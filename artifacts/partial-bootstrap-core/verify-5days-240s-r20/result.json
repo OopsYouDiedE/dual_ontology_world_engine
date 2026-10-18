@@ -1,0 +1,1711 @@
+{
+  "executor": "formal-model",
+  "geometry": false,
+  "run_config": {
+    "seed": 1,
+    "profile": "Standard_Detective",
+    "detective_zone": "zone_yi",
+    "su_initial_room": "R08",
+    "private_execution_benefit_multiplier": 1,
+    "homecoming_negotiation": false
+  },
+  "build_source_consistent": true,
+  "entry": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\game\\debug-run.dv",
+  "detective_profile": "Standard_Detective",
+  "detective_zone": "zone_yi",
+  "raw_format": "json",
+  "build_elapsed_seconds": 20.437999999994645,
+  "build_stages": [
+    {
+      "stage": "dv-generation",
+      "completed": true,
+      "elapsed_seconds": 14.64100000000326
+    },
+    {
+      "stage": "dotnet-build",
+      "completed": true,
+      "elapsed_seconds": 5.796999999991385
+    }
+  ],
+  "gc_mode_requested": "server",
+  "gc_heap_count_requested": 4,
+  "runtime_environment": {
+    "DOTNET_gcServer": "1",
+    "DOTNET_GCHeapCount": "4"
+  },
+  "projection_every": 1,
+  "resumed": false,
+  "restore_input_hashes": {},
+  "exit_code": 0,
+  "elapsed_seconds": 232.5,
+  "execution_elapsed_seconds": 232.5,
+  "source_unchanged": true,
+  "raw_path": "trace.json",
+  "trace_path": "trace.json",
+  "trace_storage_encoding": "none",
+  "raw_written": true,
+  "raw_partial_written": false,
+  "trace_written": true,
+  "trace_partial_written": false,
+  "raw_sealing_complete": true,
+  "output_well_formed": true,
+  "text_exported": true,
+  "actual_run_config": {
+    "seed": 1,
+    "profile": "Standard_Detective",
+    "detective_zone": "zone_yi",
+    "su_initial_room": "R08",
+    "private_execution_benefit_multiplier": 1,
+    "homecoming_negotiation": false
+  },
+  "run_config_matches": true,
+  "event_packet_source": "stdout.jsonl",
+  "stdout_projection_coverage": {
+    "last_event_cursor": 27981,
+    "last_flushed_step": 2627,
+    "inherited_event_count": 0,
+    "initial_steps": 0,
+    "projection_every": 1
+  },
+  "player_text_scope": "flushed stdout presentations only; unflushed raw tail is not reconstructed or claimed complete",
+  "completed_steps_after_last_flush": 0,
+  "evidence_projection": "evidence-summary.json",
+  "logical_loop_finished": true,
+  "stop_reasons": [
+    "world-horizon"
+  ],
+  "world_horizon_observed": true,
+  "chapter_summary_reported": {
+    "scope": "read-only-actual-state-not-character-knowledge",
+    "council_closed": {
+      "known": true,
+      "value": true,
+      "confidence": 1,
+      "time": 6330,
+      "claims": [],
+      "basis": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "user:2026-10-18\u7ae0\u672b\u6388\u6743"
+        }
+      ],
+      "conflicted": false
+    },
+    "council_ended": {
+      "known": true,
+      "value": false,
+      "confidence": 1,
+      "time": 0,
+      "claims": [],
+      "basis": [],
+      "conflicted": false
+    },
+    "underground_tremor": {
+      "known": true,
+      "value": true,
+      "confidence": 1,
+      "time": 6330,
+      "claims": [],
+      "basis": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "user:2026-10-18\u7ae0\u672b\u6388\u6743"
+        }
+      ],
+      "conflicted": false
+    },
+    "people": [
+      {
+        "id": "detective",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6219,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.detective.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6218,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.detective.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "committee_plan",
+          "confidence": 1,
+          "time": 6218,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.detective.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "huo",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6248,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.huo.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6247,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.huo.c2.vote.oath_courtopen_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "open_plan",
+          "confidence": 1,
+          "time": 6247,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.huo.c2.vote.oath_courtopen_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "shen",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6217,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.shen.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6216,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.shen.c2.vote.oath_courtseal_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "seal_plan",
+          "confidence": 1,
+          "time": 6216,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.shen.c2.vote.oath_courtseal_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "su",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6230,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.su.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6229,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.su.c2.vote.oath_courtopen_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "open_plan",
+          "confidence": 1,
+          "time": 6229,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.su.c2.vote.oath_courtopen_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "lucian",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6217,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.lucian.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6216,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.lucian.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "committee_plan",
+          "confidence": 1,
+          "time": 6216,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.lucian.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "gu",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6217,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.gu.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6216,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.gu.c2.vote.oath_courtseal_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "seal_plan",
+          "confidence": 1,
+          "time": 6216,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.gu.c2.vote.oath_courtseal_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "quer",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6248,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.quer.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6247,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.quer.c2.vote.oath_courtopen_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "open_plan",
+          "confidence": 1,
+          "time": 6247,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.quer.c2.vote.oath_courtopen_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "ward",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6217,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.ward.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6216,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.ward.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "committee_plan",
+          "confidence": 1,
+          "time": 6216,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.ward.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "selma",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": false,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": false,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "ballot": {
+          "known": false,
+          "value": false,
+          "confidence": 0,
+          "time": -1,
+          "claims": [],
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "ruan",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6248,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.ruan.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6247,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.ruan.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "committee_plan",
+          "confidence": 1,
+          "time": 6247,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.ruan.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "elena",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6217,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.elena.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6216,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.elena.c2.vote.oath_courtseal_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "seal_plan",
+          "confidence": 1,
+          "time": 6216,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.elena.c2.vote.oath_courtseal_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "moran",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6219,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.moran.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6218,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.moran.c2.vote.oath_courtopen_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "open_plan",
+          "confidence": 1,
+          "time": 6218,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.moran.c2.vote.oath_courtopen_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 1,
+          "confidence": 1,
+          "time": 3642,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "chapter-two-real-investigation-contact"
+            }
+          ],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "veronica",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6219,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.veronica.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6218,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.veronica.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "committee_plan",
+          "confidence": 1,
+          "time": 6218,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.veronica.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "bertrand",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6248,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.bertrand.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6247,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.bertrand.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "committee_plan",
+          "confidence": 1,
+          "time": 6247,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.bertrand.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "margaret",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6248,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.margaret.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6247,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.margaret.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "committee_plan",
+          "confidence": 1,
+          "time": 6247,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.margaret.c2.vote.oath_courtcommittee_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      },
+      {
+        "id": "mora",
+        "alive": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "signed": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6219,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.mora.c2.sign.oath_court"
+          },
+          "conflicted": false
+        },
+        "voted": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 6218,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.mora.c2.vote.oath_courtseal_plan"
+          },
+          "conflicted": false
+        },
+        "ballot": {
+          "known": true,
+          "value": "seal_plan",
+          "confidence": 1,
+          "time": 6218,
+          "claims": [],
+          "basis": {
+            "path": "docs/design-standard.md",
+            "line": 0,
+            "id": "authorized-second-chapter-daily.mora.c2.vote.oath_courtseal_plan"
+          },
+          "conflicted": false
+        },
+        "rations": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "hungry": {
+          "known": true,
+          "value": true,
+          "confidence": 1,
+          "time": 7020,
+          "claims": [],
+          "basis": [
+            {
+              "path": "docs/design-standard.md",
+              "line": 0,
+              "id": "hunger-follows-actual-missed-meal"
+            }
+          ],
+          "conflicted": false
+        },
+        "erosion_exposure": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        },
+        "pending_notes": {
+          "known": true,
+          "value": 0,
+          "confidence": 1,
+          "time": 0,
+          "claims": [],
+          "basis": [],
+          "conflicted": false
+        }
+      }
+    ],
+    "counter_remaining": {
+      "known": true,
+      "value": 99,
+      "confidence": 1,
+      "time": 0,
+      "claims": [],
+      "basis": [],
+      "conflicted": false
+    },
+    "counter_open": {
+      "known": true,
+      "value": false,
+      "confidence": 1,
+      "time": 0,
+      "claims": [],
+      "basis": [],
+      "conflicted": false
+    },
+    "ledger_pending": {
+      "known": true,
+      "value": 0,
+      "confidence": 1,
+      "time": 0,
+      "claims": [],
+      "basis": [],
+      "conflicted": false
+    },
+    "ledger_counted": {
+      "known": true,
+      "value": 0,
+      "confidence": 1,
+      "time": 0,
+      "claims": [],
+      "basis": [],
+      "conflicted": false
+    },
+    "ledger_removed": {
+      "known": true,
+      "value": 0,
+      "confidence": 1,
+      "time": 0,
+      "claims": [],
+      "basis": [],
+      "conflicted": false
+    },
+    "ledger_day_recorded": {
+      "known": true,
+      "value": 0,
+      "confidence": 1,
+      "time": 0,
+      "claims": [],
+      "basis": [],
+      "conflicted": false
+    },
+    "ledger_night_recorded": {
+      "known": true,
+      "value": 0,
+      "confidence": 1,
+      "time": 0,
+      "claims": [],
+      "basis": [],
+      "conflicted": false
+    },
+    "reserve_added": {
+      "known": true,
+      "value": false,
+      "confidence": 1,
+      "time": 0,
+      "claims": [],
+      "basis": [],
+      "conflicted": false
+    },
+    "contract_joined": {
+      "known": true,
+      "value": true,
+      "confidence": 1,
+      "time": 2335,
+      "claims": [],
+      "basis": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "chapter-two-real-investigation-contact"
+        }
+      ],
+      "conflicted": false
+    },
+    "astral_draft": {
+      "known": true,
+      "value": false,
+      "confidence": 1,
+      "time": 0,
+      "claims": [],
+      "basis": [],
+      "conflicted": false
+    },
+    "medicine_key_given": {
+      "known": true,
+      "value": false,
+      "confidence": 1,
+      "time": 0,
+      "claims": [],
+      "basis": [],
+      "conflicted": false
+    }
+  },
+  "narrative_completion": "not-assessed; review actual receipts against declared criteria",
+  "evidence_complete": true,
+  "postprocess_elapsed_seconds": 10.484000000025844
+}

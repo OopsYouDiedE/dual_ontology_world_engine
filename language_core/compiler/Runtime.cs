@@ -770,7 +770,7 @@ public static class R
                         writer.WriteEndArray();
                         return;
                     }
-                    if (ctx != null && ctx.InEvents && (key is "world" or "simulation" or "predicted" or "trace" or "catalog" || (ctx.CurrentEventType == "model_argument_unavailable" && key is "competitors" or "factor_coverage")))
+                    if (ctx != null && ctx.InEvents && (key is "world" or "simulation" or "predicted" or "trace" or "catalog" or "actions" or "departure_goals" or "first_night_base_goals" or "hearing_grants" || (ctx.CurrentEventType == "model_argument_unavailable" && key is "competitors" or "factor_coverage")))
                     {
                         writer.WriteStartArray();
                         writer.WriteStringValue(key);
