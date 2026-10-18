@@ -24,10 +24,13 @@ internal static class DvProfiler
     private static readonly Dictionary<string, Total> totals = new(StringComparer.Ordinal);
     private static readonly object gate = new();
     private static readonly long started = Stopwatch.GetTimestamp();
+    private static readonly Timer sampler;
 
     static DvProfiler()
     {
         AppDomain.CurrentDomain.ProcessExit += (_, _) => Write();
+        // Retain completed-call samples when an externally bounded session is killed.
+        sampler = new Timer(_ => Write(), null, 30000, 30000);
     }
 
     internal readonly struct Scope : IDisposable
@@ -71,13 +74,15 @@ internal static class DvProfiler
         {
             lock (gate)
             {
-                using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
+                var sample = path + ".partial";
+                using (var stream = new FileStream(sample, FileMode.Create, FileAccess.Write))
                 JsonSerializer.Serialize(stream, new
                 {
                     frequency = Stopwatch.Frequency,
                     process_ticks = Stopwatch.GetTimestamp() - started,
                     functions = totals
                 });
+                File.Move(sample, path, true);
             }
         }
         catch (Exception error)

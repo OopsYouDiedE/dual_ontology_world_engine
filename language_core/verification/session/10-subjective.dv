@@ -336,30 +336,55 @@ fn dvs_reason(actor, events, time, parent):
 fn dvs_event_prepared(events, kind, actor, time, parents, data):
     return dvs_event(events, kind, actor, time, parents, data)
 
-// Cache only a completed cognitive preparation with identical complete input.
-// Time, mind, source receipts, policy, models, interpretations and peers remain in the key.
-fn dvs_cognition_input(actor, time, chapter):
-    let ignored = ["cognition_input", "last_cognition_revision", "last_cognition_time", "cognition_reused", "cognition_cache_reuses", "last_cognitive_event", "last_reason_report", "last_readiness_report", "decision_time", "decision_revision", "decision_mind_time", "decision_chapter", "last_decision_stopped", "planning_work_total", "dependency_work_total", "dependency_cache", "planned_followup", "campaign_goals_revision", "campaign_goals_time", "campaign_goals_chapter", "c2_goals_navigation_input", "support_events_cursor", "scheduled_action"]
-    var fields = []
+// Stage-local memo: only inference is reused; other cognition keeps its normal order.
+fn dvs_reason_input(actor):
+    let adoptions = actor.mind.adoptions
+    let key = ["reason_input_refs"]
+    let cached = rt_memo_get(adoptions, key)
+    var refs = []
+    if cached[0]:
+        refs = cached[1]
+    else:
+        var i = 0
+        while i < rt_count(adoptions):
+            let adoption = adoptions[i][1]
+            if adoption.mode == "infer":
+                refs = dvp_merge_refs(refs, dvs_sim_refs(adoption.law.premise))
+                var j = 0
+                while j < rt_count(adoption.law.effects):
+                    refs = dvp_add_ref(refs, adoption.law.effects[j].ref)
+                    j = j + 1
+            i = i + 1
+        rt_memo_put(adoptions, key, refs)
+    let derivations = dv_find(actor, "inference_derivations", [])
     var i = 0
-    while i < rt_count(actor):
-        let entry = actor[i]
-        if not dv_has(ignored, entry[0]):
-            rt_push(fields, entry)
+    while i < rt_count(derivations):
+        let inputs = derivations[i].inputs
+        var j = 0
+        while j < rt_count(inputs):
+            refs = dvp_add_ref(refs, inputs[j].ref)
+            j = j + 1
         i = i + 1
-    return {"actor": fields, "time": time, "chapter": chapter}
+    var cells = []
+    i = 0
+    while i < rt_count(refs):
+        rt_push(cells, {"ref": refs[i], "cell": dvs_reason_cell(dv_read(actor.mind, refs[i]))})
+        i = i + 1
+    return {"adoptions": adoptions, "inputs": cells, "derivations": derivations, "signatures": dv_find(actor, "inference_signatures", []), "budget": dv_find(actor.policy, "reason_budget", 0), "blocked": dv_find(actor, "cognition_blocked", false)}
 
 fn dvs_prepare_cognition(actor, events, time, parent, chapter):
-    let input = dvs_cognition_input(actor, time, chapter)
-    if actor.mind.revision == dv_find(actor, "last_cognition_revision", -1) and rt_count(dv_find(actor, "pending_heard", [])) == 0 and dv_same(input, dv_find(actor, "cognition_input", false)):
-        return dv_with_many(actor, {"cognition_reused": true, "cognition_cache_reuses": dv_find(actor, "cognition_cache_reuses", 0) + 1})
-    actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(dvs_reason(actor, events, time, parent), events, time, parent), events, time, parent), events, time, parent)
+    let input = dvs_reason_input(actor)
+    var reused = dv_same(input, dv_find(actor, "reason_fixed_input", false))
+    if not reused:
+        actor = dvs_reason(actor, events, time, parent)
+        let completed = dvs_reason_input(actor)
+        if dv_same(input, completed) and not dv_find(actor, "cognition_blocked", false):
+            actor = dv_with(actor, "reason_fixed_input", rt_snapshot(completed))
+        else:
+            actor = dv_with(actor, "reason_fixed_input", false)
+    actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(actor, events, time, parent), events, time, parent), events, time, parent)
     actor = dvs_update_support_events(actor, events)
     actor = dvs_capture_public_topics(actor, events, time, parent)
     actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
     actor = dvs_prepare_speech_choices(actor, events, time, parent)
-    let completed = dvs_cognition_input(actor, time, chapter)
-    // A late model/argument update requires another full preparation, not a cache hit.
-    if dv_same(input, completed):
-        return dv_with_many(actor, {"cognition_input": completed, "last_cognition_revision": actor.mind.revision, "last_cognition_time": time, "cognition_reused": false})
-    return dv_with_many(actor, {"cognition_input": false, "last_cognition_revision": -1, "last_cognition_time": time, "cognition_reused": false})
+    return dv_with_many(actor, {"cognition_input": false, "cognition_reused": false, "reason_reused": reused})

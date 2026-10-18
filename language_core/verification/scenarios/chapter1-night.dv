@@ -13,6 +13,13 @@ fn c1n_row(actor, id, start, end, when, text):
     return {"actor": actor, "id": rt_cat("night.", id), "start": start, "end": end, "when": when, "text": text, "kind": "talk", "effects": [], "grants": [], "literal": dv_true()}
 
 fn c1n_rows():
+    let key = ["authored-declaration", "c1n_rows"]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, c1n_rows_build())
+
+fn c1n_rows_build():
     var rows = []
     let meet = dv_all([c1_at("detective", "living_hall"), c1_at("huo", "living_hall"), c1_at("shen", "living_hall")])
     rt_push(rows, c1n_row("quer", "greeting", 750, 810, meet, "老霍！沈叔！……咦，我怎么张嘴就这么叫了？"))

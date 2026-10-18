@@ -26,6 +26,13 @@ fn c2d_reply(actor, id, room, when, literal, topic, text, source):
     return dv_with(c2d_row(actor, id, room, when, literal, text, source), "response_topic", topic)
 
 fn c2d_introductions():
+    let key = ["authored-declaration", "c2d_introductions"]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, c2d_introductions_build())
+
+fn c2d_introductions_build():
     return [
         {"actor": "ward", "text": "弗雷德里克·沃德，执业律师，甲区。", "source": c2d_source("06_场面.story", 25, "chapter2.meet_jia.002")},
         {"actor": "gu", "text": "老朽顾平章，读碑的。", "source": c2d_source("06_场面.story", 31, "chapter2.meet_jia.008")},
@@ -45,6 +52,13 @@ fn c2d_curriculum():
         {"id": "lesson14", "title": "异象与记忆", "text": "辨别自己看见的、别人告诉你的，和自己盼着是真的。熟悉感只是一条线索，地点、时长与缘由仍需各自查证。", "source": c1_source("docs/design-standard.md", 0, "前两章的信息边界")}]
 
 fn c2d_rows():
+    let key = ["authored-declaration", "c2d_rows"]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, c2d_rows_build())
+
+fn c2d_rows_build():
     var rows = []
     let contract_ref = c2d_ref("contract_full_text")
     let contract_source = c1_source("docs/design-standard.md", 0, "主动询问契约全文")
@@ -465,3 +479,14 @@ fn c2d_install_scene(scene):
         rt_push(actors, c2d_refresh_actor_goals(actor))
         i = i + 1
     return dv_with_many(scene, {"physical": physical, "actors": actors, "bindings": bindings, "world_processes": processes, "chapter2_dialogue_installed": true})
+
+// Display labels require the viewer's actual self-introduction receipt.
+fn c2d_known_speaker_name(mind, actor):
+    let intros = c2d_introductions()
+    var i = 0
+    while i < rt_count(intros):
+        let intro = intros[i]
+        if intro.actor == actor and dv_truth(mind, dv_fact(c2d_person_ref(actor, "introduction"), intro.text)) == "true":
+            return c1_other_person(actor).name
+        i = i + 1
+    return ""

@@ -6,6 +6,13 @@
 // c1_other_group_extend installs content; source catalog data alone never completes an action.
 
 fn c1_other_people():
+    let key = ["authored-declaration", "c1_other_people"]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, c1_other_people_build())
+
+fn c1_other_people_build():
     var result = []
     rt_push(result, {"id": "quer", "name": "雀儿", "group": "contract", "desire": "一个不会赶她走的地方", "initial_surface": "门。门闩在外面。", "material_surface": "袋子还在，口扎得死紧。我的结。", "intention_surface": "先看看那道门闩。", "memory_surface": "怎么来的？上船，然后……不知道。", "memory_source": c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 47, "opening_quer.003"), "initial_source": c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 46, "opening_quer.002"), "material_source": c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 48, "opening_quer.004"), "desire_source": c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/07_雀儿.story", 10, "quer.desire")})
     rt_push(result, {"id": "lucian", "name": "卢西安", "group": "contract", "desire": "言灵的完美韵律", "initial_surface": "嘴边有一句诗，念到一半，韵脚找不着了。", "material_surface": "桌上的笔记是我的字，比平时潦草。", "intention_surface": "先找那个韵。", "memory_surface": "上船之后呢？也找不着了。", "memory_source": c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 31, "opening_lucian.003"), "initial_source": c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 30, "opening_lucian.002"), "material_source": c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 32, "opening_lucian.004"), "desire_source": c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/05_卢西安.story", 10, "lucian.desire")})

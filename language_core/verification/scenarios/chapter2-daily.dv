@@ -14,6 +14,13 @@ fn c2daily_notes_window():
     return dv_all([dv_at_least(c2_clock(), 1440 + 810), dv_not(dv_at_least(c2_clock(), 3 * 1440))])
 
 fn c2daily_rows():
+    let key = ["authored-declaration", "c2daily_rows"]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, c2daily_rows_build())
+
+fn c2daily_rows_build():
     var rows = []
     let morning = c2_window(2, 480, 570)
     rt_push(rows, c2daily_say("lucian", "lucian.c2.gray-violet", "washroom", morning, "莫兰，窗外那层灰带一点紫；若要画下来，该怎样调？", ["moran"]))

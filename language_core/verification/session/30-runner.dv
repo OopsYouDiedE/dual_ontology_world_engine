@@ -331,7 +331,7 @@ fn dvs_prepare_actor(state):
             dvs_debug_phase(story, actor.id, time, "choice-start")
             choice = dvs_choose(actor, bindings, costs)
             dvs_debug_phase(story, actor.id, time, "choice-end")
-        choice = dv_with(choice, "cognition_reused", dv_find(actor, "cognition_reused", false))
+        choice = dv_with_many(choice, {"cognition_reused": dv_find(actor, "cognition_reused", false), "reason_reused": dv_find(actor, "reason_reused", false)})
         actor = dv_with(actor, "dependency_work_total", dv_find(actor, "dependency_work_total", 0) + dv_find(choice, "dependency_expansions", 0))
         actor = dv_with(actor, "decision_revision", actor.mind.revision)
         var action = choice.action

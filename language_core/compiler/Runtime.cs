@@ -173,6 +173,31 @@ public static class R
         if (!found) result.Add(new List<object> { key, copy_value(value) });
         return result;
     }
+    // Batch independent-copy update, preserving ordered pairs and duplicate-key rules.
+    public static object record_with_many(object record, object updates)
+    {
+        var changes = Items(updates);
+        if (changes.Count == 0) return record;
+        var frozen = Items(snapshot(record));
+        var result = new List<object>(frozen.Count + changes.Count);
+        var keys = new List<object>(frozen.Count + changes.Count);
+        foreach (var item in frozen)
+        {
+            var key = Items(item)[0];
+            if (Convert.ToDouble(record_index(updates, key)) >= 0)
+                result.Add(new List<object> { key, copy_value(record_find(updates, key, false)) });
+            else result.Add(item);
+            keys.Add(key);
+        }
+        foreach (var item in changes)
+        {
+            var key = Items(item)[0];
+            if (keys.Exists(existing => Bool(same_value(existing, key)))) continue;
+            result.Add(new List<object> { key, copy_value(record_find(updates, key, false)) });
+            keys.Add(key);
+        }
+        return result;
+    }
     private sealed class ValueMemo
     {
         internal readonly Dictionary<string, MemoPartition> Partitions = new(StringComparer.Ordinal);

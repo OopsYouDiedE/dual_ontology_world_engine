@@ -106,6 +106,13 @@ fn c2_profile(actor):
     return {"id": actor, "group": group, "domain": domain, "station_roles": roles, "value_order": values, "basis": [c2_person_source(actor), c2_approved("chapter-two-role-groups")]}
 
 fn c2_edges():
+    let key = ["authored-declaration", "c2_edges"]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, c2_edges_build())
+
+fn c2_edges_build():
     return [
         {"from": "living_hall", "to": "central_hall", "gate": "north"},
         {"from": "central_hall", "to": "lecture", "gate": "north"},
@@ -129,6 +136,13 @@ fn c2_locations():
     return dv_append(c2_rooms(), "oath_court")
 
 fn c2_norms():
+    let key = ["authored-declaration", "c2_norms"]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, c2_norms_build())
+
+fn c2_norms_build():
     return [
         {"id": "records_supplement", "owner": "ruan", "board": "central_hall", "surface": "急需可取，预留补记栏；次日将取用、用途和结余一同核清。", "promotes": ["records", "night_exception", "patient_priority"], "sacrifices": ["no_exception"], "mode": "permit", "method": "unrecorded_take", "source": c2_approved("third-night-supplement-proposal")},
         {"id": "night_forbid", "owner": "ward", "board": "central_hall", "surface": "夜间停取公物，待白日登记后再领。", "promotes": ["no_exception", "restriction"], "sacrifices": ["night_exception"], "mode": "forbid", "method": "unrecorded_take", "source": c2_approved("third-night-forbid-proposal")},
@@ -486,6 +500,7 @@ fn c2_norm_actions(actor, norm):
             promotes = norm.sacrifices
             sacrifices = norm.promotes
             surface = "这条我不认。"
+        surface = rt_cat(rt_cat("关于“", norm.surface), rt_cat("”：", surface))
         let id = rt_cat(actor, rt_cat(".c2.", rt_cat(verb, rt_cat(".", norm.id))))
         let grants = dv_pair(c2_own(actor, rt_cat("decided.", norm.id)), c2_own(actor, rt_cat("accepted.", norm.id)))
         let speech = dv_with(c1_speech(dv_true(), norm.source, "personal-norm-decision"), "surface", surface)
@@ -1216,6 +1231,13 @@ fn c2i_granary_team():
     return dv_all([c2_at("margaret", "logistics"), c2_at("huo", "logistics"), c2_at("quer", "logistics"), c2_alive("margaret"), c2_alive("huo"), c2_alive("quer")])
 
 fn c2i_rows():
+    let key = ["authored-declaration", "c2i_rows"]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, c2i_rows_build())
+
+fn c2i_rows_build():
     let document = c2_window(2, 840, 960)
     let resonance = c2_window(3, 570, 720)
     let safety = c2_window(3, 840, 1020)

@@ -352,7 +352,7 @@ Session 宿主提供流式 WriteTrace/WriteSave；Trace 的精确数沿原字符
 | 文本 | rt_cat(a,b), rt_length(text), rt_slice(text,start,count), rt_chr(text,index), rt_code(text), rt_show(value) | 连接、UTF-16 长度/子串/单元、码值、基本值格式化；show 不格式化任意列表 |
 | 标识符 | rt_id_start(text), rt_id_part(text), rt_normalize(text) | 标识符类别、NFC |
 | 列表 | rt_list(), rt_push(list,value), rt_at(list,index), rt_replace(list,index,value), rt_count(list), rt_is_list(value) | 构造、追加、读取、替换、计数；写只读快照时报错 |
-| 记录 | rt_record_index(record,key), rt_record_find(record,key,fallback), rt_record_with(record,key,value) | 末项优先定位/查找、独立复制更新；更新全部重复键 |
+| 记录 | rt_record_index(record,key), rt_record_find(record,key,fallback), rt_record_with(record,key,value), rt_record_with_many(record,updates) | 末项优先定位/查找、独立复制更新；更新全部重复键 |
 | 复制 | rt_copy_value(value), rt_snapshot(value) | 独立可编辑分支、递归不可变快照 |
 | 纯值备忘 | rt_memo_get(owner,key), rt_memo_put(owner,key,value) | get 返回 `[found,value]`，put 返回可独立使用的结果；完整输入底本和键决定结果 |
 | 参数 | rt_arg_count(), rt_arg(index) | 启动命令行参数 |
@@ -1007,3 +1007,15 @@ C2导航意图从本人已知位置、已知开启的门和本人已采纳移动
 认知快路仅复用一次完整处理前后输入相同的固定点，且当次时间、章节、mind、政策、模型、解释、支持来源和同处上下文均未变化。先处理实际收闻与现场感知，迟发生的论证/模型更新不能标成已稳定。重复零步reason_stop及相同why_not_ready可不另发事件，实际推知/观察/模型/选择/执行不裁剪。诊断缓存和工作累计不进入行动规划备忘键。
 
 调试投影dv_debug_event返回冻结只读快照；每次实际执行仍流式保留所有debug_events，玩家呈现只输出visible条目，无可见正文丢失。无模板行直接返回空行列表，省略无用主体查找。phase_progress缺省关闭，仅去掉阶段计时诊断；run_debug.py仍将stdout直接写文件，未改为缓冲后批量落盘，也不按事件数量预设加速结论。
+
+## 连续优化循环与局部复用（2026-10-18）
+
+用户授权每轮集中完成已识别问题处理、接线与静态审读后，冻结源码运行一次最多180秒的一级正式会话；达到7200分钟即停止，否则最多四轮。每轮新增证据并独立审查，保留失败、插桩开销与未覆盖范围，提交并推送；不在改动之间穿插会话。
+
+`dv_with_many`改由通用容器ABI `rt_record_with_many(record,updates)`完成，保持有序记录、更新全部重复键、更新表末值优先、空更新返回原记录及分支独立复制。算法仍只处理容器，不含剧情或世界执行。编译器arity与Core参考同步维护。
+
+整个人物的认知缓存由局部推知固定点键替代：输入包含infer采纳、所有前提/输出字段、历史推导引用、来源单元（仅沿原推知语义剥离time）、推导、签名与剩余推理预算；只有推知前后完全不变且未阻塞时保存。时间条件所读时钟字段仍在键中；语用、假说、准备、论证与话语链继续每次执行，`reason_reused`与`cognition_reused`分列。新增效果读依赖时须扩展此键。
+
+无参静态内容声明可以使用纯值备忘，不能缓存读取会话、时间、世界或人物的构造器。支持性陈述可声明answer_form=supporting-statement，不取得完整答辩奖励；权威判答和人工候选不因评分调整而放宽。询问不携带答复正文，已知其所问命题后不重复发问。姓名只从本人真实介绍收据显示。
+
+诊断插桩每30秒原子保存已完成调用的累计耗时，超时保留最后采样；采样覆盖时长与全程时长分列，插桩运行不与原生运行作同条件吞吐比较。诊断采样只改工具输出，绝不决定人物行为。

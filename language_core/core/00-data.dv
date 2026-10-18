@@ -229,31 +229,7 @@ fn dv_channel(id, from, to, medium, enabled, gain, gate):
     return dv_object(id, "channel", {"link": {"from": dv_field(dv_entity_ref(from)), "to": dv_field(dv_entity_ref(to)), "medium": dv_field(medium), "gate": dv_field(gate)}, "transport": {"enabled": dv_field(enabled), "gain": dv_field(gain), "bands": dv_field([])}})
 
 fn dv_with_many(record, updates):
-    if (rt_count(updates) == 0):
-        return record
-    else:
-        var result = []
-        var keys = []
-        var i = 0
-        while (i < rt_count(record)):
-            var entry = record[i]
-            var key = record[i][0]
-            if dv_has_key(updates, key):
-                rt_push(result, dv_pair(key, dv_clone(dv_get(updates, key))))
-            else:
-                rt_push(result, rt_snapshot(entry))
-            rt_push(keys, key)
-            i = (i + 1)
-        i = 0
-        while (i < rt_count(updates)):
-            var key = updates[i][0]
-            if dv_has(keys, key):
-                false
-            else:
-                rt_push(result, dv_pair(key, dv_clone(dv_get(updates, key))))
-                rt_push(keys, key)
-            i = (i + 1)
-        return result
+    return rt_record_with_many(record, updates)
 
 // Copy the updated spine; unchanged branches use immutable snapshots.
 // Validation of the world/ref remains in dv_store before this data operation.

@@ -15,7 +15,7 @@ fn dvp_memo_input(actor, costs):
     while i < rt_count(actor):
         let entry = actor[i]
         let key = entry[0]
-        if key != "decision_time" and key != "decision_revision" and key != "planning_work_total" and key != "last_cognitive_event" and key != "dependency_work_total" and key != "cognition_input" and key != "last_cognition_revision" and key != "last_cognition_time" and key != "cognition_reused" and key != "cognition_cache_reuses" and key != "last_reason_report" and key != "last_readiness_report":
+        if key != "reason_fixed_input" and key != "reason_reused" and key != "decision_time" and key != "decision_revision" and key != "planning_work_total" and key != "last_cognitive_event" and key != "dependency_work_total" and key != "cognition_input" and key != "last_cognition_revision" and key != "last_cognition_time" and key != "cognition_reused" and key != "cognition_cache_reuses" and key != "last_reason_report" and key != "last_readiness_report":
             if key == "policy":
                 rt_push(result, dv_pair(key, policy))
             else:
@@ -194,6 +194,8 @@ fn dvp_scope(actor, action, bindings):
     return refs
 
 fn dvp_answer_reward(actor, action, mind):
+    if dv_find(action, "answer_form", "complete-answer") == "supporting-statement":
+        return 0
     if dv_has_key(action, "answer"):
         if (dv_truth(mind, action.answer) == "true"):
             return 1.0

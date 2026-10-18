@@ -91,10 +91,11 @@ fn c1_query_basis(atom):
                         return dv_true()
 
 fn c1_personal_request(action, target):
+    action = dv_without(action, "surface")
     var scope = action.grants
     var atom = action.grants[0].field
     var speech = dv_with(dv_with(c1_speech(dv_true(), "请把你辨认出的内容说给我听。", "professional-request"), "utterance_type", "question"), "request", {"target": target, "topic": action.grants[0].field})
-    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(action, "grants", []), "purpose_refs", scope), "precondition", c1_query_basis(atom)), "authority_precondition", dv_true()), "speech", speech), "listeners", dv_single(target))
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(action, "grants", []), "purpose_refs", scope), "precondition", dv_all([c1_query_basis(atom), dv_not(c1_statement(atom))])), "authority_precondition", dv_true()), "speech", speech), "listeners", dv_single(target))
 
 fn c1_method(name, law):
     return dv_instance(name, law)
@@ -1386,7 +1387,7 @@ fn c1_move_name(actor, origin, target):
 
 fn c1_move_action(actor, origin, target):
     var name = c1_move_name(actor, origin, target)
-    return dv_with_many(c1_action(name, "move", c1_at(actor, origin), c1_at(actor, origin), name, dv_single(dv_ref(actor, "state", "location")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story", 19, "重演通路")), {"predict_law": name, "travel": {"from": origin, "to": target}})
+    return dv_with_many(c1_action(name, "move", c1_at(actor, origin), c1_at(actor, origin), name, dv_single(dv_ref(actor, "state", "location")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story", 19, "重演通路")), {"predict_law": name, "travel": {"from": origin, "to": target}, "surface": "沿通路走到相连的房间。"})
 
 fn c1_add_move_methods(world, actor, mode):
     var edges = c1_edges()
@@ -1523,7 +1524,10 @@ fn c1_answer_actions(actor):
     var result = []
     var i = 0
     while i < rt_count(actions):
-        rt_push(result, c1_public_answer_speech(actions[i]))
+        var action = c1_public_answer_speech(actions[i])
+        if dv_has(["V1_0", "V1_1", "V1_2", "V2_0", "V2_1", "V2_2", "V5_0", "V5_1", "V5_2", "V6_0", "V6_1"], action.answer_id):
+            action = dv_with(action, "answer_form", "supporting-statement")
+        rt_push(result, action)
         i = i + 1
     return result
 
