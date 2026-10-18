@@ -18,7 +18,7 @@
 
 诊断后的纯值优化：`dv_read`在原subject→world.objects→ref.object检查后，以完整world和ref缓存完整cell，`dv_read_fields`只处理已验证前缀后的查找，缺对象仍不读facet/field。每次命中返回独立可变副本，嵌套world/ref变化使旧底本失效。`dv_truth`仅对List world中的非List常量值跳过通用memo；List常量保留原命中副本合同，其他路径及合取求值顺序保持。`dvp_topic_scan`保留原主题算法，入口的纯Bool缓存包含完整mind、item、question_ref存在性及值、topic_bindings、heard_topics；无合格mind时沿原扫描，有来源的personal早退仍优先。
 
-`rt_has_value`对冻结全字符串列表或有效底本使用ordinal字符串集合；符合条件的结构值按保守指纹分桶后仍用原相等比较，未冻结查询及不支持值沿原扫描。`rt_record_with_many`在较大正规字符串记录上索引更新，小表与非正规表沿原路径；输出顺序、重复键更新、空更新与独立复制不变。缓存附着不可变值，修改沿既有底本失效链处理。
+`rt_has_value`对冻结全字符串列表或有效底本使用ordinal字符串集合；符合条件的结构值按保守指纹分桶后仍用原相等比较，新建查询可只读计算至多八层新建列表的临时指纹，不缓存查询；更深/循环及不支持值沿原扫描。`rt_record_with_many`在较大正规字符串记录上索引更新，小表与非正规表沿原路径；输出顺序、重复键更新、空更新与独立复制不变。缓存附着不可变值，修改沿既有底本失效链处理。
 
 等待静态元数据由`c1n_clock_boundaries`/`c1n_without_clock`缓存完整condition的纯结果，其`_uncached`保留原递归顺序，目标待定、时钟及本人非时钟前提仍逐次核对。本人声明白天等待策略时，夜间片段也在日内480起点截短；既有费用与更小本人上限保留。该等待边界属于新行为条件，不能将后续吞吐当作纯同条件提速。
 
@@ -388,6 +388,8 @@ Session 宿主提供流式 WriteTrace/WriteSave；Trace 的精确数沿原字符
 | 文件 | rt_read(path), rt_write(path,text), rt_json_write(path,value) | 严格 UTF-8 读取、文本写入、流式新 JSON 文件 |
 | JSON | rt_json_parse(text), rt_json_stringify(value) | 数据交换解析与序列化 |
 | 控制台/失败 | rt_print(value), rt_fail(message) | 基本值打印并返回原值、抛出明确错误 |
+
+`rt_number(text)` 对精确文本 `0`、`1`、`-1` 复用不可变有限数值，其余仍按 invariant Float 解析并检查有限性；负零及错误顺序保持原合同。
 
 `rt_is_number(text)` 检查文本是否可解析为有限浮点数，传非文本会报 Expected Text；它不承担运行值类型判断。`rt_is_numeric_value(value)` 无隐式转换：有限 double 和有效 Rational 返回 true，数字文本、普通文本、Bool、列表/记录、非有限 double 返回 false。主体数量、依赖收集、侵蚀暴露以及表达策略权重使用后者。精确有理数权重直接按数值检查，不经 JSON 文本重解析。
 
@@ -1036,8 +1038,12 @@ python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --node 456 --value-
 
 `rt_list_with_index(items,index,value)`是三元List ABI，`dvs_replace`直接转发。每个整数位置按原`rt_eq`比较索引，命中采用value，未命中经原读取路径获取项；新根共享这些项，不属于`copy_value`独立复制。空列表不检查index，无匹配保持全部元素；原列表类型错误与读取顺序保留。
 
-`rt_record_with_many`对正规字符串二元项表构建末值更新索引，保留原字段顺序、重复原键全部更新、新键首次出现位置及末值优先、每个替换值独立复制；其他输入回原路径。`rt_has_value`可对已有冻结列表或未失效backbone建立结构桶：数值统一桶标记，候选沿原顺序执行`same_value`。未冻结/失效查询、非法数值与不支持值回原扫描；索引不改变输出、观察或决策。
+`rt_record_with_many`对正规字符串二元项表构建末值更新索引，保留原字段顺序、重复原键全部更新、新键首次出现位置及末值优先、每个替换值独立复制；其他输入回原路径。`rt_has_value`可对已有冻结列表或未失效backbone建立结构桶：数值统一桶标记，候选沿原顺序执行`same_value`。新建或失效查询只读计算至多八层新建列表的临时指纹，不缓存或展开查询；更深/循环、非法数值与不支持值回原扫描；索引不改变输出、观察或决策。
 
 个人决定首次完成时previous_event为空，后续完成从既有真实决定回执读取前驱；缺少选择或执行证据仍不登记。批量更新索引仅用于原表至少16项，或至少8项且更新多于1项；较小表沿原扫描以减少分配。
 
 章节导航只为本人已知实质前提成立的任务建立到达意向；前提为false/unknown时保留实质目标，现场检查由有来源的独立证据目标与真实方法驱动。观察下界取声明窗口，旧观察不因更新时钟自动变新；本次行为修正与容器性能优化分别验收。
+
+结构相等的内部递归与成员桶核对使用原生Bool，公开 `rt_eq`/`rt_same_value` 仍返回同一DV Bool值；引用短路、精确数转换顺序、有效底本复用和原序比较不变。不建立新的相等规则。
+
+run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运行时分层编译比较使用同源串行独立窗口并记录显式环境，不将该配置变化冒称DV算法收益。

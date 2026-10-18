@@ -18,7 +18,22 @@ public static class R
     public static double Num(object x) => x is double n && double.IsFinite(n) ? n : throw new Exception("Expected finite Number");
     public static bool Bool(object x) => x is bool b ? b : throw new Exception("Expected Bool");
     public static List<object> Items(object x) => x as List<object> ?? throw new Exception("Expected List");
-    public static object number(object s) => Num(double.Parse(Text(s), NumberStyles.Float, CultureInfo.InvariantCulture));
+    private static readonly object NumberZero = 0d;
+    private static readonly object NumberOne = 1d;
+    private static readonly object NumberMinusOne = -1d;
+    public static object number(object s)
+    {
+        // Validate Text before selecting exact finite spellings. All other
+        // input, including negative zero, keeps the original parse/error path.
+        var text = Text(s);
+        return text switch
+        {
+            "0" => NumberZero,
+            "1" => NumberOne,
+            "-1" => NumberMinusOne,
+            _ => Num(double.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture))
+        };
+    }
     public static object is_number(object s) => double.TryParse(Text(s), NumberStyles.Float, CultureInfo.InvariantCulture, out var n) && double.IsFinite(n);
     // Runtime value predicate; unlike is_number, this never parses or requires Text.
     public static object is_numeric_value(object value) => value is double n && double.IsFinite(n) || value is Rational q && q.Denominator.Sign > 0;
@@ -27,7 +42,8 @@ public static class R
     public static object mul(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Multiply(Rational.From(b)) : Num(Num(a) * Num(b));
     public static object div(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Divide(Rational.From(b)) : Num(Num(a) / Num(b));
     public static object lt(object a, object b) => a is Rational || b is Rational ? Rational.From(a).CompareTo(Rational.From(b)) < 0 : Num(a) < Num(b);
-    public static object eq(object a, object b) => (a is Rational || b is Rational) && (a is Rational || a is double) && (b is Rational || b is double) ? Rational.From(a).Equals(Rational.From(b)) : Equals(a, b);
+    private static bool EqValue(object a, object b) => (a is Rational || b is Rational) && (a is Rational || a is double) && (b is Rational || b is double) ? Rational.From(a).Equals(Rational.From(b)) : Equals(a, b);
+    public static object eq(object a, object b) => EqValue(a, b);
     public static object exact(object a) => Rational.From(a);
     public static object unit(object a)
     {
@@ -176,9 +192,10 @@ public static class R
     private static readonly List<object> MemoMiss = new() { false, false };
 
     // Structural value equality reads existing branches without materializing mutable copies.
-    public static object same_value(object a, object b)
+    public static object same_value(object a, object b) => SameValue(a, b);
+    private static bool SameValue(object a, object b)
     {
-        if (ReferenceEquals(a, b) || Bool(eq(a, b))) return true;
+        if (ReferenceEquals(a, b) || EqValue(a, b)) return true;
         if (a is not List<object> left || b is not List<object> right || left.Count != right.Count) return false;
         var leftBase = a as FrozenList;
         var rightBase = b as FrozenList;
@@ -187,7 +204,7 @@ public static class R
         if (leftBase is not null && ReferenceEquals(leftBase, rightBase)) return true;
         // Different structural hashes cannot reject equality: exact and floating numbers compare by value.
         for (var i = 0; i < left.Count; i++)
-            if (!Bool(same_value(left[i], right[i]))) return false;
+            if (!SameValue(left[i], right[i])) return false;
         return true;
     }
     // Membership is a structural-value operation; reading never thaws child lists.
@@ -209,20 +226,21 @@ public static class R
         }
         // Index only an already-frozen container or an unchanged mutable copy.
         // Unsupported/non-finite atoms retain the original ordered scan.
-        if (values.Count >= 8 && TryMembershipHash(value, out var hash))
+        if (values.Count >= 8)
         {
             var frozen = items as FrozenList;
             if (frozen is null && MutableStates.TryGetValue(values, out var state)) frozen = state.Backbone;
-            if (frozen is not null && FrozenMembership(frozen) is { } index)
+            if (frozen is not null && FrozenMembership(frozen) is { } index
+                && TryQueryMembershipHash(value, 8, out var hash))
             {
                 if (!index.TryGetValue(hash, out var candidates)) return false;
                 foreach (var candidate in candidates)
-                    if (ReferenceEquals(candidate, value) || Bool(same_value(candidate, value))) return true;
+                    if (ReferenceEquals(candidate, value) || SameValue(candidate, value)) return true;
                 return false;
             }
         }
         for (var i = 0; i < values.Count; i++)
-            if (ReferenceEquals(values[i], value) || Bool(same_value(values[i], value))) return true;
+            if (ReferenceEquals(values[i], value) || SameValue(values[i], value)) return true;
         return false;
     }
     // Ordered independent-copy record update; unchanged branches stay immutable until read.
@@ -441,6 +459,21 @@ public static class R
                 hash = 0;
                 return false;
         }
+    }
+    // Fresh query lists are read without materializing/caching them. Depth
+    // bounds cyclic or deep graphs; ineligible queries keep the original scan.
+    private static bool TryQueryMembershipHash(object value, int depth, out ulong hash)
+    {
+        if (TryMembershipHash(value, out hash)) return true;
+        if (depth <= 0 || value is not List<object> list) return false;
+        hash = 14695981039346656037UL;
+        foreach (var item in list)
+        {
+            if (!TryQueryMembershipHash(item, depth - 1, out var child)) return false;
+            hash = unchecked((hash ^ child) * 1099511628211UL);
+        }
+        hash = unchecked((hash ^ (ulong)list.Count) * 1099511628211UL) ^ 5UL;
+        return true;
     }
     private static bool TryMembershipListHash(List<object> values, out ulong hash)
     {
