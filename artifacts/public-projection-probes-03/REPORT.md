@@ -1,0 +1,7 @@
+# 最终无多余wrapper工程复核
+
+03基于最终源码重新生成、编译与执行。只移除了没有生产调用者的dvs_public_unprojected wrapper，探针直接调用生产dvs_public_projection_inputs和dvs_public_filter_projected。02中的根因定位、实际grants子集与限制说明继续适用，02原始输出保留。
+
+实际正常输出与02一致：部分交集剩一个字段、local身份正确、speaker/listener各两条观察、全覆盖零剩余、全新执行首传正常。重复公共调用报Repeated public grant projection，直接重复Core观察报Repeated observation。生成、构建及正常执行退出0；两个有意异常分支分别退出1。完整命令、原始stdout/stderr、源码组合与指纹保存在本目录。
+
+未调用prepare/complete，未运行正式会话、流程回归或游戏验收。最终源码已准备冻结。

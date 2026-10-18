@@ -1,5 +1,13 @@
 # DV 第一章会话结构
 
+2026-10-18接口维护：现役session归并为10-subjective、15-action-planning、20-speech、25-simulation和30-runner；下表旧35-model-argument的职责现归25-simulation。失败语义签名在可重复资格之前核对，Complete失败后保存，成功后清除；显式failure_grants仅对formal-model现场回执授权，native失败保留后续正规检视。等待按本人有来源的窗口边界分段，不读取同伴私有目标。
+
+chapter2 daily将会议收束与完整签署分开；截止事件不写个人选择。成功后本人观察可由row.observation_grants声明；系统chapter_summary在真实闭会后输出，保留未知与未决，不成为人物认识。环境低鸣/余震为持续现场信号，经正式现场观察取得。具体内容以设计规范为准。
+
+独立检查保留重演与撤回算法，核对dispatch、Replay_Depth、遮蔽、冻结切片输入、接纳及信任来源；生产撤回事件保留完整前后快照。编译、语法和序列化工程证据与正式一级会话分别报告，不执行流程回归。
+
+同一次执行的本人、现场与公共授权共用感知身份。公共传播从本次action_execution之后的实际观察建立索引，只补新字段；public_grants_projection登记已有来源和入口，重复公共调用仍拒绝。观察事件grants保存实际子集、declared_grants保存声明；不产生第二份伪独立支持，不改变聆听与理解。第1轮异常保留，第2轮集中修复后从新正式会话复测。
+
 第一章内容由原生DV声明，运行器由core与session模块编译而成。内容位于scenarios，oracle独立导出，JSON承接程序之间的数据交换。
 
 宿主调用 `dvs_session_open` 建立会话，`dvs_session_prepare` 推进一个人物的决策，返回待执行行动；实际执行后以 `action_event/outcome/actual` 调用 `dvs_session_complete`。世界法则、代价结算、个人观察与听闻全部在 DV 完成。序列化会话可原样恢复待执行阶段；宿主不提供答案或认识补丁。`dvs_run` 是使用同一协议的连续逻辑执行器，实际 Godot 输入与几何接线单独实现。
@@ -12,8 +20,7 @@
 | session/10-subjective | 本人推知、假说及准备状态 |
 | session/15-action-planning | 目标、信息价值、多步路径与首步选择 |
 | session/20-speech | 话语、实际收闻、理解和采纳 |
-| session/25-simulation | 历史重演、特征比较和候选排除 |
-| session/35-model-argument | 解释论证、动态答案和公共提案 |
+| session/25-simulation | 历史重演、特征比较、候选排除、解释论证、动态答案和公共提案 |
 | session/30-runner | 主体轮转、执行、观察和回答协议 |
 | checks / report | 只读判定与中文报告 |
 

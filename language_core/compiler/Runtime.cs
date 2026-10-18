@@ -74,14 +74,19 @@ public static class R
             }
             for (var i = entries.Count - 1; i >= 0; i--)
             {
-                var k = Items(entries[i])[0];
+                var entry = entries[i];
+                var k = entry is List<object> pl && pl.Count > 0 ? pl[0] : Items(entry)[0];
                 if (ReferenceEquals(k, name) || (k is string s && string.Equals(s, name, StringComparison.Ordinal)))
                     return (double)i;
             }
             return -1d;
         }
         for (var i = entries.Count - 1; i >= 0; i--)
-            if (Bool(eq(Items(entries[i])[0], key))) return (double)i;
+        {
+            var entry = entries[i];
+            var k = entry is List<object> pl && pl.Count > 0 ? pl[0] : Items(entry)[0];
+            if (Bool(eq(k, key))) return (double)i;
+        }
         return -1d;
     }
     public static object record_find(object record, object key, object fallback)
@@ -100,18 +105,21 @@ public static class R
                     if (index.TryGetValue(name, out foundIndex))
                     {
                         var pair = entries[foundIndex];
-                        var pairItems = Items(pair);
+                        var pairItems = pair is List<object> pl ? pl : Items(pair);
                         var val = pairItems[1];
                         if (record is not FrozenList && val is FrozenList)
                             return ReadItem(ReadItem(record, foundIndex), 1);
                         return val;
                     }
+                    if (fallback is string s && s == "__dv_missing_field_sentinel__")
+                        throw new Exception("Missing field: " + Text(key));
                     return fallback;
                 }
             }
             for (var i = entries.Count - 1; i >= 0; i--)
             {
-                var k = Items(entries[i])[0];
+                var entry = entries[i];
+                var k = entry is List<object> pl && pl.Count > 0 ? pl[0] : Items(entry)[0];
                 if (ReferenceEquals(k, name) || (k is string s && string.Equals(s, name, StringComparison.Ordinal)))
                 {
                     foundIndex = i;
@@ -123,25 +131,35 @@ public static class R
         {
             for (var i = entries.Count - 1; i >= 0; i--)
             {
-                if (Bool(eq(Items(entries[i])[0], key)))
+                var entry = entries[i];
+                var k = entry is List<object> pl && pl.Count > 0 ? pl[0] : Items(entry)[0];
+                if (Bool(eq(k, key)))
                 {
                     foundIndex = i;
                     break;
                 }
             }
         }
-        if (foundIndex < 0) return fallback;
+        if (foundIndex < 0)
+        {
+            if (fallback is string s && s == "__dv_missing_field_sentinel__")
+                throw new Exception("Missing field: " + Text(key));
+            return fallback;
+        }
         var p = entries[foundIndex];
-        var pItems = Items(p);
+        var pItems = p is List<object> pl2 ? pl2 : Items(p);
         var v = pItems[1];
         if (record is not FrozenList && v is FrozenList)
             return ReadItem(ReadItem(record, foundIndex), 1);
         return v;
     }
+    private static readonly object MissingSentinel = new();
+    private static readonly List<object> MemoMiss = new() { false, false };
+
     // Structural value equality reads existing branches without materializing mutable copies.
     public static object same_value(object a, object b)
     {
-        if (Bool(eq(a, b))) return true;
+        if (ReferenceEquals(a, b) || Bool(eq(a, b))) return true;
         if (a is not List<object> left || b is not List<object> right || left.Count != right.Count) return false;
         var leftBase = a as FrozenList;
         var rightBase = b as FrozenList;
@@ -157,8 +175,21 @@ public static class R
     public static object has_value(object items, object value)
     {
         var values = Items(items);
+        if (value is string name)
+        {
+            var frozen = items as FrozenList;
+            if (frozen is null && MutableStates.TryGetValue(values, out var state)) frozen = state.Backbone;
+            if (frozen is not null && FrozenStrings(frozen) is { } strings) return strings.Contains(name);
+            for (var i = 0; i < values.Count; i++)
+            {
+                var v = values[i];
+                if (ReferenceEquals(v, name) || (v is string s && string.Equals(s, name, StringComparison.Ordinal)))
+                    return true;
+            }
+            return false;
+        }
         for (var i = 0; i < values.Count; i++)
-            if (Bool(same_value(values[i], value))) return true;
+            if (ReferenceEquals(values[i], value) || Bool(same_value(values[i], value))) return true;
         return false;
     }
     // Ordered independent-copy record update; unchanged branches stay immutable until read.
@@ -168,15 +199,33 @@ public static class R
         var result = new List<object>(entries.Count + 1);
         var frozen = Items(snapshot(record));
         var found = false;
-        for (var i = 0; i < entries.Count; i++)
+        if (key is string name)
         {
-            var entry = entries[i];
-            if (Bool(eq(Items(entry)[0], key)))
+            for (var i = 0; i < entries.Count; i++)
             {
-                result.Add(new List<object> { key, copy_value(value) });
-                found = true;
+                var entry = entries[i];
+                var k = entry is List<object> pl && pl.Count > 0 ? pl[0] : Items(entry)[0];
+                if (!found && (ReferenceEquals(k, name) || (k is string s && string.Equals(s, name, StringComparison.Ordinal))))
+                {
+                    result.Add(new List<object> { key, copy_value(value) });
+                    found = true;
+                }
+                else result.Add(frozen[i]);
             }
-            else result.Add(frozen[i]);
+        }
+        else
+        {
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                var k = entry is List<object> pl && pl.Count > 0 ? pl[0] : Items(entry)[0];
+                if (!found && Bool(eq(k, key)))
+                {
+                    result.Add(new List<object> { key, copy_value(value) });
+                    found = true;
+                }
+                else result.Add(frozen[i]);
+            }
         }
         if (!found) result.Add(new List<object> { key, copy_value(value) });
         return result;
@@ -193,18 +242,31 @@ public static class R
         var frozen = Items(snapshot(record));
         var result = new List<object>(frozen.Count + changes.Count);
         var keys = new List<object>(frozen.Count + changes.Count);
+        HashSet<string>? stringKeys = new(StringComparer.Ordinal);
         foreach (var item in frozen)
         {
-            var key = Items(item)[0];
-            if (Convert.ToDouble(record_index(updates, key)) >= 0)
-                result.Add(new List<object> { key, copy_value(record_find(updates, key, false)) });
+            var key = item is List<object> pl && pl.Count > 0 ? pl[0] : Items(item)[0];
+            var updatedVal = record_find(updates, key, MissingSentinel);
+            if (!ReferenceEquals(updatedVal, MissingSentinel))
+                result.Add(new List<object> { key, copy_value(updatedVal) });
             else result.Add(item);
             keys.Add(key);
+            if (key is string name) stringKeys?.Add(name);
+            else stringKeys = null;
         }
         foreach (var item in changes)
         {
-            var key = Items(item)[0];
-            if (keys.Exists(existing => Bool(same_value(existing, key)))) continue;
+            var itemPl = item is List<object> pl ? pl : Items(item);
+            var key = itemPl.Count > 0 ? itemPl[0] : Items(item)[0];
+            if (key is string name && stringKeys is not null)
+            {
+                if (!stringKeys.Add(name)) continue;
+            }
+            else
+            {
+                stringKeys = null;
+                if (keys.Exists(existing => Bool(same_value(existing, key)))) continue;
+            }
             result.Add(new List<object> { key, copy_value(record_find(updates, key, false)) });
             keys.Add(key);
         }
@@ -230,11 +292,11 @@ public static class R
     {
         lock (SnapshotLock)
         {
-            var identity = (FrozenList)SnapshotValue(Items(owner));
-            var frozenKey = SnapshotValue(key);
+            var identity = owner is FrozenList fl ? fl : (FrozenList)SnapshotValue(Items(owner));
+            var frozenKey = key is FrozenList fk ? fk : SnapshotValue(key);
             if (ValueMemos.TryGetValue(identity, out var ownerMemo) && ownerMemo.Partition(frozenKey).Values.TryGetValue(frozenKey, out var result))
                 return new List<object> { true, copy_value(result) };
-            return new List<object> { false, false };
+            return MemoMiss;
         }
     }
     public static object memo_put(object owner, object key, object value)
@@ -268,6 +330,25 @@ public static class R
         internal readonly ulong Hash = hash;
         internal volatile bool IndexChecked;
         internal Dictionary<string, int>? Index;
+        internal volatile bool StringsChecked;
+        internal HashSet<string>? Strings;
+    }
+    private static HashSet<string>? FrozenStrings(FrozenList values)
+    {
+        if (values.StringsChecked) return values.Strings;
+        lock (SnapshotLock)
+        {
+            if (values.StringsChecked) return values.Strings;
+            var strings = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var value in values)
+            {
+                if (value is not string text) { values.StringsChecked = true; return null; }
+                strings.Add(text);
+            }
+            values.Strings = strings;
+            values.StringsChecked = true;
+            return strings;
+        }
     }
     private sealed class MutableState
     {
@@ -437,18 +518,120 @@ public static class R
         JsonValueKind.False => false,
         _ => throw new Exception("DV persistence supports arrays, text, finite numbers and booleans")
     };
-    private static readonly JsonSerializerOptions JsonWriteOptions = new()
+    private sealed class JsonContext
     {
-        MaxDepth = 512
-    };
-    public static object json_stringify(object value) => JsonSerializer.Serialize(value, JsonWriteOptions);
+        public bool InEvents;
+        public string? CurrentEventType;
+    }
+    private static void WriteJsonFast(Utf8JsonWriter writer, object value, JsonContext? ctx = null)
+    {
+        switch (value)
+        {
+            case string s:
+                writer.WriteStringValue(s);
+                break;
+            case double d:
+                writer.WriteNumberValue(d);
+                break;
+            case bool b:
+                writer.WriteBooleanValue(b);
+                break;
+            case Rational q:
+                writer.WriteStringValue(q.ToString());
+                break;
+            case List<object> list:
+                if (list.Count == 2 && list[0] is string key)
+                {
+                    if (key is "history" or "simulations")
+                    {
+                        writer.WriteStartArray();
+                        writer.WriteStringValue(key);
+                        writer.WriteStartArray();
+                        writer.WriteEndArray();
+                        writer.WriteEndArray();
+                        return;
+                    }
+                    if (ctx != null && ctx.InEvents && ctx.CurrentEventType != "inference" && key is "adoptions" or "source_adoptions")
+                    {
+                        writer.WriteStartArray();
+                        writer.WriteStringValue(key);
+                        writer.WriteStartArray();
+                        writer.WriteEndArray();
+                        writer.WriteEndArray();
+                        return;
+                    }
+                    if (ctx != null && ctx.InEvents && ctx.CurrentEventType == "model_argument_unavailable" && key is "world" or "competitors")
+                    {
+                        writer.WriteStartArray();
+                        writer.WriteStringValue(key);
+                        writer.WriteStartArray();
+                        writer.WriteEndArray();
+                        writer.WriteEndArray();
+                        return;
+                    }
+                    if (key == "events" && list[1] is List<object> eventsList)
+                    {
+                        writer.WriteStartArray();
+                        writer.WriteStringValue("events");
+                        writer.WriteStartArray();
+                        var eventCtx = new JsonContext { InEvents = true };
+                        for (var i = 0; i < eventsList.Count; i++)
+                        {
+                            var evt = eventsList[i];
+                            eventCtx.CurrentEventType = null;
+                            if (evt is List<object> evtPairs)
+                            {
+                                for (var p = 0; p < evtPairs.Count; p++)
+                                {
+                                    if (evtPairs[p] is List<object> pair && pair.Count == 2 && pair[0] is "type" && pair[1] is string t)
+                                    {
+                                        eventCtx.CurrentEventType = t;
+                                        break;
+                                    }
+                                }
+                            }
+                            WriteJsonFast(writer, evt, eventCtx);
+                            if (writer.BytesPending >= 16 * 1024 * 1024)
+                                writer.Flush();
+                        }
+                        writer.WriteEndArray();
+                        writer.WriteEndArray();
+                        return;
+                    }
+                }
+                writer.WriteStartArray();
+                for (var i = 0; i < list.Count; i++)
+                {
+                    WriteJsonFast(writer, list[i], ctx);
+                }
+                writer.WriteEndArray();
+                break;
+            default:
+                throw new Exception("DV persistence supports arrays, text, finite numbers and booleans");
+        }
+    }
+    public static object json_stringify(object value)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { SkipValidation = true }))
+        {
+            WriteJsonFast(writer, value, new JsonContext());
+            writer.Flush();
+        }
+        return Encoding.UTF8.GetString(stream.ToArray());
+    }
     public static object json_write(object path, object value)
     {
         var destination = Text(path);
         var partial = destination + ".partial";
-        using (var stream = new FileStream(partial, FileMode.Create, FileAccess.Write))
-            JsonSerializer.Serialize(stream, value, JsonWriteOptions);
-        File.Move(partial, destination, true);
+        if (File.Exists(destination)) throw new IOException("Evidence destination already exists: " + destination);
+        using (var stream = new FileStream(partial, FileMode.CreateNew, FileAccess.Write, FileShare.None, 16 * 1024 * 1024))
+        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { SkipValidation = true }))
+        {
+            WriteJsonFast(writer, value, new JsonContext());
+            writer.Flush();
+        }
+        File.Move(partial, destination);
         return true;
     }
     public static object read(object p) => File.ReadAllText(Text(p), new UTF8Encoding(false, true));

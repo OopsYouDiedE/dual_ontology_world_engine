@@ -1,0 +1,178 @@
+{
+  "normal": {
+    "exit": 0,
+    "output": "[true,true,false,false,false,true,true,false,true,false,true,false,true,false,true,\"unconventional\",\"true\",\"false\",\"read-copy-and-invalidation\"]\r\n",
+    "expected": [
+      true,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      "unconventional",
+      "true",
+      "false",
+      "read-copy-and-invalidation"
+    ],
+    "equal": true
+  },
+  "nonlist-owner": {
+    "runs": [
+      {
+        "version": "old",
+        "exit": 1,
+        "first_error": "System.Exception: Expected List"
+      },
+      {
+        "version": "new",
+        "exit": 1,
+        "first_error": "System.Exception: Expected List"
+      }
+    ],
+    "equal": true
+  },
+  "missing-op": {
+    "runs": [
+      {
+        "version": "old",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: op"
+      },
+      {
+        "version": "new",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: op"
+      }
+    ],
+    "equal": true
+  },
+  "missing-value": {
+    "runs": [
+      {
+        "version": "old",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: value"
+      },
+      {
+        "version": "new",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: value"
+      }
+    ],
+    "equal": true
+  },
+  "late-all-error": {
+    "runs": [
+      {
+        "version": "old",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: op"
+      },
+      {
+        "version": "new",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: op"
+      }
+    ],
+    "equal": true
+  },
+  "invalid-binding": {
+    "runs": [
+      {
+        "version": "old",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: completed_when"
+      },
+      {
+        "version": "new",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: completed_when"
+      }
+    ],
+    "equal": true
+  },
+  "question-before-policy": {
+    "runs": [
+      {
+        "version": "old",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: objects"
+      },
+      {
+        "version": "new",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: objects"
+      }
+    ],
+    "equal": true
+  },
+  "read-cross-subject": {
+    "runs": [
+      {
+        "version": "old",
+        "exit": 1,
+        "first_error": "System.Exception: Cross-subject reference access"
+      },
+      {
+        "version": "new",
+        "exit": 1,
+        "first_error": "System.Exception: Cross-subject reference access"
+      }
+    ],
+    "equal": true
+  },
+  "read-leading-order": {
+    "runs": [
+      {
+        "version": "old",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: objects"
+      },
+      {
+        "version": "new",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: objects"
+      }
+    ],
+    "equal": true
+  },
+  "read-invalid-objects": {
+    "runs": [
+      {
+        "version": "old",
+        "exit": 1,
+        "first_error": "System.Exception: Expected List"
+      },
+      {
+        "version": "new",
+        "exit": 1,
+        "first_error": "System.Exception: Expected List"
+      }
+    ],
+    "equal": true
+  },
+  "read-missing-field": {
+    "runs": [
+      {
+        "version": "old",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: field"
+      },
+      {
+        "version": "new",
+        "exit": 1,
+        "first_error": "System.Exception: Missing field: field"
+      }
+    ],
+    "equal": true
+  }
+}

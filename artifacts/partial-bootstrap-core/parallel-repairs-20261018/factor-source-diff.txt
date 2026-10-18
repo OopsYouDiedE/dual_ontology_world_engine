@@ -1,0 +1,118 @@
+--- dvs_factor_inference
++++ v_prune_factor_inference
+@@ -24,7 +24,7 @@
+                     var sources = v_prune_factor_refs_proof(actor, before, v_model_sim_refs(law.premise), events, index, result.remaining, allowed)
+                     result = sources
+                     if dv_and(sources.valid, (0 < rt_count(sources.source_events))):
+-                        result = dv_with_many(sources, {"source_events": dv_append(sources.source_events, event.id), "confidence": dv_min(cell.confidence, dv_min(adoption.confidence, sources.confidence)), "steps": dv_append(sources.steps, dv_with({"kind": "infer", "event": event.id, "ref": ref, "cell": cell}, "adoption", adoption))})
++                        result = dv_with(dv_with(dv_with(sources, "source_events", dv_append(sources.source_events, event.id)), "confidence", dv_min(cell.confidence, dv_min(adoption.confidence, sources.confidence))), "steps", dv_append(sources.steps, dv_with({"kind": "infer", "event": event.id, "ref": ref, "cell": cell}, "adoption", adoption)))
+                     else:
+                         result = dv_with(sources, "valid", false)
+     return result
+--- dvs_factor_paid
++++ v_prune_factor_paid
+@@ -1,13 +1,13 @@
+ fn v_prune_factor_paid(actor, events):
+     var id = dv_find(actor, "model_paid_event", "")
+-    if id == "":
+-        return false
+-    let event = dvs_find_event_by_id(events, id)
+-    if event == false:
+-        return false
+-    if dv_and((event.id == id), dv_and((event.actor == actor.id), (event.type == "action_execution"))):
+-        var data = event.data
+-        if dv_and((data.action.kind == "replay"), dv_and((data.receipt.execution.status == "applied"), (dv_get(data.receipt.ledger.receipts, data.receipt.receipt.event).state == "settled"))):
+-            return true
+-    return false
++    var i = 0
++    var valid = false
++    while (i < rt_count(events)):
++        var event = events[i]
++        if dv_and((event.id == id), dv_and((event.actor == actor.id), (event.type == "action_execution"))):
++            var data = event.data
++            if dv_and((data.action.kind == "replay"), dv_and((data.receipt.execution.status == "applied"), (dv_get(data.receipt.ledger.receipts, data.receipt.receipt.event).state == "settled"))):
++                valid = true
++        i = (i + 1)
++    return valid
+ 
+--- dvs_factor_prune
++++ v_prune_factor_prune
+@@ -32,7 +32,7 @@
+                         remaining = proof.remaining
+                         reason = "unproven-or-inadmissible-source"
+                         if dv_and(proof.valid, dv_and((0 < rt_count(proof.source_events)), v_prune_factor_scope_proof(domains, schema.fixed, proof))):
+-                            var certificate = dv_with_many({"constraint": constraint, "domains": domains, "current_revision": mind.revision, "source_chain": proof.steps}, {"source_event_ids": proof.source_events, "covered_assignments": {"fixed": schema.fixed, "free_domains": schema.free_domains}, "confidence": dv_min(cap, proof.confidence), "estimated": true, "paid_model_event": dv_find(actor, "model_paid_event", ""), "paid_units": (start - remaining), "results": {"condition": condition, "support": support}})
++                            var certificate = dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"constraint": constraint, "domains": domains, "current_revision": mind.revision, "source_chain": proof.steps}, "source_event_ids", proof.source_events), "covered_assignments", {"fixed": schema.fixed, "free_domains": schema.free_domains}), "confidence", dv_min(cap, proof.confidence)), "estimated", true), "paid_model_event", dv_find(actor, "model_paid_event", "")), "paid_units", (start - remaining)), "results", {"condition": condition, "support": support})
+                             rt_push(certificates, certificate)
+                             reason = "certified"
+         else:
+@@ -42,32 +42,6 @@
+         else:
+             rt_push(rejections, {"constraint": constraint.id, "reason": reason, "paid_units": (start - remaining)})
+         i = (i + 1)
+-    result = dv_with_many({"certificates": certificates, "rejections": rejections, "expanded": (initial - remaining), "remaining": (dv_find(policy, "model_budget", 0) - (initial - remaining))}, {"work_remaining": remaining, "current_revision": mind.revision, "actor_before": actor})
+-    var parents = dvs_cognitive_parents(actor, dv_single(parent))
+-    var j = 0
+-    if (dv_find(actor, "model_paid_event", "") == ""):
+-        false
+-    else:
+-        if dv_has(parents, actor.model_paid_event):
+-            false
+-        else:
+-            rt_push(parents, actor.model_paid_event)
+-    if (dv_find(actor, "model_previous_event", "") == ""):
+-        false
+-    else:
+-        if dv_has(parents, actor.model_previous_event):
+-            false
+-        else:
+-            rt_push(parents, actor.model_previous_event)
+-    while (j < rt_count(certificates)):
+-        var roots = certificates[j].source_event_ids
+-        var k = 0
+-        while (k < rt_count(roots)):
+-            if dv_has(parents, roots[k]):
+-                false
+-            else:
+-                rt_push(parents, roots[k])
+-            k = (k + 1)
+-        j = (j + 1)
+-    return dv_with(result, "event", dvs_event(events, "factor_prune", actor.id, time, parents, result))
++    result = dv_with(dv_with(dv_with({"certificates": certificates, "rejections": rejections, "expanded": (initial - remaining), "remaining": (dv_find(policy, "model_budget", 0) - (initial - remaining))}, "work_remaining", remaining), "current_revision", mind.revision), "actor_before", actor)
++    return result
+ 
+--- dvs_factor_certificate_bound
++++ v_prune_factor_certificate_bound
+@@ -1,14 +1,13 @@
+ fn v_prune_factor_certificate_bound(actor, certificate, events):
+-    let event_id = dv_find(certificate, "event", "")
+-    if event_id == "":
+-        return false
+-    let event = dvs_find_event_by_id(events, event_id)
+-    if event == false:
+-        return false
++    var i = 0
++    var valid = false
+     var bare = dv_without(certificate, "event")
+-    if dv_and((event.id == event_id), dv_and((event.actor == actor.id), (event.type == "factor_prune"))):
+-        var data = event.data
+-        if dv_and(dv_has(data.certificates, bare), dv_and((data.actor_before.id == actor.id), dv_and((data.actor_before.mind.revision == certificate.current_revision), dv_and((dv_find(data.actor_before, "model_paid_event", "") == certificate.paid_model_event), dv_and(dv_has(event.parents, certificate.paid_model_event), v_prune_factor_certificate_parents(certificate, event.parents)))))):
+-            return true
+-    return false
++    while (i < rt_count(events)):
++        var event = events[i]
++        if dv_and((event.id == dv_find(certificate, "event", "")), dv_and((event.actor == actor.id), (event.type == "factor_prune"))):
++            var data = event.data
++            if dv_and(dv_has(data.certificates, bare), dv_and((data.actor_before.id == actor.id), dv_and((data.actor_before.mind.revision == certificate.current_revision), dv_and((dv_find(data.actor_before, "model_paid_event", "") == certificate.paid_model_event), dv_and(dv_has(event.parents, certificate.paid_model_event), v_prune_factor_certificate_parents(certificate, event.parents)))))):
++                valid = true
++        i = (i + 1)
++    return valid
+ 
+--- dvs_factor_catalog_complete
++++ v_prune_factor_catalog_complete
+@@ -41,3 +41,5 @@
+         i = (i + 1)
+     return valid
+ 
++// Independent judge helpers: private replay only, never session publication.
++

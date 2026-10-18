@@ -1,0 +1,15 @@
+# 独立检查中性工程探针（2026-10-18）
+
+主代理另行授权后执行。没有正式会话、prepare/complete、真实剧情或oracle输入。core、session、checks编译在同一探针程序集，只有中性neutral_probe为main；session算法仅用于直接调用撤回/派生失效，与独立检查输出比较，不推进世界会话。源码清单与SHA-256、命令、生成/构建/实际执行stdout/stderr分别保存于checks-neutral-probe及checks-neutral-probe-extended。
+
+## 实际观察
+
+首份探针运行完成：选择器值1仅派发one并排除two；全输出遮蔽同时遮蔽两条候选的输出，原mind的a仍为9；Replay_Depth=0停止原因为replay-depth-exhausted且未称完整解释；放宽深度的中性派发演算只产生one的a=2，two的b继续未知；Implicature_Resistance=0.9阻止prior=0.8的解释，降低后产生accepted及acceptance字段。直接撤回产生的actor_before/after与独立重演事件一致，完整快照确实存在。
+
+扩展探针运行完成：由冻结完整假设重建1段因果切片，mask_plan仍保留完整5段；追加无授权假设后不再等于重建切片。中性失效前提使派生链失效并产生一条实际inference_dependencies_invalidated，包含完整actor_before；生产直接机制调用与独立检查的actor及事件一致。
+
+## 限制与排错
+
+初次探针编排曾因bundle写入Windows换行但ranges按LF计算，生成器报unterminated string；修正探针bundle使用LF后重新生成，未改引擎算法解决该编排错误。保存目录当前generate日志是修正后的实际生成输出；最初异常保留于聊天工具输出，不当作DV机制失败或游戏行为证据。
+
+未动态覆盖未知dispatch选择器、selector被候选改写、缺失adoption、跨阶段Replay_Depth边界、切片反驳后的全量重演预算链、实际冻结目录来源校验整条分支、复杂派生后代/预算阻塞、class_bias多项叠加、事件快照修改拒绝。本次中性探针不能证明剧情、人物行为、完整章节或实机体验改善。

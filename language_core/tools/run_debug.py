@@ -104,6 +104,8 @@ def main():
     args = parser.parse_args()
     if args.gc_heaps < 1:
         parser.error('--gc-heaps must be positive')
+    if args.timeout < 1:
+        parser.error('--timeout must be positive')
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
     build = out / 'program'
@@ -150,6 +152,7 @@ def main():
         result['elapsed_seconds'] = time.monotonic() - start
         result['source_unchanged'] = all(Path(p).is_file() and hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in hashes.items())
         result['trace_written'] = (out / 'trace.json').is_file()
+        result['trace_partial_written'] = (out / 'trace.json.partial').is_file()
         if args.profile and (out / 'profile-raw.json').is_file():
             try:
                 summarize_profile(out / 'profile-raw.json', modules, out / 'profile-summary.json')
@@ -159,10 +162,22 @@ def main():
         try:
             result['output_well_formed'] = export(out)
             result['text_exported'] = True
+            result['logical_loop_finished'] = False
+            with (out / 'stdout.jsonl').open(encoding='utf-8') as source:
+                for line in source:
+                    try:
+                        packet = record(json.loads(line))
+                    except json.JSONDecodeError:
+                        continue
+                    if isinstance(packet, dict) and packet.get('type') == 'debug_end':
+                        result['logical_loop_finished'] = True
+            if 'timeout_seconds' in result:
+                result['timeout_stage'] = 'trace-close-or-serialization' if result['logical_loop_finished'] else 'logical-session'
         except Exception as error:
             result['export_error'] = str(error)
+        result['evidence_complete'] = bool(result.get('exit_code') == 0 and result.get('output_well_formed') and result.get('logical_loop_finished') and result['trace_written'] and not result['trace_partial_written'] and result['source_unchanged'])
         (out / 'result.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
-    return 0 if result.get('exit_code') == 0 and result.get('output_well_formed') and result['source_unchanged'] else 1
+    return 0 if result['evidence_complete'] else 1
 
 
 if __name__ == '__main__':

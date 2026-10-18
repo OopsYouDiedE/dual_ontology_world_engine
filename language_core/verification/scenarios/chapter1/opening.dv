@@ -939,18 +939,25 @@ fn c1n_known_wait_actor(actor, target, basis):
         var minutes = 0
         i = 0
         var wait_chunk_limit = dv_find(actor.policy, "wait_chunk_limit", 180)
+        if dv_has_key(actor.policy, "chapter2_profile"):
+            let daytime_wait_limit = dv_find(actor.policy, "daytime_wait_chunk_limit", wait_chunk_limit)
+            var day_minute = actor.mind.time
+            while day_minute >= 1440:
+                day_minute = day_minute - 1440
+            if day_minute >= 480 and day_minute < 1260:
+                wait_chunk_limit = dv_min(wait_chunk_limit, daytime_wait_limit)
+            if dv_has_key(actor.policy, "daytime_wait_chunk_limit") and day_minute < 480:
+                wait_chunk_limit = dv_min(wait_chunk_limit, 480 - day_minute)
         if actor.mind.time < 900 and dv_has(["detective", "huo", "shen", "su", "quer", "ward", "gu", "lucian"], actor.id) and dv_truth(actor.mind, c1_at(actor.id, "living_hall")) == "true":
             wait_chunk_limit = 60
             if actor.mind.time >= 810 and actor.mind.time < 900:
                 wait_chunk_limit = 30
         while i < rt_count(durations):
-            if minutes == 0 and durations[i] >= 15 and durations[i] <= wait_chunk_limit and actor.mind.time + durations[i] <= target + 14:
+            if minutes == 0 and durations[i] >= 1 and durations[i] <= wait_chunk_limit and actor.mind.time + durations[i] <= target:
                 minutes = durations[i]
             i = i + 1
-        // Arrive within fourteen minutes after the known opportunity starts;
-        // completion does not claim an exact appointment arrival.
-        if minutes == 0:
-            minutes = 15
+        // Use only existing costed lengths and stop at the next owned boundary.
+        // In particular, a nearby window must not be crossed by a fifteen-minute floor.
         if 0 < minutes:
             let id = c1n_wait_id(actor.id, minutes)
             let known = dv_true()
@@ -994,9 +1001,41 @@ fn c1n_positive_clock_bounds(condition):
             i = i + 1
     return result
 
+// Both opening and closing thresholds bound a wait. This reads declared syntax,
+// not future world state; the caller still checks ownership and nonclock readiness.
+fn c1n_clock_boundaries(condition):
+    let key = ["c1n_clock_boundaries"]
+    let cached = rt_memo_get(condition, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(condition, key, c1n_clock_boundaries_uncached(condition))
+
+fn c1n_clock_boundaries_uncached(condition):
+    if dv_find(condition, "op", "") == "not":
+        return c1n_clock_boundaries(condition.item)
+    var result = c1n_positive_clock_bounds(condition)
+    if dv_find(condition, "op", "") == "all":
+        var i = 0
+        while i < rt_count(condition.items):
+            let nested = c1n_clock_boundaries(condition.items[i])
+            var j = 0
+            while j < rt_count(nested):
+                if not dv_has(result, nested[j]):
+                    rt_push(result, nested[j])
+                j = j + 1
+            i = i + 1
+    return result
+
 // Time alone may open a known opportunity. All remaining conditions must
 // already hold in the owner's mind, including being at its execution site.
 fn c1n_without_clock(condition):
+    let key = ["c1n_without_clock"]
+    let cached = rt_memo_get(condition, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(condition, key, c1n_without_clock_uncached(condition))
+
+fn c1n_without_clock_uncached(condition):
     let op = dv_find(condition, "op", "")
     if dv_record_like(condition) and dv_has_key(condition, "ref") and dv_find(condition.ref, "object", "") == "c2.weather":
         return dv_true()
@@ -1024,6 +1063,8 @@ fn c1n_future_goal_pending(actor, goal):
     if kind == "communicate":
         return not dv_has(dv_find(actor, "completed_actions", []), dv_find(goal, "method_id", ""))
     if kind == "know" or kind == "evidence":
+        if dv_has_key(goal, "minimum_time") and actor.mind.time < goal.minimum_time:
+            return true
         return not dv_uncontested(dv_read(actor.mind, goal.ref))
     return false
 
@@ -1063,6 +1104,23 @@ fn c1n_known_future_wait_actor(actor):
             if candidate >= 0 and (target < 0 or candidate < target) and c1n_future_goal_pending(actor, goal) and dv_truth(actor.mind, indexed.future_nonclock) == "true":
                 target = candidate
                 basis = dv_append(own_basis, {"kind": "own-declared-future-opportunity", "condition": goal.available_when, "scope": "time-opportunity-only-not-future-success"})
+        i = i + 1
+    // Reconsider at an earlier boundary of another pending, personally known
+    // opportunity, including the end of one that is already open.
+    i = 0
+    while i < rt_count(goals):
+        let goal = goals[i]
+        let own_basis = dv_find(goal, "basis", [])
+        if not dv_find(goal, "known_opportunity_wait", false) and 0 < rt_count(own_basis) and c1n_future_goal_pending(actor, goal):
+            let condition = dv_find(goal, "available_when", dv_true())
+            if dv_truth(actor.mind, c1n_without_clock(condition)) == "true":
+                let boundaries = c1n_clock_boundaries(condition)
+                var j = 0
+                while j < rt_count(boundaries):
+                    if actor.mind.time < boundaries[j] and (target < 0 or boundaries[j] < target):
+                        target = boundaries[j]
+                        basis = dv_append(own_basis, {"kind": "own-declared-opportunity-boundary", "condition": condition, "scope": "reconsideration-only-not-future-success"})
+                    j = j + 1
         i = i + 1
     if 0 <= target:
         return c1n_known_wait_actor(actor, target, basis)

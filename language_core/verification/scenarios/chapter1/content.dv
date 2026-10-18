@@ -106,1159 +106,11 @@ fn c1_vector(time):
 fn c1_cost(time, source):
     return dv_with({"minimum": c1_vector(time), "maximum": c1_vector(time), "actual": c1_vector(time)}, "source_refs", dv_single(source))
 
-fn c1_list_4(p0, p1, p2, p3):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    return list
-
-fn c1_list_5(p0, p1, p2, p3, p4):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    return list
-
-fn c1_list_6(p0, p1, p2, p3, p4, p5):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    return list
-
-fn c1_list_7(p0, p1, p2, p3, p4, p5, p6):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    return list
-
-fn c1_list_8(p0, p1, p2, p3, p4, p5, p6, p7):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    return list
-
-fn c1_list_9(p0, p1, p2, p3, p4, p5, p6, p7, p8):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    return list
-
-fn c1_list_10(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    return list
-
-fn c1_list_11(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    return list
-
-fn c1_list_12(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    return list
-
-fn c1_list_13(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    return list
-
-fn c1_list_14(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    return list
-
-fn c1_list_15(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    return list
-
-fn c1_list_16(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    return list
-
-fn c1_list_17(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    return list
-
-fn c1_list_18(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    return list
-
-fn c1_list_19(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    return list
-
-fn c1_list_20(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    return list
-
-fn c1_list_21(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    return list
-
-fn c1_list_22(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    return list
-
-fn c1_list_23(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    return list
-
-fn c1_list_24(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    return list
-
-fn c1_list_25(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    return list
-
-fn c1_list_26(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    return list
-
-fn c1_list_27(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    return list
-
-fn c1_list_28(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    return list
-
-fn c1_list_29(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    return list
-
-fn c1_list_30(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    return list
-
-fn c1_list_31(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    return list
-
-fn c1_list_32(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    return list
-
-fn c1_list_33(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    rt_push(list, p32)
-    return list
-
-fn c1_list_34(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    rt_push(list, p32)
-    rt_push(list, p33)
-    return list
-
-fn c1_list_35(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33, p34):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    rt_push(list, p32)
-    rt_push(list, p33)
-    rt_push(list, p34)
-    return list
-
-fn c1_list_36(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33, p34, p35):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    rt_push(list, p32)
-    rt_push(list, p33)
-    rt_push(list, p34)
-    rt_push(list, p35)
-    return list
-
-fn c1_list_37(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33, p34, p35, p36):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    rt_push(list, p32)
-    rt_push(list, p33)
-    rt_push(list, p34)
-    rt_push(list, p35)
-    rt_push(list, p36)
-    return list
-
-fn c1_list_38(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33, p34, p35, p36, p37):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    rt_push(list, p32)
-    rt_push(list, p33)
-    rt_push(list, p34)
-    rt_push(list, p35)
-    rt_push(list, p36)
-    rt_push(list, p37)
-    return list
-
-fn c1_list_39(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33, p34, p35, p36, p37, p38):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    rt_push(list, p32)
-    rt_push(list, p33)
-    rt_push(list, p34)
-    rt_push(list, p35)
-    rt_push(list, p36)
-    rt_push(list, p37)
-    rt_push(list, p38)
-    return list
-
-fn c1_list_40(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33, p34, p35, p36, p37, p38, p39):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    rt_push(list, p32)
-    rt_push(list, p33)
-    rt_push(list, p34)
-    rt_push(list, p35)
-    rt_push(list, p36)
-    rt_push(list, p37)
-    rt_push(list, p38)
-    rt_push(list, p39)
-    return list
-
-fn c1_list_41(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33, p34, p35, p36, p37, p38, p39, p40):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    rt_push(list, p32)
-    rt_push(list, p33)
-    rt_push(list, p34)
-    rt_push(list, p35)
-    rt_push(list, p36)
-    rt_push(list, p37)
-    rt_push(list, p38)
-    rt_push(list, p39)
-    rt_push(list, p40)
-    return list
-
-fn c1_list_42(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33, p34, p35, p36, p37, p38, p39, p40, p41):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    rt_push(list, p32)
-    rt_push(list, p33)
-    rt_push(list, p34)
-    rt_push(list, p35)
-    rt_push(list, p36)
-    rt_push(list, p37)
-    rt_push(list, p38)
-    rt_push(list, p39)
-    rt_push(list, p40)
-    rt_push(list, p41)
-    return list
-
-fn c1_list_43(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33, p34, p35, p36, p37, p38, p39, p40, p41, p42):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    rt_push(list, p32)
-    rt_push(list, p33)
-    rt_push(list, p34)
-    rt_push(list, p35)
-    rt_push(list, p36)
-    rt_push(list, p37)
-    rt_push(list, p38)
-    rt_push(list, p39)
-    rt_push(list, p40)
-    rt_push(list, p41)
-    rt_push(list, p42)
-    return list
-
-fn c1_list_44(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33, p34, p35, p36, p37, p38, p39, p40, p41, p42, p43):
-    var list = []
-    rt_push(list, p0)
-    rt_push(list, p1)
-    rt_push(list, p2)
-    rt_push(list, p3)
-    rt_push(list, p4)
-    rt_push(list, p5)
-    rt_push(list, p6)
-    rt_push(list, p7)
-    rt_push(list, p8)
-    rt_push(list, p9)
-    rt_push(list, p10)
-    rt_push(list, p11)
-    rt_push(list, p12)
-    rt_push(list, p13)
-    rt_push(list, p14)
-    rt_push(list, p15)
-    rt_push(list, p16)
-    rt_push(list, p17)
-    rt_push(list, p18)
-    rt_push(list, p19)
-    rt_push(list, p20)
-    rt_push(list, p21)
-    rt_push(list, p22)
-    rt_push(list, p23)
-    rt_push(list, p24)
-    rt_push(list, p25)
-    rt_push(list, p26)
-    rt_push(list, p27)
-    rt_push(list, p28)
-    rt_push(list, p29)
-    rt_push(list, p30)
-    rt_push(list, p31)
-    rt_push(list, p32)
-    rt_push(list, p33)
-    rt_push(list, p34)
-    rt_push(list, p35)
-    rt_push(list, p36)
-    rt_push(list, p37)
-    rt_push(list, p38)
-    rt_push(list, p39)
-    rt_push(list, p40)
-    rt_push(list, p41)
-    rt_push(list, p42)
-    rt_push(list, p43)
-    return list
-
 fn c1_materials():
-    return c1_list_26(dv_pair("bolt_down", dv_field(true)), dv_pair("ash_wedge", dv_field(true)), dv_pair("boots_toward_bolt", dv_field(true)), dv_pair("cloth_after_boots", dv_field(true)), dv_pair("fork_dent", dv_field(true)), dv_pair("score_partial", dv_field(true)), dv_pair("score_in_room", dv_field(true)), dv_pair("slate_marks", dv_field(true)), dv_pair("pipe_layout", dv_field(true)), dv_pair("cups_preferences", dv_field(true)), dv_pair("starter_layers", dv_field(true)), dv_pair("shelf_old", dv_field(true)), dv_pair("lens_mine", dv_field(true)), dv_pair("boots_fit", dv_field(true)), dv_pair("frame_hollow", dv_field(true)), dv_pair("slate_code", dv_field(true)), dv_pair("slate_person", dv_field(true)), dv_pair("cups_known", dv_field(true)), dv_pair("starter_kept", dv_field(true)), dv_pair("hand_not_mine", dv_field(true)), dv_pair("sound_trial", dv_field(true)), dv_pair("heads_lost", dv_field(true)), dv_pair("recalled_bolt", dv_field(true)), dv_pair("recalled_trust", dv_field(true)), dv_pair("recalled_copper", dv_field(true)), dv_pair("recalled_names", dv_field(true)))
+    return [dv_pair("bolt_down", dv_field(true)), dv_pair("ash_wedge", dv_field(true)), dv_pair("boots_toward_bolt", dv_field(true)), dv_pair("cloth_after_boots", dv_field(true)), dv_pair("fork_dent", dv_field(true)), dv_pair("score_partial", dv_field(true)), dv_pair("score_in_room", dv_field(true)), dv_pair("slate_marks", dv_field(true)), dv_pair("pipe_layout", dv_field(true)), dv_pair("cups_preferences", dv_field(true)), dv_pair("starter_layers", dv_field(true)), dv_pair("shelf_old", dv_field(true)), dv_pair("lens_mine", dv_field(true)), dv_pair("boots_fit", dv_field(true)), dv_pair("frame_hollow", dv_field(true)), dv_pair("slate_code", dv_field(true)), dv_pair("slate_person", dv_field(true)), dv_pair("cups_known", dv_field(true)), dv_pair("starter_kept", dv_field(true)), dv_pair("hand_not_mine", dv_field(true)), dv_pair("sound_trial", dv_field(true)), dv_pair("heads_lost", dv_field(true)), dv_pair("recalled_bolt", dv_field(true)), dv_pair("recalled_trust", dv_field(true)), dv_pair("recalled_copper", dv_field(true)), dv_pair("recalled_names", dv_field(true))]
 
 fn c1_authority_conclusions():
-    return c1_list_14(dv_pair("me", dv_field(true)), dv_pair("remote_voice", dv_field(true)), dv_pair("words_bolt", dv_field(true)), dv_pair("familiar", dv_field(true)), dv_pair("trust_reason", dv_field(true)), dv_pair("su_room", dv_field(true)), dv_pair("su_hall", dv_field(false)), dv_pair("su_pantry", dv_field(false)), dv_pair("huo_copper", dv_field(true)), dv_pair("huo_room", dv_field(false)), dv_pair("huo_foyer", dv_field(false)), dv_pair("heed_huo", dv_field(true)), dv_pair("heed_su", dv_field(false)), dv_pair("heed_neither", dv_field(false)))
+    return [dv_pair("me", dv_field(true)), dv_pair("remote_voice", dv_field(true)), dv_pair("words_bolt", dv_field(true)), dv_pair("familiar", dv_field(true)), dv_pair("trust_reason", dv_field(true)), dv_pair("su_room", dv_field(true)), dv_pair("su_hall", dv_field(false)), dv_pair("su_pantry", dv_field(false)), dv_pair("huo_copper", dv_field(true)), dv_pair("huo_room", dv_field(false)), dv_pair("huo_foyer", dv_field(false)), dv_pair("heed_huo", dv_field(true)), dv_pair("heed_su", dv_field(false)), dv_pair("heed_neither", dv_field(false))]
 
 fn c1_physical_cognition():
     var fields = c1_materials()
@@ -1273,7 +125,7 @@ fn c1_position(actor, room):
     return c1_state_object(actor, dv_single(dv_pair("location", dv_field(room))))
 
 fn c1_edges():
-    return c1_list_7(dv_pair("R05", "corridor"), dv_pair("R06", "corridor"), dv_pair("R07", "corridor"), dv_pair("R08", "corridor"), dv_pair("corridor", "hall"), dv_pair("hall", "pantry"), dv_pair("hall", "foyer"))
+    return [dv_pair("R05", "corridor"), dv_pair("R06", "corridor"), dv_pair("R07", "corridor"), dv_pair("R08", "corridor"), dv_pair("corridor", "hall"), dv_pair("hall", "pantry"), dv_pair("hall", "foyer")]
 
 fn c1_inspect_E1(actor):
     return c1_once(c1_action(rt_cat(actor, ".inspect.E1"), "inspect", c1_at(actor, "foyer"), c1_at(actor, "foyer"), "", dv_single(c1_knowledge("bolt_down")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 69, "E1")))
@@ -1371,7 +223,7 @@ fn c1_visible_E12():
     return "一件深棕长风衣。\n口袋里：一支石墨笔，一把折叠放大镜，几只证物袋。\n放大镜是黄铜圆框，带一截短柄。"
 
 fn c1_infer_rules():
-    return c1_list_20(c1_infer_0("cognition"), c1_infer_1("cognition"), c1_infer_2("cognition"), c1_infer_3("cognition"), c1_infer_4("cognition"), c1_infer_5("cognition"), c1_infer_6("cognition"), c1_infer_7("cognition"), c1_infer_8("cognition"), c1_infer_9("cognition"), c1_infer_10("cognition"), c1_infer_11("cognition"), c1_infer_12("cognition"), c1_infer_13("cognition"), c1_infer_14("cognition"), c1_infer_15("cognition"), c1_infer_16("cognition"), c1_infer_17("cognition"), c1_infer_18("cognition"), c1_infer_19("cognition"))
+    return [c1_infer_0("cognition"), c1_infer_1("cognition"), c1_infer_2("cognition"), c1_infer_3("cognition"), c1_infer_4("cognition"), c1_infer_5("cognition"), c1_infer_6("cognition"), c1_infer_7("cognition"), c1_infer_8("cognition"), c1_infer_9("cognition"), c1_infer_10("cognition"), c1_infer_11("cognition"), c1_infer_12("cognition"), c1_infer_13("cognition"), c1_infer_14("cognition"), c1_infer_15("cognition"), c1_infer_16("cognition"), c1_infer_17("cognition"), c1_infer_18("cognition"), c1_infer_19("cognition")]
 
 fn c1_adopt_inferences(mind):
     var rules = c1_infer_rules()
@@ -1520,7 +372,7 @@ fn c1_hypothesis_V6_1():
     return dv_with(dv_with(dv_with({"id": "V6_1", "proposition": dv_fact(c1_knowledge("familiar"), true), "prior": 0.5, "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 116, "V6_1"))}, "available_when", dv_fact(dv_ref("question", "state", "open_trust"), true)), "assumptions", dv_single(dv_fact(c1_knowledge("familiar"), true))), "group", "trust")
 
 fn c1_answer_actions(actor):
-    let actions = c1_list_17(c1_answer_me(actor), c1_answer_V1_0(actor), c1_answer_V1_1(actor), c1_answer_V1_2(actor), c1_answer_V2_0(actor), c1_answer_V2_1(actor), c1_answer_V2_2(actor), c1_answer_V3_0(actor), c1_answer_V3_1(actor), c1_answer_V4_0(actor), c1_answer_V4_1(actor), c1_answer_V5_0(actor), c1_answer_V5_1(actor), c1_answer_V5_2(actor), c1_answer_trust(actor), c1_answer_V6_0(actor), c1_answer_V6_1(actor))
+    let actions = [c1_answer_me(actor), c1_answer_V1_0(actor), c1_answer_V1_1(actor), c1_answer_V1_2(actor), c1_answer_V2_0(actor), c1_answer_V2_1(actor), c1_answer_V2_2(actor), c1_answer_V3_0(actor), c1_answer_V3_1(actor), c1_answer_V4_0(actor), c1_answer_V4_1(actor), c1_answer_V5_0(actor), c1_answer_V5_1(actor), c1_answer_V5_2(actor), c1_answer_trust(actor), c1_answer_V6_0(actor), c1_answer_V6_1(actor)]
     var result = []
     var i = 0
     while i < rt_count(actions):
@@ -1532,7 +384,7 @@ fn c1_answer_actions(actor):
     return result
 
 fn c1_raw_hypotheses():
-    return c1_list_17(c1_hypothesis_me(), c1_hypothesis_V1_0(), c1_hypothesis_V1_1(), c1_hypothesis_V1_2(), c1_hypothesis_V2_0(), c1_hypothesis_V2_1(), c1_hypothesis_V2_2(), c1_hypothesis_V3_0(), c1_hypothesis_V3_1(), c1_hypothesis_V4_0(), c1_hypothesis_V4_1(), c1_hypothesis_V5_0(), c1_hypothesis_V5_1(), c1_hypothesis_V5_2(), c1_hypothesis_trust(), c1_hypothesis_V6_0(), c1_hypothesis_V6_1())
+    return [c1_hypothesis_me(), c1_hypothesis_V1_0(), c1_hypothesis_V1_1(), c1_hypothesis_V1_2(), c1_hypothesis_V2_0(), c1_hypothesis_V2_1(), c1_hypothesis_V2_2(), c1_hypothesis_V3_0(), c1_hypothesis_V3_1(), c1_hypothesis_V4_0(), c1_hypothesis_V4_1(), c1_hypothesis_V5_0(), c1_hypothesis_V5_1(), c1_hypothesis_V5_2(), c1_hypothesis_trust(), c1_hypothesis_V6_0(), c1_hypothesis_V6_1()]
 
 fn c1_hypotheses():
     var items = c1_raw_hypotheses()
@@ -1574,7 +426,7 @@ fn c1_sound_action(actor):
         local_1 = dv_list3(c1_knowledge("sound_trial"), dv_ref("ritual", "state", "sound_trial_done"), c1_knowledge("heads_lost"))
     else:
         local_1 = dv_pair(c1_knowledge("sound_trial"), dv_ref("ritual", "state", "sound_trial_done"))
-    return dv_with(dv_with(c1_once(c1_action(rt_cat(actor, ".sound_trial"), "sound_test", dv_all(dv_pair(c1_at(actor, "hall"), c1_statement("pipe_layout"))), c1_at(actor, "hall"), rt_cat(actor, ".sound_trial"), local_1, c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 88, "sound_test.003"))), "public_observers", c1_list_4("detective", "huo", "shen", "su")), "public_grants", dv_single(dv_ref("ritual", "state", "sound_trial_done")))
+    return dv_with(dv_with(c1_once(c1_action(rt_cat(actor, ".sound_trial"), "sound_test", dv_all(dv_pair(c1_at(actor, "hall"), c1_statement("pipe_layout"))), c1_at(actor, "hall"), rt_cat(actor, ".sound_trial"), local_1, c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 88, "sound_test.003"))), "public_observers", ["detective", "huo", "shen", "su"]), "public_grants", dv_single(dv_ref("ritual", "state", "sound_trial_done")))
 
 fn c1_loss_testimony(actor):
     return c1_once(c1_observe_as(c1_action(rt_cat(actor, ".loss_testimony"), "talk", dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true), dv_all(dv_list3(c1_at(actor, "hall"), c1_at("su", "hall"), dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true))), "", dv_single(c1_knowledge("heads_lost")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 89, "sound_test.007")), "testimony", "su", 0.9))
@@ -1640,7 +492,7 @@ fn c1_reask_question(actor):
     return dv_with(c1_observe_as(c1_action(rt_cat(actor, ".reask_question"), "talk", c1_at(actor, "hall"), dv_all(dv_pair(c1_at(actor, "hall"), c1_at("demon", "hall"))), "", [dv_ref("question", "state", "current"), dv_ref("question", "state", "stage"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete"), dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust")], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story", 47, "clock_question.001")), "perception", "direct", 1), "repeatable", true)
 
 fn c1_room_objects():
-    return c1_list_8(c1_local_object("hall"), c1_local_object("foyer"), c1_local_object("pantry"), c1_local_object("corridor"), c1_local_object("R05"), c1_local_object("R06"), c1_local_object("R07"), c1_local_object("R08"))
+    return [c1_local_object("hall"), c1_local_object("foyer"), c1_local_object("pantry"), c1_local_object("corridor"), c1_local_object("R05"), c1_local_object("R06"), c1_local_object("R07"), c1_local_object("R08")]
 
 fn c1_add_objects(world, objects):
     var result = world
@@ -1652,7 +504,7 @@ fn c1_add_objects(world, objects):
 
 fn c1_physical_world():
     var world = dv_with(dv_world("chapter1.physical", "physical", ""), "time", 480)
-    var people = c1_list_5("detective", "huo", "shen", "su", "demon")
+    var people = ["detective", "huo", "shen", "su", "demon"]
     var i = 0
     world = c1_add_objects(world, c1_room_objects())
     world = dv_add_object(world, c1_physical_cognition())
@@ -1703,7 +555,7 @@ fn c1_public_question_receipt_goal(stage, line, source_id):
     return {"kind": "evidence", "scope": "personal", "owner": "detective", "ref": opening, "source": "perception", "minimum_time": 0, "refresh_until": dv_fact(opening, true), "refresh_refs": [stage_ref], "available_when": dv_fact(stage_ref, stage), "basis": [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", line, source_id)]}
 
 fn c1_public_goals():
-    let goals = c1_list_4(c1_public_goal("identity", "me", "evidence"), c1_public_goal("voice_source", "remote_voice", "know"), c1_public_goal("words", "words_bolt", "know"), c1_public_goal("trust", "trust_reason", "know"))
+    let goals = [c1_public_goal("identity", "me", "evidence"), c1_public_goal("voice_source", "remote_voice", "know"), c1_public_goal("words", "words_bolt", "know"), c1_public_goal("trust", "trust_reason", "know")]
     rt_push(goals, c1_public_goal("words", "score_partial", "know"))
     rt_push(goals, c1_public_question_receipt_goal("voice_source", 16, "answer_q2.001"))
     rt_push(goals, c1_public_question_receipt_goal("words", 30, "answer_q3.001"))
@@ -1771,7 +623,7 @@ fn c1_personal_goals(actor):
             return dv_list3(c1_personal_goal("frame_hollow", actor), c1_personal_goal("score_partial", actor), c1_personal_goal("heads_lost", actor))
 
 fn c1_professional_reply(actor, atom, surface, source):
-    return dv_with(dv_with(dv_with(c1_action(rt_cat(rt_cat(actor, ".reply."), atom), "talk", c1_statement(atom), dv_true(), "", [], source), "response_topic", atom), "listeners", c1_list_4("detective", "huo", "shen", "su")), "speech", dv_with(c1_speech(c1_statement(atom), source, "professional-observation"), "surface", surface))
+    return dv_with(dv_with(dv_with(c1_action(rt_cat(rt_cat(actor, ".reply."), atom), "talk", c1_statement(atom), dv_true(), "", [], source), "response_topic", atom), "listeners", ["detective", "huo", "shen", "su"]), "speech", dv_with(c1_speech(c1_statement(atom), source, "professional-observation"), "surface", surface))
 
 fn c1_professional_replies(actor):
     var replies = c1_requested_replies(actor)
@@ -1796,8 +648,8 @@ fn c1_base_person_policy(id):
 
 fn c1_investigation_actions(actor):
     var actions = c1_move_actions(actor)
-    var inspect = c1_list_12(c1_inspect_E1(actor), c1_inspect_E2(actor), c1_inspect_E3(actor), c1_inspect_E4(actor), c1_inspect_E5(actor), c1_inspect_E6(actor), c1_inspect_E7(actor), c1_inspect_E8(actor), c1_inspect_E9(actor), c1_inspect_E10(actor), c1_inspect_E11(actor), c1_inspect_E12(actor))
-    var dialogue = c1_list_7(c1_talk_slate_code(actor), c1_talk_slate_person(actor), c1_talk_frame_hollow(actor), c1_talk_cups_known(actor), c1_talk_starter_kept(actor), c1_talk_recalled_copper(actor), c1_talk_recalled_names(actor))
+    var inspect = [c1_inspect_E1(actor), c1_inspect_E2(actor), c1_inspect_E3(actor), c1_inspect_E4(actor), c1_inspect_E5(actor), c1_inspect_E6(actor), c1_inspect_E7(actor), c1_inspect_E8(actor), c1_inspect_E9(actor), c1_inspect_E10(actor), c1_inspect_E11(actor), c1_inspect_E12(actor)]
+    var dialogue = [c1_talk_slate_code(actor), c1_talk_slate_person(actor), c1_talk_frame_hollow(actor), c1_talk_cups_known(actor), c1_talk_starter_kept(actor), c1_talk_recalled_copper(actor), c1_talk_recalled_names(actor)]
     var i = 0
     while (i < rt_count(inspect)):
         rt_push(actions, inspect[i])
@@ -1867,7 +719,7 @@ fn c1_current_question(stage):
     return dv_fact(dv_ref("question", "state", rt_cat("open_", stage)), true)
 
 fn c1_identity_complete():
-    return c1_any(dv_all(dv_pair(c1_statement("boots_toward_bolt"), c1_statement("boots_fit"))), dv_all(c1_list_4(c1_statement("lens_mine"), c1_statement("slate_marks"), c1_statement("slate_person"), c1_statement("slate_code"))))
+    return c1_any(dv_all(dv_pair(c1_statement("boots_toward_bolt"), c1_statement("boots_fit"))), dv_all([c1_statement("lens_mine"), c1_statement("slate_marks"), c1_statement("slate_person"), c1_statement("slate_code")]))
 
 fn c1_voice_complete():
     return c1_any(dv_all(dv_pair(c1_statement("pipe_layout"), c1_statement("sound_trial"))), dv_all(dv_pair(c1_statement("fork_dent"), c1_statement("frame_hollow"))))
@@ -1936,11 +788,11 @@ fn c1_formal_V6_1():
     return c1_unasked_reply("V6_1", dv_fact(c1_knowledge("familiar"), true), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 116, "V6_1"))
 
 fn c1_formal_answers():
-    return c1_list_17(c1_formal_me(), c1_formal_V1_0(), c1_formal_V1_1(), c1_formal_V1_2(), c1_formal_V2_0(), c1_formal_V2_1(), c1_formal_V2_2(), c1_formal_V3_0(), c1_formal_V3_1(), c1_formal_V4_0(), c1_formal_V4_1(), c1_formal_V5_0(), c1_formal_V5_1(), c1_formal_V5_2(), c1_formal_trust(), c1_formal_V6_0(), c1_formal_V6_1())
+    return [c1_formal_me(), c1_formal_V1_0(), c1_formal_V1_1(), c1_formal_V1_2(), c1_formal_V2_0(), c1_formal_V2_1(), c1_formal_V2_2(), c1_formal_V3_0(), c1_formal_V3_1(), c1_formal_V4_0(), c1_formal_V4_1(), c1_formal_V5_0(), c1_formal_V5_1(), c1_formal_V5_2(), c1_formal_trust(), c1_formal_V6_0(), c1_formal_V6_1()]
 
 fn c1_adopt_protocol(world):
     var result = world
-    var stages = c1_list_4("identity", "voice_source", "words", "trust")
+    var stages = ["identity", "voice_source", "words", "trust"]
     var i = 0
     while (i < rt_count(stages)):
         var stage = stages[i]
@@ -1952,7 +804,7 @@ fn c1_speech(literal, surface, scope):
     return dv_with(dv_with(dv_with({"literal_ast": literal, "referents": [], "scope": scope, "time_anchor": "今晨醒来至当前发言"}, "surface_ref", surface), "presuppositions", []), "implicature_candidates", [])
 
 fn c1_raw_opening_action():
-    return dv_with(dv_with(dv_with(c1_once(c1_action("demon.opening", "opening", dv_fact(dv_ref("question", "state", "stage"), "opening"), dv_fact(dv_ref("question", "state", "stage"), "opening"), "demon.opening", dv_single(dv_ref("question", "state", "stage")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"))), "speech", dv_with(dv_with(c1_speech(dv_all(dv_list3(dv_fact(dv_ref("question", "state", "awake_scope"), true), dv_fact(dv_ref("question", "state", "memory_removed"), true), dv_fact(dv_ref("question", "state", "not_injury"), true))), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"), "awake_self"), "surface", "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。诸位所需之知，我会教。我所立之规，已贴在活动厅的公告框里。"), "implicature_candidates", dv_single(dv_single(dv_pair("id", "short_stay"))))), "listeners", c1_list_4("detective", "huo", "shen", "su")), "public_grants", [])
+    return dv_with(dv_with(dv_with(c1_once(c1_action("demon.opening", "opening", dv_fact(dv_ref("question", "state", "stage"), "opening"), dv_fact(dv_ref("question", "state", "stage"), "opening"), "demon.opening", dv_single(dv_ref("question", "state", "stage")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"))), "speech", dv_with(dv_with(c1_speech(dv_all(dv_list3(dv_fact(dv_ref("question", "state", "awake_scope"), true), dv_fact(dv_ref("question", "state", "memory_removed"), true), dv_fact(dv_ref("question", "state", "not_injury"), true))), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"), "awake_self"), "surface", "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。诸位所需之知，我会教。我所立之规，已贴在活动厅的公告框里。"), "implicature_candidates", dv_single(dv_single(dv_pair("id", "short_stay"))))), "listeners", ["detective", "huo", "shen", "su"]), "public_grants", [])
 
 fn c1_authorized_speech(action):
     return dv_with(action, "authority_truth_gate", {"required": true, "contract_id": "contract-8", "basis": dv_single(c1_source("docs/design-standard.md", 462, "may-not-deceive-students"))})
@@ -1971,7 +823,7 @@ fn c1_opening_illegal_fragment():
     return dv_with(dv_with(action, "id", "demon.opening.contrary"), "speech", dv_with(dv_with(speech, "literal_ast", dv_fact(dv_ref("question", "state", "not_injury"), false)), "surface", "是伤病。"))
 
 fn c1_demon_listener_models():
-    var listeners = c1_list_4("detective", "huo", "shen", "su")
+    var listeners = ["detective", "huo", "shen", "su"]
     var result = []
     var index = 0
     var basis = c1_handling_basis()
@@ -1981,7 +833,7 @@ fn c1_demon_listener_models():
     return result
 
 fn c1_demon_policy():
-    return dv_with(dv_with(c1_player_policy(), "hypotheses", []), "communication_goals", dv_single(dv_with(dv_with(dv_with({"id": "opening-purpose", "interpretation_id": "short_stay", "desired_status": "accepted", "weight": 1}, "listeners", c1_list_4("detective", "huo", "shen", "su")), "available_when", dv_fact(dv_ref("question", "state", "stage"), "opening")), "basis", dv_pair(c1_source("docs/design-standard.md", 419, "speaker-own-purpose-to-make-listeners-want-to-ask"), c1_source("docs/design-standard.md", 1500, "approved-defeasible-pragmatic-purpose")))))
+    return dv_with(dv_with(c1_player_policy(), "hypotheses", []), "communication_goals", dv_single(dv_with(dv_with(dv_with({"id": "opening-purpose", "interpretation_id": "short_stay", "desired_status": "accepted", "weight": 1}, "listeners", ["detective", "huo", "shen", "su"]), "available_when", dv_fact(dv_ref("question", "state", "stage"), "opening")), "basis", dv_pair(c1_source("docs/design-standard.md", 419, "speaker-own-purpose-to-make-listeners-want-to-ask"), c1_source("docs/design-standard.md", 1500, "approved-defeasible-pragmatic-purpose")))))
 
 fn c1_raw_question_action(stage, surface, first):
     var local_1 = false
@@ -1997,7 +849,7 @@ fn c1_raw_question_action(stage, surface, first):
             local_2 = "demon.original_question"
         else:
             local_2 = ""
-    return dv_with(dv_with(dv_with(c1_once(c1_action(rt_cat("demon.question.", stage), local_1, dv_fact(dv_ref("question", "state", "stage"), stage), dv_fact(dv_ref("question", "state", "stage"), stage), local_2, dv_single(dv_ref("question", "state", "stage")), surface)), "speech", dv_with(dv_with(c1_speech(dv_true(), surface, "正式公开问题；问句不是历史事实断言"), "utterance_type", "question"), "surface", rt_cat(c1_question_text(stage), " 每一问，说一句结论，再拿出一件撑得住它的东西。"))), "listeners", c1_list_4("detective", "huo", "shen", "su")), "public_grants", c1_list_8(dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust"), dv_ref("question", "state", "current"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete")))
+    return dv_with(dv_with(dv_with(c1_once(c1_action(rt_cat("demon.question.", stage), local_1, dv_fact(dv_ref("question", "state", "stage"), stage), dv_fact(dv_ref("question", "state", "stage"), stage), local_2, dv_single(dv_ref("question", "state", "stage")), surface)), "speech", dv_with(dv_with(c1_speech(dv_true(), surface, "正式公开问题；问句不是历史事实断言"), "utterance_type", "question"), "surface", rt_cat(c1_question_text(stage), " 每一问，说一句结论，再拿出一件撑得住它的东西。"))), "listeners", ["detective", "huo", "shen", "su"]), "public_grants", [dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust"), dv_ref("question", "state", "current"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete")])
 
 fn c1_question_action(stage, surface, first):
     return c1_authorized_speech(c1_raw_question_action(stage, surface, first))
@@ -2007,16 +859,16 @@ fn c1_character_demon():
     mind = dv_add_object(mind, c1_position("demon", "hall"))
     mind = dv_add_object(mind, c1_question_object())
     mind = dv_with(mind, "listener_models", c1_demon_listener_models())
-    return dv_with(dv_with({"id": "demon", "mind": mind, "policy": c1_demon_policy(), "actions": c1_list_7(c1_opening_action(), c1_opening_memory_fragment(), c1_opening_illegal_fragment(), c1_question_action("prompt", c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 46, "s5_question.004"), true), c1_question_action("voice_source", c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 16, "answer_q2.001"), false), c1_question_action("words", c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 30, "answer_q3.001"), false), c1_question_action("trust", c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 39, "answer_q4.001"), false))}, "balance", {"time": 100000, "computation": 100000, "stamina": 100000}), "location_ref", dv_ref("demon", "state", "location"))
+    return dv_with(dv_with({"id": "demon", "mind": mind, "policy": c1_demon_policy(), "actions": [c1_opening_action(), c1_opening_memory_fragment(), c1_opening_illegal_fragment(), c1_question_action("prompt", c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 46, "s5_question.004"), true), c1_question_action("voice_source", c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 16, "answer_q2.001"), false), c1_question_action("words", c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 30, "answer_q3.001"), false), c1_question_action("trust", c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 39, "answer_q4.001"), false)]}, "balance", {"time": 100000, "computation": 100000, "stamina": 100000}), "location_ref", dv_ref("demon", "state", "location"))
 
 fn c1_costs():
-    var costs = c1_list_12(dv_pair("opening", c1_cost(20, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 17, "s3_broadcast：20"))), dv_pair("question", c1_cost(15, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 18, "s5_question：15"))), dv_pair("receive_question", c1_cost(1, c1_source("docs/design-standard.md", 0, "实际行动耗时：1分钟内容参数"))), dv_pair("inspect", c1_cost(1, c1_source("docs/design-standard.md", 0, "实际行动耗时：1分钟内容参数"))), dv_pair("experiment", c1_cost(17, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 31, "试验：17"))), dv_pair("help", c1_cost(1, c1_source("docs/design-standard.md", 0, "实际行动耗时：1分钟内容参数"))), dv_pair("talk", c1_cost(1, c1_source("docs/design-standard.md", 0, "实际行动耗时：1分钟内容参数"))), dv_pair("sound_test", c1_cost(24, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 34, "声路：24"))), dv_pair("replay", dv_with(c1_cost(29, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 35, "重演：29")), "work_limit", 320)), dv_pair("answer", c1_cost(10, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 36, "答辩：10"))), dv_pair("move", c1_cost(2, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 37, "走动：2"))), dv_pair("recall", c1_cost(1, c1_source("docs/design-standard.md", 0, "实际行动耗时：1分钟内容参数"))))
+    var costs = [dv_pair("opening", c1_cost(20, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 17, "s3_broadcast：20"))), dv_pair("question", c1_cost(15, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 18, "s5_question：15"))), dv_pair("receive_question", c1_cost(1, c1_source("docs/design-standard.md", 0, "实际行动耗时：1分钟内容参数"))), dv_pair("inspect", c1_cost(1, c1_source("docs/design-standard.md", 0, "实际行动耗时：1分钟内容参数"))), dv_pair("experiment", c1_cost(17, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 31, "试验：17"))), dv_pair("help", c1_cost(1, c1_source("docs/design-standard.md", 0, "实际行动耗时：1分钟内容参数"))), dv_pair("talk", c1_cost(1, c1_source("docs/design-standard.md", 0, "实际行动耗时：1分钟内容参数"))), dv_pair("sound_test", c1_cost(24, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 34, "声路：24"))), dv_pair("replay", dv_with(c1_cost(29, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 35, "重演：29")), "work_limit", 320)), dv_pair("answer", c1_cost(10, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 36, "答辩：10"))), dv_pair("move", c1_cost(2, c1_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 37, "走动：2"))), dv_pair("recall", c1_cost(1, c1_source("docs/design-standard.md", 0, "实际行动耗时：1分钟内容参数")))]
     // Authored duration for first acquisition of a short notice; reviewing known text is presentation only.
     return dv_with(costs, "read", c1_cost(1, c1_source("docs/design-standard.md", 0, "首次阅读短公告：1分钟内容参数")))
 
 fn c1_bindings():
-    var people = c1_list_5("demon", "detective", "huo", "shen", "su")
-    var objects = c1_list_9("demon", "detective", "huo", "shen", "su", "cognition", "question", "ritual", "coat")
+    var people = ["demon", "detective", "huo", "shen", "su"]
+    var objects = ["demon", "detective", "huo", "shen", "su", "cognition", "question", "ritual", "coat"]
     var result = []
     var i = 0
     var j = 0
@@ -2029,10 +881,10 @@ fn c1_bindings():
     return result
 
 fn c1_binding_gaps():
-    return c1_list_5("No quantified >=3-day evidence; withdraw insufficient adoption without asserting its negation", "Historical wake latency is unknown; representative model coordinates are not a measured wake timestamp", "Original Q2 is distinct from literal V3; only actual paid model argument and its real support may satisfy it", "Historical route coordinates use existing edge/speed values; reaction/propagation real durations remain uncalibrated", "Demon listener models are independent provisional estimates; actual listener understanding may differ")
+    return ["No quantified >=3-day evidence; withdraw insufficient adoption without asserting its negation", "Historical wake latency is unknown; representative model coordinates are not a measured wake timestamp", "Original Q2 is distinct from literal V3; only actual paid model argument and its real support may satisfy it", "Historical route coordinates use existing edge/speed values; reaction/propagation real durations remain uncalibrated", "Demon listener models are independent provisional estimates; actual listener understanding may differ"]
 
 fn c1_scenario_native():
-    return dv_with(dv_with(dv_with(dv_with({"format": "dv-session-v1", "id": "chapter1-native-authoring", "physical": c1_physical_world(), "actors": c1_list_5(c1_character_demon(), c1_character_detective(), c1_character_huo(), c1_character_shen(), c1_character_su())}, "bindings", c1_bindings()), "cost_model", c1_costs()), "formal_answers", c1_formal_answers()), "max_actions", 1200)
+    return dv_with(dv_with(dv_with(dv_with({"format": "dv-session-v1", "id": "chapter1-native-authoring", "physical": c1_physical_world(), "actors": [c1_character_demon(), c1_character_detective(), c1_character_huo(), c1_character_shen(), c1_character_su()]}, "bindings", c1_bindings()), "cost_model", c1_costs()), "formal_answers", c1_formal_answers()), "max_actions", 1200)
 
 fn c1_variant_weight(weight, id):
     var data = dvs_scenario_base()
@@ -2069,7 +921,7 @@ fn dvs_scenario_boundary():
     return dv_with(dv_with(dv_with(data, "actors", result), "physical", dv_store(data.physical, position, dv_with(dv_with(dv_read(data.physical, position), "value", "R05"), "basis", basis))), "id", "chapter1-boundary-noncanonical")
 
 fn c1_report_labels():
-    return {"actors": c1_list_5(dv_pair("detective", "侦探"), dv_pair("huo", "霍铎"), dv_pair("shen", "沈鼎"), dv_pair("su", "苏泠"), dv_pair("demon", "铜口代管者")), "objects": c1_list_12(dv_pair("E1", "内闩"), dv_pair("E2", "木楔"), dv_pair("E3", "灰上的靴印"), dv_pair("E4", "湿布"), dv_pair("E5", "音叉与门框"), dv_pair("E6", "苏泠的乐谱"), dv_pair("E7", "霍铎的石板"), dv_pair("E8", "铜口与传声管"), dv_pair("E9", "四只茶杯"), dv_pair("E10", "酵种罐"), dv_pair("E11", "积灰书架"), dv_pair("E12", "风衣与放大镜")), "action_kinds": c1_list_12(dv_pair("opening", "开场广播"), dv_pair("question", "提出始业之问"), dv_pair("receive_question", "听取问题"), dv_pair("inspect", "检视"), dv_pair("experiment", "实验"), dv_pair("help", "请人辨认"), dv_pair("talk", "询问证言"), dv_pair("sound_test", "声路试验"), dv_pair("replay", "重演昨夜"), dv_pair("answer", "提交答辩"), dv_pair("move", "走动"), dv_pair("recall", "触物回想"))}
+    return {"actors": [dv_pair("detective", "侦探"), dv_pair("huo", "霍铎"), dv_pair("shen", "沈鼎"), dv_pair("su", "苏泠"), dv_pair("demon", "铜口代管者")], "objects": [dv_pair("E1", "内闩"), dv_pair("E2", "木楔"), dv_pair("E3", "灰上的靴印"), dv_pair("E4", "湿布"), dv_pair("E5", "音叉与门框"), dv_pair("E6", "苏泠的乐谱"), dv_pair("E7", "霍铎的石板"), dv_pair("E8", "铜口与传声管"), dv_pair("E9", "四只茶杯"), dv_pair("E10", "酵种罐"), dv_pair("E11", "积灰书架"), dv_pair("E12", "风衣与放大镜")], "action_kinds": [dv_pair("opening", "开场广播"), dv_pair("question", "提出始业之问"), dv_pair("receive_question", "听取问题"), dv_pair("inspect", "检视"), dv_pair("experiment", "实验"), dv_pair("help", "请人辨认"), dv_pair("talk", "询问证言"), dv_pair("sound_test", "声路试验"), dv_pair("replay", "重演昨夜"), dv_pair("answer", "提交答辩"), dv_pair("move", "走动"), dv_pair("recall", "触物回想")]}
 
 fn c1_active_configuration(data):
     return dv_with(dv_with(dv_with(dv_with(dv_with(data, "report_labels", c1_report_labels()), "game_duration_budget", 360), "capability_actor", "detective"), "binding_gaps", c1_binding_gaps()), "budget_scope", "Per-actor action cap240 across inherited campaign state; campaign max_actions is the sum of actor caps; reason/model/plan budgets and action costs are separate")

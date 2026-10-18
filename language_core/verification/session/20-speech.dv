@@ -540,7 +540,7 @@ fn dvs_prepare_speech_choices(actor, events, time, parent):
             cache = dv_with(cache, entry[0], {"status": "unknown-incomplete-layer", "utility": 0, "signature": entry[1]})
             i = (i + 1)
         if (0 < rt_count(candidates)):
-            dvs_event(events, "speech_choice_budget_stop", actor.id, time, dv_single(parent), {"actor_before": before, "required_units": total, "available_units": remaining, "charged_units": 0})
+            dvs_event(events, "speech_choice_budget_stop", actor.id, time, dv_single(parent), {"actor_before": dv_without(before, "simulations"), "required_units": total, "available_units": remaining, "charged_units": 0})
     else:
         while (i < rt_count(candidates)):
             var entry = candidates[i]
@@ -566,7 +566,7 @@ fn dvs_prepare_speech_choices(actor, events, time, parent):
                     value = (value + dvs_speech_goal_value(goals, listener, data))
                 else:
                     data = {"status": "unknown-no-model", "prediction": []}
-                data = dv_with_many(data, {"listener": listener, "action": action, "actor_before": dv_with_many(actor, {"policy": dv_with(actor.policy, "model_budget", remaining), "model_previous_event": budget_parent, "last_cognitive_event": choice_cognitive}), "budget_before": remaining, "charged_units": units, "goals": goals})
+                data = dv_with_many(data, {"listener": listener, "action": action, "actor_before": dv_without(dv_with_many(actor, {"policy": dv_with(actor.policy, "model_budget", remaining), "model_previous_event": budget_parent, "last_cognitive_event": choice_cognitive}), "simulations"), "budget_before": remaining, "charged_units": units, "goals": goals})
                 remaining = (remaining - units)
                 data = dv_with(data, "budget_after", remaining)
                 data = dv_with(data, "prediction_time", time)
@@ -691,7 +691,7 @@ fn dvs_proposal_reassess(actor, decision, events, time, parent):
                         local_6 = ""
                     else:
                         local_6 = dv_find(old, "source_event", "")
-                    last = dvs_event_prepared(events, local_2, actor.id, time, dvs_speech_cognitive_parents(local_3, cognitive), dv_with_many({"status": status, "actor_before": before, "actor_after": after, "charged_units": charged}, {"mind_before": actor.mind, "mind_after": actor.mind, "interpretations_before": dv_find(before, "interpretations", []), "interpretations_after": interpretations, "source_event": local_6, "proposal": proposal}))
+                    last = dvs_event_prepared(events, local_2, actor.id, time, dvs_speech_cognitive_parents(local_3, cognitive), dv_with_many({"status": status, "actor_before": dv_without(before, "simulations"), "actor_after": dv_without(after, "simulations"), "charged_units": charged}, {"mind_before": actor.mind, "mind_after": actor.mind, "interpretations_before": dv_find(before, "interpretations", []), "interpretations_after": interpretations, "source_event": local_6, "proposal": proposal}))
                     cognitive = last
                     i = (i + 1)
                 seen = dv_append(seen, proposal_id)
@@ -859,7 +859,7 @@ fn dvs_speech_owned(actors, speaker_index, action, events, time, parent, physica
             if local_1:
                 let prediction_index = dv_get(prepared.forecasts, listener_id)
                 var predicted = events[prediction_index].data
-                dvs_event_prepared(events, "speaker_prediction", speaker.id, time, dv_append(prepared.prediction_events, source), dv_with_many(predicted, {"source_event": source, "paid_prediction_events": prepared.prediction_events, "paid_forecast": predicted, "charged_units": 0, "execution_charged_units": 0, "speaker_after": speaker, "preselection_source_revision": predicted.actor_before.mind.revision}))
+                dvs_event_prepared(events, "speaker_prediction", speaker.id, time, dv_append(prepared.prediction_events, source), dv_with_many(predicted, {"source_event": source, "paid_prediction_events": prepared.prediction_events, "paid_forecast": predicted, "charged_units": 0, "execution_charged_units": 0, "speaker_after": dv_without(speaker, "simulations"), "preselection_source_revision": predicted.actor_before.mind.revision}))
             else:
                 dvs_event(events, "speaker_prediction", speaker.id, time, dv_single(source), {"listener": listener_id, "status": "unknown-no-paid-preselection", "source_event": source})
             if (target_index < 0):

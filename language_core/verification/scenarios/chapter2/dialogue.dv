@@ -210,6 +210,14 @@ fn c2d_action(row):
     while e < rt_count(effects):
         rt_push(grants, effects[e].ref)
         e = e + 1
+    // Actor-only observations after applied Complete; never speech propagation
+    // or a claim that an environment effect has already happened in prediction.
+    let observation_grants = dv_find(row, "observation_grants", [])
+    e = 0
+    while e < rt_count(observation_grants):
+        if not dv_has(grants, observation_grants[e]):
+            rt_push(grants, observation_grants[e])
+        e = e + 1
     var raw_listeners = c2d_people()
     if not dv_has_key(row, "norm_proposal"):
         if dv_has_key(row, "opportunity"):

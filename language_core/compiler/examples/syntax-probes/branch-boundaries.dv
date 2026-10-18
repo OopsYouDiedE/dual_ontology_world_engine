@@ -1,0 +1,21 @@
+fn branch(x):
+    if x == 0:
+        if false:
+            return "bad-inner"
+        elif true:
+            return "nested"
+    elif x == 1:
+        return "outer"
+    if x == 2:
+        return "independent"
+    return "fallback"
+fn loop():
+    var x = 0
+    while x < 2:
+        x = x + 1
+    if x == 2:
+        return x
+    elif true:
+        return 99
+    return 98
+(main (rt_print (rt_json_stringify (let (r (rt_list)) (do (rt_push r (branch 0)) (rt_push r (branch 1)) (rt_push r (branch 2)) (rt_push r (branch 3)) (rt_push r (loop)) r)))))

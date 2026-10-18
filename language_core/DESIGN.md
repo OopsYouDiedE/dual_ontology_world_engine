@@ -138,3 +138,10 @@ rt_record_with 是有序记录的独立复制更新 ABI：原顺序逐项检查�
 rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译器词法扫描使用。运行值检查使用一元 Bool ABI rt_is_numeric_value(value)：有限double与有效精确Rational为真，文本（包括数字文本）、布尔、列表与记录为假，不进行隐式解析。新增平台谓词须同步compiler.dv的arity/返回类型与Core参考；seed沿既有rt_通用发射映射，不增加解释器。
 
 主体数量、规划依赖、物理暴露与表达权重的数值边界遵循同一类型合同。公式、认识来源、成本和成功条件不因类型修复改变。工程值域检查与正式一级会话分列，全部源码修改冻结后统一执行；不以值域结果替代人物或剧情验收。
+
+
+## 集合简写的编译边界（2026-10-18）
+
+compiler.dv 的 sf_stmt 将同级 elif 降为既有 if 节点。sf_comprehension 产生独立 comprehension 节点，绑定、source、guard、projection 分列；sf_rename_comprehension 先按外层环境处理 source，再为 guard/projection 建立仅表达式内有效的唯一绑定。ck_comprehension 遍历来源及局部表达式，复用名义调用检查；sf_emit_comprehension 生成单次来源求值、索引迭代和有序结果累积。嵌套使用源码偏移区分目标局部名，不增加平台 ABI 或宿主解释器。
+
+此表层扩展仍使用直接 C# 后端与 Value 元素类型，保留运行时 List/Bool 错误边界；不宣称完整静态类型或高阶函数。自举固定点与中性样本执行需独立记录，样本见 compiler/examples/syntax-probes/README.md；这些工程事实不能代替正式游戏会话验收。

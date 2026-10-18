@@ -52,9 +52,14 @@ fn c2daily_rows_build():
     let notes_window = c2daily_notes_window()
     rt_push(rows, c2daily_say("ruan", "ruan.c2.discuss-supplement", "central_hall", dv_all([notes_window, dv_fact(c2daily_ref("draft_notes"), true)]), "我起草的补记栏在这里：夜间急需记下取用者、份数、用途，次日一起核对。请逐条议。", ["ward"]))
     rt_push(rows, c2daily_after(c2daily_say("ward", "ward.c2.discuss-forbid", "central_hall", notes_window, "若补记没有监督，夜间的账靠什么核实？我的提案是严禁夜取；请各人自己表明是否赞成。", ["ruan"]), "ruan", "ruan.c2.discuss-supplement"))
+    rt_push(rows, c2daily_after(c2daily_say("ward", "ward.c2.procedural-trap", "central_hall", notes_window, "按字面公约，擅取即失格。只要夜间禁令确立，没有仲裁组双人签署便动干粮的人，便是自陷毁约之局。", ["gu"]), "ward", "ward.c2.discuss-forbid"))
+    rt_push(rows, c2daily_after(c2daily_say("gu", "gu.c2.trap-warning", "central_hall", notes_window, "沃德，恶魔设的是信息诱饵，你设的是程序圈套。两边都在逼人犯规。如果不把旧账封死，明天无论谁动一口粮，都是你案头上的‘罪人’。", ["ward"]), "ward", "ward.c2.procedural-trap"))
+    rt_push(rows, c2daily_after(c2daily_say("ruan", "ruan.c2.counter-gambit", "central_hall", notes_window, "棋盘上的死子，换个落点就是劫材。你在等夜里抓贼把公约做成法庭；我多留这一栏补记，正是要在恶魔借饥饿翻盘前，把死棋下活。", ["ward"]), "gu", "gu.c2.trap-warning"))
+    rt_push(rows, c2daily_after(c2daily_say("mora", "mora.c2.care-defiance", "central_hall", notes_window, "如果夜里有人发烧快咽气，我不管你的账本是锁着的还是空的。药和粥我照样拿，名字我照样签。你如果要按‘私取’来审判一个救命的医生，那就当着全校十六人的面来审。", ["ward"]), "ruan", "ruan.c2.counter-gambit"))
     let quake = dv_all([c2_window(4, 1050, 1260), dv_fact(c2_ref("c2.weather", "earthquake_recent"), true)])
     let color = dv_fact(c2daily_ref("rare_color_layer"), "夹道罕见紫金以太色层")
     rt_push(rows, dv_with(c2d_row("demon", "demon.c2.truth-color", "living_hall", quake, color, "夹道有罕见的紫金以太色层。", c2_approved("actual-truthful-color-temptation-after-quake")), "opportunity", {"location": "living_hall", "participants": ["moran"], "mode": "all-present"}))
+    rt_push(rows, c2daily_after(c2daily_say("veronica", "veronica.c2.color-refute", "living_hall", quake, "那不是什么可以欣赏的‘色层’，那是高浓度源质在夹道冷壁上的凝析沉淀。试剂刚触及便已发黑。恶魔每个字都‘真’，拼在一起就是要命的毒饵。", ["moran", "demon"]), "demon", "demon.c2.truth-color"))
     let guards = ["detective", "bertrand", "huo"]
     var g = 0
     while g < rt_count(guards):
@@ -95,11 +100,10 @@ fn c2daily_rows_build():
                 n = n + 1
             var vote = c2daily_say(actor, rt_cat(actor, rt_cat(".c2.sign.", room)), room, dv_all([dv_all(present), c2_alive(actor), stance, dv_fact(c2daily_ref(rt_cat("voted.", actor)), true), dv_fact(c2daily_ref(rt_cat("signed.", actor)), false)]), "我把本人赞成的提案与保留意见写入公约，签名交众人核对。", [])
             vote = dv_with(vote, "effects", [dv_assign(c2daily_ref(rt_cat("signed.", actor)), true)])
+            vote = dv_with(vote, "observation_grants", [c2daily_ref("council_closed")])
             rt_push(rows, vote)
             i = i + 1
         v = v + 1
-    let tremor = dv_fact(c2daily_ref("underground_tremor"), true)
-    rt_push(rows, dv_with(c2d_row("detective", "detective.c2.ending-tremor", "central_hall", dv_fact(c2daily_ref("council_ended"), true), tremor, "公约上的签名已经收齐。脚下忽然传来地下的震颤。", c2_approved("tremor-only-after-actual-council-end")), "opportunity", {"location": "central_hall", "participants": [], "mode": "all-present"}))
     return rows
 
 axiom c2daily_cook_law():
@@ -125,7 +129,38 @@ axiom c2daily_council_end_law():
     while i < rt_count(people):
         rt_push(pre, dv_fact(c2daily_ref(rt_cat("signed.", people[i])), true))
         i = i + 1
-    return dv_axiom("c2daily_council_end_law", 1, dv_all(pre), [dv_assign(c2daily_ref("council_ended"), true), dv_assign(c2daily_ref("underground_tremor"), true)])
+    return dv_axiom("c2daily_council_end_law", 1, dv_all(pre), [dv_assign(c2daily_ref("council_ended"), true), dv_assign(c2daily_ref("council_closed"), true)])
+
+// user:2026-10-18章末授权：截止只收束议事，不代替真实签名。
+axiom c2daily_council_close_law():
+    return dv_axiom("c2daily_council_close_law", 1, dv_all([dv_at_least(c2_clock(), 6330), dv_fact(c2daily_ref("council_closed"), false)]), [dv_assign(c2daily_ref("council_closed"), true)])
+
+// The low hum and aftershock persist through closing; this is a present signal,
+// not a historical pulse. The environment never writes a mind.
+axiom c2daily_tremor_law():
+    return dv_axiom("c2daily_tremor_law", 1, dv_all([dv_fact(c2daily_ref("council_closed"), true), dv_fact(c2daily_ref("underground_tremor"), false)]), [dv_assign(c2daily_ref("underground_tremor"), true)])
+
+fn c2daily_closing_fields():
+    var fields = ["council_closed", "council_ended", "underground_tremor", "votes.open_plan", "votes.seal_plan", "votes.committee_plan"]
+    let people = c2_people()
+    var i = 0
+    while i < rt_count(people):
+        rt_push(fields, rt_cat("signed.", people[i]))
+        rt_push(fields, rt_cat("voted.", people[i]))
+        rt_push(fields, rt_cat("ballot.", people[i]))
+        i = i + 1
+    return fields
+
+// Read-only inheritance evidence; unknown fields remain unknown.
+fn c2daily_chapter_summary(physical):
+    var people = []
+    let ids = c2_people()
+    var i = 0
+    while i < rt_count(ids):
+        let id = ids[i]
+        rt_push(people, {"id": id, "alive": dv_read(physical, c2_own(id, "alive")), "signed": dv_read(physical, c2daily_ref(rt_cat("signed.", id))), "voted": dv_read(physical, c2daily_ref(rt_cat("voted.", id))), "ballot": dv_read(physical, c2daily_ref(rt_cat("ballot.", id))), "rations": dv_read(physical, c2_own(id, "rations")), "hungry": dv_read(physical, c2_own(id, "hungry")), "erosion_exposure": dv_read(physical, c2_own(id, "erosion_exposure")), "pending_notes": dv_read(physical, c2_own(id, "pending_notes"))})
+        i = i + 1
+    return {"scope": "read-only-actual-state-not-character-knowledge", "council_closed": dv_read(physical, c2daily_ref("council_closed")), "council_ended": dv_read(physical, c2daily_ref("council_ended")), "underground_tremor": dv_read(physical, c2daily_ref("underground_tremor")), "people": people, "counter_remaining": dv_read(physical, c2_ref("c2.counter", "remaining")), "counter_open": dv_read(physical, c2_ref("c2.counter", "open")), "ledger_pending": dv_read(physical, c2_ref("c2.ledger", "pending_registered")), "ledger_counted": dv_read(physical, c2_ref("c2.ledger", "counted")), "ledger_removed": dv_read(physical, c2_ref("c2.ledger", "removed")), "ledger_day_recorded": dv_read(physical, c2_ref("c2.ledger", "day_recorded")), "ledger_night_recorded": dv_read(physical, c2_ref("c2.ledger", "night_recorded")), "reserve_added": dv_read(physical, c2_ref("c2.granary", "reserve_added")), "contract_joined": dv_read(physical, c2_ref("case.contract", "joined_inventory")), "astral_draft": dv_read(physical, c2_ref("case.astral", "complete_draft")), "medicine_key_given": dv_read(physical, c2_ref("case.logistics", "medicine_key_given"))}
 
 axiom c2daily_watch_law(watched):
     let guards = ["detective", "bertrand", "huo"]
@@ -167,10 +202,16 @@ fn c2daily_install_scene(scene):
         fields = dv_with(fields, rt_cat("ballot.", people[f]), dv_unknown())
         fields = dv_with(fields, rt_cat("guarding.", people[f]), dv_field(false))
         f = f + 1
+    fields = dv_with(fields, "council_closed", dv_field(false))
     var physical = c2_add_new(scene.physical, c2_object("c2.daily", "living_hall", fields))
     physical = dv_adopt(physical, c1_method("c2.daily.council-end", c2daily_council_end_law()), "enforce", 1, source)
     var processes = dv_clone(dv_find(scene, "world_processes", []))
     rt_push(processes, {"id": "c2.daily.council-end", "law": "c2.daily.council-end", "basis": [source]})
+    let closing_source = c2_approved("user:2026-10-18章末授权")
+    physical = dv_adopt(physical, c1_method("c2.daily.council-close", c2daily_council_close_law()), "enforce", 1, [closing_source])
+    physical = dv_adopt(physical, c1_method("c2.daily.tremor", c2daily_tremor_law()), "enforce", 1, [closing_source])
+    rt_push(processes, {"id": "c2.daily.council-close", "law": "c2.daily.council-close", "once": true, "basis": [closing_source]})
+    rt_push(processes, {"id": "c2.daily.tremor", "law": "c2.daily.tremor", "once": true, "basis": [closing_source]})
     let watch_states = [true, false]
     var w = 0
     while w < rt_count(watch_states):
@@ -229,8 +270,17 @@ fn c2daily_install_scene(scene):
             physical = dv_adopt(physical, c1_method(id, law), "enforce", 1, source)
             mind = dv_adopt(mind, c1_method(id, law), "predict", 1, source)
             rt_push(actions, dv_with(c2_action(id, "help", law.premise, law.premise, id, [c2daily_ref("portions"), c2_own(actor.id, "rations"), c2_own(actor.id, "collected.2.noon")], "从热饭中领自己的一份。", source), "predict_law", id))
-        rt_push(actions, c2_inspect_action(actor.id, "c2.daily", "living_hall", ["meal_prepared", "portions", "draft_notes", "council_ended", "underground_tremor"], "查看饭桌、补记草案与公约签署进展。", source))
-        rt_push(actions, dv_with(c2_inspect_action(actor.id, "c2.daily", "central_hall", ["draft_notes", "council_ended", "underground_tremor"], "查看补记草案、公约签署进展，留意脚下。", source), "id", rt_cat(actor.id, ".c2.daily.inspect-central")))
+        rt_push(actions, c2_inspect_action(actor.id, "c2.daily", "living_hall", ["meal_prepared", "portions", "draft_notes"], "查看饭桌与补记草案。", source))
+        rt_push(actions, dv_with(c2_inspect_action(actor.id, "c2.daily", "central_hall", ["draft_notes"], "查看补记草案。", source), "id", rt_cat(actor.id, ".c2.daily.inspect-central")))
+        let venues = ["oath_court", "central_hall"]
+        var venue_index = 0
+        while venue_index < rt_count(venues):
+            let room = venues[venue_index]
+            let when = dv_all([c2_at(actor.id, room), c1_any(dv_fact(c2daily_ref("council_closed"), true), dv_at_least(c2_clock(), 6330))])
+            var closing = c2_inspect_action(actor.id, "c2.daily", room, c2daily_closing_fields(), "在会场核对投票、签名与议事收束记录，留意脚下的动静。", closing_source)
+            closing = dv_with_many(closing, {"id": rt_cat(actor.id, rt_cat(".c2.daily.closing.", room)), "precondition": when, "authority_precondition": when})
+            rt_push(actions, closing)
+            venue_index = venue_index + 1
         actor = dv_with_many(actor, {"mind": mind, "actions": c1_public_methods(actions)})
         rt_push(actors, actor)
         i = i + 1

@@ -6,6 +6,10 @@
 
 `Save()` serializes the complete internal state, including a pending action. `Restore(snapshot)` resumes that state without repeating initialization or perception. These snapshots are internal save data, not player-visible information. `Trace()` seals the logic transcript after execution.
 
+`Save()` and `WriteSave(path)` share the `$dv_rational` object encoding and JSON depth limit 512; `Restore` accepts the same depth. Trace rational values retain their existing string encoding. Output files are created exclusively; existing evidence is never overwritten. A partial or missing trace is incomplete evidence.
+
+`Snapshot(viewer).chapter_summary` is false until the actual second-chapter closing condition occurs. Afterwards it is a system record of actual votes, signatures, resources and unresolved results; it never becomes actor knowledge. The field supplies host data, and does not establish that a Godot closing card has been rendered or verified.
+
 Build from the repository root:
 
 ```powershell

@@ -1,0 +1,3 @@
+fn need_text(x: Text) = x
+fn probe() = [for x in [1]: need_text(4)]
+(main (probe))

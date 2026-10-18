@@ -4,7 +4,7 @@
 
 ### 当前可执行边界
 
-- 已实现：缩进块、fn/axiom、let/var/赋值、return/if/else/while、中文标识符和 define、位置参数、记录/列表字面量、字段/下标、普通算术和短路逻辑；mapping 的 `×` 与 `*` 调用；acceptance 的 degree/levels；有限域 imprint 声明。
+- 已实现：缩进块、fn/axiom、let/var/赋值、return/if/elif/else/while、中文标识符和 define、位置参数、记录/列表字面量、字段/下标、普通算术和短路逻辑；mapping 的 `×` 与 `*` 调用；acceptance 的 degree/levels；有限域 imprint 声明。
 - 已实现的检查：函数名称/元数、局部变量、let 不可重新赋值、显式参数/返回值/局部名义类型、单位区间字面量、Nat 字面量整数性。Acceptance/Probability/Confidence/Reliability 构造使用独立范围构造器。配平使用精确有理数，最优性由 DV 证书核验器独立确认。
 - 仍待实现：具名实参、通用 record/enum/scalar/generic 声明、单位与一般区间推导、by 证明、完整模块导入/能力系统、闭包、其余领域声明和目标无关 Typed IR。未注解代码采用 Value，既有通用计算仍用有限 double；不能将整个 Core 宣称为精确数值或完全静态证明。
 - 编译器仍支持启动语法，自身尚未改写为新语法。真实可编译写法以 core/40-value.dv、verification/session/20-speech.dv 和 verification/checks/fixtures/cognitive-semantics.dv 为例；下文超出本节边界的示例属于完整设计。
@@ -486,3 +486,20 @@ Statement  = Binding | Assignment | Return | If | For | While | Match | Context 
 实施顺序：普通语法与名义数值类型；视界/切片/认知映射运算；门槛接纳/规则/动作；守恒求解与刻画结算；分布/规划/模型/协议；编译器自身迁移。同一前端与IR逐步扩展，不新增独立剧情解析器。旧 double 权重改为精确量时明确转换方式，不把数值变化当作纯语法替换。求解、接纳与映射算法继续由 DV 库实现，平台 ABI 提供基础数值与容器操作。
 
 首批迁移对象为已有的专业观察、询问回复、主动说明和个人答辩回执。旧会话记录不证明 surface-v2 已可编译。当前已经完成首批编译与正式逻辑会话迁移；剩余设计范围以文首实现边界为准。
+
+
+## 已实现的集合与分支简写（2026-10-18）
+
+Surface 的同级 `elif condition:` 按源码顺序降为已有嵌套 if/else，首个真分支执行；else 可省略。条件仍使用既有二值 Bool 运行合同。
+
+```dv
+fn positives(xs) = [for x in xs if x > 0: x * 2]
+fn projected(xs) = [for x in xs: x]
+fn revised(record) = dv_with_many(record, {"enabled": true, "weight": 2})
+```
+
+列表推导式语法为 `[for name in source [if guard]: projection]`。单绑定，允许嵌套；source 在外部作用域只求值一次，元素按原顺序经 guard 筛选后求 projection。绑定仅在 guard 与 projection 有效，可遮蔽外部同名绑定；内层 source 仍读取外层。结果是新列表，元素沿既有 rt_at 的容器读取合同，不额外承诺深拷贝。迭代期间不应修改 source；与现有索引 while 一样每轮读取当前长度。
+
+source 运行时须为 List，guard 须为 Bool。元素静态类型保留 Value；具名函数调用、名义范围、不可变 let 与未绑定名称的检查继续执行。此实现不提供闭包、惰性迭代、多个并列 for、通用泛型或目标无关 IR。
+
+映射与过滤用推导式组合。当前没有 map/filter/any/all 高阶函数；`rt_count([for x in xs if predicate(x): x]) > 0` 与 `rt_count([for x in xs if not predicate(x): x]) == 0` 可表达有限集合的存在/全称判断，但会完整遍历并分配结果；需要短路时仍使用 while。记录更新继续调用 dv_with_many；未增加 `{...record}` 语法。新简写不自动改写业务源码，也不构成代码体积或运行速度结论。

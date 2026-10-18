@@ -45,7 +45,7 @@ fn c1_oracle_any(left, right):
     return dv_not(dv_all([dv_not(left), dv_not(right)]))
 
 fn c1_oracle_identity_complete():
-    return c1_oracle_any(dv_all(dv_pair(c1_oracle_fact("boots_toward_bolt"), c1_oracle_fact("boots_fit"))), dv_all(c1_list_4(c1_oracle_fact("lens_mine"), c1_oracle_fact("slate_marks"), c1_oracle_fact("slate_person"), c1_oracle_fact("slate_code"))))
+    return c1_oracle_any(dv_all(dv_pair(c1_oracle_fact("boots_toward_bolt"), c1_oracle_fact("boots_fit"))), dv_all([c1_oracle_fact("lens_mine"), c1_oracle_fact("slate_marks"), c1_oracle_fact("slate_person"), c1_oracle_fact("slate_code")]))
 
 fn c1_oracle_voice_complete():
     return c1_oracle_any(dv_all(dv_pair(c1_oracle_fact("pipe_layout"), c1_oracle_fact("sound_trial"))), dv_all(dv_pair(c1_oracle_fact("fork_dent"), c1_oracle_fact("frame_hollow"))))

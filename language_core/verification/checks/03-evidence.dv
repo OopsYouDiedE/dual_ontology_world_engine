@@ -988,7 +988,12 @@ fn v_retract_reason_cell(cell):
 
 fn v_retract_event(events, kind, actor, time, parents, data):
     var id = rt_cat("e", rt_show(rt_count(events)))
-    rt_push(events, dv_with(dv_with({"id": id, "type": kind, "actor": actor, "time": time}, "parents", parents), "data", dv_clone(data)))
+    var projected = []
+    if dv_has_key(data, "argument"):
+        projected = {"argument": data.argument, "mind_revision_before": data.mind_before.revision, "mind_revision_after": data.mind_after.revision, "restored": data.restored, "checked": data.checked, "remaining": data.remaining, "actor_id": actor, "actor_before": data.actor_before, "actor_after": data.actor_after, "mind_before": data.mind_before, "mind_after": data.mind_after}
+    else:
+        projected = {"mind_revision_before": data.mind_before.revision, "mind_revision_after": data.mind_after.revision, "restored": data.restored, "checked": data.checked, "budget_blocked": data.budget_blocked, "remaining": data.remaining, "actor_id": actor, "actor_before": data.actor_before, "actor_after": data.actor_after, "mind_before": data.mind_before, "mind_after": data.mind_after}
+    rt_push(events, {"id": id, "type": kind, "actor": actor, "time": time, "parents": parents, "data": projected})
     return id
 
 fn v_retract_replace(items, index, value):
@@ -1068,12 +1073,13 @@ fn v_retract_argument_revoke(actor, events, time, parent):
     else:
         local_1 = false
     updated = dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(actor, "mind", world), "argument", local_1), "ready_hypothesis", false), "inference_derivations", derivations), "cognition_blocked", blocked), "policy", dv_with(actor.policy, "reason_budget", remaining))
+    updated = dv_with(updated, "last_cognitive_event", rt_cat("e", rt_show(rt_count(events))))
     var local_2 = false
     if blocked:
         local_2 = "model_argument_revocation_pending"
     else:
         local_2 = "model_argument_revoked"
-    v_retract_event(events, local_2, actor.id, time, dv_explanation_merge(dv_pair(parent, argument.id), descendants), dv_with(dv_with(dv_with(dv_with({"argument": argument, "mind_before": actor.mind, "mind_after": world, "restored": restored}, "checked", checked), "remaining", remaining), "actor_before", actor), "actor_after", updated))
+    v_retract_event(events, local_2, actor.id, time, v_retract_cognitive_parents(actor, dv_explanation_merge(dv_pair(parent, argument.id), descendants)), dv_with(dv_with(dv_with(dv_with({"argument": argument, "mind_before": actor.mind, "mind_after": world, "restored": restored}, "checked", checked), "remaining", remaining), "actor_before", actor), "actor_after", updated))
     return updated
 
 fn v_retract_refresh_derivations(actor, events, time, parent):
@@ -1082,7 +1088,9 @@ fn v_retract_refresh_derivations(actor, events, time, parent):
     var i = (rt_count(dv_find(actor, "inference_derivations", [])) - 1)
     var contaminated = []
     var restored = []
-    var parents = dv_single(parent)
+    var parents = dv_explanation_merge(dv_single(parent), dv_single(dv_find(actor, "last_cognitive_event", "")))
+    if dv_find(actor, "last_cognitive_event", "") == "":
+        parents = dv_single(parent)
     var remaining = dv_find(actor.policy, "reason_budget", 0)
     var checked = 0
     var blocked = false
@@ -1124,6 +1132,8 @@ fn v_retract_refresh_derivations(actor, events, time, parent):
     if (0 < rt_count(restored)):
         world = dv_with(world, "revision", (world.revision + 1))
     updated = dv_with(dv_with(dv_with(dv_with(actor, "mind", world), "inference_derivations", derivations), "cognition_blocked", blocked), "policy", dv_with(actor.policy, "reason_budget", remaining))
+    if dv_or(blocked, (0 < checked)):
+        updated = dv_with(updated, "last_cognitive_event", rt_cat("e", rt_show(rt_count(events))))
     if dv_or(blocked, (0 < checked)):
         parent = v_retract_event(events, "inference_dependencies_invalidated", actor.id, time, parents, dv_with(dv_with(dv_with(dv_with({"mind_before": actor.mind, "mind_after": world, "restored": restored, "checked": checked}, "budget_blocked", blocked), "remaining", remaining), "actor_before", actor), "actor_after", updated))
     if dv_and((not blocked), (0 < checked)):
@@ -1241,3 +1251,9 @@ fn v_retract_support_parents(mind, refs, events, subject):
             j = (j + 1)
         i = (i + 1)
     return parents
+
+fn v_retract_cognitive_parents(actor, parents):
+    let previous = dv_find(actor, "last_cognitive_event", "")
+    if previous == "":
+        return parents
+    return dv_explanation_merge(parents, [previous])

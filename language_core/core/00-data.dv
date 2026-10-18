@@ -73,11 +73,7 @@ fn dv_record_like(value):
         return false
 
 fn dv_get(record, key):
-    let val = rt_record_find(record, key, "__dv_missing_field_sentinel__")
-    if (val == "__dv_missing_field_sentinel__"):
-        if (rt_record_index(record, key) < 0):
-            rt_fail(rt_cat("Missing field: ", key))
-    return val
+    return rt_record_find(record, key, "__dv_missing_field_sentinel__")
 
 fn dv_with(record, key, value):
     return rt_record_with(record, key, value)
@@ -175,6 +171,15 @@ fn dv_read(world, ref):
             dv_require((subj == world.subject), "Cross-subject reference access")
     var objects = world.objects
     var id = ref.object
+    // Validate subject and the original leading reads before the pure cache.
+    // Memo hits copy the complete cell, retaining independent caller ownership.
+    let key = ["dv_read", ref]
+    let cached = rt_memo_get(world, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(world, key, dv_read_fields(objects, id, ref))
+
+fn dv_read_fields(objects, id, ref):
     if dv_has_key(objects, id):
         var facets = dv_get(objects, id).facets
         var facet = ref.facet
@@ -290,6 +295,14 @@ fn dv_not(condition):
     return {"op": "not", "item": condition}
 
 fn dv_truth(world, proposition):
+    // Non-list owners retain memo's original Expected List error before the
+    // proposition is inspected. A constant otherwise never reads world state.
+    if rt_is_list(world):
+        if proposition.op == "constant":
+            // List constants retain memo's first-return / subsequent-copy ABI.
+            let value = proposition.value
+            if not rt_is_list(value):
+                return value
     let key = ["dv_truth", proposition]
     let cached = rt_memo_get(world, key)
     if cached[0]:
@@ -318,7 +331,7 @@ fn dv_truth_uncached(world, proposition):
                 while (i < rt_count(items)):
                     var truth = dv_truth(world, items[i])
                     if (truth == "false"):
-                        result = "false"
+                        return "false"
                     else:
                         if dv_and((truth == "unknown"), (result == "true")):
                             result = "unknown"

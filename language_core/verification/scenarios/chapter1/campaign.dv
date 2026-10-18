@@ -708,20 +708,20 @@ fn c1_other_activity_rows(group):
             {"id": "wax_ash_seen", "actor": "ward", "after": "keys_found", "time": 480, "text": "柜锁旁有火漆屑，地上煤灰足印朝向壁炉。沃德把钥匙与纸片摆在桌上，要求雀儿解释。"},
             {"id": "quer_insulted", "actor": "ward", "after": "wax_ash_seen", "time": 480, "text": "沃德称雀儿未经公开授权，背着同行私藏。雀儿攥紧袖口：‘搜也搜了，还要我认什么？’卢西安走到她身旁。"},
             {"id": "evidence_complete", "actor": "gu", "after": "wax_ash_seen", "time": 480, "text": "顾平章沿煤灰足印摸到壁炉砖槽，取出蜡布筒。筒中物件与残纸指向同一内柜；这能确认雀儿取出并私藏，不能证明她没有私下授权。"},
-            {"id": "report_basis", "actor": "ward", "after": "evidence_complete", "time": 480, "text": "沃德逐项核对：雀儿、壁炉砖槽、未经公开授权而背着同行私藏。人、处、行为齐备；‘窃取’仍是他的定性。"}
+            {"id": "report_basis", "actor": "ward", "after": "evidence_complete", "time": 480, "text": "沃德逐项核对：雀儿、壁炉砖槽、未经公开授权而背着同行私藏。人、处、行为齐备；他借恶魔的字面公约做局，把‘未经公开授权’直接等同于‘擅取窃私’，试图借此确立律法仲裁的支配权。"}
         ]
     if group == "astral":
         return [
             {"id": "care_given", "actor": "selma", "after": "", "time": 480, "text": "伊莲娜左踝肿痛，无法负重。赛尔玛重新固定绷带，让她躺稳，端来水。"},
             {"id": "ruan_admitted", "actor": "ruan", "after": "care_given", "time": 480, "text": "阮清月承认：‘闸是我拉的。再迟一刻，外面的人也会被卷进去。’这说明她拉闸，不等于她已说明门内人的意思。"},
             {"id": "evidence_complete", "actor": "selma", "after": "ruan_admitted", "time": 480, "text": "赛尔玛安抚莫兰，等他呼吸平稳后接过半截伸手草图。纸上只有门内伸出的手，手腕以下的动作被截断。"},
-            {"id": "report_basis", "actor": "selma", "after": "evidence_complete", "time": 480, "text": "赛尔玛把阮清月的拉闸自认与半截草图并置：现有材料支持‘单方面止损保多数’的表层解释，尚未说明完整手势。"},
+            {"id": "report_basis", "actor": "selma", "after": "evidence_complete", "time": 480, "text": "赛尔玛把阮清月的拉闸自认与半截草图并置：现有材料支持‘单方面止损保多数’的表层解释；阮清月静坐旁观，早已看出恶魔借半截信息诱导弃子仇恨的企图，留待棋局后手翻转。"},
             {"id": "west_passage_checked", "actor": "selma", "after": "report_basis", "time": 1890, "text": "赛尔玛从门边检查西夹道：昨夜积气已经散尽，伊莲娜的伤踝也已固定，可以有人搀扶着慢行。现在才具备安全开门条件。"}
         ]
     return [
         {"id": "care_given", "actor": "mora", "after": "", "time": 480, "text": "贝尔特朗高烧，额头烫手。茉拉给他补水、降温，守在床边记录呼吸与体温。"},
         {"id": "evidence_complete", "actor": "veronica", "after": "care_given", "time": 780, "text": "午后，试剂杯边泛起酸泡。茉拉拦住维罗妮卡：‘没有医嘱，不准再试。’维罗妮卡承认取走白塔柜试剂，却没有在争执中说明旧伤用途。"},
-        {"id": "report_basis", "actor": "mora", "after": "evidence_complete", "time": 780, "text": "茉拉按亲见的酸泡、试剂取用和争执记录‘未经医嘱的激进酸试验’。这份定性尚未核对维罗妮卡左臂旧疤。"},
+        {"id": "report_basis", "actor": "mora", "after": "evidence_complete", "time": 780, "text": "茉拉按亲见的酸泡、试剂取用和争执记录‘未经医嘱的激进酸试验’。维罗妮卡冷眼相对，深知恶魔意在挑动医护与炼金内耗，暗中留存滴定试样作为反制实据。"},
         {"id": "observation_complete", "actor": "mora", "after": "report_basis", "time": 2010, "text": "茉拉完成隔夜留观：贝尔特朗退热后情况稳定，可以转移。她收起记录，确认此刻才适合开门。"}
     ]
 
@@ -784,7 +784,7 @@ fn c1_other_activity_actor(actor, group):
 
 
 // Debug placement changes only the starting room. No answer or recollection is seeded.
-fn c1_other_place_detective(scene, zone):
+fn c1_other_place_detective(scene, zone, profile):
     var group = zone
     if zone == "zone_jia" or zone == "甲":
         group = "contract"
@@ -853,31 +853,32 @@ fn c1_other_place_detective(scene, zone):
                 let action = dv_with_many(c2_action(move_id, "move", pre, pre, move_id, [dv_ref("detective", "state", "location")], "确认外闩已经打开后，跨过门槛。", source), {"predict_law": move_id, "travel": {"from": origins[move_index], "to": targets[move_index], "gate": group}})
                 actor = dv_with_many(actor, {"mind": mind, "actions": dv_append(actor.actions, action)})
                 move_index = move_index + 1
-            let truth = c1_other_truth_rows(group)
-            var j = 0
-            while j < rt_count(truth):
-                let row = truth[j]
-                world = dv_store(world, c1_other_ref(group, row.id), dv_field(false))
-                let method = rt_cat("detective.truth.", row.id)
-                let law = c1_other_truth_law(group, row)
-                world = dv_adopt(world, c1_method(method, law), "enforce", 1, [c1_other_case(group).source])
-                mind = actor.mind
-                mind = dv_store(mind, c1_other_ref(group, row.id), dv_with(dv_field(false), "basis", [c1_other_case(group).source]))
-                mind = dv_adopt(mind, c1_method(method, law), "predict", 1, [c1_other_case(group).source])
-                var action = dv_with(c2_action(method, row.kind, law.premise, law.premise, method, [c1_other_ref(group, row.id)], row.text, c1_other_case(group).source), "predict_law", method)
-                if row.kind == "talk":
-                    let after = c1_other_claim(group, row.after)
-                    action = dv_with_many(c2_action(rt_cat("detective.truth.ask.", row.id), "talk", dv_all([c1_at("detective", c1_other_case(group).room), after]), dv_all([c1_at("detective", c1_other_case(group).room), c1_at(row.partner, c1_other_case(group).room)]), "", [], "请看这份已核对的材料。你能说明自己记得的经过吗？", c1_other_case(group).source), {"speech": dv_with_many(c1_speech(after, c1_other_case(group).source, "actual-evidence-question"), {"surface": "请看这份已核对的材料。你能说明自己记得的经过吗？", "request": {"target": row.partner, "topic": rt_cat("truth.", row.id)}}), "listeners": [row.partner], "purpose_refs": [c1_other_ref(group, row.id)]})
-                let actions = dv_append(actor.actions, action)
-                var goals = dv_append(actor.policy.goals, c2_goal(c1_other_claim(group, row.id), c1_at("detective", c1_other_case(group).room), [c1_other_case(group).source]))
-                if row.kind == "talk":
-                    rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": action.id, "available_when": action.precondition, "requires_argument": false, "basis": [c1_other_case(group).source]})
-                actor = dv_with_many(actor, {"mind": mind, "actions": actions, "policy": dv_with(actor.policy, "goals", goals)})
-                j = j + 1
-            let last = truth[rt_count(truth) - 1]
-            let reason = c1_other_ref(group, rt_cat("reason.", c1_other_case(group).authority_reason))
-            let inference = dv_axiom(rt_cat("detective.truth.reason.", group), 1, c1_other_claim(group, last.id), [dv_assign(reason, true)])
-            actor = dv_with(actor, "mind", dv_adopt(actor.mind, c1_method(rt_cat("detective.truth.reason.", group), inference), "infer", 1, [c1_other_case(group).source]))
+            if profile == "Standard_Detective":
+                let truth = c1_other_truth_rows(group)
+                var j = 0
+                while j < rt_count(truth):
+                    let row = truth[j]
+                    world = dv_store(world, c1_other_ref(group, row.id), dv_field(false))
+                    let method = rt_cat("detective.truth.", row.id)
+                    let law = c1_other_truth_law(group, row)
+                    world = dv_adopt(world, c1_method(method, law), "enforce", 1, [c1_other_case(group).source])
+                    mind = actor.mind
+                    mind = dv_store(mind, c1_other_ref(group, row.id), dv_with(dv_field(false), "basis", [c1_other_case(group).source]))
+                    mind = dv_adopt(mind, c1_method(method, law), "predict", 1, [c1_other_case(group).source])
+                    var action = dv_with(c2_action(method, row.kind, law.premise, law.premise, method, [c1_other_ref(group, row.id)], row.text, c1_other_case(group).source), "predict_law", method)
+                    if row.kind == "talk":
+                        let after = c1_other_claim(group, row.after)
+                        action = dv_with_many(c2_action(rt_cat("detective.truth.ask.", row.id), "talk", dv_all([c1_at("detective", c1_other_case(group).room), after]), dv_all([c1_at("detective", c1_other_case(group).room), c1_at(row.partner, c1_other_case(group).room)]), "", [], "请看这份已核对的材料。你能说明自己记得的经过吗？", c1_other_case(group).source), {"speech": dv_with_many(c1_speech(after, c1_other_case(group).source, "actual-evidence-question"), {"surface": "请看这份已核对的材料。你能说明自己记得的经过吗？", "request": {"target": row.partner, "topic": rt_cat("truth.", row.id)}}), "listeners": [row.partner], "purpose_refs": [c1_other_ref(group, row.id)]})
+                    let actions = dv_append(actor.actions, action)
+                    var goals = dv_append(actor.policy.goals, c2_goal(c1_other_claim(group, row.id), c1_at("detective", c1_other_case(group).room), [c1_other_case(group).source]))
+                    if row.kind == "talk":
+                        rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": action.id, "available_when": action.precondition, "requires_argument": false, "basis": [c1_other_case(group).source]})
+                    actor = dv_with_many(actor, {"mind": mind, "actions": actions, "policy": dv_with(actor.policy, "goals", goals)})
+                    j = j + 1
+                let last = truth[rt_count(truth) - 1]
+                let reason = c1_other_ref(group, rt_cat("reason.", c1_other_case(group).authority_reason))
+                let inference = dv_axiom(rt_cat("detective.truth.reason.", group), 1, c1_other_claim(group, last.id), [dv_assign(reason, true)])
+                actor = dv_with(actor, "mind", dv_adopt(actor.mind, c1_method(rt_cat("detective.truth.reason.", group), inference), "infer", 1, [c1_other_case(group).source]))
             rt_push(bindings, dv_binding(rt_cat("case.", group), rt_cat("case.", group), "detective"))
         rt_push(actors, actor)
         i = i + 1
@@ -886,24 +887,25 @@ fn c1_other_place_detective(scene, zone):
     i = 0
     while i < rt_count(actors):
         var actor = actors[i]
-        var j = 0
-        while j < rt_count(truth):
-            let row = truth[j]
-            if row.kind == "talk" and actor.id == row.partner:
-                let source = c1_other_case(group).source
-                let ref = c1_other_ref(group, row.id)
-                let method = rt_cat("detective.truth.", row.id)
-                let law = c1_other_truth_law(group, row)
-                var mind = dv_store(actor.mind, ref, dv_with(dv_field(false), "basis", [source]))
-                mind = dv_adopt(mind, c1_method(method, law), "predict", 1, [source])
-                let recall = dv_with_many(c2_action(rt_cat(actor.id, rt_cat(".truth.recall.", row.id)), "help", law.premise, law.premise, method, [ref], "他重新看向来问者递出的材料，试着把自己的记忆接起来。", source), {"predict_law": method, "received_speech_requirement": {"speaker": "detective", "action_id": rt_cat("detective.truth.ask.", row.id)}})
-                let claim = dv_fact(ref, true)
-                let reply = dv_with_many(c2_action(rt_cat(actor.id, rt_cat(".truth.reply.", row.id)), "talk", dv_all([claim, c1_at(actor.id, c1_other_case(group).room)]), c1_at(actor.id, c1_other_case(group).room), "", [], row.text, source), {"speech": dv_with(c1_speech(claim, source, "own-recollection-after-request"), "surface", row.text), "listeners": ["detective"], "response_topic": rt_cat("truth.", row.id), "requires_actual_request": true})
-                let actions = dv_append(dv_append(actor.actions, recall), reply)
-                let goals = dv_append(actor.policy.goals, c2_goal(claim, c1_other_claim(group, row.after), [source]))
-                rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": reply.id, "available_when": claim, "requires_argument": false, "basis": [source]})
-                actor = dv_with_many(actor, {"mind": mind, "actions": actions, "policy": dv_with(actor.policy, "goals", goals)})
-            j = j + 1
+        if profile == "Standard_Detective":
+            var j = 0
+            while j < rt_count(truth):
+                let row = truth[j]
+                if row.kind == "talk" and actor.id == row.partner:
+                    let source = c1_other_case(group).source
+                    let ref = c1_other_ref(group, row.id)
+                    let method = rt_cat("detective.truth.", row.id)
+                    let law = c1_other_truth_law(group, row)
+                    var mind = dv_store(actor.mind, ref, dv_with(dv_field(false), "basis", [source]))
+                    mind = dv_adopt(mind, c1_method(method, law), "predict", 1, [source])
+                    let recall = dv_with_many(c2_action(rt_cat(actor.id, rt_cat(".truth.recall.", row.id)), "help", law.premise, law.premise, method, [ref], "他重新看向来问者递出的材料，试着把自己的记忆接起来。", source), {"predict_law": method, "received_speech_requirement": {"speaker": "detective", "action_id": rt_cat("detective.truth.ask.", row.id)}})
+                    let claim = dv_fact(ref, true)
+                    let reply = dv_with_many(c2_action(rt_cat(actor.id, rt_cat(".truth.reply.", row.id)), "talk", dv_all([claim, c1_at(actor.id, c1_other_case(group).room)]), c1_at(actor.id, c1_other_case(group).room), "", [], row.text, source), {"speech": dv_with(c1_speech(claim, source, "own-recollection-after-request"), "surface", row.text), "listeners": ["detective"], "response_topic": rt_cat("truth.", row.id), "requires_actual_request": true})
+                    let actions = dv_append(dv_append(actor.actions, recall), reply)
+                    let goals = dv_append(actor.policy.goals, c2_goal(claim, c1_other_claim(group, row.after), [source]))
+                    rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": reply.id, "available_when": claim, "requires_argument": false, "basis": [source]})
+                    actor = dv_with_many(actor, {"mind": mind, "actions": actions, "policy": dv_with(actor.policy, "goals", goals)})
+                j = j + 1
         rt_push(respondents, actor)
         i = i + 1
     return dv_with_many(scene, {"physical": world, "actors": respondents, "bindings": bindings, "detective_start_group": group, "formal_answers": answers})
@@ -1034,6 +1036,19 @@ fn c1dep_actions(actor):
         var ask = c1dep_speech(actor, "detective.departure.ask-door", "foyer", dv_true(), dv_true(), "门外是谁？", c1dep_source("11_门外的人.story", 7, "door_voices.004"))
         ask = dv_with_many(ask, {"speech": dv_with(ask.speech, "request", {"target": "quer", "topic": "door_identity"}), "request_transport": {"channel": "door.living"}, "received_speech_requirement": {"speaker": "quer", "action_id": "quer.departure.call-inside"}})
         rt_push(actions, ask)
+    if actor == "su":
+        let picked = dv_all([c1_at(actor, "living_hall"), dv_fact(c1dep_ref("picked_by_quer"), true)])
+        rt_push(actions, c1dep_speech(actor, "su.departure.picked-rebuke", "living_hall", picked, picked, "门不是你答开的，是雀儿从外侧挑开的。你甚至没能说清门外究竟发生了什么。", c1dep_source("08_终局.story", 26, "su_picked_rebuke")))
+        let unpicked = dv_all([c1_at(actor, "living_hall"), dv_fact(c1dep_ref("picked_by_quer"), false), dv_fact(c1dep_ref("outer_released"), true)])
+        rt_push(actions, c1dep_speech(actor, "su.departure.praise", "living_hall", unpicked, unpicked, "你辨清了声路和木楔。门外的人不是因开门而死的。", c1dep_source("08_终局.story", 29, "su_unpicked_praise")))
+    if actor == "shen":
+        let picked = dv_all([c1_at(actor, "living_hall"), dv_fact(c1dep_ref("picked_by_quer"), true)])
+        rt_push(actions, c1dep_speech(actor, "shen.departure.picked-doubt", "living_hall", picked, picked, "方才在门内，你言语前后遮掩；门外的事，你终究没有给大家一个交代。", c1dep_source("08_终局.story", 27, "shen_picked_doubt")))
+    if actor == "huo":
+        let picked = dv_all([c1_at(actor, "living_hall"), dv_fact(c1dep_ref("picked_by_quer"), true)])
+        rt_push(actions, c1dep_speech(actor, "huo.departure.picked-cold", "living_hall", picked, picked, "若是连自己做过的事都说不分明，日后如何同路？", c1dep_source("08_终局.story", 28, "huo_picked_cold")))
+        let unpicked = dv_all([c1_at(actor, "living_hall"), dv_fact(c1dep_ref("picked_by_quer"), false), dv_fact(c1dep_ref("outer_released"), true)])
+        rt_push(actions, c1dep_speech(actor, "huo.departure.trust", "living_hall", unpicked, unpicked, "四步始业之答，堂堂正正。靴印与木楔的真相，我信你。", c1dep_source("08_终局.story", 30, "huo_unpicked_trust")))
     if actor == "demon":
         let manifestation = c1dep_manifest_law()
         rt_push(actions, dv_with_many(c2_action("demon.departure.manifest", "help", manifestation.premise, manifestation.premise, "demon.departure.manifest", [dv_ref("demon.body", "state", "manifested")], "虚影在门闩前凝实，修长窄薄的手掌获得了可以碰触物体的重量。", source), {"predict_law": "demon.departure.manifest", "repeatable": true}))

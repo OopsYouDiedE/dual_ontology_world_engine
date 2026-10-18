@@ -1,0 +1,23 @@
+// Neutral compiler probe; no world/session calls.
+fn source(counter):
+    rt_replace(counter, 0, counter[0] + 1)
+    return [1, 2, 3]
+fn classify(x):
+    if x < 0:
+        return "negative"
+    elif x == 0:
+        return "zero"
+    elif x == 1:
+        return "one"
+    else:
+        return "many"
+fn probe():
+    let counter = [0]
+    let x = 10
+    let mapped = [for x in source(counter) if x > 1: x + 10]
+    let nested = [for x in [1, 2]: [for x in [x, x + 1]: x * 2]]
+    let captured = [for y in [1, 2]: x + y]
+    let empty = [for z in []: z]
+    let excluded = [for z in [1, 2] if false: rt_fail("projection must not run")]
+    return [counter[0], x, mapped, nested, captured, empty, excluded, classify(-1), classify(0), classify(1), classify(2)]
+(main (rt_print (rt_json_stringify (probe))))

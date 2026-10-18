@@ -1,5 +1,27 @@
 # DV Core：现行语法、机制与接口参考
 
+本轮接口补充（2026-10-18）：`compiler/compiler.dv` 的 `sf_comprehension`、`sf_rename_comprehension`、`ck_comprehension`、`sf_emit_comprehension` 负责列表推导式全链，`sf_stmt`处理elif。`dvp_rejected_condition_signature`、`dvp_rejected_signature`与`dvp_eligible_base`（session/15-action-planning.dv）在可重复资格之前核对失败动作的本人相关输入；`actor.rejected_attempt_signatures`由真实Complete失败后写入，成功后清除。等值单元保留known/value/conflicted；数值阈值保留真值，时钟或无关认识修订不解除屏蔽。对应predict采纳、前提与本人位置变化可重新比较。
+
+`action.failure_grants`和`failure_observe_when`仅在formal-model回执applied而DV权威失败、现场条件成立时，沿原绑定投影产生观察。Godot失败回执不能证明逻辑拒绝后保留的起点现场，本轮不据此授予失败观察；正常检视和共同失败屏蔽仍有效。成功grants维持成功Complete后的原合同。
+
+`c1n_clock_boundaries`与已声明目标的窗口元数据限制本人等待片段，不读取其他主体目标；既有1/5分钟等待费用承接不足15分钟的片段，取消越过机会14分钟的容忍。第二章声明daytime_wait_chunk_limit=120，仅日内480–1260分钟将片段限制为原上限与120的较小值；夜间沿用原上限，窗口边界仍可截短。导航只把本人已知可达的异地ready任务作为优先焦点。配额、判答与行动费用不增加。
+
+`chapter2/daily.dv`分开`council_closed`（会议收束）与`council_ended`（全员实际签署齐备）：6330截止只收束，完整签署也可提前收束。环境独立产生持续低鸣/余震，实际会场检视后才形成本人观察；内容row.observation_grants只追加本人的成功后观察，不追加public_grants。`c2daily_chapter_summary`、`dvg_chapter_summary`与宿主snapshot.chapter_summary提供闭会后系统结算身份的真实状态投影，不写心智。未渲染的摘要字段不等于Godot章末卡已验收。
+
+只读checks/08-formal.dv保留独立重演，补齐dispatch、mask_plan、Replay_Depth和切片冻结输入核验；05-cost.dv同步本人接纳、Resistance与信任来源。03-evidence.dv独立复算撤回，25-simulation.dv发布完整actor/mind前后证据。独立算法不直接调用待审会话算法。列表构造器c1_list_4..44已移除，现役内容使用保序列表字面量。
+
+室内防护的未接通声明、空动作构造器与unknown房间输入隔离到checks/fixtures/room-safety-draft.dv，生产不包含该文件、不再创建无消费者房间状态或采纳无调度者法则。正式地点目录c2_rooms、实际气闸与户外暴露保持；runtime_contracts.unimplemented_room_safety_draft明确设计要求尚未实施，不能把隔离草案当作生产安全保障。
+
+`Runtime.json_write`独占创建partial及正式文件，拒绝覆盖；`Session.Save/WriteSave/Restore`共用精确数标签与512 JSON深度，Trace精确数继续输出字符串。`run_debug.py`的evidence_complete要求正常退出、debug_end、正式trace、无partial、正文可解析及源码未改；logical_loop_finished不表示剧情完成，timeout_stage明确会话运行或封存阶段。相关工程与正式会话证据见artifacts/partial-bootstrap-core/parallel-repairs-20261018/，未覆盖分支保留未知。
+
+同一真实执行的本人、现场与公共授权合并为每主体/引用的一份感知。`dvs_public_projection_inputs`读取本次执行事件尾段中已实际发布的观察，`dvs_public_filter_projected`只补尚未投影的观察，保留原ID、绑定与Core重复拒绝。`public_grants_projection`记录本次公共入口及已有收据来源，再次调用仍拒绝；正式接受回执的`-accepted`执行身份独立。公共observation事件的grants仅含实际新投影的physical引用，declared_grants保留原声明，聆听及listener_parse保持独立执行，不把同一执行伪装成第二份来源。
+
+诊断后的纯值优化：`dv_read`在原subject→world.objects→ref.object检查后，以完整world和ref缓存完整cell，`dv_read_fields`只处理已验证前缀后的查找，缺对象仍不读facet/field。每次命中返回独立可变副本，嵌套world/ref变化使旧底本失效。`dv_truth`仅对List world中的非List常量值跳过通用memo；List常量保留原命中副本合同，其他路径及合取求值顺序保持。`dvp_topic_scan`保留原主题算法，入口的纯Bool缓存包含完整mind、item、question_ref存在性及值、topic_bindings、heard_topics；无合格mind时沿原扫描，有来源的personal早退仍优先。
+
+`rt_has_value`只对冻结全字符串列表或有效底本使用ordinal字符串集合；混合/数值/结构值保留原比较。`rt_record_with_many`只用字符串集合辅助追加键去重，出现非字符串键即沿原结构扫描；输出顺序、重复键更新、空更新与独立复制不变。缓存附着不可变值，修改沿既有底本失效链处理。
+
+等待静态元数据由`c1n_clock_boundaries`/`c1n_without_clock`缓存完整condition的纯结果，其`_uncached`保留原递归顺序，目标待定、时钟及本人非时钟前提仍逐次核对。本人声明白天等待策略时，夜间片段也在日内480起点截短；既有费用与更小本人上限保留。该等待边界属于新行为条件，不能将后续吞吐当作纯同条件提速。
+
 本文说明仓库当前可编译、可调用的 DV Core 与正式会话接口。依据是 `compiler/compiler.dv`、`compiler/Runtime.cs`、`core/*.dv` 和 `verification/session/*.dv` 的现行源码。示例只使用中性对象，不声明项目剧情。源码审阅不等于本轮运行验收。
 
 [语言总览](../README.md) · [完整语法方案与实施边界](../SYNTAX.md) · [编译器](../compiler/README.md) · [宿主 Session](../Session/README.md) · [行动费用详述](COST.md) · [正式会话运行说明](../verification/README.md)
@@ -50,7 +72,7 @@ fn choose_total(first, second):
 | `let name = expression` | 局部绑定，不可重新赋值 |
 | `var name = expression`、`name = expression` | 可变局部与重新赋值；不能给未绑定变量赋值 |
 | `return expression` | 从当前函数返回值 |
-| `if expression:`、`else:` | Bool 条件分支；嵌套条件写在块内 |
+| `if expression:`、`elif expression:`、`else:` | Bool 条件分支；elif降为同层else中的if |
 | `while expression:` | Bool 条件循环 |
 | `function(a, b)` | 位置实参按顺序求值，检查函数名称与元数 |
 | 单独表达式语句 | 调用或计算并舍弃返回值；机制返回的新状态仍须显式保存 |
@@ -83,6 +105,13 @@ fn example():
 | 管道 | `value |> f(args)` | 把 value 插到 f 的第一个位置参数 |
 
 `%`、`.*`、`@`、`~>`/`⇝`、`|-`/`⊢`、`>>`、`=>`、`?` 和 `~` 的完整领域运算尚未实现。某些符号能被扫描为 token，不代表具备表达式语义。普通 `==` 使用平台基本值/列表身份语义；列表、记录与命题的结构值相等使用 `dv_same`（`rt_same_value`）。普通分支接受 Bool；领域三值真值用文本 `"true"`、`"false"`、`"unknown"`，须显式比较。
+
+列表推导式为 `[for item in source if condition: expression]`，可省略过滤条件，可嵌套。source在外层作用域求值一次；item仅在过滤与投影中绑定为Value，不泄漏到外部。按源顺序求值过滤，只有保留项求值投影。source与过滤条件分别在运行时核对List/Bool，未提供静态集合元素推导或短路any/all函数。源列表是普通可变值，遍历期间通过别名修改它会影响后续迭代，推导式不建立不可变快照。这里的for不是独立语句。
+
+```dv
+fn positives(items):
+    return [for item in items if item > 0: item * 2]
+```
 
 ### 数值和名义检查
 
@@ -911,3 +940,5 @@ C2导航意图从本人已知位置、已知开启的门和本人已采纳移动
 结构整理用声明原文与生产依赖闭包对照、编译及导出一致性检查确认工程接线，不执行流程回归或用它宣称游玩改善。新增源文件按职责进入现有目录；出现define/module作用域时须保留独立编译边界，不直接拼接进其他源模块。
 
 一键源码审阅导出入口为 artifacts/partial-bootstrap-core/dv-layout-20261018/export/export_dv_package.bat，默认输出 artifacts/dv_consolidated_package_v2。七个目录各输出一份DV，保留原文件边界和来源指纹；该包用于阅读，不作为新执行入口。--check只校验导出是否与当前源码一致。旧导出与历史证据不改写。
+
+时域边界（2026-10-18）：正式session在time<horizon允许新决策；time==horizon仅保留已有pending/到期队列的Complete，ready扫描不发起新决策；time>horizon停止。无队列全idle不自动跳时。debug_stop按time>=horizon记录world-horizon，不能代替剧情完成。中性证据位于artifacts/horizon-probes-01/，本次用户另授权一个240秒正式窗口。

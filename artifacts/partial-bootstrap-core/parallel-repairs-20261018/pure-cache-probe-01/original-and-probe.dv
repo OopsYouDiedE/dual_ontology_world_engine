@@ -1,0 +1,152 @@
+fn probe_old_topic(actor, item):
+    if dv_find(item, "scope", "") == "personal" and 0 < rt_count(dv_find(item, "basis", [])):
+        return true
+    var topic = dv_find(item, "question", dv_find(item, "topic", ""))
+    var question = dvp_question(actor)
+    var bindings = dv_find(actor.policy, "topic_bindings", [])
+    var i = 0
+    var active = false
+    if dv_and((not (question == "")), (topic == question)):
+        active = true
+    while (i < rt_count(bindings)):
+        var binding = bindings[i]
+        if dv_and((binding.topic == topic), dv_and((0 < rt_count(dv_find(binding, "basis", []))), dv_and(dv_or(dvs_topic_was_heard(actor, topic), (dv_truth(actor.mind, binding.heard_when) == "true")), (not (dv_truth(actor.mind, binding.completed_when) == "true"))))):
+            active = true
+        i = (i + 1)
+    return active
+
+fn probe_old_truth(world, proposition):
+    let key = ["probe_old_truth", proposition]
+    let cached = rt_memo_get(world, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(world, key, probe_old_truth_uncached(world, proposition))
+
+fn probe_old_truth_uncached(world, proposition):
+    var op = proposition.op
+    if (op == "constant"):
+        return proposition.value
+    else:
+        if (op == "not"):
+            var inner = probe_old_truth(world, proposition.item)
+            if (inner == "unknown"):
+                return "unknown"
+            else:
+                if (inner == "true"):
+                    return "false"
+                else:
+                    return "true"
+        else:
+            if (op == "all"):
+                var items = proposition.items
+                var i = 0
+                var result = "true"
+                while (i < rt_count(items)):
+                    var truth = probe_old_truth(world, items[i])
+                    if (truth == "false"):
+                        result = "false"
+                    else:
+                        if dv_and((truth == "unknown"), (result == "true")):
+                            result = "unknown"
+                    i = (i + 1)
+                return result
+            else:
+                var cell = dv_read(world, proposition.ref)
+                if dv_or((not cell.known), cell.conflicted):
+                    return "unknown"
+                else:
+                    if (op == "equals"):
+                        if dv_same(cell.value, proposition.value):
+                            return "true"
+                        else:
+                            return "false"
+                    else:
+                        if (op == "at_least"):
+                            if (cell.value < proposition.value):
+                                return "false"
+                            else:
+                                return "true"
+                        else:
+                            return rt_fail("Unknown proposition operator")
+
+fn probe_field(actor, key, value):
+    let fields = actor.mind.objects.o.facets.state
+    rt_replace(fields, rt_record_index(fields, key), dv_pair(key, value))
+    return true
+fn probe_equal(actor, item, output):
+    let before = probe_old_topic(actor, item)
+    let after = dvp_topic(actor, item)
+    dv_require(before == after, "topic mismatch")
+    rt_push(output, after)
+    return true
+fn probe_normal():
+    let ref = dv_ref("o", "state", "q")
+    let done = dv_ref("o", "state", "done")
+    let actor = {"mind": {"subject": "s", "objects": {"o": {"facets": {"state": {"q": dv_cell("a", 1, 0, []), "done": dv_cell(false, 1, 0, [])}}}}}, "policy": {"topic_bindings": []}, "question_ref": ref, "heard_topics": []}
+    let item = {"topic": "a"}
+    let output = []
+    probe_equal(actor, item, output)
+    probe_equal(actor, item, output)
+    probe_field(actor, "q", dv_cell("b", 1, 0, []))
+    probe_equal(actor, item, output)
+    probe_field(actor, "q", dv_with(dv_cell("a", 1, 0, []), "conflicted", true))
+    probe_equal(actor, item, output)
+    let binding = {"topic": "a", "basis": ["source"], "heard_when": dv_not(dv_true()), "completed_when": dv_fact(done, true)}
+    rt_push(actor.policy.topic_bindings, binding)
+    probe_equal(actor, item, output)
+    rt_push(actor.heard_topics, dv_pair("a", {"source": "received"}))
+    probe_equal(actor, item, output)
+    probe_equal(actor, item, output)
+    probe_field(actor, "done", dv_cell(true, 1, 1, []))
+    probe_equal(actor, item, output)
+    probe_field(actor, "done", dv_cell(false, 1, 2, []))
+    probe_equal(actor, item, output)
+    rt_replace(actor.policy.topic_bindings[0], rt_record_index(actor.policy.topic_bindings[0], "basis"), dv_pair("basis", []))
+    probe_equal(actor, item, output)
+    rt_replace(actor.policy.topic_bindings[0], rt_record_index(actor.policy.topic_bindings[0], "basis"), dv_pair("basis", ["new-source"]))
+    probe_equal(actor, item, output)
+    let other = dv_with(actor, "heard_topics", [])
+    probe_equal(other, item, output)
+    probe_equal(actor, item, output)
+    probe_equal({"policy": {"topic_bindings": []}}, item, output)
+    probe_equal([], {"scope": "personal", "basis": ["own"]}, output)
+    let p = dv_true()
+    dv_require(probe_old_truth(actor.mind, p) == dv_truth(actor.mind, p), "truth mismatch")
+    rt_replace(p, rt_record_index(p, "value"), dv_pair("value", "unconventional"))
+    dv_require(probe_old_truth(actor.mind, p) == dv_truth(actor.mind, p), "mutated constant mismatch")
+    rt_push(output, dv_truth(actor.mind, p))
+    let complex = dv_all([dv_true(), dv_not(dv_not(dv_fact(done, false)))])
+    dv_require(probe_old_truth(actor.mind, complex) == dv_truth(actor.mind, complex), "complex mismatch")
+    rt_push(output, dv_truth(actor.mind, complex))
+    probe_field(actor, "done", dv_cell(true, 1, 3, []))
+    dv_require(probe_old_truth(actor.mind, complex) == dv_truth(actor.mind, complex), "mutated world mismatch")
+    rt_push(output, dv_truth(actor.mind, complex))
+    return output
+fn probe_error(mode, old):
+    var world = []
+    var proposition = dv_true()
+    if mode == "nonlist-owner":
+        world = 1
+        proposition = []
+    elif mode == "missing-op":
+        proposition = []
+    elif mode == "missing-value":
+        proposition = {"op": "constant"}
+    elif mode == "late-all-error":
+        proposition = dv_all([{"op": "constant", "value": "false"}, []])
+    else:
+        var actor = {"mind": [], "policy": {"topic_bindings": [{"topic": "unrelated", "basis": [], "heard_when": dv_true()}]}}
+        if mode == "question-before-policy":
+            actor = {"mind": [], "question_ref": dv_ref("o", "state", "q")}
+        if old:
+            return probe_old_topic(actor, {"topic": "a"})
+        return dvp_topic(actor, {"topic": "a"})
+    if old:
+        return probe_old_truth(world, proposition)
+    return dv_truth(world, proposition)
+fn probe_main():
+    let mode = rt_arg(0)
+    if mode == "normal":
+        return rt_print(rt_json_stringify(probe_normal()))
+    return probe_error(mode, rt_arg(1) == "old")
+(main (probe_main))

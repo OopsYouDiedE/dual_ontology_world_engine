@@ -1,5 +1,7 @@
 # DV 编译器
 
+表层执行子集支持elif与单绑定、可嵌套列表推导式；条件、作用域、求值顺序及动态类型边界见[Core参考](../core/README.md)。中性工程输入在examples/syntax-probes/，不运行游戏。编译器是生成C#的源码自举，平台容器/数值/文件ABI及#include源组合仍分别由Runtime.cs和构建工具承担，不能称为独立机器码或完整能力类型自举。
+
 `compiler.dv` 同时实现 S 表达式启动语法与 surface-v2 执行子集的扫描、解析、领域展开、名义检查及 C# 输出。`seed/` 是启动编译器 C0，C1及后续阶段使用生成的C#与Runtime.cs。新的书写格式见[SYNTAX.md](../SYNTAX.md)。
 
 ## 构建与使用

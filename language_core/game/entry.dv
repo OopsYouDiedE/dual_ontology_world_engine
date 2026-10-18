@@ -212,7 +212,15 @@ fn dvg_snapshot(state, viewer):
             place = located
     let cast = {"detective": "detective", "huo": "engineer", "shen": "chef", "su": "musician", "quer": "thief", "lucian": "poet", "ward": "lawyer", "gu": "archaeologist", "ruan": "chessplayer", "elena": "dancer", "selma": "naturalist", "moran": "painter", "veronica": "chemist", "bertrand": "marksman", "margaret": "architect", "mora": "doctor"}
     let opened = dv_truth(state.physical, dv_fact(c1dep_ref("open"), true)) == "true"
-    return {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": "res://scenes/Chapter2/Field/CampusMapView.tscn", "map": place.map, "spawn": dv_find(place, "spawn", "bed"), "field_enabled": true, "player_control": dv_find(state, "player_actor", "") == viewer, "initial_placements": [], "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false}, "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": "detective"}, "cast": cast, "pending": dvg_intent(state)}
+    return {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": "res://scenes/Chapter2/Field/CampusMapView.tscn", "map": place.map, "spawn": dv_find(place, "spawn", "bed"), "field_enabled": true, "player_control": dv_find(state, "player_actor", "") == viewer, "initial_placements": [], "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false}, "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": "detective"}, "cast": cast, "pending": dvg_intent(state), "chapter_summary": dvg_chapter_summary(state)}
+
+// A system closing record is not fed into any actor's cognition or choices.
+fn dvg_chapter_summary(state):
+    if dv_find(state.story, "chapter", 1) != 2:
+        return false
+    if dv_truth(state.physical, dv_fact(c2daily_ref("council_closed"), true)) != "true":
+        return false
+    return c2daily_chapter_summary(state.physical)
 
 // Source module: language_core/game/campaign.dv
 // Production composition. Chapter content owns its transition conditions.
@@ -224,9 +232,10 @@ fn dvg_open():
 fn dvg_open_config(config):
     var scene = c1n_install_scene(c1dep_install_scene(c1_campaign_scene()))
     let zone = dv_find(config, "detective_zone", "zone_yi")
+    let profile = dv_find(config, "profile", "Standard_Detective")
     if zone != "zone_yi":
-        scene = c1_other_place_detective(scene, zone)
-    scene = c1c_install_scene(scene, dv_find(config, "seed", 1), dv_find(config, "profile", "Standard_Detective"))
+        scene = c1_other_place_detective(scene, zone, profile)
+    scene = c1c_install_scene(scene, dv_find(config, "seed", 1), profile)
     scene = dv_with_many(scene, {"chapter": 1, "game_duration_budget": 5 * 1440 - scene.physical.time, "execution_scope": "DV production session; Godot execution receipts; offscreen non-movement uses DV world laws"})
     return dvs_session_open(c1_player_scene(scene), "enabled")
 

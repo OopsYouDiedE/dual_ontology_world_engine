@@ -1,0 +1,156 @@
+[
+  {
+    "label": "generate",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\obj\\dv-toolchain\\843be2276a39b998096793fb868f02e797b77cc25face3eb885bc107ea1a77e4\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bundle.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\Program.cs",
+      "--emit",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\ranges.json"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "build",
+    "args": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\Probe.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers",
+      "-p:NuGetAudit=false"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "normal",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "normal"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "nonlist-owner-old",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "nonlist-owner",
+      "old"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "nonlist-owner-new",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "nonlist-owner",
+      "new"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "missing-op-old",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "missing-op",
+      "old"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "missing-op-new",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "missing-op",
+      "new"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "missing-value-old",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "missing-value",
+      "old"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "missing-value-new",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "missing-value",
+      "new"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "late-all-error-old",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "late-all-error",
+      "old"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "late-all-error-new",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "late-all-error",
+      "new"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "invalid-binding-old",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "invalid-binding",
+      "old"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "invalid-binding-new",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "invalid-binding",
+      "new"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "question-before-policy-old",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "question-before-policy",
+      "old"
+    ],
+    "exit": 1
+  },
+  {
+    "label": "question-before-policy-new",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\parallel-repairs-20261018\\pure-cache-probe-02\\bin\\Release\\net8.0\\Probe.dll",
+      "question-before-policy",
+      "new"
+    ],
+    "exit": 1
+  }
+]

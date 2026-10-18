@@ -1,0 +1,28 @@
+fn neutral_rejection_probe():
+    let access = dv_ref("neutral", "state", "access")
+    let location = dv_ref("neutral", "state", "location")
+    let clock = dv_ref("neutral", "state", "clock")
+    var mind = dv_add_object(dv_world("neutral-mind", "mind", "neutral-subject"), dv_object("neutral", "perceived", {"state": {"access": dv_field(true), "location": dv_field("origin"), "clock": dv_field(10)}}))
+    let law = dv_axiom("neutral-predict", 1, dv_all([dv_fact(access, true), dv_at_least(clock, 5)]), [])
+    mind = dv_adopt(mind, law, "predict", 1, ["neutral-basis"])
+    let action = {"id": "neutral-repeat", "kind": "move", "repeatable": true, "precondition": dv_at_least(clock, 5), "predict_law": "neutral-predict"}
+    var actor = {"id": "neutral-subject", "mind": mind, "location_ref": location, "policy": [], "used": [action.id]}
+    let ordinary = dvp_eligible(actor, action, mind, [])
+    let before_cache = dvp_memo_input(actor, [])
+    actor = dv_with(actor, "rejected_attempt_signatures", dv_with([], action.id, dvp_rejected_signature(actor, action, mind)))
+    let blocked = dvp_eligible(actor, action, mind, [])
+    let cache_changed = not dv_same(before_cache, dvp_memo_input(actor, []))
+    let revision = dv_with(mind, "revision", mind.revision + 20)
+    let revision_blocked = not dvp_eligible(dv_with(actor, "mind", revision), action, revision, [])
+    let later = dv_store(mind, clock, dv_field(11))
+    let clock_blocked = not dvp_eligible(dv_with(actor, "mind", later), action, later, [])
+    let changed_access = dv_store(mind, access, dv_field(false))
+    let access_retry = dvp_eligible(dv_with(actor, "mind", changed_access), action, changed_access, [])
+    let moved = dv_store(mind, location, dv_field("another-origin"))
+    let location_retry = dvp_eligible(dv_with(actor, "mind", moved), action, moved, [])
+    let changed_law = dv_with(law, "version", 2)
+    let changed_adoption = dv_with(dv_get(mind.adoptions, law.name), "law", changed_law)
+    let ruled = dv_with(mind, "adoptions", dv_with(mind.adoptions, law.name, changed_adoption))
+    let rule_retry = dvp_eligible(dv_with(actor, "mind", ruled), action, ruled, [])
+    return {"ordinary_repeatable_eligible": ordinary, "same_failed_inputs_blocked": not blocked, "unrelated_revision_blocked": revision_blocked, "clock_increment_blocked": clock_blocked, "relevant_access_can_retry": access_retry, "relevant_location_can_retry": location_retry, "predict_rule_can_retry": rule_retry, "planning_cache_key_changes": cache_changed}
+(main (rt_print (rt_json_stringify (neutral_rejection_probe))))

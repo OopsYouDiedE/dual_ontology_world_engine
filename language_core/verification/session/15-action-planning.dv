@@ -47,6 +47,18 @@ fn dvp_topic(actor, item):
     var topic = dv_find(item, "question", dv_find(item, "topic", ""))
     var question = dvp_question(actor)
     var bindings = dv_find(actor.policy, "topic_bindings", [])
+    // Preserve the original item/question/binding read order before caching.
+    // The full mind plus all external inputs determines this pure Bool.
+    let mind = dv_find(actor, "mind", false)
+    if not rt_is_list(mind):
+        return dvp_topic_scan(actor, topic, question, bindings)
+    let key = ["dvp_topic", item, dv_has_key(actor, "question_ref"), dv_find(actor, "question_ref", false), bindings, dv_find(actor, "heard_topics", [])]
+    let cached = rt_memo_get(mind, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(mind, key, dvp_topic_scan(actor, topic, question, bindings))
+
+fn dvp_topic_scan(actor, topic, question, bindings):
     var i = 0
     var active = false
     if dv_and((not (question == "")), (topic == question)):
@@ -288,9 +300,41 @@ fn dvp_inspection_signature(actor, action, mind):
         i = i + 1
     return {"inputs": inputs, "freshness": freshness}
 
+// Only personally known execution inputs release a rejected attempt. Numeric
+// thresholds retain their truth, so an advancing clock alone cannot retry them.
+fn dvp_rejected_condition_signature(mind, proposition):
+    if proposition.op == "all":
+        var items = []
+        var i = 0
+        while i < rt_count(proposition.items):
+            rt_push(items, dvp_rejected_condition_signature(mind, proposition.items[i]))
+            i = i + 1
+        return items
+    if proposition.op == "not":
+        return dvp_rejected_condition_signature(mind, proposition.item)
+    if proposition.op == "equals":
+        let cell = dv_read(mind, proposition.ref)
+        return {"ref": proposition.ref, "known": cell.known, "value": cell.value, "conflicted": cell.conflicted}
+    return {"condition": proposition, "truth": dv_truth(mind, proposition)}
+
+fn dvp_rejected_signature(actor, action, mind):
+    let adoption = dv_find(mind.adoptions, dv_find(action, "predict_law", ""), false)
+    var prediction = false
+    if adoption != false:
+        prediction = {"active": adoption.active, "mode": adoption.mode, "law": adoption.law, "inputs": dvp_rejected_condition_signature(mind, adoption.law.premise)}
+    var location = false
+    if dv_has_key(actor, "location_ref"):
+        let cell = dv_read(mind, actor.location_ref)
+        location = {"known": cell.known, "value": cell.value, "conflicted": cell.conflicted}
+    return {"precondition": dvp_rejected_condition_signature(mind, action.precondition), "prediction": prediction, "location": location}
+
 fn dvp_eligible_base(actor, action, mind, relevant):
     var id = action.id
     var used = dv_find(actor, "used", [])
+    let rejected = dv_find(dv_find(actor, "rejected_attempt_signatures", []), id, false)
+    if rejected != false:
+        if dv_same(rejected, dvp_rejected_signature(actor, action, mind)):
+            return false
     if dv_and((not dv_find(actor, "cognition_blocked", false)), dv_and(dv_find(action, "argument_available", true), (dv_truth(mind, action.precondition) == "true"))):
         if action.kind == "inspect":
             let inspection_actor = dvp_actor_view(actor, mind)

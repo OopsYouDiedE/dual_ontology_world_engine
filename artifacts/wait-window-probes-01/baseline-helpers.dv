@@ -1,0 +1,133 @@
+fn before_c1n_positive_clock_bounds(condition):
+    var result = []
+    let op = dv_find(condition, "op", "")
+    if op == "at_least":
+        if dv_same(condition.ref, c1_other_clock_ref()):
+            rt_push(result, condition.value)
+    if op == "all":
+        let items = dv_find(condition, "items", [])
+        var i = 0
+        while i < rt_count(items):
+            let nested = before_c1n_positive_clock_bounds(items[i])
+            var j = 0
+            while j < rt_count(nested):
+                rt_push(result, nested[j])
+                j = j + 1
+            i = i + 1
+    return result
+
+// Both opening and closing thresholds bound a wait. This reads declared syntax,
+// not future world state; the caller still checks ownership and nonclock readiness.
+
+fn before_c1n_clock_boundaries(condition):
+    if dv_find(condition, "op", "") == "not":
+        return before_c1n_clock_boundaries(condition.item)
+    var result = before_c1n_positive_clock_bounds(condition)
+    if dv_find(condition, "op", "") == "all":
+        var i = 0
+        while i < rt_count(condition.items):
+            let nested = before_c1n_clock_boundaries(condition.items[i])
+            var j = 0
+            while j < rt_count(nested):
+                if not dv_has(result, nested[j]):
+                    rt_push(result, nested[j])
+                j = j + 1
+            i = i + 1
+    return result
+
+// Time alone may open a known opportunity. All remaining conditions must
+// already hold in the owner's mind, including being at its execution site.
+
+fn before_c1n_without_clock(condition):
+    let op = dv_find(condition, "op", "")
+    if dv_record_like(condition) and dv_has_key(condition, "ref") and dv_find(condition.ref, "object", "") == "c2.weather":
+        return dv_true()
+    if op == "at_least" and dv_same(condition.ref, c1_other_clock_ref()):
+        return dv_true()
+    if op == "not":
+        let inner = dv_find(condition, "item", false)
+        if inner != false and dv_record_like(inner) and dv_has_key(inner, "ref") and dv_find(inner.ref, "object", "") == "c2.weather":
+            return dv_true()
+        if inner != false and dv_find(inner, "op", "") == "at_least" and dv_same(inner.ref, c1_other_clock_ref()):
+            return dv_true()
+    if op == "all":
+        var items = []
+        var i = 0
+        while i < rt_count(condition.items):
+            rt_push(items, before_c1n_without_clock(condition.items[i]))
+            i = i + 1
+        return dv_all(items)
+    return condition
+
+
+fn before_c1n_known_wait_actor(actor, target, basis):
+    var actions = []
+    var i = 0
+    while i < rt_count(actor.actions):
+        if not dv_find(actor.actions[i], "known_opportunity_wait", false):
+            rt_push(actions, actor.actions[i])
+        i = i + 1
+    var goals = []
+    let existing = dv_find(actor.policy, "goals", [])
+    i = 0
+    while i < rt_count(existing):
+        if not dv_find(existing[i], "known_opportunity_wait", false):
+            rt_push(goals, existing[i])
+        i = i + 1
+    let elapsed = dv_read(actor.mind, c1n_wait_ref(actor.id))
+    let progress_weight = dv_find(actor.policy, "progress_weight", 1)
+    let time_cost = dv_find(actor.policy, "time_cost", 0.01)
+    var current_night_action = false
+    let rows = c1n_rows()
+    i = 0
+    while i < rt_count(rows):
+        if rows[i].actor == actor.id and dv_truth(actor.mind, c1n_pre(rows[i])) == "true":
+            current_night_action = true
+        i = i + 1
+    if elapsed.known and actor.mind.time < target and 0 < rt_count(basis) and 0 < progress_weight and not current_night_action:
+        let durations = c1n_wait_durations()
+        var minutes = 0
+        i = 0
+        var wait_chunk_limit = dv_find(actor.policy, "wait_chunk_limit", 180)
+        if dv_has_key(actor.policy, "chapter2_profile"):
+            let daytime_wait_limit = dv_find(actor.policy, "daytime_wait_chunk_limit", wait_chunk_limit)
+            var day_minute = actor.mind.time
+            while day_minute >= 1440:
+                day_minute = day_minute - 1440
+            if day_minute >= 480 and day_minute < 1260:
+                wait_chunk_limit = dv_min(wait_chunk_limit, daytime_wait_limit)
+        if actor.mind.time < 900 and dv_has(["detective", "huo", "shen", "su", "quer", "ward", "gu", "lucian"], actor.id) and dv_truth(actor.mind, c1_at(actor.id, "living_hall")) == "true":
+            wait_chunk_limit = 60
+            if actor.mind.time >= 810 and actor.mind.time < 900:
+                wait_chunk_limit = 30
+        while i < rt_count(durations):
+            if minutes == 0 and durations[i] >= 1 and durations[i] <= wait_chunk_limit and actor.mind.time + durations[i] <= target:
+                minutes = durations[i]
+            i = i + 1
+        // Use only existing costed lengths and stop at the next owned boundary.
+        // In particular, a nearby window must not be crossed by a fifteen-minute floor.
+        if 0 < minutes:
+            let id = c1n_wait_id(actor.id, minutes)
+            let known = dv_true()
+            let result = dv_at_least(c1n_wait_ref(actor.id), elapsed.value + minutes)
+            let text = rt_cat(rt_cat("留在原处，等候本人已知的下一次作息机会（", rt_show(minutes)), "分钟）。")
+            let action = c2_action(id, c1n_wait_kind(minutes), known, dv_true(), id, [c1n_wait_ref(actor.id), c1_other_clock_ref()], text, c1n_source("own-bounded-wait"))
+            rt_push(actions, c1_public_method(dv_with_many(action, {"predict_law": id, "repeatable": true, "known_opportunity_wait": true, "wait_until": target, "wait_basis": basis})))
+            // Engineering preference: knowingly spend this time for the next
+            // personally declared opportunity. Reimburse its ordinary time score
+            // and retain only .01 net utility; other actions compete unchanged.
+            let net_utility = 0.01
+            let wait_value = (minutes * time_cost + net_utility) / progress_weight
+            rt_push(goals, dv_with_many(c2_goal(result, known, basis), {"weight": wait_value, "known_opportunity_wait": true, "wait_valuation": {"role": "engineering-personal-willingness-to-wait", "time_opportunity_cost": minutes * time_cost, "net_utility": net_utility, "progress_weight": progress_weight, "future_outcome": "unknown"}}))
+    var policy = dv_with(actor.policy, "goals", goals)
+    if actor.mind.time < 1440 and dv_has(["detective", "huo", "shen", "su", "quer", "ward", "gu", "lucian"], actor.id) and dv_truth(actor.mind, c1_at(actor.id, "living_hall")) == "true":
+        if not dv_has_key(policy, "first_night_plan_depth"):
+            policy = dv_with(policy, "first_night_plan_depth", dv_find(policy, "plan_depth", 2))
+        policy = dv_with_many(policy, {"plan_depth": 1, "first_night_plan_active": true})
+    else:
+        if dv_find(policy, "first_night_plan_active", false):
+            policy = dv_with_many(policy, {"plan_depth": policy.first_night_plan_depth, "first_night_plan_active": false})
+    return dv_with_many(actor, {"actions": actions, "policy": policy})
+
+// Only positive lower bounds in the actor's declared goal conditions qualify.
+// A negated bound denotes an upper limit, so its subtree is deliberately opaque.

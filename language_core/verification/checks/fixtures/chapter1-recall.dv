@@ -198,7 +198,7 @@ fn c1_recall_cost_reply():
     let source = c1_recall_source(117, "recall_shown_shen.003")
     var action = c1_authorized_speech(c1_action("demon.reply.recall_price", "talk", c1_recall_terms_ast(), c1_recall_terms_ast(), "", [], source))
     let speech = dv_with_many(c1_speech(c1_recall_terms_ast(), source, "retrieval-contract"), {"surface": c1_recall_price_text(), "channel": "copper-recall"})
-    return dv_with_many(action, {"speech": speech, "request_transport": {"channel": "copper-recall"}, "response_topic": "recall_price", "listeners": c1_list_4("detective", "huo", "shen", "su"), "public_grants": dv_single(c1_recall_terms_ref("receipt"))})
+    return dv_with_many(action, {"speech": speech, "request_transport": {"channel": "copper-recall"}, "response_topic": "recall_price", "listeners": ["detective", "huo", "shen", "su"], "public_grants": dv_single(c1_recall_terms_ref("receipt"))})
 
 fn c1_recall_tell_price(target):
     let source = c1_recall_source(28, "recall_offer_su.004")

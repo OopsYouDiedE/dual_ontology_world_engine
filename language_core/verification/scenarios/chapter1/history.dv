@@ -37,7 +37,7 @@ axiom c1_hist_wedge_soot(history, knowledge):
     return dv_axiom("c1_hist_wedge_soot", 1, dv_all(dv_list3(dv_fact(dv_ref(history, "state", "smoke_due"), true), dv_fact(dv_ref(history, "state", "door_open"), true), dv_fact(dv_ref(history, "state", "door_wedged"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_wedge_soot"), true)))
 
 axiom c1_hist_footprint(history, knowledge, sole, direction, result_field):
-    return dv_axiom("c1_hist_footprint", 1, dv_all(c1_list_5(dv_fact(dv_ref(history, "state", "door_changed"), true), dv_fact(dv_ref(history, "state", "at_origin"), true), dv_fact(dv_ref(knowledge, "state", "predicted_ash_fan"), true), dv_fact(dv_ref(history, "state", "sole"), sole), dv_fact(dv_ref(history, "state", "direction"), direction))), dv_single(dv_assign(dv_ref(knowledge, "state", result_field), true)))
+    return dv_axiom("c1_hist_footprint", 1, dv_all([dv_fact(dv_ref(history, "state", "door_changed"), true), dv_fact(dv_ref(history, "state", "at_origin"), true), dv_fact(dv_ref(knowledge, "state", "predicted_ash_fan"), true), dv_fact(dv_ref(history, "state", "sole"), sole), dv_fact(dv_ref(history, "state", "direction"), direction)]), dv_single(dv_assign(dv_ref(knowledge, "state", result_field), true)))
 
 axiom c1_hist_cloth(history, knowledge):
     return dv_axiom("c1_hist_cloth", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "cloth_placed"), true), dv_fact(dv_ref(history, "state", "prints_exist"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_cloth_over_heel"), true)))
@@ -46,7 +46,7 @@ axiom c1_hist_tube_full(history, listener, words):
     return dv_axiom("c1_hist_tube_full", 1, dv_all(dv_list3(dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(history, "state", "words"), words), dv_fact(dv_ref(listener, "state", "location"), "hall"))), dv_list3(dv_assign(dv_ref(history, "heard_form", listener), "full"), dv_assign(dv_ref(history, "heard_words", listener), words), dv_assign(dv_ref(history, "heard_origin", listener), "Tube")))
 
 axiom c1_hist_tube_tail(history, listener, room, words, tail):
-    return dv_axiom("c1_hist_tube_tail", 1, dv_all(c1_list_4(dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(history, "state", "words"), words), dv_fact(dv_ref(listener, "state", "location"), room), dv_fact(dv_ref(history, "loose_junction", room), true))), dv_list3(dv_assign(dv_ref(history, "heard_form", listener), "tail"), dv_assign(dv_ref(history, "heard_words", listener), tail), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
+    return dv_axiom("c1_hist_tube_tail", 1, dv_all([dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(history, "state", "words"), words), dv_fact(dv_ref(listener, "state", "location"), room), dv_fact(dv_ref(history, "loose_junction", room), true)]), dv_list3(dv_assign(dv_ref(history, "heard_form", listener), "tail"), dv_assign(dv_ref(history, "heard_words", listener), tail), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
 
 axiom c1_hist_tube_hum(history, listener):
     return dv_axiom("c1_hist_tube_hum", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(listener, "state", "location"), "pantry"))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "hum"), dv_assign(dv_ref(history, "heard_words", listener), "unintelligible")))
@@ -61,13 +61,13 @@ axiom c1_hist_outside_muffled(history, listener):
     return dv_axiom("c1_hist_outside_muffled", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(listener, "state", "location"), "foyer"))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "muffled-full"), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
 
 axiom c1_hist_outside_junction(history, listener, room):
-    return dv_axiom("c1_hist_outside_junction", 1, dv_all(c1_list_4(dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(listener, "state", "location"), room), dv_fact(dv_ref(history, "loose_junction", "foyer"), true), dv_fact(dv_ref(history, "loose_junction", room), true))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "muffled-full"), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
+    return dv_axiom("c1_hist_outside_junction", 1, dv_all([dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(listener, "state", "location"), room), dv_fact(dv_ref(history, "loose_junction", "foyer"), true), dv_fact(dv_ref(history, "loose_junction", room), true)]), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "muffled-full"), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
 
 axiom c1_hist_origin(history, knowledge, su_room, huo_room):
-    return dv_axiom("c1_hist_origin", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "inputs", "su_origin"), su_room), dv_fact(dv_ref(history, "inputs", "huo_origin"), huo_room))), c1_list_12(dv_assign(dv_ref("past.su", "state", "location"), su_room), dv_assign(dv_ref("past.huo", "state", "location"), huo_room), dv_assign(dv_ref("past.detective", "state", "location"), "R05"), dv_assign(dv_ref("past.shen", "state", "location"), "pantry"), dv_assign(dv_ref(history, "state", "door_open"), false), dv_assign(dv_ref(history, "state", "door_wedged"), false), dv_assign(dv_ref(history, "state", "door_changed"), false), dv_assign(dv_ref(knowledge, "state", "predicted_bolt"), false), dv_assign(dv_ref(knowledge, "state", "predicted_ash_fan"), false), dv_assign(dv_ref(knowledge, "state", "predicted_wedge_soot"), false), dv_assign(dv_ref(knowledge, "state", "predicted_boots_bolt"), false), dv_assign(dv_ref(knowledge, "state", "predicted_cloth_over_heel"), false)))
+    return dv_axiom("c1_hist_origin", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "inputs", "su_origin"), su_room), dv_fact(dv_ref(history, "inputs", "huo_origin"), huo_room))), [dv_assign(dv_ref("past.su", "state", "location"), su_room), dv_assign(dv_ref("past.huo", "state", "location"), huo_room), dv_assign(dv_ref("past.detective", "state", "location"), "R05"), dv_assign(dv_ref("past.shen", "state", "location"), "pantry"), dv_assign(dv_ref(history, "state", "door_open"), false), dv_assign(dv_ref(history, "state", "door_wedged"), false), dv_assign(dv_ref(history, "state", "door_changed"), false), dv_assign(dv_ref(knowledge, "state", "predicted_bolt"), false), dv_assign(dv_ref(knowledge, "state", "predicted_ash_fan"), false), dv_assign(dv_ref(knowledge, "state", "predicted_wedge_soot"), false), dv_assign(dv_ref(knowledge, "state", "predicted_boots_bolt"), false), dv_assign(dv_ref(knowledge, "state", "predicted_cloth_over_heel"), false)])
 
 axiom c1_hist_reset_records(history, knowledge):
-    return dv_axiom("c1_hist_reset_records", 1, dv_fact(dv_ref("past.detective", "state", "location"), "R05"), c1_list_6(dv_assign(dv_ref(knowledge, "state", "predicted_fork_dent"), false), dv_assign(dv_ref(knowledge, "state", "predicted_slate_first"), false), dv_assign(dv_ref(knowledge, "state", "predicted_slate_second"), false), dv_assign(dv_ref(knowledge, "state", "predicted_score_tail"), false), dv_assign(dv_ref(history, "state", "smoke_due"), false), dv_assign(dv_ref(history, "state", "cloth_placed"), false)))
+    return dv_axiom("c1_hist_reset_records", 1, dv_fact(dv_ref("past.detective", "state", "location"), "R05"), [dv_assign(dv_ref(knowledge, "state", "predicted_fork_dent"), false), dv_assign(dv_ref(knowledge, "state", "predicted_slate_first"), false), dv_assign(dv_ref(knowledge, "state", "predicted_slate_second"), false), dv_assign(dv_ref(knowledge, "state", "predicted_score_tail"), false), dv_assign(dv_ref(history, "state", "smoke_due"), false), dv_assign(dv_ref(history, "state", "cloth_placed"), false)])
 
 axiom c1_hist_smoke_due(history):
     return dv_axiom("c1_hist_smoke_due", 1, dv_true(), dv_single(dv_assign(dv_ref(history, "state", "smoke_due"), true)))
@@ -106,7 +106,7 @@ axiom c1_hist_response_bridge(history, choice, intent):
     return dv_axiom("c1_hist_response_bridge", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "response", "detective"), choice), dv_fact(dv_ref(history, "state", "request_received"), true))), dv_single(dv_assign(dv_ref("past.detective", "state", "intent"), intent)))
 
 axiom c1_hist_latch(history, knowledge):
-    return dv_axiom("c1_hist_latch", 1, dv_all(dv_list3(dv_fact(dv_ref("past.detective", "state", "location"), "foyer"), dv_fact(dv_ref("past.detective", "state", "intent"), "latch-request"), dv_fact(dv_ref(history, "state", "det_heard_relay"), true))), c1_list_6(dv_assign(dv_ref(history, "state", "door_open"), false), dv_assign(dv_ref(history, "state", "door_wedged"), false), dv_assign(dv_ref(history, "state", "door_changed"), true), dv_assign(dv_ref(history, "state", "at_origin"), true), dv_assign(dv_ref(knowledge, "state", "predicted_bolt"), true), dv_assign(dv_ref(history, "state", "latching_complete"), true)))
+    return dv_axiom("c1_hist_latch", 1, dv_all(dv_list3(dv_fact(dv_ref("past.detective", "state", "location"), "foyer"), dv_fact(dv_ref("past.detective", "state", "intent"), "latch-request"), dv_fact(dv_ref(history, "state", "det_heard_relay"), true))), [dv_assign(dv_ref(history, "state", "door_open"), false), dv_assign(dv_ref(history, "state", "door_wedged"), false), dv_assign(dv_ref(history, "state", "door_changed"), true), dv_assign(dv_ref(history, "state", "at_origin"), true), dv_assign(dv_ref(knowledge, "state", "predicted_bolt"), true), dv_assign(dv_ref(history, "state", "latching_complete"), true)])
 
 axiom c1_hist_close_for_smoke(history):
     return dv_axiom("c1_hist_close_for_smoke", 1, dv_all(dv_list3(dv_fact(dv_ref("past.detective", "state", "location"), "foyer"), dv_fact(dv_ref("past.detective", "state", "intent"), "inspect-first"), dv_fact(dv_ref("cognition", "state", "predicted_ash_fan"), true))), dv_list3(dv_assign(dv_ref(history, "state", "door_open"), false), dv_assign(dv_ref(history, "state", "door_wedged"), false), dv_assign(dv_ref(history, "state", "door_changed"), true)))
@@ -118,7 +118,7 @@ axiom c1_hist_score(history, knowledge):
     return dv_axiom("c1_hist_score", 1, dv_all(dv_list3(dv_fact(dv_ref("past.su", "state", "location"), "R08"), dv_fact(dv_ref("past.su", "state", "intent"), "write-score"), dv_fact(dv_ref(history, "state", "door_open"), false))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_score_tail"), true)))
 
 axiom c1_hist_cloth_response(history, knowledge):
-    return dv_axiom("c1_hist_cloth_response", 1, dv_all(c1_list_4(dv_fact(dv_ref("past.shen", "state", "location"), "foyer"), dv_fact(dv_ref("past.shen", "state", "intent"), "place-wet-cloth"), dv_fact(dv_ref(knowledge, "state", "predicted_ash_fan"), true), dv_fact(dv_ref(history, "state", "door_open"), false))), dv_single(dv_assign(dv_ref(history, "state", "cloth_placed"), true)))
+    return dv_axiom("c1_hist_cloth_response", 1, dv_all([dv_fact(dv_ref("past.shen", "state", "location"), "foyer"), dv_fact(dv_ref("past.shen", "state", "intent"), "place-wet-cloth"), dv_fact(dv_ref(knowledge, "state", "predicted_ash_fan"), true), dv_fact(dv_ref(history, "state", "door_open"), false)]), dv_single(dv_assign(dv_ref(history, "state", "cloth_placed"), true)))
 
 axiom c1_hist_argument_source(history, knowledge, source, loss):
     var local_1 = false
@@ -131,7 +131,7 @@ axiom c1_hist_argument_source(history, knowledge, source, loss):
         local_2 = "Open"
     else:
         local_2 = "OpenSaveMe"
-    return dv_axiom("c1_hist_argument_source", 1, dv_all(c1_list_4(dv_fact(dv_ref(history, "state", "voice_source"), source), dv_fact(dv_ref(history, "heard_form", "past.su"), local_1), dv_fact(dv_ref(history, "heard_words", "past.su"), local_2), dv_fact(dv_ref(knowledge, "state", "predicted_bolt"), true))), dv_pair(dv_assign(c1_hist_claim_ref("voice_source"), source), dv_assign(c1_hist_claim_ref("transmission_loss"), loss)))
+    return dv_axiom("c1_hist_argument_source", 1, dv_all([dv_fact(dv_ref(history, "state", "voice_source"), source), dv_fact(dv_ref(history, "heard_form", "past.su"), local_1), dv_fact(dv_ref(history, "heard_words", "past.su"), local_2), dv_fact(dv_ref(knowledge, "state", "predicted_bolt"), true)]), dv_pair(dv_assign(c1_hist_claim_ref("voice_source"), source), dv_assign(c1_hist_claim_ref("transmission_loss"), loss)))
 
 axiom c1_hist_coordinate(knowledge, history, atom, polarity, variable, value):
     return dv_axiom("c1_hist_coordinate", 1, dv_fact(dv_ref(knowledge, "state", atom), polarity), dv_single(dv_assign(dv_ref(history, "actual", variable), value)))
@@ -152,13 +152,13 @@ axiom c1_hist_inspection_preview(priority):
     return dv_axiom("c1_hist_inspection_preview", 1, dv_true(), dv_single(dv_assign(dv_ref("response.outcome", "state", "value"), priority)))
 
 fn c1_hist_variable_specs():
-    return c1_list_15(c1_list_5("V1", "R08", "su_room", true, 1), c1_list_5("V1", "hall", "su_hall", true, 1), c1_list_5("V1", "pantry", "su_pantry", true, 1), c1_list_5("V2", "hall", "huo_copper", true, 11), c1_list_5("V2", "R06", "huo_room", true, 11), c1_list_5("V2", "foyer", "huo_foyer", true, 11), c1_list_5("V3", "Tube", "remote_voice", true, 21), c1_list_5("V3", "OutsideDoor", "remote_voice", false, 21), c1_list_5("V4", "BoltKeepShut", "words_bolt", true, 30), c1_list_5("V4", "OpenSaveMe", "words_bolt", false, 30), c1_list_5("V5", "huo", "heed_huo", true, 39), c1_list_5("V5", "su", "heed_su", true, 39), c1_list_5("V5", "self", "heed_neither", true, 39), c1_list_5("V6", false, "familiar", false, 49), c1_list_5("V6", true, "familiar", true, 50))
+    return [["V1", "R08", "su_room", true, 1], ["V1", "hall", "su_hall", true, 1], ["V1", "pantry", "su_pantry", true, 1], ["V2", "hall", "huo_copper", true, 11], ["V2", "R06", "huo_room", true, 11], ["V2", "foyer", "huo_foyer", true, 11], ["V3", "Tube", "remote_voice", true, 21], ["V3", "OutsideDoor", "remote_voice", false, 21], ["V4", "BoltKeepShut", "words_bolt", true, 30], ["V4", "OpenSaveMe", "words_bolt", false, 30], ["V5", "huo", "heed_huo", true, 39], ["V5", "su", "heed_su", true, 39], ["V5", "self", "heed_neither", true, 39], ["V6", false, "familiar", false, 49], ["V6", true, "familiar", true, 50]]
 
 fn c1_hist_domain(id, values):
     return {"id": id, "version": 1, "ref": dv_ref("history", "actual", id), "values": values}
 
 fn c1_hist_domains():
-    return c1_list_6(c1_hist_domain("V1", dv_list3("R08", "hall", "pantry")), c1_hist_domain("V2", dv_list3("hall", "R06", "foyer")), c1_hist_domain("V3", dv_pair("Tube", "OutsideDoor")), c1_hist_domain("V4", dv_pair("BoltKeepShut", "OpenSaveMe")), c1_hist_domain("V5", dv_list3("huo", "su", "self")), c1_hist_domain("V6", dv_pair(false, true)))
+    return [c1_hist_domain("V1", dv_list3("R08", "hall", "pantry")), c1_hist_domain("V2", dv_list3("hall", "R06", "foyer")), c1_hist_domain("V3", dv_pair("Tube", "OutsideDoor")), c1_hist_domain("V4", dv_pair("BoltKeepShut", "OpenSaveMe")), c1_hist_domain("V5", dv_list3("huo", "su", "self")), c1_hist_domain("V6", dv_pair(false, true))]
 
 fn c1_hist_coordinate_name(index):
     return rt_cat("history.coordinate.", rt_show(index))
@@ -204,10 +204,10 @@ fn c1_hist_add_coordinates(mind):
     return result
 
 fn c1_hist_assignments(su_room, huo_room, source, words, preference, familiar):
-    return c1_list_6({"variable": "V1", "value": su_room}, {"variable": "V2", "value": huo_room}, {"variable": "V3", "value": source}, {"variable": "V4", "value": words}, {"variable": "V5", "value": preference}, {"variable": "V6", "value": familiar})
+    return [{"variable": "V1", "value": su_room}, {"variable": "V2", "value": huo_room}, {"variable": "V3", "value": source}, {"variable": "V4", "value": words}, {"variable": "V5", "value": preference}, {"variable": "V6", "value": familiar}]
 
 fn c1_hist_assumptions(su_room, huo_room, source, words, preference, familiar):
-    return c1_list_6(dv_fact(dv_ref("history", "inputs", "su_origin"), su_room), dv_fact(dv_ref("history", "inputs", "huo_origin"), huo_room), dv_fact(dv_ref("history", "inputs", "source"), source), dv_fact(dv_ref("history", "inputs", "words"), words), dv_fact(dv_ref("history", "inputs", "trust_choice"), preference), dv_fact(dv_ref("history", "inputs", "familiar"), familiar))
+    return [dv_fact(dv_ref("history", "inputs", "su_origin"), su_room), dv_fact(dv_ref("history", "inputs", "huo_origin"), huo_room), dv_fact(dv_ref("history", "inputs", "source"), source), dv_fact(dv_ref("history", "inputs", "words"), words), dv_fact(dv_ref("history", "inputs", "trust_choice"), preference), dv_fact(dv_ref("history", "inputs", "familiar"), familiar)]
 
 fn c1_hist_claim_slots():
     return dv_list3(dv_with({"slot_id": "actual_heard", "ref": c1_hist_claim_ref("actual_heard"), "trace_at": 160, "feature_index": 0}, "value_from_prediction", true), dv_with({"slot_id": "voice_source", "ref": c1_hist_claim_ref("voice_source"), "trace_at": 160, "feature_index": 4}, "value_from_prediction", true), dv_with({"slot_id": "transmission_loss", "ref": c1_hist_claim_ref("transmission_loss"), "trace_at": 160, "feature_index": 6}, "value_from_prediction", true))
@@ -216,12 +216,12 @@ fn c1_hist_feature(predicted, observed):
     return {"proposition": dv_fact(c1_knowledge(predicted), true), "observation": dv_fact(c1_knowledge(observed), true), "at": 160}
 
 fn c1_hist_features():
-    return c1_list_7(c1_hist_feature("predicted_bolt", "bolt_down"), c1_hist_feature("predicted_wedge_soot", "ash_wedge"), c1_hist_feature("predicted_boots_bolt", "boots_toward_bolt"), c1_hist_feature("predicted_cloth_over_heel", "cloth_after_boots"), c1_hist_feature("predicted_slate_first", "slate_marks"), c1_hist_feature("predicted_slate_second", "slate_person"), c1_hist_feature("predicted_score_tail", "score_partial"))
+    return [c1_hist_feature("predicted_bolt", "bolt_down"), c1_hist_feature("predicted_wedge_soot", "ash_wedge"), c1_hist_feature("predicted_boots_bolt", "boots_toward_bolt"), c1_hist_feature("predicted_cloth_over_heel", "cloth_after_boots"), c1_hist_feature("predicted_slate_first", "slate_marks"), c1_hist_feature("predicted_slate_second", "slate_person"), c1_hist_feature("predicted_score_tail", "score_partial")]
 
 fn c1_hist_response_world(preference):
     var mind = dv_world(rt_cat("history-response-", preference), "mind", "modeled.detective")
     var basis = dv_pair(c1_source("docs/design-standard.md", 713, "V5-trust-plus-one-not-action"), c1_source("docs/design-standard.md", 723, "competing-reports-and-SocialSystem"))
-    mind = c1_add_objects(mind, c1_list_5(c1_local_object("modeled.detective"), c1_local_object("modeled.huo"), c1_local_object("modeled.su"), c1_local_object("joint.request"), c1_local_object("response.outcome")))
+    mind = c1_add_objects(mind, [c1_local_object("modeled.detective"), c1_local_object("modeled.huo"), c1_local_object("modeled.su"), c1_local_object("joint.request"), c1_local_object("response.outcome")])
     mind = dv_store(mind, dv_ref("response.outcome", "state", "value"), dv_with(dv_field(0), "basis", basis))
     var local_1 = false
     if (preference == "huo"):
@@ -257,7 +257,7 @@ fn c1_hist_response_option(id, received, predict, bridge):
     return dv_with(dv_with(dv_with({"id": id, "intent": id, "feasible": dv_fact(dv_ref("joint.request", "state", received), true), "effort": 0}, "feature_weights", []), "predict_law", predict), "bridge_law", bridge)
 
 fn c1_hist_response_model(preference):
-    return dv_with(dv_with(dv_with(dv_with(dv_with({"owner": "detective", "basis": dv_pair(c1_source("docs/design-standard.md", 713, "V5-V6-model-not-fact"), c1_source("docs/design-standard.md", 723, "joint-contradictory-reports")), "confidence": 0.85, "world": c1_hist_response_world(preference)}, "context", c1_list_4({"from": dv_ref("history", "relationships", "trust_huo"), "to": dv_ref("modeled.huo", "relationship", "trust")}, {"from": dv_ref("history", "relationships", "trust_su"), "to": dv_ref("modeled.su", "relationship", "trust")}, {"from": dv_ref("history", "state", "request_received"), "to": dv_ref("joint.request", "state", "huo_received")}, {"from": dv_ref("history", "state", "det_heard_su_report"), "to": dv_ref("joint.request", "state", "su_received")})), "requests", dv_single(dv_pair("competing-reports", dv_request("joint.request", "modeled.huo", "modeled.detective")))), "options", dv_list3(dv_pair("accept-huo", c1_hist_response_option("accept-huo", "huo_received", "huo.value", "history.response.huo")), dv_pair("accept-su", c1_hist_response_option("accept-su", "su_received", "su.value", "history.response.su")), dv_pair("inspect", c1_hist_response_option("inspect", "huo_received", "inspect.value", "history.response.self")))), "policy_id", "joint-response"), "choice_ref", dv_ref("history", "response", "detective"))
+    return dv_with(dv_with(dv_with(dv_with(dv_with({"owner": "detective", "basis": dv_pair(c1_source("docs/design-standard.md", 713, "V5-V6-model-not-fact"), c1_source("docs/design-standard.md", 723, "joint-contradictory-reports")), "confidence": 0.85, "world": c1_hist_response_world(preference)}, "context", [{"from": dv_ref("history", "relationships", "trust_huo"), "to": dv_ref("modeled.huo", "relationship", "trust")}, {"from": dv_ref("history", "relationships", "trust_su"), "to": dv_ref("modeled.su", "relationship", "trust")}, {"from": dv_ref("history", "state", "request_received"), "to": dv_ref("joint.request", "state", "huo_received")}, {"from": dv_ref("history", "state", "det_heard_su_report"), "to": dv_ref("joint.request", "state", "su_received")}]), "requests", dv_single(dv_pair("competing-reports", dv_request("joint.request", "modeled.huo", "modeled.detective")))), "options", dv_list3(dv_pair("accept-huo", c1_hist_response_option("accept-huo", "huo_received", "huo.value", "history.response.huo")), dv_pair("accept-su", c1_hist_response_option("accept-su", "su_received", "su.value", "history.response.su")), dv_pair("inspect", c1_hist_response_option("inspect", "huo_received", "inspect.value", "history.response.self")))), "policy_id", "joint-response"), "choice_ref", dv_ref("history", "response", "detective"))
 
 fn c1_hist_response_models():
     return dv_list3(dv_pair("history.huo", c1_hist_response_model("huo")), dv_pair("history.su", c1_hist_response_model("su")), dv_pair("history.self", c1_hist_response_model("self")))
@@ -281,10 +281,10 @@ axiom c1_hist_shen_smoke_response(history):
     return dv_axiom("c1_hist_shen_smoke_response", 1, dv_all(dv_pair(dv_fact(dv_ref("past.shen", "belief", "smoke"), true), dv_fact(dv_ref(history, "state", "door_open"), false))), dv_single(dv_assign(dv_ref("past.shen", "state", "intent"), "place-wet-cloth")))
 
 axiom c1_hist_episode_registers(history):
-    return dv_axiom("c1_hist_episode_registers", 1, dv_true(), c1_list_12(dv_assign(dv_ref(history, "state", "request_received"), false), dv_assign(dv_ref(history, "state", "det_heard_relay"), false), dv_assign(dv_ref(history, "state", "det_heard_su_report"), false), dv_assign(dv_ref(history, "state", "prints_exist"), false), dv_assign(dv_ref("past.su", "state", "intent"), "idle"), dv_assign(dv_ref("past.huo", "state", "intent"), "idle"), dv_assign(dv_ref("past.shen", "state", "intent"), "idle"), dv_assign(dv_ref("past.detective", "state", "intent"), "idle"), dv_assign(dv_ref("past.su", "belief", "outside_wants_open"), false), dv_assign(dv_ref("past.huo", "belief", "outside_wants_open"), false), dv_assign(dv_ref(history, "state", "at_origin"), false), dv_assign(dv_ref(history, "state", "latching_complete"), false)))
+    return dv_axiom("c1_hist_episode_registers", 1, dv_true(), [dv_assign(dv_ref(history, "state", "request_received"), false), dv_assign(dv_ref(history, "state", "det_heard_relay"), false), dv_assign(dv_ref(history, "state", "det_heard_su_report"), false), dv_assign(dv_ref(history, "state", "prints_exist"), false), dv_assign(dv_ref("past.su", "state", "intent"), "idle"), dv_assign(dv_ref("past.huo", "state", "intent"), "idle"), dv_assign(dv_ref("past.shen", "state", "intent"), "idle"), dv_assign(dv_ref("past.detective", "state", "intent"), "idle"), dv_assign(dv_ref("past.su", "belief", "outside_wants_open"), false), dv_assign(dv_ref("past.huo", "belief", "outside_wants_open"), false), dv_assign(dv_ref(history, "state", "at_origin"), false), dv_assign(dv_ref(history, "state", "latching_complete"), false)])
 
 fn c1_hist_setup(mind):
-    var result = c1_add_objects(mind, c1_list_6(c1_local_object("history_claims"), c1_local_object("history"), c1_local_object("past.su"), c1_local_object("past.huo"), c1_local_object("past.detective"), c1_local_object("past.shen")))
+    var result = c1_add_objects(mind, [c1_local_object("history_claims"), c1_local_object("history"), c1_local_object("past.su"), c1_local_object("past.huo"), c1_local_object("past.detective"), c1_local_object("past.shen")])
     return c1_hist_add_coordinates(result)
 
 fn c1_hist_predicate_basis():
@@ -345,7 +345,7 @@ fn c1_hist_add_source_laws(mind):
     var sources = dv_pair("Tube", "OutsideDoor")
     var words_list = dv_pair("BoltKeepShut", "OpenSaveMe")
     var listeners = dv_pair("past.su", "past.huo")
-    var rooms = c1_list_6("hall", "R08", "foyer", "pantry", "R05", "R06")
+    var rooms = ["hall", "R08", "foyer", "pantry", "R05", "R06"]
     var i = 0
     var j = 0
     var k = 0
@@ -418,7 +418,7 @@ fn c1_hist_add_travel(mind, actor, origin, target, intent):
 
 fn c1_hist_adopt_routes(mind):
     var result = mind
-    var routes = c1_list_12(c1_list_4("past.detective", "R05", "corridor", "seek-instruction"), c1_list_4("past.detective", "corridor", "hall", "seek-instruction"), c1_list_4("past.detective", "hall", "foyer", "visit-door"), c1_list_4("past.detective", "foyer", "hall", "return-report"), c1_list_4("past.su", "R08", "corridor", "open-and-listen"), c1_list_4("past.su", "corridor", "hall", "open-and-listen"), c1_list_4("past.su", "hall", "foyer", "open-and-listen"), c1_list_4("past.su", "foyer", "hall", "write-score"), c1_list_4("past.su", "hall", "corridor", "write-score"), c1_list_4("past.su", "corridor", "R08", "write-score"), c1_list_4("past.shen", "pantry", "hall", "place-wet-cloth"), c1_list_4("past.shen", "hall", "foyer", "place-wet-cloth"))
+    var routes = [["past.detective", "R05", "corridor", "seek-instruction"], ["past.detective", "corridor", "hall", "seek-instruction"], ["past.detective", "hall", "foyer", "visit-door"], ["past.detective", "foyer", "hall", "return-report"], ["past.su", "R08", "corridor", "open-and-listen"], ["past.su", "corridor", "hall", "open-and-listen"], ["past.su", "hall", "foyer", "open-and-listen"], ["past.su", "foyer", "hall", "write-score"], ["past.su", "hall", "corridor", "write-score"], ["past.su", "corridor", "R08", "write-score"], ["past.shen", "pantry", "hall", "place-wet-cloth"], ["past.shen", "hall", "foyer", "place-wet-cloth"]]
     var index = 0
     while (index < rt_count(routes)):
         var route = routes[index]
@@ -465,7 +465,7 @@ fn c1_hist_add_variant_laws(mind):
 fn c1_hist_hearing_ids(source, words):
     var result = []
     var listeners = dv_pair("past.su", "past.huo")
-    var rooms = c1_list_6("hall", "R08", "foyer", "pantry", "R05", "R06")
+    var rooms = ["hall", "R08", "foyer", "pantry", "R05", "R06"]
     var i = 0
     var j = 0
     while (i < 2):
@@ -513,10 +513,10 @@ fn c1_hist_timeline(su_room, huo_room, source, words, preference):
     var su_corridor = (1 + (1.2 / 1.3))
     var su_hall = (1 + (3.2 / 1.3))
     var su_foyer = (1 + (5.7 / 1.3))
-    rt_push(stages, c1_hist_stage(0, c1_list_5(c1_hist_origin_id(su_room, huo_room), "history.reset", "history.reset.records", "history.layout", "history.wake")))
+    rt_push(stages, c1_hist_stage(0, [c1_hist_origin_id(su_room, huo_room), "history.reset", "history.reset.records", "history.layout", "history.wake"]))
     rt_push(stages, c1_hist_stage(1, dv_single(rt_cat("history.voice.", c1_hist_source_id(source, words)))))
     c1_hist_hearing_stages(stages, 1, source, words)
-    rt_push(stages, c1_hist_stage(1, c1_list_10("history.tail-belief.past.su", "history.open-belief.past.su", "history.tail-belief.past.huo", "history.open-belief.past.huo", "history.su.intent", "history.huo.intent", rt_cat("history.slate.", words), "history.huo.guard", "history.open-door.past.huo", rt_cat("history.relations.", preference))))
+    rt_push(stages, c1_hist_stage(1, ["history.tail-belief.past.su", "history.open-belief.past.su", "history.tail-belief.past.huo", "history.open-belief.past.huo", "history.su.intent", "history.huo.intent", rt_cat("history.slate.", words), "history.huo.guard", "history.open-door.past.huo", rt_cat("history.relations.", preference)]))
     rt_push(stages, c1_hist_stage(1.2, dv_single(c1_hist_travel_id("past.detective", "R05", "corridor", "seek-instruction"))))
     rt_push(stages, c1_hist_stage(2, dv_single("history.smoke.due")))
     c1_hist_hearing_stages(stages, 2.2, source, words)
@@ -526,10 +526,10 @@ fn c1_hist_timeline(su_room, huo_room, source, words, preference):
         rt_push(stages, c1_hist_stage(su_hall, dv_single(c1_hist_travel_id("past.su", "corridor", "hall", "open-and-listen"))))
     if (su_room == "hall"):
         su_foyer = (1 + (2.5 / 1.3))
-    rt_push(stages, c1_hist_stage(su_foyer, c1_list_5(c1_hist_travel_id("past.su", "hall", "foyer", "open-and-listen"), "history.open-door.past.su", "history.fork", "history.smoke", "history.soot")))
+    rt_push(stages, c1_hist_stage(su_foyer, [c1_hist_travel_id("past.su", "hall", "foyer", "open-and-listen"), "history.open-door.past.su", "history.fork", "history.smoke", "history.soot"]))
     rt_push(stages, c1_hist_stage(5.7, dv_list3(c1_hist_travel_id("past.detective", "hall", "foyer", "visit-door"), "history.su.report", "history.smoke")))
     rt_push(stages, dv_with({"at": 5.7, "response": {"model": rt_cat("history.", preference), "request": "competing-reports", "options": dv_list3("accept-huo", "accept-su", "inspect")}, "optional": true}, "available_when", dv_fact(dv_ref("history", "state", "request_received"), true)))
-    rt_push(stages, c1_hist_stage(5.7, c1_list_8("history.latch", "history.close-smoke", "history.footprint", "history.prints", "history.return", "history.su.return", "history.argument.heard.both", "history.argument.heard.relay")))
+    rt_push(stages, c1_hist_stage(5.7, ["history.latch", "history.close-smoke", "history.footprint", "history.prints", "history.return", "history.su.return", "history.argument.heard.both", "history.argument.heard.relay"]))
     rt_push(stages, c1_hist_stage(8.2, dv_pair(c1_hist_travel_id("past.detective", "foyer", "hall", "return-report"), "history.report")))
     rt_push(stages, c1_hist_stage((5.7 + (2.5 / 1.3)), dv_single(c1_hist_travel_id("past.su", "foyer", "hall", "write-score"))))
     rt_push(stages, c1_hist_stage((5.7 + (4.5 / 1.3)), dv_single(c1_hist_travel_id("past.su", "hall", "corridor", "write-score"))))
@@ -612,7 +612,7 @@ fn c1_hist_share_basis():
     return dv_single(c1_source("docs/design-standard.md", 1500, "approved-estimated-argument-sharing-and-paid-scope-reassessment"))
 
 fn c1_hist_share_action(actor):
-    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".share.original_q2_complete"), "talk", c1_at(actor, "hall"), c1_at(actor, "hall"), "", [], c1_source("docs/design-standard.md", 1500, "approved-actual-argument-sharing")), "speech_from_argument", true), "argument_slots", dv_list3("actual_heard", "voice_source", "transmission_loss")), "argument_question", "original_q2_complete"), "topic", "original_q2_complete"), "listeners", c1_list_4("detective", "huo", "shen", "su")), "speech", dv_with(c1_speech(dv_true(), "本人形成的历史解释；估计性、置信度与来源由实际论证生成。", "estimated-history-argument"), "channel", "speech")), "reassessment_source_scope", "awake_self"), "reassessment_scope_refs", dv_single(dv_ref("question", "state", "awake_scope")))
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".share.original_q2_complete"), "talk", c1_at(actor, "hall"), c1_at(actor, "hall"), "", [], c1_source("docs/design-standard.md", 1500, "approved-actual-argument-sharing")), "speech_from_argument", true), "argument_slots", dv_list3("actual_heard", "voice_source", "transmission_loss")), "argument_question", "original_q2_complete"), "topic", "original_q2_complete"), "listeners", ["detective", "huo", "shen", "su"]), "speech", dv_with(c1_speech(dv_true(), "本人形成的历史解释；估计性、置信度与来源由实际论证生成。", "estimated-history-argument"), "channel", "speech")), "reassessment_source_scope", "awake_self"), "reassessment_scope_refs", dv_single(dv_ref("question", "state", "awake_scope")))
 
 fn c1_hist_share_goal(actor):
     return dv_with({"kind": "communicate", "method_id": rt_cat(actor, ".share.original_q2_complete"), "requires_argument": true, "basis": c1_hist_share_basis()}, "available_when", c1_at(actor, "hall"))

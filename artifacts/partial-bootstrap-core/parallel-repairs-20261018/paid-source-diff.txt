@@ -1,0 +1,71 @@
+--- dvs_speech_proposal_decision
++++ v_paid_speech_proposal_decision
+@@ -98,5 +98,5 @@
+         local_2 = []
+     else:
+         local_2 = dv_find(acceptance, "basis", [])
+-    return dv_with_many({"status": status, "reason": reason, "confidence_cap": confidence, "proposal": proposal}, {"policy_basis": local_2, "calculation_units": units})
++    return dv_with(dv_with({"status": status, "reason": reason, "confidence_cap": confidence, "proposal": proposal}, "policy_basis", local_2), "calculation_units", units)
+ 
+--- dvs_speech_received_observations
++++ v_paid_speech_received_observations
+@@ -10,7 +10,7 @@
+             if (decision.status == "ordinary"):
+                 local_1 = items[i]
+             else:
+-                local_1 = dv_with_many(items[i], {"estimated": true, "proposal_source": decision.proposal})
++                local_1 = dv_with(dv_with(items[i], "estimated", true), "proposal_source", decision.proposal)
+             rt_push(result, local_1)
+             i = (i + 1)
+         return result
+--- dvs_speech_candidates
++++ v_paid_speech_candidates
+@@ -33,8 +33,3 @@
+         i = (i + 1)
+     return result
+ 
+-mapping dvs_listener_mapping(mind, policy, bindings):
+-    input Percept
+-    output InterpretationSet
+-    using v_paid_speech_interpret(mind, policy, bindings)
+-
+--- dvs_speech_interpret
++++ v_paid_speech_interpret
+@@ -1,4 +1,4 @@
+-fn v_paid_speech_interpret(mind, policy, bindings, candidate):
++fn v_paid_speech_interpret(mind, policy, candidate, bindings):
+     var bridges = dv_find(policy, "implicature_bridges", [])
+     var i = 0
+     var bridge = false
+--- dvs_speech_model_interpretations
++++ v_paid_speech_model_interpretations
+@@ -3,7 +3,7 @@
+     var result = []
+     var i = 0
+     while (i < rt_count(candidates)):
+-        rt_push(result, (dvs_listener_mapping(mind, policy, bindings) × candidates[i]))
++        rt_push(result, v_paid_speech_interpret(mind, policy, candidates[i], bindings))
+         i = (i + 1)
+     return result
+ 
+--- dvs_speech_model_prediction
++++ v_paid_speech_model_prediction
+@@ -1,9 +1,9 @@
+ fn v_paid_speech_model_prediction(model, speech, speaker, source, time):
+-    var before = dv_with_many(model.mind, {"history": [], "seen": []})
++    var before = dv_clone(model.mind)
+     var policy = model.policy
+     var bindings = dv_find(speech, "referents", [])
+     var parsed = v_paid_speech_map(model.mind, speech.literal_ast, dv_find(speech, "referents", []))
+-    var decision = v_paid_speech_proposal_decision(before, policy, speech, dvs_speaker_trust(policy, speaker))
++    var decision = v_paid_speech_proposal_decision(before, policy, speech, dv_find(dv_find(policy, "speaker_trust", []), speaker, 0.5))
+     var observations = v_paid_speech_received_observations(before, parsed, rt_cat("prediction-", source), speaker, time, decision)
+     var profile = dv_observation_profile({"perception": 1, "testimony": 1, "recall": 1}, dv_find(policy, "observation_threshold", 0.5))
+     var receipt = dv_update_mind(before, observations, before.revision, profile)
+@@ -25,5 +25,5 @@
+         local_3 = "scope_reference_check_true=primary"
+     else:
+         local_3 = "scope_reference_check_false=primary"
+-    return dv_with_many({"model_before": before, "model_after": after, "predicted_literal": parsed, "observations": observations}, {"observation_profile": profile, "prediction": primary, "conditional_prediction": {"scope_reference_check_false": local_1, "scope_reference_check_true": local_2}, "assumptions": dv_find(model, "assumptions", []), "conditional_reuse": local_3, "proposal_decision": decision})
++    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"model_before": before, "model_after": after, "predicted_literal": parsed, "observations": observations}, "observation_profile", profile), "prediction", primary), "conditional_prediction", {"scope_reference_check_false": local_1, "scope_reference_check_true": local_2}), "assumptions", dv_find(model, "assumptions", [])), "conditional_reuse", local_3), "proposal_decision", decision)
+ 

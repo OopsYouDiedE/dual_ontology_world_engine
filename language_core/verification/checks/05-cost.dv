@@ -386,23 +386,6 @@ fn v_paid_speech_presuppositions(mind, speech):
         i = (i + 1)
     return result
 
-fn v_paid_speech_hearing(speaker, listener, speech):
-    var source = speaker.id
-    var channel = dv_find(speech, "channel", "")
-    var source_location = dv_find(speaker, "location", "")
-    var target_location = dv_find(listener, "location", "")
-    var grants = dv_find(listener, "hearing_grants", [])
-    var i = 0
-    var heard = false
-    if dv_and((not (source_location == "")), dv_same(source_location, target_location)):
-        heard = true
-    while (i < rt_count(grants)):
-        var grant = grants[i]
-        if dv_and((grant.speaker == source), (grant.channel == channel)):
-            heard = true
-        i = (i + 1)
-    return heard
-
 fn v_paid_speech_observations(mind, proposition, source, origin, time, trust):
     var op = proposition.op
     var observations = []
@@ -585,8 +568,9 @@ fn v_paid_speech_interpret(mind, policy, candidate, bindings):
     var bridge = false
     var proposition = {"op": "constant", "value": "unknown"}
     var available = dv_true()
-    var threshold = dv_find(policy, "implicature_threshold", 0.5)
+    var threshold = dv_max(dv_find(policy, "implicature_threshold", 0.5), dv_find(policy, "Implicature_Resistance", 0))
     var confidence = 0
+    var adoption = {degree: 0, level: "held"}
     var basis = []
     var status = "rejected"
     var missing = "missing-bridge"
@@ -637,16 +621,18 @@ fn v_paid_speech_interpret(mind, policy, candidate, bindings):
                             if (proposition_truth == "false"):
                                 missing = "contrary-evidence"
                             else:
-                                if (confidence < threshold):
+                                adoption = dv_threshold_acceptance(confidence, threshold)
+                                if adoption.level != "accepted":
                                     missing = "below-policy-threshold"
                                 else:
                                     status = "accepted"
                                     missing = ""
         if dv_and((status == "accepted"), dv_and(scope_check.check_enabled, scope_check.gap)):
             status = "retained"
+            adoption = dv_threshold_acceptance(0, threshold)
             missing = "scope-reference-bridge-not-supported"
         basis = dv_append(basis, {"bridge": bridge.id, "basis": bridge_basis})
-    return dv_with(dv_with(dv_with(dv_with(dv_with({"id": candidate.id, "proposition": proposition, "status": status, "confidence": confidence}, "basis", basis), "missing_bridge", missing), "scope_check", scope_check), "kind", "defeasible-interpretation"), "calculation_units", work)
+    return dv_with_many({"id": candidate.id, "proposition": proposition, "status": status, "confidence": confidence}, {"basis": basis, "missing_bridge": missing, "scope_check": scope_check, "kind": "defeasible-interpretation", "calculation_units": work, "acceptance": adoption})
 
 fn v_paid_speech_model_interpretations(mind, policy, speech, bindings):
     var candidates = v_paid_speech_candidates(policy, speech)
@@ -658,11 +644,11 @@ fn v_paid_speech_model_interpretations(mind, policy, speech, bindings):
     return result
 
 fn v_paid_speech_model_prediction(model, speech, speaker, source, time):
-    var before = dv_clone(model.mind)
+    var before = dv_with_many(model.mind, {"history": [], "seen": []})
     var policy = model.policy
     var bindings = dv_find(speech, "referents", [])
     var parsed = v_paid_speech_map(model.mind, speech.literal_ast, dv_find(speech, "referents", []))
-    var decision = v_paid_speech_proposal_decision(before, policy, speech, dv_find(dv_find(policy, "speaker_trust", []), speaker, 0.5))
+    var decision = v_paid_speech_proposal_decision(before, policy, speech, v_paid_speaker_trust(policy, speaker))
     var observations = v_paid_speech_received_observations(before, parsed, rt_cat("prediction-", source), speaker, time, decision)
     var profile = dv_observation_profile({"perception": 1, "testimony": 1, "recall": 1}, dv_find(policy, "observation_threshold", 0.5))
     var receipt = dv_update_mind(before, observations, before.revision, profile)
@@ -715,9 +701,6 @@ fn v_paid_speech_goals(actor):
             rt_push(active, goal)
         i = (i + 1)
     return active
-
-fn v_paid_speech_choice_signature(actor, action, goals):
-    return {"mind": actor.mind, "speech": action.speech, "goals": goals, "listeners": dv_find(action, "listeners", [])}
 
 fn v_paid_speech_goal_value(goals, listener, prediction):
     var value = 0
@@ -820,3 +803,14 @@ fn v_paid_execution_prediction_check(trace, e):
         else:
             local_1 = "violated"
     return v_finding("speaker_prediction_boundary", local_1, "实际发言复用已付费的本人预选记录；核对真实父链与原付费结果，执行时不再免费预测或重复收费", dv_append(ids, e.id))
+
+fn v_paid_speaker_trust(policy, speaker):
+    var trust = dv_find(dv_find(policy, "speaker_trust", []), speaker, 0.5)
+    let biases = dv_find(policy, "class_bias", [])
+    var i = 0
+    while i < rt_count(biases):
+        let bias = biases[i]
+        if 0 < rt_count(dv_find(bias, "basis", [])) and dv_has(bias.speakers, speaker):
+            trust = trust + bias.delta
+        i = i + 1
+    return dv_min(1, dv_max(0, trust))

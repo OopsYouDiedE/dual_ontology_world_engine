@@ -448,7 +448,7 @@ fn dvs_model_execute(actor, hypothesis, events, time, parent):
         rt_push(parents, paid)
     if dv_and((not (previous == "")), (not dv_has(parents, previous))):
         rt_push(parents, previous)
-    dvs_event(events, "mind_simulation", actor.id, time, parents, {"mind_revision": mind.revision, "hypothesis": hypothesis, "result": result, "actor_before": actor, "actor_id": actor.id})
+    dvs_event(events, "mind_simulation", actor.id, time, parents, {"mind_revision": mind.revision, "hypothesis": hypothesis, "result": result, "actor_before": dv_without(actor, "simulations"), "actor_id": actor.id})
     return result
 
 fn dvs_model_recheck(actor, model):
@@ -1015,7 +1015,7 @@ fn dvs_factor_prune(actor, events, time, parent):
         else:
             rt_push(rejections, {"constraint": constraint.id, "reason": reason, "paid_units": (start - remaining)})
         i = (i + 1)
-    result = dv_with_many({"certificates": certificates, "rejections": rejections, "expanded": (initial - remaining), "remaining": (dv_find(policy, "model_budget", 0) - (initial - remaining))}, {"work_remaining": remaining, "current_revision": mind.revision, "actor_before": actor})
+    result = dv_with_many({"certificates": certificates, "rejections": rejections, "expanded": (initial - remaining), "remaining": (dv_find(policy, "model_budget", 0) - (initial - remaining))}, {"work_remaining": remaining, "current_revision": mind.revision, "actor_before": dv_without(actor, "simulations")})
     var parents = dvs_cognitive_parents(actor, dv_single(parent))
     var j = 0
     if (dv_find(actor, "model_paid_event", "") == ""):
@@ -1572,7 +1572,7 @@ fn dvs_argument_revoke(actor, events, time, parent):
         local_2 = "model_argument_revocation_pending"
     else:
         local_2 = "model_argument_revoked"
-    dvs_event_prepared(events, local_2, actor.id, time, dvs_cognitive_parents(actor, dv_explanation_merge(dv_pair(parent, argument.id), descendants)), dv_with_many({"argument": argument, "mind_revision_before": actor.mind.revision, "mind_revision_after": world.revision, "restored": restored}, {"checked": checked, "remaining": remaining, "actor_id": actor.id}))
+    dvs_event_prepared(events, local_2, actor.id, time, dvs_cognitive_parents(actor, dv_explanation_merge(dv_pair(parent, argument.id), descendants)), dv_with_many({"argument": argument, "mind_revision_before": actor.mind.revision, "mind_revision_after": world.revision, "restored": restored}, {"checked": checked, "remaining": remaining, "actor_id": actor.id, "actor_before": dv_without(actor, "simulations"), "actor_after": dv_without(updated, "simulations"), "mind_before": actor.mind, "mind_after": world}))
     return updated
 
 fn dvs_factor_coverage(actor, hypothesis, events):
@@ -2018,7 +2018,7 @@ fn dvs_refresh_derivations(actor, events, time, parent):
     if dv_or(blocked, (0 < checked)):
         updated = dv_with(updated, "last_cognitive_event", rt_cat("e", rt_show(rt_count(events))))
     if dv_or(blocked, (0 < checked)):
-        parent = dvs_event_prepared(events, "inference_dependencies_invalidated", actor.id, time, parents, dv_with_many({"mind_revision_before": actor.mind.revision, "mind_revision_after": world.revision, "restored": restored, "checked": checked}, {"budget_blocked": blocked, "remaining": remaining, "actor_id": actor.id}))
+        parent = dvs_event_prepared(events, "inference_dependencies_invalidated", actor.id, time, parents, dv_with_many({"mind_revision_before": actor.mind.revision, "mind_revision_after": world.revision, "restored": restored, "checked": checked}, {"budget_blocked": blocked, "remaining": remaining, "actor_id": actor.id, "actor_before": dv_without(actor, "simulations"), "actor_after": dv_without(updated, "simulations"), "mind_before": actor.mind, "mind_after": world}))
     if dv_and((not blocked), (0 < checked)):
         return dvs_refresh_derivations(updated, events, time, parent)
     else:

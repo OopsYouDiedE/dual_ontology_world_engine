@@ -1,0 +1,44 @@
+[
+  {
+    "label": "generate",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\obj\\dv-toolchain\\843be2276a39b998096793fb868f02e797b77cc25face3eb885bc107ea1a77e4\\c3\\bin\\Release\\net8.0\\Program.dll",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\public-projection-probes-01\\probe-bundle.dv",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\public-projection-probes-01\\Program.cs",
+      "--emit",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\public-projection-probes-01\\ranges.json"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "build",
+    "args": [
+      "dotnet",
+      "build",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\public-projection-probes-01\\Probe.csproj",
+      "-c",
+      "Release",
+      "--disable-build-servers",
+      "-p:NuGetAudit=false"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "execute",
+    "args": [
+      "dotnet",
+      "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\public-projection-probes-01\\bin\\Release\\net8.0\\Probe.dll",
+      "normal"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "repeat",
+    "exit": 1
+  },
+  {
+    "label": "core-repeat",
+    "exit": 1
+  }
+]

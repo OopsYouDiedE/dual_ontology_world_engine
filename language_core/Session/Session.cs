@@ -14,7 +14,7 @@ public sealed class DvSession
 
     public static DvSession Open(string scenario) => new(DVProgram.SessionOpen(R.json_parse(scenario)));
     public static DvSession Restore(string snapshot) => new(ParseValue(snapshot));
-    public string Save() => JsonSerializer.Serialize(SnapshotValue(state));
+    public string Save() => JsonSerializer.Serialize(state, SnapshotOptions);
     public bool Active => R.Bool(DVProgram.SessionActive(state));
 
     public string Prepare(string selection = "")
@@ -51,6 +51,7 @@ public sealed class DvSession
 
     private static readonly JsonSerializerOptions SnapshotOptions = new()
     {
+        MaxDepth = 512,
         Converters = { new SnapshotExactConverter() }
     };
 
@@ -79,7 +80,7 @@ public sealed class DvSession
 
     private static object ParseValue(string json)
     {
-        using var document = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 256 });
+        using var document = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 512 });
         return ReadValue(document.RootElement);
     }
 

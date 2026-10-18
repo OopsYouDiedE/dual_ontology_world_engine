@@ -13,13 +13,13 @@ fn dvg_debug_stop_evidence(state, steps, limit):
         rt_push(reasons, "diagnostic-action-window")
     if state.limit <= state.executed:
         rt_push(reasons, "session-action-limit")
-    if state.horizon < state.physical.time:
+    if state.horizon <= state.physical.time:
         rt_push(reasons, "world-horizon")
     if state.duration_blocked:
         rt_push(reasons, "action-exceeds-remaining-time")
     if rt_count(state.actors) <= state.idle and dvs_scheduled_count(state.actors) == 0:
         rt_push(reasons, "no-scheduled-or-admissible-action")
-    return {"reasons": reasons, "actors": actors, "executed": state.executed, "session_limit": state.limit, "diagnostic_limit": limit, "game_time": state.physical.time, "horizon": state.horizon, "idle": state.idle, "scheduled_count": dvs_scheduled_count(state.actors), "narrative_completion": "not-inferred"}
+    return {"reasons": reasons, "actors": actors, "executed": state.executed, "session_limit": state.limit, "diagnostic_limit": limit, "game_time": state.physical.time, "horizon": state.horizon, "idle": state.idle, "scheduled_count": dvs_scheduled_count(state.actors), "narrative_completion": "see-actual-closing-record", "chapter_summary": dvg_chapter_summary(state)}
 
 // A formal-model run uses production decisions and explicit logical receipts.
 fn dvg_debug_run():
