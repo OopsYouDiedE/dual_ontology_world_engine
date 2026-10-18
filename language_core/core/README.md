@@ -911,7 +911,25 @@ C2导航意图从本人已知位置、已知开启的门和本人已采纳移动
 
 认知快路仅复用一次完整处理前后输入相同的固定点，且当次时间、章节、mind、政策、模型、解释、支持来源和同处上下文均未变化。先处理实际收闻与现场感知，迟发生的论证/模型更新不能标成已稳定。重复零步reason_stop及相同why_not_ready可不另发事件，实际推知/观察/模型/选择/执行不裁剪。诊断缓存和工作累计不进入行动规划备忘键。
 
-调试投影dv_debug_event返回冻结只读快照；每次实际执行仍流式保留所有debug_events，玩家呈现只输出visible条目，无可见正文丢失。无模板行直接返回空行列表，省略无用主体查找。phase_progress缺省关闭，仅去掉阶段计时诊断；run_debug.py仍将stdout直接写文件，未改为缓冲后批量落盘，也不按事件数量预设加速结论。
+调试投影dv_debug_event返回冻结只读快照；默认每步输出，显式分批模式由game/debug-run.dv积累实际玩家呈现并按原事件游标刷新。分批模式要求在线DAG逐条保留完整原始事件，stdout只代表已刷新前缀；超时可能保留尚未投影的DAG尾部，不能声称正文完整。无模板行直接返回空行列表；phase_progress缺省关闭。分批输出不改变prepare/complete、预算或事件来源。
+
+#### 批量投影与真实阶段恢复接口（2026-10-18）
+
+`run_debug.py --raw-format dag --projection-every 32 --timeout 240 --out <新目录>` 每32次外层真实Complete后刷新积累的玩家呈现和事件投影，正常循环结束补齐剩余。默认`--projection-every 1`保留逐步投影；大于1只允许在线DAG，原`dvs_event`逐事件提交保持不变，Core原有的小型执行回执stdout也继续保留。`stdout.jsonl`及正文仅是已刷新范围。`result.json`分列`stdout_projection_coverage`、`raw_committed_events_not_yet_projected`和中断后未知的完成步数；未刷新尾不补猜为完整正文，原始DAG继续作为完整已提交事件来源。
+
+`stage-day3`、`stage-day5`分别在正式绝对时钟跨2880、5760后的首次真实Complete结束时提交，不按运行开始时间重置日期；跨界前尚未完成的计算不生成checkpoint。记录含完整state、总调试steps、实际executed、无pending状态、配置、源码指纹，以及相互关联的host_completion/action_execution事件ID、原行动token和最终实际事件。恢复校验原始DAG帧链、提交位置、事件先后/主体/父链/行动token/执行状态、状态时钟及配置，不能仅凭after_complete标记建立资格。未发生边界完成时没有对应checkpoint。
+
+DAG自身保留精确有理数节点；默认只登记已提交checkpoint的位置，不自动展开可能很大的Save副本。需要恢复时显式运行：
+
+```powershell
+python language_core/tools/debug_checkpoints.py <原始DAG或.partial> --checkpoint stage-day3 --out <新checkpoint目录>
+python language_core/tools/resume_debug.py --checkpoint <新checkpoint目录>/manifest.json --out <独立新运行目录> --timeout 240 --projection-every 32
+```
+
+第一条只读导出已校验提交前缀中的实际checkpoint，保留`$dv_rational` Save标签；第二条才显式启动恢复。缺失、未提交、状态不符、来源文件改变、Save与原提交值不符或源码/配置不一致均拒绝；中断后的有效checkpoint可独立于未提交尾使用，原尾不改写。恢复从保存state直接进入同一个`dvg_debug_loop`的prepare/complete，不重新开局、不预置前两日、不注入结果。记录原时间及步骤作为恢复起点，新增DAG的initial保存继承状态、resume-origin保留原来源；新增事件与继承事件分别统计。显式传入冲突的角色配置被拒绝，诊断投影批量不改人物配置。源码路径与指纹当前按原工作区严格核对，不自动迁移或建立新基线。
+
+C#工具加载器`tools/DebugCheckpointResume.cs`使用与Session Restore相同的512层标签解析，精确数还原为Rational，文本分数字面仍为Text；普通Trace字符串编码不能充当Save。`check_debug_structure.py --out <新工程目录>`仅生成main=false程序并选择中性codec入口，检查标签及通用DAG值，既不调用正式会话也不建立阶段状态；该工程检查与唯一授权的新正式会话分列，不自动续跑。
+
 
 ## 连续优化循环与局部复用（2026-10-18）
 
@@ -1047,3 +1065,29 @@ python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --node 456 --value-
 结构相等的内部递归与成员桶核对使用原生Bool，公开 `rt_eq`/`rt_same_value` 仍返回同一DV Bool值；引用短路、精确数转换顺序、有效底本复用和原序比较不变。不建立新的相等规则。
 
 run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运行时分层编译比较使用同源串行独立窗口并记录显式环境，不将该配置变化冒称DV算法收益。
+
+### 180秒续作第八批：私有索引与静态目标
+
+`dvp_inspection_freshness`保留原完整mind/declared缓存键及刷新/读取/真值顺序。索引从私有空根构造：每桶entries独立复制后按键首次位置追加或替换，重复ref的entries保持顺序，末尾才memo发布。该根不属于mind、预测分支或事件，不允许作为共享世界原地更新入口；返回值与输入goals/mind保持原隔离合同。
+
+章节对话目标的静态前后段由`c2d_goal_head_build`/`c2d_goal_tail_build`生成，`c2d_goal_head`按完整tasks及id复用，`c2d_goal_tail`按id复用，调用方复制后在原位置组合。rows/tasks构造、动态row扫描、本人资格/收闻/决定和可用性仍按原顺序执行；模板只包含条件声明，不缓存选择或执行结果。
+
+运行环境元数据筛选以大写键比较`DOTNET_GC`、`DOTNET_TIERED`、`COMPLUS_TIERED`前缀，保存实际环境键和值，兼容Windows环境名规范化。旧缺失记录不追补为实测。
+
+`rt_eq`、`rt_same_value`与`rt_has_value`公开Bool结果复用不可变盒，内部判断与首错顺序不变；此改动仅减少返回值装箱，不改变DV相等与成员关系。小快照InlineArray缓冲候选未采纳，其局部CPU测量未支持收益。
+
+
+### 规划引用键（2026-10-18）
+
+`core/00-data.dv`的`dv_ref_lookup_key(ref)`仅服务依赖图与检视新鲜度索引。标准有序type/object/facet/field及可选subject文本字段使用R域、字段数与逐值长度分帧，保留空值和完整主体；异常结构、扩展/重复/缺字段、顺序变化、非文本、代理项及替换字符回到J域加原JSON。它不替代ref相等、本人绑定或持久化格式。`rt_is_text(value)`为无转换Bool类型谓词。
+
+`15-action-planning.dv`的dependency_add/dependencies与inspection_freshness/inspection_signature同步使用该键，相关memo域标为ref-key-v1。BFS预算、原序、完整ref输出、来源与错误读取顺序保持；独立工程证据比较旧新键相等关系、依赖闭包、首错和别名。
+
+
+### 有限空闲证书与内容构造复用（2026-10-18）
+
+`verification/session/30-runner.dv`的`dvs_known_clock_boundary`只分析constant/not/all/equals/at_least条件的未来阈值；未知结构返回不完整，阈值只使证书失效，不改世界或本人时钟。`dvs_idle_proof_supported`排除活跃解释、付费话语预测、未处理收闻和未捕获话题等未证明路径。只有真实准备前后主体完整语义输入稳定、没有新增认知事件且实际无动作、无规划/依赖展开、无时长阻断时，才建立有限idle_guard。
+
+`dvs_idle_guard_matches`核对本人输入、绑定、费用、章节、物理非时钟状态、真实同处上下文及新增事件；未知事件类型唤醒，侵蚀仍先按原流程计算。最长60游戏分钟及规划剩余时域边界仅作保守兜底，不能替代目标和动作条件边界。变化和期限均回原prepare；符合条件时仅更新调度标记，记录`planning_stop_reused`并引用原真实`planning_stop`，不伪造本次认知或行动。证书覆盖受上述证明范围限制，不能称全部主体均可休眠。
+
+第二章`c2d_row_goal`与`c2m_row_goal`仅缓存完整row/id及最终条件等显式输入的声明构造；`c2m_observation_goal_templates`按完整groups/id缓存静态证据模板。动态请求、已作决定、本人资格、证据新鲜度、导航与等待仍按原链计算。`game/entry.dv`仍无全目标刷新守卫；这些构造缓存不能宣称消除了全部刷新或BFS成本。

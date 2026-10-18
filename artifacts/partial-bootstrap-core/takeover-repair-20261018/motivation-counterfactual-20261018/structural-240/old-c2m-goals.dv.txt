@@ -1,0 +1,32 @@
+fn old_c2m_goals(actor):
+    var result = []
+    let rows = c2m_rows()
+    var i = 0
+    while i < rt_count(rows):
+        let row = rows[i]
+        if row.actor == actor.id:
+            let available = dv_all(row.requirements)
+            let completion = dv_fact(c2_ref(row.object, row.field), true)
+            var when = available
+            if row.private:
+                let motive = dv_fact(c2_own(actor.id, "private_motive"), true)
+                when = dv_all([available, motive])
+                // Travel expresses an intention to inspect a possible opportunity, not foreknowledge of the room.
+                if dv_truth(actor.mind, completion) != "true":
+                    var travel_when = motive
+                    if row.actor == "ruan":
+                        travel_when = dv_all([motive, c2_window(3, 1080, 1260)])
+                    rt_push(result, dv_with_many(c2_goal(c2_at(actor.id, row.room), travel_when, [c2m_source()]), {"navigation_completion": c2_at(actor.id, row.room), "navigation_room": row.room, "navigation_requirements": [], "navigation_methods": [row.id]}))
+            rt_push(result, dv_with_many(c2_goal(completion, when, [c2m_source()]), {"navigation_completion": completion, "navigation_room": row.room, "navigation_requirements": row.requirements, "navigation_methods": [row.id]}))
+        i = i + 1
+    let groups = c2m_fields()
+    i = 0
+    while i < rt_count(groups):
+        let group = groups[i]
+        var j = 0
+        while j < rt_count(group.fields):
+            rt_push(result, c2_observation_goal(c2_ref(group.object, group.fields[j]), c2_at(actor.id, group.room), [c2m_source()], 0))
+            j = j + 1
+        i = i + 1
+    return result
+

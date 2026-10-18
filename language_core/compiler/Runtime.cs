@@ -36,6 +36,7 @@ public static class R
     }
     public static object is_number(object s) => double.TryParse(Text(s), NumberStyles.Float, CultureInfo.InvariantCulture, out var n) && double.IsFinite(n);
     // Runtime value predicate; unlike is_number, this never parses or requires Text.
+    public static object is_text(object value) => value is string;
     public static object is_numeric_value(object value) => value is double n && double.IsFinite(n) || value is Rational q && q.Denominator.Sign > 0;
     public static object add(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Add(Rational.From(b)) : Num(Num(a) + Num(b));
     public static object sub(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Subtract(Rational.From(b)) : Num(Num(a) - Num(b));
@@ -43,7 +44,9 @@ public static class R
     public static object div(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Divide(Rational.From(b)) : Num(Num(a) / Num(b));
     public static object lt(object a, object b) => a is Rational || b is Rational ? Rational.From(a).CompareTo(Rational.From(b)) < 0 : Num(a) < Num(b);
     private static bool EqValue(object a, object b) => (a is Rational || b is Rational) && (a is Rational || a is double) && (b is Rational || b is double) ? Rational.From(a).Equals(Rational.From(b)) : Equals(a, b);
-    public static object eq(object a, object b) => EqValue(a, b);
+    private static readonly object BoolTrue = true;
+    private static readonly object BoolFalse = false;
+    public static object eq(object a, object b) => EqValue(a, b) ? BoolTrue : BoolFalse;
     public static object exact(object a) => Rational.From(a);
     public static object unit(object a)
     {
@@ -192,7 +195,7 @@ public static class R
     private static readonly List<object> MemoMiss = new() { false, false };
 
     // Structural value equality reads existing branches without materializing mutable copies.
-    public static object same_value(object a, object b) => SameValue(a, b);
+    public static object same_value(object a, object b) => SameValue(a, b) ? BoolTrue : BoolFalse;
     private static bool SameValue(object a, object b)
     {
         if (ReferenceEquals(a, b) || EqValue(a, b)) return true;
@@ -208,7 +211,8 @@ public static class R
         return true;
     }
     // Membership is a structural-value operation; reading never thaws child lists.
-    public static object has_value(object items, object value)
+    public static object has_value(object items, object value) => HasValue(items, value) ? BoolTrue : BoolFalse;
+    private static bool HasValue(object items, object value)
     {
         var values = Items(items);
         if (value is string name)

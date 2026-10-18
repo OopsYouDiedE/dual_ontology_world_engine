@@ -137,6 +137,48 @@ fn dv_same_local_ref(subject, left, right):
         return false
     return left.type == right.type and left.object == right.object and left.facet == right.facet and left.field == right.field
 
+// An internal lookup key, not a replacement for ref equality or persistence.
+// Canonical text refs use length framing; every other value retains its JSON key.
+fn dv_ref_key_text(value):
+    if not rt_is_text(value):
+        return false
+    var i = 0
+    while i < rt_length(value):
+        let unit = rt_code(rt_chr(value, i))
+        // Preserve JSON encoder replacement behavior for malformed UTF-16.
+        if (55296 <= unit and unit <= 57343) or unit == 65533:
+            return false
+        i = i + 1
+    return true
+
+fn dv_ref_lookup_key(ref):
+    if not rt_is_list(ref):
+        return rt_cat("J", rt_json_stringify(ref))
+    let count = rt_count(ref)
+    if count != 4 and count != 5:
+        return rt_cat("J", rt_json_stringify(ref))
+    let fields = ["type", "object", "facet", "field", "subject"]
+    var parts = []
+    var i = 0
+    while i < count:
+        let pair = ref[i]
+        if not rt_is_list(pair):
+            return rt_cat("J", rt_json_stringify(ref))
+        if rt_count(pair) != 2:
+            return rt_cat("J", rt_json_stringify(ref))
+        if pair[0] != fields[i] or not dv_ref_key_text(pair[1]):
+            return rt_cat("J", rt_json_stringify(ref))
+        rt_push(parts, pair[1])
+        i = i + 1
+    if parts[0] != "ref":
+        return rt_cat("J", rt_json_stringify(ref))
+    var result = rt_cat("R", rt_cat(rt_show(count), ":"))
+    i = 0
+    while i < count:
+        result = rt_cat(result, rt_cat(rt_show(rt_length(parts[i])), rt_cat(":", parts[i])))
+        i = i + 1
+    return result
+
 fn dv_world(id, domain, subject):
     dv_require(dv_or((domain == "physical"), (domain == "mind")), "Invalid world domain")
     var local_1 = false

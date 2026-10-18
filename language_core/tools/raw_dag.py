@@ -96,6 +96,7 @@ class RawDagIndex:
         last_event = None
         error = None
         last_checkpoint = None
+        checkpoint_commits = []
         initial_stat = self.source.stat()
         with self.source.open('rb') as source:
             while True:
@@ -152,6 +153,7 @@ class RawDagIndex:
                         initial = initial or name == 'initial'
                         final = final or name == 'final'
                         last_checkpoint = {'name': name, 'root': root, 'events': count, 'frame': sequence}
+                        checkpoint_commits.append(dict(last_checkpoint))
                         last_commit_bytes = source.tell()
                     elif kind == 'seal':
                         if not initial or not final or last_checkpoint is None or last_checkpoint['name'] != 'final' or last_checkpoint['events'] != events or payload.get('final_checkpoint') is not True or type(payload.get('events')) is not int or payload.get('events') != events or type(payload.get('nodes')) is not int or payload.get('nodes') != nodes:
@@ -180,7 +182,7 @@ class RawDagIndex:
             'validated_bytes': valid_bytes, 'last_commit_bytes': last_commit_bytes,
             'residual_tail_bytes': size - valid_bytes, 'uncommitted_suffix_bytes': size - last_commit_bytes,
             'initial_checkpoint_observed': initial, 'final_checkpoint_observed': final,
-            'seal_observed': seal, 'last_checkpoint': last_checkpoint, 'invalid_tail': error,
+            'seal_observed': seal, 'last_checkpoint': last_checkpoint, 'checkpoint_commits': checkpoint_commits, 'invalid_tail': error,
             'complete_sealing': bool(initial and final and seal and error is None and not source_changed),
             'scope': 'complete sealed raw values' if initial and final and seal and error is None and not source_changed else 'validated committed event prefix only; no inferred final session state',
             'uncompleted_computation': 'unknown; calculations without a committed event are not reconstructed',

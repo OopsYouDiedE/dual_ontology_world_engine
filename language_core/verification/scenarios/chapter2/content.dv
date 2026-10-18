@@ -2460,6 +2460,36 @@ fn c2m_actions(actor):
         i = i + 1
     return result
 
+// Cache pure declaration assembly only. The caller still checks private
+// completion before requesting travel, and navigation eligibility stays live.
+fn c2m_row_goal(row, id, when, completion, travel):
+    let key = ["c2m-row-goal-declaration-v1", id, when, completion, travel]
+    let cached = rt_memo_get(row, key)
+    if cached[0]:
+        return cached[1]
+    var goal = false
+    if travel:
+        goal = dv_with_many(c2_goal(c2_at(id, row.room), when, [c2m_source()]), {"navigation_completion": c2_at(id, row.room), "navigation_room": row.room, "navigation_requirements": [], "navigation_methods": [row.id]})
+    else:
+        goal = dv_with_many(c2_goal(completion, when, [c2m_source()]), {"navigation_completion": completion, "navigation_room": row.room, "navigation_requirements": row.requirements, "navigation_methods": [row.id]})
+    return rt_memo_put(row, key, goal)
+
+fn c2m_observation_goal_templates(id, groups):
+    let key = ["c2m-observation-goal-declarations-v1", id]
+    let cached = rt_memo_get(groups, key)
+    if cached[0]:
+        return cached[1]
+    var result = []
+    var i = 0
+    while i < rt_count(groups):
+        let group = groups[i]
+        var j = 0
+        while j < rt_count(group.fields):
+            rt_push(result, c2_observation_goal(c2_ref(group.object, group.fields[j]), c2_at(id, group.room), [c2m_source()], 0))
+            j = j + 1
+        i = i + 1
+    return rt_memo_put(groups, key, result)
+
 fn c2m_goals(actor):
     var result = []
     let rows = c2m_rows()
@@ -2478,17 +2508,13 @@ fn c2m_goals(actor):
                     var travel_when = motive
                     if row.actor == "ruan":
                         travel_when = dv_all([motive, c2_window(3, 1080, 1260)])
-                    rt_push(result, dv_with_many(c2_goal(c2_at(actor.id, row.room), travel_when, [c2m_source()]), {"navigation_completion": c2_at(actor.id, row.room), "navigation_room": row.room, "navigation_requirements": [], "navigation_methods": [row.id]}))
-            rt_push(result, dv_with_many(c2_goal(completion, when, [c2m_source()]), {"navigation_completion": completion, "navigation_room": row.room, "navigation_requirements": row.requirements, "navigation_methods": [row.id]}))
+                    rt_push(result, c2m_row_goal(row, actor.id, travel_when, completion, true))
+            rt_push(result, c2m_row_goal(row, actor.id, when, completion, false))
         i = i + 1
-    let groups = c2m_fields()
+    let observations = c2m_observation_goal_templates(actor.id, c2m_fields())
     i = 0
-    while i < rt_count(groups):
-        let group = groups[i]
-        var j = 0
-        while j < rt_count(group.fields):
-            rt_push(result, c2_observation_goal(c2_ref(group.object, group.fields[j]), c2_at(actor.id, group.room), [c2m_source()], 0))
-            j = j + 1
+    while i < rt_count(observations):
+        rt_push(result, observations[i])
         i = i + 1
     return result
 

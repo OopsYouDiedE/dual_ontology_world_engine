@@ -1,0 +1,241 @@
+#include ../../../../../language_core/game/entry.dv
+// Actual production functions plus frozen pre-template c2d_goals.
+// Engineering fixtures below do not claim any game decision was executed.
+fn old_c2d_goals(actor):
+    var goals = []
+    let rows = c2d_rows()
+    let tasks = c2daily_tasks()
+    var t = 0
+    while t < rt_count(tasks):
+        if tasks[t].actor == actor.id:
+            rt_push(goals, dv_with_many(c2_goal(dv_fact(c2daily_ref(tasks[t].field), true), tasks[t].when, [c2_approved("real-daily-contact-action")]), {"navigation_room": tasks[t].room, "navigation_methods": [tasks[t].id]}))
+        t = t + 1
+    rt_push(goals, dv_with_many(c2_observation_goal(c2daily_ref("meal_prepared"), c2_window(2, 690, 810), [c2_approved("look-for-real-lunch")], 2130), {"navigation_room": "living_hall", "navigation_methods": [rt_cat(actor.id, ".c2.inspect.c2.daily")]}))
+    if actor.id == "ward":
+        rt_push(goals, dv_with_many(c2_observation_goal(c2daily_ref("draft_notes"), c2daily_notes_window(), [c2_approved("inspect-current-draft-before-owned-norm-discussion")], 2250), {"navigation_room": "central_hall", "navigation_methods": ["ward.c2.daily.inspect-central"]}))
+    if actor.id == "shen":
+        rt_push(goals, dv_with_many(c2_goal(dv_fact(c2daily_ref("meal_cooked"), true), c2_window(2, 690, 810), [c2_approved("cook-real-lunch")]), {"navigation_room": "logistics", "navigation_methods": ["shen.c2.daily.cook-sixteen"]}))
+        rt_push(goals, dv_with_many(c2_goal(dv_fact(c2daily_ref("meal_prepared"), true), dv_all([c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), true)]), [c2_approved("deliver-real-lunch")]), {"navigation_room": "living_hall", "navigation_methods": ["shen.c2.daily.deliver-sixteen"]}))
+    if actor.id == "ruan":
+        rt_push(goals, dv_with_many(c2_goal(dv_fact(c2daily_ref("draft_notes"), true), c2daily_notes_window(), [c2_approved("draft-notes-through-real-action")]), {"navigation_room": "central_hall", "navigation_methods": ["ruan.c2.draft-notes"]}))
+    // Invocation-local reuse: actor/mind remain unchanged throughout this loop.
+    // Evaluate lazily at the original first use so unrelated errors keep order.
+    var concerned_ready = false
+    var concerned = false
+    var notice_ready = false
+    var notice = false
+    var case_ready = false
+    var case_gate = false
+    var i = 0
+    while i < rt_count(rows):
+        let row = rows[i]
+        if row.actor == actor.id and (not dv_find(row, "manual_only", false) or (dv_has_key(row, "manipulation") and dv_find(actor.policy, "allow_manipulation_candidates", false))):
+            var when = dv_all([row.when, row.literal])
+            if not dv_find(row, "repeatable", false):
+                when = dv_all([when, dv_fact(c2d_mark(actor.id, row.id), false)])
+            if dv_has_key(row, "owned_decision"):
+                let candidate = dvp_find_action(actor.actions, row.id)
+                if candidate == false or not dvp_owned_decision_ready(actor, candidate, actor.mind):
+                    when = dv_not(dv_true())
+            if dv_has_key(row, "partner_decision"):
+                let candidate = dvp_find_action(actor.actions, row.id)
+                if candidate == false or not dvp_personal_ready(actor.mind, candidate.personal_choice):
+                    when = dv_not(dv_true())
+            if dv_find(row, "work_refusal", false) or dv_find(row, "concern_question", false):
+                if not concerned_ready:
+                    concerned = c2_quer_concerned(actor)
+                    concerned_ready = true
+                if not concerned:
+                    when = dv_not(dv_true())
+            if dv_find(row, "safety_warning", false) or dv_find(row, "guard_decision", false):
+                if not notice_ready:
+                    notice = c2_owned_safety_notice(actor)
+                    notice_ready = true
+                if not notice:
+                    when = dv_not(dv_true())
+            if dv_find(row, "category", "") == "case":
+                if not case_ready:
+                    case_gate = c2d_case_gate(actor.mind)
+                    case_ready = true
+                when = dv_all([when, case_gate])
+            if dv_has_key(row, "received_speech_requirement"):
+                if not c2_received_requirement(actor, row.received_speech_requirement):
+                    when = dv_not(dv_true())
+            if dv_has_key(row, "response_topic"):
+                if rt_count(dvs_pending_request(actor, row)) == 0:
+                    when = dv_not(dv_true())
+            if dv_has_key(row, "advice_decision"):
+                let candidate = dvp_find_action(actor.actions, row.id)
+                if candidate == false or not dvs_advice_decision_ready(actor, candidate, actor.mind):
+                    when = dv_not(dv_true())
+            rt_push(goals, c1n_index_goal_window({"kind": "communicate", "scope": "personal", "method_id": row.id, "available_when": when, "basis": [row.source], "requires_argument": false, "navigation_room": row.room}))
+        i = i + 1
+    let study = dv_all([dv_fact(c2_access("north"), true), c2_window(2, 600, 690)])
+    rt_push(goals, dv_with_many(c2_goal(c2_at(actor.id, "lecture"), study, [c2d_source("06_场面.story", 79, "请到讲堂")]), {"navigation_room": "lecture", "maintain_presence": true}))
+    if actor.id == "bertrand":
+        rt_push(goals, dv_with(c2_goal(dv_fact(c2d_person_ref(actor.id, "watching"), true), c2_any_night(), [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story", 30, "夜里巡夜：护住同伴")]), "navigation_room", "logistics"))
+        rt_push(goals, dv_with(c2_observation_goal(c2d_person_ref(actor.id, "small_shadow_seen"), dv_all([c2_any_night(), dv_fact(c2d_person_ref(actor.id, "watching"), true)]), [c2d_source("04_案件.story", 25, "有限身影观察")], 0), "navigation_room", "logistics"))
+    if actor.id == "detective":
+        let ledger_fields = ["counted", "reserve_received", "day_recorded", "night_recorded", "pending_registered"]
+        rt_push(goals, c2_observation_goal(c2_ref("c2.counter", "remaining"), c2_at(actor.id, "logistics"), [c1_source("docs/design-standard.md", 0, "实物清点与台账对照")], 0))
+        i = 0
+        while i < rt_count(ledger_fields):
+            rt_push(goals, c2_observation_goal(c2_ref("c2.ledger", ledger_fields[i]), c2_at(actor.id, "logistics"), [c2d_source("04_案件.story", 10, "从读到账目再判断是否有缺口")], 0))
+            i = i + 1
+    if actor.id == "quer":
+        rt_push(goals, dv_with(c2_goal(dv_fact(c2_ref("c2.granary", "latch_loose"), false), dv_all([dv_fact(c2_ref("c2.granary", "latch_loose"), true), c2_work_accepted(actor.id, "quer.c2.granary.precision")]), [c2d_source("10_执行.story", 17, "RepairLatch")]), "navigation_room", "logistics"))
+    let opportunity = c2d_known_council_proposal()
+    let venues = [{"room": "oath_court", "wind": true}, {"room": "central_hall", "wind": false}]
+    i = 0
+    while i < rt_count(venues):
+        let venue = venues[i]
+        let when = dv_all([c2d_council_when(), c2_alive(actor.id), opportunity, dv_fact(c2_ref("c2.weather", "wind"), venue.wind), dv_fact(c2daily_ref(rt_cat("signed.", actor.id)), false)])
+        rt_push(goals, dv_with(c2_goal(c2_at(actor.id, venue.room), when, [c2d_source("06_场面.story", 340, "章二议事机会")]), "navigation_room", venue.room))
+        // Ballot effects increment the actually inspected tally, never an assumed zero.
+        let tally = ["votes.open_plan", "votes.seal_plan", "votes.committee_plan"]
+        var n = 0
+        while n < rt_count(tally):
+            rt_push(goals, dv_with(c2_observation_goal(c2daily_ref(tally[n]), when, [c2_approved("actual-council-tally-before-personal-ballot")], 6210), "navigation_room", venue.room))
+            n = n + 1
+        i = i + 1
+    return goals
+
+fn old_c2m_goals(actor):
+    var result = []
+    let rows = c2m_rows()
+    var i = 0
+    while i < rt_count(rows):
+        let row = rows[i]
+        if row.actor == actor.id:
+            let available = dv_all(row.requirements)
+            let completion = dv_fact(c2_ref(row.object, row.field), true)
+            var when = available
+            if row.private:
+                let motive = dv_fact(c2_own(actor.id, "private_motive"), true)
+                when = dv_all([available, motive])
+                // Travel expresses an intention to inspect a possible opportunity, not foreknowledge of the room.
+                if dv_truth(actor.mind, completion) != "true":
+                    var travel_when = motive
+                    if row.actor == "ruan":
+                        travel_when = dv_all([motive, c2_window(3, 1080, 1260)])
+                    rt_push(result, dv_with_many(c2_goal(c2_at(actor.id, row.room), travel_when, [c2m_source()]), {"navigation_completion": c2_at(actor.id, row.room), "navigation_room": row.room, "navigation_requirements": [], "navigation_methods": [row.id]}))
+            rt_push(result, dv_with_many(c2_goal(completion, when, [c2m_source()]), {"navigation_completion": completion, "navigation_room": row.room, "navigation_requirements": row.requirements, "navigation_methods": [row.id]}))
+        i = i + 1
+    let groups = c2m_fields()
+    i = 0
+    while i < rt_count(groups):
+        let group = groups[i]
+        var j = 0
+        while j < rt_count(group.fields):
+            rt_push(result, c2_observation_goal(c2_ref(group.object, group.fields[j]), c2_at(actor.id, group.room), [c2m_source()], 0))
+            j = j + 1
+        i = i + 1
+    return result
+
+
+fn d8_compare_values(name, old, current):
+    rt_json_print({"case": name, "same": dv_same(old, current), "old": old, "current": current})
+    return true
+
+fn d8_compare(name, actor):
+    d8_compare_values(name, old_c2d_goals(actor), c2d_goals(actor))
+    return d8_compare_values(rt_cat(name, ".motive-construction"), old_c2m_goals(actor), c2m_goals(actor))
+
+fn d8_owned_context_fixtures(actor):
+    var i = 0
+    while i < rt_count(actor.actions):
+        let action = actor.actions[i]
+        if dv_has_key(action, "owned_decision"):
+            let context = dvs_owned_decision_context(actor, action.owned_decision, actor.mind)
+            let same_record = {"context": context, "fixture_kind": "engineering-only-not-executed"}
+            let same_actor = dv_with(actor, "owned_decisions", dv_with(dv_find(actor, "owned_decisions", []), action.owned_decision.id, same_record))
+            d8_compare(rt_cat(actor.id, ".owned-context-matches-fixture"), same_actor)
+            let different_record = dv_with(same_record, "context", dv_with(context, "neutral_fixture_revision", 1))
+            let different_actor = dv_with(actor, "owned_decisions", dv_with(dv_find(actor, "owned_decisions", []), action.owned_decision.id, different_record))
+            d8_compare(rt_cat(actor.id, ".owned-context-differs-fixture"), different_actor)
+            rt_json_print({"fixture_scope": "structural-owner-context-only-no-action-completion", "actor": actor.id, "action": action.id, "matching_ready": dvp_owned_decision_ready(same_actor, action, same_actor.mind), "changed_ready": dvp_owned_decision_ready(different_actor, action, different_actor.mind)})
+            return true
+        i = i + 1
+    rt_json_print({"fixture_scope": "structural-owner-context-only-no-action-completion", "actor": actor.id, "owned_decision_action": "not-declared"})
+    return true
+
+fn d8_inline_row_goal(row, when):
+    return c1n_index_goal_window({"kind": "communicate", "scope": "personal", "method_id": row.id, "available_when": when, "basis": [row.source], "requires_argument": false, "navigation_room": row.room})
+
+fn d8_motive_completion_fixtures(actor):
+    let rows = c2m_rows()
+    var i = 0
+    while i < rt_count(rows):
+        let row = rows[i]
+        if row.actor == actor.id and row.private:
+            let ref = c2_ref(row.object, row.field)
+            let completed = dv_with(actor, "mind", dv_store(actor.mind, ref, dv_field(true)))
+            let unfinished = dv_with(actor, "mind", dv_store(actor.mind, ref, dv_field(false)))
+            d8_compare_values(rt_cat(actor.id, ".private-completion-fixture-true"), old_c2m_goals(completed), c2m_goals(completed))
+            d8_compare_values(rt_cat(actor.id, ".private-completion-fixture-false"), old_c2m_goals(unfinished), c2m_goals(unfinished))
+            rt_json_print({"fixture_scope": "synthetic-private-completion-only-no-real-action", "actor": actor.id, "row": row.id})
+            return true
+        i = i + 1
+    return false
+
+fn d8_goal_construction_inputs():
+    let row = {"id": "neutral.goal", "source": {"path": "engineering-only", "line": 0, "id": "neutral-source"}, "room": "neutral-room"}
+    let windows = [dv_true(), dv_not(dv_true()), dv_at_least(c2_clock(), 10)]
+    let owners = ["neutral-owner-a", "neutral-owner-b"]
+    var i = 0
+    while i < rt_count(windows):
+        var j = 0
+        while j < rt_count(owners):
+            d8_compare_values(rt_cat("neutral.row.when-owner.", rt_show(i * 2 + j)), d8_inline_row_goal(row, windows[i]), c2d_row_goal(row, owners[j], windows[i]))
+            j = j + 1
+        i = i + 1
+    let caller = c2d_row_goal(row, owners[0], windows[0])
+    rt_push(caller.basis, "caller-only")
+    d8_compare_values("neutral.row.nested-alias", d8_inline_row_goal(row, windows[0]), c2d_row_goal(row, owners[0], windows[0]))
+    let changed_row = dv_with(row, "room", "revised-room")
+    d8_compare_values("neutral.row.complete-declaration-owner", d8_inline_row_goal(changed_row, windows[0]), c2d_row_goal(changed_row, owners[0], windows[0]))
+    let changed_when = dv_with(windows[2], "value", 20)
+    d8_compare_values("neutral.row.mutable-condition", d8_inline_row_goal(row, changed_when), c2d_row_goal(row, owners[0], changed_when))
+    let groups = [{"object": "neutral-object", "room": "neutral-room", "fields": ["neutral-field"]}]
+    let first = c2m_observation_goal_templates(owners[0], groups)
+    let sibling = c2m_observation_goal_templates(owners[0], groups)
+    rt_push(first[0].basis, "caller-only")
+    d8_compare_values("neutral.observation-template.sibling", sibling, c2m_observation_goal_templates(owners[0], groups))
+    let other = c2m_observation_goal_templates(owners[1], groups)
+    let expected = [c2_observation_goal(c2_ref("neutral-object", "neutral-field"), c2_at(owners[1], "neutral-room"), [c2m_source()], 0)]
+    d8_compare_values("neutral.observation-template.owner", expected, other)
+    return true
+
+fn dvg_debug_run():
+    // Only install actual initial declarations; never open or advance a session.
+    let scene = c2d_install_scene(c2_extend_scene(c1n_install_scene(c1dep_install_scene(c1_campaign_scene()))))
+    var i = 0
+    while i < rt_count(scene.actors):
+        let actor = scene.actors[i]
+        d8_compare(rt_cat(actor.id, ".initial-declarations"), actor)
+        let manipulation = dv_with(actor, "policy", dv_with(actor.policy, "allow_manipulation_candidates", true))
+        d8_compare(rt_cat(actor.id, ".policy-manipulation-permitted"), manipulation)
+        let without_actions = dv_with(actor, "actions", [])
+        d8_compare(rt_cat(actor.id, ".empty-action-table"), without_actions)
+        d8_owned_context_fixtures(actor)
+        d8_motive_completion_fixtures(actor)
+        let caller = c2d_goals(actor)
+        if rt_count(caller) > 0:
+            rt_push(caller[0].basis, "neutral-caller-only-basis")
+        rt_push(caller, {"neutral-caller-only": true})
+        d8_compare(rt_cat(actor.id, ".after-caller-list-and-nested-change"), actor)
+        i = i + 1
+    d8_goal_construction_inputs()
+    // Exercise the actual head cache's complete tasks owner, with no world write.
+    let tasks = c2daily_tasks()
+    let warmed = c2d_goal_head("owner", tasks)
+    let changed_tasks = dv_clone(tasks)
+    rt_push(changed_tasks, {"actor": "owner", "id": "neutral-task", "field": "neutral-field", "room": "neutral-room", "when": dv_true()})
+    d8_compare_values("neutral.head-complete-task-owner-append", c2d_goal_head_build("owner", changed_tasks), c2d_goal_head("owner", changed_tasks))
+    let warmed_changed = c2d_goal_head("owner", changed_tasks)
+    let last = rt_count(changed_tasks) - 1
+    let revised_task = dv_with(changed_tasks[last], "when", dv_not(dv_true()))
+    let revised_tasks = dvs_replace(changed_tasks, last, revised_task)
+    d8_compare_values("neutral.head-complete-task-owner-nested-change", c2d_goal_head_build("owner", revised_tasks), c2d_goal_head("owner", revised_tasks))
+    rt_json_print({"scope": "initial-declaration-and-neutral-structural-engineering-only", "formal_session": "not-started", "game_acceptance": "not-performed", "unexecuted-dynamic-branches": "unknown"})
+    return true

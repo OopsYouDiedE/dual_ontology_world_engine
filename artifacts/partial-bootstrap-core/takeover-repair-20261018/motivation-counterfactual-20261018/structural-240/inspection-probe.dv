@@ -1,0 +1,150 @@
+#include ../../../../../language_core/game/entry.dv
+#include old-ref-functions.dv
+
+fn neutral_mind():
+    var mind = dv_world("neutral-inspection", "mind", "neutral-owner")
+    mind = dv_add_object(mind, dv_object("neutral", "material", {"state": {"known": dv_field(true), "stop_true": dv_field(true), "stop_false": dv_field(false), "related": dv_with(dv_field(true), "time", 17), "other": dv_with(dv_field(true), "time", 99)}}))
+    return mind
+
+fn neutral_goal(ref, minimum, when):
+    return {"kind": "evidence", "ref": ref, "minimum_time": minimum, "available_when": when}
+
+fn neutral_goals(mode):
+    let known = dv_ref("neutral", "state", "known")
+    let missing = dv_ref("neutral", "state", "missing")
+    var goals = [neutral_goal(known, 1, dv_true()), {"kind": "know", "ignored": "neutral"}, neutral_goal(missing, 2, dv_fact(missing, true)), neutral_goal(known, 3, dv_not(dv_true()))]
+    var i = 0
+    while i < 12:
+        rt_push(goals, neutral_goal(dv_ref("neutral", "state", rt_cat("extra", rt_show(i))), i, dv_true()))
+        i = i + 1
+    rt_push(goals, neutral_goal(known, rt_div(rt_exact(3), rt_exact(2)), dv_true()))
+    let subject_ref = dv_with(known, "subject", "neutral-owner")
+    rt_push(goals, neutral_goal(subject_ref, 4, dv_true()))
+    let extended = dv_with(known, "neutral_extra", ["independent", ["nested"]])
+    rt_push(goals, neutral_goal(extended, 5, dv_true()))
+    let stops = ["stop_true", "stop_false", "stop_missing"]
+    i = 0
+    while i < rt_count(stops):
+        rt_push(goals, dv_with_many(neutral_goal(known, 7, dv_true()), {"refresh_until": dv_fact(dv_ref("neutral", "state", stops[i]), true), "refresh_refs": [dv_ref("neutral", "state", "related")]}))
+        i = i + 1
+    rt_push(goals, dv_with(neutral_goal(known, 8, dv_true()), "refresh_until", dv_not(dv_true())))
+    rt_push(goals, dv_with_many(neutral_goal(known, 9, dv_true()), {"refresh_until": dv_not(dv_true()), "refresh_refs": []}))
+    if mode == "empty":
+        return []
+    if mode == "ignored":
+        return [{"kind": "know", "available_when": "never-read"}, {"kind": "evidence"}]
+    let bad_operator = {"op": "neutral_bad_operator", "ref": known, "value": true}
+    let foreign = dv_fact(dv_with(known, "subject", "foreign-owner"), true)
+    if mode == "error-operator-first":
+        return [neutral_goal(known, 0, bad_operator), neutral_goal(known, 0, foreign)]
+    if mode == "error-subject-first":
+        return [neutral_goal(known, 0, foreign), neutral_goal(known, 0, bad_operator)]
+    if mode == "error-refresh-first":
+        return [neutral_goal(known, 0, bad_operator), dv_with(neutral_goal(known, 0, dv_true()), "refresh_until", foreign)]
+    return goals
+
+// Normalize only internal key spelling, retaining bucket references for alias probes.
+fn neutral_call(which, actor, mind):
+    var index = []
+    if which == "old":
+        index = neutral_old_dvp_inspection_freshness(actor, mind)
+    else:
+        index = dvp_inspection_freshness(actor, mind)
+    var output = []
+    var i = 0
+    while i < rt_count(index):
+        let entries = index[i][1]
+        rt_push(output, [rt_json_stringify(entries[0].ref), entries])
+        i = i + 1
+    return output
+
+fn neutral_ref_cases():
+    let a = dv_ref("a:b", "c", "d")
+    let b = dv_ref("a", "b:c", "d")
+    let unicode = dv_ref("中:文", "", "0:1")
+    let astral = dv_ref("😀", "state", "x")
+    let lone = dv_ref(rt_chr("😀", 0), "state", "x")
+    let reordered = [["object", "a:b"], ["type", "ref"], ["facet", "c"], ["field", "d"]]
+    let duplicate = dv_append(a, ["field", "d"])
+    let extension = dv_with(a, "extra", ["x", [1, true]])
+    let missing = [["type", "ref"], ["object", "a:b"], ["facet", "c"]]
+    return [a, b, dv_clone(a), dv_with(a, "subject", ""), dv_with(a, "subject", "owner1"), dv_with(a, "subject", "owner2"), reordered, duplicate, extension, missing, unicode, astral, lone, dv_with(a, "type", "different"), dv_with(a, "field", 1), [], dv_ref("�", "state", "x")]
+
+fn neutral_structural_value(which):
+    let refs = neutral_ref_cases()
+    var equivalence = []
+    var i = 0
+    while i < rt_count(refs):
+        var row = []
+        var j = 0
+        while j < rt_count(refs):
+            if which == "old":
+                rt_push(row, rt_json_stringify(refs[i]) == rt_json_stringify(refs[j]))
+            else:
+                rt_push(row, dv_ref_lookup_key(refs[i]) == dv_ref_lookup_key(refs[j]))
+            j = j + 1
+        rt_push(equivalence, row)
+        i = i + 1
+    return equivalence
+
+fn neutral_dependencies_value(which):
+    let refs = neutral_ref_cases()
+    let methods = [{"scope": [refs[0], refs[1], refs[0]], "premise": dv_fact(refs[2], true), "owner_refs": [refs[3]]}, {"scope": [refs[3]], "premise": dv_fact(refs[4], true), "owner_refs": []}]
+    var method_index = 0
+    while method_index < rt_count(refs):
+        rt_push(methods, {"scope": [refs[method_index]], "premise": dv_fact(refs[0], true), "owner_refs": [refs[1]]})
+        method_index = method_index + 1
+    let mind = neutral_mind()
+    var graph = []
+    if which == "old":
+        graph = neutral_old_dvp_dependency_topology(mind, methods)
+    else:
+        graph = dvp_dependency_topology(mind, methods)
+    var lookups = []
+    var i = 0
+    while i < rt_count(refs):
+        var key = rt_json_stringify(refs[i])
+        if which != "old":
+            key = dv_ref_lookup_key(refs[i])
+        rt_push(lookups, dv_find(graph, key, []))
+        i = i + 1
+    var closure = []
+    if which == "old":
+        closure = neutral_old_dvp_dependencies(mind, [refs[0], refs[1]], 30, methods)
+    else:
+        closure = dvp_dependencies(mind, [refs[0], refs[1]], 30, methods)
+    return {"lookups": lookups, "closure": closure}
+
+fn dvg_debug_run():
+    let which = rt_arg(0)
+    let mode = rt_arg(1)
+    if mode == "keys" or mode == "dependencies":
+        var value = []
+        if mode == "keys":
+            value = neutral_structural_value(which)
+        else:
+            value = neutral_dependencies_value(which)
+        rt_json_print({"case": mode, "value": value, "input_isolated": true, "reverse_isolated": true, "formal_session": "not-started"})
+        return true
+    let mind = neutral_mind()
+    let goals = neutral_goals(mode)
+    let actor = {"id": "neutral-owner", "mind": mind, "policy": {"goals": goals}, "actions": []}
+    let before_mind = dv_clone(mind)
+    let before_goals = dv_clone(goals)
+    let result = neutral_call(which, actor, mind)
+    let output = dv_clone(result)
+    var input_isolated = dv_same(mind, before_mind) and dv_same(goals, before_goals)
+    if 0 < rt_count(result):
+        let first_ref = result[0][1][0].ref
+        rt_replace(first_ref, 0, ["type", "neutral-output-mutated"])
+        input_isolated = input_isolated and dv_same(mind, before_mind) and dv_same(goals, before_goals)
+    let other_mind = neutral_mind()
+    let other_goals = neutral_goals(mode)
+    let other_actor = {"id": "neutral-owner", "mind": other_mind, "policy": {"goals": other_goals}, "actions": []}
+    let other_result = neutral_call(which, other_actor, other_mind)
+    let other_before = dv_clone(other_result)
+    if 0 < rt_count(other_goals) and dv_has_key(other_goals[0], "ref"):
+        rt_replace(other_goals[0].ref, 0, ["type", "neutral-input-mutated"])
+    let reverse_isolated = dv_same(other_result, other_before)
+    rt_json_print({"case": mode, "value": output, "input_isolated": input_isolated, "reverse_isolated": reverse_isolated, "formal_session": "not-started"})
+    return true

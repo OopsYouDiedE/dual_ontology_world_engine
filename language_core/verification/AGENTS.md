@@ -298,3 +298,18 @@ Session通用列表替换的ABI只新建根，保持原读取项与替换value�
 冻结05在首个个人决定Complete中异常退出，完整封存与第二运行时窗口未完成；保留失败证据。修复首次决定不存在前驱记录的空值边界后，先中性复现再另建冻结批次。第六批另修正实际轨迹中的不可行任务导航奖励与时窗观察下界；该行为条件变更依据独立审查另记新基线，不作同条件纯性能宣称。串行180秒比较server GC4与workstation GC1，运行时配置与源码收益分开报告。
 
 导航仅在本人已知navigation_requirements为真时为实质工作生成到达意向；false/unknown不使用无条件fallback。已有证据目标可独立引导现场查验，minimum_time对应声明窗口，实际输入与收据仍由prepare/complete产生。修订原因与独立审查见本任务WARD-NAVIGATION-AUDIT.md；不改行动时间、预算或权威成功条件。
+
+第八批纯计算续作：检视新鲜度索引使用未发布私有根构建，每桶独立复制并保留原序，完成后一次memo发布；不原地修改共享world/mind或事件。章节对话目标仅缓存静态前后段，head按完整tasks/id、tail按id，原动态扫描/本人条件与调用次序保持。集中中性差分及工程构建后再冻结180秒会话。运行环境记录按大小写不敏感前缀采集，旧Tiered元数据缺口保持原记录。
+
+
+## 本轮结构修订与240秒复测（2026-10-18）
+
+本轮遵循根目录最新240秒单次授权。目标刷新、空闲决策复用必须分别说明全部依赖和未知回退；时窗阈值分析不等于已经证明整个认知链可休眠。received_speeches/requests的长度不能替代内容变化，当前物理时刻不能直接写入本人时钟。
+
+批量debug投影与在线原始DAG分开：投影延后不删除原始事件；中断未刷新范围与完整封存分别报告。真实阶段checkpoint及恢复只用于有来源的后半程诊断，不能冒充全新开局；接口、精确值及源码配置一致性见core/README.md。新增rt_is_text仅做通用值类型判定，不承担内容决策。
+
+
+第二章目标构造按row/id及最终动态条件缓存声明模板；动态owned/request/advice、证据与私下完成条件仍在原位置计算，导航资格与known_future_wait继续执行。缓存不是结果预置，不使用revision或收闻数量取代完整来源。窗口休眠以30-runner明确的稳定证书为限，未知动态路径回原调度。
+
+
+构造接口：`c2d_row_goal(row,id,when)`以完整row和最终when/id缓存时窗声明；`c2m_row_goal(row,id,when,completion,travel)`保留完整工作/到达输入；`c2m_observation_goal_templates(id,groups)`以完整groups/id缓存静态证据声明。新增构造依赖必须纳入键或owner。复用返回值沿Runtime的独立可变副本合同，不共享调用方的嵌套修改。game/entry.dv本轮未增加整链刷新守卫，动态资格成本仍待解决。

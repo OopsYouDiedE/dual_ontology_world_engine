@@ -1,0 +1,41 @@
+{
+  "comparison": "actual action execution common prefix, including time/action/actor/detail; IDs and parent references excluded",
+  "prior_window_seconds": 180,
+  "current_window_seconds": 240,
+  "common_prefix_identical": true,
+  "first_difference": null,
+  "prior_last_execution": {
+    "actor": "bertrand",
+    "game_time": 2720,
+    "action_id": "bertrand.c2.accept.committee_plan",
+    "action_kind": "talk",
+    "detail": {
+      "actual": {
+        "time": 1,
+        "computation": 1,
+        "stamina": 0
+      },
+      "revision_before": 4575,
+      "revision_after": 4576,
+      "status": "applied"
+    }
+  },
+  "current_last_execution": {
+    "actor": "quer",
+    "game_time": 3308,
+    "action_id": "quer.wait.first_night.60",
+    "action_kind": "wait.first_night.60",
+    "detail": {
+      "actual": {
+        "time": 60,
+        "computation": 1,
+        "stamina": 0
+      },
+      "revision_before": 4670,
+      "revision_after": 4671,
+      "status": "applied"
+    }
+  },
+  "speedup_claim": false,
+  "scope": "unequal wall-time windows and changed diagnostics; no same-window speed conclusion"
+}

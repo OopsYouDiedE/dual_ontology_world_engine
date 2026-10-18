@@ -107,11 +107,11 @@ fn dvp_unmet_refs(mind, proposition, include_known):
                     return []
 
 fn dvp_dependency_add(graph, ref, inputs):
-    let key = rt_json_stringify(ref)
+    let key = dv_ref_lookup_key(ref)
     return dv_with(graph, key, dvp_merge_refs(dv_find(graph, key, []), inputs))
 
 fn dvp_dependency_topology(mind, methods):
-    let key = ["dvp_dependency_topology", methods]
+    let key = ["dvp_dependency_topology-ref-key-v1", methods]
     let cached = rt_memo_get(mind.adoptions, key)
     if cached[0]:
         return cached[1]
@@ -142,7 +142,7 @@ fn dvp_dependencies(mind, seeds, budget, methods):
     var refs = dv_clone(seeds)
     var cursor = 0
     while cursor < rt_count(refs) and cursor < budget:
-        let inputs = dv_find(graph, rt_json_stringify(refs[cursor]), [])
+        let inputs = dv_find(graph, dv_ref_lookup_key(refs[cursor]), [])
         var i = 0
         while i < rt_count(inputs):
             if not dv_has(refs, inputs[i]):
@@ -292,7 +292,7 @@ fn dvp_inspection_signature(actor, action, mind):
     var freshness = []
     i = 0
     while i < rt_count(refs):
-        let entries = dv_find(evidence, rt_json_stringify(refs[i]), [])
+        let entries = dv_find(evidence, dv_ref_lookup_key(refs[i]), [])
         var j = 0
         while j < rt_count(entries):
             rt_push(freshness, entries[j])
@@ -1071,7 +1071,7 @@ fn dvp_room_actions(actions, room, location_ref):
 // Every inspection in the same mind reuses the evidence refresh and availability reads.
 fn dvp_inspection_freshness(actor, mind):
     let declared = dv_find(actor.policy, "goals", [])
-    let key = ["dvp_inspection_freshness", declared]
+    let key = ["dvp_inspection_freshness-ref-key-v1", declared]
     let cached = rt_memo_get(mind, key)
     if cached[0]:
         return cached[1]
@@ -1081,8 +1081,15 @@ fn dvp_inspection_freshness(actor, mind):
     while i < rt_count(goals):
         let goal = goals[i]
         if dv_find(goal, "kind", "") == "evidence" and dv_has_key(goal, "ref"):
-            let name = rt_json_stringify(goal.ref)
+            let name = dv_ref_lookup_key(goal.ref)
             let entries = dv_append(dv_find(index, name, []), {"ref": goal.ref, "minimum_time": dv_find(goal, "minimum_time", 0), "available": dv_truth(mind, dv_find(goal, "available_when", dv_true()))})
-            index = dv_with(index, name, entries)
+            // Private construction; publish only the complete independent index.
+            let owned_entries = dv_clone(entries)
+            let position = rt_record_index(index, name)
+            let pair = [name, owned_entries]
+            if 0 <= position:
+                rt_replace(index, position, pair)
+            else:
+                rt_push(index, pair)
         i = i + 1
     return rt_memo_put(mind, key, index)

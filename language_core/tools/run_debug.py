@@ -13,6 +13,7 @@ from dv_toolchain import LANGUAGE, ROOT, PROJECT, environment
 from dv_sources import sources
 from core_profile import summarize as summarize_profile
 from raw_dag import inspect_journal
+from debug_checkpoints import validate_bundle, export_available, sha_file
 
 
 def record(value):
@@ -78,7 +79,11 @@ class EvidenceProjector:
         if not isinstance(packet, dict):
             self.summary['invalid_source_lines'].append({'source_line': number, 'error': 'packet is not a record'})
             return
+        coverage = self.summary.setdefault('projection_coverage', {'last_event_cursor': 0, 'last_flushed_step': 0, 'inherited_event_count': 0})
         if packet.get('type') == 'debug_start':
+            coverage['inherited_event_count'] = packet.get('inherited_event_count', 0)
+            coverage['initial_steps'] = packet.get('initial_steps', 0)
+            coverage['projection_every'] = packet.get('projection_every', 1)
             self.summary['projection_configuration'] = packet.get('configuration')
             self.summary['run_config'] = packet.get('run_config')
             self.summary['raw_format'] = packet.get('raw_format', 'json')
@@ -87,6 +92,8 @@ class EvidenceProjector:
             self.summary['debug_end'] = packet
             self.summary['debug_end_source_line'] = number
         elif packet.get('type') == 'debug_events':
+            coverage['last_event_cursor'] = packet.get('batch', {}).get('next', coverage['last_event_cursor'])
+            coverage['last_flushed_step'] = packet.get('through_step', coverage['last_flushed_step'])
             for index, event in enumerate(packet.get('batch', {}).get('events', [])):
                 kind = event['type']
                 pointer = {'source_line': number, 'batch_event_index': index,
@@ -158,7 +165,7 @@ def project_evidence(source_path, destination):
     return summary
 
 
-def export(out, destination=None, scope='正式逻辑会话的实际可见正文；不含 Godot 画面。仅覆盖本轮已执行范围。', raw_format='json', with_summary=False):
+def export(out, destination=None, scope='正式逻辑会话已输出到stdout的实际可见正文；不含Godot画面。中断时未flush的原始DAG尾不在本文中，不代表完整会话正文。', raw_format='json', with_summary=False):
     destination = destination or out
     source_path = out / 'stdout.jsonl'
     projector = EvidenceProjector(source_path, destination)
@@ -239,6 +246,8 @@ def main():
     parser.add_argument('--entry', type=Path, default=LANGUAGE / 'game/debug-run.dv')
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--timeout', type=int, default=600)
+    parser.add_argument('--projection-every', type=int, default=1, help='Flush diagnostic stdout every N actual completed steps; N>1 requires online raw DAG')
+    parser.add_argument('--resume-checkpoint', type=Path, help='Explicit validated stage checkpoint bundle; never initializes a fresh session')
     parser.add_argument('--gc-mode', choices=('server', 'workstation'), default='server')
     parser.add_argument('--gc-heaps', type=int, default=min(4, os.cpu_count() or 1))
     parser.add_argument('--profile', action='store_true', help='Build an instrumented DV session and report per-function and work-type time')
@@ -255,6 +264,12 @@ def main():
     if args.opening_seed < 0:
         parser.error('--opening-seed must be nonnegative')
     run_config = {'seed': args.opening_seed, 'profile': args.detective_profile, 'detective_zone': args.detective_zone, 'su_initial_room': args.su_initial_room, 'private_execution_benefit_multiplier': args.private_execution_benefit_multiplier, 'homecoming_negotiation': args.homecoming_negotiation}
+    if args.projection_every < 1:
+        parser.error('--projection-every must be positive')
+    if args.projection_every > 1 and args.raw_format != 'dag':
+        parser.error('Batched projection requires --raw-format dag; original raw events cannot be disabled')
+    if args.resume_checkpoint and (args.raw_format != 'dag' or args.entry.resolve() != (LANGUAGE / 'game/debug-run.dv').resolve()):
+        parser.error('Restore requires the production debug-run entry and --raw-format dag')
     if args.gc_heaps < 1:
         parser.error('--gc-heaps must be positive')
     if args.timeout < 1:
@@ -266,22 +281,61 @@ def main():
     if args.evidence_from:
         evidence = project_evidence(args.evidence_from.resolve(), out)
         return 0 if evidence['packet_stream_well_formed'] else 1
+    resume_bundle = None
+    resume_save = None
+    if args.resume_checkpoint:
+        try:
+            resume_bundle, resume_save = validate_bundle(args.resume_checkpoint)
+            saved_config = resume_bundle['metadata']['run_config']
+            config_options = {'--opening-seed': 'seed', '--detective-profile': 'profile', '--detective-zone': 'detective_zone', '--su-initial-room': 'su_initial_room', '--private-execution-benefit-multiplier': 'private_execution_benefit_multiplier', '--homecoming-negotiation': 'homecoming_negotiation'}
+            explicit_options = {item.split('=', 1)[0] for item in sys.argv[1:]}
+            for option, key in config_options.items():
+                if option in explicit_options and run_config[key] != saved_config[key]:
+                    raise ValueError(f'Restore configuration conflicts with checkpoint: {option}')
+            run_config = saved_config
+            args.profile = resume_bundle['metadata']['provenance'].get('instrumented', False)
+            args.opening_seed = run_config['seed']
+            args.detective_profile = run_config['profile']
+            args.detective_zone = run_config['detective_zone']
+            args.su_initial_room = run_config['su_initial_room']
+            args.private_execution_benefit_multiplier = run_config['private_execution_benefit_multiplier']
+            args.homecoming_negotiation = run_config['homecoming_negotiation']
+        except Exception as error:
+            (out / 'result.json').write_text(json.dumps({'session_started': False, 'restore_rejected': True, 'error': str(error)}, indent=2), encoding='utf-8')
+            return 1
     build = out / 'program'
     build.mkdir()
     env = environment()
     modules = sources([args.entry.resolve()])
     inputs = [path for path, _ in modules]
-    inputs += [LANGUAGE / p for p in ('compiler/Runtime.cs', 'compiler/compiler.dv', 'tools/build_session.py', 'tools/dv_sources.py', 'tools/run_debug.py', 'tools/raw_dag.py', 'tools/dv_toolchain.py')]
+    inputs += [LANGUAGE / p for p in ('compiler/Runtime.cs', 'compiler/compiler.dv', 'tools/build_session.py', 'tools/dv_sources.py', 'tools/run_debug.py', 'tools/raw_dag.py', 'tools/dv_toolchain.py', 'tools/debug_checkpoints.py', 'tools/resume_debug.py', 'tools/DebugCheckpointResume.cs')]
     if args.profile:
         inputs += [LANGUAGE / p for p in ('tools/DvProfiler.cs', 'tools/core_profile.py')]
     hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     normalized = {str(path): hashlib.sha256(text.encode('utf-8')).hexdigest() for path, text in modules}
     (out / 'source-hashes.json').write_text(json.dumps(hashes, indent=2), encoding='utf-8')
+    def dv_record(value):
+        if isinstance(value, dict):
+            return [[key, dv_record(item)] for key, item in value.items()]
+        if isinstance(value, list):
+            return [dv_record(item) for item in value]
+        return value
+    provenance = {'format': 'dv-debug-provenance-v1', 'source_hashes': hashes, 'source_manifest_sha256': sha_file(out / 'source-hashes.json'), 'run_config': run_config, 'instrumented': args.profile}
+    provenance_path = out / 'run-provenance.dv.json'
+    provenance_path.write_text(json.dumps(dv_record(provenance), ensure_ascii=True), encoding='utf-8')
+    restore_input_hashes = {}
+    if resume_save:
+        restore_input_hashes = {str(args.resume_checkpoint.resolve()): sha_file(args.resume_checkpoint), str(resume_save): sha_file(resume_save), resume_bundle['raw_source']: resume_bundle['raw_sha256']}
+    (out / '.gitattributes').write_text('stdout.jsonl -text -diff\nstderr.txt -text -diff\n*.dag.jsonl* -text -diff\n', encoding='utf-8')
     commands = [
         [sys.executable, str(LANGUAGE / 'tools/build_session.py'), '--entry', str(args.entry.resolve()), '--out', str(build), '--main', 'dvg_debug_run'] + (['--profile'] if args.profile else []),
         ['dotnet', 'build', str(build / 'Program.csproj'), '-c', 'Release', '--disable-build-servers', '-p:NuGetAudit=false']]
     shutil.copyfile(LANGUAGE / 'compiler/Runtime.cs', build / 'Runtime.cs')
-    (build / 'Program.csproj').write_text(PROJECT, encoding='utf-8')
+    project = PROJECT
+    if resume_bundle:
+        shutil.copyfile(LANGUAGE / 'tools/DebugCheckpointResume.cs', build / 'DebugCheckpointResume.cs')
+        project = PROJECT.replace('<OutputType>Exe</OutputType>', '<OutputType>Exe</OutputType><StartupObject>DebugCheckpointResume</StartupObject>')
+    (build / 'Program.csproj').write_text(project, encoding='utf-8')
     build_start = time.monotonic()
     build_stages = []
     for index, cmd in enumerate(commands):
@@ -300,7 +354,8 @@ def main():
     build_consistent = (
         all(Path(p).is_file() and hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in hashes.items())
         and {entry['path']: entry['sha256'] for entry in manifest['modules']} == normalized
-        and hashlib.sha256((build / 'Runtime.cs').read_bytes()).hexdigest() == hashes[str(LANGUAGE / 'compiler/Runtime.cs')])
+        and hashlib.sha256((build / 'Runtime.cs').read_bytes()).hexdigest() == hashes[str(LANGUAGE / 'compiler/Runtime.cs')]
+        and all(Path(p).is_file() and sha_file(p) == h for p, h in restore_input_hashes.items()))
     if not build_consistent:
         (out / 'result.json').write_text(json.dumps({'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': False, 'source_unchanged': False, 'trace_written': False, 'error': 'Sources changed during build or generated inputs differ; session not started.'}, indent=2), encoding='utf-8')
         return 1
@@ -311,10 +366,15 @@ def main():
         execution_env['DV_PROFILE_PATH'] = str(out / 'profile-raw.json')
     start = time.monotonic()
     trace_name = 'raw-events.dag.jsonl' if args.raw_format == 'dag' else ('trace.json.gz' if args.trace_compression == 'gzip' else 'trace.json')
-    result = {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'detective_profile': args.detective_profile, 'detective_zone': args.detective_zone, 'raw_format': args.raw_format, 'build_elapsed_seconds': build_elapsed, 'build_stages': build_stages, 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.startswith(('DOTNET_GC', 'DOTNET_gc', 'DOTNET_Tiered', 'COMPlus_Tiered'))}}
+    result = {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'detective_profile': args.detective_profile, 'detective_zone': args.detective_zone, 'raw_format': args.raw_format, 'build_elapsed_seconds': build_elapsed, 'build_stages': build_stages, 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.upper().startswith(('DOTNET_GC', 'DOTNET_TIERED', 'COMPLUS_TIERED'))}}
+    result['projection_every'] = args.projection_every
+    result['resumed'] = resume_bundle is not None
+    result['restore_input_hashes'] = restore_input_hashes
+    if resume_bundle:
+        result['restore_origin'] = {key: resume_bundle['metadata'][key] for key in ('checkpoint', 'commit_frame', 'game_time', 'steps', 'last_event')}
     try:
         with (out / 'stdout.jsonl').open('wb') as stdout, (out / 'stderr.txt').open('wb') as stderr:
-            program_args = [str(out / trace_name), args.detective_profile, args.detective_zone, args.raw_format, str(args.opening_seed), args.su_initial_room, str(args.private_execution_benefit_multiplier), str(args.homecoming_negotiation).lower()]
+            program_args = [str(out / trace_name), args.detective_profile, args.detective_zone, args.raw_format, str(args.opening_seed), args.su_initial_room, str(args.private_execution_benefit_multiplier), str(args.homecoming_negotiation).lower(), str(args.projection_every), str(provenance_path), str(resume_save) if resume_save else '']
             process = subprocess.run(['dotnet', str(build / 'bin/Release/net8.0/Program.dll'), *program_args], cwd=ROOT, env=execution_env, stdout=stdout, stderr=stderr, timeout=args.timeout)
             result['exit_code'] = process.returncode
     except subprocess.TimeoutExpired:
@@ -323,7 +383,7 @@ def main():
         result['elapsed_seconds'] = time.monotonic() - start
         result['execution_elapsed_seconds'] = result['elapsed_seconds']
         postprocess_start = time.monotonic()
-        result['source_unchanged'] = all(Path(p).is_file() and hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in hashes.items())
+        result['source_unchanged'] = all(Path(p).is_file() and hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in {**hashes, **restore_input_hashes}.items())
         result['raw_path'] = trace_name
         result['trace_path'] = trace_name if args.raw_format == 'json' else None
         result['trace_storage_encoding'] = args.trace_compression if args.raw_format == 'json' else 'dv-raw-dag-v1'
@@ -343,6 +403,8 @@ def main():
                 result['raw_committed_events'] = raw_summary['committed_events']
                 result['raw_event_prefix_available'] = raw_summary['committed_events'] > 0
                 result['raw_evidence_scope'] = raw_summary['scope']
+                result['stage_checkpoints'] = [{**item, 'storage': 'committed exact raw DAG; tagged Save export is explicit, never automatic'} for item in raw_summary.get('checkpoint_commits', []) if item['name'] in ('stage-day3', 'stage-day5')]
+                result['checkpoint_save_exports'] = 'not automatically expanded; use debug_checkpoints.py on an actual committed stage'
             except Exception as error:
                 result['raw_sealing_complete'] = False
                 result['raw_validation_error'] = str(error)
@@ -360,6 +422,13 @@ def main():
             result['actual_run_config'] = evidence.get('run_config')
             result['run_config_matches'] = result['actual_run_config'] == run_config
             result['event_packet_source'] = 'stdout.jsonl'
+            result['stdout_projection_coverage'] = evidence.get('projection_coverage')
+            coverage = evidence.get('projection_coverage', {})
+            if args.raw_format == 'dag' and 'raw_committed_events' in result:
+                projected = max(0, coverage.get('last_event_cursor', 0) - coverage.get('inherited_event_count', 0))
+                result['raw_committed_events_not_yet_projected'] = max(0, result['raw_committed_events'] - projected)
+            result['player_text_scope'] = 'flushed stdout presentations only; unflushed raw tail is not reconstructed or claimed complete'
+            result['completed_steps_after_last_flush'] = 0 if evidence['debug_end_observed'] else 'unknown in interrupted computation; original committed raw events retained'
             result['evidence_projection'] = 'evidence-summary.json'
             result['logical_loop_finished'] = evidence['debug_end_observed']
             result['stop_reasons'] = evidence['stop_reasons']
