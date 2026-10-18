@@ -74,7 +74,7 @@ Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，
 ## Snapshot evidence and campaign adapter
 
 The shared actor turn executes cognition and dvs_choose without the removed idle cache. dvs_event copies event payloads through dv_with, preserving the restored world/mind/actor snapshots for existing readers. A simulation result includes its predicted world; predictions remain separate from physical execution.
-The production game/campaign.dv adapter extends the same live session. dvg_run_campaign(max_steps) uses dvg_prepare and dvg_complete with formal-model receipts, stopping on the completed-action bound or session inactivity. false selects the authored action limit; zero returns the opening state. It returns live state, without closing or restarting at chapter extension. dvg_chronological_trace projects selected actors from append-ordered events; it neither changes scheduling nor grants knowledge. Geometry remains outside this logical adapter.
+The production game/entry.dv adapter extends the same live session. dvg_run_campaign(max_steps) uses dvg_prepare and dvg_complete with formal-model receipts, stopping on the completed-action bound or session inactivity. false selects the authored action limit; zero returns the opening state. It returns live state, without closing or restarting at chapter extension. dvg_chronological_trace projects selected actors from append-ordered events; it neither changes scheduling nor grants knowledge. Geometry remains outside this logical adapter.
 
 
 ## 独立事件与证据新鲜度
@@ -174,3 +174,11 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译�
 第4轮：调查导航一次只为一个尚未完成且处于本人已知时窗的任务生成到达/中继意图，优先当前地点可执行任务，随后可执行的异地任务，最后保留等待前提的首项任务；完整实质目标仍全部参加共同规划。导航缓存包括所有相关完成、要求、位置、通路与窗口真值，避免到达多个房间的短暂奖励相互往返。现场调查操作只在成功Complete后通过既有同处与可见性检查传播实际grants，不向异地人物预发结果。此为新行为条件，不作同条件性能比较。
 绑定查询缓存每个主体/物理身份的单项结果；修改bindings仍失效。支持来源按完整候选事件值构建引用索引，合并模型接受事件时保留原事件顺序，最终仍核对完整claim、after和basis，不把索引命中当作支持。中性检查与唯一180秒正式逻辑会话分列。
 内容移动正文含起终点，调查检视按本人真实字段显示操作完成状态；首夜递零嘴作为可见行动，实际同处观察不再伪装对白。未知姓名仍取本人信息，未取得介绍时不提前公开。
+
+## DV 文件归并与七目录导出（2026-10-18）
+
+生产DV按职责保留五份core、五份session、chapter1/chapter2两个内容目录，以及game的entry/debug-run入口。checks顶层为六份只读检查，authority、fixtures、report在checks子目录分别保存；生产entry不包含oracle、recall示例或验证配置。现役函数名、参数、声明体与字符串值保持原文；旧来源字符串是证据标识，路径迁移通过 artifacts/partial-bootstrap-core/dv-layout-20261018/path-map.json 追溯，不重写旧证据。
+
+结构整理用声明原文与生产依赖闭包对照、编译及导出一致性检查确认工程接线，不执行流程回归或用它宣称游玩改善。新增源文件按职责进入现有目录；出现define/module作用域时须保留独立编译边界，不直接拼接进其他源模块。
+
+一键源码审阅导出入口为 artifacts/partial-bootstrap-core/dv-layout-20261018/export/export_dv_package.bat，默认输出 artifacts/dv_consolidated_package_v2。七个目录各输出一份DV，保留原文件边界和来源指纹；该包用于阅读，不作为新执行入口。--check只校验导出是否与当前源码一致。旧导出与历史证据不改写。

@@ -21,7 +21,7 @@ process-plan描述文件与进程：files、copies、exports、sessions、checks
 | check-evidence-boundary | comparison，实际传播与接收 |
 | sweep-parameters | comparison，参数邻域 |
 
-report/10-readable.dv根据判定和轨迹生成中文报告。全部领域算法使用DV，Python负责文件与进程编排。
+checks/report/10-readable.dv根据判定和轨迹生成中文报告。全部领域算法使用DV，Python负责文件与进程编排。
 
 ## 相关选项
 

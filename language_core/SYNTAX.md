@@ -7,7 +7,7 @@
 - 已实现：缩进块、fn/axiom、let/var/赋值、return/if/else/while、中文标识符和 define、位置参数、记录/列表字面量、字段/下标、普通算术和短路逻辑；mapping 的 `×` 与 `*` 调用；acceptance 的 degree/levels；有限域 imprint 声明。
 - 已实现的检查：函数名称/元数、局部变量、let 不可重新赋值、显式参数/返回值/局部名义类型、单位区间字面量、Nat 字面量整数性。Acceptance/Probability/Confidence/Reliability 构造使用独立范围构造器。配平使用精确有理数，最优性由 DV 证书核验器独立确认。
 - 仍待实现：具名实参、通用 record/enum/scalar/generic 声明、单位与一般区间推导、by 证明、完整模块导入/能力系统、闭包、其余领域声明和目标无关 Typed IR。未注解代码采用 Value，既有通用计算仍用有限 double；不能将整个 Core 宣称为精确数值或完全静态证明。
-- 编译器仍支持启动语法，自身尚未改写为新语法。真实可编译写法以 core/55-cognition.dv、verification/session/20-speech.dv 和 verification/scenarios/cognitive-semantics.dv 为例；下文超出本节边界的示例属于完整设计。
+- 编译器仍支持启动语法，自身尚未改写为新语法。真实可编译写法以 core/40-value.dv、verification/session/20-speech.dv 和 verification/checks/fixtures/cognitive-semantics.dv 为例；下文超出本节边界的示例属于完整设计。
 
 当前 imprint 的执行形态把 achieve、vary、conserve using、limit using、minimize using 分别绑定目标记录、有限变量域、线性守恒式、当前资源/工作预算与具名资源价格。搜索结果经核验后由 dv_imprint_commit 提交。连续求解器和一般命题约束还未接入。
 

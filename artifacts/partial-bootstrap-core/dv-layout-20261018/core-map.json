@@ -1,0 +1,51 @@
+{
+  "task": "dv-layout-20261018",
+  "baseline": "baseline/core",
+  "merges": [
+    {
+      "sources": [
+        "00-data.dv",
+        "10-laws.dv",
+        "60-object-laws.dv"
+      ],
+      "target": "00-data.dv"
+    },
+    {
+      "sources": [
+        "20-observation.dv",
+        "30-transport.dv"
+      ],
+      "target": "20-observation.dv"
+    },
+    {
+      "sources": [
+        "40-value.dv",
+        "50-response.dv",
+        "55-cognition.dv"
+      ],
+      "target": "40-value.dv"
+    },
+    {
+      "sources": [
+        "70-reasoning-cost.dv",
+        "80-inspection.dv",
+        "90-action-cost.dv"
+      ],
+      "target": "70-reasoning-cost.dv"
+    },
+    {
+      "sources": [
+        "95-model-argument.dv",
+        "98-debug.dv"
+      ],
+      "target": "95-model-argument.dv"
+    }
+  ],
+  "deduplication": [],
+  "checks": {
+    "define_declarations": "No define declarations in original core modules; merged files preserve module source comments and source order.",
+    "duplicate_top_level_declarations": "No duplicate fn/axiom/defn signatures detected among merged files.",
+    "include_scope": "Original game/entry.dv includes removed source paths and requires host-side rewiring to five anchors.",
+    "sessions": "No session, flow, or regression execution performed."
+  }
+}

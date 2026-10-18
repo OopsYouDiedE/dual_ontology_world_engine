@@ -24,7 +24,7 @@ SYNTAX.md维护完整书写格式，DESIGN.md说明语言与编译架构。设�
 
 surface-v2 的可执行前端位于 compiler/compiler.dv：缩进、Unicode 标识符、define 别名、函数/局部语句、记录/列表、中缀运算、mapping、acceptance 和有限域 imprint 声明展开后复用 C# 后端。Core、正式 session、checks 与 chapter1 内容已经使用新表层语法。编译器自身保留 S 表达式启动源，C0→C1→C2→C3 继续自举；通用泛型、单位推导、完整能力类型和目标无关 Typed IR 尚未实现。
 
-compiler 中 ck_* 执行名义类型、字面量范围与可变性检查；core/55-cognition.dv 提供接纳分类、有限域配平搜索及独立证书核验。Runtime.cs 只提供基础有理数、Unicode 与容器 ABI。求解器的最优声明须经 DV 核验器重新检查覆盖、可行性与成本；正式提交一起结算认知、资源和搜索/核验工作量。核心标识符和声明关键词使用英文，其他自然语言用文件头 define 映射。
+compiler 中 ck_* 执行名义类型、字面量范围与可变性检查；core/40-value.dv 提供接纳分类、有限域配平搜索及独立证书核验。Runtime.cs 只提供基础有理数、Unicode 与容器 ABI。求解器的最优声明须经 DV 核验器重新检查覆盖、可行性与成本；正式提交一起结算认知、资源和搜索/核验工作量。核心标识符和声明关键词使用英文，其他自然语言用文件头 define 映射。
 
 ## 模块
 
@@ -61,7 +61,7 @@ core、session及编译器的算法使用DV。平台ABI承接数值、容器、�
 
 正式答辩分别记录公共结论等级与主体自己的接受回执。主体接受记录随实际交接更新，规划依据本人回执排除同等级重复提交；只读判定使用提交前的本人记录核对，不以他人的公共结论替代本人的作答。
 
-session/18-requests.dv记录实际收闻的专业请求、本人回复及同处可见人物。请求不直接取得场景命题；回复由另一主体的正式行动、本人认识与实际听觉传播形成。公开动作观察按声明范围与实际同处过滤。规划将方法前提纳入依赖，并在整个搜索中保留预测状态的分数/耗时非支配路径；重复状态不重复展开。
+session/10-subjective.dv记录实际收闻的专业请求、本人回复及同处可见人物。请求不直接取得场景命题；回复由另一主体的正式行动、本人认识与实际听觉传播形成。公开动作观察按声明范围与实际同处过滤。规划将方法前提纳入依赖，并在整个搜索中保留预测状态的分数/耗时非支配路径；重复状态不重复展开。
 
 开场内容的本人材料目标以持续公开信息的本人实际收据激活，阶段更换不抹去动机；专业证言仍要求答复者自行取得认识并正式发言。规划中的答辩话语资格与执行时使用同一本人真值检查，未知话语不作为已可执行的答案。
 
@@ -93,11 +93,11 @@ run_verification的普通编译/会话执行持续写入当轮stdout/stderr原�
 
 主体内部引用通过 dv_same_local_ref 比较：省略主体的字段解析为当前主体，显式其他主体不等同。推知依赖以法则和输出字段标识，重新推知替换该来源；事件 ID 继续标识实际发生的推知。证据支持份额与来源可靠度分别保存，默认置信度不超过最强实际来源的可靠度。
 
-session/26-model-slicing.dv 从本人已采纳法则的读写依赖逆向选取证物相关演算；切片仍遮蔽原计划全部输出，比较消耗真实工作预算。切片吻合不能建立完整解释，矛盾必须带实际预测及本人观察来源。session/16-personal-choice.dv 将本人有来源的价值排序用于同组选择；行动前提、传播与账本仍使用共用机制。跨房间请求由本人已知声道条件取得候选资格，实际接收仍由 speech 的听觉传播判定。
+session/25-simulation.dv 从本人已采纳法则的读写依赖逆向选取证物相关演算；切片仍遮蔽原计划全部输出，比较消耗真实工作预算。切片吻合不能建立完整解释，矛盾必须带实际预测及本人观察来源。session/10-subjective.dv 将本人有来源的价值排序用于同组选择；行动前提、传播与账本仍使用共用机制。跨房间请求由本人已知声道条件取得候选资格，实际接收仍由 speech 的听觉传播判定。
 
-生产编译由 game/entry.dv 的相对 #include 显式组合 core、session、内容与 game/campaign.dv。Session.OpenCampaign 创建正式原生内容，Prepare/Complete 经同一章节扩展入口；章节扩展不重新调用 session_open，不清空账本和事件。
+生产编译由 game/entry.dv 的相对 #include 显式组合 core、session 与内容；章节接线函数保存在 entry.dv 本体。Session.OpenCampaign 创建正式原生内容，Prepare/Complete 经同一章节扩展入口；章节扩展不重新调用 session_open，不清空账本和事件。
 
-生产呈现绑定在 game/presentation.dv：身体地点映射场景、房间与素材；客观显示数据不写入人物认识。初始放置只用于创建视图，跨地图回执必须来自现场执行。departure 安装独立门状态，章节内容可用与实际过门分开记录。
+生产呈现绑定在 game/entry.dv：身体地点映射场景、房间与素材；客观显示数据不写入人物认识。初始放置只用于创建视图，跨地图回执必须来自现场执行。departure 安装独立门状态，章节内容可用与实际过门分开记录。
 
 正式人工控制以 player_actor/awaiting_player/selection 保存在同一DV会话；候选只由本人现有认知、动作前提及共同资格判定生成，选择后仍走原prepare/complete和原费用/判题。人工等待不跳到他人席位、不注入行动结果。人物已声明、带来源的沟通动机可主动发出同主题回复，仍受本人真值、使用记录、机会与实际传播限制。该接线修订单独封存差异与独立审查，不作为旧基线同条件性能优化。
 控制模式的会话外壳用显式字段保留，与原会话返回合同一致；不为携带player_actor深拷贝含完整历史的state。等待选择后恢复不重复认知；空候选按原idle/轮转，不制造空菜单暂停。
@@ -113,7 +113,7 @@ session/26-model-slicing.dv 从本人已采纳法则的读写依赖逆向选取�
 请求输入专用签名保留引用、已知/值/争议及前提真值，过滤观察时刻和来源事件编号；声道请求同时保留方法前提与声道可用前提。目标、主题、地点/声道仍区分，不改仿真与论证的完整输入。这只稳定去重，不替代候答与重试生命周期。总模型预算耗尽后不接纳新的付费重演；上一方法工作余额不作为下一次方法可行性的门槛，现有有效缓存仍可读取。
 
 原生交互方法可声明 travel.station；呈现绑定将逻辑目的地与当前地图执行房间分开，成功现场回执之后才执行权威接触法则及本人来源观察。预测只写声明的接触状态，不预置观察结果；本轮自身交互历史的空初值不能夹带历史谜题信息。此类接线修复另立指纹，不作为旧规则同条件提速。
-根层存在正式可执行且净正值的非移动行动时，先完整比较一层生成的后继，再保留所有已比较路径中的最佳首步，包括移动，记录positive-current-after-successor-layer、根层与后继比较结果、实际完整层数。深度不足、没有后继与预算不能覆盖整层分别记录，不冒称完成后继比较；没有正值当前行动则继续原多步搜索。该有限理性停止策略不保证全局最优，不上调预算、不改变费用与答辩判定，另立来源基线。生产动作结果文案仅在原生game/player-content.dv按本人已获事实条件呈现；重演摘要只读本人当前有效模型，吻合不等同正式答辩。答辩回馈来自实际answer_accepted/rejected事件。重新询问观察执行时的公开题目字段及真实开放状态，不预置答案，也不冒称另一次独立话语回复。
+根层存在正式可执行且净正值的非移动行动时，先完整比较一层生成的后继，再保留所有已比较路径中的最佳首步，包括移动，记录positive-current-after-successor-layer、根层与后继比较结果、实际完整层数。深度不足、没有后继与预算不能覆盖整层分别记录，不冒称完成后继比较；没有正值当前行动则继续原多步搜索。该有限理性停止策略不保证全局最优，不上调预算、不改变费用与答辩判定，另立来源基线。生产动作结果文案仅在原生game/entry.dv按本人已获事实条件呈现；重演摘要只读本人当前有效模型，吻合不等同正式答辩。答辩回馈来自实际answer_accepted/rejected事件。重新询问观察执行时的公开题目字段及真实开放状态，不预置答案，也不冒称另一次独立话语回复。
 
 阶段交接回执只更新主体实际收到的字段；若主体错过后续公开问话，内容目标以本人收到的阶段时刻为证据下界，驱动本人在现场重新核对当前公开题目。正式听闻与重新核对分别保留实际来源；未听到的问话不自动记为听闻。重新核对的公开字段属于直接观察，不伪造第二次独立话语行动。
 
@@ -131,7 +131,7 @@ Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，
 All eligible autonomous actors enter shared cognitive preparation and dvs_choose on their turns; identical completed fixed points may be reused under the documented full-input guard. The incomplete idle cache and its writes are removed. Existing resource/time limits still apply; tracking never filters scheduling.
 Execution, observation, answer, transition, model-recheck and simulation events retain the requested full snapshots; simulation results include predicted. Revision metadata supplements snapshots. Other event producers remain subject to separate audit.
 
-The game/campaign.dv helpers dvg_tracked_actors and dvg_chronological_trace project selected actors' events in append order. dvg_run_campaign(max_steps) runs the same formal-model prepare/complete protocol and continuous chapter extension, returns live state, and stops at the completed-action bound or session inactivity. Pass false for the authored action limit, or zero for an unadvanced session. This is audit data, not player-visible knowledge or Godot geometry evidence.
+The game/entry.dv helpers dvg_tracked_actors and dvg_chronological_trace project selected actors' events in append order. dvg_run_campaign(max_steps) runs the same formal-model prepare/complete protocol and continuous chapter extension, returns live state, and stops at the completed-action bound or session inactivity. Pass false for the authored action limit, or zero for an unadvanced session. This is audit data, not player-visible knowledge or Godot geometry evidence.
 Session.cs exposes internal CampaignTrackedActors/CampaignChronologicalTrace/CampaignRun bridges. python language_core/tools/build_session.py --out language_core/Session generates an inspectable copy; the project excludes that root DVProgram.cs and builds obj/dv instead. Never edit generated copies.
 Engineering probe evidence is saved under artifacts/partial-bootstrap-core/single-action-path in new paths. Build/tracking evidence does not certify full gameplay acceptance or performance improvement.
 
@@ -139,7 +139,7 @@ Engineering probe evidence is saved under artifacts/partial-bootstrap-core/singl
 
 生产入口 game/entry.dv 使用 `#include 相对路径.dv`，路径以包含它的文件目录为基准。tools/dv_sources.py 为构建和编辑器共同解析文件依赖，依赖先于引用者编译，同一路径只加载一次，循环和缺失文件报告位置。每个文件保持独立 define 作用域；引用行保留空行以维护诊断位置。这是文件组合入口，直接调用旧编译器裸文件接口仍需先组合。
 
-game/entry.dv 的 dvg_debug_config 配置观察者、报告主体、事件类型和诊断行动上限。空筛选包含全部，max_steps=false 使用会话原上限。配置只选择输出与诊断停止位置，不修改调度、认知、费用或世界条件。core/98-debug.dv 按原事件顺序只读投影，保留事件与父事件编号、行动、来源、结果和已发生观察；完整快照保留在原始轨迹中。报告不可当作人物知识。
+game/entry.dv 的 dvg_debug_config 配置观察者、报告主体、事件类型和诊断行动上限。空筛选包含全部，max_steps=false 使用会话原上限。配置只选择输出与诊断停止位置，不修改调度、认知、费用或世界条件。core/95-model-argument.dv 按原事件顺序只读投影，保留事件与父事件编号、行动、来源、结果和已发生观察；完整快照保留在原始轨迹中。报告不可当作人物知识。
 
 `python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录>` 从 game/debug-run.dv 建立一个正式逻辑会话，沿生产 prepare/complete 与章节扩展运行；生成原始 stdout/stderr、完整 trace、来源指纹、事件 JSONL、中文调试轨迹及 02 可见正文。工程时限默认600秒，可用 --timeout 指定；超时保留已输出部分并记录未完成。一级仅运行无窗口DV逻辑会话，不启动Godot；源文与实际轨迹分别核对，03不属于一级要求。停止于行动上限或短时范围不表示通关。
 
@@ -201,7 +201,7 @@ run_debug.py 在编译前封存包含文件、编译器、运行时与构建工�
 
 生产配置入口为 `dvg_open_config({seed, profile, detective_zone})`；配置安装在 `cognitive-profiles.dv`，具体参数属于内容声明的工程初值。开局只抽样声明域并保存选值与种子，恢复存档不重新抽样。`Replay_Depth` 限制有序因果重演阶段，`plan_depth` 独立限制行动规划；重演截断不能认证完整解释。
 
-共鸣资格、公开立场冲突、私人执行效用及病理调度接口位于 `session/16-personal-choice.dv`。主动取回只在成功 Complete 后记录耦合与声明的信任变化；被动触物观察不使用取回结算。物理侵蚀读取权威暴露字段，人物风险判断读取本人认识。公开立场冲突只来自实际收闻记录；预测不生成操纵后果或真实立场证据。
+共鸣资格、公开立场冲突、私人执行效用及病理调度接口位于 `session/10-subjective.dv`。主动取回只在成功 Complete 后记录耦合与声明的信任变化；被动触物观察不使用取回结算。物理侵蚀读取权威暴露字段，人物风险判断读取本人认识。公开立场冲突只来自实际收闻记录；预测不生成操纵后果或真实立场证据。
 
 连续内容安装保留原世界、账本、主体、排队行动与事件。定时内容只开放机会，实际交谈、协作、取用、签署由正式行动产生。扩章与实际移动分别记录。等待使用明确费用的普通行动，沿原队列按可分析时钟边界结算环境，变化尚未稳定时逐分钟结算；下一机会只从本人有来源的声明目标取得，估值参数在候选上记录。扩展内容时同步维护其时域、机会刷新、资源账及精确费用，不能用提高行动预算或提前写入成果代替可达性修复。
 
@@ -277,3 +277,13 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译�
 第4轮：调查导航一次只为一个尚未完成且处于本人已知时窗的任务生成到达/中继意图，优先当前地点可执行任务，随后可执行的异地任务，最后保留等待前提的首项任务；完整实质目标仍全部参加共同规划。导航缓存包括所有相关完成、要求、位置、通路与窗口真值，避免到达多个房间的短暂奖励相互往返。现场调查操作只在成功Complete后通过既有同处与可见性检查传播实际grants，不向异地人物预发结果。此为新行为条件，不作同条件性能比较。
 绑定查询缓存每个主体/物理身份的单项结果；修改bindings仍失效。支持来源按完整候选事件值构建引用索引，合并模型接受事件时保留原事件顺序，最终仍核对完整claim、after和basis，不把索引命中当作支持。中性检查与唯一180秒正式逻辑会话分列。
 内容移动正文含起终点，调查检视按本人真实字段显示操作完成状态；首夜递零嘴作为可见行动，实际同处观察不再伪装对白。未知姓名仍取本人信息，未取得介绍时不提前公开。
+
+## DV 文件归并与七目录导出（2026-10-18）
+
+生产DV按职责保留五份core、五份session、chapter1/chapter2两个内容目录，以及game的entry/debug-run入口。checks顶层为六份只读检查，authority、fixtures、report在checks子目录分别保存；生产entry不包含oracle、recall示例或验证配置。现役函数名、参数、声明体与字符串值保持原文；旧来源字符串是证据标识，路径迁移通过 artifacts/partial-bootstrap-core/dv-layout-20261018/path-map.json 追溯，不重写旧证据。
+
+结构整理用声明原文与生产依赖闭包对照、编译及导出一致性检查确认工程接线，不执行流程回归或用它宣称游玩改善。新增源文件按职责进入现有目录；出现define/module作用域时须保留独立编译边界，不直接拼接进其他源模块。
+
+一键源码审阅导出入口为 artifacts/partial-bootstrap-core/dv-layout-20261018/export/export_dv_package.bat，默认输出 artifacts/dv_consolidated_package_v2。七个目录各输出一份DV，保留原文件边界和来源指纹；该包用于阅读，不作为新执行入口。--check只校验导出是否与当前源码一致。旧导出与历史证据不改写。
+
+编辑器的只读checks编译组通过game/entry.dv加载生产声明依赖，再额外加载checks与authority；这是静态诊断集合，生产entry不反向包含authority，不执行这些检查。

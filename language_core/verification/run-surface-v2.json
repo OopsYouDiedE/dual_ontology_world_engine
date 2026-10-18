@@ -15,10 +15,8 @@
     {
       "id": "scenario-base",
       "modules": [
-        "language_core/verification/scenarios/chapter1-laws.dv",
-        "language_core/verification/scenarios/chapter1-pragmatics.dv",
-        "language_core/verification/scenarios/chapter1-content.dv",
-        "language_core/verification/scenarios/chapter1-history.dv"
+        "language_core/verification/scenarios/chapter1/content.dv",
+        "language_core/verification/scenarios/chapter1/history.dv"
       ],
       "function": "dvs_scenario_base",
       "output": "{inputs}/scenario-base.json"
@@ -26,7 +24,7 @@
     {
       "id": "oracle",
       "modules": [
-        "language_core/verification/scenarios/chapter1-oracle.dv"
+        "language_core/verification/checks/authority/chapter1-oracle.dv"
       ],
       "function": "dvs_chapter1_oracle",
       "output": "{inputs}/chapter1-oracle.json"
@@ -34,7 +32,7 @@
     {
       "id": "cognitive-semantics",
       "modules": [
-        "language_core/verification/scenarios/cognitive-semantics.dv"
+        "language_core/verification/checks/fixtures/cognitive-semantics.dv"
       ],
       "function": "cognitive_specimen",
       "output": "{inputs}/cognitive-semantics.json"
@@ -42,7 +40,7 @@
     {
       "id": "cognitive-mind",
       "modules": [
-        "language_core/verification/scenarios/cognitive-semantics.dv"
+        "language_core/verification/checks/fixtures/cognitive-semantics.dv"
       ],
       "function": "cognitive_mind_specimen",
       "output": "{inputs}/cognitive-mind.json"

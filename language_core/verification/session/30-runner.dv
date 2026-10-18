@@ -693,3 +693,210 @@ fn dvs_owned_state_update(state, updates):
             rt_push(keys, key)
         i = i + 1
     return result
+
+// ---- Merged source module: 32-environment.dv ----
+// Physical processes read physical conditions. They never publish private knowledge.
+fn dvs_environment(physical, story, events, parent):
+    var world = physical
+    let time = dv_find(world, "time", 0)
+    let clock = dv_find(story, "clock_ref", false)
+    if clock != false:
+        world = dv_store(world, clock, dv_cell(time, 1, time, [parent]))
+    let processes = dv_find(story, "world_processes", [])
+    var i = 0
+    while i < rt_count(processes):
+        let process = processes[i]
+        let adoption = dv_get(world.adoptions, process.law)
+        if adoption.active and adoption.mode == "enforce" and dv_truth(world, adoption.law.premise) == "true":
+            let staged = dv_stage(world, adoption.law.effects, time, adoption.basis, adoption.confidence)
+            var changed = false
+            var j = 0
+            while j < rt_count(staged.changes):
+                let change = staged.changes[j]
+                if not dv_same(dvs_reason_value(change.before), dvs_reason_value(change.after)):
+                    changed = true
+                j = j + 1
+            if staged.status == "ready" and changed:
+                let id = rt_cat("environment-", rt_show(rt_count(events)))
+                let before = world
+                let execution = dv_execute(world, process.law, id, time, world.revision)
+                world = execution.world
+                if execution.status == "applied" and dv_find(process, "once", false):
+                    world = dv_suspend(world, process.law)
+                parent = dvs_event(events, "physical_process", "", time, [parent], {"process": process, "revision_before": before.revision, "revision_after": world.revision, "suspended": not dv_get(world.adoptions, process.law).active, "execution": dv_without(execution, "world")})
+        i = i + 1
+    return world
+
+// Match the old minute lattice, including a fractional action completion.
+fn dvs_environment_boundary(condition, clock, now, due):
+    let op = condition.op
+    if op == "constant":
+        return due
+    if op == "not":
+        return dvs_environment_boundary(condition.item, clock, now, due)
+    if op == "all":
+        var next = due
+        var i = 0
+        while i < rt_count(condition.items):
+            next = dv_min(next, dvs_environment_boundary(condition.items[i], clock, now, due))
+            i = i + 1
+        return next
+    if not dv_same(condition.ref, clock):
+        return due
+    if op != "at_least" or not rt_is_numeric_value(condition.value):
+        return dv_min(due, now + 1)
+    // A distant bound cannot be crossed in this wait: do not count toward it.
+    if due < condition.value:
+        return due
+    if now < condition.value:
+        let delta = condition.value - now
+        var steps = 1
+        while steps < delta:
+            steps = steps + 1
+        return dv_min(due, now + steps)
+    return due
+
+// A process that can still change the world requires another ordinary minute.
+// This retains repeated increments, conflicting writes and ordered cascades.
+fn dvs_environment_next_time(world, story, due):
+    let clock = dv_find(story, "clock_ref", false)
+    let now = world.time
+    var next = due
+    let processes = dv_find(story, "world_processes", [])
+    var i = 0
+    while i < rt_count(processes):
+        let adoption = dv_get(world.adoptions, processes[i].law)
+        if adoption.active and adoption.mode == "enforce":
+            next = dv_min(next, dvs_environment_boundary(adoption.law.premise, clock, now, due))
+            if dv_truth(world, adoption.law.premise) == "true":
+                let staged = dv_stage(world, adoption.law.effects, now, adoption.basis, adoption.confidence)
+                var j = 0
+                while j < rt_count(staged.changes):
+                    let change = staged.changes[j]
+                    if dv_same(change.ref, clock) or not dv_same(dvs_reason_value(change.before), dvs_reason_value(change.after)):
+                        return dv_min(due, now + 1)
+                    j = j + 1
+        i = i + 1
+    return next
+
+// ---- Merged source module: 40-host.dv ----
+// Host commands contain an action and its execution contract, never a mind or oracle.
+fn dvs_present_replace(text, token, value):
+    var result = ""
+    var i = 0
+    while i < rt_length(text):
+        if i + rt_length(token) <= rt_length(text) and rt_slice(text, i, rt_length(token)) == token:
+            result = rt_cat(result, value)
+            i = i + rt_length(token)
+        else:
+            result = rt_cat(result, rt_chr(text, i))
+            i = i + 1
+    return result
+
+fn dvs_present_lines(state, viewer, presentation):
+    if rt_count(dv_find(presentation, "lines", [])) == 0:
+        return []
+    var mind = false
+    var i = 0
+    while i < rt_count(state.actors):
+        if state.actors[i].id == viewer:
+            mind = state.actors[i].mind
+        i = i + 1
+    var result = []
+    if mind == false:
+        return result
+    let lines = dv_find(presentation, "lines", [])
+    i = 0
+    while i < rt_count(lines):
+        let line = lines[i]
+        var visible = dv_truth(mind, dv_find(line, "when", dv_true())) == "true"
+        var text = line.template
+        let bindings = dv_find(line, "bindings", [])
+        var j = 0
+        while visible and j < rt_count(bindings):
+            let binding = bindings[j]
+            let cell = dv_read(mind, binding.ref)
+            if dv_uncontested(cell):
+                let value = rt_show(cell.value)
+                let display = dv_find(dv_find(binding, "labels", []), value, value)
+                text = dvs_present_replace(text, rt_cat("{", rt_cat(binding.name, "}")), display)
+            else:
+                visible = false
+            j = j + 1
+        if visible:
+            rt_push(result, text)
+        i = i + 1
+    return result
+
+fn dvs_session_intent(state):
+    let pending = dv_find(state, "pending", false)
+    if pending == false:
+        if dv_find(state, "awaiting_player", false):
+            return {"status": "awaiting_input", "active": true, "game_time": state.physical.time, "options": dvs_player_options(state.actors[state.cursor])}
+        return {"status": "idle", "active": dvs_session_active(state), "game_time": state.physical.time}
+    return {"status": "prepared", "actor": pending.id, "action_event": pending.action_event, "action": pending.action, "bounds": pending.quote.bounds, "execution_cost": pending.model.actual, "game_time": pending.time}
+
+fn dvs_session_presentation(state, viewer):
+    var i = rt_count(state.events) - 1
+    var perceived = false
+    var heard = false
+    var judgment = false
+    while 0 <= i:
+        let event = state.events[i]
+        if event.actor == viewer and (event.type == "answer_accepted" or event.type == "answer_rejected"):
+            judgment = {"status": event.type, "event_id": event.id, "game_time": event.time}
+        if event.actor == viewer and (event.type == "listener_parse" or event.type == "observation"):
+            perceived = true
+        if event.actor == viewer and (event.type == "listener_parse" or event.type == "speech_received_pending"):
+            heard = true
+        if event.type == "action_execution":
+            let action = event.data.action
+            let applied = event.data.receipt.execution.status == "applied"
+            let visible = event.actor == viewer or (heard or (perceived and not dv_has_key(action, "speech")))
+            var surface = ""
+            var presentation = []
+            if applied and visible:
+                surface = dv_find(action, "surface", dv_find(dv_find(action, "speech", []), "surface", ""))
+                presentation = dv_find(action, "presentation", [])
+            var voice = "narration"
+            if dv_has_key(action, "speech"):
+                voice = "dialogue"
+            let surface_voice = voice
+            voice = dv_find(presentation, "voice", voice)
+            return {"status": event.data.receipt.execution.status, "actor": event.actor, "action_id": action.id, "action_kind": action.kind, "execution_event": event.id, "voice": voice, "surface_voice": surface_voice, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation), "judgment": judgment}
+        i = i - 1
+    return {"status": "idle", "game_time": state.physical.time}
+
+// Human choice uses the same subject-local admission and the same prepared receipt.
+fn dvs_set_player(state, actor):
+    dv_require(not dv_has_key(state, "pending"), "Cannot change controller during execution")
+    return dvs_control_state(state, state.actors, state.events, state.cursor, actor, "", false)
+
+fn dvs_control_state(state, actors, events, cursor, player, selection, waiting):
+    return {"story": state.story, "physical": state.physical, "actors": actors, "events": events, "bindings": state.bindings, "costs": state.costs, "run_start": state.run_start, "duration_budget": state.duration_budget, "horizon": state.horizon, "duration_blocked": state.duration_blocked, "limit": state.limit, "cursor": cursor, "executed": state.executed, "idle": state.idle, "status": state.status, "initial": state.initial, "player_actor": player, "player_selection": selection, "awaiting_player": waiting}
+
+fn dvs_player_options(actor):
+    var result = []
+    let refs = dvp_goal_refs(actor)
+    var i = 0
+    while i < rt_count(actor.actions):
+        let action = actor.actions[i]
+        if dvp_eligible(actor, action, actor.mind, refs):
+            let label = dv_find(action, "label", dv_find(action, "surface", dv_find(dv_find(action, "speech", []), "surface", "")))
+            if label != "":
+                rt_push(result, {"id": action.id, "label": label, "available": true})
+        i = i + 1
+    return result
+
+fn dvs_select_player(state, id):
+    dv_require(dv_find(state, "awaiting_player", false), "Player input is not currently requested")
+    let actor = state.actors[state.cursor]
+    let action = dvp_find_action(actor.actions, id)
+    dv_require(action != false, "Unknown player action")
+    dv_require(dvp_eligible(actor, action, actor.mind, dvp_goal_refs(actor)), "Player action is no longer available")
+    return dvs_control_state(state, state.actors, state.events, state.cursor, dv_find(state, "player_actor", ""), id, false)
+
+fn dvs_player_choice(actor, id):
+    let action = dvp_find_action(actor.actions, id)
+    dv_require(action != false and dvp_eligible(actor, action, actor.mind, dvp_goal_refs(actor)), "Player action failed subject admission")
+    return {"action": action, "score": 0, "plan_expansions": 0, "plans": [], "relevant_refs": dvp_goal_refs(actor), "dependency_cache": dv_find(actor, "dependency_cache", false), "controller": "player"}

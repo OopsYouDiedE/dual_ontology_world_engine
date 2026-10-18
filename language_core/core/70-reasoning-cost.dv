@@ -120,3 +120,239 @@ fn dv_judge_conclusion(world, conclusion, proof, policy):
     var cost = (((steps * policy.step) + (uncertainty * policy.evidence)) + ((assumptions * policy.assumption) + (conflicts * policy.conflict)))
     var components = {"steps": steps, "evidence_uncertainty": uncertainty, "assumptions": assumptions, "conflicts": conflicts}
     return dv_with_many({"valid": true, "cost": cost, "components": components, "reasonable": (not (policy.maximum < cost))}, {"reasonableness": (1 / (1 + (cost / policy.reference))), "confidence": root.confidence, "hypothetical": dv_or(root.hypothetical, (world.domain == "prediction")), "scope": {"world": world.id, "subject": world.subject, "revision": world.revision}, "basis": visited})
+
+// --- merged from 80-inspection.dv ---
+
+// Inspector reads committed checkpoints, not reconstructed or omniscient minds.
+
+fn dv_checkpoint(world, time):
+    return {"time": time, "revision": world.revision, "world": dv_clone(world)}
+
+fn dv_session(worlds, time, time_unit):
+    var catalog = []
+    var history = []
+    var subjects = []
+    var i = 0
+    dv_require((not (time < 0)), "Negative session time")
+    while (i < rt_count(worlds)):
+        var world = worlds[i]
+        var id = world.id
+        var domain = world.domain
+        dv_require(dv_or((domain == "physical"), (domain == "mind")), "Predictions cannot be committed as worlds")
+        dv_require((not dv_has_key(catalog, id)), "Duplicate world identity")
+        if (domain == "mind"):
+            dv_require((not dv_has(subjects, world.subject)), "Duplicate subject world")
+            rt_push(subjects, world.subject)
+        catalog = dv_with(catalog, id, world)
+        rt_push(history, dv_checkpoint(world, time))
+        i = (i + 1)
+    return {"worlds": catalog, "history": history, "time": time, "time_unit": time_unit}
+
+fn dv_session_commit(session, expected_revision, world, time):
+    var catalog = session.worlds
+    var id = world.id
+    var old = dv_get(catalog, id)
+    dv_require((old.revision == expected_revision), "Stale session commit")
+    dv_require((expected_revision < world.revision), "Commit needs a newer world revision")
+    dv_require(dv_and((old.domain == world.domain), (old.subject == world.subject)), "World identity changed")
+    dv_require((not (time < session.time)), "Session time cannot move backwards")
+    return dv_with_many(session, {"worlds": dv_with(catalog, id, world), "history": dv_append(session.history, dv_checkpoint(world, time)), "time": time})
+
+fn dv_session_advance(session, time):
+    dv_require((not (time < session.time)), "Session time cannot move backwards")
+    return dv_with(session, "time", time)
+
+fn dv_active_worldview(world):
+    var adoptions = world.adoptions
+    var result = []
+    var i = 0
+    var policies = dv_find(world, "policies", [])
+    var accepted_policies = []
+    while (i < rt_count(adoptions)):
+        var entry = adoptions[i]
+        if entry[1].active:
+            rt_push(result, dv_clone(entry))
+        i = (i + 1)
+    i = 0
+    while (i < rt_count(policies)):
+        var entry = policies[i]
+        if entry[1].active:
+            rt_push(accepted_policies, dv_clone(entry))
+        i = (i + 1)
+    return {"laws": result, "value_policies": accepted_policies}
+
+fn dv_inspect_content(world, command, object_id, facet):
+    if (command == "worldview"):
+        return dv_active_worldview(world)
+    else:
+        if (command == "state"):
+            return dv_clone(world.objects)
+        else:
+            if (command == "slice"):
+                var objects = world.objects
+                var fields = []
+                if dv_has_key(objects, object_id):
+                    var facets = dv_get(objects, object_id).facets
+                    var values = dv_find(facets, facet, [])
+                    var i = 0
+                    while (i < rt_count(values)):
+                        rt_push(fields, values[i][0])
+                        i = (i + 1)
+                return dv_slice(world, object_id, facet, fields)
+            else:
+                return rt_fail("Inspector command must be worldview, state or slice")
+
+fn dv_inspect_at(session, subject, time, command, object_id, facet):
+    dv_require((not (session.time < time)), "Requested time has not been reached")
+    var history = session.history
+    var i = 0
+    var found = false
+    var chosen = false
+    while (i < rt_count(history)):
+        var checkpoint = history[i]
+        var world = checkpoint.world
+        if dv_and((world.domain == "mind"), dv_and((world.subject == subject), (not (time < checkpoint.time)))):
+            found = true
+            chosen = checkpoint
+        i = (i + 1)
+    if found:
+        var world = chosen.world
+        return dv_with_many({"status": "snapshot", "subject": subject, "requested_time": time, "checkpoint_time": chosen.time}, {"time_unit": session.time_unit, "revision": world.revision, "content": dv_inspect_content(world, command, object_id, facet)})
+    else:
+        return {"status": "no-checkpoint", "subject": subject, "requested_time": time}
+
+fn dv_inspector_main():
+    var argc = rt_arg_count()
+    dv_require(dv_or((argc == 4), (argc == 6)), "Usage: Inspector session.json subject time worldview|state|slice [object facet]")
+    var command = rt_arg(3)
+    var local_1 = false
+    if (command == "slice"):
+        local_1 = (argc == 6)
+    else:
+        local_1 = (argc == 4)
+    dv_require(local_1, "Wrong inspector argument count")
+    var local_2 = false
+    if (argc == 6):
+        local_2 = rt_arg(4)
+    else:
+        local_2 = ""
+    var local_3 = false
+    if (argc == 6):
+        local_3 = rt_arg(5)
+    else:
+        local_3 = ""
+    return rt_print(rt_json_stringify(dv_inspect_at(rt_json_parse(rt_read(rt_arg(0))), rt_arg(1), rt_number(rt_arg(2)), command, local_2, local_3)))
+
+// --- merged from 90-action-cost.dv ---
+
+// Resource accounting is independent of preference/effort scores. All transitions return copies.
+
+fn dv_action_cost_vector(time, computation, stamina):
+    dv_require(dv_and((not (time < 0)), dv_and((not (computation < 0)), (not (stamina < 0)))), "Negative action cost")
+    return {"time": time, "computation": computation, "stamina": stamina}
+
+fn dv_action_cost_validate(v):
+    return dv_action_cost_vector(v.time, v.computation, v.stamina)
+
+fn dv_action_cost_le(a, b):
+    return dv_and((not (b.time < a.time)), dv_and((not (b.computation < a.computation)), (not (b.stamina < a.stamina))))
+
+fn dv_action_cost_add(a, b):
+    return dv_action_cost_vector((a.time + b.time), (a.computation + b.computation), (a.stamina + b.stamina))
+
+fn dv_action_cost_sub(a, b):
+    return dv_action_cost_vector((a.time - b.time), (a.computation - b.computation), (a.stamina - b.stamina))
+
+fn dv_action_cost_bounds(minimum, maximum):
+    dv_action_cost_validate(minimum)
+    dv_action_cost_validate(maximum)
+    dv_require(dv_action_cost_le(minimum, maximum), "Action minimum exceeds maximum")
+    return {"minimum": minimum, "maximum": maximum}
+
+fn dv_action_cost_ledger(id, balances):
+    dv_action_cost_validate(balances)
+    return dv_with_many({"id": id, "revision": 0, "balances": balances, "reserved": dv_action_cost_vector(0, 0, 0)}, {"receipts": [], "events": [], "spent": dv_action_cost_vector(0, 0, 0)})
+
+fn dv_action_cost_quote(ledger, world, action, event, bounds):
+    dv_domain(world, "physical")
+    dv_action_cost_bounds(bounds.minimum, bounds.maximum)
+    dv_require((not dv_has(ledger.events, event)), "Repeated cost event")
+    dv_require((not dv_has(world.seen, event)), "Repeated world event")
+    return dv_with_many({"ledger": ledger.id, "revision": ledger.revision, "world": world.id, "world_revision": world.revision}, {"action": action, "event": event, "bounds": bounds})
+
+fn dv_action_cost_admit(ledger, world, quote):
+    var maximum = quote.bounds.maximum
+    var event = quote.event
+    dv_require(dv_and((ledger.id == quote.ledger), (ledger.revision == quote.revision)), "Stale cost quote")
+    dv_require(dv_and((world.id == quote.world), (world.revision == quote.world_revision)), "Stale cost world")
+    dv_action_cost_quote(ledger, world, quote.action, event, quote.bounds)
+    dv_require(dv_action_cost_le(maximum, ledger.balances), "Insufficient action resources")
+    var receipt = dv_with(quote, "state", "reserved")
+    var next = dv_with(ledger, "revision", (ledger.revision + 1))
+    next = dv_with(next, "balances", dv_action_cost_sub(ledger.balances, maximum))
+    next = dv_with(next, "reserved", dv_action_cost_add(ledger.reserved, maximum))
+    next = dv_with(next, "events", dv_append(ledger.events, event))
+    next = dv_with(next, "receipts", dv_with(ledger.receipts, event, receipt))
+    return {"ledger": next, "receipt": receipt}
+
+fn dv_action_cost_actual(receipt, actual):
+    dv_action_cost_validate(actual)
+    dv_require(dv_and(dv_action_cost_le(receipt.bounds.minimum, actual), dv_action_cost_le(actual, receipt.bounds.maximum)), "Actual action cost outside bounds")
+    return actual
+
+fn dv_action_cost_settle(ledger, receipt, actual, outcome):
+    var event = receipt.event
+    var stored = dv_get(ledger.receipts, event)
+    var maximum = receipt.bounds.maximum
+    dv_require(dv_and((ledger.id == receipt.ledger), dv_same(stored, receipt)), "Receipt mismatch or already settled")
+    dv_require((stored.state == "reserved"), "Receipt already settled")
+    dv_require(dv_or((outcome == "applied"), (outcome == "rejected")), "Unknown settlement outcome")
+    dv_action_cost_actual(receipt, actual)
+    var next = dv_with(ledger, "revision", (ledger.revision + 1))
+    var settled = dv_with_many(receipt, {"state": "settled", "actual": actual, "outcome": outcome})
+    next = dv_with(next, "balances", dv_action_cost_add(ledger.balances, dv_action_cost_sub(maximum, actual)))
+    next = dv_with(next, "reserved", dv_action_cost_sub(ledger.reserved, maximum))
+    next = dv_with(next, "spent", dv_action_cost_add(ledger.spent, actual))
+    return dv_with(next, "receipts", dv_with(ledger.receipts, event, settled))
+
+// A queued action has already waited on the shared world clock.
+// Its ledger still pays the full duration once; immediate callers retain elapsed-time settlement.
+fn dv_action_cost_completion_time(physical, receipt, actual):
+    let now = dv_find(physical, "time", 0)
+    if dv_has_key(receipt, "scheduled_start"):
+        let due = receipt.scheduled_start + actual.time
+        dv_require(due <= now, "Scheduled action has not finished waiting")
+        return now
+    return now + actual.time
+
+fn dv_action_cost_clock_commit(physical, receipt, actual, status):
+    var event = receipt.event
+    var time = dv_action_cost_completion_time(physical, receipt, actual)
+    var history = dv_with_many({"id": event, "time": time, "kind": "action-cost", "status": status}, {"receipt": receipt, "actual": actual})
+    return dv_with_many(physical, {"time": time, "revision": (physical.revision + 1), "seen": dv_append(physical.seen, event), "history": dv_append(physical.history, history)})
+
+fn dv_action_cost_execution_metadata(execution, receipt, actual):
+    return dv_with_many(execution, {"event": receipt.event, "time": execution.world.time, "actual_cost": actual})
+
+fn dv_action_cost_execute(ledger, physical, quote, actual):
+    var admitted = dv_action_cost_admit(ledger, physical, quote)
+    var receipt = admitted.receipt
+    dv_action_cost_actual(receipt, actual)
+    var execution = dv_execute(physical, receipt.action, receipt.event, dv_action_cost_completion_time(physical, receipt, actual), receipt.world_revision)
+    if (execution.status == "applied"):
+        false
+    else:
+        execution = dv_with(execution, "world", dv_action_cost_clock_commit(physical, receipt, actual, execution.status))
+    var local_1 = false
+    if (execution.status == "applied"):
+        local_1 = "applied"
+    else:
+        local_1 = "rejected"
+    return {"ledger": dv_action_cost_settle(admitted.ledger, receipt, actual, local_1), "execution": dv_action_cost_execution_metadata(execution, receipt, actual), "receipt": receipt}
+
+fn dv_action_cost_finish(ledger, physical, quote, actual, outcome):
+    var admitted = dv_action_cost_admit(ledger, physical, quote)
+    var receipt = admitted.receipt
+    dv_action_cost_actual(receipt, actual)
+    var next = dv_action_cost_clock_commit(physical, receipt, actual, outcome)
+    return {"ledger": dv_action_cost_settle(admitted.ledger, receipt, actual, outcome), "execution": dv_action_cost_execution_metadata(dv_result(outcome, next, [], dv_single(receipt.event)), receipt, actual), "receipt": receipt}

@@ -14,19 +14,19 @@ compiler/compiler.dv 生成 C#，Runtime.cs 提供平台 ABI，core/session 执�
 
 | 模块 | 内容 |
 | --- | --- |
-| core/00-data | 世界、对象、引用和切片 |
-| core/10-laws | 公理实例与enforce/predict/infer/norm采纳 |
-| core/20-observation | 投影、来源、证据聚合和本人更新 |
-| core/30-transport | 通道传播与保留片段 |
-| core/40-value、50-response | 本人价值、关系、状态、回应意图和表达 |
-| core/55-cognition | 接纳门槛、有限域配平、证书核验和刻画提交 |
-| core/60-object-laws | 通用门与通道规律构造 |
-| core/70-reasoning-cost | 论证代价与合理度 |
-| core/80-inspection | 历史检查点和切片查询 |
-| core/90-action-cost | 多维报价、预留、执行和结算 |
-| core/95-model-argument | 模型论证、动态槽位与可撤回采纳 |
-| core/98-debug | 只读事件调试投影 |
-| verification/session | 本人认知、话语、模型、规划、调度和正式 prepare/complete |
+| core/00-data.dv | 数据、世界、公理采纳和通用对象规律 |
+| core/20-observation.dv | 观察、本人认知更新与通道传播 |
+| core/40-value.dv | 价值、回应、采纳与刻画 |
+| core/70-reasoning-cost.dv | 认知费用、历史检查与行动结算 |
+| core/95-model-argument.dv | 模型论证与只读调试投影 |
+| verification/session/10-subjective.dv | 主体认知、个人选择与请求 |
+| verification/session/15-action-planning.dv | 规划与价值比较 |
+| verification/session/20-speech.dv | 话语预测、传播与理解 |
+| verification/session/25-simulation.dv | 付费模型、切片与论证 |
+| verification/session/30-runner.dv | 调度、环境、正式回执与宿主呈现 |
+| verification/scenarios/chapter1、chapter2 | 按章节隔离的生产内容 |
+| verification/checks | 只读检查及分包的 authority、fixtures、report |
+| game/entry.dv、debug-run.dv | 生产组合与独立调试入口 |
 
 完整现行参考见 **[Core README：语法、全部领域接口与正式会话](core/README.md)**，包含可执行表层与启动语法、平台 ABI、世界/知识边界、prepare/complete、模块声明索引和未实现范围。SYNTAX.md 中的完整语言方案与该参考中的现行实现分别阅读。
 
@@ -40,7 +40,7 @@ compiler/compiler.dv 生成 C#，Runtime.cs 提供平台 ABI，core/session 执�
 
 原生内容位于verification/scenarios，会话位于verification/session。本人推知、话语理解、重演、竞争解释、论证、规划和回答协议由编译DV运行。配置、场景和oracle分别导出为交换数据。
 
-现役 Godot 保留现场、输入和呈现链，生产项目已引用由原生 DV 编译生成的 Session，移除旧 Core 项目引用。两章内容与门口交接已编入 game/modules.json；完整两章游玩、离屏人物执行和最终清理仍未完成。[第一章源码反推](../artifacts/partial-bootstrap-core/chapter1-reverse-language-requirements-2026-10-13.md)说明语言需求；运行方式见[verification/README.md](verification/README.md)。
+现役 Godot 保留现场、输入和呈现链，生产项目已引用由原生 DV 编译生成的 Session，移除旧 Core 项目引用。两章内容与门口交接已编入 game/entry.dv 的相对 include；完整两章游玩、离屏人物执行和最终清理仍未完成。[第一章源码反推](../artifacts/partial-bootstrap-core/chapter1-reverse-language-requirements-2026-10-13.md)说明语言需求；运行方式见[verification/README.md](verification/README.md)。
 
 ## 运行
 

@@ -26,13 +26,13 @@ scenarios提供原生DV内容和配置，session组织主体演算与执行，ch
 
 ## 运行合同
 
-动作费用使用core/90-action-cost.dv，会话持有成本目录和当前ledger。主体的推知、话语理解、付费重演、竞争论证、规划和回答协议各自保留来源。
+动作费用使用core/70-reasoning-cost.dv，会话持有成本目录和当前ledger。主体的推知、话语理解、付费重演、竞争论证、规划和回答协议各自保留来源。
 
 session/30-runner 提供 open/prepare/complete/close 会话接口。prepare 保留待执行行动，不先发布物理效果或观察；complete 接受对应 action_event 的实际执行结果与成本，再执行权威法则、感知和传播。命令行逻辑会话通过同一接口使用 formal-model 执行器。session/40-host 导出宿主意图与执行后的呈现数据。Session 类库由 tools/build_session.py 从 DV 源生成，保存与恢复序列化完整会话，不重新初始化认识。
 
 构建宿主类库：`dotnet build language_core/Session/DuelView.Session.csproj -c Release -p:DvPython=<Python路径>`。此构建不代表 Godot 接入或实际几何执行已经完成。
 
-正式 chapter1-*.dv、session 和 checks 已迁移到 surface-v2 可执行语法，旧 surface-v1-proposal 仅为历史提案。run-surface-v2.json 只导出当前原生第一章、独立 oracle 和机制示例，然后运行一局 enabled 正式会话；搭配 --session-only，不默认启动多场景回归。scenarios/cognitive-semantics.dv 独立运行有限域刻画与配平，不注入第一章人物状态。session/20-speech 的实际收闻与预测均调用 mapping 乘法，正式认知变化通过 core/55-cognition 的门槛机制记录；未曾采纳的解释被否定时记录拒斥，不记录撤回。
+正式 chapter1-*.dv、session 和 checks 已迁移到 surface-v2 可执行语法，旧 surface-v1-proposal 仅为历史提案。run-surface-v2.json 只导出当前原生第一章、独立 oracle 和机制示例，然后运行一局 enabled 正式会话；搭配 --session-only，不默认启动多场景回归。checks/fixtures/cognitive-semantics.dv 独立运行有限域刻画与配平，不注入第一章人物状态。session/20-speech 的实际收闻与预测均调用 mapping 乘法，正式认知变化通过 core/40-value 的门槛机制记录；未曾采纳的解释被否定时记录拒斥，不记录撤回。
 
 工程进程时限默认为240现实秒，由--process-timeout-seconds配置。--source-root指定源码，--judge-core-root指定判定Core；--rerun-frozen-session使用指定目录的既有程序和输入。游戏预算由场景配置提供。
 
@@ -113,7 +113,7 @@ rt_copy_value 的独立复制采用延迟分支实体化：返回独立可变根
 
 ## 内容声明接线维护（2026-10-16）
 
-`cognitive-profiles.dv` 提供开局配置安装；`chapter1-night.dv` 与 `chapter2-daily.dv` 通过生产 entry 显式 include，再由 campaign 安装。内容行分别声明主体系前提、物理执行条件、完成标记、实际传播和观察；参与者各自行动，不在发起人的操作中代写他人决定。
+`cognitive-profiles.dv` 提供开局配置安装；`opening.dv` 与 `daily.dv` 通过生产 entry 显式 include，再由 campaign 安装。内容行分别声明主体系前提、物理执行条件、完成标记、实际传播和观察；参与者各自行动，不在发起人的操作中代写他人决定。
 
 时钟下界只生成可选机会。等待构造器读取本人目标中的正向时钟前提，跳过否定分支；等待费用仍由成本目录报价。目标按本人认识修订与时间刷新，排队中的主体不重选。答辩 oracle 保持独立，正式阶段变更时同步其来源与门槛，不将 oracle 加入生产内容包。
 
@@ -217,3 +217,11 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译�
 第4轮：调查导航一次只为一个尚未完成且处于本人已知时窗的任务生成到达/中继意图，优先当前地点可执行任务，随后可执行的异地任务，最后保留等待前提的首项任务；完整实质目标仍全部参加共同规划。导航缓存包括所有相关完成、要求、位置、通路与窗口真值，避免到达多个房间的短暂奖励相互往返。现场调查操作只在成功Complete后通过既有同处与可见性检查传播实际grants，不向异地人物预发结果。此为新行为条件，不作同条件性能比较。
 绑定查询缓存每个主体/物理身份的单项结果；修改bindings仍失效。支持来源按完整候选事件值构建引用索引，合并模型接受事件时保留原事件顺序，最终仍核对完整claim、after和basis，不把索引命中当作支持。中性检查与唯一180秒正式逻辑会话分列。
 内容移动正文含起终点，调查检视按本人真实字段显示操作完成状态；首夜递零嘴作为可见行动，实际同处观察不再伪装对白。未知姓名仍取本人信息，未取得介绍时不提前公开。
+
+## DV 文件归并与七目录导出（2026-10-18）
+
+生产DV按职责保留五份core、五份session、chapter1/chapter2两个内容目录，以及game的entry/debug-run入口。checks顶层为六份只读检查，authority、fixtures、report在checks子目录分别保存；生产entry不包含oracle、recall示例或验证配置。现役函数名、参数、声明体与字符串值保持原文；旧来源字符串是证据标识，路径迁移通过 artifacts/partial-bootstrap-core/dv-layout-20261018/path-map.json 追溯，不重写旧证据。
+
+结构整理用声明原文与生产依赖闭包对照、编译及导出一致性检查确认工程接线，不执行流程回归或用它宣称游玩改善。新增源文件按职责进入现有目录；出现define/module作用域时须保留独立编译边界，不直接拼接进其他源模块。
+
+一键源码审阅导出入口为 artifacts/partial-bootstrap-core/dv-layout-20261018/export/export_dv_package.bat，默认输出 artifacts/dv_consolidated_package_v2。七个目录各输出一份DV，保留原文件边界和来源指纹；该包用于阅读，不作为新执行入口。--check只校验导出是否与当前源码一致。旧导出与历史证据不改写。

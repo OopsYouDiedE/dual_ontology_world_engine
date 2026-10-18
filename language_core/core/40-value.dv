@@ -72,3 +72,439 @@ fn dv_value_change(before, after, criteria):
     var a = dv_value(before, criteria, subjective)
     var b = dv_value(after, criteria, subjective)
     return {"delta": (b.score - a.score), "before": a, "after": b, "complete": dv_and(a.complete, b.complete)}
+
+// --- merged from 50-response.dv ---
+
+// Appraisal-inspired game mechanism, not a clinical or psychometric model.
+// Intent, instrumental value and expression are separate outputs.
+
+fn dv_request(id, requester, self):
+    return {"id": id, "requester": requester, "self": self}
+
+fn dv_feature_refs(request):
+    var speaker = request.requester
+    var self = request.self
+    var id = request.id
+    var refs = []
+    rt_push(refs, dv_pair("trust", dv_ref(speaker, "relationship", "trust")))
+    rt_push(refs, dv_pair("closeness", dv_ref(speaker, "relationship", "closeness")))
+    rt_push(refs, dv_pair("respect", dv_ref(speaker, "relationship", "respect")))
+    rt_push(refs, dv_pair("reciprocity", dv_ref(speaker, "relationship", "reciprocity")))
+    rt_push(refs, dv_pair("valence", dv_ref(self, "affect", "valence")))
+    rt_push(refs, dv_pair("arousal", dv_ref(self, "affect", "arousal")))
+    rt_push(refs, dv_pair("fatigue", dv_ref(self, "resources", "fatigue")))
+    rt_push(refs, dv_pair("stress", dv_ref(self, "resources", "stress")))
+    rt_push(refs, dv_pair("attention", dv_ref(self, "resources", "attention")))
+    rt_push(refs, dv_pair("threat", dv_ref(id, "appraisal", "threat")))
+    rt_push(refs, dv_pair("fairness", dv_ref(id, "appraisal", "fairness")))
+    rt_push(refs, dv_pair("control", dv_ref(id, "appraisal", "control")))
+    rt_push(refs, dv_pair("certainty", dv_ref(id, "appraisal", "certainty")))
+    rt_push(refs, dv_pair("importance", dv_ref(id, "appraisal", "importance")))
+    return refs
+
+fn dv_appraise_request(mind, request):
+    dv_domain(mind, "mind")
+    var refs = dv_feature_refs(request)
+    var features = []
+    var unknown = []
+    var basis = []
+    var i = 0
+    while (i < rt_count(refs)):
+        var entry = refs[i]
+        var key = entry[0]
+        var cell = dv_read(mind, entry[1])
+        if dv_and(cell.known, (not cell.conflicted)):
+            rt_push(features, dv_pair(key, cell.value))
+            rt_push(basis, {"feature": key, "ref": entry[1], "cell": cell})
+        else:
+            rt_push(unknown, key)
+        i = (i + 1)
+    return dv_with_many({"features": features, "unknown": unknown, "basis": basis, "revision": mind.revision}, {"subject": mind.subject, "request": request.id})
+
+fn dv_dot(features, weights):
+    var i = 0
+    var score = 0
+    var terms = []
+    var unknown = []
+    while (i < rt_count(weights)):
+        var entry = weights[i]
+        var key = entry[0]
+        if dv_has_key(features, key):
+            var contribution = (dv_get(features, key) * entry[1])
+            score = (score + contribution)
+            rt_push(terms, dv_pair(key, contribution))
+        else:
+            rt_push(unknown, key)
+        i = (i + 1)
+    return {"score": score, "terms": terms, "unknown": unknown}
+
+fn dv_clamp_signed(value):
+    if (value < -1):
+        return -1
+    else:
+        if (1 < value):
+            return 1
+        else:
+            return value
+
+fn dv_expression(appraisal, expression_policy):
+    var axes = []
+    var i = 0
+    while (i < rt_count(expression_policy)):
+        var axis = expression_policy[i]
+        var evaluation = dv_dot(appraisal.features, axis[1])
+        rt_push(axes, dv_pair(axis[0], dv_with_many(evaluation, {"value": dv_clamp_signed(evaluation.score), "complete": (rt_count(evaluation.unknown) == 0)})))
+        i = (i + 1)
+    return axes
+
+fn dv_no_change_prediction(mind):
+    dv_domain(mind, "mind")
+    return dv_with_many(mind, {"domain": "prediction", "source_revision": mind.revision})
+
+fn dv_response_option(id, intent, feasible, prediction, effort, feature_weights):
+    dv_require((not (effort < 0)), "Negative effort")
+    return dv_with_many({"id": id, "intent": intent, "feasible": feasible, "prediction": prediction}, {"effort": effort, "feature_weights": feature_weights})
+
+fn dv_validate_expression_policy(expression_policy):
+    dv_require(dv_record_like(expression_policy), "Expression policy must be an axis-to-weight-record matrix")
+    var i = 0
+    while (i < rt_count(expression_policy)):
+        var axis = expression_policy[i]
+        var key = expression_policy[i][0]
+        var weights = expression_policy[i][1]
+        var j = 0
+        dv_require((rt_slice(rt_json_stringify(key), 0, 1) == "\""), "Expression policy axis name must be Text")
+        dv_require(dv_record_like(weights), rt_cat("Expression policy axis weights must be a record: ", key))
+        while (j < rt_count(weights)):
+            var weight = weights[j]
+            var feature = weights[j][0]
+            dv_require((rt_slice(rt_json_stringify(feature), 0, 1) == "\""), "Expression policy feature name must be Text")
+            dv_require(rt_is_numeric_value(weight[1]), rt_cat(rt_cat(rt_cat("Expression policy weight must be a finite Number: ", key), "."), feature))
+            j = (j + 1)
+        i = (i + 1)
+    return true
+
+fn dv_person_policy(subject, values, effort_cost, uncertainty_cost, expression_policy):
+    dv_validate_expression_policy(expression_policy)
+    dv_require(dv_and((not (effort_cost < 0)), (not (uncertainty_cost < 0))), "Negative policy cost")
+    return dv_with({"subject": subject, "values": values, "effort_cost": effort_cost, "uncertainty_cost": uncertainty_cost}, "expression", expression_policy)
+
+fn dv_accept_policy(mind, id, policy, basis):
+    dv_domain(mind, "mind")
+    dv_require((mind.subject == policy.subject), "Foreign value policy")
+    dv_require((0 < rt_count(basis)), "Value policy needs an acceptance basis")
+    var policies = dv_find(mind, "policies", [])
+    dv_require((not dv_has_key(policies, id)), "Duplicate accepted policy")
+    return dv_with_many(mind, {"policies": dv_with(policies, id, {"policy": policy, "basis": basis, "active": true}), "revision": (mind.revision + 1)})
+
+fn dv_respond_adopted(mind, request, options, policy_id):
+    var accepted = dv_get(mind.policies, policy_id)
+    dv_require(accepted.active, "Response policy is not adopted")
+    return dv_with(dv_respond(mind, request, options, accepted.policy), "policy_basis", accepted.basis)
+
+fn dv_response_score(mind, option, appraisal, policy):
+    var prediction = option.prediction
+    dv_domain(prediction, "prediction")
+    dv_require((prediction.source_revision == mind.revision), "Stale response prediction")
+    var value = dv_value_change(mind, prediction, policy.values)
+    var relation_and_state = dv_dot(appraisal.features, option.feature_weights)
+    var effort = (option.effort * policy.effort_cost)
+    var uncertainty = ((rt_count(relation_and_state.unknown) + rt_count(value.after.unknown)) * policy.uncertainty_cost)
+    return dv_with({"score": ((value.delta + relation_and_state.score) - (effort + uncertainty)), "value": value, "relationship_and_state": relation_and_state, "effort": effort}, "uncertainty_cost", uncertainty)
+
+fn dv_respond(mind, request, options, policy):
+    dv_domain(mind, "mind")
+    dv_require((mind.subject == policy.subject), "Foreign person policy")
+    var appraisal = dv_appraise_request(mind, request)
+    var i = 0
+    var found = false
+    var best = 0
+    var chosen = false
+    var evaluated = []
+    var rejected = []
+    var ids = []
+    while (i < rt_count(options)):
+        var option = options[i]
+        var id = option.id
+        var legal = dv_truth(mind, option.feasible)
+        dv_require((not dv_has(ids, id)), "Duplicate response identity")
+        rt_push(ids, id)
+        if (legal == "true"):
+            var evaluation = dv_response_score(mind, option, appraisal, policy)
+            rt_push(evaluated, dv_pair(id, evaluation))
+            var local_1 = false
+            if found:
+                local_1 = (best < evaluation.score)
+            else:
+                local_1 = true
+            if local_1:
+                found = true
+                best = evaluation.score
+                chosen = option
+        else:
+            rt_push(rejected, dv_pair(id, legal))
+        i = (i + 1)
+    var local_2 = false
+    if found:
+        local_2 = "selected"
+    else:
+        local_2 = "no-response"
+    return dv_with_many({"status": local_2, "choice": chosen, "appraisal": appraisal, "evaluated": evaluated}, {"rejected": rejected, "expression": dv_expression(appraisal, policy.expression), "committed": false})
+
+fn dv_relax(current, baseline, retention):
+    return (baseline + ((current - baseline) * dv_unit(retention)))
+
+fn dv_affect_proposal(mind, request, policy):
+    var appraisal = dv_appraise_request(mind, request)
+    var features = appraisal.features
+    var self = request.self
+    var valence_ref = dv_ref(self, "affect", "valence")
+    var arousal_ref = dv_ref(self, "affect", "arousal")
+    var valence = dv_read(mind, valence_ref)
+    var arousal = dv_read(mind, arousal_ref)
+    dv_require(dv_and(valence.known, arousal.known), "Unknown current affect")
+    var v_delta = dv_dot(features, policy.valence_weights)
+    var a_delta = dv_dot(features, policy.arousal_weights)
+    return {"source_revision": mind.revision, "basis": appraisal, "effects": dv_pair(dv_assign(valence_ref, dv_clamp_signed((dv_relax(valence.value, policy.baseline_valence, policy.retention) + v_delta.score))), dv_assign(arousal_ref, dv_clamp_signed((dv_relax(arousal.value, policy.baseline_arousal, policy.retention) + a_delta.score))))}
+
+// --- merged from 55-cognition.dv ---
+
+// Cognitive acceptance is a derived value. Levels are ordered lower bounds.
+fn dv_acceptance_classify(degree, levels):
+    dv_unit(degree)
+    dv_require(rt_count(levels) > 0, "Acceptance requires levels")
+    dv_require(levels[0][1] == 0, "Acceptance levels must start at zero")
+    var previous = -1
+    var selected = ""
+    var i = 0
+    while i < rt_count(levels):
+        let threshold = dv_unit(levels[i][1])
+        dv_require(previous < threshold, "Acceptance thresholds must increase")
+        if degree >= threshold:
+            selected = levels[i][0]
+        previous = threshold
+        i = i + 1
+    return {degree: degree, level: selected}
+
+acceptance dv_threshold_acceptance(value, threshold):
+    degree item: Acceptance = value
+    levels:
+        held from 0
+        accepted from threshold
+
+fn dv_acceptance_transition(previous, current, source):
+    var transition = "unchanged"
+    if previous.level != current.level:
+        transition = "changed"
+        if previous.level == "accepted" and current.level != "accepted":
+            transition = "withdrawn"
+    return {before: previous, after: current, transition: transition, source: source}
+
+// Finite balance kernel. Values and charges use exact rational arithmetic.
+// The model declares each allowed structural change, its resource charges and laws.
+fn dv_balance_dot(a, b):
+    dv_require(rt_count(a) == rt_count(b), "Balance dimensions differ")
+    var result = rt_exact("0")
+    var i = 0
+    while i < rt_count(a):
+        result = result + rt_exact(a[i]) * rt_exact(b[i])
+        i = i + 1
+    return result
+
+fn dv_balance_extent(variables):
+    var total = 1
+    var i = 0
+    while i < rt_count(variables):
+        let count = rt_count(variables[i].options)
+        dv_require(count > 0, "Balance variable has an empty domain")
+        total = total * count
+        dv_require(total <= 9007199254740991, "Finite domain index exceeds exact integer range")
+        i = i + 1
+    return total
+
+fn dv_balance_candidate(index, goal, variables, laws, limits, prices):
+    var cursor = index
+    var values = []
+    var costs = []
+    var choices = []
+    var j = 0
+    while j < rt_count(limits.balances):
+        rt_push(costs, rt_exact("0"))
+        dv_require(rt_exact(limits.balances[j]) >= 0, "Negative resource balance")
+        dv_require(rt_exact(prices[j]) >= 0, "Negative resource price")
+        j = j + 1
+    var i = 0
+    while i < rt_count(variables):
+        let count = rt_count(variables[i].options)
+        let quotient = rt_floor(cursor / count)
+        let choice = cursor - quotient * count
+        cursor = quotient
+        let option = variables[i].options[choice]
+        rt_push(choices, choice)
+        rt_push(values, rt_exact(option.value))
+        dv_require(rt_count(option.cost) == rt_count(costs), "Resource cost dimensions differ")
+        j = 0
+        while j < rt_count(costs):
+            let charge = rt_exact(option.cost[j])
+            dv_require(charge >= 0, "Negative imprint charge")
+            rt_replace(costs, j, costs[j] + charge)
+            j = j + 1
+        i = i + 1
+    let degree = dv_balance_dot(goal.coefficients, values)
+    var feasible = degree >= rt_exact(goal.minimum) and degree >= 0 and degree <= 1
+    i = 0
+    while i < rt_count(laws):
+        if dv_balance_dot(laws[i].coefficients, values) != rt_exact(laws[i].total):
+            feasible = false
+        i = i + 1
+    j = 0
+    while j < rt_count(costs):
+        if costs[j] > rt_exact(limits.balances[j]):
+            feasible = false
+        j = j + 1
+    return {index: index, choices: choices, values: values, degree: degree, charges: costs, cost: dv_balance_dot(costs, prices), feasible: feasible}
+
+// Search produces a witness; it does not certify its own optimality.
+fn dv_imprint_solve(capability, goal, variables, laws, limits, prices):
+    dv_require(capability, "Imprint capability is required")
+    dv_require(rt_count(prices) == rt_count(limits.balances), "Resource price dimensions differ")
+    dv_require(limits.search_budget >= 0 and rt_floor(limits.search_budget) == limits.search_budget, "Invalid search budget")
+    let total = dv_balance_extent(variables)
+    var visited = 0
+    var best = false
+    while visited < total and visited < limits.search_budget and (visited + 1) * 2 <= limits.work_remaining:
+        let candidate = dv_balance_candidate(visited, goal, variables, laws, limits, prices)
+        if candidate.feasible:
+            if best == false:
+                best = candidate
+            else:
+                if candidate.cost < best.cost:
+                    best = candidate
+        visited = visited + 1
+    var status = "Unresolved"
+    if best != false:
+        status = "Feasible"
+        if visited == total:
+            status = "Optimal"
+    else:
+        if visited == total:
+            status = "Infeasible"
+    return {status: status, best: best, visited: visited, total: total, revision: limits.revision, subject: limits.subject}
+
+// Numeric witnesses retain meaning after the JSON exchange representation is read back.
+fn dv_balance_same_numbers(left, right):
+    if rt_count(left) != rt_count(right):
+        return false
+    var i = 0
+    while i < rt_count(left):
+        if rt_exact(left[i]) != rt_exact(right[i]):
+            return false
+        i = i + 1
+    return true
+
+fn dv_balance_same_witness(left, right):
+    return left.index == right.index and left.feasible == right.feasible and dv_same(left.choices, right.choices) and dv_balance_same_numbers(left.values, right.values) and dv_balance_same_numbers(left.charges, right.charges) and rt_exact(left.degree) == right.degree and rt_exact(left.cost) == right.cost
+
+// Trusted finite proof kernel: reconstruct the witness and independently check coverage.
+// The caller supplies the original model; certificates cannot replace its constraints.
+fn dv_imprint_check(result, goal, variables, laws, limits, prices):
+    let total = dv_balance_extent(variables)
+    if result.total != total or result.revision != limits.revision or result.subject != limits.subject:
+        return false
+    if result.visited < 0 or result.visited > total or result.visited > limits.search_budget or result.visited * 2 > limits.work_remaining or rt_floor(result.visited) != result.visited:
+        return false
+    var best = result.best
+    var verified = false
+    if best != false:
+        if best.index < 0 or best.index >= result.visited or rt_floor(best.index) != best.index:
+            return false
+        verified = dv_balance_candidate(best.index, goal, variables, laws, limits, prices)
+        if not verified.feasible or not dv_balance_same_witness(best, verified):
+            return false
+    var i = 0
+    while i < result.visited:
+        var alternative = verified
+        if best == false:
+            alternative = dv_balance_candidate(i, goal, variables, laws, limits, prices)
+        else:
+            if i != best.index:
+                alternative = dv_balance_candidate(i, goal, variables, laws, limits, prices)
+        if alternative.feasible:
+            if best == false:
+                return false
+            if alternative.cost < best.cost:
+                return false
+        i = i + 1
+    if result.visited == total:
+        if best == false:
+            return result.status == "Infeasible"
+        return result.status == "Optimal"
+    if best == false:
+        return result.status == "Unresolved"
+    return result.status == "Feasible"
+
+fn dv_imprint_commit(state, result, goal, variables, laws, limits, prices, source):
+    dv_require(state.subject == limits.subject and state.revision == limits.revision, "Imprint source state changed")
+    dv_require(dv_same(state.balances, limits.balances), "Imprint resource snapshot changed")
+    dv_require(dv_imprint_check(result, goal, variables, laws, limits, prices), "Invalid balance certificate")
+    dv_require(state.work_remaining == limits.work_remaining, "Imprint work snapshot changed")
+    let work_spent = result.visited * 2
+    let paid = dv_with_many(state, [["work_remaining", state.work_remaining - work_spent], ["revision", state.revision + 1]])
+    if result.status != "Optimal":
+        return {applied: false, state: paid, result: result, work_spent: work_spent}
+    let best = result.best
+    var balances = []
+    var i = 0
+    while i < rt_count(state.balances):
+        let before = rt_exact(state.balances[i])
+        let after = before - best.charges[i]
+        dv_require(before == after + best.charges[i], "Resource conservation failed")
+        rt_push(balances, after)
+        i = i + 1
+    let degree = dv_balance_dot(goal.coefficients, best.values)
+    let accepted = dv_acceptance_classify(degree, state.levels)
+    let previous = dv_acceptance_classify(dv_balance_dot(goal.coefficients, state.values), state.levels)
+    let transition = dv_acceptance_transition(previous, accepted, source)
+    let receipt = {kind: "Imprint", source: source, before: state.values, after: best.values, charges: best.charges, proof: result, transition: transition}
+    let next = dv_with_many(paid, [["values", best.values], ["balances", balances], ["revision", state.revision + 1], ["acceptance", accepted], ["imprint_receipt", receipt]])
+    return {applied: true, state: next, result: result, work_spent: work_spent}
+
+// Adapter to authoritative Core mind cells and the existing action-cost ledger.
+fn dv_imprint_prepare(mind, refs, ledger, work_remaining, levels, search_budget, capability):
+    dv_domain(mind, "mind")
+    var values = []
+    var i = 0
+    while i < rt_count(refs):
+        let cell = dv_read(mind, refs[i])
+        dv_require(cell.known and not cell.conflicted, "Imprint structural coordinate is not established")
+        rt_push(values, rt_exact(cell.value))
+        i = i + 1
+    return {subject: mind.subject, revision: mind.revision, mind_id: mind.id, refs: refs, values: values, balances: [ledger.balances.time, ledger.balances.computation, ledger.balances.stamina], ledger_id: ledger.id, ledger_revision: ledger.revision, work_remaining: work_remaining, levels: levels, search_budget: search_budget, imprint_allowed: capability}
+
+fn dv_imprint_apply(mind, physical, ledger, state, result, goal, variables, laws, prices, event):
+    dv_domain(mind, "mind")
+    dv_require(state.imprint_allowed, "Imprint capability is required")
+    dv_require(mind.id == state.mind_id and mind.subject == state.subject and mind.revision == state.revision, "Imprint target snapshot changed")
+    dv_require(ledger.id == state.ledger_id and ledger.revision == state.ledger_revision, "Imprint ledger snapshot changed")
+    let current = dv_imprint_prepare(mind, state.refs, ledger, state.work_remaining, state.levels, state.search_budget, state.imprint_allowed)
+    dv_require(dv_balance_same_numbers(current.values, state.values), "Imprint structural input changed")
+    let committed = dv_imprint_commit(current, result, goal, variables, laws, state, prices, event)
+    var next_mind = mind
+    var actual = dv_action_cost_vector(0, 0, 0)
+    var outcome = "rejected"
+    if committed.applied:
+        let charges = committed.state.imprint_receipt.charges
+        actual = dv_action_cost_vector(charges[0], charges[1], charges[2])
+        outcome = "applied"
+        let origin = {kind: "Imprint", event: event, subject: mind.subject, proof: result}
+        var i = 0
+        while i < rt_count(state.refs):
+            next_mind = dv_store(next_mind, state.refs[i], dv_cell(committed.state.values[i], 1, dv_find(physical, "time", 0) + actual.time, [origin]))
+            i = i + 1
+        next_mind = dv_with_many(next_mind, [["revision", committed.state.revision], ["history", dv_append(mind.history, committed.state.imprint_receipt)], ["imprint_acceptance", committed.state.acceptance]])
+        let observed = dv_imprint_prepare(next_mind, state.refs, ledger, committed.state.work_remaining, state.levels, state.search_budget, state.imprint_allowed)
+        dv_require(dv_balance_dot(goal.coefficients, observed.values) >= rt_exact(goal.minimum), "Stored cognition did not achieve imprint goal")
+    let bounds = dv_action_cost_bounds(actual, actual)
+    let quote = dv_action_cost_quote(ledger, physical, "cognitive-imprint", event, bounds)
+    let settlement = dv_action_cost_finish(ledger, physical, quote, actual, outcome)
+    return {applied: committed.applied, mind: next_mind, physical: settlement.execution.world, ledger: settlement.ledger, work_remaining: committed.state.work_remaining, work_spent: committed.work_spent, proof: result, cost_receipt: dv_get(settlement.ledger.receipts, event)}

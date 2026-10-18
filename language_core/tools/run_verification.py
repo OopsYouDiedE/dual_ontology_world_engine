@@ -413,7 +413,7 @@ def judge_history(args, workspace, historical_root, out, plan):
     checker_root = (workspace / args.judge_core_root).resolve() if args.judge_core_root else historical_root
     files = sorted((checker_root / 'language_core/core').glob('*.dv'))
     live = workspace / 'language_core/verification'
-    files += sorted((live / 'checks').glob('*.dv')) + sorted((live / 'report').glob('*.dv'))
+    files += sorted((live / 'checks').glob('*.dv')) + sorted((live / 'checks/report').glob('*.dv'))
     files += [live / (name + '.dv') for name in ENTRIES]
     files += [checker_root / 'language_core/compiler/Runtime.cs']
     seal = {}
@@ -480,7 +480,7 @@ def judge_history(args, workspace, historical_root, out, plan):
         for name in (*entries, 'readable-report'):
             program = out / name
             program.mkdir()
-            modules = core + (sorted((snapshot / 'language_core/verification/report').glob('*.dv')) if name == 'readable-report' else checks)
+            modules = core + (sorted((snapshot / 'language_core/verification/checks/report').glob('*.dv')) if name == 'readable-report' else checks)
             suffix = '\n(main (dvr_main))\n' if name == 'readable-report' else '\n' + (snapshot / ('language_core/verification/' + name + '.dv')).read_text(encoding='utf-8-sig')
             (program / 'bundle.dv').write_text('\n'.join(p.read_text(encoding='utf-8-sig') for p in modules) + suffix, encoding='utf-8')
             shutil.copyfile(snapshot / 'language_core/compiler/Runtime.cs', program / 'Runtime.cs')
