@@ -18,7 +18,7 @@
 
 诊断后的纯值优化：`dv_read`在原subject→world.objects→ref.object检查后，以完整world和ref缓存完整cell，`dv_read_fields`只处理已验证前缀后的查找，缺对象仍不读facet/field。每次命中返回独立可变副本，嵌套world/ref变化使旧底本失效。`dv_truth`仅对List world中的非List常量值跳过通用memo；List常量保留原命中副本合同，其他路径及合取求值顺序保持。`dvp_topic_scan`保留原主题算法，入口的纯Bool缓存包含完整mind、item、question_ref存在性及值、topic_bindings、heard_topics；无合格mind时沿原扫描，有来源的personal早退仍优先。
 
-`rt_has_value`只对冻结全字符串列表或有效底本使用ordinal字符串集合；混合/数值/结构值保留原比较。`rt_record_with_many`只用字符串集合辅助追加键去重，出现非字符串键即沿原结构扫描；输出顺序、重复键更新、空更新与独立复制不变。缓存附着不可变值，修改沿既有底本失效链处理。
+`rt_has_value`对冻结全字符串列表或有效底本使用ordinal字符串集合；符合条件的结构值按保守指纹分桶后仍用原相等比较，未冻结查询及不支持值沿原扫描。`rt_record_with_many`在较大正规字符串记录上索引更新，小表与非正规表沿原路径；输出顺序、重复键更新、空更新与独立复制不变。缓存附着不可变值，修改沿既有底本失效链处理。
 
 等待静态元数据由`c1n_clock_boundaries`/`c1n_without_clock`缓存完整condition的纯结果，其`_uncached`保留原递归顺序，目标待定、时钟及本人非时钟前提仍逐次核对。本人声明白天等待策略时，夜间片段也在日内480起点截短；既有费用与更小本人上限保留。该等待边界属于新行为条件，不能将后续吞吐当作纯同条件提速。
 
@@ -380,7 +380,7 @@ Session 宿主提供流式 WriteTrace/WriteSave；Trace 的精确数沿原字符
 | 相等与布尔 | rt_eq(a,b), rt_same_value(a,b), rt_not(value) | 基本/身份相等、递归结构相等、Bool 否定 |
 | 文本 | rt_cat(a,b), rt_length(text), rt_slice(text,start,count), rt_chr(text,index), rt_code(text), rt_show(value) | 连接、UTF-16 长度/子串/单元、码值、基本值格式化；show 不格式化任意列表 |
 | 标识符 | rt_id_start(text), rt_id_part(text), rt_normalize(text) | 标识符类别、NFC |
-| 列表 | rt_list(), rt_push(list,value), rt_at(list,index), rt_replace(list,index,value), rt_count(list), rt_is_list(value) | 构造、追加、读取、替换、计数；写只读快照时报错 |
+| 列表 | rt_list(), rt_push(list,value), rt_at(list,index), rt_replace(list,index,value), rt_list_with_index(list,index,value), rt_count(list), rt_is_list(value) | 构造、追加、读取、原地替换、新根共享项替换、计数；写只读快照时报错 |
 | 记录 | rt_record_index(record,key), rt_record_find(record,key,fallback), rt_record_with(record,key,value), rt_record_with_many(record,updates) | 末项优先定位/查找、独立复制更新；更新全部重复键 |
 | 复制 | rt_copy_value(value), rt_snapshot(value) | 独立可编辑分支、递归不可变快照 |
 | 纯值备忘 | rt_memo_get(owner,key), rt_memo_put(owner,key,value) | get 返回 `[found,value]`，put 返回可独立使用的结果；完整输入底本和键决定结果 |
@@ -1031,3 +1031,13 @@ python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --node 456 --value-
 `owned_decision.context_policy_keys`可显式列出本人政策字段；这些字段值同时进入决策上下文与来源快照，实际变化允许重新表态。缺省空列表保持原事实/请求比较，不读其他主体政策。
 
 本轮性能维护：Runtime的JSON编码对不可变FrozenList按弱身份复用精确字符串，可变输入沿原编码路径；读取MemoryStream有效区间避免ToArray复制。无父节点的可变容器仍清除自身Backbone/Index后返回；有父节点沿原传播。DAG仅复用浅帧payload缓冲，保持字节、SHA256链、提交刷新与异常封存规则。动作检索按完整actions值与id纯缓存，仍最后匹配；输入或嵌套改变失效。内容刷新动作/规范数组按原顺序单次重建，静态目标模板只按主体id缓存，动态后缀及收据新鲜度照常计算。工程差分比较原始输出与别名/失效，不是剧情验收。
+
+### 容器热路补充（2026-10-18）
+
+`rt_list_with_index(items,index,value)`是三元List ABI，`dvs_replace`直接转发。每个整数位置按原`rt_eq`比较索引，命中采用value，未命中经原读取路径获取项；新根共享这些项，不属于`copy_value`独立复制。空列表不检查index，无匹配保持全部元素；原列表类型错误与读取顺序保留。
+
+`rt_record_with_many`对正规字符串二元项表构建末值更新索引，保留原字段顺序、重复原键全部更新、新键首次出现位置及末值优先、每个替换值独立复制；其他输入回原路径。`rt_has_value`可对已有冻结列表或未失效backbone建立结构桶：数值统一桶标记，候选沿原顺序执行`same_value`。未冻结/失效查询、非法数值与不支持值回原扫描；索引不改变输出、观察或决策。
+
+个人决定首次完成时previous_event为空，后续完成从既有真实决定回执读取前驱；缺少选择或执行证据仍不登记。批量更新索引仅用于原表至少16项，或至少8项且更新多于1项；较小表沿原扫描以减少分配。
+
+章节导航只为本人已知实质前提成立的任务建立到达意向；前提为false/unknown时保留实质目标，现场检查由有来源的独立证据目标与真实方法驱动。观察下界取声明窗口，旧观察不因更新时钟自动变新；本次行为修正与容器性能优化分别验收。

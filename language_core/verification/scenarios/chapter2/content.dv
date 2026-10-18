@@ -988,8 +988,9 @@ fn c2_navigation_goals(actor, goals):
         let goal = maintained_route.goal
         let intended = c2_goal(c2_at(actor.id, route.next), dv_all([dv_find(goal, "available_when", dv_true()), c2_at(actor.id, route.origin)]), dv_append(goal.basis, route))
         return dv_append(goals, dv_with(intended, "navigation_intention", {"target": route.target, "next": route.next, "scope": "maintained-known-route-not-task-completion"}))
+    // Unmet work prerequisites do not create independent arrival value.
+    // A declared evidence goal can still motivate a real on-site inspection.
     var first = false
-    var fallback = false
     var i = 0
     while i < rt_count(goals):
         let goal = goals[i]
@@ -1002,17 +1003,13 @@ fn c2_navigation_goals(actor, goals):
                 if ready and c2_navigation_local_ready(actor, goal):
                     // Local substantive work keeps priority over another trip.
                     return goals
-            else:
+            elif ready:
                 let route = c2_navigation_route(actor, room)
                 if route != false:
                     let candidate = {"goal": goal, "route": route, "when": when}
-                    if fallback == false:
-                        fallback = candidate
-                    if ready and first == false:
+                    if first == false:
                         first = candidate
         i = i + 1
-    if first == false:
-        first = fallback
     if first != false:
         let route = first.route
         let basis = dv_append(first.goal.basis, route)

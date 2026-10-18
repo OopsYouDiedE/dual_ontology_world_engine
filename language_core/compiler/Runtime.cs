@@ -69,6 +69,15 @@ public static class R
     public static object list() => new List<object>();
     public static object push(object a, object b) { Invalidate(a); MutableItems(a).Add(b); return a; }
     public static object at(object a, object i) => ReadItem(a, Index(i));
+    // Persistent spine only: mirror dvs_replace's equality and selected reads.
+    public static object list_with_index(object items, object index, object value)
+    {
+        var source = Items(items);
+        var result = new List<object>(source.Count);
+        for (var i = 0; i < source.Count; i++)
+            result.Add(Bool(eq((double)i, index)) ? value : ReadItem(items, i));
+        return result;
+    }
     public static object count(object a) => (double)Items(a).Count;
     public static object record_index(object record, object key)
     {
@@ -198,6 +207,20 @@ public static class R
             }
             return false;
         }
+        // Index only an already-frozen container or an unchanged mutable copy.
+        // Unsupported/non-finite atoms retain the original ordered scan.
+        if (values.Count >= 8 && TryMembershipHash(value, out var hash))
+        {
+            var frozen = items as FrozenList;
+            if (frozen is null && MutableStates.TryGetValue(values, out var state)) frozen = state.Backbone;
+            if (frozen is not null && FrozenMembership(frozen) is { } index)
+            {
+                if (!index.TryGetValue(hash, out var candidates)) return false;
+                foreach (var candidate in candidates)
+                    if (ReferenceEquals(candidate, value) || Bool(same_value(candidate, value))) return true;
+                return false;
+            }
+        }
         for (var i = 0; i < values.Count; i++)
             if (ReferenceEquals(values[i], value) || Bool(same_value(values[i], value))) return true;
         return false;
@@ -250,6 +273,9 @@ public static class R
         updates = snapshot(updates);
         changes = Items(updates);
         var frozen = Items(snapshot(record));
+        // Small one-off records favor the original short reverse scans.
+        if (frozen.Count >= 8 && (changes.Count > 1 || frozen.Count >= 16)
+            && TryStringRecordUpdate(frozen, changes, out var stringResult)) return stringResult;
         var result = new List<object>(frozen.Count + changes.Count);
         var keys = new List<object>(frozen.Count + changes.Count);
         HashSet<string>? stringKeys = new(StringComparer.Ordinal);
@@ -281,6 +307,33 @@ public static class R
             keys.Add(key);
         }
         return result;
+    }
+    // Specialize only well-formed string-key tables. Other ABI inputs retain
+    // the original path, including its validation and first-error behavior.
+    private static bool TryStringRecordUpdate(List<object> record, List<object> changes, out List<object> result)
+    {
+        result = null!;
+        foreach (var item in record)
+            if (item is not List<object> { Count: 2 } pair || pair[0] is not string) return false;
+        foreach (var item in changes)
+            if (item is not List<object> { Count: 2 } pair || pair[0] is not string) return false;
+        var updates = new Dictionary<string, object>(changes.Count, StringComparer.Ordinal);
+        foreach (List<object> pair in changes) updates[(string)pair[0]] = pair[1];
+        var present = new HashSet<string>(StringComparer.Ordinal);
+        result = new List<object>(record.Count + changes.Count);
+        foreach (List<object> pair in record)
+        {
+            var key = (string)pair[0];
+            result.Add(updates.TryGetValue(key, out var value)
+                ? new List<object> { key, copy_value(value) } : pair);
+            present.Add(key);
+        }
+        foreach (List<object> pair in changes)
+        {
+            var key = (string)pair[0];
+            if (present.Add(key)) result.Add(new List<object> { key, copy_value(updates[key]) });
+        }
+        return true;
     }
     private sealed class ValueMemo
     {
@@ -342,6 +395,85 @@ public static class R
         internal Dictionary<string, int>? Index;
         internal volatile bool StringsChecked;
         internal HashSet<string>? Strings;
+        internal volatile bool MembershipHashChecked;
+        internal bool MembershipHashEligible;
+        internal ulong MembershipHash;
+        internal volatile bool MembershipChecked;
+        internal Dictionary<ulong, List<object>>? Membership;
+    }
+    // Numeric atoms deliberately share a token: exact and floating values may
+    // compare equal. Hash collisions only add comparisons; same_value decides.
+    private static bool TryMembershipHash(object value, out ulong hash)
+    {
+        switch (value)
+        {
+            case string text:
+                hash = unchecked((ulong)StringComparer.Ordinal.GetHashCode(text) * 1099511628211UL) ^ 1UL;
+                return true;
+            case bool flag:
+                hash = flag ? 2UL : 3UL;
+                return true;
+            case double number when double.IsFinite(number):
+            case Rational { Denominator.Sign: > 0 }:
+                hash = 4UL;
+                return true;
+            case FrozenList frozen:
+                if (frozen.MembershipHashChecked)
+                {
+                    hash = frozen.MembershipHash;
+                    return frozen.MembershipHashEligible;
+                }
+                lock (SnapshotLock)
+                {
+                    if (!frozen.MembershipHashChecked)
+                    {
+                        frozen.MembershipHashEligible = TryMembershipListHash(frozen, out frozen.MembershipHash);
+                        frozen.MembershipHashChecked = true;
+                    }
+                    hash = frozen.MembershipHash;
+                    return frozen.MembershipHashEligible;
+                }
+            case List<object> list when MutableStates.TryGetValue(list, out var state) && state.Backbone is not null:
+                // A mutable copy may borrow its unchanged backbone. A fresh or
+                // invalidated mutable graph is never traversed or cached here.
+                return TryMembershipHash(state.Backbone, out hash);
+            default:
+                hash = 0;
+                return false;
+        }
+    }
+    private static bool TryMembershipListHash(List<object> values, out ulong hash)
+    {
+        hash = 14695981039346656037UL;
+        foreach (var value in values)
+        {
+            if (!TryMembershipHash(value, out var child)) return false;
+            hash = unchecked((hash ^ child) * 1099511628211UL);
+        }
+        hash = unchecked((hash ^ (ulong)values.Count) * 1099511628211UL) ^ 5UL;
+        return true;
+    }
+    private static Dictionary<ulong, List<object>>? FrozenMembership(FrozenList values)
+    {
+        if (values.MembershipChecked) return values.Membership;
+        lock (SnapshotLock)
+        {
+            if (values.MembershipChecked) return values.Membership;
+            var index = new Dictionary<ulong, List<object>>();
+            foreach (var value in values)
+            {
+                if (!TryMembershipHash(value, out var hash))
+                {
+                    values.MembershipChecked = true;
+                    return null;
+                }
+                if (!index.TryGetValue(hash, out var bucket)) index[hash] = bucket = new();
+                bucket.Add(value);
+            }
+            values.Membership = index;
+            values.MembershipChecked = true;
+            return index;
+        }
     }
     private static HashSet<string>? FrozenStrings(FrozenList values)
     {

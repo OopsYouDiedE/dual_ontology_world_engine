@@ -350,12 +350,22 @@ fn c2d_goals(actor):
         if tasks[t].actor == actor.id:
             rt_push(goals, dv_with_many(c2_goal(dv_fact(c2daily_ref(tasks[t].field), true), tasks[t].when, [c2_approved("real-daily-contact-action")]), {"navigation_room": tasks[t].room, "navigation_methods": [tasks[t].id]}))
         t = t + 1
-    rt_push(goals, dv_with(c2_observation_goal(c2daily_ref("meal_prepared"), c2_window(2, 690, 810), [c2_approved("look-for-real-lunch")], 0), "navigation_room", "living_hall"))
+    rt_push(goals, dv_with_many(c2_observation_goal(c2daily_ref("meal_prepared"), c2_window(2, 690, 810), [c2_approved("look-for-real-lunch")], 2130), {"navigation_room": "living_hall", "navigation_methods": [rt_cat(actor.id, ".c2.inspect.c2.daily")]}))
+    if actor.id == "ward":
+        rt_push(goals, dv_with_many(c2_observation_goal(c2daily_ref("draft_notes"), c2daily_notes_window(), [c2_approved("inspect-current-draft-before-owned-norm-discussion")], 2250), {"navigation_room": "central_hall", "navigation_methods": ["ward.c2.daily.inspect-central"]}))
     if actor.id == "shen":
         rt_push(goals, dv_with_many(c2_goal(dv_fact(c2daily_ref("meal_cooked"), true), c2_window(2, 690, 810), [c2_approved("cook-real-lunch")]), {"navigation_room": "logistics", "navigation_methods": ["shen.c2.daily.cook-sixteen"]}))
         rt_push(goals, dv_with_many(c2_goal(dv_fact(c2daily_ref("meal_prepared"), true), dv_all([c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), true)]), [c2_approved("deliver-real-lunch")]), {"navigation_room": "living_hall", "navigation_methods": ["shen.c2.daily.deliver-sixteen"]}))
     if actor.id == "ruan":
         rt_push(goals, dv_with_many(c2_goal(dv_fact(c2daily_ref("draft_notes"), true), c2daily_notes_window(), [c2_approved("draft-notes-through-real-action")]), {"navigation_room": "central_hall", "navigation_methods": ["ruan.c2.draft-notes"]}))
+    // Invocation-local reuse: actor/mind remain unchanged throughout this loop.
+    // Evaluate lazily at the original first use so unrelated errors keep order.
+    var concerned_ready = false
+    var concerned = false
+    var notice_ready = false
+    var notice = false
+    var case_ready = false
+    var case_gate = false
     var i = 0
     while i < rt_count(rows):
         let row = rows[i]
@@ -372,13 +382,22 @@ fn c2d_goals(actor):
                 if candidate == false or not dvp_personal_ready(actor.mind, candidate.personal_choice):
                     when = dv_not(dv_true())
             if dv_find(row, "work_refusal", false) or dv_find(row, "concern_question", false):
-                if not c2_quer_concerned(actor):
+                if not concerned_ready:
+                    concerned = c2_quer_concerned(actor)
+                    concerned_ready = true
+                if not concerned:
                     when = dv_not(dv_true())
             if dv_find(row, "safety_warning", false) or dv_find(row, "guard_decision", false):
-                if not c2_owned_safety_notice(actor):
+                if not notice_ready:
+                    notice = c2_owned_safety_notice(actor)
+                    notice_ready = true
+                if not notice:
                     when = dv_not(dv_true())
             if dv_find(row, "category", "") == "case":
-                when = dv_all([when, c2d_case_gate(actor.mind)])
+                if not case_ready:
+                    case_gate = c2d_case_gate(actor.mind)
+                    case_ready = true
+                when = dv_all([when, case_gate])
             if dv_has_key(row, "received_speech_requirement"):
                 if not c2_received_requirement(actor, row.received_speech_requirement):
                     when = dv_not(dv_true())
@@ -443,11 +462,17 @@ fn c2d_refresh_goals_from(actor):
         i = i + 1
     let original_actions = actor.actions
     var actions = []
+    var case_ready = false
+    var case_gate = false
     i = 0
     while i < rt_count(original_actions):
         var action = original_actions[i]
         if dv_find(action, "case_method", false):
-            action = dv_with(action, "precondition", dv_all([action.case_base_when, c2d_case_gate(actor.mind)]))
+            let base_when = action.case_base_when
+            if not case_ready:
+                case_gate = c2d_case_gate(actor.mind)
+                case_ready = true
+            action = dv_with(action, "precondition", dv_all([base_when, case_gate]))
         rt_push(actions, action)
         i = i + 1
     let view = dv_with_many(actor, {"policy": dv_with(policy, "goals", combined), "actions": actions})

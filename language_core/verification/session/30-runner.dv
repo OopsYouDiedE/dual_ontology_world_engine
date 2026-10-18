@@ -670,17 +670,7 @@ fn dvs_receipt_clock_observations(story, mind, bindings, observations, action_ev
     return result
 
 fn dvs_replace(items, index, value):
-    var result = []
-    var i = 0
-    while (i < rt_count(items)):
-        var local_1 = false
-        if (i == index):
-            local_1 = value
-        else:
-            local_1 = items[i]
-        rt_push(result, local_1)
-        i = (i + 1)
-    return result
+    return rt_list_with_index(items, index, value)
 
 fn dvs_main():
     var story = rt_json_parse(rt_read(rt_arg(0)))

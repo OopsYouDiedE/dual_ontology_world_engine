@@ -894,7 +894,10 @@ fn dvs_complete_owned_decision(actor, action, success, events, execution_event, 
         return actor
     let inputs = dvs_owned_decision_inputs(actor, decision, actor.mind)
     let previous = dv_find(dv_find(actor, "owned_decisions", []), decision.id, false)
-    let receipt = {"id": decision.id, "stance": decision.stance, "context": inputs.context, "basis": decision.basis, "declaration": decision, "selection_sources": snapshot.sources, "completion_sources": inputs.sources, "selection_event": snapshot.selection_event, "execution_event": execution_event, "previous_event": dv_find(previous, "event", ""), "time": time, "meaning": "actual-owner-decision-not-performance-or-outcome"}
+    var previous_event = ""
+    if previous != false:
+        previous_event = dv_find(previous, "event", "")
+    let receipt = {"id": decision.id, "stance": decision.stance, "context": inputs.context, "basis": decision.basis, "declaration": decision, "selection_sources": snapshot.sources, "completion_sources": inputs.sources, "selection_event": snapshot.selection_event, "execution_event": execution_event, "previous_event": previous_event, "time": time, "meaning": "actual-owner-decision-not-performance-or-outcome"}
     var parents = [execution_event, snapshot.selection_event]
     var i = 0
     while i < rt_count(snapshot.sources.requests):

@@ -1,0 +1,21 @@
+中性owned_decision前驱探针：已准备，未执行/构建。
+
+文件：owned-decision-predecessor-probe.dv
+入口：build_session.py --entry <本文件> --out <新目录> --main dvg_debug_run。
+沿现有PROJECT/environment补Runtime并编译。默认不带参数运行当前函数的中性案例；同一个DLL另起独立进程传legacy-first重现旧函数异常。两次分别保存stdout/stderr与退出状态，原始日志不覆盖。legacy-first在调用前输出中性选取/执行证据及预计错误阶段；预计异常后不应出现unexpected-legacy-return，但真实结果由主代理运行记录确认。
+
+旧函数不是历史会话：从现役dvs_complete_owned_decision复制并仅逆转previous_event的false保护。其余判断与新函数保持一致。
+
+中性actor有一个自造signal字段；没有场景声明、剧情事实或游戏状态。dvs_owned_decision_selection取得正式helper的选择快照，dvs_event建立冻结action_selected→action_execution链，dvs_complete_owned_decision处理该链。后续案例仅改变自造signal形成新上下文，核对前驱指向首个owned_decision事件。该中性链不是正式游戏执行证据，不调用session_open/Prepare/Complete或环境推进。
+
+逐例核对：首次previous_event为空、首次选择/执行事件对应实际中性事件；后续前驱为首决策事件，当前stance/context对应新选择；success=false与non-applied均保留原actor且不追加完成事件；没有action_selected的执行链生成unavailable并保留原actor；action没有owned_decision时原样返回。最终输出完整事件和两次回执。
+
+邻近false-as-record只读检查
+- 同函数decision默认false有提前返回；snapshot/execution默认false在字段读取前排除；请求receipt默认false在读source_event/parse_event前排除。
+- 选择helper只有decision=false返回true，但complete函数已在调用前返回，所以正常声明不会把true当snapshot记录。
+- owned_decision_completion_selection的selection/snapshot/source/request均有false保护；parsed在dvs_heard_before_selection确认listener_parse存在后才读parents。
+- 相邻dvs_complete_advice由dvs_advice_decision_ready确认收闻receipt存在后读取，selection=false及时返回；该ready对stance默认false使用stance!=false保护。
+- 相邻dvs_complete_norm对norm_proposals默认false先dv_require，再读receipt。
+静读未发现同区域另一个与previous相同的未保护false默认值。执行事件receipt.execution、snapshot.sources以及历史owned_decisions条目仍依赖正式helper生成的记录合同；畸形外部事件/损坏存档不是本探针已证明支持的输入。
+
+未运行任何工程或正式会话，不宣称问题已通过实际复测。
