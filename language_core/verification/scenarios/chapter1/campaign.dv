@@ -762,6 +762,7 @@ fn c1_other_activity_actor(actor, group):
         if people[witness_index].group == group:
             rt_push(witnesses, people[witness_index].id)
         witness_index = witness_index + 1
+    rt_push(witnesses, "detective")
     var i = 0
     while i < rt_count(rows):
         let row = rows[i]
@@ -829,7 +830,8 @@ fn c1_other_place_detective(scene, zone, profile):
                 let peer = peers[peer_index]
                 if peer.group == group:
                     mind = c2_add_new(actor.mind, c1_local_object(peer.id))
-                    rt_push(bindings, dv_binding(peer.id, peer.id, "detective"))
+                    if dv_local(bindings, peer.id, "detective") == "":
+                        rt_push(bindings, dv_binding(peer.id, peer.id, "detective"))
                     let ready = c1_at("detective", c1_other_case(group).room)
                     let seen = c2_action(rt_cat("detective.other.see.", peer.id), "inspect", ready, dv_all([ready, c1_at(peer.id, c1_other_case(group).room)]), "", [dv_ref(peer.id, "state", "location")], rt_cat("看到同在寝区的", peer.name), c1_other_case(group).source)
                     actor = dv_with_many(actor, {"mind": mind, "actions": dv_append(actor.actions, seen), "policy": dv_with(actor.policy, "goals", dv_append(actor.policy.goals, c2_observation_goal(dv_ref(peer.id, "state", "location"), ready, [c1_other_case(group).source], 0)))})
@@ -879,7 +881,8 @@ fn c1_other_place_detective(scene, zone, profile):
                 let reason = c1_other_ref(group, rt_cat("reason.", c1_other_case(group).authority_reason))
                 let inference = dv_axiom(rt_cat("detective.truth.reason.", group), 1, c1_other_claim(group, last.id), [dv_assign(reason, true)])
                 actor = dv_with(actor, "mind", dv_adopt(actor.mind, c1_method(rt_cat("detective.truth.reason.", group), inference), "infer", 1, [c1_other_case(group).source]))
-            rt_push(bindings, dv_binding(rt_cat("case.", group), rt_cat("case.", group), "detective"))
+            if dv_local(bindings, rt_cat("case.", group), "detective") == "":
+                rt_push(bindings, dv_binding(rt_cat("case.", group), rt_cat("case.", group), "detective"))
         rt_push(actors, actor)
         i = i + 1
     var respondents = []

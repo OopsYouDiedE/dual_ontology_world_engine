@@ -24,7 +24,12 @@ fn dvg_debug_stop_evidence(state, steps, limit):
 // A formal-model run uses production decisions and explicit logical receipts.
 fn dvg_debug_run():
     let config = dvg_debug_config()
-    var state = dvg_open()
+    var run_config = {"seed": 1, "profile": "Standard_Detective", "detective_zone": "zone_yi"}
+    if 1 < rt_arg_count():
+        run_config = dv_with(run_config, "profile", rt_arg(1))
+    if 2 < rt_arg_count():
+        run_config = dv_with(run_config, "detective_zone", rt_arg(2))
+    var state = dvg_open_config(run_config)
     state = dvs_owned_state_update(state, {"story": dv_with(state.story, "debug_phase_progress", dv_find(config, "phase_progress", false))})
     var cursor = 0
     var steps = 0

@@ -101,6 +101,8 @@ def main():
     parser.add_argument('--gc-mode', choices=('server', 'workstation'), default='server')
     parser.add_argument('--gc-heaps', type=int, default=min(4, os.cpu_count() or 1))
     parser.add_argument('--profile', action='store_true', help='Build an instrumented DV session and report per-function and work-type time')
+    parser.add_argument('--detective-profile', default='Standard_Detective', choices=('Standard_Detective', 'Foolish_Detective'))
+    parser.add_argument('--detective-zone', default='zone_yi', choices=('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding'))
     args = parser.parse_args()
     if args.gc_heaps < 1:
         parser.error('--gc-heaps must be positive')
@@ -141,10 +143,10 @@ def main():
     if args.profile:
         execution_env['DV_PROFILE_PATH'] = str(out / 'profile-raw.json')
     start = time.monotonic()
-    result = {'executor': 'formal-model', 'geometry': False, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.startswith(('DOTNET_GC', 'DOTNET_gc'))}}
+    result = {'executor': 'formal-model', 'geometry': False, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'detective_profile': args.detective_profile, 'detective_zone': args.detective_zone, 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.startswith(('DOTNET_GC', 'DOTNET_gc'))}}
     try:
         with (out / 'stdout.jsonl').open('wb') as stdout, (out / 'stderr.txt').open('wb') as stderr:
-            process = subprocess.run(['dotnet', str(build / 'bin/Release/net8.0/Program.dll'), str(out / 'trace.json')], cwd=ROOT, env=execution_env, stdout=stdout, stderr=stderr, timeout=args.timeout)
+            process = subprocess.run(['dotnet', str(build / 'bin/Release/net8.0/Program.dll'), str(out / 'trace.json'), args.detective_profile, args.detective_zone], cwd=ROOT, env=execution_env, stdout=stdout, stderr=stderr, timeout=args.timeout)
             result['exit_code'] = process.returncode
     except subprocess.TimeoutExpired:
         result['timeout_seconds'] = args.timeout
