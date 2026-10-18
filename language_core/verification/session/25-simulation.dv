@@ -32,6 +32,14 @@ fn dvs_sim_refs(proposition):
                 return []
 
 fn dvs_sim_plan(hypothesis):
+    let key = ["compiled-model-plan", dv_has_key(hypothesis, "timeline"), dv_find(hypothesis, "predict_laws", [])]
+    let timeline = dv_find(hypothesis, "timeline", [])
+    let cached = rt_memo_get(timeline, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(timeline, key, dvs_sim_plan_build(hypothesis))
+
+fn dvs_sim_plan_build(hypothesis):
     var timeline = dv_find(hypothesis, "timeline", [])
     var plan = []
     var i = 0

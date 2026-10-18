@@ -59,7 +59,7 @@ def export(out, destination=None, scope='正式逻辑会话的实际可见正文
                     if not paragraphs:
                         continue
                     emitted = True
-                    voice = {'narration': '叙述', 'private-monologue': '独白', 'visible-inspection': '观察', 'visible-action': '动作叙述', 'dialogue': '对白'}.get(kind, '正文（源记录未分型）')
+                    voice = {'narration': '叙述', 'private-monologue': '独白', 'bodily-flash': '触觉闪回', 'visible-inspection': '观察', 'visible-action': '动作叙述', 'dialogue': '对白'}.get(kind, '正文（源记录未分型）')
                     name = p.get('speaker_name') or ('未具名说话者' if kind == 'dialogue' else '未具名主体')
                     visible.write(f"[{clock(p['game_time'])}] {name} · {voice}\n")
                     for paragraph in paragraphs:

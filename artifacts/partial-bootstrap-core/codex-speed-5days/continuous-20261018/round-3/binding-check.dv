@@ -1,0 +1,19 @@
+#include ../../../../../language_core/game/entry.dv
+fn dvg_debug_run():
+    var bindings = [dv_binding("object-a", "own-a", "one"), dv_binding("object-a", "other-a", "two")]
+    dv_require(dv_local(bindings, "object-a", "one") == "own-a", "first owner")
+    dv_require(dv_local(bindings, "object-a", "two") == "other-a", "second owner")
+    dv_require(dv_local(bindings, "missing", "one") == "", "missing identity")
+    dv_validate_bindings(bindings, "one")
+    let old = rt_snapshot(bindings)
+    rt_push(bindings, dv_binding("object-b", "own-b", "one"))
+    dv_require(dv_local(bindings, "object-b", "one") == "own-b", "changed binding invalidates memo")
+    dv_require(dv_local(old, "object-b", "one") == "", "old snapshot retains absence")
+    rt_push(bindings, dv_binding("object-a", "duplicate", "one"))
+    dv_require(dv_local(bindings, "object-b", "one") == "own-b", "unrelated ambiguity stays deferred")
+    if rt_arg(0) == "duplicate":
+        return dv_local(bindings, "object-a", "one")
+    if rt_arg(0) == "validate":
+        return dv_validate_bindings(bindings, "one")
+    rt_print("Neutral binding lookup, subject isolation, memo invalidation and snapshot boundaries checked.")
+    return true

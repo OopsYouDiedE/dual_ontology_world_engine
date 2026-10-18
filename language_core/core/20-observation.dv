@@ -3,18 +3,36 @@
 fn dv_binding(physical, local, subject):
     return {"physical": physical, "local": local, "subject": subject}
 
+// Subject-specific index over the exact binding value. Ambiguity remains a
+// lookup error only for the requested physical identity, as with the linear scan.
 fn dv_local(bindings, physical, subject):
-    var i = 0
-    var result = ""
-    while (i < rt_count(bindings)):
-        var binding = bindings[i]
-        if dv_and((binding.physical == physical), (binding.subject == subject)):
-            dv_require((result == ""), "Ambiguous projection binding")
-            result = binding.local
-        i = (i + 1)
-    return result
+    let key = ["projection-index", subject]
+    let cached = rt_memo_get(bindings, key)
+    var index = []
+    if cached[0]:
+        index = cached[1]
+    else:
+        var i = 0
+        while i < rt_count(bindings):
+            let binding = bindings[i]
+            if binding.subject == subject:
+                let previous = dv_find(index, binding.physical, {"local": "", "ambiguous": false})
+                let entry = {"local": binding.local, "ambiguous": previous.ambiguous or previous.local != ""}
+                let slot = rt_record_index(index, binding.physical)
+                if slot < 0:
+                    rt_push(index, dv_pair(binding.physical, entry))
+                else:
+                    rt_replace(index, slot, dv_pair(binding.physical, entry))
+            i = i + 1
+        rt_memo_put(bindings, key, index)
+    let found = dv_find(index, physical, {"local": "", "ambiguous": false})
+    dv_require(not found.ambiguous, "Ambiguous projection binding")
+    return found.local
 
 fn dv_validate_bindings(bindings, subject):
+    let key = ["validated-projection", subject]
+    if rt_memo_get(bindings, key)[0]:
+        return true
     var i = 0
     var locals = []
     var physicals = []
@@ -27,7 +45,7 @@ fn dv_validate_bindings(bindings, subject):
             rt_push(locals, b.local)
             rt_push(physicals, b.physical)
         i = (i + 1)
-    return true
+    return rt_memo_put(bindings, key, true)
 
 fn dv_project_value(value, bindings, subject):
     if rt_is_list(value):

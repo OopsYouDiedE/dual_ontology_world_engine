@@ -1,0 +1,181 @@
+diff --git a/language_core/AGENTS.md b/language_core/AGENTS.md
+index 38164211..781b710c 100644
+--- a/language_core/AGENTS.md
++++ b/language_core/AGENTS.md
+@@ -269,3 +269,7 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译
+ 诊断插桩每30秒原子保存已完成调用的累计耗时，超时保留最后采样；采样覆盖时长与全程时长分列，插桩运行不与原生运行作同条件吞吐比较。诊断采样只改工具输出，绝不决定人物行为。
+ 
+ 第2轮：批量更新先冻结updates再枚举，避免record_find的惰性展开改写枚举器版本。通用二元ABI rt_has_value实现结构值成员查询，dv_has转发，沿rt_same_value的精确数/浮点比较，不展开只读子树、不改变集合或游戏规则。中性验证补充从快照恢复的惰性更新表、冻结更新表和嵌套数值成员判断；第一轮初始化异常独立保留。
++
++第3轮：dv_local按完整bindings值建立分主体索引，重复物理映射仍在查询该身份时报告歧义；dv_validate_bindings仅缓存原顺序检查全部完成后的成功，修改bindings使缓存失效。dvs_sim_plan只缓存timeline/predict_laws的纯结构编译，不缓存模型成功或付费结果。答辩评分不再被通用话语默认进度覆盖，支持性陈述保持零完整答辩奖励；同一准备失败原因和同一模型不因无关revision变化重复发why_not_ready，实际来源事件仍保留。正式测试恢复无插桩，不能与前轮插桩作同条件速度比。
++
++一级正文导出显式识别既有bodily-flash为触觉闪回；规范表态用换行附本人所知条文，不将全文嵌入重复引号。此处仅修复呈现分类与分段。
+diff --git a/language_core/core/20-observation.dv b/language_core/core/20-observation.dv
+index 076f90b6..af2c4973 100644
+--- a/language_core/core/20-observation.dv
++++ b/language_core/core/20-observation.dv
+@@ -3,18 +3,36 @@
+ fn dv_binding(physical, local, subject):
+     return {"physical": physical, "local": local, "subject": subject}
+ 
++// Subject-specific index over the exact binding value. Ambiguity remains a
++// lookup error only for the requested physical identity, as with the linear scan.
+ fn dv_local(bindings, physical, subject):
+-    var i = 0
+-    var result = ""
+-    while (i < rt_count(bindings)):
+-        var binding = bindings[i]
+-        if dv_and((binding.physical == physical), (binding.subject == subject)):
+-            dv_require((result == ""), "Ambiguous projection binding")
+-            result = binding.local
+-        i = (i + 1)
+-    return result
++    let key = ["projection-index", subject]
++    let cached = rt_memo_get(bindings, key)
++    var index = []
++    if cached[0]:
++        index = cached[1]
++    else:
++        var i = 0
++        while i < rt_count(bindings):
++            let binding = bindings[i]
++            if binding.subject == subject:
++                let previous = dv_find(index, binding.physical, {"local": "", "ambiguous": false})
++                let entry = {"local": binding.local, "ambiguous": previous.ambiguous or previous.local != ""}
++                let slot = rt_record_index(index, binding.physical)
++                if slot < 0:
++                    rt_push(index, dv_pair(binding.physical, entry))
++                else:
++                    rt_replace(index, slot, dv_pair(binding.physical, entry))
++            i = i + 1
++        rt_memo_put(bindings, key, index)
++    let found = dv_find(index, physical, {"local": "", "ambiguous": false})
++    dv_require(not found.ambiguous, "Ambiguous projection binding")
++    return found.local
+ 
+ fn dv_validate_bindings(bindings, subject):
++    let key = ["validated-projection", subject]
++    if rt_memo_get(bindings, key)[0]:
++        return true
+     var i = 0
+     var locals = []
+     var physicals = []
+@@ -27,7 +45,7 @@ fn dv_validate_bindings(bindings, subject):
+             rt_push(locals, b.local)
+             rt_push(physicals, b.physical)
+         i = (i + 1)
+-    return true
++    return rt_memo_put(bindings, key, true)
+ 
+ fn dv_project_value(value, bindings, subject):
+     if rt_is_list(value):
+diff --git a/language_core/core/README.md b/language_core/core/README.md
+index 83d0f9f4..39c17dca 100644
+--- a/language_core/core/README.md
++++ b/language_core/core/README.md
+@@ -1021,3 +1021,7 @@ C2导航意图从本人已知位置、已知开启的门和本人已采纳移动
+ 诊断插桩每30秒原子保存已完成调用的累计耗时，超时保留最后采样；采样覆盖时长与全程时长分列，插桩运行不与原生运行作同条件吞吐比较。诊断采样只改工具输出，绝不决定人物行为。
+ 
+ 第2轮：批量更新先冻结updates再枚举，避免record_find的惰性展开改写枚举器版本。通用二元ABI rt_has_value实现结构值成员查询，dv_has转发，沿rt_same_value的精确数/浮点比较，不展开只读子树、不改变集合或游戏规则。中性验证补充从快照恢复的惰性更新表、冻结更新表和嵌套数值成员判断；第一轮初始化异常独立保留。
++
++第3轮：dv_local按完整bindings值建立分主体索引，重复物理映射仍在查询该身份时报告歧义；dv_validate_bindings仅缓存原顺序检查全部完成后的成功，修改bindings使缓存失效。dvs_sim_plan只缓存timeline/predict_laws的纯结构编译，不缓存模型成功或付费结果。答辩评分不再被通用话语默认进度覆盖，支持性陈述保持零完整答辩奖励；同一准备失败原因和同一模型不因无关revision变化重复发why_not_ready，实际来源事件仍保留。正式测试恢复无插桩，不能与前轮插桩作同条件速度比。
++
++一级正文导出显式识别既有bodily-flash为触觉闪回；规范表态用换行附本人所知条文，不将全文嵌入重复引号。此处仅修复呈现分类与分段。
+diff --git a/language_core/tools/run_debug.py b/language_core/tools/run_debug.py
+index 70ac5018..89fc33a3 100644
+--- a/language_core/tools/run_debug.py
++++ b/language_core/tools/run_debug.py
+@@ -59,7 +59,7 @@ def export(out, destination=None, scope='正式逻辑会话的实际可见正文
+                     if not paragraphs:
+                         continue
+                     emitted = True
+-                    voice = {'narration': '叙述', 'private-monologue': '独白', 'visible-inspection': '观察', 'visible-action': '动作叙述', 'dialogue': '对白'}.get(kind, '正文（源记录未分型）')
++                    voice = {'narration': '叙述', 'private-monologue': '独白', 'bodily-flash': '触觉闪回', 'visible-inspection': '观察', 'visible-action': '动作叙述', 'dialogue': '对白'}.get(kind, '正文（源记录未分型）')
+                     name = p.get('speaker_name') or ('未具名说话者' if kind == 'dialogue' else '未具名主体')
+                     visible.write(f"[{clock(p['game_time'])}] {name} · {voice}\n")
+                     for paragraph in paragraphs:
+diff --git a/language_core/verification/AGENTS.md b/language_core/verification/AGENTS.md
+index 27a54a12..215340ad 100644
+--- a/language_core/verification/AGENTS.md
++++ b/language_core/verification/AGENTS.md
+@@ -209,3 +209,7 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译
+ 诊断插桩每30秒原子保存已完成调用的累计耗时，超时保留最后采样；采样覆盖时长与全程时长分列，插桩运行不与原生运行作同条件吞吐比较。诊断采样只改工具输出，绝不决定人物行为。
+ 
+ 第2轮：批量更新先冻结updates再枚举，避免record_find的惰性展开改写枚举器版本。通用二元ABI rt_has_value实现结构值成员查询，dv_has转发，沿rt_same_value的精确数/浮点比较，不展开只读子树、不改变集合或游戏规则。中性验证补充从快照恢复的惰性更新表、冻结更新表和嵌套数值成员判断；第一轮初始化异常独立保留。
++
++第3轮：dv_local按完整bindings值建立分主体索引，重复物理映射仍在查询该身份时报告歧义；dv_validate_bindings仅缓存原顺序检查全部完成后的成功，修改bindings使缓存失效。dvs_sim_plan只缓存timeline/predict_laws的纯结构编译，不缓存模型成功或付费结果。答辩评分不再被通用话语默认进度覆盖，支持性陈述保持零完整答辩奖励；同一准备失败原因和同一模型不因无关revision变化重复发why_not_ready，实际来源事件仍保留。正式测试恢复无插桩，不能与前轮插桩作同条件速度比。
++
++一级正文导出显式识别既有bodily-flash为触觉闪回；规范表态用换行附本人所知条文，不将全文嵌入重复引号。此处仅修复呈现分类与分段。
+diff --git a/language_core/verification/DESIGN.md b/language_core/verification/DESIGN.md
+index 7b843689..890611e9 100644
+--- a/language_core/verification/DESIGN.md
++++ b/language_core/verification/DESIGN.md
+@@ -166,3 +166,7 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译
+ 诊断插桩每30秒原子保存已完成调用的累计耗时，超时保留最后采样；采样覆盖时长与全程时长分列，插桩运行不与原生运行作同条件吞吐比较。诊断采样只改工具输出，绝不决定人物行为。
+ 
+ 第2轮：批量更新先冻结updates再枚举，避免record_find的惰性展开改写枚举器版本。通用二元ABI rt_has_value实现结构值成员查询，dv_has转发，沿rt_same_value的精确数/浮点比较，不展开只读子树、不改变集合或游戏规则。中性验证补充从快照恢复的惰性更新表、冻结更新表和嵌套数值成员判断；第一轮初始化异常独立保留。
++
++第3轮：dv_local按完整bindings值建立分主体索引，重复物理映射仍在查询该身份时报告歧义；dv_validate_bindings仅缓存原顺序检查全部完成后的成功，修改bindings使缓存失效。dvs_sim_plan只缓存timeline/predict_laws的纯结构编译，不缓存模型成功或付费结果。答辩评分不再被通用话语默认进度覆盖，支持性陈述保持零完整答辩奖励；同一准备失败原因和同一模型不因无关revision变化重复发why_not_ready，实际来源事件仍保留。正式测试恢复无插桩，不能与前轮插桩作同条件速度比。
++
++一级正文导出显式识别既有bodily-flash为触觉闪回；规范表态用换行附本人所知条文，不将全文嵌入重复引号。此处仅修复呈现分类与分段。
+diff --git a/language_core/verification/scenarios/chapter2-content.dv b/language_core/verification/scenarios/chapter2-content.dv
+index 4b46a23a..86736a2c 100644
+--- a/language_core/verification/scenarios/chapter2-content.dv
++++ b/language_core/verification/scenarios/chapter2-content.dv
+@@ -500,7 +500,7 @@ fn c2_norm_actions(actor, norm):
+             promotes = norm.sacrifices
+             sacrifices = norm.promotes
+             surface = "这条我不认。"
+-        surface = rt_cat(rt_cat("关于“", norm.surface), rt_cat("”：", surface))
++        surface = rt_cat(rt_cat("针对以下条文：\n", norm.surface), rt_cat("\n", surface))
+         let id = rt_cat(actor, rt_cat(".c2.", rt_cat(verb, rt_cat(".", norm.id))))
+         let grants = dv_pair(c2_own(actor, rt_cat("decided.", norm.id)), c2_own(actor, rt_cat("accepted.", norm.id)))
+         let speech = dv_with(c1_speech(dv_true(), norm.source, "personal-norm-decision"), "surface", surface)
+diff --git a/language_core/verification/session/10-subjective.dv b/language_core/verification/session/10-subjective.dv
+index 39d712d8..f28f8036 100644
+--- a/language_core/verification/session/10-subjective.dv
++++ b/language_core/verification/session/10-subjective.dv
+@@ -321,7 +321,10 @@ fn dvs_ready(actor, events, time, parent):
+             return dv_with(actor, "ready_hypothesis", hypothesis)
+     else:
+         let report = {"reasons": reasons, "hypothesis": hypothesis, "mind_revision": actor.mind.revision}
+-        if not dv_same(report, dv_find(actor, "last_readiness_report", false)):
++        let previous_report = dv_find(actor, "last_readiness_report", false)
++        // Revision alone is not a new readiness explanation; retain the original
++        // event's revision, and emit again if reasons or the supported model change.
++        if previous_report == false or not dv_same(dv_without(report, "mind_revision"), dv_without(previous_report, "mind_revision")):
+             dvs_event(events, "why_not_ready", actor.id, time, parents, report)
+         return dv_with(actor, "last_readiness_report", report)
+ 
+diff --git a/language_core/verification/session/15-action-planning.dv b/language_core/verification/session/15-action-planning.dv
+index 2088268a..da7cc7cf 100644
+--- a/language_core/verification/session/15-action-planning.dv
++++ b/language_core/verification/session/15-action-planning.dv
+@@ -427,7 +427,7 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
+         i = (i + 1)
+     if dv_has_key(action, "answer"):
+         progress = dvp_answer_reward(actor, action, mind)
+-    if dv_has_key(action, "speech"):
++    if dv_has_key(action, "speech") and not dv_has_key(action, "answer"):
+         if (0 < rt_count(context.speech_goals)):
+             var choice = dv_find(dv_find(actor, "speech_choice_values", []), action.id, [])
+             if (dv_find(choice, "status", "") == "ready"):
+diff --git a/language_core/verification/session/25-simulation.dv b/language_core/verification/session/25-simulation.dv
+index af7a9fc4..059b0b00 100644
+--- a/language_core/verification/session/25-simulation.dv
++++ b/language_core/verification/session/25-simulation.dv
+@@ -32,6 +32,14 @@ fn dvs_sim_refs(proposition):
+                 return []
+ 
+ fn dvs_sim_plan(hypothesis):
++    let key = ["compiled-model-plan", dv_has_key(hypothesis, "timeline"), dv_find(hypothesis, "predict_laws", [])]
++    let timeline = dv_find(hypothesis, "timeline", [])
++    let cached = rt_memo_get(timeline, key)
++    if cached[0]:
++        return cached[1]
++    return rt_memo_put(timeline, key, dvs_sim_plan_build(hypothesis))
++
++fn dvs_sim_plan_build(hypothesis):
+     var timeline = dv_find(hypothesis, "timeline", [])
+     var plan = []
+     var i = 0

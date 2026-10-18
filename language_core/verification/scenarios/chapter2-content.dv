@@ -500,7 +500,7 @@ fn c2_norm_actions(actor, norm):
             promotes = norm.sacrifices
             sacrifices = norm.promotes
             surface = "这条我不认。"
-        surface = rt_cat(rt_cat("关于“", norm.surface), rt_cat("”：", surface))
+        surface = rt_cat(rt_cat("针对以下条文：\n", norm.surface), rt_cat("\n", surface))
         let id = rt_cat(actor, rt_cat(".c2.", rt_cat(verb, rt_cat(".", norm.id))))
         let grants = dv_pair(c2_own(actor, rt_cat("decided.", norm.id)), c2_own(actor, rt_cat("accepted.", norm.id)))
         let speech = dv_with(c1_speech(dv_true(), norm.source, "personal-norm-decision"), "surface", surface)

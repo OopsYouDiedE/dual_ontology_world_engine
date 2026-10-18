@@ -427,7 +427,7 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
         i = (i + 1)
     if dv_has_key(action, "answer"):
         progress = dvp_answer_reward(actor, action, mind)
-    if dv_has_key(action, "speech"):
+    if dv_has_key(action, "speech") and not dv_has_key(action, "answer"):
         if (0 < rt_count(context.speech_goals)):
             var choice = dv_find(dv_find(actor, "speech_choice_values", []), action.id, [])
             if (dv_find(choice, "status", "") == "ready"):

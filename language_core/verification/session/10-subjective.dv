@@ -321,7 +321,10 @@ fn dvs_ready(actor, events, time, parent):
             return dv_with(actor, "ready_hypothesis", hypothesis)
     else:
         let report = {"reasons": reasons, "hypothesis": hypothesis, "mind_revision": actor.mind.revision}
-        if not dv_same(report, dv_find(actor, "last_readiness_report", false)):
+        let previous_report = dv_find(actor, "last_readiness_report", false)
+        // Revision alone is not a new readiness explanation; retain the original
+        // event's revision, and emit again if reasons or the supported model change.
+        if previous_report == false or not dv_same(dv_without(report, "mind_revision"), dv_without(previous_report, "mind_revision")):
             dvs_event(events, "why_not_ready", actor.id, time, parents, report)
         return dv_with(actor, "last_readiness_report", report)
 
