@@ -1,0 +1,1318 @@
+diff --git a/language_core/AGENTS.md b/language_core/AGENTS.md
+index b50bc697..85a6e59e 100644
+--- a/language_core/AGENTS.md
++++ b/language_core/AGENTS.md
+@@ -128,7 +128,7 @@ Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，
+ 
+ ## Evidence and campaign tracking (2026-10-16)
+ 
+-All eligible autonomous actors run shared cognition and dvs_choose on their turns. The incomplete idle cache and its writes are removed. Existing resource/time limits still apply; tracking never filters scheduling.
++All eligible autonomous actors enter shared cognitive preparation and dvs_choose on their turns; identical completed fixed points may be reused under the documented full-input guard. The incomplete idle cache and its writes are removed. Existing resource/time limits still apply; tracking never filters scheduling.
+ Execution, observation, answer, transition, model-recheck and simulation events retain the requested full snapshots; simulation results include predicted. Revision metadata supplements snapshots. Other event producers remain subject to separate audit.
+ 
+ The game/campaign.dv helpers dvg_tracked_actors and dvg_chronological_trace project selected actors' events in append order. dvg_run_campaign(max_steps) runs the same formal-model prepare/complete protocol and continuous chapter extension, returns live state, and stops at the completed-action bound or session inactivity. Pass false for the authored action limit, or zero for an unadvanced session. This is audit data, not player-visible knowledge or Godot geometry evidence.
+@@ -173,7 +173,7 @@ dvs_owned_state_update 的线性会话外壳转交范围增加调度 cursor、ph
+ 
+ 接近沟通地点的 opportunity 是当前搜索叶节点的预期机会分；进入下一层时仅携带实际行动价值，不把尚未完成的沟通机会累加到无关后继上。可重复检视在成功后保存本人输入的语义签名与显式证据新鲜度；输入与所需证据条件相同时不再次自动检视，未知结果也属于已尝试结果。签名不读取物理世界，不以时间戳变化或无关信息伪造新线索。
+ 
+-每次主体具备决策资格时，plan_budget 以会话开局保存的 planning_limit 作为本次搜索上限，choice.plan_expansions 从该次余额扣除，并计入 planning_work_total。等待者不重置或执行搜索。此上限限制一次搜索的计算规模；动作账本、付费重演额度与实际游戏时间分别结算，保持原有余额合同。
++每次主体具备决策资格时，plan_budget 以会话开局保存的 planning_limit 作为本次搜索上限，choice.plan_expansions 仅计算行动树节点，从该次余额扣除并计入 planning_work_total；依赖闭包使用独立dependency_budget，工作单列dependency_expansions/dependency_work_total。等待者不重置或执行搜索。此上限限制一次搜索的计算规模；动作账本、付费重演额度与实际游戏时间分别结算，保持原有余额合同。
+ 
+ 同一时刻的空闲主体在本人认识修订或待理解收闻发生变化时可再次决策；decision_revision 记录一次实际选择结束后的本人修订，防止内部推理产生的修订造成自唤醒循环。scheduled_action 优先于这些唤醒条件，等待中的主体保持不计算。
+ 
+@@ -246,3 +246,12 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译
+ 动作目录按已声明地点建立保序缓存切片，未知地点回退全目录，动态资格不缓存为既定结果。私有预测省略审计日志，公共Core与真实世界去重仍保留；话语预选只去掉说话者无关认知，保留听者模型和观察时间先后门。环境时钟边界不向本次due之后的阈值计步；调试投影保留过程及休眠回执。本轮所有动作相关修改和文档审读完成后冻结源码，再执行唯一一次最多180秒的正式一级会话，禁止各处修复之间穿插会话。
+ 
+ 同一mind下的检视证据下界与可用性以完整目标声明为键建立纯值索引；各检视仍核验自己的grants与完整前提，不能用缓存跳过本人来源或新鲜度。
++
++
++## 因果接线、计算上限与诊断维护（2026-10-18）
++
++实际陈述在聆听解析后按原可信度生成证言，不以缺少特殊标签跳过有效陈述。认知快路先处理收闻/现场变化，只复用完整处理前后输入不变的固定点；键保留当次时间、章节、认识、政策、模型、解释、支持来源及同处上下文。晚发生的论证更新须在下次处理，不能认作完成认知。原始实际推知、模型、行动及观察继续保留；只抑制相同零步停止诊断。
++
++依赖拓扑缓存与种子闭包查询分开，闭包保留seeds/独立dependency_budget。plan_expansions只计行动搜索节点，dependency_expansions单列实际闭包工作，完整规划缓存命中两者均为零。独立闭包上限和声明positive_move_root_stop是新的计算合同，报告应与旧共同预算区分，不作同条件提速声明。导航中继只取本人已知开放的路径及本人采纳，不预置到达；完成/位置/通路变化重建意图，所有真实移动仍走原Complete。
++
++调试事件投影为只读冻结值；正式一级继续保留所有实际执行和可见正文，只省略不可见的呈现包与可选阶段诊断，stdout仍直接写原始文件。源码、预算来源、声明、调用链与文档全部完成后再冻结并运行唯一一次180秒正式一级会话，窗口达到7200与剧情实际完成分别核对。
+diff --git a/language_core/core/98-debug.dv b/language_core/core/98-debug.dv
+index 8e707b9a..ccac5a24 100644
+--- a/language_core/core/98-debug.dv
++++ b/language_core/core/98-debug.dv
+@@ -14,7 +14,7 @@ fn dv_debug_event(event):
+             else:
+                 action_id = rt_show(raw_action)
+     var detail = []
+-    let fields = ["due", "until", "waiting", "duration", "status", "reason", "score", "plan_expansions", "plan_cache_hit", "reused_plan_expansions", "stop", "root_best", "best_after_successor_layer", "completed_layers", "actual", "observations", "judgment", "accepted", "literal_truth", "epistemic_support", "source_event", "execution_id", "chapter", "movement", "process", "revision_before", "revision_after", "suspended"]
++    let fields = ["due", "until", "waiting", "duration", "status", "reason", "score", "plan_expansions", "plan_cache_hit", "reused_plan_expansions", "stop", "root_best", "best_after_successor_layer", "completed_layers", "actual", "observations", "judgment", "accepted", "literal_truth", "epistemic_support", "source_event", "execution_id", "chapter", "movement", "process", "revision_before", "revision_after", "suspended", "dependency_expansions", "dependency_stop", "cognition_reused", "reasons", "steps", "remaining", "mind_revision"]
+     var i = 0
+     while i < rt_count(fields):
+         if dv_has_key(data, fields[i]):
+@@ -22,7 +22,7 @@ fn dv_debug_event(event):
+         i = i + 1
+     if event.type == "action_execution":
+         detail = dv_with(detail, "status", data.receipt.execution.status)
+-    return dv_clone({"event_id": event.id, "type": event.type, "actor": event.actor, "game_time": event.time, "parents": event.parents, "action_id": action_id, "action_kind": dv_find(action, "kind", ""), "label": dv_find(action, "label", dv_find(action, "surface", "")), "purpose_sources": dv_find(action, "purpose_basis", []), "detail": detail})
++    return rt_snapshot({"event_id": event.id, "type": event.type, "actor": event.actor, "game_time": event.time, "parents": event.parents, "action_id": action_id, "action_kind": dv_find(action, "kind", ""), "label": dv_find(action, "label", dv_find(action, "surface", "")), "purpose_sources": dv_find(action, "purpose_basis", []), "detail": detail})
+ 
+ fn dv_debug_events(events, start, config):
+     dv_require(0 <= start and start <= rt_count(events), "Invalid debug event cursor")
+diff --git a/language_core/core/README.md b/language_core/core/README.md
+index 116c9ff8..212637ec 100644
+--- a/language_core/core/README.md
++++ b/language_core/core/README.md
+@@ -272,7 +272,7 @@ speech.manipulation = {
+ 
+ 章节开场的 own_material 目标可依持续公开信息的本人收据激活，后续题目阶段不撤销该资格。专业请求清空直接观察授权，答复仍需另一主体的本人依据和实际发言。带 speech 的答辩候选在规划资格与 Complete 均以 `dvs_speech_truth` 检查本人话语，避免将未知陈述排队成注定拒绝的行动；见 `verification/scenarios/chapter1-opening.dv` 和 `verification/session/15-action-planning.dv`。
+ 
+-每次有资格决策从会话保存的 planning_limit 取得本次 plan_budget，实际 plan_expansions 扣减并累入 planning_work_total；这与行动资源账本、付费模型额度、游戏时钟分开。等待者不重复搜索。检视与请求以本人语义输入签名去重，时间戳和无关来源编号不冒充新线索；refresh_until/refresh_refs 只使用显式列出的本人已知相关字段时间，缺省保持原 minimum_time。同条件检视去重在共同资格入口执行，未知结果也保留尝试记录。
++每次有资格决策从会话保存的 planning_limit 取得本次 plan_budget，实际行动搜索节点 plan_expansions 扣减并累入 planning_work_total；依赖闭包改用独立 dependency_budget，其实际工作单列 dependency_expansions/dependency_work_total；这与行动资源账本、付费模型额度、游戏时钟分开。等待者不重复搜索。检视与请求以本人语义输入签名去重，时间戳和无关来源编号不冒充新线索；refresh_until/refresh_refs 只使用显式列出的本人已知相关字段时间，缺省保持原 minimum_time。同条件检视去重在共同资格入口执行，未知结果也保留尝试记录。
+ 
+ ### 报价与账本
+ 
+@@ -661,6 +661,8 @@ fn dvs_hypotheses(actor, events, time, parent)
+ fn dvs_choose(actor, bindings, costs)
+ fn dvs_ready(actor, events, time, parent)
+ fn dvs_reason(actor, events, time, parent)
++fn dvs_prepare_cognition(actor, events, time, parent, chapter)
++fn dvs_cognition_input(actor, time, chapter)
+ fn dvs_event_prepared(events, kind, actor, time, parents, data)
+ ```
+ 
+@@ -679,6 +681,8 @@ fn dvp_add_ref(refs, ref)
+ fn dvp_merge_refs(refs, extra)
+ fn dvp_unmet_refs(mind, proposition, include_known)
+ fn dvp_dependencies(mind, seeds, budget, methods)
++fn dvp_dependency_topology(mind, methods)
++fn dvp_dependency_add(graph, ref, inputs)
+ fn dvp_goal_refs(actor)
+ fn dvp_probe_refs(actor)
+ fn dvp_scope(actor, action, bindings)
+@@ -992,3 +996,14 @@ fn dvs_player_choice(actor, id)
+ 环境边界超过当前动作due时直接返回due，不向遥远阈值逐分钟计步。每日昼夜声明各标记once，实际执行后休眠；流式调试投影保留process、revision_before/after与suspended。目标时间元数据按原条件纯值缓存，当前主体刷新保留精确本人时刻。等待时长清单增加120分钟，费用、物理和预测规律均从同一清单安装。连廊单字段观察目标驱动原四字段实际检视；完整换气前提不删减。上述内容与搜索条件属于本轮实现，运行效果由新会话另证。
+ 
+ 检视签名在同一mind节点及完整目标声明下共用`dvp_inspection_freshness`索引，证据下界刷新与可用性只计算一次；每个动作仍读取自己的完整grants与前提输入。索引不改变本人来源或证据新鲜度规则。
++
++
++2026-10-18 因果接线与预算分离：普通聆听先从实际解析出的陈述生成证言，不能按缺少特殊话语标签判作闲聊并抹去观察；仅无可写观察时省略认识更新，仍保留listener_parse及真实收闻。专业回复必须由实际发言、传播、解析与原采信门槛取得，不能在询问时直接赠送答案。
++
++依赖拓扑仅由实际active/infer采纳和静态方法scope/premise/owner_refs构建并缓存；闭包查询继续以seeds及dependency_budget为键，窗口改变会改变seeds，不能复用错误闭包。原plan_budget现在只限制行动树节点；内容声明dependency_budget=320独立限制闭包，缓存命中分别记零实际工作。这是计算上限合同修订，不是保持原总工作上限的等价优化。C2可声明positive_move_root_stop：根层比较完全部候选后，具有本人achieve收益的移动也允许按现有根层停止策略收束，未宣称全局最优。
++
++C2导航意图从本人已知位置、已知开启的门和本人已采纳移动方法找有来源的下一站；尚未完成任务才产生中继/终点意图，原origin条件随实际移动失效，位置、通路、采纳和完成字段变化触发刷新。路径只是意图依据，真实每一步仍逐项核验动作前提、规范、费用与Complete；未知门不用于路径，不预写调查或章节达成。
++
++认知快路仅复用一次完整处理前后输入相同的固定点，且当次时间、章节、mind、政策、模型、解释、支持来源和同处上下文均未变化。先处理实际收闻与现场感知，迟发生的论证/模型更新不能标成已稳定。重复零步reason_stop及相同why_not_ready可不另发事件，实际推知/观察/模型/选择/执行不裁剪。诊断缓存和工作累计不进入行动规划备忘键。
++
++调试投影dv_debug_event返回冻结只读快照；每次实际执行仍流式保留所有debug_events，玩家呈现只输出visible条目，无可见正文丢失。无模板行直接返回空行列表，省略无用主体查找。phase_progress缺省关闭，仅去掉阶段计时诊断；run_debug.py仍将stdout直接写文件，未改为缓冲后批量落盘，也不按事件数量预设加速结论。
+diff --git a/language_core/game/campaign.dv b/language_core/game/campaign.dv
+index ac62b926..0aa717ef 100644
+--- a/language_core/game/campaign.dv
++++ b/language_core/game/campaign.dv
+@@ -41,13 +41,14 @@ fn dvg_refresh_goals(current):
+                     refreshed = c1n_refresh_actor_goals(actor)
+                 actors = dvs_replace(actors, i, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter}))
+             else:
++                let navigation_input = c2i_navigation_input(actor)
+                 let needs_c1_wait = (actor.id == "selma" and dv_truth(actor.mind, c1_other_claim("astral", "west_passage_checked")) != "true") or (actor.id == "mora" and dv_truth(actor.mind, c1_other_claim("logistics", "observation_complete")) != "true")
+                 let in_living = (dv_truth(actor.mind, c2_at(actor.id, "living_hall")) == "true")
+                 let case_open = (dv_truth(actor.mind, c2d_case_gate(actor.mind)) == "true")
+-                if needs_c1_wait or chapter != dv_find(actor, "campaign_goals_chapter", 0) or in_living != dv_find(actor, "c2_goals_in_living", false) or case_open != dv_find(actor, "c2_goals_case_open", false) or dv_find(actor, "c2_goals_needs_wait", false) != needs_c1_wait:
++                if not dv_same(navigation_input, dv_find(actor, "c2_goals_navigation_input", [])) or needs_c1_wait or chapter != dv_find(actor, "campaign_goals_chapter", 0) or in_living != dv_find(actor, "c2_goals_in_living", false) or case_open != dv_find(actor, "c2_goals_case_open", false) or dv_find(actor, "c2_goals_needs_wait", false) != needs_c1_wait:
+                     refreshed = c2d_refresh_actor_goals(actor)
+                 refreshed = c1n_known_future_wait_actor(refreshed)
+-                actors = dvs_replace(actors, i, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter, "c2_goals_in_living": in_living, "c2_goals_case_open": case_open, "c2_goals_needs_wait": needs_c1_wait}))
++                actors = dvs_replace(actors, i, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter, "c2_goals_in_living": in_living, "c2_goals_case_open": case_open, "c2_goals_needs_wait": needs_c1_wait, "c2_goals_navigation_input": c2i_navigation_input(refreshed)}))
+             changed = true
+         i = i + 1
+     if changed:
+diff --git a/language_core/game/debug-run.dv b/language_core/game/debug-run.dv
+index a55e744a..69776881 100644
+--- a/language_core/game/debug-run.dv
++++ b/language_core/game/debug-run.dv
+@@ -32,14 +32,16 @@ fn dvg_debug_run():
+     if config.max_steps != false:
+         limit = config.max_steps
+     dv_require(0 < limit, "Debug max_steps must be positive or false for the authored limit")
+-    rt_print(rt_json_stringify({"type": "debug_start", "configuration": config, "executor": "formal-model", "geometry": false}))
++    rt_print(rt_json_stringify({"type": "debug_start", "configuration": config, "executor": "formal-model", "geometry": false, "presentation_scope": "visible-only; all action executions retained in debug_events"}))
+     while dvs_session_active(state) and steps < limit:
+         state = dvg_prepare(state)
+         let pending = dv_find(state, "pending", false)
+         if pending != false:
+             state = dvg_complete(state, {"action_event": pending.action_event, "outcome": "applied", "actual": pending.model.actual, "executor": "formal-model"})
+             steps = steps + 1
+-            rt_print(rt_json_stringify({"type": "player_presentation", "step": steps, "viewer": config.viewer, "presentation": dvg_presentation(state, config.viewer)}))
++            let presentation = dvg_presentation(state, config.viewer)
++            if dv_find(presentation, "visible", false):
++                rt_print(rt_json_stringify({"type": "player_presentation", "step": steps, "viewer": config.viewer, "presentation": presentation}))
+         let batch = dv_debug_events(state.events, cursor, config)
+         rt_print(rt_json_stringify({"type": "debug_events", "batch": batch}))
+         cursor = batch.next
+diff --git a/language_core/game/entry.dv b/language_core/game/entry.dv
+index 1853a79e..476beb33 100644
+--- a/language_core/game/entry.dv
++++ b/language_core/game/entry.dv
+@@ -41,4 +41,4 @@
+ #include campaign.dv
+ 
+ fn dvg_debug_config():
+-    return {"viewer": "detective", "actors": [], "event_types": [], "max_steps": false, "phase_progress": true}
++    return {"viewer": "detective", "actors": [], "event_types": [], "max_steps": false, "phase_progress": false}
+diff --git a/language_core/verification/AGENTS.md b/language_core/verification/AGENTS.md
+index d82b2572..587fba66 100644
+--- a/language_core/verification/AGENTS.md
++++ b/language_core/verification/AGENTS.md
+@@ -86,7 +86,7 @@ dvs_owned_state_update 的线性会话外壳转交范围增加调度 cursor、ph
+ 
+ 接近沟通地点的 opportunity 是当前搜索叶节点的预期机会分；进入下一层时仅携带实际行动价值，不把尚未完成的沟通机会累加到无关后继上。可重复检视在成功后保存本人输入的语义签名与显式证据新鲜度；输入与所需证据条件相同时不再次自动检视，未知结果也属于已尝试结果。签名不读取物理世界，不以时间戳变化或无关信息伪造新线索。
+ 
+-每次主体具备决策资格时，plan_budget 以会话开局保存的 planning_limit 作为本次搜索上限，choice.plan_expansions 从该次余额扣除，并计入 planning_work_total。等待者不重置或执行搜索。此上限限制一次搜索的计算规模；动作账本、付费重演额度与实际游戏时间分别结算，保持原有余额合同。
++每次主体具备决策资格时，plan_budget 以会话开局保存的 planning_limit 作为本次搜索上限，choice.plan_expansions 仅计算行动树节点，从该次余额扣除并计入 planning_work_total；依赖闭包使用独立dependency_budget，工作单列dependency_expansions/dependency_work_total。等待者不重置或执行搜索。此上限限制一次搜索的计算规模；动作账本、付费重演额度与实际游戏时间分别结算，保持原有余额合同。
+ 
+ 同一时刻的空闲主体在本人认识修订或待理解收闻发生变化时可再次决策；decision_revision 记录一次实际选择结束后的本人修订，防止内部推理产生的修订造成自唤醒循环。scheduled_action 优先于这些唤醒条件，等待中的主体保持不计算。
+ 
+@@ -186,3 +186,12 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译
+ 动作目录按已声明地点建立保序缓存切片，未知地点回退全目录，动态资格不缓存为既定结果。私有预测省略审计日志，公共Core与真实世界去重仍保留；话语预选只去掉说话者无关认知，保留听者模型和观察时间先后门。环境时钟边界不向本次due之后的阈值计步；调试投影保留过程及休眠回执。本轮所有动作相关修改和文档审读完成后冻结源码，再执行唯一一次最多180秒的正式一级会话，禁止各处修复之间穿插会话。
+ 
+ 同一mind下的检视证据下界与可用性以完整目标声明为键建立纯值索引；各检视仍核验自己的grants与完整前提，不能用缓存跳过本人来源或新鲜度。
++
++
++## 因果接线、计算上限与诊断维护（2026-10-18）
++
++实际陈述在聆听解析后按原可信度生成证言，不以缺少特殊标签跳过有效陈述。认知快路先处理收闻/现场变化，只复用完整处理前后输入不变的固定点；键保留当次时间、章节、认识、政策、模型、解释、支持来源及同处上下文。晚发生的论证更新须在下次处理，不能认作完成认知。原始实际推知、模型、行动及观察继续保留；只抑制相同零步停止诊断。
++
++依赖拓扑缓存与种子闭包查询分开，闭包保留seeds/独立dependency_budget。plan_expansions只计行动搜索节点，dependency_expansions单列实际闭包工作，完整规划缓存命中两者均为零。独立闭包上限和声明positive_move_root_stop是新的计算合同，报告应与旧共同预算区分，不作同条件提速声明。导航中继只取本人已知开放的路径及本人采纳，不预置到达；完成/位置/通路变化重建意图，所有真实移动仍走原Complete。
++
++调试事件投影为只读冻结值；正式一级继续保留所有实际执行和可见正文，只省略不可见的呈现包与可选阶段诊断，stdout仍直接写原始文件。源码、预算来源、声明、调用链与文档全部完成后再冻结并运行唯一一次180秒正式一级会话，窗口达到7200与剧情实际完成分别核对。
+diff --git a/language_core/verification/DESIGN.md b/language_core/verification/DESIGN.md
+index 89f1c9ff..0e5b60ab 100644
+--- a/language_core/verification/DESIGN.md
++++ b/language_core/verification/DESIGN.md
+@@ -103,7 +103,7 @@ dvs_owned_state_update 的线性会话外壳转交范围增加调度 cursor、ph
+ 
+ 接近沟通地点的 opportunity 是当前搜索叶节点的预期机会分；进入下一层时仅携带实际行动价值，不把尚未完成的沟通机会累加到无关后继上。可重复检视在成功后保存本人输入的语义签名与显式证据新鲜度；输入与所需证据条件相同时不再次自动检视，未知结果也属于已尝试结果。签名不读取物理世界，不以时间戳变化或无关信息伪造新线索。
+ 
+-每次主体具备决策资格时，plan_budget 以会话开局保存的 planning_limit 作为本次搜索上限，choice.plan_expansions 从该次余额扣除，并计入 planning_work_total。等待者不重置或执行搜索。此上限限制一次搜索的计算规模；动作账本、付费重演额度与实际游戏时间分别结算，保持原有余额合同。
++每次主体具备决策资格时，plan_budget 以会话开局保存的 planning_limit 作为本次搜索上限，choice.plan_expansions 仅计算行动树节点，从该次余额扣除并计入 planning_work_total；依赖闭包使用独立dependency_budget，工作单列dependency_expansions/dependency_work_total。等待者不重置或执行搜索。此上限限制一次搜索的计算规模；动作账本、付费重演额度与实际游戏时间分别结算，保持原有余额合同。
+ 
+ 同一时刻的空闲主体在本人认识修订或待理解收闻发生变化时可再次决策；decision_revision 记录一次实际选择结束后的本人修订，防止内部推理产生的修订造成自唤醒循环。scheduled_action 优先于这些唤醒条件，等待中的主体保持不计算。
+ 规划每个预测节点建立独立只读评分上下文，一次评估该节点的证据缺口、待达成目标、可用沟通目标与话语目标，在同节点候选间复用；后继节点重新计算，不跨世界、修订或主体缓存。候选顺序、每层展开预算、分数公式、预测结果及停止条件保持原样。状态键在同一节点只生成一次，输出键字节保持原格式。
+@@ -143,3 +143,12 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译
+ 动作目录按已声明地点建立保序缓存切片，未知地点回退全目录，动态资格不缓存为既定结果。私有预测省略审计日志，公共Core与真实世界去重仍保留；话语预选只去掉说话者无关认知，保留听者模型和观察时间先后门。环境时钟边界不向本次due之后的阈值计步；调试投影保留过程及休眠回执。本轮所有动作相关修改和文档审读完成后冻结源码，再执行唯一一次最多180秒的正式一级会话，禁止各处修复之间穿插会话。
+ 
+ 同一mind下的检视证据下界与可用性以完整目标声明为键建立纯值索引；各检视仍核验自己的grants与完整前提，不能用缓存跳过本人来源或新鲜度。
++
++
++## 因果接线、计算上限与诊断维护（2026-10-18）
++
++实际陈述在聆听解析后按原可信度生成证言，不以缺少特殊标签跳过有效陈述。认知快路先处理收闻/现场变化，只复用完整处理前后输入不变的固定点；键保留当次时间、章节、认识、政策、模型、解释、支持来源及同处上下文。晚发生的论证更新须在下次处理，不能认作完成认知。原始实际推知、模型、行动及观察继续保留；只抑制相同零步停止诊断。
++
++依赖拓扑缓存与种子闭包查询分开，闭包保留seeds/独立dependency_budget。plan_expansions只计行动搜索节点，dependency_expansions单列实际闭包工作，完整规划缓存命中两者均为零。独立闭包上限和声明positive_move_root_stop是新的计算合同，报告应与旧共同预算区分，不作同条件提速声明。导航中继只取本人已知开放的路径及本人采纳，不预置到达；完成/位置/通路变化重建意图，所有真实移动仍走原Complete。
++
++调试事件投影为只读冻结值；正式一级继续保留所有实际执行和可见正文，只省略不可见的呈现包与可选阶段诊断，stdout仍直接写原始文件。源码、预算来源、声明、调用链与文档全部完成后再冻结并运行唯一一次180秒正式一级会话，窗口达到7200与剧情实际完成分别核对。
+diff --git a/language_core/verification/scenarios/chapter1-content.dv b/language_core/verification/scenarios/chapter1-content.dv
+index 91ac63e0..5bc51d72 100644
+--- a/language_core/verification/scenarios/chapter1-content.dv
++++ b/language_core/verification/scenarios/chapter1-content.dv
+@@ -1686,7 +1686,7 @@ fn c1_subjective_world(actor):
+     return c1_evidence_contact_methods(c1_latch_contact_method(c1_add_move_methods(mind, actor, "predict"), actor, "predict"), actor, "predict")
+ 
+ fn c1_player_policy():
+-    return dv_with(dv_with(dv_with({"budget": 240, "reason_budget": 320, "model_budget": 320, "plan_budget": 320}, "hypotheses", c1_hypotheses()), "goals", []), "observation_weights", {"perception": 1, "testimony": 1, "recall": 1})
++    return dv_with(dv_with(dv_with({"budget": 240, "reason_budget": 320, "model_budget": 320, "plan_budget": 320, "dependency_budget": 320}, "hypotheses", c1_hypotheses()), "goals", []), "observation_weights", {"perception": 1, "testimony": 1, "recall": 1})
+ 
+ fn c1_public_goal(question, atom, kind):
+     return dv_with(dv_with({"kind": kind, "question": question, "ref": c1_knowledge(atom), "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 3, "answer_open.002"))}, "available_when", dv_all(dv_pair(dv_fact(dv_ref("question", "state", rt_cat("open_", question)), true), dv_fact(dv_ref("question", "state", "requires_evidence"), true)))), "source", "perception")
+diff --git a/language_core/verification/scenarios/chapter2-content.dv b/language_core/verification/scenarios/chapter2-content.dv
+index 753be2df..fd0b29b4 100644
+--- a/language_core/verification/scenarios/chapter2-content.dv
++++ b/language_core/verification/scenarios/chapter2-content.dv
+@@ -981,7 +981,7 @@ fn c2_personal_goals(actor):
+         rt_push(goals, c2_goal(dv_fact(c2_ref("c2.granary", "structure_checked"), true), c2_at(id, "logistics"), source))
+     if id == "mora":
+         rt_push(goals, c2_goal(dv_fact(c2_own("moran", "hungry"), false), dv_all([dv_fact(c2_own("moran", "fever"), true), dv_fact(c2_own("moran", "hungry"), true)]), [c2_approved("mora-does-not-refuse-a-real-patient")]))
+-    let investigations = c2i_goals(id)
++    let investigations = c2i_goals(actor)
+     var investigation_index = 0
+     while investigation_index < rt_count(investigations):
+         rt_push(goals, investigations[investigation_index])
+@@ -1116,7 +1116,7 @@ fn c2_extend_actor_from(actor, physical, previous):
+             rt_push(norm_rules, extra_rules[i])
+         i = i + 1
+     var policy = dv_with_many(actor.policy, {"topic_bindings": dv_append(dv_find(actor.policy, "topic_bindings", []), binding), "value_order": order, "value_basis": value_basis, "chapter2_profile": profile, "norm_rules": norm_rules, "visual_identity_when": dv_fact(c2_ref("c2.weather", "daylight"), true)})
+-    policy = dv_with_many(policy, {"plan_depth": 2, "first_night_plan_depth": 2, "first_night_plan_active": false})
++    policy = dv_with_many(policy, {"plan_depth": 2, "first_night_plan_depth": 2, "first_night_plan_active": false, "positive_move_root_stop": true})
+     var actions = c2_actor_actions(actor.id)
+     let first_night_group = dv_has(["detective", "huo", "shen", "su", "quer", "lucian", "ward", "gu"], actor.id) and dv_truth(physical, c2_at(actor.id, "living_hall")) == "true"
+     // Residents still outside the living hall retain the methods and goals needed to arrive.
+@@ -1320,20 +1320,28 @@ fn c2i_actions(actor):
+     return result
+ 
+ fn c2i_goals(actor):
++    let id = actor.id
+     var goals = []
+     let rows = c2i_rows()
+     var i = 0
+     while i < rt_count(rows):
+         let row = rows[i]
+-        if row.actor == actor:
+-            let transit_goal = c2_goal(c2_at(actor, row.room), row.when, [c2_approved("chapter-two-investigation-transit")])
+-            if not dv_has(goals, transit_goal):
+-                rt_push(goals, transit_goal)
+-            rt_push(goals, c2_goal(dv_fact(c2_ref(row.object, row.field), c2i_value(row)), row.when, [c2_approved("chapter-two-investigation-opportunity")]))
++        if row.actor == id:
++            let completion = dv_fact(c2_ref(row.object, row.field), c2i_value(row))
++            if dv_truth(actor.mind, completion) != "true":
++                let transit_goal = c2_goal(c2_at(id, row.room), row.when, [c2_approved("chapter-two-investigation-transit")])
++                if not dv_has(goals, transit_goal):
++                    rt_push(goals, transit_goal)
++                let route = c2i_known_route(actor, row.room)
++                if route != false and route.next != row.room:
++                    let relay = c2_goal(c2_at(id, route.next), dv_all([row.when, c2_at(id, route.origin)]), [c2_approved("own-declared-investigation-route"), route])
++                    if not dv_has(goals, relay):
++                        rt_push(goals, relay)
++            rt_push(goals, dv_with(c2_goal(completion, row.when, [c2_approved("chapter-two-investigation-opportunity")]), "navigation_completion", completion))
+         i = i + 1
+-    if actor == "ruan":
++    if id == "ruan":
+         rt_push(goals, c2_goal(dv_fact(c2_ref("c2.ledger", "supplement_column"), true), dv_fact(c2_own("ruan", "accepted.records_supplement"), true), [c2_approved("implement-reserved-column-after-acceptance")]))
+-    if actor == "moran":
++    if id == "moran":
+         rt_push(goals, c2_observation_goal(c2_ref("c2.meter", "safe"), c2_window(4, 1020, 1260), [c2_approved("read-actual-meter-before-evening-outing")], 0))
+         rt_push(goals, c2_observation_goal(c2_own("moran", "watched"), c2_night(4), [c2_approved("actual-current-supervision-not-permanent-flag")], 5370))
+         rt_push(goals, c2_goal(c2_at("moran", "outdoor_alley"), dv_fact(c2_ref("case.astral", "evening_choice"), "go"), [c2_approved("execute-actual-personal-sketch-choice")]))
+@@ -1343,13 +1351,13 @@ fn c2i_goals(actor):
+     var place_index = 0
+     while place_index < rt_count(evidence_places):
+         let place = evidence_places[place_index]
+-        if actor == "detective" or actor == "quer" or place.object == rt_cat("case.", c2_profile(actor).group):
++        if id == "detective" or id == "quer" or place.object == rt_cat("case.", c2_profile(id).group):
+             var field_index = 0
+             while field_index < rt_count(place.fields):
+-                rt_push(goals, c2_observation_goal(c2_ref(place.object, place.fields[field_index]), c2_at(actor, place.room), [c2_approved("actual-local-case-inspection")], 0))
++                rt_push(goals, c2_observation_goal(c2_ref(place.object, place.fields[field_index]), c2_at(id, place.room), [c2_approved("actual-local-case-inspection")], 0))
+                 field_index = field_index + 1
+         place_index = place_index + 1
+-    if dv_has(["margaret", "huo", "quer"], actor):
++    if dv_has(["margaret", "huo", "quer"], id):
+         let granary_fields = ["structure_checked", "wedge_set", "lift_mm", "double_bolts"]
+         var field_index = 0
+         while field_index < rt_count(granary_fields):
+@@ -1448,3 +1456,54 @@ axiom c2i_meter_safe_law():
+ 
+ axiom c2i_meter_stale_law():
+     return dv_axiom("c2i_meter_stale_law", 1, dv_all([dv_fact(c2_ref("c2.weather", "earthquake_recent"), true), dv_fact(c2_ref("c2.weather", "severe_air"), true), dv_fact(c2_ref("c2.meter", "safe"), true)]), dv_single(dv_assign(c2_ref("c2.meter", "safe"), false)))
++
++// Intermediate intention follows an owned, known-open path; execution still checks each gate.
++fn c2i_known_route(actor, target):
++    let position = dv_read(actor.mind, c2_position_ref(actor.id))
++    if not dv_uncontested(position) or position.value == target:
++        return false
++    var queue = [{"room": position.value, "first": "", "basis": []}]
++    var visited = [position.value]
++    var cursor = 0
++    let edges = c2_edges()
++    while cursor < rt_count(queue):
++        let node = queue[cursor]
++        var i = 0
++        while i < rt_count(edges):
++            let edge = edges[i]
++            var destination = ""
++            if edge.from == node.room:
++                destination = edge.to
++            if edge.to == node.room:
++                destination = edge.from
++            if destination != "" and not dv_has(visited, destination) and dv_truth(actor.mind, dv_fact(c2_access(edge.gate), true)) == "true":
++                let action = c2_move_action(actor.id, node.room, destination, edge.gate)
++                let adoption = dv_find(actor.mind.adoptions, action.predict_law, false)
++                if adoption != false and adoption.active and adoption.mode == "predict":
++                    var first = node.first
++                    if first == "":
++                        first = destination
++                    let basis = dv_append(node.basis, {"method": action.id, "adoption_basis": adoption.basis, "gate": c2_access(edge.gate), "gate_cell": dv_read(actor.mind, c2_access(edge.gate))})
++                    if destination == target:
++                        return {"origin": position.value, "next": first, "target": target, "path_basis": basis, "scope": "owned-route-intention-not-execution"}
++                    rt_push(queue, {"room": destination, "first": first, "basis": basis})
++                    rt_push(visited, destination)
++            i = i + 1
++        cursor = cursor + 1
++    return false
++
++fn c2i_navigation_input(actor):
++    var refs = [c2_position_ref(actor.id), c2_access("north"), c2_access("east"), c2_access("living")]
++    let goals = dv_find(actor.policy, "goals", [])
++    var i = 0
++    while i < rt_count(goals):
++        let completion = dv_find(goals[i], "navigation_completion", false)
++        if completion != false:
++            refs = dvp_merge_refs(refs, dvs_sim_refs(completion))
++        i = i + 1
++    var inputs = []
++    i = 0
++    while i < rt_count(refs):
++        rt_push(inputs, {"ref": refs[i], "cell": dvs_reason_value(dv_read(actor.mind, refs[i]))})
++        i = i + 1
++    return {"inputs": inputs, "adoptions": actor.mind.adoptions}
+diff --git a/language_core/verification/session/10-subjective.dv b/language_core/verification/session/10-subjective.dv
+index f99d404d..d4fd528a 100644
+--- a/language_core/verification/session/10-subjective.dv
++++ b/language_core/verification/session/10-subjective.dv
+@@ -1,333 +1,365 @@
+-// The selector receives only one actor snapshot. No authority or oracle argument.
+-
+-fn dvs_event(events, kind, actor, time, parents, data):
+-    var id = rt_cat("e", rt_show(rt_count(events)))
+-    rt_push(events, rt_snapshot({"id": id, "type": kind, "actor": actor, "time": time, "parents": parents, "data": data}))
+-    return id
+-
+-fn dvs_find_event_by_id(events, id):
+-    if (rt_length(id) > 1 and rt_chr(id, 0) == "e"):
+-        let num_str = rt_slice(id, 1, rt_length(id) - 1)
+-        if rt_is_number(num_str):
+-            let idx = rt_number(num_str)
+-            if (0 <= idx and idx < rt_count(events)):
+-                let candidate = events[idx]
+-                if (candidate.id == id):
+-                    return candidate
+-    var i = rt_count(events) - 1
+-    while (i >= 0):
+-        let event = events[i]
+-        if (event.id == id):
+-            return event
+-        i = i - 1
+-    return false
+-
+-fn dvs_cognitive_parents(actor, parents):
+-    var previous = dv_find(actor, "last_cognitive_event", "")
+-    if (previous == ""):
+-        return parents
+-    else:
+-        return dv_explanation_merge(parents, dv_single(previous))
+-
+-fn dvs_reason_cell(cell):
+-    return dv_without(cell, "time")
+-
+-fn dvs_reason_value(cell):
+-    return {"known": cell.known, "value": cell.value, "confidence": cell.confidence, "conflicted": cell.conflicted}
+-
+-fn dvs_reason_premises(mind, proposition):
+-    var op = proposition.op
+-    if (op == "constant"):
+-        return proposition
+-    else:
+-        if (op == "not"):
+-            return dvs_reason_premises(mind, proposition.item)
+-        else:
+-            if (op == "all"):
+-                var items = proposition.items
+-                var result = []
+-                var i = 0
+-                while (i < rt_count(items)):
+-                    rt_push(result, dvs_reason_premises(mind, items[i]))
+-                    i = (i + 1)
+-                return result
+-            else:
+-                return {"proposition": proposition, "support": dvs_reason_cell(dv_read(mind, proposition.ref))}
+-
+-fn dvs_reason_signature(mind, adoption):
+-    var law = adoption.law
+-    var effects = adoption.law.effects
+-    var outputs = []
+-    var i = 0
+-    while (i < rt_count(effects)):
+-        var cell = dv_read(mind, effects[i].ref)
+-        rt_push(outputs, {"known": cell.known, "value": cell.value, "confidence": cell.confidence, "conflicted": cell.conflicted})
+-        i = (i + 1)
+-    return dv_with({"law": law, "confidence": adoption.confidence, "basis": adoption.basis, "premises": dvs_reason_premises(mind, law.premise)}, "outputs", outputs)
+-
+-fn dvs_reason_changes(changes):
+-    var i = 0
+-    var changed = false
+-    while (i < rt_count(changes)):
+-        var change = changes[i]
+-        if dv_same(dvs_reason_value(change.before), dvs_reason_value(change.after)):
+-            false
+-        else:
+-            changed = true
+-        i = (i + 1)
+-    return changed
+-
+-fn dvs_reason_monotone_satisfied(mind, effects):
+-    var e = 0
+-    let n = rt_count(effects)
+-    while e < n:
+-        let eff = effects[e]
+-        if dv_find(eff, "op", "") != "assign":
+-            return false
+-        let cell = dv_read(mind, eff.ref)
+-        if not cell.known or cell.value != eff.value or cell.confidence < 1:
+-            return false
+-        e = e + 1
+-    return true
+-
+-fn dvs_reason_run(actor, events, time, parent):
+-    var mind = actor.mind
+-    var policy = actor.policy
+-    var budget = dv_find(policy, "reason_budget", 0)
+-    var count = 0
+-    var changed = true
+-    var signatures = dv_find(actor, "inference_signatures", [])
+-    var derivations = dv_find(actor, "inference_derivations", [])
+-    while dv_and(changed, (count < budget)):
+-        var adoptions = mind.adoptions
+-        var i = 0
+-        changed = false
+-        while dv_and((i < rt_count(adoptions)), (count < budget)):
+-            var entry = adoptions[i]
+-            var law = entry[1].law
+-            if dv_and(entry[1].active, (entry[1].mode == "infer")):
+-                var skip = false
+-                if dv_find(signatures, entry[0], false) != false and dvs_reason_monotone_satisfied(mind, law.effects):
+-                    skip = true
+-                if not skip and (dv_truth(mind, law.premise) == "true"):
+-                    let sig = dvs_reason_signature(mind, entry[1])
+-                    if not dv_same(dv_find(signatures, entry[0], false), sig):
+-                        var stage = dv_stage(mind, law.effects, time, entry[1].basis, entry[1].confidence)
+-                        if dv_and((stage.status == "ready"), dvs_reason_changes(stage.changes)):
+-                            var before = mind
+-                            var result = dv_infer(mind, entry[0], rt_cat("infer", rt_show(rt_count(events))), time, mind.revision)
+-                            mind = result.world
+-                            changed = true
+-                            count = (count + 1)
+-                            signatures = dv_with(signatures, entry[0], sig)
+-                            var event = dvs_event(events, "inference", actor.id, time, dv_explanation_merge(dvs_cognitive_parents(actor, dv_single(parent)), dvs_support_parents(before, dvs_sim_refs(law.premise), events, actor)), {"mind_before": before, "mind_after": mind, "law": law, "receipt": result})
+-                            actor = dv_with(actor, "last_cognitive_event", event)
+-                            rt_push(derivations, dv_with({"event": event, "adoption": entry[1], "inputs": dvs_sim_inputs(before, law.premise), "changes": result.changes}, "valid", true))
+-                        else:
+-                            if (stage.status == "ready"):
+-                                count = (count + 1)
+-                                signatures = dv_with(signatures, entry[0], sig)
+-                                dvs_event(events, "inference_alternative_basis", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"law": law, "basis": entry[1].basis, "premises": dvs_reason_premises(mind, law.premise), "mind_revision": mind.revision})
+-            i = (i + 1)
+-    var local_1 = false
+-    if (count < budget):
+-        local_1 = "no-new-effective-conclusion"
+-    else:
+-        local_1 = "budget-exhausted"
+-    actor = dv_with(actor, "last_cognitive_event", dvs_event(events, "reason_stop", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"steps": count, "remaining": (budget - count), "stop": local_1, "mind_revision": mind.revision}))
+-    return dv_with_many(actor, {"mind": mind, "inference_derivations": derivations, "inference_signatures": signatures, "policy": dv_with(policy, "reason_budget", (budget - count))})
+-
+-fn dvs_cached_model(actor, hypothesis):
+-    var model = dv_find(dv_find(actor, "simulations", []), hypothesis.id, {"fit": 0, "status": "not-simulated"})
+-    if dv_or((dv_find(model, "source_revision", -1) == actor.mind.revision), dv_and(dv_explanation_model_current(actor.mind, model), dv_same(dv_find(model, "source_response_models", false), dv_find(actor, "response_models", [])))):
+-        return dv_with(model, "validated_by_inputs", true)
+-    else:
+-        if dv_and(dvs_argument_valid(actor), dvs_argument_inputs_current(actor)):
+-            var argument = actor.argument
+-            if dv_and((dv_find(model, "source_revision", -1) == argument.source_revision), dv_or((dv_find(model, "event", "") == argument.model_event), dv_has(argument.competitor_events, dv_find(model, "event", "")))):
+-                return dv_with(model, "validated_by_argument", argument.id)
+-            else:
+-                return {"fit": 0, "status": "stale-or-unavailable", "source_revision": dv_find(model, "source_revision", -1)}
+-        else:
+-            return {"fit": 0, "status": "stale-or-unavailable", "source_revision": dv_find(model, "source_revision", -1)}
+-
+-fn dvs_working_explanation(actor, hypothesis):
+-    if dvs_factor_candidate_rejected(actor, hypothesis):
+-        return false
+-    return dv_and(dvp_topic(actor, hypothesis), dv_and((0 < rt_count(dv_find(hypothesis, "features", []))), dv_and((0 < rt_count(dvs_sim_plan(hypothesis))), dv_and((0 < rt_count(dv_find(hypothesis, "basis", []))), dv_and((dv_truth(actor.mind, dv_find(hypothesis, "available_when", dv_true())) == "true"), (not (dv_truth(actor.mind, hypothesis.proposition) == "false")))))))
+-
+-fn dvs_hypotheses(actor, events, time, parent):
+-    var mind = actor.mind
+-    var candidates = dv_find(actor.policy, "hypotheses", [])
+-    var i = 0
+-    var best = false
+-    var score = -1
+-    var working = false
+-    while (i < rt_count(candidates)):
+-        if dvs_working_explanation(actor, candidates[i]):
+-            working = true
+-        i = (i + 1)
+-    i = 0
+-    while (i < rt_count(candidates)):
+-        var h = candidates[i]
+-        if not dvs_factor_candidate_rejected(actor, h):
+-            var available = dv_find(h, "available_when", dv_true())
+-            var local_1 = false
+-            if working:
+-                local_1 = dvs_working_explanation(actor, h)
+-            else:
+-                local_1 = true
+-            if dv_and(local_1, dv_and(dvp_topic(actor, h), dv_and((0 < rt_count(dv_find(h, "basis", []))), (dv_truth(mind, available) == "true")))):
+-                var truth = dv_truth(mind, h.proposition)
+-                var local_2 = false
+-                if (truth == "false"):
+-                    local_2 = -1
+-                else:
+-                    if (truth == "true"):
+-                        local_2 = 1
+-                    else:
+-                        local_2 = dv_find(h, "prior", 0.5)
+-                var weight = local_2
+-                var model = dvs_cached_model(actor, h)
+-                weight = (weight + model.fit)
+-                if dv_or((truth == "false"), (dv_find(model, "status", "unknown") == "inconsistent")):
+-                    false
+-                else:
+-                    if (score < weight):
+-                        best = dv_with(h, "simulation", model)
+-                        score = weight
+-        i = (i + 1)
+-    var previous = dv_find(actor, "hypothesis", false)
+-    var event = dv_find(actor, "hypothesis_event", "")
+-    if dv_same(previous, best):
+-        false
+-    else:
+-        var local_3 = false
+-        if (previous == false):
+-            local_3 = "hypothesis_adopted"
+-        else:
+-            local_3 = "hypothesis_revised"
+-        event = dvs_event(events, local_3, actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"previous": previous, "current": best, "mind": mind, "preference": score})
+-    if (event == dv_find(actor, "hypothesis_event", "")):
+-        false
+-    else:
+-        actor = dv_with(actor, "last_cognitive_event", event)
+-    return dv_with_many(actor, {"hypothesis": best, "hypothesis_event": event})
+-
+-fn dvs_choose(actor, bindings, costs):
+-    let key = ["dvp_plan", dvp_memo_input(actor, costs), bindings, costs]
+-    let cached = rt_memo_get(actor.mind, key)
+-    if cached[0]:
+-        return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions}))
+-    return dvs_honor_planned_followup(actor, rt_memo_put(actor.mind, key, dvp_plan(actor, bindings, costs)))
+-
+-// Keep the actor's own predicted next step after a successful move, provided
+-// the fresh plan still finds that action directly eligible and valuable.
+-fn dvs_honor_planned_followup(actor, choice):
+-    let followup = dv_find(actor, "planned_followup", "")
+-    if followup == "":
+-        return choice
+-    var i = 0
+-    while i < rt_count(choice.plans):
+-        let plan = choice.plans[i]
+-        if rt_count(plan.path) == 1 and plan.path[0] == followup and 0 < plan.score:
+-            let action = dvp_find_action(actor.actions, followup)
+-            if action != false:
+-                return dv_with_many(choice, {"action": action, "score": plan.score, "selected_path": plan.path, "planned_followup_honored": true, "superseded_path": choice.selected_path})
+-        i = i + 1
+-    return dv_with(choice, "planned_followup_honored", false)
+-
+-fn dvs_ready(actor, events, time, parent):
+-    var hypothesis = dv_find(actor, "hypothesis", false)
+-    var ready = true
+-    var reasons = []
+-    var parents = dvs_cognitive_parents(actor, dv_single(parent))
+-    var local_1 = false
+-    if dv_has_key(actor, "question_ref"):
+-        local_1 = dv_read(actor.mind, actor.question_ref)
+-    else:
+-        local_1 = dv_unknown()
+-    var question = local_1
+-    if dv_uncontested(question):
+-        false
+-    else:
+-        ready = false
+-        rt_push(reasons, "current-public-question-unobserved")
+-    if (hypothesis == false):
+-        ready = false
+-        rt_push(reasons, "no-seriously-adopted-hypothesis")
+-    else:
+-        var simulation = dv_find(hypothesis, "simulation", [])
+-        var candidates = dv_find(actor.policy, "hypotheses", [])
+-        var i = 0
+-        var simulations = dv_find(actor, "simulations", [])
+-        var mind = actor.mind
+-        var local_2 = false
+-        if dv_has_key(simulation, "validated_by_argument"):
+-            local_2 = dv_and(dvs_argument_valid(actor), dvs_argument_inputs_current(actor))
+-        else:
+-            local_2 = false
+-        if dv_or((dv_find(simulation, "source_revision", -1) == mind.revision), dv_or(dv_find(simulation, "validated_by_inputs", false), local_2)):
+-            false
+-        else:
+-            ready = false
+-            rt_push(reasons, "simulation-evidence-version-stale")
+-        var local_3 = false
+-        if dv_has_key(simulation, "validated_by_argument"):
+-            local_3 = actor.argument.source_revision
+-        else:
+-            local_3 = mind.revision
+-        if dv_explanation_model_complete(simulation, "explained", local_3):
+-            false
+-        else:
+-            ready = false
+-            rt_push(reasons, "simulation-incomplete-or-unknown")
+-        if dv_has_key(simulation, "validated_by_argument"):
+-            rt_push(parents, simulation.validated_by_argument)
+-        if dv_has_key(simulation, "event"):
+-            rt_push(parents, simulation.event)
+-        else:
+-            ready = false
+-            rt_push(reasons, "missing-paid-simulation-event")
+-        while (i < rt_count(candidates)):
+-            var candidate = candidates[i]
+-            if dv_and((not (candidate.id == hypothesis.id)), dv_and(dvp_topic(actor, candidate), dv_and((dv_find(candidate, "group", "") == dv_find(hypothesis, "group", "")), (dv_truth(mind, dv_find(candidate, "available_when", dv_true())) == "true")))):
+-                var other = dvs_cached_model(actor, candidate)
+-                var local_4 = false
+-                if dv_and(dvs_argument_valid(actor), dvs_argument_inputs_current(actor)):
+-                    local_4 = dvs_factor_covered(candidate, dv_find(actor.argument, "factor_coverage", {"catalog": [], "certificates": []}).certificates)
+-                else:
+-                    local_4 = false
+-                if dv_or((dv_find(other, "status", "unknown") == "inconsistent"), local_4):
+-                    if dv_has_key(other, "event"):
+-                        rt_push(parents, other.event)
+-                    else:
+-                        if dv_and(dvs_argument_valid(actor), dvs_argument_inputs_current(actor)):
+-                            rt_push(parents, actor.argument.id)
+-                        else:
+-                            ready = false
+-                            rt_push(reasons, "missing-competitor-simulation-event")
+-                else:
+-                    ready = false
+-                    rt_push(reasons, rt_cat("unresolved-competitor:", candidate.id))
+-            i = (i + 1)
+-    if ready:
+-        if dv_same(dv_find(actor, "ready_hypothesis", false), hypothesis):
+-            return actor
+-        else:
+-            actor = dv_with(actor, "last_cognitive_event", dvs_event_prepared(events, "answer_ready", actor.id, time, parents, dv_with_many({"hypothesis": hypothesis, "mind_revision": actor.mind.revision, "question_id": dv_find(hypothesis, "question", question.value), "actor_id": actor.id}, {"argument": dv_find(actor, "argument", false), "argument_question": dv_find(hypothesis, "question", question.value)})))
+-            return dv_with(actor, "ready_hypothesis", hypothesis)
+-    else:
+-        dvs_event(events, "why_not_ready", actor.id, time, parents, {"reasons": reasons, "hypothesis": hypothesis})
+-        return actor
+-
+-fn dvs_reason(actor, events, time, parent):
+-    var refreshed = dvs_refresh_derivations(actor, events, time, parent)
+-    if dv_find(refreshed, "cognition_blocked", false):
+-        return refreshed
+-    else:
+-        return dvs_reason_run(refreshed, events, time, parent)
+-
+-// Fresh prepared data and borrowed data share the same immutable evidence boundary.
+-fn dvs_event_prepared(events, kind, actor, time, parents, data):
+-    return dvs_event(events, kind, actor, time, parents, data)
++// The selector receives only one actor snapshot. No authority or oracle argument.
++
++fn dvs_event(events, kind, actor, time, parents, data):
++    var id = rt_cat("e", rt_show(rt_count(events)))
++    rt_push(events, rt_snapshot({"id": id, "type": kind, "actor": actor, "time": time, "parents": parents, "data": data}))
++    return id
++
++fn dvs_find_event_by_id(events, id):
++    if (rt_length(id) > 1 and rt_chr(id, 0) == "e"):
++        let num_str = rt_slice(id, 1, rt_length(id) - 1)
++        if rt_is_number(num_str):
++            let idx = rt_number(num_str)
++            if (0 <= idx and idx < rt_count(events)):
++                let candidate = events[idx]
++                if (candidate.id == id):
++                    return candidate
++    var i = rt_count(events) - 1
++    while (i >= 0):
++        let event = events[i]
++        if (event.id == id):
++            return event
++        i = i - 1
++    return false
++
++fn dvs_cognitive_parents(actor, parents):
++    var previous = dv_find(actor, "last_cognitive_event", "")
++    if (previous == ""):
++        return parents
++    else:
++        return dv_explanation_merge(parents, dv_single(previous))
++
++fn dvs_reason_cell(cell):
++    return dv_without(cell, "time")
++
++fn dvs_reason_value(cell):
++    return {"known": cell.known, "value": cell.value, "confidence": cell.confidence, "conflicted": cell.conflicted}
++
++fn dvs_reason_premises(mind, proposition):
++    var op = proposition.op
++    if (op == "constant"):
++        return proposition
++    else:
++        if (op == "not"):
++            return dvs_reason_premises(mind, proposition.item)
++        else:
++            if (op == "all"):
++                var items = proposition.items
++                var result = []
++                var i = 0
++                while (i < rt_count(items)):
++                    rt_push(result, dvs_reason_premises(mind, items[i]))
++                    i = (i + 1)
++                return result
++            else:
++                return {"proposition": proposition, "support": dvs_reason_cell(dv_read(mind, proposition.ref))}
++
++fn dvs_reason_signature(mind, adoption):
++    var law = adoption.law
++    var effects = adoption.law.effects
++    var outputs = []
++    var i = 0
++    while (i < rt_count(effects)):
++        var cell = dv_read(mind, effects[i].ref)
++        rt_push(outputs, {"known": cell.known, "value": cell.value, "confidence": cell.confidence, "conflicted": cell.conflicted})
++        i = (i + 1)
++    return dv_with({"law": law, "confidence": adoption.confidence, "basis": adoption.basis, "premises": dvs_reason_premises(mind, law.premise)}, "outputs", outputs)
++
++fn dvs_reason_changes(changes):
++    var i = 0
++    var changed = false
++    while (i < rt_count(changes)):
++        var change = changes[i]
++        if dv_same(dvs_reason_value(change.before), dvs_reason_value(change.after)):
++            false
++        else:
++            changed = true
++        i = (i + 1)
++    return changed
++
++fn dvs_reason_monotone_satisfied(mind, effects):
++    var e = 0
++    let n = rt_count(effects)
++    while e < n:
++        let eff = effects[e]
++        if dv_find(eff, "op", "") != "assign":
++            return false
++        let cell = dv_read(mind, eff.ref)
++        if not cell.known or cell.value != eff.value or cell.confidence < 1:
++            return false
++        e = e + 1
++    return true
++
++fn dvs_reason_run(actor, events, time, parent):
++    var mind = actor.mind
++    var policy = actor.policy
++    var budget = dv_find(policy, "reason_budget", 0)
++    var count = 0
++    var changed = true
++    var signatures = dv_find(actor, "inference_signatures", [])
++    var derivations = dv_find(actor, "inference_derivations", [])
++    while dv_and(changed, (count < budget)):
++        var adoptions = mind.adoptions
++        var i = 0
++        changed = false
++        while dv_and((i < rt_count(adoptions)), (count < budget)):
++            var entry = adoptions[i]
++            var law = entry[1].law
++            if dv_and(entry[1].active, (entry[1].mode == "infer")):
++                var skip = false
++                if dv_find(signatures, entry[0], false) != false and dvs_reason_monotone_satisfied(mind, law.effects):
++                    skip = true
++                if not skip and (dv_truth(mind, law.premise) == "true"):
++                    let sig = dvs_reason_signature(mind, entry[1])
++                    if not dv_same(dv_find(signatures, entry[0], false), sig):
++                        var stage = dv_stage(mind, law.effects, time, entry[1].basis, entry[1].confidence)
++                        if dv_and((stage.status == "ready"), dvs_reason_changes(stage.changes)):
++                            var before = mind
++                            var result = dv_infer(mind, entry[0], rt_cat("infer", rt_show(rt_count(events))), time, mind.revision)
++                            mind = result.world
++                            changed = true
++                            count = (count + 1)
++                            signatures = dv_with(signatures, entry[0], sig)
++                            var event = dvs_event(events, "inference", actor.id, time, dv_explanation_merge(dvs_cognitive_parents(actor, dv_single(parent)), dvs_support_parents(before, dvs_sim_refs(law.premise), events, actor)), {"mind_before": before, "mind_after": mind, "law": law, "receipt": result})
++                            actor = dv_with(actor, "last_cognitive_event", event)
++                            rt_push(derivations, dv_with({"event": event, "adoption": entry[1], "inputs": dvs_sim_inputs(before, law.premise), "changes": result.changes}, "valid", true))
++                        else:
++                            if (stage.status == "ready"):
++                                count = (count + 1)
++                                signatures = dv_with(signatures, entry[0], sig)
++                                dvs_event(events, "inference_alternative_basis", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"law": law, "basis": entry[1].basis, "premises": dvs_reason_premises(mind, law.premise), "mind_revision": mind.revision})
++            i = (i + 1)
++    var local_1 = false
++    if (count < budget):
++        local_1 = "no-new-effective-conclusion"
++    else:
++        local_1 = "budget-exhausted"
++    let report = {"steps": count, "remaining": budget - count, "stop": local_1, "mind_revision": mind.revision}
++    if count > 0 or not dv_same(report, dv_find(actor, "last_reason_report", false)):
++        actor = dv_with_many(actor, {"last_cognitive_event": dvs_event(events, "reason_stop", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), report), "last_reason_report": report})
++    return dv_with_many(actor, {"mind": mind, "inference_derivations": derivations, "inference_signatures": signatures, "policy": dv_with(policy, "reason_budget", (budget - count))})
++
++fn dvs_cached_model(actor, hypothesis):
++    var model = dv_find(dv_find(actor, "simulations", []), hypothesis.id, {"fit": 0, "status": "not-simulated"})
++    if dv_or((dv_find(model, "source_revision", -1) == actor.mind.revision), dv_and(dv_explanation_model_current(actor.mind, model), dv_same(dv_find(model, "source_response_models", false), dv_find(actor, "response_models", [])))):
++        return dv_with(model, "validated_by_inputs", true)
++    else:
++        if dv_and(dvs_argument_valid(actor), dvs_argument_inputs_current(actor)):
++            var argument = actor.argument
++            if dv_and((dv_find(model, "source_revision", -1) == argument.source_revision), dv_or((dv_find(model, "event", "") == argument.model_event), dv_has(argument.competitor_events, dv_find(model, "event", "")))):
++                return dv_with(model, "validated_by_argument", argument.id)
++            else:
++                return {"fit": 0, "status": "stale-or-unavailable", "source_revision": dv_find(model, "source_revision", -1)}
++        else:
++            return {"fit": 0, "status": "stale-or-unavailable", "source_revision": dv_find(model, "source_revision", -1)}
++
++fn dvs_working_explanation(actor, hypothesis):
++    if dvs_factor_candidate_rejected(actor, hypothesis):
++        return false
++    return dv_and(dvp_topic(actor, hypothesis), dv_and((0 < rt_count(dv_find(hypothesis, "features", []))), dv_and((0 < rt_count(dvs_sim_plan(hypothesis))), dv_and((0 < rt_count(dv_find(hypothesis, "basis", []))), dv_and((dv_truth(actor.mind, dv_find(hypothesis, "available_when", dv_true())) == "true"), (not (dv_truth(actor.mind, hypothesis.proposition) == "false")))))))
++
++fn dvs_hypotheses(actor, events, time, parent):
++    var mind = actor.mind
++    var candidates = dv_find(actor.policy, "hypotheses", [])
++    var i = 0
++    var best = false
++    var score = -1
++    var working = false
++    while (i < rt_count(candidates)):
++        if dvs_working_explanation(actor, candidates[i]):
++            working = true
++        i = (i + 1)
++    i = 0
++    while (i < rt_count(candidates)):
++        var h = candidates[i]
++        if not dvs_factor_candidate_rejected(actor, h):
++            var available = dv_find(h, "available_when", dv_true())
++            var local_1 = false
++            if working:
++                local_1 = dvs_working_explanation(actor, h)
++            else:
++                local_1 = true
++            if dv_and(local_1, dv_and(dvp_topic(actor, h), dv_and((0 < rt_count(dv_find(h, "basis", []))), (dv_truth(mind, available) == "true")))):
++                var truth = dv_truth(mind, h.proposition)
++                var local_2 = false
++                if (truth == "false"):
++                    local_2 = -1
++                else:
++                    if (truth == "true"):
++                        local_2 = 1
++                    else:
++                        local_2 = dv_find(h, "prior", 0.5)
++                var weight = local_2
++                var model = dvs_cached_model(actor, h)
++                weight = (weight + model.fit)
++                if dv_or((truth == "false"), (dv_find(model, "status", "unknown") == "inconsistent")):
++                    false
++                else:
++                    if (score < weight):
++                        best = dv_with(h, "simulation", model)
++                        score = weight
++        i = (i + 1)
++    var previous = dv_find(actor, "hypothesis", false)
++    var event = dv_find(actor, "hypothesis_event", "")
++    if dv_same(previous, best):
++        false
++    else:
++        var local_3 = false
++        if (previous == false):
++            local_3 = "hypothesis_adopted"
++        else:
++            local_3 = "hypothesis_revised"
++        event = dvs_event(events, local_3, actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"previous": previous, "current": best, "mind": mind, "preference": score})
++    if (event == dv_find(actor, "hypothesis_event", "")):
++        false
++    else:
++        actor = dv_with(actor, "last_cognitive_event", event)
++    return dv_with_many(actor, {"hypothesis": best, "hypothesis_event": event})
++
++fn dvs_choose(actor, bindings, costs):
++    let key = ["dvp_plan", dvp_memo_input(actor, costs), bindings, costs]
++    let cached = rt_memo_get(actor.mind, key)
++    if cached[0]:
++        return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "dependency_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions, "reused_dependency_expansions": dv_find(cached[1], "dependency_expansions", 0)}))
++    return dvs_honor_planned_followup(actor, rt_memo_put(actor.mind, key, dvp_plan(actor, bindings, costs)))
++
++// Keep the actor's own predicted next step after a successful move, provided
++// the fresh plan still finds that action directly eligible and valuable.
++fn dvs_honor_planned_followup(actor, choice):
++    let followup = dv_find(actor, "planned_followup", "")
++    if followup == "":
++        return choice
++    var i = 0
++    while i < rt_count(choice.plans):
++        let plan = choice.plans[i]
++        if rt_count(plan.path) == 1 and plan.path[0] == followup and 0 < plan.score:
++            let action = dvp_find_action(actor.actions, followup)
++            if action != false:
++                return dv_with_many(choice, {"action": action, "score": plan.score, "selected_path": plan.path, "planned_followup_honored": true, "superseded_path": choice.selected_path})
++        i = i + 1
++    return dv_with(choice, "planned_followup_honored", false)
++
++fn dvs_ready(actor, events, time, parent):
++    var hypothesis = dv_find(actor, "hypothesis", false)
++    var ready = true
++    var reasons = []
++    var parents = dvs_cognitive_parents(actor, dv_single(parent))
++    var local_1 = false
++    if dv_has_key(actor, "question_ref"):
++        local_1 = dv_read(actor.mind, actor.question_ref)
++    else:
++        local_1 = dv_unknown()
++    var question = local_1
++    if dv_uncontested(question):
++        false
++    else:
++        ready = false
++        rt_push(reasons, "current-public-question-unobserved")
++    if (hypothesis == false):
++        ready = false
++        rt_push(reasons, "no-seriously-adopted-hypothesis")
++    else:
++        var simulation = dv_find(hypothesis, "simulation", [])
++        var candidates = dv_find(actor.policy, "hypotheses", [])
++        var i = 0
++        var simulations = dv_find(actor, "simulations", [])
++        var mind = actor.mind
++        var local_2 = false
++        if dv_has_key(simulation, "validated_by_argument"):
++            local_2 = dv_and(dvs_argument_valid(actor), dvs_argument_inputs_current(actor))
++        else:
++            local_2 = false
++        if dv_or((dv_find(simulation, "source_revision", -1) == mind.revision), dv_or(dv_find(simulation, "validated_by_inputs", false), local_2)):
++            false
++        else:
++            ready = false
++            rt_push(reasons, "simulation-evidence-version-stale")
++        var local_3 = false
++        if dv_has_key(simulation, "validated_by_argument"):
++            local_3 = actor.argument.source_revision
++        else:
++            local_3 = mind.revision
++        if dv_explanation_model_complete(simulation, "explained", local_3):
++            false
++        else:
++            ready = false
++            rt_push(reasons, "simulation-incomplete-or-unknown")
++        if dv_has_key(simulation, "validated_by_argument"):
++            rt_push(parents, simulation.validated_by_argument)
++        if dv_has_key(simulation, "event"):
++            rt_push(parents, simulation.event)
++        else:
++            ready = false
++            rt_push(reasons, "missing-paid-simulation-event")
++        while (i < rt_count(candidates)):
++            var candidate = candidates[i]
++            if dv_and((not (candidate.id == hypothesis.id)), dv_and(dvp_topic(actor, candidate), dv_and((dv_find(candidate, "group", "") == dv_find(hypothesis, "group", "")), (dv_truth(mind, dv_find(candidate, "available_when", dv_true())) == "true")))):
++                var other = dvs_cached_model(actor, candidate)
++                var local_4 = false
++                if dv_and(dvs_argument_valid(actor), dvs_argument_inputs_current(actor)):
++                    local_4 = dvs_factor_covered(candidate, dv_find(actor.argument, "factor_coverage", {"catalog": [], "certificates": []}).certificates)
++                else:
++                    local_4 = false
++                if dv_or((dv_find(other, "status", "unknown") == "inconsistent"), local_4):
++                    if dv_has_key(other, "event"):
++                        rt_push(parents, other.event)
++                    else:
++                        if dv_and(dvs_argument_valid(actor), dvs_argument_inputs_current(actor)):
++                            rt_push(parents, actor.argument.id)
++                        else:
++                            ready = false
++                            rt_push(reasons, "missing-competitor-simulation-event")
++                else:
++                    ready = false
++                    rt_push(reasons, rt_cat("unresolved-competitor:", candidate.id))
++            i = (i + 1)
++    if ready:
++        if dv_same(dv_find(actor, "ready_hypothesis", false), hypothesis):
++            return actor
++        else:
++            actor = dv_with(actor, "last_cognitive_event", dvs_event_prepared(events, "answer_ready", actor.id, time, parents, dv_with_many({"hypothesis": hypothesis, "mind_revision": actor.mind.revision, "question_id": dv_find(hypothesis, "question", question.value), "actor_id": actor.id}, {"argument": dv_find(actor, "argument", false), "argument_question": dv_find(hypothesis, "question", question.value)})))
++            return dv_with(actor, "ready_hypothesis", hypothesis)
++    else:
++        let report = {"reasons": reasons, "hypothesis": hypothesis, "mind_revision": actor.mind.revision}
++        if not dv_same(report, dv_find(actor, "last_readiness_report", false)):
++            dvs_event(events, "why_not_ready", actor.id, time, parents, report)
++        return dv_with(actor, "last_readiness_report", report)
++
++fn dvs_reason(actor, events, time, parent):
++    var refreshed = dvs_refresh_derivations(actor, events, time, parent)
++    if dv_find(refreshed, "cognition_blocked", false):
++        return refreshed
++    else:
++        return dvs_reason_run(refreshed, events, time, parent)
++
++// Fresh prepared data and borrowed data share the same immutable evidence boundary.
++fn dvs_event_prepared(events, kind, actor, time, parents, data):
++    return dvs_event(events, kind, actor, time, parents, data)
++
++// Cache only a completed cognitive preparation with identical complete input.
++// Time, mind, source receipts, policy, models, interpretations and peers remain in the key.
++fn dvs_cognition_input(actor, time, chapter):
++    let ignored = ["cognition_input", "last_cognition_revision", "last_cognition_time", "cognition_reused", "cognition_cache_reuses", "last_cognitive_event", "last_reason_report", "last_readiness_report", "decision_time", "decision_revision", "decision_mind_time", "decision_chapter", "last_decision_stopped", "planning_work_total", "dependency_work_total", "dependency_cache", "planned_followup", "campaign_goals_revision", "campaign_goals_time", "campaign_goals_chapter", "c2_goals_navigation_input", "support_events_cursor", "scheduled_action"]
++    var fields = []
++    var i = 0
++    while i < rt_count(actor):
++        let entry = actor[i]
++        if not dv_has(ignored, entry[0]):
++            rt_push(fields, entry)
++        i = i + 1
++    return {"actor": fields, "time": time, "chapter": chapter}
++
++fn dvs_prepare_cognition(actor, events, time, parent, chapter):
++    let input = dvs_cognition_input(actor, time, chapter)
++    if actor.mind.revision == dv_find(actor, "last_cognition_revision", -1) and rt_count(dv_find(actor, "pending_heard", [])) == 0 and dv_same(input, dv_find(actor, "cognition_input", false)):
++        return dv_with_many(actor, {"cognition_reused": true, "cognition_cache_reuses": dv_find(actor, "cognition_cache_reuses", 0) + 1})
++    actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(dvs_reason(actor, events, time, parent), events, time, parent), events, time, parent), events, time, parent)
++    actor = dvs_update_support_events(actor, events)
++    actor = dvs_capture_public_topics(actor, events, time, parent)
++    actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
++    actor = dvs_prepare_speech_choices(actor, events, time, parent)
++    let completed = dvs_cognition_input(actor, time, chapter)
++    // A late model/argument update requires another full preparation, not a cache hit.
++    if dv_same(input, completed):
++        return dv_with_many(actor, {"cognition_input": completed, "last_cognition_revision": actor.mind.revision, "last_cognition_time": time, "cognition_reused": false})
++    return dv_with_many(actor, {"cognition_input": false, "last_cognition_revision": -1, "last_cognition_time": time, "cognition_reused": false})
+diff --git a/language_core/verification/session/15-action-planning.dv b/language_core/verification/session/15-action-planning.dv
+index c2354027..dca1ae79 100644
+--- a/language_core/verification/session/15-action-planning.dv
++++ b/language_core/verification/session/15-action-planning.dv
+@@ -15,7 +15,7 @@ fn dvp_memo_input(actor, costs):
+     while i < rt_count(actor):
+         let entry = actor[i]
+         let key = entry[0]
+-        if key != "decision_time" and key != "decision_revision" and key != "planning_work_total" and key != "last_cognitive_event":
++        if key != "decision_time" and key != "decision_revision" and key != "planning_work_total" and key != "last_cognitive_event" and key != "dependency_work_total" and key != "cognition_input" and key != "last_cognition_revision" and key != "last_cognition_time" and key != "cognition_reused" and key != "cognition_cache_reuses" and key != "last_reason_report" and key != "last_readiness_report":
+             if key == "policy":
+                 rt_push(result, dv_pair(key, policy))
+             else:
+@@ -94,59 +94,53 @@ fn dvp_unmet_refs(mind, proposition, include_known):
+                 else:
+                     return []
+ 
++fn dvp_dependency_add(graph, ref, inputs):
++    let key = rt_json_stringify(ref)
++    return dv_with(graph, key, dvp_merge_refs(dv_find(graph, key, []), inputs))
++
++fn dvp_dependency_topology(mind, methods):
++    let key = ["dvp_dependency_topology", methods]
++    let cached = rt_memo_get(mind.adoptions, key)
++    if cached[0]:
++        return cached[1]
++    var graph = []
++    var i = 0
++    while i < rt_count(mind.adoptions):
++        let adoption = mind.adoptions[i][1]
++        if adoption.active and adoption.mode == "infer":
++            let inputs = dvs_sim_refs(adoption.law.premise)
++            var j = 0
++            while j < rt_count(adoption.law.effects):
++                graph = dvp_dependency_add(graph, adoption.law.effects[j].ref, inputs)
++                j = j + 1
++        i = i + 1
++    i = 0
++    while i < rt_count(methods):
++        let method = methods[i]
++        let inputs = dvp_merge_refs(dvs_sim_refs(method.premise), dv_find(method, "owner_refs", []))
++        var j = 0
++        while j < rt_count(method.scope):
++            graph = dvp_dependency_add(graph, method.scope[j], inputs)
++            j = j + 1
++        i = i + 1
++    return rt_memo_put(mind.adoptions, key, graph)
++
+ fn dvp_dependencies(mind, seeds, budget, methods):
+-    var refs = seeds
+-    var queue = seeds
++    let graph = dvp_dependency_topology(mind, methods)
++    var refs = dv_clone(seeds)
+     var cursor = 0
+-    var expanded = 0
+-    var adoptions = mind.adoptions
+-    while dv_and((cursor < rt_count(queue)), (expanded < budget)):
+-        var ref = queue[cursor]
++    while cursor < rt_count(refs) and cursor < budget:
++        let inputs = dv_find(graph, rt_json_stringify(refs[cursor]), [])
+         var i = 0
+-        expanded = (expanded + 1)
+-        while (i < rt_count(adoptions)):
+-            var adoption = adoptions[i][1]
+-            var law = adoptions[i][1].law
+-            var j = 0
+-            var effects = adoptions[i][1].law.effects
+-            if dv_and(adoption.active, (adoption.mode == "infer")):
+-                while (j < rt_count(effects)):
+-                    var effect = effects[j]
+-                    if dv_same(effect.ref, ref):
+-                        var premises = dvp_unmet_refs(mind, law.premise, true)
+-                        var k = 0
+-                        while (k < rt_count(premises)):
+-                            var premise = premises[k]
+-                            if dv_has(refs, premise):
+-                                false
+-                            else:
+-                                refs = dv_append(refs, premise)
+-                                queue = dv_append(queue, premise)
+-                            k = (k + 1)
+-                    j = (j + 1)
+-            i = (i + 1)
+-        i = 0
+-        while (i < rt_count(methods)):
+-            var method = methods[i]
+-            if dv_has(method.scope, ref):
+-                var premises = dvp_merge_refs(dvp_unmet_refs(mind, method.premise, true), dv_find(method, "owner_refs", []))
+-                var k = 0
+-                while (k < rt_count(premises)):
+-                    var premise = premises[k]
+-                    if dv_has(refs, premise):
+-                        false
+-                    else:
+-                        refs = dv_append(refs, premise)
+-                        queue = dv_append(queue, premise)
+-                    k = (k + 1)
+-            i = (i + 1)
+-        cursor = (cursor + 1)
+-    var local_1 = false
+-    if (cursor < rt_count(queue)):
+-        local_1 = "dependency-budget"
+-    else:
+-        local_1 = "dependency-closure"
+-    return {"refs": refs, "expanded": expanded, "stop": local_1}
++        while i < rt_count(inputs):
++            if not dv_has(refs, inputs[i]):
++                rt_push(refs, inputs[i])
++            i = i + 1
++        cursor = cursor + 1
++    var stop = "dependency-closure"
++    if cursor < rt_count(refs):
++        stop = "dependency-budget"
++    return {"refs": refs, "expanded": cursor, "stop": stop}
+ 
+ fn dvp_goal_refs(actor):
+     var goals = dv_find(actor.policy, "goals", [])
+@@ -612,6 +606,10 @@ fn dvp_frontier_put(frontier, node):
+     return result
+ 
+ fn dvp_dependency_methods(actor):
++    let key = ["dvp_dependency_methods"]
++    let cached = rt_memo_get(actor.actions, key)
++    if cached[0]:
++        return cached[1]
+     var actions = actor.actions
+     var methods = []
+     var i = 0
+@@ -619,11 +617,11 @@ fn dvp_dependency_methods(actor):
+         if not dv_find(actions[i], "known_opportunity_wait", false):
+             rt_push(methods, {"scope": dv_find(actions[i], "purpose_refs", dv_find(actions[i], "grants", [])), "premise": actions[i].precondition, "owner_refs": dvp_owner_requirement_refs(actions[i])})
+         i = (i + 1)
+-    return methods
++    return rt_memo_put(actor.actions, key, methods)
+ 
+ fn dvp_cached_dependencies(actor, seeds, budget):
+     var methods = dvp_dependency_methods(actor)
+-    var signature = {"question": dvp_question(actor), "seeds": seeds, "adoptions": actor.mind.adoptions, "methods": methods}
++    var signature = {"seeds": seeds, "budget": budget, "adoptions": actor.mind.adoptions, "methods": methods}
+     var cache = dv_find(actor, "dependency_cache", false)
+     if (cache == false):
+         var result = dvp_dependencies(actor.mind, seeds, budget, methods)
+@@ -666,9 +664,9 @@ fn dvp_plan(actor, bindings, costs):
+     var depth_limit = dv_find(actor.policy, "plan_depth", 2)
+     var goals = dvp_goal_refs(actor)
+     var probes = dvp_probe_refs(actor)
+-    var dependencies = dvp_cached_dependencies(actor, dvp_merge_refs(goals, probes), budget)
++    var dependencies = dvp_cached_dependencies(actor, dvp_merge_refs(goals, probes), dv_find(actor.policy, "dependency_budget", dv_find(actor, "planning_limit", budget)))
+     var relevant = dependencies.refs
+-    var expanded = dependencies.expanded
++    var expanded = 0
+     var best = false
+     var best_score = -100000
+     var best_path = []
+@@ -749,7 +747,7 @@ fn dvp_plan(actor, bindings, costs):
+                         var path = dv_append(node.path, action.id)
+                         var score = 0
+                         score = (node.score + (value.value - (cost.time * dv_find(actor.policy, "time_cost", 0.01))))
+-                        if depth == 0 and action.kind != "move" and not dv_find(action, "known_opportunity_wait", false) and current_score < score and 0 < value.information + value.verification + value.progress + value.achievement:
++                        if depth == 0 and (action.kind != "move" or (dv_find(actor.policy, "positive_move_root_stop", false) and value.achievement > 0)) and not dv_find(action, "known_opportunity_wait", false) and current_score < score and 0 < value.information + value.verification + value.progress + value.achievement:
+                             current_action = action
+                             current_score = score
+                             current_value = value
+@@ -809,7 +807,7 @@ fn dvp_plan(actor, bindings, costs):
+         local_3 = "duration-budget"
+     else:
+         local_3 = stop
+-    return dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "time_blocked": time_blocked, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": depth, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer})
++    return dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "time_blocked": time_blocked, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": depth, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer})
+ 
+ fn dvp_find_action(actions, id):
+     var i = 0
+diff --git a/language_core/verification/session/20-speech.dv b/language_core/verification/session/20-speech.dv
+index bc639266..222153ca 100644
+--- a/language_core/verification/session/20-speech.dv
++++ b/language_core/verification/session/20-speech.dv
+@@ -734,26 +734,6 @@ fn dvs_complete_norm(actor, action, applied, events, time, execution_event, obse
+     let event = dvs_event_prepared(events, "norm_decision", actor.id, time, [execution_event, observation_event, receipt.source_event, receipt.parse_event], {"decision": stance, "value_order": dv_find(actor.policy, "value_order", []), "personal_choice": dv_find(action, "personal_choice", []), "rules_before": before, "rules_after": rules})
+     return dv_with_many(actor, {"policy": dv_with(actor.policy, "norm_rules", rules), "norm_stances": stances, "last_cognitive_event": event})
+ 
+-fn dvs_listener_needs_speech_mind(listener, speaker_id, action_id):
+-    let actions = listener.actions
+-    var i = 0
+-    let count = rt_count(actions)
+-    while i < count:
+-        let req = dv_find(actions[i], "received_speech_requirement", false)
+-        if req != false:
+-            if dv_has_key(req, "any_of"):
+-                var j = 0
+-                let any_list = req.any_of
+-                while j < rt_count(any_list):
+-                    if dv_find(any_list[j], "speaker", "") == speaker_id and dv_find(any_list[j], "action_id", "") == action_id:
+-                        return true
+-                    j = j + 1
+-            else:
+-                if dv_find(req, "speaker", "") == speaker_id and dv_find(req, "action_id", "") == action_id:
+-                    return true
+-        i = i + 1
+-    return false
+-
+ fn dvs_receive_scheduled_speech(listener, message, events, time):
+     let speech = message.speech
+     let literal = speech.literal_ast
+@@ -768,17 +748,11 @@ fn dvs_receive_scheduled_speech(listener, message, events, time):
+     var trust = dvs_speaker_trust(listener.policy, speaker_id)
+     var decision = dvs_speech_proposal_decision(before, policy, speech, trust)
+     var candidates_actual = dvs_speech_candidates(policy, speech)
+-    var is_ordinary_chat = false
+-    if decision.status == "ordinary" and dv_find(speech, "norm_proposal", false) == false and dv_find(speech, "request", false) == false and rt_count(candidates_actual) == 0:
+-        if not dvs_listener_needs_speech_mind(listener, speaker_id, action_id):
+-            is_ordinary_chat = true
+     var after = before
+     var profile = dv_observation_profile({"perception": 1, "testimony": 1, "recall": 1}, dv_find(listener.policy, "observation_threshold", 0.5))
+-    var observations = []
+-    if not is_ordinary_chat:
+-        observations = dvs_speech_received_observations(before, parsed, source, speaker_id, message.received_time, decision)
+-        var receipt = dv_update_mind(before, observations, before.revision, profile)
+-        after = receipt.world
++    let observations = dvs_speech_received_observations(before, parsed, source, speaker_id, message.received_time, decision)
++    if 0 < rt_count(observations):
++        after = dv_update_mind(before, observations, before.revision, profile).world
+     var interpretations = dv_find(listener, "interpretations", [])
+     var last_interpretation = dv_find(listener, "last_interpretation_event", "")
+     var n = 0
+diff --git a/language_core/verification/session/30-runner.dv b/language_core/verification/session/30-runner.dv
+index 01a1ec17..b30151a3 100644
+--- a/language_core/verification/session/30-runner.dv
++++ b/language_core/verification/session/30-runner.dv
+@@ -315,11 +315,7 @@ fn dvs_prepare_actor(state):
+                 idle = idle + 1
+                 actors = dvs_replace(actors, index, actor)
+                 return dvs_owned_state_update(state, {"actors": actors, "cursor": cursor, "idle": idle})
+-            actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(dvs_reason(actor, events, time, parent), events, time, parent), events, time, parent), events, time, parent)
+-            actor = dvs_update_support_events(actor, events)
+-            actor = dvs_capture_public_topics(actor, events, time, parent)
+-            actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
+-            actor = dvs_prepare_speech_choices(actor, events, time, parent)
++            actor = dvs_prepare_cognition(actor, events, time, parent, dv_find(story, "chapter", 1))
+             dvs_debug_phase(story, actor.id, time, "cognition-end")
+         var choice = false
+         if dv_find(state, "player_actor", "") == actor.id:
+@@ -335,6 +331,8 @@ fn dvs_prepare_actor(state):
+             dvs_debug_phase(story, actor.id, time, "choice-start")
+             choice = dvs_choose(actor, bindings, costs)
+             dvs_debug_phase(story, actor.id, time, "choice-end")
++        choice = dv_with(choice, "cognition_reused", dv_find(actor, "cognition_reused", false))
++        actor = dv_with(actor, "dependency_work_total", dv_find(actor, "dependency_work_total", 0) + dv_find(choice, "dependency_expansions", 0))
+         actor = dv_with(actor, "decision_revision", actor.mind.revision)
+         var action = choice.action
+         actor = dv_with_many(actor, {"decision_mind_time": actor.mind.time, "decision_chapter": dv_find(story, "chapter", 1), "last_decision_stopped": action == false})
+diff --git a/language_core/verification/session/40-host.dv b/language_core/verification/session/40-host.dv
+index 9a4a7c6e..a2449c04 100644
+--- a/language_core/verification/session/40-host.dv
++++ b/language_core/verification/session/40-host.dv
+@@ -12,6 +12,8 @@ fn dvs_present_replace(text, token, value):
+     return result
+ 
+ fn dvs_present_lines(state, viewer, presentation):
++    if rt_count(dv_find(presentation, "lines", [])) == 0:
++        return []
+     var mind = false
+     var i = 0
+     while i < rt_count(state.actors):

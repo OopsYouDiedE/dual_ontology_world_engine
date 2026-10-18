@@ -134,7 +134,9 @@ fn dvs_reason_run(actor, events, time, parent):
         local_1 = "no-new-effective-conclusion"
     else:
         local_1 = "budget-exhausted"
-    actor = dv_with(actor, "last_cognitive_event", dvs_event(events, "reason_stop", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"steps": count, "remaining": (budget - count), "stop": local_1, "mind_revision": mind.revision}))
+    let report = {"steps": count, "remaining": budget - count, "stop": local_1, "mind_revision": mind.revision}
+    if count > 0 or not dv_same(report, dv_find(actor, "last_reason_report", false)):
+        actor = dv_with_many(actor, {"last_cognitive_event": dvs_event(events, "reason_stop", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), report), "last_reason_report": report})
     return dv_with_many(actor, {"mind": mind, "inference_derivations": derivations, "inference_signatures": signatures, "policy": dv_with(policy, "reason_budget", (budget - count))})
 
 fn dvs_cached_model(actor, hypothesis):
@@ -218,7 +220,7 @@ fn dvs_choose(actor, bindings, costs):
     let key = ["dvp_plan", dvp_memo_input(actor, costs), bindings, costs]
     let cached = rt_memo_get(actor.mind, key)
     if cached[0]:
-        return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions}))
+        return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "dependency_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions, "reused_dependency_expansions": dv_find(cached[1], "dependency_expansions", 0)}))
     return dvs_honor_planned_followup(actor, rt_memo_put(actor.mind, key, dvp_plan(actor, bindings, costs)))
 
 // Keep the actor's own predicted next step after a successful move, provided
@@ -318,8 +320,10 @@ fn dvs_ready(actor, events, time, parent):
             actor = dv_with(actor, "last_cognitive_event", dvs_event_prepared(events, "answer_ready", actor.id, time, parents, dv_with_many({"hypothesis": hypothesis, "mind_revision": actor.mind.revision, "question_id": dv_find(hypothesis, "question", question.value), "actor_id": actor.id}, {"argument": dv_find(actor, "argument", false), "argument_question": dv_find(hypothesis, "question", question.value)})))
             return dv_with(actor, "ready_hypothesis", hypothesis)
     else:
-        dvs_event(events, "why_not_ready", actor.id, time, parents, {"reasons": reasons, "hypothesis": hypothesis})
-        return actor
+        let report = {"reasons": reasons, "hypothesis": hypothesis, "mind_revision": actor.mind.revision}
+        if not dv_same(report, dv_find(actor, "last_readiness_report", false)):
+            dvs_event(events, "why_not_ready", actor.id, time, parents, report)
+        return dv_with(actor, "last_readiness_report", report)
 
 fn dvs_reason(actor, events, time, parent):
     var refreshed = dvs_refresh_derivations(actor, events, time, parent)
@@ -331,3 +335,31 @@ fn dvs_reason(actor, events, time, parent):
 // Fresh prepared data and borrowed data share the same immutable evidence boundary.
 fn dvs_event_prepared(events, kind, actor, time, parents, data):
     return dvs_event(events, kind, actor, time, parents, data)
+
+// Cache only a completed cognitive preparation with identical complete input.
+// Time, mind, source receipts, policy, models, interpretations and peers remain in the key.
+fn dvs_cognition_input(actor, time, chapter):
+    let ignored = ["cognition_input", "last_cognition_revision", "last_cognition_time", "cognition_reused", "cognition_cache_reuses", "last_cognitive_event", "last_reason_report", "last_readiness_report", "decision_time", "decision_revision", "decision_mind_time", "decision_chapter", "last_decision_stopped", "planning_work_total", "dependency_work_total", "dependency_cache", "planned_followup", "campaign_goals_revision", "campaign_goals_time", "campaign_goals_chapter", "c2_goals_navigation_input", "support_events_cursor", "scheduled_action"]
+    var fields = []
+    var i = 0
+    while i < rt_count(actor):
+        let entry = actor[i]
+        if not dv_has(ignored, entry[0]):
+            rt_push(fields, entry)
+        i = i + 1
+    return {"actor": fields, "time": time, "chapter": chapter}
+
+fn dvs_prepare_cognition(actor, events, time, parent, chapter):
+    let input = dvs_cognition_input(actor, time, chapter)
+    if actor.mind.revision == dv_find(actor, "last_cognition_revision", -1) and rt_count(dv_find(actor, "pending_heard", [])) == 0 and dv_same(input, dv_find(actor, "cognition_input", false)):
+        return dv_with_many(actor, {"cognition_reused": true, "cognition_cache_reuses": dv_find(actor, "cognition_cache_reuses", 0) + 1})
+    actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(dvs_reason(actor, events, time, parent), events, time, parent), events, time, parent), events, time, parent)
+    actor = dvs_update_support_events(actor, events)
+    actor = dvs_capture_public_topics(actor, events, time, parent)
+    actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
+    actor = dvs_prepare_speech_choices(actor, events, time, parent)
+    let completed = dvs_cognition_input(actor, time, chapter)
+    // A late model/argument update requires another full preparation, not a cache hit.
+    if dv_same(input, completed):
+        return dv_with_many(actor, {"cognition_input": completed, "last_cognition_revision": actor.mind.revision, "last_cognition_time": time, "cognition_reused": false})
+    return dv_with_many(actor, {"cognition_input": false, "last_cognition_revision": -1, "last_cognition_time": time, "cognition_reused": false})

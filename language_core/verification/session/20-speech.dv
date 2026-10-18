@@ -734,26 +734,6 @@ fn dvs_complete_norm(actor, action, applied, events, time, execution_event, obse
     let event = dvs_event_prepared(events, "norm_decision", actor.id, time, [execution_event, observation_event, receipt.source_event, receipt.parse_event], {"decision": stance, "value_order": dv_find(actor.policy, "value_order", []), "personal_choice": dv_find(action, "personal_choice", []), "rules_before": before, "rules_after": rules})
     return dv_with_many(actor, {"policy": dv_with(actor.policy, "norm_rules", rules), "norm_stances": stances, "last_cognitive_event": event})
 
-fn dvs_listener_needs_speech_mind(listener, speaker_id, action_id):
-    let actions = listener.actions
-    var i = 0
-    let count = rt_count(actions)
-    while i < count:
-        let req = dv_find(actions[i], "received_speech_requirement", false)
-        if req != false:
-            if dv_has_key(req, "any_of"):
-                var j = 0
-                let any_list = req.any_of
-                while j < rt_count(any_list):
-                    if dv_find(any_list[j], "speaker", "") == speaker_id and dv_find(any_list[j], "action_id", "") == action_id:
-                        return true
-                    j = j + 1
-            else:
-                if dv_find(req, "speaker", "") == speaker_id and dv_find(req, "action_id", "") == action_id:
-                    return true
-        i = i + 1
-    return false
-
 fn dvs_receive_scheduled_speech(listener, message, events, time):
     let speech = message.speech
     let literal = speech.literal_ast
@@ -768,17 +748,11 @@ fn dvs_receive_scheduled_speech(listener, message, events, time):
     var trust = dvs_speaker_trust(listener.policy, speaker_id)
     var decision = dvs_speech_proposal_decision(before, policy, speech, trust)
     var candidates_actual = dvs_speech_candidates(policy, speech)
-    var is_ordinary_chat = false
-    if decision.status == "ordinary" and dv_find(speech, "norm_proposal", false) == false and dv_find(speech, "request", false) == false and rt_count(candidates_actual) == 0:
-        if not dvs_listener_needs_speech_mind(listener, speaker_id, action_id):
-            is_ordinary_chat = true
     var after = before
     var profile = dv_observation_profile({"perception": 1, "testimony": 1, "recall": 1}, dv_find(listener.policy, "observation_threshold", 0.5))
-    var observations = []
-    if not is_ordinary_chat:
-        observations = dvs_speech_received_observations(before, parsed, source, speaker_id, message.received_time, decision)
-        var receipt = dv_update_mind(before, observations, before.revision, profile)
-        after = receipt.world
+    let observations = dvs_speech_received_observations(before, parsed, source, speaker_id, message.received_time, decision)
+    if 0 < rt_count(observations):
+        after = dv_update_mind(before, observations, before.revision, profile).world
     var interpretations = dv_find(listener, "interpretations", [])
     var last_interpretation = dv_find(listener, "last_interpretation_event", "")
     var n = 0

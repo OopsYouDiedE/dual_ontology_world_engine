@@ -981,7 +981,7 @@ fn c2_personal_goals(actor):
         rt_push(goals, c2_goal(dv_fact(c2_ref("c2.granary", "structure_checked"), true), c2_at(id, "logistics"), source))
     if id == "mora":
         rt_push(goals, c2_goal(dv_fact(c2_own("moran", "hungry"), false), dv_all([dv_fact(c2_own("moran", "fever"), true), dv_fact(c2_own("moran", "hungry"), true)]), [c2_approved("mora-does-not-refuse-a-real-patient")]))
-    let investigations = c2i_goals(id)
+    let investigations = c2i_goals(actor)
     var investigation_index = 0
     while investigation_index < rt_count(investigations):
         rt_push(goals, investigations[investigation_index])
@@ -1116,7 +1116,7 @@ fn c2_extend_actor_from(actor, physical, previous):
             rt_push(norm_rules, extra_rules[i])
         i = i + 1
     var policy = dv_with_many(actor.policy, {"topic_bindings": dv_append(dv_find(actor.policy, "topic_bindings", []), binding), "value_order": order, "value_basis": value_basis, "chapter2_profile": profile, "norm_rules": norm_rules, "visual_identity_when": dv_fact(c2_ref("c2.weather", "daylight"), true)})
-    policy = dv_with_many(policy, {"plan_depth": 2, "first_night_plan_depth": 2, "first_night_plan_active": false})
+    policy = dv_with_many(policy, {"plan_depth": 2, "first_night_plan_depth": 2, "first_night_plan_active": false, "positive_move_root_stop": true})
     var actions = c2_actor_actions(actor.id)
     let first_night_group = dv_has(["detective", "huo", "shen", "su", "quer", "lucian", "ward", "gu"], actor.id) and dv_truth(physical, c2_at(actor.id, "living_hall")) == "true"
     // Residents still outside the living hall retain the methods and goals needed to arrive.
@@ -1320,20 +1320,28 @@ fn c2i_actions(actor):
     return result
 
 fn c2i_goals(actor):
+    let id = actor.id
     var goals = []
     let rows = c2i_rows()
     var i = 0
     while i < rt_count(rows):
         let row = rows[i]
-        if row.actor == actor:
-            let transit_goal = c2_goal(c2_at(actor, row.room), row.when, [c2_approved("chapter-two-investigation-transit")])
-            if not dv_has(goals, transit_goal):
-                rt_push(goals, transit_goal)
-            rt_push(goals, c2_goal(dv_fact(c2_ref(row.object, row.field), c2i_value(row)), row.when, [c2_approved("chapter-two-investigation-opportunity")]))
+        if row.actor == id:
+            let completion = dv_fact(c2_ref(row.object, row.field), c2i_value(row))
+            if dv_truth(actor.mind, completion) != "true":
+                let transit_goal = c2_goal(c2_at(id, row.room), row.when, [c2_approved("chapter-two-investigation-transit")])
+                if not dv_has(goals, transit_goal):
+                    rt_push(goals, transit_goal)
+                let route = c2i_known_route(actor, row.room)
+                if route != false and route.next != row.room:
+                    let relay = c2_goal(c2_at(id, route.next), dv_all([row.when, c2_at(id, route.origin)]), [c2_approved("own-declared-investigation-route"), route])
+                    if not dv_has(goals, relay):
+                        rt_push(goals, relay)
+            rt_push(goals, dv_with(c2_goal(completion, row.when, [c2_approved("chapter-two-investigation-opportunity")]), "navigation_completion", completion))
         i = i + 1
-    if actor == "ruan":
+    if id == "ruan":
         rt_push(goals, c2_goal(dv_fact(c2_ref("c2.ledger", "supplement_column"), true), dv_fact(c2_own("ruan", "accepted.records_supplement"), true), [c2_approved("implement-reserved-column-after-acceptance")]))
-    if actor == "moran":
+    if id == "moran":
         rt_push(goals, c2_observation_goal(c2_ref("c2.meter", "safe"), c2_window(4, 1020, 1260), [c2_approved("read-actual-meter-before-evening-outing")], 0))
         rt_push(goals, c2_observation_goal(c2_own("moran", "watched"), c2_night(4), [c2_approved("actual-current-supervision-not-permanent-flag")], 5370))
         rt_push(goals, c2_goal(c2_at("moran", "outdoor_alley"), dv_fact(c2_ref("case.astral", "evening_choice"), "go"), [c2_approved("execute-actual-personal-sketch-choice")]))
@@ -1343,13 +1351,13 @@ fn c2i_goals(actor):
     var place_index = 0
     while place_index < rt_count(evidence_places):
         let place = evidence_places[place_index]
-        if actor == "detective" or actor == "quer" or place.object == rt_cat("case.", c2_profile(actor).group):
+        if id == "detective" or id == "quer" or place.object == rt_cat("case.", c2_profile(id).group):
             var field_index = 0
             while field_index < rt_count(place.fields):
-                rt_push(goals, c2_observation_goal(c2_ref(place.object, place.fields[field_index]), c2_at(actor, place.room), [c2_approved("actual-local-case-inspection")], 0))
+                rt_push(goals, c2_observation_goal(c2_ref(place.object, place.fields[field_index]), c2_at(id, place.room), [c2_approved("actual-local-case-inspection")], 0))
                 field_index = field_index + 1
         place_index = place_index + 1
-    if dv_has(["margaret", "huo", "quer"], actor):
+    if dv_has(["margaret", "huo", "quer"], id):
         let granary_fields = ["structure_checked", "wedge_set", "lift_mm", "double_bolts"]
         var field_index = 0
         while field_index < rt_count(granary_fields):
@@ -1448,3 +1456,54 @@ axiom c2i_meter_safe_law():
 
 axiom c2i_meter_stale_law():
     return dv_axiom("c2i_meter_stale_law", 1, dv_all([dv_fact(c2_ref("c2.weather", "earthquake_recent"), true), dv_fact(c2_ref("c2.weather", "severe_air"), true), dv_fact(c2_ref("c2.meter", "safe"), true)]), dv_single(dv_assign(c2_ref("c2.meter", "safe"), false)))
+
+// Intermediate intention follows an owned, known-open path; execution still checks each gate.
+fn c2i_known_route(actor, target):
+    let position = dv_read(actor.mind, c2_position_ref(actor.id))
+    if not dv_uncontested(position) or position.value == target:
+        return false
+    var queue = [{"room": position.value, "first": "", "basis": []}]
+    var visited = [position.value]
+    var cursor = 0
+    let edges = c2_edges()
+    while cursor < rt_count(queue):
+        let node = queue[cursor]
+        var i = 0
+        while i < rt_count(edges):
+            let edge = edges[i]
+            var destination = ""
+            if edge.from == node.room:
+                destination = edge.to
+            if edge.to == node.room:
+                destination = edge.from
+            if destination != "" and not dv_has(visited, destination) and dv_truth(actor.mind, dv_fact(c2_access(edge.gate), true)) == "true":
+                let action = c2_move_action(actor.id, node.room, destination, edge.gate)
+                let adoption = dv_find(actor.mind.adoptions, action.predict_law, false)
+                if adoption != false and adoption.active and adoption.mode == "predict":
+                    var first = node.first
+                    if first == "":
+                        first = destination
+                    let basis = dv_append(node.basis, {"method": action.id, "adoption_basis": adoption.basis, "gate": c2_access(edge.gate), "gate_cell": dv_read(actor.mind, c2_access(edge.gate))})
+                    if destination == target:
+                        return {"origin": position.value, "next": first, "target": target, "path_basis": basis, "scope": "owned-route-intention-not-execution"}
+                    rt_push(queue, {"room": destination, "first": first, "basis": basis})
+                    rt_push(visited, destination)
+            i = i + 1
+        cursor = cursor + 1
+    return false
+
+fn c2i_navigation_input(actor):
+    var refs = [c2_position_ref(actor.id), c2_access("north"), c2_access("east"), c2_access("living")]
+    let goals = dv_find(actor.policy, "goals", [])
+    var i = 0
+    while i < rt_count(goals):
+        let completion = dv_find(goals[i], "navigation_completion", false)
+        if completion != false:
+            refs = dvp_merge_refs(refs, dvs_sim_refs(completion))
+        i = i + 1
+    var inputs = []
+    i = 0
+    while i < rt_count(refs):
+        rt_push(inputs, {"ref": refs[i], "cell": dvs_reason_value(dv_read(actor.mind, refs[i]))})
+        i = i + 1
+    return {"inputs": inputs, "adoptions": actor.mind.adoptions}

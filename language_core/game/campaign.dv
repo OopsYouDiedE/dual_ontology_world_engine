@@ -41,13 +41,14 @@ fn dvg_refresh_goals(current):
                     refreshed = c1n_refresh_actor_goals(actor)
                 actors = dvs_replace(actors, i, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter}))
             else:
+                let navigation_input = c2i_navigation_input(actor)
                 let needs_c1_wait = (actor.id == "selma" and dv_truth(actor.mind, c1_other_claim("astral", "west_passage_checked")) != "true") or (actor.id == "mora" and dv_truth(actor.mind, c1_other_claim("logistics", "observation_complete")) != "true")
                 let in_living = (dv_truth(actor.mind, c2_at(actor.id, "living_hall")) == "true")
                 let case_open = (dv_truth(actor.mind, c2d_case_gate(actor.mind)) == "true")
-                if needs_c1_wait or chapter != dv_find(actor, "campaign_goals_chapter", 0) or in_living != dv_find(actor, "c2_goals_in_living", false) or case_open != dv_find(actor, "c2_goals_case_open", false) or dv_find(actor, "c2_goals_needs_wait", false) != needs_c1_wait:
+                if not dv_same(navigation_input, dv_find(actor, "c2_goals_navigation_input", [])) or needs_c1_wait or chapter != dv_find(actor, "campaign_goals_chapter", 0) or in_living != dv_find(actor, "c2_goals_in_living", false) or case_open != dv_find(actor, "c2_goals_case_open", false) or dv_find(actor, "c2_goals_needs_wait", false) != needs_c1_wait:
                     refreshed = c2d_refresh_actor_goals(actor)
                 refreshed = c1n_known_future_wait_actor(refreshed)
-                actors = dvs_replace(actors, i, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter, "c2_goals_in_living": in_living, "c2_goals_case_open": case_open, "c2_goals_needs_wait": needs_c1_wait}))
+                actors = dvs_replace(actors, i, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter, "c2_goals_in_living": in_living, "c2_goals_case_open": case_open, "c2_goals_needs_wait": needs_c1_wait, "c2_goals_navigation_input": c2i_navigation_input(refreshed)}))
             changed = true
         i = i + 1
     if changed:

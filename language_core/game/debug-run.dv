@@ -32,14 +32,16 @@ fn dvg_debug_run():
     if config.max_steps != false:
         limit = config.max_steps
     dv_require(0 < limit, "Debug max_steps must be positive or false for the authored limit")
-    rt_print(rt_json_stringify({"type": "debug_start", "configuration": config, "executor": "formal-model", "geometry": false}))
+    rt_print(rt_json_stringify({"type": "debug_start", "configuration": config, "executor": "formal-model", "geometry": false, "presentation_scope": "visible-only; all action executions retained in debug_events"}))
     while dvs_session_active(state) and steps < limit:
         state = dvg_prepare(state)
         let pending = dv_find(state, "pending", false)
         if pending != false:
             state = dvg_complete(state, {"action_event": pending.action_event, "outcome": "applied", "actual": pending.model.actual, "executor": "formal-model"})
             steps = steps + 1
-            rt_print(rt_json_stringify({"type": "player_presentation", "step": steps, "viewer": config.viewer, "presentation": dvg_presentation(state, config.viewer)}))
+            let presentation = dvg_presentation(state, config.viewer)
+            if dv_find(presentation, "visible", false):
+                rt_print(rt_json_stringify({"type": "player_presentation", "step": steps, "viewer": config.viewer, "presentation": presentation}))
         let batch = dv_debug_events(state.events, cursor, config)
         rt_print(rt_json_stringify({"type": "debug_events", "batch": batch}))
         cursor = batch.next

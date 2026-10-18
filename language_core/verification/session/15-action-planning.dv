@@ -15,7 +15,7 @@ fn dvp_memo_input(actor, costs):
     while i < rt_count(actor):
         let entry = actor[i]
         let key = entry[0]
-        if key != "decision_time" and key != "decision_revision" and key != "planning_work_total" and key != "last_cognitive_event":
+        if key != "decision_time" and key != "decision_revision" and key != "planning_work_total" and key != "last_cognitive_event" and key != "dependency_work_total" and key != "cognition_input" and key != "last_cognition_revision" and key != "last_cognition_time" and key != "cognition_reused" and key != "cognition_cache_reuses" and key != "last_reason_report" and key != "last_readiness_report":
             if key == "policy":
                 rt_push(result, dv_pair(key, policy))
             else:
@@ -94,59 +94,53 @@ fn dvp_unmet_refs(mind, proposition, include_known):
                 else:
                     return []
 
-fn dvp_dependencies(mind, seeds, budget, methods):
-    var refs = seeds
-    var queue = seeds
-    var cursor = 0
-    var expanded = 0
-    var adoptions = mind.adoptions
-    while dv_and((cursor < rt_count(queue)), (expanded < budget)):
-        var ref = queue[cursor]
-        var i = 0
-        expanded = (expanded + 1)
-        while (i < rt_count(adoptions)):
-            var adoption = adoptions[i][1]
-            var law = adoptions[i][1].law
+fn dvp_dependency_add(graph, ref, inputs):
+    let key = rt_json_stringify(ref)
+    return dv_with(graph, key, dvp_merge_refs(dv_find(graph, key, []), inputs))
+
+fn dvp_dependency_topology(mind, methods):
+    let key = ["dvp_dependency_topology", methods]
+    let cached = rt_memo_get(mind.adoptions, key)
+    if cached[0]:
+        return cached[1]
+    var graph = []
+    var i = 0
+    while i < rt_count(mind.adoptions):
+        let adoption = mind.adoptions[i][1]
+        if adoption.active and adoption.mode == "infer":
+            let inputs = dvs_sim_refs(adoption.law.premise)
             var j = 0
-            var effects = adoptions[i][1].law.effects
-            if dv_and(adoption.active, (adoption.mode == "infer")):
-                while (j < rt_count(effects)):
-                    var effect = effects[j]
-                    if dv_same(effect.ref, ref):
-                        var premises = dvp_unmet_refs(mind, law.premise, true)
-                        var k = 0
-                        while (k < rt_count(premises)):
-                            var premise = premises[k]
-                            if dv_has(refs, premise):
-                                false
-                            else:
-                                refs = dv_append(refs, premise)
-                                queue = dv_append(queue, premise)
-                            k = (k + 1)
-                    j = (j + 1)
-            i = (i + 1)
-        i = 0
-        while (i < rt_count(methods)):
-            var method = methods[i]
-            if dv_has(method.scope, ref):
-                var premises = dvp_merge_refs(dvp_unmet_refs(mind, method.premise, true), dv_find(method, "owner_refs", []))
-                var k = 0
-                while (k < rt_count(premises)):
-                    var premise = premises[k]
-                    if dv_has(refs, premise):
-                        false
-                    else:
-                        refs = dv_append(refs, premise)
-                        queue = dv_append(queue, premise)
-                    k = (k + 1)
-            i = (i + 1)
-        cursor = (cursor + 1)
-    var local_1 = false
-    if (cursor < rt_count(queue)):
-        local_1 = "dependency-budget"
-    else:
-        local_1 = "dependency-closure"
-    return {"refs": refs, "expanded": expanded, "stop": local_1}
+            while j < rt_count(adoption.law.effects):
+                graph = dvp_dependency_add(graph, adoption.law.effects[j].ref, inputs)
+                j = j + 1
+        i = i + 1
+    i = 0
+    while i < rt_count(methods):
+        let method = methods[i]
+        let inputs = dvp_merge_refs(dvs_sim_refs(method.premise), dv_find(method, "owner_refs", []))
+        var j = 0
+        while j < rt_count(method.scope):
+            graph = dvp_dependency_add(graph, method.scope[j], inputs)
+            j = j + 1
+        i = i + 1
+    return rt_memo_put(mind.adoptions, key, graph)
+
+fn dvp_dependencies(mind, seeds, budget, methods):
+    let graph = dvp_dependency_topology(mind, methods)
+    var refs = dv_clone(seeds)
+    var cursor = 0
+    while cursor < rt_count(refs) and cursor < budget:
+        let inputs = dv_find(graph, rt_json_stringify(refs[cursor]), [])
+        var i = 0
+        while i < rt_count(inputs):
+            if not dv_has(refs, inputs[i]):
+                rt_push(refs, inputs[i])
+            i = i + 1
+        cursor = cursor + 1
+    var stop = "dependency-closure"
+    if cursor < rt_count(refs):
+        stop = "dependency-budget"
+    return {"refs": refs, "expanded": cursor, "stop": stop}
 
 fn dvp_goal_refs(actor):
     var goals = dv_find(actor.policy, "goals", [])
@@ -612,6 +606,10 @@ fn dvp_frontier_put(frontier, node):
     return result
 
 fn dvp_dependency_methods(actor):
+    let key = ["dvp_dependency_methods"]
+    let cached = rt_memo_get(actor.actions, key)
+    if cached[0]:
+        return cached[1]
     var actions = actor.actions
     var methods = []
     var i = 0
@@ -619,11 +617,11 @@ fn dvp_dependency_methods(actor):
         if not dv_find(actions[i], "known_opportunity_wait", false):
             rt_push(methods, {"scope": dv_find(actions[i], "purpose_refs", dv_find(actions[i], "grants", [])), "premise": actions[i].precondition, "owner_refs": dvp_owner_requirement_refs(actions[i])})
         i = (i + 1)
-    return methods
+    return rt_memo_put(actor.actions, key, methods)
 
 fn dvp_cached_dependencies(actor, seeds, budget):
     var methods = dvp_dependency_methods(actor)
-    var signature = {"question": dvp_question(actor), "seeds": seeds, "adoptions": actor.mind.adoptions, "methods": methods}
+    var signature = {"seeds": seeds, "budget": budget, "adoptions": actor.mind.adoptions, "methods": methods}
     var cache = dv_find(actor, "dependency_cache", false)
     if (cache == false):
         var result = dvp_dependencies(actor.mind, seeds, budget, methods)
@@ -666,9 +664,9 @@ fn dvp_plan(actor, bindings, costs):
     var depth_limit = dv_find(actor.policy, "plan_depth", 2)
     var goals = dvp_goal_refs(actor)
     var probes = dvp_probe_refs(actor)
-    var dependencies = dvp_cached_dependencies(actor, dvp_merge_refs(goals, probes), budget)
+    var dependencies = dvp_cached_dependencies(actor, dvp_merge_refs(goals, probes), dv_find(actor.policy, "dependency_budget", dv_find(actor, "planning_limit", budget)))
     var relevant = dependencies.refs
-    var expanded = dependencies.expanded
+    var expanded = 0
     var best = false
     var best_score = -100000
     var best_path = []
@@ -749,7 +747,7 @@ fn dvp_plan(actor, bindings, costs):
                         var path = dv_append(node.path, action.id)
                         var score = 0
                         score = (node.score + (value.value - (cost.time * dv_find(actor.policy, "time_cost", 0.01))))
-                        if depth == 0 and action.kind != "move" and not dv_find(action, "known_opportunity_wait", false) and current_score < score and 0 < value.information + value.verification + value.progress + value.achievement:
+                        if depth == 0 and (action.kind != "move" or (dv_find(actor.policy, "positive_move_root_stop", false) and value.achievement > 0)) and not dv_find(action, "known_opportunity_wait", false) and current_score < score and 0 < value.information + value.verification + value.progress + value.achievement:
                             current_action = action
                             current_score = score
                             current_value = value
@@ -809,7 +807,7 @@ fn dvp_plan(actor, bindings, costs):
         local_3 = "duration-budget"
     else:
         local_3 = stop
-    return dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "time_blocked": time_blocked, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": depth, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer})
+    return dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "time_blocked": time_blocked, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": depth, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer})
 
 fn dvp_find_action(actions, id):
     var i = 0

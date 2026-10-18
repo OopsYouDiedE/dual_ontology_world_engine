@@ -272,7 +272,7 @@ speech.manipulation = {
 
 章节开场的 own_material 目标可依持续公开信息的本人收据激活，后续题目阶段不撤销该资格。专业请求清空直接观察授权，答复仍需另一主体的本人依据和实际发言。带 speech 的答辩候选在规划资格与 Complete 均以 `dvs_speech_truth` 检查本人话语，避免将未知陈述排队成注定拒绝的行动；见 `verification/scenarios/chapter1-opening.dv` 和 `verification/session/15-action-planning.dv`。
 
-每次有资格决策从会话保存的 planning_limit 取得本次 plan_budget，实际 plan_expansions 扣减并累入 planning_work_total；这与行动资源账本、付费模型额度、游戏时钟分开。等待者不重复搜索。检视与请求以本人语义输入签名去重，时间戳和无关来源编号不冒充新线索；refresh_until/refresh_refs 只使用显式列出的本人已知相关字段时间，缺省保持原 minimum_time。同条件检视去重在共同资格入口执行，未知结果也保留尝试记录。
+每次有资格决策从会话保存的 planning_limit 取得本次 plan_budget，实际行动搜索节点 plan_expansions 扣减并累入 planning_work_total；依赖闭包改用独立 dependency_budget，其实际工作单列 dependency_expansions/dependency_work_total；这与行动资源账本、付费模型额度、游戏时钟分开。等待者不重复搜索。检视与请求以本人语义输入签名去重，时间戳和无关来源编号不冒充新线索；refresh_until/refresh_refs 只使用显式列出的本人已知相关字段时间，缺省保持原 minimum_time。同条件检视去重在共同资格入口执行，未知结果也保留尝试记录。
 
 ### 报价与账本
 
@@ -661,6 +661,8 @@ fn dvs_hypotheses(actor, events, time, parent)
 fn dvs_choose(actor, bindings, costs)
 fn dvs_ready(actor, events, time, parent)
 fn dvs_reason(actor, events, time, parent)
+fn dvs_prepare_cognition(actor, events, time, parent, chapter)
+fn dvs_cognition_input(actor, time, chapter)
 fn dvs_event_prepared(events, kind, actor, time, parents, data)
 ```
 
@@ -679,6 +681,8 @@ fn dvp_add_ref(refs, ref)
 fn dvp_merge_refs(refs, extra)
 fn dvp_unmet_refs(mind, proposition, include_known)
 fn dvp_dependencies(mind, seeds, budget, methods)
+fn dvp_dependency_topology(mind, methods)
+fn dvp_dependency_add(graph, ref, inputs)
 fn dvp_goal_refs(actor)
 fn dvp_probe_refs(actor)
 fn dvp_scope(actor, action, bindings)
@@ -992,3 +996,14 @@ fn dvs_player_choice(actor, id)
 环境边界超过当前动作due时直接返回due，不向遥远阈值逐分钟计步。每日昼夜声明各标记once，实际执行后休眠；流式调试投影保留process、revision_before/after与suspended。目标时间元数据按原条件纯值缓存，当前主体刷新保留精确本人时刻。等待时长清单增加120分钟，费用、物理和预测规律均从同一清单安装。连廊单字段观察目标驱动原四字段实际检视；完整换气前提不删减。上述内容与搜索条件属于本轮实现，运行效果由新会话另证。
 
 检视签名在同一mind节点及完整目标声明下共用`dvp_inspection_freshness`索引，证据下界刷新与可用性只计算一次；每个动作仍读取自己的完整grants与前提输入。索引不改变本人来源或证据新鲜度规则。
+
+
+2026-10-18 因果接线与预算分离：普通聆听先从实际解析出的陈述生成证言，不能按缺少特殊话语标签判作闲聊并抹去观察；仅无可写观察时省略认识更新，仍保留listener_parse及真实收闻。专业回复必须由实际发言、传播、解析与原采信门槛取得，不能在询问时直接赠送答案。
+
+依赖拓扑仅由实际active/infer采纳和静态方法scope/premise/owner_refs构建并缓存；闭包查询继续以seeds及dependency_budget为键，窗口改变会改变seeds，不能复用错误闭包。原plan_budget现在只限制行动树节点；内容声明dependency_budget=320独立限制闭包，缓存命中分别记零实际工作。这是计算上限合同修订，不是保持原总工作上限的等价优化。C2可声明positive_move_root_stop：根层比较完全部候选后，具有本人achieve收益的移动也允许按现有根层停止策略收束，未宣称全局最优。
+
+C2导航意图从本人已知位置、已知开启的门和本人已采纳移动方法找有来源的下一站；尚未完成任务才产生中继/终点意图，原origin条件随实际移动失效，位置、通路、采纳和完成字段变化触发刷新。路径只是意图依据，真实每一步仍逐项核验动作前提、规范、费用与Complete；未知门不用于路径，不预写调查或章节达成。
+
+认知快路仅复用一次完整处理前后输入相同的固定点，且当次时间、章节、mind、政策、模型、解释、支持来源和同处上下文均未变化。先处理实际收闻与现场感知，迟发生的论证/模型更新不能标成已稳定。重复零步reason_stop及相同why_not_ready可不另发事件，实际推知/观察/模型/选择/执行不裁剪。诊断缓存和工作累计不进入行动规划备忘键。
+
+调试投影dv_debug_event返回冻结只读快照；每次实际执行仍流式保留所有debug_events，玩家呈现只输出visible条目，无可见正文丢失。无模板行直接返回空行列表，省略无用主体查找。phase_progress缺省关闭，仅去掉阶段计时诊断；run_debug.py仍将stdout直接写文件，未改为缓冲后批量落盘，也不按事件数量预设加速结论。

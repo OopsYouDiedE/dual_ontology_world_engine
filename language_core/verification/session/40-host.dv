@@ -12,6 +12,8 @@ fn dvs_present_replace(text, token, value):
     return result
 
 fn dvs_present_lines(state, viewer, presentation):
+    if rt_count(dv_find(presentation, "lines", [])) == 0:
+        return []
     var mind = false
     var i = 0
     while i < rt_count(state.actors):

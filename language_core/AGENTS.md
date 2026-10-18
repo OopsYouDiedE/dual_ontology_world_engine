@@ -128,7 +128,7 @@ Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，
 
 ## Evidence and campaign tracking (2026-10-16)
 
-All eligible autonomous actors run shared cognition and dvs_choose on their turns. The incomplete idle cache and its writes are removed. Existing resource/time limits still apply; tracking never filters scheduling.
+All eligible autonomous actors enter shared cognitive preparation and dvs_choose on their turns; identical completed fixed points may be reused under the documented full-input guard. The incomplete idle cache and its writes are removed. Existing resource/time limits still apply; tracking never filters scheduling.
 Execution, observation, answer, transition, model-recheck and simulation events retain the requested full snapshots; simulation results include predicted. Revision metadata supplements snapshots. Other event producers remain subject to separate audit.
 
 The game/campaign.dv helpers dvg_tracked_actors and dvg_chronological_trace project selected actors' events in append order. dvg_run_campaign(max_steps) runs the same formal-model prepare/complete protocol and continuous chapter extension, returns live state, and stops at the completed-action bound or session inactivity. Pass false for the authored action limit, or zero for an unadvanced session. This is audit data, not player-visible knowledge or Godot geometry evidence.
@@ -173,7 +173,7 @@ dvs_owned_state_update 的线性会话外壳转交范围增加调度 cursor、ph
 
 接近沟通地点的 opportunity 是当前搜索叶节点的预期机会分；进入下一层时仅携带实际行动价值，不把尚未完成的沟通机会累加到无关后继上。可重复检视在成功后保存本人输入的语义签名与显式证据新鲜度；输入与所需证据条件相同时不再次自动检视，未知结果也属于已尝试结果。签名不读取物理世界，不以时间戳变化或无关信息伪造新线索。
 
-每次主体具备决策资格时，plan_budget 以会话开局保存的 planning_limit 作为本次搜索上限，choice.plan_expansions 从该次余额扣除，并计入 planning_work_total。等待者不重置或执行搜索。此上限限制一次搜索的计算规模；动作账本、付费重演额度与实际游戏时间分别结算，保持原有余额合同。
+每次主体具备决策资格时，plan_budget 以会话开局保存的 planning_limit 作为本次搜索上限，choice.plan_expansions 仅计算行动树节点，从该次余额扣除并计入 planning_work_total；依赖闭包使用独立dependency_budget，工作单列dependency_expansions/dependency_work_total。等待者不重置或执行搜索。此上限限制一次搜索的计算规模；动作账本、付费重演额度与实际游戏时间分别结算，保持原有余额合同。
 
 同一时刻的空闲主体在本人认识修订或待理解收闻发生变化时可再次决策；decision_revision 记录一次实际选择结束后的本人修订，防止内部推理产生的修订造成自唤醒循环。scheduled_action 优先于这些唤醒条件，等待中的主体保持不计算。
 
@@ -246,3 +246,12 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译�
 动作目录按已声明地点建立保序缓存切片，未知地点回退全目录，动态资格不缓存为既定结果。私有预测省略审计日志，公共Core与真实世界去重仍保留；话语预选只去掉说话者无关认知，保留听者模型和观察时间先后门。环境时钟边界不向本次due之后的阈值计步；调试投影保留过程及休眠回执。本轮所有动作相关修改和文档审读完成后冻结源码，再执行唯一一次最多180秒的正式一级会话，禁止各处修复之间穿插会话。
 
 同一mind下的检视证据下界与可用性以完整目标声明为键建立纯值索引；各检视仍核验自己的grants与完整前提，不能用缓存跳过本人来源或新鲜度。
+
+
+## 因果接线、计算上限与诊断维护（2026-10-18）
+
+实际陈述在聆听解析后按原可信度生成证言，不以缺少特殊标签跳过有效陈述。认知快路先处理收闻/现场变化，只复用完整处理前后输入不变的固定点；键保留当次时间、章节、认识、政策、模型、解释、支持来源及同处上下文。晚发生的论证更新须在下次处理，不能认作完成认知。原始实际推知、模型、行动及观察继续保留；只抑制相同零步停止诊断。
+
+依赖拓扑缓存与种子闭包查询分开，闭包保留seeds/独立dependency_budget。plan_expansions只计行动搜索节点，dependency_expansions单列实际闭包工作，完整规划缓存命中两者均为零。独立闭包上限和声明positive_move_root_stop是新的计算合同，报告应与旧共同预算区分，不作同条件提速声明。导航中继只取本人已知开放的路径及本人采纳，不预置到达；完成/位置/通路变化重建意图，所有真实移动仍走原Complete。
+
+调试事件投影为只读冻结值；正式一级继续保留所有实际执行和可见正文，只省略不可见的呈现包与可选阶段诊断，stdout仍直接写原始文件。源码、预算来源、声明、调用链与文档全部完成后再冻结并运行唯一一次180秒正式一级会话，窗口达到7200与剧情实际完成分别核对。

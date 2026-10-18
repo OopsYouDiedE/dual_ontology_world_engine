@@ -315,11 +315,7 @@ fn dvs_prepare_actor(state):
                 idle = idle + 1
                 actors = dvs_replace(actors, index, actor)
                 return dvs_owned_state_update(state, {"actors": actors, "cursor": cursor, "idle": idle})
-            actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(dvs_reason(actor, events, time, parent), events, time, parent), events, time, parent), events, time, parent)
-            actor = dvs_update_support_events(actor, events)
-            actor = dvs_capture_public_topics(actor, events, time, parent)
-            actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
-            actor = dvs_prepare_speech_choices(actor, events, time, parent)
+            actor = dvs_prepare_cognition(actor, events, time, parent, dv_find(story, "chapter", 1))
             dvs_debug_phase(story, actor.id, time, "cognition-end")
         var choice = false
         if dv_find(state, "player_actor", "") == actor.id:
@@ -335,6 +331,8 @@ fn dvs_prepare_actor(state):
             dvs_debug_phase(story, actor.id, time, "choice-start")
             choice = dvs_choose(actor, bindings, costs)
             dvs_debug_phase(story, actor.id, time, "choice-end")
+        choice = dv_with(choice, "cognition_reused", dv_find(actor, "cognition_reused", false))
+        actor = dv_with(actor, "dependency_work_total", dv_find(actor, "dependency_work_total", 0) + dv_find(choice, "dependency_expansions", 0))
         actor = dv_with(actor, "decision_revision", actor.mind.revision)
         var action = choice.action
         actor = dv_with_many(actor, {"decision_mind_time": actor.mind.time, "decision_chapter": dv_find(story, "chapter", 1), "last_decision_stopped": action == false})

@@ -1686,7 +1686,7 @@ fn c1_subjective_world(actor):
     return c1_evidence_contact_methods(c1_latch_contact_method(c1_add_move_methods(mind, actor, "predict"), actor, "predict"), actor, "predict")
 
 fn c1_player_policy():
-    return dv_with(dv_with(dv_with({"budget": 240, "reason_budget": 320, "model_budget": 320, "plan_budget": 320}, "hypotheses", c1_hypotheses()), "goals", []), "observation_weights", {"perception": 1, "testimony": 1, "recall": 1})
+    return dv_with(dv_with(dv_with({"budget": 240, "reason_budget": 320, "model_budget": 320, "plan_budget": 320, "dependency_budget": 320}, "hypotheses", c1_hypotheses()), "goals", []), "observation_weights", {"perception": 1, "testimony": 1, "recall": 1})
 
 fn c1_public_goal(question, atom, kind):
     return dv_with(dv_with({"kind": kind, "question": question, "ref": c1_knowledge(atom), "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 3, "answer_open.002"))}, "available_when", dv_all(dv_pair(dv_fact(dv_ref("question", "state", rt_cat("open_", question)), true), dv_fact(dv_ref("question", "state", "requires_evidence"), true)))), "source", "perception")

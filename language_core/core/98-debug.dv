@@ -14,7 +14,7 @@ fn dv_debug_event(event):
             else:
                 action_id = rt_show(raw_action)
     var detail = []
-    let fields = ["due", "until", "waiting", "duration", "status", "reason", "score", "plan_expansions", "plan_cache_hit", "reused_plan_expansions", "stop", "root_best", "best_after_successor_layer", "completed_layers", "actual", "observations", "judgment", "accepted", "literal_truth", "epistemic_support", "source_event", "execution_id", "chapter", "movement", "process", "revision_before", "revision_after", "suspended"]
+    let fields = ["due", "until", "waiting", "duration", "status", "reason", "score", "plan_expansions", "plan_cache_hit", "reused_plan_expansions", "stop", "root_best", "best_after_successor_layer", "completed_layers", "actual", "observations", "judgment", "accepted", "literal_truth", "epistemic_support", "source_event", "execution_id", "chapter", "movement", "process", "revision_before", "revision_after", "suspended", "dependency_expansions", "dependency_stop", "cognition_reused", "reasons", "steps", "remaining", "mind_revision"]
     var i = 0
     while i < rt_count(fields):
         if dv_has_key(data, fields[i]):
@@ -22,7 +22,7 @@ fn dv_debug_event(event):
         i = i + 1
     if event.type == "action_execution":
         detail = dv_with(detail, "status", data.receipt.execution.status)
-    return dv_clone({"event_id": event.id, "type": event.type, "actor": event.actor, "game_time": event.time, "parents": event.parents, "action_id": action_id, "action_kind": dv_find(action, "kind", ""), "label": dv_find(action, "label", dv_find(action, "surface", "")), "purpose_sources": dv_find(action, "purpose_basis", []), "detail": detail})
+    return rt_snapshot({"event_id": event.id, "type": event.type, "actor": event.actor, "game_time": event.time, "parents": event.parents, "action_id": action_id, "action_kind": dv_find(action, "kind", ""), "label": dv_find(action, "label", dv_find(action, "surface", "")), "purpose_sources": dv_find(action, "purpose_basis", []), "detail": detail})
 
 fn dv_debug_events(events, start, config):
     dv_require(0 <= start and start <= rt_count(events), "Invalid debug event cursor")
