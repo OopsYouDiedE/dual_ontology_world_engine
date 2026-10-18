@@ -1,0 +1,3554 @@
+{
+  "run_result": {
+    "executor": "formal-model",
+    "geometry": false,
+    "build_source_consistent": true,
+    "entry": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\game\\debug-run.dv",
+    "gc_mode_requested": "server",
+    "gc_heap_count_requested": 4,
+    "runtime_environment": {
+      "DOTNET_gcServer": "1",
+      "DOTNET_GCHeapCount": "4"
+    },
+    "timeout_seconds": 180,
+    "elapsed_seconds": 180.09399999999732,
+    "source_unchanged": true,
+    "trace_written": false,
+    "profile_written": true,
+    "output_well_formed": true,
+    "text_exported": true
+  },
+  "changed_files": [],
+  "malformed_stdout_lines": [],
+  "last_event": {
+    "event_id": "e11305",
+    "type": "observation",
+    "actor": "margaret",
+    "game_time": 2445,
+    "parents": [
+      "e11304",
+      "e10229"
+    ],
+    "action_id": "margaret.wait.first_night.180",
+    "action_kind": "wait.first_night.180",
+    "label": "留在原处，等候本人已知的下一次作息机会（180分钟）。",
+    "purpose_sources": [
+      {
+        "path": "language_core/verification/scenarios/chapter1-night.dv",
+        "line": 0,
+        "id": "authorized-first-night-20261016.own-bounded-wait"
+      }
+    ],
+    "detail": {
+      "observations": [
+        {
+          "id": [
+            "action940",
+            "margaret",
+            {
+              "type": "ref",
+              "object": "night.wait.margaret",
+              "facet": "state",
+              "field": "elapsed",
+              "subject": "margaret"
+            }
+          ],
+          "subject": "margaret",
+          "ref": {
+            "type": "ref",
+            "object": "night.wait.margaret",
+            "facet": "state",
+            "field": "elapsed",
+            "subject": "margaret"
+          },
+          "value": 1170,
+          "source": "perception",
+          "origin": "direct",
+          "time": 2445,
+          "trust": 1,
+          "dependency": [
+            "action940",
+            {
+              "type": "ref",
+              "object": "night.wait.margaret",
+              "facet": "state",
+              "field": "elapsed",
+              "subject": "margaret"
+            }
+          ],
+          "world_version": {
+            "id": "chapter1.physical",
+            "revision": 3548
+          }
+        },
+        {
+          "id": [
+            "action940",
+            "margaret",
+            {
+              "type": "ref",
+              "object": "campaign.clock",
+              "facet": "state",
+              "field": "minute",
+              "subject": "margaret"
+            }
+          ],
+          "subject": "margaret",
+          "ref": {
+            "type": "ref",
+            "object": "campaign.clock",
+            "facet": "state",
+            "field": "minute",
+            "subject": "margaret"
+          },
+          "value": 2445,
+          "source": "perception",
+          "origin": "direct",
+          "time": 2445,
+          "trust": 1,
+          "dependency": [
+            "action940",
+            {
+              "type": "ref",
+              "object": "campaign.clock",
+              "facet": "state",
+              "field": "minute",
+              "subject": "margaret"
+            }
+          ],
+          "world_version": {
+            "id": "chapter1.physical",
+            "revision": 3548
+          }
+        }
+      ],
+      "execution_id": "action940",
+      "revision_before": 297,
+      "revision_after": 298
+    }
+  },
+  "last_execution": {
+    "event_id": "e11304",
+    "type": "action_execution",
+    "actor": "margaret",
+    "game_time": 2445,
+    "parents": [
+      "e11303"
+    ],
+    "action_id": "margaret.wait.first_night.180",
+    "action_kind": "wait.first_night.180",
+    "label": "留在原处，等候本人已知的下一次作息机会（180分钟）。",
+    "purpose_sources": [
+      {
+        "path": "language_core/verification/scenarios/chapter1-night.dv",
+        "line": 0,
+        "id": "authorized-first-night-20261016.own-bounded-wait"
+      }
+    ],
+    "detail": {
+      "actual": {
+        "time": 180,
+        "computation": 1,
+        "stamina": 0
+      },
+      "revision_before": 3547,
+      "revision_after": 3548,
+      "status": "applied"
+    }
+  },
+  "last_detective_execution": {
+    "event_id": "e11189",
+    "type": "action_execution",
+    "actor": "detective",
+    "game_time": 2329,
+    "parents": [
+      "e11188"
+    ],
+    "action_id": "detective.c2.document.inventory",
+    "action_kind": "experiment",
+    "label": "从散页中找出大半张紧急清册，保留断口等待另一半核对。",
+    "purpose_sources": [
+      {
+        "path": "docs/design-standard.md",
+        "line": 0,
+        "id": "chapter-two-real-investigation-contact"
+      }
+    ],
+    "detail": {
+      "actual": {
+        "time": 17,
+        "computation": 1,
+        "stamina": 0
+      },
+      "revision_before": 3536,
+      "revision_after": 3537,
+      "status": "applied"
+    }
+  },
+  "max_game_time": 2445,
+  "debug_end": [],
+  "detective_executions": [
+    {
+      "event_id": "e129",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 481,
+      "parents": [
+        "e128"
+      ],
+      "action_id": "detective.opening.wake",
+      "action_kind": "inspect",
+      "label": "回想醒来前的事",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story",
+          "line": 5,
+          "id": "s1_wake.003"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 477,
+        "revision_after": 478,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e266",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 482,
+      "parents": [
+        "e265"
+      ],
+      "action_id": "detective.opening.wear-coat",
+      "action_kind": "inspect",
+      "label": "穿上风衣",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story",
+          "line": 6,
+          "id": "s1_wake.006; s2_meet.008"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 494,
+        "revision_after": 495,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e514",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 484,
+      "parents": [
+        "e513"
+      ],
+      "action_id": "detective.move.R05.corridor",
+      "action_kind": "move",
+      "label": "前往走廊",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+          "line": 19,
+          "id": "重演通路"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 524,
+        "revision_after": 525,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e875",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 486,
+      "parents": [
+        "e874"
+      ],
+      "action_id": "detective.move.corridor.hall",
+      "action_kind": "move",
+      "label": "前往活动厅",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+          "line": 19,
+          "id": "重演通路"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 553,
+        "revision_after": 554,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e1051",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 487,
+      "parents": [
+        "e1050"
+      ],
+      "action_id": "detective.reask_question",
+      "action_kind": "talk",
+      "label": "询问当前的问题",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story",
+          "line": 47,
+          "id": "clock_question.001"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 569,
+        "revision_after": 570,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e1349",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 490,
+      "parents": [
+        "e1348"
+      ],
+      "action_id": "detective.opening.introduce",
+      "action_kind": "talk",
+      "label": "",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story",
+          "line": 19,
+          "id": "s2_tea.001"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 594,
+        "revision_after": 595,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e1692",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 552,
+      "parents": [
+        "e1691"
+      ],
+      "action_id": "detective.opening.empty-slot",
+      "action_kind": "inspect",
+      "label": "查看自己的标签柜",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story",
+          "line": 35,
+          "id": "s4_rewards.020"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 610,
+        "revision_after": 611,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e1746",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 553,
+      "parents": [
+        "e1745"
+      ],
+      "action_id": "detective.opening.ask-reward",
+      "action_kind": "talk",
+      "label": "",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story",
+          "line": 36,
+          "id": "s4_rewards.016"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 615,
+        "revision_after": 616,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2115",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 571,
+      "parents": [
+        "e2114"
+      ],
+      "action_id": "detective.inspect.E7",
+      "action_kind": "inspect",
+      "label": "检视长桌上的石板",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 75,
+          "id": "E7"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 636,
+        "revision_after": 637,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2153",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 573,
+      "parents": [
+        "e2152"
+      ],
+      "action_id": "detective.move.hall.foyer",
+      "action_kind": "move",
+      "label": "前往门厅",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+          "line": 19,
+          "id": "重演通路"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 639,
+        "revision_after": 640,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2186",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 574,
+      "parents": [
+        "e2185"
+      ],
+      "action_id": "detective.inspect.E1",
+      "action_kind": "inspect",
+      "label": "检视隔离门",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 69,
+          "id": "E1"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 642,
+        "revision_after": 643,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2204",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 575,
+      "parents": [
+        "e2203"
+      ],
+      "action_id": "detective.inspect.E3",
+      "action_kind": "inspect",
+      "label": "检视灰上的鞋印",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 71,
+          "id": "E3"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 645,
+        "revision_after": 646,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2223",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 576,
+      "parents": [
+        "e2222"
+      ],
+      "action_id": "detective.inspect.E4",
+      "action_kind": "inspect",
+      "label": "检视门底的湿布",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 72,
+          "id": "E4"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 646,
+        "revision_after": 647,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2249",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 577,
+      "parents": [
+        "e2248"
+      ],
+      "action_id": "detective.departure.inspect-door",
+      "action_kind": "inspect",
+      "label": "查看门内的插闩和门外的横闩。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/场面/11_门外的人.story",
+          "line": 8,
+          "id": "door_voices.005"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 648,
+        "revision_after": 649,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2300",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 579,
+      "parents": [
+        "e2299"
+      ],
+      "action_id": "detective.compare.E2",
+      "action_kind": "move",
+      "label": "前往门厅",
+      "purpose_sources": [
+        {
+          "path": "user",
+          "line": 0,
+          "id": "E2厚度、擦痕和灰扇现场比对"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 650,
+        "revision_after": 651,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2320",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 581,
+      "parents": [
+        "e2319"
+      ],
+      "action_id": "detective.touch_latch",
+      "action_kind": "move",
+      "label": "走近并触碰插闩",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story",
+          "line": 161,
+          "id": "recall_detective.002; bodily-flash-only"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 652,
+        "revision_after": 653,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2481",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 598,
+      "parents": [
+        "e2480"
+      ],
+      "action_id": "detective.compare_sole",
+      "action_kind": "experiment",
+      "label": "查看自己的鞋底",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 81,
+          "id": "exp_E3.002"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 17,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 664,
+        "revision_after": 665,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2493",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 600,
+      "parents": [
+        "e2492"
+      ],
+      "action_id": "detective.move.foyer.hall",
+      "action_kind": "move",
+      "label": "前往活动厅",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+          "line": 19,
+          "id": "重演通路"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 665,
+        "revision_after": 666,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2518",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 610,
+      "parents": [
+        "e2517"
+      ],
+      "action_id": "detective.answer.me",
+      "action_kind": "answer",
+      "label": "答辩：闩门的是我",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 11,
+          "id": "me"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 10,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 667,
+        "revision_after": 668,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2580",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 611,
+      "parents": [
+        "e2579"
+      ],
+      "action_id": "detective.reask_question",
+      "action_kind": "talk",
+      "label": "询问当前的问题",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story",
+          "line": 47,
+          "id": "clock_question.001"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 670,
+        "revision_after": 671,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2604",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 612,
+      "parents": [
+        "e2603"
+      ],
+      "action_id": "detective.inspect.E8",
+      "action_kind": "inspect",
+      "label": "检视铜口",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 76,
+          "id": "E8"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 671,
+        "revision_after": 672,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2618",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 636,
+      "parents": [
+        "e2617"
+      ],
+      "action_id": "detective.sound_trial",
+      "action_kind": "sound_test",
+      "label": "进行声路试验",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 88,
+          "id": "sound_test.003"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 24,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 672,
+        "revision_after": 673,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2649",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 646,
+      "parents": [
+        "e2648"
+      ],
+      "action_id": "detective.answer.V3_0",
+      "action_kind": "answer",
+      "label": "答辩：声音来自铜口在墙内与门框处的管道漏音",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 107,
+          "id": "V3_0"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 10,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 674,
+        "revision_after": 675,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2707",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 647,
+      "parents": [
+        "e2706"
+      ],
+      "action_id": "detective.reask_question",
+      "action_kind": "talk",
+      "label": "询问当前的问题",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story",
+          "line": 47,
+          "id": "clock_question.001"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 677,
+        "revision_after": 678,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2732",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 649,
+      "parents": [
+        "e2731"
+      ],
+      "action_id": "detective.move.hall.corridor",
+      "action_kind": "move",
+      "label": "前往走廊",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+          "line": 19,
+          "id": "重演通路"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 678,
+        "revision_after": 679,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2742",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 651,
+      "parents": [
+        "e2741"
+      ],
+      "action_id": "detective.move.corridor.R08",
+      "action_kind": "move",
+      "label": "前往苏泠的卧室",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+          "line": 19,
+          "id": "重演通路"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 679,
+        "revision_after": 680,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2751",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 652,
+      "parents": [
+        "e2750"
+      ],
+      "action_id": "detective.inspect.E6",
+      "action_kind": "inspect",
+      "label": "检视书桌上的乐谱",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 74,
+          "id": "E6"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 680,
+        "revision_after": 681,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2836",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 681,
+      "parents": [
+        "e2835"
+      ],
+      "action_id": "detective.replay",
+      "action_kind": "replay",
+      "label": "在手稿上重演昨夜",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/模拟侦探.story",
+          "line": 340,
+          "id": "replay"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 29,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 688,
+        "revision_after": 689,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2872",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 683,
+      "parents": [
+        "e2871"
+      ],
+      "action_id": "detective.move.R08.corridor",
+      "action_kind": "move",
+      "label": "前往走廊",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+          "line": 19,
+          "id": "重演通路"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 690,
+        "revision_after": 691,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2883",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 685,
+      "parents": [
+        "e2882"
+      ],
+      "action_id": "detective.move.corridor.hall",
+      "action_kind": "move",
+      "label": "前往活动厅",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+          "line": 19,
+          "id": "重演通路"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 691,
+        "revision_after": 692,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2918",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 695,
+      "parents": [
+        "e2917"
+      ],
+      "action_id": "detective.answer.V4_0",
+      "action_kind": "answer",
+      "label": "答辩：喊的是闩门，别开",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 109,
+          "id": "V4_0"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 10,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 696,
+        "revision_after": 697,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e2987",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 696,
+      "parents": [
+        "e2986"
+      ],
+      "action_id": "detective.reask_question",
+      "action_kind": "talk",
+      "label": "询问当前的问题",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story",
+          "line": 47,
+          "id": "clock_question.001"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 699,
+        "revision_after": 700,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3112",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 706,
+      "parents": [
+        "e3111"
+      ],
+      "action_id": "detective.answer.V5_0",
+      "action_kind": "answer",
+      "label": "",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 111,
+          "id": "V5_0"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 10,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 707,
+        "revision_after": 708,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3159",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 708,
+      "parents": [
+        "e3158"
+      ],
+      "action_id": "detective.move.hall.pantry",
+      "action_kind": "move",
+      "label": "前往茶水间",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+          "line": 19,
+          "id": "重演通路"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 709,
+        "revision_after": 710,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3170",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 709,
+      "parents": [
+        "e3169"
+      ],
+      "action_id": "detective.inspect.E9",
+      "action_kind": "inspect",
+      "label": "检视水槽里的杯子",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 77,
+          "id": "E9"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 710,
+        "revision_after": 711,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3200",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 710,
+      "parents": [
+        "e3199"
+      ],
+      "action_id": "detective.inspect.E10",
+      "action_kind": "inspect",
+      "label": "检视碗柜上的罐子",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 78,
+          "id": "E10"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 714,
+        "revision_after": 715,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3227",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 712,
+      "parents": [
+        "e3226"
+      ],
+      "action_id": "detective.move.pantry.hall",
+      "action_kind": "move",
+      "label": "前往活动厅",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+          "line": 19,
+          "id": "重演通路"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 715,
+        "revision_after": 716,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3241",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 722,
+      "parents": [
+        "e3240"
+      ],
+      "action_id": "detective.answer.V5_0",
+      "action_kind": "answer",
+      "label": "",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 111,
+          "id": "V5_0"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 10,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 716,
+        "revision_after": 717,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3283",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 732,
+      "parents": [
+        "e3282"
+      ],
+      "action_id": "detective.answer.trust",
+      "action_kind": "answer",
+      "label": "答辩：说明为何信任霍铎的速记并闩门",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",
+          "line": 28,
+          "id": "trust"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 10,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 717,
+        "revision_after": 718,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3339",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 734,
+      "parents": [
+        "e3338"
+      ],
+      "action_id": "detective.move.hall.foyer",
+      "action_kind": "move",
+      "label": "前往门厅",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story",
+          "line": 19,
+          "id": "重演通路"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 720,
+        "revision_after": 721,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3394",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 735,
+      "parents": [
+        "e3393"
+      ],
+      "action_id": "detective.departure.draw-inner",
+      "action_kind": "help",
+      "label": "拔出门内的插闩。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story",
+          "line": 4,
+          "id": "s10_steps.003"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 725,
+        "revision_after": 726,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3413",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 736,
+      "parents": [
+        "e3412"
+      ],
+      "action_id": "detective.departure.open-door",
+      "action_kind": "help",
+      "label": "拉开隔离门。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story",
+          "line": 8,
+          "id": "s10_open"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 726,
+        "revision_after": 727,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3445",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 738,
+      "parents": [
+        "e3444"
+      ],
+      "action_id": "detective.departure.cross-out",
+      "action_kind": "move",
+      "label": "跨过门槛，走进起居厅。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story",
+          "line": 24,
+          "id": "s10_open.003：是否迈出由本人选择"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 727,
+        "revision_after": 728,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3487",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 739,
+      "parents": [
+        "e3486"
+      ],
+      "action_id": "night.inspect-room.detective",
+      "action_kind": "inspect",
+      "label": "查看公共备餐和守夜交班的实际情况。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.room-status"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 731,
+        "revision_after": 732,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3521",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 740,
+      "parents": [
+        "e3520"
+      ],
+      "action_id": "night.inspect-displayed",
+      "action_kind": "inspect",
+      "label": "查看沃德是否已把证物摆在面前。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.displayed"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 735,
+        "revision_after": 736,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3744",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 800,
+      "parents": [
+        "e3743"
+      ],
+      "action_id": "detective.wait.first_night.60",
+      "action_kind": "wait.first_night.60",
+      "label": "留在原处，等候本人已知的下一次作息机会（60分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 60,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 748,
+        "revision_after": 749,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e3978",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 860,
+      "parents": [
+        "e3977"
+      ],
+      "action_id": "detective.wait.first_night.60",
+      "action_kind": "wait.first_night.60",
+      "label": "留在原处，等候本人已知的下一次作息机会（60分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 60,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 772,
+        "revision_after": 773,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e4172",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 890,
+      "parents": [
+        "e4171"
+      ],
+      "action_id": "detective.wait.first_night.30",
+      "action_kind": "wait.first_night.30",
+      "label": "留在原处，等候本人已知的下一次作息机会（30分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 30,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 791,
+        "revision_after": 792,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e4206",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 891,
+      "parents": [
+        "e4205"
+      ],
+      "action_id": "night.inspect-evidence",
+      "action_kind": "inspect",
+      "label": "近看蜡布筒的火漆封口与红纸的新撕毛边。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.inspect-evidence"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 793,
+        "revision_after": 794,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e4222",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 892,
+      "parents": [
+        "e4221"
+      ],
+      "action_id": "night.defer-judgment",
+      "action_kind": "talk",
+      "label": "蜡布筒的火漆封口完好，红纸毛边却是新撕的。另一半多半仍在文献工房；明日到现场勘验，再作判断。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.night.defer-judgment"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 794,
+        "revision_after": 795,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e4321",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 922,
+      "parents": [
+        "e4320"
+      ],
+      "action_id": "detective.wait.first_night.30",
+      "action_kind": "wait.first_night.30",
+      "label": "留在原处，等候本人已知的下一次作息机会（30分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 30,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 801,
+        "revision_after": 802,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e4340",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 952,
+      "parents": [
+        "e4339"
+      ],
+      "action_id": "detective.wait.first_night.30",
+      "action_kind": "wait.first_night.30",
+      "label": "留在原处，等候本人已知的下一次作息机会（30分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 30,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 803,
+        "revision_after": 804,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e4350",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 967,
+      "parents": [
+        "e4349"
+      ],
+      "action_id": "detective.wait.first_night.15",
+      "action_kind": "wait.first_night.15",
+      "label": "留在原处，等候本人已知的下一次作息机会（15分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 15,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 804,
+        "revision_after": 805,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e4364",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 968,
+      "parents": [
+        "e4363"
+      ],
+      "action_id": "night.ask-closed-doors",
+      "action_kind": "talk",
+      "label": "丙区、丁区里的人怎么样了？伤者还好吗？",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.night.ask-closed-doors"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 806,
+        "revision_after": 807,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e4848",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1148,
+      "parents": [
+        "e4847"
+      ],
+      "action_id": "detective.wait.first_night.180",
+      "action_kind": "wait.first_night.180",
+      "label": "留在原处，等候本人已知的下一次作息机会（180分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 180,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 854,
+        "revision_after": 855,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e4858",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1149,
+      "parents": [
+        "e4857"
+      ],
+      "action_id": "night.eat.detective",
+      "action_kind": "help",
+      "label": "取一份烤面包和洋葱碎肉汤，用过晚餐。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.night.eat.detective"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 855,
+        "revision_after": 856,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e5092",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1269,
+      "parents": [
+        "e5091"
+      ],
+      "action_id": "detective.wait.first_night.120",
+      "action_kind": "wait.first_night.120",
+      "label": "留在原处，等候本人已知的下一次作息机会（120分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 120,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 868,
+        "revision_after": 869,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e5102",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1270,
+      "parents": [
+        "e5101"
+      ],
+      "action_id": "night.accept-partner",
+      "action_kind": "talk",
+      "label": "好。明日先去文献工房，到了现场再核对。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.night.accept-partner"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 869,
+        "revision_after": 870,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e5151",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1271,
+      "parents": [
+        "e5150"
+      ],
+      "action_id": "night.watch-agree",
+      "action_kind": "talk",
+      "label": "我们分班守夜。交班时把听见、看见的事情说清楚。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.night.watch-agree"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 871,
+        "revision_after": 872,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e5205",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1272,
+      "parents": [
+        "e5204"
+      ],
+      "action_id": "night.inspect-room.detective",
+      "action_kind": "inspect",
+      "label": "查看公共备餐和守夜交班的实际情况。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.room-status"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 872,
+        "revision_after": 873,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e5426",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1452,
+      "parents": [
+        "e5425"
+      ],
+      "action_id": "detective.wait.first_night.180",
+      "action_kind": "wait.first_night.180",
+      "label": "留在原处，等候本人已知的下一次作息机会（180分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 180,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 896,
+        "revision_after": 897,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e5442",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1453,
+      "parents": [
+        "e5441"
+      ],
+      "action_id": "detective.night.notice-time",
+      "action_kind": "inspect",
+      "label": "留意起居厅里此刻的光线与时钟，确认已经入夜。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-observed-midnight-time"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 898,
+        "revision_after": 899,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e5452",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1454,
+      "parents": [
+        "e5451"
+      ],
+      "action_id": "night.second-watch",
+      "action_kind": "help",
+      "label": "侦探接过后半夜的守候，核对门口和走廊里的动静。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.night.second-watch"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 899,
+        "revision_after": 900,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e5592",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1806,
+      "parents": [
+        "e5591"
+      ],
+      "action_id": "detective.c2.inspect.c2.corridor.north",
+      "action_kind": "inspect",
+      "label": "从安全侧核对补风处读数、密封与已完成的换气记录。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：封闭连廊的现场读数、密封与通风"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 2986,
+        "revision_after": 2987,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e5674",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1807,
+      "parents": [
+        "e5673"
+      ],
+      "action_id": "detective.c2.inspect.route.living_hall.central_hall",
+      "action_kind": "inspect",
+      "label": "查看廊门和外闩。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story",
+          "line": 9,
+          "id": "visible-local-route"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 2994,
+        "revision_after": 2995,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e5732",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1808,
+      "parents": [
+        "e5731"
+      ],
+      "action_id": "detective.c2.inspect.weather",
+      "action_kind": "inspect",
+      "label": "望向廊外，看看天色和风。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "visible-actual-weather-not-other-peoples-exposure"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3001,
+        "revision_after": 3002,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e6000",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1988,
+      "parents": [
+        "e5999"
+      ],
+      "action_id": "detective.wait.first_night.180",
+      "action_kind": "wait.first_night.180",
+      "label": "留在原处，等候本人已知的下一次作息机会（180分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 180,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3032,
+        "revision_after": 3033,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e7632",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2108,
+      "parents": [
+        "e7631"
+      ],
+      "action_id": "detective.wait.first_night.120",
+      "action_kind": "wait.first_night.120",
+      "label": "留在原处，等候本人已知的下一次作息机会（120分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 120,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3156,
+        "revision_after": 3157,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e7710",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2110,
+      "parents": [
+        "e7709"
+      ],
+      "action_id": "detective.c2.move.living_hall.central_hall",
+      "action_kind": "move",
+      "label": "穿过廊门。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story",
+          "line": 9,
+          "id": "routes-and-boundaries"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3162,
+        "revision_after": 3163,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e7798",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2111,
+      "parents": [
+        "e7797"
+      ],
+      "action_id": "detective.c2.inspect.c2.corridor.east",
+      "action_kind": "inspect",
+      "label": "从安全侧核对补风处读数、密封与已完成的换气记录。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：封闭连廊的现场读数、密封与通风"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3170,
+        "revision_after": 3171,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e7848",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2112,
+      "parents": [
+        "e7847"
+      ],
+      "action_id": "detective.c2.inspect.route.central_hall.logistics",
+      "action_kind": "inspect",
+      "label": "查看廊门和外闩。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story",
+          "line": 9,
+          "id": "visible-local-route"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3176,
+        "revision_after": 3177,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e7957",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2114,
+      "parents": [
+        "e7956"
+      ],
+      "action_id": "detective.c2.move.central_hall.lecture",
+      "action_kind": "move",
+      "label": "穿过廊门。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story",
+          "line": 9,
+          "id": "routes-and-boundaries"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3188,
+        "revision_after": 3189,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e8856",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2144,
+      "parents": [
+        "e8855"
+      ],
+      "action_id": "detective.wait.first_night.30",
+      "action_kind": "wait.first_night.30",
+      "label": "留在原处，等候本人已知的下一次作息机会（30分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 30,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3272,
+        "revision_after": 3273,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e8910",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2145,
+      "parents": [
+        "e8909"
+      ],
+      "action_id": "detective.c2.inspect.board.veronica_evidence",
+      "action_kind": "inspect",
+      "label": "查看公告板。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story",
+          "line": 127,
+          "id": "VeronicaEvidence"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3278,
+        "revision_after": 3279,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e8948",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2146,
+      "parents": [
+        "e8947"
+      ],
+      "action_id": "detective.c2.read.veronica_evidence",
+      "action_kind": "read",
+      "label": "指控须有实物为证；取用须有记录。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story",
+          "line": 127,
+          "id": "VeronicaEvidence"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3283,
+        "revision_after": 3284,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e8988",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2147,
+      "parents": [
+        "e8987"
+      ],
+      "action_id": "detective.c2.inspect.board.lucian_no_brand",
+      "action_kind": "inspect",
+      "label": "查看公告板。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story",
+          "line": 141,
+          "id": "LucianNoBrand"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3287,
+        "revision_after": 3288,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e9018",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2148,
+      "parents": [
+        "e9017"
+      ],
+      "action_id": "detective.c2.read.lucian_no_brand",
+      "action_kind": "read",
+      "label": "未经查验，不得以“私取”之名限制任何人行走。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story",
+          "line": 141,
+          "id": "LucianNoBrand"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3291,
+        "revision_after": 3292,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e9044",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2149,
+      "parents": [
+        "e9043"
+      ],
+      "action_id": "detective.c2.accept.veronica_evidence",
+      "action_kind": "talk",
+      "label": "关于“指控须有实物为证；取用须有记录。”：我照这条做。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story",
+          "line": 127,
+          "id": "VeronicaEvidence"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3293,
+        "revision_after": 3294,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e9064",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2150,
+      "parents": [
+        "e9063"
+      ],
+      "action_id": "detective.c2.accept.lucian_no_brand",
+      "action_kind": "talk",
+      "label": "关于“未经查验，不得以“私取”之名限制任何人行走。”：我照这条做。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story",
+          "line": 141,
+          "id": "LucianNoBrand"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3295,
+        "revision_after": 3296,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e9309",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2165,
+      "parents": [
+        "e9308"
+      ],
+      "action_id": "detective.wait.first_night.15",
+      "action_kind": "wait.first_night.15",
+      "label": "留在原处，等候本人已知的下一次作息机会（15分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 15,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3318,
+        "revision_after": 3319,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e9444",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2167,
+      "parents": [
+        "e9443"
+      ],
+      "action_id": "detective.c2.move.lecture.central_hall",
+      "action_kind": "move",
+      "label": "穿过廊门。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story",
+          "line": 9,
+          "id": "routes-and-boundaries"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3334,
+        "revision_after": 3335,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e9507",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2168,
+      "parents": [
+        "e9506"
+      ],
+      "action_id": "detective.c2.inspect.board.records_supplement",
+      "action_kind": "inspect",
+      "label": "查看公告板。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "third-night-supplement-proposal"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3340,
+        "revision_after": 3341,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e9614",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2170,
+      "parents": [
+        "e9613"
+      ],
+      "action_id": "detective.c2.move.central_hall.living_hall",
+      "action_kind": "move",
+      "label": "穿过廊门。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story",
+          "line": 9,
+          "id": "routes-and-boundaries"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3348,
+        "revision_after": 3349,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e9685",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2171,
+      "parents": [
+        "e9684"
+      ],
+      "action_id": "detective.c2.inspect.c2.daily",
+      "action_kind": "inspect",
+      "label": "查看饭桌、补记草案与公约签署进展。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "real-sixteen-portion-lunch-deduct-stock-once"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3355,
+        "revision_after": 3356,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e10684",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2291,
+      "parents": [
+        "e10683"
+      ],
+      "action_id": "detective.wait.first_night.120",
+      "action_kind": "wait.first_night.120",
+      "label": "留在原处，等候本人已知的下一次作息机会（120分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 120,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3486,
+        "revision_after": 3487,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e10724",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2293,
+      "parents": [
+        "e10723"
+      ],
+      "action_id": "detective.c2.move.living_hall.central_hall",
+      "action_kind": "move",
+      "label": "穿过廊门。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story",
+          "line": 9,
+          "id": "routes-and-boundaries"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3490,
+        "revision_after": 3491,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e10752",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2294,
+      "parents": [
+        "e10751"
+      ],
+      "action_id": "detective.c2.inspect.board.night_forbid",
+      "action_kind": "inspect",
+      "label": "查看公告板。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "third-night-forbid-proposal"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3493,
+        "revision_after": 3494,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e10784",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2295,
+      "parents": [
+        "e10783"
+      ],
+      "action_id": "detective.c2.inspect.board.ward_ledger",
+      "action_kind": "inspect",
+      "label": "查看公告板。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story",
+          "line": 6,
+          "id": "WardLedger"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3496,
+        "revision_after": 3497,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e10811",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2296,
+      "parents": [
+        "e10810"
+      ],
+      "action_id": "detective.c2.read.ward_ledger",
+      "action_kind": "read",
+      "label": "凡取用公物须登记于台账；无登记取用者视为私取。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story",
+          "line": 6,
+          "id": "WardLedger"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3499,
+        "revision_after": 3500,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e10841",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2297,
+      "parents": [
+        "e10840"
+      ],
+      "action_id": "detective.c2.inspect.board.ward_night",
+      "action_kind": "inspect",
+      "label": "查看公告板。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：WardNight当前公约提案"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3502,
+        "revision_after": 3503,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e10869",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2298,
+      "parents": [
+        "e10868"
+      ],
+      "action_id": "detective.c2.read.ward_night",
+      "action_kind": "read",
+      "label": "夜间取用公物先登记，次日共同核对记录。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：WardNight当前公约提案"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3505,
+        "revision_after": 3506,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e10897",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2299,
+      "parents": [
+        "e10896"
+      ],
+      "action_id": "detective.c2.inspect.board.open_plan",
+      "action_kind": "inspect",
+      "label": "查看公告板。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：OpenPlan当前公约提案"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3508,
+        "revision_after": 3509,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e10926",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2300,
+      "parents": [
+        "e10925"
+      ],
+      "action_id": "detective.c2.read.open_plan",
+      "action_kind": "read",
+      "label": "外出前核对源质计与风向，按安全读数安排劳作，约定返程与停行条件。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：OpenPlan当前公约提案"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3511,
+        "revision_after": 3512,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e10951",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2301,
+      "parents": [
+        "e10950"
+      ],
+      "action_id": "detective.c2.inspect.board.seal_plan",
+      "action_kind": "inspect",
+      "label": "查看公告板。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：SealPlan当前公约提案"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3514,
+        "revision_after": 3515,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e10980",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2302,
+      "parents": [
+        "e10979"
+      ],
+      "action_id": "detective.c2.read.seal_plan",
+      "action_kind": "read",
+      "label": "读数不明、风止或地震之后，先留在安全处，复测后再定行程。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：SealPlan当前公约提案"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3517,
+        "revision_after": 3518,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e11004",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2303,
+      "parents": [
+        "e11003"
+      ],
+      "action_id": "detective.c2.inspect.board.committee_plan",
+      "action_kind": "inspect",
+      "label": "查看公告板。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：CommitteePlan当前公约提案"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3519,
+        "revision_after": 3520,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e11024",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2304,
+      "parents": [
+        "e11023"
+      ],
+      "action_id": "detective.c2.read.committee_plan",
+      "action_kind": "read",
+      "label": "公用粮水药逐项登记，列明取用、补记和结余，供众人核对。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：CommitteePlan当前公约提案"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3521,
+        "revision_after": 3522,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e11043",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2305,
+      "parents": [
+        "e11042"
+      ],
+      "action_id": "detective.c2.decline.ward_ledger",
+      "action_kind": "talk",
+      "label": "关于“凡取用公物须登记于台账；无登记取用者视为私取。”：这条我不认。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/03_规矩与结局.story",
+          "line": 6,
+          "id": "WardLedger"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3523,
+        "revision_after": 3524,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e11064",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2306,
+      "parents": [
+        "e11063"
+      ],
+      "action_id": "detective.c2.decline.ward_night",
+      "action_kind": "talk",
+      "label": "关于“夜间取用公物先登记，次日共同核对记录。”：这条我不认。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：WardNight当前公约提案"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3525,
+        "revision_after": 3526,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e11086",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2307,
+      "parents": [
+        "e11085"
+      ],
+      "action_id": "detective.c2.accept.open_plan",
+      "action_kind": "talk",
+      "label": "关于“外出前核对源质计与风向，按安全读数安排劳作，约定返程与停行条件。”：我照这条做。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：OpenPlan当前公约提案"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3527,
+        "revision_after": 3528,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e11102",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2308,
+      "parents": [
+        "e11101"
+      ],
+      "action_id": "detective.c2.decline.seal_plan",
+      "action_kind": "talk",
+      "label": "关于“读数不明、风止或地震之后，先留在安全处，复测后再定行程。”：这条我不认。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：SealPlan当前公约提案"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3528,
+        "revision_after": 3529,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e11118",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2309,
+      "parents": [
+        "e11117"
+      ],
+      "action_id": "detective.c2.accept.committee_plan",
+      "action_kind": "talk",
+      "label": "关于“公用粮水药逐项登记，列明取用、补记和结余，供众人核对。”：我照这条做。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "第五部分：CommitteePlan当前公约提案"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3530,
+        "revision_after": 3531,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e11146",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2311,
+      "parents": [
+        "e11145"
+      ],
+      "action_id": "detective.c2.move.central_hall.document_workshop",
+      "action_kind": "move",
+      "label": "穿过廊门。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story",
+          "line": 9,
+          "id": "routes-and-boundaries"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 2,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3532,
+        "revision_after": 3533,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e11158",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2312,
+      "parents": [
+        "e11157"
+      ],
+      "action_id": "detective.c2.investigation.inspect.document_workshop",
+      "action_kind": "inspect",
+      "label": "在现场核对已完成的操作与留下的证据。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "chapter-two-evidence-requires-local-inspection"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3533,
+        "revision_after": 3534,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e11189",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2329,
+      "parents": [
+        "e11188"
+      ],
+      "action_id": "detective.c2.document.inventory",
+      "action_kind": "experiment",
+      "label": "从散页中找出大半张紧急清册，保留断口等待另一半核对。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "chapter-two-real-investigation-contact"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 17,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3536,
+        "revision_after": 3537,
+        "status": "applied"
+      }
+    }
+  ],
+  "detective_answers": [
+    {
+      "event_id": "e2520",
+      "type": "answer_accepted",
+      "actor": "detective",
+      "game_time": 610,
+      "parents": [
+        "e2519"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e2651",
+      "type": "answer_accepted",
+      "actor": "detective",
+      "game_time": 646,
+      "parents": [
+        "e2650"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e2920",
+      "type": "answer_accepted",
+      "actor": "detective",
+      "game_time": 695,
+      "parents": [
+        "e2919"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e3114",
+      "type": "answer_rejected",
+      "actor": "detective",
+      "game_time": 706,
+      "parents": [
+        "e3113"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "unasked-topic",
+        "accepted": false,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e3243",
+      "type": "answer_rejected",
+      "actor": "detective",
+      "game_time": 722,
+      "parents": [
+        "e3242"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "unasked-topic",
+        "accepted": false,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    },
+    {
+      "event_id": "e3285",
+      "type": "answer_accepted",
+      "actor": "detective",
+      "game_time": 732,
+      "parents": [
+        "e3284"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "accepted",
+        "accepted": true,
+        "literal_truth": "true",
+        "epistemic_support": "true"
+      }
+    }
+  ],
+  "choice_stops": {
+    "current-affordance-root": 603,
+    "complete-depth": 354
+  },
+  "reason_reuse": {
+    "False": 102,
+    "True": 855
+  },
+  "events_by_type": {
+    "session_start": 1,
+    "reason_stop": 131,
+    "why_not_ready": 1047,
+    "speech_choice_prediction": 16,
+    "action_selected": 957,
+    "planning_choice": 957,
+    "action_scheduled": 957,
+    "co_presence": 330,
+    "observation": 1267,
+    "action_wait": 408,
+    "cost_quote": 941,
+    "host_completion": 941,
+    "action_execution": 941,
+    "speech_literal": 197,
+    "speaker_prediction": 724,
+    "speech_received_pending": 202,
+    "listener_parse": 407,
+    "planning_stop": 119,
+    "inference": 73,
+    "implicature": 4,
+    "public_topic_heard": 34,
+    "inference_alternative_basis": 21,
+    "speech_unheard": 317,
+    "acceptance_changed": 3,
+    "inference_dependencies_invalidated": 12,
+    "hypothesis_adopted": 14,
+    "answer_submitted": 16,
+    "answer_accepted": 14,
+    "question_transition": 14,
+    "hypothesis_revised": 11,
+    "factor_prune": 1,
+    "mind_simulation": 12,
+    "model_argument_unavailable": 77,
+    "answer_rejected": 2,
+    "chapter_content_available": 1,
+    "physical_process": 19,
+    "norm_receipt": 70,
+    "norm_decision": 48
+  },
+  "profile_sample_seconds": 150.1002732,
+  "profile_top": [
+    {
+      "name": "dv_local",
+      "calls": 89369,
+      "exclusive_seconds": 64.1844915,
+      "inclusive_seconds": 92.6696188
+    },
+    {
+      "name": "dv_get",
+      "calls": 389599175,
+      "exclusive_seconds": 30.0555575,
+      "inclusive_seconds": 30.0555575
+    },
+    {
+      "name": "dv_and",
+      "calls": 174569769,
+      "exclusive_seconds": 9.4622532,
+      "inclusive_seconds": 9.4622532
+    },
+    {
+      "name": "dv_has",
+      "calls": 4311710,
+      "exclusive_seconds": 5.3680642,
+      "inclusive_seconds": 5.3680642
+    },
+    {
+      "name": "dv_truth",
+      "calls": 3199823,
+      "exclusive_seconds": 5.2253408,
+      "inclusive_seconds": 16.0391853
+    },
+    {
+      "name": "dv_with_many",
+      "calls": 360827,
+      "exclusive_seconds": 4.2314284,
+      "inclusive_seconds": 4.2314284
+    },
+    {
+      "name": "dv_has_key",
+      "calls": 8167093,
+      "exclusive_seconds": 2.444611,
+      "inclusive_seconds": 2.444611
+    },
+    {
+      "name": "dvs_support_parents",
+      "calls": 1940,
+      "exclusive_seconds": 2.3831886,
+      "inclusive_seconds": 8.2151787
+    },
+    {
+      "name": "dv_find",
+      "calls": 16668590,
+      "exclusive_seconds": 2.2940111,
+      "inclusive_seconds": 2.2940111
+    },
+    {
+      "name": "dvs_sim_plan",
+      "calls": 49082,
+      "exclusive_seconds": 2.1307157,
+      "inclusive_seconds": 4.7665368
+    },
+    {
+      "name": "dv_clone",
+      "calls": 1812123,
+      "exclusive_seconds": 1.7993615,
+      "inclusive_seconds": 1.7993615
+    },
+    {
+      "name": "dv_pair",
+      "calls": 15295573,
+      "exclusive_seconds": 1.7189349,
+      "inclusive_seconds": 1.7189349
+    },
+    {
+      "name": "dv_same_local_ref",
+      "calls": 3344066,
+      "exclusive_seconds": 1.5485447,
+      "inclusive_seconds": 2.8589802
+    },
+    {
+      "name": "dv_with",
+      "calls": 239828,
+      "exclusive_seconds": 1.1611622,
+      "inclusive_seconds": 1.1611622
+    },
+    {
+      "name": "dv_stage_store_owned",
+      "calls": 8697,
+      "exclusive_seconds": 1.107989,
+      "inclusive_seconds": 1.2750418
+    },
+    {
+      "name": "dv_truth_uncached",
+      "calls": 729354,
+      "exclusive_seconds": 1.0255374,
+      "inclusive_seconds": 10.8138445
+    },
+    {
+      "name": "dvp_topic",
+      "calls": 262185,
+      "exclusive_seconds": 0.9149398,
+      "inclusive_seconds": 5.0796752
+    },
+    {
+      "name": "dv_without",
+      "calls": 95941,
+      "exclusive_seconds": 0.8595938,
+      "inclusive_seconds": 1.1149951
+    },
+    {
+      "name": "dv_validate_bindings",
+      "calls": 1242,
+      "exclusive_seconds": 0.7795321,
+      "inclusive_seconds": 2.1182235
+    },
+    {
+      "name": "dv_with_path",
+      "calls": 24285,
+      "exclusive_seconds": 0.6929825,
+      "inclusive_seconds": 2.0417526
+    },
+    {
+      "name": "dv_record_like",
+      "calls": 225854,
+      "exclusive_seconds": 0.668805,
+      "inclusive_seconds": 0.6978212
+    },
+    {
+      "name": "dv_read",
+      "calls": 908205,
+      "exclusive_seconds": 0.5748301,
+      "inclusive_seconds": 5.7014038
+    },
+    {
+      "name": "dv_same",
+      "calls": 1107584,
+      "exclusive_seconds": 0.502998,
+      "inclusive_seconds": 0.502998
+    },
+    {
+      "name": "dvp_actor_view",
+      "calls": 16339,
+      "exclusive_seconds": 0.4051016,
+      "inclusive_seconds": 0.4060313
+    },
+    {
+      "name": "c1dep_unify_demon_position",
+      "calls": 215719,
+      "exclusive_seconds": 0.3646343,
+      "inclusive_seconds": 3.040437
+    }
+  ]
+}

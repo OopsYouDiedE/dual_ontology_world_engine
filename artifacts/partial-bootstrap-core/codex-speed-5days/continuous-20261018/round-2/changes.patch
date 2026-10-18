@@ -1,0 +1,102 @@
+diff --git a/language_core/AGENTS.md b/language_core/AGENTS.md
+index c3bbaa30..38164211 100644
+--- a/language_core/AGENTS.md
++++ b/language_core/AGENTS.md
+@@ -267,3 +267,5 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译
+ 无参静态内容声明可以使用纯值备忘，不能缓存读取会话、时间、世界或人物的构造器。支持性陈述可声明answer_form=supporting-statement，不取得完整答辩奖励；权威判答和人工候选不因评分调整而放宽。询问不携带答复正文，已知其所问命题后不重复发问。姓名只从本人真实介绍收据显示。
+ 
+ 诊断插桩每30秒原子保存已完成调用的累计耗时，超时保留最后采样；采样覆盖时长与全程时长分列，插桩运行不与原生运行作同条件吞吐比较。诊断采样只改工具输出，绝不决定人物行为。
++
++第2轮：批量更新先冻结updates再枚举，避免record_find的惰性展开改写枚举器版本。通用二元ABI rt_has_value实现结构值成员查询，dv_has转发，沿rt_same_value的精确数/浮点比较，不展开只读子树、不改变集合或游戏规则。中性验证补充从快照恢复的惰性更新表、冻结更新表和嵌套数值成员判断；第一轮初始化异常独立保留。
+diff --git a/language_core/compiler/Runtime.cs b/language_core/compiler/Runtime.cs
+index 88db7dc8..6b651359 100644
+--- a/language_core/compiler/Runtime.cs
++++ b/language_core/compiler/Runtime.cs
+@@ -153,6 +153,14 @@ public static class R
+             if (!Bool(same_value(left[i], right[i]))) return false;
+         return true;
+     }
++    // Membership is a structural-value operation; reading never thaws child lists.
++    public static object has_value(object items, object value)
++    {
++        var values = Items(items);
++        for (var i = 0; i < values.Count; i++)
++            if (Bool(same_value(values[i], value))) return true;
++        return false;
++    }
+     // Ordered independent-copy record update; unchanged branches stay immutable until read.
+     public static object record_with(object record, object key, object value)
+     {
+@@ -178,6 +186,10 @@ public static class R
+     {
+         var changes = Items(updates);
+         if (changes.Count == 0) return record;
++        // Lookups may thaw a mutable owner's child slots. Iterate a frozen update
++        // table so materialization cannot invalidate the enumeration itself.
++        updates = snapshot(updates);
++        changes = Items(updates);
+         var frozen = Items(snapshot(record));
+         var result = new List<object>(frozen.Count + changes.Count);
+         var keys = new List<object>(frozen.Count + changes.Count);
+diff --git a/language_core/compiler/compiler.dv b/language_core/compiler/compiler.dv
+index 519079c6..de08380a 100644
+--- a/language_core/compiler/compiler.dv
++++ b/language_core/compiler/compiler.dv
+@@ -109,7 +109,7 @@
+ (defn native_arity (name)
+   (if (has (words "rt_list rt_arg_count") name) 0
+     (if (has (words "rt_number rt_is_number rt_is_numeric_value rt_not rt_length rt_code rt_show rt_count rt_is_list rt_copy_value rt_snapshot rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify rt_id_start rt_id_part rt_normalize rt_exact rt_floor") name) 1
+-      (if (has (words "rt_add rt_sub rt_mul rt_div rt_lt rt_eq rt_memo_get rt_record_with_many rt_same_value rt_cat rt_chr rt_push rt_at rt_write rt_json_write rt_record_index") name) 2
++      (if (has (words "rt_add rt_sub rt_mul rt_div rt_lt rt_eq rt_memo_get rt_has_value rt_record_with_many rt_same_value rt_cat rt_chr rt_push rt_at rt_write rt_json_write rt_record_index") name) 2
+         (if (has (words "rt_slice rt_replace rt_record_find rt_record_with rt_memo_put") name) 3 -1)))))
+ (defn lookup (signatures name)
+   (let (i 0 found -1)
+diff --git a/language_core/core/00-data.dv b/language_core/core/00-data.dv
+index df12fd4b..21bb20a5 100644
+--- a/language_core/core/00-data.dv
++++ b/language_core/core/00-data.dv
+@@ -47,13 +47,7 @@ fn dv_append(items, value):
+     return r
+ 
+ fn dv_has(items, value):
+-    var i = 0
+-    var found = false
+-    while dv_and((not found), (i < rt_count(items))):
+-        if dv_same(items[i], value):
+-            found = true
+-        i = (i + 1)
+-    return found
++    return rt_has_value(items, value)
+ 
+ fn dv_find(record, key, fallback):
+     return rt_record_find(record, key, fallback)
+diff --git a/language_core/core/README.md b/language_core/core/README.md
+index 6ef0964c..83d0f9f4 100644
+--- a/language_core/core/README.md
++++ b/language_core/core/README.md
+@@ -1019,3 +1019,5 @@ C2导航意图从本人已知位置、已知开启的门和本人已采纳移动
+ 无参静态内容声明可以使用纯值备忘，不能缓存读取会话、时间、世界或人物的构造器。支持性陈述可声明answer_form=supporting-statement，不取得完整答辩奖励；权威判答和人工候选不因评分调整而放宽。询问不携带答复正文，已知其所问命题后不重复发问。姓名只从本人真实介绍收据显示。
+ 
+ 诊断插桩每30秒原子保存已完成调用的累计耗时，超时保留最后采样；采样覆盖时长与全程时长分列，插桩运行不与原生运行作同条件吞吐比较。诊断采样只改工具输出，绝不决定人物行为。
++
++第2轮：批量更新先冻结updates再枚举，避免record_find的惰性展开改写枚举器版本。通用二元ABI rt_has_value实现结构值成员查询，dv_has转发，沿rt_same_value的精确数/浮点比较，不展开只读子树、不改变集合或游戏规则。中性验证补充从快照恢复的惰性更新表、冻结更新表和嵌套数值成员判断；第一轮初始化异常独立保留。
+diff --git a/language_core/verification/AGENTS.md b/language_core/verification/AGENTS.md
+index 7ac2d48e..27a54a12 100644
+--- a/language_core/verification/AGENTS.md
++++ b/language_core/verification/AGENTS.md
+@@ -207,3 +207,5 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译
+ 无参静态内容声明可以使用纯值备忘，不能缓存读取会话、时间、世界或人物的构造器。支持性陈述可声明answer_form=supporting-statement，不取得完整答辩奖励；权威判答和人工候选不因评分调整而放宽。询问不携带答复正文，已知其所问命题后不重复发问。姓名只从本人真实介绍收据显示。
+ 
+ 诊断插桩每30秒原子保存已完成调用的累计耗时，超时保留最后采样；采样覆盖时长与全程时长分列，插桩运行不与原生运行作同条件吞吐比较。诊断采样只改工具输出，绝不决定人物行为。
++
++第2轮：批量更新先冻结updates再枚举，避免record_find的惰性展开改写枚举器版本。通用二元ABI rt_has_value实现结构值成员查询，dv_has转发，沿rt_same_value的精确数/浮点比较，不展开只读子树、不改变集合或游戏规则。中性验证补充从快照恢复的惰性更新表、冻结更新表和嵌套数值成员判断；第一轮初始化异常独立保留。
+diff --git a/language_core/verification/DESIGN.md b/language_core/verification/DESIGN.md
+index 8ea55df1..7b843689 100644
+--- a/language_core/verification/DESIGN.md
++++ b/language_core/verification/DESIGN.md
+@@ -164,3 +164,5 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译
+ 无参静态内容声明可以使用纯值备忘，不能缓存读取会话、时间、世界或人物的构造器。支持性陈述可声明answer_form=supporting-statement，不取得完整答辩奖励；权威判答和人工候选不因评分调整而放宽。询问不携带答复正文，已知其所问命题后不重复发问。姓名只从本人真实介绍收据显示。
+ 
+ 诊断插桩每30秒原子保存已完成调用的累计耗时，超时保留最后采样；采样覆盖时长与全程时长分列，插桩运行不与原生运行作同条件吞吐比较。诊断采样只改工具输出，绝不决定人物行为。
++
++第2轮：批量更新先冻结updates再枚举，避免record_find的惰性展开改写枚举器版本。通用二元ABI rt_has_value实现结构值成员查询，dv_has转发，沿rt_same_value的精确数/浮点比较，不展开只读子树、不改变集合或游戏规则。中性验证补充从快照恢复的惰性更新表、冻结更新表和嵌套数值成员判断；第一轮初始化异常独立保留。

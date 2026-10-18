@@ -47,13 +47,7 @@ fn dv_append(items, value):
     return r
 
 fn dv_has(items, value):
-    var i = 0
-    var found = false
-    while dv_and((not found), (i < rt_count(items))):
-        if dv_same(items[i], value):
-            found = true
-        i = (i + 1)
-    return found
+    return rt_has_value(items, value)
 
 fn dv_find(record, key, fallback):
     return rt_record_find(record, key, fallback)

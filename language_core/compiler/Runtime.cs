@@ -153,6 +153,14 @@ public static class R
             if (!Bool(same_value(left[i], right[i]))) return false;
         return true;
     }
+    // Membership is a structural-value operation; reading never thaws child lists.
+    public static object has_value(object items, object value)
+    {
+        var values = Items(items);
+        for (var i = 0; i < values.Count; i++)
+            if (Bool(same_value(values[i], value))) return true;
+        return false;
+    }
     // Ordered independent-copy record update; unchanged branches stay immutable until read.
     public static object record_with(object record, object key, object value)
     {
@@ -178,6 +186,10 @@ public static class R
     {
         var changes = Items(updates);
         if (changes.Count == 0) return record;
+        // Lookups may thaw a mutable owner's child slots. Iterate a frozen update
+        // table so materialization cannot invalidate the enumeration itself.
+        updates = snapshot(updates);
+        changes = Items(updates);
         var frozen = Items(snapshot(record));
         var result = new List<object>(frozen.Count + changes.Count);
         var keys = new List<object>(frozen.Count + changes.Count);
