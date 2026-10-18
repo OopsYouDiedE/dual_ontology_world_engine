@@ -282,9 +282,31 @@ fn dv_debug_event(event):
         if dv_has_key(data, fields[i]):
             rt_push(detail, dv_pair(fields[i], dv_get(data, fields[i])))
         i = i + 1
+    // Keep the actual subjective computation inspectable. This is an explicit
+    // reporting projection; no field is promoted to a real-world observation.
+    if event.type == "mind_simulation" or event.type == "model_recheck":
+        detail = dv_with_many(detail, {"hypothesis": dv_find(data, "hypothesis", false), "result": dv_debug_model_result(dv_find(data, "result", false)), "source_adoptions": dv_find(dv_find(dv_find(data, "actor_before", []), "mind", []), "adoptions", []), "scope": "subjective-model-not-actual-execution; full-snapshots-in-raw-trace"})
+        if dv_has_key(data, "model_before"):
+            detail = dv_with(detail, "model_before", dv_debug_model_result(data.model_before))
+    if event.type == "factor_prune":
+        detail = dv_with_many(detail, dv_without(data, "actor_before"))
+        detail = dv_with(detail, "source_adoptions", dv_find(dv_find(dv_find(data, "actor_before", []), "mind", []), "adoptions", []))
+    if event.type == "model_argument_unavailable" or event.type == "model_argument_accepted":
+        var competitors = []
+        var competitor_index = 0
+        let original = dv_find(data, "competitors", [])
+        while competitor_index < rt_count(original):
+            rt_push(competitors, dv_debug_model_result(original[competitor_index]))
+            competitor_index = competitor_index + 1
+        detail = dv_with_many(detail, {"hypothesis": dv_find(data, "hypothesis", false), "competitors": competitors, "result": dv_debug_model_result(dv_find(data, "result", false)), "scope": "subjective-argument; full-snapshots-in-raw-trace"})
     if event.type == "action_execution":
         detail = dv_with(detail, "status", data.receipt.execution.status)
     return rt_snapshot({"event_id": event.id, "type": event.type, "actor": event.actor, "game_time": event.time, "parents": event.parents, "action_id": action_id, "action_kind": dv_find(action, "kind", ""), "label": dv_find(action, "label", dv_find(action, "surface", "")), "purpose_sources": dv_find(action, "purpose_basis", []), "detail": detail})
+
+fn dv_debug_model_result(result):
+    if not dv_record_like(result):
+        return result
+    return dv_without(dv_without(result, "predicted"), "world")
 
 fn dv_debug_events(events, start, config):
     dv_require(0 <= start and start <= rt_count(events), "Invalid debug event cursor")

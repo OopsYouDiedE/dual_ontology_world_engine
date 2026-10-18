@@ -929,10 +929,16 @@ fn c1n_known_wait_actor(actor, target, basis):
     let time_cost = dv_find(actor.policy, "time_cost", 0.01)
     var current_night_action = false
     let rows = c1n_rows()
+    let relevant = dvp_goal_refs(actor)
     i = 0
     while i < rt_count(rows):
-        if rows[i].actor == actor.id and dv_truth(actor.mind, c1n_pre(rows[i])) == "true":
-            current_night_action = true
+        if rows[i].actor == actor.id:
+            var action_index = 0
+            while action_index < rt_count(actions) and not current_night_action:
+                let action = actions[action_index]
+                if action.id == rows[i].id and dvp_eligible(actor, action, actor.mind, relevant):
+                    current_night_action = true
+                action_index = action_index + 1
         i = i + 1
     if elapsed.known and actor.mind.time < target and 0 < rt_count(basis) and 0 < progress_weight and not current_night_action:
         let durations = c1n_wait_durations()

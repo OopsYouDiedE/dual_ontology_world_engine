@@ -942,3 +942,33 @@ C2导航意图从本人已知位置、已知开启的门和本人已采纳移动
 一键源码审阅导出入口为 artifacts/partial-bootstrap-core/dv-layout-20261018/export/export_dv_package.bat，默认输出 artifacts/dv_consolidated_package_v2。七个目录各输出一份DV，保留原文件边界和来源指纹；该包用于阅读，不作为新执行入口。--check只校验导出是否与当前源码一致。旧导出与历史证据不改写。
 
 时域边界（2026-10-18）：正式session在time<horizon允许新决策；time==horizon仅保留已有pending/到期队列的Complete，ready扫描不发起新决策；time>horizon停止。无队列全idle不自动跳时。debug_stop按time>=horizon记录world-horizon，不能代替剧情完成。中性证据位于artifacts/horizon-probes-01/，本次用户另授权一个240秒正式窗口。
+
+## 接管修复接口与证据范围（2026-10-18）
+
+`dvs_model_recheck_eligible` 拒绝 `evaluation_scope.kind=causal-refutation` 的局部反证切片；切片的完成状态保留其局部身份，不作为原完整计划的重比资格。
+
+本轮跨区内容使用同一正式判答合同分别登记 `identity` 与 `reason` 阶段。`content_grade` 是声明与报告的内容范围元数据；部分人物辨认与完整原因各有独立条件和回执，它不改变 `truth_level`、不生成模型论证。题目字段由实际开题Complete与有来源的观察取得。配置与结果比较口径见本任务 `COUNTERFACTUAL-CRITERIA.md`，不将可用候选当作实际作答。
+
+`dvs_model_recheck_eligible(actor, hypothesis, model, time)` 仅允许已完成且无执行失败、候选与本人revision/time、采纳、响应模型、有效Replay_Depth和模型起点一致的缓存走重比。其他情况从原付费模型入口重新推演；新增 `source_hypothesis`、`source_mind_time`、`source_replay_depth` 缺失时自然失效。此为保守缓存门，不增加计算预算。无计划的模型记录 `no-declared-plan`，遍历后未完整记录 `declared-plan-incomplete`；深度与预算停止各自保留。`plan_complete`、真实预测/比较、论证与实际行为仍是分别记录的事实。
+
+- `c2_navigation_goals(actor, goals)`：接收含 `navigation_room` 的本人目标；`navigation_requirements` 为内容声明的非空间准备，`navigation_methods`/`method_id` 指向对应方法。本地优先调用完整 `dvp_eligible`，不因空 requirements 判定任务就绪。仅为一项机会增加已知开放路径下一步意图，原实质目标全部保留。
+- `c2_navigation_route(actor, target)`：先复用 `c2i_known_route`。下游门尚未核实时，可返回已知开放前缀末端的安全侧地点，`requested_target` 与当前可执行 `target` 分列；不预测未知门、他人行动或后续达成。
+- `dvg_refresh_goals` 按选中主体的真实认识/时间/章节刷新完整内容目标；旧章目标在本人实际入厅后清理。第二章行动规划深度恢复为2。`dvs_schedule` 不以一次无候选结果永久跳过主体；同一时刻仍按决策时间与修订避免重复准备。
+- `c1_other_place_detective` 两档安装同一可接触内容；配置只通过认知初始化进入共同机制。首夜等待抑制通过实际安装动作的共享资格门核对，既有范围与成本不变。
+- `WriteJsonFast`、`rt_json_stringify`、`rt_json_write` 完整保存传入容器值；历史、模拟、采纳、竞争模型及嵌套世界不按字段名清空。精确数在Trace仍输出原分数字符串。完整保存的耗时和文件大小与先前裁剪输出不能作同口径速度比较。
+- `dv_debug_event` 对模拟/复核输出 hypothesis、result（假定、预测、比较、覆盖、工作与停止）、source_adoptions；剪枝保留证书及拒绝，论证保留竞争结果。大 `world`/`predicted` 快照只在显式调试投影中省略，完整原值仍保存在原始 trace，预测始终标为主观计算。
+- `python language_core/tools/run_debug.py --out <新目录>` 自动追加 `actual-event-index.jsonl`、`reasoning-evidence.jsonl`、`evidence-summary.json`；索引含源SHA256、source_line、事件编号和字段有无。`--evidence-from <既有events.jsonl> --out <新目录>` 只整理既有输出，不构建或执行；原投影缺失字段保持 not-exported。
+- `result.json` 分列 debug_end、stop_reasons、world_horizon_observed、chapter_summary_reported、narrative_completion。后者由人工按来源和实际回执审查，正常退出、trace封存及world-horizon均不等于剧情达成。执行范围仍仅formal-model，不包含Godot画面、几何或输入。
+
+源码索引：`verification/scenarios/chapter2/content.dv`（路由/目标/现场观察）、`dialogue.dv`（沟通与目标刷新）、`daily.dv`（真实日常及票数观察）、`scenarios/chapter1/campaign.dv`/`opening.dv`（投放与等待）、`verification/session/30-runner.dv`（调度）、`core/95-model-argument.dv`（投影）、`compiler/Runtime.cs`（值序列化）、`tools/run_debug.py`（封存与索引）。本节仅记录实现接口，验收结论见本任务新证据。
+
+
+### 真实回执时间与无损封存
+
+`dvs_receipt_clock_observations(story, mind, bindings, observations, action_event, execution_event, time)` 只读取声明的 `clock_ref` 与本人数值时钟，时间来自已结算 `execution.time`。同字段直接观察合并为同次 `perception/execution-receipt`，绑定实际执行事件；未初始化或未绑定的时钟不被补成已知。Complete单调推进本人mind.time，成功与拒绝均不再加一次时长；Prepare、预测和其他主体不被同步。此修复使窗口判断与真实行动时间一致，不改费用或推进世界时钟的规则。
+
+`rt_json_write("new-trace.json.gz", value)` 可选择gzip无损存储，解压后的字节与同输入 `rt_json_stringify` 一致。默认 `.json` 仍直接JSON；二者均不裁剪字段并用 `.partial` 防止半写冒充完成。`run_debug.py --trace-compression gzip` 向生成程序传入该目标，result列出trace_path/trace_storage_encoding，timeout仍覆盖执行与封存全过程。命令示例：
+
+```powershell
+python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录> --detective-profile Foolish_Detective --detective-zone zone_bing --trace-compression gzip --timeout 180
+```

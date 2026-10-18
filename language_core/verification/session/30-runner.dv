@@ -248,8 +248,9 @@ fn dvs_schedule(state):
                     due_time = queued.due
                     due_index = index
             else:
-                let stopped = dv_find(state, "player_actor", "") != actor.id and dv_find(actor, "last_decision_stopped", false) == true and actor.mind.revision == dv_find(actor, "decision_revision", -1) and actor.mind.time == dv_find(actor, "decision_mind_time", -1) and dv_find(actor, "decision_chapter", 0) == dv_find(state.story, "chapter", 1) and rt_count(dv_find(actor, "pending_heard", [])) == 0
-                if state.physical.time < state.horizon and ready_index < 0 and 0 < dv_find(actor.policy, "budget", 0) and not stopped and (dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", []))):
+                // No-action is not a permanent property of a mind revision:
+                // time, local arrivals and content goals can create a new opportunity.
+                if state.physical.time < state.horizon and ready_index < 0 and 0 < dv_find(actor.policy, "budget", 0) and (dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", []))):
                     ready_index = index
         index = index + 1
         if index == rt_count(state.actors):
@@ -327,10 +328,6 @@ fn dvs_prepare_actor(state):
             dvs_debug_phase(story, actor.id, time, "cognition-start")
             actor = dvs_drain_received_speech(actor, events, time)
             actor = dvs_notice_peers(actor, physical, actors, bindings, events, time, parent)
-            if dv_find(state, "player_actor", "") != actor.id and dv_find(actor, "last_decision_stopped", false) == true and actor.mind.revision == dv_find(actor, "decision_revision", -1) and actor.mind.time == dv_find(actor, "decision_mind_time", -1) and dv_find(actor, "decision_chapter", 0) == dv_find(story, "chapter", 1):
-                idle = idle + 1
-                actors = dvs_replace(actors, index, actor)
-                return dvs_owned_state_update(state, {"actors": actors, "cursor": cursor, "idle": idle})
             actor = dvs_prepare_cognition(actor, events, time, parent, dv_find(story, "chapter", 1))
             dvs_debug_phase(story, actor.id, time, "cognition-end")
         var choice = false
@@ -351,7 +348,6 @@ fn dvs_prepare_actor(state):
         actor = dv_with(actor, "dependency_work_total", dv_find(actor, "dependency_work_total", 0) + dv_find(choice, "dependency_expansions", 0))
         actor = dv_with(actor, "decision_revision", actor.mind.revision)
         var action = choice.action
-        actor = dv_with_many(actor, {"decision_mind_time": actor.mind.time, "decision_chapter": dv_find(story, "chapter", 1), "last_decision_stopped": action == false})
         actor = dv_with(actor, "dependency_cache", choice.dependency_cache)
         actor = dv_with(actor, "planned_followup", "")
         actor = dv_with_many(actor, {"planning_work_total": dv_find(actor, "planning_work_total", 0) + choice.plan_expansions, "policy": dv_with(actor.policy, "plan_budget", dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)})
@@ -463,9 +459,10 @@ fn dvs_session_complete(state, receipt):
         if dv_find(receipt, "executor", "") == "formal-model" and receipt.outcome == "applied" and dv_truth(physical, dv_find(action, "failure_observe_when", dv_not(dv_true()))) == "true":
             observation_grants = dv_find(action, "failure_grants", [])
     local_4 = dvs_observation_source(dv_perceive(physical, mind, bindings, observation_grants, action_event, time), action)
-    var observations = local_4
+    var observations = dvs_receipt_clock_observations(story, mind, bindings, local_4, action_event, execution_event, result.execution.time)
     var profile = dvs_observation_profile(actor)
-    actor = dv_with(actor, "mind", dv_update_mind(mind, observations, mind.revision, profile).world)
+    let observed_mind = dv_update_mind(mind, observations, mind.revision, profile).world
+    actor = dv_with(actor, "mind", dv_with(observed_mind, "time", dv_max(dv_find(observed_mind, "time", 0), result.execution.time)))
     if (0 < rt_count(observations)):
         parent = dvs_event_prepared(events, "observation", id, time, dvs_cognitive_parents(actor, dv_single(parent)), dv_with_many({"observations": observations, "revision_before": mind.revision, "revision_after": actor.mind.revision, "mind_before": mind, "mind_after": actor.mind, "action": action}, {"bindings": bindings, "grants": observation_grants, "execution_id": action_event}))
     if (0 < rt_count(observations)):
@@ -551,7 +548,7 @@ fn dvs_session_complete(state, receipt):
                         var cached = dv_find(simulations, candidate.id, false)
                         var simulation = false
                         var local_8 = false
-                        if (cached == false):
+                        if not dvs_model_recheck_eligible(actor, candidate, cached, time):
                             local_8 = dvs_model(actor, candidate, events, time, parent)
                         else:
                             var recheck = dvs_model_recheck(actor, cached)
@@ -559,6 +556,7 @@ fn dvs_session_complete(state, receipt):
                             local_8 = recheck
                         simulation = local_8
                         simulation = dv_with_many(simulation, {"validation_inputs": dv_explanation_merge(dv_explanation_model_inputs(actor.mind, simulation), dvs_model_observed_inputs(simulation)), "source_adoptions": actor.mind.adoptions, "source_response_models": dv_find(actor, "response_models", [])})
+                        simulation = dv_with_many(simulation, {"source_mind_time": actor.mind.time, "source_hypothesis": candidate, "source_replay_depth": dv_find(actor.policy, "Replay_Depth", rt_count(dvs_sim_plan(candidate)))})
                         simulations = dv_with(simulations, candidate.id, dv_with_many(simulation, {"event": events[(rt_count(events) - 1)].id, "source_revision": actor.mind.revision}))
                         actor = dv_with_many(actor, {"model_previous_event": events[(rt_count(events) - 1)].id, "last_cognitive_event": events[(rt_count(events) - 1)].id, "policy": dv_with_many(actor.policy, {"model_budget": simulation.remaining, "model_work_remaining": simulation.work_remaining})})
             k = (k + 1)
@@ -634,6 +632,35 @@ fn dvs_session_close(state):
     dvs_event(events, "session_stopped", "", dv_find(physical, "time", 0), dv_single(events[(rt_count(events) - 1)].id), {"reason": status, "actions_executed": executed})
     rt_print(rt_json_stringify({"type": "session_stopped", "status": status, "game_time": dv_find(physical, "time", 0)}))
     return {"events": events, "initial": initial, "final": {"physical": physical, "actors": pruned_actors}, "status": status, "time": dv_find(physical, "time", 0), "game_time_unit": "minute", "configuration": {"cost_model": costs, "formal_answers": dv_find(story, "formal_answers", []), "source_refs": dv_find(story, "source_refs", []), "time_origin": {"run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "unit": "minute"}, "report_labels": dv_find(story, "report_labels", []), "bindings": bindings}, "scope": dv_find(story, "execution_scope", "DV formal model; no Godot host input or geometry")}
+
+// A real, settled action reports its completion time to its own actor.
+// No other physical fields or inactive actors are synchronized.
+fn dvs_receipt_clock_observations(story, mind, bindings, observations, action_event, execution_event, time):
+    let clock = dv_find(story, "clock_ref", false)
+    if clock == false:
+        return observations
+    let local = dv_local(bindings, clock.object, mind.subject)
+    if local == "":
+        return observations
+    let ref = dv_scoped_ref(mind.subject, local, clock.facet, clock.field)
+    let prior = dv_read(mind, ref)
+    if not prior.known or not rt_is_numeric_value(prior.value):
+        return observations
+    let receipt = dv_observation(dv_list3(action_event, mind.subject, ref), mind.subject, ref, time, "perception", "execution-receipt", time, 1, dv_pair(execution_event, ref))
+    var result = []
+    var replaced = false
+    var i = 0
+    while i < rt_count(observations):
+        if dv_same_local_ref(mind.subject, observations[i].ref, ref):
+            if not replaced:
+                rt_push(result, receipt)
+                replaced = true
+        else:
+            rt_push(result, observations[i])
+        i = i + 1
+    if not replaced:
+        rt_push(result, receipt)
+    return result
 
 fn dvs_replace(items, index, value):
     var result = []

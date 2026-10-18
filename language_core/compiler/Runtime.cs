@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text.Json.Serialization;
 using System.Text;
 using System.Text.Json;
+using System.IO.Compression;
 
 namespace DuelView.Compiled;
 
@@ -518,12 +519,9 @@ public static class R
         JsonValueKind.False => false,
         _ => throw new Exception("DV persistence supports arrays, text, finite numbers and booleans")
     };
-    private sealed class JsonContext
-    {
-        public bool InEvents;
-        public string? CurrentEventType;
-    }
-    private static void WriteJsonFast(Utf8JsonWriter writer, object value, JsonContext? ctx = null)
+    // Serialization preserves the supplied DV value. Evidence projection belongs
+    // to explicit DV reporting APIs, never to implicit field-name filtering.
+    private static void WriteJsonFast(Utf8JsonWriter writer, object value)
     {
         switch (value)
         {
@@ -540,69 +538,12 @@ public static class R
                 writer.WriteStringValue(q.ToString());
                 break;
             case List<object> list:
-                if (list.Count == 2 && list[0] is string key)
-                {
-                    if (key is "history" or "simulations")
-                    {
-                        writer.WriteStartArray();
-                        writer.WriteStringValue(key);
-                        writer.WriteStartArray();
-                        writer.WriteEndArray();
-                        writer.WriteEndArray();
-                        return;
-                    }
-                    if (ctx != null && ctx.InEvents && ctx.CurrentEventType != "inference" && key is "adoptions" or "source_adoptions")
-                    {
-                        writer.WriteStartArray();
-                        writer.WriteStringValue(key);
-                        writer.WriteStartArray();
-                        writer.WriteEndArray();
-                        writer.WriteEndArray();
-                        return;
-                    }
-                    if (ctx != null && ctx.InEvents && ctx.CurrentEventType == "model_argument_unavailable" && key is "world" or "competitors")
-                    {
-                        writer.WriteStartArray();
-                        writer.WriteStringValue(key);
-                        writer.WriteStartArray();
-                        writer.WriteEndArray();
-                        writer.WriteEndArray();
-                        return;
-                    }
-                    if (key == "events" && list[1] is List<object> eventsList)
-                    {
-                        writer.WriteStartArray();
-                        writer.WriteStringValue("events");
-                        writer.WriteStartArray();
-                        var eventCtx = new JsonContext { InEvents = true };
-                        for (var i = 0; i < eventsList.Count; i++)
-                        {
-                            var evt = eventsList[i];
-                            eventCtx.CurrentEventType = null;
-                            if (evt is List<object> evtPairs)
-                            {
-                                for (var p = 0; p < evtPairs.Count; p++)
-                                {
-                                    if (evtPairs[p] is List<object> pair && pair.Count == 2 && pair[0] is "type" && pair[1] is string t)
-                                    {
-                                        eventCtx.CurrentEventType = t;
-                                        break;
-                                    }
-                                }
-                            }
-                            WriteJsonFast(writer, evt, eventCtx);
-                            if (writer.BytesPending >= 16 * 1024 * 1024)
-                                writer.Flush();
-                        }
-                        writer.WriteEndArray();
-                        writer.WriteEndArray();
-                        return;
-                    }
-                }
                 writer.WriteStartArray();
                 for (var i = 0; i < list.Count; i++)
                 {
-                    WriteJsonFast(writer, list[i], ctx);
+                    WriteJsonFast(writer, list[i]);
+                    if (writer.BytesPending >= 16 * 1024 * 1024)
+                        writer.Flush();
                 }
                 writer.WriteEndArray();
                 break;
@@ -615,7 +556,7 @@ public static class R
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { SkipValidation = true }))
         {
-            WriteJsonFast(writer, value, new JsonContext());
+            WriteJsonFast(writer, value);
             writer.Flush();
         }
         return Encoding.UTF8.GetString(stream.ToArray());
@@ -626,9 +567,13 @@ public static class R
         var partial = destination + ".partial";
         if (File.Exists(destination)) throw new IOException("Evidence destination already exists: " + destination);
         using (var stream = new FileStream(partial, FileMode.CreateNew, FileAccess.Write, FileShare.None, 16 * 1024 * 1024))
-        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { SkipValidation = true }))
         {
-            WriteJsonFast(writer, value, new JsonContext());
+            // Optional lossless storage encoding; the JSON value is unchanged.
+            // Dispose compression before publishing the final filename.
+            using var compressed = destination.EndsWith(".gz", StringComparison.OrdinalIgnoreCase)
+                ? new GZipStream(stream, CompressionLevel.Fastest, leaveOpen: true) : null;
+            using var writer = new Utf8JsonWriter(compressed is null ? stream : compressed, new JsonWriterOptions { SkipValidation = true });
+            WriteJsonFast(writer, value);
             writer.Flush();
         }
         File.Move(partial, destination);

@@ -330,18 +330,14 @@ fn c2d_goals(actor):
     var t = 0
     while t < rt_count(tasks):
         if tasks[t].actor == actor.id:
-            rt_push(goals, c2_goal(dv_fact(c2daily_ref(tasks[t].field), true), tasks[t].when, [c2_approved("real-daily-contact-action")]))
+            rt_push(goals, dv_with_many(c2_goal(dv_fact(c2daily_ref(tasks[t].field), true), tasks[t].when, [c2_approved("real-daily-contact-action")]), {"navigation_room": tasks[t].room, "navigation_methods": [tasks[t].id]}))
         t = t + 1
-    rt_push(goals, c2_observation_goal(c2daily_ref("meal_prepared"), c2_window(2, 690, 810), [c2_approved("look-for-real-lunch")], 0))
+    rt_push(goals, dv_with(c2_observation_goal(c2daily_ref("meal_prepared"), c2_window(2, 690, 810), [c2_approved("look-for-real-lunch")], 0), "navigation_room", "living_hall"))
     if actor.id == "shen":
-        rt_push(goals, c2_goal(c2_at("shen", "central_hall"), dv_all([c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), false), dv_not(c2_at("shen", "logistics"))]), [c2_approved("cook-real-lunch")]))
-        rt_push(goals, c2_goal(c2_at("shen", "logistics"), dv_all([c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), false)]), [c2_approved("cook-real-lunch")]))
-        rt_push(goals, c2_goal(dv_fact(c2daily_ref("meal_cooked"), true), c2_window(2, 690, 810), [c2_approved("cook-real-lunch")]))
-        rt_push(goals, c2_goal(c2_at("shen", "central_hall"), dv_all([c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), true), dv_not(c2_at("shen", "living_hall")), dv_fact(c2daily_ref("meal_prepared"), false)]), [c2_approved("deliver-real-lunch")]))
-        rt_push(goals, c2_goal(c2_at("shen", "living_hall"), dv_all([c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), true), dv_fact(c2daily_ref("meal_prepared"), false)]), [c2_approved("deliver-real-lunch")]))
-        rt_push(goals, c2_goal(dv_fact(c2daily_ref("meal_prepared"), true), c2_window(2, 690, 810), [c2_approved("cook-real-lunch")]))
+        rt_push(goals, dv_with_many(c2_goal(dv_fact(c2daily_ref("meal_cooked"), true), c2_window(2, 690, 810), [c2_approved("cook-real-lunch")]), {"navigation_room": "logistics", "navigation_methods": ["shen.c2.daily.cook-sixteen"]}))
+        rt_push(goals, dv_with_many(c2_goal(dv_fact(c2daily_ref("meal_prepared"), true), dv_all([c2_window(2, 690, 810), dv_fact(c2daily_ref("meal_cooked"), true)]), [c2_approved("deliver-real-lunch")]), {"navigation_room": "living_hall", "navigation_methods": ["shen.c2.daily.deliver-sixteen"]}))
     if actor.id == "ruan":
-        rt_push(goals, c2_goal(dv_fact(c2daily_ref("draft_notes"), true), c2daily_notes_window(), [c2_approved("draft-notes-through-real-action")]))
+        rt_push(goals, dv_with_many(c2_goal(dv_fact(c2daily_ref("draft_notes"), true), c2daily_notes_window(), [c2_approved("draft-notes-through-real-action")]), {"navigation_room": "central_hall", "navigation_methods": ["ruan.c2.draft-notes"]}))
     var i = 0
     while i < rt_count(rows):
         let row = rows[i]
@@ -349,15 +345,19 @@ fn c2d_goals(actor):
             var when = dv_all([row.when, row.literal, dv_fact(c2d_mark(actor.id, row.id), false)])
             if dv_find(row, "category", "") == "case":
                 when = dv_all([when, c2d_case_gate(actor.mind)])
-            rt_push(goals, c1n_index_goal_window({"kind": "communicate", "scope": "personal", "method_id": row.id, "available_when": when, "basis": [row.source], "requires_argument": false}))
+            if dv_has_key(row, "received_speech_requirement"):
+                if not dvp_received_speech_matches(dv_find(actor, "received_speeches", []), row.received_speech_requirement):
+                    when = dv_not(dv_true())
+            if dv_has_key(row, "response_topic"):
+                if rt_count(dvs_pending_request(actor, row)) == 0:
+                    when = dv_not(dv_true())
+            rt_push(goals, c1n_index_goal_window({"kind": "communicate", "scope": "personal", "method_id": row.id, "available_when": when, "basis": [row.source], "requires_argument": false, "navigation_room": row.room}))
         i = i + 1
     let study = dv_all([dv_fact(c2_access("north"), true), c2_window(2, 600, 690)])
-    if actor.id == "demon":
-        rt_push(goals, c2_goal(c2_at("demon", "central_hall"), dv_all([study, dv_not(c2_at("demon", "lecture"))]), [c2d_source("06_场面.story", 79, "请到讲堂")]))
-    rt_push(goals, c2_goal(c2_at(actor.id, "lecture"), study, [c2d_source("06_场面.story", 79, "请到讲堂")]))
+    rt_push(goals, dv_with(c2_goal(c2_at(actor.id, "lecture"), study, [c2d_source("06_场面.story", 79, "请到讲堂")]), "navigation_room", "lecture"))
     if actor.id == "bertrand":
-        rt_push(goals, c2_goal(dv_fact(c2d_person_ref(actor.id, "watching"), true), c2_any_night(), [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story", 30, "夜里巡夜：护住同伴")]))
-        rt_push(goals, c2_observation_goal(c2d_person_ref(actor.id, "small_shadow_seen"), dv_all([c2_any_night(), dv_fact(c2d_person_ref(actor.id, "watching"), true)]), [c2d_source("04_案件.story", 25, "有限身影观察")], 0))
+        rt_push(goals, dv_with(c2_goal(dv_fact(c2d_person_ref(actor.id, "watching"), true), c2_any_night(), [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story", 30, "夜里巡夜：护住同伴")]), "navigation_room", "logistics"))
+        rt_push(goals, dv_with(c2_observation_goal(c2d_person_ref(actor.id, "small_shadow_seen"), dv_all([c2_any_night(), dv_fact(c2d_person_ref(actor.id, "watching"), true)]), [c2d_source("04_案件.story", 25, "有限身影观察")], 0), "navigation_room", "logistics"))
     if actor.id == "detective":
         let ledger_fields = ["counted", "reserve_received", "day_recorded", "night_recorded", "pending_registered"]
         rt_push(goals, c2_observation_goal(c2_ref("c2.counter", "remaining"), c2_at(actor.id, "logistics"), [c1_source("docs/design-standard.md", 0, "实物清点与台账对照")], 0))
@@ -366,10 +366,21 @@ fn c2d_goals(actor):
             rt_push(goals, c2_observation_goal(c2_ref("c2.ledger", ledger_fields[i]), c2_at(actor.id, "logistics"), [c2d_source("04_案件.story", 10, "从读到账目再判断是否有缺口")], 0))
             i = i + 1
     if actor.id == "quer" or actor.id == "huo":
-        rt_push(goals, c2_goal(dv_fact(c2_ref("c2.granary", "latch_loose"), false), dv_fact(c2_ref("c2.granary", "latch_loose"), true), [c2d_source("10_执行.story", 17, "RepairLatch")]))
+        rt_push(goals, dv_with(c2_goal(dv_fact(c2_ref("c2.granary", "latch_loose"), false), dv_fact(c2_ref("c2.granary", "latch_loose"), true), [c2d_source("10_执行.story", 17, "RepairLatch")]), "navigation_room", "logistics"))
     let opportunity = c2d_known_council_proposal()
-    rt_push(goals, c2_goal(c2_at(actor.id, "oath_court"), dv_all([c2d_council_when(), c2_alive(actor.id), opportunity, dv_fact(c2_ref("c2.weather", "wind"), true)]), [c2d_source("06_场面.story", 340, "章二议事机会")]))
-    rt_push(goals, c2_goal(c2_at(actor.id, "central_hall"), dv_all([c2d_council_when(), c2_alive(actor.id), opportunity, dv_fact(c2_ref("c2.weather", "wind"), false)]), [c1_source("docs/design-standard.md", 0, "无风时在中央厅议事")]))
+    let venues = [{"room": "oath_court", "wind": true}, {"room": "central_hall", "wind": false}]
+    i = 0
+    while i < rt_count(venues):
+        let venue = venues[i]
+        let when = dv_all([c2d_council_when(), c2_alive(actor.id), opportunity, dv_fact(c2_ref("c2.weather", "wind"), venue.wind), dv_fact(c2daily_ref(rt_cat("signed.", actor.id)), false)])
+        rt_push(goals, dv_with(c2_goal(c2_at(actor.id, venue.room), when, [c2d_source("06_场面.story", 340, "章二议事机会")]), "navigation_room", venue.room))
+        // Ballot effects increment the actually inspected tally, never an assumed zero.
+        let tally = ["votes.open_plan", "votes.seal_plan", "votes.committee_plan"]
+        var n = 0
+        while n < rt_count(tally):
+            rt_push(goals, dv_with(c2_observation_goal(c2daily_ref(tally[n]), when, [c2_approved("actual-council-tally-before-personal-ballot")], 6210), "navigation_room", venue.room))
+            n = n + 1
+        i = i + 1
     return goals
 
 fn c2d_refresh_actor_goals(actor):
@@ -377,8 +388,11 @@ fn c2d_refresh_actor_goals(actor):
     var policy = dv_with(actor.policy, "chapter2_dialogue_goals", goals)
     var combined = c2_personal_goals(actor)
     var i = 0
-    if actor.id == "demon":
-        let carried = dv_find(actor.policy, "chapter1_carried_goals", [])
+    // Actual self-location is the arrival receipt; content installation is not arrival.
+    if actor.id != "demon" and dv_truth(actor.mind, c2_at(actor.id, "living_hall")) == "true":
+        policy = dv_with(policy, "chapter1_carried_goals", [])
+    let carried = dv_find(policy, "chapter1_carried_goals", [])
+    if actor.id == "demon" or dv_truth(actor.mind, c2_at(actor.id, "living_hall")) != "true":
         while i < rt_count(carried):
             rt_push(combined, carried[i])
             i = i + 1
@@ -392,7 +406,8 @@ fn c2d_refresh_actor_goals(actor):
         if dv_find(actions[i], "case_method", false):
             actions = dvs_replace(actions, i, dv_with(actions[i], "precondition", dv_all([actions[i].case_base_when, c2d_case_gate(actor.mind)])))
         i = i + 1
-    return dv_with_many(actor, {"policy": dv_with(policy, "goals", combined), "actions": actions})
+    let view = dv_with_many(actor, {"policy": dv_with(policy, "goals", combined), "actions": actions})
+    return dv_with(view, "policy", dv_with(view.policy, "goals", c2_navigation_goals(view, combined)))
 
 fn c2d_install_scene(scene):
     if dv_find(scene, "chapter2_dialogue_installed", false):

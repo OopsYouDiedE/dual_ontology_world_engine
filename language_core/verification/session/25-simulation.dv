@@ -434,7 +434,13 @@ fn dvs_model_execute(actor, hypothesis, events, time, parent):
     if (result.remaining < 1):
         local_2 = "budget-exhausted"
     else:
-        local_2 = "declared-plan-complete"
+        if rt_count(plan) == 0:
+            local_2 = "no-declared-plan"
+        else:
+            if complete:
+                local_2 = "declared-plan-complete"
+            else:
+                local_2 = "declared-plan-incomplete"
     result = dv_with_many(result, {"calculation_unit": "one-assumption-predict-rule-indexed-dispatch-context-binding-option-prediction-option-evaluation-response-dispatch-or-feature-comparison", "stop_reason": local_2})
     if replay_limited:
         result = dv_with(result, "stop_reason", "replay-depth-exhausted")
@@ -450,6 +456,34 @@ fn dvs_model_execute(actor, hypothesis, events, time, parent):
         rt_push(parents, previous)
     dvs_event(events, "mind_simulation", actor.id, time, parents, {"mind_revision": mind.revision, "hypothesis": hypothesis, "result": result, "actor_before": dv_without(actor, "simulations"), "actor_id": actor.id})
     return result
+
+// Recomparison only reuses a completed prediction under the identical source context.
+// Missing metadata, partial plans and changed inputs require a new paid model run.
+fn dvs_model_recheck_eligible(actor, hypothesis, model, time):
+    if model == false:
+        return false
+    if dv_find(dv_find(model, "evaluation_scope", []), "kind", "") == "causal-refutation":
+        return false
+    let required = ["plan_complete", "failures", "source_revision", "source_mind_time", "source_hypothesis", "source_adoptions", "source_response_models", "source_replay_depth", "start_time"]
+    var i = 0
+    while i < rt_count(required):
+        if not dv_has_key(model, required[i]):
+            return false
+        i = i + 1
+    if not model.plan_complete or rt_count(model.failures) != 0:
+        return false
+    if model.source_revision != actor.mind.revision or model.source_mind_time != actor.mind.time:
+        return false
+    if not dv_same(model.source_hypothesis, hypothesis):
+        return false
+    if not dv_same(model.source_adoptions, actor.mind.adoptions):
+        return false
+    if not dv_same(model.source_response_models, dv_find(actor, "response_models", [])):
+        return false
+    let depth = dv_find(actor.policy, "Replay_Depth", rt_count(dvs_sim_plan(hypothesis)))
+    if model.source_replay_depth != depth:
+        return false
+    return model.start_time == dv_find(hypothesis, "start_time", time)
 
 fn dvs_model_recheck(actor, model):
     var mind = actor.mind

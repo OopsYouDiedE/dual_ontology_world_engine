@@ -59,7 +59,9 @@ fn c2daily_rows_build():
     let quake = dv_all([c2_window(4, 1050, 1260), dv_fact(c2_ref("c2.weather", "earthquake_recent"), true)])
     let color = dv_fact(c2daily_ref("rare_color_layer"), "夹道罕见紫金以太色层")
     rt_push(rows, dv_with(c2d_row("demon", "demon.c2.truth-color", "living_hall", quake, color, "夹道有罕见的紫金以太色层。", c2_approved("actual-truthful-color-temptation-after-quake")), "opportunity", {"location": "living_hall", "participants": ["moran"], "mode": "all-present"}))
-    rt_push(rows, c2daily_after(c2daily_say("veronica", "veronica.c2.color-refute", "living_hall", quake, "那不是什么可以欣赏的‘色层’，那是高浓度源质在夹道冷壁上的凝析沉淀。试剂刚触及便已发黑。恶魔每个字都‘真’，拼在一起就是要命的毒饵。", ["moran", "demon"]), "demon", "demon.c2.truth-color"))
+    let recent_quake = dv_fact(c2_ref("c2.weather", "earthquake_recent"), true)
+    let color_warning = dv_with(c2daily_say("veronica", "veronica.c2.color-refute", "living_hall", quake, "颜色好看，不能证明安全。震后要在现场测量浓度，核对读数取得的时刻，再谈能不能出去；别让一句真话把人引出门。", ["moran", "demon"]), "literal", recent_quake)
+    rt_push(rows, c2daily_after(color_warning, "demon", "demon.c2.truth-color"))
     let guards = ["detective", "bertrand", "huo"]
     var g = 0
     while g < rt_count(guards):
@@ -226,8 +228,11 @@ fn c2daily_install_scene(scene):
         var actor = scene.actors[i]
         var mind = c2_add_new(actor.mind, c1_local_object("c2.daily"))
         rt_push(bindings, dv_binding("c2.daily", "c2.daily", actor.id))
-        mind = dv_store(mind, c2daily_ref(rt_cat("signed.", actor.id)), dv_field(false))
-        mind = dv_store(mind, c2daily_ref(rt_cat("voted.", actor.id)), dv_field(false))
+        // These are the owner's new, unperformed protocol actions, not a copy
+        // of another person's vote or a prediction of a future agreement.
+        let personal_record = dv_with(dv_field(false), "basis", [c2_approved("own-unperformed-council-record")])
+        mind = dv_store(mind, c2daily_ref(rt_cat("signed.", actor.id)), personal_record)
+        mind = dv_store(mind, c2daily_ref(rt_cat("voted.", actor.id)), personal_record)
         if actor.id == "demon":
             mind = dv_store(mind, c2daily_ref("rare_color_layer"), dv_field("夹道罕见紫金以太色层"))
         var actions = dv_clone(actor.actions)
@@ -263,7 +268,7 @@ fn c2daily_install_scene(scene):
             let delivery_law = c2daily_deliver_law()
             physical = dv_adopt(physical, c1_method(delivery, delivery_law), "enforce", 1, source)
             mind = dv_adopt(mind, c1_method(delivery, delivery_law), "predict", 1, source)
-            rt_push(actions, dv_with(c2_action(delivery, "help", delivery_law.premise, delivery_law.premise, delivery, [c2daily_ref("meal_prepared")], "沈鼎把热饭摆上起居厅的四张桌子。", source), "predict_law", delivery))
+            rt_push(actions, dv_with_many(c2_action(delivery, "help", delivery_law.premise, delivery_law.premise, delivery, [c2daily_ref("meal_prepared")], "沈鼎把热饭摆上起居厅的四张桌子。", source), {"predict_law": delivery, "public_observers": c2_people(), "public_grants": [c2daily_ref("meal_prepared"), c2daily_ref("portions")]}))
         if dv_has(c2_people(), actor.id):
             let id = rt_cat(actor.id, ".c2.daily.serve")
             let law = c2daily_serve_law(actor.id)
@@ -276,6 +281,11 @@ fn c2daily_install_scene(scene):
         var venue_index = 0
         while venue_index < rt_count(venues):
             let room = venues[venue_index]
+            let council_when = dv_all([c2_at(actor.id, room), c2d_council_when()])
+            let council_fields = [rt_cat("signed.", actor.id), rt_cat("voted.", actor.id), rt_cat("ballot.", actor.id), "votes.open_plan", "votes.seal_plan", "votes.committee_plan"]
+            var council = c2_inspect_action(actor.id, "c2.daily", room, council_fields, "在会场核对本人的投票、签名记录与当前票数。", source)
+            council = dv_with_many(council, {"id": rt_cat(actor.id, rt_cat(".c2.daily.council-record.", room)), "precondition": council_when, "authority_precondition": council_when})
+            rt_push(actions, council)
             let when = dv_all([c2_at(actor.id, room), c1_any(dv_fact(c2daily_ref("council_closed"), true), dv_at_least(c2_clock(), 6330))])
             var closing = c2_inspect_action(actor.id, "c2.daily", room, c2daily_closing_fields(), "在会场核对投票、签名与议事收束记录，留意脚下的动静。", closing_source)
             closing = dv_with_many(closing, {"id": rt_cat(actor.id, rt_cat(".c2.daily.closing.", room)), "precondition": when, "authority_precondition": when})

@@ -150,7 +150,7 @@ fn c2_norms_build():
         {"id": "ward_night", "owner": "ward", "board": "central_hall", "surface": "夜间取用公物先登记，次日共同核对记录。", "promotes": ["restriction", "ward_authority"], "sacrifices": ["not_targeted", "movement_freedom"], "mode": "forbid", "method": "unrecorded_take", "source": c2_approved("第五部分：WardNight当前公约提案")},
         {"id": "mora_night", "owner": "mora", "board": "logistics", "surface": "病者伤者优先。夜间照护或饥饿急需可取一份，次日告知。", "promotes": ["patient_priority", "night_exception"], "sacrifices": ["no_exception"], "mode": "permit", "method": "unrecorded_take", "source": c2_approved("第五部分：MoraNight当前公约提案")},
         {"id": "ruan_ledger", "owner": "ruan", "board": "logistics", "surface": "每日按人头分配，日末清点。", "promotes": ["per_person", "records"], "sacrifices": [], "mode": "prefer", "method": "collect_and_count", "source": c2_source("03_规矩与结局.story", 59, "RuanLedger")},
-        {"id": "shen_kitchen", "owner": "shen", "board": "hall", "surface": "粮仓钥匙交给做饭的人，统一煮粥，先喂饿着的人。", "promotes": ["central_cooking", "patient_priority", "records"], "sacrifices": [], "mode": "prefer", "method": "cook_and_feed", "source": c2_source("03_规矩与结局.story", 113, "ShenKitchen")},
+        {"id": "shen_kitchen", "owner": "shen", "board": "living_hall", "surface": "粮仓钥匙交给做饭的人，统一煮粥，先喂饿着的人。", "promotes": ["central_cooking", "patient_priority", "records"], "sacrifices": [], "mode": "prefer", "method": "cook_and_feed", "source": c2_source("03_规矩与结局.story", 113, "ShenKitchen")},
         {"id": "veronica_evidence", "owner": "veronica", "board": "lecture", "surface": "指控须有实物为证；取用须有记录。", "promotes": ["evidence", "records"], "sacrifices": [], "mode": "forbid", "method": "unsupported_accusation", "source": c2_source("03_规矩与结局.story", 127, "VeronicaEvidence")},
         {"id": "lucian_no_brand", "owner": "lucian", "board": "lecture", "surface": "未经查验，不得以“私取”之名限制任何人行走。", "promotes": ["evidence", "not_targeted", "movement_freedom", "night_exception"], "sacrifices": ["restriction"], "mode": "forbid", "method": "unverified_restriction", "source": c2_source("03_规矩与结局.story", 141, "LucianNoBrand")},
         {"id": "open_plan", "owner": "huo", "board": "central_hall", "surface": "外出前核对源质计与风向，按安全读数安排劳作，约定返程与停行条件。", "promotes": ["measured_work"], "sacrifices": ["cautious_travel", "committee"], "mode": "permit", "method": "measured_outing", "source": c2_approved("第五部分：OpenPlan当前公约提案")},
@@ -444,7 +444,7 @@ axiom c2_report_law(actor):
 axiom c2_night_eat_law(actor):
     var room = rt_cat("dorm.", c2_profile(actor).group)
     if c2_profile(actor).group == "living":
-        room = "hall"
+        room = "living_hall"
     return dv_axiom("c2_night_eat_law", 1, dv_all([c2_at(actor, room), c2_any_night(), dv_fact(c2_own(actor, "hungry"), true), dv_at_least(c2_own(actor, "rations"), 1), c2_alive(actor)]), [dv_increment(c2_own(actor, "rations"), -1), dv_increment(c2_own(actor, "consumed"), 1), dv_assign(c2_own(actor, "hungry"), false), dv_increment(c2_ref(rt_cat("c2.litter.", c2_profile(actor).group), "crumbs"), 1)])
 
 axiom c2_deliver_patient_law(actor):
@@ -752,8 +752,8 @@ fn c2_compact_observations(actor):
         rt_push(conditions, c2_at(actor, places[i]))
         i = i + 1
     let visible = dv_not(dv_all(c2_negated_conditions(conditions)))
-    let fields = ["ash_falling", "wind", "daylight", "severe_air"]
-    let weather = c2_action(rt_cat(actor, ".c2.inspect.weather"), "inspect", visible, visible, "", [c2_ref("c2.weather", "ash_falling"), c2_ref("c2.weather", "wind"), c2_ref("c2.weather", "daylight"), c2_ref("c2.weather", "severe_air")], "望向廊外，看看天色和风。", c2_approved("visible-actual-weather-not-other-peoples-exposure"))
+    let fields = ["ash_falling", "wind", "daylight", "severe_air", "earthquake_recent"]
+    let weather = c2_action(rt_cat(actor, ".c2.inspect.weather"), "inspect", visible, visible, "", [c2_ref("c2.weather", "ash_falling"), c2_ref("c2.weather", "wind"), c2_ref("c2.weather", "daylight"), c2_ref("c2.weather", "severe_air"), c2_ref("c2.weather", "earthquake_recent")], "望向廊外，看看天色和风。", c2_approved("visible-actual-weather-not-other-peoples-exposure"))
     return [dv_with(clock, "repeatable", true), dv_with_many(weather, {"repeatable": true, "presentation": c2_inspection_presentation(actor, "c2.weather", fields)})]
 
 fn c2_self_grants(actor):
@@ -898,6 +898,120 @@ fn c2_goal(proposition, when, basis):
 fn c2_observation_goal(ref, when, basis, time):
     return c1n_index_goal_window({"kind": "evidence", "scope": "personal", "ref": ref, "source": "perception", "available_when": when, "basis": basis, "minimum_time": time})
 
+// A declared work location is an intention, not a prediction of its result.
+// Choose one location for all owned opportunities, including daily work and
+// communication, rather than granting simultaneous competing arrival rewards.
+fn c2_navigation_condition(condition, actor):
+    let op = dv_find(condition, "op", "")
+    if op == "equals" and dv_same_local_ref(actor, condition.ref, c2_position_ref(actor)):
+        return dv_true()
+    if op == "all":
+        var items = []
+        var i = 0
+        while i < rt_count(condition.items):
+            rt_push(items, c2_navigation_condition(condition.items[i], actor))
+            i = i + 1
+        return dv_all(items)
+    return condition
+
+fn c2_navigation_pending(actor, goal):
+    if dv_find(goal, "kind", "") == "evidence":
+        return not dvp_source_supported_since(dv_read(actor.mind, goal.ref), dv_find(goal, "source", "perception"), dv_find(goal, "minimum_time", 0))
+    return c1n_future_goal_pending(actor, goal)
+
+fn c2_navigation_local_ready(actor, goal):
+    var methods = dv_find(goal, "navigation_methods", [])
+    if dv_has_key(goal, "method_id"):
+        methods = dv_append(methods, goal.method_id)
+    let relevant = dvp_goal_refs(actor)
+    var i = 0
+    while i < rt_count(methods):
+        let action = dvp_find_action(actor.actions, methods[i])
+        if action != false and action.kind != "move" and dvp_eligible(actor, action, actor.mind, relevant):
+            return true
+        i = i + 1
+    return false
+
+fn c2_navigation_goals(actor, goals):
+    if c2i_closing_navigation(actor) != false:
+        return goals
+    var first = false
+    var fallback = false
+    var i = 0
+    while i < rt_count(goals):
+        let goal = goals[i]
+        let room = dv_find(goal, "navigation_room", "")
+        let basis = dv_find(goal, "basis", [])
+        let when = c2_navigation_condition(dv_find(goal, "available_when", dv_true()), actor.id)
+        if room != "" and 0 < rt_count(basis) and c2_navigation_pending(actor, goal) and dv_truth(actor.mind, when) == "true":
+            let ready = dv_truth(actor.mind, dv_all(dv_find(goal, "navigation_requirements", []))) == "true"
+            if dv_truth(actor.mind, c2_at(actor.id, room)) == "true":
+                if ready and c2_navigation_local_ready(actor, goal):
+                    // Local substantive work keeps priority over another trip.
+                    return goals
+            else:
+                let route = c2_navigation_route(actor, room)
+                if route != false:
+                    let candidate = {"goal": goal, "route": route, "when": when}
+                    if fallback == false:
+                        fallback = candidate
+                    if ready and first == false:
+                        first = candidate
+        i = i + 1
+    if first == false:
+        first = fallback
+    if first != false:
+        let route = first.route
+        let basis = dv_append(first.goal.basis, route)
+        let intended = c2_goal(c2_at(actor.id, route.next), dv_all([first.when, c2_at(actor.id, route.origin)]), basis)
+        return dv_append(goals, dv_with(intended, "navigation_intention", {"target": route.target, "next": route.next, "scope": "known-route-only-not-task-completion"}))
+    return goals
+
+// A closed downstream gate does not prevent approaching its safe-side origin.
+// The returned prefix contains only owned, known-open movement laws. Searching
+// the declared map beyond that gate never grants access or assumes it can open.
+fn c2_navigation_route(actor, target):
+    let direct = c2i_known_route(actor, target)
+    if direct != false:
+        return direct
+    let position = dv_read(actor.mind, c2_position_ref(actor.id))
+    if not dv_uncontested(position) or position.value == target:
+        return false
+    var queue = [{"room": position.value, "first": "", "prefix_end": position.value, "blocked": false, "basis": []}]
+    var visited = [position.value]
+    var cursor = 0
+    let edges = c2_edges()
+    while cursor < rt_count(queue):
+        let node = queue[cursor]
+        var i = 0
+        while i < rt_count(edges):
+            let edge = edges[i]
+            var destination = ""
+            if edge.from == node.room:
+                destination = edge.to
+            if edge.to == node.room:
+                destination = edge.from
+            if destination != "" and not dv_has(visited, destination):
+                let action = c2_move_action(actor.id, node.room, destination, edge.gate)
+                let adoption = dv_find(actor.mind.adoptions, action.predict_law, false)
+                if adoption != false and adoption.active and adoption.mode == "predict":
+                    var next = dv_with(node, "room", destination)
+                    if not node.blocked:
+                        if dv_truth(actor.mind, dv_fact(c2_access(edge.gate), true)) == "true":
+                            var first = node.first
+                            if first == "":
+                                first = destination
+                            next = dv_with_many(next, {"first": first, "prefix_end": destination, "basis": dv_append(node.basis, {"method": action.id, "adoption_basis": adoption.basis, "gate": c2_access(edge.gate), "gate_cell": dv_read(actor.mind, c2_access(edge.gate))})})
+                        else:
+                            next = dv_with(next, "blocked", true)
+                    if destination == target and next.first != "":
+                        return {"origin": position.value, "next": next.first, "target": next.prefix_end, "requested_target": target, "path_basis": next.basis, "scope": "known-open-prefix-before-unverified-gate"}
+                    rt_push(queue, next)
+                    rt_push(visited, destination)
+            i = i + 1
+        cursor = cursor + 1
+    return false
+
 // A route inspection concerns a door at the owner's current known location.
 fn c2_gate_visible(actor, gate):
     let edges = c2_edges()
@@ -922,6 +1036,28 @@ fn c2_personal_goals(actor):
     let id = actor.id
     let source = [c2_person_source(id)]
     var goals = [c2_observation_goal(c2_clock(), dv_true(), [c2_approved("actual-clock-observation-before-time-sensitive-actions")], 0)]
+    // Fixed, owned observation windows do not assume what the weather will be.
+    // Rechecking at a new day/evening is distinct from refreshing on each clock tick.
+    let weather_fields = ["wind", "daylight", "severe_air", "earthquake_recent"]
+    var weather_day = 2
+    while weather_day <= 5:
+        let boundaries = [480, 1260]
+        var phase = 0
+        while phase < rt_count(boundaries):
+            let start = boundaries[phase]
+            var end = 1260
+            if start == 1260:
+                end = 1440
+            var field_index = 0
+            while field_index < rt_count(weather_fields):
+                rt_push(goals, c2_observation_goal(c2_ref("c2.weather", weather_fields[field_index]), c2_window(weather_day, start, end), [c2_approved("owned-daily-environment-observation-opportunity")], (weather_day - 1) * 1440 + start))
+                field_index = field_index + 1
+            phase = phase + 1
+        weather_day = weather_day + 1
+    var quake_field = 0
+    while quake_field < rt_count(weather_fields):
+        rt_push(goals, c2_observation_goal(c2_ref("c2.weather", weather_fields[quake_field]), c2_window(4, 1050, 1260), [c2_approved("owned-evening-safety-observation-not-predicted-quake")], 5370))
+        quake_field = quake_field + 1
     // user:2026-10-18章末授权：观察真实收束，不预置签署结果。
     rt_push(goals, c2_observation_goal(c2_ref("c2.daily", "council_closed"), dv_at_least(c2_clock(), 6330), [c2_approved("user:2026-10-18章末授权")], 6330))
     rt_push(goals, c2_observation_goal(c2_ref("c2.daily", "council_ended"), dv_fact(c2_ref("c2.daily", "council_closed"), true), [c2_approved("user:2026-10-18章末授权")], 0))
@@ -955,6 +1091,7 @@ fn c2_personal_goals(actor):
         var corridor_index = 0
         while corridor_index < rt_count(indoor_gates):
             let gate = indoor_gates[corridor_index]
+            rt_push(goals, dv_with_many(c2_observation_goal(c2_ref("c2.weather", "severe_air"), dv_all([c2_at(id, c2_corridor_origin(gate)), dv_at_least(c2_clock(), 1980)]), [c2_approved("current-intake-safety-before-corridor-work")], 1980), {"refresh_until": dv_fact(c2_ref(rt_cat("c2.corridor.", gate), "ventilated"), true), "refresh_refs": [c2_ref(rt_cat("c2.corridor.", gate), "intake_safe"), c2_ref(rt_cat("c2.corridor.", gate), "seal_intact")]}))
             rt_push(goals, c2_observation_goal(c2_ref(rt_cat("c2.corridor.", gate), "ventilated"), dv_all([c2_at(id, c2_corridor_origin(gate)), dv_at_least(c2_clock(), 1980)]), [c2_approved("现场核对封闭连廊")], 1980))
             rt_push(goals, c2_goal(dv_fact(c2_ref(rt_cat("c2.corridor.", gate), "ventilated"), true), dv_all([c2_at(id, c2_corridor_origin(gate)), dv_at_least(c2_clock(), 1980)]), [c2_approved("经核对后实际换气")]))
             rt_push(goals, c2_goal(dv_fact(c2_access(gate), true), dv_all([c2_at(id, c2_corridor_origin(gate)), dv_at_least(c2_clock(), 1980)]), [c2_approved("经核对后实际开启连廊")]))
@@ -964,7 +1101,7 @@ fn c2_personal_goals(actor):
     while i < rt_count(norms):
         let norm = norms[i]
         if norm.owner == id:
-            rt_push(goals, c2_goal(dv_fact(c2_ref(c2_norm_object(norm.id), "posted"), true), dv_all([c2_at(id, norm.board), dv_at_least(c2_clock(), 2250)]), [norm.source]))
+            rt_push(goals, dv_with_many(c2_goal(dv_fact(c2_ref(c2_norm_object(norm.id), "posted"), true), dv_at_least(c2_clock(), 2250), [norm.source]), {"navigation_room": norm.board, "navigation_requirements": [c2_norm_available(norm)], "navigation_methods": [rt_cat(id, rt_cat(".c2.propose.", norm.id)), rt_cat(id, rt_cat(".c2.post.", norm.id))]}))
         rt_push(goals, c2_observation_goal(c2_ref(c2_norm_object(norm.id), "posted"), dv_all([c2_at(id, norm.board), dv_at_least(c2_clock(), 2250)]), [norm.source], 0))
         rt_push(goals, c2_observation_goal(c2_ref(c2_norm_object(norm.id), "text"), dv_fact(c2_ref(c2_norm_object(norm.id), "posted"), true), [norm.source], 0))
         rt_push(goals, c2_goal(dv_fact(c2_own(id, rt_cat("decided.", norm.id)), true), dv_fact(c2_ref(c2_norm_object(norm.id), "text"), norm.surface), [norm.source]))
@@ -976,7 +1113,17 @@ fn c2_personal_goals(actor):
         while i < rt_count(meals):
             let meal = meals[i]
             let flag = rt_cat("eaten.", rt_cat(rt_show(day), rt_cat(".", meal.id)))
-            rt_push(goals, c2_goal(dv_fact(c2_own(id, flag), true), c2_window(day, meal.start, meal.end), source))
+            var meal_room = "logistics"
+            if day == 2 and meal.id == "noon":
+                meal_room = "living_hall"
+            var meal_ready = c1_any(dv_at_least(c2_own(id, "rations"), 1), dv_fact(c2_ref("c2.counter", "open"), true))
+            if meal_room == "living_hall":
+                meal_ready = c1_any(dv_at_least(c2_own(id, "rations"), 1), dv_fact(c2daily_ref("meal_prepared"), true))
+            let suffix = rt_cat(rt_show(day), rt_cat(".", meal.id))
+            var meal_methods = [rt_cat(id, rt_cat(".c2.collect.", suffix)), rt_cat(id, rt_cat(".c2.eat.", suffix))]
+            if meal_room == "living_hall":
+                rt_push(meal_methods, rt_cat(id, ".c2.daily.serve"))
+            rt_push(goals, dv_with_many(c2_goal(dv_fact(c2_own(id, flag), true), c2_window(day, meal.start, meal.end), source), {"navigation_room": meal_room, "navigation_requirements": [meal_ready], "navigation_methods": meal_methods}))
             i = i + 1
         day = day + 1
     rt_push(goals, c2_goal(dv_fact(c2_own(id, "hungry"), false), dv_fact(c2_own(id, "hungry"), true), source))
@@ -987,7 +1134,7 @@ fn c2_personal_goals(actor):
         var service_day = 2
         while service_day <= 5:
             let active = c1_any(c2_window(service_day, 720, 840), c2_window(service_day, 1080, 1260))
-            rt_push(goals, c2_goal(dv_fact(c2_ref("c2.counter", "open"), true), active, [c2_approved("real-counter-service-does-not-require-total-granary-key")]))
+            rt_push(goals, dv_with(c2_goal(dv_fact(c2_ref("c2.counter", "open"), true), active, [c2_approved("real-counter-service-does-not-require-total-granary-key")]), "navigation_room", "logistics"))
             service_day = service_day + 1
     rt_push(goals, c2_goal(dv_fact(c2_own(id, "owe_notes"), 0), dv_all(dv_pair(dv_at_least(c2_own(id, "owe_notes"), 1), dv_fact(c2_own(id, "busy_care"), false))), [c2_source("10_执行.story", 9, "Inform")]))
     if id == "huo" or id == "margaret":
@@ -1130,7 +1277,7 @@ fn c2_extend_actor_from(actor, physical, previous):
             rt_push(norm_rules, extra_rules[i])
         i = i + 1
     var policy = dv_with_many(actor.policy, {"topic_bindings": dv_append(dv_find(actor.policy, "topic_bindings", []), binding), "value_order": order, "value_basis": value_basis, "chapter2_profile": profile, "norm_rules": norm_rules, "visual_identity_when": dv_fact(c2_ref("c2.weather", "daylight"), true)})
-    policy = dv_with_many(policy, {"plan_depth": 1, "first_night_plan_depth": 1, "first_night_plan_active": false, "positive_move_root_stop": true, "daytime_wait_chunk_limit": 120})
+    policy = dv_with_many(policy, {"plan_depth": 2, "first_night_plan_depth": 2, "first_night_plan_active": false, "positive_move_root_stop": false, "daytime_wait_chunk_limit": 120})
     var actions = c2_actor_actions(actor.id)
     let first_night_group = dv_has(["detective", "huo", "shen", "su", "quer", "lucian", "ward", "gu"], actor.id) and dv_truth(physical, c2_at(actor.id, "living_hall")) == "true"
     // Residents still outside the living hall retain the methods and goals needed to arrive.
@@ -1342,7 +1489,6 @@ fn c2i_goals(actor):
     let id = actor.id
     var goals = []
     let rows = c2i_rows()
-    let focus = c2i_navigation_focus(actor, rows)
     let closing = c2i_closing_navigation(actor)
     if closing != false:
         let source = c2_approved("user:2026-10-18章末授权")
@@ -1355,16 +1501,7 @@ fn c2i_goals(actor):
         let row = rows[i]
         if row.actor == id:
             let completion = dv_fact(c2_ref(row.object, row.field), c2i_value(row))
-            if closing == false and row.id == focus:
-                let transit_goal = c2_goal(c2_at(id, row.room), row.when, [c2_approved("chapter-two-investigation-transit")])
-                if not dv_has(goals, transit_goal):
-                    rt_push(goals, transit_goal)
-                let route = c2i_known_route(actor, row.room)
-                if route != false and route.next != row.room:
-                    let relay = c2_goal(c2_at(id, route.next), dv_all([row.when, c2_at(id, route.origin)]), [c2_approved("own-declared-investigation-route"), route])
-                    if not dv_has(goals, relay):
-                        rt_push(goals, relay)
-            rt_push(goals, dv_with(c2_goal(completion, row.when, [c2_approved("chapter-two-investigation-opportunity")]), "navigation_completion", completion))
+            rt_push(goals, dv_with_many(c2_goal(completion, row.when, [c2_approved("chapter-two-investigation-opportunity")]), {"navigation_completion": completion, "navigation_room": row.room, "navigation_requirements": row.requirements, "navigation_methods": [row.id]}))
         i = i + 1
     if id == "ruan":
         rt_push(goals, c2_goal(dv_fact(c2_ref("c2.ledger", "supplement_column"), true), dv_fact(c2_own("ruan", "accepted.records_supplement"), true), [c2_approved("implement-reserved-column-after-acceptance")]))

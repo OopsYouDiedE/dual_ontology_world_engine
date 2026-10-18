@@ -1,5 +1,24 @@
 # DV 模块维护
 
+本轮追加反事实比较（2026-10-18）：用户要求完成设计文档中的测试。集中完成接管修复并只读审查后冻结源码，对两种侦探配置与四个初始区分别运行一次最多180秒的独立正式一级会话，主代理串行测量，配置间不改源码；每组由新上下文代理审查实际证据，审查者不读取设计。具体关键节点、范围与版本记录于本任务目录 COUNTERFACTUAL-CRITERIA.md，未覆盖的后续分支保持未知。本条为本轮新增矩阵授权，历史单次窗口与中断记录继续保留。
+
+真实 Complete 以已结算 execution.time 推进本人 mind.time；已有且经声明 clock_ref/本人 bindings 映射的数值时钟取得同次执行回执观察。该观察来源为 perception/execution-receipt，同字段原观察合并，成功与失败均不重复加时；未知/未绑定时钟保持未知，不读取其他权威字段、不在Prepare或预测同步、不全员同步。初次失败窗口与修复后的新来源分开封存。
+
+rt_json_write 目标以 .gz 结尾时使用无损 gzip，解压为完整原JSON字节，仍先 .partial，压缩关闭后发布正式文件。run_debug --trace-compression gzip 明确记录文件名与存储编码；默认none保持原JSON。保存时限包含逻辑与封存，不借压缩改变时域或宣称剧情达成。
+
+
+## 接管修复工程合同（2026-10-18）
+
+调度不按一次无候选结果长期休眠主体；同一游戏时刻仍用 decision_time/revision 防止重复准备，推进后重新处理实际收闻、同处变化与共同选择。第二章按本人认识、时间和章节刷新目标，取消只覆盖调查字段的刷新签名；实际到起居厅前保留必要旧章目标。
+
+目标可声明 navigation_room、navigation_requirements、navigation_methods。日常、沟通与调查共用一个已知开放路径的首步意图，本地优先须对应实质方法通过共享资格门。下游通路未核实时仅可接近其安全侧，不预测开门、他人响应或任务成功。第二章恢复两层规划，费用、工作预算和正式判定不变；本轮不作同条件提速声明。
+
+Runtime JSON 完整序列化输入值，不按 history、simulations、adoptions、world 或事件名称清空字段。debug 投影明确保留假设、预测、比较、剪枝证书、源采纳与停止理由，大世界/主体快照以原始 trace 为准。保存超时保留部分文件并记为未完整封存。
+
+付费重演缓存采用保守重比门：只有已完成且无执行失败的计划，候选、本人revision/time、采纳、响应模型、有效Replay_Depth及模型起点完全一致时才重比旧预测；否则重新调用同一付费dvs_model，不更新旧模型来源冒充重新推演。新增来源字段缺失时缓存失效。停止诊断分列no-declared-plan、declared-plan-incomplete、declared-plan-complete、budget-exhausted与replay-depth-exhausted，不以停止标签替代plan_complete和实际比较。
+
+run_debug.py 新增 actual-event-index.jsonl、reasoning-evidence.jsonl、evidence-summary.json，含源指纹、行号和字段缺失状态。--evidence-from <既有events.jsonl> --out <新目录> 只流式整理历史投影，不构建、不运行、不补猜缺失字段。result 分列停止、时域、章节摘要和 narrative_completion，正常退出或到达时域不自动建立剧情达成。本任务继续使用 artifacts/partial-bootstrap-core/takeover-repair-20261018/；旧报告及证据原样保留，以新勘误记录区别。
+
 本目录继承仓库根AGENTS.md。语言名为DuelView（DV），源码后缀为`.dv`，实现位于language_core。
 
 ## 单一动作实现（2026-10-14）

@@ -28,6 +28,117 @@ def clock(value):
     return f'第 {whole // 1440 + 1} 日 {whole % 1440 // 60:02}:{whole % 60:02}'
 
 
+REASONING_FIELDS = {
+    'mind_simulation': ('hypothesis', 'result.assumptions', 'result.predictions',
+                        'result.trace', 'result.comparisons', 'result.expanded',
+                        'result.remaining', 'result.stop_reason', 'source_adoptions'),
+    'model_recheck': ('hypothesis', 'model_before', 'result.predictions',
+                      'result.comparisons', 'result.expanded', 'result.remaining'),
+    'factor_prune': ('certificates', 'rejections', 'expanded', 'remaining',
+                     'work_remaining', 'source_adoptions'),
+    'model_argument_unavailable': ('hypothesis', 'competitors', 'result.reason',
+                                  'result.argument', 'result.expanded', 'result.remaining'),
+    'model_argument_accepted': ('hypothesis', 'competitors', 'result.reason',
+                               'result.argument', 'result.expanded', 'result.remaining'),
+}
+
+
+def field_availability(value, path):
+    """Presence is a structural observation, never validation of a model or source."""
+    for key in path.split('.'):
+        if not isinstance(value, dict) or key not in value:
+            return 'not-exported'
+        value = value[key]
+    return 'exported-empty' if value == [] or value == {} or value == '' else 'exported'
+
+
+def project_evidence(source_path, destination):
+    """Stream already recorded packets; never open the potentially huge trace file."""
+    summary = {
+        'schema': 'dv-evidence-index-v1', 'source': str(source_path.resolve()),
+        'projector_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        'scope': 'recorded debug projection only; no state reconstruction or content judgment',
+        'event_inventory': {}, 'reasoning_field_inventory': {},
+        'projection_configuration': None,
+        'debug_end_observed': False, 'debug_end': None,
+        'narrative_completion': 'not-assessed; review declared criteria against actual event receipts',
+        'source_validation': 'not-performed; parent IDs and source fields are references, not validated proof',
+        'invalid_source_lines': [],
+    }
+    digest = hashlib.sha256()
+    with source_path.open('rb') as source, \
+            (destination / 'actual-event-index.jsonl').open('x', encoding='utf-8') as actual, \
+            (destination / 'reasoning-evidence.jsonl').open('x', encoding='utf-8') as reasoning:
+        for number, raw_line in enumerate(source, 1):
+            digest.update(raw_line)
+            if not raw_line.strip():
+                continue
+            try:
+                packet = record(json.loads(raw_line))
+            except (json.JSONDecodeError, UnicodeDecodeError) as error:
+                summary['invalid_source_lines'].append({'source_line': number, 'error': str(error)})
+                continue
+            if not isinstance(packet, dict):
+                summary['invalid_source_lines'].append({'source_line': number, 'error': 'packet is not a record'})
+                continue
+            if packet.get('type') == 'debug_start':
+                summary['projection_configuration'] = packet.get('configuration')
+                continue
+            if packet.get('type') == 'debug_end':
+                summary['debug_end_observed'] = True
+                summary['debug_end'] = packet
+                summary['debug_end_source_line'] = number
+                continue
+            if packet.get('type') != 'debug_events':
+                continue
+            for index, event in enumerate(packet.get('batch', {}).get('events', [])):
+                kind = event['type']
+                inventory = summary['event_inventory'].setdefault(kind, {'occurrences': 0, 'first': None, 'last': None})
+                pointer = {'source_line': number, 'batch_event_index': index,
+                           'event_id': event['event_id'], 'actor': event.get('actor'),
+                           'game_time': event.get('game_time')}
+                inventory['occurrences'] += 1
+                inventory['first'] = inventory['first'] or pointer
+                inventory['last'] = pointer
+                detail = event.get('detail', {})
+                if kind in REASONING_FIELDS:
+                    availability = {path: field_availability(detail, path) for path in REASONING_FIELDS[kind]}
+                    for path, status in availability.items():
+                        field_inventory = summary['reasoning_field_inventory'].setdefault(kind, {}).setdefault(path, {})
+                        field_inventory[status] = field_inventory.get(status, 0) + 1
+                    item = {**pointer, 'type': kind, 'meaning': 'record of subjective calculation; predictions are not actual effects',
+                            'field_availability': availability, 'projection': event}
+                    reasoning.write(json.dumps(item, ensure_ascii=False) + '\n')
+                else:
+                    # All other events remain available for criteria chosen by the reviewer.
+                    # Selection/quotation/scheduling are explicitly not completed execution.
+                    role = {
+                        'action_execution': 'execution-receipt',
+                        'host_completion': 'host-receipt-awaiting-DV-settlement',
+                        'action_scheduled': 'scheduled-intent',
+                        'planning_choice': 'subjective-choice',
+                        'planning_stop': 'subjective-search-stop',
+                        'chapter_content_available': 'content-availability',
+                        'question_transition': 'protocol-transition',
+                    }.get(kind, 'recorded-mechanism-event')
+                    item = {**pointer, 'type': kind, 'evidence_role': role, 'parents': event.get('parents', []),
+                            'action_id': event.get('action_id'), 'action_kind': event.get('action_kind'),
+                            'purpose_sources': event.get('purpose_sources', []), 'detail': detail,
+                            'execution_status': detail.get('status') if kind == 'action_execution' else None,
+                            'meaning': 'recorded event; no inferred achievement or narrative completion'}
+                    actual.write(json.dumps(item, ensure_ascii=False) + '\n')
+    summary['source_sha256'] = digest.hexdigest()
+    end = summary['debug_end'] or {}
+    stop = end.get('stop_evidence', {})
+    summary['stop_reasons'] = stop.get('reasons', [])
+    summary['world_horizon_observed'] = 'world-horizon' in summary['stop_reasons']
+    summary['chapter_summary_reported'] = stop.get('chapter_summary')
+    summary['packet_stream_well_formed'] = not summary['invalid_source_lines']
+    with (destination / 'evidence-summary.json').open('x', encoding='utf-8') as output:
+        json.dump(summary, output, ensure_ascii=False, indent=2)
+    return summary
+
+
 def export(out, destination=None, scope='正式逻辑会话的实际可见正文；不含 Godot 画面。仅覆盖本轮已执行范围。'):
     destination = destination or out
     complete = True
@@ -101,8 +212,10 @@ def main():
     parser.add_argument('--gc-mode', choices=('server', 'workstation'), default='server')
     parser.add_argument('--gc-heaps', type=int, default=min(4, os.cpu_count() or 1))
     parser.add_argument('--profile', action='store_true', help='Build an instrumented DV session and report per-function and work-type time')
+    parser.add_argument('--evidence-from', type=Path, help='Only project an existing events.jsonl packet stream into a new --out directory; never build or execute a session')
     parser.add_argument('--detective-profile', default='Standard_Detective', choices=('Standard_Detective', 'Foolish_Detective'))
     parser.add_argument('--detective-zone', default='zone_yi', choices=('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding'))
+    parser.add_argument('--trace-compression', choices=('none', 'gzip'), default='none', help='Lossless storage for the full raw JSON trace; no field projection')
     args = parser.parse_args()
     if args.gc_heaps < 1:
         parser.error('--gc-heaps must be positive')
@@ -110,6 +223,9 @@ def main():
         parser.error('--timeout must be positive')
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
+    if args.evidence_from:
+        evidence = project_evidence(args.evidence_from.resolve(), out)
+        return 0 if evidence['packet_stream_well_formed'] else 1
     build = out / 'program'
     build.mkdir()
     env = environment()
@@ -143,18 +259,21 @@ def main():
     if args.profile:
         execution_env['DV_PROFILE_PATH'] = str(out / 'profile-raw.json')
     start = time.monotonic()
+    trace_name = 'trace.json.gz' if args.trace_compression == 'gzip' else 'trace.json'
     result = {'executor': 'formal-model', 'geometry': False, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'detective_profile': args.detective_profile, 'detective_zone': args.detective_zone, 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.startswith(('DOTNET_GC', 'DOTNET_gc'))}}
     try:
         with (out / 'stdout.jsonl').open('wb') as stdout, (out / 'stderr.txt').open('wb') as stderr:
-            process = subprocess.run(['dotnet', str(build / 'bin/Release/net8.0/Program.dll'), str(out / 'trace.json'), args.detective_profile, args.detective_zone], cwd=ROOT, env=execution_env, stdout=stdout, stderr=stderr, timeout=args.timeout)
+            process = subprocess.run(['dotnet', str(build / 'bin/Release/net8.0/Program.dll'), str(out / trace_name), args.detective_profile, args.detective_zone], cwd=ROOT, env=execution_env, stdout=stdout, stderr=stderr, timeout=args.timeout)
             result['exit_code'] = process.returncode
     except subprocess.TimeoutExpired:
         result['timeout_seconds'] = args.timeout
     finally:
         result['elapsed_seconds'] = time.monotonic() - start
         result['source_unchanged'] = all(Path(p).is_file() and hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in hashes.items())
-        result['trace_written'] = (out / 'trace.json').is_file()
-        result['trace_partial_written'] = (out / 'trace.json.partial').is_file()
+        result['trace_path'] = trace_name
+        result['trace_storage_encoding'] = args.trace_compression
+        result['trace_written'] = (out / trace_name).is_file()
+        result['trace_partial_written'] = (out / (trace_name + '.partial')).is_file()
         if args.profile and (out / 'profile-raw.json').is_file():
             try:
                 summarize_profile(out / 'profile-raw.json', modules, out / 'profile-summary.json')
@@ -164,15 +283,13 @@ def main():
         try:
             result['output_well_formed'] = export(out)
             result['text_exported'] = True
-            result['logical_loop_finished'] = False
-            with (out / 'stdout.jsonl').open(encoding='utf-8') as source:
-                for line in source:
-                    try:
-                        packet = record(json.loads(line))
-                    except json.JSONDecodeError:
-                        continue
-                    if isinstance(packet, dict) and packet.get('type') == 'debug_end':
-                        result['logical_loop_finished'] = True
+            evidence = project_evidence(out / 'events.jsonl', out)
+            result['evidence_projection'] = 'evidence-summary.json'
+            result['logical_loop_finished'] = evidence['debug_end_observed']
+            result['stop_reasons'] = evidence['stop_reasons']
+            result['world_horizon_observed'] = evidence['world_horizon_observed']
+            result['chapter_summary_reported'] = evidence['chapter_summary_reported']
+            result['narrative_completion'] = evidence['narrative_completion']
             if 'timeout_seconds' in result:
                 result['timeout_stage'] = 'trace-close-or-serialization' if result['logical_loop_finished'] else 'logical-session'
         except Exception as error:
