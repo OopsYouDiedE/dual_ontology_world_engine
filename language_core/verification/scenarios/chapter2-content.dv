@@ -282,13 +282,17 @@ axiom c2_move_law(actor, origin, target, gate):
         i = i + 1
     return dv_axiom("c2_move_law", 1, dv_all(conditions), dv_single(dv_assign(c2_position_ref(actor), target)))
 
+fn c2_place_label(place):
+    let names = {"living_hall": "起居厅", "central_hall": "中央厅", "lecture": "讲堂", "logistics": "后勤院", "clinic": "诊疗室", "greenhouse": "温室", "document_workshop": "文献工房", "resonance_hall": "共鸣厅", "quiet_room": "沉静室", "white_tower_safe": "白塔安全端", "washroom": "盥洗室", "oath_court": "誓约庭", "outdoor_meter": "户外仪器阵", "outdoor_high": "户外高地", "outdoor_alley": "户外小径", "dorm.contract": "甲区寝室", "dorm.astral": "丙区寝室", "dorm.logistics": "丁区寝室", "threshold.contract": "甲区门外", "threshold.astral": "丙区门外", "threshold.logistics": "丁区门外", "hall": "乙区大厅", "foyer": "乙区门厅", "corridor": "乙区走廊", "pantry": "备餐间"}
+    return dv_find(names, place, place)
+
 fn c2_move_action(actor, origin, target, gate):
     let id = rt_cat(actor, rt_cat(".c2.move.", rt_cat(origin, rt_cat(".", target))))
     let premise = c2_move_law(actor, origin, target, gate).premise
     var method = "travel"
     if dv_has(["oath_court", "greenhouse", "outdoor_meter", "outdoor_high", "outdoor_alley"], target):
         method = "outdoor_travel"
-    return dv_with_many(c2_action(id, "move", premise, premise, id, dv_single(c2_position_ref(actor)), "穿过廊门。", c2_source("00_通行.story", 9, "routes-and-boundaries")), {"repeatable": true, "normative_method": method, "travel": {"from": origin, "to": target, "gate": gate}, "predict_law": id})
+    return dv_with_many(c2_action(id, "move", premise, premise, id, dv_single(c2_position_ref(actor)), rt_cat("从", rt_cat(c2_place_label(origin), rt_cat("穿过廊门，来到", rt_cat(c2_place_label(target), "。")))), c2_source("00_通行.story", 9, "routes-and-boundaries")), {"repeatable": true, "normative_method": method, "travel": {"from": origin, "to": target, "gate": gate}, "predict_law": id})
 
 fn c2_norm_condition(norm, actor):
     let night = c2_any_night()
@@ -361,6 +365,14 @@ fn c2_inspection_presentation(actor, object, fields):
         rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, "ash_falling"), true), "主楼的灰还在落。", [], c2_source("00_时间与文案.story", 52, "开场白")))
         rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, "ash_falling"), false), "落灰停了。", [], c2_approved("second-day-morning-wind")))
         rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, "wind"), true), "廊外起风了。", [], c2_approved("second-day-morning-wind")))
+    if object == "case.contract" or object == "case.astral" or object == "case.logistics":
+        let names = {"lock_no_pry": "锁具检查", "emergency_inventory_majority": "大半张清册的查找", "ward_half_paper": "另一半清册的出示", "joined_inventory": "清册拼合", "ladder_lowered": "备用梯放下", "copper_filings": "铜屑勘查", "seven_step_scuffs": "步位擦痕勘查", "palm_print": "掌印勘查", "vent_pressure_formula": "通风压差算式核对", "moran_reassured": "画夹持有人的安抚", "complete_draft": "完整底稿出示", "r07_skin_test": "R-07皮试记录查找", "three_old_scars": "旧疤核对", "medicine_key_given": "药柜钥匙交接"}
+        var i = 0
+        while i < rt_count(fields):
+            let label = dv_find(names, fields[i], "现场操作")
+            rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, fields[i]), true), rt_cat(label, "：现场记录为已完成。"), [], c2_approved("actual-local-case-inspection")))
+            rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, fields[i]), false), rt_cat(label, "：现场记录为尚未完成。"), [], c2_approved("actual-local-case-inspection")))
+            i = i + 1
     return {"actor": actor, "voice": "visible-inspection", "lines": lines}
 
 fn c2_route_inspections(actor):
@@ -1324,7 +1336,7 @@ fn c2i_actions(actor):
             if row.field == "day_sketch_exposed":
                 rt_push(grants, c2_own("moran", "fever"))
                 rt_push(grants, c2_own("moran", "erosion_exposure"))
-            var action = c2_action(row.id, "experiment", pre, pre, row.id, grants, row.text, c2_approved("chapter-two-real-investigation-contact"))
+            var action = dv_with_many(c2_action(row.id, "experiment", pre, pre, row.id, grants, row.text, c2_approved("chapter-two-real-investigation-contact")), {"public_observers": c2_people(), "public_grants": [ref]})
             let talk_fields = ["gu_apologized", "key_returned", "moran_reassured", "abandoned_child_misunderstanding_resolved", "medicine_key_given"]
             if dv_has(talk_fields, row.field):
                 action = dv_with_many(action, {"kind": "talk", "speech": dv_with(c1_speech(dv_true(), c2_approved("chapter-two-evidence-led-dialogue"), "case-resolution"), "surface", row.text), "listeners": c2_people()})
@@ -1345,12 +1357,13 @@ fn c2i_goals(actor):
     let id = actor.id
     var goals = []
     let rows = c2i_rows()
+    let focus = c2i_navigation_focus(actor, rows)
     var i = 0
     while i < rt_count(rows):
         let row = rows[i]
         if row.actor == id:
             let completion = dv_fact(c2_ref(row.object, row.field), c2i_value(row))
-            if dv_truth(actor.mind, completion) != "true":
+            if row.id == focus:
                 let transit_goal = c2_goal(c2_at(id, row.room), row.when, [c2_approved("chapter-two-investigation-transit")])
                 if not dv_has(goals, transit_goal):
                     rt_push(goals, transit_goal)
@@ -1479,6 +1492,27 @@ axiom c2i_meter_safe_law():
 axiom c2i_meter_stale_law():
     return dv_axiom("c2i_meter_stale_law", 1, dv_all([dv_fact(c2_ref("c2.weather", "earthquake_recent"), true), dv_fact(c2_ref("c2.weather", "severe_air"), true), dv_fact(c2_ref("c2.meter", "safe"), true)]), dv_single(dv_assign(c2_ref("c2.meter", "safe"), false)))
 
+// One navigation intention at a time. Local ready work outranks a trip;
+// all completion goals remain available to the shared planner.
+fn c2i_navigation_focus(actor, rows):
+    var fallback = ""
+    var ready = ""
+    var i = 0
+    while i < rt_count(rows):
+        let row = rows[i]
+        if row.actor == actor.id and dv_truth(actor.mind, row.when) == "true" and dv_truth(actor.mind, dv_fact(c2_ref(row.object, row.field), c2i_value(row))) != "true":
+            if fallback == "":
+                fallback = row.id
+            if dv_truth(actor.mind, dv_all(row.requirements)) == "true":
+                if dv_truth(actor.mind, c2_at(actor.id, row.room)) == "true":
+                    return row.id
+                if ready == "":
+                    ready = row.id
+        i = i + 1
+    if ready != "":
+        return ready
+    return fallback
+
 // Intermediate intention follows an owned, known-open path; execution still checks each gate.
 fn c2i_known_route(actor, target):
     let position = dv_read(actor.mind, c2_position_ref(actor.id))
@@ -1523,9 +1557,17 @@ fn c2i_navigation_input(actor):
         if completion != false:
             refs = dvp_merge_refs(refs, dvs_sim_refs(completion))
         i = i + 1
+    let rows = c2i_rows()
+    var windows = []
+    i = 0
+    while i < rt_count(rows):
+        if rows[i].actor == actor.id:
+            refs = dvp_merge_refs(refs, dvs_sim_refs(dv_all(rows[i].requirements)))
+            rt_push(windows, dv_truth(actor.mind, rows[i].when))
+        i = i + 1
     var inputs = []
     i = 0
     while i < rt_count(refs):
         rt_push(inputs, {"ref": refs[i], "cell": dvs_reason_value(dv_read(actor.mind, refs[i]))})
         i = i + 1
-    return {"inputs": inputs, "adoptions": actor.mind.adoptions}
+    return {"inputs": inputs, "windows": windows, "adoptions": actor.mind.adoptions}

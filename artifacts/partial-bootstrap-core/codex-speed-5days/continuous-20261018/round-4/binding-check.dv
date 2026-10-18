@@ -1,0 +1,35 @@
+#include ../../../../../language_core/game/entry.dv
+fn dvg_debug_run():
+    var bindings = [dv_binding("object-a", "own-a", "one"), dv_binding("object-a", "other-a", "two")]
+    dv_require(dv_local(bindings, "object-a", "one") == "own-a", "first owner")
+    dv_require(dv_local(bindings, "object-a", "two") == "other-a", "second owner")
+    dv_require(dv_local(bindings, "missing", "one") == "", "missing identity")
+    dv_validate_bindings(bindings, "one")
+    let old = rt_snapshot(bindings)
+    rt_push(bindings, dv_binding("object-b", "own-b", "one"))
+    dv_require(dv_local(bindings, "object-b", "one") == "own-b", "changed binding invalidates memo")
+    dv_require(dv_local(old, "object-b", "one") == "", "old snapshot retains absence")
+    rt_push(bindings, dv_binding("object-a", "duplicate", "one"))
+    dv_require(dv_local(bindings, "object-b", "one") == "own-b", "unrelated ambiguity stays deferred")
+    if rt_arg(0) == "duplicate":
+        return dv_local(bindings, "object-a", "one")
+    if rt_arg(0) == "validate":
+        return dv_validate_bindings(bindings, "one")
+    let ref = dv_ref("fixture", "state", "a")
+    let other = dv_ref("fixture", "state", "b")
+    let claim = {"ref": dv_scoped_ref("one", "fixture", "state", "a"), "value": true}
+    let cell = dv_with_many(dv_field(true), {"claims": [claim], "basis": ["m"]})
+    var mind = dv_add_object(dv_world("neutral", "mind", "one"), dv_object("fixture", "perceived", {"state": {"a": cell}}))
+    let events = [{"id": "o", "actor": "one", "type": "observation", "data": {"observations": [claim, claim]}}, {"id": "m", "actor": "one", "type": "model_argument_accepted", "data": []}, {"id": "i", "actor": "one", "type": "inference", "data": {"receipt": {"changes": [{"ref": ref, "after": cell}]}}}]
+    dv_require(dv_same(dvs_support_parents(mind, [ref], events, "one"), ["o", "m", "i"]), "support ordering and duplicate observation")
+    dv_require(dv_same(dvs_support_parents(mind, [other], events, "one"), []), "unrelated support excluded")
+    dv_require(dv_same(dvs_support_parents(mind, [dv_scoped_ref("one", "fixture", "state", "a")], events, "one"), ["o", "m"]), "inference keeps exact ref equality")
+    mind = dv_add_object(mind, dv_object("one", "perceived", {"state": {"location": dv_field("room-b")}}))
+    let rows = [c2i_row("one", "task-a", "room-a", dv_true(), "fixture", "first", [], ""), c2i_row("one", "task-b", "room-b", dv_true(), "fixture", "second", [], "")]
+    dv_require(c2i_navigation_focus({"id": "one", "mind": mind}, rows) == "task-b", "finish ready local task before travel")
+    mind = dv_store(mind, c2_ref("fixture", "second"), dv_field(true))
+    dv_require(c2i_navigation_focus({"id": "one", "mind": mind}, rows) == "task-a", "completed task releases next intention")
+    let closed = [dv_with(rows[0], "when", {"op": "constant", "value": "false"})]
+    dv_require(c2i_navigation_focus({"id": "one", "mind": mind}, closed) == "", "closed window has no transit reward")
+    rt_print("Neutral binding lookup, subject isolation, memo invalidation and snapshot boundaries checked.")
+    return true

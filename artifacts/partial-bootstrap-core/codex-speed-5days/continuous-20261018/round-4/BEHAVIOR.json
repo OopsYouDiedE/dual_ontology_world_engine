@@ -1,0 +1,209 @@
+{
+  "last_applied": {
+    "event_id": "e14446",
+    "type": "action_execution",
+    "actor": "huo",
+    "game_time": 6221,
+    "parents": [
+      "e14445"
+    ],
+    "action_id": "huo.wait.first_night.30",
+    "action_kind": "wait.first_night.30",
+    "label": "留在原处，等候本人已知的下一次作息机会（30分钟）。",
+    "purpose_sources": [
+      {
+        "path": "language_core/verification/scenarios/chapter1-night.dv",
+        "line": 0,
+        "id": "authorized-first-night-20261016.own-bounded-wait"
+      }
+    ],
+    "detail": {
+      "actual": {
+        "time": 30,
+        "computation": 1,
+        "stamina": 0
+      },
+      "revision_before": 4238,
+      "revision_after": 4239,
+      "status": "applied"
+    }
+  },
+  "first_rejected": {
+    "event_id": "e3427",
+    "type": "action_execution",
+    "actor": "quer",
+    "game_time": 844,
+    "parents": [
+      "e3426"
+    ],
+    "action_id": "quer.departure.pick-outer",
+    "action_kind": "experiment",
+    "label": "细铁丝拨了四下，外侧的横闩抬了起来。",
+    "purpose_sources": [
+      {
+        "path": "godot_csharp/scenes/Awakening/Script/story/第一章/场面/12_雀儿撬门.story",
+        "line": 7,
+        "id": "quer_opens.001-002"
+      }
+    ],
+    "detail": {
+      "actual": {
+        "time": 17,
+        "computation": 1,
+        "stamina": 0
+      },
+      "revision_before": 756,
+      "revision_after": 757,
+      "status": "rejected"
+    }
+  },
+  "rejected_actions": {
+    "quer.departure.pick-outer": 1,
+    "night.corroborate": 1,
+    "mora.c2.distribute": 1,
+    "veronica.c2.move.logistics.central_hall": 149,
+    "moran.c2.move.outdoor_meter.central_hall": 152,
+    "quer.c2.move.logistics.central_hall": 112,
+    "ruan.c2.move.living_hall.central_hall": 157
+  },
+  "detective_investigations": [
+    {
+      "event_id": "e10005",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2316,
+      "parents": [
+        "e10004"
+      ],
+      "action_id": "detective.c2.document.inventory",
+      "action_kind": "experiment",
+      "label": "从散页中找出大半张紧急清册，保留断口等待另一半核对。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "chapter-two-real-investigation-contact"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 17,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3527,
+        "revision_after": 3528,
+        "status": "applied"
+      }
+    },
+    {
+      "event_id": "e11503",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 3481,
+      "parents": [
+        "e11502"
+      ],
+      "action_id": "detective.c2.resonance.pressure",
+      "action_kind": "experiment",
+      "label": "检查备用通风道，抄下标注时刻与压差的算式，保留两者的对应关系。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "chapter-two-real-investigation-contact"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 17,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 3739,
+        "revision_after": 3740,
+        "status": "applied"
+      }
+    }
+  ],
+  "investigation_team_actions": [
+    {
+      "event": "e4061",
+      "time": 1080,
+      "action": "moran.answer.astral.ruan",
+      "status": "applied"
+    },
+    {
+      "event": "e4072",
+      "time": 1080,
+      "action": "ruan.answer.astral.ruan",
+      "status": "applied"
+    },
+    {
+      "event": "e4083",
+      "time": 1080,
+      "action": "elena.answer.astral.ruan",
+      "status": "applied"
+    },
+    {
+      "event": "e4118",
+      "time": 1085,
+      "action": "selma.answer.astral.ruan",
+      "status": "applied"
+    },
+    {
+      "event": "e10005",
+      "time": 2316,
+      "action": "detective.c2.document.inventory",
+      "status": "applied"
+    },
+    {
+      "event": "e10022",
+      "time": 2319,
+      "action": "quer.c2.document.dismantle-lock",
+      "status": "applied"
+    },
+    {
+      "event": "e11503",
+      "time": 3481,
+      "action": "detective.c2.resonance.pressure",
+      "status": "applied"
+    },
+    {
+      "event": "e11507",
+      "time": 3481,
+      "action": "quer.c2.resonance.pipe-climb",
+      "status": "applied"
+    },
+    {
+      "event": "e11581",
+      "time": 3498,
+      "action": "quer.c2.resonance.copper",
+      "status": "applied"
+    },
+    {
+      "event": "e12258",
+      "time": 3751,
+      "action": "quer.c2.safety.acid-drawer",
+      "status": "applied"
+    }
+  ],
+  "stop": [
+    {
+      "event_id": "e18083",
+      "type": "session_stopped",
+      "actor": "",
+      "game_time": 6529,
+      "parents": [
+        "e18082"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "reason": "no-admissible-action-or-budget"
+      }
+    }
+  ]
+}

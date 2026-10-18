@@ -23,7 +23,8 @@ fn c1n_rows_build():
     var rows = []
     let meet = dv_all([c1_at("detective", "living_hall"), c1_at("huo", "living_hall"), c1_at("shen", "living_hall")])
     rt_push(rows, c1n_row("quer", "greeting", 750, 810, meet, "老霍！沈叔！……咦，我怎么张嘴就这么叫了？"))
-    rt_push(rows, c1n_row("shen", "apron", 750, 810, c1_at("quer", "living_hall"), "沈鼎摸了摸围裙口袋，摸出一点零嘴，递向雀儿。"))
+    let apron = c1n_row("shen", "apron", 750, 810, c1_at("quer", "living_hall"), "沈鼎摸了摸围裙口袋，摸出一点零嘴，递向雀儿。")
+    rt_push(rows, dv_with_many(apron, {"kind": "help", "public_observers": c2_people(), "public_grants": [c1n_mark(apron.id)]}))
     var show = c1n_row("ward", "show-evidence", 840, 930, dv_all([dv_fact(c1_other_ref("contract", "evidence_complete"), true), dv_fact(c1_other_ref("contract", "keys_found"), true), dv_fact(c1_other_ref("contract", "wax_ash_seen"), true)]), "沃德摊开半角红纸，又放下管网图的蜡布筒：先限制雀儿的自由，待事情查明。")
     show = dv_with_many(show, {"kind": "help", "effects": [dv_assign(dv_ref("night.evidence", "state", "displayed"), true)], "grants": [dv_ref("night.evidence", "state", "displayed")], "public_observers": c2_people(), "public_grants": [dv_ref("night.evidence", "state", "displayed")]})
     rt_push(rows, show)

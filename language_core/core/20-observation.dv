@@ -6,6 +6,11 @@ fn dv_binding(physical, local, subject):
 // Subject-specific index over the exact binding value. Ambiguity remains a
 // lookup error only for the requested physical identity, as with the linear scan.
 fn dv_local(bindings, physical, subject):
+    let lookup_key = [rt_cat("projection-local:", subject), physical]
+    let lookup = rt_memo_get(bindings, lookup_key)
+    if lookup[0]:
+        dv_require(not lookup[1].ambiguous, "Ambiguous projection binding")
+        return lookup[1].local
     let key = ["projection-index", subject]
     let cached = rt_memo_get(bindings, key)
     var index = []
@@ -26,6 +31,7 @@ fn dv_local(bindings, physical, subject):
             i = i + 1
         rt_memo_put(bindings, key, index)
     let found = dv_find(index, physical, {"local": "", "ambiguous": false})
+    rt_memo_put(bindings, lookup_key, found)
     dv_require(not found.ambiguous, "Ambiguous projection binding")
     return found.local
 

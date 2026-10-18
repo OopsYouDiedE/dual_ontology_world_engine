@@ -337,6 +337,68 @@ fn dvs_subject_support_events(events, subject):
         j = j + 1
     return result
 
+// Index only candidate events; final claim/cell/basis matching remains below.
+fn dvs_support_ref_key(subject, ref):
+    return rt_json_stringify([ref.type, ref.object, ref.facet, ref.field, dv_find(ref, "subject", subject)])
+
+fn dvs_support_event_index(events, subject):
+    let key = ["support-event-index", subject]
+    let cached = rt_memo_get(events, key)
+    if cached[0]:
+        return cached[1]
+    var index = []
+    var accepted = []
+    var i = 0
+    while i < rt_count(events):
+        let event = events[i]
+        var refs = []
+        if event.type == "observation" or event.type == "listener_parse":
+            let observations = event.data.observations
+            var j = 0
+            while j < rt_count(observations):
+                rt_push(refs, observations[j].ref)
+                j = j + 1
+        if event.type == "inference":
+            let changes = event.data.receipt.changes
+            var j = 0
+            while j < rt_count(changes):
+                rt_push(refs, changes[j].ref)
+                j = j + 1
+        if event.type == "model_argument_accepted":
+            rt_push(accepted, i)
+        var j = 0
+        while j < rt_count(refs):
+            let ref_key = dvs_support_ref_key(subject, refs[j])
+            var positions = dv_find(index, ref_key, [])
+            if not dv_has(positions, i):
+                rt_push(positions, i)
+                let slot = rt_record_index(index, ref_key)
+                if slot < 0:
+                    rt_push(index, dv_pair(ref_key, positions))
+                else:
+                    rt_replace(index, slot, dv_pair(ref_key, positions))
+            j = j + 1
+        i = i + 1
+    return rt_memo_put(events, key, {"refs": index, "accepted": accepted})
+
+fn dvs_support_ref_events(events, index, subject, ref):
+    let positions = dv_find(index.refs, dvs_support_ref_key(subject, ref), [])
+    var result = []
+    var i = 0
+    var j = 0
+    while i < rt_count(positions) or j < rt_count(index.accepted):
+        if j >= rt_count(index.accepted):
+            rt_push(result, events[positions[i]])
+            i = i + 1
+        else:
+            if i < rt_count(positions) and positions[i] < index.accepted[j]:
+                rt_push(result, events[positions[i]])
+                i = i + 1
+            else:
+                rt_push(result, events[index.accepted[j]])
+                j = j + 1
+    return result
+
 fn dvs_support_parents(mind, refs, events, subject_or_actor):
     var subject = subject_or_actor
     var cand_events = []
@@ -347,6 +409,7 @@ fn dvs_support_parents(mind, refs, events, subject_or_actor):
             cand_events = dvs_subject_support_events(events, subject)
     else:
         cand_events = dvs_subject_support_events(events, subject)
+    let support_index = dvs_support_event_index(cand_events, subject)
     var parents = []
     var i = 0
     while (i < rt_count(refs)):
@@ -354,9 +417,10 @@ fn dvs_support_parents(mind, refs, events, subject_or_actor):
         var cell = dv_read(mind, ref)
         let claims = dv_find(cell, "claims", [])
         let basis = dv_find(cell, "basis", [])
+        let ref_events = dvs_support_ref_events(cand_events, support_index, subject, ref)
         var j = 0
-        while (j < rt_count(cand_events)):
-            var event = cand_events[j]
+        while (j < rt_count(ref_events)):
+            var event = ref_events[j]
             var data = event.data
             var k = 0
             if dv_or((event.type == "observation"), (event.type == "listener_parse")):
