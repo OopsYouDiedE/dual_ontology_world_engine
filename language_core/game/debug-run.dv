@@ -35,6 +35,16 @@ fn dvg_debug_run():
         run_config = dv_with(run_config, "profile", rt_arg(1))
     if 2 < rt_arg_count():
         run_config = dv_with(run_config, "detective_zone", rt_arg(2))
+    if 4 < rt_arg_count():
+        run_config = dv_with(run_config, "seed", rt_number(rt_arg(4)))
+    if 5 < rt_arg_count():
+        run_config = dv_with(run_config, "su_initial_room", rt_arg(5))
+    if 6 < rt_arg_count():
+        run_config = dv_with(run_config, "private_execution_benefit_multiplier", rt_number(rt_arg(6)))
+    if 7 < rt_arg_count():
+        dv_require(rt_arg(7) == "true" or rt_arg(7) == "false", "Homecoming negotiation argument must be true or false")
+        run_config = dv_with(run_config, "homecoming_negotiation", rt_arg(7) == "true")
+    run_config = dvg_run_config(run_config)
     var state = dvg_open_config(run_config)
     state = dvs_owned_state_update(state, {"story": dv_with(state.story, "debug_phase_progress", dv_find(config, "phase_progress", false))})
     if raw_format == "dag":
@@ -45,7 +55,7 @@ fn dvg_debug_run():
     if config.max_steps != false:
         limit = config.max_steps
     dv_require(0 < limit, "Debug max_steps must be positive or false for the authored limit")
-    rt_json_print({"type": "debug_start", "configuration": config, "executor": "formal-model", "geometry": false, "raw_format": raw_format, "presentation_scope": "visible-only; all committed original events retained in raw DAG when enabled"})
+    rt_json_print({"type": "debug_start", "configuration": config, "run_config": state.story.run_config, "executor": "formal-model", "geometry": false, "raw_format": raw_format, "presentation_scope": "visible-only; all committed original events retained in raw DAG when enabled"})
     while dvs_session_active(state) and steps < limit:
         state = dvg_prepare(state)
         let pending = dv_find(state, "pending", false)

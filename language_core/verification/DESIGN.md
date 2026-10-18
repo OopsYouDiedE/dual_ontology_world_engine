@@ -204,3 +204,11 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译�
 结构整理用声明原文与生产依赖闭包对照、编译及导出一致性检查确认工程接线，不执行流程回归或用它宣称游玩改善。新增源文件按职责进入现有目录；出现define/module作用域时须保留独立编译边界，不直接拼接进其他源模块。
 
 一键源码审阅导出入口为 artifacts/partial-bootstrap-core/dv-layout-20261018/export/export_dv_package.bat，默认输出 artifacts/dv_consolidated_package_v2。七个目录各输出一份DV，保留原文件边界和来源指纹；该包用于阅读，不作为新执行入口。--check只校验导出是否与当前源码一致。旧导出与历史证据不改写。
+
+## 私下机会与反事实输入
+
+none-present使用带地点和可见性范围的实际co_presence收据。预测移动丢弃他人上下文时不能把空列表当成无人证据。private_execution依据本人收益和资源代价，policy.private_execution_benefit_multiplier仅是显式主观反事实初值，默认为1；真实物理成本不乘该倍率。人物设局的enforce复核在场者，predict不访问他人未知位置。初始配置与实际执行、动态结果分别保存，归乡协商基础不等于完整离岛实现。
+
+归乡协商基础在scenarios/chapter2/homecoming.dv，由game/entry显式安装/刷新；默认只提供人工候选，homecoming_negotiation配置才增加自主协商目标。安全证明、照护接续、岛外承诺和离岛效果尚未实现。实际影响账本兼容保留旧player字段，新增control区分自主主体与玩家控制，真实Complete认证发言者而预测不能写入。
+
+本轮补充：private_execution净收益进入共同动作评分；owner_utility按本人有来源前提及数量声明加权，记录分项，不把未知安全条件变为真。归乡赞成/暂缓用共享owned_decision身份，在本人相关事实变化后重选。维持在场声明maintain_presence只协调纯导航奖励，保留原实质动作与预算。

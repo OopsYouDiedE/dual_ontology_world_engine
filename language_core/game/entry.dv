@@ -17,6 +17,7 @@
 #include ../verification/scenarios/chapter2/content.dv
 #include ../verification/scenarios/chapter2/daily.dv
 #include ../verification/scenarios/chapter2/dialogue.dv
+#include ../verification/scenarios/chapter2/homecoming.dv
 
 // Source module: language_core/game/player-content.dv
 // Presentation migrated from the existing first-chapter authored cards and routes.
@@ -227,16 +228,68 @@ fn dvg_chapter_summary(state):
 fn dvg_open():
     return dvg_open_config({"seed": 1, "profile": "Standard_Detective", "detective_zone": "zone_yi"})
 
+// Configuration is retained as evidence and carried into chapter policy inheritance.
+fn dvg_run_config(config):
+    let result = {"seed": dv_find(config, "seed", 1), "profile": dv_find(config, "profile", "Standard_Detective"), "detective_zone": dv_find(config, "detective_zone", "zone_yi"), "su_initial_room": dv_find(config, "su_initial_room", "R08"), "private_execution_benefit_multiplier": dv_find(config, "private_execution_benefit_multiplier", 1), "homecoming_negotiation": dv_find(config, "homecoming_negotiation", false)}
+    dv_require(rt_floor(result.seed) == result.seed and 0 <= result.seed, "Opening seed must be a nonnegative integer")
+    dv_require(dv_has(["R08", "R05"], result.su_initial_room), "Unsupported initial Su room")
+    dv_require(result.private_execution_benefit_multiplier == 1 or result.private_execution_benefit_multiplier == 2, "Private execution benefit multiplier must be 1 or 2")
+    dv_require(result.homecoming_negotiation == true or result.homecoming_negotiation == false, "Homecoming negotiation must be boolean")
+    return result
+
+fn dvg_configure_actor_policies(scene, config):
+    var actors = []
+    var i = 0
+    while i < rt_count(scene.actors):
+        let actor = scene.actors[i]
+        var actions = actor.actions
+        let initial_profile = dv_find(dv_find(actor, "cognitive_initialization", []), "profile", [])
+        if dv_find(actor.policy, "allow_manipulation_candidates", dv_find(initial_profile, "allow_manipulation_candidates", false)):
+            actions = []
+            var j = 0
+            while j < rt_count(actor.actions):
+                var action = actor.actions[j]
+                let speech = dv_find(action, "speech", [])
+                if dv_find(action, "manipulation", false) != false or dv_find(speech, "manipulation", false) != false:
+                    action = dv_with(action, "manual_only", false)
+                rt_push(actions, action)
+                j = j + 1
+        rt_push(actors, dv_with_many(actor, {"actions": actions, "policy": dv_with_many(actor.policy, {"private_execution_benefit_multiplier": config.private_execution_benefit_multiplier, "homecoming_negotiation": config.homecoming_negotiation})}))
+        i = i + 1
+    return dv_with_many(scene, {"actors": actors, "run_config": config})
+
+// Relocation changes only the actual room and its owner's initial self-location.
+// Existing identity bindings are retained; no third-party location or sound is granted.
+fn dvg_configure_initial_room(scene, config):
+    if config.su_initial_room == "R08":
+        return scene
+    let basis = [{"path": "user:current-request", "line": 0, "id": "counterfactual-su-initial-room"}]
+    let ref = dv_ref("su", "state", "location")
+    dv_require(dv_local(scene.bindings, "su", "su") == "su", "Su initial location requires its existing identity binding")
+    let physical = dv_store(scene.physical, ref, dv_with(dv_field(config.su_initial_room), "basis", basis))
+    var actors = []
+    var i = 0
+    while i < rt_count(scene.actors):
+        var actor = scene.actors[i]
+        if actor.id == "su":
+            actor = dv_with_many(actor, {"location": config.su_initial_room, "mind": dv_store(actor.mind, actor.location_ref, dv_with(dv_field(config.su_initial_room), "basis", basis))})
+        rt_push(actors, actor)
+        i = i + 1
+    return dv_with_many(scene, {"physical": physical, "actors": actors})
+
 // Initial configuration changes the declared cognition and starting room only.
 // Budgets and receipts retain their production contracts; no result is seeded.
 fn dvg_open_config(config):
+    let run_config = dvg_run_config(config)
     var scene = c1n_install_scene(c1dep_install_scene(c1_campaign_scene()))
+    scene = dvg_configure_initial_room(scene, run_config)
     let zone = dv_find(config, "detective_zone", "zone_yi")
     let profile = dv_find(config, "profile", "Standard_Detective")
     if zone != "zone_yi":
         scene = c1_other_place_detective(scene, zone, profile)
     scene = c1c_install_scene(scene, dv_find(config, "seed", 1), profile)
     scene = dv_with_many(scene, {"chapter": 1, "game_duration_budget": 5 * 1440 - scene.physical.time, "execution_scope": "DV production session; Godot execution receipts; offscreen non-movement uses DV world laws"})
+    scene = dvg_configure_actor_policies(scene, run_config)
     return dvs_session_open(c1_player_scene(scene), "enabled")
 
 fn dvg_chapter_two_ready(state):
@@ -246,7 +299,7 @@ fn dvg_extend(state):
     if dv_find(state.story, "chapter", 0) != 1 or not dvg_chapter_two_ready(state):
         return state
     let live = dv_with_many(state.story, {"physical": state.physical, "actors": state.actors, "bindings": state.bindings})
-    let expanded = dv_with(c2daily_install_scene(c2d_install_scene(c2_extend_scene(live))), "chapter", 2)
+    let expanded = dvg_configure_actor_policies(dv_with(c2h_install_scene(c2daily_install_scene(c2d_install_scene(c2_extend_scene(live)))), "chapter", 2), dvg_run_config(dv_find(state.story, "run_config", [])))
     var events = state.events
     dvs_event(events, "chapter_content_available", "", state.physical.time, [], {"chapter": 2, "source": c2_approved("chapter-state-inheritance"), "movement": false})
     // Content availability neither relocates a resident nor grants perceptions.
@@ -272,7 +325,7 @@ fn dvg_refresh_goals(current):
                 let case_open = (dv_truth(actor.mind, c2d_case_gate(actor.mind)) == "true")
                 // Goal windows, speech receipts and daily protocol fields all
                 // participate; an investigation-only signature misses these inputs.
-                refreshed = c2d_refresh_actor_goals(actor)
+                refreshed = c2h_refresh_actor(c2d_refresh_actor_goals(actor))
                 refreshed = c1n_known_future_wait_actor(refreshed)
                 actors = dvs_replace(actors, i, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter, "c2_goals_in_living": in_living, "c2_goals_case_open": case_open, "c2_goals_needs_wait": needs_c1_wait}))
             changed = true

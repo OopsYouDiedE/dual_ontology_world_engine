@@ -1011,3 +1011,23 @@ python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --node 456 --value-
 `c2_meter_fields`包含safe、environment_epoch和sample_location；`c2_sample_claim`只取实际direct perception，`c2_meter_fresh`核同一采样来源、地点、原时刻、30分钟寿命及本人已知环境变化。天气/转述/查旧表不刷新采样来源。`c2_safety_goals`生成有来源的复测与在岗目标；未采纳相应规程者仍可能按旧认识自主冒险，物理暴露由当下世界结算。安全侧仪器接近使用measurement_approach规范分类，真实门、移动和暴露合同保留。
 
 实际登记取用分别保留pending.self/patient等用途计数；purpose_clarified表示当事人真实说明后的回执，补记只结算相应待核份额。普通记录人员依据本人的实际账页观察与问答核对，不读physical自动获知新取用；台账差额不自动建立有罪结论。源码索引：`verification/scenarios/chapter2/content.dv`（声明、执行law、采样与本人刷新）、`daily.dv`（持续值守）、`dialogue.dv`（请求/回应、目标和现场信息）。此处为实现合同，动态效果见本轮正式会话证据。
+
+## 本轮反事实与现场机会接口（2026-10-18）
+
+`dvg_open_config`的配置包含`seed`、`profile`、`detective_zone`、`su_initial_room`（R08/R05）及`private_execution_benefit_multiplier`（1/2）。正式调试入口通过`--opening-seed`、`--detective-profile`、`--detective-zone`、`--su-initial-room`、`--private-execution-benefit-multiplier`传入并封存实际配置。`Shura_Detective`只调整价值序列和操纵候选自动资格，其余认知参数沿标准配置；默认输入保持原值。位置反事实仅改当前身体和本人位置，不改事故史。
+
+`opportunity_requirement.mode`支持`all-present`、`at-least-one-present`与`none-present`。未知模式报错。`dvs_notice_peers`通过真实观察记录`visible_context_location`与`visible_context_clear`，co_presence事件保留地点与可见性；none-present只有地点匹配、观察可用且指定参与者均未见时满足。该主观判断不代替权威执行检查，也不证明世界上没有隐藏人物。未到达地点的空预测上下文不能满足该资格。
+
+`private_execution`比较本人有来源的benefit乘政策倍率与resource_cost；倍率必须非负数，默认为1。净效用（benefit×倍率−resource_cost）同时进入共同规划的progress，并单列private_utility；倍率不改变账本扣费。源码入口为verification/session/10-subjective.dv，内容声明在chapter2/content.dv；不同倍率未必改变动作资格或结局，需实际轨迹判断。
+
+本轮补充：`--homecoming-negotiation`默认关闭，仅显式协商反事实开启。chapter2/homecoming.dv提供真实提议、听闻与个人异议基础，自己的愿意与对侦探申请的同意分开；尚无安全实证、岛外承诺、照护接续验证或实际离岛生成器，归乡效用由本人drive、caution与对申请者的信任参与实际共同评分；动态异议仍须正式事件证明，不能由声明推定CF8达成。失败动作签名保留现场机会范围与可见上下文，真实变化才允许重新尝试。
+
+实际Complete的话语同时记录actual_influence_actor与控制来源player/autonomous，允许正式自主侦探进入原影响记录；旧player字段保持兼容，control明确来源。只有字面真、真实收闻先于选择、指定动作实际执行且后果首次改变才登记。该时间链仍标causal_attribution=not-established，不冒称已证明因果诱杀。
+
+通用`owner_utility`声明含`requires`、`basis`和`terms`，每项为`quantity`与数值`weight`；只在本人前提成立且有来源时求和。quantity可为数值、本人policy_key、本人ref或speaker（既有本人speaker_trust），不读世界。规划值保留逐项quantity、weight、contribution及来源；相关ref和requires进入依赖切片。效用不越过资格门、不发布结果。`owned_decision`重复沟通目标以本人相关上下文变化判断待办，已完成动作标记不永久封死重新表态。
+
+`maintain_presence`是内容声明的有时窗在场意向：本人已达时不追加无关纯导航目标，尚未达时优先生成该意向的已知通路首步；原实质行动仍参加共同选择，不锁定位置或注入等待。该行为调整针对冻结02实际位置奖励折返，须以新会话核对。
+
+`owned_decision.context_policy_keys`可显式列出本人政策字段；这些字段值同时进入决策上下文与来源快照，实际变化允许重新表态。缺省空列表保持原事实/请求比较，不读其他主体政策。
+
+本轮性能维护：Runtime的JSON编码对不可变FrozenList按弱身份复用精确字符串，可变输入沿原编码路径；读取MemoryStream有效区间避免ToArray复制。无父节点的可变容器仍清除自身Backbone/Index后返回；有父节点沿原传播。DAG仅复用浅帧payload缓冲，保持字节、SHA256链、提交刷新与异常封存规则。动作检索按完整actions值与id纯缓存，仍最后匹配；输入或嵌套改变失效。内容刷新动作/规范数组按原顺序单次重建，静态目标模板只按主体id缓存，动态后缀及收据新鲜度照常计算。工程差分比较原始输出与别名/失效，不是剧情验收。

@@ -16,7 +16,7 @@ fn cognitive_initialization(profile, samples, basis):
 
 // Narrow engineering initial ranges, not narrative facts or acceptance targets.
 fn c1c_install_scene(scene, seed, profile):
-    dv_require(profile == "Standard_Detective" or profile == "Foolish_Detective", "Unknown detective cognitive profile")
+    dv_require(profile == "Standard_Detective" or profile == "Foolish_Detective" or profile == "Shura_Detective", "Unknown detective cognitive profile")
     let basis = [{"path": "user:current-request", "line": 0, "id": "declared-engineering-cognitive-initial-ranges"}]
     var actors = []
     var i = 0
@@ -46,8 +46,10 @@ fn c1c_install_scene(scene, seed, profile):
             var selected_profile = []
             if actor.id == "detective":
                 let norms = dv_find(old, "norm_rules", [])
-                if profile == "Standard_Detective":
+                if profile == "Standard_Detective" or profile == "Shura_Detective":
                     selected_profile = Standard_Detective(64, 0.75, ["understand_cost", "solve_case", "evidence", "safety", "night_exception", "records", "measured_work", "clarify_terms", "seek_advice", "avoid_attachment"], norms, basis)
+                    if profile == "Shura_Detective":
+                        selected_profile = dv_with_many(selected_profile, {"cognitive_profile": "Shura_Detective", "value_order": ["pursue_desire", "understand_cost"], "allow_manipulation_candidates": true})
                 else:
                     selected_profile = Foolish_Detective(2, 0.25, ["pursue_desire", "avoid_attachment", "solve_case", "understand_cost"], [], dv_find(old, "class_bias", []), basis)
             if actor.id == "detective":

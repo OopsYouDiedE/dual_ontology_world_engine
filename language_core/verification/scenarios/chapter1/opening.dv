@@ -646,6 +646,9 @@ fn c1n_source(id):
 fn c1n_mark(id):
     return c1n_ref(rt_cat("done.", id))
 
+fn c1n_judgment_ref():
+    return c1n_ref("detective.evidence_judgment_stance")
+
 fn c1n_row(actor, id, start, end, when, text):
     return {"actor": actor, "id": rt_cat("night.", id), "start": start, "end": end, "when": when, "text": text, "kind": "talk", "effects": [], "grants": [], "literal": dv_true()}
 
@@ -665,11 +668,18 @@ fn c1n_rows_build():
     var show = c1n_row("ward", "show-evidence", 840, 930, dv_all([dv_fact(c1_other_ref("contract", "evidence_complete"), true), dv_fact(c1_other_ref("contract", "keys_found"), true), dv_fact(c1_other_ref("contract", "wax_ash_seen"), true)]), "沃德摊开半角红纸，又放下管网图的蜡布筒。")
     show = dv_with_many(show, {"kind": "help", "effects": [dv_assign(dv_ref("night.evidence", "state", "displayed"), true)], "grants": [dv_ref("night.evidence", "state", "displayed")], "public_observers": c2_people(), "public_grants": [dv_ref("night.evidence", "state", "displayed")]})
     rt_push(rows, show)
-    rt_push(rows, c1n_row("ward", "ward-claim", 840, 930, dv_fact(dv_ref("night.evidence", "state", "displayed"), true), "先限制雀儿的自由，待事情查明。"))
+    var restriction = c1n_row("ward", "ward-claim", 840, 930, dv_fact(dv_ref("night.evidence", "state", "displayed"), true), "先限制雀儿的自由，待事情查明。")
+    restriction = dv_with_many(restriction, {"effects": [dv_assign(c1n_ref("ward.restriction_announced"), true)], "grants": [c1n_ref("ward.restriction_announced")], "public_grants": [c1n_ref("ward.restriction_announced")]})
+    rt_push(rows, restriction)
     let inspected = dv_all([dv_fact(dv_ref("night.evidence", "state", "wax_seal_intact"), true), dv_fact(dv_ref("night.evidence", "state", "fresh_torn_edge"), true)])
-    rt_push(rows, dv_with(c1n_row("detective", "defer-judgment", 840, 930, inspected, "蜡布筒的火漆封口完好，红纸毛边却是新撕的。另一半多半仍在文献工房；明日到现场勘验，再作判断。"), "received", {"speaker": "ward", "action_id": "night.ward-claim"}))
-    rt_push(rows, dv_with(c1n_row("detective", "provisional-assent", 840, 930, dv_fact(dv_ref("night.evidence", "state", "displayed"), true), "沃德已经摆出材料，我暂且附和先限制行动，先按他的说法处理。"), "received", {"speaker": "ward", "action_id": "night.ward-claim"}))
-    var defer = c1n_row("gu", "corroborate", 840, 930, dv_true(), "孤证不立。待明日去文献工房，把另一半找来核对。")
+    let uncommitted = dv_fact(c1n_judgment_ref(), "uncommitted")
+    var judgment = c1n_row("detective", "defer-judgment", 840, 930, dv_all([inspected, uncommitted]), "蜡布筒的火漆封口完好，红纸毛边却是新撕的。另一半多半仍在文献工房；明日到现场勘验，再作判断。")
+    judgment = dv_with_many(judgment, {"received": {"speaker": "ward", "action_id": "night.ward-claim"}, "effects": [dv_assign(c1n_judgment_ref(), "deferred")], "grants": [c1n_judgment_ref()], "public_grants": [c1n_judgment_ref()]})
+    rt_push(rows, judgment)
+    var assent = c1n_row("detective", "provisional-assent", 840, 930, dv_all([dv_fact(dv_ref("night.evidence", "state", "displayed"), true), uncommitted]), "沃德已经摆出材料，我暂且附和先限制行动，先按他的说法处理。")
+    assent = dv_with_many(assent, {"received": {"speaker": "ward", "action_id": "night.ward-claim"}, "effects": [dv_assign(c1n_judgment_ref(), "provisional-assent")], "grants": [c1n_judgment_ref()], "public_grants": [c1n_judgment_ref()]})
+    rt_push(rows, assent)
+    var defer = c1n_row("gu", "corroborate", 840, 930, dv_fact(c1n_judgment_ref(), "deferred"), "孤证不立。待明日去文献工房，把另一半找来核对。")
     defer = dv_with(defer, "received", {"speaker": "detective", "action_id": "night.defer-judgment"})
     rt_push(rows, defer)
     rt_push(rows, c1n_row("detective", "ask-closed-doors", 960, 1101, dv_true(), "丙区、丁区里的人怎么样了？伤者还好吗？"))
@@ -680,11 +690,11 @@ fn c1n_rows_build():
     cook = dv_with_many(cook, {"kind": "help", "effects": [dv_increment(dv_ref("night.provisions", "state", "bread"), -8), dv_increment(dv_ref("night.provisions", "state", "onion"), -8), dv_increment(dv_ref("night.provisions", "state", "meat"), -8), dv_assign(dv_ref("night.provisions", "state", "evening_servings"), 8)], "grants": [dv_ref("night.provisions", "state", "bread"), dv_ref("night.provisions", "state", "onion"), dv_ref("night.provisions", "state", "meat"), dv_ref("night.provisions", "state", "evening_servings"), dv_ref("night.provisions", "state", "consumed")], "public_observers": c2_people(), "public_grants": [dv_ref("night.provisions", "state", "evening_servings"), dv_ref("night.provisions", "state", "consumed")]})
     rt_push(rows, cook)
     rt_push(rows, c1n_row("quer", "cold-hand", 1260, 1440, c1_at("detective", "living_hall"), "壁炉边，雀儿压低声音：递钥匙的那只手，很凉。那人说，‘别让它落进下面那东西手里。’我只知道自己听到了这句话。"))
-    var partner = c1n_row("quer", "partner", 1260, 1440, c1_at("detective", "living_hall"), "明日一起去文献工房。我替你开学园里的锁，咱们搭档，怎么样？")
-    partner = dv_with_many(partner, {"effects": [dv_assign(c1n_ref("partner_offered"), true)], "grants": [c1n_ref("partner_offered")]})
+    var partner = c1n_row("quer", "partner", 1260, 1440, dv_all([c1_at("detective", "living_hall"), dv_fact(c1n_judgment_ref(), "deferred")]), "明日一起去文献工房。我替你开学园里的锁，咱们搭档，怎么样？")
+    partner = dv_with_many(partner, {"received": {"speaker": "detective", "action_id": "night.defer-judgment"}, "effects": [dv_assign(c1n_ref("partner_offered"), true)], "grants": [c1n_ref("partner_offered")], "public_grants": [c1n_ref("partner_offered")]})
     rt_push(rows, partner)
-    var accept = c1n_row("detective", "accept-partner", 1260, 1440, c1_at("quer", "living_hall"), "好。明日先去文献工房，到了现场再核对。")
-    accept = dv_with_many(accept, {"received": {"speaker": "quer", "action_id": "night.partner"}, "effects": [dv_assign(c1n_ref("partner_promised"), true)], "grants": [c1n_ref("partner_promised")]})
+    var accept = c1n_row("detective", "accept-partner", 1260, 1440, dv_all([c1_at("quer", "living_hall"), dv_fact(c1n_judgment_ref(), "deferred")]), "好。明日先去文献工房，到了现场再核对。")
+    accept = dv_with_many(accept, {"received": {"speaker": "quer", "action_id": "night.partner"}, "effects": [dv_assign(c1n_ref("partner_promised"), true)], "grants": [c1n_ref("partner_promised")], "public_grants": [c1n_ref("partner_promised")]})
     rt_push(rows, accept)
     rt_push(rows, c1n_row("huo", "watch-offer", 1260, 1440, c1_at("detective", "living_hall"), "夜里总得有人醒着。我跟你分班，先把这一夜守过去。"))
     var watch = c1n_row("detective", "watch-agree", 1260, 1440, c1_at("huo", "living_hall"), "我们分班守夜。交班时把听见、看见的事情说清楚。")
@@ -704,6 +714,20 @@ fn c1n_rows_build():
     var second_watch = c1n_row("detective", "second-watch", 1440, 1800, dv_fact(c1n_ref("watch_agreed"), true), "侦探接过后半夜的守候，核对门口和走廊里的动静。")
     second_watch = dv_with(second_watch, "kind", "help")
     rt_push(rows, second_watch)
+    let lure_targets = ["huo", "su"]
+    var lure_index = 0
+    while lure_index < rt_count(lure_targets):
+        let target = lure_targets[lure_index]
+        let site = c1_deep_resonance_site(target)
+        let literal = c1_statement(site.evidence)
+        var text = "石板上确实留下了那些刻痕。你还想弄懂它，就继续沿着它追索吧。"
+        if target == "su":
+            text = "那份乐谱确实还有残缺的部分。你还想听全，就继续沿着它追索吧。"
+        var lure = c1n_row("detective", rt_cat("selective-recall.", target), 1110, 1440, literal, text)
+        let source = c1n_source("user:2026-10-18-selective-truth-owner-choice")
+        lure = dv_with_many(lure, {"literal": literal, "manual_only": true, "opportunity_requirement": {"location": "living_hall", "participants": [target], "mode": "all-present"}, "personal_choice": {"group": rt_cat("first-night-recall.", target), "requires": literal, "prohibits": dv_not(dv_true()), "promotes": ["pursue_desire"], "sacrifices": ["understand_cost", "safety"], "require_positive": true, "basis": [source]}, "manipulation": {"method": "selective-true-fragment-omitting-retrieval-cost", "targets": [target], "action_ids": [rt_cat(target, ".deep-resonance")], "consequence_when": dv_fact(c1_deep_resonance_ref(target), true), "basis": [source]}})
+        rt_push(rows, lure)
+        lure_index = lure_index + 1
     return rows
 
 fn c1n_pre(row):
@@ -732,6 +756,14 @@ fn c1n_action(row):
         action = dv_with(action, "received_speech_requirement", row.received)
     if row.id == "night.defer-judgment" or row.id == "night.provisional-assent":
         action = c1_inquiry_choice(action, "first-night-evidence-judgment", row.id == "night.defer-judgment")
+    let metadata = ["manual_only", "personal_choice", "opportunity_requirement"]
+    var metadata_index = 0
+    while metadata_index < rt_count(metadata):
+        if dv_has_key(row, metadata[metadata_index]):
+            action = dv_with(action, metadata[metadata_index], dv_get(row, metadata[metadata_index]))
+        metadata_index = metadata_index + 1
+    if dv_has_key(row, "manipulation"):
+        action = dv_with(action, "speech", dv_with(action.speech, "manipulation", row.manipulation))
     return action
 
 fn c1n_inspections(actor):
@@ -767,7 +799,7 @@ fn c1n_goals(actor):
     var i = 0
     while i < rt_count(rows):
         let row = rows[i]
-        if row.actor == actor.id:
+        if row.actor == actor.id and (not dv_find(row, "manual_only", false) or (dv_has_key(row, "manipulation") and dv_find(actor.policy, "allow_manipulation_candidates", false))):
             if row.kind == "talk":
                 rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": row.id, "available_when": c1n_pre(row), "requires_argument": false, "basis": [c1n_source(row.id)]})
             else:
@@ -907,7 +939,7 @@ fn c1n_install_scene(scene):
     if dv_find(scene, "first_night_installed", false):
         return scene
     let rows = c1n_rows()
-    var fields = {"partner_offered": dv_field(false), "partner_promised": dv_field(false), "watch_agreed": dv_field(false)}
+    var fields = {"partner_offered": dv_field(false), "partner_promised": dv_field(false), "watch_agreed": dv_field(false), "detective.evidence_judgment_stance": dv_field("uncommitted"), "ward.restriction_announced": dv_field(false)}
     var i = 0
     while i < rt_count(rows):
         fields = dv_with(fields, rt_cat("done.", rows[i].id), dv_field(false))
@@ -941,6 +973,10 @@ fn c1n_install_scene(scene):
             if dv_local(bindings, objects[j].id, actor.id) == "":
                 rt_push(bindings, dv_binding(objects[j].id, objects[j].id, actor.id))
             j = j + 1
+        if actor.id == "detective":
+            mind = dv_store(mind, c1n_judgment_ref(), dv_with(dv_field("uncommitted"), "basis", [c1n_source("own-evidence-judgment-not-yet-expressed")]))
+        if actor.id == "ward":
+            mind = dv_store(mind, c1n_ref("ward.restriction_announced"), dv_with(dv_field(false), "basis", [c1n_source("own-restriction-not-yet-announced")]))
         let call_object = rt_cat("night.call.", actor.id)
         physical = c2_add_new(physical, c1_state_object(call_object, {"heard": dv_field(false), "night_observed": dv_field(false)}))
         mind = c2_add_new(mind, c1_local_object(call_object))
@@ -1189,6 +1225,9 @@ fn c1n_future_goal_pending(actor, goal):
     if kind == "achieve":
         return dv_truth(actor.mind, goal.proposition) != "true"
     if kind == "communicate":
+        let method = dvp_find_action(actor.actions, dv_find(goal, "method_id", ""))
+        if method != false and dv_has_key(method, "owned_decision"):
+            return dvp_owned_decision_ready(actor, method, actor.mind)
         return not dv_has(dv_find(actor, "completed_actions", []), dv_find(goal, "method_id", ""))
     if kind == "know" or kind == "evidence":
         if dv_has_key(goal, "minimum_time") and actor.mind.time < goal.minimum_time:

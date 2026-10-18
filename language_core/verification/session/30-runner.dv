@@ -363,7 +363,7 @@ fn dvs_prepare_actor(state):
             var model = dv_get(costs, action.kind)
             var action_event = rt_cat("action", rt_show(executed))
             var ledger = actor.ledger
-            parent = dvs_event_prepared(events, "action_selected", id, time, dvs_selection_parents(actor, action, choice, events, parent), dv_with_many({"action": action, "revision_before": mind.revision, "score": choice.score, "hypothesis": dv_find(actor, "hypothesis", false)}, {"plan_expansions": choice.plan_expansions, "plans": choice.plans}))
+            parent = dvs_event_prepared(events, "action_selected", id, time, dvs_selection_parents(actor, action, choice, events, parent), dv_with_many({"action": action, "revision_before": mind.revision, "score": choice.score, "hypothesis": dv_find(actor, "hypothesis", false)}, {"plan_expansions": choice.plan_expansions, "plans": choice.plans, "owned_decision": dvs_owned_decision_selection(actor, action)}))
             parent = dvs_event(events, "planning_choice", id, time, dv_single(parent), dv_without(choice, "dependency_cache"))
             var bounds = dv_action_cost_bounds(model.minimum, model.maximum)
             if dv_or((horizon < (time + bounds.maximum.time)), (horizon < (time + model.actual.time))):
@@ -425,6 +425,8 @@ fn dvs_session_complete(state, receipt):
         local_3 = dv_and(dvs_authority_speech_allowed(action, physical, id), (dvs_speech_truth(actor.mind, action.speech) == "true"))
     else:
         local_3 = true
+    if local_3 and dvs_owned_decision_completion_selection(actor, action, events, parent) == false:
+        local_3 = false
     if dv_or((not (receipt.outcome == "applied")), (not dv_and((dv_truth(physical, dv_find(action, "authority_precondition", action.precondition)) == "true"), local_3))):
         local_2 = dv_action_cost_finish(ledger, physical, quote, model.actual, "rejected")
     else:
@@ -470,6 +472,7 @@ fn dvs_session_complete(state, receipt):
     actor = dvs_complete_cognitive_effects(actor, action, result.execution.status == "applied", events, execution_event, time)
     actor = dvs_complete_norm(actor, action, result.execution.status == "applied", events, time, execution_event, parent)
     actor = dvs_complete_advice(actor, action, result.execution.status == "applied", events, time, execution_event)
+    actor = dvs_complete_owned_decision(actor, action, result.execution.status == "applied", events, execution_event, time)
     actor = dvs_complete_player_influences(actor, action, before, physical, result.execution.status == "applied", events, execution_event, time)
     if dv_and(dv_has_key(action, "answer"), (result.execution.status == "applied")):
         var judgment = dvs_answer(dv_find(story, "formal_answers", []), action, physical, actor.mind, bindings, events)
@@ -588,7 +591,10 @@ fn dvs_session_complete(state, receipt):
         var actual_player = ""
         if id == dv_find(state, "player_actor", ""):
             actual_player = id
-        action = dv_with(action, "speech", dv_with_many(action.speech, {"actual_player_actor": actual_player, "actual_literal_truth": dv_truth(physical, action.speech.literal_ast)}))
+        var control = "autonomous"
+        if actual_player != "":
+            control = "player"
+        action = dv_with(action, "speech", dv_with_many(action.speech, {"actual_player_actor": actual_player, "actual_influence_actor": id, "actual_influence_control": control, "actual_literal_truth": dv_truth(physical, action.speech.literal_ast)}))
         actors = dvs_speech_owned(actors, index, action, events, time, parent, physical)
         actors = dvs_public_grants(actors, index, action, physical, bindings, events, time, parent, action_event)
     actor = actors[index]

@@ -249,7 +249,7 @@ fn c2d_action(row):
         action = dv_with(action, "speech", dv_with_many(speech, {"utterance_type": "proposal", "norm_proposal": row.norm_proposal}))
     if dv_has_key(row, "personal_choice"):
         action = dv_with(action, "personal_choice", row.personal_choice)
-    let metadata = ["public_grants", "public_observers", "work_decision", "work_clearance", "work_refusal", "concern_question", "repeatable", "manual_only", "safety_warning", "guard_decision", "advice_decision"]
+    let metadata = ["public_grants", "public_observers", "work_decision", "work_reply", "work_clearance", "work_refusal", "concern_question", "repeatable", "manual_only", "safety_warning", "guard_decision", "advice_decision", "owned_decision", "owner_utility", "partner_decision"]
     var metadata_index = 0
     while metadata_index < rt_count(metadata):
         if dv_has_key(row, metadata[metadata_index]):
@@ -359,8 +359,18 @@ fn c2d_goals(actor):
     var i = 0
     while i < rt_count(rows):
         let row = rows[i]
-        if row.actor == actor.id and not dv_find(row, "manual_only", false):
-            var when = dv_all([row.when, row.literal, dv_fact(c2d_mark(actor.id, row.id), false)])
+        if row.actor == actor.id and (not dv_find(row, "manual_only", false) or (dv_has_key(row, "manipulation") and dv_find(actor.policy, "allow_manipulation_candidates", false))):
+            var when = dv_all([row.when, row.literal])
+            if not dv_find(row, "repeatable", false):
+                when = dv_all([when, dv_fact(c2d_mark(actor.id, row.id), false)])
+            if dv_has_key(row, "owned_decision"):
+                let candidate = dvp_find_action(actor.actions, row.id)
+                if candidate == false or not dvp_owned_decision_ready(actor, candidate, actor.mind):
+                    when = dv_not(dv_true())
+            if dv_has_key(row, "partner_decision"):
+                let candidate = dvp_find_action(actor.actions, row.id)
+                if candidate == false or not dvp_personal_ready(actor.mind, candidate.personal_choice):
+                    when = dv_not(dv_true())
             if dv_find(row, "work_refusal", false) or dv_find(row, "concern_question", false):
                 if not c2_quer_concerned(actor):
                     when = dv_not(dv_true())
@@ -382,7 +392,7 @@ fn c2d_goals(actor):
             rt_push(goals, c1n_index_goal_window({"kind": "communicate", "scope": "personal", "method_id": row.id, "available_when": when, "basis": [row.source], "requires_argument": false, "navigation_room": row.room}))
         i = i + 1
     let study = dv_all([dv_fact(c2_access("north"), true), c2_window(2, 600, 690)])
-    rt_push(goals, dv_with(c2_goal(c2_at(actor.id, "lecture"), study, [c2d_source("06_场面.story", 79, "请到讲堂")]), "navigation_room", "lecture"))
+    rt_push(goals, dv_with_many(c2_goal(c2_at(actor.id, "lecture"), study, [c2d_source("06_场面.story", 79, "请到讲堂")]), {"navigation_room": "lecture", "maintain_presence": true}))
     if actor.id == "bertrand":
         rt_push(goals, dv_with(c2_goal(dv_fact(c2d_person_ref(actor.id, "watching"), true), c2_any_night(), [c1_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story", 30, "夜里巡夜：护住同伴")]), "navigation_room", "logistics"))
         rt_push(goals, dv_with(c2_observation_goal(c2d_person_ref(actor.id, "small_shadow_seen"), dv_all([c2_any_night(), dv_fact(c2d_person_ref(actor.id, "watching"), true)]), [c2d_source("04_案件.story", 25, "有限身影观察")], 0), "navigation_room", "logistics"))
@@ -394,7 +404,7 @@ fn c2d_goals(actor):
             rt_push(goals, c2_observation_goal(c2_ref("c2.ledger", ledger_fields[i]), c2_at(actor.id, "logistics"), [c2d_source("04_案件.story", 10, "从读到账目再判断是否有缺口")], 0))
             i = i + 1
     if actor.id == "quer":
-        rt_push(goals, dv_with(c2_goal(dv_fact(c2_ref("c2.granary", "latch_loose"), false), dv_fact(c2_ref("c2.granary", "latch_loose"), true), [c2d_source("10_执行.story", 17, "RepairLatch")]), "navigation_room", "logistics"))
+        rt_push(goals, dv_with(c2_goal(dv_fact(c2_ref("c2.granary", "latch_loose"), false), dv_all([dv_fact(c2_ref("c2.granary", "latch_loose"), true), c2_work_accepted(actor.id, "quer.c2.granary.precision")]), [c2d_source("10_执行.story", 17, "RepairLatch")]), "navigation_room", "logistics"))
     let opportunity = c2d_known_council_proposal()
     let venues = [{"room": "oath_court", "wind": true}, {"room": "central_hall", "wind": false}]
     i = 0
@@ -431,11 +441,14 @@ fn c2d_refresh_goals_from(actor):
     while i < rt_count(goals):
         rt_push(combined, goals[i])
         i = i + 1
-    var actions = actor.actions
+    let original_actions = actor.actions
+    var actions = []
     i = 0
-    while i < rt_count(actions):
-        if dv_find(actions[i], "case_method", false):
-            actions = dvs_replace(actions, i, dv_with(actions[i], "precondition", dv_all([actions[i].case_base_when, c2d_case_gate(actor.mind)])))
+    while i < rt_count(original_actions):
+        var action = original_actions[i]
+        if dv_find(action, "case_method", false):
+            action = dv_with(action, "precondition", dv_all([action.case_base_when, c2d_case_gate(actor.mind)]))
+        rt_push(actions, action)
         i = i + 1
     let view = dv_with_many(actor, {"policy": dv_with(policy, "goals", combined), "actions": actions})
     return dv_with(view, "policy", dv_with(view.policy, "goals", c2_navigation_goals(view, combined)))

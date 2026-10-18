@@ -88,21 +88,21 @@ fn c2_profile(actor):
     if actor == "shen":
         values = ["central_cooking", "patient_priority", "per_person", "not_targeted", "cautious_travel"]
     if actor == "ruan":
-        values = ["records", "per_person", "committee", "witnesses", "evidence"]
+        values = ["records", "controlled_audit", "per_person", "committee", "witnesses", "evidence"]
     if actor == "ward":
-        values = ["committee", "records", "ward_authority", "restriction", "no_exception", "witnesses", "evidence"]
+        values = ["ward_authority", "committee", "records", "restriction", "no_exception", "witnesses", "evidence"]
     if actor == "gu":
         values = ["cautious_travel", "tradition", "records", "evidence", "contract"]
     if actor == "lucian":
-        values = ["not_targeted", "evidence", "movement_freedom", "patient_priority", "contract", "records"]
+        values = ["resonance_exclusivity", "not_targeted", "evidence", "movement_freedom", "patient_priority", "contract", "records"]
     if actor == "selma":
         values = ["patient_priority", "evidence", "research"]
     if actor == "veronica":
-        values = ["evidence", "records", "committee", "research"]
+        values = ["avoid_ethics_review", "evidence", "records", "committee", "research"]
     if actor == "elena":
         values = ["tradition", "evidence", "contract", "safety", "cautious_travel"]
     if actor == "moran":
-        values = ["measured_work", "research"]
+        values = ["avoid_isolation", "measured_work", "research"]
     return {"id": actor, "group": group, "domain": domain, "station_roles": roles, "value_order": values, "basis": [c2_person_source(actor), c2_approved("chapter-two-role-groups")]}
 
 fn c2_edges():
@@ -169,7 +169,9 @@ fn c2_object(id, room, fields):
     return dv_with(c1_state_object(id, fields), "location", room)
 
 fn c2_initial_body(actor):
-    var fields = {"alive": dv_field(true), "rations": dv_field(0), "consumed": dv_field(0), "hungry": dv_field(false), "owe_notes": dv_field(0), "pending_notes": dv_field(0), "busy_care": dv_field(false), "station": dv_field(""), "guard_commitment": dv_field(false), "guard_response_ready": dv_unknown(), "repair_requested": dv_field(false), "watched": dv_field(false), "night_taken": dv_field(false), "exposure_terminal": dv_unknown(), "reason_committed": dv_field(false), "norm_conflict_driven": dv_field(false), "fever": dv_unknown(), "day_sketch_exposed": dv_field(false), "evening_sketch_exposed": dv_field(false), "erosion_exposure": dv_field(0), "restriction_announced": dv_field(false), "restriction_withdrawn": dv_field(false), "guard_active": dv_field(false), "support_active": dv_field(false), "partner_offered": dv_field(false), "partner_accepted": dv_field(false)}
+    var fields = {"alive": dv_field(true), "rations": dv_field(0), "consumed": dv_field(0), "hungry": dv_field(false), "owe_notes": dv_field(0), "pending_notes": dv_field(0), "busy_care": dv_field(false), "station": dv_field(""), "guard_commitment": dv_field(false), "guard_response_ready": dv_unknown(), "repair_requested": dv_field(false), "watched": dv_field(false), "night_taken": dv_field(false), "exposure_terminal": dv_unknown(), "reason_committed": dv_field(false), "norm_conflict_driven": dv_field(false), "fever": dv_unknown(), "day_sketch_exposed": dv_field(false), "evening_sketch_exposed": dv_field(false), "erosion_exposure": dv_field(0), "restriction_withdrawn": dv_field(false), "guard_active": dv_field(false), "support_active": dv_field(false)}
+    if dv_has(["ward", "lucian", "moran", "veronica", "ruan"], actor):
+        fields = dv_with(fields, "private_motive", dv_with(dv_field(true), "basis", [c2_approved("user:2026-10-18-personal-active-motives")]))
     let work = c2_work_specs()
     var work_index = 0
     while work_index < rt_count(work):
@@ -356,7 +358,7 @@ fn c2_inspection_has(fields, field):
     return false
 
 fn c2_inspection_presentation(actor, object, fields):
-    var lines = []
+    var lines = c2m_visible_lines(object, fields)
     let description = c2_source("09_表达.story", 653, "存粮与门闩")
     if object == "c2.granary":
         rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, "latch_loose"), true), "门闩变形松动，重锁另须处理。", [], c2_source("09_表达.story", 654, "闩松")))
@@ -392,8 +394,9 @@ fn c2_inspection_presentation(actor, object, fields):
         var i = 0
         while i < rt_count(fields):
             let label = dv_find(names, fields[i], "现场操作")
-            rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, fields[i]), true), rt_cat(label, "：现场记录为已完成。"), [], c2_approved("actual-local-case-inspection")))
-            rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, fields[i]), false), rt_cat(label, "：现场记录为尚未完成。"), [], c2_approved("actual-local-case-inspection")))
+            if not dv_has_key(c2m_labels(), fields[i]):
+                rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, fields[i]), true), rt_cat(label, "：现场记录为已完成。"), [], c2_approved("actual-local-case-inspection")))
+                rt_push(lines, c2_visible_line(dv_fact(c2_ref(object, fields[i]), false), rt_cat(label, "：现场记录为尚未完成。"), [], c2_approved("actual-local-case-inspection")))
             i = i + 1
     return {"actor": actor, "voice": "visible-inspection", "lines": lines}
 
@@ -417,7 +420,7 @@ fn c2_route_inspections(actor):
 
 axiom c2_collect_law(actor, day, meal, start, end):
     let flag = rt_cat("collected.", rt_cat(rt_show(day), rt_cat(".", meal)))
-    return dv_axiom("c2_collect_law", 1, dv_all([c2_at(actor, "logistics"), c2_window(day, start, end), dv_fact(c2_ref("c2.counter", "open"), true), dv_at_least(c2_ref("c2.counter", "remaining"), 1), dv_fact(c2_own(actor, flag), false), c2_alive(actor)]), [dv_increment(c2_ref("c2.counter", "remaining"), -1), dv_increment(c2_ref("c2.ledger", "removed"), 1), dv_increment(c2_ref("c2.ledger", "day_recorded"), 1), dv_increment(c2_own(actor, "rations"), 1), dv_assign(c2_own(actor, flag), true)])
+    return dv_axiom("c2_collect_law", 1, dv_all([c2_at(actor, "logistics"), c2_window(day, start, end), dv_fact(c2_ref("c2.counter", "open"), true), dv_at_least(c2_ref("c2.counter", "remaining"), 1), dv_fact(c2_own(actor, flag), false), c2_alive(actor)]), c2m_concat([dv_increment(c2_ref("c2.counter", "remaining"), -1), dv_increment(c2_ref("c2.ledger", "removed"), 1), dv_increment(c2_ref("c2.ledger", "day_recorded"), 1), dv_increment(c2_own(actor, "rations"), 1), dv_assign(c2_own(actor, flag), true)], c2m_ration_contact_effects()))
 
 axiom c2_eat_law(actor, day, meal):
     var start = 720
@@ -460,7 +463,7 @@ axiom c2_night_take_variant_law(actor, patient, registered):
         rt_push(effects, dv_increment(c2_own(actor, "pending_notes"), 1))
         rt_push(effects, dv_increment(c2_own(actor, rt_cat("pending.", purpose)), 1))
         rt_push(effects, dv_assign(c2_own(actor, rt_cat("purpose_clarified.", purpose)), false))
-    return dv_axiom("c2_night_take_variant_law", 1, dv_all([record_condition, c2_at(actor, "logistics"), c2_any_night(), dv_fact(c2_own(actor, "rations"), 0), dv_fact(c2_ref("c2.counter", "open"), true), dv_at_least(c2_ref("c2.counter", "remaining"), 1), c2_alive(actor), need]), effects)
+    return dv_axiom("c2_night_take_variant_law", 1, dv_all([record_condition, c2_at(actor, "logistics"), c2_any_night(), dv_fact(c2_own(actor, "rations"), 0), dv_fact(c2_ref("c2.counter", "open"), true), dv_at_least(c2_ref("c2.counter", "remaining"), 1), c2_alive(actor), need]), c2m_concat(effects, c2m_ration_contact_effects()))
 
 axiom c2_night_take_law(actor, patient):
     return c2_night_take_variant_law(actor, patient, false)
@@ -736,7 +739,7 @@ fn c2_actor_actions(actor):
         rt_push(result, c2_move_action(actor, edge.from, edge.to, edge.gate))
         rt_push(result, c2_move_action(actor, edge.to, edge.from, edge.gate))
         i = i + 1
-    let rows = [c2i_evening_actions(actor), c2i_record_actions(actor), c2_supply_actions(actor), c2_special_actions(actor), c2_corridor_actions(actor), c2i_actions(actor), c2_safety_actions(actor)]
+    let rows = [c2i_evening_actions(actor), c2i_record_actions(actor), c2_supply_actions(actor), c2_special_actions(actor), c2_corridor_actions(actor), c2i_actions(actor), c2_safety_actions(actor), c2m_actions(actor)]
     i = 0
     while i < rt_count(rows):
         var j = 0
@@ -793,6 +796,7 @@ fn c2_self_grants(actor):
     return grants
 
 fn c2_install_actor_laws_into(domain, owned_adoptions, actor, mode):
+    c2m_install(domain, owned_adoptions, actor, mode)
     c2i_install_laws(domain, owned_adoptions, actor, mode)
     c2i_record_install(domain, owned_adoptions, actor, mode)
     c2_safety_install(domain, owned_adoptions, actor, mode)
@@ -963,6 +967,27 @@ fn c2_navigation_local_ready(actor, goal):
 fn c2_navigation_goals(actor, goals):
     if c2i_closing_navigation(actor) != false:
         return goals
+    // An active, already reached presence intention does not earn another
+    // unrelated arrival reward. Substantive actions still enter shared choice.
+    var held = 0
+    var maintained_route = false
+    while held < rt_count(goals):
+        let goal = goals[held]
+        if dv_find(goal, "maintain_presence", false) and 0 < rt_count(dv_find(goal, "basis", [])):
+            if dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true":
+                if dv_truth(actor.mind, goal.proposition) == "true":
+                    return goals
+                let room = dv_find(goal, "navigation_room", "")
+                if room != "" and maintained_route == false:
+                    let route = c2_navigation_route(actor, room)
+                    if route != false:
+                        maintained_route = {"goal": goal, "route": route}
+        held = held + 1
+    if maintained_route != false:
+        let route = maintained_route.route
+        let goal = maintained_route.goal
+        let intended = c2_goal(c2_at(actor.id, route.next), dv_all([dv_find(goal, "available_when", dv_true()), c2_at(actor.id, route.origin)]), dv_append(goal.basis, route))
+        return dv_append(goals, dv_with(intended, "navigation_intention", {"target": route.target, "next": route.next, "scope": "maintained-known-route-not-task-completion"}))
     var first = false
     var fallback = false
     var i = 0
@@ -1060,8 +1085,7 @@ fn c2_negated_conditions(conditions):
         i = i + 1
     return result
 
-fn c2_personal_goals(actor):
-    let id = actor.id
+fn c2_personal_goal_templates_build(id):
     let source = [c2_person_source(id)]
     var goals = [c2_observation_goal(c2_clock(), dv_true(), [c2_approved("actual-clock-observation-before-time-sensitive-actions")], 0)]
     // Fixed, owned observation windows do not assume what the weather will be.
@@ -1181,6 +1205,20 @@ fn c2_personal_goals(actor):
         rt_push(goals, c2_goal(dv_fact(c2_ref("c2.granary", "structure_checked"), true), c2_at(id, "logistics"), source))
     if id == "mora":
         rt_push(goals, c2_goal(dv_fact(c2_own("moran", "hungry"), false), dv_all([dv_fact(c2_own("moran", "fever"), true), dv_fact(c2_own("moran", "hungry"), true)]), [c2_approved("mora-does-not-refuse-a-real-patient")]))
+    return goals
+
+// Cache only content-authored values; callers own a clone before appending.
+fn c2_personal_goal_templates(id):
+    let key = ["c2-personal-goal-templates-v1", id]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, c2_personal_goal_templates_build(id))
+
+fn c2_personal_goals(actor):
+    var goals = dv_clone(c2_personal_goal_templates(actor.id))
+    if actor.id == "demon":
+        return goals
     let investigations = c2i_goals(actor)
     var investigation_index = 0
     while investigation_index < rt_count(investigations):
@@ -1297,6 +1335,8 @@ fn c2_extend_actor_from(actor, physical, previous):
     let profile = c2_profile(actor.id)
     let binding = {"topic": "chapter2", "heard_when": dv_true(), "completed_when": dv_not(dv_true()), "basis": profile.basis}
     var order = dv_clone(dv_find(actor.policy, "value_order", []))
+    if dv_has(["ward", "lucian", "moran", "veronica", "ruan"], actor.id):
+        order = c2m_concat(profile.value_order, [for value in order if not dv_has(profile.value_order, value): value])
     i = 0
     while i < rt_count(profile.value_order):
         if not dv_has(order, profile.value_order[i]):
@@ -1393,6 +1433,7 @@ fn c2_world_processes():
         let terminal = rt_cat("c2.terminal.", people[i])
         rt_push(result, {"id": terminal, "law": terminal, "basis": [c2_approved("actual-terminal-exposure")]})
         i = i + 1
+    rt_push(result, {"id": "c2.drawer.ink-contact", "law": "c2.drawer.ink-contact", "basis": [c2m_source()]})
     return result
 
 fn c2_runtime_contracts():
@@ -1440,7 +1481,7 @@ fn c2i_rows_build():
         c2i_row("detective", "detective.c2.resonance.steps", "resonance_hall", resonance, "case.astral", "seven_step_scuffs", [dv_fact(c2_ref("case.astral", "ladder_lowered"), true)], "顺着七星步位，逐一比对地面的擦痕。"),
         c2i_row("detective", "detective.c2.resonance.palm", "resonance_hall", resonance, "case.astral", "palm_print", [dv_fact(c2_ref("case.astral", "ladder_lowered"), true)], "梯上与平台边缘留着掌印，位置与攀援线路相接。"),
         c2i_row("detective", "detective.c2.resonance.pressure", "quiet_room", resonance, "case.astral", "vent_pressure_formula", [], "检查备用通风道，抄下标注时刻与压差的算式，保留两者的对应关系。"),
-        c2i_row("quer", "quer.c2.safety.acid-drawer", "white_tower_safe", safety, "case.logistics", "r07_skin_test", [], "以酸蚀松开抽屉，取出R-07自体皮试记录。"),
+        c2i_row("quer", "quer.c2.safety.acid-drawer", "white_tower_safe", safety, "case.logistics", "r07_skin_test", [], "实际开启已可操作的抽屉，取出R-07自体皮试记录。"),
         c2i_row("margaret", "margaret.c2.granary.wedge", "logistics", c2_window(3, 720, 840), "c2.granary", "wedge_set", [c2i_granary_team(), dv_fact(c2_own("margaret", "can_structure"), true), dv_fact(c2_ref("c2.granary", "structure_checked"), true)], "按昨日勘查位置置入结构楔，托住变形门框。"),
         c2i_row("huo", "huo.c2.granary.jack", "logistics", c2_window(3, 720, 840), "c2.granary", "lift_mm", [c2i_granary_team(), dv_fact(c2_own("huo", "can_weight"), true), dv_fact(c2_own("margaret", "support_active"), true), dv_fact(c2_ref("c2.granary", "wedge_set"), true)], "以千斤顶和滑轮抬升门框四毫米，保持载荷，让雀儿操作双栓。")]
     let contract_join = dv_all([dv_fact(c2_ref("case.contract", "lock_no_pry"), true), dv_fact(c2_ref("case.contract", "emergency_inventory_majority"), true)])
@@ -1470,6 +1511,14 @@ fn c2i_physical_premise(row):
     var conditions = dv_append(row.requirements, dv_all([c2_at(row.actor, row.room), c2_alive(row.actor), row.when]))
     if row.field == "wedge_set" or row.field == "lift_mm":
         rt_push(conditions, dv_fact(c2_own(row.actor, "support_active"), false))
+    if row.field == "emergency_inventory_majority":
+        rt_push(conditions, c1_any(dv_fact(c2_ref("case.contract", "inventory_hidden"), false), dv_fact(c2_ref("case.contract", "inventory_recovered"), true)))
+    if row.field == "vent_pressure_formula":
+        rt_push(conditions, c1_any(dv_fact(c2_ref("case.astral", "pipe_blocked"), false), dv_fact(c2_ref("case.astral", "pipe_cleared"), true)))
+    if row.field == "complete_draft":
+        rt_push(conditions, c1_any(dv_fact(c2_ref("case.astral", "draft_hidden"), false), dv_fact(c2_ref("case.astral", "draft_recovered"), true)))
+    if row.field == "r07_skin_test":
+        rt_push(conditions, c1_any(dv_fact(c2_ref("case.logistics", "drawer_etched"), false), dv_fact(c2_ref("case.logistics", "drawer_neutralized"), true)))
     return dv_all(conditions)
 
 axiom c2i_contact_law(row):
@@ -1506,7 +1555,7 @@ fn c2i_world_objects(world):
                 initial = 0
             result = dv_store(result, ref, dv_field(initial))
         i = i + 1
-    return result
+    return c2m_initialize(result)
 
 fn c2i_install_laws(domain, adoptions, actor, mode):
     let rows = c2i_rows()
@@ -1575,6 +1624,7 @@ fn c2i_goals(actor):
     var goals = []
     if id == "ward" or id == "quer":
         rt_push(goals, c2_observation_goal(c2_ref("case.contract", "cabinet_key_holder"), c2_at(id, "document_workshop"), [c2_approved("actual-key-custody-receipt")], 0))
+    goals = c2m_concat(goals, c2m_goals(actor))
     let rows = c2i_rows()
     let closing = c2i_closing_navigation(actor)
     if closing != false:
@@ -1588,7 +1638,8 @@ fn c2i_goals(actor):
         let row = rows[i]
         if row.actor == id:
             let completion = dv_fact(c2_ref(row.object, row.field), c2i_value(row))
-            rt_push(goals, dv_with_many(c2_goal(completion, row.when, [c2_approved("chapter-two-investigation-opportunity")]), {"navigation_completion": completion, "navigation_room": row.room, "navigation_requirements": row.requirements, "navigation_methods": [row.id]}))
+            let undertaking = dv_all([row.when, c2_work_accepted(id, row.id)])
+            rt_push(goals, dv_with_many(c2_goal(completion, undertaking, [c2_approved("chapter-two-investigation-opportunity")]), {"navigation_completion": completion, "navigation_room": row.room, "navigation_requirements": row.requirements, "navigation_methods": [row.id]}))
         i = i + 1
     if id == "ruan":
         rt_push(goals, c2_goal(dv_fact(c2_ref("c2.ledger", "supplement_column"), true), dv_fact(c2_own("ruan", "accepted.records_supplement"), true), [c2_approved("implement-reserved-column-after-acceptance")]))
@@ -1835,6 +1886,32 @@ fn c2i_navigation_input(actor):
 fn c2_work_accepted(actor, id):
     return dv_fact(c2_own(actor, rt_cat("work.accepted.", id)), true)
 
+fn c2_work_decision(item, stance, source):
+    var refs = []
+    if item.actor == "quer" and item.field != "lock_no_pry":
+        refs = [c1_other_ref("contract", "quer_insulted"), c1n_ref("ward.restriction_announced"), c2_own("ward", "restriction_withdrawn"), c2_ref("case.contract", "key_returned"), c2_ref("case.contract", "cabinet_key_holder")]
+    return {"id": rt_cat("work.", item.id), "stance": stance, "context_refs": refs, "request_topics": [rt_cat("work.", item.id)], "basis": [source]}
+
+fn c2_guard_decision(actor, stance, source):
+    var refs = [c2_ref("c2.weather", "earthquake_recent"), c2_ref("c2.weather", "wind"), c2_ref("c2.weather", "environment_epoch"), c2_ref("c2.meter", "safe"), c2_position_ref("moran"), c2_own("moran", "alive")]
+    let guards = ["detective", "bertrand", "huo"]
+    var i = 0
+    while i < rt_count(guards):
+        if guards[i] != actor:
+            rt_push(refs, c2_own(guards[i], "guard_active"))
+        i = i + 1
+    return {"id": rt_cat("guard-duty.", actor), "stance": stance, "context_refs": refs, "request_topics": [rt_cat("guard-duty.", actor)], "basis": [source]}
+
+fn c2_partner_already_decided(actor, kind):
+    let completed = dv_find(actor, "completed_actions", [])
+    if dv_truth(actor.mind, dv_fact(c1n_ref("partner_promised"), true)) == "true":
+        return true
+    if actor.id == "detective" and (dv_has(completed, "night.accept-partner") or dv_has(completed, "detective.c2.partner.accept")):
+        return true
+    if kind == "offer":
+        return dv_truth(actor.mind, dv_fact(c1n_ref("partner_offered"), true)) == "true" or dv_has(completed, "night.partner") or dv_has(completed, "quer.c2.partner.offer")
+    return false
+
 fn c2_work_specs():
     var result = []
     let rows = c2i_rows()
@@ -1863,7 +1940,7 @@ fn c2_work_purpose(field):
     return "承担自己能做的现场核对，所见与结果另行记录。"
 
 fn c2_quer_restriction():
-    return dv_fact(c2_own("ward", "restriction_announced"), true)
+    return dv_fact(c1n_ref("ward.restriction_announced"), true)
 
 fn c2_quer_restricted(actor):
     let heard = c2_received_requirement(actor, {"speaker": "ward", "action_id": "night.ward-claim"})
@@ -1875,7 +1952,7 @@ fn c2_quer_concerned(actor):
 fn c2_cooperation_basis(actor, basis):
     var result = basis
     if actor.id == "quer":
-        let refs = [c1_other_ref("contract", "quer_insulted"), c2_own("ward", "restriction_announced"), c2_own("ward", "restriction_withdrawn")]
+        let refs = [c1_other_ref("contract", "quer_insulted"), c1n_ref("ward.restriction_announced"), c2_own("ward", "restriction_withdrawn")]
         var i = 0
         while i < rt_count(refs):
             let cell = dv_read(actor.mind, refs[i])
@@ -1895,10 +1972,10 @@ fn c2_cooperation_rows():
     let source = c2_approved("user:2026-10-18-real-owned-cooperation-and-retraction")
     let early = c2_window(2, 480, 960)
     var offer = c2d_row("quer", "quer.c2.partner.offer", "living_hall", early, dv_true(), "咱们一起去文献工房？我验锁，你核清册，到了现场再说下一步。", source)
-    offer = dv_with_many(offer, {"effects": [dv_assign(c2_own("quer", "partner_offered"), true)], "opportunity": {"location": "living_hall", "participants": ["detective"], "mode": "all-present"}, "personal_choice": {"group": "quer.partner", "requires": early, "prohibits": dv_fact(c2_own("quer", "partner_offered"), true), "promotes": ["evidence", "movement_freedom"], "sacrifices": [], "basis": [source]}})
+    offer = dv_with_many(offer, {"effects": [dv_assign(c1n_ref("partner_offered"), true)], "public_grants": [c1n_ref("partner_offered")], "partner_decision": "offer", "opportunity": {"location": "living_hall", "participants": ["detective"], "mode": "all-present"}, "personal_choice": {"group": "quer.partner", "requires": early, "prohibits": dv_not(dv_true()), "promotes": ["evidence", "movement_freedom"], "sacrifices": [], "basis": [source]}})
     rt_push(rows, offer)
     var accept = c2d_row("detective", "detective.c2.partner.accept", "living_hall", early, dv_true(), "好。我承担清册核对；专业操作由你自己决定。", source)
-    accept = dv_with_many(accept, {"received_speech_requirement": {"any_of": [{"speaker": "quer", "action_id": "quer.c2.partner.offer"}, {"speaker": "quer", "action_id": "night.partner"}]}, "effects": [dv_assign(c2_own("detective", "partner_accepted"), true)], "public_grants": [c2_own("detective", "partner_accepted")], "personal_choice": {"group": "detective.partner", "requires": early, "prohibits": dv_fact(c2_own("detective", "partner_accepted"), true), "promotes": ["evidence"], "sacrifices": [], "basis": [source]}})
+    accept = dv_with_many(accept, {"received_speech_requirement": {"any_of": [{"speaker": "quer", "action_id": "quer.c2.partner.offer"}, {"speaker": "quer", "action_id": "night.partner"}]}, "effects": [dv_assign(c1n_ref("partner_promised"), true)], "partner_decision": "accept", "public_grants": [c1n_ref("partner_promised")], "personal_choice": {"group": "detective.partner", "requires": early, "prohibits": dv_not(dv_true()), "promotes": ["evidence"], "sacrifices": [], "basis": [source]}})
     rt_push(rows, accept)
     let work = c2_work_specs()
     var i = 0
@@ -1911,11 +1988,11 @@ fn c2_cooperation_rows():
             promotes = ["research"]
         if item.field == "lock_no_pry":
             promotes = ["not_targeted", "movement_freedom", "evidence"]
-        take = dv_with_many(take, {"effects": [dv_assign(decided, true), dv_assign(c2_own(item.actor, rt_cat("work.accepted.", item.id)), true)], "repeatable": true, "work_decision": item.id, "work_clearance": item.field == "lock_no_pry", "public_observers": c2_people(), "public_grants": [decided, c2_own(item.actor, rt_cat("work.accepted.", item.id))], "personal_choice": {"group": rt_cat("work.", item.id), "requires": item.when, "prohibits": dv_fact(decided, true), "promotes": promotes, "sacrifices": [], "require_positive": true, "basis": [source]}})
+        take = dv_with_many(take, {"effects": [dv_assign(decided, true), dv_assign(c2_own(item.actor, rt_cat("work.accepted.", item.id)), true)], "repeatable": true, "work_decision": item.id, "work_reply": item.id, "owned_decision": c2_work_decision(item, "accepted", source), "work_clearance": item.field == "lock_no_pry", "public_observers": c2_people(), "public_grants": [decided, c2_own(item.actor, rt_cat("work.accepted.", item.id))], "personal_choice": {"group": rt_cat("work.", item.id), "requires": item.when, "prohibits": dv_not(dv_true()), "promotes": promotes, "sacrifices": [], "require_positive": true, "basis": [source]}})
         rt_push(rows, take)
         if item.actor == "quer" and item.field != "lock_no_pry":
             var refuse = c2d_row("quer", rt_cat(item.id, ".refuse-restriction"), item.room, item.when, dv_true(), "先前对我的指控还没有向我澄清，却先叫我替你们开锁？把依据说清楚，再谈这次合作。", source)
-            refuse = dv_with_many(refuse, {"work_refusal": true, "effects": [dv_assign(c2_own("quer", rt_cat("work.accepted.", item.id)), false), dv_assign(decided, false)], "personal_choice": {"group": rt_cat("work.", item.id), "requires": item.when, "prohibits": dv_not(dv_true()), "promotes": ["not_targeted", "movement_freedom", "evidence"], "sacrifices": ["measured_work"], "basis": [source]}})
+            refuse = dv_with_many(refuse, {"work_refusal": true, "work_reply": item.id, "repeatable": true, "owned_decision": c2_work_decision(item, "declined", source), "effects": [dv_assign(c2_own("quer", rt_cat("work.accepted.", item.id)), false), dv_assign(decided, true)], "public_observers": c2_people(), "public_grants": [decided, c2_own("quer", rt_cat("work.accepted.", item.id))], "personal_choice": {"group": rt_cat("work.", item.id), "requires": item.when, "prohibits": dv_not(dv_true()), "promotes": ["not_targeted", "movement_freedom", "evidence"], "sacrifices": ["measured_work"], "basis": [source]}})
             rt_push(rows, refuse)
         if item.actor == "quer" or item.actor == "huo" or item.actor == "margaret":
             var requester = "detective"
@@ -2060,7 +2137,7 @@ fn c2_safety_actions(actor):
         let release_id = rt_cat(actor, ".c2.guard.release-post")
         let release_pre = dv_all([c2_at(actor, "living_hall"), dv_fact(c2_own(actor, "guard_active"), true)])
         var release = c2_action(release_id, "help", release_pre, release_pre, release_id, [c2_own(actor, "guard_active"), c2_own(actor, "guard_commitment")], "我现在交接离岗；接班人实际到岗前，不要把这里当作仍有人值守。", source)
-        release = dv_with_many(release, {"repeatable": true, "personal_choice": {"group": rt_cat("guard-duty.", actor), "requires": release_pre, "prohibits": dv_not(dv_true()), "promotes": ["research"], "sacrifices": ["patient_priority", "safety", "measured_work"], "require_positive": true, "basis": [source]}, "speech": dv_with_many(c1_speech(c2_at(actor, "living_hall"), source, "actual-guard-release"), {"surface": release.surface, "channel": "local"}), "listeners": c2_people(), "public_grants": [c2_own(actor, "guard_active"), c2_own(actor, "guard_commitment")]})
+        release = dv_with_many(release, {"repeatable": true, "owned_decision": c2_guard_decision(actor, "released", source), "personal_choice": {"group": rt_cat("guard-duty.", actor), "requires": release_pre, "prohibits": dv_not(dv_true()), "promotes": ["research"], "sacrifices": ["patient_priority", "safety", "measured_work"], "require_positive": true, "basis": [source]}, "speech": dv_with_many(c1_speech(c2_at(actor, "living_hall"), source, "actual-guard-release"), {"surface": release.surface, "channel": "local"}), "listeners": c2_people(), "public_grants": [c2_own(actor, "guard_active"), c2_own(actor, "guard_commitment")]})
         rt_push(actions, release)
     return actions
 
@@ -2107,22 +2184,33 @@ fn c2_owned_recheck_needed(actor):
 // Only owned observations and actual request receipts change the chooser view.
 // Physical laws retain bodily feasibility and never acquire this view's beliefs.
 fn c2_refresh_content_actions(actor):
-    var actions = actor.actions
+    let original_actions = actor.actions
+    var actions = []
     var i = 0
     let notice = c2_owned_safety_notice(actor)
     let recheck = c2_owned_recheck_needed(actor)
     let adopted_stop = dv_truth(actor.mind, dv_fact(c2_own(actor.id, "accepted.seal_plan"), true)) == "true"
-    while i < rt_count(actions):
-        var action = actions[i]
+    while i < rt_count(original_actions):
+        var action = original_actions[i]
+        if dv_has_key(action, "partner_decision"):
+            let base = dv_find(action, "owned_precondition_base", action.precondition)
+            let choice = dv_find(action, "owned_choice_base", action.personal_choice)
+            var qualification = dv_true()
+            if c2_partner_already_decided(actor, action.partner_decision):
+                qualification = dv_not(dv_true())
+            action = dv_with_many(action, {"owned_precondition_base": base, "owned_choice_base": choice, "precondition": dv_all([base, qualification]), "personal_choice": dv_with(choice, "requires", dv_all([choice.requires, qualification]))})
+        if dv_has_key(action, "work_reply"):
+            let request = dvs_pending_request(actor, {"response_topic": rt_cat("work.", action.work_reply)})
+            if 0 < rt_count(request):
+                action = dv_with_many(action, {"response_topic": rt_cat("work.", action.work_reply), "requires_actual_request": true})
+            else:
+                action = dv_without(dv_without(action, "response_topic"), "requires_actual_request")
         if dv_has_key(action, "work_decision"):
             var choice = dv_find(action, "owned_choice_base", action.personal_choice)
             action = dv_with(action, "owned_choice_base", choice)
             let request = dvs_pending_request(actor, {"response_topic": rt_cat("work.", action.work_decision)})
             if 0 < rt_count(request):
                 choice = dv_with(choice, "basis", dv_append(choice.basis, {"source_event": request.source_event, "parse_event": request.parse_event, "requester": request.requester}))
-                action = dv_with_many(action, {"response_topic": rt_cat("work.", action.work_decision), "requires_actual_request": true})
-            else:
-                action = dv_without(dv_without(action, "response_topic"), "requires_actual_request")
             if dv_truth(actor.mind, dv_fact(c1n_ref("partner_promised"), true)) == "true":
                 choice = dv_with(choice, "basis", dv_append(choice.basis, {"ref": c1n_ref("partner_promised"), "receipt": dv_read(actor.mind, c1n_ref("partner_promised"))}))
             if actor.id == "quer" and c2_quer_concerned(actor) and not dv_find(action, "work_clearance", false):
@@ -2185,16 +2273,19 @@ fn c2_refresh_content_actions(actor):
             action = dv_with(action, "personal_choice", dv_with(action.personal_choice, "requires", qualification))
         // A supporter can physically leave; doing so releases the operation.
         // Its own continuing-duty goal is considered by the shared planner.
-        actions = dvs_replace(actions, i, action)
+        rt_push(actions, action)
         i = i + 1
-    var rules = dv_find(actor.policy, "norm_rules", [])
+    let original_rules = dv_find(actor.policy, "norm_rules", [])
+    var rules = []
     i = 0
-    while i < rt_count(rules):
-        if rules[i].id == "seal_plan":
+    while i < rt_count(original_rules):
+        var rule = original_rules[i]
+        if rule.id == "seal_plan":
             var applies = dv_not(dv_true())
             if recheck:
                 applies = dv_fact(c2_own(actor.id, "accepted.seal_plan"), true)
-            rules = dvs_replace(rules, i, dv_with(rules[i], "available_when", applies))
+            rule = dv_with(rule, "available_when", applies)
+        rt_push(rules, rule)
         i = i + 1
     return dv_with_many(actor, {"actions": actions, "policy": dv_with(actor.policy, "norm_rules", rules)})
 
@@ -2206,7 +2297,9 @@ fn c2_safety_goals(actor):
     while work_index < rt_count(work):
         let item = work[work_index]
         if item.actor == actor.id:
-            rt_push(goals, dv_with_many(c2_goal(c2_work_accepted(actor.id, item.id), item.when, [c2_approved("user:2026-10-18-real-owned-cooperation-and-retraction")]), {"navigation_room": item.room, "navigation_methods": [rt_cat(item.id, ".undertake")]}))
+            let candidate = dvp_find_action(actor.actions, rt_cat(item.id, ".undertake"))
+            if candidate != false and dvp_owned_decision_ready(actor, candidate, actor.mind):
+                rt_push(goals, dv_with_many(c2_goal(c2_work_accepted(actor.id, item.id), item.when, [c2_approved("user:2026-10-18-real-owned-cooperation-and-retraction")]), {"navigation_room": item.room, "navigation_methods": [rt_cat(item.id, ".undertake")]}))
         work_index = work_index + 1
     let outward = actor.id == "moran" or dv_truth(actor.mind, dv_fact(c2_own(actor.id, "accepted.seal_plan"), true)) == "true" or dv_truth(actor.mind, dv_fact(c2_own(actor.id, "accepted.open_plan"), true)) == "true"
     if outward and c2_owned_recheck_needed(actor):
@@ -2221,7 +2314,9 @@ fn c2_safety_goals(actor):
         rt_push(goals, dv_with_many(c2_observation_goal(c2_ref("c2.meter", "safe"), dv_at_least(c2_clock(), 1980), source, minimum), {"navigation_room": "outdoor_meter", "navigation_methods": [rt_cat(actor.id, ".c2.sample.meter")]}))
     if dv_has(["detective", "bertrand", "huo"], actor.id):
         if c2_owned_safety_notice(actor):
-            rt_push(goals, dv_with_many(c2_goal(dv_fact(c2_own(actor.id, "guard_commitment"), true), c2_night(4), source), {"navigation_room": "living_hall", "navigation_methods": [rt_cat(actor.id, ".c2.guard.undertake")]}))
+            let candidate = dvp_find_action(actor.actions, rt_cat(actor.id, ".c2.guard.undertake"))
+            if candidate != false and dvp_owned_decision_ready(actor, candidate, actor.mind):
+                rt_push(goals, dv_with_many(c2_goal(dv_fact(c2_own(actor.id, "guard_commitment"), true), c2_night(4), source), {"navigation_room": "living_hall", "navigation_methods": [rt_cat(actor.id, ".c2.guard.undertake")]}))
         rt_push(goals, dv_with_many(c2_goal(dv_fact(c2_own(actor.id, "guard_active"), true), dv_all([c2_night(4), dv_fact(c2_own(actor.id, "guard_commitment"), true)]), source), {"navigation_room": "living_hall", "navigation_methods": [rt_cat(actor.id, ".c2.guard.take-post")]}))
         rt_push(goals, c2_goal(c2_at(actor.id, "living_hall"), dv_all([c2_night(4), dv_fact(c2_own(actor.id, "guard_active"), true)]), source))
     if dv_has(["margaret", "huo"], actor.id):
@@ -2244,3 +2339,198 @@ fn c2_safety_goals(actor):
             i = i + 1
         rt_push(goals, c2_observation_goal(c2_own("moran", "watched"), c2_night(4), source, minimum))
     return goals
+
+// Owner motives are declarations; opportunities and consequences still require real execution.
+fn c2m_source():
+    return c2_approved("user:2026-10-18-personal-active-motives")
+
+fn c2m_row(actor, suffix, room, object, field, requirements, effects, text, promotes, sacrifices, private):
+    return {"actor": actor, "id": rt_cat(actor, rt_cat(".c2.motive.", suffix)), "room": room, "object": object, "field": field, "requirements": requirements, "effects": effects, "text": text, "promotes": promotes, "sacrifices": sacrifices, "private": private}
+
+fn c2m_rows():
+    let key = ["authored-declaration", "c2m_rows"]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, c2m_rows_build())
+
+fn c2m_rows_build():
+    let contract = "case.contract"
+    let astral = "case.astral"
+    let logistics = "case.logistics"
+    let ledger = "c2.ledger"
+    var rows = []
+    rt_push(rows, c2m_row("ward", "hide-inventory", "document_workshop", contract, "inventory_hidden", [dv_fact(c2_ref(contract, "joined_inventory"), false), dv_fact(c2_ref(contract, "emergency_inventory_majority"), false)], [dv_assign(c2_ref(contract, "blue_ink"), true)], "把清册收进铁匣，手边的蓝墨蹭在匣口；我想先保住自己的处置权。", ["ward_authority", "pursue_desire"], ["evidence", "understand_cost"], true))
+    rt_push(rows, c2m_row("lucian", "obstruct-resonance", "quiet_room", astral, "pipe_blocked", [dv_fact(c2_ref(astral, "vent_pressure_formula"), false)], [dv_assign(c2_ref(astral, "formula_partial"), true)], "堵住传声管，擦去压差式的一部分；这次共鸣的解释权，我想留在自己手里。", ["resonance_exclusivity", "pursue_desire"], ["evidence", "understand_cost"], true))
+    rt_push(rows, c2m_row("moran", "hide-draft", "quiet_room", astral, "draft_hidden", [dv_fact(c2_ref(astral, "complete_draft"), false)], [dv_assign(c2_ref(astral, "misleading_sketch"), true)], "把底稿藏进画夹暗层，换上一张容易误读的草图；我怕他们据此把我隔离。", ["avoid_isolation", "pursue_desire"], ["evidence", "understand_cost"], true))
+    rt_push(rows, c2m_row("veronica", "etch-drawer", "white_tower_safe", logistics, "drawer_etched", [dv_fact(c2_ref(logistics, "r07_skin_test"), false)], [dv_assign(c2_ref(logistics, "r07_label_changed"), true)], "用酸蚀住日志抽屉，换去R-07标签；我不想让这份记录先变成伦理审查的罪证。", ["avoid_ethics_review", "pursue_desire"], ["records", "evidence", "understand_cost"], true))
+    rt_push(rows, c2m_row("ruan", "leave-latch", "logistics", ledger, "audit_gap_created", [c2_window(3, 1080, 1260), dv_fact(c2_ref("c2.granary", "total_store_locked"), true)], [dv_assign(c2_ref(ledger, "ration_latch_unfastened"), true), dv_assign(c2_ref(ledger, "verification_ink"), true), dv_assign(c2_ref(ledger, "drawer_contact_since_mark"), false)], "主仓还没开。我故意留下配给屉暗扣和校验墨点，想用一次可追查的缺口迫使大家认真对账。", ["controlled_audit", "records", "pursue_desire"], ["safety", "understand_cost"], true))
+    let inspected = dv_all([dv_fact(c2_ref(contract, "blue_ink"), true), dv_fact(c2_ref(contract, "cabinet_key_holder"), "ward"), dv_fact(c2_ref(contract, "lock_no_pry"), true)])
+    rt_push(rows, c2m_row("ward", "hand-inventory", "document_workshop", contract, "inventory_recovered", [dv_fact(c2_ref(contract, "inventory_hidden"), true), inspected], [], "蓝墨、锁具和代管记录都已经摆在面前。我自己打开铁匣，把清册交出来供现场核对。", ["records", "evidence", "witnesses"], ["ward_authority"], false))
+    rt_push(rows, c2m_row("quer", "open-inventory-box", "document_workshop", contract, "inventory_recovered", [dv_fact(c2_ref(contract, "inventory_hidden"), true), dv_fact(c2_ref(contract, "blue_ink"), true), dv_fact(c2_own("quer", "can_lock"), true)], [], "沿蓝墨痕找到铁匣，实际拆开匣锁，取出里面的清册。", ["evidence", "measured_work"], [], false))
+    rt_push(rows, c2m_row("quer", "clear-pipe", "quiet_room", astral, "pipe_cleared", [dv_fact(c2_ref(astral, "pipe_blocked"), true), dv_fact(c2_ref(astral, "formula_partial"), true)], [], "找到堵塞处，拆开接头，实际疏通传声管；压差式仍须重新测量核对。", ["evidence", "measured_work"], [], false))
+    rt_push(rows, c2m_row("detective", "recover-draft", "quiet_room", astral, "draft_recovered", [dv_fact(c2_ref(astral, "draft_hidden"), true), dv_fact(c2_ref(astral, "misleading_sketch"), true), dv_fact(c2_ref(astral, "moran_reassured"), true), c2_at("moran", "quiet_room")], [], "在莫兰面前逐层检查画夹，找回藏起的原稿，留待本人展出并逐页核对。", ["evidence", "patient_priority"], [], false))
+    rt_push(rows, c2m_row("quer", "neutralize-drawer", "white_tower_safe", logistics, "drawer_neutralized", [dv_fact(c2_ref(logistics, "drawer_etched"), true), dv_fact(c2_ref(logistics, "r07_label_changed"), true)], [], "现场检查酸痕和换签处，中和残酸，松开抽屉；日志还要实际取出。", ["evidence", "measured_work", "safety"], [], false))
+    return rows
+
+fn c2m_fields():
+    return [{"object": "case.contract", "room": "document_workshop", "fields": ["inventory_hidden", "inventory_recovered", "blue_ink", "lock_no_pry", "cabinet_key_holder", "joined_inventory", "emergency_inventory_majority"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["pipe_blocked", "formula_partial", "pipe_cleared", "draft_hidden", "misleading_sketch", "draft_recovered", "moran_reassured", "vent_pressure_formula", "complete_draft"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["drawer_etched", "r07_label_changed", "drawer_neutralized", "r07_skin_test"]}, {"object": "c2.ledger", "room": "logistics", "fields": ["audit_gap_created", "ration_latch_unfastened", "verification_ink", "ink_disturbed", "counted", "reserve_received", "day_recorded", "night_recorded", "pending_registered"]}]
+
+fn c2m_initialize(world):
+    var result = world
+    if not dv_read(result, c2_ref("c2.ledger", "drawer_contact_since_mark")).known:
+        result = dv_store(result, c2_ref("c2.ledger", "drawer_contact_since_mark"), dv_field(false))
+    let groups = c2m_fields()
+    var i = 0
+    while i < rt_count(groups):
+        var j = 0
+        while j < rt_count(groups[i].fields):
+            let field = groups[i].fields[j]
+            // Existing evidence and unknown custody are retained. Only newly declared acts start undone.
+            if not dv_read(result, c2_ref(groups[i].object, field)).known and field != "cabinet_key_holder":
+                var initial = false
+                result = dv_store(result, c2_ref(groups[i].object, field), dv_field(initial))
+            j = j + 1
+        i = i + 1
+    return result
+
+fn c2m_ready(row):
+    var conditions = dv_append(row.requirements, dv_all([c2_at(row.actor, row.room), c2_alive(row.actor), dv_fact(c2_ref(row.object, row.field), false)]))
+    if row.private:
+        rt_push(conditions, dv_fact(c2_own(row.actor, "private_motive"), true))
+    return dv_all(conditions)
+
+fn c2m_authority(row):
+    var conditions = [c2m_ready(row)]
+    if row.private:
+        let people = dv_append(c2_people(), "demon")
+        var i = 0
+        while i < rt_count(people):
+            if people[i] != row.actor:
+                rt_push(conditions, dv_not(c2_at(people[i], row.room)))
+            i = i + 1
+    return dv_all(conditions)
+
+axiom c2m_law(row, mode):
+    var premise = c2m_authority(row)
+    if mode == "predict":
+        premise = c2m_ready(row)
+    return dv_axiom("c2m_law", 1, premise, c2m_concat([dv_assign(c2_ref(row.object, row.field), true)], row.effects))
+
+fn c2m_install(domain, adoptions, actor, mode):
+    if actor == "ruan":
+        dv_adopt_into(domain, adoptions, c1_method("c2.drawer.ink-contact", c2m_ink_contact_law()), mode, 1, [c2m_source()])
+    let rows = c2m_rows()
+    var i = 0
+    while i < rt_count(rows):
+        if rows[i].actor == actor:
+            dv_adopt_into(domain, adoptions, c1_method(rows[i].id, c2m_law(rows[i], mode)), mode, 1, [c2m_source()])
+        i = i + 1
+    return true
+
+fn c2m_actions(actor):
+    var result = []
+    let rows = c2m_rows()
+    var i = 0
+    while i < rt_count(rows):
+        let row = rows[i]
+        if row.actor == actor:
+            var grants = [c2_ref(row.object, row.field)]
+            var j = 0
+            while j < rt_count(row.effects):
+                rt_push(grants, row.effects[j].ref)
+                j = j + 1
+            let ready = c2m_ready(row)
+            var action = dv_with(c2_action(row.id, "experiment", ready, c2m_authority(row), row.id, grants, row.text, c2m_source()), "predict_law", row.id)
+            action = dv_with(action, "personal_choice", {"group": row.id, "requires": ready, "prohibits": dv_fact(c2_ref(row.object, row.field), true), "promotes": row.promotes, "sacrifices": row.sacrifices, "require_positive": true, "basis": [c2m_source()]})
+            if row.private:
+                action = dv_with_many(action, {"private_execution": {"requires": ready, "benefit": {"policy_key": "drive"}, "resource_cost": {"policy_key": "caution"}, "basis": [c2m_source()]}, "opportunity_requirement": {"location": row.room, "participants": c2m_other_people(actor), "mode": "none-present"}})
+            else:
+                action = dv_with_many(action, {"public_observers": c2_people(), "public_grants": grants})
+            rt_push(result, action)
+        i = i + 1
+    let groups = c2m_fields()
+    i = 0
+    while i < rt_count(groups):
+        let group = groups[i]
+        var inspect = c2_inspect_action(actor, group.object, group.room, group.fields, "在现场查看实物的位置、痕迹和操作后的状态，不据此认定是谁做的。", c2m_source())
+        inspect = dv_with(inspect, "id", rt_cat(actor, rt_cat(".c2.motive.inspect.", group.object)))
+        if group.object == "c2.ledger":
+            inspect = dv_with(inspect, "grants", dv_append(inspect.grants, c2_ref("c2.counter", "remaining")))
+            let comparison = c2_visible_line(dv_fact(c2_ref("c2.ledger", "verification_ink"), true), "现场还剩{库存}份；起始登记{起始}份，新增存粮登记{新增}份，白日领取{白日}份，夜间补记{补记}份，待补用途{待记}份。结合墨点扰动与这些实物、登记继续核对；墨痕本身不能确定取用次数和取用者。", [c2_visible_binding("库存", c2_ref("c2.counter", "remaining"), {}), c2_visible_binding("起始", c2_ref("c2.ledger", "counted"), {}), c2_visible_binding("新增", c2_ref("c2.ledger", "reserve_received"), {}), c2_visible_binding("白日", c2_ref("c2.ledger", "day_recorded"), {}), c2_visible_binding("补记", c2_ref("c2.ledger", "night_recorded"), {}), c2_visible_binding("待记", c2_ref("c2.ledger", "pending_registered"), {})], c2m_source())
+            inspect = dv_with(inspect, "presentation", dv_with(inspect.presentation, "lines", dv_append(inspect.presentation.lines, comparison)))
+        rt_push(result, inspect)
+        i = i + 1
+    return result
+
+fn c2m_goals(actor):
+    var result = []
+    let rows = c2m_rows()
+    var i = 0
+    while i < rt_count(rows):
+        let row = rows[i]
+        if row.actor == actor.id:
+            let available = dv_all(row.requirements)
+            let completion = dv_fact(c2_ref(row.object, row.field), true)
+            var when = available
+            if row.private:
+                let motive = dv_fact(c2_own(actor.id, "private_motive"), true)
+                when = dv_all([available, motive])
+                // Travel expresses an intention to inspect a possible opportunity, not foreknowledge of the room.
+                if dv_truth(actor.mind, completion) != "true":
+                    var travel_when = motive
+                    if row.actor == "ruan":
+                        travel_when = dv_all([motive, c2_window(3, 1080, 1260)])
+                    rt_push(result, dv_with_many(c2_goal(c2_at(actor.id, row.room), travel_when, [c2m_source()]), {"navigation_completion": c2_at(actor.id, row.room), "navigation_room": row.room, "navigation_requirements": [], "navigation_methods": [row.id]}))
+            rt_push(result, dv_with_many(c2_goal(completion, when, [c2m_source()]), {"navigation_completion": completion, "navigation_room": row.room, "navigation_requirements": row.requirements, "navigation_methods": [row.id]}))
+        i = i + 1
+    let groups = c2m_fields()
+    i = 0
+    while i < rt_count(groups):
+        let group = groups[i]
+        var j = 0
+        while j < rt_count(group.fields):
+            rt_push(result, c2_observation_goal(c2_ref(group.object, group.fields[j]), c2_at(actor.id, group.room), [c2m_source()], 0))
+            j = j + 1
+        i = i + 1
+    return result
+
+fn c2m_labels():
+    return {"inventory_hidden": "清册收在铁匣内", "inventory_recovered": "清册已从铁匣取出", "blue_ink": "匣口留着蓝墨", "pipe_blocked": "传声管内有堵塞物", "formula_partial": "压差式有部分被擦掉", "pipe_cleared": "传声管已经疏通", "draft_hidden": "画夹暗层藏有底稿", "misleading_sketch": "外层草图与底稿不同", "draft_recovered": "原稿已从暗层找回", "drawer_etched": "日志抽屉留着酸蚀痕迹", "r07_label_changed": "R-07标签有换贴痕迹", "drawer_neutralized": "抽屉残酸已经中和", "audit_gap_created": "配给屉留下可供核对的缺口", "ration_latch_unfastened": "配给屉暗扣未扣紧", "verification_ink": "暗扣旁留着校验墨点", "ink_disturbed": "校验墨点有取粮接触留下的扰动"}
+
+fn c2m_visible_lines(object, fields):
+    var result = []
+    let labels = c2m_labels()
+    var i = 0
+    while i < rt_count(fields):
+        if dv_has_key(labels, fields[i]):
+            rt_push(result, c2_visible_line(dv_fact(c2_ref(object, fields[i]), true), rt_cat(dv_get(labels, fields[i]), "。"), [], c2m_source()))
+            rt_push(result, c2_visible_line(dv_fact(c2_ref(object, fields[i]), false), rt_cat("现场未见：", rt_cat(dv_get(labels, fields[i]), "。")), [], c2m_source()))
+        i = i + 1
+    return result
+
+fn c2m_concat(left, right):
+    var result = dv_clone(left)
+    var i = 0
+    while i < rt_count(right):
+        rt_push(result, right[i])
+        i = i + 1
+    return result
+
+fn c2m_other_people(actor):
+    var result = []
+    let people = dv_append(c2_people(), "demon")
+    var i = 0
+    while i < rt_count(people):
+        if people[i] != actor:
+            rt_push(result, people[i])
+        i = i + 1
+    return result
+
+// Every successful ration removal physically touches the same service drawer.
+// The counter's open service state and the original actors, time and accounting stay unchanged.
+fn c2m_ration_contact_effects():
+    return [dv_assign(c2_ref("c2.ledger", "drawer_contact_since_mark"), true)]
+
+axiom c2m_ink_contact_law():
+    return dv_axiom("c2m_ink_contact_law", 1, dv_all([dv_fact(c2_ref("c2.ledger", "ration_latch_unfastened"), true), dv_fact(c2_ref("c2.ledger", "verification_ink"), true), dv_fact(c2_ref("c2.ledger", "drawer_contact_since_mark"), true), dv_fact(c2_ref("c2.ledger", "ink_disturbed"), false)]), [dv_assign(c2_ref("c2.ledger", "ink_disturbed"), true)])

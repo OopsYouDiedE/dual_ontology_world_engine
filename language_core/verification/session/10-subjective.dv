@@ -442,6 +442,8 @@ fn dvp_received_speech_matches(receipts, requirement):
 fn dvp_owner_requirements(actor, action, mind):
     if not dvs_actor_can_act(actor):
         return false
+    if not dvp_owned_decision_ready(actor, action, mind):
+        return false
     if not dvs_advice_decision_ready(actor, action, mind):
         return false
     let resonance = dv_find(action, "resonance", false)
@@ -473,6 +475,7 @@ fn dvp_owner_requirements(actor, action, mind):
     let opportunity = dv_find(action, "opportunity_requirement", false)
     if opportunity != false:
         dv_require(dv_record_like(opportunity), "Opportunity requirement must be a record")
+        dv_require(dv_has(["all-present", "at-least-one-present", "none-present"], opportunity.mode), "Unknown opportunity mode")
         let own = dv_read(mind, actor.location_ref)
         if not dv_uncontested(own) or own.value != opportunity.location:
             return false
@@ -493,6 +496,10 @@ fn dvp_owner_requirements(actor, action, mind):
             return false
         if opportunity.mode == "at-least-one-present" and present == 0:
             return false
+        if opportunity.mode == "none-present":
+            // An empty projected list at an unvisited destination is not an observation.
+            if present != 0 or not dv_find(actor, "visible_context_clear", false) or dv_find(actor, "visible_context_location", false) != own.value:
+                return false
     let heard = dv_find(action, "received_speech_requirement", false)
     if heard != false:
         dv_require(dv_record_like(heard), "Received speech requirement must be a record")
@@ -618,7 +625,7 @@ fn dvp_normative_ready(actor, action, mind):
         dv_require(dv_record_like(private), "Private execution must be a record")
         if rt_count(dv_find(private, "basis", [])) == 0 or dv_truth(mind, private.requires) != "true":
             return false
-        if dvp_owned_quantity(actor, mind, private.benefit) <= dvp_owned_quantity(actor, mind, private.resource_cost):
+        if dvp_private_execution_utility(actor, action, mind) <= 0:
             return false
     let method = dv_find(action, "normative_method", "")
     if method == "":
@@ -661,6 +668,8 @@ fn dvp_owned_quantity(actor, mind, declaration):
     if declaration == false:
         return 0
     dv_require(dv_record_like(declaration), "Owned quantity must be a number or record")
+    if dv_has_key(declaration, "speaker"):
+        return dvs_speaker_trust(actor.policy, declaration.speaker)
     if dv_has_key(declaration, "policy_key"):
         let quantity = dv_find(actor.policy, declaration.policy_key, 0)
         dv_require(rt_is_numeric_value(quantity), "Owned policy quantity must be numeric")
@@ -671,6 +680,38 @@ fn dvp_owned_quantity(actor, mind, declaration):
     if dv_uncontested(cell) and rt_is_numeric_value(cell.value):
         return cell.value
     return 0
+
+fn dvp_owner_utility(actor, action, mind):
+    let declaration = dv_find(action, "owner_utility", false)
+    if declaration == false:
+        return {"value": 0, "terms": []}
+    dv_require(dv_record_like(declaration), "Owner utility must be a record")
+    if rt_count(dv_find(declaration, "basis", [])) == 0 or dv_truth(mind, declaration.requires) != "true":
+        return {"value": 0, "terms": []}
+    var value = 0
+    var inputs = []
+    var i = 0
+    while i < rt_count(declaration.terms):
+        let term = declaration.terms[i]
+        dv_require(rt_is_numeric_value(term.weight), "Owner utility weight must be numeric")
+        let quantity = dvp_owned_quantity(actor, mind, term.quantity)
+        let contribution = quantity * term.weight
+        value = value + contribution
+        rt_push(inputs, {"declaration": term.quantity, "quantity": quantity, "weight": term.weight, "contribution": contribution})
+        i = i + 1
+    return {"value": value, "terms": inputs, "basis": declaration.basis}
+
+fn dvp_private_execution_utility(actor, action, mind):
+    let private = dv_find(action, "private_execution", false)
+    if private == false:
+        return 0
+    dv_require(dv_record_like(private), "Private execution must be a record")
+    if rt_count(dv_find(private, "basis", [])) == 0 or dv_truth(mind, private.requires) != "true":
+        return 0
+    let multiplier = dv_find(actor.policy, "private_execution_benefit_multiplier", 1)
+    dv_require(rt_is_numeric_value(multiplier), "Private benefit multiplier must be numeric")
+    dv_require(0 <= multiplier, "Private benefit multiplier must be nonnegative")
+    return dvp_owned_quantity(actor, mind, private.benefit) * multiplier - dvp_owned_quantity(actor, mind, private.resource_cost)
 
 fn dvp_resonance_utility(actor, action, mind):
     let r = action.resonance
@@ -690,6 +731,31 @@ fn dvp_resonance_utility(actor, action, mind):
 // Keep owner-only utility inputs in the planning dependency signature and slice.
 fn dvp_owner_requirement_refs(action):
     var refs = []
+    let utility = dv_find(action, "owner_utility", false)
+    if utility != false:
+        refs = dvp_merge_refs(refs, dvs_sim_refs(utility.requires))
+        var ui = 0
+        while ui < rt_count(utility.terms):
+            let quantity = utility.terms[ui].quantity
+            if quantity != false and not rt_is_numeric_value(quantity):
+                if dv_has_key(quantity, "ref"):
+                    refs = dvp_add_ref(refs, quantity.ref)
+            ui = ui + 1
+    let private = dv_find(action, "private_execution", false)
+    if private != false:
+        dv_require(dv_record_like(private), "Private execution must be a record")
+        refs = dvp_merge_refs(refs, dvs_sim_refs(private.requires))
+        let quantities = [private.benefit, private.resource_cost]
+        var pi = 0
+        while pi < rt_count(quantities):
+            let quantity = quantities[pi]
+            if quantity != false and not rt_is_numeric_value(quantity):
+                dv_require(dv_record_like(quantity), "Owned quantity must be a number or record")
+                if not dv_has_key(quantity, "policy_key") and not dv_has_key(quantity, "speaker"):
+                    dv_require(dv_has_key(quantity, "ref"), "Owned quantity needs policy_key or ref")
+                    dv_require(dv_record_like(quantity.ref), "Owned quantity ref must be a record")
+                    refs = dvp_add_ref(refs, quantity.ref)
+            pi = pi + 1
     let r = dv_find(action, "resonance", false)
     if r != false:
         dv_require(dv_record_like(r), "Resonance must be a record")
@@ -704,7 +770,7 @@ fn dvp_owner_requirement_refs(action):
                 let quantity = quantities[i]
                 if quantity != false and not rt_is_numeric_value(quantity):
                     dv_require(dv_record_like(quantity), "Owned quantity must be a number or record")
-                    if not dv_has_key(quantity, "policy_key"):
+                    if not dv_has_key(quantity, "policy_key") and not dv_has_key(quantity, "speaker"):
                         dv_require(dv_has_key(quantity, "ref"), "Owned quantity needs policy_key or ref")
                         dv_require(dv_record_like(quantity.ref), "Owned quantity ref must be a record")
                         refs = dvp_add_ref(refs, quantity.ref)
@@ -713,6 +779,9 @@ fn dvp_owner_requirement_refs(action):
     if night != false:
         dv_require(dv_record_like(night), "Night call requirement must be a record")
         refs = dvp_merge_refs(refs, dvs_sim_refs(night.night_when))
+    let decision = dv_find(action, "owned_decision", false)
+    if decision != false:
+        refs = dvp_merge_refs(refs, dv_find(decision, "context_refs", []))
     return refs
 
 fn dvs_actor_can_act(actor):
@@ -777,7 +846,7 @@ fn dvs_erosion_update(actor, physical, time):
         dv_require(dv_has_key(actor, "first_day_mind"), "Late erosion needs declared first-day memory snapshot")
         let old = actor.mind
         let memory = dv_with_many(actor.first_day_mind, {"time": time, "revision": old.revision + 1})
-        result = dv_with_many(result, {"mind": memory, "erosion_memory_truncated": true, "erosion_memory_epoch": memory_epoch, "simulations": [], "interpretations": [], "response_models": [], "proposals": [], "received_speeches": [], "received_advice": [], "pending_heard": [], "observed_public_claims": [], "observed_claim_conflicts": [], "pending_player_influences": [], "dependency_cache": false})
+        result = dv_with_many(result, {"mind": memory, "erosion_memory_truncated": true, "erosion_memory_epoch": memory_epoch, "simulations": [], "interpretations": [], "response_models": [], "proposals": [], "received_speeches": [], "received_advice": [], "owned_decisions": [], "pending_heard": [], "observed_public_claims": [], "observed_claim_conflicts": [], "pending_player_influences": [], "dependency_cache": false})
     return result
 
 // Only the actual audible reception path invokes this, never speaker forecasts.
@@ -836,6 +905,112 @@ fn dvs_heard_before_selection(events, actor, action, execution_event, parse_even
         return false
     return selection
 
+// A decision keeps its semantic inputs separate from evidence provenance. A
+// repeated inspection of the same value does not create a new decision context.
+fn dvs_owned_decision_request(actor, topic):
+    let requests = dv_find(actor, "received_requests", [])
+    var latest = false
+    var i = 0
+    while i < rt_count(requests):
+        let receipt = requests[i]
+        if receipt.topic == topic and dv_find(receipt, "source_event", "") != "" and dv_find(receipt, "parse_event", "") != "":
+            latest = receipt
+        i = i + 1
+    return latest
+
+fn dvs_owned_decision_inputs(actor, decision, mind):
+    dv_require(dv_record_like(decision), "Owned decision must be a record")
+    dv_require(dv_find(decision, "id", "") != "" and dv_find(decision, "stance", "") != "", "Owned decision needs identity and stance")
+    dv_require(rt_count(dv_find(decision, "basis", [])) > 0, "Owned decision needs declared provenance")
+    let refs = dv_find(decision, "context_refs", [])
+    let topics = dv_find(decision, "request_topics", [])
+    dv_require(rt_is_list(refs) and rt_is_list(topics), "Owned decision references and request topics must be lists")
+    var values = []
+    var sources = []
+    var requests = []
+    var request_sources = []
+    var i = 0
+    while i < rt_count(refs):
+        let ref = refs[i]
+        dv_require(dv_record_like(ref) and dv_find(ref, "type", "") == "ref", "Owned decision context needs field references")
+        let subject = dv_find(ref, "subject", actor.id)
+        dv_require(subject == "" or subject == actor.id, "Owned decision context must belong to this subject")
+        let local = dv_scoped_ref(actor.id, ref.object, ref.facet, ref.field)
+        let cell = dv_read(mind, local)
+        rt_push(values, {"ref": local, "known": cell.known, "conflicted": cell.conflicted, "value": cell.value})
+        rt_push(sources, {"ref": local, "cell": cell})
+        i = i + 1
+    i = 0
+    while i < rt_count(topics):
+        let topic = topics[i]
+        let receipt = dvs_owned_decision_request(actor, topic)
+        var identity = false
+        if receipt != false:
+            identity = {"requester": receipt.requester, "source_event": receipt.source_event, "parse_event": receipt.parse_event}
+        rt_push(requests, {"topic": topic, "receipt": identity})
+        rt_push(request_sources, {"topic": topic, "receipt": receipt})
+        i = i + 1
+    let policy_keys = dv_find(decision, "context_policy_keys", [])
+    dv_require(rt_is_list(policy_keys), "Owned decision policy keys must be a list")
+    var policy_values = []
+    i = 0
+    while i < rt_count(policy_keys):
+        rt_push(policy_values, {"key": policy_keys[i], "value": dv_find(actor.policy, policy_keys[i], false)})
+        i = i + 1
+    return {"context": {"values": values, "requests": requests, "policy_values": policy_values}, "sources": {"fields": sources, "requests": request_sources, "policy_values": policy_values}}
+
+fn dvs_owned_decision_context(actor, decision, mind):
+    return dvs_owned_decision_inputs(actor, decision, mind).context
+
+fn dvp_owned_decision_ready(actor, action, mind):
+    let decision = dv_find(action, "owned_decision", false)
+    if decision == false:
+        return true
+    let context = dvs_owned_decision_context(actor, decision, mind)
+    let previous = dv_find(dv_find(actor, "owned_decisions", []), decision.id, false)
+    return previous == false or not dv_same(previous.context, context)
+
+// Stored only in the real action_selected event; forecasts never call this.
+fn dvs_owned_decision_selection(actor, action):
+    let decision = dv_find(action, "owned_decision", false)
+    if decision == false:
+        return false
+    return dv_with(dvs_owned_decision_inputs(actor, decision, actor.mind), "declaration", decision)
+
+// Also used before publishing actual effects, so a changed queued decision is
+// rejected rather than recorded as if it had been selected under the new input.
+fn dvs_owned_decision_completion_selection(actor, action, events, parent):
+    let decision = dv_find(action, "owned_decision", false)
+    if decision == false:
+        return true
+    if not dvp_owned_decision_ready(actor, action, actor.mind):
+        return false
+    let selection = dvs_action_selection_evidence(events, actor, action, parent)
+    if selection == false:
+        return false
+    let selected_event = dvs_find_event_by_id(events, selection.event)
+    let snapshot = dv_find(selected_event.data, "owned_decision", false)
+    if snapshot == false or not dv_same(snapshot.declaration, decision) or not dv_same(snapshot.context, dvs_owned_decision_context(actor, decision, actor.mind)):
+        return false
+    let requests = snapshot.sources.requests
+    var i = 0
+    while i < rt_count(requests):
+        let receipt = requests[i].receipt
+        if receipt != false:
+            let source = dvs_find_event_by_id(events, receipt.source_event)
+            if source == false or source.type != "speech_literal" or source.actor != receipt.requester:
+                return false
+            let request = dv_find(dv_find(source.data, "speech", []), "request", false)
+            if request == false or request.target != actor.id or request.topic != requests[i].topic or not dv_same(request, receipt.request):
+                return false
+            if dvs_heard_before_selection(events, actor, action, parent, receipt.parse_event, receipt.source_event) == false:
+                return false
+            let parsed = dvs_find_event_by_id(events, receipt.parse_event)
+            if not dv_has(parsed.parents, receipt.source_event) or dvs_recorded_event_position(events, receipt.parse_event) <= dvs_recorded_event_position(events, receipt.source_event):
+                return false
+        i = i + 1
+    return dv_with(snapshot, "selection_event", selection.event)
+
 // Called only by actual Complete. Passive flashbacks do not acquire paid coupling.
 fn dvs_complete_cognitive_effects(actor, action, success, events, event, time):
     if not success:
@@ -872,15 +1047,15 @@ fn dvs_complete_cognitive_effects(actor, action, success, events, event, time):
                 i = i + 1
     return result
 
-// An explicit speech declaration records intent only after actual player emission
+// An explicit speech declaration records intent only after actual emission
 // and audible parsing. No forecast enters this provenance ledger.
 fn dvs_receive_player_influence(listener, speech, speaker, source, parse_event):
     let manipulation = dv_find(speech, "manipulation", false)
-    if manipulation == false or dv_find(speech, "actual_player_actor", "") != speaker or dv_find(speech, "actual_literal_truth", "unknown") != "true":
+    if manipulation == false or dv_find(speech, "actual_influence_actor", dv_find(speech, "actual_player_actor", "")) != speaker or dv_find(speech, "actual_literal_truth", "unknown") != "true":
         return listener
     if not dv_has(dv_find(manipulation, "targets", []), listener.id) or rt_count(dv_find(manipulation, "basis", [])) == 0:
         return listener
-    let receipt = {"player": speaker, "target": listener.id, "method": manipulation.method, "speech_event": source, "parse_event": parse_event, "declaration": manipulation}
+    let receipt = {"player": speaker, "control": dv_find(speech, "actual_influence_control", "player"), "target": listener.id, "method": manipulation.method, "speech_event": source, "parse_event": parse_event, "declaration": manipulation}
     return dv_with(listener, "pending_player_influences", dv_append(dv_find(listener, "pending_player_influences", []), receipt))
 
 // Advice is a received recommendation, never a granted fact or an action order.
@@ -974,7 +1149,7 @@ fn dvs_complete_player_influences(actor, action, before, after, success, events,
                     let stance_position = dvs_recorded_event_position(events, stance.event)
                     if stance.parse_event != influence.parse_event or stance_position < 0 or selection.position <= stance_position:
                         stance = false
-                history = dv_append(history, {"player": influence.player, "target": actor.id, "method": influence.method, "speech_event": influence.speech_event, "parse_event": influence.parse_event, "selection_event": selection.event, "execution_event": event, "action": action.id, "time": time, "consequence": declaration.consequence_when, "before": prior, "after": actual, "basis": declaration.basis, "advice_stance_before_selection": stance, "record_kind": "post-advice-matching-behavior", "causal_attribution": "not-established"})
+                history = dv_append(history, {"player": influence.player, "control": dv_find(influence, "control", "player"), "target": actor.id, "method": influence.method, "speech_event": influence.speech_event, "parse_event": influence.parse_event, "selection_event": selection.event, "execution_event": event, "action": action.id, "time": time, "consequence": declaration.consequence_when, "before": prior, "after": actual, "basis": declaration.basis, "advice_stance_before_selection": stance, "record_kind": "post-advice-matching-behavior", "causal_attribution": "not-established"})
                 completed = true
         if not completed:
             rt_push(retained, influence)
@@ -1068,10 +1243,15 @@ fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent):
     if dv_find(actor.policy, "notice_co_presence", false):
         var context = dvs_visible_context(actor, physical, actors)
         var old = dv_find(actor, "visible_context", [])
-        if dv_same(context, old):
+        let position = dv_read(physical, actor.location_ref)
+        var location = false
+        if dv_uncontested(position):
+            location = position.value
+        let clear = location != false and dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true())) == "true"
+        if dv_same(context, old) and dv_find(actor, "visible_context_location", false) == location and dv_find(actor, "visible_context_clear", false) == clear:
             return actor
         else:
-            var event = dvs_event(events, "co_presence", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"context_before": old, "context_after": context, "location_ref": actor.location_ref})
+            var event = dvs_event(events, "co_presence", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"context_before": old, "context_after": context, "location_ref": actor.location_ref, "observed_location": location, "visibility_available": clear})
             var grants = []
             var i = 0
             while i < rt_count(actors):
@@ -1088,7 +1268,7 @@ fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent):
                     let next = dv_update_mind(mind, observations, mind.revision, dvs_observation_profile(actor)).world
                     event = dvs_event_prepared(events, "observation", actor.id, time, dv_single(event), {"observations": observations, "revision_before": mind.revision, "revision_after": next.revision, "bindings": bindings, "grants": grants, "execution_id": event})
                     mind = next
-            return dv_with_many(actor, {"visible_context": context, "mind": mind, "last_cognitive_event": event})
+            return dv_with_many(actor, {"visible_context": context, "visible_context_location": location, "visible_context_clear": clear, "mind": mind, "last_cognitive_event": event})
     else:
         return actor
 

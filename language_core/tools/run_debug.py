@@ -80,6 +80,7 @@ class EvidenceProjector:
             return
         if packet.get('type') == 'debug_start':
             self.summary['projection_configuration'] = packet.get('configuration')
+            self.summary['run_config'] = packet.get('run_config')
             self.summary['raw_format'] = packet.get('raw_format', 'json')
         elif packet.get('type') == 'debug_end':
             self.summary['debug_end_observed'] = True
@@ -242,11 +243,18 @@ def main():
     parser.add_argument('--gc-heaps', type=int, default=min(4, os.cpu_count() or 1))
     parser.add_argument('--profile', action='store_true', help='Build an instrumented DV session and report per-function and work-type time')
     parser.add_argument('--evidence-from', type=Path, help='Only project an existing events.jsonl packet stream into a new --out directory; never build or execute a session')
-    parser.add_argument('--detective-profile', default='Standard_Detective', choices=('Standard_Detective', 'Foolish_Detective'))
+    parser.add_argument('--detective-profile', default='Standard_Detective', choices=('Standard_Detective', 'Foolish_Detective', 'Shura_Detective'))
+    parser.add_argument('--opening-seed', type=int, default=1)
+    parser.add_argument('--homecoming-negotiation', action='store_true', help='Enable declared homecoming negotiation candidates; does not seed votes or outcomes')
+    parser.add_argument('--su-initial-room', choices=('R08', 'R05'), default='R08')
+    parser.add_argument('--private-execution-benefit-multiplier', type=int, choices=(1, 2), default=1)
     parser.add_argument('--detective-zone', default='zone_yi', choices=('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding'))
     parser.add_argument('--trace-compression', choices=('none', 'gzip'), default='none', help='Lossless storage for the full raw JSON trace; no field projection')
     parser.add_argument('--raw-format', choices=('json', 'dag'), default='json', help='json preserves the legacy final trace; dag records checksummed lossless values and event commits online')
     args = parser.parse_args()
+    if args.opening_seed < 0:
+        parser.error('--opening-seed must be nonnegative')
+    run_config = {'seed': args.opening_seed, 'profile': args.detective_profile, 'detective_zone': args.detective_zone, 'su_initial_room': args.su_initial_room, 'private_execution_benefit_multiplier': args.private_execution_benefit_multiplier, 'homecoming_negotiation': args.homecoming_negotiation}
     if args.gc_heaps < 1:
         parser.error('--gc-heaps must be positive')
     if args.timeout < 1:
@@ -294,7 +302,7 @@ def main():
         and {entry['path']: entry['sha256'] for entry in manifest['modules']} == normalized
         and hashlib.sha256((build / 'Runtime.cs').read_bytes()).hexdigest() == hashes[str(LANGUAGE / 'compiler/Runtime.cs')])
     if not build_consistent:
-        (out / 'result.json').write_text(json.dumps({'executor': 'formal-model', 'geometry': False, 'build_source_consistent': False, 'source_unchanged': False, 'trace_written': False, 'error': 'Sources changed during build or generated inputs differ; session not started.'}, indent=2), encoding='utf-8')
+        (out / 'result.json').write_text(json.dumps({'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': False, 'source_unchanged': False, 'trace_written': False, 'error': 'Sources changed during build or generated inputs differ; session not started.'}, indent=2), encoding='utf-8')
         return 1
     execution_env = env.copy()
     execution_env['DOTNET_gcServer'] = '1' if args.gc_mode == 'server' else '0'
@@ -303,12 +311,10 @@ def main():
         execution_env['DV_PROFILE_PATH'] = str(out / 'profile-raw.json')
     start = time.monotonic()
     trace_name = 'raw-events.dag.jsonl' if args.raw_format == 'dag' else ('trace.json.gz' if args.trace_compression == 'gzip' else 'trace.json')
-    result = {'executor': 'formal-model', 'geometry': False, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'detective_profile': args.detective_profile, 'detective_zone': args.detective_zone, 'raw_format': args.raw_format, 'build_elapsed_seconds': build_elapsed, 'build_stages': build_stages, 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.startswith(('DOTNET_GC', 'DOTNET_gc'))}}
+    result = {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'detective_profile': args.detective_profile, 'detective_zone': args.detective_zone, 'raw_format': args.raw_format, 'build_elapsed_seconds': build_elapsed, 'build_stages': build_stages, 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.startswith(('DOTNET_GC', 'DOTNET_gc'))}}
     try:
         with (out / 'stdout.jsonl').open('wb') as stdout, (out / 'stderr.txt').open('wb') as stderr:
-            program_args = [str(out / trace_name), args.detective_profile, args.detective_zone]
-            if args.raw_format == 'dag':
-                program_args.append('dag')
+            program_args = [str(out / trace_name), args.detective_profile, args.detective_zone, args.raw_format, str(args.opening_seed), args.su_initial_room, str(args.private_execution_benefit_multiplier), str(args.homecoming_negotiation).lower()]
             process = subprocess.run(['dotnet', str(build / 'bin/Release/net8.0/Program.dll'), *program_args], cwd=ROOT, env=execution_env, stdout=stdout, stderr=stderr, timeout=args.timeout)
             result['exit_code'] = process.returncode
     except subprocess.TimeoutExpired:
@@ -351,6 +357,8 @@ def main():
         try:
             result['output_well_formed'], evidence = export(out, raw_format=args.raw_format, with_summary=True)
             result['text_exported'] = True
+            result['actual_run_config'] = evidence.get('run_config')
+            result['run_config_matches'] = result['actual_run_config'] == run_config
             result['event_packet_source'] = 'stdout.jsonl'
             result['evidence_projection'] = 'evidence-summary.json'
             result['logical_loop_finished'] = evidence['debug_end_observed']

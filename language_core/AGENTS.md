@@ -334,3 +334,21 @@ checks/fixtures/room-safety-draft.dv保存未接通的声明草案，只有显�
 第3轮为独立插桩诊断，样本覆盖与180秒进程时长分别报告，不外推原生耗时。诊断后纯值缓存须以完整输入和原首错、返回副本及嵌套修改失效作中性差分；预算、快照与正式决策保持。第4轮恢复原生、集中修改冻结后仅运行一次180秒正式一级会话并由新上下文代理审查。用户随后明确追加一次240秒窗口，集中核对终点边界后冻结源码，仅运行该次新会话；历史窗口及其限制原样保留。dv_read/常量/topic缓存及字符串容器快路合同见core/README.md。
 
 用户最新授权（2026-10-18）：本次新正式会话时限240秒，仅测试一次，目标为实际到达五日时域终点；时域推进、真实收尾和完整证据分别记录。不得通过注入结果、补充预算、伪造等待目标或直接改时钟满足目标。
+
+## 动机反事实配置维护（2026-10-18）
+
+正式dvg_open_config支持seed、profile、detective_zone、su_initial_room和private_execution_benefit_multiplier。Shura_Detective共用标准认知参数，改变价值排序并授权已有manipulation候选参与自主选择；不直接派动作。初始当前房间与事故历史分开，默认R08不改动原场景。run_debug新增--opening-seed、--su-initial-room和--private-execution-benefit-multiplier，实际run_config写入debug_start与result，配置差异与行为差异分别审查。
+
+opportunity_requirement的none-present须有当前地点的实际可见上下文收据，空的预测上下文不能证明现场无人；物理执行法则独立复核现场。收益倍率改变本人的private_execution资格比较及共同规划中的净效用，不改变资源扣费、世界法则或预算。集中修改完成后统一编译，正式窗口串行180秒且新上下文独立审查；维护core/README.md与verification/DESIGN.md，不执行流程回归。
+
+本轮补充：`--homecoming-negotiation`默认关闭，仅显式协商反事实开启。chapter2/homecoming.dv提供真实提议、听闻与个人异议基础，自己的愿意与对侦探申请的同意分开；尚无安全实证、岛外承诺、照护接续验证或实际离岛生成器，归乡效用由本人drive、caution与对申请者的信任参与实际共同评分；动态异议仍须正式事件证明，不能由声明推定CF8达成。失败动作签名保留现场机会范围与可见上下文，真实变化才允许重新尝试。
+
+实际Complete的话语同时记录actual_influence_actor与控制来源player/autonomous，允许正式自主侦探进入原影响记录；旧player字段保持兼容，control明确来源。只有字面真、真实收闻先于选择、指定动作实际执行且后果首次改变才登记。该时间链仍标causal_attribution=not-established，不冒称已证明因果诱杀。
+
+本轮后续集中修复：通用owner_utility按本人声明数量加权进入共同规划并保留分项，private_execution净收益同时影响资格与评分；本人ref依赖进入规划切片。重复owned_decision沟通按本人上下文变化重新开放。冻结02因识别上述缺口结束，保留已完成窗口，不与新源码拼接比较；集中修复后另起冻结批次。
+
+`maintain_presence`是内容声明的有时窗在场意向：本人已达时不追加无关纯导航目标，尚未达时优先生成该意向的已知通路首步；原实质行动仍参加共同选择，不锁定位置或注入等待。该行为调整针对冻结02实际位置奖励折返，须以新会话核对。
+
+`owned_decision.context_policy_keys`可显式列出本人政策字段；这些字段值同时进入决策上下文与来源快照，实际变化允许重新表态。缺省空列表保持原事实/请求比较，不读其他主体政策。
+
+本轮性能维护：Runtime的JSON编码对不可变FrozenList按弱身份复用精确字符串，可变输入沿原编码路径；读取MemoryStream有效区间避免ToArray复制。无父节点的可变容器仍清除自身Backbone/Index后返回；有父节点沿原传播。DAG仅复用浅帧payload缓冲，保持字节、SHA256链、提交刷新与异常封存规则。动作检索按完整actions值与id纯缓存，仍最后匹配；输入或嵌套改变失效。内容刷新动作/规范数组按原顺序单次重建，静态目标模板只按主体id缓存，动态后缀及收据新鲜度照常计算。工程差分比较原始输出与别名/失效，不是剧情验收。

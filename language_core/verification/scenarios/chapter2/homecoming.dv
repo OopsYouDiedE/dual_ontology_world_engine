@@ -1,0 +1,194 @@
+// Article 11 negotiation only. No departure, safety oracle or seed-selected dissenter.
+fn c2h_ref(field):
+    return c2_ref("c2.homecoming", field)
+
+fn c2h_person(actor, field):
+    return c2h_ref(rt_cat(actor, rt_cat(".", field)))
+
+fn c2h_source():
+    return c2_approved("user:2026-10-18-article11-owned-negotiation")
+
+fn c2h_contract():
+    return dv_fact(c2d_ref("contract_full_text"), c1_op_contract_text())
+
+// A promise from a companion is not an island-exit promise. These unmet
+// premises remain unknown until a separately authorized real source exists.
+fn c2h_consent_requires(actor):
+    var clauses = [c2h_contract()]
+    if dv_has(["ward", "veronica", "ruan"], actor):
+        rt_push(clauses, dv_fact(c2h_ref("safety_verified"), true))
+    if dv_has(["margaret", "shen", "mora", "bertrand"], actor):
+        rt_push(clauses, dv_fact(c2_ref("c2.granary", "reserve_added"), true))
+        rt_push(clauses, dv_fact(c2h_ref("care_continuity_verified"), true))
+    if actor == "quer":
+        rt_push(clauses, dv_fact(c2_ref("case.contract", "gu_apologized"), true))
+        rt_push(clauses, dv_fact(c2_own("ward", "restriction_withdrawn"), true))
+        rt_push(clauses, dv_fact(c2h_ref("outside_promise.quer"), true))
+    if actor == "elena":
+        rt_push(clauses, dv_fact(c2_ref("case.astral", "abandoned_child_misunderstanding_resolved"), true))
+        rt_push(clauses, dv_fact(c2h_ref("outside_promise.elena"), true))
+    return dv_all(clauses)
+
+fn c2h_objection(actor):
+    if dv_has(["ward", "veronica", "ruan"], actor):
+        return "我对契约履行的安全仍有保留，暂不赞成。条文、本人实证与履行结果需要分别核对。"
+    if dv_has(["huo", "su", "moran", "gu"], actor):
+        return "尽忘意味着放弃在这里取得的认识。我仍要比较求知与生存的价值，现在保留意见。"
+    if dv_has(["margaret", "shen", "mora", "bertrand"], actor):
+        return "粮仓和病人的责任还要依据我实际知道的情况核对。我暂不把归乡当作这些责任已经解决。"
+    if actor == "quer" or actor == "elena":
+        return "旧怨是否真正修复，岛外是否有可以依靠的承诺，都要由我自己确认。现在我保留意见。"
+    return "我还愿意继续核对留岛与尽忘归乡的代价，暂不赞成。"
+
+fn c2h_rows():
+    var rows = []
+    let source = c2h_source()
+    let proposal_id = "detective.c2.homecoming.propose"
+    var propose = c2d_row("detective", proposal_id, "living_hall", c2h_contract(), dv_true(), "我提议按契约第十一条协商尽忘归乡。我的愿意另行表态；其余仍存活在岛上的每个人都须本人同意，听见提议不算同意。", source)
+    propose = dv_with_many(propose, {"effects": [dv_assign(c2h_ref("proposed"), true)], "received_speech_requirement": {"speaker": "demon", "action_id": "demon.c2.contract-full-text"}})
+    rt_push(rows, propose)
+    let people = c2_people()
+    var i = 0
+    while i < rt_count(people):
+        let actor = people[i]
+        let ready = dv_all([c2_alive(actor), c2h_contract()])
+        let consent = c2h_consent_requires(actor)
+        let options = ["consent", "defer"]
+        var n = 0
+        while n < rt_count(options):
+            let accepts = options[n] == "consent"
+            var when = ready
+            var text = c2h_objection(actor)
+            if accepts:
+                when = dv_all([ready, consent])
+                text = "这是我本人的选择：我愿意尽忘归乡。这句话只记录我的愿意，不能代替任何其他人的同意。"
+            var decision_field = "consent_detective"
+            if actor == "detective":
+                decision_field = "willing"
+            elif accepts:
+                text = "我同意侦探按契约第十一条申请尽忘归乡。这只表示我对他的申请的表态，不表示我自己也决定离开。"
+            let id = rt_cat(actor, rt_cat(".c2.homecoming.", options[n]))
+            var row = c2d_row(actor, id, "living_hall", when, dv_true(), text, source)
+            row = dv_with_many(row, {"effects": [dv_assign(c2h_person(actor, "decided"), true), dv_assign(c2h_person(actor, decision_field), accepts), dv_assign(c2h_person(actor, "stance"), options[n])], "repeatable": true, "owned_decision": c2h_decision(actor, options[n]), "received_speech_requirement": {"speaker": "detective", "action_id": proposal_id}})
+            if actor == "detective":
+                row = dv_without(row, "received_speech_requirement")
+                row = dv_with(row, "when", dv_all([when, dv_fact(c2h_ref("proposed"), true)]))
+            rt_push(rows, row)
+            n = n + 1
+        i = i + 1
+    return rows
+
+fn c2h_install_scene(scene):
+    if dv_find(scene, "chapter2_homecoming_installed", false):
+        return scene
+    var fields = {"proposed": dv_field(false), "safety_verified": dv_unknown(), "outside_promise.quer": dv_unknown(), "outside_promise.elena": dv_unknown(), "care_continuity_verified": dv_unknown()}
+    let people = c2_people()
+    var i = 0
+    while i < rt_count(people):
+        fields = dv_with_many(fields, [[rt_cat(people[i], ".decided"), dv_field(false)], [rt_cat(people[i], ".willing"), dv_unknown()], [rt_cat(people[i], ".consent_detective"), dv_unknown()], [rt_cat(people[i], ".stance"), dv_unknown()]])
+        i = i + 1
+    var physical = c2_add_new(scene.physical, c2_object("c2.homecoming", "living_hall", fields))
+    var bindings = dv_clone(scene.bindings)
+    var actors = []
+    let rows = c2h_rows()
+    i = 0
+    while i < rt_count(rows):
+        physical = dv_store(physical, c2d_mark(rows[i].actor, rows[i].id), dv_field(false))
+        physical = dv_adopt(physical, c1_method(rows[i].id, c2d_row_law(rows[i])), "enforce", 1, [rows[i].source])
+        i = i + 1
+    i = 0
+    while i < rt_count(scene.actors):
+        var actor = scene.actors[i]
+        var mind = c2_add_new(actor.mind, c1_local_object("c2.homecoming"))
+        if dv_local(bindings, "c2.homecoming", actor.id) == "":
+            rt_push(bindings, dv_binding("c2.homecoming", "c2.homecoming", actor.id))
+        var actions = dv_clone(actor.actions)
+        if dv_has(people, actor.id):
+            mind = dv_store(mind, c2h_person(actor.id, "decided"), dv_field(false))
+        var j = 0
+        while j < rt_count(rows):
+            let row = rows[j]
+            if row.actor == actor.id:
+                mind = dv_store(mind, c2d_mark(actor.id, row.id), dv_field(false))
+                mind = dv_adopt(mind, c1_method(row.id, c2d_row_law(row)), "predict", 1, [row.source])
+                rt_push(actions, dv_with(c2d_action(row), "manual_only", true))
+            j = j + 1
+        rt_push(actors, dv_with_many(actor, {"mind": mind, "actions": c1_public_methods(actions)}))
+        i = i + 1
+    return dv_with_many(scene, {"physical": physical, "actors": actors, "bindings": bindings, "chapter2_homecoming_installed": true})
+
+// Both stances share an identity: only new relevant owned facts reopen a vote.
+fn c2h_decision(actor, stance):
+    var refs = [c2d_ref("contract_full_text"), c2h_ref("proposed")]
+    if dv_has(["ward", "veronica", "ruan"], actor):
+        rt_push(refs, c2h_ref("safety_verified"))
+    if dv_has(["margaret", "shen", "mora", "bertrand"], actor):
+        refs = dvp_merge_refs(refs, [c2_ref("c2.granary", "reserve_added"), c2h_ref("care_continuity_verified"), c2_own("moran", "fever"), c2_own("moran", "hungry")])
+    if actor == "quer":
+        refs = dvp_merge_refs(refs, [c2_ref("case.contract", "gu_apologized"), c2_own("ward", "restriction_withdrawn"), c2h_ref("outside_promise.quer")])
+    if actor == "elena":
+        refs = dvp_merge_refs(refs, [c2_ref("case.astral", "abandoned_child_misunderstanding_resolved"), c2h_ref("outside_promise.elena")])
+    if dv_has(["huo", "su", "moran", "gu"], actor):
+        refs = dvp_merge_refs(refs, [c2_own(actor, "hungry"), c2_own(actor, "fever"), c2_ref("c2.weather", "earthquake_recent"), c2_ref("c2.meter", "safe")])
+    return {"id": rt_cat("homecoming.", actor), "stance": stance, "context_refs": refs, "context_policy_keys": ["drive", "caution", "speaker_trust", "class_bias"], "request_topics": [], "basis": [c2h_source()]}
+
+fn c2h_owner_utility(actor, action, consent):
+    var direction = 1
+    if not consent:
+        direction = -1
+    // Drive values preserving inquiry; caution values survival. The known
+    // substantive requirements still gate consent before either is compared.
+    let trust = dvs_speaker_trust(actor.policy, "detective")
+    let basis = [c2h_source(), {"samples": dv_find(actor, "cognitive_samples", []), "policy_drive": dv_find(actor.policy, "drive", false), "policy_caution": dv_find(actor.policy, "caution", false), "speaker": "detective", "speaker_trust": trust, "speaker_trust_policy": dv_find(actor.policy, "speaker_trust", []), "class_bias": dv_find(actor.policy, "class_bias", []), "owned_inputs": dvs_owned_decision_inputs(actor, action.owned_decision, actor.mind).sources}]
+    return {"requires": action.precondition, "basis": basis, "terms": [{"quantity": {"policy_key": "drive"}, "weight": -direction}, {"quantity": {"policy_key": "caution"}, "weight": direction}, {"quantity": {"speaker": "detective"}, "weight": direction}]}
+
+// Call after c2d_refresh_actor_goals, which rebuilds the base goal list.
+// Recompute navigation after adding these communication goals so another room
+// is a real known-path movement opportunity rather than a local-only label.
+fn c2h_refresh_actor(actor):
+    var actions = actor.actions
+    var goals = actor.policy.goals
+    var i = 0
+    while i < rt_count(actions):
+        var action = actions[i]
+        if dv_has_key(action, "owned_decision") and action.owned_decision.id == rt_cat("homecoming.", actor.id):
+            action = dv_without(action, "personal_choice")
+            action = dv_with(action, "owner_utility", c2h_owner_utility(actor, action, action.owned_decision.stance == "consent"))
+            actions = dvs_replace(actions, i, action)
+        if dv_has(["detective.c2.homecoming.propose", rt_cat(actor.id, ".c2.homecoming.consent"), rt_cat(actor.id, ".c2.homecoming.defer")], action.id) and dv_find(actor.policy, "homecoming_negotiation", false):
+            action = dv_with(action, "manual_only", false)
+            actions = dvs_replace(actions, i, action)
+            var available = action.precondition
+            if dv_has_key(action, "received_speech_requirement") and not c2_received_requirement(actor, action.received_speech_requirement):
+                available = dv_not(dv_true())
+            if not dvp_owned_decision_ready(actor, action, actor.mind):
+                available = dv_not(dv_true())
+            rt_push(goals, c1n_index_goal_window({"kind": "communicate", "scope": "personal", "method_id": action.id, "available_when": available, "basis": [c2h_source()], "requires_argument": false, "navigation_room": "living_hall"}))
+        i = i + 1
+    if not dv_find(actor.policy, "homecoming_negotiation", false):
+        return dv_with(actor, "actions", actions)
+    var substantive = []
+    i = 0
+    while i < rt_count(goals):
+        if not dv_has_key(goals[i], "navigation_intention"):
+            rt_push(substantive, goals[i])
+        i = i + 1
+    let view = dv_with_many(actor, {"actions": actions, "policy": dv_with(actor.policy, "goals", substantive)})
+    return dv_with(view, "policy", dv_with(view.policy, "goals", c2_navigation_goals(view, substantive)))
+
+// This read-only report is not an action and never executes a departure.
+fn c2h_summary(physical):
+    var others = []
+    var unanimous = true
+    let people = c2_people()
+    var i = 0
+    while i < rt_count(people):
+        let id = people[i]
+        if id != "detective":
+            let alive = dv_read(physical, c2_own(id, "alive"))
+            let willing = dv_read(physical, c2h_person(id, "consent_detective"))
+            rt_push(others, {"actor": id, "alive": alive, "consent_detective": willing, "stance": dv_read(physical, c2h_person(id, "stance"))})
+            if not dv_uncontested(alive) or (alive.value == true and (not dv_uncontested(willing) or willing.value != true)):
+                unanimous = false
+        i = i + 1
+    return {"scope": "negotiation-only-no-departure", "proposed": dv_read(physical, c2h_ref("proposed")), "own_willing": dv_read(physical, c2h_person("detective", "willing")), "others": others, "all_other_living_consent": unanimous, "safety_verification": dv_read(physical, c2h_ref("safety_verified")), "seed_specific_homecoming_utility": "declared-shared-owner-utility", "departure": "not-implemented"}

@@ -326,7 +326,10 @@ fn dvp_rejected_signature(actor, action, mind):
     if dv_has_key(actor, "location_ref"):
         let cell = dv_read(mind, actor.location_ref)
         location = {"known": cell.known, "value": cell.value, "conflicted": cell.conflicted}
-    return {"precondition": dvp_rejected_condition_signature(mind, action.precondition), "prediction": prediction, "location": location}
+    var opportunity = false
+    if dv_has_key(action, "opportunity_requirement"):
+        opportunity = {"context": dv_find(actor, "visible_context", []), "observed_location": dv_find(actor, "visible_context_location", false), "visibility_available": dv_find(actor, "visible_context_clear", false)}
+    return {"precondition": dvp_rejected_condition_signature(mind, action.precondition), "prediction": prediction, "location": location, "opportunity": opportunity}
 
 fn dvp_eligible_base(actor, action, mind, relevant):
     if dv_find(action, "manual_only", false) and not dv_find(actor, "manual_input", false):
@@ -477,7 +480,11 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
         if (0 < rt_count(context.speech_goals)):
             var choice = dv_find(dv_find(actor, "speech_choice_values", []), action.id, [])
             if (dv_find(choice, "status", "") == "ready"):
-                progress = choice.utility
+                // Reuse only the already paid forecast whose actual inputs
+                // still match this node. Planning does not prepare a new model.
+                let signature = dvs_speech_choice_signature(actor, action, context.speech_goals, dv_find(actor, "decision_time", dv_find(mind, "time", 0)))
+                if dv_same(dv_find(choice, "signature", false), signature):
+                    progress = choice.utility
         else:
             if dv_has_key(action.speech, "request"):
                 false
@@ -490,6 +497,10 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
         progress = 1
     if dv_has_key(action, "personal_choice"):
         progress = 1
+    let private_utility = dvp_private_execution_utility(actor, action, mind)
+    progress = progress + private_utility
+    let owner_utility = dvp_owner_utility(actor, action, mind)
+    progress = progress + owner_utility.value
     let resonance = dv_find(action, "resonance", false)
     if resonance != false:
         dv_require(dv_record_like(resonance), "Resonance must be a record")
@@ -522,7 +533,7 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
                     if known_features > 0 and 0 < rt_count(dv_find(hypothesis, "basis", [])) and not dv_explanation_model_complete(cached, "explained", mind.revision) and dv_find(cached, "status", "unknown") != "inconsistent":
                         verification = verification + 1
     let achievement = dvp_achievement_pending(actor, action, context.achievements)
-    return {"information": information, "verification": verification, "progress": progress, "achievement": achievement, "value": (((information + verification) * dv_find(policy, "information_weight", 1)) + ((progress + achievement) * dv_find(policy, "progress_weight", 1)))}
+    return {"information": information, "verification": verification, "progress": progress, "private_utility": private_utility, "owner_utility": owner_utility, "achievement": achievement, "value": (((information + verification) * dv_find(policy, "information_weight", 1)) + ((progress + achievement) * dv_find(policy, "progress_weight", 1)))}
 
 // Access to an already owned communication goal is not its fulfillment.
 // Predict only the subject's adopted effect; never supply a listener or an answer.
@@ -600,8 +611,8 @@ fn dvp_join_items(list):
         i = i + 1
     return s
 
-fn dvp_state_key(room, tasks):
-    return rt_cat(room, rt_cat("|", dvp_join_items(tasks)))
+fn dvp_state_key(room, tasks, visible_context):
+    return dv_pair(rt_cat(room, rt_cat("|", dvp_join_items(tasks))), visible_context)
 
 fn dvp_extract_required_room(prop, loc_ref):
     if not dv_record_like(prop):
@@ -734,10 +745,11 @@ fn dvp_plan(actor, bindings, costs):
         let cur_loc = dv_read(actor.mind, actor.location_ref)
         if dv_uncontested(cur_loc):
             root_room = rt_show(cur_loc.value)
-    let initial_seen = dvp_state_key(root_room, [])
-    var init_key = rt_cat(initial_seen, rt_cat("#", rt_cat(dvp_join_items(initial_achievements), rt_cat("@", dvp_join_items(initial_access)))))
+    let initial_context = dv_find(actor, "visible_context", [])
+    let initial_seen = dvp_state_key(root_room, [], initial_context)
+    let init_key = dv_list3(initial_seen, initial_achievements, initial_access)
     var plans = []
-    var frontier = dv_single({"mind": actor.mind, "path": [], "score": 0, "room": root_room, "tasks": [], "seen": dv_single(initial_seen), "key": init_key, "achievements": initial_achievements, "opportunities": initial_access})
+    var frontier = dv_single({"mind": actor.mind, "visible_context": initial_context, "path": [], "score": 0, "room": root_room, "tasks": [], "seen": dv_single(initial_seen), "key": init_key, "achievements": initial_achievements, "opportunities": initial_access})
     var depth = 0
     var time_blocked = 0
     var stop = "complete-depth"
@@ -755,7 +767,7 @@ fn dvp_plan(actor, bindings, costs):
                 var node = frontier[n]
                 var i = 0
                 var mind = frontier[n].mind
-                var node_actor = dvp_actor_view(actor, mind)
+                var node_actor = dvp_actor_view(dv_with(actor, "visible_context", node.visible_context), mind)
                 rt_push(node_actor, dv_pair("planning_achievements", node.achievements))
                 rt_push(node_actor, dv_pair("planning_opportunities", node.opportunities))
                 let node_actions = dvp_room_actions(actions, node.room, dv_find(actor, "location_ref", false))
@@ -773,7 +785,7 @@ fn dvp_plan(actor, bindings, costs):
                             let req_room = dv_find(action, "required_room", "")
                             if req_room != "" and req_room != node.room:
                                 spatially_possible = false
-                    if spatially_possible and (depth == 0 or not dv_find(action, "known_opportunity_wait", false)) and dvp_eligible(actor, action, mind, relevant):
+                    if spatially_possible and (depth == 0 or not dv_find(action, "known_opportunity_wait", false)) and dvp_eligible(node_actor, action, mind, relevant):
                         if dv_has_key(actor.policy, "remaining_game_time"):
                             if (actor.policy.remaining_game_time < (dv_find(node, "elapsed", 0) + dv_get(costs, action.kind).maximum.time)):
                                 time_blocked = (time_blocked + 1)
@@ -817,7 +829,9 @@ fn dvp_plan(actor, bindings, costs):
                                     var prediction = dvp_forecast(mind, name)
                                     if (prediction.status == "applied"):
                                         var predicted = prediction.world
-                                        let achieved = dvp_satisfied_goals(actor, predicted, node.achievements)
+                                        let predicted_actor = dvp_actor_view(node_actor, predicted)
+                                        let predicted_context = dv_find(predicted_actor, "visible_context", [])
+                                        let achieved = dvp_satisfied_goals(predicted_actor, predicted, node.achievements)
                                         var is_transit = false
                                         var room = node.room
                                         if dv_has_key(action, "travel"):
@@ -828,12 +842,12 @@ fn dvp_plan(actor, bindings, costs):
                                         var next_tasks = node.tasks
                                         if not is_transit:
                                             next_tasks = dv_append(node.tasks, action.id)
-                                        let seen_key = dvp_state_key(room, next_tasks)
-                                        var pred_key = rt_cat(seen_key, rt_cat("#", rt_cat(dvp_join_items(achieved), rt_cat("@", dvp_join_items(opportunity_keys)))))
+                                        let seen_key = dvp_state_key(room, next_tasks, predicted_context)
+                                        let pred_key = dv_list3(seen_key, achieved, opportunity_keys)
                                         if dv_has(node.seen, seen_key) or (not is_transit and dv_has(node.tasks, action.id)):
                                             false
                                         else:
-                                            var candidate_node = {"mind": predicted, "path": path, "score": score - opportunity_value * dv_find(actor.policy, "progress_weight", 1), "room": room, "tasks": next_tasks, "seen": dv_append(node.seen, seen_key), "key": pred_key, "prediction_basis": adoption.basis, "elapsed": dv_find(node, "elapsed", 0) + dv_get(costs, action.kind).maximum.time, "achievements": achieved, "opportunities": opportunity_keys}
+                                            var candidate_node = {"mind": predicted, "visible_context": predicted_context, "path": path, "score": score - opportunity_value * dv_find(actor.policy, "progress_weight", 1), "room": room, "tasks": next_tasks, "seen": dv_append(node.seen, seen_key), "key": pred_key, "prediction_basis": adoption.basis, "elapsed": dv_find(node, "elapsed", 0) + dv_get(costs, action.kind).maximum.time, "achievements": achieved, "opportunities": opportunity_keys}
                                             if dvp_dominated(visited, candidate_node):
                                                 false
                                             else:
@@ -862,12 +876,35 @@ fn dvp_plan(actor, bindings, costs):
     return dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "time_blocked": time_blocked, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": depth, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer})
 
 fn dvp_find_action(actions, id):
+    let key = ["dvp-find-action", id]
+    let cached = rt_memo_get(actions, key)
+    if cached[0]:
+        return cached[1]
     var i = 0
     var result = false
     while (i < rt_count(actions)):
         if (actions[i].id == id):
             result = actions[i]
         i = (i + 1)
+    return rt_memo_put(actions, key, result)
+
+// A forecast may discard old co-presence but never discover a peer at a new
+// location. The search carries this filtered record forward, so returning to a
+// previous room does not restore a context discarded earlier on that branch.
+fn dvp_view_visible_context(actor, mind):
+    var result = []
+    if not dv_has_key(actor, "location_ref"):
+        return result
+    let own = dv_read(mind, actor.location_ref)
+    if not dv_uncontested(own):
+        return result
+    let previous = dv_find(actor, "visible_context", [])
+    var i = 0
+    while i < rt_count(previous):
+        let entry = previous[i]
+        if dv_find(entry[1], "location", false) == own.value:
+            rt_push(result, entry)
+        i = i + 1
     return result
 
 fn dvp_actor_view(actor, mind):
@@ -879,7 +916,10 @@ fn dvp_actor_view(actor, mind):
         if (entry[0] == "mind"):
             local_1 = dv_pair("mind", mind)
         else:
-            local_1 = entry
+            if entry[0] == "visible_context":
+                local_1 = dv_pair("visible_context", dvp_view_visible_context(actor, mind))
+            else:
+                local_1 = entry
         rt_push(result, local_1)
         i = (i + 1)
     return result

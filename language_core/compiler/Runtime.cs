@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Numerics;
 using System.Text.Json.Serialization;
@@ -387,7 +388,15 @@ public static class R
     private static void Invalidate(object value)
     {
         var list = MutableItems(value);
-        if (!MutableStates.TryGetValue(list, out _)) return;
+        if (!MutableStates.TryGetValue(list, out var initial)) return;
+        // No ancestor can depend on this owner; invalidate only its own caches.
+        if (initial.Parents.Count == 0)
+        {
+            initial.Backbone = null;
+            initial.IndexChecked = false;
+            initial.Index = null;
+            return;
+        }
         var visited = new HashSet<List<object>>(ReferenceEqualityComparer.Instance);
         var pending = new Stack<List<object>>();
         pending.Push(list);
@@ -559,7 +568,20 @@ public static class R
                 throw new Exception("DV persistence supports arrays, text, finite numbers and booleans");
         }
     }
+    private sealed class JsonEncoding(string text)
+    {
+        internal readonly string Text = text;
+    }
+    private static readonly ConditionalWeakTable<FrozenList, JsonEncoding> JsonEncodings = new();
     public static object json_stringify(object value)
+    {
+        // Only frozen identities are cacheable. Mutable values retain the exact
+        // pre-existing serialization path and never reuse a stale encoding.
+        if (value is FrozenList frozen)
+            return JsonEncodings.GetValue(frozen, key => new JsonEncoding(EncodeJson(key))).Text;
+        return EncodeJson(value);
+    }
+    private static string EncodeJson(object value)
     {
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { SkipValidation = true }))
@@ -567,7 +589,7 @@ public static class R
             WriteJsonFast(writer, value);
             writer.Flush();
         }
-        return Encoding.UTF8.GetString(stream.ToArray());
+        return Encoding.UTF8.GetString(stream.GetBuffer().AsSpan(0, checked((int)stream.Length)));
     }
     private static readonly object OutputLock = new();
     private static readonly Stream StandardOutput = Console.OpenStandardOutput();
@@ -655,6 +677,7 @@ public static class R
         private readonly FileStream stream;
         private readonly ConditionalWeakTable<FrozenList, RawNode> nodes = new();
         private readonly HashSet<string> eventIds = new(StringComparer.Ordinal);
+        private readonly ArrayBufferWriter<byte> frameBuffer = new();
         private long nextNode;
         private long sequence;
         private long flushedSequence;
@@ -701,9 +724,9 @@ public static class R
             try
             {
                 // A frame contains one shallow node or commit, never an expanded DAG.
-                using var buffer = new MemoryStream();
-                using (var writer = new Utf8JsonWriter(buffer)) { payload(writer); writer.Flush(); }
-                var bytes = buffer.GetBuffer().AsSpan(0, checked((int)buffer.Length));
+                frameBuffer.Clear();
+                using (var writer = new Utf8JsonWriter(frameBuffer)) { payload(writer); writer.Flush(); }
+                var bytes = frameBuffer.WrittenSpan;
                 using var digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 digest.AppendData(Encoding.ASCII.GetBytes(previous + "\n" + sequence.ToString(CultureInfo.InvariantCulture) + "\n"));
                 digest.AppendData(bytes);
