@@ -291,7 +291,7 @@ fn c1_other_policy(id):
     while (i < rt_count(spec.options)):
         rt_push(goals, {"kind": "know", "question": rt_cat(person.group, ".identity"), "ref": c1_other_ref(person.group, rt_cat("answer.", spec.options[i])), "available_when": c1_other_claim(person.group, "open"), "basis": dv_single(spec.source)})
         i = (i + 1)
-    rt_push(goals, {"kind": "know", "question": rt_cat(person.group, ".identity"), "ref": c1_other_ref(person.group, rt_cat("receipt.", id)), "available_when": dv_all([c1_other_claim(person.group, "open"), dv_at_least(c1_other_clock_ref(), c1_other_report_time(person.group))]), "basis": dv_single(spec.source)})
+    rt_push(goals, c2_goal(c1_other_claim(person.group, rt_cat("receipt.", id)), dv_all([c1_other_claim(person.group, "open"), dv_at_least(c1_other_clock_ref(), c1_other_report_time(person.group))]), [spec.source]))
     rt_push(goals, {"kind": "know", "question": "own_material", "ref": dv_ref(rt_cat("personal.", id), "state", "material_detail"), "basis": dv_pair(person.material_source, person.desire_source)})
     if id == "lucian":
         rt_push(goals, c2_observation_goal(dv_ref("quer", "state", "location"), c1_other_claim("contract", "outer_latch_released"), [spec.source], 0))
@@ -806,6 +806,23 @@ axiom c1_other_complete_accept(group, actor):
     let pre = dv_all([c1_other_claim(group, "open"), c1_other_claim(group, rt_cat("receipt.", actor))])
     return dv_axiom(rt_cat("c1_other_complete_accept.", rt_cat(group, rt_cat(".", actor))), 1, pre, [dv_assign(c1_other_ref(group, rt_cat("complete_receipt.", actor)), true), dv_assign(c1_other_ref(group, rt_cat("complete_level.", actor)), 1), dv_assign(dv_ref(rt_cat("personal.", actor), "state", "current"), rt_cat(group, ".complete"))])
 
+// The common chooser compares only alternatives whose complete present
+// eligibility holds. The declaration never makes a future reply executable.
+fn c1_other_case_choice_declaration(group, mode, condition, source_refs):
+    var promotes = ["solve_case", "evidence", "clarify_terms"]
+    var sacrifices = ["avoid_attachment"]
+    if mode == "literal":
+        promotes = ["solve_case", "avoid_attachment"]
+        sacrifices = ["evidence", "clarify_terms"]
+    if mode == "departure":
+        promotes = ["pursue_desire", "avoid_attachment"]
+        sacrifices = ["solve_case", "evidence", "clarify_terms"]
+    let basis = dv_append(source_refs, c1_source("user:current-request", 0, "approved-cross-zone-personal-choice-20261018"))
+    return {"group": rt_cat("detective.case-response.", group), "requires": condition, "prohibits": dv_not(dv_true()), "promotes": promotes, "sacrifices": sacrifices, "basis": basis}
+
+fn c1_other_case_choice(action, group, mode):
+    return dv_with(action, "personal_choice", c1_other_case_choice_declaration(group, mode, action.precondition, action.source_refs))
+
 fn c1_other_placement_release_goals(goals, group, release, local_release, manifest, local_manifest):
     let old_items = release.premise.items
     let new_items = local_release.premise.items
@@ -930,7 +947,9 @@ fn c1_other_place_detective(scene, zone, profile):
             let here = c1_at("detective", c1_other_case(group).room)
             let hearing = dv_append(dv_find(actor, "hearing_grants", []), {"speaker": "demon", "channel": rt_cat("copper.", group), "available_when": here, "sender_locations": ["living_hall"], "listener_locations": [c1_other_case(group).room], "basis": [placement_source]})
             let reason_topic = {"topic": rt_cat(group, ".reason"), "heard_when": c1_other_claim(group, "receipt.detective"), "completed_when": c1_other_claim(group, "complete_receipt.detective"), "basis": [placement_source]}
-            let policy = dv_with(actor.policy, "topic_bindings", dv_append(dv_find(actor.policy, "topic_bindings", []), reason_topic))
+            let report_purpose = dv_all([here, c1_other_claim(group, "open"), dv_fact(current_ref, rt_cat(group, ".identity")), dv_fact(c1_other_ref(group, "receipt.detective"), false)])
+            let report_wait = {"target_time": c1_other_report_time(group), "available_when": report_purpose, "personal_choice": c1_other_case_choice_declaration(group, "investigate", report_purpose, [placement_source])}
+            let policy = dv_with_many(actor.policy, {"topic_bindings": dv_append(dv_find(actor.policy, "topic_bindings", []), reason_topic), "known_opportunity_wait_choices": dv_append(dv_find(actor.policy, "known_opportunity_wait_choices", []), report_wait)})
             actor = dv_with_many(actor, {"mind": mind, "location": c1_other_case(group).room, "question_ref": current_ref, "hearing_grants": hearing, "policy": policy})
             actor = c1_other_activity_actor(actor, group)
             let peers = c1_other_people()
@@ -951,7 +970,8 @@ fn c1_other_place_detective(scene, zone, profile):
             var local_actions = dv_append(actor.actions, recheck)
             var local_goals = dv_clone(actor.policy.goals)
             rt_push(local_goals, c2_observation_goal(current_ref, here, [source], 0))
-            rt_push(local_goals, {"kind": "know", "question": rt_cat(group, ".identity"), "ref": c1_other_ref(group, "receipt.detective"), "available_when": dv_all([c1_other_claim(group, "open"), dv_at_least(c1_other_clock_ref(), c1_other_report_time(group))]), "basis": [source]})
+            rt_push(local_goals, c2_goal(c1_other_claim(group, "receipt.detective"), dv_all([c1_other_claim(group, "open"), dv_at_least(c1_other_clock_ref(), c1_other_report_time(group))]), [source]))
+            rt_push(local_goals, c2_goal(c1_other_claim(group, "complete_receipt.detective"), c1_other_claim(group, "receipt.detective"), [source]))
             let exit_ready = dv_all([c1_other_claim(group, "outer_latch_released"), dv_fact(c1_other_access_ref(group), true)])
             rt_push(local_goals, c2_observation_goal(c1_other_ref(group, "outer_latch_released"), here, [source], 0))
             rt_push(local_goals, c2_observation_goal(c1_other_access_ref(group), here, [source], 0))
@@ -968,7 +988,7 @@ fn c1_other_place_detective(scene, zone, profile):
                 let answer_ready = dv_all([here, c1_other_claim(group, "open"), literal, dv_at_least(c1_other_clock_ref(), c1_other_report_time(group))])
                 let surface = c1_other_literal_report_surface(group, option)
                 let answer_action = dv_with_many(c2_action(answer_id, "answer", answer_ready, answer_ready, "", [], surface, source), {"answer": literal, "answer_id": answer_id, "topic": rt_cat(group, ".identity"), "content_grade": "literal-actor-and-material-only", "speech": dv_with_many(c1_speech(literal, source, "locally-supported-literal-report-not-motive"), {"surface": surface, "channel": rt_cat("copper.", group)}), "listeners": ["demon"]})
-                rt_push(local_actions, answer_action)
+                rt_push(local_actions, c1_other_case_choice(answer_action, group, "literal"))
                 rt_push(answers, {"id": answer_id, "stage": rt_cat(group, ".identity"), "content_grade": "literal-actor-and-material-only", "condition": literal, "required_support": literal, "question_match": c1_other_claim(group, "open"), "answer_complete": literal, "require_argument": false, "accepted_law": rt_cat("other.accept.", rt_cat(group, ".detective")), "progress_ref": c1_other_ref(group, "level.detective"), "completion_ref": c1_other_ref(group, "receipt.detective"), "accepted_listeners": ["detective", "demon"], "accepted_public_grants": [c1_other_ref(group, "receipt.detective"), c1_other_ref(group, "level.detective"), current_ref], "source_refs": [source]})
                 let reasons = c1_other_case(group).reason_options
                 var reason_index = 0
@@ -978,7 +998,8 @@ fn c1_other_place_detective(scene, zone, profile):
                     let complete_id = rt_cat(answer_id, rt_cat(".reason.", reason))
                     let ready = dv_all([answer_ready, c1_other_claim(group, "receipt.detective"), complete])
                     let complete_surface = c1_other_reason_report_surface(group, option, reason)
-                    rt_push(local_actions, dv_with_many(c2_action(complete_id, "answer", ready, ready, "", [], complete_surface, source), {"answer": complete, "answer_id": complete_id, "topic": rt_cat(group, ".reason"), "content_grade": "complete-causal-account", "speech": dv_with_many(c1_speech(complete, source, "personally-supported-causal-account"), {"surface": complete_surface, "channel": rt_cat("copper.", group)}), "listeners": ["demon"]}))
+                    let complete_action = dv_with_many(c2_action(complete_id, "answer", ready, ready, "", [], complete_surface, source), {"answer": complete, "answer_id": complete_id, "topic": rt_cat(group, ".reason"), "content_grade": "complete-causal-account", "speech": dv_with_many(c1_speech(complete, source, "personally-supported-causal-account"), {"surface": complete_surface, "channel": rt_cat("copper.", group)}), "listeners": ["demon"]})
+                    rt_push(local_actions, c1_other_case_choice(complete_action, group, "complete"))
                     rt_push(answers, {"id": complete_id, "stage": rt_cat(group, ".reason"), "content_grade": "complete-causal-account", "condition": complete, "required_support": complete, "question_match": dv_all([c1_other_claim(group, "open"), c1_other_claim(group, "receipt.detective")]), "answer_complete": complete, "require_argument": false, "accepted_law": rt_cat("other.complete-accept.", rt_cat(group, ".detective")), "progress_ref": c1_other_ref(group, "complete_level.detective"), "completion_ref": c1_other_ref(group, "complete_receipt.detective"), "accepted_listeners": ["detective", "demon"], "accepted_public_grants": [c1_other_ref(group, "complete_receipt.detective"), c1_other_ref(group, "complete_level.detective"), current_ref], "source_refs": [source]})
                     reason_index = reason_index + 1
                 option_index = option_index + 1
@@ -993,7 +1014,7 @@ fn c1_other_place_detective(scene, zone, profile):
                 world = dv_adopt(world, c1_method(move_id, law), "enforce", 1, [source])
                 mind = dv_adopt(actor.mind, c1_method(move_id, law), "predict", 1, [source])
                 let action = dv_with_many(c2_action(move_id, "move", pre, pre, move_id, [dv_ref("detective", "state", "location")], "确认外闩已经打开后，跨过门槛。", source), {"predict_law": move_id, "travel": {"from": origins[move_index], "to": targets[move_index], "gate": group}})
-                actor = dv_with_many(actor, {"mind": mind, "actions": dv_append(actor.actions, action)})
+                actor = dv_with_many(actor, {"mind": mind, "actions": dv_append(actor.actions, c1_other_case_choice(action, group, "departure"))})
                 move_index = move_index + 1
             let truth = c1_other_truth_rows(group)
             var j = 0
@@ -1004,13 +1025,14 @@ fn c1_other_place_detective(scene, zone, profile):
                 let law = c1_other_truth_law(group, row)
                 world = dv_adopt(world, c1_method(method, law), "enforce", 1, [c1_other_case(group).source])
                 mind = actor.mind
-                mind = dv_store(mind, c1_other_ref(group, row.id), dv_with(dv_field(false), "basis", [c1_other_case(group).source]))
+                if row.kind != "talk":
+                    mind = dv_store(mind, c1_other_ref(group, row.id), dv_with(dv_field(false), "basis", [c1_other_case(group).source]))
                 mind = dv_adopt(mind, c1_method(method, law), "predict", 1, [c1_other_case(group).source])
                 var action = dv_with(c2_action(method, row.kind, law.premise, law.premise, method, [c1_other_ref(group, row.id)], row.text, c1_other_case(group).source), "predict_law", method)
                 if row.kind == "talk":
                     let after = c1_other_claim(group, row.after)
                     action = dv_with_many(c2_action(rt_cat("detective.truth.ask.", row.id), "talk", dv_all([c1_at("detective", c1_other_case(group).room), after]), dv_all([c1_at("detective", c1_other_case(group).room), c1_at(row.partner, c1_other_case(group).room)]), "", [], "请看这份已核对的材料。你能说明自己记得的经过吗？", c1_other_case(group).source), {"speech": dv_with_many(c1_speech(after, c1_other_case(group).source, "actual-evidence-question"), {"surface": "请看这份已核对的材料。你能说明自己记得的经过吗？", "request": {"target": row.partner, "topic": rt_cat("truth.", row.id)}}), "listeners": [row.partner], "purpose_refs": [c1_other_ref(group, row.id)]})
-                let actions = dv_append(actor.actions, action)
+                let actions = dv_append(actor.actions, c1_other_case_choice(action, group, "investigate"))
                 var goals = dv_append(actor.policy.goals, c2_goal(c1_other_claim(group, row.id), c1_at("detective", c1_other_case(group).room), [c1_other_case(group).source]))
                 if row.kind == "talk":
                     rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": action.id, "available_when": action.precondition, "requires_argument": false, "basis": [c1_other_case(group).source]})
@@ -1139,9 +1161,7 @@ fn c1dep_actions(actor):
     let four = ["detective", "huo", "shen", "su"]
     if dv_has(four, actor):
         let fields = [c1dep_ref("outer_released"), c1dep_ref("inner_down"), c1dep_ref("open"), c2_access("living_exit")]
-        let question_opened = dv_not(dv_all([dv_not(dv_fact(dv_ref("question", "state", "open_identity"), true)), dv_not(dv_fact(dv_ref("question", "state", "solved_identity"), true))]))
-        let investigating = dv_all([c1_at(actor, "foyer"), question_opened])
-        rt_push(actions, dv_with(c2_action(rt_cat(actor, ".departure.inspect-door"), "inspect", investigating, c1_at(actor, "foyer"), "", fields, "查看门内的插闩和门外的横闩。", c1dep_source("11_门外的人.story", 8, "door_voices.005")), "repeatable", true))
+        rt_push(actions, dv_with(c2_action(rt_cat(actor, ".departure.inspect-door"), "inspect", c1_at(actor, "foyer"), c1_at(actor, "foyer"), "", fields, "查看门内的插闩和门外的横闩。", c1dep_source("11_门外的人.story", 8, "door_voices.005")), "repeatable", true))
         if actor == "detective":
             let inner = dv_all([c1_at(actor, "foyer"), dv_fact(c1dep_ref("outer_released"), true), dv_fact(c1dep_ref("inner_down"), true)])
             rt_push(actions, dv_with_many(c2_action(rt_cat(actor, ".departure.draw-inner"), "help", inner, inner, rt_cat(actor, ".departure.draw-inner"), dv_single(c1dep_ref("inner_down")), "拔出门内的插闩。", source), {"predict_law": rt_cat(actor, ".departure.draw-inner"), "public_observers": four, "public_grants": [c1dep_ref("inner_down")]}))
@@ -1163,7 +1183,9 @@ fn c1dep_actions(actor):
         let own_pre = c1dep_pick_contract_law().premise
         rt_push(actions, dv_with_many(c2_action("quer.departure.pick-contract", "experiment", own_pre, own_pre, "quer.departure.pick-contract", [c1_other_ref("contract", "outer_latch_released"), c1_other_access_ref("contract"), c1dep_ref("contract_picked_by_quer")], "雀儿受够了盘问，从袖口拉出精钢丝，探过门缝挑起甲区外闩。卢西安收起手稿，跟上她。", c1_source("docs/design-standard.md", 0, "甲区开锁机会")), {"predict_law": "quer.departure.pick-contract", "public_observers": ["lucian", "ward", "gu"], "public_grants": [c1_other_ref("contract", "outer_latch_released"), c1_other_access_ref("contract")]}))
         let pre = c1dep_pick_law().premise
-        rt_push(actions, dv_with(c2_action("quer.departure.pick-outer", "experiment", pre, pre, "quer.departure.pick-outer", [c1dep_ref("outer_released"), c1dep_ref("picked_by_quer"), c2_access("living_exit")], "细铁丝拨了四下，外侧的横闩抬了起来。", c1dep_source("12_雀儿撬门.story", 7, "quer_opens.001-002")), "predict_law", "quer.departure.pick-outer"))
+        let pick_source = c1dep_source("12_雀儿撬门.story", 7, "quer_opens.001-002")
+        let pick = c2_action("quer.departure.pick-outer", "experiment", pre, pre, "quer.departure.pick-outer", [c1dep_ref("outer_released"), c1dep_ref("picked_by_quer"), c2_access("living_exit")], "细铁丝拨了四下，外侧的横闩抬了起来。", pick_source)
+        rt_push(actions, dv_with_many(pick, {"predict_law": "quer.departure.pick-outer", "speech": dv_with_many(c1_speech(dv_true(), pick_source, "actual-latch-sound"), {"surface": "门外传来细铁丝拨动和横闩抬起的金属响声。", "channel": "door.living"}), "listeners": four, "public_grants": [c1dep_ref("outer_released"), c2_access("living_exit")]}))
         let receipt = dv_at_least(c1_other_clock_ref(), 690)
         let call = c1dep_speech(actor, "quer.departure.call-inside", "living_hall", receipt, dv_true(), "里头有人？", c1dep_source("11_门外的人.story", 5, "door_voices.002：询问部分"))
         rt_push(actions, dv_with(call, "speech", dv_with(call.speech, "utterance_type", "question")))
@@ -1266,9 +1288,13 @@ fn c1dep_goals(actor):
     let source = [c1dep_source("08_终局.story", 24, "s10_open.003：未迈出由本人选择")]
     if dv_has(["detective", "huo", "shen", "su"], actor.id):
         let after_trust = dv_fact(dv_ref("question", "state", "solved_trust"), true)
-        rt_push(goals, dv_with(c2_observation_goal(c1dep_ref("outer_released"), after_trust, source, 0), "refresh_until", dv_fact(c1dep_ref("outer_released"), true)))
-        rt_push(goals, c2_observation_goal(c1dep_ref("inner_down"), after_trust, source, 0))
-        rt_push(goals, c2_observation_goal(c1dep_ref("open"), after_trust, source, 0))
+        let released = dv_fact(c1dep_ref("outer_released"), true)
+        let at_door = c1_at(actor.id, "foyer")
+        let recheck = c1_any(after_trust, c1_any(released, at_door))
+        let door_source = [c1dep_source("11_门外的人.story", 8, "door_voices.005：本人听见门外动静或在门厅现场复查")]
+        rt_push(goals, dv_with_many(c2_observation_goal(c1dep_ref("outer_released"), recheck, door_source, 0), {"refresh_until": released, "refresh_refs": [dv_ref("question", "state", "solved_trust")]}))
+        rt_push(goals, dv_with_many(c2_observation_goal(c1dep_ref("inner_down"), recheck, door_source, 0), {"refresh_until": dv_not(dv_true()), "refresh_refs": [c1dep_ref("outer_released")]}))
+        rt_push(goals, dv_with_many(c2_observation_goal(c1dep_ref("open"), recheck, door_source, 0), {"refresh_until": dv_not(dv_true()), "refresh_refs": [c1dep_ref("outer_released")]}))
         rt_push(goals, c2_goal(dv_fact(c1dep_ref("inner_down"), false), dv_fact(c1dep_ref("outer_released"), true), source))
         rt_push(goals, c2_goal(dv_fact(c1dep_ref("open"), true), dv_fact(c1dep_ref("outer_released"), true), source))
         rt_push(goals, c2_goal(c1_at(actor.id, "living_hall"), dv_fact(c1dep_ref("outer_released"), true), source))

@@ -285,28 +285,67 @@ fn dv_debug_event(event):
     // Keep the actual subjective computation inspectable. This is an explicit
     // reporting projection; no field is promoted to a real-world observation.
     if event.type == "mind_simulation" or event.type == "model_recheck":
-        detail = dv_with_many(detail, {"hypothesis": dv_find(data, "hypothesis", false), "result": dv_debug_model_result(dv_find(data, "result", false)), "source_adoptions": dv_find(dv_find(dv_find(data, "actor_before", []), "mind", []), "adoptions", []), "scope": "subjective-model-not-actual-execution; full-snapshots-in-raw-trace"})
+        detail = dv_with_many(detail, {"hypothesis": dv_debug_reference(dv_find(data, "hypothesis", false)), "result": dv_debug_model_result(dv_find(data, "result", false)), "source_adoptions": dv_debug_reference(dv_find(dv_find(dv_find(data, "actor_before", []), "mind", []), "adoptions", [])), "scope": "subjective-model-not-actual-execution; references-resolve-to-full-raw-values"})
+        let hypothesis = dv_find(data, "hypothesis", [])
+        let calculation = dv_find(data, "result", [])
+        detail = dv_with_many(detail, {"hypothesis_id": dv_find(hypothesis, "id", ""), "calculation_scope": dv_find(calculation, "evaluation_scope", dv_find(hypothesis, "evaluation_scope", {"kind": "declared-plan", "plan_complete": dv_find(calculation, "plan_complete", false)}))})
         if dv_has_key(data, "model_before"):
-            detail = dv_with(detail, "model_before", dv_debug_model_result(data.model_before))
+            detail = dv_with(detail, "model_before", dv_debug_model_reference(data.model_before))
     if event.type == "factor_prune":
-        detail = dv_with_many(detail, dv_without(data, "actor_before"))
-        detail = dv_with(detail, "source_adoptions", dv_find(dv_find(dv_find(data, "actor_before", []), "mind", []), "adoptions", []))
+        detail = dv_with_many(detail, dv_debug_without_snapshot(data))
+        detail = dv_with(detail, "source_adoptions", dv_debug_reference(dv_find(dv_find(dv_find(data, "actor_before", []), "mind", []), "adoptions", [])))
+        detail = dv_with(detail, "calculation_scope", {"kind": "factor-prune", "meaning": "constraint-refutation-not-complete-model-explanation"})
     if event.type == "model_argument_unavailable" or event.type == "model_argument_accepted":
         var competitors = []
         var competitor_index = 0
         let original = dv_find(data, "competitors", [])
         while competitor_index < rt_count(original):
-            rt_push(competitors, dv_debug_model_result(original[competitor_index]))
+            rt_push(competitors, dv_debug_model_reference(original[competitor_index]))
             competitor_index = competitor_index + 1
-        detail = dv_with_many(detail, {"hypothesis": dv_find(data, "hypothesis", false), "competitors": competitors, "result": dv_debug_model_result(dv_find(data, "result", false)), "scope": "subjective-argument; full-snapshots-in-raw-trace"})
+        detail = dv_with_many(detail, {"hypothesis": dv_debug_reference(dv_find(data, "hypothesis", false)), "competitors": competitors, "result": dv_debug_model_result(dv_find(data, "result", false)), "scope": "subjective-argument; references-resolve-to-full-raw-values"})
+        detail = dv_with(detail, "calculation_scope", {"kind": "argument-comparison", "meaning": "uses-recorded-models-not-a-new-causal-replay"})
     if event.type == "action_execution":
         detail = dv_with(detail, "status", data.receipt.execution.status)
-    return rt_snapshot({"event_id": event.id, "type": event.type, "actor": event.actor, "game_time": event.time, "parents": event.parents, "action_id": action_id, "action_kind": dv_find(action, "kind", ""), "label": dv_find(action, "label", dv_find(action, "surface", "")), "purpose_sources": dv_find(action, "purpose_basis", []), "detail": detail})
+    return rt_snapshot({"event_id": event.id, "type": event.type, "actor": event.actor, "game_time": event.time, "parents": event.parents, "action_id": action_id, "action_kind": dv_find(action, "kind", ""), "label": dv_find(action, "label", dv_find(action, "surface", "")), "purpose_sources": dv_find(action, "purpose_basis", []), "detail": detail, "raw_event_ref": rt_raw_ref(event)})
+
+fn dv_debug_reference(value):
+    let reference = rt_raw_ref(value)
+    if reference == false:
+        return value
+    return {"raw_ref": reference, "meaning": "complete-original-value-in-raw-journal"}
+
+fn dv_debug_model_reference(model):
+    let reference = rt_raw_ref(model)
+    if reference == false:
+        return dv_debug_model_result(model)
+    return {"raw_ref": reference, "event": dv_find(model, "event", ""), "status": dv_find(model, "status", ""), "fit": dv_find(model, "fit", false), "plan_complete": dv_find(model, "plan_complete", false), "evaluation_scope": dv_find(model, "evaluation_scope", "declared-plan"), "stop_reason": dv_find(model, "stop_reason", "")}
+
+fn dv_debug_without_snapshot(data):
+    var result = []
+    var i = 0
+    while i < rt_count(data):
+        let entry = data[i]
+        if entry[0] != "actor_before":
+            rt_push(result, entry)
+        i = i + 1
+    return result
 
 fn dv_debug_model_result(result):
     if not dv_record_like(result):
         return result
-    return dv_without(dv_without(result, "predicted"), "world")
+    // Borrow frozen children in one pass, then freeze the final projection once.
+    var projected = []
+    var i = 0
+    while i < rt_count(result):
+        let entry = result[i]
+        let key = entry[0]
+        if key != "predicted" and key != "world":
+            var value = entry[1]
+            if dv_has(["source_adoptions", "source_response_models", "source_hypothesis", "trace", "argument"], key):
+                value = dv_debug_reference(value)
+            rt_push(projected, dv_pair(key, value))
+        i = i + 1
+    return projected
 
 fn dv_debug_events(events, start, config):
     dv_require(0 <= start and start <= rt_count(events), "Invalid debug event cursor")

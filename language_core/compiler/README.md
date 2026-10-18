@@ -38,6 +38,10 @@ Expr = Number | String | true | false | Name
 
 Runtime.cs提供数值、Bool、文本、列表、文件、命令行、JSON交换和Block调用。compiler.dv负责语法、作用域和代码生成。surface-v2 前端已由 DV 实现；完整目标无关 Typed IR 仍待实现。
 
+平台新增一元Text ABI `rt_text_join(values)`，依原顺序串接文本片段；`cs_string`以片段表一次合并，保留原Unicode与目标C#转义合同。`rt_json_print(value)`是一元Bool ABI，直接向标准输出写UTF-8 JSON和平台换行，数值/容器编码与`rt_json_stringify`相同，避免整包UTF-16中间字符串。
+
+显式调试DAG ABI为 `rt_raw_open(path)`、`rt_raw_event(frozen_event)`、`rt_raw_finish(value)`（一元Bool）、`rt_raw_checkpoint(name,value)`（二元Bool）、`rt_raw_ref(value)`（一元Value）及 `rt_raw_abort()`（零元Bool）。未启用记录器时event/checkpoint/finish/ref/abort返回false，不遍历输入；默认正式宿主没有文件I/O。成功finish恢复disabled，同进程可向新路径开启记录；失败记录器只可显式abort释放，保留partial，不自动重试或续写。启用后只记录冻结原值，不执行世界、推演或人物选择。节点先定义，事件最后提交，帧链使用SHA-256；只有initial、final与seal完整且原子发布才构成完整封存。编译器arity和名义返回类型与上述ABI同步。文件格式、命令及中止边界见[Core参考](../core/README.md)。
+
 
 ## Surface 编译过程
 

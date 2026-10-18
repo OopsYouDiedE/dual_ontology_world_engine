@@ -1,10 +1,20 @@
 # DV 模块维护
 
+本轮附件整批修正遵循根目录最新顺序：源码、声明、设计/工程文档及静态审读全部完成后，才统一构建、探针和冻结会话。任务阶段为 artifacts/partial-bootstrap-core/takeover-repair-20261018/batch-correction-20261018/；旧矩阵不改写。此顺序覆盖下文历史阶段允许的中途工程检查。
+
+手动候选以 action.manual_only 声明；dvp_eligible_base 只在临时 actor.manual_input=true 的只读资格视图中开放。dvs_player_options、dvs_select_player、dvs_player_choice 共用该视图，存回状态仍是原主体；自动规划不设置该字段，其他本人来源、现场与规范资格保持相同。内容询问仍是有来源的实际动作，不能声称新增手动选项使全部AI轨迹不变。
+
+policy.known_opportunity_wait_choices 为有来源的未来等待补充个人选择：target_time须严格匹配实际生成的已知机会，available_when须本人为真，personal_choice.basis须非空。仅这种显式声明允许等待与当前责任同场比较；多个有效匹配报歧义。原等待费用、时间片与实际Complete保持不变，不用未来答复压制眼前动作。
+
+建议通过speech.advice声明并在实际listener_parse后登记；advice_decision是本人沿既有价值/动机评估的付费回应，只有实际成功Complete更新stance。接受、执行和因果归因分别记录。后续行为账本核本次实际selection晚于parse，不能冒领已经排队的行动；没有独立证据的关联明确标post-advice-matching-behavior/causal_attribution=not-established。当前建议记忆随认知截断清理，历史账本不补回认识。普通重复话语须显式repeatable且非once/response_once，仍走共同资格。完整字段与源码索引见core/README.md。
+
 本轮追加反事实比较（2026-10-18）：用户要求完成设计文档中的测试。集中完成接管修复并只读审查后冻结源码，对两种侦探配置与四个初始区分别运行一次最多180秒的独立正式一级会话，主代理串行测量，配置间不改源码；每组由新上下文代理审查实际证据，审查者不读取设计。具体关键节点、范围与版本记录于本任务目录 COUNTERFACTUAL-CRITERIA.md，未覆盖的后续分支保持未知。本条为本轮新增矩阵授权，历史单次窗口与中断记录继续保留。
 
 真实 Complete 以已结算 execution.time 推进本人 mind.time；已有且经声明 clock_ref/本人 bindings 映射的数值时钟取得同次执行回执观察。该观察来源为 perception/execution-receipt，同字段原观察合并，成功与失败均不重复加时；未知/未绑定时钟保持未知，不读取其他权威字段、不在Prepare或预测同步、不全员同步。初次失败窗口与修复后的新来源分开封存。
 
 rt_json_write 目标以 .gz 结尾时使用无损 gzip，解压为完整原JSON字节，仍先 .partial，压缩关闭后发布正式文件。run_debug --trace-compression gzip 明确记录文件名与存储编码；默认none保持原JSON。保存时限包含逻辑与封存，不借压缩改变时域或宣称剧情达成。
+
+显式 `run_debug.py --raw-format dag` 启用在线冻结原值日志，和JSON压缩互斥。事件冻结后先提交原始DAG再发布；节点先定义、事件末提交，帧摘要连锁。initial保存完整会话，正常close后final保存trace与last_live_session，seal后才发布正式文件；默认JSON没有记录器I/O。`tools/raw_dag.py`只读校验/恢复指定事件、节点或checkpoint，以SQLite临时偏移索引限制内存。中断只提供已验证提交前缀，不补终态或在途计算。UTF-8直写和单次流式导出不改变默认JSON值编码；索引引用stdout行、批内位置与raw_ref，不重复模型大值。CLI、ABI与失败边界见core/README.md及compiler/README.md。
 
 
 ## 接管修复工程合同（2026-10-18）

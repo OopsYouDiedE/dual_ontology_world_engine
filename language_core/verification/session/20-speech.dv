@@ -314,6 +314,7 @@ fn dvs_speech_interpret(mind, policy, bindings, candidate):
     var status = "rejected"
     var missing = "missing-bridge"
     var scope_check = []
+    var withdrawal_evidence = false
     var work = 0
     while (i < rt_count(bridges)):
         var item = bridges[i]
@@ -337,6 +338,7 @@ fn dvs_speech_interpret(mind, policy, bindings, candidate):
         var interpreted_scope = dv_find(bridge, "target_scope", dv_find(bridge, "source_scope", ""))
         var scope_truth = dv_truth(mind, scope_ast)
         var withdraw_truth = dv_truth(mind, withdrawal)
+        withdrawal_evidence = {"condition": withdrawal, "truth": withdraw_truth, "inputs": dvs_sim_inputs(mind, withdrawal), "scope": "owner-known-cells-only"}
         var available_truth = dv_truth(mind, available)
         var premise_truth = dv_truth(mind, premise)
         var proposition_truth = dv_truth(mind, proposition)
@@ -371,7 +373,7 @@ fn dvs_speech_interpret(mind, policy, bindings, candidate):
             adoption = dv_threshold_acceptance(0, threshold)
             missing = "scope-reference-bridge-not-supported"
         basis = dv_append(basis, {"bridge": bridge.id, "basis": bridge_basis})
-    return dv_with_many({"id": candidate.id, "proposition": proposition, "status": status, "confidence": confidence}, {"basis": basis, "missing_bridge": missing, "scope_check": scope_check, "kind": "defeasible-interpretation", "calculation_units": work, "acceptance": adoption})
+    return dv_with_many({"id": candidate.id, "proposition": proposition, "status": status, "confidence": confidence}, {"basis": basis, "missing_bridge": missing, "scope_check": scope_check, "withdrawal_evidence": withdrawal_evidence, "kind": "defeasible-interpretation", "calculation_units": work, "acceptance": adoption})
 
 fn dvs_speech_model_interpretations(mind, policy, speech, bindings):
     var candidates = dvs_speech_candidates(policy, speech)
@@ -773,6 +775,7 @@ fn dvs_receive_scheduled_speech(listener, message, events, time):
     listener = dv_with(listener, "received_speeches", dv_append(dv_find(listener, "received_speeches", []), {"speaker": speaker_id, "action_id": action_id, "parse_event": parse_event, "source_event": source}))
     listener = dvs_receive_public_claim(listener, speech, speaker_id, source, parse_event)
     listener = dvs_receive_player_influence(listener, speech, speaker_id, source, parse_event)
+    listener = dvs_receive_advice(listener, speech, speaker_id, source, parse_event, parsed)
     while (n < rt_count(candidates_actual)):
         var candidate = candidates_actual[n]
         var interpretation = (dvs_listener_mapping(after, policy, bindings) × candidates_actual[n])
@@ -877,6 +880,26 @@ fn dvs_speech_owned(actors, speaker_index, action, events, time, parent, physica
                         next = dvs_replace(next, target_index, dvs_receive_scheduled_speech(listener, message, events, time))
             i = (i + 1)
     return next
+
+fn dvs_complete_advice(actor, action, success, events, time, execution_event):
+    let decision = dv_find(action, "advice_decision", false)
+    if not success or decision == false:
+        return actor
+    if not dvs_advice_decision_ready(actor, action, actor.mind):
+        dvs_event(events, "advice_decision_unavailable", actor.id, time, [execution_event], {"decision": decision, "reason": "receipt-or-owner-assessment-unavailable-at-complete"})
+        return actor
+    let receipt = dv_get(dv_find(actor, "received_advice", []), decision.advice_id)
+    let selection = dvs_heard_before_selection(events, actor, action, execution_event, receipt.parse_event, receipt.source_event)
+    if selection == false:
+        dvs_event(events, "advice_decision_unavailable", actor.id, time, [execution_event, receipt.source_event, receipt.parse_event], {"decision": decision, "reason": "advice-not-before-decision-selection"})
+        return actor
+    let assessment = dvs_advice_assessment(actor, receipt, decision.assessment_action_id, actor.mind)
+    var status = "declined"
+    if decision.accepted:
+        status = "accepted-for-consideration"
+    let stance = {"advice_id": decision.advice_id, "accepted": decision.accepted, "status": status, "source_event": receipt.source_event, "parse_event": receipt.parse_event, "selection_event": selection.event, "execution_event": execution_event, "assessment": assessment, "time": time, "meaning": "owner-stance-not-target-execution-or-causal-proof"}
+    let event = dvs_event(events, "advice_decision", actor.id, time, [execution_event, receipt.source_event, receipt.parse_event], stance)
+    return dv_with_many(actor, {"advice_stances": dv_with(dv_find(actor, "advice_stances", []), decision.advice_id, dv_with(stance, "event", event)), "last_cognitive_event": event})
 
 fn dvs_pragmatics_reconsider(actor, events, time, parent):
     let mind = actor.mind

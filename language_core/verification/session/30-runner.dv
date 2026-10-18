@@ -467,9 +467,10 @@ fn dvs_session_complete(state, receipt):
         parent = dvs_event_prepared(events, "observation", id, time, dvs_cognitive_parents(actor, dv_single(parent)), dv_with_many({"observations": observations, "revision_before": mind.revision, "revision_after": actor.mind.revision, "mind_before": mind, "mind_after": actor.mind, "action": action}, {"bindings": bindings, "grants": observation_grants, "execution_id": action_event}))
     if (0 < rt_count(observations)):
         actor = dv_with(actor, "last_cognitive_event", parent)
-    actor = dvs_complete_cognitive_effects(actor, action, result.execution.status == "applied", execution_event, time)
+    actor = dvs_complete_cognitive_effects(actor, action, result.execution.status == "applied", events, execution_event, time)
     actor = dvs_complete_norm(actor, action, result.execution.status == "applied", events, time, execution_event, parent)
-    actor = dvs_complete_player_influences(actor, action, before, physical, result.execution.status == "applied", execution_event, time)
+    actor = dvs_complete_advice(actor, action, result.execution.status == "applied", events, time, execution_event)
+    actor = dvs_complete_player_influences(actor, action, before, physical, result.execution.status == "applied", events, execution_event, time)
     if dv_and(dv_has_key(action, "answer"), (result.execution.status == "applied")):
         var judgment = dvs_answer(dv_find(story, "formal_answers", []), action, physical, actor.mind, bindings, events)
         var stage = ""
@@ -989,11 +990,12 @@ fn dvs_control_state(state, actors, events, cursor, player, selection, waiting):
 
 fn dvs_player_options(actor):
     var result = []
+    let view = dv_with(actor, "manual_input", true)
     let refs = dvp_goal_refs(actor)
     var i = 0
     while i < rt_count(actor.actions):
         let action = actor.actions[i]
-        if dvp_eligible(actor, action, actor.mind, refs):
+        if dvp_eligible(view, action, actor.mind, refs):
             let label = dv_find(action, "label", dv_find(action, "surface", dv_find(dv_find(action, "speech", []), "surface", "")))
             if label != "":
                 rt_push(result, {"id": action.id, "label": label, "available": true})
@@ -1004,11 +1006,13 @@ fn dvs_select_player(state, id):
     dv_require(dv_find(state, "awaiting_player", false), "Player input is not currently requested")
     let actor = state.actors[state.cursor]
     let action = dvp_find_action(actor.actions, id)
+    let view = dv_with(actor, "manual_input", true)
     dv_require(action != false, "Unknown player action")
-    dv_require(dvp_eligible(actor, action, actor.mind, dvp_goal_refs(actor)), "Player action is no longer available")
+    dv_require(dvp_eligible(view, action, actor.mind, dvp_goal_refs(actor)), "Player action is no longer available")
     return dvs_control_state(state, state.actors, state.events, state.cursor, dv_find(state, "player_actor", ""), id, false)
 
 fn dvs_player_choice(actor, id):
     let action = dvp_find_action(actor.actions, id)
-    dv_require(action != false and dvp_eligible(actor, action, actor.mind, dvp_goal_refs(actor)), "Player action failed subject admission")
+    let view = dv_with(actor, "manual_input", true)
+    dv_require(action != false and dvp_eligible(view, action, actor.mind, dvp_goal_refs(actor)), "Player action failed subject admission")
     return {"action": action, "score": 0, "plan_expansions": 0, "plans": [], "relevant_refs": dvp_goal_refs(actor), "dependency_cache": dv_find(actor, "dependency_cache", false), "controller": "player"}

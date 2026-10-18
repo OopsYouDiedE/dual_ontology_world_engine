@@ -1,0 +1,475 @@
+根据你提供的 `DuelView (DV)` 引擎核心代码、第一/二章原生剧情模块以及《安眠者有福》设计规范文档，以下针对你的三个问题进行逐项代码级审查与设计评估：
+
+---
+
+### 一、 剧情声称能够在 180 秒内跑完，从代码上看是否使用正确路径？
+
+**结论：是的，在逻辑与验证规则上完全走了真实的生产环境因果路径（没有使用预置答案、跳过推演或作弊捷径），但从“计算复杂度与数据结构实现”来看，跑完五天全流程（至游戏时间 `7200` 分钟）要在 180 秒内完成存在明显的性能瓶颈风险。**
+
+#### 1. 为什么说它走的是“正确路径”（无作弊/无捷径）？
+
+从 `game/debug-run.dv`、`game/entry.dv` 和 `verification/session/30-runner.dv` 可以确认：
+
+* **完整的三阶段协议与状态流转**：`dvg_debug_run` 严格调用生产级的 `dvg_open_config` $\rightarrow$ `dvg_prepare` $\rightarrow$ `dvg_complete` 循环。唯一被短路的是 Godot 的 2D/3D 几何寻路动画（通过传入 `"executor": "formal-model"` 回执直接按 `model.actual` 结算动作耗时），所有的认知推演（`dvs_reason`）、假设模拟（`dvs_model`）、动作规划（`dvs_choose` / `dvp_plan`）、听觉与视线边界校验（`dvs_speech_hearing` / `dvs_visible_context`）以及代价账本结算（`dv_action_cost_execute`）全部原封不动地执行。
+
+
+* **严格的视野与认知隔离**：在 `00-data.dv` 和 `20-observation.dv` 中，所有物理世界的真相（如 `c1_authority_conclusions`）不会直接进入角色 `mind`；角色必须走到对应房间、满足前置条件并执行 `inspect` / `talk` / `experiment`，才能通过 `dv_perceive` 生成带时间戳与来源的 `observation`，再经由 `dv_update_mind` 更新主观认知。
+
+
+* **真实的等待与环境步进机制**：为了跨越多日时间窗口，`opening.dv` 中的 `c1n_known_future_wait_actor` 会提取角色自身已知目标的时间下界，动态生成有代价的等待动作（`[180, 120, 60, 30, 15, 5, 1]` 分钟）。当动作进入 `scheduled_action` 队列后，调度器 `dvs_schedule` 会通过 `dvs_environment_next_time` 逐个跨越环境过程边界（如落灰、起风、饥饿检查、微震），绝不会跳过中间的物理法则结算。
+
+
+
+#### 2. 代码中为 180 秒目标所做的关键加速优化
+
+代码库为了将 16 个 Agent 跨 5 天的组合爆炸压进 180 秒，已经做了大量极其精巧的剪枝与缓存：
+
+1. **底层不可变树路径拷贝与纯函数缓存**：`dv_with_path` 对未修改分支直接调用 `rt_snapshot` 冻结共享，避免全量深拷贝；`dv_read`、`dv_truth`、`dvp_plan`、`dvp_forecast` 全部挂载了 `rt_memo_get` / `rt_memo_put`。
+
+
+2. **第一章 108 种历史假设的因子剪枝与反向切片**：在 `history.dv` 中，$3 \times 3 \times 2 \times 2 \times 3 \times 2 = 108$ 个候选模型如果全量跑时间线会极其耗时。代码在 `30-runner.dv` 中先运行 `dvs_factor_prune`（利用单变量坐标约束直接排除已被证伪的组合，生成 `factor_certificates`），接着在 `26-model-slicing.dv` 的 `dvs_model` 中使用**反向因果切片（Backward Causal Slicing）**，提取最小特征切片先跑一次 `causal-refutation` 探针，一旦矛盾立即淘汰，极大地压缩了 `replay` 的计算量。
+
+
+3. **规划深度的动态降维**：除侦探在第一章 `plan_depth` 为 `6`（苏泠为 `4`）外，第一夜起居厅等待期间以及进入第二章后（`c2_extend_actor_from`），全员的 `plan_depth` 被统一压低到了 `1` 或 `2`（`first_night_plan_depth: 2`），并且加入了按当前房间预过滤动作的 `dvp_room_actions`。
+
+
+
+#### 3. 潜在的超时风险点（代码级隐患）
+
+尽管路径正确，但以下三处实现细节极易拖慢运行速度，威胁 180 秒红线：
+
+* **`dvg_debug_run` 循环内的全量日志序列化开销**：在 `debug-run.dv` 的 `while dvs_session_active(state) and steps < limit` 循环中，**每执行完一步（Step）**，都会调用 `dv_debug_events(state.events, cursor, config)` 并执行 `rt_print(rt_json_stringify(...))`。在数千步的战役中，高频的 JSON 字符串拼接与标准输出 I/O 会消耗大量宿主时间。
+
+
+* **`dvg_refresh_goals` 导致的规划缓存（Memo）频繁失效**：在第二章中，每当游戏时钟推进（`actor.mind.time != dv_find(actor, "campaign_goals_time", -1)`），`dvg_refresh_goals` 都会调用 `c2d_refresh_actor_goals` 和 `c1n_known_future_wait_actor` 重新构建角色的 `policy.goals` 和 `actions`（移除或替换 `known_opportunity_wait` 动作）。由于 `dvs_choose` 的缓存键 `dvp_memo_input` 包含了完整的 `actor.actions` 和 `actor.policy`，**每次时钟微调都会导致 `dvp_plan` 的 Memo 彻底失效**，迫使 16 个角色频繁重跑 BFS 规划与依赖闭包。
+
+
+* **编译器后端的 `cs_string` 平方级字符串拼接**：在 `compiler.dv` 中，`cs_string` 等函数使用 `(set result (rt_cat result ...))` 逐字符拼接，若包含编译时间或大 JSON 读写，会产生额外的 GC 压力。
+
+
+
+---
+
+### 二、 设计文档中“愚蠢侦探”及“额外人员（跨区投放）”等反事实检测是否合理？
+
+**结论：该设计在叙事工程与形式化验证上非常合理且极具巧思，它实质上构成了因果推理引擎的“消融实验（Ablation Study）”与“对称性检验”；但在当前代码实现中，部分反事实分支的落地还存在“机械化耦合”与“未完全接线”的ギャップ（Gap）。**
+
+#### 1. 合理性评估（为什么这是优秀的设计？）
+
+* **防止“剧本硬编码伪装成 AI 涌现”**：很多号称“系统涌现”的叙事游戏，实际上是因为只有一条写死的顺畅路径。通过引入 **`Foolish_Detective`（认知消融基线）**，只修改四个核心认知参数（将 `Replay_Depth` 从 $64$ 降为 $2$、`plan_depth` 从 $6$ 降为 $2$、`Implicature_Resistance` 从 $0.75$ 降为 $0.25$、`scope_reference_check` 设为 `false`，并调换价值排序为 `["pursue_desire", "avoid_attachment", ...]`），就能在不改一条世界物理法则的前提下，自然复现“被恶魔的会话含义带偏 $\rightarrow$ 無法在 13:00 前完成四步答辩 $\rightarrow$ 被雀儿从外侧撬门救出 $\rightarrow$ 遭到同伴道德谴责”的完整反面弧线。这直接证明了游戏的核心乐趣确实是由“认知模型”驱动的。
+
+
+* **“跨区投放（额外人员）”验证了规则的普适性**：在 `campaign.dv` 的 `c1_other_place_detective` 中，将侦探初始位置改到甲、丙、丁任一区。这种反事实设计实现了两个极佳的效果：
+
+
+1. **对乙区（减员测试）**：代码显式处理了“少掉第四人”的边界（将 `shen.opening.serve-tea` 等动作的 `participants` 从四人改为 `["huo", "shen", "su"]`），证明乙区三人在没有侦探的情况下依然能正常泡茶、交谈，而不会报错卡死或凭空捏造第四人。
+
+
+2. **对甲/丙/丁区（增员破局测试）**：甲、丙、丁三区之所以在第一章得出“字面正确但定性错误”的半截结论，是因为各区内部存在阶级或学科偏见（如沃德对扒手的规训欲、茉拉对化学家的伦理戒心）。将无门户之见的 `Standard_Detective` 投入该区后，通过 `c1_other_truth_rows` 触发现场物证勘验与温和引导（如检验火漆指模、安抚莫兰取出暗层画稿、核对维罗妮卡左臂旧疤），在第一章内就提前推翻误判。这完美验证了“侦探作为跨阶层实证支点”的角色定位。
+
+
+
+
+
+#### 2. 当前代码实现中的不足与隐患（代码 vs 文档的错位）
+
+虽然设计极其合理，但对照 `chapter1/campaign.dv`、`cognitive-profiles.dv` 与 `chapter2/content.dv`，可以发现当前代码在实现这些反事实检测时有 **3 处不够自然的地方**：
+
+1. **跨区投放时，`Foolish_Detective` 缺乏真正的“同流合污/附和偏见”分化**：
+* **文档声称**：若将 `Foolish_Detective` 投放到甲/丙/丁区，他会“无法打破各区固有的阶级与学科壁垒，甚至顺从沃德/伊莲娜/茉拉的先入为主偏见，随大流得出半截答案”。
+
+
+* **代码实际行为**：在 `campaign.dv` 的 `c1_other_place_detective(scene, zone, profile)` 中，**传入的 `profile` 参数根本没有被使用**！无论传入的是 `Standard_Detective` 还是 `Foolish_Detective`，代码都会无条件给侦探注入 `c1_other_truth_rows(group)` 的全部破局动作与目标（如 `seal_examined`、`moran_calmed`、`old_scar_examined`），且这些动作的前提条件（`c1_other_truth_law`）只检查了位置和 `evidence_complete`，完全没有检查侦探的 `Implicature_Resistance`、`Replay_Depth` 或 `value_order`。这意味着在代码里，**哪怕是愚蠢侦探被投放到甲/丙/丁区，也会像标准侦探一样自动完成翻案**，与设计文档第 6.2.2 节的表述不符。
+
+
+
+
+2. **乙区同伴对愚蠢侦探的“前后矛盾谴责”触发条件过于苛刻**：
+* 在 `content.dv` 中，苏泠、霍铎、沈鼎确实配置了 `c1_answer_conflict_response`（当侦探在 `voice-source`、`original-words`、`familiarity` 上提交了前后冲突的答辩时，触发严厉谴责）。
+
+
+* 但由于 `Foolish_Detective` 的 `plan_depth` 只有 `2`，且没有预先注入强烈的错误假设偏置（`prior` 均为 `0.5`），他在乙区往往是因为“做不出完整证据链而干等至 13:00 被雀儿撬门（触发 `su.departure.picked-rebuke`）”，而不一定会主动去铜口连续提交两次相互矛盾的错误答案（从而难以稳定触发 `respond-defense-conflict`）。
+
+
+
+
+3. **第二章中 `Foolish_Detective` 导致“主粮仓不开与第四夜人员伤亡”的因果链在代码里被写成了固定时间窗口**：
+* 在 `chapter2/content.dv` 的 `c2i_rows_build` 中，文献工房翻案（`document_workshop`）、三匠开主粮仓（`c2i_granary_team`）的动作，直接挂载在了 `detective`、`quer`、`huo`、`margaret` 各自的目标列表中，只要到了时间窗口（如 `c2_window(3, 720, 840)`）且连廊开启，即便侦探是 `Foolish_Detective`，只要雀儿、霍铎、玛格丽特自己走到了后勤院，他们依然会自动配合打开主粮仓；同时，莫兰在第四夜的选择（`moran.c2.sketch.evening`）主要取决于恶魔是否说了紫金色层、户外源质计 `c2.meter` 是否为 `safe` 以及是否有守卫在场，与侦探在第一章是否孤立雀儿没有形成强代码耦合。
+
+
+
+
+
+---
+
+### 三、 剧情与设计文档的优化建议
+
+结合代码实现与《设计规范》文本，提出以下 **5 点具体优化建议**（涵盖代码对齐、机制打磨与文档规范）：
+
+#### 1. 修复跨区投放中 `profile` 参数未生效的漏洞（代码与文档对齐）
+
+* **建议**：在 `campaign.dv` 的 `c1_other_place_detective(scene, zone, profile)` 中，令 `c1_other_truth_rows` 的破局目标受 `profile`（或认知策略中的 `scope_reference_check` / `value_order`）门控。
+
+
+* **具体改法**：将 `seal_examined`（微距查验火漆指模）、`moran_calmed`（跨阶层耐心安抚）、`old_scar_examined`（实证医学核验）包装为带有 `personal_choice` 的动作（要求 `promotes: ["evidence", "clarify_terms"]`，`sacrifices: ["avoid_attachment", "pursue_desire"]`）。这样 `Standard_Detective` 会优先执行破局，而将 `pursue_desire` 和 `avoid_attachment` 排在首位的 `Foolish_Detective` 则会跳过深度勘验，直接采信 `evidence_complete` + `report_basis` 提交半截答案，使代码100%兑现设计文档的承诺。
+
+
+
+#### 2. 增强第二章“粮仓开启”对“文献工房翻案”的跨区人际依赖
+
+* **问题**：目前代码里 `c2_repair_latch_law` 只要求玛格丽特、霍铎、雀儿三人在第三日中午同时位于 `logistics` 且完成了结构检查与千斤顶抬升，没有检查雀儿是否已经洗清嫌疑（`joined_inventory` 或 `key_returned`）。
+
+
+* **建议**：在设计文档第 5.2 节中明确提到“沃德反对让雀儿接触门锁，雀儿冷笑罢工；必须先去文献工房翻案，雀儿才会拍胸脯承担主粮仓开锁任务”。建议在 `c2_repair_latch_law`（或雀儿前往后勤院修锁的导航目标 `available_when`）中加入 `dv_fact(c2_ref("case.contract", "joined_inventory"), true)`（或雀儿对侦探/群体的信任阈值条件）。这样就能把“文献工房翻案 $\rightarrow$ 雀儿同意出手 $\rightarrow$ 主粮仓开启 $\rightarrow$ 解除断粮危机”真正锁死为一条不可跳过的涌现因果链。
+
+
+
+#### 3. 明确“数值工程标度”与“叙事文本无数值”的双层规范
+
+* **问题**：设计文档第 5.6 节（`c2_runtime_contracts` 对应的设计说明）一方面强调“不发明浓度、剂量、疾病或侵蚀数值（no-invented-concentration-dose-disease-or-erosion-number）”，但另一方面在第三部分 1.2 节给出了精确的线性不等式 $U_{\text{resonance}} = (W_{\text{drive}} \times I_{\text{relevance}} + B_{\text{demon\_truth}}) - (S_{\text{caution}} + R_{\text{perceived\_risk}})$，且代码里使用了 `erosion_exposure` 阈值 `1/2/4/6/8`。
+
+
+* **建议**：在设计文档的《总纲》或《第六部分》中增加一段“工程标度与叙事表现的边界声明”**——明确指出：所有的权重、剂量档位（`1/2/4/6/8`）与口粮转换（`672 = 16 * 21 * 2`）仅作为 DV 内核的**序数/定性工程标度（Ordinal Engineering Scale），绝不在 UI、案卷册子或角色台词中裸露任何百分比或数值（台词中只表现“注意涣散/梦游/失神”等五级临床症状与定性描述）。这能消除文档读者对“无数值设计”与“公式化判定”之间的理解冲突。
+
+
+
+#### 4. 优化“第三夜《少了一份》”与“第四夜《错规之祸》”的叙事衔接张力
+
+* **建议**：在设计文档第五部分第 3 节中，第三夜《少了一份》的冲突目前在标准侦探线下因为“第二天晚上就已经建好了补记栏且第三天中午开了主粮仓”，导致第三夜几乎没有戏剧波澜（变成了纯粹的合规记账）。
+
+
+* **优化方向**：建议在文档与 `daily.dv` 中保留一丝“即便有补记栏也会产生的认知摩擦”——例如：茉拉在第三夜因为急着回诊疗所救护发热的莫兰（`busy_care = true`），只匆忙在预留栏画了一个勾而未写清用途（对应代码中的 `pending_registered` 未及时转为 `night_recorded`）；第四日清晨沃德依程序质询这个“未注明用途的待核记号”，需要侦探去诊疗所核对碗底残渣（`c2.bowl.residue`）后完成最后一步背书。这样既能体现“预留补记栏”避免冤案的制度优越性，又不会让标准侦探线在第三夜完全失去调查与对质的乐趣。
+
+
+
+#### 5. 补充“修罗线（隐性伦理分支）”在前两章的具体触发锚点说明
+
+* **问题**：设计文档在《总纲》与《第八部分》多次提到“修罗线（静默记录玩家利用片面真话诱导他人、促成他人无节制取回记忆）”，且 `10-subjective.dv` 中已经实现了完备的 `dvs_receive_player_influence` 与 `dvs_complete_player_influences` 账本机制。但在第四、五部分（第一、二章详案）中，完全没有说明玩家在前两章**具体可以通过哪些对话选项触发 `manipulation` 记录**。
+
+
+* **建议**：在第四、五部分补充 2–3 个可选的“修罗线微伏笔”示例（仅在玩家手动控制时可选，标准 AI 侦探不选）：
+1. **第一章**：当沈鼎向侦探咨询“罐子是我的，可这事……你说呢？（`recall_advice`）”时，除了中立回答“你自己拿主意”，增加一个诱导选项（利用“想护住熟人就得记起他们是谁”的真话催促沈鼎强行握紧陶罐取回记忆，写入首条 `player_influence_history`）。
+
+
+2. **第二章**：在第四日傍晚微震后，允许玩家不仅不劝阻莫兰，反而顺着恶魔的话头诱导莫兰或卢西安冒险测试源质特性。将这些具体锚点补入文档，能让 `10-subjective.dv` 中已经写好的 `player_influence_history` 机制在叙事文档中有据可查。
+要在不破坏 `DV` 引擎“禁止硬编码剧本分支、禁止根据 `profile` 名字写 `if-else` 作弊、一切结果必须由主体的认知图谱与价值排序自然涌现”**这一铁律的前提下，真正跑出设计文档中声称的四大反事实实验效果，我们需要把**“侦探的认知参数差异（`Standard` vs `Foolish`）”**精确地转化为**“动作准入条件（`dvp_eligible`）与规划收益（`dvp_action_value`）的分水岭”。
+
+目前你的引擎底层已经具备了全部所需的原语：`personal_choice`（基于 `value_order` 的序数价值比较）、`implicature_bridges`（基于 `Implicature_Resistance` 和 `scope_reference_check` 的会话含义采纳）、`observed_claim_conflicts`（公开陈述前后矛盾追踪）以及 `received_speech_requirement`（实际收闻门控）。
+
+下面按**四个核心反事实实验场景**，给出具体的代码级改造方案（直接定位到你现有的 `.dv` 文件与函数）：
+
+---
+
+### 实验一：第一章乙区——让 `Foolish_Detective` 真正陷入“语用陷阱 $\rightarrow$ 前后矛盾 $\rightarrow$ 同伴谴责 $\rightarrow$ 13:00 被雀儿撬门救出”
+
+#### 1. 现状诊断（为什么现在跑不出来？）
+
+* 在 `chapter1/content.dv` 中，恶魔开场广播带有 `implicature_candidates: [{"id": "short_stay"}]`，但**缺少关于“门外有人呼救且被关死”的会话含义桥接（Implicature Bridge）**。
+
+
+* 因此，`Foolish_Detective` 虽然 `Implicature_Resistance` 只有 `0.25` 且 `scope_reference_check: false`，但他脑中并没有因为听信广播而生成错误的倾向（如相信 `remote_voice == false` 或 `words_bolt == false`）。
+
+
+* 同时，`c1_answer_V3_1`（回答“声音就在门外”）的准入条件和收益没有被恶魔的暗示激活，导致愚蠢侦探不会主动去铜口提交错误的阶段性陈述，自然也就无法触发苏泠、霍铎、沈鼎的 `respond-defense-conflict`（前后矛盾谴责）。
+
+
+
+#### 2. 落地改造方案（修改 `chapter1/content.dv` 与 `opening.dv`）
+
+**第一步：在开场提问 `demon.question.prompt` 中加入预设陷阱的会话含义候选**
+在 `c1_op_investigation_candidates()`（位于 `opening.dv`）中，为恶魔的提问（“门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？”）挂载一个语用暗示候选 `outside_caller_presupposition`：
+
+```dv
+// 在 opening.dv 的 c1_op_investigation_candidates() 中：
+var question = c1_question_action("prompt", c1_op_source(46, "s5_question.004"), true)
+var q_speech = dv_with_many(question.speech, {
+    "surface": "此为始业之问：门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？",
+    "scope": "question_presupposition",
+    "implicature_candidates": [{"id": "outside_caller_presupposition"}]
+})
+question = dv_with(question, "speech", q_speech)
+
+```
+
+**第二步：在 `c1_pragmatic_policy` 中增加“门外呼救预设”桥接规则**
+在 `chapter1/content.dv` 中定义一个新的桥接规则函数 `c1_outside_caller_rule()`，它的 `prior` 设为 `0.45`，`source_scope` 为 `"question_presupposition"`，`target_scope` 为 `"acoustic_source"`：
+
+* 对于 `Standard_Detective`：他的 `Implicature_Resistance` 是 `0.75`（高于 `0.45`），且 `scope_reference_check` 为 `true`。在 `dvs_speech_interpret` 中，该暗示会被直接判定为 `rejected`（`"below-policy-threshold"` 或 `"scope-reference-bridge-not-supported"`）。
+
+
+* 对于 `Foolish_Detective`：他的 `Implicature_Resistance` 是 `0.25`（低于 `0.45`），且 `scope_reference_check` 为 `false`。他会自动采纳（`accepted`）这一语用暗示！
+
+
+* 当侦探随后做完声路试验或拿到石板推导出真命题 `remote_voice == true` 时，`withdraw_when` 条件触发，该暗示又会在 `dvs_pragmatics_reconsider` 中自动变为 `withdrawn`。
+
+
+
+```dv
+// 在 chapter1/content.dv 中新增：
+fn c1_outside_caller_rule(knowledge, question, basis):
+    return {
+        "id": "outside_caller_presupposition",
+        "cue": "outside_caller_presupposition",
+        "premise": dv_fact(dv_ref(question, "state", "open_identity"), true),
+        "proposition": dv_fact(dv_ref(knowledge, "state", "presupposed_outside_call"), true),
+        "prior": 0.45,
+        "basis": basis,
+        "source_scope": "question_presupposition",
+        "target_scope": "acoustic_source",
+        "scope_bridge": {"op": "constant", "value": "unknown"},
+        "available_when": dv_true(),
+        "withdraw_when": dv_fact(dv_ref(knowledge, "state", "remote_voice"), true)
+    }
+
+```
+
+**第三步：用 `owner_interpretation_requirement` 驱动愚蠢侦探先交错答、再改口，引爆同伴谴责**
+你的引擎在 `16-personal-choice.dv` 的 `dvp_eligible_after_base` 中已经写好了现成的 `owner_interpretation_requirement` 钩子！我们只需要把它挂在 `V3_1`（“声音就在门外”）上，或者增设一个受该暗示驱动的公开表态动作：
+
+1. 当 `Foolish_Detective` 的 `interpretations["outside_caller_presupposition"].status == "accepted"` 时，他激活一个个人目标：公开附和“声音就在门外（`V3_1`）”。
+2. 此次发言通过 `dvs_receive_public_claim` 在苏泠、霍铎、沈鼎脑中记下 `key: "voice-source", value: "V3_1"`。
+
+
+3. 随后，当愚蠢侦探看到苏泠的音叉或霍铎的石板、试图改口说 `V3_0`（或尝试重演失败）时，立即在三人脑中生成 `observed_claim_conflicts`。
+
+
+4. 三人的 `c1_answer_conflict_response(actor, "voice-source")` 瞬间满足 `received_claim_conflict` 准入条件，当场对侦探发起道德谴责与实证质疑！
+
+
+5. 同时，因为 `Foolish_Detective` 的 `Replay_Depth` 只有 `2`（远小于历史模型所需的 16 个 Stage），他在执行 `detective.replay` 时，`dvs_model_execute` 会在第 2 个 Stage 处因 `replay_limit <= replay_stages` 提前终止，返回 `stop_reason: "replay-depth-exhausted"` 且 `plan_complete: false`。这导致他无法完成历史重演论证，加上 `plan_depth: 2` 使他无法规划出“去备餐间查茶杯 + 请沈鼎辨认 + 回大厅答辩”的 4 步路径，他必然卡在 `trust`（或更早阶段）无法在 `780`（13:00）前完成答辩，最终在 13:00 被雀儿执行 `quer.departure.pick-outer` 从外侧挑开门闩，完美触发苏泠的 `su.departure.picked-rebuke`、沈鼎的 `shen.departure.picked-doubt` 和霍铎的 `huo.departure.picked-cold`！
+
+
+
+---
+
+### 实验二：第一章跨区投放——让 `Standard_Detective` 破局翻案，而 `Foolish_Detective` 随波逐流
+
+#### 1. 现状诊断
+
+在 `chapter1/campaign.dv` 的 `c1_other_place_detective(scene, zone, profile)` 中，传入的 `profile` 形参完全是死参数。`c1_other_truth_rows(group)` 生成的深度勘验动作（甲区查火漆指模 `seal_examined`、丙区安抚莫兰 `moran_calmed`、丁区查左臂旧疤 `old_scar_examined`）没有任何价值权衡门槛，导致愚蠢侦探被投放到甲/丙/丁区时也会百分百执行深度破局。
+
+#### 2. 落地改造方案（修改 `chapter1/campaign.dv`）
+
+不需要在 `c1_other_place_detective` 里写 `if profile == "Standard_Detective"`（那会违背你的架构原则），而是**利用两个 Profile すでに声明好的 `value_order` 差异**！
+
+在 `cognitive-profiles.dv` 中，两个侦探的价值序列已经截然不同：
+
+* `Standard_Detective`：`["understand_cost", "solve_case", "evidence", "safety", "night_exception", "records", "measured_work", "clarify_terms", "seek_advice", "avoid_attachment"]`（**`evidence` 与 `clarify_terms` 远高于 `avoid_attachment**`）。
+
+
+* `Foolish_Detective`：`["pursue_desire", "avoid_attachment", "solve_case", "understand_cost"]`（**`avoid_attachment` 排在第二位，且根本没有 `evidence` 和 `clarify_terms**`）。
+
+
+
+**具体代码改法**：
+在 `c1_other_place_detective`（位于 `campaign.dv`）中，为每个寝区设计**同一 `personal_choice` 组（`group: "other.case.stance"`）下的两个竞争动作**：
+
+1. **动作 A（深度实证翻案，即原有的 `c1_other_truth_rows` 第一步）**：
+为其挂载 `personal_choice`：
+```dv
+let truth_choice = {
+    "group": rt_cat("other.stance.", group),
+    "requires": c1_other_claim(group, "evidence_complete"),
+    "prohibits": c1_other_claim(group, "shallow_concurred"),
+    "promotes": ["evidence", "clarify_terms"],
+    "sacrifices": ["avoid_attachment"],
+    "require_positive": true,
+    "basis": [c1_other_case(group).source]
+}
+action = dv_with(action, "personal_choice", truth_choice)
+
+```
+
+
+2. **动作 B（附和表层偏见，新增动作 `detective.other.concur-shallow`）**：
+当该区完成了表层取证（`evidence_complete` 且 `report_basis` 为 `true`）时，允许侦探选择“不作额外介入、顺从本区多数人的表层定性”：
+```dv
+let shallow_choice = {
+    "group": rt_cat("other.stance.", group),
+    "requires": dv_all([c1_other_claim(group, "evidence_complete"), c1_other_claim(group, "report_basis")]),
+    "prohibits": c1_other_claim(group, truth[0].id),
+    "promotes": ["avoid_attachment", "solve_case"],
+    "sacrifices": ["evidence", "clarify_terms"],
+    "require_positive": true,
+    "basis": [c1_other_case(group).source]
+}
+
+```
+
+
+
+**运行效果（通过 `dvp_personal_better` 自动分流）**：
+
+* 当 **`Standard_Detective`** 处于甲/丙/丁区时，`dvp_personal_better` 扫描他的 `value_order`，发现 `evidence` 排在前面，动作 A 净得分为正且击败动作 B。于是他主动查验火漆、安抚莫兰、查看旧疤，推导出真正的 `reason.<authority_reason>`，完成全真破局！
+
+
+* 当 **`Foolish_Detective`** 处于甲/丙/丁区时，`dvp_personal_better` 扫描他的 `value_order`，首先命中排在第二位的 `avoid_attachment`（不惹麻烦、不介入他人争端）。动作 A 在 `avoid_attachment` 上是 `-1`（直接被 `require_positive` 和动作 B 淘汰），动作 B 在 `avoid_attachment` 上是 `+1`！于是愚蠢侦探自动选择附和沃德/赛尔玛/茉拉的表层结论，直接调用 `detective.answer.<group>` 提交“字面正确但定性错误”的半截答案！
+
+
+
+---
+
+### 实验三：第二章搭档与粮仓危机——让“孤立雀儿 $\rightarrow$ 文献工房未翻案 $\rightarrow$ 雀儿罢工不开主粮仓 $\rightarrow$ 第三夜断粮抓贼”真正闭环
+
+#### 1. 现状诊断
+
+在目前的 `chapter2/content.dv` 中：
+
+* 侦探去文献工房查清册（`detective.c2.document.inventory`）和拼合清册（`detective.c2.document.join`）是无条件写进 `c2i_rows` 的。哪怕是 `Foolish_Detective`，到了第二天下午也会乖乖去文献工房帮雀儿翻案。
+
+
+* 更关键的是，第三天中午开启主粮仓的 `c2_repair_latch_law` 和 `c2_total_store_open_law`，**完全没有检查 `case.contract.joined_inventory`（甲区冤案是否洗清）**！所以就算不翻案，雀儿到了第三天中午还是会去把主粮仓打开。
+
+
+
+#### 2. 落地改造方案（修改 `chapter1/opening.dv` 与 `chapter2/content.dv`）
+
+我们要把这条跨章因果链的**每一环都用真实状态字段锁住**：
+
+**第一环（第一夜 $14:00$ 沃德发难时的立场分流）**：
+在 `opening.dv` 的 `c1n_rows_build()` 中，目前只有 `detective.inspect-evidence` 和 `night.defer-judgment`（侦探替雀儿说话，指出火漆完好、毛边是新撕的）。
+
+* 给 `night.inspect-evidence` 加上 `personal_choice`（要求 `promotes: ["evidence", "clarify_terms"]`，`sacrifices: ["avoid_attachment"]`）。
+
+
+* 同时为侦探增加一个同组的竞争动作 `night.concur-ward`（轻信沃德的答辩结论，同意暂且孤立雀儿，`promotes: ["avoid_attachment"]`，效果为写入 `c1n_ref("ward_concurred"): true`）。
+* 这样在第一夜：`Standard_Detective` 会检视火漆并说出 `night.defer-judgment`，从而触发雀儿在 $21:00$ 发出搭档邀请 `night.partner`，侦探答应后写入 **`c1n_ref("partner_promised") = true`**；而 `Foolish_Detective` 因为不检视火漆、选择 `night.concur-ward`，雀儿就不会与他结成搭档（**`partner_promised` 保持为 `false**`）！
+
+
+
+**第二环（第二日文献工房翻案依赖 `partner_promised`）**：
+在 `chapter2/content.dv` 的 `c2i_rows_build()` 中，将 `quer.c2.document.dismantle-lock` 和 `detective.c2.document.inventory` 的前置条件 `requirements` 中加入：
+
+```dv
+dv_fact(c1n_ref("partner_promised"), true)
+
+```
+
+如果第一夜侦探孤立了雀儿（未达成搭档承诺），第二日两人就不会组队去文献工房翻案，`case.contract.joined_inventory` 与 `case.contract.key_returned` 将保持为 `false`！
+
+**第三环（第三日主粮仓修锁依赖 `key_returned` / `joined_inventory`）**：
+在 `chapter2/content.dv` 的 `c2_repair_latch_law(actor)` 中，为雀儿修锁增加尊严条件——如果她的窃贼污名未被洗清（`joined_inventory == false`），她拒绝去动后勤院的锁（对应设计文档“沃德反对让雀儿接触门锁，雀儿冷笑罢工”）：
+
+```dv
+// 修改 chapter2/content.dv 中的 c2_repair_latch_law：
+axiom c2_repair_latch_law(actor):
+    return dv_axiom("c2_repair_latch_law", 1, dv_all([
+        c2_at(actor, "logistics"),
+        c2i_granary_team(),
+        c2_window(3, 720, 840),
+        dv_fact(c2_own(actor, "can_lock"), true),
+        dv_fact(c2_ref("case.contract", "joined_inventory"), true), // 新增：须先洗清甲区冤案
+        dv_fact(c2_ref("c2.granary", "lift_mm"), 4),
+        dv_fact(c2_ref("c2.granary", "structure_checked"), true),
+        dv_fact(c2_ref("c2.granary", "latch_loose"), true),
+        c2_alive(actor)
+    ]), [
+        dv_assign(c2_ref("c2.granary", "latch_loose"), false),
+        dv_assign(c2_ref("c2.granary", "tool_marks"), true),
+        dv_assign(c2_ref("c2.granary", "double_bolts"), false),
+        dv_assign(c2_ref("c2.granary", "locked"), false)
+    ])
+
+```
+
+这一行加上去之后，蝴蝶效应会极其震撼地自然展开：
+
+1. `Foolish_Detective` 在第一夜不查火漆 $\rightarrow$ `partner_promised` 为 `false`；
+
+
+2. 第二日不去文献工房 $\rightarrow$ `joined_inventory` 为 `false`；
+
+
+3. 第三日中午雀儿拒绝开锁 $\rightarrow$ `double_bolts` 保持 `true` $\rightarrow$ `c2_total_store_open_law` 无法执行 $\rightarrow$ **672 份储备粮无法入库，外间 99 份干粮在第四日耗尽**，直接引爆全员饥荒与夜取危机！
+
+
+
+---
+
+### 实验四：第二章第 3、4 夜——让“规则采纳差异”自然导出《少了一份》内讧与《错规之祸》莫兰之死
+
+#### 1. 现状诊断
+
+为什么现在到了第四天晚上，哪怕在 `Foolish_Detective` 局里，莫兰也不一定会死？
+我们看 `chapter2/content.dv` 与 `daily.dv` 的代码细节：
+
+1. 在 `daily.dv` 中，第四日傍晚微震后，恶魔对莫兰说出 `demon.c2.truth-color`（“夹道有罕见的紫金以太色层”）。
+
+
+2. 紧接着，`guards = ["detective", "bertrand", "huo"]` 三人都有一个 `caution-moran` 动作（劝阻莫兰，并将 `c2daily_ref("guarding.<actor>")` 设为 `true`）。
+
+
+3. 一旦三人中**有任何一人**执行了 `caution-moran`，环境过程 `c2daily_watch_law(true)` 就会把莫兰身上的 `watched` 设为 `true`！
+
+
+4. 同时，环境过程 `c2.meter.stale` 在微震发生（`minute: 5370`）的一瞬间，**自动把户外源质计 `c2.meter.safe` 从 `true` 改成了 `false**`！而莫兰外出写生的动作 `moran.c2.sketch.evening.go` 的前提条件里写着：`ready = dv_all([context, dv_fact(c2_ref("c2.meter", "safe"), true)])`。
+
+
+* **致命 Bug 就在这里**：一旦微震发生，`c2.meter.safe` 在物理世界里变成了 `false`。如果莫兰在震后去读了源质计，他看到 `safe == false` 就绝对不会选 `go`；而如果莫兰在震前读过源质计（他脑中 `mind` 里的 `c2.meter.safe` 还是震前的旧值 `true`！），只要霍铎或贝尔特朗对他说了一句 `caution-moran`，莫兰的 `watched` 变成 `true`，他在 `personal_choice` 中就会因为 `watched` 给 `stay` 加上了 `["measured_work", "safety", "cautious_travel"]` 而选择留在室内！
+
+
+
+
+
+#### 2. 落地改造方案（让“过期读数陷阱”与“无人看守”在愚蠢侦探线下真实发生）
+
+这段设计原本的精妙意图是：**莫兰在第四天白天（震前）读过一次源质计，当时 `c2.meter.safe == true`；傍晚 $17:30$ 发生微震，物理世界的 `c2.meter.safe` 变成了 `false`，但如果众人没有确立并执行“震后强制停行复测与门岗值守”的规矩，莫兰脑中的 `c2.meter.safe` 依然停留在白天的过期读数 `true`，于是他受恶魔真话诱导走入 `outdoor_alley`，触发 `c2i_outdoor_danger_law`（`erosion_exposure + 8`）直接达到 `death` 档位，被 `c2_terminal_exposure_law` 判定死亡（`alive = false`）**！
+
+要让这个机制严丝合缝地跑出来，只需对 `chapter2/content.dv` 和 `daily.dv` 做三处精准微调：
+
+1. **调整莫兰读取源质计的时间窗口（制造“震前安全读数残留”）**：
+在 `c2i_goals`（位于 `chapter2/content.dv`）中，目前莫兰读取 `c2.meter.safe` 的目标窗口是 `c2_window(4, 1020, 1260)`（即 $17:00\text{–}21:00$，横跨了 $17:30$ 即 `1050` 的微震时刻）。
+
+
+* 将莫兰初次读取源质计的窗口改为**震前下午 `c2_window(4, 840, 1020)`（$14:00\text{–}17:00$）**。这样莫兰在下午就会去 `outdoor_meter` 读一次表，把 `c2.meter.safe = true` 写入自己的 `mind`。
+
+
+* 至于**震后（`1050` 之后）是否去复测**，则绑定到他是否采纳了 `seal_plan`（顾平章/维罗妮卡的“震后停行复测”公约）或听到了维罗妮卡的 `veronica.c2.color-refute` 警告！
+
+
+
+
+2. **让 `caution-moran`（门岗劝阻与看守）受“侦探是否推动安全立规/通报”门控**：
+在 `daily.dv` 中，目前 `detective`、`bertrand`、`huo` 的 `caution-moran` 动作只要到了第四夜且听见恶魔说话就会无条件触发。
+
+
+* 为 `detective.c2.caution-moran` 增加 `personal_choice`（要求 `promotes: ["safety", "evidence"]`，`sacrifices: ["avoid_attachment"]`），使得只有 `Standard_Detective` 会主动出面劝阻并组织看守，而 `Foolish_Detective` 保持沉默。
+
+
+* 同时，将 `bertrand.c2.caution-moran` 和 `huo.c2.caution-moran` 的 `received_speech_requirement` 设为**需要收到侦探的预警（`speaker: "detective", action_id: "detective.c2.caution-moran"`）或主粮仓已开（若主粮仓未开，霍铎与贝尔特朗在第四夜正因饥饿 `hungry == true` 而在后勤院/寝区觅食，不在起居厅守门！）**。
+
+
+
+
+3. **验证死亡结算闭环**：
+一旦在 `Foolish_Detective` 线下：
+* 主粮仓未开 $\rightarrow$ 第四夜众人饥饿（`hungry == true`），霍铎与贝尔特朗忙于应对饥饿，侦探因 `avoid_attachment` 不出面组织看守 $\rightarrow$ `moran` 的 `watched` 保持为 `false`；
+
+
+* 恶魔抛出 `demon.c2.truth-color` $\rightarrow$ 莫兰脑中拿着下午的过期读数 `c2.meter.safe == true`，在 `moran.c2.sketch.evening.go.false` 与 `stay.false` 之间比较 `value_order`（莫兰的 `value_order` 是 `["measured_work", "research"]`，`research` 排在前面，而 `safety` 根本不在他的个人高优列表里！）；
+
+
+* 莫兰果断选择 `go`，独自走出连廊进入 `outdoor_alley` $\rightarrow$ 立即触发世界过程 `c2i_outdoor_danger_law`（`erosion_exposure` 瞬间 `+8`，加上第三天白天的 `+1` 共计 `9`）$\rightarrow$ `dvs_erosion_update` 将其 `erosion_stage` 更新为 `"death"`（`rank = 4`）并在下一次环境结算或状态同步中触发不可逆伤亡！
+
+
+
+
+
+---
+
+### 总结：改动最小化清单
+
+通过以上四步改造，你**不需要修改任何一行 `core/` 或 `verification/session/` 的底层引擎代码**，只需要在场景内容层（`chapter1/content.dv`、`chapter1/opening.dv`、`chapter1/campaign.dv`、`chapter2/content.dv`、`chapter2/daily.dv`）补齐这 4 处声明式钩子：
+
+| 实验场景 | 修改位置 | 核心机制手段 |
+| --- | --- | --- |
+| **1. 乙区愚蠢侦探败北** | `chapter1/opening.dv`<br>
+
+<br>`chapter1/content.dv` | 为始业提问增加 `outside_caller_presupposition` 语用暗示，利用 `Implicature_Resistance` ($0.75$ vs $0.25$) 与 `Replay_Depth` ($64$ vs $2$) 自然分流。 |
+| **2. 跨区投放双基线对比** | `chapter1/campaign.dv` (`c1_other_place_detective`) | 为 `c1_other_truth_rows` 与新增的 `concur-shallow` 挂载同组 `personal_choice`，利用 `evidence` vs `avoid_attachment` 的价值排序分流。 |
+| **3. 搭档与主粮仓蝴蝶效应** | `chapter1/opening.dv`<br>
+
+<br>`chapter2/content.dv` | 将“首夜查火漆 $\rightarrow$ `partner_promised` $\rightarrow$ 文献工房 `joined_inventory` $\rightarrow$ 主粮仓 `c2_repair_latch_law`”串联为严格的前置条件链。 |
+| **4. 第四夜《错规之祸》伤亡** | `chapter2/content.dv`<br>
+
+<br>`chapter2/daily.dv` | 将莫兰测表窗口前移至震前下午（制造过期安全读数），并将门岗看守 `caution-moran` 与侦探的主动预警及粮仓温饱状态绑定。 |

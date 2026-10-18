@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using System.Text;
 using System.Text.Json;
 using System.IO.Compression;
+using System.Security.Cryptography;
 
 namespace DuelView.Compiled;
 
@@ -36,6 +37,13 @@ public static class R
     public static object floor(object a) => Math.Floor(Num(a));
     public static object not(object a) => !Bool(a);
     public static object cat(object a, object b) => Text(a) + Text(b);
+    // Generic linear concatenation, including UTF-16 fragments used by bootstrap.
+    public static object text_join(object values)
+    {
+        var result = new StringBuilder();
+        foreach (var value in Items(values)) result.Append(Text(value));
+        return result.ToString();
+    }
     public static object length(object a) => (double)Text(a).Length;
     private static int Index(object a) { var n = Num(a); return n >= 0 && n <= int.MaxValue && n == Math.Truncate(n) ? (int)n : throw new Exception("Invalid index"); }
     public static object slice(object a, object start, object count) => Text(a).Substring(Index(start), Index(count));
@@ -561,6 +569,280 @@ public static class R
         }
         return Encoding.UTF8.GetString(stream.ToArray());
     }
+    private static readonly object OutputLock = new();
+    private static readonly Stream StandardOutput = Console.OpenStandardOutput();
+    // Same value encoding as json_stringify, without a whole-packet UTF-16 copy.
+    public static object json_print(object value)
+    {
+        lock (OutputLock)
+        {
+            Console.Out.Flush();
+            using var writer = new Utf8JsonWriter(StandardOutput, new JsonWriterOptions { SkipValidation = true });
+            WriteJsonFast(writer, value);
+            writer.Flush();
+            StandardOutput.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
+            StandardOutput.Flush();
+        }
+        return true;
+    }
+
+    // Opt-in evidence I/O only. The disabled hook never traverses the supplied value.
+    // Values are frozen before registration; neither recording nor references mutate them.
+    private static RawDagWriter? RawEvidence;
+    private static readonly object RawLock = new();
+    public static object raw_open(object path)
+    {
+        lock (RawLock)
+        {
+            if (RawEvidence is not null) throw new InvalidOperationException("Raw recorder already opened; abort a failed recorder before reopening");
+            RawEvidence = new RawDagWriter(Text(path));
+            return true;
+        }
+    }
+    public static object raw_event(object value)
+    {
+        lock (RawLock)
+        {
+            if (RawEvidence is null) return false;
+            RawEvidence.Event(value);
+            return true;
+        }
+    }
+    public static object raw_checkpoint(object name, object value)
+    {
+        lock (RawLock)
+        {
+            if (RawEvidence is null) return false;
+            RawEvidence.Checkpoint(Text(name), value);
+            return true;
+        }
+    }
+    public static object raw_finish(object value)
+    {
+        lock (RawLock)
+        {
+            if (RawEvidence is null) return false;
+            RawEvidence.Finish(value);
+            RawEvidence = null;
+            return true;
+        }
+    }
+    // Explicit recovery only: preserve the partial file, publish no seal/final name.
+    public static object raw_abort()
+    {
+        lock (RawLock)
+        {
+            if (RawEvidence is null) return false;
+            RawEvidence.Abort();
+            RawEvidence = null;
+            return true;
+        }
+    }
+    public static object raw_ref(object value)
+    {
+        lock (RawLock)
+        {
+            if (RawEvidence is null || value is not List<object>) return false;
+            return RawEvidence.Reference(value);
+        }
+    }
+
+    private sealed record RawNode(long Id, long Frame);
+    private sealed class RawDagWriter
+    {
+        private readonly string destination;
+        private readonly string partial;
+        private readonly FileStream stream;
+        private readonly ConditionalWeakTable<FrozenList, RawNode> nodes = new();
+        private readonly HashSet<string> eventIds = new(StringComparer.Ordinal);
+        private long nextNode;
+        private long sequence;
+        private long flushedSequence;
+        private long eventCount;
+        private string previous = new('0', 64);
+        private bool finished;
+        private bool failed;
+
+        internal RawDagWriter(string path)
+        {
+            destination = Path.GetFullPath(path);
+            partial = destination + ".partial";
+            if (File.Exists(destination)) throw new IOException("Evidence destination already exists: " + destination);
+            stream = new FileStream(partial, FileMode.CreateNew, FileAccess.Write, FileShare.Read, 1024 * 1024);
+            try
+            {
+                Frame(writer =>
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("kind", "header");
+                    writer.WriteString("format", "dv-raw-dag-v1");
+                    writer.WriteString("value_encoding", "DV arrays; typed rational atoms; trace-json or dv-tagged recovery");
+                    writer.WriteString("checksum", "sha256(previous-ascii + LF + sequence-ascii + LF + payload-utf8)");
+                    writer.WriteString("scope", "lossless frozen values; final checkpoint required for complete sealing");
+                    writer.WriteEndObject();
+                });
+                FlushCommit();
+            }
+            catch { stream.Dispose(); throw; }
+        }
+        private void RequireOpen()
+        {
+            if (finished || failed) throw new InvalidOperationException("Raw recorder is closed or failed");
+        }
+        private void FlushCommit()
+        {
+            if (flushedSequence == sequence) return;
+            try { stream.Flush(); flushedSequence = sequence; }
+            catch { failed = true; throw; }
+        }
+        private long Frame(Action<Utf8JsonWriter> payload)
+        {
+            RequireOpen();
+            try
+            {
+                // A frame contains one shallow node or commit, never an expanded DAG.
+                using var buffer = new MemoryStream();
+                using (var writer = new Utf8JsonWriter(buffer)) { payload(writer); writer.Flush(); }
+                var bytes = buffer.GetBuffer().AsSpan(0, checked((int)buffer.Length));
+                using var digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+                digest.AppendData(Encoding.ASCII.GetBytes(previous + "\n" + sequence.ToString(CultureInfo.InvariantCulture) + "\n"));
+                digest.AppendData(bytes);
+                var checksum = Convert.ToHexString(digest.GetHashAndReset()).ToLowerInvariant();
+                using (var writer = new Utf8JsonWriter(stream))
+                {
+                    writer.WriteStartObject();
+                    writer.WriteNumber("seq", sequence);
+                    writer.WriteString("prev", previous);
+                    writer.WritePropertyName("payload");
+                    writer.WriteRawValue(bytes, skipInputValidation: true);
+                    writer.WriteString("sha256", checksum);
+                    writer.WriteEndObject();
+                    writer.Flush();
+                }
+                stream.WriteByte((byte)'\n');
+                previous = checksum;
+                return sequence++;
+            }
+            catch { failed = true; throw; }
+        }
+        private RawNode Node(object value)
+        {
+            RequireOpen();
+            if (value is not List<object>) throw new ArgumentException("Raw DAG roots must be DV lists/records");
+            var frozen = (FrozenList)snapshot(value);
+            if (nodes.TryGetValue(frozen, out var known)) return known;
+            var children = new RawNode?[frozen.Count];
+            for (var i = 0; i < frozen.Count; i++)
+                if (frozen[i] is List<object>) children[i] = Node(frozen[i]);
+            var id = nextNode++;
+            var frame = Frame(writer =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("kind", "node");
+                writer.WriteNumber("node_id", id);
+                writer.WriteStartArray("items");
+                for (var i = 0; i < frozen.Count; i++)
+                {
+                    if (children[i] is { } child)
+                    {
+                        writer.WriteStartObject();
+                        writer.WriteNumber("node", child.Id);
+                        writer.WriteEndObject();
+                    }
+                    else if (frozen[i] is Rational exact)
+                    {
+                        writer.WriteStartObject();
+                        writer.WriteString("rational", exact.ToString());
+                        writer.WriteEndObject();
+                    }
+                    else WriteJsonFast(writer, frozen[i]);
+                }
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            });
+            var result = new RawNode(id, frame);
+            nodes.Add(frozen, result);
+            return result;
+        }
+        internal void Event(object value)
+        {
+            RequireOpen();
+            var frozen = snapshot(value);
+            var id = Text(record_find(frozen, "id", false));
+            if (!eventIds.Add(id))
+            {
+                failed = true;
+                throw new InvalidOperationException("Repeated raw event ID: " + id);
+            }
+            var node = Node(frozen);
+            Frame(writer =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("kind", "event");
+                writer.WriteString("event_id", id);
+                writer.WriteNumber("root", node.Id);
+                writer.WriteNumber("ordinal", eventCount);
+                writer.WriteEndObject();
+            });
+            // Commit is last, and visible before the caller publishes the event.
+            FlushCommit();
+            eventCount++;
+        }
+        internal void Checkpoint(string name, object value)
+        {
+            var node = Node(value);
+            Frame(writer =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("kind", "checkpoint");
+                writer.WriteString("name", name);
+                writer.WriteNumber("root", node.Id);
+                writer.WriteNumber("events", eventCount);
+                writer.WriteEndObject();
+            });
+            FlushCommit();
+        }
+        internal object Reference(object value)
+        {
+            var node = Node(value);
+            FlushCommit();
+            return snapshot(new List<object>
+            {
+                new List<object> { "format", "dv-raw-dag-v1" },
+                new List<object> { "journal", Path.GetFileName(destination) },
+                new List<object> { "partial_journal", Path.GetFileName(partial) },
+                new List<object> { "node_id", node.Id.ToString(CultureInfo.InvariantCulture) },
+                new List<object> { "definition_frame", node.Frame.ToString(CultureInfo.InvariantCulture) }
+            });
+        }
+        internal void Finish(object value)
+        {
+            Checkpoint("final", value);
+            Frame(writer =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("kind", "seal");
+                writer.WriteNumber("events", eventCount);
+                writer.WriteNumber("nodes", nextNode);
+                writer.WriteBoolean("final_checkpoint", true);
+                writer.WriteEndObject();
+            });
+            try
+            {
+                FlushCommit();
+                stream.Dispose();
+                // Neither incomplete frames nor failed I/O publish the completed filename.
+                File.Move(partial, destination);
+                finished = true;
+            }
+            catch { failed = true; throw; }
+        }
+        internal void Abort()
+        {
+            failed = true;
+            stream.Dispose();
+        }
+    }
     public static object json_write(object path, object value)
     {
         var destination = Text(path);
@@ -581,7 +863,11 @@ public static class R
     }
     public static object read(object p) => File.ReadAllText(Text(p), new UTF8Encoding(false, true));
     public static object write(object p, object s) { File.WriteAllText(Text(p), Text(s), new UTF8Encoding(false, true)); return s; }
-    public static object print(object a) { Console.WriteLine(Text(show(a))); return a; }
+    public static object print(object a)
+    {
+        lock (OutputLock) { Console.WriteLine(Text(show(a))); Console.Out.Flush(); }
+        return a;
+    }
     public static object Block(Func<object> f) => f();
 }
 

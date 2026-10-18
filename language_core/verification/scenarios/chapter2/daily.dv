@@ -67,10 +67,16 @@ fn c2daily_rows_build():
     while g < rt_count(guards):
         let actor = guards[g]
         let id = rt_cat(actor, ".c2.caution-moran")
-        var caution = c2daily_say(actor, id, "living_hall", dv_all([c2_night(4), dv_fact(c2_ref("c2.weather", "earthquake_recent"), true)]), "莫兰，震后夜里的读数和路线没有确认。先停在门内，我们一起复测，再谈出去。", ["moran"])
-        caution = c2daily_after(caution, "demon", "demon.c2.truth-color")
-        caution = dv_with(caution, "effects", [dv_assign(c2daily_ref(rt_cat("guarding.", actor)), true)])
+        var caution = c2daily_say(actor, id, "living_hall", c2_night(4), "莫兰，颜色不能证明安全；读数的时效和路线都要核对。先留在门内，我们复测后再谈出去。", ["moran"])
+        caution = dv_with_many(caution, {"safety_warning": true, "personal_choice": {"group": rt_cat("safety-warning.", actor), "requires": c2_night(4), "prohibits": dv_fact(c2d_mark(actor, id), true), "promotes": ["patient_priority", "safety", "measured_work"], "sacrifices": [], "basis": [c2_approved("user:2026-10-18-owned-safety-intervention")]}})
         rt_push(rows, caution)
+        let commitment = c2_own(actor, "guard_commitment")
+        var undertake = c2daily_say(actor, rt_cat(actor, ".c2.guard.undertake"), "living_hall", c2_night(4), "这一班我愿意守门；真正到岗后值守，离岗时交接。", ["moran"])
+        undertake = dv_with_many(undertake, {"guard_decision": true, "repeatable": true, "effects": [dv_assign(commitment, true)], "personal_choice": {"group": rt_cat("guard-duty.", actor), "requires": c2_night(4), "prohibits": dv_fact(commitment, true), "promotes": ["patient_priority", "safety", "measured_work"], "sacrifices": ["research"], "basis": [c2_approved("user:2026-10-18-owned-safety-intervention")]}})
+        rt_push(rows, undertake)
+        var decline = c2daily_say(actor, rt_cat(actor, ".c2.guard.decline"), "living_hall", c2_night(4), "这班我暂不承担；请由愿意留下的人实际到岗，我的这句话不算有人值守。", ["moran"])
+        decline = dv_with_many(decline, {"guard_decision": true, "personal_choice": {"group": rt_cat("guard-duty.", actor), "requires": c2_night(4), "prohibits": dv_fact(commitment, true), "promotes": ["research"], "sacrifices": ["patient_priority", "safety", "measured_work"], "basis": [c2_approved("user:2026-10-18-owned-safety-intervention")]}})
+        rt_push(rows, decline)
         g = g + 1
     let people = c2_people()
     let venues = ["oath_court", "central_hall"]
@@ -169,7 +175,7 @@ axiom c2daily_watch_law(watched):
     var present = []
     var i = 0
     while i < rt_count(guards):
-        rt_push(present, dv_all([dv_fact(c2daily_ref(rt_cat("guarding.", guards[i])), true), c2_at(guards[i], "living_hall"), c2_alive(guards[i]), c2_at("moran", "living_hall")]))
+        rt_push(present, dv_all([dv_fact(c2_own(guards[i], "guard_active"), true), c2_at(guards[i], "living_hall"), c2_alive(guards[i]), c2_at("moran", "living_hall")]))
         i = i + 1
     var premise = c1_any(present[0], c1_any(present[1], present[2]))
     if not watched:

@@ -107,9 +107,9 @@
 (defn reserved (name) (either (ck_bounded name) (has (words "if let set while do true false") name)))
 (defn runtime_name (name) (if (rt_lt (rt_length name) 3) false (rt_eq (rt_slice name 0 3) "rt_")))
 (defn native_arity (name)
-  (if (has (words "rt_list rt_arg_count") name) 0
-    (if (has (words "rt_number rt_is_number rt_is_numeric_value rt_not rt_length rt_code rt_show rt_count rt_is_list rt_copy_value rt_snapshot rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify rt_id_start rt_id_part rt_normalize rt_exact rt_floor") name) 1
-      (if (has (words "rt_add rt_sub rt_mul rt_div rt_lt rt_eq rt_memo_get rt_has_value rt_record_with_many rt_same_value rt_cat rt_chr rt_push rt_at rt_write rt_json_write rt_record_index") name) 2
+  (if (has (words "rt_list rt_arg_count rt_raw_abort") name) 0
+    (if (has (words "rt_number rt_is_number rt_is_numeric_value rt_not rt_length rt_code rt_show rt_count rt_is_list rt_copy_value rt_snapshot rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify rt_json_print rt_raw_open rt_raw_event rt_raw_finish rt_raw_ref rt_text_join rt_id_start rt_id_part rt_normalize rt_exact rt_floor") name) 1
+      (if (has (words "rt_add rt_sub rt_mul rt_div rt_lt rt_eq rt_memo_get rt_has_value rt_record_with_many rt_same_value rt_cat rt_chr rt_push rt_at rt_write rt_json_write rt_raw_checkpoint rt_record_index") name) 2
         (if (has (words "rt_slice rt_replace rt_record_find rt_record_with rt_memo_put") name) 3 -1)))))
 (defn lookup (signatures name)
   (let (i 0 found -1)
@@ -121,17 +121,17 @@
   (let (name (sym n))
     (if (either (reserved name) (has scope name)) (bad n "reserved, duplicate or shadowed local") (rt_push scope name))))
 (defn cs_string (raw)
-  (let (i 0 result "")
+  (let (i 0 result (rt_list))
     (do
       (while (rt_lt i (rt_length raw))
         (let (c (rt_chr raw i) code (rt_code c))
           (do
-            (set result (rt_cat result
+            (rt_push result
               (if (rt_eq code 133) "\\u0085"
                 (if (rt_eq code 8232) "\\u2028"
-                  (if (rt_eq code 8233) "\\u2029" c)))))
+                  (if (rt_eq code 8233) "\\u2029" c))))
             (set i (rt_add i 1)))))
-      result)))
+      (rt_text_join result))))
 (defn emit (n scope signatures)
  (if (rt_eq (kind n) "comprehension") (sf_emit_comprehension n scope signatures) (emit_plain n scope signatures)))
 (defn emit_plain (n scope signatures)
@@ -516,8 +516,9 @@
       (if (rt_eq tag "list")
        (let (xs (children n) name (sym (rt_at xs 0)) sig (lookup defs name))
         (if (rt_eq sig -1)
-         (if (has (words "rt_lt rt_eq rt_not rt_is_list rt_is_number rt_is_numeric_value") name) "Bool"
-          (if (has (words "rt_add rt_sub rt_mul rt_div rt_number rt_count rt_length rt_code") name) "Number" "Value"))
+          (if (has (words "rt_lt rt_eq rt_not rt_is_list rt_is_number rt_is_numeric_value rt_json_print rt_raw_open rt_raw_event rt_raw_checkpoint rt_raw_finish rt_raw_abort") name) "Bool"
+           (if (has (words "rt_add rt_sub rt_mul rt_div rt_number rt_count rt_length rt_code") name) "Number"
+            (if (rt_eq name "rt_text_join") "Text" "Value")))
          (rt_at sig 1))) "Value")))))))
 (defn ck_expect (n expected env defs)
  (let (actual (ck_type n env defs)) (do

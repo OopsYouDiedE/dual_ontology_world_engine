@@ -956,8 +956,8 @@ C2导航意图从本人已知位置、已知开启的门和本人已采纳移动
 - `dvg_refresh_goals` 按选中主体的真实认识/时间/章节刷新完整内容目标；旧章目标在本人实际入厅后清理。第二章行动规划深度恢复为2。`dvs_schedule` 不以一次无候选结果永久跳过主体；同一时刻仍按决策时间与修订避免重复准备。
 - `c1_other_place_detective` 两档安装同一可接触内容；配置只通过认知初始化进入共同机制。首夜等待抑制通过实际安装动作的共享资格门核对，既有范围与成本不变。
 - `WriteJsonFast`、`rt_json_stringify`、`rt_json_write` 完整保存传入容器值；历史、模拟、采纳、竞争模型及嵌套世界不按字段名清空。精确数在Trace仍输出原分数字符串。完整保存的耗时和文件大小与先前裁剪输出不能作同口径速度比较。
-- `dv_debug_event` 对模拟/复核输出 hypothesis、result（假定、预测、比较、覆盖、工作与停止）、source_adoptions；剪枝保留证书及拒绝，论证保留竞争结果。大 `world`/`predicted` 快照只在显式调试投影中省略，完整原值仍保存在原始 trace，预测始终标为主观计算。
-- `python language_core/tools/run_debug.py --out <新目录>` 自动追加 `actual-event-index.jsonl`、`reasoning-evidence.jsonl`、`evidence-summary.json`；索引含源SHA256、source_line、事件编号和字段有无。`--evidence-from <既有events.jsonl> --out <新目录>` 只整理既有输出，不构建或执行；原投影缺失字段保持 not-exported。
+- `dv_debug_event` 对模拟/复核保留 hypothesis、result（假定、预测、比较、覆盖、工作与停止）、source_adoptions；剪枝保留证书及拒绝，论证保留竞争结果。默认JSON模式沿用完整值；显式DAG模式以 `raw_ref` 定位重复大值及原始事件。大 `world`/`predicted` 只在显式调试投影中省略，原值在完整trace或已提交DAG事件中；预测始终标为主观计算。反证切片、完整计划和论证比较分别标记 `calculation_scope`。
+- `python language_core/tools/run_debug.py --out <新目录>` 自动追加 `actual-event-index.jsonl`、`reasoning-evidence.jsonl`、`evidence-summary.json`；一次流式整理保留源SHA256、source_line、batch_event_index、事件编号和字段有无。索引不重复整份模型，以 `projection_source`/`raw_event_ref` 指向原值；引用字段记 `exported-reference`。默认模式另存规范化 `events.jsonl`，DAG模式以原字节 `stdout.jsonl` 为唯一packet源。`--evidence-from <既有packet文件> --out <新目录>` 只整理既有输出，不构建或执行；缺失字段保持 not-exported。
 - `result.json` 分列 debug_end、stop_reasons、world_horizon_observed、chapter_summary_reported、narrative_completion。后者由人工按来源和实际回执审查，正常退出、trace封存及world-horizon均不等于剧情达成。执行范围仍仅formal-model，不包含Godot画面、几何或输入。
 
 源码索引：`verification/scenarios/chapter2/content.dv`（路由/目标/现场观察）、`dialogue.dv`（沟通与目标刷新）、`daily.dv`（真实日常及票数观察）、`scenarios/chapter1/campaign.dv`/`opening.dv`（投放与等待）、`verification/session/30-runner.dv`（调度）、`core/95-model-argument.dv`（投影）、`compiler/Runtime.cs`（值序列化）、`tools/run_debug.py`（封存与索引）。本节仅记录实现接口，验收结论见本任务新证据。
@@ -972,3 +972,42 @@ C2导航意图从本人已知位置、已知开启的门和本人已采纳移动
 ```powershell
 python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录> --detective-profile Foolish_Detective --detective-zone zone_bing --trace-compression gzip --timeout 180
 ```
+
+### 在线原始值日志与人工资格
+
+显式 `--raw-format dag` 将原始值写入 `raw-events.dag.jsonl.partial`。`dvs_event`先冻结事件、调用记录器提交，再发布到正式事件表；记录器仅I/O，不参与认知、选择或结算。数组子树只定义一次，引用只指向先前定义；每帧保留序号、前帧摘要和本帧SHA-256。`initial` checkpoint保存开启后的完整会话；正常关闭后，`final`保存 `{trace,last_live_session}`，seal完成后才发布正式文件名。定义写完而事件尚未提交的尾部不算已发生事件。
+
+```powershell
+python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录> --raw-format dag --timeout 180
+python language_core/tools/raw_dag.py <raw-events.dag.jsonl.partial> --out <新summary.json>
+python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --event e123 --out <新event.json>
+python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --node 456 --out <新value.json>
+python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --checkpoint final --path '["trace"]' --out <新trace.json>
+python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --node 456 --value-format dv-tagged --out <新typed-value.json>
+```
+
+`raw_dag.py`只读原日志，用临时SQLite偏移索引按需流式展开原值。DAG内部以 `{rational:"2/3"}` 保留精确数类型，文本"2/3"仍为文本；默认 `--value-format trace-json`按旧Trace数字文本恢复，`dv-tagged`输出 `{$dv_rational:...}` 区分类型。校验错误或中断留下可验证提交前缀及原尾部；没有final/seal不重建终态，未提交的在途计算保持未知。`raw-dag-summary.json`与 `result.raw_sealing_complete`分别说明范围；`raw-event-index.jsonl`还保留prepare内已提交而尚未投影到stdout的事件引用。DAG文件不冒称 `trace.json`；`--trace-compression`仅用于默认JSON，与DAG互斥。默认未启用记录器时不遍历事件、不创建文件；成功finish恢复disabled，可向新路径重新开启。失败不自动续写，显式零元Bool `rt_raw_abort()`仅释放记录器并保留partial，不生成final/seal。`rt_json_print`直接输出UTF-8，编码语义同JSON接口。
+
+动作可声明 `manual_only=true`。`dvp_eligible_base`要求临时 `actor.manual_input=true`；只有 `dvs_player_options/select_player/player_choice`创建该资格视图，持久状态不写入它。其余本人前提、来源、规范、解释及费用不变；自动规划拒绝这种动作。新的实际询问仍可能进入AI轨迹，手动限制只针对声明的候选。
+
+`policy.known_opportunity_wait_choices`条目包含 `target_time`、`available_when`和 `personal_choice`。只有目标时间精确匹配、本人的条件为真且basis非空时，生成的真实付费等待才附带该选择；多项匹配报歧义。显式声明可与当前行动比较，未声明的默认等待继续受当前责任抑制。个人选择当前项与替代项共用非递归的本人资格及正向价值门，不用不可执行的备选阻断当前行动。
+
+源码索引：`compiler/Runtime.cs`（UTF-8、冻结DAG与通用文本ABI）、`compiler/compiler.dv`（arity/返回类型及字符串发射）、`core/95-model-argument.dv`（原值引用投影）、`verification/session/10-subjective.dv`（事件提交与共同比较）、`15-action-planning.dv`（人工资格）、`30-runner.dv`（人工入口）、`game/debug-run.dv`（启用与关闭）、`tools/run_debug.py`（单次流式导出）和 `tools/raw_dag.py`（只读恢复）。
+
+### 实际建议、本人表态与后续行为
+
+话语可声明 `advice={id,topic,targets,proposed_action_ids,position,basis}`，其中position为consider、avoid或owner-decides。只有实际可听并完成listener_parse后，`dvs_receive_advice`才登记received_advice和历史advice_receipts；这是建议收据，不授予命题或行动结果。内容可声明带 `advice_decision={advice_id,accepted,assessment_action_id}` 的普通付费回应，由本人既有共鸣动机/风险或个人序数价值评估资格。回应不挂主动取回的resonance效果。
+
+`dvs_complete_advice`只在真实成功Complete后登记advice_stances和advice_decision事件，关联实际speech、parse、selection与execution。接受表示纳入本人考虑，不执行目标行动、不改变既有权重。当前建议收据在认知截断时清理；历史记录不用于补回遗忘的认识。
+
+`dvs_action_selection_evidence`只沿本次实际execution→host→quote→planning链寻找匹配的action_selected；`dvs_heard_before_selection`核对同一事件表中实际parse早于该选择，避免新到建议冒领已排队行动。`influence_consequences`与 `player_influence_history`保留真实来源、选择和后果；后者仍核对实际物理false/unknown→true。没有独立因果证据时，记录明确为 `post-advice-matching-behavior` / `causal_attribution=not-established`，可附选择前已发生的advice stance，不用时间相邻声称影响成立。
+
+普通非request/非response话语只有显式repeatable且非once/response_once时允许已使用ID再进入资格；仍核验实际前提、本人选择与收益。请求、回复的一次性和上下文合同保持原路径。源码索引：`verification/session/10-subjective.dv`（资格、收据与顺序证据）、`20-speech.dv`（真实parse及建议表态Complete）、`15-action-planning.dv`（重复话语门）和 `30-runner.dv`（统一Complete接线）；具体建议声明在章节内容中。
+
+### 内容侧协作与采样接口
+
+`c2_work_specs` / `c2_cooperation_rows`声明本人承担、拒绝、实际邀请与回应；`c2_refresh_content_actions`只用本人真实收据刷新选择。`work.accepted.*`是本人承担记录，和 `support_active`/`guard_active`的实际操作结果分开。`c2i_physical_premise(row)`保留权威机械条件，本人承诺、规范采纳、搭档关系及指控状态不成为物理law的开门条件。操作须技能、位置、存活及真实持续支承；实际离岗移动或主动交接清active，重新就位仍须新Complete，已在岗不重复取得同一操作收益。
+
+`c2_meter_fields`包含safe、environment_epoch和sample_location；`c2_sample_claim`只取实际direct perception，`c2_meter_fresh`核同一采样来源、地点、原时刻、30分钟寿命及本人已知环境变化。天气/转述/查旧表不刷新采样来源。`c2_safety_goals`生成有来源的复测与在岗目标；未采纳相应规程者仍可能按旧认识自主冒险，物理暴露由当下世界结算。安全侧仪器接近使用measurement_approach规范分类，真实门、移动和暴露合同保留。
+
+实际登记取用分别保留pending.self/patient等用途计数；purpose_clarified表示当事人真实说明后的回执，补记只结算相应待核份额。普通记录人员依据本人的实际账页观察与问答核对，不读physical自动获知新取用；台账差额不自动建立有罪结论。源码索引：`verification/scenarios/chapter2/content.dv`（声明、执行law、采样与本人刷新）、`daily.dv`（持续值守）、`dialogue.dv`（请求/回应、目标和现场信息）。此处为实现合同，动态效果见本轮正式会话证据。

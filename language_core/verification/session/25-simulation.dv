@@ -569,9 +569,8 @@ fn dvs_sim_response(actor, world, stage, time, remaining, confidence):
                                 rt_push(inputs, {"from": binding.from, "to": binding.to, "cell": cell})
                                 if dv_and(dv_uncontested(cell), (0 < cell.confidence)):
                                     response_confidence = dv_min(response_confidence, cell.confidence)
-                                else:
-                                    complete = false
-                                    reason = "unknown-required-response-context"
+                                // Bind unknowns without rejecting independent options. Their own
+                                // feasibility, predict premises and value reads decide completeness.
                                 if dv_has_key(local.objects, binding.to.object):
                                     var local_1 = false
                                     if dv_uncontested(cell):
@@ -595,6 +594,7 @@ fn dvs_sim_response(actor, world, stage, time, remaining, confidence):
                                     prediction = dv_no_change_prediction(local)
                                     if (legal == "unknown"):
                                         complete = false
+                                        reason = "unknown-required-response-context"
                                     if (name == ""):
                                         false
                                     else:
@@ -609,6 +609,10 @@ fn dvs_sim_response(actor, world, stage, time, remaining, confidence):
                                                         false
                                                     else:
                                                         complete = false
+                                                        if dv_truth(local, adoption.law.premise) == "unknown":
+                                                            reason = "unknown-required-response-context"
+                                                        else:
+                                                            reason = "response-option-prediction-failed"
                                             else:
                                                 if (legal == "false"):
                                                     false

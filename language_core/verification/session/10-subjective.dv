@@ -2,7 +2,9 @@
 
 fn dvs_event(events, kind, actor, time, parents, data):
     var id = rt_cat("e", rt_show(rt_count(events)))
-    rt_push(events, rt_snapshot({"id": id, "type": kind, "actor": actor, "time": time, "parents": parents, "data": data}))
+    let frozen_event = rt_snapshot({"id": id, "type": kind, "actor": actor, "time": time, "parents": parents, "data": data})
+    rt_raw_event(frozen_event)
+    rt_push(events, frozen_event)
     return id
 
 fn dvs_find_event_by_id(events, id):
@@ -440,6 +442,8 @@ fn dvp_received_speech_matches(receipts, requirement):
 fn dvp_owner_requirements(actor, action, mind):
     if not dvs_actor_can_act(actor):
         return false
+    if not dvs_advice_decision_ready(actor, action, mind):
+        return false
     let resonance = dv_find(action, "resonance", false)
     if resonance != false:
         dv_require(dv_record_like(resonance), "Resonance must be a record")
@@ -538,11 +542,7 @@ fn dvp_eligible(actor, action, mind, relevant):
         return false
     return dvp_eligible_after_base(actor, action, mind, relevant)
 
-fn dvp_eligible_after_base(actor, action, mind, relevant):
-    if not dvp_owner_requirements(actor, action, mind):
-        return false
-    if not dvp_normative_ready(actor, action, mind):
-        return false
+fn dvp_owner_interpretation_ready(actor, action):
     let attitude = dv_find(action, "owner_interpretation_requirement", false)
     if attitude != false:
         dv_require(dv_record_like(attitude), "Owner interpretation requirement must be a record")
@@ -552,22 +552,42 @@ fn dvp_eligible_after_base(actor, action, mind, relevant):
         dv_require(dv_record_like(interpretation), "Owner interpretation must be a record")
         if attitude.subject != actor.id or interpretation.status != attitude.required_status or dv_find(interpretation, "source_event", "") == "":
             return false
+    return true
+
+// This single-owner gate is deliberately nonrecursive; group comparison calls it
+// for each alternative without re-entering the alternative's whole choice group.
+fn dvp_personal_admissible(actor, action, mind):
+    if not dv_has_key(action, "personal_choice"):
+        return true
+    let choice = action.personal_choice
+    if not dvp_personal_ready(mind, choice):
+        return false
+    let order = dv_find(actor.policy, "value_order", [])
+    if rt_count(order) == 0 or rt_count(dv_find(actor.policy, "value_basis", [])) == 0:
+        return false
+    if dv_find(choice, "require_positive", false):
+        var i = 0
+        var first = 0
+        while i < rt_count(order) and first == 0:
+            first = dvp_personal_impact(choice, order[i])
+            i = i + 1
+        if first <= 0:
+            return false
+    return true
+
+fn dvp_eligible_after_base(actor, action, mind, relevant):
+    if not dvp_owner_requirements(actor, action, mind):
+        return false
+    if not dvp_normative_ready(actor, action, mind):
+        return false
+    if not dvp_owner_interpretation_ready(actor, action):
+        return false
     if (not dv_has_key(action, "personal_choice")):
         return true
     let choice = action.personal_choice
-    if (not dvp_personal_ready(mind, choice)):
+    if not dvp_personal_admissible(actor, action, mind):
         return false
     let order = dv_find(actor.policy, "value_order", [])
-    if (rt_count(order) == 0 or rt_count(dv_find(actor.policy, "value_basis", [])) == 0):
-        return false
-    if dv_find(choice, "require_positive", false):
-        var value_index = 0
-        var first = 0
-        while value_index < rt_count(order) and first == 0:
-            first = dvp_personal_impact(choice, order[value_index])
-            value_index = value_index + 1
-        if first <= 0:
-            return false
     var alternatives = actor.actions
     if dv_has_key(actor, "planning_choice_groups"):
         alternatives = dv_find(actor.planning_choice_groups, choice.group, [])
@@ -575,8 +595,8 @@ fn dvp_eligible_after_base(actor, action, mind, relevant):
     while (i < rt_count(alternatives)):
         let other = alternatives[i]
         if (other.id != action.id and dv_has_key(other, "personal_choice")):
-            if (other.personal_choice.group == choice.group and dvp_personal_ready(mind, other.personal_choice)):
-                if (dvp_eligible_base(actor, other, mind, relevant) and dvp_owner_requirements(actor, other, mind) and dvp_normative_ready(actor, other, mind) and dvp_personal_better(order, other.personal_choice, choice)):
+            if (other.personal_choice.group == choice.group and dvp_personal_admissible(actor, other, mind)):
+                if (dvp_eligible_base(actor, other, mind, relevant) and dvp_owner_requirements(actor, other, mind) and dvp_normative_ready(actor, other, mind) and dvp_owner_interpretation_ready(actor, other) and dvp_personal_better(order, other.personal_choice, choice)):
                     return false
         i = i + 1
     return true
@@ -757,7 +777,7 @@ fn dvs_erosion_update(actor, physical, time):
         dv_require(dv_has_key(actor, "first_day_mind"), "Late erosion needs declared first-day memory snapshot")
         let old = actor.mind
         let memory = dv_with_many(actor.first_day_mind, {"time": time, "revision": old.revision + 1})
-        result = dv_with_many(result, {"mind": memory, "erosion_memory_truncated": true, "erosion_memory_epoch": memory_epoch, "simulations": [], "interpretations": [], "response_models": [], "proposals": [], "received_speeches": [], "pending_heard": [], "observed_public_claims": [], "observed_claim_conflicts": [], "pending_player_influences": [], "dependency_cache": false})
+        result = dv_with_many(result, {"mind": memory, "erosion_memory_truncated": true, "erosion_memory_epoch": memory_epoch, "simulations": [], "interpretations": [], "response_models": [], "proposals": [], "received_speeches": [], "received_advice": [], "pending_heard": [], "observed_public_claims": [], "observed_claim_conflicts": [], "pending_player_influences": [], "dependency_cache": false})
     return result
 
 // Only the actual audible reception path invokes this, never speaker forecasts.
@@ -777,8 +797,47 @@ fn dvs_receive_public_claim(listener, speech, speaker, source, parse_event):
     let received = {"speaker": speaker, "key": claim.key, "value": claim.value, "source_event": source, "parse_event": parse_event}
     return dv_with_many(listener, {"observed_public_claims": dv_append(history, received), "observed_claim_conflicts": conflicts})
 
+fn dvs_recorded_event_position(events, id):
+    var i = rt_count(events) - 1
+    while i >= 0:
+        if events[i].id == id:
+            return i
+        i = i - 1
+    return -1
+
+// Follow only the actual execution's host/quote/planning chain. Cognitive
+// ancestors can contain an older selection of the same action and are not used.
+fn dvs_action_selection_evidence(events, actor, action, execution_event):
+    var cursor = execution_event
+    var seen = []
+    while cursor != "" and not dv_has(seen, cursor):
+        rt_push(seen, cursor)
+        let current = dvs_find_event_by_id(events, cursor)
+        if current == false or current.actor != actor.id:
+            return false
+        if current.type == "action_selected":
+            if dv_find(dv_find(current.data, "action", []), "id", "") == action.id:
+                return {"event": current.id, "position": dvs_recorded_event_position(events, current.id), "time": current.time}
+            return false
+        if not dv_has(["action_execution", "host_completion", "cost_quote", "planning_choice", "action_scheduled"], current.type) or rt_count(current.parents) != 1:
+            return false
+        cursor = current.parents[0]
+    return false
+
+fn dvs_heard_before_selection(events, actor, action, execution_event, parse_event, source_event):
+    let selection = dvs_action_selection_evidence(events, actor, action, execution_event)
+    let parsed = dvs_find_event_by_id(events, parse_event)
+    if selection == false or parsed == false:
+        return false
+    if parsed.type != "listener_parse" or parsed.actor != actor.id or dv_find(parsed.data, "source_event", "") != source_event:
+        return false
+    let position = dvs_recorded_event_position(events, parse_event)
+    if position < 0 or selection.position <= position:
+        return false
+    return selection
+
 // Called only by actual Complete. Passive flashbacks do not acquire paid coupling.
-fn dvs_complete_cognitive_effects(actor, action, success, event, time):
+fn dvs_complete_cognitive_effects(actor, action, success, events, event, time):
     if not success:
         return actor
     var result = actor
@@ -807,7 +866,9 @@ fn dvs_complete_cognitive_effects(actor, action, success, event, time):
             while i < rt_count(heard):
                 let speech = heard[i]
                 if speech.speaker == influence.speaker and speech.action_id == influence.action_id:
-                    result = dv_with(result, "influence_consequences", dv_append(dv_find(result, "influence_consequences", []), {"speech_event": speech.source_event, "parse_event": speech.parse_event, "execution_event": event, "action": action.id, "time": time, "basis": influence.basis}))
+                    let selection = dvs_heard_before_selection(events, actor, action, event, speech.parse_event, speech.source_event)
+                    if selection != false:
+                        result = dv_with(result, "influence_consequences", dv_append(dv_find(result, "influence_consequences", []), {"speech_event": speech.source_event, "parse_event": speech.parse_event, "selection_event": selection.event, "execution_event": event, "action": action.id, "time": time, "basis": influence.basis, "record_kind": "post-advice-matching-behavior", "causal_attribution": "not-established", "consequence_transition": "not-assessed"}))
                 i = i + 1
     return result
 
@@ -822,9 +883,75 @@ fn dvs_receive_player_influence(listener, speech, speaker, source, parse_event):
     let receipt = {"player": speaker, "target": listener.id, "method": manipulation.method, "speech_event": source, "parse_event": parse_event, "declaration": manipulation}
     return dv_with(listener, "pending_player_influences", dv_append(dv_find(listener, "pending_player_influences", []), receipt))
 
+// Advice is a received recommendation, never a granted fact or an action order.
+fn dvs_receive_advice(listener, speech, speaker, source, parse_event, literal):
+    let proposal = dv_find(speech, "advice", false)
+    if proposal == false:
+        return listener
+    if not dv_has(dv_find(proposal, "targets", []), listener.id) or rt_count(dv_find(proposal, "basis", [])) == 0:
+        return listener
+    dv_require(dv_has_key(proposal, "id") and dv_has_key(proposal, "position"), "Advice needs an identity and a recommendation position")
+    let receipt = {"id": proposal.id, "speaker": speaker, "source_event": source, "parse_event": parse_event, "literal": literal, "proposal": proposal, "meaning": "recommendation-received-not-adopted-or-executed"}
+    return dv_with_many(listener, {"received_advice": dv_with(dv_find(listener, "received_advice", []), proposal.id, receipt), "advice_receipts": dv_append(dv_find(listener, "advice_receipts", []), receipt)})
+
+// Reuse the owner's existing action motivation/risk formula, without changing its
+// inputs, granting a forecast or attaching resonance to the response action.
+fn dvs_advice_assessment(actor, receipt, action_id, mind):
+    if not dv_has(dv_find(receipt.proposal, "proposed_action_ids", []), action_id):
+        return false
+    let target = dvp_find_action(actor.actions, action_id)
+    if target == false:
+        return false
+    let resonance = dv_find(target, "resonance", false)
+    if resonance == false:
+        let choice = dv_find(target, "personal_choice", false)
+        let order = dv_find(actor.policy, "value_order", [])
+        if choice == false or rt_count(order) == 0 or rt_count(dv_find(actor.policy, "value_basis", [])) == 0:
+            return false
+        let ready = dv_truth(mind, target.precondition) == "true" and dvp_personal_ready(mind, choice) and dvp_normative_ready(actor, target, mind)
+        var impact = 0
+        var i = 0
+        while i < rt_count(order) and impact == 0:
+            impact = dvp_personal_impact(choice, order[i])
+            i = i + 1
+        var accepted = false
+        if receipt.proposal.position == "consider":
+            accepted = ready and impact > 0
+        if receipt.proposal.position == "avoid":
+            accepted = ready and impact <= 0
+        if receipt.proposal.position == "owner-decides":
+            accepted = ready
+        return {"accepted": accepted, "target_action": action_id, "assessment_kind": "existing-owner-ordinal-values", "first_impact": impact, "requires_truth": dv_truth(mind, target.precondition), "basis": dv_find(actor.policy, "value_basis", []), "value_order": order, "choice": choice, "meaning": "owner-assessment-only; acceptance-does-not-execute-or-reweight-target"}
+    if dv_find(resonance, "passive", false):
+        return false
+    let requires = dv_find(resonance, "requires", dv_true())
+    let ready = dv_truth(mind, requires) == "true" and 0 < rt_count(dv_find(resonance, "basis", []))
+    let utility = dvp_resonance_utility(actor, target, mind)
+    var accepted = false
+    if receipt.proposal.position == "consider":
+        accepted = ready and utility > 0
+    if receipt.proposal.position == "avoid":
+        accepted = ready and utility <= 0
+    if receipt.proposal.position == "owner-decides":
+        accepted = ready
+    return {"accepted": accepted, "target_action": action_id, "assessment_kind": "existing-owner-resonance-utility", "utility": utility, "requires_truth": dv_truth(mind, requires), "basis": resonance.basis, "inputs": {"drive": dvp_owned_quantity(actor, mind, resonance.drive), "relevance": dvp_owned_quantity(actor, mind, resonance.relevance), "truth_bonus": dvp_owned_quantity(actor, mind, resonance.truth_bonus), "caution": dvp_owned_quantity(actor, mind, resonance.caution), "perceived_risk": dvp_owned_quantity(actor, mind, resonance.perceived_risk)}, "meaning": "owner-assessment-only; acceptance-does-not-execute-or-reweight-target"}
+
+fn dvs_advice_decision_ready(actor, action, mind):
+    let decision = dv_find(action, "advice_decision", false)
+    if decision == false:
+        return true
+    let receipt = dv_find(dv_find(actor, "received_advice", []), decision.advice_id, false)
+    if receipt == false or receipt.source_event == "" or receipt.parse_event == "":
+        return false
+    let stance = dv_find(dv_find(actor, "advice_stances", []), decision.advice_id, false)
+    if stance != false and dv_find(stance, "parse_event", "") == receipt.parse_event:
+        return false
+    let assessment = dvs_advice_assessment(actor, receipt, decision.assessment_action_id, mind)
+    return assessment != false and assessment.accepted == decision.accepted
+
 // A declared behavioral effect must actually execute and its physical consequence
 // must become true. Intent, interpretation and prediction do not count as outcome.
-fn dvs_complete_player_influences(actor, action, before, after, success, event, time):
+fn dvs_complete_player_influences(actor, action, before, after, success, events, event, time):
     if not success:
         return actor
     let pending = dv_find(actor, "pending_player_influences", [])
@@ -837,11 +964,17 @@ fn dvs_complete_player_influences(actor, action, before, after, success, event, 
         let influence = pending[i]
         let declaration = influence.declaration
         var completed = false
-        if dv_has(dv_find(declaration, "action_ids", []), action.id):
+        let selection = dvs_heard_before_selection(events, actor, action, event, influence.parse_event, influence.speech_event)
+        if selection != false and dv_has(dv_find(declaration, "action_ids", []), action.id):
             let prior = dv_truth(before, declaration.consequence_when)
             let actual = dv_truth(after, declaration.consequence_when)
             if prior != "true" and actual == "true":
-                history = dv_append(history, {"player": influence.player, "target": actor.id, "method": influence.method, "speech_event": influence.speech_event, "parse_event": influence.parse_event, "execution_event": event, "action": action.id, "time": time, "consequence": declaration.consequence_when, "before": prior, "after": actual, "basis": declaration.basis})
+                var stance = dv_find(dv_find(actor, "advice_stances", []), dv_find(declaration, "advice_id", ""), false)
+                if stance != false:
+                    let stance_position = dvs_recorded_event_position(events, stance.event)
+                    if stance.parse_event != influence.parse_event or stance_position < 0 or selection.position <= stance_position:
+                        stance = false
+                history = dv_append(history, {"player": influence.player, "target": actor.id, "method": influence.method, "speech_event": influence.speech_event, "parse_event": influence.parse_event, "selection_event": selection.event, "execution_event": event, "action": action.id, "time": time, "consequence": declaration.consequence_when, "before": prior, "after": actual, "basis": declaration.basis, "advice_stance_before_selection": stance, "record_kind": "post-advice-matching-behavior", "causal_attribution": "not-established"})
                 completed = true
         if not completed:
             rt_push(retained, influence)

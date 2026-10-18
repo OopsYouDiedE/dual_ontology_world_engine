@@ -329,6 +329,8 @@ fn dvp_rejected_signature(actor, action, mind):
     return {"precondition": dvp_rejected_condition_signature(mind, action.precondition), "prediction": prediction, "location": location}
 
 fn dvp_eligible_base(actor, action, mind, relevant):
+    if dv_find(action, "manual_only", false) and not dv_find(actor, "manual_input", false):
+        return false
     var id = action.id
     var used = dv_find(actor, "used", [])
     let rejected = dv_find(dv_find(actor, "rejected_attempt_signatures", []), id, false)
@@ -367,7 +369,7 @@ fn dvp_eligible_base(actor, action, mind, relevant):
                         var context = dvs_request_context(actor, action, action.speech.request.target)
                         local_2 = dv_and((not (context == false)), (not dv_same(context, dv_find(dv_find(actor, "request_contexts", []), id, false))))
                     else:
-                        local_2 = (not dv_has(used, id))
+                        local_2 = not dv_has(used, id) or (dv_find(action, "repeatable", false) and not dv_find(action, "once", false) and not dv_find(action, "response_once", false))
                 return dv_and((dvs_speech_truth(actor.mind, action.speech) == "true"), local_2)
             else:
                 if (action.kind == "replay"):
@@ -499,22 +501,26 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
                 false
             else:
                 if dv_and(dvp_topic(actor, hypothesis), dv_and((0 < rt_count(dv_find(hypothesis, "features", []))), (0 < rt_count(dvs_sim_plan(hypothesis))))):
-                    var features_known = true
+                    var known_features = 0
                     var feats = dv_find(hypothesis, "features", [])
                     var fi = 0
                     while fi < rt_count(feats):
                         var f = feats[fi]
                         var obs = dv_find(f, "observation", dv_find(f, "proposition", false))
                         if obs != false:
+                            var feature_known = true
                             var f_refs = dvs_sim_refs(obs)
                             var fri = 0
                             while fri < rt_count(f_refs):
                                 if not dv_uncontested(dv_read(mind, f_refs[fri])):
-                                    features_known = false
+                                    feature_known = false
                                 fri = fri + 1
+                            if feature_known and dv_truth(mind, obs) != "unknown":
+                                known_features = known_features + 1
                         fi = fi + 1
-                    if features_known and (dv_find(dvs_cached_model(actor, hypothesis), "status", "unknown") == "stale-or-unavailable"):
-                        verification = (verification + 1)
+                    let cached = dvs_cached_model(actor, hypothesis)
+                    if known_features > 0 and 0 < rt_count(dv_find(hypothesis, "basis", [])) and not dv_explanation_model_complete(cached, "explained", mind.revision) and dv_find(cached, "status", "unknown") != "inconsistent":
+                        verification = verification + 1
     let achievement = dvp_achievement_pending(actor, action, context.achievements)
     return {"information": information, "verification": verification, "progress": progress, "achievement": achievement, "value": (((information + verification) * dv_find(policy, "information_weight", 1)) + ((progress + achievement) * dv_find(policy, "progress_weight", 1)))}
 

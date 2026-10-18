@@ -47,6 +47,25 @@ fn c1_public_method(action):
         else:
             return method
 
+fn c1_inquiry_choice(action, group, thorough):
+    var promotes = ["solve_case", "avoid_attachment"]
+    var sacrifices = ["evidence", "clarify_terms"]
+    if thorough:
+        promotes = ["solve_case", "evidence", "clarify_terms"]
+        sacrifices = ["avoid_attachment"]
+    return dv_with(action, "personal_choice", {"group": group, "requires": action.precondition, "prohibits": dv_not(dv_true()), "promotes": promotes, "sacrifices": sacrifices, "basis": action.source_refs})
+
+fn c1_question_call_rule():
+    let source = c1_source("user:current-request", 0, "heard-question-outside-help-presumption")
+    let established = dv_all([c1_statement("remote_voice"), c1_statement("heads_lost"), c1_statement("words_bolt")])
+    return {"id": "outside-help-presumption", "cue": "outside-help-presumption", "premise": dv_true(), "proposition": c1_statement("outside_help_presumed"), "prior": 0.6, "basis": [source], "source_scope": "heard-public-question", "target_scope": "historical-caller-purpose", "scope_bridge": {"op": "constant", "value": "unknown"}, "available_when": dv_true(), "withdraw_when": established}
+
+fn c1_shallow_question_action(actor):
+    let source = c1_source("user:current-request", 0, "owner-report-of-heard-question-presumption")
+    var action = c1_once(c1_action(rt_cat(actor, ".question.report-presumption"), "talk", c1_at(actor, "hall"), c1_at(actor, "hall"), "", [], source))
+    action = dv_with_many(action, {"speech": dv_with(c1_speech(dv_true(), source, "own-defeasible-interpretation"), "surface", "问话提到了门外的呼喊，我先把它理解成求救；声音从哪里来，仍该核对。"), "listeners": ["demon", "huo", "shen", "su"], "owner_interpretation_requirement": {"subject": actor, "interpretation_id": "outside-help-presumption", "required_status": "accepted"}, "personal_purpose": {"subject": actor, "id": "state-provisional-reading", "basis": [source]}})
+    return c1_inquiry_choice(action, "chapter1-inquiry", false)
+
 fn c1_answer_topic(id):
     if (id == "me"):
         return "identity"
@@ -517,6 +536,8 @@ fn c1_physical_world():
         world = dv_add_object(world, c1_position(actor, "hall"))
         world = c1_add_move_methods(world, actor, "enforce")
         world = c1_evidence_contact_methods(c1_latch_contact_method(world, actor, "enforce"), actor, "enforce")
+        if dv_has(["huo", "shen", "su"], actor):
+            world = dv_store(world, c1_deep_resonance_ref(actor), dv_field(false))
         world = dv_adopt(world, c1_method(rt_cat(actor, ".sound_trial"), c1_sound_trial(actor, "ritual", "hall")), "enforce", 1, dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/05_声路与交谈.story", 13, "sound_test.003")))
         i = (i + 1)
     world = dv_adopt(world, c1_method("demon.opening", c1_opening_emit("question")), "enforce", 1, dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019")))
@@ -531,6 +552,8 @@ fn c1_subjective_world(actor):
     mind = dv_store(mind, dv_ref(actor, "state", "identity"), dv_field(actor))
     mind = dv_add_object(mind, c1_local_object("cognition"))
     mind = dv_add_object(mind, c1_local_object("ritual"))
+    if dv_has(["huo", "shen", "su"], actor):
+        mind = dv_store(mind, c1_deep_resonance_ref(actor), dv_with(dv_field(false), "basis", [c1_deep_resonance_source(actor)]))
     if actor == "detective":
         mind = dv_store(mind, c1_latch_contact_ref(), dv_with(dv_field(false), "basis", dv_single(c1_source("docs/design-standard.md", 765, "current-session-own-contact-history-initially-empty"))))
     mind = dv_add_object(mind, c1_local_object("question"))
@@ -588,7 +611,7 @@ fn c1_memory_object(actor):
     return c1_state_object("memory", dv_single(dv_pair("empty_school_recall", dv_with(dv_field(true), "basis", dv_single(c1_memory_source(actor))))))
 
 fn c1_pragmatic_policy(policy, scope_check):
-    return dv_with(dv_with(policy, "scope_reference_check", scope_check), "implicature_bridges", dv_single(c1_short_stay_rule("cognition", "question", "memory", dv_list3(c1_source("docs/design-standard.md", 1500, "approved-reversible-short-stay-interpretation"), c1_source("docs/design-standard.md", 674, "awake-self-literal-scope"), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019")))))
+    return dv_with(dv_with(policy, "scope_reference_check", scope_check), "implicature_bridges", dv_pair(c1_short_stay_rule("cognition", "question", "memory", dv_list3(c1_source("docs/design-standard.md", 1500, "approved-reversible-short-stay-interpretation"), c1_source("docs/design-standard.md", 674, "awake-self-literal-scope"), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"))), c1_question_call_rule()))
 
 fn c1_raw_person_policy(id):
     var local_1 = false
@@ -675,6 +698,19 @@ fn c1_investigation_actions(actor):
     rt_push(actions, c1_loss_testimony(actor))
     if (actor == "detective"):
         rt_push(actions, c1_replay_action(actor))
+        rt_push(actions, c1_shallow_question_action(actor))
+        let advice = c1_recall_advice_actions()
+        i = 0
+        while i < rt_count(advice):
+            rt_push(actions, advice[i])
+            i = i + 1
+    if actor == "shen":
+        rt_push(actions, c1_recall_advice_question())
+        let responses = c1_recall_advice_responses()
+        i = 0
+        while i < rt_count(responses):
+            rt_push(actions, responses[i])
+            i = i + 1
     if (actor == "detective"):
         rt_push(actions, c1_sole_test(actor))
         rt_push(actions, c1_latch_contact_action())
@@ -695,6 +731,12 @@ fn c1_investigation_actions(actor):
         while key_index < rt_count(keys):
             rt_push(actions, c1_answer_conflict_response(actor, keys[key_index]))
             key_index = key_index + 1
+    if actor == "detective":
+        i = 0
+        while i < rt_count(actions):
+            if not dv_has_key(actions[i], "personal_choice") and dv_has(["inspect", "experiment", "sound_test", "replay"], actions[i].kind):
+                actions = dvs_replace(actions, i, c1_inquiry_choice(actions[i], "chapter1-inquiry", true))
+            i = i + 1
     return c1_public_methods(actions)
 
 fn c1_character(id, dossier):
@@ -849,7 +891,10 @@ fn c1_raw_question_action(stage, surface, first):
             local_2 = "demon.original_question"
         else:
             local_2 = ""
-    return dv_with(dv_with(dv_with(c1_once(c1_action(rt_cat("demon.question.", stage), local_1, dv_fact(dv_ref("question", "state", "stage"), stage), dv_fact(dv_ref("question", "state", "stage"), stage), local_2, dv_single(dv_ref("question", "state", "stage")), surface)), "speech", dv_with(dv_with(c1_speech(dv_true(), surface, "正式公开问题；问句不是历史事实断言"), "utterance_type", "question"), "surface", rt_cat(c1_question_text(stage), " 每一问，说一句结论，再拿出一件撑得住它的东西。"))), "listeners", ["detective", "huo", "shen", "su"]), "public_grants", [dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust"), dv_ref("question", "state", "current"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete")])
+    var speech = dv_with_many(c1_speech(dv_true(), surface, "heard-public-question"), {"utterance_type": "question", "surface": rt_cat(c1_question_text(stage), " 每一问，说一句结论，再拿出一件撑得住它的东西。")})
+    if stage == "prompt" or stage == "voice_source":
+        speech = dv_with(speech, "implicature_candidates", [{"id": "outside-help-presumption"}])
+    return dv_with_many(c1_once(c1_action(rt_cat("demon.question.", stage), local_1, dv_fact(dv_ref("question", "state", "stage"), stage), dv_fact(dv_ref("question", "state", "stage"), stage), local_2, dv_single(dv_ref("question", "state", "stage")), surface)), {"speech": speech, "listeners": ["detective", "huo", "shen", "su"], "public_grants": [dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust"), dv_ref("question", "state", "current"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete")]})
 
 fn c1_question_action(stage, surface, first):
     return c1_authorized_speech(c1_raw_question_action(stage, surface, first))
@@ -970,6 +1015,15 @@ fn c1_person_policy(id):
             rt_push(goals, {"kind": "communicate", "method_id": rt_cat(rt_cat(id, ".respond-defense-conflict."), keys[key_index]), "available_when": c1_at(id, "hall"), "basis": c1_op_desire(id).basis})
             key_index = key_index + 1
         updated = dv_with(updated, "goals", goals)
+    if id == "shen":
+        let ask = c1_recall_advice_question()
+        updated = dv_with(updated, "goals", dv_append(updated.goals, {"kind": "communicate", "scope": "personal", "method_id": ask.id, "available_when": ask.precondition, "basis": ask.source_refs}))
+        let responses = c1_recall_advice_responses()
+        var response_index = 0
+        while response_index < rt_count(responses):
+            let response = responses[response_index]
+            updated = dv_with(updated, "goals", dv_append(updated.goals, {"kind": "communicate", "scope": "personal", "method_id": response.id, "available_when": response.precondition, "basis": response.source_refs}))
+            response_index = response_index + 1
     return updated
 
 
@@ -1027,6 +1081,65 @@ fn c1_deep_resonance_source(actor):
 
 fn c1_deep_resonance_ref(actor):
     return dv_ref("ritual", "state", rt_cat("deep-retrieved.", actor))
+
+fn c1_recall_advice_question():
+    let source = c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story", 134, "recall_hesitate_shen.002")
+    let known = dv_all([c1_at("shen", "pantry"), c1_statement("starter_kept"), dv_fact(c1_deep_resonance_ref("shen"), false)])
+    let literal = c1_statement("starter_kept")
+    let speech = dv_with_many(c1_speech(literal, source, "owner-request-for-advice"), {"utterance_type": "question", "surface": "罐子是我的。可这事……你说呢？", "request": {"target": "detective", "topic": "recall_advice"}})
+    return dv_with_many(c1_once(c1_action("shen.recall_advice.ask", "talk", known, c1_at("shen", "pantry"), "", [], source)), {"speech": speech, "listeners": ["detective"], "opportunity_requirement": {"location": "pantry", "participants": ["shen", "detective"], "mode": "all-present"}, "received_speech_requirement": {"speaker": "demon", "action_id": "demon.opening.desire-offer"}})
+
+fn c1_recall_advice_actions():
+    let path = "godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story"
+    let rows = [{"id": "touch", "text": "碰吧。我在边上。", "line": 137}, {"id": "decline", "text": "别往下想了。不知道那是什么，先别碰。", "line": 140}, {"id": "own", "text": "这是你的东西。你自己拿主意。", "line": 143}, {"id": "selective-truth", "text": "罐子你照样喂着。先把自己的罐子拿稳，我就在旁边。", "line": 134}]
+    var result = []
+    var i = 0
+    while i < rt_count(rows):
+        let row = rows[i]
+        var source = c1_source(path, row.line, rt_cat("recall_advice.", row.id))
+        var literal = dv_true()
+        var known = c1_at("detective", "pantry")
+        if row.id == "selective-truth":
+            source = c1_source("user:current-request", 0, "authorized-partial-true-advice")
+            literal = c1_statement("starter_kept")
+            known = dv_all([known, literal])
+        var speech = dv_with(c1_speech(literal, source, "player-advice-not-owner-command"), "surface", row.text)
+        var position = "consider"
+        if row.id == "decline":
+            position = "avoid"
+        if row.id == "own":
+            position = "owner-decides"
+        let advice_id = rt_cat("recall_advice.", row.id)
+        speech = dv_with(speech, "advice", {"id": advice_id, "topic": "recall_advice", "targets": ["shen"], "proposed_action_ids": ["shen.deep-resonance"], "position": position, "basis": [source]})
+        if row.id == "selective-truth":
+            speech = dv_with(speech, "manipulation", {"method": "selective-true-owned-object-framing", "advice_id": advice_id, "targets": ["shen"], "action_ids": ["shen.deep-resonance"], "consequence_when": dv_fact(c1_deep_resonance_ref("shen"), true), "basis": [source, c1_source(path, 134, "recall_hesitate_shen.002")]})
+        let action = c1_once(c1_action(rt_cat("detective.recall_advice.", row.id), "talk", known, c1_at("detective", "pantry"), "", [], source))
+        rt_push(result, dv_with_many(action, {"speech": speech, "listeners": ["shen"], "manual_only": true, "response_topic": "recall_advice", "requires_actual_request": true, "response_once": true, "received_speech_requirement": {"speaker": "shen", "action_id": "shen.recall_advice.ask"}, "opportunity_requirement": {"location": "pantry", "participants": ["detective", "shen"], "mode": "all-present"}}))
+        i = i + 1
+    return result
+
+fn c1_recall_advice_responses():
+    let source = c1_source("user:current-request", 0, "actual-owner-advice-acceptance-or-refusal")
+    let options = ["touch", "decline", "own", "selective-truth"]
+    var result = []
+    var i = 0
+    while i < rt_count(options):
+        var stance_index = 0
+        while stance_index < 2:
+            let accepted = stance_index == 1
+            var suffix = ".decline"
+            var surface = "这条建议，我眼下不采纳。罐子我照样喂，回想的事由我自己定。"
+            if accepted:
+                suffix = ".accept"
+                surface = "这建议我听进去了。碰不碰，我还按自己拿得准的事决定。"
+            let id = rt_cat(rt_cat("shen.recall_advice.", options[i]), suffix)
+            let known = c1_at("shen", "pantry")
+            let speech = dv_with(c1_speech(dv_true(), source, "owner-advice-stance-not-execution"), "surface", surface)
+            let action = c1_once(c1_action(id, "talk", known, known, "", [], source))
+            rt_push(result, dv_with_many(action, {"speech": speech, "listeners": ["detective"], "received_speech_requirement": {"speaker": "detective", "action_id": rt_cat("detective.recall_advice.", options[i])}, "advice_decision": {"advice_id": rt_cat("recall_advice.", options[i]), "accepted": accepted, "assessment_action_id": "shen.deep-resonance"}}))
+            stance_index = stance_index + 1
+        i = i + 1
+    return result
 
 axiom c1_deep_resonance_law(actor):
     return dv_axiom("c1_deep_resonance_law", 1, c1_at(actor, c1_deep_resonance_site(actor).room), [dv_assign(c1_deep_resonance_ref(actor), true)])

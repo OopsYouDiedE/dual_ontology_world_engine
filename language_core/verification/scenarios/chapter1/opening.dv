@@ -662,11 +662,13 @@ fn c1n_rows_build():
     rt_push(rows, c1n_row("quer", "greeting", 750, 810, meet, "老霍！沈叔！……咦，我怎么张嘴就这么叫了？"))
     let apron = c1n_row("shen", "apron", 750, 810, c1_at("quer", "living_hall"), "沈鼎摸了摸围裙口袋，摸出一点零嘴，递向雀儿。")
     rt_push(rows, dv_with_many(apron, {"kind": "help", "public_observers": c2_people(), "public_grants": [c1n_mark(apron.id)]}))
-    var show = c1n_row("ward", "show-evidence", 840, 930, dv_all([dv_fact(c1_other_ref("contract", "evidence_complete"), true), dv_fact(c1_other_ref("contract", "keys_found"), true), dv_fact(c1_other_ref("contract", "wax_ash_seen"), true)]), "沃德摊开半角红纸，又放下管网图的蜡布筒：先限制雀儿的自由，待事情查明。")
+    var show = c1n_row("ward", "show-evidence", 840, 930, dv_all([dv_fact(c1_other_ref("contract", "evidence_complete"), true), dv_fact(c1_other_ref("contract", "keys_found"), true), dv_fact(c1_other_ref("contract", "wax_ash_seen"), true)]), "沃德摊开半角红纸，又放下管网图的蜡布筒。")
     show = dv_with_many(show, {"kind": "help", "effects": [dv_assign(dv_ref("night.evidence", "state", "displayed"), true)], "grants": [dv_ref("night.evidence", "state", "displayed")], "public_observers": c2_people(), "public_grants": [dv_ref("night.evidence", "state", "displayed")]})
     rt_push(rows, show)
+    rt_push(rows, c1n_row("ward", "ward-claim", 840, 930, dv_fact(dv_ref("night.evidence", "state", "displayed"), true), "先限制雀儿的自由，待事情查明。"))
     let inspected = dv_all([dv_fact(dv_ref("night.evidence", "state", "wax_seal_intact"), true), dv_fact(dv_ref("night.evidence", "state", "fresh_torn_edge"), true)])
-    rt_push(rows, c1n_row("detective", "defer-judgment", 840, 930, inspected, "蜡布筒的火漆封口完好，红纸毛边却是新撕的。另一半多半仍在文献工房；明日到现场勘验，再作判断。"))
+    rt_push(rows, dv_with(c1n_row("detective", "defer-judgment", 840, 930, inspected, "蜡布筒的火漆封口完好，红纸毛边却是新撕的。另一半多半仍在文献工房；明日到现场勘验，再作判断。"), "received", {"speaker": "ward", "action_id": "night.ward-claim"}))
+    rt_push(rows, dv_with(c1n_row("detective", "provisional-assent", 840, 930, dv_fact(dv_ref("night.evidence", "state", "displayed"), true), "沃德已经摆出材料，我暂且附和先限制行动，先按他的说法处理。"), "received", {"speaker": "ward", "action_id": "night.ward-claim"}))
     var defer = c1n_row("gu", "corroborate", 840, 930, dv_true(), "孤证不立。待明日去文献工房，把另一半找来核对。")
     defer = dv_with(defer, "received", {"speaker": "detective", "action_id": "night.defer-judgment"})
     rt_push(rows, defer)
@@ -728,6 +730,8 @@ fn c1n_action(row):
         action = dv_with(action, "public_observers", row.public_observers)
     if dv_has_key(row, "received"):
         action = dv_with(action, "received_speech_requirement", row.received)
+    if row.id == "night.defer-judgment" or row.id == "night.provisional-assent":
+        action = c1_inquiry_choice(action, "first-night-evidence-judgment", row.id == "night.defer-judgment")
     return action
 
 fn c1n_inspections(actor):
@@ -738,7 +742,8 @@ fn c1n_inspections(actor):
     rt_push(actions, dv_with(c2_action(rt_cat("night.inspect-room.", actor), "inspect", here, here, "", [c1n_ref("watch_agreed"), dv_ref("night.provisions", "state", "evening_servings")], "查看公共备餐和守夜交班的实际情况。", c1n_source("room-status")), "repeatable", true))
     if actor == "detective":
         let pre = dv_all([here, dv_fact(dv_ref("night.evidence", "state", "displayed"), true)])
-        rt_push(actions, c2_action("night.inspect-evidence", "inspect", pre, pre, "", [dv_ref("night.evidence", "state", "displayed"), dv_ref("night.evidence", "state", "wax_seal_intact"), dv_ref("night.evidence", "state", "fresh_torn_edge")], "近看蜡布筒的火漆封口与红纸的新撕毛边。", c1n_source("inspect-evidence")))
+        let inspection = c2_action("night.inspect-evidence", "inspect", pre, pre, "", [dv_ref("night.evidence", "state", "displayed"), dv_ref("night.evidence", "state", "wax_seal_intact"), dv_ref("night.evidence", "state", "fresh_torn_edge")], "近看蜡布筒的火漆封口与红纸的新撕毛边。", c1n_source("inspect-evidence"))
+        rt_push(actions, dv_with(c1_inquiry_choice(inspection, "first-night-evidence-judgment", true), "received_speech_requirement", {"speaker": "ward", "action_id": "night.ward-claim"}))
     if actor == "detective":
         rt_push(actions, c2_action("night.inspect-displayed", "inspect", here, here, "", [dv_ref("night.evidence", "state", "displayed")], "查看沃德是否已把证物摆在面前。", c1n_source("displayed")))
     let call_source = c1n_source("personally-heard-midnight-copper-call")
@@ -785,6 +790,105 @@ fn c1n_goals(actor):
         i = i + 1
     return goals
 
+fn c1_inquiry_room(actor, condition):
+    if condition.op == "equals":
+        if dv_same_local_ref(actor.id, condition.ref, actor.location_ref):
+            return condition.value
+    if condition.op == "all":
+        var i = 0
+        while i < rt_count(condition.items):
+            let room = c1_inquiry_room(actor, condition.items[i])
+            if room != "":
+                return room
+            i = i + 1
+    return ""
+
+fn c1_inquiry_route(actor, target):
+    let position = dv_read(actor.mind, actor.location_ref)
+    if not dv_uncontested(position) or position.value == target:
+        return false
+    var queue = [{"room": position.value, "first": "", "basis": []}]
+    var seen = [position.value]
+    var cursor = 0
+    let edges = c1_edges()
+    while cursor < rt_count(queue):
+        let node = queue[cursor]
+        var i = 0
+        while i < rt_count(edges):
+            var destination = ""
+            if edges[i][0] == node.room:
+                destination = edges[i][1]
+            if edges[i][1] == node.room:
+                destination = edges[i][0]
+            if destination != "" and not dv_has(seen, destination):
+                let method = c1_move_name(actor.id, node.room, destination)
+                let adoption = dv_find(actor.mind.adoptions, method, false)
+                if adoption != false and adoption.active and adoption.mode == "predict":
+                    var first = node.first
+                    if first == "":
+                        first = destination
+                    let basis = dv_append(node.basis, {"method": method, "basis": adoption.basis})
+                    if destination == target:
+                        return {"next": first, "target": target, "basis": basis}
+                    rt_push(queue, {"room": destination, "first": first, "basis": basis})
+                    rt_push(seen, destination)
+            i = i + 1
+        cursor = cursor + 1
+    return false
+
+fn c1_inquiry_navigation(actor):
+    if actor.id != "detective":
+        return actor
+    var actions = actor.actions
+    var action_index = 0
+    while action_index < rt_count(actions):
+        if dv_find(actions[action_index], "inquiry_navigation_choice", false):
+            actions = dvs_replace(actions, action_index, dv_without(dv_without(actions[action_index], "personal_choice"), "inquiry_navigation_choice"))
+        action_index = action_index + 1
+    actor = dv_with(actor, "actions", actions)
+    var goals = []
+    let old = actor.policy.goals
+    var i = 0
+    while i < rt_count(old):
+        if not dv_find(old[i], "inquiry_navigation", false):
+            rt_push(goals, old[i])
+        i = i + 1
+    var selected = false
+    let position = dv_read(actor.mind, actor.location_ref)
+    i = 0
+    while i < rt_count(goals):
+        let goal = goals[i]
+        if dv_has_key(goal, "ref") and dvp_topic(actor, goal) and 0 < rt_count(dv_find(goal, "basis", [])) and dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true":
+            let cell = dv_read(actor.mind, goal.ref)
+            var pending = not dv_uncontested(cell)
+            if dv_find(goal, "kind", "") == "evidence":
+                pending = not dvp_source_supported_since(cell, dv_find(goal, "source", "perception"), dv_find(goal, "minimum_time", 0))
+            if pending:
+                var j = 0
+                while j < rt_count(actor.actions):
+                    let action = actor.actions[j]
+                    if action.kind == "inspect" and dv_has(dv_find(action, "grants", []), goal.ref) and not dv_has(dv_find(actor, "completed_actions", []), action.id):
+                        let room = c1_inquiry_room(actor, action.precondition)
+                        if room != "":
+                            if dv_uncontested(position) and room == position.value:
+                                return dv_with(actor, "policy", dv_with(actor.policy, "goals", goals))
+                            if selected == false:
+                                let route = c1_inquiry_route(actor, room)
+                                if route != false:
+                                    selected = {"kind": "achieve", "scope": "personal", "owner": actor.id, "proposition": c1_at(actor.id, route.next), "available_when": dv_find(goal, "available_when", dv_true()), "basis": goal.basis, "inquiry_navigation": true, "target_method": action.id, "target_ref": goal.ref, "route": route, "fulfillment": "movement-only-not-inspection"}
+                    j = j + 1
+        i = i + 1
+    if selected != false:
+        rt_push(goals, selected)
+        let method = c1_move_name(actor.id, position.value, selected.route.next)
+        action_index = 0
+        while action_index < rt_count(actions):
+            if actions[action_index].id == method:
+                actions = dvs_replace(actions, action_index, dv_with(c1_inquiry_choice(actions[action_index], "chapter1-inquiry", true), "inquiry_navigation_choice", true))
+            action_index = action_index + 1
+        actor = dv_with(actor, "actions", actions)
+    return dv_with(actor, "policy", dv_with(actor.policy, "goals", goals))
+
 fn c1n_refresh_actor_goals(actor):
     if not dv_has_key(actor.policy, "first_night_goals"):
         var combined = dv_clone(dv_find(actor.policy, "first_night_base_goals", actor.policy.goals))
@@ -794,7 +898,7 @@ fn c1n_refresh_actor_goals(actor):
             rt_push(combined, goals[i])
             i = i + 1
         actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"goals": combined, "first_night_goals": goals}))
-    return c1n_known_future_wait_actor(actor)
+    return c1n_known_future_wait_actor(c1_inquiry_navigation(actor))
 
 fn c1n_morning_ready(world):
     return world.time >= 1800
@@ -940,7 +1044,16 @@ fn c1n_known_wait_actor(actor, target, basis):
                     current_night_action = true
                 action_index = action_index + 1
         i = i + 1
-    if elapsed.known and actor.mind.time < target and 0 < rt_count(basis) and 0 < progress_weight and not current_night_action:
+    var explicit_wait_choice = false
+    let declared_wait_choices = dv_find(actor.policy, "known_opportunity_wait_choices", [])
+    var declared_index = 0
+    while declared_index < rt_count(declared_wait_choices):
+        let declaration = declared_wait_choices[declared_index]
+        if dv_has_key(declaration, "target_time") and dv_has_key(declaration, "available_when") and dv_has_key(declaration, "personal_choice"):
+            if declaration.target_time == target and dv_truth(actor.mind, declaration.available_when) == "true" and 0 < rt_count(dv_find(declaration.personal_choice, "basis", [])):
+                explicit_wait_choice = true
+        declared_index = declared_index + 1
+    if elapsed.known and actor.mind.time < target and 0 < rt_count(basis) and 0 < progress_weight and (not current_night_action or explicit_wait_choice):
         let durations = c1n_wait_durations()
         var minutes = 0
         i = 0
@@ -969,7 +1082,16 @@ fn c1n_known_wait_actor(actor, target, basis):
             let known = dv_true()
             let result = dv_at_least(c1n_wait_ref(actor.id), elapsed.value + minutes)
             let text = rt_cat(rt_cat("留在原处，等候本人已知的下一次作息机会（", rt_show(minutes)), "分钟）。")
-            let action = c2_action(id, c1n_wait_kind(minutes), known, dv_true(), id, [c1n_wait_ref(actor.id), c1_other_clock_ref()], text, c1n_source("own-bounded-wait"))
+            var action = c2_action(id, c1n_wait_kind(minutes), known, dv_true(), id, [c1n_wait_ref(actor.id), c1_other_clock_ref()], text, c1n_source("own-bounded-wait"))
+            let wait_choices = dv_find(actor.policy, "known_opportunity_wait_choices", [])
+            var choice_index = 0
+            while choice_index < rt_count(wait_choices):
+                let declaration = wait_choices[choice_index]
+                if dv_has_key(declaration, "target_time") and dv_has_key(declaration, "available_when") and dv_has_key(declaration, "personal_choice"):
+                    if declaration.target_time == target and dv_truth(actor.mind, declaration.available_when) == "true" and 0 < rt_count(dv_find(declaration.personal_choice, "basis", [])):
+                        dv_require(not dv_has_key(action, "personal_choice"), "Ambiguous known-opportunity wait choice")
+                        action = dv_with(action, "personal_choice", declaration.personal_choice)
+                choice_index = choice_index + 1
             rt_push(actions, c1_public_method(dv_with_many(action, {"predict_law": id, "repeatable": true, "known_opportunity_wait": true, "wait_until": target, "wait_basis": basis})))
             // Engineering preference: knowingly spend this time for the next
             // personally declared opportunity. Reimburse its ordinary time score
