@@ -5,6 +5,7 @@ const WORLD_VIEW := preload("res://scenes/Shared/Field/WorldView.gd")
 
 var _bodies: Dictionary = {}
 var _worlds: Dictionary = {}
+var _occupancy: Array[Dictionary] = []
 var _parking: Node2D
 var _closing := false
 var _busy := false
@@ -91,15 +92,80 @@ func _initial_occupied(who: String, field: Node2D, point: Vector2) -> bool:
 			return true
 	return false
 
+## All maps share retained coordinates even when their bodies are in another viewport.
+func occupied_positions(walker: CharacterBody2D, resource: String, map_key: String) -> Array[Vector2]:
+	var result: Array[Vector2] = []
+	for record: Dictionary in _bodies.values():
+		var body: CharacterBody2D = record.body
+		if is_instance_valid(body) and body != walker and str(record.resource) == resource and str(record.map) == map_key:
+			result.append(body.position)
+	return result
+
+func occupied_at(walker: CharacterBody2D, resource: String, map_key: String, point: Vector2) -> bool:
+	for position: Vector2 in occupied_positions(walker, resource, map_key):
+		var separation := (position - point).abs()
+		if separation.x < 19.0 and separation.y < 15.0: return true
+	return false
+
+## Occupancy shapes represent bodies retained in other worlds.
+## They have no actor, presentation, movement or DV state. Formal execution is serial.
+func sync_obstacles(field: Node2D) -> void:
+	var root: Node2D = field.adapter.objects_root()
+	for node in root.get_children():
+		if node.has_meta("retained_occupancy"):
+			(node as StaticBody2D).collision_layer = 0
+			root.remove_child(node)
+			node.queue_free()
+	for who in _bodies:
+		var record: Dictionary = _bodies[who]
+		var body: CharacterBody2D = record.body
+		if not is_instance_valid(body) or body.get_parent() == root: continue
+		if str(record.resource) != field.execution_resource or str(record.map) != field.adapter.map_key(): continue
+		var obstacle := StaticBody2D.new()
+		obstacle.set_meta("retained_occupancy", body.get_instance_id())
+		obstacle.collision_layer = body.collision_layer
+		obstacle.collision_mask = 0
+		obstacle.position = body.position
+		for child in body.get_children():
+			if child is CollisionShape2D and not child.disabled:
+				var shape := CollisionShape2D.new()
+				shape.shape = child.shape
+				shape.transform = child.transform
+				obstacle.add_child(shape)
+		root.add_child(obstacle)
+		_occupancy.append({"obstacle": obstacle, "body": body, "field": field, "who": who})
+
+func _physics_process(_delta: float) -> void:
+	if _closing: return
+	for i in range(_occupancy.size() - 1, -1, -1):
+		var item: Dictionary = _occupancy[i]
+		# Keep stale references as Variants until validity is checked: a typed
+		# assignment itself throws after queue_free, before is_instance_valid.
+		var obstacle = item.obstacle
+		if not is_instance_valid(obstacle) or not obstacle.is_inside_tree():
+			_occupancy.remove_at(i)
+			continue
+		var body = item.body
+		var field = item.field
+		var record: Dictionary = _bodies.get(item.who, {}) if is_instance_valid(body) else {}
+		if not is_instance_valid(field) or record.is_empty() or str(record.map) != field.adapter.map_key() or str(record.resource) != field.execution_resource or body.get_parent() == obstacle.get_parent():
+			obstacle.collision_layer = 0
+			obstacle.queue_free()
+			_occupancy.remove_at(i)
+			continue
+		# Local player walking need not wait for a DV action or another snapshot.
+		obstacle.position = body.position
+
 ## A snapshot authorizes first materialization, never relocation of an existing body.
 func acquire_actor(who: String, sprite_key: String, field: Node2D) -> CharacterBody2D:
 	if _closing: return null
 	var body: CharacterBody2D
+	var previous: Node2D
 	if _bodies.has(who):
 		var record: Dictionary = _bodies[who]
 		body = record.body
 		if not is_instance_valid(body) or str(record.resource) != field.execution_resource or str(record.map) != field.adapter.map_key(): return null
-		var previous: Node2D = record.field
+		previous = record.field
 		if is_instance_valid(previous) and previous != field: _detach(who, previous)
 	else:
 		var binding := _actor_binding(who, field.execution_binding)
@@ -121,6 +187,8 @@ func acquire_actor(who: String, sprite_key: String, field: Node2D) -> CharacterB
 		field.player = body
 		field.sight.set_process(not field.execution_only)
 	_bodies[who].field = field
+	if is_instance_valid(previous) and previous != field: sync_obstacles(previous)
+	sync_obstacles(field)
 	return body
 
 func _detach(who: String, field: Node2D) -> void:
@@ -220,7 +288,9 @@ func execute(intent: Dictionary, visible_field: Node2D, execution_snapshot: Dict
 		return _blocked(intent, serial, "retained_body_room_mismatch")
 	# Access geometry is world data; private actor text is never applied to visible UI.
 	if field.adapter.has_method("apply_snapshot"): field.adapter.apply_snapshot(execution_snapshot)
+	sync_obstacles(field)
 	var source_point := body.position
+	var source_geometry := "interior" if field.adapter.entered_room(source_point) == source_room else "source-side-doorway"
 	var instance := body.get_instance_id()
 	_busy = true
 	# Newly attached collision bodies and deferred access barriers must enter physics
@@ -242,7 +312,7 @@ func execute(intent: Dictionary, visible_field: Node2D, execution_snapshot: Dict
 	if received.is_empty(): return _blocked(intent, serial, "execution_interrupted")
 	received["source_map"] = source_map
 	received["source_room"] = source_room
-	received["source_geometry"] = "interior" if field.adapter.entered_room(source_point) == source_room else "source-side-doorway"
+	received["source_geometry"] = source_geometry
 	received["source_position"] = [source_point.x, source_point.y]
 	received["actor_instance_id"] = instance
 	received["execution_world"] = "isolated-godot" if field.execution_only else "visible-godot"
@@ -277,6 +347,7 @@ func reset() -> void:
 		viewport.queue_free()
 	_bodies.clear()
 	_worlds.clear()
+	_occupancy.clear()
 	_parking = null
 	_busy = false
 	_closing = false

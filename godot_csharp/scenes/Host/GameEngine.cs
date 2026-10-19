@@ -337,12 +337,26 @@ public partial class GameEngine : Node
             if (Directory.Exists(path)) throw new IOException("Evidence directory already exists");
             Directory.CreateDirectory(path);
             ownsDirectory = true;
-            phase = "inputs";
-            DuelView.Compiled.BinaryEvidence.WriteJsonRecords(Path.Combine(path, "inputs.dvlog"), inputs);
-            phase = "visible";
-            DuelView.Compiled.BinaryEvidence.WriteJsonRecords(Path.Combine(path, "visible.dvlog"), visible);
-            phase = "interaction-timing";
-            DuelView.Compiled.BinaryEvidence.WriteJsonRecords(Path.Combine(path, "interaction-timing.dvlog"), timings);
+            // A failed output must not suppress independent evidence or the save.
+            foreach (var output in new (string, IEnumerable<string>)[] {
+                ("inputs", inputs.ToArray()), ("visible", visible.ToArray()), ("interaction-timing", timings.ToArray()) })
+            {
+                phase = output.Item1;
+                try
+                {
+                    var recordPath = Path.Combine(path, phase + ".dvlog");
+                    await Task.Run(() =>
+                    {
+                        DuelView.Compiled.BinaryEvidence.WriteJsonRecords(recordPath + ".partial", output.Item2);
+                        File.Move(recordPath + ".partial", recordPath, overwrite: false);
+                    });
+                }
+                catch (Exception error)
+                {
+                    GD.PushError(error.ToString());
+                    errors.Add(new { phase, error = error.ToString() });
+                }
+            }
             var current = session;
             if (current is null) return;
             phase = "trace";

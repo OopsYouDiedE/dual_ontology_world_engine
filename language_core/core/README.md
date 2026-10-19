@@ -1008,6 +1008,8 @@ DAG v2每个envelope保留seq、prev、payload、sha256；链摘要为sha256(pre
 
 `compiler/Runtime.cs`中的BinaryEvidence/RawDagWriter、`tools/binary_evidence.py`、`tools/raw_dag.py`维护编码、校验和SQLite偏移索引；`Session.WriteTrace/WriteSave/RestoreFile`用于独占文件与完整封存的恢复。阶段导出为checkpoint.dvsave，仍逐项核对实际Complete、源码和配置来源。JSON仅用于进程内宿主字符串、编译配置和小型工程汇总；stdout与事件索引、实际输入、可见正文、计时及画面采样记录落盘均为二进制。
 
+BinaryEvidence的宿主编码支持FromJson产生的object[]，包含嵌套和空数组，使用原列表标签；这是记录存储边界的容器适配，不扩张R.TryItems/IsDvList的DV语言值域。
+
 
 动作可声明 `manual_only=true`。`dvp_eligible_base`要求临时 `actor.manual_input=true`；只有 `dvs_player_options/select_player/player_choice`创建该资格视图，持久状态不写入它。其余本人前提、来源、规范、解释及费用不变；自动规划拒绝这种动作。新的实际询问仍可能进入AI轨迹，手动限制只针对声明的候选。
 

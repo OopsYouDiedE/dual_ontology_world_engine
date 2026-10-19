@@ -454,3 +454,5 @@ Runtime新增rt_phase(stage, actor)二参数Bool ABI，经AsyncLocal作用域调
 普通房间移动移除通用过路surface，动作与Complete合同不变；原始内容及显示维护见verification/AGENTS.md。与四倍渲染采集的比较必须注明条件变化。
 
 新会话result、evidence-summary及含逐段原始记录的卡顿/交互分析输出也使用.dvlog；源码指纹和编译配置JSON不记录会话轨迹。
+
+BinaryEvidence的宿主记录编码显式支持FromJson产生的object[]，包括嵌套及空数组；仍用原DVLOG2列表标签。此支持只属于存储边界，R.TryItems/IsDvList的DV值域保持List/FrozenList，不把CLR数组引入语言容器。

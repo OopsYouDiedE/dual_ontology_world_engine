@@ -212,16 +212,53 @@ def register_external_sprites(room, sprite_paths, sizes):
         sizes[item["sprite"]] = (width, height)
 
 
+def existing_outdoor_spawns(manifest, scenes):
+    """Resolve overlapping outdoor tiles by their actual, non-overlapping core bounds."""
+    result = {}
+    for key, room in manifest["rooms"].items():
+        source = (scenes / f"{key}.tscn").read_text(encoding="utf-8")
+        core = re.search(r"^metadata/outdoor_core = Rect2\(([^)]+)\)$", source, re.M)
+        origin = re.search(r"^metadata/outdoor_origin = Vector2\(([^)]+)\)$", source, re.M)
+        if core is None or origin is None:
+            continue
+        left, top, width, height = map(float, core[1].split(","))
+        ox, oy = map(float, origin[1].split(","))
+        for spawn, (x, y) in room["spawns"].items():
+            if left <= x + ox < left + width and top <= y + oy < top + height:
+                if spawn in result:
+                    raise ValueError(f"Ambiguous outdoor spawn: {spawn}")
+                if f'[node name="{spawn}" type="Marker2D" parent="Spawns"]' not in source:
+                    raise ValueError(f"Missing outdoor spawn marker: {key}/{spawn}")
+                result[spawn] = key
+    return result
+
+
+def resolve_outdoor_exits(room, spawn_region):
+    # Copy recipe dictionaries: regenerating one room must not mutate other recipes.
+    room["exits"] = [{**exit, "target": spawn_region[exit["spawn"]] if exit["target"] == "campus" else exit["target"]}
+                     for exit in room["exits"]]
+
+
+def validate_links(manifest):
+    spawns = {key: set(room["spawns"]) for key, room in manifest["rooms"].items()}
+    bad = [(key, e["name"], e["target"], e["spawn"]) for key, room in manifest["rooms"].items() for e in room["exits"]
+           if e["target"] not in spawns or e["spawn"] not in spawns[e["target"]]]
+    if bad:
+        raise ValueError(f"Invalid map links: {bad}")
+
+
 def update_geometry_only(keys, compiled=COMPILED, scenes=SCENES, manifest_path=OUT / "manifest.json", repaint=False):
     """Regenerate selected interiors; optionally repaint their baked floor shadows."""
     validate_maps(keys)
     text_table = load_room_text(compiled)
     manifest = read_json(manifest_path)
+    spawn_region = existing_outdoor_spawns(manifest, scenes)
     authored = {room["key"]: resolve_room_text(room, text_table) for room in rooms.all_rooms()}
     fps = {**CH1_FP, **{name: entry.get("footprint") for name, entry in manifest.get("props", {}).items()}}
     candidates = {}
     for key in keys:
         room = authored[key]
+        resolve_outdoor_exits(room, spawn_region)
         room["furniture"] = resolve(room["furniture"], fps)
         paths, sizes = {}, {}
         for item in room["furniture"]:
@@ -244,7 +281,10 @@ def update_geometry_only(keys, compiled=COMPILED, scenes=SCENES, manifest_path=O
             canvas.image().save(buffer, format="PNG")
             candidates[OUT / "rooms" / f"{key}.png"] = buffer.getvalue()
         manifest["rooms"][key]["sites"] = scene_sites(room)
+        manifest["rooms"][key]["exits"] = room["exits"]
+        manifest["rooms"][key]["spawns"] = room["spawns"]
         manifest["rooms"][key]["geometry_objects"] = [item for item in room["furniture"] if "texture" in item]
+    validate_links(manifest)
     candidates[manifest_path] = json.dumps(manifest, ensure_ascii=False, indent=1).encode("utf-8")
     return publish(candidates)
 
@@ -463,9 +503,7 @@ def main():
         sprite_paths[name] = f"res://ShareAsset/Internal/Props/Chapter2/props/{name}.png"
         sizes[name] = (can.w, can.h)
     for room in all_rooms:
-        for e in room["exits"]:
-            if e["target"] == "campus":
-                e["target"] = spawn_region[e["spawn"]]
+        resolve_outdoor_exits(room, spawn_region)
         room["furniture"] = resolve(room["furniture"], fps)
         register_external_sprites(room, sprite_paths, sizes)
         missing = {f["sprite"] for f in room["furniture"]} - set(sprite_paths)
@@ -486,10 +524,7 @@ def main():
                                           "spawns": room["spawns"], "sites": room["sites"]}
         print(room["key"], *room["size_px"], len(room["furniture"]), len(room["solids_px"]), "solids")
     # link check: every exit's target room and spawn exist
-    spawns = {k: set(v["spawns"]) for k, v in manifest["rooms"].items()}
-    bad = [(k, e["name"], e["target"], e["spawn"]) for k, v in manifest["rooms"].items() for e in v["exits"]
-           if e["target"] not in spawns or e["spawn"] not in spawns[e["target"]]]
-    assert not bad, bad
+    validate_links(manifest)
     (OUT / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
     print("ok", len(manifest["rooms"]), "rooms", len(canvases), "chapter-2 sprites")
 

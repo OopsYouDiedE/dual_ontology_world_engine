@@ -194,10 +194,12 @@ func station(target: String, who: String) -> Dictionary:
 		var id := target.substr(5)
 		if not geometry.has(id): return {}
 		return {"point": geometry[id].point, "radius": float(geometry[id].reach)}
-	var best := INF
-	var chosen := Vector2.ZERO
-	var open_best := INF
-	var open_point := Vector2.ZERO
+	var preferred: Array[Vector2] = []
+	for point: Vector2 in stands():
+		if entered_room(point) == target and walkable(point, actor) and not field.position_occupied(actor, point):
+			preferred.append(point)
+	var open_points: Array[Vector2] = []
+	var fallback: Array[Vector2] = []
 	var grid := nav_grid(actor)
 	for y in range(grid.region.size.y):
 		for x in range(grid.region.size.x):
@@ -205,20 +207,21 @@ func station(target: String, who: String) -> Dictionary:
 			if grid.is_point_solid(cell): continue
 			var point := grid.get_point_position(cell)
 			if entered_room(point) != target: continue
-			var distance := point.distance_squared_to(actor.position)
-			if distance < best:
-				best = distance
-				chosen = point
+			if field.position_occupied(actor, point): continue
+			fallback.append(point)
 			# Prefer room interior with turning space rather than a narrow door recess.
 			var can_turn := true
 			for offset in [Vector2.LEFT * 16, Vector2.RIGHT * 16, Vector2.UP * 16, Vector2.DOWN * 16]:
 				if entered_room(point + offset) != target or not walkable(point + offset, actor):
 					can_turn = false
 					break
-			if can_turn and distance < open_best:
-				open_best = distance
-				open_point = point
-	return {} if best == INF else {"point": open_point if open_best != INF else chosen, "radius": 0.0}
+			if can_turn: open_points.append(point)
+	var nearer := func(a: Vector2, b: Vector2) -> bool: return a.distance_squared_to(actor.position) < b.distance_squared_to(actor.position)
+	preferred.sort_custom(nearer)
+	open_points.sort_custom(nearer)
+	fallback.sort_custom(nearer)
+	return {} if fallback.is_empty() else {"point": actor.position, "radius": 0.0,
+		"room_target": true, "approach_groups": [preferred, open_points, fallback]}
 
 func _map_routes() -> Dictionary:
 	if not _routes.is_empty(): return _routes
@@ -269,7 +272,7 @@ func execute_destination(destination: Dictionary, who: String, serial: int, acti
 	while key != str(destination.get("map", "")):
 		var edge := _next_edge(str(destination.get("map", "")))
 		if edge.is_empty():
-			field._daily_report(who, serial, "blocked", room_of(actor.position), action)
+			field._daily_report(who, serial, "blocked", room_of(actor.position), action, {"reason": "no_map_route"})
 			return
 		var origin := key
 		_route_target_next = str(edge.to)
@@ -279,14 +282,14 @@ func execute_destination(destination: Dictionary, who: String, serial: int, acti
 		_route_target_next = ""
 		if field._closing or not is_instance_valid(actor): return
 		if key == origin:
-			field._daily_report(who, serial, "blocked", room_of(actor.position), action)
+			field._daily_report(who, serial, "blocked", room_of(actor.position), action, {"reason": "map_transition_not_completed"})
 			return
 	var anchor_name := str(destination.get("anchor", ""))
 	if anchor_name != "":
 		var point = anchor(anchor_name)
 		if point != null: await field._follow_route(actor, point)
 		if point == null or actor.position.distance_to(point) > 8.0:
-			field._daily_report(who, serial, "blocked", room_of(actor.position), action)
+			field._daily_report(who, serial, "blocked", room_of(actor.position), action, {"reason": "anchor_not_reached", "anchor": anchor_name})
 			return
 	var target := str(destination.get("departure_station", destination.get("room", "")))
 	var execution_room := str(destination.get("execution_room", destination.get("room", "")))
@@ -354,6 +357,8 @@ func valid_transition(next: String, spawn: String, at: Vector2, use_at: bool) ->
 			valid = source_world.distance_to(target_world) <= 0.01 and (layout.get_meta("outdoor_core") as Rect2).has_point(target_world)
 	var size: Vector2 = layout.get_meta("map_size", Vector2.ZERO)
 	valid = valid and Rect2(Vector2.ZERO, size).has_point(point)
+	if valid and field.execution_bridge != null:
+		valid = not field.execution_bridge.occupied_at(field.player, field.execution_resource, next, point)
 	var solids := layout.get_node_or_null("Solids")
 	if valid and solids != null:
 		for node in solids.get_children():
@@ -455,10 +460,9 @@ func _build_grid() -> void:
 func nav_grid(walker: CharacterBody2D) -> AStarGrid2D:
 	var base: AStarGrid2D = _grids[key]
 	var other_cells: Array[Vector2i] = []
-	for other in field.actors.values():
-		if not is_instance_valid(other) or other == walker or other.get_parent() != walker.get_parent(): continue
-		var first := Vector2i(((other.position - Vector2(19, 15) - base.offset) / base.cell_size).ceil())
-		var last := Vector2i(((other.position + Vector2(19, 15) - base.offset) / base.cell_size).floor())
+	for position: Vector2 in field.occupied_positions(walker):
+		var first := Vector2i(((position - Vector2(19, 15) - base.offset) / base.cell_size).ceil())
+		var last := Vector2i(((position + Vector2(19, 15) - base.offset) / base.cell_size).floor())
 		for y in range(first.y, last.y + 1):
 			for x in range(first.x, last.x + 1):
 				var cell := Vector2i(x, y)

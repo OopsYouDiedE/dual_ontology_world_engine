@@ -49,6 +49,12 @@ public static class BinaryEvidence
                 writer.Write((byte)7); writer.Write(map.Count);
                 foreach (var entry in map) { WriteValue(writer, entry.Key, depth + 1); WriteValue(writer, entry.Value, depth + 1); }
                 break;
+            case object?[] array:
+                // Host JSON arrays decode to CLR arrays, not DV List/FrozenList.
+                // This storage case does not expand the runtime's DV value domain.
+                writer.Write((byte)8); writer.Write(array.Length);
+                foreach (var item in array) WriteValue(writer, item, depth + 1);
+                break;
             case JsonElement element: WriteValue(writer, FromJson(element), depth); break;
             default:
                 if (!R.TryItems(value!, out var items)) throw new InvalidDataException("Unsupported binary evidence atom");

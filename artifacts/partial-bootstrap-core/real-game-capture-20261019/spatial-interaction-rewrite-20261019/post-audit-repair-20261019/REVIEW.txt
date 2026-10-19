@@ -1,0 +1,18 @@
+独立上下文只读工程审查摘要（2026-10-19）
+
+审查代理 final_geometry_review 未读取设计文件、未改文件、未运行游戏；通过独立Python读取器完整解码geometry-07两份DVLOG2记录，并实际查看两张原始PNG。
+
+具体证据
+- 真实身体实例71521274171，碰撞代理owner相同。接近者由(460,736)向(460,784)移动，在(460,771.9931)因真实碰撞停步，travel_result=stuck。占位查询与导航格均拒绝重叠，已有出生点被占用时valid_transition返回false。
+- 身体实际移到(460,752)，代理位置相同；当前点的物理命中为代理72376912007，owner=71521274171。旧点(460,784)的占位为false，碰撞层2物理点查询为空。
+- 转交后的handoff_colliders只含instance=71521274171、proxy_owner=0，即原来的真实身体，未命中其占位代理。
+- 普通房间移动的最终daily：fixture_a，序号1，geometry_room_arrival，living_hall:hall，终点与站点(400,828)，arrival_error=0。
+- 地图首边由起居厅北门(256,16)连接campus_sw/living_north。实际源位置(264,41.33334)，经声明门口转换到(1924,321)，随后最终daily为序号2、geometry_doorway、campus_sw:campus_sw、arrived，终点(1928,328)，arrival_error=0。
+- 室内PNG有两个分离人物；室外PNG显示主体位于门外道路。geometry-07.log仅有Godot/Vulkan启动信息，没有脚本异常。二进制帧无解码、校验或截断错误。
+
+限制
+旧位置清理的物理实测是脚点偏移(0,-6)、碰撞层2的点查询，不是整片区域扫描。截图覆盖最终画面，没有保存这条工程移动的逐帧视频。夹具没有Main/GameEngine或正式DV会话，不能证明Prepare/Complete、玩家输入、人物决策、剧情、整局体验或正式会话封存。
+
+此前独立审查 geometry_evidence_review 对04确认了静止占位、房间和门口最终回执，并指出动态占位范围缺口。随后 live_occupancy_review 对05明确保留释放引用错误，不接受其清理结论。最终07对应的是已修复生命周期处理后的新证据，未改写04或05原记录。
+
+GameEngine.CloseTrace的逐份错误隔离只经源码审读；本轮没有磁盘满或其他关闭故障注入，因此没有运行证据证明该故障路径的完整封存。

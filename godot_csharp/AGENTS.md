@@ -260,3 +260,13 @@ FrameArchive亦串行追加已序列化文本，输入、可见采样元数据�
 profile_dv_capture、encode_dv_capture、report_runtime_hitches及summarize_interaction_timing使用language_core/tools/binary_evidence.py读取新记录，旧JSON仅只读兼容。工程源码指纹、启动参数和小型汇总不承载逐事件状态，可沿用工程JSON。此存储修订不是同条件性能或游戏验收证据；完整行为与画面须另起实际会话验证。
 
 新会话result、evidence-summary及含逐段原始记录的卡顿/交互分析输出也使用.dvlog；源码指纹和编译配置JSON不记录会话轨迹。
+
+## 审计后空间与封存修复（2026-10-19）
+
+geometry-only/interiors-only从已生成室外场景的outdoor_core、outdoor_origin与manifest出生点解析抽象campus出口，与全量生成共用出口解析和链接核对；重叠室外图按核心区确定归属。缺出生点、归属多义或链接缺失时在发布前报错，不把抽象地图名写入运行场景。
+
+DvFieldExecutor按保留实体的资源、地图和真实坐标提供占位查询；离屏世界为同地图、当前场地之外的实体建立只含原碰撞形状的StaticBody2D占位体。它们没有人物脚本、渲染或DV状态；正式执行串行，每次执行、换图及实体转交后刷新，逐物理帧跟随原实体真实位置，原实体离开该图或转入本场地时清除占位体，不移动原实体。动态导航、站点候选和跨图出生点核对同一占位来源；出生点被占用时保留源图并返回受阻。普通房间到达按可达的空闲Stand、具有转身空间的房间格、其他合法房间格依次选择，各组按实际距离排序；显式热点半径、导航锚点及4px到达误差保持原合同。
+
+关闭时输入、可见正文及计时分别封存为.partial并在成功后发布；各输出独立捕获异常，单份失败仍尝试其余记录、原始会话及存档。close-result.dvlog记录实际错误，TraceClosed只表示关闭结束。
+
+纯几何工程排错入口为Godot --path godot_csharp --script res://tools/probe_retained_geometry.gd -- --out=<新绝对目录>。夹具不加载Main、不打开DV会话；仅核对跨视口占位、真实CharacterBody碰撞、普通房间站点与地图图边，输出二进制记录及实际PNG。不作为游戏流程、人物选择或剧情达成证据。

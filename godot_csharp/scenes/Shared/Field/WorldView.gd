@@ -141,6 +141,7 @@ func apply_snapshot(value: Dictionary) -> void:
 		tint.color = daylight * Color(0.62, 0.66, 0.76) if adapter.sight_terrain_fog() else daylight
 	if adapter.has_method("apply_snapshot"): adapter.apply_snapshot(value)
 	if not execution_only and adapter.fixed_actors().is_empty(): _spawn_people()
+	if execution_bridge != null: execution_bridge.sync_obstacles(self)
 	_build_sites()
 
 func field_active() -> bool:
@@ -613,6 +614,7 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 	_after_map_load()
 	# 先按快照站好此处的人，再告诉章节到了哪里（回来的快照只让新来的人走进来）。
 	if not execution_only and adapter.fixed_actors().is_empty(): _spawn_people()
+	if execution_bridge != null: execution_bridge.sync_obstacles(self)
 	_build_sites()
 	if not _applying_scene and adapter.map_key() != "":
 		field_event.emit({"kind": "move", "map": adapter.map_key()})
@@ -675,10 +677,17 @@ func _follow_route(actor: CharacterBody2D, destination: Vector2) -> Dictionary:
 	route.append(destination)
 	return await _follow(actor, route)
 
-func position_occupied(walker: CharacterBody2D, point: Vector2) -> bool:
+func occupied_positions(walker: CharacterBody2D) -> Array[Vector2]:
+	if execution_bridge != null: return execution_bridge.occupied_positions(walker, execution_resource, adapter.map_key())
+	var result: Array[Vector2] = []
 	for other in actors.values():
 		if not is_instance_valid(other) or other == walker or other.get_parent() != walker.get_parent(): continue
-		var separation: Vector2 = (other.position - point).abs()
+		result.append(other.position)
+	return result
+
+func position_occupied(walker: CharacterBody2D, point: Vector2) -> bool:
+	for position: Vector2 in occupied_positions(walker):
+		var separation: Vector2 = (position - point).abs()
 		if separation.x < 19.0 and separation.y < 15.0: return true
 	return false
 
@@ -725,25 +734,30 @@ func _daily_go(ev: Dictionary) -> void:
 	var destination := Vector2.ZERO
 	var best_route := PackedVector2Array()
 	var best_cost := INF
-	for point in _station_approaches(station, grid):
-		if adapter.entered_room(point) != str(ev.room) or not adapter.walkable(point, actor): continue
-		if position_occupied(actor, point): continue
-		var reserved := false
-		for other in _daily.values():
-			if point.distance_to(other.destination) < 28.0: reserved = true
-		if reserved: continue
-		var route := FieldNavigation.route_on_grid(actor.position, point, grid)
-		if route.is_empty(): continue
-		var cost := _route_cost(actor.position, route, point)
-		if cost < best_cost:
-			best_cost = cost
-			destination = point
-			best_route = route
+	for group in station.get("approach_groups", [_station_approaches(station, grid)]):
+		for point: Vector2 in group:
+			if adapter.entered_room(point) != str(ev.room) or not adapter.walkable(point, actor): continue
+			if position_occupied(actor, point): continue
+			var reserved := false
+			for other in _daily.values():
+				if point.distance_to(other.destination) < 28.0: reserved = true
+			if reserved: continue
+			var route := FieldNavigation.route_on_grid(actor.position, point, grid)
+			if route.is_empty(): continue
+			var cost := _route_cost(actor.position, route, point)
+			if cost < best_cost:
+				best_cost = cost
+				destination = point
+				best_route = route
+			# Generic room candidates are ordered by proximity within each group.
+			if bool(station.get("room_target", false)): break
+		if not best_route.is_empty(): break
 	if best_route.is_empty():
 		_daily_report(who, int(ev.serial), "blocked", "", str(ev.get("action", "rest")), {"station": str(ev.target)})
 		return
 	_cancel_motion(actor)
 	if actor.seated: actor.stand_up()
+	if bool(station.get("room_target", false)): station.point = destination
 	_daily[who] = {"serial": int(ev.serial), "room": str(ev.room), "action": str(ev.get("action", "rest")), "destination": destination,
 		"station": str(ev.target), "station_point": station.point, "station_radius": float(station.radius),
 		"focus": station.get("focus", station.point), "last": actor.position, "still": 0.0, "working": false, "previous_speed": actor.speed}
