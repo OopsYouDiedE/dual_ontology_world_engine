@@ -60,6 +60,8 @@ var _player_key := ""
 
 var _motion: Dictionary = {}         # instance id → generation
 var _daily: Dictionary = {}          # who → job
+var _cached_object_sprites: Array[Sprite2D] = []
+var _cached_object_map := ""
 
 # ============================================================== lifecycle ===
 
@@ -237,10 +239,12 @@ func player_visible_objects(occluded_regions: Array[Rect2] = []) -> Array[String
 	if not is_instance_valid(objects): return result
 	var counts := {}
 	var represented_sites := {}
-	var sprites: Array[Sprite2D] = []
-	_player_object_sprites(objects, sprites)
-	for sprite in sprites:
-		if sprite.texture == null or str(sprite.name) == "BedQuiltForeground": continue
+	if _cached_object_map != adapter.map_key() or _cached_object_sprites.is_empty():
+		_cached_object_sprites.clear()
+		_player_object_sprites(objects, _cached_object_sprites)
+		_cached_object_map = adapter.map_key()
+	for sprite in _cached_object_sprites:
+		if not is_instance_valid(sprite) or sprite.texture == null or str(sprite.name) == "BedQuiltForeground": continue
 		if not _player_object_drawn(sprite): continue
 		var exposed := _player_object_exposed(sprite.get_global_transform_with_canvas() * sprite.get_rect(), occluded_regions)
 		if exposed.is_empty(): continue
@@ -586,6 +590,7 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 	player.get_parent().remove_child(player)
 	add_child(player)
 	adapter.load_map(key, spawn)
+	_cached_object_sprites.clear()
 	remove_child(player)
 	adapter.objects_root().add_child(player)
 	player.position = at if use_at else adapter.spawn_point(spawn)

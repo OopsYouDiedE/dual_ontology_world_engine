@@ -8,6 +8,7 @@ const TITLE_SCENE := preload("res://scenes/UI/Panels/Title/Title.tscn")
 const FIELD_SCRIPT := preload("res://scenes/Shared/Field/WorldView.gd")
 const FIELD_EXECUTOR := preload("res://scenes/Host/DvFieldExecutor.gd")
 const VIEW_TRACE := preload("res://scenes/Host/PlayerViewTrace.gd")
+const CAMPUS_MAP_VIEW := preload("res://scenes/Chapter2/Field/CampusMapView.tscn")
 
 @export_enum("player", "ai") var controller := "player"
 @export var campaign_options: Dictionary = {}
@@ -87,7 +88,7 @@ func _home() -> void:
 func _view(ev: Dictionary, begin := true) -> void:
 	_timing("view_build_begin")
 	_view_resource = str(ev.resource)
-	var resource: PackedScene = load(str(ev.resource)) as PackedScene
+	var resource: PackedScene = CAMPUS_MAP_VIEW if str(ev.resource) == "res://scenes/Chapter2/Field/CampusMapView.tscn" else (load(str(ev.resource)) as PackedScene)
 	if resource == null:
 		push_error("无法加载世界视图：" + str(ev.resource))
 		return

@@ -233,25 +233,19 @@ func set_dialogue_cast(mapping: Dictionary) -> void:
 		portraits[character] = moods
 	set_character_portraits(portraits)
 
+var _portrait_paths: Dictionary = {}
+static var _portrait_cache: Dictionary = {}
+
 func set_character_portraits(mapping: Dictionary) -> void:
 	character_portraits.clear()
+	_portrait_paths.clear()
 	for canonical_name in mapping:
 		var character := _portrait_character(str(canonical_name))
 		if character.is_empty():
 			continue
 		var asset: Variant = mapping[canonical_name]
 		var moods: Dictionary = asset if asset is Dictionary else {"calm": asset}
-		var textures := {}
-		for mood in PORTRAIT_MOODS:
-			var value: Variant = moods.get(mood)
-			var texture: Texture2D = null
-			if value is Texture2D:
-				texture = value
-			elif value is String and ResourceLoader.exists(value):
-				texture = load(value) as Texture2D
-			if texture != null:
-				textures[mood] = texture if texture.get_meta("portrait_bust", false) else _bust(texture)
-		character_portraits[character] = textures
+		_portrait_paths[character] = moods
 	if not is_instance_valid(panel):
 		return
 	character_portrait.texture = null
@@ -259,6 +253,22 @@ func set_character_portraits(mapping: Dictionary) -> void:
 	portrait_mood = "calm"
 	_refresh_character_portrait()
 	layout_compact_line()
+
+func _get_portrait_texture(character: String, mood: String) -> Texture2D:
+	if character.is_empty(): return null
+	var cache_key := character + ":" + mood
+	if _portrait_cache.has(cache_key): return _portrait_cache[cache_key]
+	var moods: Dictionary = _portrait_paths.get(character, {})
+	var value: Variant = moods.get(mood, moods.get("calm"))
+	var texture: Texture2D = null
+	if value is Texture2D:
+		texture = value
+	elif value is String and ResourceLoader.exists(value):
+		texture = load(value) as Texture2D
+	if texture != null and not texture.get_meta("portrait_bust", false):
+		texture = _bust(texture)
+	_portrait_cache[cache_key] = texture
+	return texture
 
 func _bust(texture: Texture2D) -> Texture2D:
 	var size := texture.get_size()
@@ -281,8 +291,7 @@ func _refresh_character_portrait() -> void:
 	if character != portrait_character or mood != portrait_mood:
 		portrait_character = character
 		portrait_mood = mood
-		var textures: Dictionary = character_portraits.get(character, {})
-		character_portrait.texture = textures.get(mood, textures.get("calm")) as Texture2D
+		character_portrait.texture = _get_portrait_texture(character, mood)
 	var shown := active and not busy and line != null and character_portrait.texture != null and panel.visible and not history_panel.visible
 	if compact:
 		# The card keeps one layout for every speaker: a portrait, or a monogram for

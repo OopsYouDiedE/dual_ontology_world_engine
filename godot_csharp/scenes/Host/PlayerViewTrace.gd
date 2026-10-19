@@ -5,6 +5,7 @@ var host: Node
 var record_visible: Callable
 var record_input: Callable
 var _last_frame := ""
+var _last_data: Dictionary = {}
 var _wired: Dictionary = {}
 var _control_context: Dictionary = {}
 var _closing := false
@@ -90,7 +91,6 @@ func _collect_after_draw() -> void:
 		var lower_cover: Array[Rect2] = dialogue_cover.duplicate()
 		if ui.modal_layer.visible and is_instance_valid(ui.modal_root):
 			_add_cover(ui.modal_root.get_node_or_null("PanelContainer"), lower_cover)
-		if is_instance_valid(host.field): _scan(host.field, viewport_rect, items, lower_cover)
 		_scan(ui.hud, viewport_rect, items, lower_cover)
 		if ui.modal_layer.visible and is_instance_valid(ui.modal_root):
 			_scan(ui.modal_root, viewport_rect, items, dialogue_cover)
@@ -102,6 +102,8 @@ func _collect_after_draw() -> void:
 	data["view_schema"] = 2
 	data["texts"] = items
 	data["objects"] = _scene_objects()
+	if data == _last_data: return
+	_last_data = data.duplicate(true)
 	var signature := JSON.stringify(data)
 	if signature == _last_frame: return
 	_last_frame = signature

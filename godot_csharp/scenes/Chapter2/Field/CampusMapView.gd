@@ -4,12 +4,24 @@ extends Node2D
 ## 剧情与文字不在这里。
 
 const MAPS := "res://scenes/Chapter2/Maps/%s.tscn"
+const MAP_ZONE_YI := preload("res://scenes/Chapter2/Maps/zone_yi.tscn")
 const Bindings := preload("res://scenes/Shared/Field/PresentationBindings.gd")
 const SEAM := 36.0
 ## 地图里没有标记、由地图层补上的交互点。
 const EXTRA_SITES := {"zone_jia": {"litter": Vector2(440, 240)}}
 ## 只作装饰、不开放交互的标记。
 const DECOR_MARKERS := ["transmitter", "isolation_gate", "lane", "harbor", "stele", "collapse", "counterweight"]
+static var _packed_maps: Dictionary = {}
+
+func _get_packed_map(map_name: String) -> PackedScene:
+	if map_name == "zone_yi": return MAP_ZONE_YI
+	var packed: PackedScene = _packed_maps.get(map_name)
+	if packed == null:
+		var path := MAPS % map_name
+		if ResourceLoader.exists(path):
+			packed = load(path) as PackedScene
+			if packed != null: _packed_maps[map_name] = packed
+	return packed
 
 var field: Node2D
 var map: Node2D
@@ -18,6 +30,7 @@ var armed := true
 var _switching := false
 var occluders: Array[Sprite2D] = []
 var _grids: Dictionary = {}
+var _solid_regions: Dictionary = {}
 var _blocked_rects: Dictionary = {}
 var _walls: Dictionary = {}
 var _seen: Dictionary = {}
@@ -89,6 +102,7 @@ func _apply_geometry_bindings(snapshot: Dictionary, rebuild := true) -> void:
 			map.get_node("Solids").add_child(solid)
 			_geometry_nodes.append(solid)
 	_grids.clear()
+	_solid_regions.clear()
 	if rebuild: _build_grid()
 
 func can_enter(next: String) -> bool:
@@ -118,6 +132,7 @@ func _refresh_access_geometry() -> void:
 		else:
 			barrier.disabled = can_enter(str(exit.get_meta("target")))
 	_grids.clear()
+	_solid_regions.clear()
 	_build_grid()
 
 func setup() -> bool:
@@ -208,7 +223,9 @@ func _map_routes() -> Dictionary:
 	for file in DirAccess.get_files_at("res://scenes/Chapter2/Maps"):
 		if not file.ends_with(".tscn"): continue
 		var name := file.get_basename()
-		var layout: Node2D = (load(MAPS % name) as PackedScene).instantiate()
+		var packed := _get_packed_map(name)
+		if packed == null: continue
+		var layout: Node2D = packed.instantiate()
 		var edges: Array = []
 		for exit in layout.get_node("Exits").get_children():
 			edges.append({"to": str(exit.get_meta("target")), "point": exit.position})
@@ -275,8 +292,7 @@ func execute_destination(destination: Dictionary, who: String, serial: int, acti
 func play_replay(_ev: Dictionary) -> void: pass
 
 func load_map(next: String, _spawn: String) -> void:
-	if not ResourceLoader.exists(MAPS % next): return
-	var packed := load(MAPS % next) as PackedScene
+	var packed := _get_packed_map(next)
 	if packed == null: return
 	if map:
 		# 先停掉旧图出口的检测并断开信号，再释放旧图，避免物理回调里改动碰撞体。
@@ -319,9 +335,10 @@ func spawn_point(spawn: String) -> Vector2:
 ## Cross-map placement is only the authored doorway transform or a continuous seam.
 ## Missing authored geometry blocks the transition before the source map is removed.
 func valid_transition(next: String, spawn: String, at: Vector2, use_at: bool) -> bool:
-	if _route_target_next != next or not ResourceLoader.exists(MAPS % next): return false
-	var layout := (load(MAPS % next) as PackedScene).instantiate() as Node2D
-	if layout == null: return false
+	if _route_target_next != next: return false
+	var packed := _get_packed_map(next)
+	if packed == null: return false
+	var layout := packed.instantiate() as Node2D
 	var marker: Marker2D = layout.get_node_or_null("Spawns/" + spawn) as Marker2D if spawn != "" else null
 	var point := at if use_at else (marker.position if marker != null else Vector2.ZERO)
 	var valid := use_at or marker != null
@@ -412,40 +429,49 @@ func _build_grid() -> void:
 	grid.update()
 	_grids[key] = grid
 	_blocked_rects[key] = []
+	var regions: Array[Rect2i] = []
 	var solids := map.get_node_or_null("Solids")
-	if solids == null: return
-	for shape_node in solids.get_children():
-		var cs := shape_node as CollisionShape2D
-		if cs == null or cs.disabled or not (cs.shape is RectangleShape2D): continue
-		var half: Vector2 = (cs.shape as RectangleShape2D).size / 2.0
-		var rect := Rect2(cs.position - half, half * 2.0).grow_individual(10, 1, 10, 14)
-		_blocked_rects[key].append(rect)
-		var x0 := maxi(0, int(ceil((rect.position.x - 8.0) / 16.0)))
-		var y0 := maxi(0, int(ceil((rect.position.y - 8.0) / 16.0)))
-		var x1 := mini(grid.region.size.x - 1, int(floor((rect.end.x - 8.0) / 16.0)))
-		var y1 := mini(grid.region.size.y - 1, int(floor((rect.end.y - 8.0) / 16.0)))
-		if x1 >= x0 and y1 >= y0: grid.fill_solid_region(Rect2i(x0, y0, x1 - x0 + 1, y1 - y0 + 1), true)
+	if solids != null:
+		for shape_node in solids.get_children():
+			var cs := shape_node as CollisionShape2D
+			if cs == null or cs.disabled or not (cs.shape is RectangleShape2D): continue
+			var half: Vector2 = (cs.shape as RectangleShape2D).size / 2.0
+			var rect := Rect2(cs.position - half, half * 2.0).grow_individual(10, 1, 10, 14)
+			_blocked_rects[key].append(rect)
+			var x0 := maxi(0, int(ceil((rect.position.x - 8.0) / 16.0)))
+			var y0 := maxi(0, int(ceil((rect.position.y - 8.0) / 16.0)))
+			var x1 := mini(grid.region.size.x - 1, int(floor((rect.end.x - 8.0) / 16.0)))
+			var y1 := mini(grid.region.size.y - 1, int(floor((rect.end.y - 8.0) / 16.0)))
+			if x1 >= x0 and y1 >= y0:
+				var r := Rect2i(x0, y0, x1 - x0 + 1, y1 - y0 + 1)
+				grid.fill_solid_region(r, true)
+				regions.append(r)
+	_solid_regions[key] = regions
 
 func nav_grid(walker: CharacterBody2D) -> AStarGrid2D:
 	var base: AStarGrid2D = _grids[key]
+	var other_cells: Array[Vector2i] = []
+	for other in field.actors.values():
+		if not is_instance_valid(other) or other == walker or other.get_parent() != walker.get_parent(): continue
+		var first := Vector2i(((other.position - Vector2(19, 15) - base.offset) / base.cell_size).ceil())
+		var last := Vector2i(((other.position + Vector2(19, 15) - base.offset) / base.cell_size).floor())
+		for y in range(first.y, last.y + 1):
+			for x in range(first.x, last.x + 1):
+				var cell := Vector2i(x, y)
+				if base.region.has_point(cell) and not base.is_point_solid(cell):
+					other_cells.append(cell)
+	if other_cells.is_empty():
+		return base
 	var grid := AStarGrid2D.new()
 	grid.region = base.region
 	grid.cell_size = base.cell_size
 	grid.offset = base.offset
 	grid.diagonal_mode = base.diagonal_mode
 	grid.update()
-	for y in range(base.region.position.y, base.region.end.y):
-		for x in range(base.region.position.x, base.region.end.x):
-			var cell := Vector2i(x, y)
-			if base.is_point_solid(cell): grid.set_point_solid(cell)
-	for other in field.actors.values():
-		if not is_instance_valid(other) or other == walker or other.get_parent() != walker.get_parent(): continue
-		var first := Vector2i(((other.position - Vector2(19, 15) - grid.offset) / grid.cell_size).ceil())
-		var last := Vector2i(((other.position + Vector2(19, 15) - grid.offset) / grid.cell_size).floor())
-		for y in range(first.y, last.y + 1):
-			for x in range(first.x, last.x + 1):
-				var cell := Vector2i(x, y)
-				if grid.region.has_point(cell): grid.set_point_solid(cell)
+	for r: Rect2i in _solid_regions.get(key, []):
+		grid.fill_solid_region(r, true)
+	for cell in other_cells:
+		grid.set_point_solid(cell, true)
 	return grid
 
 func manual_exit_target(point: Vector2) -> String:
