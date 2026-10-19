@@ -7,4 +7,4 @@
 | `reward_locker.png` | 80×32 | (40,32) | 第一章活动厅北墙的矮柜，四扇独立小门和纸签 |
 | `cylinder_player.png` | 32×40 | (16,40) | 矮柜右侧小支架上的手摇装置 |
 
-从仓库根目录执行 `python godot_csharp/AssetsSource/Internal/Props/Chapter1Rewards/build.py`，再执行 `python godot_csharp/tools/build_awakening_map.py` 和 Godot 资源导入。构建地图的家具表统一生成精灵、脚底碰撞和导航足迹，不使用整张画布作碰撞。名签只画抽象墨痕；悬停名与点击心声来自 `.story`。
+从仓库根目录执行 `python godot_csharp/AssetsSource/Internal/Props/Chapter1Rewards/build.py` 生成并发布该资源族。现役地图由 `tools/chapter2_art/rooms.py` 与 `tools/build_chapter2_scenes.py` 维护；该资源族的存在不自动构成生产接线。脚底碰撞由现役家具表或原生DV的几何声明提供，图像不代替互动资格与内容来源。

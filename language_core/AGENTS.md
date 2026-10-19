@@ -113,9 +113,8 @@ session/10-subjective.dv记录实际收闻的专业请求、本人回复及同�
 
 ```powershell
 dotnet build language_core/LanguageCore.sln -c Release --disable-build-servers
-python language_core/tools/build_core.py --out artifacts/partial-bootstrap-core/domain-build-<new-run>
 python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstrap-core/compiler-<new-run>
-python language_core/tools/run_verification.py --config <process-plan.json> --out artifacts/partial-bootstrap-core/<new-run>
+python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<new-run>
 python language_core/tools/check_dv.py --format json <source.dv>
 python language_core/tools/dv_lsp.py
 ```
@@ -124,9 +123,9 @@ python language_core/tools/dv_lsp.py
 
 源码和目标生成物由对应DV构建链连接。架构、接口和命令变动同步本文件；内容设计合并至docs/design-standard.md。阶段成果继续使用artifacts/partial-bootstrap-core/，每轮修改按根流程提交与推送。
 
-run_verification的普通编译/会话执行持续写入当轮stdout/stderr原始文件，结束后记录进程时长与来源封存。可在会话期间查看已经实际发生的行动；完整停止轨迹与只读判定另行记录。
+run_debug沿生产组合入口封存源码、stdout/stderr、实际事件与玩家正文；停止、时域、剧情与封存完整性分别记录。
 
-用户2026-10-12停止独立Agent复评的裁定继续适用。新语法运行使用 verification/run-surface-v2.json 的单次正式会话计划；不默认执行旧多场景计划。
+正式一级入口为game/debug-run.dv与tools/run_debug.py；工具不自动执行旧多场景比较计划。
 
 
 当前机器缺少 .NET 8 运行时而有 .NET 9；本轮记录显式使用 DOTNET_ROLL_FORWARD=Major 运行 net8.0 产物。源码仍以 .NET 8 为目标。NuGetAudit=false 仅关闭本地构建时不可达的漏洞索引查询，不改变 DV 检查器或游戏条件。
@@ -437,3 +436,9 @@ Record已有冻结/可变索引继续使用；不足8槽的文本键记录在第
 ## 人工认知与阅读期调度（2026-10-19，用户追加裁定）
 
 用户明确采纳人工玩家省去重度预演、阅读时提前处理NPC。人工轻量认知、实际replay后的完整刷新及source_actor_revision小型见证的具体合同见verification/AGENTS.md与core/README.md。AI控制与NPC仍使用完整共同认知。宿主阅读期继续使用同一Prepare/现场回执/Complete，具体显示与执行队列由godot_csharp/AGENTS.md维护；此为机制变化，不作同条件纯计算提速结论，本批继续暂停验证。
+
+## 冗余源与Python入口清理（2026-10-19）
+
+生产编译依赖由game/entry.dv的相对include声明；调试入口debug-run.dv继续include生产入口。未接线的旧语法提案、旧回忆fixture、旧固定比较配置及其独立流程包装已移除，来源保留在Git和原始证据。当前Python入口分为共享构建工具链（dv_toolchain/dv_sources、build_session、bootstrap_compiler）、编辑器接口（check_dv/dv_lsp）和显式诊断/证据工具（run_debug、resume_debug及其依赖）；不再保留重复的Core自举包装或依赖固定scratch编译器的回归入口。checks中仍有独立算法、oracle、机制示例与明确被文档引用的未实现草案，不按生产可达性误删。
+
+本轮只做源码删除、调用关系与文档维护，不构建、不运行探针或正式会话。删除清单、字节指纹及生产include闭包记录于本轮source-cleanup-20261019目录；静态依赖相同不代表先前功能已完成验收。

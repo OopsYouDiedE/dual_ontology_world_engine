@@ -222,3 +222,7 @@ Main默认audit=false，--dv-audit配置完整证据；GameEngine关闭时普通
 ## 人工认知与阅读期调度（2026-10-19，用户追加裁定）
 
 Main阅读时发送正式dv_next，GameEngine仍单队列后台Prepare。仅远离当前观察房间、且目的地也不进入该房间的NPC可在阅读期间使用现有Godot执行器/Complete实际推进；玩家动作、同房间动作和新可见对白保留在前台队列。正在阅读的正文和HUD不被后继快照替换；实际状态、尚未绘制正文及真实物理执行分别留痕。空呈现的下一调度提示只能发一次，不预写回执或跳过碰撞，不后台代选玩家动作。人工轻量认知的合同由language_core/verification/AGENTS.md维护；本批继续暂停验证。
+
+## 冗余地图接口清理（2026-10-19）
+
+写入退役Awakening.tscn/map_layout.tres的旧地图Python包装移除。现役地图仍由build_chapter2_scenes.py消费chapter2_art配方；共享家具、独立资源族生产器及仍有调用的MCP/编辑器接口保留，不能因名称包含Awakening而删除生产共享资源。旧场景README改为迁移导航，不再列退役回归命令。此清理不重生成资源、不构建或运行游戏，既有project.godot修改保留。

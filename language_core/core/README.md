@@ -1138,3 +1138,9 @@ run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运
 `dvs_prepare_manual_cognition(actor,events,time,parent,chapter)`用于player_actor：保持基础推理/语用/真实收闻，省去普通回合的假说/论证全量重建与speech_choice_values预测。实际成功replay产生manual_replay_refresh，下一次调用共同完整认知后清除。来源验证与候选准入继续执行。AI玩家使用普通自主链，不进入此分支。
 
 `20-speech.dv`的speech_choice_prediction增加source_actor_revision，speaker_prediction读取这个小值，旧事件回退到actor_before.mind.revision；精简存储不因此保留整个人物副本。`Main.gd`可在阅读时发dv_next，并沿唯一正式执行器提前完成远处NPC动作，遇到玩家、同房间动作或新可见对白则交还前台。界面正文冻结与实际世界推进分开记录；后台执行仍使用真实回执和原费用。
+
+### 源码与Python接口维护（2026-10-19）
+
+现役DV组合以game/entry.dv与game/debug-run.dv的相对include为准。Python构建/编辑接口共用tools/dv_toolchain.py和dv_sources.py，生产类库由build_session.py生成，独立自举由bootstrap_compiler.py保存证据，一级输出由run_debug.py记录。旧Core独立构建包装、固定scratch语义回归包装及JSON多会话编排已退役；其历史源码只从Git查阅，不恢复为第二个游戏入口。
+
+验证源码仍保留checks/独立算法、authority/oracle、report及现有编辑器组。删除的旧比较main包装与固定fixture没有生产include依赖；清理记录保留删除前字节指纹。此处仅维护工程入口，不宣称构建或游戏验收完成。

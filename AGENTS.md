@@ -254,3 +254,7 @@ language_core 的现役文件按 core、session、chapter1、chapter2、game 和
 ## 人工认知与阅读期调度（2026-10-19，用户追加裁定）
 
 本轮用户明确采纳人工玩家省去重度预演、阅读时提前处理NPC。这是控制方式与调度机制变化，独立记录于本轮任务目录，不作同条件纯计算提速结论。人工认知和事件策略由language_core/AGENTS.md及verification/AGENTS.md维护；阅读期现场执行和显示队列由godot_csharp/AGENTS.md维护。本批继续暂停验证，先完成整批修改。
+
+## 冗余源与接口清理（2026-10-19）
+
+本轮按用户要求移除未接线DV提案/旧fixture及退役Python编排，现役构建、编辑器、生产会话、独立检查源码和仍有调用的资源接口按依赖保留。模块具体入口维护在language_core及godot_csharp的AGENTS中；删除来源、原因与生产include指纹保存在artifacts/partial-bootstrap-core/real-game-capture-20261019/spatial-interaction-rewrite-20261019/source-cleanup-20261019/。历史原始证据和保护清单不改写；本轮不启动构建、探针、回归或游戏验证。

@@ -61,19 +61,17 @@ checks保留独立算法；重演覆盖dispatch、完整候选遮蔽与Replay_De
 
 scenarios提供原生DV内容和配置，session组织主体演算与执行，checks独立读取轨迹，report产生中文报告。core+session组合为运行器；core+checks与各入口组合为判定程序。oracle单独导出。
 
-人物、世界、话语、规则、参数和oracle使用DV声明；JSON承接执行后的交换数据。旧.story提供迁移来源，Python计划描述文件和进程。run_verification.py负责源码、构建、导出和进程I/O。
+人物、世界、话语、规则、参数和oracle使用DV声明；JSON承接执行后的交换数据。旧.story提供迁移来源；生产逻辑会话由game/debug-run.dv组合，tools/run_debug.py仅负责文件、构建和进程I/O。
 
 ## 运行合同
 
 动作费用使用core/70-reasoning-cost.dv，会话持有成本目录和当前ledger。主体的推知、话语理解、付费重演、竞争论证、规划和回答协议各自保留来源。
 
-session/30-runner 提供 open/prepare/complete/close 会话接口。prepare 保留待执行行动，不先发布物理效果或观察；complete 接受对应 action_event 的实际执行结果与成本，再执行权威法则、感知和传播。命令行逻辑会话通过同一接口使用 formal-model 执行器。session/40-host 导出宿主意图与执行后的呈现数据。Session 类库由 tools/build_session.py 从 DV 源生成，保存与恢复序列化完整会话，不重新初始化认识。
+session/30-runner 提供 open/prepare/complete/close 会话接口。prepare 保留待执行行动，不先发布物理效果或观察；complete 接受对应 action_event 的实际执行结果与成本，再执行权威法则、感知和传播。命令行逻辑会话通过同一接口使用 formal-model 执行器。session/30-runner及game/entry导出宿主意图与执行后的呈现数据。Session 类库由 tools/build_session.py 从 DV 源生成，保存与恢复序列化完整会话，不重新初始化认识。
 
 构建宿主类库：`dotnet build language_core/Session/DuelView.Session.csproj -c Release -p:DvPython=<Python路径>`。此构建不代表 Godot 接入或实际几何执行已经完成。
 
-正式 chapter1-*.dv、session 和 checks 已迁移到 surface-v2 可执行语法，旧 surface-v1-proposal 仅为历史提案。run-surface-v2.json 只导出当前原生第一章、独立 oracle 和机制示例，然后运行一局 enabled 正式会话；搭配 --session-only，不默认启动多场景回归。checks/fixtures/cognitive-semantics.dv 独立运行有限域刻画与配平，不注入第一章人物状态。session/20-speech 的实际收闻与预测均调用 mapping 乘法，正式认知变化通过 core/40-value 的门槛机制记录；未曾采纳的解释被否定时记录拒斥，不记录撤回。
-
-工程进程时限默认为240现实秒，由--process-timeout-seconds配置。--source-root指定源码，--judge-core-root指定判定Core；--rerun-frozen-session使用指定目录的既有程序和输入。游戏预算由场景配置提供。
+正式章节、session和checks使用surface-v2可执行语法。checks/fixtures/cognitive-semantics.dv保留独立刻画机制示例，不注入生产状态；实际收闻与预测继续调用共同mapping/acceptance机制。正式会话入口、时限和证据合同见上级AGENTS及game/debug-run.dv，不另维护旧JSON多会话编排。
 
 ## 输出与维护
 
@@ -333,3 +331,7 @@ Session presentation 保留原有surface/lines，并透传动作source_refs。Ma
 本轮用户明确采纳人工玩家省去重度预演、阅读时提前处理NPC。30-runner对player_actor调用dvs_prepare_manual_cognition：收闻、同处感知、基础推理、语用重审和公共话题继续处理，普通回合不自动全量重建假说/论证或预测所有发言。真实成功replay标记manual_replay_refresh，下一轮沿共同完整认知刷新已付费结果；AI控制及NPC继续完整共同认知。准入、来源和付费判定保持，人工与AI轨迹不能当作同一机制比较。
 
 Main阅读时发送正式dv_next，GameEngine仍单队列后台Prepare。仅远离当前观察房间、且目的地也不进入该房间的NPC可在阅读期间使用现有Godot执行器/Complete实际推进；玩家动作、同房间动作和新可见对白保留在前台队列。正在阅读的正文和HUD不被后继快照替换；实际状态、尚未绘制正文及真实物理执行分别留痕。空呈现的下一调度提示只能发一次，不预写回执或跳过碰撞，不后台代选玩家动作。此为用户授权的调度机制变化，不作同条件提速结论；本批仍暂停验证。
+
+## 冗余入口退役（2026-10-19）
+
+旧独立比较/参数入口、未实施语法提案、未接线回忆fixture及固定比较manifest已从工作源码移除。main-causal.dv仍由dv-check.json的独立检查组消费，保留只读入口；checks/authority、report、现行检查算法与有明确维护用途的fixtures保留。旧过程计划和Python编排不作为新会话入口，历史封存目录不改写。生产与调试include闭包本轮不改，不运行任何会话或回归。
