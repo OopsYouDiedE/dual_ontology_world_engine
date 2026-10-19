@@ -47,7 +47,8 @@ var _stage_bounds_cache: Dictionary = {}
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	_apply_geometry_bindings(snapshot)
-	var next: Dictionary = snapshot.get("access", {}).get("maps", {})
+	var raw_access = snapshot.get("access", {})
+	var next: Dictionary = (raw_access.get("maps", {}) if raw_access is Dictionary and raw_access.get("maps") is Dictionary else {})
 	if next == _access: return
 	_access = next.duplicate(true)
 	if map: _refresh_access_geometry.call_deferred()
@@ -55,7 +56,8 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 ## Native content provides geometric bindings; no story identity or rule is selected here.
 func _apply_geometry_bindings(snapshot: Dictionary, rebuild := true) -> void:
 	if map == null: return
-	var declaration: Dictionary = snapshot.get("geometry_bindings", {}).get(key, {})
+	var raw_bindings = snapshot.get("geometry_bindings", {})
+	var declaration: Dictionary = (raw_bindings.get(key, {}) if raw_bindings is Dictionary and raw_bindings.get(key) is Dictionary else {})
 	var signature := JSON.stringify(declaration)
 	if signature == _geometry_signature: return
 	_geometry_signature = signature

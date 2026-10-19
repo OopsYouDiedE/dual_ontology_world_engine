@@ -438,7 +438,8 @@ func open_settings(page := "rules") -> void:
 	book.closed.connect(close_modal)
 
 func open_campus_map() -> void:
-	var campus: Dictionary = snapshot.get("campus", {})
+	var raw_campus = snapshot.get("campus", {})
+	var campus: Dictionary = raw_campus if raw_campus is Dictionary else {}
 	var body := open_modal(str(campus.get("title", "学园图")), Vector2(1152, 0), "map")
 	var view: Control = CAMPUS_MAP.instantiate()
 	view.show_data(campus)
@@ -512,7 +513,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		close_modal()
 		get_viewport().set_input_as_handled()
 		return
-	var controls: Dictionary = snapshot.get("controls", {})
+	var raw_controls = snapshot.get("controls", {})
+	var controls: Dictionary = raw_controls if raw_controls is Dictionary else {}
 	if modal_kind == "ending":
 		# 结局卡的按钮键（R、C 等）由宿主随事件给出，不是可改键动作；“Enter”按对话继续键处理。
 		if event is not InputEventKey: return

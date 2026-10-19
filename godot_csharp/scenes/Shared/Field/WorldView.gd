@@ -177,7 +177,16 @@ func _site_rooms() -> Dictionary:
 
 func _build_sites() -> void:
 	sites.clear()
-	var defs: Dictionary = snapshot.get("sites", {})
+	var raw_defs = snapshot.get("sites", {})
+	var defs := {}
+	if raw_defs is Dictionary:
+		defs = raw_defs
+	elif raw_defs is Array:
+		for item in raw_defs:
+			if item is Dictionary and item.has("id"):
+				defs[str(item.id)] = item
+			elif item is Array and item.size() == 2 and item[0] is String:
+				defs[item[0]] = item[1]
 	var geometry: Dictionary = adapter.site_geometry(defs)
 	for id in geometry:
 		var def: Dictionary = defs.get(id, {})
