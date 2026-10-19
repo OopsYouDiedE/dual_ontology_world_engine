@@ -6,7 +6,7 @@
 
 逐一重新计算两个 comparison 中 before/after 原始文件的 SHA-256，均与各自记录一致；同时重新计算 record-layout source-manifest 中封存副本与源路径，以及 literal-capacity source-hashes 中封存副本与源路径，未发现记录偏差。这是当前读取时的文件核对，不是运行时防篡改监测。
 
-record-layout 的 before Runtime 为 `4857621e54e8191bd31f9736213af57a1eb99cc91be623e181f39bd70bdd9f17`，after 为 `1fcd15aa32086ca2a3f12c0e357c1ff905c48fe2d90c0749bbde4657cd929941`；两边使用相同 Session（`7940aec4df0c10ea5f535ad79dd9580476bcf5d6a9f6421e92d935c683b32665`）、Probe 与 Stub。不是用当前源冒充旧 Runtime。Stub 将生产 Session 所需 DV 函数替换为中性返回，因此这里只覆盖 Session C# 边界及值表示，没有执行真实 campaign 的 prepare/complete 语义。
+record-layout 的 before Runtime 为 `4857621e54e8191bd31f9736213af57a1eb99cc91be623e181f39bd70bdd9f17`，after 为 `1fcd15aa32086ca2a3f12c0e357c1ff905c48fe2d90c0749bbde4657cd929941`；两边使用相同 Session（`7940aec4df0c10ea5f535ad79dd9580476bcf5d6a9f6421e92d935c683b32665`）、Probe 与 Stub。不是用当前源冒充旧 Runtime。Stub 将生产 Session 所需 DV 函数替换为中性返回，因此这里只覆盖 Session C# 边界及值表示，没有执行真实 campaign 的 prepare/complete 语义。审查时现役 `language_core/Session/Session.cs` 为 `153fa2da6c085750d11c0d2dc69123ffe8eced063155c5d4fcb704eac08cff91`，已不同于隔离工具底本；本样本不能作为现役完整 Session 的验证。
 
 literal-capacity 的 before 编译器来自 `frozen-04-integrated/source` 已存在的 C3 cache，工具明确在 cache 缺失时停止而不重建；after 使用当前 toolchain C3。封存 compiler.dv 实际差异是 surface list literal 的 List 容量发射；同时 `00-data.dv` 将 dv_pair/dv_single/dv_list3 的 push 构造改为 literal，其余所取 core 源在两边一致。两边 Runtime 都是上述 record-layout after，fixture 与 Wrapper 相同。因此该样本考察“容量发射与小列表构造”组合的增量，不是最初 Runtime 到最终整合版本的总收益，也没有拆分两项修改各自贡献。
 

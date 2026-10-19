@@ -1,0 +1,1954 @@
+{
+  "scope": "Independent read-only evidence audit; no design files, no build, no session",
+  "raw_summary": {
+    "format": "dv-raw-dag-v1",
+    "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\takeover-repair-20261018\\motivation-counterfactual-20261018\\csharp-runtime-20261019\\frozen-05-allocations\\standard-yi\\raw-events.dag.jsonl.partial",
+    "source_sha256": "712d5a9f803b5077b8329823ec90d5b6e21b7d2e3219138f34e1ed4d51baa5ac",
+    "source_bytes": 224965742,
+    "validated_frames": 573425,
+    "validated_nodes": 554000,
+    "source_changed_during_scan": false,
+    "committed_events": 19423,
+    "last_committed_event": "e19422",
+    "validated_bytes": 224965742,
+    "last_commit_bytes": 224965742,
+    "residual_tail_bytes": 0,
+    "uncommitted_suffix_bytes": 0,
+    "initial_checkpoint_observed": true,
+    "final_checkpoint_observed": false,
+    "seal_observed": false,
+    "last_checkpoint": {
+      "name": "initial",
+      "root": 27103,
+      "events": 1,
+      "frame": 27106
+    },
+    "checkpoint_commits": [
+      {
+        "name": "initial",
+        "root": 27103,
+        "events": 1,
+        "frame": 27106
+      }
+    ],
+    "invalid_tail": null,
+    "complete_sealing": false,
+    "scope": "validated committed event prefix only; no inferred final session state",
+    "uncompleted_computation": "unknown; calculations without a committed event are not reconstructed",
+    "original_tail_preserved": true
+  },
+  "selected_raw_events": [
+    {
+      "id": "e2660",
+      "type": "action_execution",
+      "actor": "detective",
+      "time": 594,
+      "parents": [
+        "e2659"
+      ]
+    },
+    {
+      "id": "e2661",
+      "type": "answer_submitted",
+      "actor": "detective",
+      "time": 594,
+      "parents": [
+        "e2660"
+      ]
+    },
+    {
+      "id": "e2662",
+      "type": "answer_accepted",
+      "actor": "detective",
+      "time": 594,
+      "parents": [
+        "e2661"
+      ]
+    },
+    {
+      "id": "e3449",
+      "type": "host_completion",
+      "actor": "detective",
+      "time": 661,
+      "parents": [
+        "e3448"
+      ]
+    },
+    {
+      "id": "e3450",
+      "type": "action_execution",
+      "actor": "detective",
+      "time": 661,
+      "parents": [
+        "e3449"
+      ]
+    },
+    {
+      "id": "e6613",
+      "type": "chapter_content_available",
+      "actor": "",
+      "time": 1830,
+      "parents": []
+    },
+    {
+      "id": "e18692",
+      "type": "host_completion",
+      "actor": "detective",
+      "time": 2375,
+      "parents": [
+        "e18691"
+      ]
+    },
+    {
+      "id": "e18693",
+      "type": "action_execution",
+      "actor": "detective",
+      "time": 2375,
+      "parents": [
+        "e18692"
+      ]
+    },
+    {
+      "id": "e18911",
+      "type": "host_completion",
+      "actor": "detective",
+      "time": 2400,
+      "parents": [
+        "e18910"
+      ]
+    },
+    {
+      "id": "e18912",
+      "type": "action_execution",
+      "actor": "detective",
+      "time": 2400,
+      "parents": [
+        "e18911"
+      ]
+    },
+    {
+      "id": "e19415",
+      "type": "cost_quote",
+      "actor": "moran",
+      "time": 2470,
+      "parents": [
+        "e19400"
+      ]
+    },
+    {
+      "id": "e19416",
+      "type": "host_completion",
+      "actor": "moran",
+      "time": 2470,
+      "parents": [
+        "e19415"
+      ]
+    },
+    {
+      "id": "e19417",
+      "type": "action_execution",
+      "actor": "moran",
+      "time": 2470,
+      "parents": [
+        "e19416"
+      ]
+    },
+    {
+      "id": "e19418",
+      "type": "observation",
+      "actor": "moran",
+      "time": 2470,
+      "parents": [
+        "e19417",
+        "e19398"
+      ]
+    },
+    {
+      "id": "e19419",
+      "type": "cost_quote",
+      "actor": "mora",
+      "time": 2470,
+      "parents": [
+        "e19408"
+      ]
+    },
+    {
+      "id": "e19420",
+      "type": "host_completion",
+      "actor": "mora",
+      "time": 2470,
+      "parents": [
+        "e19419"
+      ]
+    },
+    {
+      "id": "e19421",
+      "type": "action_execution",
+      "actor": "mora",
+      "time": 2470,
+      "parents": [
+        "e19420"
+      ]
+    },
+    {
+      "id": "e19422",
+      "type": "observation",
+      "actor": "mora",
+      "time": 2470,
+      "parents": [
+        "e19421",
+        "e19406"
+      ]
+    }
+  ],
+  "projected_action_chains": [
+    {
+      "event_id": "e3434",
+      "type": "action_selected",
+      "actor": "detective",
+      "game_time": 659,
+      "parents": [
+        "e3432",
+        "e3433",
+        "e3206",
+        "e3323",
+        "e2081",
+        "e3380",
+        "e3405",
+        "e3421",
+        "e1763",
+        "e2875",
+        "e1791",
+        "e1806",
+        "e1133",
+        "e2136",
+        "e2942",
+        "e3115",
+        "e3205",
+        "e2020",
+        "e3180",
+        "e2524",
+        "e3201",
+        "e2525",
+        "e3278",
+        "e2878"
+      ],
+      "action_id": "detective.departure.cross-out",
+      "action_kind": "move",
+      "label": "跨过门槛，走进起居厅。",
+      "purpose_sources": [
+        [
+          [
+            "path",
+            "godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story"
+          ],
+          [
+            "line",
+            24
+          ],
+          [
+            "id",
+            "s10_open.003：是否迈出由本人选择"
+          ]
+        ]
+      ],
+      "detail": [
+        [
+          "score",
+          0.98
+        ],
+        [
+          "plan_expansions",
+          1
+        ],
+        [
+          "revision_before",
+          383
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "106045"
+        ],
+        [
+          "definition_frame",
+          "109481"
+        ]
+      ]
+    },
+    {
+      "event_id": "e3435",
+      "type": "planning_choice",
+      "actor": "detective",
+      "game_time": 659,
+      "parents": [
+        "e3434"
+      ],
+      "action_id": "detective.departure.cross-out",
+      "action_kind": "move",
+      "label": "跨过门槛，走进起居厅。",
+      "purpose_sources": [
+        [
+          [
+            "path",
+            "godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story"
+          ],
+          [
+            "line",
+            24
+          ],
+          [
+            "id",
+            "s10_open.003：是否迈出由本人选择"
+          ]
+        ]
+      ],
+      "detail": [
+        [
+          "score",
+          0.98
+        ],
+        [
+          "plan_expansions",
+          1
+        ],
+        [
+          "stop",
+          "current-affordance-root"
+        ],
+        [
+          "root_best",
+          [
+            [
+              "path",
+              [
+                "detective.departure.cross-out"
+              ]
+            ],
+            [
+              "net_score",
+              0.98
+            ]
+          ]
+        ],
+        [
+          "best_after_successor_layer",
+          [
+            [
+              "path",
+              [
+                "detective.departure.cross-out"
+              ]
+            ],
+            [
+              "net_score",
+              0.98
+            ]
+          ]
+        ],
+        [
+          "completed_layers",
+          1
+        ],
+        [
+          "dependency_expansions",
+          0
+        ],
+        [
+          "dependency_stop",
+          "dependency-closure"
+        ],
+        [
+          "reason_reused",
+          true
+        ],
+        [
+          "cognition_reused",
+          false
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "106055"
+        ],
+        [
+          "definition_frame",
+          "109492"
+        ]
+      ]
+    },
+    {
+      "event_id": "e3448",
+      "type": "cost_quote",
+      "actor": "detective",
+      "game_time": 661,
+      "parents": [
+        "e3435"
+      ],
+      "action_id": "detective.departure.cross-out",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": [],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "106394"
+        ],
+        [
+          "definition_frame",
+          "109844"
+        ]
+      ]
+    },
+    {
+      "event_id": "e3449",
+      "type": "host_completion",
+      "actor": "detective",
+      "game_time": 661,
+      "parents": [
+        "e3448"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": [
+        [
+          "actual",
+          [
+            [
+              "time",
+              2
+            ],
+            [
+              "computation",
+              1
+            ],
+            [
+              "stamina",
+              0
+            ]
+          ]
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "106401"
+        ],
+        [
+          "definition_frame",
+          "109852"
+        ]
+      ]
+    },
+    {
+      "event_id": "e3450",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 661,
+      "parents": [
+        "e3449"
+      ],
+      "action_id": "detective.departure.cross-out",
+      "action_kind": "move",
+      "label": "跨过门槛，走进起居厅。",
+      "purpose_sources": [
+        [
+          [
+            "path",
+            "godot_csharp/scenes/Awakening/Script/story/第一章/场面/08_终局.story"
+          ],
+          [
+            "line",
+            24
+          ],
+          [
+            "id",
+            "s10_open.003：是否迈出由本人选择"
+          ]
+        ]
+      ],
+      "detail": [
+        [
+          "actual",
+          [
+            [
+              "time",
+              2
+            ],
+            [
+              "computation",
+              1
+            ],
+            [
+              "stamina",
+              0
+            ]
+          ]
+        ],
+        [
+          "revision_before",
+          807
+        ],
+        [
+          "revision_after",
+          808
+        ],
+        [
+          "status",
+          "applied"
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "106484"
+        ],
+        [
+          "definition_frame",
+          "109936"
+        ]
+      ]
+    },
+    {
+      "event_id": "e18683",
+      "type": "action_selected",
+      "actor": "detective",
+      "game_time": 2374,
+      "parents": [
+        "e18679",
+        "e18682",
+        "e18670",
+        "e8866",
+        "e7698",
+        "e17333",
+        "e17752",
+        "e17463",
+        "e17793",
+        "e7182",
+        "e7210",
+        "e11517",
+        "e11570",
+        "e17551",
+        "e17833",
+        "e17637",
+        "e17856",
+        "e17714",
+        "e17910",
+        "e18151",
+        "e18017",
+        "e18631",
+        "e1763",
+        "e2875",
+        "e1791",
+        "e1806",
+        "e1133",
+        "e2136",
+        "e2942",
+        "e6700",
+        "e17224",
+        "e17401",
+        "e7154",
+        "e11460",
+        "e17506",
+        "e17602",
+        "e17676",
+        "e18138",
+        "e18087",
+        "e18246",
+        "e18164",
+        "e8790",
+        "e8736",
+        "e3278",
+        "e2878"
+      ],
+      "action_id": "detective.c2.sample.meter",
+      "action_kind": "inspect",
+      "label": "在源质计安全侧实测，记录读数、采样地点及现场环境标记。",
+      "purpose_sources": [
+        [
+          [
+            "path",
+            "docs/design-standard.md"
+          ],
+          [
+            "line",
+            0
+          ],
+          [
+            "id",
+            "user:2026-10-18-owned-measurement-and-continuing-duty"
+          ]
+        ]
+      ],
+      "detail": [
+        [
+          "score",
+          12.590000000000002
+        ],
+        [
+          "plan_expansions",
+          1
+        ],
+        [
+          "revision_before",
+          898
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "536005"
+        ],
+        [
+          "definition_frame",
+          "554690"
+        ]
+      ]
+    },
+    {
+      "event_id": "e18684",
+      "type": "planning_choice",
+      "actor": "detective",
+      "game_time": 2374,
+      "parents": [
+        "e18683"
+      ],
+      "action_id": "detective.c2.sample.meter",
+      "action_kind": "inspect",
+      "label": "在源质计安全侧实测，记录读数、采样地点及现场环境标记。",
+      "purpose_sources": [
+        [
+          [
+            "path",
+            "docs/design-standard.md"
+          ],
+          [
+            "line",
+            0
+          ],
+          [
+            "id",
+            "user:2026-10-18-owned-measurement-and-continuing-duty"
+          ]
+        ]
+      ],
+      "detail": [
+        [
+          "score",
+          12.590000000000002
+        ],
+        [
+          "plan_expansions",
+          1
+        ],
+        [
+          "stop",
+          "current-affordance-root"
+        ],
+        [
+          "root_best",
+          [
+            [
+              "path",
+              [
+                "detective.c2.sample.meter"
+              ]
+            ],
+            [
+              "net_score",
+              12.590000000000002
+            ]
+          ]
+        ],
+        [
+          "best_after_successor_layer",
+          [
+            [
+              "path",
+              [
+                "detective.c2.sample.meter"
+              ]
+            ],
+            [
+              "net_score",
+              12.590000000000002
+            ]
+          ]
+        ],
+        [
+          "completed_layers",
+          1
+        ],
+        [
+          "dependency_expansions",
+          71
+        ],
+        [
+          "dependency_stop",
+          "dependency-closure"
+        ],
+        [
+          "reason_reused",
+          true
+        ],
+        [
+          "cognition_reused",
+          false
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "536011"
+        ],
+        [
+          "definition_frame",
+          "554697"
+        ]
+      ]
+    },
+    {
+      "event_id": "e18691",
+      "type": "cost_quote",
+      "actor": "detective",
+      "game_time": 2375,
+      "parents": [
+        "e18684"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": [],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "536070"
+        ],
+        [
+          "definition_frame",
+          "554763"
+        ]
+      ]
+    },
+    {
+      "event_id": "e18692",
+      "type": "host_completion",
+      "actor": "detective",
+      "game_time": 2375,
+      "parents": [
+        "e18691"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": [
+        [
+          "actual",
+          [
+            [
+              "time",
+              1
+            ],
+            [
+              "computation",
+              1
+            ],
+            [
+              "stamina",
+              0
+            ]
+          ]
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "536077"
+        ],
+        [
+          "definition_frame",
+          "554771"
+        ]
+      ]
+    },
+    {
+      "event_id": "e18693",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2375,
+      "parents": [
+        "e18692"
+      ],
+      "action_id": "detective.c2.sample.meter",
+      "action_kind": "inspect",
+      "label": "在源质计安全侧实测，记录读数、采样地点及现场环境标记。",
+      "purpose_sources": [
+        [
+          [
+            "path",
+            "docs/design-standard.md"
+          ],
+          [
+            "line",
+            0
+          ],
+          [
+            "id",
+            "user:2026-10-18-owned-measurement-and-continuing-duty"
+          ]
+        ]
+      ],
+      "detail": [
+        [
+          "actual",
+          [
+            [
+              "time",
+              1
+            ],
+            [
+              "computation",
+              1
+            ],
+            [
+              "stamina",
+              0
+            ]
+          ]
+        ],
+        [
+          "revision_before",
+          4547
+        ],
+        [
+          "revision_after",
+          4548
+        ],
+        [
+          "status",
+          "applied"
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "536135"
+        ],
+        [
+          "definition_frame",
+          "554830"
+        ]
+      ]
+    },
+    {
+      "event_id": "e18875",
+      "type": "action_selected",
+      "actor": "detective",
+      "game_time": 2399,
+      "parents": [
+        "e18873",
+        "e18874",
+        "e18869",
+        "e8866",
+        "e7698",
+        "e17333",
+        "e17752",
+        "e17463",
+        "e17793",
+        "e7182",
+        "e7210",
+        "e11517",
+        "e11570",
+        "e17551",
+        "e17833",
+        "e17637",
+        "e17856",
+        "e17714",
+        "e17910",
+        "e18138",
+        "e18246",
+        "e18151",
+        "e1763",
+        "e2875",
+        "e1791",
+        "e1806",
+        "e1133",
+        "e2136",
+        "e2942",
+        "e18737",
+        "e6700",
+        "e17224",
+        "e17401",
+        "e7154",
+        "e11460",
+        "e17506",
+        "e17602",
+        "e17676",
+        "e18164",
+        "e18087",
+        "e8790",
+        "e18694",
+        "e8736",
+        "e3278",
+        "e2878"
+      ],
+      "action_id": "detective.wait.first_night.1",
+      "action_kind": "wait.first_night.1",
+      "label": "留在原处，等候本人已知的下一次作息机会（1分钟）。",
+      "purpose_sources": [
+        [
+          [
+            "path",
+            "language_core/verification/scenarios/chapter1-night.dv"
+          ],
+          [
+            "line",
+            0
+          ],
+          [
+            "id",
+            "authorized-first-night-20261016.own-bounded-wait"
+          ]
+        ]
+      ],
+      "detail": [
+        [
+          "score",
+          0.01
+        ],
+        [
+          "plan_expansions",
+          2
+        ],
+        [
+          "revision_before",
+          904
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "540341"
+        ],
+        [
+          "definition_frame",
+          "559218"
+        ]
+      ]
+    },
+    {
+      "event_id": "e18876",
+      "type": "planning_choice",
+      "actor": "detective",
+      "game_time": 2399,
+      "parents": [
+        "e18875"
+      ],
+      "action_id": "detective.wait.first_night.1",
+      "action_kind": "wait.first_night.1",
+      "label": "留在原处，等候本人已知的下一次作息机会（1分钟）。",
+      "purpose_sources": [
+        [
+          [
+            "path",
+            "language_core/verification/scenarios/chapter1-night.dv"
+          ],
+          [
+            "line",
+            0
+          ],
+          [
+            "id",
+            "authorized-first-night-20261016.own-bounded-wait"
+          ]
+        ]
+      ],
+      "detail": [
+        [
+          "score",
+          0.01
+        ],
+        [
+          "plan_expansions",
+          2
+        ],
+        [
+          "stop",
+          "complete-depth"
+        ],
+        [
+          "root_best",
+          [
+            [
+              "path",
+              [
+                "detective.wait.first_night.1"
+              ]
+            ],
+            [
+              "net_score",
+              0.01
+            ]
+          ]
+        ],
+        [
+          "best_after_successor_layer",
+          []
+        ],
+        [
+          "completed_layers",
+          2
+        ],
+        [
+          "dependency_expansions",
+          0
+        ],
+        [
+          "dependency_stop",
+          "dependency-closure"
+        ],
+        [
+          "reason_reused",
+          true
+        ],
+        [
+          "cognition_reused",
+          false
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "540350"
+        ],
+        [
+          "definition_frame",
+          "559228"
+        ]
+      ]
+    },
+    {
+      "event_id": "e18910",
+      "type": "cost_quote",
+      "actor": "detective",
+      "game_time": 2400,
+      "parents": [
+        "e18876"
+      ],
+      "action_id": "detective.wait.first_night.1",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": [],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "541932"
+        ],
+        [
+          "definition_frame",
+          "560844"
+        ]
+      ]
+    },
+    {
+      "event_id": "e18911",
+      "type": "host_completion",
+      "actor": "detective",
+      "game_time": 2400,
+      "parents": [
+        "e18910"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": [
+        [
+          "actual",
+          [
+            [
+              "time",
+              1
+            ],
+            [
+              "computation",
+              1
+            ],
+            [
+              "stamina",
+              0
+            ]
+          ]
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "541939"
+        ],
+        [
+          "definition_frame",
+          "560852"
+        ]
+      ]
+    },
+    {
+      "event_id": "e18912",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2400,
+      "parents": [
+        "e18911"
+      ],
+      "action_id": "detective.wait.first_night.1",
+      "action_kind": "wait.first_night.1",
+      "label": "留在原处，等候本人已知的下一次作息机会（1分钟）。",
+      "purpose_sources": [
+        [
+          [
+            "path",
+            "language_core/verification/scenarios/chapter1-night.dv"
+          ],
+          [
+            "line",
+            0
+          ],
+          [
+            "id",
+            "authorized-first-night-20261016.own-bounded-wait"
+          ]
+        ]
+      ],
+      "detail": [
+        [
+          "actual",
+          [
+            [
+              "time",
+              1
+            ],
+            [
+              "computation",
+              1
+            ],
+            [
+              "stamina",
+              0
+            ]
+          ]
+        ],
+        [
+          "revision_before",
+          4575
+        ],
+        [
+          "revision_after",
+          4576
+        ],
+        [
+          "status",
+          "applied"
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "542007"
+        ],
+        [
+          "definition_frame",
+          "560921"
+        ]
+      ]
+    }
+  ],
+  "detective_last_execution": {
+    "event_id": "e18912",
+    "type": "action_execution",
+    "actor": "detective",
+    "game_time": 2400,
+    "parents": [
+      "e18911"
+    ],
+    "action_id": "detective.wait.first_night.1",
+    "action_kind": "wait.first_night.1",
+    "label": "留在原处，等候本人已知的下一次作息机会（1分钟）。",
+    "purpose_sources": [
+      [
+        [
+          "path",
+          "language_core/verification/scenarios/chapter1-night.dv"
+        ],
+        [
+          "line",
+          0
+        ],
+        [
+          "id",
+          "authorized-first-night-20261016.own-bounded-wait"
+        ]
+      ]
+    ],
+    "detail": [
+      [
+        "actual",
+        [
+          [
+            "time",
+            1
+          ],
+          [
+            "computation",
+            1
+          ],
+          [
+            "stamina",
+            0
+          ]
+        ]
+      ],
+      [
+        "revision_before",
+        4575
+      ],
+      [
+        "revision_after",
+        4576
+      ],
+      [
+        "status",
+        "applied"
+      ]
+    ],
+    "raw_event_ref": [
+      [
+        "format",
+        "dv-raw-dag-v1"
+      ],
+      [
+        "journal",
+        "raw-events.dag.jsonl"
+      ],
+      [
+        "partial_journal",
+        "raw-events.dag.jsonl.partial"
+      ],
+      [
+        "node_id",
+        "542007"
+      ],
+      [
+        "definition_frame",
+        "560921"
+      ]
+    ]
+  },
+  "answer_acceptance": [
+    {
+      "event_id": "e2662",
+      "type": "answer_accepted",
+      "actor": "detective",
+      "game_time": 594,
+      "parents": [
+        "e2661"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": [
+        [
+          "reason",
+          "accepted"
+        ],
+        [
+          "accepted",
+          true
+        ],
+        [
+          "literal_truth",
+          "true"
+        ],
+        [
+          "epistemic_support",
+          "true"
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "87432"
+        ],
+        [
+          "definition_frame",
+          "90096"
+        ]
+      ]
+    },
+    {
+      "event_id": "e2761",
+      "type": "answer_accepted",
+      "actor": "detective",
+      "game_time": 605,
+      "parents": [
+        "e2760"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": [
+        [
+          "reason",
+          "accepted"
+        ],
+        [
+          "accepted",
+          true
+        ],
+        [
+          "literal_truth",
+          "true"
+        ],
+        [
+          "epistemic_support",
+          "true"
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "90021"
+        ],
+        [
+          "definition_frame",
+          "92784"
+        ]
+      ]
+    },
+    {
+      "event_id": "e3021",
+      "type": "answer_accepted",
+      "actor": "detective",
+      "game_time": 631,
+      "parents": [
+        "e3020"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": [
+        [
+          "reason",
+          "accepted"
+        ],
+        [
+          "accepted",
+          true
+        ],
+        [
+          "literal_truth",
+          "true"
+        ],
+        [
+          "epistemic_support",
+          "true"
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "95996"
+        ],
+        [
+          "definition_frame",
+          "99019"
+        ]
+      ]
+    },
+    {
+      "event_id": "e3274",
+      "type": "answer_accepted",
+      "actor": "detective",
+      "game_time": 654,
+      "parents": [
+        "e3273"
+      ],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": [
+        [
+          "reason",
+          "accepted"
+        ],
+        [
+          "accepted",
+          true
+        ],
+        [
+          "literal_truth",
+          "true"
+        ],
+        [
+          "epistemic_support",
+          "true"
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "101750"
+        ],
+        [
+          "definition_frame",
+          "105026"
+        ]
+      ]
+    }
+  ],
+  "chapter_content_available": [
+    {
+      "event_id": "e6613",
+      "type": "chapter_content_available",
+      "actor": "",
+      "game_time": 1830,
+      "parents": [],
+      "action_id": "",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": [
+        [
+          "chapter",
+          2
+        ],
+        [
+          "movement",
+          false
+        ]
+      ],
+      "raw_event_ref": [
+        [
+          "format",
+          "dv-raw-dag-v1"
+        ],
+        [
+          "journal",
+          "raw-events.dag.jsonl"
+        ],
+        [
+          "partial_journal",
+          "raw-events.dag.jsonl.partial"
+        ],
+        [
+          "node_id",
+          "164919"
+        ],
+        [
+          "definition_frame",
+          "171534"
+        ]
+      ]
+    }
+  ],
+  "detective_tail_presentations": [
+    {
+      "status": "applied",
+      "actor": "detective",
+      "action_id": "detective.wait.first_night.60",
+      "action_kind": "wait.first_night.60",
+      "execution_event": "e18630",
+      "source_refs": [
+        [
+          [
+            "path",
+            "language_core/verification/scenarios/chapter1-night.dv"
+          ],
+          [
+            "line",
+            0
+          ],
+          [
+            "id",
+            "authorized-first-night-20261016.own-bounded-wait"
+          ]
+        ]
+      ],
+      "voice": "narration",
+      "surface_voice": "narration",
+      "game_time": 2370,
+      "visible": true,
+      "surface": "留在原处，等候本人已知的下一次作息机会（60分钟）。",
+      "lines": [],
+      "judgment": false,
+      "speaker_name": "侦探"
+    },
+    {
+      "status": "applied",
+      "actor": "detective",
+      "action_id": "detective.c2.move.document_workshop.central_hall",
+      "action_kind": "move",
+      "execution_event": "e18648",
+      "source_refs": [
+        [
+          [
+            "path",
+            "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story"
+          ],
+          [
+            "line",
+            9
+          ],
+          [
+            "id",
+            "routes-and-boundaries"
+          ]
+        ]
+      ],
+      "voice": "narration",
+      "surface_voice": "narration",
+      "game_time": 2372,
+      "visible": true,
+      "surface": "从文献工房穿过廊门，来到中央厅。",
+      "lines": [],
+      "judgment": false,
+      "speaker_name": "侦探"
+    },
+    {
+      "status": "applied",
+      "actor": "detective",
+      "action_id": "detective.c2.move.central_hall.outdoor_meter",
+      "action_kind": "move",
+      "execution_event": "e18669",
+      "source_refs": [
+        [
+          [
+            "path",
+            "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story"
+          ],
+          [
+            "line",
+            9
+          ],
+          [
+            "id",
+            "routes-and-boundaries"
+          ]
+        ]
+      ],
+      "voice": "narration",
+      "surface_voice": "narration",
+      "game_time": 2374,
+      "visible": true,
+      "surface": "从中央厅穿过廊门，来到户外仪器阵。",
+      "lines": [],
+      "judgment": false,
+      "speaker_name": "侦探"
+    },
+    {
+      "status": "applied",
+      "actor": "detective",
+      "action_id": "detective.c2.sample.meter",
+      "action_kind": "inspect",
+      "execution_event": "e18693",
+      "source_refs": [
+        [
+          [
+            "path",
+            "docs/design-standard.md"
+          ],
+          [
+            "line",
+            0
+          ],
+          [
+            "id",
+            "user:2026-10-18-owned-measurement-and-continuing-duty"
+          ]
+        ]
+      ],
+      "voice": "visible-inspection",
+      "surface_voice": "narration",
+      "game_time": 2375,
+      "visible": true,
+      "surface": "在源质计安全侧实测，记录读数、采样地点及现场环境标记。",
+      "lines": [],
+      "judgment": false,
+      "speaker_name": "侦探"
+    },
+    {
+      "status": "applied",
+      "actor": "detective",
+      "action_id": "detective.c2.move.outdoor_meter.central_hall",
+      "action_kind": "move",
+      "execution_event": "e18711",
+      "source_refs": [
+        [
+          [
+            "path",
+            "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story"
+          ],
+          [
+            "line",
+            9
+          ],
+          [
+            "id",
+            "routes-and-boundaries"
+          ]
+        ]
+      ],
+      "voice": "narration",
+      "surface_voice": "narration",
+      "game_time": 2377,
+      "visible": true,
+      "surface": "从户外仪器阵穿过廊门，来到中央厅。",
+      "lines": [],
+      "judgment": false,
+      "speaker_name": "侦探"
+    },
+    {
+      "status": "applied",
+      "actor": "detective",
+      "action_id": "detective.c2.move.central_hall.document_workshop",
+      "action_kind": "move",
+      "execution_event": "e18736",
+      "source_refs": [
+        [
+          [
+            "path",
+            "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story"
+          ],
+          [
+            "line",
+            9
+          ],
+          [
+            "id",
+            "routes-and-boundaries"
+          ]
+        ]
+      ],
+      "voice": "narration",
+      "surface_voice": "narration",
+      "game_time": 2379,
+      "visible": true,
+      "surface": "从中央厅穿过廊门，来到文献工房。",
+      "lines": [],
+      "judgment": false,
+      "speaker_name": "侦探"
+    },
+    {
+      "status": "applied",
+      "actor": "detective",
+      "action_id": "detective.wait.first_night.20",
+      "action_kind": "wait.first_night.20",
+      "execution_event": "e18868",
+      "source_refs": [
+        [
+          [
+            "path",
+            "language_core/verification/scenarios/chapter1-night.dv"
+          ],
+          [
+            "line",
+            0
+          ],
+          [
+            "id",
+            "authorized-first-night-20261016.own-bounded-wait"
+          ]
+        ]
+      ],
+      "voice": "narration",
+      "surface_voice": "narration",
+      "game_time": 2399,
+      "visible": true,
+      "surface": "留在原处，等候本人已知的下一次作息机会（20分钟）。",
+      "lines": [],
+      "judgment": false,
+      "speaker_name": "侦探"
+    },
+    {
+      "status": "applied",
+      "actor": "detective",
+      "action_id": "detective.wait.first_night.1",
+      "action_kind": "wait.first_night.1",
+      "execution_event": "e18912",
+      "source_refs": [
+        [
+          [
+            "path",
+            "language_core/verification/scenarios/chapter1-night.dv"
+          ],
+          [
+            "line",
+            0
+          ],
+          [
+            "id",
+            "authorized-first-night-20261016.own-bounded-wait"
+          ]
+        ]
+      ],
+      "voice": "narration",
+      "surface_voice": "narration",
+      "game_time": 2400,
+      "visible": true,
+      "surface": "留在原处，等候本人已知的下一次作息机会（1分钟）。",
+      "lines": [],
+      "judgment": false,
+      "speaker_name": "侦探"
+    }
+  ],
+  "interpretation": {
+    "max_executed_time": 2470,
+    "start_time": 480,
+    "executed_elapsed_game_minutes": 1990,
+    "fifth_day_reached": false,
+    "geometry_verified": false,
+    "raw_unprojected_events": 8,
+    "full_seal": false,
+    "narrative_ending": "not established",
+    "unknown_name_rendering": "Observed early self introductions and subsequent dialogue labeled unknown; whether names should be known requires epistemic source review; no design read"
+  }
+}
