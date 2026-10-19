@@ -238,3 +238,6 @@ Main阅读时发送正式dv_next，GameEngine仍单队列后台Prepare。仅远�
 profile_dv_capture.py新增--speed，默认4保留独立历史测量口径，一倍交互复测显式--speed 1。捕获脚本在run.json写出前读取同一--dv-speed，禁止元数据写4而实际窗口为1。input.json的key可带duration_ms（1至5000现实毫秒），通过普通Input.parse_input_event按下、忽略时间缩放的计时器松开，并记录实际松键时刻；不写玩家坐标、DV状态或动作回执。
 
 用户授权Luna依据新会话可见截图操控卧室到走廊，主代理查看关键PNG并核对实际输入、源侧门道回执和独立现实耗时。操作代理不读设计、源码、隐藏测量、旧记录或预写路线。此为指定空间行为复测，不能称为完整盲玩或剧情通关；性能分析器及截图开销纳入本轮现实耗时，采样尾部与封存分列。
+
+## 被动卡顿与位置记录（2026-10-19）
+RuntimeDiagnostics按真实frame_post_draw记录>=50ms间隔、实际碰撞体房间变化和首次进入视口的节点；视口命中不代表穿透遮挡可见或人物已认出，须核对PNG。GameEngine命令独立编号，记录Prepare、Complete、快照、交付及DV内部阶段；PollTimings只读消费在线副本，关闭归档保留完整原队列。采集器live-timing按200ms追加，keyframes关联随后真实PNG；截图及日志自身开销单独计时。report_runtime_hitches.py只读分析每个绘制间隔与>=100ms命令等待，墙钟重叠分解不等于CPU归因，重叠优先与未知残差明确记录，正常行走/阅读/人工停顿单列。保留未闭合阶段，不补猜原因。测试由Luna仅依本轮图像经既有InputEvent协议操纵，主审查核对关键PNG；不代选剧情答案。

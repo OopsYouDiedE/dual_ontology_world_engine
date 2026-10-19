@@ -20,6 +20,11 @@ fn c1_op_wake_room(id):
         return "R07"
     return "R08"
 
+fn c1_op_initial_room(id):
+    if id == "detective":
+        return c1_op_wake_room(id)
+    return "hall"
+
 fn c1_op_name(id, detective_name):
     if id == "detective":
         return detective_name
@@ -204,7 +209,8 @@ fn c1_op_morning_candidates():
     var people = c1_op_people()
     var i = 0
     while i < rt_count(people):
-        rt_push(result, dv_with(c1_op_wake_action(people[i]), "personal_purpose", {"subject": people[i], "id": "current-self-observation", "basis": dv_single(c1_memory_source(people[i]))}))
+        if people[i] == "detective":
+            rt_push(result, dv_with(c1_op_wake_action(people[i]), "personal_purpose", {"subject": people[i], "id": "current-self-observation", "basis": dv_single(c1_memory_source(people[i]))}))
         i = i + 1
     var wear = c1_once(c1_action("detective.opening.wear-coat", "inspect", dv_all(dv_pair(c1_at("detective", "R05"), dv_fact(dv_ref("coat", "identity", "owner"), "detective"))), c1_at("detective", "R05"), "opening.wear-coat", [dv_ref("coat", "state", "worn_by")], c1_op_source(6, "s1_wake.006; s2_meet.008")))
     rt_push(result, dv_with(wear, "owner", "detective"))
@@ -301,7 +307,7 @@ fn c1_op_install_world(world, detective_name):
     var people = c1_op_people()
     var i = 0
     while i < rt_count(people):
-        result = dv_store(result, dv_ref(people[i], "state", "location"), dv_field(c1_op_wake_room(people[i])))
+        result = dv_store(result, dv_ref(people[i], "state", "location"), dv_field(c1_op_initial_room(people[i])))
         result = dv_store(result, dv_ref(people[i], "body", "awake"), dv_with(dv_field(true), "basis", dv_single(c1_memory_source(people[i]))))
         i = i + 1
     var rules = c1_op_rules()
@@ -320,8 +326,8 @@ fn c1_op_install_actor(actor, detective_name):
         mind = dv_add_object(mind, c1_local_object(objects[i].id))
         i = i + 1
     if dv_has(c1_op_people(), id):
-        mind = dv_store(mind, dv_ref(id, "state", "location"), dv_field(c1_op_wake_room(id)))
-        actor = dv_with(actor, "location", c1_op_wake_room(id))
+        mind = dv_store(mind, dv_ref(id, "state", "location"), dv_field(c1_op_initial_room(id)))
+        actor = dv_with(actor, "location", c1_op_initial_room(id))
         var own = c1_op_person_object(id, detective_name)
         var fields = own.facets.state
         var self_source = c1_op_source(19, "s2_tea.001;self-name-and-profession")

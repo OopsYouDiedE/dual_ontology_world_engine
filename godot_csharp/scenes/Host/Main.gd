@@ -48,6 +48,9 @@ func _ready() -> void:
 	view_trace.name = "PlayerViewTrace"
 	add_child(view_trace)
 	view_trace.configure(self, engine.RecordVisible, engine.RecordInput)
+	var diagnostics := preload("res://scenes/Host/RuntimeDiagnostics.gd").new()
+	add_child(diagnostics)
+	diagnostics.configure(self)
 	field_executor = FIELD_EXECUTOR.new()
 	field_executor.name = "DvFieldExecutor"
 	add_child(field_executor)
@@ -258,11 +261,14 @@ func _presentation_lines(result: Dictionary) -> Array:
 	return lines
 
 func _apply(snapshot: Dictionary) -> void:
+	_timing("ui_apply_begin")
 	if _view_resource != "" and str(snapshot.resource) != _view_resource:
 		_view(snapshot, false)
+		_timing("ui_apply_end")
 		return
 	if is_instance_valid(ui): ui.apply_snapshot(snapshot)
 	if is_instance_valid(field): field.apply_snapshot(snapshot)
+	_timing("ui_apply_end")
 
 func begin_shutdown() -> void:
 	if _closing: return

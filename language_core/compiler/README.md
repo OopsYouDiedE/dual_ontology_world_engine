@@ -89,3 +89,5 @@ mapping 当前要求直接以具名映射调用作为乘法左项，尚非可任
 新增零参数Bool ABI `rt_audit_mode()`，由Runtime.R的执行上下文策略提供；compiler.dv维护arity与类型识别。独立程序默认审计，宿主Session按实例作用域覆盖。关闭raw_event不会读取或冻结参数，开启raw_open要求审计策略。
 
 记录索引保持有序pair及重复键规则：大记录直接建索引，小记录在第四次文本键查询时建索引。冻结节点构造同时计算存储身份哈希和值兼容哈希，后者供same_value拒绝不相等值，碰撞仍回到原深比。数字兼容哈希允许碰撞，以保持Rational与double的原有相等合同；不是持久文件摘要或跨进程指纹。
+
+平台ABI新增rt_phase(stage, actor)，二参数，返回true；Runtime.cs以AsyncLocal范围调用外部阶段观察器，compiler.dv登记元数。无观察器不产生输出；不是DV时间、事件或执行回执。

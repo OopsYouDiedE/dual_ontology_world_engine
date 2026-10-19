@@ -446,3 +446,6 @@ Record已有冻结/可变索引继续使用；不足8槽的文本键记录在第
 ## 现场门槛起点（2026-10-19）
 
 Godot的源侧可走门道可用于departure_room起点核对；门道不产生entered_room目标到达或观察。该修复不改变DV移动候选、失败屏蔽、结算费用与判定；本次原失败会话保留，不删除失败事件恢复选项。普通人工窗口默认一倍速，独立测量显式倍率仍分列，具体几何合同由godot_csharp/AGENTS.md维护。
+
+## 被动阶段观测（2026-10-19）
+Runtime新增rt_phase(stage, actor)二参数Bool ABI，经AsyncLocal作用域调用只读观察器。无观察器时返回true；不写入DV值、事件或计时规则。DvSession.PhaseObserver按Run作用域隔离，dvg_prepare记录调度/目标刷新，runner记录认知/选择。实际异常保留未闭合阶段，不为诊断重试动作。内容初始条件依据本轮用户裁定更新，现行设计见design-standard；既往基线和证据不改写。

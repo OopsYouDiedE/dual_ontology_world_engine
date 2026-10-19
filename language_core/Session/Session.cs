@@ -8,6 +8,7 @@ public sealed class DvSession
 {
     private object state;
     private readonly bool audit;
+    public Action<string, string>? PhaseObserver { get; set; }
     public bool AuditMode => audit;
     private DvSession(object value, bool auditMode = true)
     {
@@ -17,6 +18,7 @@ public sealed class DvSession
     private object Run(Func<object> operation)
     {
         using var scope = R.UseAudit(audit);
+        using var phases = R.UsePhases(PhaseObserver);
         return operation();
     }
 

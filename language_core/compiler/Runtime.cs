@@ -15,6 +15,19 @@ namespace DuelView.Compiled;
 // Platform/value ABI only. No reader, AST walker, evaluator or code generator.
 public static class R
 {
+    private static readonly AsyncLocal<Action<string, string>?> PhaseContext = new();
+    public static IDisposable UsePhases(Action<string, string>? observer) => new PhaseScope(observer);
+    private sealed class PhaseScope : IDisposable
+    {
+        private readonly Action<string, string>? previous = PhaseContext.Value;
+        public PhaseScope(Action<string, string>? observer) => PhaseContext.Value = observer;
+        public void Dispose() => PhaseContext.Value = previous;
+    }
+    public static object phase(object stage, object actor)
+    {
+        PhaseContext.Value?.Invoke(Text(stage), Text(actor));
+        return true;
+    }
     // Execution-context local: concurrent host sessions never change one another's policy.
     // Standalone compiler/audit programs retain complete evidence by default.
     private static readonly AsyncLocal<bool?> AuditContext = new();

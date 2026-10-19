@@ -335,3 +335,6 @@ Main阅读时发送正式dv_next，GameEngine仍单队列后台Prepare。仅远�
 ## 冗余入口退役（2026-10-19）
 
 旧独立比较/参数入口、未实施语法提案、未接线回忆fixture及固定比较manifest已从工作源码移除。main-causal.dv仍由dv-check.json的独立检查组消费，保留只读入口；checks/authority、report、现行检查算法与有明确维护用途的fixtures保留。旧过程计划和Python编排不作为新会话入口，历史封存目录不改写。生产与调试include闭包本轮不改，不运行任何会话或回归。
+
+## 阶段观测（2026-10-19）
+dvs_debug_phase透传rt_phase，默认无观察器，不写世界/心智/事件；宿主可记录实际阶段墙钟。初始地点变更属于内容规则变化，历史比较另列，不能作为同条件速度改善。

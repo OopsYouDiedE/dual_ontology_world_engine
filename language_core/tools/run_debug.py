@@ -255,7 +255,7 @@ def main():
     parser.add_argument('--detective-profile', default='Standard_Detective', choices=('Standard_Detective', 'Foolish_Detective', 'Shura_Detective'))
     parser.add_argument('--opening-seed', type=int, default=1)
     parser.add_argument('--homecoming-negotiation', action='store_true', help='Enable declared homecoming negotiation candidates; does not seed votes or outcomes')
-    parser.add_argument('--su-initial-room', choices=('R08', 'R05'), default='R08')
+    parser.add_argument('--su-initial-room', choices=('hall', 'R08', 'R05'), default='hall')
     parser.add_argument('--private-execution-benefit-multiplier', type=int, choices=(1, 2), default=1)
     parser.add_argument('--detective-zone', default='zone_yi', choices=('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding'))
     parser.add_argument('--trace-compression', choices=('none', 'gzip'), default='none', help='Lossless storage for the full raw JSON trace; no field projection')

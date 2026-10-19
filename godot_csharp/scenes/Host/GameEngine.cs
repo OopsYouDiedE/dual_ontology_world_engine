@@ -19,19 +19,31 @@ public partial class GameEngine : Node
     private string optionsJson = "{}";
     private string snapshotJson = "{}";
     private string pendingEvent = "";
-    private readonly Queue<string> commands = new();
+    private readonly Queue<(long Id, string Json)> commands = new();
     private readonly HashSet<string> completedEvents = new(StringComparer.Ordinal);
     private readonly List<string> visible = [];
     private readonly List<string> inputs = [];
     private readonly List<object> hostErrors = [];
     private readonly ConcurrentQueue<string> timings = new();
+    private readonly ConcurrentQueue<string> liveTimings = new();
+    private long nextCommand, activeCommand;
     private readonly long timingOrigin = Stopwatch.GetTimestamp();
     private string interaction = "";
 
-    private void Stamp(string stage, string id, string details = "") => timings.Enqueue(JsonSerializer.Serialize(new {
-        real_us = (Stopwatch.GetTimestamp() - timingOrigin) * 1000000L / Stopwatch.Frequency,
-        stage, interaction_id = id, details
-    }));
+    public long TimingClockUs() => (Stopwatch.GetTimestamp() - timingOrigin) * 1000000L / Stopwatch.Frequency;
+    private void Stamp(string stage, string id, string details = "", long? command = null)
+    {
+        var row = JsonSerializer.Serialize(new { real_us = TimingClockUs(), stage,
+            interaction_id = id, command_id = command ?? activeCommand, details });
+        timings.Enqueue(row);
+        liveTimings.Enqueue(row);
+    }
+    public GArray PollTimings()
+    {
+        GArray result = new();
+        while (liveTimings.TryDequeue(out var row)) result.Add(row);
+        return result;
+    }
 
     public void RecordTiming(GDict value) => Stamp(value.GetValueOrDefault("stage", "").AsString(),
         value.GetValueOrDefault("interaction_id", interaction).AsString(), Json.Stringify(value));
@@ -58,14 +70,15 @@ public partial class GameEngine : Node
     {
         var json = Json.Stringify(input);
         inputs.Add(json);
-        Stamp("command_received", input.GetValueOrDefault("interaction_id", interaction).AsString(), input.GetValueOrDefault("kind", "").AsString());
+        var command = ++nextCommand;
+        Stamp("command_received", input.GetValueOrDefault("interaction_id", interaction).AsString(), input.GetValueOrDefault("kind", "").AsString(), command);
         if (closing) return new();
         if (faulted)
         {
             Report(new InvalidOperationException("Session dispatch stopped after a host worker error"));
             return new();
         }
-        commands.Enqueue(json);
+        commands.Enqueue((command, json));
         StartPump();
         return new();
     }
@@ -83,7 +96,9 @@ public partial class GameEngine : Node
         {
             while (commands.Count != 0 && !closing && !maintenance && !faulted)
             {
-                var input = Parse(commands.Dequeue());
+                var queued = commands.Dequeue();
+                activeCommand = queued.Id;
+                var input = Parse(queued.Json);
                 var kind = input.GetValueOrDefault("kind", "").AsString();
                 if (input.ContainsKey("interaction_id")) interaction = input["interaction_id"].AsString();
                 var timingId = interaction;
@@ -97,8 +112,14 @@ public partial class GameEngine : Node
                         var options = optionsJson;
                         var opened = await Task.Run(() =>
                         {
+                            Stamp("open_begin", timingId);
                             var current = DvSession.OpenConfiguredCampaign(options);
-                            return (Session: current, Snapshot: current.Snapshot(current.Viewer));
+                            current.PhaseObserver = (stage, actor) => Stamp("dv_" + stage, timingId, actor);
+                            Stamp("open_end", timingId);
+                            Stamp("snapshot_begin", timingId);
+                            var initialSnapshot = current.Snapshot(current.Viewer);
+                            Stamp("snapshot_end", timingId);
+                            return (Session: current, Snapshot: initialSnapshot);
                         });
                         session = opened.Session;
                         snapshotJson = opened.Snapshot;
@@ -155,7 +176,10 @@ public partial class GameEngine : Node
                             Stamp("complete_begin", timingId, actionEvent);
                             var presentation = current.Complete(json, current.Viewer);
                             Stamp("complete_end", timingId, actionEvent);
-                            return (Presentation: presentation, Snapshot: current.Snapshot(current.Viewer));
+                            Stamp("snapshot_begin", timingId);
+                            var projected = current.Snapshot(current.Viewer);
+                            Stamp("snapshot_end", timingId);
+                            return (Presentation: presentation, Snapshot: projected);
                         });
                         completedEvents.Add(actionEvent);
                         pendingEvent = "";
@@ -175,8 +199,11 @@ public partial class GameEngine : Node
                 if (!closing && events.Count != 0)
                 {
                     Stamp("events_delivered", timingId, kind);
+                    Stamp("delivery_begin", timingId, kind);
                     EmitSignal(SignalName.EventsReady, events);
+                    Stamp("delivery_end", timingId, kind);
                 }
+                Stamp("command_finished", timingId, kind);
             }
         }
         catch (Exception error)

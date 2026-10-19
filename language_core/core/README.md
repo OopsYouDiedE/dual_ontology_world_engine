@@ -1039,7 +1039,7 @@ python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --node 456 --value-
 
 ## 本轮反事实与现场机会接口（2026-10-18）
 
-`dvg_open_config`的配置包含`seed`、`profile`、`detective_zone`、`su_initial_room`（R08/R05）及`private_execution_benefit_multiplier`（1/2）。正式调试入口通过`--opening-seed`、`--detective-profile`、`--detective-zone`、`--su-initial-room`、`--private-execution-benefit-multiplier`传入并封存实际配置。`Shura_Detective`只调整价值序列和操纵候选自动资格，其余认知参数沿标准配置；默认输入保持原值。位置反事实仅改当前身体和本人位置，不改事故史。
+`dvg_open_config`的配置包含`seed`、`profile`、`detective_zone`、`su_initial_room`（默认hall；反事实可用R08/R05）及`private_execution_benefit_multiplier`（1/2）。正式调试入口通过`--opening-seed`、`--detective-profile`、`--detective-zone`、`--su-initial-room`、`--private-execution-benefit-multiplier`传入并封存实际配置。`Shura_Detective`只调整价值序列和操纵候选自动资格，其余认知参数沿标准配置。位置反事实仅改当前身体和本人位置，不改事故史。
 
 `opportunity_requirement.mode`支持`all-present`、`at-least-one-present`与`none-present`。未知模式报错。`dvs_notice_peers`通过真实观察记录`visible_context_location`与`visible_context_clear`，co_presence事件保留地点与可见性；none-present只有地点匹配、观察可用且指定参与者均未见时满足。该主观判断不代替权威执行检查，也不证明世界上没有隐藏人物。未到达地点的空预测上下文不能满足该资格。
 
@@ -1148,3 +1148,6 @@ run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运
 ### 源侧门道执行起点（2026-10-19）
 
 现场执行器以CampusMapView.departure_room核对正式移动起点：除室内地板/台阶外，源房间几何分区内实际可走的D门道格也是合法出发点。entered_room仍只核对真正进入的室内地面，不能以D格给出到达或观察。回执source_geometry区分interior与source-side-doorway，源/目标房间及实际位置仍保留。SpatialInput按真实门道邻接几何匹配现有准入ID，鼠标和E没有新增DV候选或费用路径。
+
+## 被动阶段ABI（2026-10-19）
+rt_phase(stage: Text, actor: Text)返回Bool true，使用Runtime.AsyncLocal观察器；无观察器不输出。Session.PhaseObserver在Run范围接收阶段与主体，不修改DV状态。生产game/entry.dv在Prepare记录schedule/goals起止，verification/session/30-runner.dv记录cognition/choice起止；GameEngine关联命令与墙钟。观察器不可作为选择、效果、费用或来源。

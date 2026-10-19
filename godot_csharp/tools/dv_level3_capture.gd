@@ -10,6 +10,8 @@ var serial := 0
 var finishing := false
 var last_continue := 0
 var dialogue_seen := false
+var highlights: Array = []
+var last_flush := 0
 
 func _initialize() -> void:
 	root.unfocusable = true
@@ -42,6 +44,9 @@ func _run() -> void:
 
 func _process(_delta: float) -> bool:
 	if not is_instance_valid(host) or finishing: return false
+	if Time.get_ticks_msec() - last_flush >= 200:
+		last_flush = Time.get_ticks_msec()
+		_flush_timings()
 	if seconds > 0 and Time.get_ticks_msec() - started >= seconds * 1000.0:
 		_finish.call_deferred()
 		return false
@@ -112,6 +117,21 @@ func _append(name: String, value: Variant) -> void:
 	file.store_line(JSON.stringify(value))
 	file.close()
 
+func _flush_timings() -> void:
+	var rows: Array = host.engine.PollTimings()
+	if rows.is_empty(): return
+	host._timing("journal_begin")
+	var path := directory.path_join("live-timing.jsonl")
+	var file := FileAccess.open(path, FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE)
+	file.seek_end()
+	for raw in rows:
+		file.store_line(str(raw))
+		var row: Dictionary = JSON.parse_string(str(raw))
+		if str(row.stage) in ["physical_location", "actor_in_viewport", "frame_gap"]:
+			highlights.append(row)
+	file.close()
+	host._timing("journal_end")
+
 func _capture() -> void:
 	if finishing or directory == "": return
 	var now := Time.get_ticks_msec()
@@ -119,7 +139,12 @@ func _capture() -> void:
 	last_capture = now
 	var elapsed := now - started
 	var filename := "frame-%09d.png" % elapsed
+	host._timing("capture_begin", {"file": filename})
 	root.get_texture().get_image().save_png(directory.path_join(filename))
+	host._timing("capture_png_end", {"file": filename})
+	if not highlights.is_empty():
+		_append("keyframes.jsonl", {"real_ms": elapsed, "file": filename, "events": highlights})
+		highlights = []
 	var frames_path := directory.path_join("frames.jsonl")
 	var frames := FileAccess.open(frames_path, FileAccess.READ_WRITE if FileAccess.file_exists(frames_path) else FileAccess.WRITE)
 	frames.seek_end()
@@ -133,6 +158,7 @@ func _capture() -> void:
 	file.store_line(JSON.stringify(record))
 	file.close()
 	_capture_render_state(elapsed, filename)
+	host._timing("capture_end", {"file": filename})
 
 func _capture_render_state(elapsed: int, filename: String) -> void:
 	if not is_instance_valid(host) or not is_instance_valid(host.field): return
@@ -171,6 +197,7 @@ func _write(name: String, value: Variant) -> void:
 func _finish() -> void:
 	if finishing: return
 	finishing = true
+	_flush_timings()
 	_write("end.json", {"real_ms": Time.get_ticks_msec() - started, "snapshot": host.engine.Snapshot()})
 	host.shutdown_completed.connect(func(): quit())
 	host.begin_shutdown()

@@ -364,9 +364,9 @@ fn dvg_host_viewer(state):
 
 // Configuration is retained as evidence and carried into chapter policy inheritance.
 fn dvg_run_config(config):
-    let result = {"seed": dv_find(config, "seed", 1), "profile": dv_find(config, "profile", "Standard_Detective"), "detective_zone": dv_find(config, "detective_zone", "zone_yi"), "su_initial_room": dv_find(config, "su_initial_room", "R08"), "private_execution_benefit_multiplier": dv_find(config, "private_execution_benefit_multiplier", 1), "homecoming_negotiation": dv_find(config, "homecoming_negotiation", false)}
+    let result = {"seed": dv_find(config, "seed", 1), "profile": dv_find(config, "profile", "Standard_Detective"), "detective_zone": dv_find(config, "detective_zone", "zone_yi"), "su_initial_room": dv_find(config, "su_initial_room", "hall"), "private_execution_benefit_multiplier": dv_find(config, "private_execution_benefit_multiplier", 1), "homecoming_negotiation": dv_find(config, "homecoming_negotiation", false)}
     dv_require(rt_floor(result.seed) == result.seed and 0 <= result.seed, "Opening seed must be a nonnegative integer")
-    dv_require(dv_has(["R08", "R05"], result.su_initial_room), "Unsupported initial Su room")
+    dv_require(dv_has(["hall", "R08", "R05"], result.su_initial_room), "Unsupported initial Su room")
     dv_require(result.private_execution_benefit_multiplier == 1 or result.private_execution_benefit_multiplier == 2, "Private execution benefit multiplier must be 1 or 2")
     dv_require(result.homecoming_negotiation == true or result.homecoming_negotiation == false, "Homecoming negotiation must be boolean")
     return result
@@ -395,7 +395,7 @@ fn dvg_configure_actor_policies(scene, config):
 // Relocation changes only the actual room and its owner's initial self-location.
 // Existing identity bindings are retained; no third-party location or sound is granted.
 fn dvg_configure_initial_room(scene, config):
-    if config.su_initial_room == "R08":
+    if config.su_initial_room == "hall":
         return scene
     let basis = [{"path": "user:current-request", "line": 0, "id": "counterfactual-su-initial-room"}]
     let ref = dv_ref("su", "state", "location")
@@ -472,9 +472,14 @@ fn dvg_prepare(state):
     var current = dvg_extend(state)
     while dvs_session_active(current) and dv_find(current, "pending", false) == false and not dv_find(current, "awaiting_player", false):
         if dv_find(current, "player_selection", "") == "":
+            rt_phase("schedule-start", "")
             current = dvs_schedule(current)
+            rt_phase("schedule-end", "")
         if dv_find(current, "pending", false) == false and dvs_session_active(current):
-            current = dvs_prepare_actor(dvg_refresh_goals(current))
+            rt_phase("goals-start", "")
+            current = dvg_refresh_goals(current)
+            rt_phase("goals-end", "")
+            current = dvs_prepare_actor(current)
         if dv_find(current, "pending", false) == false:
             current = dvg_extend(current)
     return current

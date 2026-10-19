@@ -449,6 +449,7 @@ fn dvs_schedule(state):
     return dvs_owned_state_update(state, {"idle": rt_count(state.actors)})
 
 fn dvs_debug_phase(story, actor, time, phase):
+    rt_phase(phase, actor)
     if dv_find(story, "debug_phase_progress", false):
         rt_print(rt_json_stringify({"type": "engine_phase", "actor": actor, "game_time": time, "phase": phase}))
     return true
