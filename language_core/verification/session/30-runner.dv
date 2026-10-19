@@ -1164,11 +1164,18 @@ fn dvs_session_presentation(state, viewer):
 
 // Human choice uses the same subject-local admission and the same prepared receipt.
 fn dvs_set_player(state, actor):
-    dv_require(not dv_has_key(state, "pending"), "Cannot change controller during execution")
+    dv_require(dv_find(state, "pending", false) == false, "Cannot change controller during execution")
+    var found = actor == ""
+    var i = 0
+    while i < rt_count(state.actors):
+        if state.actors[i].id == actor:
+            found = true
+        i = i + 1
+    dv_require(found, "Unknown player actor")
     return dvs_control_state(state, state.actors, state.events, state.cursor, actor, "", false)
 
 fn dvs_control_state(state, actors, events, cursor, player, selection, waiting):
-    return {"story": state.story, "physical": state.physical, "actors": actors, "events": events, "bindings": state.bindings, "costs": state.costs, "run_start": state.run_start, "duration_budget": state.duration_budget, "horizon": state.horizon, "duration_blocked": state.duration_blocked, "limit": state.limit, "cursor": cursor, "executed": state.executed, "idle": state.idle, "status": state.status, "initial": state.initial, "player_actor": player, "player_selection": selection, "awaiting_player": waiting}
+    return dvs_owned_state_update(state, {"actors": actors, "events": events, "cursor": cursor, "player_actor": player, "player_selection": selection, "awaiting_player": waiting})
 
 fn dvs_player_options(actor):
     var result = []

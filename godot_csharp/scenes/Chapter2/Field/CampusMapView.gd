@@ -26,6 +26,7 @@ var _last_allowed_position := Vector2.ZERO
 var presentation: Dictionary = {}
 var _player_sprite := ""
 var _routes: Dictionary = {}
+var _route_target_next := ""
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	var next: Dictionary = snapshot.get("access", {}).get("maps", {})
@@ -87,6 +88,11 @@ func set_prop(_id: String, _state: String) -> void: pass
 func station(target: String, who: String) -> Dictionary:
 	var actor: CharacterBody2D = field.actors.get(who)
 	if actor == null: return {}
+	if target.begins_with("site:"):
+		var geometry := site_geometry(field.snapshot.get("sites", {}))
+		var id := target.substr(5)
+		if not geometry.has(id): return {}
+		return {"point": geometry[id].point, "radius": float(geometry[id].reach)}
 	var best := INF
 	var chosen := Vector2.ZERO
 	var grid := nav_grid(actor)
@@ -152,9 +158,12 @@ func execute_destination(destination: Dictionary, who: String, serial: int, acti
 			field._daily_report(who, serial, "blocked", room_of(actor.position), action)
 			return
 		var origin := key
+		_route_target_next = str(edge.to)
 		await field._follow_route(actor, edge.point)
 		await get_tree().physics_frame
 		await get_tree().process_frame
+		_route_target_next = ""
+		if field._closing or not is_instance_valid(actor): return
 		if key == origin:
 			field._daily_report(who, serial, "blocked", room_of(actor.position), action)
 			return
@@ -165,10 +174,15 @@ func execute_destination(destination: Dictionary, who: String, serial: int, acti
 		if point == null or actor.position.distance_to(point) > 8.0:
 			field._daily_report(who, serial, "blocked", room_of(actor.position), action)
 			return
-	field.move_to_station(str(destination.room), str(destination.room), who, serial, action)
+	var target := str(destination.get("departure_station", destination.get("room", "")))
+	var execution_room := str(destination.get("execution_room", destination.get("room", "")))
+	field.move_to_station(target, execution_room, who, serial, action)
 func play_replay(_ev: Dictionary) -> void: pass
 
 func load_map(next: String, _spawn: String) -> void:
+	if not ResourceLoader.exists(MAPS % next): return
+	var packed := load(MAPS % next) as PackedScene
+	if packed == null: return
 	if map:
 		# 先停掉旧图出口的检测并断开信号，再释放旧图，避免物理回调里改动碰撞体。
 		for exit in map.get_node("Exits").get_children():
@@ -180,7 +194,7 @@ func load_map(next: String, _spawn: String) -> void:
 		map.queue_free()
 	key = next
 	_access_shapes.clear()
-	map = (load(MAPS % next) as PackedScene).instantiate()
+	map = packed.instantiate()
 	add_child(map)
 	occluders.clear()
 	for node in map.get_node("Objects").get_children():
@@ -203,6 +217,35 @@ func spawn_point(spawn: String) -> Vector2:
 		return (map.get_meta("outdoor_core") as Rect2).get_center() - (map.get_meta("outdoor_origin") as Vector2)
 	return Vector2(64, 64)
 
+## Cross-map placement is only the authored doorway transform or a continuous seam.
+## Missing authored geometry blocks the transition before the source map is removed.
+func valid_transition(next: String, spawn: String, at: Vector2, use_at: bool) -> bool:
+	if _route_target_next != next or not ResourceLoader.exists(MAPS % next): return false
+	var layout := (load(MAPS % next) as PackedScene).instantiate() as Node2D
+	if layout == null: return false
+	var marker: Marker2D = layout.get_node_or_null("Spawns/" + spawn) as Marker2D if spawn != "" else null
+	var point := at if use_at else (marker.position if marker != null else Vector2.ZERO)
+	var valid := use_at or marker != null
+	if use_at:
+		valid = map.has_meta("outdoor_origin") and layout.has_meta("outdoor_origin") and layout.has_meta("outdoor_core")
+		if valid:
+			var source_world: Vector2 = field.player.position + (map.get_meta("outdoor_origin") as Vector2)
+			var target_world: Vector2 = at + (layout.get_meta("outdoor_origin") as Vector2)
+			valid = source_world.distance_to(target_world) <= 0.01 and (layout.get_meta("outdoor_core") as Rect2).has_point(target_world)
+	var size: Vector2 = layout.get_meta("map_size", Vector2.ZERO)
+	valid = valid and Rect2(Vector2.ZERO, size).has_point(point)
+	var solids := layout.get_node_or_null("Solids")
+	if valid and solids != null:
+		for node in solids.get_children():
+			var shape := node as CollisionShape2D
+			if shape == null or shape.disabled or shape.shape is not RectangleShape2D: continue
+			var extent: Vector2 = (shape.shape as RectangleShape2D).size
+			if Rect2(shape.position - extent / 2.0, extent).grow_individual(10, 1, 10, 14).has_point(point):
+				valid = false
+				break
+	layout.free()
+	return valid
+
 func stands() -> Array:
 	var result := []
 	if map == null: return result
@@ -219,9 +262,10 @@ func door_point(fallback: Vector2) -> Vector2:
 # ------------------------------------------------------------- movement ---
 
 func _on_exit_entered(body: Node, exit: Area2D) -> void:
-	if body != field.player or not armed: return
+	if body != field.player or not armed or _route_target_next != str(exit.get_meta("target")): return
 	armed = false
 	_switching = true
+	field._cancel_motion(field.player)
 	field.call_deferred("load_map", String(exit.get_meta("target")), String(exit.get_meta("spawn")))
 
 func _on_exit_left(body: Node) -> void:
@@ -243,14 +287,15 @@ func _inside_exit() -> bool:
 	return false
 
 func _check_region() -> void:
-	if _switching or not map.has_meta("outdoor_core"): return
+	if _switching or _route_target_next == "" or not map.has_meta("outdoor_core"): return
 	var g: Vector2 = field.player.position + (map.get_meta("outdoor_origin") as Vector2)
 	if (map.get_meta("outdoor_core") as Rect2).grow(SEAM).has_point(g): return
 	var cores: Dictionary = map.get_meta("outdoor_cores")
 	var origins: Dictionary = map.get_meta("outdoor_origins")
 	for next in cores:
-		if (cores[next] as Rect2).has_point(g):
+		if str(next) == _route_target_next and (cores[next] as Rect2).has_point(g):
 			_switching = true
+			field._cancel_motion(field.player)
 			field.call_deferred("load_map", String(next), "", g - (origins[next] as Vector2), true)
 			return
 

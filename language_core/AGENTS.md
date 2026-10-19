@@ -1,5 +1,16 @@
 # DV 模块维护
 
+## Core 与现场接线（2026-10-19）
+
+正式入口使用 `GameEngine.ConfigureSession` 的 `{controller: "player"|"ai", viewer?: string, campaign?: record}`，只允许新会话打开前配置。默认主体、内容参数与可视资源绑定在 DV `dvg_host_open` / `dvg_host_viewer`；宿主不另写人物标识或决策规则。玩家候选与 AI 规划最终进入同一 Prepare/Complete，控制方式不在在途动作中切换。
+
+Main 的导出参数与 `--dv-controller=player|ai`、`--dv-viewer=`、`--dv-profile=`、`--dv-zone=`、`--dv-seed=` 配置同一入口；`--dv-auto-start` 仅触发正常 start，不选择动作。GameEngine 串行消费输入，后台完成 DV 状态转换和观察者/执行主体快照，主线程读取缓存。`dv_action.execution_snapshot` 仅供现场执行，不送入观察者正文。
+
+Main → DvFieldExecutor → WorldView 使用唯一保留的人物实体执行移动。离屏场地使用独立 World2D 的同一地图、寻路和碰撞代码；切图保留真实实体和终点，初次物化核对声明地点与合法出生点。回执核对主体、序号、动作、地图、房间及显式站点到达误差。缺资源或绑定返回 blocked，不以逻辑执行器替代几何到达。唯一 Complete 在执行器返回后提交，普通现场信号不重复结算。
+
+显式保存/恢复拒绝现场 pending；异步存取等待后台工作后再次核对。关闭等待后台工作并保留现场 pending；错误停止继续准备并记录到关闭证据。用户输入与显示记录先保存，原始会话和存档仍流式封存。工程构建与界面专项观察分别报告，不据此宣称完整剧情或五日达成。
+
+
 本轮附件整批修正遵循根目录最新顺序：源码、声明、设计/工程文档及静态审读全部完成后，才统一构建、探针和冻结会话。任务阶段为 artifacts/partial-bootstrap-core/takeover-repair-20261018/batch-correction-20261018/；旧矩阵不改写。此顺序覆盖下文历史阶段允许的中途工程检查。
 
 手动候选以 action.manual_only 声明；dvp_eligible_base 只在临时 actor.manual_input=true 的只读资格视图中开放。dvs_player_options、dvs_select_player、dvs_player_choice 共用该视图，存回状态仍是原主体；自动规划不设置该字段，其他本人来源、现场与规范资格保持相同。内容询问仍是有来源的实际动作，不能声称新增手动选项使全部AI轨迹不变。

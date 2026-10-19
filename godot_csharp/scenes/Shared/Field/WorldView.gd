@@ -34,6 +34,12 @@ var sight: Node2D
 var hints: Node2D
 var tint: CanvasModulate
 var follow_camera := true
+## The host owns retained bodies; hidden fields run the same geometry without UI.
+var execution_bridge: Node
+var execution_only := false
+var execution_binding: Dictionary = {}
+var execution_resource := ""
+var execution_transitions: Array = []
 
 var snapshot: Dictionary = {}
 var sites: Dictionary = {}           # id → {title, point, reach, box?, marker?, person?, new}
@@ -69,12 +75,15 @@ func setup(map_adapter: Node2D) -> void:
 	sight.name = "Sight"
 	sight.z_index = 40
 	sight.host = adapter
+	sight.set_process(false)
 	add_child(sight)
 	hints = HintOverlayScene.instantiate()
 	hints.z_index = 50
 	add_child(hints)
 	hints.set("source", self)
 	if not adapter.setup(): return
+	if execution_bridge != null and str(execution_binding.get("map", "")) != "":
+		adapter.load_map(str(execution_binding.map), str(execution_binding.get("spawn", "")))
 	_player_key = adapter.player_key()
 	for key in adapter.fixed_actors():
 		actors[key] = adapter.fixed_actors()[key]
@@ -85,6 +94,13 @@ func setup(map_adapter: Node2D) -> void:
 			return
 		player = _make_actor(_player_key, adapter.player_sprite())
 	if player == null: return
+	sight.set_process(not execution_only)
+	if execution_only:
+		camera.enabled = false
+		sight.set_process(false)
+		sight.hide()
+		hints.hide()
+		set_process(false)
 	camera.position = adapter.camera_point(player.position)
 	camera.position_smoothing_enabled = adapter.camera_smoothing()
 	_after_map_load()
@@ -105,16 +121,19 @@ func _exit_tree() -> void:
 
 func apply_snapshot(value: Dictionary) -> void:
 	snapshot = value
+	execution_binding = value
 	if is_instance_valid(tint):
 		tint.color = DAYPART_TINT.get(str(value.get("daypart", "")), Color.WHITE) if adapter.uses_daypart_tint() else Color.WHITE
 	if adapter.has_method("apply_snapshot"): adapter.apply_snapshot(value)
-	if adapter.fixed_actors().is_empty(): _spawn_people()
+	if not execution_only and adapter.fixed_actors().is_empty(): _spawn_people()
 	_build_sites()
 
 func field_active() -> bool:
-	return not _closing and bool(snapshot.get("field_enabled", false)) and not ui_busy.call() and not adapter.switching()
+	return not execution_only and player != null and not _closing and bool(snapshot.get("field_enabled", false)) and not ui_busy.call() and not adapter.switching()
 
 func context() -> Dictionary:
+	if player == null:
+		return {"field_active": false, "actors": {}, "map": adapter.map_key(), "site_rooms": _site_rooms()}
 	var facts := {}
 	for key in actors:
 		var actor: CharacterBody2D = actors[key]
@@ -465,6 +484,12 @@ func _route_cost(from: Vector2, route: PackedVector2Array, to: Vector2) -> float
 # ================================================================ people ===
 
 func _make_actor(key: String, sprite_key: String) -> CharacterBody2D:
+	if execution_bridge != null:
+		return execution_bridge.acquire_actor(key, sprite_key, self)
+	return create_body(key, sprite_key)
+
+## Called once for an actor by the retaining executor, never to replace a moved body.
+func create_body(key: String, sprite_key: String) -> CharacterBody2D:
 	var actor := CharacterBody2D.new()
 	actor.set_script(ACTOR)
 	var path := PIXEL_FRAMES % sprite_key
@@ -491,16 +516,20 @@ func _spawn_people() -> void:
 	for key in actors.keys():
 		if key == _player_key or shown.has(key): continue
 		var leaving: CharacterBody2D = actors[key]
-		actors.erase(key)
-		if is_instance_valid(leaving): leaving.queue_free()
+		if execution_bridge != null:
+			execution_bridge.park_actor(key, self)
+		else:
+			actors.erase(key)
+			if is_instance_valid(leaving): leaving.queue_free()
 	var index := 0
 	for key in shown:
 		var p: Dictionary = shown[key]
 		var actor: CharacterBody2D = actors.get(key)
 		if actor == null:
 			actor = _make_actor(key, str(p.get("sprite", "")))
-			if actor == null: return
-			actor.position = stands[(absi(key.hash()) + index) % stands.size()] if not stands.is_empty() else player.position + Vector2(40 * index, 30)
+			if actor == null: continue
+			if execution_bridge == null:
+				actor.position = stands[(absi(key.hash()) + index) % stands.size()] if not stands.is_empty() else player.position + Vector2(40 * index, 30)
 		if not actor.travelling: _frame_pose(actor, str(p.get("frame", "")))
 		index += 1
 
@@ -508,27 +537,43 @@ func _frame_pose(actor: CharacterBody2D, frame: String) -> void:
 	actor.pose({"操作": "interact", "递物": "interact", "拉拽": "interact", "交谈": "talk", "蹲查": "inspect"}.get(frame, "idle"), "front")
 
 func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -> void:
+	if execution_bridge != null and adapter.map_key() == key:
+		# setup already adopted the retained body at its actual endpoint.
+		return
+	if player == null: return
+	if adapter.has_method("valid_transition") and not adapter.valid_transition(key, spawn, at, use_at):
+		adapter.blocked_entry()
+		return
 	if not _applying_scene and adapter.has_method("can_enter") and not adapter.can_enter(key):
 		adapter.blocked_entry()
 		field_event.emit({"kind": "blocked_move", "map": key})
 		return
+	var source_map := str(adapter.map_key())
+	var source_point := player.position
 	for actor_key in actors.keys():
 		if actor_key == _player_key: continue
+		if execution_bridge != null:
+			execution_bridge.park_actor(actor_key, self)
+			continue
 		var actor: CharacterBody2D = actors[actor_key]
 		if is_instance_valid(actor):
 			_cancel_motion(actor)
 			actor.queue_free()
 		actors.erase(actor_key)
-	_daily.clear()
+	for who in _daily.keys(): _daily_release(who)
+	_cancel_motion(player)
 	player.get_parent().remove_child(player)
 	add_child(player)
 	adapter.load_map(key, spawn)
 	remove_child(player)
 	adapter.objects_root().add_child(player)
 	player.position = at if use_at else adapter.spawn_point(spawn)
+	execution_transitions.append({"from_map": source_map, "from_position": [source_point.x, source_point.y],
+		"to_map": key, "to_position": [player.position.x, player.position.y], "spawn": spawn, "continuous": use_at})
+	if execution_bridge != null: execution_bridge.note_map(self)
 	_after_map_load()
 	# 先按快照站好此处的人，再告诉章节到了哪里（回来的快照只让新来的人走进来）。
-	if adapter.fixed_actors().is_empty(): _spawn_people()
+	if not execution_only and adapter.fixed_actors().is_empty(): _spawn_people()
 	_build_sites()
 	if not _applying_scene and adapter.map_key() != "":
 		field_event.emit({"kind": "move", "map": adapter.map_key()})
@@ -548,6 +593,7 @@ func _after_map_load() -> void:
 
 ## Only the prepared DV movement intent enters physical execution.
 func execute_move(destination: Dictionary, who: String, serial: int, action: String) -> void:
+	execution_transitions.clear()
 	if adapter.has_method("execute_destination"):
 		adapter.execute_destination(destination, who, serial, action)
 		return
@@ -670,7 +716,12 @@ func _daily_report(who: String, serial: int, status: String, room: String, actio
 		if actor != null:
 			proof.merge({"actual_position": [actor.position.x, actor.position.y], "arrival_error": actor.position.distance_to(job.destination),
 				"station_distance": actor.position.distance_to(job.station_point)}, true)
-	if status != "arrived": _daily_release(who)
+	var body := _actor(who)
+	if body != null:
+		proof["actual_position"] = [body.position.x, body.position.y]
+	proof["map"] = adapter.map_key()
+	proof["transitions"] = execution_transitions.duplicate(true)
+	_daily_release(who)
 	var event := {"kind": "daily", "who": who, "serial": serial, "status": status, "room": room, "action": action}
 	event.merge(proof, true)
 	field_event.emit(event)

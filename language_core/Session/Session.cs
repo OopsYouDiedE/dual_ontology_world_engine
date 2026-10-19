@@ -10,6 +10,8 @@ public sealed class DvSession
     private DvSession(object value) => state = value;
 
     public static DvSession OpenCampaign(string player = "") => new(DVProgram.SetPlayer(DVProgram.CampaignOpen(), player));
+    public static DvSession OpenConfiguredCampaign(string options) => new(DVProgram.HostOpen(ParseValue(options)));
+    public string Viewer => R.Text(DVProgram.HostViewer(state));
     public string Snapshot(string viewer) => HostJson(DVProgram.CampaignSnapshot(state, viewer));
 
     public static DvSession Open(string scenario) => new(DVProgram.SessionOpen(R.json_parse(scenario)));
@@ -121,6 +123,8 @@ public static partial class DVProgram
     internal static object CampaignChronologicalTrace(object state) => F_dvg_chronological_trace(state);
     internal static object CampaignRun(object maxSteps) => F_dvg_run_campaign(maxSteps);
     internal static object CampaignOpen() => F_dvg_open();
+    internal static object HostOpen(object options) => F_dvg_host_open(options);
+    internal static object HostViewer(object state) => F_dvg_host_viewer(state);
     internal static object SetPlayer(object state, object actor) => F_dvs_set_player(state, actor);
     internal static object SelectPlayer(object state, object id) => F_dvs_select_player(state, id);
     internal static object CampaignSnapshot(object state, object viewer) => F_dvg_snapshot(state, viewer);

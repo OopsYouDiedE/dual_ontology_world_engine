@@ -1,5 +1,8 @@
 # DV Core：现行语法、机制与接口参考
 
+宿主入口（2026-10-19）：`game/entry.dv` 的 `dvg_host_open(options)` 接收 controller、viewer 与 campaign；`dvg_host_viewer(state)` 返回持久化的观察者。controller 仅决定 `dvs_set_player` 是否设置人工输入主体。`dvs_control_state` 使用顶层所有权更新保留未知会话字段，不改 world/mind 复制合同。`dvg_snapshot` 输出 logical_location、execution_room 与原生可视绑定；`people` 逐人保留同类地点字段。`access.maps`按当前所在地图和权威门态供地图出口碰撞使用，人物本人出行资格仍由 DV law 判断。C# 导出观察者快照供显示，执行主体快照独立随 dv_action 供几何调度。现场身份和到达结果经同一 Complete 结算，未成功的移动不授予接触观察。
+
+
 本轮接口补充（2026-10-18）：`compiler/compiler.dv` 的 `sf_comprehension`、`sf_rename_comprehension`、`ck_comprehension`、`sf_emit_comprehension` 负责列表推导式全链，`sf_stmt`处理elif。`dvp_rejected_condition_signature`、`dvp_rejected_signature`与`dvp_eligible_base`（session/15-action-planning.dv）在可重复资格之前核对失败动作的本人相关输入；`actor.rejected_attempt_signatures`由真实Complete失败后写入，成功后清除。等值单元保留known/value/conflicted；数值阈值保留真值，时钟或无关认识修订不解除屏蔽。对应predict采纳、前提与本人位置变化可重新比较。
 
 `action.failure_grants`和`failure_observe_when`仅在formal-model回执applied而DV权威失败、现场条件成立时，沿原绑定投影产生观察。Godot失败回执不能证明逻辑拒绝后保留的起点现场，本轮不据此授予失败观察；正常检视和共同失败屏蔽仍有效。成功grants维持成功Complete后的原合同。

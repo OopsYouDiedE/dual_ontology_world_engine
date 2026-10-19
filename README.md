@@ -11,7 +11,7 @@
 | docs/design-standard.md | 唯一设计规范 |
 | artifacts | 封存证据与阶段报告 |
 
-旧 C# Core、旧解释链、旧章节会话和旧 AI 坐席及其运行工具已移除，源码可从 Git 历史查阅。旧 `.story`、译文和历史证据保留作迁移来源。现场移动只有 Main → WorldView.execute_move → 完成回执；没有旧 stage 执行分派。命令行逻辑执行器复用 DV prepare/complete，不替代 Godot 现场验收。
+旧 C# Core、旧解释链、旧章节会话和旧 AI 坐席及其运行工具已移除，源码可从 Git 历史查阅。旧 `.story`、译文和历史证据保留作迁移来源。现场移动只有 Main → DvFieldExecutor → WorldView.execute_move → 完成回执；没有旧 stage 执行分派。命令行逻辑执行器复用 DV prepare/complete，不替代 Godot 现场验收。
 
 ```powershell
 dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false
@@ -22,3 +22,14 @@ python language_core/tools/check_dv.py --format json <source.dv>
 通过环境变量 GODOT 指定 Godot 4.6.1 .NET，正常启动使用 `--path godot_csharp`。构建时可用 `-p:DvPython=<Python路径>` 指定生成器。
 
 工作约束见 [AGENTS.md](AGENTS.md)，完整语法与特性见 [DV Core 参考](language_core/core/README.md)，宿主接口见 [DV Session](language_core/Session/README.md)。禁止流程回归，不以构建结果证明游戏验收。一级使用 `python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录>` 运行无窗口正式逻辑会话；三级保护测量工具仍待重建。旧路径清理证据见 [报告](artifacts/partial-bootstrap-core/single-action-path/report.md)。
+
+玩家与 AI 侦探共用正式宿主。游戏启动参数在 `--` 后传入，例如：
+
+```powershell
+& $env:GODOT --path godot_csharp -- --dv-controller=player
+& $env:GODOT --path godot_csharp -- --dv-controller=ai
+```
+
+Main 场景也可通过 controller、viewer、campaign_options 导出属性设置；只在打开会话前生效。可选 `--dv-auto-start` 跳过标题页的开始按钮，不自动选择玩家候选。缺失几何、人物资源或站点会产生失败回执，不能作为成功移动。
+
+VS Code 默认打开 `godot_csharp/DualOntologyWorldEngine.sln`（游戏与 Session），语言工具使用解决方案选择器切换 `language_core/LanguageCore.sln`。历史 artifacts、tmp、scratch 保留在磁盘，工作区排除其自动发现与监视，避免测试快照被当作现役工程。

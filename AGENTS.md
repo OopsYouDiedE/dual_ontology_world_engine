@@ -240,3 +240,7 @@ language_core 的现役文件按 core、session、chapter1、chapter2、game 和
 用户最新指令将本轮正式一级会话改为一次最多240现实秒，覆盖此前180秒续作要求。先集中完成目标刷新与空闲唤醒依赖守卫、引用键、分批投影及真实阶段存档接口，再静态审查、统一工程排错和冻结；不在修改中穿插正式会话。事件/时间条件无法证明稳定时保留原求值路径，不恢复排除主体的脏缓存。
 
 阶段存档只能来自正式prepare/complete实际执行状态，恢复须校验源码、配置与完整提交标识，精确数保持原值。恢复诊断与新开局验收分列，本轮不额外启动恢复会话。原始事件持续保存，批量玩家正文投影的未刷新尾部如实记录；不能以减少证据冒充提速。沿用motivation-counterfactual-20261018/structural-240目录，独立审查不读取设计。
+
+## VS Code 工作区发现（2026-10-19）
+
+默认解决方案为 `godot_csharp/DualOntologyWorldEngine.sln`，包含现役游戏与 Session；维护编译器/seed时显式切换 `language_core/LanguageCore.sln`。`.vscode/settings.json` 排除 artifacts、tmp、scratch 的历史工程发现、搜索及文件监视，保留原始证据与现役源码。设置依据已安装扩展的 schema 维护，不能仅以隐藏资源管理器目录宣称语言服务已全部停止扫描。Core 与现场执行合同见对应模块 AGENTS.md；配置修复与实际 VS Code 重载观察分别记录。

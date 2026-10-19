@@ -138,27 +138,28 @@ fn dvg_place(location):
         "dorm.astral": {"map": "zone_bing", "room": "zone_bing:hall"},
         "dorm.logistics": {"map": "zone_ding", "room": "zone_ding:hall"},
         "dorm.yi": {"map": "zone_yi", "room": "zone_yi:hall"},
-        "foyer": {"map": "zone_yi", "room": "zone_yi:foyer", "spawn": "door_west"},
-        "hall": {"map": "zone_yi", "room": "zone_yi:hall", "spawn": "table"},
-        "R05": {"map": "zone_yi", "room": "zone_yi:R05", "spawn": "bed"},
-        "R06": {"map": "zone_yi", "room": "zone_yi:R06"},
-        "R07": {"map": "zone_yi", "room": "zone_yi:R07"},
-        "R08": {"map": "zone_yi", "room": "zone_yi:R08"},
+        "foyer": {"map": "zone_yi", "room": "zone_yi:foyer", "spawn": "from_hall"},
+        "hall": {"map": "zone_yi", "room": "zone_yi:hall"},
+        "R05": {"map": "zone_yi", "room": "zone_yi:north_1", "anchor": "site:bed"},
+        "R06": {"map": "zone_yi", "room": "zone_yi:south_1"},
+        "R07": {"map": "zone_yi", "room": "zone_yi:south_2"},
+        "R08": {"map": "zone_yi", "room": "zone_yi:north_2"},
         "corridor": {"map": "zone_yi", "room": "zone_yi:corridor"},
-        "pantry": {"map": "zone_yi", "room": "zone_yi:pantry"}}
+        "pantry": {"map": "zone_yi", "room": "zone_yi:prep"}}
     return dv_find(places, location, {"map": "", "room": location})
 
 fn dvg_intent(state):
     let intent = dvs_session_intent(state)
-    if intent.status != "prepared" or intent.action.kind != "move":
+    if intent.status != "prepared":
         return intent
     let travel = dv_find(intent.action, "travel", [])
+    if intent.action.kind != "move" and not dv_has_key(travel, "station"):
+        return intent
     let target = dv_find(travel, "to", "")
-    var destination = dvg_place(target)
+    let place = dvg_place(target)
+    var destination = dv_with_many(place, {"execution_room": place.room, "logical_location": target})
     if dv_has_key(travel, "station"):
         destination = dv_with(destination, "departure_station", travel.station)
-    if dv_find(travel, "from", "") == "foyer" and target == "living_hall":
-        destination = dv_with_many(destination, {"departure_station": "lounge", "execution_room": "lounge"})
     return dv_with(intent, "destination", destination)
 
 fn dvg_clock(time):
@@ -190,8 +191,11 @@ fn dvg_presentation(state, viewer):
         i = i + 1
     return dv_with(result, "speaker_name", display)
 
+fn dvg_cast():
+    return {"detective": "detective", "huo": "engineer", "shen": "chef", "su": "musician", "lucian": "poet", "gu": "archaeologist", "quer": "thief", "ward": "lawyer", "selma": "naturalist", "ruan": "chessplayer", "elena": "dancer", "moran": "painter", "veronica": "chemist", "bertrand": "marksman", "margaret": "architect", "mora": "doctor"}
+
 fn dvg_people(state, viewer):
-    let sprites = {"detective": "detective", "huo": "engineer", "shen": "chef", "su": "musician", "lucian": "poet", "gu": "archaeologist", "quer": "thief", "ward": "lawyer", "selma": "naturalist", "ruan": "chessplayer", "elena": "dancer", "moran": "painter", "veronica": "chemist", "bertrand": "marksman", "margaret": "architect", "mora": "doctor"}
+    let sprites = dvg_cast()
     var people = []
     var i = 0
     while i < rt_count(state.actors):
@@ -200,20 +204,46 @@ fn dvg_people(state, viewer):
         if actor.id != viewer and dv_uncontested(position) and dv_has_key(sprites, actor.id):
             let place = dvg_place(position.value)
             if place.map != "":
-                rt_push(people, {"key": actor.id, "map": place.map, "present": true, "sprite": dv_find(sprites, actor.id, ""), "frame": ""})
+                var person = {"key": actor.id, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": position.value, "spawn": dv_find(place, "spawn", ""), "present": true, "sprite": dv_find(sprites, actor.id, ""), "frame": ""}
+                if dv_has_key(place, "anchor"):
+                    person = dv_with(person, "anchor", place.anchor)
+                rt_push(people, person)
         i = i + 1
     return people
 
+// The map adapter gates destination maps. Keep the occupied map available for
+// materialization and local movement; only a doorway to another map is gated.
+fn dvg_map_access(state, current_map):
+    let zones = [{"map": "zone_yi", "group": "living"}, {"map": "zone_jia", "group": "contract"}, {"map": "zone_bing", "group": "astral"}, {"map": "zone_ding", "group": "logistics"}]
+    var maps = {"living_hall": true}
+    var i = 0
+    while i < rt_count(zones):
+        let zone = zones[i]
+        var condition = c1dep_can_cross()
+        if zone.group != "living":
+            condition = dv_all([c1_other_claim(zone.group, "outer_latch_released"), dv_fact(c1_other_access_ref(zone.group), true)])
+        let opened = dv_truth(state.physical, condition) == "true"
+        maps = dv_with(maps, zone.map, opened or current_map == zone.map)
+        if current_map == zone.map:
+            maps = dv_with(maps, "living_hall", opened)
+        i = i + 1
+    return maps
+
 fn dvg_snapshot(state, viewer):
     let position = dv_read(state.physical, c2_position_ref(viewer))
-    var place = {"map": "zone_yi", "room": "zone_yi:R05", "spawn": "bed"}
+    var place = {"map": "", "room": ""}
+    var logical_location = ""
     if dv_uncontested(position):
+        logical_location = position.value
         let located = dvg_place(position.value)
         if located.map != "":
             place = located
-    let cast = {"detective": "detective", "huo": "engineer", "shen": "chef", "su": "musician", "quer": "thief", "lucian": "poet", "ward": "lawyer", "gu": "archaeologist", "ruan": "chessplayer", "elena": "dancer", "selma": "naturalist", "moran": "painter", "veronica": "chemist", "bertrand": "marksman", "margaret": "architect", "mora": "doctor"}
+    let cast = dvg_cast()
     let opened = dv_truth(state.physical, dv_fact(c1dep_ref("open"), true)) == "true"
-    return {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": "res://scenes/Chapter2/Field/CampusMapView.tscn", "map": place.map, "spawn": dv_find(place, "spawn", "bed"), "field_enabled": true, "player_control": dv_find(state, "player_actor", "") == viewer, "initial_placements": [], "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false}, "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": "detective"}, "cast": cast, "pending": dvg_intent(state), "chapter_summary": dvg_chapter_summary(state)}
+    var snapshot = {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": "res://scenes/Chapter2/Field/CampusMapView.tscn", "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": logical_location, "spawn": dv_find(place, "spawn", ""), "field_enabled": true, "player_control": dv_find(state, "player_actor", "") == viewer, "initial_placements": [], "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false, "maps": dvg_map_access(state, place.map)}, "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": dv_find(cast, viewer, "")}, "cast": cast, "pending": dvg_intent(state), "chapter_summary": dvg_chapter_summary(state)}
+    if dv_has_key(place, "anchor"):
+        snapshot = dv_with(snapshot, "anchor", place.anchor)
+    return snapshot
 
 // A system closing record is not fed into any actor's cognition or choices.
 fn dvg_chapter_summary(state):
@@ -227,6 +257,34 @@ fn dvg_chapter_summary(state):
 // Production composition. Chapter content owns its transition conditions.
 fn dvg_open():
     return dvg_open_config({"seed": 1, "profile": "Standard_Detective", "detective_zone": "zone_yi"})
+
+// UI ownership and viewing are host configuration, separate from campaign rules.
+fn dvg_host_open(options):
+    let controller = dv_find(options, "controller", "player")
+    let viewer = dv_find(options, "viewer", "detective")
+    dv_require(dv_has(["player", "ai"], controller), "Unsupported host controller")
+    var state = dvg_open_config(dv_find(options, "campaign", {}))
+    var found = false
+    var i = 0
+    while i < rt_count(state.actors):
+        let actor = state.actors[i]
+        if actor.id == viewer:
+            found = true
+            dv_require(dv_has_key(dvg_cast(), viewer), "Host viewer has no visual cast binding")
+            dv_require(dv_local(state.bindings, viewer, viewer) != "", "Host viewer has no projection binding")
+            let position = dv_read(state.physical, actor.location_ref)
+            dv_require(dv_uncontested(position), "Host viewer has no settled location")
+            dv_require(dvg_place(position.value).map != "", "Host viewer has no map binding")
+        i = i + 1
+    dv_require(found, "Unknown host viewer")
+    var player = ""
+    if controller == "player":
+        player = viewer
+    state = dvs_set_player(state, player)
+    return dvs_owned_state_update(state, {"story": dv_with(state.story, "host_viewer", viewer)})
+
+fn dvg_host_viewer(state):
+    return dv_find(state.story, "host_viewer", "detective")
 
 // Configuration is retained as evidence and carried into chapter policy inheritance.
 fn dvg_run_config(config):
