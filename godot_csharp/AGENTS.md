@@ -183,6 +183,12 @@ Session presentation 保留原有surface/lines，并透传动作source_refs。Ma
 
 ## 集中修复与四倍播放（2026-10-19）
 
+### 自动采集与性能记录（2026-10-19）
+
+`python godot_csharp/tools/profile_dv_capture.py --out <新绝对目录> --godot <Godot .NET exe> --dotnet-trace <dotnet-trace.exe> --seconds 90` 包装现有正式渲染采集入口，启动 Godot `--debug --profiling --gpu-profile`，并在启动游戏进程后立即附加 dotnet-trace 的 cpu-sampling。依赖 Python 3 与 dotnet-trace；Godot 原生脚本分析与 .NET 调用栈分别封存，不把前者称为 C# 分析。托管采样默认80秒（窗口减10秒，可用`--managed-seconds`指定更短正整数），提前结束并排空轨迹，避免原生宿主退出时留下不完整EventPipe尾部；未采样的启动区间与窗口尾部如实保留。截图及实际现实毫秒索引、游戏时钟和宿主关闭证据沿用原合同；启动至分析器退出的总耗时单列，包含封存与分析器收尾，不冒充玩家游戏时长。源码及程序集前后指纹另存，拒绝覆盖证据目录。热点报告同时检查退出码和错误正文，实际脚本/GPU分析启动标记单列，不把文件存在或工具退出0冒充有效报告。分析器开销计入本轮，不与无分析器窗口宣称同条件速度比较。
+
+用户指定轻量模型记录画面时，使用全新上下文的该模型，仅提供本轮原始 PNG 与时间索引。记录实际查看的文件、采样时刻、可辨正文、人物外观、界面及场景变化；未查看区间与无法辨认内容保留未知，不用隐藏状态补写画面，不替代引擎侦探选择行动。证据审查与剧情、人物机制验收分列。
+
 按用户最新要求，先集中修订本批已发现的源与几何缺口，再冻结、统一工程排错与四倍播放检查；中途发现需改源则结束该批次，保留原失败证据。本轮不以局部几何夹具或按钮工程触发宣称正式三级验收。
 
 Main.playback_speed默认4，`--dv-speed=`可在0.25至8间设置，打开会话前应用Engine.time_scale；physics_ticks_per_second按60×max(1,speed)设置，四倍时240以维持单步物理间隔。输入记录host_configuration中的倍率与帧频；不把倍率写成DV费用、分钟或推演预算，不按倍率推算未发生的剧情节点。采集脚本需要现实秒窗口时使用ignore_time_scale计时，原始会话与纯几何夹具分列。

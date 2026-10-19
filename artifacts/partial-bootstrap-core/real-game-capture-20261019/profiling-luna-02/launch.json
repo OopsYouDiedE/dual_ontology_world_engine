@@ -1,0 +1,39 @@
+{
+  "started_at": "2026-10-19T02:22:33.679927+00:00",
+  "commit": "b5ce752da5b8533728abc1f91afce27233e844f2",
+  "command": [
+    "C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\Godot_v4.6.1-stable_mono_win64.exe",
+    "--path",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\godot_csharp",
+    "--debug",
+    "--profiling",
+    "--gpu-profile",
+    "--script",
+    "res://tools/dv_level3_capture.gd",
+    "--",
+    "--out=C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\real-game-capture-20261019\\profiling-luna-02\\run",
+    "--mode=detective",
+    "--seconds=90.0",
+    "--dv-controller=ai",
+    "--dv-speed=4"
+  ],
+  "profiling": "Godot script/GPU plus .NET cpu-sampling attached automatically at process launch",
+  "managed_requested_seconds": 80,
+  "managed_coverage": "Bounded sampling stops before native host exits; final capture tail is not managed-profiled",
+  "scope": "Bounded rendered capture; profiling overhead included; not a completion test or speed comparison",
+  "game_pid": 8068,
+  "profiler_command": [
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\tmp\\profiling-tools\\dotnet-trace.exe",
+    "collect",
+    "--process-id",
+    "8068",
+    "--profile",
+    "cpu-sampling",
+    "--duration",
+    "00:00:01:20",
+    "--output",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\real-game-capture-20261019\\profiling-luna-02\\managed.nettrace"
+  ],
+  "managed_process_discovered": true,
+  "managed_discovery_elapsed_seconds": 1.702999999979511
+}

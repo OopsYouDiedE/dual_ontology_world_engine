@@ -1,0 +1,36 @@
+Top 25 Functions (Inclusive)                                                  Inclusive           Exclusive           
+1.  (Non-Activities)                                                          100%                0%                  
+2.  Threads                                                                   100%                0%                  
+3.  PortableThreadPool+WorkerThread.WorkerThreadStart()                       41.72%              0%                  
+4.  LowLevelLifoSemaphore.Wait(int32,bool)                                    38.99%              0.02%               
+5.  LowLevelLifoSemaphore.WaitForSignal(int32)                                38.97%              35.12%              
+6.  PortableThreadPool+GateThread.GateThreadStart()                           20.86%              0%                  
+7.  WaitHandle.WaitOneNoCheck(int32)                                          20.85%              20.85%              
+8.  CSharpInstanceBridge.Call(int,value class Godot.NativeInterop.godot_st    13.4%               0%                  
+    ring_name*,value class Godot.NativeInterop.godot_variant**,int32,value                                            
+     class Godot.NativeInterop.godot_variant_call_error*,value class Godot                                            
+    .NativeInterop.godot_variant*)                                            
+9.  DualOntologyWorldEngine!GameEngine.InvokeGodotClassMethod(required_mod    13.4%               0.13%               
+    ifier System.Runtime.InteropServices.InAttribute value class Godot.Nat                                            
+    iveInterop.godot_string_name&,value class Godot.NativeInterop.NativeVa                                            
+    riantPtrArgs,value class Godot.NativeInterop.godot_variant&)                                            
+10. NativeFuncs.godotsharp_method_bind_ptrcall(int,int,void**,void*)          9.98%               9.98%               
+11. DualOntologyWorldEngine!GameEngine.Parse(class System.String)             8.85%               0%                  
+12. DualOntologyWorldEngine!GameEngine.Snapshot()                             8.71%               0%                  
+13. Json.ParseString(class System.String)                                     8.69%               0%                  
+14. NativeCalls.godot_icall_1_771(int,class System.String)                    8.69%               0%                  
+15. DualOntologyWorldEngine!GameEngine+<DrainCommands>d__22.MoveNext()        8.18%               0.65%               
+16. GodotSynchronizationContext.ExecutePendingContinuations()                 7.5%                0%                  
+17. GodotTaskScheduler.Activate()                                             7.5%                0%                  
+18. ScriptManagerBridge.FrameCallback()                                       7.5%                0%                  
+19. ExecutionContext.RunInternal(class System.Threading.ExecutionContext,c    7.5%                0%                  
+    lass System.Threading.ContextCallback,class System.Object)                                            
+20. __Canon].MoveNext(class System.Threading.Thread)                          7.5%                0%                  
+21. NativeFuncs.godotsharp_dictionary_destroy(value class Godot.NativeInte    6.92%               6.92%               
+    rop.godot_dictionary&)                                            
+22. godot_dictionary.Dispose()                                                6.92%               0%                  
+23. Dictionary.Dispose(bool)                                                  6.92%               0%                  
+24. Dictionary.Finalize()                                                     6.92%               0%                  
+25. NativeCalls.godot_icall_2_891(int,int,value class Godot.NativeInterop.    6%                  0%                  
+    godot_string_name,value class System.ReadOnlySpan`1<value class Godot.                                            
+    Variant>,value class Godot.NativeInterop.godot_string_name)                                            
