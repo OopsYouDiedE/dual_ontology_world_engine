@@ -46,6 +46,8 @@ def main():
     parser.add_argument("--controller", choices=("ai", "player"), default="ai")
     parser.add_argument("--speed", type=float, default=4.0, help="Explicit Godot playback speed; use 1 for normal-speed interaction checks")
     parser.add_argument("--managed-seconds", type=int, help="Managed sampling duration; defaults to window minus 10 seconds")
+    parser.add_argument("--native-profiling", choices=("off", "full"), default="off",
+                        help="Optional Godot console script/GPU profiling; .NET sampling always remains enabled")
     args = parser.parse_args()
     if not args.godot or not args.dotnet_trace:
         parser.error("Specify --godot and --dotnet-trace (or GODOT and PATH)")
@@ -70,7 +72,7 @@ def main():
     session_root = Path(os.environ["APPDATA"]) / "Godot/app_userdata/Dual Ontology World Engine/dv-sessions"
     existing = {p.name for p in session_root.glob("*")}
     command = [str(godot), "--path", str(ROOT / "godot_csharp"),
-               "--debug", "--profiling", "--gpu-profile", "--script", "res://tools/dv_level3_capture.gd", "--",
+               "--debug", *(["--profiling", "--gpu-profile"] if args.native_profiling == "full" else []), "--script", "res://tools/dv_level3_capture.gd", "--",
                f"--out={out / 'run'}", "--mode=" + ("detective" if args.controller == "ai" else "player"), f"--seconds={args.seconds}",
                f"--dv-controller={args.controller}", f"--dv-speed={args.speed}", "--dv-audit"]
     if args.controller == "player":
@@ -78,7 +80,8 @@ def main():
     launch = {
         "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT).decode().strip(),
-        "command": command, "profiling": "Godot script/GPU plus .NET cpu-sampling attached automatically at process launch",
+        "command": command, "profiling": ".NET cpu-sampling attached automatically; passive frame/phase timings retained",
+        "native_profiling_requested": args.native_profiling,
         "managed_requested_seconds": managed_seconds,
         "managed_coverage": "Bounded sampling stops before native host exits; final capture tail is not managed-profiled",
         "scope": "Bounded rendered capture; profiling overhead included; not a completion test or speed comparison",
@@ -144,6 +147,7 @@ def main():
         result["managed_report_readable"] = analysis.returncode == 0 and "[ERROR]" not in report_text and bool(report_text.strip())
     godot_output = (out / "godot-stdout.log").read_text(encoding="utf-8", errors="replace")
     result["godot_script_profile_confirmed"] = "BEGIN PROFILING" in godot_output
+    result["native_profiling_requested"] = args.native_profiling
     result["gpu_profile_confirmed"] = "GPU PROFILE" in godot_output
     write_json(out / "result.json", result)
     print(json.dumps(result, ensure_ascii=False, indent=2))

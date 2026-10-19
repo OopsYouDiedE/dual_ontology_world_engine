@@ -195,7 +195,7 @@ Session presentation 保留原有surface/lines，并透传动作source_refs。Ma
 
 ### 自动采集与性能记录（2026-10-19）
 
-`python godot_csharp/tools/profile_dv_capture.py --out <新绝对目录> --godot <Godot .NET exe> --dotnet-trace <dotnet-trace.exe> --seconds 90` 包装现有正式渲染采集入口，启动 Godot `--debug --profiling --gpu-profile`，并在启动游戏进程后立即附加 dotnet-trace 的 cpu-sampling。依赖 Python 3 与 dotnet-trace；Godot 原生脚本分析与 .NET 调用栈分别封存，不把前者称为 C# 分析。托管采样默认80秒（窗口减10秒，可用`--managed-seconds`指定更短正整数），提前结束并排空轨迹，避免原生宿主退出时留下不完整EventPipe尾部；未采样的启动区间与窗口尾部如实保留。截图及实际现实毫秒索引、游戏时钟和宿主关闭证据沿用原合同；启动至分析器退出的总耗时单列，包含封存与分析器收尾，不冒充玩家游戏时长。源码及程序集前后指纹另存，拒绝覆盖证据目录。热点报告同时检查退出码和错误正文，实际脚本/GPU分析启动标记单列，不把文件存在或工具退出0冒充有效报告。分析器开销计入本轮，不与无分析器窗口宣称同条件速度比较。
+`python godot_csharp/tools/profile_dv_capture.py --out <新绝对目录> --godot <Godot .NET exe> --dotnet-trace <dotnet-trace.exe> --seconds 90` 包装现有正式渲染采集入口，启动 Godot `--debug`，并在启动游戏进程后立即附加 dotnet-trace 的 cpu-sampling；需要本地脚本/GPU控制台分析时显式加`--native-profiling full`，默认off。依赖 Python 3 与 dotnet-trace；Godot 原生脚本分析与 .NET 调用栈分别封存，不把前者称为 C# 分析。托管采样默认80秒（窗口减10秒，可用`--managed-seconds`指定更短正整数），提前结束并排空轨迹，避免原生宿主退出时留下不完整EventPipe尾部；未采样的启动区间与窗口尾部如实保留。截图及实际现实毫秒索引、游戏时钟和宿主关闭证据沿用原合同；启动至分析器退出的总耗时单列，包含封存与分析器收尾，不冒充玩家游戏时长。源码及程序集前后指纹另存，拒绝覆盖证据目录。热点报告同时检查退出码和错误正文，实际脚本/GPU分析启动标记单列，不把文件存在或工具退出0冒充有效报告。分析器开销计入本轮，不与无分析器窗口宣称同条件速度比较。
 
 用户指定轻量模型记录画面时，使用全新上下文的该模型，仅提供本轮原始 PNG 与时间索引。记录实际查看的文件、采样时刻、可辨正文、人物外观、界面及场景变化；未查看区间与无法辨认内容保留未知，不用隐藏状态补写画面，不替代引擎侦探选择行动。证据审查与剧情、人物机制验收分列。
 
@@ -248,3 +248,5 @@ FrameArchive只接收主线程复制出的RGBA8像素；后台.NET任务串行�
 CampusMapView首次装图先采用当前访问声明，一次性加入内容几何和门禁后建立导航；动态几何/访问更新保留原重建合同。通用房间目的地优先选同房且四向16px可走的转身空间，无此点才保留原最近点；不改变显式热点半径、碰撞体或到达回执。Main初始字段快照只应用一次。
 四倍测试显式--speed 4；physics_ticks_per_second=240，max_physics_steps_per_frame=32，连续碰撞单步时间保持。普通窗口仍默认1倍，DV费用不变。盲玩Luna只读本轮PNG/输入与采样索引，自主选路，留意门边停滞、横移、折返、对白、输入响应和同伴可见行为，不能读取源码、历史、设计或隐藏诊断，也不预写路线。不同倍率的旧窗口只作条件不同的诊断参照，不作同条件速度宣称。
 RuntimeDiagnostics补记process开始及render前边界；PlayerViewTrace与view构建单独插桩，保留未归因残差。后台编码时间不并入主线程阻塞分解。成果沿用real-game-capture任务目录，优化后另起独占窗口。
+
+本轮定位分析器自身开销时，保持四倍物理、完整审计、截图与.NET采样，另起新会话切换native-profiling；不开脚本/GPU控制台分析不代表关闭全部分析器。该条件差异在launch/result明确保留，原有完整分析窗口不改写。先看新窗口实际间隔，不能依据周期相近直接判定根因。
