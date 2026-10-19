@@ -54,7 +54,7 @@ fn dvg_debug_stage(state, config, run_config, steps, boundary, before_time, acti
 // Both fresh and explicitly restored runs use this exact prepare/complete loop.
 fn dvg_debug_loop(initial, config, run_config, initial_steps, initial_cursor, resumed):
     var state = initial
-    var raw_format = "json"
+    var raw_format = "dag"
     if 3 < rt_arg_count():
         raw_format = rt_arg(3)
     var projection_every = 1
@@ -106,15 +106,16 @@ fn dvg_debug_loop(initial, config, run_config, initial_steps, initial_cursor, re
     rt_json_print({"type": "debug_events", "batch": dv_debug_events(trace.events, cursor, config), "through_step": steps, "projection_every": projection_every})
     if raw_format == "dag":
         return rt_raw_finish({"trace": trace, "last_live_session": state})
-    return rt_json_write(rt_arg(0), trace)
+    rt_fail("JSON recording is forbidden")
+    return false
 
 // Fresh initialization is never used by the restore entry.
 fn dvg_debug_run():
     let config = dvg_debug_config()
-    var raw_format = "json"
+    var raw_format = "dag"
     if 3 < rt_arg_count():
         raw_format = rt_arg(3)
-    dv_require(raw_format == "json" or raw_format == "dag", "Unknown raw evidence format")
+    dv_require(raw_format == "dag", "Unknown raw evidence format")
     if raw_format == "dag":
         rt_raw_open(rt_arg(0))
     var run_config = {"seed": 1, "profile": "Standard_Detective", "detective_zone": "zone_yi"}

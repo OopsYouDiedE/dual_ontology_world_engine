@@ -34,13 +34,13 @@ func _run() -> void:
 		quit(2)
 		return
 	DirAccess.make_dir_recursive_absolute(directory)
-	_write("run.json", {"mode": mode, "time_scale": Engine.time_scale, "capture_hz": 5, "duration_real_seconds": seconds, "input": "Input.parse_input_event; no desktop devices"})
 	host = load("res://scenes/Host/Main.tscn").instantiate()
 	root.add_child(host)
 	host.engine.SetPlayerControlled(mode != "detective")
 	archive = load("res://scenes/Host/FrameArchive.cs").new()
 	root.add_child(archive)
 	archive.Configure(host.engine.TimingClockUs())
+	_write("run.dvlog", {"mode": mode, "time_scale": Engine.time_scale, "capture_hz": 5, "duration_real_seconds": seconds, "input": "Input.parse_input_event; no desktop devices"})
 	started = Time.get_ticks_msec()
 	host.engine.EventsReady.connect(_host_events)
 	RenderingServer.frame_post_draw.connect(_capture)
@@ -62,7 +62,8 @@ func _process(_delta: float) -> bool:
 	var input_path := directory.path_join("input.json")
 	if FileAccess.file_exists(input_path):
 		var packet = JSON.parse_string(FileAccess.get_file_as_string(input_path))
-		DirAccess.rename_absolute(input_path, directory.path_join("input-%06d.json" % serial))
+		archive.WriteRecord(directory.path_join("input-%06d.dvlog" % serial), JSON.stringify(packet))
+		DirAccess.remove_absolute(input_path) # Transient command packet; consumed evidence is binary.
 		serial += 1
 		if packet is Dictionary:
 			_input_packet(packet)
@@ -80,7 +81,7 @@ func _process(_delta: float) -> bool:
 	return false
 
 func _input_packet(packet: Dictionary) -> void:
-	_append("input-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "packet": packet})
+	_append("input-events.dvlog", {"real_ms": Time.get_ticks_msec() - started, "packet": packet})
 	if str(packet.get("kind", "")) == "stop":
 		_finish.call_deferred()
 	elif str(packet.get("kind", "")) == "key":
@@ -108,7 +109,7 @@ func _release_due_keys() -> void:
 		if Time.get_ticks_msec() < int(held_keys[code]): continue
 		_key(code, false)
 		held_keys.erase(code)
-		_append("input-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "packet": {"kind": "key-release", "key": OS.get_keycode_string(code)}})
+		_append("input-events.dvlog", {"real_ms": Time.get_ticks_msec() - started, "packet": {"kind": "key-release", "key": OS.get_keycode_string(code)}})
 
 func _poll_archive() -> void:
 	for raw in archive.PollCompleted():
@@ -117,11 +118,11 @@ func _poll_archive() -> void:
 			archive_errors.append(row)
 			push_error("Text archive failed: " + str(row.error))
 			continue
-		_append("archive-timing.jsonl", row)
+		_append("archive-timing.dvlog", row)
 		if row.error != null:
 			archive_errors.append(row)
 			push_error("Frame archive failed: " + str(row.error))
-		else: _append("frames.jsonl", {"real_ms": int(str(row.file).trim_prefix("frame-").trim_suffix(".png")), "file": row.file, "saved_us": row.end_us})
+		else: _append("frames.dvlog", {"real_ms": int(str(row.file).trim_prefix("frame-").trim_suffix(".png")), "file": row.file, "saved_us": row.end_us})
 
 func _key(code: int, down: bool) -> void:
 	var event := InputEventKey.new()
@@ -132,10 +133,10 @@ func _key(code: int, down: bool) -> void:
 
 func _host_events(events: Array) -> void:
 	# Host delivery times are evidence bounds, not inferred DV milestone times.
-	_append("host-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "events": events})
+	_append("host-events.dvlog", {"real_ms": Time.get_ticks_msec() - started, "events": events})
 
 func _append(name: String, value: Variant) -> void:
-	archive.AppendText(directory.path_join(name), JSON.stringify(value) + "\n")
+	archive.AppendRecords(directory.path_join(name), JSON.stringify(value) + "\n")
 
 func _flush_timings() -> void:
 	var rows: Array = host.engine.PollTimings()
@@ -147,7 +148,7 @@ func _flush_timings() -> void:
 		var row: Dictionary = JSON.parse_string(str(raw))
 		if str(row.stage) in ["physical_location", "actor_in_viewport", "frame_gap"]:
 			highlights.append(row)
-	archive.AppendText(directory.path_join("live-timing.jsonl"), "\n".join(lines) + "\n")
+	archive.AppendRecords(directory.path_join("live-timing.dvlog"), "\n".join(lines) + "\n")
 	host._timing("journal_end")
 
 func _capture() -> void:
@@ -168,11 +169,11 @@ func _capture() -> void:
 	archive.Enqueue(image.get_data(), image.get_width(), image.get_height(), directory.path_join(filename), captured_us)
 	host._timing("capture_png_end", {"file": filename})
 	if not highlights.is_empty():
-		_append("keyframes.jsonl", {"real_ms": elapsed, "file": filename, "events": highlights})
+		_append("keyframes.dvlog", {"real_ms": elapsed, "file": filename, "events": highlights})
 		highlights = []
 	# This stream is for the main reviewer, never the blind player.
 	var record := {"real_ms": elapsed, "time_scale": Engine.time_scale, "snapshot": host.engine.Snapshot()}
-	_append("measurement.jsonl", record)
+	_append("measurement.dvlog", record)
 	_capture_render_state(elapsed, filename)
 	host._timing("capture_end", {"file": filename})
 
@@ -198,21 +199,19 @@ func _capture_render_state(elapsed: int, filename: String) -> void:
 				"animation": str(sprite.animation), "frame": sprite.frame, "texture": texture.resource_path if texture != null else "",
 				"alpha": sprite.modulate.a, "self_alpha": sprite.self_modulate.a})
 		rows.append(row)
-	_append("render-state.jsonl", {"real_ms": elapsed, "file": filename, "actors": rows, "scope": "private-passive-render-diagnostic"})
+	_append("render-state.dvlog", {"real_ms": elapsed, "file": filename, "actors": rows, "scope": "private-passive-render-diagnostic"})
 
 func _write(name: String, value: Variant) -> void:
-	var file := FileAccess.open(directory.path_join(name), FileAccess.WRITE)
-	file.store_string(JSON.stringify(value))
-	file.close()
+	archive.WriteRecord(directory.path_join(name), JSON.stringify(value))
 
 func _finish() -> void:
 	if finishing: return
 	finishing = true
 	var ended := Time.get_ticks_msec() - started
-	_write("end.json", {"real_ms": ended, "snapshot": host.engine.Snapshot()})
+	_write("end.dvlog", {"real_ms": ended, "snapshot": host.engine.Snapshot()})
 	for code in held_keys:
 		_key(code, false)
-		_append("input-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "packet": {"kind": "key-release", "key": OS.get_keycode_string(code), "reason": "capture-end"}})
+		_append("input-events.dvlog", {"real_ms": Time.get_ticks_msec() - started, "packet": {"kind": "key-release", "key": OS.get_keycode_string(code), "reason": "capture-end"}})
 	held_keys.clear()
 	_flush_timings()
 	host.shutdown_completed.connect(func(): host_closed = true)
@@ -221,5 +220,5 @@ func _finish() -> void:
 		_poll_archive()
 		if archive.IsIdle() and host_closed: break
 		await process_frame
-	_write("capture-close.json", {"capture_end_real_ms": ended, "archive_and_host_closed_real_ms": Time.get_ticks_msec() - started, "archive_errors": archive_errors})
+	_write("capture-close.dvlog", {"capture_end_real_ms": ended, "archive_and_host_closed_real_ms": Time.get_ticks_msec() - started, "archive_errors": archive_errors})
 	quit(0 if archive_errors.is_empty() else 2)

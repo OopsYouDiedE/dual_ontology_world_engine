@@ -99,14 +99,13 @@ def export_checkpoint(index, name, out):
     meta = checkpoint_metadata(index, name)
     out = Path(out).resolve()
     out.mkdir(parents=True, exist_ok=False)
-    temporary = out / 'checkpoint.save.json.partial'
-    target = out / 'checkpoint.save.json'
-    with temporary.open('x', encoding='utf-8', newline='\n') as output:
-        index.write_value(index.select(checkpoint=name), output, 'dv-tagged')
-        output.write('\n')
+    temporary = out / 'checkpoint.dvsave.partial'
+    target = out / 'checkpoint.dvsave'
+    with temporary.open('xb') as output:
+        index.write_binary(index.select(checkpoint=name), output)
     os.link(temporary, target)
     temporary.unlink()
-    manifest = {'format': 'dv-debug-checkpoint-bundle-v1', 'checkpoint': name, 'save_file': target.name, 'save_sha256': sha_file(target), 'raw_source': str(index.source), 'raw_sha256': index.summary['source_sha256'], 'raw_validated_bytes': index.summary['validated_bytes'], 'raw_invalid_tail': index.summary['invalid_tail'], 'metadata': meta, 'scope': 'actual committed completion checkpoint; tagged Save values preserve exact rationals; no invented earlier state'}
+    manifest = {'format': 'dv-debug-checkpoint-bundle-v1', 'checkpoint': name, 'save_file': target.name, 'save_sha256': sha_file(target), 'raw_source': str(index.source), 'raw_sha256': index.summary['source_sha256'], 'raw_validated_bytes': index.summary['validated_bytes'], 'raw_invalid_tail': index.summary['invalid_tail'], 'metadata': meta, 'scope': 'actual committed completion checkpoint; binary DAG Save values preserve exact rationals; no invented earlier state'}
     with (out / 'manifest.json').open('x', encoding='utf-8') as output:
         json.dump(manifest, output, ensure_ascii=False, indent=2)
         output.write('\n')
@@ -119,15 +118,15 @@ def validate_bundle(path):
     if bundle.get('format') != 'dv-debug-checkpoint-bundle-v1':
         raise ValueError('Unsupported checkpoint bundle')
     save = path.parent / bundle['save_file']
-    if save.name != 'checkpoint.save.json' or save.resolve().parent != path.parent or not save.is_file() or sha_file(save) != bundle['save_sha256']:
-        raise ValueError('Checkpoint tagged Save is missing, changed or outside its bundle')
+    if save.name != 'checkpoint.dvsave' or save.resolve().parent != path.parent or not save.is_file() or sha_file(save) != bundle['save_sha256']:
+        raise ValueError('Checkpoint binary DAG Save is missing, changed or outside its bundle')
     raw = Path(bundle['raw_source'])
     if not raw.is_file():
         raise ValueError('Original committed raw source is missing')
     # One validated raw scan; stream the Save re-expansion through a digest.
     class DigestSink:
         def __init__(self): self.digest = hashlib.sha256()
-        def write(self, text): self.digest.update(text.encode('utf-8'))
+        def write(self, data): self.digest.update(data)
     with RawDagIndex(raw) as index:
         if index.summary['source_sha256'] != bundle['raw_sha256']:
             raise ValueError('Original committed raw source changed')
@@ -135,8 +134,7 @@ def validate_bundle(path):
         if meta != bundle['metadata']:
             raise ValueError('Bundle metadata does not match original committed checkpoint')
         sink = DigestSink()
-        index.write_value(index.select(checkpoint=bundle['checkpoint']), sink, 'dv-tagged')
-        sink.write('\n')
+        index.write_binary(index.select(checkpoint=bundle['checkpoint']), sink)
         if sink.digest.hexdigest() != bundle['save_sha256']:
             raise ValueError('Tagged Save does not equal the committed checkpoint value')
     hashes = meta['provenance'].get('source_hashes')

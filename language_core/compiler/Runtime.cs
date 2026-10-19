@@ -12,6 +12,158 @@ using System.Security.Cryptography;
 
 namespace DuelView.Compiled;
 
+// Storage codec only. JSON remains an in-memory host/compiler exchange format.
+public static class BinaryEvidence
+{
+    public static readonly byte[] Magic = "DVLOG2\r\n"u8.ToArray();
+    private const int MaxFrame = 256 * 1024 * 1024;
+    private static readonly UTF8Encoding Utf8 = new(false, true);
+    public static void RequireBinaryPath(string path)
+    {
+        var parts = Path.GetFileName(path).Split('.');
+        if (parts.Any(p => p.Equals("json", StringComparison.OrdinalIgnoreCase) ||
+            p.Equals("jsonl", StringComparison.OrdinalIgnoreCase) || p.Equals("gz", StringComparison.OrdinalIgnoreCase)))
+            throw new IOException("JSON recording is forbidden; use .dvlog/.dvdag/.dvsave");
+    }
+    public static byte[] Encode(object? value)
+    {
+        using var output = new MemoryStream();
+        using var writer = new BinaryWriter(output, Utf8, leaveOpen: true);
+        WriteValue(writer, value, 0);
+        return output.ToArray();
+    }
+    private static void WriteValue(BinaryWriter writer, object? value, int depth)
+    {
+        if (depth > 512) throw new InvalidDataException("Binary evidence nesting exceeds 512");
+        switch (value)
+        {
+            case null: writer.Write((byte)0); break;
+            case bool flag: writer.Write((byte)(flag ? 2 : 1)); break;
+            case int number: writer.Write((byte)3); writer.Write((long)number); break;
+            case long number: writer.Write((byte)3); writer.Write(number); break;
+            case double number when double.IsFinite(number): writer.Write((byte)4); writer.Write(number); break;
+            case string text:
+                var bytes = Utf8.GetBytes(text);
+                writer.Write((byte)5); writer.Write(bytes.Length); writer.Write(bytes); break;
+            case IDictionary<string, object?> map:
+                writer.Write((byte)7); writer.Write(map.Count);
+                foreach (var entry in map) { WriteValue(writer, entry.Key, depth + 1); WriteValue(writer, entry.Value, depth + 1); }
+                break;
+            case JsonElement element: WriteValue(writer, FromJson(element), depth); break;
+            default:
+                if (!R.TryItems(value!, out var items)) throw new InvalidDataException("Unsupported binary evidence atom");
+                writer.Write((byte)8); writer.Write(items.Count);
+                foreach (var item in items) WriteValue(writer, item, depth + 1);
+                break;
+        }
+    }
+    public static object? FromJson(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.Object => value.EnumerateObject().ToDictionary(p => p.Name, p => FromJson(p.Value)),
+        JsonValueKind.Array => value.EnumerateArray().Select(FromJson).ToArray(),
+        JsonValueKind.String => value.GetString(),
+        JsonValueKind.Number => value.TryGetInt64(out var integer) ? (object)integer : value.GetDouble(),
+        JsonValueKind.True => true, JsonValueKind.False => false, JsonValueKind.Null => null,
+        _ => throw new InvalidDataException("Unsupported host record value")
+    };
+    public static object? Decode(byte[] payload)
+    {
+        using var input = new MemoryStream(payload, writable: false);
+        using var reader = new BinaryReader(input, Utf8);
+        var result = ReadValue(reader, payload.Length, 0);
+        if (input.Position != input.Length) throw new InvalidDataException("Trailing binary value bytes");
+        return result;
+    }
+    private static object? ReadValue(BinaryReader reader, int limit, int depth)
+    {
+        if (depth > 512) throw new InvalidDataException("Binary evidence nesting exceeds 512");
+        switch (reader.ReadByte())
+        {
+            case 0: return null;
+            case 1: return false;
+            case 2: return true;
+            case 3: return reader.ReadInt64();
+            case 4:
+                var number = reader.ReadDouble();
+                if (!double.IsFinite(number)) throw new InvalidDataException("Nonfinite evidence number");
+                return number;
+            case 5:
+                var size = reader.ReadInt32();
+                if (size < 0 || size > limit) throw new InvalidDataException("Invalid binary text length");
+                var bytes = reader.ReadBytes(size);
+                if (bytes.Length != size) throw new EndOfStreamException();
+                return Utf8.GetString(bytes);
+            case 7:
+                var count = reader.ReadInt32();
+                if (count < 0 || count > limit) throw new InvalidDataException("Invalid binary map length");
+                var map = new Dictionary<string, object?>();
+                for (var i = 0; i < count; i++)
+                {
+                    var key = ReadValue(reader, limit, depth + 1) as string ?? throw new InvalidDataException("Binary map key is not text");
+                    map.Add(key, ReadValue(reader, limit, depth + 1));
+                }
+                return map;
+            case 8:
+                var length = reader.ReadInt32();
+                if (length < 0 || length > limit) throw new InvalidDataException("Invalid binary list length");
+                var list = new List<object?>();
+                for (var i = 0; i < length; i++) list.Add(ReadValue(reader, limit, depth + 1));
+                return list;
+            default: throw new InvalidDataException("Unknown binary value tag");
+        }
+    }
+    public static void WriteFrame(Stream stream, object? value)
+    {
+        var payload = Encode(value);
+        if (payload.Length > MaxFrame) throw new InvalidDataException("Binary frame exceeds size limit");
+        Span<byte> prefix = stackalloc byte[4];
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(prefix, payload.Length);
+        stream.Write(prefix); stream.Write(SHA256.HashData(payload)); stream.Write(payload);
+    }
+    public static object? ReadFrame(Stream stream, out bool end)
+    {
+        Span<byte> prefix = stackalloc byte[4];
+        var first = stream.ReadByte();
+        end = first < 0;
+        if (end) return null;
+        prefix[0] = (byte)first; stream.ReadExactly(prefix[1..]);
+        var size = System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(prefix);
+        if (size < 0 || size > MaxFrame) throw new InvalidDataException("Invalid binary frame size");
+        var checksum = new byte[32]; stream.ReadExactly(checksum);
+        var payload = new byte[size]; stream.ReadExactly(payload);
+        if (!CryptographicOperations.FixedTimeEquals(checksum, SHA256.HashData(payload))) throw new InvalidDataException("Binary frame checksum mismatch");
+        return Decode(payload);
+    }
+    public static void RequireHeader(Stream stream)
+    {
+        var header = new byte[Magic.Length]; stream.ReadExactly(header);
+        if (!header.AsSpan().SequenceEqual(Magic)) throw new InvalidDataException("Unsupported binary evidence header");
+    }
+    public static void WriteJsonRecords(string path, IEnumerable<string> records)
+    {
+        RequireBinaryPath(path);
+        using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
+        output.Write(Magic);
+        WriteJsonRecords(output, records);
+    }
+    public static void AppendJsonRecords(string path, string records)
+    {
+        RequireBinaryPath(path);
+        using var output = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
+        if (output.Length == 0) output.Write(Magic);
+        else { RequireHeader(output); output.Position = output.Length; }
+        WriteJsonRecords(output, records.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+    }
+    private static void WriteJsonRecords(Stream stream, IEnumerable<string> records)
+    {
+        foreach (var record in records)
+        {
+            using var document = JsonDocument.Parse(record);
+            WriteFrame(stream, document.RootElement);
+        }
+    }
+}
+
 // Platform/value ABI only. No reader, AST walker, evaluator or code generator.
 public static class R
 {
@@ -998,10 +1150,18 @@ public static class R
     private static readonly Stream StandardOutput = Console.OpenStandardOutput();
     private static readonly byte[] NewLineBytes = Encoding.UTF8.GetBytes(Environment.NewLine);
     // Same value encoding as json_stringify, without a whole-packet UTF-16 copy.
+    private static bool binaryOutputHeader;
+    private static bool binaryRecording;
     public static object json_print(object value)
     {
         lock (OutputLock)
         {
+            if (binaryRecording || Environment.GetEnvironmentVariable("DV_BINARY_STDOUT") == "1")
+            {
+                if (!binaryOutputHeader) { StandardOutput.Write(BinaryEvidence.Magic); binaryOutputHeader = true; }
+                // Projection packets are bounded values; exact atoms remain tagged.
+                BinaryEvidence.WriteFrame(StandardOutput, BinaryProjection(value)); StandardOutput.Flush(); return true;
+            }
             using var writer = new Utf8JsonWriter(StandardOutput, new JsonWriterOptions { SkipValidation = true });
             WriteJsonFast(writer, value);
             writer.Flush();
@@ -1013,6 +1173,12 @@ public static class R
 
     // Opt-in evidence I/O only. The disabled hook never traverses the supplied value.
     // Values are frozen before registration; neither recording nor references mutate them.
+    private static object BinaryProjection(object value)
+    {
+        if (value is Rational exact) return exact.ToString();
+        if (TryItems(value, out var items)) return items.Select(BinaryProjection).ToList();
+        return value;
+    }
     private static RawDagWriter? RawEvidence;
     private static readonly object RawLock = new();
     public static object raw_open(object path)
@@ -1022,6 +1188,7 @@ public static class R
         {
             if (RawEvidence is not null) throw new InvalidOperationException("Raw recorder already opened; abort a failed recorder before reopening");
             RawEvidence = new RawDagWriter(Text(path));
+            binaryRecording = true;
             return true;
         }
     }
@@ -1082,53 +1249,25 @@ public static class R
         private readonly FileStream stream;
         private readonly ConditionalWeakTable<FrozenList, RawNode> nodes = new();
         private readonly HashSet<string> eventIds = new(StringComparer.Ordinal);
-        private readonly ArrayBufferWriter<byte> frameBuffer = new();
-        private readonly IncrementalHash digest;
-        private Utf8JsonWriter? payloadWriter;
-        private Utf8JsonWriter? envelopeWriter;
-        private long nextNode;
-        private long sequence;
-        private long flushedSequence;
-        private long eventCount;
+        private long nextNode, sequence, flushedSequence, eventCount;
         private string previous = new('0', 64);
-        private bool finished;
-        private bool failed;
-
+        private bool finished, failed;
+        private static Dictionary<string, object?> Map(params (string Key, object? Value)[] fields) => fields.ToDictionary(x => x.Key, x => x.Value);
         internal RawDagWriter(string path)
         {
-            destination = Path.GetFullPath(path);
-            partial = destination + ".partial";
+            BinaryEvidence.RequireBinaryPath(path);
+            destination = Path.GetFullPath(path); partial = destination + ".partial";
             if (File.Exists(destination)) throw new IOException("Evidence destination already exists: " + destination);
             stream = new FileStream(partial, FileMode.CreateNew, FileAccess.Write, FileShare.Read, 1024 * 1024);
-            try { digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256); }
-            catch { stream.Dispose(); throw; }
             try
             {
-                payloadWriter = new Utf8JsonWriter(frameBuffer);
-                envelopeWriter = new Utf8JsonWriter(stream);
-                Frame(writer =>
-                {
-                    writer.WriteStartObject();
-                    writer.WriteString("kind", "header");
-                    writer.WriteString("format", "dv-raw-dag-v1");
-                    writer.WriteString("value_encoding", "DV arrays; typed rational atoms; trace-json or dv-tagged recovery");
-                    writer.WriteString("checksum", "sha256(previous-ascii + LF + sequence-ascii + LF + payload-utf8)");
-                    writer.WriteString("scope", "lossless frozen values; final checkpoint required for complete sealing");
-                    writer.WriteEndObject();
-                });
+                stream.Write(BinaryEvidence.Magic);
+                Frame(Map(("kind", "header"), ("format", "dv-raw-dag-v2"),
+                    ("value_encoding", "typed binary atoms and prior node references"),
+                    ("checksum", "sha256(previous-ascii + LF + sequence-ascii + LF + binary-payload)")));
                 FlushCommit();
             }
-            catch { DisposeResources(); throw; }
-        }
-        private void DisposeResources()
-        {
-            // Even a failed writer disposal must release the native hash and file.
-            try { payloadWriter?.Dispose(); }
-            finally
-            {
-                try { envelopeWriter?.Dispose(); }
-                finally { try { digest.Dispose(); } finally { stream.Dispose(); } }
-            }
+            catch { stream.Dispose(); throw; }
         }
         private void RequireOpen()
         {
@@ -1140,42 +1279,17 @@ public static class R
             try { stream.Flush(); flushedSequence = sequence; }
             catch { failed = true; throw; }
         }
-        private long Frame(Action<Utf8JsonWriter> payload)
+        private long Frame(Dictionary<string, object?> payload)
         {
             RequireOpen();
             try
             {
-                // A frame contains one shallow node or commit, never an expanded DAG.
-                frameBuffer.Clear();
-                payloadWriter!.Reset(frameBuffer);
-                payload(payloadWriter);
-                payloadWriter.Flush();
-                var bytes = frameBuffer.WrittenSpan;
-                Span<byte> prefix = stackalloc byte[96];
-                var prefixLength = Encoding.ASCII.GetBytes(previous, prefix);
-                prefix[prefixLength++] = (byte)'\n';
-                if (!System.Buffers.Text.Utf8Formatter.TryFormat(sequence, prefix[prefixLength..], out var digits))
-                    throw new InvalidOperationException("Raw frame sequence exceeds checksum prefix");
-                prefixLength += digits;
-                prefix[prefixLength++] = (byte)'\n';
-                digest.AppendData(prefix[..prefixLength]);
+                var bytes = BinaryEvidence.Encode(payload);
+                using var digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+                digest.AppendData(Encoding.ASCII.GetBytes(previous + "\n" + sequence.ToString(CultureInfo.InvariantCulture) + "\n"));
                 digest.AppendData(bytes);
-                Span<byte> hash = stackalloc byte[32];
-                if (!digest.TryGetHashAndReset(hash, out _)) throw new InvalidOperationException("SHA-256 buffer too short");
-                var checksum = Convert.ToHexString(hash).ToLowerInvariant();
-                {
-                    var writer = envelopeWriter!;
-                    writer.Reset(stream);
-                    writer.WriteStartObject();
-                    writer.WriteNumber("seq", sequence);
-                    writer.WriteString("prev", previous);
-                    writer.WritePropertyName("payload");
-                    writer.WriteRawValue(bytes, skipInputValidation: true);
-                    writer.WriteString("sha256", checksum);
-                    writer.WriteEndObject();
-                    writer.Flush();
-                }
-                stream.WriteByte((byte)'\n');
+                var checksum = Convert.ToHexString(digest.GetHashAndReset()).ToLowerInvariant();
+                BinaryEvidence.WriteFrame(stream, Map(("seq", sequence), ("prev", previous), ("payload", payload), ("sha256", checksum)));
                 previous = checksum;
                 return sequence++;
             }
@@ -1187,84 +1301,33 @@ public static class R
             if (!IsDvList(value)) throw new ArgumentException("Raw DAG roots must be DV lists/records");
             var frozen = (FrozenList)snapshot(value);
             if (nodes.TryGetValue(frozen, out var known)) return known;
-            var children = new RawNode?[frozen.Count];
+            var items = new List<object?>();
             for (var i = 0; i < frozen.Count; i++)
-                if (IsDvList(frozen[i])) children[i] = Node(frozen[i]);
+                items.Add(IsDvList(frozen[i]) ? Map(("node", Node(frozen[i]).Id)) :
+                    frozen[i] is Rational exact ? Map(("rational", exact.ToString())) : frozen[i]);
             var id = nextNode++;
-            var frame = Frame(writer =>
-            {
-                writer.WriteStartObject();
-                writer.WriteString("kind", "node");
-                writer.WriteNumber("node_id", id);
-                writer.WriteStartArray("items");
-                for (var i = 0; i < frozen.Count; i++)
-                {
-                    if (children[i] is { } child)
-                    {
-                        writer.WriteStartObject();
-                        writer.WriteNumber("node", child.Id);
-                        writer.WriteEndObject();
-                    }
-                    else if (frozen[i] is Rational exact)
-                    {
-                        writer.WriteStartObject();
-                        writer.WriteString("rational", exact.ToString());
-                        writer.WriteEndObject();
-                    }
-                    else WriteJsonFast(writer, frozen[i]);
-                }
-                writer.WriteEndArray();
-                writer.WriteEndObject();
-            });
-            var result = new RawNode(id, frame);
-            nodes.Add(frozen, result);
-            return result;
+            var frame = Frame(Map(("kind", "node"), ("node_id", id), ("items", items)));
+            var result = new RawNode(id, frame); nodes.Add(frozen, result); return result;
         }
         internal void Event(object value)
         {
-            RequireOpen();
-            var frozen = snapshot(value);
-            var id = Text(record_find(frozen, "id", false));
-            if (!eventIds.Add(id))
-            {
-                failed = true;
-                throw new InvalidOperationException("Repeated raw event ID: " + id);
-            }
+            var frozen = snapshot(value); var id = Text(record_find(frozen, "id", false));
+            if (!eventIds.Add(id)) { failed = true; throw new InvalidOperationException("Repeated raw event ID: " + id); }
             var node = Node(frozen);
-            Frame(writer =>
-            {
-                writer.WriteStartObject();
-                writer.WriteString("kind", "event");
-                writer.WriteString("event_id", id);
-                writer.WriteNumber("root", node.Id);
-                writer.WriteNumber("ordinal", eventCount);
-                writer.WriteEndObject();
-            });
-            // Commit is last, and visible before the caller publishes the event.
-            FlushCommit();
-            eventCount++;
+            Frame(Map(("kind", "event"), ("event_id", id), ("root", node.Id), ("ordinal", eventCount)));
+            FlushCommit(); eventCount++;
         }
         internal void Checkpoint(string name, object value)
         {
             var node = Node(value);
-            Frame(writer =>
-            {
-                writer.WriteStartObject();
-                writer.WriteString("kind", "checkpoint");
-                writer.WriteString("name", name);
-                writer.WriteNumber("root", node.Id);
-                writer.WriteNumber("events", eventCount);
-                writer.WriteEndObject();
-            });
-            FlushCommit();
+            Frame(Map(("kind", "checkpoint"), ("name", name), ("root", node.Id), ("events", eventCount))); FlushCommit();
         }
         internal object Reference(object value)
         {
-            var node = Node(value);
-            FlushCommit();
+            var node = Node(value); FlushCommit();
             return snapshot(new List<object>
             {
-                new List<object> { "format", "dv-raw-dag-v1" },
+                new List<object> { "format", "dv-raw-dag-v2" },
                 new List<object> { "journal", Path.GetFileName(destination) },
                 new List<object> { "partial_journal", Path.GetFileName(partial) },
                 new List<object> { "node_id", node.Id.ToString(CultureInfo.InvariantCulture) },
@@ -1274,49 +1337,84 @@ public static class R
         internal void Finish(object value)
         {
             Checkpoint("final", value);
-            Frame(writer =>
-            {
-                writer.WriteStartObject();
-                writer.WriteString("kind", "seal");
-                writer.WriteNumber("events", eventCount);
-                writer.WriteNumber("nodes", nextNode);
-                writer.WriteBoolean("final_checkpoint", true);
-                writer.WriteEndObject();
-            });
-            try
-            {
-                FlushCommit();
-                DisposeResources();
-                // Neither incomplete frames nor failed I/O publish the completed filename.
-                File.Move(partial, destination);
-                finished = true;
-            }
-            catch { failed = true; throw; }
+            Frame(Map(("kind", "seal"), ("events", eventCount), ("nodes", nextNode), ("final_checkpoint", true)));
+            try { FlushCommit(); stream.Dispose(); File.Move(partial, destination); finished = true; }
+            catch { failed = true; stream.Dispose(); throw; }
         }
-        internal void Abort()
-        {
-            failed = true;
-            DisposeResources();
-        }
+        internal void Abort() { failed = true; stream.Dispose(); }
     }
-    public static object json_write(object path, object value)
+    public static void WriteEvidenceFile(string path, object value)
     {
-        var destination = Text(path);
-        var partial = destination + ".partial";
-        if (File.Exists(destination)) throw new IOException("Evidence destination already exists: " + destination);
-        using (var stream = new FileStream(partial, FileMode.CreateNew, FileAccess.Write, FileShare.None, 64 * 1024 * 1024))
-        {
-            // Optional lossless storage encoding; the JSON value is unchanged.
-            // Dispose compression before publishing the final filename.
-            using var compressed = destination.EndsWith(".gz", StringComparison.OrdinalIgnoreCase)
-                ? new GZipStream(stream, CompressionLevel.Fastest, leaveOpen: true) : null;
-            using var writer = new Utf8JsonWriter(compressed is null ? stream : compressed, new JsonWriterOptions { SkipValidation = true });
-            WriteJsonFast(writer, value);
-            writer.Flush();
-        }
-        File.Move(partial, destination);
-        return true;
+        var writer = new RawDagWriter(path);
+        try { writer.Checkpoint("initial", value); writer.Finish(value); }
+        catch { writer.Abort(); throw; }
     }
+    public static object ReadEvidenceFile(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        BinaryEvidence.RequireHeader(stream);
+        var values = new List<object>(); var previous = new string('0', 64); long sequence = 0;
+        object? final = null; bool sealedFile = false, initial = false;
+        while (true)
+        {
+            var raw = BinaryEvidence.ReadFrame(stream, out var end); if (end) break;
+            if (sealedFile) throw new InvalidDataException("Frames after final seal");
+            var envelope = raw as Dictionary<string, object?> ?? throw new InvalidDataException("Invalid DAG envelope");
+            if (envelope.Count != 4 || (long)envelope["seq"]! != sequence || (string)envelope["prev"]! != previous)
+                throw new InvalidDataException("DAG sequence/checksum predecessor mismatch");
+            var payload = (Dictionary<string, object?>)envelope["payload"]!;
+            using var digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            digest.AppendData(Encoding.ASCII.GetBytes(previous + "\n" + sequence.ToString(CultureInfo.InvariantCulture) + "\n"));
+            digest.AppendData(BinaryEvidence.Encode(payload));
+            var checksum = Convert.ToHexString(digest.GetHashAndReset()).ToLowerInvariant();
+            if ((string)envelope["sha256"]! != checksum) throw new InvalidDataException("DAG checksum mismatch");
+            previous = checksum; var kind = (string)payload["kind"]!;
+            if (sequence++ == 0)
+            {
+                if (kind != "header" || (string)payload["format"]! != "dv-raw-dag-v2") throw new InvalidDataException("Unsupported DAG header");
+                continue;
+            }
+            if (final is not null && kind != "seal") throw new InvalidDataException("Unsealed final checkpoint");
+            if (kind == "node")
+            {
+                if ((long)payload["node_id"]! != values.Count) throw new InvalidDataException("Invalid DAG node order");
+                var items = (List<object?>)payload["items"]!; var value = new List<object>();
+                foreach (var item in items)
+                {
+                    if (item is Dictionary<string, object?> atom)
+                    {
+                        if (atom.Count != 1) throw new InvalidDataException("Invalid DAG atom");
+                        if (atom.TryGetValue("node", out var reference))
+                        {
+                            var index = (long)reference!;
+                            if (index < 0 || index >= values.Count) throw new InvalidDataException("Missing DAG node");
+                            value.Add(values[(int)index]);
+                        }
+                        else if (atom.TryGetValue("rational", out var exact)) value.Add(Rational.From((string)exact!));
+                        else throw new InvalidDataException("Unknown DAG atom");
+                    }
+                    else value.Add(item is long integer ? (object)(double)integer : item ?? throw new InvalidDataException("Null DV atom"));
+                }
+                values.Add(snapshot(value));
+            }
+            else if (kind == "checkpoint")
+            {
+                var root = (long)payload["root"]!;
+                if (root < 0 || root >= values.Count || (long)payload["events"]! != 0) throw new InvalidDataException("Invalid value-file checkpoint");
+                initial |= (string)payload["name"]! == "initial";
+                if ((string)payload["name"]! == "final") final = values[(int)root];
+            }
+            else if (kind == "seal")
+            {
+                if (!initial || final is null || payload["final_checkpoint"] is not true || (long)payload["nodes"]! != values.Count || (long)payload["events"]! != 0)
+                    throw new InvalidDataException("Invalid binary value seal");
+                sealedFile = true;
+            }
+            else throw new InvalidDataException("Unsupported frame in binary value file");
+        }
+        return sealedFile && final is not null ? final : throw new InvalidDataException("Incomplete binary value file");
+    }
+    public static object json_write(object path, object value) => throw new InvalidOperationException("JSON recording is forbidden; use raw DAG binary evidence");
     public static object read(object p) => File.ReadAllText(Text(p), new UTF8Encoding(false, true));
     public static object write(object p, object s) { File.WriteAllText(Text(p), Text(s), new UTF8Encoding(false, true)); return s; }
     public static object print(object a)

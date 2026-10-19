@@ -1,5 +1,9 @@
 """Encode rendered 5 Hz samples on their measured real timeline, without rerunning."""
 import argparse
+import sys
+from pathlib import Path as EvidencePath
+sys.path.insert(0, str(EvidencePath(__file__).resolve().parents[2] / "language_core/tools"))
+from binary_evidence import records
 import json
 import pathlib
 import shutil
@@ -12,7 +16,9 @@ directory = args.directory.resolve()
 target = directory / 'recording.mp4'
 if target.exists():
     raise SystemExit('Refusing to overwrite an existing recording')
-rows = [json.loads(line) for line in (directory / 'frames.jsonl').read_text(encoding='utf-8').splitlines()]
+index_path = directory / 'frames.dvlog'
+if not index_path.exists(): index_path = directory / 'frames.jsonl'  # old evidence
+rows = list(records(index_path))
 if not rows:
     raise SystemExit('No actual rendered frames')
 concat = directory / 'recording.ffconcat'

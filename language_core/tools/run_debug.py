@@ -13,7 +13,13 @@ from dv_toolchain import LANGUAGE, ROOT, PROJECT, environment
 from dv_sources import sources
 from core_profile import summarize as summarize_profile
 from raw_dag import inspect_journal
+from binary_evidence import RecordWriter, iter_packets
 from debug_checkpoints import validate_bundle, export_available, sha_file
+
+
+def write_result(directory, value):
+    with RecordWriter(directory / 'result.dvlog') as output:
+        output.append(value)
 
 
 def record(value):
@@ -70,14 +76,14 @@ class EvidenceProjector:
             'debug_end_observed': False, 'debug_end': None,
             'narrative_completion': 'not-assessed; review actual receipts against declared criteria',
             'source_validation': 'not-performed; parent IDs are references, not validated proof',
-            'invalid_source_lines': [],
+            'invalid_source_records': [],
         }
-        self.actual = (destination / 'actual-event-index.jsonl').open('x', encoding='utf-8')
-        self.reasoning = (destination / 'reasoning-evidence.jsonl').open('x', encoding='utf-8')
+        self.actual = RecordWriter(destination / 'actual-event-index.dvlog')
+        self.reasoning = RecordWriter(destination / 'reasoning-evidence.dvlog')
 
     def consume(self, packet, number):
         if not isinstance(packet, dict):
-            self.summary['invalid_source_lines'].append({'source_line': number, 'error': 'packet is not a record'})
+            self.summary['invalid_source_records'].append({'source_record': number, 'error': 'packet is not a record'})
             return
         coverage = self.summary.setdefault('projection_coverage', {'last_event_cursor': 0, 'last_flushed_step': 0, 'inherited_event_count': 0})
         if packet.get('type') == 'debug_start':
@@ -90,13 +96,13 @@ class EvidenceProjector:
         elif packet.get('type') == 'debug_end':
             self.summary['debug_end_observed'] = True
             self.summary['debug_end'] = packet
-            self.summary['debug_end_source_line'] = number
+            self.summary['debug_end_source_record'] = number
         elif packet.get('type') == 'debug_events':
             coverage['last_event_cursor'] = packet.get('batch', {}).get('next', coverage['last_event_cursor'])
             coverage['last_flushed_step'] = packet.get('through_step', coverage['last_flushed_step'])
             for index, event in enumerate(packet.get('batch', {}).get('events', [])):
                 kind = event['type']
-                pointer = {'source_line': number, 'batch_event_index': index,
+                pointer = {'source_record': number, 'batch_event_index': index,
                            'event_id': event['event_id'], 'actor': event.get('actor'),
                            'game_time': event.get('game_time')}
                 inventory = self.summary['event_inventory'].setdefault(kind, {'occurrences': 0, 'first': None, 'last': None})
@@ -142,9 +148,9 @@ class EvidenceProjector:
         self.summary['stop_reasons'] = stop.get('reasons', [])
         self.summary['world_horizon_observed'] = 'world-horizon' in self.summary['stop_reasons']
         self.summary['chapter_summary_reported'] = stop.get('chapter_summary')
-        self.summary['packet_stream_well_formed'] = not self.summary['invalid_source_lines']
-        with (destination / 'evidence-summary.json').open('x', encoding='utf-8') as output:
-            json.dump(self.summary, output, ensure_ascii=False, indent=2)
+        self.summary['packet_stream_well_formed'] = not self.summary['invalid_source_records']
+        with RecordWriter(destination / 'evidence-summary.dvlog') as output:
+            output.append(self.summary)
         return self.summary
 
 
@@ -152,44 +158,45 @@ def project_evidence(source_path, destination):
     projector = EvidenceProjector(source_path, destination)
     try:
         with source_path.open('rb') as source:
-            for number, raw in enumerate(source, 1):
+            for number, (raw, decoded) in enumerate(iter_packets(source), 1):
                 projector.digest.update(raw)
                 if not raw.strip():
                     continue
                 try:
-                    projector.consume(record(json.loads(raw)), number)
+                    projector.consume(record(decoded if decoded is not None else json.loads(raw)), number)
                 except (json.JSONDecodeError, UnicodeDecodeError) as error:
-                    projector.summary['invalid_source_lines'].append({'source_line': number, 'error': str(error)})
+                    projector.summary['invalid_source_records'].append({'source_record': number, 'error': str(error)})
     finally:
         summary = projector.finish(destination)
     return summary
 
 
-def export(out, destination=None, scope='正式逻辑会话已输出到stdout的实际可见正文；不含Godot画面。中断时未flush的原始DAG尾不在本文中，不代表完整会话正文。', raw_format='json', with_summary=False):
+def export(out, destination=None, scope='正式逻辑会话已输出到stdout的实际可见正文；不含Godot画面。中断时未flush的原始DAG尾不在本文中，不代表完整会话正文。', raw_format='dag', with_summary=False):
     destination = destination or out
-    source_path = out / 'stdout.jsonl'
+    source_path = out / 'stdout.dvlog'
+    if not source_path.exists(): source_path = out / 'stdout.jsonl'  # old evidence, read-only
     projector = EvidenceProjector(source_path, destination)
     complete = True
     # The legacy normalized packet file remains available in default JSON mode.
     # DAG mode keeps untouched stdout as its sole packet source, avoiding a duplicate.
-    events = (destination / 'events.jsonl').open('x', encoding='utf-8') if raw_format == 'json' else None
+    events = None  # original binary stdout is the sole packet source
     try:
         with source_path.open('rb') as source, \
                 (destination / '02-引擎输出的玩家可见动作.txt').open('x', encoding='utf-8') as visible, \
                 (destination / '调试轨迹.txt').open('x', encoding='utf-8') as debug, \
-                (destination / 'format-notices.jsonl').open('x', encoding='utf-8') as notices:
+                RecordWriter(destination / 'format-notices.dvlog') as notices:
             visible.write(scope + '\n\n')
-            for number, raw in enumerate(source, 1):
+            for number, (raw, decoded) in enumerate(iter_packets(source), 1):
                 projector.digest.update(raw)
                 if not raw.strip():
                     continue
                 try:
-                    packet = record(json.loads(raw))
+                    packet = record(decoded if decoded is not None else json.loads(raw))
                 except (json.JSONDecodeError, UnicodeDecodeError) as error:
                     complete = False
-                    issue = {'source_line': number, 'issue': 'invalid-or-truncated-json', 'error': str(error)}
+                    issue = {'source_record': number, 'issue': 'invalid-or-truncated-record', 'error': str(error)}
                     notices.write(json.dumps(issue) + '\n')
-                    projector.summary['invalid_source_lines'].append(issue)
+                    projector.summary['invalid_source_records'].append(issue)
                     continue
                 projector.consume(packet, number)
                 if not isinstance(packet, dict):
@@ -215,7 +222,7 @@ def export(out, destination=None, scope='正式逻辑会话已输出到stdout的
                         for paragraph in paragraphs:
                             visible.write(paragraph + '\n\n')
                     if not emitted:
-                        notices.write(json.dumps({'source_line': number, 'issue': 'visible-action-without-text', 'execution_event': p.get('execution_event'), 'action_id': p.get('action_id'), 'action_kind': p.get('action_kind')}, ensure_ascii=False) + '\n')
+                        notices.write(json.dumps({'source_record': number, 'issue': 'visible-action-without-text', 'execution_event': p.get('execution_event'), 'action_id': p.get('action_id'), 'action_kind': p.get('action_kind')}, ensure_ascii=False) + '\n')
                     if isinstance(judgment, dict):
                         outcome = {'answer_accepted': '本次答辩已获接受。', 'answer_rejected': '本次答辩未获接受。'}.get(judgment['status'], judgment['status'])
                         visible.write(f"[{clock(judgment.get('game_time', p['game_time']))}] 答辩回执\n{outcome}\n\n")
@@ -232,7 +239,7 @@ def export(out, destination=None, scope='正式逻辑会话已输出到stdout的
                                 value = detail.get(key)
                                 if isinstance(value, (str, int, float, bool)):
                                     debug.write(f'{key}：{value}\n')
-                        debug.write(f"完整投影：stdout.jsonl 第{number}行 batch.events[{index}]；原始事件以raw_event_ref定位。\n\n")
+                        debug.write(f"完整投影：stdout.dvlog 第{number}条记录 batch.events[{index}]；原始事件以raw_event_ref定位。\n\n")
     finally:
         if events:
             events.close()
@@ -258,8 +265,8 @@ def main():
     parser.add_argument('--su-initial-room', choices=('hall', 'R08', 'R05'), default='hall')
     parser.add_argument('--private-execution-benefit-multiplier', type=int, choices=(1, 2), default=1)
     parser.add_argument('--detective-zone', default='zone_yi', choices=('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding'))
-    parser.add_argument('--trace-compression', choices=('none', 'gzip'), default='none', help='Lossless storage for the full raw JSON trace; no field projection')
-    parser.add_argument('--raw-format', choices=('json', 'dag'), default='json', help='json preserves the legacy final trace; dag records checksummed lossless values and event commits online')
+    parser.add_argument('--trace-compression', choices=('none',), default='none', help='Deprecated compatibility argument; JSON recordings are prohibited')
+    parser.add_argument('--raw-format', choices=('dag',), default='dag', help='Lossless typed binary DAG; JSON recording is forbidden')
     args = parser.parse_args()
     if args.opening_seed < 0:
         parser.error('--opening-seed must be nonnegative')
@@ -274,8 +281,6 @@ def main():
         parser.error('--gc-heaps must be positive')
     if args.timeout < 1:
         parser.error('--timeout must be positive')
-    if args.raw_format == 'dag' and args.trace_compression != 'none':
-        parser.error('--trace-compression applies to JSON; DAG uses independently checksummed uncompressed frames')
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
     if args.evidence_from:
@@ -301,14 +306,14 @@ def main():
             args.private_execution_benefit_multiplier = run_config['private_execution_benefit_multiplier']
             args.homecoming_negotiation = run_config['homecoming_negotiation']
         except Exception as error:
-            (out / 'result.json').write_text(json.dumps({'session_started': False, 'restore_rejected': True, 'error': str(error)}, indent=2), encoding='utf-8')
+            write_result(out, {'session_started': False, 'restore_rejected': True, 'error': str(error)})
             return 1
     build = out / 'program'
     build.mkdir()
     env = environment()
     modules = sources([args.entry.resolve()])
     inputs = [path for path, _ in modules]
-    inputs += [LANGUAGE / p for p in ('compiler/Runtime.cs', 'compiler/compiler.dv', 'tools/build_session.py', 'tools/dv_sources.py', 'tools/run_debug.py', 'tools/raw_dag.py', 'tools/dv_toolchain.py', 'tools/debug_checkpoints.py', 'tools/resume_debug.py', 'tools/DebugCheckpointResume.cs')]
+    inputs += [LANGUAGE / p for p in ('compiler/Runtime.cs', 'compiler/compiler.dv', 'tools/build_session.py', 'tools/dv_sources.py', 'tools/run_debug.py', 'tools/raw_dag.py', 'tools/binary_evidence.py', 'tools/dv_toolchain.py', 'tools/debug_checkpoints.py', 'tools/resume_debug.py', 'tools/DebugCheckpointResume.cs')]
     if args.profile:
         inputs += [LANGUAGE / p for p in ('tools/DvProfiler.cs', 'tools/core_profile.py')]
     hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
@@ -326,7 +331,7 @@ def main():
     restore_input_hashes = {}
     if resume_save:
         restore_input_hashes = {str(args.resume_checkpoint.resolve()): sha_file(args.resume_checkpoint), str(resume_save): sha_file(resume_save), resume_bundle['raw_source']: resume_bundle['raw_sha256']}
-    (out / '.gitattributes').write_text('stdout.jsonl -text -diff\nstderr.txt -text -diff\n*.dag.jsonl* -text -diff\n', encoding='utf-8')
+    (out / '.gitattributes').write_text('*.dvlog* -text -diff\n*.dvdag* -text -diff\n*.dvsave* -text -diff\nstderr.txt -text -diff\n', encoding='utf-8')
     commands = [
         [sys.executable, str(LANGUAGE / 'tools/build_session.py'), '--entry', str(args.entry.resolve()), '--out', str(build), '--main', 'dvg_debug_run'] + (['--profile'] if args.profile else []),
         ['dotnet', 'build', str(build / 'Program.csproj'), '-c', 'Release', '--disable-build-servers', '-p:NuGetAudit=false']]
@@ -357,15 +362,16 @@ def main():
         and hashlib.sha256((build / 'Runtime.cs').read_bytes()).hexdigest() == hashes[str(LANGUAGE / 'compiler/Runtime.cs')]
         and all(Path(p).is_file() and sha_file(p) == h for p, h in restore_input_hashes.items()))
     if not build_consistent:
-        (out / 'result.json').write_text(json.dumps({'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': False, 'source_unchanged': False, 'trace_written': False, 'error': 'Sources changed during build or generated inputs differ; session not started.'}, indent=2), encoding='utf-8')
+        write_result(out, {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': False, 'source_unchanged': False, 'trace_written': False, 'error': 'Sources changed during build or generated inputs differ; session not started.'})
         return 1
     execution_env = env.copy()
     execution_env['DOTNET_gcServer'] = '1' if args.gc_mode == 'server' else '0'
     execution_env['DOTNET_GCHeapCount'] = format(args.gc_heaps, 'x')
     if args.profile:
         execution_env['DV_PROFILE_PATH'] = str(out / 'profile-raw.json')
+    execution_env['DV_BINARY_STDOUT'] = '1'
     start = time.monotonic()
-    trace_name = 'raw-events.dag.jsonl' if args.raw_format == 'dag' else ('trace.json.gz' if args.trace_compression == 'gzip' else 'trace.json')
+    trace_name = 'raw-events.dvdag'
     result = {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'detective_profile': args.detective_profile, 'detective_zone': args.detective_zone, 'raw_format': args.raw_format, 'build_elapsed_seconds': build_elapsed, 'build_stages': build_stages, 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.upper().startswith(('DOTNET_GC', 'DOTNET_TIERED', 'COMPLUS_TIERED'))}}
     result['projection_every'] = args.projection_every
     result['resumed'] = resume_bundle is not None
@@ -373,7 +379,7 @@ def main():
     if resume_bundle:
         result['restore_origin'] = {key: resume_bundle['metadata'][key] for key in ('checkpoint', 'commit_frame', 'game_time', 'steps', 'last_event')}
     try:
-        with (out / 'stdout.jsonl').open('wb') as stdout, (out / 'stderr.txt').open('wb') as stderr:
+        with (out / 'stdout.dvlog').open('xb') as stdout, (out / 'stderr.txt').open('wb') as stderr:
             program_args = [str(out / trace_name), args.detective_profile, args.detective_zone, args.raw_format, str(args.opening_seed), args.su_initial_room, str(args.private_execution_benefit_multiplier), str(args.homecoming_negotiation).lower(), str(args.projection_every), str(provenance_path), str(resume_save) if resume_save else '']
             process = subprocess.run(['dotnet', str(build / 'bin/Release/net8.0/Program.dll'), *program_args], cwd=ROOT, env=execution_env, stdout=stdout, stderr=stderr, timeout=args.timeout)
             result['exit_code'] = process.returncode
@@ -385,20 +391,20 @@ def main():
         postprocess_start = time.monotonic()
         result['source_unchanged'] = all(Path(p).is_file() and hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in {**hashes, **restore_input_hashes}.items())
         result['raw_path'] = trace_name
-        result['trace_path'] = trace_name if args.raw_format == 'json' else None
-        result['trace_storage_encoding'] = args.trace_compression if args.raw_format == 'json' else 'dv-raw-dag-v1'
+        result['trace_path'] = trace_name
+        result['trace_storage_encoding'] = 'dv-raw-dag-v2'
         result['raw_written'] = (out / trace_name).is_file()
         result['raw_partial_written'] = (out / (trace_name + '.partial')).is_file()
-        result['trace_written'] = args.raw_format == 'json' and result['raw_written']
-        result['trace_partial_written'] = args.raw_format == 'json' and result['raw_partial_written']
+        result['trace_written'] = result['raw_written']
+        result['trace_partial_written'] = result['raw_partial_written']
         if args.raw_format == 'dag':
             raw_source = out / (trace_name if result['raw_written'] else trace_name + '.partial')
             try:
-                raw_summary = inspect_journal(raw_source, out / 'raw-event-index.jsonl')
+                raw_summary = inspect_journal(raw_source, out / 'raw-event-index.dvlog')
                 with (out / 'raw-dag-summary.json').open('x', encoding='utf-8') as output:
                     json.dump(raw_summary, output, ensure_ascii=False, indent=2)
                 result['raw_dag_summary'] = 'raw-dag-summary.json'
-                result['raw_event_index'] = 'raw-event-index.jsonl'
+                result['raw_event_index'] = 'raw-event-index.dvlog'
                 result['raw_sealing_complete'] = bool(result['raw_written'] and raw_summary['complete_sealing'])
                 result['raw_committed_events'] = raw_summary['committed_events']
                 result['raw_event_prefix_available'] = raw_summary['committed_events'] > 0
@@ -421,7 +427,7 @@ def main():
             result['text_exported'] = True
             result['actual_run_config'] = evidence.get('run_config')
             result['run_config_matches'] = result['actual_run_config'] == run_config
-            result['event_packet_source'] = 'stdout.jsonl'
+            result['event_packet_source'] = 'stdout.dvlog'
             result['stdout_projection_coverage'] = evidence.get('projection_coverage')
             coverage = evidence.get('projection_coverage', {})
             if args.raw_format == 'dag' and 'raw_committed_events' in result:
@@ -429,7 +435,7 @@ def main():
                 result['raw_committed_events_not_yet_projected'] = max(0, result['raw_committed_events'] - projected)
             result['player_text_scope'] = 'flushed stdout presentations only; unflushed raw tail is not reconstructed or claimed complete'
             result['completed_steps_after_last_flush'] = 0 if evidence['debug_end_observed'] else 'unknown in interrupted computation; original committed raw events retained'
-            result['evidence_projection'] = 'evidence-summary.json'
+            result['evidence_projection'] = 'evidence-summary.dvlog'
             result['logical_loop_finished'] = evidence['debug_end_observed']
             result['stop_reasons'] = evidence['stop_reasons']
             result['world_horizon_observed'] = evidence['world_horizon_observed']
@@ -441,7 +447,7 @@ def main():
             result['export_error'] = str(error)
         result['evidence_complete'] = bool(result.get('exit_code') == 0 and result.get('output_well_formed') and result.get('logical_loop_finished') and result['raw_sealing_complete'] and result['source_unchanged'])
         result['postprocess_elapsed_seconds'] = time.monotonic() - postprocess_start
-        (out / 'result.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
+        write_result(out, result)
     return 0 if result['evidence_complete'] else 1
 
 

@@ -1,10 +1,10 @@
-"""Read-only validation and streaming recovery of dv-raw-dag-v1 evidence.
+"""Read-only validation and streaming recovery of binary dv-raw-dag-v2 evidence (old v1 read-only compatible).
 
 Examples (no game execution):
-  python raw_dag.py raw-events.dag.jsonl.partial --out prefix-summary.json
-  python raw_dag.py raw-events.dag.jsonl --event e123 --out event-e123.json
-  python raw_dag.py raw-events.dag.jsonl --node 456 --out original-value.json
-  python raw_dag.py raw-events.dag.jsonl --checkpoint final --path '["trace"]' --out trace.json
+  python raw_dag.py raw-events.dvdag.partial --out prefix-summary.txt
+  python raw_dag.py raw-events.dvdag --event e123 --out event-e123.dvdag
+  python raw_dag.py raw-events.dvdag --node 456 --out original-value.dvdag
+  python raw_dag.py raw-events.dvdag --checkpoint final --path '["trace"]' --out trace.dvdag
 
 The journal is never modified. A temporary SQLite offset index bounds resident
 memory; recovery expands only the requested value, directly to the output stream.
@@ -22,7 +22,9 @@ import sys
 import tempfile
 
 
-FORMAT = 'dv-raw-dag-v1'
+from binary_evidence import MAGIC, encode, decode, read_frame, write_frame, RecordWriter
+
+FORMAT = 'dv-raw-dag-v2'
 
 
 def _reject_constant(value):
@@ -51,6 +53,8 @@ class RawDagIndex:
             CREATE TABLE checkpoints(name TEXT NOT NULL, root INTEGER NOT NULL, events INTEGER NOT NULL, seq INTEGER NOT NULL);
         ''')
         self.reader = self.source.open('rb')
+        self.binary = self.reader.read(len(MAGIC)) == MAGIC
+        self.reader.seek(0)
         self.summary = self._scan()
 
     def close(self):
@@ -65,6 +69,17 @@ class RawDagIndex:
         self.close()
 
     def _payload(self, raw, expected_seq, previous):
+        if self.binary:
+            envelope = decode(raw[36:])
+            if not isinstance(envelope, dict) or set(envelope) != {'seq', 'prev', 'payload', 'sha256'}:
+                raise ValueError('Invalid binary DAG envelope')
+            if type(envelope['seq']) is not int or envelope['seq'] != expected_seq or envelope['prev'] != previous:
+                raise ValueError('Binary DAG sequence/checksum predecessor mismatch')
+            payload = envelope['payload']
+            if not isinstance(payload, dict): raise ValueError('Invalid binary DAG payload')
+            checksum = hashlib.sha256(previous.encode('ascii') + b'\n' + str(expected_seq).encode('ascii') + b'\n' + encode(payload)).hexdigest()
+            if checksum != envelope['sha256']: raise ValueError('Binary DAG chain checksum mismatch')
+            return payload, checksum
         if not raw.endswith(b'\n'):
             raise ValueError('Unterminated frame; no commit newline')
         envelope = json.loads(raw, parse_constant=_reject_constant, parse_int=_parse_integer)
@@ -99,11 +114,20 @@ class RawDagIndex:
         checkpoint_commits = []
         initial_stat = self.source.stat()
         with self.source.open('rb') as source:
+            if self.binary:
+                digest.update(source.read(len(MAGIC)))
+                valid_bytes = len(MAGIC)
             while True:
                 offset = source.tell()
-                raw = source.readline()
-                if not raw:
+                try:
+                    frame = read_frame(source) if self.binary else None
+                    raw = frame[0] if frame is not None else (b'' if self.binary else source.readline())
+                except (ValueError, UnicodeDecodeError) as issue:
+                    error = {'byte_offset': offset, 'frame': sequence, 'error': str(issue)}
+                    source.seek(offset)
+                    while chunk := source.read(1024 * 1024): digest.update(chunk)
                     break
+                if not raw: break
                 digest.update(raw)
                 try:
                     if seal:
@@ -113,7 +137,7 @@ class RawDagIndex:
                     if final and kind != 'seal':
                         raise ValueError('Only the final seal may follow the final checkpoint')
                     if sequence == 0:
-                        if kind != 'header' or payload.get('format') != FORMAT:
+                        if kind != 'header' or payload.get('format') != (FORMAT if self.binary else 'dv-raw-dag-v1'):
                             raise ValueError('Missing supported journal header')
                     elif kind == 'node':
                         node_id, items = payload.get('node_id'), payload.get('items')
@@ -175,7 +199,7 @@ class RawDagIndex:
         source_changed = (initial_stat.st_size, initial_stat.st_mtime_ns) != (final_stat.st_size, final_stat.st_mtime_ns)
         self.db.commit()
         return {
-            'format': FORMAT, 'source': str(self.source), 'source_sha256': digest.hexdigest(),
+            'format': FORMAT if self.binary else 'dv-raw-dag-v1', 'source': str(self.source), 'source_sha256': digest.hexdigest(),
             'source_bytes': size, 'validated_frames': sequence, 'validated_nodes': nodes,
             'source_changed_during_scan': source_changed,
             'committed_events': events, 'last_committed_event': last_event,
@@ -194,7 +218,8 @@ class RawDagIndex:
         if row is None:
             raise ValueError(f'Node {node_id} is not in the validated prefix')
         self.reader.seek(row[0])
-        return json.loads(self.reader.readline(), parse_constant=_reject_constant, parse_int=_parse_integer)['payload']['items']
+        envelope = read_frame(self.reader)[1] if self.binary else json.loads(self.reader.readline(), parse_constant=_reject_constant, parse_int=_parse_integer)
+        return envelope['payload']['items']
 
     def record_field(self, root, key):
         found = None
@@ -236,14 +261,31 @@ class RawDagIndex:
         return selected
 
     def write_event_index(self, destination):
-        with Path(destination).open('x', encoding='utf-8', newline='\n') as output:
+        with RecordWriter(destination) as output:
             for event_id, root, ordinal, sequence in self.db.execute('SELECT id, root, ordinal, seq FROM events ORDER BY ordinal'):
                 time = self.record_field(root, 'time')
                 item = {'event_id': event_id, 'node_id': str(root), 'ordinal': ordinal, 'commit_frame': sequence,
                         'type': self.record_field(root, 'type'), 'actor': self.record_field(root, 'actor'),
                         'game_time': time['rational'] if isinstance(time, dict) and set(time) == {'rational'} else time, 'raw_source': str(self.source),
                         'scope': 'original committed event; no reconstruction of uncommitted work'}
-                output.write(json.dumps(item, ensure_ascii=False) + '\n')
+                output.append(item)
+
+    def write_binary(self, selected, output):
+        if not isinstance(selected, dict) or set(selected) != {'node'}:
+            raise ValueError('Binary value export requires a list/record root')
+        root = selected['node']; previous = '0' * 64; sequence = 0
+        output.write(MAGIC)
+        def frame(payload):
+            nonlocal previous, sequence
+            checksum = hashlib.sha256(previous.encode('ascii') + b'\n' + str(sequence).encode('ascii') + b'\n' + encode(payload)).hexdigest()
+            write_frame(output, {'seq': sequence, 'prev': previous, 'payload': payload, 'sha256': checksum})
+            sequence += 1; previous = checksum
+        frame({'kind': 'header', 'format': FORMAT, 'value_encoding': 'typed binary atoms and prior node references', 'checksum': 'sha256(previous-ascii + LF + sequence-ascii + LF + binary-payload)'})
+        for node_id in range(root + 1):
+            frame({'kind': 'node', 'node_id': node_id, 'items': self.node(node_id)})
+        frame({'kind': 'checkpoint', 'name': 'initial', 'root': root, 'events': 0})
+        frame({'kind': 'checkpoint', 'name': 'final', 'root': root, 'events': 0})
+        frame({'kind': 'seal', 'events': 0, 'nodes': root + 1, 'final_checkpoint': True})
 
     def write_value(self, selected, output, value_format='trace-json'):
         # Iterative expansion avoids recursive Python objects and recursion limits.
@@ -282,7 +324,7 @@ def main():
     selection.add_argument('--node', type=int)
     selection.add_argument('--checkpoint')
     parser.add_argument('--path', default='[]', help='JSON path array: string record keys and integer list indices')
-    parser.add_argument('--value-format', choices=('trace-json', 'dv-tagged'), default='trace-json', help='Trace exact-number text, or $dv_rational tags preserving the original DV atom type')
+    parser.add_argument('--value-format', choices=('binary', 'trace-json', 'dv-tagged'), default='binary', help='Trace exact-number text, or $dv_rational tags preserving the original DV atom type')
     parser.add_argument('--out', type=Path, help='New output file; never overwrites an existing path')
     parser.add_argument('--events-out', type=Path, help='New index of every validated event commit, including events not yet projected to stdout')
     args = parser.parse_args()
@@ -295,23 +337,22 @@ def main():
         partial = Path(str(args.out) + '.partial') if args.out else None
         if args.out and args.out.exists():
             raise FileExistsError(args.out)
-        output = partial.open('x', encoding='utf-8', newline='\n') if partial else sys.stdout
-        written = False
-        try:
-            if args.event is None and args.node is None and args.checkpoint is None:
-                json.dump(index.summary, output, ensure_ascii=False, indent=2)
-            else:
-                index.write_value(index.select(args.event, args.node, args.checkpoint, path), output, args.value_format)
-            output.write('\n')
-            written = True
-        finally:
+        selected = args.event is not None or args.node is not None or args.checkpoint is not None
+        if selected and args.out:
+            if args.value_format != 'binary' or any(x in ('.json', '.jsonl', '.gz') for x in args.out.suffixes):
+                raise ValueError('New evidence exports must be binary .dvdag/.dvsave')
+            with partial.open('xb') as output:
+                index.write_binary(index.select(args.event, args.node, args.checkpoint, path), output)
+            os.link(partial, args.out); partial.unlink()
+        elif selected:
+            index.write_value(index.select(args.event, args.node, args.checkpoint, path), sys.stdout, 'trace-json')
+            sys.stdout.write('\n')
+        else:
+            text = '\n'.join(f'{key}: {value}' for key, value in index.summary.items()) + '\n'
             if args.out:
-                output.close()
-        if args.out and written:
-            # Hard-link publication fails if a concurrent destination appeared;
-            # unlike POSIX rename it can never overwrite an existing artifact.
-            os.link(partial, args.out)
-            partial.unlink()
+                if args.out.suffix.lower() in ('.json', '.jsonl', '.gz'): raise ValueError('Use .txt/.md for inspection summaries')
+                with args.out.open('x', encoding='utf-8') as output: output.write(text)
+            else: sys.stdout.write(text)
         return 0 if index.summary['invalid_tail'] is None else 1
 
 

@@ -8,7 +8,7 @@
 
 真实 Complete 以已结算 execution.time 推进本人 mind.time；已有且经声明 clock_ref/本人 bindings 映射的数值时钟取得同次执行回执观察。该观察来源为 perception/execution-receipt，同字段原观察合并，成功与失败均不重复加时；未知/未绑定时钟保持未知，不读取其他权威字段、不在Prepare或预测同步、不全员同步。初次失败窗口与修复后的新来源分开封存。
 
-rt_json_write 目标以 .gz 结尾时使用无损 gzip，解压为完整原JSON字节，仍先 .partial，压缩关闭后发布正式文件。run_debug --trace-compression gzip 明确记录文件名与存储编码；默认none保持原JSON。保存时限包含逻辑与封存，不借压缩改变时域或宣称剧情达成。
+新记录统一为dv-raw-dag-v2二进制；rt_json_write拒绝落盘轨迹，run_debug默认且仅接受DAG，禁止JSON及压缩JSON。封存仍使用.partial和完整校验，时域及剧情结论分别核对。
 
 
 ## 接管修复维护（2026-10-18）
@@ -97,7 +97,7 @@ cognitive_mind_specimen 将刻画机制连接到真实 Core mind、主体系引�
 
 2026-10-15：批量初始化可使用独占采用表构建器，先复制继承表，每条声明仍立即执行原验证顺序，再仅追加独立条目；finish核对旧前缀与长度，修订号按成功追加数增长，一次持久更新世界，空批保持原世界。中间采用表不得发布、分叉或当作任意更新入口，world/mind/预测仍保持原独立复制合同。
 证据目标可显式声明 refresh_until 与 refresh_refs；仅本人尚不知停止命题为真时，以 refresh_refs 中本人已知相关字段的接收时刻和原 minimum_time 的最大值刷新证据下界。缺少 refresh_refs 时保持原下界。本人时钟、无关观察和检视本身的时刻不触发刷新。收到信息与采信内容分别处理；不读取 physical 或预测历史，不改旧观察、认知、预算与判答。
-Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，Save仍为$dv_rational对象标签。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.json明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
+Session新增流式WriteTrace/WriteSave，二进制Trace/Save以类型化rational原子保存精确数，进程内字符串接口保留旧JSON标签。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.dvlog明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
 
 ## Evidence contract repair (2026-10-16)
 
@@ -341,3 +341,7 @@ dvs_debug_phase透传rt_phase，默认无观察器，不写世界/心智/事件�
 
 ## 普通房间移动呈现（2026-10-19）
 c1_move_action保留原动作、费用、世界法则与回执，移除重复的通用过路surface；真实剧情发言继续沿原来源与成功Complete呈现。属于显示交互修订，不把减少确认键次数当作认知或剧情提速。
+
+## 二进制原始记录（2026-10-19）
+
+正式debug-run默认且仅启用原始DAG；源码不再有可运行的JSON轨迹分支。事件、主体及预测原值不裁剪，存储由Runtime的dv-raw-dag-v2记录；stdout投影为DVLOG2二进制，不改投影刷新时刻、prepare/complete或人物认识。旧证据只读。模块接口见../AGENTS.md及../core/README.md；本轮仅工程排错，不启动正式游戏或流程回归。

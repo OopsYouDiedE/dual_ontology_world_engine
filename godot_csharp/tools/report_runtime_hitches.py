@@ -1,5 +1,9 @@
 """Read passive host timestamps. Wall-time overlap is not sampled CPU attribution."""
 import argparse
+import sys
+from pathlib import Path as EvidencePath
+sys.path.insert(0, str(EvidencePath(__file__).resolve().parents[2] / "language_core/tools"))
+from binary_evidence import records, RecordWriter
 import json
 from collections import defaultdict
 from pathlib import Path
@@ -113,8 +117,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.out.exists():
         raise SystemExit("Refusing to overwrite evidence")
-    rows = [json.loads(line) for line in args.source.read_text(encoding="utf-8-sig").splitlines() if line.strip()]
+    rows = list(records(args.source))
     result = analyze(rows)
     if args.archive:
-        result["background_archive"] = [json.loads(line) for line in args.archive.read_text().splitlines() if line.strip()]
-    args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        result["background_archive"] = list(records(args.archive))
+    with RecordWriter(args.out) as output:
+        output.append(result)

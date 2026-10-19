@@ -4,33 +4,34 @@ import argparse
 import ast
 import hashlib
 import json
+import io
 import shutil
 import subprocess
 import sys
 import time
 from dv_toolchain import ROOT, LANGUAGE, PROJECT, environment
 from raw_dag import RawDagIndex
+from binary_evidence import records
+from debug_checkpoints import record
 from dv_sources import sources
 from debug_checkpoints import checkpoint_metadata
 
 PROBE = r'''
 using DuelView.Compiled;
-using System.Reflection;
-using System.Text.Json;
 internal static class DebugStructureProbe
 {
     public static void Main(string[] args)
     {
-        var method = typeof(DebugCheckpointResume).GetMethod("ReadValue", BindingFlags.NonPublic | BindingFlags.Static)!;
-        using var document = JsonDocument.Parse("[[\"exact\",{\"$dv_rational\":\"1/3\"}],[\"text\",\"1/3\"],[\"number\",0.5],[\"flag\",false]]");
-        var loaded = method.Invoke(null, new object[] { document.RootElement })!;
         var expected = new List<object> { new List<object> { "exact", Rational.From("1/3") }, new List<object> { "text", "1/3" }, new List<object> { "number", 0.5d }, new List<object> { "flag", false } };
-        Console.WriteLine(JsonSerializer.Serialize(new { scope = "neutral-tagged-codec-only", same_value = R.Bool(R.same_value(expected, loaded)), exact_type = R.record_find(loaded, "exact", false).GetType().FullName, text_type = R.record_find(loaded, "text", false).GetType().FullName }));
+        R.WriteEvidenceFile(args[0] + ".dvsave", expected);
+        var loaded = R.ReadEvidenceFile(args[0] + ".dvsave");
         R.raw_open(args[0]);
         R.raw_checkpoint("initial", expected);
+        R.json_print(new List<object> { new List<object> { "scope", "neutral-binary-codec-only" }, new List<object> { "same_value", R.same_value(expected, loaded) }, new List<object> { "exact_type", R.record_find(loaded, "exact", false).GetType().FullName! }, new List<object> { "text_type", R.record_find(loaded, "text", false).GetType().FullName! } });
         R.raw_checkpoint("neutral-codec", loaded);
+        R.raw_event(new List<object> { new List<object> { "id", "e0" }, new List<object> { "type", "neutral-codec" }, new List<object> { "actor", "" }, new List<object> { "time", 0.0 }, new List<object> { "data", loaded } });
         R.raw_finish(expected);
-        Console.WriteLine("{\"formal_session\":\"not-started\",\"stage_checkpoint\":\"not-created\",\"resume_loop\":\"not-called\"}");
+        R.json_print(new List<object> { new List<object> { "formal_session", "not-started" }, new List<object> { "stage_checkpoint", "not-created" }, new List<object> { "resume_loop", "not-called" } });
     }
 }
 '''
@@ -42,9 +43,9 @@ def main():
     args = parser.parse_args()
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
-    report = {'scope': 'neutral-tagged-codec-and-journal-only', 'formal_session': 'not-started', 'stages': [], 'complete': False}
+    report = {'scope': 'neutral-binary-codec-and-journal-only', 'formal_session': 'not-started', 'stages': [], 'complete': False}
     tracked = {path for path, _ in sources([LANGUAGE / 'game/debug-run.dv'])}
-    tracked.update({LANGUAGE / 'compiler/Runtime.cs', LANGUAGE / 'compiler/compiler.dv', LANGUAGE / 'tools/DebugCheckpointResume.cs', LANGUAGE / 'tools/debug_checkpoints.py', LANGUAGE / 'tools/raw_dag.py', Path(__file__).resolve()})
+    tracked.update({LANGUAGE / 'compiler/Runtime.cs', LANGUAGE / 'compiler/compiler.dv', LANGUAGE / 'tools/DebugCheckpointResume.cs', LANGUAGE / 'tools/debug_checkpoints.py', LANGUAGE / 'tools/raw_dag.py', LANGUAGE / 'tools/binary_evidence.py', Path(__file__).resolve()})
     initial_hashes = {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(tracked)}
     report['source_sha256_before'] = initial_hashes
     def save():
@@ -74,15 +75,17 @@ def main():
         project = PROJECT.replace('<OutputType>Exe</OutputType>', '<OutputType>Exe</OutputType><StartupObject>DebugStructureProbe</StartupObject>')
         (program / 'Program.csproj').write_text(project, encoding='utf-8')
         run(['dotnet', 'build', program / 'Program.csproj', '-c', 'Release', '--disable-build-servers', '-p:NuGetAudit=false'], 'neutral-build')
-        journal = out / 'neutral-codec.dag.jsonl'
+        journal = out / 'neutral-codec.dvdag'
         run(['dotnet', program / 'bin/Release/net8.0/Program.dll', journal], 'neutral-codec')
-        packets = [json.loads(line) for line in (out / 'neutral-codec.stdout').read_text(encoding='utf-8-sig').splitlines()]
+        packets = [record(value) for value in records(out / 'neutral-codec.stdout')]
         report['codec_observations'] = packets
         with RawDagIndex(journal) as index:
             report['raw_summary'] = index.summary
-            with (out / 'neutral-tagged.save.json').open('x', encoding='utf-8') as output:
-                index.write_value(index.select(checkpoint='neutral-codec'), output, 'dv-tagged')
-            restored = json.loads((out / 'neutral-tagged.save.json').read_text())
+            with (out / 'neutral-binary.dvsave').open('xb') as output:
+                index.write_binary(index.select(checkpoint='neutral-codec'), output)
+            expanded = io.StringIO()
+            index.write_value(index.select(checkpoint='neutral-codec'), expanded, 'dv-tagged')
+            restored = json.loads(expanded.getvalue())
             expected = [['exact', {'$dv_rational': '1/3'}], ['text', '1/3'], ['number', 0.5], ['flag', False]]
             report['tagged_expected'] = expected
             report['tagged_actual'] = restored

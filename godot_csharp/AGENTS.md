@@ -6,7 +6,7 @@
 
 awaiting_input仅更新现场资格表，不打开全局列表。单一近距动作直接提交，多动作在物件旁显示局部纸面标签；随身动作从本人局部手稿入口访问。空间绑定及中文标题由原生DV声明提供，宿主不拆解剧情动作ID或编造内容。Main在正式执行前复核人工热点接触，进入共享Prepare/Complete。
 
-GameEngine以Stopwatch单调微秒写interaction-timing.jsonl，按interaction_id关联请求、命令排队、Prepare、快照、现场执行、Complete、绘制首帧及阅读结束；局部行走单列起止及实测游戏钟。PlayerViewTrace在实际frame_post_draw后标记首帧，不能把待显示正文当成已绘制。`python godot_csharp/tools/summarize_interaction_timing.py <宿主interaction-timing.jsonl> --out <新JSON>`只读整理，缺段为null，阅读/等待与CPU耗时分别解释。
+GameEngine以Stopwatch单调微秒写interaction-timing.dvlog，按interaction_id关联请求、命令排队、Prepare、快照、现场执行、Complete、绘制首帧及阅读结束；局部行走单列起止及实测游戏钟。PlayerViewTrace在实际frame_post_draw后标记首帧，不能把待显示正文当成已绘制。`python godot_csharp/tools/summarize_interaction_timing.py <宿主interaction-timing.dvlog> --out <新dvlog>`只读整理，缺段为null，阅读/等待与CPU耗时分别解释。
 
 PaperFrame使用生成主题内的双线StyleBox，供HUD、对白及局部选择共用；姓名栏关闭自身滚动，长正文仍可滚动，立绘下不重复姓名。主题仍通过build_ui_theme.py重生，禁止直接手改生成tres。集中修改后统一工程排错，再以实际空间输入与截图检查；性能采集保留脚本/GPU/.NET来源。profile_dv_capture.py的`--controller=player`使用人工输入协议、自动开始，不代选剧情；其模式名player不代表独立盲玩。
 
@@ -159,10 +159,10 @@ Main → DvFieldExecutor → WorldView 使用唯一保留的人物实体执行�
 
 DV正式移动入口为WorldView.execute_move：地图适配器提供目的地执行，否则使用同一站点导航。按2026-10-19裁定，SpatialInput另承接无DV结算的同房间键鼠接近；跨房间及热点行动仍回到正式入口。旧stage、快照进出场和让路移动不恢复，快照不代替行走。短启动工程排错使用`--script res://tools/dv_host_startup_probe.gd -- --out=<新绝对证据目录>`，八秒后封存截图与快照，拒绝覆盖旧目录；不得称为完整游戏验收。
 
-三级无桌面输入采集：tools/dv_level3_capture.gd 在屏幕外、不取焦点的正式 Main 渲染实例中设置 Engine.time_scale=4；使用 -- --out=<新绝对目录> --mode=blind|detective --seconds=<现实秒>。input.json 仅接受 key、click、stop，通过 Input.parse_input_event 进入正常输入；detective 模式仅自动开始和继续对白，不选择世界动作。截图可提供盲玩者，measurement.jsonl/end.json 只供主审查，不得向盲玩者提供。该工具不补齐尚未接入的人工动作入口，不将默认自主侦探视为盲玩者决策，不执行流程回归。原始证据只新增，关闭时保留宿主原始输入与可见记录。四倍只加速 Godot 计时、物理与呈现，不改变 DV 行动费用或推演预算；DV 游戏钟取实测快照，不按倍速换算。
+三级无桌面输入采集：tools/dv_level3_capture.gd 在屏幕外、不取焦点的正式 Main 渲染实例中设置 Engine.time_scale=4；使用 -- --out=<新绝对目录> --mode=blind|detective --seconds=<现实秒>。input.json 仅接受 key、click、stop，通过 Input.parse_input_event 进入正常输入；detective 模式仅自动开始和继续对白，不选择世界动作。截图可提供盲玩者，measurement.jsonl/end.dvlog 只供主审查，不得向盲玩者提供。该工具不补齐尚未接入的人工动作入口，不将默认自主侦探视为盲玩者决策，不执行流程回归。原始证据只新增，关闭时保留宿主原始输入与可见记录。四倍只加速 Godot 计时、物理与呈现，不改变 DV 行动费用或推演预算；DV 游戏钟取实测快照，不按倍速换算。
 侦探组自动继续对白至少间隔1.5现实秒，首次出现也先等待，保留正文实际绘制机会；初版过快跳读的采集只作工程试运行，单独保留，不与修订版混为同一计时规则。
 
-2026-10-14续测：正式UI默认人工控制，GameEngine.SetPlayerControlled仅配置DV席位，不选择行动；DV awaiting_input 提供可执行候选，UI选择回传同一Prepare，现场仍经WorldView和Complete。dv_level3_capture每200现实毫秒采集实际已绘制帧，frames.jsonl记录真实时刻；--seconds=0保持运行直到外部stop，四倍游戏时速不变。encode_dv_capture.py <目录>按原采集时间生成5fps recording.mp4，真实间隔不匀时明确保留末帧，不重跑游戏也不改游戏时间。
+2026-10-14续测：正式UI默认人工控制，GameEngine.SetPlayerControlled仅配置DV席位，不选择行动；DV awaiting_input 提供可执行候选，UI选择回传同一Prepare，现场仍经WorldView和Complete。dv_level3_capture每200现实毫秒采集实际已绘制帧，frames.dvlog记录真实时刻；--seconds=0保持运行直到外部stop，四倍游戏时速不变。encode_dv_capture.py <目录>按原采集时间生成5fps recording.mp4，真实间隔不匀时明确保留末帧，不重跑游戏也不改游戏时间。
 正式对白沿DV呈现返回的actor与speaker_name标注说话者；宿主不填默认人物姓名。
 DV呈现中的显式换行逐段交给原对白继续流程，保留原文本顺序与输入确认，避免多段证物挤在同一矮框中。
 采集另记录input-events.jsonl的协议实际消费时刻与host-events.jsonl的宿主交付时刻；后者为私有审查数据，不向盲玩者提供。prepare交付只证明已准备，不冒充执行、推演正确、答案接受或交接时刻；真实节点仍与正式事件及可见画面核对，无法精确定位时保留采样区间/记录不足。
@@ -172,8 +172,8 @@ DV呈现中的显式换行逐段交给原对白继续流程，保留原文本顺
 
 2026-10-15：批量初始化可使用独占采用表构建器，先复制继承表，每条声明仍立即执行原验证顺序，再仅追加独立条目；finish核对旧前缀与长度，修订号按成功追加数增长，一次持久更新世界，空批保持原世界。中间采用表不得发布、分叉或当作任意更新入口，world/mind/预测仍保持原独立复制合同。
 证据目标可显式声明refresh_until命题；仅本人尚不知该命题为真时，在目标组合时把minimum_time刷新为本人mind.time。此操作不改旧观察或认知，不授权新的传输频道，也不代选检视；本人时刻未推进时不承诺刷新有效。每个目标可独立停止刷新，原预算与判答不变。
-Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，Save仍为$dv_rational对象标签。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.json明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
-采集可在原5Hz截图之后追加私有render-state.jsonl，只读现有actor/AnimatedSprite2D可见性、位置、动画帧与当前纹理引用，并关联原real_ms和文件名；不加载资源、触发动作或更改呈现。失效节点、空纹理、无效动画帧与诊断文件打开失败容错。该记录不给盲玩者；额外磁盘开销随新来源封存，实际采样间隙照实保留，不能以隐藏节点状态代选行动或代替PNG实视。
+Session新增流式WriteTrace/WriteSave，二进制Trace/Save保留rational原子和共享节点，JSON标签只用于进程内兼容。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.dvlog明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
+采集可在原5Hz截图之后追加私有render-state.dvlog，只读现有actor/AnimatedSprite2D可见性、位置、动画帧与当前纹理引用，并关联原real_ms和文件名；不加载资源、触发动作或更改呈现。失效节点、空纹理、无效动画帧与诊断文件打开失败容错。该记录不给盲玩者；额外磁盘开销随新来源封存，实际采样间隙照实保留，不能以隐藏节点状态代选行动或代替PNG实视。
 
 ## DV 到期意图合同（2026-10-16）
 
@@ -217,7 +217,7 @@ RoomStage只处理当前房间构图、局部PointLight2D、窗光和有上限�
 
 资源生产：python godot_csharp/tools/build_ui_theme.py；python godot_csharp/tools/build_room_table_props.py；python godot_csharp/tools/build_chapter2_scenes.py --geometry-only <地图键...>。表格道具继续从原生像素配方生成，保持尺寸、锚点与碰撞范围；不直接修补生成PNG或tres。
 
-Main默认audit=false，--dv-audit配置完整证据；GameEngine关闭时普通模式跳过session.json，保留save/输入/可见正文/计时。close-result明确audit_mode与trace_policy，complete只表示该策略规定的保存完成。profile_dv_capture.py始终启用--dv-audit；不得把普通模式与审计模式记录称为同条件耗时比较。本批按用户要求暂停所有验证，先集中完成修改。
+Main默认audit=false，--dv-audit配置完整证据；GameEngine关闭时普通模式跳过session.dvdag，保留save/输入/可见正文/计时。close-result明确audit_mode与trace_policy，complete只表示该策略规定的保存完成。profile_dv_capture.py始终启用--dv-audit；不得把普通模式与审计模式记录称为同条件耗时比较。本批按用户要求暂停所有验证，先集中完成修改。
 
 ## 人工认知与阅读期调度（2026-10-19，用户追加裁定）
 
@@ -235,7 +235,7 @@ Main阅读时发送正式dv_next，GameEngine仍单队列后台Prepare。仅远�
 
 ## 一倍速直接输入的现场复测（2026-10-19）
 
-profile_dv_capture.py新增--speed，默认4保留独立历史测量口径，一倍交互复测显式--speed 1。捕获脚本在run.json写出前读取同一--dv-speed，禁止元数据写4而实际窗口为1。input.json的key可带duration_ms（1至5000现实毫秒），通过普通Input.parse_input_event按下、按单调现实毫秒截止时刻松开，并记录实际松键时刻；不写玩家坐标、DV状态或动作回执。
+profile_dv_capture.py新增--speed，默认4保留独立历史测量口径，一倍交互复测显式--speed 1。捕获脚本在run.dvlog写出前读取同一--dv-speed，禁止元数据写4而实际窗口为1。input.json的key可带duration_ms（1至5000现实毫秒），通过普通Input.parse_input_event按下、按单调现实毫秒截止时刻松开，并记录实际松键时刻；不写玩家坐标、DV状态或动作回执。
 
 用户授权Luna依据新会话可见截图操控卧室到走廊，主代理查看关键PNG并核对实际输入、源侧门道回执和独立现实耗时。操作代理不读设计、源码、隐藏测量、旧记录或预写路线。此为指定空间行为复测，不能称为完整盲玩或剧情通关；性能分析器及截图开销纳入本轮现实耗时，采样尾部与封存分列。
 
@@ -252,3 +252,11 @@ RuntimeDiagnostics补记process开始及render前边界；PlayerViewTrace与view
 本轮定位分析器自身开销时，保持四倍物理、完整审计、截图与.NET采样，另起新会话切换native-profiling；不开脚本/GPU控制台分析不代表关闭全部分析器。该条件差异在launch/result明确保留，原有完整分析窗口不改写。先看新窗口实际间隔，不能依据周期相近直接判定根因。
 
 FrameArchive亦串行追加已序列化文本，输入、可见采样元数据与在线计时写盘不占主线程；同一路径保持队列次序。图像容量独立计数，文本不得静默丢弃；文本异常记录text-error及capture-close.archive_errors，不循环写入失败日志。关闭循环持续消费PNG完成通知，并排空这些通知新追加的frames/时序记录后才退出，真实捕获终点保持原值。中性探针补查文本先后顺序。
+
+## 禁止JSON轨迹（2026-10-19）
+
+新的输入、可见正文、计时、渲染采样、帧索引与关闭回执落盘为DVLOG2二进制.dvlog；原始会话为.dvdag，存档为.dvsave。FrameArchive的AppendRecords仅在后台解析进程内JSON消息，再编码二进制帧，PNG原像素合同不变；WriteRecord保存小型单条二进制元数据。JSON.stringify/JsonSerializer仍可用于内存中的Godot接口，不能直接写作运行记录。Session的写接口自行创建.partial、成功后发布正式名，宿主不再次改名；失败保留部分文件并在close-result.dvlog注明。
+
+profile_dv_capture、encode_dv_capture、report_runtime_hitches及summarize_interaction_timing使用language_core/tools/binary_evidence.py读取新记录，旧JSON仅只读兼容。工程源码指纹、启动参数和小型汇总不承载逐事件状态，可沿用工程JSON。此存储修订不是同条件性能或游戏验收证据；完整行为与画面须另起实际会话验证。
+
+新会话result、evidence-summary及含逐段原始记录的卡顿/交互分析输出也使用.dvlog；源码指纹和编译配置JSON不记录会话轨迹。

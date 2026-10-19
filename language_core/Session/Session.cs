@@ -60,21 +60,12 @@ public sealed class DvSession
 
     public string Trace() => R.Text(R.json_stringify(Run(() => DVProgram.SessionClose(state))));
 
-    private static readonly JsonSerializerOptions TraceOptions = new()
+    public void WriteTrace(string path) => R.WriteEvidenceFile(path, Run(() => DVProgram.SessionClose(state)));
+    public void WriteSave(string path) => R.WriteEvidenceFile(path, DurableState());
+    public static DvSession RestoreFile(string path)
     {
-        MaxDepth = 512
-    };
-
-    public void WriteTrace(string path)
-    {
-        using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
-        JsonSerializer.Serialize(stream, Run(() => DVProgram.SessionClose(state)), TraceOptions);
-    }
-
-    public void WriteSave(string path)
-    {
-        using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
-        JsonSerializer.Serialize(stream, DurableState(), SnapshotOptions);
+        var value = R.ReadEvidenceFile(path);
+        return new(value, R.Bool(R.record_find(value, "audit_mode", true)));
     }
 
     private static readonly JsonSerializerOptions SnapshotOptions = new()

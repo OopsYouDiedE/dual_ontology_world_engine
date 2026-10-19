@@ -338,21 +338,20 @@ public partial class GameEngine : Node
             Directory.CreateDirectory(path);
             ownsDirectory = true;
             phase = "inputs";
-            File.WriteAllLines(Path.Combine(path, "inputs.jsonl"), inputs);
+            DuelView.Compiled.BinaryEvidence.WriteJsonRecords(Path.Combine(path, "inputs.dvlog"), inputs);
             phase = "visible";
-            File.WriteAllLines(Path.Combine(path, "visible.jsonl"), visible);
+            DuelView.Compiled.BinaryEvidence.WriteJsonRecords(Path.Combine(path, "visible.dvlog"), visible);
             phase = "interaction-timing";
-            File.WriteAllLines(Path.Combine(path, "interaction-timing.jsonl"), timings);
+            DuelView.Compiled.BinaryEvidence.WriteJsonRecords(Path.Combine(path, "interaction-timing.dvlog"), timings);
             var current = session;
             if (current is null) return;
             phase = "trace";
-            var tracePath = Path.Combine(path, "session.json.partial");
+            var tracePath = Path.Combine(path, "session.dvdag");
             try
             {
                 if (current.AuditMode)
                 {
                     await Task.Run(() => current.WriteTrace(tracePath));
-                    File.Move(tracePath, Path.Combine(path, "session.json"));
                 }
             }
             catch (Exception error)
@@ -361,11 +360,10 @@ public partial class GameEngine : Node
                 errors.Add(new { phase, error = error.ToString() });
             }
             phase = "save";
-            var savePath = Path.Combine(path, "save.json.partial");
+            var savePath = Path.Combine(path, "save.dvsave");
             try
             {
                 await Task.Run(() => current.WriteSave(savePath));
-                File.Move(savePath, Path.Combine(path, "save.json"));
             }
             catch (Exception error)
             {
@@ -384,8 +382,10 @@ public partial class GameEngine : Node
             {
                 if (ownsDirectory && path is not null)
                 {
-                    using var result = new FileStream(Path.Combine(path, "close-result.json"), FileMode.CreateNew, System.IO.FileAccess.Write);
-                    System.Text.Json.JsonSerializer.Serialize(result, new { complete = errors.Count == 0, audit_mode = session?.AuditMode, trace_policy = session?.AuditMode == true ? "full" : "omitted-gameplay", session_opened = session is not null, unprocessed_commands = commands.Count, pending_action = pendingEvent, errors });
+                    using var result = new FileStream(Path.Combine(path, "close-result.dvlog"), FileMode.CreateNew, System.IO.FileAccess.Write);
+                    result.Write(DuelView.Compiled.BinaryEvidence.Magic);
+                    var closeRecord = System.Text.Json.JsonSerializer.SerializeToElement(new { complete = errors.Count == 0, audit_mode = session?.AuditMode, trace_policy = session?.AuditMode == true ? "full" : "omitted-gameplay", session_opened = session is not null, unprocessed_commands = commands.Count, pending_action = pendingEvent, errors });
+                    DuelView.Compiled.BinaryEvidence.WriteFrame(result, closeRecord);
                 }
             }
             catch (Exception error) { GD.PushError(error.ToString()); }

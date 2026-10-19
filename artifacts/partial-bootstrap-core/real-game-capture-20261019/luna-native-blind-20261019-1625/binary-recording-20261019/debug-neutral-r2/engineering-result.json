@@ -1,0 +1,210 @@
+{
+  "scope": "neutral-binary-codec-and-journal-only",
+  "formal_session": "not-started",
+  "stages": [
+    {
+      "name": "dv-generation-no-session-main",
+      "command": [
+        "C:\\Users\\iii\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+        "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\tools\\build_session.py",
+        "--entry",
+        "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\game\\debug-run.dv",
+        "--out",
+        "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\real-game-capture-20261019\\luna-native-blind-20261019-1625\\binary-recording-20261019\\debug-neutral-r2\\program",
+        "--main",
+        "false"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.765999999974156
+    },
+    {
+      "name": "neutral-build",
+      "command": [
+        "dotnet",
+        "build",
+        "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\real-game-capture-20261019\\luna-native-blind-20261019-1625\\binary-recording-20261019\\debug-neutral-r2\\program\\Program.csproj",
+        "-c",
+        "Release",
+        "--disable-build-servers",
+        "-p:NuGetAudit=false"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 9.953000000008615
+    },
+    {
+      "name": "neutral-codec",
+      "command": [
+        "dotnet",
+        "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\real-game-capture-20261019\\luna-native-blind-20261019-1625\\binary-recording-20261019\\debug-neutral-r2\\program\\bin\\Release\\net8.0\\Program.dll",
+        "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\real-game-capture-20261019\\luna-native-blind-20261019-1625\\binary-recording-20261019\\debug-neutral-r2\\neutral-codec.dvdag"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.125
+    }
+  ],
+  "complete": true,
+  "source_sha256_before": {
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\compiler.dv": "2ede4c65a8995833eb842b1fde4f776505747a424eaec7f5307fea55f5eff22c",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\Runtime.cs": "1d4b530d65eacb835ae26ed31766b08ef8e28365da97ae3f2bbf0a08baf1f364",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\core\\00-data.dv": "07cbb35b58e034440f8bdca5692c45bda3f35857b62b44615835aae28bce69bc",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\core\\20-observation.dv": "23fa7a82236249cd6790c794dc77c3cce6e6a2f5174099ae3701aa75d305db89",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\core\\40-value.dv": "2e3eedf0109c5a6370d87b942a08e48cb39ef5d86d9ef6fdfd19499d49057678",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\core\\70-reasoning-cost.dv": "622054382317305cdeb6a34622308014aa4c37db9c5c749762ca0683b8cd7fd2",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\core\\95-model-argument.dv": "f06b5c8fb8a19e3fc07128746914adfa89f821f06f47cafe9c21a1f897cf0159",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\game\\debug-run.dv": "fd3db5a58ff6f647077485fbbbc843b4771dbdbe538a7a3b4bded4c47a6498ce",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\game\\entry.dv": "8358027d6d4ded03e944cc991fdeaaf02d1f1a731e2835c80894fec85bf6efac",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\tools\\binary_evidence.py": "19e98cead016658030e7bcf39b19f8b023d143cc92d7481b55ec40c9486f3ace",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\tools\\check_debug_structure.py": "b7cb342997021d51225436288e861e7a25988d17819fb2854a3fc153eef7965f",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\tools\\debug_checkpoints.py": "a0fc6ae69d75e09667e86fb0119c39737f2295e2596db6f97d6fc7318a5cf2ca",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\tools\\DebugCheckpointResume.cs": "ddaf00070f54ffde4de7d1d67592bea5a9b5ffdeef81e70ce7a3ada969f918de",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\tools\\raw_dag.py": "a24b25f4e311b01088902ee5fefd1b13c07ee45d1c57b395b441a87e521f68c2",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter1\\campaign.dv": "b19968a8c16999a5e5af7faff3b04054b5af83058aa84761b0bae1ddbfd0b593",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter1\\cognitive-profiles.dv": "8c681726931a90e9907605ad4e987342ad3909c0bab74197116fbb60b2853a27",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter1\\content.dv": "a8484dda2f8d4eac5122de08253f703ec82b1ffe441ba8e8933d63d05e1fda24",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter1\\history.dv": "c1a0dc1526ae3cedaf5a37a44a6b76edff58fbf7174e814bcf86fc5614c2959d",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter1\\opening.dv": "e2a03c1e744b04fa1e09e5072d0992c0d1f94310a52de040eaf74ee004cb7c8e",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter2\\content.dv": "fd2f5c550e8233ede501cfebfdd172a1e0517bb960ec4514edce573f1624a8dc",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter2\\daily.dv": "843d36cc69e2aaa77584749a2288ee655b9b154f68cbb89f0c23d91bd04db3a2",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter2\\dialogue.dv": "77808985d90ce64ade863afd795357e6ca8ef5df58cd3c5cfebe287f242fd279",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter2\\homecoming.dv": "b7cf7eae621fde085291a68931cdf5140d5612f059ea6134536a2b0db45a8369",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\session\\10-subjective.dv": "51608299fc7cd56ba57a31161678bb872b8e72723df92145463757a100f8f36b",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\session\\15-action-planning.dv": "667474dfd78d42eeb04df25bc367027a0a5ffef29473f0435ef768087cd82eab",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\session\\20-speech.dv": "39471d85e9bf3c020b7561860d04d68b8a6235fdcbb313458c6675f31d13a67f",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\session\\25-simulation.dv": "3b23e90a98e9b3b7acefde3bf251a7ce3ba47169542169a600c42a242f8b4b2d",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\session\\30-runner.dv": "bf79a867c1f82730229f0fdd76ce68850825548697523e2c201a29b61f3349c2"
+  },
+  "codec_observations": [
+    {
+      "scope": "neutral-binary-codec-only",
+      "same_value": true,
+      "exact_type": "DuelView.Compiled.Rational",
+      "text_type": "System.String"
+    },
+    {
+      "formal_session": "not-started",
+      "stage_checkpoint": "not-created",
+      "resume_loop": "not-called"
+    }
+  ],
+  "raw_summary": {
+    "format": "dv-raw-dag-v2",
+    "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\real-game-capture-20261019\\luna-native-blind-20261019-1625\\binary-recording-20261019\\debug-neutral-r2\\neutral-codec.dvdag",
+    "source_sha256": "e55ecfe9b295f8cd7ab0afc7ae7a1e3a0eeb9414973d09efbd45219af2ca0f83",
+    "source_bytes": 5570,
+    "validated_frames": 17,
+    "validated_nodes": 11,
+    "source_changed_during_scan": false,
+    "committed_events": 1,
+    "last_committed_event": "e0",
+    "validated_bytes": 5570,
+    "last_commit_bytes": 5570,
+    "residual_tail_bytes": 0,
+    "uncommitted_suffix_bytes": 0,
+    "initial_checkpoint_observed": true,
+    "final_checkpoint_observed": true,
+    "seal_observed": true,
+    "last_checkpoint": {
+      "name": "final",
+      "root": 4,
+      "events": 1,
+      "frame": 15
+    },
+    "checkpoint_commits": [
+      {
+        "name": "initial",
+        "root": 4,
+        "events": 0,
+        "frame": 6
+      },
+      {
+        "name": "neutral-codec",
+        "root": 4,
+        "events": 0,
+        "frame": 7
+      },
+      {
+        "name": "final",
+        "root": 4,
+        "events": 1,
+        "frame": 15
+      }
+    ],
+    "invalid_tail": null,
+    "complete_sealing": true,
+    "scope": "complete sealed raw values",
+    "uncompleted_computation": "unknown; calculations without a committed event are not reconstructed",
+    "original_tail_preserved": true
+  },
+  "tagged_expected": [
+    [
+      "exact",
+      {
+        "$dv_rational": "1/3"
+      }
+    ],
+    [
+      "text",
+      "1/3"
+    ],
+    [
+      "number",
+      0.5
+    ],
+    [
+      "flag",
+      false
+    ]
+  ],
+  "tagged_actual": [
+    [
+      "exact",
+      {
+        "$dv_rational": "1/3"
+      }
+    ],
+    [
+      "text",
+      "1/3"
+    ],
+    [
+      "number",
+      0.5
+    ],
+    [
+      "flag",
+      false
+    ]
+  ],
+  "missing_stage_rejected": "Requested stage checkpoint has no validated commit",
+  "source_sha256_after": {
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\compiler.dv": "2ede4c65a8995833eb842b1fde4f776505747a424eaec7f5307fea55f5eff22c",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\compiler\\Runtime.cs": "1d4b530d65eacb835ae26ed31766b08ef8e28365da97ae3f2bbf0a08baf1f364",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\core\\00-data.dv": "07cbb35b58e034440f8bdca5692c45bda3f35857b62b44615835aae28bce69bc",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\core\\20-observation.dv": "23fa7a82236249cd6790c794dc77c3cce6e6a2f5174099ae3701aa75d305db89",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\core\\40-value.dv": "2e3eedf0109c5a6370d87b942a08e48cb39ef5d86d9ef6fdfd19499d49057678",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\core\\70-reasoning-cost.dv": "622054382317305cdeb6a34622308014aa4c37db9c5c749762ca0683b8cd7fd2",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\core\\95-model-argument.dv": "f06b5c8fb8a19e3fc07128746914adfa89f821f06f47cafe9c21a1f897cf0159",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\game\\debug-run.dv": "fd3db5a58ff6f647077485fbbbc843b4771dbdbe538a7a3b4bded4c47a6498ce",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\game\\entry.dv": "8358027d6d4ded03e944cc991fdeaaf02d1f1a731e2835c80894fec85bf6efac",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\tools\\binary_evidence.py": "19e98cead016658030e7bcf39b19f8b023d143cc92d7481b55ec40c9486f3ace",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\tools\\check_debug_structure.py": "b7cb342997021d51225436288e861e7a25988d17819fb2854a3fc153eef7965f",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\tools\\debug_checkpoints.py": "a0fc6ae69d75e09667e86fb0119c39737f2295e2596db6f97d6fc7318a5cf2ca",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\tools\\DebugCheckpointResume.cs": "ddaf00070f54ffde4de7d1d67592bea5a9b5ffdeef81e70ce7a3ada969f918de",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\tools\\raw_dag.py": "a24b25f4e311b01088902ee5fefd1b13c07ee45d1c57b395b441a87e521f68c2",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter1\\campaign.dv": "b19968a8c16999a5e5af7faff3b04054b5af83058aa84761b0bae1ddbfd0b593",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter1\\cognitive-profiles.dv": "8c681726931a90e9907605ad4e987342ad3909c0bab74197116fbb60b2853a27",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter1\\content.dv": "a8484dda2f8d4eac5122de08253f703ec82b1ffe441ba8e8933d63d05e1fda24",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter1\\history.dv": "c1a0dc1526ae3cedaf5a37a44a6b76edff58fbf7174e814bcf86fc5614c2959d",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter1\\opening.dv": "e2a03c1e744b04fa1e09e5072d0992c0d1f94310a52de040eaf74ee004cb7c8e",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter2\\content.dv": "fd2f5c550e8233ede501cfebfdd172a1e0517bb960ec4514edce573f1624a8dc",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter2\\daily.dv": "843d36cc69e2aaa77584749a2288ee655b9b154f68cbb89f0c23d91bd04db3a2",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter2\\dialogue.dv": "77808985d90ce64ade863afd795357e6ca8ef5df58cd3c5cfebe287f242fd279",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\scenarios\\chapter2\\homecoming.dv": "b7cf7eae621fde085291a68931cdf5140d5612f059ea6134536a2b0db45a8369",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\session\\10-subjective.dv": "51608299fc7cd56ba57a31161678bb872b8e72723df92145463757a100f8f36b",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\session\\15-action-planning.dv": "667474dfd78d42eeb04df25bc367027a0a5ffef29473f0435ef768087cd82eab",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\session\\20-speech.dv": "39471d85e9bf3c020b7561860d04d68b8a6235fdcbb313458c6675f31d13a67f",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\session\\25-simulation.dv": "3b23e90a98e9b3b7acefde3bf251a7ce3ba47169542169a600c42a242f8b4b2d",
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\language_core\\verification\\session\\30-runner.dv": "bf79a867c1f82730229f0fdd76ce68850825548697523e2c201a29b61f3349c2"
+  },
+  "source_unchanged": true
+}

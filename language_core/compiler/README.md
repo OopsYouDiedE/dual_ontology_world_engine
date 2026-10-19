@@ -80,7 +80,7 @@ mapping 当前要求直接以具名映射调用作为乘法左项，尚非可任
 
 本轮最新用户目标（2026-10-19）：集中完成已识别优化、结构/接线与撤销错误捷径后再测试。事实等价允许结合严格分析与实际证据作有范围的工程取舍，但不能通过降低搜索层数、删除认知/目标或裁剪原始证据冒充同条件提速。实际覆盖外的分支保持未知。数值缓存候选虽然降低微负载分配，正式窗口未显示进步，现封存为未采纳候选；现役底本保留第二批的单父引用与DAG写出器复用。
 
-冻结容器现以内部sealed IReadOnlyList<object>独占不可变object[]，直接采用冻结时新建的子数组，不再继承可变List或二次复制。R.Items返回只读接口，IsDvList/TryItems仍仅识别原生List及内部FrozenList，不扩张DV值域；写操作仅接受原生可变List，读取可变所有者时才解冻选中子分支并建立父失效关系。根复制和记录更新仍为O(n)，不是HAMT或持久向量。枚举器保留List的状态与错误语义；越界读交给私有空List产生原异常。Session的HostValue/SnapshotValue同步识别两种合法容器，Save标签、Trace字符串、原始DAG及独立副本必须集中工程核对。Items的CLR返回签名变化要求编译器自举与Session/宿主统一重建，禁止混用旧程序集。
+冻结容器现以内部sealed IReadOnlyList<object>独占不可变object[]，直接采用冻结时新建的子数组，不再继承可变List或二次复制。R.Items返回只读接口，IsDvList/TryItems仍仅识别原生List及内部FrozenList，不扩张DV值域；写操作仅接受原生可变List，读取可变所有者时才解冻选中子分支并建立父失效关系。根复制和记录更新仍为O(n)，不是HAMT或持久向量。枚举器保留List的状态与错误语义；越界读交给私有空List产生原异常。Session的HostValue/SnapshotValue同步识别两种合法容器，进程内Save标签/Trace字符串、落盘二进制DAG及独立副本分别集中工程核对。Items的CLR返回签名变化要求编译器自举与Session/宿主统一重建，禁止混用旧程序集。
 
 空冻结集合的接口枚举委托私有原生空List，保留.NET空枚举器的独立错误状态；非空集合采用值类型枚举器。解冻由FrozenList.CopyRoot把私有数组一次复制到独占List，不暴露底本、不逐项扩容。单字段更新按原先校验/冻结/首匹配顺序，内部保留具体冻结类型以免逐项经接口分派；冻结索引仅在完整资格验证后读取具体冻结pair。中性保存/恢复、错误文本和DAG差分与分配样本分列，CPU噪声不包装成整局提速。
 
@@ -91,3 +91,7 @@ mapping 当前要求直接以具名映射调用作为乘法左项，尚非可任
 记录索引保持有序pair及重复键规则：大记录直接建索引，小记录在第四次文本键查询时建索引。冻结节点构造同时计算存储身份哈希和值兼容哈希，后者供same_value拒绝不相等值，碰撞仍回到原深比。数字兼容哈希允许碰撞，以保持Rational与double的原有相等合同；不是持久文件摘要或跨进程指纹。
 
 平台ABI新增rt_phase(stage, actor)，二参数，返回true；Runtime.cs以AsyncLocal范围调用外部阶段观察器，compiler.dv登记元数。无观察器不产生输出；不是DV时间、事件或执行回执。
+
+### Binary recording (2026-10-19)
+
+Runtime's `BinaryEvidence` encodes typed `DVLOG2` records; `rt_raw_open/event/checkpoint/ref/finish/abort` now write checksummed dv-raw-dag-v2 binary files, with prior-node references. Opening raw recording makes subsequent `rt_json_print` calls emit binary projection frames to stdout; without a recorder that ABI still serves compiler/data exchange. `rt_json_write` remains recognized for diagnostic compatibility but throws: new JSON recordings are forbidden. There is no new language syntax or world authority in this codec. Raw commit ordering, no-overwrite, exact Rational/string distinction and retained partial failures remain part of the ABI. See core/README.md and tools/binary_evidence.py for readers.

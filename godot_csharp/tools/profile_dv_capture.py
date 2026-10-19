@@ -1,6 +1,10 @@
 """Run the real rendered detective capture with Godot and managed profiling."""
 
 import argparse
+import sys
+from pathlib import Path as EvidencePath
+sys.path.insert(0, str(EvidencePath(__file__).resolve().parents[2] / "language_core/tools"))
+from binary_evidence import records, RecordWriter
 import datetime
 import hashlib
 import json
@@ -14,7 +18,7 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 EVIDENCE_ATTRIBUTES = (
     "run/** -text -diff\nhost-session/** -text -diff\n*.log -text -diff\n"
-    "*.nettrace -text -diff\n*.json -text -diff\n*.jsonl -text -diff\n"
+    "*.nettrace -text -diff\n*.json -text -diff\n*.dvlog* -text -diff\n*.dvdag* -text -diff\n*.dvsave* -text -diff\n"
     "managed-*.txt -text -diff\nVISUAL*.md -text -diff\n"
 )
 
@@ -127,9 +131,9 @@ def main():
     if len(sessions) == 1:
         shutil.copytree(sessions[0], out / "host-session")
     run = out / "run"
-    if (run / "end.json").exists():
-        end = json.loads((run / "end.json").read_text(encoding="utf-8"))
-        rows = [json.loads(line) for line in (run / "measurement.jsonl").read_text(encoding="utf-8").splitlines()]
+    if (run / "end.dvlog").exists():
+        end = next(records(run / "end.dvlog"))
+        rows = list(records(run / "measurement.dvlog"))
         valid = [row for row in rows if "game_time" in row.get("snapshot", {})]
         result["capture_end_real_ms"] = end["real_ms"]
         if valid:
@@ -149,7 +153,8 @@ def main():
     result["godot_script_profile_confirmed"] = "BEGIN PROFILING" in godot_output
     result["native_profiling_requested"] = args.native_profiling
     result["gpu_profile_confirmed"] = "GPU PROFILE" in godot_output
-    write_json(out / "result.json", result)
+    with RecordWriter(out / "result.dvlog") as output:
+        output.append(result)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return game_exit or collector_exit or (0 if result.get("managed_report_readable") else 1)
 

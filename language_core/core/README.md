@@ -15,7 +15,7 @@
 
 室内防护的未接通声明、空动作构造器与unknown房间输入隔离到checks/fixtures/room-safety-draft.dv，生产不包含该文件、不再创建无消费者房间状态或采纳无调度者法则。正式地点目录c2_rooms、实际气闸与户外暴露保持；runtime_contracts.unimplemented_room_safety_draft明确设计要求尚未实施，不能把隔离草案当作生产安全保障。
 
-`Runtime.json_write`独占创建partial及正式文件，拒绝覆盖；`Session.Save/WriteSave/Restore`共用精确数标签与512 JSON深度，Trace精确数继续输出字符串。`run_debug.py`的evidence_complete要求正常退出、debug_end、正式trace、无partial、正文可解析及源码未改；logical_loop_finished不表示剧情完成，timeout_stage明确会话运行或封存阶段。相关工程与正式会话证据见artifacts/partial-bootstrap-core/parallel-repairs-20261018/，未覆盖分支保留未知。
+`Runtime.json_write`拒绝新记录；`Session.WriteTrace/WriteSave`用二进制DAG独占创建partial并成功封存后发布，`RestoreFile`验证完整封存。Save/Restore字符串只保留进程内JSON兼容。`run_debug.py`的evidence_complete要求正常退出、debug_end、正式trace、无partial、正文可解析及源码未改；logical_loop_finished不表示剧情完成，timeout_stage明确会话运行或封存阶段。相关工程与正式会话证据见artifacts/partial-bootstrap-core/parallel-repairs-20261018/，未覆盖分支保留未知。
 
 同一真实执行的本人、现场与公共授权合并为每主体/引用的一份感知。`dvs_public_projection_inputs`读取本次执行事件尾段中已实际发布的观察，`dvs_public_filter_projected`只补尚未投影的观察，保留原ID、绑定与Core重复拒绝。`public_grants_projection`记录本次公共入口及已有收据来源，再次调用仍拒绝；正式接受回执的`-accepted`执行身份独立。公共observation事件的grants仅含实际新投影的physical引用，declared_grants保留原声明，聆听及listener_parse保持独立执行，不把同一执行伪装成第二份来源。
 
@@ -374,7 +374,7 @@ dvg_complete(state, receipt)
 
 `dvs_event`/`dvs_event_prepared` 经 rt_snapshot 发布只读完整事件快照。`dv_debug_events(events, start, config)` 按原顺序投影事件、父编号、行动与结果；空 actor/type 过滤表示全部。返回 next 为原事件游标，过滤不改变调度或人物认识。完整快照保留在原始轨迹，摘要和 phase_progress 都不表示未完成行动已经完成。
 
-Session 宿主提供流式 WriteTrace/WriteSave；Trace 的精确数沿原字符串格式，Save 使用 `$dv_rational` 标签。rt_json_write 写 `.partial` 后成功发布正式文件，新目标不覆盖原证据。关闭等待在途工作，SessionClose 不自动重试；complete 与各阶段错误以实际关闭结果为准，TraceClosed 只表示关闭结束。普通 JSON 列表/键值对不是可执行 DV 声明。
+Session 宿主提供流式二进制 WriteTrace/WriteSave；精确数使用rational原子。二进制DAG写 `.partial` 后成功发布正式文件，新目标不覆盖原证据。关闭等待在途工作，SessionClose 不自动重试；complete 与各阶段错误以实际关闭结果为准，TraceClosed 只表示关闭结束。普通 JSON 列表/键值对不是可执行 DV 声明。
 
 下面列出编译器 `arity` 接受的全部平台函数。除特别注明外，错误经异常/rt_fail 报告；ABI 负责基础值和 I/O，领域校验由 DV 库执行。
 
@@ -390,7 +390,7 @@ Session 宿主提供流式 WriteTrace/WriteSave；Trace 的精确数沿原字符
 | 复制 | rt_copy_value(value), rt_snapshot(value) | 独立可编辑分支、递归不可变快照 |
 | 纯值备忘 | rt_memo_get(owner,key), rt_memo_put(owner,key,value) | get 返回 `[found,value]`，put 返回可独立使用的结果；完整输入底本和键决定结果 |
 | 参数 | rt_arg_count(), rt_arg(index) | 启动命令行参数 |
-| 文件 | rt_read(path), rt_write(path,text), rt_json_write(path,value) | 严格 UTF-8 读取、文本写入、流式新 JSON 文件 |
+| 文件 | rt_read(path), rt_write(path,text), rt_json_write(path,value) | 严格UTF-8读取与普通文本写入；rt_json_write保留名称但拒绝轨迹记录 |
 | JSON | rt_json_parse(text), rt_json_stringify(value) | 数据交换解析与序列化 |
 | 控制台/失败 | rt_print(value), rt_fail(message) | 基本值打印并返回原值、抛出明确错误 |
 
@@ -920,7 +920,7 @@ C2导航意图从本人已知位置、已知开启的门和本人已采纳移动
 
 #### 批量投影与真实阶段恢复接口（2026-10-18）
 
-`run_debug.py --raw-format dag --projection-every 32 --timeout 240 --out <新目录>` 每32次外层真实Complete后刷新积累的玩家呈现和事件投影，正常循环结束补齐剩余。默认`--projection-every 1`保留逐步投影；大于1只允许在线DAG，原`dvs_event`逐事件提交保持不变，Core原有的小型执行回执stdout也继续保留。`stdout.jsonl`及正文仅是已刷新范围。`result.json`分列`stdout_projection_coverage`、`raw_committed_events_not_yet_projected`和中断后未知的完成步数；未刷新尾不补猜为完整正文，原始DAG继续作为完整已提交事件来源。
+`run_debug.py --raw-format dag --projection-every 32 --timeout 240 --out <新目录>` 每32次外层真实Complete后刷新积累的玩家呈现和事件投影，正常循环结束补齐剩余。默认`--projection-every 1`保留逐步投影；大于1只允许在线DAG，原`dvs_event`逐事件提交保持不变，Core原有的小型执行回执stdout也继续保留。`stdout.dvlog`及正文仅是已刷新范围。`result.dvlog`分列`stdout_projection_coverage`、`raw_committed_events_not_yet_projected`和中断后未知的完成步数；未刷新尾不补猜为完整正文，原始DAG继续作为完整已提交事件来源。
 
 `stage-day3`、`stage-day5`分别在正式绝对时钟跨2880、5760后的首次真实Complete结束时提交，不按运行开始时间重置日期；跨界前尚未完成的计算不生成checkpoint。记录含完整state、总调试steps、实际executed、无pending状态、配置、源码指纹，以及相互关联的host_completion/action_execution事件ID、原行动token和最终实际事件。恢复校验原始DAG帧链、提交位置、事件先后/主体/父链/行动token/执行状态、状态时钟及配置，不能仅凭after_complete标记建立资格。未发生边界完成时没有对应checkpoint。
 
@@ -931,9 +931,9 @@ python language_core/tools/debug_checkpoints.py <原始DAG或.partial> --checkpo
 python language_core/tools/resume_debug.py --checkpoint <新checkpoint目录>/manifest.json --out <独立新运行目录> --timeout 240 --projection-every 32
 ```
 
-第一条只读导出已校验提交前缀中的实际checkpoint，保留`$dv_rational` Save标签；第二条才显式启动恢复。缺失、未提交、状态不符、来源文件改变、Save与原提交值不符或源码/配置不一致均拒绝；中断后的有效checkpoint可独立于未提交尾使用，原尾不改写。恢复从保存state直接进入同一个`dvg_debug_loop`的prepare/complete，不重新开局、不预置前两日、不注入结果。记录原时间及步骤作为恢复起点，新增DAG的initial保存继承状态、resume-origin保留原来源；新增事件与继承事件分别统计。显式传入冲突的角色配置被拒绝，诊断投影批量不改人物配置。源码路径与指纹当前按原工作区严格核对，不自动迁移或建立新基线。
+第一条只读导出已校验提交前缀中的实际checkpoint，保留精确rational原子与同文字符串的类型区别；第二条才显式启动恢复。缺失、未提交、状态不符、来源文件改变、Save与原提交值不符或源码/配置不一致均拒绝；中断后的有效checkpoint可独立于未提交尾使用，原尾不改写。恢复从保存state直接进入同一个`dvg_debug_loop`的prepare/complete，不重新开局、不预置前两日、不注入结果。记录原时间及步骤作为恢复起点，新增DAG的initial保存继承状态、resume-origin保留原来源；新增事件与继承事件分别统计。显式传入冲突的角色配置被拒绝，诊断投影批量不改人物配置。源码路径与指纹当前按原工作区严格核对，不自动迁移或建立新基线。
 
-C#工具加载器`tools/DebugCheckpointResume.cs`使用与Session Restore相同的512层标签解析，精确数还原为Rational，文本分数字面仍为Text；普通Trace字符串编码不能充当Save。`check_debug_structure.py --out <新工程目录>`仅生成main=false程序并选择中性codec入口，检查标签及通用DAG值，既不调用正式会话也不建立阶段状态；该工程检查与唯一授权的新正式会话分列，不自动续跑。
+C#工具加载器`tools/DebugCheckpointResume.cs`使用与Session RestoreFile相同的二进制DAG校验，精确数还原为Rational，文本分数字面仍为Text；未封存的轨迹不能充当Save。`check_debug_structure.py --out <新工程目录>`仅生成main=false程序并选择中性codec入口，检查标签及通用DAG值，既不调用正式会话也不建立阶段状态；该工程检查与唯一授权的新正式会话分列，不自动续跑。
 
 
 ## 连续优化循环与局部复用（2026-10-18）
@@ -980,10 +980,10 @@ C#工具加载器`tools/DebugCheckpointResume.cs`使用与Session Restore相同�
 - `c2_navigation_route(actor, target)`：先复用 `c2i_known_route`。下游门尚未核实时，可返回已知开放前缀末端的安全侧地点，`requested_target` 与当前可执行 `target` 分列；不预测未知门、他人行动或后续达成。
 - `dvg_refresh_goals` 按选中主体的真实认识/时间/章节刷新完整内容目标；旧章目标在本人实际入厅后清理。第二章行动规划深度恢复为2。`dvs_schedule` 不以一次无候选结果永久跳过主体；同一时刻仍按决策时间与修订避免重复准备。
 - `c1_other_place_detective` 两档安装同一可接触内容；配置只通过认知初始化进入共同机制。首夜等待抑制通过实际安装动作的共享资格门核对，既有范围与成本不变。
-- `WriteJsonFast`、`rt_json_stringify`、`rt_json_write` 完整保存传入容器值；历史、模拟、采纳、竞争模型及嵌套世界不按字段名清空。精确数在Trace仍输出原分数字符串。完整保存的耗时和文件大小与先前裁剪输出不能作同口径速度比较。
-- `dv_debug_event` 对模拟/复核保留 hypothesis、result（假定、预测、比较、覆盖、工作与停止）、source_adoptions；剪枝保留证书及拒绝，论证保留竞争结果。默认JSON模式沿用完整值；显式DAG模式以 `raw_ref` 定位重复大值及原始事件。大 `world`/`predicted` 只在显式调试投影中省略，原值在完整trace或已提交DAG事件中；预测始终标为主观计算。反证切片、完整计划和论证比较分别标记 `calculation_scope`。
-- `python language_core/tools/run_debug.py --out <新目录>` 自动追加 `actual-event-index.jsonl`、`reasoning-evidence.jsonl`、`evidence-summary.json`；一次流式整理保留源SHA256、source_line、batch_event_index、事件编号和字段有无。索引不重复整份模型，以 `projection_source`/`raw_event_ref` 指向原值；引用字段记 `exported-reference`。默认模式另存规范化 `events.jsonl`，DAG模式以原字节 `stdout.jsonl` 为唯一packet源。`--evidence-from <既有packet文件> --out <新目录>` 只整理既有输出，不构建或执行；缺失字段保持 not-exported。
-- `result.json` 分列 debug_end、stop_reasons、world_horizon_observed、chapter_summary_reported、narrative_completion。后者由人工按来源和实际回执审查，正常退出、trace封存及world-horizon均不等于剧情达成。执行范围仍仅formal-model，不包含Godot画面、几何或输入。
+- `WriteJsonFast`与`rt_json_stringify`仅负责内存JSON交换；完整落盘由二进制DAG保存，历史、模拟、采纳、竞争模型及嵌套世界不按字段名清空，精确数分型保存。完整保存的耗时和文件大小与先前裁剪输出不能作同口径速度比较。
+- `dv_debug_event` 对模拟/复核保留 hypothesis、result（假定、预测、比较、覆盖、工作与停止）、source_adoptions；剪枝保留证书及拒绝，论证保留竞争结果。原始二进制DAG保留完整值，调试投影以 `raw_ref` 定位重复大值及原始事件。大 `world`/`predicted` 只在显式调试投影中省略，原值在完整trace或已提交DAG事件中；预测始终标为主观计算。反证切片、完整计划和论证比较分别标记 `calculation_scope`。
+- `python language_core/tools/run_debug.py --out <新目录>` 自动追加 `actual-event-index.dvlog`、`reasoning-evidence.dvlog`、`evidence-summary.dvlog`；一次流式整理保留源SHA256、source_line、batch_event_index、事件编号和字段有无。索引不重复整份模型，以 `projection_source`/`raw_event_ref` 指向原值；引用字段记 `exported-reference`。新会话以原字节 `stdout.dvlog` 为唯一packet源，不再复制规范化JSON事件。`--evidence-from <既有packet文件> --out <新目录>` 只整理既有输出，不构建或执行；缺失字段保持 not-exported。
+- `result.dvlog` 分列 debug_end、stop_reasons、world_horizon_observed、chapter_summary_reported、narrative_completion。后者由人工按来源和实际回执审查，正常退出、trace封存及world-horizon均不等于剧情达成。执行范围仍仅formal-model，不包含Godot画面、几何或输入。
 
 源码索引：`verification/scenarios/chapter2/content.dv`（路由/目标/现场观察）、`dialogue.dv`（沟通与目标刷新）、`daily.dv`（真实日常及票数观察）、`scenarios/chapter1/campaign.dv`/`opening.dv`（投放与等待）、`verification/session/30-runner.dv`（调度）、`core/95-model-argument.dv`（投影）、`compiler/Runtime.cs`（值序列化）、`tools/run_debug.py`（封存与索引）。本节仅记录实现接口，验收结论见本任务新证据。
 
@@ -992,26 +992,22 @@ C#工具加载器`tools/DebugCheckpointResume.cs`使用与Session Restore相同�
 
 `dvs_receipt_clock_observations(story, mind, bindings, observations, action_event, execution_event, time)` 只读取声明的 `clock_ref` 与本人数值时钟，时间来自已结算 `execution.time`。同字段直接观察合并为同次 `perception/execution-receipt`，绑定实际执行事件；未初始化或未绑定的时钟不被补成已知。Complete单调推进本人mind.time，成功与拒绝均不再加一次时长；Prepare、预测和其他主体不被同步。此修复使窗口判断与真实行动时间一致，不改费用或推进世界时钟的规则。
 
-`rt_json_write("new-trace.json.gz", value)` 可选择gzip无损存储，解压后的字节与同输入 `rt_json_stringify` 一致。默认 `.json` 仍直接JSON；二者均不裁剪字段并用 `.partial` 防止半写冒充完成。`run_debug.py --trace-compression gzip` 向生成程序传入该目标，result列出trace_path/trace_storage_encoding，timeout仍覆盖执行与封存全过程。命令示例：
-
-```powershell
-python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录> --detective-profile Foolish_Detective --detective-zone zone_bing --trace-compression gzip --timeout 180
-```
-
-### 在线原始值日志与人工资格
-
-显式 `--raw-format dag` 将原始值写入 `raw-events.dag.jsonl.partial`。`dvs_event`先冻结事件、调用记录器提交，再发布到正式事件表；记录器仅I/O，不参与认知、选择或结算。数组子树只定义一次，引用只指向先前定义；每帧保留序号、前帧摘要和本帧SHA-256。`initial` checkpoint保存开启后的完整会话；正常关闭后，`final`保存 `{trace,last_live_session}`，seal完成后才发布正式文件名。定义写完而事件尚未提交的尾部不算已发生事件。
+新轨迹禁止JSON、JSONL和压缩JSON。`run_debug.py`默认且只接受`--raw-format dag`，写`raw-events.dvdag`和二进制`stdout.dvlog`。`rt_json_write`拒绝记录；JSON解析和字符串编码只服务内存交换与编译配置。
 
 ```powershell
 python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录> --raw-format dag --timeout 180
-python language_core/tools/raw_dag.py <raw-events.dag.jsonl.partial> --out <新summary.json>
-python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --event e123 --out <新event.json>
-python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --node 456 --out <新value.json>
-python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --checkpoint final --path '["trace"]' --out <新trace.json>
-python language_core/tools/raw_dag.py <raw-events.dag.jsonl> --node 456 --value-format dv-tagged --out <新typed-value.json>
+python language_core/tools/raw_dag.py <raw-events.dvdag.partial> --out <新summary.txt>
+python language_core/tools/raw_dag.py <raw-events.dvdag> --event e123 --out <新event.dvdag>
+python language_core/tools/raw_dag.py <raw-events.dvdag> --node 456 --out <新value.dvdag>
+python language_core/tools/raw_dag.py <raw-events.dvdag> --checkpoint final --path '["trace"]' --out <新trace.dvdag>
 ```
 
-`raw_dag.py`只读原日志，用临时SQLite偏移索引按需流式展开原值。DAG内部以 `{rational:"2/3"}` 保留精确数类型，文本"2/3"仍为文本；默认 `--value-format trace-json`按旧Trace数字文本恢复，`dv-tagged`输出 `{$dv_rational:...}` 区分类型。校验错误或中断留下可验证提交前缀及原尾部；没有final/seal不重建终态，未提交的在途计算保持未知。`raw-dag-summary.json`与 `result.raw_sealing_complete`分别说明范围；`raw-event-index.jsonl`还保留prepare内已提交而尚未投影到stdout的事件引用。DAG文件不冒称 `trace.json`；`--trace-compression`仅用于默认JSON，与DAG互斥。默认未启用记录器时不遍历事件、不创建文件；成功finish恢复disabled，可向新路径重新开启。失败不自动续写，显式零元Bool `rt_raw_abort()`仅释放记录器并保留partial，不生成final/seal。`rt_json_print`直接输出UTF-8，编码语义同JSON接口。
+存储分层：`DVLOG2\r\n`文件头后逐帧写uint32小端payload长度、32字节SHA-256、类型化二进制payload；标签0/1/2为null/false/true，3为int64，4为有限IEEE double（保留负零），5为长度前缀UTF-8，7为文本键映射，8为有序列表，数值和长度均小端。原始DAG的浅payload包含node、event、checkpoint或seal，只有前向已定义的节点可被引用。精确有理数以rational原子与同文字符串分型，全部字段及顺序保留；二进制不按history、simulations、adoptions或world裁剪内容。
+
+DAG v2每个envelope保留seq、prev、payload、sha256；链摘要为sha256(previous-ascii + LF + sequence-ascii + LF + 二进制payload)，再由DVLOG2帧摘要保护。事件先冻结、原始事件提交刷新后才发布到正式事件表；initial保留初态，final保留trace与last_live_session，seal后发布正式文件名。中断只有已验证提交前缀，不补在途计算或终态。所有新值导出保持二进制DAG，避免在读取阶段再次展开巨型JSON。历史v1 JSON仅只读兼容。
+
+`compiler/Runtime.cs`中的BinaryEvidence/RawDagWriter、`tools/binary_evidence.py`、`tools/raw_dag.py`维护编码、校验和SQLite偏移索引；`Session.WriteTrace/WriteSave/RestoreFile`用于独占文件与完整封存的恢复。阶段导出为checkpoint.dvsave，仍逐项核对实际Complete、源码和配置来源。JSON仅用于进程内宿主字符串、编译配置和小型工程汇总；stdout与事件索引、实际输入、可见正文、计时及画面采样记录落盘均为二进制。
+
 
 动作可声明 `manual_only=true`。`dvp_eligible_base`要求临时 `actor.manual_input=true`；只有 `dvs_player_options/select_player/player_choice`创建该资格视图，持久状态不写入它。其余本人前提、来源、规范、解释及费用不变；自动规划拒绝这种动作。新的实际询问仍可能进入AI轨迹，手动限制只针对声明的候选。
 
@@ -1113,7 +1109,7 @@ run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运
 
 本轮最新用户目标（2026-10-19）：集中完成已识别优化、结构/接线与撤销错误捷径后再测试。事实等价允许结合严格分析与实际证据作有范围的工程取舍，但不能通过降低搜索层数、删除认知/目标或裁剪原始证据冒充同条件提速。实际覆盖外的分支保持未知。数值缓存候选虽然降低微负载分配，正式窗口未显示进步，现封存为未采纳候选；现役底本保留第二批的单父引用与DAG写出器复用。
 
-冻结容器现以内部sealed IReadOnlyList<object>独占不可变object[]，直接采用冻结时新建的子数组，不再继承可变List或二次复制。R.Items返回只读接口，IsDvList/TryItems仍仅识别原生List及内部FrozenList，不扩张DV值域；写操作仅接受原生可变List，读取可变所有者时才解冻选中子分支并建立父失效关系。根复制和记录更新仍为O(n)，不是HAMT或持久向量。枚举器保留List的状态与错误语义；越界读交给私有空List产生原异常。Session的HostValue/SnapshotValue同步识别两种合法容器，Save标签、Trace字符串、原始DAG及独立副本必须集中工程核对。Items的CLR返回签名变化要求编译器自举与Session/宿主统一重建，禁止混用旧程序集。
+冻结容器现以内部sealed IReadOnlyList<object>独占不可变object[]，直接采用冻结时新建的子数组，不再继承可变List或二次复制。R.Items返回只读接口，IsDvList/TryItems仍仅识别原生List及内部FrozenList，不扩张DV值域；写操作仅接受原生可变List，读取可变所有者时才解冻选中子分支并建立父失效关系。根复制和记录更新仍为O(n)，不是HAMT或持久向量。枚举器保留List的状态与错误语义；越界读交给私有空List产生原异常。Session的HostValue/SnapshotValue同步识别两种合法容器，进程内Save标签/Trace字符串、落盘二进制DAG及独立副本分别集中工程核对。Items的CLR返回签名变化要求编译器自举与Session/宿主统一重建，禁止混用旧程序集。
 
 空冻结集合的接口枚举委托私有原生空List，保留.NET空枚举器的独立错误状态；非空集合采用值类型枚举器。解冻由FrozenList.CopyRoot把私有数组一次复制到独占List，不暴露底本、不逐项扩容。单字段更新按原先校验/冻结/首匹配顺序，内部保留具体冻结类型以免逐项经接口分派；冻结索引仅在完整资格验证后读取具体冻结pair。中性保存/恢复、错误文本和DAG差分与分配样本分列，CPU噪声不包装成整局提速。
 
@@ -1131,7 +1127,7 @@ run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运
 
 `rt_audit_mode() -> Bool`是无参数平台ABI。完整审计保留原始事件data；普通宿主的`dvs_event_storage(kind,data)`在冻结前排除只供审计的六种before/after大字段。正式因子证明实际读取的历史状态继续保留：inference的mind_before/mind_after、observation和listener_parse的mind_after、factor_prune的actor_before。此边界不关闭来源证明、不裁剪权威world/mind或改变费用与判定。
 
-`DvSession.OpenConfiguredCampaign`选项`audit`默认false，`--dv-audit`设true；独立逻辑输出仍默认完整审计。存档保留audit_mode，普通关闭省略重复的全量session.json，完整采集工具显式启用审计。精简记录不能声称拥有完整逐步快照。实现索引：compiler/Runtime.cs的AuditScope/RecordHot/SnapshotValue，compiler/compiler.dv的native_arity/ck_type_raw，verification/session/10-subjective.dv的dvs_event_storage，Session/Session.cs的实例策略与持久化。
+`DvSession.OpenConfiguredCampaign`选项`audit`默认false，`--dv-audit`设true；独立逻辑输出仍默认完整审计。存档保留audit_mode，普通关闭省略重复的全量session.dvdag，完整采集工具显式启用审计。精简记录不能声称拥有完整逐步快照。实现索引：compiler/Runtime.cs的AuditScope/RecordHot/SnapshotValue，compiler/compiler.dv的native_arity/ck_type_raw，verification/session/10-subjective.dv的dvs_event_storage，Session/Session.cs的实例策略与持久化。
 
 ### 人工输入与阅读期推进（2026-10-19）
 
@@ -1151,3 +1147,5 @@ run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运
 
 ## 被动阶段ABI（2026-10-19）
 rt_phase(stage: Text, actor: Text)返回Bool true，使用Runtime.AsyncLocal观察器；无观察器不输出。Session.PhaseObserver在Run范围接收阶段与主体，不修改DV状态。生产game/entry.dv在Prepare记录schedule/goals起止，verification/session/30-runner.dv记录cognition/choice起止；GameEngine关联命令与墙钟。观察器不可作为选择、效果、费用或来源。
+
+新会话result、evidence-summary及含逐段原始记录的卡顿/交互分析输出也使用.dvlog；源码指纹和编译配置JSON不记录会话轨迹。

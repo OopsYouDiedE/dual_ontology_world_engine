@@ -6,7 +6,7 @@
 
 `Save()` serializes the complete internal state, including a pending action. `Restore(snapshot)` resumes that state without repeating initialization or perception. These snapshots are internal save data, not player-visible information. `Trace()` seals the logic transcript after execution.
 
-`Save()` and `WriteSave(path)` share the `$dv_rational` object encoding and JSON depth limit 512; `Restore` accepts the same depth. Trace rational values retain their existing string encoding. Output files are created exclusively; existing evidence is never overwritten. A partial or missing trace is incomplete evidence.
+`Save()`/`Restore(string)` retain the in-memory JSON exchange contract only. New on-disk `WriteTrace(path)` and `WriteSave(path)` use checked binary DAG v2 files (.dvdag/.dvsave), with typed rational atoms and shared immutable nodes. `RestoreFile(path)` requires a valid complete seal. Writers exclusively create .partial, publish after sealing and refuse JSON/JSONL/gzip destinations; failures retain their partial bytes. No state fields are omitted.
 
 `Snapshot(viewer).chapter_summary` is false until the actual second-chapter closing condition occurs. Afterwards it is a system record of actual votes, signatures, resources and unresolved results; it never becomes actor knowledge. The field supplies host data, and does not establish that a Godot closing card has been rendered or verified.
 
@@ -42,4 +42,6 @@ Use `python language_core/tools/run_debug.py --out <new-directory>` for one form
 
 Level-one testing is windowless DV logic only; it does not start Godot or require a UI replay. Read-only projections are independent copies, and presentation surface_voice is distinct from the supplementary voice.
 
-`OpenConfiguredCampaign`接受`audit: bool`，普通Godot游玩默认false；完整采集显式true。策略按实例在每次DV调用时建立执行上下文作用域，不跨会话改全局默认。`AuditMode`可读取；Save/WriteSave在边界写入audit_mode，Restore沿用（旧档缺失默认true）。普通游玩的部分审计大字段未保存，宿主不会自动导出session.json；WriteTrace仍是显式接口，不会恢复已省略的历史字段。
+`OpenConfiguredCampaign`接受`audit: bool`，普通Godot游玩默认false；完整采集显式true。策略按实例在每次DV调用时建立执行上下文作用域，不跨会话改全局默认。`AuditMode`可读取；Save/WriteSave在边界写入audit_mode，Restore沿用（旧档缺失默认true）。普通游玩的部分审计大字段未保存，宿主不会自动导出session.dvdag；WriteTrace仍是显式接口，不会恢复已省略的历史字段。
+
+Binary record framing is implemented in compiler/Runtime.cs (`BinaryEvidence`): `DVLOG2\r\n`, then little-endian uint32 length, SHA-256 and typed payload. Raw DAG frames also carry sequence/predecessor checksums and node/event/checkpoint/seal records. Integers, finite IEEE double values (including negative zero), UTF-8 text, Bool, maps and ordered arrays are distinct; DV Rational atoms retain their canonical exact text as a typed DAG atom. `tools/binary_evidence.py` and `tools/raw_dag.py` read the same format, with old JSON evidence supported only for read-only inspection. This changes storage, not decisions or receipts; no gameplay validation is claimed by the codec checks.

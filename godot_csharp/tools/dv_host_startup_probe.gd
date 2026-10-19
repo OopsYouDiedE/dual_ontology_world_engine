@@ -21,8 +21,8 @@ func _run() -> void:
 	await create_timer(8.0).timeout
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png(directory.path_join("startup.png"))
-	var output := FileAccess.open(directory.path_join("snapshot.json"), FileAccess.WRITE)
-	output.store_string(JSON.stringify(host.engine.Snapshot()))
-	output.close()
+	var archive: Node = load("res://scenes/Host/FrameArchive.cs").new()
+	root.add_child(archive)
+	archive.WriteRecord(directory.path_join("snapshot.dvlog"), JSON.stringify(host.engine.Snapshot()))
 	host.shutdown_completed.connect(func(): quit())
 	host.begin_shutdown()

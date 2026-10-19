@@ -22,10 +22,9 @@ func _run() -> void:
 	original.close()
 	archive.Enqueue(pixels, 3, 2, directory.path_join("pixels.png"), 0)
 	archive.Enqueue(pixels, 3, 2, directory.path_join("existing.png"), 0)
-	archive.AppendText(directory.path_join("ordered.txt"), "first\n")
-	archive.AppendText(directory.path_join("ordered.txt"), "second\n")
+	archive.AppendRecords(directory.path_join("ordered.dvlog"), JSON.stringify({"order": "first"}) + "\n")
+	archive.AppendRecords(directory.path_join("ordered.dvlog"), JSON.stringify({"order": "second"}) + "\n")
 	while not archive.IsIdle(): await process_frame
-	var rows := FileAccess.open(directory.path_join("results.jsonl"), FileAccess.WRITE)
-	for row in archive.PollCompleted(): rows.store_line(str(row))
-	rows.close()
+	for row in archive.PollCompleted(): archive.AppendRecords(directory.path_join("results.dvlog"), str(row) + "\n")
+	while not archive.IsIdle(): await process_frame
 	quit()

@@ -53,15 +53,14 @@ public partial class FrameArchive : Node
             }
         }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
     }
-    public void AppendText(string path, string text)
+    public void AppendRecords(string path, string text)
     {
         Interlocked.Increment(ref pending);
         tail = tail.ContinueWith(_ =>
         {
             try
             {
-                using var stream = new FileStream(path, FileMode.Append, System.IO.FileAccess.Write, FileShare.Read);
-                stream.Write(Encoding.UTF8.GetBytes(text));
+                DuelView.Compiled.BinaryEvidence.AppendJsonRecords(path, text);
             }
             catch (Exception failure)
             {
@@ -71,6 +70,7 @@ public partial class FrameArchive : Node
             finally { Interlocked.Decrement(ref pending); }
         }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
     }
+    public void WriteRecord(string path, string record) => DuelView.Compiled.BinaryEvidence.WriteJsonRecords(path, new[] { record });
     public Godot.Collections.Array PollCompleted()
     {
         Godot.Collections.Array rows = new();

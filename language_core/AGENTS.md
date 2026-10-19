@@ -27,9 +27,10 @@ policy.known_opportunity_wait_choices 为有来源的未来等待补充个人选
 
 真实 Complete 以已结算 execution.time 推进本人 mind.time；已有且经声明 clock_ref/本人 bindings 映射的数值时钟取得同次执行回执观察。该观察来源为 perception/execution-receipt，同字段原观察合并，成功与失败均不重复加时；未知/未绑定时钟保持未知，不读取其他权威字段、不在Prepare或预测同步、不全员同步。初次失败窗口与修复后的新来源分开封存。
 
-rt_json_write 目标以 .gz 结尾时使用无损 gzip，解压为完整原JSON字节，仍先 .partial，压缩关闭后发布正式文件。run_debug --trace-compression gzip 明确记录文件名与存储编码；默认none保持原JSON。保存时限包含逻辑与封存，不借压缩改变时域或宣称剧情达成。
+新轨迹、过程记录与落盘存档只使用二进制。`run_debug.py`仅接受`--raw-format dag`（默认），拒绝JSON/gzip轨迹；`raw-events.dvdag`为dv-raw-dag-v2，`stdout.dvlog`为带SHA-256帧的DVLOG2流。已有`rt_json_print`在原始记录开启后输出二进制投影，`rt_json_write`写文件入口拒绝执行；JSON解析/字符串序列化仍用于进程内接口和编译配置。原始事件先提交后发布，节点定义先于引用，事件提交、checkpoint、final、seal和.partial边界保留。
 
-显式 `run_debug.py --raw-format dag` 启用在线冻结原值日志，和JSON压缩互斥。事件冻结后先提交原始DAG再发布；节点先定义、事件末提交，帧摘要连锁。initial保存完整会话，正常close后final保存trace与last_live_session，seal后才发布正式文件；默认JSON没有记录器I/O。`tools/raw_dag.py`只读校验/恢复指定事件、节点或checkpoint，以SQLite临时偏移索引限制内存。中断只提供已验证提交前缀，不补终态或在途计算。UTF-8直写和单次流式导出不改变默认JSON值编码；索引引用stdout行、批内位置与raw_ref，不重复模型大值。CLI、ABI与失败边界见core/README.md及compiler/README.md。
+`tools/binary_evidence.py`提供C#/Python一致的类型、长度与SHA-256帧读取；`tools/raw_dag.py`只读校验v2与历史v1，使用SQLite偏移索引，新的值导出为.dvdag/.dvsave，新的事件索引为.dvlog；大值不展开成JSON文件。历史JSON只读兼容，文本检查的内存展开不等于新轨迹记录。`WriteTrace/WriteSave`流式保存完整原值及共享引用，`RestoreFile`只接受完整封存的二进制值文件；原Save/Restore字符串仅为进程内兼容接口。精确Rational与同文字符串分型，浮点位型、字段顺序与未知字段保留。阶段恢复仍校验原始来源、完整提交及实际Complete，不新跑游戏。
+
 
 
 ## 接管修复工程合同（2026-10-18）
@@ -38,11 +39,11 @@ rt_json_write 目标以 .gz 结尾时使用无损 gzip，解压为完整原JSON�
 
 目标可声明 navigation_room、navigation_requirements、navigation_methods。日常、沟通与调查共用一个已知开放路径的首步意图，本地优先须对应实质方法通过共享资格门。下游通路未核实时仅可接近其安全侧，不预测开门、他人响应或任务成功。第二章恢复两层规划，费用、工作预算和正式判定不变；本轮不作同条件提速声明。
 
-Runtime JSON 完整序列化输入值，不按 history、simulations、adoptions、world 或事件名称清空字段。debug 投影明确保留假设、预测、比较、剪枝证书、源采纳与停止理由，大世界/主体快照以原始 trace 为准。保存超时保留部分文件并记为未完整封存。
+二进制轨迹完整保存输入值，不按 history、simulations、adoptions、world 或事件名称清空字段。debug 投影明确保留假设、预测、比较、剪枝证书、源采纳与停止理由，大世界/主体快照以原始 trace 为准。保存超时保留部分文件并记为未完整封存。
 
 付费重演缓存采用保守重比门：只有已完成且无执行失败的计划，候选、本人revision/time、采纳、响应模型、有效Replay_Depth及模型起点完全一致时才重比旧预测；否则重新调用同一付费dvs_model，不更新旧模型来源冒充重新推演。新增来源字段缺失时缓存失效。停止诊断分列no-declared-plan、declared-plan-incomplete、declared-plan-complete、budget-exhausted与replay-depth-exhausted，不以停止标签替代plan_complete和实际比较。
 
-run_debug.py 新增 actual-event-index.jsonl、reasoning-evidence.jsonl、evidence-summary.json，含源指纹、行号和字段缺失状态。--evidence-from <既有events.jsonl> --out <新目录> 只流式整理历史投影，不构建、不运行、不补猜缺失字段。result 分列停止、时域、章节摘要和 narrative_completion，正常退出或到达时域不自动建立剧情达成。本任务继续使用 artifacts/partial-bootstrap-core/takeover-repair-20261018/；旧报告及证据原样保留，以新勘误记录区别。
+run_debug.py 新增 actual-event-index.dvlog、reasoning-evidence.dvlog、evidence-summary.dvlog，含源指纹、行号和字段缺失状态。--evidence-from <既有events.jsonl> --out <新目录> 只流式整理历史投影，不构建、不运行、不补猜缺失字段。result 分列停止、时域、章节摘要和 narrative_completion，正常退出或到达时域不自动建立剧情达成。本任务继续使用 artifacts/partial-bootstrap-core/takeover-repair-20261018/；旧报告及证据原样保留，以新勘误记录区别。
 
 本目录继承仓库根AGENTS.md。语言名为DuelView（DV），源码后缀为`.dv`，实现位于language_core。
 
@@ -166,7 +167,7 @@ session/25-simulation.dv 从本人已采纳法则的读写依赖逆向选取证�
 
 2026-10-15：批量初始化可使用独占采用表构建器，先复制继承表，每条声明仍立即执行原验证顺序，再仅追加独立条目；finish核对旧前缀与长度，修订号按成功追加数增长，一次持久更新世界，空批保持原世界。中间采用表不得发布、分叉或当作任意更新入口，world/mind/预测仍保持原独立复制合同。
 证据目标可显式声明 refresh_until 与 refresh_refs；仅本人尚不知停止命题为真时，以 refresh_refs 中本人已知相关字段的接收时刻和原 minimum_time 的最大值刷新证据下界。缺少 refresh_refs 时保持原下界。本人时钟、无关观察和检视本身的时刻不触发刷新。收到信息与采信内容分别处理；不读取 physical 或预测历史，不改旧观察、认知、预算与判答。
-Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，Save仍为$dv_rational对象标签。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.json明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
+Session新增流式WriteTrace/WriteSave，落盘Trace/Save精确数使用DAG的rational原子，与同文字符串分型；仅进程内JSON兼容接口保留原标签。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.dvlog明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
 
 
 ## Evidence and campaign tracking (2026-10-16)
@@ -337,7 +338,7 @@ rt_is_number(text) 只检查文本能否解析为有限浮点数，仍供编译�
 
 失败Complete记录actor.rejected_attempt_signatures，资格判断在repeatable之前核对本人相关输入语义；数字阈值以真值区分，不因时钟或无关revision自动重试。action.failure_grants与failure_observe_when显式授权现场失败观察，仅formal-model回执applied而DV权威未成功时使用，经过原绑定投影，不继承成功授权或隐藏拒绝原因。Godot回执不能证明拒绝后保留的逻辑起点现场时，不授予失败观察。
 
-Runtime.json_write独占创建partial与正式输出，不覆盖既有证据；Session Save/WriteSave共用精确数标签与512深度合同。run_debug以debug_end、正式trace、无partial及源码一致性区分完整证据，timeout_stage区分会话运行与完整轨迹封存。完整前后快照保留。集中工程探针后冻结源码，仅一次180秒正式一级会话；独立审查读取本轮记录，未执行级别列明未验证。
+Runtime.json_write拒绝记录；二进制WriteTrace/WriteSave独占创建partial并成功封存后发布，RestoreFile校验完整性及精确数类型。run_debug以debug_end、正式trace、无partial及源码一致性区分完整证据，timeout_stage区分会话运行与完整轨迹封存。完整前后快照保留。集中工程探针后冻结源码，仅一次180秒正式一级会话；独立审查读取本轮记录，未执行级别列明未验证。
 
 收尾与调查共用单一导航意图；本人截止时钟或闭会观察成立后，按本人已知开放且已采纳移动法则的最短路线逐段前往核对地点。完成记录、可用时间真值、位置、全部相关gate及本人closed进入导航缓存键；不提高深度/预算，不写入预测到达。内容收束字段与系统摘要合同见verification/AGENTS.md和core/README.md。
 
@@ -407,7 +408,7 @@ run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运
 
 本轮最新用户目标（2026-10-19）：集中完成已识别优化、结构/接线与撤销错误捷径后再测试。事实等价允许结合严格分析与实际证据作有范围的工程取舍，但不能通过降低搜索层数、删除认知/目标或裁剪原始证据冒充同条件提速。实际覆盖外的分支保持未知。数值缓存候选虽然降低微负载分配，正式窗口未显示进步，现封存为未采纳候选；现役底本保留第二批的单父引用与DAG写出器复用。
 
-冻结容器现以内部sealed IReadOnlyList<object>独占不可变object[]，直接采用冻结时新建的子数组，不再继承可变List或二次复制。R.Items返回只读接口，IsDvList/TryItems仍仅识别原生List及内部FrozenList，不扩张DV值域；写操作仅接受原生可变List，读取可变所有者时才解冻选中子分支并建立父失效关系。根复制和记录更新仍为O(n)，不是HAMT或持久向量。枚举器保留List的状态与错误语义；越界读交给私有空List产生原异常。Session的HostValue/SnapshotValue同步识别两种合法容器，Save标签、Trace字符串、原始DAG及独立副本必须集中工程核对。Items的CLR返回签名变化要求编译器自举与Session/宿主统一重建，禁止混用旧程序集。
+冻结容器现以内部sealed IReadOnlyList<object>独占不可变object[]，直接采用冻结时新建的子数组，不再继承可变List或二次复制。R.Items返回只读接口，IsDvList/TryItems仍仅识别原生List及内部FrozenList，不扩张DV值域；写操作仅接受原生可变List，读取可变所有者时才解冻选中子分支并建立父失效关系。根复制和记录更新仍为O(n)，不是HAMT或持久向量。枚举器保留List的状态与错误语义；越界读交给私有空List产生原异常。Session的HostValue/SnapshotValue同步识别两种合法容器，进程内Save标签/Trace字符串、落盘二进制DAG及独立副本分别集中工程核对。Items的CLR返回签名变化要求编译器自举与Session/宿主统一重建，禁止混用旧程序集。
 
 空冻结集合的接口枚举委托私有原生空List，保留.NET空枚举器的独立错误状态；非空集合采用值类型枚举器。解冻由FrozenList.CopyRoot把私有数组一次复制到独占List，不暴露底本、不逐项扩容。单字段更新按原先校验/冻结/首匹配顺序，内部保留具体冻结类型以免逐项经接口分派；冻结索引仅在完整资格验证后读取具体冻结pair。中性保存/恢复、错误文本和DAG差分与分配样本分列，CPU噪声不包装成整局提速。
 
@@ -429,7 +430,7 @@ Session presentation 保留原有surface/lines，并透传动作source_refs。Ma
 
 R.AuditMode 使用 AsyncLocal 按执行上下文隔离，独立逻辑程序默认完整审计。DvSession.OpenConfiguredCampaign 读取 audit（默认false），Prepare/Complete/投影/关闭均在本会话策略作用域运行；存档在序列化边界补写 audit_mode，恢复沿用原策略，旧档缺失时按完整审计处理。宿主 --dv-audit 显式开启完整证据，采集工具固定带此参数。
 
-dvs_event_storage 在冻结前裁剪普通游玩的事件data六种before/after大字段。正式消费者仍需要的 inference.mind_before/mind_after、observation/listener_parse.mind_after 和 factor_prune.actor_before 保留。事件顺序、ID、父边、观察、回执及世界/心智历史法则保持原数据；不裁剪任意嵌套值或改变JSON序列化。非审计 raw_event 不遍历值且返回true；raw_open要求审计模式。普通宿主不导出重复全量session.json，仍保存真实输入、可见信息、计时、可恢复save及明确的close-result策略；该目录不是完整审计证据。
+dvs_event_storage 在冻结前裁剪普通游玩的事件data六种before/after大字段。正式消费者仍需要的 inference.mind_before/mind_after、observation/listener_parse.mind_after 和 factor_prune.actor_before 保留。事件顺序、ID、父边、观察、回执及世界/心智历史法则保持原数据；不裁剪任意嵌套值或改变JSON序列化。非审计 raw_event 不遍历值且返回true；raw_open要求审计模式。普通宿主不导出重复全量session.dvdag，仍保存真实输入、可见信息、计时、可恢复save及明确的close-result策略；该目录不是完整审计证据。
 
 Record已有冻结/可变索引继续使用；不足8槽的文本键记录在第四次查询时也可建索引，可变pair的父链继续失效。冻结新节点时自底向上计算值兼容64位哈希，same_value可按引用或不同兼容哈希短路；同哈希仍深比，精确/浮点数保持原相等语义。存储身份哈希不替代值兼容哈希。源码在compiler/Runtime.cs、compiler/compiler.dv、verification/session/10-subjective.dv和Session/Session.cs；本轮用户要求完成前不执行工程或游戏验证。
 
@@ -451,3 +452,5 @@ Godot的源侧可走门道可用于departure_room起点核对；门道不产生e
 Runtime新增rt_phase(stage, actor)二参数Bool ABI，经AsyncLocal作用域调用只读观察器。无观察器时返回true；不写入DV值、事件或计时规则。DvSession.PhaseObserver按Run作用域隔离，dvg_prepare记录调度/目标刷新，runner记录认知/选择。实际异常保留未闭合阶段，不为诊断重试动作。内容初始条件依据本轮用户裁定更新，现行设计见design-standard；既往基线和证据不改写。
 
 普通房间移动移除通用过路surface，动作与Complete合同不变；原始内容及显示维护见verification/AGENTS.md。与四倍渲染采集的比较必须注明条件变化。
+
+新会话result、evidence-summary及含逐段原始记录的卡顿/交互分析输出也使用.dvlog；源码指纹和编译配置JSON不记录会话轨迹。

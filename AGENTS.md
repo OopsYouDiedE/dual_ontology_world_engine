@@ -258,3 +258,9 @@ language_core 的现役文件按 core、session、chapter1、chapter2、game 和
 ## 冗余源与接口清理（2026-10-19）
 
 本轮按用户要求移除未接线DV提案/旧fixture及退役Python编排，现役构建、编辑器、生产会话、独立检查源码和仍有调用的资源接口按依赖保留。模块具体入口维护在language_core及godot_csharp的AGENTS中；删除来源、原因与生产include指纹保存在artifacts/partial-bootstrap-core/real-game-capture-20261019/spatial-interaction-rewrite-20261019/source-cleanup-20261019/。历史原始证据和保护清单不改写；本轮不启动构建、探针、回归或游戏验证。
+
+## 轨迹存储与历史清理（2026-10-19，用户追加裁定）
+
+用户禁止新轨迹记录使用JSON，包括JSONL及压缩JSON。正式原始事件、状态快照、存档、实际输入、玩家可见记录、采样与计时使用带校验的二进制流；共享不可变子树以DAG节点引用保存，保留全部原字段、精确数、顺序与来源。JSON继续用于进程内接口、编译配置与小型工程汇总，不能作为运行轨迹落盘格式；旧JSON证据仅只读兼容；.dvlog/.dvdag/.dvsave及.partial在.gitattributes中关闭换行转换和文本diff。读取器、封存及恢复合同维护在language_core/AGENTS.md、core/README.md及godot_csharp/AGENTS.md。
+
+本轮用户明确授权删除本次Luna记录及Gemini当前记录之外的历史轨迹；删除范围以luna-native-blind-20261019-1625/disk-cleanup-20261019的逐文件清单追溯，不扩大为报告、源码、素材或存档清理。保留的当前来源不改写。该用户裁定覆盖此前禁止删除历史原始轨迹的条款，不授权以后自动删除其他证据。
