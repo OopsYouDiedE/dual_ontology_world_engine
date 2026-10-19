@@ -506,6 +506,39 @@ func sight_region(cell: Vector2i) -> String:
 	return key
 
 func room_of(p: Vector2) -> String: return key + ":" + sight_region(Vector2i((p / 32.0).floor()))
+## A source-side threshold belongs to its departure room, but is not arrival.
+func departure_room(p: Vector2) -> String:
+	var entered := entered_room(p)
+	if entered != "": return entered
+	if walkable(p) and _terrain_mark(Vector2i((p / 32.0).floor())) == "D": return room_of(p)
+	return ""
+
+func _terrain_mark(cell: Vector2i) -> String:
+	var rows: Array = map.get_meta("terrain_rows", []) if map else []
+	if cell.y < 0 or cell.y >= rows.size(): return ""
+	var row: String = rows[cell.y]
+	return row.substr(cell.x, 1) if cell.x >= 0 and cell.x < row.length() else ""
+
+## Doorway components expose only geometric neighbours; DV still admits actions.
+func doorway_rooms(p: Vector2) -> Array[String]:
+	var start := Vector2i((p / 32.0).floor())
+	var result: Array[String] = []
+	if _terrain_mark(start) != "D": return result
+	var pending: Array[Vector2i] = [start]
+	var seen := {start: true}
+	while not pending.is_empty():
+		var cell: Vector2i = pending.pop_back()
+		for offset in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+			var adjacent: Vector2i = cell + offset
+			var mark := _terrain_mark(adjacent)
+			if mark == "D" and not seen.has(adjacent):
+				seen[adjacent] = true
+				pending.append(adjacent)
+			elif mark in [".", "S"]:
+				var room := room_of(Vector2(adjacent) * 32.0 + Vector2(16,16))
+				if room not in result: result.append(room)
+	return result
+
 func entered_room(p: Vector2) -> String:
 	if map == null: return ""
 	if map.has_meta("outdoor_core"):

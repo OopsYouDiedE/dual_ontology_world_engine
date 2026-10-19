@@ -213,7 +213,7 @@ func execute(intent: Dictionary, visible_field: Node2D, execution_snapshot: Dict
 	if field == null: field = _hidden_field(who, execution_snapshot)
 	if field == null or not field.actors.has(who): return _blocked(intent, serial, "missing_actor_geometry_binding")
 	var body: CharacterBody2D = field.actors[who]
-	if field.adapter.entered_room(body.position) != source_room:
+	if field.adapter.departure_room(body.position) != source_room:
 		return _blocked(intent, serial, "retained_body_room_mismatch")
 	# Access geometry is world data; private actor text is never applied to visible UI.
 	if field.adapter.has_method("apply_snapshot"): field.adapter.apply_snapshot(execution_snapshot)
@@ -239,6 +239,7 @@ func execute(intent: Dictionary, visible_field: Node2D, execution_snapshot: Dict
 	if received.is_empty(): return _blocked(intent, serial, "execution_interrupted")
 	received["source_map"] = source_map
 	received["source_room"] = source_room
+	received["source_geometry"] = "interior" if field.adapter.entered_room(source_point) == source_room else "source-side-doorway"
 	received["source_position"] = [source_point.x, source_point.y]
 	received["actor_instance_id"] = instance
 	received["execution_world"] = "isolated-godot" if field.execution_only else "visible-godot"

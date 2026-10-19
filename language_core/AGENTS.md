@@ -442,3 +442,7 @@ Record已有冻结/可变索引继续使用；不足8槽的文本键记录在第
 生产编译依赖由game/entry.dv的相对include声明；调试入口debug-run.dv继续include生产入口。未接线的旧语法提案、旧回忆fixture、旧固定比较配置及其独立流程包装已移除，来源保留在Git和原始证据。当前Python入口分为共享构建工具链（dv_toolchain/dv_sources、build_session、bootstrap_compiler）、编辑器接口（check_dv/dv_lsp）和显式诊断/证据工具（run_debug、resume_debug及其依赖）；不再保留重复的Core自举包装或依赖固定scratch编译器的回归入口。checks中仍有独立算法、oracle、机制示例与明确被文档引用的未实现草案，不按生产可达性误删。
 
 本轮只做源码删除、调用关系与文档维护，不构建、不运行探针或正式会话。删除清单、字节指纹及生产include闭包记录于本轮source-cleanup-20261019目录；静态依赖相同不代表先前功能已完成验收。
+
+## 现场门槛起点（2026-10-19）
+
+Godot的源侧可走门道可用于departure_room起点核对；门道不产生entered_room目标到达或观察。该修复不改变DV移动候选、失败屏蔽、结算费用与判定；本次原失败会话保留，不删除失败事件恢复选项。普通人工窗口默认一倍速，独立测量显式倍率仍分列，具体几何合同由godot_csharp/AGENTS.md维护。

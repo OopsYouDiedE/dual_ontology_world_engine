@@ -12,7 +12,7 @@ const VIEW_TRACE := preload("res://scenes/Host/PlayerViewTrace.gd")
 @export_enum("player", "ai") var controller := "player"
 @export var campaign_options: Dictionary = {}
 @export var viewer := ""
-@export_range(0.25, 8.0, 0.25) var playback_speed := 4.0
+@export_range(0.25, 8.0, 0.25) var playback_speed := 1.0
 var field_executor: Node
 var _started := false
 var view_trace: Node

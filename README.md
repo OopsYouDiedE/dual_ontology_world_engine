@@ -36,6 +36,6 @@ Main 场景也可通过 controller、viewer、campaign_options 导出属性设�
 
 VS Code 默认打开 `godot_csharp/DualOntologyWorldEngine.sln`（游戏与 Session），语言工具使用解决方案选择器切换 `language_core/LanguageCore.sln`。历史 artifacts、tmp、scratch 保留在磁盘，工作区排除其自动发现与监视，避免测试快照被当作现役工程。
 
-宿主播放默认四倍速，可用 `--dv-speed=1` 或 Main.playback_speed 调整。倍率应用到Godot时间，物理帧频随倍率增加以保持单步物理间隔；DV分钟费用、预算和判断仍由原动作结算。输入证据记录所用倍率和物理帧频，四倍播放不作为Core纯计算性能提升的证据。
+正常游玩默认一倍速，可用 `--dv-speed=` 或 Main.playback_speed 调整；独立性能采集入口显式指定其测量倍率。倍率应用到Godot时间，物理帧频随倍率增加以保持单步物理间隔；DV分钟费用、预算和判断仍由原动作结算。输入证据记录所用倍率和物理帧频，四倍播放不作为Core纯计算性能提升的证据。
 
 普通实机游玩使用精简事件记录；需要完整来源快照时加 `--dv-audit`。`profile_dv_capture.py`已固定带该参数。普通模式仍保留实际输入、可见正文、分段计时与存档，关闭清单注明记录策略；两种模式的速度和证据完整性分别解释。房间镜头、局部光影与对白布局本批已修改，按用户要求暂未验证。

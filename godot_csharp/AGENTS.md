@@ -201,7 +201,7 @@ Session presentation 保留原有surface/lines，并透传动作source_refs。Ma
 
 按用户最新要求，先集中修订本批已发现的源与几何缺口，再冻结、统一工程排错与四倍播放检查；中途发现需改源则结束该批次，保留原失败证据。本轮不以局部几何夹具或按钮工程触发宣称正式三级验收。
 
-Main.playback_speed默认4，`--dv-speed=`可在0.25至8间设置，打开会话前应用Engine.time_scale；physics_ticks_per_second按60×max(1,speed)设置，四倍时240以维持单步物理间隔。输入记录host_configuration中的倍率与帧频；不把倍率写成DV费用、分钟或推演预算，不按倍率推算未发生的剧情节点。采集脚本需要现实秒窗口时使用ignore_time_scale计时，原始会话与纯几何夹具分列。
+Main.playback_speed默认1，`--dv-speed=`可在0.25至8间设置，打开会话前应用Engine.time_scale；physics_ticks_per_second按60×max(1,speed)设置，四倍时240以维持单步物理间隔。输入记录host_configuration中的倍率与帧频；不把倍率写成DV费用、分钟或推演预算，不按倍率推算未发生的剧情节点。采集脚本需要现实秒窗口时使用ignore_time_scale计时，原始会话与纯几何夹具分列。
 
 原生矢量道具通过`python godot_csharp/tools/publish_geometry_assets.py Internal/Props/Outdoor`从AssetsSource原字节发布至ShareAsset；AssetsSource受.gdignore保护，生产纹理只引用正式发布目录。
 
@@ -226,3 +226,9 @@ Main阅读时发送正式dv_next，GameEngine仍单队列后台Prepare。仅远�
 ## 冗余地图接口清理（2026-10-19）
 
 写入退役Awakening.tscn/map_layout.tres的旧地图Python包装移除。现役地图仍由build_chapter2_scenes.py消费chapter2_art配方；共享家具、独立资源族生产器及仍有调用的MCP/编辑器接口保留，不能因名称包含Awakening而删除生产共享资源。旧场景README改为迁移导航，不再列退役回归命令。此清理不重生成资源、不构建或运行游戏，既有project.godot修改保留。
+
+## 门槛出发与一倍游玩（2026-10-19）
+
+正常游玩默认一倍速；独立采集仍通过显式参数决定倍率。门道D格不作为进入房间或观察的证据。CampusMapView.departure_room仅在真实可走的源侧D格返回其几何分区，供DvFieldExecutor核对起点；entered_room继续只承认室内地板/台阶，到达回执要求不变。源/目标房间、动作、主体、序号与真实位置照常核对；回执标明source_geometry，不能以门槛出发证明目标已达。
+
+鼠标点击门道时，SpatialInput只从DV已准入移动中匹配该实际连通门道的唯一邻室；先真实寻路到门口，走过边界或到达门口再请求正式动作。E可在近距门口请求同一动作；多义门不猜选。doorway_rooms只查询几何相邻分区，不开放未知移动或全局列表。用户实际失败记录与本轮工程排错独立保存，不以启动代替实际移动验收。

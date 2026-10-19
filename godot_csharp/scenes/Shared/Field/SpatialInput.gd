@@ -11,6 +11,7 @@ var _walking := false
 var _walk_id := ""
 var _progress := Vector2.ZERO
 var _stuck := 0.0
+var _pending_door: Dictionary = {}
 
 func set_options(value: Array) -> void:
 	options = value
@@ -29,6 +30,7 @@ func _id() -> String:
 func _stop_walk(reason: String) -> void:
 	_route.clear()
 	_site = ""
+	_pending_door = {}
 	if _walking:
 		_stamp("local_motion_end", _walk_id, {"reason": reason, "game_time": field.snapshot.get("game_time", 0), "position": [field.player.position.x, field.player.position.y]})
 	_walking = false
@@ -51,6 +53,7 @@ func _physics_process(delta: float) -> void:
 	if direction != Vector2.ZERO:
 		_route.clear()
 		_site = ""
+		_pending_door = {}
 		_begin_walk()
 		_step(direction * field.player.speed * delta, delta)
 	elif not _route.is_empty():
@@ -60,8 +63,10 @@ func _physics_process(delta: float) -> void:
 			_route.remove_at(0)
 			if _route.is_empty():
 				var site := _site
+				var door := _pending_door
 				_stop_walk("arrived")
 				if site != "": _interact(site)
+				elif not door.is_empty(): _submit(door, "", "doorway-click")
 		else:
 			_step(difference.limit_length(field.player.speed * delta), delta)
 			if field.player.position.distance_to(_progress) >= 0.5:
@@ -104,6 +109,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("interact") or event.is_action_pressed("dialogue_continue"):
 		var site := str(field.nearest)
 		if site != "": _interact(site)
+		else:
+			var door := _near_door()
+			if not door.is_empty(): _submit(door, "", "doorway-interact")
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("manuscript") or event.is_action_pressed("wait"):
 		_show_self_choices()
@@ -111,9 +119,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _navigate(point: Vector2) -> void:
 	_stop_walk("new-target")
+	var door := _door_option(point)
 	var destination_room: String = field.adapter.room_of(point)
 	var own_room := str(field.snapshot.get("execution_room", ""))
-	if not field.in_sight(point):
+	if not field.in_sight(point) and door.is_empty():
 		var doorway_visible := false
 		for direction in field.APPROACH:
 			if field.in_sight(point + direction.normalized() * 32.0): doorway_visible = true
@@ -121,10 +130,40 @@ func _navigate(point: Vector2) -> void:
 		for option in options:
 			var binding: Dictionary = option.get("interaction", {})
 			if str(binding.get("kind", "")) == "doorway" and str(binding.get("destination", {}).get("room", "")) == destination_room: admitted = true
-		if not doorway_visible or not admitted: return
+		if not doorway_visible or (not admitted and door.is_empty()): return
 	if not field.adapter.walkable(point, field.player): return
 	_route = NAV.route_on_grid(field.player.position, point, _local_grid(destination_room if destination_room != own_room else ""))
-	if not _route.is_empty(): _route.append(point)
+	if not _route.is_empty():
+		_route.append(point)
+		_pending_door = door
+
+func _door_option(point: Vector2) -> Dictionary:
+	if not field.adapter.has_method("doorway_rooms"): return {}
+	var rooms: Array[String] = field.adapter.doorway_rooms(point)
+	var own_room := str(field.snapshot.get("execution_room", ""))
+	if own_room not in rooms: return {}
+	var found: Dictionary = {}
+	for option in options:
+		var binding: Dictionary = option.get("interaction", {})
+		var target: Dictionary = binding.get("destination", {})
+		var room := str(target.get("room", ""))
+		if str(binding.get("kind", "")) == "doorway" and str(target.get("map", "")) == field.adapter.map_key() and room != own_room and room in rooms:
+			# Ambiguous doors require a more precise approach, never a guessed choice.
+			if not found.is_empty(): return {}
+			found = option
+	return found
+
+func _near_door() -> Dictionary:
+	var nearest: Dictionary = {}
+	var best := INF
+	for offset in [Vector2.ZERO, Vector2.UP * 24, Vector2.DOWN * 24, Vector2.LEFT * 24, Vector2.RIGHT * 24]:
+		var point: Vector2 = field.player.position + offset
+		if not field.adapter.walkable(point, field.player): continue
+		var choice := _door_option(point)
+		if not choice.is_empty() and offset.length_squared() < best:
+			nearest = choice
+			best = offset.length_squared()
+	return nearest
 
 func _local_grid(destination_room := "") -> AStarGrid2D:
 	var grid: AStarGrid2D = field.adapter.nav_grid(field.player)

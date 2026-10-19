@@ -1144,3 +1144,7 @@ run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运
 现役DV组合以game/entry.dv与game/debug-run.dv的相对include为准。Python构建/编辑接口共用tools/dv_toolchain.py和dv_sources.py，生产类库由build_session.py生成，独立自举由bootstrap_compiler.py保存证据，一级输出由run_debug.py记录。旧Core独立构建包装、固定scratch语义回归包装及JSON多会话编排已退役；其历史源码只从Git查阅，不恢复为第二个游戏入口。
 
 验证源码仍保留checks/独立算法、authority/oracle、report及现有编辑器组。删除的旧比较main包装与固定fixture没有生产include依赖；清理记录保留删除前字节指纹。此处仅维护工程入口，不宣称构建或游戏验收完成。
+
+### 源侧门道执行起点（2026-10-19）
+
+现场执行器以CampusMapView.departure_room核对正式移动起点：除室内地板/台阶外，源房间几何分区内实际可走的D门道格也是合法出发点。entered_room仍只核对真正进入的室内地面，不能以D格给出到达或观察。回执source_geometry区分interior与source-side-doorway，源/目标房间及实际位置仍保留。SpatialInput按真实门道邻接几何匹配现有准入ID，鼠标和E没有新增DV候选或费用路径。
