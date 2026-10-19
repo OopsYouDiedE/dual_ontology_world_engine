@@ -1,0 +1,106 @@
+{
+  "scope": "one-times-speed manual viewport-input spatial check, Luna operator; no state injection or desktop control",
+  "gameplay_commit": "2e8aa97f3a02433f35aeb18d1d514ede05621e34",
+  "all_observed_time_scales": [
+    1.0
+  ],
+  "capture_clock_ms": {
+    "first_bedroom": 3809,
+    "first_injected_input": 27369,
+    "doorway_key_down": 75916,
+    "last_pre_corridor_frame": 79418,
+    "first_corridor_frame": 79618,
+    "formal_move_presentation": 79524,
+    "capture_stop": 100310
+  },
+  "first_input_to_corridor_seconds": 52.249,
+  "gate_request_to_execution_end_seconds": 3.360342,
+  "gate_request_to_execution_begin_seconds": 2.394924,
+  "physical_execution_seconds": 0.965418,
+  "capture_and_engine_clocks": "Separate monotonic origins; deltas calculated only within one origin.",
+  "game_clock_minutes": {
+    "before": 480,
+    "after": 482.0
+  },
+  "actual_receipt": {
+    "action_event": "action17",
+    "actual": {
+      "computation": 1.0,
+      "stamina": 0.0,
+      "time": 2.0
+    },
+    "executor": "godot",
+    "field": {
+      "action": "detective.move.R05.corridor",
+      "actor_instance_id": 93079996589,
+      "actual_position": [
+        808.0,
+        360.0
+      ],
+      "approach_point": [
+        808.0,
+        360.0
+      ],
+      "arrival_error": 0.0,
+      "arrival_tolerance": 4.0,
+      "execution_world": "visible-godot",
+      "kind": "daily",
+      "map": "zone_yi",
+      "room": "zone_yi:corridor",
+      "serial": 18,
+      "source_geometry": "source-side-doorway",
+      "source_map": "zone_yi",
+      "source_position": [
+        801.666137695313,
+        286.331390380859
+      ],
+      "source_room": "zone_yi:north_1",
+      "station": "zone_yi:corridor",
+      "station_distance": 0.0,
+      "station_point": [
+        808.0,
+        360.0
+      ],
+      "station_radius": 0.0,
+      "status": "arrived",
+      "transitions": [],
+      "who": "detective"
+    },
+    "outcome": "applied"
+  },
+  "operator_delay_scope": "Total elapsed includes screenshot reading, decisions, collisions, one ineffective click, waiting and profiling/render capture overhead; not CPU latency.",
+  "key_screenshots": [
+    "run/frame-000025609.png",
+    "run/frame-000079618.png",
+    "run/frame-000080642.png"
+  ],
+  "managed_profile_scope": "30-second initial sample; it does not cover the later door crossing. Godot script/GPU profiling and actual execution timing retained.",
+  "closure": {
+    "complete": true,
+    "audit_mode": true,
+    "trace_policy": "full",
+    "session_opened": true,
+    "unprocessed_commands": 0,
+    "pending_action": "",
+    "errors": []
+  },
+  "launch_result": {
+    "exit_code": 0,
+    "profiler_exit_code": 0,
+    "launcher_elapsed_seconds": 106.85900000002584,
+    "managed_requested_seconds": 30,
+    "source_changes": [],
+    "new_host_sessions": [
+      "C:\\Users\\iii\\AppData\\Roaming\\Godot\\app_userdata\\Dual Ontology World Engine\\dv-sessions\\20261019-034646-8969"
+    ],
+    "capture_end_real_ms": 100310,
+    "first_clock_real_ms": 3809,
+    "first_game_time_minutes": 480.0,
+    "end_game_time_minutes": 482.0,
+    "observed_game_elapsed_minutes": 2.0,
+    "managed_report_exit_code": 0,
+    "managed_report_readable": true,
+    "godot_script_profile_confirmed": true,
+    "gpu_profile_confirmed": true
+  }
+}
