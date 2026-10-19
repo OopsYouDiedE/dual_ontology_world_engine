@@ -407,3 +407,11 @@ run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运
 冻结容器现以内部sealed IReadOnlyList<object>独占不可变object[]，直接采用冻结时新建的子数组，不再继承可变List或二次复制。R.Items返回只读接口，IsDvList/TryItems仍仅识别原生List及内部FrozenList，不扩张DV值域；写操作仅接受原生可变List，读取可变所有者时才解冻选中子分支并建立父失效关系。根复制和记录更新仍为O(n)，不是HAMT或持久向量。枚举器保留List的状态与错误语义；越界读交给私有空List产生原异常。Session的HostValue/SnapshotValue同步识别两种合法容器，Save标签、Trace字符串、原始DAG及独立副本必须集中工程核对。Items的CLR返回签名变化要求编译器自举与Session/宿主统一重建，禁止混用旧程序集。
 
 空冻结集合的接口枚举委托私有原生空List，保留.NET空枚举器的独立错误状态；非空集合采用值类型枚举器。解冻由FrozenList.CopyRoot把私有数组一次复制到独占List，不暴露底本、不逐项扩容。单字段更新按原先校验/冻结/首匹配顺序，内部保留具体冻结类型以免逐项经接口分派；冻结索引仅在完整资格验证后读取具体冻结pair。中性保存/恢复、错误文本和DAG差分与分配样本分列，CPU噪声不包装成整局提速。
+
+## 可见正文的执行来源（2026-10-19）
+
+Session presentation 保留原有surface/lines，并透传动作source_refs。Main为实际发出的正文标注execution_event、source_id（动作ID）、source_field、emitted_line_index与paragraph_index，line_id由真实执行事件和输出字段/序号组成。该序号是过滤后的显示序号，不冒称源文件行号或原声明索引。source_refs保留原声明提供的路径/行/ID，不补造缺少的来源。ChapterDialogue把这些只读元数据保留到已绘制控件与PlayerViewTrace，既不变更正文，也不写入人物认识。旧证据不补写编号。
+
+空间呈现声明以`dvg_geometry_bindings`按map输出，sites的id/point/label、props的id/texture/position/可选footprint由native内容维护。宿主通用实例化真实节点与碰撞，不在宿主推测剧情地点；图像不替代检视、实测或出行资格。当前源码新增空间布置与纯计算优化分别报告，不作同条件剧情速度声明。
+
+初次物化与导航分开：native snapshot/people.initial_anchor是主体的明确初次锚点；地点anchor保留作移动目的地，不被所有同房人物共同当作出生点。缺初次锚点时只选既有同房且可走、未占用的Stand/Spawn；显式锚点也核占位。已有实体沿用真实位置。室外entered_room以地图实际边界及可走栅格判定，不读取不存在的室内terrain_rows；门区、跨图和最终物理回执仍独立核验。

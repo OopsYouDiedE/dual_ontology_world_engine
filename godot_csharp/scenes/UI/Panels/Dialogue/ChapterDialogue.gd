@@ -78,6 +78,8 @@ class PacketLine extends RefCounted:
 		var data: Dictionary = lines[0] if not lines.is_empty() else {}
 		source = {"line_id": str(data.get("line_id", "")), "source_id": str(data.get("source_id", "")),
 			"trace_id": str(data.get("trace_id", "")), "line_index": int(data.get("line_index", 0))}
+		for key in ["execution_event", "source_field", "emitted_line_index", "paragraph_index", "source_refs", "judgment_event"]:
+			if data.has(key): source[key] = data[key]
 		character = str(data.get("speaker", ""))
 		text = str(data.get("text", ""))
 		mood = str(data.get("mood", "calm"))

@@ -45,10 +45,11 @@ func _actor_binding(who: String, state: Dictionary) -> Dictionary:
 		if str(person.get("key", "")) == who:
 			result = person.duplicate(true)
 			break
+	result["anchor"] = str(result.get("initial_anchor", ""))
 	var presentation: Dictionary = state.get("presentation", {})
 	if str(presentation.get("player_actor", "")) == who:
 		result.merge({"map": str(state.get("map", "")), "execution_room": str(state.get("execution_room", "")),
-			"spawn": str(state.get("spawn", "")), "anchor": str(state.get("anchor", "")),
+			"spawn": str(state.get("spawn", "")), "anchor": str(state.get("initial_anchor", "")),
 			"sprite": str(presentation.get("player_sprite", ""))}, true)
 	return result
 
@@ -59,7 +60,7 @@ func _initial_point(who: String, field: Node2D, binding: Dictionary):
 	if declared_anchor != "":
 		var point = field.adapter.anchor(declared_anchor)
 		if point == null or field.adapter.entered_room(point) != room or not field.adapter.walkable(point): return null
-		return point
+		return null if _initial_occupied(who, field, point) else point
 	var candidates: Array = []
 	for placement in field.execution_binding.get("initial_placements", []):
 		if str(placement.get("actor", "")) == who:
@@ -79,14 +80,16 @@ func _initial_point(who: String, field: Node2D, binding: Dictionary):
 	for candidate in candidates:
 		var point: Vector2 = candidate
 		if field.adapter.entered_room(point) != room or not field.adapter.walkable(point): continue
-		var occupied := false
-		for id in _bodies:
-			var record: Dictionary = _bodies[id]
-			var body: CharacterBody2D = record.body
-			if id != who and is_instance_valid(body) and str(record.resource) == field.execution_resource and str(record.map) == field.adapter.map_key() and body.position.distance_to(point) < 24.0:
-				occupied = true
-		if not occupied: return point
+		if not _initial_occupied(who, field, point): return point
 	return null
+
+func _initial_occupied(who: String, field: Node2D, point: Vector2) -> bool:
+	for id in _bodies:
+		var record: Dictionary = _bodies[id]
+		var body: CharacterBody2D = record.body
+		if id != who and is_instance_valid(body) and str(record.resource) == field.execution_resource and str(record.map) == field.adapter.map_key() and body.position.distance_to(point) < 24.0:
+			return true
+	return false
 
 ## A snapshot authorizes first materialization, never relocation of an existing body.
 func acquire_actor(who: String, sprite_key: String, field: Node2D) -> CharacterBody2D:

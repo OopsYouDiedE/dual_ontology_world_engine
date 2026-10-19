@@ -168,3 +168,27 @@ Session新增流式WriteTrace/WriteSave，Trace的精确数仍为原字符串，
 ## DV 到期意图合同（2026-10-16）
 
 Prepare 返回已经到达逻辑完成时刻的单个意图，其他主体的排队行动由 DV 保存。宿主继续实际移动并回报现场结果，Complete 才发布效果。execution_cost 是该行动完整费用，已等待的游戏时长由 DV 去重结算；宿主不另推游戏时钟。尚未完成的现场执行继续使用同一 pending，不重新 Prepare。本轮仅进行无窗口逻辑检验，几何与呈现尚未验收。
+
+## 可见正文的执行来源（2026-10-19）
+
+Session presentation 保留原有surface/lines，并透传动作source_refs。Main为实际发出的正文标注execution_event、source_id（动作ID）、source_field、emitted_line_index与paragraph_index，line_id由真实执行事件和输出字段/序号组成。该序号是过滤后的显示序号，不冒称源文件行号或原声明索引。source_refs保留原声明提供的路径/行/ID，不补造缺少的来源。ChapterDialogue把这些只读元数据保留到已绘制控件与PlayerViewTrace，既不变更正文，也不写入人物认识。旧证据不补写编号。
+
+## 原生空间声明与局部几何生成（2026-10-19）
+
+`dvg_snapshot.geometry_bindings`按地图键提供sites与props的纯几何数据；CampusMapView创建Marker2D、Sprite2D及声明footprint对应的真实碰撞，并重建导航栅格。声明只在内容DV中保存，宿主不绑定具体剧情ID；同声明重复刷新不重建节点，切图重新应用目的图的声明。出生锚点与最终路径使用同一实际图中的节点。几何外观不授予读数、调查结论或采信。
+
+`python godot_csharp/tools/build_chapter2_scenes.py --geometry-only <interior-key...>`从rooms配方和既有PNG重新生成目标室内场景与manifest，不重画图片、不启动Godot。geometry_sites只存ID与坐标，显示标题由native snapshot.sites提供；text-only/sites-only保留这些无文本marker。几何生成日志与图片指纹检查只用于工程来源核对，不能代替实际到达和画面验收。
+
+初次物化与导航分开：native snapshot/people.initial_anchor是主体的明确初次锚点；地点anchor保留作移动目的地，不被所有同房人物共同当作出生点。缺初次锚点时只选既有同房且可走、未占用的Stand/Spawn；显式锚点也核占位。已有实体沿用真实位置。室外entered_room以地图实际边界及可走栅格判定，不读取不存在的室内terrain_rows；门区、跨图和最终物理回执仍独立核验。
+
+## 集中修复与四倍播放（2026-10-19）
+
+按用户最新要求，先集中修订本批已发现的源与几何缺口，再冻结、统一工程排错与四倍播放检查；中途发现需改源则结束该批次，保留原失败证据。本轮不以局部几何夹具或按钮工程触发宣称正式三级验收。
+
+Main.playback_speed默认4，`--dv-speed=`可在0.25至8间设置，打开会话前应用Engine.time_scale；physics_ticks_per_second按60×max(1,speed)设置，四倍时240以维持单步物理间隔。输入记录host_configuration中的倍率与帧频；不把倍率写成DV费用、分钟或推演预算，不按倍率推算未发生的剧情节点。采集脚本需要现实秒窗口时使用ignore_time_scale计时，原始会话与纯几何夹具分列。
+
+原生矢量道具通过`python godot_csharp/tools/publish_geometry_assets.py Internal/Props/Outdoor`从AssetsSource原字节发布至ShareAsset；AssetsSource受.gdignore保护，生产纹理只引用正式发布目录。
+
+室内家具位置改变后使用`--interiors-only <interior-key...>`重生所选场景、manifest和底图烘焙阴影，避免旧阴影残留；该入口不重建室外。仅新增已有贴图而不改变原阴影时才使用geometry-only。两者都从源码生成，不手改tscn。
+
+站点接近保持原半径和房间约束，除既有连续方向样本外枚举半径内全部可走格中心，避免窄合法接近点被有限方向漏掉。Campus.walkable同时核对格中心合法性与查询连续脚点是否落入原矩形障碍的膨胀范围；不删除碰撞或扩大站点半径。实际到达仍由CharacterBody2D移动、终点、房间和到达误差回执核验。

@@ -12,6 +12,7 @@ const VIEW_TRACE := preload("res://scenes/Host/PlayerViewTrace.gd")
 @export_enum("player", "ai") var controller := "player"
 @export var campaign_options: Dictionary = {}
 @export var viewer := ""
+@export_range(0.25, 8.0, 0.25) var playback_speed := 4.0
 var field_executor: Node
 var _started := false
 var view_trace: Node
@@ -123,10 +124,17 @@ func dispatch(input: Dictionary) -> void:
 	engine.Dispatch(input)
 
 func _session_options() -> Dictionary:
+	var speed := playback_speed
 	var options := {"controller": controller, "campaign": campaign_options.duplicate(true)}
 	if viewer != "": options.viewer = viewer
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--dv-controller="): options.controller = arg.trim_prefix("--dv-controller=")
+		if arg.begins_with("--dv-speed="):
+			var value := arg.trim_prefix("--dv-speed=")
+			if not value.is_valid_float():
+				_show_error("Invalid --dv-speed: " + value)
+				return {}
+			speed = float(value)
+		elif arg.begins_with("--dv-controller="): options.controller = arg.trim_prefix("--dv-controller=")
 		elif arg.begins_with("--dv-viewer="): options.viewer = arg.trim_prefix("--dv-viewer=")
 		elif arg.begins_with("--dv-profile="): options.campaign.profile = arg.trim_prefix("--dv-profile=")
 		elif arg.begins_with("--dv-zone="): options.campaign.detective_zone = arg.trim_prefix("--dv-zone=")
@@ -139,6 +147,12 @@ func _session_options() -> Dictionary:
 	if str(options.controller) not in ["player", "ai"]:
 		_show_error("Invalid --dv-controller: " + str(options.controller))
 		return {}
+	if not is_finite(speed) or speed < 0.25 or speed > 8.0:
+		_show_error("Playback speed must be between 0.25 and 8")
+		return {}
+	Engine.time_scale = speed
+	Engine.physics_ticks_per_second = ceili(60.0 * maxf(1.0, speed))
+	engine.RecordInput({"device": "host_configuration", "controller": str(options.controller), "playback_speed": speed, "physics_ticks_per_second": Engine.physics_ticks_per_second})
 	return options
 
 func _show_error(message: String) -> void:
@@ -177,22 +191,43 @@ func _drain() -> void:
 			"dv_action": await _dv_execute(ev.intent, ev.get("execution_snapshot", {}))
 			"dv_present":
 				var result: Dictionary = ev.presentation
-				var lines: Array = []
-				if bool(result.get("visible", false)):
-					if str(result.get("surface", "")) != "": lines.append({"text": result.surface, "speaker": str(result.get("actor", "")), "speaker_name": str(result.get("speaker_name", ""))})
-					for text in result.get("lines", []):
-						for paragraph in str(text).split("\n", false):
-							lines.append({"text": paragraph, "speaker": str(result.get("actor", "")), "speaker_name": str(result.get("speaker_name", ""))})
-				var judgment = result.get("judgment", false)
-				if judgment is Dictionary:
-					lines.append({"text": "本次答辩已获接受。" if str(judgment.status) == "answer_accepted" else "本次答辩未获接受。", "speaker": ""})
-				if not lines.is_empty(): await ui.present({"kind": "lines", "lines": lines})
+				var lines := _presentation_lines(result)
+				if not lines.is_empty():
+					await ui.present({"kind": "lines", "lines": lines, "trace_id": str(result.get("execution_event", "")), "presentation_id": str(result.get("execution_event", ""))})
 				dispatch.call_deferred({"kind": "dv_next"})
 			"view": _view(ev)
 			"state": _apply(ev.snapshot)
 			"error": _show_error(str(ev.message))
 			_: push_error("Unknown DV host event: " + str(ev.get("kind", "")))
 	_draining = false
+
+## IDs name the actual execution and emitted field; source_refs retain authored provenance.
+## Emitted line ordinals are not claimed to be original declaration line numbers.
+func _presentation_line(result: Dictionary, text: String, field_name: String, index: int, paragraph: int) -> Dictionary:
+	var event := str(result.get("execution_event", ""))
+	return {"text": text, "speaker": str(result.get("actor", "")), "speaker_name": str(result.get("speaker_name", "")),
+		"trace_id": event, "execution_event": event, "source_id": str(result.get("action_id", "")),
+		"line_id": "%s:%s:%d:%d" % [event, field_name, index, paragraph], "source_field": field_name,
+		"emitted_line_index": index, "paragraph_index": paragraph, "source_refs": result.get("source_refs", [])}
+
+func _presentation_lines(result: Dictionary) -> Array:
+	var lines: Array = []
+	if bool(result.get("visible", false)):
+		if str(result.get("surface", "")) != "": lines.append(_presentation_line(result, str(result.surface), "surface", 0, 0))
+		var index := 0
+		for text in result.get("lines", []):
+			var paragraph := 0
+			for part in str(text).split("\n", false):
+				lines.append(_presentation_line(result, part, "presentation.lines", index, paragraph))
+				paragraph += 1
+			index += 1
+	var judgment = result.get("judgment", false)
+	if judgment is Dictionary:
+		var line := _presentation_line(result, "本次答辩已获接受。" if str(judgment.status) == "answer_accepted" else "本次答辩未获接受。", "judgment.status", 0, 0)
+		line.speaker = ""
+		line.judgment_event = str(judgment.get("event_id", ""))
+		lines.append(line)
+	return lines
 
 func _apply(snapshot: Dictionary) -> void:
 	if _view_resource != "" and str(snapshot.resource) != _view_resource:

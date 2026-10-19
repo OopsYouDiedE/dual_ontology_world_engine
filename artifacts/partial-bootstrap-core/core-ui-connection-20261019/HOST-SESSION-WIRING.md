@@ -42,3 +42,13 @@
 - 标题页从未开启会话时正常保存输入、可见记录与 close-result，记录 session_opened=false，不制造缺少会话的错误；已开启则记录 true 并沿原 Trace/Save 封存。
 
 本补修只静读接口与控制流，未构建、未运行或启动会话。实际现场中途存取拒绝、正式结束后的存取与标题退出仍待主代理集中检查。
+
+## 同主体快照导出复用（静态计算优化）
+
+Prepare 的同一后台工作原先先导出实际行动者快照，再读取 Viewer 并导出观察者快照。行动者等于观察者时，现复用第一次导出的不可变 JSON string；不同主体仍分别调用 Snapshot，非 prepared 的 execution_snapshot 仍为空对象。
+
+静读确认：Viewer 是 dvg_host_viewer 对当前 story.host_viewer 的只读读取；dvg_snapshot 只构造投影，DvSession.Snapshot 只调用该函数与 HostJson，均不替换 Session.state。串行泵在同一个 worker 的这些调用之间不启动另一状态转换。因此该复用只适用于 StringComparison.Ordinal 确认的同一主体，不跨行动、会话或 worker 缓存。
+
+保留原执行快照导出先于 Viewer 读取的求值顺序：原来第一次投影或 Viewer getter 的确定性错误仍在原位置发生。仅省去同参数、同状态的第二次纯投影与 JSON 编码。state 仍先于 dv_action 发出；两个消费者各自 Parse 对应 string，得到独立 Godot 字典，不共享可变 UI/执行对象，不删除观察者或现场执行证据。
+
+未构建、未运行，没有据此声称实机耗时或完整体验改善；收益范围仅是 actor==viewer 的 prepared 分支减少一次重复纯值导出。

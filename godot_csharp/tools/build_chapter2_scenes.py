@@ -18,6 +18,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import struct
 import sys
 from pathlib import Path
 
@@ -63,10 +64,21 @@ def validate_maps(keys):
 def site_indices(sites, key):
     if not isinstance(sites, list) or any(not isinstance(s, dict) or not isinstance(s.get("id"), str) for s in sites):
         raise ValueError(f"Invalid sites: {key}")
-    ids = [s["id"] for s in sites]
+    ids = [s["id"] for s in sites if not s.get("geometry_only", False)]
     if len(set(ids)) != len(ids) or set(ids) != set(rooms.TEXT_SITES[key]):
         raise ValueError(f"Duplicate, missing or unknown site: {key}")
-    return {site: i for i, site in enumerate(ids)}
+    return {site["id"]: i for i, site in enumerate(sites) if not site.get("geometry_only", False)}
+
+
+def scene_sites(room):
+    """Text-bound sites and label-free geometry anchors share the authored scene."""
+    return [*room.get("sites", []), *({**site, "label": "", "geometry_only": True}
+                                    for site in room.get("geometry_sites", []))]
+
+
+def geometry_site_ids(key):
+    return {site["id"] for room in rooms.all_rooms() if room["key"] == key
+            for site in room.get("geometry_sites", [])}
 
 
 def resolve_room_text(room, text):
@@ -103,7 +115,7 @@ def scene_text(source, key, text):
         nodes[path] = (attributes, header.end(), end)
     roots = [path for path, (attrs, _, _) in nodes.items() if "parent" not in attrs]
     sites = {path.removeprefix("Sites/") for path in nodes if path.startswith("Sites/")}
-    if roots != [key] or "Sites" not in nodes or sites != set(rooms.TEXT_SITES[key]):
+    if roots != [key] or "Sites" not in nodes or sites != set(rooms.TEXT_SITES[key]) | geometry_site_ids(key):
         raise ValueError(f"Missing or unknown scene root/site: {key}")
     if nodes["Sites"][0].get("parent") != "." or nodes["Sites"][0].get("type") != "Node2D":
         raise ValueError(f"Invalid Sites container: {key}")
@@ -167,12 +179,72 @@ def update_sites_only(keys, compiled=COMPILED, scenes=SCENES, manifest_path=OUT 
             raise ValueError(f"Missing or duplicate Sites container: {key}")
         prefix = source.split('[node name="Sites"', 1)[0]
         lines = ['[node name="Sites" type="Node2D" parent="."]', '']
-        for site in room["sites"]:
+        for site in scene_sites(room):
             lines += [f'[node name="{site["id"]}" type="Marker2D" parent="Sites"]',
                       f'position = Vector2({site["point"][0]}, {site["point"][1]})',
                       f'metadata/label = {json.dumps(site["label"], ensure_ascii=False)}', '']
+            if site.get("geometry_only", False): lines.insert(len(lines) - 1, 'metadata/geometry_only = true')
         candidates[path] = (prefix + "\n".join(lines)).encode("utf-8")
-        manifest["rooms"][key]["sites"] = room["sites"]
+        manifest["rooms"][key]["sites"] = scene_sites(room)
+    candidates[manifest_path] = json.dumps(manifest, ensure_ascii=False, indent=1).encode("utf-8")
+    return publish(candidates)
+
+
+def register_external_sprites(room, sprite_paths, sizes):
+    """Read explicitly authored existing PNGs without painting or copying assets."""
+    for item in room["furniture"]:
+        if "texture" not in item:
+            continue
+        texture = item["texture"]
+        if not isinstance(texture, str) or not texture.startswith("res://"):
+            raise ValueError(f"Expected a project texture path: {item['name']}")
+        data = (GAME / texture.removeprefix("res://")).read_bytes()
+        if data[:8] != b"\x89PNG\r\n\x1a\n":
+            raise ValueError(f"Expected an existing PNG: {texture}")
+        width, height = struct.unpack(">II", data[16:24])
+        region = item.get("texture_region")
+        if region is not None:
+            x, y, rw, rh = region
+            if min(x, y) < 0 or min(rw, rh) <= 0 or x + rw > width or y + rh > height:
+                raise ValueError(f"Texture region outside source: {item['name']}")
+            width, height = rw, rh
+        sprite_paths[item["sprite"]] = texture
+        sizes[item["sprite"]] = (width, height)
+
+
+def update_geometry_only(keys, compiled=COMPILED, scenes=SCENES, manifest_path=OUT / "manifest.json", repaint=False):
+    """Regenerate selected interiors; optionally repaint their baked floor shadows."""
+    validate_maps(keys)
+    text_table = load_room_text(compiled)
+    manifest = read_json(manifest_path)
+    authored = {room["key"]: resolve_room_text(room, text_table) for room in rooms.all_rooms()}
+    fps = {**CH1_FP, **{name: entry.get("footprint") for name, entry in manifest.get("props", {}).items()}}
+    candidates = {}
+    for key in keys:
+        room = authored[key]
+        room["furniture"] = resolve(room["furniture"], fps)
+        paths, sizes = {}, {}
+        for item in room["furniture"]:
+            if "texture" in item:
+                continue
+            name = item["sprite"]
+            texture = f"res://ShareAsset/Internal/Props/Chapter2/props/{name}.png" if name in manifest.get("props", {}) else f"{CH1}/{name}.png"
+            data = (GAME / texture.removeprefix("res://")).read_bytes()
+            if data[:8] != b"\x89PNG\r\n\x1a\n":
+                raise ValueError(f"Expected an existing PNG: {texture}")
+            paths[name] = texture
+            sizes[name] = struct.unpack(">II", data[16:24])
+        register_external_sprites(room, paths, sizes)
+        candidates[scenes / f"{key}.tscn"] = tscn(room, f"res://ShareAsset/Internal/Props/Chapter2/rooms/{key}.png", paths, sizes).encode("utf-8")
+        if repaint:
+            import io
+            from chapter2_art import painter
+            canvas, _ = painter.paint(room)
+            buffer = io.BytesIO()
+            canvas.image().save(buffer, format="PNG")
+            candidates[OUT / "rooms" / f"{key}.png"] = buffer.getvalue()
+        manifest["rooms"][key]["sites"] = scene_sites(room)
+        manifest["rooms"][key]["geometry_objects"] = [item for item in room["furniture"] if "texture" in item]
     candidates[manifest_path] = json.dumps(manifest, ensure_ascii=False, indent=1).encode("utf-8")
     return publish(candidates)
 
@@ -303,8 +375,14 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
     for f in room["furniture"]:
         w, h = sizes[f["sprite"]]
         x, y = f["position"]
+        ox, oy = f.get("draw_offset", [-(w // 2), -h])
         lines += [f'[node name="{f["name"]}" type="Sprite2D" parent="Objects"]', f'position = Vector2({x}, {y})',
-                  f'texture = ExtResource("t_{f["sprite"]}")', 'centered = false', f'offset = Vector2({-(w // 2)}, {-h})']
+                  f'texture = ExtResource("t_{f["sprite"]}")', 'centered = false', f'offset = Vector2({ox}, {oy})']
+        if "texture_region" in f:
+            rx, ry, rw, rh = f["texture_region"]
+            lines += ['region_enabled = true', f'region_rect = Rect2({rx}, {ry}, {rw}, {rh})']
+        for prop in ("rotation_degrees", "z_index"):
+            if prop in f: lines.append(f'{prop} = {f[prop]}')
         if f.get("occluder"):
             lines.append('metadata/occluder = true')
         lines.append('')
@@ -323,9 +401,10 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
     for i, (x, y) in enumerate(stands(room)):
         lines += [f'[node name="s{i:02d}" type="Marker2D" parent="Stands"]', f'position = Vector2({x}, {y})', '']
     lines += ['[node name="Sites" type="Node2D" parent="."]', '']
-    for s in room.get("sites", []):
+    for s in scene_sites(room):
         lines += [f'[node name="{s["id"]}" type="Marker2D" parent="Sites"]', f'position = Vector2({s["point"][0]}, {s["point"][1]})',
                   f'metadata/label = {json.dumps(s["label"], ensure_ascii=False)}', '']
+        if s.get("geometry_only", False): lines.insert(len(lines) - 1, 'metadata/geometry_only = true')
     return "\n".join(lines)
 
 
@@ -335,12 +414,20 @@ def main():
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--text-only", nargs="+", metavar="MAP", help="Update existing interior titles and labels without rebuilding geometry.")
     modes.add_argument("--sites-only", nargs="+", metavar="MAP", help="Regenerate marker geometry with compiled text, using existing textures.")
+    modes.add_argument("--geometry-only", nargs="+", metavar="MAP", help="Regenerate selected interiors from recipes and existing PNGs; do not paint or import assets.")
+    modes.add_argument("--interiors-only", nargs="+", metavar="MAP", help="Regenerate selected interiors and their baked floor shadows, without outdoors.")
     args = parser.parse_args()
     if args.text_only:
         print(f"room text: {update_text_only(args.text_only)} file(s) changed")
         return
     if args.sites_only:
         print(f"generated sites: {update_sites_only(args.sites_only)} file(s) changed")
+        return
+    if args.interiors_only:
+        print(f"generated interiors: {update_geometry_only(args.interiors_only, repaint=True)} file(s) changed")
+        return
+    if args.geometry_only:
+        print(f"generated geometry: {update_geometry_only(args.geometry_only)} file(s) changed")
         return
     from chapter2_art import outdoor, painter
 
@@ -372,6 +459,7 @@ def main():
             if e["target"] == "campus":
                 e["target"] = spawn_region[e["spawn"]]
         room["furniture"] = resolve(room["furniture"], fps)
+        register_external_sprites(room, sprite_paths, sizes)
         missing = {f["sprite"] for f in room["furniture"]} - set(sprite_paths)
         assert not missing, (room["key"], missing)
         arch, anchors = painter.paint(room)
@@ -379,7 +467,8 @@ def main():
         (SCENES / f"{room['key']}.tscn").write_text(
             tscn(room, f"res://ShareAsset/Internal/Props/Chapter2/rooms/{room['key']}.png", sprite_paths, sizes), encoding="utf-8")
         manifest["rooms"][room["key"]] = {"title": room["title"], "cells": [len(room["rows"][0]), len(room["rows"])],
-                                          "exits": room["exits"], "spawns": room["spawns"], "sites": room.get("sites", [])}
+                                          "exits": room["exits"], "spawns": room["spawns"], "sites": scene_sites(room),
+                                          "geometry_objects": [item for item in room["furniture"] if "texture" in item]}
         print(room["key"], arch.w, arch.h, len(room["furniture"]))
     for room in regions:
         room["architecture"].save(OUT / "rooms" / f"{room['key']}.png")

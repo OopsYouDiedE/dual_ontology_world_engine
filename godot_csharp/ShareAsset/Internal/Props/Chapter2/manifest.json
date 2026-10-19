@@ -193,7 +193,8 @@
      ],
      "label": "隔离门"
     }
-   ]
+   ],
+   "geometry_objects": []
   },
   "zone_yi": {
    "title": "乙区",
@@ -252,6 +253,167 @@
       196
      ],
      "label": "bed"
+    },
+    {
+     "id": "E1",
+     "point": [
+      26,
+      396
+     ],
+     "label": "",
+     "geometry_only": true
+    },
+    {
+     "id": "E2",
+     "point": [
+      62,
+      422
+     ],
+     "label": "",
+     "geometry_only": true
+    },
+    {
+     "id": "E6",
+     "point": [
+      522,
+      202
+     ],
+     "label": "",
+     "geometry_only": true
+    },
+    {
+     "id": "E7",
+     "point": [
+      368,
+      258
+     ],
+     "label": "",
+     "geometry_only": true
+    },
+    {
+     "id": "E10",
+     "point": [
+      368,
+      502
+     ],
+     "label": "",
+     "geometry_only": true
+    },
+    {
+     "id": "E11",
+     "point": [
+      806,
+      110
+     ],
+     "label": "",
+     "geometry_only": true
+    }
+   ],
+   "geometry_objects": [
+    {
+     "name": "InnerBolt",
+     "sprite": "inner_bolt",
+     "position": [
+      22,
+      422
+     ],
+     "texture": "res://ShareAsset/Internal/Props/AwakeningEvidence/isolation_door_side.png",
+     "texture_region": [
+      74,
+      86,
+      8,
+      48
+     ],
+     "footprint": null
+    },
+    {
+     "name": "AshFan",
+     "sprite": "ash_fan",
+     "position": [
+      31,
+      378
+     ],
+     "texture": "res://ShareAsset/Internal/Props/AwakeningEvidence/ash_fan.png",
+     "rotation_degrees": 90,
+     "z_index": -1,
+     "footprint": null
+    },
+    {
+     "name": "Wedge",
+     "sprite": "wedge",
+     "position": [
+      62,
+      428
+     ],
+     "texture": "res://ShareAsset/Internal/Props/AwakeningEvidence/wedge.png",
+     "footprint": null
+    },
+    {
+     "name": "Score",
+     "sprite": "score",
+     "position": [
+      522,
+      228
+     ],
+     "texture": "res://ShareAsset/Internal/Props/AwakeningEvidence/score.png",
+     "draw_offset": [
+      -9,
+      -34
+     ],
+     "footprint": null
+    },
+    {
+     "name": "Slate",
+     "sprite": "slate",
+     "position": [
+      368,
+      296
+     ],
+     "texture": "res://ShareAsset/Internal/Props/AwakeningEvidence/slate.png",
+     "draw_offset": [
+      -10,
+      -44
+     ],
+     "footprint": null
+    },
+    {
+     "name": "Jar",
+     "sprite": "jar",
+     "position": [
+      368,
+      536
+     ],
+     "texture": "res://ShareAsset/Internal/Props/AwakeningEvidence/jar.png",
+     "draw_offset": [
+      -7,
+      -48
+     ],
+     "footprint": null
+    },
+    {
+     "name": "R05Shelf",
+     "sprite": "bookcase_empty",
+     "position": [
+      800,
+      110
+     ],
+     "texture": "res://ShareAsset/Internal/Props/FirstAwakeningInterior/bookcase_empty.png",
+     "footprint": [
+      780,
+      96,
+      40,
+      14
+     ]
+    },
+    {
+     "name": "R05ShelfTrace",
+     "sprite": "shelf_dust_hand",
+     "position": [
+      800,
+      110
+     ],
+     "texture": "res://ShareAsset/Internal/Props/AwakeningEvidence/shelf_dust_hand.png",
+     "footprint": null
     }
    ]
   },
@@ -305,7 +467,8 @@
      ],
      "label": "隔离门"
     }
-   ]
+   ],
+   "geometry_objects": []
   },
   "zone_ding": {
    "title": "丁区",
@@ -357,7 +520,8 @@
      ],
      "label": "隔离门"
     }
-   ]
+   ],
+   "geometry_objects": []
   },
   "central_hall": {
    "title": "中央厅",

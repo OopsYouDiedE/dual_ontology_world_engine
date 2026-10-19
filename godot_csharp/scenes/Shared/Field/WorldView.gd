@@ -638,6 +638,33 @@ func _follow_route(actor: CharacterBody2D, destination: Vector2) -> Dictionary:
 
 # ---------------------------------------------------------------- camera ---
 
+## Keep continuous approach samples and include every grid centre inside the same radius.
+## Sparse directional sampling must not hide a narrow but physically legal approach.
+func _station_approaches(station: Dictionary, grid: AStarGrid2D) -> Array[Vector2]:
+	var points: Array[Vector2] = []
+	var radius := float(station.radius)
+	if radius <= 0.0:
+		points.append(station.point)
+		return points
+	var seen := {}
+	for fraction in [1.0, 0.75]:
+		for heading in APPROACH:
+			var point: Vector2 = station.point + heading.normalized() * radius * fraction
+			if not seen.has(point):
+				seen[point] = true
+				points.append(point)
+	var start := Vector2i(((station.point - Vector2.ONE * radius - grid.offset) / grid.cell_size).ceil())
+	var stop := Vector2i(((station.point + Vector2.ONE * radius - grid.offset) / grid.cell_size).floor())
+	for y in range(maxi(start.y, grid.region.position.y), mini(stop.y, grid.region.end.y - 1) + 1):
+		for x in range(maxi(start.x, grid.region.position.x), mini(stop.x, grid.region.end.x - 1) + 1):
+			var cell := Vector2i(x, y)
+			if grid.is_point_solid(cell): continue
+			var point := grid.get_point_position(cell)
+			if point.distance_to(station.point) <= radius and not seen.has(point):
+				seen[point] = true
+				points.append(point)
+	return points
+
 func _daily_go(ev: Dictionary) -> void:
 	var who := str(ev.who)
 	var actor: CharacterBody2D = actors.get(who)
@@ -652,21 +679,19 @@ func _daily_go(ev: Dictionary) -> void:
 	var destination := Vector2.ZERO
 	var best_route := PackedVector2Array()
 	var best_cost := INF
-	for fraction in [1.0, 0.75]:
-		for heading in APPROACH:
-			var point: Vector2 = station.point + heading.normalized() * float(station.radius) * fraction
-			if adapter.entered_room(point) != str(ev.room) or not adapter.walkable(point, actor): continue
-			var reserved := false
-			for other in _daily.values():
-				if point.distance_to(other.destination) < 28.0: reserved = true
-			if reserved: continue
-			var route := FieldNavigation.route_on_grid(actor.position, point, grid)
-			if route.is_empty(): continue
-			var cost := _route_cost(actor.position, route, point)
-			if cost < best_cost:
-				best_cost = cost
-				destination = point
-				best_route = route
+	for point in _station_approaches(station, grid):
+		if adapter.entered_room(point) != str(ev.room) or not adapter.walkable(point, actor): continue
+		var reserved := false
+		for other in _daily.values():
+			if point.distance_to(other.destination) < 28.0: reserved = true
+		if reserved: continue
+		var route := FieldNavigation.route_on_grid(actor.position, point, grid)
+		if route.is_empty(): continue
+		var cost := _route_cost(actor.position, route, point)
+		if cost < best_cost:
+			best_cost = cost
+			destination = point
+			best_route = route
 	if best_route.is_empty():
 		_daily_report(who, int(ev.serial), "blocked", "", str(ev.get("action", "rest")), {"station": str(ev.target)})
 		return

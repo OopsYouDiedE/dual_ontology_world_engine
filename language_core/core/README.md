@@ -1116,3 +1116,9 @@ run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运
 冻结容器现以内部sealed IReadOnlyList<object>独占不可变object[]，直接采用冻结时新建的子数组，不再继承可变List或二次复制。R.Items返回只读接口，IsDvList/TryItems仍仅识别原生List及内部FrozenList，不扩张DV值域；写操作仅接受原生可变List，读取可变所有者时才解冻选中子分支并建立父失效关系。根复制和记录更新仍为O(n)，不是HAMT或持久向量。枚举器保留List的状态与错误语义；越界读交给私有空List产生原异常。Session的HostValue/SnapshotValue同步识别两种合法容器，Save标签、Trace字符串、原始DAG及独立副本必须集中工程核对。Items的CLR返回签名变化要求编译器自举与Session/宿主统一重建，禁止混用旧程序集。
 
 空冻结集合的接口枚举委托私有原生空List，保留.NET空枚举器的独立错误状态；非空集合采用值类型枚举器。解冻由FrozenList.CopyRoot把私有数组一次复制到独占List，不暴露底本、不逐项扩容。单字段更新按原先校验/冻结/首匹配顺序，内部保留具体冻结类型以免逐项经接口分派；冻结索引仅在完整资格验证后读取具体冻结pair。中性保存/恢复、错误文本和DAG差分与分配样本分列，CPU噪声不包装成整局提速。
+
+宿主正文来源：`dvs_session_presentation`透传动作`source_refs`，保留已有字符串surface/lines格式。Main按真实execution_event与输出字段/序号生成line_id，source_id表示动作ID；显示序号不是源声明索引。只读来源元数据跟随ChapterDialogue当前行进入实际绘制记录，缺失的源文件信息保持缺失，不影响人物知识或显示资格。
+
+`game/entry.dv`的`dvg_geometry_bindings`声明按地图分组的sites（id/point/label）和props（id/texture/position/可选footprint）。`dvg_site_titles`只给已有几何提供物件标题。宿主载图后实例化，再使用同一图的锚点、栅格与碰撞执行；场景外观不授予读数或知识。snapshot带齐声明以支持在Complete前跨图的真实执行。生成室内geometry_sites与native标题分工见Godot模块维护合同。
+
+`dvg_initial_anchor`产生主体的明确初次锚点，snapshot及people的`initial_anchor`供首次物化使用，地点`anchor`继续供目的地导航。宿主对两类来源保持区别，初次点仍核同房、可走与占位；保留身体不重新放置。户外地点由室外地图边界/可走性判定实际房间，不冒用室内地形标志。

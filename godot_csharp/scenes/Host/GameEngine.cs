@@ -101,8 +101,13 @@ public partial class GameEngine : Node
                             using var document = JsonDocument.Parse(intent);
                             var root = document.RootElement;
                             var ready = root.GetProperty("status").GetString() == "prepared";
-                            var executionSnapshot = ready ? current.Snapshot(root.GetProperty("actor").GetString()!) : "{}";
-                            return (Intent: intent, Snapshot: current.Snapshot(current.Viewer), ExecutionSnapshot: executionSnapshot);
+                            var actor = ready ? root.GetProperty("actor").GetString() : null;
+                            var executionSnapshot = ready ? current.Snapshot(actor!) : "{}";
+                            var viewer = current.Viewer;
+                            // JSON strings are immutable; the two Godot boundaries still parse independent values.
+                            var viewerSnapshot = ready && string.Equals(actor, viewer, StringComparison.Ordinal)
+                                ? executionSnapshot : current.Snapshot(viewer);
+                            return (Intent: intent, Snapshot: viewerSnapshot, ExecutionSnapshot: executionSnapshot);
                         });
                         snapshotJson = prepared.Snapshot;
                         var intent = Parse(prepared.Intent);

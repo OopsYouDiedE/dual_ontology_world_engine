@@ -130,6 +130,9 @@ fn dvg_place(location):
         "white_tower_safe": {"map": "clinic", "room": "clinic:safety"},
         "washroom": {"map": "living_hall", "room": "living_hall:bath"},
         "resonance": {"map": "resonance", "room": "resonance:hall"},
+        "outdoor_meter": {"map": "campus_n", "room": "campus_n:campus_n", "anchor": "site:outdoor_meter"},
+        "outdoor_high": {"map": "campus_n", "room": "campus_n:campus_n", "anchor": "site:outdoor_high"},
+        "outdoor_alley": {"map": "campus_sw", "room": "campus_sw:campus_sw", "anchor": "lane_east"},
         "oath_court": {"map": "campus_s", "room": "campus_s:campus_s", "anchor": "site:oath_court"},
         "threshold.contract": {"map": "living_hall", "room": "living_hall:hall", "anchor": "west_north"},
         "threshold.astral": {"map": "living_hall", "room": "living_hall:hall", "anchor": "west_south"},
@@ -194,6 +197,12 @@ fn dvg_presentation(state, viewer):
 fn dvg_cast():
     return {"detective": "detective", "huo": "engineer", "shen": "chef", "su": "musician", "lucian": "poet", "gu": "archaeologist", "quer": "thief", "ward": "lawyer", "selma": "naturalist", "ruan": "chessplayer", "elena": "dancer", "moran": "painter", "veronica": "chemist", "bertrand": "marksman", "margaret": "architect", "mora": "doctor"}
 
+// A navigation destination is not a per-person initial placement.
+fn dvg_initial_anchor(actor, location):
+    if actor == "detective" and location == "R05":
+        return "site:bed"
+    return ""
+
 fn dvg_people(state, viewer):
     let sprites = dvg_cast()
     var people = []
@@ -204,7 +213,7 @@ fn dvg_people(state, viewer):
         if actor.id != viewer and dv_uncontested(position) and dv_has_key(sprites, actor.id):
             let place = dvg_place(position.value)
             if place.map != "":
-                var person = {"key": actor.id, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": position.value, "spawn": dv_find(place, "spawn", ""), "present": true, "sprite": dv_find(sprites, actor.id, ""), "frame": ""}
+                var person = {"key": actor.id, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": position.value, "initial_anchor": dvg_initial_anchor(actor.id, position.value), "spawn": dv_find(place, "spawn", ""), "present": true, "sprite": dv_find(sprites, actor.id, ""), "frame": ""}
                 if dv_has_key(place, "anchor"):
                     person = dv_with(person, "anchor", place.anchor)
                 rt_push(people, person)
@@ -229,6 +238,15 @@ fn dvg_map_access(state, current_map):
         i = i + 1
     return maps
 
+// Spatial additions are content declarations. Sampling and safety remain DV actions.
+fn dvg_site_titles(map):
+    if map == "zone_yi":
+        return {"E1": {"title": "隔离门"}, "E2": {"title": "门底与木楔"}, "E6": {"title": "苏泠的书桌"}, "E7": {"title": "活动厅长桌"}, "E10": {"title": "备餐柜台"}, "E11": {"title": "置物架"}}
+    return {}
+
+fn dvg_geometry_bindings():
+    return {"campus_n": {"sites": [{"id": "outdoor_meter", "point": [672, 1416], "label": "户外仪器阵"}, {"id": "outdoor_high", "point": [672, 1272], "label": "高地通路"}], "props": [{"id": "outdoor_dial", "texture": "res://ShareAsset/Internal/Props/Outdoor/dial_meter.svg", "position": [704, 1416], "footprint": [-10, -8, 20, 8]}]}}
+
 fn dvg_snapshot(state, viewer):
     let position = dv_read(state.physical, c2_position_ref(viewer))
     var place = {"map": "", "room": ""}
@@ -240,7 +258,7 @@ fn dvg_snapshot(state, viewer):
             place = located
     let cast = dvg_cast()
     let opened = dv_truth(state.physical, dv_fact(c1dep_ref("open"), true)) == "true"
-    var snapshot = {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": "res://scenes/Chapter2/Field/CampusMapView.tscn", "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": logical_location, "spawn": dv_find(place, "spawn", ""), "field_enabled": true, "player_control": dv_find(state, "player_actor", "") == viewer, "initial_placements": [], "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false, "maps": dvg_map_access(state, place.map)}, "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": dv_find(cast, viewer, "")}, "cast": cast, "pending": dvg_intent(state), "chapter_summary": dvg_chapter_summary(state)}
+    var snapshot = {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": "res://scenes/Chapter2/Field/CampusMapView.tscn", "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": logical_location, "initial_anchor": dvg_initial_anchor(viewer, logical_location), "spawn": dv_find(place, "spawn", ""), "field_enabled": true, "player_control": dv_find(state, "player_actor", "") == viewer, "initial_placements": [], "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false, "maps": dvg_map_access(state, place.map)}, "sites": dvg_site_titles(place.map), "geometry_bindings": dvg_geometry_bindings(), "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": dv_find(cast, viewer, "")}, "cast": cast, "pending": dvg_intent(state), "chapter_summary": dvg_chapter_summary(state)}
     if dv_has_key(place, "anchor"):
         snapshot = dv_with(snapshot, "anchor", place.anchor)
     return snapshot

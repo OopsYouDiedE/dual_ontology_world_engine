@@ -1,26 +1,34 @@
-[gd_scene load_steps=23 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/rooms/zone_yi.png" id="arch"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/armchair.png" id="t_armchair"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/AwakeningEvidence/ash_fan.png" id="t_ash_fan"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/barrel.png" id="t_barrel"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/bed_0.png" id="t_bed_0"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/bookcase_0.png" id="t_bookcase_0"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/bookcase_empty.png" id="t_bookcase_empty"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/chair_back.png" id="t_chair_back"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/chair_front.png" id="t_chair_front"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/coat_stand.png" id="t_coat_stand"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/crate.png" id="t_crate"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/desk_0.png" id="t_desk_0"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/floor_lamp.png" id="t_floor_lamp"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/AwakeningEvidence/isolation_door_side.png" id="t_inner_bolt"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/AwakeningEvidence/jar.png" id="t_jar"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/nightstand.png" id="t_nightstand"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/notice_board.png" id="t_notice_board"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/range_stove.png" id="t_range_stove"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/sack.png" id="t_sack"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/AwakeningEvidence/score.png" id="t_score"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/AwakeningEvidence/shelf_dust_hand.png" id="t_shelf_dust_hand"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/shoe_bench.png" id="t_shoe_bench"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/sideboard.png" id="t_sideboard"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/AwakeningEvidence/slate.png" id="t_slate"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/study_table.png" id="t_study_table"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/transmitter.png" id="t_transmitter"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/wardrobe.png" id="t_wardrobe"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/washstand.png" id="t_washstand"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/AwakeningEvidence/wedge.png" id="t_wedge"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/worktable.png" id="t_worktable"]
 
 [sub_resource type="RectangleShape2D" id="s0"]
@@ -476,6 +484,9 @@ size = Vector2(18, 12)
 [sub_resource type="RectangleShape2D" id="s150"]
 size = Vector2(96, 30)
 
+[sub_resource type="RectangleShape2D" id="s151"]
+size = Vector2(40, 14)
+
 [sub_resource type="RectangleShape2D" id="e0"]
 size = Vector2(32, 64)
 
@@ -728,7 +739,7 @@ centered = false
 offset = Vector2(-9, -50)
 
 [node name="Armchair" type="Sprite2D" parent="Objects"]
-position = Vector2(408, 378)
+position = Vector2(224, 216)
 texture = ExtResource("t_armchair")
 centered = false
 offset = Vector2(-15, -32)
@@ -794,10 +805,62 @@ centered = false
 offset = Vector2(-10, -26)
 
 [node name="ToolBench" type="Sprite2D" parent="Objects"]
-position = Vector2(354, 404)
+position = Vector2(320, 180)
 texture = ExtResource("t_worktable")
 centered = false
 offset = Vector2(-48, -44)
+
+[node name="InnerBolt" type="Sprite2D" parent="Objects"]
+position = Vector2(22, 422)
+texture = ExtResource("t_inner_bolt")
+centered = false
+offset = Vector2(-4, -48)
+region_enabled = true
+region_rect = Rect2(74, 86, 8, 48)
+
+[node name="AshFan" type="Sprite2D" parent="Objects"]
+position = Vector2(31, 378)
+texture = ExtResource("t_ash_fan")
+centered = false
+offset = Vector2(-50, -34)
+rotation_degrees = 90
+z_index = -1
+
+[node name="Wedge" type="Sprite2D" parent="Objects"]
+position = Vector2(62, 428)
+texture = ExtResource("t_wedge")
+centered = false
+offset = Vector2(-7, -8)
+
+[node name="Score" type="Sprite2D" parent="Objects"]
+position = Vector2(522, 228)
+texture = ExtResource("t_score")
+centered = false
+offset = Vector2(-9, -34)
+
+[node name="Slate" type="Sprite2D" parent="Objects"]
+position = Vector2(368, 296)
+texture = ExtResource("t_slate")
+centered = false
+offset = Vector2(-10, -44)
+
+[node name="Jar" type="Sprite2D" parent="Objects"]
+position = Vector2(368, 536)
+texture = ExtResource("t_jar")
+centered = false
+offset = Vector2(-7, -48)
+
+[node name="R05Shelf" type="Sprite2D" parent="Objects"]
+position = Vector2(800, 110)
+texture = ExtResource("t_bookcase_empty")
+centered = false
+offset = Vector2(-20, -60)
+
+[node name="R05ShelfTrace" type="Sprite2D" parent="Objects"]
+position = Vector2(800, 110)
+texture = ExtResource("t_shelf_dust_hand")
+centered = false
+offset = Vector2(-20, -60)
 
 [node name="Solids" type="StaticBody2D" parent="."]
 collision_mask = 0
@@ -1359,7 +1422,7 @@ position = Vector2(214.0, 368.0)
 shape = SubResource("s138")
 
 [node name="s139" type="CollisionShape2D" parent="Solids"]
-position = Vector2(408.0, 370.0)
+position = Vector2(224.0, 208.0)
 shape = SubResource("s139")
 
 [node name="s140" type="CollisionShape2D" parent="Solids"]
@@ -1403,8 +1466,12 @@ position = Vector2(64.0, 590.0)
 shape = SubResource("s149")
 
 [node name="s150" type="CollisionShape2D" parent="Solids"]
-position = Vector2(354.0, 389.0)
+position = Vector2(320.0, 165.0)
 shape = SubResource("s150")
+
+[node name="s151" type="CollisionShape2D" parent="Solids"]
+position = Vector2(800.0, 103.0)
+shape = SubResource("s151")
 
 [node name="Exits" type="Node2D" parent="."]
 
@@ -1426,49 +1493,49 @@ position = Vector2(64, 400)
 [node name="Stands" type="Node2D" parent="."]
 
 [node name="s00" type="Marker2D" parent="Stands"]
-position = Vector2(592, 220)
+position = Vector2(624, 220)
 
 [node name="s01" type="Marker2D" parent="Stands"]
 position = Vector2(1072, 636)
 
 [node name="s02" type="Marker2D" parent="Stands"]
-position = Vector2(240, 604)
-
-[node name="s03" type="Marker2D" parent="Stands"]
-position = Vector2(80, 188)
-
-[node name="s04" type="Marker2D" parent="Stands"]
-position = Vector2(1008, 156)
-
-[node name="s05" type="Marker2D" parent="Stands"]
-position = Vector2(624, 636)
-
-[node name="s06" type="Marker2D" parent="Stands"]
-position = Vector2(336, 156)
-
-[node name="s07" type="Marker2D" parent="Stands"]
-position = Vector2(272, 380)
-
-[node name="s08" type="Marker2D" parent="Stands"]
-position = Vector2(848, 636)
-
-[node name="s09" type="Marker2D" parent="Stands"]
-position = Vector2(784, 156)
-
-[node name="s10" type="Marker2D" parent="Stands"]
 position = Vector2(112, 412)
 
+[node name="s03" type="Marker2D" parent="Stands"]
+position = Vector2(592, 636)
+
+[node name="s04" type="Marker2D" parent="Stands"]
+position = Vector2(1040, 220)
+
+[node name="s05" type="Marker2D" parent="Stands"]
+position = Vector2(240, 156)
+
+[node name="s06" type="Marker2D" parent="Stands"]
+position = Vector2(400, 380)
+
+[node name="s07" type="Marker2D" parent="Stands"]
+position = Vector2(240, 604)
+
+[node name="s08" type="Marker2D" parent="Stands"]
+position = Vector2(816, 636)
+
+[node name="s09" type="Marker2D" parent="Stands"]
+position = Vector2(816, 220)
+
+[node name="s10" type="Marker2D" parent="Stands"]
+position = Vector2(80, 188)
+
 [node name="s11" type="Marker2D" parent="Stands"]
-position = Vector2(400, 636)
+position = Vector2(400, 188)
 
 [node name="s12" type="Marker2D" parent="Stands"]
-position = Vector2(240, 220)
+position = Vector2(400, 636)
 
 [node name="s13" type="Marker2D" parent="Stands"]
-position = Vector2(528, 572)
+position = Vector2(240, 348)
 
 [node name="s14" type="Marker2D" parent="Stands"]
-position = Vector2(752, 572)
+position = Vector2(528, 156)
 
 [node name="s15" type="Marker2D" parent="Stands"]
 position = Vector2(976, 572)
@@ -1490,3 +1557,33 @@ metadata/label = "隔离门"
 [node name="bed" type="Marker2D" parent="Sites"]
 position = Vector2(858, 196)
 metadata/label = "bed"
+
+[node name="E1" type="Marker2D" parent="Sites"]
+position = Vector2(26, 396)
+metadata/label = ""
+metadata/geometry_only = true
+
+[node name="E2" type="Marker2D" parent="Sites"]
+position = Vector2(62, 422)
+metadata/label = ""
+metadata/geometry_only = true
+
+[node name="E6" type="Marker2D" parent="Sites"]
+position = Vector2(522, 202)
+metadata/label = ""
+metadata/geometry_only = true
+
+[node name="E7" type="Marker2D" parent="Sites"]
+position = Vector2(368, 258)
+metadata/label = ""
+metadata/geometry_only = true
+
+[node name="E10" type="Marker2D" parent="Sites"]
+position = Vector2(368, 502)
+metadata/label = ""
+metadata/geometry_only = true
+
+[node name="E11" type="Marker2D" parent="Sites"]
+position = Vector2(806, 110)
+metadata/label = ""
+metadata/geometry_only = true

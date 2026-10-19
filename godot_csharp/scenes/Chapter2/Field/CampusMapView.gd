@@ -18,6 +18,7 @@ var armed := true
 var _switching := false
 var occluders: Array[Sprite2D] = []
 var _grids: Dictionary = {}
+var _blocked_rects: Dictionary = {}
 var _walls: Dictionary = {}
 var _seen: Dictionary = {}
 var _access: Dictionary = {}
@@ -27,12 +28,67 @@ var presentation: Dictionary = {}
 var _player_sprite := ""
 var _routes: Dictionary = {}
 var _route_target_next := ""
+var _geometry_signature := ""
+var _geometry_nodes: Array[Node] = []
 
 func apply_snapshot(snapshot: Dictionary) -> void:
+	_apply_geometry_bindings(snapshot)
 	var next: Dictionary = snapshot.get("access", {}).get("maps", {})
 	if next == _access: return
 	_access = next.duplicate(true)
 	if map: _refresh_access_geometry.call_deferred()
+
+## Native content provides geometric bindings; no story identity or rule is selected here.
+func _apply_geometry_bindings(snapshot: Dictionary) -> void:
+	if map == null: return
+	var declaration: Dictionary = snapshot.get("geometry_bindings", {}).get(key, {})
+	var signature := JSON.stringify(declaration)
+	if signature == _geometry_signature: return
+	_geometry_signature = signature
+	for node in _geometry_nodes:
+		if is_instance_valid(node):
+			node.get_parent().remove_child(node)
+			node.queue_free()
+	_geometry_nodes.clear()
+	var textures: Dictionary = {}
+	for prop in declaration.get("props", []):
+		var texture := load(str(prop.get("texture", ""))) as Texture2D
+		if texture == null:
+			Bindings.fail(self, "Missing native geometry texture: " + str(prop.get("id", "")))
+			return
+		textures[str(prop.id)] = texture
+	for site in declaration.get("sites", []):
+		var id := str(site.get("id", ""))
+		if id == "" or map.get_node("Sites").has_node(NodePath(id)):
+			Bindings.fail(self, "Duplicate or empty native geometry site: " + id)
+			continue
+		var marker := Marker2D.new()
+		marker.name = id
+		marker.position = Vector2(float(site.point[0]), float(site.point[1]))
+		marker.set_meta("label", str(site.get("label", id)))
+		map.get_node("Sites").add_child(marker)
+		_geometry_nodes.append(marker)
+	for prop in declaration.get("props", []):
+		var texture: Texture2D = textures[str(prop.id)]
+		var sprite := Sprite2D.new()
+		sprite.name = str(prop.id)
+		sprite.texture = texture
+		sprite.position = Vector2(float(prop.position[0]), float(prop.position[1]))
+		sprite.centered = false
+		sprite.offset = Vector2(-texture.get_width() / 2.0, -texture.get_height())
+		map.get_node("Objects").add_child(sprite)
+		_geometry_nodes.append(sprite)
+		if prop.has("footprint"):
+			var rect: Array = prop.footprint
+			var shape := RectangleShape2D.new()
+			shape.size = Vector2(float(rect[2]), float(rect[3]))
+			var solid := CollisionShape2D.new()
+			solid.shape = shape
+			solid.position = sprite.position + Vector2(float(rect[0]), float(rect[1])) + shape.size / 2.0
+			map.get_node("Solids").add_child(solid)
+			_geometry_nodes.append(solid)
+	_grids.clear()
+	_build_grid()
 
 func can_enter(next: String) -> bool:
 	return bool(_access.get(next, true))
@@ -193,6 +249,8 @@ func load_map(next: String, _spawn: String) -> void:
 		remove_child(map)
 		map.queue_free()
 	key = next
+	_geometry_signature = ""
+	_geometry_nodes.clear()
 	_access_shapes.clear()
 	map = packed.instantiate()
 	add_child(map)
@@ -204,6 +262,7 @@ func load_map(next: String, _spawn: String) -> void:
 	for exit in map.get_node("Exits").get_children():
 		(exit as Area2D).body_entered.connect(_on_exit_entered.bind(exit))
 		(exit as Area2D).body_exited.connect(_on_exit_left)
+	_apply_geometry_bindings(field.snapshot)
 	_refresh_access_geometry()
 	_build_walls()
 
@@ -312,6 +371,7 @@ func _build_grid() -> void:
 	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
 	grid.update()
 	_grids[key] = grid
+	_blocked_rects[key] = []
 	var solids := map.get_node_or_null("Solids")
 	if solids == null: return
 	for shape_node in solids.get_children():
@@ -319,6 +379,7 @@ func _build_grid() -> void:
 		if cs == null or cs.disabled or not (cs.shape is RectangleShape2D): continue
 		var half: Vector2 = (cs.shape as RectangleShape2D).size / 2.0
 		var rect := Rect2(cs.position - half, half * 2.0).grow_individual(10, 1, 10, 14)
+		_blocked_rects[key].append(rect)
 		var x0 := maxi(0, int(ceil((rect.position.x - 8.0) / 16.0)))
 		var y0 := maxi(0, int(ceil((rect.position.y - 8.0) / 16.0)))
 		var x1 := mini(grid.region.size.x - 1, int(floor((rect.end.x - 8.0) / 16.0)))
@@ -330,7 +391,10 @@ func nav_grid(_walker: CharacterBody2D) -> AStarGrid2D: return _grids[key]
 func walkable(p: Vector2, _walker: CharacterBody2D = null) -> bool:
 	var grid: AStarGrid2D = _grids.get(key)
 	var c := Vector2i(p / 16.0)
-	return grid != null and grid.region.has_point(c) and not grid.is_point_solid(c)
+	if grid == null or not grid.region.has_point(c) or grid.is_point_solid(c): return false
+	for rect: Rect2 in _blocked_rects.get(key, []):
+		if rect.has_point(p): return false
+	return true
 
 ## 室外楼体挡人物视线；室内按当前房间显示。
 func _build_walls() -> void:
@@ -384,7 +448,12 @@ func sight_region(cell: Vector2i) -> String:
 	return key
 
 func room_of(p: Vector2) -> String: return key + ":" + sight_region(Vector2i((p / 32.0).floor()))
-func entered_room(p: Vector2) -> String: return room_of(p) if sight_interior(Vector2i((p / 32.0).floor())) else ""
+func entered_room(p: Vector2) -> String:
+	if map == null: return ""
+	if map.has_meta("outdoor_core"):
+		var size: Vector2 = map.get_meta("map_size", Vector2.ZERO)
+		return room_of(p) if Rect2(Vector2.ZERO, size).has_point(p) and walkable(p) else ""
+	return room_of(p) if sight_interior(Vector2i((p / 32.0).floor())) else ""
 func room_name(_p: Vector2) -> String: return str(map.get_meta("title", key)) if map else ""
 
 # ----------------------------------------------------------------- sites ---

@@ -26,10 +26,12 @@ python language_core/tools/check_dv.py --format json <source.dv>
 玩家与 AI 侦探共用正式宿主。游戏启动参数在 `--` 后传入，例如：
 
 ```powershell
-& $env:GODOT --path godot_csharp -- --dv-controller=player
-& $env:GODOT --path godot_csharp -- --dv-controller=ai
+& $env:GODOT --path godot_csharp -- --dv-controller=player --dv-speed=4
+& $env:GODOT --path godot_csharp -- --dv-controller=ai --dv-speed=4
 ```
 
 Main 场景也可通过 controller、viewer、campaign_options 导出属性设置；只在打开会话前生效。可选 `--dv-auto-start` 跳过标题页的开始按钮，不自动选择玩家候选。缺失几何、人物资源或站点会产生失败回执，不能作为成功移动。
 
 VS Code 默认打开 `godot_csharp/DualOntologyWorldEngine.sln`（游戏与 Session），语言工具使用解决方案选择器切换 `language_core/LanguageCore.sln`。历史 artifacts、tmp、scratch 保留在磁盘，工作区排除其自动发现与监视，避免测试快照被当作现役工程。
+
+宿主播放默认四倍速，可用 `--dv-speed=1` 或 Main.playback_speed 调整。倍率应用到Godot时间，物理帧频随倍率增加以保持单步物理间隔；DV分钟费用、预算和判断仍由原动作结算。输入证据记录所用倍率和物理帧频，四倍播放不作为Core纯计算性能提升的证据。
