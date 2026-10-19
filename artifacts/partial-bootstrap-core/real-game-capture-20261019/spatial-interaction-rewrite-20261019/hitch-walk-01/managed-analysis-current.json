@@ -1,0 +1,5 @@
+{
+  "exit_code": 0,
+  "parser": "dotnet-trace 10; source runtime EventPipe sampling",
+  "scope": "first 200 real seconds plus tool attach timing; aggregate thread samples, not per-hitch CPU causal attribution"
+}
