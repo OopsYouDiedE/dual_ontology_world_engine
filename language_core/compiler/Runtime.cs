@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Collections;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Numerics;
@@ -17,7 +18,20 @@ public static class R
     public static string Text(object x) => x as string ?? throw new Exception("Expected Text");
     public static double Num(object x) => x is double n && double.IsFinite(n) ? n : throw new Exception("Expected finite Number");
     public static bool Bool(object x) => x is bool b ? b : throw new Exception("Expected Bool");
-    public static List<object> Items(object x) => x as List<object> ?? throw new Exception("Expected List");
+    public static IReadOnlyList<object> Items(object x) => TryItems(x, out var items)
+        ? items : throw new Exception("Expected List");
+    // Read interface is not a value-domain predicate: external arrays and other
+    // IReadOnlyList implementations are deliberately not accepted as DV lists.
+    public static bool IsDvList(object value) => value is List<object> or FrozenList;
+    public static bool TryItems(object value, out IReadOnlyList<object> items)
+    {
+        switch (value)
+        {
+            case List<object> mutable: items = mutable; return true;
+            case FrozenList frozen: items = frozen; return true;
+            default: items = null!; return false;
+        }
+    }
     private static readonly object NumberZero = 0d;
     private static readonly object NumberOne = 1d;
     private static readonly object NumberMinusOne = -1d;
@@ -69,8 +83,8 @@ public static class R
     public static object slice(object a, object start, object count) => Text(a).Substring(Index(start), Index(count));
     public static object chr(object a, object i) => Text(a)[Index(i)].ToString();
     public static object code(object a) => Text(a).Length == 1 ? (double)Text(a)[0] : throw new Exception("Expected one UTF-16 unit");
-    public static object show(object a) => a switch { string s => s, Rational q => q.ToString(), double n => n.ToString("R", CultureInfo.InvariantCulture), bool b => b ? "true" : "false", List<object> list => FormatList(list), _ => throw new Exception("Cannot format value") };
-    private static string FormatList(List<object> list)
+    public static object show(object a) => a switch { string s => s, Rational q => q.ToString(), double n => n.ToString("R", CultureInfo.InvariantCulture), bool b => b ? "true" : "false", List<object> list => FormatList(list), FrozenList frozen => FormatList(frozen), _ => throw new Exception("Cannot format value") };
+    private static string FormatList(IReadOnlyList<object> list)
     {
         var sb = new StringBuilder("[");
         for (var i = 0; i < list.Count; i++)
@@ -97,7 +111,14 @@ public static class R
             result.Add(Bool(eq((double)i, index)) ? value : ReadItem(items, i));
         return result;
     }
-    public static object count(object a) => (double)Items(a).Count;
+    public static object count(object a) => a switch
+    {
+        FrozenList frozen => (double)frozen.Count,
+        List<object> mutable => (double)mutable.Count,
+        _ => (double)Items(a).Count
+    };
+    private static object RawItem(object owner, int index) => owner is FrozenList frozen
+        ? frozen[index] : (owner as List<object> ?? throw new Exception("Expected List"))[index];
     public static object record_index(object record, object key)
     {
         var entries = Items(record);
@@ -106,14 +127,14 @@ public static class R
             if (entries.Count >= 8)
             {
                 var frozen = record as FrozenList;
-                if (frozen is null && MutableStates.TryGetValue(entries, out var state)) frozen = state.Backbone;
-                var index = frozen is not null ? FrozenIndex(frozen) : MutableIndex(entries);
+                if (frozen is null && entries is List<object> mutable && MutableStates.TryGetValue(mutable, out var state)) frozen = state.Backbone;
+                var index = frozen is not null ? FrozenIndex(frozen) : MutableIndex((List<object>)entries);
                 if (index is not null) return index.TryGetValue(name, out var found) ? (double)found : -1d;
             }
             for (var i = entries.Count - 1; i >= 0; i--)
             {
                 var entry = entries[i];
-                var k = entry is List<object> pl && pl.Count > 0 ? pl[0] : Items(entry)[0];
+                var k = RawItem(entry, 0);
                 if (ReferenceEquals(k, name) || (k is string s && string.Equals(s, name, StringComparison.Ordinal)))
                     return (double)i;
             }
@@ -122,7 +143,7 @@ public static class R
         for (var i = entries.Count - 1; i >= 0; i--)
         {
             var entry = entries[i];
-            var k = entry is List<object> pl && pl.Count > 0 ? pl[0] : Items(entry)[0];
+            var k = RawItem(entry, 0);
             if (Bool(eq(k, key))) return (double)i;
         }
         return -1d;
@@ -136,15 +157,14 @@ public static class R
             if (entries.Count >= 8)
             {
                 var frozen = record as FrozenList;
-                if (frozen is null && MutableStates.TryGetValue(entries, out var state)) frozen = state.Backbone;
-                var index = frozen is not null ? FrozenIndex(frozen) : MutableIndex(entries);
+                if (frozen is null && entries is List<object> mutable && MutableStates.TryGetValue(mutable, out var state)) frozen = state.Backbone;
+                var index = frozen is not null ? FrozenIndex(frozen) : MutableIndex((List<object>)entries);
                 if (index is not null)
                 {
                     if (index.TryGetValue(name, out foundIndex))
                     {
                         var pair = entries[foundIndex];
-                        var pairItems = pair is List<object> pl ? pl : Items(pair);
-                        var val = pairItems[1];
+                        var val = RawItem(pair, 1);
                         if (record is not FrozenList && val is FrozenList)
                             return ReadItem(ReadItem(record, foundIndex), 1);
                         return val;
@@ -157,7 +177,7 @@ public static class R
             for (var i = entries.Count - 1; i >= 0; i--)
             {
                 var entry = entries[i];
-                var k = entry is List<object> pl && pl.Count > 0 ? pl[0] : Items(entry)[0];
+                var k = RawItem(entry, 0);
                 if (ReferenceEquals(k, name) || (k is string s && string.Equals(s, name, StringComparison.Ordinal)))
                 {
                     foundIndex = i;
@@ -170,7 +190,7 @@ public static class R
             for (var i = entries.Count - 1; i >= 0; i--)
             {
                 var entry = entries[i];
-                var k = entry is List<object> pl && pl.Count > 0 ? pl[0] : Items(entry)[0];
+                var k = RawItem(entry, 0);
                 if (Bool(eq(k, key)))
                 {
                     foundIndex = i;
@@ -185,8 +205,7 @@ public static class R
             return fallback;
         }
         var p = entries[foundIndex];
-        var pItems = p is List<object> pl2 ? pl2 : Items(p);
-        var v = pItems[1];
+        var v = RawItem(p, 1);
         if (record is not FrozenList && v is FrozenList)
             return ReadItem(ReadItem(record, foundIndex), 1);
         return v;
@@ -199,13 +218,18 @@ public static class R
     private static bool SameValue(object a, object b)
     {
         if (ReferenceEquals(a, b) || EqValue(a, b)) return true;
-        if (a is not List<object> left || b is not List<object> right || left.Count != right.Count) return false;
+        if (!TryItems(a, out var left) || !TryItems(b, out var right) || left.Count != right.Count) return false;
         var leftBase = a as FrozenList;
         var rightBase = b as FrozenList;
-        if (leftBase is null && MutableStates.TryGetValue(left, out var ls)) leftBase = ls.Backbone;
-        if (rightBase is null && MutableStates.TryGetValue(right, out var rs)) rightBase = rs.Backbone;
+        if (leftBase is null && left is List<object> leftMutable && MutableStates.TryGetValue(leftMutable, out var ls)) leftBase = ls.Backbone;
+        if (rightBase is null && right is List<object> rightMutable && MutableStates.TryGetValue(rightMutable, out var rs)) rightBase = rs.Backbone;
         if (leftBase is not null && ReferenceEquals(leftBase, rightBase)) return true;
-        // Different structural hashes cannot reject equality: exact and floating numbers compare by value.
+        // The snapshot identity hash distinguishes exact/floating representation.
+        // Only the value-compatible membership hash may reject structural equality.
+        // Numeric collisions deliberately fall through to the original ordered comparison.
+        if (leftBase is not null && rightBase is not null
+            && TryMembershipHash(leftBase, out var leftHash)
+            && TryMembershipHash(rightBase, out var rightHash) && leftHash != rightHash) return false;
         for (var i = 0; i < left.Count; i++)
             if (!SameValue(left[i], right[i])) return false;
         return true;
@@ -218,7 +242,7 @@ public static class R
         if (value is string name)
         {
             var frozen = items as FrozenList;
-            if (frozen is null && MutableStates.TryGetValue(values, out var state)) frozen = state.Backbone;
+            if (frozen is null && values is List<object> mutable && MutableStates.TryGetValue(mutable, out var state)) frozen = state.Backbone;
             if (frozen is not null && FrozenStrings(frozen) is { } strings) return strings.Contains(name);
             for (var i = 0; i < values.Count; i++)
             {
@@ -233,7 +257,7 @@ public static class R
         if (values.Count >= 8)
         {
             var frozen = items as FrozenList;
-            if (frozen is null && MutableStates.TryGetValue(values, out var state)) frozen = state.Backbone;
+            if (frozen is null && values is List<object> mutable && MutableStates.TryGetValue(mutable, out var state)) frozen = state.Backbone;
             if (frozen is not null && FrozenMembership(frozen) is { } index
                 && TryQueryMembershipHash(value, 8, out var hash))
             {
@@ -251,15 +275,16 @@ public static class R
     public static object record_with(object record, object key, object value)
     {
         var entries = Items(record);
-        var result = new List<object>(entries.Count + 1);
-        var frozen = Items(snapshot(record));
+        var entryCount = entries.Count;
+        var result = new List<object>(entryCount + 1);
+        var frozen = (FrozenList)snapshot(record);
         var found = false;
         if (key is string name)
         {
-            for (var i = 0; i < entries.Count; i++)
+            for (var i = 0; i < entryCount; i++)
             {
-                var entry = entries[i];
-                var k = entry is List<object> pl && pl.Count > 0 ? pl[0] : Items(entry)[0];
+                var entry = RawItem(record, i);
+                var k = RawItem(entry, 0);
                 if (!found && (ReferenceEquals(k, name) || (k is string s && string.Equals(s, name, StringComparison.Ordinal))))
                 {
                     result.Add(new List<object> { key, copy_value(value) });
@@ -270,10 +295,10 @@ public static class R
         }
         else
         {
-            for (var i = 0; i < entries.Count; i++)
+            for (var i = 0; i < entryCount; i++)
             {
-                var entry = entries[i];
-                var k = entry is List<object> pl && pl.Count > 0 ? pl[0] : Items(entry)[0];
+                var entry = RawItem(record, i);
+                var k = RawItem(entry, 0);
                 if (!found && Bool(eq(k, key)))
                 {
                     result.Add(new List<object> { key, copy_value(value) });
@@ -303,7 +328,7 @@ public static class R
         HashSet<string>? stringKeys = new(StringComparer.Ordinal);
         foreach (var item in frozen)
         {
-            var key = item is List<object> pl && pl.Count > 0 ? pl[0] : Items(item)[0];
+            var key = RawItem(item, 0);
             var updatedVal = record_find(updates, key, MissingSentinel);
             if (!ReferenceEquals(updatedVal, MissingSentinel))
                 result.Add(new List<object> { key, copy_value(updatedVal) });
@@ -314,7 +339,7 @@ public static class R
         }
         foreach (var item in changes)
         {
-            var itemPl = item is List<object> pl ? pl : Items(item);
+            var itemPl = Items(item);
             var key = itemPl.Count > 0 ? itemPl[0] : Items(item)[0];
             if (key is string name && stringKeys is not null)
             {
@@ -332,26 +357,28 @@ public static class R
     }
     // Specialize only well-formed string-key tables. Other ABI inputs retain
     // the original path, including its validation and first-error behavior.
-    private static bool TryStringRecordUpdate(List<object> record, List<object> changes, out List<object> result)
+    private static bool TryStringRecordUpdate(IReadOnlyList<object> record, IReadOnlyList<object> changes, out List<object> result)
     {
         result = null!;
         foreach (var item in record)
-            if (item is not List<object> { Count: 2 } pair || pair[0] is not string) return false;
+            if (!TryItems(item, out var pair) || pair.Count != 2 || pair[0] is not string) return false;
         foreach (var item in changes)
-            if (item is not List<object> { Count: 2 } pair || pair[0] is not string) return false;
+            if (!TryItems(item, out var pair) || pair.Count != 2 || pair[0] is not string) return false;
         var updates = new Dictionary<string, object>(changes.Count, StringComparer.Ordinal);
-        foreach (List<object> pair in changes) updates[(string)pair[0]] = pair[1];
+        foreach (var item in changes) { var pair = Items(item); updates[(string)pair[0]] = pair[1]; }
         var present = new HashSet<string>(StringComparer.Ordinal);
         result = new List<object>(record.Count + changes.Count);
-        foreach (List<object> pair in record)
+        foreach (var item in record)
         {
+            var pair = Items(item);
             var key = (string)pair[0];
             result.Add(updates.TryGetValue(key, out var value)
-                ? new List<object> { key, copy_value(value) } : pair);
+                ? new List<object> { key, copy_value(value) } : item);
             present.Add(key);
         }
-        foreach (List<object> pair in changes)
+        foreach (var item in changes)
         {
+            var pair = Items(item);
             var key = (string)pair[0];
             if (present.Add(key)) result.Add(new List<object> { key, copy_value(updates[key]) });
         }
@@ -362,7 +389,7 @@ public static class R
         internal readonly Dictionary<string, MemoPartition> Partitions = new(StringComparer.Ordinal);
         internal MemoPartition Partition(object key)
         {
-            var name = key is List<object> parts && parts.Count > 0 && parts[0] is string tag ? tag : "";
+            var name = TryItems(key, out var parts) && parts.Count > 0 && parts[0] is string tag ? tag : "";
             if (!Partitions.TryGetValue(name, out var partition)) Partitions[name] = partition = new();
             return partition;
         }
@@ -400,19 +427,63 @@ public static class R
             return value;
         }
     }
-    public static object is_list(object a) => a is List<object>;
+    public static object is_list(object a) => IsDvList(a);
     public static object copy_value(object value)
     {
-        if (value is not List<object>) return value;
+        if (!IsDvList(value)) return value;
         // Every copy owns its root. Descendants are immutable until accessed through this owner.
         var frozen = value is FrozenList ? value : snapshot(value);
         return Thaw((FrozenList)frozen);
     }
     // Evidence values are immutable copies. Interning changes storage, never their JSON shape.
     // Mutable copies remain independent through copy_value; only snapshot() uses this pool.
-    private sealed class FrozenList(int capacity, ulong hash) : List<object>(capacity)
+    private sealed class FrozenList : IReadOnlyList<object>
     {
-        internal readonly ulong Hash = hash;
+        // Only SnapshotValue supplies this newly allocated, fully frozen array.
+        // It is adopted once and never exposed or modified after publication.
+        private readonly object[] children;
+        private static readonly List<object> InvalidIndexSource = [];
+        internal FrozenList(object[] ownedChildren, ulong hash)
+        {
+            children = ownedChildren;
+            Hash = hash;
+        }
+        // List copies the private array into its own backing store in one pass;
+        // the immutable source remains private and cannot be mutated by its owner.
+        internal List<object> CopyRoot() => new(children);
+        public int Count => children.Length;
+        public object this[int index]
+        {
+            get
+            {
+                // Preserve List's invalid-index exception at the same read.
+                if ((uint)index >= (uint)children.Length) return InvalidIndexSource[index];
+                return children[index];
+            }
+        }
+        public Enumerator GetEnumerator() => new(children);
+        IEnumerator<object> IEnumerable<object>.GetEnumerator() => children.Length == 0
+            ? ((IEnumerable<object>)InvalidIndexSource).GetEnumerator() : GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => children.Length == 0
+            ? ((IEnumerable)InvalidIndexSource).GetEnumerator() : GetEnumerator();
+        public struct Enumerator : IEnumerator<object>
+        {
+            private readonly object[] values;
+            private int index;
+            private object? current;
+            internal Enumerator(object[] values) { this.values = values; index = 0; current = null; }
+            public object Current => current!;
+            object IEnumerator.Current => index == 0 || index == values.Length + 1
+                ? throw new InvalidOperationException("Enumeration has either not started or has already finished.") : Current;
+            public bool MoveNext()
+            {
+                if (index < values.Length) { current = values[index++]; return true; }
+                index = values.Length + 1; current = null; return false;
+            }
+            void IEnumerator.Reset() { index = 0; current = null; }
+            public void Dispose() { }
+        }
+        internal readonly ulong Hash;
         internal volatile bool IndexChecked;
         internal Dictionary<string, int>? Index;
         internal volatile bool StringsChecked;
@@ -469,7 +540,7 @@ public static class R
     private static bool TryQueryMembershipHash(object value, int depth, out ulong hash)
     {
         if (TryMembershipHash(value, out hash)) return true;
-        if (depth <= 0 || value is not List<object> list) return false;
+        if (depth <= 0 || !TryItems(value, out var list)) return false;
         hash = 14695981039346656037UL;
         foreach (var item in list)
         {
@@ -479,12 +550,12 @@ public static class R
         hash = unchecked((hash ^ (ulong)list.Count) * 1099511628211UL) ^ 5UL;
         return true;
     }
-    private static bool TryMembershipListHash(List<object> values, out ulong hash)
+    private static bool TryMembershipListHash(IReadOnlyList<object> values, out ulong hash)
     {
         hash = 14695981039346656037UL;
-        foreach (var value in values)
+        for (var i = 0; i < values.Count; i++)
         {
-            if (!TryMembershipHash(value, out var child)) return false;
+            if (!TryMembershipHash(values[i], out var child)) return false;
             hash = unchecked((hash ^ child) * 1099511628211UL);
         }
         hash = unchecked((hash ^ (ulong)values.Count) * 1099511628211UL) ^ 5UL;
@@ -534,32 +605,38 @@ public static class R
         internal FrozenList? Backbone;
         internal bool IndexChecked;
         internal Dictionary<string, int>? Index;
-        internal readonly List<WeakReference<List<object>>> Parents = new();
+        // Most thawed branches have exactly one owner. Do not allocate a List
+        // and its backing array for the common single-parent case.
+        internal WeakReference<List<object>>? Parent;
+        internal List<WeakReference<List<object>>>? OtherParents;
     }
     private static readonly ConditionalWeakTable<List<object>, MutableState> MutableStates = new();
     private static List<object> Thaw(FrozenList frozen)
     {
-        var result = new List<object>(frozen);
+        var result = frozen.CopyRoot();
         MutableStates.Add(result, new MutableState { Backbone = frozen });
         return result;
     }
     private static void LinkParent(List<object> child, List<object> parent)
     {
-        if (child is FrozenList) return;
         var state = MutableStates.GetOrCreateValue(child);
-        for (var i = state.Parents.Count - 1; i >= 0; i--)
+        if (state.Parent is null) { state.Parent = new(parent); return; }
+        if (!state.Parent.TryGetTarget(out var first)) { state.Parent.SetTarget(parent); return; }
+        if (ReferenceEquals(first, parent)) return;
+        var others = state.OtherParents ??= new();
+        for (var i = others.Count - 1; i >= 0; i--)
         {
-            if (!state.Parents[i].TryGetTarget(out var existing)) state.Parents.RemoveAt(i);
+            if (!others[i].TryGetTarget(out var existing)) others.RemoveAt(i);
             else if (ReferenceEquals(existing, parent)) return;
         }
-        state.Parents.Add(new WeakReference<List<object>>(parent));
+        others.Add(new WeakReference<List<object>>(parent));
     }
     private static void Invalidate(object value)
     {
         var list = MutableItems(value);
         if (!MutableStates.TryGetValue(list, out var initial)) return;
         // No ancestor can depend on this owner; invalidate only its own caches.
-        if (initial.Parents.Count == 0)
+        if (initial.Parent is null && initial.OtherParents is not { Count: > 0 })
         {
             initial.Backbone = null;
             initial.IndexChecked = false;
@@ -575,9 +652,15 @@ public static class R
             state.Backbone = null;
             state.IndexChecked = false;
             state.Index = null;
-            for (var i = state.Parents.Count - 1; i >= 0; i--)
-                if (state.Parents[i].TryGetTarget(out var parent)) pending.Push(parent);
-                else state.Parents.RemoveAt(i);
+            if (state.Parent is { } first)
+            {
+                if (first.TryGetTarget(out var parent)) pending.Push(parent);
+                else state.Parent = null;
+            }
+            if (state.OtherParents is { } others)
+                for (var i = others.Count - 1; i >= 0; i--)
+                    if (others[i].TryGetTarget(out var parent)) pending.Push(parent);
+                    else others.RemoveAt(i);
         }
     }
     private static Dictionary<string, int>? FrozenIndex(FrozenList record)
@@ -588,10 +671,10 @@ public static class R
             if (record.IndexChecked) return record.Index;
             var index = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var item in record)
-                if (item is not List<object> pair || pair.Count == 0)
+                if (!TryItems(item, out var pair) || pair.Count == 0)
                 { record.IndexChecked = true; return null; }
             for (var i = 0; i < record.Count; i++)
-                if (Items(record[i])[0] is string key) index[key] = i;
+                if (((FrozenList)record[i])[0] is string key) index[key] = i;
             record.Index = index;
             record.IndexChecked = true;
             return index;
@@ -606,8 +689,8 @@ public static class R
         var regular = true;
         for (var i = 0; i < record.Count; i++)
         {
-            if (record[i] is not List<object> pair) { regular = false; continue; }
-            LinkParent(pair, record);
+            if (!TryItems(record[i], out var pair)) { regular = false; continue; }
+            if (pair is List<object> mutablePair) LinkParent(mutablePair, record);
             if (pair.Count == 0) { regular = false; continue; }
             if (pair[0] is string key) index[key] = i;
         }
@@ -617,25 +700,42 @@ public static class R
     }
     private static List<object> MutableItems(object value) => value is FrozenList
         ? throw new InvalidOperationException("Cannot mutate an evidence snapshot; copy it first")
-        : Items(value);
+        : value as List<object> ?? throw new Exception("Expected List");
     private static readonly object SnapshotLock = new();
     private static readonly Dictionary<ulong, List<WeakReference<FrozenList>>> SnapshotPool = new();
     private static readonly Queue<ulong> SnapshotBucketOrder = new();
-    private static int SnapshotSweeps;
+    private static int SnapshotMaintenanceTicks;
+    private static int SnapshotGeneration = GC.CollectionCount(2);
+    private static int SnapshotSweepRemaining;
+    // Weak targets do not remove their dictionary keys or queue entries. After a
+    // full collection, retire those dead buckets incrementally, including trees
+    // reached through memo_get/put rather than the public snapshot entry point.
+    // Live identities are never evicted: memo keys and DAG sharing depend on them.
+    private static void MaintainSnapshots()
+    {
+        if ((++SnapshotMaintenanceTicks & 63) != 0) return;
+        var generation = GC.CollectionCount(2);
+        if (generation != SnapshotGeneration)
+        {
+            SnapshotGeneration = generation;
+            SnapshotSweepRemaining = SnapshotBucketOrder.Count;
+        }
+        var budget = Math.Min(128, SnapshotSweepRemaining);
+        SnapshotSweepRemaining -= budget;
+        while (budget-- > 0 && SnapshotBucketOrder.TryDequeue(out var key))
+        {
+            var bucket = SnapshotPool[key];
+            bucket.RemoveAll(reference => !reference.TryGetTarget(out _));
+            if (bucket.Count == 0) SnapshotPool.Remove(key);
+            else SnapshotBucketOrder.Enqueue(key);
+        }
+    }
     public static object snapshot(object value)
     {
         lock (SnapshotLock)
         {
-            var result = SnapshotValue(value);
-            if (++SnapshotSweeps % 1024 == 0 && SnapshotBucketOrder.Count != 0)
-            {
-                var key = SnapshotBucketOrder.Dequeue();
-                var bucket = SnapshotPool[key];
-                bucket.RemoveAll(reference => !reference.TryGetTarget(out _));
-                if (bucket.Count == 0) SnapshotPool.Remove(key);
-                else SnapshotBucketOrder.Enqueue(key);
-            }
-            return result;
+            MaintainSnapshots();
+            return SnapshotValue(value);
         }
     }
     private static object SnapshotValue(object value)
@@ -643,7 +743,8 @@ public static class R
         if (value is FrozenList || value is not List<object> items) return value;
         var state = MutableStates.GetOrCreateValue(items);
         if (state.Backbone is not null) return state.Backbone;
-        var children = new object[items.Count];
+        MaintainSnapshots();
+        var children = items.Count == 0 ? Array.Empty<object>() : new object[items.Count];
         ulong hash = 14695981039346656037UL;
         for (var i = 0; i < items.Count; i++)
         {
@@ -669,19 +770,19 @@ public static class R
                     : Equals(existing[j], children[j]);
             if (same) { state.Backbone = existing; return existing; }
         }
-        var frozen = new FrozenList(children.Length, hash);
-        frozen.AddRange(children);
+        var frozen = new FrozenList(children, hash);
         bucket.Add(new WeakReference<FrozenList>(frozen));
         state.Backbone = frozen;
         return frozen;
     }
     private static object ReadItem(object owner, int index)
     {
-        var items = Items(owner);
+        if (owner is FrozenList readOnly) return readOnly[index];
+        var items = MutableItems(owner);
         var value = items[index];
-        if (owner is not FrozenList && value is FrozenList frozen)
+        if (value is FrozenList frozen)
         {
-            // Install the branch in this mutable owner only. Sibling copies retain the frozen branch.
+            // Materialize only this owner's selected branch, preserving siblings.
             value = Thaw(frozen);
             LinkParent((List<object>)value, items);
             items[index] = value;
@@ -705,14 +806,9 @@ public static class R
         JsonValueKind.False => false,
         _ => throw new Exception("DV persistence supports arrays, text, finite numbers and booleans")
     };
-    private sealed class JsonContext
-    {
-        public bool InEvents;
-        public string? CurrentEventType;
-    }
     // Serialization preserves the supplied DV value. Evidence projection belongs
     // to explicit DV reporting APIs, never to implicit field-name filtering.
-    private static void WriteJsonFast(Utf8JsonWriter writer, object value, JsonContext? ctx = null)
+    private static void WriteJsonFast(Utf8JsonWriter writer, object value)
     {
         switch (value)
         {
@@ -749,70 +845,12 @@ public static class R
                 }
                 writer.WriteStringValue(q.ToString());
                 break;
-            case List<object> list:
-                if (list.Count == 2 && list[0] is string key)
-                {
-                    if (key is "history" or "simulations")
-                    {
-                        writer.WriteStartArray();
-                        writer.WriteStringValue(key);
-                        writer.WriteStartArray();
-                        writer.WriteEndArray();
-                        writer.WriteEndArray();
-                        return;
-                    }
-                    if (ctx != null && ctx.InEvents && ctx.CurrentEventType != "inference" && key is "adoptions" or "source_adoptions")
-                    {
-                        writer.WriteStartArray();
-                        writer.WriteStringValue(key);
-                        writer.WriteStartArray();
-                        writer.WriteEndArray();
-                        writer.WriteEndArray();
-                        return;
-                    }
-                    if (ctx != null && ctx.InEvents && (key is "world" or "simulation" or "predicted" or "trace" or "catalog" or "actions" or "departure_goals" or "first_night_base_goals" or "hearing_grants" || (ctx.CurrentEventType == "model_argument_unavailable" && key is "competitors" or "factor_coverage")))
-                    {
-                        writer.WriteStartArray();
-                        writer.WriteStringValue(key);
-                        writer.WriteStartArray();
-                        writer.WriteEndArray();
-                        writer.WriteEndArray();
-                        return;
-                    }
-                    if (key == "events" && list[1] is List<object> eventsList)
-                    {
-                        writer.WriteStartArray();
-                        writer.WriteStringValue("events");
-                        writer.WriteStartArray();
-                        var eventCtx = new JsonContext { InEvents = true };
-                        for (var i = 0; i < eventsList.Count; i++)
-                        {
-                            var evt = eventsList[i];
-                            eventCtx.CurrentEventType = null;
-                            if (evt is List<object> evtPairs)
-                            {
-                                for (var p = 0; p < evtPairs.Count; p++)
-                                {
-                                    if (evtPairs[p] is List<object> pair && pair.Count == 2 && pair[0] is "type" && pair[1] is string t)
-                                    {
-                                        eventCtx.CurrentEventType = t;
-                                        break;
-                                    }
-                                }
-                            }
-                            WriteJsonFast(writer, evt, eventCtx);
-                            if (writer.BytesPending >= 16 * 1024 * 1024)
-                                writer.Flush();
-                        }
-                        writer.WriteEndArray();
-                        writer.WriteEndArray();
-                        return;
-                    }
-                }
+            case object dvList when TryItems(dvList, out var list):
                 writer.WriteStartArray();
                 for (var i = 0; i < list.Count; i++)
                 {
-                    WriteJsonFast(writer, list[i], ctx);
+                    WriteJsonFast(writer, list[i]);
+                    if (writer.BytesPending >= 16 * 1024 * 1024) writer.Flush();
                 }
                 writer.WriteEndArray();
                 break;
@@ -838,7 +876,7 @@ public static class R
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { SkipValidation = true }))
         {
-            WriteJsonFast(writer, value, new JsonContext());
+            WriteJsonFast(writer, value);
             writer.Flush();
         }
         return Encoding.UTF8.GetString(stream.GetBuffer().AsSpan(0, checked((int)stream.Length)));
@@ -852,7 +890,7 @@ public static class R
         lock (OutputLock)
         {
             using var writer = new Utf8JsonWriter(StandardOutput, new JsonWriterOptions { SkipValidation = true });
-            WriteJsonFast(writer, value, new JsonContext());
+            WriteJsonFast(writer, value);
             writer.Flush();
             StandardOutput.Write(NewLineBytes);
             StandardOutput.Flush();
@@ -916,7 +954,7 @@ public static class R
     {
         lock (RawLock)
         {
-            if (RawEvidence is null || value is not List<object>) return false;
+            if (RawEvidence is null || !IsDvList(value)) return false;
             return RawEvidence.Reference(value);
         }
     }
@@ -930,6 +968,9 @@ public static class R
         private readonly ConditionalWeakTable<FrozenList, RawNode> nodes = new();
         private readonly HashSet<string> eventIds = new(StringComparer.Ordinal);
         private readonly ArrayBufferWriter<byte> frameBuffer = new();
+        private readonly IncrementalHash digest;
+        private Utf8JsonWriter? payloadWriter;
+        private Utf8JsonWriter? envelopeWriter;
         private long nextNode;
         private long sequence;
         private long flushedSequence;
@@ -944,8 +985,12 @@ public static class R
             partial = destination + ".partial";
             if (File.Exists(destination)) throw new IOException("Evidence destination already exists: " + destination);
             stream = new FileStream(partial, FileMode.CreateNew, FileAccess.Write, FileShare.Read, 1024 * 1024);
+            try { digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256); }
+            catch { stream.Dispose(); throw; }
             try
             {
+                payloadWriter = new Utf8JsonWriter(frameBuffer);
+                envelopeWriter = new Utf8JsonWriter(stream);
                 Frame(writer =>
                 {
                     writer.WriteStartObject();
@@ -958,7 +1003,17 @@ public static class R
                 });
                 FlushCommit();
             }
-            catch { stream.Dispose(); throw; }
+            catch { DisposeResources(); throw; }
+        }
+        private void DisposeResources()
+        {
+            // Even a failed writer disposal must release the native hash and file.
+            try { payloadWriter?.Dispose(); }
+            finally
+            {
+                try { envelopeWriter?.Dispose(); }
+                finally { try { digest.Dispose(); } finally { stream.Dispose(); } }
+            }
         }
         private void RequireOpen()
         {
@@ -977,14 +1032,25 @@ public static class R
             {
                 // A frame contains one shallow node or commit, never an expanded DAG.
                 frameBuffer.Clear();
-                using (var writer = new Utf8JsonWriter(frameBuffer)) { payload(writer); writer.Flush(); }
+                payloadWriter!.Reset(frameBuffer);
+                payload(payloadWriter);
+                payloadWriter.Flush();
                 var bytes = frameBuffer.WrittenSpan;
-                using var digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-                digest.AppendData(Encoding.ASCII.GetBytes(previous + "\n" + sequence.ToString(CultureInfo.InvariantCulture) + "\n"));
+                Span<byte> prefix = stackalloc byte[96];
+                var prefixLength = Encoding.ASCII.GetBytes(previous, prefix);
+                prefix[prefixLength++] = (byte)'\n';
+                if (!System.Buffers.Text.Utf8Formatter.TryFormat(sequence, prefix[prefixLength..], out var digits))
+                    throw new InvalidOperationException("Raw frame sequence exceeds checksum prefix");
+                prefixLength += digits;
+                prefix[prefixLength++] = (byte)'\n';
+                digest.AppendData(prefix[..prefixLength]);
                 digest.AppendData(bytes);
-                var checksum = Convert.ToHexString(digest.GetHashAndReset()).ToLowerInvariant();
-                using (var writer = new Utf8JsonWriter(stream))
+                Span<byte> hash = stackalloc byte[32];
+                if (!digest.TryGetHashAndReset(hash, out _)) throw new InvalidOperationException("SHA-256 buffer too short");
+                var checksum = Convert.ToHexString(hash).ToLowerInvariant();
                 {
+                    var writer = envelopeWriter!;
+                    writer.Reset(stream);
                     writer.WriteStartObject();
                     writer.WriteNumber("seq", sequence);
                     writer.WriteString("prev", previous);
@@ -1003,12 +1069,12 @@ public static class R
         private RawNode Node(object value)
         {
             RequireOpen();
-            if (value is not List<object>) throw new ArgumentException("Raw DAG roots must be DV lists/records");
+            if (!IsDvList(value)) throw new ArgumentException("Raw DAG roots must be DV lists/records");
             var frozen = (FrozenList)snapshot(value);
             if (nodes.TryGetValue(frozen, out var known)) return known;
             var children = new RawNode?[frozen.Count];
             for (var i = 0; i < frozen.Count; i++)
-                if (frozen[i] is List<object>) children[i] = Node(frozen[i]);
+                if (IsDvList(frozen[i])) children[i] = Node(frozen[i]);
             var id = nextNode++;
             var frame = Frame(writer =>
             {
@@ -1105,7 +1171,7 @@ public static class R
             try
             {
                 FlushCommit();
-                stream.Dispose();
+                DisposeResources();
                 // Neither incomplete frames nor failed I/O publish the completed filename.
                 File.Move(partial, destination);
                 finished = true;
@@ -1115,7 +1181,7 @@ public static class R
         internal void Abort()
         {
             failed = true;
-            stream.Dispose();
+            DisposeResources();
         }
     }
     public static object json_write(object path, object value)

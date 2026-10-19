@@ -1,0 +1,76 @@
+{
+  "numeric-validation.json": {
+    "byte_identical": true,
+    "before_sha256": "388b64ec59a09a8b2c7f4d3f472fb2275184111a1cd7b35540fa05256f3d783f",
+    "after_sha256": "388b64ec59a09a8b2c7f4d3f472fb2275184111a1cd7b35540fa05256f3d783f"
+  },
+  "semantics.json": {
+    "byte_identical": true,
+    "before_sha256": "db0f27beabb696c002cc6508801f6f305890b7dcb0ccfa1b7c1b9dc101fefa82",
+    "after_sha256": "db0f27beabb696c002cc6508801f6f305890b7dcb0ccfa1b7c1b9dc101fefa82"
+  },
+  "neutral.dag.jsonl": {
+    "byte_identical": true,
+    "before_sha256": "374d40e68942182bf81b5d382545d28552a41a1016078a990a67e3980d96fd96",
+    "after_sha256": "374d40e68942182bf81b5d382545d28552a41a1016078a990a67e3980d96fd96"
+  },
+  "failure.dag.jsonl.partial": {
+    "byte_identical": true,
+    "before_sha256": "11e02b7fb8cfdccef42bd8eaa0e4bf59f7a15faca85f63bbd5236c84bb1cadeb",
+    "after_sha256": "11e02b7fb8cfdccef42bd8eaa0e4bf59f7a15faca85f63bbd5236c84bb1cadeb"
+  },
+  "metrics": {
+    "before": {
+      "equality": {
+        "milliseconds": 1.4851,
+        "allocated_bytes": 32
+      },
+      "numeric": {
+        "milliseconds": 120.3567,
+        "allocated_bytes": 98400040,
+        "checksum": 2400000
+      },
+      "raw": {
+        "milliseconds": 581.9992,
+        "allocated_bytes": 70955576
+      },
+      "trash_allocated_bytes": 54779784,
+      "buckets_after_collection": 119913,
+      "buckets_after_idle": 45894,
+      "buckets_after_active": 115894,
+      "buckets_after_final_collection": 45894
+    },
+    "after": {
+      "equality": {
+        "milliseconds": 1.9779,
+        "allocated_bytes": 32
+      },
+      "numeric": {
+        "milliseconds": 16.5031,
+        "allocated_bytes": 40,
+        "checksum": 2400000
+      },
+      "raw": {
+        "milliseconds": 461.7187,
+        "allocated_bytes": 70374256
+      },
+      "trash_allocated_bytes": 57204960,
+      "buckets_after_collection": 136426,
+      "buckets_after_idle": 45894,
+      "buckets_after_active": 115894,
+      "buckets_after_final_collection": 45894
+    }
+  },
+  "json_integrity": {
+    "before": {
+      "expected": "[[\"history\",[\"H\"]],[\"simulations\",[\"S\"]],[\"events\",[[[\"type\",\"observation\"],[\"world\",[\"W\"]],[\"adoptions\",[\"A\"]],[\"competitors\",[\"C\"]]]]]]",
+      "actual": "[[\"history\",[\"H\"]],[\"simulations\",[\"S\"]],[\"events\",[[[\"type\",\"observation\"],[\"world\",[\"W\"]],[\"adoptions\",[\"A\"]],[\"competitors\",[\"C\"]]]]]]",
+      "complete": true
+    },
+    "after": {
+      "expected": "[[\"history\",[\"H\"]],[\"simulations\",[\"S\"]],[\"events\",[[[\"type\",\"observation\"],[\"world\",[\"W\"]],[\"adoptions\",[\"A\"]],[\"competitors\",[\"C\"]]]]]]",
+      "actual": "[[\"history\",[\"H\"]],[\"simulations\",[\"S\"]],[\"events\",[[[\"type\",\"observation\"],[\"world\",[\"W\"]],[\"adoptions\",[\"A\"]],[\"competitors\",[\"C\"]]]]]]",
+      "complete": true
+    }
+  }
+}

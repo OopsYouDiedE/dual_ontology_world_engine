@@ -786,7 +786,7 @@ fn dvp_owner_requirement_refs(action):
 
 fn dvs_actor_can_act(actor):
     let stage = dv_find(actor, "erosion_stage", "early")
-    return stage != "terminal" and stage != "death"
+    return stage != "terminal" and stage != "death" and not dv_find(actor, "incapacitated", false)
 
 // A reproducible integer stream; samples are selected only from declared options.
 fn dvs_cognitive_seed_next(seed):
@@ -824,6 +824,9 @@ fn dvs_erosion_update(actor, physical, time):
     let erosion = dv_find(actor, "erosion", false)
     if erosion == false:
         return actor
+    var incapacitated = false
+    if dv_has_key(erosion, "incapacity_when"):
+        incapacitated = dv_truth(physical, erosion.incapacity_when) == "true"
     let exposure_cell = dv_read(physical, erosion.physical_ref)
     var exposure = 0
     if dv_uncontested(exposure_cell) and rt_is_numeric_value(exposure_cell.value):
@@ -835,10 +838,13 @@ fn dvs_erosion_update(actor, physical, time):
     while i < rt_count(erosion.thresholds):
         let threshold = erosion.thresholds[i]
         if threshold.at <= exposure and rank < threshold.rank:
-            rank = threshold.rank
+            if not dv_has_key(threshold, "when") or dv_truth(physical, threshold.when) == "true":
+                rank = threshold.rank
         i = i + 1
     dv_require(0 <= rank and rank < rt_count(stages), "Invalid erosion stage")
     var result = dv_with_many(actor, {"erosion_rank": rank, "erosion_stage": stages[rank]})
+    if dv_has_key(erosion, "incapacity_when"):
+        result = dv_with(result, "incapacitated", incapacitated)
     let memory_period = dv_find(erosion, "memory_period", 1440)
     dv_require(0 < memory_period, "Erosion memory period must be positive")
     let memory_epoch = rt_floor(time / memory_period)

@@ -313,3 +313,13 @@ Session通用列表替换的ABI只新建根，保持原读取项与替换value�
 
 
 构造接口：`c2d_row_goal(row,id,when)`以完整row和最终when/id缓存时窗声明；`c2m_row_goal(row,id,when,completion,travel)`保留完整工作/到达输入；`c2m_observation_goal_templates(id,groups)`以完整groups/id缓存静态证据声明。新增构造依赖必须纳入键或owner。复用返回值沿Runtime的独立可变副本合同，不共享调用方的嵌套修改。game/entry.dv本轮未增加整链刷新守卫，动态资格成本仍待解决。
+
+## 错误性能捷径撤销与结构化批次（2026-10-19）
+
+第二章恢复既有两层规划及恢复深度，正收益移动不在根层提前结束，白天等待上限回到120；扩章保留既有模型/论证/模拟记录。恢复被删的静态观察目标与私下到达意向时窗，仪表读数按本人收据时刻保留30分钟新鲜度；旧安全读数同样可以请求复测，不恢复只允许false读数复测的限制。close返回完整actors而非删去simulations的投影。该撤销建立不同于单层窗口的新条件，不作为同条件速度提升。
+
+用户要求C#结构化与已识别问题集中完成后统一工程排错和冻结会话；未接通的剧情因果交共享任务清单，不能据声明/旗标或耗时证明已发生。当前核查与源指纹见csharp-runtime-20261019/GEMINI-ROLLBACK-MECHANISMS.md与GEMINI-ATTACHMENT-SOURCE-AUDIT.md。
+
+erosion.thresholds的条目可选when；原剂量和rank条件成立后，仅物理世界中该条件为真才推进该级，缺省保持原即时阈值。erosion可选incapacity_when，将实际物理真值投影到actor.incapacitated，未知不冒充已发生；dvs_actor_can_act同时排除该失能投影及terminal/death。无该声明不新增投影字段，原rank单调和认知截断规则保留。内容负责症状/治疗与生命法则，调度不按角色或专用字段判断；该因果修正属于新条件，不作同条件性能比较。
+
+c2d_row可显式携带listeners与已有completed_action_requirement，c2d_action及目标构造共同透传、核对；未声明listeners保持原机会参与者推导。完成要求读取正式成功Complete记录，不以预测/开卡/失败检视替代；received_speech_requirement仍要求指定speaker/action的实际source/parse回执。个人表态使用owned_decision与共同价值比较，提案、投票、决议和执行分别声明；汇总不发布世界效果。物件转移采用单一holder/location权威，派生标志保持同步，现场观察不泄漏远端位置。实现与未接通的内容链分别列入本批报告。

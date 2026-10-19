@@ -1,0 +1,8369 @@
+{
+  "hashes": {
+    "frozen-04-integrated\\source-hashes.json": {
+      "mismatches": []
+    },
+    "frozen-04-integrated\\standard-yi\\source-hashes.json": {
+      "mismatches": []
+    }
+  },
+  "dag": {
+    "format": "dv-raw-dag-v1",
+    "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\partial-bootstrap-core\\takeover-repair-20261018\\motivation-counterfactual-20261018\\csharp-runtime-20261019\\frozen-04-integrated\\standard-yi\\raw-events.dag.jsonl.partial",
+    "source_sha256": "f25442d0b082ac982c574188b3212918d655eade250667f65f75875e5d8f90da",
+    "source_bytes": 223615231,
+    "validated_frames": 571340,
+    "validated_nodes": 551999,
+    "source_changed_during_scan": false,
+    "committed_events": 19339,
+    "last_committed_event": "e19338",
+    "validated_bytes": 223615231,
+    "last_commit_bytes": 223615231,
+    "residual_tail_bytes": 0,
+    "uncommitted_suffix_bytes": 0,
+    "initial_checkpoint_observed": true,
+    "final_checkpoint_observed": false,
+    "seal_observed": false,
+    "last_checkpoint": {
+      "name": "initial",
+      "root": 27103,
+      "events": 1,
+      "frame": 27106
+    },
+    "checkpoint_commits": [
+      {
+        "name": "initial",
+        "root": 27103,
+        "events": 1,
+        "frame": 27106
+      }
+    ],
+    "invalid_tail": null,
+    "complete_sealing": false,
+    "scope": "validated committed event prefix only; no inferred final session state",
+    "uncompleted_computation": "unknown; calculations without a committed event are not reconstructed",
+    "original_tail_preserved": true
+  },
+  "tail": [
+    {
+      "event_id": "e19135",
+      "type": "cost_quote",
+      "actor": "huo",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19128"
+      ]
+    },
+    {
+      "event_id": "e19136",
+      "type": "host_completion",
+      "actor": "huo",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19135"
+      ]
+    },
+    {
+      "event_id": "e19137",
+      "type": "action_execution",
+      "actor": "huo",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19136"
+      ]
+    },
+    {
+      "event_id": "e19138",
+      "type": "observation",
+      "actor": "huo",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19137",
+        "e19126"
+      ]
+    },
+    {
+      "event_id": "e19139",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19138",
+        "e19134"
+      ]
+    },
+    {
+      "event_id": "e19140",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19138",
+        "e19139",
+        "e19134",
+        "e11382",
+        "e11423",
+        "e13137",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19141",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19140"
+      ]
+    },
+    {
+      "event_id": "e19142",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19141"
+      ]
+    },
+    {
+      "event_id": "e19143",
+      "type": "action_selected",
+      "actor": "huo",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19142",
+        "e19138",
+        "e7782",
+        "e7696",
+        "e17338",
+        "e17680",
+        "e17468",
+        "e17719",
+        "e7158",
+        "e7187",
+        "e11576",
+        "e11634",
+        "e7959",
+        "e7972",
+        "e7888",
+        "e17556",
+        "e17758",
+        "e17642",
+        "e17799",
+        "e19124",
+        "e17862",
+        "e7674",
+        "e7649",
+        "e17228",
+        "e17405",
+        "e7128",
+        "e11522",
+        "e7836",
+        "e17510",
+        "e17606",
+        "e7816",
+        "e7797",
+        "e7751",
+        "e3279",
+        "e3086"
+      ]
+    },
+    {
+      "event_id": "e19144",
+      "type": "planning_choice",
+      "actor": "huo",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19143"
+      ]
+    },
+    {
+      "event_id": "e19145",
+      "type": "action_scheduled",
+      "actor": "huo",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19144"
+      ]
+    },
+    {
+      "event_id": "e19146",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19147",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2422,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19141"
+      ]
+    },
+    {
+      "event_id": "e19148",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2422,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19147"
+      ]
+    },
+    {
+      "event_id": "e19149",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2422,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19148"
+      ]
+    },
+    {
+      "event_id": "e19150",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2422,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19149",
+        "e19139"
+      ]
+    },
+    {
+      "event_id": "e19151",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2422,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19150"
+      ]
+    },
+    {
+      "event_id": "e19152",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2422,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19150",
+        "e19151",
+        "e11382",
+        "e11423",
+        "e13359",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19153",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2422,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19152"
+      ]
+    },
+    {
+      "event_id": "e19154",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2422,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19153"
+      ]
+    },
+    {
+      "event_id": "e19155",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2422,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19156",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2424,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19153"
+      ]
+    },
+    {
+      "event_id": "e19157",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2424,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19156"
+      ]
+    },
+    {
+      "event_id": "e19158",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2424,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19157"
+      ]
+    },
+    {
+      "event_id": "e19159",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2424,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19158",
+        "e19151"
+      ]
+    },
+    {
+      "event_id": "e19160",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2424,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19159"
+      ]
+    },
+    {
+      "event_id": "e19161",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2424,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19159",
+        "e19160",
+        "e11382",
+        "e11423",
+        "e13137",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19162",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2424,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19161"
+      ]
+    },
+    {
+      "event_id": "e19163",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2424,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19162"
+      ]
+    },
+    {
+      "event_id": "e19164",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2424,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19165",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2426,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19162"
+      ]
+    },
+    {
+      "event_id": "e19166",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2426,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19165"
+      ]
+    },
+    {
+      "event_id": "e19167",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2426,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19166"
+      ]
+    },
+    {
+      "event_id": "e19168",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2426,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19167",
+        "e19160"
+      ]
+    },
+    {
+      "event_id": "e19169",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2426,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19168"
+      ]
+    },
+    {
+      "event_id": "e19170",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2426,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19168",
+        "e19169",
+        "e11382",
+        "e11423",
+        "e13359",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19171",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2426,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19170"
+      ]
+    },
+    {
+      "event_id": "e19172",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2426,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19171"
+      ]
+    },
+    {
+      "event_id": "e19173",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2426,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19174",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2428,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19171"
+      ]
+    },
+    {
+      "event_id": "e19175",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2428,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19174"
+      ]
+    },
+    {
+      "event_id": "e19176",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2428,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19175"
+      ]
+    },
+    {
+      "event_id": "e19177",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2428,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19176",
+        "e19169"
+      ]
+    },
+    {
+      "event_id": "e19178",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2428,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19177"
+      ]
+    },
+    {
+      "event_id": "e19179",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2428,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19177",
+        "e19178",
+        "e11382",
+        "e11423",
+        "e13137",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19180",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2428,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19179"
+      ]
+    },
+    {
+      "event_id": "e19181",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2428,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19180"
+      ]
+    },
+    {
+      "event_id": "e19182",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2428,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19183",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2430,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19180"
+      ]
+    },
+    {
+      "event_id": "e19184",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2430,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19183"
+      ]
+    },
+    {
+      "event_id": "e19185",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2430,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19184"
+      ]
+    },
+    {
+      "event_id": "e19186",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2430,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19185",
+        "e19178"
+      ]
+    },
+    {
+      "event_id": "e19187",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2430,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19186"
+      ]
+    },
+    {
+      "event_id": "e19188",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2430,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19186",
+        "e19187",
+        "e11382",
+        "e11423",
+        "e13359",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19189",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2430,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19188"
+      ]
+    },
+    {
+      "event_id": "e19190",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2430,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19189"
+      ]
+    },
+    {
+      "event_id": "e19191",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2430,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19192",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2432,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19189"
+      ]
+    },
+    {
+      "event_id": "e19193",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2432,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19192"
+      ]
+    },
+    {
+      "event_id": "e19194",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2432,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19193"
+      ]
+    },
+    {
+      "event_id": "e19195",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2432,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19194",
+        "e19187"
+      ]
+    },
+    {
+      "event_id": "e19196",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2432,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19195"
+      ]
+    },
+    {
+      "event_id": "e19197",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2432,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19195",
+        "e19196",
+        "e11382",
+        "e11423",
+        "e13137",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19198",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2432,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19197"
+      ]
+    },
+    {
+      "event_id": "e19199",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2432,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19198"
+      ]
+    },
+    {
+      "event_id": "e19200",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2432,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19201",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2434,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19198"
+      ]
+    },
+    {
+      "event_id": "e19202",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2434,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19201"
+      ]
+    },
+    {
+      "event_id": "e19203",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2434,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19202"
+      ]
+    },
+    {
+      "event_id": "e19204",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2434,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19203",
+        "e19196"
+      ]
+    },
+    {
+      "event_id": "e19205",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2434,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19204"
+      ]
+    },
+    {
+      "event_id": "e19206",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2434,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19204",
+        "e19205",
+        "e11382",
+        "e11423",
+        "e13359",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19207",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2434,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19206"
+      ]
+    },
+    {
+      "event_id": "e19208",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2434,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19207"
+      ]
+    },
+    {
+      "event_id": "e19209",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2434,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19210",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2436,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19207"
+      ]
+    },
+    {
+      "event_id": "e19211",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2436,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19210"
+      ]
+    },
+    {
+      "event_id": "e19212",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2436,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19211"
+      ]
+    },
+    {
+      "event_id": "e19213",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2436,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19212",
+        "e19205"
+      ]
+    },
+    {
+      "event_id": "e19214",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2436,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19213"
+      ]
+    },
+    {
+      "event_id": "e19215",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2436,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19213",
+        "e19214",
+        "e11382",
+        "e11423",
+        "e13137",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19216",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2436,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19215"
+      ]
+    },
+    {
+      "event_id": "e19217",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2436,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19216"
+      ]
+    },
+    {
+      "event_id": "e19218",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2436,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19219",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2438,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19216"
+      ]
+    },
+    {
+      "event_id": "e19220",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2438,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19219"
+      ]
+    },
+    {
+      "event_id": "e19221",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2438,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19220"
+      ]
+    },
+    {
+      "event_id": "e19222",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2438,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19221",
+        "e19214"
+      ]
+    },
+    {
+      "event_id": "e19223",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2438,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19222"
+      ]
+    },
+    {
+      "event_id": "e19224",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2438,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19222",
+        "e19223",
+        "e11382",
+        "e11423",
+        "e13359",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19225",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2438,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19224"
+      ]
+    },
+    {
+      "event_id": "e19226",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2438,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19225"
+      ]
+    },
+    {
+      "event_id": "e19227",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2438,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19228",
+      "type": "cost_quote",
+      "actor": "lucian",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18343"
+      ]
+    },
+    {
+      "event_id": "e19229",
+      "type": "host_completion",
+      "actor": "lucian",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19228"
+      ]
+    },
+    {
+      "event_id": "e19230",
+      "type": "action_execution",
+      "actor": "lucian",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19229"
+      ]
+    },
+    {
+      "event_id": "e19231",
+      "type": "observation",
+      "actor": "lucian",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19230",
+        "e18985"
+      ]
+    },
+    {
+      "event_id": "e19232",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19225"
+      ]
+    },
+    {
+      "event_id": "e19233",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19232"
+      ]
+    },
+    {
+      "event_id": "e19234",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19233"
+      ]
+    },
+    {
+      "event_id": "e19235",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19234",
+        "e19223"
+      ]
+    },
+    {
+      "event_id": "e19236",
+      "type": "co_presence",
+      "actor": "lucian",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19235",
+        "e19231"
+      ]
+    },
+    {
+      "event_id": "e19237",
+      "type": "action_selected",
+      "actor": "lucian",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19235",
+        "e19236",
+        "e19231",
+        "e8281",
+        "e7702",
+        "e17236",
+        "e17348",
+        "e17477",
+        "e17519",
+        "e18293",
+        "e18310",
+        "e18330",
+        "e9134",
+        "e9160",
+        "e9076",
+        "e17614",
+        "e17652",
+        "e17729",
+        "e17769",
+        "e17839",
+        "e17880",
+        "e18266",
+        "e17972",
+        "e6720",
+        "e17056",
+        "e17415",
+        "e8950",
+        "e17567",
+        "e17692",
+        "e17811",
+        "e8241",
+        "e8218",
+        "e1597"
+      ]
+    },
+    {
+      "event_id": "e19238",
+      "type": "planning_choice",
+      "actor": "lucian",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19237"
+      ]
+    },
+    {
+      "event_id": "e19239",
+      "type": "action_scheduled",
+      "actor": "lucian",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19238"
+      ]
+    },
+    {
+      "event_id": "e19240",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19239",
+        "e19235"
+      ]
+    },
+    {
+      "event_id": "e19241",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19239",
+        "e19240",
+        "e19235",
+        "e11382",
+        "e11423",
+        "e13137",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19242",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19241"
+      ]
+    },
+    {
+      "event_id": "e19243",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19242"
+      ]
+    },
+    {
+      "event_id": "e19244",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19245",
+      "type": "cost_quote",
+      "actor": "quer",
+      "game_time": 2441,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18351"
+      ]
+    },
+    {
+      "event_id": "e19246",
+      "type": "host_completion",
+      "actor": "quer",
+      "game_time": 2441,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19245"
+      ]
+    },
+    {
+      "event_id": "e19247",
+      "type": "action_execution",
+      "actor": "quer",
+      "game_time": 2441,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19246"
+      ]
+    },
+    {
+      "event_id": "e19248",
+      "type": "observation",
+      "actor": "quer",
+      "game_time": 2441,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19247",
+        "e19011"
+      ]
+    },
+    {
+      "event_id": "e19249",
+      "type": "co_presence",
+      "actor": "quer",
+      "game_time": 2441,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19248"
+      ]
+    },
+    {
+      "event_id": "e19250",
+      "type": "observation",
+      "actor": "quer",
+      "game_time": 2441,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19249"
+      ]
+    },
+    {
+      "event_id": "e19251",
+      "type": "action_selected",
+      "actor": "quer",
+      "game_time": 2441,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19248",
+        "e19250",
+        "e7682",
+        "e7708",
+        "e17343",
+        "e17409",
+        "e17514",
+        "e17561",
+        "e7770",
+        "e7079",
+        "e11390",
+        "e11270",
+        "e11475",
+        "e11317",
+        "e7882",
+        "e17647",
+        "e17686",
+        "e17764",
+        "e17805",
+        "e18349",
+        "e18323",
+        "e7657",
+        "e17232",
+        "e17473",
+        "e7755",
+        "e11360",
+        "e11433",
+        "e7852",
+        "e17610",
+        "e17725",
+        "e7817",
+        "e7901",
+        "e7832",
+        "e1596"
+      ]
+    },
+    {
+      "event_id": "e19252",
+      "type": "planning_choice",
+      "actor": "quer",
+      "game_time": 2441,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19251"
+      ]
+    },
+    {
+      "event_id": "e19253",
+      "type": "action_scheduled",
+      "actor": "quer",
+      "game_time": 2441,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19252"
+      ]
+    },
+    {
+      "event_id": "e19254",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2441,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19255",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19242"
+      ]
+    },
+    {
+      "event_id": "e19256",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19255"
+      ]
+    },
+    {
+      "event_id": "e19257",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19256"
+      ]
+    },
+    {
+      "event_id": "e19258",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19257",
+        "e19240"
+      ]
+    },
+    {
+      "event_id": "e19259",
+      "type": "cost_quote",
+      "actor": "quer",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19252"
+      ]
+    },
+    {
+      "event_id": "e19260",
+      "type": "host_completion",
+      "actor": "quer",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19259"
+      ]
+    },
+    {
+      "event_id": "e19261",
+      "type": "action_execution",
+      "actor": "quer",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19260"
+      ]
+    },
+    {
+      "event_id": "e19262",
+      "type": "observation",
+      "actor": "quer",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19261",
+        "e19250"
+      ]
+    },
+    {
+      "event_id": "e19263",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19262",
+        "e19258"
+      ]
+    },
+    {
+      "event_id": "e19264",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19262",
+        "e19263",
+        "e19258",
+        "e11382",
+        "e11423",
+        "e13359",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19265",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19264"
+      ]
+    },
+    {
+      "event_id": "e19266",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19265"
+      ]
+    },
+    {
+      "event_id": "e19267",
+      "type": "action_selected",
+      "actor": "quer",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19266",
+        "e19262",
+        "e7682",
+        "e7708",
+        "e17343",
+        "e17409",
+        "e17514",
+        "e17561",
+        "e7770",
+        "e7079",
+        "e11390",
+        "e11270",
+        "e11475",
+        "e11317",
+        "e7882",
+        "e17647",
+        "e17686",
+        "e17764",
+        "e17805",
+        "e19248",
+        "e18323",
+        "e7657",
+        "e17232",
+        "e17473",
+        "e7755",
+        "e11360",
+        "e11433",
+        "e7852",
+        "e17610",
+        "e17725",
+        "e7817",
+        "e7901",
+        "e7832",
+        "e1596"
+      ]
+    },
+    {
+      "event_id": "e19268",
+      "type": "planning_choice",
+      "actor": "quer",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19267"
+      ]
+    },
+    {
+      "event_id": "e19269",
+      "type": "action_scheduled",
+      "actor": "quer",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19268"
+      ]
+    },
+    {
+      "event_id": "e19270",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19271",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2444,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19265"
+      ]
+    },
+    {
+      "event_id": "e19272",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2444,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19271"
+      ]
+    },
+    {
+      "event_id": "e19273",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2444,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19272"
+      ]
+    },
+    {
+      "event_id": "e19274",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2444,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19273",
+        "e19263"
+      ]
+    },
+    {
+      "event_id": "e19275",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2444,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19274"
+      ]
+    },
+    {
+      "event_id": "e19276",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2444,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19274",
+        "e19275",
+        "e11382",
+        "e11423",
+        "e13137",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19277",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2444,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19276"
+      ]
+    },
+    {
+      "event_id": "e19278",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2444,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19277"
+      ]
+    },
+    {
+      "event_id": "e19279",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2444,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19280",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2446,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19277"
+      ]
+    },
+    {
+      "event_id": "e19281",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2446,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19280"
+      ]
+    },
+    {
+      "event_id": "e19282",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2446,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19281"
+      ]
+    },
+    {
+      "event_id": "e19283",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2446,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19282",
+        "e19275"
+      ]
+    },
+    {
+      "event_id": "e19284",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2446,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19283"
+      ]
+    },
+    {
+      "event_id": "e19285",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2446,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19283",
+        "e19284",
+        "e11382",
+        "e11423",
+        "e13359",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19286",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2446,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19285"
+      ]
+    },
+    {
+      "event_id": "e19287",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2446,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19286"
+      ]
+    },
+    {
+      "event_id": "e19288",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2446,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19289",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2448,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19286"
+      ]
+    },
+    {
+      "event_id": "e19290",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2448,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19289"
+      ]
+    },
+    {
+      "event_id": "e19291",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2448,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19290"
+      ]
+    },
+    {
+      "event_id": "e19292",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2448,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19291",
+        "e19284"
+      ]
+    },
+    {
+      "event_id": "e19293",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2448,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19292"
+      ]
+    },
+    {
+      "event_id": "e19294",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2448,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19292",
+        "e19293",
+        "e11382",
+        "e11423",
+        "e13137",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19295",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2448,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19294"
+      ]
+    },
+    {
+      "event_id": "e19296",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2448,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19295"
+      ]
+    },
+    {
+      "event_id": "e19297",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2448,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19298",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2450,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19295"
+      ]
+    },
+    {
+      "event_id": "e19299",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2450,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19298"
+      ]
+    },
+    {
+      "event_id": "e19300",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2450,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19299"
+      ]
+    },
+    {
+      "event_id": "e19301",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2450,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19300",
+        "e19293"
+      ]
+    },
+    {
+      "event_id": "e19302",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2450,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19301"
+      ]
+    },
+    {
+      "event_id": "e19303",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2450,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19301",
+        "e19302",
+        "e11382",
+        "e11423",
+        "e13359",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19304",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2450,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19303"
+      ]
+    },
+    {
+      "event_id": "e19305",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2450,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19304"
+      ]
+    },
+    {
+      "event_id": "e19306",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2450,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19307",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2452,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19304"
+      ]
+    },
+    {
+      "event_id": "e19308",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2452,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19307"
+      ]
+    },
+    {
+      "event_id": "e19309",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2452,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19308"
+      ]
+    },
+    {
+      "event_id": "e19310",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2452,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19309",
+        "e19302"
+      ]
+    },
+    {
+      "event_id": "e19311",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2452,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19310"
+      ]
+    },
+    {
+      "event_id": "e19312",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2452,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19310",
+        "e19311",
+        "e11382",
+        "e11423",
+        "e13137",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19313",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2452,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19312"
+      ]
+    },
+    {
+      "event_id": "e19314",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2452,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19313"
+      ]
+    },
+    {
+      "event_id": "e19315",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2452,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19316",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2454,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19313"
+      ]
+    },
+    {
+      "event_id": "e19317",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2454,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19316"
+      ]
+    },
+    {
+      "event_id": "e19318",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2454,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19317"
+      ]
+    },
+    {
+      "event_id": "e19319",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2454,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19318",
+        "e19311"
+      ]
+    },
+    {
+      "event_id": "e19320",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2454,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19319"
+      ]
+    },
+    {
+      "event_id": "e19321",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2454,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19319",
+        "e19320",
+        "e11382",
+        "e11423",
+        "e13359",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19322",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2454,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19321"
+      ]
+    },
+    {
+      "event_id": "e19323",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2454,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19322"
+      ]
+    },
+    {
+      "event_id": "e19324",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2454,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19325",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2456,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19322"
+      ]
+    },
+    {
+      "event_id": "e19326",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2456,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19325"
+      ]
+    },
+    {
+      "event_id": "e19327",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2456,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19326"
+      ]
+    },
+    {
+      "event_id": "e19328",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2456,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19327",
+        "e19320"
+      ]
+    },
+    {
+      "event_id": "e19329",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2456,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19328"
+      ]
+    },
+    {
+      "event_id": "e19330",
+      "type": "action_selected",
+      "actor": "moran",
+      "game_time": 2456,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19328",
+        "e19329",
+        "e11382",
+        "e11423",
+        "e13137",
+        "e12321",
+        "e11352",
+        "e11797",
+        "e8193",
+        "e11630",
+        "e4987",
+        "e5005"
+      ]
+    },
+    {
+      "event_id": "e19331",
+      "type": "planning_choice",
+      "actor": "moran",
+      "game_time": 2456,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19330"
+      ]
+    },
+    {
+      "event_id": "e19332",
+      "type": "action_scheduled",
+      "actor": "moran",
+      "game_time": 2456,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19331"
+      ]
+    },
+    {
+      "event_id": "e19333",
+      "type": "action_wait",
+      "actor": "",
+      "game_time": 2456,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": []
+    },
+    {
+      "event_id": "e19334",
+      "type": "cost_quote",
+      "actor": "moran",
+      "game_time": 2458,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19331"
+      ]
+    },
+    {
+      "event_id": "e19335",
+      "type": "host_completion",
+      "actor": "moran",
+      "game_time": 2458,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19334"
+      ]
+    },
+    {
+      "event_id": "e19336",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2458,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19335"
+      ]
+    },
+    {
+      "event_id": "e19337",
+      "type": "observation",
+      "actor": "moran",
+      "game_time": 2458,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19336",
+        "e19329"
+      ]
+    },
+    {
+      "event_id": "e19338",
+      "type": "co_presence",
+      "actor": "moran",
+      "game_time": 2458,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19337"
+      ]
+    }
+  ],
+  "executions": [
+    {
+      "event_id": "e134",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 481,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e133"
+      ]
+    },
+    {
+      "event_id": "e254",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 482,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e253"
+      ]
+    },
+    {
+      "event_id": "e353",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 483,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e352"
+      ]
+    },
+    {
+      "event_id": "e657",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 485,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e656"
+      ]
+    },
+    {
+      "event_id": "e971",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 487,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e970"
+      ]
+    },
+    {
+      "event_id": "e1132",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 488,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e1131"
+      ]
+    },
+    {
+      "event_id": "e1230",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 489,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e1229"
+      ]
+    },
+    {
+      "event_id": "e1639",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 513,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e1638"
+      ]
+    },
+    {
+      "event_id": "e1662",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 514,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e1661"
+      ]
+    },
+    {
+      "event_id": "e1730",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 516,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e1729"
+      ]
+    },
+    {
+      "event_id": "e1748",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 517,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e1747"
+      ]
+    },
+    {
+      "event_id": "e1762",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 518,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e1761"
+      ]
+    },
+    {
+      "event_id": "e1777",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 519,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e1776"
+      ]
+    },
+    {
+      "event_id": "e1790",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 520,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e1789"
+      ]
+    },
+    {
+      "event_id": "e1805",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 521,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e1804"
+      ]
+    },
+    {
+      "event_id": "e1819",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 522,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e1818"
+      ]
+    },
+    {
+      "event_id": "e1833",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 524,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e1832"
+      ]
+    },
+    {
+      "event_id": "e2025",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 553,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2024"
+      ]
+    },
+    {
+      "event_id": "e2080",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 554,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2079"
+      ]
+    },
+    {
+      "event_id": "e2127",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 555,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2126"
+      ]
+    },
+    {
+      "event_id": "e2535",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 584,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2534"
+      ]
+    },
+    {
+      "event_id": "e2660",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 594,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2659"
+      ]
+    },
+    {
+      "event_id": "e2723",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 595,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2722"
+      ]
+    },
+    {
+      "event_id": "e2759",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 605,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2758"
+      ]
+    },
+    {
+      "event_id": "e2817",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 606,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2816"
+      ]
+    },
+    {
+      "event_id": "e2857",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 608,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2856"
+      ]
+    },
+    {
+      "event_id": "e2874",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 610,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2873"
+      ]
+    },
+    {
+      "event_id": "e2889",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 612,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2888"
+      ]
+    },
+    {
+      "event_id": "e2910",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 614,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2909"
+      ]
+    },
+    {
+      "event_id": "e2927",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 616,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2926"
+      ]
+    },
+    {
+      "event_id": "e2941",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 617,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2940"
+      ]
+    },
+    {
+      "event_id": "e2957",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 619,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2956"
+      ]
+    },
+    {
+      "event_id": "e2973",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 621,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e2972"
+      ]
+    },
+    {
+      "event_id": "e3019",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 631,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3018"
+      ]
+    },
+    {
+      "event_id": "e3074",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 632,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3073"
+      ]
+    },
+    {
+      "event_id": "e3097",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 634,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3096"
+      ]
+    },
+    {
+      "event_id": "e3114",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 636,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3113"
+      ]
+    },
+    {
+      "event_id": "e3140",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 638,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3139"
+      ]
+    },
+    {
+      "event_id": "e3162",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 640,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3161"
+      ]
+    },
+    {
+      "event_id": "e3179",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 641,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3178"
+      ]
+    },
+    {
+      "event_id": "e3200",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 642,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3199"
+      ]
+    },
+    {
+      "event_id": "e3218",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 644,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3217"
+      ]
+    },
+    {
+      "event_id": "e3272",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 654,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3271"
+      ]
+    },
+    {
+      "event_id": "e3322",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 656,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3321"
+      ]
+    },
+    {
+      "event_id": "e3379",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 657,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3378"
+      ]
+    },
+    {
+      "event_id": "e3404",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 658,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3403"
+      ]
+    },
+    {
+      "event_id": "e3420",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 659,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3419"
+      ]
+    },
+    {
+      "event_id": "e3450",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 661,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3449"
+      ]
+    },
+    {
+      "event_id": "e3491",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 662,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3490"
+      ]
+    },
+    {
+      "event_id": "e3522",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 663,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3521"
+      ]
+    },
+    {
+      "event_id": "e3851",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 723,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e3850"
+      ]
+    },
+    {
+      "event_id": "e4016",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 783,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e4015"
+      ]
+    },
+    {
+      "event_id": "e4172",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 843,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e4171"
+      ]
+    },
+    {
+      "event_id": "e4480",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 873,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e4479"
+      ]
+    },
+    {
+      "event_id": "e4502",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 874,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e4501"
+      ]
+    },
+    {
+      "event_id": "e4512",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 875,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e4511"
+      ]
+    },
+    {
+      "event_id": "e4732",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 905,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e4731"
+      ]
+    },
+    {
+      "event_id": "e4760",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 935,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e4759"
+      ]
+    },
+    {
+      "event_id": "e4770",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 955,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e4769"
+      ]
+    },
+    {
+      "event_id": "e4780",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 960,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e4779"
+      ]
+    },
+    {
+      "event_id": "e4790",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 961,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e4789"
+      ]
+    },
+    {
+      "event_id": "e5365",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1141,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e5364"
+      ]
+    },
+    {
+      "event_id": "e5381",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1142,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e5380"
+      ]
+    },
+    {
+      "event_id": "e5404",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1202,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e5403"
+      ]
+    },
+    {
+      "event_id": "e5449",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1232,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e5448"
+      ]
+    },
+    {
+      "event_id": "e5480",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1252,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e5479"
+      ]
+    },
+    {
+      "event_id": "e5526",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1257,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e5525"
+      ]
+    },
+    {
+      "event_id": "e5557",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1260,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e5556"
+      ]
+    },
+    {
+      "event_id": "e6082",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e6081"
+      ]
+    },
+    {
+      "event_id": "e6150",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1441,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e6149"
+      ]
+    },
+    {
+      "event_id": "e6234",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1443,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e6233"
+      ]
+    },
+    {
+      "event_id": "e6266",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1444,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e6265"
+      ]
+    },
+    {
+      "event_id": "e6324",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1446,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e6323"
+      ]
+    },
+    {
+      "event_id": "e6422",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1448,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e6421"
+      ]
+    },
+    {
+      "event_id": "e6454",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1465,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e6453"
+      ]
+    },
+    {
+      "event_id": "e6479",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1467,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e6478"
+      ]
+    },
+    {
+      "event_id": "e6699",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1831,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e6698"
+      ]
+    },
+    {
+      "event_id": "e6791",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1832,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e6790"
+      ]
+    },
+    {
+      "event_id": "e6842",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1833,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e6841"
+      ]
+    },
+    {
+      "event_id": "e6893",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1834,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e6892"
+      ]
+    },
+    {
+      "event_id": "e7123",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1894,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e7122"
+      ]
+    },
+    {
+      "event_id": "e7153",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1895,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e7152"
+      ]
+    },
+    {
+      "event_id": "e7181",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1896,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e7180"
+      ]
+    },
+    {
+      "event_id": "e7209",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1897,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e7208"
+      ]
+    },
+    {
+      "event_id": "e7322",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1917,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e7321"
+      ]
+    },
+    {
+      "event_id": "e7369",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1920,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e7368"
+      ]
+    },
+    {
+      "event_id": "e7436",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 1921,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e7435"
+      ]
+    },
+    {
+      "event_id": "e8563",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2041,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e8562"
+      ]
+    },
+    {
+      "event_id": "e8629",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2043,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e8628"
+      ]
+    },
+    {
+      "event_id": "e8735",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2044,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e8734"
+      ]
+    },
+    {
+      "event_id": "e8789",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2045,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e8788"
+      ]
+    },
+    {
+      "event_id": "e8865",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2046,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e8864"
+      ]
+    },
+    {
+      "event_id": "e9018",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2048,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e9017"
+      ]
+    },
+    {
+      "event_id": "e11428",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2108,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e11427"
+      ]
+    },
+    {
+      "event_id": "e11459",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2109,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e11458"
+      ]
+    },
+    {
+      "event_id": "e11516",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2110,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e11515"
+      ]
+    },
+    {
+      "event_id": "e11569",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2111,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e11568"
+      ]
+    },
+    {
+      "event_id": "e12088",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2126,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e12087"
+      ]
+    },
+    {
+      "event_id": "e12261",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2130,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e12260"
+      ]
+    },
+    {
+      "event_id": "e12406",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2132,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e12405"
+      ]
+    },
+    {
+      "event_id": "e12792",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2134,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e12791"
+      ]
+    },
+    {
+      "event_id": "e13096",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2135,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e13095"
+      ]
+    },
+    {
+      "event_id": "e13739",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2155,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e13738"
+      ]
+    },
+    {
+      "event_id": "e13952",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2160,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e13951"
+      ]
+    },
+    {
+      "event_id": "e16745",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2280,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e16744"
+      ]
+    },
+    {
+      "event_id": "e16874",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2282,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e16873"
+      ]
+    },
+    {
+      "event_id": "e16977",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2283,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e16976"
+      ]
+    },
+    {
+      "event_id": "e17043",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2284,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17042"
+      ]
+    },
+    {
+      "event_id": "e17223",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2285,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17222"
+      ]
+    },
+    {
+      "event_id": "e17332",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2286,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17331"
+      ]
+    },
+    {
+      "event_id": "e17400",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2287,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17399"
+      ]
+    },
+    {
+      "event_id": "e17462",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2288,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17461"
+      ]
+    },
+    {
+      "event_id": "e17505",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2289,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17504"
+      ]
+    },
+    {
+      "event_id": "e17550",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2290,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17549"
+      ]
+    },
+    {
+      "event_id": "e17601",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2291,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17600"
+      ]
+    },
+    {
+      "event_id": "e17636",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2292,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17635"
+      ]
+    },
+    {
+      "event_id": "e17675",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2293,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17674"
+      ]
+    },
+    {
+      "event_id": "e17713",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2294,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17712"
+      ]
+    },
+    {
+      "event_id": "e17751",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2295,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17750"
+      ]
+    },
+    {
+      "event_id": "e17792",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2296,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17791"
+      ]
+    },
+    {
+      "event_id": "e17832",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2297,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17831"
+      ]
+    },
+    {
+      "event_id": "e17855",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2298,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17854"
+      ]
+    },
+    {
+      "event_id": "e17909",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2299,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17908"
+      ]
+    },
+    {
+      "event_id": "e17998",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2301,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e17997"
+      ]
+    },
+    {
+      "event_id": "e18016",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2302,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18015"
+      ]
+    },
+    {
+      "event_id": "e18040",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2304,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18039"
+      ]
+    },
+    {
+      "event_id": "e18067",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2306,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18066"
+      ]
+    },
+    {
+      "event_id": "e18086",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2307,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18085"
+      ]
+    },
+    {
+      "event_id": "e18137",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2308,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18136"
+      ]
+    },
+    {
+      "event_id": "e18150",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2309,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18149"
+      ]
+    },
+    {
+      "event_id": "e18163",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2310,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18162"
+      ]
+    },
+    {
+      "event_id": "e18630",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2370,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18629"
+      ]
+    },
+    {
+      "event_id": "e18648",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2372,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18647"
+      ]
+    },
+    {
+      "event_id": "e18669",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2374,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18668"
+      ]
+    },
+    {
+      "event_id": "e18693",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2375,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18692"
+      ]
+    },
+    {
+      "event_id": "e18711",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2377,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18710"
+      ]
+    },
+    {
+      "event_id": "e18736",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2379,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18735"
+      ]
+    },
+    {
+      "event_id": "e18868",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2399,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18867"
+      ]
+    },
+    {
+      "event_id": "e18912",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2400,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e18911"
+      ]
+    },
+    {
+      "event_id": "e19137",
+      "type": "action_execution",
+      "actor": "huo",
+      "game_time": 2420,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19136"
+      ]
+    },
+    {
+      "event_id": "e19149",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2422,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19148"
+      ]
+    },
+    {
+      "event_id": "e19158",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2424,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19157"
+      ]
+    },
+    {
+      "event_id": "e19167",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2426,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19166"
+      ]
+    },
+    {
+      "event_id": "e19176",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2428,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19175"
+      ]
+    },
+    {
+      "event_id": "e19185",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2430,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19184"
+      ]
+    },
+    {
+      "event_id": "e19194",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2432,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19193"
+      ]
+    },
+    {
+      "event_id": "e19203",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2434,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19202"
+      ]
+    },
+    {
+      "event_id": "e19212",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2436,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19211"
+      ]
+    },
+    {
+      "event_id": "e19221",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2438,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19220"
+      ]
+    },
+    {
+      "event_id": "e19230",
+      "type": "action_execution",
+      "actor": "lucian",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19229"
+      ]
+    },
+    {
+      "event_id": "e19234",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2440,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19233"
+      ]
+    },
+    {
+      "event_id": "e19247",
+      "type": "action_execution",
+      "actor": "quer",
+      "game_time": 2441,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19246"
+      ]
+    },
+    {
+      "event_id": "e19257",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19256"
+      ]
+    },
+    {
+      "event_id": "e19261",
+      "type": "action_execution",
+      "actor": "quer",
+      "game_time": 2442,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19260"
+      ]
+    },
+    {
+      "event_id": "e19273",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2444,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19272"
+      ]
+    },
+    {
+      "event_id": "e19282",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2446,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19281"
+      ]
+    },
+    {
+      "event_id": "e19291",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2448,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19290"
+      ]
+    },
+    {
+      "event_id": "e19300",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2450,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19299"
+      ]
+    },
+    {
+      "event_id": "e19309",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2452,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19308"
+      ]
+    },
+    {
+      "event_id": "e19318",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2454,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19317"
+      ]
+    },
+    {
+      "event_id": "e19327",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2456,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19326"
+      ]
+    },
+    {
+      "event_id": "e19336",
+      "type": "action_execution",
+      "actor": "moran",
+      "game_time": 2458,
+      "fields": [
+        "id",
+        "type",
+        "actor",
+        "time",
+        "parents",
+        "data"
+      ],
+      "parents": [
+        "e19335"
+      ]
+    }
+  ],
+  "selected_projection": [
+    {
+      "event_id": "e2537",
+      "time": 584,
+      "hypothesis_id": "me",
+      "status": "unknown",
+      "plan_complete": false,
+      "fit": 0,
+      "stop": "no-declared-plan"
+    },
+    {
+      "event_id": "e2538",
+      "time": 584,
+      "hypothesis_id": "history-case-0",
+      "status": "explained",
+      "plan_complete": true,
+      "fit": 0.5,
+      "stop": "declared-plan-complete"
+    },
+    {
+      "event_id": "e2539",
+      "time": 584,
+      "hypothesis_id": "history-case-0",
+      "status": "inconsistent",
+      "plan_complete": false,
+      "fit": -1000000,
+      "stop": "declared-plan-incomplete"
+    },
+    {
+      "event_id": "e2540",
+      "time": 584,
+      "hypothesis_id": "history-case-1",
+      "status": "explained",
+      "plan_complete": true,
+      "fit": 0.5,
+      "stop": "declared-plan-complete"
+    },
+    {
+      "event_id": "e2541",
+      "time": 584,
+      "hypothesis_id": "history-case-1",
+      "status": "unknown",
+      "plan_complete": true,
+      "fit": 2.5,
+      "stop": "declared-plan-complete"
+    },
+    {
+      "event_id": "e2542",
+      "time": 584,
+      "hypothesis_id": "history-case-2",
+      "status": "explained",
+      "plan_complete": true,
+      "fit": 0.5,
+      "stop": "declared-plan-complete"
+    },
+    {
+      "event_id": "e2543",
+      "time": 584,
+      "hypothesis_id": "history-case-2",
+      "status": "unknown",
+      "plan_complete": false,
+      "fit": 0,
+      "stop": "budget-exhausted"
+    },
+    {
+      "event_id": "e9112",
+      "type": "planning_choice",
+      "actor": "ward",
+      "game_time": 2049,
+      "parents": [
+        "e9111"
+      ],
+      "action_id": "ward.c2.move.central_hall.lecture",
+      "action_kind": "move",
+      "label": "从中央厅穿过廊门，来到讲堂。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story",
+          "line": 9,
+          "id": "routes-and-boundaries"
+        }
+      ],
+      "detail": {
+        "score": 1.98,
+        "plan_expansions": 1,
+        "stop": "current-affordance-root",
+        "root_best": {
+          "path": [
+            "ward.c2.move.central_hall.lecture"
+          ],
+          "net_score": 1.98
+        },
+        "best_after_successor_layer": {
+          "path": [
+            "ward.c2.move.central_hall.lecture"
+          ],
+          "net_score": 1.98
+        },
+        "completed_layers": 1,
+        "dependency_expansions": 0,
+        "dependency_stop": "dependency-closure",
+        "reason_reused": true,
+        "cognition_reused": false
+      },
+      "raw_event_ref": {
+        "format": "dv-raw-dag-v1",
+        "journal": "raw-events.dag.jsonl",
+        "partial_journal": "raw-events.dag.jsonl.partial",
+        "node_id": "277851",
+        "definition_frame": "286965"
+      }
+    },
+    {
+      "event_id": "e9196",
+      "type": "planning_choice",
+      "actor": "ward",
+      "game_time": 2051,
+      "parents": [
+        "e9195"
+      ],
+      "action_id": "ward.c2.move.lecture.central_hall",
+      "action_kind": "move",
+      "label": "从讲堂穿过廊门，来到中央厅。",
+      "purpose_sources": [
+        {
+          "path": "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story",
+          "line": 9,
+          "id": "routes-and-boundaries"
+        }
+      ],
+      "detail": {
+        "score": 1.02,
+        "plan_expansions": 2,
+        "stop": "complete-depth",
+        "root_best": {
+          "path": [
+            "ward.wait.first_night.60"
+          ],
+          "net_score": 0.010000000000000009
+        },
+        "best_after_successor_layer": [],
+        "completed_layers": 2,
+        "dependency_expansions": 48,
+        "dependency_stop": "dependency-closure",
+        "reason_reused": true,
+        "cognition_reused": false
+      },
+      "raw_event_ref": {
+        "format": "dv-raw-dag-v1",
+        "journal": "raw-events.dag.jsonl",
+        "partial_journal": "raw-events.dag.jsonl.partial",
+        "node_id": "280091",
+        "definition_frame": "289289"
+      }
+    },
+    {
+      "event_id": "e18016",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2302,
+      "parents": [
+        "e18015"
+      ],
+      "action_id": "detective.c2.sample.meter",
+      "action_kind": "inspect",
+      "label": "在源质计安全侧实测，记录读数、采样地点及现场环境标记。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "user:2026-10-18-owned-measurement-and-continuing-duty"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 4486,
+        "revision_after": 4487,
+        "status": "applied"
+      },
+      "raw_event_ref": {
+        "format": "dv-raw-dag-v1",
+        "journal": "raw-events.dag.jsonl",
+        "partial_journal": "raw-events.dag.jsonl.partial",
+        "node_id": "521592",
+        "definition_frame": "539610"
+      }
+    },
+    {
+      "event_id": "e18150",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2309,
+      "parents": [
+        "e18149"
+      ],
+      "action_id": "detective.c2.investigation.inspect.document_workshop",
+      "action_kind": "inspect",
+      "label": "在现场核对已完成的操作与留下的证据。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "chapter-two-evidence-requires-local-inspection"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 4495,
+        "revision_after": 4496,
+        "status": "applied"
+      },
+      "raw_event_ref": {
+        "format": "dv-raw-dag-v1",
+        "journal": "raw-events.dag.jsonl",
+        "partial_journal": "raw-events.dag.jsonl.partial",
+        "node_id": "524264",
+        "definition_frame": "542416"
+      }
+    },
+    {
+      "event_id": "e18693",
+      "type": "action_execution",
+      "actor": "detective",
+      "game_time": 2375,
+      "parents": [
+        "e18692"
+      ],
+      "action_id": "detective.c2.sample.meter",
+      "action_kind": "inspect",
+      "label": "在源质计安全侧实测，记录读数、采样地点及现场环境标记。",
+      "purpose_sources": [
+        {
+          "path": "docs/design-standard.md",
+          "line": 0,
+          "id": "user:2026-10-18-owned-measurement-and-continuing-duty"
+        }
+      ],
+      "detail": {
+        "actual": {
+          "time": 1,
+          "computation": 1,
+          "stamina": 0
+        },
+        "revision_before": 4547,
+        "revision_after": 4548,
+        "status": "applied"
+      },
+      "raw_event_ref": {
+        "format": "dv-raw-dag-v1",
+        "journal": "raw-events.dag.jsonl",
+        "partial_journal": "raw-events.dag.jsonl.partial",
+        "node_id": "536135",
+        "definition_frame": "554830"
+      }
+    },
+    {
+      "event_id": "e18959",
+      "type": "action_selected",
+      "actor": "detective",
+      "game_time": 2400,
+      "parents": [
+        "e18957",
+        "e18958",
+        "e18913",
+        "e8866",
+        "e7698",
+        "e17333",
+        "e17752",
+        "e17463",
+        "e17793",
+        "e7182",
+        "e7210",
+        "e11517",
+        "e11570",
+        "e17551",
+        "e17833",
+        "e17637",
+        "e17856",
+        "e17714",
+        "e17910",
+        "e18138",
+        "e18246",
+        "e18151",
+        "e1763",
+        "e2875",
+        "e1791",
+        "e1806",
+        "e1133",
+        "e2136",
+        "e2942",
+        "e18737",
+        "e6700",
+        "e17224",
+        "e17401",
+        "e7154",
+        "e11460",
+        "e17506",
+        "e17602",
+        "e17676",
+        "e18164",
+        "e18087",
+        "e8790",
+        "e18694",
+        "e8736",
+        "e3278",
+        "e2878"
+      ],
+      "action_id": "detective.wait.first_night.120",
+      "action_kind": "wait.first_night.120",
+      "label": "留在原处，等候本人已知的下一次作息机会（120分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "score": 0.010000000000000009,
+        "plan_expansions": 2,
+        "revision_before": 905
+      },
+      "raw_event_ref": {
+        "format": "dv-raw-dag-v1",
+        "journal": "raw-events.dag.jsonl",
+        "partial_journal": "raw-events.dag.jsonl.partial",
+        "node_id": "543225",
+        "definition_frame": "562186"
+      }
+    },
+    {
+      "event_id": "e18960",
+      "type": "planning_choice",
+      "actor": "detective",
+      "game_time": 2400,
+      "parents": [
+        "e18959"
+      ],
+      "action_id": "detective.wait.first_night.120",
+      "action_kind": "wait.first_night.120",
+      "label": "留在原处，等候本人已知的下一次作息机会（120分钟）。",
+      "purpose_sources": [
+        {
+          "path": "language_core/verification/scenarios/chapter1-night.dv",
+          "line": 0,
+          "id": "authorized-first-night-20261016.own-bounded-wait"
+        }
+      ],
+      "detail": {
+        "score": 0.010000000000000009,
+        "plan_expansions": 2,
+        "stop": "complete-depth",
+        "root_best": {
+          "path": [
+            "detective.wait.first_night.120"
+          ],
+          "net_score": 0.010000000000000009
+        },
+        "best_after_successor_layer": [],
+        "completed_layers": 2,
+        "dependency_expansions": 0,
+        "dependency_stop": "dependency-closure",
+        "reason_reused": true,
+        "cognition_reused": false
+      },
+      "raw_event_ref": {
+        "format": "dv-raw-dag-v1",
+        "journal": "raw-events.dag.jsonl",
+        "partial_journal": "raw-events.dag.jsonl.partial",
+        "node_id": "543231",
+        "definition_frame": "562193"
+      }
+    },
+    {
+      "event_id": "e18961",
+      "type": "action_scheduled",
+      "actor": "detective",
+      "game_time": 2400,
+      "parents": [
+        "e18960"
+      ],
+      "action_id": "detective.wait.first_night.120",
+      "action_kind": "",
+      "label": "",
+      "purpose_sources": [],
+      "detail": {
+        "due": 2520,
+        "duration": 120
+      },
+      "raw_event_ref": {
+        "format": "dv-raw-dag-v1",
+        "journal": "raw-events.dag.jsonl",
+        "partial_journal": "raw-events.dag.jsonl.partial",
+        "node_id": "543237",
+        "definition_frame": "562200"
+      }
+    }
+  ],
+  "terminal_actual": {
+    "event": "e19336",
+    "actor": "moran",
+    "time": 2458,
+    "action": "moran.c2.move.resonance_hall.quiet_room",
+    "actual": {
+      "time": 2,
+      "computation": 1,
+      "stamina": 0
+    },
+    "receipt_observation": "e19337: location=quiet_room, execution-receipt clock=2458",
+    "last_event": "e19338 co_presence",
+    "precondition": [
+      [
+        "op",
+        "all"
+      ],
+      [
+        "items",
+        [
+          [
+            [
+              "op",
+              "all"
+            ],
+            [
+              "items",
+              [
+                [
+                  [
+                    "op",
+                    "equals"
+                  ],
+                  [
+                    "ref",
+                    [
+                      [
+                        "type",
+                        "ref"
+                      ],
+                      [
+                        "object",
+                        "moran"
+                      ],
+                      [
+                        "facet",
+                        "state"
+                      ],
+                      [
+                        "field",
+                        "location"
+                      ]
+                    ]
+                  ],
+                  [
+                    "value",
+                    "resonance_hall"
+                  ]
+                ],
+                [
+                  [
+                    "op",
+                    "equals"
+                  ],
+                  [
+                    "ref",
+                    [
+                      [
+                        "type",
+                        "ref"
+                      ],
+                      [
+                        "object",
+                        "campaign.access"
+                      ],
+                      [
+                        "facet",
+                        "state"
+                      ],
+                      [
+                        "field",
+                        "north"
+                      ]
+                    ]
+                  ],
+                  [
+                    "value",
+                    true
+                  ]
+                ],
+                [
+                  [
+                    "op",
+                    "equals"
+                  ],
+                  [
+                    "ref",
+                    [
+                      [
+                        "type",
+                        "ref"
+                      ],
+                      [
+                        "object",
+                        "c2.person.moran"
+                      ],
+                      [
+                        "facet",
+                        "state"
+                      ],
+                      [
+                        "field",
+                        "station"
+                      ]
+                    ]
+                  ],
+                  [
+                    "value",
+                    ""
+                  ]
+                ],
+                [
+                  [
+                    "op",
+                    "equals"
+                  ],
+                  [
+                    "ref",
+                    [
+                      [
+                        "type",
+                        "ref"
+                      ],
+                      [
+                        "object",
+                        "c2.person.moran"
+                      ],
+                      [
+                        "facet",
+                        "state"
+                      ],
+                      [
+                        "field",
+                        "busy_care"
+                      ]
+                    ]
+                  ],
+                  [
+                    "value",
+                    false
+                  ]
+                ],
+                [
+                  [
+                    "op",
+                    "all"
+                  ],
+                  [
+                    "items",
+                    [
+                      [
+                        [
+                          "op",
+                          "equals"
+                        ],
+                        [
+                          "ref",
+                          [
+                            [
+                              "type",
+                              "ref"
+                            ],
+                            [
+                              "object",
+                              "c2.person.moran"
+                            ],
+                            [
+                              "facet",
+                              "state"
+                            ],
+                            [
+                              "field",
+                              "alive"
+                            ]
+                          ]
+                        ],
+                        [
+                          "value",
+                          true
+                        ]
+                      ],
+                      [
+                        [
+                          "op",
+                          "equals"
+                        ],
+                        [
+                          "ref",
+                          [
+                            [
+                              "type",
+                              "ref"
+                            ],
+                            [
+                              "object",
+                              "c2.person.moran"
+                            ],
+                            [
+                              "facet",
+                              "state"
+                            ],
+                            [
+                              "field",
+                              "in_coma"
+                            ]
+                          ]
+                        ],
+                        [
+                          "value",
+                          false
+                        ]
+                      ],
+                      [
+                        [
+                          "op",
+                          "equals"
+                        ],
+                        [
+                          "ref",
+                          [
+                            [
+                              "type",
+                              "ref"
+                            ],
+                            [
+                              "object",
+                              "c2.person.moran"
+                            ],
+                            [
+                              "facet",
+                              "state"
+                            ],
+                            [
+                              "field",
+                              "stone_stupor"
+                            ]
+                          ]
+                        ],
+                        [
+                          "value",
+                          false
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ],
+          [
+            [
+              "op",
+              "all"
+            ],
+            [
+              "items",
+              [
+                [
+                  [
+                    "op",
+                    "equals"
+                  ],
+                  [
+                    "ref",
+                    [
+                      [
+                        "type",
+                        "ref"
+                      ],
+                      [
+                        "object",
+                        "c2.person.moran"
+                      ],
+                      [
+                        "facet",
+                        "state"
+                      ],
+                      [
+                        "field",
+                        "alive"
+                      ]
+                    ]
+                  ],
+                  [
+                    "value",
+                    true
+                  ]
+                ],
+                [
+                  [
+                    "op",
+                    "equals"
+                  ],
+                  [
+                    "ref",
+                    [
+                      [
+                        "type",
+                        "ref"
+                      ],
+                      [
+                        "object",
+                        "c2.person.moran"
+                      ],
+                      [
+                        "facet",
+                        "state"
+                      ],
+                      [
+                        "field",
+                        "in_coma"
+                      ]
+                    ]
+                  ],
+                  [
+                    "value",
+                    false
+                  ]
+                ],
+                [
+                  [
+                    "op",
+                    "equals"
+                  ],
+                  [
+                    "ref",
+                    [
+                      [
+                        "type",
+                        "ref"
+                      ],
+                      [
+                        "object",
+                        "c2.person.moran"
+                      ],
+                      [
+                        "facet",
+                        "state"
+                      ],
+                      [
+                        "field",
+                        "stone_stupor"
+                      ]
+                    ]
+                  ],
+                  [
+                    "value",
+                    false
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "purpose_basis": [
+      [
+        [
+          "path",
+          "godot_csharp/scenes/Awakening/Script/story/续篇/00_通行.story"
+        ],
+        [
+          "line",
+          9
+        ],
+        [
+          "id",
+          "routes-and-boundaries"
+        ]
+      ]
+    ],
+    "receipt_summary": {}
+  },
+  "raw_action_index": [
+    [
+      "e134",
+      "detective",
+      481,
+      "detective.opening.wake"
+    ],
+    [
+      "e254",
+      "detective",
+      482,
+      "detective.opening.wear-coat"
+    ],
+    [
+      "e353",
+      "detective",
+      483,
+      "detective.identify-own-lens"
+    ],
+    [
+      "e657",
+      "detective",
+      485,
+      "detective.move.R05.corridor"
+    ],
+    [
+      "e971",
+      "detective",
+      487,
+      "detective.move.corridor.hall"
+    ],
+    [
+      "e1132",
+      "detective",
+      488,
+      "detective.inspect.E7"
+    ],
+    [
+      "e1230",
+      "detective",
+      489,
+      "detective.inspect.E8"
+    ],
+    [
+      "e1639",
+      "detective",
+      513,
+      "detective.sound_trial"
+    ],
+    [
+      "e1662",
+      "detective",
+      514,
+      "detective.opening.introduce"
+    ],
+    [
+      "e1730",
+      "detective",
+      516,
+      "detective.move.hall.foyer"
+    ],
+    [
+      "e1748",
+      "detective",
+      517,
+      "detective.departure.inspect-door"
+    ],
+    [
+      "e1762",
+      "detective",
+      518,
+      "detective.inspect.E1"
+    ],
+    [
+      "e1777",
+      "detective",
+      519,
+      "detective.inspect.E2"
+    ],
+    [
+      "e1790",
+      "detective",
+      520,
+      "detective.inspect.E3"
+    ],
+    [
+      "e1805",
+      "detective",
+      521,
+      "detective.inspect.E4"
+    ],
+    [
+      "e1819",
+      "detective",
+      522,
+      "detective.inspect.E5"
+    ],
+    [
+      "e1833",
+      "detective",
+      524,
+      "detective.move.foyer.hall"
+    ],
+    [
+      "e2025",
+      "detective",
+      553,
+      "detective.replay"
+    ],
+    [
+      "e2080",
+      "detective",
+      554,
+      "detective.opening.empty-slot"
+    ],
+    [
+      "e2127",
+      "detective",
+      555,
+      "detective.opening.ask-reward"
+    ],
+    [
+      "e2535",
+      "detective",
+      584,
+      "detective.replay"
+    ],
+    [
+      "e2660",
+      "detective",
+      594,
+      "detective.answer.me"
+    ],
+    [
+      "e2723",
+      "detective",
+      595,
+      "detective.reask_question"
+    ],
+    [
+      "e2759",
+      "detective",
+      605,
+      "detective.answer.V3_0"
+    ],
+    [
+      "e2817",
+      "detective",
+      606,
+      "detective.reask_question"
+    ],
+    [
+      "e2857",
+      "detective",
+      608,
+      "detective.move.hall.foyer"
+    ],
+    [
+      "e2874",
+      "detective",
+      610,
+      "detective.compare.E2"
+    ],
+    [
+      "e2889",
+      "detective",
+      612,
+      "detective.move.foyer.hall"
+    ],
+    [
+      "e2910",
+      "detective",
+      614,
+      "detective.move.hall.corridor"
+    ],
+    [
+      "e2927",
+      "detective",
+      616,
+      "detective.move.corridor.R08"
+    ],
+    [
+      "e2941",
+      "detective",
+      617,
+      "detective.inspect.E6"
+    ],
+    [
+      "e2957",
+      "detective",
+      619,
+      "detective.move.R08.corridor"
+    ],
+    [
+      "e2973",
+      "detective",
+      621,
+      "detective.move.corridor.hall"
+    ],
+    [
+      "e3019",
+      "detective",
+      631,
+      "detective.answer.V4_0"
+    ],
+    [
+      "e3074",
+      "detective",
+      632,
+      "detective.reask_question"
+    ],
+    [
+      "e3097",
+      "detective",
+      634,
+      "detective.move.hall.foyer"
+    ],
+    [
+      "e3114",
+      "detective",
+      636,
+      "detective.touch_latch"
+    ],
+    [
+      "e3140",
+      "detective",
+      638,
+      "detective.move.foyer.hall"
+    ],
+    [
+      "e3162",
+      "detective",
+      640,
+      "detective.move.hall.pantry"
+    ],
+    [
+      "e3179",
+      "detective",
+      641,
+      "detective.inspect.E9"
+    ],
+    [
+      "e3200",
+      "detective",
+      642,
+      "detective.inspect.E10"
+    ],
+    [
+      "e3218",
+      "detective",
+      644,
+      "detective.move.pantry.hall"
+    ],
+    [
+      "e3272",
+      "detective",
+      654,
+      "detective.answer.trust"
+    ],
+    [
+      "e3322",
+      "detective",
+      656,
+      "detective.move.hall.foyer"
+    ],
+    [
+      "e3379",
+      "detective",
+      657,
+      "detective.departure.inspect-door"
+    ],
+    [
+      "e3404",
+      "detective",
+      658,
+      "detective.departure.draw-inner"
+    ],
+    [
+      "e3420",
+      "detective",
+      659,
+      "detective.departure.open-door"
+    ],
+    [
+      "e3450",
+      "detective",
+      661,
+      "detective.departure.cross-out"
+    ],
+    [
+      "e3491",
+      "detective",
+      662,
+      "night.inspect-room.detective"
+    ],
+    [
+      "e3522",
+      "detective",
+      663,
+      "night.inspect-displayed"
+    ],
+    [
+      "e3851",
+      "detective",
+      723,
+      "detective.wait.first_night.60"
+    ],
+    [
+      "e4016",
+      "detective",
+      783,
+      "detective.wait.first_night.60"
+    ],
+    [
+      "e4172",
+      "detective",
+      843,
+      "detective.wait.first_night.60"
+    ],
+    [
+      "e4480",
+      "detective",
+      873,
+      "detective.wait.first_night.30"
+    ],
+    [
+      "e4502",
+      "detective",
+      874,
+      "night.inspect-evidence"
+    ],
+    [
+      "e4512",
+      "detective",
+      875,
+      "night.defer-judgment"
+    ],
+    [
+      "e4732",
+      "detective",
+      905,
+      "detective.wait.first_night.30"
+    ],
+    [
+      "e4760",
+      "detective",
+      935,
+      "detective.wait.first_night.30"
+    ],
+    [
+      "e4770",
+      "detective",
+      955,
+      "detective.wait.first_night.20"
+    ],
+    [
+      "e4780",
+      "detective",
+      960,
+      "detective.wait.first_night.5"
+    ],
+    [
+      "e4790",
+      "detective",
+      961,
+      "night.ask-closed-doors"
+    ],
+    [
+      "e5365",
+      "detective",
+      1141,
+      "detective.wait.first_night.180"
+    ],
+    [
+      "e5381",
+      "detective",
+      1142,
+      "night.eat.detective"
+    ],
+    [
+      "e5404",
+      "detective",
+      1202,
+      "detective.wait.first_night.60"
+    ],
+    [
+      "e5449",
+      "detective",
+      1232,
+      "detective.wait.first_night.30"
+    ],
+    [
+      "e5480",
+      "detective",
+      1252,
+      "detective.wait.first_night.20"
+    ],
+    [
+      "e5526",
+      "detective",
+      1257,
+      "detective.wait.first_night.5"
+    ],
+    [
+      "e5557",
+      "detective",
+      1260,
+      "detective.wait.first_night.3"
+    ],
+    [
+      "e6082",
+      "detective",
+      1440,
+      "detective.wait.first_night.180"
+    ],
+    [
+      "e6150",
+      "detective",
+      1441,
+      "detective.night.notice-time"
+    ],
+    [
+      "e6234",
+      "detective",
+      1443,
+      "detective.departure.cross-in"
+    ],
+    [
+      "e6266",
+      "detective",
+      1444,
+      "detective.departure.ask-door"
+    ],
+    [
+      "e6324",
+      "detective",
+      1446,
+      "detective.departure.cross-out"
+    ],
+    [
+      "e6422",
+      "detective",
+      1448,
+      "detective.departure.cross-in"
+    ],
+    [
+      "e6454",
+      "detective",
+      1465,
+      "detective.compare_sole"
+    ],
+    [
+      "e6479",
+      "detective",
+      1467,
+      "detective.departure.cross-out"
+    ],
+    [
+      "e6699",
+      "detective",
+      1831,
+      "detective.c2.inspect.c2.corridor.north"
+    ],
+    [
+      "e6791",
+      "detective",
+      1832,
+      "detective.c2.inspect.c2.daily"
+    ],
+    [
+      "e6842",
+      "detective",
+      1833,
+      "detective.c2.inspect.route.living_hall.central_hall"
+    ],
+    [
+      "e6893",
+      "detective",
+      1834,
+      "detective.c2.motive.inspect.case.contract.living_hall"
+    ],
+    [
+      "e7123",
+      "detective",
+      1894,
+      "detective.wait.first_night.60"
+    ],
+    [
+      "e7153",
+      "detective",
+      1895,
+      "detective.c2.inspect.board.shen_kitchen"
+    ],
+    [
+      "e7181",
+      "detective",
+      1896,
+      "detective.c2.read.shen_kitchen"
+    ],
+    [
+      "e7209",
+      "detective",
+      1897,
+      "detective.c2.accept.shen_kitchen"
+    ],
+    [
+      "e7322",
+      "detective",
+      1917,
+      "detective.wait.first_night.20"
+    ],
+    [
+      "e7369",
+      "detective",
+      1920,
+      "detective.wait.first_night.3"
+    ],
+    [
+      "e7436",
+      "detective",
+      1921,
+      "detective.c2.inspect.weather"
+    ],
+    [
+      "e8563",
+      "detective",
+      2041,
+      "detective.wait.first_night.120"
+    ],
+    [
+      "e8629",
+      "detective",
+      2043,
+      "detective.c2.move.living_hall.central_hall"
+    ],
+    [
+      "e8735",
+      "detective",
+      2044,
+      "detective.c2.inspect.c2.corridor.east"
+    ],
+    [
+      "e8789",
+      "detective",
+      2045,
+      "detective.c2.inspect.route.central_hall.logistics"
+    ],
+    [
+      "e8865",
+      "detective",
+      2046,
+      "detective.c2.inspect.weather"
+    ],
+    [
+      "e9018",
+      "detective",
+      2048,
+      "detective.c2.move.central_hall.lecture"
+    ],
+    [
+      "e11428",
+      "detective",
+      2108,
+      "detective.wait.first_night.60"
+    ],
+    [
+      "e11459",
+      "detective",
+      2109,
+      "detective.c2.inspect.board.veronica_evidence"
+    ],
+    [
+      "e11516",
+      "detective",
+      2110,
+      "detective.c2.read.veronica_evidence"
+    ],
+    [
+      "e11569",
+      "detective",
+      2111,
+      "detective.c2.accept.veronica_evidence"
+    ],
+    [
+      "e12088",
+      "detective",
+      2126,
+      "detective.wait.first_night.15"
+    ],
+    [
+      "e12261",
+      "detective",
+      2130,
+      "detective.wait.first_night.4"
+    ],
+    [
+      "e12406",
+      "detective",
+      2132,
+      "detective.c2.move.lecture.central_hall"
+    ],
+    [
+      "e12792",
+      "detective",
+      2134,
+      "detective.c2.move.central_hall.living_hall"
+    ],
+    [
+      "e13096",
+      "detective",
+      2135,
+      "detective.c2.inspect.c2.daily"
+    ],
+    [
+      "e13739",
+      "detective",
+      2155,
+      "detective.wait.first_night.20"
+    ],
+    [
+      "e13952",
+      "detective",
+      2160,
+      "detective.wait.first_night.5"
+    ],
+    [
+      "e16745",
+      "detective",
+      2280,
+      "detective.wait.first_night.120"
+    ],
+    [
+      "e16874",
+      "detective",
+      2282,
+      "detective.c2.move.living_hall.central_hall"
+    ],
+    [
+      "e16977",
+      "detective",
+      2283,
+      "detective.c2.inspect.board.records_supplement"
+    ],
+    [
+      "e17043",
+      "detective",
+      2284,
+      "detective.c2.inspect.board.night_forbid"
+    ],
+    [
+      "e17223",
+      "detective",
+      2285,
+      "detective.c2.inspect.board.ward_ledger"
+    ],
+    [
+      "e17332",
+      "detective",
+      2286,
+      "detective.c2.read.ward_ledger"
+    ],
+    [
+      "e17400",
+      "detective",
+      2287,
+      "detective.c2.inspect.board.ward_night"
+    ],
+    [
+      "e17462",
+      "detective",
+      2288,
+      "detective.c2.read.ward_night"
+    ],
+    [
+      "e17505",
+      "detective",
+      2289,
+      "detective.c2.inspect.board.open_plan"
+    ],
+    [
+      "e17550",
+      "detective",
+      2290,
+      "detective.c2.read.open_plan"
+    ],
+    [
+      "e17601",
+      "detective",
+      2291,
+      "detective.c2.inspect.board.seal_plan"
+    ],
+    [
+      "e17636",
+      "detective",
+      2292,
+      "detective.c2.read.seal_plan"
+    ],
+    [
+      "e17675",
+      "detective",
+      2293,
+      "detective.c2.inspect.board.committee_plan"
+    ],
+    [
+      "e17713",
+      "detective",
+      2294,
+      "detective.c2.read.committee_plan"
+    ],
+    [
+      "e17751",
+      "detective",
+      2295,
+      "detective.c2.decline.ward_ledger"
+    ],
+    [
+      "e17792",
+      "detective",
+      2296,
+      "detective.c2.decline.ward_night"
+    ],
+    [
+      "e17832",
+      "detective",
+      2297,
+      "detective.c2.accept.open_plan"
+    ],
+    [
+      "e17855",
+      "detective",
+      2298,
+      "detective.c2.decline.seal_plan"
+    ],
+    [
+      "e17909",
+      "detective",
+      2299,
+      "detective.c2.accept.committee_plan"
+    ],
+    [
+      "e17998",
+      "detective",
+      2301,
+      "detective.c2.move.central_hall.outdoor_meter"
+    ],
+    [
+      "e18016",
+      "detective",
+      2302,
+      "detective.c2.sample.meter"
+    ],
+    [
+      "e18040",
+      "detective",
+      2304,
+      "detective.c2.move.outdoor_meter.central_hall"
+    ],
+    [
+      "e18067",
+      "detective",
+      2306,
+      "detective.c2.move.central_hall.document_workshop"
+    ],
+    [
+      "e18086",
+      "detective",
+      2307,
+      "detective.c2.document.inventory.undertake"
+    ],
+    [
+      "e18137",
+      "detective",
+      2308,
+      "detective.c2.motive.inspect.case.contract.document_workshop"
+    ],
+    [
+      "e18150",
+      "detective",
+      2309,
+      "detective.c2.investigation.inspect.document_workshop"
+    ],
+    [
+      "e18163",
+      "detective",
+      2310,
+      "detective.c2.document.join.undertake"
+    ],
+    [
+      "e18630",
+      "detective",
+      2370,
+      "detective.wait.first_night.60"
+    ],
+    [
+      "e18648",
+      "detective",
+      2372,
+      "detective.c2.move.document_workshop.central_hall"
+    ],
+    [
+      "e18669",
+      "detective",
+      2374,
+      "detective.c2.move.central_hall.outdoor_meter"
+    ],
+    [
+      "e18693",
+      "detective",
+      2375,
+      "detective.c2.sample.meter"
+    ],
+    [
+      "e18711",
+      "detective",
+      2377,
+      "detective.c2.move.outdoor_meter.central_hall"
+    ],
+    [
+      "e18736",
+      "detective",
+      2379,
+      "detective.c2.move.central_hall.document_workshop"
+    ],
+    [
+      "e18868",
+      "detective",
+      2399,
+      "detective.wait.first_night.20"
+    ],
+    [
+      "e18912",
+      "detective",
+      2400,
+      "detective.wait.first_night.1"
+    ],
+    [
+      "e19137",
+      "huo",
+      2420,
+      "huo.c2.sample.meter"
+    ],
+    [
+      "e19149",
+      "moran",
+      2422,
+      "moran.c2.move.resonance_hall.quiet_room"
+    ],
+    [
+      "e19158",
+      "moran",
+      2424,
+      "moran.c2.move.quiet_room.resonance_hall"
+    ],
+    [
+      "e19167",
+      "moran",
+      2426,
+      "moran.c2.move.resonance_hall.quiet_room"
+    ],
+    [
+      "e19176",
+      "moran",
+      2428,
+      "moran.c2.move.quiet_room.resonance_hall"
+    ],
+    [
+      "e19185",
+      "moran",
+      2430,
+      "moran.c2.move.resonance_hall.quiet_room"
+    ],
+    [
+      "e19194",
+      "moran",
+      2432,
+      "moran.c2.move.quiet_room.resonance_hall"
+    ],
+    [
+      "e19203",
+      "moran",
+      2434,
+      "moran.c2.move.resonance_hall.quiet_room"
+    ],
+    [
+      "e19212",
+      "moran",
+      2436,
+      "moran.c2.move.quiet_room.resonance_hall"
+    ],
+    [
+      "e19221",
+      "moran",
+      2438,
+      "moran.c2.move.resonance_hall.quiet_room"
+    ],
+    [
+      "e19230",
+      "lucian",
+      2440,
+      "lucian.wait.first_night.120"
+    ],
+    [
+      "e19234",
+      "moran",
+      2440,
+      "moran.c2.move.quiet_room.resonance_hall"
+    ],
+    [
+      "e19247",
+      "quer",
+      2441,
+      "quer.wait.first_night.120"
+    ],
+    [
+      "e19257",
+      "moran",
+      2442,
+      "moran.c2.move.resonance_hall.quiet_room"
+    ],
+    [
+      "e19261",
+      "quer",
+      2442,
+      "quer.c2.sample.meter"
+    ],
+    [
+      "e19273",
+      "moran",
+      2444,
+      "moran.c2.move.quiet_room.resonance_hall"
+    ],
+    [
+      "e19282",
+      "moran",
+      2446,
+      "moran.c2.move.resonance_hall.quiet_room"
+    ],
+    [
+      "e19291",
+      "moran",
+      2448,
+      "moran.c2.move.quiet_room.resonance_hall"
+    ],
+    [
+      "e19300",
+      "moran",
+      2450,
+      "moran.c2.move.resonance_hall.quiet_room"
+    ],
+    [
+      "e19309",
+      "moran",
+      2452,
+      "moran.c2.move.quiet_room.resonance_hall"
+    ],
+    [
+      "e19318",
+      "moran",
+      2454,
+      "moran.c2.move.resonance_hall.quiet_room"
+    ],
+    [
+      "e19327",
+      "moran",
+      2456,
+      "moran.c2.move.quiet_room.resonance_hall"
+    ],
+    [
+      "e19336",
+      "moran",
+      2458,
+      "moran.c2.move.resonance_hall.quiet_room"
+    ]
+  ],
+  "raw_action_index_scope": "all committed execution action IDs inspected; retained detective and unprojected tail subset only"
+}

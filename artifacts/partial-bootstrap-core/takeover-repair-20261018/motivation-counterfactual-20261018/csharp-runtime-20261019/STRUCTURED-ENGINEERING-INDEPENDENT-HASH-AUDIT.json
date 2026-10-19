@@ -1,0 +1,1070 @@
+{
+  "run-01": {
+    "manifest_mismatches": [],
+    "comparisons": {
+      "observations.json": {
+        "recalculated": {
+          "byte_identical": false,
+          "before_sha256": "e765524b187d890e6b59f0dc89da1bcc5eba89d27e15de9af6355615e05f8ab4",
+          "after_sha256": "7e51aa6144f584231a1a6a44931eee19f25538f2cd8e1dc2b9609243db1757bb"
+        },
+        "saved_record_matches": true
+      },
+      "session-save.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581",
+          "after_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581"
+        },
+        "saved_record_matches": true
+      },
+      "session-save-stream.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581",
+          "after_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581"
+        },
+        "saved_record_matches": true
+      },
+      "session-restored-save.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581",
+          "after_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581"
+        },
+        "saved_record_matches": true
+      },
+      "session-trace.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3",
+          "after_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3"
+        },
+        "saved_record_matches": true
+      },
+      "session-trace-stream.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3",
+          "after_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3"
+        },
+        "saved_record_matches": true
+      },
+      "session-host.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "4cfc639c5243bb8534918c40fa70970cf1de58a8da639ad7d3628e3ad4c05681",
+          "after_sha256": "4cfc639c5243bb8534918c40fa70970cf1de58a8da639ad7d3628e3ad4c05681"
+        },
+        "saved_record_matches": true
+      },
+      "neutral.dag.jsonl": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "8c5ba2f40e785aa2798738e93b68e7ac9ccd0ff7e51a6c73ed9d9df48152ebed",
+          "after_sha256": "8c5ba2f40e785aa2798738e93b68e7ac9ccd0ff7e51a6c73ed9d9df48152ebed"
+        },
+        "saved_record_matches": true
+      },
+      "failure.dag.jsonl.partial": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "532825249cd4c60e796aac0b13c3b9aa26bc8463c8b2d3868f38f47099309e4a",
+          "after_sha256": "532825249cd4c60e796aac0b13c3b9aa26bc8463c8b2d3868f38f47099309e4a"
+        },
+        "saved_record_matches": true
+      },
+      "performance-1/performance-semantics.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73",
+          "after_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73"
+        },
+        "saved_record_matches": true
+      },
+      "performance-2/performance-semantics.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73",
+          "after_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73"
+        },
+        "saved_record_matches": true
+      },
+      "performance-3/performance-semantics.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73",
+          "after_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73"
+        },
+        "saved_record_matches": true
+      }
+    },
+    "dag": {
+      "before/neutral.dag.jsonl": {
+        "chain_errors": [],
+        "last_kind": "seal",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "checkpoint",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "checkpoint",
+          "seal"
+        ]
+      },
+      "before/failure.dag.jsonl.partial": {
+        "chain_errors": [],
+        "last_kind": "event",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event"
+        ]
+      },
+      "after/neutral.dag.jsonl": {
+        "chain_errors": [],
+        "last_kind": "seal",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "checkpoint",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "checkpoint",
+          "seal"
+        ]
+      },
+      "after/failure.dag.jsonl.partial": {
+        "chain_errors": [],
+        "last_kind": "event",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event"
+        ]
+      }
+    },
+    "performance_summary_mismatches": []
+  },
+  "run-02": {
+    "manifest_mismatches": [],
+    "comparisons": {
+      "observations.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "e765524b187d890e6b59f0dc89da1bcc5eba89d27e15de9af6355615e05f8ab4",
+          "after_sha256": "e765524b187d890e6b59f0dc89da1bcc5eba89d27e15de9af6355615e05f8ab4"
+        },
+        "saved_record_matches": true
+      },
+      "session-save.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581",
+          "after_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581"
+        },
+        "saved_record_matches": true
+      },
+      "session-save-stream.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581",
+          "after_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581"
+        },
+        "saved_record_matches": true
+      },
+      "session-restored-save.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581",
+          "after_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581"
+        },
+        "saved_record_matches": true
+      },
+      "session-trace.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3",
+          "after_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3"
+        },
+        "saved_record_matches": true
+      },
+      "session-trace-stream.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3",
+          "after_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3"
+        },
+        "saved_record_matches": true
+      },
+      "session-host.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "4cfc639c5243bb8534918c40fa70970cf1de58a8da639ad7d3628e3ad4c05681",
+          "after_sha256": "4cfc639c5243bb8534918c40fa70970cf1de58a8da639ad7d3628e3ad4c05681"
+        },
+        "saved_record_matches": true
+      },
+      "neutral.dag.jsonl": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "8c5ba2f40e785aa2798738e93b68e7ac9ccd0ff7e51a6c73ed9d9df48152ebed",
+          "after_sha256": "8c5ba2f40e785aa2798738e93b68e7ac9ccd0ff7e51a6c73ed9d9df48152ebed"
+        },
+        "saved_record_matches": true
+      },
+      "failure.dag.jsonl.partial": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "532825249cd4c60e796aac0b13c3b9aa26bc8463c8b2d3868f38f47099309e4a",
+          "after_sha256": "532825249cd4c60e796aac0b13c3b9aa26bc8463c8b2d3868f38f47099309e4a"
+        },
+        "saved_record_matches": true
+      },
+      "performance-1/performance-semantics.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73",
+          "after_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73"
+        },
+        "saved_record_matches": true
+      },
+      "performance-2/performance-semantics.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73",
+          "after_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73"
+        },
+        "saved_record_matches": true
+      },
+      "performance-3/performance-semantics.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73",
+          "after_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73"
+        },
+        "saved_record_matches": true
+      }
+    },
+    "dag": {
+      "before/neutral.dag.jsonl": {
+        "chain_errors": [],
+        "last_kind": "seal",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "checkpoint",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "checkpoint",
+          "seal"
+        ]
+      },
+      "before/failure.dag.jsonl.partial": {
+        "chain_errors": [],
+        "last_kind": "event",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event"
+        ]
+      },
+      "after/neutral.dag.jsonl": {
+        "chain_errors": [],
+        "last_kind": "seal",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "checkpoint",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "checkpoint",
+          "seal"
+        ]
+      },
+      "after/failure.dag.jsonl.partial": {
+        "chain_errors": [],
+        "last_kind": "event",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event"
+        ]
+      }
+    },
+    "performance_summary_mismatches": []
+  },
+  "run-03": {
+    "manifest_mismatches": [],
+    "comparisons": {
+      "observations.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "e765524b187d890e6b59f0dc89da1bcc5eba89d27e15de9af6355615e05f8ab4",
+          "after_sha256": "e765524b187d890e6b59f0dc89da1bcc5eba89d27e15de9af6355615e05f8ab4"
+        },
+        "saved_record_matches": true
+      },
+      "session-save.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581",
+          "after_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581"
+        },
+        "saved_record_matches": true
+      },
+      "session-save-stream.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581",
+          "after_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581"
+        },
+        "saved_record_matches": true
+      },
+      "session-restored-save.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581",
+          "after_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581"
+        },
+        "saved_record_matches": true
+      },
+      "session-trace.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3",
+          "after_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3"
+        },
+        "saved_record_matches": true
+      },
+      "session-trace-stream.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3",
+          "after_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3"
+        },
+        "saved_record_matches": true
+      },
+      "session-host.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "4cfc639c5243bb8534918c40fa70970cf1de58a8da639ad7d3628e3ad4c05681",
+          "after_sha256": "4cfc639c5243bb8534918c40fa70970cf1de58a8da639ad7d3628e3ad4c05681"
+        },
+        "saved_record_matches": true
+      },
+      "neutral.dag.jsonl": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "8c5ba2f40e785aa2798738e93b68e7ac9ccd0ff7e51a6c73ed9d9df48152ebed",
+          "after_sha256": "8c5ba2f40e785aa2798738e93b68e7ac9ccd0ff7e51a6c73ed9d9df48152ebed"
+        },
+        "saved_record_matches": true
+      },
+      "failure.dag.jsonl.partial": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "532825249cd4c60e796aac0b13c3b9aa26bc8463c8b2d3868f38f47099309e4a",
+          "after_sha256": "532825249cd4c60e796aac0b13c3b9aa26bc8463c8b2d3868f38f47099309e4a"
+        },
+        "saved_record_matches": true
+      },
+      "performance-1/performance-semantics.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73",
+          "after_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73"
+        },
+        "saved_record_matches": true
+      },
+      "performance-2/performance-semantics.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73",
+          "after_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73"
+        },
+        "saved_record_matches": true
+      },
+      "performance-3/performance-semantics.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73",
+          "after_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73"
+        },
+        "saved_record_matches": true
+      }
+    },
+    "dag": {
+      "before/neutral.dag.jsonl": {
+        "chain_errors": [],
+        "last_kind": "seal",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "checkpoint",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "checkpoint",
+          "seal"
+        ]
+      },
+      "before/failure.dag.jsonl.partial": {
+        "chain_errors": [],
+        "last_kind": "event",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event"
+        ]
+      },
+      "after/neutral.dag.jsonl": {
+        "chain_errors": [],
+        "last_kind": "seal",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "checkpoint",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "checkpoint",
+          "seal"
+        ]
+      },
+      "after/failure.dag.jsonl.partial": {
+        "chain_errors": [],
+        "last_kind": "event",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event"
+        ]
+      }
+    },
+    "performance_summary_mismatches": []
+  },
+  "run-04": {
+    "manifest_mismatches": [],
+    "comparisons": {
+      "observations.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "e765524b187d890e6b59f0dc89da1bcc5eba89d27e15de9af6355615e05f8ab4",
+          "after_sha256": "e765524b187d890e6b59f0dc89da1bcc5eba89d27e15de9af6355615e05f8ab4"
+        },
+        "saved_record_matches": true
+      },
+      "session-save.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581",
+          "after_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581"
+        },
+        "saved_record_matches": true
+      },
+      "session-save-stream.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581",
+          "after_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581"
+        },
+        "saved_record_matches": true
+      },
+      "session-restored-save.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581",
+          "after_sha256": "36db612b3645457cd0baaede946d6ea2f9b7f86e50289c997e56c6190f80c581"
+        },
+        "saved_record_matches": true
+      },
+      "session-trace.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3",
+          "after_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3"
+        },
+        "saved_record_matches": true
+      },
+      "session-trace-stream.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3",
+          "after_sha256": "47ef483b5e93c1091dbb8c37aa2effa052c8a58ccd16eb8d8566ada1668edbd3"
+        },
+        "saved_record_matches": true
+      },
+      "session-host.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "4cfc639c5243bb8534918c40fa70970cf1de58a8da639ad7d3628e3ad4c05681",
+          "after_sha256": "4cfc639c5243bb8534918c40fa70970cf1de58a8da639ad7d3628e3ad4c05681"
+        },
+        "saved_record_matches": true
+      },
+      "neutral.dag.jsonl": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "8c5ba2f40e785aa2798738e93b68e7ac9ccd0ff7e51a6c73ed9d9df48152ebed",
+          "after_sha256": "8c5ba2f40e785aa2798738e93b68e7ac9ccd0ff7e51a6c73ed9d9df48152ebed"
+        },
+        "saved_record_matches": true
+      },
+      "failure.dag.jsonl.partial": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "532825249cd4c60e796aac0b13c3b9aa26bc8463c8b2d3868f38f47099309e4a",
+          "after_sha256": "532825249cd4c60e796aac0b13c3b9aa26bc8463c8b2d3868f38f47099309e4a"
+        },
+        "saved_record_matches": true
+      },
+      "performance-1/performance-semantics.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73",
+          "after_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73"
+        },
+        "saved_record_matches": true
+      },
+      "performance-2/performance-semantics.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73",
+          "after_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73"
+        },
+        "saved_record_matches": true
+      },
+      "performance-3/performance-semantics.json": {
+        "recalculated": {
+          "byte_identical": true,
+          "before_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73",
+          "after_sha256": "1b0d77e065f8c6abeb9e94214dac2f465fa39e361ecef5938a6078248ce87d73"
+        },
+        "saved_record_matches": true
+      }
+    },
+    "dag": {
+      "before/neutral.dag.jsonl": {
+        "chain_errors": [],
+        "last_kind": "seal",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "checkpoint",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "checkpoint",
+          "seal"
+        ]
+      },
+      "before/failure.dag.jsonl.partial": {
+        "chain_errors": [],
+        "last_kind": "event",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event"
+        ]
+      },
+      "after/neutral.dag.jsonl": {
+        "chain_errors": [],
+        "last_kind": "seal",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "checkpoint",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "event",
+          "node",
+          "node",
+          "checkpoint",
+          "seal"
+        ]
+      },
+      "after/failure.dag.jsonl.partial": {
+        "chain_errors": [],
+        "last_kind": "event",
+        "final_exists": false,
+        "kinds": [
+          "header",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "node",
+          "event"
+        ]
+      }
+    },
+    "performance_summary_mismatches": []
+  },
+  "current_source_matches_run04": {
+    "Runtime.cs": true,
+    "Session.cs": true
+  }
+}

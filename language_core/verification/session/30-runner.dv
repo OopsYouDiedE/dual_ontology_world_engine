@@ -822,14 +822,9 @@ fn dvs_session_close(state):
         status = "budget-exhausted"
     if dvs_session_active(state):
         status = "host-closed-during-active-session"
-    var pruned_actors = []
-    var pa_i = 0
-    while pa_i < rt_count(actors):
-        rt_push(pruned_actors, dv_without(actors[pa_i], "simulations"))
-        pa_i = pa_i + 1
     dvs_event(events, "session_stopped", "", dv_find(physical, "time", 0), dv_single(events[(rt_count(events) - 1)].id), {"reason": status, "actions_executed": executed})
     rt_print(rt_json_stringify({"type": "session_stopped", "status": status, "game_time": dv_find(physical, "time", 0)}))
-    return {"events": events, "initial": initial, "final": {"physical": physical, "actors": pruned_actors}, "status": status, "time": dv_find(physical, "time", 0), "game_time_unit": "minute", "configuration": {"cost_model": costs, "formal_answers": dv_find(story, "formal_answers", []), "source_refs": dv_find(story, "source_refs", []), "time_origin": {"run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "unit": "minute"}, "report_labels": dv_find(story, "report_labels", []), "bindings": bindings}, "scope": dv_find(story, "execution_scope", "DV formal model; no Godot host input or geometry")}
+    return {"events": events, "initial": initial, "final": {"physical": physical, "actors": actors}, "status": status, "time": dv_find(physical, "time", 0), "game_time_unit": "minute", "configuration": {"cost_model": costs, "formal_answers": dv_find(story, "formal_answers", []), "source_refs": dv_find(story, "source_refs", []), "time_origin": {"run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "unit": "minute"}, "report_labels": dv_find(story, "report_labels", []), "bindings": bindings}, "scope": dv_find(story, "execution_scope", "DV formal model; no Godot host input or geometry")}
 
 // A real, settled action reports its completion time to its own actor.
 // No other physical fields or inactive actors are synchronized.

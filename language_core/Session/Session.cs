@@ -74,7 +74,7 @@ public sealed class DvSession
     private static object SnapshotValue(object value) => value switch
     {
         Rational exact => new Dictionary<string, string> { ["$dv_rational"] = exact.ToString() },
-        List<object> items => items.Select(SnapshotValue).ToArray(),
+        object dvList when R.TryItems(dvList, out var items) => items.Select(SnapshotValue).ToArray(),
         _ => value
     };
 
@@ -100,11 +100,15 @@ public sealed class DvSession
     private static object HostValue(object value)
     {
         if (value is Rational) return SnapshotValue(value);
-        if (value is not List<object> items) return value;
-        if (items.Count > 0 && items.All(item => item is List<object> { Count: 2 } pair && pair[0] is string))
+        if (!R.TryItems(value, out var items)) return value;
+        if (items.Count > 0 && items.All(item => R.TryItems(item, out var pair) && pair.Count == 2 && pair[0] is string))
         {
             var record = new Dictionary<string, object>();
-            foreach (List<object> pair in items) record[(string)pair[0]] = HostValue(pair[1]);
+            foreach (var item in items)
+            {
+                var pair = R.Items(item);
+                record[(string)pair[0]] = HostValue(pair[1]);
+            }
             return record;
         }
         return items.Select(HostValue).ToArray();

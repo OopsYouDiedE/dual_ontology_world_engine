@@ -1,0 +1,242 @@
+{
+  "performance-1": {
+    "before": {
+      "scope": "finite neutral container sample; not game performance",
+      "small_trees": 2500,
+      "small_fields": 3,
+      "large_trees": 256,
+      "large_fields": 128,
+      "independent_copies": 1500,
+      "sparse_updates": 1500,
+      "stopwatch_frequency": 10000000,
+      "metrics": [
+        {
+          "name": "freeze-unique-small",
+          "elapsed_ticks": 218394,
+          "elapsed_milliseconds": 21.8394,
+          "allocated_bytes": 10041696,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        },
+        {
+          "name": "freeze-unique-large",
+          "elapsed_ticks": 1033508,
+          "elapsed_milliseconds": 103.3508,
+          "allocated_bytes": 36191448,
+          "gen0_collections": 3,
+          "gen1_collections": 3,
+          "gen2_collections": 1
+        },
+        {
+          "name": "independent-copy-read-sparse-update",
+          "elapsed_ticks": 373683,
+          "elapsed_milliseconds": 37.3683,
+          "allocated_bytes": 11417200,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        }
+      ]
+    },
+    "after": {
+      "scope": "finite neutral container sample; not game performance",
+      "small_trees": 2500,
+      "small_fields": 3,
+      "large_trees": 256,
+      "large_fields": 128,
+      "independent_copies": 1500,
+      "sparse_updates": 1500,
+      "stopwatch_frequency": 10000000,
+      "metrics": [
+        {
+          "name": "freeze-unique-small",
+          "elapsed_ticks": 154992,
+          "elapsed_milliseconds": 15.4992,
+          "allocated_bytes": 9121696,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        },
+        {
+          "name": "freeze-unique-large",
+          "elapsed_ticks": 977265,
+          "elapsed_milliseconds": 97.7265,
+          "allocated_bytes": 32513464,
+          "gen0_collections": 4,
+          "gen1_collections": 4,
+          "gen2_collections": 2
+        },
+        {
+          "name": "independent-copy-read-sparse-update",
+          "elapsed_ticks": 469102,
+          "elapsed_milliseconds": 46.9102,
+          "allocated_bytes": 9665200,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        }
+      ]
+    }
+  },
+  "performance-2": {
+    "before": {
+      "scope": "finite neutral container sample; not game performance",
+      "small_trees": 2500,
+      "small_fields": 3,
+      "large_trees": 256,
+      "large_fields": 128,
+      "independent_copies": 1500,
+      "sparse_updates": 1500,
+      "stopwatch_frequency": 10000000,
+      "metrics": [
+        {
+          "name": "freeze-unique-small",
+          "elapsed_ticks": 329026,
+          "elapsed_milliseconds": 32.9026,
+          "allocated_bytes": 10041696,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        },
+        {
+          "name": "freeze-unique-large",
+          "elapsed_ticks": 1046602,
+          "elapsed_milliseconds": 104.6602,
+          "allocated_bytes": 36191448,
+          "gen0_collections": 3,
+          "gen1_collections": 3,
+          "gen2_collections": 1
+        },
+        {
+          "name": "independent-copy-read-sparse-update",
+          "elapsed_ticks": 374920,
+          "elapsed_milliseconds": 37.492,
+          "allocated_bytes": 11417200,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        }
+      ]
+    },
+    "after": {
+      "scope": "finite neutral container sample; not game performance",
+      "small_trees": 2500,
+      "small_fields": 3,
+      "large_trees": 256,
+      "large_fields": 128,
+      "independent_copies": 1500,
+      "sparse_updates": 1500,
+      "stopwatch_frequency": 10000000,
+      "metrics": [
+        {
+          "name": "freeze-unique-small",
+          "elapsed_ticks": 160945,
+          "elapsed_milliseconds": 16.0945,
+          "allocated_bytes": 9121696,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        },
+        {
+          "name": "freeze-unique-large",
+          "elapsed_ticks": 1218055,
+          "elapsed_milliseconds": 121.8055,
+          "allocated_bytes": 32513464,
+          "gen0_collections": 4,
+          "gen1_collections": 4,
+          "gen2_collections": 2
+        },
+        {
+          "name": "independent-copy-read-sparse-update",
+          "elapsed_ticks": 670836,
+          "elapsed_milliseconds": 67.0836,
+          "allocated_bytes": 9665200,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        }
+      ]
+    }
+  },
+  "performance-3": {
+    "before": {
+      "scope": "finite neutral container sample; not game performance",
+      "small_trees": 2500,
+      "small_fields": 3,
+      "large_trees": 256,
+      "large_fields": 128,
+      "independent_copies": 1500,
+      "sparse_updates": 1500,
+      "stopwatch_frequency": 10000000,
+      "metrics": [
+        {
+          "name": "freeze-unique-small",
+          "elapsed_ticks": 246600,
+          "elapsed_milliseconds": 24.66,
+          "allocated_bytes": 10041696,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        },
+        {
+          "name": "freeze-unique-large",
+          "elapsed_ticks": 1232873,
+          "elapsed_milliseconds": 123.2873,
+          "allocated_bytes": 36191448,
+          "gen0_collections": 3,
+          "gen1_collections": 3,
+          "gen2_collections": 1
+        },
+        {
+          "name": "independent-copy-read-sparse-update",
+          "elapsed_ticks": 359562,
+          "elapsed_milliseconds": 35.9562,
+          "allocated_bytes": 11417200,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        }
+      ]
+    },
+    "after": {
+      "scope": "finite neutral container sample; not game performance",
+      "small_trees": 2500,
+      "small_fields": 3,
+      "large_trees": 256,
+      "large_fields": 128,
+      "independent_copies": 1500,
+      "sparse_updates": 1500,
+      "stopwatch_frequency": 10000000,
+      "metrics": [
+        {
+          "name": "freeze-unique-small",
+          "elapsed_ticks": 196906,
+          "elapsed_milliseconds": 19.6906,
+          "allocated_bytes": 9121696,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        },
+        {
+          "name": "freeze-unique-large",
+          "elapsed_ticks": 1214162,
+          "elapsed_milliseconds": 121.4162,
+          "allocated_bytes": 32513400,
+          "gen0_collections": 4,
+          "gen1_collections": 4,
+          "gen2_collections": 2
+        },
+        {
+          "name": "independent-copy-read-sparse-update",
+          "elapsed_ticks": 526249,
+          "elapsed_milliseconds": 52.6249,
+          "allocated_bytes": 9665200,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        }
+      ]
+    }
+  }
+}

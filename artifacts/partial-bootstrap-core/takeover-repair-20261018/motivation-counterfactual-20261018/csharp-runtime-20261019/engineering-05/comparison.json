@@ -1,0 +1,76 @@
+{
+  "numeric-validation.json": {
+    "byte_identical": true,
+    "before_sha256": "388b64ec59a09a8b2c7f4d3f472fb2275184111a1cd7b35540fa05256f3d783f",
+    "after_sha256": "388b64ec59a09a8b2c7f4d3f472fb2275184111a1cd7b35540fa05256f3d783f"
+  },
+  "semantics.json": {
+    "byte_identical": true,
+    "before_sha256": "db0f27beabb696c002cc6508801f6f305890b7dcb0ccfa1b7c1b9dc101fefa82",
+    "after_sha256": "db0f27beabb696c002cc6508801f6f305890b7dcb0ccfa1b7c1b9dc101fefa82"
+  },
+  "neutral.dag.jsonl": {
+    "byte_identical": false,
+    "before_sha256": "374d40e68942182bf81b5d382545d28552a41a1016078a990a67e3980d96fd96",
+    "after_sha256": "5bf0ea8d1d888ce9cb8d276fae5b252b95faffa8c4c03a3aad7128bfad88afbf"
+  },
+  "failure.dag.jsonl.partial": {
+    "byte_identical": true,
+    "before_sha256": "11e02b7fb8cfdccef42bd8eaa0e4bf59f7a15faca85f63bbd5236c84bb1cadeb",
+    "after_sha256": "11e02b7fb8cfdccef42bd8eaa0e4bf59f7a15faca85f63bbd5236c84bb1cadeb"
+  },
+  "metrics": {
+    "before": {
+      "equality": {
+        "milliseconds": 4.8311,
+        "allocated_bytes": 32
+      },
+      "numeric": {
+        "milliseconds": 126.9307,
+        "allocated_bytes": 98400040,
+        "checksum": 2400000
+      },
+      "raw": {
+        "milliseconds": 498.1767,
+        "allocated_bytes": 66746488
+      },
+      "trash_allocated_bytes": 57416240,
+      "buckets_after_collection": 55861,
+      "buckets_after_idle": 893,
+      "buckets_after_active": 70893,
+      "buckets_after_final_collection": 893
+    },
+    "after": {
+      "equality": {
+        "milliseconds": 2.8918,
+        "allocated_bytes": 32
+      },
+      "numeric": {
+        "milliseconds": 21.6893,
+        "allocated_bytes": 14400040,
+        "checksum": 2400000
+      },
+      "raw": {
+        "milliseconds": 442.2569,
+        "allocated_bytes": 66361848
+      },
+      "trash_allocated_bytes": 57416216,
+      "buckets_after_collection": 55829,
+      "buckets_after_idle": 893,
+      "buckets_after_active": 70893,
+      "buckets_after_final_collection": 893
+    }
+  },
+  "json_integrity": {
+    "before": {
+      "expected": "[[\"history\",[\"H\"]],[\"simulations\",[\"S\"]],[\"events\",[[[\"type\",\"observation\"],[\"world\",[\"W\"]],[\"adoptions\",[\"A\"]],[\"competitors\",[\"C\"]]]]]]",
+      "actual": "[[\"history\",[\"H\"]],[\"simulations\",[\"S\"]],[\"events\",[[[\"type\",\"observation\"],[\"world\",[\"W\"]],[\"adoptions\",[\"A\"]],[\"competitors\",[\"C\"]]]]]]",
+      "complete": true
+    },
+    "after": {
+      "expected": "[[\"history\",[\"H\"]],[\"simulations\",[\"S\"]],[\"events\",[[[\"type\",\"observation\"],[\"world\",[\"W\"]],[\"adoptions\",[\"A\"]],[\"competitors\",[\"C\"]]]]]]",
+      "actual": "[[\"history\",[\"H\"]],[\"simulations\",[\"S\"]],[\"events\",[[[\"type\",\"observation\"],[\"world\",[\"W\"]],[\"adoptions\",[\"A\"]],[\"competitors\",[\"C\"]]]]]]",
+      "complete": true
+    }
+  }
+}

@@ -363,6 +363,8 @@ dvg_prepare(state)
 dvg_complete(state, receipt)
 ```
 
+`cognitive_erosion`返回的声明可扩充`incapacity_when`条件；每个threshold的`when`也可省略。Session在实际physical中核对可选条件，只有true才将对应剂量级推进或投影incapacitated；未知不当作已发生，无条件条目保持原即时阈值。rank仍单调，晚期认知损害仍执行；生命、症状和治疗的具体因果来自内容法则，剂量本身不替代内容的死亡或永久失能事实。声明例：`dv_with(cognitive_erosion(exposure_ref, [{"at": dose, "rank": 3, "when": terminal_condition}], coupling, basis), "incapacity_when", incapacitated_condition)`。未提供incapacity_when时不新增投影字段。
+
 ## 7. 历史、调试、保存与平台 ABI
 
 `70-reasoning-cost.dv` 的 `dv_session` 是检查点容器，和正式 `dvs_session_*` 调度器不同。commit 核对更高版本、身份、domain/subject 与非倒退时间；advance 只推进容器时间。`dv_inspect_at` 选择不晚于请求时刻的本人真实检查点，支持 worldview/state/slice；未来、缺失历史明确报错，不用当前知识推造历史。worldview 包含有效规律采用和价值政策。
@@ -381,7 +383,7 @@ Session 宿主提供流式 WriteTrace/WriteSave；Trace 的精确数沿原字符
 | 文本 | rt_cat(a,b), rt_length(text), rt_slice(text,start,count), rt_chr(text,index), rt_code(text), rt_show(value) | 连接、UTF-16 长度/子串/单元、码值、基本值格式化；show 不格式化任意列表 |
 | 标识符 | rt_id_start(text), rt_id_part(text), rt_normalize(text) | 标识符类别、NFC |
 | 列表 | rt_list(), rt_push(list,value), rt_at(list,index), rt_replace(list,index,value), rt_list_with_index(list,index,value), rt_count(list), rt_is_list(value) | 构造、追加、读取、原地替换、新根共享项替换、计数；写只读快照时报错 |
-| 记录 | rt_record_index(record,key), rt_record_find(record,key,fallback), rt_record_with(record,key,value), rt_record_with_many(record,updates) | 末项优先定位/查找、独立复制更新；更新全部重复键 |
+| 记录 | rt_record_index(record,key), rt_record_find(record,key,fallback), rt_record_with(record,key,value), rt_record_with_many(record,updates) | 末项优先定位/查找；with只替首个同键项，with_many更新全部同键项；独立复制 |
 | 复制 | rt_copy_value(value), rt_snapshot(value) | 独立可编辑分支、递归不可变快照 |
 | 纯值备忘 | rt_memo_get(owner,key), rt_memo_put(owner,key,value) | get 返回 `[found,value]`，put 返回可独立使用的结果；完整输入底本和键决定结果 |
 | 参数 | rt_arg_count(), rt_arg(index) | 启动命令行参数 |
@@ -1091,3 +1093,23 @@ run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运
 `dvs_idle_guard_matches`核对本人输入、绑定、费用、章节、物理非时钟状态、真实同处上下文及新增事件；未知事件类型唤醒，侵蚀仍先按原流程计算。最长60游戏分钟及规划剩余时域边界仅作保守兜底，不能替代目标和动作条件边界。变化和期限均回原prepare；符合条件时仅更新调度标记，记录`planning_stop_reused`并引用原真实`planning_stop`，不伪造本次认知或行动。证书覆盖受上述证明范围限制，不能称全部主体均可休眠。
 
 第二章`c2d_row_goal`与`c2m_row_goal`仅缓存完整row/id及最终条件等显式输入的声明构造；`c2m_observation_goal_templates`按完整groups/id缓存静态证据模板。动态请求、已作决定、本人资格、证据新鲜度、导航与等待仍按原链计算。`game/entry.dv`仍无全目标刷新守卫；这些构造缓存不能宣称消除了全部刷新或BFS成本。
+
+
+## C# 容器与证据维护（2026-10-19）
+
+用户已暂停Antigravity并授权在原工作区集中修改；本轮整合C#结构化、Session边界与已识别DV错误修复。正式会话前冻结全部实际源码；源修改期间不把工作区测量当作冻结证据，不并发运行正式会话。
+
+快照驻留保留全部仍存活的规范身份。Gen2收集后增量清理弱驻留表的死亡桶，每64次维护触点最多处理128桶；memo与递归冻结均触发维护，不淘汰存活身份。结构相等仅以数值兼容的结构指纹排除不等；指纹相同仍依原序逐值比较，未知值沿原路径。JSON不按字段名裁剪；原始DAG逐帧复用SHA-256上下文，摘要输入字节、提交刷新与partial合同保持。
+
+中性容器/别名/精确数差分、失活桶压力与DAG原始字节比较属于工程排错。工程样本耗时不外推正式五日耗时，JSON完整性修复与性能比较分别记录。证据目录为artifacts/partial-bootstrap-core/takeover-repair-20261018/motivation-counterfactual-20261018/csharp-runtime-20261019/。
+
+后续集中C#修订：可变分支的首个弱父引用直接内置在MutableState，仅多父时分配附加表；保留多别名、死亡父引用清理和循环失效遍历。DAG写入器跨帧Reset复用两份Utf8JsonWriter，失败释放使用finally保证文件与摘要释放。先做多父/循环失效及原始帧字节工程差分，正式游戏结果按候选版本分列，不沿用前轮窗口作为新候选验收。
+
+用户最新追加授权（2026-10-19）：允许多轮正式一级窗口，每轮最多240秒；每轮集中修改并先确认具体工程收益，再隔离冻结串行运行，实际进展和失败分别记录。同条件C#比较固定首轮DV内容及配置，Antigravity新增剧情另行集成，不跨版本拼接。
+
+
+本轮最新用户目标（2026-10-19）：集中完成已识别优化、结构/接线与撤销错误捷径后再测试。事实等价允许结合严格分析与实际证据作有范围的工程取舍，但不能通过降低搜索层数、删除认知/目标或裁剪原始证据冒充同条件提速。实际覆盖外的分支保持未知。数值缓存候选虽然降低微负载分配，正式窗口未显示进步，现封存为未采纳候选；现役底本保留第二批的单父引用与DAG写出器复用。
+
+冻结容器现以内部sealed IReadOnlyList<object>独占不可变object[]，直接采用冻结时新建的子数组，不再继承可变List或二次复制。R.Items返回只读接口，IsDvList/TryItems仍仅识别原生List及内部FrozenList，不扩张DV值域；写操作仅接受原生可变List，读取可变所有者时才解冻选中子分支并建立父失效关系。根复制和记录更新仍为O(n)，不是HAMT或持久向量。枚举器保留List的状态与错误语义；越界读交给私有空List产生原异常。Session的HostValue/SnapshotValue同步识别两种合法容器，Save标签、Trace字符串、原始DAG及独立副本必须集中工程核对。Items的CLR返回签名变化要求编译器自举与Session/宿主统一重建，禁止混用旧程序集。
+
+空冻结集合的接口枚举委托私有原生空List，保留.NET空枚举器的独立错误状态；非空集合采用值类型枚举器。解冻由FrozenList.CopyRoot把私有数组一次复制到独占List，不暴露底本、不逐项扩容。单字段更新按原先校验/冻结/首匹配顺序，内部保留具体冻结类型以免逐项经接口分派；冻结索引仅在完整资格验证后读取具体冻结pair。中性保存/恢复、错误文本和DAG差分与分配样本分列，CPU噪声不包装成整局提速。

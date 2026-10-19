@@ -76,35 +76,128 @@ fn c2h_rows():
             rt_push(rows, row)
             n = n + 1
         i = i + 1
-    let depart_id = "demon.c2.homecoming.depart"
-    var depart = c2d_row("demon", depart_id, "living_hall", dv_all([dv_fact(c2h_ref("proposed"), true), dv_at_least(c2_clock(), 7140)]), dv_true(), "契约第十一条与第十二条生效：代管者依约解除学园担保，遣返全体幸存者；外显记忆依约封存，留存潜意识创伤印记。", source)
-    depart = dv_with_many(depart, {"effects": [dv_assign(c2h_ref("departed"), true), dv_assign(c2h_ref("trauma_imprints_sealed"), true)]})
-    rt_push(rows, depart)
-    let ruan_dead_stone_id = "ruan.c2.exile.dead_stone"
-    let ruan_ds_text = "十九场死活推演与口粮余量冰冷对账：零证据产出且纯消耗口粮者，在生存棋盘上唯有作为死子断然割舍。"
-    var ruan_ds = c2d_row("ruan", ruan_dead_stone_id, "central_hall", dv_fact(c2_ref("c2.casualty", "casualty_occurred"), true), dv_fact(c2h_person("ruan", "dead_stone_declared"), true), ruan_ds_text, source)
-    ruan_ds = dv_with(ruan_ds, "effects", [dv_assign(c2h_person("ruan", "dead_stone_declared"), true)])
-    rt_push(rows, ruan_ds)
-    let ward_exile_id = "ward.c2.exile.motion"
-    let ward_ex_text = "基于连环伤亡与断粮事实，依紧急自保公约起草《剥夺配给与放逐动议》，不再承担非必要消耗。"
-    var ward_ex = c2d_row("ward", ward_exile_id, "central_hall", dv_fact(c2h_person("ruan", "dead_stone_declared"), true), dv_fact(c2h_ref("exile_motion_passed"), true), ward_ex_text, source)
-    ward_ex = dv_with(ward_ex, "effects", [dv_assign(c2h_ref("exile_motion_passed"), true), dv_assign(c2_own("detective", "exiled"), true)])
-    rt_push(rows, ward_ex)
-    let veronica_refuse_id = "veronica.c2.exile.refuse"
-    let veronica_ref_text = "化学滴定与配给效率表明，为拖累全体生存概率的冗余个体浪费任何防护资源，是对幸存者的集体自杀。"
-    var veronica_ref = c2d_row("veronica", veronica_refuse_id, "central_hall", dv_fact(c2h_ref("exile_motion_passed"), true), dv_fact(c2h_person("veronica", "protection_refused"), true), veronica_ref_text, source)
-    veronica_ref = dv_with(veronica_ref, "effects", [dv_assign(c2h_person("veronica", "protection_refused"), true)])
-    rt_push(rows, veronica_ref)
+    // Departure requires a separately implemented execution contract. A proposal
+    // and elapsed time never stand in for consent, safety or actual departure.
+    let ruan_id = "ruan.c2.exile.dead_stone"
+    let proposal = "ward.c2.exile.motion"
+    let ruan_pre = dv_all([c2h_present("ruan"), dv_fact(c2_ref("c2.casualty", "casualty_occurred"), true)])
+    var ruan = c2d_row("ruan", ruan_id, "central_hall", ruan_pre, dv_true(), "我主张把伤亡与配给责任放在一起对账，并提出是否继续承担侦探配给的问题。这只是我的主张。", source)
+    ruan = dv_with_many(ruan, {"effects": [dv_assign(c2h_person("ruan", "dead_stone_declared"), true)], "public_grants": [c2h_person("ruan", "dead_stone_declared"), c2d_mark("ruan", ruan_id)], "personal_choice": c2h_exile_choice("ruan-declaration", ruan_pre, ["controlled_audit", "records"], ["patient_priority"])})
+    rt_push(rows, ruan)
+    let ward_pre = dv_all([c2h_present("ward"), dv_fact(c2h_person("ruan", "dead_stone_declared"), true), c2h_balance_condition()])
+    var ward = c2d_row("ward", proposal, "central_hall", ward_pre, dv_true(), "我提出《剥夺配给与放逐动议》，请各位分别表态。提出动议尚不代表动议通过或已经执行。", source)
+    ward = dv_with_many(ward, {"effects": [dv_assign(c2h_ref("exile_motion_proposed"), true)], "public_grants": [c2h_ref("exile_motion_proposed"), c2d_mark("ward", proposal)], "received_speech_requirement": {"speaker": "ruan", "action_id": ruan_id}, "personal_choice": c2h_exile_choice("ward-motion", ward_pre, ["committee", "records"], ["patient_priority"])})
+    rt_push(rows, ward)
+    i = 0
+    while i < rt_count(people):
+        let actor = people[i]
+        let ready = dv_all([c2h_present(actor), dv_fact(c2h_ref("exile_motion_proposed"), true)])
+        let options = ["consent", "reject"]
+        var n = 0
+        while n < rt_count(options):
+            let accepts = options[n] == "consent"
+            var promotes = ["patient_priority", "solidarity"]
+            var sacrifices = ["restriction"]
+            var text = "我反对放逐侦探。这只记录我本人的意见。"
+            if accepts:
+                promotes = ["safety", "records", "restriction"]
+                sacrifices = ["patient_priority", "solidarity"]
+                text = "我同意这项放逐动议。这只记录我本人的意见，不能替他人投票，也不代表已执行。"
+            let id = rt_cat(actor, rt_cat(".c2.exile.", options[n]))
+            var row = c2d_row(actor, id, "central_hall", ready, dv_true(), text, source)
+            row = dv_with_many(row, {"effects": [dv_assign(c2h_person(actor, "exile_stance"), options[n])], "public_grants": [c2h_person(actor, "exile_stance"), c2d_mark(actor, id)], "repeatable": true, "owned_decision": c2h_exile_decision(actor, options[n]), "received_speech_requirement": {"speaker": "ward", "action_id": proposal}, "personal_choice": c2h_exile_choice(rt_cat("exile.", actor), ready, promotes, sacrifices)})
+            rt_push(rows, row)
+            n = n + 1
+        i = i + 1
+    // A unanimous decision records deprivation of rations; it never moves or
+    // exiles anyone. There is no escort execution contract in this module.
+    let passed = c2h_motion_passed_condition()
+    var record = c2d_row("ward", "ward.c2.exile.record-unanimous", "central_hall", passed, dv_true(), "本次在场有能力参与者已分别同意，记录一致剥夺配给的决议。放逐尚待实际执行。", source)
+    record = dv_with_many(record, {"effects": [dv_assign(c2h_ref("exile_motion_passed"), true), dv_assign(c2h_ref("ration_deprivation_decided"), true)], "public_grants": [c2h_ref("exile_motion_passed"), c2h_ref("ration_deprivation_decided")], "personal_choice": c2h_exile_choice("ward-record-unanimous", passed, ["committee", "records"], [])})
+    rt_push(rows, record)
+    let refuse_pre = dv_all([c2h_present("veronica"), dv_fact(c2h_ref("exile_motion_passed"), true), dv_fact(c2h_person("veronica", "exile_stance"), "consent")])
+    var refuse = c2d_row("veronica", "veronica.c2.exile.refuse", "central_hall", refuse_pre, dv_true(), "我拒绝继续为这项配给责任提供防护。这是我本人的决定。", source)
+    refuse = dv_with_many(refuse, {"effects": [dv_assign(c2h_person("veronica", "protection_refused"), true)], "received_speech_requirement": {"speaker": "ward", "action_id": "ward.c2.exile.record-unanimous"}, "personal_choice": c2h_exile_choice("veronica-refuse-protection", refuse_pre, ["safety", "avoid_ethics_review"], ["patient_priority"])})
+    rt_push(rows, refuse)
     return rows
+
+fn c2h_present(actor):
+    return dv_all([c2_at(actor, "central_hall"), c2_alive(actor), dv_fact(c2_own(actor, "stone_stupor"), false), dv_fact(c2_own(actor, "in_coma"), false)])
+
+fn c2h_exile_choice(group, requires, promotes, sacrifices):
+    return {"group": group, "requires": requires, "prohibits": dv_not(dv_true()), "promotes": promotes, "sacrifices": sacrifices, "require_positive": true, "basis": [c2h_source()]}
+
+fn c2h_exile_decision(actor, stance):
+    var refs = [c2h_ref("exile_motion_proposed"), c2_ref("c2.casualty", "casualty_occurred"), c2_own(actor, "hungry"), c2_own(actor, "alive"), c2_own(actor, "stone_stupor"), c2_own(actor, "in_coma")]
+    return {"id": rt_cat("exile.", actor), "stance": stance, "context_refs": refs, "context_policy_keys": ["value_order", "speaker_trust", "class_bias"], "request_topics": [], "basis": [c2h_source()]}
+
+// Existing group balance is a background prerequisite, never a voting rule.
+// Cardinality is compiled into ordinary propositions and evaluated in the same
+// world as the actual law; the summary does not publish authority effects.
+fn c2h_at_least_conditions(items, start, count):
+    if count <= 0:
+        return dv_true()
+    if rt_count(items) - start < count:
+        return dv_not(dv_true())
+    return c1_any(dv_all([items[start], c2h_at_least_conditions(items, start + 1, count - 1)]), c2h_at_least_conditions(items, start + 1, count))
+
+fn c2h_balance_condition():
+    let guardians = ["shen", "mora", "huo", "quer", "bertrand", "margaret"]
+    let calculators = ["ruan", "ward", "veronica"]
+    var g = []
+    var c = []
+    var i = 0
+    while i < rt_count(guardians):
+        rt_push(g, c2h_present(guardians[i]))
+        i = i + 1
+    i = 0
+    while i < rt_count(calculators):
+        rt_push(c, c2h_present(calculators[i]))
+        i = i + 1
+    var cases = []
+    i = 1
+    while i <= rt_count(calculators):
+        rt_push(cases, dv_all([c2h_at_least_conditions(c, 0, i), dv_not(c2h_at_least_conditions(g, 0, i))]))
+        i = i + 1
+    return dv_not(dv_all(c2_negated_conditions(cases)))
+
+fn c2h_motion_passed_condition():
+    var clauses = [c2h_present("ward"), dv_fact(c2h_ref("exile_motion_proposed"), true), c2h_balance_condition()]
+    let people = c2_people()
+    var i = 0
+    while i < rt_count(people):
+        let actor = people[i]
+        // An absent living capable person is unresolved, never an implicit yes.
+        let excluded = c1_any(dv_fact(c2_own(actor, "alive"), false), dv_fact(c2_own(actor, "stone_stupor"), true))
+        let consent = dv_all([c2h_present(actor), dv_fact(c2h_person(actor, "exile_stance"), "consent"), dv_fact(c2d_mark(actor, rt_cat(actor, ".c2.exile.consent")), true)])
+        rt_push(clauses, c1_any(excluded, consent))
+        i = i + 1
+    return dv_all(clauses)
+
+fn c2h_inspect_ballot(actor, person):
+    let pre = dv_all([c2_at(actor, "central_hall"), c2_at(person, "central_hall"), c2_alive(actor)])
+    let refs = [c2_own(person, "alive"), c2_own(person, "stone_stupor"), c2_own(person, "in_coma"), c2h_person(person, "exile_stance"), c2d_mark(person, rt_cat(person, ".c2.exile.consent")), c2d_mark(person, rt_cat(person, ".c2.exile.reject"))]
+    return dv_with(c2_action(rt_cat(actor, rt_cat(".c2.exile.inspect.", person)), "inspect", pre, pre, "", refs, "核对在场者的状态与本人表态记录。", c2h_source()), "repeatable", true)
+
+fn c2h_is_exile(id):
+    if dv_has(["ruan.c2.exile.dead_stone", "ward.c2.exile.motion", "ward.c2.exile.record-unanimous", "veronica.c2.exile.refuse"], id):
+        return true
+    let people = c2_people()
+    var i = 0
+    while i < rt_count(people):
+        if id == rt_cat(people[i], ".c2.exile.consent") or id == rt_cat(people[i], ".c2.exile.reject"):
+            return true
+        i = i + 1
+    return false
 
 fn c2h_install_scene(scene):
     if dv_find(scene, "chapter2_homecoming_installed", false):
         return scene
-    var fields = {"proposed": dv_field(false), "departed": dv_field(false), "trauma_imprints_sealed": dv_field(false), "exile_motion_passed": dv_field(false), "safety_verified": dv_unknown(), "outside_promise.quer": dv_unknown(), "outside_promise.elena": dv_unknown(), "care_continuity_verified": dv_unknown()}
+    var fields = {"proposed": dv_field(false), "departed": dv_field(false), "trauma_imprints_sealed": dv_field(false), "ration_deprivation_decided": dv_field(false), "exile_motion_proposed": dv_field(false), "exile_motion_passed": dv_field(false), "safety_verified": dv_unknown(), "outside_promise.quer": dv_unknown(), "outside_promise.elena": dv_unknown(), "care_continuity_verified": dv_unknown()}
     let people = c2_people()
     var i = 0
     while i < rt_count(people):
-        fields = dv_with_many(fields, [[rt_cat(people[i], ".decided"), dv_field(false)], [rt_cat(people[i], ".willing"), dv_unknown()], [rt_cat(people[i], ".consent_detective"), dv_unknown()], [rt_cat(people[i], ".stance"), dv_unknown()]])
+        fields = dv_with_many(fields, [[rt_cat(people[i], ".decided"), dv_field(false)], [rt_cat(people[i], ".willing"), dv_unknown()], [rt_cat(people[i], ".consent_detective"), dv_unknown()], [rt_cat(people[i], ".stance"), dv_unknown()], [rt_cat(people[i], ".exile_stance"), dv_unknown()]])
         i = i + 1
     var physical = c2_add_new(scene.physical, c2_object("c2.homecoming", "living_hall", fields))
     var bindings = dv_clone(scene.bindings)
@@ -130,8 +223,18 @@ fn c2h_install_scene(scene):
             if row.actor == actor.id:
                 mind = dv_store(mind, c2d_mark(actor.id, row.id), dv_field(false))
                 mind = dv_adopt(mind, c1_method(row.id, c2d_row_law(row)), "predict", 1, [row.source])
-                rt_push(actions, dv_with(c2d_action(row), "manual_only", true))
+                let is_exile = c2h_is_exile(row.id)
+                var act = c2d_action(row)
+                if not is_exile:
+                    act = dv_with(act, "manual_only", true)
+                rt_push(actions, act)
             j = j + 1
+        if dv_has(people, actor.id):
+            j = 0
+            while j < rt_count(people):
+                if actor.id == "ward" or people[j] == actor.id:
+                    rt_push(actions, c2h_inspect_ballot(actor.id, people[j]))
+                j = j + 1
         rt_push(actors, dv_with_many(actor, {"mind": mind, "actions": c1_public_methods(actions)}))
         i = i + 1
     return dv_with_many(scene, {"physical": physical, "actors": actors, "bindings": bindings, "chapter2_homecoming_installed": true})
@@ -174,6 +277,13 @@ fn c2h_refresh_actor(actor):
             action = dv_without(action, "personal_choice")
             action = dv_with(action, "owner_utility", c2h_owner_utility(actor, action, action.owned_decision.stance == "consent"))
             actions = dvs_replace(actions, i, action)
+        if c2h_is_exile(action.id):
+            var available = action.precondition
+            if dv_has_key(action, "received_speech_requirement") and not c2_received_requirement(actor, action.received_speech_requirement):
+                available = dv_not(dv_true())
+            if not dvp_owned_decision_ready(actor, action, actor.mind):
+                available = dv_not(dv_true())
+            rt_push(goals, c1n_index_goal_window({"kind": "communicate", "scope": "personal", "method_id": action.id, "available_when": available, "basis": [c2h_source()], "requires_argument": false, "navigation_room": "central_hall"}))
         if dv_has(["detective.c2.homecoming.propose", rt_cat(actor.id, ".c2.homecoming.consent"), rt_cat(actor.id, ".c2.homecoming.defer")], action.id) and dv_find(actor.policy, "homecoming_negotiation", false):
             action = dv_with(action, "manual_only", false)
             actions = dvs_replace(actions, i, action)
@@ -184,8 +294,23 @@ fn c2h_refresh_actor(actor):
                 available = dv_not(dv_true())
             rt_push(goals, c1n_index_goal_window({"kind": "communicate", "scope": "personal", "method_id": action.id, "available_when": available, "basis": [c2h_source()], "requires_argument": false, "navigation_room": "living_hall"}))
         i = i + 1
-    if not dv_find(actor.policy, "homecoming_negotiation", false):
-        return dv_with(actor, "actions", actions)
+    if dv_has(c2_people(), actor.id):
+        var people = [actor.id]
+        if actor.id == "ward":
+            people = c2_people()
+        i = 0
+        while i < rt_count(people):
+            let person = people[i]
+            var opened = dv_fact(c2h_ref("exile_motion_proposed"), true)
+            if actor.id == "ward":
+                opened = c1_any(opened, dv_fact(c2h_person("ruan", "dead_stone_declared"), true))
+            let ready = dv_all([c2_at(actor.id, "central_hall"), c2_at(person, "central_hall"), opened])
+            let refs = [c2_own(person, "alive"), c2_own(person, "stone_stupor"), c2_own(person, "in_coma"), c2h_person(person, "exile_stance")]
+            var r = 0
+            while r < rt_count(refs):
+                rt_push(goals, dv_with(c2_observation_goal(refs[r], ready, [c2h_source()], 0), "navigation_room", "central_hall"))
+                r = r + 1
+            i = i + 1
     var substantive = []
     i = 0
     while i < rt_count(goals):
@@ -196,35 +321,47 @@ fn c2h_refresh_actor(actor):
     return dv_with(view, "policy", dv_with(view.policy, "goals", c2_navigation_goals(view, substantive)))
 
 fn c2h_guardian_balance(physical):
-    let guardians = ["shen", "mora", "huo", "quer", "bertrand", "margaret"]
-    let calculators = ["ruan", "ward", "veronica"]
-    var g_alive = 0
-    var c_alive = 0
+    let groups = [["shen", "mora", "huo", "quer", "bertrand", "margaret"], ["ruan", "ward", "veronica"]]
+    var counts = []
+    var ballots = []
+    var group = 0
+    while group < rt_count(groups):
+        var present = 0
+        var i = 0
+        while i < rt_count(groups[group]):
+            let actor = groups[group][i]
+            let eligible = dv_truth(physical, c2h_present(actor))
+            if eligible == "true":
+                present = present + 1
+            rt_push(ballots, {"actor": actor, "present_capable": eligible, "stance": dv_read(physical, c2h_person(actor, "exile_stance"))})
+            i = i + 1
+        rt_push(counts, present)
+        group = group + 1
+    var all_ballots = []
+    let people = c2_people()
     var i = 0
-    while i < rt_count(guardians):
-        let st = dv_read(physical, c2_own(guardians[i], "alive"))
-        if dv_uncontested(st) and st.value == true:
-            g_alive = g_alive + 1
+    while i < rt_count(people):
+        let actor = people[i]
+        rt_push(all_ballots, {"actor": actor, "present_capable": dv_truth(physical, c2h_present(actor)), "alive": dv_read(physical, c2_own(actor, "alive")), "permanently_disabled": dv_read(physical, c2_own(actor, "stone_stupor")), "stance": dv_read(physical, c2h_person(actor, "exile_stance")), "consent_execution": dv_read(physical, c2d_mark(actor, rt_cat(actor, ".c2.exile.consent"))), "reject_execution": dv_read(physical, c2d_mark(actor, rt_cat(actor, ".c2.exile.reject")))})
         i = i + 1
-    i = 0
-    while i < rt_count(calculators):
-        let st = dv_read(physical, c2_own(calculators[i], "alive"))
-        if dv_uncontested(st) and st.value == true:
-            c_alive = c_alive + 1
-        i = i + 1
-    let majority = c_alive <= g_alive
-    var fate = "hollow_homecoming_protected"
-    if not majority:
-        fate = "cold_calculator_elimination"
-    return {"guardians_alive": g_alive, "calculators_alive": c_alive, "humanity_barrier": majority, "fate": fate}
+    return {"guardians_present_capable": counts[0], "calculators_present_capable": counts[1], "background_gate": dv_truth(physical, c2h_balance_condition()), "group_members": ballots, "ballots": all_ballots, "unanimous_decision_eligible": dv_truth(physical, c2h_motion_passed_condition()), "motion_proposed": dv_read(physical, c2h_ref("exile_motion_proposed")), "motion_passed": dv_read(physical, c2h_ref("exile_motion_passed")), "ration_deprivation_decided": dv_read(physical, c2h_ref("ration_deprivation_decided")), "exile_execution": "not-implemented"}
 
-fn c2h_trauma_imprints():
-    return [
-        {"id": "imprint_avoid_doors", "description": "日常下意识避开所有紧闭门扉"},
-        {"id": "imprint_wind_flinch", "description": "听到走廊铜管风鸣会瞬间惊醒并摸向腰间"},
-        {"id": "imprint_empty_table_tears", "description": "面对空置的餐桌长久伫立、潸然泪下"},
-        {"id": "imprint_ring_rubbing", "description": "手指反复摩挲早已空缺的指环"}
-    ]
+// These are event-grounded literary candidates, not personal cognitive imprints.
+// The caller has no actor contact history, so no recipient or sealing is asserted.
+fn c2h_trauma_imprints(physical):
+    var imprints = []
+    let rows = [
+        {"ref": c2_ref("c2.casualty", "moran_dead"), "id": "imprint_avoid_doors", "description": "对死亡留下的恐惧"},
+        {"ref": c2_ref("c2.casualty", "bertrand_stupor"), "id": "imprint_empty_chair_stone", "description": "对石雕般失能留下的创伤"},
+        {"ref": c2_ref("c2.weather", "earthquake_recent"), "id": "imprint_wind_flinch", "description": "对地震留下的惊惧"},
+        {"ref": c2_own("detective", "hungry"), "id": "imprint_empty_plate_tears", "description": "对饥饿留下的恐惧"}]
+    var i = 0
+    while i < rt_count(rows):
+        let st = dv_read(physical, rows[i].ref)
+        if dv_uncontested(st) and st.value == true:
+            rt_push(imprints, {"id": rows[i].id, "description": rows[i].description, "basis": {"ref": rows[i].ref, "state": st}, "status": "event-grounded-candidate-contact-unverified"})
+        i = i + 1
+    return imprints
 
 fn c2h_summary(physical):
     var others = []
@@ -241,4 +378,4 @@ fn c2h_summary(physical):
                 unanimous = false
         i = i + 1
     let balance = c2h_guardian_balance(physical)
-    return {"scope": "negotiation-and-departure", "proposed": dv_read(physical, c2h_ref("proposed")), "own_willing": dv_read(physical, c2h_person("detective", "willing")), "others": others, "all_other_living_consent": unanimous, "safety_verification": dv_read(physical, c2h_ref("safety_verified")), "seed_specific_homecoming_utility": "declared-shared-owner-utility", "departure": dv_read(physical, c2h_ref("departed")), "guardian_balance": balance, "trauma_imprints": c2h_trauma_imprints()}
+    return {"scope": "negotiation-only", "proposed": dv_read(physical, c2h_ref("proposed")), "own_willing": dv_read(physical, c2h_person("detective", "willing")), "others": others, "all_other_living_consent": unanimous, "safety_verification": dv_read(physical, c2h_ref("safety_verified")), "seed_specific_homecoming_utility": "declared-shared-owner-utility", "departure": dv_read(physical, c2h_ref("departed")), "guardian_balance": balance, "trauma_imprints": c2h_trauma_imprints(physical)}

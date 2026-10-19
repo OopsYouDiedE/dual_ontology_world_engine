@@ -1,0 +1,9 @@
+{
+  "expanded_events_identical": true,
+  "expanded_final_identical": true,
+  "node_counts": {
+    "before": 45008,
+    "after": 45009
+  },
+  "reason": "Weak snapshot interning may redefine equal nodes after GC; original fixture did not retain event roots. Values must still be lossless. Next fixture retains actual frozen events, as production session does."
+}
