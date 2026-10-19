@@ -14,7 +14,7 @@ var dialogue_seen := false
 func _initialize() -> void:
 	root.unfocusable = true
 	root.position = Vector2i(10000, 10000)
-	Engine.time_scale = 4.0
+	Engine.time_scale = 1.0
 	_run.call_deferred()
 
 func _run() -> void:
@@ -22,6 +22,7 @@ func _run() -> void:
 		if argument.begins_with("--out="): directory = argument.substr(6)
 		if argument.begins_with("--mode="): mode = argument.substr(7)
 		if argument.begins_with("--seconds="): seconds = float(argument.substr(10))
+		if argument.begins_with("--dv-speed="): Engine.time_scale = float(argument.trim_prefix("--dv-speed="))
 	if directory == "" or DirAccess.dir_exists_absolute(directory):
 		push_error("Require a new --out directory")
 		quit(2)
@@ -71,7 +72,9 @@ func _input_packet(packet: Dictionary) -> void:
 	elif str(packet.get("kind", "")) == "key":
 		var code := OS.find_keycode_from_string(str(packet.get("key", "")))
 		_key(code, bool(packet.get("pressed", true)))
-		if not packet.has("pressed"): _key(code, false)
+		if packet.has("duration_ms"):
+			_release_key_later(code, clampf(float(packet.duration_ms), 1.0, 5000.0))
+		elif not packet.has("pressed"): _key(code, false)
 	elif str(packet.get("kind", "")) == "click":
 		var point := Vector2(float(packet.x), float(packet.y))
 		var motion := InputEventMouseMotion.new()
@@ -85,6 +88,11 @@ func _input_packet(packet: Dictionary) -> void:
 			event.button_index = MOUSE_BUTTON_LEFT
 			event.pressed = down
 			Input.parse_input_event(event)
+
+func _release_key_later(code: int, milliseconds: float) -> void:
+	await create_timer(milliseconds / 1000.0, true, false, true).timeout
+	_key(code, false)
+	_append("input-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "packet": {"kind": "key-release", "key": OS.get_keycode_string(code)}})
 
 func _key(code: int, down: bool) -> void:
 	var event := InputEventKey.new()

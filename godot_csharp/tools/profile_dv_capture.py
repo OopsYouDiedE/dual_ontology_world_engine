@@ -44,12 +44,15 @@ def main():
     parser.add_argument("--dotnet-trace", default=shutil.which("dotnet-trace"))
     parser.add_argument("--seconds", type=float, default=90)
     parser.add_argument("--controller", choices=("ai", "player"), default="ai")
+    parser.add_argument("--speed", type=float, default=4.0, help="Explicit Godot playback speed; use 1 for normal-speed interaction checks")
     parser.add_argument("--managed-seconds", type=int, help="Managed sampling duration; defaults to window minus 10 seconds")
     args = parser.parse_args()
     if not args.godot or not args.dotnet_trace:
         parser.error("Specify --godot and --dotnet-trace (or GODOT and PATH)")
     if args.seconds <= 0:
         parser.error("--seconds must be positive")
+    if not 0.25 <= args.speed <= 8.0:
+        parser.error("--speed must be between 0.25 and 8")
     managed_seconds = args.managed_seconds if args.managed_seconds is not None else max(1, int(args.seconds) - 10)
     if managed_seconds <= 0 or managed_seconds >= args.seconds:
         parser.error("--managed-seconds must be positive and shorter than --seconds, so the profiler can drain before host exit")
@@ -69,7 +72,7 @@ def main():
     command = [str(godot), "--path", str(ROOT / "godot_csharp"),
                "--debug", "--profiling", "--gpu-profile", "--script", "res://tools/dv_level3_capture.gd", "--",
                f"--out={out / 'run'}", "--mode=" + ("detective" if args.controller == "ai" else "player"), f"--seconds={args.seconds}",
-               f"--dv-controller={args.controller}", "--dv-speed=4", "--dv-audit"]
+               f"--dv-controller={args.controller}", f"--dv-speed={args.speed}", "--dv-audit"]
     if args.controller == "player":
         command.append("--dv-auto-start")
     launch = {
