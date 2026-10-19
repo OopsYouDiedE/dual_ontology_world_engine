@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Text.Json;
 using System.Security.Cryptography;
+using System.Text;
 
 // Owns pixel copies only. Worker never touches Godot resources or scene objects.
 public partial class FrameArchive : Node
@@ -12,10 +13,11 @@ public partial class FrameArchive : Node
     private readonly ConcurrentQueue<string> completed = new();
     private Task tail = Task.CompletedTask;
     private int pending;
+    private int pendingFrames;
     private long origin;
     public void Configure(long clockUs) => origin = Stopwatch.GetTimestamp() - clockUs * Stopwatch.Frequency / 1000000;
     private long Clock() => (Stopwatch.GetTimestamp() - origin) * 1000000 / Stopwatch.Frequency;
-    public bool HasCapacity() => Volatile.Read(ref pending) < 8;
+    public bool HasCapacity() => Volatile.Read(ref pendingFrames) < 8;
     public bool IsIdle() => Volatile.Read(ref pending) == 0;
     public void Enqueue(byte[] pixels, int width, int height, string path, long capturedUs)
     {
@@ -23,6 +25,7 @@ public partial class FrameArchive : Node
         if (pixels.Length != checked(width * height * 4)) throw new ArgumentException("Expected owned RGBA8 pixels");
         var queued = Clock();
         Interlocked.Increment(ref pending);
+        Interlocked.Increment(ref pendingFrames);
         tail = tail.ContinueWith(_ =>
         {
             var begin = Clock();
@@ -46,7 +49,26 @@ public partial class FrameArchive : Node
                     queued_us = queued, begin_us = begin, encoded_us = encoded, written_us = written, end_us = Clock(),
                     rgba_sha256 = pixelHash, error }));
                 Interlocked.Decrement(ref pending);
+                Interlocked.Decrement(ref pendingFrames);
             }
+        }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+    }
+    public void AppendText(string path, string text)
+    {
+        Interlocked.Increment(ref pending);
+        tail = tail.ContinueWith(_ =>
+        {
+            try
+            {
+                using var stream = new FileStream(path, FileMode.Append, System.IO.FileAccess.Write, FileShare.Read);
+                stream.Write(Encoding.UTF8.GetBytes(text));
+            }
+            catch (Exception failure)
+            {
+                completed.Enqueue(JsonSerializer.Serialize(new { kind = "text-error", file = System.IO.Path.GetFileName(path),
+                    end_us = Clock(), error = failure.ToString() }));
+            }
+            finally { Interlocked.Decrement(ref pending); }
         }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
     }
     public Godot.Collections.Array PollCompleted()

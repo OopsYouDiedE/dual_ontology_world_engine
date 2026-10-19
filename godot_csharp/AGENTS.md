@@ -250,3 +250,5 @@ CampusMapView首次装图先采用当前访问声明，一次性加入内容几�
 RuntimeDiagnostics补记process开始及render前边界；PlayerViewTrace与view构建单独插桩，保留未归因残差。后台编码时间不并入主线程阻塞分解。成果沿用real-game-capture任务目录，优化后另起独占窗口。
 
 本轮定位分析器自身开销时，保持四倍物理、完整审计、截图与.NET采样，另起新会话切换native-profiling；不开脚本/GPU控制台分析不代表关闭全部分析器。该条件差异在launch/result明确保留，原有完整分析窗口不改写。先看新窗口实际间隔，不能依据周期相近直接判定根因。
+
+FrameArchive亦串行追加已序列化文本，输入、可见采样元数据与在线计时写盘不占主线程；同一路径保持队列次序。图像容量独立计数，文本不得静默丢弃；文本异常记录text-error及capture-close.archive_errors，不循环写入失败日志。关闭循环持续消费PNG完成通知，并排空这些通知新追加的frames/时序记录后才退出，真实捕获终点保持原值。中性探针补查文本先后顺序。

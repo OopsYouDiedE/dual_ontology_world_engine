@@ -113,6 +113,10 @@ func _release_due_keys() -> void:
 func _poll_archive() -> void:
 	for raw in archive.PollCompleted():
 		var row: Dictionary = JSON.parse_string(str(raw))
+		if str(row.get("kind", "")) == "text-error":
+			archive_errors.append(row)
+			push_error("Text archive failed: " + str(row.error))
+			continue
 		_append("archive-timing.jsonl", row)
 		if row.error != null:
 			archive_errors.append(row)
@@ -131,25 +135,19 @@ func _host_events(events: Array) -> void:
 	_append("host-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "events": events})
 
 func _append(name: String, value: Variant) -> void:
-	var path := directory.path_join(name)
-	var file := FileAccess.open(path, FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE)
-	file.seek_end()
-	file.store_line(JSON.stringify(value))
-	file.close()
+	archive.AppendText(directory.path_join(name), JSON.stringify(value) + "\n")
 
 func _flush_timings() -> void:
 	var rows: Array = host.engine.PollTimings()
 	if rows.is_empty(): return
 	host._timing("journal_begin")
-	var path := directory.path_join("live-timing.jsonl")
-	var file := FileAccess.open(path, FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE)
-	file.seek_end()
+	var lines := PackedStringArray()
 	for raw in rows:
-		file.store_line(str(raw))
+		lines.append(str(raw))
 		var row: Dictionary = JSON.parse_string(str(raw))
 		if str(row.stage) in ["physical_location", "actor_in_viewport", "frame_gap"]:
 			highlights.append(row)
-	file.close()
+	archive.AppendText(directory.path_join("live-timing.jsonl"), "\n".join(lines) + "\n")
 	host._timing("journal_end")
 
 func _capture() -> void:
@@ -174,11 +172,7 @@ func _capture() -> void:
 		highlights = []
 	# This stream is for the main reviewer, never the blind player.
 	var record := {"real_ms": elapsed, "time_scale": Engine.time_scale, "snapshot": host.engine.Snapshot()}
-	var path := directory.path_join("measurement.jsonl")
-	var file := FileAccess.open(path, FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE)
-	file.seek_end()
-	file.store_line(JSON.stringify(record))
-	file.close()
+	_append("measurement.jsonl", record)
 	_capture_render_state(elapsed, filename)
 	host._timing("capture_end", {"file": filename})
 
@@ -204,12 +198,7 @@ func _capture_render_state(elapsed: int, filename: String) -> void:
 				"animation": str(sprite.animation), "frame": sprite.frame, "texture": texture.resource_path if texture != null else "",
 				"alpha": sprite.modulate.a, "self_alpha": sprite.self_modulate.a})
 		rows.append(row)
-	var path := directory.path_join("render-state.jsonl")
-	var file := FileAccess.open(path, FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE)
-	if file == null: return
-	file.seek_end()
-	file.store_line(JSON.stringify({"real_ms": elapsed, "file": filename, "actors": rows, "scope": "private-passive-render-diagnostic"}))
-	file.close()
+	_append("render-state.jsonl", {"real_ms": elapsed, "file": filename, "actors": rows, "scope": "private-passive-render-diagnostic"})
 
 func _write(name: String, value: Variant) -> void:
 	var file := FileAccess.open(directory.path_join(name), FileAccess.WRITE)
@@ -228,8 +217,9 @@ func _finish() -> void:
 	_flush_timings()
 	host.shutdown_completed.connect(func(): host_closed = true)
 	host.begin_shutdown()
-	while not archive.IsIdle() or not host_closed:
+	while true:
+		_poll_archive()
+		if archive.IsIdle() and host_closed: break
 		await process_frame
-	_poll_archive()
 	_write("capture-close.json", {"capture_end_real_ms": ended, "archive_and_host_closed_real_ms": Time.get_ticks_msec() - started, "archive_errors": archive_errors})
 	quit(0 if archive_errors.is_empty() else 2)

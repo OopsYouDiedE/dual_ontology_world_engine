@@ -22,6 +22,8 @@ func _run() -> void:
 	original.close()
 	archive.Enqueue(pixels, 3, 2, directory.path_join("pixels.png"), 0)
 	archive.Enqueue(pixels, 3, 2, directory.path_join("existing.png"), 0)
+	archive.AppendText(directory.path_join("ordered.txt"), "first\n")
+	archive.AppendText(directory.path_join("ordered.txt"), "second\n")
 	while not archive.IsIdle(): await process_frame
 	var rows := FileAccess.open(directory.path_join("results.jsonl"), FileAccess.WRITE)
 	for row in archive.PollCompleted(): rows.store_line(str(row))
