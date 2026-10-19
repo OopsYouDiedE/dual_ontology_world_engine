@@ -20,9 +20,12 @@ fn dvs_event_storage(kind, data):
     if kind == "factor_prune":
         keep = ["actor_before"]
     var result = []
-    for entry in data:
+    var index = 0
+    while index < rt_count(data):
+        let entry = data[index]
         if not dv_has(["mind_before", "mind_after", "physical_before", "physical_after", "actor_before", "actor_after"], entry[0]) or dv_has(keep, entry[0]):
             rt_push(result, entry)
+        index = index + 1
     return result
 
 fn dvs_find_event_by_id(events, id):
