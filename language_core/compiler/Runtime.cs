@@ -663,16 +663,85 @@ public static class R
                     else others.RemoveAt(i);
         }
     }
+    // Metadata only: keys and immutable last-slot indices, never field values.
+    private sealed class RecordLayout(string[] ownedKeys, Dictionary<string, int> lastSlots)
+    {
+        internal readonly string[] OrderedKeys = ownedKeys;
+        internal readonly Dictionary<string, int> LastSlots = lastSlots;
+    }
+    private static readonly Dictionary<ulong, List<RecordLayout>> RecordLayouts = new();
+    private static int RecordLayoutCount;
+    private static long RecordLayoutCharacters;
+    private const int RecordLayoutLimit = 128;
+    private const int RecordLayoutSlotLimit = 128;
+    private const long RecordLayoutCharacterLimit = 4096;
+    private const long RecordLayoutPoolCharacterLimit = 65536;
     private static Dictionary<string, int>? FrozenIndex(FrozenList record)
     {
         if (record.IndexChecked) return record.Index;
         lock (SnapshotLock)
         {
             if (record.IndexChecked) return record.Index;
-            var index = new Dictionary<string, int>(StringComparer.Ordinal);
+            var allText = true;
+            long characters = 0;
+            ulong fingerprint = 14695981039346656037UL;
+            // Validate every pair before any cache lookup, including mixed keys.
+            // No value slot is read, and invalid pairs retain the original fallback.
             foreach (var item in record)
+            {
                 if (!TryItems(item, out var pair) || pair.Count == 0)
                 { record.IndexChecked = true; return null; }
+                if (pair[0] is string key)
+                {
+                    if (record.Count > RecordLayoutSlotLimit) continue;
+                    characters += key.Length;
+                    fingerprint = unchecked((fingerprint ^ (ulong)StringComparer.Ordinal.GetHashCode(key)) * 1099511628211UL);
+                }
+                else allText = false;
+            }
+            fingerprint = unchecked((fingerprint ^ (ulong)record.Count) * 1099511628211UL);
+            if (allText && record.Count <= RecordLayoutSlotLimit && characters <= RecordLayoutCharacterLimit)
+            {
+                if (RecordLayouts.TryGetValue(fingerprint, out var bucket))
+                    foreach (var layout in bucket)
+                    {
+                        if (layout.OrderedKeys.Length != record.Count) continue;
+                        var same = true;
+                        for (var i = 0; i < record.Count; i++)
+                            if (!string.Equals(layout.OrderedKeys[i], (string)((FrozenList)record[i])[0], StringComparison.Ordinal))
+                            { same = false; break; }
+                        if (!same) continue;
+                        record.Index = layout.LastSlots;
+                        record.IndexChecked = true;
+                        return layout.LastSlots;
+                    }
+                // Miss only: do not allocate a keys array or dictionary on a hit.
+                var keys = new string[record.Count];
+                var slots = new Dictionary<string, int>(StringComparer.Ordinal);
+                for (var i = 0; i < record.Count; i++)
+                {
+                    var key = keys[i] = (string)((FrozenList)record[i])[0];
+                    slots[key] = i;
+                }
+                if (RecordLayoutCount >= RecordLayoutLimit || RecordLayoutCharacters + characters > RecordLayoutPoolCharacterLimit)
+                {
+                    // Existing FrozenList.Index references keep their dictionaries.
+                    // Clear only pool roots, never any published dictionary.
+                    RecordLayouts.Clear();
+                    RecordLayoutCount = 0;
+                    RecordLayoutCharacters = 0;
+                }
+                if (!RecordLayouts.TryGetValue(fingerprint, out bucket)) RecordLayouts[fingerprint] = bucket = new();
+                bucket.Add(new RecordLayout(keys, slots));
+                RecordLayoutCount++;
+                RecordLayoutCharacters += characters;
+                record.Index = slots;
+                record.IndexChecked = true;
+                return slots;
+            }
+            // Mixed keys, large tables and excessive text retain the local index.
+            // Admission limits never reject an otherwise valid DV value.
+            var index = new Dictionary<string, int>(StringComparer.Ordinal);
             for (var i = 0; i < record.Count; i++)
                 if (((FrozenList)record[i])[0] is string key) index[key] = i;
             record.Index = index;

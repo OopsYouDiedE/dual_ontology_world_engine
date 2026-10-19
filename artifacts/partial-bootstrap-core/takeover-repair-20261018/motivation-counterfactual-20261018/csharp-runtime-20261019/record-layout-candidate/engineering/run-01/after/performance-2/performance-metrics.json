@@ -1,0 +1,39 @@
+{
+  "scope": "finite neutral container sample; not game performance",
+  "small_trees": 2500,
+  "small_fields": 3,
+  "large_trees": 256,
+  "large_fields": 128,
+  "independent_copies": 1500,
+  "sparse_updates": 1500,
+  "stopwatch_frequency": 10000000,
+  "metrics": [
+    {
+      "name": "freeze-unique-small",
+      "elapsed_ticks": 192301,
+      "elapsed_milliseconds": 19.2301,
+      "allocated_bytes": 9121696,
+      "gen0_collections": 1,
+      "gen1_collections": 1,
+      "gen2_collections": 0
+    },
+    {
+      "name": "freeze-unique-large",
+      "elapsed_ticks": 1040259,
+      "elapsed_milliseconds": 104.0259,
+      "allocated_bytes": 32520040,
+      "gen0_collections": 4,
+      "gen1_collections": 4,
+      "gen2_collections": 2
+    },
+    {
+      "name": "independent-copy-read-sparse-update",
+      "elapsed_ticks": 236191,
+      "elapsed_milliseconds": 23.6191,
+      "allocated_bytes": 7067568,
+      "gen0_collections": 0,
+      "gen1_collections": 0,
+      "gen2_collections": 0
+    }
+  ]
+}

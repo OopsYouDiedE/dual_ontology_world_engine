@@ -2,20 +2,13 @@
 // only when accessed through an output owner, so output mutations stay independent.
 
 fn dv_pair(a, b):
-    var r = []
-    rt_push(r, a)
-    rt_push(r, b)
-    return r
+    return [a, b]
 
 fn dv_single(a):
-    var r = []
-    rt_push(r, a)
-    return r
+    return [a]
 
 fn dv_list3(a, b, c):
-    var r = dv_pair(a, b)
-    rt_push(r, c)
-    return r
+    return [a, b, c]
 
 fn dv_and(a, b):
     if a:

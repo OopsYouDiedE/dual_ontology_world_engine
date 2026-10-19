@@ -1,0 +1,33 @@
+fn lc_mark(log, value):
+    rt_push(log, value)
+    return value
+
+fn lc_fixture():
+    var log = []
+    var empty = []
+    var one = [lc_mark(log, "one")]
+    var two = [lc_mark(log, "two-a"), lc_mark(log, "two-b")]
+    var three = [lc_mark(log, "three-a"), lc_mark(log, "three-b"), lc_mark(log, "three-c")]
+    var six = ["a", "b", "c", "d", "e", "f"]
+    var many = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q"]
+    var child = ["shared"]
+    var pair = dv_pair(child, child)
+    var single = dv_single(child)
+    var list3 = dv_list3(child, child, child)
+    rt_push(child, "alias-change")
+    var clone = dv_clone(pair)
+    rt_push(clone[0], "clone-only")
+    var record = [["k", "first"], ["other", child], ["k", "last"]]
+    var first_update = dv_with(record, "k", "replacement")
+    var all_update = dv_with_many(record, [["k", "u1"], ["new", "new-first"], ["k", "u2"], ["new", "new-last"]])
+    var exact = rt_exact("2/7")
+    var json = rt_json_stringify([exact, ["nested", exact]])
+    return [log, empty, one, two, three, six, many, pair, single, list3, clone, record, first_update, all_update, exact, json]
+
+fn lc_error(log):
+    return [lc_mark(log, "before-error"), rt_at([], 0), lc_mark(log, "after-error")]
+
+fn lc_construct(value):
+    return [dv_pair(value, value), dv_single(value), dv_list3(value, value, value), [value, value, value, value, value, value]]
+
+(main false)

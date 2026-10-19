@@ -1122,3 +1122,7 @@ run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运
 `game/entry.dv`的`dvg_geometry_bindings`声明按地图分组的sites（id/point/label）和props（id/texture/position/可选footprint）。`dvg_site_titles`只给已有几何提供物件标题。宿主载图后实例化，再使用同一图的锚点、栅格与碰撞执行；场景外观不授予读数或知识。snapshot带齐声明以支持在Complete前跨图的真实执行。生成室内geometry_sites与native标题分工见Godot模块维护合同。
 
 `dvg_initial_anchor`产生主体的明确初次锚点，snapshot及people的`initial_anchor`供首次物化使用，地点`anchor`继续供目的地导航。宿主对两类来源保持区别，初次点仍核同房、可走与占位；保留身体不重新放置。户外地点由室外地图边界/可走性判定实际房间，不冒用室内地形标志。
+
+冻结记录布局索引：`compiler/Runtime.cs`的`FrozenIndex`在原有8项阈值之后验证全部pair；纯文本键可共享原序键布局的末槽字典，命中仍完整Ordinal比较，重复键的末项读取与`record_with`首项更新各沿原合同。池只持有键和只读索引，不持有字段值；SnapshotLock保护，最多128布局、每布局128槽/4096 UTF16字符、累计65536字符。超限清池根后旧节点仍引用旧索引；混合键、大表、长布局回局部索引，坏pair回原扫描与首错。共享只减少metadata重复分配，不是HAMT或常数时间布局识别。
+
+字面量分配：`compiler/compiler.dv::sf_emit_array`按AST已知项数发射`new List<object>(N) { ... }`，元素仍原序求值，空根也独立分配；不定长comprehension不预估结果数。`core/00-data.dv`的`dv_pair`、`dv_single`、`dv_list3`用对应array字面量装入已求值参数，保留子值引用与独占根。资源分配成功时值、通常错误次序、别名及显式费用保持；容量数组提前分配会改变OOM相对元素错误/副作用的时序，profile的helper调用归属也随函数体改变。此边界不属于全资源失败等价承诺。编译器改动须从源重建C0→C1→C2→C3并核C2/C3固定点，再重建Session/宿主。

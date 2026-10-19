@@ -1,0 +1,320 @@
+{
+  "layout": {
+    "before": [
+      {
+        "label": "construct-freeze.8",
+        "elapsed_ticks": 63130,
+        "elapsed_milliseconds": 6.313,
+        "allocated_bytes": 5946984
+      },
+      {
+        "label": "first-index.8",
+        "elapsed_ticks": 12923,
+        "elapsed_milliseconds": 1.2923,
+        "allocated_bytes": 1016000
+      },
+      {
+        "label": "repeat-index.8",
+        "elapsed_ticks": 13445,
+        "elapsed_milliseconds": 1.3445,
+        "allocated_bytes": 240000
+      },
+      {
+        "label": "construct-freeze.128",
+        "elapsed_ticks": 1757627,
+        "elapsed_milliseconds": 175.7627,
+        "allocated_bytes": 77625312
+      },
+      {
+        "label": "first-index.128",
+        "elapsed_ticks": 224856,
+        "elapsed_milliseconds": 22.4856,
+        "allocated_bytes": 10216000
+      },
+      {
+        "label": "repeat-index.128",
+        "elapsed_ticks": 8793,
+        "elapsed_milliseconds": 0.8793,
+        "allocated_bytes": 240000
+      }
+    ],
+    "after": [
+      {
+        "label": "construct-freeze.8",
+        "elapsed_ticks": 80822,
+        "elapsed_milliseconds": 8.0822,
+        "allocated_bytes": 5946984
+      },
+      {
+        "label": "first-index.8",
+        "elapsed_ticks": 7301,
+        "elapsed_milliseconds": 0.7301,
+        "allocated_bytes": 25200
+      },
+      {
+        "label": "repeat-index.8",
+        "elapsed_ticks": 12621,
+        "elapsed_milliseconds": 1.2621,
+        "allocated_bytes": 240000
+      },
+      {
+        "label": "construct-freeze.128",
+        "elapsed_ticks": 2065879,
+        "elapsed_milliseconds": 206.5879,
+        "allocated_bytes": 77625280
+      },
+      {
+        "label": "first-index.128",
+        "elapsed_ticks": 109466,
+        "elapsed_milliseconds": 10.9466,
+        "allocated_bytes": 35360
+      },
+      {
+        "label": "repeat-index.128",
+        "elapsed_ticks": 9933,
+        "elapsed_milliseconds": 0.9933,
+        "allocated_bytes": 240000
+      }
+    ]
+  },
+  "performance-1": {
+    "before": {
+      "scope": "finite neutral container sample; not game performance",
+      "small_trees": 2500,
+      "small_fields": 3,
+      "large_trees": 256,
+      "large_fields": 128,
+      "independent_copies": 1500,
+      "sparse_updates": 1500,
+      "stopwatch_frequency": 10000000,
+      "metrics": [
+        {
+          "name": "freeze-unique-small",
+          "elapsed_ticks": 199455,
+          "elapsed_milliseconds": 19.9455,
+          "allocated_bytes": 9121696,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        },
+        {
+          "name": "freeze-unique-large",
+          "elapsed_ticks": 1107000,
+          "elapsed_milliseconds": 110.7,
+          "allocated_bytes": 32513464,
+          "gen0_collections": 4,
+          "gen1_collections": 4,
+          "gen2_collections": 2
+        },
+        {
+          "name": "independent-copy-read-sparse-update",
+          "elapsed_ticks": 829574,
+          "elapsed_milliseconds": 82.9574,
+          "allocated_bytes": 9665200,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        }
+      ]
+    },
+    "after": {
+      "scope": "finite neutral container sample; not game performance",
+      "small_trees": 2500,
+      "small_fields": 3,
+      "large_trees": 256,
+      "large_fields": 128,
+      "independent_copies": 1500,
+      "sparse_updates": 1500,
+      "stopwatch_frequency": 10000000,
+      "metrics": [
+        {
+          "name": "freeze-unique-small",
+          "elapsed_ticks": 165266,
+          "elapsed_milliseconds": 16.5266,
+          "allocated_bytes": 9121696,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        },
+        {
+          "name": "freeze-unique-large",
+          "elapsed_ticks": 748418,
+          "elapsed_milliseconds": 74.8418,
+          "allocated_bytes": 32513256,
+          "gen0_collections": 3,
+          "gen1_collections": 3,
+          "gen2_collections": 1
+        },
+        {
+          "name": "independent-copy-read-sparse-update",
+          "elapsed_ticks": 200066,
+          "elapsed_milliseconds": 20.0066,
+          "allocated_bytes": 7067568,
+          "gen0_collections": 0,
+          "gen1_collections": 0,
+          "gen2_collections": 0
+        }
+      ]
+    }
+  },
+  "performance-2": {
+    "before": {
+      "scope": "finite neutral container sample; not game performance",
+      "small_trees": 2500,
+      "small_fields": 3,
+      "large_trees": 256,
+      "large_fields": 128,
+      "independent_copies": 1500,
+      "sparse_updates": 1500,
+      "stopwatch_frequency": 10000000,
+      "metrics": [
+        {
+          "name": "freeze-unique-small",
+          "elapsed_ticks": 198120,
+          "elapsed_milliseconds": 19.812,
+          "allocated_bytes": 9121696,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        },
+        {
+          "name": "freeze-unique-large",
+          "elapsed_ticks": 1189488,
+          "elapsed_milliseconds": 118.9488,
+          "allocated_bytes": 32513464,
+          "gen0_collections": 4,
+          "gen1_collections": 4,
+          "gen2_collections": 2
+        },
+        {
+          "name": "independent-copy-read-sparse-update",
+          "elapsed_ticks": 678528,
+          "elapsed_milliseconds": 67.8528,
+          "allocated_bytes": 9665200,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        }
+      ]
+    },
+    "after": {
+      "scope": "finite neutral container sample; not game performance",
+      "small_trees": 2500,
+      "small_fields": 3,
+      "large_trees": 256,
+      "large_fields": 128,
+      "independent_copies": 1500,
+      "sparse_updates": 1500,
+      "stopwatch_frequency": 10000000,
+      "metrics": [
+        {
+          "name": "freeze-unique-small",
+          "elapsed_ticks": 192301,
+          "elapsed_milliseconds": 19.2301,
+          "allocated_bytes": 9121696,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        },
+        {
+          "name": "freeze-unique-large",
+          "elapsed_ticks": 1040259,
+          "elapsed_milliseconds": 104.0259,
+          "allocated_bytes": 32520040,
+          "gen0_collections": 4,
+          "gen1_collections": 4,
+          "gen2_collections": 2
+        },
+        {
+          "name": "independent-copy-read-sparse-update",
+          "elapsed_ticks": 236191,
+          "elapsed_milliseconds": 23.6191,
+          "allocated_bytes": 7067568,
+          "gen0_collections": 0,
+          "gen1_collections": 0,
+          "gen2_collections": 0
+        }
+      ]
+    }
+  },
+  "performance-3": {
+    "before": {
+      "scope": "finite neutral container sample; not game performance",
+      "small_trees": 2500,
+      "small_fields": 3,
+      "large_trees": 256,
+      "large_fields": 128,
+      "independent_copies": 1500,
+      "sparse_updates": 1500,
+      "stopwatch_frequency": 10000000,
+      "metrics": [
+        {
+          "name": "freeze-unique-small",
+          "elapsed_ticks": 327879,
+          "elapsed_milliseconds": 32.7879,
+          "allocated_bytes": 9121696,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        },
+        {
+          "name": "freeze-unique-large",
+          "elapsed_ticks": 1101564,
+          "elapsed_milliseconds": 110.1564,
+          "allocated_bytes": 32513464,
+          "gen0_collections": 4,
+          "gen1_collections": 4,
+          "gen2_collections": 2
+        },
+        {
+          "name": "independent-copy-read-sparse-update",
+          "elapsed_ticks": 546162,
+          "elapsed_milliseconds": 54.6162,
+          "allocated_bytes": 9665200,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        }
+      ]
+    },
+    "after": {
+      "scope": "finite neutral container sample; not game performance",
+      "small_trees": 2500,
+      "small_fields": 3,
+      "large_trees": 256,
+      "large_fields": 128,
+      "independent_copies": 1500,
+      "sparse_updates": 1500,
+      "stopwatch_frequency": 10000000,
+      "metrics": [
+        {
+          "name": "freeze-unique-small",
+          "elapsed_ticks": 160693,
+          "elapsed_milliseconds": 16.0693,
+          "allocated_bytes": 9121696,
+          "gen0_collections": 1,
+          "gen1_collections": 1,
+          "gen2_collections": 0
+        },
+        {
+          "name": "freeze-unique-large",
+          "elapsed_ticks": 1073738,
+          "elapsed_milliseconds": 107.3738,
+          "allocated_bytes": 32513464,
+          "gen0_collections": 4,
+          "gen1_collections": 4,
+          "gen2_collections": 2
+        },
+        {
+          "name": "independent-copy-read-sparse-update",
+          "elapsed_ticks": 228064,
+          "elapsed_milliseconds": 22.8064,
+          "allocated_bytes": 7067568,
+          "gen0_collections": 0,
+          "gen1_collections": 0,
+          "gen2_collections": 0
+        }
+      ]
+    }
+  }
+}
