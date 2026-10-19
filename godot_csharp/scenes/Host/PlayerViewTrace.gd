@@ -67,6 +67,11 @@ func _wire(control: Control) -> void:
 
 func _after_draw() -> void:
 	if _closing or not is_instance_valid(host): return
+	host._timing("visible_trace_begin")
+	_collect_after_draw()
+	host._timing("visible_trace_end")
+
+func _collect_after_draw() -> void:
 	var items: Array = []
 	var viewport_rect: Rect2 = host.get_viewport().get_visible_rect()
 	if is_instance_valid(host.title_layer):

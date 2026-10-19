@@ -40,7 +40,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	if map: _refresh_access_geometry.call_deferred()
 
 ## Native content provides geometric bindings; no story identity or rule is selected here.
-func _apply_geometry_bindings(snapshot: Dictionary) -> void:
+func _apply_geometry_bindings(snapshot: Dictionary, rebuild := true) -> void:
 	if map == null: return
 	var declaration: Dictionary = snapshot.get("geometry_bindings", {}).get(key, {})
 	var signature := JSON.stringify(declaration)
@@ -89,7 +89,7 @@ func _apply_geometry_bindings(snapshot: Dictionary) -> void:
 			map.get_node("Solids").add_child(solid)
 			_geometry_nodes.append(solid)
 	_grids.clear()
-	_build_grid()
+	if rebuild: _build_grid()
 
 func can_enter(next: String) -> bool:
 	return bool(_access.get(next, true))
@@ -179,6 +179,8 @@ func station(target: String, who: String) -> Dictionary:
 		return {"point": geometry[id].point, "radius": float(geometry[id].reach)}
 	var best := INF
 	var chosen := Vector2.ZERO
+	var open_best := INF
+	var open_point := Vector2.ZERO
 	var grid := nav_grid(actor)
 	for y in range(grid.region.size.y):
 		for x in range(grid.region.size.x):
@@ -190,7 +192,16 @@ func station(target: String, who: String) -> Dictionary:
 			if distance < best:
 				best = distance
 				chosen = point
-	return {} if best == INF else {"point": chosen, "radius": 0.0}
+			# Prefer room interior with turning space rather than a narrow door recess.
+			var can_turn := true
+			for offset in [Vector2.LEFT * 16, Vector2.RIGHT * 16, Vector2.UP * 16, Vector2.DOWN * 16]:
+				if entered_room(point + offset) != target or not walkable(point + offset, actor):
+					can_turn = false
+					break
+			if can_turn and distance < open_best:
+				open_best = distance
+				open_point = point
+	return {} if best == INF else {"point": open_point if open_best != INF else chosen, "radius": 0.0}
 
 func _map_routes() -> Dictionary:
 	if not _routes.is_empty(): return _routes
@@ -290,7 +301,8 @@ func load_map(next: String, _spawn: String) -> void:
 	for exit in map.get_node("Exits").get_children():
 		(exit as Area2D).body_entered.connect(_on_exit_entered.bind(exit))
 		(exit as Area2D).body_exited.connect(_on_exit_left)
-	_apply_geometry_bindings(field.snapshot)
+	_access = field.snapshot.get("access", {}).get("maps", {}).duplicate(true)
+	_apply_geometry_bindings(field.snapshot, false)
 	_refresh_access_geometry()
 	_build_walls()
 

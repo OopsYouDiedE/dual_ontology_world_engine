@@ -4,17 +4,27 @@ var host: Node
 var previous_draw := 0
 var locations: Dictionary = {}
 var first_visible: Dictionary = {}
+var process_begin := 0
+var render_begin := 0
 const FRAME_GAP_US := 50000
 
 func configure(value: Node) -> void:
 	host = value
+	process_priority = -10000
+	RenderingServer.frame_pre_draw.connect(_before_render)
 	RenderingServer.frame_post_draw.connect(_drawn)
+
+func _process(_delta: float) -> void:
+	if is_instance_valid(host): process_begin = host.engine.TimingClockUs()
+
+func _before_render() -> void:
+	if is_instance_valid(host): render_begin = host.engine.TimingClockUs()
 
 func _drawn() -> void:
 	if not is_instance_valid(host) or host._closing: return
 	var now: int = host.engine.TimingClockUs()
 	if previous_draw > 0 and now - previous_draw >= FRAME_GAP_US:
-		host._timing("frame_gap", {"begin_us": previous_draw, "end_us": now, "duration_us": now - previous_draw, "threshold_us": FRAME_GAP_US})
+		host._timing("frame_gap", {"begin_us": previous_draw, "end_us": now, "duration_us": now - previous_draw, "threshold_us": FRAME_GAP_US, "process_begin_us": process_begin, "render_begin_us": render_begin})
 	previous_draw = now
 	if not is_instance_valid(host.field): return
 	var field: Node2D = host.field

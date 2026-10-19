@@ -22,6 +22,8 @@ def analyze(rows):
         "complete_begin": ("complete_end", "DV_complete"),
         "snapshot_begin": ("snapshot_end", "snapshot"),
         "delivery_begin": ("delivery_end", "host_delivery_other"),
+        "view_build_begin": ("view_build_end", "view_build"),
+        "visible_trace_begin": ("visible_trace_end", "visible_trace"),
         "ui_apply_begin": ("ui_apply_end", "UI_apply"),
         "capture_begin": ("capture_png_end", "capture_PNG"),
         "capture_png_end": ("capture_end", "capture_metadata"),
@@ -29,6 +31,9 @@ def analyze(rows):
         "execution_begin": ("execution_end", "physical_execution_or_receipt"),
         "presentation_begin": ("reading_finished", "dialogue_reading"),
     }
+    if any(r["stage"] == "capture_readback_end" for r in rows):
+        pairs["capture_begin"] = ("capture_readback_end", "capture_readback")
+        pairs["capture_readback_end"] = ("capture_png_end", "capture_pixel_copy_queue")
     for name in ("schedule", "goals", "cognition", "choice"):
         pairs[f"dv_{name}-start"] = (f"dv_{name}-end", f"DV_{name}")
     ends = defaultdict(list)
@@ -67,7 +72,7 @@ def analyze(rows):
             covering = [s for s in selected if s["begin_us"] <= left and right <= s["end_us"]]
             # Concurrent main-thread work takes precedence over a background DV interval.
             chosen = max(covering, key=lambda s: (priority.get(s["category"], 10)
-                         + (20 if s["category"] in {"UI_apply", "capture_PNG", "capture_metadata", "diagnostic_journal"} else 0),
+                         + (20 if s["category"] in {"UI_apply", "view_build", "visible_trace", "capture_PNG", "capture_readback", "capture_pixel_copy_queue", "capture_metadata", "diagnostic_journal"} else 0),
                          s["begin_us"]), default=None)
             totals[chosen["category"] if chosen else "unattributed_wall_time"] += (right-left)/1000
         context = sorted({s["category"] for s in spans if s["begin_us"] < end and begin < s["end_us"]
@@ -82,6 +87,7 @@ def analyze(rows):
             d = details(row)
             begin, end = d["begin_us"], d["end_us"]
             gaps.append({"begin_us": begin, "end_us": end, "duration_ms": (end-begin)/1000,
+                         "frame_boundaries": {k: d[k] for k in ("process_begin_us", "render_begin_us") if k in d},
                          **composition(begin, end)})
         if row["stage"] in ("physical_location", "actor_in_viewport"):
             locations.append({"real_us": row["real_us"], "stage": row["stage"], **details(row)})
@@ -103,8 +109,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", type=Path)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--archive", type=Path, help="Separate background PNG worker intervals; never add them to main-thread blocking")
     args = parser.parse_args()
     if args.out.exists():
         raise SystemExit("Refusing to overwrite evidence")
     rows = [json.loads(line) for line in args.source.read_text(encoding="utf-8-sig").splitlines() if line.strip()]
-    args.out.write_text(json.dumps(analyze(rows), ensure_ascii=False, indent=2), encoding="utf-8")
+    result = analyze(rows)
+    if args.archive:
+        result["background_archive"] = [json.loads(line) for line in args.archive.read_text().splitlines() if line.strip()]
+    args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")

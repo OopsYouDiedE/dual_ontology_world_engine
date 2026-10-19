@@ -258,7 +258,7 @@ fn c1_move_name(actor, origin, target):
 
 fn c1_move_action(actor, origin, target):
     var name = c1_move_name(actor, origin, target)
-    return dv_with_many(c1_action(name, "move", c1_at(actor, origin), c1_at(actor, origin), name, dv_single(dv_ref(actor, "state", "location")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story", 19, "重演通路")), {"predict_law": name, "travel": {"from": origin, "to": target}, "surface": "沿通路走到相连的房间。"})
+    return dv_with_many(c1_action(name, "move", c1_at(actor, origin), c1_at(actor, origin), name, dv_single(dv_ref(actor, "state", "location")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story", 19, "重演通路")), {"predict_law": name, "travel": {"from": origin, "to": target}})
 
 fn c1_add_move_methods(world, actor, mode):
     var edges = c1_edges()

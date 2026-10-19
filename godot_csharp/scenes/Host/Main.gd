@@ -85,6 +85,7 @@ func _home() -> void:
 	title.ui_event.connect(dispatch)
 
 func _view(ev: Dictionary, begin := true) -> void:
+	_timing("view_build_begin")
 	_view_resource = str(ev.resource)
 	var resource: PackedScene = load(str(ev.resource)) as PackedScene
 	if resource == null:
@@ -112,7 +113,8 @@ func _view(ev: Dictionary, begin := true) -> void:
 	field_executor.configure_visible(field, initial)
 	field.setup(adapter)
 	field_executor.bind_visible(field, initial)
-	_apply(initial)
+	ui.apply_snapshot(initial)
+	_timing("view_build_end")
 	# 等场景加入树并应用快照后才开始脚本；这也是可见视图的普通握手。
 	if begin: dispatch.call_deferred({"kind": "view_ready"})
 
@@ -166,7 +168,8 @@ func _session_options() -> Dictionary:
 		return {}
 	Engine.time_scale = speed
 	Engine.physics_ticks_per_second = ceili(60.0 * maxf(1.0, speed))
-	engine.RecordInput({"device": "host_configuration", "controller": str(options.controller), "playback_speed": speed, "physics_ticks_per_second": Engine.physics_ticks_per_second})
+	Engine.max_physics_steps_per_frame = ceili(8.0 * maxf(1.0, speed))
+	engine.RecordInput({"device": "host_configuration", "controller": str(options.controller), "playback_speed": speed, "physics_ticks_per_second": Engine.physics_ticks_per_second, "max_physics_steps_per_frame": Engine.max_physics_steps_per_frame})
 	return options
 
 func _show_error(message: String) -> void:

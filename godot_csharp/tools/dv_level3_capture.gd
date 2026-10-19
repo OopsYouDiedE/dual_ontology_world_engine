@@ -12,6 +12,10 @@ var last_continue := 0
 var dialogue_seen := false
 var highlights: Array = []
 var last_flush := 0
+var archive: Node
+var held_keys: Dictionary = {}
+var host_closed := false
+var archive_errors: Array = []
 
 func _initialize() -> void:
 	root.unfocusable = true
@@ -34,6 +38,9 @@ func _run() -> void:
 	host = load("res://scenes/Host/Main.tscn").instantiate()
 	root.add_child(host)
 	host.engine.SetPlayerControlled(mode != "detective")
+	archive = load("res://scenes/Host/FrameArchive.cs").new()
+	root.add_child(archive)
+	archive.Configure(host.engine.TimingClockUs())
 	started = Time.get_ticks_msec()
 	host.engine.EventsReady.connect(_host_events)
 	RenderingServer.frame_post_draw.connect(_capture)
@@ -44,6 +51,8 @@ func _run() -> void:
 
 func _process(_delta: float) -> bool:
 	if not is_instance_valid(host) or finishing: return false
+	_release_due_keys()
+	_poll_archive()
 	if Time.get_ticks_msec() - last_flush >= 200:
 		last_flush = Time.get_ticks_msec()
 		_flush_timings()
@@ -78,7 +87,7 @@ func _input_packet(packet: Dictionary) -> void:
 		var code := OS.find_keycode_from_string(str(packet.get("key", "")))
 		_key(code, bool(packet.get("pressed", true)))
 		if packet.has("duration_ms"):
-			_release_key_later(code, clampf(float(packet.duration_ms), 1.0, 5000.0))
+			held_keys[code] = Time.get_ticks_msec() + ceili(clampf(float(packet.duration_ms), 1.0, 5000.0))
 		elif not packet.has("pressed"): _key(code, false)
 	elif str(packet.get("kind", "")) == "click":
 		var point := Vector2(float(packet.x), float(packet.y))
@@ -94,10 +103,21 @@ func _input_packet(packet: Dictionary) -> void:
 			event.pressed = down
 			Input.parse_input_event(event)
 
-func _release_key_later(code: int, milliseconds: float) -> void:
-	await create_timer(milliseconds / 1000.0, true, false, true).timeout
-	_key(code, false)
-	_append("input-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "packet": {"kind": "key-release", "key": OS.get_keycode_string(code)}})
+func _release_due_keys() -> void:
+	for code in held_keys.keys():
+		if Time.get_ticks_msec() < int(held_keys[code]): continue
+		_key(code, false)
+		held_keys.erase(code)
+		_append("input-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "packet": {"kind": "key-release", "key": OS.get_keycode_string(code)}})
+
+func _poll_archive() -> void:
+	for raw in archive.PollCompleted():
+		var row: Dictionary = JSON.parse_string(str(raw))
+		_append("archive-timing.jsonl", row)
+		if row.error != null:
+			archive_errors.append(row)
+			push_error("Frame archive failed: " + str(row.error))
+		else: _append("frames.jsonl", {"real_ms": int(str(row.file).trim_prefix("frame-").trim_suffix(".png")), "file": row.file, "saved_us": row.end_us})
 
 func _key(code: int, down: bool) -> void:
 	var event := InputEventKey.new()
@@ -137,19 +157,21 @@ func _capture() -> void:
 	var now := Time.get_ticks_msec()
 	if now - last_capture < 200: return
 	last_capture = now
+	if not archive.HasCapacity():
+		host._timing("capture_backpressure", {"real_ms": now - started})
+		return
 	var elapsed := now - started
 	var filename := "frame-%09d.png" % elapsed
+	var captured_us: int = host.engine.TimingClockUs()
 	host._timing("capture_begin", {"file": filename})
-	root.get_texture().get_image().save_png(directory.path_join(filename))
+	var image := root.get_texture().get_image()
+	host._timing("capture_readback_end", {"file": filename})
+	if image.get_format() != Image.FORMAT_RGBA8: image.convert(Image.FORMAT_RGBA8)
+	archive.Enqueue(image.get_data(), image.get_width(), image.get_height(), directory.path_join(filename), captured_us)
 	host._timing("capture_png_end", {"file": filename})
 	if not highlights.is_empty():
 		_append("keyframes.jsonl", {"real_ms": elapsed, "file": filename, "events": highlights})
 		highlights = []
-	var frames_path := directory.path_join("frames.jsonl")
-	var frames := FileAccess.open(frames_path, FileAccess.READ_WRITE if FileAccess.file_exists(frames_path) else FileAccess.WRITE)
-	frames.seek_end()
-	frames.store_line(JSON.stringify({"real_ms": elapsed, "file": filename}))
-	frames.close()
 	# This stream is for the main reviewer, never the blind player.
 	var record := {"real_ms": elapsed, "time_scale": Engine.time_scale, "snapshot": host.engine.Snapshot()}
 	var path := directory.path_join("measurement.jsonl")
@@ -197,7 +219,17 @@ func _write(name: String, value: Variant) -> void:
 func _finish() -> void:
 	if finishing: return
 	finishing = true
+	var ended := Time.get_ticks_msec() - started
+	_write("end.json", {"real_ms": ended, "snapshot": host.engine.Snapshot()})
+	for code in held_keys:
+		_key(code, false)
+		_append("input-events.jsonl", {"real_ms": Time.get_ticks_msec() - started, "packet": {"kind": "key-release", "key": OS.get_keycode_string(code), "reason": "capture-end"}})
+	held_keys.clear()
 	_flush_timings()
-	_write("end.json", {"real_ms": Time.get_ticks_msec() - started, "snapshot": host.engine.Snapshot()})
-	host.shutdown_completed.connect(func(): quit())
+	host.shutdown_completed.connect(func(): host_closed = true)
 	host.begin_shutdown()
+	while not archive.IsIdle() or not host_closed:
+		await process_frame
+	_poll_archive()
+	_write("capture-close.json", {"capture_end_real_ms": ended, "archive_and_host_closed_real_ms": Time.get_ticks_msec() - started, "archive_errors": archive_errors})
+	quit(0 if archive_errors.is_empty() else 2)

@@ -449,3 +449,5 @@ Godot的源侧可走门道可用于departure_room起点核对；门道不产生e
 
 ## 被动阶段观测（2026-10-19）
 Runtime新增rt_phase(stage, actor)二参数Bool ABI，经AsyncLocal作用域调用只读观察器。无观察器时返回true；不写入DV值、事件或计时规则。DvSession.PhaseObserver按Run作用域隔离，dvg_prepare记录调度/目标刷新，runner记录认知/选择。实际异常保留未闭合阶段，不为诊断重试动作。内容初始条件依据本轮用户裁定更新，现行设计见design-standard；既往基线和证据不改写。
+
+普通房间移动移除通用过路surface，动作与Complete合同不变；原始内容及显示维护见verification/AGENTS.md。与四倍渲染采集的比较必须注明条件变化。

@@ -235,9 +235,16 @@ Main阅读时发送正式dv_next，GameEngine仍单队列后台Prepare。仅远�
 
 ## 一倍速直接输入的现场复测（2026-10-19）
 
-profile_dv_capture.py新增--speed，默认4保留独立历史测量口径，一倍交互复测显式--speed 1。捕获脚本在run.json写出前读取同一--dv-speed，禁止元数据写4而实际窗口为1。input.json的key可带duration_ms（1至5000现实毫秒），通过普通Input.parse_input_event按下、忽略时间缩放的计时器松开，并记录实际松键时刻；不写玩家坐标、DV状态或动作回执。
+profile_dv_capture.py新增--speed，默认4保留独立历史测量口径，一倍交互复测显式--speed 1。捕获脚本在run.json写出前读取同一--dv-speed，禁止元数据写4而实际窗口为1。input.json的key可带duration_ms（1至5000现实毫秒），通过普通Input.parse_input_event按下、按单调现实毫秒截止时刻松开，并记录实际松键时刻；不写玩家坐标、DV状态或动作回执。
 
 用户授权Luna依据新会话可见截图操控卧室到走廊，主代理查看关键PNG并核对实际输入、源侧门道回执和独立现实耗时。操作代理不读设计、源码、隐藏测量、旧记录或预写路线。此为指定空间行为复测，不能称为完整盲玩或剧情通关；性能分析器及截图开销纳入本轮现实耗时，采样尾部与封存分列。
 
 ## 被动卡顿与位置记录（2026-10-19）
 RuntimeDiagnostics按真实frame_post_draw记录>=50ms间隔、实际碰撞体房间变化和首次进入视口的节点；视口命中不代表穿透遮挡可见或人物已认出，须核对PNG。GameEngine命令独立编号，记录Prepare、Complete、快照、交付及DV内部阶段；PollTimings只读消费在线副本，关闭归档保留完整原队列。采集器live-timing按200ms追加，keyframes关联随后真实PNG；截图及日志自身开销单独计时。report_runtime_hitches.py只读分析每个绘制间隔与>=100ms命令等待，墙钟重叠分解不等于CPU归因，重叠优先与未知残差明确记录，正常行走/阅读/人工停顿单列。保留未闭合阶段，不补猜原因。测试由Luna仅依本轮图像经既有InputEvent协议操纵，主审查核对关键PNG；不代选剧情答案。
+
+## 后台原图封存与四倍物理盲测（2026-10-19）
+FrameArchive只接收主线程复制出的RGBA8像素；后台.NET任务串行执行无损PNG编码与原子写盘，不调用Godot资源/场景API。RGBA SHA-256保留像素来源，PNG成功出现后才追加frames索引。最多八个未完成任务，满队列明确记录capture_backpressure，保留采样缺口，不阻塞主线程或默默丢图。主线程纹理读回、像素复制入队、后台排队/编码/写盘和哈希各自计时。失败保留.partial及错误；结束先记录真实游玩终点，再等待宿主与归档结束，封存尾部时间单列。
+中性像素/禁止覆盖排错入口：Godot --headless --path godot_csharp --script res://tools/probe_frame_archive.gd -- --out=<新目录>，不加载游戏或推进DV；用普通PNG解码核对RGBA字节及SHA，检查已有文件字节与错误留存。
+CampusMapView首次装图先采用当前访问声明，一次性加入内容几何和门禁后建立导航；动态几何/访问更新保留原重建合同。通用房间目的地优先选同房且四向16px可走的转身空间，无此点才保留原最近点；不改变显式热点半径、碰撞体或到达回执。Main初始字段快照只应用一次。
+四倍测试显式--speed 4；physics_ticks_per_second=240，max_physics_steps_per_frame=32，连续碰撞单步时间保持。普通窗口仍默认1倍，DV费用不变。盲玩Luna只读本轮PNG/输入与采样索引，自主选路，留意门边停滞、横移、折返、对白、输入响应和同伴可见行为，不能读取源码、历史、设计或隐藏诊断，也不预写路线。不同倍率的旧窗口只作条件不同的诊断参照，不作同条件速度宣称。
+RuntimeDiagnostics补记process开始及render前边界；PlayerViewTrace与view构建单独插桩，保留未归因残差。后台编码时间不并入主线程阻塞分解。成果沿用real-game-capture任务目录，优化后另起独占窗口。
