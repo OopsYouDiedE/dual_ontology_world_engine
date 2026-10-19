@@ -403,7 +403,8 @@ func open_notebook() -> void:
 	_notebook.open_card.connect(func(id: String) -> void:
 		close_modal()
 		ui_event.emit({"kind": "card", "card_id": id}))
-	if bool(snapshot.get("controls", {}).get("manuscript", false)): _footer("重演手稿（R）", open_manuscript, false, "", "secondary")
+	var raw_ctrl = snapshot.get("controls", {})
+	if raw_ctrl is Dictionary and bool(raw_ctrl.get("manuscript", false)): _footer("重演手稿（R）", open_manuscript, false, "", "secondary")
 	_footer("合上（Tab）", close_modal, false, "", "secondary")
 
 func _replay_data() -> Dictionary:

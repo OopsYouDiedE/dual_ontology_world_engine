@@ -319,7 +319,9 @@ func load_map(next: String, _spawn: String) -> void:
 	for exit in map.get_node("Exits").get_children():
 		(exit as Area2D).body_entered.connect(_on_exit_entered.bind(exit))
 		(exit as Area2D).body_exited.connect(_on_exit_left)
-	_access = field.snapshot.get("access", {}).get("maps", {}).duplicate(true)
+	var raw_access = field.snapshot.get("access", {})
+	var maps = raw_access.get("maps", {}) if raw_access is Dictionary else {}
+	_access = maps.duplicate(true) if maps is Dictionary else {}
 	_apply_geometry_bindings(field.snapshot, false)
 	_refresh_access_geometry()
 	_build_walls()

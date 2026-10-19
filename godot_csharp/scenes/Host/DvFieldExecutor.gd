@@ -187,8 +187,10 @@ func _hidden_field(who: String, state: Dictionary) -> Node2D:
 
 func _blocked(intent: Dictionary, serial: int, reason: String) -> Dictionary:
 	var who := str(intent.get("actor", ""))
+	var raw_act = intent.get("action", {})
+	var act_id := str(raw_act.get("id", "")) if raw_act is Dictionary else ""
 	var result := {"kind": "daily", "who": who, "serial": serial,
-		"action": str(intent.get("action", {}).get("id", "")), "status": "blocked", "room": "", "reason": reason}
+		"action": act_id, "status": "blocked", "room": "", "reason": reason}
 	if _bodies.has(who):
 		var body: CharacterBody2D = _bodies[who].body
 		if is_instance_valid(body):
@@ -199,7 +201,8 @@ func _blocked(intent: Dictionary, serial: int, reason: String) -> Dictionary:
 func execute(intent: Dictionary, visible_field: Node2D, execution_snapshot: Dictionary, serial: int) -> Dictionary:
 	if _closing or _busy: return _blocked(intent, serial, "executor_unavailable")
 	var who := str(intent.get("actor", ""))
-	var action := str(intent.get("action", {}).get("id", ""))
+	var raw_act = intent.get("action", {})
+	var action := str(raw_act.get("id", "")) if raw_act is Dictionary else ""
 	var destination: Dictionary = intent.get("destination", {})
 	var source_map := str(execution_snapshot.get("map", ""))
 	var source_room := str(execution_snapshot.get("execution_room", ""))
@@ -249,8 +252,9 @@ func execute(intent: Dictionary, visible_field: Node2D, execution_snapshot: Dict
 		if str(received.get("room", "")) != expected_room or str(received.get("map", "")) != str(destination.get("map", "")):
 			received.status = "blocked"
 			received.reason = "arrival_identity_mismatch"
-	if str(received.get("status", "")) == "arrived" and intent.get("action", {}).get("travel", {}).has("station"):
-		var station := str(intent.action.travel.station)
+	var raw_travel = raw_act.get("travel", {}) if raw_act is Dictionary else {}
+	if str(received.get("status", "")) == "arrived" and raw_travel is Dictionary and raw_travel.has("station"):
+		var station := str(raw_travel.station)
 		if str(received.get("station", "")) != station or not received.has("arrival_error") or float(received.arrival_error) > 4.0:
 			received.status = "blocked"
 			received.reason = "station_evidence_mismatch"

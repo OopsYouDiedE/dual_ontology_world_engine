@@ -302,7 +302,8 @@ func player_visible_objects(occluded_regions: Array[Rect2] = []) -> Array[String
 		if sites[id].has("person") or represented_sites.has(id) or not site_visible(id): continue
 		var hidden := false
 		if "spatial" in adapter:
-			var props: Dictionary = adapter.get("spatial").get("objects", {})
+			var spatial = adapter.get("spatial")
+			var props: Dictionary = spatial.get("objects", {}) if spatial is Dictionary else {}
 			if props.has(id):
 				var prop := objects.get_node_or_null(str(props[id].get("sprite", ""))) as CanvasItem
 				hidden = prop == null or not _player_object_drawn(prop)
@@ -403,7 +404,10 @@ func _player_object_exposed_in_sight(pieces: Array[Rect2]) -> bool:
 	return false
 
 func _player_object_site(sprite: Sprite2D) -> String:
-	return str(snapshot.get("sprite_sites", {}).get(str(sprite.name), ""))
+	var sites_map = snapshot.get("sprite_sites", {})
+	if sites_map is Dictionary:
+		return str(sites_map.get(str(sprite.name), ""))
+	return ""
 
 func _player_object_title(node: Node) -> String:
 	for key in ["player_visible_name", "title", "label", "text"]:
