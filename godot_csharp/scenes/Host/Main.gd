@@ -26,6 +26,13 @@ var _closing := false
 var _dv_intent: Dictionary = {}
 var _dv_serial := 0
 var _view_resource := ""
+var _interaction_id := ""
+var _interaction_site := ""
+var _reading := false
+var _background_execution := false
+
+func _timing(stage: String, details: Dictionary = {}) -> void:
+	engine.RecordTiming({"stage": stage, "interaction_id": _interaction_id, "details": details})
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
@@ -106,9 +113,12 @@ func _view(ev: Dictionary, begin := true) -> void:
 	# 等场景加入树并应用快照后才开始脚本；这也是可见视图的普通握手。
 	if begin: dispatch.call_deferred({"kind": "view_ready"})
 
-## 输入只进入 DV 会话的统一调度入口。
+## 热点与跨房间进入DV；房间内坐标接近由现场消费，不进入此入口。
 func dispatch(input: Dictionary) -> void:
 	if _closing: return
+	if str(input.get("kind", "")) == "spatial_select":
+		if is_instance_valid(field) and is_instance_valid(field.spatial): field.spatial.select(str(input.choice_id), str(input.site))
+		return
 	if str(input.get("kind", "")) == "quit":
 		engine.RecordInput({"device": "ui_semantic", "kind": "quit"})
 		begin_shutdown.call_deferred()
@@ -125,7 +135,7 @@ func dispatch(input: Dictionary) -> void:
 
 func _session_options() -> Dictionary:
 	var speed := playback_speed
-	var options := {"controller": controller, "campaign": campaign_options.duplicate(true)}
+	var options := {"controller": controller, "campaign": campaign_options.duplicate(true), "audit": false}
 	if viewer != "": options.viewer = viewer
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--dv-speed="):
@@ -134,6 +144,7 @@ func _session_options() -> Dictionary:
 				_show_error("Invalid --dv-speed: " + value)
 				return {}
 			speed = float(value)
+		elif arg == "--dv-audit": options.audit = true
 		elif arg.begins_with("--dv-controller="): options.controller = arg.trim_prefix("--dv-controller=")
 		elif arg.begins_with("--dv-viewer="): options.viewer = arg.trim_prefix("--dv-viewer=")
 		elif arg.begins_with("--dv-profile="): options.campaign.profile = arg.trim_prefix("--dv-profile=")
@@ -165,8 +176,16 @@ func _show_error(message: String) -> void:
 	dialog.popup_centered(Vector2i(640, 240))
 
 func _field_input(input: Dictionary) -> void:
-	# Prepared movement is consumed only by the executor's awaited receipt.
-	if str(input.get("kind", "")) != "daily": return
+	match str(input.get("kind", "")):
+		"timing": engine.RecordTiming(input)
+		"select":
+			_interaction_id = str(input.interaction_id)
+			_interaction_site = str(input.site)
+			dispatch(input)
+		"spatial_choices":
+			_interaction_id = str(input.interaction_id)
+			_timing("local_choices_ready")
+			ui.spatial_choices(input)
 
 func _accept_execution(input: Dictionary) -> void:
 	if _closing or _dv_intent.is_empty(): return
@@ -193,8 +212,17 @@ func _drain() -> void:
 				var result: Dictionary = ev.presentation
 				var lines := _presentation_lines(result)
 				if not lines.is_empty():
+					_reading = true
+					# Start the ordinary serialized Prepare while this frozen text is read.
+					# Remote NPCs still execute real Godot movement and return Complete.
+					ev.advance_requested = true
+					dispatch.call_deferred({"kind": "dv_next", "schedule": "reading-background"})
+					_timing("presentation_begin", {"execution_event": result.get("execution_event", "")})
 					await ui.present({"kind": "lines", "lines": lines, "trace_id": str(result.get("execution_event", "")), "presentation_id": str(result.get("execution_event", ""))})
-				dispatch.call_deferred({"kind": "dv_next"})
+					_reading = false
+					_timing("reading_finished", {"execution_event": result.get("execution_event", "")})
+				if not bool(ev.get("advance_requested", false)):
+					dispatch.call_deferred({"kind": "dv_next"})
 			"view": _view(ev)
 			"state": _apply(ev.snapshot)
 			"error": _show_error(str(ev.message))
@@ -239,6 +267,7 @@ func _apply(snapshot: Dictionary) -> void:
 func begin_shutdown() -> void:
 	if _closing: return
 	_closing = true
+	_reading = false
 	if is_instance_valid(view_trace): view_trace.begin_shutdown()
 	_queue.clear()
 	if is_instance_valid(field_executor): field_executor.begin_shutdown()
@@ -250,26 +279,65 @@ func _exit_tree() -> void:
 	begin_shutdown()
 
 func _dv_events(events: Array) -> void:
-	_queue.append_array(events)
+	if _closing: return
+	for ev in events:
+		if _reading and str(ev.get("kind", "")) == "dv_action" and _remote_npc_intent(ev):
+			_execute_reading_npc(ev)
+		elif _reading and str(ev.get("kind", "")) == "dv_present" and _presentation_lines(ev.presentation).is_empty():
+			# Empty presentation has no reading work. Remember that its next cue was
+			# already sent so the foreground drain cannot prepare the actor twice.
+			ev.advance_requested = true
+			_queue.append(ev)
+			dispatch.call_deferred({"kind": "dv_next", "schedule": "reading-background"})
+		else:
+			_queue.append(ev)
 	_drain.call_deferred()
+
+func _remote_npc_intent(ev: Dictionary) -> bool:
+	if _background_execution or not is_instance_valid(field): return false
+	var intent: Dictionary = ev.get("intent", {})
+	if str(intent.get("status", "")) != "prepared": return false
+	var viewer := str(field.snapshot.get("viewer", ""))
+	if str(intent.get("actor", "")) == viewer: return false
+	var current_room := str(field.snapshot.get("execution_room", ""))
+	var source: Dictionary = ev.get("execution_snapshot", {})
+	var source_room := str(source.get("execution_room", ""))
+	if source_room == "" or source_room == current_room: return false
+	var destination: Dictionary = intent.get("destination", {})
+	var destination_room := str(destination.get("execution_room", destination.get("room", "")))
+	return destination_room != current_room
+
+func _execute_reading_npc(ev: Dictionary) -> void:
+	_background_execution = true
+	_timing("reading_npc_execution_begin", {"actor": ev.intent.actor, "action_event": ev.intent.action_event})
+	await _dv_execute(ev.intent, ev.get("execution_snapshot", {}))
+	_timing("reading_npc_execution_end", {"actor": ev.intent.actor, "action_event": ev.intent.action_event})
+	_background_execution = false
 
 func _dv_execute(intent: Dictionary, execution_snapshot: Dictionary) -> void:
 	if str(intent.get("status", "")) == "awaiting_input":
-		ui.present({"kind": "candidates", "title": "接下来做什么", "options": intent.options})
+		field.spatial.set_options(intent.options)
+		_timing("player_options_ready", {"options": intent.options.size()})
 		return
 	if str(intent.get("status", "")) != "prepared": return
 	_dv_intent = intent
 	_dv_serial += 1
 	var action: Dictionary = intent.action
+	_timing("execution_begin", {"action_event": intent.action_event, "actor": intent.actor})
 	if str(action.kind) == "move" or action.get("travel", {}).has("station"):
 		var receipt: Dictionary = await field_executor.execute(intent, field, execution_snapshot, _dv_serial)
 		_accept_execution(receipt)
 	else:
-		_dv_complete("applied", {"executor": "dv-world", "context": field.context()})
+		var contact := true
+		if _interaction_site != "" and _interaction_site != "self" and str(intent.actor) == str(field.snapshot.get("viewer", "")):
+			contact = field.spatial._in_reach(_interaction_site)
+		_dv_complete("applied" if contact else "rejected", {"executor": "dv-world", "site": _interaction_site, "contact": contact, "context": field.context()})
 
 func _dv_complete(outcome: String, execution: Dictionary) -> void:
+	_timing("execution_end", {"outcome": outcome, "action_event": _dv_intent.action_event})
 	var receipt := {"action_event": _dv_intent.action_event, "outcome": outcome, "actual": _dv_intent.execution_cost, "executor": "godot", "field": execution}
 	_dv_intent = {}
+	_interaction_site = ""
 	dispatch.call_deferred({"kind": "dv_complete", "receipt": receipt})
 
 func _notification(what: int) -> void:

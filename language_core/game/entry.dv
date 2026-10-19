@@ -153,6 +153,16 @@ fn dvg_place(location):
 
 fn dvg_intent(state):
     let intent = dvs_session_intent(state)
+    if intent.status == "awaiting_input":
+        var options = []
+        let actor = state.actors[state.cursor]
+        var i = 0
+        while i < rt_count(intent.options):
+            let option = intent.options[i]
+            let action = dvp_find_action(actor.actions, option.id)
+            rt_push(options, dv_with_many(option, {"kind": action.kind, "interaction": dvg_interaction(action)}))
+            i = i + 1
+        return dv_with(intent, "options", options)
     if intent.status != "prepared":
         return intent
     let travel = dv_find(intent.action, "travel", [])
@@ -164,6 +174,38 @@ fn dvg_intent(state):
     if dv_has_key(travel, "station"):
         destination = dv_with(destination, "departure_station", travel.station)
     return dv_with(intent, "destination", destination)
+
+// Presentation bindings contain no observed values or additional action admission.
+// The host selects from the already admitted IDs; Prepare rechecks the same action.
+fn dvg_interaction(action):
+    if dv_has_key(action, "interaction"):
+        return action.interaction
+    let travel = dv_find(action, "travel", [])
+    if action.kind == "move" and dv_has_key(travel, "to"):
+        return {"kind": "doorway", "destination": dvg_place(travel.to)}
+    if dv_has_key(travel, "station"):
+        return {"kind": "site", "site": rt_slice(travel.station, 5, rt_length(travel.station) - 5)}
+    let sites = {"E1": "E1", "E2": "E2", "E3": "E2", "E4": "E2", "E5": "E2", "E6": "E6", "E7": "E7", "E8": "transmitter", "E9": "E10", "E10": "E10", "E11": "E11", "E12": "E12"}
+    var i = 0
+    while i < rt_count(sites):
+        if c1_ui_ends(action.id, rt_cat(".inspect.", sites[i][0])):
+            return {"kind": "site", "site": sites[i][1]}
+        i = i + 1
+    let named = {".opening.wake": "bed", ".opening.wear-coat": "E12", ".identify-own-lens": "E12", ".compare_sole": "E2", ".sound_trial": "transmitter", ".reask_question": "transmitter", ".opening.empty-slot": "zone_rules"}
+    i = 0
+    while i < rt_count(named):
+        if c1_ui_ends(action.id, named[i][0]):
+            return {"kind": "site", "site": named[i][1]}
+        i = i + 1
+    if action.kind == "answer":
+        return {"kind": "site", "site": "transmitter"}
+    let request = dv_find(dv_find(action, "speech", []), "request", [])
+    if dv_has_key(request, "target"):
+        return {"kind": "person", "person": request.target}
+    let listeners = dv_find(action, "listeners", [])
+    if rt_count(listeners) == 1:
+        return {"kind": "person", "person": listeners[0]}
+    return {"kind": "self"}
 
 fn dvg_clock(time):
     let minute = rt_floor(time)
@@ -205,6 +247,12 @@ fn dvg_initial_anchor(actor, location):
 
 fn dvg_people(state, viewer):
     let sprites = dvg_cast()
+    var viewer_mind = state.actors[0].mind
+    var viewer_index = 0
+    while viewer_index < rt_count(state.actors):
+        if state.actors[viewer_index].id == viewer:
+            viewer_mind = state.actors[viewer_index].mind
+        viewer_index = viewer_index + 1
     var people = []
     var i = 0
     while i < rt_count(state.actors):
@@ -214,6 +262,11 @@ fn dvg_people(state, viewer):
             let place = dvg_place(position.value)
             if place.map != "":
                 var person = {"key": actor.id, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": position.value, "initial_anchor": dvg_initial_anchor(actor.id, position.value), "spawn": dv_find(place, "spawn", ""), "present": true, "sprite": dv_find(sprites, actor.id, ""), "frame": ""}
+                let known_name = dv_read(viewer_mind, c1_op_person_ref(actor.id, "name"))
+                var title = "同伴"
+                if dv_uncontested(known_name):
+                    title = known_name.value
+                person = dv_with(person, "title", title)
                 if dv_has_key(place, "anchor"):
                     person = dv_with(person, "anchor", place.anchor)
                 rt_push(people, person)
@@ -241,11 +294,16 @@ fn dvg_map_access(state, current_map):
 // Spatial additions are content declarations. Sampling and safety remain DV actions.
 fn dvg_site_titles(map):
     if map == "zone_yi":
-        return {"E1": {"title": "隔离门"}, "E2": {"title": "门底与木楔"}, "E6": {"title": "苏泠的书桌"}, "E7": {"title": "活动厅长桌"}, "E10": {"title": "备餐柜台"}, "E11": {"title": "置物架"}}
+        return {"bed": {"title": "床"}, "transmitter": {"title": "铜口"}, "zone_rules": {"title": "公告框"}, "E1": {"title": "隔离门"}, "E2": {"title": "门底与木楔"}, "E6": {"title": "苏泠的书桌"}, "E7": {"title": "活动厅长桌"}, "E10": {"title": "备餐柜台"}, "E11": {"title": "置物架"}, "E12": {"title": "风衣"}}
+    return {}
+
+fn dvg_sprite_sites(map):
+    if map == "zone_yi":
+        return {"N1Bed": "bed", "N1Coat": "E12", "R05Shelf": "E11", "R05ShelfTrace": "E11", "Transmitter": "transmitter", "InnerBolt": "E1", "Slate": "E7", "Jar": "E10"}
     return {}
 
 fn dvg_geometry_bindings():
-    return {"campus_n": {"sites": [{"id": "outdoor_meter", "point": [672, 1416], "label": "户外仪器阵"}, {"id": "outdoor_high", "point": [672, 1272], "label": "高地通路"}], "props": [{"id": "outdoor_dial", "texture": "res://ShareAsset/Internal/Props/Outdoor/dial_meter.svg", "position": [704, 1416], "footprint": [-10, -8, 20, 8]}]}}
+    return {"zone_yi": {"sites": [{"id": "E12", "point": [876, 246], "label": "风衣"}], "props": []}, "campus_n": {"sites": [{"id": "outdoor_meter", "point": [672, 1416], "label": "户外仪器阵"}, {"id": "outdoor_high", "point": [672, 1272], "label": "高地通路"}], "props": [{"id": "outdoor_dial", "texture": "res://ShareAsset/Internal/Props/Outdoor/dial_meter.svg", "position": [704, 1416], "footprint": [-10, -8, 20, 8]}]}}
 
 fn dvg_snapshot(state, viewer):
     let position = dv_read(state.physical, c2_position_ref(viewer))
@@ -261,7 +319,7 @@ fn dvg_snapshot(state, viewer):
     var snapshot = {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": "res://scenes/Chapter2/Field/CampusMapView.tscn", "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": logical_location, "initial_anchor": dvg_initial_anchor(viewer, logical_location), "spawn": dv_find(place, "spawn", ""), "field_enabled": true, "player_control": dv_find(state, "player_actor", "") == viewer, "initial_placements": [], "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false, "maps": dvg_map_access(state, place.map)}, "sites": dvg_site_titles(place.map), "geometry_bindings": dvg_geometry_bindings(), "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": dv_find(cast, viewer, "")}, "cast": cast, "pending": dvg_intent(state), "chapter_summary": dvg_chapter_summary(state)}
     if dv_has_key(place, "anchor"):
         snapshot = dv_with(snapshot, "anchor", place.anchor)
-    return snapshot
+    return dv_with(snapshot, "sprite_sites", dvg_sprite_sites(place.map))
 
 // A system closing record is not fed into any actor's cognition or choices.
 fn dvg_chapter_summary(state):

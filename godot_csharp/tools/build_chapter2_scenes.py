@@ -368,6 +368,14 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
               f'metadata/title = {json.dumps(room["title"], ensure_ascii=False)}', f'metadata/map_size = Vector2({W}, {H})']
     if room["rows"]:
         lines.append(f'metadata/terrain_rows = {json.dumps(room["rows"])}')
+    lights = []
+    for decor in room.get("decor", []):
+        if decor[0] in ("window", "sconce"):
+            lights.append({"kind": decor[0], "point": [decor[1], decor[2] * CELL + (48 if decor[0] == "window" else 36)]})
+    for prop in room.get("furniture", []):
+        if prop["sprite"] in ("floor_lamp", "range_stove", "fireplace"):
+            lights.append({"kind": "lamp", "point": [prop["position"][0], prop["position"][1] - 28]})
+    lines.append(f'metadata/stage_lights = {json.dumps(lights)}')
     lines += [f'metadata/{k} = {v}' for k, v in room.get("meta", {}).items()]
     lines += ['',
               '[node name="Architecture" type="Sprite2D" parent="."]', 'z_index = -10', 'texture = ExtResource("arch")', 'centered = false', '',

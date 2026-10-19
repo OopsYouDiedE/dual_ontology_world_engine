@@ -49,7 +49,7 @@
 
 宿主只保留 GameEngine → DvSession → 生成 DV 类库，不保留旧坐席 token、DispatchField、舞台动作分派或第二个 DvRuntime 会话持有者。界面呈现完成不单独触发 Prepare，只有 view_ready / dv_next 启动下一步；等待回执时不重新分派意图。
 
-移动目的地分别声明逻辑地点、当前地图执行房间和站点；同一逻辑地点内的移动仍须真实寻路与碰撞到达。显式站点动作的回执核对主体、序号、行动、站点及房间，并保留实际终点、站点范围与到达误差。依赖现场接触的观察只在对应成功 Complete 后产生，卡片显示与预测不能代替现场接触。
+移动目的地分别声明逻辑地点、当前地图执行房间和站点。按2026-10-19用户裁定，同房间WASD/鼠标接近由宿主寻路与真实碰撞执行，不进入DV、不扣游戏时间或动作步数；热点交互及跨房间仍走唯一Prepare/Complete正式链。显式站点动作的回执核对主体、序号、行动、站点及房间，并保留实际终点、站点范围与到达误差。依赖现场接触的观察只在对应成功Complete后产生，局部行走不授予观察或答案。
 
 构建：`dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false`；必要时用 `-p:DvPython=<Python路径>`。DV 编译器自举与编辑器继续使用现有工具，seed 只持有语法 Reader/Value，不含世界执行或解释器。两份解决方案均引用 Session。
 
@@ -244,3 +244,13 @@ language_core 的现役文件按 core、session、chapter1、chapter2、game 和
 ## VS Code 工作区发现（2026-10-19）
 
 默认解决方案为 `godot_csharp/DualOntologyWorldEngine.sln`，包含现役游戏与 Session；维护编译器/seed时显式切换 `language_core/LanguageCore.sln`。`.vscode/settings.json` 排除 artifacts、tmp、scratch 的历史工程发现、搜索及文件监视，保留原始证据与现役源码。设置依据已安装扩展的 schema 维护，不能仅以隐藏资源管理器目录宣称语言服务已全部停止扫描。Core 与现场执行合同见对应模块 AGENTS.md；配置修复与实际 VS Code 重载观察分别记录。
+
+## 普通游玩与审计、房间舞台（2026-10-19）
+
+用户要求先完成剩余优化，暂停构建、探针和游戏验证；本批只编辑源码、文档与生产资源，既有记录原样保留。资源生成不算实机验收。继续使用 artifacts/partial-bootstrap-core/real-game-capture-20261019/spatial-interaction-rewrite-20261019/。
+
+正式宿主的普通游玩使用精简事件存储，完整证据采集显式启用 --dv-audit。精简模式仍保留正式推理读取的历史状态；不得关闭这些读取或将其缺失伪装为同条件优化。审计模式、实际行为和性能结论分别报告，不以精简证据替代完整验收。接口与存储合同分别见 language_core/AGENTS.md 和 godot_csharp/AGENTS.md。
+
+## 人工认知与阅读期调度（2026-10-19，用户追加裁定）
+
+本轮用户明确采纳人工玩家省去重度预演、阅读时提前处理NPC。这是控制方式与调度机制变化，独立记录于本轮任务目录，不作同条件纯计算提速结论。人工认知和事件策略由language_core/AGENTS.md及verification/AGENTS.md维护；阅读期现场执行和显示队列由godot_csharp/AGENTS.md维护。本批继续暂停验证，先完成整批修改。

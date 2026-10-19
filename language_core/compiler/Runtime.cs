@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Threading;
 using System.Collections;
 using System.Buffers;
 using System.Runtime.CompilerServices;
@@ -14,6 +15,18 @@ namespace DuelView.Compiled;
 // Platform/value ABI only. No reader, AST walker, evaluator or code generator.
 public static class R
 {
+    // Execution-context local: concurrent host sessions never change one another's policy.
+    // Standalone compiler/audit programs retain complete evidence by default.
+    private static readonly AsyncLocal<bool?> AuditContext = new();
+    public static bool AuditMode { get => AuditContext.Value ?? true; set => AuditContext.Value = value; }
+    public static object audit_mode() => AuditMode;
+    public static IDisposable UseAudit(bool enabled) => new AuditScope(enabled);
+    private sealed class AuditScope : IDisposable
+    {
+        private readonly bool? previous = AuditContext.Value;
+        public AuditScope(bool enabled) => AuditContext.Value = enabled;
+        public void Dispose() => AuditContext.Value = previous;
+    }
     public static string[] Arguments = [];
     public static string Text(object x) => x as string ?? throw new Exception("Expected Text");
     public static double Num(object x) => x is double n && double.IsFinite(n) ? n : throw new Exception("Expected finite Number");
@@ -119,12 +132,18 @@ public static class R
     };
     private static object RawItem(object owner, int index) => owner is FrozenList frozen
         ? frozen[index] : (owner as List<object> ?? throw new Exception("Expected List"))[index];
+    // Tiny records stay linear until repeated lookup amortizes an index.
+    private static bool RecordHot(object record)
+    {
+        if (record is FrozenList frozen) return Interlocked.Increment(ref frozen.RecordReads) > 3;
+        return ++MutableStates.GetOrCreateValue((List<object>)record).RecordReads > 3;
+    }
     public static object record_index(object record, object key)
     {
         var entries = Items(record);
         if (key is string name)
         {
-            if (entries.Count >= 8)
+            if (entries.Count >= 8 || RecordHot(record))
             {
                 var frozen = record as FrozenList;
                 if (frozen is null && entries is List<object> mutable && MutableStates.TryGetValue(mutable, out var state)) frozen = state.Backbone;
@@ -154,7 +173,7 @@ public static class R
         int foundIndex = -1;
         if (key is string name)
         {
-            if (entries.Count >= 8)
+            if (entries.Count >= 8 || RecordHot(record))
             {
                 var frozen = record as FrozenList;
                 if (frozen is null && entries is List<object> mutable && MutableStates.TryGetValue(mutable, out var state)) frozen = state.Backbone;
@@ -484,6 +503,7 @@ public static class R
             public void Dispose() { }
         }
         internal readonly ulong Hash;
+        internal int RecordReads;
         internal volatile bool IndexChecked;
         internal Dictionary<string, int>? Index;
         internal volatile bool StringsChecked;
@@ -602,6 +622,7 @@ public static class R
     }
     private sealed class MutableState
     {
+        internal int RecordReads;
         internal FrozenList? Backbone;
         internal bool IndexChecked;
         internal Dictionary<string, int>? Index;
@@ -815,10 +836,15 @@ public static class R
         MaintainSnapshots();
         var children = items.Count == 0 ? Array.Empty<object>() : new object[items.Count];
         ulong hash = 14695981039346656037UL;
+        ulong compatibleHash = hash;
+        var compatible = true;
         for (var i = 0; i < items.Count; i++)
         {
             if (items[i] is List<object> mutableChild) LinkParent(mutableChild, items);
             var child = children[i] = SnapshotValue(items[i]);
+            if (TryMembershipHash(child, out var valueHash))
+                compatibleHash = unchecked((compatibleHash ^ valueHash) * 1099511628211UL);
+            else compatible = false;
             var part = child is FrozenList list ? list.Hash : unchecked((ulong)HashCode.Combine(child.GetType(), child));
             hash = unchecked((hash ^ part) * 1099511628211UL);
         }
@@ -839,7 +865,12 @@ public static class R
                     : Equals(existing[j], children[j]);
             if (same) { state.Backbone = existing; return existing; }
         }
-        var frozen = new FrozenList(children, hash);
+        var frozen = new FrozenList(children, hash)
+        {
+            MembershipHash = unchecked((compatibleHash ^ (ulong)items.Count) * 1099511628211UL) ^ 5UL,
+            MembershipHashEligible = compatible,
+            MembershipHashChecked = true
+        };
         bucket.Add(new WeakReference<FrozenList>(frozen));
         state.Backbone = frozen;
         return frozen;
@@ -973,6 +1004,7 @@ public static class R
     private static readonly object RawLock = new();
     public static object raw_open(object path)
     {
+        if (!AuditMode) throw new InvalidOperationException("Raw evidence requires audit mode");
         lock (RawLock)
         {
             if (RawEvidence is not null) throw new InvalidOperationException("Raw recorder already opened; abort a failed recorder before reopening");
@@ -982,6 +1014,7 @@ public static class R
     }
     public static object raw_event(object value)
     {
+        if (!AuditMode) return true;
         lock (RawLock)
         {
             if (RawEvidence is null) return false;

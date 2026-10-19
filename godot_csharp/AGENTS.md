@@ -1,5 +1,15 @@
 # Godot 游戏宿主维护与路径规范
 
+## 空间输入与分段计时（2026-10-19）
+
+用户裁定同房间内WASD/鼠标行走为宿主接近，不提交DV、不结算时间或步数。SpatialInput负责连续碰撞、鼠标路径及近距热点；WorldView保留现场实体，CampusMapView提供几何与动态人物避让。跨房间边界只提交DV已准入的移动ID，实际执行前不更改逻辑地点；NPC正式移动仍用同一执行器。人物碰撞mask包含其他人物，站点接近点排除已占用终点，不移动旁人让路或传送到达。
+
+awaiting_input仅更新现场资格表，不打开全局列表。单一近距动作直接提交，多动作在物件旁显示局部纸面标签；随身动作从本人局部手稿入口访问。空间绑定及中文标题由原生DV声明提供，宿主不拆解剧情动作ID或编造内容。Main在正式执行前复核人工热点接触，进入共享Prepare/Complete。
+
+GameEngine以Stopwatch单调微秒写interaction-timing.jsonl，按interaction_id关联请求、命令排队、Prepare、快照、现场执行、Complete、绘制首帧及阅读结束；局部行走单列起止及实测游戏钟。PlayerViewTrace在实际frame_post_draw后标记首帧，不能把待显示正文当成已绘制。`python godot_csharp/tools/summarize_interaction_timing.py <宿主interaction-timing.jsonl> --out <新JSON>`只读整理，缺段为null，阅读/等待与CPU耗时分别解释。
+
+PaperFrame使用生成主题内的双线StyleBox，供HUD、对白及局部选择共用；姓名栏关闭自身滚动，长正文仍可滚动，立绘下不重复姓名。主题仍通过build_ui_theme.py重生，禁止直接手改生成tres。集中修改后统一工程排错，再以实际空间输入与截图检查；性能采集保留脚本/GPU/.NET来源。profile_dv_capture.py的`--controller=player`使用人工输入协议、自动开始，不代选剧情；其模式名player不代表独立盲玩。
+
 ## Core 与现场接线（2026-10-19）
 
 正式入口使用 `GameEngine.ConfigureSession` 的 `{controller: "player"|"ai", viewer?: string, campaign?: record}`，只允许新会话打开前配置。默认主体、内容参数与可视资源绑定在 DV `dvg_host_open` / `dvg_host_viewer`；宿主不另写人物标识或决策规则。玩家候选与 AI 规划最终进入同一 Prepare/Complete，控制方式不在在途动作中切换。
@@ -147,7 +157,7 @@ Main → DvFieldExecutor → WorldView 使用唯一保留的人物实体执行�
 
 第二章 CampusMapView 从 DV 快照读取呈现绑定，不再读取旧第二章剧情 JSON。地图通路由场景出口与室外核心区域构建，实际寻路和出口触发后才返回完成；无在场身体或无法跨图执行的 NPC 返回未执行，不能据此改变 DV 地点。该离屏执行缺口仍待补齐。
 
-单一现场入口为 WorldView.execute_move：地图适配器提供目的地执行，否则使用同一站点导航。旧 stage/直接键鼠移动/快照进出场和让路移动均已移除。快照只创建视图身体，不发起未准备的行走。短启动工程排错使用 `--script res://tools/dv_host_startup_probe.gd -- --out=<新绝对证据目录>`，八秒后封存截图与快照，拒绝覆盖旧目录；不得称为完整游戏验收。
+DV正式移动入口为WorldView.execute_move：地图适配器提供目的地执行，否则使用同一站点导航。按2026-10-19裁定，SpatialInput另承接无DV结算的同房间键鼠接近；跨房间及热点行动仍回到正式入口。旧stage、快照进出场和让路移动不恢复，快照不代替行走。短启动工程排错使用`--script res://tools/dv_host_startup_probe.gd -- --out=<新绝对证据目录>`，八秒后封存截图与快照，拒绝覆盖旧目录；不得称为完整游戏验收。
 
 三级无桌面输入采集：tools/dv_level3_capture.gd 在屏幕外、不取焦点的正式 Main 渲染实例中设置 Engine.time_scale=4；使用 -- --out=<新绝对目录> --mode=blind|detective --seconds=<现实秒>。input.json 仅接受 key、click、stop，通过 Input.parse_input_event 进入正常输入；detective 模式仅自动开始和继续对白，不选择世界动作。截图可提供盲玩者，measurement.jsonl/end.json 只供主审查，不得向盲玩者提供。该工具不补齐尚未接入的人工动作入口，不将默认自主侦探视为盲玩者决策，不执行流程回归。原始证据只新增，关闭时保留宿主原始输入与可见记录。四倍只加速 Godot 计时、物理与呈现，不改变 DV 行动费用或推演预算；DV 游戏钟取实测快照，不按倍速换算。
 侦探组自动继续对白至少间隔1.5现实秒，首次出现也先等待，保留正文实际绘制机会；初版过快跳读的采集只作工程试运行，单独保留，不与修订版混为同一计时规则。
@@ -198,3 +208,17 @@ Main.playback_speed默认4，`--dv-speed=`可在0.25至8间设置，打开会话
 室内家具位置改变后使用`--interiors-only <interior-key...>`重生所选场景、manifest和底图烘焙阴影，避免旧阴影残留；该入口不重建室外。仅新增已有贴图而不改变原阴影时才使用geometry-only。两者都从源码生成，不手改tscn。
 
 站点接近保持原半径和房间约束，除既有连续方向样本外枚举半径内全部可走格中心，避免窄合法接近点被有限方向漏掉。Campus.walkable同时核对格中心合法性与查询连续脚点是否落入原矩形障碍的膨胀范围；不删除碰撞或扩大站点半径。实际到达仍由CharacterBody2D移动、终点、房间和到达误差回执核验。
+
+## 房间舞台与游玩记录策略（2026-10-19）
+
+RoomStage只处理当前房间构图、局部PointLight2D、窗光和有上限的GPUParticles2D；CampusMapView缓存地形分区边界供镜头取景，不改变门洞、导航或DV目的地。build_chapter2_scenes.py从实际窗/壁灯/灯具配方生成stage_lights元数据；室外保持原取景，离屏执行器不创建舞台特效。reduce_motion关闭微尘并取消缩放动画。灯光采用暖瓷白/淡玫瑰与冷蓝灰，沿用设计中的专属色边界。
+
+对白按可见窗口约65%宽布局；透明立绘框从左侧破框，portrait_etch shader保留原alpha并降低饱和度，paper_surface提供低对比纸面纹理；PaperFrame绘制主题色双线和角花。长正文仍可滚动。表面着色、灯光和特效不作为新增热点、观察或人物认识。
+
+资源生产：python godot_csharp/tools/build_ui_theme.py；python godot_csharp/tools/build_room_table_props.py；python godot_csharp/tools/build_chapter2_scenes.py --geometry-only <地图键...>。表格道具继续从原生像素配方生成，保持尺寸、锚点与碰撞范围；不直接修补生成PNG或tres。
+
+Main默认audit=false，--dv-audit配置完整证据；GameEngine关闭时普通模式跳过session.json，保留save/输入/可见正文/计时。close-result明确audit_mode与trace_policy，complete只表示该策略规定的保存完成。profile_dv_capture.py始终启用--dv-audit；不得把普通模式与审计模式记录称为同条件耗时比较。本批按用户要求暂停所有验证，先集中完成修改。
+
+## 人工认知与阅读期调度（2026-10-19，用户追加裁定）
+
+Main阅读时发送正式dv_next，GameEngine仍单队列后台Prepare。仅远离当前观察房间、且目的地也不进入该房间的NPC可在阅读期间使用现有Godot执行器/Complete实际推进；玩家动作、同房间动作和新可见对白保留在前台队列。正在阅读的正文和HUD不被后继快照替换；实际状态、尚未绘制正文及真实物理执行分别留痕。空呈现的下一调度提示只能发一次，不预写回执或跳过碰撞，不后台代选玩家动作。人工轻量认知的合同由language_core/verification/AGENTS.md维护；本批继续暂停验证。

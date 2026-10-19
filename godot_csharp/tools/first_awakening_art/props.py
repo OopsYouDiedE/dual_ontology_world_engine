@@ -408,8 +408,13 @@ def study_table() -> Canvas:
         c.px(lx, 54, WALNUT[5])
     # Study papers: stacked measurement sheets, a ruler and notched battens.
     for i, (px, py) in enumerate(((22, 12), (24, 14), (21, 17))):
-        c.rect(px, py, 20, 14, CREAM[5] if i != 1 else CREAM[4])
+        c.rect(px + 1, py + 2, 20, 14, BOTTLE[1])
+        c.rect(px, py, 20, 14, CREAM[4] if i != 1 else CREAM[3])
+        c.hline(px, py, 19, CREAM[5])
+        c.vline(px, py, 13, CREAM[5])
         c.hline(px, py + 13, 20, CREAM[2])
+        c.line(px + 15, py + 1, px + 18, py + 4, CREAM[2])
+        c.hline(px + 15, py + 1, 4, CREAM[5])
     for ly in range(20, 30, 2):
         c.hline(24, ly, 14, FOG[2])
     c.line(24, 24, 36, 24, CLARET[3])
@@ -499,7 +504,10 @@ def worktable() -> Canvas:
         c.hline(rx, ry, 11, OCHRE[5])
         c.hline(rx, ry + 7, 11, OCHRE[2])
         c.vline(rx + 5, ry, 8, OCHRE[3])
-        c.rect(rx + 2, ry + 3, 7, 3, CREAM[5])
+        c.line(rx, ry + 1, rx + 4, ry + 4, OCHRE[2])
+        c.line(rx + 10, ry + 1, rx + 6, ry + 4, OCHRE[3])
+        c.hline(rx + 1, ry + 6, 9, OCHRE[3])
+        c.rect(rx + 2, ry + 3, 7, 3, CREAM[4])
         c.hline(rx + 3, ry + 4, 4, (90, 80, 70, 255))
     # Bread board, knife, water jug
     c.ellipse(72, 13, 11, 6, WALNUT[5])

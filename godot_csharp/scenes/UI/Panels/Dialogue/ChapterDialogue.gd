@@ -343,6 +343,7 @@ func _ready() -> void:
 		push_error("StoryDialogue requires the ChapterDialogue.tscn node hierarchy")
 		return
 	_bind_existing()
+	_refresh_paper_surface()
 	get_viewport().size_changed.connect(layout_compact_line)
 	history_button.text = _caption("回看", "History", "履歴")
 	history_close_button.text = _caption("关闭", "Close", "閉じる")
@@ -369,6 +370,7 @@ func _bind_existing() -> void:
 			history_panel.theme = dialogue_theme
 	heading = $DialoguePanel/Heading
 	speaker = $DialoguePanel/Speaker
+	speaker.scroll_active = false
 	body = $DialoguePanel/Body
 	# Long lines remain readable within the authored box; short lines keep its layout.
 	body.scroll_active = true
@@ -384,6 +386,7 @@ func _bind_existing() -> void:
 	character_portrait = $DialoguePanel/PortraitFrame/Column/Stage/CharacterPortrait
 	portrait_monogram = $DialoguePanel/PortraitFrame/Column/Stage/Monogram
 	portrait_name = $DialoguePanel/PortraitFrame/Column/PortraitName
+	portrait_name.hide()
 	_base_panel_rect = Rect2(panel.position, panel.size)
 	_base_panel_bottom_margin = get_viewport().get_visible_rect().size.y - _base_panel_rect.end.y
 	for node in [speaker, body, choices]:
@@ -451,9 +454,12 @@ func layout_compact_line() -> void:
 	var sample: Control = choices.get_child(0) as Control if count > 0 else null
 	var row_height := sample.custom_minimum_size.y if sample != null else 44.0
 	var height := _base_panel_rect.size.y + ceilf(float(count) / choices.columns) * (row_height + response_row_gap)
-	panel.size.y = height
-	panel.position.y = get_viewport().get_visible_rect().size.y - _base_panel_bottom_margin - height
-	var portrait_space := portrait_frame.size.x + portrait_text_gap if portrait_frame.visible else 0.0
+	var viewport := get_viewport().get_visible_rect().size
+	panel.size.x = minf(viewport.x - 64.0, maxf(560.0, viewport.x * 0.65))
+	panel.position.x = minf(viewport.x - panel.size.x - 24.0, (viewport.x - panel.size.x) * 0.5 + minf(80.0, viewport.x * 0.06))
+	panel.size.y = minf(height, viewport.y * 0.65)
+	panel.position.y = get_viewport().get_visible_rect().size.y - _base_panel_bottom_margin - panel.size.y
+	var portrait_space := 0.0
 	for node in _base_text_offsets:
 		node.offset_left = float(_base_text_offsets[node]) + portrait_space
 	speaker.offset_right = _base_speaker_right + portrait_space
@@ -681,6 +687,13 @@ func _setting(section: String, key: String, fallback: Variant) -> Variant:
 func _on_setting_changed(section: String, key: String, _value: Variant) -> void:
 	if section == "controls" and key == "hold_fast_forward":
 		_fast_forward_latched = false
+	if section == "accessibility" and key in ["paper_texture", "high_contrast"]:
+		_refresh_paper_surface()
+
+func _refresh_paper_surface() -> void:
+	if not is_instance_valid(panel) or not panel.material is ShaderMaterial: return
+	var textured := bool(_setting("accessibility", "paper_texture", true)) and not bool(_setting("accessibility", "high_contrast", false))
+	panel.material.set_shader_parameter("texture_strength", 1.0 if textured else 0.0)
 
 ## 快进键为“切换”模式（GameSettings controls.hold_fast_forward = false）时，按一下开、再按一下关。
 var _fast_forward_latched := false

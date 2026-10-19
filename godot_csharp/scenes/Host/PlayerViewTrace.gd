@@ -8,6 +8,7 @@ var _last_frame := ""
 var _wired: Dictionary = {}
 var _control_context: Dictionary = {}
 var _closing := false
+var _timed_presentations: Dictionary = {}
 
 func configure(owner_node: Node, visible_sink: Callable, input_sink: Callable) -> void:
 	host = owner_node
@@ -101,6 +102,10 @@ func _after_draw() -> void:
 	_last_frame = signature
 	data["frame"] = Engine.get_frames_drawn()
 	record_visible.call(data)
+	var presentation := str(data.get("presentation_id", ""))
+	if presentation != "" and str(data.get("panel", "")) in ["dialogue", "spatial"] and not _timed_presentations.has(presentation):
+		_timed_presentations[presentation] = true
+		host._timing("local_choices_frame" if str(data.get("panel", "")) == "spatial" else "first_frame_drawn", {"presentation_id": presentation, "frame": data.frame})
 
 func _scene_objects() -> Array:
 	if not is_instance_valid(host.field): return []

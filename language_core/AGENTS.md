@@ -1,5 +1,9 @@
 # DV 模块维护
 
+## 空间交互合同（2026-10-19）
+
+同房间宿主接近不提交DV或扣除时间/行动次数，热点交互与跨房间继续走共同Prepare/Complete。game/entry.dv在共享dvs_player_options已准入候选上附加kind与interaction（site/person/self/doorway、目的地图及执行房间），不返回隐藏值，不改变资格。绑定属于原生DV呈现内容；缺少具体绑定的个人动作通过本人手稿访问，宿主不解析剧情ID。dvs_select_player仍复核同一本人资格。宿主的坐标与碰撞不写入认知；实际接触成功后才Complete发布观察。
+
 ## Core 与现场接线（2026-10-19）
 
 正式入口使用 `GameEngine.ConfigureSession` 的 `{controller: "player"|"ai", viewer?: string, campaign?: record}`，只允许新会话打开前配置。默认主体、内容参数与可视资源绑定在 DV `dvg_host_open` / `dvg_host_viewer`；宿主不另写人物标识或决策规则。玩家候选与 AI 规划最终进入同一 Prepare/Complete，控制方式不在在途动作中切换。
@@ -421,3 +425,15 @@ Session presentation 保留原有surface/lines，并透传动作source_refs。Ma
 冻结记录首次索引可共享有序文本键布局的只读末槽字典；先验证全部pair，布局命中仍逐项Ordinal核对，重复键及原扫描回退保持。池由SnapshotLock保护，最多128布局、每布局128槽/4096 UTF16字符、池累计65536字符；超限仅清池根，已发布字典由原冻结节点继续持有，不清内容、不存字段值。非文本键、大表和超长布局保留局部索引；准入阈值不是语言有效性条件，也不是全进程索引存量上限。
 
 编译器对已知长度array字面量生成独占List容量构造；dv_pair/dv_single/dv_list3沿原序引用参数创建独占根，不克隆子值。正常元素求值、别名、通常首错及显式游戏费用保持；完整后备数组提前分配，内存耗尽时与元素副作用/错误的先后可能变化，profile函数归属也可能变化。集中工程核对记录布局/失效/保存及原始DAG字节、字面量求值与编译器固定点；分配下降不外推整局耗时，四倍速仍是宿主播放参数。
+
+## 会话审计策略与冻结哈希（2026-10-19）
+
+R.AuditMode 使用 AsyncLocal 按执行上下文隔离，独立逻辑程序默认完整审计。DvSession.OpenConfiguredCampaign 读取 audit（默认false），Prepare/Complete/投影/关闭均在本会话策略作用域运行；存档在序列化边界补写 audit_mode，恢复沿用原策略，旧档缺失时按完整审计处理。宿主 --dv-audit 显式开启完整证据，采集工具固定带此参数。
+
+dvs_event_storage 在冻结前裁剪普通游玩的事件data六种before/after大字段。正式消费者仍需要的 inference.mind_before/mind_after、observation/listener_parse.mind_after 和 factor_prune.actor_before 保留。事件顺序、ID、父边、观察、回执及世界/心智历史法则保持原数据；不裁剪任意嵌套值或改变JSON序列化。非审计 raw_event 不遍历值且返回true；raw_open要求审计模式。普通宿主不导出重复全量session.json，仍保存真实输入、可见信息、计时、可恢复save及明确的close-result策略；该目录不是完整审计证据。
+
+Record已有冻结/可变索引继续使用；不足8槽的文本键记录在第四次查询时也可建索引，可变pair的父链继续失效。冻结新节点时自底向上计算值兼容64位哈希，same_value可按引用或不同兼容哈希短路；同哈希仍深比，精确/浮点数保持原相等语义。存储身份哈希不替代值兼容哈希。源码在compiler/Runtime.cs、compiler/compiler.dv、verification/session/10-subjective.dv和Session/Session.cs；本轮用户要求完成前不执行工程或游戏验证。
+
+## 人工认知与阅读期调度（2026-10-19，用户追加裁定）
+
+用户明确采纳人工玩家省去重度预演、阅读时提前处理NPC。人工轻量认知、实际replay后的完整刷新及source_actor_revision小型见证的具体合同见verification/AGENTS.md与core/README.md。AI控制与NPC仍使用完整共同认知。宿主阅读期继续使用同一Prepare/现场回执/Complete，具体显示与执行队列由godot_csharp/AGENTS.md维护；此为机制变化，不作同条件纯计算提速结论，本批继续暂停验证。

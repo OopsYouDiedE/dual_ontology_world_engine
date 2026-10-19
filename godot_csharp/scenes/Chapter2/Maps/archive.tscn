@@ -188,6 +188,7 @@ texture_filter = 1
 metadata/title = "名录库·文献工房"
 metadata/map_size = Vector2(896, 608)
 metadata/terrain_rows = ["############################", "#WWWWWWWWWWWWWW#############", "#wwwwwwwwwwwwww#############", "#..............#############", "#..............#############", "#..............#############", "#..............#############", "#..............#############", "#..............#############", "#######DD###################", "#WWWWWWDDWWWWWW#WWWWWWWWWWW#", "#wwwwwwDDwwwwww#wwwwwwwwwww#", "#..............#...........#", "#..............#...........#", "#SS............D...........#", "#SS............D...........#", "#SS............#...........#", "#SS............#...........#", "#######DD###################"]
+metadata/stage_lights = [{"kind": "sconce", "point": [128, 356]}, {"kind": "sconce", "point": [384, 356]}, {"kind": "window", "point": [672, 368]}, {"kind": "sconce", "point": [800, 356]}, {"kind": "lamp", "point": [416, 398]}]
 
 [node name="Architecture" type="Sprite2D" parent="."]
 z_index = -10
@@ -534,7 +535,7 @@ shape = SubResource("s54")
 position = Vector2(256.0, 592.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus_n"
+metadata/target = "campus"
 metadata/spawn = "archive_front"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/south"]

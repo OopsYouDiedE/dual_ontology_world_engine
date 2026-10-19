@@ -30,6 +30,7 @@ var _routes: Dictionary = {}
 var _route_target_next := ""
 var _geometry_signature := ""
 var _geometry_nodes: Array[Node] = []
+var _stage_bounds_cache: Dictionary = {}
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	_apply_geometry_bindings(snapshot)
@@ -133,7 +134,34 @@ func map_key() -> String: return key
 func switching() -> bool: return _switching
 func uses_daypart_tint() -> bool: return true
 func camera_smoothing() -> bool: return true
-func camera_point(p: Vector2) -> Vector2: return p
+func stage_bounds(p: Vector2) -> Rect2:
+	if map == null or not sight_terrain_fog(): return camera_limits()
+	var region := sight_region(Vector2i((p / 32.0).floor()))
+	var cache_key := key + ":" + region
+	if _stage_bounds_cache.has(cache_key): return _stage_bounds_cache[cache_key]
+	var rows: Array = map.get_meta("terrain_rows", [])
+	var bounds := Rect2(p, Vector2.ONE)
+	var found := false
+	for y in rows.size():
+		var row: String = rows[y]
+		for x in row.length():
+			if sight_region(Vector2i(x, y)) == region:
+				var cell := Rect2(Vector2(x, y) * 32.0, Vector2(32, 32))
+				bounds = bounds.merge(cell) if found else cell
+				found = true
+	_stage_bounds_cache[cache_key] = bounds
+	return bounds
+
+func camera_point(p: Vector2) -> Vector2:
+	if not sight_terrain_fog(): return p
+	var bounds := stage_bounds(p)
+	var view: Vector2 = field.get_viewport_rect().size / field.camera.zoom
+	var focus := bounds.get_center()
+	# Small rooms form one stage; larger halls track without leaving their bounds.
+	for axis in 2:
+		if bounds.size[axis] > view[axis]:
+			focus[axis] = clampf(p[axis], bounds.position[axis] + view[axis] * 0.5, bounds.end[axis] - view[axis] * 0.5)
+	return focus
 func camera_limits() -> Rect2:
 	var size: Vector2 = map.get_meta("map_size", Vector2(1024, 1024)) if map else Vector2(1024, 1024)
 	return Rect2(Vector2.ZERO, size)
@@ -386,7 +414,37 @@ func _build_grid() -> void:
 		var y1 := mini(grid.region.size.y - 1, int(floor((rect.end.y - 8.0) / 16.0)))
 		if x1 >= x0 and y1 >= y0: grid.fill_solid_region(Rect2i(x0, y0, x1 - x0 + 1, y1 - y0 + 1), true)
 
-func nav_grid(_walker: CharacterBody2D) -> AStarGrid2D: return _grids[key]
+func nav_grid(walker: CharacterBody2D) -> AStarGrid2D:
+	var base: AStarGrid2D = _grids[key]
+	var grid := AStarGrid2D.new()
+	grid.region = base.region
+	grid.cell_size = base.cell_size
+	grid.offset = base.offset
+	grid.diagonal_mode = base.diagonal_mode
+	grid.update()
+	for y in range(base.region.position.y, base.region.end.y):
+		for x in range(base.region.position.x, base.region.end.x):
+			var cell := Vector2i(x, y)
+			if base.is_point_solid(cell): grid.set_point_solid(cell)
+	for other in field.actors.values():
+		if not is_instance_valid(other) or other == walker or other.get_parent() != walker.get_parent(): continue
+		var first := Vector2i(((other.position - Vector2(19, 15) - grid.offset) / grid.cell_size).ceil())
+		var last := Vector2i(((other.position + Vector2(19, 15) - grid.offset) / grid.cell_size).floor())
+		for y in range(first.y, last.y + 1):
+			for x in range(first.x, last.x + 1):
+				var cell := Vector2i(x, y)
+				if grid.region.has_point(cell): grid.set_point_solid(cell)
+	return grid
+
+func manual_exit_target(point: Vector2) -> String:
+	if not armed or map == null: return ""
+	for exit in map.get_node("Exits").get_children():
+		var shape := exit.get_node_or_null("Shape") as CollisionShape2D
+		if shape == null or not shape.shape is RectangleShape2D: continue
+		var target := str(exit.get_meta("target", ""))
+		var rectangle := Rect2(exit.position + shape.position - shape.shape.size / 2.0, shape.shape.size)
+		if can_enter(target) and rectangle.has_point(point): return target
+	return ""
 
 func walkable(p: Vector2, _walker: CharacterBody2D = null) -> bool:
 	var grid: AStarGrid2D = _grids.get(key)

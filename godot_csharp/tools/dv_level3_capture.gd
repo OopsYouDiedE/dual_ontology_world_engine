@@ -30,7 +30,7 @@ func _run() -> void:
 	_write("run.json", {"mode": mode, "time_scale": Engine.time_scale, "capture_hz": 5, "duration_real_seconds": seconds, "input": "Input.parse_input_event; no desktop devices"})
 	host = load("res://scenes/Host/Main.tscn").instantiate()
 	root.add_child(host)
-	host.engine.SetPlayerControlled(mode == "blind")
+	host.engine.SetPlayerControlled(mode != "detective")
 	started = Time.get_ticks_msec()
 	host.engine.EventsReady.connect(_host_events)
 	RenderingServer.frame_post_draw.connect(_capture)

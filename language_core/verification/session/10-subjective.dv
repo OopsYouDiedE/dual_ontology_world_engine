@@ -2,10 +2,28 @@
 
 fn dvs_event(events, kind, actor, time, parents, data):
     var id = rt_cat("e", rt_show(rt_count(events)))
-    let frozen_event = rt_snapshot({"id": id, "type": kind, "actor": actor, "time": time, "parents": parents, "data": data})
+    let frozen_event = rt_snapshot({"id": id, "type": kind, "actor": actor, "time": time, "parents": parents, "data": dvs_event_storage(kind, data)})
     rt_raw_event(frozen_event)
     rt_push(events, frozen_event)
     return id
+
+// Keep the historical states consumed by actual factor proofs. All other full
+// before/after payloads are audit-only; IDs, receipts and observations are intact.
+fn dvs_event_storage(kind, data):
+    if rt_audit_mode():
+        return data
+    var keep = []
+    if kind == "inference":
+        keep = ["mind_before", "mind_after"]
+    if kind == "observation" or kind == "listener_parse":
+        keep = ["mind_after"]
+    if kind == "factor_prune":
+        keep = ["actor_before"]
+    var result = []
+    for entry in data:
+        if not dv_has(["mind_before", "mind_after", "physical_before", "physical_after", "actor_before", "actor_after"], entry[0]) or dv_has(keep, entry[0]):
+            rt_push(result, entry)
+    return result
 
 fn dvs_find_event_by_id(events, id):
     if (rt_length(id) > 1 and rt_chr(id, 0) == "e"):
@@ -393,6 +411,24 @@ fn dvs_prepare_cognition(actor, events, time, parent, chapter):
     actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
     actor = dvs_prepare_speech_choices(actor, events, time, parent)
     return dv_with_many(actor, {"cognition_input": false, "cognition_reused": false, "reason_reused": reused})
+
+// Human input chooses hypotheses and speech instead of pre-evaluating every
+// hypothetical branch. Real paid replay still refreshes its derived arguments.
+fn dvs_prepare_manual_cognition(actor, events, time, parent, chapter):
+    if dv_find(actor, "manual_replay_refresh", false):
+        return dv_with(dvs_prepare_cognition(dv_without(actor, "manual_replay_refresh"), events, time, parent, chapter), "cognition_mode", "manual-paid-replay")
+    let input = dvs_reason_input(actor)
+    var reused = dv_same(input, dv_find(actor, "reason_fixed_input", false))
+    if not reused:
+        actor = dvs_reason(actor, events, time, parent)
+        let completed = dvs_reason_input(actor)
+        actor = dv_with(actor, "reason_fixed_input", false)
+        if dv_same(input, completed) and not dv_find(actor, "cognition_blocked", false):
+            actor = dv_with(actor, "reason_fixed_input", rt_snapshot(completed))
+    actor = dvs_pragmatics_reconsider(actor, events, time, parent)
+    actor = dvs_update_support_events(actor, events)
+    actor = dvs_capture_public_topics(actor, events, time, parent)
+    return dv_with_many(actor, {"cognition_input": false, "cognition_reused": false, "reason_reused": reused, "cognition_mode": "manual-light", "speech_choice_values": []})
 
 // ---- Merged source module: 16-personal-choice.dv ----
 fn dvp_choice_groups(actions):

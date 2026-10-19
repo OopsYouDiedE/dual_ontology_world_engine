@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scenes/UI/Panels/HUD/FieldHUD.gd" id="script"]
 [ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperPixelText.tscn" id="pixel"]
-[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperRule.tscn" id="rule"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperFrame.tscn" id="rule"]
 [ext_resource type="Theme" path="res://scenes/UI/Styles/UITheme.tres" id="theme"]
 
 [sub_resource type="Gradient" id="vignette_gradient"]
@@ -52,12 +52,12 @@ theme = ExtResource("theme")
 theme_type_variation = &"FieldHUDBar"
 
 [node name="Rule" parent="." instance=ExtResource("rule")]
+anchor_bottom = 0.0
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 42.0
+offset_top = 0.0
 offset_bottom = 48.0
 grow_horizontal = 2
-style = "double"
 
 [node name="Title" parent="." instance=ExtResource("pixel")]
 offset_left = 480.0

@@ -322,7 +322,7 @@ speech.manipulation = {
 
 pending 存在时不重新分派行动。scheduled_action 优先于修订唤醒；空闲主体同一时刻只有本人修订或真实待理解收闻变化才再次决策，decision_revision 记录实际选择结束后的修订，避免内部推知造成自唤醒循环。
 
-`dvs_set_player`、`dvs_player_options`、`dvs_select_player` 使用同一会话保存 player_actor/awaiting_player/selection；人工候选来自本人认知及共同资格，实际选择仍走 prepare/complete，不注入行动结果。呈现完成本身不触发 Prepare；生产宿主以 view_ready/dv_next 请求下一步。
+`dvs_set_player`、`dvs_player_options`、`dvs_select_player` 使用同一会话保存 player_actor/awaiting_player/selection；人工候选来自本人认知及共同资格，实际选择仍走 prepare/complete，不注入行动结果。game/entry.dv的`dvg_intent`为已准入候选附加`kind`及`interaction`空间绑定（`site`/`person`/`self`/`doorway`，跨房间携带destination），仅供宿主接近与局部选项。绑定不含观察结果、不改变资格；同房间WASD/鼠标接近不调用DV、无时间及行动次数结算。热点交互与跨房间才选择原动作，Complete仍以实际回执生效。呈现完成本身不触发Prepare；生产宿主以view_ready/dv_next请求下一步。
 
 `dvs_answer` 分别核对题目匹配、字面真值、本人支持、论证完整性与权威接受规律。公共结论等级、本人正式接受、实际章节交接分别记录；他人的公共结论不替代本人回执。正文与呈现仍只展示该主体真正观察/收闻后获准显示的材料。
 
@@ -1126,3 +1126,15 @@ run_debug的runtime_environment还记录DOTNET_Tiered/COMPlus_Tiered设置；运
 冻结记录布局索引：`compiler/Runtime.cs`的`FrozenIndex`在原有8项阈值之后验证全部pair；纯文本键可共享原序键布局的末槽字典，命中仍完整Ordinal比较，重复键的末项读取与`record_with`首项更新各沿原合同。池只持有键和只读索引，不持有字段值；SnapshotLock保护，最多128布局、每布局128槽/4096 UTF16字符、累计65536字符。超限清池根后旧节点仍引用旧索引；混合键、大表、长布局回局部索引，坏pair回原扫描与首错。共享只减少metadata重复分配，不是HAMT或常数时间布局识别。
 
 字面量分配：`compiler/compiler.dv::sf_emit_array`按AST已知项数发射`new List<object>(N) { ... }`，元素仍原序求值，空根也独立分配；不定长comprehension不预估结果数。`core/00-data.dv`的`dv_pair`、`dv_single`、`dv_list3`用对应array字面量装入已求值参数，保留子值引用与独占根。资源分配成功时值、通常错误次序、别名及显式费用保持；容量数组提前分配会改变OOM相对元素错误/副作用的时序，profile的helper调用归属也随函数体改变。此边界不属于全资源失败等价承诺。编译器改动须从源重建C0→C1→C2→C3并核C2/C3固定点，再重建Session/宿主。
+
+### 普通游玩事件与完整审计（2026-10-19）
+
+`rt_audit_mode() -> Bool`是无参数平台ABI。完整审计保留原始事件data；普通宿主的`dvs_event_storage(kind,data)`在冻结前排除只供审计的六种before/after大字段。正式因子证明实际读取的历史状态继续保留：inference的mind_before/mind_after、observation和listener_parse的mind_after、factor_prune的actor_before。此边界不关闭来源证明、不裁剪权威world/mind或改变费用与判定。
+
+`DvSession.OpenConfiguredCampaign`选项`audit`默认false，`--dv-audit`设true；独立逻辑输出仍默认完整审计。存档保留audit_mode，普通关闭省略重复的全量session.json，完整采集工具显式启用审计。精简记录不能声称拥有完整逐步快照。实现索引：compiler/Runtime.cs的AuditScope/RecordHot/SnapshotValue，compiler/compiler.dv的native_arity/ck_type_raw，verification/session/10-subjective.dv的dvs_event_storage，Session/Session.cs的实例策略与持久化。
+
+### 人工输入与阅读期推进（2026-10-19）
+
+`dvs_prepare_manual_cognition(actor,events,time,parent,chapter)`用于player_actor：保持基础推理/语用/真实收闻，省去普通回合的假说/论证全量重建与speech_choice_values预测。实际成功replay产生manual_replay_refresh，下一次调用共同完整认知后清除。来源验证与候选准入继续执行。AI玩家使用普通自主链，不进入此分支。
+
+`20-speech.dv`的speech_choice_prediction增加source_actor_revision，speaker_prediction读取这个小值，旧事件回退到actor_before.mind.revision；精简存储不因此保留整个人物副本。`Main.gd`可在阅读时发dv_next，并沿唯一正式执行器提前完成远处NPC动作，遇到玩家、同房间动作或新可见对白则交还前台。界面正文冻结与实际世界推进分开记录；后台执行仍使用真实回执和原费用。

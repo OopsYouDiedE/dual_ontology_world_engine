@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=33 format=3 uid="uid://c6iaqwqliw75c"]
+[gd_resource type="Theme" load_steps=36 format=3 uid="uid://c6iaqwqliw75c"]
 
 [ext_resource type="FontFile" uid="uid://1mrmumh7kkwu" path="res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf" id="font_zhaohua"]
 [ext_resource type="FontFile" uid="uid://wv7t0k0kjb08" path="res://ShareAsset/External/NotoSerifSC/NotoSerifSC[wght].ttf" id="font_noto"]
@@ -65,6 +65,31 @@ base_font = ExtResource("font_yozai")
 
 [sub_resource type="StyleBoxEmpty" id="transparent_text"]
 
+[sub_resource type="StyleBoxFlat" id="paper_frame_outer"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.494118, 0.435294, 0.345098, 0.85)
+
+[sub_resource type="StyleBoxFlat" id="paper_frame_inner"]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.65)
+
+[sub_resource type="StyleBoxTexture" id="spatial_choice_panel"]
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+texture = ExtResource("paper_texture")
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
 [sub_resource type="StyleBoxFlat" id="scroll_grabber"]
 bg_color = Color(0.133333, 0.109804, 0.0823529, 0.35)
 
@@ -97,10 +122,16 @@ draw_center = false
 border_width_bottom = 2
 border_color = Color(0.184314, 0.231373, 0.341176, 1)
 
-[sub_resource type="StyleBoxTexture" id="dialogue_panel"]
-texture = ExtResource("paper_texture")
-axis_stretch_horizontal = 1
-axis_stretch_vertical = 1
+[sub_resource type="StyleBoxFlat" id="dialogue_panel"]
+bg_color = Color(0.917647, 0.878431, 0.768627, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.65)
+shadow_color = Color(0.133333, 0.109804, 0.0823529, 0.6)
+shadow_size = 14
+shadow_offset = Vector2(0, 7)
 
 [sub_resource type="StyleBoxTexture" id="history_panel"]
 texture = ExtResource("paper_texture")
@@ -108,16 +139,7 @@ axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
 [sub_resource type="StyleBoxFlat" id="portrait_mount"]
-content_margin_left = 8.0
-content_margin_top = 8.0
-content_margin_right = 8.0
-content_margin_bottom = 8.0
-bg_color = Color(0.882353, 0.835294, 0.709804, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.133333, 0.109804, 0.0823529, 0.8)
+bg_color = Color(0.917647, 0.878431, 0.768627, 0)
 
 [resource]
 default_font = SubResource("font_body")
@@ -186,6 +208,9 @@ Label/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 Label/styles/normal = SubResource("transparent_text")
 Paper/colors/rule = Color(0.494118, 0.435294, 0.345098, 0.7)
 Paper/colors/rule_strong = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperFrame/colors/ornament = Color(0.494118, 0.435294, 0.345098, 0.72)
+PaperFrame/styles/inner = SubResource("paper_frame_inner")
+PaperFrame/styles/outer = SubResource("paper_frame_outer")
 PixelColumn/base_type = &"Label"
 PixelColumn/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 PixelColumn/constants/pixel_scale = 2
@@ -222,6 +247,8 @@ RichTextLabel/font_sizes/normal_font_size = 18
 RichTextLabel/fonts/bold_font = SubResource("font_deck")
 RichTextLabel/styles/focus = SubResource("transparent_text")
 RichTextLabel/styles/normal = SubResource("transparent_text")
+SpatialChoicePanel/base_type = &"PanelContainer"
+SpatialChoicePanel/styles/panel = SubResource("spatial_choice_panel")
 VScrollBar/styles/grabber = SubResource("scroll_grabber")
 VScrollBar/styles/grabber_highlight = SubResource("scroll_grabber_hi")
 VScrollBar/styles/grabber_pressed = SubResource("scroll_grabber_hi")

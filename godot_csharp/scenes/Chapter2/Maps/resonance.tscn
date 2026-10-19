@@ -157,6 +157,7 @@ texture_filter = 1
 metadata/title = "共鸣厅·沉静室"
 metadata/map_size = Vector2(928, 512)
 metadata/terrain_rows = ["#############################", "#WWWWWWWWWWWWWWWWWWWW#WWWWWW#", "#wwwwwwwwwwwwwwwwwwww#wwwwww#", "#....................#......#", "#....................#......#", "#....................D......#", "#....................D......#", "#....................#......#", "#....................########", "#....................########", "#....................########", "#....................########", "#....................########", "#....................########", "#....................########", "##########DD#################"]
+metadata/stage_lights = [{"kind": "window", "point": [128, 80]}, {"kind": "window", "point": [544, 80]}, {"kind": "sconce", "point": [320, 68]}, {"kind": "sconce", "point": [352, 68]}]
 
 [node name="Architecture" type="Sprite2D" parent="."]
 z_index = -10
@@ -463,7 +464,7 @@ shape = SubResource("s47")
 position = Vector2(352.0, 496.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus_nw"
+metadata/target = "campus"
 metadata/spawn = "resonance_front"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/south"]

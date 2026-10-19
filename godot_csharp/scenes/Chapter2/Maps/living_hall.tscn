@@ -319,6 +319,7 @@ texture_filter = 1
 metadata/title = "起居厅"
 metadata/map_size = Vector2(512, 1280)
 metadata/terrain_rows = ["#######DD#######", "#WWWWWWDDWWWWWW#", "#wwwwwwDDwwwwww#", "#..............#", "#..............#", "#..............#", "#..............#", "D..............D", "D..............D", "#..............#", "#..............#", "#..............#", "#..............#", "#..............#", "#..............#", "DSSSSSSSSSSSSSSD", "D..............D", "#..............#", "#..............#", "#..............#", "#..............#", "#..............#", "#..............#", "D..............D", "D..............D", "#..............#", "#..............#", "#..............#", "#..............#", "#..............#", "#..............#", "#######DD#######", "#WWWWWWDDWWWWWW#", "#wwwwwwDDwwwwww#", "#..............#", "#..............#", "#..............#", "#..............#", "#..............#", "################"]
+metadata/stage_lights = [{"kind": "window", "point": [96, 80]}, {"kind": "window", "point": [416, 80]}, {"kind": "sconce", "point": [200, 68]}, {"kind": "sconce", "point": [312, 68]}, {"kind": "window", "point": [384, 1072]}, {"kind": "sconce", "point": [128, 1060]}, {"kind": "lamp", "point": [128, 72]}, {"kind": "lamp", "point": [416, 206]}, {"kind": "lamp", "point": [72, 644]}]
 
 [node name="Architecture" type="Sprite2D" parent="."]
 z_index = -10
@@ -841,7 +842,7 @@ shape = SubResource("s89")
 position = Vector2(256.0, 16.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus_sw"
+metadata/target = "campus"
 metadata/spawn = "living_north"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/north_door"]
@@ -891,7 +892,7 @@ shape = SubResource("e4")
 position = Vector2(16.0, 512.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus_sw"
+metadata/target = "campus"
 metadata/spawn = "lane_west"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/west_lane"]
@@ -901,7 +902,7 @@ shape = SubResource("e5")
 position = Vector2(496.0, 512.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus_sw"
+metadata/target = "campus"
 metadata/spawn = "lane_east"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/east_lane"]

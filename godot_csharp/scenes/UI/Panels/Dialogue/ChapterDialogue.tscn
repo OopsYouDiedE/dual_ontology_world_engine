@@ -1,10 +1,20 @@
 [gd_scene format=3]
 
+[ext_resource type="Shader" path="res://scenes/UI/Components/portrait_etch.gdshader" id="etch"]
+[ext_resource type="Shader" path="res://scenes/UI/Components/paper_surface.gdshader" id="paper"]
+
 [ext_resource type="Script" path="res://scenes/UI/Panels/Dialogue/ChapterDialogue.gd" id="dialogue"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Characters/DialogueCast/detective_calm.tres" id="portrait"]
 [ext_resource type="PackedScene" path="res://scenes/UI/Components/DialogueResponse.tscn" id="response"]
+[ext_resource type="PackedScene" path="res://scenes/UI/Components/PaperFrame.tscn" id="frame"]
 
 [ext_resource type="Theme" path="res://scenes/UI/Styles/DialogueTheme.tres" id="styles_DialogueTheme"]
+
+[sub_resource type="ShaderMaterial" id="paper_material"]
+shader = ExtResource("paper")
+
+[sub_resource type="ShaderMaterial" id="etch_material"]
+shader = ExtResource("etch")
 
 [node name="Dialogue" type="CanvasLayer"]
 layer = 10
@@ -13,14 +23,17 @@ preview_portrait = ExtResource("portrait")
 response_scene = ExtResource("response")
 
 [node name="DialoguePanel" type="Panel" parent="."]
+material = SubResource("paper_material")
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 64.0
-offset_top = -192.0
-offset_right = 1216.0
+offset_left = 304.0
+offset_top = -248.0
+offset_right = 1136.0
 offset_bottom = -24.0
 theme = ExtResource("styles_DialogueTheme")
 theme_type_variation = &"ChapterDialogueDialoguePanel"
+
+[node name="DoubleRule" parent="DialoguePanel" instance=ExtResource("frame")]
 
 [node name="Heading" type="Label" parent="DialoguePanel"]
 visible = false
@@ -39,14 +52,15 @@ offset_right = 512.0
 offset_bottom = 48.0
 mouse_filter = 2
 text = "说话人"
+scroll_active = false
 theme_type_variation = &"ChapterDialogueSpeaker"
 
 [node name="Body" type="RichTextLabel" parent="DialoguePanel"]
 anchor_right = 1.0
 offset_left = 32.0
 offset_top = 56.0
-offset_right = -144.0
-offset_bottom = 136.0
+offset_right = -32.0
+offset_bottom = 152.0
 mouse_filter = 2
 bbcode_enabled = true
 text = "示例台词。"
@@ -56,7 +70,7 @@ theme_type_variation = &"ChapterDialogueBody"
 [node name="Choices" type="GridContainer" parent="DialoguePanel"]
 anchor_right = 1.0
 offset_left = 32.0
-offset_top = 152.0
+offset_top = 168.0
 offset_right = -32.0
 columns = 2
 theme_type_variation = &"ChapterDialogueChoices"
@@ -102,10 +116,10 @@ text = "回看"
 theme_type_variation = &"ChapterDialogueHistoryButton"
 
 [node name="PortraitFrame" type="PanelContainer" parent="DialoguePanel"]
-offset_left = 24.0
-offset_top = -128.0
-offset_right = 248.0
-offset_bottom = 160.0
+offset_left = -208.0
+offset_top = -116.0
+offset_right = 16.0
+offset_bottom = 224.0
 mouse_filter = 2
 theme_type_variation = &"ChapterDialoguePortraitFrame"
 
@@ -122,6 +136,7 @@ mouse_filter = 2
 [node name="CharacterPortrait" type="TextureRect" parent="DialoguePanel/PortraitFrame/Column/Stage"]
 layout_mode = 2
 texture_filter = 2
+material = SubResource("etch_material")
 mouse_filter = 2
 texture = ExtResource("portrait")
 expand_mode = 1
@@ -137,6 +152,7 @@ vertical_alignment = 1
 theme_type_variation = &"ChapterDialogueMonogram"
 
 [node name="PortraitName" type="Label" parent="DialoguePanel/PortraitFrame/Column"]
+visible = false
 custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 mouse_filter = 2

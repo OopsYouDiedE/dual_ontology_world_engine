@@ -2,6 +2,8 @@
 
 正式游戏只使用编译 DV 的动作实现：`Prepare → 现场执行/世界法则回执 → Complete → 呈现`。主体决策、费用、效果、观察、传播与结算由 DV 完成，Godot 负责物理移动、输入、画面和音效。
 
+人工探索使用WASD或鼠标在当前房间内接近，连续碰撞与寻路由宿主执行，不扣DV时间或行动次数。靠近物件或人物按E/空格/Enter交互，多项动作只在该接触点显示局部选择；跨房间在门口提交原DV移动候选，真实执行成功后结算。等待输入不弹出全局动作列表。R/T访问随身或等待操作，实际可用内容仍由DV资格表提供。
+
 | 目录 | 职责 |
 | --- | --- |
 | language_core/core、verification/session | 唯一动作机制与主体推演 |
@@ -35,3 +37,5 @@ Main 场景也可通过 controller、viewer、campaign_options 导出属性设�
 VS Code 默认打开 `godot_csharp/DualOntologyWorldEngine.sln`（游戏与 Session），语言工具使用解决方案选择器切换 `language_core/LanguageCore.sln`。历史 artifacts、tmp、scratch 保留在磁盘，工作区排除其自动发现与监视，避免测试快照被当作现役工程。
 
 宿主播放默认四倍速，可用 `--dv-speed=1` 或 Main.playback_speed 调整。倍率应用到Godot时间，物理帧频随倍率增加以保持单步物理间隔；DV分钟费用、预算和判断仍由原动作结算。输入证据记录所用倍率和物理帧频，四倍播放不作为Core纯计算性能提升的证据。
+
+普通实机游玩使用精简事件记录；需要完整来源快照时加 `--dv-audit`。`profile_dv_capture.py`已固定带该参数。普通模式仍保留实际输入、可见正文、分段计时与存档，关闭清单注明记录策略；两种模式的速度和证据完整性分别解释。房间镜头、局部光影与对白布局本批已修改，按用户要求暂未验证。

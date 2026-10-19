@@ -9,6 +9,8 @@ const FieldVocabulary := preload("res://scenes/Shared/Field/FieldVocabulary.gd")
 const Bindings := preload("res://scenes/Shared/Field/PresentationBindings.gd")
 const SightMaskScene := preload("res://scenes/UI/Panels/Field/SightMask.tscn")
 const HintOverlayScene := preload("res://scenes/UI/Panels/Field/HintOverlay.tscn")
+const ROOM_STAGE := preload("res://scenes/Shared/Field/RoomStage.gd")
+const SPATIAL_INPUT := preload("res://scenes/Shared/Field/SpatialInput.gd")
 const PIXEL_FRAMES := "res://ShareAsset/Internal/Characters/PixelCast/%s.tres"
 const ANIME_FRAMES := "res://ShareAsset/Internal/Characters/AnimeCast/%s.tres"
 const APPROACH := [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]
@@ -33,6 +35,8 @@ var camera: Camera2D
 var sight: Node2D
 var hints: Node2D
 var tint: CanvasModulate
+var spatial: Node
+var room_stage: Node2D
 var follow_camera := true
 ## The host owns retained bodies; hidden fields run the same geometry without UI.
 var execution_bridge: Node
@@ -104,6 +108,14 @@ func setup(map_adapter: Node2D) -> void:
 	camera.position = adapter.camera_point(player.position)
 	camera.position_smoothing_enabled = adapter.camera_smoothing()
 	_after_map_load()
+	if not execution_only:
+		spatial = SPATIAL_INPUT.new()
+		spatial.name = "SpatialInput"
+		spatial.field = self
+		add_child(spatial)
+		room_stage = ROOM_STAGE.new()
+		room_stage.field = self
+		add_child(room_stage)
 
 func begin_shutdown() -> void:
 	if _closing: return
@@ -123,7 +135,8 @@ func apply_snapshot(value: Dictionary) -> void:
 	snapshot = value
 	execution_binding = value
 	if is_instance_valid(tint):
-		tint.color = DAYPART_TINT.get(str(value.get("daypart", "")), Color.WHITE) if adapter.uses_daypart_tint() else Color.WHITE
+		var daylight: Color = DAYPART_TINT.get(str(value.get("daypart", "")), Color.WHITE)
+		tint.color = daylight * Color(0.62, 0.66, 0.76) if adapter.sight_terrain_fog() else daylight
 	if adapter.has_method("apply_snapshot"): adapter.apply_snapshot(value)
 	if not execution_only and adapter.fixed_actors().is_empty(): _spawn_people()
 	_build_sites()
@@ -169,7 +182,12 @@ func _build_sites() -> void:
 		if def.is_empty() and not geometry[id].get("fallback", false): continue
 		if not bool(def.get("enabled", true)): continue
 		var site: Dictionary = geometry[id].duplicate()
-		site.title = str(def.get("title", site.get("title", id)))
+		site.title = str(def.get("title", site.get("title", "")))
+		if site.title == "" or str(site.title) == str(id):
+			var names := FieldVocabulary.table("OBJECT_NAMES")
+			for key in names:
+				if str(key).to_lower() == str(id).to_lower(): site.title = str(names[key])
+		if site.title == "" or str(site.title) == str(id): continue
 		site.new = bool(def.get("new", false))
 		sites[id] = site
 	for person in snapshot.get("people", []):
@@ -372,7 +390,7 @@ func _player_object_exposed_in_sight(pieces: Array[Rect2]) -> bool:
 	return false
 
 func _player_object_site(sprite: Sprite2D) -> String:
-	return str(FieldVocabulary.table("SPRITE_SITES").get(str(sprite.name), "")) if adapter.map_key() == "awakening" else ""
+	return str(snapshot.get("sprite_sites", {}).get(str(sprite.name), ""))
 
 func _player_object_title(node: Node) -> String:
 	for key in ["player_visible_name", "title", "label", "text"]:
@@ -452,7 +470,10 @@ func _process(_delta: float) -> void:
 		for object_name in hits.get("nodes", []):
 			var furniture := objects.get_node_or_null(str(object_name)) as Sprite2D
 			if furniture and _player_object_drawn(furniture) and in_sight(furniture.position):
+				var site := _player_object_site(furniture)
+				if sites.has(site) and site_visible(site): hovered = site
 				hover_text = _player_object_title(furniture)
+				if sites.has(site): hover_text = str(sites[site].title)
 				break
 	if hover_text != _hover_text or hover_text != "":
 		_hover_text = hover_text
@@ -501,7 +522,7 @@ func create_body(key: String, sprite_key: String) -> CharacterBody2D:
 	actor.standard = load(path)
 	actor.name = key
 	adapter.objects_root().add_child(actor)
-	actor.collision_mask = 1
+	actor.collision_mask = 3
 	actor.speed = 130.0 if key == _player_key else 110.0
 	actors[key] = actor
 	return actor
@@ -636,6 +657,13 @@ func _follow_route(actor: CharacterBody2D, destination: Vector2) -> Dictionary:
 	route.append(destination)
 	return await _follow(actor, route)
 
+func position_occupied(walker: CharacterBody2D, point: Vector2) -> bool:
+	for other in actors.values():
+		if not is_instance_valid(other) or other == walker or other.get_parent() != walker.get_parent(): continue
+		var separation: Vector2 = (other.position - point).abs()
+		if separation.x < 19.0 and separation.y < 15.0: return true
+	return false
+
 # ---------------------------------------------------------------- camera ---
 
 ## Keep continuous approach samples and include every grid centre inside the same radius.
@@ -681,6 +709,7 @@ func _daily_go(ev: Dictionary) -> void:
 	var best_cost := INF
 	for point in _station_approaches(station, grid):
 		if adapter.entered_room(point) != str(ev.room) or not adapter.walkable(point, actor): continue
+		if position_occupied(actor, point): continue
 		var reserved := false
 		for other in _daily.values():
 			if point.distance_to(other.destination) < 28.0: reserved = true

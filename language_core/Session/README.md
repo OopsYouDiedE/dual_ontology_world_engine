@@ -41,3 +41,5 @@ Production sources are composed by `game/entry.dv` using relative `#include` lin
 Use `python language_core/tools/run_debug.py --out <new-directory>` for one formal-model output run. It preserves raw output and source fingerprints and exports readable debug/player text. It does not perform Godot execution or certify a full level-one acceptance by itself.
 
 Level-one testing is windowless DV logic only; it does not start Godot or require a UI replay. Read-only projections are independent copies, and presentation surface_voice is distinct from the supplementary voice.
+
+`OpenConfiguredCampaign`接受`audit: bool`，普通Godot游玩默认false；完整采集显式true。策略按实例在每次DV调用时建立执行上下文作用域，不跨会话改全局默认。`AuditMode`可读取；Save/WriteSave在边界写入audit_mode，Restore沿用（旧档缺失默认true）。普通游玩的部分审计大字段未保存，宿主不会自动导出session.json；WriteTrace仍是显式接口，不会恢复已省略的历史字段。

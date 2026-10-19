@@ -73,6 +73,7 @@ texture_filter = 1
 metadata/title = "粮仓"
 metadata/map_size = Vector2(320, 288)
 metadata/terrain_rows = ["##########", "#WWWWWWWW#", "#wwwwwwww#", "#........#", "#........#", "#........#", "#........#", "#........#", "####DD####"]
+metadata/stage_lights = [{"kind": "sconce", "point": [64, 68]}]
 
 [node name="Architecture" type="Sprite2D" parent="."]
 z_index = -10
@@ -201,7 +202,7 @@ shape = SubResource("s19")
 position = Vector2(160.0, 272.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus_s"
+metadata/target = "campus"
 metadata/spawn = "granary_front"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/south"]

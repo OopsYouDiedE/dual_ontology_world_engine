@@ -193,6 +193,7 @@ texture_filter = 1
 metadata/title = "中央厅"
 metadata/map_size = Vector2(832, 832)
 metadata/terrain_rows = ["############DD############", "############DD############", "########WWWWDDWWWW########", "########wwwwDDwwww########", "#######............#######", "######..............######", "#####................#####", "####..................####", "###....................###", "##......................##", "##......................##", "##......................##", "DDDD..................DDDD", "DDDD..................DDDD", "##......................##", "##......................##", "##......................##", "##......................##", "###....................###", "####..................####", "#####................#####", "######..............######", "#######.....DD.....#######", "########....DD....########", "############DD############", "############DD############"]
+metadata/stage_lights = [{"kind": "sconce", "point": [288, 100]}, {"kind": "sconce", "point": [544, 100]}]
 
 [node name="Architecture" type="Sprite2D" parent="."]
 z_index = -10
@@ -501,7 +502,7 @@ shape = SubResource("s55")
 position = Vector2(416.0, 16.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus_n"
+metadata/target = "campus"
 metadata/spawn = "hall_north"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/north"]
@@ -511,7 +512,7 @@ shape = SubResource("e0")
 position = Vector2(416.0, 816.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus_n"
+metadata/target = "campus"
 metadata/spawn = "hall_south"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/south"]
@@ -531,7 +532,7 @@ shape = SubResource("e2")
 position = Vector2(816.0, 416.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus_n"
+metadata/target = "campus"
 metadata/spawn = "hall_east"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/east"]

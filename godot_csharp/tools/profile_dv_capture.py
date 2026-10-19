@@ -43,6 +43,7 @@ def main():
     parser.add_argument("--godot", default=os.environ.get("GODOT"))
     parser.add_argument("--dotnet-trace", default=shutil.which("dotnet-trace"))
     parser.add_argument("--seconds", type=float, default=90)
+    parser.add_argument("--controller", choices=("ai", "player"), default="ai")
     parser.add_argument("--managed-seconds", type=int, help="Managed sampling duration; defaults to window minus 10 seconds")
     args = parser.parse_args()
     if not args.godot or not args.dotnet_trace:
@@ -67,8 +68,10 @@ def main():
     existing = {p.name for p in session_root.glob("*")}
     command = [str(godot), "--path", str(ROOT / "godot_csharp"),
                "--debug", "--profiling", "--gpu-profile", "--script", "res://tools/dv_level3_capture.gd", "--",
-               f"--out={out / 'run'}", "--mode=detective", f"--seconds={args.seconds}",
-               "--dv-controller=ai", "--dv-speed=4"]
+               f"--out={out / 'run'}", "--mode=" + ("detective" if args.controller == "ai" else "player"), f"--seconds={args.seconds}",
+               f"--dv-controller={args.controller}", "--dv-speed=4", "--dv-audit"]
+    if args.controller == "player":
+        command.append("--dv-auto-start")
     launch = {
         "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT).decode().strip(),

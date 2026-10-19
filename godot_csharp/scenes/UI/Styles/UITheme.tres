@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=80 format=3 uid="uid://0xr67dd1psa"]
+[gd_resource type="Theme" load_steps=83 format=3 uid="uid://0xr67dd1psa"]
 
 [ext_resource type="FontFile" uid="uid://1mrmumh7kkwu" path="res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf" id="font_zhaohua"]
 [ext_resource type="FontFile" uid="uid://wv7t0k0kjb08" path="res://ShareAsset/External/NotoSerifSC/NotoSerifSC[wght].ttf" id="font_noto"]
@@ -65,6 +65,31 @@ fallbacks = Array[Font]([ExtResource("font_kurenaido"), SubResource("font_body")
 base_font = ExtResource("font_yozai")
 
 [sub_resource type="StyleBoxEmpty" id="transparent_text"]
+
+[sub_resource type="StyleBoxFlat" id="paper_frame_outer"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.494118, 0.435294, 0.345098, 0.85)
+
+[sub_resource type="StyleBoxFlat" id="paper_frame_inner"]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.65)
+
+[sub_resource type="StyleBoxTexture" id="spatial_choice_panel"]
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+texture = ExtResource("paper_texture")
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
 
 [sub_resource type="StyleBoxFlat" id="scroll_grabber"]
 bg_color = Color(0.133333, 0.109804, 0.0823529, 0.35)
@@ -923,6 +948,9 @@ PaperEntry/styles/hover = SubResource("opt_hover")
 PaperEntry/styles/hover_pressed = SubResource("opt_hover")
 PaperEntry/styles/normal = SubResource("opt_normal")
 PaperEntry/styles/pressed = SubResource("opt_hover")
+PaperFrame/colors/ornament = Color(0.494118, 0.435294, 0.345098, 0.72)
+PaperFrame/styles/inner = SubResource("paper_frame_inner")
+PaperFrame/styles/outer = SubResource("paper_frame_outer")
 PaperIcon/base_type = &"Label"
 PaperIcon/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 PaperIcon/font_sizes/font_size = 24
@@ -1206,6 +1234,8 @@ RichTextLabel/styles/focus = SubResource("transparent_text")
 RichTextLabel/styles/normal = SubResource("transparent_text")
 SightMask/colors/remembered = Color(0.105882, 0.094118, 0.082353, 0.62)
 SightMask/colors/unseen = Color(0.105882, 0.094118, 0.082353, 1)
+SpatialChoicePanel/base_type = &"PanelContainer"
+SpatialChoicePanel/styles/panel = SubResource("spatial_choice_panel")
 VScrollBar/styles/grabber = SubResource("scroll_grabber")
 VScrollBar/styles/grabber_highlight = SubResource("scroll_grabber_hi")
 VScrollBar/styles/grabber_pressed = SubResource("scroll_grabber_hi")

@@ -7,32 +7,56 @@ using System.Text.Json.Serialization;
 public sealed class DvSession
 {
     private object state;
-    private DvSession(object value) => state = value;
+    private readonly bool audit;
+    public bool AuditMode => audit;
+    private DvSession(object value, bool auditMode = true)
+    {
+        audit = auditMode;
+        state = R.record_with(value, "audit_mode", audit);
+    }
+    private object Run(Func<object> operation)
+    {
+        using var scope = R.UseAudit(audit);
+        return operation();
+    }
 
     public static DvSession OpenCampaign(string player = "") => new(DVProgram.SetPlayer(DVProgram.CampaignOpen(), player));
-    public static DvSession OpenConfiguredCampaign(string options) => new(DVProgram.HostOpen(ParseValue(options)));
-    public string Viewer => R.Text(DVProgram.HostViewer(state));
-    public string Snapshot(string viewer) => HostJson(DVProgram.CampaignSnapshot(state, viewer));
+    public static DvSession OpenConfiguredCampaign(string options)
+    {
+        var configuration = ParseValue(options);
+        var audit = R.Bool(R.record_find(configuration, "audit", false));
+        using var scope = R.UseAudit(audit);
+        return new(DVProgram.HostOpen(configuration), audit);
+    }
+    public string Viewer => R.Text(Run(() => DVProgram.HostViewer(state)));
+    public string Snapshot(string viewer) => HostJson(Run(() => DVProgram.CampaignSnapshot(state, viewer)));
 
     public static DvSession Open(string scenario) => new(DVProgram.SessionOpen(R.json_parse(scenario)));
-    public static DvSession Restore(string snapshot) => new(ParseValue(snapshot));
-    public string Save() => JsonSerializer.Serialize(state, SnapshotOptions);
+    public static DvSession Restore(string snapshot)
+    {
+        var value = ParseValue(snapshot);
+        return new(value, R.Bool(R.record_find(value, "audit_mode", true)));
+    }
+    // Explicit constructors in DV may replace the state shell; persist host policy
+    // at the boundary instead of depending on every shell to carry that metadata.
+    private object DurableState() => R.record_with(state, "audit_mode", audit);
+    public string Save() => JsonSerializer.Serialize(DurableState(), SnapshotOptions);
     public bool Active => R.Bool(DVProgram.SessionActive(state));
 
     public string Prepare(string selection = "")
     {
-        if (selection.Length > 0) state = DVProgram.SelectPlayer(state, selection);
-        state = DVProgram.SessionPrepare(state);
-        return HostJson(DVProgram.SessionIntent(state));
+        if (selection.Length > 0) state = Run(() => DVProgram.SelectPlayer(state, selection));
+        state = Run(() => DVProgram.SessionPrepare(state));
+        return HostJson(Run(() => DVProgram.SessionIntent(state)));
     }
 
     public string Complete(string receipt, string viewer)
     {
-        state = DVProgram.SessionComplete(state, ParseValue(receipt));
-        return HostJson(DVProgram.SessionPresentation(state, viewer));
+        state = Run(() => DVProgram.SessionComplete(state, ParseValue(receipt)));
+        return HostJson(Run(() => DVProgram.SessionPresentation(state, viewer)));
     }
 
-    public string Trace() => R.Text(R.json_stringify(DVProgram.SessionClose(state)));
+    public string Trace() => R.Text(R.json_stringify(Run(() => DVProgram.SessionClose(state))));
 
     private static readonly JsonSerializerOptions TraceOptions = new()
     {
@@ -42,13 +66,13 @@ public sealed class DvSession
     public void WriteTrace(string path)
     {
         using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
-        JsonSerializer.Serialize(stream, DVProgram.SessionClose(state), TraceOptions);
+        JsonSerializer.Serialize(stream, Run(() => DVProgram.SessionClose(state)), TraceOptions);
     }
 
     public void WriteSave(string path)
     {
         using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
-        JsonSerializer.Serialize(stream, state, SnapshotOptions);
+        JsonSerializer.Serialize(stream, DurableState(), SnapshotOptions);
     }
 
     private static readonly JsonSerializerOptions SnapshotOptions = new()

@@ -218,6 +218,7 @@ texture_filter = 1
 metadata/title = "温室"
 metadata/map_size = Vector2(384, 992)
 metadata/terrain_rows = ["############", "#WWWWWWWWWW#", "#wwwwwwwwww#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#SSSSSSSSSS#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#SSSSSSSSSS#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#..........#", "#####DD#####"]
+metadata/stage_lights = []
 
 [node name="Architecture" type="Sprite2D" parent="."]
 z_index = -10
@@ -562,7 +563,7 @@ shape = SubResource("s67")
 position = Vector2(192.0, 976.0)
 collision_layer = 0
 collision_mask = 2
-metadata/target = "campus_ne"
+metadata/target = "campus"
 metadata/spawn = "greenhouse_front"
 
 [node name="Shape" type="CollisionShape2D" parent="Exits/south"]

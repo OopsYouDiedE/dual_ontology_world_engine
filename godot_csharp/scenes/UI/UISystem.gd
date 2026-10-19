@@ -270,6 +270,49 @@ func _candidates(ev: Dictionary) -> void:
 	menu.show_data({"prompt": str(ev.get("prompt", "")), "options": options})
 	menu.chosen.connect(func(id: String) -> void: _select(ev, id))
 
+## A nearby object's alternatives stay at that object. There is no room-wide action menu.
+func spatial_choices(ev: Dictionary) -> void:
+	close_modal()
+	modal_kind = "spatial"
+	ev = ev.duplicate()
+	ev.presentation_id = "spatial:" + str(ev.get("interaction_id", ""))
+	_modal_event = ev
+	var popup := PanelContainer.new()
+	popup.name = "SpatialChoices"
+	popup.theme = dialogue.dialogue_theme
+	popup.theme_type_variation = &"SpatialChoicePanel"
+	modal_root = popup
+	modal_layer.add_child(popup)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size = Vector2(348, mini(468, 32 + ev.get("options", []).size() * 36))
+	popup.add_child(scroll)
+	var column := VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(column)
+	var heading := Label.new()
+	heading.theme_type_variation = &"ChapterDialogueHeading"
+	heading.text = str(ev.title)
+	column.add_child(heading)
+	for option in ev.get("options", []):
+		var button := Button.new()
+		button.text = str(option.label)
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.clip_text = true
+		button.tooltip_text = str(option.label)
+		button.pressed.connect(func() -> void:
+			var selected := {"kind": "spatial_select", "site": str(ev.site), "choice_id": str(option.id)}
+			close_modal()
+			ui_event.emit(selected))
+		column.add_child(button)
+	var frame := preload("res://scenes/UI/Components/PaperFrame.tscn").instantiate()
+	popup.add_child(frame)
+	var point: Vector2 = ev.get("screen_position", get_viewport().get_mouse_position())
+	var size := Vector2i(380, mini(500, 48 + ev.get("options", []).size() * 48))
+	var viewport := get_viewport().get_visible_rect().size
+	popup.size = Vector2(size)
+	popup.position = Vector2(clampf(point.x + 16, 16, viewport.x - size.x - 16), clampf(point.y - 40, 56, viewport.y - size.y - 16))
+
 func _card(ev: Dictionary) -> void:
 	# 证物名作卡内叠题（设计规范第六部分 §4.7），弹窗本身不另起标题。
 	var wide: bool = str(ev.get("picture", "")) != "" or ev.has("table")
@@ -465,6 +508,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if Engine.is_editor_hint() or _closing: return
 	if event is not InputEventKey and event is not InputEventMouseButton: return
 	if not event.is_pressed() or event.is_echo(): return
+	if modal_kind == "spatial" and (event is InputEventMouseButton or event.is_action_pressed("cancel") or event.is_action_pressed("move_left") or event.is_action_pressed("move_right") or event.is_action_pressed("move_up") or event.is_action_pressed("move_down")):
+		close_modal()
+		get_viewport().set_input_as_handled()
+		return
 	var controls: Dictionary = snapshot.get("controls", {})
 	if modal_kind == "ending":
 		# 结局卡的按钮键（R、C 等）由宿主随事件给出，不是可改键动作；“Enter”按对话继续键处理。

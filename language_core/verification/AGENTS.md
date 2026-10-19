@@ -327,3 +327,9 @@ c2d_row可显式携带listeners与已有completed_action_requirement，c2d_actio
 ## 可见正文的执行来源（2026-10-19）
 
 Session presentation 保留原有surface/lines，并透传动作source_refs。Main为实际发出的正文标注execution_event、source_id（动作ID）、source_field、emitted_line_index与paragraph_index，line_id由真实执行事件和输出字段/序号组成。该序号是过滤后的显示序号，不冒称源文件行号或原声明索引。source_refs保留原声明提供的路径/行/ID，不补造缺少的来源。ChapterDialogue把这些只读元数据保留到已绘制控件与PlayerViewTrace，既不变更正文，也不写入人物认识。旧证据不补写编号。
+
+## 人工认知与阅读期调度（2026-10-19，用户追加裁定）
+
+本轮用户明确采纳人工玩家省去重度预演、阅读时提前处理NPC。30-runner对player_actor调用dvs_prepare_manual_cognition：收闻、同处感知、基础推理、语用重审和公共话题继续处理，普通回合不自动全量重建假说/论证或预测所有发言。真实成功replay标记manual_replay_refresh，下一轮沿共同完整认知刷新已付费结果；AI控制及NPC继续完整共同认知。准入、来源和付费判定保持，人工与AI轨迹不能当作同一机制比较。
+
+Main阅读时发送正式dv_next，GameEngine仍单队列后台Prepare。仅远离当前观察房间、且目的地也不进入该房间的NPC可在阅读期间使用现有Godot执行器/Complete实际推进；玩家动作、同房间动作和新可见对白保留在前台队列。正在阅读的正文和HUD不被后继快照替换；实际状态、尚未绘制正文及真实物理执行分别留痕。空呈现的下一调度提示只能发一次，不预写回执或跳过碰撞，不后台代选玩家动作。此为用户授权的调度机制变化，不作同条件提速结论；本批仍暂停验证。

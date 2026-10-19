@@ -1,5 +1,7 @@
 using Godot;
 using System.Text.Json;
+using System.Diagnostics;
+using System.Collections.Concurrent;
 using GArray = Godot.Collections.Array;
 using GDict = Godot.Collections.Dictionary;
 
@@ -22,6 +24,17 @@ public partial class GameEngine : Node
     private readonly List<string> visible = [];
     private readonly List<string> inputs = [];
     private readonly List<object> hostErrors = [];
+    private readonly ConcurrentQueue<string> timings = new();
+    private readonly long timingOrigin = Stopwatch.GetTimestamp();
+    private string interaction = "";
+
+    private void Stamp(string stage, string id, string details = "") => timings.Enqueue(JsonSerializer.Serialize(new {
+        real_us = (Stopwatch.GetTimestamp() - timingOrigin) * 1000000L / Stopwatch.Frequency,
+        stage, interaction_id = id, details
+    }));
+
+    public void RecordTiming(GDict value) => Stamp(value.GetValueOrDefault("stage", "").AsString(),
+        value.GetValueOrDefault("interaction_id", interaction).AsString(), Json.Stringify(value));
 
     public void ConfigureSession(GDict options)
     {
@@ -45,6 +58,7 @@ public partial class GameEngine : Node
     {
         var json = Json.Stringify(input);
         inputs.Add(json);
+        Stamp("command_received", input.GetValueOrDefault("interaction_id", interaction).AsString(), input.GetValueOrDefault("kind", "").AsString());
         if (closing) return new();
         if (faulted)
         {
@@ -71,6 +85,9 @@ public partial class GameEngine : Node
             {
                 var input = Parse(commands.Dequeue());
                 var kind = input.GetValueOrDefault("kind", "").AsString();
+                if (input.ContainsKey("interaction_id")) interaction = input["interaction_id"].AsString();
+                var timingId = interaction;
+                Stamp("command_started", timingId, kind);
                 GArray events = new();
                 try
                 {
@@ -97,16 +114,20 @@ public partial class GameEngine : Node
                         var current = session;
                         var prepared = await Task.Run(() =>
                         {
+                            Stamp("prepare_begin", timingId, selection);
                             var intent = current.Prepare(selection);
+                            Stamp("prepare_end", timingId);
                             using var document = JsonDocument.Parse(intent);
                             var root = document.RootElement;
                             var ready = root.GetProperty("status").GetString() == "prepared";
                             var actor = ready ? root.GetProperty("actor").GetString() : null;
+                            Stamp("snapshot_begin", timingId);
                             var executionSnapshot = ready ? current.Snapshot(actor!) : "{}";
                             var viewer = current.Viewer;
                             // JSON strings are immutable; the two Godot boundaries still parse independent values.
                             var viewerSnapshot = ready && string.Equals(actor, viewer, StringComparison.Ordinal)
                                 ? executionSnapshot : current.Snapshot(viewer);
+                            Stamp("snapshot_end", timingId);
                             return (Intent: intent, Snapshot: viewerSnapshot, ExecutionSnapshot: executionSnapshot);
                         });
                         snapshotJson = prepared.Snapshot;
@@ -131,7 +152,9 @@ public partial class GameEngine : Node
                         var current = session;
                         var completed = await Task.Run(() =>
                         {
+                            Stamp("complete_begin", timingId, actionEvent);
                             var presentation = current.Complete(json, current.Viewer);
+                            Stamp("complete_end", timingId, actionEvent);
                             return (Presentation: presentation, Snapshot: current.Snapshot(current.Viewer));
                         });
                         completedEvents.Add(actionEvent);
@@ -149,7 +172,11 @@ public partial class GameEngine : Node
                     Report(error);
                 }
                 // Reentrant signal handlers append to this pump; no input is dropped while it is busy.
-                if (!closing && events.Count != 0) EmitSignal(SignalName.EventsReady, events);
+                if (!closing && events.Count != 0)
+                {
+                    Stamp("events_delivered", timingId, kind);
+                    EmitSignal(SignalName.EventsReady, events);
+                }
             }
         }
         catch (Exception error)
@@ -287,14 +314,19 @@ public partial class GameEngine : Node
             File.WriteAllLines(Path.Combine(path, "inputs.jsonl"), inputs);
             phase = "visible";
             File.WriteAllLines(Path.Combine(path, "visible.jsonl"), visible);
+            phase = "interaction-timing";
+            File.WriteAllLines(Path.Combine(path, "interaction-timing.jsonl"), timings);
             var current = session;
             if (current is null) return;
             phase = "trace";
             var tracePath = Path.Combine(path, "session.json.partial");
             try
             {
-                await Task.Run(() => current.WriteTrace(tracePath));
-                File.Move(tracePath, Path.Combine(path, "session.json"));
+                if (current.AuditMode)
+                {
+                    await Task.Run(() => current.WriteTrace(tracePath));
+                    File.Move(tracePath, Path.Combine(path, "session.json"));
+                }
             }
             catch (Exception error)
             {
@@ -326,7 +358,7 @@ public partial class GameEngine : Node
                 if (ownsDirectory && path is not null)
                 {
                     using var result = new FileStream(Path.Combine(path, "close-result.json"), FileMode.CreateNew, System.IO.FileAccess.Write);
-                    System.Text.Json.JsonSerializer.Serialize(result, new { complete = errors.Count == 0, session_opened = session is not null, unprocessed_commands = commands.Count, pending_action = pendingEvent, errors });
+                    System.Text.Json.JsonSerializer.Serialize(result, new { complete = errors.Count == 0, audit_mode = session?.AuditMode, trace_policy = session?.AuditMode == true ? "full" : "omitted-gameplay", session_opened = session is not null, unprocessed_commands = commands.Count, pending_action = pendingEvent, errors });
                 }
             }
             catch (Exception error) { GD.PushError(error.ToString()); }

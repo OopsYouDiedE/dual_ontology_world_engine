@@ -507,7 +507,10 @@ fn dvs_prepare_actor(state):
             dvs_debug_phase(story, actor.id, time, "cognition-start")
             actor = dvs_drain_received_speech(actor, events, time)
             actor = dvs_notice_peers(actor, physical, actors, bindings, events, time, parent)
-            actor = dvs_prepare_cognition(actor, events, time, parent, dv_find(story, "chapter", 1))
+            if dv_find(state, "player_actor", "") == actor.id:
+                actor = dvs_prepare_manual_cognition(actor, events, time, parent, dv_find(story, "chapter", 1))
+            else:
+                actor = dvs_prepare_cognition(actor, events, time, parent, dv_find(story, "chapter", 1))
             dvs_debug_phase(story, actor.id, time, "cognition-end")
         var choice = false
         if dv_find(state, "player_actor", "") == actor.id:
@@ -764,6 +767,8 @@ fn dvs_session_complete(state, receipt):
         actor = dv_with(actor, "answer_attempt_signatures", dv_with(dv_find(actor, "answer_attempt_signatures", []), action.id, dvp_input_signature(actor, action, choice.relevant_refs)))
     if (action.kind == "replay"):
         actor = dv_with(actor, "replay_attempt_signatures", dv_with(dv_find(actor, "replay_attempt_signatures", []), action.id, dvp_input_signature(actor, action, choice.relevant_refs)))
+        if result.execution.status == "applied" and id == dv_find(state, "player_actor", ""):
+            actor = dv_with(actor, "manual_replay_refresh", true)
     if action.kind == "inspect" and result.execution.status == "applied":
         actor = dv_with(actor, "inspection_attempt_signatures", dv_with(dv_find(actor, "inspection_attempt_signatures", []), action.id, dvp_inspection_signature(actor, action, actor.mind)))
     if result.execution.status != "applied":
