@@ -13,7 +13,6 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import build_ui_desk as desk  # noqa: E402  标题页的灯脚、火焰高度与投影缩短，与桌面图同一套数
 
 STYLES = Path(__file__).resolve().parents[1] / "scenes" / "UI" / "Styles"
 
@@ -319,30 +318,57 @@ def title_theme() -> Theme:
     t.set("Title/colors/page_dark", hexc("BCAE8E"))
     t.set("Title/colors/cover_edge", hexc("22241E"))
     t.set("Title/colors/spine", hexc("000000", 0.28))
-    # 册子的摆放与桌面渲染同一套数（build_ui_desk.py）：封面中心与尺寸（屏幕像素）、桌面上的转角（十分之一度）、
-    # 近侧书页厚度（毫米厚度按近俯视竖直减半后的屏幕像素）、纵深缩短（百分之一）。册子投影已烘在桌面图里。
-    for key, value in (("book_x", desk.BOOK_CENTER[0]), ("book_y", desk.BOOK_CENTER[1]),
-                       ("book_w", desk.BOOK_SIZE[0]), ("book_h", desk.BOOK_SIZE[1]),
-                       ("book_angle", round(desk.BOOK_ANGLE * 10)),
-                       ("thickness", round(desk.mm(desk.BOOK_THICK_MM) * desk.ELEV_K * desk.S)),
-                       ("elev_q", round(desk.ELEV_Q * 100)), ("slip_shadow", 4)):
-        t.set(f"Title/constants/{key}", value)
-    cloth = t.texture_file("cloth_texture", "res://ShareAsset/Internal/Props/UIDesk/cover-painted.png", "")
+    # The 3D stage owns geometry and projection; themes own page typography.
+    cloth = t.texture_file("cloth_texture", "res://ShareAsset/Internal/Props/UIDesk/Painterly3D/reference-cloth.webp", "")
     t.type("TitleCover", "PanelContainer")
     t.set("TitleCover/styles/panel", t.sub("StyleBoxTexture", "title_cloth", [
         ("texture", cloth), ("axis_stretch_horizontal", "0"), ("axis_stretch_vertical", "0")]))
     t.type("TitleSlip", "PanelContainer")
-    t.set("TitleSlip/styles/panel", t.box("title_slip", margin=(20, 20, 20, 24)))
+    slip_texture = t.texture_file("blank_leaf_texture", "res://ShareAsset/Internal/Props/UIDesk/Painterly3D/reference-paper.webp", "")
+    t.set("TitleSlip/styles/panel", t.sub("StyleBoxTexture", "title_slip", [
+        ("texture", slip_texture), ("content_margin_left", "20.0"), ("content_margin_top", "20.0"),
+        ("content_margin_right", "20.0"), ("content_margin_bottom", "24.0")]))
     t.type("TitleColumn", "VBoxContainer")
     t.set("TitleColumn/constants/separation", 14)
     t.type("TitleMount", "PanelContainer")
     t.set("TitleMount/styles/panel", t.box("title_plate", bg=c("ink"), border=c("ink"), width=(2, 2, 2, 2)))
     t.type("TitleMenu", "VBoxContainer")
     t.set("TitleMenu/constants/separation", 4)
+    t.type("BookLeaf", "PanelContainer")
+    leaf_texture = t.texture_file("blank_leaf_texture", "res://ShareAsset/Internal/Props/UIDesk/Painterly3D/reference-paper.webp", "")
+    t.set("BookLeaf/styles/panel", t.sub("StyleBoxTexture", "book_leaf", [
+        ("texture", leaf_texture), ("content_margin_left", "42.0"), ("content_margin_top", "36.0"),
+        ("content_margin_right", "36.0"), ("content_margin_bottom", "24.0")]))
+    t.type("BookColumn", "VBoxContainer")
+    t.set("BookColumn/constants/separation", 12)
+    text_type(t, "BookHeading", "Label", size=SIZE["title"], color=c("ink"), font=f["deck"], rich=False)
+    t.type("BookToggle", "CheckButton")
+    t.set("BookToggle/colors/font_color", c("ink"))
+    t.set("BookToggle/colors/font_hover_color", c("hand"))
+    t.set("BookToggle/colors/font_pressed_color", c("hand"))
+    t.set("BookToggle/fonts/font", f["register"])
+    check_on = t.texture_file("book_check_on", "res://ShareAsset/Internal/Props/UIDesk/Painterly3D/check-on.svg", "")
+    check_off = t.texture_file("book_check_off", "res://ShareAsset/Internal/Props/UIDesk/Painterly3D/check-off.svg", "")
+    for state in ("checked", "checked_disabled", "checked_mirrored", "checked_disabled_mirrored"):
+        t.set(f"BookToggle/icons/{state}", check_on)
+    for state in ("unchecked", "unchecked_disabled", "unchecked_mirrored", "unchecked_disabled_mirrored"):
+        t.set(f"BookToggle/icons/{state}", check_off)
+    slider_mark = t.texture_file("book_slider_mark", "res://ShareAsset/Internal/Props/UIDesk/Painterly3D/slider-mark.svg", "")
+    for state in ("grabber", "grabber_highlight", "grabber_disabled"):
+        t.set(f"HSlider/icons/{state}", slider_mark)
+    t.set("HSlider/styles/slider", t.box("book_slider_track", border=c("rule", 0.8), width=(0, 0, 0, 1), margin=(0, 3, 0, 3)))
+    t.set("HSlider/styles/grabber_area", t.box("book_slider_ink", border=c("hand", 0.65), width=(0, 0, 0, 1), margin=(0, 3, 0, 3)))
+    t.set("HSlider/styles/grabber_area_highlight", t.box("book_slider_ink_hi", border=c("hand"), width=(0, 0, 0, 2), margin=(0, 3, 0, 3)))
+    t.set("HSlider/styles/focus", t.box("book_slider_focus", border=c("hand", 0.4), width=(0, 0, 0, 1), margin=(0, 4, 0, 4)))
+    option_plain = t.box("book_option", border=c("rule", 0.55), width=(0, 0, 0, 1), margin=(8, 6, 8, 6))
+    option_hover = t.box("book_option_hover", bg=c("paper_dark", 0.4), border=c("hand"), width=(0, 0, 0, 1), margin=(8, 6, 8, 6))
+    button_type(t, "BookOption", "Button", normal=option_plain, hover=option_hover, pressed=option_hover,
+                disabled=option_plain, focus=t.box("book_option_focus", border=c("hand"), width=(0, 0, 0, 1)),
+                color=c("ink"), disabled_color=c("muted"), size=SIZE["body"], font=f["register"])
     flat = t.box("title_flat", margin=(24, 6, 24, 6))
-    under = t.box("title_under", border=c("ink"), width=(0, 0, 0, 3), margin=(24, 6, 24, 3))
+    under = t.box("title_under", border=c("ink"), width=(0, 0, 0, 1), margin=(24, 6, 24, 5))
     button_type(t, "TitleMenuButton", "Button", normal=flat, hover=under, pressed=under, disabled=flat, focus=under,
-                color=c("ink"), disabled_color=c("muted", 0.5), size=SIZE["body"] + 2, font=f["register"])
+                color=c("ink"), disabled_color=c("muted", 0.5), size=SIZE["sub"], font=f["register"])
     return t
 
 

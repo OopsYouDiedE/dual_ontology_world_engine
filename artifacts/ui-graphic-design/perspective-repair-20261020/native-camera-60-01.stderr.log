@@ -1,0 +1,21 @@
+WARNING: GameAudio: 缺少音频 res://ShareAsset/Internal/Props/Audio/Music/main_theme.ogg
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _load (res://scenes/Shared/Audio/GameAudio.gd:110)
+       [1] play_music (res://scenes/Shared/Audio/GameAudio.gd:51)
+       [2] music (res://scenes/Shared/Audio/Sound.gd:11)
+       [3] _ready (res://scenes/UI/TitleUI.gd:100)
+       [4] _home (res://scenes/Host/Main.gd:88)
+       [5] _ready (res://scenes/Host/Main.gd:60)
+WARNING: GameAudio: 缺少音频 res://ShareAsset/Internal/Props/Audio/Sfx/ui_click.ogg
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _load (res://scenes/Shared/Audio/GameAudio.gd:110)
+       [1] play_sfx (res://scenes/Shared/Audio/GameAudio.gd:83)
+       [2] sfx (res://scenes/Shared/Audio/Sound.gd:26)
+       [3] _request (res://scenes/UI/TitleUI.gd:238)
+       [4] _turn_to (res://scenes/UI/TitleUI.gd:452)
+WARNING: 7 RIDs of type "Texture" were leaked.
+   at: finalize (servers/rendering/rendering_device.cpp:7505)
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2641)

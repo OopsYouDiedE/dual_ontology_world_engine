@@ -4,6 +4,50 @@ These tools maintain the Godot host's assets and engineering evidence. Current
 gameplay is the seven DV files in `language_core`; runtime assets are under
 `godot_csharp/ShareAsset`. No tool provides a second gameplay implementation.
 
+## Title book presentation
+
+The current title desk is a real 3D stage rendered by `DeskStage3D.gd`, hosted by `TitleUI.tscn` / `TitleUI.gd`. Desk, book, lamp and props share one camera, geometry scale and lighting system. The flame, light energy and material response share a flicker signal. Perspective, occlusion and shadows must remain consistent across the whole stage.
+
+`BookProjection3D.gd` uses the stage camera to intersect the pointer ray with the book's page plane, then maps that hit into the `580 × 820` page SubViewport. It forwards actual pointer events to native Controls. Input must follow the displayed geometry during camera movement and window resizing; a screen rectangle or an unrelated 2D projection is not the input contract.
+
+`BookLeafTurn3D.gd` and `book_leaf_mesh_3d.gdshader` render separate front and back page surfaces, a closed thickness and page edges. Covers use the rigid-cover mode; paper leaves bend while staying bound to the spine. Old page contents are rendered once into a dedicated SubViewport with `UPDATE_ONCE`, then frozen as GPU textures. The production page-turn path must not read rendered pixels back to the CPU every frame or recreate textures every frame. The capture tool's explicit image readback is only for evidence collection. With `reduce_motion` enabled, navigation immediately settles on the requested page, ends any active turn and restores input; parallax and visible flicker are disabled.
+
+### Geometry and painted materials
+
+`build_painterly_desk.py` runs under Blender 4.2. It writes the editable source to `AssetsSource/Internal/Props/UIDesk/Painterly3D/painterly_desk.blend` and the runtime model to `ShareAsset/Internal/Props/UIDesk/Painterly3D/desk.glb`. The runtime directory also contains the WebP material atlas and page/cloth textures. Keep editable sources separate from imported runtime assets. Blender is an authoring dependency, not a running-game dependency.
+
+`build_desk_surface_maps.py` authors separate wood grooves, woven cloth, paper fibers and brass scratches in Blender nodes and bakes CPU Cycles normal/roughness data. The current reference albedo contributes only a bounded high-frequency registration term. Outputs are a 1024-square OpenGL tangent +Y normal atlas, a linear scalar roughness atlas, and matching 512-square cloth/paper crops. Data PNGs have no display or gamma transform. The editable node source and per-file hashes are saved beside the geometric source as `desk_surface_maps.blend` and `reference-surface-maps-manifest.json`. The runtime consumes these maps on desk props, static book surfaces and both sides of animated pages. Albedo generation, numerical data baking and manual painting are distinct provenance claims; see the source README.
+
+The title camera stays close at the specified 60-degree viewing angle. Elevation and target distance are independent controls; moving closer does not lower the viewing angle. Elevation, target distance and vertical field of view stay fixed during opening. Opening only translates the camera target to follow the readable page. Enlarged physical props are composed through placement and natural edge cropping; their bounds and the moving cover never widen the lens or move the camera upward/backward. A cover moving outside the frame is allowed. The viewport keeps vertical framing and changes side margins as its width changes. `BookSurfaceDetail3D.gd` supplies bounded bevels and `paper_mount.gdshader` affects only the paper slip background. Glass provides transparency, Fresnel highlights and scene reflection; it does not implement optical magnification or refraction.
+
+`AssetsSource/Internal/Props/UIDesk/Painterly3D/desk_physical_spec.json` is the single physical-size input to the geometry builder. It records the assumed book-cover length, millimeters per scene unit, comparable real-product specifications, target dimensions and prop layout. The builder measures actual mesh vertices, calibrates the relevant object axes, seats every prop on the desk and exports measured dimensions plus the wick-tip world position in `ShareAsset/Internal/Props/UIDesk/Painterly3D/desk-physical-layout.json`. Stage flame and light positions consume that generated configuration. Changing physical scale requires checking the entire page-turn sweep, visible control occlusion and reflection bounds; successful native button events alone do not establish unobstructed text. Product references establish size classes, not reproduction of a branded product.
+
+From the repository root, with the relevant executables available on PATH:
+
+```powershell
+blender --factory-startup --background --python-exit-code 1 --python godot_csharp/tools/build_painterly_desk.py
+blender --factory-startup --background --python-exit-code 1 --python godot_csharp/tools/build_desk_surface_maps.py
+dotnet build godot_csharp/DualOntologyWorldEngine.csproj
+godot --path godot_csharp --editor
+```
+
+Use the Godot .NET executable for both the editor and capture. The executable name may differ on a local installation; substitute its actual path if it is not named `godot`.
+
+### Capture the current 3D title UI
+
+`capture_title_3d.gd` instantiates the production TitleUI without Main or a DV session. It drives actual mouse events through the camera/page projection, observes native button activations and UI events, and records PNG frames plus the binary `ui-input.dvlog` archive. Run it with a visible rendering window, without `--headless`, after building the C# project and importing assets. Supply a new absolute output directory; existing evidence must not be overwritten.
+
+```powershell
+godot --path godot_csharp --script res://tools/capture_title_3d.gd -- --out=C:/Temp/title-3d-capture-NEW
+```
+
+The capture covers the title presentation, including pointer response, light variation and page navigation. It does not establish successful game startup, save loading, snapshot reconstruction or path/session recovery. The tool rejects an animation capture when the saved reduce-motion preference is enabled; it does not change that preference. `capture_title_book.gd` remains the legacy 2D capture entry point and is not evidence for the current 3D stage. Documentation of these contracts does not claim that the build or capture has passed; report results from the actual run and its evidence.
+
+The title's `load/path` event uses the existing GameEngine serial command queue
+and DvSession.RestoreFile. A save awaiting a physical execution receipt is rejected.
+File-validation failure returns `load_error` without installing a session; valid
+save restoration still requires a separate fresh-session/physical-state review.
+
 ## Map and artwork inputs
 
 `build_chapter2_scenes.py` uses `chapter2_art/rooms.py` for authored geometry and

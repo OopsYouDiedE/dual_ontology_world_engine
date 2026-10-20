@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/UI/SettingsUI.gd" id="1_settings"]
-[ext_resource type="Theme" path="res://scenes/UI/Styles/OverlayTheme.tres" id="2_overlay"]
+[ext_resource type="Theme" path="res://scenes/UI/Styles/TitleTheme.tres" id="2_overlay"]
 
 [node name="SettingsUI" type="CanvasLayer"]
 layer = 28
@@ -27,6 +27,7 @@ grow_vertical = 2
 [node name="ModalBox" type="PanelContainer" parent="CenterBox"]
 custom_minimum_size = Vector2(620, 420)
 layout_mode = 2
+theme_type_variation = &"BookLeaf"
 
 [node name="Margin" type="MarginContainer" parent="CenterBox/ModalBox"]
 layout_mode = 2

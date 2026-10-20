@@ -128,20 +128,24 @@ public partial class GameEngine : Node
                 GArray events = new();
                 try
                 {
-                    if (kind == "start")
+                    if (kind == "start" || kind == "load")
                     {
                         if (session is not null) throw new InvalidOperationException("Session is already open");
                         var options = optionsJson;
+                        var savePath = kind == "load" ? input.GetValueOrDefault("path", "").AsString() : "";
                         var opened = await Task.Run(() =>
                         {
                             Stamp("open_begin", timingId);
-                            var current = DvSession.OpenConfiguredCampaign(options);
+                            var current = kind == "load" ? DvSession.RestoreFile(savePath) : DvSession.OpenConfiguredCampaign(options);
                             BindPhases(current, timingId, queued.Id);
                             Stamp("open_end", timingId);
                             Stamp("snapshot_begin", timingId);
                             var initialSnapshot = current.Snapshot(current.Viewer);
                             Stamp("snapshot_end", timingId);
                             var snapshot = Materialize(initialSnapshot, timingId, "viewer");
+                            if (kind == "load" && snapshot.GetValueOrDefault("pending", new GDict()).AsGodotDictionary()
+                                .GetValueOrDefault("status", "").AsString() == "prepared")
+                                throw new InvalidOperationException("Cannot restore a save with an outstanding physical execution receipt");
                             GArray delivered = new() { new GDict { ["kind"] = "view",
                                 ["resource"] = snapshot["resource"], ["snapshot"] = snapshot } };
                             return (Session: current, Snapshot: initialSnapshot, Events: delivered);
@@ -229,10 +233,19 @@ public partial class GameEngine : Node
                 }
                 catch (Exception error)
                 {
-                    // A failed projection can follow a successful state transition. Never retry it blindly.
-                    faulted = true;
-                    hostErrors.Add(new { phase = kind, error = error.ToString() });
-                    Report(error);
+                    if (kind == "load" && session is null)
+                    {
+                        // File validation did not install or mutate a session. Keep the book usable.
+                        hostErrors.Add(new { phase = kind, error = error.ToString() });
+                        events.Add(new GDict { ["kind"] = "load_error", ["message"] = error.Message });
+                    }
+                    else
+                    {
+                        // A failed projection can follow a successful state transition. Never retry it blindly.
+                        faulted = true;
+                        hostErrors.Add(new { phase = kind, error = error.ToString() });
+                        Report(error);
+                    }
                 }
                 // Reentrant signal handlers append to this pump; no input is dropped while it is busy.
                 if (!closing && events.Count != 0)

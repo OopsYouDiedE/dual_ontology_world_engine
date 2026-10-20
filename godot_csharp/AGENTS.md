@@ -84,6 +84,20 @@ Main 的导出属性以及 `--dv-controller=`、`--dv-viewer=`、`--dv-profile=`
 
 UI 样式、颜色与排版统一由 Theme/StyleBox 等 Resource 维护；不在节点中随意添加 `theme_override_*`，也不在脚本中临时覆盖主题或新造样式盒。非原生二进制素材的 Resource 使用文本 `.tres`。现役 `DialogueTheme.tres` 与 `TitleTheme.tres` 由 `tools/build_ui_theme.py` 生成；共有字体和纹理属于其依赖，不与未使用的主题分支一起删除。
 
+标题桌面采用 `TitleUI.tscn` / `TitleUI.gd` 与 `DeskStage3D.gd` 的真实 3D 实现：桌面、书本、灯具及摆件使用真实几何，在同一 `Camera3D`、同一空间尺度与光照下渲染；火焰、灯光能量与受光材质必须使用一致的闪烁驱动。透视、遮挡、接触关系和投影由共同场景承担，不得用相互独立的屏幕贴片伪造不同视角的物体。`BookProjection3D.gd` 负责显示和输入的共同相机契约，将屏幕射线与书页平面的交点逆映射到 `580×820` 的页面 SubViewport，并把真实鼠标输入交给原生 Control；相机偏移、窗口缩放与视觉位置变化时必须保持命中一致。
+
+`BookLeafTurn3D.gd` 及 `book_leaf_mesh_3d.gdshader` 提供具有独立正背面、真实厚度和边缘的页面网格；硬书皮使用 rigid-cover 行为，纸页允许曲面弯折，书脊位置、翻页方向与下层页面状态保持一致。旧页内容通过独立 SubViewport 的 `UPDATE_ONCE` 渲染后冻结，生产翻页路径不得逐帧执行 GPU 图像回读或重建页面纹理；截图工具为记录证据而读取图像不属于生产动画路径。`reduce_motion` 开启时直接落到目标页面并结束当前动画，恢复正常输入，同时停用视差及明显闪烁，不得留下半翻书页或输入锁。
+
+标题材质按颜色与表面数据分别维护：当前 `reference-material-atlas.webp`、`reference-cloth.webp`、`reference-paper.webp` 为参考图辅助生成的颜色素材；`tools/build_desk_surface_maps.py` 使用 Blender CPU Cycles 从独立微表面节点烘焙 `reference-normal.png`、`reference-roughness.png` 及布面/纸面裁切图。法线使用 OpenGL 切线空间 +Y，粗糙度使用线性数据，二者不按颜色纹理转换。静态书体与翻页网格保留切线，法线框架随页面变形和背面 UV 同步；UI 字样不参与表面高度生成。`BookSurfaceDetail3D.gd` 提供静态书体倒角，`paper_mount.gdshader` 仅修饰纸签背景边缘。玻璃使用透明材质和场景反射，能力边界与资产来源写入对应 AssetsSource README。
+
+桌面实物比例的唯一输入为 `AssetsSource/Internal/Props/UIDesk/Painterly3D/desk_physical_spec.json`：记录书封毫米基准、实物规格来源、各道具目标尺寸和布局。几何生成器按实际网格顶点标定，输出 `ShareAsset/Internal/Props/UIDesk/Painterly3D/desk-physical-layout.json` 的测量尺寸和灯芯顶点；`DeskStage3D.gd` 从该配置读取灯芯与火焰尺寸，不另写独立灯光位置常量。改变道具体量时同步核对落桌、整段翻页扫掠、屏幕遮挡及反射体积。相机俯角与取景距离独立维护，拉近镜头不得隐含降低俯角；按照设计规范指定的俯角保持近景，物体放大时不得拉远或扩大视野来强行容纳全体道具。构图通过实际摆放与自然裁切调整，开书只平移跟随阅读页。按钮射线激活成功不能替代画面遮挡检查。
+
+`tools/build_painterly_desk.py` 使用 Blender 4.2 生成桌面几何；可编辑源稿保存到 `AssetsSource/Internal/Props/UIDesk/Painterly3D/painterly_desk.blend`，运行资源为 `ShareAsset/Internal/Props/UIDesk/Painterly3D/desk.glb` 与同目录 WebP 材质。源稿与运行资源分开管理，运行场景不依赖 Blender 在线执行。`tools/capture_title_3d.gd` 是当前 3D 标题界面的观察入口，必须使用有可见渲染窗口的 Godot .NET 构建，并预先完成 C# 编译；它仅实例化生产 TitleUI，通过真实输入检查页面与按钮，输出 PNG 和二进制 `ui-input.dvlog`，不加载 Main、不启动 DV 会话，不能据此宣称游戏或存档恢复已验收。`tools/capture_title_book.gd` 保留为旧 2D 入口，其结果不代表当前 3D 标题界面。上述为实现与验证契约，验收状态以实际运行证据为准。
+
+以下既有载入与路径恢复约束保留原文，未因本次标题界面工作重新验收：
+
+续读列出 user://saves/*.dvsave，也可显式选择文件，向 Main 发 load/path；GameEngine 在原串行队列用 DvSession.RestoreFile 恢复，拒绝尚待现场回执的存档。文件验证失败不安装会话，load_error 返回书页；不得据此声称跨版本与现场恢复已验收。
+
 `UITransition.gd` 管理可取消的进入/退出状态，过渡使用现实时间，不受游戏播放倍率影响；`reduce_motion` 修改实时生效并使当前过渡落定。`ModalPanel.gd` 负责打开、退出期间的输入锁、焦点圈定/恢复和完成信号，实际退场后才发 closed。UISystem 串行切换设置、调查及其各面板，上层弹窗阻止底层对白或现场消费同一输入；现场选择在弹窗退场后发回原 site 与 choice_id。Title 的设置层高于标题层，Main 等待 `transition_out` 后更换视图。UISystem 提供可等待的 `transition_in/out` 与 `fade_in/out`，屏幕遮罩覆盖期间保持 busy；WorldView 只在目标准备完成后进行可见跨图淡变。
 
 对白、回看、提示各自取消旧任务；空对白与立即完成的低动态效果也提供可等待的完成结果。换行保留正文顺序与来源，立绘通过线程请求预备后绑定，旧请求不覆盖新说话者。重入、关闭或新提示不得遗留能隐藏当前界面的旧回调。

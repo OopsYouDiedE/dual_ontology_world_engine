@@ -1,0 +1,135 @@
+{
+  "blender_version": "4.2.1 LTS",
+  "generator": "build_desk_surface_maps.py",
+  "seed": 73417,
+  "samples": 8,
+  "device": "CPU",
+  "atlas_layout": "TL wood / TR cloth / BL paper / BR brass",
+  "albedo_sha256": "599707811ba7f1ad4875f50b21c8c37664b778900dd14456222453d0586a1e63",
+  "normal": "OpenGL tangent +Y, linear RGB",
+  "roughness": "linear scalar",
+  "parameters": [
+    {
+      "name": "wood",
+      "u": 0.0,
+      "v": 0.5,
+      "crop": [
+        0,
+        0
+      ],
+      "depth_m": 0.001,
+      "span_m": 1.0,
+      "base_roughness": 0.49,
+      "metallic": 0.0
+    },
+    {
+      "name": "cloth",
+      "u": 0.5,
+      "v": 0.5,
+      "crop": [
+        512,
+        0
+      ],
+      "depth_m": 0.0005,
+      "span_m": 0.45,
+      "base_roughness": 0.83,
+      "metallic": 0.0
+    },
+    {
+      "name": "paper",
+      "u": 0.0,
+      "v": 0.0,
+      "crop": [
+        0,
+        512
+      ],
+      "depth_m": 0.00015,
+      "span_m": 0.45,
+      "base_roughness": 0.9,
+      "metallic": 0.0
+    },
+    {
+      "name": "brass",
+      "u": 0.5,
+      "v": 0.0,
+      "crop": [
+        512,
+        512
+      ],
+      "depth_m": 0.0002,
+      "span_m": 0.35,
+      "base_roughness": 0.4,
+      "metallic": 1.0
+    }
+  ],
+  "statistics": {
+    "wood": {
+      "normal_xy_std": 0.104304,
+      "min_normal_z": 0.94238,
+      "roughness_min": 0.415679,
+      "roughness_max": 0.612547
+    },
+    "cloth": {
+      "normal_xy_std": 0.072196,
+      "min_normal_z": 0.987157,
+      "roughness_min": 0.759673,
+      "roughness_max": 0.875061
+    },
+    "paper": {
+      "normal_xy_std": 0.006723,
+      "min_normal_z": 0.999594,
+      "roughness_min": 0.861005,
+      "roughness_max": 0.932137
+    },
+    "brass": {
+      "normal_xy_std": 0.013803,
+      "min_normal_z": 0.993965,
+      "roughness_min": 0.331142,
+      "roughness_max": 0.535375
+    }
+  },
+  "files": [
+    {
+      "name": "reference-normal.png",
+      "width": 1024,
+      "height": 1024,
+      "size_bytes": 963841,
+      "sha256": "4d8c9d4d4c624da9c3b80bd54a383e44af28ec50383b52bf5afe09469abaf7d1"
+    },
+    {
+      "name": "reference-roughness.png",
+      "width": 1024,
+      "height": 1024,
+      "size_bytes": 552021,
+      "sha256": "a7fdb4695d90fea152d50fd0ae75b2780ea0fbff045cc895c08da065f31abf7a"
+    },
+    {
+      "name": "reference-cloth-normal.png",
+      "width": 512,
+      "height": 512,
+      "size_bytes": 298355,
+      "sha256": "3048c756eb3fab6e75fc1e9b53ee1846cababc9e4b2aa1be71b8e0dae31533c9"
+    },
+    {
+      "name": "reference-cloth-roughness.png",
+      "width": 512,
+      "height": 512,
+      "size_bytes": 139540,
+      "sha256": "07fd1cda0428a038aad9c27d52249a14771b424fd764bf40fccf329b7b7f1ae7"
+    },
+    {
+      "name": "reference-paper-normal.png",
+      "width": 512,
+      "height": 512,
+      "size_bytes": 155970,
+      "sha256": "496e1a05de14509c42ad70fad93ddda4c133faea3b03fcab0e4da785c0598c4f"
+    },
+    {
+      "name": "reference-paper-roughness.png",
+      "width": 512,
+      "height": 512,
+      "size_bytes": 118751,
+      "sha256": "8fcaf767e473fd6ec725e466a669a24cf679866c358f13aa3639d26229aa24e0"
+    }
+  ]
+}

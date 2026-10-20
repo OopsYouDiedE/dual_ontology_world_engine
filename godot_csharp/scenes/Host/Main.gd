@@ -169,6 +169,9 @@ func dispatch(input: Dictionary) -> void:
 		if options.is_empty(): return
 		engine.ConfigureSession(options)
 		_started = true
+	elif str(input.get("kind", "")) == "load":
+		if _started: return
+		_started = true
 	engine.Dispatch(input)
 
 func _session_options() -> Dictionary:
@@ -272,6 +275,9 @@ func _drain() -> void:
 			"view": await _view(ev)
 			"state": await _apply(ev.snapshot)
 			"error": _show_error(str(ev.message))
+			"load_error":
+				_started = false
+				if is_instance_valid(title_layer): title_layer.get_child(0).show_load_error(str(ev.message))
 			_: push_error("Unknown DV host event: " + str(ev.get("kind", "")))
 	_draining = false
 
