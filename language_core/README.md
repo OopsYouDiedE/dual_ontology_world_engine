@@ -2,6 +2,25 @@
 
 DuelView 简称 DV，源码后缀为 `.dv`。领域算法、主体推演和原生章节内容由 DV 编译为 C#；Godot 通过 `DvSession` 使用同一正式动作链。这里的源码与工程说明不代替实际游戏验收。
 
+## 作者从这里开始
+
+剧情可以直接写成段落，保留人的标点与换行；条件和效果使用确定的领域句式：
+
+```dv
+称谓 木箱 为「crate」。
+称谓 剩余件数 为「remaining」。
+
+叙述 箱边见闻：
+    她放下提灯，伸手拂去箱盖上的灰。
+    “这里还有东西。”
+
+法则 取一件：
+    当 木箱 的 剩余件数 至少 1。
+    则 木箱 的 剩余件数 增加 -1。
+```
+
+这是中性语法示例。`叙述` 返回文字，`台词` 返回逐行文字列表；它们不要求正文使用引号、转义或 `return`。`法则` 和 `行动` 保持既有条件、来源、观察和正式执行合同。新写章节优先用这些形式，算法和复杂数据组合仍可使用普通函数。完整写法、缩进、中文引号、文件内称谓、本人/现场边界及当前限制见 [SYNTAX.md 的自然书写部分](SYNTAX.md#当前执行子集按段落与句子书写)。
+
 ## 当前文件与依赖
 
 | 文件或目录 | 职责 |
@@ -18,7 +37,7 @@ DuelView 简称 DV，源码后缀为 `.dv`。领域算法、主体推演和原�
 | [tools/](tools/) | 共用构建、编辑器诊断、正式逻辑运行及二进制证据工具 |
 | [editors/](editors/AGENTS.md) | VS Code 与 Visual Studio 2022 客户端；Godot 客户端在宿主插件目录 |
 
-`tools/dv_toolchain.py` 解析相对 `#include`，保留各源文件的 define 作用域与位置边界。它以 `compiler/seed/Seed.csproj` 为 C0，依次用 `10-compiler.dv` 生成 C1、C2、C3，并比较 C2/C3 的 C# 源码。`tools/build_session.py` 默认将 `60-game.dv` 的闭包交给 C3，生成由 Session 项目引用的类库。`70-checks.dv` 不被生产入口反向包含；seed、Runtime、检查源码与诊断恢复工具都具有独立用途。
+`tools/dv_toolchain.py` 解析行首的相对 `#include`，保留各源文件的 define/称谓作用域与位置边界；缩进正文中的引用样式文字原样保留。它以 `compiler/seed/Seed.csproj` 为 C0，依次用 `10-compiler.dv` 生成 C1、C2、C3，并比较 C2/C3 的 C# 源码。`tools/build_session.py` 默认将 `60-game.dv` 的闭包交给 C3，生成由 Session 项目引用的类库。`70-checks.dv` 不被生产入口反向包含；seed、Runtime、检查源码与诊断恢复工具都具有独立用途。
 
 ## 构建与工程检查
 
@@ -50,7 +69,7 @@ python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<
 
 ## 实现范围与文档
 
-20–60 使用 surface-v2 的可执行表层，10 保留启动语法，70 同时含表层与启动语法。因此不能声称七个文件都已彻底消除 S 表达式。已接入公式函数、MATLAB 风格具名输出函数、缩进、普通调用、记录/列表、中缀运算、单绑定列表推导、mapping、acceptance 和有限域 imprint；完整泛型、单位推导、能力类型、闭包及目标无关 Typed IR 仍属设计范围。
+20–60 使用 surface-v2 的可执行表层，40/50 的纯法则、独立叙述和部分行动已采用自然书写，10 保留启动语法，70 同时含表层与启动语法。因此不能声称所有内容或七个文件都已彻底转换。已接入自然段落、领域句式、公式函数、MATLAB 风格具名输出函数、缩进、普通调用、记录/列表、中缀运算、单绑定列表推导、mapping、acceptance 和有限域 imprint；任意自然语言理解、完整泛型、单位推导、能力类型、闭包及目标无关 Typed IR 仍属未实现范围。
 
 `20-core.dv` 的 `dv_bind/dv_view` 一次建立显式主客观对象对应，具体事实仍走观察链。`dv_evaluate` 以 verify/run 共用一个法则求值器，前提、原子效果和可选后置条件保持同义；验证候选带快照范围，不提交事件。`dv_imprint_solve_with` 提供参考枚举和精确线性区间分支剪枝，自动选择只影响算法，不扩大预算前缀；独立 checker 核验最优性与覆盖。`dv_analyze_law`、`dv_imprint_analyze`、`dv_analyze_time` 分别报告快照依赖、有限模型适用性和时间重评边界。Session 使用同一个 Core 时间分析核，保留逐分钟回退与正式动作链。可执行示例、结果资格和未实现边界集中在 [SYNTAX.md](SYNTAX.md)。
 

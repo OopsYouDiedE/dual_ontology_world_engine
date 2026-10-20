@@ -1,0 +1,506 @@
+{
+  "scope": "neutral authoring syntax and Core data semantics; no gameplay",
+  "status": "failed",
+  "cases": [
+    {
+      "id": "natural-behavior",
+      "outcome": "compiled-and-executed",
+      "outputs": [
+        {
+          "prefix": "RAW ",
+          "value": "第一行保留中文标点：，。！？\nfn pretend() = \"unterminated\n#include deliberately-missing.dv\n#define 当 while\n// 原文不是注释；未配对括号 { [ (\n路径 C:\\story\\new\\file.dv；原样的 \\n 与 \\\" 都是文本。\n引号“甲”、‘乙’、「丙」与 ASCII \"quoted\"。\n非 BMP：😀、𠮷；行分隔字符：甲 乙。\n\n    额外四格缩进保留。\n最后一行。"
+        },
+        {
+          "prefix": "DIALOGUE ",
+          "value": [
+            "第一句：「请核对。」",
+            "\"\"",
+            "    保留额外缩进的第二句。",
+            "#include deliberately-missing-dialogue.dv",
+            "最后一句😀。"
+          ]
+        },
+        {
+          "prefix": "CRLF ",
+          "value": "第一行。\n\n第二行😀。"
+        },
+        {
+          "prefix": "TERMINAL ",
+          "value": "文件末尾没有换行。"
+        }
+      ],
+      "scenario_markers": [
+        "SCENARIO literal-text-and-conditional-dialogue completed",
+        "SCENARIO law-structure-three-valued-logic-and-explicit-execution completed",
+        "SCENARIO action-data-once-surface-and-independent-ownership completed"
+      ],
+      "generated_sha256": "d9a4b7768886be69c7b0e5ed82caeab561c8e8881cfa9f64d2e1bc84d832ff47"
+    },
+    {
+      "id": "law-missing-premise",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-missing-premise.dv",
+            "line": 3,
+            "column": 1,
+            "message": "法则需要前提或当分句；无条件时明确写前提 dv_true()"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-missing-premise.dv",
+            "line": 3,
+            "column": 1,
+            "message": "法则需要前提或当分句；无条件时明确写前提 dv_true()"
+          }
+        }
+      ]
+    },
+    {
+      "id": "law-missing-effects",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-missing-effects.dv",
+            "line": 3,
+            "column": 1,
+            "message": "法则需要效果或则分句；无效果时明确写效果 []"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-missing-effects.dv",
+            "line": 3,
+            "column": 1,
+            "message": "法则需要效果或则分句；无效果时明确写效果 []"
+          }
+        }
+      ]
+    },
+    {
+      "id": "law-duplicate-premise",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-duplicate-premise.dv",
+            "line": 5,
+            "column": 5,
+            "message": "重复分句：前提"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-duplicate-premise.dv",
+            "line": 5,
+            "column": 5,
+            "message": "重复分句：前提"
+          }
+        }
+      ]
+    },
+    {
+      "id": "law-duplicate-effects",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-duplicate-effects.dv",
+            "line": 6,
+            "column": 5,
+            "message": "重复分句：效果"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-duplicate-effects.dv",
+            "line": 6,
+            "column": 5,
+            "message": "重复分句：效果"
+          }
+        }
+      ]
+    },
+    {
+      "id": "law-mixed-premise",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-mixed-premise.dv",
+            "line": 3,
+            "column": 1,
+            "message": "前提与当分句不能同时使用"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-mixed-premise.dv",
+            "line": 3,
+            "column": 1,
+            "message": "前提与当分句不能同时使用"
+          }
+        }
+      ]
+    },
+    {
+      "id": "law-mixed-effects",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-mixed-effects.dv",
+            "line": 3,
+            "column": 1,
+            "message": "效果与则分句不能同时使用"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-mixed-effects.dv",
+            "line": 3,
+            "column": 1,
+            "message": "效果与则分句不能同时使用"
+          }
+        }
+      ]
+    },
+    {
+      "id": "law-unknown-clause",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-unknown-clause.dv",
+            "line": 5,
+            "column": 5,
+            "message": "未知法则分句：因而"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-unknown-clause.dv",
+            "line": 5,
+            "column": 5,
+            "message": "未知法则分句：因而"
+          }
+        }
+      ]
+    },
+    {
+      "id": "action-unknown-clause",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/action-unknown-clause.dv",
+            "line": 11,
+            "column": 5,
+            "message": "未知行动分句：自动成功"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/action-unknown-clause.dv",
+            "line": 11,
+            "column": 5,
+            "message": "未知行动分句：自动成功"
+          }
+        }
+      ]
+    },
+    {
+      "id": "action-missing-known",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/action-missing-known.dv",
+            "line": 3,
+            "column": 1,
+            "message": "缺少必要分句：precondition"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/action-missing-known.dv",
+            "line": 3,
+            "column": 1,
+            "message": "缺少必要分句：precondition"
+          }
+        }
+      ]
+    },
+    {
+      "id": "action-duplicate-known",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/action-duplicate-known.dv",
+            "line": 11,
+            "column": 5,
+            "message": "重复分句：precondition"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/action-duplicate-known.dv",
+            "line": 11,
+            "column": 5,
+            "message": "重复分句：precondition"
+          }
+        }
+      ]
+    },
+    {
+      "id": "unbound-after-nonbmp",
+      "outcome": "unexpected-result",
+      "error": "AssertionError: Compiler rejection did not include a source line and column"
+    },
+    {
+      "id": "duplicate-declaration",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/duplicate-declaration.dv",
+            "line": 6,
+            "column": 1,
+            "message": "duplicate or reserved function"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/duplicate-declaration.dv",
+            "line": 6,
+            "column": 1,
+            "message": "duplicate or reserved function"
+          }
+        }
+      ]
+    },
+    {
+      "id": "empty-prose",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/empty-prose.dv",
+            "line": 4,
+            "column": 1,
+            "message": "叙述或台词需要缩进的正文"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/empty-prose.dv",
+            "line": 4,
+            "column": 1,
+            "message": "叙述或台词需要缩进的正文"
+          }
+        }
+      ]
+    },
+    {
+      "id": "unclosed-quote",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/unclosed-quote.dv",
+            "line": 4,
+            "column": 7,
+            "message": "中文引号必须在本行闭合；多行请用叙述块"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/unclosed-quote.dv",
+            "line": 4,
+            "column": 7,
+            "message": "中文引号必须在本行闭合；多行请用叙述块"
+          }
+        }
+      ]
+    },
+    {
+      "id": "included-source-location",
+      "outcome": "unexpected-result",
+      "error": "AssertionError: Compiler rejection did not include a source line and column"
+    },
+    {
+      "id": "law-bare-boolean",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-bare-boolean.dv",
+            "line": 4,
+            "column": 7,
+            "message": "条件需要三值命题；无条件请写无条件或 dv_true()"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/law-bare-boolean.dv",
+            "line": 4,
+            "column": 7,
+            "message": "条件需要三值命题；无条件请写无条件或 dv_true()"
+          }
+        }
+      ]
+    },
+    {
+      "id": "alias-after-declaration",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/alias-after-declaration.dv",
+            "line": 6,
+            "column": 1,
+            "message": "define 或称谓必须位于本文件声明之前"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/alias-after-declaration.dv",
+            "line": 6,
+            "column": 1,
+            "message": "define 或称谓必须位于本文件声明之前"
+          }
+        }
+      ]
+    },
+    {
+      "id": "alias-nontext",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/alias-nontext.dv",
+            "line": 3,
+            "column": 9,
+            "message": "称谓须绑定文字；例如：称谓 门厅 为「hall」。"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/alias-nontext.dv",
+            "line": 3,
+            "column": 9,
+            "message": "称谓须绑定文字；例如：称谓 门厅 为「hall」。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "negation-bare-boolean",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/negation-bare-boolean.dv",
+            "line": 4,
+            "column": 9,
+            "message": "条件需要三值命题；无条件请写无条件或 dv_true()"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/negation-bare-boolean.dv",
+            "line": 4,
+            "column": 9,
+            "message": "条件需要三值命题；无条件请写无条件或 dv_true()"
+          }
+        }
+      ]
+    },
+    {
+      "id": "conjunction-bare-boolean",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/conjunction-bare-boolean.dv",
+            "line": 4,
+            "column": 14,
+            "message": "条件需要三值命题；无条件请写无条件或 dv_true()"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/conjunction-bare-boolean.dv",
+            "line": 4,
+            "column": 14,
+            "message": "条件需要三值命题；无条件请写无条件或 dv_true()"
+          }
+        }
+      ]
+    },
+    {
+      "id": "disjunction-bare-boolean",
+      "outcome": "rejected-at-expected-source-location",
+      "checks": [
+        {
+          "mode": "--check",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/disjunction-bare-boolean.dv",
+            "line": 4,
+            "column": 7,
+            "message": "条件需要三值命题；无条件请写无条件或 dv_true()"
+          }
+        },
+        {
+          "mode": "--emit",
+          "diagnostic": {
+            "path": "/workspace/scratch/c1e13f57077c/dual_ontology_world_engine/artifacts/natural-authoring-20261021/engineering-01/frozen/artifacts/natural-authoring-20261021/checks/negative/disjunction-bare-boolean.dv",
+            "line": 4,
+            "column": 7,
+            "message": "条件需要三值命题；无条件请写无条件或 dv_true()"
+          }
+        }
+      ]
+    }
+  ]
+}

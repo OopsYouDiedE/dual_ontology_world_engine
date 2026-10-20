@@ -1,0 +1,2821 @@
+// Persistent-by-copy data operations. Unchanged branches are frozen and thawed
+// only when accessed through an output owner, so output mutations stay independent.
+
+dv_pair(a, b) = [a, b]
+
+dv_single(a) = [a]
+
+dv_list3(a, b, c) = [a, b, c]
+
+fn dv_and(a, b):
+    if a:
+        return b
+    else:
+        return false
+
+fn dv_or(a, b):
+    if a:
+        return true
+    else:
+        return b
+
+fn dv_require(condition, message):
+    if condition:
+        return true
+    else:
+        return rt_fail(message)
+
+dv_clone(value) = rt_copy_value(value)
+
+dv_same(a, b) = rt_same_value(a, b)
+
+fn dv_append(items, value):
+    var r = dv_clone(items)
+    rt_push(r, dv_clone(value))
+    return r
+
+dv_has(items, value) = rt_has_value(items, value)
+
+dv_find(record, key, fallback) = rt_record_find(record, key, fallback)
+
+dv_has_key(record, key) = 0 <= rt_record_index(record, key)
+
+fn dv_record_like(value):
+    if rt_is_list(value):
+        var i = 0
+        var valid = true
+        while dv_and(valid, (i < rt_count(value))):
+            var entry = value[i]
+            var local_1 = false
+            if rt_is_list(entry):
+                local_1 = (rt_count(entry) == 2)
+            else:
+                local_1 = false
+            valid = local_1
+            i = (i + 1)
+        return valid
+    else:
+        return false
+
+dv_get(record, key) = rt_record_find(record, key, "__dv_missing_field_sentinel__")
+
+dv_with(record, key, value) = rt_record_with(record, key, value)
+
+fn dv_m2(k1, v1, k2, v2):
+    return dv_pair(dv_pair(k1, v1), dv_pair(k2, v2))
+
+fn dv_without(record, key):
+    var result = []
+    var i = 0
+    while (i < rt_count(record)):
+        var entry = record[i]
+        if (entry[0] == key):
+            false
+        else:
+            rt_push(result, dv_clone(entry))
+        i = (i + 1)
+    return result
+
+fn dv_m3(k1, v1, k2, v2, k3, v3):
+    return dv_with_many([], dv_list3(dv_pair(k1, v1), dv_pair(k2, v2), dv_pair(k3, v3)))
+
+fn dv_m4(k1, v1, k2, v2, k3, v3, k4, v4):
+    var updates = dv_list3(dv_pair(k1, v1), dv_pair(k2, v2), dv_pair(k3, v3))
+    rt_push(updates, dv_pair(k4, v4))
+    return dv_with_many([], updates)
+
+fn dv_unit(x):
+    dv_require(dv_and((not (x < 0)), (not (1 < x))), "Expected weight in [0,1]")
+    return x
+
+fn dv_unknown():
+    return dv_with_many({"known": false, "value": false, "confidence": 0, "time": -1}, {"claims": [], "conflicted": false})
+
+fn dv_min(a, b):
+    if (a < b):
+        return a
+    else:
+        return b
+
+fn dv_max(a, b):
+    if (a < b):
+        return b
+    else:
+        return a
+
+fn dv_cell(value, confidence, time, claims):
+    return dv_with_many({"known": true, "value": dv_clone(value), "confidence": dv_unit(confidence), "time": time}, {"claims": [], "basis": claims, "conflicted": false})
+
+dv_entity_ref(id) = {"type": "entity-ref", "id": id}
+
+dv_ref(object_id, facet, field) = {"type": "ref", "object": object_id, "facet": facet, "field": field}
+
+fn dv_scoped_ref(subject, object_id, facet, field):
+    return dv_with(dv_ref(object_id, facet, field), "subject", subject)
+
+fn dv_same_local_ref(subject, left, right):
+    if dv_find(left, "subject", subject) != subject or dv_find(right, "subject", subject) != subject:
+        return false
+    return left.type == right.type and left.object == right.object and left.facet == right.facet and left.field == right.field
+
+// An internal lookup key, not a replacement for ref equality or persistence.
+// Canonical text refs use length framing; every other value retains its JSON key.
+fn dv_ref_key_text(value):
+    if not rt_is_text(value):
+        return false
+    var i = 0
+    while i < rt_length(value):
+        let unit = rt_code(rt_chr(value, i))
+        // Preserve JSON encoder replacement behavior for malformed UTF-16.
+        if (55296 <= unit and unit <= 57343) or unit == 65533:
+            return false
+        i = i + 1
+    return true
+
+fn dv_ref_lookup_key(ref):
+    if not rt_is_list(ref):
+        return rt_cat("J", rt_json_stringify(ref))
+    let count = rt_count(ref)
+    if count != 4 and count != 5:
+        return rt_cat("J", rt_json_stringify(ref))
+    let fields = ["type", "object", "facet", "field", "subject"]
+    var parts = []
+    var i = 0
+    while i < count:
+        let pair = ref[i]
+        if not rt_is_list(pair):
+            return rt_cat("J", rt_json_stringify(ref))
+        if rt_count(pair) != 2:
+            return rt_cat("J", rt_json_stringify(ref))
+        if pair[0] != fields[i] or not dv_ref_key_text(pair[1]):
+            return rt_cat("J", rt_json_stringify(ref))
+        rt_push(parts, pair[1])
+        i = i + 1
+    if parts[0] != "ref":
+        return rt_cat("J", rt_json_stringify(ref))
+    var result = rt_cat("R", rt_cat(rt_show(count), ":"))
+    i = 0
+    while i < count:
+        result = rt_cat(result, rt_cat(rt_show(rt_length(parts[i])), rt_cat(":", parts[i])))
+        i = i + 1
+    return result
+
+fn dv_world(id, domain, subject):
+    dv_require(dv_or((domain == "physical"), (domain == "mind")), "Invalid world domain")
+    var local_1 = false
+    if (domain == "physical"):
+        local_1 = (subject == "")
+    else:
+        local_1 = (0 < rt_length(subject))
+    dv_require(local_1, "World subject mismatch")
+    return dv_with_many({"id": id, "domain": domain, "subject": subject, "revision": 0}, {"objects": [], "adoptions": [], "history": [], "seen": []})
+
+fn dv_domain(world, domain):
+    return dv_require((world.domain == domain), "Wrong world domain")
+
+fn dv_object(id, kind, facets):
+    var local_1 = false
+    if (kind == "perceived"):
+        local_1 = dv_unknown()
+    else:
+        local_1 = dv_field(kind)
+    return {"id": id, "kind": kind, "facets": dv_with(facets, "identity", dv_with(dv_find(facets, "identity", []), "kind", local_1))}
+
+fn dv_add_object(world, object):
+    var objects = world.objects
+    var id = object.id
+    dv_require((not dv_has_key(objects, id)), "Duplicate object identity")
+    return dv_with_many(world, {"objects": dv_with(objects, id, object), "revision": (world.revision + 1)})
+
+fn dv_read(world, ref):
+    if dv_has_key(ref, "subject"):
+        var subj = ref.subject
+        if (not (subj == "")):
+            dv_require((subj == world.subject), "Cross-subject reference access")
+    var objects = world.objects
+    var id = ref.object
+    // Validate subject and the original leading reads before the pure cache.
+    // Memo hits copy the complete cell, retaining independent caller ownership.
+    let key = ["dv_read", ref]
+    let cached = rt_memo_get(world, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(world, key, dv_read_fields(objects, id, ref))
+
+fn dv_read_fields(objects, id, ref):
+    if dv_has_key(objects, id):
+        var facets = dv_get(objects, id).facets
+        var facet = ref.facet
+        if dv_has_key(facets, facet):
+            var fields = dv_get(facets, facet)
+            var field_key = ref.field
+            if dv_has_key(fields, field_key):
+                return dv_clone(dv_get(fields, field_key))
+            else:
+                return dv_unknown()
+        else:
+            return dv_unknown()
+    else:
+        return dv_unknown()
+
+fn dv_store(world, ref, cell):
+    var objects = world.objects
+    var id = ref.object
+    dv_require(dv_has_key(objects, id), "Unknown object identity")
+    var object = dv_get(objects, id)
+    var facets = object.facets
+    var facet = ref.facet
+    var fields = dv_find(facets, facet, [])
+    let updated_fields = dv_with(fields, ref.field, cell)
+    let updated_object = dv_with(object, "facets", dv_with(facets, facet, updated_fields))
+    return dv_with(world, "objects", dv_with(objects, id, updated_object))
+
+fn dv_slice(world, object_id, facet, fields):
+    var result = []
+    var i = 0
+    while (i < rt_count(fields)):
+        var field = fields[i]
+        rt_push(result, dv_pair(field, dv_read(world, dv_ref(object_id, facet, field))))
+        i = (i + 1)
+    return dv_with_many({"world": world.id, "domain": world.domain, "subject": world.subject, "revision": world.revision}, {"object": object_id, "facet": facet, "fields": result})
+
+fn dv_field(value):
+    return dv_cell(value, 1, 0, [])
+
+fn dv_uncontested(cell):
+    return dv_and(cell.known, (not cell.conflicted))
+
+fn dv_door(id, from, to, closed, held, inside, outside, automatic, gap):
+    return dv_object(id, "door", {"link": {"from": dv_field(dv_entity_ref(from)), "to": dv_field(dv_entity_ref(to))}, "mechanical": dv_with_many({"closed": dv_field(closed), "held": dv_field(held), "inside_latch": dv_field(inside), "outside_latch": dv_field(outside)}, {"automatic": dv_field(automatic), "gap": dv_field(gap), "sealed": dv_field(false)})})
+
+fn dv_channel(id, from, to, medium, enabled, gain, gate):
+    dv_unit(gain)
+    return dv_object(id, "channel", {"link": {"from": dv_field(dv_entity_ref(from)), "to": dv_field(dv_entity_ref(to)), "medium": dv_field(medium), "gate": dv_field(gate)}, "transport": {"enabled": dv_field(enabled), "gain": dv_field(gain), "bands": dv_field([])}})
+
+fn dv_with_many(record, updates):
+    return rt_record_with_many(record, updates)
+
+// Copy the updated spine; unchanged branches use immutable snapshots.
+// Validation of the world/ref remains in dv_store before this data operation.
+fn dv_with_path(record, keys, depth, value):
+    let key = keys[depth]
+    var result = []
+    var found = false
+    var i = 0
+    while i < rt_count(record):
+        let entry = record[i]
+        if entry[0] == key:
+            var next = false
+            if depth + 1 == rt_count(keys):
+                next = dv_clone(value)
+            else:
+                next = dv_with_path(dv_get(record, key), keys, depth + 1, value)
+            rt_push(result, dv_pair(dv_clone(entry[0]), next))
+            found = true
+        else:
+            rt_push(result, rt_snapshot(entry))
+        i = i + 1
+    if not found:
+        var next = false
+        if depth + 1 == rt_count(keys):
+            next = dv_clone(value)
+        else:
+            next = dv_with_path([], keys, depth + 1, value)
+        rt_push(result, dv_pair(dv_clone(key), next))
+    return result
+
+// Private transaction builder: owned is a fresh dv_clone, never a published world.
+// Only law stages and dv_update_mind may call this; observed cells are copied.
+fn dv_stage_store_owned(owned, ref, cell):
+    let objects = owned.objects
+    dv_require(dv_has_key(objects, ref.object), "Unknown object identity")
+    let object = dv_get(objects, ref.object)
+    let facets = object.facets
+    let fields = dv_find(facets, ref.facet, [])
+    let updated = dv_with(object, "facets", dv_with(facets, ref.facet, dv_with(fields, ref.field, cell)))
+    var i = 0
+    while i < rt_count(objects):
+        if objects[i][0] == ref.object:
+            rt_replace(objects, i, dv_pair(dv_clone(objects[i][0]), dv_clone(updated)))
+        i = i + 1
+    return owned
+
+// --- merged from 10-laws.dv ---
+
+// Law schema is data. Adoption in each world determines how the schema is used.
+
+dv_true() = {"op": "constant", "value": "true"}
+
+dv_fact(ref, expected) = {"op": "equals", "ref": ref, "value": expected}
+
+dv_at_least(ref, minimum) = {"op": "at_least", "ref": ref, "value": minimum}
+
+dv_all(conditions) = {"op": "all", "items": conditions}
+
+dv_not(condition) = {"op": "not", "item": condition}
+
+// Record-shaped equalities and updates are ordinary law data. They retain the
+// three-valued premise evaluator and the same atomic effect staging path.
+dv_matches(object_id, facet, fields) = dv_all([for entry in fields: dv_fact(dv_ref(object_id, facet, entry[0]), entry[1])])
+
+dv_writes(object_id, facet, fields) = [for entry in fields: dv_assign(dv_ref(object_id, facet, entry[0]), entry[1])]
+
+// A declaration analyzer reports dependencies; it does not observe a world.
+fn dv_condition_inputs(condition):
+    let unsupported = {"complete": false, "reads": []}
+    if not dv_record_like(condition) or not dv_has_key(condition, "op"):
+        return unsupported
+    let op = condition.op
+    if op == "constant":
+        return {"complete": dv_has_key(condition, "value") and dv_has(["true", "false", "unknown"], dv_find(condition, "value", "")), "reads": []}
+    if op == "not":
+        if not dv_has_key(condition, "item"):
+            return unsupported
+        return dv_condition_inputs(condition.item)
+    if op == "all":
+        if not dv_has_key(condition, "items") or not rt_is_list(condition.items):
+            return unsupported
+        var reads = []
+        var complete = true
+        var i = 0
+        while i < rt_count(condition.items):
+            let part = dv_condition_inputs(condition.items[i])
+            complete = complete and part.complete
+            var j = 0
+            while j < rt_count(part.reads):
+                if not dv_has(reads, part.reads[j]):
+                    rt_push(reads, dv_clone(part.reads[j]))
+                j = j + 1
+            i = i + 1
+        return {"complete": complete, "reads": reads}
+    if (op != "equals" and op != "at_least") or not dv_has_key(condition, "ref") or not dv_has_key(condition, "value"):
+        return unsupported
+    let ref = condition.ref
+    if not dv_record_like(ref) or dv_find(ref, "type", "") != "ref":
+        return unsupported
+    if not rt_is_text(dv_find(ref, "object", false)) or not rt_is_text(dv_find(ref, "facet", false)) or not rt_is_text(dv_find(ref, "field", false)):
+        return unsupported
+    if not rt_is_text(dv_find(ref, "subject", "")):
+        return unsupported
+    if op == "at_least" and not rt_is_numeric_value(condition.value):
+        return unsupported
+    return {"complete": true, "reads": [dv_clone(ref)]}
+
+// Reference records are maps: field order and omitted/empty subject do not
+// change a read. An unspecified owner cannot prove a distinct explicit scope.
+fn dv_time_ref_relation(ref, clock):
+    if not dv_record_like(clock) or dv_find(clock, "type", "") != "ref":
+        return "unknown"
+    if not rt_is_text(dv_find(clock, "object", false)) or not rt_is_text(dv_find(clock, "facet", false)) or not rt_is_text(dv_find(clock, "field", false)) or not rt_is_text(dv_find(clock, "subject", "")):
+        return "unknown"
+    if ref.object != clock.object or ref.facet != clock.facet or ref.field != clock.field:
+        return "different"
+    if dv_find(ref, "subject", "") != dv_find(clock, "subject", ""):
+        return "unknown"
+    return "same"
+
+// This boundary only analyzes declared predicates. The caller owns stability
+// checks for non-clock inputs and ordered effects between samples.
+fn dv_time_boundary(condition, clock, now, until, policy):
+    dv_require(policy == "invalidate" or policy == "minute", "Unknown time analysis policy")
+    dv_require(rt_is_numeric_value(now) and rt_is_numeric_value(until), "Invalid time analysis interval")
+    if until < now:
+        return {"complete": false, "next": now}
+    let fallback = {"complete": false, "next": dv_min(until, now + 1)}
+    if not dv_record_like(condition) or not dv_has_key(condition, "op"):
+        return fallback
+    let op = condition.op
+    if op == "constant":
+        if not dv_has_key(condition, "value") or not dv_has(["true", "false", "unknown"], condition.value):
+            return fallback
+        return {"complete": true, "next": until}
+    if op == "not":
+        if not dv_has_key(condition, "item"):
+            return fallback
+        return dv_time_boundary(condition.item, clock, now, until, policy)
+    if op == "all":
+        if not dv_has_key(condition, "items") or not rt_is_list(condition.items):
+            return fallback
+        var next = until
+        var i = 0
+        while i < rt_count(condition.items):
+            let part = dv_time_boundary(condition.items[i], clock, now, until, policy)
+            if not part.complete:
+                return fallback
+            next = dv_min(next, part.next)
+            i = i + 1
+        return {"complete": true, "next": next}
+    let inputs = dv_condition_inputs(condition)
+    if not inputs.complete:
+        return fallback
+    if clock == false:
+        if policy == "minute":
+            return {"complete": true, "next": until}
+        return fallback
+    let relation = dv_time_ref_relation(condition.ref, clock)
+    if relation == "unknown":
+        return fallback
+    if relation == "different":
+        return {"complete": true, "next": until}
+    if not rt_is_numeric_value(condition.value):
+        return fallback
+    if policy == "minute":
+        if op != "at_least":
+            return fallback
+        if until < condition.value:
+            return {"complete": true, "next": until}
+        if now < condition.value:
+            let delta = condition.value - now
+            var steps = 1
+            while steps < delta:
+                steps = steps + 1
+            return {"complete": true, "next": dv_min(until, now + steps)}
+        return {"complete": true, "next": until}
+    if now < condition.value:
+        return {"complete": true, "next": dv_min(until, condition.value)}
+    if op == "equals" and now == condition.value:
+        return {"complete": true, "next": now}
+    return {"complete": true, "next": until}
+
+fn dv_analyze_time(condition, clock, now, until, policy):
+    let boundary = dv_time_boundary(condition, clock, now, until, policy)
+    let inputs = dv_condition_inputs(condition)
+    var solver = "minute-step"
+    var reason = "unsupported-predicate"
+    if boundary.complete:
+        solver = "event-boundary"
+        reason = "declared-boundary"
+    if not boundary.complete and inputs.complete and (dv_find(condition, "op", "") == "equals" or dv_find(condition, "op", "") == "at_least"):
+        if clock == false:
+            reason = "clock-not-declared"
+        else:
+            if dv_time_ref_relation(condition.ref, clock) == "unknown":
+                reason = "ambiguous-clock-reference"
+            else:
+                if policy == "minute" and condition.op == "equals":
+                    reason = "clock-equality-needs-sampling"
+    if until < now:
+        solver = "none"
+        reason = "expired-interval"
+    return dv_with_many(boundary, {"solver": solver, "reason": reason, "policy": policy, "from": now, "until": until, "reads": inputs.reads, "scope": "declaration", "assumptions": ["non-clock inputs remain stable", "caller rechecks state changes and ordered effects"], "numeric_semantics": "runtime-values"})
+
+// Snapshot diagnostics expose unknown and conflicted inputs separately. They
+// do not claim that effects or a postcondition have already been verified.
+fn dv_analyze_law(world, name):
+    let adoption = dv_get(world.adoptions, name)
+    let law = adoption.law
+    let inputs = dv_condition_inputs(law.premise)
+    var unknown = []
+    var conflicted = []
+    var i = 0
+    while i < rt_count(inputs.reads):
+        let ref = inputs.reads[i]
+        let cell = dv_read(world, ref)
+        if not cell.known:
+            rt_push(unknown, ref)
+        if cell.conflicted:
+            rt_push(conflicted, ref)
+        i = i + 1
+    var truth = "unknown"
+    if inputs.complete:
+        truth = dv_truth(world, law.premise)
+    return {"world": world.id, "subject": world.subject, "revision": world.revision, "law": name, "law_version": law.version, "mode": adoption.mode, "active": adoption.active, "premise": truth, "complete": inputs.complete, "reads": inputs.reads, "unknown": unknown, "conflicted": conflicted, "effects_verified": false, "scope": "input-snapshot", "numeric_semantics": "runtime-values"}
+
+fn dv_truth(world, proposition):
+    // Non-list owners retain memo's original Expected List error before the
+    // proposition is inspected. A constant otherwise never reads world state.
+    if rt_is_list(world):
+        if proposition.op == "constant":
+            // List constants retain memo's first-return / subsequent-copy ABI.
+            let value = proposition.value
+            if not rt_is_list(value):
+                return value
+    let key = ["dv_truth", proposition]
+    let cached = rt_memo_get(world, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(world, key, dv_truth_uncached(world, proposition))
+
+fn dv_truth_uncached(world, proposition):
+    var op = proposition.op
+    if (op == "constant"):
+        return proposition.value
+    else:
+        if (op == "not"):
+            var inner = dv_truth(world, proposition.item)
+            if (inner == "unknown"):
+                return "unknown"
+            else:
+                if (inner == "true"):
+                    return "false"
+                else:
+                    return "true"
+        else:
+            if (op == "all"):
+                var items = proposition.items
+                var i = 0
+                var result = "true"
+                while (i < rt_count(items)):
+                    var truth = dv_truth(world, items[i])
+                    if (truth == "false"):
+                        return "false"
+                    else:
+                        if dv_and((truth == "unknown"), (result == "true")):
+                            result = "unknown"
+                    i = (i + 1)
+                return result
+            else:
+                var cell = dv_read(world, proposition.ref)
+                if dv_or((not cell.known), cell.conflicted):
+                    return "unknown"
+                else:
+                    if (op == "equals"):
+                        if dv_same(cell.value, proposition.value):
+                            return "true"
+                        else:
+                            return "false"
+                    else:
+                        if (op == "at_least"):
+                            if (cell.value < proposition.value):
+                                return "false"
+                            else:
+                                return "true"
+                        else:
+                            return rt_fail("Unknown proposition operator")
+
+dv_assign(ref, value) = {"op": "assign", "ref": ref, "value": value}
+
+dv_increment(ref, amount) = {"op": "increment", "ref": ref, "value": amount}
+
+fn dv_axiom(name, version, premise, effects):
+    return {"name": name, "version": version, "premise": dv_clone(premise), "effects": dv_clone(effects)}
+
+// The postcondition is checked on the same candidate used by verify and run.
+// It never repairs a candidate or changes an unknown proposition into false.
+dv_contract(name, version, premise, effects, postcondition) = dv_with(dv_axiom(name, version, premise, effects), "postcondition", postcondition)
+
+fn dv_instance(id, law):
+    return dv_with_many(law, {"schema": law.name, "name": id})
+
+fn dv_checked_adoption(domain, adoptions, law, mode, confidence, basis):
+    dv_unit(confidence)
+    var local_1 = false
+    if (domain == "physical"):
+        local_1 = (confidence == 1)
+    else:
+        local_1 = true
+    dv_require(local_1, "Physical laws require certainty")
+    dv_require((0 < rt_count(basis)), "Adoption needs a basis")
+    dv_require((not dv_has_key(adoptions, law.name)), "Duplicate law instance: provide a distinct instance identity")
+    var local_2 = false
+    if (domain == "physical"):
+        local_2 = (mode == "enforce")
+    else:
+        local_2 = dv_and((domain == "mind"), dv_or((mode == "predict"), dv_or((mode == "infer"), (mode == "norm"))))
+    dv_require(local_2, "Adoption mode is incompatible with world")
+    return dv_with({"law": law, "mode": mode, "confidence": confidence, "basis": basis}, "active", true)
+
+fn dv_adopt(world, law, mode, confidence, basis):
+    let adoption = dv_checked_adoption(world.domain, world.adoptions, law, mode, confidence, basis)
+    return dv_with_many(world, {"adoptions": dv_with(world.adoptions, law.name, adoption), "revision": (world.revision + 1)})
+
+// Initialization-only builder: owned_adoptions is a private clone, never a world field.
+fn dv_adopt_into(domain, owned_adoptions, law, mode, confidence, basis):
+    let adoption = dv_checked_adoption(domain, owned_adoptions, law, mode, confidence, basis)
+    rt_push(owned_adoptions, dv_pair(law.name, adoption))
+    return true
+
+fn dv_finish_owned_adoptions(world, owned_adoptions):
+    let previous_count = rt_count(world.adoptions)
+    dv_require(previous_count <= rt_count(owned_adoptions), "Adoption builder removed inherited entries")
+    var i = 0
+    while i < previous_count:
+        dv_require(dv_same(world.adoptions[i], owned_adoptions[i]), "Adoption builder changed inherited entries")
+        i = i + 1
+    if previous_count == rt_count(owned_adoptions):
+        return world
+    return dv_with_many(world, {"adoptions": owned_adoptions, "revision": world.revision + rt_count(owned_adoptions) - previous_count})
+
+fn dv_suspend(world, name):
+    var adoptions = world.adoptions
+    return dv_with_many(world, {"adoptions": dv_with(adoptions, name, dv_with(dv_get(adoptions, name), "active", false)), "revision": (world.revision + 1)})
+
+fn dv_reconsider(world, law, mode, confidence, basis):
+    var name = law.name
+    var previous = dv_get(world.adoptions, name)
+    var updated = dv_adopt(dv_with(world, "adoptions", dv_without(world.adoptions, name)), law, mode, confidence, basis)
+    return dv_with(updated, "history", dv_append(world.history, {"kind": "reconsideration", "previous": previous, "current": dv_get(updated.adoptions, name), "basis": basis}))
+
+fn dv_premise_confidence(world, proposition):
+    var op = proposition.op
+    if (op == "constant"):
+        return 1
+    else:
+        if (op == "not"):
+            return dv_premise_confidence(world, proposition.item)
+        else:
+            if (op == "all"):
+                var items = proposition.items
+                var i = 0
+                var confidence = 1
+                while (i < rt_count(items)):
+                    confidence = dv_min(confidence, dv_premise_confidence(world, items[i]))
+                    i = (i + 1)
+                return confidence
+            else:
+                return dv_read(world, proposition.ref).confidence
+
+fn dv_result(status, world, changes, basis):
+    return {"status": status, "world": dv_clone(world), "changes": dv_clone(changes), "basis": dv_clone(basis)}
+
+fn dv_stage(world, effects, time, basis, confidence):
+    var stage = dv_clone(world)
+    var changes = []
+    var touched = []
+    var i = 0
+    var status = "ready"
+    while dv_and((status == "ready"), (i < rt_count(effects))):
+        var effect = effects[i]
+        var ref = effect.ref
+        var op = effect.op
+        var before = dv_read(stage, ref)
+        if (not dv_has_key(stage.objects, ref.object)):
+            status = "unknown-object"
+        else:
+            if dv_has(touched, ref):
+                status = "duplicate-write"
+            else:
+                if dv_and((op == "increment"), dv_or((not before.known), before.conflicted)):
+                    status = "conflicted-state"
+                else:
+                    dv_require(dv_or((op == "assign"), (op == "increment")), "Unknown effect operator")
+                    var local_1 = false
+                    if (op == "assign"):
+                        local_1 = effect.value
+                    else:
+                        local_1 = (before.value + effect.value)
+                    var value = local_1
+                    stage = dv_stage_store_owned(stage, ref, dv_cell(value, confidence, time, basis))
+                    rt_push(changes, {"ref": ref, "before": before, "after": dv_read(stage, ref)})
+                    rt_push(touched, dv_clone(ref))
+        i = (i + 1)
+    if (status == "ready"):
+        return {"status": "ready", "world": stage, "changes": changes, "basis": basis}
+    else:
+        return dv_result(status, world, [], basis)
+
+fn dv_infer_stage(world, effects, time, basis, confidence, law_name, event_id):
+    var stage = dv_clone(world)
+    var changes = []
+    var touched = []
+    var i = 0
+    var status = "ready"
+    var profile = dv_find(world, "profile", dv_observation_profile({"perception": 1, "testimony": 1, "recall": 1, "inference": 1}, 0.5))
+    while dv_and((status == "ready"), (i < rt_count(effects))):
+        var effect = effects[i]
+        var ref = effect.ref
+        var op = effect.op
+        var before = dv_read(stage, ref)
+        if (not dv_has_key(stage.objects, ref.object)):
+            status = "unknown-object"
+        else:
+            if dv_has(touched, ref):
+                status = "duplicate-write"
+            else:
+                if dv_and((op == "increment"), dv_or((not before.known), before.conflicted)):
+                    status = "conflicted-state"
+                else:
+                    dv_require(dv_or((op == "assign"), (op == "increment")), "Unknown effect operator")
+                    var local_1 = false
+                    if (op == "assign"):
+                        local_1 = effect.value
+                    else:
+                        local_1 = (before.value + effect.value)
+                    var value = local_1
+                    var claim = dv_with_many({"id": dv_list3(event_id, law_name, ref), "subject": stage.subject, "ref": ref, "value": dv_clone(value)}, {"source": "inference", "origin": law_name, "time": time, "trust": confidence, "dependency": dv_list3("inference", law_name, ref)})
+                    var old_claims = before.claims
+                    var local_2 = false
+                    if dv_and(before.known, (rt_count(old_claims) == 0)):
+                        local_2 = dv_single(dv_with_many({"id": dv_pair("initial", ref), "subject": stage.subject, "ref": ref, "value": before.value}, {"source": "initial", "origin": "initial", "time": before.time, "trust": before.confidence, "dependency": dv_pair("initial", ref)}))
+                    else:
+                        local_2 = old_claims
+                    var claims = local_2
+                    var new_claims = dv_replace_claim(claims, claim)
+                    var new_cell = dv_aggregate(new_claims, profile, time)
+                    stage = dv_stage_store_owned(stage, ref, new_cell)
+                    rt_push(changes, {"ref": ref, "before": before, "after": dv_read(stage, ref)})
+                    rt_push(touched, dv_clone(ref))
+        i = (i + 1)
+    if (status == "ready"):
+        return {"status": "ready", "world": stage, "changes": changes, "basis": basis}
+    else:
+        return dv_result(status, world, [], basis)
+
+// One evaluator stages effects for both operations. Verification returns the
+// unchanged input as .world and labels the candidate as a non-executable view.
+// Run always reevaluates the current input; a verification is not a commit token.
+fn dv_evaluate_law_value(world, name, mode, event_id, time, expected_revision, operation):
+    dv_require(operation == "verify" or operation == "run", "Expected verify or run")
+    dv_require((world.revision == expected_revision), "Stale world revision")
+    dv_require((not dv_has(world.seen, event_id)), "Repeated world event")
+    dv_require((not (time < dv_find(world, "time", 0))), "World time cannot move backwards")
+    dv_require((world.domain == "physical" and mode == "enforce") or (world.domain == "mind" and (mode == "infer" or mode == "predict")), "Evaluation mode is incompatible with world")
+    var adoption = dv_get(world.adoptions, name)
+    var law = adoption.law
+    var basis = adoption.basis
+    if (not adoption.active):
+        return dv_result("not-adopted", world, [], basis)
+    else:
+        if (not (adoption.mode == mode)):
+            return dv_result("wrong-adoption-mode", world, [], basis)
+        else:
+            var truth = dv_truth(world, law.premise)
+            if (not (truth == "true")):
+                return dv_result(rt_cat("premise-", truth), world, [], basis)
+            else:
+                var local_1 = false
+                if (mode == "infer"):
+                    var infer_confidence = dv_min(dv_premise_confidence(world, law.premise), adoption.confidence)
+                    local_1 = dv_infer_stage(world, law.effects, time, basis, infer_confidence, name, event_id)
+                else:
+                    local_1 = dv_stage(world, law.effects, time, basis, adoption.confidence)
+                var staged = local_1
+                if (not (staged.status == "ready")):
+                    return staged
+                else:
+                    if dv_has_key(law, "postcondition"):
+                        let post_truth = dv_truth(staged.world, law.postcondition)
+                        if post_truth != "true":
+                            return dv_result(rt_cat("postcondition-", post_truth), world, [], basis)
+                    if operation == "verify":
+                        let candidate = dv_with_many(staged.world, {"domain": "verification", "source_domain": world.domain, "source_revision": expected_revision})
+                        let assessment = {"world": world.id, "subject": world.subject, "revision": expected_revision, "law": name, "law_version": law.version, "mode": mode, "event": event_id, "time": time, "precision": "runtime-discrete", "scope": "input-snapshot"}
+                        return dv_with_many(dv_result("verified", world, dv_clone(staged.changes), dv_clone(basis)), {"candidate": candidate, "assessment": assessment})
+                    var next = staged.world
+                    var revision = (expected_revision + 1)
+                    var event = dv_with_many({"id": event_id, "time": time, "law": name, "law_version": law.version}, {"changes": staged.changes, "basis": basis})
+                    rt_push(next.seen, dv_clone(event_id))
+                    rt_push(next.history, event)
+                    next = dv_with_many(next, {"revision": revision, "time": time})
+                    return {"status": "applied", "world": next, "changes": dv_clone(staged.changes), "basis": dv_clone(basis), "event": event_id, "time": time}
+
+// Every completed prediction result, including a blocked one, remains outside
+// the authoritative mind domain. Verification still returns its original input.
+fn dv_evaluate_law(world, name, mode, event_id, time, expected_revision, operation):
+    let result = dv_evaluate_law_value(world, name, mode, event_id, time, expected_revision, operation)
+    if operation == "run" and mode == "predict":
+        return dv_with_many(result, {"world": dv_with_many(result.world, {"domain": "prediction", "source_revision": expected_revision}), "source_revision": expected_revision})
+    return result
+
+dv_apply_law(world, name, mode, event_id, time, expected_revision) = dv_evaluate_law(world, name, mode, event_id, time, expected_revision, "run")
+
+dv_verify(world, name, mode, event_id, time, expected_revision) = dv_evaluate_law(world, name, mode, event_id, time, expected_revision, "verify")
+
+// A compact request keeps operation explicit and never infers a subject's mode
+// from authoritative physics. Existing execute/predict/infer entry points remain.
+dv_evaluate(world, name, request) = dv_evaluate_law(world, name, request.mode, request.event, request.time, request.revision, request.operation)
+
+fn dv_execute(physical, name, event_id, time, expected_revision):
+    dv_domain(physical, "physical")
+    return dv_apply_law(physical, name, "enforce", event_id, time, expected_revision)
+
+fn dv_predict(mind, name, event_id, time, expected_revision):
+    dv_domain(mind, "mind")
+    return dv_apply_law(mind, name, "predict", event_id, time, expected_revision)
+
+fn dv_infer(mind, name, event_id, time, expected_revision):
+    dv_domain(mind, "mind")
+    return dv_apply_law(mind, name, "infer", event_id, time, expected_revision)
+
+fn dv_norm(mind, name):
+    dv_domain(mind, "mind")
+    var adoption = dv_get(mind.adoptions, name)
+    dv_require((adoption.mode == "norm"), "Not a normative adoption")
+    if adoption.active:
+        return dv_truth(mind, adoption.law.premise)
+    else:
+        return "unknown"
+
+// --- merged from 60-object-laws.dv ---
+
+// Generic operational axioms. No chapter identities, answers or authored dialogue.
+
+function law = door_open(door)
+    law = dv_axiom("door_open", 1, dv_matches(door, "mechanical", {"inside_latch": false, "outside_latch": false}), dv_writes(door, "mechanical", {"closed": false}))
+end
+
+door_self_close(door) = dv_axiom("door_self_close", 1, dv_matches(door, "mechanical", {"automatic": true, "held": false}), dv_writes(door, "mechanical", {"closed": true, "gap": 0}))
+
+door_latch(door) = dv_axiom("door_latch", 1, dv_matches(door, "mechanical", {"closed": true}), dv_writes(door, "mechanical", {"inside_latch": true}))
+
+door_seal(door) = dv_axiom("door_seal", 1, dv_matches(door, "mechanical", {"closed": true}), dv_writes(door, "mechanical", {"sealed": true}))
+
+channel_reconfigure(channel, gain) = dv_axiom("channel_reconfigure", 1, dv_true(), dv_writes(channel, "transport", {"gain": dv_unit(gain)}))
+
+channel_flow(channel) = dv_axiom("channel_flow", 1, dv_matches(channel, "transport", {"enabled": true}), [])
+
+
+// Observation adaptation is an explicit trusted boundary. Minds receive no world pointer.
+
+dv_binding(physical, local, subject) = {"physical": physical, "local": local, "subject": subject}
+
+// Bind explicitly named identities in one call. Only empty perceived objects
+// are created; neither physical facets nor physical law adoption enter the mind.
+fn dv_bind(physical, mind, aliases):
+    dv_domain(physical, "physical")
+    dv_domain(mind, "mind")
+    dv_require(dv_record_like(aliases), "Bindings require physical-to-local identity pairs")
+    var next = dv_clone(mind)
+    var bindings = []
+    var i = 0
+    while i < rt_count(aliases):
+        let source = aliases[i][0]
+        let local = aliases[i][1]
+        dv_require(dv_has_key(physical.objects, source), "Cannot bind an unknown physical object")
+        dv_require(0 < rt_length(source) and 0 < rt_length(local), "Binding identities must be nonempty")
+        rt_push(bindings, dv_binding(source, local, mind.subject))
+        if not dv_has_key(next.objects, local):
+            next = dv_add_object(next, dv_object(local, "perceived", []))
+        i = i + 1
+    dv_validate_bindings(bindings, mind.subject)
+    return {"mind": next, "bindings": bindings, "subject": mind.subject, "source_world": physical.id, "source_revision": physical.revision}
+
+dv_view(physical, subject, aliases) = dv_bind(physical, dv_world(rt_cat("mind:", subject), "mind", subject), aliases)
+
+// Subject-specific index over the exact binding value. Ambiguity remains a
+// lookup error only for the requested physical identity, as with the linear scan.
+fn dv_local(bindings, physical, subject):
+    let lookup_key = [rt_cat("projection-local:", subject), physical]
+    let lookup = rt_memo_get(bindings, lookup_key)
+    if lookup[0]:
+        dv_require(not lookup[1].ambiguous, "Ambiguous projection binding")
+        return lookup[1].local
+    let key = ["projection-index", subject]
+    let cached = rt_memo_get(bindings, key)
+    var index = []
+    if cached[0]:
+        index = cached[1]
+    else:
+        var i = 0
+        while i < rt_count(bindings):
+            let binding = bindings[i]
+            if binding.subject == subject:
+                let previous = dv_find(index, binding.physical, {"local": "", "ambiguous": false})
+                let entry = {"local": binding.local, "ambiguous": previous.ambiguous or previous.local != ""}
+                let slot = rt_record_index(index, binding.physical)
+                if slot < 0:
+                    rt_push(index, dv_pair(binding.physical, entry))
+                else:
+                    rt_replace(index, slot, dv_pair(binding.physical, entry))
+            i = i + 1
+        rt_memo_put(bindings, key, index)
+    let found = dv_find(index, physical, {"local": "", "ambiguous": false})
+    rt_memo_put(bindings, lookup_key, found)
+    dv_require(not found.ambiguous, "Ambiguous projection binding")
+    return found.local
+
+fn dv_validate_bindings(bindings, subject):
+    let key = ["validated-projection", subject]
+    if rt_memo_get(bindings, key)[0]:
+        return true
+    var i = 0
+    var locals = []
+    var physicals = []
+    while (i < rt_count(bindings)):
+        var b = bindings[i]
+        if (b.subject == subject):
+            dv_require((0 < rt_length(b.local)), "Empty local identity")
+            dv_require((not dv_has(locals, b.local)), "Local projection cannot bind two objects")
+            dv_require((not dv_has(physicals, b.physical)), "Ambiguous physical binding")
+            rt_push(locals, b.local)
+            rt_push(physicals, b.physical)
+        i = (i + 1)
+    return rt_memo_put(bindings, key, true)
+
+fn dv_project_value(value, bindings, subject):
+    if rt_is_list(value):
+        if dv_record_like(value):
+            if dv_same(dv_find(value, "type", ""), "entity-ref"):
+                var local = dv_local(bindings, value.id, subject)
+                if (local == ""):
+                    return {"known": false, "value": false}
+                else:
+                    return {"known": true, "value": dv_entity_ref(local)}
+            else:
+                if dv_or(dv_same(dv_find(value, "type", ""), "ref"), dv_and(dv_has_key(value, "object"), dv_and(dv_has_key(value, "facet"), dv_has_key(value, "field")))):
+                    var local = dv_local(bindings, value.object, subject)
+                    if (local == ""):
+                        return {"known": false, "value": false}
+                    else:
+                        return {"known": true, "value": dv_scoped_ref(subject, local, value.facet, value.field)}
+                else:
+                    if dv_has_key(value, "op"):
+                        var op = value.op
+                        if (op == "constant"):
+                            return {"known": true, "value": value}
+                        else:
+                            if dv_or((op == "equals"), (op == "at_least")):
+                                var p_ref = dv_project_value(value.ref, bindings, subject)
+                                var p_val = dv_project_value(value.value, bindings, subject)
+                                if dv_and(p_ref.known, p_val.known):
+                                    return {"known": true, "value": dv_with_many(value, {"ref": p_ref.value, "value": p_val.value})}
+                                else:
+                                    return {"known": false, "value": false}
+                            else:
+                                if (op == "not"):
+                                    var p_item = dv_project_value(value.item, bindings, subject)
+                                    if p_item.known:
+                                        return {"known": true, "value": dv_with(value, "item", p_item.value)}
+                                    else:
+                                        return {"known": false, "value": false}
+                                else:
+                                    if (op == "all"):
+                                        var items = value.items
+                                        var i = 0
+                                        var p_items = []
+                                        var all_known = true
+                                        while (i < rt_count(items)):
+                                            var p_sub = dv_project_value(items[i], bindings, subject)
+                                            all_known = dv_and(all_known, p_sub.known)
+                                            rt_push(p_items, p_sub.value)
+                                            i = (i + 1)
+                                        if all_known:
+                                            return {"known": true, "value": dv_with(value, "items", p_items)}
+                                        else:
+                                            return {"known": false, "value": false}
+                                    else:
+                                        return {"known": false, "value": false}
+                    else:
+                        var i = 0
+                        var items = []
+                        var known = true
+                        while (i < rt_count(value)):
+                            var projected = dv_project_value(value[i], bindings, subject)
+                            known = dv_and(known, projected.known)
+                            rt_push(items, projected.value)
+                            i = (i + 1)
+                        return {"known": known, "value": items}
+        else:
+            var i = 0
+            var items = []
+            var known = true
+            while (i < rt_count(value)):
+                var projected = dv_project_value(value[i], bindings, subject)
+                known = dv_and(known, projected.known)
+                rt_push(items, projected.value)
+                i = (i + 1)
+            return {"known": known, "value": items}
+    else:
+        return {"known": true, "value": value}
+
+fn dv_observation(id, subject, ref, value, source, origin, time, trust, dependency):
+    dv_unit(trust)
+    dv_require((not (time < 0)), "Negative observation time")
+    dv_require(dv_has(dv_append(dv_list3("perception", "testimony", "recall"), dv_pair("inference", "initial")), source), "Observations use perception, testimony, recall, inference or initial")
+    return dv_with_many({"id": id, "subject": subject, "ref": ref, "value": dv_clone(value)}, {"source": source, "origin": origin, "time": time, "trust": trust, "dependency": dependency})
+
+fn dv_perceive(physical, mind, bindings, grants, event_id, time):
+    dv_domain(physical, "physical")
+    dv_domain(mind, "mind")
+    dv_validate_bindings(bindings, mind.subject)
+    var observations = []
+    var i = 0
+    var subject = mind.subject
+    while (i < rt_count(grants)):
+        var ref = grants[i]
+        var local = dv_local(bindings, ref.object, subject)
+        var cell = dv_read(physical, ref)
+        if dv_and((not (local == "")), cell.known):
+            var mapped = dv_project_value(cell.value, bindings, subject)
+            var local_ref = dv_scoped_ref(subject, local, ref.facet, ref.field)
+            if mapped.known:
+                rt_push(observations, dv_with(dv_observation(dv_list3(event_id, subject, local_ref), subject, local_ref, mapped.value, "perception", "direct", time, 1, dv_pair(event_id, local_ref)), "world_version", {"id": physical.id, "revision": physical.revision}))
+        i = (i + 1)
+    return observations
+
+fn dv_perceive_changes(receipt, mind, bindings, grants):
+    dv_require((receipt.status == "applied"), "Only applied world changes can be perceived")
+    var changes = receipt.changes
+    var exposed = []
+    var i = 0
+    while (i < rt_count(changes)):
+        var ref = changes[i].ref
+        if dv_has(grants, ref):
+            rt_push(exposed, ref)
+        i = (i + 1)
+    return dv_perceive(receipt.world, mind, bindings, exposed, receipt.event, receipt.time)
+
+fn dv_observation_profile(source_weights, threshold):
+    return {"weights": source_weights, "threshold": dv_unit(threshold)}
+
+fn dv_weight(observation, profile):
+    var weights = profile.weights
+    var source = observation.source
+    var weight = dv_find(weights, source, 1)
+    dv_require((not (weight < 0)), "Negative evidence weight")
+    return (weight * dv_unit(observation.trust))
+
+fn dv_replace_claim(claims, observation):
+    var result = []
+    var i = 0
+    while (i < rt_count(claims)):
+        var old = claims[i]
+        if dv_same(old.dependency, observation.dependency):
+            false
+        else:
+            rt_push(result, dv_clone(old))
+        i = (i + 1)
+    rt_push(result, dv_clone(observation))
+    return result
+
+fn dv_aggregate(claims, profile, time):
+    var alternatives = []
+    var i = 0
+    var total = 0
+    var best = 0
+    var chosen = false
+    var best_rel = 0
+    while (i < rt_count(claims)):
+        var claim = claims[i]
+        var weight = dv_weight(claim, profile)
+        var value = claim.value
+        var j = 0
+        var found = false
+        var new_items = []
+        while (j < rt_count(alternatives)):
+            var alternative = alternatives[j]
+            if dv_same(alternative[0], value):
+                rt_push(new_items, dv_list3(value, (alternative[1] + weight), dv_max(alternative[2], dv_unit(claim.trust))))
+                found = true
+            else:
+                rt_push(new_items, alternative)
+            j = (j + 1)
+        if dv_or(found, (weight == 0)):
+            false
+        else:
+            rt_push(new_items, dv_list3(value, weight, dv_unit(claim.trust)))
+        alternatives = new_items
+        total = (total + weight)
+        i = (i + 1)
+    i = 0
+    var distribution = []
+    while (i < rt_count(alternatives)):
+        var alternative = alternatives[i]
+        var weight = alternative[1]
+        var rel = alternative[2]
+        if (best < weight):
+            best = weight
+            chosen = alternative[0]
+            best_rel = rel
+        var local_1 = false
+        if (total == 0):
+            local_1 = 0
+        else:
+            local_1 = (weight / total)
+        rt_push(distribution, dv_pair(alternative[0], local_1))
+        i = (i + 1)
+    var local_2 = false
+    if (total == 0):
+        local_2 = 0
+    else:
+        local_2 = (best / total)
+    var support_share = local_2
+    // Agreement measures support, not source independence. Repeating uncertain
+    // evidence cannot establish certainty without an independent model of it.
+    var epistemic_confidence = (support_share * best_rel)
+    var cell = dv_cell(chosen, epistemic_confidence, time, claims)
+    return dv_with_many(cell, {"known": dv_and((0 < total), (not (epistemic_confidence < profile.threshold))), "conflicted": (1 < rt_count(alternatives)), "claims": claims, "alternatives": distribution, "support_share": support_share, "source_reliability": best_rel})
+
+fn dv_update_mind(mind, observations, expected_revision, profile):
+    dv_domain(mind, "mind")
+    dv_require((mind.revision == expected_revision), "Stale cognition revision")
+    var next = dv_clone(mind)
+    var i = 0
+    var accepted = []
+    var dispositions = []
+    var latest_time = dv_find(mind, "time", 0)
+    while (i < rt_count(observations)):
+        var observation = observations[i]
+        var id = observation.id
+        var ref = observation.ref
+        var object_id = ref.object
+        dv_require((observation.subject == mind.subject), "Foreign observation")
+        dv_require((not dv_has(next.seen, id)), "Repeated observation")
+        dv_weight(observation, profile)
+        if dv_has_key(next.objects, object_id):
+            false
+        else:
+            next = dv_add_object(next, dv_object(object_id, "perceived", []))
+        var old = dv_read(next, ref)
+        var time = observation.time
+        latest_time = dv_max(latest_time, time)
+        if (time < old.time):
+            rt_push(dispositions, dv_pair(id, "older-than-current"))
+        else:
+            var is_perception = (observation.source == "perception")
+            let version = dv_find(observation, "world_version", false)
+            let previous_version = dv_find(old, "world_version", false)
+            var later_version = false
+            if (version != false and previous_version != false):
+                later_version = (version.id == previous_version.id and previous_version.revision < version.revision)
+            let replaces_current = is_perception and (old.time < time or later_version)
+            var local_1 = false
+            if replaces_current:
+                local_1 = []
+            else:
+                local_1 = old.claims
+            var claims = local_1
+            if dv_and(old.known, (rt_count(claims) == 0)):
+                if (not replaces_current):
+                    claims = dv_single(dv_with_many({"id": dv_pair("initial", ref), "subject": next.subject, "ref": ref, "value": old.value}, {"source": "initial", "origin": "initial", "time": old.time, "trust": old.confidence, "dependency": dv_pair("initial", ref)}))
+            var new_time = dv_max(old.time, time)
+            var updated = dv_aggregate(dv_replace_claim(claims, observation), profile, new_time)
+            if (is_perception and version != false):
+                updated = dv_with(updated, "world_version", version)
+            else:
+                if (previous_version != false):
+                    updated = dv_with(updated, "world_version", previous_version)
+            next = dv_stage_store_owned(next, ref, updated)
+            rt_push(dispositions, dv_pair(id, "updated"))
+        rt_push(next.seen, dv_clone(id))
+        rt_push(accepted, dv_clone(observation))
+        i = (i + 1)
+    var local_2 = false
+    if (rt_count(observations) == 0):
+        local_2 = expected_revision
+    else:
+        local_2 = (expected_revision + 1)
+    rt_push(next.history, {"kind": "observation-batch", "observations": accepted, "dispositions": dispositions})
+    next = dv_with_many(next, {"time": latest_time, "revision": local_2})
+    return {"world": next, "dispositions": dispositions, "revision": next.revision}
+
+// --- merged from 30-transport.dv ---
+
+// Signals are segmented by the author/host. No hidden reconstruction of lost words.
+
+fn dv_segment(content, strength, band):
+    return {"content": content, "strength": strength, "band": band}
+
+fn dv_signal(location, medium, segments):
+    return {"location": dv_entity_ref(location), "medium": medium, "segments": segments}
+
+fn dv_filter_signal(segments, gain, threshold, bands):
+    var result = []
+    var i = 0
+    while (i < rt_count(segments)):
+        var segment = segments[i]
+        var strength = (segment.strength * gain)
+        if dv_and((not (strength < threshold)), dv_or((rt_count(bands) == 0), dv_has(bands, segment.band))):
+            rt_push(result, dv_segment(segment.content, strength, segment.band))
+        i = (i + 1)
+    return result
+
+fn dv_transport(world, path, signal, threshold):
+    dv_require((not (threshold < 0)), "Negative perception threshold")
+    var i = 0
+    var location = signal.location
+    var segments = dv_clone(signal.segments)
+    var status = "delivered"
+    var trace = []
+    while dv_and((status == "delivered"), (i < rt_count(path))):
+        var channel = path[i]
+        var objects = world.objects
+        dv_require(dv_has_key(objects, channel), "Unknown channel")
+        dv_require((dv_truth(world, dv_fact(dv_ref(channel, "identity", "kind"), "channel")) == "true"), "Transport object must be known as a channel")
+        var from = dv_read(world, dv_ref(channel, "link", "from"))
+        var to = dv_read(world, dv_ref(channel, "link", "to"))
+        var medium = dv_read(world, dv_ref(channel, "link", "medium"))
+        var gate = dv_read(world, dv_ref(channel, "link", "gate"))
+        var enabled = dv_read(world, dv_ref(channel, "transport", "enabled"))
+        var gain = dv_read(world, dv_ref(channel, "transport", "gain"))
+        if dv_and(dv_and(dv_uncontested(from), dv_uncontested(to)), dv_and(dv_and(dv_uncontested(medium), dv_uncontested(gate)), dv_and(dv_uncontested(enabled), dv_uncontested(gain)))):
+            dv_require(dv_same(location, from.value), "Discontinuous channel path")
+            dv_require((signal.medium == medium.value), "Channel medium mismatch")
+            var gate_truth = dv_truth(world, gate.value)
+            if dv_and(enabled.value, (gate_truth == "true")):
+                var bands_cell = dv_read(world, dv_ref(channel, "transport", "bands"))
+                if dv_uncontested(bands_cell):
+                    segments = dv_filter_signal(segments, dv_unit(gain.value), threshold, bands_cell.value)
+                    location = to.value
+                    rt_push(trace, channel)
+                else:
+                    status = "unknown"
+            else:
+                var local_1 = false
+                if (gate_truth == "unknown"):
+                    local_1 = "unknown"
+                else:
+                    local_1 = "blocked"
+                status = local_1
+        else:
+            status = "unknown"
+        i = (i + 1)
+    var local_2 = false
+    if (status == "delivered"):
+        local_2 = segments
+    else:
+        local_2 = []
+    return dv_with({"status": status, "location": location, "segments": local_2, "trace": trace}, "world_revision", world.revision)
+
+fn dv_hear(delivery, subject, local_ref, perceived_origin, event_id, time):
+    dv_require((delivery.status == "delivered"), "No delivered signal")
+    dv_require((dv_find(delivery, "hypothetical", true) == false), "Predicted or unauthorised transmission cannot become perception")
+    return dv_observation(event_id, subject, local_ref, delivery.segments, "perception", perceived_origin, time, 1, event_id)
+
+fn dv_transport_theory(law):
+    return dv_with(law, "operation", "attenuate-filter")
+
+fn dv_transmit(world, law_name, path, signal, threshold):
+    var adoption = dv_get(world.adoptions, law_name)
+    var law = adoption.law
+    dv_require(adoption.active, "Transmission law is not active")
+    dv_require((law.operation == "attenuate-filter"), "Not a transport theory")
+    var local_1 = false
+    if (world.domain == "physical"):
+        local_1 = (adoption.mode == "enforce")
+    else:
+        local_1 = dv_and((world.domain == "mind"), (adoption.mode == "predict"))
+    dv_require(local_1, "Wrong transmission adoption")
+    dv_require((dv_truth(world, law.premise) == "true"), "Transmission premise is not established")
+    return dv_with_many(dv_transport(world, path, signal, threshold), {"basis": adoption.basis, "hypothetical": (not (world.domain == "physical"))})
+
+
+// Value is computed against an explicit rubric, not a truth or legality judgement.
+
+fn dv_criterion(id, ref, mode, target, weight):
+    dv_require(dv_or((mode == "numeric"), (mode == "matches")), "Unsupported value criterion")
+    return dv_with({"id": id, "ref": ref, "mode": mode, "target": target}, "weight", weight)
+
+fn dv_measure(value, criterion):
+    if (criterion.mode == "numeric"):
+        return (value * criterion.weight)
+    else:
+        if dv_same(value, criterion.target):
+            return criterion.weight
+        else:
+            return 0
+
+fn dv_expected_measure(cell, criterion):
+    var alternatives = dv_find(cell, "alternatives", [])
+    var sum = 0
+    var i = 0
+    if (rt_count(alternatives) == 0):
+        return (dv_measure(cell.value, criterion) * cell.confidence)
+    else:
+        while (i < rt_count(alternatives)):
+            var alternative = alternatives[i]
+            sum = (sum + (dv_measure(alternative[0], criterion) * alternative[1]))
+            i = (i + 1)
+        return (sum * cell.confidence)
+
+fn dv_value(world, criteria, subjective):
+    var i = 0
+    var score = 0
+    var details = []
+    var unknown = []
+    var ids = []
+    while (i < rt_count(criteria)):
+        var criterion = criteria[i]
+        var id = criterion.id
+        var cell = dv_read(world, criterion.ref)
+        dv_require((not dv_has(ids, id)), "Duplicate value criterion")
+        rt_push(ids, id)
+        if cell.known:
+            var local_1 = false
+            if subjective:
+                local_1 = dv_expected_measure(cell, criterion)
+            else:
+                local_1 = dv_measure(cell.value, criterion)
+            var amount = local_1
+            score = (score + amount)
+            rt_push(details, {"criterion": id, "contribution": amount, "confidence": cell.confidence, "conflicted": cell.conflicted})
+        else:
+            rt_push(unknown, id)
+        i = (i + 1)
+    return dv_with_many({"score": score, "details": details, "unknown": unknown, "complete": (rt_count(unknown) == 0)}, {"world": world.id, "revision": world.revision, "subject": world.subject})
+
+fn dv_value_subjective(mind, criteria):
+    dv_require(dv_or((mind.domain == "mind"), (mind.domain == "prediction")), "Subjective value requires a mind or prediction")
+    return dv_value(mind, criteria, true)
+
+fn dv_value_objective(physical, criteria):
+    dv_domain(physical, "physical")
+    return dv_value(physical, criteria, false)
+
+fn dv_value_change(before, after, criteria):
+    dv_require(dv_and((before.id == after.id), (before.subject == after.subject)), "Value comparison crosses worlds")
+    var subjective = (not (before.domain == "physical"))
+    var local_1 = false
+    if subjective:
+        local_1 = dv_and((before.domain == "mind"), dv_or((after.domain == "mind"), (after.domain == "prediction")))
+    else:
+        local_1 = (after.domain == "physical")
+    dv_require(local_1, "Value domain mismatch")
+    var a = dv_value(before, criteria, subjective)
+    var b = dv_value(after, criteria, subjective)
+    return {"delta": (b.score - a.score), "before": a, "after": b, "complete": dv_and(a.complete, b.complete)}
+
+// --- merged from 50-response.dv ---
+
+// Appraisal-inspired game mechanism, not a clinical or psychometric model.
+// Intent, instrumental value and expression are separate outputs.
+
+fn dv_request(id, requester, self):
+    return {"id": id, "requester": requester, "self": self}
+
+fn dv_feature_refs(request):
+    var speaker = request.requester
+    var self = request.self
+    var id = request.id
+    var refs = []
+    rt_push(refs, dv_pair("trust", dv_ref(speaker, "relationship", "trust")))
+    rt_push(refs, dv_pair("closeness", dv_ref(speaker, "relationship", "closeness")))
+    rt_push(refs, dv_pair("respect", dv_ref(speaker, "relationship", "respect")))
+    rt_push(refs, dv_pair("reciprocity", dv_ref(speaker, "relationship", "reciprocity")))
+    rt_push(refs, dv_pair("valence", dv_ref(self, "affect", "valence")))
+    rt_push(refs, dv_pair("arousal", dv_ref(self, "affect", "arousal")))
+    rt_push(refs, dv_pair("fatigue", dv_ref(self, "resources", "fatigue")))
+    rt_push(refs, dv_pair("stress", dv_ref(self, "resources", "stress")))
+    rt_push(refs, dv_pair("attention", dv_ref(self, "resources", "attention")))
+    rt_push(refs, dv_pair("threat", dv_ref(id, "appraisal", "threat")))
+    rt_push(refs, dv_pair("fairness", dv_ref(id, "appraisal", "fairness")))
+    rt_push(refs, dv_pair("control", dv_ref(id, "appraisal", "control")))
+    rt_push(refs, dv_pair("certainty", dv_ref(id, "appraisal", "certainty")))
+    rt_push(refs, dv_pair("importance", dv_ref(id, "appraisal", "importance")))
+    return refs
+
+fn dv_appraise_request(mind, request):
+    dv_domain(mind, "mind")
+    var refs = dv_feature_refs(request)
+    var features = []
+    var unknown = []
+    var basis = []
+    var i = 0
+    while (i < rt_count(refs)):
+        var entry = refs[i]
+        var key = entry[0]
+        var cell = dv_read(mind, entry[1])
+        if dv_and(cell.known, (not cell.conflicted)):
+            rt_push(features, dv_pair(key, cell.value))
+            rt_push(basis, {"feature": key, "ref": entry[1], "cell": cell})
+        else:
+            rt_push(unknown, key)
+        i = (i + 1)
+    return dv_with_many({"features": features, "unknown": unknown, "basis": basis, "revision": mind.revision}, {"subject": mind.subject, "request": request.id})
+
+fn dv_dot(features, weights):
+    var i = 0
+    var score = 0
+    var terms = []
+    var unknown = []
+    while (i < rt_count(weights)):
+        var entry = weights[i]
+        var key = entry[0]
+        if dv_has_key(features, key):
+            var contribution = (dv_get(features, key) * entry[1])
+            score = (score + contribution)
+            rt_push(terms, dv_pair(key, contribution))
+        else:
+            rt_push(unknown, key)
+        i = (i + 1)
+    return {"score": score, "terms": terms, "unknown": unknown}
+
+fn dv_clamp_signed(value):
+    if (value < -1):
+        return -1
+    else:
+        if (1 < value):
+            return 1
+        else:
+            return value
+
+fn dv_expression(appraisal, expression_policy):
+    var axes = []
+    var i = 0
+    while (i < rt_count(expression_policy)):
+        var axis = expression_policy[i]
+        var evaluation = dv_dot(appraisal.features, axis[1])
+        rt_push(axes, dv_pair(axis[0], dv_with_many(evaluation, {"value": dv_clamp_signed(evaluation.score), "complete": (rt_count(evaluation.unknown) == 0)})))
+        i = (i + 1)
+    return axes
+
+fn dv_no_change_prediction(mind):
+    dv_domain(mind, "mind")
+    return dv_with_many(mind, {"domain": "prediction", "source_revision": mind.revision})
+
+fn dv_response_option(id, intent, feasible, prediction, effort, feature_weights):
+    dv_require((not (effort < 0)), "Negative effort")
+    return dv_with_many({"id": id, "intent": intent, "feasible": feasible, "prediction": prediction}, {"effort": effort, "feature_weights": feature_weights})
+
+fn dv_validate_expression_policy(expression_policy):
+    dv_require(dv_record_like(expression_policy), "Expression policy must be an axis-to-weight-record matrix")
+    var i = 0
+    while (i < rt_count(expression_policy)):
+        var axis = expression_policy[i]
+        var key = expression_policy[i][0]
+        var weights = expression_policy[i][1]
+        var j = 0
+        dv_require((rt_slice(rt_json_stringify(key), 0, 1) == "\""), "Expression policy axis name must be Text")
+        dv_require(dv_record_like(weights), rt_cat("Expression policy axis weights must be a record: ", key))
+        while (j < rt_count(weights)):
+            var weight = weights[j]
+            var feature = weights[j][0]
+            dv_require((rt_slice(rt_json_stringify(feature), 0, 1) == "\""), "Expression policy feature name must be Text")
+            dv_require(rt_is_numeric_value(weight[1]), rt_cat(rt_cat(rt_cat("Expression policy weight must be a finite Number: ", key), "."), feature))
+            j = (j + 1)
+        i = (i + 1)
+    return true
+
+fn dv_person_policy(subject, values, effort_cost, uncertainty_cost, expression_policy):
+    dv_validate_expression_policy(expression_policy)
+    dv_require(dv_and((not (effort_cost < 0)), (not (uncertainty_cost < 0))), "Negative policy cost")
+    return dv_with({"subject": subject, "values": values, "effort_cost": effort_cost, "uncertainty_cost": uncertainty_cost}, "expression", expression_policy)
+
+fn dv_accept_policy(mind, id, policy, basis):
+    dv_domain(mind, "mind")
+    dv_require((mind.subject == policy.subject), "Foreign value policy")
+    dv_require((0 < rt_count(basis)), "Value policy needs an acceptance basis")
+    var policies = dv_find(mind, "policies", [])
+    dv_require((not dv_has_key(policies, id)), "Duplicate accepted policy")
+    return dv_with_many(mind, {"policies": dv_with(policies, id, {"policy": policy, "basis": basis, "active": true}), "revision": (mind.revision + 1)})
+
+fn dv_respond_adopted(mind, request, options, policy_id):
+    var accepted = dv_get(mind.policies, policy_id)
+    dv_require(accepted.active, "Response policy is not adopted")
+    return dv_with(dv_respond(mind, request, options, accepted.policy), "policy_basis", accepted.basis)
+
+fn dv_response_score(mind, option, appraisal, policy):
+    var prediction = option.prediction
+    dv_domain(prediction, "prediction")
+    dv_require((prediction.source_revision == mind.revision), "Stale response prediction")
+    var value = dv_value_change(mind, prediction, policy.values)
+    var relation_and_state = dv_dot(appraisal.features, option.feature_weights)
+    var effort = (option.effort * policy.effort_cost)
+    var uncertainty = ((rt_count(relation_and_state.unknown) + rt_count(value.after.unknown)) * policy.uncertainty_cost)
+    return dv_with({"score": ((value.delta + relation_and_state.score) - (effort + uncertainty)), "value": value, "relationship_and_state": relation_and_state, "effort": effort}, "uncertainty_cost", uncertainty)
+
+fn dv_respond(mind, request, options, policy):
+    dv_domain(mind, "mind")
+    dv_require((mind.subject == policy.subject), "Foreign person policy")
+    var appraisal = dv_appraise_request(mind, request)
+    var i = 0
+    var found = false
+    var best = 0
+    var chosen = false
+    var evaluated = []
+    var rejected = []
+    var ids = []
+    while (i < rt_count(options)):
+        var option = options[i]
+        var id = option.id
+        var legal = dv_truth(mind, option.feasible)
+        dv_require((not dv_has(ids, id)), "Duplicate response identity")
+        rt_push(ids, id)
+        if (legal == "true"):
+            var evaluation = dv_response_score(mind, option, appraisal, policy)
+            rt_push(evaluated, dv_pair(id, evaluation))
+            var local_1 = false
+            if found:
+                local_1 = (best < evaluation.score)
+            else:
+                local_1 = true
+            if local_1:
+                found = true
+                best = evaluation.score
+                chosen = option
+        else:
+            rt_push(rejected, dv_pair(id, legal))
+        i = (i + 1)
+    var local_2 = false
+    if found:
+        local_2 = "selected"
+    else:
+        local_2 = "no-response"
+    return dv_with_many({"status": local_2, "choice": chosen, "appraisal": appraisal, "evaluated": evaluated}, {"rejected": rejected, "expression": dv_expression(appraisal, policy.expression), "committed": false})
+
+fn dv_relax(current, baseline, retention):
+    return (baseline + ((current - baseline) * dv_unit(retention)))
+
+fn dv_affect_proposal(mind, request, policy):
+    var appraisal = dv_appraise_request(mind, request)
+    var features = appraisal.features
+    var self = request.self
+    var valence_ref = dv_ref(self, "affect", "valence")
+    var arousal_ref = dv_ref(self, "affect", "arousal")
+    var valence = dv_read(mind, valence_ref)
+    var arousal = dv_read(mind, arousal_ref)
+    dv_require(dv_and(valence.known, arousal.known), "Unknown current affect")
+    var v_delta = dv_dot(features, policy.valence_weights)
+    var a_delta = dv_dot(features, policy.arousal_weights)
+    return {"source_revision": mind.revision, "basis": appraisal, "effects": dv_pair(dv_assign(valence_ref, dv_clamp_signed((dv_relax(valence.value, policy.baseline_valence, policy.retention) + v_delta.score))), dv_assign(arousal_ref, dv_clamp_signed((dv_relax(arousal.value, policy.baseline_arousal, policy.retention) + a_delta.score))))}
+
+// --- merged from 55-cognition.dv ---
+
+// Cognitive acceptance is a derived value. Levels are ordered lower bounds.
+fn dv_acceptance_classify(degree, levels):
+    dv_unit(degree)
+    dv_require(rt_count(levels) > 0, "Acceptance requires levels")
+    dv_require(levels[0][1] == 0, "Acceptance levels must start at zero")
+    var previous = -1
+    var selected = ""
+    var i = 0
+    while i < rt_count(levels):
+        let threshold = dv_unit(levels[i][1])
+        dv_require(previous < threshold, "Acceptance thresholds must increase")
+        if degree >= threshold:
+            selected = levels[i][0]
+        previous = threshold
+        i = i + 1
+    return {degree: degree, level: selected}
+
+acceptance dv_threshold_acceptance(value, threshold):
+    degree item: Acceptance = value
+    levels:
+        held from 0
+        accepted from threshold
+
+fn dv_acceptance_transition(previous, current, source):
+    var transition = "unchanged"
+    if previous.level != current.level:
+        transition = "changed"
+        if previous.level == "accepted" and current.level != "accepted":
+            transition = "withdrawn"
+    return {before: previous, after: current, transition: transition, source: source}
+
+// Finite balance kernel. Values and charges use exact rational arithmetic.
+// The model declares each allowed structural change, its resource charges and laws.
+fn dv_balance_dot(a, b):
+    dv_require(rt_count(a) == rt_count(b), "Balance dimensions differ")
+    var result = rt_exact("0")
+    var i = 0
+    while i < rt_count(a):
+        result = result + rt_exact(a[i]) * rt_exact(b[i])
+        i = i + 1
+    return result
+
+fn dv_balance_extent(variables):
+    var total = 1
+    var i = 0
+    while i < rt_count(variables):
+        let count = rt_count(variables[i].options)
+        dv_require(count > 0, "Balance variable has an empty domain")
+        total = total * count
+        dv_require(total <= 9007199254740991, "Finite domain index exceeds exact integer range")
+        i = i + 1
+    return total
+
+fn dv_balance_candidate(index, goal, variables, laws, limits, prices):
+    var cursor = index
+    var values = []
+    var costs = []
+    var choices = []
+    var j = 0
+    while j < rt_count(limits.balances):
+        rt_push(costs, rt_exact("0"))
+        dv_require(rt_exact(limits.balances[j]) >= 0, "Negative resource balance")
+        dv_require(rt_exact(prices[j]) >= 0, "Negative resource price")
+        j = j + 1
+    var i = 0
+    while i < rt_count(variables):
+        let count = rt_count(variables[i].options)
+        let quotient = rt_floor(cursor / count)
+        let choice = cursor - quotient * count
+        cursor = quotient
+        let option = variables[i].options[choice]
+        rt_push(choices, choice)
+        rt_push(values, rt_exact(option.value))
+        dv_require(rt_count(option.cost) == rt_count(costs), "Resource cost dimensions differ")
+        j = 0
+        while j < rt_count(costs):
+            let charge = rt_exact(option.cost[j])
+            dv_require(charge >= 0, "Negative imprint charge")
+            rt_replace(costs, j, costs[j] + charge)
+            j = j + 1
+        i = i + 1
+    let degree = dv_balance_dot(goal.coefficients, values)
+    var feasible = degree >= rt_exact(goal.minimum) and degree >= 0 and degree <= 1
+    i = 0
+    while i < rt_count(laws):
+        if dv_balance_dot(laws[i].coefficients, values) != rt_exact(laws[i].total):
+            feasible = false
+        i = i + 1
+    j = 0
+    while j < rt_count(costs):
+        if costs[j] > rt_exact(limits.balances[j]):
+            feasible = false
+        j = j + 1
+    return {index: index, choices: choices, values: values, degree: degree, charges: costs, cost: dv_balance_dot(costs, prices), feasible: feasible}
+
+// Budget units remain covered candidate indices, including certified skipped blocks.
+// Preprocessing and interval checks are diagnostics, not new gameplay resource charges.
+fn dv_balance_search_limit(total, limits):
+    dv_require(limits.search_budget >= 0 and rt_floor(limits.search_budget) == limits.search_budget, "Invalid search budget")
+    dv_require(limits.work_remaining >= 0, "Negative imprint work budget")
+    var covered = dv_min(total, limits.search_budget)
+    if covered * 2 > limits.work_remaining:
+        // Runtime floor accepts only Number. Bisect Number indices and compare
+        // their charges with the exact balance; never pass that balance to floor.
+        var lower = 0
+        var upper = covered
+        while lower < upper:
+            let middle = lower + rt_floor((upper - lower + 1) / 2)
+            if middle * 2 <= limits.work_remaining:
+                lower = middle
+            else:
+                upper = middle - 1
+        covered = lower
+    return covered
+
+fn dv_balance_stop_reason(visited, total, limits):
+    if visited == total:
+        return "domain-covered"
+    let search_stop = visited >= limits.search_budget
+    let work_stop = (visited + 1) * 2 > limits.work_remaining
+    if search_stop and work_stop:
+        return "search-and-work-budget"
+    if search_stop:
+        return "search-budget"
+    if work_stop:
+        return "work-budget"
+    return "prefix-stop"
+
+// This analyzes the existing finite linear schema, not arbitrary nonlinear formulas.
+// The recommendation is a setup-cost heuristic; it makes no elapsed-time guarantee.
+fn dv_imprint_analyze(goal, variables, laws, limits, prices):
+    dv_require(rt_count(prices) == rt_count(limits.balances), "Resource price dimensions differ")
+    let total = dv_balance_extent(variables)
+    dv_require(rt_count(goal.coefficients) == rt_count(variables), "Balance dimensions differ")
+    var i = 0
+    while i < rt_count(laws):
+        dv_require(rt_count(laws[i].coefficients) == rt_count(variables), "Balance dimensions differ")
+        i = i + 1
+    var option_count = 0
+    i = 0
+    while i < rt_count(variables):
+        option_count = option_count + rt_count(variables[i].options)
+        i = i + 1
+    let candidate_limit = dv_balance_search_limit(total, limits)
+    let branch_applicable = rt_count(variables) > 0
+    var recommended = "enumerate"
+    var reason = "reference-path-has-lower-setup-cost"
+    if branch_applicable and option_count * 2 < candidate_limit:
+        recommended = "branch_bound"
+        reason = "cartesian-prefix-exceeds-linear-bound-preparation"
+    if not branch_applicable:
+        reason = "zero-dimensional-reference-domain"
+    return {family: "finite-linear-cartesian", arithmetic: "exact-rational", branch_bound_applicable: branch_applicable, recommended: recommended, selection_reason: reason, total: total, candidate_limit: candidate_limit, option_count: option_count, budget_covers_domain: candidate_limit == total, stop_reason: dv_balance_stop_reason(candidate_limit, total, limits), budget_unit: "covered-candidate-prefix", work_per_covered_candidate: 2, bound_scope: "separable-linear-intervals-may-be-loose", requirements: "finite-nonempty-options; matching-linear-dimensions; exact-numeric-values; nonnegative-charges-and-prices", validation: "shape-and-budget; selected-solver-validates-numeric-options", time_guarantee: "none"}
+
+fn dv_balance_finish(best, visited, total, limits, algorithm, evaluated, bound_checks, preprocessed, coverage, analysis):
+    var status = "Unresolved"
+    if best != false:
+        status = "Feasible"
+        if visited == total:
+            status = "Optimal"
+    else:
+        if visited == total:
+            status = "Infeasible"
+    var proof_kind = "enumerated-prefix-v1"
+    if algorithm == "branch_bound":
+        proof_kind = "linear-interval-prefix-v1"
+    return {status: status, best: best, visited: visited, total: total, revision: limits.revision, subject: limits.subject, algorithm: algorithm, proof_kind: proof_kind, coverage: coverage, arithmetic: "exact-rational", complete: visited == total, stop_reason: dv_balance_stop_reason(visited, total, limits), covered_candidates: visited, charged_work: visited * 2, candidate_evaluations: evaluated, pruned_candidates: visited - evaluated, bound_checks: bound_checks, preprocessed_options: preprocessed, counter_scope: "search-diagnostics-not-total-runtime-or-certificate-authority", analysis: analysis}
+
+// Reference enumeration remains available and retains the original prefix and tie order.
+fn dv_imprint_enumerate(goal, variables, laws, limits, prices, analysis):
+    let total = analysis.total
+    var visited = 0
+    var best = false
+    while visited < analysis.candidate_limit:
+        let candidate = dv_balance_candidate(visited, goal, variables, laws, limits, prices)
+        if candidate.feasible:
+            if best == false:
+                best = candidate
+            else:
+                if candidate.cost < best.cost:
+                    best = candidate
+        visited = visited + 1
+    return dv_balance_finish(best, visited, total, limits, "enumerate", visited, 0, 0, [], analysis)
+
+fn dv_balance_zeroes(count):
+    var result = []
+    var i = 0
+    while i < count:
+        rt_push(result, rt_exact("0"))
+        i = i + 1
+    return result
+
+// Each option contributes [degree, law totals..., resource charges..., price].
+// Bounds take extrema of the products themselves, so signed coefficients are safe.
+fn dv_balance_interval_model(goal, variables, laws, limits, prices):
+    dv_require(rt_count(prices) == rt_count(limits.balances), "Resource price dimensions differ")
+    dv_require(rt_count(goal.coefficients) == rt_count(variables), "Balance dimensions differ")
+    let field_count = 2 + rt_count(laws) + rt_count(prices)
+    var exact_prices = []
+    var balances = []
+    var law_totals = []
+    var i = 0
+    while i < rt_count(prices):
+        let price = rt_exact(prices[i])
+        let balance = rt_exact(limits.balances[i])
+        dv_require(price >= 0, "Negative resource price")
+        dv_require(balance >= 0, "Negative resource balance")
+        rt_push(exact_prices, price)
+        rt_push(balances, balance)
+        i = i + 1
+    i = 0
+    while i < rt_count(laws):
+        dv_require(rt_count(laws[i].coefficients) == rt_count(variables), "Balance dimensions differ")
+        rt_push(law_totals, rt_exact(laws[i].total))
+        i = i + 1
+    var domains = []
+    var widths = [1]
+    var lower = [dv_balance_zeroes(field_count)]
+    var upper = [dv_balance_zeroes(field_count)]
+    var option_count = 0
+    i = 0
+    while i < rt_count(variables):
+        var domain = []
+        var minimum = []
+        var maximum = []
+        var choice = 0
+        while choice < rt_count(variables[i].options):
+            let option = variables[i].options[choice]
+            let value = rt_exact(option.value)
+            dv_require(rt_count(option.cost) == rt_count(prices), "Resource cost dimensions differ")
+            var terms = [rt_exact(goal.coefficients[i]) * value]
+            var j = 0
+            while j < rt_count(laws):
+                rt_push(terms, rt_exact(laws[j].coefficients[i]) * value)
+                j = j + 1
+            var cost = rt_exact("0")
+            j = 0
+            while j < rt_count(prices):
+                let charge = rt_exact(option.cost[j])
+                dv_require(charge >= 0, "Negative imprint charge")
+                rt_push(terms, charge)
+                cost = cost + charge * exact_prices[j]
+                j = j + 1
+            rt_push(terms, cost)
+            rt_push(domain, terms)
+            if choice == 0:
+                minimum = dv_clone(terms)
+                maximum = dv_clone(terms)
+            else:
+                j = 0
+                while j < field_count:
+                    rt_replace(minimum, j, dv_min(minimum[j], terms[j]))
+                    rt_replace(maximum, j, dv_max(maximum[j], terms[j]))
+                    j = j + 1
+            choice = choice + 1
+            option_count = option_count + 1
+        var next_lower = []
+        var next_upper = []
+        var field_index = 0
+        while field_index < field_count:
+            rt_push(next_lower, lower[i][field_index] + minimum[field_index])
+            rt_push(next_upper, upper[i][field_index] + maximum[field_index])
+            field_index = field_index + 1
+        rt_push(domains, domain)
+        rt_push(widths, widths[i] * rt_count(domain))
+        rt_push(lower, next_lower)
+        rt_push(upper, next_upper)
+        i = i + 1
+    return {domains: domains, widths: widths, lower: lower, upper: upper, field_count: field_count, goal_minimum: rt_exact(goal.minimum), law_totals: law_totals, balances: balances, option_count: option_count}
+
+fn dv_balance_interval_kind(model, depth, fixed, best):
+    let lower = model.lower[depth]
+    let upper = model.upper[depth]
+    let goal_lower = fixed[0] + lower[0]
+    let goal_upper = fixed[0] + upper[0]
+    if goal_upper < model.goal_minimum or goal_upper < 0 or goal_lower > 1:
+        return "goal-bound"
+    var j = 0
+    while j < rt_count(model.law_totals):
+        let field = 1 + j
+        if model.law_totals[j] < fixed[field] + lower[field] or model.law_totals[j] > fixed[field] + upper[field]:
+            return "law-bound"
+        j = j + 1
+    j = 0
+    while j < rt_count(model.balances):
+        let field = 1 + rt_count(model.law_totals) + j
+        if fixed[field] + lower[field] > model.balances[j]:
+            return "resource-bound"
+        j = j + 1
+    if best != false:
+        let field = model.field_count - 1
+        if fixed[field] + lower[field] >= best.cost:
+            return "cost-bound"
+    return ""
+
+fn dv_balance_interval_choices(model, index):
+    var choices = []
+    var cursor = index
+    var i = 0
+    while i < rt_count(model.domains):
+        let count = rt_count(model.domains[i])
+        let quotient = rt_floor(cursor / count)
+        rt_push(choices, cursor - quotient * count)
+        cursor = quotient
+        i = i + 1
+    return choices
+
+// Largest aligned low-coordinate block first; no recursive call stack is required.
+fn dv_balance_interval_probe(model, start, best):
+    let choices = dv_balance_interval_choices(model, start)
+    var fixed = dv_balance_zeroes(model.field_count)
+    var depth = rt_count(model.domains)
+    var checks = 0
+    while depth >= 0:
+        let width = model.widths[depth]
+        if rt_floor(start / width) * width == start:
+            checks = checks + 1
+            let kind = dv_balance_interval_kind(model, depth, fixed, best)
+            if kind != "":
+                return {depth: depth, kind: kind, bound_checks: checks}
+        if depth > 0:
+            let terms = model.domains[depth - 1][choices[depth - 1]]
+            var j = 0
+            while j < model.field_count:
+                rt_replace(fixed, j, fixed[j] + terms[j])
+                j = j + 1
+        depth = depth - 1
+    return {depth: 0, kind: "candidate", bound_checks: checks}
+
+fn dv_imprint_branch_bound(goal, variables, laws, limits, prices, analysis):
+    if analysis.candidate_limit == 0:
+        return dv_balance_finish(false, 0, analysis.total, limits, "branch_bound", 0, 0, 0, [], analysis)
+    let model = dv_balance_interval_model(goal, variables, laws, limits, prices)
+    var visited = 0
+    var evaluated = 0
+    var bound_checks = 0
+    var coverage = []
+    var best = false
+    while visited < analysis.candidate_limit:
+        let probe = dv_balance_interval_probe(model, visited, best)
+        let count = dv_min(model.widths[probe.depth], analysis.candidate_limit - visited)
+        bound_checks = bound_checks + probe.bound_checks
+        if probe.kind == "candidate":
+            let candidate = dv_balance_candidate(visited, goal, variables, laws, limits, prices)
+            evaluated = evaluated + 1
+            if candidate.feasible:
+                if best == false:
+                    best = candidate
+                else:
+                    if candidate.cost < best.cost:
+                        best = candidate
+        rt_push(coverage, {start: visited, depth: probe.depth, count: count, kind: probe.kind})
+        visited = visited + count
+    return dv_balance_finish(best, visited, analysis.total, limits, "branch_bound", evaluated, bound_checks, model.option_count, coverage, analysis)
+
+// Search produces a witness and coverage certificate; verification remains separate.
+fn dv_imprint_solve_with(capability, goal, variables, laws, limits, prices, algorithm):
+    dv_require(capability, "Imprint capability is required")
+    dv_require(algorithm == "auto" or algorithm == "enumerate" or algorithm == "branch_bound", "Unknown imprint solver")
+    let base_analysis = dv_imprint_analyze(goal, variables, laws, limits, prices)
+    var selected = algorithm
+    if selected == "auto":
+        selected = base_analysis.recommended
+    var fallback_reason = ""
+    if selected == "branch_bound" and not base_analysis.branch_bound_applicable:
+        selected = "enumerate"
+        fallback_reason = "unsupported-bound-model-reference-fallback"
+    let analysis = dv_with_many(base_analysis, {requested_algorithm: algorithm, selected_algorithm: selected, fallback_reason: fallback_reason})
+    if selected == "branch_bound":
+        return dv_imprint_branch_bound(goal, variables, laws, limits, prices, analysis)
+    return dv_imprint_enumerate(goal, variables, laws, limits, prices, analysis)
+
+fn dv_imprint_solve(capability, goal, variables, laws, limits, prices):
+    return dv_imprint_solve_with(capability, goal, variables, laws, limits, prices, "auto")
+
+// Numeric witnesses retain meaning after the JSON exchange representation is read back.
+fn dv_balance_same_numbers(left, right):
+    if rt_count(left) != rt_count(right):
+        return false
+    var i = 0
+    while i < rt_count(left):
+        if rt_exact(left[i]) != rt_exact(right[i]):
+            return false
+        i = i + 1
+    return true
+
+fn dv_balance_same_witness(left, right):
+    return left.index == right.index and left.feasible == right.feasible and dv_same(left.choices, right.choices) and dv_balance_same_numbers(left.values, right.values) and dv_balance_same_numbers(left.charges, right.charges) and rt_exact(left.degree) == right.degree and rt_exact(left.cost) == right.cost
+
+// Reconstruct high-coordinate contributions from the original model, never the proof.
+fn dv_balance_interval_fixed(model, start, depth):
+    let choices = dv_balance_interval_choices(model, start)
+    var fixed = dv_balance_zeroes(model.field_count)
+    var i = depth
+    while i < rt_count(model.domains):
+        let terms = model.domains[i][choices[i]]
+        var j = 0
+        while j < model.field_count:
+            rt_replace(fixed, j, fixed[j] + terms[j])
+            j = j + 1
+        i = i + 1
+    return fixed
+
+fn dv_balance_check_coverage(result, goal, variables, laws, limits, prices, verified):
+    let coverage = dv_find(result, "coverage", false)
+    if not rt_is_list(coverage):
+        return false
+    if result.visited == 0:
+        return rt_count(coverage) == 0
+    let model = dv_balance_interval_model(goal, variables, laws, limits, prices)
+    var cursor = 0
+    var i = 0
+    while i < rt_count(coverage):
+        let block = coverage[i]
+        if not dv_record_like(block):
+            return false
+        let start = dv_find(block, "start", -1)
+        let depth = dv_find(block, "depth", -1)
+        let count = dv_find(block, "count", -1)
+        let kind = dv_find(block, "kind", "")
+        if not rt_is_numeric_value(start) or not rt_is_numeric_value(depth) or not rt_is_numeric_value(count):
+            return false
+        if start != cursor or rt_floor(start) != start or depth < 0 or depth > rt_count(variables) or rt_floor(depth) != depth:
+            return false
+        let width = model.widths[depth]
+        if count <= 0 or count > width or rt_floor(count) != count or start + count > result.visited:
+            return false
+        if rt_floor(start / width) * width != start:
+            return false
+        if count < width and start + count != result.visited:
+            return false
+        if kind == "candidate":
+            if depth != 0 or count != 1:
+                return false
+            var candidate = verified
+            if verified == false:
+                candidate = dv_balance_candidate(start, goal, variables, laws, limits, prices)
+            else:
+                if start != verified.index:
+                    candidate = dv_balance_candidate(start, goal, variables, laws, limits, prices)
+            if candidate.feasible:
+                if verified == false:
+                    return false
+                if candidate.cost < verified.cost:
+                    return false
+        else:
+            if kind != "goal-bound" and kind != "law-bound" and kind != "resource-bound" and kind != "cost-bound":
+                return false
+            let fixed = dv_balance_interval_fixed(model, start, depth)
+            if dv_balance_interval_kind(model, depth, fixed, verified) != kind:
+                return false
+        cursor = start + count
+        i = i + 1
+    return cursor == result.visited
+
+// Trusted finite proof kernel: reconstruct the witness and independently check coverage.
+// The caller supplies the original model; certificates cannot replace its constraints.
+fn dv_imprint_check(result, goal, variables, laws, limits, prices):
+    if not dv_record_like(result):
+        return false
+    let total = dv_balance_extent(variables)
+    if result.total != total or result.revision != limits.revision or result.subject != limits.subject:
+        return false
+    if not rt_is_numeric_value(result.visited):
+        return false
+    if result.visited < 0 or result.visited > total or result.visited > limits.search_budget or result.visited * 2 > limits.work_remaining or rt_floor(result.visited) != result.visited:
+        return false
+    var best = result.best
+    var verified = false
+    if best != false:
+        if not dv_record_like(best):
+            return false
+        if not rt_is_numeric_value(dv_find(best, "index", false)):
+            return false
+        if not rt_is_list(dv_find(best, "choices", false)) or not rt_is_list(dv_find(best, "values", false)) or not rt_is_list(dv_find(best, "charges", false)):
+            return false
+        if not dv_has_key(best, "degree") or not dv_has_key(best, "cost"):
+            return false
+        if best.index < 0 or best.index >= result.visited or rt_floor(best.index) != best.index:
+            return false
+        verified = dv_balance_candidate(best.index, goal, variables, laws, limits, prices)
+        if not verified.feasible or not dv_balance_same_witness(best, verified):
+            return false
+    let proof_kind = dv_find(result, "proof_kind", "enumerated-prefix-v1")
+    if proof_kind == "linear-interval-prefix-v1":
+        if not dv_balance_check_coverage(result, goal, variables, laws, limits, prices, verified):
+            return false
+    else:
+        if proof_kind != "enumerated-prefix-v1":
+            return false
+        // Legacy six-field certificates retain the original independent enumeration.
+        var i = 0
+        while i < result.visited:
+            var alternative = verified
+            if best == false:
+                alternative = dv_balance_candidate(i, goal, variables, laws, limits, prices)
+            else:
+                if i != best.index:
+                    alternative = dv_balance_candidate(i, goal, variables, laws, limits, prices)
+            if alternative.feasible:
+                if best == false:
+                    return false
+                if alternative.cost < best.cost:
+                    return false
+            i = i + 1
+    if result.visited == total:
+        if best == false:
+            return result.status == "Infeasible"
+        return result.status == "Optimal"
+    if best == false:
+        return result.status == "Unresolved"
+    return result.status == "Feasible"
+
+fn dv_imprint_commit(state, result, goal, variables, laws, limits, prices, source):
+    dv_require(state.subject == limits.subject and state.revision == limits.revision, "Imprint source state changed")
+    dv_require(dv_same(state.balances, limits.balances), "Imprint resource snapshot changed")
+    dv_require(dv_imprint_check(result, goal, variables, laws, limits, prices), "Invalid balance certificate")
+    dv_require(state.work_remaining == limits.work_remaining, "Imprint work snapshot changed")
+    let work_spent = result.visited * 2
+    let paid = dv_with_many(state, [["work_remaining", state.work_remaining - work_spent], ["revision", state.revision + 1]])
+    if result.status != "Optimal":
+        return {applied: false, state: paid, result: result, work_spent: work_spent}
+    let best = result.best
+    var balances = []
+    var i = 0
+    while i < rt_count(state.balances):
+        let before = rt_exact(state.balances[i])
+        let after = before - best.charges[i]
+        dv_require(before == after + best.charges[i], "Resource conservation failed")
+        rt_push(balances, after)
+        i = i + 1
+    let degree = dv_balance_dot(goal.coefficients, best.values)
+    let accepted = dv_acceptance_classify(degree, state.levels)
+    let previous = dv_acceptance_classify(dv_balance_dot(goal.coefficients, state.values), state.levels)
+    let transition = dv_acceptance_transition(previous, accepted, source)
+    let receipt = {kind: "Imprint", source: source, before: state.values, after: best.values, charges: best.charges, proof: result, transition: transition}
+    let next = dv_with_many(paid, [["values", best.values], ["balances", balances], ["revision", state.revision + 1], ["acceptance", accepted], ["imprint_receipt", receipt]])
+    return {applied: true, state: next, result: result, work_spent: work_spent}
+
+// Adapter to authoritative Core mind cells and the existing action-cost ledger.
+fn dv_imprint_prepare(mind, refs, ledger, work_remaining, levels, search_budget, capability):
+    dv_domain(mind, "mind")
+    var values = []
+    var i = 0
+    while i < rt_count(refs):
+        let cell = dv_read(mind, refs[i])
+        dv_require(cell.known and not cell.conflicted, "Imprint structural coordinate is not established")
+        rt_push(values, rt_exact(cell.value))
+        i = i + 1
+    return {subject: mind.subject, revision: mind.revision, mind_id: mind.id, refs: refs, values: values, balances: [ledger.balances.time, ledger.balances.computation, ledger.balances.stamina], ledger_id: ledger.id, ledger_revision: ledger.revision, work_remaining: work_remaining, levels: levels, search_budget: search_budget, imprint_allowed: capability}
+
+fn dv_imprint_apply(mind, physical, ledger, state, result, goal, variables, laws, prices, event):
+    dv_domain(mind, "mind")
+    dv_require(state.imprint_allowed, "Imprint capability is required")
+    dv_require(mind.id == state.mind_id and mind.subject == state.subject and mind.revision == state.revision, "Imprint target snapshot changed")
+    dv_require(ledger.id == state.ledger_id and ledger.revision == state.ledger_revision, "Imprint ledger snapshot changed")
+    let current = dv_imprint_prepare(mind, state.refs, ledger, state.work_remaining, state.levels, state.search_budget, state.imprint_allowed)
+    dv_require(dv_balance_same_numbers(current.values, state.values), "Imprint structural input changed")
+    let committed = dv_imprint_commit(current, result, goal, variables, laws, state, prices, event)
+    var next_mind = mind
+    var actual = dv_action_cost_vector(0, 0, 0)
+    var outcome = "rejected"
+    if committed.applied:
+        let charges = committed.state.imprint_receipt.charges
+        actual = dv_action_cost_vector(charges[0], charges[1], charges[2])
+        outcome = "applied"
+        let origin = {kind: "Imprint", event: event, subject: mind.subject, proof: result}
+        var i = 0
+        while i < rt_count(state.refs):
+            next_mind = dv_store(next_mind, state.refs[i], dv_cell(committed.state.values[i], 1, dv_find(physical, "time", 0) + actual.time, [origin]))
+            i = i + 1
+        next_mind = dv_with_many(next_mind, [["revision", committed.state.revision], ["history", dv_append(mind.history, committed.state.imprint_receipt)], ["imprint_acceptance", committed.state.acceptance]])
+        let observed = dv_imprint_prepare(next_mind, state.refs, ledger, committed.state.work_remaining, state.levels, state.search_budget, state.imprint_allowed)
+        dv_require(dv_balance_dot(goal.coefficients, observed.values) >= rt_exact(goal.minimum), "Stored cognition did not achieve imprint goal")
+    let bounds = dv_action_cost_bounds(actual, actual)
+    let quote = dv_action_cost_quote(ledger, physical, "cognitive-imprint", event, bounds)
+    let settlement = dv_action_cost_finish(ledger, physical, quote, actual, outcome)
+    return {applied: committed.applied, mind: next_mind, physical: settlement.execution.world, ledger: settlement.ledger, work_remaining: committed.state.work_remaining, work_spent: committed.work_spent, proof: result, cost_receipt: dv_get(settlement.ledger.receipts, event)}
+
+
+// Validity is checked before cost. Cost is not truth, probability or action utility.
+
+fn dv_proof_step(id, kind, conclusion, parents, law):
+    return dv_with({"id": id, "kind": kind, "conclusion": conclusion, "parents": parents}, "law", law)
+
+fn dv_cost_policy(step, evidence, assumption, conflict, reference, maximum, allow_assumptions, budget):
+    dv_require(dv_and(dv_and((not (step < 0)), (not (evidence < 0))), dv_and(dv_and((0 < assumption), (not (conflict < 0))), dv_and((0 < reference), (not (maximum < 0))))), "Invalid reasoning costs")
+    dv_require((0 < budget), "Invalid proof budget")
+    return dv_with_many({"step": step, "evidence": evidence, "assumption": assumption, "conflict": conflict}, {"reference": reference, "maximum": maximum, "allow_assumptions": allow_assumptions, "budget": budget})
+
+fn dv_rule_concludes(law, conclusion):
+    var effects = law.effects
+    var i = 0
+    var found = false
+    while (i < rt_count(effects)):
+        var effect = effects[i]
+        if (effect.op == "assign"):
+            if dv_same(conclusion, dv_fact(effect.ref, effect.value)):
+                found = true
+        i = (i + 1)
+    return found
+
+fn dv_match_premises(premise, supplied):
+    if dv_same(premise, dv_true()):
+        return (rt_count(supplied) == 0)
+    else:
+        if (premise.op == "all"):
+            var required = premise.items
+            var i = 0
+            var valid = (rt_count(supplied) == rt_count(required))
+            while (i < rt_count(required)):
+                valid = dv_and(valid, dv_has(supplied, required[i]))
+                i = (i + 1)
+            return valid
+        else:
+            return dv_same(supplied, dv_single(premise))
+
+fn dv_check_step(world, step, checked, policy):
+    var kind = step.kind
+    var conclusion = step.conclusion
+    var parents = step.parents
+    var supplied = []
+    var confidence = 1
+    var i = 0
+    var hypothetical = false
+    while (i < rt_count(parents)):
+        var parent = dv_get(checked, parents[i])
+        rt_push(supplied, parent.conclusion)
+        confidence = dv_min(confidence, parent.confidence)
+        hypothetical = dv_or(hypothetical, parent.hypothetical)
+        i = (i + 1)
+    var assumptions = 0
+    var conflicts = 0
+    var local_uncertainty = 0
+    if (kind == "known"):
+        dv_require((rt_count(parents) == 0), "Known premise cannot hide parents")
+        dv_require((dv_truth(world, conclusion) == "true"), "Conclusion is not available in this view")
+        confidence = dv_premise_confidence(world, conclusion)
+        local_uncertainty = (1 - confidence)
+    else:
+        if (kind == "assume"):
+            dv_require((rt_count(parents) == 0), "Assumption cannot hide parents")
+            dv_require(dv_and(policy.allow_assumptions, (not (world.domain == "physical"))), "Assumption not permitted")
+            hypothetical = true
+            assumptions = 1
+            confidence = 0
+            if (dv_truth(world, conclusion) == "false"):
+                conflicts = 1
+        else:
+            if (kind == "axiom"):
+                var adoption = dv_get(world.adoptions, step.law)
+                var law = adoption.law
+                dv_require(adoption.active, "Proof uses a suspended axiom")
+                dv_require((adoption.mode == "infer"), "Operational effects do not prove that an event occurred")
+                dv_require(dv_rule_concludes(law, conclusion), "Axiom does not conclude this proposition")
+                dv_require(dv_match_premises(law.premise, supplied), "Axiom premises are not established")
+                confidence = dv_min(confidence, adoption.confidence)
+                local_uncertainty = (1 - adoption.confidence)
+            else:
+                rt_fail("Unsupported proof step")
+    return dv_with_many(dv_clone(step), {"confidence": confidence, "hypothetical": hypothetical, "assumptions": assumptions, "conflicts": conflicts, "local_uncertainty": local_uncertainty})
+
+fn dv_judge_conclusion(world, conclusion, proof, policy):
+    dv_require((0 < rt_count(proof)), "Empty derivation")
+    dv_require((not (policy.budget < rt_count(proof))), "Derivation budget exhausted")
+    var checked = []
+    var i = 0
+    while (i < rt_count(proof)):
+        var step = proof[i]
+        var id = step.id
+        dv_require((not dv_has_key(checked, id)), "Repeated proof node identity")
+        checked = dv_with(checked, id, dv_check_step(world, step, checked, policy))
+        i = (i + 1)
+    var root = dv_get(checked, proof[(rt_count(proof) - 1)].id)
+    var queue = dv_single(root.id)
+    var visited = []
+    var cursor = 0
+    var steps = 0
+    var uncertainty = 0
+    var assumptions = 0
+    var conflicts = 0
+    dv_require(dv_same(conclusion, root.conclusion), "Derivation concludes another proposition")
+    while (cursor < rt_count(queue)):
+        var id = queue[cursor]
+        if dv_has(visited, id):
+            false
+        else:
+            var step = dv_get(checked, id)
+            var parents = step.parents
+            var p = 0
+            rt_push(visited, id)
+            steps = (steps + 1)
+            uncertainty = (uncertainty + step.local_uncertainty)
+            assumptions = (assumptions + step.assumptions)
+            conflicts = (conflicts + step.conflicts)
+            while (p < rt_count(parents)):
+                rt_push(queue, parents[p])
+                p = (p + 1)
+        cursor = (cursor + 1)
+    var cost = (((steps * policy.step) + (uncertainty * policy.evidence)) + ((assumptions * policy.assumption) + (conflicts * policy.conflict)))
+    var components = {"steps": steps, "evidence_uncertainty": uncertainty, "assumptions": assumptions, "conflicts": conflicts}
+    return dv_with_many({"valid": true, "cost": cost, "components": components, "reasonable": (not (policy.maximum < cost))}, {"reasonableness": (1 / (1 + (cost / policy.reference))), "confidence": root.confidence, "hypothetical": dv_or(root.hypothetical, (world.domain == "prediction")), "scope": {"world": world.id, "subject": world.subject, "revision": world.revision}, "basis": visited})
+
+// --- merged from 80-inspection.dv ---
+
+// Inspector reads committed checkpoints, not reconstructed or omniscient minds.
+
+fn dv_checkpoint(world, time):
+    return {"time": time, "revision": world.revision, "world": dv_clone(world)}
+
+fn dv_session(worlds, time, time_unit):
+    var catalog = []
+    var history = []
+    var subjects = []
+    var i = 0
+    dv_require((not (time < 0)), "Negative session time")
+    while (i < rt_count(worlds)):
+        var world = worlds[i]
+        var id = world.id
+        var domain = world.domain
+        dv_require(dv_or((domain == "physical"), (domain == "mind")), "Predictions cannot be committed as worlds")
+        dv_require((not dv_has_key(catalog, id)), "Duplicate world identity")
+        if (domain == "mind"):
+            dv_require((not dv_has(subjects, world.subject)), "Duplicate subject world")
+            rt_push(subjects, world.subject)
+        catalog = dv_with(catalog, id, world)
+        rt_push(history, dv_checkpoint(world, time))
+        i = (i + 1)
+    return {"worlds": catalog, "history": history, "time": time, "time_unit": time_unit}
+
+fn dv_session_commit(session, expected_revision, world, time):
+    var catalog = session.worlds
+    var id = world.id
+    var old = dv_get(catalog, id)
+    dv_require((old.revision == expected_revision), "Stale session commit")
+    dv_require((expected_revision < world.revision), "Commit needs a newer world revision")
+    dv_require(dv_and((old.domain == world.domain), (old.subject == world.subject)), "World identity changed")
+    dv_require((not (time < session.time)), "Session time cannot move backwards")
+    return dv_with_many(session, {"worlds": dv_with(catalog, id, world), "history": dv_append(session.history, dv_checkpoint(world, time)), "time": time})
+
+fn dv_session_advance(session, time):
+    dv_require((not (time < session.time)), "Session time cannot move backwards")
+    return dv_with(session, "time", time)
+
+fn dv_active_worldview(world):
+    var adoptions = world.adoptions
+    var result = []
+    var i = 0
+    var policies = dv_find(world, "policies", [])
+    var accepted_policies = []
+    while (i < rt_count(adoptions)):
+        var entry = adoptions[i]
+        if entry[1].active:
+            rt_push(result, dv_clone(entry))
+        i = (i + 1)
+    i = 0
+    while (i < rt_count(policies)):
+        var entry = policies[i]
+        if entry[1].active:
+            rt_push(accepted_policies, dv_clone(entry))
+        i = (i + 1)
+    return {"laws": result, "value_policies": accepted_policies}
+
+fn dv_inspect_content(world, command, object_id, facet):
+    if (command == "worldview"):
+        return dv_active_worldview(world)
+    else:
+        if (command == "state"):
+            return dv_clone(world.objects)
+        else:
+            if (command == "slice"):
+                var objects = world.objects
+                var fields = []
+                if dv_has_key(objects, object_id):
+                    var facets = dv_get(objects, object_id).facets
+                    var values = dv_find(facets, facet, [])
+                    var i = 0
+                    while (i < rt_count(values)):
+                        rt_push(fields, values[i][0])
+                        i = (i + 1)
+                return dv_slice(world, object_id, facet, fields)
+            else:
+                return rt_fail("Inspector command must be worldview, state or slice")
+
+fn dv_inspect_at(session, subject, time, command, object_id, facet):
+    dv_require((not (session.time < time)), "Requested time has not been reached")
+    var history = session.history
+    var i = 0
+    var found = false
+    var chosen = false
+    while (i < rt_count(history)):
+        var checkpoint = history[i]
+        var world = checkpoint.world
+        if dv_and((world.domain == "mind"), dv_and((world.subject == subject), (not (time < checkpoint.time)))):
+            found = true
+            chosen = checkpoint
+        i = (i + 1)
+    if found:
+        var world = chosen.world
+        return dv_with_many({"status": "snapshot", "subject": subject, "requested_time": time, "checkpoint_time": chosen.time}, {"time_unit": session.time_unit, "revision": world.revision, "content": dv_inspect_content(world, command, object_id, facet)})
+    else:
+        return {"status": "no-checkpoint", "subject": subject, "requested_time": time}
+
+fn dv_inspector_main():
+    var argc = rt_arg_count()
+    dv_require(dv_or((argc == 4), (argc == 6)), "Usage: Inspector session.json subject time worldview|state|slice [object facet]")
+    var command = rt_arg(3)
+    var local_1 = false
+    if (command == "slice"):
+        local_1 = (argc == 6)
+    else:
+        local_1 = (argc == 4)
+    dv_require(local_1, "Wrong inspector argument count")
+    var local_2 = false
+    if (argc == 6):
+        local_2 = rt_arg(4)
+    else:
+        local_2 = ""
+    var local_3 = false
+    if (argc == 6):
+        local_3 = rt_arg(5)
+    else:
+        local_3 = ""
+    return rt_print(rt_json_stringify(dv_inspect_at(rt_json_parse(rt_read(rt_arg(0))), rt_arg(1), rt_number(rt_arg(2)), command, local_2, local_3)))
+
+// --- merged from 90-action-cost.dv ---
+
+// Resource accounting is independent of preference/effort scores. All transitions return copies.
+
+fn dv_action_cost_vector(time, computation, stamina):
+    dv_require(dv_and((not (time < 0)), dv_and((not (computation < 0)), (not (stamina < 0)))), "Negative action cost")
+    return {"time": time, "computation": computation, "stamina": stamina}
+
+fn dv_action_cost_validate(v):
+    return dv_action_cost_vector(v.time, v.computation, v.stamina)
+
+fn dv_action_cost_le(a, b):
+    return dv_and((not (b.time < a.time)), dv_and((not (b.computation < a.computation)), (not (b.stamina < a.stamina))))
+
+fn dv_action_cost_add(a, b):
+    return dv_action_cost_vector((a.time + b.time), (a.computation + b.computation), (a.stamina + b.stamina))
+
+fn dv_action_cost_sub(a, b):
+    return dv_action_cost_vector((a.time - b.time), (a.computation - b.computation), (a.stamina - b.stamina))
+
+fn dv_action_cost_bounds(minimum, maximum):
+    dv_action_cost_validate(minimum)
+    dv_action_cost_validate(maximum)
+    dv_require(dv_action_cost_le(minimum, maximum), "Action minimum exceeds maximum")
+    return {"minimum": minimum, "maximum": maximum}
+
+fn dv_action_cost_ledger(id, balances):
+    dv_action_cost_validate(balances)
+    return dv_with_many({"id": id, "revision": 0, "balances": balances, "reserved": dv_action_cost_vector(0, 0, 0)}, {"receipts": [], "events": [], "spent": dv_action_cost_vector(0, 0, 0)})
+
+fn dv_action_cost_quote(ledger, world, action, event, bounds):
+    dv_domain(world, "physical")
+    dv_action_cost_bounds(bounds.minimum, bounds.maximum)
+    dv_require((not dv_has(ledger.events, event)), "Repeated cost event")
+    dv_require((not dv_has(world.seen, event)), "Repeated world event")
+    return dv_with_many({"ledger": ledger.id, "revision": ledger.revision, "world": world.id, "world_revision": world.revision}, {"action": action, "event": event, "bounds": bounds})
+
+fn dv_action_cost_admit(ledger, world, quote):
+    var maximum = quote.bounds.maximum
+    var event = quote.event
+    dv_require(dv_and((ledger.id == quote.ledger), (ledger.revision == quote.revision)), "Stale cost quote")
+    dv_require(dv_and((world.id == quote.world), (world.revision == quote.world_revision)), "Stale cost world")
+    dv_action_cost_quote(ledger, world, quote.action, event, quote.bounds)
+    dv_require(dv_action_cost_le(maximum, ledger.balances), "Insufficient action resources")
+    var receipt = dv_with(quote, "state", "reserved")
+    var next = dv_with(ledger, "revision", (ledger.revision + 1))
+    next = dv_with(next, "balances", dv_action_cost_sub(ledger.balances, maximum))
+    next = dv_with(next, "reserved", dv_action_cost_add(ledger.reserved, maximum))
+    next = dv_with(next, "events", dv_append(ledger.events, event))
+    next = dv_with(next, "receipts", dv_with(ledger.receipts, event, receipt))
+    return {"ledger": next, "receipt": receipt}
+
+fn dv_action_cost_actual(receipt, actual):
+    dv_action_cost_validate(actual)
+    dv_require(dv_and(dv_action_cost_le(receipt.bounds.minimum, actual), dv_action_cost_le(actual, receipt.bounds.maximum)), "Actual action cost outside bounds")
+    return actual
+
+fn dv_action_cost_settle(ledger, receipt, actual, outcome):
+    var event = receipt.event
+    var stored = dv_get(ledger.receipts, event)
+    var maximum = receipt.bounds.maximum
+    dv_require(dv_and((ledger.id == receipt.ledger), dv_same(stored, receipt)), "Receipt mismatch or already settled")
+    dv_require((stored.state == "reserved"), "Receipt already settled")
+    dv_require(dv_or((outcome == "applied"), (outcome == "rejected")), "Unknown settlement outcome")
+    dv_action_cost_actual(receipt, actual)
+    var next = dv_with(ledger, "revision", (ledger.revision + 1))
+    var settled = dv_with_many(receipt, {"state": "settled", "actual": actual, "outcome": outcome})
+    next = dv_with(next, "balances", dv_action_cost_add(ledger.balances, dv_action_cost_sub(maximum, actual)))
+    next = dv_with(next, "reserved", dv_action_cost_sub(ledger.reserved, maximum))
+    next = dv_with(next, "spent", dv_action_cost_add(ledger.spent, actual))
+    return dv_with(next, "receipts", dv_with(ledger.receipts, event, settled))
+
+// A queued action has already waited on the shared world clock.
+// Its ledger still pays the full duration once; immediate callers retain elapsed-time settlement.
+fn dv_action_cost_completion_time(physical, receipt, actual):
+    let now = dv_find(physical, "time", 0)
+    if dv_has_key(receipt, "scheduled_start"):
+        let due = receipt.scheduled_start + actual.time
+        dv_require(due <= now, "Scheduled action has not finished waiting")
+        return now
+    return now + actual.time
+
+fn dv_action_cost_clock_commit(physical, receipt, actual, status):
+    var event = receipt.event
+    var time = dv_action_cost_completion_time(physical, receipt, actual)
+    var history = dv_with_many({"id": event, "time": time, "kind": "action-cost", "status": status}, {"receipt": receipt, "actual": actual})
+    return dv_with_many(physical, {"time": time, "revision": (physical.revision + 1), "seen": dv_append(physical.seen, event), "history": dv_append(physical.history, history)})
+
+fn dv_action_cost_execution_metadata(execution, receipt, actual):
+    return dv_with_many(execution, {"event": receipt.event, "time": execution.world.time, "actual_cost": actual})
+
+fn dv_action_cost_execute(ledger, physical, quote, actual):
+    var admitted = dv_action_cost_admit(ledger, physical, quote)
+    var receipt = admitted.receipt
+    dv_action_cost_actual(receipt, actual)
+    var execution = dv_execute(physical, receipt.action, receipt.event, dv_action_cost_completion_time(physical, receipt, actual), receipt.world_revision)
+    if (execution.status == "applied"):
+        false
+    else:
+        execution = dv_with(execution, "world", dv_action_cost_clock_commit(physical, receipt, actual, execution.status))
+    var local_1 = false
+    if (execution.status == "applied"):
+        local_1 = "applied"
+    else:
+        local_1 = "rejected"
+    return {"ledger": dv_action_cost_settle(admitted.ledger, receipt, actual, local_1), "execution": dv_action_cost_execution_metadata(execution, receipt, actual), "receipt": receipt}
+
+fn dv_action_cost_finish(ledger, physical, quote, actual, outcome):
+    var admitted = dv_action_cost_admit(ledger, physical, quote)
+    var receipt = admitted.receipt
+    dv_action_cost_actual(receipt, actual)
+    var next = dv_action_cost_clock_commit(physical, receipt, actual, outcome)
+    return {"ledger": dv_action_cost_settle(admitted.ledger, receipt, actual, outcome), "execution": dv_action_cost_execution_metadata(dv_result(outcome, next, [], dv_single(receipt.event)), receipt, actual), "receipt": receipt}
+
+
+// Explicit, defeasible acceptance of a paid explanation. This is not an observation adapter.
+
+fn dv_explanation_model_complete(model, status, revision):
+    return dv_and((dv_find(model, "status", "unknown") == status), dv_and(dv_or((dv_find(model, "source_revision", -1) == revision), dv_find(model, "validated_by_inputs", false)), dv_and(dv_find(model, "plan_complete", false), dv_and((not (dv_find(model, "remaining", -1) < 0)), dv_and((not (dv_find(model, "work_remaining", -1) < 0)), dv_and((rt_count(dv_find(model, "failures", [])) == 0), dv_and((0 < rt_count(dv_find(model, "predictions", []))), dv_and((rt_count(dv_find(model, "predictions", [])) == rt_count(dv_find(model, "comparisons", []))), dv_has_key(model, "event")))))))))
+
+fn dv_explanation_observation_sources(mind, comparison, sources):
+    var observed = comparison.observed_cells
+    var i = 0
+    var valid = true
+    var ids = []
+    var inputs = []
+    if (rt_count(observed) == 0):
+        valid = false
+    while (i < rt_count(observed)):
+        var item = observed[i]
+        var ref = observed[i].ref
+        var cell = dv_read(mind, observed[i].ref)
+        var j = 0
+        var found = false
+        if dv_same(cell, item.cell):
+            false
+        else:
+            valid = false
+        while (j < rt_count(sources)):
+            var source = sources[j]
+            var observation = sources[j].observation
+            if dv_and((observation.subject == mind.subject), dv_and(dv_same_local_ref(mind.subject, observation.ref, ref), dv_same(observation.value, cell.value))):
+                if dv_has(dv_find(cell, "claims", []), observation):
+                    found = true
+                    if dv_has(ids, source.event_id):
+                        false
+                    else:
+                        ids = dv_append(ids, source.event_id)
+            j = (j + 1)
+        if found:
+            false
+        else:
+            valid = false
+        rt_push(inputs, item)
+        i = (i + 1)
+    return {"valid": valid, "source_event_ids": ids, "inputs": inputs}
+
+fn dv_explanation_trace_changes(step):
+    if dv_has_key(step, "changes"):
+        return step.changes
+    else:
+        if dv_has_key(step, "response"):
+            var response = step.response
+            if dv_has_key(response, "bridge"):
+                return dv_find(response.bridge, "changes", [])
+            else:
+                return []
+        else:
+            return []
+
+fn dv_explanation_slot(model, slot):
+    var predictions = model.predictions
+    var index = slot.feature_index
+    var valid = false
+    var value = false
+    var confidence = 0
+    var trace_step = -1
+    var trace = model.trace
+    var j = 0
+    if dv_and((not (index < 0)), (index < rt_count(predictions))):
+        var prediction = predictions[index]
+        while (j < rt_count(trace)):
+            var step = trace[j]
+            var changes = dv_explanation_trace_changes(trace[j])
+            var k = 0
+            if (step.at == slot.trace_at):
+                while (k < rt_count(changes)):
+                    var change = changes[k]
+                    if dv_and(dv_same(change.ref, slot.ref), dv_and(dv_uncontested(change.after), dv_and(prediction.covered, dv_find(slot, "value_from_prediction", false)))):
+                        valid = true
+                        value = change.after.value
+                        confidence = dv_min(prediction.confidence, change.after.confidence)
+                        trace_step = j
+                    k = (k + 1)
+            j = (j + 1)
+    return dv_with({"valid": valid, "value": value, "confidence": confidence, "trace_step": trace_step}, "slot", slot)
+
+fn dv_explanation_model_inputs(mind, model):
+    var trace = dv_find(model, "trace", [])
+    var result = []
+    var i = 0
+    while (i < rt_count(trace)):
+        var refs = dv_find(trace[i], "inputs", [])
+        var j = 0
+        while (j < rt_count(refs)):
+            var ref = refs[j].ref
+            result = dv_explanation_merge(result, dv_single({"ref": ref, "cell": dv_read(mind, ref)}))
+            j = (j + 1)
+        i = (i + 1)
+    return result
+
+fn dv_explanation_model_current(mind, model):
+    var inputs = dv_find(model, "validation_inputs", [])
+    var valid = dv_same(dv_find(model, "source_adoptions", false), mind.adoptions)
+    var i = 0
+    while (i < rt_count(inputs)):
+        var input = inputs[i]
+        if dv_same(dv_without(input.cell, "time"), dv_without(dv_read(mind, input.ref), "time")):
+            false
+        else:
+            valid = false
+        i = (i + 1)
+    return valid
+
+fn dv_accept_explanation(mind, model, competitors, slots, sources, policy, budget, time, id):
+    var valid = true
+    var reason = "accepted-estimated"
+    var comparisons = dv_find(model, "comparisons", [])
+    var i = 0
+    var source_ids = []
+    var inputs = []
+    var competitor_ids = []
+    var claims = []
+    var effects = []
+    var remaining = budget
+    var confidence = dv_find(policy, "confidence_cap", 0)
+    dv_domain(mind, "mind")
+    if dv_and(dv_find(policy, "active", false), dv_and((0 < confidence), dv_and((confidence < 1), (0 < rt_count(dv_find(policy, "basis", [])))))):
+        false
+    else:
+        valid = false
+        reason = "abduction-strategy-not-adopted"
+    var local_1 = false
+    if dv_find(model, "validated_by_inputs", false):
+        local_1 = dv_explanation_model_current(mind, model)
+    else:
+        local_1 = true
+    if dv_and(dv_explanation_model_complete(model, "explained", mind.revision), local_1):
+        false
+    else:
+        valid = false
+        reason = "model-incomplete-or-stale"
+    while (i < rt_count(comparisons)):
+        var comparison = comparisons[i]
+        var observed = dv_explanation_observation_sources(mind, comparisons[i], sources)
+        if dv_and((comparison.result == "match"), observed.valid):
+            false
+        else:
+            valid = false
+            reason = "unobserved-or-unmatched-feature"
+        confidence = dv_min(confidence, comparison.confidence)
+        source_ids = dv_explanation_merge(source_ids, observed.source_event_ids)
+        inputs = dv_explanation_merge(inputs, observed.inputs)
+        i = (i + 1)
+    inputs = dv_explanation_merge(inputs, dv_explanation_model_inputs(mind, model))
+    i = 0
+    while (i < rt_count(competitors)):
+        var other = competitors[i]
+        var j = 0
+        var other_comparisons = dv_find(competitors[i], "comparisons", [])
+        var contradiction = false
+        var local_2 = false
+        if dv_find(other, "validated_by_inputs", false):
+            local_2 = dv_explanation_model_current(mind, other)
+        else:
+            local_2 = true
+        if dv_and(dv_explanation_model_complete(other, "inconsistent", mind.revision), local_2):
+            false
+        else:
+            valid = false
+            reason = "unresolved-competitor"
+        while (j < rt_count(other_comparisons)):
+            var comparison = other_comparisons[j]
+            var observed = dv_explanation_observation_sources(mind, other_comparisons[j], sources)
+            if dv_and((not (comparison.result == "unknown")), observed.valid):
+                false
+            else:
+                valid = false
+                reason = "competitor-feature-unresolved"
+            if (comparison.result == "contradiction"):
+                contradiction = true
+            source_ids = dv_explanation_merge(source_ids, observed.source_event_ids)
+            inputs = dv_explanation_merge(inputs, observed.inputs)
+            j = (j + 1)
+        inputs = dv_explanation_merge(inputs, dv_explanation_model_inputs(mind, other))
+        if contradiction:
+            false
+        else:
+            valid = false
+            reason = "competitor-not-refuted"
+        if dv_has_key(other, "event"):
+            competitor_ids = dv_append(competitor_ids, other.event)
+        i = (i + 1)
+    if (rt_count(slots) == 0):
+        valid = false
+        reason = "no-public-claim-slots"
+    i = 0
+    while dv_and(valid, (i < rt_count(slots))):
+        if (remaining < 1):
+            valid = false
+            reason = "argument-reason-budget"
+        else:
+            var slot = slots[i]
+            var resolved = dv_explanation_slot(model, slots[i])
+            remaining = (remaining - 1)
+            if resolved.valid:
+                var ref = slot.ref
+                var existing = dv_read(mind, slot.ref)
+                if dv_has_key(mind.objects, ref.object):
+                    false
+                else:
+                    valid = false
+                    reason = "unknown-local-claim-object"
+                if dv_and(dv_uncontested(existing), (not dv_same(existing.value, resolved.value))):
+                    valid = false
+                    reason = "claim-conflicts-with-current-evidence"
+                confidence = dv_min(confidence, resolved.confidence)
+                rt_push(claims, dv_with({"slot_id": slot.slot_id, "ref": ref, "value": resolved.value, "trace_step": resolved.trace_step}, "feature_index", slot.feature_index))
+                if dv_uncontested(existing):
+                    false
+                else:
+                    rt_push(effects, dv_assign(ref, resolved.value))
+            else:
+                valid = false
+                reason = "claim-not-covered-by-actual-predictive-trace"
+            i = (i + 1)
+    if (0 < confidence):
+        false
+    else:
+        valid = false
+        reason = "unsupported-zero-confidence"
+    var basis = dv_explanation_merge(dv_find(policy, "basis", []), dv_explanation_merge(source_ids, dv_append(competitor_ids, dv_find(model, "event", ""))))
+    var world = mind
+    var changes = []
+    if valid:
+        var stage = dv_stage(mind, effects, time, dv_append(basis, id), confidence)
+        var j = 0
+        if (stage.status == "ready"):
+            world = stage.world
+            changes = stage.changes
+            while (j < rt_count(changes)):
+                var ref = changes[j].ref
+                world = dv_store(world, ref, dv_with_many(dv_read(world, ref), {"source": "abduction", "estimated": true}))
+                j = (j + 1)
+            if (0 < rt_count(changes)):
+                world = dv_with(world, "revision", (mind.revision + 1))
+        else:
+            valid = false
+            reason = stage.status
+    var argument = dv_with_many({"id": id, "estimated": true, "confidence": confidence, "claims": claims}, {"model_event": dv_find(model, "event", ""), "source_event_ids": source_ids, "competitor_events": competitor_ids, "source_revision": mind.revision, "mind_revision_after": world.revision, "inputs": inputs, "changes": changes, "basis": basis})
+    if valid:
+        world = dv_with(world, "history", dv_append(world.history, {"kind": "estimated-model-argument", "argument": argument, "time": time}))
+    return dv_with_many({"accepted": valid, "reason": reason, "world": world, "argument": argument}, {"remaining": remaining, "expanded": (budget - remaining)})
+
+fn dv_explanation_merge(a, b):
+    var result = a
+    var i = 0
+    while (i < rt_count(b)):
+        if dv_has(result, b[i]):
+            false
+        else:
+            result = dv_append(result, b[i])
+        i = (i + 1)
+    return result
+
+// --- merged from 98-debug.dv ---
+
+// Read-only event projection. Filtering affects reports, never scheduling or knowledge.
+fn dv_debug_event(event):
+    let data = event.data
+    let raw_action = dv_find(data, "action", [])
+    var action = []
+    var action_id = dv_find(data, "action_id", "")
+    if dv_record_like(raw_action):
+        action = raw_action
+        action_id = dv_find(action, "id", action_id)
+    else:
+        if raw_action != false:
+            if rt_is_list(raw_action):
+                action_id = rt_json_stringify(raw_action)
+            else:
+                action_id = rt_show(raw_action)
+    var detail = []
+    let fields = ["due", "until", "waiting", "duration", "status", "reason", "score", "plan_expansions", "plan_cache_hit", "reused_plan_expansions", "stop", "root_best", "best_after_successor_layer", "completed_layers", "actual", "observations", "judgment", "accepted", "literal_truth", "epistemic_support", "source_event", "execution_id", "chapter", "movement", "process", "revision_before", "revision_after", "suspended", "dependency_expansions", "dependency_stop", "reason_reused", "cognition_reused", "reasons", "steps", "remaining", "mind_revision"]
+    var i = 0
+    while i < rt_count(fields):
+        if dv_has_key(data, fields[i]):
+            rt_push(detail, dv_pair(fields[i], dv_get(data, fields[i])))
+        i = i + 1
+    // Keep the actual subjective computation inspectable. This is an explicit
+    // reporting projection; no field is promoted to a real-world observation.
+    if event.type == "mind_simulation" or event.type == "model_recheck":
+        detail = dv_with_many(detail, {"hypothesis": dv_debug_reference(dv_find(data, "hypothesis", false)), "result": dv_debug_model_result(dv_find(data, "result", false)), "source_adoptions": dv_debug_reference(dv_find(dv_find(dv_find(data, "actor_before", []), "mind", []), "adoptions", [])), "scope": "subjective-model-not-actual-execution; references-resolve-to-full-raw-values"})
+        let hypothesis = dv_find(data, "hypothesis", [])
+        let calculation = dv_find(data, "result", [])
+        detail = dv_with_many(detail, {"hypothesis_id": dv_find(hypothesis, "id", ""), "calculation_scope": dv_find(calculation, "evaluation_scope", dv_find(hypothesis, "evaluation_scope", {"kind": "declared-plan", "plan_complete": dv_find(calculation, "plan_complete", false)}))})
+        if dv_has_key(data, "model_before"):
+            detail = dv_with(detail, "model_before", dv_debug_model_reference(data.model_before))
+    if event.type == "factor_prune":
+        detail = dv_with_many(detail, dv_debug_without_snapshot(data))
+        detail = dv_with(detail, "source_adoptions", dv_debug_reference(dv_find(dv_find(dv_find(data, "actor_before", []), "mind", []), "adoptions", [])))
+        detail = dv_with(detail, "calculation_scope", {"kind": "factor-prune", "meaning": "constraint-refutation-not-complete-model-explanation"})
+    if event.type == "model_argument_unavailable" or event.type == "model_argument_accepted":
+        var competitors = []
+        var competitor_index = 0
+        let original = dv_find(data, "competitors", [])
+        while competitor_index < rt_count(original):
+            rt_push(competitors, dv_debug_model_reference(original[competitor_index]))
+            competitor_index = competitor_index + 1
+        detail = dv_with_many(detail, {"hypothesis": dv_debug_reference(dv_find(data, "hypothesis", false)), "competitors": competitors, "result": dv_debug_model_result(dv_find(data, "result", false)), "scope": "subjective-argument; references-resolve-to-full-raw-values"})
+        detail = dv_with(detail, "calculation_scope", {"kind": "argument-comparison", "meaning": "uses-recorded-models-not-a-new-causal-replay"})
+    if event.type == "action_execution":
+        detail = dv_with(detail, "status", data.receipt.execution.status)
+    return rt_snapshot({"event_id": event.id, "type": event.type, "actor": event.actor, "game_time": event.time, "parents": event.parents, "action_id": action_id, "action_kind": dv_find(action, "kind", ""), "label": dv_find(action, "label", dv_find(action, "surface", "")), "purpose_sources": dv_find(action, "purpose_basis", []), "detail": detail, "raw_event_ref": rt_raw_ref(event)})
+
+fn dv_debug_reference(value):
+    let reference = rt_raw_ref(value)
+    if reference == false:
+        return value
+    return {"raw_ref": reference, "meaning": "complete-original-value-in-raw-journal"}
+
+fn dv_debug_model_reference(model):
+    let reference = rt_raw_ref(model)
+    if reference == false:
+        return dv_debug_model_result(model)
+    return {"raw_ref": reference, "event": dv_find(model, "event", ""), "status": dv_find(model, "status", ""), "fit": dv_find(model, "fit", false), "plan_complete": dv_find(model, "plan_complete", false), "evaluation_scope": dv_find(model, "evaluation_scope", "declared-plan"), "stop_reason": dv_find(model, "stop_reason", "")}
+
+fn dv_debug_without_snapshot(data):
+    var result = []
+    var i = 0
+    while i < rt_count(data):
+        let entry = data[i]
+        if entry[0] != "actor_before":
+            rt_push(result, entry)
+        i = i + 1
+    return result
+
+fn dv_debug_model_result(result):
+    if not dv_record_like(result):
+        return result
+    // Borrow frozen children in one pass, then freeze the final projection once.
+    var projected = []
+    var i = 0
+    while i < rt_count(result):
+        let entry = result[i]
+        let key = entry[0]
+        if key != "predicted" and key != "world":
+            var value = entry[1]
+            if dv_has(["source_adoptions", "source_response_models", "source_hypothesis", "trace", "argument"], key):
+                value = dv_debug_reference(value)
+            rt_push(projected, dv_pair(key, value))
+        i = i + 1
+    return projected
+
+fn dv_debug_events(events, start, config):
+    dv_require(0 <= start and start <= rt_count(events), "Invalid debug event cursor")
+    let actors = dv_find(config, "actors", [])
+    let kinds = dv_find(config, "event_types", [])
+    var result = []
+    var i = start
+    while i < rt_count(events):
+        let event = events[i]
+        if (rt_count(actors) == 0 or event.actor == "" or dv_has(actors, event.actor)) and (rt_count(kinds) == 0 or dv_has(kinds, event.type)):
+            rt_push(result, dv_debug_event(event))
+        i = i + 1
+    return {"from": start, "next": rt_count(events), "events": result, "scope": "independent debug projection; full snapshots remain in live session; file completeness is reported separately"}
+
+
+
+
+法则 missing_premise：
+    效果 []
+

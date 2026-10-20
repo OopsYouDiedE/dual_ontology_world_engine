@@ -1,0 +1,6 @@
+#include ../../../../language_core/20-core.dv
+
+法则 duplicate_premise：
+    前提 dv_true()
+    前提 dv_not(dv_true())
+    效果 []

@@ -16,11 +16,13 @@ python language_core/tools/check_dv.py --format json language_core/10-compiler.d
 
 `build_session.py` 默认组合 `60-game.dv` 的 include 闭包，生成 `DVProgram.cs`、模块范围和来源清单；Session 项目引用 `obj/dv/DVProgram.cs`。这些是可重建输出，不能手改或冒称独立源实现。仅比较生成源固定点不等于形式化证明或正式游戏验收。环境缺失、SDK 错误或未运行阶段如实说明，不沿用历史构建记录。
 
-`tools/dv_toolchain.py` 的 `sources()` 按当前文件解析相对 `#include`，保留 define 作用域与 UTF-16 源位置边界，拒绝循环和缺失依赖。裸编译器接口接收已经组合的源与范围数据；编辑器使用 [dv-check.json](../dv-check.json) 选择编译器、生产或独立检查闭包，生产组不含 oracle。
+`tools/dv_toolchain.py` 的 `sources()` 只解析从行首开始的相对 `#include`，保留 define/称谓作用域与 UTF-16 源位置边界，拒绝循环和缺失依赖。缩进正文中的 `#include` 保持文字；源适配只规范 CRLF/CR，不把 U+2028 等文字字符拆成源码行。裸编译器接口接收已经组合的源与范围数据；编辑器使用 [dv-check.json](../dv-check.json) 选择编译器、生产或独立检查闭包，生产组不含 oracle。
 
 ## 前端与当前类型边界
 
-`sf_scan/sf_parse` 处理 Unicode、缩进与 define，`sf_declaration` 展开 fn、axiom、公式、function 具名输出、mapping、acceptance、imprint，`sf_rename_body` 为局部绑定生成唯一目标名，`ck_program/ck_body/ck_expect` 核对名称、元数、显式名义类型、字面量范围及 let 可变性，随后直接发射 C#。
+`sf_scan/sf_parse` 处理 Unicode、缩进、define 和文件内称谓。`nl_scan_prose` 在标点、注释及括号扫描前捕获叙述/台词/表述的原文 token；`nl_declaration` 把作者声明降到同一函数 AST，`sf_declaration` 继续展开 fn、axiom、公式、function 具名输出、mapping、acceptance、imprint。`sf_rename_body` 为局部绑定生成唯一目标名，`ck_program/ck_body/ck_expect` 核对名称、元数、显式名义类型、字面量范围及 let 可变性，随后直接发射 C#。
+
+自然法则调用既有 `dv_ref/dv_fact/dv_at_least/dv_not/dv_all/dv_assign/dv_increment/dv_axiom`，不增加世界解释器。自然行动生成既有七字段及可选 once/surface 的有序记录，整体 `dv_clone` 保持传入容器隔离；它不依赖章节专用的 c1_action。自然条件中的明显布尔字面量会在根节点和非/合取/析取操作数上被拒绝，属性值仍可为真或假；未注解函数返回值仍受既有 Value 静态边界限制。所有新增名称与函数共用名称/元数检查，称谓替换保留引用处源位置，原文 token 不参与名称替换。完整作者合同见 [SYNTAX.md](../SYNTAX.md)。
 
 公式 `f(x) [-> Type] = expression` 与 `function y[: Type] = f(x) ... end` 都降到既有 surface/defn 管线。具名输出用公共 declare 语句表达未初始化可变局部，不生成默认 false；`sf_output_flow` 在重命名前核对明确赋值、分支交集、循环可能零次和裸 return。多输出按序返回 List，调用侧仍是普通位置参数与单一返回值；不支持调用端解构或 nargout。end 风格块与原 fn 缩进块分别解析，共用后端与名义检查；输出局部的 C# definite assignment 仍接受实际 .NET 编译核对。
 
