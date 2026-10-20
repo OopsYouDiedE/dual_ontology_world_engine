@@ -58,6 +58,15 @@ func _run() -> void:
 	var first := page.get_node("Scroll/Column/First") as Button
 	var second := page.get_node("Scroll/Column/Second") as Button
 	var slider := page.get_node("Scroll/Column/Volume") as HSlider
+	var accessibility_label := page.get_node("Scroll/Column/AccessibilityOnly") as Label
+	var accessibility_enabled := is_accessibility_enabled()
+	var initial_target: Control = accessibility_label if accessibility_enabled else first
+	page_viewport.gui_release_focus()
+	_button(JOY_BUTTON_DPAD_DOWN, true)
+	_button(JOY_BUTTON_DPAD_DOWN, false)
+	_observe("initial controller focus respects native accessibility mode",
+		page_viewport.gui_get_focus_owner() == initial_target,
+		{"accessibility_enabled": accessibility_enabled, "expected_control": initial_target.name})
 	first.grab_focus()
 	_axis(JOY_AXIS_LEFT_Y, 0.18)
 	_observe("stick drift leaves focus alone", page_viewport.gui_get_focus_owner() == first)
@@ -115,6 +124,12 @@ func _setup_page() -> void:
 	column.name = "Column"
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(column)
+	var accessibility_label := Label.new()
+	accessibility_label.name = "AccessibilityOnly"
+	accessibility_label.text = "Screen-reader description"
+	accessibility_label.focus_mode = Control.FOCUS_ACCESSIBILITY
+	accessibility_label.custom_minimum_size.y = 48
+	column.add_child(accessibility_label)
 	for label in ["First", "Disabled", "Second"]:
 		var button := Button.new()
 		button.name = label

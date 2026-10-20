@@ -128,9 +128,11 @@ static func reduced_motion(owner_node: Node) -> bool:
 	return settings != null and bool(settings.get_value("accessibility", "reduce_motion"))
 
 static func can_focus(control: Control) -> bool:
-	return is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() \
-		and control.get_focus_mode_with_override() != Control.FOCUS_NONE \
-		and not (control is BaseButton and control.disabled)
+	if not is_instance_valid(control) or not control.is_inside_tree() or not control.is_visible_in_tree(): return false
+	var mode := control.get_focus_mode_with_override()
+	# Match native focus eligibility, including an explicitly enabled screen reader.
+	if mode == Control.FOCUS_ACCESSIBILITY and not control.get_tree().is_accessibility_enabled(): return false
+	return mode != Control.FOCUS_NONE and not (control is BaseButton and control.disabled)
 
 static func focusable_controls(root: Node) -> Array[Control]:
 	var result: Array[Control] = []

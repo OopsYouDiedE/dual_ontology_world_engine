@@ -595,6 +595,10 @@ func _check_note(expected_text: String) -> bool:
 	return true
 
 func _leave_casebook(label: String) -> bool:
+	# Detail/editor back returns one page. The visible index action clears that
+	# history; only the index's return action closes the shared book.
+	if not await _click(book._leaf_index, "return-to-index:" + label): return false
+	if not await _await_page("index", "index-before-close-" + label): return false
 	if not await _click(book._leaf_back, "return-to-field:" + label): return false
 	var deadline := Time.get_ticks_usec() + 1600000
 	while casebook.is_active():

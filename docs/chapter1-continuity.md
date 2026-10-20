@@ -6,11 +6,13 @@
 
 第一章生活层的房间共用同一个 `CampusMapView`。跨房间不卸载地图，不重新创建侦探，也不把角色传送至房间锚点。`WorldView.SpatialInputInner` 保留键盘、摇杆和鼠标路线输入，以真实 `CharacterBody2D.move_and_slide()` 穿过门道。
 
-房内靠近门时只准备几何与导航资源。正式跨门请求限于当前可用的可见门选项与真实源侧门道，附带 request、choice、actor、map、from_room、to_room；Main 将这些值与独立返回的 DV prepared intent 核对，才给执行目的地加上 `continuous_walk` 标记。标记不进入 Core，不替代正常的来源、实体、序号、站点及碰撞核对。
+房内靠近门时只准备几何与导航资源。正式跨门请求限于当前可用的可见门选项与真实源侧门道，附带 request、choice、actor、map、from_room、to_room；Main 将这些值与独立返回的 DV prepared intent 核对，才给执行目的地加上 `continuous_walk` 标记。标记不进入 Core，不替代正常的来源、实体、序号、站点及碰撞核对。`formal_selection_ready` 另行确认本轮玩家选项已交付，且没有待呈现事件、延后输入或执行中的动作；普通房内行走不依赖这个正式选择门限。
 
 请求期间仍可在源房间行走。Prepare 完成后只放行这次请求的目标边界；首次进入真实目标内室发一次到达回执。等待 Complete 时允许目标房间内局部行走，下一次跨门必须等待权威快照。到达前松开、转回或打开界面会取消该真实过门尝试；若人物已在厚门道的另一逻辑侧，仍通过真实碰撞走回源侧再发失败回执。正式尝试的失败费用继续由原 DV 规则结算，普通房内接近和转身不发跨门动作。
 
-接口：`continuous_request()` 提供本次请求；`is_continuous_action()` 核对当前请求与目的地；`reject_continuous_request()` 释放未接受请求或已完成失败回执；`synchronize_continuous_snapshot()` 只在权威目标房间提交后清除成功请求。
+接口：`continuous_request()` 提供本次请求；`is_continuous_action()` 核对当前请求与目的地；`reject_continuous_request()` 释放未接受请求或已完成失败回执。现场执行器在接管前拒绝请求时，Main 同样释放该请求，避免永久保留提交锁。
+
+`synchronize_continuous_snapshot()` 在权威目标房间提交后清除成功请求。如果人物已实际到达，而新的权威结果明确回到源房间且 pending 为 `idle` 或 `awaiting_input`，进入 `reconciling`，通过原身体、局部导航和真实碰撞走回源侧后再释放。旧 `prepared` 快照不会触发回退；UI 占用暂停返回，动态阻挡保留返回状态并重新查询路径。此恢复过程不发送第二次选择、到达回执或 Complete。
 
 ## 呈现准备与缓存
 

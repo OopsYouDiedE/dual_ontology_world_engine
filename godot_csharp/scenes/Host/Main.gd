@@ -670,6 +670,13 @@ func _dv_complete(outcome: String, execution: Dictionary) -> void:
 	_timing("execution_end", {"outcome": outcome, "action_event": _dv_intent.action_event})
 	var receipt := {"action_event": _dv_intent.action_event, "outcome": outcome, "actual": _dv_intent.execution_cost, "executor": "godot", "field": execution}
 	if str(_dv_intent.get("actor", "")) == str(_continuous_selection.get("actor", "")) and str(_dv_intent.get("action", {}).get("id", "")) == str(_continuous_selection.get("choice_id", "")):
+		if outcome != "applied" and is_instance_valid(field):
+			var phase := str(field.continuous_request().get("phase", ""))
+			if phase in ["requested", "settling"]:
+				# The executor can reject before execute_move accepts the request.
+				# Such a request will never receive a spatial prepared/settling
+				# transition, so release it alongside its one rejected receipt.
+				field.reject_continuous_request(str(_continuous_selection.get("choice_id", "")), "execution_rejected")
 		_continuous_selection.clear()
 	_dv_intent = {}
 	_player_options_open = false

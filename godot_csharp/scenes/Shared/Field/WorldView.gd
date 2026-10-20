@@ -1343,6 +1343,9 @@ class SpatialInputInner extends Node:
 	var _gate_waiting := false
 	var _retry_after_usec := 0
 	var _preview_pair := ""
+	var _reconcile_route := PackedVector2Array()
+	var _reconcile_retry := 0.0
+	var _reconcile_stuck := 0.0
 
 	func continuous_request() -> Dictionary:
 		return _continuous.duplicate(true)
@@ -1358,6 +1361,11 @@ class SpatialInputInner extends Node:
 		if str(_continuous.phase) == "prepared":
 			_cancel_continuous(reason)
 			return
+		if str(_continuous.phase) in ["arrived", "reconciling"]:
+			# Releasing the host request cannot discard a body still on the
+			# other side. Only its authoritative arrival or real return can.
+			synchronize_continuous_snapshot()
+			return
 		_stamp("continuous_request_released", str(_continuous.request_id), {"reason": reason})
 		_continuous.clear()
 		_gate_waiting = false
@@ -1370,6 +1378,79 @@ class SpatialInputInner extends Node:
 			_stamp("continuous_arrival_committed", str(_continuous.request_id), {"room": authoritative_room})
 			_continuous.clear()
 			_gate_waiting = false
+		elif str(_continuous.phase) == "arrived" and authoritative_room == str(_continuous.from_room):
+			var pending: Dictionary = field.snapshot.get("pending", {})
+			# The old prepared snapshot still names the source while Complete
+			# is pending. Only a settled authority response can reject arrival.
+			if str(pending.get("status", "")) in ["idle", "awaiting_input"]:
+				_stop_walk("authoritative-arrival-rejected")
+				_continuous.phase = "reconciling"
+				_continuous.reconciliation_state = "planning"
+				_reconcile_route.clear()
+				_reconcile_retry = 0.0
+				_reconcile_stuck = 0.0
+				_gate_waiting = false
+				_stamp("continuous_reconciliation_begin", str(_continuous.request_id), {"room": authoritative_room, "position": [field.player.position.x, field.player.position.y]})
+
+	func _finish_reconciliation_if_safe() -> bool:
+		if str(field.adapter.departure_room(field.player.position)) != str(_continuous.from_room): return false
+		_stamp("continuous_reconciliation_finished", str(_continuous.request_id), {"room": _continuous.from_room, "position": [field.player.position.x, field.player.position.y]})
+		_continuous.clear()
+		_reconcile_route.clear()
+		_reconcile_retry = 0.0
+		_reconcile_stuck = 0.0
+		_gate_waiting = false
+		_stop_walk("authoritative-source-restored")
+		return true
+
+	func _reconciliation_blocked(reason: String) -> void:
+		_reconcile_route.clear()
+		_reconcile_retry = 0.2
+		_reconcile_stuck = 0.0
+		field.player.pose("idle")
+		if str(_continuous.get("reconciliation_state", "")) != "blocked":
+			_stamp("continuous_reconciliation_blocked", str(_continuous.request_id), {"reason": reason})
+		_continuous.reconciliation_state = "blocked"
+
+	func _reconcile_rejected_arrival(delta: float) -> bool:
+		if _continuous.is_empty() or str(_continuous.phase) != "reconciling": return false
+		if _finish_reconciliation_if_safe(): return true
+		_reconcile_retry = maxf(0.0, _reconcile_retry - delta)
+		if _reconcile_retry > 0.0: return true
+		if _reconcile_route.is_empty():
+			# Rebuild the occupancy overlay for every retry. Recovery uses only
+			# the same two rooms and never replays a formal selection/receipt.
+			var grid := _local_grid(str(_continuous.to_room))
+			_reconcile_route = NAV.route_on_grid(field.player.position, _last_source_position, grid)
+			if _reconcile_route.is_empty():
+				_reconciliation_blocked("no_source_return_route")
+				return true
+			_reconcile_route.append(_last_source_position)
+			_continuous.reconciliation_state = "returning"
+			_stamp("continuous_reconciliation_route", str(_continuous.request_id), {"points": _reconcile_route.size()})
+		_begin_walk()
+		var before: Vector2 = field.player.position
+		var remaining: float = field.player.speed * delta
+		for _segment in MAX_ROUTE_STEPS_PER_TICK:
+			if _reconcile_route.is_empty() or remaining <= 0.0: break
+			var difference: Vector2 = _reconcile_route[0] - field.player.position
+			if difference.length() > 1.0:
+				var motion := difference.limit_length(remaining)
+				var next: Vector2 = field.player.position + motion
+				if str(field.adapter.room_of(next)) not in [str(_continuous.from_room), str(_continuous.to_room)] or not field.adapter.walkable(next, field.player):
+					_reconciliation_blocked("source_return_geometry_changed")
+					return true
+				_move_body(motion, delta)
+				remaining = maxf(0.0, remaining - motion.length())
+				if _finish_reconciliation_if_safe(): return true
+				if field.player.position.distance_to(_reconcile_route[0]) > 1.0: break
+			_reconcile_route.remove_at(0)
+		if field.player.position.distance_to(before) >= 0.5:
+			_reconcile_stuck = 0.0
+		else:
+			_reconcile_stuck += delta
+			if _reconcile_stuck >= 0.35: _reconciliation_blocked("source_return_obstructed")
+		return true
 
 	func accept_continuous_passage(destination: Dictionary, who: String, serial: int, action: String) -> void:
 		if not is_continuous_action(action, destination) or who != str(field._player_key):
@@ -1411,7 +1492,7 @@ class SpatialInputInner extends Node:
 			"continuous_walk": continuous_request(), "context": field.context()})
 
 	func _cancel_continuous(reason: String) -> void:
-		if _continuous.is_empty() or str(_continuous.phase) in ["arrived", "settling"]: return
+		if _continuous.is_empty() or str(_continuous.phase) in ["arrived", "settling", "reconciling"]: return
 		_continuous.cancelled = true
 		_continuous.cancel_reason = reason
 		_finish_cancel_if_safe()
@@ -1538,6 +1619,7 @@ class SpatialInputInner extends Node:
 			if _walking: _stop_walk("input-blocked")
 			elif not _continuous.is_empty(): _cancel_continuous("input-blocked")
 			return
+		if _reconcile_rejected_arrival(delta): return
 		if _return_cancelled_passage(delta): return
 		var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		if direction != Vector2.ZERO:
