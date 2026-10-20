@@ -12,6 +12,7 @@ const DIAGNOSTICS := RuntimeDiagnosticsInner
 const CASEBOOK_DATA := preload("res://scenes/UI/CasebookData.gd")
 const CAMPUS_MAP_VIEW := preload("res://scenes/Chapter2/Field/CampusMapView.tscn")
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
+const NOTICE_THEME := preload("res://scenes/UI/Styles/OverlayTheme.tres")
 
 @export_enum("player", "ai") var controller := "player"
 @export var campaign_options: Dictionary = {}
@@ -43,6 +44,10 @@ var _bookmark_loading := false
 var _bookmark_saving := false
 var _session_generation := 0
 var _book_deferred_inputs: Array[Dictionary] = []
+var _opening_field := false
+var _view_faulted := false
+var _continuous_selection: Dictionary = {}
+var _player_options_open := false
 
 func _timing(stage: String, details: Dictionary = {}) -> void:
 	engine.RecordTiming({"stage": stage, "interaction_id": _interaction_id, "details": details})
@@ -72,7 +77,8 @@ func _ready() -> void:
 	_home()
 	if "--dv-auto-start" in OS.get_cmdline_user_args(): dispatch.call_deferred({"kind": "start"})
 
-func _dispose_views() -> void:
+func _dispose_views(keep_title := false) -> void:
+	_player_options_open = false
 	if is_instance_valid(field):
 		if is_instance_valid(field_executor): field_executor.retain_field(field)
 		field.begin_shutdown()
@@ -84,10 +90,10 @@ func _dispose_views() -> void:
 		remove_child(ui)
 		ui.queue_free()
 	ui = null
-	if is_instance_valid(title_layer):
+	if not keep_title and is_instance_valid(title_layer):
 		remove_child(title_layer)
 		title_layer.queue_free()
-	title_layer = null
+		title_layer = null
 
 func _home() -> void:
 	_dispose_views()
@@ -104,10 +110,15 @@ func _home() -> void:
 func _view(ev: Dictionary, begin := true) -> bool:
 	var generation := _session_generation
 	var replacing := bool(ev.get("replace_session", false))
+	var opening_title: Control = title_layer.get_child(0) if is_instance_valid(title_layer) else null
+	var opening := is_instance_valid(opening_title)
+	_opening_field = opening
+	if is_instance_valid(opening_title): opening_title.set_opening_status("field")
 	_timing("view_build_begin")
 	var resource: PackedScene = CAMPUS_MAP_VIEW if str(ev.resource) == "res://scenes/Chapter2/Field/CampusMapView.tscn" else (load(str(ev.resource)) as PackedScene)
 	if resource == null:
-		push_error("无法加载世界视图：" + str(ev.resource))
+		_show_error("无法加载世界视图：" + str(ev.resource))
+		_opening_field = false
 		return false
 	# Production view events already carry the worker's completed data graph.
 	# Keep Snapshot() only for callers using the earlier host interface.
@@ -125,6 +136,7 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	if not prepared or _closing or generation != _session_generation:
 		_discard_adapter(adapter)
 		if not prepared and not replacing and not _closing and generation == _session_generation: _show_error("无法准备世界地图：" + str(initial.get("map", "")))
+		_opening_field = false
 		return false
 	# A prepared background map cannot replace a book the player is reading.
 	# An explicit bookmark install owns the replacement and closes its old UI.
@@ -132,21 +144,22 @@ func _view(ev: Dictionary, begin := true) -> bool:
 		await get_tree().process_frame
 	if _closing or generation != _session_generation:
 		_discard_adapter(adapter)
+		_opening_field = false
 		return false
-	# Resource preparation leaves the current screen drawn and responsive.
-	# Retire it only after its own exit transition has completed.
-	if is_instance_valid(title_layer):
-		var title := title_layer.get_child(0)
-		if title.has_method("transition_out"): await title.transition_out()
-	elif is_instance_valid(ui) and ui.has_method("transition_out"):
+	# Keep the physical book above the first field while its bodies, navigation
+	# and room-stage resources are assembled. Its final paper turn reveals an
+	# already drawn field, rather than a black interval between two scene trees.
+	if not is_instance_valid(opening_title) and is_instance_valid(ui) and ui.has_method("transition_out"):
 		await ui.transition_out()
 	if _closing or generation != _session_generation:
 		_discard_adapter(adapter)
+		_opening_field = false
 		return false
-	_dispose_views()
+	_dispose_views(is_instance_valid(opening_title))
 	if replacing: field_executor.reset()
 	_view_resource = str(ev.resource)
 	ui = UI_SCENE.instantiate()
+	if opening: ui.set_host_input_enabled(false)
 	if ev.has("casebook"):
 		_casebook.restore_data(ev.casebook, str(initial.get("viewer", "")))
 	ui.casebook = _casebook
@@ -159,7 +172,8 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	field.name = "WorldView"
 	field.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(field)
-	field.ui_busy = ui.is_busy
+	field.ui_busy = _field_ui_busy
+	field.formal_selection_ready = _formal_selection_ready
 	field.fader = ui
 	field.field_event.connect(_field_input)
 	field.hover_changed.connect(ui.show_hover)
@@ -169,15 +183,53 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	field.setup(adapter)
 	field_executor.bind_visible(field, initial)
 	ui.apply_snapshot(initial)
+	if is_instance_valid(opening_title):
+		opening_title.set_opening_status("paper")
+		if field.has_method("prepare_presentation"): await field.prepare_presentation()
+		if _closing or generation != _session_generation:
+			_opening_field = false
+			return false
+		if not is_instance_valid(field.player):
+			_show_error("现场人物尚未完成装配，无法开始阅读。")
+			_opening_field = false
+			return false
+		# A physics step settles the actual scene, then a render presents its
+		# resources once before the opening leaf can expose them to the player.
+		await get_tree().physics_frame
+		if DisplayServer.get_name() != "headless": await RenderingServer.frame_post_draw
+		if _closing or generation != _session_generation:
+			_opening_field = false
+			return false
+		var revealed: bool = await opening_title.transition_to_field()
+		if not revealed: return false
+		if _closing or generation != _session_generation:
+			_opening_field = false
+			return false
+		if is_instance_valid(title_layer):
+			remove_child(title_layer)
+			title_layer.queue_free()
+			title_layer = null
+		_opening_field = false
+		ui.set_host_input_enabled(true)
 	if is_instance_valid(view_trace): move_child(view_trace, get_child_count() - 1)
 	_timing("view_build_end")
-	if ui.has_method("transition_in"): await ui.transition_in()
+	if not opening and ui.has_method("transition_in"): await ui.transition_in()
 	# 等场景加入树并应用快照后才开始脚本；这也是可见视图的普通握手。
 	if _closing or generation != _session_generation: return false
 	if begin: dispatch.call_deferred({"kind": "view_ready"})
 	if str(ev.get("casebook_warning", "")) != "":
 		_show_casebook_warning(str(ev.casebook_warning))
 	return true
+
+func _field_ui_busy() -> bool:
+	return _opening_field or _view_faulted or is_instance_valid(title_layer) or _closing or (is_instance_valid(ui) and ui.is_busy())
+
+func _formal_selection_ready() -> bool:
+	# Local movement remains available while other actors or worker projections
+	# run. A formal selection must belong to the current acknowledged option
+	# cycle, never to stale buttons left by an earlier awaiting_input snapshot.
+	return _player_options_open and not _field_ui_busy() and not _draining and _queue.is_empty() and _book_deferred_inputs.is_empty() \
+		and not _completion_pending and not _background_execution and not _bookmark_loading and not _bookmark_saving and _dv_intent.is_empty()
 
 func _discard_adapter(adapter: Node2D) -> void:
 	if _pending_adapter == adapter: _pending_adapter = null
@@ -187,6 +239,7 @@ func _discard_adapter(adapter: Node2D) -> void:
 
 func _show_casebook_warning(message: String) -> void:
 	var dialog := AcceptDialog.new()
+	dialog.theme = NOTICE_THEME
 	dialog.title = tr("案卷提示")
 	dialog.dialog_text = message
 	dialog.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -199,6 +252,7 @@ func _show_bookmark_view_error(backup_path: String) -> void:
 	if backup_path != "": message += "\n\n" + tr("载入前备份：%s") % backup_path
 	if is_instance_valid(ui): ui.show_bookmark_result(message)
 	var dialog := AcceptDialog.new()
+	dialog.theme = NOTICE_THEME
 	dialog.title = tr("书签载入未完成")
 	dialog.dialog_text = message
 	dialog.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -210,6 +264,7 @@ func _show_bookmark_view_error(backup_path: String) -> void:
 func dispatch(input: Dictionary) -> void:
 	if _closing: return
 	var input_kind := str(input.get("kind", ""))
+	if _view_faulted and input_kind not in ["quit", "dv_complete"]: return
 	# Keep accepted physical receipts deliverable while persistence waits on work.
 	if _bookmark_loading and input_kind != "dv_complete": return
 	if (_book_reading or _bookmark_saving) and input_kind in ["dv_next", "view_ready", "select"]:
@@ -242,11 +297,13 @@ func dispatch(input: Dictionary) -> void:
 		if _started: return
 		var options := _session_options()
 		if options.is_empty(): return
+		if is_instance_valid(title_layer): title_layer.get_child(0).begin_opening()
 		engine.ConfigureSession(options)
 		_started = true
 	elif str(input.get("kind", "")) == "load":
 		if _started: return
 		_started = true
+	if input_kind in ["start", "load", "select", "dv_next", "view_ready", "dv_complete"]: _player_options_open = false
 	engine.Dispatch(input)
 
 func _bookmark_boundary_ready() -> bool:
@@ -296,7 +353,11 @@ func _session_options() -> Dictionary:
 
 func _show_error(message: String) -> void:
 	push_error(message)
+	if is_instance_valid(title_layer) and title_layer.get_child(0).has_method("show_start_error"):
+		title_layer.get_child(0).show_start_error(message, not _started)
+		return
 	var dialog := AcceptDialog.new()
+	dialog.theme = NOTICE_THEME
 	dialog.title = "会话错误"
 	dialog.dialog_text = message
 	add_child(dialog)
@@ -307,8 +368,12 @@ func _field_input(input: Dictionary) -> void:
 	match str(input.get("kind", "")):
 		"timing": engine.RecordTiming(input)
 		"select":
+			if not _formal_selection_ready():
+				field.reject_continuous_request(str(input.get("choice_id", "")), "selection_cycle_closed")
+				return
 			_interaction_id = str(input.interaction_id)
 			_interaction_site = str(input.site)
+			_continuous_selection = input.get("continuous_walk", {}).duplicate(true)
 			dispatch(input)
 		"spatial_choices":
 			_interaction_id = str(input.interaction_id)
@@ -333,7 +398,7 @@ func _drain() -> void:
 	if _draining or _closing: return
 	_draining = true
 	var generation := _session_generation
-	while not _queue.is_empty() and not _closing and generation == _session_generation:
+	while not _queue.is_empty() and not _closing and not _view_faulted and generation == _session_generation:
 		while _book_reading and not _closing and generation == _session_generation:
 			await get_tree().process_frame
 		if _closing or generation != _session_generation: break
@@ -365,7 +430,10 @@ func _drain() -> void:
 					_timing("reading_finished", {"execution_event": result.get("execution_event", "")})
 				if not bool(ev.get("advance_requested", false)):
 					dispatch.call_deferred({"kind": "dv_next"})
-			"view": await _view(ev)
+			"view":
+				if not await _view(ev) and not _closing and generation == _session_generation:
+					_view_faulted = true
+					_queue.clear()
 			"state": await _apply(ev.snapshot)
 			"error": _show_error(str(ev.message))
 			"load_error":
@@ -373,7 +441,7 @@ func _drain() -> void:
 				if is_instance_valid(title_layer): title_layer.get_child(0).show_load_error(str(ev.message))
 			_: push_error("Unknown DV host event: " + str(ev.get("kind", "")))
 	_draining = false
-	if not _queue.is_empty() and not _closing: _drain.call_deferred()
+	if not _queue.is_empty() and not _closing and not _view_faulted: _drain.call_deferred()
 
 ## IDs name the actual execution and emitted field; source_refs retain authored provenance.
 ## Emitted line ordinals are not claimed to be original declaration line numbers.
@@ -406,7 +474,9 @@ func _presentation_lines(result: Dictionary) -> Array:
 func _apply(snapshot: Dictionary) -> void:
 	_timing("ui_apply_begin")
 	if _view_resource != "" and str(snapshot.resource) != _view_resource:
-		await _view(snapshot, false)
+		if not await _view(snapshot, false) and not _closing:
+			_view_faulted = true
+			_queue.clear()
 		_timing("ui_apply_end")
 		return
 	if is_instance_valid(ui): ui.apply_snapshot(snapshot)
@@ -439,6 +509,10 @@ func _exit_tree() -> void:
 func _dv_events(events: Array) -> void:
 	if _closing: return
 	for ev in events:
+		if str(ev.get("kind", "")) in ["view", "state", "dv_action", "dv_present", "error", "bookmark_loaded"]: _player_options_open = false
+		if _view_faulted:
+			if str(ev.get("kind", "")) == "error": _show_error(str(ev.message))
+			continue
 		if str(ev.get("kind", "")) in ["dv_present", "error"]: _completion_pending = false
 		if str(ev.get("kind", "")) == "bookmark_loaded":
 			_install_bookmark(ev)
@@ -482,6 +556,8 @@ func _on_book_reading_changed(active: bool) -> void:
 
 func _install_bookmark(event: Dictionary) -> void:
 	_session_generation += 1
+	_view_faulted = false
+	_player_options_open = false
 	var generation := _session_generation
 	# The host already owns the restored session. Bind its archive immediately,
 	# so closing the window during map preparation cannot save the old notes.
@@ -492,6 +568,7 @@ func _install_bookmark(event: Dictionary) -> void:
 	_queue.clear()
 	_book_deferred_inputs.clear()
 	_dv_intent.clear()
+	_continuous_selection.clear()
 	_interaction_id = ""
 	_interaction_site = ""
 	# The host only emits this after persistence has refused pending execution.
@@ -532,14 +609,37 @@ func _execute_reading_npc(ev: Dictionary) -> void:
 
 func _dv_execute(intent: Dictionary, execution_snapshot: Dictionary) -> void:
 	if str(intent.get("status", "")) == "awaiting_input":
+		if not _continuous_selection.is_empty():
+			field.reject_continuous_request(str(_continuous_selection.get("choice_id", "")), "prepare_returned_to_input")
+			_continuous_selection.clear()
 		field.spatial.set_options(intent.options)
+		_player_options_open = true
 		_timing("player_options_ready", {"options": intent.options.size()})
 		return
-	if str(intent.get("status", "")) != "prepared": return
+	if str(intent.get("status", "")) != "prepared":
+		if not _continuous_selection.is_empty() and is_instance_valid(field):
+			field.reject_continuous_request(str(_continuous_selection.get("choice_id", "")), "prepare_not_ready")
+			_continuous_selection.clear()
+		return
 	_dv_intent = intent
+	_player_options_open = false
 	_dv_serial += 1
 	var action: Dictionary = intent.action
 	_timing("execution_begin", {"action_event": intent.action_event, "actor": intent.actor})
+	if not _continuous_selection.is_empty() and str(intent.actor) == str(field.snapshot.get("viewer", "")):
+		if _verified_continuous_action(intent, execution_snapshot):
+			# Only the host adds this execution mode after matching the independently
+			# prepared DV intent. The request itself is never an arrival receipt.
+			intent = intent.duplicate(false)
+			intent.destination = intent.destination.duplicate(true)
+			intent.destination.continuous_walk = true
+			intent.destination.continuous_request_id = str(_continuous_selection.get("request_id", ""))
+			_dv_intent = intent
+		else:
+			field.reject_continuous_request(str(_continuous_selection.get("choice_id", "")), "prepared_passage_mismatch")
+			_continuous_selection.clear()
+			_dv_complete("rejected", {"executor": "godot", "reason": "prepared_passage_mismatch", "context": field.context()})
+			return
 	if str(action.kind) == "move" or action.get("travel", {}).has("station"):
 		var receipt: Dictionary = await field_executor.execute(intent, field, execution_snapshot, _dv_serial)
 		_accept_execution(receipt)
@@ -549,10 +649,30 @@ func _dv_execute(intent: Dictionary, execution_snapshot: Dictionary) -> void:
 			contact = field.spatial._in_reach(_interaction_site)
 		_dv_complete("applied" if contact else "rejected", {"executor": "dv-world", "site": _interaction_site, "contact": contact, "context": field.context()})
 
+func _verified_continuous_action(intent: Dictionary, source: Dictionary) -> bool:
+	if not is_instance_valid(field) or not is_instance_valid(field.adapter): return false
+	var action: Dictionary = intent.get("action", {})
+	var destination: Dictionary = intent.get("destination", {})
+	var request := _continuous_selection
+	var map_key := str(source.get("map", ""))
+	var from_room := str(source.get("execution_room", ""))
+	var to_room := str(destination.get("execution_room", destination.get("room", "")))
+	if str(action.get("kind", "")) != "move" or action.get("travel", {}).has("station"): return false
+	if str(request.get("request_id", "")).is_empty() or str(intent.get("actor", "")) != str(request.get("actor", "")): return false
+	if str(action.get("id", "")) != str(request.get("choice_id", "")): return false
+	if map_key.is_empty() or from_room.is_empty() or to_room.is_empty() or from_room == to_room: return false
+	if str(source.get("resource", "")) != field.execution_resource: return false
+	if map_key != str(destination.get("map", "")) or map_key != str(field.adapter.map_key()): return false
+	if str(request.get("map", "")) != map_key or str(request.get("from_room", "")) != from_room or str(request.get("to_room", "")) != to_room: return false
+	return field.is_continuous_action(str(action.id), destination)
+
 func _dv_complete(outcome: String, execution: Dictionary) -> void:
 	_timing("execution_end", {"outcome": outcome, "action_event": _dv_intent.action_event})
 	var receipt := {"action_event": _dv_intent.action_event, "outcome": outcome, "actual": _dv_intent.execution_cost, "executor": "godot", "field": execution}
+	if str(_dv_intent.get("actor", "")) == str(_continuous_selection.get("actor", "")) and str(_dv_intent.get("action", {}).get("id", "")) == str(_continuous_selection.get("choice_id", "")):
+		_continuous_selection.clear()
 	_dv_intent = {}
+	_player_options_open = false
 	_interaction_site = ""
 	_completion_pending = true
 	dispatch.call_deferred({"kind": "dv_complete", "receipt": receipt})
@@ -662,11 +782,18 @@ class PlayerViewTraceInner extends Node:
 		elif event is InputEventMouseButton:
 			data = {"device": "mouse", "button": event.button_index, "pressed": event.pressed,
 				"position": [event.position.x, event.position.y], "double_click": event.double_click}
+		elif event is InputEventJoypadButton:
+			data = {"device": "joypad_button", "device_id": event.device,
+				"button": event.button_index, "pressed": event.pressed, "pressure": event.pressure}
+		elif event is InputEventJoypadMotion:
+			data = {"device": "joypad_axis", "device_id": event.device,
+				"axis": event.axis, "value": event.axis_value}
 		if not data.is_empty():
 			data.merge(_context())
 			record_input.call(data)
 
 	func _context() -> Dictionary:
+		if is_instance_valid(host.title_layer): return {"panel": "title"}
 		if is_instance_valid(host.ui): return host.ui.view_trace_context()
 		return {"panel": "title"}
 

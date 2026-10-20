@@ -8,6 +8,7 @@ signal history_closed
 signal line_read(line: Dictionary)
 
 const Transition := preload("res://scenes/UI/UITransition.gd")
+const UIInput := preload("res://scenes/Shared/Input/UIInput.gd")
 
 @onready var dialogue_panel: Panel = %DialoguePanel
 @onready var speaker_label: RichTextLabel = %SpeakerLabel
@@ -57,6 +58,7 @@ var _portrait_requests: Dictionary = {}
 var _notice_tweens: Dictionary = {}
 var _notice_deadlines: Dictionary = {}
 var _notice_serials: Dictionary = {}
+var _navigation = UIInput.new()
 
 func _ready() -> void:
 	layer = 20
@@ -327,6 +329,7 @@ func _on_line_transition(_request_id: int, shown: bool, cancelled: bool) -> void
 func set_modal_blocked(blocked: bool) -> void:
 	if _modal_blocked == blocked: return
 	_modal_blocked = blocked
+	_navigation.reset()
 	_refresh_controls()
 	_update_reveal_pause()
 
@@ -340,6 +343,7 @@ func toggle_history() -> void:
 		close_history()
 		return
 	if not _can_advance(): return
+	_navigation.reset()
 	var focused := get_viewport().gui_get_focus_owner()
 	_history_focus = weakref(focused) if focused != null else null
 	history_body.text = "\n\n".join(_history)
@@ -350,6 +354,7 @@ func toggle_history() -> void:
 
 func close_history() -> void:
 	if not is_history_active(): return
+	_navigation.reset()
 	_history_motion.request(false)
 	_refresh_controls()
 
@@ -384,15 +389,33 @@ func _refresh_controls() -> void:
 	Transition.set_interactive(history_panel, is_history_active() and not _modal_blocked and not _history_motion.is_transitioning())
 
 func _input(event: InputEvent) -> void:
-	if not _dialogue_active or _modal_blocked or not event.is_pressed() or event.is_echo(): return
+	if not _dialogue_active or _modal_blocked: return
 	if is_history_active():
-		if event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel"):
+		if UIInput.is_back(event, false):
+			if UIInput.is_back(event): close_history()
+			get_viewport().set_input_as_handled()
+		elif _history_motion.is_transitioning():
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("dialogue_history") and not event.is_echo():
 			close_history()
 			get_viewport().set_input_as_handled()
-		elif _history_motion.is_transitioning() or Transition.cycle_focus(history_panel, event):
+		elif _navigation.handle(history_panel, event):
 			get_viewport().set_input_as_handled()
 		return
-	if Transition.cycle_focus(dialogue_panel, event):
+	if UIInput.is_back(event, false):
+		# Back never silently skips an unread line or chooses an offered answer.
+		get_viewport().set_input_as_handled()
+		return
+	if not _can_advance():
+		if event.is_action("ui_accept") or event.is_action("dialogue_continue") or UIInput.is_gamepad(event):
+			get_viewport().set_input_as_handled()
+		return
+	if _navigation.handle(dialogue_panel, event):
+		get_viewport().set_input_as_handled()
+		return
+	if not event.is_pressed() or event.is_echo(): return
+	if event.is_action_pressed("dialogue_history"):
+		toggle_history()
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("dialogue_continue") or event.is_action_pressed("ui_accept"):
@@ -401,6 +424,19 @@ func _input(event: InputEvent) -> void:
 		if _can_advance() and focused is BaseButton and dialogue_panel.is_ancestor_of(focused) and event.is_action_pressed("ui_accept"): return
 		advance_dialogue()
 		get_viewport().set_input_as_handled()
+
+func _process(delta: float) -> void:
+	if _modal_blocked or not _dialogue_active or _shutting_down:
+		_navigation.reset()
+	elif is_history_active() and not _history_motion.is_transitioning():
+		_navigation.tick(history_panel, delta)
+	elif _can_advance():
+		_navigation.tick(dialogue_panel, delta)
+	else:
+		_navigation.reset()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT: _navigation.reset()
 
 func _layout() -> void:
 	if not is_node_ready(): return

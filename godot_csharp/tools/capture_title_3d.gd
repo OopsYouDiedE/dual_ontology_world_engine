@@ -184,7 +184,8 @@ func _navigate(button: Button, expected_page: String, prefix: String, settled_na
 		var next_frame := Time.get_ticks_usec() + FRAME_INTERVAL_US
 		while Time.get_ticks_usec() < next_frame and title._turning and not finishing:
 			await process_frame
-	# Start is emitted by the production async continuation after landing.
+	# Start now opens the session concurrently with the first leaf. These two
+	# frames observe the settled paper; event count is checked independently.
 	await process_frame
 	await process_frame
 	if title._current_page != expected_page or title._turning:

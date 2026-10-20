@@ -150,12 +150,16 @@ func _build_help() -> void:
 		["继续对白：%s。", ["dialogue_continue"]],
 		["返回或关闭：%s。", ["cancel"]],
 		["设置：%s。", ["settings"]],
+		["案卷：%s。", ["notebook"]],
+		["推演：%s；地图：%s。", ["manuscript", "campus_map"]],
+		["书页前后翻阅：%s。", ["book_prev", "book_next"]],
 	]:
 		var label := Label.new()
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		add_child(label)
 		_help_lines.append({"control": label, "source": specification[0], "actions": specification[1]})
+	_add_text("手柄方向键选择条目，右摇杆滚动纸页。")
 
 
 func _choose_language(code: String) -> void:
@@ -211,7 +215,15 @@ func _refresh_content() -> void:
 			var text: String = _settings.action_text(action) if _settings != null else ""
 			if not text.is_empty(): names.append(text)
 		var label: Label = item.control
-		label.text = tr(str(item.source)) % (" · ".join(names) if not names.is_empty() else tr("未绑定"))
+		var source := str(item.source)
+		if source.count("%s") > 1:
+			var captions: Array[String] = []
+			for action: String in item.actions:
+				var caption: String = _settings.action_text(action) if _settings != null else ""
+				captions.append(caption if not caption.is_empty() else tr("未绑定"))
+			label.text = tr(source) % captions
+		else:
+			label.text = tr(source) % (" · ".join(names) if not names.is_empty() else tr("未绑定"))
 
 
 func _refresh_binding(binding: Dictionary) -> void:

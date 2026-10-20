@@ -26,6 +26,9 @@ func _ready() -> void:
 	for control: Control in [room_label, status_label, time_label, hint_label, hover_tip, hud_settings_button]:
 		control.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	_refresh_chrome()
+	# The field's A/Enter action belongs to the nearby object. The guide remains
+	# mouse-accessible and has dedicated keyboard/controller shortcuts.
+	hud_settings_button.focus_mode = Control.FOCUS_NONE
 	hud_settings_button.pressed.connect(func():
 		if not _overlay_blocked and not _shutting_down: settings_requested.emit()
 	)

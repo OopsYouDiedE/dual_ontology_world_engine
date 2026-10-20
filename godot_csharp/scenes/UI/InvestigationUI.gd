@@ -29,6 +29,7 @@ func _ready() -> void:
 	_localize()
 
 func _notification(what: int) -> void:
+	super._notification(what)
 	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready(): _localize()
 
 func _localize() -> void:

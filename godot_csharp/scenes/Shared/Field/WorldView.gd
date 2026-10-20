@@ -28,6 +28,9 @@ signal closing
 var adapter: Node2D
 ## 宿主注入：界面是否占用（对白、弹窗）；以及界面的淡入淡出。
 var ui_busy := func() -> bool: return false
+## Only the host can open the delivered player-option cycle. This gate applies
+## to formal selections, not local movement while other actors are executing.
+var formal_selection_ready := func() -> bool: return false
 var fader: Object
 
 var player: CharacterBody2D
@@ -120,6 +123,32 @@ func setup(map_adapter: Node2D) -> void:
 		room_stage.field = self
 		add_child(room_stage)
 
+## The host keeps the title/book in front until this preparation has finished.
+## Scene nodes and rendering resources are touched only on the scene thread.
+func prepare_presentation() -> void:
+	if execution_only or _closing: return
+	if is_instance_valid(room_stage): await room_stage.prepare_presentation()
+	if _closing: return
+	var own_room := str(snapshot.get("execution_room", execution_binding.get("execution_room", "")))
+	if own_room != "" and adapter.has_method("local_nav_grid"):
+		adapter.local_nav_grid(player, own_room, "")
+		for option in snapshot.get("pending", {}).get("options", []):
+			var binding: Dictionary = option.get("interaction", {})
+			var destination: Dictionary = binding.get("destination", {})
+			if str(binding.get("kind", "")) == "doorway" and str(destination.get("map", "")) == adapter.map_key():
+				adapter.local_nav_grid(player, own_room, str(destination.get("room", "")))
+				await get_tree().process_frame
+				if _closing: return
+
+func continuous_request() -> Dictionary:
+	return spatial.continuous_request() if is_instance_valid(spatial) else {}
+
+func is_continuous_action(action: String, destination: Dictionary) -> bool:
+	return is_instance_valid(spatial) and spatial.is_continuous_action(action, destination)
+
+func reject_continuous_request(choice_id: String, reason := "request_rejected") -> void:
+	if is_instance_valid(spatial): spatial.reject_continuous_request(choice_id, reason)
+
 func begin_shutdown() -> void:
 	if _closing: return
 	_closing = true
@@ -144,6 +173,7 @@ func apply_snapshot(value: Dictionary) -> void:
 	if not execution_only and adapter.fixed_actors().is_empty(): _spawn_people()
 	if execution_bridge != null: execution_bridge.sync_obstacles(self)
 	_build_sites()
+	if is_instance_valid(spatial): spatial.synchronize_continuous_snapshot()
 	if not execution_only and adapter.has_method("prefetch_snapshot"): adapter.prefetch_snapshot(value)
 
 func field_active() -> bool:
@@ -533,9 +563,8 @@ func _make_actor(key: String, sprite_key: String) -> CharacterBody2D:
 func create_body(key: String, sprite_key: String) -> CharacterBody2D:
 	var actor := CharacterBody2D.new()
 	actor.set_script(ACTOR)
-	var path := PIXEL_FRAMES % sprite_key
-	if not ResourceLoader.exists(path): path = ANIME_FRAMES % sprite_key
-	if not ResourceLoader.exists(path):
+	var path: String = RESOURCES.actor_path(sprite_key)
+	if path == "":
 		actor.free()
 		Bindings.fail(self, "Missing actor asset binding: " + key + " -> " + sprite_key)
 		return null
@@ -667,6 +696,14 @@ func _after_map_load() -> void:
 ## Only the prepared DV movement intent enters physical execution.
 func execute_move(destination: Dictionary, who: String, serial: int, action: String) -> void:
 	execution_transitions.clear()
+	if bool(destination.get("continuous_walk", false)):
+		# Only Main may set this flag after matching a prepared formal intent.
+		# Do not allocate a second route or move the retained body for the player.
+		if who == _player_key and is_instance_valid(spatial):
+			spatial.accept_continuous_passage(destination, who, serial, action)
+		else:
+			_daily_report(who, serial, "blocked", "", action, {"reason": "continuous_actor_mismatch"})
+		return
 	if adapter.has_method("prepare_map"):
 		var prepared: bool = await adapter.prepare_map(str(adapter.map_key()), snapshot, get_tree())
 		if _closing: return
@@ -1121,6 +1158,8 @@ class RoomStageInner extends Node2D:
 	var _layer: CanvasLayer
 	var _bounds := Rect2()
 	var _reduce_motion := false
+	var _warming := false
+	var _prepared_map: Node2D
 
 	func _ready() -> void:
 		var settings := get_node_or_null("/root/GameSettings")
@@ -1142,8 +1181,34 @@ class RoomStageInner extends Node2D:
 		_veil.material = mat
 		_layer.add_child(_veil)
 
+	func prepare_presentation() -> void:
+		if not is_instance_valid(field.adapter.map) or _prepared_map == field.adapter.map: return
+		_warming = true
+		_map = field.adapter.map
+		_ensure_glow()
+		var capacity: Vector2i = field.adapter.presentation_capacity() if field.adapter.has_method("presentation_capacity") else Vector2i.ZERO
+		for index in capacity.x:
+			_ensure_light(index)
+			var light := _light_pool[index]
+			light.position = field.player.position
+			light.energy = 0.001
+			light.enabled = true
+			light.show()
+		for index in capacity.y: _window_beam(field.player.position, index, true)
+		# Give the renderer a covered frame to compile the same light/particle
+		# pipelines that will be reused when the player first leaves the bedroom.
+		await get_tree().process_frame
+		if field._closing: return
+		if DisplayServer.get_name() != "headless": await RenderingServer.frame_post_draw
+		if field._closing: return
+		_prepared_map = _map
+		_room = str(field.adapter.room_of(field.player.position))
+		_bounds = field.adapter.stage_bounds(field.player.position)
+		_rebuild_lights(field.adapter.sight_terrain_fog())
+		_warming = false
+
 	func _process(delta: float) -> void:
-		if not is_instance_valid(field.player) or field.adapter.map == null: return
+		if _warming or not is_instance_valid(field.player) or field.adapter.map == null: return
 		var adapter: Node2D = field.adapter
 		var room: String = adapter.room_of(field.player.position)
 		var indoor: bool = adapter.sight_terrain_fog()
@@ -1173,32 +1238,15 @@ class RoomStageInner extends Node2D:
 		if not indoor:
 			field.camera.zoom = Vector2(2, 2)
 			return
-		if _glow == null:
-			var gradient := Gradient.new()
-			gradient.offsets = PackedFloat32Array([0, 0.16, 0.48, 1])
-			gradient.colors = PackedColorArray([Color(1,1,1,1), Color(1,1,1,0.82), Color(1,1,1,0.26), Color(1,1,1,0)])
-			_glow = GradientTexture2D.new()
-			_glow.gradient = gradient
-			_glow.width = 256
-			_glow.height = 256
-			_glow.fill = GradientTexture2D.FILL_RADIAL
-			_glow.fill_from = Vector2(0.5, 0.5)
-			_glow.fill_to = Vector2(1, 0.5)
+		_ensure_glow()
 		var light_index := 0
 		var window_index := 0
-		for declaration in _map.get_meta("stage_lights", []):
+		var declarations: Array = field.adapter.stage_lights(field.player.position) if field.adapter.has_method("stage_lights") else _map.get_meta("stage_lights", [])
+		for declaration in declarations:
 			var point := Vector2(float(declaration.point[0]), float(declaration.point[1]))
 			if not _bounds.grow(12).has_point(point): continue
 			var window: bool = str(declaration.kind) == "window"
-			if light_index >= _light_pool.size():
-				var created := PointLight2D.new()
-				created.texture = _glow
-				created.height = 48.0
-				created.shadow_enabled = false
-				created.range_z_min = -100
-				created.range_z_max = 100
-				add_child(created)
-				_light_pool.append(created)
+			_ensure_light(light_index)
 			var light := _light_pool[light_index]
 			light_index += 1
 			light.position = point
@@ -1211,7 +1259,31 @@ class RoomStageInner extends Node2D:
 				_window_beam(point, window_index)
 				window_index += 1
 
-	func _window_beam(point: Vector2, index: int) -> void:
+	func _ensure_glow() -> void:
+		if _glow != null: return
+		var gradient := Gradient.new()
+		gradient.offsets = PackedFloat32Array([0, 0.16, 0.48, 1])
+		gradient.colors = PackedColorArray([Color(1,1,1,1), Color(1,1,1,0.82), Color(1,1,1,0.26), Color(1,1,1,0)])
+		_glow = GradientTexture2D.new()
+		_glow.gradient = gradient
+		_glow.width = 256
+		_glow.height = 256
+		_glow.fill = GradientTexture2D.FILL_RADIAL
+		_glow.fill_from = Vector2(0.5, 0.5)
+		_glow.fill_to = Vector2(1, 0.5)
+
+	func _ensure_light(index: int) -> void:
+		if index < _light_pool.size(): return
+		var created := PointLight2D.new()
+		created.texture = _glow
+		created.height = 48.0
+		created.shadow_enabled = false
+		created.range_z_min = -100
+		created.range_z_max = 100
+		add_child(created)
+		_light_pool.append(created)
+
+	func _window_beam(point: Vector2, index: int, prepare_particles := false) -> void:
 		if index >= _beam_pool.size():
 			var created := Polygon2D.new()
 			created.polygon = PackedVector2Array([Vector2(-12,0), Vector2(12,0), Vector2(92,160), Vector2(30,160)])
@@ -1222,7 +1294,7 @@ class RoomStageInner extends Node2D:
 		var beam := _beam_pool[index]
 		beam.position = point
 		beam.show()
-		if _reduce_motion: return
+		if _reduce_motion and not prepare_particles: return
 		if index >= _dust_pool.size():
 			var created := GPUParticles2D.new()
 			created.amount = 18
@@ -1253,6 +1325,7 @@ class RoomStageInner extends Node2D:
 class SpatialInputInner extends Node:
 	const NAV := FieldNavigationInner
 	const MAX_ROUTE_STEPS_PER_TICK := 32
+	const PASSAGE_LOOKAHEAD := 160.0
 	var field: Node2D
 	var options: Array = []
 	var submitted := false
@@ -1264,13 +1337,175 @@ class SpatialInputInner extends Node:
 	var _progress := Vector2.ZERO
 	var _stuck := 0.0
 	var _pending_door: Dictionary = {}
+	var _continuous: Dictionary = {}
+	var _passage_heading := Vector2.ZERO
+	var _last_source_position := Vector2.ZERO
+	var _gate_waiting := false
+	var _retry_after_usec := 0
+	var _preview_pair := ""
+
+	func continuous_request() -> Dictionary:
+		return _continuous.duplicate(true)
+
+	func is_continuous_action(action: String, destination: Dictionary) -> bool:
+		if _continuous.is_empty() or str(_continuous.get("phase", "")) != "requested": return false
+		return action == str(_continuous.choice_id) and str(destination.get("map", "")) == str(_continuous.map) and str(destination.get("execution_room", destination.get("room", ""))) == str(_continuous.to_room)
+
+	func reject_continuous_request(choice_id: String, reason: String) -> void:
+		if _continuous.is_empty() or str(_continuous.choice_id) != choice_id: return
+		# A prepared intent owns a receipt. Rejection here is only the host's
+		# acknowledgement of Request failure or an already completed receipt.
+		if str(_continuous.phase) == "prepared":
+			_cancel_continuous(reason)
+			return
+		_stamp("continuous_request_released", str(_continuous.request_id), {"reason": reason})
+		_continuous.clear()
+		_gate_waiting = false
+		_retry_after_usec = Time.get_ticks_usec() + 200000
+
+	func synchronize_continuous_snapshot() -> void:
+		if _continuous.is_empty(): return
+		var authoritative_room := str(field.snapshot.get("execution_room", ""))
+		if str(_continuous.phase) == "arrived" and authoritative_room == str(_continuous.to_room):
+			_stamp("continuous_arrival_committed", str(_continuous.request_id), {"room": authoritative_room})
+			_continuous.clear()
+			_gate_waiting = false
+
+	func accept_continuous_passage(destination: Dictionary, who: String, serial: int, action: String) -> void:
+		if not is_continuous_action(action, destination) or who != str(field._player_key):
+			field._daily_report(who, serial, "blocked", "", action, {"reason": "continuous_request_mismatch"})
+			return
+		_continuous.phase = "prepared"
+		_continuous.serial = serial
+		_continuous.action = action
+		_continuous.prepared_usec = Time.get_ticks_usec()
+		if str(field.adapter.departure_room(field.player.position)) != str(_continuous.from_room):
+			_continuous.cancelled = true
+			_continuous.cancel_reason = "continuous_source_changed"
+		_stamp("continuous_passage_prepared", str(_continuous.request_id), {"serial": serial, "from_room": _continuous.from_room, "to_room": _continuous.to_room, "request_to_prepare_usec": Time.get_ticks_usec() - int(_continuous.requested_usec)})
+		if bool(_continuous.cancelled): _finish_cancel_if_safe()
+
+	func _request_continuous(option: Dictionary, heading: Vector2, source: String) -> void:
+		if not _continuous.is_empty() or Time.get_ticks_usec() < _retry_after_usec or not _can_select(option): return
+		var binding: Dictionary = option.get("interaction", {})
+		var destination: Dictionary = binding.get("destination", {})
+		var from_room := str(field.snapshot.get("execution_room", ""))
+		var to_room := str(destination.get("execution_room", destination.get("room", "")))
+		if str(binding.get("kind", "")) != "doorway" or str(destination.get("map", "")) != field.adapter.map_key() or to_room == "" or to_room == from_room: return
+		if str(field.adapter.departure_room(field.player.position)) != from_room: return
+		# Room-local motion must not reserve or charge a formal crossing. The
+		# request begins only after the retained footpoint enters the doorway
+		# on its source side and input points towards the neighbour's interior.
+		var neighbours: Array[String] = field.adapter.doorway_rooms(field.player.position)
+		if from_room not in neighbours or to_room not in neighbours: return
+		var landing: Variant = field.adapter.doorway_landing(field.player.position, to_room, field.player)
+		if landing == null or heading.normalized().dot(((landing as Vector2) - field.player.position).normalized()) <= 0.15: return
+		var id := _id()
+		_last_source_position = field.player.position
+		_passage_heading = heading.normalized()
+		_continuous = {"request_id": id, "choice_id": str(option.id), "actor": str(field._player_key), "map": str(field.adapter.map_key()),
+			"from_room": from_room, "to_room": to_room, "phase": "requested", "cancelled": false, "cancel_reason": "",
+			"source_position": [field.player.position.x, field.player.position.y], "requested_usec": Time.get_ticks_usec()}
+		_stamp("continuous_request_begin", id, {"choice_id": option.id, "from_room": from_room, "to_room": to_room, "source": source})
+		field.field_event.emit({"kind": "select", "choice_id": option.id, "site": "", "interaction_id": id,
+			"continuous_walk": continuous_request(), "context": field.context()})
+
+	func _cancel_continuous(reason: String) -> void:
+		if _continuous.is_empty() or str(_continuous.phase) in ["arrived", "settling"]: return
+		_continuous.cancelled = true
+		_continuous.cancel_reason = reason
+		_finish_cancel_if_safe()
+
+	func _finish_cancel_if_safe() -> void:
+		if _continuous.is_empty() or str(_continuous.phase) != "prepared" or not bool(_continuous.cancelled): return
+		var room := str(field.adapter.departure_room(field.player.position))
+		if room != str(_continuous.from_room): return
+		_continuous.phase = "settling"
+		var proof := {"continuous_walk": true, "request_id": _continuous.request_id, "reason": _continuous.cancel_reason,
+			"prepared_to_receipt_usec": Time.get_ticks_usec() - int(_continuous.prepared_usec)}
+		field._daily_report(str(field._player_key), int(_continuous.serial), "blocked", room, str(_continuous.action), proof)
+
+	func _return_cancelled_passage(delta: float) -> bool:
+		if _continuous.is_empty() or str(_continuous.phase) != "prepared" or not bool(_continuous.cancelled): return false
+		_finish_cancel_if_safe()
+		if str(_continuous.get("phase", "")) != "prepared": return false
+		# A thick threshold can span both logical labels. If cancelled midway,
+		# walk the retained body back through the same collision world before
+		# issuing a blocked receipt. No position assignment or fake arrival.
+		var motion: Vector2 = (_last_source_position - field.player.position).limit_length(field.player.speed * delta)
+		_move_body(motion, delta)
+		_finish_cancel_if_safe()
+		return true
+
+	func _check_continuous_arrival() -> void:
+		if _continuous.is_empty() or str(_continuous.phase) != "prepared": return
+		var entered := str(field.adapter.entered_room(field.player.position))
+		if entered == str(_continuous.from_room): _last_source_position = field.player.position
+		if bool(_continuous.cancelled):
+			_finish_cancel_if_safe()
+			return
+		if entered != str(_continuous.to_room): return
+		if not field.adapter.walkable(field.player.position, field.player): return
+		_continuous.phase = "arrived"
+		var proof := {"continuous_walk": true, "request_id": _continuous.request_id, "reason": "continuous_threshold_arrival",
+			"request_to_arrival_usec": Time.get_ticks_usec() - int(_continuous.requested_usec),
+			"prepared_to_arrival_usec": Time.get_ticks_usec() - int(_continuous.prepared_usec)}
+		_stamp("continuous_physical_arrival", str(_continuous.request_id), proof)
+		field._daily_report(str(field._player_key), int(_continuous.serial), "arrived", entered, str(_continuous.action), proof)
+
+	func _control_room() -> String:
+		if not _continuous.is_empty():
+			return str(_continuous.to_room) if str(_continuous.phase) == "arrived" else str(_continuous.from_room)
+		return str(field.snapshot.get("execution_room", ""))
+
+	func _option_for_room(room: String) -> Dictionary:
+		for option in options:
+			var binding: Dictionary = option.get("interaction", {})
+			var destination: Dictionary = binding.get("destination", {})
+			if str(binding.get("kind", "")) == "doorway" and str(destination.get("map", "")) == field.adapter.map_key() and str(destination.get("room", "")) == room: return option
+		return {}
+
+	func _prepare_ahead(direction: Vector2) -> void:
+		if direction == Vector2.ZERO or not _continuous.is_empty(): return
+		var heading := direction.normalized()
+		var current := _door_option(field.player.position)
+		if not current.is_empty():
+			_request_continuous(current, heading, "entering-doorway")
+			if not _continuous.is_empty(): return
+		for distance in range(16, int(PASSAGE_LOOKAHEAD) + 1, 16):
+			var point: Vector2 = field.player.position + heading * distance
+			if not field.adapter.walkable(point, field.player): return
+			var option := _door_option(point)
+			if not option.is_empty():
+				# Look-ahead performs geometry preparation only. A player may
+				# approach and turn away inside a room without any DV action.
+				var target := str(option.get("interaction", {}).get("destination", {}).get("room", ""))
+				var pair := str(field.adapter.map_key()) + "\n" + _control_room() + "\n" + target
+				if pair != _preview_pair:
+					_local_grid(target)
+					_preview_pair = pair
+				return
 
 	func set_options(value: Array) -> void:
 		options = value
+		_preview_pair = ""
 		submitted = false
+		synchronize_continuous_snapshot()
+		if not _continuous.is_empty() and str(_continuous.phase) == "settling":
+			reject_continuous_request(str(_continuous.choice_id), "cancelled_receipt_acknowledged")
 
 	func enabled() -> bool:
 		return is_instance_valid(field) and field.field_active() and bool(field.snapshot.get("player_control", false)) and not submitted and not field._daily.has(field.player.name)
+
+	func _can_select(option: Dictionary) -> bool:
+		if not field.formal_selection_ready.call(): return false
+		var pending: Dictionary = field.snapshot.get("pending", {})
+		if str(pending.get("status", "")) != "awaiting_input": return false
+		var choice_id := str(option.get("id", ""))
+		if choice_id == "": return false
+		for current in pending.get("options", []):
+			if str(current.get("id", "")) == choice_id: return true
+		return false
 
 	func _stamp(stage: String, id: String, data: Dictionary = {}) -> void:
 		field.field_event.emit({"kind": "timing", "stage": stage, "interaction_id": id, "details": data})
@@ -1280,6 +1515,7 @@ class SpatialInputInner extends Node:
 		return "spatial-%d-%d" % [Time.get_ticks_usec(), _sequence]
 
 	func _stop_walk(reason: String) -> void:
+		_cancel_continuous(reason)
 		_route.clear()
 		_site = ""
 		_pending_door = {}
@@ -1300,13 +1536,19 @@ class SpatialInputInner extends Node:
 	func _physics_process(delta: float) -> void:
 		if not enabled():
 			if _walking: _stop_walk("input-blocked")
+			elif not _continuous.is_empty(): _cancel_continuous("input-blocked")
 			return
+		if _return_cancelled_passage(delta): return
 		var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		if direction != Vector2.ZERO:
+			if not _continuous.is_empty() and str(_continuous.phase) in ["requested", "prepared"] and direction.dot(_passage_heading) < -0.15:
+				_cancel_continuous("turned-back")
+				if _return_cancelled_passage(delta): return
 			_route.clear()
 			_site = ""
 			_pending_door = {}
 			_begin_walk()
+			_prepare_ahead(direction)
 			_step(direction * field.player.speed * delta, delta)
 		elif not _route.is_empty():
 			_begin_walk()
@@ -1316,6 +1558,7 @@ class SpatialInputInner extends Node:
 				if difference.length() > 1.0:
 					if remaining <= 0.0: break
 					var motion := difference.limit_length(remaining)
+					_prepare_ahead(difference)
 					_step(motion, delta)
 					# A doorway can submit a formal action and clear the local route.
 					if _route.is_empty() or not enabled(): return
@@ -1327,32 +1570,56 @@ class SpatialInputInner extends Node:
 					var door := _pending_door
 					_stop_walk("arrived")
 					if site != "": _interact(site)
-					elif not door.is_empty(): _submit(door, "", "doorway-click")
+					elif not door.is_empty() and _continuous.is_empty(): _submit(door, "", "doorway-click")
 					return
 			if field.player.position.distance_to(_progress) >= 0.5:
 				_progress = field.player.position
 				_stuck = 0.0
 			else:
 				_stuck += delta
-				if _stuck >= 0.5: _stop_walk("blocked")
+				if _stuck >= 0.5 and not _gate_waiting: _stop_walk("blocked")
 		elif _walking:
 			_stop_walk("released")
 
 	func _step(motion: Vector2, delta: float) -> void:
 		var next: Vector2 = field.player.position + motion
-		var room := str(field.snapshot.get("execution_room", field.snapshot.get("room", "")))
+		var room := _control_room()
 		var next_room: String = field.adapter.room_of(next)
 		var exit_map: String = field.adapter.manual_exit_target(next) if field.adapter.has_method("manual_exit_target") else ""
+		var admitted := not _continuous.is_empty() and str(_continuous.phase) == "prepared" and not bool(_continuous.cancelled) and next_room == str(_continuous.to_room)
+		if exit_map == "" and (next_room == room or admitted):
+			_gate_waiting = false
+			_move_body(motion, delta)
+			_check_continuous_arrival()
+			return
 		if next_room != room or exit_map != "":
 			if not field.adapter.walkable(next, field.player): return
-			_stop_walk("doorway")
+			if exit_map == "":
+				# An in-flight request never admits a second boundary. Keep the
+				# player's current legal movement and click route intact while the
+				# formal Prepare/Complete handshake settles this one doorway.
+				if _continuous.is_empty():
+					var candidate := _option_for_room(next_room)
+					if not candidate.is_empty(): _request_continuous(candidate, motion, "doorway-boundary")
+				if not _gate_waiting:
+					_gate_waiting = true
+					_stamp("continuous_gate_wait", _walk_id, {"room": room, "destination": next_room})
+				return
+			if not _continuous.is_empty(): return
 			for option in options:
 				var binding: Dictionary = option.get("interaction", {})
 				var destination: Dictionary = binding.get("destination", {})
 				if str(binding.get("kind", "")) == "doorway" and ((exit_map != "" and str(destination.get("map", "")) == exit_map) or (exit_map == "" and str(destination.get("map", "")) == field.adapter.map_key() and str(destination.get("room", "")) == next_room)):
+					if not _can_select(option):
+						_gate_waiting = true
+						return
+					_stop_walk("doorway")
 					_submit(option, "", "doorway")
 					return
 			return
+
+	func _move_body(motion: Vector2, delta: float) -> void:
+		if motion == Vector2.ZERO: return
 		field.player.velocity = motion / maxf(delta, 0.000001)
 		field.player.face_vector(motion)
 		field.player.pose("walk")
@@ -1371,17 +1638,29 @@ class SpatialInputInner extends Node:
 			if site != "": _interact(site)
 			else:
 				var door := _near_door()
-				if not door.is_empty(): _submit(door, "", "doorway-interact")
+				if not door.is_empty():
+					# The interact key may use the ordinary formal movement route;
+					# only held movement or a spatial destination keeps local control.
+					if _continuous.is_empty(): _submit(door, "", "doorway-interact")
 			get_viewport().set_input_as_handled()
 		elif event.is_action_pressed("manuscript") or event.is_action_pressed("wait"):
 			_show_self_choices()
 			get_viewport().set_input_as_handled()
 
 	func _navigate(point: Vector2) -> void:
+		if not _continuous.is_empty() and str(_continuous.phase) != "arrived":
+			_cancel_continuous("new-target")
+			return
 		_stop_walk("new-target")
 		var door := _door_option(point)
 		var destination_room: String = field.adapter.room_of(point)
-		var own_room := str(field.snapshot.get("execution_room", ""))
+		var own_room := _control_room()
+		if not door.is_empty() and field.adapter.has_method("doorway_landing"):
+			var destination: Dictionary = door.get("interaction", {}).get("destination", {})
+			destination_room = str(destination.get("execution_room", destination.get("room", "")))
+			var landing: Variant = field.adapter.doorway_landing(point, destination_room, field.player)
+			if landing == null: return
+			point = landing as Vector2
 		if not field.in_sight(point) and door.is_empty():
 			var doorway_visible := false
 			for direction in field.APPROACH:
@@ -1395,12 +1674,14 @@ class SpatialInputInner extends Node:
 		_route = NAV.route_on_grid(field.player.position, point, _local_grid(destination_room if destination_room != own_room else ""))
 		if not _route.is_empty():
 			_route.append(point)
-			_pending_door = door
+			if destination_room != own_room:
+				var passage := door if not door.is_empty() else _option_for_room(destination_room)
+				if not passage.is_empty(): _request_continuous(passage, point - field.player.position, "doorway-click")
 
 	func _door_option(point: Vector2) -> Dictionary:
 		if not field.adapter.has_method("doorway_rooms"): return {}
 		var rooms: Array[String] = field.adapter.doorway_rooms(point)
-		var own_room := str(field.snapshot.get("execution_room", ""))
+		var own_room := _control_room()
 		if own_room not in rooms: return {}
 		var found: Dictionary = {}
 		for option in options:
@@ -1427,7 +1708,7 @@ class SpatialInputInner extends Node:
 	func _local_grid(destination_room := "") -> AStarGrid2D:
 		# This room mask belongs to this request. Never write it into the map's
 		# shared grid when there happen to be no other bodies in the room.
-		var room := str(field.snapshot.get("execution_room", ""))
+		var room := _control_room()
 		return field.adapter.local_nav_grid(field.player, room, destination_room)
 
 	func _approach(site: String) -> void:
@@ -1465,9 +1746,14 @@ class SpatialInputInner extends Node:
 		return result
 
 	func _interact(site: String) -> void:
+		if not _continuous.is_empty():
+			_cancel_continuous("interaction-requested")
+			return
 		if not _in_reach(site): return
-		_stop_walk("interaction")
 		var choices := choices_for(site)
+		choices = choices.filter(func(option: Dictionary) -> bool: return _can_select(option))
+		if choices.is_empty(): return
+		_stop_walk("interaction")
 		if choices.size() == 1: _submit(choices[0], site, "hotspot")
 		elif choices.size() > 1:
 			var id := _id()
@@ -1475,6 +1761,9 @@ class SpatialInputInner extends Node:
 			field.field_event.emit({"kind": "spatial_choices", "interaction_id": id, "site": site, "title": field.sites[site].title, "options": choices, "screen_position": field.get_global_transform_with_canvas() * field.site_point(site)})
 
 	func _show_self_choices() -> void:
+		if not _continuous.is_empty():
+			_cancel_continuous("self-interaction-requested")
+			return
 		var choices: Array = []
 		for option in options:
 			if str(option.get("interaction", {}).get("kind", "")) == "self": choices.append(option)
@@ -1484,13 +1773,14 @@ class SpatialInputInner extends Node:
 		field.field_event.emit({"kind": "spatial_choices", "interaction_id": id, "site": "self", "title": "随身手稿", "options": choices, "screen_position": field.get_global_transform_with_canvas() * field.player.position})
 
 	func select(id: String, site: String) -> void:
-		if submitted or (site != "self" and not _in_reach(site)): return
+		if submitted or not _continuous.is_empty() or (site != "self" and not _in_reach(site)): return
 		for option in options:
 			if str(option.id) == id and ((site == "self" and str(option.get("interaction", {}).get("kind", "")) == "self") or option in choices_for(site)):
 				_submit(option, site, "local-choice")
 				return
 
 	func _submit(option: Dictionary, site: String, source: String) -> void:
+		if submitted or not _continuous.is_empty() or not _can_select(option): return
 		var id := _id()
 		_stamp("input_request", id, {"choice_id": option.id, "site": site, "source": source, "game_time": field.snapshot.get("game_time", 0)})
 		submitted = true

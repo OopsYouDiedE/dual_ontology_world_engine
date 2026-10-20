@@ -6,7 +6,7 @@ gameplay is the seven DV files in `language_core`; runtime assets are under
 
 ## Theme generation
 
-`build_ui_theme.py` writes all three current themes under `scenes/UI/Styles`.
+`build_ui_theme.py` writes all three current themes and their common native popup SVG icons under `scenes/UI/Styles`.
 They share the generator's paper / ink / hand palette, type sizes and font
 fallbacks. Update that source before regenerating; do not hand-edit the outputs
 or reproduce their styling in scene-local overrides.
@@ -22,7 +22,7 @@ python godot_csharp/tools/build_ui_theme.py
 python godot_csharp/tools/build_ui_theme.py --check
 ```
 
-`--check` compares all three files with deterministic generator output. It checks
+`--check` compares the themes and popup icons with deterministic generator output. It checks
 resource-source consistency, not Godot rendering, legibility or input behavior.
 Overlay variations include the HUD family, modal margins/stacks, editorial
 caption/title, manuscript body/note and quiet/text/choice actions. Keep their
@@ -233,3 +233,19 @@ one cleanup. It has no mandatory dependency on historical artifacts and directly
 classifies the seven current DV files. Missing literal resources, unresolved dynamic
 paths and gameplay behavior are separate questions; static inventory does not
 establish runtime or visual correctness.
+
+## Shared controller and return input
+
+See `../docs/chapter1-input.md` for the default input map, `UIInput` ownership,
+one-level right-click/B return, and versioned `GameSettings` binding migration.
+`probe_ui_input.gd` is a finite native-Control mechanism probe with isolated user
+data and a new absolute `--out` directory. It writes binary input observations
+through `FrameArchive`; it does not run Main/DV or validate physical controllers,
+book rendering, map traversal or gameplay. Build/import prerequisites, commands
+and evidence boundaries are documented there; this index asserts no run result.
+
+### Focused doorway input observations
+
+`dv_level3_capture.gd` retains its normal capture defaults. For an explicitly scoped input/physics observation, `--movement-samples` adds binary per-physics-frame observations while the player is moving or a continuous doorway request exists; `--capture-ms=1000` lowers screenshot readback frequency. The stream records actual body positions, instance identity, input direction, authoritative/physical room and request phase without moving the body or selecting actions. It is diagnostic instrumentation, not an uninstrumented performance baseline.
+
+Transient `input.json` packets now also accept `click` with numeric `button` (1 left, 2 right), `joy_button` with numeric `button` and optional `pressed`, and `joy_axis` with numeric `axis` and `value` in [-1, 1]. These go through `Input.parse_input_event`; they do not establish physical-controller/driver coverage. Held controller buttons and axes are released on capture close and recorded in the binary input stream. Formal game scope and authorization remain as described above; a short doorway observation is not a complete story acceptance.

@@ -8,6 +8,7 @@ signal casebook_reading_changed(active: bool)
 
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 const Transition := preload("res://scenes/UI/UITransition.gd")
+const UIInput := preload("res://scenes/Shared/Input/UIInput.gd")
 const CASEBOOK_SCRIPT := preload("res://scenes/UI/CasebookUI.gd")
 const CASEBOOK_DATA := preload("res://scenes/UI/CasebookData.gd")
 const HUD_SCENE := preload("res://scenes/UI/FieldHUD.tscn")
@@ -33,6 +34,7 @@ var _pending_action: Dictionary = {}
 var _screen_motion = Transition.new()
 var _archive_result: Dictionary = {}
 var _archive_lines: Array = []
+var _host_input_enabled := true
 
 @onready var _screen_layer: CanvasLayer = $TransitionLayer
 @onready var _screen_fader: ColorRect = $TransitionLayer/ScreenFader
@@ -53,7 +55,9 @@ func _ready() -> void:
 	_screen_motion.completed.connect(_on_screen_transition_completed)
 	hud_ui = HUD_SCENE.instantiate()
 	add_child(hud_ui)
-	hud_ui.settings_requested.connect(open_settings)
+	hud_ui.settings_requested.connect(func():
+		if _host_input_enabled: open_settings()
+	)
 	dialogue_ui = DIALOGUE_SCENE.instantiate()
 	add_child(dialogue_ui)
 	dialogue_ui.dialogue_step.connect(func():
@@ -86,6 +90,13 @@ func _ready() -> void:
 	settings_ui.ui_event.connect(_on_book_event)
 	var settings := get_node_or_null("/root/GameSettings")
 	if settings != null: settings.setting_changed.connect(_on_setting_changed)
+	_sync_overlay_input()
+
+func set_host_input_enabled(enabled: bool) -> void:
+	# Main can prepare this UI behind the opening page. It may render, but must
+	# not capture the title's input or expose a second active menu beforehand.
+	_host_input_enabled = enabled
+	if is_node_ready(): _sync_overlay_input()
 
 func begin_shutdown() -> void:
 	if _closing: return
@@ -167,7 +178,7 @@ func present(ev: Dictionary) -> Dictionary:
 	return {}
 
 func _request_modal(kind: String, data: Dictionary = {}) -> void:
-	if _closing or not _pending_action.is_empty(): return
+	if _closing or not _host_input_enabled or not _pending_action.is_empty(): return
 	# Settings is a child reading layer. Preserve the sheet beneath it, including
 	# its reading position; returning must not dispatch or re-run any world action.
 	if kind == "settings" and _modal_kind != "settings" and investigation_ui.is_open() and not _active_modal.is_empty():
@@ -252,7 +263,7 @@ func _release_modal() -> void:
 	_flush_pending_action()
 
 func _sync_overlay_input() -> void:
-	var screen_blocked: bool = _screen_motion.is_active()
+	var screen_blocked: bool = _screen_motion.is_active() or not _host_input_enabled
 	dialogue_ui.set_modal_blocked(_modal_cycle or screen_blocked)
 	hud_ui.set_overlay_blocked(_modal_cycle or screen_blocked)
 	settings_ui.set_external_blocked(screen_blocked)
@@ -366,11 +377,22 @@ func show_flash(text: String, duration := 1.8) -> void:
 	dialogue_ui.show_flash(text, duration)
 
 func _input(event: InputEvent) -> void:
-	if _screen_motion.is_active() and event.is_pressed(): get_viewport().set_input_as_handled()
+	if not _host_input_enabled: return
+	if _closing or _screen_motion.is_active():
+		get_viewport().set_input_as_handled()
+		return
+	# Children receive _input first: the book, modal sheet or history closes one
+	# level and consumes the event. Capture the remaining back input before GUI
+	# Controls can swallow a right-click and before the field can see it.
+	if UIInput.is_back(event, false):
+		if UIInput.is_back(event):
+			if _modal_cycle: close_modal()
+			elif not dialogue_ui.is_dialogue_active(): open_settings()
+		get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _closing or not event.is_pressed() or event.is_echo(): return
-	if event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel"):
+	if _closing or not _host_input_enabled or not event.is_pressed() or event.is_echo(): return
+	if UIInput.is_back(event):
 		if _modal_cycle: close_modal()
 		elif not dialogue_ui.is_dialogue_active(): open_settings()
 		get_viewport().set_input_as_handled()
