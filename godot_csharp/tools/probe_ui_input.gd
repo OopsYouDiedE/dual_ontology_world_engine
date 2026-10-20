@@ -84,12 +84,20 @@ func _run() -> void:
 	_observe("horizontal stick edits native slider", is_equal_approx(slider.value, 0.6), {"value": slider.value})
 	first.grab_focus()
 	forwarder.projection.reset_navigation()
+	var held_started := Time.get_ticks_usec()
 	_axis(JOY_AXIS_LEFT_Y, 0.85)
-	await create_timer(0.44, true, false, true).timeout
-	_observe("held stick repeats after initial delay", page_viewport.gui_get_focus_owner() == slider)
+	await _wait_until(held_started + 440000)
+	var repeated_focus := page_viewport.gui_get_focus_owner()
+	_observe("held stick repeats after initial delay", repeated_focus == slider,
+		{"held_us": Time.get_ticks_usec() - held_started, "focus": _focus_path(repeated_focus)})
 	_axis(JOY_AXIS_LEFT_Y, 0.0)
-	await create_timer(0.24, true, false, true).timeout
-	_observe("neutral stick stops repeat", page_viewport.gui_get_focus_owner() == slider)
+	var released_focus := page_viewport.gui_get_focus_owner()
+	var released_started := Time.get_ticks_usec()
+	await _wait_until(released_started + 240000)
+	var neutral_focus := page_viewport.gui_get_focus_owner()
+	_observe("neutral stick stops repeat", neutral_focus == released_focus,
+		{"neutral_us": Time.get_ticks_usec() - released_started,
+		"released_focus": _focus_path(released_focus), "focus": _focus_path(neutral_focus)})
 	_axis(JOY_AXIS_RIGHT_Y, 0.8)
 	await create_timer(0.16, true, false, true).timeout
 	_axis(JOY_AXIS_RIGHT_Y, 0.0)
@@ -105,6 +113,15 @@ func _run() -> void:
 		"physical_controller_tested": false, "elapsed_us": Time.get_ticks_usec() - origin}))
 	print("Native input observation complete. Evidence: ", output, ". Failures: ", "; ".join(failures))
 	quit(0 if failures.is_empty() else 1)
+
+func _wait_until(deadline_usec: int) -> void:
+	# SceneTreeTimer starts in the current frame; its first delta can include
+	# time before the injected event. Match the input helper's monotonic clock.
+	while Time.get_ticks_usec() < deadline_usec:
+		await process_frame
+
+func _focus_path(control: Control) -> String:
+	return str(control.get_path()) if is_instance_valid(control) else ""
 
 func _setup_page() -> void:
 	page_viewport = SubViewport.new()
