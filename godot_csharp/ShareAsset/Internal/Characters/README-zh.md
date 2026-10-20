@@ -1,39 +1,22 @@
-# 角色正面站立帧：32×48
+# 现役人物资源
 
-本说明记录21人的身份基准正面站立帧。剧情场景另使用[动作图集](animation_v2/README.md)与专用表演资源；本图集不代表全部角色动作来源。旧1355×1161概念总图不是32×48精灵帧，也不能通过标注“像素风”视为合格。
+正式地图人物由 `scenes/Shared/Field/WorldView.gd` 根据 DV 提供的角色键创建，身体与动画呈现由 `scenes/Story/StoryActor.gd` 承接。角色资源不提供主体决策、世界效果或知识。
 
-## 文件与尺寸
+| 目录 | 当前用途 | 制作入口 |
+| --- | --- | --- |
+| `PixelCast/` | 正式地图优先加载的像素动作图集，PNG 与 SpriteFrames `.tres` 配套 | `godot_csharp/tools/build_pixel_cast.py` |
+| `AnimeCast/` | PixelCast 缺失时的现役回退图集，另保留上身裁切资源 | `godot_csharp/tools/build_anime_cast.py` |
+| `DialogueCast/` | 对白上身立绘与六种表情的 AtlasTexture；当前 `DialogueUI.gd` 按角色键加载 calm 资源 | `godot_csharp/tools/build_dialogue_cast.py` |
+| `voices/` | 已保留的声音素材；是否播放以宿主实际调用为准 | 素材不等同于已实现的对白语音功能 |
 
-`characters-21-front-master.png` 是224×144透明图集，7列3行，共21帧。每帧画布严格32×48，不透明内容依体态宽窄和身高留白。脚底统一在帧内第46行（从0计数），第47行透明；居中Sprite2D的脚底像素位于原点下方22px。
+当前角色键为 `detective`、`engineer`、`chef`、`musician`、`poet`、`archaeologist`、`thief`、`lawyer`、`naturalist`、`chessplayer`、`dancer`、`painter`、`chemist`、`marksman`、`architect`、`doctor`。人物身份、名字与呈现绑定由正式 DV 内容提供，资源文件名不作为剧情依据。
 
-`atlas/` 中21个AtlasTexture分别引用一个32×48区域，游戏直接使用这些资源。Sprite2D保持1倍缩放和最近邻采样，不用放大到旧角色尺寸。`front-standing-preview.png` 是4倍最近邻检视图，文字位于帧外，不作为游戏纹理。
+PixelCast 基础画布为 32×48，运行时使用最近邻采样。具体角色可由制作参数声明其他画布尺寸；脚底、缩放和过滤参数取各 SpriteFrames 的 metadata。AnimeCast 从原图登记透明边界、对齐与显示尺度；DialogueCast 从原图登记 calm/thoughtful/worried/angry/warm/hooked 六种上身范围，不把图集制成证明当作角色动作或表情已在正式会话中使用的证明。
 
-逐行顺序：
+## 生产源与维护
 
-- 01言灵导师、02仪式导师、03工程导师、04学园长、05恶魔、06侦探、07诗人。
-- 08音乐家、09博物学家、10机械工程师、11主厨、12考古学家、13神偷、14律师。
-- 15棋手、16化学家、17神射手、18舞蹈艺术家、19画家、20建筑师、21医生。
+这些制作工具从 `godot_csharp/AssetsSource/Internal/Characters/` 下的同名资产族读取源稿；PixelCast 还需要该资产族中每人的调色板 JSON。当前仓库快照没有包含这些源稿与调色板，必须先从原制作来源恢复输入才能重建。现有运行图集应保留，不能因工具仍在就假定缺失源稿能够重现。
 
-## 造型与日常携带
+在输入齐备后，从仓库根目录执行对应工具，例如 `python godot_csharp/tools/build_pixel_cast.py --only detective`；资源导入按 Godot 工程说明执行。更新图集同时检查角色键、PNG、`.tres`、metadata、透明边界、脚底锚点及导入侧车。开发整图截图工具 `scenes/Chapter2/Field/capture_maps.gd` 同样使用 PixelCast，避免开发截图仍显示另一套角色比例。
 
-保留各人的发色、服装主色与体态，采用约1900年前后的高领衬衣、马甲、呢料外套、工作罩衣、围裙、长裙和皮鞋作为衣着基础。裁剪与装饰经过场景像素尺度简化，不要求在小人上复制立绘纹样。年代参考包括 [Met的1905年日常套装](https://www.metmuseum.org/art/collection/search/157423) 与 [悉尼档案馆的爱德华时代服饰资料](https://archives.cityofsydney.nsw.gov.au/nodes/view/1939285)；本作服装为架空学园设计，发色沿用角色身份。
-
-默认站姿空手。视力所需眼镜可以佩戴；怀表、钥匙、手帕、钱币或便携笔记可放衣袋，不因“随身携带”就必须画出来。是否携带由具体场景与个人习惯决定，没有给全员强配一套物品。
-
-厨刀放在厨房，烧瓶留在实验台，棋盘属于对局，长枪在训练或警戒时取用；乐器、卷尺、画板与医疗箱同样按任务出现。它们不作为职业身份图标。人物用发型、体形、衣着色块和站姿区分，动作中需要的物品另画对应动作帧。
-
-新版取消现代耳机、悬挂试管、常驻长枪、棋盘与测量工具，减去过密金饰。角色像素不叠加场景的材质噪点着色器。
-
-## 制作与检查
-
-由内置image_gen重绘，实际提示词见源稿区的 `character-prompt.txt`。生成源 `godot_csharp/AssetsSource/Internal/Characters/FrontStanding/front-standing-generated.png` 为1563×1006造型源稿，不能直接用于运行时。经用户授权，用Pillow做最近邻像素整理、调色板归并及精确排版：
-
-```powershell
-python godot_csharp/tools/build_character_atlas.py
-```
-
-在仓库根目录运行，需要Pillow。该脚本重建缩制派生图集及检视图，不重新调用生成模型；输出符合32×48画布规格，不属于直接逐像素原绘。固定裁剪范围对应本次源稿，不适用于任意其他图片。
-
-验收检查：21个区域均为32×48且无跨格；透明度仅0/255；每人最多16个不透明颜色，整图统一至96色以内；轮廓、空手站姿、衣着与脚底在4倍最近邻图上逐人检查。这些检查限定于身份基准帧，不表示各场景统一使用该图集。
-
-本图集只交付正面静止帧，不能证明动画或整段场景完成。前三场的背面、侧面、行走与坐姿等动作见动作图集说明，所需专用动作仍按片段验收。Shot01为Story中央厅兼容入口，实际角色引用由Story场景维护。
+现役人物图集、立绘及 AnimeCast 回退保留独立用途，不能只按静态路径搜索移除动态加载的资源。此前静止身份图与旧动作制作过程从 Git 历史查阅，本说明只维护当前运行引用与实际重建前提。

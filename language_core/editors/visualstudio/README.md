@@ -17,4 +17,4 @@ This is a compiler diagnostics client. It does not yet provide completion, navig
 
 The client follows Microsoft's [Visual Studio language server extension contract](https://learn.microsoft.com/en-us/visualstudio/extensibility/adding-an-lsp-extension). The shared transport is `language_core/tools/dv_lsp.py`. The Godot client uses the same checker directly.
 
-Local evidence: `artifacts/partial-bootstrap-core/editor-checker-01/`. The client was built and packaged, and the language server was exercised with real unsaved edits. Installation and diagnostic rendering inside Visual Studio have not yet been verified.
+Historical build or protocol records are not installation evidence for the current source. Verify packaging, installation, unsaved-buffer diagnostics and actual editor rendering separately when that work is requested; no gameplay conclusion follows from an editor check.

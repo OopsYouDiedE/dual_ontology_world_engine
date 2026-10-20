@@ -30,6 +30,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from asset_sources import require_originals
+
 from PIL import Image, ImageFilter
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -236,6 +238,7 @@ def frames_resource(key: str, cell_w: int, cell_h: int) -> str:
 
 
 def build(key: str, source: Path = SOURCE, preview: Path = PREVIEW) -> None:
+    require_originals([source / f"{key}-compact.png", PALETTES / f"{key}.json"], "PixelCast master and palette")
     master = Master(key, source)
     cw, ch, foot = master.cell_w, master.cell_h, master.foot_row
     sheet = Image.new("RGBA", (cw * 6, ch * 3))
@@ -266,6 +269,9 @@ def main() -> None:
     parser.add_argument("--preview-dir", type=Path, default=PREVIEW)
     args = parser.parse_args()
     keys = args.only or sorted(path.stem for path in PALETTES.glob("*.json"))
+    require_originals([path for key in keys
+                       for path in (args.source_dir / f"{key}-compact.png", PALETTES / f"{key}.json")],
+                      "PixelCast master and palette")
     for key in keys:
         build(key, args.source_dir, args.preview_dir)
 

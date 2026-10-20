@@ -11,6 +11,8 @@ import argparse
 import shutil
 from pathlib import Path
 
+from asset_sources import require_originals
+
 from PIL import Image
 
 GAME = Path(__file__).resolve().parents[1]
@@ -100,6 +102,7 @@ def bounds(path: Path) -> list[list[tuple[int, int, int, int]]]:
 
 def build(key: str) -> None:
     source = SOURCE / f"{key}-compact.png"
+    require_originals([source], "AnimeCast")
     boxes = bounds(source)
     canvas_width = max(b[2] - b[0] for row in boxes for b in row)
     canvas_height = max(b[3] - b[1] for row in boxes for b in row)
@@ -153,8 +156,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--only", nargs="+", choices=list(HEIGHTS))
     args = parser.parse_args()
+    keys = list(args.only or HEIGHTS)
+    require_originals((SOURCE / f"{key}-compact.png" for key in keys), "AnimeCast")
     errors = []
-    for key in args.only or HEIGHTS:
+    for key in keys:
         try:
             build(key)
         except (ValueError, FileNotFoundError) as error:

@@ -3,7 +3,8 @@
     python music/build_soundtrack.py                  # 编译曲谱，由 MuseScore 4 导出并后处理生成游戏配乐、音效与提示音
     python music/build_soundtrack.py --only night     # 只编译某一首曲目（或某个音效 id）
     python music/build_soundtrack.py --scores         # 只核对/更新曲谱，不渲染游戏 OGG
-    python music/build_soundtrack.py --export         # 另用 MuseScore 4 导出 PDF / MusicXML / MIDI / MP3
+    python music/build_soundtrack.py --export         # 将 PDF / MusicXML / MIDI / MP3 导出至 artifacts/releases/soundtrack
+    python music/build_soundtrack.py --export --export-dir <目录> # 指定发行导出目录
     python music/build_soundtrack.py --rewrite-scores # 从 cues.py 更新 .mscz（严格保留原谱乐器名称与音色设置）并导出全部产物
     python music/build_soundtrack.py --from-mscz      # 直接以现有 .mscz 为唯一源，经 MuseScore 4 编译进游戏（跳过 cues.py 比对）
 
@@ -42,6 +43,7 @@ ASSETS = os.path.join(ROOT, 'godot_csharp', 'ShareAsset', 'Internal')
 MUSIC_OUT = os.path.join(ASSETS, 'Props', 'Audio', 'Music')
 SFX_OUT = os.path.join(ASSETS, 'Props', 'Audio', 'Sfx')
 VOICE_OUT = os.path.join(ASSETS, 'Characters', 'voices')
+EXPORT_OUT = os.path.join(ROOT, 'artifacts', 'releases', 'soundtrack')
 SCORE_NAMES = {
     'main_theme': 'Main Theme',
     'door_side': 'The Near Side of the Door',
@@ -75,9 +77,15 @@ def _run_musescore_export(musescore, mscz, out_path, extra=()):
         raise RuntimeError(f'MuseScore 4 未能导出 {out_path}')
 
 
-def export_score(musescore, mscz):
-    """用 MuseScore 4 打开曲谱并导出 PDF、MusicXML、MIDI 与 MP3。"""
-    base = os.path.splitext(mscz)[0]
+def score_export_base(mscz, directory):
+    directory = os.path.abspath(directory)
+    os.makedirs(directory, exist_ok=True)
+    return os.path.join(directory, os.path.splitext(os.path.basename(mscz))[0])
+
+
+def export_score(musescore, mscz, directory=EXPORT_OUT):
+    """将 PDF、MusicXML、MIDI 与 MP3 写入独立发行目录，保留原谱。"""
+    base = score_export_base(mscz, directory)
     tasks = [
         (base + '.pdf', ()),
         (base + '.musicxml', ()),
@@ -318,9 +326,9 @@ def _compile_cue(make, args, musescore):
             raise RuntimeError('\n'.join(msg))
 
     if rewrite and not musescore:
-        write_midi(piece, base + '.mid')
+        write_midi(piece, score_export_base(mscz_path, args.export_dir) + '.mid')
     if musescore and (rewrite or args.export):
-        export_score(musescore, mscz_path)
+        export_score(musescore, mscz_path, args.export_dir)
     if args.scores:
         return f'{piece.slug}: {len(piece.bars)} 小节（曲谱已就绪）'
 
@@ -347,6 +355,8 @@ def main():
                     help='直接将现有 .mscz 经 MuseScore 4 编译导出为游戏音频（不核对 cues.py）')
     ap.add_argument('--export', action='store_true',
                     help='重新用 MuseScore 4 导出 PDF / MusicXML / MIDI / MP3')
+    ap.add_argument('--export-dir', default=EXPORT_OUT,
+                    help='原声/乐谱导出目录（默认 artifacts/releases/soundtrack）')
     ap.add_argument('--jobs', type=int, default=4,
                     help='并行调用 MuseScore 4 的工作线程数（默认 4）')
     args = ap.parse_args()

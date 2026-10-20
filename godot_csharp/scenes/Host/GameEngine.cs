@@ -64,6 +64,9 @@ public partial class GameEngine : Node
     }
 
     public GDict Snapshot() => Parse(snapshotJson);
+
+    // Read the same completed host projection; never traverse a worker-owned DV state.
+    public string ReadMilestoneProgressJson() => snapshotJson;
     private static GDict Parse(string json) => Json.ParseString(json).AsGodotDictionary();
 
     public GArray Dispatch(GDict input)

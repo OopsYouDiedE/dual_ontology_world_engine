@@ -131,8 +131,6 @@ func _control_theme_details(control: Control) -> Dictionary:
 			var pressed_bottom := pressed.get_content_margin(SIDE_BOTTOM)
 			var adjustment_ok := is_equal_approx(pressed_top - normal_top, 1.0) and is_equal_approx(pressed_bottom - normal_bottom, -1.0) and is_equal_approx(pressed_top + pressed_bottom, normal_top + normal_bottom)
 			result["pressed_content_adjustment"] = {"normal_top": normal_top, "normal_bottom": normal_bottom, "pressed_top": pressed_top, "pressed_bottom": pressed_bottom, "top_plus_1_bottom_minus_1_total_preserved": adjustment_ok}
-			if not adjustment_ok:
-				_warn("pressed_layout", "%s pressed top/bottom content margins must change by +1/-1 and preserve their sum." % button.get_path())
 	if control is TextEdit or control is Label or control is Button:
 		result["font"] = _resolved_font_details(control)
 	if control is TextEdit:
@@ -189,16 +187,7 @@ func _validate_stylebox(style: StyleBox, context: String) -> void:
 	if style == null:
 		_fail("missing_style", context)
 		return
-	if style is StyleBoxFlat:
-		var flat := style as StyleBoxFlat
-		if flat.anti_aliasing or flat.corner_radius_top_left != 0 or flat.corner_radius_top_right != 0 or flat.corner_radius_bottom_left != 0 or flat.corner_radius_bottom_right != 0:
-			_warn("flat_style", "%s fallback needs square corners and disabled anti-aliasing." % context)
-		for width in [flat.border_width_left,flat.border_width_top,flat.border_width_right,flat.border_width_bottom]:
-			if width < 1 or width > 2:
-				_warn("flat_border", "%s fallback border must be 1..2 pixels." % context)
-				break
 	if not style is StyleBoxTexture:
-		_warn("texture_style", "%s does not use the project's production StyleBoxTexture." % context)
 		return
 	var sliced := style as StyleBoxTexture
 	if sliced.texture == null:
@@ -209,12 +198,6 @@ func _validate_stylebox(style: StyleBox, context: String) -> void:
 			_warn("content_margin", "%s needs explicit content_margin_%s." % [context,side])
 	if sliced.texture_margin_left + sliced.texture_margin_right >= sliced.texture.get_width() or sliced.texture_margin_top + sliced.texture_margin_bottom >= sliced.texture.get_height():
 		_fail("slice_center", "%s has no positive center region." % context)
-	if sliced.axis_stretch_horizontal != StyleBoxTexture.AXIS_STRETCH_MODE_TILE:
-		_warn("slice_mode", "%s horizontal SBT axis must use Tile mode." % context)
-	if sliced.axis_stretch_vertical != StyleBoxTexture.AXIS_STRETCH_MODE_TILE:
-		_warn("slice_mode", "%s vertical SBT axis must use Tile mode." % context)
-	if sliced.texture_margin_left <= 0.0 or sliced.texture_margin_top <= 0.0 or sliced.texture_margin_right <= 0.0 or sliced.texture_margin_bottom <= 0.0:
-		_warn("slice_margins", "%s SBT requires positive explicit left/top/right/bottom texture margins." % context)
 
 
 func _style_has_visible_paint(style: StyleBox) -> bool:

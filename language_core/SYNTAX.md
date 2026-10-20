@@ -1,30 +1,30 @@
 # DV 领域语法与数值类型方案
 
-本方案名为 surface-v2，取代旧 surface-v1。当前编译器已实现下面列明的执行子集，Core 与正式第一章通过该前端编译运行；后文完整语言设计中尚未实现的部分继续保留为目标。
+本方案名为 surface-v2。当前执行入口与七文件索引见 [README.md](README.md)，现行语法入口见 [docs/syntax.md](../docs/syntax.md)。本文件先列源码已接入的执行子集；第1–14节保留完整语言方案，超出本节边界的语法仍是目标，不能直接作为当前可编译代码或验收证据。
 
 ### 当前可执行边界
 
 - 已实现：缩进块、fn/axiom、let/var/赋值、return/if/elif/else/while、中文标识符和 define、位置参数、记录/列表字面量、字段/下标、普通算术和短路逻辑；mapping 的 `×` 与 `*` 调用；acceptance 的 degree/levels；有限域 imprint 声明。
 - 已实现的检查：函数名称/元数、局部变量、let 不可重新赋值、显式参数/返回值/局部名义类型、单位区间字面量、Nat 字面量整数性。Acceptance/Probability/Confidence/Reliability 构造使用独立范围构造器。配平使用精确有理数，最优性由 DV 证书核验器独立确认。
 - 仍待实现：具名实参、通用 record/enum/scalar/generic 声明、单位与一般区间推导、by 证明、完整模块导入/能力系统、闭包、其余领域声明和目标无关 Typed IR。未注解代码采用 Value，既有通用计算仍用有限 double；不能将整个 Core 宣称为精确数值或完全静态证明。
-- 编译器仍支持启动语法，自身尚未改写为新语法。真实可编译写法以 core/40-value.dv、verification/session/20-speech.dv 和 verification/checks/fixtures/cognitive-semantics.dv 为例；下文超出本节边界的示例属于完整设计。
+- 编译器仍支持启动语法，自身尚未改写为新语法。实际写法以 [20-core.dv](20-core.dv)、[30-session.dv](30-session.dv) 和 [70-checks.dv](70-checks.dv) 的表层部分为例；10-compiler 和70中的部分报告仍使用启动语法，不能声称七文件全部转换。
 
 当前 imprint 的执行形态把 achieve、vary、conserve using、limit using、minimize using 分别绑定目标记录、有限变量域、线性守恒式、当前资源/工作预算与具名资源价格。搜索结果经核验后由 dv_imprint_commit 提交。连续求解器和一般命题约束还未接入。
 
-DV 的书写单位是“谁取得什么材料、如何理解、凭什么采纳、如何选择与行动”。普通函数实现算法，切片、解释、依据、评分和动作使用专门语法。类型系统携带主体、来源、数值含义和操作阶段。
+完整语言方案以“谁取得什么材料、如何理解、凭什么采纳、如何选择与行动”为书写单位，目标是让切片、解释、依据、评分和动作拥有专门语法，并由类型携带主体、来源与阶段。当前执行子集以普通函数和已接入的少量领域展开实现算法，其余能力按下面的设计范围阅读。
 
 ## 文件引用与调试入口
 
 通过 `tools/build_session.py`、`tools/run_debug.py` 或编辑器检查入口组合源文件时，引用写为独立行：
 
 ```dv
-#include ../core/00-data.dv
-#include scene.dv
+#include 20-core.dv
+#include 30-session.dv
 ```
 
 路径相对当前文件，包含 `.dv` 后缀；每个文件加载一次，循环引用与缺失文件报错。依赖先编译，各文件的 define 保持文件作用域。当前功能由共用文件适配器解析，裸编译器接口接收组合后的源和文件范围。
 
-`rt_json_write(path, value)` 将原生 DV 数据流式保存到新文件；中间写入 `.partial`，成功后才发布正式文件名。调试配置与调用示例见 `game/entry.dv`、`game/debug-run.dv`。
+`tools/dv_toolchain.py` 是共用文件适配器，生产入口为 [60-game.dv](60-game.dv)，独立检查入口为 [70-checks.dv](70-checks.dv)；[dv-check.json](dv-check.json) 为编辑器选择对应闭包。新轨迹使用二进制 DAG/DVLOG，`rt_json_write(path, value)` 执行时拒绝新 JSON 文件记录；进程内 JSON 交换及历史只读兼容仍保留。调试入口是 `60-game.dv` 的 `dvg_debug_run`，通过 `tools/run_debug.py` 按当前任务授权运行。
 
 ## 1 参照与取舍
 
@@ -485,10 +485,10 @@ Statement  = Binding | Assignment | Return | If | For | While | Match | Context 
 
 实施顺序：普通语法与名义数值类型；视界/切片/认知映射运算；门槛接纳/规则/动作；守恒求解与刻画结算；分布/规划/模型/协议；编译器自身迁移。同一前端与IR逐步扩展，不新增独立剧情解析器。旧 double 权重改为精确量时明确转换方式，不把数值变化当作纯语法替换。求解、接纳与映射算法继续由 DV 库实现，平台 ABI 提供基础数值与容器操作。
 
-首批迁移对象为已有的专业观察、询问回复、主动说明和个人答辩回执。旧会话记录不证明 surface-v2 已可编译。当前已经完成首批编译与正式逻辑会话迁移；剩余设计范围以文首实现边界为准。
+现行20–60的专业观察、询问回复、主动说明和个人答辩回执已使用表层源码。是否在当前环境完成编译及正式会话验证，以本轮实际记录为准；旧会话与源码迁移不证明完整语言方案已经实现。剩余范围以文首边界为准。
 
 
-## 已实现的集合与分支简写（2026-10-18）
+## 当前执行子集：集合与分支简写
 
 Surface 的同级 `elif condition:` 按源码顺序降为已有嵌套 if/else，首个真分支执行；else 可省略。条件仍使用既有二值 Bool 运行合同。
 

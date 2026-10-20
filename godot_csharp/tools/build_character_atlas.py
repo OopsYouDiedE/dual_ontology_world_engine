@@ -1,6 +1,8 @@
 """Build the approved front-idle atlas from its ImageGen source. Requires Pillow."""
 from pathlib import Path
 
+from asset_sources import require_originals
+
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -22,7 +24,9 @@ FRAMES = [
 
 
 def build():
-    source = Image.open(ROOT / "godot_csharp/AssetsSource/Internal/Characters/FrontStanding/front-standing-generated.png").convert("RGBA")
+    source_path = ROOT / "godot_csharp/AssetsSource/Internal/Characters/FrontStanding/front-standing-generated.png"
+    require_originals([source_path], "FrontStanding")
+    source = Image.open(source_path).convert("RGBA")
     atlas = Image.new("RGBA", (224, 144))
     for index, (bounds, height) in enumerate(FRAMES):
         sprite = source.crop(bounds)

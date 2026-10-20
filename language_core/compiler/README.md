@@ -1,19 +1,34 @@
-# DV 编译器
+# DV 编译器与平台 ABI
 
-表层执行子集支持elif与单绑定、可嵌套列表推导式；条件、作用域、求值顺序及动态类型边界见[Core参考](../core/README.md)。中性工程输入在examples/syntax-probes/，不运行游戏。编译器是生成C#的源码自举，平台容器/数值/文件ABI及#include源组合仍分别由Runtime.cs和构建工具承担，不能称为独立机器码或完整能力类型自举。
+编译器源位于 [10-compiler.dv](../10-compiler.dv)，同时处理 S 表达式启动语法与 surface-v2 可执行子集。这里保留的 `seed/Program.cs` 是最小 C0 编译器，包含 Reader/Value 和启动子集的 C# 发射；它不执行世界、人物或会话。C1 及后续生成编译器只引用 [Runtime.cs](Runtime.cs)，不再调用 C0 Reader。
 
-`compiler.dv` 同时实现 S 表达式启动语法与 surface-v2 执行子集的扫描、解析、领域展开、名义检查及 C# 输出。`seed/` 是启动编译器 C0，C1及后续阶段使用生成的C#与Runtime.cs。新的书写格式见[SYNTAX.md](../SYNTAX.md)。
+## 构建链与生成物
 
-## 构建与使用
+共用入口为 [tools/dv_toolchain.py](../tools/dv_toolchain.py) 的 `compiler()`，生产生成器为 [tools/build_session.py](../tools/build_session.py)。在仓库根目录运行：
 
 ```powershell
-python language_core/tools/bootstrap_compiler.py --out artifacts/partial-bootstrap-core/compiler-<new-run>
-dotnet artifacts/partial-bootstrap-core/compiler-<new-run>/c3/bin/Release/net8.0/Program.dll input.dv output.cs
+dotnet build language_core/LanguageCore.sln -c Release --disable-build-servers -p:NuGetAudit=false
+python language_core/tools/build_session.py --out language_core/Session/obj/dv
+python language_core/tools/check_dv.py --format json language_core/10-compiler.dv
 ```
 
-构建工具依次生成C1、C2、C3。生成的output.cs与Runtime.cs组成.NET 8程序。
+构建工具先构建 `compiler/seed/Seed.csproj`，用 C0 编译 `10-compiler.dv` 得到 C1，再由 C1 得到 C2、C2 得到 C3；每阶段把生成源与 Runtime 交给 .NET 8。C2/C3 的生成源码逐字节比较，固定点不同就停止。缓存位于 `language_core/obj/dv-toolchain/<来源指纹>/`，缓存输入包含编译器源与 compiler 目录中除 bin/obj 外的文件，共用锁避免多个编辑器并发覆盖。
 
-## 保留的启动语法
+`build_session.py` 默认组合 `60-game.dv` 的 include 闭包，生成 `DVProgram.cs`、模块范围和来源清单；Session 项目引用 `obj/dv/DVProgram.cs`。这些是可重建输出，不能手改或冒称独立源实现。仅比较生成源固定点不等于形式化证明或正式游戏验收。环境缺失、SDK 错误或未运行阶段如实说明，不沿用历史构建记录。
+
+`tools/dv_toolchain.py` 的 `sources()` 按当前文件解析相对 `#include`，保留 define 作用域与 UTF-16 源位置边界，拒绝循环和缺失依赖。裸编译器接口接收已经组合的源与范围数据；编辑器使用 [dv-check.json](../dv-check.json) 选择编译器、生产或独立检查闭包，生产组不含 oracle。
+
+## 前端与当前类型边界
+
+`sf_scan/sf_parse` 处理 Unicode、缩进与 define，`sf_declaration` 展开 fn、axiom、mapping、acceptance、imprint，`sf_rename_body` 为局部绑定生成唯一目标名，`ck_program/ck_body/ck_expect` 核对名称、元数、显式名义类型、字面量范围及 let 可变性，随后直接发射 C#。
+
+当前表层支持普通位置参数、记录/列表、字段与下标、中缀运算、短路逻辑、if/elif/else、while 和单绑定列表推导。`elif` 按源码顺序降为嵌套分支；推导式先在外层环境求值 source 一次，再按原顺序处理 guard/projection，绑定仅在表达式内生效，支持嵌套。source 须为 List、guard 须为 Bool，元素保持 Value；需要短路的集合检查仍使用 while，不能用分配完整结果的推导式宣称等价的短路行为。
+
+未注解值保持 Value，有限 double 仍是通用 Number，显式 Rational 提供精确数。名义区间/数值检查不能证明所有运行值、主体信息域或一般数学性质；通用泛型、单位推导、闭包、能力类型、完整领域声明和目标无关 Typed IR 尚未实现。完整方案与当前子集见 [SYNTAX.md](../SYNTAX.md)。编译器自身仍用启动语法，70-checks 也保留部分启动语法报告函数。
+
+mapping 的乘法形式要求直接具名映射调用作为左项，尚非可传递的闭包值。acceptance 的程度与门槛分类、imprint 的有限域配平由 `20-core.dv` 库函数执行；独立证书核验重新检查可行性、成本与最优覆盖，不能把编译名义检查代替求解证明。
+
+## 启动语法
 
 ```text
 Program = (defn Name (Name*) Expr)* (main Expr)
@@ -26,72 +41,61 @@ Expr = Number | String | true | false | Name
      | (while Expr Expr)
 ```
 
-函数支持前向引用、递归和相互递归。let从左到右初始化，参数按顺序求值，if求值选中的分支，while返回false。局部赋值使用set。
+启动源保留前向引用、递归、按序实参和 let 初始化，if 只执行选中分支，while 返回 false。其名称采用 ASCII 字母/下划线及后续数字，分号注释延续至行尾，字符串支持 Unicode 与基本转义；表层的 Unicode 标识符和 define 由表层前端处理。AST 节点保存 kind、payload 与 UTF-16 偏移。
 
-值域为Number、Text、Bool、List；Number为有限double，List为可变容器。rt_eq对基本值比较值，对List比较身份。
+## 基础值和数值
 
-标识符采用ASCII字母/下划线开头，后续可含数字；rt_为平台函数前缀。注释从分号延续到行尾。字符串支持基本转义和Unicode文本。AST节点为`[kind, payload, offset]`，位置为UTF-16偏移。
+Runtime 只承接基础值、容器、文件、控制台与执行适配，不实现 DV 语法解析、AST 求值、人物选择或世界法则。新增 ABI 时同步 10-compiler 的元数/返回类型和文档；seed 保持通用 rt_ 发射，不增加世界解释器。
 
-## 公理与平台
+| ABI | 合同 |
+| --- | --- |
+| `rt_is_number(text)` | 检查文本可否解析为有限浮点数，供词法扫描使用 |
+| `rt_is_numeric_value(value)` | 只对合法有限 double / Rational 为真，不把数字文本、Bool 或容器转换成数值 |
+| `rt_is_text(value)` | 只判断 Text，不解析、编码或构造值 |
+| `rt_eq(a,b)` | 基础值按既有值规则，列表仍按身份，不等同结构比较 |
+| `rt_same_value(a,b)`、`rt_has_value(items,value)` | 按原序结构比较与成员查询，保留精确/浮点混合数值相等规则 |
+| `rt_text_join(values)` | 按原顺序拼接文本，用于生成代码等纯文本处理 |
+| `rt_list_with_index(items,index,value)` | 返回新列表根，沿原索引相等规则替换命中项，其他元素保留引用；不等于深复制或原地替换 |
 
-`(axiom Name Version (Parameters...) Premise Effects)`展开为返回dv_axiom数据的具名函数。领域算法由core/*.dv提供。
+Rational 与同文字符串始终分型。double 显式转 Rational 使用其十进制表示，不抹去此前浮点误差。数字解析保持 Text/有限值校验、其他拼写和负零的既有边界；任何数值缓存必须保留这些语义与首错顺序。
 
-Runtime.cs提供数值、Bool、文本、列表、文件、命令行、JSON交换和Block调用。compiler.dv负责语法、作用域和代码生成。surface-v2 前端已由 DV 实现；完整目标无关 Typed IR 仍待实现。
+## 独立复制与不可变快照
 
-平台新增一元Text ABI `rt_text_join(values)`，依原顺序串接文本片段；`cs_string`以片段表一次合并，保留原Unicode与目标C#转义合同。`rt_json_print(value)`是一元Bool ABI，直接向标准输出写UTF-8 JSON和平台换行，数值/容器编码与`rt_json_stringify`相同，避免整包UTF-16中间字符串。
+`rt_snapshot` 递归复制普通列表为不可变 FrozenList，并对相同不可变子树共享身份。哈希碰撞逐项核对；弱驻留不延长已释放快照的生命周期，也不淘汰仍存活的规范身份。源列表后续修改不会改变快照，`rt_push/rt_replace` 拒绝直接写快照。
 
-显式调试DAG ABI为 `rt_raw_open(path)`、`rt_raw_event(frozen_event)`、`rt_raw_finish(value)`（一元Bool）、`rt_raw_checkpoint(name,value)`（二元Bool）、`rt_raw_ref(value)`（一元Value）及 `rt_raw_abort()`（零元Bool）。未启用记录器时event/checkpoint/finish/ref/abort返回false，不遍历输入；默认正式宿主没有文件I/O。成功finish恢复disabled，同进程可向新路径开启记录；失败记录器只可显式abort释放，保留partial，不自动重试或续写。启用后只记录冻结原值，不执行世界、推演或人物选择。节点先定义，事件最后提交，帧链使用SHA-256；只有initial、final与seal完整且原子发布才构成完整封存。编译器arity和名义返回类型与上述ABI同步。文件格式、命令及中止边界见[Core参考](../core/README.md)。
+FrozenList 是封闭的 `IReadOnlyList<object>`，独占底层数组；`R.Items` 返回只读接口，`IsDvList/TryItems` 只识别原生 List 与内部 FrozenList。CLR 数组等其他集合只由宿主证据编码器显式支持，不进入 DV 值域。枚举器及越界读取保持既有错误边界；公开接口签名改变时必须统一重建编译器、Session 与宿主，不能混用旧程序集。
 
+`rt_copy_value` 返回独立可变根，子树暂存不可变快照；从可变父节点读取子列表时仅在该父节点内延迟实体化独立可变分支，从快照读取继续只读。原值、兄弟副本与事件快照相互隔离。弱父链接保留多别名、循环失效与死亡父引用清理；ABI 写入使自身和所有可变父节点的底本/索引失效，纯读取实体化保持未变底本有效。C# 不绕过 ABI 修改 Items。
 
-## Surface 编译过程
+驻留池在 Gen2 后按维护触点增量清理死亡桶，保留存活身份；memo 和递归冻结均参与维护。根复制与记录更新仍为 O(n)，当前结构不是持久向量或 HAMT。分配、CPU 或样本结果只说明实际覆盖，不外推整局性能。
 
-sf_scan/sf_parse 处理缩进、Unicode 与 define；sf_declaration 将 mapping、acceptance、imprint 展开到具体 DV 运算。sf_rename_body 为局部绑定分配唯一目标名。ck_program/ck_body/ck_expect 核对显式名义类型、字面量范围和可变性，随后生成普通 C# 函数与语句。定义与数学检查采用英文符号；源位置错误显示输入路径、行与列。
+## 有序记录与缓存
 
-mapping 当前要求直接以具名映射调用作为乘法左项，尚非可任意传递的闭包值。名义范围构造不能由同名用户函数覆盖。Rational 是平台基础值，认知与求解代码均在 DV；初始 double 数值可显式转为其十进制表示对应的有理数，转换不会消除此前已经产生的浮点误差。
+记录保持有序 pair 列表。`rt_record_index/rt_record_find` 从末项查找，重复键末项读取；`rt_record_with` 只替换首个匹配项，无同键则追加；`rt_record_with_many` 更新全部同键项、更新表末值优先，空更新返回原记录。批量更新先冻结更新表，避免惰性读取改变枚举器；未变分支按独立复制合同实体化。不能把读取和单项/批量写入的不同重复键语义统一改掉。
 
-基本检查器核对程序声明；dv_imprint_check 核对有限域求解证书，二者不混用人物相信的公理充当数学证明。当前不是 Lean 等价的证明语言；泛型、量纲和一般精化证明的边界见 SYNTAX.md。
+正规文本键记录可以建立末槽索引，非文本键、不规则结构或未知条件回到原序线性路径。可变 pair 的父链失效必须覆盖键、字段对和记录修改；索引不得绕过全部结构验证或改变首错顺序。较小记录在重复读取后也可建立索引，不因优化阈值改变语言有效值范围。
 
-精确有理数的交换表示为规范分数字符串；有限域证书核验器在读取数值字段时重新构造有理数，因此保存后恢复的证书仍可核验，文本字段不自动转换为数字。
+冻结记录布局只共享有序文本键到末槽的只读字典，命中仍逐项 Ordinal 比较，不保存字段值。池上限为128布局、每布局128槽/4096 UTF-16字符、累计65536字符；超限清除池根，已发布节点继续持有自己的字典，不清内容。这些是缓存准入参数，不是全进程内存上限或合法记录限制。
 
-通用三元容器ABI `rt_list_with_index(items,index,value)` 返回新的列表根，逐项沿 `rt_eq` 比较索引；匹配项采用value，其他项按原顺序读取并保留引用。非整数、越界或其他无匹配索引返回原元素的新根；空列表不检查index。它不属于独立复制，不等同于原地 `rt_replace`。
+结构相等可由相同引用/有效底本短路，只使用数值兼容哈希排除不等；存储身份哈希不替代值哈希，也不是持久摘要。同兼容哈希仍逐项深比，精确数、浮点数及正负零继续按原值规则。结构查询无法稳定哈希时回扫描；新建查询不被偷偷冻结或缓存成新状态。
 
-运行时数值解析对精确文本 `0`/`1`/`-1` 复用不可变数值盒；先校验Text，其余拼写（包括负零）沿原invariant Float解析与有限值检查。冻结成员索引允许新建查询计算至多八层新建列表的临时指纹，超深/循环/不支持值回原扫描；查询不冻结、不缓存，候选仍用原完整值比较。
+`rt_memo_get/put` 由完整不可变输入身份和命名键区分结果，读取返回独立副本。每个输入按键首个文本项分区，分区最多512键、按插入次序淘汰，弱输入表不延长生命周期。源修改由失效链产生新的底本。memo 只用于纯值运算，不能缓存实际事件、费用结算、采信、执行结果或错误；新增读取依赖必须进入完整键。
 
-结构相等的内部递归与成员桶核对使用原生Bool，公开 `rt_eq`/`rt_same_value` 仍返回同一DV Bool值；引用短路、精确数转换顺序、有效底本复用和原序比较不变。不建立新的相等规则。
+## 审计、文件与阶段观察
 
-`rt_eq`、`rt_same_value`与`rt_has_value`公开Bool结果复用不可变盒，内部判断与首错顺序不变；此改动仅减少返回值装箱，不改变DV相等与成员关系。小快照InlineArray缓冲候选未采纳，其局部CPU测量未支持收益。
+`rt_audit_mode()` 读取 AsyncLocal 执行上下文，独立程序默认完整审计，Session 在各调用作用域覆盖。`rt_phase(stage,actor)` 调用外部只读阶段观察器，正常返回 true；无观察器不输出，不能作为 DV 时间、事件或完成回执。平台观察不得反向决定人物行为。
 
+新证据由 Runtime 的 `BinaryEvidence` 与 DAG writer 写入校验二进制。`.dvlog` 使用 DVLOG2 类型帧，DAG 另有节点定义、先前节点引用、序号/前序摘要、事件、checkpoint、final 与 seal。Rational 原子保留类型和精确文本；浮点位型、字符串、字段顺序及未知字段不被裁剪。节点先于引用，真实事件提交在发布之前，失败保留 `.partial`，成功封存后原子发布并拒绝覆盖。
 
-`rt_is_text(value)` 是一元、无转换的运行时值类型谓词，返回 Bool；任意非文本值返回 false，不调用 Text 校验或 JSON 编码。引用键快路据此辨别字符串字段，其他输入保留原序列化路径。
+| ABI | 记录行为 |
+| --- | --- |
+| `rt_raw_open(path)` | 仅允许审计模式，在新路径独占开启 DAG |
+| `rt_raw_event(value)` | 记录冻结原值；非审计模式不遍历参数并返回 true |
+| `rt_raw_checkpoint(name,value)`、`rt_raw_ref(value)` | 保存实际阶段或已有值的引用，保留来源，不执行世界 |
+| `rt_raw_finish(value)`、`rt_raw_abort()` | 完整结束或释放失败记录器；失败不自动重试，不覆盖 partial |
+| `rt_json_print(value)` | 记录器开启或显式二进制 stdout 环境下输出二进制投影；其他情况服务编译/数据交换 |
+| `rt_json_write(path,value)` | 保留识别以给出明确诊断，执行时拒绝新 JSON 文件记录 |
 
+未开启记录器的事件/checkpoint/finish/ref 接口按各自现有返回合同处理，不遍历并构造伪证据。JSON 解析和字符串交换仍是进程内功能，旧 JSON 记录只读兼容。二进制输出与精简审计保留范围分别说明，序列化器不按任意字段名裁剪。存档和关闭语义见 [Session/README.md](../Session/README.md)，读取器为 `tools/binary_evidence.py` 与 `tools/raw_dag.py`。
 
-## C# 容器与证据维护（2026-10-19）
-
-用户已暂停Antigravity并授权在原工作区集中修改；本轮整合C#结构化、Session边界与已识别DV错误修复。正式会话前冻结全部实际源码；源修改期间不把工作区测量当作冻结证据，不并发运行正式会话。
-
-快照驻留保留全部仍存活的规范身份。Gen2收集后增量清理弱驻留表的死亡桶，每64次维护触点最多处理128桶；memo与递归冻结均触发维护，不淘汰存活身份。结构相等仅以数值兼容的结构指纹排除不等；指纹相同仍依原序逐值比较，未知值沿原路径。JSON不按字段名裁剪；原始DAG逐帧复用SHA-256上下文，摘要输入字节、提交刷新与partial合同保持。
-
-中性容器/别名/精确数差分、失活桶压力与DAG原始字节比较属于工程排错。工程样本耗时不外推正式五日耗时，JSON完整性修复与性能比较分别记录。证据目录为artifacts/partial-bootstrap-core/takeover-repair-20261018/motivation-counterfactual-20261018/csharp-runtime-20261019/。
-
-后续集中C#修订：可变分支的首个弱父引用直接内置在MutableState，仅多父时分配附加表；保留多别名、死亡父引用清理和循环失效遍历。DAG写入器跨帧Reset复用两份Utf8JsonWriter，失败释放使用finally保证文件与摘要释放。先做多父/循环失效及原始帧字节工程差分，正式游戏结果按候选版本分列，不沿用前轮窗口作为新候选验收。
-
-用户最新追加授权（2026-10-19）：允许多轮正式一级窗口，每轮最多240秒；每轮集中修改并先确认具体工程收益，再隔离冻结串行运行，实际进展和失败分别记录。同条件C#比较固定首轮DV内容及配置，Antigravity新增剧情另行集成，不跨版本拼接。
-
-
-本轮最新用户目标（2026-10-19）：集中完成已识别优化、结构/接线与撤销错误捷径后再测试。事实等价允许结合严格分析与实际证据作有范围的工程取舍，但不能通过降低搜索层数、删除认知/目标或裁剪原始证据冒充同条件提速。实际覆盖外的分支保持未知。数值缓存候选虽然降低微负载分配，正式窗口未显示进步，现封存为未采纳候选；现役底本保留第二批的单父引用与DAG写出器复用。
-
-冻结容器现以内部sealed IReadOnlyList<object>独占不可变object[]，直接采用冻结时新建的子数组，不再继承可变List或二次复制。R.Items返回只读接口，IsDvList/TryItems仍仅识别原生List及内部FrozenList，不扩张DV值域；写操作仅接受原生可变List，读取可变所有者时才解冻选中子分支并建立父失效关系。根复制和记录更新仍为O(n)，不是HAMT或持久向量。枚举器保留List的状态与错误语义；越界读交给私有空List产生原异常。Session的HostValue/SnapshotValue同步识别两种合法容器，进程内Save标签/Trace字符串、落盘二进制DAG及独立副本分别集中工程核对。Items的CLR返回签名变化要求编译器自举与Session/宿主统一重建，禁止混用旧程序集。
-
-空冻结集合的接口枚举委托私有原生空List，保留.NET空枚举器的独立错误状态；非空集合采用值类型枚举器。解冻由FrozenList.CopyRoot把私有数组一次复制到独占List，不暴露底本、不逐项扩容。单字段更新按原先校验/冻结/首匹配顺序，内部保留具体冻结类型以免逐项经接口分派；冻结索引仅在完整资格验证后读取具体冻结pair。中性保存/恢复、错误文本和DAG差分与分配样本分列，CPU噪声不包装成整局提速。
-
-## 游玩记录策略与值容器（2026-10-19）
-
-新增零参数Bool ABI `rt_audit_mode()`，由Runtime.R的执行上下文策略提供；compiler.dv维护arity与类型识别。独立程序默认审计，宿主Session按实例作用域覆盖。关闭raw_event不会读取或冻结参数，开启raw_open要求审计策略。
-
-记录索引保持有序pair及重复键规则：大记录直接建索引，小记录在第四次文本键查询时建索引。冻结节点构造同时计算存储身份哈希和值兼容哈希，后者供same_value拒绝不相等值，碰撞仍回到原深比。数字兼容哈希允许碰撞，以保持Rational与double的原有相等合同；不是持久文件摘要或跨进程指纹。
-
-平台ABI新增rt_phase(stage, actor)，二参数，返回true；Runtime.cs以AsyncLocal范围调用外部阶段观察器，compiler.dv登记元数。无观察器不产生输出；不是DV时间、事件或执行回执。
-
-### Binary recording (2026-10-19)
-
-Runtime's `BinaryEvidence` encodes typed `DVLOG2` records; `rt_raw_open/event/checkpoint/ref/finish/abort` now write checksummed dv-raw-dag-v2 binary files, with prior-node references. Opening raw recording makes subsequent `rt_json_print` calls emit binary projection frames to stdout; without a recorder that ABI still serves compiler/data exchange. `rt_json_write` remains recognized for diagnostic compatibility but throws: new JSON recordings are forbidden. There is no new language syntax or world authority in this codec. Raw commit ordering, no-overwrite, exact Rational/string distinction and retained partial failures remain part of the ABI. See core/README.md and tools/binary_evidence.py for readers.
+`build_session.py --profile` 只在诊断生成函数中插入 `DvProfiler`，不会给普通类库计时。中性别名、冻结更新表、精确数、异常文本、DAG 字节及固定点的工程证据分别记录；构建或编解码成功均不能宣称人物、剧情或实机体验已验收。
