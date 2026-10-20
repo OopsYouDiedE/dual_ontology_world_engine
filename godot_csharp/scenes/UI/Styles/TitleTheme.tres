@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=48 format=3 uid="uid://desx2ma08f07d"]
+[gd_resource type="Theme" load_steps=55 format=3 uid="uid://desx2ma08f07d"]
 
 [ext_resource type="FontFile" uid="uid://1mrmumh7kkwu" path="res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf" id="font_zhaohua"]
 [ext_resource type="FontFile" uid="uid://wv7t0k0kjb08" path="res://ShareAsset/External/NotoSerifSC/NotoSerifSC[wght].ttf" id="font_noto"]
@@ -133,6 +133,46 @@ content_margin_top = 36.0
 content_margin_right = 36.0
 content_margin_bottom = 24.0
 
+[sub_resource type="StyleBoxFlat" id="book_image_mount"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.45)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="BookNoteEdit_normal"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.22)
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="BookNoteEdit_focus"]
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="BookLineEdit_normal"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.22)
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="BookLineEdit_focus"]
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 0.6)
+
 [sub_resource type="StyleBoxFlat" id="book_slider_track"]
 content_margin_top = 3.0
 content_margin_bottom = 3.0
@@ -184,6 +224,20 @@ draw_center = false
 border_width_bottom = 1
 border_color = Color(0.184314, 0.231373, 0.341176, 1)
 
+[sub_resource type="StyleBoxFlat" id="book_index"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="book_index_focus"]
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 1)
+
 [sub_resource type="StyleBoxFlat" id="title_flat"]
 content_margin_left = 24.0
 content_margin_top = 6.0
@@ -203,14 +257,63 @@ border_color = Color(0.133333, 0.109804, 0.0823529, 1)
 [resource]
 default_font = SubResource("font_body")
 default_font_size = 18
+BookBody/base_type = &"RichTextLabel"
+BookBody/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookBody/font_sizes/bold_font_size = 18
+BookBody/font_sizes/normal_font_size = 18
+BookBody/fonts/bold_font = SubResource("font_deck")
+BookBody/fonts/normal_font = SubResource("font_body")
+BookCaption/base_type = &"RichTextLabel"
+BookCaption/colors/default_color = Color(0.352941, 0.298039, 0.231373, 1)
+BookCaption/font_sizes/bold_font_size = 14
+BookCaption/font_sizes/normal_font_size = 14
+BookCaption/fonts/normal_font = SubResource("font_body")
+BookCaptionLabel/base_type = &"Label"
+BookCaptionLabel/colors/font_color = Color(0.352941, 0.298039, 0.231373, 1)
+BookCaptionLabel/font_sizes/font_size = 14
+BookCaptionLabel/fonts/font = SubResource("font_body")
 BookColumn/base_type = &"VBoxContainer"
 BookColumn/constants/separation = 12
+BookHandText/base_type = &"RichTextLabel"
+BookHandText/colors/default_color = Color(0.184314, 0.231373, 0.341176, 1)
+BookHandText/font_sizes/bold_font_size = 18
+BookHandText/font_sizes/normal_font_size = 18
+BookHandText/fonts/normal_font = SubResource("font_hand")
 BookHeading/base_type = &"Label"
 BookHeading/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 BookHeading/font_sizes/font_size = 32
 BookHeading/fonts/font = SubResource("font_deck")
+BookImageMount/base_type = &"PanelContainer"
+BookImageMount/styles/panel = SubResource("book_image_mount")
+BookIndexButton/base_type = &"Button"
+BookIndexButton/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookIndexButton/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 1)
+BookIndexButton/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookIndexButton/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookIndexButton/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookIndexButton/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookIndexButton/font_sizes/font_size = 22
+BookIndexButton/fonts/font = SubResource("font_deck")
+BookIndexButton/styles/disabled = SubResource("book_option")
+BookIndexButton/styles/focus = SubResource("book_index_focus")
+BookIndexButton/styles/hover = SubResource("book_option_hover")
+BookIndexButton/styles/hover_pressed = SubResource("book_option_hover")
+BookIndexButton/styles/normal = SubResource("book_index")
+BookIndexButton/styles/pressed = SubResource("book_option_hover")
 BookLeaf/base_type = &"PanelContainer"
 BookLeaf/styles/panel = SubResource("book_leaf")
+BookLineEdit/base_type = &"LineEdit"
+BookLineEdit/colors/font_color = Color(0.184314, 0.231373, 0.341176, 1)
+BookLineEdit/font_sizes/font_size = 18
+BookLineEdit/fonts/font = SubResource("font_hand")
+BookLineEdit/styles/focus = SubResource("BookLineEdit_focus")
+BookLineEdit/styles/normal = SubResource("BookLineEdit_normal")
+BookNoteEdit/base_type = &"TextEdit"
+BookNoteEdit/colors/font_color = Color(0.184314, 0.231373, 0.341176, 1)
+BookNoteEdit/font_sizes/font_size = 18
+BookNoteEdit/fonts/font = SubResource("font_hand")
+BookNoteEdit/styles/focus = SubResource("BookNoteEdit_focus")
+BookNoteEdit/styles/normal = SubResource("BookNoteEdit_normal")
 BookOption/base_type = &"Button"
 BookOption/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 BookOption/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 1)
@@ -226,6 +329,12 @@ BookOption/styles/hover = SubResource("book_option_hover")
 BookOption/styles/hover_pressed = SubResource("book_option_hover")
 BookOption/styles/normal = SubResource("book_option")
 BookOption/styles/pressed = SubResource("book_option_hover")
+BookRow/base_type = &"VBoxContainer"
+BookRow/constants/separation = 4
+BookSectionHeading/base_type = &"Label"
+BookSectionHeading/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookSectionHeading/font_sizes/font_size = 22
+BookSectionHeading/fonts/font = SubResource("font_deck")
 BookToggle/base_type = &"CheckButton"
 BookToggle/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 BookToggle/colors/font_hover_color = Color(0.184314, 0.231373, 0.341176, 1)

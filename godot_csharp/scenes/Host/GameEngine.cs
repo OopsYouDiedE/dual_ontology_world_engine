@@ -132,9 +132,10 @@ public partial class GameEngine : Node
                     {
                         if (session is not null) throw new InvalidOperationException("Session is already open");
                         var options = optionsJson;
-                        var savePath = kind == "load" ? input.GetValueOrDefault("path", "").AsString() : "";
+                        var savePath = kind == "load" ? NormalizeBookmarkPath(input.GetValueOrDefault("path", "").AsString()) : "";
                         var opened = await Task.Run(() =>
                         {
+                            using var save = kind == "load" ? OpenBookmarkForRead(savePath) : null;
                             Stamp("open_begin", timingId);
                             var current = kind == "load" ? DvSession.RestoreFile(savePath) : DvSession.OpenConfiguredCampaign(options);
                             BindPhases(current, timingId, queued.Id);
@@ -142,18 +143,21 @@ public partial class GameEngine : Node
                             Stamp("snapshot_begin", timingId);
                             var initialSnapshot = current.Snapshot(current.Viewer);
                             Stamp("snapshot_end", timingId);
-                            var snapshot = Materialize(initialSnapshot, timingId, "viewer");
-                            if (kind == "load" && snapshot.GetValueOrDefault("pending", new GDict()).AsGodotDictionary()
-                                .GetValueOrDefault("status", "").AsString() == "prepared")
-                                throw new InvalidOperationException("Cannot restore a save with an outstanding physical execution receipt");
-                            GArray delivered = new() { new GDict { ["kind"] = "view",
-                                ["resource"] = snapshot["resource"], ["snapshot"] = snapshot } };
-                            return (Session: current, Snapshot: initialSnapshot, Events: delivered);
+                            if (kind == "load") RequireRestorableSnapshot(initialSnapshot);
+                            var journal = kind == "load" ? ReadBoundCasebook(savePath, current.Viewer, save!) : (Json: "{}", Warning: "");
+                            return (Session: current, Snapshot: initialSnapshot, Viewer: current.Viewer,
+                                Casebook: journal.Json, Warning: journal.Warning);
                         });
                         Stamp("handoff_begin", timingId, kind);
+                        var snapshot = Materialize(opened.Snapshot, timingId, "viewer");
+                        var journalData = Parse(opened.Casebook);
+                        events = new GArray { new GDict { ["kind"] = "view",
+                            ["resource"] = snapshot["resource"], ["snapshot"] = snapshot,
+                            ["casebook"] = journalData, ["casebook_warning"] = opened.Warning } };
                         session = opened.Session;
                         snapshotJson = opened.Snapshot;
-                        events = opened.Events;
+                        casebookViewer = opened.Viewer;
+                        casebookJson = opened.Casebook;
                         Stamp("handoff_end", timingId, kind);
                     }
                     else if (kind == "view_ready" || kind == "dv_next" || kind == "select")
@@ -310,6 +314,8 @@ public partial class GameEngine : Node
     {
         session = restored.Session;
         snapshotJson = restored.Snapshot;
+        casebookViewer = restored.Session.Viewer;
+        casebookJson = "{}";
         pendingEvent = "";
         completedEvents.Clear();
         // Commands accepted for the previous state cannot be replayed into a restored state.
@@ -427,14 +433,30 @@ public partial class GameEngine : Node
             }
             phase = "save";
             var savePath = Path.Combine(path, "save.dvsave");
+            var saved = false;
             try
             {
                 await Task.Run(() => current.WriteSave(savePath));
+                saved = true;
             }
             catch (Exception error)
             {
                 GD.PushError(error.ToString());
                 errors.Add(new { phase, error = error.ToString() });
+            }
+            if (saved)
+            {
+                phase = "casebook";
+                // Capture the latest main-thread UI projection after automatic
+                // world saving succeeds. Its owner and exact save bytes are bound.
+                var journal = casebookJson;
+                var viewer = current.Viewer;
+                try { await Task.Run(() => WriteBoundCasebook(savePath, viewer, journal)); }
+                catch (Exception error)
+                {
+                    GD.PushError(error.ToString());
+                    errors.Add(new { phase, error = error.ToString() });
+                }
             }
         }
         catch (Exception error)

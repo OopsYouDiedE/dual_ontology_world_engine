@@ -148,7 +148,14 @@ func release_audio_and_wait_for_mix() -> bool:
 func quit_cleanly(exit_code := 0) -> void:
 	if _quitting: return
 	_quitting = true
-	get_tree().call_group("lifecycle_hosts", "begin_shutdown")
+	# Start all host drains before awaiting any one of them. World/session files
+	# must be sealed before audio teardown is allowed to terminate the process.
+	var hosts := get_tree().get_nodes_in_group("lifecycle_hosts")
+	for host in hosts:
+		if is_instance_valid(host) and host.has_method("begin_shutdown"): host.begin_shutdown()
+	for host in hosts:
+		if is_instance_valid(host) and host.has_method("wait_for_shutdown"):
+			await host.wait_for_shutdown()
 	var drained: bool = await release_audio_and_wait_for_mix()
 	get_tree().quit(exit_code if drained else (exit_code if exit_code != 0 else 1))
 

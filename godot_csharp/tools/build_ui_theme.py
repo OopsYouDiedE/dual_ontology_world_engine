@@ -1,10 +1,10 @@
-"""生成界面主题：scenes/UI/Styles/DialogueTheme.tres、TitleTheme.tres。
+"""生成界面主题：scenes/UI/Styles/DialogueTheme.tres、TitleTheme.tres、OverlayTheme.tres。
 
 设计规范第六部分 §4：现场类界面用 19 世纪末报纸版式，翻阅类界面用近代博物书对开；
 语义色板、五级字号（标题页书名与通栏问题另可用 64）、正文朝华打字机、标题思源宋体特粗、笔迹 Yozai。
 颜色、字号与字体只在本文件顶部定义一次，主题条目一律引用这些名字；改外观先改这里再重新生成。
 
-    python godot_csharp/tools/build_ui_theme.py          # 写出两份现役主题
+    python godot_csharp/tools/build_ui_theme.py          # 写出三份现役主题
     python godot_csharp/tools/build_ui_theme.py --check  # 只比对，不一致时返回 1
 """
 from __future__ import annotations
@@ -342,6 +342,22 @@ def title_theme() -> Theme:
     t.type("BookColumn", "VBoxContainer")
     t.set("BookColumn/constants/separation", 12)
     text_type(t, "BookHeading", "Label", size=SIZE["title"], color=c("ink"), font=f["deck"], rich=False)
+    text_type(t, "BookSectionHeading", "Label", size=SIZE["sub"], color=c("ink"), font=f["deck"], rich=False)
+    text_type(t, "BookCaptionLabel", "Label", size=SIZE["note"], color=c("muted"), font=f["body"], rich=False)
+    text_type(t, "BookBody", "RichTextLabel", size=SIZE["body"], color=c("ink"), font=f["body"], bold=f["deck"])
+    text_type(t, "BookCaption", "RichTextLabel", size=SIZE["note"], color=c("muted"), font=f["body"])
+    text_type(t, "BookHandText", "RichTextLabel", size=SIZE["body"], color=c("hand"), font=f["hand"])
+    t.type("BookRow", "VBoxContainer")
+    t.set("BookRow/constants/separation", 4)
+    t.type("BookImageMount", "PanelContainer")
+    t.set("BookImageMount/styles/panel", t.box("book_image_mount", bg=c("paper_dark", 0.45), border=c("rule", 0.6), width=(1,1,1,1), margin=(8,8,8,8)))
+    for name, base in (("BookNoteEdit", "TextEdit"), ("BookLineEdit", "LineEdit")):
+        t.type(name, base)
+        t.set(f"{name}/colors/font_color", c("hand"))
+        t.set(f"{name}/fonts/font", f["hand"])
+        t.set(f"{name}/font_sizes/font_size", SIZE["body"])
+        t.set(f"{name}/styles/normal", t.box(name + "_normal", bg=c("paper_dark", 0.22), border=c("rule", 0.6), width=(0,0,0,1), margin=(8,8,8,8)))
+        t.set(f"{name}/styles/focus", t.box(name + "_focus", border=c("hand", 0.6), width=(0,0,0,1)))
     t.type("BookToggle", "CheckButton")
     t.set("BookToggle/colors/font_color", c("ink"))
     t.set("BookToggle/colors/font_hover_color", c("hand"))
@@ -365,6 +381,10 @@ def title_theme() -> Theme:
     button_type(t, "BookOption", "Button", normal=option_plain, hover=option_hover, pressed=option_hover,
                 disabled=option_plain, focus=t.box("book_option_focus", border=c("hand"), width=(0, 0, 0, 1)),
                 color=c("ink"), disabled_color=c("muted"), size=SIZE["body"], font=f["register"])
+    button_type(t, "BookIndexButton", "Button", normal=t.box("book_index", border=c("rule", 0.6), width=(0,0,0,1), margin=(10,10,10,10)),
+                hover=option_hover, pressed=option_hover, disabled=option_plain,
+                focus=t.box("book_index_focus", border=c("hand"), width=(0,0,0,1)),
+                color=c("ink"), disabled_color=c("muted"), size=SIZE["sub"], font=f["deck"])
     flat = t.box("title_flat", margin=(24, 6, 24, 6))
     under = t.box("title_under", border=c("ink"), width=(0, 0, 0, 1), margin=(24, 6, 24, 5))
     button_type(t, "TitleMenuButton", "Button", normal=flat, hover=under, pressed=under, disabled=flat, focus=under,
@@ -372,9 +392,84 @@ def title_theme() -> Theme:
     return t
 
 
+# ============================================================= OverlayTheme ===
+
+def overlay_theme() -> Theme:
+    """现场报头与独立推演纸页，复用书本的语义色及字体角色。"""
+    t = Theme("uid://cdg6m0q2t8r4h")
+    f = fonts(t)
+    t.header += [("default_font", f["body"]), ("default_font_size", SIZE["body"])]
+    paper_basics(t, f, c("ink"))
+    t.set("RichTextLabel/fonts/normal_font", f["body"])
+    t.set("RichTextLabel/constants/line_separation", 6)
+
+    t.type("HUDPanel", "PanelContainer")
+    t.set("HUDPanel/styles/panel", t.box("hud_panel", bg=c("paper", 0.97),
+          border=c("rule", 0.7), width=(0, 0, 0, 1),
+          shadow=c("ink", 0.16), shadow_size=4, shadow_offset=(0, 2)))
+    t.type("PaperPanel", "PanelContainer")
+    paper = t.texture_file("overlay_paper_texture", "res://ShareAsset/Internal/Props/UIDesk/Painterly3D/reference-paper.webp", "")
+    t.set("PaperPanel/styles/panel", t.sub("StyleBoxTexture", "overlay_paper_panel", [("texture", paper)]))
+
+    for name, margin in (("HUDMargin", (16, 7, 16, 7)), ("ModalMargin", (32, 26, 32, 24))):
+        t.type(name, "MarginContainer")
+        for side, value in zip(("left", "top", "right", "bottom"), margin):
+            t.set(f"{name}/constants/margin_{side}", value)
+    for name, base, separation in (("HUDRow", "HBoxContainer", 20),
+                                   ("ModalStack", "VBoxContainer", 12),
+                                   ("HeaderRow", "HBoxContainer", 20),
+                                   ("BodyStack", "VBoxContainer", 12)):
+        t.type(name, base)
+        t.set(f"{name}/constants/separation", separation)
+    t.type("FooterRow", "HFlowContainer")
+    t.set("FooterRow/constants/h_separation", 16)
+    t.set("FooterRow/constants/v_separation", 8)
+
+    text_type(t, "HUDLocation", "Label", size=SIZE["body"], color=c("ink"), font=f["deck"], rich=False)
+    text_type(t, "HUDCaption", "Label", size=SIZE["note"], color=c("muted"), font=f["register"], rich=False)
+    text_type(t, "EditorialCaption", "Label", size=SIZE["note"], color=c("muted"), font=f["register"], rich=False)
+    text_type(t, "EditorialTitle", "Label", size=SIZE["title"], color=c("ink"), font=f["deck"], rich=False)
+    text_type(t, "EditorialSubtitle", "Label", size=SIZE["sub"], color=c("ink"), font=f["deck"], rich=False)
+    text_type(t, "ManuscriptBody", "RichTextLabel", size=SIZE["body"], color=c("ink"), font=f["body"], bold=f["deck"])
+    text_type(t, "ManuscriptNote", "RichTextLabel", size=SIZE["body"], color=c("hand"), font=f["hand"], bold=f["hand"])
+    for name in ("ManuscriptBody", "ManuscriptNote"):
+        t.set(f"{name}/constants/line_separation", 6)
+    text_type(t, "FieldHint", "Label", size=SIZE["body"], color=c("ink"), font=f["body"], rich=False,
+              style=t.box("field_hint", bg=c("paper", 0.96), border=c("rule", 0.55),
+                          width=(0, 0, 0, 1), margin=(16, 8, 16, 8)))
+    tooltip = t.box("field_tooltip", bg=c("paper"), border=c("rule", 0.65),
+                    width=(1, 1, 1, 1), margin=(12, 6, 12, 6),
+                    shadow=c("ink", 0.18), shadow_size=4, shadow_offset=(0, 2))
+    text_type(t, "FieldTooltip", "Label", size=SIZE["note"], color=c("ink"), font=f["body"], rich=False, style=tooltip)
+    t.set("TooltipPanel/styles/panel", tooltip)
+    text_type(t, "TooltipLabel", "Label", size=SIZE["note"], color=c("ink"), font=f["body"], rich=False)
+
+    focus = t.box("overlay_focus", border=c("hand", 0.85), width=(0, 0, 0, 2))
+    for name, size, font, margin, color in (
+        ("Button", SIZE["body"], f["body"], (10, 7, 10, 7), c("ink")),
+        ("QuietAction", SIZE["note"], f["register"], (8, 4, 8, 4), c("muted")),
+        ("TextAction", SIZE["body"], f["hand"], (12, 8, 12, 8), c("hand")),
+        ("ChoiceRow", SIZE["body"], f["body"], (12, 12, 12, 12), c("ink")),
+    ):
+        rule_width = (0, 0, 0, 1) if name == "ChoiceRow" else (0, 0, 0, 0)
+        plain = t.box(name + "_plain", border=c("rule", 0.45), width=rule_width, margin=margin)
+        hover = t.box(name + "_hover", bg=c("paper_dark", 0.42), border=c("hand", 0.7),
+                      width=(0, 0, 0, 1), margin=margin)
+        pressed = t.box(name + "_pressed", bg=c("paper_dark", 0.72), border=c("hand"),
+                        width=(0, 0, 0, 1), margin=margin)
+        button_type(t, name, "Button", normal=plain, hover=hover, pressed=pressed,
+                    disabled=plain, focus=focus, color=color, disabled_color=c("muted", 0.55),
+                    size=size, font=font)
+    t.set("HSeparator/styles/separator", t.box("overlay_rule", border=c("rule", 0.65),
+          width=(0, 1, 0, 0), margin=(0, 3, 0, 3)))
+    t.set("HSeparator/constants/separation", 8)
+    return t
+
+
 def main() -> int:
     check = "--check" in sys.argv
-    outputs = {"DialogueTheme.tres": dialogue_theme(), "TitleTheme.tres": title_theme()}
+    outputs = {"DialogueTheme.tres": dialogue_theme(), "TitleTheme.tres": title_theme(),
+               "OverlayTheme.tres": overlay_theme()}
     stale = []
     for name, theme in outputs.items():
         path = STYLES / name

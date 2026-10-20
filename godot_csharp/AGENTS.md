@@ -82,7 +82,7 @@ Main 的导出属性以及 `--dv-controller=`、`--dv-viewer=`、`--dv-profile=`
 
 运行时资产放在 `ShareAsset/`；若提供高分辨率源稿、切片工程等生产输入，放在受 `.gdignore` 保护的 `AssetsSource/`。当前 Git 树并未包含全部历史生产源和配方，重建前必须核对输入实际存在；缺源时保留现有运行资产并报告缺口，不把它们当可随时重生的缓存。生成文件从对应工具重建，不直接修改成品；调整路径同步核对场景、动态资源路径、插件配置及生成工具。删除资产时只移除该资产对应的导入侧车，保留其他 `.import` 的导入配置。
 
-UI 样式、颜色与排版统一由 Theme/StyleBox 等 Resource 维护；不在节点中随意添加 `theme_override_*`，也不在脚本中临时覆盖主题或新造样式盒。非原生二进制素材的 Resource 使用文本 `.tres`。现役 `DialogueTheme.tres` 与 `TitleTheme.tres` 由 `tools/build_ui_theme.py` 生成；共有字体和纹理属于其依赖，不与未使用的主题分支一起删除。
+UI 样式、颜色与排版统一由 Theme/StyleBox 等 Resource 维护；不在节点中随意添加 `theme_override_*`，也不在脚本中临时覆盖主题或新造样式盒。非原生二进制素材的 Resource 使用文本 `.tres`。现役 `DialogueTheme.tres`、`TitleTheme.tres` 与 `OverlayTheme.tres` 均由 `tools/build_ui_theme.py` 生成；共有字体和纹理属于其依赖，不与未使用的主题分支一起删除。
 
 标题桌面采用 `TitleUI.tscn` / `TitleUI.gd` 与 `DeskStage3D.gd` 的真实 3D 实现：桌面、书本、灯具及摆件使用真实几何，在同一 `Camera3D`、同一空间尺度与光照下渲染；火焰、灯光能量与受光材质必须使用一致的闪烁驱动。透视、遮挡、接触关系和投影由共同场景承担，不得用相互独立的屏幕贴片伪造不同视角的物体。`BookProjection3D.gd` 负责显示和输入的共同相机契约，将屏幕射线与书页平面的交点逆映射到 `580×820` 的页面 SubViewport，并把真实鼠标输入交给原生 Control；相机偏移、窗口缩放与视觉位置变化时必须保持命中一致。
 
@@ -106,6 +106,22 @@ UI 样式、颜色与排版统一由 Theme/StyleBox 等 Resource 维护；不在
 
 Session 呈现保留 surface/lines 和 `source_refs`。Main 为发出的正文记录 `execution_event`、`source_id`、`source_field`、`emitted_line_index`、`paragraph_index` 与 `line_id`。过滤后的显示序号不冒充源行号，缺少来源不补造；`PlayerViewTrace` 在实际 `frame_post_draw` 后记录首帧，待显示正文与已绘制正文分开。
 
+## 共享书本、案卷与界面设置
+
+`CasebookUI.gd` 在游戏内实例化同一 `TitleUI.tscn`，设置 `mode = "casebook"` 并提供 `CasebookData`；卷首使用 `mode = "title"`。这两种入口共享 `DeskStage3D`、实体书、翻页材质、页面 SubViewport 与 `BookProjection3D` 的原生输入路径。`BookSettingsPage.gd` 提供共同设置页，`BookArchivePage.gd` 提供目录、记录、详情及个人批注；不要另造一套屏幕贴片或游戏内设置界面。翻页、焦点、文本编辑、窗口适配与减少动态设置须遵守同一物理书契约。
+
+三份现役主题共用生成器中的 paper / ink / hand 语义色与字体角色：`TitleTheme` 负责卷首和案卷书页，`DialogueTheme` 负责对白，`OverlayTheme` 负责 `FieldHUD` 与独立 `InvestigationUI`。现场报头、纸页边距、正文、个人笔迹、选择行与焦点状态均使用主题 variation；不得在场景或脚本中另造局部配色与字号。生成与 `--check` 必须覆盖三份主题，补齐 Overlay 样式时不得顺带改写 Title / Dialogue 的设计。
+
+三语界面使用 `GameLocale` 的 `zh_CN`、`ja`、`en`，偏好保存于 `user://language.cfg`；音量、显示及辅助功能由 `GameSettings` 保存于 `user://settings.cfg`。它们只影响宿主呈现，不进入 Core、正式会话、世界存档或案卷侧车。切换语言只翻译界面文案，不改写已收到的原始正文、人物发言或玩家批注；刷新时保留当前编辑内容、焦点与滚动位置。
+
+`CasebookData.gd` 是按 viewer 隔离的纯 UI 数据投影，导出结构为 `{version: 1, viewer, entries, notes, next_note}`。来源限于 `DialogueUI.line_read` 已交付的正文行、实际打开的可见卡片以及显式提供且标记 acquired 的案卷记录；不能扫描 `snapshot.people` 等几何投影补出未见人物，也不能以隐藏的行动标签替代条目标题。看过物件与拥有物件分别记录，显示或收录本身不授予世界物品、行动资格或新知识。
+
+正文条目保留原始 `lines` 数组及 `line_id`、`source_field`、`emitted_line_index`、`paragraph_index`、`execution_event` / `trace_id`、`source_id` / `source_refs`、说话者等已交付字段。列表摘要不能替代逐行来源；缺失字段不补造，显示序号不冒充源行号。图版及立绘只沿已经交付的可见卡片或明确取得记录引用资源，不按剧情编号解锁素材。
+
+个人批注使用 `personal = true` 的独立 notes 记录，保留原文、关联条目、时间和地点，与证词、证物正文明确区分。案卷中的推演入口交给独立的 `InvestigationUI`；批注可以作为玩家草稿显示，不自动成为正式答案、世界事实或行动提交。正式调查、预测与行动仍走既有纯数据 UI 事件和宿主链。
+
+`CasebookUI` 保存并恢复打开前的暂停状态，以 `reading_changed` 告知 Main 阅读占用；保存或切换书签期间保持交互锁。载入后 Main 必须清除旧视图队列、释放旧 UI 与现场执行器绑定，并隔离旧的异步呈现回调，待新快照装配后按既有 `view_ready` 链恢复调度。书本打开、关闭、换语言或编辑笔记均不得额外派发世界动作。
+
 ## 保存、计时与证据
 
 `input_gate_state` 在实际绘制后的输入门状态变化时记录 UI 占用、阅读、提交锁、待执行主体/动作、现场任务、地图切换和队列长度。它只诊断“强制等待”，不修改准入、调度或输入锁；与实际输入、Prepare/Complete、现场执行和玩家截图配对解释。
@@ -121,6 +137,33 @@ Session 呈现保留 surface/lines 和 `source_refs`。Main 为发出的正文�
 `RuntimeDiagnostics` 在实际 `frame_post_draw` 记录较长绘制间隔、位置变化与节点视口命中。视口命中不代表穿透遮挡可见或人物已经认出对象。脚本/GPU 与 .NET 栈分别封存；墙钟重叠不等于 CPU 归因，未知残差、未闭合阶段、采样缺口及分析器自身开销均如实记录。
 
 `FrameArchive` 只接收主线程复制的 RGBA8 像素，后台串行完成无损 PNG 编码、哈希及原子写盘，不调用 Godot 场景/资源 API。PNG 成功后才追加帧索引，最多八个未完成图像任务；队列满则记录 backpressure 与采样缺口，不阻塞主线程或默默丢图。主线程读回/复制与后台排队/编码/写盘分别计时。后台同序追加已序列化记录，文本不能静默丢弃；关闭先记录真实游玩终点，再排空任务、完成通知及其追加的索引，封存尾部时间单列。
+
+### 案卷与书签持久化
+
+Main 在发起书签保存或载入前复核宿主呈现边界：正文阅读、待交付事件/延后输入、队列排空、地图准备/切换、现场执行及已提交但尚未返回的 Complete 投影均须落定。未满足时在书页提示先读完正文并等待现场动作结束，记录 `bookmark_boundary_rejected`，不调用持久化接口；不能仅凭 DV 无现场 pending 就保存尚未读出的正文。`_completion_pending` 从真实回执安排提交起保持到 `dv_present` 或错误回传，覆盖清空现场意图到后台 Complete 返回之间的空窗。
+
+保存使用独立 `_bookmark_saving`，与载入锁共同驱动现有书本操作锁；操作期间不关闭、重入或再提交书签，暂停状态保持。书签成功/失败事件在 `_dv_events` 直接处理，不进入被阅读占用挡住的呈现队列；事件解除对应操作锁，延后输入在阅读及操作锁均释放后恢复。已接受的 `dv_complete` 回执保留送达通道，C# 仍自行等待既有工作并复核命令/现场边界，不由 UI 锁代替。
+
+宿主发出 `bookmark_loaded` 后，`_view()` 仍须明确返回现场装配是否成功；`_install_bookmark` 只有在成功且载入 generation 未变化时才解除操作锁并发送 `view_ready`。资源或地图准备失败时保留操作锁、暂停旧现场，记录 `bookmark_view_failed`，以 `PROCESS_MODE_ALWAYS` 的错误对话框说明“宿主已载入、现场未装配”，显示载入前备份路径并提示关闭后从续读重新选择备份；不假装回滚旧会话，不继续派发动作，也不另建回退会话。
+
+`PlayerViewTraceInner` 使用 `PROCESS_MODE_ALWAYS`，Main 在卷首或现场子树装配后把它移到最后一个子节点，使只记录、不消费输入的 `_input` 先于书页的消费路径收到按键和鼠标。暂停期间的真实输入与控件激活分别留痕；记录节点不得调用输入 handled 或代为派发行动。
+
+退出由 `Sound.quit_cleanly()` / `GameAudio.quit_cleanly()` 统一协调：Main 的菜单退出与窗口关闭都进入该路径，不另行调用 SceneTree.quit。GameAudio 先启动全部 lifecycle_hosts 的 `begin_shutdown()`，再等待支持该接口的宿主 `wait_for_shutdown()`，最后排空音频并退出。Main 的 `begin_shutdown()` 保持幂等且不等待，只启动唯一的 C# `CloseTrace()`；`wait_for_shutdown()` 先调用它，若 `_shutdown_finished` 已置位则立即返回，否则等待 `shutdown_completed`。`TraceClosed` 回调先置完成标志再发信号，避免信号先到导致永等。等待关系不反向依赖音频退出；C# 异常也须结束关闭等待，实际封存完整性仍以 `close-result.dvlog` 各阶段结果为准。
+
+`scenes/Host/CasebookPersistence.cs` 是 `GameEngine` 的 partial 实现，不引入第二个会话或另写世界存档。主线程只接受可序列化的纯数据字典，按条目、批注及逐行来源白名单保留字段；Node、Resource、Callable 和设置/语言偏好不进入记录。工作线程只消费独占数据或不可变字符串，不访问 Godot Node 或共享 Dictionary；完成后在主线程物化回传数据。
+
+| 宿主接口 | 合同 |
+| --- | --- |
+| `UpdateCasebook(Dictionary data)` | 更新当前 viewer 的 UI 案卷缓存，供关闭保存使用；不推进或修改 DV。 |
+| `ReadCasebook()` | 返回独立字典，调用者不能借此改写宿主缓存。 |
+| `SaveBookmark(Dictionary data)` | 等待既有工作后复核维护锁、关闭/故障状态、静止命令队列及无现场 pending，再调用当前 Session 的 `WriteSave`。 |
+| `LoadBookmark(String path, Dictionary currentData)` | 先用 `DvSession.RestoreFile` 验证候选并拒绝 `pending.status = prepared`；安装前为当前会话写入全新世界备份和绑定案卷。 |
+
+手动书签写入新建的 `user://saves/<UTC>-bookmark-<唯一标识>.dvsave`；载入前备份使用 `<UTC>-before-load-<唯一标识>.dvsave`。保存必须沿用 Session 的 `.partial` 到正式名发布契约，拒绝覆盖旧文件。常规忙碌、无效文件或侧车失败通过 `bookmark_error` 返回可读信息，不把它们转成全局故障停机。`bookmark_saved` 返回 path；`bookmark_loaded` 返回 path、backup_path、snapshot、casebook 和 casebook_warning。错误记录中的 save_written / casebook_written 区分世界保存与案卷保存，不能把前者成功写成整对文件均成功。
+
+同名 `<basename>.casebook.dvlog` 使用现有 `BinaryEvidence` 写入单个二进制封装记录：`{version: 1, viewer, save_sha256, casebook}`。SHA256 绑定实际 `.dvsave` 字节，读取时验证二进制头、版本、记录数量、外层与案卷内层 viewer 以及哈希；不凭文件名认定归属。旧存档没有侧车时允许恢复空案卷；损坏、错配或异 viewer 的侧车不导入，返回警告。正式会话恢复仍以 `.dvsave` 为准，不从案卷重建世界。
+
+游戏内切换前须成功完成当前会话的全新备份与配套案卷；若世界备份已写入而侧车失败，保留备份及失败证据，当前会话不切换。候选有效、备份完成且宿主门限再次通过后才调用 `InstallRestored`。初始标题 `load/path` 同样读取可选的绑定侧车，并随 `view` 事件交付 casebook / casebook_warning。`CloseTrace` 在原有自动 `save.dvsave` 成功后追加 `save.casebook.dvlog`，侧车失败独立记入关闭结果，不吞掉其他证据阶段，也不覆盖或删除已产生的世界保存。
 
 ## 工程命令与验证边界
 
@@ -140,6 +183,8 @@ python godot_csharp/tools/build_ui_theme.py --check
 ```
 
 只在任务确有需要且符合当轮授权时启动工程探针、采集或游戏。现役 `tools/dv_host_startup_probe.gd` 是短启动排错；`tools/profile_dv_capture.py` 包装 `tools/dv_level3_capture.gd`，记录实际输入、画面、计时与 .NET 采样。其 `--native-profiling full` 显式启用原生控制台分析，默认 off；`--speed` 默认 4，一倍复测显式设为 1。`tools/encode_dv_capture.py`、`report_runtime_hitches.py`、`summarize_interaction_timing.py` 消费已有记录；工具参数与格式以现役源码及 README 为准，缺失的旧探针不重新列为入口。
+
+`tools/capture_casebook_ui.gd` 是共享书本的独立 UI 采集入口，使用经批准的有限可见正文/图版夹具，不运行 Main、DV 或 Core。它记录真实投影输入、页面与原生控件呈现，不能证明正式观察者实际取得证物、个人批注产生世界效果、完整书签恢复或剧情行为。夹具范围、语言临时切换、输出及期限见 `tools/README.md`；构建、采集和玩法验收分别报告，未执行的检查不得写作通过。
 
 禁止执行根目录列明的流程回归，不能以断言数量、通过率或“全绿”评价游戏。构建、语法、生成物一致性仅用于工程排错。一级是无窗口正式 DV 逻辑输出；二级 UI 检查实际截图；三级只有明确要求最终效果时执行，默认由引擎侦探提供正式输入。独立盲玩需要用户明确指定，操作代理只看本轮允许的画面和输入资料，不读设计、源码或隐藏诊断，不预写路线和答案。具体时限与倍率按当轮约定，不沿用历史任务窗口。
 

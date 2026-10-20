@@ -9,7 +9,9 @@ const FIELD_SCRIPT := preload("res://scenes/Shared/Field/WorldView.gd")
 const FIELD_EXECUTOR := DvFieldExecutorInner
 const VIEW_TRACE := PlayerViewTraceInner
 const DIAGNOSTICS := RuntimeDiagnosticsInner
+const CASEBOOK_DATA := preload("res://scenes/UI/CasebookData.gd")
 const CAMPUS_MAP_VIEW := preload("res://scenes/Chapter2/Field/CampusMapView.tscn")
+const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 
 @export_enum("player", "ai") var controller := "player"
 @export var campaign_options: Dictionary = {}
@@ -25,6 +27,7 @@ var title_layer: CanvasLayer
 var _queue: Array = []
 var _draining := false
 var _closing := false
+var _shutdown_finished := false
 var _dv_intent: Dictionary = {}
 var _dv_serial := 0
 var _view_resource := ""
@@ -32,7 +35,14 @@ var _interaction_id := ""
 var _interaction_site := ""
 var _reading := false
 var _background_execution := false
+var _completion_pending := false
 var _pending_adapter: Node2D
+var _casebook: RefCounted = CASEBOOK_DATA.new()
+var _book_reading := false
+var _bookmark_loading := false
+var _bookmark_saving := false
+var _session_generation := 0
+var _book_deferred_inputs: Array[Dictionary] = []
 
 func _timing(stage: String, details: Dictionary = {}) -> void:
 	engine.RecordTiming({"stage": stage, "interaction_id": _interaction_id, "details": details})
@@ -40,13 +50,15 @@ func _timing(stage: String, details: Dictionary = {}) -> void:
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
 	add_to_group("lifecycle_hosts")
-	TranslationServer.set_locale("zh_CN")
 	get_window().title = "安眠者有福"
 	engine = EngineScript.new()
 	engine.name = "Engine"
 	add_child(engine)
 	engine.EventsReady.connect(_dv_events)
-	engine.TraceClosed.connect(func(): shutdown_completed.emit())
+	engine.TraceClosed.connect(func():
+		_shutdown_finished = true
+		shutdown_completed.emit()
+	)
 	view_trace = VIEW_TRACE.new()
 	view_trace.name = "PlayerViewTrace"
 	add_child(view_trace)
@@ -87,13 +99,16 @@ func _home() -> void:
 	title.mode = "title"
 	title_layer.add_child(title)
 	title.ui_event.connect(dispatch)
+	if is_instance_valid(view_trace): move_child(view_trace, get_child_count() - 1)
 
-func _view(ev: Dictionary, begin := true) -> void:
+func _view(ev: Dictionary, begin := true) -> bool:
+	var generation := _session_generation
+	var replacing := bool(ev.get("replace_session", false))
 	_timing("view_build_begin")
 	var resource: PackedScene = CAMPUS_MAP_VIEW if str(ev.resource) == "res://scenes/Chapter2/Field/CampusMapView.tscn" else (load(str(ev.resource)) as PackedScene)
 	if resource == null:
 		push_error("无法加载世界视图：" + str(ev.resource))
-		return
+		return false
 	# Production view events already carry the worker's completed data graph.
 	# Keep Snapshot() only for callers using the earlier host interface.
 	var initial: Dictionary = ev.get("snapshot", {})
@@ -107,12 +122,17 @@ func _view(ev: Dictionary, begin := true) -> void:
 	if adapter.has_method("prepare_map"):
 		prepared = await adapter.prepare_map(str(initial.get("map", "")), initial, get_tree())
 	_timing("view_prepare_end", {"ready": prepared})
-	if not prepared or _closing:
-		if adapter.has_method("begin_shutdown"): adapter.begin_shutdown()
-		adapter.free()
-		_pending_adapter = null
-		if not _closing: _show_error("无法准备世界地图：" + str(initial.get("map", "")))
-		return
+	if not prepared or _closing or generation != _session_generation:
+		_discard_adapter(adapter)
+		if not prepared and not replacing and not _closing and generation == _session_generation: _show_error("无法准备世界地图：" + str(initial.get("map", "")))
+		return false
+	# A prepared background map cannot replace a book the player is reading.
+	# An explicit bookmark install owns the replacement and closes its old UI.
+	while _book_reading and not replacing and not _closing and generation == _session_generation:
+		await get_tree().process_frame
+	if _closing or generation != _session_generation:
+		_discard_adapter(adapter)
+		return false
 	# Resource preparation leaves the current screen drawn and responsive.
 	# Retire it only after its own exit transition has completed.
 	if is_instance_valid(title_layer):
@@ -120,17 +140,20 @@ func _view(ev: Dictionary, begin := true) -> void:
 		if title.has_method("transition_out"): await title.transition_out()
 	elif is_instance_valid(ui) and ui.has_method("transition_out"):
 		await ui.transition_out()
-	if _closing:
-		if adapter.has_method("begin_shutdown"): adapter.begin_shutdown()
-		adapter.free()
-		_pending_adapter = null
-		return
+	if _closing or generation != _session_generation:
+		_discard_adapter(adapter)
+		return false
 	_dispose_views()
+	if replacing: field_executor.reset()
 	_view_resource = str(ev.resource)
 	ui = UI_SCENE.instantiate()
+	if ev.has("casebook"):
+		_casebook.restore_data(ev.casebook, str(initial.get("viewer", "")))
+	ui.casebook = _casebook
 	ui.name = "UI"
 	add_child(ui)
 	ui.ui_event.connect(dispatch)
+	ui.casebook_reading_changed.connect(_on_book_reading_changed)
 	field = Node2D.new()
 	field.set_script(FIELD_SCRIPT)
 	field.name = "WorldView"
@@ -146,22 +169,74 @@ func _view(ev: Dictionary, begin := true) -> void:
 	field.setup(adapter)
 	field_executor.bind_visible(field, initial)
 	ui.apply_snapshot(initial)
+	if is_instance_valid(view_trace): move_child(view_trace, get_child_count() - 1)
 	_timing("view_build_end")
 	if ui.has_method("transition_in"): await ui.transition_in()
 	# 等场景加入树并应用快照后才开始脚本；这也是可见视图的普通握手。
-	if begin and not _closing: dispatch.call_deferred({"kind": "view_ready"})
+	if _closing or generation != _session_generation: return false
+	if begin: dispatch.call_deferred({"kind": "view_ready"})
+	if str(ev.get("casebook_warning", "")) != "":
+		_show_casebook_warning(str(ev.casebook_warning))
+	return true
+
+func _discard_adapter(adapter: Node2D) -> void:
+	if _pending_adapter == adapter: _pending_adapter = null
+	if is_instance_valid(adapter):
+		if adapter.has_method("begin_shutdown"): adapter.begin_shutdown()
+		adapter.free()
+
+func _show_casebook_warning(message: String) -> void:
+	var dialog := AcceptDialog.new()
+	dialog.title = tr("案卷提示")
+	dialog.dialog_text = message
+	dialog.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(dialog)
+	dialog.confirmed.connect(dialog.queue_free)
+	dialog.popup_centered(Vector2i(640, 240))
+
+func _show_bookmark_view_error(backup_path: String) -> void:
+	var message := tr("书签已载入宿主，但现场未能完成装配。当前现场已暂停，请关闭游戏后重新打开，并从“续读”选择载入前备份。")
+	if backup_path != "": message += "\n\n" + tr("载入前备份：%s") % backup_path
+	if is_instance_valid(ui): ui.show_bookmark_result(message)
+	var dialog := AcceptDialog.new()
+	dialog.title = tr("书签载入未完成")
+	dialog.dialog_text = message
+	dialog.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(dialog)
+	dialog.confirmed.connect(dialog.queue_free)
+	dialog.popup_centered(Vector2i(680, 300))
 
 ## 热点与跨房间进入DV；房间内坐标接近由现场消费，不进入此入口。
 func dispatch(input: Dictionary) -> void:
 	if _closing: return
+	var input_kind := str(input.get("kind", ""))
+	# Keep accepted physical receipts deliverable while persistence waits on work.
+	if _bookmark_loading and input_kind != "dv_complete": return
+	if (_book_reading or _bookmark_saving) and input_kind in ["dv_next", "view_ready", "select"]:
+		if input_kind != "dv_next" or not _has_deferred_next(): _book_deferred_inputs.append(input.duplicate(true))
+		return
+	if _bookmark_saving and input_kind != "dv_complete": return
+	if input_kind in ["bookmark_save", "bookmark_load"] and not _bookmark_boundary_ready():
+		_timing("bookmark_boundary_rejected", {"operation": input_kind})
+		if is_instance_valid(ui):
+			ui.show_bookmark_result(tr("请先读完当前正文并等待现场动作结束，再保存或载入书签。"))
+		return
+	if input_kind == "bookmark_save":
+		_bookmark_saving = true
+		if is_instance_valid(ui): ui.set_bookmark_loading(true)
+		engine.SaveBookmark(_casebook.export_data())
+		return
+	if input_kind == "bookmark_load":
+		_bookmark_loading = true
+		if is_instance_valid(ui): ui.set_bookmark_loading(true)
+		engine.LoadBookmark(str(input.get("path", "")), _casebook.export_data())
+		return
 	if str(input.get("kind", "")) == "spatial_select":
 		if is_instance_valid(field) and is_instance_valid(field.spatial): field.spatial.select(str(input.choice_id), str(input.site))
 		return
 	if str(input.get("kind", "")) == "quit":
 		engine.RecordInput({"device": "ui_semantic", "kind": "quit"})
-		begin_shutdown.call_deferred()
-		await shutdown_completed
-		get_tree().quit()
+		await Sound.quit_cleanly()
 		return
 	if str(input.get("kind", "")) == "start":
 		if _started: return
@@ -173,6 +248,17 @@ func dispatch(input: Dictionary) -> void:
 		if _started: return
 		_started = true
 	engine.Dispatch(input)
+
+func _bookmark_boundary_ready() -> bool:
+	# Session saves cannot reconstruct unread host presentation or in-flight maps.
+	if _reading or _draining or not _queue.is_empty() or not _book_deferred_inputs.is_empty(): return false
+	if is_instance_valid(_pending_adapter) or _background_execution or _completion_pending or not _dv_intent.is_empty(): return false
+	if is_instance_valid(field_executor) and bool(field_executor.get("_busy")): return false
+	if is_instance_valid(field):
+		if is_instance_valid(field.adapter) and field.adapter.switching(): return false
+		var jobs: Variant = field.get("_daily")
+		if jobs is Dictionary and not jobs.is_empty(): return false
+	return true
 
 func _session_options() -> Dictionary:
 	var speed := playback_speed
@@ -246,20 +332,26 @@ func _accept_execution(input: Dictionary) -> void:
 func _drain() -> void:
 	if _draining or _closing: return
 	_draining = true
-	while not _queue.is_empty() and not _closing:
+	var generation := _session_generation
+	while not _queue.is_empty() and not _closing and generation == _session_generation:
+		while _book_reading and not _closing and generation == _session_generation:
+			await get_tree().process_frame
+		if _closing or generation != _session_generation: break
+		if _queue.is_empty(): break
 		var ev: Dictionary = _queue.pop_front()
 		# A completed reading can expose an older queued observer snapshot while
 		# an off-screen actor still owns an executing body. Let that real movement
 		# finish before snapshot binding can acquire/reparent the same body.
 		if str(ev.get("kind", "")) in ["state", "view"]:
-			while _background_execution and not _closing:
+			while _background_execution and not _closing and generation == _session_generation:
 				await get_tree().process_frame
-			if _closing: break
+			if _closing or generation != _session_generation: break
 		match str(ev.get("kind", "")):
 			"dv_action": await _dv_execute(ev.intent, ev.get("execution_snapshot", {}))
 			"dv_present":
 				var result: Dictionary = ev.presentation
 				var lines := _presentation_lines(result)
+				if is_instance_valid(ui): ui.prepare_presentation(result)
 				if not lines.is_empty():
 					_reading = true
 					# Start the ordinary serialized Prepare while this frozen text is read.
@@ -268,6 +360,7 @@ func _drain() -> void:
 					dispatch.call_deferred({"kind": "dv_next", "schedule": "reading-background"})
 					_timing("presentation_begin", {"execution_event": result.get("execution_event", "")})
 					await ui.present({"kind": "lines", "lines": lines, "trace_id": str(result.get("execution_event", "")), "presentation_id": str(result.get("execution_event", ""))})
+					if generation != _session_generation: break
 					_reading = false
 					_timing("reading_finished", {"execution_event": result.get("execution_event", "")})
 				if not bool(ev.get("advance_requested", false)):
@@ -280,6 +373,7 @@ func _drain() -> void:
 				if is_instance_valid(title_layer): title_layer.get_child(0).show_load_error(str(ev.message))
 			_: push_error("Unknown DV host event: " + str(ev.get("kind", "")))
 	_draining = false
+	if not _queue.is_empty() and not _closing: _drain.call_deferred()
 
 ## IDs name the actual execution and emitted field; source_refs retain authored provenance.
 ## Emitted line ordinals are not claimed to be original declaration line numbers.
@@ -330,7 +424,14 @@ func begin_shutdown() -> void:
 		_pending_adapter.begin_shutdown()
 	if is_instance_valid(field): field.begin_shutdown()
 	if is_instance_valid(ui): ui.begin_shutdown()
-	if is_instance_valid(engine): engine.CloseTrace()
+	if is_instance_valid(engine):
+		engine.UpdateCasebook(_casebook.export_data())
+		engine.CloseTrace()
+
+func wait_for_shutdown() -> void:
+	begin_shutdown()
+	if _shutdown_finished: return
+	await shutdown_completed
 
 func _exit_tree() -> void:
 	begin_shutdown()
@@ -338,9 +439,25 @@ func _exit_tree() -> void:
 func _dv_events(events: Array) -> void:
 	if _closing: return
 	for ev in events:
-		if _reading and str(ev.get("kind", "")) == "dv_action" and _remote_npc_intent(ev):
+		if str(ev.get("kind", "")) in ["dv_present", "error"]: _completion_pending = false
+		if str(ev.get("kind", "")) == "bookmark_loaded":
+			_install_bookmark(ev)
+			continue
+		if str(ev.get("kind", "")) in ["bookmark_saved", "bookmark_error"]:
+			if str(ev.get("kind", "")) == "bookmark_saved" or str(ev.get("operation", "")) == "save":
+				_bookmark_saving = false
+			if str(ev.get("kind", "")) == "bookmark_error" and str(ev.get("operation", "")) == "load":
+				_bookmark_loading = false
+			if is_instance_valid(ui): ui.set_bookmark_loading(_bookmark_loading or _bookmark_saving)
+			if not _book_reading: _on_book_reading_changed(false)
+			if is_instance_valid(ui):
+				var message := str(ev.get("message", ""))
+				if message == "": message = tr("书签已保存。") if str(ev.kind) == "bookmark_saved" else tr("暂时无法保存或载入，请等待当前行动结束。")
+				ui.show_bookmark_result(message, str(ev.kind) == "bookmark_saved")
+			continue
+		if not _book_reading and _reading and str(ev.get("kind", "")) == "dv_action" and _remote_npc_intent(ev):
 			_execute_reading_npc(ev)
-		elif _reading and str(ev.get("kind", "")) == "dv_present" and _presentation_lines(ev.presentation).is_empty():
+		elif not _book_reading and _reading and str(ev.get("kind", "")) == "dv_present" and _presentation_lines(ev.presentation).is_empty():
 			# Empty presentation has no reading work. Remember that its next cue was
 			# already sent so the foreground drain cannot prepare the actor twice.
 			ev.advance_requested = true
@@ -349,6 +466,48 @@ func _dv_events(events: Array) -> void:
 		else:
 			_queue.append(ev)
 	_drain.call_deferred()
+
+func _has_deferred_next() -> bool:
+	for input in _book_deferred_inputs:
+		if str(input.get("kind", "")) == "dv_next": return true
+	return false
+
+func _on_book_reading_changed(active: bool) -> void:
+	_book_reading = active
+	if active or _closing or _bookmark_loading or _bookmark_saving: return
+	var deferred := _book_deferred_inputs
+	_book_deferred_inputs = []
+	for input in deferred: dispatch.call_deferred(input)
+	_drain.call_deferred()
+
+func _install_bookmark(event: Dictionary) -> void:
+	_session_generation += 1
+	var generation := _session_generation
+	# The host already owns the restored session. Bind its archive immediately,
+	# so closing the window during map preparation cannot save the old notes.
+	# The departing UI keeps its old object until disposal; it cannot mutate this.
+	_casebook = CASEBOOK_DATA.new()
+	_casebook.restore_data(event.get("casebook", {}), str(event.snapshot.get("viewer", "")))
+	_reading = false
+	_queue.clear()
+	_book_deferred_inputs.clear()
+	_dv_intent.clear()
+	_interaction_id = ""
+	_interaction_site = ""
+	# The host only emits this after persistence has refused pending execution.
+	var installed: bool = await _view({"resource": event.snapshot.resource, "snapshot": event.snapshot,
+		"casebook_warning": event.get("casebook_warning", ""), "replace_session": true}, false)
+	if _closing or generation != _session_generation: return
+	if not installed:
+		_bookmark_loading = true
+		get_tree().paused = true
+		if is_instance_valid(ui): ui.set_bookmark_loading(true)
+		_timing("bookmark_view_failed", {"path": event.get("path", ""), "backup_path": event.get("backup_path", "")})
+		_show_bookmark_view_error(str(event.get("backup_path", "")))
+		return
+	_bookmark_loading = false
+	if is_instance_valid(ui): ui.set_bookmark_loading(false)
+	if not _closing: dispatch.call_deferred({"kind": "view_ready"})
 
 func _remote_npc_intent(ev: Dictionary) -> bool:
 	if _background_execution or not is_instance_valid(field): return false
@@ -395,13 +554,12 @@ func _dv_complete(outcome: String, execution: Dictionary) -> void:
 	var receipt := {"action_event": _dv_intent.action_event, "outcome": outcome, "actual": _dv_intent.execution_cost, "executor": "godot", "field": execution}
 	_dv_intent = {}
 	_interaction_site = ""
+	_completion_pending = true
 	dispatch.call_deferred({"kind": "dv_complete", "receipt": receipt})
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and not _closing:
-		begin_shutdown.call_deferred()
-		await shutdown_completed
-		get_tree().quit()
+		await Sound.quit_cleanly()
 
 # ==============================================================================
 # 宿主内聚执行支持类 (Host Subsystems Inner Classes)
@@ -480,6 +638,7 @@ class PlayerViewTraceInner extends Node:
 	var _timed_presentations: Dictionary = {}
 
 	func configure(owner_node: Node, visible_sink: Callable, input_sink: Callable) -> void:
+		process_mode = Node.PROCESS_MODE_ALWAYS
 		host = owner_node
 		record_visible = visible_sink
 		record_input = input_sink

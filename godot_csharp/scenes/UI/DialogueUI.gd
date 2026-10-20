@@ -5,6 +5,7 @@ signal choice_selected(id: String)
 signal dialogue_finished(last_choice: String)
 signal presentation_completed(presentation_id: int, result: Dictionary)
 signal history_closed
+signal line_read(line: Dictionary)
 
 const Transition := preload("res://scenes/UI/UITransition.gd")
 
@@ -36,6 +37,8 @@ var _lines_choices: Array = []
 var _chosen_choice := ""
 var _speakers: Dictionary = {}
 var _cast: Dictionary = {}
+var _text_speed := 1.0
+var _archived_line_serial := -1
 var _reveal: Tween
 var _portrait_tween: Tween
 var _history: Array[String] = []
@@ -57,6 +60,8 @@ var _notice_serials: Dictionary = {}
 
 func _ready() -> void:
 	layer = 20
+	body_label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	speaker_label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	decor.draw.connect(_draw_rules)
 	dialogue_panel.resized.connect(_layout)
 	get_viewport().size_changed.connect(_layout)
@@ -71,6 +76,7 @@ func _ready() -> void:
 	next_button.pressed.connect(advance_dialogue)
 	var settings := get_node_or_null("/root/GameSettings")
 	if settings != null:
+		_text_speed = float(settings.get_value("accessibility", "text_speed"))
 		_reduce_motion = bool(settings.get_value("accessibility", "reduce_motion"))
 		_screen_flash = bool(settings.get_value("accessibility", "screen_flash"))
 		settings.setting_changed.connect(_on_setting_changed)
@@ -173,7 +179,7 @@ func _render_current_line() -> void:
 	speaker_label.text = "[b]%s[/b]" % _speakers.get(speaker, speaker)
 	body_label.text = str(line.get("text", ""))
 	body_label.scroll_to_line(0)
-	body_label.visible_ratio = 1.0 if _reduce_motion else 0.0
+	body_label.visible_ratio = 1.0 if _reduce_motion or _text_speed <= 0.0 else 0.0
 	_history.append("%s\n%s" % [str(_speakers.get(speaker, speaker)), body_label.text])
 	_assign_portrait(null, _line_serial)
 	var texture: Variant = line.get("portrait")
@@ -209,12 +215,16 @@ func _render_current_line() -> void:
 func _begin_reveal() -> void:
 	if not _dialogue_active or _finishing: return
 	_stop_reveal()
-	if _reduce_motion:
+	if _reduce_motion or _text_speed <= 0.0:
 		body_label.visible_ratio = 1.0
+		_record_visible_line.call_deferred()
 		return
-	if body_label.visible_ratio >= 1.0: return
+	if body_label.visible_ratio >= 1.0:
+		_record_visible_line.call_deferred()
+		return
 	_reveal = Transition.real_tween(self)
-	_reveal.tween_property(body_label, "visible_ratio", 1.0, clampf(body_label.get_total_character_count() * 0.022, 0.15, 1.2))
+	_reveal.tween_property(body_label, "visible_ratio", 1.0, clampf(body_label.get_total_character_count() * 0.022, 0.15, 1.2) / maxf(_text_speed, 0.01) * (1.0 - body_label.visible_ratio))
+	_reveal.finished.connect(_record_visible_line)
 	if _modal_blocked or is_history_active(): _reveal.pause()
 
 func _can_advance() -> bool:
@@ -225,11 +235,20 @@ func _finish_reveal() -> bool:
 	if body_label.visible_ratio >= 1.0: return false
 	_stop_reveal()
 	body_label.visible_ratio = 1.0
+	_record_visible_line.call_deferred()
 	return true
+
+func _record_visible_line() -> void:
+	if not _dialogue_active or _finishing or _shutting_down or _modal_blocked: return
+	if _lines_index < 0 or _lines_index >= _lines_queue.size() or body_label.visible_ratio < 1.0: return
+	if _archived_line_serial == _line_serial: return
+	_archived_line_serial = _line_serial
+	line_read.emit(_lines_queue[_lines_index])
 
 func advance_dialogue() -> void:
 	if not _can_advance(): return
 	if _finish_reveal(): return
+	_record_visible_line()
 	var is_last := _lines_index == _lines_queue.size() - 1
 	if is_last and not _lines_choices.is_empty(): return
 	_lines_index += 1
@@ -249,6 +268,7 @@ func advance_dialogue() -> void:
 func _choose(id: String, line_serial: int) -> void:
 	if line_serial != _line_serial or not _can_advance(): return
 	if _finish_reveal(): return
+	_record_visible_line()
 	_chosen_choice = id
 	_finish_dialogue()
 	choice_selected.emit(id)
@@ -447,6 +467,10 @@ func _cancel_notice(kind: String) -> void:
 
 func _on_setting_changed(section: String, key: String, value: Variant) -> void:
 	if section != "accessibility": return
+	if key == "text_speed":
+		_text_speed = float(value)
+		_begin_reveal()
+		return
 	if key == "reduce_motion":
 		_reduce_motion = bool(value)
 		if _reduce_motion:

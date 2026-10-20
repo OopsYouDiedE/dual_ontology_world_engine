@@ -7,6 +7,7 @@ const PHYSICAL_LAYOUT_PATH := "res://ShareAsset/Internal/Props/UIDesk/Painterly3
 const PHYSICAL_LAYOUT: JSON = preload(PHYSICAL_LAYOUT_PATH)
 const SURFACE_SHADER := preload("res://scenes/UI/painterly_surface.gdshader")
 const GLASS_SHADER := preload("res://scenes/UI/desk_glass.gdshader")
+const MAGNIFIER_SHADER := preload("res://scenes/UI/magnifier_lens.gdshader")
 const FLAME_SHADER := preload("res://scenes/UI/desk_flame.gdshader")
 const LAMP_BASE_ENERGY := 9.0
 const Atmosphere = preload("res://scenes/UI/DeskAtmosphere3D.gd")
@@ -37,6 +38,7 @@ var atmosphere: Node3D
 var _wick_tip := Vector3.ZERO
 var _flame_height := 0.0
 var _flame_radius := 0.0
+var _magnifier_optics: Dictionary = {}
 
 func _load_physical_layout() -> bool:
 	# The Blender exporter measures the actual wick after the physical-size
@@ -190,8 +192,18 @@ func _style_geometry(node: Node) -> void:
 			var original := object.mesh.surface_get_material(surface_index) as StandardMaterial3D
 			if original == null: continue
 			var label := original.resource_name
+			if label == "LensGlass":
+				var magnifier := _make_magnifier_material(object, surface_index)
+				if magnifier != null:
+					object.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+					object.sorting_use_aabb_center = true
+					# Screen-reading glass cannot be captured into the static probe.
+					object.layers = 1
+					object.set_surface_override_material(surface_index, magnifier)
+					continue
 			if label == "LampGlass" or label == "LensGlass" or label == "InkGlass" or label == "GlassStroke":
 				object.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				object.sorting_use_aabb_center = true
 				var transparent := ShaderMaterial.new()
 				transparent.shader = GLASS_SHADER
 				var ink_glass := label == "InkGlass"
@@ -272,6 +284,52 @@ func _style_geometry(node: Node) -> void:
 			object.set_surface_override_material(surface_index,surface)
 			_materials.append(surface)
 	for child in node.get_children(): _style_geometry(child)
+
+func _make_magnifier_material(object: MeshInstance3D, surface_index: int) -> ShaderMaterial:
+	var arrays := object.mesh.surface_get_arrays(surface_index)
+	if arrays.is_empty() or not arrays[Mesh.ARRAY_VERTEX] is PackedVector3Array:
+		push_warning("Title magnifier has no readable optic vertices; keeping plain glass")
+		return null
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	if vertices.is_empty(): return null
+	var optic_bounds := object.mesh.get_aabb()
+	var local_axis := Vector3.UP
+	# The procedural optic is flat on the desk; its thin local axis is its axis
+	# of revolution. Derive it from geometry so no screen-space centre is guessed.
+	if optic_bounds.size.x < optic_bounds.size.y and optic_bounds.size.x < optic_bounds.size.z:
+		local_axis = Vector3.RIGHT
+	elif optic_bounds.size.z < optic_bounds.size.y:
+		local_axis = Vector3.BACK
+	var axis := (object.global_basis * local_axis).normalized()
+	if axis.dot(Vector3.UP) < 0.0: axis = -axis
+	var center := object.global_transform * optic_bounds.get_center()
+	var radius := 0.0
+	var minimum_height := INF
+	var maximum_height := -INF
+	for vertex in vertices:
+		var relative: Vector3 = object.global_transform * vertex - center
+		var height := relative.dot(axis)
+		minimum_height = minf(minimum_height, height)
+		maximum_height = maxf(maximum_height, height)
+		radius = maxf(radius, (relative - axis * height).length())
+	var thickness := maximum_height - minimum_height
+	if radius <= 0.0 or thickness <= 0.0:
+		push_warning("Title magnifier has invalid measured radius or thickness; keeping plain glass")
+		return null
+	center += axis * (minimum_height + maximum_height) * 0.5
+	var material := ShaderMaterial.new()
+	material.shader = MAGNIFIER_SHADER
+	material.set_shader_parameter("lens_center_world", center)
+	material.set_shader_parameter("lens_axis_world", axis)
+	material.set_shader_parameter("lens_radius_world", radius)
+	material.set_shader_parameter("lens_thickness_world", thickness)
+	material.set_shader_parameter("depth_reject_margin_world", radius * 0.008)
+	_magnifier_optics = {"mesh": object.name, "center_world": center, "axis_world": axis,
+		"radius_world": radius, "thickness_world": thickness, "magnification": 1.32}
+	return material
+
+func get_magnifier_optics() -> Dictionary:
+	return _magnifier_optics.duplicate()
 
 func apply_material_atlas(texture: Texture2D) -> void:
 	_atlas = texture

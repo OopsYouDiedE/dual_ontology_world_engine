@@ -84,20 +84,24 @@ func _build_leaf_mesh(thickness: float) -> ArrayMesh:
 	var uvs := PackedVector2Array()
 	var tags := PackedColorArray()
 	var indices := PackedInt32Array()
-	# Both skins use identical winding. The shader keeps the front-facing
-	# exterior of the upper skin and the back-facing exterior of the lower.
-	# This leaves an actual closed thickness instead of a screen-space rim.
+	# A closed shell needs outward winding AND outward normals on each skin.
+	# The back is a real front-facing surface, not an inside face recovered by
+	# fragment discard. This keeps color, depth and shadow passes consistent.
 	for side in range(2):
 		var offset := vertices.size()
-		var y := thickness * (0.5 if side == 0 else -0.5)
+		var front := side == 0
+		var y := thickness * (0.5 if front else -0.5)
+		var normal := Vector3.UP if front else Vector3.DOWN
+		var tangent_x := 1.0 if front else -1.0
 		for row in range(ROWS + 1):
 			for column in range(COLUMNS + 1):
 				var uv := Vector2(float(column) / COLUMNS, float(row) / ROWS)
 				vertices.append(Vector3(uv.x * page_size.x, y, (uv.y - 0.5) * page_size.y))
-				normals.append(Vector3.UP)
-				# UV grows along +X/+Z. With N=+Y, handedness -1 gives B=+Z.
-				tangents.append_array(PackedFloat32Array([1.0, 0.0, 0.0, -1.0]))
-				uvs.append(uv)
+				normals.append(normal)
+				# Back U grows toward -X so the opened left page is readable.
+				# With N/T both reversed there, handedness -1 still gives B=+Z.
+				tangents.append_array(PackedFloat32Array([tangent_x, 0.0, 0.0, -1.0]))
+				uvs.append(uv if front else Vector2(1.0 - uv.x, uv.y))
 				tags.append(Color(float(side), 0.0, 0.0, 1.0))
 		for row in range(ROWS):
 			for column in range(COLUMNS):
@@ -105,8 +109,11 @@ func _build_leaf_mesh(thickness: float) -> ArrayMesh:
 				var b := a + 1
 				var c := a + COLUMNS + 1
 				var d := c + 1
-				# Clockwise when viewed from above, following Godot's convention.
-				indices.append_array(PackedInt32Array([a, b, c, b, d, c]))
+				# Godot uses clockwise front faces, seen from each exterior side.
+				if front:
+					indices.append_array(PackedInt32Array([a, b, c, b, d, c]))
+				else:
+					indices.append_array(PackedInt32Array([a, c, b, b, c, d]))
 	# The perimeter is subdivided at the same intervals as the page skins.
 	var perimeter: Array[Vector2] = []
 	for column in range(COLUMNS + 1):

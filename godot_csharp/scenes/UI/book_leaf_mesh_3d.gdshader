@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode cull_disabled, depth_draw_opaque, diffuse_burley;
+render_mode cull_back, depth_draw_opaque, diffuse_burley;
 
 uniform sampler2D front_texture : source_color, filter_linear, repeat_disable;
 uniform sampler2D back_texture : source_color, filter_linear, repeat_disable;
@@ -38,7 +38,9 @@ void vertex() {
 	surface_tag = COLOR.rg;
 	float t = reverse ? 1.0 - progress : progress;
 	float angle = t * PI;
-	float u = UV.x;
+	// Geometry is measured from the binding, independently of the back's
+	// mirrored material UV. Both skins therefore follow the exact same curve.
+	float u = VERTEX.x / page_size.x;
 	// The outer part of a paper leaf lags the binding. Integrating its
 	// tangent gives a circular strip with constant physical arc length.
 	float bend = -flexibility * sin(angle);
@@ -77,28 +79,17 @@ void vertex() {
 
 void fragment() {
 	bool is_edge = surface_tag.y > 0.5;
-	if (!is_edge) {
-		bool lower_skin = surface_tag.x > 0.5;
-		if ((!lower_skin && !FRONT_FACING) || (lower_skin && FRONT_FACING)) {
-			discard;
-		}
-	}
-	vec3 base_normal = normalize(NORMAL);
-	vec3 tangent = normalize(TANGENT);
-	vec3 bitangent = normalize(BINORMAL);
-	if (!FRONT_FACING) {
-		base_normal = -base_normal;
-		// The back image mirrors U; its tangent follows that same coordinate.
-		tangent = -tangent;
-	}
-	vec2 page_uv = FRONT_FACING ? UV : vec2(1.0 - UV.x, UV.y);
-	vec4 paper = FRONT_FACING
-		? texture(front_texture, page_uv)
-		: texture(back_texture, page_uv);
+	// Surface identity is part of the mesh, not the current camera/light view.
+	// Both skins already have outward normals, matching UVs and tangent frames.
+	bool is_back = surface_tag.x > 0.5;
+	vec2 page_uv = UV;
+	vec4 paper = is_back
+		? texture(back_texture, page_uv)
+		: texture(front_texture, page_uv);
 	vec3 detail_normal = vec3(0.0, 0.0, 1.0);
 	float roughness = paper_roughness;
 	if (!is_edge) {
-		if (FRONT_FACING) {
+		if (!is_back) {
 			if (has_front_normal) detail_normal = unpack_detail_normal(texture(front_normal_texture, page_uv).rgb, front_normal_strength);
 			if (has_front_roughness) roughness = texture(front_roughness_texture, page_uv).r;
 			if (front_paper_mount) {
@@ -122,7 +113,10 @@ void fragment() {
 	}
 	// An unpainted UI texel remains paper, rather than a hole in the book.
 	ALBEDO = is_edge ? edge_color.rgb : mix(blank_paper.rgb, paper.rgb, paper.a) * surface_tint.rgb;
-	NORMAL = normalize(tangent * detail_normal.x + bitangent * detail_normal.y + base_normal * detail_normal.z);
+	// Keep NORMAL geometric for the renderer's shadow normal bias. Godot
+	// applies the material detail through the rotated mesh tangent frame.
+	NORMAL_MAP = detail_normal * 0.5 + 0.5;
+	NORMAL_MAP_DEPTH = 1.0;
 	ROUGHNESS = clamp(roughness, 0.04, 1.0);
 	METALLIC = 0.0;
 	SPECULAR = 0.12;

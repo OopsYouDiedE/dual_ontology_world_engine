@@ -17,7 +17,7 @@ var _external_blocked := false
 @onready var _modal_dimmer: ColorRect = $Dimmer
 
 func _ready() -> void:
-	_motion.configure(self, self, _modal_surface, _modal_dimmer)
+	_motion.configure(self, self, _modal_surface, _modal_dimmer, false, 1.0)
 	_motion.completed.connect(_on_transition_completed)
 	Transition.set_interactive(_modal_surface, false)
 	var settings := get_node_or_null("/root/GameSettings")

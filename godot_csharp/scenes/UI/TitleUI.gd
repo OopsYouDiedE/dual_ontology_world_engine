@@ -3,9 +3,11 @@ extends Control
 ## Visual presentation only: emits the same ui_event dictionaries as before.
 signal ui_event(event: Dictionary)
 signal transition_finished(shown: bool)
+signal close_requested
 
 const Sound = preload("res://scenes/Shared/Audio/Sound.gd")
-const SETTINGS_SCENE = preload("res://scenes/UI/SettingsUI.tscn")
+const BookSettingsPage = preload("res://scenes/UI/BookSettingsPage.gd")
+const BookArchivePage = preload("res://scenes/UI/BookArchivePage.gd")
 const Transition = preload("res://scenes/UI/UITransition.gd")
 const BookProjection = preload("res://scenes/UI/BookProjection3D.gd")
 const LeafTurn = preload("res://scenes/UI/BookLeafTurn3D.gd")
@@ -23,6 +25,12 @@ const TITLE_TYPES := {"zh_CN": &"PixelDisplay", "en": &"PixelMast", "ja": &"Pixe
 
 
 var mode := "title"
+var initial_page := "index"
+var archive: RefCounted
+var _external_blocked := false
+var _leaf_index: Button
+var _leaf_scroll: ScrollContainer
+var _bookmark_status: RichTextLabel
 @onready var start_button: Button = %StartButton
 @onready var continue_button: Button = %ContinueButton
 @onready var settings_button: Button = %SettingsButton
@@ -49,6 +57,7 @@ var _snapshot_display: TextureRect
 var _cover_snapshot_viewport: SubViewport
 var _cover_snapshot_display: TextureRect
 var _endpaper_viewport: SubViewport
+var _endpaper_title: Label
 var _open_amount := 0.0
 var _current_page := "cover"
 var _turning := false
@@ -58,7 +67,6 @@ var _leaf_body: VBoxContainer
 var _leaf_back: Button
 var _leaf_next: Button
 var _leaf_heading: Label
-var _settings_instance: Node
 var _file_dialog: FileDialog
 var _load_error_line: RichTextLabel
 var _page_motion = Transition.new()
@@ -97,8 +105,9 @@ func _ready() -> void:
 	_page_motion.configure(self, self, _projection_surface, null, false, 1.0)
 	_page_motion.completed.connect(_on_page_transition)
 	_set_menu_input(false)
-	Sound.music("main_theme", 2.5)
+	if mode == "title": Sound.music("main_theme", 2.5)
 	transition_in.call_deferred()
+	if mode == "casebook": open_section.bind(initial_page).call_deferred()
 
 func _resize_stage() -> void:
 	# Preserve the window's aspect ratio instead of stretching the whole desk.
@@ -124,7 +133,6 @@ func _load_optional_material_map(file_name: String) -> Texture2D:
 
 func transition_in() -> bool:
 	_leaving = false
-	if is_instance_valid(_settings_instance): _settings_instance.set_external_blocked(false)
 	_request_pending = false
 	_set_menu_input(false)
 	var request_id: int = _page_motion.request(true, true, 0.24)
@@ -138,7 +146,6 @@ func transition_in() -> bool:
 func transition_out() -> bool:
 	_leaving = true
 	_set_menu_input(false)
-	if is_instance_valid(_settings_instance): _settings_instance.set_external_blocked(true)
 	var request_id: int = _page_motion.request(false, true, 0.20)
 	return await _page_motion.wait_for(request_id)
 
@@ -154,8 +161,8 @@ func _on_setting_changed(section: String, key: String, value: Variant) -> void:
 			if _turn_tween != null and _turn_tween.is_valid(): _turn_tween.custom_step(10.0)
 
 func _set_menu_input(enabled: bool) -> void:
-	_menu_input_enabled = enabled and not _leaving and not _request_pending and not _turning and _current_page == "cover"
-	viewport.gui_disable_input = _leaving or _request_pending or _turning
+	_menu_input_enabled = enabled and not _external_blocked and not _leaving and not _request_pending and not _turning and _current_page == "cover"
+	viewport.gui_disable_input = _external_blocked or _leaving or _request_pending or _turning
 	for button: Button in [start_button, continue_button, settings_button, quit_button]:
 		button.disabled = not _menu_input_enabled
 
@@ -165,7 +172,6 @@ func _settings_active() -> bool:
 func _exit_tree() -> void:
 	if _turn_tween != null and _turn_tween.is_valid(): _turn_tween.kill()
 	_page_motion.dispose()
-	if is_instance_valid(_settings_instance): _settings_instance.begin_shutdown()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready(): _localize()
@@ -178,10 +184,14 @@ func _localize() -> void:
 	var texts: Array = TEXTS[_language()]
 	title_label.theme_type_variation = TITLE_TYPES[_language()]
 	title_label.text = texts[0]
+	if is_instance_valid(_endpaper_title):
+		_endpaper_title.text = texts[0]
+		_endpaper_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	var buttons: Array[Button] = [start_button, continue_button, settings_button, quit_button]
 	for index in buttons.size():
 		_labels[buttons[index]] = texts[index + 1]
 		_mark(buttons[index], buttons[index].has_focus())
+	_localize_leaf()
 
 func _process(delta: float) -> void:
 	if not visible or not is_instance_valid(_book): return
@@ -198,17 +208,52 @@ func _draw_rule() -> void:
 	rule.draw_rect(Rect2(0, 0, rule.size.x, 2), color)
 	rule.draw_rect(Rect2(0, 5, rule.size.x, 1), color)
 
+func set_external_blocked(blocked: bool) -> void:
+	_external_blocked = blocked
+	_set_menu_input(not blocked)
+
+func open_section(page: String) -> void:
+	if not is_inside_tree(): return
+	if _turning:
+		return
+	if not _leaving and not _request_pending:
+		if _current_page == page:
+			_show_leaf(page)
+		else:
+			_turn_to(page)
+
+func _leave_book() -> void:
+	if _turning or _leaving: return
+	if mode == "casebook": close_requested.emit()
+	else: _turn_to("cover")
+
+func _localize_leaf() -> void:
+	if not is_instance_valid(_leaf_heading): return
+	_leaf_back.text = tr("返回现场") if mode == "casebook" else tr("☜ 封面")
+	_leaf_index.text = tr("目录")
+	_leaf_next.text = tr("续读 ☞") if _current_page == "settings" else tr("凡例 ☞")
+	var headings := {"settings": "凡例与设置", "load": "续读 · 书签", "start": "开始阅读", "index": "案卷目录",
+		"evidence": "证据", "items": "物品", "people": "人物立像", "gallery": "图版", "hypotheses": "猜想", "records": "记录"}
+	_leaf_heading.text = tr(headings.get(_current_page.get_slice("@", 0), "个人批注" if _current_page.begins_with("write:") else "案卷记录"))
+	if is_instance_valid(_leaf_body):
+		for child in _leaf_body.get_children():
+			if child is Control and child.has_meta("bookmark_display_path"):
+				_bind_bookmark_label(child, str(child.get_meta("bookmark_display_path")))
+
 func open_settings() -> void:
 	if not _leaving and not _request_pending and not _turning: _turn_to("settings")
 
 func close_settings() -> void:
-	if not _turning: _turn_to("cover")
+	_leave_book()
 
 func open_load_book() -> void:
 	if not _leaving and not _request_pending and not _turning: _turn_to("load")
 
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree() or not is_instance_valid(_book): return
+	if _external_blocked:
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouse or event is InputEventKey or event is InputEventJoypadButton:
 		if not _turning and not _leaving: _projection.forward(event)
 		if not viewport.is_input_handled(): _unhandled_input(event)
@@ -218,7 +263,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_pressed() or event.is_echo() or _turning or _leaving: return
 	if _current_page != "cover" and not _request_pending:
 		if event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel") or event.is_action_pressed("settings"):
-			_turn_to("cover")
+			_leave_book()
 		return
 	if not _menu_input_enabled: return
 	if event.is_action_pressed("ui_accept") or event.is_action_pressed("dialogue_continue"):
@@ -229,6 +274,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_request("quit")
 
 func _request(kind: String, path := "") -> void:
+	if mode == "casebook":
+		if kind == "load": _confirm_bookmark(path)
+		elif kind == "quit": close_requested.emit()
+		return
 	if _turning or _leaving or _request_pending: return
 	if kind == "start":
 		if not _menu_input_enabled: return
@@ -315,12 +364,14 @@ func _setup_book() -> void:
 	background.size = Vector2(viewport.size)
 	_endpaper_viewport.add_child(background)
 	var inside_title := Label.new()
+	_endpaper_title = inside_title
 	inside_title.theme = theme
 	inside_title.theme_type_variation = &"BookHeading"
 	inside_title.text = TEXTS[_language()][0]
 	inside_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	inside_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	inside_title.position = Vector2(54, 110)
-	inside_title.size = Vector2(472, 54)
+	inside_title.size = Vector2(472, 100)
 	_endpaper_viewport.add_child(inside_title)
 	var illustration := TextureRect.new()
 	illustration.texture = load("res://ShareAsset/External/CampiPhlegraei/campi_phlegraei_plate_vi.jpg")
@@ -470,9 +521,11 @@ func _setup_leaf() -> void:
 	_leaf_heading = heading
 	heading.name = "LeafHeading"
 	heading.theme_type_variation = &"BookHeading"
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(heading)
 	column.add_child(HSeparator.new())
 	var scroll := ScrollContainer.new()
+	_leaf_scroll = scroll
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	column.add_child(scroll)
@@ -481,13 +534,18 @@ func _setup_leaf() -> void:
 	_leaf_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_leaf_body)
 	_leaf_back = Button.new()
-	_leaf_back.text = "☜ 封面"
+	_leaf_back.text = tr("☜ 封面")
 	_leaf_back.theme_type_variation = &"TitleMenuButton"
-	_leaf_back.pressed.connect(func(): _turn_to("cover"))
+	_leaf_back.pressed.connect(_leave_book)
 	var footer := HBoxContainer.new()
 	column.add_child(footer)
 	_leaf_back.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer.add_child(_leaf_back)
+	_leaf_index = Button.new()
+	_leaf_index.theme_type_variation = &"BookOption"
+	_leaf_index.text = tr("目录")
+	_leaf_index.pressed.connect(func(): _turn_to("index"))
+	footer.add_child(_leaf_index)
 	_leaf_next = Button.new()
 	_leaf_next.theme_type_variation = &"TitleMenuButton"
 	_leaf_next.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -501,43 +559,124 @@ func _show_leaf(page: String) -> void:
 	_book_leaf.visible = page != "cover"
 	if page == "cover": return
 	_leaf_next.visible = page in ["settings", "load"]
-	_leaf_next.text = "续读 ☞" if page == "settings" else "凡例 ☞"
+	_leaf_index.visible = mode == "casebook" and page != "index"
+	_localize_leaf()
 	for child in _leaf_body.get_children():
 		_leaf_body.remove_child(child)
 		child.queue_free()
-	_leaf_heading.text = "凡例与设置" if page == "settings" else "续读 · 书签" if page == "load" else "开始阅读"
+	_bookmark_status = null
+	_load_error_line = null
+	_leaf_scroll.scroll_vertical = 0
 	if page == "settings":
-		if not is_instance_valid(_settings_instance):
-			_settings_instance = SETTINGS_SCENE.instantiate()
-			add_child(_settings_instance)
-		_settings_instance.populate_page(_leaf_body)
+		_leaf_body.add_child(BookSettingsPage.new())
 	elif page == "load":
-		var directory := DirAccess.open("user://saves")
-		var found := false
-		if directory != null:
-			for file in directory.get_files():
-				if not file.ends_with(".dvsave"): continue
-				found = true
-				var path := ProjectSettings.globalize_path("user://saves/" + file)
-				_leaf_button(file.get_basename(), func(): _request("load", path))
-		if not found: _leaf_text("尚无书签。请选择已有存档继续阅读。")
-		_leaf_button("选择存档…", _choose_save)
+		_populate_bookmarks()
+	elif page == "start":
+		_leaf_text(tr("案卷正在展开……"))
 	else:
-		_leaf_text("案卷正在展开……")
+		var content := BookArchivePage.new()
+		content.archive = archive
+		content.section = page.get_slice("@", 0)
+		content.page_index = int(page.get_slice("@", 1)) if "@" in page else 0
+		content.page_requested.connect(open_section)
+		content.ui_event.connect(func(event: Dictionary): ui_event.emit(event))
+		_leaf_body.add_child(content)
+
+func _populate_bookmarks() -> void:
+	if mode == "casebook":
+		_leaf_button(tr("保存书签"), func():
+			show_bookmark_message(tr("正在保存书签……"))
+			ui_event.emit({"kind": "bookmark_save"})
+		)
+	var paths: Array[String] = []
+	var directory := DirAccess.open("user://saves")
+	if directory != null:
+		for file in directory.get_files():
+			if file.ends_with(".dvsave"): paths.append("user://saves/" + file)
+	# Normal shutdown saves remain valid bookmarks; list without rewriting them.
+	var sessions := DirAccess.open("user://dv-sessions")
+	if sessions != null:
+		for folder in sessions.get_directories():
+			var path := "user://dv-sessions/" + folder + "/save.dvsave"
+			if FileAccess.file_exists(path): paths.append(path)
+	paths.sort()
+	paths.reverse()
+	if paths.is_empty(): _leaf_text(tr("尚无书签。请选择已有存档继续阅读。"))
+	for path in paths:
+		var actual := ProjectSettings.globalize_path(path)
+		var button := _leaf_button("", func(): _request("load", actual))
+		_bind_bookmark_label(button, path)
+	_leaf_button(tr("选择存档…"), _choose_save)
+
+func _bookmark_display_name(path: String) -> String:
+	var normalized := path.replace("\\", "/")
+	var basename := normalized.get_file().get_basename().strip_edges()
+	# These two formats are written with DateTime.UtcNow by the host. Preserve
+	# that timezone explicitly; arbitrary external names carry no time promise.
+	var bookmark_pattern := RegEx.new()
+	bookmark_pattern.compile("^([0-9]{8})T([0-9]{6})[0-9]{7}Z-(bookmark|before-load)-[0-9a-fA-F]{32}$")
+	var bookmark := bookmark_pattern.search(basename)
+	if bookmark != null:
+		var stamp := _bookmark_utc_stamp(bookmark.get_string(1), bookmark.get_string(2))
+		return tr("载入前备份 · %s") % stamp if bookmark.get_string(3) == "before-load" else tr("书签 · %s") % stamp
+	var parent := normalized.get_base_dir()
+	if basename == "save" and parent.get_base_dir().get_file() == "dv-sessions":
+		var session_pattern := RegEx.new()
+		session_pattern.compile("^([0-9]{8})-([0-9]{6})-[0-9]{4}$")
+		var session := session_pattern.search(parent.get_file())
+		if session != null:
+			return tr("会话存档 · %s") % _bookmark_utc_stamp(session.get_string(1), session.get_string(2))
+	if basename.is_empty(): return tr("游戏存档")
+	return basename if basename.length() <= 48 else basename.left(45) + "…"
+
+func _bookmark_utc_stamp(day: String, clock: String) -> String:
+	return "%s-%s-%s %s:%s:%s UTC" % [day.substr(0, 4), day.substr(4, 2), day.substr(6, 2),
+		clock.substr(0, 2), clock.substr(2, 2), clock.substr(4, 2)]
+
+func _bind_bookmark_label(control: Control, path: String) -> void:
+	control.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	control.set_meta("bookmark_display_path", path)
+	control.set("text", _bookmark_display_name(path))
+	control.tooltip_text = ProjectSettings.globalize_path(path)
+
+func _confirm_bookmark(path: String) -> void:
+	# Review in the book. The host preserves the current session before loading.
+	for child in _leaf_body.get_children():
+		_leaf_body.remove_child(child)
+		child.queue_free()
+	_leaf_text(tr("载入书签将切换当前进度，当前案卷会先保存为新的书签。"))
+	var file_label := _leaf_text("")
+	_bind_bookmark_label(file_label, path)
+	var confirm_button := _leaf_button(tr("载入此书签"), func():
+		show_bookmark_message(tr("正在载入书签……"))
+		ui_event.emit({"kind": "bookmark_load", "path": path})
+	)
+	_leaf_button(tr("返回书签"), func(): _show_leaf("load"))
+	confirm_button.grab_focus()
+
+func show_bookmark_message(message: String) -> void:
+	if _current_page != "load": return
+	if not is_instance_valid(_bookmark_status):
+		_bookmark_status = _leaf_text(message)
+	else:
+		_bookmark_status.text = message
 
 func _leaf_text(text: String) -> RichTextLabel:
 	var label := RichTextLabel.new()
 	label.fit_content = true
+	label.theme_type_variation = &"BookBody"
 	label.text = text
 	_leaf_body.add_child(label)
 	return label
 
-func _leaf_button(text: String, action: Callable) -> void:
+func _leaf_button(text: String, action: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.theme_type_variation = &"TitleMenuButton"
+	button.theme_type_variation = &"BookOption"
+	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.pressed.connect(action)
 	_leaf_body.add_child(button)
+	return button
 
 func _choose_save() -> void:
 	if not is_instance_valid(_file_dialog):
@@ -545,7 +684,7 @@ func _choose_save() -> void:
 		_file_dialog.use_native_dialog = true
 		_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 		_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
-		_file_dialog.filters = PackedStringArray(["*.dvsave ; 游戏存档"])
+		_file_dialog.filters = PackedStringArray(["*.dvsave ; " + tr("游戏存档")])
 		_file_dialog.file_selected.connect(func(path: String): _request("load", path))
 		add_child(_file_dialog)
 	_file_dialog.popup_centered_ratio(0.7)
@@ -554,6 +693,6 @@ func show_load_error(message: String) -> void:
 	_request_pending = false
 	_set_menu_input(true)
 	if not is_instance_valid(_load_error_line):
-		_load_error_line = _leaf_text("无法续读此书签，请选择其他存档。")
+		_load_error_line = _leaf_text(tr("无法续读此书签，请选择其他存档。"))
 	_load_error_line.tooltip_text = message
 	_leaf_back.grab_focus()

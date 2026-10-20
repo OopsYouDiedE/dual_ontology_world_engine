@@ -16,6 +16,7 @@
 | `godot_csharp/scenes/UI/DeskStage3D.gd` | 场景装配、透视相机、视口适配与统一风场驱动的灯光。 |
 | `godot_csharp/scenes/UI/painterly_surface.gdshader` | 材质底色与笔触细节的运行时着色。 |
 | `godot_csharp/scenes/UI/desk_glass.gdshader` | 透明玻璃、Fresnel 轮廓响应及受光反射。 |
+| `godot_csharp/scenes/UI/magnifier_lens.gdshader` | 仅用于 `LensGlass`：深度约束的屏幕空间放大、折射及 Fresnel 响应。 |
 | `godot_csharp/scenes/UI/desk_flame.gdshader` | 油灯火焰形体、暖色发光及风向偏转。 |
 | `godot_csharp/scenes/UI/DeskAtmosphere3D.gd` | 标题书桌空间中的少量 GPU 微尘；支持减少动态时隐藏和暂停。 |
 
@@ -32,7 +33,7 @@
 ## 当前道具几何
 
 - 油灯采用层叠黄铜灯脚、细同心刻圈、梨形透明储油体和双层玻璃烟囱；燃烧器有实际贯通孔，调节轮有细齿。
-- 放大镜采用双层金属镜框、凸面玻璃、分段金属套环和成形木柄。凸面只描述几何外形，不表示已经实现放大成像。
+- 放大镜采用双层金属镜框、凸面玻璃、分段金属套环和成形木柄。运行时仅 `LensGlass` 使用 `magnifier_lens.gdshader`，结合实际镜片位置与凸面法线实现深度约束的屏幕空间放大和折射。
 - 墨水瓶采用倒角钴蓝玻璃外壳、深色墨水内芯、瓶口螺纹和瓶盖滚花，不附大面积白色标签。
 - 钢笔采用渐变木制笔杆、金属套环、细笔夹与薄弧面笔尖；笔尖的中央开缝和通气孔由几何形成。
 
@@ -106,6 +107,16 @@ PNG 使用 8 bit 数据编码，不经过 AgX、显示变换或 gamma 转换；�
 
 脚本把上述 PNG 写入运行时 `Painterly3D` 目录，把节点源与 `reference-surface-maps-manifest.json` 写入 `AssetsSource` 的同名目录。manifest 记录实际 Blender 版本、输入底色 SHA256、参数、各象限法线/粗糙度统计及输出 SHA256。运行时检查空白或非法法线及恒定粗糙度；这些数据检查不代替 Godot 实机视觉验收。脚本仅依赖 Blender 与 Python 标准库，不要求安装 NumPy 或 Pillow。
 
+## 共享书本的运行时装配
+
+卷首与游戏内案卷共用 `TitleUI.tscn` 的实体书：`CasebookUI.gd` 只以 `mode = "casebook"` 提供入口与当前 viewer 的纯 UI 案卷数据。桌面几何、真实光照、书体尺寸、60°相机契约、翻页网格及 `BookProjection3D.gd` 的页面命中路径保持共用。设置、目录、条目、批注和书签属于原生 Control 内容，由 `BookSettingsPage.gd` / `BookArchivePage.gd` 等页面装配进 SubViewport；新增这些页面无需重建 `desk.glb`，也不将文字或批注烘焙进底色、法线或粗糙度。
+
+`BookLeafTurn3D.gd` 的正面与背面使用向外的绕序、各自法线和对应 UV 切线，厚度边缘闭合；`book_leaf_mesh_3d.gdshader` 使用背面剔除，并依据独立表面标识选择正背纹理。背面文字 UV 与法线贴图基向量同步，切线框架随叶片形变；不能在片元阶段再次翻转几何法线来补偿错误绕序。微表面写入 `NORMAL_MAP` / `NORMAL_MAP_DEPTH`，几何法线保留给真实受光与阴影。这两个运行时文件作为同一网格/材质接口维护；修改它们不会自动更新 Blender 道具模型，也不能以压平光照或重绘背面底色代替几何修复。
+
+页面和独立现场界面的版式由 `tools/build_ui_theme.py` 统一生成三份主题：`TitleTheme.tres` 用于实体书，`DialogueTheme.tres` 用于对白，`OverlayTheme.tres` 用于现场 HUD 与独立推演纸页。三者共用语义纸色、墨色、笔迹色与字体角色；Overlay 的纸面直接引用现役 `reference-paper.webp`，不增加第二套素材生成配方。
+
+三语 UI 偏好保存在独立的宿主设置文件，原始正文与玩家批注保留原文；它们不是本目录的素材生成输入。案卷逐行来源、个人批注与独立推演、绑定 viewer 和存档哈希的二进制侧车合同见 `godot_csharp/AGENTS.md`。共享书本的观察工具为 `tools/capture_casebook_ui.gd`，命令与输出见 `tools/README.md`：它使用有限可见内容夹具，不启动 Main/DV，画面不能作为实际取得证物、完整书签恢复或玩法验收依据。本节只记录装配与资源边界，构建和视觉效果由后续实际证据报告。
+
 ## 实现边界
 
-灯光闪烁来自同一组连续时间函数，驱动火芯形变、光源位置与能量，物体阴影由 Godot 实时计算。玻璃着色采用透明混合、Fresnel 轮廓和受光反射；没有实现真实光学折射、放大镜成像或体积玻璃散射。火焰由独立发光着色器表现，不是流体燃烧模拟。本说明记录资产来源、生成方式和实现边界，不构成运行效果或交互验收记录；实际表现以 Godot 实机截图及相应交互记录为准。
+灯光闪烁来自同一组连续时间函数，驱动火芯形变、光源位置与能量，物体阴影由 Godot 实时计算。其他玻璃仍采用透明混合、Fresnel 轮廓和受光反射；仅 `LensGlass` 的 `magnifier_lens.gdshader` 实现深度约束的屏幕空间放大、折射与 Fresnel 响应。当前默认放大参数为 `magnification = 1.32`、折射率为 `refractive_index = 1.52`，以实际着色器为准。屏幕拷贝来自不透明绘制阶段，采样图像不含后绘的透明火焰和玻璃；这是屏幕空间近似，不是真实光线追踪，也不代表尺寸参考品牌的光学性能。火焰由独立发光着色器表现，不是流体燃烧模拟。本说明记录资产来源、生成方式和实现边界，不构成运行效果或交互验收记录；实际表现以 Godot 实机截图及相应交互记录为准。

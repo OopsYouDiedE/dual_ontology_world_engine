@@ -4,10 +4,12 @@ extends Control
 signal ui_event(event: Dictionary)
 signal step_dialogue
 signal dialogue_option_selected(choice_id: String)
+signal casebook_reading_changed(active: bool)
 
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 const Transition := preload("res://scenes/UI/UITransition.gd")
-const SETTINGS_SCENE := preload("res://scenes/UI/SettingsUI.tscn")
+const CASEBOOK_SCRIPT := preload("res://scenes/UI/CasebookUI.gd")
+const CASEBOOK_DATA := preload("res://scenes/UI/CasebookData.gd")
 const HUD_SCENE := preload("res://scenes/UI/FieldHUD.tscn")
 const INVESTIGATION_SCENE := preload("res://scenes/UI/InvestigationUI.tscn")
 const DIALOGUE_SCENE := preload("res://scenes/UI/DialogueUI.tscn")
@@ -17,15 +19,20 @@ var hud_ui: CanvasLayer
 var investigation_ui: CanvasLayer
 var dialogue_ui: CanvasLayer
 var snapshot: Dictionary = {}
+var casebook: RefCounted = CASEBOOK_DATA.new()
 var _closing := false
 var _trace_display: Dictionary = {}
 var _pending_modal: Dictionary = {}
 var _modal_cycle := false
 var _modal_kind := ""
+var _active_modal: Dictionary = {}
+var _modal_stack: Array[Dictionary] = []
 var _return_focus: WeakRef
 var _spatial_context: Dictionary = {}
 var _pending_action: Dictionary = {}
 var _screen_motion = Transition.new()
+var _archive_result: Dictionary = {}
+var _archive_lines: Array = []
 
 @onready var _screen_layer: CanvasLayer = $TransitionLayer
 @onready var _screen_fader: ColorRect = $TransitionLayer/ScreenFader
@@ -40,6 +47,7 @@ var ui_busy: bool:
 	get: return is_busy()
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_screen_motion.configure(self, _screen_layer, _screen_fader, null, false, 1.0)
 	_screen_motion.completed.connect(_on_screen_transition_completed)
@@ -62,16 +70,20 @@ func _ready() -> void:
 			_flush_pending_action()
 	)
 	dialogue_ui.history_closed.connect(_activate_pending_modal)
+	dialogue_ui.line_read.connect(_on_dialogue_line_read)
 	investigation_ui = INVESTIGATION_SCENE.instantiate()
 	add_child(investigation_ui)
 	investigation_ui.restore_previous_focus = false
 	investigation_ui.action_chosen.connect(_on_investigation_action)
 	investigation_ui.closed.connect(_on_modal_closed)
-	settings_ui = SETTINGS_SCENE.instantiate()
+	settings_ui = CASEBOOK_SCRIPT.new()
+	settings_ui.archive = casebook
 	add_child(settings_ui)
 	settings_ui.restore_previous_focus = false
 	settings_ui.closed.connect(_on_modal_closed)
 	settings_ui.reopen_requested.connect(open_settings)
+	settings_ui.reading_changed.connect(func(active: bool): casebook_reading_changed.emit(active))
+	settings_ui.ui_event.connect(_on_book_event)
 	var settings := get_node_or_null("/root/GameSettings")
 	if settings != null: settings.setting_changed.connect(_on_setting_changed)
 
@@ -79,6 +91,8 @@ func begin_shutdown() -> void:
 	if _closing: return
 	_closing = true
 	_pending_modal.clear()
+	_modal_stack.clear()
+	_active_modal.clear()
 	_pending_action.clear()
 	_return_focus = null
 	_screen_motion.dispose()
@@ -129,6 +143,7 @@ func apply_snapshot(data: Dictionary) -> void:
 	# Main publishes completed projections. UI reads them without mutating or
 	# repeatedly deep-copying the whole snapshot for a handful of display fields.
 	snapshot = data
+	casebook.apply_snapshot(snapshot)
 	if is_instance_valid(dialogue_ui): dialogue_ui.configure_cast(snapshot.get("cast", {}))
 	if is_instance_valid(hud_ui): hud_ui.apply_snapshot(snapshot)
 
@@ -148,11 +163,21 @@ func present(ev: Dictionary) -> Dictionary:
 		"music": Sound.music(str(ev.get("id", "")), float(ev.get("fade", 1.6)))
 		"sound": Sound.sfx(str(ev.get("id", "")), float(ev.get("volume", 0.0)))
 		"duck": Sound.duck(bool(ev.get("on", false)))
-		"close", "interaction_closed": close_modal()
+		"close", "interaction_closed": close_modal(false)
 	return {}
 
 func _request_modal(kind: String, data: Dictionary = {}) -> void:
 	if _closing or not _pending_action.is_empty(): return
+	# Settings is a child reading layer. Preserve the sheet beneath it, including
+	# its reading position; returning must not dispatch or re-run any world action.
+	if kind == "settings" and _modal_kind != "settings" and investigation_ui.is_open() and not _active_modal.is_empty():
+		var previous := _active_modal.duplicate(false)
+		previous["view_state"] = investigation_ui.capture_view_state()
+		_modal_stack.append(previous)
+	elif kind != "settings":
+		# Explicit navigation replaces the current reading route. A manuscript
+		# opened from the book must not reveal an obsolete copy when it closes.
+		_modal_stack.clear()
 	if not _modal_cycle:
 		var focused := get_viewport().gui_get_focus_owner()
 		_return_focus = weakref(focused) if focused != null else null
@@ -160,9 +185,10 @@ func _request_modal(kind: String, data: Dictionary = {}) -> void:
 	_pending_modal = {"kind": kind, "data": data}
 	_sync_overlay_input()
 	if settings_ui.is_active():
-		if kind == "settings":
+		if kind in ["settings", "notebook", "card", "bookmarks"]:
 			_pending_modal.clear()
-			settings_ui.open()
+			_modal_kind = kind
+			settings_ui.open(_book_page(kind, data))
 		else:
 			settings_ui.close()
 	elif investigation_ui.is_active():
@@ -182,29 +208,38 @@ func _activate_pending_modal() -> void:
 	var request := _pending_modal
 	_pending_modal = {}
 	_modal_kind = str(request.kind)
+	_active_modal = request
 	var data: Dictionary = request.data
 	_spatial_context = {}
 	match _modal_kind:
-		"settings": settings_ui.open()
-		"notebook": investigation_ui.open_notebook(data)
+		"settings", "notebook", "bookmarks", "card": settings_ui.open(_book_page(_modal_kind, data))
 		"manuscript": investigation_ui.open_manuscript(data)
-		"card": investigation_ui.open_card(data)
 		"campus_map": investigation_ui.open_campus_map(data)
 		"ending": investigation_ui.open_ending(data)
 		"spatial":
 			_spatial_context = data
 			investigation_ui.show_spatial_choices(data)
+	if request.has("view_state") and _modal_kind != "settings":
+		investigation_ui.restore_view_state(request.view_state)
 	_sync_overlay_input()
 
 func _on_modal_closed() -> void:
 	if _closing: return
 	_spatial_context = {}
+	if _pending_modal.is_empty() and not _modal_stack.is_empty() and _pending_action.is_empty():
+		_pending_modal = _modal_stack.pop_back()
+		if str(_pending_modal.get("kind", "")) == "manuscript":
+			# A note written in the child book is immediately visible on return.
+			var restored_data: Dictionary = _pending_modal.data.duplicate(true)
+			restored_data.personal_notes = casebook.notes.duplicate(true)
+			_pending_modal.data = restored_data
 	_activate_pending_modal()
 
 func _release_modal() -> void:
 	if _screen_motion.is_active() or settings_ui.is_active() or investigation_ui.is_active() or not _pending_modal.is_empty(): return
 	_modal_cycle = false
 	_modal_kind = ""
+	_active_modal.clear()
 	_sync_overlay_input()
 	var restored := false
 	if _return_focus != null:
@@ -226,6 +261,7 @@ func _sync_overlay_input() -> void:
 func _on_investigation_action(id: String) -> void:
 	if _closing or not _pending_action.is_empty(): return
 	_pending_modal.clear()
+	_modal_stack.clear()
 	if _modal_kind == "spatial":
 		# Use only the site and currently offered IDs from the real field event.
 		# WorldView.spatial.select rechecks the current qualification and contact.
@@ -248,8 +284,9 @@ func _flush_pending_action() -> void:
 func spatial_choices(data: Dictionary) -> void:
 	_request_modal("spatial", data)
 
-func close_modal() -> void:
+func close_modal(return_to_parent := true) -> void:
 	_pending_modal.clear()
+	if not return_to_parent: _modal_stack.clear()
 	settings_ui.close()
 	investigation_ui.close()
 	if not settings_ui.is_active() and not investigation_ui.is_active(): _release_modal()
@@ -258,10 +295,13 @@ func open_notebook() -> void:
 	_request_modal("notebook", snapshot.get("notebook", {}))
 
 func open_manuscript(_announce := true) -> void:
-	_request_modal("manuscript", snapshot.get("replay", {}))
+	var data: Dictionary = snapshot.get("replay", {}).duplicate(true)
+	data.personal_notes = casebook.notes.duplicate(true)
+	_request_modal("manuscript", data)
 
 func open_card(data: Dictionary) -> void:
-	_request_modal("card", data)
+	var entry_id: String = casebook.record_card(data)
+	_request_modal("card", {"entry_id": entry_id})
 
 func open_campus_map() -> void:
 	var map_value: Variant = snapshot.get("map", {})
@@ -278,6 +318,37 @@ func open_ending(data: Dictionary) -> void:
 
 func open_settings(_page := "rules") -> void:
 	_request_modal("settings")
+
+func _book_page(kind: String, data: Dictionary) -> String:
+	match kind:
+		"settings": return "settings"
+		"bookmarks": return "load"
+		"card": return "entry:" + str(data.get("entry_id", ""))
+	return "index"
+
+func _on_book_event(event: Dictionary) -> void:
+	match str(event.get("kind", "")):
+		"bookmark_save", "bookmark_load": ui_event.emit(event)
+		"open_reasoning": open_manuscript()
+		"card_action":
+			_on_investigation_action(str(event.get("id", "")))
+			settings_ui.close()
+
+func show_bookmark_result(message: String, success := false) -> void:
+	settings_ui.show_bookmark_result(message, success)
+
+func set_bookmark_loading(blocked: bool) -> void:
+	settings_ui.set_bookmark_loading(blocked)
+
+func prepare_presentation(result: Dictionary) -> void:
+	_archive_result = result
+	_archive_lines = []
+
+func _on_dialogue_line_read(line: Dictionary) -> void:
+	if _archive_result.is_empty(): return
+	_archive_lines.append(line.duplicate(true))
+	casebook.record_presentation(_archive_result, _archive_lines)
+
 
 func show_hover(text: String, pos: Vector2) -> void:
 	if not _modal_cycle: hud_ui.show_hover(text, pos)
@@ -327,7 +398,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func view_trace_context() -> Dictionary:
-	if settings_ui.is_active(): return {"panel": "settings", "transition": settings_ui.transition_state()}
+	if settings_ui.is_active(): return {"panel": "casebook", "page": str(settings_ui.book.get("_current_page")) if is_instance_valid(settings_ui.book) else _modal_kind, "transition": settings_ui.transition_state()}
 	if investigation_ui.is_active(): return {"panel": "investigation", "page": _modal_kind, "transition": investigation_ui.transition_state()}
 	if dialogue_ui.is_dialogue_active(): return {"panel": "dialogue"}
 	return {"panel": "field", "modal_pending": not _pending_modal.is_empty(), "screen_transition": _screen_motion.is_active()}
