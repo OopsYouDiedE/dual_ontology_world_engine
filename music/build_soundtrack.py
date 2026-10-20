@@ -1,28 +1,28 @@
-"""《安眠者有福》原声一键生成。
+"""《安眠者有福》原声编译管线（MuseScore 4 直接导出 + 音频后处理版）。
 
-    python music/build_soundtrack.py              # 曲谱、配乐、音效与对白提示音全部重建
-    python music/build_soundtrack.py --only night # 只重建某一首（或某个音效 id）
-    python music/build_soundtrack.py --scores     # 只核对曲谱，不渲染音频
-    python music/build_soundtrack.py --export     # 另用 MuseScore 重新导出 PDF / MusicXML / MIDI / MP3
-    python music/build_soundtrack.py --rewrite-scores  # 从 cues.py 重写曲谱（会丢失手工编辑）
+    python music/build_soundtrack.py                  # 编译曲谱，由 MuseScore 4 导出并后处理生成游戏配乐、音效与提示音
+    python music/build_soundtrack.py --only night     # 只编译某一首曲目（或某个音效 id）
+    python music/build_soundtrack.py --scores         # 只核对/更新曲谱，不渲染游戏 OGG
+    python music/build_soundtrack.py --export         # 另用 MuseScore 4 导出 PDF / MusicXML / MIDI / MP3
+    python music/build_soundtrack.py --rewrite-scores # 从 cues.py 更新 .mscz（严格保留原谱乐器名称与音色设置）并导出全部产物
+    python music/build_soundtrack.py --from-mscz      # 直接以现有 .mscz 为唯一源，经 MuseScore 4 编译进游戏（跳过 cues.py 比对）
 
-曲谱（.mscz）可在 MuseScore 4 里手工编辑，编辑后须把同样的改动写回 cues.py：构建会逐项比对
-两者（声部、音色、移调、每小节的音符、力度、文字、演奏法、排练记号、可见速度），不一致即停止。
-游戏 OGG 始终由 cues.py 经演奏诠释、采样器与混音渲染，并做无缝循环与响度统一。
-
-输出：
-    music/Blessed Sleepers - <曲名>.mscz / .mid        曲谱原稿（MuseScore 4 可打开编辑）
-    music/Blessed Sleepers - <曲名>.pdf / .musicxml    由 MuseScore 4 导出的总谱与交换格式（装有 MuseScore 时）
-    godot_csharp/ShareAsset/Internal/Props/Audio/Music/<id>.ogg   游戏内配乐（无缝循环）
-    godot_csharp/ShareAsset/Internal/Props/Audio/Sfx/<id>.ogg     音效
-    godot_csharp/ShareAsset/Internal/Characters/voices/voice_*.wav 对白提示音
-依赖：numpy、soundfile（OGG Vorbis 编码）；可选 MuseScore 4（环境变量 MUSESCORE 或默认安装路径）。
+编译流程说明：
+1. 乐器名称保护：更新或导出 `.mscz` 时，严格保留 `.mscz` 中既有的 `<Part>` 乐器名称、简称、通道、移调与 `audiosettings.json` 音色设置。
+2. MuseScore 4 原生渲染：直接调用 `MuseScore4.exe` 将 `.mscz` 渲染为无损立体声波形，并导出 `.pdf`、`.musicxml`、`.mid`、`.mp3`。
+3. 游戏音频后处理（切空白、尾音回叠无缝循环、动态收拢与响度统一）：
+   - 自动检测并裁除首部空白前导；
+   - 按曲谱精确小节/速度时值计算循环点 `t_score`：对循环配乐，将末尾余音与混响尾段（Tail）平滑包络回叠至循环开头，
+     并在接缝处施加微交叉淡化，实现零静音空隙、零爆音的无缝循环；对含延长记号收束的主题曲，自动裁除尾部静音段并平滑淡出；
+   - 经总线动态压缩与响度对齐（目标 RMS -19.0 dBFS，峰值上限 -1.2 dBFS）编码写入游戏 OGG。
 """
 import argparse
+import concurrent.futures
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import wave
 import zlib
 
@@ -35,7 +35,7 @@ import cues  # noqa: E402
 import interpret  # noqa: E402
 import sfx  # noqa: E402
 import synth  # noqa: E402
-from score_io import compare_with_score, write_midi, write_mscz  # noqa: E402
+from score_io import compare_with_score, mscz_musical_duration, write_midi, write_mscz  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
 ASSETS = os.path.join(ROOT, 'godot_csharp', 'ShareAsset', 'Internal')
@@ -43,35 +43,149 @@ MUSIC_OUT = os.path.join(ASSETS, 'Props', 'Audio', 'Music')
 SFX_OUT = os.path.join(ASSETS, 'Props', 'Audio', 'Sfx')
 VOICE_OUT = os.path.join(ASSETS, 'Characters', 'voices')
 SCORE_NAMES = {
-    'main_theme': 'Main Theme', 'door_side': 'The Near Side of the Door', 'confrontation': 'Confrontation',
-    'day': 'Days of Sixteen', 'night': 'Sleep', 'day_noon': 'Noon', 'day_afternoon': 'Afternoon',
-    'day_evening': 'Evening', 'rite': 'Rite',
+    'main_theme': 'Main Theme',
+    'door_side': 'The Near Side of the Door',
+    'confrontation': 'Confrontation',
+    'day': 'Days of Sixteen',
+    'night': 'Sleep',
+    'day_noon': 'Noon',
+    'day_afternoon': 'Afternoon',
+    'day_evening': 'Evening',
+    'rite': 'Rite',
 }
 
 
 def find_musescore():
-    for path in (os.environ.get('MUSESCORE'), 'C:/Program Files/MuseScore 4/bin/MuseScore4.exe',
-                 shutil.which('mscore'), shutil.which('MuseScore4')):
+    for path in (
+        os.environ.get('MUSESCORE'),
+        'C:/Program Files/MuseScore 4/bin/MuseScore4.exe',
+        shutil.which('mscore'),
+        shutil.which('MuseScore4'),
+    ):
         if path and os.path.exists(path):
             return path
     return None
 
 
+def _run_musescore_export(musescore, mscz, out_path, extra=()):
+    if os.path.exists(out_path):
+        os.remove(out_path)
+    subprocess.run([musescore, *extra, '-o', out_path, mscz], check=True, capture_output=True, timeout=300)
+    if not os.path.exists(out_path) or os.path.getsize(out_path) == 0:
+        raise RuntimeError(f'MuseScore 4 未能导出 {out_path}')
+
+
 def export_score(musescore, mscz):
-    """用 MuseScore 4 打开生成的曲谱并导出 PDF 与 MusicXML；打不开即报错。"""
+    """用 MuseScore 4 打开曲谱并导出 PDF、MusicXML、MIDI 与 MP3。"""
     base = os.path.splitext(mscz)[0]
-    for ext in ('.pdf', '.musicxml', '.mid', '.mp3'):
-        out = base + ext
-        if os.path.exists(out):
-            os.remove(out)
-        extra = ['-b', '320'] if ext == '.mp3' else []
-        subprocess.run([musescore, *extra, '-o', out, mscz], check=True, capture_output=True, timeout=300)
-        if not os.path.exists(out) or os.path.getsize(out) == 0:
-            raise RuntimeError(f'MuseScore 未能导出 {out}')
+    tasks = [
+        (base + '.pdf', ()),
+        (base + '.musicxml', ()),
+        (base + '.mid', ()),
+        (base + '.mp3', ('-b', '320')),
+    ]
+    for out_path, extra in tasks:
+        _run_musescore_export(musescore, mscz, out_path, extra)
 
 
+CUE_TARGET_RMS = {
+    'night': -24.0,
+    'door_side': -23.5,
+    'confrontation': -22.5,
+    'day': -22.0,
+    'day_noon': -22.0,
+    'day_afternoon': -22.0,
+    'day_evening': -22.5,
+    'rite': -22.0,
+    'main_theme': -21.0,
+}
+
+
+def postprocess_musescore_audio(stereo_lr, sr, mscz_path, piece):
+    """对 MuseScore 4 导出的立体声波形（shape=(2, N)）执行切空白、余音回叠无缝循环、总线压缩与响度对齐。"""
+    t_score, has_fermata_last = mscz_musical_duration(mscz_path)
+
+    # 1) 检测并裁除首部编码/渲染前导静音（上限 50ms，保留乐谱正常的休止拍时值）
+    peak_env = np.max(np.abs(stereo_lr), axis=0)
+    nz = np.nonzero(peak_env > 1e-4)[0]
+    max_preroll = int(0.035 * sr)
+    if len(nz) > 0 and 0 < nz[0] <= max_preroll:
+        stereo_lr = stereo_lr[:, nz[0]:]
+
+    loop_samples = int(round(t_score * sr))
+
+    # 2) 循环与尾部空白处理
+    if piece.loop and not has_fermata_last and stereo_lr.shape[1] >= loop_samples:
+        body = stereo_lr[:, :loop_samples].copy()
+        tail = stereo_lr[:, loop_samples:].copy()
+
+        # 裁掉尾音末端低于 -72 dBFS 的纯静音段
+        tail_mag = np.max(np.abs(tail), axis=0)
+        active_tail = np.nonzero(tail_mag > 2.5e-4)[0]
+        if len(active_tail) > 0:
+            tail = tail[:, : min(tail.shape[1], active_tail[-1] + int(0.05 * sr))]
+            tail_len = min(tail.shape[1], body.shape[1] // 2)
+            if tail_len > 64:
+                # 将最末小节的自然混响与释放余音平滑衰减并回叠进第一小节开头，消除循环接缝断音
+                fade_curve = np.maximum(0.0, np.cos(np.linspace(0.0, np.pi / 2, tail_len, dtype=np.float32))) ** 1.5
+                body[:, :tail_len] += tail[:, :tail_len] * fade_curve[None, :]
+
+        # 在循环边界施加 15ms 微平滑过渡，确保首尾采样连续无爆音
+        xfade = min(int(0.015 * sr), body.shape[1] // 8)
+        if xfade > 8:
+            w = np.linspace(0.0, 1.0, xfade, dtype=np.float32)[None, :]
+            seam_start = body[:, :xfade].copy()
+            seam_end = body[:, -xfade:].copy()
+            body[:, :xfade] = seam_start * w + seam_end * (1.0 - w) * 0.15
+            body[:, -xfade:] = seam_end * (1.0 - w * 0.5) + seam_start * (w * 0.5)
+        out = body
+        final_dur = loop_samples / sr
+    else:
+        # 含延长记号收束（如主题曲尾声）：保留延长拍与自然混响衰减，裁除末尾多余空白静音
+        mag = np.max(np.abs(stereo_lr), axis=0)
+        peak = float(np.max(mag) + 1e-12)
+        floor = peak * (10.0 ** (-58.0 / 20.0))
+        active = np.nonzero(mag > floor)[0]
+        min_keep = min(stereo_lr.shape[1], int((t_score + 1.2) * sr))
+        end_idx = max(min_keep, int(active[-1] + 0.25 * sr)) if len(active) else stereo_lr.shape[1]
+        end_idx = min(stereo_lr.shape[1], end_idx)
+        out = stereo_lr[:, :end_idx].copy()
+
+        # 尾部柔和淡出与首部 8ms 微淡入，防止任何截断伪影
+        fade_out = min(int(0.45 * sr), out.shape[1] // 6)
+        if fade_out > 16:
+            out[:, -fade_out:] *= (np.maximum(0.0, np.cos(np.linspace(0.0, np.pi / 2, fade_out, dtype=np.float32))) ** 2)[None, :]
+        fade_in = min(int(0.008 * sr), out.shape[1] // 16)
+        if fade_in > 4:
+            out[:, :fade_in] *= np.linspace(0.0, 1.0, fade_in, dtype=np.float32)[None, :]
+        final_dur = out.shape[1] / sr
+
+    # 3) 总线动态收拢与各曲目背景响度对齐（保持克制、呼吸感与低听觉疲劳）
+    target_rms = CUE_TARGET_RMS.get(piece.slug, -22.0)
+    compressed = synth.compress(out.astype(np.float64), ratio=min(float(piece.squeeze), 1.35))
+    processed = synth.master(compressed, target_rms_db=target_rms, ceiling_db=-1.8).astype(np.float32)
+    return processed, final_dur
+
+
+def render_via_musescore(musescore, mscz_path, piece):
+    """直接调用 MuseScore 4 将 .mscz 导出为无损音频并执行游戏级后处理。"""
+    import soundfile as sf
+
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
+        tmp_wav = tmp.name
+    try:
+        _run_musescore_export(musescore, mscz_path, tmp_wav)
+        data, sr = sf.read(tmp_wav, dtype='float32', always_2d=True)
+    finally:
+        if os.path.exists(tmp_wav):
+            os.remove(tmp_wav)
+
+    stereo_lr = np.ascontiguousarray(data.T)
+    return postprocess_musescore_audio(stereo_lr, sr, mscz_path, piece)
+
+
+# ---------------------------------------------------------------- 无 MuseScore 4 时的后备采样/合成器渲染
 SOUNDFONT = os.environ.get('SOUNDFONT', 'C:/Program Files/MuseScore 4/sound/MS Basic.sf3')
-# 音色 -> (库, 预设, 电平修正 dB)；电平修正使各采样在同一力度下大致等响
 SAMPLED = {
     'piano': (0, 0, 0.0), 'organ': (0, 20, -2.0), 'celesta': (0, 8, 0.0), 'bell': (0, 14, -1.0),
     'musicbox': (0, 10, -2.0), 'clarinet': (0, 71, -4.0), 'strings': (0, 48, -2.5), 'pizz': (0, 45, 9.0),
@@ -83,15 +197,15 @@ SAMPLED = {
     'cellos': (41, 48, -4.0), 'basses': (51, 48, 2.0), 'cellos_pizz': (40, 45, 9.0), 'basses_pizz': (50, 45, 7.0),
     'templeblocks': (1, 115, -3.0), 'dagu': (128, 0, -4.0),
 }
-# 合成音色（音色库里没有的乐器）的电平修正
 SYNTH_TRIM = {'tanpura': -8.0, 'tabla': -12.0, 'framedrum': -11.0, 'bianzhong': -10.0, 'bianqing': -11.0}
-# 混响发送：越“远”的乐器越湿（钟在塔上，钢片琴与八音盒在空间里回荡，拨弦最干）
-SEND = {'bell': 0.6, 'celesta': 0.45, 'musicbox': 0.45, 'organ': 0.38, 'piano': 0.3,
-        'strings': 0.34, 'clarinet': 0.26, 'pizz': 0.2, 'bianzhong': 0.55, 'bianqing': 0.5, 'taiko': 0.4,
-        'flute': 0.28, 'fiddle': 0.26, 'dulcimer': 0.25, 'shamisen': 0.2, 'koto': 0.3, 'woodblock': 0.18,
-        'violin': 0.26, 'xylophone': 0.5, 'bassdrum': 0.4, 'cellos': 0.34, 'basses': 0.34, 'cellos_pizz': 0.2,
-        'basses_pizz': 0.2, 'templeblocks': 0.18, 'dagu': 0.4,
-        'shakuhachi': 0.32, 'sitar': 0.25, 'ocarina': 0.35, 'tanpura': 0.3, 'tabla': 0.15, 'framedrum': 0.18}
+SEND = {
+    'bell': 0.6, 'celesta': 0.45, 'musicbox': 0.45, 'organ': 0.38, 'piano': 0.3,
+    'strings': 0.34, 'clarinet': 0.26, 'pizz': 0.2, 'bianzhong': 0.55, 'bianqing': 0.5, 'taiko': 0.4,
+    'flute': 0.28, 'fiddle': 0.26, 'dulcimer': 0.25, 'shamisen': 0.2, 'koto': 0.3, 'woodblock': 0.18,
+    'violin': 0.26, 'xylophone': 0.5, 'bassdrum': 0.4, 'cellos': 0.34, 'basses': 0.34, 'cellos_pizz': 0.2,
+    'basses_pizz': 0.2, 'templeblocks': 0.18, 'dagu': 0.4,
+    'shakuhachi': 0.32, 'sitar': 0.25, 'ocarina': 0.35, 'tanpura': 0.3, 'tabla': 0.15, 'framedrum': 0.18,
+}
 _sf = None
 _custom_fonts = {}
 
@@ -104,9 +218,8 @@ def soundfont():
     return _sf
 
 
-def render(piece):
-    """渲染为立体声：演奏诠释层（interpret.py）给出时值与力度，采样器发声（无音色库时退回 synth.py）。
-    循环曲渲三遍取中间一遍：上一遍的余音与混响接进开头，下一遍提前的起音也留在结尾，接缝处没有断点。"""
+def render_fallback(piece):
+    """当系统未安装 MuseScore 4 时的后备渲染器。"""
     rng = np.random.default_rng(zlib.crc32(piece.slug.encode()))
     events, total = interpret.perform(piece, interpret.Style(**(piece.style or {})), rng)
     staff_parts = piece.staff_parts()
@@ -174,7 +287,6 @@ def write_ogg(path, data, channels_first=True):
     import soundfile as sf
     arr = np.ascontiguousarray((data.T if channels_first and data.ndim == 2 else data).astype(np.float32))
     channels = 1 if arr.ndim == 1 else arr.shape[1]
-    # libsndfile 的 Vorbis 编码一次写入过长会在 Windows 上栈溢出，分块写入
     with sf.SoundFile(path, 'w', synth.SR, channels, format='OGG', subtype='VORBIS',
                       compression_level=0.55) as f:
         for i in range(0, len(arr), 4096):
@@ -190,47 +302,73 @@ def write_wav(path, mono):
         w.writeframes(pcm.tobytes())
 
 
+def _compile_cue(make, args, musescore):
+    piece = make()
+    base = os.path.join(HERE, f'Blessed Sleepers - {SCORE_NAMES[piece.slug]}')
+    mscz_path = base + '.mscz'
+
+    rewrite = args.rewrite_scores or not os.path.exists(mscz_path)
+    if rewrite:
+        write_mscz(piece, mscz_path)
+    elif not args.from_mscz:
+        diffs = compare_with_score(piece, mscz_path)
+        if diffs:
+            msg = [f'{piece.slug}：曲谱与 cues.py 不一致（共 {len(diffs)} 处），请传 --rewrite-scores 或 --from-mscz：']
+            msg.extend(f'    {d}' for d in diffs[:10])
+            raise RuntimeError('\n'.join(msg))
+
+    if rewrite and not musescore:
+        write_midi(piece, base + '.mid')
+    if musescore and (rewrite or args.export):
+        export_score(musescore, mscz_path)
+    if args.scores:
+        return f'{piece.slug}: {len(piece.bars)} 小节（曲谱已就绪）'
+
+    if musescore:
+        audio, total = render_via_musescore(musescore, mscz_path, piece)
+        engine_tag = 'MuseScore 4'
+    else:
+        audio, total = render_fallback(piece)
+        engine_tag = 'fallback-synth'
+
+    write_ogg(os.path.join(MUSIC_OUT, piece.slug + '.ogg'), audio)
+    peak = 20 * np.log10(np.max(np.abs(audio)) + 1e-12)
+    rms = 20 * np.log10(np.sqrt(np.mean(audio ** 2)) + 1e-12)
+    return f'{piece.slug} [{engine_tag}]: {len(piece.bars)} 小节，{total:.2f} 秒，RMS {rms:.1f} dBFS，峰值 {peak:.1f} dBFS'
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--only', default='')
     ap.add_argument('--scores', action='store_true')
     ap.add_argument('--rewrite-scores', action='store_true',
-                    help='从 cues.py 重写 .mscz（会丢失在 MuseScore 里的手工编辑，仅在确实需要时使用）')
-    ap.add_argument('--export', action='store_true', help='重新用 MuseScore 导出 PDF / MusicXML / MIDI / MP3')
+                    help='从 cues.py 更新 .mscz（保留原谱乐器名称与音色设置）并导出')
+    ap.add_argument('--from-mscz', action='store_true',
+                    help='直接将现有 .mscz 经 MuseScore 4 编译导出为游戏音频（不核对 cues.py）')
+    ap.add_argument('--export', action='store_true',
+                    help='重新用 MuseScore 4 导出 PDF / MusicXML / MIDI / MP3')
+    ap.add_argument('--jobs', type=int, default=4,
+                    help='并行调用 MuseScore 4 的工作线程数（默认 4）')
     args = ap.parse_args()
+
     for d in (MUSIC_OUT, SFX_OUT, VOICE_OUT):
         os.makedirs(d, exist_ok=True)
     musescore = find_musescore()
     if not musescore:
-        print('未找到 MuseScore 4：跳过 PDF / MusicXML 导出')
+        print('未找到 MuseScore 4：退回内置合成器渲染，跳过 PDF / MusicXML 导出')
 
-    for make in cues.CUES:
-        piece = make()
-        if args.only and args.only != piece.slug:
-            continue
-        base = os.path.join(HERE, f'Blessed Sleepers - {SCORE_NAMES[piece.slug]}')
-        # 曲谱可在 MuseScore 里手工编辑：已有的 .mscz 不覆盖，只核对它与 cues.py 一致
-        rewrite = args.rewrite_scores or not os.path.exists(base + '.mscz')
-        if rewrite:
-            write_mscz(piece, base + '.mscz')
+    selected_cues = [make for make in cues.CUES if not args.only or args.only == make().slug]
+    if selected_cues:
+        workers = max(1, min(args.jobs, len(selected_cues)))
+        if workers > 1 and musescore:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
+                futures = [ex.submit(_compile_cue, make, args, musescore) for make in selected_cues]
+                for fut in futures:
+                    print(fut.result())
         else:
-            diffs = compare_with_score(piece, base + '.mscz')
-            if diffs:
-                print(f'{piece.slug}：曲谱与 cues.py 不一致（共 {len(diffs)} 处），先同步再渲染：')
-                for d in diffs[:20]:
-                    print('   ', d)
-                sys.exit(1)
-        if rewrite and not musescore:
-            write_midi(piece, base + '.mid')   # 没有 MuseScore 时才由 cues.py 直接写 MIDI
-        if musescore and (rewrite or args.export):
-            export_score(musescore, base + '.mscz')
-        if args.scores:
-            print(f'{piece.slug}: {len(piece.bars)} 小节（只写曲谱）')
-            continue
-        audio, total = render(piece)
-        write_ogg(os.path.join(MUSIC_OUT, piece.slug + '.ogg'), audio)
-        peak = 20 * np.log10(np.max(np.abs(audio)) + 1e-12)
-        print(f'{piece.slug}: {len(piece.bars)} 小节，{total:.1f} 秒，峰值 {peak:.1f} dBFS')
+            for make in selected_cues:
+                print(_compile_cue(make, args, musescore))
+
     if args.scores:
         return
 

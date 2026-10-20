@@ -148,7 +148,7 @@ def zone(label: str) -> dict:
         F("StudyTable", "study_table", P(26, 9, 0, 8)), F("StudyChairNW", "chair_front", P(25, 7, 0, 30)),
         F("StudyChairNE", "chair_front", P(27, 7, 0, 30)), F("StudyChairSW", "chair_back", P(25, 9, 0, 30)),
         F("StudyChairSE", "chair_back", P(27, 9, 0, 30)), F("HallBookcase", "bookcase_0", P(23, 3, 4, 14)),
-        F("HallLamp", "floor_lamp", P(29, 11, 10, 20)), F("Armchair", "armchair", P(23, 11, 8, 26)),
+        F("HallLamp", "floor_lamp", P(29, 11, 10, 20)), F("Armchair", "armchair", P(29, 6, 0, 24)),
         F("Range", "range_stove", P(28, 16, 8, 22)), F("Sideboard", "sideboard", P(24, 16, 0, 24)),
         F("Worktable", "worktable", P(26, 19, 0, 10)), F("Barrel", "barrel", P(29, 19, 8, 30)),
         F("Washstand", "washstand", P(33, 3, 0, 22)),
@@ -156,7 +156,7 @@ def zone(label: str) -> dict:
         F("StoreCrate", "crate", P(32, 18, 0, 20)), F("StoreSack", "sack", P(33, 19, 10, 20)), F("StoreBarrel", "barrel", P(34, 18, 0, 20)),
     ]
     extra = {"ink": [F("InkShelf", "archive_shelf", P(23, 11, 30, 26))],
-             "brass": [F("ToolBench", "worktable", P(24, 12, 30, 20))],
+             "brass": [F("ToolBench", "worktable", P(26, 5, 0, 20))],
              "drape": [F("Screen", "folding_screen", P(28, 11, 0, 26)), F("MusicStand", "music_stand", P(24, 12, 0, 20))],
              "tile": [F("MedCabinet", "medicine_cabinet", P(23, 11, 30, 26))]}[z["extra"]]
     furniture += extra
@@ -175,6 +175,34 @@ def zone(label: str) -> dict:
         room = mirror(room)
     if room["key"] == "zone_yi":
         room["sites"].append({"id": "bed", "point": (858, 196), "label_key": "资源.场点.zone_yi.bed.标签"})
+        evidence = "res://ShareAsset/Internal/Props/AwakeningEvidence"
+        interior = "res://ShareAsset/Internal/Props/FirstAwakeningInterior"
+        room["furniture"] += [
+            dict(F("InnerBolt", "inner_bolt", [22, 422]), texture=f"{evidence}/isolation_door_side.png",
+                 texture_region=[74, 86, 8, 48], footprint=None),
+            dict(F("AshFan", "ash_fan", [31, 378]), texture=f"{evidence}/ash_fan.png",
+                 rotation_degrees=90, z_index=-1, footprint=None),
+            dict(F("Wedge", "wedge", [62, 428]), texture=f"{evidence}/wedge.png", footprint=None),
+            dict(F("Score", "score", [522, 228]), texture=f"{evidence}/score.png",
+                 draw_offset=[-9, -34], footprint=None),
+            dict(F("Slate", "slate", [368, 296]), texture=f"{evidence}/slate.png",
+                 draw_offset=[-10, -44], footprint=None),
+            dict(F("Jar", "jar", [368, 536]), texture=f"{evidence}/jar.png",
+                 draw_offset=[-7, -48], footprint=None),
+            dict(F("R05Shelf", "bookcase_empty", [800, 110]), texture=f"{interior}/bookcase_empty.png",
+                 footprint=[780, 96, 40, 14]),
+            dict(F("R05ShelfTrace", "shelf_dust_hand", [800, 110]), texture=f"{evidence}/shelf_dust_hand.png",
+                 footprint=None),
+        ]
+        # Geometry identifiers only; native presentation supplies player-visible labels.
+        room["geometry_sites"] = [
+            {"id": "E1", "point": [26, 396]}, {"id": "E2", "point": [62, 422]},
+            {"id": "E6", "point": [522, 202]}, {"id": "E7", "point": [368, 258]},
+            {"id": "E10", "point": [368, 502]}, {"id": "E11", "point": [806, 110]},
+            {"id": "hall_copper_seat", "point": [368, 240]},
+            {"id": "hall_tea_side", "point": [320, 300]},
+            {"id": "hall_window_side", "point": [260, 280]},
+        ]
     return room
 
 
@@ -260,7 +288,7 @@ def living_hall() -> dict:
              {"id": "fireplace", "point": P(4, 4, 0, 8), "label_key": "资源.场点.living_hall.fireplace.标签"}]
     return dict(key="living_hall", title_key="资源.地图.living_hall.标题", rows=p.rows(), regions=regions,
                 floor={"hall": "parquet", "bath": "whitetile"}, wall={"hall": ("plaster", "CREAM"), "bath": ("tile",)},
-                decor=decor, floor_work=floor_work, furniture=furniture, exits=exits, spawns=spawns, sites=sites)
+                decor=decor, floor_work=floor_work, furniture=furniture, exits=exits, spawns=spawns, sites=sites, geometry_sites=[{"id": "living_south_table", "point": [240, 572]}, {"id": "living_piano", "point": [160, 320]}])
 
 
 # --------------------------------------------------------------- 中央厅 ----

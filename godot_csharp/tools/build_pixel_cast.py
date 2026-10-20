@@ -74,8 +74,8 @@ def luma(c) -> float:
 
 
 class Master:
-    def __init__(self, key: str):
-        path = SOURCE / f"{key}-compact.png"
+    def __init__(self, key: str, source: Path = SOURCE):
+        path = source / f"{key}-compact.png"
         self.image = Image.open(path).convert("RGBA")
         self.boxes = bounds(path)
         self.alpha = self.image.getchannel("A").load()
@@ -235,8 +235,8 @@ def frames_resource(key: str, cell_w: int, cell_h: int) -> str:
     return "\n".join(lines)
 
 
-def build(key: str) -> None:
-    master = Master(key)
+def build(key: str, source: Path = SOURCE, preview: Path = PREVIEW) -> None:
+    master = Master(key, source)
     cw, ch, foot = master.cell_w, master.cell_h, master.foot_row
     sheet = Image.new("RGBA", (cw * 6, ch * 3))
     for y, (direction, row) in enumerate(zip(DIRECTIONS, master.boxes)):
@@ -250,22 +250,24 @@ def build(key: str) -> None:
     colours = {c for c in pixels if c[3]}
     assert {c[3] for c in pixels} <= {0, 255}
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    PREVIEW.mkdir(parents=True, exist_ok=True)
+    preview.mkdir(parents=True, exist_ok=True)
     sheet.save(OUTPUT / f"{key}.png")
     (OUTPUT / f"{key}.tres").write_text(frames_resource(key, cw, ch), encoding="utf-8")
-    preview = Image.new("RGBA", sheet.size, (150, 150, 150, 255))
-    preview.alpha_composite(sheet)
-    preview.resize((sheet.width * 6, sheet.height * 6), Image.NEAREST).save(PREVIEW / f"{key}-x6.png")
+    review = Image.new("RGBA", sheet.size, (150, 150, 150, 255))
+    review.alpha_composite(sheet)
+    review.resize((sheet.width * 6, sheet.height * 6), Image.NEAREST).save(preview / f"{key}-x6.png")
     print(f"{key}: 18 poses in {cw}x{ch} cells, standing {round(HEIGHTS[key] * WORLD_HEIGHT_SCALE)}px, {len(colours)} colours")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--only", nargs="+", choices=list(HEIGHTS))
+    parser.add_argument("--source-dir", type=Path, default=SOURCE, help="Versioned ImageGen masters; same 3x6 layout")
+    parser.add_argument("--preview-dir", type=Path, default=PREVIEW)
     args = parser.parse_args()
     keys = args.only or sorted(path.stem for path in PALETTES.glob("*.json"))
     for key in keys:
-        build(key)
+        build(key, args.source_dir, args.preview_dir)
 
 
 if __name__ == "__main__":

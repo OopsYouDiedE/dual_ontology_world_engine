@@ -6,3 +6,8 @@ artifacts/basic-ui-system/level3-6_1-sol/** -text
 artifacts/remake-belief-replay/blind-level3-sol61-20261008-01/** -text
 artifacts/basic-ui-system/level3-6_1-sol/**/*.log -diff
 artifacts/basic-ui-system/level3-6_1-sol/**/progress.txt -diff
+
+# Typed binary evidence must never undergo newline conversion or text diffing.
+*.dvlog* -text -diff
+*.dvdag* -text -diff
+*.dvsave* -text -diff

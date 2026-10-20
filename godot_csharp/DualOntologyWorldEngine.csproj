@@ -8,16 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="legacy/**;simulation/**;tests/**;examples/**;**/obj/**;**/bin/**;scenes/Awakening/check/**;scenes/Awakening/Night/**;scenes/Awakening/Script/**;scenes/Chapter2/Prototype/**;scenes/Chapter2/Script/**;scenes/Shared/Story/**;scenes/Shared/Game/**" />
-    <ProjectReference Include="scenes/Shared/Game/GameSession.csproj" />
-    <Compile Remove="scenes/Shared/check/WorldScriptCheck/**;scenes/Shared/check/FixtureData.cs" />
-    <Compile Remove="scenes/Shared/check/PlayerControllerCheck/**" />
-    <Compile Remove="scenes/Shared/check/KnowledgeCheck/**" />
-    <Compile Remove="scenes/Shared/check/StrategyCheck/**" />
-    <Compile Remove="scenes/Shared/check/StrategyIntegrationCheck/**" />
-    <Compile Remove="scenes/Shared/check/SaveCheck/**" />
-    <Compile Remove="tools/PlayerTranscript/**" />
-    <Compile Include="scenes/Shared/Story/Examples/WorldScript/Host/WorldSessionEngine.cs" />
-    <ProjectReference Include="..\csharp\DualOntologyWorldEngine.Core.csproj" />
+    <Compile Remove="**/obj/**;**/bin/**" />
+    <ProjectReference Include="../language_core/Session/DuelView.Session.csproj" />
   </ItemGroup>
 </Project>

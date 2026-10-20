@@ -8,6 +8,9 @@
     "editor.codeLens": true,
     "dotnet.codeLens.enableReferencesCodeLens": true,
     "dotnet.codeLens.enableTestsCodeLens": false,
+    "dotnet.defaultSolution": "godot_csharp/DualOntologyWorldEngine.sln",
+    "dotnet.preferVisualStudioCodeFileSystemWatcher": true,
+    "omnisharp.projectFilesExcludePattern": "**/node_modules/**,**/.git/**,**/bower_components/**,**/artifacts/**,**/tmp/**,**/scratch/**",
     "gitlens.codeLens.enabled": false,
     "gitlens.codeLens.authors.enabled": false,
     "gitlens.codeLens.recentChange.enabled": false,
@@ -15,10 +18,21 @@
     "git.blame.editorDecoration.enabled": false,
     "files.exclude": {
         "**/*.uid": true,
-        "**/*.import": true
+        "**/*.import": true,
+        "artifacts": true,
+        "tmp": true,
+        "scratch": true
     },
     "search.exclude": {
-        "**/*.uid": true
+        "**/*.uid": true,
+        "artifacts/**": true,
+        "tmp/**": true,
+        "scratch/**": true
+    },
+    "files.watcherExclude": {
+        "artifacts/**": true,
+        "tmp/**": true,
+        "scratch/**": true
     },
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",

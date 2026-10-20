@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=33 format=3 uid="uid://desx2ma08f07d"]
+[gd_resource type="Theme" load_steps=36 format=3 uid="uid://desx2ma08f07d"]
 
 [ext_resource type="FontFile" uid="uid://1mrmumh7kkwu" path="res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf" id="font_zhaohua"]
 [ext_resource type="FontFile" uid="uid://wv7t0k0kjb08" path="res://ShareAsset/External/NotoSerifSC/NotoSerifSC[wght].ttf" id="font_noto"]
@@ -10,8 +10,8 @@
 [ext_resource type="FontFile" uid="uid://bp2hcr87qwy24" path="res://ShareAsset/External/yujisyuku/YujiSyuku-Regular.ttf" id="font_yuji"]
 [ext_resource type="FontFile" uid="uid://efwuolvoxfi0" path="res://ShareAsset/External/ZenKurenaido/ZenKurenaido-Regular.ttf" id="font_kurenaido"]
 [ext_resource type="FontFile" uid="uid://5taqf2dxpeah" path="res://ShareAsset/External/newtegomin/NewTegomin-Regular.ttf" id="font_tegomin"]
-[ext_resource type="Texture2D" uid="uid://318jfwph0wi7" path="res://ShareAsset/Internal/Props/UIDesk/cloth.png" id="cloth_texture"]
 [ext_resource type="Texture2D" uid="uid://di8b1hqq18tsx" path="res://ShareAsset/Internal/Props/UIPaper/paper_pixel.png" id="paper_texture"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/UIDesk/cover-painted.png" id="cloth_texture"]
 
 [sub_resource type="SystemFont" id="system_fallback"]
 font_names = PackedStringArray("Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC")
@@ -66,6 +66,31 @@ base_font = ExtResource("font_yozai")
 
 [sub_resource type="StyleBoxEmpty" id="transparent_text"]
 
+[sub_resource type="StyleBoxFlat" id="paper_frame_outer"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.494118, 0.435294, 0.345098, 0.85)
+
+[sub_resource type="StyleBoxFlat" id="paper_frame_inner"]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.65)
+
+[sub_resource type="StyleBoxTexture" id="spatial_choice_panel"]
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+texture = ExtResource("paper_texture")
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
 [sub_resource type="StyleBoxFlat" id="scroll_grabber"]
 bg_color = Color(0.133333, 0.109804, 0.0823529, 0.35)
 
@@ -79,17 +104,15 @@ bg_color = Color(0.882353, 0.835294, 0.709804, 0.8)
 
 [sub_resource type="StyleBoxTexture" id="title_cloth"]
 texture = ExtResource("cloth_texture")
-axis_stretch_horizontal = 1
-axis_stretch_vertical = 1
+axis_stretch_horizontal = 0
+axis_stretch_vertical = 0
 
-[sub_resource type="StyleBoxTexture" id="title_slip"]
+[sub_resource type="StyleBoxFlat" id="title_slip"]
 content_margin_left = 20.0
 content_margin_top = 20.0
 content_margin_right = 20.0
 content_margin_bottom = 24.0
-texture = ExtResource("paper_texture")
-axis_stretch_horizontal = 1
-axis_stretch_vertical = 1
+draw_center = false
 
 [sub_resource type="StyleBoxFlat" id="title_plate"]
 bg_color = Color(0.133333, 0.109804, 0.0823529, 1)
@@ -122,6 +145,9 @@ Label/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 Label/styles/normal = SubResource("transparent_text")
 Paper/colors/rule = Color(0.494118, 0.435294, 0.345098, 0.7)
 Paper/colors/rule_strong = Color(0.133333, 0.109804, 0.0823529, 1)
+PaperFrame/colors/ornament = Color(0.494118, 0.435294, 0.345098, 0.72)
+PaperFrame/styles/inner = SubResource("paper_frame_inner")
+PaperFrame/styles/outer = SubResource("paper_frame_outer")
 PixelColumn/base_type = &"Label"
 PixelColumn/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 PixelColumn/constants/pixel_scale = 2
@@ -158,6 +184,8 @@ RichTextLabel/font_sizes/normal_font_size = 18
 RichTextLabel/fonts/bold_font = SubResource("font_deck")
 RichTextLabel/styles/focus = SubResource("transparent_text")
 RichTextLabel/styles/normal = SubResource("transparent_text")
+SpatialChoicePanel/base_type = &"PanelContainer"
+SpatialChoicePanel/styles/panel = SubResource("spatial_choice_panel")
 Title/colors/background = Color(0.105882, 0.094118, 0.082353, 1)
 Title/colors/cover_edge = Color(0.133333, 0.141176, 0.117647, 1)
 Title/colors/page_dark = Color(0.737255, 0.682353, 0.556863, 1)

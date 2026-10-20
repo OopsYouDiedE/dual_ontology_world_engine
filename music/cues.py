@@ -39,7 +39,7 @@ def p_celesta(**kw):
 
 
 def p_bells(**kw):
-    return Part('bell', '管钟', 'Cme.', 'pitched-percussion.tubular-bells', 14, 53, 79, amateur=(60, 79),
+    return Part('bell', '管钟', 'Cme.', 'pitched-percussion.tubular-bells', 14, 53, 84, amateur=(60, 84),
                 template_id='tubular-bells', voice='bell', **kw)
 
 
@@ -248,7 +248,7 @@ def main_theme():
         kw = {}
         if i == 0:
             lines[BEL] = 'D5:w'
-            kw = dict(dyn={RH: 'mf', CEL: 'pp', ORG: 'p', LH: 'mp', STR: 'mp', BEL: 'pp'},
+            kw = dict(dyn={RH: 'mp', CEL: 'pp', ORG: 'pp', LH: 'p', STR: 'p', BEL: 'pp'},
                       mark='B · 旧日的灯', text={RH: 'con calore'})
         bars.append(Bar(lines, harm=ch, lead=RH, **kw))
     # A' · 有福：全奏，钢琴八度，后句攀上高点再落回
@@ -260,14 +260,14 @@ def main_theme():
         kw = {}
         if i == 0:
             lines[BEL] = 'B4:w'
-            kw = dict(dyn={RH: 'f', ORG: 'mf', LH: 'mf', STR: 'mf', BEL: 'p', CEL: 'p'},
+            kw = dict(dyn={RH: 'mf', ORG: 'p', LH: 'p', STR: 'p', BEL: 'pp', CEL: 'pp'},
                       mark="A' · 有福", text={RH: 'largamente'})
         if i == 3:
             lines[CEL] = 'r:h F#6:q E6:e F#6:e'
         if i == 4:
-            kw = dict(dyn={RH: 'ff', ORG: 'f', STR: 'f'})
+            kw = dict(dyn={RH: 'mf', ORG: 'mp', STR: 'mp'})
         if i == 6:
-            kw = dict(dyn={RH: 'mf', ORG: 'mp', LH: 'mp', STR: 'mp'}, text={RH: 'dim.'})
+            kw = dict(dyn={RH: 'mp', ORG: 'p', LH: 'pp', STR: 'pp'}, text={RH: 'dim.'})
         bars.append(Bar(lines, harm=ch, lead=RH, **kw))
     # 尾声 · 问句得到回答：后半截第一次落回主音（B 大调）
     bars.append(Bar({CEL: CALL, ORG: 'F#3+B3+D#4:w', STR: 'B2:w', LH: 'B1+F#2:w'}, harm=['B'], lead=CEL,
@@ -325,7 +325,7 @@ def confrontation():
         for c, b in _split(chords):
             root = CH[c][2]
             hi = shift(root + ':e', 1).split(':')[0]
-            out += [f'{root}+{hi}:e' + ('>' if k == 0 else '') for k in range(int(b * 2))]
+            out += [f'{root}+{hi}:e' for k in range(int(b * 2))]
         return ' '.join(out)
 
     first = list(THEME_A[:7]) + [('B4:w', ['G'])]
@@ -335,8 +335,8 @@ def confrontation():
     for i, (mel, ch) in enumerate(first + second):
         kw = {}
         if i == 0:
-            kw = dict(mark='对质', dyn={ORG: 'mf', RH: 'p', LH: 'mf', STR: 'mp'},
-                      tempo=(88, tempo_text(88, 'Moderato, inesorabile')), text={ORG: 'a piena voce', LH: 'marcato'})
+            kw = dict(mark='对质', dyn={ORG: 'mp', RH: 'pp', LH: 'p', STR: 'pp'},
+                      tempo=(84, tempo_text(84, 'Moderato, inesorabile')), text={ORG: 'sotto voce', LH: 'legato'})
         if i in (7, 15):
             kw = dict(text={ORG: 'la nota giusta, il basso sbagliato'})
         bars.append(Bar({ORG: mel, RH: block(ch), LH: pulse(ch), STR: bass(ch)}, harm=ch, lead=ORG, **kw))
@@ -372,7 +372,7 @@ def night():
         kw = {}
         if i == 0:
             kw = dict(mark='安眠', tempo=(54, tempo_text(54, 'Lento, carillon')),
-                      dyn={BOX: 'mp', BEL: 'pp', ORG: 'ppp', LH: 'pp', STR: 'pp'})
+                      dyn={BOX: 'p', BEL: 'pp', ORG: 'ppp', LH: 'pp', STR: 'pp'})
         bars.append(Bar(lines, harm=[c], lead=BOX, **kw))
     return Piece('night', '安眠', '第二章 · 夜（单一主题循环）', 2, (3, 4), parts, bars, reverb=3.0, wet=0.36,
                  mix={BEL: 9, LH: 1, STR: -8},
@@ -429,7 +429,7 @@ def day():
     tempo = (90, tempo_text(60, 'Allegretto, a passeggio', dotted=True))
     for i, (mel, ch) in enumerate(THEME_MAJOR_68):
         kw = dict(mark='一 · 钢琴', tempo=tempo, text={RH: 'leggiero'},
-                  dyn={RH: 'mf', LH: 'p', PIZ: 'mp', CLA: 'mp', CEL: 'p'}, tech={PIZ: 'pizzicato'}) if i == 0 else {}
+                  dyn={RH: 'mp', LH: 'pp', PIZ: 'p', CLA: 'p', CEL: 'pp'}, tech={PIZ: 'pizzicato'}) if i == 0 else {}
         bars.append(Bar({RH: mel, LH: barcarolle(ch), PIZ: pizz_line(ch)}, harm=ch, lead=RH, **kw))
     for i, (mel, ch) in enumerate(THEME_MAJOR_68):
         lines = {CLA: mel, LH: barcarolle(ch), PIZ: pizz_line(ch)}
@@ -448,16 +448,16 @@ def day():
 
 
 # 4/4 的五声化大调主题（宫调式）：句尾避开导音，半终止停在羽音 B 上
-THEME_GONG = ['F#5:e E5:e D5:q A5:q G5:e A5:e', 'B5:q. A5:e G5:q F#5:q', 'E5:q F#5:e G5:e A5:q D5:q',
-              'E5:h D5:q B4:q', 'F#5:e E5:e D5:q A5:q G5:e A5:e', 'B5:q. A5:e F#5:q E5:q',
+THEME_GONG = ['F#5:e E5:e D5:q A5:q F#5:e A5:e', 'B5:q. A5:e F#5:q F#5:q', 'E5:q F#5:e F#5:e A5:q D5:q',
+              'E5:h D5:q B4:q', 'F#5:e E5:e D5:q A5:q F#5:e A5:e', 'B5:q. A5:e F#5:q E5:q',
               'F#5:q E5:e D5:e E5:q A4:q', 'D5:w']
 # 笛子加花（放慢加花）：骨干音不变，拍内填入邻音与回音
 THEME_GONG_ORNATE = [
-    'F#5:s A5:s F#5:s E5:s D5:e. E5:s A5:s B5:s A5:e G5:s A5:s B5:s A5:s',
-    'B5:e. D6:s B5:e A5:e G5:s A5:s G5:s E5:s F#5:q',
-    'E5:s F#5:s E5:s D5:s F#5:e G5:e A5:e. B5:s A5:s F#5:s E5:s D5:s',
+    'F#5:s A5:s F#5:s E5:s D5:e. E5:s A5:s B5:s A5:e F#5:s A5:s B5:s A5:s',
+    'B5:e. D6:s B5:e A5:e F#5:s A5:s F#5:s E5:s F#5:q',
+    'E5:s F#5:s E5:s D5:s F#5:e F#5:e A5:e. B5:s A5:s F#5:s E5:s D5:s',
     'E5:q. F#5:e D5:e. E5:s B4:s A4:s B4:e',
-    'F#5:s A5:s F#5:s E5:s D5:e. E5:s A5:s B5:s A5:e G5:s A5:s B5:s A5:s',
+    'F#5:s A5:s F#5:s E5:s D5:e. E5:s A5:s B5:s A5:e F#5:s A5:s B5:s A5:s',
     'B5:e. D6:s B5:e A5:e F#5:s A5:s F#5:s E5:s E5:q',
     'F#5:s A5:s F#5:s E5:s D5:e E5:e E5:e. D5:s A4:q',
     'D5:h. E5:s D5:s B4:s D5:s',
@@ -491,7 +491,7 @@ def day_noon():
              voice='fiddle', channel_name='arco', channels=(('arco', 0, 110), ('pizzicato', 0, 45), ('tremolo', 0, 44))),
         Part('dulcimer', '扬琴', 'Dlc.', 'pitched-percussion.hammer-dulcimer', 15, 48, 86, pan=0.4,
              template_id='dulcimer', voice='dulcimer'),
-        Part('shamisen', '三味线', 'Sh.', 'pluck.shamisen', 106, 48, 84, amateur=(48, 79), pan=-0.4,
+        Part('shamisen', '三味线', 'Sh.', 'pluck.shamisen', 106, 47, 84, amateur=(47, 79), pan=-0.4,
              template_id='shamisen', voice='shamisen'),
         Part('koto', '日本筝', 'Ko.', 'pluck.koto', 107, 36, 83, amateur=(57, 83), bass_clef=True, pan=0.1,
              template_id='koto', voice='koto'),
@@ -500,20 +500,20 @@ def day_noon():
     bars = []
     for i in range(8):
         kw = dict(mark='一 · 慢板（放慢加花）', tempo=(60, tempo_text(60, 'Adagio, con fioriture')),
-                  dyn={DIZI: 'mp', ERHU: 'p', ZHENG_: 'p', PIPA: 'p', YANG: 'p', MUYU: 'p'}) if i == 0 else {}
+                  dyn={DIZI: 'p', ERHU: 'pp', ZHENG_: 'pp', PIPA: 'pp', YANG: 'pp', MUYU: 'pp'}) if i == 0 else {}
         lines = {DIZI: THEME_GONG_ORNATE[i], ERHU: THEME_GONG[i], ZHENG_: ZHENG[GONG_ROOTS[i]]}
         bars.append(Bar(lines, harm=[GONG_ROOTS[i]], lead=DIZI, **kw))
     for rep in range(2):
         for i in range(8):
             kw = {}
             if i == 0 and rep == 0:
-                kw = dict(mark='二 · 快板', tempo=(112, tempo_text(112, 'Allegro')),
-                          dyn={DIZI: 'mf', ERHU: 'mf', YANG: 'mp', PIPA: 'mp', MUYU: 'mp'})
+                kw = dict(mark='二 · 中板', tempo=(92, tempo_text(92, 'Moderato')),
+                          dyn={DIZI: 'mp', ERHU: 'p', YANG: 'p', PIPA: 'p', MUYU: 'p'})
             elif i == 0:
-                kw = dict(mark="二' · 快板（笛高八度）")
-            lines = {DIZI: THEME_GONG[i] if rep == 0 else shift(THEME_GONG[i], 1), ERHU: THEME_GONG[i],
+                kw = dict(mark="二' · 中板（丝竹相和）")
+            lines = {DIZI: THEME_GONG[i], ERHU: THEME_GONG[i],
                      YANG: tremolo(shift(THEME_GONG[i], -1)), PIPA: shift(THEME_GONG[i], -1),
-                     MUYU: 'C5:q> C5:q C5:q C5:q'}
+                     MUYU: 'C5:q C5:q C5:q C5:q'}
             bars.append(Bar(lines, harm=[GONG_ROOTS[i]], lead=DIZI, **kw))
     return Piece('day_noon', '午间', '日常变奏 · 丝竹式（循环）', 2, (4, 4), parts, bars, reverb=1.3, wet=0.2,
                  mix={ZHENG_: 4, MUYU: 8}, style=dict(rubato=0.5, swell=0.7, lead_db=2.0))
@@ -536,7 +536,7 @@ def day_afternoon():
              template_id='shakuhachi', voice='shakuhachi'),
         Part('dulcimer', '扬琴', 'Dlc.', 'pitched-percussion.hammer-dulcimer', 15, 48, 86, pan=0.35,
              template_id='dulcimer', voice='dulcimer'),
-        Part('shamisen', '三味线', 'Sh.', 'pluck.shamisen', 106, 48, 84, amateur=(48, 79), bass_clef=True,
+        Part('shamisen', '三味线', 'Sh.', 'pluck.shamisen', 106, 47, 84, amateur=(47, 79), bass_clef=True,
              pan=-0.35, template_id='shamisen', voice='shamisen'),
         Part('fiddle', '小提琴', 'Vln.', 'strings.violin', 40, 55, 103, amateur=(55, 88), pan=0.2, template_id='violin',
              voice='violin', channel_name='arco', channels=(('arco', 0, 40), ('pizzicato', 0, 45), ('tremolo', 0, 44))),
@@ -648,15 +648,15 @@ def rite():
             if i in (4, 9):
                 lines[QING] = 'F#5:w' if i == 4 else 'B4:w'
             if i in (0, 5):
-                lines[DRUM] = 'C3:q> r:q r:h'
+                lines[DRUM] = 'C3:q r:q r:h'
             if rep == 1 and i == 9:
-                lines[DRUM] = 'C3:q> C3:q> C3:q> r:q'
+                lines[DRUM] = 'C3:q C3:q C3:q r:q'
             if rep == 0 and i == 0:
                 lines[ZHU] = 'C5:q C5:q C5:q r:q'
             kw = {}
             if i == 0 and rep == 0:
                 kw = dict(mark='一 · 金声玉振', tempo=(50, tempo_text(50, 'Grave, rituale')),
-                          dyn={BZ: 'mf', QING: 'mp', SHENG_: 'p', XUN: 'mp', QIN_: 'mp', DRUM: 'mf', ZHU: 'mf'})
+                          dyn={BZ: 'p', QING: 'p', SHENG_: 'pp', XUN: 'p', QIN_: 'p', DRUM: 'p', ZHU: 'p'})
             elif i == 0:
                 kw = dict(mark='二 · 埙与琴')
             bars.append(Bar(lines, harm=['Bm'], lead=BZ if rep == 0 else XUN, **kw))

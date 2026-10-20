@@ -1,0 +1,175 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scenes/UI/DialogueUI.gd" id="script"]
+[ext_resource type="Theme" path="res://scenes/UI/Styles/DialogueTheme.tres" id="theme"]
+[ext_resource type="Shader" path="res://scenes/UI/portrait_etch.gdshader" id="etch"]
+[ext_resource type="Shader" path="res://scenes/UI/paper_surface.gdshader" id="paper"]
+
+[sub_resource type="ShaderMaterial" id="paper_mat"]
+shader = ExtResource("paper")
+
+[sub_resource type="ShaderMaterial" id="etch_mat"]
+shader = ExtResource("etch")
+
+[node name="DialogueUI" type="CanvasLayer"]
+layer = 20
+script = ExtResource("script")
+
+[node name="DialoguePanel" type="Panel" parent="."]
+unique_name_in_owner = true
+visible = false
+anchor_left = 0.27
+anchor_top = 1.0
+anchor_right = 0.94
+anchor_bottom = 1.0
+offset_top = -200.0
+offset_bottom = -24.0
+theme = ExtResource("theme")
+theme_type_variation = &"ChapterDialogueDialoguePanel"
+
+[node name="Paper" type="ColorRect" parent="DialoguePanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
+mouse_filter = 2
+material = SubResource("paper_mat")
+
+[node name="NewspaperDecor" type="Control" parent="DialoguePanel"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Portrait" type="TextureRect" parent="DialoguePanel"]
+unique_name_in_owner = true
+visible = false
+anchor_bottom = 1.0
+offset_left = -180.0
+offset_top = -96.0
+offset_right = 12.0
+offset_bottom = -8.0
+mouse_filter = 2
+texture_filter = 2
+expand_mode = 1
+stretch_mode = 5
+material = SubResource("etch_mat")
+
+[node name="Margin" type="MarginContainer" parent="DialoguePanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_type_variation = &"DialogueMargins"
+
+[node name="VBox" type="VBoxContainer" parent="DialoguePanel/Margin"]
+layout_mode = 2
+theme_type_variation = &"DialogueColumn"
+
+[node name="Header" type="HBoxContainer" parent="DialoguePanel/Margin/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 32)
+
+[node name="SpeakerLabel" type="RichTextLabel" parent="DialoguePanel/Margin/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ChapterDialogueSpeaker"
+bbcode_enabled = true
+scroll_active = false
+
+[node name="HistoryButton" type="Button" parent="DialoguePanel/Margin/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ChapterDialogueHistoryButton"
+text = "回看"
+
+[node name="BodyLabel" type="RichTextLabel" parent="DialoguePanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 54)
+size_flags_vertical = 3
+theme_type_variation = &"ChapterDialogueBody"
+bbcode_enabled = true
+
+[node name="ChoicesScroll" type="ScrollContainer" parent="DialoguePanel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ChoicesContainer" type="VBoxContainer" parent="DialoguePanel/Margin/VBox/ChoicesScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"DialogueColumn"
+
+[node name="NextPrompt" type="HBoxContainer" parent="DialoguePanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 2
+
+[node name="NextButton" type="Button" parent="DialoguePanel/Margin/VBox/NextPrompt"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ChapterDialogueNext"
+text = "继续 ▸"
+
+[node name="HistoryPanel" type="Panel" parent="."]
+unique_name_in_owner = true
+visible = false
+anchor_left = 0.22
+anchor_right = 0.94
+anchor_top = 0.18
+anchor_bottom = 0.70
+theme = ExtResource("theme")
+theme_type_variation = &"ChapterDialogueHistoryPanel"
+
+[node name="HistoryBody" type="RichTextLabel" parent="HistoryPanel"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 45.0
+offset_right = -24.0
+offset_bottom = -20.0
+theme_type_variation = &"ChapterDialogueBody"
+
+[node name="HistoryClose" type="Button" parent="HistoryPanel"]
+unique_name_in_owner = true
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -85.0
+offset_right = -20.0
+offset_top = 10.0
+offset_bottom = 40.0
+text = "合上"
+
+[node name="AsideLabel" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+anchor_top = 0.5
+anchor_bottom = 0.5
+anchor_right = 1.0
+offset_top = -24.0
+offset_bottom = 24.0
+horizontal_alignment = 1
+theme = ExtResource("theme")
+theme_type_variation = &"DialogueAside"
+
+[node name="FlashLabel" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+horizontal_alignment = 1
+vertical_alignment = 1
+theme = ExtResource("theme")
+theme_type_variation = &"DialogueFlash"
+
+[node name="FaderRect" type="ColorRect" parent="."]
+unique_name_in_owner = true
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0)

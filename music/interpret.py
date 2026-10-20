@@ -147,12 +147,13 @@ def perform(piece, style, rng):
         for si in range(len(staff_parts)):
             if si in bar.dyn:
                 vel[si] = VELOCITY[bar.dyn[si]]
-            qpos = bi * bpb
-            for pitches, dur, flags in parse_line(piece.line(bar, si)):
-                dq = DUR[dur][2] / 480
-                if pitches:
-                    raw.append((si, bi, qpos, dq, [midi_of(p) for p in pitches], vel.get(si, 64), flags))
-                qpos += dq
+            for vline in piece.voices(bar, si):
+                qpos = bi * bpb
+                for pitches, dur, flags in parse_line(vline):
+                    dq = DUR[dur][2] / 480
+                    if pitches:
+                        raw.append((si, bi, qpos, dq, [midi_of(p) for p in pitches], vel.get(si, 64), flags))
+                    qpos += dq
     lead_next = {}  # (staff) -> 排好序的起点，用于连奏判断
     for si in range(len(staff_parts)):
         lead_next[si] = sorted({r[2] for r in raw if r[0] == si})

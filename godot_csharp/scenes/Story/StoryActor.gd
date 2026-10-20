@@ -45,11 +45,21 @@ func _ready() -> void:
 	shape.shape = box
 	shape.position.y = -6
 	add_child(shape)
-	# A small stepped footprint reads as contact at the native pixel scale.
-	var shadow := Polygon2D.new()
+	var shadow := Sprite2D.new()
 	shadow.name = "ContactShadow"
-	shadow.polygon = PackedVector2Array([Vector2(-9,-2),Vector2(-6,-4),Vector2(6,-4),Vector2(9,-2),Vector2(9,0),Vector2(6,2),Vector2(-6,2),Vector2(-9,0)])
-	shadow.color = Color(0.06, 0.05, 0.04, 0.28)
+	var fade := Gradient.new()
+	fade.colors = PackedColorArray([Color(0.05, 0.045, 0.04, 0.4), Color(0.05, 0.045, 0.04, 0)])
+	var texture := GradientTexture2D.new()
+	texture.gradient = fade
+	texture.width = 48
+	texture.height = 48
+	texture.fill = GradientTexture2D.FILL_RADIAL
+	texture.fill_from = Vector2(0.5, 0.5)
+	texture.fill_to = Vector2(1, 0.5)
+	shadow.texture = texture
+	shadow.scale = Vector2(0.5, 0.18)
+	shadow.position.y = -1
+	shadow.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	add_child(shadow)
 	apply_visual(sprite)
 	add_child(sprite)
@@ -137,23 +147,11 @@ func perform(action: String, mirrored := false) -> void:
 	await sprite.animation_finished
 	pose("idle")
 
-func move_input(direction: Vector2) -> void:
-	velocity = direction * speed
-	if direction.length_squared() > 0:
-		face_vector(direction)
-		pose("walk")
-	else:
-		pose("idle")
-	move_and_slide()
-
 func face_vector(direction: Vector2) -> void:
 	if absf(direction.x) > absf(direction.y):
 		facing = "right" if direction.x > 0 else "left"
 	else:
 		facing = "front" if direction.y > 0 else "back"
-
-func walk_to(point: Vector2) -> Dictionary:
-	return await follow_path(PackedVector2Array([point]))
 
 func follow_path(points: PackedVector2Array) -> Dictionary:
 	stop_travel()

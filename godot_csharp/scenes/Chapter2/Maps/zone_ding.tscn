@@ -485,6 +485,7 @@ texture_filter = 1
 metadata/title = "丁区"
 metadata/map_size = Vector2(1152, 704)
 metadata/terrain_rows = ["####################################", "#WWWW#WWWWWWWW#WWWWWW#WWWWWW#WWWWWW#", "#wwww#wwwwwwww#wwwwww#wwwwww#wwwwww#", "#....#........#......#......#......#", "#....#........#......#......#......#", "#....#........#......#......#......#", "#....#........#......#......#......#", "##DD##........#......#......#......#", "#WDDW#........###DD#####DD#####DD###", "#wDDw#........WWWDDWWWWWDDWWWWWDDWW#", "#....#........wwwDDwwwwwDDwwwwwDDww#", "D....D.............................#", "D....D.............................#", "#....####DD######DD#####DD#####DD###", "##DD##WWWDDWWW#WWDDWW#WWDDWW#WWDDWW#", "#WDDW#wwwDDwww#wwDDww#wwDDww#wwDDww#", "#wDDw#........#......#......#......#", "#....#........#......#......#......#", "#....#........#......#......#......#", "#....#........#......#......#......#", "#....#........#......#......#......#", "####################################"]
+metadata/stage_lights = [{"kind": "window", "point": [1024, 80]}, {"kind": "window", "point": [800, 80]}, {"kind": "window", "point": [576, 80]}, {"kind": "sconce", "point": [944, 324]}, {"kind": "sconce", "point": [720, 324]}, {"kind": "sconce", "point": [496, 324]}, {"kind": "window", "point": [320, 80]}, {"kind": "sconce", "point": [400, 68]}, {"kind": "sconce", "point": [224, 68]}, {"kind": "lamp", "point": [214, 344]}, {"kind": "lamp", "point": [248, 506]}]
 
 [node name="Architecture" type="Sprite2D" parent="."]
 z_index = -10
@@ -729,7 +730,7 @@ centered = false
 offset = Vector2(-9, -50)
 
 [node name="Armchair" type="Sprite2D" parent="Objects"]
-position = Vector2(408, 378)
+position = Vector2(224, 216)
 texture = ExtResource("t_armchair")
 centered = false
 offset = Vector2(-15, -32)
@@ -1360,7 +1361,7 @@ position = Vector2(214.0, 368.0)
 shape = SubResource("s138")
 
 [node name="s139" type="CollisionShape2D" parent="Solids"]
-position = Vector2(408.0, 370.0)
+position = Vector2(224.0, 208.0)
 shape = SubResource("s139")
 
 [node name="s140" type="CollisionShape2D" parent="Solids"]
@@ -1463,7 +1464,7 @@ position = Vector2(112, 412)
 position = Vector2(400, 636)
 
 [node name="s12" type="Marker2D" parent="Stands"]
-position = Vector2(240, 220)
+position = Vector2(400, 348)
 
 [node name="s13" type="Marker2D" parent="Stands"]
 position = Vector2(528, 572)

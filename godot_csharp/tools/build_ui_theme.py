@@ -141,7 +141,8 @@ class Theme:
         load_steps = len(self.ext) + len(self.subs) + 1
         out = [f'[gd_resource type="Theme" load_steps={load_steps} format=3 uid="{self.uid}"]', ""]
         for kind, uid, path, rid in self.ext:
-            out.append(f'[ext_resource type="{kind}" uid="{uid}" path="{path}" id="{rid}"]')
+            uid_field = f' uid="{uid}"' if uid else ''
+            out.append(f'[ext_resource type="{kind}"{uid_field} path="{path}" id="{rid}"]')
         if self.ext: out.append("")
         for kind, rid, props in self.subs:
             out.append(f'[sub_resource type="{kind}" id="{rid}"]')
@@ -241,6 +242,11 @@ def paper_basics(t: Theme, f: dict[str, str], ink: str) -> str:
     t.set("RichTextLabel/styles/focus", empty)
     t.set("Paper/colors/rule", c("rule", 0.7))
     t.set("Paper/colors/rule_strong", c("ink"))
+    t.set("PaperFrame/colors/ornament", c("rule", 0.72))
+    t.set("PaperFrame/styles/outer", t.box("paper_frame_outer", border=c("rule", 0.85), width=(2, 2, 2, 2)))
+    t.set("PaperFrame/styles/inner", t.box("paper_frame_inner", border=c("rule", 0.65), width=(1, 1, 1, 1)))
+    t.type("SpatialChoicePanel", "PanelContainer")
+    t.set("SpatialChoicePanel/styles/panel", t.paper("spatial_choice_panel", margin=(16, 16, 16, 16)))
     t.set("VScrollBar/styles/grabber", t.box("scroll_grabber", bg=c("ink", 0.35)))
     t.set("VScrollBar/styles/grabber_highlight", t.box("scroll_grabber_hi", bg=c("ink", 0.55)))
     t.set("VScrollBar/styles/grabber_pressed", t.box("scroll_grabber_hi", bg=c("ink", 0.55)))
@@ -665,13 +671,23 @@ def dialogue_theme() -> Theme:
     t.type("ChapterDialogueVisitedResponse", "Button")
     for state in ("font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"):
         t.set(f"ChapterDialogueVisitedResponse/colors/{state}", c("muted"))
-    text_type(t, "ChapterDialogueBody", "RichTextLabel", size=SIZE["sub"], color=c("ink"))
-    t.set("ChapterDialogueBody/constants/line_separation", 8)
+    text_type(t, "ChapterDialogueBody", "RichTextLabel", size=SIZE["body"], color=c("ink"))
+    t.set("ChapterDialogueBody/constants/line_separation", 6)
+    t.type("DialogueMargins", "MarginContainer")
+    for side, value in zip(("left", "top", "right", "bottom"), (28, 14, 28, 12)):
+        t.set(f"DialogueMargins/constants/margin_{side}", value)
+    t.type("DialogueColumn", "VBoxContainer")
+    t.set("DialogueColumn/constants/separation", 6)
+    t.type("DialogueChoice", "Button")
+    t.set("DialogueChoice/colors/font_color", c("hand"))
+    t.set("DialogueChoice/fonts/font", f["hand"])
+    text_type(t, "DialogueAside", "Label", size=SIZE["sub"], color=c("paper"), rich=False)
+    text_type(t, "DialogueFlash", "Label", size=SIZE["title"], color=c("paper"), rich=False)
     t.type("ChapterDialogueChoices", "GridContainer")
     t.set("ChapterDialogueChoices/constants/h_separation", 16)
     t.set("ChapterDialogueChoices/constants/v_separation", 8)
     t.type("ChapterDialogueDialoguePanel", "Panel")
-    t.set("ChapterDialogueDialoguePanel/styles/panel", t.paper("dialogue_panel"))
+    t.set("ChapterDialogueDialoguePanel/styles/panel", t.box("dialogue_panel", bg=c("paper"), border=c("rule", 0.65), width=(1, 1, 1, 1), shadow=c("ink", 0.6), shadow_size=14, shadow_offset=(0, 7)))
     text_type(t, "ChapterDialogueHeading", "Label", size=SIZE["note"], color=c("muted"), font=f["register"], rich=False)
     t.type("ChapterDialogueHistoryButton", "Button")
     t.set("ChapterDialogueHistoryButton/colors/font_color", c("muted"))
@@ -683,8 +699,7 @@ def dialogue_theme() -> Theme:
     t.set("ChapterDialogueNext/colors/font_color", c("ink"))
     t.set("ChapterDialogueNext/font_sizes/font_size", SIZE["note"])
     t.type("ChapterDialoguePortraitFrame", "PanelContainer")
-    t.set("ChapterDialoguePortraitFrame/styles/panel", t.box("portrait_mount", bg=c("paper_dark"), border=c("ink", 0.8),
-                                                             width=(1, 1, 1, 1), margin=(8, 8, 8, 8)))
+    t.set("ChapterDialoguePortraitFrame/styles/panel", t.box("portrait_mount", bg=c("paper", 0.0), margin=(0, 0, 0, 0)))
     t.type("ChapterDialoguePortraitColumn", "VBoxContainer")
     t.set("ChapterDialoguePortraitColumn/constants/separation", 8)
     text_type(t, "ChapterDialoguePortraitName", "Label", size=SIZE["note"], color=c("muted"), font=f["register"], rich=False)
@@ -716,12 +731,12 @@ def title_theme() -> Theme:
                        ("thickness", round(desk.mm(desk.BOOK_THICK_MM) * desk.ELEV_K * desk.S)),
                        ("elev_q", round(desk.ELEV_Q * 100)), ("slip_shadow", 4)):
         t.set(f"Title/constants/{key}", value)
-    cloth = t.texture_file("cloth_texture", "res://ShareAsset/Internal/Props/UIDesk/cloth.png", "uid://318jfwph0wi7")
+    cloth = t.texture_file("cloth_texture", "res://ShareAsset/Internal/Props/UIDesk/cover-painted.png", "")
     t.type("TitleCover", "PanelContainer")
     t.set("TitleCover/styles/panel", t.sub("StyleBoxTexture", "title_cloth", [
-        ("texture", cloth), ("axis_stretch_horizontal", "1"), ("axis_stretch_vertical", "1")]))
+        ("texture", cloth), ("axis_stretch_horizontal", "0"), ("axis_stretch_vertical", "0")]))
     t.type("TitleSlip", "PanelContainer")
-    t.set("TitleSlip/styles/panel", t.paper("title_slip", margin=(20, 20, 20, 24)))
+    t.set("TitleSlip/styles/panel", t.box("title_slip", margin=(20, 20, 20, 24)))
     t.type("TitleColumn", "VBoxContainer")
     t.set("TitleColumn/constants/separation", 14)
     t.type("TitleMount", "PanelContainer")

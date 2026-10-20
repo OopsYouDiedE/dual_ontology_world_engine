@@ -1,221 +1,409 @@
-using DualOntologyWorldEngine.Gameplay;
 using Godot;
-using DualOntologyWorldEngine.Story;
 using System.Text.Json;
+using System.Diagnostics;
+using System.Collections.Concurrent;
 using GArray = Godot.Collections.Array;
 using GDict = Godot.Collections.Dictionary;
 
-/// <summary>只读取资源、转换事件和写存档；游戏流程由无 Godot 依赖的 GameSession 负责。</summary>
+// Platform boundary: all state transitions and decisions are compiled from DV.
 public partial class GameEngine : Node
 {
-    private GameSession? _session;
-    private SubjectivePlayerController? _controller;
-    private int _agentSeed, _maxAgentSelections = 10000, _maxAgentObservations = 20000;
-    private GameSession Session => _session ??= new GameSession(
-        Godot.FileAccess.GetFileAsString("res://scenes/Chapter2/Script/generated_chapter_02.json"),
-        "res://scenes/Awakening/Awakening.tscn",
-        "res://scenes/Chapter2/Field/CampusMapView.tscn",
-        _aiSeat ? null : ProjectSettings.GlobalizePath("res://../artifacts/basic-ui-system/player-traces"),
-        message => GD.PushWarning(message), _aiSeat ? null : ReadAuthorSources, null, _maxAgentSelections, _maxAgentObservations,
-        _aiSeat);
-    private bool _aiSeat;
+    [Signal] public delegate void EventsReadyEventHandler(GArray events);
+    [Signal] public delegate void TraceClosedEventHandler();
+    private Task work = Task.CompletedTask;
+    private bool closing;
+    private bool busy;
+    private bool maintenance;
+    private bool faulted;
+    private DvSession? session;
+    private string optionsJson = "{}";
+    private string snapshotJson = "{}";
+    private string pendingEvent = "";
+    private readonly Queue<(long Id, string Json)> commands = new();
+    private readonly HashSet<string> completedEvents = new(StringComparer.Ordinal);
+    private readonly List<string> visible = [];
+    private readonly List<string> inputs = [];
+    private readonly List<object> hostErrors = [];
+    private readonly ConcurrentQueue<string> timings = new();
+    private readonly ConcurrentQueue<string> liveTimings = new();
+    private long nextCommand, activeCommand;
+    private readonly long timingOrigin = Stopwatch.GetTimestamp();
+    private string interaction = "";
 
-    /// <summary>AI takes the player seat with that character's own declared rules (any role).</summary>
-    public void ConfigureAiSeat(int seed, int maxSelections, int maxObservations)
+    public long TimingClockUs() => (Stopwatch.GetTimestamp() - timingOrigin) * 1000000L / Stopwatch.Frequency;
+    private void Stamp(string stage, string id, string details = "", long? command = null)
     {
-        if (_session is not null) throw new InvalidOperationException("Configure the controller before starting a session.");
-        (_aiSeat, _agentSeed, _maxAgentSelections, _maxAgentObservations) = (true, seed, maxSelections, maxObservations);
+        var row = JsonSerializer.Serialize(new { real_us = TimingClockUs(), stage,
+            interaction_id = id, command_id = command ?? activeCommand, details });
+        timings.Enqueue(row);
+        liveTimings.Enqueue(row);
     }
-    public string AgentCandidateInputJson(string token)
+    public GArray PollTimings()
     {
-        try { return JsonSerializer.Serialize(Session.AgentCandidateInput(token)); }
-        catch (PlayerBoundaryException error) { return JsonSerializer.Serialize(new Dictionary<string, object?> { ["boundary"] = error.Code }); }
-    }
-    public bool AgentEnabled() => _session?.AgentEnabled ?? false;
-    public string AgentObservationJson() => JsonSerializer.Serialize(Session.AgentObservation);
-    public string AgentTimeJson() => JsonSerializer.Serialize(Session.AgentTime);
-    public int AgentSelections() => Session.AgentSelections;
-    public string AgentDecideJson()
-    {
-        try
-        {
-            var declaration = Session.AgentDeclaration ?? throw new PlayerBoundaryException("agent_not_declared");
-            _controller ??= new(declaration, _agentSeed);
-            return JsonSerializer.Serialize(_controller.Decide(Session.AgentObservation!, Session.AgentCognition));
-        }
-        catch (PlayerBoundaryException error)
-        { Session.CloseAgent(); return JsonSerializer.Serialize(new PlayerDecision(null, error.Code, null)); }
-        catch (Exception error)
-        { Session.CloseAgent(); GD.PushError(error.ToString()); return JsonSerializer.Serialize(new PlayerDecision(null, "engine_error", null)); }
-    }
-    public string AgentObservePanel(string panel, string runLabel)
-    {
-        try { Session.ObserveAgentPanel(panel, runLabel); return ""; }
-        catch (PlayerBoundaryException error) { Session.CloseAgent(); return error.Code; }
-    }
-    public string AgentObserveField(GArray offers)
-    {
-        try
-        {
-            var entries = offers.Select(v => FromDictionary(v.AsGodotDictionary())).Select(o =>
-            {
-                var point = (o.GetValueOrDefault("location") as IEnumerable<object?> ?? []).ToArray();
-                return new PlayerFieldOffer(ChapterEvents.Text(o, "label"), ChapterEvents.Text(o, "kind"),
-                    ChapterEvents.Flag(o, "new"), ChapterEvents.Map(o, "input"), Purpose: ChapterEvents.Text(o, "purpose"))
-                { Location = point.Length == 2 ? new(Convert.ToDouble(point[0]), Convert.ToDouble(point[1])) : null };
-            }).ToArray();
-            Session.ObserveAgentField(entries);
-            return "";
-        }
-        catch (PlayerBoundaryException error) { return error.Code; }
-    }
-    public void CloseAgent() => Session.CloseAgent();
-    public GArray DispatchField(GDict input)
-    {
-        try
-        {
-            var output = new GArray();
-            foreach (var ev in Session.DispatchField(FromDictionary(input))) output.Add(ToGodot(ev));
-            return output;
-        }
-        catch (PlayerBoundaryException error)
-        { return new GArray { ToGodot(ChapterEvents.Event("agent_stopped", ("reason", error.Code))) }; }
-        catch (Exception error)
-        {
-            GD.PushError(error.ToString());
-            return new GArray { ToGodot(ChapterEvents.Event("error", ("message", error.Message))) };
-        }
+        GArray result = new();
+        while (liveTimings.TryDequeue(out var row)) result.Add(row);
+        return result;
     }
 
-    private static IReadOnlyDictionary<string, string> ReadAuthorSources()
+    public void RecordTiming(GDict value) => Stamp(value.GetValueOrDefault("stage", "").AsString(),
+        value.GetValueOrDefault("interaction_id", interaction).AsString(), Json.Stringify(value));
+
+    public void ConfigureSession(GDict options)
     {
-        var sources = new SortedDictionary<string, string>(StringComparer.Ordinal);
-        try
-        {
-            var repository = System.IO.Path.GetFullPath(ProjectSettings.GlobalizePath("res://../"));
-            var scriptDirectory = ProjectSettings.GlobalizePath("res://scenes/Awakening/Script");
-            var paths = new List<string> { System.IO.Path.Combine(scriptDirectory, "chapter_01.story") };
-            try
-            {
-                paths.AddRange(System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(scriptDirectory, "story"),
-                    "*.story", System.IO.SearchOption.AllDirectories));
-            }
-            catch (Exception error)
-            { GD.PushWarning("Author story snapshot could not enumerate fragments; tracing continues: " + error.Message); }
-            foreach (var path in paths.OrderBy(p => System.IO.Path.GetRelativePath(repository, p).Replace('\\', '/'), StringComparer.Ordinal))
-            {
-                try
-                {
-                    var key = System.IO.Path.GetRelativePath(repository, path).Replace('\\', '/');
-                    sources[key] = System.IO.File.ReadAllText(path, System.Text.Encoding.UTF8);
-                }
-                catch (Exception error)
-                { GD.PushWarning("Author story snapshot could not read " + path + "; tracing continues: " + error.Message); }
-            }
-        }
-        catch (Exception error)
-        { GD.PushWarning("Author story snapshot could not be read; tracing continues: " + error.Message); }
-        return sources;
+        if (session is not null || busy || maintenance || commands.Count != 0 || closing || faulted)
+            throw new InvalidOperationException("Session options can only be configured before opening a new session");
+        optionsJson = Json.Stringify(options);
     }
 
-    public void RecordVisible(GDict payload) => Session.RecordVisible(FromDictionary(payload));
-    public void RecordInput(GDict payload) => Session.RecordInput(FromDictionary(payload));
-    public void CloseTrace() { _session?.Dispose(); }
-    public override void _ExitTree() => CloseTrace();
+    // Compatibility entry: control is an opening option, never a second decision path.
+    public void SetPlayerControlled(bool value)
+    {
+        var options = Parse(optionsJson);
+        options["controller"] = value ? "player" : "ai";
+        ConfigureSession(options);
+    }
+
+    public GDict Snapshot() => Parse(snapshotJson);
+    private static GDict Parse(string json) => Json.ParseString(json).AsGodotDictionary();
 
     public GArray Dispatch(GDict input)
     {
+        var json = Json.Stringify(input);
+        inputs.Add(json);
+        var command = ++nextCommand;
+        Stamp("command_received", input.GetValueOrDefault("interaction_id", interaction).AsString(), input.GetValueOrDefault("kind", "").AsString(), command);
+        if (closing) return new();
+        if (faulted)
+        {
+            Report(new InvalidOperationException("Session dispatch stopped after a host worker error"));
+            return new();
+        }
+        commands.Enqueue((command, json));
+        StartPump();
+        return new();
+    }
+
+    private void StartPump()
+    {
+        if (busy || maintenance || closing || faulted || commands.Count == 0) return;
+        busy = true;
+        work = DrainCommands();
+    }
+
+    private async Task DrainCommands()
+    {
         try
         {
-            var result = new GArray();
-            foreach (var ev in Session.Dispatch(FromDictionary(input)))
+            while (commands.Count != 0 && !closing && !maintenance && !faulted)
             {
-                if (ev.GetValueOrDefault("kind") as string == "save") { Save(ev); continue; }
-                result.Add(ToGodot(ev));
+                var queued = commands.Dequeue();
+                activeCommand = queued.Id;
+                var input = Parse(queued.Json);
+                var kind = input.GetValueOrDefault("kind", "").AsString();
+                if (input.ContainsKey("interaction_id")) interaction = input["interaction_id"].AsString();
+                var timingId = interaction;
+                Stamp("command_started", timingId, kind);
+                GArray events = new();
+                try
+                {
+                    if (kind == "start")
+                    {
+                        if (session is not null) throw new InvalidOperationException("Session is already open");
+                        var options = optionsJson;
+                        var opened = await Task.Run(() =>
+                        {
+                            Stamp("open_begin", timingId);
+                            var current = DvSession.OpenConfiguredCampaign(options);
+                            current.PhaseObserver = (stage, actor) => Stamp("dv_" + stage, timingId, actor);
+                            Stamp("open_end", timingId);
+                            Stamp("snapshot_begin", timingId);
+                            var initialSnapshot = current.Snapshot(current.Viewer);
+                            Stamp("snapshot_end", timingId);
+                            return (Session: current, Snapshot: initialSnapshot);
+                        });
+                        session = opened.Session;
+                        snapshotJson = opened.Snapshot;
+                        var snapshot = Snapshot();
+                        events.Add(new GDict { ["kind"] = "view", ["resource"] = snapshot["resource"] });
+                    }
+                    else if (kind == "view_ready" || kind == "dv_next" || kind == "select")
+                    {
+                        if (session is null) throw new InvalidOperationException("Session is not open");
+                        // An acknowledgement cannot redispatch an already executing intention.
+                        if (pendingEvent.Length != 0) continue;
+                        var selection = kind == "select" ? input["choice_id"].AsString() : "";
+                        var current = session;
+                        var prepared = await Task.Run(() =>
+                        {
+                            Stamp("prepare_begin", timingId, selection);
+                            var intent = current.Prepare(selection);
+                            Stamp("prepare_end", timingId);
+                            using var document = JsonDocument.Parse(intent);
+                            var root = document.RootElement;
+                            var ready = root.GetProperty("status").GetString() == "prepared";
+                            var actor = ready ? root.GetProperty("actor").GetString() : null;
+                            Stamp("snapshot_begin", timingId);
+                            var executionSnapshot = ready ? current.Snapshot(actor!) : "{}";
+                            var viewer = current.Viewer;
+                            // JSON strings are immutable; the two Godot boundaries still parse independent values.
+                            var viewerSnapshot = ready && string.Equals(actor, viewer, StringComparison.Ordinal)
+                                ? executionSnapshot : current.Snapshot(viewer);
+                            Stamp("snapshot_end", timingId);
+                            return (Intent: intent, Snapshot: viewerSnapshot, ExecutionSnapshot: executionSnapshot);
+                        });
+                        snapshotJson = prepared.Snapshot;
+                        var intent = Parse(prepared.Intent);
+                        if (intent.GetValueOrDefault("status", "").AsString() == "prepared")
+                            pendingEvent = intent["action_event"].AsString();
+                        events.Add(new GDict { ["kind"] = "state", ["snapshot"] = Snapshot() });
+                        events.Add(new GDict { ["kind"] = "dv_action", ["intent"] = intent,
+                            ["execution_snapshot"] = Parse(prepared.ExecutionSnapshot) });
+                    }
+                    else if (kind == "dv_complete")
+                    {
+                        var receipt = input["receipt"].AsGodotDictionary();
+                        var actionEvent = receipt.GetValueOrDefault("action_event", "").AsString();
+                        if (completedEvents.Contains(actionEvent)) continue;
+                        if (session is null || pendingEvent.Length == 0 || actionEvent != pendingEvent)
+                        {
+                            Report(new InvalidOperationException("Completion belongs to no pending host action"));
+                            continue;
+                        }
+                        var json = Json.Stringify(receipt);
+                        var current = session;
+                        var completed = await Task.Run(() =>
+                        {
+                            Stamp("complete_begin", timingId, actionEvent);
+                            var presentation = current.Complete(json, current.Viewer);
+                            Stamp("complete_end", timingId, actionEvent);
+                            Stamp("snapshot_begin", timingId);
+                            var projected = current.Snapshot(current.Viewer);
+                            Stamp("snapshot_end", timingId);
+                            return (Presentation: presentation, Snapshot: projected);
+                        });
+                        completedEvents.Add(actionEvent);
+                        pendingEvent = "";
+                        snapshotJson = completed.Snapshot;
+                        events.Add(new GDict { ["kind"] = "state", ["snapshot"] = Snapshot() });
+                        events.Add(new GDict { ["kind"] = "dv_present", ["presentation"] = Parse(completed.Presentation) });
+                    }
+                }
+                catch (Exception error)
+                {
+                    // A failed projection can follow a successful state transition. Never retry it blindly.
+                    faulted = true;
+                    hostErrors.Add(new { phase = kind, error = error.ToString() });
+                    Report(error);
+                }
+                // Reentrant signal handlers append to this pump; no input is dropped while it is busy.
+                if (!closing && events.Count != 0)
+                {
+                    Stamp("events_delivered", timingId, kind);
+                    Stamp("delivery_begin", timingId, kind);
+                    EmitSignal(SignalName.EventsReady, events);
+                    Stamp("delivery_end", timingId, kind);
+                }
+                Stamp("command_finished", timingId, kind);
             }
-            return result;
         }
         catch (Exception error)
         {
-            if (error is PlayerBoundaryException boundary)
-                return new GArray { ToGodot(ChapterEvents.Event("agent_stopped", ("reason", boundary.Code))) };
+            faulted = true;
+            hostErrors.Add(new { phase = "host-pump", error = error.ToString() });
             GD.PushError(error.ToString());
-            var output = new Dictionary<string, object?> { ["kind"] = "error", ["message"] = error.Message };
-            _session?.RecordOutput(output);
-            return new GArray { ToGodot(output) };
         }
+        finally { busy = false; }
     }
 
-    public GDict Snapshot() => _session is null ? new() : ToGodot(_session.Snapshot()).AsGodotDictionary();
-
-    /// <summary>UI-independent full session API. Buttons and file selection belong to the UI host.</summary>
-    public GDict ExportSession()
+    private void Report(Exception error)
     {
-        return Session.Save() switch
+        GD.PushError(error.ToString());
+        if (!closing) EmitSignal(SignalName.EventsReady, new GArray { new GDict { ["kind"] = "error", ["message"] = error.Message } });
+    }
+
+    private void RequireNoPendingExecution()
+    {
+        if (pendingEvent.Length != 0)
+            throw new InvalidOperationException("Session persistence is unavailable while a Godot action awaits its execution receipt");
+    }
+
+    private void RequireIdle(bool requireSession = true)
+    {
+        if (busy || maintenance || closing) throw new InvalidOperationException("Use the awaited persistence boundary while session work is active");
+        RequireNoPendingExecution();
+        if (requireSession && session is null) throw new InvalidOperationException("Session is not open");
+    }
+
+    public string Save()
+    {
+        RequireIdle();
+        try { return session!.Save(); }
+        catch (Exception error) { hostErrors.Add(new { phase = "save-sync", error = error.ToString() }); throw; }
+    }
+
+    public void Restore(string json)
+    {
+        RequireIdle(requireSession: false);
+        try { InstallRestored(Task.Run(() => RestoreValue(json)).GetAwaiter().GetResult()); }
+        catch (Exception error) { hostErrors.Add(new { phase = "restore-sync", error = error.ToString() }); throw; }
+    }
+
+    private static (DvSession Session, string Snapshot) RestoreValue(string json)
+    {
+        var current = DvSession.Restore(json);
+        return (current, current.Snapshot(current.Viewer));
+    }
+
+    private void InstallRestored((DvSession Session, string Snapshot) restored)
+    {
+        session = restored.Session;
+        snapshotJson = restored.Snapshot;
+        pendingEvent = "";
+        completedEvents.Clear();
+        // Commands accepted for the previous state cannot be replayed into a restored state.
+        commands.Clear();
+        faulted = false;
+    }
+
+    // Internal Task APIs deliberately stay out of Godot's Variant method binding.
+    internal Task<string> SaveAsync()
+    {
+        if (closing || maintenance) throw new InvalidOperationException("Session persistence is unavailable");
+        RequireNoPendingExecution();
+        maintenance = true;
+        var operation = SaveAfterAsync(work);
+        work = operation;
+        return operation;
+    }
+
+    private async Task<string> SaveAfterAsync(Task previous)
+    {
+        await Task.Yield();
+        try
         {
-            DualOntologyWorldEngine.Core.ContractResult<byte[]>.Success s => new() { ["ok"]=true,["data"]=s.Value },
-            DualOntologyWorldEngine.Core.ContractResult<byte[]>.Failure f => new() { ["ok"]=false,["code"]=f.Error.Code.ToString(),["path"]=f.Error.Path },
-            _ => throw new InvalidOperationException()
-        };
+            await previous;
+            RequireNoPendingExecution();
+            var current = session ?? throw new InvalidOperationException("Session is not open");
+            return await Task.Run(current.Save);
+        }
+        catch (Exception error) { hostErrors.Add(new { phase = "save", error = error.ToString() }); throw; }
+        finally { maintenance = false; StartPump(); }
     }
-    public GDict RestoreSession(byte[] data)
+
+    internal Task RestoreAsync(string json)
     {
-        return Session.Restore(data) switch
+        if (closing || maintenance) throw new InvalidOperationException("Session persistence is unavailable");
+        RequireNoPendingExecution();
+        maintenance = true;
+        var operation = RestoreAfterAsync(work, json);
+        work = operation;
+        return operation;
+    }
+
+    private async Task RestoreAfterAsync(Task previous, string json)
+    {
+        await Task.Yield();
+        try
         {
-            DualOntologyWorldEngine.Core.ContractResult<bool>.Success => new() { ["ok"]=true,["snapshot"]=Snapshot(),["restore_epoch"]=Session.RestoreEpoch.ToString("D") },
-            DualOntologyWorldEngine.Core.ContractResult<bool>.Failure f => new() { ["ok"]=false,["code"]=f.Error.Code.ToString(),["path"]=f.Error.Path },
-            _ => throw new InvalidOperationException()
-        };
+            await previous;
+            RequireNoPendingExecution();
+            InstallRestored(await Task.Run(() => RestoreValue(json)));
+        }
+        catch (Exception error) { hostErrors.Add(new { phase = "restore", error = error.ToString() }); throw; }
+        finally { maintenance = false; StartPump(); }
     }
 
-    private static void Save(IReadOnlyDictionary<string, object?> ev)
+    public void RecordVisible(GDict value) => visible.Add(Json.Stringify(value));
+    public void RecordInput(GDict value) => inputs.Add(Json.Stringify(value));
+    public async void CloseTrace()
     {
-        using var file = Godot.FileAccess.Open((string)ev["path"]!, Godot.FileAccess.ModeFlags.Write);
-        file?.StoreString(Json.Stringify(ToGodot(ev.GetValueOrDefault("data")), "\t"));
-    }
-
-    // ---------------------------------------------------------- conversion --
-
-    private static Dictionary<string, object?> FromDictionary(GDict input) => input.ToDictionary(p => p.Key.AsString(), p => FromGodot(p.Value));
-    private static object? FromGodot(Variant value) => value.VariantType switch
-    {
-        Variant.Type.Nil => null, Variant.Type.Dictionary => FromDictionary(value.AsGodotDictionary()),
-        Variant.Type.Array => value.AsGodotArray().Select(FromGodot).ToArray(),
-        Variant.Type.PackedStringArray => value.AsStringArray().Cast<object?>().ToArray(),
-        Variant.Type.Bool => value.AsBool(), Variant.Type.Int => value.AsInt64(), Variant.Type.Float => value.AsDouble(),
-        Variant.Type.Vector2 => new object?[] { (double)value.AsVector2().X, (double)value.AsVector2().Y },
-        _ => value.AsString(),
-    };
-    private static Variant ToGodot(object? value)
-    {
-        switch (value)
+        if (closing) return;
+        closing = true;
+        string? path = null;
+        var ownsDirectory = false;
+        var phase = "await-work";
+        var errors = new List<object>();
+        try
         {
-            case null: return default;
-            case string text: return text;
-            case System.Collections.IDictionary dictionary:
+            try { await work; }
+            catch (Exception error)
             {
-                var result = new GDict();
-                foreach (System.Collections.DictionaryEntry pair in dictionary) result[pair.Key.ToString()!] = ToGodot(pair.Value);
-                return result;
+                GD.PushError(error.ToString());
+                errors.Add(new { phase, error = error.ToString() });
             }
-            case IReadOnlyDictionary<string, object?> readOnly:
+            errors.AddRange(hostErrors);
+            phase = "create-directory";
+            path = ProjectSettings.GlobalizePath("user://dv-sessions/" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-ffff"));
+            if (Directory.Exists(path)) throw new IOException("Evidence directory already exists");
+            Directory.CreateDirectory(path);
+            ownsDirectory = true;
+            // A failed output must not suppress independent evidence or the save.
+            foreach (var output in new (string, IEnumerable<string>)[] {
+                ("inputs", inputs.ToArray()), ("visible", visible.ToArray()), ("interaction-timing", timings.ToArray()) })
             {
-                var result = new GDict();
-                foreach (var pair in readOnly) result[pair.Key] = ToGodot(pair.Value);
-                return result;
+                phase = output.Item1;
+                try
+                {
+                    var recordPath = Path.Combine(path, phase + ".dvlog");
+                    await Task.Run(() =>
+                    {
+                        DuelView.Compiled.BinaryEvidence.WriteJsonRecords(recordPath + ".partial", output.Item2);
+                        File.Move(recordPath + ".partial", recordPath, overwrite: false);
+                    });
+                }
+                catch (Exception error)
+                {
+                    GD.PushError(error.ToString());
+                    errors.Add(new { phase, error = error.ToString() });
+                }
             }
-            case System.Collections.IEnumerable sequence:
+            var current = session;
+            if (current is null) return;
+            phase = "trace";
+            var tracePath = Path.Combine(path, "session.dvdag");
+            try
             {
-                var result = new GArray();
-                foreach (var item in sequence) result.Add(ToGodot(item));
-                return result;
+                if (current.AuditMode)
+                {
+                    await Task.Run(() => current.WriteTrace(tracePath));
+                }
             }
-            case bool b: return b;
-            case int i: return i;
-            case long l: return l;
-            case double d: return d;
-            case float f: return f;
-            default: return value.ToString()!;
+            catch (Exception error)
+            {
+                GD.PushError(error.ToString());
+                errors.Add(new { phase, error = error.ToString() });
+            }
+            phase = "save";
+            var savePath = Path.Combine(path, "save.dvsave");
+            try
+            {
+                await Task.Run(() => current.WriteSave(savePath));
+            }
+            catch (Exception error)
+            {
+                GD.PushError(error.ToString());
+                errors.Add(new { phase, error = error.ToString() });
+            }
+        }
+        catch (Exception error)
+        {
+            GD.PushError(error.ToString());
+            errors.Add(new { phase, error = error.ToString() });
+        }
+        finally
+        {
+            try
+            {
+                if (ownsDirectory && path is not null)
+                {
+                    using var result = new FileStream(Path.Combine(path, "close-result.dvlog"), FileMode.CreateNew, System.IO.FileAccess.Write);
+                    result.Write(DuelView.Compiled.BinaryEvidence.Magic);
+                    var closeRecord = System.Text.Json.JsonSerializer.SerializeToElement(new { complete = errors.Count == 0, audit_mode = session?.AuditMode, trace_policy = session?.AuditMode == true ? "full" : "omitted-gameplay", session_opened = session is not null, unprocessed_commands = commands.Count, pending_action = pendingEvent, errors });
+                    DuelView.Compiled.BinaryEvidence.WriteFrame(result, closeRecord);
+                }
+            }
+            catch (Exception error) { GD.PushError(error.ToString()); }
+            EmitSignal(SignalName.TraceClosed);
         }
     }
 }

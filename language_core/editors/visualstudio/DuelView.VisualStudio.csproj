@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>DuelView.VisualStudio</AssemblyName>
+    <VsInstallDir Condition="'$(VsInstallDir)' == ''">$(ProgramW6432)\Microsoft Visual Studio\2022\Community</VsInstallDir>
+    <VsIde>$(VsInstallDir)\Common7\IDE</VsIde>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="Microsoft.VisualStudio.LanguageServer.Client" HintPath="$(VsIde)\CommonExtensions\Microsoft\LanguageServer\Microsoft.VisualStudio.LanguageServer.Client.dll" Private="false" />
+    <Reference Include="Microsoft.VisualStudio.CoreUtility" HintPath="$(VsIde)\CommonExtensions\Microsoft\Editor\Microsoft.VisualStudio.CoreUtility.dll" Private="false" />
+    <Reference Include="Microsoft.VisualStudio.Threading" HintPath="$(VsIde)\PublicAssemblies\Microsoft.VisualStudio.Threading.17.x\Microsoft.VisualStudio.Threading.dll" Private="false" />
+  </ItemGroup>
+</Project>
