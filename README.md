@@ -33,6 +33,8 @@ python language_core/tools/check_dv.py --format json language_core/30-session.dv
 
 Godot 首次打开工程时导入资源。CSV 本地化源及其 `.csv.import` 设置保留在版本控制中，生成的 `.translation` 由 Godot 重建；资源 `.import` 设置与需要的 `.uid` 应保留。游戏 OGG 音频需按 [音乐构建说明](music/README.md) 生成。地图完整重建的原始素材前提见 [Chapter2 资源说明](godot_csharp/ShareAsset/Internal/Props/Chapter2/README.md)。
 
+生活翼四寝区和公共起居厅使用同一 `living_floor` 执行地图；修改其源场景后运行 `python godot_csharp/tools/build_living_floor.py` 重新组合。室外分区保持独立。真实入口的后台截图/输入及等待诊断方式见 [工具说明](godot_csharp/tools/README.md)。
+
 PowerShell 启动示例，`GODOT` 指向 Godot .NET 程序：
 
 ```powershell

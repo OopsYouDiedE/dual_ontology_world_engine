@@ -46,8 +46,12 @@ def main():
     parser.add_argument("--out", required=True, type=Path, help="New evidence directory")
     parser.add_argument("--godot", default=os.environ.get("GODOT"))
     parser.add_argument("--dotnet-trace", default=shutil.which("dotnet-trace"))
+    parser.add_argument("--managed-profile", default="dotnet-sampled-thread-time",
+                        help="dotnet-trace profile name; current Windows versions sample managed thread time")
     parser.add_argument("--seconds", type=float, default=90)
     parser.add_argument("--controller", choices=("ai", "player"), default="ai")
+    parser.add_argument("--window-mode", choices=("offscreen", "window"), default="offscreen",
+                        help="Offscreen keeps real rendering, physics and viewport input without desktop focus")
     parser.add_argument("--speed", type=float, default=4.0, help="Explicit Godot playback speed; use 1 for normal-speed interaction checks")
     parser.add_argument("--managed-seconds", type=int, help="Managed sampling duration; defaults to window minus 10 seconds")
     parser.add_argument("--native-profiling", choices=("off", "full"), default="off",
@@ -63,6 +67,11 @@ def main():
     if managed_seconds <= 0 or managed_seconds >= args.seconds:
         parser.error("--managed-seconds must be positive and shorter than --seconds, so the profiler can drain before host exit")
     godot = Path(args.godot).resolve(strict=True)
+    # The Windows console executable is a wrapper, not the managed runtime PID.
+    if godot.name.endswith("_console.exe"):
+        runtime = godot.with_name(godot.name.replace("_console.exe", ".exe"))
+        if runtime.is_file():
+            godot = runtime
     trace = Path(args.dotnet_trace).resolve(strict=True)
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -75,17 +84,18 @@ def main():
     write_json(out / "source-before.json", before)
     session_root = Path(os.environ["APPDATA"]) / "Godot/app_userdata/Dual Ontology World Engine/dv-sessions"
     existing = {p.name for p in session_root.glob("*")}
-    command = [str(godot), "--path", str(ROOT / "godot_csharp"),
-               "--debug", *(["--profiling", "--gpu-profile"] if args.native_profiling == "full" else []), "--script", "res://tools/dv_level3_capture.gd", "--",
+    command = [str(godot), "--path", str(ROOT / "godot_csharp"), "--log-file", str(out / "godot-native.log"),
+               "--ignore-error-breaks", *(["--debug", "--profiling", "--gpu-profile"] if args.native_profiling == "full" else []), "--script", "res://tools/dv_level3_capture.gd", "--",
                f"--out={out / 'run'}", "--mode=" + ("detective" if args.controller == "ai" else "player"), f"--seconds={args.seconds}",
-               f"--dv-controller={args.controller}", f"--dv-speed={args.speed}", "--dv-audit"]
-    if args.controller == "player":
-        command.append("--dv-auto-start")
+               f"--dv-controller={args.controller}", f"--dv-speed={args.speed}", "--dv-audit", f"--window-mode={args.window_mode}"]
+    command.append("--dv-auto-start")
     launch = {
         "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT).decode().strip(),
-        "command": command, "profiling": ".NET cpu-sampling attached automatically; passive frame/phase timings retained",
+        "command": command, "profiling": ".NET managed thread stack sampling attached automatically; passive frame/phase timings retained",
+        "managed_profile": args.managed_profile,
         "native_profiling_requested": args.native_profiling,
+        "window_mode": args.window_mode,
         "managed_requested_seconds": managed_seconds,
         "managed_coverage": "Bounded sampling stops before native host exits; final capture tail is not managed-profiled",
         "scope": "Bounded rendered capture; profiling overhead included; not a completion test or speed comparison",
@@ -105,7 +115,7 @@ def main():
                 managed_ready = True
                 break
             time.sleep(0.1)
-        trace_command = [str(trace), "collect", "--process-id", str(game.pid), "--profile", "cpu-sampling",
+        trace_command = [str(trace), "collect", "--process-id", str(game.pid), "--profile", args.managed_profile,
                          "--duration", duration, "--output", str(out / "managed.nettrace")]
         launch.update({"game_pid": game.pid, "profiler_command": trace_command,
                        "managed_process_discovered": managed_ready,
@@ -150,13 +160,17 @@ def main():
         report_text = (out / "managed-hotspots.txt").read_text(encoding="utf-8", errors="replace")
         result["managed_report_readable"] = analysis.returncode == 0 and "[ERROR]" not in report_text and bool(report_text.strip())
     godot_output = (out / "godot-stdout.log").read_text(encoding="utf-8", errors="replace")
+    if (out / "godot-native.log").is_file():
+        godot_output += (out / "godot-native.log").read_text(encoding="utf-8", errors="replace")
+    result["godot_error_lines"] = [line for line in godot_output.splitlines()
+                                   if line.lstrip().startswith(("SCRIPT ERROR:", "ERROR:"))]
     result["godot_script_profile_confirmed"] = "BEGIN PROFILING" in godot_output
     result["native_profiling_requested"] = args.native_profiling
     result["gpu_profile_confirmed"] = "GPU PROFILE" in godot_output
     with RecordWriter(out / "result.dvlog") as output:
         output.append(result)
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return game_exit or collector_exit or (0 if result.get("managed_report_readable") else 1)
+    return game_exit or collector_exit or (0 if result.get("managed_report_readable") and not result["godot_error_lines"] else 1)
 
 
 if __name__ == "__main__":

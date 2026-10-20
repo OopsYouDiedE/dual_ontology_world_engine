@@ -50,6 +50,30 @@ and scripts when retaining their derivatives.
 
 ## Capture and inspection
 
+`build_living_floor.py` composes the five published living-wing scenes into
+`Maps/living_floor.tscn`. Source scenes and textures remain reconstruction inputs.
+It aligns shared door columns and inserts six hall rows to keep the north and
+south wings from overlapping. Geometry, labels, lights and collision move together;
+logical room identifiers remain unchanged. Rebuild this composite after changing
+any of its source scenes. Other buildings and exterior regions remain separate.
+
+For independent blind input use `profile_dv_capture.py --controller player
+--window-mode offscreen`. The default offscreen, unfocusable window still renders
+the real Host scene, physics and UI. A blind operator may read only captured PNGs
+and write ordinary key/click packets to the transient `run/input.json`; private
+measurement and session records are for the separate reviewer. `--window-mode
+window` opts into a visible window. This is bounded diagnosis, not completion.
+On Windows the launcher resolves Godot's console wrapper to the actual runtime
+executable before attaching managed sampling; the combined engine output is in
+`godot-native.log`. Current dotnet-trace defaults to `dotnet-sampled-thread-time`;
+these stack shares include waits and are not CPU utilization. Use
+`--managed-profile` when an older installed tool requires a different profile.
+Ordinary captures do not start the interactive stdout debugger. Script errors
+remain in the native log and result record, and make the launcher return failure.
+Native full profiling explicitly starts the script debugger and has greater overhead.
+`check_living_floor.gd` checks resource loading and collision/exit structure only,
+without starting DV or establishing gameplay acceptance.
+
 `profile_dv_capture.py` launches `dv_level3_capture.gd`, using the normal Host scene
 and FrameArchive. This gameplay capture runs only when that testing scope is
 requested. `dv_host_startup_probe.gd` and `capture_ui_start.gd` are targeted

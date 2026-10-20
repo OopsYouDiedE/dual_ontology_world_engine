@@ -18,6 +18,8 @@
 
 ## 生产路径与重建前提
 
+生活翼的正式执行地图为 `Maps/living_floor.tscn`。`tools/build_living_floor.py` 从四寝区及起居厅已发布场景合成该文件，直接引用原 PNG/CanvasTexture/法线与家具资源，不另画底图；五张源场景仍是重建输入，不能作为未使用成品删除。公共厅中段补接六格，其余场景仅平移，门禁改为同图屏障。改动源场景后重新运行此组合工具；室外分区和其他建筑维持原样。
+
 布局和绘制工具保留在 `godot_csharp/tools/chapter2_art/` 与 `build_chapter2_scenes.py`。仍被现役生产器调用的共用纯绘图模块位于 `tools/first_awakening_art/`；其目录名不构成旧剧情执行入口。地图标题和站点标签读取已有 manifest 中记录的文本，不再要求退役场景的编译 JSON。
 
 局部 `--text-only`、`--sites-only`、`--geometry-only` 模式使用现存 manifest、场景和 PNG；`--interiors-only` 另使用共用绘图配方重画室内与烘焙阴影。几何生成将家具 footprint 转成碰撞，核对出入口目标、出生点及来源标签。文本来源缺失时应报告具体缺口，不能从标识猜测剧情文案。

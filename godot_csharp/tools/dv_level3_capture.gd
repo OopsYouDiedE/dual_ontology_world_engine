@@ -18,8 +18,9 @@ var host_closed := false
 var archive_errors: Array = []
 
 func _initialize() -> void:
-	root.unfocusable = true
-	root.position = Vector2i(10000, 10000)
+	if "--window-mode=window" not in OS.get_cmdline_user_args():
+		root.unfocusable = true
+		root.position = Vector2i(10000, 10000)
 	Engine.time_scale = 1.0
 	_run.call_deferred()
 
@@ -44,10 +45,6 @@ func _run() -> void:
 	started = Time.get_ticks_msec()
 	host.engine.EventsReady.connect(_host_events)
 	RenderingServer.frame_post_draw.connect(_capture)
-	if mode == "detective":
-		await process_frame
-		_key(KEY_ENTER, true)
-		_key(KEY_ENTER, false)
 
 func _process(_delta: float) -> bool:
 	if not is_instance_valid(host) or finishing: return false
@@ -67,7 +64,7 @@ func _process(_delta: float) -> bool:
 		serial += 1
 		if packet is Dictionary:
 			_input_packet(packet)
-	if mode == "detective" and is_instance_valid(host.ui) and host.ui.dialogue.active:
+	if mode == "detective" and is_instance_valid(host.ui) and is_instance_valid(host.ui.dialogue_ui) and host.ui.dialogue_ui.is_dialogue_active():
 		if not dialogue_seen:
 			dialogue_seen = true
 			last_continue = Time.get_ticks_msec()

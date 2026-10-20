@@ -14,9 +14,10 @@ static func _fail_binding(node: Node, message: String) -> void:
 
 const SEAM := 36.0
 ## 地图里没有标记、由地图层补上的交互点。
-const EXTRA_SITES := {"zone_jia": {"litter": Vector2(440, 240)}}
+const EXTRA_SITES := {"zone_jia": {"litter": Vector2(440, 240)}, "living_floor": {"litter": Vector2(440, 240)}}
 ## 只作装饰、不开放交互的标记。
 const DECOR_MARKERS := ["transmitter", "isolation_gate", "lane", "harbor", "stele", "collapse", "counterweight"]
+static var _floor_parts: Dictionary = {}
 static var _static_routes: Dictionary = {}
 static var _static_spawns: Dictionary = {}
 static var _static_meta: Dictionary = {}
@@ -45,7 +46,7 @@ static func _ensure_static_manifest() -> void:
 				elif e.has("cells"):
 					var cl: Array = e.cells
 					pt = Vector2((cl[0] + cl[2]) * 16.0, (cl[1] + cl[3]) * 16.0)
-				edges.append({"to": str(e.get("target", "")), "point": pt})
+				edges.append({"to": "living_floor" if str(e.get("target", "")) == "living_hall" else str(e.get("target", "")), "point": pt})
 		_static_routes[rname] = edges
 		var spawns: Dictionary = rinfo.get("spawns", {})
 		var sp_dict := {}
@@ -61,6 +62,14 @@ static func _ensure_static_manifest() -> void:
 			var sz: Array = rinfo.size_px
 			meta_dict["map_size"] = Vector2(sz[0], sz[1])
 		_static_meta[rname] = meta_dict
+
+	# Only exterior doors remain map edges; the five interiors share one floor.
+	var floor_edges: Array = []
+	for edge: Dictionary in _static_routes.get("living_hall", []):
+		if str(edge.to).begins_with("zone_"): continue
+		var point: Vector2 = edge.point
+		floor_edges.append({"to": edge.to, "point": point + Vector2(1120, 128 + (192 if point.y >= 544 else 0))})
+	_static_routes["living_floor"] = floor_edges
 
 func _get_packed_map(map_name: String) -> PackedScene:
 	var path := MAPS % map_name
@@ -184,6 +193,11 @@ static func _append_actor_resource(paths: Array[String], sprite: String) -> void
 	if path not in paths: paths.append(path)
 
 func _new_map_record(layout: Node2D) -> Dictionary:
+	if layout.has_meta("floor_parts"): _floor_parts = layout.get_meta("floor_parts")
+	for exit in layout.get_node("Exits").get_children():
+		if str(exit.get_meta("target", "")) == "living_hall":
+			exit.set_meta("target", "living_floor")
+			exit.set_meta("spawn", "living_hall_" + str(exit.get_meta("spawn", "")))
 	return {"node": layout, "geometry": {}, "geometry_applied": false,
 		"geometry_nodes": [], "access_shapes": {}, "relief_ready": false, "resources": {}}
 
@@ -343,7 +357,7 @@ func _apply_record_access(map_name: String, record: Dictionary, access: Dictiona
 	if solids == null: return false
 	var changed := false
 	for exit in layout.get_node("Exits").get_children():
-		var disabled := bool(access.get(str(exit.get_meta("target")), true))
+		var disabled := bool(access.get(str(exit.get_meta("gate", exit.get_meta("target", ""))), true))
 		var barrier: CollisionShape2D = record.access_shapes.get(exit.name)
 		if not is_instance_valid(barrier):
 			var source := exit.get_node("Shape") as CollisionShape2D
@@ -490,10 +504,11 @@ func _append_room_row(map_name: String, layout: Node2D, y: int, rooms: Dictionar
 	for x in grid.region.size.x:
 		var cell := Vector2i(x, y)
 		var point := grid.get_point_position(cell)
-		var room := map_name + ":" + _region_in_map(map_name, Vector2i((point / 32.0).floor()))
+		var room := _room_id(map_name, Vector2i((point / 32.0).floor()))
 		if not navigation.has(room): navigation[room] = []
 		navigation[room].append(cell)
 		if grid.is_point_solid(cell): continue
+		if room == "void": continue
 		if not outdoor and _mark_in_rows(rows, Vector2i((point / 32.0).floor())) not in [".", "S"]: continue
 		if not rooms.has(room): rooms[room] = {"open": [], "fallback": []}
 		rooms[room].fallback.append(point)
@@ -501,7 +516,7 @@ func _append_room_row(map_name: String, layout: Node2D, y: int, rooms: Dictionar
 		for offset in [Vector2.LEFT * 16, Vector2.RIGHT * 16, Vector2.UP * 16, Vector2.DOWN * 16]:
 			var near: Vector2 = point + offset
 			var near_cell := Vector2i((near / 32.0).floor())
-			if map_name + ":" + _region_in_map(map_name, near_cell) != room or not _walkable_on_map(map_name, near) or (not outdoor and _mark_in_rows(rows, near_cell) not in [".", "S"]):
+			if _room_id(map_name, near_cell) != room or not _walkable_on_map(map_name, near) or (not outdoor and _mark_in_rows(rows, near_cell) not in [".", "S"]):
 				can_turn = false
 				break
 		if can_turn: rooms[room].open.append(point)
@@ -601,6 +616,7 @@ func load_map(next: String, _spawn: String) -> void:
 	# collision proxies are attached, and after any visible fade has completed.
 	armed = false
 	for exit in map.get_node("Exits").get_children():
+		if bool(exit.get_meta("internal_gate", false)): continue
 		(exit as Area2D).monitoring = true
 		(exit as Area2D).body_entered.connect(_on_exit_entered.bind(exit))
 		(exit as Area2D).body_exited.connect(_on_exit_left)
@@ -662,7 +678,7 @@ func door_point(fallback: Vector2) -> Vector2:
 # ------------------------------------------------------------- movement ---
 
 func _on_exit_entered(body: Node, exit: Area2D) -> void:
-	if body != field.player or not armed or _route_target_next != str(exit.get_meta("target")): return
+	if body != field.player or not armed or _route_target_next != str(exit.get_meta("target", "")): return
 	armed = false
 	_switching = true
 	field._cancel_motion(field.player)
@@ -843,6 +859,18 @@ func sight_region(cell: Vector2i) -> String:
 	return _region_in_map(key, cell)
 
 static func _region_in_map(map_name: String, cell: Vector2i) -> String:
+	if map_name == "living_floor":
+		# Hall owns the shared wall columns; room names keep the DV contract.
+		var order := ["living_hall", "zone_yi", "zone_jia", "zone_bing", "zone_ding"]
+		for part: String in order:
+			if not _floor_parts.has(part): continue
+			var offset: Array = _floor_parts[part]
+			var local := cell - Vector2i(Vector2(float(offset[0]), float(offset[1])) / 32.0)
+			var size := Vector2i(16, 46) if part == "living_hall" else Vector2i(36, 22)
+			if not Rect2i(Vector2i.ZERO, size).has_point(local): continue
+			if part == "living_hall" and local.y >= 17: local.y = maxi(16, local.y - 6)
+			return part + ":" + _region_in_map(part, local)
+		return "void"
 	# 分区坐标直接对应 chapter2_art/rooms.py 的原生房间格；东区为水平镜像。
 	if map_name in ["zone_yi", "zone_jia", "zone_ding", "zone_bing"]:
 		var x := 35 - cell.x if map_name in ["zone_yi", "zone_ding"] else cell.x
@@ -860,13 +888,27 @@ static func _region_in_map(map_name: String, cell: Vector2i) -> String:
 		"logistics": return "kitchen" if cell.x < 13 else "dining"
 	return map_name
 
-func room_of(p: Vector2) -> String: return key + ":" + sight_region(Vector2i((p / 32.0).floor()))
+static func _room_id(map_name: String, cell: Vector2i) -> String:
+	var region := _region_in_map(map_name, cell)
+	return region if map_name == "living_floor" else map_name + ":" + region
+
+func room_of(p: Vector2) -> String: return _room_id(key, Vector2i((p / 32.0).floor()))
 ## A source-side threshold belongs to its departure room, but is not arrival.
 func departure_room(p: Vector2) -> String:
 	var entered := entered_room(p)
 	if entered != "": return entered
-	if walkable(p) and _terrain_mark(Vector2i((p / 32.0).floor())) == "D": return room_of(p)
+	if _terrain_mark(Vector2i((p / 32.0).floor())) == "D" and _departure_footpoint_clear(p): return room_of(p)
 	return ""
+
+## Source identity uses the retained body's continuous footpoint. Its nav-cell
+## centre can lie inside a neighbouring inflated wall although the body is clear.
+## Keep the original inflation and all destination/navigation checks unchanged.
+func _departure_footpoint_clear(p: Vector2) -> bool:
+	var grid: AStarGrid2D = _grids.get(key)
+	if grid == null or not grid.region.has_point(Vector2i((p / 16.0).floor())): return false
+	for rect: Rect2 in _blocked_rects.get(key, []):
+		if rect.has_point(p): return false
+	return true
 
 func _terrain_mark(cell: Vector2i) -> String:
 	var rows: Array = map.get_meta("terrain_rows", []) if map else []

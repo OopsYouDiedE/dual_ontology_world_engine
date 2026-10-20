@@ -48,6 +48,8 @@ Main 的导出属性以及 `--dv-controller=`、`--dv-viewer=`、`--dv-profile=`
 
 ## 空间输入与现场执行
 
+门槛 D 格的出发房间身份使用保留身体的连续脚点核对原膨胀障碍矩形；相邻导航格中心落在墙内不能单独抹去合法门槛脚点的出发身份。导航、目的地、站点半径及到达误差仍按原规则核对，不把门槛出发当作目标到达。
+
 同房间内 WASD/鼠标行走由宿主寻路和真实碰撞执行，不提交 DV，不扣游戏时间或动作步数，也不产生观察、答案或成功交互。`awaiting_input` 更新现场资格表；玩家接近物件或人物后交互，单一动作直接提交，多动作在接触点显示局部选择。随身/等待操作仍由 DV 资格表准入。Main 在正式执行前复核人工热点接触。
 
 跨房间仅提交 DV 已准入的移动 ID。鼠标点击门道时先按实际几何匹配唯一邻室并真实走到门口；E 可在近距门口发起同一动作，多义门不猜选。门道 D 格可用于出发核对，但不作为到达邻室或获得观察的依据。
@@ -65,6 +67,10 @@ Main 的导出属性以及 `--dv-controller=`、`--dv-viewer=`、`--dv-profile=`
 相同人物与场地的静态占位体复用，实时同步实体变换、碰撞层与形状；只在主体不再属于该资源/地图、实体转交或场地关闭时撤销，避免每次快照重建一批碰撞节点。
 
 ## 地图、呈现与资源
+
+生活翼同层统一使用 `Maps/living_floor.tscn`，由 `tools/build_living_floor.py` 组合五张已发布场景生成；原场景和纹理保留为生成输入。四寝区隔离门是同图物理屏障，使用 DV 提供的各区放行值，不触发切图。逻辑房间标识保持 `zone_*:*` / `living_hall:*`，执行地图统一为 `living_floor`；室外分区及不同建筑不合并。公共厅中段补接六格以避免原局部底图相互重叠，门、标记、碰撞与灯光同步变换。
+
+实际盲测可通过 `profile_dv_capture.py --controller player --window-mode offscreen` 启动真实 Main 场景，使用保存的渲染截图及 `input.json` 瞬时输入包操作普通视口输入。默认离屏且不可聚焦，保留图形渲染与物理，不使用 headless 逻辑运行替代；独立盲玩代理只读取该轮画面与通用输入协议。`--window-mode window` 可恢复可见窗口。
 
 `dvg_snapshot.geometry_bindings` 提供地图站点、道具、纹理、位置与 footprint。`CampusMapView` 按声明建立 Marker2D、Sprite2D、碰撞与导航；相同声明不重复重建。场景和动态呈现均由内容声明驱动，宿主不以解析剧情动作 ID 替代空间绑定。
 
@@ -87,6 +93,8 @@ UI 样式、颜色与排版统一由 Theme/StyleBox 等 Resource 维护；不在
 Session 呈现保留 surface/lines 和 `source_refs`。Main 为发出的正文记录 `execution_event`、`source_id`、`source_field`、`emitted_line_index`、`paragraph_index` 与 `line_id`。过滤后的显示序号不冒充源行号，缺少来源不补造；`PlayerViewTrace` 在实际 `frame_post_draw` 后记录首帧，待显示正文与已绘制正文分开。
 
 ## 保存、计时与证据
+
+`input_gate_state` 在实际绘制后的输入门状态变化时记录 UI 占用、阅读、提交锁、待执行主体/动作、现场任务、地图切换和队列长度。它只诊断“强制等待”，不修改准入、调度或输入锁；与实际输入、Prepare/Complete、现场执行和玩家截图配对解释。
 
 显式保存/恢复拒绝现场 pending，异步维护先等待后台任务并再次核对。关闭允许保留真实 pending，等待在途工作后分别封存输入、可见正文、计时、会话及存档。每项输出独立捕获异常，一项失败仍尝试其余项；先写 `.partial`，成功才发布正式名，失败保留部分文件。Session 的写接口自行发布，宿主不重复改名；关闭链只调用一次 SessionClose。证据目录独占创建，不覆盖既有记录，异常也释放关闭等待。`TraceClosed` 只表示关闭结束，完整性依 `close-result.dvlog` 中各阶段结果判断。
 

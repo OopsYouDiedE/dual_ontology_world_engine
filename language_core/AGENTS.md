@@ -60,6 +60,8 @@ python language_core/tools/dv_lsp.py
 
 ## 正式动作与空间接口
 
+生活翼合图后，60 的宿主绑定统一投影到 `living_floor`，仍保留 `zone_*:*` 与 `living_hall:*` 执行房间、原逻辑地点及站点 ID。各区隔离门开闭独立投影为同图屏障资格，不以观察者已在同一张地图为由开放其他寝区；世界与人物认识不随合图改写。
+
 唯一动作链为 `60-game.dv` → `30-session.dv` Prepare → 宿主实际执行/世界法则回执 → Complete。DV 负责选择、报价、权威效果、观察、传播与结算；Godot Main → WorldView 执行空间与碰撞。界面呈现结束本身不另起 Prepare，等待回执时不重复分派意图。
 
 同房间 WASD/鼠标接近由宿主真实寻路与碰撞执行，不提交 DV、不扣 DV 时间或行动步数；热点交互与跨房间仍走共同链。`dvs_player_options` 只返回本人准入候选，60 附加 kind/interaction 与原生资源绑定，不返回隐藏值。`dvs_select_player` 再核对资格；人工 `manual_only` 只在临时只读 `manual_input` 视图开放，不写回自主人物。

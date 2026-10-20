@@ -105,7 +105,7 @@ fn c1_player_replay_summary(actor):
 // Authored location bindings. Geometry remains owned by the existing map assets.
 fn dvg_place(location):
     let places = {
-        "living_hall": {"map": "living_hall", "room": "living_hall:hall", "spawn": "east_south"},
+        "living_hall": {"map": "living_floor", "room": "living_hall:hall", "spawn": "living_hall_east_south"},
         "central_hall": {"map": "central_hall", "room": "central_hall:central_hall"},
         "lecture": {"map": "lecture", "room": "lecture:lecture"},
         "logistics": {"map": "logistics", "room": "logistics:dining"},
@@ -115,27 +115,27 @@ fn dvg_place(location):
         "resonance_hall": {"map": "resonance", "room": "resonance:hall"},
         "quiet_room": {"map": "resonance", "room": "resonance:silent"},
         "white_tower_safe": {"map": "clinic", "room": "clinic:safety"},
-        "washroom": {"map": "living_hall", "room": "living_hall:bath"},
+        "washroom": {"map": "living_floor", "room": "living_hall:bath"},
         "resonance": {"map": "resonance", "room": "resonance:hall"},
         "outdoor_meter": {"map": "campus_n", "room": "campus_n:campus_n", "anchor": "site:outdoor_meter"},
         "outdoor_high": {"map": "campus_n", "room": "campus_n:campus_n", "anchor": "site:outdoor_high"},
         "outdoor_alley": {"map": "campus_sw", "room": "campus_sw:campus_sw", "anchor": "lane_east"},
         "oath_court": {"map": "campus_s", "room": "campus_s:campus_s", "anchor": "site:oath_court"},
-        "threshold.contract": {"map": "living_hall", "room": "living_hall:hall", "anchor": "west_north"},
-        "threshold.astral": {"map": "living_hall", "room": "living_hall:hall", "anchor": "west_south"},
-        "threshold.logistics": {"map": "living_hall", "room": "living_hall:hall", "anchor": "east_north"},
-        "dorm.contract": {"map": "zone_jia", "room": "zone_jia:hall"},
-        "dorm.astral": {"map": "zone_bing", "room": "zone_bing:hall"},
-        "dorm.logistics": {"map": "zone_ding", "room": "zone_ding:hall"},
-        "dorm.yi": {"map": "zone_yi", "room": "zone_yi:hall"},
-        "foyer": {"map": "zone_yi", "room": "zone_yi:foyer", "spawn": "from_hall"},
-        "hall": {"map": "zone_yi", "room": "zone_yi:hall"},
-        "R05": {"map": "zone_yi", "room": "zone_yi:north_1", "anchor": "site:bed"},
-        "R06": {"map": "zone_yi", "room": "zone_yi:south_1"},
-        "R07": {"map": "zone_yi", "room": "zone_yi:south_2"},
-        "R08": {"map": "zone_yi", "room": "zone_yi:north_2"},
-        "corridor": {"map": "zone_yi", "room": "zone_yi:corridor"},
-        "pantry": {"map": "zone_yi", "room": "zone_yi:prep"}}
+        "threshold.contract": {"map": "living_floor", "room": "living_hall:hall", "anchor": "living_hall_west_north"},
+        "threshold.astral": {"map": "living_floor", "room": "living_hall:hall", "anchor": "living_hall_west_south"},
+        "threshold.logistics": {"map": "living_floor", "room": "living_hall:hall", "anchor": "living_hall_east_north"},
+        "dorm.contract": {"map": "living_floor", "room": "zone_jia:hall"},
+        "dorm.astral": {"map": "living_floor", "room": "zone_bing:hall"},
+        "dorm.logistics": {"map": "living_floor", "room": "zone_ding:hall"},
+        "dorm.yi": {"map": "living_floor", "room": "zone_yi:hall"},
+        "foyer": {"map": "living_floor", "room": "zone_yi:foyer", "spawn": "zone_yi_from_hall"},
+        "hall": {"map": "living_floor", "room": "zone_yi:hall"},
+        "R05": {"map": "living_floor", "room": "zone_yi:north_1", "anchor": "site:bed"},
+        "R06": {"map": "living_floor", "room": "zone_yi:south_1"},
+        "R07": {"map": "living_floor", "room": "zone_yi:south_2"},
+        "R08": {"map": "living_floor", "room": "zone_yi:north_2"},
+        "corridor": {"map": "living_floor", "room": "zone_yi:corridor"},
+        "pantry": {"map": "living_floor", "room": "zone_yi:prep"}}
     return dv_find(places, location, {"map": "", "room": location})
 
 fn dvg_intent(state):
@@ -272,7 +272,7 @@ fn dvg_map_access(state, current_map):
         if zone.group != "living":
             condition = dv_all([c1_other_claim(zone.group, "outer_latch_released"), dv_fact(c1_other_access_ref(zone.group), true)])
         let opened = dv_truth(state.physical, condition) == "true"
-        maps = dv_with(maps, zone.map, opened or current_map == zone.map)
+        maps = dv_with(maps, zone.map, opened)
         if current_map == zone.map:
             maps = dv_with(maps, "living_hall", opened)
         i = i + 1
@@ -280,17 +280,17 @@ fn dvg_map_access(state, current_map):
 
 // Spatial additions are content declarations. Sampling and safety remain DV actions.
 fn dvg_site_titles(map):
-    if map == "zone_yi":
+    if map == "living_floor":
         return {"bed": {"title": "床"}, "transmitter": {"title": "铜口"}, "zone_rules": {"title": "公告框"}, "E1": {"title": "隔离门"}, "E2": {"title": "门底与木楔"}, "E6": {"title": "苏泠的书桌"}, "E7": {"title": "活动厅长桌"}, "E10": {"title": "备餐柜台"}, "E11": {"title": "置物架"}, "E12": {"title": "风衣"}}
     return {}
 
 fn dvg_sprite_sites(map):
-    if map == "zone_yi":
+    if map == "living_floor":
         return {"N1Bed": "bed", "N1Coat": "E12", "R05Shelf": "E11", "R05ShelfTrace": "E11", "Transmitter": "transmitter", "InnerBolt": "E1", "Slate": "E7", "Jar": "E10"}
     return {}
 
 fn dvg_geometry_bindings():
-    return {"zone_yi": {"sites": [{"id": "E12", "point": [876, 246], "label": "风衣"}], "props": []}, "campus_n": {"sites": [{"id": "outdoor_meter", "point": [672, 1416], "label": "户外仪器阵"}, {"id": "outdoor_high", "point": [672, 1272], "label": "高地通路"}], "props": [{"id": "outdoor_dial", "texture": "res://ShareAsset/Internal/Props/Outdoor/dial_meter.svg", "position": [704, 1416], "footprint": [-10, -8, 20, 8]}]}}
+    return {"living_floor": {"sites": [{"id": "E12", "point": [2476, 950], "label": "风衣"}], "props": []}, "campus_n": {"sites": [{"id": "outdoor_meter", "point": [672, 1416], "label": "户外仪器阵"}, {"id": "outdoor_high", "point": [672, 1272], "label": "高地通路"}], "props": [{"id": "outdoor_dial", "texture": "res://ShareAsset/Internal/Props/Outdoor/dial_meter.svg", "position": [704, 1416], "footprint": [-10, -8, 20, 8]}]}}
 
 fn dvg_snapshot(state, viewer):
     return dvg_snapshot_with_intent(state, viewer, dvg_intent(state))

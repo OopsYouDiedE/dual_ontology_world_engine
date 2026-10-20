@@ -408,6 +408,7 @@ class RuntimeDiagnosticsInner extends Node:
 	var first_visible: Dictionary = {}
 	var process_begin := 0
 	var render_begin := 0
+	var last_input_state: Dictionary = {}
 	const FRAME_GAP_US := 50000
 
 	func configure(value: Node) -> void:
@@ -431,6 +432,19 @@ class RuntimeDiagnosticsInner extends Node:
 		if not is_instance_valid(host.field): return
 		var field: Node2D = host.field
 		if not is_instance_valid(field.adapter): return
+		var spatial: Node = field.spatial
+		var input_state := {"map": str(field.adapter.map_key()), "room": str(field.snapshot.get("execution_room", "")),
+			"ui_busy": is_instance_valid(host.ui) and host.ui.is_busy(), "reading": host._reading,
+			"background_execution": host._background_execution, "draining": host._draining,
+			"queued_events": host._queue.size(), "map_switching": field.adapter.switching(),
+			"submitted": is_instance_valid(spatial) and spatial.submitted,
+			"options": spatial.options.size() if is_instance_valid(spatial) else 0,
+			"input_enabled": spatial.enabled() if is_instance_valid(spatial) else false,
+			"intent_actor": str(host._dv_intent.get("actor", "")), "intent_action": str(host._dv_intent.get("action", {}).get("id", "")),
+			"physical_jobs": field._daily.keys()}
+		if input_state != last_input_state:
+			last_input_state = input_state.duplicate(true)
+			host._timing("input_gate_state", input_state)
 		var viewport_rect := field.get_viewport_rect()
 		for key in field.actors:
 			var actor = field.actors[key]
