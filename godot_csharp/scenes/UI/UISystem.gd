@@ -1,11 +1,12 @@
 extends Control
 
-## UI 总装容器与事件总线：解耦汇聚 6 大界面，向上与 Host/Main 提供纯数据通信。
+## UI presentation and one modal owner; only pure data crosses the Host boundary.
 signal ui_event(event: Dictionary)
 signal step_dialogue
 signal dialogue_option_selected(choice_id: String)
 
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
+const Transition := preload("res://scenes/UI/UITransition.gd")
 const SETTINGS_SCENE := preload("res://scenes/UI/SettingsUI.tscn")
 const HUD_SCENE := preload("res://scenes/UI/FieldHUD.tscn")
 const INVESTIGATION_SCENE := preload("res://scenes/UI/InvestigationUI.tscn")
@@ -15,164 +16,301 @@ var settings_ui: CanvasLayer
 var hud_ui: CanvasLayer
 var investigation_ui: CanvasLayer
 var dialogue_ui: CanvasLayer
-
 var snapshot: Dictionary = {}
 var _closing := false
 var _trace_display: Dictionary = {}
+var _pending_modal: Dictionary = {}
+var _modal_cycle := false
+var _modal_kind := ""
+var _return_focus: WeakRef
+var _spatial_context: Dictionary = {}
+var _pending_action: Dictionary = {}
+var _screen_motion = Transition.new()
+
+@onready var _screen_layer: CanvasLayer = $TransitionLayer
+@onready var _screen_fader: ColorRect = $TransitionLayer/ScreenFader
 
 var hud: CanvasLayer:
-	get:
-		return hud_ui
+	get: return hud_ui
 
 var fader: ColorRect:
-	get:
-		return dialogue_ui.get_fader() if is_instance_valid(dialogue_ui) else null
+	get: return _screen_fader
 
 var ui_busy: bool:
-	get:
-		return is_busy()
+	get: return is_busy()
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_instantiate_subsystems()
-
-func _instantiate_subsystems() -> void:
+	_screen_motion.configure(self, _screen_layer, _screen_fader, null, false, 1.0)
+	_screen_motion.completed.connect(_on_screen_transition_completed)
 	hud_ui = HUD_SCENE.instantiate()
 	add_child(hud_ui)
-	hud_ui.settings_requested.connect(func(): open_settings())
-
+	hud_ui.settings_requested.connect(open_settings)
 	dialogue_ui = DIALOGUE_SCENE.instantiate()
 	add_child(dialogue_ui)
-	dialogue_ui.dialogue_step.connect(func(): step_dialogue.emit())
+	dialogue_ui.dialogue_step.connect(func():
+		if not _closing: step_dialogue.emit()
+	)
 	dialogue_ui.choice_selected.connect(func(cid: String):
+		if _closing: return
 		dialogue_option_selected.emit(cid)
 		ui_event.emit({"kind": "choice", "id": cid})
 	)
 	dialogue_ui.dialogue_finished.connect(func(_last_choice: String):
-		step_dialogue.emit()
+		if not _closing:
+			step_dialogue.emit()
+			_flush_pending_action()
 	)
-
+	dialogue_ui.history_closed.connect(_activate_pending_modal)
 	investigation_ui = INVESTIGATION_SCENE.instantiate()
 	add_child(investigation_ui)
-	investigation_ui.action_chosen.connect(func(aid: String):
-		ui_event.emit({"kind": "card_action", "id": aid})
-	)
-
+	investigation_ui.restore_previous_focus = false
+	investigation_ui.action_chosen.connect(_on_investigation_action)
+	investigation_ui.closed.connect(_on_modal_closed)
 	settings_ui = SETTINGS_SCENE.instantiate()
 	add_child(settings_ui)
+	settings_ui.restore_previous_focus = false
+	settings_ui.closed.connect(_on_modal_closed)
+	settings_ui.reopen_requested.connect(open_settings)
+	var settings := get_node_or_null("/root/GameSettings")
+	if settings != null: settings.setting_changed.connect(_on_setting_changed)
 
 func begin_shutdown() -> void:
+	if _closing: return
 	_closing = true
+	_pending_modal.clear()
+	_pending_action.clear()
+	_return_focus = null
+	_screen_motion.dispose()
+	settings_ui.begin_shutdown()
+	investigation_ui.begin_shutdown()
+	dialogue_ui.begin_shutdown()
+	hud_ui.begin_shutdown()
+
+func _exit_tree() -> void:
+	_screen_motion.dispose()
 
 func is_busy() -> bool:
-	if is_instance_valid(dialogue_ui) and dialogue_ui.is_dialogue_active():
-		return true
-	if is_instance_valid(investigation_ui) and investigation_ui.visible:
-		return true
-	if is_instance_valid(settings_ui) and settings_ui.visible:
-		return true
-	return false
+	return _closing or _screen_motion.is_active() or _modal_cycle or not _pending_modal.is_empty() \
+		or (is_instance_valid(dialogue_ui) and dialogue_ui.is_dialogue_active()) \
+		or (is_instance_valid(investigation_ui) and investigation_ui.is_active()) \
+		or (is_instance_valid(settings_ui) and settings_ui.is_active())
+
+## These methods only cover/uncover the screen. They never step or replace text.
+func fade_out() -> bool:
+	if _closing: return false
+	var request_id: int = _screen_motion.request(true, true, 0.16)
+	_sync_overlay_input()
+	return await _screen_motion.wait_for(request_id)
+
+func fade_in() -> bool:
+	if _closing: return false
+	var request_id: int = _screen_motion.request(false, true, 0.20)
+	_sync_overlay_input()
+	return await _screen_motion.wait_for(request_id)
+
+func transition_out() -> bool:
+	return await fade_out()
+
+func transition_in() -> bool:
+	if _closing: return false
+	if not _screen_motion.is_active(): _screen_motion.request(true, false)
+	return await fade_in()
+
+func _on_screen_transition_completed(_request_id: int, shown: bool, cancelled: bool) -> void:
+	if _closing or cancelled: return
+	_sync_overlay_input()
+	if not shown: _activate_pending_modal()
+
+func _on_setting_changed(section: String, key: String, value: Variant) -> void:
+	if section == "accessibility" and key == "reduce_motion" and bool(value): _screen_motion.finish_current()
 
 func apply_snapshot(data: Dictionary) -> void:
-	snapshot = data.duplicate(true)
-	if is_instance_valid(dialogue_ui):
-		dialogue_ui.configure_cast(snapshot.get("cast", {}))
-	if is_instance_valid(hud_ui):
-		hud_ui.apply_snapshot(snapshot)
+	# Main publishes completed projections. UI reads them without mutating or
+	# repeatedly deep-copying the whole snapshot for a handful of display fields.
+	snapshot = data
+	if is_instance_valid(dialogue_ui): dialogue_ui.configure_cast(snapshot.get("cast", {}))
+	if is_instance_valid(hud_ui): hud_ui.apply_snapshot(snapshot)
 
 func present(ev: Dictionary) -> Dictionary:
 	if _closing or ev.is_empty(): return {}
 	_trace_display = ev
 	match str(ev.get("kind", "")):
 		"lines":
-			if is_instance_valid(dialogue_ui):
-				dialogue_ui.start_dialogue(ev)
-				var choice = await dialogue_ui.dialogue_finished
-				return {"trace_id": str(ev.get("trace_id", "")), "choice": choice}
-			return {}
-		"aside":
-			show_aside(str(ev.get("text", "")), float(ev.get("seconds", 2.5)))
-		"flash", "title":
-			show_flash(str(ev.get("text", "")), float(ev.get("seconds", 1.8)))
-		"hint":
-			set_hint(str(ev.get("text", "")))
-		"card":
-			open_card(ev)
-		"ending":
-			open_ending(ev)
-		"music":
-			Sound.music(str(ev.get("id", "")), float(ev.get("fade", 1.6)))
-		"sound":
-			Sound.sfx(str(ev.get("id", "")), float(ev.get("volume", 0.0)))
-		"duck":
-			Sound.duck(bool(ev.get("on", false)))
-		"close", "interaction_closed":
-			close_modal()
+			var result: Dictionary = await dialogue_ui.play_dialogue(ev)
+			result["trace_id"] = str(ev.get("trace_id", ""))
+			return result
+		"aside": show_aside(str(ev.get("text", "")), float(ev.get("seconds", 2.5)))
+		"flash", "title": show_flash(str(ev.get("text", "")), float(ev.get("seconds", 1.8)))
+		"hint": set_hint(str(ev.get("text", "")))
+		"card": open_card(ev)
+		"ending": open_ending(ev)
+		"music": Sound.music(str(ev.get("id", "")), float(ev.get("fade", 1.6)))
+		"sound": Sound.sfx(str(ev.get("id", "")), float(ev.get("volume", 0.0)))
+		"duck": Sound.duck(bool(ev.get("on", false)))
+		"close", "interaction_closed": close_modal()
 	return {}
 
-func spatial_choices(input: Dictionary) -> void:
-	if is_instance_valid(investigation_ui):
-		investigation_ui.show_spatial_choices(input)
+func _request_modal(kind: String, data: Dictionary = {}) -> void:
+	if _closing or not _pending_action.is_empty(): return
+	if not _modal_cycle:
+		var focused := get_viewport().gui_get_focus_owner()
+		_return_focus = weakref(focused) if focused != null else null
+	_modal_cycle = true
+	_pending_modal = {"kind": kind, "data": data}
+	_sync_overlay_input()
+	if settings_ui.is_active():
+		if kind == "settings":
+			_pending_modal.clear()
+			settings_ui.open()
+		else:
+			settings_ui.close()
+	elif investigation_ui.is_active():
+		investigation_ui.close()
+	else:
+		_activate_pending_modal()
+
+func _activate_pending_modal() -> void:
+	if _closing or _screen_motion.is_active(): return
+	if settings_ui.is_active() or investigation_ui.is_active(): return
+	if _pending_modal.is_empty():
+		_release_modal()
+		return
+	if dialogue_ui.is_history_active():
+		dialogue_ui.close_history()
+		return
+	var request := _pending_modal
+	_pending_modal = {}
+	_modal_kind = str(request.kind)
+	var data: Dictionary = request.data
+	_spatial_context = {}
+	match _modal_kind:
+		"settings": settings_ui.open()
+		"notebook": investigation_ui.open_notebook(data)
+		"manuscript": investigation_ui.open_manuscript(data)
+		"card": investigation_ui.open_card(data)
+		"campus_map": investigation_ui.open_campus_map(data)
+		"ending": investigation_ui.open_ending(data)
+		"spatial":
+			_spatial_context = data
+			investigation_ui.show_spatial_choices(data)
+	_sync_overlay_input()
+
+func _on_modal_closed() -> void:
+	if _closing: return
+	_spatial_context = {}
+	_activate_pending_modal()
+
+func _release_modal() -> void:
+	if _screen_motion.is_active() or settings_ui.is_active() or investigation_ui.is_active() or not _pending_modal.is_empty(): return
+	_modal_cycle = false
+	_modal_kind = ""
+	_sync_overlay_input()
+	var restored := false
+	if _return_focus != null:
+		var control := _return_focus.get_ref() as Control
+		if Transition.can_focus(control):
+			control.grab_focus()
+			restored = true
+	_return_focus = null
+	if not restored: dialogue_ui.restore_focus()
+	_flush_pending_action()
+
+func _sync_overlay_input() -> void:
+	var screen_blocked: bool = _screen_motion.is_active()
+	dialogue_ui.set_modal_blocked(_modal_cycle or screen_blocked)
+	hud_ui.set_overlay_blocked(_modal_cycle or screen_blocked)
+	settings_ui.set_external_blocked(screen_blocked)
+	investigation_ui.set_external_blocked(screen_blocked)
+
+func _on_investigation_action(id: String) -> void:
+	if _closing or not _pending_action.is_empty(): return
+	_pending_modal.clear()
+	if _modal_kind == "spatial":
+		# Use only the site and currently offered IDs from the real field event.
+		# WorldView.spatial.select rechecks the current qualification and contact.
+		for option: Dictionary in _spatial_context.get("options", []):
+			if str(option.get("id", "")) == id and bool(option.get("available", true)):
+				_pending_action = {"kind": "spatial_select", "choice_id": id, "site": str(_spatial_context.get("site", ""))}
+				return
+	else:
+		_pending_action = {"kind": "card_action", "id": id}
+
+func _flush_pending_action() -> void:
+	if _closing or _pending_action.is_empty() or _modal_cycle or _screen_motion.is_active(): return
+	if str(_pending_action.kind) == "spatial_select" and dialogue_ui.is_dialogue_active(): return
+	# The field rechecks ui_busy. Release the departing modal before dispatching
+	# its single captured choice, so the legitimate selection is not rejected.
+	var action := _pending_action
+	_pending_action = {}
+	ui_event.emit(action)
+
+func spatial_choices(data: Dictionary) -> void:
+	_request_modal("spatial", data)
 
 func close_modal() -> void:
-	if is_instance_valid(investigation_ui) and investigation_ui.visible:
-		investigation_ui.close()
-	if is_instance_valid(settings_ui) and settings_ui.visible:
-		settings_ui.close()
+	_pending_modal.clear()
+	settings_ui.close()
+	investigation_ui.close()
+	if not settings_ui.is_active() and not investigation_ui.is_active(): _release_modal()
 
 func open_notebook() -> void:
-	if is_instance_valid(investigation_ui):
-		investigation_ui.open_notebook(snapshot.get("notebook", {}))
+	_request_modal("notebook", snapshot.get("notebook", {}))
 
 func open_manuscript(_announce := true) -> void:
-	if is_instance_valid(investigation_ui):
-		investigation_ui.open_manuscript(snapshot.get("replay", {}))
+	_request_modal("manuscript", snapshot.get("replay", {}))
 
 func open_card(data: Dictionary) -> void:
-	if is_instance_valid(investigation_ui):
-		investigation_ui.open_card(data)
+	_request_modal("card", data)
 
 func open_campus_map() -> void:
-	if is_instance_valid(investigation_ui):
-		investigation_ui.open_campus_map(snapshot.get("map", {}))
+	var map_value: Variant = snapshot.get("map", {})
+	var map_data: Dictionary = {}
+	if map_value is Dictionary:
+		map_data = map_value
+	elif map_value is String or map_value is StringName:
+		# The current snapshot's map is a location ID, not authored map prose.
+		map_data = {"id": str(map_value)}
+	_request_modal("campus_map", map_data)
 
 func open_ending(data: Dictionary) -> void:
-	if is_instance_valid(investigation_ui):
-		investigation_ui.open_ending(data)
+	_request_modal("ending", data)
 
 func open_settings(_page := "rules") -> void:
-	if is_instance_valid(settings_ui):
-		settings_ui.open()
+	_request_modal("settings")
 
 func show_hover(text: String, pos: Vector2) -> void:
-	if is_instance_valid(hud_ui):
-		hud_ui.show_hover(text, pos)
+	if not _modal_cycle: hud_ui.show_hover(text, pos)
 
 func hide_hover() -> void:
-	if is_instance_valid(hud_ui):
-		hud_ui.hide_hover()
+	hud_ui.hide_hover()
 
 func set_hint(text: String) -> void:
-	if is_instance_valid(hud_ui):
-		hud_ui.set_hint(text)
+	hud_ui.set_hint(text)
 
 func show_aside(text: String, duration := 2.5) -> void:
-	if is_instance_valid(dialogue_ui):
-		dialogue_ui.show_aside(text, duration)
+	dialogue_ui.show_aside(text, duration)
 
 func show_flash(text: String, duration := 1.8) -> void:
-	if is_instance_valid(dialogue_ui):
-		dialogue_ui.show_flash(text, duration)
+	dialogue_ui.show_flash(text, duration)
+
+func _input(event: InputEvent) -> void:
+	if _screen_motion.is_active() and event.is_pressed(): get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _closing or not event.is_pressed() or event.is_echo(): return
-	if event.is_action_pressed("cancel"):
-		if is_busy():
-			close_modal()
-			get_viewport().set_input_as_handled()
-		else:
-			open_settings()
-			get_viewport().set_input_as_handled()
+	if event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel"):
+		if _modal_cycle: close_modal()
+		elif not dialogue_ui.is_dialogue_active(): open_settings()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("settings"):
+		open_settings()
+		get_viewport().set_input_as_handled()
+		return
+	if _modal_cycle:
+		# A queued switch also owns input while the previous panel is closing.
+		get_viewport().set_input_as_handled()
 		return
 	if is_busy(): return
 	if event.is_action_pressed("notebook"):
@@ -187,12 +325,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("wait"):
 		ui_event.emit({"kind": "action", "act": {"cmd": "stay"}})
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("settings"):
-		open_settings()
-		get_viewport().set_input_as_handled()
 
 func view_trace_context() -> Dictionary:
-	if is_instance_valid(settings_ui) and settings_ui.visible: return {"panel": "settings"}
-	if is_instance_valid(investigation_ui) and investigation_ui.visible: return {"panel": "investigation"}
-	if is_instance_valid(dialogue_ui) and dialogue_ui.is_dialogue_active(): return {"panel": "dialogue"}
-	return {"panel": "field"}
+	if settings_ui.is_active(): return {"panel": "settings", "transition": settings_ui.transition_state()}
+	if investigation_ui.is_active(): return {"panel": "investigation", "page": _modal_kind, "transition": investigation_ui.transition_state()}
+	if dialogue_ui.is_dialogue_active(): return {"panel": "dialogue"}
+	return {"panel": "field", "modal_pending": not _pending_modal.is_empty(), "screen_transition": _screen_motion.is_active()}

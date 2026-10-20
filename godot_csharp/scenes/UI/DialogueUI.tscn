@@ -114,6 +114,13 @@ layout_mode = 2
 theme_type_variation = &"ChapterDialogueNext"
 text = "继续 ▸"
 
+[node name="HistoryBlocker" type="ColorRect" parent="."]
+unique_name_in_owner = true
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0)
+
 [node name="HistoryPanel" type="Panel" parent="."]
 unique_name_in_owner = true
 visible = false
@@ -147,6 +154,7 @@ text = "合上"
 [node name="AsideLabel" type="Label" parent="."]
 unique_name_in_owner = true
 visible = false
+mouse_filter = 2
 anchor_top = 0.5
 anchor_bottom = 0.5
 anchor_right = 1.0
@@ -159,6 +167,7 @@ theme_type_variation = &"DialogueAside"
 [node name="FlashLabel" type="Label" parent="."]
 unique_name_in_owner = true
 visible = false
+mouse_filter = 2
 anchor_right = 1.0
 anchor_bottom = 1.0
 horizontal_alignment = 1

@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/UI/InvestigationUI.gd" id="1_inv"]
+[ext_resource type="Theme" path="res://scenes/UI/Styles/OverlayTheme.tres" id="2_overlay"]
 
 [node name="InvestigationUI" type="CanvasLayer"]
 layer = 25
@@ -16,6 +17,7 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.5)
 
 [node name="CenterBox" type="CenterContainer" parent="."]
+theme = ExtResource("2_overlay")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

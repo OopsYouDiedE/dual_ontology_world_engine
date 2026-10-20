@@ -32,6 +32,7 @@ var _interaction_id := ""
 var _interaction_site := ""
 var _reading := false
 var _background_execution := false
+var _pending_adapter: Node2D
 
 func _timing(stage: String, details: Dictionary = {}) -> void:
 	engine.RecordTiming({"stage": stage, "interaction_id": _interaction_id, "details": details})
@@ -89,12 +90,43 @@ func _home() -> void:
 
 func _view(ev: Dictionary, begin := true) -> void:
 	_timing("view_build_begin")
-	_view_resource = str(ev.resource)
 	var resource: PackedScene = CAMPUS_MAP_VIEW if str(ev.resource) == "res://scenes/Chapter2/Field/CampusMapView.tscn" else (load(str(ev.resource)) as PackedScene)
 	if resource == null:
 		push_error("无法加载世界视图：" + str(ev.resource))
 		return
+	# Production view events already carry the worker's completed data graph.
+	# Keep Snapshot() only for callers using the earlier host interface.
+	var initial: Dictionary = ev.get("snapshot", {})
+	if initial.is_empty(): initial = ev if ev.has("viewer") else engine.Snapshot()
+	var adapter: Node2D = resource.instantiate()
+	_pending_adapter = adapter
+	if adapter.get("presentation") != null and initial.has("presentation"):
+		adapter.presentation = initial.presentation
+	_timing("view_prepare_begin", {"map": initial.get("map", "")})
+	var prepared := true
+	if adapter.has_method("prepare_map"):
+		prepared = await adapter.prepare_map(str(initial.get("map", "")), initial, get_tree())
+	_timing("view_prepare_end", {"ready": prepared})
+	if not prepared or _closing:
+		if adapter.has_method("begin_shutdown"): adapter.begin_shutdown()
+		adapter.free()
+		_pending_adapter = null
+		if not _closing: _show_error("无法准备世界地图：" + str(initial.get("map", "")))
+		return
+	# Resource preparation leaves the current screen drawn and responsive.
+	# Retire it only after its own exit transition has completed.
+	if is_instance_valid(title_layer):
+		var title := title_layer.get_child(0)
+		if title.has_method("transition_out"): await title.transition_out()
+	elif is_instance_valid(ui) and ui.has_method("transition_out"):
+		await ui.transition_out()
+	if _closing:
+		if adapter.has_method("begin_shutdown"): adapter.begin_shutdown()
+		adapter.free()
+		_pending_adapter = null
+		return
 	_dispose_views()
+	_view_resource = str(ev.resource)
 	ui = UI_SCENE.instantiate()
 	ui.name = "UI"
 	add_child(ui)
@@ -105,21 +137,19 @@ func _view(ev: Dictionary, begin := true) -> void:
 	field.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(field)
 	field.ui_busy = ui.is_busy
-	field.fader = ui.hud
+	field.fader = ui
 	field.field_event.connect(_field_input)
 	field.hover_changed.connect(ui.show_hover)
 	field.hint_changed.connect(ui.set_hint)
-	var adapter: Node2D = resource.instantiate()
-	var initial: Dictionary = engine.Snapshot()
-	if adapter.get("presentation") != null and initial.has("presentation"):
-		adapter.presentation = initial.presentation
 	field_executor.configure_visible(field, initial)
+	_pending_adapter = null
 	field.setup(adapter)
 	field_executor.bind_visible(field, initial)
 	ui.apply_snapshot(initial)
 	_timing("view_build_end")
+	if ui.has_method("transition_in"): await ui.transition_in()
 	# 等场景加入树并应用快照后才开始脚本；这也是可见视图的普通握手。
-	if begin: dispatch.call_deferred({"kind": "view_ready"})
+	if begin and not _closing: dispatch.call_deferred({"kind": "view_ready"})
 
 ## 热点与跨房间进入DV；房间内坐标接近由现场消费，不进入此入口。
 func dispatch(input: Dictionary) -> void:
@@ -215,6 +245,13 @@ func _drain() -> void:
 	_draining = true
 	while not _queue.is_empty() and not _closing:
 		var ev: Dictionary = _queue.pop_front()
+		# A completed reading can expose an older queued observer snapshot while
+		# an off-screen actor still owns an executing body. Let that real movement
+		# finish before snapshot binding can acquire/reparent the same body.
+		if str(ev.get("kind", "")) in ["state", "view"]:
+			while _background_execution and not _closing:
+				await get_tree().process_frame
+			if _closing: break
 		match str(ev.get("kind", "")):
 			"dv_action": await _dv_execute(ev.intent, ev.get("execution_snapshot", {}))
 			"dv_present":
@@ -232,8 +269,8 @@ func _drain() -> void:
 					_timing("reading_finished", {"execution_event": result.get("execution_event", "")})
 				if not bool(ev.get("advance_requested", false)):
 					dispatch.call_deferred({"kind": "dv_next"})
-			"view": _view(ev)
-			"state": _apply(ev.snapshot)
+			"view": await _view(ev)
+			"state": await _apply(ev.snapshot)
 			"error": _show_error(str(ev.message))
 			_: push_error("Unknown DV host event: " + str(ev.get("kind", "")))
 	_draining = false
@@ -269,7 +306,7 @@ func _presentation_lines(result: Dictionary) -> Array:
 func _apply(snapshot: Dictionary) -> void:
 	_timing("ui_apply_begin")
 	if _view_resource != "" and str(snapshot.resource) != _view_resource:
-		_view(snapshot, false)
+		await _view(snapshot, false)
 		_timing("ui_apply_end")
 		return
 	if is_instance_valid(ui): ui.apply_snapshot(snapshot)
@@ -283,6 +320,8 @@ func begin_shutdown() -> void:
 	if is_instance_valid(view_trace): view_trace.begin_shutdown()
 	_queue.clear()
 	if is_instance_valid(field_executor): field_executor.begin_shutdown()
+	if is_instance_valid(_pending_adapter) and _pending_adapter.has_method("begin_shutdown"):
+		_pending_adapter.begin_shutdown()
 	if is_instance_valid(field): field.begin_shutdown()
 	if is_instance_valid(ui): ui.begin_shutdown()
 	if is_instance_valid(engine): engine.CloseTrace()
@@ -548,6 +587,7 @@ class DvFieldExecutorInner extends Node:
 	var _worlds: Dictionary = {}
 	var _occupancy: Array[Dictionary] = []
 	var _parking: Node2D
+	var _preparing_adapters: Array[Node2D] = []
 	var _closing := false
 	var _busy := false
 	var _viewer := ""
@@ -644,36 +684,76 @@ class DvFieldExecutorInner extends Node:
 		return result
 
 	func occupied_at(walker: CharacterBody2D, resource: String, map_key: String, point: Vector2) -> bool:
-		for position: Vector2 in occupied_positions(walker, resource, map_key):
-			var separation := (position - point).abs()
+		# Station searches ask this for many candidates. Do not allocate a full
+		# positions array for every point; inspect the same retained bodies.
+		for record: Dictionary in _bodies.values():
+			var body: CharacterBody2D = record.body
+			if not is_instance_valid(body) or body == walker or str(record.resource) != resource or str(record.map) != map_key: continue
+			var separation := (body.position - point).abs()
 			if separation.x < 19.0 and separation.y < 15.0: return true
 		return false
 
 	func sync_obstacles(field: Node2D) -> void:
+		if _closing or not is_instance_valid(field) or not is_instance_valid(field.adapter): return
 		var root: Node2D = field.adapter.objects_root()
-		for node in root.get_children():
-			if node.has_meta("retained_occupancy"):
-				(node as StaticBody2D).collision_layer = 0
-				root.remove_child(node)
-				node.queue_free()
+		var retained: Dictionary = {}
+		for i in range(_occupancy.size() - 1, -1, -1):
+			var item: Dictionary = _occupancy[i]
+			if item.field != field: continue
+			var obstacle: StaticBody2D = item.obstacle
+			var record: Dictionary = _bodies.get(item.who, {})
+			var body: CharacterBody2D = item.body
+			if not is_instance_valid(obstacle) or obstacle.get_parent() != root or record.is_empty() or not is_instance_valid(body) or record.body != body or body.get_parent() == root or str(record.resource) != field.execution_resource or str(record.map) != field.adapter.map_key():
+				_remove_occupancy(i)
+				continue
+			retained[item.who] = item
 		for who in _bodies:
 			var record: Dictionary = _bodies[who]
 			var body: CharacterBody2D = record.body
 			if not is_instance_valid(body) or body.get_parent() == root: continue
 			if str(record.resource) != field.execution_resource or str(record.map) != field.adapter.map_key(): continue
+			if retained.has(who):
+				_update_occupancy(retained[who])
+				continue
 			var obstacle := StaticBody2D.new()
 			obstacle.set_meta("retained_occupancy", body.get_instance_id())
 			obstacle.collision_layer = body.collision_layer
 			obstacle.collision_mask = 0
-			obstacle.position = body.position
+			obstacle.transform = body.transform
+			var shapes: Array[Dictionary] = []
 			for child in body.get_children():
-				if child is CollisionShape2D and not child.disabled:
+				if child is CollisionShape2D:
 					var shape := CollisionShape2D.new()
 					shape.shape = child.shape
 					shape.transform = child.transform
+					shape.disabled = child.disabled
 					obstacle.add_child(shape)
+					shapes.append({"source": child, "proxy": shape})
 			root.add_child(obstacle)
-			_occupancy.append({"obstacle": obstacle, "body": body, "field": field, "who": who})
+			_occupancy.append({"obstacle": obstacle, "body": body, "field": field, "who": who, "shapes": shapes})
+
+	func _remove_occupancy(index: int) -> void:
+		var obstacle: StaticBody2D = _occupancy[index].obstacle
+		if is_instance_valid(obstacle):
+			obstacle.collision_layer = 0
+			obstacle.queue_free()
+		_occupancy.remove_at(index)
+
+	func _update_occupancy(item: Dictionary) -> void:
+		var obstacle: StaticBody2D = item.obstacle
+		var body: CharacterBody2D = item.body
+		obstacle.transform = body.transform
+		obstacle.collision_layer = body.collision_layer
+		for pair: Dictionary in item.shapes:
+			var source: CollisionShape2D = pair.source
+			var proxy: CollisionShape2D = pair.proxy
+			if not is_instance_valid(proxy): continue
+			if not is_instance_valid(source):
+				proxy.disabled = true
+				continue
+			if proxy.shape != source.shape: proxy.shape = source.shape
+			if proxy.transform != source.transform: proxy.transform = source.transform
+			if proxy.disabled != source.disabled: proxy.disabled = source.disabled
 
 	func _physics_process(_delta: float) -> void:
 		if _closing: return
@@ -681,17 +761,15 @@ class DvFieldExecutorInner extends Node:
 			var item: Dictionary = _occupancy[i]
 			var obstacle = item.obstacle
 			if not is_instance_valid(obstacle) or not obstacle.is_inside_tree():
-				_occupancy.remove_at(i)
+				_remove_occupancy(i)
 				continue
 			var body = item.body
 			var field = item.field
 			var record: Dictionary = _bodies.get(item.who, {}) if is_instance_valid(body) else {}
-			if not is_instance_valid(field) or record.is_empty() or str(record.map) != field.adapter.map_key() or str(record.resource) != field.execution_resource or body.get_parent() == obstacle.get_parent():
-				obstacle.collision_layer = 0
-				obstacle.queue_free()
-				_occupancy.remove_at(i)
+			if not is_instance_valid(field) or not is_instance_valid(field.adapter) or record.is_empty() or str(record.map) != field.adapter.map_key() or str(record.resource) != field.execution_resource or body.get_parent() == obstacle.get_parent():
+				_remove_occupancy(i)
 				continue
-			obstacle.position = body.position
+			_update_occupancy(item)
 
 	func acquire_actor(who: String, sprite_key: String, field: Node2D) -> CharacterBody2D:
 		if _closing: return null
@@ -765,6 +843,9 @@ class DvFieldExecutorInner extends Node:
 		if is_instance_valid(field):
 			if field.execution_resource != resource: return null
 			if field.player == null:
+				if field.adapter.has_method("prepare_map"):
+					if not await field.adapter.prepare_map(source_map, state, get_tree()): return null
+				if _closing or not is_instance_valid(field) or field._closing: return null
 				if field.adapter.map_key() != source_map: field.adapter.load_map(source_map, str(state.get("spawn", "")))
 				field.execution_binding = state
 				var binding := _actor_binding(who, state)
@@ -773,6 +854,18 @@ class DvFieldExecutorInner extends Node:
 			return field
 		var packed := CAMPUS_MAP_VIEW if resource == "res://scenes/Chapter2/Field/CampusMapView.tscn" else (load(resource) as PackedScene)
 		if packed == null: return null
+		var adapter := packed.instantiate() as Node2D
+		if adapter == null: return null
+		adapter.presentation = state.get("presentation", {})
+		_preparing_adapters.append(adapter)
+		var prepared := true
+		if adapter.has_method("prepare_map"):
+			prepared = await adapter.prepare_map(source_map, state, get_tree())
+		_preparing_adapters.erase(adapter)
+		if not prepared or _closing:
+			if adapter.has_method("begin_shutdown"): adapter.begin_shutdown()
+			adapter.free()
+			return null
 		var viewport := _new_viewport("ActorExecution")
 		field = Node2D.new()
 		field.set_script(WORLD_VIEW)
@@ -780,11 +873,6 @@ class DvFieldExecutorInner extends Node:
 		configure_visible(field, state)
 		field.hide()
 		viewport.add_child(field)
-		var adapter := packed.instantiate() as Node2D
-		if adapter == null:
-			viewport.queue_free()
-			return null
-		adapter.presentation = state.get("presentation", {})
 		field.setup(adapter)
 		field.apply_snapshot(state)
 		_worlds[who] = field
@@ -805,6 +893,13 @@ class DvFieldExecutorInner extends Node:
 
 	func execute(intent: Dictionary, visible_field: Node2D, execution_snapshot: Dictionary, serial: int) -> Dictionary:
 		if _closing or _busy: return _blocked(intent, serial, "executor_unavailable")
+		# Hold the same execution lock during asynchronous resource preparation.
+		_busy = true
+		var receipt := await _execute_pending(intent, visible_field, execution_snapshot, serial)
+		_busy = false
+		return receipt
+
+	func _execute_pending(intent: Dictionary, visible_field: Node2D, execution_snapshot: Dictionary, serial: int) -> Dictionary:
 		var who := str(intent.get("actor", ""))
 		var raw_act = intent.get("action", {})
 		var action := str(raw_act.get("id", "")) if raw_act is Dictionary else ""
@@ -818,7 +913,8 @@ class DvFieldExecutorInner extends Node:
 		if is_instance_valid(visible_field) and visible_field.execution_resource == str(execution_snapshot.get("resource", "")) and visible_field.adapter.map_key() == source_map:
 			var body: CharacterBody2D = visible_field.actors.get(who)
 			if body != null and (body == visible_field.player or str(destination.get("map", "")) == source_map): field = visible_field
-		if field == null: field = _hidden_field(who, execution_snapshot)
+		if field == null: field = await _hidden_field(who, execution_snapshot)
+		if _closing: return _blocked(intent, serial, "execution_interrupted")
 		if field == null or not field.actors.has(who): return _blocked(intent, serial, "missing_actor_geometry_binding")
 		var body: CharacterBody2D = field.actors[who]
 		if field.adapter.departure_room(body.position) != source_room:
@@ -828,10 +924,8 @@ class DvFieldExecutorInner extends Node:
 		var source_point := body.position
 		var source_geometry := "interior" if field.adapter.entered_room(source_point) == source_room else "source-side-doorway"
 		var instance := body.get_instance_id()
-		_busy = true
 		await get_tree().physics_frame
 		if _closing or not is_instance_valid(field) or field._closing:
-			_busy = false
 			return _blocked(intent, serial, "execution_interrupted")
 		var received: Dictionary = {}
 		var listener := func(event: Dictionary) -> void:
@@ -842,7 +936,6 @@ class DvFieldExecutorInner extends Node:
 		while received.is_empty() and not _closing and is_instance_valid(field) and not field._closing:
 			await get_tree().process_frame
 		if is_instance_valid(field) and field.field_event.is_connected(listener): field.field_event.disconnect(listener)
-		_busy = false
 		if received.is_empty(): return _blocked(intent, serial, "execution_interrupted")
 		received["source_map"] = source_map
 		received["source_room"] = source_room
@@ -869,6 +962,8 @@ class DvFieldExecutorInner extends Node:
 	func begin_shutdown() -> void:
 		if _closing: return
 		_closing = true
+		for adapter in _preparing_adapters:
+			if is_instance_valid(adapter) and adapter.has_method("begin_shutdown"): adapter.begin_shutdown()
 		for field in _worlds.values():
 			if is_instance_valid(field): field.begin_shutdown()
 

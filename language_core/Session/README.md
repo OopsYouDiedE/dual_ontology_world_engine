@@ -37,7 +37,15 @@ dotnet build language_core/Session/DuelView.Session.csproj -c Release -p:DvPytho
 
 `GameEngine.ConfigureSession` 只在新会话打开前接受配置。宿主串行处理命令，排队保存重入输入，并以 DV `action_event` 去重完成回执；不相干回执不能清除 pending。后台工作异常停止继续分派，不能自动重试可能已经提交的转换。
 
-打开、准备、完成与观察者缓存投影在同一后台工作链中进行。主线程读取最后完成的缓存，避免并发遍历正在更新的 DV 状态。`dv_action.execution_snapshot` 仅供实际行动主体的几何执行，不作为玩家取得的新观察；阶段回调 `PhaseObserver` 只读报告计算阶段。
+打开、准备、完成、观察者投影、JSON 编码和生产事件的 Godot 纯数据物化在同一串行后台工作链中进行。后台每次独立创建 intent、观察者 snapshot 与执行者 snapshot 的 Dictionary/Array 图，完成后经 await 一次转交主线程；相同观察者可以共享不可变 JSON 字符串，两个可变 Godot 图仍各自独立。后台不操作活动场景、节点、加载资源或发送 UI 信号；主线程交接只更新已完成的缓存字符串、pending 标识和事件图引用，再发送原顺序事件。
+
+初次 `view` 事件携带 `resource` 与已经物化的 `snapshot`，Main 直接安装该快照，不再从 JSON 重建同一开局。兼容 `GameEngine.Snapshot()` 仍从最后完成的缓存 JSON 返回独立 Dictionary，显式调用会在调用线程解析；生产事件链不调用它。`ReadMilestoneProgressJson()` 直接读取同一缓存字符串。这些接口不并发遍历正在更新的 DV 状态。`dv_action.execution_snapshot` 仅供实际行动主体的几何执行，不作为玩家取得的新观察。
+
+Session 在一次状态转换之间保留私有 intent 投影，供 `Prepare` 返回与同态的观察者/执行者快照复用。缓存仅由该实例的串行工作者访问，不向宿主暴露 DV 值；每次 `Prepare`、`Complete` 以及会追加关闭事件的 `Trace`/`WriteTrace` 在执行前清空，抛错也不会留下可继续复用的旧投影，恢复使用新实例。原生 `dvg_snapshot(state, viewer)` 仍直接从该状态计算 intent；Session 使用 `dvg_snapshot_with_intent` 传入自己同态的只读投影。复用不跳过认知、正式选择资格重核或执行，也不跨过正式状态变化沿用旧候选；`SelectPlayer` 的资格重核保持原样。
+
+宿主 JSON 直接递归写入 UTF-8 输出，不先复制成完整的托管 Dictionary/object[] 树。非空字符串二元组列表仍编码为对象，其他列表（包括空列表）仍编码为数组；重复键保持第一次插入位置和最后一个值，Rational 仍使用 `$dv_rational` 字符串标签。投影保持原字段、嵌套形状与 JSON 数值/转义规则，不改变保存或二进制证据格式。宿主投影维持原来的 64 层 JSON 深度上限，超限报告 JsonException。
+
+`PhaseObserver` 只读报告计算阶段，GameEngine 为每个命令重新绑定 interaction_id/command_id；恢复后的会话同样接线。现有 prepare/complete、snapshot 与 delivery 计时保留，另记录 DV intent/snapshot 投影、host_json 编码、`materialize_begin/end` 后台解析、`handoff_begin/end` 主线程交接以及托管 thread_id。阶段之间的空档与未闭合阶段保留原状，不把总等待当作 CPU，也不把编码/物化阶段外的工作算进其耗时。序列化收益、主线程停顿、NPC 决策等待和实际现场移动须分别测量。
 
 Godot 的显式保存与恢复拒绝仍等待现场回执的状态；异步入口暂停命令泵，并在等待先前工作完成后再次核对 pending。恢复后旧状态的排队命令被丢弃，实际输入记录仍保留。来自关闭存档的 pending 在下一次正常 Prepare 后交给现场真实执行。
 

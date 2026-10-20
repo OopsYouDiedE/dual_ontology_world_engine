@@ -1,6 +1,5 @@
-extends CanvasLayer
+extends "res://scenes/UI/ModalPanel.gd"
 
-signal closed
 signal action_chosen(id: String)
 
 @onready var modal_box: PanelContainer = %ModalBox
@@ -10,33 +9,35 @@ signal action_chosen(id: String)
 @onready var modal_footer: HBoxContainer = %ModalFooter
 
 var _current_panel := ""
+var _content_serial := 0
 
 func _ready() -> void:
-	layer = 25
-	visible = false
+	super._ready()
 	modal_close_button.pressed.connect(close)
-
-func _input(event: InputEvent) -> void:
-	if not visible: return
-	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		close()
-		get_viewport().set_input_as_handled()
+	closed.connect(func(): _current_panel = "")
 
 func open_modal(title: String, min_size := Vector2(620, 420), panel_id := "") -> VBoxContainer:
+	_content_serial += 1
 	_current_panel = panel_id
 	modal_title.text = title
 	modal_box.custom_minimum_size = min_size
 	for child in modal_body.get_children():
+		modal_body.remove_child(child)
 		child.queue_free()
 	for child in modal_footer.get_children():
+		modal_footer.remove_child(child)
 		child.queue_free()
-	visible = true
+	show_panel()
 	return modal_body
 
-func close() -> void:
-	visible = false
-	_current_panel = ""
-	closed.emit()
+func current_panel() -> String:
+	return _current_panel
+
+func _choose(id: String, content_serial: int) -> void:
+	if content_serial != _content_serial or not can_interact(): return
+	# close() locks every control before a callback can dispatch a second action.
+	close()
+	action_chosen.emit(id)
 
 func open_notebook(data: Dictionary) -> void:
 	var body := open_modal("随身手账", Vector2(680, 460), "notebook")
@@ -80,10 +81,7 @@ func open_card(data: Dictionary) -> void:
 		var btn := Button.new()
 		btn.text = str(act.get("label", act.get("text", "确定")))
 		var aid := str(act.get("id", ""))
-		btn.pressed.connect(func():
-			action_chosen.emit(aid)
-			close()
-		)
+		btn.pressed.connect(_choose.bind(aid, _content_serial))
 		modal_footer.add_child(btn)
 
 func open_campus_map(data: Dictionary) -> void:
@@ -119,8 +117,6 @@ func show_spatial_choices(data: Dictionary) -> void:
 			btn.text = str(opt.get("label", opt.get("id", "")))
 			var cid := str(opt.get("id", ""))
 			btn.custom_minimum_size = Vector2(0, 36)
-			btn.pressed.connect(func():
-				action_chosen.emit(cid)
-				close()
-			)
+			btn.disabled = not bool(opt.get("available", true))
+			btn.pressed.connect(_choose.bind(cid, _content_serial))
 			body.add_child(btn)

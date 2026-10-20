@@ -34,7 +34,8 @@ public partial class GameEngine : Node
     private void Stamp(string stage, string id, string details = "", long? command = null)
     {
         var row = JsonSerializer.Serialize(new { real_us = TimingClockUs(), stage,
-            interaction_id = id, command_id = command ?? activeCommand, details });
+            interaction_id = id, command_id = command ?? activeCommand,
+            thread_id = System.Environment.CurrentManagedThreadId, details });
         timings.Enqueue(row);
         liveTimings.Enqueue(row);
     }
@@ -68,6 +69,24 @@ public partial class GameEngine : Node
     // Read the same completed host projection; never traverse a worker-owned DV state.
     public string ReadMilestoneProgressJson() => snapshotJson;
     private static GDict Parse(string json) => Json.ParseString(json).AsGodotDictionary();
+
+    private void BindPhases(DvSession current, string timingId, long command)
+    {
+        // Bind each command, not just opening: later selections have their own
+        // interaction ID, and restored sessions need the same phase observer.
+        current.PhaseObserver = (stage, details) => Stamp("dv_" + stage, timingId, details, command);
+    }
+
+    private GDict Materialize(string json, string timingId, string projection)
+    {
+        // JSON parsing constructs only an exclusively owned data graph. No
+        // scene nodes or shared resources enter the worker. Publish it after
+        // await completes, then leave all graph mutation to the main thread.
+        Stamp("materialize_begin", timingId, projection);
+        var value = Parse(json);
+        Stamp("materialize_end", timingId, projection);
+        return value;
+    }
 
     public GArray Dispatch(GDict input)
     {
@@ -117,17 +136,21 @@ public partial class GameEngine : Node
                         {
                             Stamp("open_begin", timingId);
                             var current = DvSession.OpenConfiguredCampaign(options);
-                            current.PhaseObserver = (stage, actor) => Stamp("dv_" + stage, timingId, actor);
+                            BindPhases(current, timingId, queued.Id);
                             Stamp("open_end", timingId);
                             Stamp("snapshot_begin", timingId);
                             var initialSnapshot = current.Snapshot(current.Viewer);
                             Stamp("snapshot_end", timingId);
-                            return (Session: current, Snapshot: initialSnapshot);
+                            var snapshot = Materialize(initialSnapshot, timingId, "viewer");
+                            GArray delivered = new() { new GDict { ["kind"] = "view",
+                                ["resource"] = snapshot["resource"], ["snapshot"] = snapshot } };
+                            return (Session: current, Snapshot: initialSnapshot, Events: delivered);
                         });
+                        Stamp("handoff_begin", timingId, kind);
                         session = opened.Session;
                         snapshotJson = opened.Snapshot;
-                        var snapshot = Snapshot();
-                        events.Add(new GDict { ["kind"] = "view", ["resource"] = snapshot["resource"] });
+                        events = opened.Events;
+                        Stamp("handoff_end", timingId, kind);
                     }
                     else if (kind == "view_ready" || kind == "dv_next" || kind == "select")
                     {
@@ -138,29 +161,35 @@ public partial class GameEngine : Node
                         var current = session;
                         var prepared = await Task.Run(() =>
                         {
+                            BindPhases(current, timingId, queued.Id);
                             Stamp("prepare_begin", timingId, selection);
                             var intent = current.Prepare(selection);
                             Stamp("prepare_end", timingId);
-                            using var document = JsonDocument.Parse(intent);
-                            var root = document.RootElement;
-                            var ready = root.GetProperty("status").GetString() == "prepared";
-                            var actor = ready ? root.GetProperty("actor").GetString() : null;
+                            var projectedIntent = Materialize(intent, timingId, "intent");
+                            var ready = projectedIntent.GetValueOrDefault("status", "").AsString() == "prepared";
+                            var actor = ready ? projectedIntent["actor"].AsString() : null;
                             Stamp("snapshot_begin", timingId);
                             var executionSnapshot = ready ? current.Snapshot(actor!) : "{}";
                             var viewer = current.Viewer;
-                            // JSON strings are immutable; the two Godot boundaries still parse independent values.
+                            // JSON strings can be shared; the two Godot graphs are
+                            // independently materialized before either is published.
                             var viewerSnapshot = ready && string.Equals(actor, viewer, StringComparison.Ordinal)
                                 ? executionSnapshot : current.Snapshot(viewer);
                             Stamp("snapshot_end", timingId);
-                            return (Intent: intent, Snapshot: viewerSnapshot, ExecutionSnapshot: executionSnapshot);
+                            var projectedViewer = Materialize(viewerSnapshot, timingId, "viewer");
+                            var projectedExecution = Materialize(executionSnapshot, timingId, "executor");
+                            GArray delivered = new() {
+                                new GDict { ["kind"] = "state", ["snapshot"] = projectedViewer },
+                                new GDict { ["kind"] = "dv_action", ["intent"] = projectedIntent,
+                                    ["execution_snapshot"] = projectedExecution } };
+                            return (Snapshot: viewerSnapshot, Events: delivered,
+                                Pending: ready ? projectedIntent["action_event"].AsString() : "");
                         });
+                        Stamp("handoff_begin", timingId, kind);
                         snapshotJson = prepared.Snapshot;
-                        var intent = Parse(prepared.Intent);
-                        if (intent.GetValueOrDefault("status", "").AsString() == "prepared")
-                            pendingEvent = intent["action_event"].AsString();
-                        events.Add(new GDict { ["kind"] = "state", ["snapshot"] = Snapshot() });
-                        events.Add(new GDict { ["kind"] = "dv_action", ["intent"] = intent,
-                            ["execution_snapshot"] = Parse(prepared.ExecutionSnapshot) });
+                        pendingEvent = prepared.Pending;
+                        events = prepared.Events;
+                        Stamp("handoff_end", timingId, kind);
                     }
                     else if (kind == "dv_complete")
                     {
@@ -176,19 +205,26 @@ public partial class GameEngine : Node
                         var current = session;
                         var completed = await Task.Run(() =>
                         {
+                            BindPhases(current, timingId, queued.Id);
                             Stamp("complete_begin", timingId, actionEvent);
                             var presentation = current.Complete(json, current.Viewer);
                             Stamp("complete_end", timingId, actionEvent);
                             Stamp("snapshot_begin", timingId);
                             var projected = current.Snapshot(current.Viewer);
                             Stamp("snapshot_end", timingId);
-                            return (Presentation: presentation, Snapshot: projected);
+                            var projectedViewer = Materialize(projected, timingId, "viewer");
+                            var projectedPresentation = Materialize(presentation, timingId, "presentation");
+                            GArray delivered = new() {
+                                new GDict { ["kind"] = "state", ["snapshot"] = projectedViewer },
+                                new GDict { ["kind"] = "dv_present", ["presentation"] = projectedPresentation } };
+                            return (Snapshot: projected, Events: delivered);
                         });
+                        Stamp("handoff_begin", timingId, kind);
                         completedEvents.Add(actionEvent);
                         pendingEvent = "";
                         snapshotJson = completed.Snapshot;
-                        events.Add(new GDict { ["kind"] = "state", ["snapshot"] = Snapshot() });
-                        events.Add(new GDict { ["kind"] = "dv_present", ["presentation"] = Parse(completed.Presentation) });
+                        events = completed.Events;
+                        Stamp("handoff_end", timingId, kind);
                     }
                 }
                 catch (Exception error)

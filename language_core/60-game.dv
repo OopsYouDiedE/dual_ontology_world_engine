@@ -293,6 +293,11 @@ fn dvg_geometry_bindings():
     return {"zone_yi": {"sites": [{"id": "E12", "point": [876, 246], "label": "风衣"}], "props": []}, "campus_n": {"sites": [{"id": "outdoor_meter", "point": [672, 1416], "label": "户外仪器阵"}, {"id": "outdoor_high", "point": [672, 1272], "label": "高地通路"}], "props": [{"id": "outdoor_dial", "texture": "res://ShareAsset/Internal/Props/Outdoor/dial_meter.svg", "position": [704, 1416], "footprint": [-10, -8, 20, 8]}]}}
 
 fn dvg_snapshot(state, viewer):
+    return dvg_snapshot_with_intent(state, viewer, dvg_intent(state))
+
+// A host may reuse this read-only intent only until the next state transition.
+// The standalone DV entry above still projects directly from its own state.
+fn dvg_snapshot_with_intent(state, viewer, intent):
     let position = dv_read(state.physical, c2_position_ref(viewer))
     var place = {"map": "", "room": ""}
     var logical_location = ""
@@ -303,7 +308,7 @@ fn dvg_snapshot(state, viewer):
             place = located
     let cast = dvg_cast()
     let opened = dv_truth(state.physical, dv_fact(c1dep_ref("open"), true)) == "true"
-    var snapshot = {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": "res://scenes/Chapter2/Field/CampusMapView.tscn", "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": logical_location, "initial_anchor": dvg_initial_anchor(viewer, logical_location), "spawn": dv_find(place, "spawn", ""), "field_enabled": true, "player_control": dv_find(state, "player_actor", "") == viewer, "initial_placements": [], "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false, "maps": dvg_map_access(state, place.map)}, "sites": dvg_site_titles(place.map), "geometry_bindings": dvg_geometry_bindings(), "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": dv_find(cast, viewer, "")}, "cast": cast, "pending": dvg_intent(state), "chapter_summary": dvg_chapter_summary(state)}
+    var snapshot = {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "resource": "res://scenes/Chapter2/Field/CampusMapView.tscn", "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": logical_location, "initial_anchor": dvg_initial_anchor(viewer, logical_location), "spawn": dv_find(place, "spawn", ""), "field_enabled": true, "player_control": dv_find(state, "player_actor", "") == viewer, "initial_placements": [], "hud": {"title": "安眠者有福", "time": dvg_clock(state.physical.time)}, "access": {"dorms": true, "isolation_open": opened, "door_prints": false, "maps": dvg_map_access(state, place.map)}, "sites": dvg_site_titles(place.map), "geometry_bindings": dvg_geometry_bindings(), "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "presentation": {"player_actor": viewer, "player_sprite": dv_find(cast, viewer, "")}, "cast": cast, "pending": intent, "chapter_summary": dvg_chapter_summary(state)}
     if dv_has_key(place, "anchor"):
         snapshot = dv_with(snapshot, "anchor", place.anchor)
     return dv_with(snapshot, "sprite_sites", dvg_sprite_sites(place.map))

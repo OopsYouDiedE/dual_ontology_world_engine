@@ -7,9 +7,11 @@ extends Control
 ## 菜单：开始阅读 / 续读 / 凡例（设置）/ 合卷。向宿主回传纯数据 ui_event 字典。
 
 signal ui_event(event: Dictionary)
+signal transition_finished(shown: bool)
 
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 const SETTINGS_SCENE := preload("res://scenes/UI/SettingsUI.tscn")
+const Transition := preload("res://scenes/UI/UITransition.gd")
 
 const TEXTS := {
 	"zh_CN": ["安眠者有福", "开始阅读", "续读", "凡例", "合卷"],
@@ -35,6 +37,12 @@ var _settings_instance: Node
 var _light_time := 0.0
 var _reduce_motion := false
 var _labels := {}
+var _page_motion = Transition.new()
+var _menu_input_enabled := false
+var _request_pending := false
+var _leaving := false
+var _settings_focus: WeakRef
+var _light_ticks := 0
 
 func _ready() -> void:
 	_place_book()
@@ -58,18 +66,67 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 
+	_page_motion.configure(self, self, self, null, false, 1.0)
+	_page_motion.completed.connect(_on_page_transition)
+	_light_ticks = Time.get_ticks_usec()
 	Sound.music("main_theme", 2.5)
 	var settings := get_node_or_null("/root/GameSettings")
 	if settings != null:
 		_reduce_motion = bool(settings.get_value("accessibility", "reduce_motion"))
-		settings.setting_changed.connect(func(section: String, key: String, value):
-			if section == "accessibility" and key == "reduce_motion": _reduce_motion = bool(value)
-		)
+		settings.setting_changed.connect(_on_setting_changed)
 	start_button.pressed.connect(_request.bind("start"))
 	quit_button.pressed.connect(_request.bind("quit"))
 	settings_button.pressed.connect(open_settings)
 	continue_button.disabled = true
-	start_button.grab_focus()
+	_set_menu_input(false)
+	transition_in.call_deferred()
+
+func transition_in() -> bool:
+	if Engine.is_editor_hint(): return true
+	_leaving = false
+	_request_pending = false
+	_set_menu_input(false)
+	var request_id: int = _page_motion.request(true, true, 0.20)
+	var completed: bool = await _page_motion.wait_for(request_id)
+	if completed and not _leaving and is_instance_valid(_settings_instance):
+		_settings_instance.set_external_blocked(false)
+	if completed and not _leaving and not _settings_active():
+		_set_menu_input(true)
+		start_button.grab_focus()
+	return completed and not _leaving
+
+func transition_out() -> bool:
+	if Engine.is_editor_hint(): return true
+	_leaving = true
+	_set_menu_input(false)
+	if is_instance_valid(_settings_instance): _settings_instance.set_external_blocked(true)
+	if _settings_active(): await _settings_instance.close_and_wait()
+	if not _leaving: return false
+	var request_id: int = _page_motion.request(false, true, 0.16)
+	return await _page_motion.wait_for(request_id)
+
+func _on_page_transition(_request_id: int, shown: bool, cancelled: bool) -> void:
+	if not cancelled: transition_finished.emit(shown)
+
+func _on_setting_changed(section: String, key: String, value: Variant) -> void:
+	if section == "accessibility" and key == "reduce_motion":
+		_reduce_motion = bool(value)
+		if _reduce_motion: _page_motion.finish_current()
+
+func _set_menu_input(enabled: bool) -> void:
+	_menu_input_enabled = enabled and not _leaving and not _request_pending
+	viewport.gui_disable_input = not _menu_input_enabled
+	for button: Button in [start_button, settings_button, quit_button]:
+		button.disabled = not _menu_input_enabled
+	continue_button.disabled = true
+
+func _settings_active() -> bool:
+	return is_instance_valid(_settings_instance) and _settings_instance.is_active()
+
+func _exit_tree() -> void:
+	if Engine.is_editor_hint(): return
+	_page_motion.dispose()
+	if is_instance_valid(_settings_instance): _settings_instance.begin_shutdown()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready():
@@ -88,10 +145,13 @@ func _localize() -> void:
 		_labels[buttons[i]] = texts[i + 1]
 		_mark(buttons[i], buttons[i].has_focus())
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
-	_light_time += delta
+	var now := Time.get_ticks_usec()
+	_light_time += float(now - _light_ticks) / 1000000.0
+	_light_ticks = now
+	if not visible: return
 	var wave := 0.0 if _reduce_motion else sin(_light_time * 4.5) * 0.025 + sin(_light_time * 11.3) * 0.012
 	var intensity := 0.96 + wave
 	if is_instance_valid(glow): glow.modulate.a = intensity * 0.15
@@ -102,7 +162,7 @@ func _mark(b: Button, on: bool) -> void:
 	b.text = ("☞ " + str(_labels[b])) if on else str(_labels[b])
 
 func _hover(b: Button) -> void:
-	if not b.disabled:
+	if _menu_input_enabled and not b.disabled:
 		b.grab_focus()
 
 func _place_slip_shadow() -> void:
@@ -158,30 +218,43 @@ func _draw_rule() -> void:
 # ================================================================ settings ===
 
 func open_settings() -> void:
-	if is_instance_valid(_settings_instance) and _settings_instance.visible:
-		return
+	if _leaving or _request_pending: return
+	if _settings_active() and _settings_instance.is_open(): return
 	Sound.sfx("ui_click", -4.0)
+	if not _settings_active():
+		var focused := viewport.gui_get_focus_owner()
+		_settings_focus = weakref(focused) if focused != null else null
 	if not is_instance_valid(_settings_instance):
 		_settings_instance = SETTINGS_SCENE.instantiate()
 		add_child(_settings_instance)
-		if _settings_instance.has_signal("closed"):
-			_settings_instance.closed.connect(close_settings)
+		# CanvasLayer indices are absolute within the viewport, even when nested.
+		# Main's title is on layer 30; the title's settings must be above it.
+		_settings_instance.layer = 40
+		_settings_instance.restore_previous_focus = false
+		_settings_instance.closed.connect(_on_settings_closed)
+		_settings_instance.reopen_requested.connect(open_settings)
+	_set_menu_input(false)
+	_settings_instance.set_external_blocked(false)
 	_settings_instance.open()
-	viewport.gui_disable_input = true
 
 func close_settings() -> void:
-	if is_instance_valid(_settings_instance):
-		_settings_instance.visible = false
-	viewport.gui_disable_input = false
-	settings_button.grab_focus()
+	if is_instance_valid(_settings_instance): _settings_instance.close()
+
+func _on_settings_closed() -> void:
+	if _leaving or _request_pending: return
+	_set_menu_input(true)
+	var focused: Control = _settings_focus.get_ref() as Control if _settings_focus != null else null
+	if Transition.can_focus(focused): focused.grab_focus()
+	else: settings_button.grab_focus()
+	_settings_focus = null
 
 func _unhandled_input(event: InputEvent) -> void:
 	if Engine.is_editor_hint():
 		return
-	if is_instance_valid(_settings_instance) and _settings_instance.visible:
-		if event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel") or event.is_action_pressed("settings"):
-			close_settings()
-			get_viewport().set_input_as_handled()
+	if not event.is_pressed() or event.is_echo(): return
+	if _settings_active(): return
+	if not _menu_input_enabled:
+		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("ui_accept") or event.is_action_pressed("dialogue_continue"):
 		_request("start")
@@ -194,9 +267,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _request(kind: String) -> void:
-	if start_button.disabled:
-		return
-	for b: Button in [start_button, continue_button, settings_button, quit_button]:
-		b.disabled = true
+	if not _menu_input_enabled or _settings_active(): return
+	_request_pending = true
+	_set_menu_input(false)
 	Sound.sfx("ui_click", -4.0)
 	ui_event.emit({"kind": kind})

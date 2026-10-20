@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/UI/FieldHUD.gd" id="1_hud"]
+[ext_resource type="Theme" path="res://scenes/UI/Styles/OverlayTheme.tres" id="2_overlay"]
 
 [node name="FieldHUD" type="CanvasLayer"]
 layer = 10
@@ -8,6 +9,7 @@ script = ExtResource("1_hud")
 
 [node name="TopBar" type="PanelContainer" parent="."]
 unique_name_in_owner = true
+theme = ExtResource("2_overlay")
 anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 44.0
@@ -51,6 +53,7 @@ text = "凡例"
 
 [node name="HintLabel" type="Label" parent="."]
 unique_name_in_owner = true
+theme = ExtResource("2_overlay")
 visible = false
 anchors_preset = 12
 anchor_top = 1.0
@@ -65,6 +68,7 @@ horizontal_alignment = 1
 
 [node name="HoverTip" type="Label" parent="."]
 unique_name_in_owner = true
+theme = ExtResource("2_overlay")
 visible = false
 offset_right = 120.0
 offset_bottom = 26.0

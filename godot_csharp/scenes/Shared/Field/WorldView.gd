@@ -4,6 +4,7 @@ extends Node2D
 ## 接口与分层见设计第四部分 §2。
 
 const ACTOR := preload("res://scenes/Story/StoryActor.gd")
+const RESOURCES := preload("res://scenes/Shared/Field/FieldResources.gd")
 const FieldNavigation := FieldNavigationInner
 const FieldVocabulary := FieldVocabularyInner
 const Bindings := PresentationBindingsInner
@@ -143,6 +144,7 @@ func apply_snapshot(value: Dictionary) -> void:
 	if not execution_only and adapter.fixed_actors().is_empty(): _spawn_people()
 	if execution_bridge != null: execution_bridge.sync_obstacles(self)
 	_build_sites()
+	if not execution_only and adapter.has_method("prefetch_snapshot"): adapter.prefetch_snapshot(value)
 
 func field_active() -> bool:
 	return not execution_only and player != null and not _closing and bool(snapshot.get("field_enabled", false)) and not ui_busy.call() and not adapter.switching()
@@ -537,7 +539,8 @@ func create_body(key: String, sprite_key: String) -> CharacterBody2D:
 		actor.free()
 		Bindings.fail(self, "Missing actor asset binding: " + key + " -> " + sprite_key)
 		return null
-	actor.standard = load(path)
+	actor.standard = RESOURCES.ready(path) as SpriteFrames
+	if actor.standard == null: actor.standard = load(path)
 	actor.name = key
 	adapter.objects_root().add_child(actor)
 	actor.collision_mask = 3
@@ -580,6 +583,17 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 		# setup already adopted the retained body at its actual endpoint; prevent cyclical floor reloads
 		return
 	if player == null: return
+	var retained_player := player
+	var source_map := str(adapter.map_key())
+	if adapter.has_method("prepare_map"):
+		var prepared: bool = await adapter.prepare_map(key, snapshot, get_tree())
+		if _closing: return
+		if player != retained_player or str(adapter.map_key()) != source_map:
+			if str(adapter.map_key()) == source_map and adapter.has_method("finish_transition"): adapter.finish_transition()
+			return
+		if not prepared:
+			adapter.blocked_entry()
+			return
 	if adapter.has_method("valid_transition") and not adapter.valid_transition(key, spawn, at, use_at):
 		adapter.blocked_entry()
 		return
@@ -587,7 +601,22 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 		adapter.blocked_entry()
 		field_event.emit({"kind": "blocked_move", "map": key})
 		return
-	var source_map := str(adapter.map_key())
+	var transition_fader: Object = fader if not execution_only and is_instance_valid(fader) and fader.has_method("fade_out") and fader.has_method("fade_in") else null
+	if transition_fader != null:
+		# I/O and navigation are ready before covering the visible field. Hidden
+		# execution keeps the same physical transfer without presentation waits.
+		var covered: bool = await transition_fader.fade_out()
+		if _closing: return
+		if player != retained_player or str(adapter.map_key()) != source_map:
+			if str(adapter.map_key()) == source_map and adapter.has_method("finish_transition"): adapter.finish_transition()
+			if is_instance_valid(transition_fader): await transition_fader.fade_in()
+			return
+		# Bodies and access may have changed while the cover animated. Placement
+		# still requires the current authoritative entry and actual free geometry.
+		if not covered or (adapter.has_method("valid_transition") and not adapter.valid_transition(key, spawn, at, use_at)) or (not _applying_scene and adapter.has_method("can_enter") and not adapter.can_enter(key)):
+			adapter.blocked_entry()
+			if is_instance_valid(transition_fader): await transition_fader.fade_in()
+			return
 	var source_point := player.position
 	for actor_key in actors.keys():
 		if actor_key == _player_key: continue
@@ -616,6 +645,9 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 	if not execution_only and adapter.fixed_actors().is_empty(): _spawn_people()
 	if execution_bridge != null: execution_bridge.sync_obstacles(self)
 	_build_sites()
+	if is_instance_valid(transition_fader): await transition_fader.fade_in()
+	if _closing: return
+	if adapter.has_method("finish_transition"): adapter.finish_transition()
 	if not _applying_scene and adapter.map_key() != "":
 		field_event.emit({"kind": "move", "map": adapter.map_key()})
 
@@ -635,6 +667,12 @@ func _after_map_load() -> void:
 ## Only the prepared DV movement intent enters physical execution.
 func execute_move(destination: Dictionary, who: String, serial: int, action: String) -> void:
 	execution_transitions.clear()
+	if adapter.has_method("prepare_map"):
+		var prepared: bool = await adapter.prepare_map(str(adapter.map_key()), snapshot, get_tree())
+		if _closing: return
+		if not prepared:
+			_daily_report(who, serial, "blocked", "", action, {"reason": "geometry_preparation_failed"})
+			return
 	if adapter.has_method("execute_destination"):
 		adapter.execute_destination(destination, who, serial, action)
 		return
@@ -734,7 +772,9 @@ func _daily_go(ev: Dictionary) -> void:
 	var destination := Vector2.ZERO
 	var best_route := PackedVector2Array()
 	var best_cost := INF
-	for group in station.get("approach_groups", [_station_approaches(station, grid)]):
+	var groups: Array = station.approach_groups if station.has("approach_groups") else [_station_approaches(station, grid)]
+	for candidate_group in groups:
+		var group: Array = candidate_group.call() if candidate_group is Callable else candidate_group
 		for point: Vector2 in group:
 			if adapter.entered_room(point) != str(ev.room) or not adapter.walkable(point, actor): continue
 			if position_occupied(actor, point): continue
@@ -926,11 +966,13 @@ class SightMaskInner extends Node2D:
 	var _origin := Vector2i(-999, -999)
 	var _entry := Vector2i(-999, -999)
 	var _clock := 0.0
+	var _region_cells: Dictionary = {}
 
 	func reset() -> void:
 		visible_cells.clear()
 		seen_cells = {}
 		active_region = ""
+		_region_cells.clear()
 		_origin = Vector2i(-999, -999)
 		_entry = Vector2i(-999, -999)
 		queue_redraw()
@@ -949,6 +991,13 @@ class SightMaskInner extends Node2D:
 		_clock += delta
 		var entry := Vector2i((host.sight_entry_origin() / cell_size).floor())
 		var origin := entry if _terrain_fog() else Vector2i((host.sight_origin() / cell_size).floor())
+		# Indoor visibility depends on the entered region, not on every step
+		# within it. Reset on map changes; retain each observer's own seen cells.
+		if _origin != Vector2i(-999, -999) and _terrain_fog() and host.sight_region(entry) == active_region:
+			_origin = origin
+			_entry = entry
+			_clock = 0.0
+			return
 		if origin == _origin and entry == _entry and _clock < 0.5: return
 		_clock = 0.0
 		_origin = origin
@@ -961,32 +1010,24 @@ class SightMaskInner extends Node2D:
 		var size: Vector2i = host.sight_size()
 		if _terrain_fog():
 			var entry := Vector2i((host.sight_entry_origin() / cell_size).floor())
-			_reveal_room(entry, size)
-			if active_region != "":
-				for y in range(size.y):
-					for x in range(size.x):
+			active_region = host.sight_region(entry)
+			if active_region == "": return
+			if not _region_cells.has(active_region):
+				var cells: Array[Vector2i] = []
+				for y in size.y:
+					for x in size.x:
 						var cell := Vector2i(x, y)
-						if host.sight_region(cell) == active_region:
-							visible_cells[cell] = true
+						if host.sight_region(cell) == active_region: cells.append(cell)
+				_region_cells[active_region] = cells
+			for cell: Vector2i in _region_cells[active_region]:
+				visible_cells[cell] = true
+				seen_cells[cell] = true
 			return
 		for y in range(maxi(0, origin.y - sight_radius), mini(size.y, origin.y + sight_radius + 1)):
 			for x in range(maxi(0, origin.x - sight_radius), mini(size.x, origin.x + sight_radius + 1)):
 				var target := Vector2i(x, y)
 				if (target - origin).length_squared() > sight_radius * sight_radius: continue
 				if _clear(origin, target): visible_cells[target] = true
-
-	func _reveal_room(origin: Vector2i, size: Vector2i) -> void:
-		if not _terrain_fog(): return
-		var region: String = host.sight_region(origin)
-		if region == "":
-			active_region = ""
-			return
-		active_region = region
-		for y in range(size.y):
-			for x in range(size.x):
-				var cell := Vector2i(x, y)
-				if host.sight_region(cell) == region:
-					seen_cells[cell] = true
 
 	func _terrain_fog() -> bool:
 		return host != null and host.has_method("sight_terrain_fog") and host.sight_terrain_fog()
@@ -1003,23 +1044,26 @@ class SightMaskInner extends Node2D:
 	func _draw() -> void:
 		if host == null: return
 		var size: Vector2i = host.sight_size()
-		var rect_size := Vector2(cell_size, cell_size)
-		if _terrain_fog():
-			for y in range(size.y):
-				for x in range(size.x):
+		var indoor := _terrain_fog()
+		# Adjacent cells with the same shade form one rectangle. This is the
+		# identical mask, with far fewer CanvasItem draw commands on large maps.
+		for y in size.y:
+			var run_start := 0
+			var previous := -1
+			for x in range(size.x + 1):
+				var shade := -1
+				if x < size.x:
 					var cell := Vector2i(x, y)
-					if visible_cells.has(cell) or not host.sight_interior(cell): continue
-					var shade := remembered_shade if seen_cells.has(cell) else unseen_shade
-					draw_rect(Rect2(Vector2(cell * cell_size), rect_size), shade, true)
-			return
-		for y in range(size.y):
-			for x in range(size.x):
-				var cell := Vector2i(x, y)
-				if visible_cells.has(cell):
-					seen_cells[cell] = true
-					continue
-				var shade := remembered_shade if seen_cells.has(cell) else unseen_shade
-				draw_rect(Rect2(Vector2(cell * cell_size), rect_size), shade, true)
+					if visible_cells.has(cell):
+						if not indoor: seen_cells[cell] = true
+					elif not indoor or host.sight_interior(cell):
+						shade = 1 if seen_cells.has(cell) else 0
+				if shade == previous: continue
+				if previous >= 0:
+					var color := remembered_shade if previous == 1 else unseen_shade
+					draw_rect(Rect2(Vector2(run_start, y) * cell_size, Vector2(x - run_start, 1) * cell_size), color, true)
+				run_start = x
+				previous = shade
 
 class HintOverlayInner extends Node2D:
 	var hover_color: Color = Color(0.9, 0.8, 0.4, 0.9)
@@ -1069,7 +1113,10 @@ class RoomStageInner extends Node2D:
 	var field: Node2D
 	var _map: Node2D
 	var _room := ""
-	var _lights: Array[Node2D] = []
+	var _light_pool: Array[PointLight2D] = []
+	var _beam_pool: Array[Polygon2D] = []
+	var _dust_pool: Array[GPUParticles2D] = []
+	var _glow: GradientTexture2D
 	var _veil: ColorRect
 	var _layer: CanvasLayer
 	var _bounds := Rect2()
@@ -1116,74 +1163,96 @@ class RoomStageInner extends Node2D:
 		_veil.material.set_shader_parameter("pixel_size", Vector2.ONE / viewport)
 
 	func _rebuild_lights(indoor: bool) -> void:
-		for node in _lights:
-			remove_child(node)
-			node.queue_free()
-		_lights.clear()
+		for light in _light_pool:
+			light.enabled = false
+			light.hide()
+		for beam in _beam_pool: beam.hide()
+		for dust in _dust_pool:
+			dust.speed_scale = 0.0
+			dust.hide()
 		if not indoor:
 			field.camera.zoom = Vector2(2, 2)
 			return
-		var gradient := Gradient.new()
-		gradient.offsets = PackedFloat32Array([0, 0.16, 0.48, 1])
-		gradient.colors = PackedColorArray([Color(1,1,1,1), Color(1,1,1,0.82), Color(1,1,1,0.26), Color(1,1,1,0)])
-		var glow := GradientTexture2D.new()
-		glow.gradient = gradient
-		glow.width = 256
-		glow.height = 256
-		glow.fill = GradientTexture2D.FILL_RADIAL
-		glow.fill_from = Vector2(0.5, 0.5)
-		glow.fill_to = Vector2(1, 0.5)
+		if _glow == null:
+			var gradient := Gradient.new()
+			gradient.offsets = PackedFloat32Array([0, 0.16, 0.48, 1])
+			gradient.colors = PackedColorArray([Color(1,1,1,1), Color(1,1,1,0.82), Color(1,1,1,0.26), Color(1,1,1,0)])
+			_glow = GradientTexture2D.new()
+			_glow.gradient = gradient
+			_glow.width = 256
+			_glow.height = 256
+			_glow.fill = GradientTexture2D.FILL_RADIAL
+			_glow.fill_from = Vector2(0.5, 0.5)
+			_glow.fill_to = Vector2(1, 0.5)
+		var light_index := 0
+		var window_index := 0
 		for declaration in _map.get_meta("stage_lights", []):
 			var point := Vector2(float(declaration.point[0]), float(declaration.point[1]))
 			if not _bounds.grow(12).has_point(point): continue
 			var window: bool = str(declaration.kind) == "window"
-			var light := PointLight2D.new()
+			if light_index >= _light_pool.size():
+				var created := PointLight2D.new()
+				created.texture = _glow
+				created.height = 48.0
+				created.shadow_enabled = false
+				created.range_z_min = -100
+				created.range_z_max = 100
+				add_child(created)
+				_light_pool.append(created)
+			var light := _light_pool[light_index]
+			light_index += 1
 			light.position = point
-			light.texture = glow
 			light.texture_scale = 1.1 if window else 1.45
 			light.color = Color(0.63, 0.79, 0.94) if window else Color(1.0, 0.81, 0.71)
 			light.energy = 0.6 if window else 0.9
-			light.height = 48.0
-			light.shadow_enabled = false
-			light.range_z_min = -100
-			light.range_z_max = 100
-			add_child(light)
-			_lights.append(light)
-			if window: _window_beam(point)
+			light.enabled = true
+			light.show()
+			if window:
+				_window_beam(point, window_index)
+				window_index += 1
 
-	func _window_beam(point: Vector2) -> void:
-		var beam := Polygon2D.new()
+	func _window_beam(point: Vector2, index: int) -> void:
+		if index >= _beam_pool.size():
+			var created := Polygon2D.new()
+			created.polygon = PackedVector2Array([Vector2(-12,0), Vector2(12,0), Vector2(92,160), Vector2(30,160)])
+			created.vertex_colors = PackedColorArray([Color(0.6,0.76,0.9,0.12),Color(0.6,0.76,0.9,0.12),Color(0.6,0.76,0.9,0),Color(0.6,0.76,0.9,0)])
+			created.z_index = 25
+			add_child(created)
+			_beam_pool.append(created)
+		var beam := _beam_pool[index]
 		beam.position = point
-		beam.polygon = PackedVector2Array([Vector2(-12,0), Vector2(12,0), Vector2(92,160), Vector2(30,160)])
-		beam.vertex_colors = PackedColorArray([Color(0.6,0.76,0.9,0.12),Color(0.6,0.76,0.9,0.12),Color(0.6,0.76,0.9,0),Color(0.6,0.76,0.9,0)])
-		beam.z_index = 25
-		add_child(beam)
-		_lights.append(beam)
+		beam.show()
 		if _reduce_motion: return
-		var dust := GPUParticles2D.new()
+		if index >= _dust_pool.size():
+			var created := GPUParticles2D.new()
+			created.amount = 18
+			created.lifetime = 8.0
+			created.preprocess = 4.0
+			created.local_coords = true
+			created.visibility_rect = Rect2(-64,-80,176,200)
+			created.z_index = 26
+			var motion := ParticleProcessMaterial.new()
+			motion.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+			motion.emission_box_extents = Vector3(28,60,0)
+			motion.direction = Vector3(0.2,-1,0)
+			motion.spread = 35
+			motion.initial_velocity_min = 1.0
+			motion.initial_velocity_max = 3.0
+			motion.gravity = Vector3.ZERO
+			motion.color = Color(0.8,0.86,0.91,0.18)
+			motion.scale_min = 0.35
+			motion.scale_max = 0.8
+			created.process_material = motion
+			add_child(created)
+			_dust_pool.append(created)
+		var dust := _dust_pool[index]
 		dust.position = point + Vector2(30, 70)
-		dust.amount = 18
-		dust.lifetime = 8.0
-		dust.preprocess = 4.0
-		dust.visibility_rect = Rect2(-64,-80,176,200)
-		dust.z_index = 26
-		var motion := ParticleProcessMaterial.new()
-		motion.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
-		motion.emission_box_extents = Vector3(28,60,0)
-		motion.direction = Vector3(0.2,-1,0)
-		motion.spread = 35
-		motion.initial_velocity_min = 1.0
-		motion.initial_velocity_max = 3.0
-		motion.gravity = Vector3.ZERO
-		motion.color = Color(0.8,0.86,0.91,0.18)
-		motion.scale_min = 0.35
-		motion.scale_max = 0.8
-		dust.process_material = motion
-		add_child(dust)
-		_lights.append(dust)
+		dust.speed_scale = 1.0
+		dust.show()
 
 class SpatialInputInner extends Node:
 	const NAV := FieldNavigationInner
+	const MAX_ROUTE_STEPS_PER_TICK := 32
 	var field: Node2D
 	var options: Array = []
 	var submitted := false
@@ -1241,8 +1310,17 @@ class SpatialInputInner extends Node:
 			_step(direction * field.player.speed * delta, delta)
 		elif not _route.is_empty():
 			_begin_walk()
-			var difference: Vector2 = _route[0] - field.player.position
-			if difference.length() <= 1.0:
+			var remaining: float = field.player.speed * delta
+			for _segment in MAX_ROUTE_STEPS_PER_TICK:
+				var difference: Vector2 = _route[0] - field.player.position
+				if difference.length() > 1.0:
+					if remaining <= 0.0: break
+					var motion := difference.limit_length(remaining)
+					_step(motion, delta)
+					# A doorway can submit a formal action and clear the local route.
+					if _route.is_empty() or not enabled(): return
+					remaining = maxf(0.0, remaining - motion.length())
+					if field.player.position.distance_to(_route[0]) > 1.0: break
 				_route.remove_at(0)
 				if _route.is_empty():
 					var site := _site
@@ -1250,14 +1328,13 @@ class SpatialInputInner extends Node:
 					_stop_walk("arrived")
 					if site != "": _interact(site)
 					elif not door.is_empty(): _submit(door, "", "doorway-click")
+					return
+			if field.player.position.distance_to(_progress) >= 0.5:
+				_progress = field.player.position
+				_stuck = 0.0
 			else:
-				_step(difference.limit_length(field.player.speed * delta), delta)
-				if field.player.position.distance_to(_progress) >= 0.5:
-					_progress = field.player.position
-					_stuck = 0.0
-				else:
-					_stuck += delta
-					if _stuck >= 0.5: _stop_walk("blocked")
+				_stuck += delta
+				if _stuck >= 0.5: _stop_walk("blocked")
 		elif _walking:
 			_stop_walk("released")
 
@@ -1348,14 +1425,10 @@ class SpatialInputInner extends Node:
 		return nearest
 
 	func _local_grid(destination_room := "") -> AStarGrid2D:
-		var grid: AStarGrid2D = field.adapter.nav_grid(field.player)
+		# This room mask belongs to this request. Never write it into the map's
+		# shared grid when there happen to be no other bodies in the room.
 		var room := str(field.snapshot.get("execution_room", ""))
-		for y in range(grid.region.position.y, grid.region.end.y):
-			for x in range(grid.region.position.x, grid.region.end.x):
-				var cell := Vector2i(x, y)
-				var candidate_room: String = field.adapter.room_of(grid.get_point_position(cell))
-				if candidate_room != room and candidate_room != destination_room: grid.set_point_solid(cell)
-		return grid
+		return field.adapter.local_nav_grid(field.player, room, destination_room)
 
 	func _approach(site: String) -> void:
 		if not field.site_visible(site): return
@@ -1455,7 +1528,20 @@ class FieldNavigationInner extends RefCounted:
 		var from := _free_endpoint(grid, start)
 		var to := _free_endpoint(grid, finish)
 		if from.x < 0 or to.x < 0: return PackedVector2Array()
-		return grid.get_point_path(from, to)
+		return _without_collinear_points(grid.get_point_path(from, to))
+
+	## Remove only redundant points on the same directed segment. No diagonal
+	## shortcut, wall clearance, endpoint or turn is changed by this reduction.
+	static func _without_collinear_points(points: PackedVector2Array) -> PackedVector2Array:
+		if points.size() < 3: return points
+		var result := PackedVector2Array([points[0]])
+		for index in range(1, points.size() - 1):
+			var before := points[index] - result[result.size() - 1]
+			var after := points[index + 1] - points[index]
+			if before.cross(after) == 0.0 and before.dot(after) > 0.0: continue
+			result.append(points[index])
+		result.append(points[points.size() - 1])
+		return result
 
 	static func _free_endpoint(grid: AStarGrid2D, point: Vector2) -> Vector2i:
 		var cell := Vector2i(((point - grid.offset) / grid.cell_size).round())
