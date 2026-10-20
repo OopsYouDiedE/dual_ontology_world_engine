@@ -53,8 +53,10 @@ Main → DvFieldExecutor → WorldView 使用唯一保留的人物实体执行�
 
 ## 宿主与核心合同
 
-1. **分层隔离原则**：
+1. **分层隔离原则与模块架构**：
    - UI 控件严禁直接访问 Core 对象引用；Core 严禁依赖任何 Godot 场景或节点。
+   - UI 结构划分为 6 个解耦独立模块：主界面（TitleUI）、设置界面（SettingsUI）、游戏内 HUD（FieldHUD）、调查界面（InvestigationUI：手稿/卡片/笔记本/地图/终局）、游戏场景显示（WorldView）、文本显示（DialogueUI：对白/选项/旁白/闪白/转场淡入淡出）；顶层由 `UISystem.tscn` / `UISystem.gd` 负责装配与生命周期路由，以纯数据字典通信，防止隐式代码耦合。
+   - 宿主现场辅助类（`RuntimeDiagnostics`、`PlayerViewTrace`、`DvFieldExecutor`）以内部类整合进 `Host/Main.gd`；现场导航与渲染辅助（`FieldVocabulary`、`PresentationBindings`、`SightMask`、`HintOverlay`、`RoomStage`、`SpatialInput`、`FieldNavigation`）以内部类整合进 `Shared/Field/WorldView.gd`。
    - `Host/Main.tscn` 与 `Host/GameEngine.cs` 是唯一胶水，负责双向数据转发：将 Core 演算结果与回执转为纯数据派发给 UI 和现场，将玩家/坐席操作转为 Core 意图交由世界引擎裁决。
 
 2. **主体共同决策与适配**：
@@ -74,30 +76,31 @@ Main → DvFieldExecutor → WorldView 使用唯一保留的人物实体执行�
    - AI 坐席（`AgentPilot.gd` / `GameEngine.ConfigureAiSeat`）驱动玩家席位，基于本人认知与声明规则，通过正式现场与 UI 动作进行游戏。
    - 实际复测使用 `full_test.py`，完整记录真实决策、输入、回执与渲染截图。评估以实际行为合理性为准，不采用计数汇总。
 
-## 一、场景（.tscn）架构分类
+## 一、场景（.tscn）与 UI 架构（2026-10-19 统一）
 
-项目中所有场景及预制件必须明确归属于以下三类之一：
+所有 UI 界面，包括负责窗口 UI 和核心沟通的容器，全部统一为一个 `.tscn` 和一个 `.gd` 文件：
+- **统一 UI 场景**：`scenes/UI/UISystem.tscn`
+- **统一 UI 脚本**：`scenes/UI/UISystem.gd`
 
-1. **小组件（Components / Widgets，`UI/Components/`）**：
-   - 最小可复用单元，不管理全局流程生命周期，受父级容器控制或纯数据驱动渲染（如按钮、标签、模态窗骨架、证物卡片、对白选项等）。
-   - 保持高内聚，对外仅暴露必要的属性与交互信号，不持有业务全局状态。
+旧的脚手架与分散面板组件（`UI/Panels/`、`UI/Components/`、`UI/Workbench/`）已完全清理并删除。
 
-2. **UI 面板与子系统（UI Views & Subsystems，`UI/Panels/<面板>/`）**：
-   - 完整的界面功能页、浮层或视觉交互系统（如对白面板、菜单、卡片、表单、笔记本、地图、HUD 等）。
-   - 通过标准化信号向外发送用户意图，接收结构化数据刷新展示，与底层逻辑实体解耦。
+### 场景结构与层级
 
-3. **宿主承接与信号总线（Main / Host，`Host/`）**：
-   - 游戏宿主顶层胶水（`Main.tscn` / `GameEngine.cs`），唯一直接承接 C# 逻辑会话并驱动游戏循环的节点。
-
-### 场景目录映射
-
-| 分类 | 目录 | 内容 |
+| 层级 | 节点 | 职责 |
 | :--- | :--- | :--- |
-| 小组件 | `UI/Components/` | `Paper.gd`（组件工厂）、按钮、标签、弹窗、印戳、手账页等复用控件 |
-| UI 面板 | `UI/Panels/<面板>/` | `Dialogue`、`Menu`、`Card`、`Form`、`Notebook`、`Ending`、`HUD`、`Field` 等 |
-| UI 总装 | `UI/UISystem.tscn` | 整合各面板，纯数据驱动，通过 `ui_event` 回传操作 |
-| 宿主 | `Host/` | `Main.tscn`（主场景）、`GameEngine.cs`、`AgentPilot.gd` |
-| 现场视图 | `Shared/Field/` 及各章目录 | 地图适配器、现场精灵、碰撞与出口表现 |
+| **TitleLayer** (30) | `TitleBox` / `DeskBackground` | 卷首封面、标题、开始阅读、凡例与合卷退出 |
+| **HUDLayer** (10) | `TopBar` / `HintLabel` / `HoverTip` / `AsideLabel` / `FlashLabel` | 常驻状态栏（房间名、章节名、时钟）、底部提示、悬停热点提示、旁白与全屏警示 |
+| **DialogueLayer** (20) | `DialoguePanel` / `VBox` | 角色正文、讲话者名字、交互选择项、翻页提示 |
+| **ModalLayer** (25) | `ModalFrame` / `ModalBody` | 模态弹窗系统：证物卡片、手账簿、案情推演手稿、校区平面图、系统设置与终局结算 |
+
+### 宿主承接与信号契约
+
+- 顶层宿主胶水为 `Host/Main.tscn` 与 `Host/GameEngine.cs`。
+- `Main.gd` 直接实例化 `UISystem.tscn`，通过以下标准接口通信：
+  - `show_title()` / `show_hud()` / `apply_snapshot(snapshot)`
+  - `start_dialogue(speech)` / `advance_dialogue()` / `dialogue_option_selected(id)`
+  - `open_card(data)` / `open_notebook()` / `open_manuscript()` / `open_campus_map()` / `open_settings()` / `open_ending(data)`
+  - `ui_event(event_name, data)` 信号回传用户操作，与 Core 保持纯数据驱动解耦。
 
 ## 二、资源类型与样式规范
 

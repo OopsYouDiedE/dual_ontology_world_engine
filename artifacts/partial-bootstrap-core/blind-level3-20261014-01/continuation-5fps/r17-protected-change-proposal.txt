@@ -1,9 +1,0 @@
-R17 protected change rationale
-
-R16 completed trust action at game752 but host result arrived at real1529294ms; stop was requested at1400913ms, so later delivery was not rendered/captured. First three accepted answers were rendered; chapter content availability is not crossing.
-
-Post-stop 5-second EventPipe profile locates working thread at dvg_complete -> dvg_extend -> dv_with_many -> dv_clone -> Runtime.copy_value. This establishes the sampled location, not all preceding wait phases. Separate later dotnet-stack sample was in Save/SnapshotValue, so it cannot be used as proof of the earlier compute location.
-
-Change: only transfer the single owned host session container without copying all event/history subtrees. Keep fresh top-level pairs; preserve every field; override declared updates. Only dvg_extend final return and dvg_prepare actor-list replacement use this function. World/mind/prediction/plan/snapshot persistent-copy APIs remain unchanged. No cost/quota, source fact, formal answer condition, time model, movement, collision, capture or input change. All event and initial values retained.
-
-This is a distinct source fingerprint. R16 originals preserved; no reset of old measurement baselines. Independent proposal and exact-diff review precede new formal run. Engineering alias/serialization checks cannot substitute for actual UI and crossing evidence.

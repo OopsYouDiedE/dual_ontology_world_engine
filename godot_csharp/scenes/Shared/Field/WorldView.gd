@@ -4,19 +4,19 @@ extends Node2D
 ## 接口与分层见设计第四部分 §2。
 
 const ACTOR := preload("res://scenes/Story/StoryActor.gd")
-const FieldNavigation := preload("res://scenes/Shared/FieldNavigation.gd")
-const FieldVocabulary := preload("res://scenes/Shared/Field/FieldVocabulary.gd")
-const Bindings := preload("res://scenes/Shared/Field/PresentationBindings.gd")
-const SightMaskScene := preload("res://scenes/UI/Panels/Field/SightMask.tscn")
-const HintOverlayScene := preload("res://scenes/UI/Panels/Field/HintOverlay.tscn")
-const ROOM_STAGE := preload("res://scenes/Shared/Field/RoomStage.gd")
-const SPATIAL_INPUT := preload("res://scenes/Shared/Field/SpatialInput.gd")
+const FieldNavigation := FieldNavigationInner
+const FieldVocabulary := FieldVocabularyInner
+const Bindings := PresentationBindingsInner
+const SightMaskScript := SightMaskInner
+const HintOverlayScript := HintOverlayInner
+const ROOM_STAGE := RoomStageInner
+const SPATIAL_INPUT := SpatialInputInner
 const PIXEL_FRAMES := "res://ShareAsset/Internal/Characters/PixelCast/%s.tres"
 const ANIME_FRAMES := "res://ShareAsset/Internal/Characters/AnimeCast/%s.tres"
 const APPROACH := [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]
 const NEAR_SITE_RADIUS := 85.0
-const DAYPART_TINT := {"dawn": Color(1.0, 0.96, 0.9), "morning": Color(1, 1, 1), "noon": Color(1, 1, 0.97),
-	"afternoon": Color(1.0, 0.95, 0.86), "evening": Color(0.96, 0.82, 0.7), "night": Color(0.45, 0.5, 0.68)}
+const DAYPART_TINT := {"dawn": Color("b7b8b8"), "morning": Color("d8d4cc"), "noon": Color("e4e0d8"),
+	"afternoon": Color("d4cec4"), "evening": Color("96939a"), "night": Color("525866")}
 
 signal field_event(event: Dictionary)
 signal hover_changed(text: String, screen_position: Vector2)
@@ -77,13 +77,13 @@ func setup(map_adapter: Node2D) -> void:
 	tint = CanvasModulate.new()
 	tint.color = Color.WHITE
 	add_child(tint)
-	sight = SightMaskScene.instantiate()
+	sight = SightMaskScript.new()
 	sight.name = "Sight"
 	sight.z_index = 40
 	sight.host = adapter
 	sight.set_process(false)
 	add_child(sight)
-	hints = HintOverlayScene.instantiate()
+	hints = HintOverlayScript.new()
 	hints.z_index = 50
 	add_child(hints)
 	hints.set("source", self)
@@ -576,8 +576,8 @@ func _frame_pose(actor: CharacterBody2D, frame: String) -> void:
 	actor.pose({"操作": "interact", "递物": "interact", "拉拽": "interact", "交谈": "talk", "蹲查": "inspect"}.get(frame, "idle"), "front")
 
 func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -> void:
-	if execution_bridge != null and adapter.map_key() == key:
-		# setup already adopted the retained body at its actual endpoint.
+	if adapter != null and adapter.map_key() == key:
+		# setup already adopted the retained body at its actual endpoint; prevent cyclical floor reloads
 		return
 	if player == null: return
 	if adapter.has_method("valid_transition") and not adapter.valid_transition(key, spawn, at, use_at):
@@ -811,3 +811,683 @@ func _daily_report(who: String, serial: int, status: String, room: String, actio
 	var event := {"kind": "daily", "who": who, "serial": serial, "status": status, "room": room, "action": action}
 	event.merge(proof, true)
 	field_event.emit(event)
+
+# ==============================================================================
+# 内聚现场支持类 (Field Subsystems Inner Classes)
+# ==============================================================================
+
+class FieldVocabularyInner:
+	static var _data := {
+		"FIELD_WORDS": {
+			"门关": "（关闭）", "门开": "（开启）", "宿舍门开": "宿舍门（开启）", "宿舍门关": "宿舍门（关闭）",
+			"未命名": "未命名物品", "床头油灯": "床头柜上的油灯", "床头柜": "床头柜", "地毯": "地毯",
+			"地毯旁白前缀": "地毯。", "壁灯": "壁灯"
+		},
+		"PRESENTATION": {
+			"composites": {
+				"res://ShareAsset/Internal/Props/FirstAwakeningInterior/nightstand.png": {
+					"lamp": {"x": 6, "y": 4, "width": 8, "height": 13, "word": "床头油灯"},
+					"cabinet": {"x": 1, "y": 16, "width": 18, "height": 20, "word": "床头柜"}
+				}
+			}
+		},
+		"OBJECT_NAMES": {
+			"SheetedBed": "罩着防尘布的床", "EmptyBookcase": "书架", "EmptyWardrobe": "衣柜", "Nightstand": "床头柜",
+			"Bookcase": "书架", "DeskChair": "椅子", "ReadingChair": "扶手椅", "ReadingTable": "小几",
+			"StudyTable": "长桌", "RewardLocker": "领取柜", "CylinderPlayer": "手摇试听机", "StudyFern": "花架",
+			"StudyConsole": "边桌", "PaperBasket": "纸篓", "WallClock": "挂钟", "LinenChest": "箱子",
+			"Wardrobe": "衣柜", "Dresser": "梳妆台", "Washstand": "水槽", "Sideboard": "碗柜",
+			"Worktable": "案板", "CupTable": "小圆桌", "CoatStand": "衣架", "StoreSack": "袋子",
+			"PantrySack": "袋子", "CorridorConsole": "边桌", "CorridorPlant": "花架", "ShoeBench": "长凳",
+			"ToolBench": "工作台", "DemonPrints": "地上的脚印", "Transmitter": "铜口", "Mouthpiece": "铜口",
+			"ZoneRules": "公告框", "SealRack": "架子", "WorksShelf": "书架", "Shelf": "书架",
+			"VaultDoor": "门", "Warning": "告示", "CopyDesk": "书桌", "PlanCabinet": "柜子",
+			"Pedestal": "台座", "RelayColumn": "柱子", "Piano": "钢琴", "Globe": "地球仪",
+			"Armchair": "扶手椅", "Range": "灶", "Basin": "洗手盆", "Bed": "床",
+			"Chair": "椅子", "Desk": "书桌", "Coat": "衣架", "Crate": "箱子",
+			"Barrel": "水桶", "Sack": "袋子", "Lamp": "灯", "Fern": "盆栽",
+			"Bench": "长凳", "Notice": "公告框", "Pillar": "柱子", "Hydrangea": "绣球花",
+			"Blackboard": "黑板", "ChessChair": "椅子", "Chess": "棋盘桌", "Fireplace": "壁炉",
+			"FireSide": "边桌", "LaundryTub": "洗衣盆", "DishRack": "碗碟架", "Drying": "晾衣绳",
+			"Heater": "热水炉", "Lectern": "讲台", "Ledger": "账簿台", "MedCabinet": "药柜",
+			"MusicStand": "谱架", "Pots": "花盆", "Pump": "手动水泵", "RationCounter": "配给台",
+			"ReagentCabinet": "试剂柜", "Spring": "汲水泉", "Tools": "园艺工具", "Tub": "浴缸",
+			"Valve": "阀门", "Buckets": "水桶", "Bollard": "系缆桩", "Engine": "机械装置",
+			"Hood": "排烟罩", "LaneGate": "门扇", "LongTable": "长桌", "PianoStool": "琴凳",
+			"Plant": "花架", "Rockfall": "岩石", "Screen": "屏风", "Timetable": "课表板",
+			"Trough": "水槽", "Table": "桌子", "Bin": "储物箱", "Frame": "框架",
+			"Stand": "架子", "round": "树"
+		},
+		"TEXTURE_NAMES": {
+			"planter_bed": "种植床", "ward_bed": "病床", "lecture_desk_row": "课桌", "music_stand": "谱架",
+			"tuning_frame": "框架", "lamp_post": "路灯", "piano_stool": "琴凳", "granary_bin": "储物箱",
+			"basin_row": "洗手盆", "bucket_pair": "水桶", "chess_table": "棋盘桌", "doctor_desk": "诊疗桌",
+			"folding_screen": "屏风", "gate_leaf": "门扇", "plant_stand": "花架", "side_table_plain": "边桌",
+			"stone_bench": "石凳", "long_table": "长桌", "timetable_board": "课表板"
+		},
+		"TEXTURE_PREFIX_NAMES": {
+			"outdoor_hydrangea_": "绣球花", "outdoor_round_": "树", "outdoor_boulder_": "岩石"
+		}
+	}
+
+	static func table(key: String) -> Dictionary:
+		var value = _data.get(key, {})
+		return value if value is Dictionary else {}
+
+	static func word(key: String) -> String:
+		return str(table("FIELD_WORDS").get(key, ""))
+
+	static func sprite_parts(sprite: Sprite2D) -> Array[Dictionary]:
+		var result: Array[Dictionary] = []
+		var presentation := table("PRESENTATION")
+		if not presentation.get("composites") is Dictionary:
+			PresentationBindingsInner.fail(sprite, "Missing composite presentation declarations")
+			return result
+		var definitions: Dictionary = presentation.composites
+		if not definitions.has(sprite.texture.resource_path): return result
+		var parts: Dictionary = definitions[sprite.texture.resource_path]
+		for key in parts:
+			var spec: Dictionary = parts[key]
+			var title := word(str(spec.word))
+			if title == "":
+				PresentationBindingsInner.fail(sprite, "Missing composite vocabulary binding: " + str(spec.word))
+				return []
+			var rect := Rect2(float(spec.x), float(spec.y), float(spec.width), float(spec.height))
+			if not Rect2(Vector2.ZERO, sprite.texture.get_size()).encloses(rect):
+				PresentationBindingsInner.fail(sprite, "Composite region exceeds texture: " + str(key))
+				return []
+			result.append({"rect": Rect2(sprite.get_rect().position + rect.position, rect.size), "title": title})
+		return result
+
+class PresentationBindingsInner:
+	static func actor_error(root: Node, bindings: Dictionary, player_key: String) -> String:
+		if bindings.is_empty() or not bindings.has(player_key): return "Missing player actor binding: " + player_key
+		var nodes := {}
+		for key in bindings:
+			var path := str(bindings[key])
+			if path == "" or nodes.has(path): return "Invalid or duplicate actor node binding: " + str(key)
+			nodes[path] = true
+			if root.get_node_or_null(path) is not CharacterBody2D: return "Missing actor node binding: " + str(key) + " -> " + path
+		return ""
+
+	static func fail(node: Node, message: String) -> void:
+		push_error(message)
+		if node.is_inside_tree(): node.get_tree().quit(1)
+
+class SightMaskInner extends Node2D:
+	var cell_size: int = 32
+	var sight_radius: int = 15
+	var unseen_shade: Color = Color(0.08, 0.08, 0.08, 0.85)
+	var remembered_shade: Color = Color(0.18, 0.18, 0.18, 0.5)
+	var host: Node
+	var visible_cells: Dictionary = {}
+	var seen_cells: Dictionary = {}
+	var active_region := ""
+	var _origin := Vector2i(-999, -999)
+	var _entry := Vector2i(-999, -999)
+	var _clock := 0.0
+
+	func reset() -> void:
+		visible_cells.clear()
+		seen_cells = {}
+		active_region = ""
+		_origin = Vector2i(-999, -999)
+		_entry = Vector2i(-999, -999)
+		queue_redraw()
+
+	func can_see(point: Vector2) -> bool:
+		var cell := Vector2i((point / cell_size).floor())
+		if _terrain_fog():
+			return active_region != "" and seen_cells.has(cell) and host.sight_region(cell) == active_region
+		return visible_cells.has(cell)
+
+	func terrain_known(point: Vector2) -> bool:
+		return seen_cells.has(Vector2i((point / cell_size).floor()))
+
+	func _process(delta: float) -> void:
+		if Engine.is_editor_hint() or host == null: return
+		_clock += delta
+		var entry := Vector2i((host.sight_entry_origin() / cell_size).floor())
+		var origin := entry if _terrain_fog() else Vector2i((host.sight_origin() / cell_size).floor())
+		if origin == _origin and entry == _entry and _clock < 0.5: return
+		_clock = 0.0
+		_origin = origin
+		_entry = entry
+		_cast(origin)
+		queue_redraw()
+
+	func _cast(origin: Vector2i) -> void:
+		visible_cells.clear()
+		var size: Vector2i = host.sight_size()
+		if _terrain_fog():
+			var entry := Vector2i((host.sight_entry_origin() / cell_size).floor())
+			_reveal_room(entry, size)
+			if active_region != "":
+				for y in range(size.y):
+					for x in range(size.x):
+						var cell := Vector2i(x, y)
+						if host.sight_region(cell) == active_region:
+							visible_cells[cell] = true
+			return
+		for y in range(maxi(0, origin.y - sight_radius), mini(size.y, origin.y + sight_radius + 1)):
+			for x in range(maxi(0, origin.x - sight_radius), mini(size.x, origin.x + sight_radius + 1)):
+				var target := Vector2i(x, y)
+				if (target - origin).length_squared() > sight_radius * sight_radius: continue
+				if _clear(origin, target): visible_cells[target] = true
+
+	func _reveal_room(origin: Vector2i, size: Vector2i) -> void:
+		if not _terrain_fog(): return
+		var region: String = host.sight_region(origin)
+		if region == "":
+			active_region = ""
+			return
+		active_region = region
+		for y in range(size.y):
+			for x in range(size.x):
+				var cell := Vector2i(x, y)
+				if host.sight_region(cell) == region:
+					seen_cells[cell] = true
+
+	func _terrain_fog() -> bool:
+		return host != null and host.has_method("sight_terrain_fog") and host.sight_terrain_fog()
+
+	func _clear(a: Vector2i, b: Vector2i) -> bool:
+		var delta := b - a
+		var steps := maxi(absi(delta.x), absi(delta.y))
+		if steps <= 1: return true
+		for i in range(1, steps):
+			var check := Vector2i((Vector2(a) + Vector2(delta) * (float(i) / float(steps))).round())
+			if host.sight_blocks(check): return false
+		return true
+
+	func _draw() -> void:
+		if host == null: return
+		var size: Vector2i = host.sight_size()
+		var rect_size := Vector2(cell_size, cell_size)
+		if _terrain_fog():
+			for y in range(size.y):
+				for x in range(size.x):
+					var cell := Vector2i(x, y)
+					if visible_cells.has(cell) or not host.sight_interior(cell): continue
+					var shade := remembered_shade if seen_cells.has(cell) else unseen_shade
+					draw_rect(Rect2(Vector2(cell * cell_size), rect_size), shade, true)
+			return
+		for y in range(size.y):
+			for x in range(size.x):
+				var cell := Vector2i(x, y)
+				if visible_cells.has(cell):
+					seen_cells[cell] = true
+					continue
+				var shade := remembered_shade if seen_cells.has(cell) else unseen_shade
+				draw_rect(Rect2(Vector2(cell * cell_size), rect_size), shade, true)
+
+class HintOverlayInner extends Node2D:
+	var hover_color: Color = Color(0.9, 0.8, 0.4, 0.9)
+	var near_color: Color = Color(0.8, 0.75, 0.6, 0.6)
+	var shade_color: Color = Color(0.1, 0.1, 0.1, 0.4)
+	var spark_edge_color: Color = Color(0.95, 0.9, 0.5, 0.8)
+	var spark_light_color: Color = Color(1.0, 1.0, 0.8, 0.9)
+	var spark_center_color: Color = Color(1.0, 1.0, 1.0, 1.0)
+	var source: Node2D
+	var clock := 0.0
+
+	func _ready() -> void:
+		if material == null:
+			var unlit := CanvasItemMaterial.new()
+			unlit.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
+			material = unlit
+
+	func _process(delta: float) -> void:
+		clock += delta
+		queue_redraw()
+
+	func _draw() -> void:
+		if source == null: return
+		var sites: Dictionary = source.get("sites") if source.get("sites") != null else {}
+		var hovered: String = str(source.get("hovered")) if source.get("hovered") != null else ""
+		var nearest: String = str(source.get("nearest")) if source.get("nearest") != null else ""
+		for id: String in sites.keys():
+			var data: Dictionary = sites[id]
+			var box: Rect2 = data.get("box", Rect2())
+			if box.size == Vector2.ZERO: continue
+			if id == hovered:
+				draw_rect(box, hover_color, false, 2.0)
+			elif id == nearest and hovered == "":
+				draw_rect(box, near_color, false, 1.0)
+			elif bool(data.get("new", false)):
+				var phase := fposmod(clock * 2.0, 1.0)
+				var spark_radius := int(round(1.0 + phase * 3.0))
+				_draw_spark(box.position + box.size * 0.5, spark_radius)
+
+	func _draw_spark(center: Vector2, radius: int) -> void:
+		draw_circle(center, float(radius + 1), spark_edge_color)
+		draw_circle(center, float(radius), spark_light_color)
+		draw_circle(center, float(maxi(1, radius - 1)), spark_center_color)
+
+class RoomStageInner extends Node2D:
+	const VEIL := preload("res://scenes/Shared/Field/room_veil.gdshader")
+	var field: Node2D
+	var _map: Node2D
+	var _room := ""
+	var _lights: Array[Node2D] = []
+	var _veil: ColorRect
+	var _layer: CanvasLayer
+	var _bounds := Rect2()
+	var _reduce_motion := false
+
+	func _ready() -> void:
+		var settings := get_node_or_null("/root/GameSettings")
+		if settings != null:
+			_reduce_motion = bool(settings.get_value("accessibility", "reduce_motion"))
+			settings.setting_changed.connect(func(section: String, key: String, value):
+				if section == "accessibility" and key == "reduce_motion":
+					_reduce_motion = bool(value)
+					_room = ""
+			)
+		_layer = CanvasLayer.new()
+		_layer.layer = 1
+		add_child(_layer)
+		_veil = ColorRect.new()
+		_veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		var mat := ShaderMaterial.new()
+		mat.shader = VEIL
+		_veil.material = mat
+		_layer.add_child(_veil)
+
+	func _process(delta: float) -> void:
+		if not is_instance_valid(field.player) or field.adapter.map == null: return
+		var adapter: Node2D = field.adapter
+		var room: String = adapter.room_of(field.player.position)
+		var indoor: bool = adapter.sight_terrain_fog()
+		_veil.visible = indoor
+		if _map != adapter.map or room != _room:
+			_map = adapter.map
+			_room = room
+			_bounds = adapter.stage_bounds(field.player.position)
+			_rebuild_lights(indoor)
+		if not indoor: return
+		var viewport: Vector2 = get_viewport_rect().size
+		var zoom := clampf(minf(viewport.x * 0.9 / _bounds.size.x, viewport.y * 0.88 / _bounds.size.y), 2.0, 3.4)
+		field.camera.zoom = Vector2.ONE * zoom if _reduce_motion else field.camera.zoom.lerp(Vector2.ONE * zoom, 1.0 - exp(-delta * 8.0))
+		var transform: Transform2D = field.get_global_transform_with_canvas()
+		var screen_bounds: Rect2 = transform * _bounds
+		_veil.material.set_shader_parameter("room_rect", Vector4(screen_bounds.position.x / viewport.x, screen_bounds.position.y / viewport.y, screen_bounds.end.x / viewport.x, screen_bounds.end.y / viewport.y))
+		_veil.material.set_shader_parameter("pixel_size", Vector2.ONE / viewport)
+
+	func _rebuild_lights(indoor: bool) -> void:
+		for node in _lights:
+			remove_child(node)
+			node.queue_free()
+		_lights.clear()
+		if not indoor:
+			field.camera.zoom = Vector2(2, 2)
+			return
+		var gradient := Gradient.new()
+		gradient.offsets = PackedFloat32Array([0, 0.16, 0.48, 1])
+		gradient.colors = PackedColorArray([Color(1,1,1,1), Color(1,1,1,0.82), Color(1,1,1,0.26), Color(1,1,1,0)])
+		var glow := GradientTexture2D.new()
+		glow.gradient = gradient
+		glow.width = 256
+		glow.height = 256
+		glow.fill = GradientTexture2D.FILL_RADIAL
+		glow.fill_from = Vector2(0.5, 0.5)
+		glow.fill_to = Vector2(1, 0.5)
+		for declaration in _map.get_meta("stage_lights", []):
+			var point := Vector2(float(declaration.point[0]), float(declaration.point[1]))
+			if not _bounds.grow(12).has_point(point): continue
+			var window: bool = str(declaration.kind) == "window"
+			var light := PointLight2D.new()
+			light.position = point
+			light.texture = glow
+			light.texture_scale = 1.1 if window else 1.45
+			light.color = Color(0.63, 0.79, 0.94) if window else Color(1.0, 0.81, 0.71)
+			light.energy = 0.6 if window else 0.9
+			light.height = 48.0
+			light.shadow_enabled = false
+			light.range_z_min = -100
+			light.range_z_max = 100
+			add_child(light)
+			_lights.append(light)
+			if window: _window_beam(point)
+
+	func _window_beam(point: Vector2) -> void:
+		var beam := Polygon2D.new()
+		beam.position = point
+		beam.polygon = PackedVector2Array([Vector2(-12,0), Vector2(12,0), Vector2(92,160), Vector2(30,160)])
+		beam.vertex_colors = PackedColorArray([Color(0.6,0.76,0.9,0.12),Color(0.6,0.76,0.9,0.12),Color(0.6,0.76,0.9,0),Color(0.6,0.76,0.9,0)])
+		beam.z_index = 25
+		add_child(beam)
+		_lights.append(beam)
+		if _reduce_motion: return
+		var dust := GPUParticles2D.new()
+		dust.position = point + Vector2(30, 70)
+		dust.amount = 18
+		dust.lifetime = 8.0
+		dust.preprocess = 4.0
+		dust.visibility_rect = Rect2(-64,-80,176,200)
+		dust.z_index = 26
+		var motion := ParticleProcessMaterial.new()
+		motion.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		motion.emission_box_extents = Vector3(28,60,0)
+		motion.direction = Vector3(0.2,-1,0)
+		motion.spread = 35
+		motion.initial_velocity_min = 1.0
+		motion.initial_velocity_max = 3.0
+		motion.gravity = Vector3.ZERO
+		motion.color = Color(0.8,0.86,0.91,0.18)
+		motion.scale_min = 0.35
+		motion.scale_max = 0.8
+		dust.process_material = motion
+		add_child(dust)
+		_lights.append(dust)
+
+class SpatialInputInner extends Node:
+	const NAV := FieldNavigationInner
+	var field: Node2D
+	var options: Array = []
+	var submitted := false
+	var _route := PackedVector2Array()
+	var _site := ""
+	var _sequence := 0
+	var _walking := false
+	var _walk_id := ""
+	var _progress := Vector2.ZERO
+	var _stuck := 0.0
+	var _pending_door: Dictionary = {}
+
+	func set_options(value: Array) -> void:
+		options = value
+		submitted = false
+
+	func enabled() -> bool:
+		return is_instance_valid(field) and field.field_active() and bool(field.snapshot.get("player_control", false)) and not submitted and not field._daily.has(field.player.name)
+
+	func _stamp(stage: String, id: String, data: Dictionary = {}) -> void:
+		field.field_event.emit({"kind": "timing", "stage": stage, "interaction_id": id, "details": data})
+
+	func _id() -> String:
+		_sequence += 1
+		return "spatial-%d-%d" % [Time.get_ticks_usec(), _sequence]
+
+	func _stop_walk(reason: String) -> void:
+		_route.clear()
+		_site = ""
+		_pending_door = {}
+		if _walking:
+			_stamp("local_motion_end", _walk_id, {"reason": reason, "game_time": field.snapshot.get("game_time", 0), "position": [field.player.position.x, field.player.position.y]})
+		_walking = false
+		if is_instance_valid(field.player) and not field.player.travelling: field.player.pose("idle")
+
+	func _begin_walk() -> void:
+		if _walking: return
+		if field.player.seated: field.player.stand_up()
+		_walking = true
+		_progress = field.player.position
+		_stuck = 0.0
+		_walk_id = _id()
+		_stamp("local_motion_begin", _walk_id, {"game_time": field.snapshot.get("game_time", 0), "position": [field.player.position.x, field.player.position.y]})
+
+	func _physics_process(delta: float) -> void:
+		if not enabled():
+			if _walking: _stop_walk("input-blocked")
+			return
+		var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+		if direction != Vector2.ZERO:
+			_route.clear()
+			_site = ""
+			_pending_door = {}
+			_begin_walk()
+			_step(direction * field.player.speed * delta, delta)
+		elif not _route.is_empty():
+			_begin_walk()
+			var difference: Vector2 = _route[0] - field.player.position
+			if difference.length() <= 1.0:
+				_route.remove_at(0)
+				if _route.is_empty():
+					var site := _site
+					var door := _pending_door
+					_stop_walk("arrived")
+					if site != "": _interact(site)
+					elif not door.is_empty(): _submit(door, "", "doorway-click")
+			else:
+				_step(difference.limit_length(field.player.speed * delta), delta)
+				if field.player.position.distance_to(_progress) >= 0.5:
+					_progress = field.player.position
+					_stuck = 0.0
+				else:
+					_stuck += delta
+					if _stuck >= 0.5: _stop_walk("blocked")
+		elif _walking:
+			_stop_walk("released")
+
+	func _step(motion: Vector2, delta: float) -> void:
+		var next: Vector2 = field.player.position + motion
+		var room := str(field.snapshot.get("execution_room", field.snapshot.get("room", "")))
+		var next_room: String = field.adapter.room_of(next)
+		var exit_map: String = field.adapter.manual_exit_target(next) if field.adapter.has_method("manual_exit_target") else ""
+		if next_room != room or exit_map != "":
+			if not field.adapter.walkable(next, field.player): return
+			_stop_walk("doorway")
+			for option in options:
+				var binding: Dictionary = option.get("interaction", {})
+				var destination: Dictionary = binding.get("destination", {})
+				if str(binding.get("kind", "")) == "doorway" and ((exit_map != "" and str(destination.get("map", "")) == exit_map) or (exit_map == "" and str(destination.get("map", "")) == field.adapter.map_key() and str(destination.get("room", "")) == next_room)):
+					_submit(option, "", "doorway")
+					return
+			return
+		field.player.velocity = motion / maxf(delta, 0.000001)
+		field.player.face_vector(motion)
+		field.player.pose("walk")
+		field.player.move_and_slide()
+		field.player.velocity = Vector2.ZERO
+
+	func _unhandled_input(event: InputEvent) -> void:
+		if not enabled() or event.is_echo(): return
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			var site := str(field.hovered)
+			if site != "": _approach(site)
+			else: _navigate(field.get_global_mouse_position())
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("interact") or event.is_action_pressed("dialogue_continue"):
+			var site := str(field.nearest)
+			if site != "": _interact(site)
+			else:
+				var door := _near_door()
+				if not door.is_empty(): _submit(door, "", "doorway-interact")
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("manuscript") or event.is_action_pressed("wait"):
+			_show_self_choices()
+			get_viewport().set_input_as_handled()
+
+	func _navigate(point: Vector2) -> void:
+		_stop_walk("new-target")
+		var door := _door_option(point)
+		var destination_room: String = field.adapter.room_of(point)
+		var own_room := str(field.snapshot.get("execution_room", ""))
+		if not field.in_sight(point) and door.is_empty():
+			var doorway_visible := false
+			for direction in field.APPROACH:
+				if field.in_sight(point + direction.normalized() * 32.0): doorway_visible = true
+			var admitted := false
+			for option in options:
+				var binding: Dictionary = option.get("interaction", {})
+				if str(binding.get("kind", "")) == "doorway" and str(binding.get("destination", {}).get("room", "")) == destination_room: admitted = true
+			if not doorway_visible or (not admitted and door.is_empty()): return
+		if not field.adapter.walkable(point, field.player): return
+		_route = NAV.route_on_grid(field.player.position, point, _local_grid(destination_room if destination_room != own_room else ""))
+		if not _route.is_empty():
+			_route.append(point)
+			_pending_door = door
+
+	func _door_option(point: Vector2) -> Dictionary:
+		if not field.adapter.has_method("doorway_rooms"): return {}
+		var rooms: Array[String] = field.adapter.doorway_rooms(point)
+		var own_room := str(field.snapshot.get("execution_room", ""))
+		if own_room not in rooms: return {}
+		var found: Dictionary = {}
+		for option in options:
+			var binding: Dictionary = option.get("interaction", {})
+			var target: Dictionary = binding.get("destination", {})
+			var room := str(target.get("room", ""))
+			if str(binding.get("kind", "")) == "doorway" and str(target.get("map", "")) == field.adapter.map_key() and room != own_room and room in rooms:
+				if not found.is_empty(): return {}
+				found = option
+		return found
+
+	func _near_door() -> Dictionary:
+		var nearest: Dictionary = {}
+		var best := INF
+		for offset in [Vector2.ZERO, Vector2.UP * 24, Vector2.DOWN * 24, Vector2.LEFT * 24, Vector2.RIGHT * 24]:
+			var point: Vector2 = field.player.position + offset
+			if not field.adapter.walkable(point, field.player): continue
+			var choice := _door_option(point)
+			if not choice.is_empty() and offset.length_squared() < best:
+				nearest = choice
+				best = offset.length_squared()
+		return nearest
+
+	func _local_grid(destination_room := "") -> AStarGrid2D:
+		var grid: AStarGrid2D = field.adapter.nav_grid(field.player)
+		var room := str(field.snapshot.get("execution_room", ""))
+		for y in range(grid.region.position.y, grid.region.end.y):
+			for x in range(grid.region.position.x, grid.region.end.x):
+				var cell := Vector2i(x, y)
+				var candidate_room: String = field.adapter.room_of(grid.get_point_position(cell))
+				if candidate_room != room and candidate_room != destination_room: grid.set_point_solid(cell)
+		return grid
+
+	func _approach(site: String) -> void:
+		if not field.site_visible(site): return
+		if _in_reach(site):
+			_interact(site)
+			return
+		var center: Vector2 = field.site_point(site)
+		var station := {"point": center, "radius": float(field.sites[site].reach) - 4.0}
+		var grid: AStarGrid2D = _local_grid()
+		var best := INF
+		var chosen := PackedVector2Array()
+		for point in field._station_approaches(station, grid):
+			if field.adapter.entered_room(point) != str(field.snapshot.get("execution_room", "")) or not field.adapter.walkable(point, field.player): continue
+			if field.position_occupied(field.player, point): continue
+			var route := NAV.route_on_grid(field.player.position, point, grid)
+			if route.is_empty(): continue
+			var distance: float = field._route_cost(field.player.position, route, point)
+			if distance < best:
+				best = distance
+				chosen = route
+				chosen.append(point)
+		_stop_walk("new-target")
+		_route = chosen
+		_site = site
+
+	func _in_reach(site: String) -> bool:
+		return field.sites.has(site) and field.site_visible(site) and field.player.position.distance_to(field.site_point(site)) <= float(field.sites[site].reach)
+
+	func choices_for(site: String) -> Array:
+		var result: Array = []
+		for option in options:
+			var binding: Dictionary = option.get("interaction", {})
+			if (str(binding.get("kind", "")) == "site" and str(binding.get("site", "")) == site) or (str(binding.get("kind", "")) == "person" and site == "person:" + str(binding.get("person", ""))): result.append(option)
+		return result
+
+	func _interact(site: String) -> void:
+		if not _in_reach(site): return
+		_stop_walk("interaction")
+		var choices := choices_for(site)
+		if choices.size() == 1: _submit(choices[0], site, "hotspot")
+		elif choices.size() > 1:
+			var id := _id()
+			_stamp("input_request", id, {"site": site, "request": "local-choices"})
+			field.field_event.emit({"kind": "spatial_choices", "interaction_id": id, "site": site, "title": field.sites[site].title, "options": choices, "screen_position": field.get_global_transform_with_canvas() * field.site_point(site)})
+
+	func _show_self_choices() -> void:
+		var choices: Array = []
+		for option in options:
+			if str(option.get("interaction", {}).get("kind", "")) == "self": choices.append(option)
+		if choices.is_empty(): return
+		var id := _id()
+		_stamp("input_request", id, {"site": "self", "request": "local-choices"})
+		field.field_event.emit({"kind": "spatial_choices", "interaction_id": id, "site": "self", "title": "随身手稿", "options": choices, "screen_position": field.get_global_transform_with_canvas() * field.player.position})
+
+	func select(id: String, site: String) -> void:
+		if submitted or (site != "self" and not _in_reach(site)): return
+		for option in options:
+			if str(option.id) == id and ((site == "self" and str(option.get("interaction", {}).get("kind", "")) == "self") or option in choices_for(site)):
+				_submit(option, site, "local-choice")
+				return
+
+	func _submit(option: Dictionary, site: String, source: String) -> void:
+		var id := _id()
+		_stamp("input_request", id, {"choice_id": option.id, "site": site, "source": source, "game_time": field.snapshot.get("game_time", 0)})
+		submitted = true
+		field.field_event.emit({"kind": "select", "choice_id": option.id, "site": site, "interaction_id": id, "context": field.context()})
+
+class FieldNavigationInner extends RefCounted:
+	const CLICK_TARGET_WIDTH := 24.0
+	const ROUTE_CELL := 8
+
+	static func walkable(center: Vector2, floors: Dictionary, obstacles: Array[Rect2]) -> bool:
+		for corner in [Vector2(-10,-14),Vector2(9,-14),Vector2(-10,1),Vector2(9,1)]:
+			if not floors.has(Vector2i((center + corner) / 32.0)): return false
+		for obstacle in obstacles:
+			if obstacle.grow_individual(10,1,10,14).has_point(center): return false
+		return true
+
+	static func route(start: Vector2, finish: Vector2, floors: Dictionary, obstacles: Array[Rect2], map_size: Vector2i) -> PackedVector2Array:
+		return route_on_grid(start, finish, build_route_grid(floors, obstacles, map_size))
+
+	static func build_route_grid(floors: Dictionary, obstacles: Array[Rect2], map_size: Vector2i) -> AStarGrid2D:
+		var grid := AStarGrid2D.new()
+		grid.region = Rect2i(Vector2i.ZERO, map_size * (32 / ROUTE_CELL))
+		grid.cell_size = Vector2(ROUTE_CELL, ROUTE_CELL)
+		grid.offset = grid.cell_size / 2.0
+		grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
+		grid.update()
+		for y in grid.region.size.y:
+			for x in grid.region.size.x:
+				var node := Vector2i(x, y)
+				var center := grid.get_point_position(node)
+				grid.set_point_solid(node, not walkable(center, floors, obstacles))
+		return grid
+
+	static func route_on_grid(start: Vector2, finish: Vector2, grid: AStarGrid2D) -> PackedVector2Array:
+		var from := _free_endpoint(grid, start)
+		var to := _free_endpoint(grid, finish)
+		if from.x < 0 or to.x < 0: return PackedVector2Array()
+		return grid.get_point_path(from, to)
+
+	static func _free_endpoint(grid: AStarGrid2D, point: Vector2) -> Vector2i:
+		var cell := Vector2i(((point - grid.offset) / grid.cell_size).round())
+		var best := Vector2i(-1, -1)
+		var distance := INF
+		for y in range(-1, 2):
+			for x in range(-1, 2):
+				var candidate := cell + Vector2i(x, y)
+				if not grid.region.has_point(candidate) or grid.is_point_solid(candidate): continue
+				var offset := grid.get_point_position(candidate).distance_squared_to(point)
+				if offset < distance:
+					distance = offset
+					best = candidate
+		return best
+
+	static func site_point(id: String, sites: Dictionary, actors: Dictionary) -> Vector2:
+		var site: Dictionary = sites[id]
+		return actors[site.title].position if actors.has(site.title) else site.point
+
+	static func clicked_site(position: Vector2, sites: Dictionary, actors: Dictionary) -> String:
+		var chosen := ""
+		var best_distance := INF
+		for id in sites:
+			var point := site_point(id, sites, actors)
+			var actor_site := actors.has(sites[id].title)
+			var top := 52.0 if actor_site else 80.0 if id.begins_with("bed_") else 56.0
+			if not Rect2(point + Vector2(-CLICK_TARGET_WIDTH, -top), Vector2(CLICK_TARGET_WIDTH * 2.0, top + 10.0)).has_point(position):
+				continue
+			var marker := point + Vector2(0, -46 if actor_site else -12)
+			var distance := position.distance_squared_to(marker)
+			if distance < best_distance:
+				best_distance = distance
+				chosen = id
+		return chosen
+

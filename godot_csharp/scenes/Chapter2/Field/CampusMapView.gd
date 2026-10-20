@@ -5,13 +5,61 @@ extends Node2D
 
 const MAPS := "res://scenes/Chapter2/Maps/%s.tscn"
 const MAP_ZONE_YI := preload("res://scenes/Chapter2/Maps/zone_yi.tscn")
-const Bindings := preload("res://scenes/Shared/Field/PresentationBindings.gd")
+
+static func _fail_binding(node: Node, message: String) -> void:
+	push_error(message)
+	if node.is_inside_tree(): node.get_tree().quit(1)
+
 const SEAM := 36.0
 ## 地图里没有标记、由地图层补上的交互点。
 const EXTRA_SITES := {"zone_jia": {"litter": Vector2(440, 240)}}
 ## 只作装饰、不开放交互的标记。
 const DECOR_MARKERS := ["transmitter", "isolation_gate", "lane", "harbor", "stele", "collapse", "counterweight"]
 static var _packed_maps: Dictionary = {}
+static var _static_routes: Dictionary = {}
+static var _static_spawns: Dictionary = {}
+static var _static_meta: Dictionary = {}
+
+static func _ensure_static_manifest() -> void:
+	if not _static_routes.is_empty(): return
+	var manifest_path := "res://ShareAsset/Internal/Props/Chapter2/manifest.json"
+	if not FileAccess.file_exists(manifest_path): return
+	var f := FileAccess.open(manifest_path, FileAccess.READ)
+	if f == null: return
+	var raw := f.get_as_text()
+	f.close()
+	var json = JSON.parse_string(raw)
+	if not (json is Dictionary): return
+	var rooms: Dictionary = json.get("rooms", {})
+	for rname in rooms:
+		var rinfo: Dictionary = rooms[rname]
+		var exits_list: Array = rinfo.get("exits", [])
+		var edges: Array = []
+		for e in exits_list:
+			if e is Dictionary:
+				var pt := Vector2.ZERO
+				if e.has("rect_px"):
+					var rx: Array = e.rect_px
+					pt = Vector2(rx[0] + rx[2] / 2.0, rx[1] + rx[3] / 2.0)
+				elif e.has("cells"):
+					var cl: Array = e.cells
+					pt = Vector2((cl[0] + cl[2]) * 16.0, (cl[1] + cl[3]) * 16.0)
+				edges.append({"to": str(e.get("target", "")), "point": pt})
+		_static_routes[rname] = edges
+		var spawns: Dictionary = rinfo.get("spawns", {})
+		var sp_dict := {}
+		for sname in spawns:
+			var pt: Array = spawns[sname]
+			sp_dict[sname] = Vector2(pt[0], pt[1])
+		_static_spawns[rname] = sp_dict
+		var meta_dict := {}
+		if rinfo.has("cells"):
+			var cl: Array = rinfo.cells
+			meta_dict["map_size"] = Vector2(cl[0] * 32.0, cl[1] * 32.0)
+		elif rinfo.has("size_px"):
+			var sz: Array = rinfo.size_px
+			meta_dict["map_size"] = Vector2(sz[0], sz[1])
+		_static_meta[rname] = meta_dict
 
 func _get_packed_map(map_name: String) -> PackedScene:
 	if map_name == "zone_yi": return MAP_ZONE_YI
@@ -70,13 +118,13 @@ func _apply_geometry_bindings(snapshot: Dictionary, rebuild := true) -> void:
 	for prop in declaration.get("props", []):
 		var texture := load(str(prop.get("texture", ""))) as Texture2D
 		if texture == null:
-			Bindings.fail(self, "Missing native geometry texture: " + str(prop.get("id", "")))
+			_fail_binding(self, "Missing native geometry texture: " + str(prop.get("id", "")))
 			return
 		textures[str(prop.id)] = texture
 	for site in declaration.get("sites", []):
 		var id := str(site.get("id", ""))
 		if id == "" or map.get_node("Sites").has_node(NodePath(id)):
-			Bindings.fail(self, "Duplicate or empty native geometry site: " + id)
+			_fail_binding(self, "Duplicate or empty native geometry site: " + id)
 			continue
 		var marker := Marker2D.new()
 		marker.name = id
@@ -140,7 +188,7 @@ func _refresh_access_geometry() -> void:
 func setup() -> bool:
 	_player_sprite = str(presentation.get("player_sprite", ""))
 	if _player_sprite == "":
-		Bindings.fail(self, "Missing player portrait binding")
+		_fail_binding(self, "Missing player portrait binding")
 		return false
 	return true
 func player_key() -> String: return str(presentation.player_actor)
@@ -224,28 +272,8 @@ func station(target: String, who: String) -> Dictionary:
 		"room_target": true, "approach_groups": [preferred, open_points, fallback]}
 
 func _map_routes() -> Dictionary:
-	if not _routes.is_empty(): return _routes
-	for file in DirAccess.get_files_at("res://scenes/Chapter2/Maps"):
-		if not file.ends_with(".tscn"): continue
-		var name := file.get_basename()
-		var packed := _get_packed_map(name)
-		if packed == null: continue
-		var layout: Node2D = packed.instantiate()
-		var edges: Array = []
-		for exit in layout.get_node("Exits").get_children():
-			edges.append({"to": str(exit.get_meta("target")), "point": exit.position})
-		if layout.has_meta("outdoor_core"):
-			var core: Rect2 = layout.get_meta("outdoor_core")
-			var cores: Dictionary = layout.get_meta("outdoor_cores")
-			for next in cores:
-				var other: Rect2 = cores[next]
-				var shared := core.grow(1.0).intersection(other)
-				if next == name or not shared.has_area(): continue
-				var point := shared.get_center()
-				point += (other.get_center() - point).normalized() * (SEAM + 24.0)
-				edges.append({"to": str(next), "point": point - (layout.get_meta("outdoor_origin") as Vector2)})
-		_routes[name] = edges
-		layout.free()
+	_ensure_static_manifest()
+	if not _static_routes.is_empty(): return _static_routes
 	return _routes
 
 func _next_edge(destination: String) -> Dictionary:
@@ -297,6 +325,7 @@ func execute_destination(destination: Dictionary, who: String, serial: int, acti
 func play_replay(_ev: Dictionary) -> void: pass
 
 func load_map(next: String, _spawn: String) -> void:
+	if key == next and map != null: return
 	var packed := _get_packed_map(next)
 	if packed == null: return
 	if map:
@@ -314,6 +343,10 @@ func load_map(next: String, _spawn: String) -> void:
 	_access_shapes.clear()
 	map = packed.instantiate()
 	add_child(map)
+	var architecture := map.get_node_or_null("Architecture") as Sprite2D
+	if architecture != null and architecture.texture != null:
+		var relief := architecture.texture.resource_path.get_basename() + ".relief.tres"
+		if ResourceLoader.exists(relief): architecture.texture = load(relief)
 	occluders.clear()
 	for node in map.get_node("Objects").get_children():
 		if node is Sprite2D and node.has_meta("occluder"): occluders.append(node)
@@ -343,32 +376,45 @@ func spawn_point(spawn: String) -> Vector2:
 ## Missing authored geometry blocks the transition before the source map is removed.
 func valid_transition(next: String, spawn: String, at: Vector2, use_at: bool) -> bool:
 	if _route_target_next != next: return false
-	var packed := _get_packed_map(next)
-	if packed == null: return false
-	var layout := packed.instantiate() as Node2D
-	var marker: Marker2D = layout.get_node_or_null("Spawns/" + spawn) as Marker2D if spawn != "" else null
-	var point := at if use_at else (marker.position if marker != null else Vector2.ZERO)
-	var valid := use_at or marker != null
-	if use_at:
-		valid = map.has_meta("outdoor_origin") and layout.has_meta("outdoor_origin") and layout.has_meta("outdoor_core")
-		if valid:
-			var source_world: Vector2 = field.player.position + (map.get_meta("outdoor_origin") as Vector2)
-			var target_world: Vector2 = at + (layout.get_meta("outdoor_origin") as Vector2)
-			valid = source_world.distance_to(target_world) <= 0.01 and (layout.get_meta("outdoor_core") as Rect2).has_point(target_world)
-	var size: Vector2 = layout.get_meta("map_size", Vector2.ZERO)
-	valid = valid and Rect2(Vector2.ZERO, size).has_point(point)
+	_ensure_static_manifest()
+	var point := at
+	var has_spawn := false
+	if _static_spawns.has(next) and _static_spawns[next].has(spawn):
+		has_spawn = true
+		if not use_at: point = _static_spawns[next][spawn]
+	var valid := use_at or has_spawn
+	var size: Vector2 = _static_meta.get(next, {}).get("map_size", Vector2.ZERO)
+	if size != Vector2.ZERO and not Rect2(Vector2.ZERO, size).has_point(point):
+		valid = false
 	if valid and field.execution_bridge != null:
 		valid = not field.execution_bridge.occupied_at(field.player, field.execution_resource, next, point)
-	var solids := layout.get_node_or_null("Solids")
-	if valid and solids != null:
-		for node in solids.get_children():
-			var shape := node as CollisionShape2D
-			if shape == null or shape.disabled or shape.shape is not RectangleShape2D: continue
-			var extent: Vector2 = (shape.shape as RectangleShape2D).size
-			if Rect2(shape.position - extent / 2.0, extent).grow_individual(10, 1, 10, 14).has_point(point):
-				valid = false
-				break
-	layout.free()
+	if not valid or use_at or not _static_spawns.has(next):
+		var packed := _get_packed_map(next)
+		if packed == null: return false
+		var layout := packed.instantiate() as Node2D
+		var marker: Marker2D = layout.get_node_or_null("Spawns/" + spawn) as Marker2D if spawn != "" else null
+		point = at if use_at else (marker.position if marker != null else Vector2.ZERO)
+		valid = use_at or marker != null
+		if use_at:
+			valid = map.has_meta("outdoor_origin") and layout.has_meta("outdoor_origin") and layout.has_meta("outdoor_core")
+			if valid:
+				var source_world: Vector2 = field.player.position + (map.get_meta("outdoor_origin") as Vector2)
+				var target_world: Vector2 = at + (layout.get_meta("outdoor_origin") as Vector2)
+				valid = source_world.distance_to(target_world) <= 0.01 and (layout.get_meta("outdoor_core") as Rect2).has_point(target_world)
+		size = layout.get_meta("map_size", Vector2.ZERO)
+		valid = valid and Rect2(Vector2.ZERO, size).has_point(point)
+		if valid and field.execution_bridge != null:
+			valid = not field.execution_bridge.occupied_at(field.player, field.execution_resource, next, point)
+		var solids := layout.get_node_or_null("Solids")
+		if valid and solids != null:
+			for node in solids.get_children():
+				var shape := node as CollisionShape2D
+				if shape == null or shape.disabled or shape.shape is not RectangleShape2D: continue
+				var extent: Vector2 = (shape.shape as RectangleShape2D).size
+				if Rect2(shape.position - extent / 2.0, extent).grow_individual(10, 1, 10, 14).has_point(point):
+					valid = false
+					break
+		layout.free()
 	return valid
 
 func stands() -> Array:
@@ -612,9 +658,25 @@ func site_geometry(defs: Dictionary) -> Dictionary:
 	return result
 
 func anchor(name: String):
-	if name.begins_with("site:"):
-		var marker := map.get_node_or_null("Sites/" + name.substr(5)) as Marker2D
+	if map == null: return null
+	if name.begins_with("slot:"):
+		var key := name.substr(5)
+		var marker := map.get_node_or_null("Stations/" + key) as Marker2D
+		if marker: return marker.position
+		marker = map.get_node_or_null("Sites/" + key) as Marker2D
+		if marker: return marker.position
+		marker = map.get_node_or_null("Stands/" + key) as Marker2D
 		return marker.position if marker else null
+	if name.begins_with("site:"):
+		var key := name.substr(5)
+		var marker := map.get_node_or_null("Sites/" + key) as Marker2D
+		if marker: return marker.position
+		marker = map.get_node_or_null("Stations/" + key) as Marker2D
+		return marker.position if marker else null
+	var st := map.get_node_or_null("Stations/" + name) as Marker2D
+	if st: return st.position
+	var site := map.get_node_or_null("Sites/" + name) as Marker2D
+	if site: return site.position
 	var spawn := map.get_node_or_null("Spawns/" + name) as Marker2D
 	return spawn.position if spawn else null
 

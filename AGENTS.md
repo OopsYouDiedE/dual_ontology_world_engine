@@ -45,7 +45,7 @@
 
 本节覆盖本文及旧文档中的 r20、旧 Core、解释链和旧工具入口描述。用户要求清理整个项目的旧动作实现；旧源码只能从 Git 历史查阅，历史 artifacts、保护基线、`.story` 与译文保留，不重新编译成可运行旧路径。
 
-唯一正式动作链是 `verification/session/30-runner.dv` 的 prepare → 执行回执 → complete：DV 负责主体决策、报价、权威效果、观察、传播与结算；Godot Main → WorldView 只执行移动并返回现场结果；非移动使用同一 complete 的 DV 世界法则。命令行 formal-model 是同一接口的逻辑执行适配，不含 Godot 几何，不能冒称实机验收。预测与推演不发布真实行动效果。
+唯一正式动作链是 `language_core/30-session.dv`（由 `60-game.dv` 整合）的 prepare → 执行回执 → complete：DV 负责主体决策、报价、权威效果、观察、传播与结算；Godot Main → WorldView 只执行移动并返回现场结果；非移动使用同一 complete 的 DV 世界法则。命令行 formal-model 是同一接口的逻辑执行适配，不含 Godot 几何，不能冒称实机验收。预测与推演不发布真实行动效果。
 
 宿主只保留 GameEngine → DvSession → 生成 DV 类库，不保留旧坐席 token、DispatchField、舞台动作分派或第二个 DvRuntime 会话持有者。界面呈现完成不单独触发 Prepare，只有 view_ready / dv_next 启动下一步；等待回执时不重新分派意图。
 
@@ -63,7 +63,8 @@
 
 ### Core 语法与特性参考
 
-- [language_core/core/README.md](language_core/core/README.md) 是现行 DV Core 的完整语法、特性、接口与实现边界说明入口；[language_core/README.md](language_core/README.md) 保留导航。
+- [docs/syntax.md](docs/syntax.md) 是现行 DV Core 的完整语法说明规范；[docs/design-standard.md](docs/design-standard.md) 是唯一的设计规范文件。
+- [language_core/core/README.md](language_core/core/README.md) 保留导航与历史映射索引；Core 源码已正式合并为 `10-compiler.dv` 至 `70-checks.dv` 共 7 个文件。
 - 修改语言语法、内置操作、Core/session 接口、声明字段、宿主合同或现行实现边界时，必须在同一轮同步更新该参考中的说明、示例与源码索引；仅新增名称而未接入生产链的能力须明确标注。
 - 工程参考依据现行源码维护，内容设计仍以 `docs/design-standard.md` 为准。文档、源码实现与本轮实际执行证据分别记录，不以参考文档宣称验收完成。
 
@@ -72,14 +73,15 @@
 | `csharp/` | 旧 Core 已退役，仅保留迁移说明 |
 | `godot_csharp/` | Godot 游戏宿主，单向引用 Core，见 [godot_csharp/AGENTS.md](godot_csharp/AGENTS.md) |
 | `docs/design-standard.md` | 唯一的设计规范文件 |
-| `language_core/` | 隔离的 DuelView（DV）语言 Core；不引用旧 Core，见该目录的 AGENTS.md |
+| `docs/syntax.md` | 现行 Core 完整语法说明规范 |
+| `language_core/` | 隔离的 DuelView（DV）语言 Core（正式合并为 10-70 七个源文件），见该目录的 AGENTS.md |
 | `tools/` | 仓库级通用工程工具；使用方式受测评方式约束 |
 | `godot_csharp/tools/` | 资产生产、剧本编译与 Godot 工具 |
 | `music/` | 音乐工程与原声 |
 | `artifacts/<task-name>/` | 阶段成果、验证报告与交付物 |
 | `tmp/`、`scratch/` | 仅存放一次性临时输出 |
 
-旧 r20 源码已移除；迁移来源保存在 Git 历史，历史记录不作为 DV 正式会话证据。
+旧 r20 源码与所有脚手架文件已移除；UI 界面按职责划分为 6 个解耦接口：主界面（TitleUI）、设置界面（SettingsUI）、游戏内 UI（FieldHUD）、调查界面（InvestigationUI）、游戏场景显示（WorldView）、文本显示（DialogueUI），由顶层容器 UISystem（`godot_csharp/scenes/UI/UISystem.tscn` 和 `UISystem.gd`）统一路由纯数据事件，防止隐式代码耦合。宿主与现场的碎片化辅助脚本分别收敛进 `Host/Main.gd` 与 `Shared/Field/WorldView.gd` 内部。DV 工具链整合入 `dv_toolchain.py`、`build_session.py` 与 `run_debug.py`，Core 合并为 `10-compiler.dv` 至 `70-checks.dv` 共 7 个源文件。迁移来源保存在 Git 历史，历史记录不作为 DV 正式会话证据。
 
 ## 环境
 

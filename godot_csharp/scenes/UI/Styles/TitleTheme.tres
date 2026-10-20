@@ -11,7 +11,7 @@
 [ext_resource type="FontFile" uid="uid://efwuolvoxfi0" path="res://ShareAsset/External/ZenKurenaido/ZenKurenaido-Regular.ttf" id="font_kurenaido"]
 [ext_resource type="FontFile" uid="uid://5taqf2dxpeah" path="res://ShareAsset/External/newtegomin/NewTegomin-Regular.ttf" id="font_tegomin"]
 [ext_resource type="Texture2D" uid="uid://di8b1hqq18tsx" path="res://ShareAsset/Internal/Props/UIPaper/paper_pixel.png" id="paper_texture"]
-[ext_resource type="Texture2D" uid="uid://318jfwph0wi7" path="res://ShareAsset/Internal/Props/UIDesk/cloth.png" id="cloth_texture"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/UIDesk/cover-painted.png" id="cloth_texture"]
 
 [sub_resource type="SystemFont" id="system_fallback"]
 font_names = PackedStringArray("Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC")
@@ -104,17 +104,15 @@ bg_color = Color(0.882353, 0.835294, 0.709804, 0.8)
 
 [sub_resource type="StyleBoxTexture" id="title_cloth"]
 texture = ExtResource("cloth_texture")
-axis_stretch_horizontal = 1
-axis_stretch_vertical = 1
+axis_stretch_horizontal = 0
+axis_stretch_vertical = 0
 
-[sub_resource type="StyleBoxTexture" id="title_slip"]
+[sub_resource type="StyleBoxFlat" id="title_slip"]
 content_margin_left = 20.0
 content_margin_top = 20.0
 content_margin_right = 20.0
 content_margin_bottom = 24.0
-texture = ExtResource("paper_texture")
-axis_stretch_horizontal = 1
-axis_stretch_vertical = 1
+draw_center = false
 
 [sub_resource type="StyleBoxFlat" id="title_plate"]
 bg_color = Color(0.133333, 0.109804, 0.0823529, 1)

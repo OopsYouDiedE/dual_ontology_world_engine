@@ -199,6 +199,9 @@ def zone(label: str) -> dict:
             {"id": "E1", "point": [26, 396]}, {"id": "E2", "point": [62, 422]},
             {"id": "E6", "point": [522, 202]}, {"id": "E7", "point": [368, 258]},
             {"id": "E10", "point": [368, 502]}, {"id": "E11", "point": [806, 110]},
+            {"id": "hall_copper_seat", "point": [368, 240]},
+            {"id": "hall_tea_side", "point": [320, 300]},
+            {"id": "hall_window_side", "point": [260, 280]},
         ]
     return room
 
@@ -285,7 +288,7 @@ def living_hall() -> dict:
              {"id": "fireplace", "point": P(4, 4, 0, 8), "label_key": "资源.场点.living_hall.fireplace.标签"}]
     return dict(key="living_hall", title_key="资源.地图.living_hall.标题", rows=p.rows(), regions=regions,
                 floor={"hall": "parquet", "bath": "whitetile"}, wall={"hall": ("plaster", "CREAM"), "bath": ("tile",)},
-                decor=decor, floor_work=floor_work, furniture=furniture, exits=exits, spawns=spawns, sites=sites)
+                decor=decor, floor_work=floor_work, furniture=furniture, exits=exits, spawns=spawns, sites=sites, geometry_sites=[{"id": "living_south_table", "point": [240, 572]}, {"id": "living_piano", "point": [160, 320]}])
 
 
 # --------------------------------------------------------------- 中央厅 ----

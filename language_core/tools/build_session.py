@@ -4,18 +4,19 @@ import json
 import hashlib
 import re
 from pathlib import Path
-from dv_toolchain import LANGUAGE, checked, compiler
-from dv_sources import sources as resolve_sources
+from dv_toolchain import LANGUAGE, checked, compiler, sources as resolve_sources
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--out', type=Path, required=True)
-    parser.add_argument('--entry', type=Path, default=LANGUAGE / 'game/entry.dv')
+    parser.add_argument('--entry', type=Path, default=LANGUAGE / '60-game.dv')
     parser.add_argument('--main', default='false', choices=['false', 'dvg_debug_run'])
     parser.add_argument('--profile', action='store_true', help='Instrument generated DV functions for an opt-in diagnostic build')
     args = parser.parse_args()
     target = args.out.resolve()
+    if target.suffix:
+        target = target.parent
     target.mkdir(parents=True, exist_ok=True)
     chunks, ranges, sources, offset = [], [], [], 0
     for path, source in resolve_sources([args.entry]):

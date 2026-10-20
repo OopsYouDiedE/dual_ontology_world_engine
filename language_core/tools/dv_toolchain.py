@@ -3,6 +3,7 @@ from contextlib import contextmanager
 import hashlib
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
@@ -33,6 +34,42 @@ def checked(argv, **kwargs):
     result = run(argv, **kwargs)
     if result.returncode:
         raise RuntimeError(result.stdout + result.stderr)
+    return result
+
+
+def sources(entries, overrides=None):
+    overrides = overrides or {}
+    result, seen, stack = [], set(), []
+
+    def visit(path):
+        path = Path(path).resolve()
+        if path in stack:
+            raise ValueError('DV include cycle: ' + ' -> '.join(map(str, stack + [path])))
+        if path in seen:
+            return
+        stack.append(path)
+        text = overrides[path] if path in overrides else path.read_text(encoding='utf-8-sig')
+        lines = text.replace('\r\n', '\n').replace('\r', '\n').splitlines(keepends=True)
+        for index, line in enumerate(lines):
+            if not line.lstrip().startswith('#include'):
+                continue
+            match = re.fullmatch(r'#include\s+(.+?)\s*', line.strip())
+            if not match:
+                raise ValueError(f'{path}:{index + 1}: expected #include relative/path.dv')
+            relative = Path(match[1])
+            if relative.is_absolute() or relative.drive or relative.suffix != '.dv':
+                raise ValueError(f'{path}:{index + 1}: include requires a relative .dv path')
+            try:
+                visit(path.parent / relative)
+            except OSError as error:
+                raise ValueError(f'{path}:{index + 1}: {error}') from error
+            lines[index] = '\n'
+        stack.pop()
+        seen.add(path)
+        result.append((path, ''.join(lines) + '\n'))
+
+    for entry in entries:
+        visit(entry)
     return result
 
 
@@ -69,7 +106,7 @@ def build_lock(path):
 
 
 def compiler():
-    inputs = [p for folder in ("compiler",)
+    inputs = [LANGUAGE / "10-compiler.dv"] + [p for folder in ("compiler",)
               for p in (LANGUAGE / folder).rglob("*")
               if p.is_file() and not {"bin", "obj"}.intersection(p.parts)]
     digest = hashlib.sha256()
@@ -91,7 +128,7 @@ def compiler():
             for stage in ("c1", "c2", "c3"):
                 target = work / stage
                 target.mkdir()
-                checked(["dotnet", previous, LANGUAGE / "compiler/compiler.dv", target / "Program.cs"], timeout=180)
+                checked(["dotnet", previous, LANGUAGE / "10-compiler.dv", target / "Program.cs"], timeout=180)
                 shutil.copyfile(LANGUAGE / "compiler/Runtime.cs", target / "Runtime.cs")
                 (target / "Program.csproj").write_text(PROJECT, encoding="utf-8")
                 checked(["dotnet", "build", target / "Program.csproj", "-c", "Release", "--disable-build-servers"], timeout=180)

@@ -6,8 +6,7 @@ import re
 import sys
 import tempfile
 
-from dv_toolchain import LANGUAGE, compiler, run
-from dv_sources import sources as resolve_sources
+from dv_toolchain import LANGUAGE, compiler, run, sources as resolve_sources
 
 
 def project_sources(focus, project=None):

@@ -1,9 +1,0 @@
-[gd_scene format=3 uid="uid://dk7q0fheefjf2"]
-
-[ext_resource type="PackedScene" path="res://scenes/Chapter2/Game/CampusMap.tscn" id="scene"]
-
-[node name="CampusMap" unique_id=1208966321 instance=ExtResource("scene")]
-links = [["ArchiveFront", "Hall"], ["Hall", "Lecture"], ["Lecture", "Resonance"], ["Hall", "Commons"], ["Commons", "DormW"], ["Commons", "DormL"], ["Commons", "DormS"], ["Commons", "DormLife"], ["Commons", "Oath"], ["Commons", "Logistics"], ["Logistics", "Granary"], ["Logistics", "Clinic"], ["Clinic", "Greenhouse"], ["Logistics", "Oath"]]
-
-[node name="Locations" parent="." index="0"]
-anchors_preset = 0

@@ -1,1 +1,0 @@
-using System; using System.Reflection; class Probe { static void Main(string[] args) { var a=Assembly.LoadFile(args[0]); foreach(var r in a.GetReferencedAssemblies()) Console.WriteLine("REF " + r.FullName); foreach(var t in a.GetTypes()) Console.WriteLine("TYPE " + t.FullName); } }

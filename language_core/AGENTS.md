@@ -63,28 +63,29 @@ run_debug.py 新增 actual-event-index.dvlog、reasoning-evidence.dvlog、eviden
 
 ## 文档
 
-现行语法、特性与接口统一入口为 [core/README.md](core/README.md)。修改编译语法、Core/session 声明字段、机制或生产接线时，同轮更新该参考、源码索引与本文件涉及的合同；设计目标、工程参数与实际证据分别标识。
+现行完整语法规范统一维护于 [docs/syntax.md](../docs/syntax.md)；[core/README.md](core/README.md) 保留历史导航与接口索引。修改编译语法、Core/session 声明字段、机制或生产接线时，同轮更新该参考、源码索引与本文件涉及的合同；设计目标、工程参数与实际证据分别标识。
 
-SYNTAX.md维护完整书写格式，DESIGN.md说明语言与编译架构。设计和指南直接描述语法、机制、模块和命令。第一章源码需求保存在artifacts/partial-bootstrap-core/chapter1-reverse-language-requirements-2026-10-13.md。
+`docs/syntax.md` 维护完整书写格式与语法规则，`DESIGN.md` 说明语言与编译架构。设计和指南直接描述语法、机制、模块和命令。
 
-surface-v2 的可执行前端位于 compiler/compiler.dv：缩进、Unicode 标识符、define 别名、函数/局部语句、记录/列表、中缀运算、mapping、acceptance 和有限域 imprint 声明展开后复用 C# 后端。Core、正式 session、checks 与 chapter1 内容已经使用新表层语法。编译器自身保留 S 表达式启动源，C0→C1→C2→C3 继续自举；通用泛型、单位推导、完整能力类型和目标无关 Typed IR 尚未实现。
+surface-v2 的可执行前端位于 `10-compiler.dv`：缩进、Unicode 标识符、define 别名、函数/局部语句、记录/列表、中缀运算、mapping、acceptance 和有限域 imprint 声明展开后复用 C# 后端。Core、正式 session、checks 与章节推演内容已经使用新表层语法。编译器自身保留 S 表达式启动源，C0→C1→C2→C3 继续自举；通用泛型、单位推导、完整能力类型和目标无关 Typed IR 尚未实现。
 
-compiler 中 ck_* 执行名义类型、字面量范围与可变性检查；core/40-value.dv 提供接纳分类、有限域配平搜索及独立证书核验。Runtime.cs 只提供基础有理数、Unicode 与容器 ABI。求解器的最优声明须经 DV 核验器重新检查覆盖、可行性与成本；正式提交一起结算认知、资源和搜索/核验工作量。核心标识符和声明关键词使用英文，其他自然语言用文件头 define 映射。
+`10-compiler.dv` 中 ck_* 执行名义类型、字面量范围与可变性检查；`20-core.dv` 提供接纳分类、有限域配平搜索及独立证书核验。Runtime.cs 只提供基础有理数、Unicode 与容器 ABI。求解器的最优声明须经 DV 核验器重新检查覆盖、可行性与成本；正式提交一起结算认知、资源和搜索/核验工作量。核心标识符和声明关键词使用英文，其他自然语言用文件头 define 映射。
 
-## 模块
+## 模块架构（Core 7 文件合并）
 
-| 路径 | 职责 |
+Core 现已正式合并为 `10-70` 共 7 个源文件：
+
+| 文件 | 职责 |
 | --- | --- |
-| compiler/compiler.dv | 扫描、解析、名称/调用处理和C#输出 |
-| compiler/seed / Runtime.cs | 启动编译器与平台ABI |
-| core/*.dv | 世界、规则、观察、传播、价值、回应、费用和论证 |
-| verification/session | 正式DV逻辑会话 |
-| verification/scenarios | 原生人物、世界、话语、公理实例及配置 |
-| verification/checks / report | 只读判定和中文报告 |
-| tools | 构建及进程编排 |
-| Session | 从 core/session 的 DV 源生成的独立宿主类库；C# 仅封装序列化与对象所有权 |
-| editors/visualstudio | Visual Studio 2022 的 DV 诊断客户端；语义检查复用 DV 编译器 |
-| editors/vscode | 用户指定的 VS Code 客户端；官方语言客户端连接共用 Python LSP，npm 打包 VSIX |
+| `10-compiler.dv` | DV 编译器前端与生成器：词法、缩进、AST、名称处理与 C# 代码生成 |
+| `20-core.dv` | 核心语义层：数据容器、观察、有理数评价、有限域配平、推理费用与论证 |
+| `30-session.dv` | 决策与推演运行时：主观世界、两层规划、言语交互、意图模拟与主循环 Runner（Prepare / Complete） |
+| `40-chapter1.dv` | 第一章内容包：场景地点、世界状态、公理推演、开篇剧情与认知画像 |
+| `50-chapter2.dv` | 第二章内容包：日常节奏、对话系统、回归推演与空间拓扑 |
+| `60-game.dv` | 游戏总装与入口：整合 20、30、40、50，提供宿主配置会话与调试执行入口 |
+| `70-checks.dv` | 权威核验与测试报告：整合 60，提供真相 Oracle、认知语义夹具与中文只读报告 |
+| `Session/` | 由 `60-game.dv` 编译生成的独立 .NET 宿主类库，供 Godot `Host/GameEngine.cs` 引用 |
+| `compiler/seed/` / `Runtime.cs` | 自举启动器与底层 ABI 运行时 |
 
 core、session及编译器的算法使用DV。平台ABI承接数值、容器、文件、控制台和最低执行适配。正式 Godot 项目已改为引用 Session；现场呈现与章节通行仍在集中修复。
 
@@ -438,9 +439,7 @@ Record已有冻结/可变索引继续使用；不足8槽的文本键记录在第
 
 用户明确采纳人工玩家省去重度预演、阅读时提前处理NPC。人工轻量认知、实际replay后的完整刷新及source_actor_revision小型见证的具体合同见verification/AGENTS.md与core/README.md。AI控制与NPC仍使用完整共同认知。宿主阅读期继续使用同一Prepare/现场回执/Complete，具体显示与执行队列由godot_csharp/AGENTS.md维护；此为机制变化，不作同条件纯计算提速结论，本批继续暂停验证。
 
-## 冗余源与Python入口清理（2026-10-19）
-
-生产编译依赖由game/entry.dv的相对include声明；调试入口debug-run.dv继续include生产入口。未接线的旧语法提案、旧回忆fixture、旧固定比较配置及其独立流程包装已移除，来源保留在Git和原始证据。当前Python入口分为共享构建工具链（dv_toolchain/dv_sources、build_session、bootstrap_compiler）、编辑器接口（check_dv/dv_lsp）和显式诊断/证据工具（run_debug、resume_debug及其依赖）；不再保留重复的Core自举包装或依赖固定scratch编译器的回归入口。checks中仍有独立算法、oracle、机制示例与明确被文档引用的未实现草案，不按生产可达性误删。
+生产编译依赖由 `60-game.dv`（经 entry 入口）的相对 include 声明。未接线的旧语法提案、旧回忆 fixture、旧固定比较配置及其独立流程包装已移除。Core 合并为 `10-compiler.dv` 至 `70-checks.dv` 7个源文件。当前 Python 入口精简收敛为：共享构建工具链（`dv_toolchain.py`，含 sources include 解析与 C0-C3 自举缓存）、程序集生成器（`build_session.py`）、编辑器接口（`check_dv.py` / `dv_lsp.py`）以及诊断与证据工具（`run_debug.py`，已内聚分析/断点逻辑，搭配 `binary_evidence.py` 与 `raw_dag.py`）。Seed 编译器精简合并为 `Program.cs` 与 `Seed.csproj` 单一源文件。不再保留散落的单用途微型脚本。
 
 本轮只做源码删除、调用关系与文档维护，不构建、不运行探针或正式会话。删除清单、字节指纹及生产include闭包记录于本轮source-cleanup-20261019目录；静态依赖相同不代表先前功能已完成验收。
 

@@ -344,7 +344,7 @@ public static class R
         int foundIndex = -1;
         if (key is string name)
         {
-            if (entries.Count >= 8 || RecordHot(record))
+            if (entries.Count >= 4 || RecordHot(record))
             {
                 var frozen = record as FrozenList;
                 if (frozen is null && entries is List<object> mutable && MutableStates.TryGetValue(mutable, out var state)) frozen = state.Backbone;
@@ -511,7 +511,7 @@ public static class R
         changes = Items(updates);
         var frozen = Items(snapshot(record));
         // Small one-off records favor the original short reverse scans.
-        if (frozen.Count >= 8 && (changes.Count > 1 || frozen.Count >= 16)
+        if (frozen.Count >= 4 && (changes.Count > 1 || frozen.Count >= 8)
             && TryStringRecordUpdate(frozen, changes, out var stringResult)) return stringResult;
         var result = new List<object>(frozen.Count + changes.Count);
         var keys = new List<object>(frozen.Count + changes.Count);
@@ -1425,7 +1425,19 @@ public static class R
     public static object write(object p, object s) { File.WriteAllText(Text(p), Text(s), new UTF8Encoding(false, true)); return s; }
     public static object print(object a)
     {
-        lock (OutputLock) { Console.WriteLine(Text(show(a))); Console.Out.Flush(); }
+        lock (OutputLock)
+        {
+            if (binaryRecording || Environment.GetEnvironmentVariable("DV_BINARY_STDOUT") == "1")
+            {
+                Console.Error.WriteLine(Text(show(a)));
+                Console.Error.Flush();
+            }
+            else
+            {
+                Console.WriteLine(Text(show(a)));
+                Console.Out.Flush();
+            }
+        }
         return a;
     }
     public static object Block(Func<object> f) => f();
