@@ -5846,46 +5846,7 @@ fn dvs_dispatch_due(state, index):
 // it does not synchronize a mind clock or establish cognition's full dependency set.
 // Non-clock reads are stable only while the caller separately retains their inputs.
 fn dvs_known_clock_boundary(condition, clock, now, limit):
-    let fallback = {"complete": false, "next": dv_min(limit, now + 1)}
-    if not dv_record_like(condition) or not dv_has_key(condition, "op"):
-        return fallback
-    let op = condition.op
-    if op == "constant":
-        if not dv_has_key(condition, "value"):
-            return fallback
-        return {"complete": true, "next": limit}
-    if op == "not":
-        if not dv_has_key(condition, "item"):
-            return fallback
-        return dvs_known_clock_boundary(condition.item, clock, now, limit)
-    if op == "all":
-        if not dv_has_key(condition, "items") or not rt_is_list(condition.items):
-            return fallback
-        var next = limit
-        var i = 0
-        while i < rt_count(condition.items):
-            let part = dvs_known_clock_boundary(condition.items[i], clock, now, limit)
-            if not part.complete:
-                return fallback
-            next = dv_min(next, part.next)
-            i = i + 1
-        return {"complete": true, "next": next}
-    if (op != "equals" and op != "at_least") or not dv_has_key(condition, "ref") or not dv_has_key(condition, "value"):
-        return fallback
-    if not dv_record_like(condition.ref) or dv_find(condition.ref, "type", "") != "ref" or not dv_has_key(condition.ref, "object") or not dv_has_key(condition.ref, "facet") or not dv_has_key(condition.ref, "field"):
-        return fallback
-    if clock == false:
-        return fallback
-    if not dv_same(condition.ref, clock):
-        return {"complete": true, "next": limit}
-    if not rt_is_numeric_value(condition.value):
-        return fallback
-    if now < condition.value:
-        // Invalidation may precede an ordinary tick; it never advances time.
-        return {"complete": true, "next": dv_min(condition.value, limit)}
-    if op == "equals" and now == condition.value:
-        return {"complete": true, "next": dv_min(now, limit)}
-    return {"complete": true, "next": limit}
+    return dv_time_boundary(condition, clock, now, limit, "invalidate")
 
 // Complete owned state except administrative scan/dispatch cursors. Their
 // append-only event inputs are checked separately; no mind or budget is removed.
@@ -6658,32 +6619,7 @@ fn dvs_environment(physical, story, events, parent):
 
 // Match the old minute lattice, including a fractional action completion.
 fn dvs_environment_boundary(condition, clock, now, due):
-    let op = condition.op
-    if op == "constant":
-        return due
-    if op == "not":
-        return dvs_environment_boundary(condition.item, clock, now, due)
-    if op == "all":
-        var next = due
-        var i = 0
-        while i < rt_count(condition.items):
-            next = dv_min(next, dvs_environment_boundary(condition.items[i], clock, now, due))
-            i = i + 1
-        return next
-    if not dv_same(condition.ref, clock):
-        return due
-    if op != "at_least" or not rt_is_numeric_value(condition.value):
-        return dv_min(due, now + 1)
-    // A distant bound cannot be crossed in this wait: do not count toward it.
-    if due < condition.value:
-        return due
-    if now < condition.value:
-        let delta = condition.value - now
-        var steps = 1
-        while steps < delta:
-            steps = steps + 1
-        return dv_min(due, now + steps)
-    return due
+    return dv_time_boundary(condition, clock, now, due, "minute").next
 
 // A process that can still change the world requires another ordinary minute.
 // This retains repeated increments, conflicting writes and ordered cascades.

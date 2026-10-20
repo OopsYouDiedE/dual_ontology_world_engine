@@ -20,7 +20,9 @@ python language_core/tools/check_dv.py --format json language_core/10-compiler.d
 
 ## 前端与当前类型边界
 
-`sf_scan/sf_parse` 处理 Unicode、缩进与 define，`sf_declaration` 展开 fn、axiom、mapping、acceptance、imprint，`sf_rename_body` 为局部绑定生成唯一目标名，`ck_program/ck_body/ck_expect` 核对名称、元数、显式名义类型、字面量范围及 let 可变性，随后直接发射 C#。
+`sf_scan/sf_parse` 处理 Unicode、缩进与 define，`sf_declaration` 展开 fn、axiom、公式、function 具名输出、mapping、acceptance、imprint，`sf_rename_body` 为局部绑定生成唯一目标名，`ck_program/ck_body/ck_expect` 核对名称、元数、显式名义类型、字面量范围及 let 可变性，随后直接发射 C#。
+
+公式 `f(x) [-> Type] = expression` 与 `function y[: Type] = f(x) ... end` 都降到既有 surface/defn 管线。具名输出用公共 declare 语句表达未初始化可变局部，不生成默认 false；`sf_output_flow` 在重命名前核对明确赋值、分支交集、循环可能零次和裸 return。多输出按序返回 List，调用侧仍是普通位置参数与单一返回值；不支持调用端解构或 nargout。end 风格块与原 fn 缩进块分别解析，共用后端与名义检查；输出局部的 C# definite assignment 仍接受实际 .NET 编译核对。
 
 当前表层支持普通位置参数、记录/列表、字段与下标、中缀运算、短路逻辑、if/elif/else、while 和单绑定列表推导。`elif` 按源码顺序降为嵌套分支；推导式先在外层环境求值 source 一次，再按原顺序处理 guard/projection，绑定仅在表达式内生效，支持嵌套。source 须为 List、guard 须为 Bool，元素保持 Value；需要短路的集合检查仍使用 while，不能用分配完整结果的推导式宣称等价的短路行为。
 

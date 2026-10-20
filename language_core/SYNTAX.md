@@ -4,14 +4,113 @@
 
 ### 当前可执行边界
 
-- 已实现：缩进块、fn/axiom、let/var/赋值、return/if/elif/else/while、中文标识符和 define、位置参数、记录/列表字面量、字段/下标、普通算术和短路逻辑；mapping 的 `×` 与 `*` 调用；acceptance 的 degree/levels；有限域 imprint 声明。
+- 已实现：缩进块、fn/axiom、公式定义 `f(x) = expression`、具名输出 `function y = f(x) ... end`、let/var/赋值、return/if/elif/else/while、中文标识符和 define、位置参数、记录/列表字面量、字段/下标、普通算术和短路逻辑；mapping 的 `×` 与 `*` 调用；acceptance 的 degree/levels；有限域 imprint 声明。
 - 已实现的检查：函数名称/元数、局部变量、let 不可重新赋值、显式参数/返回值/局部名义类型、单位区间字面量、Nat 字面量整数性。Acceptance/Probability/Confidence/Reliability 构造使用独立范围构造器。配平使用精确有理数，最优性由 DV 证书核验器独立确认。
 - 仍待实现：具名实参、通用 record/enum/scalar/generic 声明、单位与一般区间推导、by 证明、完整模块导入/能力系统、闭包、其余领域声明和目标无关 Typed IR。未注解代码采用 Value，既有通用计算仍用有限 double；不能将整个 Core 宣称为精确数值或完全静态证明。
 - 编译器仍支持启动语法，自身尚未改写为新语法。实际写法以 [20-core.dv](20-core.dv)、[30-session.dv](30-session.dv) 和 [70-checks.dv](70-checks.dv) 的表层部分为例；10-compiler 和70中的部分报告仍使用启动语法，不能声称七文件全部转换。
 
-当前 imprint 的执行形态把 achieve、vary、conserve using、limit using、minimize using 分别绑定目标记录、有限变量域、线性守恒式、当前资源/工作预算与具名资源价格。搜索结果经核验后由 dv_imprint_commit 提交。连续求解器和一般命题约束还未接入。
+当前 imprint 的执行形态把 achieve、vary、conserve using、limit using、minimize using 分别绑定目标记录、有限变量域、线性守恒式、当前资源/工作预算与具名资源价格。枚举与线性区间分支剪枝共用模型、候选顺序、预算和独立证书核验，结果经核验后由 dv_imprint_commit 提交。连续求解器和一般命题约束还未接入。
 
 完整语言方案以“谁取得什么材料、如何理解、凭什么采纳、如何选择与行动”为书写单位，目标是让切片、解释、依据、评分和动作拥有专门语法，并由类型携带主体、来源与阶段。当前执行子集以普通函数和已接入的少量领域展开实现算法，其余能力按下面的设计范围阅读。
+
+## 当前执行子集：函数、绑定与演算
+
+### 公式与具名输出
+
+单表达式定义可以省去 `fn` 和 `return`，参数和结果仍可标注当前支持的名义类型：
+
+```dv
+平方(x: Number) -> Number = x * x
+距离平方(x, y) = 平方(x) + 平方(y)
+```
+
+具名输出借鉴 MATLAB 的函数头，整个函数和内部控制块用 `end` 结束：
+
+```dv
+function y: Number = 截断(x: Number)
+    if x < 0
+        y = 0
+    elseif x > 1
+        y = 1
+    else
+        y = x
+    end
+end
+
+function [a: Number, b: Number] = 平分(total: Number)
+    a = total / 2
+    b = total - a
+end
+```
+
+每个输出必须在读到它、裸 `return` 或函数结束之前明确赋值。检查合并所有可到达分支，循环按可能执行零次处理；缺少分支赋值不会获得默认 `false`。函数内仍用 `let/var` 声明其他局部变量，已有 `fn ...:` 缩进语法保持可用。具名输出函数使用裸 `return` 返回当前全部输出。
+
+多输出按声明顺序返回普通列表，例如 `let halves = 平分(10)`，再用 `halves[0]`、`halves[1]` 取值。当前不支持 MATLAB 的调用端多重赋值、`nargout`、矩阵广播或分号语义，也不支持函数值与闭包。公式、具名输出、原有 fn/axiom 降到同一函数 AST、名称/元数/类型检查与 C# 后端；不能定义同名重载。公式是可执行定义，不能自动被当作任意数学方程求根或全称定理。
+
+### 规则定义一次，验证与运行共用
+
+`dv_matches(object, facet, fields)` 把记录展开为一组相等命题的合取；`dv_writes` 把记录展开为有序赋值效果。前提继续使用真、假、未知三值求值，效果继续通过原子的暂存路径执行：
+
+```dv
+开门(门) = dv_contract(
+    "open", 1,
+    dv_matches(门, "mechanical", {"inside_latch": false, "outside_latch": false}),
+    dv_writes(门, "mechanical", {"closed": false}),
+    dv_matches(门, "mechanical", {"closed": false})
+)
+```
+
+`dv_contract(name, version, premise, effects, postcondition)` 在原 `dv_axiom` 数据上增加后置条件。它不隐含世界采纳，仍由 `dv_adopt` 确定 enforce、infer 或 predict 范围。`dv_evaluate(world, name, request)` 的 request 必须给出 operation、mode、event、time、revision；例如对已正式采纳的规则：
+
+```dv
+let request = {"operation": "verify", "mode": "enforce", "event": "open-1", "time": 1, "revision": world.revision}
+let assessment = dv_evaluate(world, "open", request)
+let execution = dv_evaluate(world, "open", dv_with(request, "operation", "run"))
+```
+
+| 操作 | 结果和边界 |
+| --- | --- |
+| `verify` | 同一求值器检查前提、暂存效果与后置条件；成功为 `verified`，`.world` 是未改变的输入副本，`.candidate.domain` 为 `verification`，不追加事件、修订或实际支付 |
+| `run` | 对传入的当前世界重新执行同一求值过程，再提交历史、事件去重、时间和修订；成功为 `applied`，predict 的结果标记为 `prediction` |
+| 前提/后置条件未知 | 分别为 `premise-unknown` / `postcondition-unknown`，保留原世界，不作为假条件或成功提交 |
+| 效果失败/后置条件为假 | 原子回滚；不会留下前半段写入、事件或修订 |
+| 过期修订、重复事件、倒退时间或越域 mode | 保持执行合同的运行错误，不自动改参数重试 |
+
+`dv_verify(world, name, mode, event, time, revision)` 是验证便捷入口；`dv_execute/dv_predict/dv_infer` 保留现有调用。验证的 assessment 记录世界、主体、修订、规则版本、时间与 mode，作用域只覆盖输入快照。成功和失败回执的 world、changes、basis 均与输入独立。候选不是可提交票据；再次运行始终重新核对当前快照。后置条件只检查候选，不负责修补；当前没有 `old()`、任意函数纯度证明或外部 I/O 回滚。宿主动作仍通过 Prepare → 真实回执 → Complete，验证不替代现场执行。
+
+### 一次建立主客观对象对应
+
+```dv
+let view = dv_view(physical, "observer", {"physical_door": "眼前的门", "physical_clock": "墙上时钟"})
+let mind = view.mind
+let bindings = view.bindings
+```
+
+`dv_view` 新建主体世界；已有主体用 `dv_bind(physical, mind, aliases)`。aliases 是显式的“物理 ID → 本地 ID”记录。返回主体和完整 bindings，并保留来源世界 ID/修订。它只创建缺失的 perceived 对象，其种类和具体字段保持未知；既有 mind 的认识、采纳、历史和扩展字段保留。重复或歧义映射、空 ID 与不存在的物理对象被拒绝。实际可见字段继续由 grants、`dv_perceive` 和 `dv_update_mind` 处理，绑定本身不会复制物理事实、法则或隐藏对象列表。
+
+### 解算器、分析器与结果资格
+
+```dv
+let analysis = dv_imprint_analyze(goal, variables, laws, limits, prices)
+let result = dv_imprint_solve_with(true, goal, variables, laws, limits, prices, "auto")
+let valid = dv_imprint_check(result, goal, variables, laws, limits, prices)
+```
+
+`true` 在此只示意调用者已取得 imprint capability；生产仍用既有能力与费用入口。原 `dv_imprint_solve` 使用 auto，表层 imprint 声明继续走同一路径。
+
+| 引擎/分析器 | 适用范围 | 输出资格 |
+| --- | --- | --- |
+| `enumerate` | 有限笛卡尔域的参考枚举 | 精确有理数候选；按原顺序覆盖预算允许的前缀 |
+| `branch_bound` | 同一有限线性模型 | 用保守区间证明整块不可行或不优，保留覆盖证书；不改变预算前缀和平局选择 |
+| `auto` / `dv_imprint_analyze` | 比较候选前缀与区间预处理规模 | 小问题或零维选择枚举；这是准备成本启发式，无现实时间保证 |
+| `dv_analyze_law(world, name)` | 已采纳规则的输入快照 | 前提依赖、未知/冲突输入、版本和 mode；`effects_verified` 明确为 false |
+| `dv_analyze_time(condition, clock, now, until, policy)` | 已支持命题的时钟依赖 | 下一次重新求值边界、依赖、假设和回退信息；不运行世界或同步认识 |
+
+数值误差、搜索完整性和时间适用范围分列。有限域求解的 arithmetic 为 exact-rational；`visited/covered_candidates` 是证书覆盖的候选前缀，不等于实际逐项计算次数。`charged_work = 2 * visited` 保留既有预算单位。`candidate_evaluations/bound_checks/preprocessed_options` 是诊断计数，不能作为总运行时间或额外证书权威。区间界可以宽松，但须保守；独立 checker 从原模型重算 witness 和每个覆盖块，保留旧枚举证书兼容。
+
+只有覆盖全域且有可行 witness 才是 `Optimal`；全域无解为 `Infeasible`。预算截止时分别为 `Feasible` 或 `Unresolved`，并报告 stop_reason，不能把未知部分补成已证明。该接口不接纳任意连续、非线性或概率模型；没有误差估计的粗略数值不能借此成为正式结算。
+
+时间策略 `minute` 对齐现有一分钟采样格并保留实际 fractional due；`invalidate` 返回依赖需要重评的边界，等式恰在当前时刻成立时可返回 now，调用者不能将它当作时间推进。时钟引用按字段语义比较，忽略记录键顺序，省略与空 subject 等价；无法证明的主体范围回退，不当作稳定的非时钟输入。until 早于 now 时返回 `expired-interval`、`complete=false`、`next=now`，不倒退或制造休眠窗口。未支持条件回退 minute-step。`complete` 只表示声明分析支持，仍要求非时钟输入稳定，并由 Session 检查增量、级联和状态失效。两种策略共用 `dv_time_boundary`，不会创建第二套世界模拟。通用 Number 仍为有限 double，明确 Rational 值才有精确数值语义。
 
 ## 文件引用与调试入口
 

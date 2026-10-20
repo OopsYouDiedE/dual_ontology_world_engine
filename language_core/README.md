@@ -50,6 +50,8 @@ python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<
 
 ## 实现范围与文档
 
-20–60 使用 surface-v2 的可执行表层，10 保留启动语法，70 同时含表层与启动语法。因此不能声称七个文件都已彻底消除 S 表达式。已接入缩进、普通调用、记录/列表、中缀运算、单绑定列表推导、mapping、acceptance 和有限域 imprint；完整泛型、单位推导、能力类型、闭包及目标无关 Typed IR 仍属设计范围。
+20–60 使用 surface-v2 的可执行表层，10 保留启动语法，70 同时含表层与启动语法。因此不能声称七个文件都已彻底消除 S 表达式。已接入公式函数、MATLAB 风格具名输出函数、缩进、普通调用、记录/列表、中缀运算、单绑定列表推导、mapping、acceptance 和有限域 imprint；完整泛型、单位推导、能力类型、闭包及目标无关 Typed IR 仍属设计范围。
+
+`20-core.dv` 的 `dv_bind/dv_view` 一次建立显式主客观对象对应，具体事实仍走观察链。`dv_evaluate` 以 verify/run 共用一个法则求值器，前提、原子效果和可选后置条件保持同义；验证候选带快照范围，不提交事件。`dv_imprint_solve_with` 提供参考枚举和精确线性区间分支剪枝，自动选择只影响算法，不扩大预算前缀；独立 checker 核验最优性与覆盖。`dv_analyze_law`、`dv_imprint_analyze`、`dv_analyze_time` 分别报告快照依赖、有限模型适用性和时间重评边界。Session 使用同一个 Core 时间分析核，保留逐分钟回退与正式动作链。可执行示例、结果资格和未实现边界集中在 [SYNTAX.md](SYNTAX.md)。
 
 [docs/syntax.md](../docs/syntax.md) 是现行语法入口，[SYNTAX.md](SYNTAX.md) 明确区分执行子集与完整语法方案，[DESIGN.md](DESIGN.md) 维护工程架构与不变量，[REFERENCES.md](REFERENCES.md) 保留研究来源。剧情、人物和玩法只依据 [设计规范](../docs/design-standard.md)。已移除目录及历史任务记录从 Git 历史追溯，不作为当前入口或本轮验收证据。
