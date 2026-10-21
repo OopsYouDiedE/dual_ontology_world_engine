@@ -5,6 +5,12 @@
 `godot_csharp/ShareAsset`。资产生成器在 `mcp/asset_pipeline`；下文保留相关
 生成与采集前提的导航。
 
+`render_terminal_export.py --svg <CLI导出.svg> --out <新.png> [--font <中文字体>]`
+将CLI生产渲染器的定位单元画布导出为PNG。MCP入口为diagnostics /
+terminal-export。该工具只解析CLI生成的rect/text SVG子集，不启动会话；
+它是渲染导出而非物理终端屏幕截取。需要Pillow，默认使用Windows微软雅黑；
+路径独占创建，不覆盖旧图。
+
 ## 工具工程入口
 
 统一 MCP 中，Python 命令属于 `diagnostics`，GDScript 采集与观察属于 `godot_tools`。地图截图为 `capture-maps`，UI 采集为 `capture-casebook`、`capture-period`、`capture-start-reveal`、`capture-title`，宿主入口为 `capture-saved-game`、`capture-level3`、`host-startup`，独立观察为 `ui-input`、`living-floor`、`music-context`。路由直接指向本目录现役脚本；列举工具不执行它们。`ui-input` 自动采用一次性工具用户数据。

@@ -19,6 +19,8 @@
 
 CLI 的 status/options 不推进会话；next 单步推进 Prepare 或 formal-model Complete，act 只消费当前人工候选并推进到下一人工边界。自主控制使用显式 `--controller ai`，不由启动自动循环。CLI 与游戏共享 SmartReplay；记录回放不创建正式会话。入口及封存规则见 [cli/README.md](cli/README.md)。Core AI 测试按用户批准的要求和指标执行，工程构建不替代该批准。
 
+CLI的TerminalModel仅为观察者投影和只读回放的显示模型；房间/连接来自本人map_knowledge，不从执行者或开发Inspect补真值。ANSI与SVG由同一单元画布生成；--preview必须在创建会话前返回，明确标注UI示例，不能触发自主调度。回放重启清空显示缓存，不用历史帧恢复或分叉会话。截图导出工具归mcp/verification，并在tools.json登记；预览、必要构建和Core AI验收分别报告。
+
 [README.md](README.md) 维护实际目录、入口和状态；[DESIGN.md](DESIGN.md) 维护当前架构与语义合同；[compiler/README.md](compiler/README.md) 维护编译器及平台 ABI；[host_bridge/README.md](host_bridge/README.md) 维护宿主边界；[SYNTAX.md](SYNTAX.md) 区分执行子集与完整语法方案，现行语法入口为 [docs/syntax.md](../docs/syntax.md)。修改语法、内置操作、声明字段、接口、目录或构建命令时，同轮修正对应文档与本文件，不把未接线提案写成已实现能力。
 
 各 DV 模块是现役源码，不是导出副本。20–60 使用表层语法，40/50 可混用自然段落、法则/行动句式与算法函数，10 保留 S 表达式启动源，70 混合表层与旧报告函数。旧源码字符串中的路径可能是历史来源标识，清理导航不改写旧事件或来源字符串。只读检查和 oracle 保持与生产入口隔离；源码清理按实际构建、编辑器、资源生成和诊断消费者判断，不能仅凭未进入普通游戏判为废件。

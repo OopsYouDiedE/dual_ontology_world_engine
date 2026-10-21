@@ -4,6 +4,39 @@
 从仓库根目录启动 `dotnet run --project dv_core/cli/DvCli.csproj -- --tui`。
 `--help` 和 `--replay` 不打开正式会话。单独构建不会执行会话。
 
+## 房间分组与彩色终端
+
+`--tui` 使用同一TerminalModel和ANSI真彩/Unicode单元画布。宽屏显示
+房间分组、已知拓扑、事件和候选；窄屏改为纵向面板。中文按显示列宽处理。
+`--no-color` 或 `NO_COLOR` 去掉颜色，文本及JSON-Lines入口继续保留。
+
+每个房间标题后紧随其条目。地图只读观察者的map_knowledge；连接不代表
+门已开或已获准通行，当前记录无门状态时明确标未知。当前房人物只读
+观察者投影；其他房间没有人物记录时不写“空房”。不读取Inspect或世界真值，
+也不虚构规划评分、置信度或外部行动理由。
+
+无会话预览与同画布导出：
+
+```powershell
+dotnet run --project dv_core/cli/DvCli.csproj -- --preview --width 120 --height 42 --export-ui NEW.svg
+python mcp/verification/render_terminal_export.py --svg NEW.svg --out NEW.png
+```
+
+预览的Room A/B/C和候选为显式UI示例，不启动Core或AI；导出是实际渲染器
+单元画布，PNG不冒称操作系统终端截图。SVG/PNG路径必须不存在。截图工具需要
+Pillow及中文字体，非Windows通过--font指定字体。MCP路由为diagnostics的
+terminal-export。设计修订见[界面设计](../../docs/dv-core-terminal-ui.md)。
+
+也可用`--tui --command status --export-ui NEW.svg`导出真实开局只读投影，
+不调用Prepare或推进AI；options命令同样可导出。已有记录可用
+`--replay FILE --tui --command step --export-ui NEW.svg`导出首帧，不创建会话。
+导出不支持会推进动作的命令，也不导出自动循环。
+
+`--width 60..240 --height 24..100`设置预览和重定向画布；交互终端按实际
+窗口尺寸重排。height为最小高度，长内容纵向流入终端滚动区，不静默截断。
+记录回放继续共享SmartReplay，restart清空显示缓存；未实现
+左箭头回退、历史分叉、M热切换或LIVE游标，不提供这些误导快捷键。
+
 ## 会话命令
 
 默认由用户控制 detective；`--controller ai` 保留引擎自主控制。

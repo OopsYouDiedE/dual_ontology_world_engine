@@ -13,7 +13,12 @@ internal sealed class Cli
     private SmartReplay? replay;
     private bool jsonLines, tui, quit;
     private string? savePath, tracePath;
-    private readonly Queue<string> transcript = new();
+    private readonly List<TerminalEntry> terminalEntries = new();
+    private IReadOnlyDictionary<string, object?> replaySnapshot = HostValues.Empty;
+    private ReplayFrame? terminalFrame;
+    private int terminalWidth = 120, terminalHeight = 42;
+    private bool noColor;
+    private string? exportFramePath;
     private readonly CancellationTokenSource cancellation = new();
     private const int TranscriptCapacity = 40;
 
@@ -54,6 +59,8 @@ internal sealed class Cli
         var audit = false;
         var speed = 1d;
         var campaign = new Dictionary<string, object?>();
+        var preview = false;
+        string? exportUi = null;
         for (var i = 0; i < args.Length; i++)
         {
             string Value()
@@ -66,6 +73,11 @@ internal sealed class Cli
                 case "--help": case "-h": Console.WriteLine(Help); return;
                 case "--jsonl": jsonLines = true; break;
                 case "--tui": tui = true; break;
+                case "--preview": preview = true; tui = true; break;
+                case "--export-ui": exportUi = Value(); break;
+                case "--width": terminalWidth = int.Parse(Value(), CultureInfo.InvariantCulture); break;
+                case "--height": terminalHeight = int.Parse(Value(), CultureInfo.InvariantCulture); break;
+                case "--no-color": noColor = true; break;
                 case "--dev": developer = true; break;
                 case "--audit": audit = true; break;
                 case "--viewer": viewer = Value(); break;
@@ -89,6 +101,28 @@ internal sealed class Cli
             throw new ArgumentException("Recorded replay does not restore or save live sessions.");
         Console.InputEncoding = Encoding.UTF8;
         Console.OutputEncoding = new UTF8Encoding(false);
+        if (terminalWidth is < 60 or > 240 || terminalHeight is < 24 or > 100)
+            throw new ArgumentException("UI dimensions: width 60..240, height 24..100.");
+        if (preview)
+        {
+            if (replayPath is not null || restore is not null || savePath is not null || tracePath is not null || command is not null || controller != "player" || developer || audit || campaign.Count > 0)
+                throw new ArgumentException("--preview is a session-free UI example; do not combine it with session or replay options.");
+            var model = TerminalProjection.Preview();
+            if (exportUi is not null)
+            {
+                using var stream = new FileStream(exportUi, FileMode.CreateNew, FileAccess.Write);
+                using var writer = new StreamWriter(stream, new UTF8Encoding(false));
+                writer.Write(TerminalView.ExportSvg(model, terminalWidth, terminalHeight));
+            }
+            Console.Write(TerminalView.Render(model, terminalWidth, terminalHeight, !noColor && Environment.GetEnvironmentVariable("NO_COLOR") is null));
+            return;
+        }
+        if (exportUi is not null)
+        {
+            if (!tui || command is null || (replayPath is null && command is not ("status" or "options")) || (replayPath is not null && command != "step"))
+                throw new ArgumentException("--export-ui requires --preview, or --tui with a read-only --command status/options (recorded replay: step).");
+            exportFramePath = exportUi;
+        }
         if (replayPath is not null)
         {
             replay = SmartReplay.Load(replayPath);
@@ -147,7 +181,9 @@ internal sealed class Cli
                 case "play":
                     player.Play(argument.Length == 0 ? player.Speed : double.Parse(argument, CultureInfo.InvariantCulture));
                     await PlayReplay(); break;
-                case "restart": player.Restart(); Emit("replay", ReplayStatus()); break;
+                case "restart":
+                    player.Restart(); replaySnapshot = HostValues.Empty; terminalFrame = null; terminalEntries.Clear();
+                    Emit("replay", ReplayStatus()); break;
                 default: throw new ArgumentException("Replay commands: status, play [1|2|4|8], pause, step, restart, quit.");
             }
             return;
@@ -266,24 +302,50 @@ internal sealed class Cli
         }
     }
 
-    private void ShowFrame(ReplayFrame? frame) { if (frame is not null) Emit("frame", frame); }
+    private void ShowFrame(ReplayFrame? frame)
+    {
+        if (frame is null) return;
+        terminalFrame = frame;
+        if (frame.Data.GetValueOrDefault("snapshot") is IReadOnlyDictionary<string, object?> snapshot)
+            replaySnapshot = snapshot;
+        Emit("frame", frame);
+    }
 
     private void Emit(string kind, object data)
     {
         if (jsonLines) { Console.WriteLine(JsonSerializer.Serialize(new { kind, scope = session is null ? "recorded-replay" : "formal-model", data }, Json)); return; }
         var text = Format(kind, data);
-        if (!tui || Console.IsOutputRedirected) { Console.WriteLine(text); return; }
-        transcript.Enqueue(text);
-        while (transcript.Count > TranscriptCapacity) transcript.Dequeue();
-        Console.Clear();
-        var width = Math.Max(1, Console.WindowWidth - 1);
-        string Fit(string line) => line.Length <= width ? line : line[..width];
-        Console.WriteLine(Fit(session is null ? $"[记录回放 | {replay?.Index + 1}/{replay?.Count} | {replay?.Speed}×]" : Header(session.TextStatus())));
-        Console.WriteLine(new string('─', Math.Min(width, 100)));
-        foreach (var entry in transcript.SelectMany(entry => entry.Split('\n')).TakeLast(Math.Max(1, Console.WindowHeight - 6)))
-            Console.WriteLine(Fit(entry.TrimEnd('\r')));
-        Console.WriteLine("────────────────────────────────────────");
-        Console.WriteLine(session is null ? "空格 暂停/继续 | → 单步 | 1/2/4/8 倍速 | Q 退出" : "status | options | act <编号/ID> | next | save <路径> | quit");
+        if (!tui) { Console.WriteLine(text); return; }
+        if (kind is "presentation" or "frame" or "help" or "saved" or "trace" or "development")
+        {
+            terminalEntries.Add(new TerminalEntry { Title = data is ReplayFrame recorded ? $"#{recorded.Sequence} · {recorded.Kind}" : kind, Text = text, Kind = kind });
+            if (terminalEntries.Count > TranscriptCapacity) terminalEntries.RemoveAt(0);
+        }
+        var snapshot = session?.Materialize(session.Viewer) ?? replaySnapshot;
+        var status = session?.TextStatus() ?? HostValues.Empty;
+        var pending = session?.Intent ?? HostValues.Map(replaySnapshot, "pending");
+        var choices = HostValues.List(pending, "options").OfType<IReadOnlyDictionary<string, object?>>().ToArray();
+        var mode = session is null ? $"记录回放 {replay?.Index + 1}/{replay?.Count} · {replay?.Speed}×" : ControllerIsAutonomous(session) ? "自主控制 · 显式next推进" : "人工控制 · formal-model";
+        var model = TerminalProjection.FromSnapshot(snapshot, status, choices, terminalEntries.ToArray(), mode,
+            session is null ? replay?.Playing == true ? "播放中" : "已暂停" : HostValues.Text(pending, "status", "未准备"),
+            session is null ? "记录只读 · 不执行动作 · " + HostValues.Text(terminalFrame?.Data ?? HostValues.Empty, "source", "来源未记录") : "当前观察者投影 · 不包含Godot几何",
+            terminalFrame?.Action ?? "");
+        var width = terminalWidth;
+        var height = terminalHeight;
+        if (!Console.IsOutputRedirected)
+        {
+            width = Math.Clamp(Console.WindowWidth - 1, 60, 240);
+            height = Math.Clamp(Console.WindowHeight - 2, 24, 100);
+            Console.Clear();
+        }
+        if (exportFramePath is { } path)
+        {
+            using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
+            using var writer = new StreamWriter(stream, new UTF8Encoding(false));
+            writer.Write(TerminalView.ExportSvg(model, width, height));
+            exportFramePath = null;
+        }
+        Console.WriteLine(TerminalView.Render(model, width, height, !noColor && Environment.GetEnvironmentVariable("NO_COLOR") is null));
     }
 
     private static string Header(IReadOnlyDictionary<string, object?> status) =>
@@ -326,6 +388,10 @@ internal sealed class Cli
     private const string Help = """
 DV Core CLI (formal-model; no Godot geometry)
   --tui | --jsonl               Terminal view or JSON-Lines protocol
+  --preview                    Session-free styled UI example (no AI)
+  --width 120 --height 42       Preview / redirected TUI dimensions
+  --export-ui NEW.svg           Export preview or one read-only command frame
+  --no-color                   Disable ANSI colors (also honors NO_COLOR)
   --command "status"            Execute one command and exit
   --controller player|ai --viewer ID --profile NAME --zone ID --seed N
   --dev --audit                 Explicit development/recording modes
