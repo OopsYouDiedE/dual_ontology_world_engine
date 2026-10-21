@@ -61,6 +61,10 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	status_label.tooltip_text = status_label.text
 	time_label.text = str(hud.get("time", ""))
 
+func finish_entrance() -> void:
+	# Initial layout is rendered behind the title; the reveal owns its motion.
+	_bar_motion.finish_current()
+
 func set_overlay_blocked(blocked: bool) -> void:
 	_overlay_blocked = blocked
 	hud_settings_button.disabled = blocked or _shutting_down

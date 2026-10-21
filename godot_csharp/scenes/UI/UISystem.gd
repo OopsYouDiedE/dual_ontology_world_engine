@@ -20,6 +20,9 @@ var investigation_ui: CanvasLayer
 var dialogue_ui: CanvasLayer
 var snapshot: Dictionary = {}
 var casebook: RefCounted = CASEBOOK_DATA.new()
+## The host can prepare and draw this UI under a title without accepting input.
+var host_input_blocked := false
+var start_covered := false
 var _closing := false
 var _trace_display: Dictionary = {}
 var _pending_modal: Dictionary = {}
@@ -50,7 +53,7 @@ var ui_busy: bool:
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_screen_motion.configure(self, _screen_layer, _screen_fader, null, false, 1.0)
+	_screen_motion.configure(self, _screen_layer, _screen_fader, null, start_covered, 1.0)
 	_screen_motion.completed.connect(_on_screen_transition_completed)
 	hud_ui = HUD_SCENE.instantiate()
 	add_child(hud_ui)
@@ -87,6 +90,18 @@ func _ready() -> void:
 	settings_ui.ui_event.connect(_on_book_event)
 	var settings := get_node_or_null("/root/GameSettings")
 	if settings != null: settings.setting_changed.connect(_on_setting_changed)
+	_sync_overlay_input()
+
+func set_host_input_blocked(blocked: bool) -> void:
+	host_input_blocked = blocked
+	if is_node_ready(): _sync_overlay_input()
+
+func prepare_for_reveal() -> bool:
+	if _closing: return false
+	if not await dialogue_ui.wait_for_cast_prepared(): return false
+	if _closing or not is_inside_tree(): return false
+	hud_ui.finish_entrance()
+	return true
 
 func begin_shutdown() -> void:
 	if _closing: return
@@ -110,7 +125,7 @@ func _exit_tree() -> void:
 	_screen_motion.dispose()
 
 func is_busy() -> bool:
-	return _closing or _screen_motion.is_active() or _modal_cycle or not _pending_modal.is_empty() \
+	return _closing or host_input_blocked or _screen_motion.is_active() or _modal_cycle or not _pending_modal.is_empty() \
 		or (is_instance_valid(dialogue_ui) and dialogue_ui.is_dialogue_active()) \
 		or (is_instance_valid(investigation_ui) and investigation_ui.is_active()) \
 		or (is_instance_valid(settings_ui) and settings_ui.is_active())
@@ -177,7 +192,7 @@ func present(ev: Dictionary) -> Dictionary:
 	return {}
 
 func _request_modal(kind: String, data: Dictionary = {}) -> void:
-	if _closing or not _pending_action.is_empty(): return
+	if _closing or host_input_blocked or not _pending_action.is_empty(): return
 	# Settings is a child reading layer. Preserve the sheet beneath it, including
 	# its reading position; returning must not dispatch or re-run any world action.
 	if kind == "settings" and _modal_kind != "settings" and investigation_ui.is_open() and not _active_modal.is_empty():
@@ -207,7 +222,7 @@ func _request_modal(kind: String, data: Dictionary = {}) -> void:
 		_activate_pending_modal()
 
 func _activate_pending_modal() -> void:
-	if _closing or _screen_motion.is_active(): return
+	if _closing or host_input_blocked or _screen_motion.is_active(): return
 	if settings_ui.is_active() or investigation_ui.is_active(): return
 	if _pending_modal.is_empty():
 		_release_modal()
@@ -262,7 +277,7 @@ func _release_modal() -> void:
 	_flush_pending_action()
 
 func _sync_overlay_input() -> void:
-	var screen_blocked: bool = _screen_motion.is_active()
+	var screen_blocked: bool = host_input_blocked or _screen_motion.is_active()
 	dialogue_ui.set_modal_blocked(_modal_cycle or screen_blocked)
 	hud_ui.set_overlay_blocked(_modal_cycle or screen_blocked)
 	settings_ui.set_external_blocked(screen_blocked)
@@ -283,7 +298,7 @@ func _on_investigation_action(id: String) -> void:
 		_pending_action = {"kind": "card_action", "id": id}
 
 func _flush_pending_action() -> void:
-	if _closing or _pending_action.is_empty() or _modal_cycle or _screen_motion.is_active(): return
+	if _closing or host_input_blocked or _pending_action.is_empty() or _modal_cycle or _screen_motion.is_active(): return
 	if str(_pending_action.kind) == "spatial_select" and dialogue_ui.is_dialogue_active(): return
 	# The field rechecks ui_busy. Release the departing modal before dispatching
 	# its single captured choice, so the legitimate selection is not rejected.
@@ -376,10 +391,12 @@ func show_flash(text: String, duration := 1.8) -> void:
 	dialogue_ui.show_flash(text, duration)
 
 func _input(event: InputEvent) -> void:
+	# Leave title input to the still-visible title; our controls are disabled.
+	if host_input_blocked: return
 	if _screen_motion.is_active() and event.is_pressed(): get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _closing or not event.is_pressed() or event.is_echo(): return
+	if _closing or host_input_blocked or not event.is_pressed() or event.is_echo(): return
 	if event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel"):
 		if _modal_cycle: close_modal()
 		elif not dialogue_ui.is_dialogue_active(): open_settings()

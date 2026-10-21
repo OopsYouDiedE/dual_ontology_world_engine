@@ -306,6 +306,47 @@ def update_geometry_only(keys, text_source=TEXT_SOURCE, scenes=SCENES, manifest_
     candidates[manifest_path] = json.dumps(manifest, ensure_ascii=False, indent=1).encode("utf-8")
     return publish(candidates)
 
+
+def update_stands_only(keys, scenes=SCENES, manifest_path=OUT / "manifest.json"):
+    """Append capacity markers without rewriting published art, geometry or text."""
+    validate_maps(keys)
+    manifest = read_json(manifest_path)
+    fps = {**CH1_FP, **{name: entry.get("footprint") for name, entry in manifest.get("props", {}).items()}}
+    authored = {room["key"]: room for room in rooms.all_rooms()}
+    candidates = {}
+    for key in keys:
+        room = authored[key]
+        room["furniture"] = resolve(room["furniture"], fps)
+        points = stands(room)
+        previous = stands({**room, "stand_capacity": {}})
+        path = scenes / f"{key}.tscn"
+        source = path.read_bytes().decode("utf-8")
+        markers = []
+        for match in re.finditer(r'(?ms)^\[node\b.*?(?=^\[|\Z)', source):
+            header = match[0].splitlines()[0]
+            if 'parent="Stands"' not in header:
+                continue
+            name = re.search(r'name="([^"]+)"', header)
+            position = re.search(r'^position = Vector2\(([-\d.]+), ([-\d.]+)\)\r?$', match[0], re.M)
+            if 'type="Marker2D"' not in header or name is None or position is None:
+                raise ValueError(f"Unsupported published Stand: {key}")
+            markers.append((name[1], [float(position[1]), float(position[2])], match.end()))
+        published = [(name, point) for name, point, _ in markers]
+        expected = [(f"s{i:02d}", point) for i, point in enumerate(points)]
+        if published == expected:
+            continue
+        old = [(f"s{i:02d}", point) for i, point in enumerate(previous)]
+        if not markers or published != old or points[:len(previous)] != previous:
+            raise ValueError(f"Published Stands differ from their source recipe: {key}; retain the scene for review")
+        newline = "\r\n" if "\r\n" in source else "\n"
+        added = "".join(newline.join([
+            f'[node name="s{i:02d}" type="Marker2D" parent="Stands"]',
+            f'position = Vector2({x}, {y})', "", "",
+        ]) for i, (x, y) in enumerate(points[len(previous):], len(previous)))
+        end = markers[-1][2]
+        candidates[path] = (source[:end] + added + source[end:]).encode("utf-8")
+    return publish(candidates)
+
 # Chapter-1 sprite footprints (w, h) measured from its placement table.
 CH1_FP = {
     "bed_0": (36, 64), "desk_0": (58, 26), "chair_back": (14, 10), "chair_front": (14, 10), "wardrobe": (40, 16),
@@ -368,11 +409,26 @@ def stands(room, n=16):
             if all(rows[y + dy][x + dx] in painter.WALKABLE for dy in (-1, 0, 1) for dx in (-1, 0, 1)):
                 ok.append((x, y))
     if not ok:
+        if room.get("stand_capacity"):
+            raise ValueError(f"No legal standing candidates for {room['key']}")
         return []
     cx = sum(p[0] for p in ok) / len(ok); cy = sum(p[1] for p in ok) / len(ok)
     pick = [min(ok, key=lambda p: (p[0] - cx) ** 2 + (p[1] - cy) ** 2)]
     while len(pick) < min(n, len(ok)):
         pick.append(max(ok, key=lambda p: min((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 for q in pick)))
+    # Preserve the original markers and their order. Whole-building spreading
+    # alone does not guarantee enough initial places in each occupied region.
+    for name, capacity in room.get("stand_capacity", {}).items():
+        bounds = [r[1:] for r in room.get("regions", []) if r[0] == name]
+        if len(bounds) != 1 or not isinstance(capacity, int) or capacity < 0:
+            raise ValueError(f"Invalid standing capacity: {room['key']}:{name}")
+        x0, y0, x1, y1 = bounds[0]
+        within = lambda p: x0 <= p[0] < x1 and y0 <= p[1] < y1
+        while sum(within(p) for p in pick) < capacity:
+            available = [p for p in ok if within(p) and p not in pick]
+            if not available:
+                raise ValueError(f"Insufficient legal standing candidates: {room['key']}:{name}")
+            pick.append(max(available, key=lambda p: min((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 for q in pick)))
     return [[x * CELL + CELL // 2, y * CELL + CELL - 4] for x, y in pick]
 
 
@@ -480,6 +536,7 @@ def main():
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--text-only", nargs="+", metavar="MAP", help="Update existing interior titles and labels without rebuilding geometry.")
     modes.add_argument("--sites-only", nargs="+", metavar="MAP", help="Regenerate marker geometry with published labels, using existing textures.")
+    modes.add_argument("--stands-only", nargs="+", metavar="MAP", help="Append declared standing capacity while preserving all other published scene bytes.")
     modes.add_argument("--geometry-only", nargs="+", metavar="MAP", help="Regenerate selected interiors from recipes and existing PNGs; do not paint or import assets.")
     modes.add_argument("--interiors-only", nargs="+", metavar="MAP", help="Regenerate selected interiors and their baked floor shadows, without outdoors.")
     parser.add_argument("--text-source", type=Path, default=TEXT_SOURCE,
@@ -492,6 +549,9 @@ def main():
         return
     if args.sites_only:
         print(f"generated sites: {update_sites_only(args.sites_only, text_source=args.text_source)} file(s) changed")
+        return
+    if args.stands_only:
+        print(f"generated stands: {update_stands_only(args.stands_only)} file(s) changed")
         return
     if args.interiors_only:
         print(f"generated interiors: {update_geometry_only(args.interiors_only, text_source=args.text_source, repaint=True)} file(s) changed")

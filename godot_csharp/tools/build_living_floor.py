@@ -9,7 +9,36 @@ PARTS = {'zone_jia': (0, 0), 'zone_ding': (1600, 0),
          'zone_bing': (0, 704), 'zone_yi': (1600, 704), 'living_hall': (1120, 128)}
 
 
-def build():
+def _publish_stands_only(path, generated):
+    """Add newly authored markers while retaining the published floor's bytes."""
+    source = path.read_bytes().decode('utf-8')
+    def markers(text):
+        result = {}
+        for match in re.finditer(r'(?ms)^\[node\b.*?(?=^\[|\Z)', text):
+            header = match[0].splitlines()[0]
+            if 'parent="Stands"' not in header:
+                continue
+            name = re.search(r'name="([^"]+)"', header)[1]
+            if name in result or 'type="Marker2D"' not in header:
+                raise ValueError(f'Invalid Stand marker: {name}')
+            result[name] = match
+        return result
+    previous, current = markers(source), markers(generated)
+    if not previous:
+        raise ValueError('Published floor has no standing markers; retain it for review')
+    for name, match in previous.items():
+        if name not in current or match[0].replace('\r\n', '\n').strip() != current[name][0].replace('\r\n', '\n').strip():
+            raise ValueError(f'Published floor Stand differs from source: {name}')
+    added = [match[0].strip() for name, match in current.items() if name not in previous]
+    if not added:
+        return
+    newline = '\r\n' if '\r\n' in source else '\n'
+    text = (newline * 2).join(block.replace('\r\n', '\n').replace('\n', newline) for block in added) + newline * 2
+    end = max(match.end() for match in previous.values())
+    path.write_bytes((source[:end] + text + source[end:]).encode('utf-8'))
+
+
+def build(stands_only=False):
     resources, nodes, terrain = [], [], [['#'] * 86 for _ in range(50)]
     lights = []
     for key, (dx, dy) in PARTS.items():
@@ -89,8 +118,15 @@ def build():
     groups[1] += '\ncollision_mask = 0'
     resources.sort(key=lambda block: 0 if block.startswith('[ext_resource') else 1)
     output = f'[gd_scene load_steps={len(resources)+1} format=3]\n\n' + '\n\n'.join(resources + [root] + groups + nodes) + '\n'
-    (MAPS / 'living_floor.tscn').write_text(output, encoding='utf-8', newline='\n')
+    target = MAPS / 'living_floor.tscn'
+    if stands_only:
+        _publish_stands_only(target, output)
+    else:
+        target.write_text(output, encoding='utf-8', newline='\n')
 
 
 if __name__ == '__main__':
-    build()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--stands-only', action='store_true', help='Append source Stand markers without changing other published floor content.')
+    build(stands_only=parser.parse_args().stands_only)

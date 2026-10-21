@@ -161,6 +161,7 @@ def zone(label: str) -> dict:
              "tile": [F("MedCabinet", "medicine_cabinet", P(23, 11, 30, 26))]}[z["extra"]]
     furniture += extra
     room = dict(key=ZONE_KEY[label], title_key=f"资源.地图.{ZONE_KEY[label]}.标题", rows=p.rows(), regions=regions,
+                stand_capacity={"hall": 4},
                 floor={"room": z["floor"], "corridor": "plank", "hall": z["floor"], "prep": "quarry", "wc": "whitetile",
                        "foyer": "flagstone", "store": "plank", "default": "plank"},
                 wall={"room": z["wall"], "corridor": ("plaster", "CREAM"), "hall": z["wall"], "prep": ("tile",),

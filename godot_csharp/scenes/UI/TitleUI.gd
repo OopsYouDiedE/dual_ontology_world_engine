@@ -4,6 +4,7 @@ extends Control
 signal ui_event(event: Dictionary)
 signal transition_finished(shown: bool)
 signal close_requested
+signal field_reveal_finished(cancelled: bool)
 
 const Sound = preload("res://scenes/Shared/Audio/Sound.gd")
 const BookSettingsPage = preload("res://scenes/UI/BookSettingsPage.gd")
@@ -12,6 +13,7 @@ const Transition = preload("res://scenes/UI/UITransition.gd")
 const BookProjection = preload("res://scenes/UI/BookProjection3D.gd")
 const LeafTurn = preload("res://scenes/UI/BookLeafTurn3D.gd")
 const BookSurfaceDetail = preload("res://scenes/UI/BookSurfaceDetail3D.gd")
+const FIELD_REVEAL_SHADER: Shader = preload("res://scenes/UI/title_reveal.gdshader")
 const PAGE_SIZE := Vector2(4.8, 6.8)
 const PAGE_Y := 0.325
 const OPEN_PAGE_Y := 0.2775
@@ -22,6 +24,11 @@ const TEXTS := {
 	"ja": ["眠る者に福あれ", "読みはじめる", "続きから", "設定", "本を閉じる"],
 }
 const TITLE_TYPES := {"zh_CN": &"PixelDisplay", "en": &"PixelMast", "ja": &"PixelMast"}
+const LOADING_TEXTS := {
+	"zh_CN": {"session": "正在准备……", "load": "正在读取书签……", "map": "正在准备现场……", "cast": "正在准备人物……", "frame": "即将展开……", "failed": "准备未完成", "restart": "请关闭后重新打开游戏。"},
+	"en": {"session": "Preparing…", "load": "Reading bookmark…", "map": "Preparing the scene…", "cast": "Preparing the cast…", "frame": "Ready to unfold…", "failed": "Unable to begin", "restart": "Please close and reopen the game."},
+	"ja": {"session": "準備しています…", "load": "しおりを読み込んでいます…", "map": "舞台を整えています…", "cast": "人物を準備しています…", "frame": "まもなく開きます…", "failed": "準備できませんでした", "restart": "ゲームを終了してから、もう一度起動してください。"},
+}
 
 
 var mode := "title"
@@ -75,9 +82,27 @@ var _labels := {}
 var _menu_input_enabled := false
 var _request_pending := false
 var _leaving := false
+var _opening_kind := ""
+var _loading_stage := ""
+var _opening_error := ""
+var _startup_failed := false
+var _startup_error_dialog: AcceptDialog
+var _loading_status: RichTextLabel
+var _field_reveal_material: ShaderMaterial
+var _field_reveal_tween: Tween
+var _field_revealing := false
+var _field_reveal_cancelled := false
+var _field_reveal_complete := false
 
 func _ready() -> void:
 	_projection_surface.texture = _stage_viewport.get_texture()
+	if mode == "title":
+		# Compile the reveal shader with the normal title, before gameplay starts.
+		_field_reveal_material = ShaderMaterial.new()
+		_field_reveal_material.shader = FIELD_REVEAL_SHADER
+		_field_reveal_material.set_shader_parameter("paper_texture", load(ASSET_ROOT + "reference-paper.webp"))
+		_field_reveal_material.set_shader_parameter("paper_tint", get_theme_color("page_light", "Title"))
+		_projection_surface.material = _field_reveal_material
 	_projection_surface.resized.connect(_resize_stage)
 	_resize_stage()
 	_slip.resized.connect(_update_paper_mount_size)
@@ -110,6 +135,9 @@ func _ready() -> void:
 	if mode == "casebook": open_section.bind(initial_page).call_deferred()
 
 func _resize_stage() -> void:
+	# Keep the frozen GPU texture intact if the window changes during the reveal.
+	# The anchored display and normalized shader coordinates still fill the window.
+	if _field_revealing: return
 	# Preserve the window's aspect ratio instead of stretching the whole desk.
 	var dimensions := _projection_surface.size.max(Vector2(320, 240))
 	var resolution_scale := minf(1.0, 1600.0 / maxf(dimensions.x, dimensions.y))
@@ -132,22 +160,168 @@ func _load_optional_material_map(file_name: String) -> Texture2D:
 	return load(path) as Texture2D
 
 func transition_in() -> bool:
+	if _field_revealing or _field_reveal_complete or _leaving: return false
 	_leaving = false
-	_request_pending = false
 	_set_menu_input(false)
 	var request_id: int = _page_motion.request(true, true, 0.24)
 	var completed: bool = await _page_motion.wait_for(request_id)
-	if completed and not _leaving:
+	if completed and not _leaving and not _request_pending:
 		_set_menu_input(true)
 		if _current_page == "cover": start_button.grab_focus()
 		else: _leaf_back.grab_focus()
 	return completed and not _leaving
 
 func transition_out() -> bool:
+	if _field_revealing: _finish_field_reveal(true)
 	_leaving = true
 	_set_menu_input(false)
 	var request_id: int = _page_motion.request(false, true, 0.20)
 	return await _page_motion.wait_for(request_id)
+
+## Loading owns the current printed page. Only the host may reveal the field.
+func begin_opening(kind := "start") -> void:
+	if mode != "title" or _leaving or _startup_failed or _request_pending: return
+	_opening_kind = kind
+	_opening_error = ""
+	_loading_stage = "session"
+	_request_pending = true
+	# Auto-start may arrive before the initial fade; cover the field completely.
+	_page_motion.request(true, false)
+	_page_motion.finish_current()
+	_set_menu_input(false)
+	_refresh_loading_status()
+
+func set_loading_stage(stage: String) -> void:
+	if not _request_pending or _leaving or not LOADING_TEXTS["zh_CN"].has(stage): return
+	_loading_stage = stage
+	_refresh_loading_status()
+
+func _loading_text() -> String:
+	var key := "load" if _loading_stage == "session" and _opening_kind == "load" else _loading_stage
+	return str(LOADING_TEXTS[_language()].get(key, ""))
+
+func _refresh_loading_status() -> void:
+	_mark(start_button, start_button.has_focus())
+	start_button.tooltip_text = _opening_error
+	if _current_page == "load" and _request_pending and _opening_kind != "":
+		if not is_instance_valid(_loading_status):
+			_loading_status = _leaf_text("")
+			_loading_status.theme_type_variation = &"BookCaption"
+		_loading_status.text = _loading_text()
+		_loading_status.show()
+	elif is_instance_valid(_loading_status):
+		_loading_status.hide()
+
+func cancel_opening() -> void:
+	if _field_revealing: _finish_field_reveal(true)
+	_field_reveal_complete = false
+	_leaving = false
+	_request_pending = false
+	_opening_kind = ""
+	_loading_stage = ""
+	_opening_error = ""
+	_startup_failed = false
+	if _field_reveal_material != null: _field_reveal_material.set_shader_parameter("progress", 0.0)
+	_stage_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_resize_stage()
+	_set_menu_input(true)
+	_refresh_loading_status()
+
+func show_start_error(message: String, retryable := false) -> void:
+	cancel_opening()
+	_startup_failed = not retryable
+	_opening_error = message
+	_set_menu_input(true)
+	_refresh_loading_status()
+	if _current_page == "cover":
+		if _startup_failed: quit_button.grab_focus()
+		else: start_button.grab_focus()
+	else:
+		if not is_instance_valid(_load_error_line):
+			_load_error_line = _leaf_text("")
+		_load_error_line.text = str(LOADING_TEXTS[_language()].failed)
+		_load_error_line.tooltip_text = message
+		_leaf_back.grab_focus()
+	if _startup_failed:
+		if not is_instance_valid(_startup_error_dialog):
+			_startup_error_dialog = AcceptDialog.new()
+			_startup_error_dialog.theme = theme
+			_startup_error_dialog.process_mode = Node.PROCESS_MODE_ALWAYS
+			add_child(_startup_error_dialog)
+			_startup_error_dialog.confirmed.connect(_close_start_error)
+			_startup_error_dialog.close_requested.connect(_close_start_error)
+		_startup_error_dialog.title = str(LOADING_TEXTS[_language()].failed)
+		_startup_error_dialog.dialog_text = message + "\n\n" + str(LOADING_TEXTS[_language()].restart)
+		_startup_error_dialog.popup_centered(Vector2i(660, 280))
+
+func _close_start_error() -> void:
+	if is_instance_valid(_startup_error_dialog): _startup_error_dialog.hide()
+	if not is_inside_tree() or _leaving: return
+	if _current_page == "cover": quit_button.grab_focus()
+	else: _leaf_back.grab_focus()
+
+func transition_to_field() -> bool:
+	if mode != "title" or not is_inside_tree() or _startup_failed: return false
+	if _field_reveal_complete: return not _field_reveal_cancelled
+	if _field_revealing:
+		while _field_revealing: await field_reveal_finished
+		return _field_reveal_complete and not _field_reveal_cancelled
+	_field_revealing = true
+	_field_reveal_cancelled = false
+	_leaving = true
+	_request_pending = true
+	_set_menu_input(false)
+	# Settle a possible initial fade without allowing its continuation to unlock.
+	var shown_request: int = _page_motion.request(true, false)
+	_page_motion.finish_current()
+	await _page_motion.wait_for(shown_request)
+	if not is_inside_tree() or not _field_revealing: return _field_reveal_complete and not _field_reveal_cancelled
+	# The completed preparation leaves no loading message printed on the leaf.
+	# Native controls may regain their normal ink while viewport input stays locked.
+	_opening_kind = ""
+	_loading_stage = ""
+	_refresh_loading_status()
+	for button: Button in [start_button, continue_button, settings_button, quit_button]:
+		button.disabled = false
+	viewport.gui_disable_input = true
+	# This is an existing viewport texture, frozen on the GPU once. The world
+	# underneath has already been drawn by Main; no preview or image readback.
+	var rendered := DisplayServer.get_name() != "headless"
+	if rendered:
+		# The book controls feed a texture inside the desk's own viewport. Let
+		# the updated inner texture reach the desk before freezing that texture.
+		await RenderingServer.frame_post_draw
+		if not is_inside_tree() or not _field_revealing: return _field_reveal_complete and not _field_reveal_cancelled
+		await RenderingServer.frame_post_draw
+	else: await get_tree().process_frame
+	if not is_inside_tree() or not _field_revealing: return _field_reveal_complete and not _field_reveal_cancelled
+	_stage_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	if _reduce_motion or not rendered:
+		_finish_field_reveal(false)
+	else:
+		_field_reveal_tween = Transition.real_tween(self)
+		_field_reveal_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+		_field_reveal_tween.tween_method(_set_field_reveal, 0.0, 1.0, 0.82)
+		_field_reveal_tween.finished.connect(_finish_field_reveal.bind(false))
+	while _field_revealing: await field_reveal_finished
+	return _field_reveal_complete and not _field_reveal_cancelled
+
+func _set_field_reveal(value: float) -> void:
+	if _field_reveal_material != null:
+		_field_reveal_material.set_shader_parameter("progress", value)
+
+func _finish_field_reveal(cancelled: bool) -> void:
+	if not _field_revealing: return
+	_field_revealing = false
+	_field_reveal_cancelled = cancelled
+	_field_reveal_complete = not cancelled
+	if _field_reveal_tween != null:
+		_field_reveal_tween.kill()
+		_field_reveal_tween = null
+	if not cancelled: _set_field_reveal(1.0)
+	field_reveal_finished.emit(cancelled)
 
 func _on_page_transition(_request_id: int, shown: bool, cancelled: bool) -> void:
 	if not cancelled: transition_finished.emit(shown)
@@ -159,17 +333,29 @@ func _on_setting_changed(section: String, key: String, value: Variant) -> void:
 		if _reduce_motion:
 			_page_motion.finish_current()
 			if _turn_tween != null and _turn_tween.is_valid(): _turn_tween.custom_step(10.0)
+			if _field_revealing: _finish_field_reveal(false)
 
 func _set_menu_input(enabled: bool) -> void:
 	_menu_input_enabled = enabled and not _external_blocked and not _leaving and not _request_pending and not _turning and _current_page == "cover"
 	viewport.gui_disable_input = _external_blocked or _leaving or _request_pending or _turning
 	for button: Button in [start_button, continue_button, settings_button, quit_button]:
 		button.disabled = not _menu_input_enabled
+	if _request_pending and _opening_kind != "" and _current_page == "cover":
+		# The viewport and request owner already block interaction. Keep the
+		# loading status in the theme's normal ink so it remains readable.
+		start_button.disabled = false
+	if _startup_failed:
+		start_button.disabled = true
+		continue_button.disabled = true
+		if _current_page == "load":
+			for child in _leaf_body.get_children():
+				if child is BaseButton: child.disabled = true
 
 func _settings_active() -> bool:
 	return _current_page == "settings"
 
 func _exit_tree() -> void:
+	_finish_field_reveal(true)
 	if _turn_tween != null and _turn_tween.is_valid(): _turn_tween.kill()
 	_page_motion.dispose()
 
@@ -192,12 +378,19 @@ func _localize() -> void:
 		_labels[buttons[index]] = texts[index + 1]
 		_mark(buttons[index], buttons[index].has_focus())
 	_localize_leaf()
+	_refresh_loading_status()
 
 func _process(delta: float) -> void:
-	if not visible or not is_instance_valid(_book): return
+	if not visible or not is_instance_valid(_book) or _field_revealing or _field_reveal_complete: return
 	_projection.update(_projection_surface.get_local_mouse_position(), delta, _reduce_motion)
 
 func _mark(button: Button, selected: bool) -> void:
+	if button == start_button and _request_pending and _opening_kind != "":
+		button.text = _loading_text()
+		return
+	if button == start_button and _startup_failed:
+		button.text = str(LOADING_TEXTS[_language()].failed)
+		return
 	button.text = ("☞ " + str(_labels.get(button, button.text))) if selected else str(_labels.get(button, button.text))
 
 func _hover(button: Button) -> void:
@@ -232,7 +425,7 @@ func _localize_leaf() -> void:
 	_leaf_back.text = tr("返回现场") if mode == "casebook" else tr("☜ 封面")
 	_leaf_index.text = tr("目录")
 	_leaf_next.text = tr("续读 ☞") if _current_page == "settings" else tr("凡例 ☞")
-	var headings := {"settings": "凡例与设置", "load": "续读 · 书签", "start": "开始阅读", "index": "案卷目录",
+	var headings := {"settings": "凡例与设置", "load": "续读 · 书签", "index": "案卷目录",
 		"evidence": "证据", "items": "物品", "people": "人物立像", "gallery": "图版", "hypotheses": "猜想", "records": "记录"}
 	_leaf_heading.text = tr(headings.get(_current_page.get_slice("@", 0), "个人批注" if _current_page.begins_with("write:") else "案卷记录"))
 	if is_instance_valid(_leaf_body):
@@ -247,19 +440,21 @@ func close_settings() -> void:
 	_leave_book()
 
 func open_load_book() -> void:
-	if not _leaving and not _request_pending and not _turning: _turn_to("load")
+	if not _leaving and not _request_pending and not _turning and not _startup_failed: _turn_to("load")
 
 func _input(event: InputEvent) -> void:
+	if is_instance_valid(_startup_error_dialog) and _startup_error_dialog.visible: return
 	if not is_visible_in_tree() or not is_instance_valid(_book): return
-	if _external_blocked:
+	if _external_blocked or _request_pending or _turning or _leaving:
 		get_viewport().set_input_as_handled()
 		return
-	if event is InputEventMouse or event is InputEventKey or event is InputEventJoypadButton:
+	if event is InputEventMouse or event is InputEventKey or event is InputEventJoypadButton or event is InputEventJoypadMotion:
 		if not _turning and not _leaving: _projection.forward(event)
 		if not viewport.is_input_handled(): _unhandled_input(event)
 		get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if is_instance_valid(_startup_error_dialog) and _startup_error_dialog.visible: return
 	if not event.is_pressed() or event.is_echo() or _turning or _leaving: return
 	if _current_page != "cover" and not _request_pending:
 		if event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel") or event.is_action_pressed("settings"):
@@ -279,11 +474,14 @@ func _request(kind: String, path := "") -> void:
 		elif kind == "quit": close_requested.emit()
 		return
 	if _turning or _leaving or _request_pending: return
+	if _startup_failed and kind in ["start", "load"]: return
 	if kind == "start":
 		if not _menu_input_enabled: return
-		await _turn_to("start")
-	_request_pending = true
-	_set_menu_input(false)
+	if kind in ["start", "load"]:
+		begin_opening(kind)
+	else:
+		_request_pending = true
+		_set_menu_input(false)
 	Sound.sfx("ui_click", -4.0)
 	var request := {"kind": kind}
 	if path != "": request.path = path
@@ -445,6 +643,7 @@ func _animate_leaf(value: float, leaf: Node3D, closing: bool, rigid: bool) -> vo
 	if not rigid: leaf.position.y = lerpf(OPEN_PAGE_Y - 0.006, 0.33, value)
 
 func _turn_to(page: String) -> void:
+	if mode == "title" and (page not in ["cover", "settings", "load"] or (_startup_failed and page == "load")): return
 	if _turning or _current_page == page: return
 	var previous := _current_page
 	var opening := previous == "cover"
@@ -558,7 +757,7 @@ func _show_leaf(page: String) -> void:
 	_cover_root.get_node("PaperGround").visible = page != "cover"
 	_book_leaf.visible = page != "cover"
 	if page == "cover": return
-	_leaf_next.visible = page in ["settings", "load"]
+	_leaf_next.visible = page in ["settings", "load"] and not (_startup_failed and page == "settings")
 	_leaf_index.visible = mode == "casebook" and page != "index"
 	_localize_leaf()
 	for child in _leaf_body.get_children():
@@ -566,13 +765,12 @@ func _show_leaf(page: String) -> void:
 		child.queue_free()
 	_bookmark_status = null
 	_load_error_line = null
+	_loading_status = null
 	_leaf_scroll.scroll_vertical = 0
 	if page == "settings":
 		_leaf_body.add_child(BookSettingsPage.new())
 	elif page == "load":
 		_populate_bookmarks()
-	elif page == "start":
-		_leaf_text(tr("案卷正在展开……"))
 	else:
 		var content := BookArchivePage.new()
 		content.archive = archive
@@ -690,8 +888,7 @@ func _choose_save() -> void:
 	_file_dialog.popup_centered_ratio(0.7)
 
 func show_load_error(message: String) -> void:
-	_request_pending = false
-	_set_menu_input(true)
+	cancel_opening()
 	if not is_instance_valid(_load_error_line):
 		_load_error_line = _leaf_text(tr("无法续读此书签，请选择其他存档。"))
 	_load_error_line.tooltip_text = message

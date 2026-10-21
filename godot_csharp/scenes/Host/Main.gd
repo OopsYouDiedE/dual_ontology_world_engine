@@ -19,6 +19,8 @@ const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 @export_range(0.25, 8.0, 0.25) var playback_speed := 1.0
 var field_executor: Node
 var _started := false
+var _opening := false
+var _opening_failed := false
 var view_trace: Node
 var engine: Node
 var ui: Node
@@ -74,7 +76,7 @@ func _ready() -> void:
 	_home()
 	if "--dv-auto-start" in OS.get_cmdline_user_args(): dispatch.call_deferred({"kind": "start"})
 
-func _dispose_views() -> void:
+func _dispose_views(keep_title := false) -> void:
 	if is_instance_valid(field):
 		if is_instance_valid(field_executor): field_executor.retain_field(field)
 		field.begin_shutdown()
@@ -86,10 +88,10 @@ func _dispose_views() -> void:
 		remove_child(ui)
 		ui.queue_free()
 	ui = null
-	if is_instance_valid(title_layer):
+	if not keep_title and is_instance_valid(title_layer):
 		remove_child(title_layer)
 		title_layer.queue_free()
-	title_layer = null
+		title_layer = null
 
 func _home() -> void:
 	_dispose_views()
@@ -106,19 +108,25 @@ func _home() -> void:
 func _view(ev: Dictionary, begin := true) -> bool:
 	var generation := _session_generation
 	var replacing := bool(ev.get("replace_session", false))
+	var opening_title: Control = title_layer.get_child(0) if is_instance_valid(title_layer) else null
 	_timing("view_build_begin")
 	var resource: PackedScene = CAMPUS_MAP_VIEW if str(ev.resource) == "res://scenes/Chapter2/Field/CampusMapView.tscn" else (load(str(ev.resource)) as PackedScene)
 	if resource == null:
-		push_error("无法加载世界视图：" + str(ev.resource))
+		_view_error("无法加载世界视图：" + str(ev.resource), replacing)
 		return false
 	# Production view events already carry the worker's completed data graph.
 	# Keep Snapshot() only for callers using the earlier host interface.
 	var initial: Dictionary = ev.get("snapshot", {})
 	if initial.is_empty(): initial = ev if ev.has("viewer") else engine.Snapshot()
+	var presentation: Dictionary = initial.get("presentation", {})
+	if str(presentation.get("player_actor", "")) == "" or str(presentation.get("player_sprite", "")) == "":
+		_view_error("开场快照缺少人物呈现绑定。", replacing)
+		return false
 	var adapter: Node2D = resource.instantiate()
 	_pending_adapter = adapter
 	if adapter.get("presentation") != null and initial.has("presentation"):
 		adapter.presentation = initial.presentation
+	if is_instance_valid(opening_title): opening_title.set_loading_stage("map")
 	_timing("view_prepare_begin", {"map": initial.get("map", "")})
 	var prepared := true
 	if adapter.has_method("prepare_map"):
@@ -126,7 +134,8 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	_timing("view_prepare_end", {"ready": prepared})
 	if not prepared or _closing or generation != _session_generation:
 		_discard_adapter(adapter)
-		if not prepared and not replacing and not _closing and generation == _session_generation: _show_error("无法准备世界地图：" + str(initial.get("map", "")))
+		if not prepared and not _closing and generation == _session_generation:
+			_view_error("无法准备世界地图：" + str(initial.get("map", "")), replacing)
 		return false
 	# A prepared background map cannot replace a book the player is reading.
 	# An explicit bookmark install owns the replacement and closes its old UI.
@@ -135,23 +144,22 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	if _closing or generation != _session_generation:
 		_discard_adapter(adapter)
 		return false
-	# Resource preparation leaves the current screen drawn and responsive.
-	# Retire it only after its own exit transition has completed.
-	if is_instance_valid(title_layer):
-		var title := title_layer.get_child(0)
-		if title.has_method("transition_out"): await title.transition_out()
-	elif is_instance_valid(ui) and ui.has_method("transition_out"):
+	# Keep the title opaque while the actual field, actors and UI are assembled
+	# and rendered behind it. In-game view replacement retains its own fade.
+	if not is_instance_valid(opening_title) and is_instance_valid(ui) and ui.has_method("transition_out"):
 		await ui.transition_out()
 	if _closing or generation != _session_generation:
 		_discard_adapter(adapter)
 		return false
-	_dispose_views()
+	_dispose_views(is_instance_valid(opening_title))
 	if replacing: field_executor.reset()
 	_view_resource = str(ev.resource)
 	ui = UI_SCENE.instantiate()
 	if ev.has("casebook"):
 		_casebook.restore_data(ev.casebook, str(initial.get("viewer", "")))
 	ui.casebook = _casebook
+	ui.host_input_blocked = true
+	ui.start_covered = not is_instance_valid(opening_title)
 	ui.name = "UI"
 	add_child(ui)
 	ui.ui_event.connect(dispatch)
@@ -168,18 +176,64 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	field.hint_changed.connect(ui.set_hint)
 	field_executor.configure_visible(field, initial)
 	_pending_adapter = null
+	if is_instance_valid(opening_title): opening_title.set_loading_stage("cast")
 	field.setup(adapter)
+	if not is_instance_valid(field.player) or not is_instance_valid(field.spatial):
+		_view_error("现场人物或交互未能完成装配。", replacing)
+		return false
 	field_executor.bind_visible(field, initial)
 	ui.apply_snapshot(initial)
 	if is_instance_valid(view_trace): move_child(view_trace, get_child_count() - 1)
+	if not await field.prepare_presentation(initial):
+		if not _closing and generation == _session_generation:
+			_view_error("现场未能完成准备：" + str(field.presentation_error), replacing)
+		return false
+	if _closing or generation != _session_generation: return false
+	if not await ui.prepare_for_reveal(): return false
+	if _closing or generation != _session_generation: return false
+	if is_instance_valid(opening_title): opening_title.set_loading_stage("frame")
+	# Layout, physics registration, sight/light updates and an actual draw must
+	# all precede the reveal. Fixed timers and resource completion are not ready.
+	await get_tree().process_frame
+	if _closing or generation != _session_generation: return false
+	await get_tree().physics_frame
+	if _closing or generation != _session_generation: return false
+	var rendered := DisplayServer.get_name() != "headless"
+	if rendered: await RenderingServer.frame_post_draw
+	else: await get_tree().process_frame
+	if _closing or generation != _session_generation: return false
 	_timing("view_build_end")
-	if ui.has_method("transition_in"): await ui.transition_in()
+	_timing("view_prepared_for_reveal", {"map": initial.get("map", ""), "actors": field.actors.size(), "frame": Engine.get_frames_drawn(), "rendered": rendered, "title_covering": is_instance_valid(opening_title)})
+	if is_instance_valid(opening_title):
+		_timing("title_reveal_begin")
+		var revealed: bool = await opening_title.transition_to_field()
+		if not revealed or _closing or generation != _session_generation: return false
+		_timing("title_reveal_end", {"frame": Engine.get_frames_drawn()})
+		remove_child(title_layer)
+		title_layer.queue_free()
+		title_layer = null
+	elif ui.has_method("transition_in"):
+		await ui.transition_in()
 	# 等场景加入树并应用快照后才开始脚本；这也是可见视图的普通握手。
 	if _closing or generation != _session_generation: return false
+	_opening = false
+	ui.set_host_input_blocked(false)
 	if begin: dispatch.call_deferred({"kind": "view_ready"})
 	if str(ev.get("casebook_warning", "")) != "":
 		_show_casebook_warning(str(ev.casebook_warning))
 	return true
+
+func _view_error(message: String, replacing: bool) -> void:
+	if replacing: return # The bookmark owner reports its backup and holds the lock.
+	if is_instance_valid(title_layer):
+		_opening = false
+		_opening_failed = true
+		_queue.clear()
+		title_layer.get_child(0).show_start_error(message, false)
+		_timing("title_opening_failed", {"message": message})
+		push_error(message)
+	else:
+		_show_error(message)
 
 func _discard_adapter(adapter: Node2D) -> void:
 	if _pending_adapter == adapter: _pending_adapter = null
@@ -212,6 +266,8 @@ func _show_bookmark_view_error(backup_path: String) -> void:
 func dispatch(input: Dictionary) -> void:
 	if _closing: return
 	var input_kind := str(input.get("kind", ""))
+	if _opening_failed and input_kind != "quit": return
+	if _opening and input_kind not in ["start", "load", "quit"]: return
 	# Keep accepted physical receipts deliverable while persistence waits on work.
 	if _bookmark_loading and input_kind != "dv_complete": return
 	# Finish already prepared actions and their presentation before saving.
@@ -247,13 +303,21 @@ func dispatch(input: Dictionary) -> void:
 	if str(input.get("kind", "")) == "start":
 		if _started: return
 		var options := _session_options()
-		if options.is_empty(): return
+		if options.is_empty():
+			if is_instance_valid(title_layer): title_layer.get_child(0).cancel_opening()
+			return
 		engine.ConfigureSession(options)
 		_started = true
 	elif str(input.get("kind", "")) == "load":
 		if _started: return
-		if not _configure_load_playback(): return
+		if not _configure_load_playback():
+			if is_instance_valid(title_layer): title_layer.get_child(0).cancel_opening()
+			return
 		_started = true
+	if input_kind in ["start", "load"]:
+		_opening = true
+		if is_instance_valid(title_layer): title_layer.get_child(0).begin_opening(input_kind)
+		_timing("title_opening_requested", {"kind": input_kind})
 	engine.Dispatch(input)
 
 func _process(_delta: float) -> void:
@@ -345,7 +409,7 @@ func _show_error(message: String) -> void:
 func _field_input_busy() -> bool:
 	# A yielded presentation batch may still contain newer action eligibility.
 	# Do not accept a world click against an intermediate observer projection.
-	return _draining or not _queue.is_empty() or _completion_pending or _bookmark_loading or _bookmark_saving or _bookmark_requested or not is_instance_valid(ui) or ui.is_busy()
+	return _opening or _opening_failed or _draining or not _queue.is_empty() or _completion_pending or _bookmark_loading or _bookmark_saving or _bookmark_requested or not is_instance_valid(ui) or ui.is_busy()
 
 func _field_input(input: Dictionary) -> void:
 	match str(input.get("kind", "")):
@@ -374,7 +438,7 @@ func _accept_execution(input: Dictionary) -> void:
 	_dv_complete("applied" if arrived else "rejected", input)
 
 func _drain() -> void:
-	if _draining or _closing: return
+	if _draining or _closing or _opening_failed: return
 	_draining = true
 	var generation := _session_generation
 	var slice_started := Time.get_ticks_usec()
@@ -421,16 +485,20 @@ func _drain() -> void:
 					_timing("reading_finished", {"execution_event": result.get("execution_event", "")})
 				if not bool(ev.get("advance_requested", false)):
 					dispatch.call_deferred({"kind": "dv_next"})
-			"view": await _view(ev)
+			"view":
+				if not await _view(ev):
+					_queue.clear()
+					break
 			"state": await _apply(ev.snapshot)
 			"error":
 				_bookmark_requested = false
 				_bookmark_next = {}
-				_show_error(str(ev.message))
+				_view_error(str(ev.message), false)
 			"load_error":
 				_bookmark_requested = false
 				_bookmark_next = {}
 				_started = false
+				_opening = false
 				if is_instance_valid(title_layer): title_layer.get_child(0).show_load_error(str(ev.message))
 			_: push_error("Unknown DV host event: " + str(ev.get("kind", "")))
 	_draining = false
@@ -733,6 +801,7 @@ class PlayerViewTraceInner extends Node:
 			record_input.call(data)
 
 	func _context() -> Dictionary:
+		if is_instance_valid(host.title_layer): return {"panel": "title", "opening": host._opening}
 		if is_instance_valid(host.ui): return host.ui.view_trace_context()
 		return {"panel": "title"}
 
@@ -788,6 +857,9 @@ class PlayerViewTraceInner extends Node:
 			host._timing("local_choices_frame" if str(data.get("panel", "")) == "spatial" else "first_frame_drawn", {"presentation_id": presentation, "frame": data.frame})
 
 	func _scene_objects() -> Array:
+		# Preparing a field under the title is not a player sighting. Partial
+		# coverage during the reveal is described by its actual captured frames.
+		if is_instance_valid(host.title_layer): return []
 		if not is_instance_valid(host.field): return []
 		var covered: Array[Rect2] = []
 		if is_instance_valid(host.ui):
@@ -872,14 +944,15 @@ class DvFieldExecutorInner extends Node:
 			if str(person.get("key", "")) == who:
 				result = person.duplicate(true)
 				break
-		if not result.has("anchor") or str(result.get("anchor", "")) == "":
-			result["anchor"] = str(result.get("initial_anchor", ""))
+		# A place's navigation target can be shared by several people. Only the
+		# authored initial anchor fixes a new body's position; otherwise use the
+		# existing same-room, walkable and unoccupied Stand/Spawn candidates.
+		result["anchor"] = str(result.get("initial_anchor", ""))
 		var presentation: Dictionary = state.get("presentation", {})
 		if str(presentation.get("player_actor", "")) == who:
 			var init_a := str(state.get("initial_anchor", ""))
-			var a := str(state.get("anchor", init_a))
 			result.merge({"map": str(state.get("map", "")), "execution_room": str(state.get("execution_room", "")),
-				"spawn": str(state.get("spawn", "")), "anchor": a,
+				"spawn": str(state.get("spawn", "")), "anchor": init_a,
 				"sprite": str(presentation.get("player_sprite", ""))}, true)
 		return result
 

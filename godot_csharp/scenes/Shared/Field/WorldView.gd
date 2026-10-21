@@ -47,6 +47,7 @@ var execution_resource := ""
 var execution_transitions: Array = []
 
 var snapshot: Dictionary = {}
+var presentation_error := ""
 var sites: Dictionary = {}           # id → {title, point, reach, box?, marker?, person?, new}
 var nearest := ""
 var hovered := ""
@@ -119,6 +120,72 @@ func setup(map_adapter: Node2D) -> void:
 		room_stage = ROOM_STAGE.new()
 		room_stage.field = self
 		add_child(room_stage)
+
+## Prepare the installed scene while the host still covers it with the book.
+## This never advances DV or changes bodies' positions. The host owns the final
+## physics/render barrier, after its UI has also finished preparing.
+func prepare_presentation(initial: Dictionary) -> bool:
+	presentation_error = ""
+	if _closing or not is_inside_tree(): return false
+	if execution_only: return _presentation_failure("离屏执行场地不能作为开卷现场。")
+	var prepared_adapter := adapter
+	var prepared_map: Node2D = adapter.get("map") if is_instance_valid(adapter) else null
+	if not _presentation_bindings_ready(initial, prepared_adapter, prepared_map): return false
+	# setup/apply_snapshot can queue an access-geometry refresh on the live map.
+	# Reusing prepare_map waits for that refresh and its navigation data, while
+	# retaining the resources and nodes already prepared before installation.
+	if adapter.has_method("prepare_map"):
+		var prepared: bool = await adapter.prepare_map(str(initial.get("map", "")), initial, get_tree())
+		if _closing or not is_inside_tree(): return false
+		if not prepared: return _presentation_failure("现场几何与导航尚未完成准备。")
+	if not _presentation_bindings_ready(initial, prepared_adapter, prepared_map): return false
+	# Sight normally updates as a child after this node's process callback.
+	# Resolve it first here so the very first exposed frame has its furniture,
+	# character visibility, room lighting and final initial camera composition.
+	sight.prepare_presentation()
+	_sync_scene_visibility()
+	room_stage.prepare_presentation()
+	return _presentation_bindings_ready(initial, prepared_adapter, prepared_map)
+
+func _presentation_failure(message: String) -> bool:
+	presentation_error = message
+	return false
+
+func _presentation_bindings_ready(initial: Dictionary, prepared_adapter: Node2D, prepared_map: Node2D) -> bool:
+	if _closing or not is_inside_tree(): return false
+	if not is_instance_valid(prepared_adapter) or adapter != prepared_adapter or not adapter.is_inside_tree():
+		return _presentation_failure("现场地图适配器尚未完成装配。")
+	var expected_map := str(initial.get("map", ""))
+	if expected_map == "" or str(adapter.map_key()) != expected_map or not is_instance_valid(prepared_map) \
+		or adapter.get("map") != prepared_map or not prepared_map.is_inside_tree():
+		return _presentation_failure("现场地图尚未完成装配：" + expected_map)
+	if adapter.switching(): return _presentation_failure("现场地图仍在切换。")
+	if not is_instance_valid(camera) or not is_instance_valid(sight) or not is_instance_valid(room_stage) or not is_instance_valid(spatial):
+		return _presentation_failure("现场视野与呈现组件尚未完成装配。")
+	var expected_player := str(initial.get("presentation", {}).get("player_actor", ""))
+	if expected_player == "" or not is_instance_valid(player) or actors.get(expected_player) != player:
+		return _presentation_failure("现场主角尚未完成装配。")
+	var required: Array[String] = [expected_player]
+	for person in initial.get("people", []):
+		if str(person.get("map", "")) != expected_map or not bool(person.get("present", true)): continue
+		var key := str(person.get("key", ""))
+		if key not in required: required.append(key)
+	for key in required:
+		var actor: CharacterBody2D = actors.get(key)
+		if not is_instance_valid(actor) or not actor.is_inside_tree() or not is_ancestor_of(actor):
+			return _presentation_failure("现场人物尚未完成装配：" + key)
+		var sprite := actor.get("sprite") as AnimatedSprite2D
+		if not is_instance_valid(sprite) or sprite.sprite_frames == null \
+			or not sprite.sprite_frames.has_animation(sprite.animation) \
+			or sprite.sprite_frames.get_frame_count(sprite.animation) == 0:
+			return _presentation_failure("现场人物图像尚未完成准备：" + key)
+		var collision_ready := false
+		for child in actor.get_children():
+			if child is CollisionShape2D and child.shape != null and not child.disabled:
+				collision_ready = true
+				break
+		if not collision_ready: return _presentation_failure("现场人物碰撞尚未完成准备：" + key)
+	return true
 
 func begin_shutdown() -> void:
 	if _closing: return
@@ -459,8 +526,7 @@ func _physics_process(delta: float) -> void:
 	_update_daily(delta)
 	_pick_nearest()
 
-func _process(_delta: float) -> void:
-	if _closing or player == null: return
+func _sync_scene_visibility() -> void:
 	var fog: bool = adapter.sight_terrain_fog()
 	var objects: Node = adapter.objects_root()
 	if fog and objects:
@@ -471,6 +537,11 @@ func _process(_delta: float) -> void:
 		var actor: CharacterBody2D = actors[key]
 		if is_instance_valid(actor) and actor != player:
 			actor.visible = in_sight(actor.position)
+
+func _process(_delta: float) -> void:
+	if _closing or player == null: return
+	_sync_scene_visibility()
+	var objects: Node = adapter.objects_root()
 	var active := field_active()
 	if active and not _was_active: _active_since = Time.get_ticks_msec()
 	_was_active = active
@@ -986,6 +1057,13 @@ class SightMaskInner extends Node2D:
 	func terrain_known(point: Vector2) -> bool:
 		return seen_cells.has(Vector2i((point / cell_size).floor()))
 
+	func prepare_presentation() -> void:
+		# Preserve the observer's seen cells; force only its normal current-view
+		# calculation before the field is exposed by the title transition.
+		_origin = Vector2i(-999, -999)
+		_entry = Vector2i(-999, -999)
+		_process(0.0)
+
 	func _process(delta: float) -> void:
 		if Engine.is_editor_hint() or host == null: return
 		_clock += delta
@@ -1141,6 +1219,23 @@ class RoomStageInner extends Node2D:
 		mat.shader = VEIL
 		_veil.material = mat
 		_layer.add_child(_veil)
+
+	func prepare_presentation() -> void:
+		_map = field.adapter.map
+		_room = str(field.adapter.room_of(field.player.position))
+		_bounds = field.adapter.stage_bounds(field.player.position)
+		var indoor: bool = field.adapter.sight_terrain_fog()
+		_rebuild_lights(indoor)
+		_veil.visible = indoor
+		if indoor:
+			var viewport: Vector2 = get_viewport_rect().size
+			var dimensions := _bounds.size.max(Vector2.ONE)
+			var zoom := clampf(minf(viewport.x * 0.9 / dimensions.x, viewport.y * 0.88 / dimensions.y), 2.0, 3.4)
+			field.camera.zoom = Vector2.ONE * zoom
+		field.camera.position = field.adapter.camera_point(field.player.position)
+		field.camera.reset_smoothing()
+		field.camera.force_update_scroll()
+		_process(0.0)
 
 	func _process(delta: float) -> void:
 		if not is_instance_valid(field.player) or field.adapter.map == null: return

@@ -94,6 +94,30 @@ func configure_cast(cast: Dictionary) -> void:
 		var path := "res://ShareAsset/Internal/Characters/DialogueCast/%s_calm.tres" % str(key)
 		_request_portrait(path)
 
+## Opening waits for only the portraits already requested by configure_cast.
+## Optional missing/failed images retain the existing text-only fallback.
+func wait_for_cast_prepared() -> bool:
+	var requested: Array = _portrait_requests.keys()
+	while not _shutting_down and is_inside_tree():
+		var waiting := false
+		for value in requested:
+			var path := str(value)
+			if _portrait_cache.has(path): continue
+			if not bool(_portrait_requests.get(path, false)):
+				_portrait_cache[path] = null
+				continue
+			var status := ResourceLoader.load_threaded_get_status(path)
+			if status == ResourceLoader.THREAD_LOAD_LOADED:
+				_portrait_cache[path] = ResourceLoader.load_threaded_get(path) as Texture2D
+			elif status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+				waiting = true
+			else:
+				_portrait_cache[path] = null
+				_portrait_requests[path] = false
+		if not waiting: return true
+		await get_tree().process_frame
+	return false
+
 func _request_portrait(path: String) -> void:
 	if _portrait_cache.has(path) or _portrait_requests.has(path): return
 	if not ResourceLoader.exists(path):

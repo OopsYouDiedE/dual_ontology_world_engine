@@ -70,6 +70,8 @@ Main 的导出属性以及 `--dv-controller=`、`--dv-viewer=`、`--dv-profile=`
 
 生活翼同层统一使用 `Maps/living_floor.tscn`，由 `tools/build_living_floor.py` 组合五张已发布场景生成；原场景和纹理保留为生成输入。四寝区隔离门是同图物理屏障，使用 DV 提供的各区放行值，不触发切图。逻辑房间标识保持 `zone_*:*` / `living_hall:*`，执行地图统一为 `living_floor`；室外分区及不同建筑不合并。公共厅中段补接六格以避免原局部底图相互重叠，门、标记、碰撞与灯光同步变换。
 
+地图源可通过 `stand_capacity` 声明各几何区域的站位容量。`tools/build_chapter2_scenes.py --stands-only <地图...>` 保留原有 Stand 顺序，只从原障碍、门道及邻格过滤后的候选补齐不足；发布前复核已发行标记与源配方一致，只更新 Stand 标记，不重绘地图或改动碰撞。生活翼随后使用 `tools/build_living_floor.py --stands-only` 同步新增标记并保留其他已发布内容；运行时仍只使用已发行的合法 Stand/Spawn，不临时移动旁人或放宽出生规则。
+
 实际盲测可通过 `profile_dv_capture.py --controller player --window-mode offscreen` 启动真实 Main 场景，使用保存的渲染截图及 `input.json` 瞬时输入包操作普通视口输入。默认离屏且不可聚焦，保留图形渲染与物理，不使用 headless 逻辑运行替代；独立盲玩代理只读取该轮画面与通用输入协议。`--window-mode window` 可恢复可见窗口。
 
 `dvg_snapshot.geometry_bindings` 提供地图站点、道具、纹理、位置与 footprint。`CampusMapView` 按声明建立 Marker2D、Sprite2D、碰撞与导航；相同声明不重复重建。场景和动态呈现均由内容声明驱动，宿主不以解析剧情动作 ID 替代空间绑定。
@@ -98,13 +100,17 @@ UI 样式、颜色与排版统一由 Theme/StyleBox 等 Resource 维护；不在
 
 续读列出 user://saves/*.dvsave，也可显式选择文件，向 Main 发 load/path；GameEngine 在原串行队列用 DvSession.RestoreFile 恢复，拒绝尚待现场回执的存档。文件验证失败不安装会话，load_error 返回书页；不得据此声称跨版本与现场恢复已验收。
 
-`UITransition.gd` 管理可取消的进入/退出状态，过渡使用现实时间，不受游戏播放倍率影响；`reduce_motion` 修改实时生效并使当前过渡落定。`ModalPanel.gd` 负责打开、退出期间的输入锁、焦点圈定/恢复和完成信号，实际退场后才发 closed。UISystem 串行切换设置、调查及其各面板，上层弹窗阻止底层对白或现场消费同一输入；现场选择在弹窗退场后发回原 site 与 choice_id。Title 的设置层高于标题层，Main 等待 `transition_out` 后更换视图。UISystem 提供可等待的 `transition_in/out` 与 `fade_in/out`，屏幕遮罩覆盖期间保持 busy；WorldView 只在目标准备完成后进行可见跨图淡变。
+`UITransition.gd` 管理可取消的进入/退出状态，过渡使用现实时间，不受游戏播放倍率影响；`reduce_motion` 修改实时生效并使当前过渡落定。`ModalPanel.gd` 负责打开、退出期间的输入锁、焦点圈定/恢复和完成信号，实际退场后才发 closed。UISystem 串行切换设置、调查及其各面板，上层弹窗阻止底层对白或现场消费同一输入；现场选择在弹窗退场后发回原 site 与 choice_id。Title 的设置层高于标题层；游戏内视图替换等待原 UI 的 `transition_out`，卷首交接遵循下述揭页契约。UISystem 提供可等待的 `transition_in/out` 与 `fade_in/out`，屏幕遮罩覆盖期间保持 busy；WorldView 只在目标准备完成后进行可见跨图淡变。
 
 对白、回看、提示各自取消旧任务；空对白与立即完成的低动态效果也提供可等待的完成结果。换行保留正文顺序与来源，立绘通过线程请求预备后绑定，旧请求不覆盖新说话者。重入、关闭或新提示不得遗留能隐藏当前界面的旧回调。
 
 `RoomStage` 负责当前房间构图、局部灯光与有上限的粒子；离屏执行不创建舞台特效。`reduce_motion` 关闭微尘及缩放动画。房间构图、着色器和灯光不改变碰撞、门洞、DV 目的地或人物认识。对白保留原透明立绘与滚动正文、原文顺序、说话者映射和用户继续操作，不能把界面播放完成当作行动成功。
 
 Session 呈现保留 surface/lines 和 `source_refs`。Main 为发出的正文记录 `execution_event`、`source_id`、`source_field`、`emitted_line_index`、`paragraph_index` 与 `line_id`。过滤后的显示序号不冒充源行号，缺少来源不补造；`PlayerViewTrace` 在实际 `frame_post_draw` 后记录首帧，待显示正文与已绘制正文分开。
+
+## 卷首加载与揭页
+
+开始阅读和标题续读立即发出正式请求，并把当前书页保留到现场真实就绪。`Main._view` 在标题后装配 `WorldView` 与 `UISystem`，等待地图、人物、已请求立绘、视野光效、镜头、HUD 和实际绘制帧，再调用 `TitleUI.transition_to_field` 单次揭页；不能先翻到占位页或撤去标题后才装配。`_opening` 与 `UISystem.host_input_blocked` 覆盖整个准备和揭页期间，低动态仅省略运动。游戏内视图替换保留其屏幕遮罩。接口、错误边界及二级观察入口 `tools/capture_start_reveal.gd` 见 [卷首加载与揭页](../docs/title-opening.md)；其截图不能代替剧情验收或同条件性能比较。
 
 ## 共享书本、案卷与界面设置
 
