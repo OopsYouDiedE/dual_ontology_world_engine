@@ -5,17 +5,17 @@
     python music/build_soundtrack.py --scores         # 只核对/更新曲谱，不渲染游戏 OGG
     python music/build_soundtrack.py --export         # 将 PDF / MusicXML / MIDI / MP3 导出至 artifacts/releases/soundtrack
     python music/build_soundtrack.py --export --export-dir <目录> # 指定发行导出目录
-    python music/build_soundtrack.py --rewrite-scores # 从 cues.py 更新 .mscz（严格保留原谱乐器名称与音色设置）并导出全部产物
+    python music/build_soundtrack.py --rewrite-scores # 从 cues.py 更新 .mscz（保留乐器名称，应用明确指定的音色与混音设置）并导出全部产物
     python music/build_soundtrack.py --from-mscz      # 直接以现有 .mscz 为唯一源，经 MuseScore 4 编译进游戏（跳过 cues.py 比对）
 
 编译流程说明：
-1. 乐器名称保护：更新或导出 `.mscz` 时，严格保留 `.mscz` 中既有的 `<Part>` 乐器名称、简称、通道、移调与 `audiosettings.json` 音色设置。
+1. 乐器名称保护：更新或导出 `.mscz` 时，保留原谱乐器身份和记谱移调；仅按明确的 explicit_sound 声明更新音色/键位，按源混音表更新原生混音。
 2. MuseScore 4 原生渲染：直接调用 `MuseScore4.exe` 将 `.mscz` 渲染为无损立体声波形，并导出 `.pdf`、`.musicxml`、`.mid`、`.mp3`。
 3. 游戏音频后处理（切空白、尾音回叠无缝循环、动态收拢与响度统一）：
    - 自动检测并裁除首部空白前导；
    - 按曲谱精确小节/速度时值计算循环点 `t_score`：对循环配乐，将末尾余音与混响尾段（Tail）平滑包络回叠至循环开头，
-     并在接缝处施加微交叉淡化，实现零静音空隙、零爆音的无缝循环；对含延长记号收束的主题曲，自动裁除尾部静音段并平滑淡出；
-   - 经总线动态压缩与响度对齐（目标 RMS -19.0 dBFS，峰值上限 -1.2 dBFS）编码写入游戏 OGG。
+     并在接缝处施加微交叉淡化，降低循环边界的不连续；编码后仍须检查接缝；对含延长记号收束的主题曲，自动裁除尾部静音段并平滑淡出；
+   - 经总线动态压缩与响度对齐（各曲目标 RMS -21 至 -24 dBFS，PCM 峰值上限 -1.8 dBFS，编码峰值另测）编码写入游戏 OGG。
 """
 import argparse
 import concurrent.futures
@@ -212,7 +212,7 @@ SAMPLED = {
     'violin': (0, 40, -3.0), 'xylophone': (0, 13, -11.0),
     'framedrum': (128, 0, -11.0), 'tabla': (0, 0, -12.0), 'bassdrum': (128, 48, 0.0),
     'cellos': (41, 48, -4.0), 'basses': (51, 48, 2.0), 'cellos_pizz': (40, 45, 9.0), 'basses_pizz': (50, 45, 7.0),
-    'templeblocks': (1, 115, -3.0), 'dagu': (128, 0, -4.0),
+    'templeblocks': (1, 115, -3.0), 'dagu': (128, 48, -4.0),
 }
 SYNTH_TRIM = {'tanpura': -8.0, 'tabla': -12.0, 'framedrum': -11.0, 'bianzhong': -10.0, 'bianqing': -11.0}
 SEND = {

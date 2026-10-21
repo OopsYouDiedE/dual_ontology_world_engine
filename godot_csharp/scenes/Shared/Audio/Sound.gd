@@ -10,6 +10,18 @@ static func music(id: String, fade := 1.6) -> void:
 	if hub:
 		hub.play_music(id, fade)
 
+static func scene_music(snapshot: Dictionary) -> void:
+	var hub := _hub()
+	if hub: hub.apply_music_scene(snapshot)
+
+static func begin_presentation_music(presentation: Dictionary) -> int:
+	var hub := _hub()
+	return int(hub.begin_presentation_music(presentation)) if hub else 0
+
+static func end_presentation_music(token: int) -> void:
+	var hub := _hub()
+	if hub: hub.end_presentation_music(token)
+
 static func stop_music(fade := 1.6) -> void:
 	var hub := _hub()
 	if hub:

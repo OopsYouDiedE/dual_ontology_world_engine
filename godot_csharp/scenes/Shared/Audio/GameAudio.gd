@@ -3,6 +3,7 @@ extends Node
 ## 场景脚本经 Sound.gd 调用，自动加载缺席时（无头检查脚本）静默跳过。
 ## 曲目与音效由 music/build_soundtrack.py 生成，曲目用途见 docs/design-standard.md 第五部分。
 
+const MusicContext := preload("res://scenes/Shared/Audio/MusicContext.gd")
 const MUSIC_PATH := "res://ShareAsset/Internal/Props/Audio/Music/%s.ogg"
 const SFX_PATH := "res://ShareAsset/Internal/Props/Audio/Sfx/%s.ogg"
 const MUSIC_DB := -9.0
@@ -21,6 +22,9 @@ var _sfx: Array[AudioStreamPlayer] = []
 var _next_sfx := 0
 var _cache := {}
 var _quitting := false
+var _scene_music := ""
+var _music_token_serial := 0
+var _presentation_music_token := 0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -47,8 +51,38 @@ static func _bus_or_master(bus: StringName) -> StringName:
 func current_music() -> String:
 	return _current
 
+func apply_music_scene(snapshot: Dictionary) -> void:
+	var next := MusicContext.background(snapshot)
+	if next == "": return
+	_scene_music = next
+	if _presentation_music_token == 0:
+		play_music(_scene_music)
+
+func begin_presentation_music(presentation: Dictionary) -> int:
+	if _scene_music == "" or not MusicContext.is_formal_confrontation(presentation):
+		return 0
+	_music_token_serial += 1
+	_presentation_music_token = _music_token_serial
+	play_music("confrontation", 0.8)
+	return _presentation_music_token
+
+func end_presentation_music(token: int) -> void:
+	# A late callback from an old UI must not interrupt a new presentation.
+	if token == 0 or token != _presentation_music_token: return
+	_presentation_music_token = 0
+	if _scene_music != "": play_music(_scene_music, 1.2)
+
+func _clear_music_context() -> void:
+	_scene_music = ""
+	_presentation_music_token = 0
+
 func play_music(id: String, fade := 1.6) -> void:
-	if id == _current:
+	if id == "main_theme": _clear_music_context()
+	# Formal confrontation is scoped to delivered dialogue, never a generic BGM.
+	if id == "confrontation" and _presentation_music_token == 0:
+		id = _scene_music
+		if id == "": return
+	if id == _current and _music[_active].playing:
 		return
 	var stream := _load(MUSIC_PATH % id)
 	if stream == null:
@@ -66,6 +100,7 @@ func play_music(id: String, fade := 1.6) -> void:
 	_fade_to(new, old, fade)
 
 func stop_music(fade := 1.6) -> void:
+	_clear_music_context()
 	_current = ""
 	_fade_to(null, _music[_active], fade)
 
@@ -114,6 +149,7 @@ func _load(path: String) -> AudioStream:
 
 ## Release playback before the audio server and scene tree are destroyed.
 func release_audio() -> void:
+	_clear_music_context()
 	if _fade:
 		_fade.kill()
 		_fade = null

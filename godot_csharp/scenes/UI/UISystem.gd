@@ -33,6 +33,7 @@ var _pending_action: Dictionary = {}
 var _screen_motion = Transition.new()
 var _archive_result: Dictionary = {}
 var _archive_lines: Array = []
+var _presentation_music_token := 0
 
 @onready var _screen_layer: CanvasLayer = $TransitionLayer
 @onready var _screen_fader: ColorRect = $TransitionLayer/ScreenFader
@@ -90,6 +91,8 @@ func _ready() -> void:
 func begin_shutdown() -> void:
 	if _closing: return
 	_closing = true
+	Sound.end_presentation_music(_presentation_music_token)
+	_presentation_music_token = 0
 	_pending_modal.clear()
 	_modal_stack.clear()
 	_active_modal.clear()
@@ -102,6 +105,8 @@ func begin_shutdown() -> void:
 	hud_ui.begin_shutdown()
 
 func _exit_tree() -> void:
+	Sound.end_presentation_music(_presentation_music_token)
+	_presentation_music_token = 0
 	_screen_motion.dispose()
 
 func is_busy() -> bool:
@@ -146,13 +151,18 @@ func apply_snapshot(data: Dictionary) -> void:
 	casebook.apply_snapshot(snapshot)
 	if is_instance_valid(dialogue_ui): dialogue_ui.configure_cast(snapshot.get("cast", {}))
 	if is_instance_valid(hud_ui): hud_ui.apply_snapshot(snapshot)
+	if not _closing: Sound.scene_music(snapshot)
 
 func present(ev: Dictionary) -> Dictionary:
 	if _closing or ev.is_empty(): return {}
 	_trace_display = ev
 	match str(ev.get("kind", "")):
 		"lines":
+			_presentation_music_token = Sound.begin_presentation_music(_archive_result)
+			var music_token := _presentation_music_token
 			var result: Dictionary = await dialogue_ui.play_dialogue(ev)
+			Sound.end_presentation_music(music_token)
+			if _presentation_music_token == music_token: _presentation_music_token = 0
 			result["trace_id"] = str(ev.get("trace_id", ""))
 			return result
 		"aside": show_aside(str(ev.get("text", "")), float(ev.get("seconds", 2.5)))

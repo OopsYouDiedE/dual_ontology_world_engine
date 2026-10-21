@@ -195,6 +195,9 @@ class Part:
     part_id: int = 0           # MuseScore <Part id="...">，0 表示按顺序编号
     track_name: str = ''       # MuseScore <trackName>，缺省同 name
 
+    initial_clef: str = ''     # Explicit notation override, not a sounding-pitch transpose.
+    explicit_sound: str = ''   # Reviewed MS Basic preset name; empty retains automatic articulation switching.
+
     def playback_pitch(self, pitch):
         return self.drum_map[pitch] if self.drum_map else pitch
 
@@ -290,11 +293,11 @@ class Piece:
 # ---------------------------------------------------------------- MSCX 输出
 
 DRUM_DEFINITIONS = {
-    'frame-drum': '<Drum pitch="45"><head>normal</head><line>0</line><voice>0</voice><name>Frame Drum</name><stem>1</stem><shortcut>A</shortcut></Drum>',
+    'frame-drum': '<Drum pitch="64"><head>normal</head><line>0</line><voice>0</voice><name>Hand Drum Centre (Low Tumba substitute)</name><stem>1</stem><shortcut>A</shortcut></Drum><Drum pitch="60"><head>normal</head><line>-1</line><voice>0</voice><name>Hand Drum Rim (Bongo substitute)</name><stem>1</stem><shortcut>B</shortcut></Drum>',
     'tablas': '<Drum pitch="73"><head>normal</head><line>1</line><voice>0</voice><name>Ge (open bass)</name><stem>1</stem><shortcut>A</shortcut><panelRow>0</panelRow><panelColumn>0</panelColumn></Drum><Drum pitch="71"><head>normal</head><line>-1</line><voice>0</voice><name>Na</name><stem>1</stem><shortcut>B</shortcut><panelRow>0</panelRow><panelColumn>1</panelColumn></Drum><Drum pitch="87"><head>normal</head><line>-1</line><voice>0</voice><name>Tin</name><stem>1</stem><shortcut>C</shortcut><panelRow>0</panelRow><panelColumn>2</panelColumn></Drum><Drum pitch="84"><head>normal</head><line>-1</line><voice>0</voice><name>Te</name><stem>1</stem><shortcut>D</shortcut><panelRow>0</panelRow><panelColumn>3</panelColumn></Drum>',
     'bass-drum': '<Drum pitch="36"><head>normal</head><line>0</line><voice>0</voice><name>Concert Bass Drum</name><stem>2</stem><shortcut>A</shortcut></Drum>',
     'temple-blocks': '<Drum pitch="58"><head>normal</head><line>8</line><voice>0</voice><name>Low Temple Block</name><stem>1</stem><shortcut>A</shortcut><panelRow>0</panelRow><panelColumn>0</panelColumn></Drum><Drum pitch="59"><head>normal</head><line>6</line><voice>0</voice><name>Low-Mid Temple Block</name><stem>1</stem><shortcut>B</shortcut><panelRow>0</panelRow><panelColumn>1</panelColumn></Drum><Drum pitch="60"><head>normal</head><line>4</line><voice>0</voice><name>Mid Temple Block</name><stem>1</stem><shortcut>C</shortcut><panelRow>0</panelRow><panelColumn>2</panelColumn></Drum><Drum pitch="61"><head>normal</head><line>2</line><voice>0</voice><name>High-Mid Temple Block</name><stem>1</stem><shortcut>D</shortcut><panelRow>0</panelRow><panelColumn>3</panelColumn></Drum><Drum pitch="62"><head>normal</head><line>0</line><voice>0</voice><name>High Temple Block</name><stem>1</stem><shortcut>E</shortcut><panelRow>0</panelRow><panelColumn>4</panelColumn></Drum>',
-    'dagu': '<Drum pitch="87"><head>normal</head><line>0</line><voice>0</voice><name>Dagu</name><stem>1</stem><shortcut>A</shortcut><panelRow>0</panelRow><panelColumn>0</panelColumn></Drum>',
+    'dagu': '<Drum pitch="36"><head>normal</head><line>0</line><voice>0</voice><name>Concert Bass Drum</name><stem>1</stem><shortcut>A</shortcut><panelRow>0</panelRow><panelColumn>0</panelColumn></Drum>',
     'wood-blocks': '<Drum pitch="76"><head>normal</head><line>-1</line><voice>0</voice><name>High Wood Block</name><stem>1</stem><shortcut>A</shortcut></Drum><Drum pitch="77"><head>normal</head><line>1</line><voice>0</voice><name>Low Wood Block</name><stem>1</stem><shortcut>B</shortcut></Drum>',
 }
 
@@ -611,8 +614,129 @@ def build_mscx(piece, preserved_parts_xml=None):
             '    </Score>\n'
             '  </museScore>\n')
     root = ET.fromstring(mscx)
+    apply_staff_clefs(root, piece)
+    validate_score_ranges(root, piece.slug)
     _resolve_spanners(root, piece)
     return apply_expression_playback(root, piece)
+
+
+def apply_staff_clefs(root, piece):
+    """Reconcile explicit notation choices while retaining instrument identity/sounds.
+
+    Reusing an old Part must not silently discard a new bass-clef choice. Octave
+    transposition remains on the instrument; matching concert/written clefs only
+    move the displayed notes. Note.pitch and all channels are untouched.
+    """
+    parts = root.find('Score').findall('Part')
+    if len(parts) != len(piece.parts):
+        raise ValueError(f'{piece.slug}: preserved Part count does not match source')
+    for model, xml_part in zip(piece.parts, parts):
+        staves = xml_part.findall('Staff')
+        if len(staves) != model.staves:
+            raise ValueError(f'{piece.slug}/{model.name}: preserved staff count mismatch')
+        ins = xml_part.find('Instrument')
+        if model.explicit_sound:
+            # Only explicitly reviewed playback overrides may change saved channels.
+            # Names, transposition, pitch limits and other articulations stay intact.
+            channels = ins.findall('Channel')
+            if not channels:
+                channels = [ET.SubElement(ins, 'Channel')]
+            channel = next((c for c in channels if c.get('name', '') == model.channel_name), channels[0])
+            program = channel.find('program')
+            if program is None:
+                program = ET.SubElement(channel, 'program')
+            program.set('value', str(model.program))
+            for ctrl, value in ((0, model.bank >> 7), (32, model.bank & 127)):
+                target = next((c for c in channel.findall('controller') if c.get('ctrl') == str(ctrl)), None)
+                if target is None:
+                    target = ET.SubElement(channel, 'controller', {'ctrl': str(ctrl)})
+                target.set('value', str(value))
+            if model.drum_map:
+                for drum in list(ins.findall('Drum')):
+                    ins.remove(drum)
+        if model.drum_map:
+            ins = xml_part.find('Instrument')
+            existing = {int(d.get('pitch')) for d in ins.findall('Drum')}
+            definitions = ET.fromstring('<Drums>' + DRUM_DEFINITIONS[model.template_id] + '</Drums>')
+            for drum in definitions:
+                if int(drum.get('pitch')) in model.drum_map.values() and int(drum.get('pitch')) not in existing:
+                    ins.append(drum)
+            missing = set(model.drum_map.values()) - {int(d.get('pitch')) for d in ins.findall('Drum')}
+            if missing:
+                raise ValueError(f'{piece.slug}/{model.name}: undefined percussion keys {missing}')
+            continue
+        if model.staves != 1:
+            continue
+        clef = model.initial_clef or ('F' if model.bass_clef else '')
+        if not clef:
+            continue
+        if clef not in ('F', 'G', 'C3', 'C4'):
+            raise ValueError(f'Unsupported explicit clef: {clef}')
+        ins = xml_part.find('Instrument')
+        transpose = int(ins.findtext('transposeChromatic', '0'))
+        concert = clef
+        if abs(transpose) == 12 and clef in ('F', 'G'):
+            concert += '8va' if transpose > 0 else '8vb'
+        staff = staves[0]
+        for child in list(staff):
+            if child.tag in ('defaultClef', 'defaultConcertClef', 'defaultTransposingClef'):
+                staff.remove(child)
+        for child in list(ins):
+            if child.tag in ('clef', 'concertClef', 'transposingClef'):
+                ins.remove(child)
+        if concert == clef:
+            ET.SubElement(staff, 'defaultClef').text = clef
+            ET.SubElement(ins, 'clef').text = clef
+        else:
+            ET.SubElement(staff, 'defaultConcertClef').text = concert
+            ET.SubElement(staff, 'defaultTransposingClef').text = clef
+            ET.SubElement(ins, 'concertClef').text = concert
+            ET.SubElement(ins, 'transposingClef').text = clef
+
+
+def score_range_issues(root):
+    """Audit actual stored instrument limits, not only the generator's lo/hi.
+
+    MSCX Note.pitch is the concert MIDI pitch. Percussion pitches are sample keys,
+    not a melodic range. Amateur warnings remain distinct from hard range errors.
+    """
+    score = root.find('Score')
+    staves = iter(score.findall('Staff'))
+    issues = []
+    for part in score.findall('Part'):
+        ins = part.find('Instrument')
+        lo, hi = int(ins.findtext('minPitchP', '0')), int(ins.findtext('maxPitchP', '127'))
+        alo, ahi = int(ins.findtext('minPitchA', str(lo))), int(ins.findtext('maxPitchA', str(hi)))
+        for inner, _ in enumerate(part.findall('Staff')):
+            staff = next(staves)
+            if ins.findtext('useDrumset') == '1':
+                continue
+            for bar, measure in enumerate(staff.findall('Measure'), 1):
+                for note in measure.findall('.//Note'):
+                    pitch = int(note.findtext('pitch'))
+                    severity = 'professional' if not lo <= pitch <= hi else ('amateur' if not alo <= pitch <= ahi else '')
+                    if severity:
+                        issues.append({'part': ins.findtext('longName'), 'staff': inner+1,
+                                       'bar': bar, 'pitch': pitch_name(pitch), 'midi': pitch,
+                                       'severity': severity, 'low': pitch < (lo if severity == 'professional' else alo)})
+    return issues
+
+
+def validate_score_ranges(root, slug):
+    # Production cues are deliberately written inside both stored usable ranges.
+    # Never widen the limits or suppress the coloured warnings to pass this check.
+    errors = score_range_issues(root)
+    if errors:
+        first = errors[0]
+        raise ValueError(f"{slug}: actual score instrument range error: {first['part']} bar {first['bar']} {first['pitch']} ({len(errors)} notes)")
+
+
+def notation_signature(mscx):
+    score = ET.fromstring(mscx).find('Score')
+    tags = {'defaultClef', 'defaultConcertClef', 'defaultTransposingClef',
+            'clef', 'concertClef', 'transposingClef'}
+    return [[(n.tag, tuple(sorted(n.attrib.items())), n.text) for n in p.iter() if n.tag in tags]
+            for p in score.findall('Part')]
 
 
 def apply_expression_playback(root, piece):
@@ -662,8 +786,8 @@ def apply_expression_playback(root, piece):
 
 def soundfont_input(part):
     """MuseScore 4.7 FluidResolver 的指定预设资源格式。"""
-    if part.soundfont:
-        name = os.path.splitext(os.path.basename(part.soundfont))[0]
+    if part.soundfont or part.explicit_sound:
+        name = os.path.splitext(os.path.basename(part.soundfont))[0] if part.soundfont else 'MS Basic'
         return {
             'resourceMeta': {
                 'id': f'{name}\\{part.bank}\\{part.program}',
@@ -673,7 +797,7 @@ def soundfont_input(part):
                 'attributes': {
                     'soundFontName': name,
                     'playbackSetupData': 'last.last.last',
-                    'presetName': name,
+                    'presetName': part.explicit_sound or name,
                     'presetBank': str(part.bank),
                     'presetProgram': str(part.program),
                 },
@@ -750,19 +874,51 @@ def default_audiosettings(piece):
     }
 
 
-def update_audiosettings(piece, raw_bytes=None):
-    """保持曲谱工程音频设置自然中立（不施加额外混音增益控制，由曲谱内强弱记号完全控制动态）。"""
-    if raw_bytes is None:
-        cfg = default_audiosettings(piece)
-    else:
-        try:
-            cfg = json.loads(raw_bytes.decode('utf-8'))
-        except Exception:
-            cfg = default_audiosettings(piece)
-    for track in cfg.get('tracks', []):
-        track.setdefault('out', {})['volumeDb'] = 0.0
-    cfg.setdefault('master', {})['volumeDb'] = 0.0
+def update_audiosettings(piece, raw_bytes=None, part_ids=None):
+    """Apply the authored per-instrument mix to native playback, preserving FX.
+
+    A piano has one native mixer channel: use the same source mix for both
+    staves, with allInStaff dynamics controlling the hand-to-hand balance.
+    Source gain/pan are independent of choosing a different sound preset.
+    """
+    cfg = default_audiosettings(piece) if raw_bytes is None else json.loads(raw_bytes.decode('utf-8'))
+    ids = part_ids or [str(p.part_id or i + 1) for i, p in enumerate(piece.parts)]
+    defaults = default_audiosettings(piece)['tracks']
+    staff = 0
+    for i, (part, pid) in enumerate(zip(piece.parts, ids)):
+        matching = [t for t in cfg.get('tracks', []) if t.get('partId') == pid]
+        if len(matching) > 1:
+            raise ValueError(f'{piece.slug}: ambiguous native track id {pid}')
+        if matching:
+            track = matching[0]
+        else:
+            track = defaults[i]
+            track['partId'] = pid
+            cfg.setdefault('tracks', []).append(track)
+        gains = [float(piece.mix.get(staff+j, piece.mix.get(staff, 0.0))) for j in range(part.staves)]
+        if any(abs(g-gains[0]) > 1e-6 for g in gains):
+            raise ValueError(f'{piece.slug}/{part.name}: native multi-staff mix must match; use scoped dynamics')
+        if part.gain <= 0 or not math.isfinite(part.gain):
+            raise ValueError(f'{piece.slug}/{part.name}: invalid gain')
+        out = track.setdefault('out', {})
+        out['volumeDb'] = round(gains[0] + 20.0 * math.log10(part.gain), 5)
+        out['balance'] = float(part.pan)
+        send = max(0.0, min(1.0, float(piece.wet) * (0.55 if part.drum_map else 1.0)))
+        out['auxSends'] = [{'active': True, 'signalAmount': send}, {'active': False, 'signalAmount': 0.0}]
+        if part.explicit_sound or part.soundfont:
+            track['in'] = soundfont_input(part)
+        staff += part.staves
     return json.dumps(cfg, ensure_ascii=False, indent=2).encode('utf-8')
+
+
+def native_audio_signature(cfg):
+    """Only fields governed by the source mix; do not overwrite unrelated FX."""
+    return [(t.get('partId'), t.get('in', {}).get('resourceMeta', {}).get('id'),
+             round(float(t.get('out', {}).get('volumeDb', 0)), 4),
+             round(float(t.get('out', {}).get('balance', 0)), 4),
+             [(a.get('active'), round(float(a.get('signalAmount', 0)), 4))
+              for a in t.get('out', {}).get('auxSends', [])])
+            for t in cfg.get('tracks', []) if t.get('instrumentId') != 'metronome']
 
 
 def _extract_existing_mscz_assets(path):
@@ -775,15 +931,17 @@ def _extract_existing_mscz_assets(path):
         for name in z.namelist():
             if name.endswith('.mscx'):
                 mscx_text = z.read(name).decode('utf-8')
-                parts_matches = re.findall(r'(    <Part id="\d+">.*?</Part>\n)', mscx_text, re.S)
-                if parts_matches:
-                    preserved_parts = ''.join(parts_matches)
+                # XML extraction also preserves manually saved/reformatted Parts.
+                parts = ET.fromstring(mscx_text).find('Score').findall('Part')
+                if parts:
+                    preserved_parts = ''.join(ET.tostring(p, encoding='unicode') for p in parts)
             elif name not in ('META-INF/container.xml',):
                 extra_files[name] = z.read(name)
     return preserved_parts, extra_files
 
 
 def write_mscz(piece, path):
+    path = os.fspath(path)
     base = os.path.splitext(os.path.basename(path))[0]
     preserved_parts, extra_files = _extract_existing_mscz_assets(path)
     style = extra_files.get('score_style.mss')
@@ -795,7 +953,9 @@ def write_mscz(piece, path):
         with open(os.path.join(HERE, 'viewsettings.json'), 'rb') as f:
             view = f.read()
     audiosettings_bytes = extra_files.get('audiosettings.json')
-    audiosettings = update_audiosettings(piece, audiosettings_bytes)
+    part_ids = ([p.get('id') for p in ET.fromstring('<Parts>' + preserved_parts + '</Parts>')]
+                if preserved_parts else None)
+    audiosettings = update_audiosettings(piece, audiosettings_bytes, part_ids)
     automation = extra_files.get('automation.json', b'[]\n')
     thumbnail = extra_files.get('Thumbnails/thumbnail.png')
 
@@ -809,7 +969,8 @@ def write_mscz(piece, path):
         '    </rootfiles>\n  </container>\n'
     )
     mscx_content = build_mscx(piece, preserved_parts_xml=preserved_parts)
-    with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
+    temporary = path + '.writing'
+    with zipfile.ZipFile(temporary, 'w', zipfile.ZIP_DEFLATED) as z:
         z.writestr('score_style.mss', style)
         z.writestr(f'{base}.mscx', mscx_content)
         if thumbnail is not None:
@@ -818,6 +979,7 @@ def write_mscz(piece, path):
         z.writestr('audiosettings.json', audiosettings)
         z.writestr('viewsettings.json', view)
         z.writestr('META-INF/container.xml', container)
+    os.replace(temporary, path)
 
 
 # ---------------------------------------------------------------- 曲谱时长计算（从 .mscz / Piece 直接求精确循环秒数）
@@ -984,6 +1146,17 @@ def compare_with_score(piece, path):
     preserved_parts, _ = _extract_existing_mscz_assets(path)
     (pa, sa), (pb, sb) = score_content(stored), score_content(build_mscx(piece, preserved_parts_xml=preserved_parts))
     diffs = []
+    expected_xml = build_mscx(piece, preserved_parts_xml=preserved_parts)
+    with zipfile.ZipFile(path) as archive:
+        raw_audio = archive.read('audiosettings.json')
+    ids = [p.get('id') for p in ET.fromstring(stored).find('Score').findall('Part')]
+    if native_audio_signature(json.loads(raw_audio)) != native_audio_signature(json.loads(update_audiosettings(piece, raw_audio, ids))):
+        diffs.append('原生混音/指定音色：现谱未采用源数据设置')
+    if notation_signature(stored) != notation_signature(expected_xml):
+        diffs.append('谱号：现谱未采用源数据的谱表/实音/移调谱号')
+    for issue in score_range_issues(ET.fromstring(stored)):
+        if issue['severity'] in ('professional', 'amateur'):
+            diffs.append(f"现谱乐器音域越界：{issue['part']} 第 {issue['bar']} 小节 {issue['pitch']}")
     labels = ('模板', '名称', '简称', 'MusicXML', 'bank', 'program', '移调')
     if len(pa) != len(pb):
         diffs.append(f'声部数：曲谱 {len(pa)}，源数据 {len(pb)}')
