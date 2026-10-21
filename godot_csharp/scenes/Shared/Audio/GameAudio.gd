@@ -6,6 +6,8 @@ extends Node
 const MUSIC_PATH := "res://ShareAsset/Internal/Props/Audio/Music/%s.ogg"
 const SFX_PATH := "res://ShareAsset/Internal/Props/Audio/Sfx/%s.ogg"
 const MUSIC_DB := -9.0
+# A through-composed title must end naturally; repeat only background cues.
+const NON_LOOPING_CUES := {"main_theme": true}
 const DUCK_DB := -9.0
 const SILENT_DB := -60.0
 const SFX_VOICES := 8
@@ -54,7 +56,7 @@ func play_music(id: String, fade := 1.6) -> void:
 	_current = id
 	var looped: AudioStream = stream.duplicate()
 	if looped is AudioStreamOggVorbis:
-		looped.loop = true
+		looped.loop = not NON_LOOPING_CUES.has(id)
 	var old := _music[_active]
 	_active = 1 - _active
 	var new := _music[_active]

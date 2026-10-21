@@ -579,7 +579,8 @@ def build_mscx(piece, preserved_parts_xml=None):
                         head += f'<StaffText><text><i>{escape(bar.text[si])}</i></text></StaffText>'
                     if si in bar.dyn:
                         d = bar.dyn[si]
-                        head += f'<Dynamic><subtype>{d}</subtype><velocity>{VELOCITY[d]}</velocity></Dynamic>'
+                        head += (f'<Dynamic><subtype>{d}</subtype><velocity>{VELOCITY[d]}</velocity>'
+                                 '<voiceAssignment>allInStaff</voiceAssignment></Dynamic>')
                     if si in bar.tech:
                         label = {'pizzicato': 'pizz.', 'arco': 'arco', 'tremolo': 'trem.'}[bar.tech[si]]
                         head += (f'<PlayTechAnnotation><playTechType>{bar.tech[si]}</playTechType>'
@@ -618,10 +619,10 @@ def apply_expression_playback(root, piece):
     """补充散板引子（拉格阿拉普）的平滑呼吸速度曲线。"""
     score = root.find('Score')
     lengths = {'32nd': .125, '16th': .25, 'eighth': .5, 'quarter': 1., 'half': 2., 'whole': 4.}
-    if piece.slug == 'day_evening':
+    if piece.slug in ('day_evening', 'day_afternoon'):
         from interpret import Style, tempo_curve
         qgrid, tgrid = tempo_curve(piece, Style(**(piece.style or {})))
-        count = 8
+        count = 8 if piece.slug == 'day_evening' else 4
         measures = score.find('Staff').findall('Measure')
         for bi, measure in enumerate(measures[:count]):
             voice = measure.find('voice')

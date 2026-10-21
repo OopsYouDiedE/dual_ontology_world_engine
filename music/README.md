@@ -25,3 +25,9 @@ PDF、MusicXML、MIDI、MP3 默认写入仓库根目录的 `artifacts/releases/s
 ## 历史发行副本
 
 2026-10-20 的仓库清理将九首曲目的 36 份 PDF、MusicXML、MIDI、MP3 从当前源码树移除，原谱和生成链保留。原始导出可从清理前提交 [`6166be88`](https://github.com/OopsYouDiedE/dual_ontology_world_engine/tree/6166be88b96864271b33a1624c0568cb728581c7/music) 取回；Git 历史未重写。重新生成的文件是否与旧导出逐字一致，取决于 MuseScore、SoundFont 和环境版本。
+
+## 2026-10-21 配乐修订记录
+
+本轮修正了双谱表钢琴力度作用域：生成的 MuseScore Dynamic 显式设置 `voiceAssignment=allInStaff`，右手旋律不再受左手弱奏覆盖；主主题及现场、日常变奏作了局部声部变化。《午间》后八小节改为笛子加花与二胡骨干相互衬托，不再完整复制前一段；《午后》分离框鼓不同击打 MIDI 音高，并在前奏加入呼吸式细微变速；《暮课》降低引子持续伴奏的脉冲感，后段把笛与西塔琴处理成分句接续。制作链的音频循环接缝在混音母带处理后再次对齐边界样本。
+
+独立原谱 `music1.mscz` 仅清理原来的末尾空白小节，原始文件备份在 `artifacts/music-revision-20261021/music1-before-trim.mscz`。游戏不再对完整主题曲 `main_theme` 强制循环。对《誓约》等具有起礼/终礼结构的配乐，进一步拆分成状态驱动的循环乐段需要与实际游戏事件结合，不把波形级无缝当作音乐结构的无缝。项目曲谱及游戏 OGG 的再生入口见本文件上文。

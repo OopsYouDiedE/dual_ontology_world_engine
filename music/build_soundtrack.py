@@ -138,14 +138,14 @@ def postprocess_musescore_audio(stereo_lr, sr, mscz_path, piece):
                 fade_curve = np.maximum(0.0, np.cos(np.linspace(0.0, np.pi / 2, tail_len, dtype=np.float32))) ** 1.5
                 body[:, :tail_len] += tail[:, :tail_len] * fade_curve[None, :]
 
-        # 在循环边界施加 15ms 微平滑过渡，确保首尾采样连续无爆音
-        xfade = min(int(0.015 * sr), body.shape[1] // 8)
+        # 用对称包络校准首尾采样；原实现只能混合局部波形，不能保证边界连续。
+        xfade = min(int(0.080 * sr), body.shape[1] // 8)
         if xfade > 8:
-            w = np.linspace(0.0, 1.0, xfade, dtype=np.float32)[None, :]
-            seam_start = body[:, :xfade].copy()
-            seam_end = body[:, -xfade:].copy()
-            body[:, :xfade] = seam_start * w + seam_end * (1.0 - w) * 0.15
-            body[:, -xfade:] = seam_end * (1.0 - w * 0.5) + seam_start * (w * 0.5)
+            boundary = (body[:, :1].copy() + body[:, -1:].copy()) * 0.5
+            u = np.linspace(0.0, 1.0, xfade, dtype=np.float32)[None, :]
+            ease = 0.5 - 0.5 * np.cos(np.pi * u)
+            body[:, :xfade] += (boundary - body[:, :1]) * (1.0 - ease)
+            body[:, -xfade:] += (boundary - body[:, -1:]) * ease
         out = body
         final_dur = loop_samples / sr
     else:
@@ -172,6 +172,15 @@ def postprocess_musescore_audio(stereo_lr, sr, mscz_path, piece):
     target_rms = CUE_TARGET_RMS.get(piece.slug, -22.0)
     compressed = synth.compress(out.astype(np.float64), ratio=min(float(piece.squeeze), 1.35))
     processed = synth.master(compressed, target_rms_db=target_rms, ceiling_db=-1.8).astype(np.float32)
+    if piece.loop and not has_fermata_last and processed.shape[1] > 64:
+        # Master compression may change the two end samples independently.
+        # Re-align the rendered periodic boundary after mastering.
+        n = min(int(0.080 * sr), processed.shape[1] // 8)
+        avg = (processed[:, :1] + processed[:, -1:]) * 0.5
+        u = np.linspace(0.0, 1.0, n, dtype=np.float32)[None, :]
+        ease = 0.5 - 0.5 * np.cos(np.pi * u)
+        processed[:, :n] += (avg - processed[:, :1]) * (1.0 - ease)
+        processed[:, -n:] += (avg - processed[:, -1:]) * ease
     return processed, final_dur
 
 
