@@ -13,6 +13,7 @@ public sealed record TerminalModel
     public string Source { get; init; } = "未记录";
     public string Footer { get; init; } = "命令：未记录";
     public bool IsPreview { get; init; }
+    public string Zoom { get; init; } = "fit";
     public IReadOnlyList<TerminalRoom> Rooms { get; init; } = Array.Empty<TerminalRoom>();
     public IReadOnlyList<TerminalEdge> Edges { get; init; } = Array.Empty<TerminalEdge>();
     public IReadOnlyList<TerminalOption> Options { get; init; } = Array.Empty<TerminalOption>();
@@ -38,7 +39,7 @@ public sealed record TerminalOption
 {
     public string Id { get; init; } = "";
     public string Title { get; init; } = "未记录";
-    public string Detail { get; init; } = "未记录";
+    public string Detail { get; init; } = "";
     public bool Selected { get; init; }
 }
 
@@ -52,8 +53,8 @@ public sealed record TerminalEntry
 /// <summary>Pure observer presentation. ANSI and SVG share the exact same cell layout.</summary>
 public static class TerminalView
 {
-    private const string Background = "#0b1424", Panel = "#101f32", Ink = "#eadfca";
-    private const string Teal = "#65d8c4", Muted = "#93a8bb", Amber = "#edbd72", Border = "#324d67";
+    private const string Background = "#0b1424", Ink = "#eadfca";
+    private const string Teal = "#65d8c4", Muted = "#93a8bb", Amber = "#edbd72";
     private sealed record Line(string Text, string Color = Ink);
     private sealed record Block(string Title, List<Line> Lines);
     private sealed record Cell(string Glyph, string Color, string Back, bool Continuation = false);
@@ -112,78 +113,47 @@ public static class TerminalView
     private static Canvas Layout(TerminalModel model, int requestedWidth, int requestedHeight)
     {
         var width = Math.Clamp(requestedWidth, 60, 300);
-        var wide = width >= 110;
         var inner = width - 4;
-        var leftWidth = wide ? Math.Max(28, inner * 28 / 100) : inner;
-        var rightWidth = wide ? Math.Max(29, inner * 28 / 100) : inner;
-        var centerWidth = wide ? inner - leftWidth - rightWidth - 2 : inner;
-        var left = Rooms(model, leftWidth - 4);
-        var center = Events(model, centerWidth - 4);
-        var right = Choices(model, rightWidth - 4);
-        var source = new Block("来源 / 记录边界", Lines(model.Source, rightWidth - 4, Muted));
-        var heading = Lines($"{model.Actor}  ·  {model.Location}  ·  {model.Clock}", width - 6, Ink);
-        var phase = Lines($"{model.Mode}  /  {model.Phase}", width - 6, Muted);
-        var topHeight = heading.Count + phase.Count + 4 + (model.IsPreview ? 1 : 0);
-        var footer = Lines(model.Footer, width - 6, Muted);
-        var footerHeight = footer.Count + 2;
-        var bodyHeight = wide
-            ? Math.Max(left.Lines.Count + 2, Math.Max(center.Lines.Count + 2, right.Lines.Count + source.Lines.Count + 5))
-            : left.Lines.Count + center.Lines.Count + right.Lines.Count + source.Lines.Count + 11;
-        // Height is a minimum: long and narrow views flow vertically instead of hiding observations.
-        var height = Math.Max(Math.Clamp(requestedHeight, 20, 1000), topHeight + bodyHeight + footerHeight + 2);
-        var canvas = new Canvas(width, height);
-        canvas.Put(2, 1, model.Title, Teal, width - 4);
-        var cursor = 2;
-        if (model.IsPreview) canvas.Put(2, cursor++, "◆ 界面预览 · 未打开会话 · 非游戏验收", Amber, width - 4);
-        foreach (var line in heading) canvas.Put(3, cursor++, line.Text, line.Color, width - 6);
-        foreach (var line in phase) canvas.Put(3, cursor++, line.Text, line.Color, width - 6);
-        canvas.Rule(2, cursor, width - 4);
-        var y = topHeight;
-        if (wide)
-        {
-            canvas.Box(2, y, leftWidth, bodyHeight, left);
-            canvas.Box(3 + leftWidth, y, centerWidth, bodyHeight, center);
-            var rightX = 4 + leftWidth + centerWidth;
-            var choiceHeight = right.Lines.Count + 2;
-            canvas.Box(rightX, y, rightWidth, choiceHeight, right);
-            canvas.Box(rightX, y + choiceHeight + 1, rightWidth, bodyHeight - choiceHeight - 1, source);
-        }
-        else
-        {
-            foreach (var block in new[] { left, center, right, source })
-            {
-                canvas.Box(2, y, inner, block.Lines.Count + 2, block);
-                y += block.Lines.Count + 3;
-            }
-        }
-        canvas.Box(2, height - footerHeight - 1, inner, footerHeight, new Block("回放 / 命令", footer));
-        return canvas;
-    }
-
-    private static Block Rooms(TerminalModel model, int width)
-    {
-        var result = new List<Line>();
-        if (model.Rooms.Count == 0) result.Add(new("房间：未记录", Muted));
+        var content = new List<Line>();
+        content.Add(new(model.Title, Teal));
+        if (model.IsPreview) content.Add(new("预览", Amber));
+        else if (!string.IsNullOrWhiteSpace(model.Clock)) content.Add(new(model.Clock, Muted));
+        content.Add(new(""));
+        content.Add(new("房间", Teal));
+        var spacing = model.Zoom == "detail" || (model.Zoom == "fit" && model.Rooms.Count * 5 < requestedHeight) ? 1 : 0;
         foreach (var room in model.Rooms)
         {
-            result.AddRange(Lines((room.IsCurrent ? "● " : "○ ") + room.Title, width, room.IsCurrent ? Teal : Ink));
-            if (room.Lines.Count == 0) result.Add(new("  内容：未记录", Muted));
-            foreach (var item in room.Lines) result.AddRange(Lines("  · " + item, width, Muted));
-            result.Add(new(""));
+            content.AddRange(Lines("- " + room.Title, inner, room.IsCurrent ? Teal : Ink));
+            if (room.IsCurrent)
+                content.AddRange(Lines("  " + (model.Actor == "detective" ? "侦探" : model.Actor), inner, Teal));
+            foreach (var line in room.Lines.Where(line => !string.IsNullOrWhiteSpace(line)))
+                content.AddRange(Lines("  " + line, inner, Muted));
+            if (spacing > 0) content.Add(new(""));
         }
-        result.Add(new("连接拓扑 · 非平面图", Teal));
-        if (model.Edges.Count == 0) result.Add(new("连接：未记录", Muted));
+        if (model.Rooms.Count == 0) content.Add(new("—", Muted));
+        content.Add(new(""));
+        content.Add(new("通道", Teal));
         foreach (var edge in model.Edges)
         {
             var from = model.Rooms.FirstOrDefault(room => room.Id == edge.From)?.Title ?? edge.From;
             var to = model.Rooms.FirstOrDefault(room => room.Id == edge.To)?.Title ?? edge.To;
-            result.AddRange(Lines("╭─ " + Missing(from), width, Ink));
-            result.AddRange(Lines("│  " + Missing(edge.State), width, Amber));
-            result.AddRange(Lines("╰─ " + Missing(to), width, Ink));
+            var state = string.IsNullOrWhiteSpace(edge.State) || edge.State == "状态未记录" ? "" : "  [" + edge.State + "]";
+            content.AddRange(Lines(from + "-" + to + state, inner));
         }
-        foreach (var room in model.Rooms.Where(room => !model.Edges.Any(edge => edge.From == room.Id || edge.To == room.Id)))
-            result.AddRange(Lines("○ " + room.Title + " · 未记录连接", width, Muted));
-        return new Block("房间 / 空间", result);
+        if (model.Edges.Count == 0) content.Add(new("—", Muted));
+        if (model.Entries.Count > 0)
+        {
+            content.Add(new("")); content.Add(new("记录", Teal));
+            content.AddRange(Events(model, inner).Lines);
+        }
+        if (model.Options.Count > 0)
+        {
+            content.Add(new("")); content.Add(new("行动", Teal));
+            content.AddRange(Choices(model, inner).Lines);
+        }
+        var canvas = new Canvas(width, content.Count + 2);
+        for (var i = 0; i < content.Count; i++) canvas.Put(2, i + 1, content[i].Text, content[i].Color, inner);
+        return canvas;
     }
 
     private static Block Events(TerminalModel model, int width)
@@ -206,7 +176,7 @@ public static class TerminalView
         foreach (var option in model.Options)
         {
             result.AddRange(Lines((option.Selected ? "▸ " : "· ") + Missing(option.Title), width, option.Selected ? Teal : Ink));
-            result.AddRange(Lines("  " + Missing(option.Detail), width, Muted));
+            if (!string.IsNullOrWhiteSpace(option.Detail)) result.AddRange(Lines("  " + option.Detail, width, Muted));
             result.Add(new(""));
         }
         return new Block("当前候选", result);
@@ -298,21 +268,6 @@ public static class TerminalView
                 if (size == 2) Cells[y, x + 1] = new("", color, Cells[y, x + 1].Back, true);
                 x += size;
             }
-        }
-        public void Rule(int x, int y, int width) => Put(x, y, new string('─', width), Border, width);
-        public void Box(int x, int y, int width, int height, Block block)
-        {
-            for (var row = y; row < y + height; row++)
-                for (var column = x; column < x + width; column++) Cells[row, column] = new(" ", Ink, Panel);
-            Put(x, y, "╭" + new string('─', width - 2) + "╮", Border, width);
-            Put(x, y + height - 1, "╰" + new string('─', width - 2) + "╯", Border, width);
-            for (var row = y + 1; row < y + height - 1; row++)
-            {
-                Put(x, row, "│", Border, 1); Put(x + width - 1, row, "│", Border, 1);
-            }
-            Put(x + 2, y, " " + block.Title + " ", Teal, width - 4);
-            for (var i = 0; i < block.Lines.Count && i < height - 2; i++)
-                Put(x + 2, y + i + 1, block.Lines[i].Text, block.Lines[i].Color, width - 4);
         }
     }
 }

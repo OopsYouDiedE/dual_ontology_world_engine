@@ -19,6 +19,7 @@ internal sealed class Cli
     private int terminalWidth = 120, terminalHeight = 42;
     private bool noColor;
     private string? exportFramePath;
+    private string terminalZoom = "fit";
     private readonly CancellationTokenSource cancellation = new();
     private const int TranscriptCapacity = 40;
 
@@ -60,6 +61,8 @@ internal sealed class Cli
         var speed = 1d;
         var campaign = new Dictionary<string, object?>();
         var preview = false;
+        var previewRooms = 3;
+        var previewCurrent = 1;
         string? exportUi = null;
         for (var i = 0; i < args.Length; i++)
         {
@@ -74,6 +77,9 @@ internal sealed class Cli
                 case "--jsonl": jsonLines = true; break;
                 case "--tui": tui = true; break;
                 case "--preview": preview = true; tui = true; break;
+                case "--preview-rooms": previewRooms = int.Parse(Value(), CultureInfo.InvariantCulture); break;
+                case "--preview-current": previewCurrent = int.Parse(Value(), CultureInfo.InvariantCulture); break;
+                case "--ui-zoom": terminalZoom = Value(); break;
                 case "--export-ui": exportUi = Value(); break;
                 case "--width": terminalWidth = int.Parse(Value(), CultureInfo.InvariantCulture); break;
                 case "--height": terminalHeight = int.Parse(Value(), CultureInfo.InvariantCulture); break;
@@ -103,11 +109,13 @@ internal sealed class Cli
         Console.OutputEncoding = new UTF8Encoding(false);
         if (terminalWidth is < 60 or > 240 || terminalHeight is < 24 or > 100)
             throw new ArgumentException("UI dimensions: width 60..240, height 24..100.");
+        if (terminalZoom is not ("fit" or "detail" or "compact")) throw new ArgumentException("--ui-zoom: fit, detail or compact.");
+        if (!preview && (previewRooms != 3 || previewCurrent != 1)) throw new ArgumentException("Preview room controls require --preview.");
         if (preview)
         {
             if (replayPath is not null || restore is not null || savePath is not null || tracePath is not null || command is not null || controller != "player" || developer || audit || campaign.Count > 0)
                 throw new ArgumentException("--preview is a session-free UI example; do not combine it with session or replay options.");
-            var model = TerminalProjection.Preview();
+            var model = TerminalProjection.Preview(previewRooms, previewCurrent) with { Zoom = terminalZoom };
             if (exportUi is not null)
             {
                 using var stream = new FileStream(exportUi, FileMode.CreateNew, FileAccess.Write);
@@ -171,6 +179,14 @@ internal sealed class Cli
             case "help": Emit("help", Help); return;
             case "quit": case "exit": quit = true; return;
             case "status": Emit("status", session?.TextStatus() ?? ReplayStatus()); return;
+            case "zoom":
+                if (!tui) throw new ArgumentException("zoom is available in --tui only.");
+                terminalZoom = argument.ToLowerInvariant() switch
+                {
+                    "fit" or "" => "fit", "in" or "detail" => "detail", "out" or "compact" => "compact",
+                    _ => throw new ArgumentException("zoom fit / in / out")
+                };
+                Emit("status", session?.TextStatus() ?? ReplayStatus()); return;
         }
         if (replay is { } player)
         {
@@ -329,7 +345,7 @@ internal sealed class Cli
         var model = TerminalProjection.FromSnapshot(snapshot, status, choices, terminalEntries.ToArray(), mode,
             session is null ? replay?.Playing == true ? "播放中" : "已暂停" : HostValues.Text(pending, "status", "未准备"),
             session is null ? "记录只读 · 不执行动作 · " + HostValues.Text(terminalFrame?.Data ?? HostValues.Empty, "source", "来源未记录") : "当前观察者投影 · 不包含Godot几何",
-            terminalFrame?.Action ?? "");
+            terminalFrame?.Action ?? "") with { Zoom = terminalZoom };
         var width = terminalWidth;
         var height = terminalHeight;
         if (!Console.IsOutputRedirected)
@@ -389,6 +405,8 @@ internal sealed class Cli
 DV Core CLI (formal-model; no Godot geometry)
   --tui | --jsonl               Terminal view or JSON-Lines protocol
   --preview                    Session-free styled UI example (no AI)
+  --preview-rooms 1..24 --preview-current N  Structure / actor marker examples
+  --ui-zoom fit|detail|compact   Automatic fit or manual room-card scale
   --width 120 --height 42       Preview / redirected TUI dimensions
   --export-ui NEW.svg           Export preview or one read-only command frame
   --no-color                   Disable ANSI colors (also honors NO_COLOR)
@@ -398,7 +416,7 @@ DV Core CLI (formal-model; no Godot geometry)
   --restore FILE                Restore a committed .dvsave
   --save FILE --trace FILE      Seal new binary artifacts on exit
   --replay FILE --speed 1|2|4|8 Read-only .dvdag/.dvlog replay
-Commands: status, options, next, act <01|ID|selection JSON>,
+Commands: status, options, zoom fit|in|out, next, act <01|ID|selection JSON>,
           inspect [actor], tp <place>, time <minutes>,
           save <new.dvsave>, trace <new.dvdag>, help, quit.
 JSON-Lines input: {"command":"act","argument":"01"}
