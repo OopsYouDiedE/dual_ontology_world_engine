@@ -62,7 +62,7 @@ def gutter_cut(mask: Image.Image, axis: str, ideal: float, radius: int) -> int:
     return (begin + end) // 2
 
 
-def bounds(path: Path) -> list[list[tuple[int, int, int, int]]]:
+def bounds(path: Path, threshold: int = ALPHA_BOUND_THRESHOLD) -> list[list[tuple[int, int, int, int]]]:
     """Only inspect alpha; the original PNG is later copied byte-for-byte."""
     with Image.open(path) as image:
         if "A" not in image.getbands():
@@ -73,7 +73,7 @@ def bounds(path: Path) -> list[list[tuple[int, int, int, int]]]:
         width, height = image.size
         # Low-alpha generation halos do not define the body bounds. This temporary
         # inspection mask never becomes an asset and does not alter the copied PNG.
-        body_alpha = alpha.point(lambda value: 255 if value >= ALPHA_BOUND_THRESHOLD else 0)
+        body_alpha = alpha.point(lambda value: 255 if value >= threshold else 0)
         row_edges = [0] + [gutter_cut(body_alpha, "y", height * i / 3, round(height / 3 * 0.18)) for i in (1, 2)] + [height]
         rows = []
         for y in range(3):

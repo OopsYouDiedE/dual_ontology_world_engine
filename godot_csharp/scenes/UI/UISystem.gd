@@ -8,6 +8,7 @@ signal casebook_reading_changed(active: bool)
 
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 const Transition := preload("res://scenes/UI/UITransition.gd")
+const UIInput := preload("res://scenes/Shared/Input/UIInput.gd")
 const CASEBOOK_SCRIPT := preload("res://scenes/UI/CasebookUI.gd")
 const CASEBOOK_DATA := preload("res://scenes/UI/CasebookData.gd")
 const HUD_SCENE := preload("res://scenes/UI/FieldHUD.tscn")
@@ -20,6 +21,9 @@ var investigation_ui: CanvasLayer
 var dialogue_ui: CanvasLayer
 var snapshot: Dictionary = {}
 var casebook: RefCounted = CASEBOOK_DATA.new()
+## The host can prepare and draw this UI under a title without accepting input.
+var host_input_blocked := false
+var start_covered := false
 var _closing := false
 var _trace_display: Dictionary = {}
 var _pending_modal: Dictionary = {}
@@ -30,10 +34,12 @@ var _modal_stack: Array[Dictionary] = []
 var _return_focus: WeakRef
 var _spatial_context: Dictionary = {}
 var _pending_action: Dictionary = {}
+var _player_options: Array = []
 var _screen_motion = Transition.new()
 var _archive_result: Dictionary = {}
 var _archive_lines: Array = []
 var _presentation_music_token := 0
+var _host_input_enabled := true
 
 @onready var _screen_layer: CanvasLayer = $TransitionLayer
 @onready var _screen_fader: ColorRect = $TransitionLayer/ScreenFader
@@ -50,11 +56,13 @@ var ui_busy: bool:
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_screen_motion.configure(self, _screen_layer, _screen_fader, null, false, 1.0)
+	_screen_motion.configure(self, _screen_layer, _screen_fader, null, start_covered, 1.0)
 	_screen_motion.completed.connect(_on_screen_transition_completed)
 	hud_ui = HUD_SCENE.instantiate()
 	add_child(hud_ui)
-	hud_ui.settings_requested.connect(open_settings)
+	hud_ui.settings_requested.connect(func():
+		if _host_input_enabled: open_settings()
+	)
 	dialogue_ui = DIALOGUE_SCENE.instantiate()
 	add_child(dialogue_ui)
 	dialogue_ui.dialogue_step.connect(func():
@@ -87,6 +95,25 @@ func _ready() -> void:
 	settings_ui.ui_event.connect(_on_book_event)
 	var settings := get_node_or_null("/root/GameSettings")
 	if settings != null: settings.setting_changed.connect(_on_setting_changed)
+	_sync_overlay_input()
+
+func set_host_input_blocked(blocked: bool) -> void:
+	host_input_blocked = blocked
+	if is_node_ready():
+		_sync_overlay_input()
+		if not blocked and not _closing: Sound.scene_music(snapshot)
+
+func prepare_for_reveal() -> bool:
+	if _closing: return false
+	if not await dialogue_ui.wait_for_cast_prepared(): return false
+	if _closing or not is_inside_tree(): return false
+	hud_ui.finish_entrance()
+	return true
+func set_host_input_enabled(enabled: bool) -> void:
+	# Main can prepare this UI behind the opening page. It may render, but must
+	# not capture the title's input or expose a second active menu beforehand.
+	_host_input_enabled = enabled
+	if is_node_ready(): _sync_overlay_input()
 
 func begin_shutdown() -> void:
 	if _closing: return
@@ -110,7 +137,7 @@ func _exit_tree() -> void:
 	_screen_motion.dispose()
 
 func is_busy() -> bool:
-	return _closing or _screen_motion.is_active() or _modal_cycle or not _pending_modal.is_empty() \
+	return _closing or host_input_blocked or _screen_motion.is_active() or _modal_cycle or not _pending_modal.is_empty() \
 		or (is_instance_valid(dialogue_ui) and dialogue_ui.is_dialogue_active()) \
 		or (is_instance_valid(investigation_ui) and investigation_ui.is_active()) \
 		or (is_instance_valid(settings_ui) and settings_ui.is_active())
@@ -151,7 +178,7 @@ func apply_snapshot(data: Dictionary) -> void:
 	casebook.apply_snapshot(snapshot)
 	if is_instance_valid(dialogue_ui): dialogue_ui.configure_cast(snapshot.get("cast", {}))
 	if is_instance_valid(hud_ui): hud_ui.apply_snapshot(snapshot)
-	if not _closing: Sound.scene_music(snapshot)
+	if not host_input_blocked and not _closing: Sound.scene_music(snapshot)
 
 func present(ev: Dictionary) -> Dictionary:
 	if _closing or ev.is_empty(): return {}
@@ -177,7 +204,7 @@ func present(ev: Dictionary) -> Dictionary:
 	return {}
 
 func _request_modal(kind: String, data: Dictionary = {}) -> void:
-	if _closing or not _pending_action.is_empty(): return
+	if _closing or host_input_blocked or not _host_input_enabled or not _pending_action.is_empty(): return
 	# Settings is a child reading layer. Preserve the sheet beneath it, including
 	# its reading position; returning must not dispatch or re-run any world action.
 	if kind == "settings" and _modal_kind != "settings" and investigation_ui.is_open() and not _active_modal.is_empty():
@@ -207,7 +234,7 @@ func _request_modal(kind: String, data: Dictionary = {}) -> void:
 		_activate_pending_modal()
 
 func _activate_pending_modal() -> void:
-	if _closing or _screen_motion.is_active(): return
+	if _closing or host_input_blocked or _screen_motion.is_active(): return
 	if settings_ui.is_active() or investigation_ui.is_active(): return
 	if _pending_modal.is_empty():
 		_release_modal()
@@ -223,7 +250,9 @@ func _activate_pending_modal() -> void:
 	_spatial_context = {}
 	match _modal_kind:
 		"settings", "notebook", "bookmarks", "card": settings_ui.open(_book_page(_modal_kind, data))
-		"manuscript": investigation_ui.open_manuscript(data)
+		"manuscript":
+			_spatial_context = {"site": "self", "options": data.get("options", [])}
+			investigation_ui.open_manuscript(data)
 		"campus_map": investigation_ui.open_campus_map(data)
 		"ending": investigation_ui.open_ending(data)
 		"spatial":
@@ -262,7 +291,7 @@ func _release_modal() -> void:
 	_flush_pending_action()
 
 func _sync_overlay_input() -> void:
-	var screen_blocked: bool = _screen_motion.is_active()
+	var screen_blocked: bool = host_input_blocked or not _host_input_enabled or _screen_motion.is_active()
 	dialogue_ui.set_modal_blocked(_modal_cycle or screen_blocked)
 	hud_ui.set_overlay_blocked(_modal_cycle or screen_blocked)
 	settings_ui.set_external_blocked(screen_blocked)
@@ -270,20 +299,25 @@ func _sync_overlay_input() -> void:
 
 func _on_investigation_action(id: String) -> void:
 	if _closing or not _pending_action.is_empty(): return
+	var action_id := id
+	if id.begins_with("{"):
+		var envelope: Variant = JSON.parse_string(id)
+		if envelope is not Dictionary or not envelope.get("action_id") is String or not envelope.get("hypothesis_id") is String: return
+		action_id = str(envelope.action_id)
 	_pending_modal.clear()
 	_modal_stack.clear()
-	if _modal_kind == "spatial":
+	if _modal_kind in ["spatial", "manuscript"]:
 		# Use only the site and currently offered IDs from the real field event.
 		# WorldView.spatial.select rechecks the current qualification and contact.
 		for option: Dictionary in _spatial_context.get("options", []):
-			if str(option.get("id", "")) == id and bool(option.get("available", true)):
+			if str(option.get("id", "")) == action_id and bool(option.get("available", true)):
 				_pending_action = {"kind": "spatial_select", "choice_id": id, "site": str(_spatial_context.get("site", ""))}
 				return
 	else:
 		_pending_action = {"kind": "card_action", "id": id}
 
 func _flush_pending_action() -> void:
-	if _closing or _pending_action.is_empty() or _modal_cycle or _screen_motion.is_active(): return
+	if _closing or host_input_blocked or _pending_action.is_empty() or _modal_cycle or _screen_motion.is_active(): return
 	if str(_pending_action.kind) == "spatial_select" and dialogue_ui.is_dialogue_active(): return
 	# The field rechecks ui_busy. Release the departing modal before dispatching
 	# its single captured choice, so the legitimate selection is not rejected.
@@ -304,9 +338,19 @@ func close_modal(return_to_parent := true) -> void:
 func open_notebook() -> void:
 	_request_modal("notebook", snapshot.get("notebook", {}))
 
+func set_player_options(options: Array) -> void:
+	# IDs come from the current Prepare result. Opening a page never creates
+	# actions or admits a hypothesis; the field checks selection again.
+	_player_options = options.duplicate(true)
+
 func open_manuscript(_announce := true) -> void:
 	var data: Dictionary = snapshot.get("replay", {}).duplicate(true)
 	data.personal_notes = casebook.notes.duplicate(true)
+	var choices: Array = []
+	for option: Dictionary in _player_options:
+		var binding: Dictionary = option.get("interaction", {})
+		if str(binding.get("kind", "")) == "self" and str(binding.get("purpose", "")) != "wait": choices.append(option)
+	data.options = choices
 	_request_modal("manuscript", data)
 
 func open_card(data: Dictionary) -> void:
@@ -376,11 +420,22 @@ func show_flash(text: String, duration := 1.8) -> void:
 	dialogue_ui.show_flash(text, duration)
 
 func _input(event: InputEvent) -> void:
-	if _screen_motion.is_active() and event.is_pressed(): get_viewport().set_input_as_handled()
+	if host_input_blocked or not _host_input_enabled: return
+	if _closing or _screen_motion.is_active():
+		get_viewport().set_input_as_handled()
+		return
+	# Children receive _input first: the book, modal sheet or history closes one
+	# level and consumes the event. Capture the remaining back input before GUI
+	# Controls can swallow a right-click and before the field can see it.
+	if UIInput.is_back(event, false):
+		if UIInput.is_back(event):
+			if _modal_cycle: close_modal()
+			elif not dialogue_ui.is_dialogue_active(): open_settings()
+		get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _closing or not event.is_pressed() or event.is_echo(): return
-	if event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel"):
+	if _closing or host_input_blocked or not _host_input_enabled or not event.is_pressed() or event.is_echo(): return
+	if UIInput.is_back(event):
 		if _modal_cycle: close_modal()
 		elif not dialogue_ui.is_dialogue_active(): open_settings()
 		get_viewport().set_input_as_handled()
@@ -404,7 +459,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		open_campus_map()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("wait"):
-		ui_event.emit({"kind": "action", "act": {"cmd": "stay"}})
+		ui_event.emit({"kind": "request_wait"})
 		get_viewport().set_input_as_handled()
 
 func view_trace_context() -> Dictionary:

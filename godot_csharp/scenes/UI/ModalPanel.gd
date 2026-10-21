@@ -5,6 +5,7 @@ signal closing
 signal closed
 
 const Transition := preload("res://scenes/UI/UITransition.gd")
+const UIInput := preload("res://scenes/Shared/Input/UIInput.gd")
 
 var restore_previous_focus := true
 var _motion = Transition.new()
@@ -12,6 +13,7 @@ var _return_focus: WeakRef
 var _shutting_down := false
 var _selection_pending := false
 var _external_blocked := false
+var _navigation = UIInput.new()
 
 @onready var _modal_surface: Control = $CenterBox
 @onready var _modal_dimmer: ColorRect = $Dimmer
@@ -55,6 +57,7 @@ func show_panel() -> void:
 
 func close() -> void:
 	if not is_active() or not _motion.wants_shown(): return
+	_navigation.reset()
 	_selection_pending = true
 	Transition.set_interactive(_modal_surface, false)
 	closing.emit()
@@ -77,23 +80,34 @@ func _exit_tree() -> void:
 	_motion.dispose()
 
 func _input(event: InputEvent) -> void:
-	if not is_active() or not event.is_pressed() or event.is_echo(): return
-	if _external_blocked:
+	if not is_active(): return
+	if _external_blocked or not can_interact():
+		# The top sheet owns releases and stick motion throughout its transition.
+		# A held confirm/back must never reach the page or field beneath it.
+		_navigation.reset()
+		get_viewport().set_input_as_handled()
+	elif UIInput.is_back(event, false):
+		if UIInput.is_back(event): close()
 		get_viewport().set_input_as_handled()
 	elif _is_close_event(event):
 		close()
 		get_viewport().set_input_as_handled()
-	elif not can_interact():
-		# Keep the departing panel modal until its final frame, including keyboard input.
-		get_viewport().set_input_as_handled()
-	elif Transition.cycle_focus(_modal_surface, event):
+	elif _navigation.handle(_modal_surface, event):
 		get_viewport().set_input_as_handled()
 
 func _is_close_event(event: InputEvent) -> bool:
-	return event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel")
+	return UIInput.is_back(event)
+
+func _process(delta: float) -> void:
+	if can_interact(): _navigation.tick(_modal_surface, delta)
+	else: _navigation.reset()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT: _navigation.reset()
 
 func _enable_panel() -> void:
 	if not is_open() or _external_blocked: return
+	_navigation.reset()
 	Transition.set_interactive(_modal_surface, true)
 	var button := get_node_or_null("%ModalCloseButton") as Control
 	if Transition.can_focus(button): button.grab_focus()

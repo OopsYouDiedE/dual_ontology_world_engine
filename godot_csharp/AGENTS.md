@@ -54,6 +54,20 @@ Main 的导出属性以及 `--dv-controller=`、`--dv-viewer=`、`--dv-profile=`
 
 跨房间仅提交 DV 已准入的移动 ID。鼠标点击门道时先按实际几何匹配唯一邻室并真实走到门口；E 可在近距门口发起同一动作，多义门不猜选。门道 D 格可用于出发核对，但不作为到达邻室或获得观察的依据。
 
+同图房间也可共享没有 D 标记的开放地板边界。`CampusMapView.passage_at(source, attempted, from_room, to_room, walker)` 仅查询已载入 authored 几何：真实身体仍在 source、两点分别属于指定室内、地形为相邻的可行走地板格、探测不超过一个现有地形格，且原导航障碍与身体 `test_move` 均允许该短步时，返回 source/target/landing 证据。WorldView 只把该证据匹配到当前唯一可用的同图跨房动作；WASD 到边界、近距 E 与边界点击均保留 Prepare、真实碰撞及 Complete。该查询不造门、不改碰撞、站点或半径，不写位置、不授予房间或观察；远距地板点击仍先在源房真实行走。镜头显示边界与逻辑房间、准入及现场到达分别处理。
+
+在途连续通行提示只投影真实 `continuous_request` 阶段和取消标记：准备、通行、取消、核对或返回源处。提示优先于普通热点/控制说明，不依赖 `can_submit` 再次开放；对白、模态界面、关闭及隐藏执行场仍抑制。三语正文不含内部调度术语，不创建行动、剧情或知识，不宣称到达；请求清除即恢复原现场提示。
+
+E 的近门候选统一汇总同图 D 格邻室与跨图 `Exits/Shape` 矩形。`CampusMapView.manual_exit_targets_near(point, radius)` 只查询实际出口几何、armed 与通行值，不执行移动；`SpatialInput._near_door()` 只接受当前 `available` 的 doorway 选项，按行动 ID 去重，全部近门候选仅一个时才沿原正式链提交。现场可操作且 `spatial.can_submit()` 成立、无热点提示时，HUD 显示该候选的已交付 label 与 E；否则显示三语通用控制提示，不从隐藏状态补目标。模态与对白期间不显示该提示。新热点火花绘制复用 `site_visible`，低动态设置保留静态标记并停止闪烁时钟。
+
+家具命中保留实际绘制与视野过滤，优先选择已有 `sprite_sites` 绑定且当前可见的现场物件，普通家具名称只作回退。静态“当前可交互”标记仅来自当前 `available` 的 site/person 候选，并同时要求现场 active、`spatial.can_submit()` 和 `site_visible`；该标记不表示 new、未取得或新观察，不改站点与接触半径。E 没有合法近热点或唯一门候选时，在可提交边界只显示三语 UI 短提示，不生成对白、世界事件或行动资格。
+
+悬停与鼠标按下共用 `WorldView.pointer_hit(point)`，输入为现场本地坐标，保留站点可见性、绘制过滤和映射家具优先规则。鼠标按下在原 `_unhandled_input` 与 enabled/UI 门禁后，用本次 `event.position` 经现场 canvas 变换逆矩阵换算并立即查询；地面导航也使用同一点，不读取上帧 hovered 或另查鼠标全局位置代替该次事件。采集器同包输入不能以等待一帧替代生产命中合同。
+
+人工同图连续过门因明确 `released` 取消时，只在真实源房、身体停止、空转交链且 executor 捕获的 Prepared 起点与实际终点精确相等的子集中生成 `continuous_cancel` 重试证明。WorldView 提供原生取消候选；Main 独立核对当前 Prepared 意图、请求、主体、行动、序号、两房、地图、实际脚点与 `interior` / `source-side-doorway` 源几何后，才签入 `source-cancel-v1`、`action_event` 及 `identity_verified`，移除来件自行声明的证明。DV 只授当前同签名的人工新输入重试资格；原动作仍 rejected，费用、位置与观察不改，不自动重发。宿主显示三语取消短提示，不宣称到达。请求时脚点另记 `request_source_position`，不能替代 Prepared 起点；实际返回但坐标不同、跨图、其他取消原因及持续受阻不属于该重试合同。
+
+跨图及跨房动作真实执行一部分后失败，可能保留与 DV 拒绝结果不一致的实体地点；此缺口尚未修复。预备资源与入口校验不能代替最终站点成功，也不能保证动态受阻后仍在源图；不得传送身体、伪改保留实体记录或放宽源身份核对掩盖失败。涉及部分终点的正式合同须另行处理。
+
 正式移动沿 `Main → DvFieldExecutor → WorldView.execute_move`，现场成功后才执行 Complete。回执核对主体、序号、行动、地图、逻辑房间、执行房间和显式站点，保留真实终点、站点范围与到达误差。`destination.room`、`execution_room`、`departure_station` 各司其职；依赖现场接触的观察只由成功 Complete 产生。缺少人物、地图、站点或合法出生点必须返回失败，不把命令行逻辑执行当作几何到达。
 
 人物碰撞包含其他人物，不移动旁人让路，不传送至目标。站点接近核对原半径和房间，枚举合法候选并避开已占终点。连续脚点与导航格中心共同核对原障碍膨胀范围；保持显式站点原半径和 4 px 到达误差。普通房间终点依次选择可达空闲 Stand、具有转身空间的房间格及其他合法房间格，各组按实际距离排序。
@@ -70,6 +84,8 @@ Main 的导出属性以及 `--dv-controller=`、`--dv-viewer=`、`--dv-profile=`
 
 生活翼同层统一使用 `Maps/living_floor.tscn`，由 `tools/build_living_floor.py` 组合五张已发布场景生成；原场景和纹理保留为生成输入。四寝区隔离门是同图物理屏障，使用 DV 提供的各区放行值，不触发切图。逻辑房间标识保持 `zone_*:*` / `living_hall:*`，执行地图统一为 `living_floor`；室外分区及不同建筑不合并。公共厅中段补接六格以避免原局部底图相互重叠，门、标记、碰撞与灯光同步变换。
 
+地图源可通过 `stand_capacity` 声明各几何区域的站位容量。`tools/build_chapter2_scenes.py --stands-only <地图...>` 保留原有 Stand 顺序，只从原障碍、门道及邻格过滤后的候选补齐不足；发布前复核已发行标记与源配方一致，只更新 Stand 标记，不重绘地图或改动碰撞。生活翼随后使用 `tools/build_living_floor.py --stands-only` 同步新增标记并保留其他已发布内容；运行时仍只使用已发行的合法 Stand/Spawn，不临时移动旁人或放宽出生规则。
+
 实际盲测可通过 `profile_dv_capture.py --controller player --window-mode offscreen` 启动真实 Main 场景，使用保存的渲染截图及 `input.json` 瞬时输入包操作普通视口输入。默认离屏且不可聚焦，保留图形渲染与物理，不使用 headless 逻辑运行替代；独立盲玩代理只读取该轮画面与通用输入协议。`--window-mode window` 可恢复可见窗口。
 
 `dvg_snapshot.geometry_bindings` 提供地图站点、道具、纹理、位置与 footprint。`CampusMapView` 按声明建立 Marker2D、Sprite2D、碰撞与导航；相同声明不重复重建。场景和动态呈现均由内容声明驱动，宿主不以解析剧情动作 ID 替代空间绑定。
@@ -80,9 +96,11 @@ Main 的导出属性以及 `--dv-controller=`、`--dv-viewer=`、`--dv-profile=`
 
 场景基础格为 32×32，角色基础设计格为 32×48。正式人物优先使用 `Characters/PixelCast/<key>.tres`，缺失时按现有合同回退至 AnimeCast；对白使用 DialogueCast 立绘。共享家具和证物仍分布于 `FirstAwakeningInterior` 与 `AwakeningEvidence`，它们由现役统一地图消费。资源职责、来源与重建前提见 `ShareAsset/Internal/Characters/README-zh.md` 和 `ShareAsset/Internal/Props/Chapter2/README.md`。
 
+重绘三向六姿素材可使用 `tools/publish_redrawn_cast.py --source <源目录> --review <新审阅目录>`。原画中 alpha>=200 定义正式二值覆盖，边界检查与发布使用同一覆盖定义；整批检查后才替换 PNG。沿用现役 .tres 的单元、姿态顺序、动画费用和节奏，每个人全姿态使用同一缩放并对齐原脚点；不改变碰撞与人物状态。审阅目录保存像素预览、原画/旧资产/新资产指纹。原有 bounds(path) 默认阈值保持不变，新发布器显式选择覆盖阈值；这属于美术覆盖规则，不是剧情或物理验收规则。
+
 运行时资产放在 `ShareAsset/`；若提供高分辨率源稿、切片工程等生产输入，放在受 `.gdignore` 保护的 `AssetsSource/`。当前 Git 树并未包含全部历史生产源和配方，重建前必须核对输入实际存在；缺源时保留现有运行资产并报告缺口，不把它们当可随时重生的缓存。生成文件从对应工具重建，不直接修改成品；调整路径同步核对场景、动态资源路径、插件配置及生成工具。删除资产时只移除该资产对应的导入侧车，保留其他 `.import` 的导入配置。
 
-UI 样式、颜色与排版统一由 Theme/StyleBox 等 Resource 维护；不在节点中随意添加 `theme_override_*`，也不在脚本中临时覆盖主题或新造样式盒。非原生二进制素材的 Resource 使用文本 `.tres`。现役 `DialogueTheme.tres`、`TitleTheme.tres` 与 `OverlayTheme.tres` 均由 `tools/build_ui_theme.py` 生成；共有字体和纹理属于其依赖，不与未使用的主题分支一起删除。
+UI 样式、颜色与排版统一由 Theme/StyleBox 等 Resource 维护；不在节点中随意添加 `theme_override_*`，也不在脚本中临时覆盖主题或新造样式盒。非原生二进制素材的 Resource 使用文本 `.tres`。现役 `DialogueTheme.tres`、`TitleTheme.tres` 与 `OverlayTheme.tres` 均由 `tools/build_ui_theme.py` 生成；共有字体和纹理属于其依赖，不与未使用的主题分支一起删除。对白、调查纸页、HUD 与独立推演手稿的版式和接口维护在 `../docs/ui-presentation.md`。普通阅读区使用命名主题变体与轻规线，避免重新引入默认控件外壳或闭合重框。
 
 标题桌面采用 `TitleUI.tscn` / `TitleUI.gd` 与 `DeskStage3D.gd` 的真实 3D 实现：桌面、书本、灯具及摆件使用真实几何，在同一 `Camera3D`、同一空间尺度与光照下渲染；火焰、灯光能量与受光材质必须使用一致的闪烁驱动。透视、遮挡、接触关系和投影由共同场景承担，不得用相互独立的屏幕贴片伪造不同视角的物体。`BookProjection3D.gd` 负责显示和输入的共同相机契约，将屏幕射线与书页平面的交点逆映射到 `580×820` 的页面 SubViewport，并把真实鼠标输入交给原生 Control；相机偏移、窗口缩放与视觉位置变化时必须保持命中一致。
 
@@ -98,13 +116,19 @@ UI 样式、颜色与排版统一由 Theme/StyleBox 等 Resource 维护；不在
 
 续读列出 user://saves/*.dvsave，也可显式选择文件，向 Main 发 load/path；GameEngine 在原串行队列用 DvSession.RestoreFile 恢复，拒绝尚待现场回执的存档。文件验证失败不安装会话，load_error 返回书页；不得据此声称跨版本与现场恢复已验收。
 
-`UITransition.gd` 管理可取消的进入/退出状态，过渡使用现实时间，不受游戏播放倍率影响；`reduce_motion` 修改实时生效并使当前过渡落定。`ModalPanel.gd` 负责打开、退出期间的输入锁、焦点圈定/恢复和完成信号，实际退场后才发 closed。UISystem 串行切换设置、调查及其各面板，上层弹窗阻止底层对白或现场消费同一输入；现场选择在弹窗退场后发回原 site 与 choice_id。Title 的设置层高于标题层，Main 等待 `transition_out` 后更换视图。UISystem 提供可等待的 `transition_in/out` 与 `fade_in/out`，屏幕遮罩覆盖期间保持 busy；WorldView 只在目标准备完成后进行可见跨图淡变。
+`UITransition.gd` 管理可取消的进入/退出状态，过渡使用现实时间，不受游戏播放倍率影响；`reduce_motion` 修改实时生效并使当前过渡落定。`ModalPanel.gd` 负责打开、退出期间的输入锁、焦点圈定/恢复和完成信号，实际退场后才发 closed。UISystem 串行切换设置、调查及其各面板，上层弹窗阻止底层对白或现场消费同一输入；现场选择在弹窗退场后发回原 site 与 choice_id。Title 的设置层高于标题层；游戏内视图替换等待原 UI 的 `transition_out`，卷首交接遵循下述揭页契约。UISystem 提供可等待的 `transition_in/out` 与 `fade_in/out`，屏幕遮罩覆盖期间保持 busy；WorldView 只在目标准备完成后进行可见跨图淡变。
 
 对白、回看、提示各自取消旧任务；空对白与立即完成的低动态效果也提供可等待的完成结果。换行保留正文顺序与来源，立绘通过线程请求预备后绑定，旧请求不覆盖新说话者。重入、关闭或新提示不得遗留能隐藏当前界面的旧回调。
+
+`DialogueUI` 的当前显示及回看称谓只使用该条已交付的 `speaker_name`；缺失或为空时留空，不回退内部 `speaker` ID，也不从旧条目缓存补名。内部 `speaker` 仅可继续用于立绘资源映射等非称谓用途；原始逐行来源字段仍照实保留，不能由显示层替另一观察者补出人物身份。
 
 `RoomStage` 负责当前房间构图、局部灯光与有上限的粒子；离屏执行不创建舞台特效。`reduce_motion` 关闭微尘及缩放动画。房间构图、着色器和灯光不改变碰撞、门洞、DV 目的地或人物认识。对白保留原透明立绘与滚动正文、原文顺序、说话者映射和用户继续操作，不能把界面播放完成当作行动成功。
 
 Session 呈现保留 surface/lines 和 `source_refs`。Main 为发出的正文记录 `execution_event`、`source_id`、`source_field`、`emitted_line_index`、`paragraph_index` 与 `line_id`。过滤后的显示序号不冒充源行号，缺少来源不补造；`PlayerViewTrace` 在实际 `frame_post_draw` 后记录首帧，待显示正文与已绘制正文分开。
+
+## 卷首加载与揭页
+
+开始阅读和标题续读立即发出正式请求，并把当前书页保留到现场真实就绪。`Main._view` 在标题后装配 `WorldView` 与 `UISystem`，等待地图、人物、已请求立绘、视野光效、镜头、HUD 和实际绘制帧，再调用 `TitleUI.transition_to_field` 单次揭页；不能先翻到占位页或撤去标题后才装配。`_opening` 与 `UISystem.host_input_blocked` 覆盖整个准备和揭页期间，低动态仅省略运动。游戏内视图替换保留其屏幕遮罩。接口、错误边界及二级观察入口 `tools/capture_start_reveal.gd` 见 [卷首加载与揭页](../docs/title-opening.md)；其截图不能代替剧情验收或同条件性能比较。
 
 ## 共享书本、案卷与界面设置
 
@@ -193,3 +217,21 @@ python godot_csharp/tools/build_ui_theme.py --check
 禁止执行根目录列明的流程回归，不能以断言数量、通过率或“全绿”评价游戏。构建、语法、生成物一致性仅用于工程排错。一级是无窗口正式 DV 逻辑输出；二级 UI 检查实际截图；三级只有明确要求最终效果时执行，默认由引擎侦探提供正式输入。独立盲玩需要用户明确指定，操作代理只看本轮允许的画面和输入资料，不读设计、源码或隐藏诊断，不预写路线和答案。具体时限与倍率按当轮约定，不沿用历史任务窗口。
 
 完整行为结论依新正式会话的实际输入、可见结果和回执；图片、正文、原始事件、计时和来源分别保存，未发生/未覆盖/记录不足分别说明。不得放宽预算、正确条件、碰撞或计时规则制造提速，不把四倍播放、精简审计、纯几何夹具或短启动当作剧情通关和同条件性能改善。先完成当轮整批修改，再按要求统一排错和冻结；中途改源则结束该批次并保留失败证据。
+
+
+## 人工重演与可见记录扫描
+
+InvestigationUI 的假设表单由当前 DV replay_input 提供，所有选择初始未选。UISystem 与 WorldView 只拆出原 action_id 核对当前选项与接触，再沿原字符串链保留整个纯数据封装；不在 UI 运行模型或判定答案。Session 边界解析后由 DV 重核候选和正式执行。
+
+PlayerViewTrace 每个实际绘制帧仍完整检查文本与可见对象；一次同步扫描共用只读的小型界面上下文，向可见记录添加字段前独立复制，不减采样、不跨帧缓存、不改变输入控制激活记录。扫描优化与插桩采集开销需分别实测，不按代码改动推断帧率收益。
+
+## 共享输入工程索引
+
+右键／B 逐层返回、手柄导航及 `GameSettings` 控制绑定迁移见 `docs/chapter1-input.md`。`UIInput.gd` 仅负责宿主呈现；现场移动沿既有 `move_*` 路径。`tools/probe_ui_input.gd` 使用隔离用户数据与原生 Controls，输出二进制输入观察，不运行 Main／DV，也不证明物理手柄、书页画面、地图或剧情验收；实际状态以本次运行日志和证据为准。
+
+## 连续过门与开卷宿主
+
+Main 的初始视图在不透明 TitleUI 下完成 prepare_map / prepare_presentation(initial)、视野与 UI 装配及真实绘制屏障，沿用现役 title-ready 纸页揭幕；现场 host_input_blocked 与 field.ui_busy 在揭幕完成前保持关闭，不重新接入旧 BookOpeningPage 启动状态机。视图失败停止事件消费并在书页报告，已开始会话不可原地重复新建。连续跨门请求仅在可用玩家选项与真实源侧门道内发生，宿主独立核对 prepared 身份后允许唯一边界，仍走正常物理回执与 Complete。缓存失效、取消、界面接口与性能证据边界见 `../docs/chapter1-continuity.md`。
+
+
+连续过门的 continuous_request 在权威拒绝后的真实回源期间（含受阻重试）仍非空；书签边界必须等待它清除，不能因 Complete 已结束而保存或切换尚未协调的身体位置。

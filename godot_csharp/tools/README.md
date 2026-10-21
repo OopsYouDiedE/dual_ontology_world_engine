@@ -4,9 +4,76 @@ These tools maintain the Godot host's assets and engineering evidence. Current
 gameplay is the seven DV files in `language_core`; runtime assets are under
 `godot_csharp/ShareAsset`. No tool provides a second gameplay implementation.
 
+## Field input and hint checks
+
+Same-map authored rooms may share open floor edges without a D tile.
+`CampusMapView.passage_at` checks the actual body's source, room membership,
+cardinally adjacent authored floor cells, unchanged walkability and a real-body
+`test_move` over at most one existing terrain cell. It returns geometry only.
+WorldView matches a unique currently available from/to move before requesting
+Prepare, then retains real collision and Complete. Keyboard boundary motion,
+nearby E and short boundary clicks share this check; distant clicks still walk
+within the source room first. No door, radius, collision shape or position is
+invented. Finite verification must separately cover open edges, solid walls,
+unavailable/ambiguous actions, release cancellation and real neighbour arrival;
+static review does not establish these outcomes or repair camera clipping.
+
+During an actual continuous request, the field hint projects its current phase
+and cancellation flag in Chinese, Japanese or English, ahead of ordinary field
+hints even when formal submission is closed. Dialogue/modal UI and hidden
+execution fields still suppress it. Preparation, cancellation, confirmation and
+return messages are UI only; they assert no arrival or new world fact and clear
+with the request. Verify a delayed request and cancellation separately from a
+successful crossing.
+
+Production E interaction combines nearby same-map doorway cells and authored
+cross-map `Exits/Shape` rectangles. `CampusMapView.manual_exit_targets_near` is a
+geometry query; `WorldView` matches only currently available doorway actions,
+deduplicates their IDs and submits only a unique candidate through the existing
+Prepare / physical execution / Complete chain. No capture tool may replace this
+with a position write or an invented action. With no hotspot hint, an actionable
+field shows that admitted door label and E, or brief Chinese/Japanese/English
+controls; modal panels and dialogue suppress this guidance. New-site sparks use
+the same visibility filter as interaction, and reduced motion keeps a static mark.
+
+Finite rendered checks should cover a unique nearby cross-map exit, out-of-range
+and closed exits, ambiguous actions, same-map doors, visible/hidden new hotspots
+and runtime reduced-motion changes. Static review or a patch application does
+not establish input, collision or screenshot acceptance. Partial movement failure
+after a real room/map transfer still needs a formal endpoint reconciliation
+contract; the input/hint changes do not repair that separate gap.
+
+Furniture hover keeps the existing draw/visibility checks and prefers an actual
+hit sprite with a current `sprite_sites` binding before a generic furniture name.
+A static interaction marker requires a visible site/person with a current
+available option and an actionable field; it is not an unread/new-evidence flag.
+E with no admitted nearby hotspot or unique door gives a localized UI notice at
+the existing submission boundary. These affordances do not change reach,
+collision, observation or action eligibility. Check them using a specific object
+overlapping a table, an unavailable nearby person and modal/dialogue suppression.
+
+Field mouse presses use the current event's viewport position, converted through
+the field canvas inverse, for the same `WorldView.pointer_hit` query used by
+hover and for ground navigation. Captured motion/press/release packets can arrive
+in one process interval; a previous-frame hover is not a click target. This does
+not bypass unhandled-input propagation or modal, drawing, sight, collision and
+action gates. A captured click with no motion alone does not establish a defect:
+pair its event coordinates with UI coverage, current field gates and route result.
+
+Released continuous passages have a narrow manual retry proof: the real body
+must be stopped in the verified source room with no transfers and exactly equal
+Prepared source and actual positions. Main independently matches the live
+prepared action, request, actor, serial, rooms, map and source geometry before
+adding a `source-cancel-v1` certificate; a receipt cannot mark itself verified.
+The cancellation notice is UI only. DV keeps the rejected result and existing
+cost/position/observation rules and permits only fresh manual input, without
+automatic redispatch. A request-time point is diagnostic, not the Prepared
+source. Physical returns to a different point and other failure classes remain
+outside this subset and require separate evidence and contracts.
+
 ## Theme generation
 
-`build_ui_theme.py` writes all three current themes under `scenes/UI/Styles`.
+`build_ui_theme.py` writes all three current themes and their common native popup SVG icons under `scenes/UI/Styles`.
 They share the generator's paper / ink / hand palette, type sizes and font
 fallbacks. Update that source before regenerating; do not hand-edit the outputs
 or reproduce their styling in scene-local overrides.
@@ -22,7 +89,7 @@ python godot_csharp/tools/build_ui_theme.py
 python godot_csharp/tools/build_ui_theme.py --check
 ```
 
-`--check` compares all three files with deterministic generator output. It checks
+`--check` compares the themes and popup icons with deterministic generator output. It checks
 resource-source consistency, not Godot rendering, legibility or input behavior.
 Overlay variations include the HUD family, modal margins/stacks, editorial
 caption/title, manuscript body/note and quiet/text/choice actions. Keep their
@@ -182,6 +249,14 @@ missing originals produce an error, existing runtime PNGs remain intact, and no
 replacement source is invented. The AnimeCast module supplies shared crop constants
 and functions to PixelCast and DialogueCast, so it remains in their authoring chain.
 
+For newly generated, reviewed 3x6 masters, `publish_redrawn_cast.py --source DIR
+--review NEW_DIR [--only KEY...]` uses the existing native cell/animation contract.
+It checks all selected sheets before publishing. The alpha>=200 coverage mask
+is explicit for both gutter registration and final binary alpha. A per-character
+publication recipe preserves standing height across rebuilds; previews and source,
+old-asset and new-asset hashes go to the new review directory. No collision,
+animation resource or timing is rewritten.
+
 `build_ui_theme.py`, `build_ui_desk.py` and `build_ui_paper.py` maintain current
 shared UI. `build_surface_materials.py` derives normal maps from existing room PNGs.
 `build_room_table_props.py` reuses recovered furniture helpers. Keep source images
@@ -218,6 +293,17 @@ Native full profiling explicitly starts the script debugger and has greater over
 `check_living_floor.gd` checks resource loading and collision/exit structure only,
 without starting DV or establishing gameplay acceptance.
 
+`capture_period_ui.gd` reviews the production opening dialogue, then closes the
+host and renders isolated production UI components. It checks manuscript/guide
+nesting, restored reading position, wrapped choices, UI locale and reduced motion
+at 1280x720 and 1600x900. Long text and choices are explicitly marked layout
+samples and never reach Core. Run with a rendering Godot .NET build and
+`--path godot_csharp --script res://tools/capture_period_ui.gd -- --out=NEW_ABSOLUTE_DIR`.
+The directory must not already exist. PNGs and checksummed `ui-review.dvlog`
+retain rendered evidence and raw input; this is level-two UI diagnosis, not a
+full game run. See [the presentation contracts](../../docs/ui-presentation.md)
+for the visual review scope.
+
 `profile_dv_capture.py` launches `dv_level3_capture.gd`, using the normal Host scene
 and FrameArchive. This gameplay capture runs only when that testing scope is
 requested. `dv_host_startup_probe.gd` and `capture_ui_start.gd` are targeted
@@ -238,3 +324,26 @@ one cleanup. It has no mandatory dependency on historical artifacts and directly
 classifies the seven current DV files. Missing literal resources, unresolved dynamic
 paths and gameplay behavior are separate questions; static inventory does not
 establish runtime or visual correctness.
+
+
+## Detective inquiry input and trace context
+
+The manuscript uses the currently admitted replay_input schema. Unselected fields remain unselected; selecting a hypothesis sends a pure-data action_id/hypothesis_id envelope through the existing String input channel. DV rechecks and pays for one selected reconstruction. The UI neither simulates nor grants knowledge.
+
+PlayerViewTrace continues scanning every actual frame. A single synchronous scan shares its small read-only UI context among control bindings and copies it before adding frame text/object fields; there is no cross-frame reuse or reduced evidence sampling. Diagnostic capture and production performance remain distinct.
+
+## Shared controller and return input
+
+See `../docs/chapter1-input.md` for the default input map, `UIInput` ownership,
+one-level right-click/B return, and versioned `GameSettings` binding migration.
+`probe_ui_input.gd` is a finite native-Control mechanism probe with isolated user
+data and a new absolute `--out` directory. It writes binary input observations
+through `FrameArchive`; it does not run Main/DV or validate physical controllers,
+book rendering, map traversal or gameplay. Build/import prerequisites, commands
+and evidence boundaries are documented there; this index asserts no run result.
+
+### Focused doorway input observations
+
+`dv_level3_capture.gd` retains its normal capture defaults. For an explicitly scoped input/physics observation, `--movement-samples` adds binary per-physics-frame observations while the player is moving or a continuous doorway request exists; `--capture-ms=1000` lowers screenshot readback frequency. The stream records actual body positions, instance identity, input direction, authoritative/physical room and request phase without moving the body or selecting actions. It is diagnostic instrumentation, not an uninstrumented performance baseline.
+
+Transient `input.json` packets now also accept `click` with numeric `button` (1 left, 2 right), `joy_button` with numeric `button` and optional `pressed`, and `joy_axis` with numeric `axis` and `value` in [-1, 1]. These go through `Input.parse_input_event`; they do not establish physical-controller/driver coverage. Held controller buttons and axes are released on capture close and recorded in the binary input stream. Formal game scope and authorization remain as described above; a short doorway observation is not a complete story acceptance.

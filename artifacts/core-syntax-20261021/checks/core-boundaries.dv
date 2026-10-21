@@ -1,0 +1,138 @@
+#include ../../../language_core/20-core.dv
+
+// Constructed neutral values only. This file never starts a session.
+
+fn neutral_request(world, operation, mode, event, time):
+    return {operation: operation, mode: mode, event: event, time: time, revision: world.revision}
+
+fn neutral_contract():
+    return dv_contract("neutral-change", 1, dv_matches("sample", "state", {value: 0, flag: false}), dv_writes("sample", "state", {value: 1, flag: true}), dv_matches("sample", "state", {value: 1, flag: true}))
+
+fn neutral_world():
+    let empty = dv_world("neutral-physical", "physical", "")
+    let object = dv_object("sample", "neutral", {state: {value: dv_field(0), flag: dv_field(false)}, private: {amount: dv_field(123)}})
+    return dv_adopt(dv_add_object(empty, object), neutral_contract(), "enforce", 1, ["neutral-fixture"])
+
+fn neutral_core_success():
+    let physical = neutral_world()
+    let original = dv_clone(physical)
+    let value_ref = dv_ref("sample", "state", "value")
+    let verification = dv_evaluate(physical, "neutral-change", neutral_request(physical, "verify", "enforce", "neutral-event", 1))
+    dv_require(verification.status == "verified", "Contract verification did not complete")
+    dv_require(dv_same(verification.world, original) and dv_same(physical, original), "Verification changed input world")
+    dv_require(verification.candidate.domain == "verification" and verification.candidate.source_domain == "physical", "Verification candidate lost non-executable domain")
+    dv_require(verification.assessment.revision == original.revision and verification.assessment.scope == "input-snapshot", "Verification lost snapshot scope")
+    dv_require(dv_read(verification.candidate, value_ref).value == 1, "Verification candidate omitted staged effects")
+    dv_require(rt_count(verification.candidate.seen) == 0 and rt_count(verification.candidate.history) == 0, "Verification published an event")
+    let edited_candidate = dv_store(verification.candidate, value_ref, dv_field(99))
+    dv_require(dv_read(edited_candidate, value_ref).value == 99, "Neutral candidate edit failed")
+    let executed = dv_evaluate(physical, "neutral-change", neutral_request(physical, "run", "enforce", "neutral-event", 1))
+    dv_require(executed.status == "applied" and dv_read(executed.world, value_ref).value == 1, "Run did not reevaluate original law")
+    dv_require(executed.world.revision == original.revision + 1 and executed.world.time == 1, "Run revision or time differs")
+    dv_require(rt_count(executed.world.seen) == 1 and rt_count(executed.world.history) == 1, "Run did not publish exactly its event")
+    dv_require(dv_same(physical, original), "Run mutated its input owner")
+
+    let bad_post = dv_contract("neutral-false-post", 1, dv_true(), dv_writes("sample", "state", {value: 2}), dv_fact(value_ref, 3))
+    let bad_world = dv_adopt(physical, bad_post, "enforce", 1, ["neutral-fixture"])
+    let bad_verify = dv_evaluate(bad_world, "neutral-false-post", neutral_request(bad_world, "verify", "enforce", "bad-verify", 2))
+    let bad_run = dv_evaluate(bad_world, "neutral-false-post", neutral_request(bad_world, "run", "enforce", "bad-run", 2))
+    dv_require(bad_verify.status == "postcondition-false" and bad_run.status == "postcondition-false", "False postcondition was accepted")
+    dv_require(dv_same(bad_verify.world, bad_world) and dv_same(bad_run.world, bad_world) and rt_count(bad_run.changes) == 0, "False postcondition did not roll back atomically")
+    rt_replace(bad_verify.basis, 0, "edited-failure-receipt")
+    rt_push(bad_verify.world.seen, "edited-failure-world")
+    dv_require(dv_get(bad_world.adoptions, "neutral-false-post").basis[0] == "neutral-fixture" and rt_count(bad_world.seen) == 0, "Failed verification receipt shares input basis or world")
+    let unknown_ref = dv_ref("sample", "state", "missing")
+    let unknown_post = dv_contract("neutral-unknown-post", 1, dv_true(), dv_writes("sample", "state", {value: 2}), dv_fact(unknown_ref, true))
+    let unknown_world = dv_adopt(physical, unknown_post, "enforce", 1, ["neutral-fixture"])
+    let unknown_run = dv_evaluate(unknown_world, "neutral-unknown-post", neutral_request(unknown_world, "run", "enforce", "unknown-post", 2))
+    dv_require(unknown_run.status == "postcondition-unknown" and dv_same(unknown_run.world, unknown_world) and rt_count(unknown_run.changes) == 0, "Unknown postcondition did not roll back")
+
+    let unknown_law = dv_axiom("neutral-unknown-input", 1, dv_fact(unknown_ref, true), dv_writes("sample", "state", {value: 2}))
+    let input_world = dv_adopt(physical, unknown_law, "enforce", 1, ["neutral-fixture"])
+    let input_analysis = dv_analyze_law(input_world, "neutral-unknown-input")
+    dv_require(input_analysis.complete and input_analysis.premise == "unknown" and dv_has(input_analysis.unknown, unknown_ref), "Unknown input diagnostics lost the dependency")
+    dv_require(not input_analysis.effects_verified and input_analysis.scope == "input-snapshot", "Input analysis claimed effect validation")
+    let unknown_input = dv_evaluate(input_world, "neutral-unknown-input", neutral_request(input_world, "run", "enforce", "unknown-input", 2))
+    dv_require(unknown_input.status == "premise-unknown" and dv_same(unknown_input.world, input_world), "Unknown premise was treated as executable")
+    let conflicted_world = dv_store(physical, value_ref, dv_with(dv_field(0), "conflicted", true))
+    let conflicted_analysis = dv_analyze_law(conflicted_world, "neutral-change")
+    dv_require(conflicted_analysis.premise == "unknown" and dv_has(conflicted_analysis.conflicted, value_ref) and rt_count(conflicted_analysis.unknown) == 0, "Conflicted and unknown inputs were conflated")
+
+    let old_mind = dv_with(dv_add_object(dv_world("neutral-existing-mind", "mind", "neutral-observer"), dv_object("remembered", "perceived", {memory: {number: dv_field(7)}})), "annotations", ["original"])
+    let mind = dv_adopt(old_mind, dv_axiom("neutral-belief", 1, dv_true(), []), "infer", 1, ["neutral-fixture"])
+    let mind_before = dv_clone(mind)
+    let bound = dv_bind(physical, mind, {sample: "perceived-sample"})
+    dv_require(dv_local(bound.bindings, "sample", "neutral-observer") == "perceived-sample", "Binding identity map differs")
+    dv_require(not dv_read(bound.mind, dv_ref("perceived-sample", "private", "amount")).known, "Binding copied a physical fact")
+    dv_require(not dv_read(bound.mind, dv_ref("perceived-sample", "identity", "kind")).known, "Binding disclosed physical kind")
+    dv_require(dv_same(bound.mind.adoptions, mind.adoptions) and not dv_has_key(bound.mind.adoptions, "neutral-change"), "Binding copied physical laws")
+    dv_require(dv_read(bound.mind, dv_ref("remembered", "memory", "number")).value == 7, "Binding discarded preexisting cognition")
+    rt_replace(bound.mind.annotations, 0, "changed")
+    dv_require(mind.annotations[0] == "original" and dv_same(mind, mind_before) and dv_same(physical, original), "Binding return shares mutable input state")
+    let viewed = dv_view(physical, "second-observer", {sample: "second-sample"})
+    dv_require(viewed.subject == "second-observer" and viewed.mind.domain == "mind" and rt_count(viewed.mind.adoptions) == 0, "New view did not retain an isolated subject")
+
+    let prediction_base = dv_add_object(dv_world("neutral-prediction-input", "mind", "neutral-observer"), dv_object("sample", "perceived", {state: {value: dv_field(0), flag: dv_field(false)}}))
+    let prediction_mind = dv_adopt(prediction_base, neutral_contract(), "predict", 1, ["neutral-fixture"])
+    let predicted = dv_evaluate(prediction_mind, "neutral-change", neutral_request(prediction_mind, "run", "predict", "prediction", 1))
+    dv_require(predicted.status == "applied" and predicted.world.domain == "prediction" and dv_read(prediction_mind, value_ref).value == 0, "Prediction published into the input mind")
+    let blocked_prediction_mind = dv_store(prediction_mind, value_ref, dv_field(1))
+    let blocked_public = dv_evaluate(blocked_prediction_mind, "neutral-change", neutral_request(blocked_prediction_mind, "run", "predict", "blocked-prediction", 1))
+    let blocked_legacy = dv_predict(blocked_prediction_mind, "neutral-change", "blocked-prediction", 1, blocked_prediction_mind.revision)
+    dv_require(blocked_public.status == "premise-false" and blocked_public.world.domain == "prediction" and dv_same(blocked_public, blocked_legacy), "Blocked prediction entry points differ")
+    let blocked_verification = dv_evaluate(blocked_prediction_mind, "neutral-change", neutral_request(blocked_prediction_mind, "verify", "predict", "blocked-verification", 1))
+    dv_require(blocked_verification.status == "premise-false" and blocked_verification.world.domain == "mind" and blocked_prediction_mind.domain == "mind", "Failed prediction verification changed the input domain")
+    let infer_base = dv_add_object(dv_world("neutral-infer-input", "mind", "neutral-observer"), dv_object("sample", "perceived", {state: {flag: dv_field(false)}}))
+    let infer_law = dv_contract("neutral-infer", 1, dv_fact(dv_ref("sample", "state", "flag"), false), dv_writes("sample", "state", {value: 1}), dv_fact(value_ref, 1))
+    let infer_mind = dv_adopt(infer_base, infer_law, "infer", 1, ["neutral-fixture"])
+    let infer_check = dv_evaluate(infer_mind, "neutral-infer", neutral_request(infer_mind, "verify", "infer", "infer", 1))
+    let inferred = dv_evaluate(infer_mind, "neutral-infer", neutral_request(infer_mind, "run", "infer", "infer", 1))
+    dv_require(infer_check.status == "verified" and inferred.status == "applied" and inferred.world.domain == "mind", "Infer diverged between verification and run")
+    dv_require(not dv_read(infer_mind, value_ref).known and dv_read(inferred.world, value_ref).value == 1, "Infer mutated its input owner")
+
+    let clock = dv_ref("neutral-clock", "time", "now")
+    let threshold = dv_at_least(clock, rt_exact("7/2"))
+    let minute = dv_analyze_time(threshold, clock, 0, 10, "minute")
+    let fractional_end = dv_analyze_time(threshold, clock, 0, rt_exact("15/4"), "minute")
+    let invalidate = dv_analyze_time(threshold, clock, 0, 10, "invalidate")
+    dv_require(minute.complete and minute.next == 4 and minute.solver == "event-boundary", "Minute sampling boundary differs for an exact threshold")
+    dv_require(fractional_end.complete and fractional_end.next == rt_exact("15/4"), "Fractional due was rounded away")
+    dv_require(invalidate.complete and invalidate.next == rt_exact("7/2"), "Invalidation lost exact boundary")
+    let equals_now = dv_analyze_time(dv_fact(clock, 2), clock, 2, 10, "invalidate")
+    let equals_minute = dv_analyze_time(dv_fact(clock, 2), clock, 2, 10, "minute")
+    dv_require(equals_now.complete and equals_now.next == 2, "Equality boundary skipped current-time reevaluation")
+    dv_require(not equals_minute.complete and equals_minute.next == 3 and equals_minute.solver == "minute-step", "Equality did not retain minute fallback")
+    let expired = dv_analyze_time(threshold, clock, 10, 9, "minute")
+    dv_require(not expired.complete and expired.next == 10 and expired.solver == "none" and expired.reason == "expired-interval", "Expired horizon moved time backwards or claimed completion")
+    let reordered_clock = {field: "now", facet: "time", object: "neutral-clock", type: "ref"}
+    let reordered = dv_analyze_time(dv_at_least(reordered_clock, rt_exact("7/2")), clock, 0, 10, "minute")
+    let empty_subject = dv_analyze_time(dv_at_least(dv_with(reordered_clock, "subject", ""), rt_exact("7/2")), clock, 0, 10, "minute")
+    dv_require(reordered.complete and reordered.next == 4 and empty_subject.complete and empty_subject.next == 4, "Equivalent clock ref representation hid a real boundary")
+    let ambiguous = dv_analyze_time(dv_at_least(dv_with(clock, "subject", "another-observer"), rt_exact("7/2")), clock, 0, 10, "minute")
+    dv_require(not ambiguous.complete and ambiguous.next == 1 and ambiguous.reason == "ambiguous-clock-reference", "Ambiguous clock subject was treated as stable non-clock input")
+    let unsupported = dv_analyze_time({op: "neutral-unsupported"}, clock, 0, 10, "minute")
+    dv_require(not unsupported.complete and unsupported.next == 1, "Unsupported condition was treated as complete")
+    let dependencies = dv_condition_inputs(dv_all([dv_fact(value_ref, 0), dv_not(dv_fact(value_ref, 1)), threshold]))
+    dv_require(dependencies.complete and rt_count(dependencies.reads) == 2 and dv_has(dependencies.reads, value_ref) and dv_has(dependencies.reads, clock), "Condition dependency analysis changed identity or duplicated a read")
+    dv_require(minute.scope == "declaration" and rt_count(minute.assumptions) > 0, "Time analysis lost applicability conditions")
+    rt_print("CHECK core-boundaries completed")
+    return true
+
+fn checks_main():
+    if rt_arg_count() == 0:
+        return neutral_core_success()
+    let command = rt_arg(0)
+    let world = neutral_world()
+    if command == "stale":
+        return dv_evaluate(world, "neutral-change", dv_with(neutral_request(world, "run", "enforce", "stale", 1), "revision", world.revision - 1))
+    if command == "duplicate-binding":
+        return dv_bind(world, dv_world("neutral-mind", "mind", "neutral-observer"), [["sample", "first"], ["sample", "second"]])
+    if command == "verification-execution":
+        let verified = dv_evaluate(world, "neutral-change", neutral_request(world, "verify", "enforce", "candidate", 1))
+        return dv_evaluate(verified.candidate, "neutral-change", neutral_request(verified.candidate, "run", "enforce", "candidate", 1))
+    let applied = dv_evaluate(world, "neutral-change", neutral_request(world, "run", "enforce", "first", 5))
+    if command == "repeated":
+        return dv_evaluate(applied.world, "neutral-change", neutral_request(applied.world, "run", "enforce", "first", 5))
+    if command == "backwards-time":
+        return dv_evaluate(applied.world, "neutral-change", neutral_request(applied.world, "run", "enforce", "second", 4))
+    return rt_fail("Unknown neutral Core check command")

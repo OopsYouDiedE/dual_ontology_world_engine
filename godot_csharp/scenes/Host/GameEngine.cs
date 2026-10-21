@@ -146,11 +146,13 @@ public partial class GameEngine : Node
                             if (kind == "load") RequireRestorableSnapshot(initialSnapshot);
                             var journal = kind == "load" ? ReadBoundCasebook(savePath, current.Viewer, save!) : (Json: "{}", Warning: "");
                             return (Session: current, Snapshot: initialSnapshot, Viewer: current.Viewer,
-                                Casebook: journal.Json, Warning: journal.Warning);
+                                Casebook: journal.Json, Warning: journal.Warning,
+                                ProjectedSnapshot: Materialize(initialSnapshot, timingId, "viewer"),
+                                ProjectedCasebook: Parse(journal.Json));
                         });
                         Stamp("handoff_begin", timingId, kind);
-                        var snapshot = Materialize(opened.Snapshot, timingId, "viewer");
-                        var journalData = Parse(opened.Casebook);
+                        var snapshot = opened.ProjectedSnapshot;
+                        var journalData = opened.ProjectedCasebook;
                         events = new GArray { new GDict { ["kind"] = "view",
                             ["resource"] = snapshot["resource"], ["snapshot"] = snapshot,
                             ["casebook"] = journalData, ["casebook_warning"] = opened.Warning } };

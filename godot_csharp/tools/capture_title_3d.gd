@@ -169,6 +169,46 @@ func _click(button: Button) -> bool:
 func _navigate(button: Button, expected_page: String, prefix: String, settled_name: String) -> bool:
 	if not await _click(button):
 		return false
+	return await _observe_navigation("mouse:left:" + str(button.name), expected_page, prefix, settled_name)
+
+func _navigate_gamepad(button_index: int, expected_page: String, prefix: String, settled_name: String) -> bool:
+	if finishing or hard_stopped:
+		return false
+	var previous_count := pressed_controls.size()
+	for down in [true, false]:
+		var event := InputEventJoypadButton.new()
+		event.device = 0
+		event.button_index = button_index
+		event.pressed = down
+		_record({"kind": "joypad_button", "device": event.device, "button_index": button_index, "pressed": down})
+		target.push_input(event, true)
+	if pressed_controls.size() != previous_count:
+		_fail("Book gamepad navigation also activated a native button: " + prefix)
+		return false
+	return await _observe_navigation("gamepad:" + str(button_index), expected_page, prefix, settled_name)
+
+func _navigate_right_back(expected_page: String, prefix: String, settled_name: String) -> bool:
+	if finishing or hard_stopped:
+		return false
+	# Aim at a real control; book-level back must precede Control consumption.
+	var point: Vector2 = title.project_button(title._leaf_back)
+	_move(point)
+	var previous_count := pressed_controls.size()
+	for down in [true, false]:
+		var event := InputEventMouseButton.new()
+		event.position = point
+		event.global_position = point
+		event.button_index = MOUSE_BUTTON_RIGHT
+		event.button_mask = MOUSE_BUTTON_MASK_RIGHT if down else 0
+		event.pressed = down
+		_record({"kind": "mouse_button", "position": [point.x, point.y], "button_index": MOUSE_BUTTON_RIGHT, "pressed": down})
+		target.push_input(event, true)
+	if pressed_controls.size() != previous_count:
+		_fail("Right-click back also activated a native button: " + prefix)
+		return false
+	return await _observe_navigation("mouse:right", expected_page, prefix, settled_name)
+
+func _observe_navigation(source: String, expected_page: String, prefix: String, settled_name: String) -> bool:
 	var animation_deadline := Time.get_ticks_usec() + 3500000
 	var sequence := 0
 	# The first frame can still be the old page while its GPU copy completes.
@@ -184,13 +224,15 @@ func _navigate(button: Button, expected_page: String, prefix: String, settled_na
 		var next_frame := Time.get_ticks_usec() + FRAME_INTERVAL_US
 		while Time.get_ticks_usec() < next_frame and title._turning and not finishing:
 			await process_frame
-	# Start is emitted by the production async continuation after landing.
+	# Start now opens the session concurrently with the first leaf. These two
+	# frames observe the settled paper; event count is checked independently.
 	await process_frame
 	await process_frame
 	if title._current_page != expected_page or title._turning:
 		_fail("Page did not settle on " + expected_page + " after " + prefix)
 		return false
-	_record({"kind": "navigation_result", "control": str(button.name), "expected_page": expected_page, "page": title._current_page, "animation_frames": sequence})
+	_record({"kind": "navigation_result", "source": source, "expected_page": expected_page, "page": title._current_page,
+		"page_history": title._page_history.duplicate(), "animation_frames": sequence})
 	return await _shot(settled_name)
 
 func _run() -> void:
@@ -282,19 +324,26 @@ func _run() -> void:
 	if not await _navigate(title.settings_button, "settings", "settings-open", "settings-page"):
 		await _finish(4)
 		return
-	if not await _navigate(title._leaf_next, "load", "paper-to-load", "load-from-paper"):
+	if not await _navigate_gamepad(JOY_BUTTON_RIGHT_SHOULDER, "load", "rb-to-load", "load-after-rb"):
 		await _finish(4)
 		return
-	if not await _navigate(title._leaf_next, "settings", "paper-to-settings", "settings-from-paper"):
+	if not await _navigate_gamepad(JOY_BUTTON_LEFT_SHOULDER, "settings", "lb-to-settings", "settings-after-lb"):
 		await _finish(4)
 		return
-	if not await _navigate(title._leaf_back, "cover", "settings-close", "cover-after-settings"):
+	# Back unwinds each visited paper in order: settings -> load -> settings -> cover.
+	if not await _navigate_right_back("load", "right-back-to-load", "load-after-right-back"):
+		await _finish(4)
+		return
+	if not await _navigate_gamepad(JOY_BUTTON_B, "settings", "b-back-to-settings", "settings-after-b-back"):
+		await _finish(4)
+		return
+	if not await _navigate_right_back("cover", "right-back-to-cover", "cover-after-settings"):
 		await _finish(4)
 		return
 	if not await _navigate(title.continue_button, "load", "load-open", "load-page"):
 		await _finish(4)
 		return
-	if not await _navigate(title._leaf_back, "cover", "load-close", "cover-after-load"):
+	if not await _navigate_gamepad(JOY_BUTTON_B, "cover", "b-close-load", "cover-after-load"):
 		await _finish(4)
 		return
 	if not await _navigate(title.start_button, "start", "start-open", "start-page"):
@@ -304,8 +353,9 @@ func _run() -> void:
 		_fail("Expected exactly one start ui_event; observed " + str(emitted))
 		await _finish(5)
 		return
-	if pressed_controls.size() != 7:
-		_fail("Expected exactly seven native button activations")
+	var expected_buttons: Array[String] = [str(title.settings_button.name), str(title.continue_button.name), str(title.start_button.name)]
+	if pressed_controls != expected_buttons:
+		_fail("Expected only settings, continue and start button activations; observed " + str(pressed_controls))
 		await _finish(5)
 		return
 	await _finish(0)

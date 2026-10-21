@@ -77,7 +77,7 @@ public sealed class DvSession
     public string Prepare(string selection = "")
     {
         intentProjection = null;
-        if (selection.Length > 0) state = Run(() => DVProgram.SelectPlayer(state, selection));
+        if (selection.Length > 0) state = Run(() => DVProgram.SelectPlayer(state, selection.StartsWith("{", StringComparison.Ordinal) ? ParseValue(selection) : selection));
         state = Run(() => DVProgram.SessionPrepare(state));
         return EncodeHost(IntentProjection(), "intent");
     }

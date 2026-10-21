@@ -18,7 +18,10 @@ ROOMS = GAME / "ShareAsset/Internal/Props/Chapter2/rooms"
 
 def build():
     records = []
-    for path in sorted(ROOMS.glob("*.png")):
+    paths = sorted(ROOMS.glob("*.png"))
+    desktop = GAME / "ShareAsset/Internal/Props/UIDesk/Layers/wood.png"
+    if desktop.exists(): paths.append(desktop)
+    for path in paths:
         if path.stem.endswith("-normal"):
             continue
         image = Image.open(path).convert("RGB")

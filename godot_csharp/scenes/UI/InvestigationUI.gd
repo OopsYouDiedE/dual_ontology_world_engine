@@ -17,6 +17,7 @@ var _source_title := "调查信息"
 var _restore_serial := 0
 var _title_is_ui := true
 var _ui_texts: Array[Dictionary] = []
+var _option_placeholders: Array[Dictionary] = []
 
 func _ready() -> void:
 	super._ready()
@@ -29,6 +30,7 @@ func _ready() -> void:
 	_localize()
 
 func _notification(what: int) -> void:
+	super._notification(what)
 	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready(): _localize()
 
 func _localize() -> void:
@@ -38,6 +40,9 @@ func _localize() -> void:
 		if not is_instance_valid(control): continue
 		var text := _bound_text(item)
 		control.set("text", "[b]%s[/b]" % text if bool(item.bold) else text)
+	for item: Dictionary in _option_placeholders:
+		var picker: OptionButton = item.control
+		if is_instance_valid(picker): picker.set_item_text(0, _bound_text(item))
 
 func _text(zh: String, en: String, ja: String) -> String:
 	var locale := TranslationServer.get_locale()
@@ -93,6 +98,7 @@ func open_modal(title: String, min_size := Vector2(760, 520), panel_id := "", ti
 	_source_title = title
 	_title_is_ui = title_is_ui
 	_ui_texts.clear()
+	_option_placeholders.clear()
 	_requested_size = min_size
 	for child in modal_body.get_children():
 		modal_body.remove_child(child)
@@ -140,6 +146,16 @@ func open_manuscript(data: Dictionary) -> void:
 	# nor promotes personal writing into an admitted hypothesis or a prediction.
 	var body := open_modal("推演工作台", Vector2(720, 500), "replay", true)
 	_append_supplied_section(body, "推演摘要", data.get("summary"))
+	var choices: Array = data.get("options", [])
+	if not choices.is_empty():
+		_ui_localized_text(body, "随身思考与重演", "Reflection and reconstruction", "考察と再現", "EditorialSubtitle")
+		for option: Dictionary in choices:
+			if option.has("replay_input"):
+				_append_replay_form(body, option)
+			else:
+				body.add_child(_action_button(option, "ChoiceRow"))
+	else:
+		_ui_localized_text(body, "当前没有可进行的重演。调查现场、询问同伴后，可再到这里整理线索。", "No reconstruction is available yet. Examine the scene and question your companions, then return to your notes.", "今は実行できる再現がありません。現場を調べ、仲間に話を聞いてから手稿に戻れます。", "ManuscriptNote")
 	_ui_text(body, "推演与假设", true)
 	var hypotheses := _supplied_texts(data.get("hypotheses", []))
 	if hypotheses.is_empty():
@@ -154,6 +170,72 @@ func open_manuscript(data: Dictionary) -> void:
 	if personal_notes.is_empty():
 		_ui_text(body, "尚无个人批注。")
 	for text: String in personal_notes: _raw_text(body, text)
+
+func _append_replay_form(body: VBoxContainer, option: Dictionary) -> void:
+	var schema: Dictionary = option.replay_input
+	var serial := _content_serial
+	var named := OptionButton.new()
+	named.theme_type_variation = &"ChoiceRow"
+	named.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	named.add_item(_text("未选择假设", "Choose a hypothesis", "仮説を選択"))
+	_option_placeholders.append({"control": named, "locales": ["未选择假设", "Choose a hypothesis", "仮説を選択"]})
+	for row: Dictionary in schema.get("named", []): named.add_item(str(row.label))
+	body.add_child(named)
+	var named_submit := Button.new()
+	named_submit.theme_type_variation = &"TextAction"
+	named_submit.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	named_submit.text = _text("支付并重演所选假设", "Pay and replay selected hypothesis", "選択した仮説を有料で再現")
+	_ui_texts.append({"control": named_submit, "locales": ["支付并重演所选假设", "Pay and replay selected hypothesis", "選択した仮説を有料で再現"], "bold": false})
+	named_submit.disabled = true
+	named.item_selected.connect(func(index: int): named_submit.disabled = index == 0)
+	named_submit.pressed.connect(func():
+		var index := named.selected - 1
+		var rows: Array = schema.get("named", [])
+		if index >= 0 and index < rows.size():
+			_choose(JSON.stringify({"action_id": option.id, "hypothesis_id": rows[index].id}), serial)
+	)
+	body.add_child(named_submit)
+	var assumption := str(schema.get("initial_assumption", ""))
+	if not assumption.is_empty(): _raw_text(body, assumption)
+	var selected: Dictionary = {}
+	var history_submit := Button.new()
+	history_submit.theme_type_variation = &"TextAction"
+	history_submit.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	history_submit.text = _text("支付并重演这份组合假设", "Pay and replay this combination", "この組合せ仮説を有料で再現")
+	_ui_texts.append({"control": history_submit, "locales": ["支付并重演这份组合假设", "Pay and replay this combination", "この組合せ仮説を有料で再現"], "bold": false})
+	history_submit.disabled = true
+	var variables: Array = schema.get("variables", [])
+	for variable: Dictionary in variables:
+		_raw_text(body, str(variable.label))
+		var picker := OptionButton.new()
+		picker.theme_type_variation = &"ChoiceRow"
+		picker.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+		picker.add_item(_text("未选择", "Unselected", "未選択"))
+		_option_placeholders.append({"control": picker, "locales": ["未选择", "Unselected", "未選択"]})
+		for item: Dictionary in variable.get("values", []): picker.add_item(str(item.label))
+		picker.item_selected.connect(func(index: int):
+			if index == 0: selected.erase(str(variable.id))
+			else: selected[str(variable.id)] = variable.get("values", [])[index - 1].value
+			history_submit.disabled = _manual_case(schema, selected).is_empty()
+		)
+		body.add_child(picker)
+	history_submit.pressed.connect(func():
+		var hypothesis := _manual_case(schema, selected)
+		if not hypothesis.is_empty(): _choose(JSON.stringify({"action_id": option.id, "hypothesis_id": hypothesis}), serial)
+	)
+	if schema.get("cases", []).is_empty():
+		_ui_localized_text(body, "完整组合假设尚未向本人开放；未选项目保持未知。", "The complete combination is not available to this subject yet. Unselected fields remain unknown.", "完全な組合せ仮説はまだ本人に開かれていません。未選択の項目は不明のままです。", "ManuscriptNote")
+	body.add_child(history_submit)
+
+func _manual_case(schema: Dictionary, selected: Dictionary) -> String:
+	for row: Dictionary in schema.get("cases", []):
+		var assignments: Array = row.get("assignments", [])
+		var matches := not assignments.is_empty() and selected.size() == assignments.size()
+		for assignment: Dictionary in assignments:
+			var variable := str(assignment.variable)
+			if not selected.has(variable) or selected[variable] != assignment.value: matches = false
+		if matches: return str(row.id)
+	return ""
 
 func _append_supplied_section(body: VBoxContainer, source: String, value: Variant) -> void:
 	var texts := _supplied_texts(value)

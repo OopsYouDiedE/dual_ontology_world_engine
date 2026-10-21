@@ -12,6 +12,7 @@ signal setting_changed(section: String, key: String, value)
 signal settings_requested
 
 const SAVE_PATH := "user://settings.cfg"
+const CONTROL_BINDINGS_VERSION := 1
 const BASE_WINDOW := Vector2i(1280, 992)
 const SECTIONS := ["graphics", "language", "audio", "controls", "accessibility"]
 
@@ -21,14 +22,14 @@ const CONTROL_ACTIONS := [
 	"notebook", "manuscript", "campus_map", "wait", "cancel",
 	"dialogue_continue", "dialogue_choose", "dialogue_history", "fast_forward",
 	"replay_pause", "replay_speed", "replay_skip",
-	"settings",
+	"settings", "book_prev", "book_next",
 ]
 const ACTION_GROUPS := {
 	"move_up": "move", "move_down": "move", "move_left": "move", "move_right": "move",
 	"interact": "world", "notebook": "world", "manuscript": "world", "campus_map": "world", "wait": "world", "cancel": "world",
 	"dialogue_continue": "dialogue", "dialogue_choose": "dialogue", "dialogue_history": "dialogue", "fast_forward": "dialogue",
 	"replay_pause": "replay", "replay_speed": "replay", "replay_skip": "replay",
-	"settings": "system",
+	"settings": "system", "book_prev": "system", "book_next": "system",
 }
 ## 移动键按物理位置匹配（换键盘布局后 WASD 仍是左手那一排），其余按键帽字符匹配。
 const PHYSICAL_ACTIONS := ["move_up", "move_down", "move_left", "move_right"]
@@ -51,6 +52,8 @@ const ACTION_NAMES := {
 	"replay_speed": ["回放加速", "Replay speed", "再生速度"],
 	"replay_skip": ["跳过回放", "Skip replay", "スキップ"],
 	"settings": ["设置", "Settings", "設定"],
+	"book_prev": ["前一页", "Previous page", "前のページ"],
+	"book_next": ["后一页", "Next page", "次のページ"],
 }
 const MODIFIER_KEYS := [KEY_CTRL, KEY_SHIFT, KEY_ALT, KEY_META]
 const BUS_NAMES := {"master": "Master", "music": "Music", "sfx": "Sfx", "voice": "Voice"}
@@ -233,7 +236,7 @@ func action_events(action: String) -> Array[InputEvent]:
 		result.assign(InputMap.action_get_events(action))
 	return result
 
-## 把第 index 个绑定换成 event；index 超出现有数量（或 -1）则新增一个。只收键盘按键和鼠标按钮。
+## 把第 index 个绑定换成 event；index 超出现有数量（或 -1）则新增一个。接收键鼠、手柄按钮和轴方向。
 ## 同一动作里已有相同按键时返回 false。其它动作上的同键冲突由界面用 find_conflicts 先提示。
 func rebind(action: String, index: int, event: InputEvent) -> bool:
 	if not _default_events.has(action): return false
@@ -274,7 +277,8 @@ func reset_action(action: String) -> void:
 	if not _default_events.has(action): return
 	var events: Array[InputEvent] = []
 	for entry in _default_events[action]:
-		events.append(_dict_to_event(entry, action))
+		var event := _dict_to_event(entry, action)
+		if event != null: events.append(event)
 	_set_action_events(action, events)
 	_explicit.erase("controls/" + action)
 	_save_later()
@@ -319,7 +323,36 @@ func event_label(event: InputEvent) -> String:
 		return prefix + label
 	if event is InputEventMouseButton:
 		return _mouse_name(event.button_index)
+	if event is InputEventJoypadButton:
+		return _joy_button_name(event.button_index)
+	if event is InputEventJoypadMotion:
+		return _joy_axis_name(event.axis, event.axis_value)
 	return "" if event == null else event.as_text()
+
+func _joy_button_name(button: int) -> String:
+	var names := {
+		JOY_BUTTON_A: "A", JOY_BUTTON_B: "B", JOY_BUTTON_X: "X", JOY_BUTTON_Y: "Y",
+		JOY_BUTTON_BACK: "View", JOY_BUTTON_START: "Start",
+		JOY_BUTTON_LEFT_SHOULDER: "LB", JOY_BUTTON_RIGHT_SHOULDER: "RB",
+		JOY_BUTTON_LEFT_STICK: "L3", JOY_BUTTON_RIGHT_STICK: "R3",
+	}
+	if names.has(button): return str(names[button])
+	var arrows := {JOY_BUTTON_DPAD_UP: "↑", JOY_BUTTON_DPAD_DOWN: "↓", JOY_BUTTON_DPAD_LEFT: "←", JOY_BUTTON_DPAD_RIGHT: "→"}
+	if arrows.has(button):
+		var language := current_language()
+		var prefix := "十字键" if language == "zh_CN" else "十字キー" if language == "ja" else "D-pad "
+		return prefix + str(arrows[button])
+	return "Button %d" % (button + 1)
+
+func _joy_axis_name(axis: int, value: float) -> String:
+	if axis == JOY_AXIS_TRIGGER_LEFT: return "LT"
+	if axis == JOY_AXIS_TRIGGER_RIGHT: return "RT"
+	var language := current_language()
+	var left := axis == JOY_AXIS_LEFT_X or axis == JOY_AXIS_LEFT_Y
+	var names := {"zh_CN": ["左摇杆", "右摇杆"], "en": ["Left stick ", "Right stick "], "ja": ["左スティック", "右スティック"]}
+	var prefix := str(names[language][0 if left else 1])
+	var horizontal := axis == JOY_AXIS_LEFT_X or axis == JOY_AXIS_RIGHT_X
+	return prefix + (("←" if value < 0.0 else "→") if horizontal else ("↑" if value < 0.0 else "↓"))
 
 func _key_name(code: int) -> String:
 	match code:
@@ -368,6 +401,10 @@ func _event_to_dict(event: InputEvent) -> Dictionary:
 	if event is InputEventMouseButton:
 		return {"type": "mouse", "button": int(event.button_index),
 			"ctrl": event.ctrl_pressed, "shift": event.shift_pressed, "alt": event.alt_pressed, "meta": event.meta_pressed}
+	if event is InputEventJoypadButton:
+		return {"type": "joy_button", "button": int(event.button_index)}
+	if event is InputEventJoypadMotion and absf(event.axis_value) >= 0.25:
+		return {"type": "joy_axis", "axis": int(event.axis), "value": -1.0 if event.axis_value < 0.0 else 1.0}
 	return {}
 
 ## 序列化数据 → 事件。移动动作只存物理键，其它动作只存键帽字符，这样与 project.godot 默认一致、测试合成的按键也能匹配。
@@ -401,6 +438,22 @@ func _dict_to_event(data: Dictionary, action: String) -> InputEvent:
 			event.alt_pressed = bool(data.get("alt", false))
 			event.meta_pressed = bool(data.get("meta", false))
 			return event
+		"joy_button":
+			var button := int(data.get("button", -1))
+			if button < 0 or button >= JOY_BUTTON_MAX: return null
+			var event := InputEventJoypadButton.new()
+			event.device = -1
+			event.button_index = button as JoyButton
+			return event
+		"joy_axis":
+			var axis := int(data.get("axis", -1))
+			var value := float(data.get("value", 0.0))
+			if axis < 0 or axis >= JOY_AXIS_MAX or is_zero_approx(value): return null
+			var event := InputEventJoypadMotion.new()
+			event.device = -1
+			event.axis = axis as JoyAxis
+			event.axis_value = -1.0 if value < 0.0 else 1.0
+			return event
 	return null
 
 func _same_input(a: InputEvent, b: InputEvent) -> bool:
@@ -408,6 +461,10 @@ func _same_input(a: InputEvent, b: InputEvent) -> bool:
 		return _key_identity(a) == _key_identity(b) and a.get_modifiers_mask() == b.get_modifiers_mask()
 	if a is InputEventMouseButton and b is InputEventMouseButton:
 		return a.button_index == b.button_index and a.get_modifiers_mask() == b.get_modifiers_mask()
+	if a is InputEventJoypadButton and b is InputEventJoypadButton:
+		return a.button_index == b.button_index
+	if a is InputEventJoypadMotion and b is InputEventJoypadMotion:
+		return a.axis == b.axis and signf(a.axis_value) == signf(b.axis_value)
 	return false
 
 ## 同一个键不论用键帽字符还是物理位置记录，都化成键帽字符比较。
@@ -548,6 +605,7 @@ func flush() -> void:
 	if _is_explicit("controls", "hold_fast_forward"): file.set_value("controls", "hold_fast_forward", _hold_fast_forward)
 	for action in CONTROL_ACTIONS:
 		if _is_explicit("controls", action):
+			file.set_value("controls", "bindings_version", CONTROL_BINDINGS_VERSION)
 			var serial: Array = []
 			for event in action_events(action): serial.append(_event_to_dict(event))
 			file.set_value("controls", action, serial)
@@ -576,6 +634,17 @@ func _load() -> void:
 			var event := _dict_to_event(entry, action) if entry is Dictionary else null
 			if event != null: events.append(event)
 		if events.is_empty(): continue
+		# Earlier settings could store keyboard/mouse only. Preserve those edits
+		# while adding the newly shipped controller bindings exactly once.
+		if int(file.get_value("controls", "bindings_version", 0)) < CONTROL_BINDINGS_VERSION:
+			for entry: Dictionary in _default_events[action]:
+				if str(entry.get("type", "")) not in ["joy_button", "joy_axis"]: continue
+				var candidate := _dict_to_event(entry, action)
+				if candidate == null: continue
+				var duplicate := false
+				for existing: InputEvent in events:
+					if _same_input(existing, candidate): duplicate = true
+				if not duplicate: events.append(candidate)
 		InputMap.action_erase_events(action)
 		for event in events: InputMap.action_add_event(action, event)
 		_mark("controls", action)

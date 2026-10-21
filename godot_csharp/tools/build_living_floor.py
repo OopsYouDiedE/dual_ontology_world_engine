@@ -9,7 +9,36 @@ PARTS = {'zone_jia': (0, 0), 'zone_ding': (1600, 0),
          'zone_bing': (0, 704), 'zone_yi': (1600, 704), 'living_hall': (1120, 128)}
 
 
-def build():
+def _publish_stands_only(path, generated):
+    """Add newly authored markers while retaining the published floor's bytes."""
+    source = path.read_bytes().decode('utf-8')
+    def markers(text):
+        result = {}
+        for match in re.finditer(r'(?ms)^\[node\b.*?(?=^\[|\Z)', text):
+            header = match[0].splitlines()[0]
+            if 'parent="Stands"' not in header:
+                continue
+            name = re.search(r'name="([^"]+)"', header)[1]
+            if name in result or 'type="Marker2D"' not in header:
+                raise ValueError(f'Invalid Stand marker: {name}')
+            result[name] = match
+        return result
+    previous, current = markers(source), markers(generated)
+    if not previous:
+        raise ValueError('Published floor has no standing markers; retain it for review')
+    for name, match in previous.items():
+        if name not in current or match[0].replace('\r\n', '\n').strip() != current[name][0].replace('\r\n', '\n').strip():
+            raise ValueError(f'Published floor Stand differs from source: {name}')
+    added = [match[0].strip() for name, match in current.items() if name not in previous]
+    if not added:
+        return
+    newline = '\r\n' if '\r\n' in source else '\n'
+    text = (newline * 2).join(block.replace('\r\n', '\n').replace('\n', newline) for block in added) + newline * 2
+    end = max(match.end() for match in previous.values())
+    path.write_bytes((source[:end] + text + source[end:]).encode('utf-8'))
+
+
+def build(stands_only=False):
     resources, nodes, terrain = [], [], [['#'] * 86 for _ in range(50)]
     lights = []
     for key, (dx, dy) in PARTS.items():
@@ -70,10 +99,17 @@ def build():
                                 py = y + dy + 96
                 prop = f'position = Vector2({px:g}, {py:g})'
                 body = body.replace(match[0], prop) if match else prop + '\n' + body
-            if key == 'living_hall' and name == 'Architecture':
-                # Reuse published pixels as three source regions; no repaint required.
-                for suffix, sy, height, dest_y, scale in [('top', 0, 544, 128, 1), ('join', 544, 32, 672, 6), ('bottom', 544, 736, 864, 1)]:
-                    nodes.append(f'[node name="hall_{suffix}" type="Sprite2D" parent="."]\nposition = Vector2(1120, {dest_y})\nscale = Vector2(1, {scale})\ntexture = ExtResource("living_hall_arch")\ncentered = false\nregion_enabled = true\nregion_rect = Rect2(0, {sy}, 512, {height})')
+            if key == 'living_hall' and parent == '.' and (name == 'Architecture' or 'metadata/surface_layer = true' in body):
+                # Each image-generated surface layer has its own 2x texture.
+                # Split texture coordinates at the same physical corridor join.
+                texture_id = re.search(r'texture = ExtResource\("([^"]+)"\)', body)[1]
+                scale_match = re.search(r'scale = Vector2\(([^,]+), ([^)]+)\)', body)
+                sx = float(scale_match[1]) if scale_match else 1.0
+                sy_scale = float(scale_match[2]) if scale_match else 1.0
+                z_match = re.search(r'z_index = (-?\d+)', body)
+                z = int(z_match[1]) if z_match else -10
+                for suffix, sy, height, dest_y, stretch in [('top', 0, 544, 128, 1), ('join', 544, 32, 672, 6), ('bottom', 544, 736, 864, 1)]:
+                    nodes.append(f'[node name="hall_{name}_{suffix}" type="Sprite2D" parent="."]\nz_index = {z}\nposition = Vector2(1120, {dest_y})\nscale = Vector2({sx:g}, {sy_scale*stretch:g})\ntexture = ExtResource("{texture_id}")\ncentered = false\nregion_enabled = true\nregion_rect = Rect2(0, {sy/sy_scale:g}, {512/sx:g}, {height/sy_scale:g})\nmetadata/surface_layer = true')
                 continue
             nodes.append(header + '\n' + body.strip())
     for i, node in enumerate(nodes):
@@ -89,8 +125,15 @@ def build():
     groups[1] += '\ncollision_mask = 0'
     resources.sort(key=lambda block: 0 if block.startswith('[ext_resource') else 1)
     output = f'[gd_scene load_steps={len(resources)+1} format=3]\n\n' + '\n\n'.join(resources + [root] + groups + nodes) + '\n'
-    (MAPS / 'living_floor.tscn').write_text(output, encoding='utf-8', newline='\n')
+    target = MAPS / 'living_floor.tscn'
+    if stands_only:
+        _publish_stands_only(target, output)
+    else:
+        target.write_text(output, encoding='utf-8', newline='\n')
 
 
 if __name__ == '__main__':
-    build()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--stands-only', action='store_true', help='Append source Stand markers without changing other published floor content.')
+    build(stands_only=parser.parse_args().stands_only)

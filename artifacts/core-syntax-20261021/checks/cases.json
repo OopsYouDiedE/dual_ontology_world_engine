@@ -1,0 +1,63 @@
+[
+  {
+    "id": "syntax-positive",
+    "file": "syntax-positive.dv",
+    "runs": [{"marker": "CHECK syntax-positive completed"}]
+  },
+  {
+    "id": "syntax-branch-output-unset",
+    "source": "function value = only_one_branch(flag: Bool)\nif flag\nvalue = 1\nend\nend\n",
+    "reject": "named output not assigned on every path: value"
+  },
+  {
+    "id": "syntax-loop-output-unset",
+    "source": "function value = only_loop(flag: Bool)\nwhile flag\nvalue = 1\nend\nend\n",
+    "reject": "named output not assigned on every path: value"
+  },
+  {
+    "id": "syntax-output-read-before-write",
+    "source": "function value = read_before_write()\nvalue = value + 1\nend\n",
+    "reject": "named output read before assignment: value"
+  },
+  {
+    "id": "syntax-named-return-expression",
+    "source": "function value = return_expression()\nvalue = 1\nreturn 2\nend\n",
+    "reject": "named-output return takes no expression; assign the outputs first"
+  },
+  {
+    "id": "syntax-duplicate-output",
+    "source": "function [value, value] = duplicate_outputs()\nvalue = 1\nend\n",
+    "reject": "reserved, duplicate or shadowed local"
+  },
+  {
+    "id": "syntax-missing-end",
+    "source": "function value = missing_end()\nvalue = 1\n",
+    "reject": "expected end before end of source"
+  },
+  {
+    "id": "syntax-conflicting-output-type",
+    "source": "function value: Number = conflicting_type() -> Text\nvalue = 1\nend\n",
+    "reject": "conflicting named output and return types"
+  },
+  {
+    "id": "core-boundaries",
+    "file": "core-boundaries.dv",
+    "runs": [
+      {"marker": "CHECK core-boundaries completed"},
+      {"argv": ["stale"], "reject": "Stale world revision"},
+      {"argv": ["repeated"], "reject": "Repeated world event"},
+      {"argv": ["backwards-time"], "reject": "World time cannot move backwards"},
+      {"argv": ["verification-execution"], "reject": "Evaluation mode is incompatible with world"},
+      {"argv": ["duplicate-binding"], "reject": "Ambiguous physical binding"}
+    ]
+  },
+  {
+    "id": "finite-solvers",
+    "file": "finite-solvers.dv",
+    "runs": [
+      {"marker": "CHECK finite-solvers completed"},
+      {"argv": ["empty-domain"], "reject": "Balance variable has an empty domain"},
+      {"argv": ["no-capability"], "reject": "Imprint capability is required"}
+    ]
+  }
+]

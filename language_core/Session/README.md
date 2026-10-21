@@ -20,7 +20,7 @@ dotnet build language_core/Session/DuelView.Session.csproj -c Release -p:DvPytho
 | `OpenCampaign(player = "")` | 打开原生生产内容，可指定人工控制主体；空参数保持自主控制 |
 | `OpenConfiguredCampaign(optionsJson)` | 通过 `dvg_host_open` 应用 `{controller, viewer?, campaign?, audit?}`，默认与配置验证属于 DV |
 | `Viewer`、`Snapshot(viewer)` | 读取当前/恢复会话的原生观察者与呈现投影 |
-| `Prepare(selection = "")` | 核对本人资格，准备唯一正式意图；已有 pending 时返回同一意图 |
+| `Prepare(selection = "")` | 核对本人资格，准备唯一正式意图；已有 pending 时返回同一意图。普通选择为动作 ID；人工重演为 JSON 字符串 `{action_id,hypothesis_id}`，只在此边界解析为 DV 纯数据 |
 | `Complete(receiptJson, viewer)` | 接受与动作身份相符的真实执行回执，结算并生成对指定观察者可见的呈现 |
 | `Active` | 读取会话是否继续活动 |
 | `Save()`、`Restore(string)` | 完整进程内 JSON 快照交换，不用于新轨迹落盘 |
@@ -30,6 +30,8 @@ dotnet build language_core/Session/DuelView.Session.csproj -c Release -p:DvPytho
 回执包含 `action_event`、`outcome`、`actual`（time/computation/stamina）与执行器身份。失败执行仍保留实际费用及失败回执，成功后才应用相应的权威效果与观察。重复准备不产生第二次执行；未知观察、预测结果或候选出现不能代替现场成功回执。
 
 人工选择仅在 DV 等待该主体输入时提交，选择与自主控制共用资格、Prepare/Complete、费用及判答。等待与恢复不重复认知，不生成答案。呈现过滤到本人已完成动作、真实解析话语或实际观察；远处的私人正文不会通过呈现接口泄漏。`surface_voice` 与附加 `voice` 保留区别。
+
+人工重演封装保留原动作 ID，DV 在选择与完成时重核本人候选的 topic、basis、available_when 与 manual_available_when；只对明确选中的一项执行付费重演，不顺带重演其他模型；既有有来源约束的剪枝及覆盖证明仍在同次付费预算内执行。尝试签名按动作与假设分开；本人认识变化后可重新核对，其他候选不因一次尝试而全部关闭。自主重演仍使用原批量路径。新输入方式属于控制机制修正，不作为同条件性能优化。
 
 `Snapshot(viewer).chapter_summary` 只在实际章节结算条件发生后提供系统结果；它不写入人物认识，也不证明 Godot 已显示或验证结算画面。内容扩展保留原会话、账本、队列与事件；内容可用和实际跨门分别记录。
 

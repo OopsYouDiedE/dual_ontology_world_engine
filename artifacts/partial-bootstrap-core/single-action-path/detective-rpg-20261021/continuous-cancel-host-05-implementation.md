@@ -1,0 +1,13 @@
+# 05宿主落地：零位移released取消的人工重试证明
+
+按主代理批准，仅修改根工作区Main.gd、WorldView.gd及Godot工程说明；未改candidate04/05或旧runtime，未构建、未启动Godot/会话。与core_audit的30-session实现对齐source-cancel-v1。
+
+WorldView._finish_cancel_if_safe在真实departure_room等from_room后先置settling并停止本次局部路线，再发blocked。只有reason=released、同map、无switching且execution_transitions为空时附原生source_cancel_candidate、from/to及真实actual_position；请求时位置作为request_source_position保留。WorldView不声明identity_verified、不自造action_event。
+
+Main._normalize_continuous_cancel先移除来件自报continuous_cancel，再独立检查当前Prepared move非station、Main验证后加的destination.continuous_walk/request ID、当前请求和主体/行动/执行序号、原生请求settling状态、源/目标/map一致、raw字段、实际身体已停止与真实源房。源几何仅允许interior/source-side-doorway且与当前身体重算一致。raw source_position是executor源身份核验后捕获的Prepared源点；要求它与raw actual_position精确逐坐标相等，实际点还须等当前body位置、finite且无路径在途。原生request_source_position不替代它。
+
+仅全部成立时由Main签入normalized continuous_cancel：version、action_event、request_id、actor、action、serial、map、from_room、to_room、source_position、actual_position、source_geometry、transitions=[]、reason=released、identity_verified=true。Core只为这类取消保留同签名人工新输入重试token；原结果仍rejected，原费用结算不改，不写位置/观察、无自动重发。
+
+对应取消回执产生三语UI短提示，说明已取消、仍在原处，并请玩家在处理结束后重新输入方向；不宣称到达目标，不生成剧情对白或世界事件。
+
+当前git diff --check退出0，仅已有工作树CRLF下次Git转LF提示。没有GDScript解析、构建或行为验收，由主代理统一冻结后执行。本文件中的实现范围优先于较早continuous-cancel-host-proof-proposal.md允许源侧实际返回的宽方案；本次source!=actual的真实返回、其他取消原因、跨图/一般受阻仍不授该重试证明，不能声称全部失败移动已修复。

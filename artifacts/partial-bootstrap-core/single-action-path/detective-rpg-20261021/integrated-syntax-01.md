@@ -1,0 +1,1 @@
+整合冻结版静态语法检查：2026-10-21，python language_core/tools/check_dv.py --format json language_core/30-session.dv，在 tmp/detective-rpg-integrated-20261021 执行。退出码0，success=true，diagnostics为空。包含20/30/40/50/60现役闭包，仅证明静态语法、名字、调用和已实现类型约束；没有执行会话，不证明剧情/玩法。

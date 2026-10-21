@@ -7,6 +7,19 @@ static var _resources: Dictionary = {}
 static var _order: Array[String] = []
 static var _pending: Dictionary = {}
 static var _failed: Dictionary = {}
+static var _actor_paths: Dictionary = {}
+
+## Asset identity is immutable for one running build. Resolve it during chapter
+## preparation, not on the first frame in which somebody enters the doorway.
+static func actor_path(sprite: String) -> String:
+	if sprite == "": return ""
+	if _actor_paths.has(sprite): return str(_actor_paths[sprite])
+	for folder in ["Characters/PixelCast", "Characters/AnimeCast", "Props/GameplayFixtures"]:
+		var path := "res://ShareAsset/Internal/%s/%s.tres" % [folder, sprite]
+		if ResourceLoader.exists(path):
+			_actor_paths[sprite] = path
+			return path
+	return ""
 
 static func _remember(path: String, resource: Resource) -> Resource:
 	if resource == null: return null

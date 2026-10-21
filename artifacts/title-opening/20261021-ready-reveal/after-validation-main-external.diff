@@ -1,0 +1,60 @@
+--- frozen/godot_csharp/scenes/Host/Main.gd
++++ current/godot_csharp/scenes/Host/Main.gd
+@@ -836,9 +836,9 @@
+ 			"text": _plain_text(control), "pressed": true})
+ 		record_input.call(data)
+ 
+-	func _wire(control: Control) -> void:
++	func _wire(control: Control, context: Dictionary) -> void:
+ 		var id := control.get_instance_id()
+-		_control_context[id] = _context()
++		_control_context[id] = context
+ 		if _wired.has(id): return
+ 		_wired[id] = true
+ 		var path := str(host.get_path_to(control))
+@@ -858,12 +858,15 @@
+ 
+ 	func _collect_after_draw() -> void:
+ 		var items: Array = []
++		# Scene callbacks cannot interleave this synchronous scan. Share its small
++		# read-only input context, then copy before adding visible-frame payload.
++		var context := _context()
+ 		var viewport_rect: Rect2 = host.get_viewport().get_visible_rect()
+ 		if is_instance_valid(host.title_layer):
+-			_scan(host.title_layer, viewport_rect, items)
++			_scan(host.title_layer, viewport_rect, items, context)
+ 		elif is_instance_valid(host.ui):
+-			_scan(host.ui, viewport_rect, items)
+-		var data := _context()
++			_scan(host.ui, viewport_rect, items, context)
++		var data := context.duplicate()
+ 		data["event"] = "visible_frame"
+ 		data["view_schema"] = 2
+ 		data["texts"] = items
+@@ -894,7 +897,7 @@
+ 							covered.append(sub.get_global_rect())
+ 		return host.field.player_visible_objects(covered)
+ 
+-	func _scan(node: Node, clip: Rect2, items: Array, covered: Array[Rect2] = []) -> void:
++	func _scan(node: Node, clip: Rect2, items: Array, context: Dictionary) -> void:
+ 		if node is CanvasLayer and not node.visible: return
+ 		if node is CanvasItem and (not node.is_visible_in_tree() or node.modulate.a <= 0.001): return
+ 		var child_clip := clip
+@@ -903,7 +906,7 @@
+ 			var bounds := control.get_global_rect()
+ 			var visible_bounds := bounds.intersection(clip)
+ 			if not visible_bounds.has_area(): return
+-			_wire(control)
++			_wire(control, context)
+ 			var text := _plain_text(control)
+ 			if text != "":
+ 				var item := {"text": text, "content_clipped": false}
+@@ -913,7 +916,7 @@
+ 					item["complete"] = control.visible_characters < 0 or control.visible_characters >= control.get_total_character_count()
+ 				items.append(item)
+ 			if control.clip_contents or control is ScrollContainer: child_clip = visible_bounds
+-		for child in node.get_children(): _scan(child, child_clip, items, covered)
++		for child in node.get_children(): _scan(child, child_clip, items, context)
+ 
+ 	func _plain_text(control: Control) -> String:
+ 		if control is RichTextLabel: return control.get_parsed_text()

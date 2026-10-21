@@ -14,6 +14,9 @@ var _draft_id := ""
 var _draft_initialized := false
 var _draft_text := ""
 var _draft_title := ""
+var _editor_caret := Vector2i.ZERO
+var _editor_scroll := 0.0
+var _view_serial := 0
 
 func _ready() -> void:
 	name = "ArchivePage"
@@ -23,9 +26,63 @@ func _ready() -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready():
-		if is_instance_valid(_editor): _draft_text = _editor.text
-		if is_instance_valid(_note_title): _draft_title = _note_title.text
-		_build.call_deferred()
+		_rebuild_translated.call_deferred()
+
+func capture_view_state() -> Dictionary:
+	if is_instance_valid(_editor):
+		_draft_text = _editor.text
+		_editor_caret = Vector2i(_editor.get_caret_column(), _editor.get_caret_line())
+		_editor_scroll = _editor.scroll_vertical
+	if is_instance_valid(_note_title): _draft_title = _note_title.text
+	return {"draft_initialized": _draft_initialized, "draft_id": _draft_id,
+		"draft_title": _draft_title, "draft_text": _draft_text, "related": _related.duplicate(),
+		"caret": _editor_caret, "editor_scroll": _editor_scroll}
+
+func restore_view_state(state: Dictionary) -> void:
+	if state.is_empty(): return
+	_draft_initialized = bool(state.get("draft_initialized", false))
+	_draft_id = str(state.get("draft_id", ""))
+	_draft_title = str(state.get("draft_title", ""))
+	_draft_text = str(state.get("draft_text", ""))
+	_related = state.get("related", []).duplicate()
+	_editor_caret = state.get("caret", Vector2i.ZERO)
+	_editor_scroll = float(state.get("editor_scroll", 0.0))
+
+func request_adjacent_page(direction: int) -> bool:
+	if archive == null or not LABELS.has(section): return false
+	var total: int = archive.list_section(section).size()
+	var target := page_index + direction
+	if target < 0 or target * PAGE_LENGTH >= total: return true
+	page_requested.emit(section + "@" + str(target))
+	return true
+
+func _rebuild_translated() -> void:
+	if not is_inside_tree(): return
+	_view_serial += 1
+	var serial := _view_serial
+	capture_view_state()
+	var controls := _focusable()
+	var focused := get_viewport().gui_get_focus_owner()
+	var focus_index := controls.find(focused)
+	var scroll := _parent_scroll()
+	var position := scroll.scroll_vertical if scroll != null else 0
+	_build()
+	await get_tree().process_frame
+	if not is_inside_tree() or serial != _view_serial: return
+	controls = _focusable()
+	if focus_index >= 0 and not controls.is_empty():
+		controls[mini(focus_index, controls.size() - 1)].grab_focus()
+	if scroll != null: scroll.set_deferred("scroll_vertical", position)
+
+func _parent_scroll() -> ScrollContainer:
+	var ancestor := get_parent()
+	while ancestor != null:
+		if ancestor is ScrollContainer: return ancestor
+		ancestor = ancestor.get_parent()
+	return null
+
+func _focusable() -> Array[Control]:
+	return preload("res://scenes/UI/UITransition.gd").focusable_controls(self)
 
 func _build() -> void:
 	for child in get_children():
@@ -158,6 +215,9 @@ func _note_editor(source_id: String) -> void:
 	_editor.custom_minimum_size = Vector2(0, 260)
 	_editor.theme_type_variation = &"BookNoteEdit"
 	add_child(_editor)
+	_editor.set_caret_line(_editor_caret.y)
+	_editor.set_caret_column(_editor_caret.x)
+	_editor.set_deferred("scroll_vertical", _editor_scroll)
 	if not _related.is_empty():
 		_label(tr("关联证据"), &"BookCaptionLabel")
 		for id in _related:

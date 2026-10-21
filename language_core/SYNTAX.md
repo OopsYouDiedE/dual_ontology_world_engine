@@ -1,17 +1,224 @@
-# DV 领域语法与数值类型方案
+# DV 自然书写、执行语法与数值类型方案
 
-本方案名为 surface-v2。当前执行入口与七文件索引见 [README.md](README.md)，现行语法入口见 [docs/syntax.md](../docs/syntax.md)。本文件先列源码已接入的执行子集；第1–14节保留完整语言方案，超出本节边界的语法仍是目标，不能直接作为当前可编译代码或验收证据。
+当前 surface-v2 同时支持面向作者的自然段落、领域句式和面向算法的函数语法。执行入口与七文件索引见 [README.md](README.md)，现行语法入口见 [docs/syntax.md](../docs/syntax.md)。本文件先列源码已接入的执行子集；第1–14节保留完整语言方案，超出执行子集边界的语法仍是目标，不能直接作为当前可编译代码或验收证据。
 
 ### 当前可执行边界
 
-- 已实现：缩进块、fn/axiom、let/var/赋值、return/if/elif/else/while、中文标识符和 define、位置参数、记录/列表字面量、字段/下标、普通算术和短路逻辑；mapping 的 `×` 与 `*` 调用；acceptance 的 degree/levels；有限域 imprint 声明。
+- 已实现的作者书写：`叙述` 原文段落、`台词` 逐行列表、`称谓` 文件内名称、`法则` 的“当……并且……则……并使……”和 `行动` 的本人条件、现场条件、依据与表述；中文引号和标点。原文不要求字符串引号、转义、列表逗号或 `return`。
+- 已实现的算法书写：缩进块、fn/axiom、公式定义 `f(x) = expression`、具名输出 `function y = f(x) ... end`、let/var/赋值、return/if/elif/else/while、中文标识符和 define、位置参数、记录/列表字面量、字段/下标、普通算术和短路逻辑；mapping 的 `×` 与 `*` 调用；acceptance 的 degree/levels；有限域 imprint 声明。
 - 已实现的检查：函数名称/元数、局部变量、let 不可重新赋值、显式参数/返回值/局部名义类型、单位区间字面量、Nat 字面量整数性。Acceptance/Probability/Confidence/Reliability 构造使用独立范围构造器。配平使用精确有理数，最优性由 DV 证书核验器独立确认。
 - 仍待实现：具名实参、通用 record/enum/scalar/generic 声明、单位与一般区间推导、by 证明、完整模块导入/能力系统、闭包、其余领域声明和目标无关 Typed IR。未注解代码采用 Value，既有通用计算仍用有限 double；不能将整个 Core 宣称为精确数值或完全静态证明。
-- 编译器仍支持启动语法，自身尚未改写为新语法。实际写法以 [20-core.dv](20-core.dv)、[30-session.dv](30-session.dv) 和 [70-checks.dv](70-checks.dv) 的表层部分为例；10-compiler 和70中的部分报告仍使用启动语法，不能声称七文件全部转换。
+- 编译器仍支持启动语法，自身尚未改写为新语法。自然书写的实际内容见 [40-chapter1.dv](40-chapter1.dv) 和 [50-chapter2.dv](50-chapter2.dv)，算法见 [20-core.dv](20-core.dv)、[30-session.dv](30-session.dv)；10-compiler 和70中的部分报告仍使用启动语法，不能声称七文件全部转换。
 
-当前 imprint 的执行形态把 achieve、vary、conserve using、limit using、minimize using 分别绑定目标记录、有限变量域、线性守恒式、当前资源/工作预算与具名资源价格。搜索结果经核验后由 dv_imprint_commit 提交。连续求解器和一般命题约束还未接入。
+当前 imprint 的执行形态把 achieve、vary、conserve using、limit using、minimize using 分别绑定目标记录、有限变量域、线性守恒式、当前资源/工作预算与具名资源价格。枚举与线性区间分支剪枝共用模型、候选顺序、预算和独立证书核验，结果经核验后由 dv_imprint_commit 提交。连续求解器和一般命题约束还未接入。
 
 完整语言方案以“谁取得什么材料、如何理解、凭什么采纳、如何选择与行动”为书写单位，目标是让切片、解释、依据、评分和动作拥有专门语法，并由类型携带主体、来源与阶段。当前执行子集以普通函数和已接入的少量领域展开实现算法，其余能力按下面的设计范围阅读。
+
+## 当前执行子集：按段落与句子书写
+
+以下使用独立的中性例子说明语法，不增加游戏设定。新写剧情时先写正文；需要精确描述可执行条件和效果时，再使用明确的领域句式。一般算法仍可使用后面的函数、公式和容器语法。
+
+### 叙述与台词
+
+```dv
+叙述 门前景象：
+    门前落着薄薄的一层灰。
+    她停下脚步，轻声问：“有人吗？”
+
+    屋内没有回答。
+
+台词 门前交谈：
+    “先看看门闩。”
+    “好，我在这里等你。”
+```
+
+`叙述` 返回一个字符串，正文按实际换行保留。`台词` 返回有序字符串列表，每个非空行是一条；它不自动识别说话人、听众或话语真假。它们声明同名的零参数函数，既有调用方可直接用 `门前景象()`、`门前交谈()` 取得原值。
+
+正文只用空格缩进，推荐四格。读取时移除各非空行共有的最小缩进，保留额外缩进、内部空行与文字；声明末尾用于分隔下一段的空行和最后一个结构换行不进入结果。若文本必须含结尾换行或其他精确控制字符，仍可使用原字符串表达式。`台词` 忽略空行，因此不能用空行表示空字符串条目。
+
+正文头的冒号必须是该行最后一个非空白字符，说明性注释放在头行之前。扫描器先识别“叙述/台词/表述……：”的原文头，再展开名称；不要用旧 `define` 将这些正文头改指为 `fn` 等其他语法。普通同名变量、函数调用和 `叙述(x) = x` 一类旧公式仍按原语法处理。
+
+正文在标点、注释和括号扫描之前整体读取。因此引号、反斜杠、`//`、`#include`、未配对括号以及看似程序的语句都只是正文，不发生插值、指令展开或执行。中英文引号可按文学文本的需要直接书写。
+
+在已有函数分支中也可直接写正文，省去 `return "..."`：
+
+```dv
+fn 门前反应(有人应答):
+    if 有人应答:
+        叙述：
+            她退开半步，等候门后的人。
+    else:
+        叙述：
+            她又敲了两下门。
+```
+
+函数内的 `叙述：` 和 `台词：` 都是当前分支的返回语句；分支选择本身仍遵循明确的程序条件。段落文字不会自动成为世界事实、人物认识或已发生事件。
+
+### 名称、中文引号与句子边界
+
+```dv
+称谓 仓房 为「storeroom」。
+称谓 木箱 为「crate」。
+称谓 剩余件数 为「remaining」。
+```
+
+称谓放在本文件所有声明之前，绑定一个文字标识，与旧 `define` 共享本文件作用域；重复名称和非文字值会报错。它不会跨 `#include` 文件泄漏，也不会修改字符串或段落正文。称谓只简化引用，不建立主客观对象对应、不复制事实，也不赋予人物所知。
+
+`「……」` 可用于同一行的文字值，内部反斜杠按字面保留；多行文字请写正文块。普通双引号字符串继续支持原转义规则。自然声明接受中文冒号 `：`、逗号 `，`、顿号 `、` 和句末 `。`；句末句号可省略，每条分句仍独占一行。名称和“的、等于、至少、位于”等连接词之间使用空格，或用中文引号直接界定文字。编译器不猜测连续汉字的分词。
+
+自然表达式中的 `无条件`、`真`、`假`、`非` 具有专用含义，参数请使用其他名称；需要表达这些字面文字时用中文引号。参数声明尚未单独拒绝这些名称，它们在自然表达式中仍会优先解释为专用词，不能靠同名参数改写其含义。
+
+### 法则：条件与效果写成句子
+
+```dv
+法则 领取物品，给定 人物：
+    当 人物 位于 仓房。
+    并且 木箱 的 剩余件数 至少 1。
+    则 木箱 的 剩余件数 增加 -1。
+```
+
+无参数时可省略“，给定……”；多个参数写成“，给定 人物、目标”。原括号参数表也可用于需要显式类型的声明。法则声明创建返回既有 `dv_axiom` 的函数；默认规则名等于声明名，版本为 1。需要兼容既有标识或动态命名时，在正文中显式写 `名为 表达式。`、`版本 表达式。`。
+
+| 句式 | 精确含义 |
+| --- | --- |
+| `对象 的 字段` | `dv_ref(对象, "state", 字段)` |
+| `对象 的 切面 的 字段` | `dv_ref(对象, 切面, 字段)`；引用至多三部分 |
+| `引用 等于 值` 或 `引用 为 值` | `dv_fact(引用, 值)` |
+| `引用 至少 值` | `dv_at_least(引用, 值)` |
+| `人物 位于 地点` | 该人物 `state.location` 等于地点的命题 |
+| `非 命题` | `dv_not`，保留未知 |
+| `命题 并且 命题` | 有序 `dv_all` |
+| `命题 或者 命题` | 以 `dv_not/dv_all` 表达的三值析取 |
+| `引用 变为 值` | `dv_assign` 效果 |
+| `引用 增加 数量` | `dv_increment` 效果，负数表示减少 |
+| `无条件` | `dv_true()` 命题 |
+
+单条 `当` 保留原命题，多条 `当/并且` 按书写顺序形成合取。`则/并使` 按顺序形成效果列表。比较和“位于”先于“并且”，后者先于“或者”；“非”包括它后面的比较，但不越过未加括号的合取/析取。复杂关系用括号明确范围；数值计算和既有函数调用可以直接放入句式。
+
+`真/假` 是属性的布尔值，例如 `木箱 的「sealed」为 真`；条件本身需要三值命题，不能将裸布尔值当作前提，包括把它嵌在“非、并且、或者”中。这里的自然逻辑也不会隐式变成普通 `if` 的布尔判断。
+
+需要精确保留现有复杂表达式时，使用一条 `前提 表达式。` 和一条 `效果 表达式。`，分别给出完整命题和完整效果列表。`前提` 不能与 `当/并且` 混用，`效果` 不能与 `则/并使` 混用。名称/版本等字段重复、未知分句、缺少条件或效果均报错。`则` 后也可直接调用已有的效果构造函数。
+
+声明只构造法则；采纳、验证、推演与正式执行仍经过同一 Core 接口。写下“则……”不会立即改变世界，也不会让人物获知隐藏条件。带后置条件的 `dv_contract` 与其他复杂算法继续使用下节的既有入口。
+
+### 行动：本人条件与现场条件分别写明
+
+```dv
+行动 取一件，给定 人物：
+    编号「take-one」。
+    类别「inspect」。
+    本人须知 人物 位于 仓房。
+    现场要求 木箱 的 剩余件数 至少 1。
+    遵循「领取物品」。
+    可获知 [木箱 的 剩余件数]。
+    依据 []。
+    仅一次 真。
+    表述：
+        她取出一件物品，轻轻合上箱盖。
+```
+
+这是行动值的声明，示例没有替调用方注册法则或提供正式来源。前七项必填，依次对应现有行动记录的 `id`、`kind`、`precondition`、`authority_precondition`、`law`、`grants`、`source_refs`；`依据` 接受来源列表。`仅一次` 和 `表述` 可省略，对应 `once` 和 `surface`。字段顺序由编译器统一，返回值与传入的可变容器独立复制。
+
+本人所需认识、权威现场前提、可能取得的信息与来源各有明确位置。声明和显示表述本身不会授予观察、支付费用或执行行动；这些仍由既有 Prepare → 现场回执 → Complete 完成。复杂的行动附加字段继续通过现有函数组合；当前没有任意中文句子的意图推断、指代消解或自动补全缺失事实。
+
+## 当前执行子集：函数、绑定与演算
+
+### 公式与具名输出
+
+单表达式定义可以省去 `fn` 和 `return`，参数和结果仍可标注当前支持的名义类型：
+
+```dv
+平方(x: Number) -> Number = x * x
+距离平方(x, y) = 平方(x) + 平方(y)
+```
+
+具名输出借鉴 MATLAB 的函数头，整个函数和内部控制块用 `end` 结束：
+
+```dv
+function y: Number = 截断(x: Number)
+    if x < 0
+        y = 0
+    elseif x > 1
+        y = 1
+    else
+        y = x
+    end
+end
+
+function [a: Number, b: Number] = 平分(total: Number)
+    a = total / 2
+    b = total - a
+end
+```
+
+每个输出必须在读到它、裸 `return` 或函数结束之前明确赋值。检查合并所有可到达分支，循环按可能执行零次处理；缺少分支赋值不会获得默认 `false`。函数内仍用 `let/var` 声明其他局部变量，已有 `fn ...:` 缩进语法保持可用。具名输出函数使用裸 `return` 返回当前全部输出。
+
+多输出按声明顺序返回普通列表，例如 `let halves = 平分(10)`，再用 `halves[0]`、`halves[1]` 取值。当前不支持 MATLAB 的调用端多重赋值、`nargout`、矩阵广播或分号语义，也不支持函数值与闭包。公式、具名输出、原有 fn/axiom 降到同一函数 AST、名称/元数/类型检查与 C# 后端；不能定义同名重载。公式是可执行定义，不能自动被当作任意数学方程求根或全称定理。
+
+### 规则定义一次，验证与运行共用
+
+`dv_matches(object, facet, fields)` 把记录展开为一组相等命题的合取；`dv_writes` 把记录展开为有序赋值效果。前提继续使用真、假、未知三值求值，效果继续通过原子的暂存路径执行：
+
+```dv
+开门(门) = dv_contract(
+    "open", 1,
+    dv_matches(门, "mechanical", {"inside_latch": false, "outside_latch": false}),
+    dv_writes(门, "mechanical", {"closed": false}),
+    dv_matches(门, "mechanical", {"closed": false})
+)
+```
+
+`dv_contract(name, version, premise, effects, postcondition)` 在原 `dv_axiom` 数据上增加后置条件。它不隐含世界采纳，仍由 `dv_adopt` 确定 enforce、infer 或 predict 范围。`dv_evaluate(world, name, request)` 的 request 必须给出 operation、mode、event、time、revision；例如对已正式采纳的规则：
+
+```dv
+let request = {"operation": "verify", "mode": "enforce", "event": "open-1", "time": 1, "revision": world.revision}
+let assessment = dv_evaluate(world, "open", request)
+let execution = dv_evaluate(world, "open", dv_with(request, "operation", "run"))
+```
+
+| 操作 | 结果和边界 |
+| --- | --- |
+| `verify` | 同一求值器检查前提、暂存效果与后置条件；成功为 `verified`，`.world` 是未改变的输入副本，`.candidate.domain` 为 `verification`，不追加事件、修订或实际支付 |
+| `run` | 对传入的当前世界重新执行同一求值过程，再提交历史、事件去重、时间和修订；成功为 `applied`，predict 的结果标记为 `prediction` |
+| 前提/后置条件未知 | 分别为 `premise-unknown` / `postcondition-unknown`，保留原世界，不作为假条件或成功提交 |
+| 效果失败/后置条件为假 | 原子回滚；不会留下前半段写入、事件或修订 |
+| 过期修订、重复事件、倒退时间或越域 mode | 保持执行合同的运行错误，不自动改参数重试 |
+
+`dv_verify(world, name, mode, event, time, revision)` 是验证便捷入口；`dv_execute/dv_predict/dv_infer` 保留现有调用。验证的 assessment 记录世界、主体、修订、规则版本、时间与 mode，作用域只覆盖输入快照。成功和失败回执的 world、changes、basis 均与输入独立。候选不是可提交票据；再次运行始终重新核对当前快照。后置条件只检查候选，不负责修补；当前没有 `old()`、任意函数纯度证明或外部 I/O 回滚。宿主动作仍通过 Prepare → 真实回执 → Complete，验证不替代现场执行。
+
+### 一次建立主客观对象对应
+
+```dv
+let view = dv_view(physical, "observer", {"physical_door": "眼前的门", "physical_clock": "墙上时钟"})
+let mind = view.mind
+let bindings = view.bindings
+```
+
+`dv_view` 新建主体世界；已有主体用 `dv_bind(physical, mind, aliases)`。aliases 是显式的“物理 ID → 本地 ID”记录。返回主体和完整 bindings，并保留来源世界 ID/修订。它只创建缺失的 perceived 对象，其种类和具体字段保持未知；既有 mind 的认识、采纳、历史和扩展字段保留。重复或歧义映射、空 ID 与不存在的物理对象被拒绝。实际可见字段继续由 grants、`dv_perceive` 和 `dv_update_mind` 处理，绑定本身不会复制物理事实、法则或隐藏对象列表。
+
+### 解算器、分析器与结果资格
+
+```dv
+let analysis = dv_imprint_analyze(goal, variables, laws, limits, prices)
+let result = dv_imprint_solve_with(true, goal, variables, laws, limits, prices, "auto")
+let valid = dv_imprint_check(result, goal, variables, laws, limits, prices)
+```
+
+`true` 在此只示意调用者已取得 imprint capability；生产仍用既有能力与费用入口。原 `dv_imprint_solve` 使用 auto，表层 imprint 声明继续走同一路径。
+
+| 引擎/分析器 | 适用范围 | 输出资格 |
+| --- | --- | --- |
+| `enumerate` | 有限笛卡尔域的参考枚举 | 精确有理数候选；按原顺序覆盖预算允许的前缀 |
+| `branch_bound` | 同一有限线性模型 | 用保守区间证明整块不可行或不优，保留覆盖证书；不改变预算前缀和平局选择 |
+| `auto` / `dv_imprint_analyze` | 比较候选前缀与区间预处理规模 | 小问题或零维选择枚举；这是准备成本启发式，无现实时间保证 |
+| `dv_analyze_law(world, name)` | 已采纳规则的输入快照 | 前提依赖、未知/冲突输入、版本和 mode；`effects_verified` 明确为 false |
+| `dv_analyze_time(condition, clock, now, until, policy)` | 已支持命题的时钟依赖 | 下一次重新求值边界、依赖、假设和回退信息；不运行世界或同步认识 |
+
+数值误差、搜索完整性和时间适用范围分列。有限域求解的 arithmetic 为 exact-rational；`visited/covered_candidates` 是证书覆盖的候选前缀，不等于实际逐项计算次数。`charged_work = 2 * visited` 保留既有预算单位。`candidate_evaluations/bound_checks/preprocessed_options` 是诊断计数，不能作为总运行时间或额外证书权威。区间界可以宽松，但须保守；独立 checker 从原模型重算 witness 和每个覆盖块，保留旧枚举证书兼容。
+
+只有覆盖全域且有可行 witness 才是 `Optimal`；全域无解为 `Infeasible`。预算截止时分别为 `Feasible` 或 `Unresolved`，并报告 stop_reason，不能把未知部分补成已证明。该接口不接纳任意连续、非线性或概率模型；没有误差估计的粗略数值不能借此成为正式结算。
+
+时间策略 `minute` 对齐现有一分钟采样格并保留实际 fractional due；`invalidate` 返回依赖需要重评的边界，等式恰在当前时刻成立时可返回 now，调用者不能将它当作时间推进。时钟引用按字段语义比较，忽略记录键顺序，省略与空 subject 等价；无法证明的主体范围回退，不当作稳定的非时钟输入。until 早于 now 时返回 `expired-interval`、`complete=false`、`next=now`，不倒退或制造休眠窗口。未支持条件回退 minute-step。`complete` 只表示声明分析支持，仍要求非时钟输入稳定，并由 Session 检查增量、级联和状态失效。两种策略共用 `dv_time_boundary`，不会创建第二套世界模拟。通用 Number 仍为有限 double，明确 Rational 值才有精确数值语义。
 
 ## 文件引用与调试入口
 
@@ -22,7 +229,7 @@
 #include 30-session.dv
 ```
 
-路径相对当前文件，包含 `.dv` 后缀；每个文件加载一次，循环引用与缺失文件报错。依赖先编译，各文件的 define 保持文件作用域。当前功能由共用文件适配器解析，裸编译器接口接收组合后的源和文件范围。
+引用行必须从行首开始，路径相对当前文件，包含 `.dv` 后缀；每个文件加载一次，循环引用与缺失文件报错。缩进正文中的 `#include` 是普通文本。依赖先编译，各文件的 define/称谓保持文件作用域。文件适配器只把 CRLF/CR 规范为 LF，不把 U+2028 等正文字符当成源码换行。当前功能由共用文件适配器解析，裸编译器接口接收组合后的源和文件范围。
 
 `tools/dv_toolchain.py` 是共用文件适配器，生产入口为 [60-game.dv](60-game.dv)，独立检查入口为 [70-checks.dv](70-checks.dv)；[dv-check.json](dv-check.json) 为编辑器选择对应闭包。新轨迹使用二进制 DAG/DVLOG，`rt_json_write(path, value)` 执行时拒绝新 JSON 文件记录；进程内 JSON 交换及历史只读兼容仍保留。调试入口是 `60-game.dv` 的 `dvg_debug_run`，通过 `tools/run_debug.py` 按当前任务授权运行。
 

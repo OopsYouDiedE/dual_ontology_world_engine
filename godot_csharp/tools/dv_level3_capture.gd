@@ -16,6 +16,10 @@ var archive: Node
 var held_keys: Dictionary = {}
 var host_closed := false
 var archive_errors: Array = []
+var capture_interval_ms := 200
+var movement_samples := false
+var held_joy_buttons: Dictionary = {}
+var held_joy_axes: Dictionary = {}
 
 func _initialize() -> void:
 	if "--window-mode=window" not in OS.get_cmdline_user_args():
@@ -30,6 +34,8 @@ func _run() -> void:
 		if argument.begins_with("--mode="): mode = argument.substr(7)
 		if argument.begins_with("--seconds="): seconds = float(argument.substr(10))
 		if argument.begins_with("--dv-speed="): Engine.time_scale = float(argument.trim_prefix("--dv-speed="))
+		if argument.begins_with("--capture-ms="): capture_interval_ms = maxi(100, int(argument.trim_prefix("--capture-ms=")))
+		if argument == "--movement-samples": movement_samples = true
 	if directory == "" or DirAccess.dir_exists_absolute(directory):
 		push_error("Require a new --out directory")
 		quit(2)
@@ -41,7 +47,7 @@ func _run() -> void:
 	archive = load("res://scenes/Host/FrameArchive.cs").new()
 	root.add_child(archive)
 	archive.Configure(host.engine.TimingClockUs())
-	_write("run.dvlog", {"mode": mode, "time_scale": Engine.time_scale, "capture_hz": 5, "duration_real_seconds": seconds, "input": "Input.parse_input_event; no desktop devices"})
+	_write("run.dvlog", {"mode": mode, "time_scale": Engine.time_scale, "capture_interval_ms": capture_interval_ms, "movement_samples": movement_samples, "duration_real_seconds": seconds, "input": "Input.parse_input_event; no desktop devices"})
 	started = Time.get_ticks_msec()
 	host.engine.EventsReady.connect(_host_events)
 	RenderingServer.frame_post_draw.connect(_capture)
@@ -77,6 +83,21 @@ func _process(_delta: float) -> bool:
 		dialogue_seen = false
 	return false
 
+func _physics_process(delta: float) -> bool:
+	if not movement_samples or finishing or not is_instance_valid(archive) or not is_instance_valid(host): return false
+	if not is_instance_valid(host.field) or not is_instance_valid(host.field.player) or not is_instance_valid(host.field.spatial): return false
+	var field: Node2D = host.field
+	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var request: Dictionary = field.continuous_request()
+	if direction == Vector2.ZERO and request.is_empty() and not field.spatial._walking: return false
+	_append("movement-samples.dvlog", {"real_us": Time.get_ticks_usec(), "physics_delta": delta,
+		"position": [field.player.position.x, field.player.position.y], "actor_instance_id": field.player.get_instance_id(),
+		"direction": [direction.x, direction.y], "enabled": field.spatial.enabled(), "ui_busy": host._field_ui_busy(),
+		"map": field.adapter.map_key(), "entered_room": field.adapter.entered_room(field.player.position),
+		"departure_room": field.adapter.departure_room(field.player.position), "authoritative_room": field.snapshot.get("execution_room", ""),
+		"game_time": field.snapshot.get("game_time", 0), "request_id": request.get("request_id", ""), "phase": request.get("phase", "")})
+	return false
+
 func _input_packet(packet: Dictionary) -> void:
 	_append("input-events.dvlog", {"real_ms": Time.get_ticks_msec() - started, "packet": packet})
 	if str(packet.get("kind", "")) == "stop":
@@ -97,9 +118,38 @@ func _input_packet(packet: Dictionary) -> void:
 			var event := InputEventMouseButton.new()
 			event.position = point
 			event.global_position = point
-			event.button_index = MOUSE_BUTTON_LEFT
+			event.button_index = int(packet.get("button", MOUSE_BUTTON_LEFT))
 			event.pressed = down
 			Input.parse_input_event(event)
+	elif str(packet.get("kind", "")) == "joy_button":
+		var button := int(packet.get("button", 0))
+		var down := bool(packet.get("pressed", true))
+		_joy_button(button, down)
+		if down: held_joy_buttons[button] = true
+		else: held_joy_buttons.erase(button)
+		if not packet.has("pressed"):
+			_joy_button(button, false)
+			held_joy_buttons.erase(button)
+	elif str(packet.get("kind", "")) == "joy_axis":
+		var axis := int(packet.get("axis", 0))
+		var value := clampf(float(packet.get("value", 0.0)), -1.0, 1.0)
+		_joy_axis(axis, value)
+		if is_zero_approx(value): held_joy_axes.erase(axis)
+		else: held_joy_axes[axis] = value
+
+func _joy_button(button: int, down: bool) -> void:
+	var event := InputEventJoypadButton.new()
+	event.device = 0
+	event.button_index = button
+	event.pressed = down
+	Input.parse_input_event(event)
+
+func _joy_axis(axis: int, value: float) -> void:
+	var event := InputEventJoypadMotion.new()
+	event.device = 0
+	event.axis = axis
+	event.axis_value = value
+	Input.parse_input_event(event)
 
 func _release_due_keys() -> void:
 	for code in held_keys.keys():
@@ -151,7 +201,7 @@ func _flush_timings() -> void:
 func _capture() -> void:
 	if finishing or directory == "": return
 	var now := Time.get_ticks_msec()
-	if now - last_capture < 200: return
+	if now - last_capture < capture_interval_ms: return
 	last_capture = now
 	if not archive.HasCapacity():
 		host._timing("capture_backpressure", {"real_ms": now - started})
@@ -210,6 +260,14 @@ func _finish() -> void:
 		_key(code, false)
 		_append("input-events.dvlog", {"real_ms": Time.get_ticks_msec() - started, "packet": {"kind": "key-release", "key": OS.get_keycode_string(code), "reason": "capture-end"}})
 	held_keys.clear()
+	for button in held_joy_buttons:
+		_joy_button(button, false)
+		_append("input-events.dvlog", {"real_ms": Time.get_ticks_msec() - started, "packet": {"kind": "joy_button", "button": button, "pressed": false, "reason": "capture-end"}})
+	held_joy_buttons.clear()
+	for axis in held_joy_axes:
+		_joy_axis(axis, 0.0)
+		_append("input-events.dvlog", {"real_ms": Time.get_ticks_msec() - started, "packet": {"kind": "joy_axis", "axis": axis, "value": 0.0, "reason": "capture-end"}})
+	held_joy_axes.clear()
 	_flush_timings()
 	host.shutdown_completed.connect(func(): host_closed = true)
 	host.begin_shutdown()
