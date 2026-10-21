@@ -1,0 +1,8109 @@
+{
+  "schema": "dv-geometry-v1",
+  "cell_size": 32,
+  "maps": {
+    "archive": {
+      "scene": "res://scenes/Chapter2/Maps/archive.tscn",
+      "size": [
+        896.0,
+        608.0
+      ],
+      "sites": {
+        "lock_core": {
+          "point": [
+            256.0,
+            384.0
+          ],
+          "path": "Sites/lock_core",
+          "label": "库门锁芯",
+          "room": "archive:foyer"
+        },
+        "seal_boxes": {
+          "point": [
+            256.0,
+            160.0
+          ],
+          "path": "Sites/seal_boxes",
+          "label": "封存匣",
+          "room": "archive:vault"
+        },
+        "name_warning": {
+          "point": [
+            160.0,
+            384.0
+          ],
+          "path": "Sites/name_warning",
+          "label": "唤名警告",
+          "room": "archive:foyer"
+        },
+        "red_ink": {
+          "point": [
+            608.0,
+            480.0
+          ],
+          "path": "Sites/red_ink",
+          "label": "规程页",
+          "room": "archive:works"
+        },
+        "watch_point": {
+          "point": [
+            320.0,
+            512.0
+          ],
+          "path": "Sites/watch_point",
+          "label": "守夜点",
+          "room": "archive:foyer"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            336.0,
+            252.0
+          ],
+          "path": "Stands/s00",
+          "room": "archive:vault"
+        },
+        "s01": {
+          "point": [
+            816.0,
+            540.0
+          ],
+          "path": "Stands/s01",
+          "room": "archive:works"
+        },
+        "s02": {
+          "point": [
+            80.0,
+            444.0
+          ],
+          "path": "Stands/s02",
+          "room": "archive:foyer"
+        },
+        "s03": {
+          "point": [
+            432.0,
+            540.0
+          ],
+          "path": "Stands/s03",
+          "room": "archive:foyer"
+        },
+        "s04": {
+          "point": [
+            80.0,
+            156.0
+          ],
+          "path": "Stands/s04",
+          "room": "archive:vault"
+        },
+        "s05": {
+          "point": [
+            624.0,
+            540.0
+          ],
+          "path": "Stands/s05",
+          "room": "archive:works"
+        },
+        "s06": {
+          "point": [
+            272.0,
+            444.0
+          ],
+          "path": "Stands/s06",
+          "room": "archive:foyer"
+        },
+        "s07": {
+          "point": [
+            240.0,
+            156.0
+          ],
+          "path": "Stands/s07",
+          "room": "archive:vault"
+        },
+        "s08": {
+          "point": [
+            432.0,
+            156.0
+          ],
+          "path": "Stands/s08",
+          "room": "archive:vault"
+        },
+        "s09": {
+          "point": [
+            144.0,
+            252.0
+          ],
+          "path": "Stands/s09",
+          "room": "archive:vault"
+        },
+        "s10": {
+          "point": [
+            688.0,
+            444.0
+          ],
+          "path": "Stands/s10",
+          "room": "archive:works"
+        },
+        "s11": {
+          "point": [
+            176.0,
+            508.0
+          ],
+          "path": "Stands/s11",
+          "room": "archive:foyer"
+        },
+        "s12": {
+          "point": [
+            336.0,
+            156.0
+          ],
+          "path": "Stands/s12",
+          "room": "archive:vault"
+        },
+        "s13": {
+          "point": [
+            368.0,
+            444.0
+          ],
+          "path": "Stands/s13",
+          "room": "archive:foyer"
+        },
+        "s14": {
+          "point": [
+            720.0,
+            540.0
+          ],
+          "path": "Stands/s14",
+          "room": "archive:works"
+        },
+        "s15": {
+          "point": [
+            176.0,
+            188.0
+          ],
+          "path": "Stands/s15",
+          "room": "archive:vault"
+        }
+      },
+      "spawns": {
+        "south": {
+          "point": [
+            256.0,
+            560.0
+          ],
+          "path": "Spawns/south",
+          "room": "archive:foyer"
+        },
+        "stairs": {
+          "point": [
+            112.0,
+            496.0
+          ],
+          "path": "Spawns/stairs",
+          "room": "archive:foyer"
+        }
+      },
+      "exits": [
+        {
+          "id": "south",
+          "target": "campus_n",
+          "point": [
+            256.0,
+            592.0
+          ],
+          "spawn": "archive_front"
+        },
+        {
+          "id": "down",
+          "target": "counterweight",
+          "point": [
+            64.0,
+            544.0
+          ],
+          "spawn": "from_stairs"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "archive:vault",
+          "region": "vault",
+          "rect": [
+            0,
+            0,
+            512,
+            288
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              512,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "archive:works",
+          "region": "works",
+          "rect": [
+            512,
+            0,
+            384,
+            608
+          ],
+          "rects": [
+            [
+              512,
+              0,
+              384,
+              608
+            ]
+          ]
+        },
+        {
+          "id": "archive:foyer",
+          "region": "foyer",
+          "rect": [
+            0,
+            288,
+            512,
+            320
+          ],
+          "rects": [
+            [
+              0,
+              288,
+              512,
+              320
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "door_000",
+          "from": "archive:foyer",
+          "to": "archive:works",
+          "point": [
+            496.0,
+            480.0
+          ]
+        },
+        {
+          "id": "door_001",
+          "from": "archive:foyer",
+          "to": "archive:vault",
+          "point": [
+            256.0,
+            336.0
+          ]
+        },
+        {
+          "id": "south",
+          "from": "archive:foyer",
+          "to": "campus_n",
+          "target_map": "campus_n",
+          "point": [
+            256.0,
+            592.0
+          ]
+        },
+        {
+          "id": "down",
+          "from": "archive:foyer",
+          "to": "counterweight",
+          "target_map": "counterweight",
+          "point": [
+            64.0,
+            544.0
+          ]
+        }
+      ]
+    },
+    "campus_n": {
+      "scene": "res://scenes/Chapter2/Maps/campus_n.tscn",
+      "size": [
+        3024.0,
+        3216.0
+      ],
+      "sites": {
+        "spring": {
+          "point": [
+            2976.0,
+            2760.0
+          ],
+          "path": "Sites/spring",
+          "label": "汲水泉",
+          "room": "campus_n:campus_n"
+        }
+      },
+      "stations": {},
+      "stands": {},
+      "spawns": {
+        "hall_north": {
+          "point": [
+            672.0,
+            1545.0
+          ],
+          "path": "Spawns/hall_north",
+          "room": "campus_n:campus_n"
+        },
+        "hall_south": {
+          "point": [
+            672.0,
+            2486.0
+          ],
+          "path": "Spawns/hall_south",
+          "room": "campus_n:campus_n"
+        },
+        "hall_east": {
+          "point": [
+            1142.0,
+            2024.0
+          ],
+          "path": "Spawns/hall_east",
+          "room": "campus_n:campus_n"
+        },
+        "archive_front": {
+          "point": [
+            672.0,
+            1214.0
+          ],
+          "path": "Spawns/archive_front",
+          "room": "campus_n:campus_n"
+        },
+        "clinic_front": {
+          "point": [
+            2016.0,
+            3014.0
+          ],
+          "path": "Spawns/clinic_front",
+          "room": "campus_n:campus_n"
+        }
+      },
+      "exits": [
+        {
+          "id": "中央厅北",
+          "target": "central_hall",
+          "point": [
+            672.0,
+            1598.0
+          ],
+          "spawn": "north"
+        },
+        {
+          "id": "中央厅南",
+          "target": "central_hall",
+          "point": [
+            672.0,
+            2433.0
+          ],
+          "spawn": "south"
+        },
+        {
+          "id": "中央厅东",
+          "target": "central_hall",
+          "point": [
+            1089.0,
+            2016.0
+          ],
+          "spawn": "east"
+        },
+        {
+          "id": "名录库",
+          "target": "archive",
+          "point": [
+            672.0,
+            1161.0
+          ],
+          "spawn": "south"
+        },
+        {
+          "id": "诊疗所",
+          "target": "clinic",
+          "point": [
+            2016.0,
+            2961.0
+          ],
+          "spawn": "south"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "campus_n:campus_n",
+          "region": "campus_n",
+          "rect": [
+            0,
+            0,
+            3008,
+            3200
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              3008,
+              3200
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "中央厅北",
+          "from": "campus_n:campus_n",
+          "to": "central_hall",
+          "target_map": "central_hall",
+          "point": [
+            672.0,
+            1598.0
+          ]
+        },
+        {
+          "id": "中央厅南",
+          "from": "campus_n:campus_n",
+          "to": "central_hall",
+          "target_map": "central_hall",
+          "point": [
+            672.0,
+            2433.0
+          ]
+        },
+        {
+          "id": "中央厅东",
+          "from": "campus_n:campus_n",
+          "to": "central_hall",
+          "target_map": "central_hall",
+          "point": [
+            1089.0,
+            2016.0
+          ]
+        },
+        {
+          "id": "名录库",
+          "from": "campus_n:campus_n",
+          "to": "archive",
+          "target_map": "archive",
+          "point": [
+            672.0,
+            1161.0
+          ]
+        },
+        {
+          "id": "诊疗所",
+          "from": "campus_n:campus_n",
+          "to": "clinic",
+          "target_map": "clinic",
+          "point": [
+            2016.0,
+            2961.0
+          ]
+        }
+      ]
+    },
+    "campus_ne": {
+      "scene": "res://scenes/Chapter2/Maps/campus_ne.tscn",
+      "size": [
+        3168.0,
+        3216.0
+      ],
+      "sites": {
+        "spring": {
+          "point": [
+            528.0,
+            2760.0
+          ],
+          "path": "Sites/spring",
+          "label": "汲水泉",
+          "room": "campus_ne:campus_ne"
+        }
+      },
+      "stations": {},
+      "stands": {},
+      "spawns": {
+        "greenhouse_front": {
+          "point": [
+            624.0,
+            2318.0
+          ],
+          "path": "Spawns/greenhouse_front",
+          "room": "campus_ne:campus_ne"
+        }
+      },
+      "exits": [
+        {
+          "id": "温室",
+          "target": "greenhouse",
+          "point": [
+            624.0,
+            2265.0
+          ],
+          "spawn": "south"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "campus_ne:campus_ne",
+          "region": "campus_ne",
+          "rect": [
+            0,
+            0,
+            3168,
+            3200
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              3168,
+              3200
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "温室",
+          "from": "campus_ne:campus_ne",
+          "to": "greenhouse",
+          "target_map": "greenhouse",
+          "point": [
+            624.0,
+            2265.0
+          ]
+        }
+      ]
+    },
+    "campus_nw": {
+      "scene": "res://scenes/Chapter2/Maps/campus_nw.tscn",
+      "size": [
+        2976.0,
+        3216.0
+      ],
+      "sites": {},
+      "stations": {},
+      "stands": {},
+      "spawns": {
+        "living_north": {
+          "point": [
+            1924.0,
+            2961.0
+          ],
+          "path": "Spawns/living_north",
+          "room": "campus_nw:campus_nw"
+        },
+        "resonance_front": {
+          "point": [
+            1344.0,
+            1934.0
+          ],
+          "path": "Spawns/resonance_front",
+          "room": "campus_nw:campus_nw"
+        }
+      },
+      "exits": [
+        {
+          "id": "生活翼北门",
+          "target": "living_hall",
+          "point": [
+            1924.0,
+            3014.0
+          ],
+          "spawn": "north_door"
+        },
+        {
+          "id": "共鸣厅",
+          "target": "resonance",
+          "point": [
+            1344.0,
+            1881.0
+          ],
+          "spawn": "south"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "campus_nw:campus_nw",
+          "region": "campus_nw",
+          "rect": [
+            0,
+            0,
+            2976,
+            3200
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              2976,
+              3200
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "生活翼北门",
+          "from": "campus_nw:campus_nw",
+          "to": "living_hall",
+          "target_map": "living_hall",
+          "point": [
+            1924.0,
+            3014.0
+          ]
+        },
+        {
+          "id": "共鸣厅",
+          "from": "campus_nw:campus_nw",
+          "to": "resonance",
+          "target_map": "resonance",
+          "point": [
+            1344.0,
+            1881.0
+          ]
+        }
+      ]
+    },
+    "campus_s": {
+      "scene": "res://scenes/Chapter2/Maps/campus_s.tscn",
+      "size": [
+        3024.0,
+        3216.0
+      ],
+      "sites": {
+        "oath_court": {
+          "point": [
+            672.0,
+            1776.0
+          ],
+          "path": "Sites/oath_court",
+          "label": "誓约庭",
+          "room": "campus_s:campus_s"
+        },
+        "spring": {
+          "point": [
+            2976.0,
+            120.0
+          ],
+          "path": "Sites/spring",
+          "label": "汲水泉",
+          "room": "campus_s:campus_s"
+        },
+        "drying_yard": {
+          "point": [
+            2400.0,
+            960.0
+          ],
+          "path": "Sites/drying_yard",
+          "label": "晾晒场",
+          "room": "campus_s:campus_s"
+        },
+        "gate": {
+          "point": [
+            672.0,
+            2220.0
+          ],
+          "path": "Sites/gate",
+          "label": "门楼",
+          "room": "campus_s:campus_s"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            456.0,
+            1632.0
+          ],
+          "path": "Stands/s00",
+          "room": "campus_s:campus_s"
+        },
+        "s01": {
+          "point": [
+            528.0,
+            1632.0
+          ],
+          "path": "Stands/s01",
+          "room": "campus_s:campus_s"
+        },
+        "s02": {
+          "point": [
+            600.0,
+            1632.0
+          ],
+          "path": "Stands/s02",
+          "room": "campus_s:campus_s"
+        },
+        "s03": {
+          "point": [
+            744.0,
+            1632.0
+          ],
+          "path": "Stands/s03",
+          "room": "campus_s:campus_s"
+        },
+        "s04": {
+          "point": [
+            816.0,
+            1632.0
+          ],
+          "path": "Stands/s04",
+          "room": "campus_s:campus_s"
+        },
+        "s05": {
+          "point": [
+            888.0,
+            1632.0
+          ],
+          "path": "Stands/s05",
+          "room": "campus_s:campus_s"
+        },
+        "s06": {
+          "point": [
+            456.0,
+            1728.0
+          ],
+          "path": "Stands/s06",
+          "room": "campus_s:campus_s"
+        },
+        "s07": {
+          "point": [
+            528.0,
+            1728.0
+          ],
+          "path": "Stands/s07",
+          "room": "campus_s:campus_s"
+        },
+        "s08": {
+          "point": [
+            600.0,
+            1728.0
+          ],
+          "path": "Stands/s08",
+          "room": "campus_s:campus_s"
+        },
+        "s09": {
+          "point": [
+            744.0,
+            1728.0
+          ],
+          "path": "Stands/s09",
+          "room": "campus_s:campus_s"
+        },
+        "s10": {
+          "point": [
+            816.0,
+            1728.0
+          ],
+          "path": "Stands/s10",
+          "room": "campus_s:campus_s"
+        },
+        "s11": {
+          "point": [
+            888.0,
+            1728.0
+          ],
+          "path": "Stands/s11",
+          "room": "campus_s:campus_s"
+        },
+        "s12": {
+          "point": [
+            456.0,
+            1824.0
+          ],
+          "path": "Stands/s12",
+          "room": "campus_s:campus_s"
+        },
+        "s13": {
+          "point": [
+            528.0,
+            1824.0
+          ],
+          "path": "Stands/s13",
+          "room": "campus_s:campus_s"
+        },
+        "s14": {
+          "point": [
+            600.0,
+            1824.0
+          ],
+          "path": "Stands/s14",
+          "room": "campus_s:campus_s"
+        },
+        "s15": {
+          "point": [
+            744.0,
+            1824.0
+          ],
+          "path": "Stands/s15",
+          "room": "campus_s:campus_s"
+        },
+        "s16": {
+          "point": [
+            816.0,
+            1824.0
+          ],
+          "path": "Stands/s16",
+          "room": "campus_s:campus_s"
+        },
+        "s17": {
+          "point": [
+            888.0,
+            1824.0
+          ],
+          "path": "Stands/s17",
+          "room": "campus_s:campus_s"
+        },
+        "s18": {
+          "point": [
+            456.0,
+            1920.0
+          ],
+          "path": "Stands/s18",
+          "room": "campus_s:campus_s"
+        },
+        "s19": {
+          "point": [
+            528.0,
+            1920.0
+          ],
+          "path": "Stands/s19",
+          "room": "campus_s:campus_s"
+        },
+        "s20": {
+          "point": [
+            600.0,
+            1920.0
+          ],
+          "path": "Stands/s20",
+          "room": "campus_s:campus_s"
+        },
+        "s21": {
+          "point": [
+            744.0,
+            1920.0
+          ],
+          "path": "Stands/s21",
+          "room": "campus_s:campus_s"
+        },
+        "s22": {
+          "point": [
+            816.0,
+            1920.0
+          ],
+          "path": "Stands/s22",
+          "room": "campus_s:campus_s"
+        },
+        "s23": {
+          "point": [
+            888.0,
+            1920.0
+          ],
+          "path": "Stands/s23",
+          "room": "campus_s:campus_s"
+        }
+      },
+      "spawns": {
+        "clinic_front": {
+          "point": [
+            2016.0,
+            374.0
+          ],
+          "path": "Spawns/clinic_front",
+          "room": "campus_s:campus_s"
+        },
+        "logistics_west": {
+          "point": [
+            1089.0,
+            992.0
+          ],
+          "path": "Spawns/logistics_west",
+          "room": "campus_s:campus_s"
+        },
+        "logistics_east": {
+          "point": [
+            1886.0,
+            992.0
+          ],
+          "path": "Spawns/logistics_east",
+          "room": "campus_s:campus_s"
+        },
+        "granary_front": {
+          "point": [
+            2016.0,
+            974.0
+          ],
+          "path": "Spawns/granary_front",
+          "room": "campus_s:campus_s"
+        },
+        "gate_inside": {
+          "point": [
+            672.0,
+            2076.0
+          ],
+          "path": "Spawns/gate_inside",
+          "room": "campus_s:campus_s"
+        },
+        "gate_outside": {
+          "point": [
+            672.0,
+            2388.0
+          ],
+          "path": "Spawns/gate_outside",
+          "room": "campus_s:campus_s"
+        }
+      },
+      "exits": [
+        {
+          "id": "诊疗所",
+          "target": "clinic",
+          "point": [
+            2016.0,
+            321.0
+          ],
+          "spawn": "south"
+        },
+        {
+          "id": "后勤院西",
+          "target": "logistics",
+          "point": [
+            1142.0,
+            984.0
+          ],
+          "spawn": "west"
+        },
+        {
+          "id": "后勤院东",
+          "target": "logistics",
+          "point": [
+            1833.0,
+            984.0
+          ],
+          "spawn": "east"
+        },
+        {
+          "id": "粮仓",
+          "target": "granary",
+          "point": [
+            2016.0,
+            921.0
+          ],
+          "spawn": "south"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "campus_s:campus_s",
+          "region": "campus_s",
+          "rect": [
+            0,
+            0,
+            3008,
+            3200
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              3008,
+              3200
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "诊疗所",
+          "from": "campus_s:campus_s",
+          "to": "clinic",
+          "target_map": "clinic",
+          "point": [
+            2016.0,
+            321.0
+          ]
+        },
+        {
+          "id": "后勤院西",
+          "from": "campus_s:campus_s",
+          "to": "logistics",
+          "target_map": "logistics",
+          "point": [
+            1142.0,
+            984.0
+          ]
+        },
+        {
+          "id": "后勤院东",
+          "from": "campus_s:campus_s",
+          "to": "logistics",
+          "target_map": "logistics",
+          "point": [
+            1833.0,
+            984.0
+          ]
+        },
+        {
+          "id": "粮仓",
+          "from": "campus_s:campus_s",
+          "to": "granary",
+          "target_map": "granary",
+          "point": [
+            2016.0,
+            921.0
+          ]
+        }
+      ]
+    },
+    "campus_sw": {
+      "scene": "res://scenes/Chapter2/Maps/campus_sw.tscn",
+      "size": [
+        2976.0,
+        3216.0
+      ],
+      "sites": {
+        "lane": {
+          "point": [
+            1924.0,
+            736.0
+          ],
+          "path": "Sites/lane",
+          "label": "夹道",
+          "room": "campus_sw:campus_sw"
+        }
+      },
+      "stations": {},
+      "stands": {},
+      "spawns": {
+        "living_north": {
+          "point": [
+            1924.0,
+            321.0
+          ],
+          "path": "Spawns/living_north",
+          "room": "campus_sw:campus_sw"
+        },
+        "lane_west": {
+          "point": [
+            1742.0,
+            744.0
+          ],
+          "path": "Spawns/lane_west",
+          "room": "campus_sw:campus_sw"
+        },
+        "lane_east": {
+          "point": [
+            2107.0,
+            744.0
+          ],
+          "path": "Spawns/lane_east",
+          "room": "campus_sw:campus_sw"
+        }
+      },
+      "exits": [
+        {
+          "id": "生活翼北门",
+          "target": "living_hall",
+          "point": [
+            1924.0,
+            374.0
+          ],
+          "spawn": "north_door"
+        },
+        {
+          "id": "夹道西",
+          "target": "living_hall",
+          "point": [
+            1795.0,
+            736.0
+          ],
+          "spawn": "west_lane"
+        },
+        {
+          "id": "夹道东",
+          "target": "living_hall",
+          "point": [
+            2054.0,
+            736.0
+          ],
+          "spawn": "east_lane"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "campus_sw:campus_sw",
+          "region": "campus_sw",
+          "rect": [
+            0,
+            0,
+            2976,
+            3200
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              2976,
+              3200
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "生活翼北门",
+          "from": "campus_sw:campus_sw",
+          "to": "living_hall",
+          "target_map": "living_hall",
+          "point": [
+            1924.0,
+            374.0
+          ]
+        },
+        {
+          "id": "夹道西",
+          "from": "campus_sw:campus_sw",
+          "to": "living_hall",
+          "target_map": "living_hall",
+          "point": [
+            1795.0,
+            736.0
+          ]
+        },
+        {
+          "id": "夹道东",
+          "from": "campus_sw:campus_sw",
+          "to": "living_hall",
+          "target_map": "living_hall",
+          "point": [
+            2054.0,
+            736.0
+          ]
+        }
+      ]
+    },
+    "central_hall": {
+      "scene": "res://scenes/Chapter2/Maps/central_hall.tscn",
+      "size": [
+        832.0,
+        832.0
+      ],
+      "sites": {
+        "relay": {
+          "point": [
+            416.0,
+            456.0
+          ],
+          "path": "Sites/relay",
+          "label": "传声中继",
+          "room": "central_hall:central_hall"
+        },
+        "mouthpiece": {
+          "point": [
+            352.0,
+            480.0
+          ],
+          "path": "Sites/mouthpiece",
+          "label": "铜口",
+          "room": "central_hall:central_hall"
+        },
+        "central_notice": {
+          "point": [
+            192.0,
+            224.0
+          ],
+          "path": "Sites/central_notice",
+          "label": "中央公告板",
+          "room": "central_hall:central_hall"
+        },
+        "watch_point": {
+          "point": [
+            416.0,
+            640.0
+          ],
+          "path": "Sites/watch_point",
+          "label": "守夜点",
+          "room": "central_hall:central_hall"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            432.0,
+            476.0
+          ],
+          "path": "Stands/s00",
+          "room": "central_hall:central_hall"
+        },
+        "s01": {
+          "point": [
+            112.0,
+            348.0
+          ],
+          "path": "Stands/s01",
+          "room": "central_hall:central_hall"
+        },
+        "s02": {
+          "point": [
+            560.0,
+            188.0
+          ],
+          "path": "Stands/s02",
+          "room": "central_hall:central_hall"
+        },
+        "s03": {
+          "point": [
+            720.0,
+            540.0
+          ],
+          "path": "Stands/s03",
+          "room": "central_hall:central_hall"
+        },
+        "s04": {
+          "point": [
+            304.0,
+            732.0
+          ],
+          "path": "Stands/s04",
+          "room": "central_hall:central_hall"
+        },
+        "s05": {
+          "point": [
+            304.0,
+            188.0
+          ],
+          "path": "Stands/s05",
+          "room": "central_hall:central_hall"
+        },
+        "s06": {
+          "point": [
+            144.0,
+            572.0
+          ],
+          "path": "Stands/s06",
+          "room": "central_hall:central_hall"
+        },
+        "s07": {
+          "point": [
+            528.0,
+            700.0
+          ],
+          "path": "Stands/s07",
+          "room": "central_hall:central_hall"
+        },
+        "s08": {
+          "point": [
+            688.0,
+            348.0
+          ],
+          "path": "Stands/s08",
+          "room": "central_hall:central_hall"
+        },
+        "s09": {
+          "point": [
+            272.0,
+            412.0
+          ],
+          "path": "Stands/s09",
+          "room": "central_hall:central_hall"
+        },
+        "s10": {
+          "point": [
+            432.0,
+            284.0
+          ],
+          "path": "Stands/s10",
+          "room": "central_hall:central_hall"
+        },
+        "s11": {
+          "point": [
+            304.0,
+            572.0
+          ],
+          "path": "Stands/s11",
+          "room": "central_hall:central_hall"
+        },
+        "s12": {
+          "point": [
+            560.0,
+            412.0
+          ],
+          "path": "Stands/s12",
+          "room": "central_hall:central_hall"
+        },
+        "s13": {
+          "point": [
+            560.0,
+            572.0
+          ],
+          "path": "Stands/s13",
+          "room": "central_hall:central_hall"
+        },
+        "s14": {
+          "point": [
+            432.0,
+            604.0
+          ],
+          "path": "Stands/s14",
+          "room": "central_hall:central_hall"
+        },
+        "s15": {
+          "point": [
+            208.0,
+            252.0
+          ],
+          "path": "Stands/s15",
+          "room": "central_hall:central_hall"
+        }
+      },
+      "spawns": {
+        "north": {
+          "point": [
+            416.0,
+            112.0
+          ],
+          "path": "Spawns/north",
+          "room": "central_hall:central_hall"
+        },
+        "south": {
+          "point": [
+            416.0,
+            744.0
+          ],
+          "path": "Spawns/south",
+          "room": "central_hall:central_hall"
+        },
+        "west": {
+          "point": [
+            80.0,
+            432.0
+          ],
+          "path": "Spawns/west",
+          "room": "central_hall:central_hall"
+        },
+        "east": {
+          "point": [
+            768.0,
+            432.0
+          ],
+          "path": "Spawns/east",
+          "room": "central_hall:central_hall"
+        }
+      },
+      "exits": [
+        {
+          "id": "north",
+          "target": "campus_n",
+          "point": [
+            416.0,
+            16.0
+          ],
+          "spawn": "hall_north"
+        },
+        {
+          "id": "south",
+          "target": "campus_n",
+          "point": [
+            416.0,
+            816.0
+          ],
+          "spawn": "hall_south"
+        },
+        {
+          "id": "west",
+          "target": "lecture",
+          "point": [
+            16.0,
+            416.0
+          ],
+          "spawn": "from_central"
+        },
+        {
+          "id": "east",
+          "target": "campus_n",
+          "point": [
+            816.0,
+            416.0
+          ],
+          "spawn": "hall_east"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "central_hall:central_hall",
+          "region": "central_hall",
+          "rect": [
+            0,
+            0,
+            832,
+            832
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              832,
+              832
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "north",
+          "from": "central_hall:central_hall",
+          "to": "campus_n",
+          "target_map": "campus_n",
+          "point": [
+            416.0,
+            16.0
+          ]
+        },
+        {
+          "id": "south",
+          "from": "central_hall:central_hall",
+          "to": "campus_n",
+          "target_map": "campus_n",
+          "point": [
+            416.0,
+            816.0
+          ]
+        },
+        {
+          "id": "west",
+          "from": "central_hall:central_hall",
+          "to": "lecture",
+          "target_map": "lecture",
+          "point": [
+            16.0,
+            416.0
+          ]
+        },
+        {
+          "id": "east",
+          "from": "central_hall:central_hall",
+          "to": "campus_n",
+          "target_map": "campus_n",
+          "point": [
+            816.0,
+            416.0
+          ]
+        }
+      ]
+    },
+    "clinic": {
+      "scene": "res://scenes/Chapter2/Maps/clinic.tscn",
+      "size": [
+        864.0,
+        352.0
+      ],
+      "sites": {
+        "reagent": {
+          "point": [
+            720.0,
+            160.0
+          ],
+          "path": "Sites/reagent",
+          "label": "试剂柜",
+          "room": "clinic:safety"
+        },
+        "empty_bowl": {
+          "point": [
+            160.0,
+            192.0
+          ],
+          "path": "Sites/empty_bowl",
+          "label": "病床",
+          "room": "clinic:ward"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            400.0,
+            220.0
+          ],
+          "path": "Stands/s00",
+          "room": "clinic:ward"
+        },
+        "s01": {
+          "point": [
+            784.0,
+            156.0
+          ],
+          "path": "Stands/s01",
+          "room": "clinic:safety"
+        },
+        "s02": {
+          "point": [
+            80.0,
+            220.0
+          ],
+          "path": "Stands/s02",
+          "room": "clinic:ward"
+        },
+        "s03": {
+          "point": [
+            560.0,
+            284.0
+          ],
+          "path": "Stands/s03",
+          "room": "clinic:ward"
+        },
+        "s04": {
+          "point": [
+            240.0,
+            252.0
+          ],
+          "path": "Stands/s04",
+          "room": "clinic:ward"
+        },
+        "s05": {
+          "point": [
+            720.0,
+            284.0
+          ],
+          "path": "Stands/s05",
+          "room": "clinic:safety"
+        },
+        "s06": {
+          "point": [
+            304.0,
+            156.0
+          ],
+          "path": "Stands/s06",
+          "room": "clinic:ward"
+        },
+        "s07": {
+          "point": [
+            496.0,
+            188.0
+          ],
+          "path": "Stands/s07",
+          "room": "clinic:ward"
+        },
+        "s08": {
+          "point": [
+            688.0,
+            188.0
+          ],
+          "path": "Stands/s08",
+          "room": "clinic:safety"
+        },
+        "s09": {
+          "point": [
+            208.0,
+            156.0
+          ],
+          "path": "Stands/s09",
+          "room": "clinic:ward"
+        },
+        "s10": {
+          "point": [
+            112.0,
+            156.0
+          ],
+          "path": "Stands/s10",
+          "room": "clinic:ward"
+        },
+        "s11": {
+          "point": [
+            176.0,
+            220.0
+          ],
+          "path": "Stands/s11",
+          "room": "clinic:ward"
+        },
+        "s12": {
+          "point": [
+            336.0,
+            252.0
+          ],
+          "path": "Stands/s12",
+          "room": "clinic:ward"
+        },
+        "s13": {
+          "point": [
+            400.0,
+            156.0
+          ],
+          "path": "Stands/s13",
+          "room": "clinic:ward"
+        },
+        "s14": {
+          "point": [
+            560.0,
+            188.0
+          ],
+          "path": "Stands/s14",
+          "room": "clinic:ward"
+        },
+        "s15": {
+          "point": [
+            400.0,
+            284.0
+          ],
+          "path": "Stands/s15",
+          "room": "clinic:ward"
+        }
+      },
+      "spawns": {
+        "south": {
+          "point": [
+            288.0,
+            304.0
+          ],
+          "path": "Spawns/south",
+          "room": "clinic:ward"
+        }
+      },
+      "exits": [
+        {
+          "id": "south",
+          "target": "campus_s",
+          "point": [
+            288.0,
+            336.0
+          ],
+          "spawn": "clinic_front"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "clinic:ward",
+          "region": "ward",
+          "rect": [
+            0,
+            0,
+            640,
+            352
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              640,
+              352
+            ]
+          ]
+        },
+        {
+          "id": "clinic:safety",
+          "region": "safety",
+          "rect": [
+            640,
+            0,
+            224,
+            352
+          ],
+          "rects": [
+            [
+              640,
+              0,
+              224,
+              352
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "door_000",
+          "from": "clinic:safety",
+          "to": "clinic:ward",
+          "point": [
+            624.0,
+            224.0
+          ]
+        },
+        {
+          "id": "south",
+          "from": "clinic:ward",
+          "to": "campus_s",
+          "target_map": "campus_s",
+          "point": [
+            288.0,
+            336.0
+          ]
+        }
+      ]
+    },
+    "counterweight": {
+      "scene": "res://scenes/Chapter2/Maps/counterweight.tscn",
+      "size": [
+        448.0,
+        352.0
+      ],
+      "sites": {
+        "counterweight": {
+          "point": [
+            224.0,
+            192.0
+          ],
+          "path": "Sites/counterweight",
+          "label": "配重",
+          "room": "counterweight:counterweight"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            272.0,
+            252.0
+          ],
+          "path": "Stands/s00",
+          "room": "counterweight:counterweight"
+        },
+        "s01": {
+          "point": [
+            80.0,
+            156.0
+          ],
+          "path": "Stands/s01",
+          "room": "counterweight:counterweight"
+        },
+        "s02": {
+          "point": [
+            368.0,
+            156.0
+          ],
+          "path": "Stands/s02",
+          "room": "counterweight:counterweight"
+        },
+        "s03": {
+          "point": [
+            176.0,
+            284.0
+          ],
+          "path": "Stands/s03",
+          "room": "counterweight:counterweight"
+        },
+        "s04": {
+          "point": [
+            368.0,
+            284.0
+          ],
+          "path": "Stands/s04",
+          "room": "counterweight:counterweight"
+        },
+        "s05": {
+          "point": [
+            304.0,
+            188.0
+          ],
+          "path": "Stands/s05",
+          "room": "counterweight:counterweight"
+        },
+        "s06": {
+          "point": [
+            144.0,
+            156.0
+          ],
+          "path": "Stands/s06",
+          "room": "counterweight:counterweight"
+        },
+        "s07": {
+          "point": [
+            368.0,
+            220.0
+          ],
+          "path": "Stands/s07",
+          "room": "counterweight:counterweight"
+        },
+        "s08": {
+          "point": [
+            208.0,
+            252.0
+          ],
+          "path": "Stands/s08",
+          "room": "counterweight:counterweight"
+        },
+        "s09": {
+          "point": [
+            336.0,
+            252.0
+          ],
+          "path": "Stands/s09",
+          "room": "counterweight:counterweight"
+        },
+        "s10": {
+          "point": [
+            240.0,
+            284.0
+          ],
+          "path": "Stands/s10",
+          "room": "counterweight:counterweight"
+        },
+        "s11": {
+          "point": [
+            304.0,
+            284.0
+          ],
+          "path": "Stands/s11",
+          "room": "counterweight:counterweight"
+        },
+        "s12": {
+          "point": [
+            112.0,
+            156.0
+          ],
+          "path": "Stands/s12",
+          "room": "counterweight:counterweight"
+        },
+        "s13": {
+          "point": [
+            304.0,
+            156.0
+          ],
+          "path": "Stands/s13",
+          "room": "counterweight:counterweight"
+        },
+        "s14": {
+          "point": [
+            336.0,
+            156.0
+          ],
+          "path": "Stands/s14",
+          "room": "counterweight:counterweight"
+        },
+        "s15": {
+          "point": [
+            336.0,
+            188.0
+          ],
+          "path": "Stands/s15",
+          "room": "counterweight:counterweight"
+        }
+      },
+      "spawns": {
+        "from_stairs": {
+          "point": [
+            80.0,
+            272.0
+          ],
+          "path": "Spawns/from_stairs",
+          "room": "counterweight:counterweight"
+        }
+      },
+      "exits": [
+        {
+          "id": "up",
+          "target": "archive",
+          "point": [
+            64.0,
+            240.0
+          ],
+          "spawn": "stairs"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "counterweight:counterweight",
+          "region": "counterweight",
+          "rect": [
+            0,
+            0,
+            448,
+            352
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              448,
+              352
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "up",
+          "from": "counterweight:counterweight",
+          "to": "archive",
+          "target_map": "archive",
+          "point": [
+            64.0,
+            240.0
+          ]
+        }
+      ]
+    },
+    "granary": {
+      "scene": "res://scenes/Chapter2/Maps/granary.tscn",
+      "size": [
+        320.0,
+        288.0
+      ],
+      "sites": {
+        "latch": {
+          "point": [
+            160.0,
+            232.0
+          ],
+          "path": "Sites/latch",
+          "label": "门闩",
+          "room": "granary:granary"
+        },
+        "stock": {
+          "point": [
+            160.0,
+            128.0
+          ],
+          "path": "Sites/stock",
+          "label": "存粮",
+          "room": "granary:granary"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            144.0,
+            188.0
+          ],
+          "path": "Stands/s00",
+          "room": "granary:granary"
+        },
+        "s01": {
+          "point": [
+            176.0,
+            188.0
+          ],
+          "path": "Stands/s01",
+          "room": "granary:granary"
+        }
+      },
+      "spawns": {
+        "south": {
+          "point": [
+            160.0,
+            240.0
+          ],
+          "path": "Spawns/south",
+          "room": "granary:granary"
+        }
+      },
+      "exits": [
+        {
+          "id": "south",
+          "target": "campus_s",
+          "point": [
+            160.0,
+            272.0
+          ],
+          "spawn": "granary_front"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "granary:granary",
+          "region": "granary",
+          "rect": [
+            0,
+            0,
+            320,
+            288
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              320,
+              288
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "south",
+          "from": "granary:granary",
+          "to": "campus_s",
+          "target_map": "campus_s",
+          "point": [
+            160.0,
+            272.0
+          ]
+        }
+      ]
+    },
+    "greenhouse": {
+      "scene": "res://scenes/Chapter2/Maps/greenhouse.tscn",
+      "size": [
+        384.0,
+        992.0
+      ],
+      "sites": {
+        "valve": {
+          "point": [
+            192.0,
+            128.0
+          ],
+          "path": "Sites/valve",
+          "label": "阀门",
+          "room": "greenhouse:greenhouse"
+        },
+        "gauge": {
+          "point": [
+            224.0,
+            128.0
+          ],
+          "path": "Sites/gauge",
+          "label": "压力表",
+          "room": "greenhouse:greenhouse"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            240.0,
+            540.0
+          ],
+          "path": "Stands/s00",
+          "room": "greenhouse:greenhouse"
+        },
+        "s01": {
+          "point": [
+            80.0,
+            156.0
+          ],
+          "path": "Stands/s01",
+          "room": "greenhouse:greenhouse"
+        },
+        "s02": {
+          "point": [
+            80.0,
+            924.0
+          ],
+          "path": "Stands/s02",
+          "room": "greenhouse:greenhouse"
+        },
+        "s03": {
+          "point": [
+            304.0,
+            284.0
+          ],
+          "path": "Stands/s03",
+          "room": "greenhouse:greenhouse"
+        },
+        "s04": {
+          "point": [
+            304.0,
+            796.0
+          ],
+          "path": "Stands/s04",
+          "room": "greenhouse:greenhouse"
+        },
+        "s05": {
+          "point": [
+            80.0,
+            380.0
+          ],
+          "path": "Stands/s05",
+          "room": "greenhouse:greenhouse"
+        },
+        "s06": {
+          "point": [
+            80.0,
+            700.0
+          ],
+          "path": "Stands/s06",
+          "room": "greenhouse:greenhouse"
+        },
+        "s07": {
+          "point": [
+            80.0,
+            540.0
+          ],
+          "path": "Stands/s07",
+          "room": "greenhouse:greenhouse"
+        },
+        "s08": {
+          "point": [
+            240.0,
+            156.0
+          ],
+          "path": "Stands/s08",
+          "room": "greenhouse:greenhouse"
+        },
+        "s09": {
+          "point": [
+            208.0,
+            412.0
+          ],
+          "path": "Stands/s09",
+          "room": "greenhouse:greenhouse"
+        },
+        "s10": {
+          "point": [
+            208.0,
+            668.0
+          ],
+          "path": "Stands/s10",
+          "room": "greenhouse:greenhouse"
+        },
+        "s11": {
+          "point": [
+            304.0,
+            924.0
+          ],
+          "path": "Stands/s11",
+          "room": "greenhouse:greenhouse"
+        },
+        "s12": {
+          "point": [
+            304.0,
+            636.0
+          ],
+          "path": "Stands/s12",
+          "room": "greenhouse:greenhouse"
+        },
+        "s13": {
+          "point": [
+            80.0,
+            252.0
+          ],
+          "path": "Stands/s13",
+          "room": "greenhouse:greenhouse"
+        },
+        "s14": {
+          "point": [
+            304.0,
+            380.0
+          ],
+          "path": "Stands/s14",
+          "room": "greenhouse:greenhouse"
+        },
+        "s15": {
+          "point": [
+            80.0,
+            796.0
+          ],
+          "path": "Stands/s15",
+          "room": "greenhouse:greenhouse"
+        }
+      },
+      "spawns": {
+        "south": {
+          "point": [
+            192.0,
+            944.0
+          ],
+          "path": "Spawns/south",
+          "room": "greenhouse:greenhouse"
+        }
+      },
+      "exits": [
+        {
+          "id": "south",
+          "target": "campus_ne",
+          "point": [
+            192.0,
+            976.0
+          ],
+          "spawn": "greenhouse_front"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "greenhouse:greenhouse",
+          "region": "greenhouse",
+          "rect": [
+            0,
+            0,
+            384,
+            992
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              384,
+              992
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "south",
+          "from": "greenhouse:greenhouse",
+          "to": "campus_ne",
+          "target_map": "campus_ne",
+          "point": [
+            192.0,
+            976.0
+          ]
+        }
+      ]
+    },
+    "harbor": {
+      "scene": "res://scenes/Chapter2/Maps/harbor.tscn",
+      "size": [
+        3168.0,
+        3216.0
+      ],
+      "sites": {
+        "collapse": {
+          "point": [
+            1675.0,
+            2617.0
+          ],
+          "path": "Sites/collapse",
+          "label": "港路塌方处",
+          "room": "harbor:harbor"
+        },
+        "spring": {
+          "point": [
+            528.0,
+            120.0
+          ],
+          "path": "Sites/spring",
+          "label": "汲水泉",
+          "room": "harbor:harbor"
+        },
+        "stele": {
+          "point": [
+            2016.0,
+            1584.0
+          ],
+          "path": "Sites/stele",
+          "label": "契约石碑",
+          "room": "harbor:harbor"
+        },
+        "harbor": {
+          "point": [
+            2424.0,
+            1704.0
+          ],
+          "path": "Sites/harbor",
+          "label": "码头",
+          "room": "harbor:harbor"
+        }
+      },
+      "stations": {},
+      "stands": {},
+      "spawns": {
+        "harbor_landing": {
+          "point": [
+            2016.0,
+            1680.0
+          ],
+          "path": "Spawns/harbor_landing",
+          "room": "harbor:harbor"
+        }
+      },
+      "exits": [],
+      "rooms": [
+        {
+          "id": "harbor:harbor",
+          "region": "harbor",
+          "rect": [
+            0,
+            0,
+            3168,
+            3200
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              3168,
+              3200
+            ]
+          ]
+        }
+      ],
+      "doors": []
+    },
+    "lecture": {
+      "scene": "res://scenes/Chapter2/Maps/lecture.tscn",
+      "size": [
+        704.0,
+        576.0
+      ],
+      "sites": {
+        "blackboard": {
+          "point": [
+            352.0,
+            168.0
+          ],
+          "path": "Sites/blackboard",
+          "label": "黑板",
+          "room": "lecture:lecture"
+        },
+        "timetable": {
+          "point": [
+            576.0,
+            136.0
+          ],
+          "path": "Sites/timetable",
+          "label": "课表",
+          "room": "lecture:lecture"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            336.0,
+            284.0
+          ],
+          "path": "Stands/s00",
+          "room": "lecture:lecture"
+        },
+        "s01": {
+          "point": [
+            624.0,
+            508.0
+          ],
+          "path": "Stands/s01",
+          "room": "lecture:lecture"
+        },
+        "s02": {
+          "point": [
+            80.0,
+            508.0
+          ],
+          "path": "Stands/s02",
+          "room": "lecture:lecture"
+        },
+        "s03": {
+          "point": [
+            624.0,
+            156.0
+          ],
+          "path": "Stands/s03",
+          "room": "lecture:lecture"
+        },
+        "s04": {
+          "point": [
+            80.0,
+            156.0
+          ],
+          "path": "Stands/s04",
+          "room": "lecture:lecture"
+        },
+        "s05": {
+          "point": [
+            368.0,
+            508.0
+          ],
+          "path": "Stands/s05",
+          "room": "lecture:lecture"
+        },
+        "s06": {
+          "point": [
+            592.0,
+            316.0
+          ],
+          "path": "Stands/s06",
+          "room": "lecture:lecture"
+        },
+        "s07": {
+          "point": [
+            240.0,
+            156.0
+          ],
+          "path": "Stands/s07",
+          "room": "lecture:lecture"
+        },
+        "s08": {
+          "point": [
+            432.0,
+            156.0
+          ],
+          "path": "Stands/s08",
+          "room": "lecture:lecture"
+        },
+        "s09": {
+          "point": [
+            80.0,
+            316.0
+          ],
+          "path": "Stands/s09",
+          "room": "lecture:lecture"
+        },
+        "s10": {
+          "point": [
+            528.0,
+            220.0
+          ],
+          "path": "Stands/s10",
+          "room": "lecture:lecture"
+        },
+        "s11": {
+          "point": [
+            176.0,
+            252.0
+          ],
+          "path": "Stands/s11",
+          "room": "lecture:lecture"
+        },
+        "s12": {
+          "point": [
+            304.0,
+            412.0
+          ],
+          "path": "Stands/s12",
+          "room": "lecture:lecture"
+        },
+        "s13": {
+          "point": [
+            432.0,
+            252.0
+          ],
+          "path": "Stands/s13",
+          "room": "lecture:lecture"
+        },
+        "s14": {
+          "point": [
+            80.0,
+            412.0
+          ],
+          "path": "Stands/s14",
+          "room": "lecture:lecture"
+        },
+        "s15": {
+          "point": [
+            592.0,
+            412.0
+          ],
+          "path": "Stands/s15",
+          "room": "lecture:lecture"
+        }
+      },
+      "spawns": {
+        "from_central": {
+          "point": [
+            640.0,
+            336.0
+          ],
+          "path": "Spawns/from_central",
+          "room": "lecture:lecture"
+        }
+      },
+      "exits": [
+        {
+          "id": "east",
+          "target": "central_hall",
+          "point": [
+            688.0,
+            320.0
+          ],
+          "spawn": "west"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "lecture:lecture",
+          "region": "lecture",
+          "rect": [
+            0,
+            0,
+            704,
+            576
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              704,
+              576
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "east",
+          "from": "lecture:lecture",
+          "to": "central_hall",
+          "target_map": "central_hall",
+          "point": [
+            688.0,
+            320.0
+          ]
+        }
+      ]
+    },
+    "living_floor": {
+      "scene": "res://scenes/Chapter2/Maps/living_floor.tscn",
+      "size": [
+        2752.0,
+        1600.0
+      ],
+      "sites": {
+        "zone_jia_transmitter": {
+          "point": [
+            800.0,
+            136.0
+          ],
+          "path": "Sites/zone_jia_transmitter",
+          "label": "铜口",
+          "room": "zone_jia:hall"
+        },
+        "zone_jia_zone_rules": {
+          "point": [
+            896.0,
+            136.0
+          ],
+          "path": "Sites/zone_jia_zone_rules",
+          "label": "公告框",
+          "room": "zone_jia:hall"
+        },
+        "zone_jia_isolation_gate": {
+          "point": [
+            1104.0,
+            384.0
+          ],
+          "path": "Sites/zone_jia_isolation_gate",
+          "label": "隔离门",
+          "room": "zone_jia:foyer"
+        },
+        "zone_ding_transmitter": {
+          "point": [
+            1952.0,
+            136.0
+          ],
+          "path": "Sites/zone_ding_transmitter",
+          "label": "铜口",
+          "room": "zone_ding:hall"
+        },
+        "zone_ding_zone_rules": {
+          "point": [
+            1856.0,
+            136.0
+          ],
+          "path": "Sites/zone_ding_zone_rules",
+          "label": "公告框",
+          "room": "zone_ding:hall"
+        },
+        "zone_ding_isolation_gate": {
+          "point": [
+            1648.0,
+            384.0
+          ],
+          "path": "Sites/zone_ding_isolation_gate",
+          "label": "隔离门",
+          "room": "zone_ding:foyer"
+        },
+        "zone_bing_transmitter": {
+          "point": [
+            800.0,
+            840.0
+          ],
+          "path": "Sites/zone_bing_transmitter",
+          "label": "铜口",
+          "room": "zone_bing:hall"
+        },
+        "zone_bing_zone_rules": {
+          "point": [
+            896.0,
+            840.0
+          ],
+          "path": "Sites/zone_bing_zone_rules",
+          "label": "公告框",
+          "room": "zone_bing:hall"
+        },
+        "zone_bing_isolation_gate": {
+          "point": [
+            1104.0,
+            1088.0
+          ],
+          "path": "Sites/zone_bing_isolation_gate",
+          "label": "隔离门",
+          "room": "zone_bing:foyer"
+        },
+        "transmitter": {
+          "point": [
+            1952.0,
+            840.0
+          ],
+          "path": "Sites/transmitter",
+          "label": "铜口",
+          "room": "zone_yi:hall"
+        },
+        "zone_rules": {
+          "point": [
+            1856.0,
+            840.0
+          ],
+          "path": "Sites/zone_rules",
+          "label": "公告框",
+          "room": "zone_yi:hall"
+        },
+        "isolation_gate": {
+          "point": [
+            1648.0,
+            1088.0
+          ],
+          "path": "Sites/isolation_gate",
+          "label": "隔离门",
+          "room": "zone_yi:foyer"
+        },
+        "bed": {
+          "point": [
+            2458.0,
+            900.0
+          ],
+          "path": "Sites/bed",
+          "label": "bed",
+          "room": "zone_yi:north_1"
+        },
+        "E1": {
+          "point": [
+            1626.0,
+            1100.0
+          ],
+          "path": "Sites/E1",
+          "label": "",
+          "room": "living_hall:hall"
+        },
+        "E2": {
+          "point": [
+            1662.0,
+            1126.0
+          ],
+          "path": "Sites/E2",
+          "label": "",
+          "room": "zone_yi:foyer"
+        },
+        "E6": {
+          "point": [
+            2122.0,
+            906.0
+          ],
+          "path": "Sites/E6",
+          "label": "",
+          "room": "zone_yi:north_2"
+        },
+        "E7": {
+          "point": [
+            1968.0,
+            962.0
+          ],
+          "path": "Sites/E7",
+          "label": "",
+          "room": "zone_yi:hall"
+        },
+        "E10": {
+          "point": [
+            1968.0,
+            1206.0
+          ],
+          "path": "Sites/E10",
+          "label": "",
+          "room": "zone_yi:prep"
+        },
+        "E11": {
+          "point": [
+            2406.0,
+            814.0
+          ],
+          "path": "Sites/E11",
+          "label": "",
+          "room": "zone_yi:north_1"
+        },
+        "hall_copper_seat": {
+          "point": [
+            1968.0,
+            944.0
+          ],
+          "path": "Sites/hall_copper_seat",
+          "label": "",
+          "room": "zone_yi:hall"
+        },
+        "hall_tea_side": {
+          "point": [
+            1920.0,
+            1004.0
+          ],
+          "path": "Sites/hall_tea_side",
+          "label": "",
+          "room": "zone_yi:hall"
+        },
+        "hall_window_side": {
+          "point": [
+            1860.0,
+            984.0
+          ],
+          "path": "Sites/hall_window_side",
+          "label": "",
+          "room": "zone_yi:hall"
+        },
+        "living_hall_watch_point": {
+          "point": [
+            1376.0,
+            944.0
+          ],
+          "path": "Sites/living_hall_watch_point",
+          "label": "守夜点",
+          "room": "living_hall:hall"
+        },
+        "living_hall_hall_notice": {
+          "point": [
+            1472.0,
+            264.0
+          ],
+          "path": "Sites/living_hall_hall_notice",
+          "label": "生活翼公告板",
+          "room": "living_hall:hall"
+        },
+        "living_hall_fireplace": {
+          "point": [
+            1248.0,
+            264.0
+          ],
+          "path": "Sites/living_hall_fireplace",
+          "label": "壁炉",
+          "room": "living_hall:hall"
+        },
+        "living_hall_living_south_table": {
+          "point": [
+            1360.0,
+            892.0
+          ],
+          "path": "Sites/living_hall_living_south_table",
+          "label": "",
+          "room": "living_hall:hall"
+        },
+        "living_hall_living_piano": {
+          "point": [
+            1280.0,
+            448.0
+          ],
+          "path": "Sites/living_hall_living_piano",
+          "label": "",
+          "room": "living_hall:hall"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "zone_jia_s00": {
+          "point": [
+            560.0,
+            220.0
+          ],
+          "path": "Stands/zone_jia_s00",
+          "room": "zone_jia:north_2"
+        },
+        "zone_jia_s01": {
+          "point": [
+            80.0,
+            636.0
+          ],
+          "path": "Stands/zone_jia_s01",
+          "room": "zone_jia:south_0"
+        },
+        "zone_jia_s02": {
+          "point": [
+            912.0,
+            604.0
+          ],
+          "path": "Stands/zone_jia_s02",
+          "room": "zone_jia:prep"
+        },
+        "zone_jia_s03": {
+          "point": [
+            1072.0,
+            188.0
+          ],
+          "path": "Stands/zone_jia_s03",
+          "room": "zone_jia:wc"
+        },
+        "zone_jia_s04": {
+          "point": [
+            144.0,
+            156.0
+          ],
+          "path": "Stands/zone_jia_s04",
+          "room": "zone_jia:north_0"
+        },
+        "zone_jia_s05": {
+          "point": [
+            528.0,
+            636.0
+          ],
+          "path": "Stands/zone_jia_s05",
+          "room": "zone_jia:south_2"
+        },
+        "zone_jia_s06": {
+          "point": [
+            816.0,
+            156.0
+          ],
+          "path": "Stands/zone_jia_s06",
+          "room": "zone_jia:hall"
+        },
+        "zone_jia_s07": {
+          "point": [
+            848.0,
+            380.0
+          ],
+          "path": "Stands/zone_jia_s07",
+          "room": "zone_jia:hall"
+        },
+        "zone_jia_s08": {
+          "point": [
+            304.0,
+            636.0
+          ],
+          "path": "Stands/zone_jia_s08",
+          "room": "zone_jia:south_1"
+        },
+        "zone_jia_s09": {
+          "point": [
+            368.0,
+            156.0
+          ],
+          "path": "Stands/zone_jia_s09",
+          "room": "zone_jia:north_1"
+        },
+        "zone_jia_s10": {
+          "point": [
+            1040.0,
+            412.0
+          ],
+          "path": "Stands/zone_jia_s10",
+          "room": "zone_jia:foyer"
+        },
+        "zone_jia_s11": {
+          "point": [
+            752.0,
+            636.0
+          ],
+          "path": "Stands/zone_jia_s11",
+          "room": "zone_jia:prep"
+        },
+        "zone_jia_s12": {
+          "point": [
+            176.0,
+            572.0
+          ],
+          "path": "Stands/zone_jia_s12",
+          "room": "zone_jia:south_0"
+        },
+        "zone_jia_s13": {
+          "point": [
+            400.0,
+            572.0
+          ],
+          "path": "Stands/zone_jia_s13",
+          "room": "zone_jia:south_1"
+        },
+        "zone_jia_s14": {
+          "point": [
+            624.0,
+            572.0
+          ],
+          "path": "Stands/zone_jia_s14",
+          "room": "zone_jia:south_2"
+        },
+        "zone_jia_s15": {
+          "point": [
+            752.0,
+            348.0
+          ],
+          "path": "Stands/zone_jia_s15",
+          "room": "zone_jia:hall"
+        },
+        "zone_ding_s00": {
+          "point": [
+            2192.0,
+            220.0
+          ],
+          "path": "Stands/zone_ding_s00",
+          "room": "zone_ding:north_2"
+        },
+        "zone_ding_s01": {
+          "point": [
+            2672.0,
+            636.0
+          ],
+          "path": "Stands/zone_ding_s01",
+          "room": "zone_ding:south_0"
+        },
+        "zone_ding_s02": {
+          "point": [
+            1840.0,
+            604.0
+          ],
+          "path": "Stands/zone_ding_s02",
+          "room": "zone_ding:prep"
+        },
+        "zone_ding_s03": {
+          "point": [
+            1680.0,
+            188.0
+          ],
+          "path": "Stands/zone_ding_s03",
+          "room": "zone_ding:wc"
+        },
+        "zone_ding_s04": {
+          "point": [
+            2608.0,
+            156.0
+          ],
+          "path": "Stands/zone_ding_s04",
+          "room": "zone_ding:north_0"
+        },
+        "zone_ding_s05": {
+          "point": [
+            2224.0,
+            636.0
+          ],
+          "path": "Stands/zone_ding_s05",
+          "room": "zone_ding:south_2"
+        },
+        "zone_ding_s06": {
+          "point": [
+            1936.0,
+            156.0
+          ],
+          "path": "Stands/zone_ding_s06",
+          "room": "zone_ding:hall"
+        },
+        "zone_ding_s07": {
+          "point": [
+            1872.0,
+            380.0
+          ],
+          "path": "Stands/zone_ding_s07",
+          "room": "zone_ding:hall"
+        },
+        "zone_ding_s08": {
+          "point": [
+            2448.0,
+            636.0
+          ],
+          "path": "Stands/zone_ding_s08",
+          "room": "zone_ding:south_1"
+        },
+        "zone_ding_s09": {
+          "point": [
+            2384.0,
+            156.0
+          ],
+          "path": "Stands/zone_ding_s09",
+          "room": "zone_ding:north_1"
+        },
+        "zone_ding_s10": {
+          "point": [
+            1712.0,
+            412.0
+          ],
+          "path": "Stands/zone_ding_s10",
+          "room": "zone_ding:foyer"
+        },
+        "zone_ding_s11": {
+          "point": [
+            2000.0,
+            636.0
+          ],
+          "path": "Stands/zone_ding_s11",
+          "room": "zone_ding:prep"
+        },
+        "zone_ding_s12": {
+          "point": [
+            2000.0,
+            348.0
+          ],
+          "path": "Stands/zone_ding_s12",
+          "room": "zone_ding:hall"
+        },
+        "zone_ding_s13": {
+          "point": [
+            2128.0,
+            572.0
+          ],
+          "path": "Stands/zone_ding_s13",
+          "room": "zone_ding:south_2"
+        },
+        "zone_ding_s14": {
+          "point": [
+            2352.0,
+            572.0
+          ],
+          "path": "Stands/zone_ding_s14",
+          "room": "zone_ding:south_1"
+        },
+        "zone_ding_s15": {
+          "point": [
+            2576.0,
+            572.0
+          ],
+          "path": "Stands/zone_ding_s15",
+          "room": "zone_ding:south_0"
+        },
+        "zone_bing_s00": {
+          "point": [
+            560.0,
+            924.0
+          ],
+          "path": "Stands/zone_bing_s00",
+          "room": "zone_bing:north_2"
+        },
+        "zone_bing_s01": {
+          "point": [
+            80.0,
+            1340.0
+          ],
+          "path": "Stands/zone_bing_s01",
+          "room": "zone_bing:south_0"
+        },
+        "zone_bing_s02": {
+          "point": [
+            912.0,
+            1308.0
+          ],
+          "path": "Stands/zone_bing_s02",
+          "room": "zone_bing:prep"
+        },
+        "zone_bing_s03": {
+          "point": [
+            1072.0,
+            892.0
+          ],
+          "path": "Stands/zone_bing_s03",
+          "room": "zone_bing:wc"
+        },
+        "zone_bing_s04": {
+          "point": [
+            144.0,
+            860.0
+          ],
+          "path": "Stands/zone_bing_s04",
+          "room": "zone_bing:north_0"
+        },
+        "zone_bing_s05": {
+          "point": [
+            528.0,
+            1340.0
+          ],
+          "path": "Stands/zone_bing_s05",
+          "room": "zone_bing:south_2"
+        },
+        "zone_bing_s06": {
+          "point": [
+            816.0,
+            860.0
+          ],
+          "path": "Stands/zone_bing_s06",
+          "room": "zone_bing:hall"
+        },
+        "zone_bing_s07": {
+          "point": [
+            752.0,
+            1084.0
+          ],
+          "path": "Stands/zone_bing_s07",
+          "room": "zone_bing:hall"
+        },
+        "zone_bing_s08": {
+          "point": [
+            1040.0,
+            1116.0
+          ],
+          "path": "Stands/zone_bing_s08",
+          "room": "zone_bing:foyer"
+        },
+        "zone_bing_s09": {
+          "point": [
+            304.0,
+            1340.0
+          ],
+          "path": "Stands/zone_bing_s09",
+          "room": "zone_bing:south_1"
+        },
+        "zone_bing_s10": {
+          "point": [
+            368.0,
+            860.0
+          ],
+          "path": "Stands/zone_bing_s10",
+          "room": "zone_bing:north_1"
+        },
+        "zone_bing_s11": {
+          "point": [
+            752.0,
+            1340.0
+          ],
+          "path": "Stands/zone_bing_s11",
+          "room": "zone_bing:prep"
+        },
+        "zone_bing_s12": {
+          "point": [
+            912.0,
+            1052.0
+          ],
+          "path": "Stands/zone_bing_s12",
+          "room": "zone_bing:hall"
+        },
+        "zone_bing_s13": {
+          "point": [
+            176.0,
+            1276.0
+          ],
+          "path": "Stands/zone_bing_s13",
+          "room": "zone_bing:south_0"
+        },
+        "zone_bing_s14": {
+          "point": [
+            400.0,
+            1276.0
+          ],
+          "path": "Stands/zone_bing_s14",
+          "room": "zone_bing:south_1"
+        },
+        "zone_bing_s15": {
+          "point": [
+            624.0,
+            1276.0
+          ],
+          "path": "Stands/zone_bing_s15",
+          "room": "zone_bing:south_2"
+        },
+        "zone_yi_s00": {
+          "point": [
+            2224.0,
+            924.0
+          ],
+          "path": "Stands/zone_yi_s00",
+          "room": "zone_yi:north_2"
+        },
+        "zone_yi_s01": {
+          "point": [
+            2672.0,
+            1340.0
+          ],
+          "path": "Stands/zone_yi_s01",
+          "room": "zone_yi:south_0"
+        },
+        "zone_yi_s02": {
+          "point": [
+            1712.0,
+            1116.0
+          ],
+          "path": "Stands/zone_yi_s02",
+          "room": "zone_yi:foyer"
+        },
+        "zone_yi_s03": {
+          "point": [
+            2192.0,
+            1340.0
+          ],
+          "path": "Stands/zone_yi_s03",
+          "room": "zone_yi:south_2"
+        },
+        "zone_yi_s04": {
+          "point": [
+            2640.0,
+            924.0
+          ],
+          "path": "Stands/zone_yi_s04",
+          "room": "zone_yi:north_0"
+        },
+        "zone_yi_s05": {
+          "point": [
+            1840.0,
+            860.0
+          ],
+          "path": "Stands/zone_yi_s05",
+          "room": "zone_yi:hall"
+        },
+        "zone_yi_s06": {
+          "point": [
+            2000.0,
+            1084.0
+          ],
+          "path": "Stands/zone_yi_s06",
+          "room": "zone_yi:hall"
+        },
+        "zone_yi_s07": {
+          "point": [
+            1840.0,
+            1308.0
+          ],
+          "path": "Stands/zone_yi_s07",
+          "room": "zone_yi:prep"
+        },
+        "zone_yi_s08": {
+          "point": [
+            2416.0,
+            1340.0
+          ],
+          "path": "Stands/zone_yi_s08",
+          "room": "zone_yi:south_1"
+        },
+        "zone_yi_s09": {
+          "point": [
+            2416.0,
+            924.0
+          ],
+          "path": "Stands/zone_yi_s09",
+          "room": "zone_yi:north_1"
+        },
+        "zone_yi_s10": {
+          "point": [
+            1680.0,
+            892.0
+          ],
+          "path": "Stands/zone_yi_s10",
+          "room": "zone_yi:wc"
+        },
+        "zone_yi_s11": {
+          "point": [
+            2000.0,
+            892.0
+          ],
+          "path": "Stands/zone_yi_s11",
+          "room": "zone_yi:hall"
+        },
+        "zone_yi_s12": {
+          "point": [
+            2000.0,
+            1340.0
+          ],
+          "path": "Stands/zone_yi_s12",
+          "room": "zone_yi:prep"
+        },
+        "zone_yi_s13": {
+          "point": [
+            1840.0,
+            1052.0
+          ],
+          "path": "Stands/zone_yi_s13",
+          "room": "zone_yi:hall"
+        },
+        "zone_yi_s14": {
+          "point": [
+            2128.0,
+            860.0
+          ],
+          "path": "Stands/zone_yi_s14",
+          "room": "zone_yi:north_2"
+        },
+        "zone_yi_s15": {
+          "point": [
+            2576.0,
+            1276.0
+          ],
+          "path": "Stands/zone_yi_s15",
+          "room": "zone_yi:south_0"
+        },
+        "living_hall_s00": {
+          "point": [
+            1360.0,
+            892.0
+          ],
+          "path": "Stands/living_hall_s00",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s01": {
+          "point": [
+            1552.0,
+            1532.0
+          ],
+          "path": "Stands/living_hall_s01",
+          "room": "living_hall:bath"
+        },
+        "living_hall_s02": {
+          "point": [
+            1552.0,
+            284.0
+          ],
+          "path": "Stands/living_hall_s02",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s03": {
+          "point": [
+            1264.0,
+            1276.0
+          ],
+          "path": "Stands/living_hall_s03",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s04": {
+          "point": [
+            1200.0,
+            284.0
+          ],
+          "path": "Stands/living_hall_s04",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s05": {
+          "point": [
+            1520.0,
+            1148.0
+          ],
+          "path": "Stands/living_hall_s05",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s06": {
+          "point": [
+            1264.0,
+            1532.0
+          ],
+          "path": "Stands/living_hall_s06",
+          "room": "living_hall:bath"
+        },
+        "living_hall_s07": {
+          "point": [
+            1424.0,
+            476.0
+          ],
+          "path": "Stands/living_hall_s07",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s08": {
+          "point": [
+            1200.0,
+            540.0
+          ],
+          "path": "Stands/living_hall_s08",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s09": {
+          "point": [
+            1232.0,
+            1052.0
+          ],
+          "path": "Stands/living_hall_s09",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s10": {
+          "point": [
+            1552.0,
+            956.0
+          ],
+          "path": "Stands/living_hall_s10",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s11": {
+          "point": [
+            1360.0,
+            316.0
+          ],
+          "path": "Stands/living_hall_s11",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s12": {
+          "point": [
+            1520.0,
+            604.0
+          ],
+          "path": "Stands/living_hall_s12",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s13": {
+          "point": [
+            1360.0,
+            1148.0
+          ],
+          "path": "Stands/living_hall_s13",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s14": {
+          "point": [
+            1424.0,
+            1276.0
+          ],
+          "path": "Stands/living_hall_s14",
+          "room": "living_hall:hall"
+        },
+        "living_hall_s15": {
+          "point": [
+            1392.0,
+            1468.0
+          ],
+          "path": "Stands/living_hall_s15",
+          "room": "living_hall:bath"
+        },
+        "zone_jia_s16": {
+          "point": [
+            912.0,
+            156.0
+          ],
+          "path": "Stands/zone_jia_s16",
+          "room": "zone_jia:hall"
+        },
+        "zone_ding_s16": {
+          "point": [
+            1840.0,
+            156.0
+          ],
+          "path": "Stands/zone_ding_s16",
+          "room": "zone_ding:hall"
+        },
+        "zone_bing_s16": {
+          "point": [
+            912.0,
+            860.0
+          ],
+          "path": "Stands/zone_bing_s16",
+          "room": "zone_bing:hall"
+        }
+      },
+      "spawns": {
+        "zone_jia_from_hall": {
+          "point": [
+            1088.0,
+            400.0
+          ],
+          "path": "Spawns/zone_jia_from_hall",
+          "room": "zone_jia:foyer"
+        },
+        "zone_ding_from_hall": {
+          "point": [
+            1664.0,
+            400.0
+          ],
+          "path": "Spawns/zone_ding_from_hall",
+          "room": "zone_ding:foyer"
+        },
+        "zone_bing_from_hall": {
+          "point": [
+            1088.0,
+            1104.0
+          ],
+          "path": "Spawns/zone_bing_from_hall",
+          "room": "zone_bing:foyer"
+        },
+        "zone_yi_from_hall": {
+          "point": [
+            1664.0,
+            1104.0
+          ],
+          "path": "Spawns/zone_yi_from_hall",
+          "room": "zone_yi:foyer"
+        },
+        "living_hall_north_door": {
+          "point": [
+            1376.0,
+            232.0
+          ],
+          "path": "Spawns/living_hall_north_door",
+          "room": "living_hall:hall"
+        },
+        "living_hall_west_north": {
+          "point": [
+            1172.0,
+            400.0
+          ],
+          "path": "Spawns/living_hall_west_north",
+          "room": "living_hall:hall"
+        },
+        "living_hall_west_south": {
+          "point": [
+            1172.0,
+            1104.0
+          ],
+          "path": "Spawns/living_hall_west_south",
+          "room": "living_hall:hall"
+        },
+        "living_hall_east_north": {
+          "point": [
+            1580.0,
+            400.0
+          ],
+          "path": "Spawns/living_hall_east_north",
+          "room": "living_hall:hall"
+        },
+        "living_hall_east_south": {
+          "point": [
+            1580.0,
+            1104.0
+          ],
+          "path": "Spawns/living_hall_east_south",
+          "room": "living_hall:hall"
+        },
+        "living_hall_west_lane": {
+          "point": [
+            1172.0,
+            656.0
+          ],
+          "path": "Spawns/living_hall_west_lane",
+          "room": "living_hall:hall"
+        },
+        "living_hall_east_lane": {
+          "point": [
+            1580.0,
+            656.0
+          ],
+          "path": "Spawns/living_hall_east_lane",
+          "room": "living_hall:hall"
+        }
+      },
+      "exits": [
+        {
+          "id": "living_hall_north_door",
+          "target": "campus_sw",
+          "point": [
+            1376.0,
+            144.0
+          ],
+          "spawn": "living_north"
+        },
+        {
+          "id": "living_hall_west_lane",
+          "target": "campus_sw",
+          "point": [
+            1136.0,
+            640.0
+          ],
+          "spawn": "lane_west"
+        },
+        {
+          "id": "living_hall_east_lane",
+          "target": "campus_sw",
+          "point": [
+            1616.0,
+            640.0
+          ],
+          "spawn": "lane_east"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "zone_jia:north_0",
+          "region": "zone_jia:north_0",
+          "rect": [
+            0,
+            0,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:north_1",
+          "region": "zone_jia:north_1",
+          "rect": [
+            224,
+            0,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              224,
+              0,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:north_2",
+          "region": "zone_jia:north_2",
+          "rect": [
+            448,
+            0,
+            256,
+            288
+          ],
+          "rects": [
+            [
+              448,
+              0,
+              256,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:hall",
+          "region": "zone_jia:hall",
+          "rect": [
+            704,
+            0,
+            256,
+            448
+          ],
+          "rects": [
+            [
+              704,
+              0,
+              256,
+              448
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:wc",
+          "region": "zone_jia:wc",
+          "rect": [
+            960,
+            0,
+            192,
+            224
+          ],
+          "rects": [
+            [
+              960,
+              0,
+              192,
+              128
+            ],
+            [
+              960,
+              128,
+              160,
+              96
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:wc",
+          "region": "zone_ding:wc",
+          "rect": [
+            1600,
+            0,
+            192,
+            224
+          ],
+          "rects": [
+            [
+              1600,
+              0,
+              192,
+              128
+            ],
+            [
+              1632,
+              128,
+              160,
+              96
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:hall",
+          "region": "zone_ding:hall",
+          "rect": [
+            1792,
+            0,
+            256,
+            448
+          ],
+          "rects": [
+            [
+              1792,
+              0,
+              256,
+              448
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:north_2",
+          "region": "zone_ding:north_2",
+          "rect": [
+            2048,
+            0,
+            256,
+            288
+          ],
+          "rects": [
+            [
+              2048,
+              0,
+              256,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:north_1",
+          "region": "zone_ding:north_1",
+          "rect": [
+            2304,
+            0,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              2304,
+              0,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:north_0",
+          "region": "zone_ding:north_0",
+          "rect": [
+            2528,
+            0,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              2528,
+              0,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "living_hall:hall",
+          "region": "living_hall:hall",
+          "rect": [
+            1120,
+            128,
+            512,
+            1216
+          ],
+          "rects": [
+            [
+              1120,
+              128,
+              512,
+              1216
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:foyer",
+          "region": "zone_jia:foyer",
+          "rect": [
+            960,
+            224,
+            160,
+            224
+          ],
+          "rects": [
+            [
+              960,
+              224,
+              160,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:foyer",
+          "region": "zone_ding:foyer",
+          "rect": [
+            1632,
+            224,
+            160,
+            224
+          ],
+          "rects": [
+            [
+              1632,
+              224,
+              160,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:corridor",
+          "region": "zone_jia:corridor",
+          "rect": [
+            0,
+            288,
+            704,
+            160
+          ],
+          "rects": [
+            [
+              0,
+              288,
+              704,
+              160
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:corridor",
+          "region": "zone_ding:corridor",
+          "rect": [
+            2048,
+            288,
+            704,
+            160
+          ],
+          "rects": [
+            [
+              2048,
+              288,
+              704,
+              160
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:south_0",
+          "region": "zone_jia:south_0",
+          "rect": [
+            0,
+            448,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              0,
+              448,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:south_1",
+          "region": "zone_jia:south_1",
+          "rect": [
+            224,
+            448,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              224,
+              448,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:south_2",
+          "region": "zone_jia:south_2",
+          "rect": [
+            448,
+            448,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              448,
+              448,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:prep",
+          "region": "zone_jia:prep",
+          "rect": [
+            704,
+            448,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              704,
+              448,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:store",
+          "region": "zone_jia:store",
+          "rect": [
+            960,
+            448,
+            160,
+            256
+          ],
+          "rects": [
+            [
+              960,
+              448,
+              160,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:store",
+          "region": "zone_ding:store",
+          "rect": [
+            1632,
+            448,
+            160,
+            256
+          ],
+          "rects": [
+            [
+              1632,
+              448,
+              160,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:prep",
+          "region": "zone_ding:prep",
+          "rect": [
+            1792,
+            448,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              1792,
+              448,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:south_2",
+          "region": "zone_ding:south_2",
+          "rect": [
+            2048,
+            448,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              2048,
+              448,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:south_1",
+          "region": "zone_ding:south_1",
+          "rect": [
+            2304,
+            448,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              2304,
+              448,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:south_0",
+          "region": "zone_ding:south_0",
+          "rect": [
+            2528,
+            448,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              2528,
+              448,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:north_0",
+          "region": "zone_bing:north_0",
+          "rect": [
+            0,
+            704,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              0,
+              704,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:north_1",
+          "region": "zone_bing:north_1",
+          "rect": [
+            224,
+            704,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              224,
+              704,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:north_2",
+          "region": "zone_bing:north_2",
+          "rect": [
+            448,
+            704,
+            256,
+            288
+          ],
+          "rects": [
+            [
+              448,
+              704,
+              256,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:hall",
+          "region": "zone_bing:hall",
+          "rect": [
+            704,
+            704,
+            256,
+            448
+          ],
+          "rects": [
+            [
+              704,
+              704,
+              256,
+              448
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:wc",
+          "region": "zone_bing:wc",
+          "rect": [
+            960,
+            704,
+            160,
+            224
+          ],
+          "rects": [
+            [
+              960,
+              704,
+              160,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:wc",
+          "region": "zone_yi:wc",
+          "rect": [
+            1632,
+            704,
+            160,
+            224
+          ],
+          "rects": [
+            [
+              1632,
+              704,
+              160,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:hall",
+          "region": "zone_yi:hall",
+          "rect": [
+            1792,
+            704,
+            256,
+            448
+          ],
+          "rects": [
+            [
+              1792,
+              704,
+              256,
+              448
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:north_2",
+          "region": "zone_yi:north_2",
+          "rect": [
+            2048,
+            704,
+            256,
+            288
+          ],
+          "rects": [
+            [
+              2048,
+              704,
+              256,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:north_1",
+          "region": "zone_yi:north_1",
+          "rect": [
+            2304,
+            704,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              2304,
+              704,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:north_0",
+          "region": "zone_yi:north_0",
+          "rect": [
+            2528,
+            704,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              2528,
+              704,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:foyer",
+          "region": "zone_bing:foyer",
+          "rect": [
+            960,
+            928,
+            160,
+            224
+          ],
+          "rects": [
+            [
+              960,
+              928,
+              160,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:foyer",
+          "region": "zone_yi:foyer",
+          "rect": [
+            1632,
+            928,
+            160,
+            224
+          ],
+          "rects": [
+            [
+              1632,
+              928,
+              160,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:corridor",
+          "region": "zone_bing:corridor",
+          "rect": [
+            0,
+            992,
+            704,
+            160
+          ],
+          "rects": [
+            [
+              0,
+              992,
+              704,
+              160
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:corridor",
+          "region": "zone_yi:corridor",
+          "rect": [
+            2048,
+            992,
+            704,
+            160
+          ],
+          "rects": [
+            [
+              2048,
+              992,
+              704,
+              160
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:south_0",
+          "region": "zone_bing:south_0",
+          "rect": [
+            0,
+            1152,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              0,
+              1152,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:south_1",
+          "region": "zone_bing:south_1",
+          "rect": [
+            224,
+            1152,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              224,
+              1152,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:south_2",
+          "region": "zone_bing:south_2",
+          "rect": [
+            448,
+            1152,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              448,
+              1152,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:prep",
+          "region": "zone_bing:prep",
+          "rect": [
+            704,
+            1152,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              704,
+              1152,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:store",
+          "region": "zone_bing:store",
+          "rect": [
+            960,
+            1152,
+            160,
+            256
+          ],
+          "rects": [
+            [
+              960,
+              1152,
+              160,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:store",
+          "region": "zone_yi:store",
+          "rect": [
+            1632,
+            1152,
+            160,
+            256
+          ],
+          "rects": [
+            [
+              1632,
+              1152,
+              160,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:prep",
+          "region": "zone_yi:prep",
+          "rect": [
+            1792,
+            1152,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              1792,
+              1152,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:south_2",
+          "region": "zone_yi:south_2",
+          "rect": [
+            2048,
+            1152,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              2048,
+              1152,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:south_1",
+          "region": "zone_yi:south_1",
+          "rect": [
+            2304,
+            1152,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              2304,
+              1152,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:south_0",
+          "region": "zone_yi:south_0",
+          "rect": [
+            2528,
+            1152,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              2528,
+              1152,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "living_hall:bath",
+          "region": "living_hall:bath",
+          "rect": [
+            1120,
+            1344,
+            512,
+            256
+          ],
+          "rects": [
+            [
+              1120,
+              1344,
+              512,
+              256
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "door_000",
+          "from": "zone_bing:foyer",
+          "to": "zone_bing:store",
+          "point": [
+            1056.0,
+            1200.0
+          ]
+        },
+        {
+          "id": "door_001",
+          "from": "living_hall:hall",
+          "to": "zone_bing:foyer",
+          "point": [
+            1136.0,
+            1088.0
+          ]
+        },
+        {
+          "id": "door_002",
+          "from": "zone_ding:foyer",
+          "to": "zone_ding:store",
+          "point": [
+            1696.0,
+            496.0
+          ]
+        },
+        {
+          "id": "door_003",
+          "from": "zone_ding:foyer",
+          "to": "zone_ding:hall",
+          "point": [
+            1776.0,
+            384.0
+          ]
+        },
+        {
+          "id": "door_004",
+          "from": "zone_jia:corridor",
+          "to": "zone_jia:north_0",
+          "point": [
+            128.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_005",
+          "from": "zone_ding:corridor",
+          "to": "zone_ding:south_2",
+          "point": [
+            2176.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_006",
+          "from": "zone_yi:corridor",
+          "to": "zone_yi:north_0",
+          "point": [
+            2624.0,
+            1008.0
+          ]
+        },
+        {
+          "id": "door_007",
+          "from": "zone_bing:corridor",
+          "to": "zone_bing:south_2",
+          "point": [
+            576.0,
+            1168.0
+          ]
+        },
+        {
+          "id": "door_008",
+          "from": "zone_jia:corridor",
+          "to": "zone_jia:south_0",
+          "point": [
+            128.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_009",
+          "from": "zone_ding:corridor",
+          "to": "zone_ding:north_1",
+          "point": [
+            2400.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_010",
+          "from": "zone_jia:corridor",
+          "to": "zone_jia:south_1",
+          "point": [
+            352.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_011",
+          "from": "zone_bing:corridor",
+          "to": "zone_bing:north_0",
+          "point": [
+            128.0,
+            1008.0
+          ]
+        },
+        {
+          "id": "door_012",
+          "from": "zone_bing:corridor",
+          "to": "zone_bing:north_2",
+          "point": [
+            576.0,
+            1008.0
+          ]
+        },
+        {
+          "id": "door_013",
+          "from": "zone_yi:hall",
+          "to": "zone_yi:prep",
+          "point": [
+            1920.0,
+            1168.0
+          ]
+        },
+        {
+          "id": "door_014",
+          "from": "zone_jia:hall",
+          "to": "zone_jia:prep",
+          "point": [
+            832.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_015",
+          "from": "zone_bing:foyer",
+          "to": "zone_bing:wc",
+          "point": [
+            1056.0,
+            976.0
+          ]
+        },
+        {
+          "id": "door_016",
+          "from": "zone_ding:corridor",
+          "to": "zone_ding:south_0",
+          "point": [
+            2624.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_017",
+          "from": "zone_jia:corridor",
+          "to": "zone_jia:north_2",
+          "point": [
+            576.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_018",
+          "from": "zone_yi:corridor",
+          "to": "zone_yi:south_1",
+          "point": [
+            2400.0,
+            1168.0
+          ]
+        },
+        {
+          "id": "door_019",
+          "from": "zone_ding:foyer",
+          "to": "zone_ding:wc",
+          "point": [
+            1696.0,
+            272.0
+          ]
+        },
+        {
+          "id": "door_020",
+          "from": "living_hall:bath",
+          "to": "living_hall:hall",
+          "point": [
+            1376.0,
+            1360.0
+          ]
+        },
+        {
+          "id": "door_021",
+          "from": "zone_bing:corridor",
+          "to": "zone_bing:south_1",
+          "point": [
+            352.0,
+            1168.0
+          ]
+        },
+        {
+          "id": "door_022",
+          "from": "zone_jia:corridor",
+          "to": "zone_jia:south_2",
+          "point": [
+            576.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_023",
+          "from": "zone_jia:foyer",
+          "to": "zone_jia:hall",
+          "point": [
+            976.0,
+            384.0
+          ]
+        },
+        {
+          "id": "door_024",
+          "from": "living_hall:hall",
+          "to": "zone_ding:store",
+          "point": [
+            1616.0,
+            640.0
+          ]
+        },
+        {
+          "id": "door_025",
+          "from": "zone_yi:corridor",
+          "to": "zone_yi:south_2",
+          "point": [
+            2176.0,
+            1168.0
+          ]
+        },
+        {
+          "id": "door_026",
+          "from": "zone_jia:foyer",
+          "to": "zone_jia:store",
+          "point": [
+            1056.0,
+            496.0
+          ]
+        },
+        {
+          "id": "door_027",
+          "from": "living_hall:hall",
+          "to": "zone_jia:store",
+          "point": [
+            1136.0,
+            640.0
+          ]
+        },
+        {
+          "id": "door_028",
+          "from": "zone_bing:hall",
+          "to": "zone_bing:prep",
+          "point": [
+            832.0,
+            1168.0
+          ]
+        },
+        {
+          "id": "door_029",
+          "from": "zone_ding:hall",
+          "to": "zone_ding:prep",
+          "point": [
+            1920.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_030",
+          "from": "zone_ding:corridor",
+          "to": "zone_ding:south_1",
+          "point": [
+            2400.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_031",
+          "from": "zone_jia:corridor",
+          "to": "zone_jia:north_1",
+          "point": [
+            352.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_032",
+          "from": "zone_jia:foyer",
+          "to": "zone_jia:wc",
+          "point": [
+            1056.0,
+            272.0
+          ]
+        },
+        {
+          "id": "door_033",
+          "from": "zone_bing:corridor",
+          "to": "zone_bing:south_0",
+          "point": [
+            128.0,
+            1168.0
+          ]
+        },
+        {
+          "id": "door_034",
+          "from": "living_hall:hall",
+          "to": "zone_jia:foyer",
+          "point": [
+            1136.0,
+            384.0
+          ]
+        },
+        {
+          "id": "door_035",
+          "from": "zone_yi:corridor",
+          "to": "zone_yi:north_1",
+          "point": [
+            2400.0,
+            1008.0
+          ]
+        },
+        {
+          "id": "door_036",
+          "from": "zone_ding:corridor",
+          "to": "zone_ding:north_0",
+          "point": [
+            2624.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_037",
+          "from": "zone_yi:foyer",
+          "to": "zone_yi:store",
+          "point": [
+            1696.0,
+            1200.0
+          ]
+        },
+        {
+          "id": "door_038",
+          "from": "zone_bing:foyer",
+          "to": "zone_bing:hall",
+          "point": [
+            976.0,
+            1088.0
+          ]
+        },
+        {
+          "id": "door_039",
+          "from": "zone_bing:corridor",
+          "to": "zone_bing:north_1",
+          "point": [
+            352.0,
+            1008.0
+          ]
+        },
+        {
+          "id": "door_040",
+          "from": "zone_yi:corridor",
+          "to": "zone_yi:south_0",
+          "point": [
+            2624.0,
+            1168.0
+          ]
+        },
+        {
+          "id": "door_041",
+          "from": "zone_ding:corridor",
+          "to": "zone_ding:north_2",
+          "point": [
+            2176.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_042",
+          "from": "zone_yi:corridor",
+          "to": "zone_yi:north_2",
+          "point": [
+            2176.0,
+            1008.0
+          ]
+        },
+        {
+          "id": "door_043",
+          "from": "living_hall:hall",
+          "to": "zone_yi:foyer",
+          "point": [
+            1616.0,
+            1088.0
+          ]
+        },
+        {
+          "id": "door_044",
+          "from": "zone_yi:foyer",
+          "to": "zone_yi:wc",
+          "point": [
+            1696.0,
+            976.0
+          ]
+        },
+        {
+          "id": "door_045",
+          "from": "zone_yi:foyer",
+          "to": "zone_yi:hall",
+          "point": [
+            1776.0,
+            1088.0
+          ]
+        },
+        {
+          "id": "door_046",
+          "from": "living_hall:hall",
+          "to": "zone_ding:foyer",
+          "point": [
+            1616.0,
+            384.0
+          ]
+        },
+        {
+          "id": "living_hall_north_door",
+          "from": "living_hall:hall",
+          "to": "campus_sw",
+          "target_map": "campus_sw",
+          "point": [
+            1376.0,
+            144.0
+          ]
+        },
+        {
+          "id": "living_hall_west_lane",
+          "from": "living_hall:hall",
+          "to": "campus_sw",
+          "target_map": "campus_sw",
+          "point": [
+            1136.0,
+            640.0
+          ]
+        },
+        {
+          "id": "living_hall_east_lane",
+          "from": "living_hall:hall",
+          "to": "campus_sw",
+          "target_map": "campus_sw",
+          "point": [
+            1616.0,
+            640.0
+          ]
+        }
+      ]
+    },
+    "living_hall": {
+      "scene": "res://scenes/Chapter2/Maps/living_hall.tscn",
+      "size": [
+        512.0,
+        1280.0
+      ],
+      "sites": {
+        "watch_point": {
+          "point": [
+            256.0,
+            624.0
+          ],
+          "path": "Sites/watch_point",
+          "label": "守夜点",
+          "room": "living_hall:hall"
+        },
+        "hall_notice": {
+          "point": [
+            352.0,
+            136.0
+          ],
+          "path": "Sites/hall_notice",
+          "label": "生活翼公告板",
+          "room": "living_hall:hall"
+        },
+        "fireplace": {
+          "point": [
+            128.0,
+            136.0
+          ],
+          "path": "Sites/fireplace",
+          "label": "壁炉",
+          "room": "living_hall:hall"
+        },
+        "living_south_table": {
+          "point": [
+            240.0,
+            572.0
+          ],
+          "path": "Sites/living_south_table",
+          "label": "",
+          "room": "living_hall:hall"
+        },
+        "living_piano": {
+          "point": [
+            160.0,
+            320.0
+          ],
+          "path": "Sites/living_piano",
+          "label": "",
+          "room": "living_hall:hall"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            240.0,
+            572.0
+          ],
+          "path": "Stands/s00",
+          "room": "living_hall:hall"
+        },
+        "s01": {
+          "point": [
+            432.0,
+            1212.0
+          ],
+          "path": "Stands/s01",
+          "room": "living_hall:bath"
+        },
+        "s02": {
+          "point": [
+            432.0,
+            156.0
+          ],
+          "path": "Stands/s02",
+          "room": "living_hall:hall"
+        },
+        "s03": {
+          "point": [
+            144.0,
+            956.0
+          ],
+          "path": "Stands/s03",
+          "room": "living_hall:hall"
+        },
+        "s04": {
+          "point": [
+            80.0,
+            156.0
+          ],
+          "path": "Stands/s04",
+          "room": "living_hall:hall"
+        },
+        "s05": {
+          "point": [
+            400.0,
+            828.0
+          ],
+          "path": "Stands/s05",
+          "room": "living_hall:hall"
+        },
+        "s06": {
+          "point": [
+            144.0,
+            1212.0
+          ],
+          "path": "Stands/s06",
+          "room": "living_hall:bath"
+        },
+        "s07": {
+          "point": [
+            304.0,
+            348.0
+          ],
+          "path": "Stands/s07",
+          "room": "living_hall:hall"
+        },
+        "s08": {
+          "point": [
+            80.0,
+            412.0
+          ],
+          "path": "Stands/s08",
+          "room": "living_hall:hall"
+        },
+        "s09": {
+          "point": [
+            112.0,
+            732.0
+          ],
+          "path": "Stands/s09",
+          "room": "living_hall:hall"
+        },
+        "s10": {
+          "point": [
+            432.0,
+            636.0
+          ],
+          "path": "Stands/s10",
+          "room": "living_hall:hall"
+        },
+        "s11": {
+          "point": [
+            240.0,
+            188.0
+          ],
+          "path": "Stands/s11",
+          "room": "living_hall:hall"
+        },
+        "s12": {
+          "point": [
+            400.0,
+            476.0
+          ],
+          "path": "Stands/s12",
+          "room": "living_hall:hall"
+        },
+        "s13": {
+          "point": [
+            240.0,
+            828.0
+          ],
+          "path": "Stands/s13",
+          "room": "living_hall:hall"
+        },
+        "s14": {
+          "point": [
+            304.0,
+            956.0
+          ],
+          "path": "Stands/s14",
+          "room": "living_hall:hall"
+        },
+        "s15": {
+          "point": [
+            272.0,
+            1148.0
+          ],
+          "path": "Stands/s15",
+          "room": "living_hall:bath"
+        }
+      },
+      "spawns": {
+        "north_door": {
+          "point": [
+            256.0,
+            104.0
+          ],
+          "path": "Spawns/north_door",
+          "room": "living_hall:hall"
+        },
+        "west_north": {
+          "point": [
+            52.0,
+            272.0
+          ],
+          "path": "Spawns/west_north",
+          "room": "living_hall:hall"
+        },
+        "west_south": {
+          "point": [
+            52.0,
+            784.0
+          ],
+          "path": "Spawns/west_south",
+          "room": "living_hall:hall"
+        },
+        "east_north": {
+          "point": [
+            460.0,
+            272.0
+          ],
+          "path": "Spawns/east_north",
+          "room": "living_hall:hall"
+        },
+        "east_south": {
+          "point": [
+            460.0,
+            784.0
+          ],
+          "path": "Spawns/east_south",
+          "room": "living_hall:hall"
+        },
+        "west_lane": {
+          "point": [
+            52.0,
+            528.0
+          ],
+          "path": "Spawns/west_lane",
+          "room": "living_hall:hall"
+        },
+        "east_lane": {
+          "point": [
+            460.0,
+            528.0
+          ],
+          "path": "Spawns/east_lane",
+          "room": "living_hall:hall"
+        }
+      },
+      "exits": [
+        {
+          "id": "north_door",
+          "target": "campus_sw",
+          "point": [
+            256.0,
+            16.0
+          ],
+          "spawn": "living_north"
+        },
+        {
+          "id": "west_north",
+          "target": "zone_jia",
+          "point": [
+            16.0,
+            256.0
+          ],
+          "spawn": "from_hall"
+        },
+        {
+          "id": "west_south",
+          "target": "zone_bing",
+          "point": [
+            16.0,
+            768.0
+          ],
+          "spawn": "from_hall"
+        },
+        {
+          "id": "east_north",
+          "target": "zone_ding",
+          "point": [
+            496.0,
+            256.0
+          ],
+          "spawn": "from_hall"
+        },
+        {
+          "id": "east_south",
+          "target": "zone_yi",
+          "point": [
+            496.0,
+            768.0
+          ],
+          "spawn": "from_hall"
+        },
+        {
+          "id": "west_lane",
+          "target": "campus_sw",
+          "point": [
+            16.0,
+            512.0
+          ],
+          "spawn": "lane_west"
+        },
+        {
+          "id": "east_lane",
+          "target": "campus_sw",
+          "point": [
+            496.0,
+            512.0
+          ],
+          "spawn": "lane_east"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "living_hall:hall",
+          "region": "hall",
+          "rect": [
+            0,
+            0,
+            512,
+            1024
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              512,
+              1024
+            ]
+          ]
+        },
+        {
+          "id": "living_hall:bath",
+          "region": "bath",
+          "rect": [
+            0,
+            1024,
+            512,
+            256
+          ],
+          "rects": [
+            [
+              0,
+              1024,
+              512,
+              256
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "door_000",
+          "from": "living_hall:bath",
+          "to": "living_hall:hall",
+          "point": [
+            256.0,
+            1040.0
+          ]
+        },
+        {
+          "id": "north_door",
+          "from": "living_hall:hall",
+          "to": "campus_sw",
+          "target_map": "campus_sw",
+          "point": [
+            256.0,
+            16.0
+          ]
+        },
+        {
+          "id": "west_north",
+          "from": "living_hall:hall",
+          "to": "zone_jia",
+          "target_map": "zone_jia",
+          "point": [
+            16.0,
+            256.0
+          ]
+        },
+        {
+          "id": "west_south",
+          "from": "living_hall:hall",
+          "to": "zone_bing",
+          "target_map": "zone_bing",
+          "point": [
+            16.0,
+            768.0
+          ]
+        },
+        {
+          "id": "east_north",
+          "from": "living_hall:hall",
+          "to": "zone_ding",
+          "target_map": "zone_ding",
+          "point": [
+            496.0,
+            256.0
+          ]
+        },
+        {
+          "id": "east_south",
+          "from": "living_hall:hall",
+          "to": "zone_yi",
+          "target_map": "zone_yi",
+          "point": [
+            496.0,
+            768.0
+          ]
+        },
+        {
+          "id": "west_lane",
+          "from": "living_hall:hall",
+          "to": "campus_sw",
+          "target_map": "campus_sw",
+          "point": [
+            16.0,
+            512.0
+          ]
+        },
+        {
+          "id": "east_lane",
+          "from": "living_hall:hall",
+          "to": "campus_sw",
+          "target_map": "campus_sw",
+          "point": [
+            496.0,
+            512.0
+          ]
+        }
+      ]
+    },
+    "logistics": {
+      "scene": "res://scenes/Chapter2/Maps/logistics.tscn",
+      "size": [
+        992.0,
+        448.0
+      ],
+      "sites": {
+        "ration_counter": {
+          "point": [
+            464.0,
+            288.0
+          ],
+          "path": "Sites/ration_counter",
+          "label": "配给台",
+          "room": "logistics:dining"
+        },
+        "ledger": {
+          "point": [
+            512.0,
+            256.0
+          ],
+          "path": "Sites/ledger",
+          "label": "台账",
+          "room": "logistics:dining"
+        },
+        "ration_notice": {
+          "point": [
+            512.0,
+            128.0
+          ],
+          "path": "Sites/ration_notice",
+          "label": "配给台公告板",
+          "room": "logistics:dining"
+        },
+        "watch_point": {
+          "point": [
+            576.0,
+            288.0
+          ],
+          "path": "Sites/watch_point",
+          "label": "守夜点",
+          "room": "logistics:dining"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            496.0,
+            188.0
+          ],
+          "path": "Stands/s00",
+          "room": "logistics:dining"
+        },
+        "s01": {
+          "point": [
+            880.0,
+            380.0
+          ],
+          "path": "Stands/s01",
+          "room": "logistics:dining"
+        },
+        "s02": {
+          "point": [
+            80.0,
+            156.0
+          ],
+          "path": "Stands/s02",
+          "room": "logistics:kitchen"
+        },
+        "s03": {
+          "point": [
+            272.0,
+            380.0
+          ],
+          "path": "Stands/s03",
+          "room": "logistics:kitchen"
+        },
+        "s04": {
+          "point": [
+            816.0,
+            156.0
+          ],
+          "path": "Stands/s04",
+          "room": "logistics:dining"
+        },
+        "s05": {
+          "point": [
+            592.0,
+            380.0
+          ],
+          "path": "Stands/s05",
+          "room": "logistics:dining"
+        },
+        "s06": {
+          "point": [
+            272.0,
+            188.0
+          ],
+          "path": "Stands/s06",
+          "room": "logistics:kitchen"
+        },
+        "s07": {
+          "point": [
+            112.0,
+            316.0
+          ],
+          "path": "Stands/s07",
+          "room": "logistics:kitchen"
+        },
+        "s08": {
+          "point": [
+            368.0,
+            284.0
+          ],
+          "path": "Stands/s08",
+          "room": "logistics:kitchen"
+        },
+        "s09": {
+          "point": [
+            912.0,
+            220.0
+          ],
+          "path": "Stands/s09",
+          "room": "logistics:dining"
+        },
+        "s10": {
+          "point": [
+            592.0,
+            252.0
+          ],
+          "path": "Stands/s10",
+          "room": "logistics:dining"
+        },
+        "s11": {
+          "point": [
+            816.0,
+            284.0
+          ],
+          "path": "Stands/s11",
+          "room": "logistics:dining"
+        },
+        "s12": {
+          "point": [
+            176.0,
+            220.0
+          ],
+          "path": "Stands/s12",
+          "room": "logistics:kitchen"
+        },
+        "s13": {
+          "point": [
+            496.0,
+            348.0
+          ],
+          "path": "Stands/s13",
+          "room": "logistics:dining"
+        },
+        "s14": {
+          "point": [
+            592.0,
+            156.0
+          ],
+          "path": "Stands/s14",
+          "room": "logistics:dining"
+        },
+        "s15": {
+          "point": [
+            368.0,
+            188.0
+          ],
+          "path": "Stands/s15",
+          "room": "logistics:kitchen"
+        }
+      },
+      "spawns": {
+        "west": {
+          "point": [
+            52.0,
+            336.0
+          ],
+          "path": "Spawns/west",
+          "room": "logistics:kitchen"
+        },
+        "east": {
+          "point": [
+            940.0,
+            336.0
+          ],
+          "path": "Spawns/east",
+          "room": "logistics:dining"
+        }
+      },
+      "exits": [
+        {
+          "id": "west",
+          "target": "campus_s",
+          "point": [
+            16.0,
+            320.0
+          ],
+          "spawn": "logistics_west"
+        },
+        {
+          "id": "east",
+          "target": "campus_s",
+          "point": [
+            976.0,
+            320.0
+          ],
+          "spawn": "logistics_east"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "logistics:kitchen",
+          "region": "kitchen",
+          "rect": [
+            0,
+            0,
+            416,
+            448
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              416,
+              448
+            ]
+          ]
+        },
+        {
+          "id": "logistics:dining",
+          "region": "dining",
+          "rect": [
+            416,
+            0,
+            576,
+            448
+          ],
+          "rects": [
+            [
+              416,
+              0,
+              576,
+              448
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "door_000",
+          "from": "logistics:dining",
+          "to": "logistics:kitchen",
+          "point": [
+            432.0,
+            272.0
+          ]
+        },
+        {
+          "id": "west",
+          "from": "logistics:kitchen",
+          "to": "campus_s",
+          "target_map": "campus_s",
+          "point": [
+            16.0,
+            320.0
+          ]
+        },
+        {
+          "id": "east",
+          "from": "logistics:dining",
+          "to": "campus_s",
+          "target_map": "campus_s",
+          "point": [
+            976.0,
+            320.0
+          ]
+        }
+      ]
+    },
+    "resonance": {
+      "scene": "res://scenes/Chapter2/Maps/resonance.tscn",
+      "size": [
+        928.0,
+        512.0
+      ],
+      "sites": {
+        "step_marks": {
+          "point": [
+            800.0,
+            160.0
+          ],
+          "path": "Sites/step_marks",
+          "label": "门内步位标线",
+          "room": "resonance:silent"
+        },
+        "silent_door": {
+          "point": [
+            672.0,
+            192.0
+          ],
+          "path": "Sites/silent_door",
+          "label": "沉静室门",
+          "room": "resonance:hall"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            400.0,
+            252.0
+          ],
+          "path": "Stands/s00",
+          "room": "resonance:hall"
+        },
+        "s01": {
+          "point": [
+            848.0,
+            156.0
+          ],
+          "path": "Stands/s01",
+          "room": "resonance:silent"
+        },
+        "s02": {
+          "point": [
+            80.0,
+            444.0
+          ],
+          "path": "Stands/s02",
+          "room": "resonance:hall"
+        },
+        "s03": {
+          "point": [
+            624.0,
+            444.0
+          ],
+          "path": "Stands/s03",
+          "room": "resonance:hall"
+        },
+        "s04": {
+          "point": [
+            112.0,
+            156.0
+          ],
+          "path": "Stands/s04",
+          "room": "resonance:hall"
+        },
+        "s05": {
+          "point": [
+            624.0,
+            188.0
+          ],
+          "path": "Stands/s05",
+          "room": "resonance:hall"
+        },
+        "s06": {
+          "point": [
+            304.0,
+            412.0
+          ],
+          "path": "Stands/s06",
+          "room": "resonance:hall"
+        },
+        "s07": {
+          "point": [
+            272.0,
+            156.0
+          ],
+          "path": "Stands/s07",
+          "room": "resonance:hall"
+        },
+        "s08": {
+          "point": [
+            464.0,
+            444.0
+          ],
+          "path": "Stands/s08",
+          "room": "resonance:hall"
+        },
+        "s09": {
+          "point": [
+            80.0,
+            284.0
+          ],
+          "path": "Stands/s09",
+          "room": "resonance:hall"
+        },
+        "s10": {
+          "point": [
+            592.0,
+            316.0
+          ],
+          "path": "Stands/s10",
+          "room": "resonance:hall"
+        },
+        "s11": {
+          "point": [
+            496.0,
+            188.0
+          ],
+          "path": "Stands/s11",
+          "room": "resonance:hall"
+        },
+        "s12": {
+          "point": [
+            752.0,
+            220.0
+          ],
+          "path": "Stands/s12",
+          "room": "resonance:silent"
+        },
+        "s13": {
+          "point": [
+            208.0,
+            252.0
+          ],
+          "path": "Stands/s13",
+          "room": "resonance:hall"
+        },
+        "s14": {
+          "point": [
+            304.0,
+            284.0
+          ],
+          "path": "Stands/s14",
+          "room": "resonance:hall"
+        },
+        "s15": {
+          "point": [
+            208.0,
+            444.0
+          ],
+          "path": "Stands/s15",
+          "room": "resonance:hall"
+        }
+      },
+      "spawns": {
+        "south": {
+          "point": [
+            352.0,
+            464.0
+          ],
+          "path": "Spawns/south",
+          "room": "resonance:hall"
+        }
+      },
+      "exits": [
+        {
+          "id": "south",
+          "target": "campus_nw",
+          "point": [
+            352.0,
+            496.0
+          ],
+          "spawn": "resonance_front"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "resonance:hall",
+          "region": "hall",
+          "rect": [
+            0,
+            0,
+            704,
+            512
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              704,
+              512
+            ]
+          ]
+        },
+        {
+          "id": "resonance:silent",
+          "region": "silent",
+          "rect": [
+            704,
+            0,
+            224,
+            512
+          ],
+          "rects": [
+            [
+              704,
+              0,
+              224,
+              512
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "door_000",
+          "from": "resonance:hall",
+          "to": "resonance:silent",
+          "point": [
+            688.0,
+            192.0
+          ]
+        },
+        {
+          "id": "south",
+          "from": "resonance:hall",
+          "to": "campus_nw",
+          "target_map": "campus_nw",
+          "point": [
+            352.0,
+            496.0
+          ]
+        }
+      ]
+    },
+    "zone_bing": {
+      "scene": "res://scenes/Chapter2/Maps/zone_bing.tscn",
+      "size": [
+        1152.0,
+        704.0
+      ],
+      "sites": {
+        "transmitter": {
+          "point": [
+            800.0,
+            136.0
+          ],
+          "path": "Sites/transmitter",
+          "label": "铜口",
+          "room": "zone_bing:hall"
+        },
+        "zone_rules": {
+          "point": [
+            896.0,
+            136.0
+          ],
+          "path": "Sites/zone_rules",
+          "label": "公告框",
+          "room": "zone_bing:hall"
+        },
+        "isolation_gate": {
+          "point": [
+            1104.0,
+            384.0
+          ],
+          "path": "Sites/isolation_gate",
+          "label": "隔离门",
+          "room": "zone_bing:foyer"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            560.0,
+            220.0
+          ],
+          "path": "Stands/s00",
+          "room": "zone_bing:north_2"
+        },
+        "s01": {
+          "point": [
+            80.0,
+            636.0
+          ],
+          "path": "Stands/s01",
+          "room": "zone_bing:south_0"
+        },
+        "s02": {
+          "point": [
+            912.0,
+            604.0
+          ],
+          "path": "Stands/s02",
+          "room": "zone_bing:prep"
+        },
+        "s03": {
+          "point": [
+            1072.0,
+            188.0
+          ],
+          "path": "Stands/s03",
+          "room": "zone_bing:wc"
+        },
+        "s04": {
+          "point": [
+            144.0,
+            156.0
+          ],
+          "path": "Stands/s04",
+          "room": "zone_bing:north_0"
+        },
+        "s05": {
+          "point": [
+            528.0,
+            636.0
+          ],
+          "path": "Stands/s05",
+          "room": "zone_bing:south_2"
+        },
+        "s06": {
+          "point": [
+            816.0,
+            156.0
+          ],
+          "path": "Stands/s06",
+          "room": "zone_bing:hall"
+        },
+        "s07": {
+          "point": [
+            752.0,
+            380.0
+          ],
+          "path": "Stands/s07",
+          "room": "zone_bing:hall"
+        },
+        "s08": {
+          "point": [
+            1040.0,
+            412.0
+          ],
+          "path": "Stands/s08",
+          "room": "zone_bing:foyer"
+        },
+        "s09": {
+          "point": [
+            304.0,
+            636.0
+          ],
+          "path": "Stands/s09",
+          "room": "zone_bing:south_1"
+        },
+        "s10": {
+          "point": [
+            368.0,
+            156.0
+          ],
+          "path": "Stands/s10",
+          "room": "zone_bing:north_1"
+        },
+        "s11": {
+          "point": [
+            752.0,
+            636.0
+          ],
+          "path": "Stands/s11",
+          "room": "zone_bing:prep"
+        },
+        "s12": {
+          "point": [
+            912.0,
+            348.0
+          ],
+          "path": "Stands/s12",
+          "room": "zone_bing:hall"
+        },
+        "s13": {
+          "point": [
+            176.0,
+            572.0
+          ],
+          "path": "Stands/s13",
+          "room": "zone_bing:south_0"
+        },
+        "s14": {
+          "point": [
+            400.0,
+            572.0
+          ],
+          "path": "Stands/s14",
+          "room": "zone_bing:south_1"
+        },
+        "s15": {
+          "point": [
+            624.0,
+            572.0
+          ],
+          "path": "Stands/s15",
+          "room": "zone_bing:south_2"
+        },
+        "s16": {
+          "point": [
+            912.0,
+            156.0
+          ],
+          "path": "Stands/s16",
+          "room": "zone_bing:hall"
+        }
+      },
+      "spawns": {
+        "from_hall": {
+          "point": [
+            1088.0,
+            400.0
+          ],
+          "path": "Spawns/from_hall",
+          "room": "zone_bing:foyer"
+        }
+      },
+      "exits": [
+        {
+          "id": "isolation_gate",
+          "target": "living_hall",
+          "point": [
+            1136.0,
+            384.0
+          ],
+          "spawn": "west_south"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "zone_bing:north_0",
+          "region": "north_0",
+          "rect": [
+            0,
+            0,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:north_1",
+          "region": "north_1",
+          "rect": [
+            224,
+            0,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              224,
+              0,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:north_2",
+          "region": "north_2",
+          "rect": [
+            448,
+            0,
+            256,
+            288
+          ],
+          "rects": [
+            [
+              448,
+              0,
+              256,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:hall",
+          "region": "hall",
+          "rect": [
+            704,
+            0,
+            256,
+            448
+          ],
+          "rects": [
+            [
+              704,
+              0,
+              256,
+              448
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:wc",
+          "region": "wc",
+          "rect": [
+            960,
+            0,
+            192,
+            224
+          ],
+          "rects": [
+            [
+              960,
+              0,
+              192,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:foyer",
+          "region": "foyer",
+          "rect": [
+            960,
+            224,
+            192,
+            224
+          ],
+          "rects": [
+            [
+              960,
+              224,
+              192,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:corridor",
+          "region": "corridor",
+          "rect": [
+            0,
+            288,
+            704,
+            160
+          ],
+          "rects": [
+            [
+              0,
+              288,
+              704,
+              160
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:south_0",
+          "region": "south_0",
+          "rect": [
+            0,
+            448,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              0,
+              448,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:south_1",
+          "region": "south_1",
+          "rect": [
+            224,
+            448,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              224,
+              448,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:south_2",
+          "region": "south_2",
+          "rect": [
+            448,
+            448,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              448,
+              448,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:prep",
+          "region": "prep",
+          "rect": [
+            704,
+            448,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              704,
+              448,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_bing:store",
+          "region": "store",
+          "rect": [
+            960,
+            448,
+            192,
+            256
+          ],
+          "rects": [
+            [
+              960,
+              448,
+              192,
+              256
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "door_000",
+          "from": "zone_bing:corridor",
+          "to": "zone_bing:north_0",
+          "point": [
+            128.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_001",
+          "from": "zone_bing:corridor",
+          "to": "zone_bing:north_2",
+          "point": [
+            576.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_002",
+          "from": "zone_bing:corridor",
+          "to": "zone_bing:south_0",
+          "point": [
+            128.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_003",
+          "from": "zone_bing:corridor",
+          "to": "zone_bing:south_2",
+          "point": [
+            576.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_004",
+          "from": "zone_bing:foyer",
+          "to": "zone_bing:hall",
+          "point": [
+            976.0,
+            384.0
+          ]
+        },
+        {
+          "id": "door_005",
+          "from": "zone_bing:corridor",
+          "to": "zone_bing:north_1",
+          "point": [
+            352.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_006",
+          "from": "zone_bing:foyer",
+          "to": "zone_bing:wc",
+          "point": [
+            1056.0,
+            272.0
+          ]
+        },
+        {
+          "id": "door_007",
+          "from": "zone_bing:corridor",
+          "to": "zone_bing:south_1",
+          "point": [
+            352.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_008",
+          "from": "zone_bing:foyer",
+          "to": "zone_bing:store",
+          "point": [
+            1056.0,
+            496.0
+          ]
+        },
+        {
+          "id": "door_009",
+          "from": "zone_bing:hall",
+          "to": "zone_bing:prep",
+          "point": [
+            832.0,
+            464.0
+          ]
+        },
+        {
+          "id": "isolation_gate",
+          "from": "zone_bing:foyer",
+          "to": "living_hall",
+          "target_map": "living_hall",
+          "point": [
+            1136.0,
+            384.0
+          ]
+        }
+      ]
+    },
+    "zone_ding": {
+      "scene": "res://scenes/Chapter2/Maps/zone_ding.tscn",
+      "size": [
+        1152.0,
+        704.0
+      ],
+      "sites": {
+        "transmitter": {
+          "point": [
+            352.0,
+            136.0
+          ],
+          "path": "Sites/transmitter",
+          "label": "铜口",
+          "room": "zone_ding:hall"
+        },
+        "zone_rules": {
+          "point": [
+            256.0,
+            136.0
+          ],
+          "path": "Sites/zone_rules",
+          "label": "公告框",
+          "room": "zone_ding:hall"
+        },
+        "isolation_gate": {
+          "point": [
+            48.0,
+            384.0
+          ],
+          "path": "Sites/isolation_gate",
+          "label": "隔离门",
+          "room": "zone_ding:foyer"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            592.0,
+            220.0
+          ],
+          "path": "Stands/s00",
+          "room": "zone_ding:north_2"
+        },
+        "s01": {
+          "point": [
+            1072.0,
+            636.0
+          ],
+          "path": "Stands/s01",
+          "room": "zone_ding:south_0"
+        },
+        "s02": {
+          "point": [
+            240.0,
+            604.0
+          ],
+          "path": "Stands/s02",
+          "room": "zone_ding:prep"
+        },
+        "s03": {
+          "point": [
+            80.0,
+            188.0
+          ],
+          "path": "Stands/s03",
+          "room": "zone_ding:wc"
+        },
+        "s04": {
+          "point": [
+            1008.0,
+            156.0
+          ],
+          "path": "Stands/s04",
+          "room": "zone_ding:north_0"
+        },
+        "s05": {
+          "point": [
+            624.0,
+            636.0
+          ],
+          "path": "Stands/s05",
+          "room": "zone_ding:south_2"
+        },
+        "s06": {
+          "point": [
+            336.0,
+            156.0
+          ],
+          "path": "Stands/s06",
+          "room": "zone_ding:hall"
+        },
+        "s07": {
+          "point": [
+            272.0,
+            380.0
+          ],
+          "path": "Stands/s07",
+          "room": "zone_ding:hall"
+        },
+        "s08": {
+          "point": [
+            848.0,
+            636.0
+          ],
+          "path": "Stands/s08",
+          "room": "zone_ding:south_1"
+        },
+        "s09": {
+          "point": [
+            784.0,
+            156.0
+          ],
+          "path": "Stands/s09",
+          "room": "zone_ding:north_1"
+        },
+        "s10": {
+          "point": [
+            112.0,
+            412.0
+          ],
+          "path": "Stands/s10",
+          "room": "zone_ding:foyer"
+        },
+        "s11": {
+          "point": [
+            400.0,
+            636.0
+          ],
+          "path": "Stands/s11",
+          "room": "zone_ding:prep"
+        },
+        "s12": {
+          "point": [
+            400.0,
+            348.0
+          ],
+          "path": "Stands/s12",
+          "room": "zone_ding:hall"
+        },
+        "s13": {
+          "point": [
+            528.0,
+            572.0
+          ],
+          "path": "Stands/s13",
+          "room": "zone_ding:south_2"
+        },
+        "s14": {
+          "point": [
+            752.0,
+            572.0
+          ],
+          "path": "Stands/s14",
+          "room": "zone_ding:south_1"
+        },
+        "s15": {
+          "point": [
+            976.0,
+            572.0
+          ],
+          "path": "Stands/s15",
+          "room": "zone_ding:south_0"
+        },
+        "s16": {
+          "point": [
+            240.0,
+            156.0
+          ],
+          "path": "Stands/s16",
+          "room": "zone_ding:hall"
+        }
+      },
+      "spawns": {
+        "from_hall": {
+          "point": [
+            64.0,
+            400.0
+          ],
+          "path": "Spawns/from_hall",
+          "room": "zone_ding:foyer"
+        }
+      },
+      "exits": [
+        {
+          "id": "isolation_gate",
+          "target": "living_hall",
+          "point": [
+            16.0,
+            384.0
+          ],
+          "spawn": "east_north"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "zone_ding:wc",
+          "region": "wc",
+          "rect": [
+            0,
+            0,
+            192,
+            224
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              192,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:hall",
+          "region": "hall",
+          "rect": [
+            192,
+            0,
+            256,
+            448
+          ],
+          "rects": [
+            [
+              192,
+              0,
+              256,
+              448
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:north_2",
+          "region": "north_2",
+          "rect": [
+            448,
+            0,
+            256,
+            288
+          ],
+          "rects": [
+            [
+              448,
+              0,
+              256,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:north_1",
+          "region": "north_1",
+          "rect": [
+            704,
+            0,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              704,
+              0,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:north_0",
+          "region": "north_0",
+          "rect": [
+            928,
+            0,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              928,
+              0,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:foyer",
+          "region": "foyer",
+          "rect": [
+            0,
+            224,
+            192,
+            224
+          ],
+          "rects": [
+            [
+              0,
+              224,
+              192,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:corridor",
+          "region": "corridor",
+          "rect": [
+            448,
+            288,
+            704,
+            160
+          ],
+          "rects": [
+            [
+              448,
+              288,
+              704,
+              160
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:store",
+          "region": "store",
+          "rect": [
+            0,
+            448,
+            192,
+            256
+          ],
+          "rects": [
+            [
+              0,
+              448,
+              192,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:prep",
+          "region": "prep",
+          "rect": [
+            192,
+            448,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              192,
+              448,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:south_2",
+          "region": "south_2",
+          "rect": [
+            448,
+            448,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              448,
+              448,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:south_1",
+          "region": "south_1",
+          "rect": [
+            704,
+            448,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              704,
+              448,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_ding:south_0",
+          "region": "south_0",
+          "rect": [
+            928,
+            448,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              928,
+              448,
+              224,
+              256
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "door_000",
+          "from": "zone_ding:corridor",
+          "to": "zone_ding:north_0",
+          "point": [
+            1024.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_001",
+          "from": "zone_ding:corridor",
+          "to": "zone_ding:south_0",
+          "point": [
+            1024.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_002",
+          "from": "zone_ding:foyer",
+          "to": "zone_ding:wc",
+          "point": [
+            96.0,
+            272.0
+          ]
+        },
+        {
+          "id": "door_003",
+          "from": "zone_ding:corridor",
+          "to": "zone_ding:north_2",
+          "point": [
+            576.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_004",
+          "from": "zone_ding:foyer",
+          "to": "zone_ding:store",
+          "point": [
+            96.0,
+            496.0
+          ]
+        },
+        {
+          "id": "door_005",
+          "from": "zone_ding:hall",
+          "to": "zone_ding:prep",
+          "point": [
+            320.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_006",
+          "from": "zone_ding:corridor",
+          "to": "zone_ding:south_2",
+          "point": [
+            576.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_007",
+          "from": "zone_ding:corridor",
+          "to": "zone_ding:north_1",
+          "point": [
+            800.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_008",
+          "from": "zone_ding:corridor",
+          "to": "zone_ding:south_1",
+          "point": [
+            800.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_009",
+          "from": "zone_ding:foyer",
+          "to": "zone_ding:hall",
+          "point": [
+            176.0,
+            384.0
+          ]
+        },
+        {
+          "id": "isolation_gate",
+          "from": "zone_ding:foyer",
+          "to": "living_hall",
+          "target_map": "living_hall",
+          "point": [
+            16.0,
+            384.0
+          ]
+        }
+      ]
+    },
+    "zone_jia": {
+      "scene": "res://scenes/Chapter2/Maps/zone_jia.tscn",
+      "size": [
+        1152.0,
+        704.0
+      ],
+      "sites": {
+        "transmitter": {
+          "point": [
+            800.0,
+            136.0
+          ],
+          "path": "Sites/transmitter",
+          "label": "铜口",
+          "room": "zone_jia:hall"
+        },
+        "zone_rules": {
+          "point": [
+            896.0,
+            136.0
+          ],
+          "path": "Sites/zone_rules",
+          "label": "公告框",
+          "room": "zone_jia:hall"
+        },
+        "isolation_gate": {
+          "point": [
+            1104.0,
+            384.0
+          ],
+          "path": "Sites/isolation_gate",
+          "label": "隔离门",
+          "room": "zone_jia:foyer"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            560.0,
+            220.0
+          ],
+          "path": "Stands/s00",
+          "room": "zone_jia:north_2"
+        },
+        "s01": {
+          "point": [
+            80.0,
+            636.0
+          ],
+          "path": "Stands/s01",
+          "room": "zone_jia:south_0"
+        },
+        "s02": {
+          "point": [
+            912.0,
+            604.0
+          ],
+          "path": "Stands/s02",
+          "room": "zone_jia:prep"
+        },
+        "s03": {
+          "point": [
+            1072.0,
+            188.0
+          ],
+          "path": "Stands/s03",
+          "room": "zone_jia:wc"
+        },
+        "s04": {
+          "point": [
+            144.0,
+            156.0
+          ],
+          "path": "Stands/s04",
+          "room": "zone_jia:north_0"
+        },
+        "s05": {
+          "point": [
+            528.0,
+            636.0
+          ],
+          "path": "Stands/s05",
+          "room": "zone_jia:south_2"
+        },
+        "s06": {
+          "point": [
+            816.0,
+            156.0
+          ],
+          "path": "Stands/s06",
+          "room": "zone_jia:hall"
+        },
+        "s07": {
+          "point": [
+            848.0,
+            380.0
+          ],
+          "path": "Stands/s07",
+          "room": "zone_jia:hall"
+        },
+        "s08": {
+          "point": [
+            304.0,
+            636.0
+          ],
+          "path": "Stands/s08",
+          "room": "zone_jia:south_1"
+        },
+        "s09": {
+          "point": [
+            368.0,
+            156.0
+          ],
+          "path": "Stands/s09",
+          "room": "zone_jia:north_1"
+        },
+        "s10": {
+          "point": [
+            1040.0,
+            412.0
+          ],
+          "path": "Stands/s10",
+          "room": "zone_jia:foyer"
+        },
+        "s11": {
+          "point": [
+            752.0,
+            636.0
+          ],
+          "path": "Stands/s11",
+          "room": "zone_jia:prep"
+        },
+        "s12": {
+          "point": [
+            176.0,
+            572.0
+          ],
+          "path": "Stands/s12",
+          "room": "zone_jia:south_0"
+        },
+        "s13": {
+          "point": [
+            400.0,
+            572.0
+          ],
+          "path": "Stands/s13",
+          "room": "zone_jia:south_1"
+        },
+        "s14": {
+          "point": [
+            624.0,
+            572.0
+          ],
+          "path": "Stands/s14",
+          "room": "zone_jia:south_2"
+        },
+        "s15": {
+          "point": [
+            752.0,
+            348.0
+          ],
+          "path": "Stands/s15",
+          "room": "zone_jia:hall"
+        },
+        "s16": {
+          "point": [
+            912.0,
+            156.0
+          ],
+          "path": "Stands/s16",
+          "room": "zone_jia:hall"
+        }
+      },
+      "spawns": {
+        "from_hall": {
+          "point": [
+            1088.0,
+            400.0
+          ],
+          "path": "Spawns/from_hall",
+          "room": "zone_jia:foyer"
+        }
+      },
+      "exits": [
+        {
+          "id": "isolation_gate",
+          "target": "living_hall",
+          "point": [
+            1136.0,
+            384.0
+          ],
+          "spawn": "west_north"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "zone_jia:north_0",
+          "region": "north_0",
+          "rect": [
+            0,
+            0,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:north_1",
+          "region": "north_1",
+          "rect": [
+            224,
+            0,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              224,
+              0,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:north_2",
+          "region": "north_2",
+          "rect": [
+            448,
+            0,
+            256,
+            288
+          ],
+          "rects": [
+            [
+              448,
+              0,
+              256,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:hall",
+          "region": "hall",
+          "rect": [
+            704,
+            0,
+            256,
+            448
+          ],
+          "rects": [
+            [
+              704,
+              0,
+              256,
+              448
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:wc",
+          "region": "wc",
+          "rect": [
+            960,
+            0,
+            192,
+            224
+          ],
+          "rects": [
+            [
+              960,
+              0,
+              192,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:foyer",
+          "region": "foyer",
+          "rect": [
+            960,
+            224,
+            192,
+            224
+          ],
+          "rects": [
+            [
+              960,
+              224,
+              192,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:corridor",
+          "region": "corridor",
+          "rect": [
+            0,
+            288,
+            704,
+            160
+          ],
+          "rects": [
+            [
+              0,
+              288,
+              704,
+              160
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:south_0",
+          "region": "south_0",
+          "rect": [
+            0,
+            448,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              0,
+              448,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:south_1",
+          "region": "south_1",
+          "rect": [
+            224,
+            448,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              224,
+              448,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:south_2",
+          "region": "south_2",
+          "rect": [
+            448,
+            448,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              448,
+              448,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:prep",
+          "region": "prep",
+          "rect": [
+            704,
+            448,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              704,
+              448,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_jia:store",
+          "region": "store",
+          "rect": [
+            960,
+            448,
+            192,
+            256
+          ],
+          "rects": [
+            [
+              960,
+              448,
+              192,
+              256
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "door_000",
+          "from": "zone_jia:corridor",
+          "to": "zone_jia:north_0",
+          "point": [
+            128.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_001",
+          "from": "zone_jia:corridor",
+          "to": "zone_jia:north_2",
+          "point": [
+            576.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_002",
+          "from": "zone_jia:corridor",
+          "to": "zone_jia:south_0",
+          "point": [
+            128.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_003",
+          "from": "zone_jia:corridor",
+          "to": "zone_jia:south_2",
+          "point": [
+            576.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_004",
+          "from": "zone_jia:foyer",
+          "to": "zone_jia:hall",
+          "point": [
+            976.0,
+            384.0
+          ]
+        },
+        {
+          "id": "door_005",
+          "from": "zone_jia:corridor",
+          "to": "zone_jia:north_1",
+          "point": [
+            352.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_006",
+          "from": "zone_jia:foyer",
+          "to": "zone_jia:wc",
+          "point": [
+            1056.0,
+            272.0
+          ]
+        },
+        {
+          "id": "door_007",
+          "from": "zone_jia:corridor",
+          "to": "zone_jia:south_1",
+          "point": [
+            352.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_008",
+          "from": "zone_jia:foyer",
+          "to": "zone_jia:store",
+          "point": [
+            1056.0,
+            496.0
+          ]
+        },
+        {
+          "id": "door_009",
+          "from": "zone_jia:hall",
+          "to": "zone_jia:prep",
+          "point": [
+            832.0,
+            464.0
+          ]
+        },
+        {
+          "id": "isolation_gate",
+          "from": "zone_jia:foyer",
+          "to": "living_hall",
+          "target_map": "living_hall",
+          "point": [
+            1136.0,
+            384.0
+          ]
+        }
+      ]
+    },
+    "zone_yi": {
+      "scene": "res://scenes/Chapter2/Maps/zone_yi.tscn",
+      "size": [
+        1152.0,
+        704.0
+      ],
+      "sites": {
+        "transmitter": {
+          "point": [
+            352.0,
+            136.0
+          ],
+          "path": "Sites/transmitter",
+          "label": "铜口",
+          "room": "zone_yi:hall"
+        },
+        "zone_rules": {
+          "point": [
+            256.0,
+            136.0
+          ],
+          "path": "Sites/zone_rules",
+          "label": "公告框",
+          "room": "zone_yi:hall"
+        },
+        "isolation_gate": {
+          "point": [
+            48.0,
+            384.0
+          ],
+          "path": "Sites/isolation_gate",
+          "label": "隔离门",
+          "room": "zone_yi:foyer"
+        },
+        "bed": {
+          "point": [
+            858.0,
+            196.0
+          ],
+          "path": "Sites/bed",
+          "label": "bed",
+          "room": "zone_yi:north_1"
+        },
+        "E1": {
+          "point": [
+            26.0,
+            396.0
+          ],
+          "path": "Sites/E1",
+          "label": "",
+          "room": "zone_yi:foyer"
+        },
+        "E2": {
+          "point": [
+            62.0,
+            422.0
+          ],
+          "path": "Sites/E2",
+          "label": "",
+          "room": "zone_yi:foyer"
+        },
+        "E6": {
+          "point": [
+            522.0,
+            202.0
+          ],
+          "path": "Sites/E6",
+          "label": "",
+          "room": "zone_yi:north_2"
+        },
+        "E7": {
+          "point": [
+            368.0,
+            258.0
+          ],
+          "path": "Sites/E7",
+          "label": "",
+          "room": "zone_yi:hall"
+        },
+        "E10": {
+          "point": [
+            368.0,
+            502.0
+          ],
+          "path": "Sites/E10",
+          "label": "",
+          "room": "zone_yi:prep"
+        },
+        "E11": {
+          "point": [
+            806.0,
+            110.0
+          ],
+          "path": "Sites/E11",
+          "label": "",
+          "room": "zone_yi:north_1"
+        },
+        "hall_copper_seat": {
+          "point": [
+            368.0,
+            240.0
+          ],
+          "path": "Sites/hall_copper_seat",
+          "label": "",
+          "room": "zone_yi:hall"
+        },
+        "hall_tea_side": {
+          "point": [
+            320.0,
+            300.0
+          ],
+          "path": "Sites/hall_tea_side",
+          "label": "",
+          "room": "zone_yi:hall"
+        },
+        "hall_window_side": {
+          "point": [
+            260.0,
+            280.0
+          ],
+          "path": "Sites/hall_window_side",
+          "label": "",
+          "room": "zone_yi:hall"
+        }
+      },
+      "stations": {},
+      "stands": {
+        "s00": {
+          "point": [
+            624.0,
+            220.0
+          ],
+          "path": "Stands/s00",
+          "room": "zone_yi:north_2"
+        },
+        "s01": {
+          "point": [
+            1072.0,
+            636.0
+          ],
+          "path": "Stands/s01",
+          "room": "zone_yi:south_0"
+        },
+        "s02": {
+          "point": [
+            112.0,
+            412.0
+          ],
+          "path": "Stands/s02",
+          "room": "zone_yi:foyer"
+        },
+        "s03": {
+          "point": [
+            592.0,
+            636.0
+          ],
+          "path": "Stands/s03",
+          "room": "zone_yi:south_2"
+        },
+        "s04": {
+          "point": [
+            1040.0,
+            220.0
+          ],
+          "path": "Stands/s04",
+          "room": "zone_yi:north_0"
+        },
+        "s05": {
+          "point": [
+            240.0,
+            156.0
+          ],
+          "path": "Stands/s05",
+          "room": "zone_yi:hall"
+        },
+        "s06": {
+          "point": [
+            400.0,
+            380.0
+          ],
+          "path": "Stands/s06",
+          "room": "zone_yi:hall"
+        },
+        "s07": {
+          "point": [
+            240.0,
+            604.0
+          ],
+          "path": "Stands/s07",
+          "room": "zone_yi:prep"
+        },
+        "s08": {
+          "point": [
+            816.0,
+            636.0
+          ],
+          "path": "Stands/s08",
+          "room": "zone_yi:south_1"
+        },
+        "s09": {
+          "point": [
+            816.0,
+            220.0
+          ],
+          "path": "Stands/s09",
+          "room": "zone_yi:north_1"
+        },
+        "s10": {
+          "point": [
+            80.0,
+            188.0
+          ],
+          "path": "Stands/s10",
+          "room": "zone_yi:wc"
+        },
+        "s11": {
+          "point": [
+            400.0,
+            188.0
+          ],
+          "path": "Stands/s11",
+          "room": "zone_yi:hall"
+        },
+        "s12": {
+          "point": [
+            400.0,
+            636.0
+          ],
+          "path": "Stands/s12",
+          "room": "zone_yi:prep"
+        },
+        "s13": {
+          "point": [
+            240.0,
+            348.0
+          ],
+          "path": "Stands/s13",
+          "room": "zone_yi:hall"
+        },
+        "s14": {
+          "point": [
+            528.0,
+            156.0
+          ],
+          "path": "Stands/s14",
+          "room": "zone_yi:north_2"
+        },
+        "s15": {
+          "point": [
+            976.0,
+            572.0
+          ],
+          "path": "Stands/s15",
+          "room": "zone_yi:south_0"
+        }
+      },
+      "spawns": {
+        "from_hall": {
+          "point": [
+            64.0,
+            400.0
+          ],
+          "path": "Spawns/from_hall",
+          "room": "zone_yi:foyer"
+        }
+      },
+      "exits": [
+        {
+          "id": "isolation_gate",
+          "target": "living_hall",
+          "point": [
+            16.0,
+            384.0
+          ],
+          "spawn": "east_south"
+        }
+      ],
+      "rooms": [
+        {
+          "id": "zone_yi:wc",
+          "region": "wc",
+          "rect": [
+            0,
+            0,
+            192,
+            224
+          ],
+          "rects": [
+            [
+              0,
+              0,
+              192,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:hall",
+          "region": "hall",
+          "rect": [
+            192,
+            0,
+            256,
+            448
+          ],
+          "rects": [
+            [
+              192,
+              0,
+              256,
+              448
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:north_2",
+          "region": "north_2",
+          "rect": [
+            448,
+            0,
+            256,
+            288
+          ],
+          "rects": [
+            [
+              448,
+              0,
+              256,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:north_1",
+          "region": "north_1",
+          "rect": [
+            704,
+            0,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              704,
+              0,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:north_0",
+          "region": "north_0",
+          "rect": [
+            928,
+            0,
+            224,
+            288
+          ],
+          "rects": [
+            [
+              928,
+              0,
+              224,
+              288
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:foyer",
+          "region": "foyer",
+          "rect": [
+            0,
+            224,
+            192,
+            224
+          ],
+          "rects": [
+            [
+              0,
+              224,
+              192,
+              224
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:corridor",
+          "region": "corridor",
+          "rect": [
+            448,
+            288,
+            704,
+            160
+          ],
+          "rects": [
+            [
+              448,
+              288,
+              704,
+              160
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:store",
+          "region": "store",
+          "rect": [
+            0,
+            448,
+            192,
+            256
+          ],
+          "rects": [
+            [
+              0,
+              448,
+              192,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:prep",
+          "region": "prep",
+          "rect": [
+            192,
+            448,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              192,
+              448,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:south_2",
+          "region": "south_2",
+          "rect": [
+            448,
+            448,
+            256,
+            256
+          ],
+          "rects": [
+            [
+              448,
+              448,
+              256,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:south_1",
+          "region": "south_1",
+          "rect": [
+            704,
+            448,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              704,
+              448,
+              224,
+              256
+            ]
+          ]
+        },
+        {
+          "id": "zone_yi:south_0",
+          "region": "south_0",
+          "rect": [
+            928,
+            448,
+            224,
+            256
+          ],
+          "rects": [
+            [
+              928,
+              448,
+              224,
+              256
+            ]
+          ]
+        }
+      ],
+      "doors": [
+        {
+          "id": "door_000",
+          "from": "zone_yi:corridor",
+          "to": "zone_yi:north_0",
+          "point": [
+            1024.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_001",
+          "from": "zone_yi:corridor",
+          "to": "zone_yi:south_0",
+          "point": [
+            1024.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_002",
+          "from": "zone_yi:foyer",
+          "to": "zone_yi:wc",
+          "point": [
+            96.0,
+            272.0
+          ]
+        },
+        {
+          "id": "door_003",
+          "from": "zone_yi:corridor",
+          "to": "zone_yi:north_2",
+          "point": [
+            576.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_004",
+          "from": "zone_yi:foyer",
+          "to": "zone_yi:store",
+          "point": [
+            96.0,
+            496.0
+          ]
+        },
+        {
+          "id": "door_005",
+          "from": "zone_yi:hall",
+          "to": "zone_yi:prep",
+          "point": [
+            320.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_006",
+          "from": "zone_yi:corridor",
+          "to": "zone_yi:south_2",
+          "point": [
+            576.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_007",
+          "from": "zone_yi:corridor",
+          "to": "zone_yi:north_1",
+          "point": [
+            800.0,
+            304.0
+          ]
+        },
+        {
+          "id": "door_008",
+          "from": "zone_yi:corridor",
+          "to": "zone_yi:south_1",
+          "point": [
+            800.0,
+            464.0
+          ]
+        },
+        {
+          "id": "door_009",
+          "from": "zone_yi:foyer",
+          "to": "zone_yi:hall",
+          "point": [
+            176.0,
+            384.0
+          ]
+        },
+        {
+          "id": "isolation_gate",
+          "from": "zone_yi:foyer",
+          "to": "living_hall",
+          "target_map": "living_hall",
+          "point": [
+            16.0,
+            384.0
+          ]
+        }
+      ]
+    }
+  },
+  "additions": {
+    "living_floor": {
+      "sites": [
+        {
+          "id": "E12",
+          "point": [
+            2476,
+            950
+          ],
+          "label": "风衣"
+        },
+        {
+          "id": "litter",
+          "point": [
+            440,
+            240
+          ],
+          "label": "碎纸"
+        }
+      ],
+      "props": []
+    },
+    "campus_n": {
+      "sites": [
+        {
+          "id": "outdoor_meter",
+          "point": [
+            672,
+            1416
+          ],
+          "label": "户外仪器阵"
+        },
+        {
+          "id": "outdoor_high",
+          "point": [
+            672,
+            1272
+          ],
+          "label": "高地通路"
+        }
+      ],
+      "props": [
+        {
+          "id": "outdoor_dial",
+          "texture": "res://ShareAsset/Internal/Props/Outdoor/dial_meter.svg",
+          "position": [
+            704,
+            1416
+          ],
+          "footprint": [
+            -10,
+            -8,
+            20,
+            8
+          ]
+        }
+      ]
+    },
+    "zone_jia": {
+      "sites": [
+        {
+          "id": "litter",
+          "point": [
+            440,
+            240
+          ],
+          "label": "碎纸"
+        }
+      ],
+      "props": []
+    }
+  }
+}

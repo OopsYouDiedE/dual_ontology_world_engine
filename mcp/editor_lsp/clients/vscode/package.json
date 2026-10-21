@@ -1,0 +1,31 @@
+{
+  "name": "duelview-dv",
+  "displayName": "DuelView DV",
+  "description": "DV compiler diagnostics for source files and unsaved edits.",
+  "version": "0.1.0",
+  "publisher": "duelview",
+  "license": "UNLICENSED",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Programming Languages"],
+  "main": "./extension.js",
+  "activationEvents": ["onLanguage:duelview"],
+  "capabilities": { "untrustedWorkspaces": { "supported": false } },
+  "contributes": {
+    "languages": [{ "id": "duelview", "aliases": ["DuelView", "DV"], "extensions": [".dv"] }],
+    "commands": [{ "command": "dv.restartChecker", "title": "DV: Restart Compiler Checker" }],
+    "configuration": {
+      "title": "DuelView DV",
+      "properties": {
+        "dv.pythonPath": { "type": "string", "default": "python", "scope": "machine", "description": "Python 3 executable used to run the DV language server." },
+        "dv.checkerPath": { "type": "string", "default": "", "scope": "machine", "description": "Absolute path to mcp/editor_lsp/check_dv.py. Empty discovers it from each source file's ancestors." }
+      }
+    }
+  },
+  "scripts": {
+    "prepare-server": "node prepare.js",
+    "vscode:prepublish": "node prepare.js",
+    "package": "vsce package --allow-missing-repository --skip-license --out ../../../../artifacts/releases/dv/DuelView.VSCode.vsix"
+  },
+  "dependencies": { "vscode-languageclient": "9.0.1" },
+  "devDependencies": { "@vscode/vsce": "3.6.2" }
+}

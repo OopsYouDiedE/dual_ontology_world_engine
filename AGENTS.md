@@ -2,7 +2,7 @@
 
 ## 适用范围与依据
 
-- 本文件适用于整个仓库；[language_core/AGENTS.md](language_core/AGENTS.md)、[godot_csharp/AGENTS.md](godot_csharp/AGENTS.md) 及更近的 AGENTS 补充模块约束，冲突时以更近文件为准。用户当前直接指令优先。
+- 本文件适用于整个仓库；[dv_core/AGENTS.md](dv_core/AGENTS.md)、[godot_csharp/AGENTS.md](godot_csharp/AGENTS.md) 及更近的 AGENTS 补充模块约束，冲突时以更近文件为准。用户当前直接指令优先。
 - AGENTS 只维护工作流程、架构、接口、验证与报告方式。世界、人物、剧情、谜题与玩法的依据只有用户指令和 [设计规范](docs/design-standard.md)；依据缺失、含糊或冲突时向用户确认，不自行补设，不在 AGENTS 中另写剧情结论。
 - 调整工作流程、命令、架构或模块接口时，在同轮更新对应 AGENTS 与工程文档。历史任务的机器状态、临时时限、暂停窗口和实施快照保存在 Git 与任务记录中，不叠加成新任务的执行要求。
 - 子代理不读取项目设计文件；主代理负责设计核对和实现取舍，并向并行任务提供必要的工程边界。
@@ -11,18 +11,19 @@
 
 | 路径 | 职责 |
 | --- | --- |
-| `language_core/10-compiler.dv` | DV 编译器 |
-| `language_core/20-core.dv`、`30-session.dv` | 通用机制、主体认知与会话 |
-| `language_core/40-chapter1.dv`、`50-chapter2.dv` | 原生 DV 内容 |
-| `language_core/60-game.dv` | 生产 include 闭包、连续章节与宿主入口 |
-| `language_core/70-checks.dv` | 隔离检查、权威 oracle、夹具和报告 |
-| `language_core/compiler/`、`Session/` | 最小自举编译器、平台 ABI 与 .NET 会话接口 |
+| `dv_core/compiler/10-compiler.dv` | DV 编译器 |
+| `dv_core/modules/20-core.dv`、`30-session.dv` | 通用机制、主体认知与会话 |
+| `dv_core/modules/35-campaign-schema.dv` | 两章共同依赖的角色、位置、时钟、构造器与跨章结构 |
+| `dv_core/modules/40-chapter1.dv`、`50-chapter2.dv` | 各自 include 35 的原生 DV 内容 |
+| `dv_core/modules/60-game.dv` | 生产 include 闭包、连续章节与宿主入口 |
+| `dv_core/checks/70-checks.dv` | 隔离检查、权威 oracle、夹具和报告 |
+| `dv_core/compiler/`、`dv_core/host_bridge/` | 最小自举编译器、平台 ABI 与 .NET 会话接口 |
 | `godot_csharp/` | Godot 场景、物理、输入与呈现 |
-| `tools/`、`godot_csharp/tools/` | 仓库审计与资产生产工具 |
-| `music/` | 曲谱、音频生成源码及构建说明 |
-| `artifacts/<任务>/` | 报告与证据；`tmp/`、`scratch/` 为临时输出 |
+| `mcp/build/`、`asset_pipeline/`、`editor_lsp/`、`rpg_adapter/`、`verification/` | 按需加载的构建、生成、编辑与诊断工具 |
+| `mcp/music_pipeline/` | 曲谱、音频生成源码及构建说明 |
+| `artifacts/<任务>/` | 报告与证据；`.scratch/` 为任务结束时清理的临时输出 |
 
-现行语法与实现边界统一维护在 [language_core/SYNTAX.md](language_core/SYNTAX.md)，[docs/syntax.md](docs/syntax.md) 只保留导航。架构目标、已实现能力和本轮验证分别表述。语言完整迁移目标及尚未完成的静态检查等能力以对应工程文档为准。
+现行语法与实现边界统一维护在 [dv_core/SYNTAX.md](dv_core/SYNTAX.md)，[docs/syntax.md](docs/syntax.md) 只保留导航。架构目标、已实现能力和本轮验证分别表述。语言完整迁移目标及尚未完成的静态检查等能力以对应工程文档为准。
 
 原生 DV 声明与函数（自然叙述/台词、法则/行动句式，表层 `fn`/`axiom`、公式及 `function ... end`，启动语法 `defn`）构成逻辑源码，经同一编译器生成 C# 执行；实际世界效力由采纳与正式执行决定。剧情书写优先使用原文段落，确定的条件和效果使用领域句式；算法仍可使用函数。内容与通用机制分离：专案内容归 40/50 等内容声明，通用 core/session 不硬编码专案剧情；oracle 不提供给主体、不进入生产闭包。不得把旧段落语法、序列化 world 巨树或 JSON 字符串改扩展名当作原生迁移。旧 `.story` 与旧实现只用于迁移溯源，不恢复第二套生产执行路径。
 
@@ -32,7 +33,7 @@ Core 的 verify/run 共用同一法则求值器，绑定对象对应不授予事
 
 正式动作链由 `30-session.dv` 实现并由 `60-game.dv` 整合：Prepare → 现场执行/世界法则回执 → Complete。DV 负责决策、报价、权威效果、观察、传播与结算；Godot Main → WorldView 执行物理移动并返回现场结果。命令行 `formal-model` 适配同一接口，不包含 Godot 几何。预测与推演不发布真实行动效果。
 
-宿主只持有 GameEngine → DvSession → 生成的 DV 类库。等待回执时不重复分派意图，呈现完成不单独触发 Prepare；下一步由 view_ready / dv_next 启动。seed 是包含 Reader/Value 和代码发射的最小 C0 自举编译器，不含世界执行或第二套会话。
+宿主只持有 GameEngine → DvSession → 生成的 DV 类库。等待回执时不重复分派意图。阅读与同房行走期间通过显式 BackgroundPrepare 处理可执行 NPC；返回的动作仍交给同一物理执行器与 Complete。人工动作的提前准备按状态版本和观察者消费，失效即重新 Prepare。seed 是包含 Reader/Value 和代码发射的最小 C0 自举编译器，不含世界执行或第二套会话。
 
 移动目的地分别声明逻辑地点、执行房间与站点。同房间 WASD/鼠标接近由宿主寻路和真实碰撞执行，不进入 DV、不扣游戏时间或动作步数；热点交互与跨房间走正式 Prepare/Complete。显式站点回执核对主体、序号、行动、站点和房间，保留实际终点、站点范围及到达误差。依赖接触的观察只在对应成功 Complete 后产生，局部行走不授予观察或答案。
 
@@ -46,16 +47,24 @@ Core 的 verify/run 共用同一法则求值器，绑定对象对应不授予事
 
 ```sh
 dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false
-dotnet build language_core/LanguageCore.sln -c Release --disable-build-servers -p:NuGetAudit=false
-python language_core/tools/check_dv.py --format json language_core/30-session.dv
-python tools/audit_action_paths.py --out <新JSON路径>
+dotnet build dv_core/LanguageCore.sln -c Release --disable-build-servers -p:NuGetAudit=false
+python mcp/editor_lsp/check_dv.py --format json dv_core/modules/30-session.dv
+python mcp/verification/audit_action_paths.py --out <新JSON路径>
 ```
 
-素材变更后用 Godot 编辑器重新导入；PowerShell 命令为 `& $env:GODOT --headless --editor --path godot_csharp --import`。音乐发行导出写入 `artifacts/releases/soundtrack/`，游戏音频路径与前提见 [music/README.md](music/README.md)。
+素材变更后用 Godot 编辑器重新导入；PowerShell 命令为 `& $env:GODOT --headless --editor --path godot_csharp --import`。音乐发行导出写入 `artifacts/releases/soundtrack/`，游戏音频路径与前提见 [mcp/music_pipeline/README.md](mcp/music_pipeline/README.md)。
 
-VS Code 默认解决方案为 `godot_csharp/DualOntologyWorldEngine.sln`；编译器/seed 工作切换到 `language_core/LanguageCore.sln`。工作区排除 artifacts、tmp、scratch 的历史工程发现、搜索与监视，保留其原始内容。配置依据扩展 schema 维护；配置修复与实际编辑器重载观察分别报告。
+VS Code 默认解决方案为 `godot_csharp/DualOntologyWorldEngine.sln`；编译器/seed 工作切换到 `dv_core/LanguageCore.sln`。工作区排除 artifacts、tmp、scratch 的历史工程发现、搜索与监视，保留其原始内容。配置依据扩展 schema 维护；配置修复与实际编辑器重载观察分别报告。
 
 旧 verify、FullTest、guarded_level3、PlayerTranscript、回放和旧会话检查入口已退役，不重新调用。三级保护运行工具仍须按现行 DV 合同建立后才能用于受保护比较；旧保护清单与证据保留原字节。
+
+## 工具与临时文件
+
+复用工具统一放在 `mcp/`，由 `mcp/server.py` 的静态目录按需加载。资产生成、编译、编辑器、取证和检查脚本均在工具域；`godot_csharp` 只包含运行代码、场景、契约与发布资源。`FrameArchive.cs` 仅编入临时工具工程。
+
+一次性脚本放在被忽略的 `.scratch/`。任务提交前删除本轮临时脚本并确认没有本轮遗留；已有其他工作不覆盖。工具启动的临时 Godot 工程在退出时清理。新增可复用能力直接归入对应 MCP 管线。
+
+实施顺序服从用户当前指令。本轮全部 Step 的实现和接线完成前，不设置或执行测试、构建、探针与检验。重构围绕明确的状态所有权、一次提交和单一入口，按真实失败语义处理错误。
 
 ## 工作流程
 
@@ -82,7 +91,7 @@ VS Code 默认解决方案为 `godot_csharp/DualOntologyWorldEngine.sln`；编�
 
 | 级别 | 入口、证据与边界 |
 | --- | --- |
-| 一级：正式 DV 逻辑输出 | `python language_core/tools/run_debug.py --out artifacts/partial-bootstrap-core/<新目录> --timeout <本轮授权秒数>`，执行生产 formal-model 会话，不启动 Godot。保留源码指纹、原始 stdout/stderr、轨迹、调试投影与玩家可见正文；按事件编号检查行动前提、回执、称谓、叙述、顺序、重复和缺失。源文推导与实际轨迹分别保存。一级不含画面、几何、碰撞或输入验收。 |
+| 一级：正式 DV 逻辑输出 | `python mcp/verification/run_debug.py --out artifacts/partial-bootstrap-core/<新目录> --timeout <本轮授权秒数>`，执行生产 formal-model 会话，不启动 Godot。保留源码指纹、原始 stdout/stderr、轨迹、调试投影与玩家可见正文；按事件编号检查行动前提、回执、称谓、叙述、顺序、重复和缺失。源文推导与实际轨迹分别保存。一级不含画面、几何、碰撞或输入验收。 |
 | 二级：Godot UI | 使用现役 DV 内容的有限片段检查各场景组合、显示与交互，实际查看截图；不默认扩大为全局会话。 |
 | 三级：游戏本体 | 仅在用户明确要求最终效果测试时执行。默认由引擎自身的侦探以本人认知、动机和共同决策提供输入，经真实碰撞、交互和显示完成。测试 Agent 不代选动作、不预写路线或答案。 |
 

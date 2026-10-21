@@ -68,6 +68,7 @@ var _endpaper_viewport: SubViewport
 var _endpaper_title: Label
 var _open_amount := 0.0
 var _current_page := "cover"
+var _frozen_page := ""
 var _turning := false
 var _turn_tween: Tween
 var _book_leaf: PanelContainer
@@ -681,6 +682,7 @@ func _turn_to(page: String) -> void:
 	_capture_page_state()
 	_projection.reset_navigation()
 	var previous := _current_page
+	_frozen_page = previous
 	var opening := previous == "cover"
 	var closing := page == "cover"
 	_turning = true
@@ -732,6 +734,7 @@ func _turn_to(page: String) -> void:
 		if is_instance_valid(_page_leaf): _page_leaf.queue_free()
 		_page_leaf = null
 	_turning = false
+	_frozen_page = ""
 	_set_menu_input(true)
 	if not _request_pending and not _leaving: _restore_page_state()
 
@@ -967,3 +970,8 @@ func show_load_error(message: String) -> void:
 		_load_error_line = _leaf_text(tr("无法续读此书签，请选择其他存档。"))
 	_load_error_line.tooltip_text = message
 	_leaf_back.grab_focus()
+
+func page_trace_context() -> Dictionary:
+	return {"panel": "title" if mode == "title" else "casebook", "page": _current_page,
+		"projected_3d": true, "turning": _turning, "opening": _request_pending,
+		"page_texture": "frozen" if _turning else "live", "frozen_source_page": _frozen_page, "occlusion_evidence": "rendered-frame"}

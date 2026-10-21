@@ -1,0 +1,185 @@
+// Standalone formal-model tooling. Production does not include this module.
+#include ../modules/60-game.dv
+
+// Reporting selection only; all residents retain the same decision mechanism.
+fn dvg_tracked_actors():
+    return dvg_debug_config().actors
+
+fn dvg_chronological_trace(state):
+    return dv_debug_events(state.events, 0, dvg_debug_config()).events
+
+// Bounded formal-model adapter; false uses the authored session action limit.
+// Returns the live state without closing it or resetting at chapter expansion.
+fn dvg_run_campaign(max_steps):
+    var state = dvg_open()
+    var limit = max_steps
+    if limit == false:
+        limit = state.limit
+    dv_require(0 <= limit, "Negative campaign step limit")
+    var steps = 0
+    while dvs_session_active(state) and steps < limit:
+        state = dvg_prepare(state)
+        let pending = dv_find(state, "pending", false)
+        if pending != false:
+            state = dvg_complete(state, {"action_event": pending.action_event, "outcome": "applied", "actual": pending.model.actual, "executor": "formal-model"})
+            steps = steps + 1
+    return state
+
+// Source module: language_core/game/entry.dv
+// Production composition and read-only diagnostic configuration.
+
+fn dvg_debug_config():
+    return {"viewer": "detective", "actors": [], "event_types": [], "max_steps": false, "phase_progress": false}
+
+// Read-only stopping evidence; these limits never mean narrative completion.
+fn dvg_debug_stop_evidence(state, steps, limit):
+    var actors = []
+    var reasons = []
+    var i = 0
+    while i < rt_count(state.actors):
+        let actor = state.actors[i]
+        rt_push(actors, {"actor": actor.id, "action_quota": dv_find(actor.policy, "budget", 0), "reason_budget": dv_find(actor.policy, "reason_budget", 0), "model_budget": dv_find(actor.policy, "model_budget", 0), "planning_limit": dv_find(actor, "planning_limit", 0), "scheduled_action": dv_find(actor, "scheduled_action", false), "can_act": dvs_actor_can_act(actor)})
+        i = i + 1
+    if limit <= steps:
+        rt_push(reasons, "diagnostic-action-window")
+    if state.limit <= state.executed:
+        rt_push(reasons, "session-action-limit")
+    if state.horizon <= state.physical.time:
+        rt_push(reasons, "world-horizon")
+    if state.duration_blocked:
+        rt_push(reasons, "action-exceeds-remaining-time")
+    if rt_count(state.actors) <= state.idle and dvs_scheduled_count(state.actors) == 0:
+        rt_push(reasons, "no-scheduled-or-admissible-action")
+    return {"reasons": reasons, "actors": actors, "executed": state.executed, "session_limit": state.limit, "diagnostic_limit": limit, "game_time": state.physical.time, "horizon": state.horizon, "idle": state.idle, "scheduled_count": dvs_scheduled_count(state.actors), "narrative_completion": "see-actual-closing-record", "chapter_summary": dvg_chapter_summary(state)}
+
+// Projection buffering changes diagnostic delivery only. Every dvs_event still
+// commits its original value to the raw DAG before the event is published.
+fn dvg_debug_flush(state, presentations, cursor, config, steps, projection_every):
+    var i = 0
+    while i < rt_count(presentations):
+        rt_json_print(presentations[i])
+        i = i + 1
+    let batch = dv_debug_events(state.events, cursor, config)
+    rt_json_print({"type": "debug_events", "batch": batch, "through_step": steps, "projection_every": projection_every})
+    return batch.next
+
+fn dvg_debug_completion(events, action_event):
+    var i = rt_count(events) - 1
+    while 0 <= i:
+        let execution = events[i]
+        if execution.type == "action_execution" and rt_count(execution.parents) == 1:
+            let host = dvs_find_event_by_id(events, execution.parents[0])
+            if host != false and host.type == "host_completion" and host.actor == execution.actor and dv_find(host.data, "action_event", "") == action_event:
+                return {"host_event": host.id, "execution_event": execution.id, "actor": execution.actor, "action_event": action_event, "status": execution.data.receipt.execution.status}
+        i = i - 1
+    rt_fail("Stage checkpoint has no matching actual execution and host receipt")
+    return false
+
+fn dvg_debug_stage(state, config, run_config, steps, boundary, before_time, action_event, inherited_events, provenance):
+    dv_require(dv_find(state, "pending", false) == false, "Stage checkpoint requires a completed action with no pending receipt")
+    let last = rt_count(state.events) - 1
+    dv_require(0 <= last, "Stage checkpoint requires actual event evidence")
+    let completion = dvg_debug_completion(state.events, action_event)
+    return {"format": "dv-debug-stage-v1", "completion": completion, "executed": state.executed, "after_complete": true, "boundary": boundary, "before_time": before_time, "game_time": state.physical.time, "steps": steps, "completed_action_event": action_event, "last_event": state.events[last].id, "inherited_event_count": inherited_events, "debug_config": config, "run_config": run_config, "provenance": provenance, "state": state}
+
+// Both fresh and explicitly restored runs use this exact prepare/complete loop.
+fn dvg_debug_loop(initial, config, run_config, initial_steps, initial_cursor, resumed):
+    var state = initial
+    var raw_format = "dag"
+    if 3 < rt_arg_count():
+        raw_format = rt_arg(3)
+    var projection_every = 1
+    if 8 < rt_arg_count():
+        projection_every = rt_number(rt_arg(8))
+    dv_require(0 < projection_every and rt_floor(projection_every) == projection_every, "Projection batch must be a positive integer")
+    var provenance = []
+    if 9 < rt_arg_count() and rt_arg(9) != "":
+        provenance = rt_json_parse(rt_read(rt_arg(9)))
+    dv_require(projection_every == 1 or raw_format == "dag", "Batched projection requires complete online raw DAG evidence")
+    var cursor = initial_cursor
+    var steps = initial_steps
+    var last_flush_steps = steps
+    var presentations = []
+    var last_complete_time = state.physical.time
+    var limit = state.limit
+    if config.max_steps != false:
+        limit = config.max_steps
+    dv_require(0 < limit, "Debug max_steps must be positive or false for the authored limit")
+    var inherited_events = 0
+    if resumed:
+        inherited_events = rt_count(state.events)
+    rt_json_print({"type": "debug_start", "configuration": config, "run_config": run_config, "executor": "formal-model", "geometry": false, "raw_format": raw_format, "projection_every": projection_every, "resumed": resumed, "initial_steps": steps, "inherited_event_count": inherited_events, "run_start_game_time": state.physical.time, "presentation_scope": "stdout contains flushed projection only; every original committed event remains in raw DAG"})
+    while dvs_session_active(state) and steps < limit:
+        let before_time = last_complete_time
+        state = dvg_prepare(state)
+        let pending = dv_find(state, "pending", false)
+        if pending != false:
+            state = dvg_complete(state, {"action_event": pending.action_event, "outcome": "applied", "actual": pending.model.actual, "executor": "formal-model"})
+            steps = steps + 1
+            let presentation = dvg_presentation(state, config.viewer)
+            if dv_find(presentation, "visible", false):
+                rt_push(presentations, rt_snapshot({"type": "player_presentation", "step": steps, "viewer": config.viewer, "presentation": presentation}))
+            if raw_format == "dag" and 0 < rt_count(provenance):
+                if before_time < 2880 and 2880 <= state.physical.time:
+                    rt_raw_checkpoint("stage-day3", dvg_debug_stage(state, config, run_config, steps, 2880, before_time, pending.action_event, inherited_events, provenance))
+                if before_time < 5760 and 5760 <= state.physical.time:
+                    rt_raw_checkpoint("stage-day5", dvg_debug_stage(state, config, run_config, steps, 5760, before_time, pending.action_event, inherited_events, provenance))
+            last_complete_time = state.physical.time
+        if projection_every == 1 or projection_every <= steps - last_flush_steps:
+            cursor = dvg_debug_flush(state, presentations, cursor, config, steps, projection_every)
+            presentations = []
+            last_flush_steps = steps
+    if cursor < rt_count(state.events) or 0 < rt_count(presentations):
+        cursor = dvg_debug_flush(state, presentations, cursor, config, steps, projection_every)
+    let active = dvs_session_active(state)
+    rt_json_print({"type": "debug_end", "steps": steps, "active": active, "game_time": state.physical.time, "action_bound_reached": steps == limit, "stop_evidence": dvg_debug_stop_evidence(state, steps, limit)})
+    let trace = dvs_session_close(state)
+    rt_json_print({"type": "debug_events", "batch": dv_debug_events(trace.events, cursor, config), "through_step": steps, "projection_every": projection_every})
+    if raw_format == "dag":
+        return rt_raw_finish({"trace": trace, "last_live_session": state})
+    rt_fail("JSON recording is forbidden")
+    return false
+
+// Fresh initialization is never used by the restore entry.
+fn dvg_debug_run():
+    let config = dvg_debug_config()
+    var raw_format = "dag"
+    if 3 < rt_arg_count():
+        raw_format = rt_arg(3)
+    dv_require(raw_format == "dag", "Unknown raw evidence format")
+    if raw_format == "dag":
+        rt_raw_open(rt_arg(0))
+    var run_config = {"seed": 1, "profile": "Standard_Detective", "detective_zone": "zone_yi"}
+    if 1 < rt_arg_count():
+        run_config = dv_with(run_config, "profile", rt_arg(1))
+    if 2 < rt_arg_count():
+        run_config = dv_with(run_config, "detective_zone", rt_arg(2))
+    if 4 < rt_arg_count():
+        run_config = dv_with(run_config, "seed", rt_number(rt_arg(4)))
+    if 5 < rt_arg_count():
+        run_config = dv_with(run_config, "su_initial_room", rt_arg(5))
+    if 6 < rt_arg_count():
+        run_config = dv_with(run_config, "private_execution_benefit_multiplier", rt_number(rt_arg(6)))
+    if 7 < rt_arg_count():
+        dv_require(rt_arg(7) == "true" or rt_arg(7) == "false", "Homecoming negotiation argument must be true or false")
+        run_config = dv_with(run_config, "homecoming_negotiation", rt_arg(7) == "true")
+    run_config = dvg_run_config(run_config)
+    var state = dvg_open_config(run_config)
+    state = dvs_owned_state_update(state, {"story": dv_with(state.story, "debug_phase_progress", dv_find(config, "phase_progress", false))})
+    if raw_format == "dag":
+        rt_raw_checkpoint("initial", state)
+    return dvg_debug_loop(state, config, run_config, 0, 0, false)
+
+// Loaded by the tagged-Save C# adapter after Python provenance validation.
+fn dvg_debug_resume(checkpoint):
+    dv_require(checkpoint.format == "dv-debug-stage-v1" and checkpoint.after_complete == true, "Unsupported or uncompleted checkpoint")
+    dv_require(rt_arg(3) == "dag", "Restored runs require online raw DAG")
+    dv_require(dv_same(checkpoint.run_config, checkpoint.state.story.run_config), "Checkpoint configuration differs from saved session")
+    dv_require(dv_find(checkpoint.state, "pending", false) == false, "Checkpoint still awaits a completion receipt")
+    let current_provenance = rt_json_parse(rt_read(rt_arg(9)))
+    dv_require(dv_same(checkpoint.provenance.source_hashes, current_provenance.source_hashes), "Restore source fingerprints differ")
+    dv_require(dv_same(checkpoint.run_config, current_provenance.run_config), "Restore requested configuration differs")
+    rt_raw_open(rt_arg(0))
+    rt_raw_checkpoint("initial", checkpoint.state)
+    rt_raw_checkpoint("resume-origin", dv_without(checkpoint, "state"))
+    return dvg_debug_loop(checkpoint.state, checkpoint.debug_config, checkpoint.run_config, checkpoint.steps, rt_count(checkpoint.state.events), true)

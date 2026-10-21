@@ -1,8 +1,9 @@
 extends Node
 ## 全局配乐与音效（自动加载为 GameAudio）。配乐两条轨交叉淡化、无缝循环；音效走小型播放器池。
 ## 场景脚本经 Sound.gd 调用，自动加载缺席时（无头检查脚本）静默跳过。
-## 曲目与音效由 music/build_soundtrack.py 生成，曲目用途见 docs/design-standard.md 第五部分。
+## 曲目与音效由 mcp/music_pipeline/build_soundtrack.py 生成，曲目用途见 docs/design-standard.md 第五部分。
 
+const LIFECYCLE := preload("res://scenes/Host/HostLifecycle.gd")
 const MusicContext := preload("res://scenes/Shared/Audio/MusicContext.gd")
 const MUSIC_PATH := "res://ShareAsset/Internal/Props/Audio/Music/%s.ogg"
 const SFX_PATH := "res://ShareAsset/Internal/Props/Audio/Sfx/%s.ogg"
@@ -21,7 +22,6 @@ var _fade: Tween
 var _sfx: Array[AudioStreamPlayer] = []
 var _next_sfx := 0
 var _cache := {}
-var _quitting := false
 var _scene_music := ""
 var _music_token_serial := 0
 var _presentation_music_token := 0
@@ -184,18 +184,7 @@ func release_audio_and_wait_for_mix() -> bool:
 	return false
 
 func quit_cleanly(exit_code := 0) -> void:
-	if _quitting: return
-	_quitting = true
-	# Start all host drains before awaiting any one of them. World/session files
-	# must be sealed before audio teardown is allowed to terminate the process.
-	var hosts := get_tree().get_nodes_in_group("lifecycle_hosts")
-	for host in hosts:
-		if is_instance_valid(host) and host.has_method("begin_shutdown"): host.begin_shutdown()
-	for host in hosts:
-		if is_instance_valid(host) and host.has_method("wait_for_shutdown"):
-			await host.wait_for_shutdown()
-	var drained: bool = await release_audio_and_wait_for_mix()
-	get_tree().quit(exit_code if drained else (exit_code if exit_code != 0 else 1))
+	await LIFECYCLE.quit(get_tree(), exit_code)
 
 func _exit_tree() -> void:
 	release_audio()

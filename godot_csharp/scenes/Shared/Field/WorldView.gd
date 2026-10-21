@@ -1,4 +1,6 @@
 extends Node2D
+
+const LIFECYCLE := preload("res://scenes/Host/HostLifecycle.gd")
 ## 通用世界现场：执行正式 DV 移动意图，承接人物、视线、悬停、碰撞与镜头。
 ## 地图适配器提供几何、房间、锚点和道具显示；完成回执经 field_event 交回宿主。
 ## 接口与分层见设计第四部分 §2。
@@ -210,6 +212,9 @@ func is_continuous_action(action: String, destination: Dictionary) -> bool:
 func reject_continuous_request(choice_id: String, reason := "request_rejected") -> void:
 	if is_instance_valid(spatial): spatial.reject_continuous_request(choice_id, reason)
 
+func suspend_player_input() -> void:
+	if is_instance_valid(spatial): spatial.stop_for_shutdown()
+
 func begin_shutdown() -> void:
 	if _closing: return
 	_closing = true
@@ -234,7 +239,6 @@ func apply_snapshot(value: Dictionary) -> void:
 	if not execution_only and adapter.fixed_actors().is_empty(): _spawn_people()
 	if execution_bridge != null: execution_bridge.sync_obstacles(self)
 	_build_sites()
-	if is_instance_valid(spatial): spatial.synchronize_continuous_snapshot()
 	if not execution_only and adapter.has_method("prefetch_snapshot"): adapter.prefetch_snapshot(value)
 
 func field_active() -> bool:
@@ -780,6 +784,43 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 	if not _applying_scene and adapter.map_key() != "":
 		field_event.emit({"kind": "move", "map": adapter.map_key()})
 
+## Undo the provisional physical phase after the authoritative Complete rejects it.
+## The recorded source position is the transaction's committed placement.
+func restore_movement_anchor(who: String, anchor: Dictionary, state: Dictionary, animate := true) -> bool:
+	if _closing: return false
+	var body: CharacterBody2D = actors[who]
+	_cancel_motion(body)
+	_daily_release(who)
+	var source_map := str(anchor.map)
+	var source_position: Vector2 = anchor.position
+	var visible_player := not execution_only and body == player
+	var covered := animate and visible_player and is_instance_valid(fader)
+	if covered:
+		var shown: bool = await fader.fade_out()
+		if _closing or not shown: return false
+	if adapter.map_key() != source_map:
+		var prepared: bool = await adapter.prepare_map(source_map, state, get_tree())
+		if _closing or not prepared: return false
+		for other in actors.keys():
+			if str(other) != who: execution_bridge.park_actor(str(other), self)
+		body.reparent(self, false)
+		adapter.load_map(source_map, str(state.get("spawn", "")))
+		body.reparent(adapter.objects_root(), false)
+		_cached_object_sprites.clear()
+	body.position = source_position
+	body.velocity = Vector2.ZERO
+	if execution_only or body == player:
+		snapshot = state
+		execution_binding = state
+	adapter.apply_snapshot(snapshot)
+	if body == player: _after_map_load()
+	_build_sites()
+	execution_bridge.note_map(self)
+	execution_bridge.sync_obstacles(self)
+	adapter.finish_transition()
+	if covered: await fader.fade_in()
+	return true
+
 func _after_map_load() -> void:
 	sight.reset()
 	sight.seen_cells = adapter.seen_cells()
@@ -1089,7 +1130,7 @@ class PresentationBindingsInner:
 
 	static func fail(node: Node, message: String) -> void:
 		push_error(message)
-		if node.is_inside_tree(): node.get_tree().quit(1)
+		if node.is_inside_tree(): LIFECYCLE.quit.call_deferred(node.get_tree(), 1)
 
 class SightMaskInner extends Node2D:
 	var cell_size: int = 32
@@ -1463,7 +1504,7 @@ class RoomStageInner extends Node2D:
 class SpatialInputInner extends Node:
 	const NAV := FieldNavigationInner
 	const MAX_ROUTE_STEPS_PER_TICK := 32
-	const PASSAGE_LOOKAHEAD := 160.0
+	const PASSAGE_LOOKAHEAD := 48.0
 	var field: Node2D
 	var options: Array = []
 	var submitted := false
@@ -1481,9 +1522,33 @@ class SpatialInputInner extends Node:
 	var _gate_waiting := false
 	var _retry_after_usec := 0
 	var _preview_pair := ""
-	var _reconcile_route := PackedVector2Array()
-	var _reconcile_retry := 0.0
-	var _reconcile_stuck := 0.0
+	var _preview_choice := ""
+
+	func finish_transaction(applied: bool) -> void:
+		_continuous.clear()
+		_gate_waiting = false
+		submitted = false
+		if not applied: _stop_walk("movement-rolled-back")
+
+	func stop_for_shutdown() -> void:
+		# The pending action receives one rejected receipt. Complete then owns
+		# the rollback; no input-driven return path survives application exit.
+		if not _continuous.is_empty() and str(_continuous.phase) == "prepared":
+			_continuous.phase = "settling"
+			field.player.velocity = Vector2.ZERO
+			field._daily_report(str(field._player_key), int(_continuous.serial), "blocked", field.adapter.entered_room(field.player.position), str(_continuous.action), {"reason": "host_shutdown"})
+		_stop_walk("host_shutdown")
+
+	func _preview(option: Dictionary) -> void:
+		var choice := str(option.get("id", ""))
+		if choice == "" or choice == _preview_choice or not _can_select(option): return
+		_preview_choice = choice
+		field.field_event.emit({"kind": "prepare_ahead", "choice_id": choice})
+
+	func _cancel_preview() -> void:
+		if _preview_choice == "": return
+		_preview_choice = ""
+		field.field_event.emit({"kind": "cancel_ahead"})
 
 	func continuous_request() -> Dictionary:
 		return _continuous.duplicate(true)
@@ -1492,8 +1557,6 @@ class SpatialInputInner extends Node:
 		if _continuous.is_empty(): return ""
 		var phase := str(_continuous.get("phase", ""))
 		var locale := TranslationServer.get_locale()
-		if phase == "reconciling":
-			return "元の場所へ戻っています。お待ちください。" if locale.begins_with("ja") else "Returning to the starting place. Please wait." if locale.begins_with("en") else "正在返回原处，请稍候。"
 		if bool(_continuous.get("cancelled", false)):
 			return "通行を取り消しています。お待ちください。" if locale.begins_with("ja") else "Cancelling passage. Please wait." if locale.begins_with("en") else "正在取消通行，请稍候。"
 		if phase == "requested":
@@ -1515,96 +1578,13 @@ class SpatialInputInner extends Node:
 		if str(_continuous.phase) == "prepared":
 			_cancel_continuous(reason)
 			return
-		if str(_continuous.phase) in ["arrived", "reconciling"]:
-			# Releasing the host request cannot discard a body still on the
-			# other side. Only its authoritative arrival or real return can.
-			synchronize_continuous_snapshot()
-			return
+		if str(_continuous.phase) == "arrived": return # Complete owns this transaction.
+
 		_stamp("continuous_request_released", str(_continuous.request_id), {"reason": reason})
 		_continuous.clear()
 		_gate_waiting = false
 		_retry_after_usec = Time.get_ticks_usec() + 200000
 
-	func synchronize_continuous_snapshot() -> void:
-		if _continuous.is_empty(): return
-		var authoritative_room := str(field.snapshot.get("execution_room", ""))
-		if str(_continuous.phase) == "arrived" and authoritative_room == str(_continuous.to_room):
-			_stamp("continuous_arrival_committed", str(_continuous.request_id), {"room": authoritative_room})
-			_continuous.clear()
-			_gate_waiting = false
-		elif str(_continuous.phase) == "arrived" and authoritative_room == str(_continuous.from_room):
-			var pending: Dictionary = field.snapshot.get("pending", {})
-			# The old prepared snapshot still names the source while Complete
-			# is pending. Only a settled authority response can reject arrival.
-			if str(pending.get("status", "")) in ["idle", "awaiting_input"]:
-				_stop_walk("authoritative-arrival-rejected")
-				_continuous.phase = "reconciling"
-				_continuous.reconciliation_state = "planning"
-				_reconcile_route.clear()
-				_reconcile_retry = 0.0
-				_reconcile_stuck = 0.0
-				_gate_waiting = false
-				_stamp("continuous_reconciliation_begin", str(_continuous.request_id), {"room": authoritative_room, "position": [field.player.position.x, field.player.position.y]})
-
-	func _finish_reconciliation_if_safe() -> bool:
-		if str(field.adapter.departure_room(field.player.position)) != str(_continuous.from_room): return false
-		_stamp("continuous_reconciliation_finished", str(_continuous.request_id), {"room": _continuous.from_room, "position": [field.player.position.x, field.player.position.y]})
-		_continuous.clear()
-		_reconcile_route.clear()
-		_reconcile_retry = 0.0
-		_reconcile_stuck = 0.0
-		_gate_waiting = false
-		_stop_walk("authoritative-source-restored")
-		return true
-
-	func _reconciliation_blocked(reason: String) -> void:
-		_reconcile_route.clear()
-		_reconcile_retry = 0.2
-		_reconcile_stuck = 0.0
-		field.player.pose("idle")
-		if str(_continuous.get("reconciliation_state", "")) != "blocked":
-			_stamp("continuous_reconciliation_blocked", str(_continuous.request_id), {"reason": reason})
-		_continuous.reconciliation_state = "blocked"
-
-	func _reconcile_rejected_arrival(delta: float) -> bool:
-		if _continuous.is_empty() or str(_continuous.phase) != "reconciling": return false
-		if _finish_reconciliation_if_safe(): return true
-		_reconcile_retry = maxf(0.0, _reconcile_retry - delta)
-		if _reconcile_retry > 0.0: return true
-		if _reconcile_route.is_empty():
-			# Rebuild the occupancy overlay for every retry. Recovery uses only
-			# the same two rooms and never replays a formal selection/receipt.
-			var grid := _local_grid(str(_continuous.to_room))
-			_reconcile_route = NAV.route_on_grid(field.player.position, _last_source_position, grid)
-			if _reconcile_route.is_empty():
-				_reconciliation_blocked("no_source_return_route")
-				return true
-			_reconcile_route.append(_last_source_position)
-			_continuous.reconciliation_state = "returning"
-			_stamp("continuous_reconciliation_route", str(_continuous.request_id), {"points": _reconcile_route.size()})
-		_begin_walk()
-		var before: Vector2 = field.player.position
-		var remaining: float = field.player.speed * delta
-		for _segment in MAX_ROUTE_STEPS_PER_TICK:
-			if _reconcile_route.is_empty() or remaining <= 0.0: break
-			var difference: Vector2 = _reconcile_route[0] - field.player.position
-			if difference.length() > 1.0:
-				var motion := difference.limit_length(remaining)
-				var next: Vector2 = field.player.position + motion
-				if str(field.adapter.room_of(next)) not in [str(_continuous.from_room), str(_continuous.to_room)] or not field.adapter.walkable(next, field.player):
-					_reconciliation_blocked("source_return_geometry_changed")
-					return true
-				_move_body(motion, delta)
-				remaining = maxf(0.0, remaining - motion.length())
-				if _finish_reconciliation_if_safe(): return true
-				if field.player.position.distance_to(_reconcile_route[0]) > 1.0: break
-			_reconcile_route.remove_at(0)
-		if field.player.position.distance_to(before) >= 0.5:
-			_reconcile_stuck = 0.0
-		else:
-			_reconcile_stuck += delta
-			if _reconcile_stuck >= 0.35: _reconciliation_blocked("source_return_obstructed")
-		return true
 
 	func accept_continuous_passage(destination: Dictionary, who: String, serial: int, action: String) -> void:
 		if not is_continuous_action(action, destination) or who != str(field._player_key):
@@ -1655,7 +1635,7 @@ class SpatialInputInner extends Node:
 			"continuous_walk": continuous_request(), "context": field.context()})
 
 	func _cancel_continuous(reason: String) -> void:
-		if _continuous.is_empty() or str(_continuous.phase) in ["arrived", "settling", "reconciling"]: return
+		if _continuous.is_empty() or str(_continuous.phase) in ["arrived", "settling"]: return
 		_continuous.cancelled = true
 		_continuous.cancel_reason = reason
 		_finish_cancel_if_safe()
@@ -1721,31 +1701,43 @@ class SpatialInputInner extends Node:
 		return found
 
 	func _prepare_ahead(direction: Vector2) -> void:
-		if direction == Vector2.ZERO or not _continuous.is_empty(): return
+		if not _continuous.is_empty(): return
+		if direction == Vector2.ZERO:
+			_cancel_preview()
+			return
 		var heading := direction.normalized()
 		var current := _door_option(field.player.position)
 		if not current.is_empty():
 			_request_continuous(current, heading, "entering-doorway")
 			if not _continuous.is_empty(): return
+		if field.adapter.has_method("manual_exit_targets_near"):
+			var targets: Array[String] = field.adapter.manual_exit_targets_near(field.player.position + heading * 16.0, PASSAGE_LOOKAHEAD)
+			for option: Dictionary in options:
+				var interaction: Dictionary = option.get("interaction", {})
+				if str(interaction.get("kind", "")) == "doorway" and str(interaction.get("destination", {}).get("map", "")) in targets:
+					_preview(option)
+					return
 		for distance in range(16, int(PASSAGE_LOOKAHEAD) + 1, 16):
 			var point: Vector2 = field.player.position + heading * distance
-			if not field.adapter.walkable(point, field.player): return
+			if not field.adapter.walkable(point, field.player):
+				_cancel_preview()
+				return
 			var option := _door_option(point)
 			if not option.is_empty():
-				# Look-ahead performs geometry preparation only. A player may
-				# approach and turn away inside a room without any DV action.
+				_preview(option)
 				var target := str(option.get("interaction", {}).get("destination", {}).get("room", ""))
 				var pair := str(field.adapter.map_key()) + "\n" + _control_room() + "\n" + target
 				if pair != _preview_pair:
 					_local_grid(target)
 					_preview_pair = pair
 				return
+		_cancel_preview()
 
 	func set_options(value: Array) -> void:
 		options = value
+		_preview_choice = ""
 		_preview_pair = ""
 		submitted = false
-		synchronize_continuous_snapshot()
 		if not _continuous.is_empty() and str(_continuous.phase) == "settling":
 			reject_continuous_request(str(_continuous.choice_id), "cancelled_receipt_acknowledged")
 
@@ -1776,6 +1768,7 @@ class SpatialInputInner extends Node:
 		return "spatial-%d-%d" % [Time.get_ticks_usec(), _sequence]
 
 	func _stop_walk(reason: String) -> void:
+		if _continuous.is_empty(): _cancel_preview()
 		_cancel_continuous(reason)
 		_route.clear()
 		_site = ""
@@ -1799,7 +1792,6 @@ class SpatialInputInner extends Node:
 			if _walking: _stop_walk("input-blocked")
 			elif not _continuous.is_empty(): _cancel_continuous("input-blocked")
 			return
-		if _reconcile_rejected_arrival(delta): return
 		if _return_cancelled_passage(delta): return
 		var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		if direction != Vector2.ZERO:
@@ -1916,6 +1908,7 @@ class SpatialInputInner extends Node:
 			get_viewport().set_input_as_handled()
 
 	func _navigate(point: Vector2) -> void:
+		_cancel_preview()
 		if not _continuous.is_empty() and str(_continuous.phase) != "arrived":
 			_cancel_continuous("new-target")
 			return
@@ -1945,7 +1938,9 @@ class SpatialInputInner extends Node:
 			_route.append(point)
 			if destination_room != own_room:
 				var passage := door if not door.is_empty() else _option_for_room(destination_room)
-				if not passage.is_empty(): _request_continuous(passage, point - field.player.position, "doorway-click", point)
+				if not passage.is_empty():
+					_preview(passage)
+					_request_continuous(passage, point - field.player.position, "doorway-click", point)
 
 	func _door_option(point: Vector2) -> Dictionary:
 		if not field.adapter.has_method("doorway_rooms"): return {}
@@ -1999,6 +1994,7 @@ class SpatialInputInner extends Node:
 		return field.adapter.local_nav_grid(field.player, room, destination_room)
 
 	func _approach(site: String) -> void:
+		_cancel_preview()
 		if not field.site_visible(site): return
 		if _in_reach(site):
 			_interact(site)
@@ -2021,6 +2017,8 @@ class SpatialInputInner extends Node:
 		_stop_walk("new-target")
 		_route = chosen
 		_site = site
+		var candidates := choices_for(site)
+		if candidates.size() == 1 and not chosen.is_empty(): _preview(candidates[0])
 
 	func _in_reach(site: String) -> bool:
 		return field.sites.has(site) and field.site_visible(site) and field.player.position.distance_to(field.site_point(site)) <= float(field.sites[site].reach)

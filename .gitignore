@@ -11,6 +11,7 @@ __pycache__/
 .pytest_cache/
 tmp/
 scratch/
+.scratch/
 # Local release packages; source and build instructions remain tracked.
 artifacts/releases/
 *.log
@@ -23,10 +24,10 @@ godot_csharp/imported_assets/
 # Godot regenerates these from the tracked CSV and .csv.import files.
 godot_csharp/**/*.translation
 # Legacy soundtrack exports; current exports go to artifacts/releases/soundtrack/.
-/music/Blessed Sleepers - *.mp3
-/music/Blessed Sleepers - *.mid
-/music/Blessed Sleepers - *.pdf
-/music/Blessed Sleepers - *.musicxml
+/mcp/music_pipeline/Blessed Sleepers - *.mp3
+/mcp/music_pipeline/Blessed Sleepers - *.mid
+/mcp/music_pipeline/Blessed Sleepers - *.pdf
+/mcp/music_pipeline/Blessed Sleepers - *.musicxml
 
 runs/
 artifacts/basic-ui-system/player-traces/*

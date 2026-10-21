@@ -6,9 +6,12 @@ const EngineScript := preload("res://scenes/Host/GameEngine.cs")
 const UI_SCENE := preload("res://scenes/UI/UISystem.tscn")
 const TITLE_SCENE := preload("res://scenes/UI/TitleUI.tscn")
 const FIELD_SCRIPT := preload("res://scenes/Shared/Field/WorldView.gd")
-const FIELD_EXECUTOR := DvFieldExecutorInner
-const VIEW_TRACE := PlayerViewTraceInner
-const DIAGNOSTICS := RuntimeDiagnosticsInner
+const FIELD_EXECUTOR := preload("res://scenes/Host/DvFieldExecutor.gd")
+const VIEW_TRACE := preload("res://scenes/Host/PlayerViewTrace.gd")
+const DIAGNOSTICS := preload("res://scenes/Host/RuntimeDiagnostics.gd")
+const HOST_FLOW := preload("res://scenes/Host/HostFlow.gd")
+const DEV_CONSOLE := preload("res://scenes/Host/DevConsole.gd")
+const MOCK_SESSION := preload("res://scenes/Host/MockSession.gd")
 const CASEBOOK_DATA := preload("res://scenes/UI/CasebookData.gd")
 const CAMPUS_MAP_VIEW := preload("res://scenes/Chapter2/Field/CampusMapView.tscn")
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
@@ -18,38 +21,29 @@ const NOTICE_THEME := preload("res://scenes/UI/Styles/OverlayTheme.tres")
 @export var campaign_options: Dictionary = {}
 @export var viewer := ""
 @export_range(0.25, 8.0, 0.25) var playback_speed := 1.0
+var flow := HOST_FLOW.new()
+var dev_console: CanvasLayer
+var diagnostics: Node
+var audit_enabled := false
+var _preview_tokens: Dictionary = {}
+var _npc_tick_at := 0
 var field_executor: Node
-var _started := false
-var _opening := false
-var _opening_failed := false
 var view_trace: Node
 var engine: Node
 var ui: Node
 var field: Node2D
 var title_layer: CanvasLayer
 var _queue: Array = []
-var _draining := false
-var _closing := false
-var _shutdown_finished := false
 var _dv_intent: Dictionary = {}
 var _dv_serial := 0
 var _view_resource := ""
 var _interaction_id := ""
 var _interaction_site := ""
-var _reading := false
-var _player_options_open := false
-var _background_execution := false
-var _completion_pending := false
 var _pending_adapter: Node2D
 var _casebook: RefCounted = CASEBOOK_DATA.new()
-var _book_reading := false
-var _bookmark_loading := false
-var _bookmark_saving := false
-var _bookmark_requested := false
 var _bookmark_next: Dictionary = {}
 var _session_generation := 0
 var _book_deferred_inputs: Array[Dictionary] = []
-var _view_faulted := false
 var _continuous_selection: Dictionary = {}
 
 func _timing(stage: String, details: Dictionary = {}) -> void:
@@ -59,21 +53,26 @@ func _ready() -> void:
 	get_tree().auto_accept_quit = false
 	add_to_group("lifecycle_hosts")
 	get_window().title = "安眠者有福"
-	engine = EngineScript.new()
+	audit_enabled = "--dv-audit" in OS.get_cmdline_user_args()
+	engine = MOCK_SESSION.new() if "--dv-mock" in OS.get_cmdline_user_args() else EngineScript.new()
 	engine.name = "Engine"
 	add_child(engine)
 	engine.EventsReady.connect(_dv_events)
 	engine.TraceClosed.connect(func():
-		_shutdown_finished = true
+		flow.shutdown_finished = true
 		shutdown_completed.emit()
 	)
 	view_trace = VIEW_TRACE.new()
 	view_trace.name = "PlayerViewTrace"
 	add_child(view_trace)
-	view_trace.configure(self, engine.RecordVisible, engine.RecordInput)
-	var diagnostics := DIAGNOSTICS.new()
+	view_trace.configure(self, engine.RecordVisible, engine.RecordInput, audit_enabled)
+	diagnostics = DIAGNOSTICS.new()
 	add_child(diagnostics)
-	diagnostics.configure(self)
+	diagnostics.configure(self, audit_enabled)
+	engine.SetDiagnosticsEnabled(audit_enabled)
+	dev_console = DEV_CONSOLE.new()
+	add_child(dev_console)
+	dev_console.configure(self, engine)
 	field_executor = FIELD_EXECUTOR.new()
 	field_executor.name = "DvFieldExecutor"
 	add_child(field_executor)
@@ -81,7 +80,7 @@ func _ready() -> void:
 	if "--dv-auto-start" in OS.get_cmdline_user_args(): dispatch.call_deferred({"kind": "start"})
 
 func _dispose_views(keep_title := false) -> void:
-	_player_options_open = false
+	flow.player_options_open = false
 	if is_instance_valid(field):
 		if is_instance_valid(field_executor): field_executor.retain_field(field)
 		field.begin_shutdown()
@@ -119,10 +118,7 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	if resource == null:
 		_view_error("无法加载世界视图：" + str(ev.resource), replacing)
 		return false
-	# Production view events already carry the worker's completed data graph.
-	# Keep Snapshot() only for callers using the earlier host interface.
-	var initial: Dictionary = ev.get("snapshot", {})
-	if initial.is_empty(): initial = ev if ev.has("viewer") else engine.Snapshot()
+	var initial: Dictionary = ev.snapshot
 	var presentation: Dictionary = initial.get("presentation", {})
 	if str(presentation.get("player_actor", "")) == "" or str(presentation.get("player_sprite", "")) == "":
 		_view_error("开场快照缺少人物呈现绑定。", replacing)
@@ -137,23 +133,23 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	if adapter.has_method("prepare_map"):
 		prepared = await adapter.prepare_map(str(initial.get("map", "")), initial, get_tree())
 	_timing("view_prepare_end", {"ready": prepared})
-	if not prepared or _closing or generation != _session_generation:
+	if not prepared or flow.closing or generation != _session_generation:
 		_discard_adapter(adapter)
-		if not prepared and not _closing and generation == _session_generation:
+		if not prepared and not flow.closing and generation == _session_generation:
 			_view_error("无法准备世界地图：" + str(initial.get("map", "")), replacing)
 		return false
 	# A prepared background map cannot replace a book the player is reading.
 	# An explicit bookmark install owns the replacement and closes its old UI.
-	while _book_reading and not replacing and not _closing and generation == _session_generation:
+	while flow.book_reading and not replacing and not flow.closing and generation == _session_generation:
 		await get_tree().process_frame
-	if _closing or generation != _session_generation:
+	if flow.closing or generation != _session_generation:
 		_discard_adapter(adapter)
 		return false
 	# Keep the title opaque while the actual field, actors and UI are assembled
 	# and rendered behind it. In-game view replacement retains its own fade.
 	if not is_instance_valid(opening_title) and is_instance_valid(ui) and ui.has_method("transition_out"):
 		await ui.transition_out()
-	if _closing or generation != _session_generation:
+	if flow.closing or generation != _session_generation:
 		_discard_adapter(adapter)
 		return false
 	_dispose_views(is_instance_valid(opening_title))
@@ -191,29 +187,29 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	ui.apply_snapshot(initial)
 	if is_instance_valid(view_trace): move_child(view_trace, get_child_count() - 1)
 	if not await field.prepare_presentation(initial):
-		if not _closing and generation == _session_generation:
+		if not flow.closing and generation == _session_generation:
 			_view_error("现场未能完成准备：" + str(field.presentation_error), replacing)
 		return false
-	if _closing or generation != _session_generation: return false
+	if flow.closing or generation != _session_generation: return false
 	if not await ui.prepare_for_reveal(): return false
-	if _closing or generation != _session_generation: return false
+	if flow.closing or generation != _session_generation: return false
 	if is_instance_valid(opening_title): opening_title.set_loading_stage("frame")
 	# Layout, physics registration, sight/light updates and an actual draw must
 	# all precede the reveal. Fixed timers and resource completion are not ready.
 	await get_tree().process_frame
-	if _closing or generation != _session_generation: return false
+	if flow.closing or generation != _session_generation: return false
 	await get_tree().physics_frame
-	if _closing or generation != _session_generation: return false
+	if flow.closing or generation != _session_generation: return false
 	var rendered := DisplayServer.get_name() != "headless"
 	if rendered: await RenderingServer.frame_post_draw
 	else: await get_tree().process_frame
-	if _closing or generation != _session_generation: return false
+	if flow.closing or generation != _session_generation: return false
 	_timing("view_build_end")
 	_timing("view_prepared_for_reveal", {"map": initial.get("map", ""), "actors": field.actors.size(), "frame": Engine.get_frames_drawn(), "rendered": rendered, "title_covering": is_instance_valid(opening_title)})
 	if is_instance_valid(opening_title):
 		_timing("title_reveal_begin")
 		var revealed: bool = await opening_title.transition_to_field()
-		if not revealed or _closing or generation != _session_generation: return false
+		if not revealed or flow.closing or generation != _session_generation: return false
 		_timing("title_reveal_end", {"frame": Engine.get_frames_drawn()})
 		remove_child(title_layer)
 		title_layer.queue_free()
@@ -221,8 +217,8 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	elif ui.has_method("transition_in"):
 		await ui.transition_in()
 	# 等场景加入树并应用快照后才开始脚本；这也是可见视图的普通握手。
-	if _closing or generation != _session_generation: return false
-	_opening = false
+	if flow.closing or generation != _session_generation: return false
+	flow.opening = false
 	ui.set_host_input_blocked(false)
 	if begin: dispatch.call_deferred({"kind": "view_ready"})
 	if str(ev.get("casebook_warning", "")) != "":
@@ -232,8 +228,8 @@ func _view(ev: Dictionary, begin := true) -> bool:
 func _view_error(message: String, replacing: bool) -> void:
 	if replacing: return # The bookmark owner reports its backup and holds the lock.
 	if is_instance_valid(title_layer):
-		_opening = false
-		_opening_failed = true
+		flow.opening = false
+		flow.opening_failed = true
 		_queue.clear()
 		title_layer.get_child(0).show_start_error(message, false)
 		_timing("title_opening_failed", {"message": message})
@@ -272,33 +268,35 @@ func _show_bookmark_view_error(backup_path: String) -> void:
 
 ## 热点与跨房间进入DV；房间内坐标接近由现场消费，不进入此入口。
 func dispatch(input: Dictionary) -> void:
-	if _closing: return
 	var input_kind := str(input.get("kind", ""))
-	if _opening_failed and input_kind != "quit": return
-	if _opening and input_kind not in ["start", "load", "quit"]: return
-	if _view_faulted and input_kind not in ["quit", "dv_complete"]: return
+	if flow.closing:
+		if input_kind == "dv_complete": engine.Dispatch(input)
+		return
+	if flow.opening_failed and input_kind != "quit": return
+	if flow.opening and input_kind not in ["start", "load", "quit"]: return
+	if flow.view_faulted and input_kind not in ["quit", "dv_complete"]: return
 	# Keep accepted physical receipts deliverable while persistence waits on work.
-	if _bookmark_loading and input_kind != "dv_complete": return
+	if flow.bookmark_loading and input_kind != "dv_complete": return
 	# Finish already prepared actions and their presentation before saving.
 	# Holding only the next Prepare keeps receipt delivery and reading live.
-	if _bookmark_requested and input_kind == "dv_next":
+	if flow.bookmark_requested and input_kind == "dv_next":
 		if _bookmark_next.is_empty(): _bookmark_next = input.duplicate(true)
 		return
-	if (_book_reading or _bookmark_saving) and input_kind in ["dv_next", "view_ready", "select"]:
+	if (flow.book_reading or flow.bookmark_saving) and input_kind in ["dv_next", "view_ready", "select"]:
 		if input_kind != "dv_next" or not _has_deferred_next(): _book_deferred_inputs.append(input.duplicate(true))
 		return
-	if _bookmark_saving and input_kind != "dv_complete": return
-	if (input_kind == "bookmark_load" or (input_kind == "bookmark_save" and _book_reading)) and not _bookmark_boundary_ready():
+	if flow.bookmark_saving and input_kind != "dv_complete": return
+	if (input_kind == "bookmark_load" or (input_kind == "bookmark_save" and flow.book_reading)) and not _bookmark_boundary_ready():
 		_timing("bookmark_boundary_rejected", {"operation": input_kind})
 		if is_instance_valid(ui):
 			ui.show_bookmark_result(tr("请先读完当前正文并等待现场动作结束，再保存或载入书签。"))
 		return
 	if input_kind == "bookmark_save":
-		_bookmark_requested = true
+		flow.bookmark_requested = true
 		_try_bookmark_save()
 		return
 	if input_kind == "bookmark_load":
-		_bookmark_loading = true
+		flow.bookmark_loading = true
 		if is_instance_valid(ui): ui.set_bookmark_loading(true)
 		engine.LoadBookmark(str(input.get("path", "")), _casebook.export_data())
 		return
@@ -313,34 +311,38 @@ func dispatch(input: Dictionary) -> void:
 		await Sound.quit_cleanly()
 		return
 	if str(input.get("kind", "")) == "start":
-		if _started: return
+		if flow.started: return
 		var options := _session_options()
 		if options.is_empty():
 			if is_instance_valid(title_layer): title_layer.get_child(0).cancel_opening()
 			return
 		engine.ConfigureSession(options)
-		_started = true
+		flow.started = true
 	elif str(input.get("kind", "")) == "load":
-		if _started: return
+		if flow.started: return
 		if not _configure_load_playback():
 			if is_instance_valid(title_layer): title_layer.get_child(0).cancel_opening()
 			return
-		_started = true
+		flow.started = true
 	if input_kind in ["start", "load"]:
-		_opening = true
+		flow.opening = true
 		if is_instance_valid(title_layer): title_layer.get_child(0).begin_opening(input_kind)
 		_timing("title_opening_requested", {"kind": input_kind})
-	if input_kind in ["start", "load", "view_ready", "dv_next", "select", "dv_complete"]: _player_options_open = false
+	if input_kind in ["start", "load", "view_ready", "dv_next", "select", "dv_complete"]: flow.player_options_open = false
 	engine.Dispatch(input)
 
 func _process(_delta: float) -> void:
-	if _bookmark_requested: _try_bookmark_save()
+	if flow.bookmark_requested: _try_bookmark_save()
+	var can_background := (flow.player_options_open or flow.reading) and not flow.book_reading and not flow.closing and not flow.opening and not flow.bookmark_loading and not flow.bookmark_saving and not flow.bookmark_requested
+	if can_background and not flow.background_execution and _dv_intent.is_empty() and not flow.completion_pending and (flow.reading or _queue.is_empty()) and engine.CanBackgroundTick() and Time.get_ticks_msec() >= _npc_tick_at:
+		_npc_tick_at = Time.get_ticks_msec() + 250
+		engine.Dispatch({"kind": "npc_tick"})
 
 func _try_bookmark_save() -> void:
-	if not _bookmark_requested or not _started or _closing or _bookmark_loading or _bookmark_saving: return
+	if not flow.bookmark_requested or not flow.started or flow.closing or flow.bookmark_loading or flow.bookmark_saving: return
 	if not _bookmark_boundary_ready() or not engine.IsBookmarkBoundaryReady(): return
-	_bookmark_requested = false
-	_bookmark_saving = true
+	flow.bookmark_requested = false
+	flow.bookmark_saving = true
 	# Once the safe boundary is owned, use the normal persistence continuation
 	# queue. Its existing next-request deduplication also covers late callbacks.
 	if not _bookmark_next.is_empty():
@@ -351,8 +353,8 @@ func _try_bookmark_save() -> void:
 
 func _bookmark_boundary_ready() -> bool:
 	# Session saves cannot reconstruct unread host presentation or in-flight maps.
-	if _reading or _draining or not _queue.is_empty() or not _book_deferred_inputs.is_empty(): return false
-	if is_instance_valid(_pending_adapter) or _background_execution or _completion_pending or not _dv_intent.is_empty(): return false
+	if flow.reading or flow.draining or not _queue.is_empty() or not _book_deferred_inputs.is_empty(): return false
+	if is_instance_valid(_pending_adapter) or flow.background_execution or flow.completion_pending or not _dv_intent.is_empty(): return false
 	if is_instance_valid(field_executor) and bool(field_executor.get("_busy")): return false
 	if is_instance_valid(field):
 		if is_instance_valid(field.adapter) and field.adapter.switching(): return false
@@ -375,6 +377,7 @@ func _session_options() -> Dictionary:
 				return {}
 			speed = float(value)
 		elif arg == "--dv-audit": options.audit = true
+		elif arg == "--dv-dev": options.developer = true
 		elif arg.begins_with("--dv-controller="): options.controller = arg.trim_prefix("--dv-controller=")
 		elif arg.begins_with("--dv-viewer="): options.viewer = arg.trim_prefix("--dv-viewer=")
 		elif arg.begins_with("--dv-profile="): options.campaign.profile = arg.trim_prefix("--dv-profile=")
@@ -416,7 +419,7 @@ func _apply_playback(speed: float, control_mode: String) -> bool:
 func _show_error(message: String) -> void:
 	push_error(message)
 	if is_instance_valid(title_layer) and title_layer.get_child(0).has_method("show_start_error"):
-		title_layer.get_child(0).show_start_error(message, not _started)
+		title_layer.get_child(0).show_start_error(message, not flow.started)
 		return
 	var dialog := AcceptDialog.new()
 	dialog.theme = NOTICE_THEME
@@ -429,15 +432,21 @@ func _show_error(message: String) -> void:
 func _field_input_busy() -> bool:
 	# Local movement only owns geometry. Background NPC work must not freeze
 	# an otherwise free player's feet; formal actions have a separate gate.
-	return _closing or _view_faulted or _opening or _opening_failed or _bookmark_loading or _bookmark_saving or _bookmark_requested or not is_instance_valid(ui) or ui.is_busy()
+	return (is_instance_valid(dev_console) and dev_console.is_open()) or flow.closing or flow.view_faulted or flow.opening or flow.opening_failed or flow.bookmark_loading or flow.bookmark_saving or flow.bookmark_requested or not is_instance_valid(ui) or ui.is_busy()
 
 func _formal_selection_ready() -> bool:
-	return _player_options_open and not _field_input_busy() and not _draining and _queue.is_empty() \
-		and not _completion_pending and not _background_execution and _book_deferred_inputs.is_empty() and _dv_intent.is_empty()
+	return flow.player_options_open and not _field_input_busy() and not flow.draining and _queue.is_empty() \
+		and not flow.completion_pending and not flow.background_execution and _book_deferred_inputs.is_empty() and _dv_intent.is_empty()
 
 func _field_input(input: Dictionary) -> void:
+	if flow.closing: return
 	match str(input.get("kind", "")):
 		"timing": engine.RecordTiming(input)
+		"prepare_ahead":
+			if _formal_selection_ready(): engine.Dispatch(input)
+		"cancel_ahead":
+			_preview_tokens.clear()
+			engine.Dispatch(input)
 		"select":
 			if not _formal_selection_ready():
 				field.reject_continuous_request(str(input.get("choice_id", "")), "selection_cycle_closed")
@@ -446,6 +455,9 @@ func _field_input(input: Dictionary) -> void:
 			_interaction_id = str(input.interaction_id)
 			_interaction_site = str(input.site)
 			_continuous_selection = input.get("continuous_walk", {}).duplicate(true)
+			var token: Dictionary = _preview_tokens.get(str(input.get("choice_id", "")), {})
+			if not token.is_empty(): input.preview_token = str(token.token)
+			_preview_tokens.clear()
 			dispatch(input)
 		"interaction_hint":
 			if is_instance_valid(ui): ui.show_aside(str(input.get("text", "")))
@@ -455,7 +467,7 @@ func _field_input(input: Dictionary) -> void:
 			ui.spatial_choices(input)
 
 func _accept_execution(input: Dictionary) -> void:
-	if _closing or _dv_intent.is_empty(): return
+	if _dv_intent.is_empty(): return
 	var action: Dictionary = _dv_intent.action
 	var destination: Dictionary = _dv_intent.get("destination", {})
 	var arrived := str(input.get("kind", "")) == "daily" and str(input.get("status", "")) == "arrived"
@@ -526,12 +538,12 @@ func _normalize_continuous_cancel(input: Dictionary) -> Dictionary:
 	return result
 
 func _drain() -> void:
-	if _draining or _closing or _opening_failed: return
-	_draining = true
+	if flow.draining or flow.closing or flow.opening_failed: return
+	flow.draining = true
 	var generation := _session_generation
 	var slice_started := Time.get_ticks_usec()
 	var slice_frame := Engine.get_process_frames()
-	while not _queue.is_empty() and not _closing and not _view_faulted and generation == _session_generation:
+	while not _queue.is_empty() and not flow.closing and not flow.view_faulted and generation == _session_generation:
 		# Reading can accumulate many completed NPC projections. Preserve every
 		# event in order, but let rendering and input run between bounded batches.
 		if Engine.get_process_frames() != slice_frame:
@@ -542,19 +554,26 @@ func _drain() -> void:
 			await get_tree().process_frame
 			slice_frame = Engine.get_process_frames()
 			slice_started = Time.get_ticks_usec()
-		while _book_reading and not _closing and generation == _session_generation:
+		while flow.book_reading and not flow.closing and generation == _session_generation:
 			await get_tree().process_frame
-		if _closing or generation != _session_generation: break
+		if flow.closing or generation != _session_generation: break
 		if _queue.is_empty(): break
 		var ev: Dictionary = _queue.pop_front()
 		# A completed reading can expose an older queued observer snapshot while
 		# an off-screen actor still owns an executing body. Let that real movement
 		# finish before snapshot binding can acquire/reparent the same body.
 		if str(ev.get("kind", "")) in ["state", "view"]:
-			while _background_execution and not _closing and generation == _session_generation:
+			while flow.background_execution and not flow.closing and generation == _session_generation:
 				await get_tree().process_frame
-			if _closing or generation != _session_generation: break
+			if flow.closing or generation != _session_generation: break
 		match str(ev.get("kind", "")):
+			"dev_state":
+				_session_generation += 1
+				_preview_tokens.clear()
+				_dv_intent.clear()
+				_continuous_selection.clear()
+				_queue.clear()
+				await _view({"resource": ev.snapshot.resource, "snapshot": ev.snapshot, "replace_session": true}, true)
 			"dv_action": await _dv_execute(ev.intent, ev.get("execution_snapshot", {}))
 			"dv_present":
 				var result: Dictionary = ev.presentation
@@ -565,38 +584,38 @@ func _drain() -> void:
 				var lines := _presentation_lines(result)
 				if is_instance_valid(ui): ui.prepare_presentation(result)
 				if not lines.is_empty():
-					_reading = true
+					flow.reading = true
 					# Start the ordinary serialized Prepare while this frozen text is read.
 					# Remote NPCs still execute real Godot movement and return Complete.
 					ev.advance_requested = true
 					dispatch.call_deferred({"kind": "dv_next", "schedule": "reading-background"})
 					_timing("presentation_begin", {"execution_event": result.get("execution_event", "")})
-					await ui.present({"kind": "lines", "lines": lines, "trace_id": str(result.get("execution_event", "")), "presentation_id": str(result.get("execution_event", ""))})
+					await ui.present({"kind": "lines", "lines": lines, "trace_id": str(result.get("execution_event", "")), "presentation_id": str(result.get("presentation_id", result.get("execution_event", "")))})
 					if generation != _session_generation: break
-					_reading = false
+					flow.reading = false
 					_timing("reading_finished", {"execution_event": result.get("execution_event", "")})
 				if not bool(ev.get("advance_requested", false)):
 					dispatch.call_deferred({"kind": "dv_next"})
 			"view":
 				if not await _view(ev):
-					if not _closing and generation == _session_generation: _view_faulted = true
+					if not flow.closing and generation == _session_generation: flow.view_faulted = true
 					_queue.clear()
 					break
 			"state": await _apply(ev.snapshot)
 			"error":
-				_bookmark_requested = false
+				flow.bookmark_requested = false
 				_bookmark_next = {}
 				_view_error(str(ev.message), false)
 			"load_error":
-				_bookmark_requested = false
+				flow.bookmark_requested = false
 				_bookmark_next = {}
-				_started = false
-				_opening = false
+				flow.started = false
+				flow.opening = false
 				if is_instance_valid(title_layer): title_layer.get_child(0).show_load_error(str(ev.message))
 			_: push_error("Unknown DV host event: " + str(ev.get("kind", "")))
-	_draining = false
+	flow.draining = false
 	_try_bookmark_save()
-	if not _queue.is_empty() and not _closing and not _view_faulted: _drain.call_deferred()
+	if not _queue.is_empty() and not flow.closing and not flow.view_faulted: _drain.call_deferred()
 
 ## IDs name the actual execution and emitted field; source_refs retain authored provenance.
 ## Emitted line ordinals are not claimed to be original declaration line numbers.
@@ -629,66 +648,99 @@ func _presentation_lines(result: Dictionary) -> Array:
 func _apply(snapshot: Dictionary) -> void:
 	_timing("ui_apply_begin")
 	if _view_resource != "" and str(snapshot.resource) != _view_resource:
-		if not await _view(snapshot, false) and not _closing:
-			_view_faulted = true
+		if not await _view({"resource": snapshot.resource, "snapshot": snapshot}, false) and not flow.closing:
+			flow.view_faulted = true
 			_queue.clear()
 		_timing("ui_apply_end")
 		return
 	if is_instance_valid(ui): ui.apply_snapshot(snapshot)
-	if is_instance_valid(field): field.apply_snapshot(snapshot)
+	if is_instance_valid(field) and int(snapshot.get("state_version", -1)) >= int(field.snapshot.get("state_version", -1)):
+		field.apply_snapshot(snapshot)
 	_timing("ui_apply_end")
 
 func begin_shutdown() -> void:
-	if _closing: return
-	_closing = true
-	_bookmark_requested = false
+	if flow.closing: return
+	flow.closing = true
+	flow.bookmark_requested = false
 	_bookmark_next = {}
-	_reading = false
+	flow.reading = false
 	if is_instance_valid(view_trace): view_trace.begin_shutdown()
+	if is_instance_valid(diagnostics): diagnostics.set_enabled(false)
+	if is_instance_valid(dev_console): dev_console.begin_shutdown()
+	if is_instance_valid(ui): ui.set_host_input_blocked(true)
+	if is_instance_valid(field): field.suspend_player_input()
+	# Prepared intents that never entered execution stay pending in the trace.
+	# Core saves the last committed state; shutdown does not invent an attempt.
 	_queue.clear()
+	# Freeze new input while the existing worker, physical receipt and commit
+	# still own their scene resources. Teardown starts at the drained boundary.
+	while not _dv_intent.is_empty() or flow.completion_pending or (is_instance_valid(field_executor) and field_executor._busy) or (is_instance_valid(engine) and not engine.IsDispatchIdle()):
+		await get_tree().process_frame
+	if is_instance_valid(ui): ui.begin_shutdown()
 	if is_instance_valid(field_executor): field_executor.begin_shutdown()
 	if is_instance_valid(_pending_adapter) and _pending_adapter.has_method("begin_shutdown"):
 		_pending_adapter.begin_shutdown()
 	if is_instance_valid(field): field.begin_shutdown()
-	if is_instance_valid(ui): ui.begin_shutdown()
 	if is_instance_valid(engine):
 		engine.UpdateCasebook(_casebook.export_data())
 		engine.CloseTrace()
 
 func wait_for_shutdown() -> void:
 	begin_shutdown()
-	if _shutdown_finished: return
+	if flow.shutdown_finished: return
 	await shutdown_completed
 
 func _exit_tree() -> void:
 	begin_shutdown()
 
 func _dv_events(events: Array) -> void:
-	if _closing: return
 	for ev in events:
-		if str(ev.get("kind", "")) in ["view", "state", "dv_action", "dv_present", "error", "bookmark_loaded"]: _player_options_open = false
-		if _view_faulted:
+		if str(ev.get("kind", "")) == "dv_commit":
+			var settled: bool = await field_executor.settle(str(ev.action_event), str(ev.outcome), field, not flow.closing)
+			if not settled:
+				flow.completion_pending = false
+				flow.view_faulted = true
+				engine.RecordHostFailure("Movement rollback did not complete for " + str(ev.action_event))
+				return
+			continue
+		if flow.closing:
+			if str(ev.get("kind", "")) in ["dv_present", "error"]: flow.completion_pending = false
+			continue
+		if str(ev.get("kind", "")) == "prepared_ahead":
+			if int(ev.state_version) == int(engine.Snapshot().get("state_version", -1)):
+				_preview_tokens[str(ev.choice_id)] = ev
+			continue
+		if str(ev.get("kind", "")) == "state":
+			for choice in _preview_tokens.keys():
+				if int(_preview_tokens[choice].state_version) != int(ev.snapshot.get("state_version", -1)): _preview_tokens.erase(choice)
+		if str(ev.get("kind", "")) in ["dev_inspect", "dev_error", "replay_loaded"]:
+			dev_console.receive(ev)
+			continue
+		if str(ev.get("kind", "")) in ["view", "state", "dv_action", "dv_present", "error", "bookmark_loaded"]: flow.player_options_open = false
+		if flow.view_faulted:
 			if str(ev.get("kind", "")) == "error": _show_error(str(ev.message))
 			continue
-		if str(ev.get("kind", "")) in ["dv_present", "error"]: _completion_pending = false
+		if str(ev.get("kind", "")) in ["dv_present", "error"]: flow.completion_pending = false
 		if str(ev.get("kind", "")) == "bookmark_loaded":
 			_install_bookmark(ev)
 			continue
 		if str(ev.get("kind", "")) in ["bookmark_saved", "bookmark_error"]:
 			if str(ev.get("kind", "")) == "bookmark_saved" or str(ev.get("operation", "")) == "save":
-				_bookmark_saving = false
+				flow.bookmark_saving = false
 			if str(ev.get("kind", "")) == "bookmark_error" and str(ev.get("operation", "")) == "load":
-				_bookmark_loading = false
-			if is_instance_valid(ui): ui.set_bookmark_loading(_bookmark_loading or _bookmark_saving)
-			if not _book_reading: _on_book_reading_changed(false)
+				flow.bookmark_loading = false
+			if is_instance_valid(ui): ui.set_bookmark_loading(flow.bookmark_loading or flow.bookmark_saving)
+			if not flow.book_reading: _on_book_reading_changed(false)
 			if is_instance_valid(ui):
 				var message := str(ev.get("message", ""))
 				if message == "": message = tr("书签已保存。") if str(ev.kind) == "bookmark_saved" else tr("暂时无法保存或载入，请等待当前行动结束。")
 				ui.show_bookmark_result(message, str(ev.kind) == "bookmark_saved")
 			continue
-		if not _book_reading and _reading and str(ev.get("kind", "")) == "dv_action" and _remote_npc_intent(ev):
+		if flow.reading and str(ev.get("kind", "")) == "state" and is_instance_valid(field):
+			field.apply_snapshot(ev.snapshot)
+		if not flow.book_reading and flow.reading and str(ev.get("kind", "")) == "dv_action" and _background_npc_intent(ev):
 			_execute_reading_npc(ev)
-		elif not _book_reading and _reading and str(ev.get("kind", "")) == "dv_present" and _presentation_lines(ev.presentation).is_empty():
+		elif not flow.book_reading and flow.reading and str(ev.get("kind", "")) == "dv_present" and _presentation_lines(ev.presentation).is_empty():
 			# Empty presentation has no reading work. Remember that its next cue was
 			# already sent so the foreground drain cannot prepare the actor twice.
 			ev.advance_requested = true
@@ -704,8 +756,8 @@ func _has_deferred_next() -> bool:
 	return false
 
 func _on_book_reading_changed(active: bool) -> void:
-	_book_reading = active
-	if active or _closing or _bookmark_loading or _bookmark_saving: return
+	flow.book_reading = active
+	if active or flow.closing or flow.bookmark_loading or flow.bookmark_saving: return
 	var deferred := _book_deferred_inputs
 	_book_deferred_inputs = []
 	for input in deferred: dispatch.call_deferred(input)
@@ -713,17 +765,17 @@ func _on_book_reading_changed(active: bool) -> void:
 
 func _install_bookmark(event: Dictionary) -> void:
 	_session_generation += 1
-	_bookmark_requested = false
+	flow.bookmark_requested = false
 	_bookmark_next = {}
-	_view_faulted = false
-	_player_options_open = false
+	flow.view_faulted = false
+	flow.player_options_open = false
 	var generation := _session_generation
 	# The host already owns the restored session. Bind its archive immediately,
 	# so closing the window during map preparation cannot save the old notes.
 	# The departing UI keeps its old object until disposal; it cannot mutate this.
 	_casebook = CASEBOOK_DATA.new()
 	_casebook.restore_data(event.get("casebook", {}), str(event.snapshot.get("viewer", "")))
-	_reading = false
+	flow.reading = false
 	_queue.clear()
 	_book_deferred_inputs.clear()
 	_dv_intent.clear()
@@ -733,38 +785,29 @@ func _install_bookmark(event: Dictionary) -> void:
 	# The host only emits this after persistence has refused pending execution.
 	var installed: bool = await _view({"resource": event.snapshot.resource, "snapshot": event.snapshot,
 		"casebook_warning": event.get("casebook_warning", ""), "replace_session": true}, false)
-	if _closing or generation != _session_generation: return
+	if flow.closing or generation != _session_generation: return
 	if not installed:
-		_bookmark_loading = true
+		flow.bookmark_loading = true
 		get_tree().paused = true
 		if is_instance_valid(ui): ui.set_bookmark_loading(true)
 		_timing("bookmark_view_failed", {"path": event.get("path", ""), "backup_path": event.get("backup_path", "")})
 		_show_bookmark_view_error(str(event.get("backup_path", "")))
 		return
-	_bookmark_loading = false
+	flow.bookmark_loading = false
 	if is_instance_valid(ui): ui.set_bookmark_loading(false)
-	if not _closing: dispatch.call_deferred({"kind": "view_ready"})
+	if not flow.closing: dispatch.call_deferred({"kind": "view_ready"})
 
-func _remote_npc_intent(ev: Dictionary) -> bool:
-	if _background_execution or not is_instance_valid(field): return false
+func _background_npc_intent(ev: Dictionary) -> bool:
+	if flow.background_execution or not is_instance_valid(field): return false
 	var intent: Dictionary = ev.get("intent", {})
-	if str(intent.get("status", "")) != "prepared": return false
-	var viewer := str(field.snapshot.get("viewer", ""))
-	if str(intent.get("actor", "")) == viewer: return false
-	var current_room := str(field.snapshot.get("execution_room", ""))
-	var source: Dictionary = ev.get("execution_snapshot", {})
-	var source_room := str(source.get("execution_room", ""))
-	if source_room == "" or source_room == current_room: return false
-	var destination: Dictionary = intent.get("destination", {})
-	var destination_room := str(destination.get("execution_room", destination.get("room", "")))
-	return destination_room != current_room
+	return str(intent.get("status", "")) == "prepared" and str(intent.get("actor", "")) != str(field.snapshot.get("viewer", ""))
 
 func _execute_reading_npc(ev: Dictionary) -> void:
-	_background_execution = true
+	flow.background_execution = true
 	_timing("reading_npc_execution_begin", {"actor": ev.intent.actor, "action_event": ev.intent.action_event})
 	await _dv_execute(ev.intent, ev.get("execution_snapshot", {}))
 	_timing("reading_npc_execution_end", {"actor": ev.intent.actor, "action_event": ev.intent.action_event})
-	_background_execution = false
+	flow.background_execution = false
 
 func _dv_execute(intent: Dictionary, execution_snapshot: Dictionary) -> void:
 	if str(intent.get("status", "")) == "awaiting_input":
@@ -772,7 +815,7 @@ func _dv_execute(intent: Dictionary, execution_snapshot: Dictionary) -> void:
 			field.reject_continuous_request(str(_continuous_selection.get("choice_id", "")), "prepare_returned_to_input")
 			_continuous_selection.clear()
 		field.spatial.set_options(intent.options)
-		_player_options_open = true
+		flow.player_options_open = true
 		if is_instance_valid(ui): ui.set_player_options(intent.options)
 		_timing("player_options_ready", {"options": intent.options.size()})
 		return
@@ -782,7 +825,7 @@ func _dv_execute(intent: Dictionary, execution_snapshot: Dictionary) -> void:
 			_continuous_selection.clear()
 		return
 	_dv_intent = intent
-	_player_options_open = false
+	flow.player_options_open = false
 	_dv_serial += 1
 	var action: Dictionary = intent.action
 	_timing("execution_begin", {"action_event": intent.action_event, "actor": intent.actor})
@@ -839,634 +882,34 @@ func _dv_complete(outcome: String, execution: Dictionary) -> void:
 				# transition, so release it alongside its one rejected receipt.
 				field.reject_continuous_request(str(_continuous_selection.get("choice_id", "")), "execution_rejected")
 		_continuous_selection.clear()
-	_player_options_open = false
+	flow.player_options_open = false
 	# NPCs may finish before a queued player action. Keep that player's
 	# contact until their own receipt, so delayed inspection is still checked.
 	if str(_dv_intent.get("actor", "")) == str(field.snapshot.get("viewer", "")):
 		_interaction_site = ""
 	_dv_intent = {}
-	_completion_pending = true
+	flow.completion_pending = true
 	dispatch.call_deferred({"kind": "dv_complete", "receipt": receipt})
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_CLOSE_REQUEST and not _closing:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and not flow.closing:
 		await Sound.quit_cleanly()
 
-# ==============================================================================
-# 宿主内聚执行支持类 (Host Subsystems Inner Classes)
-# ==============================================================================
 
-class RuntimeDiagnosticsInner extends Node:
-	var host: Node
-	var previous_draw := 0
-	var locations: Dictionary = {}
-	var first_visible: Dictionary = {}
-	var process_begin := 0
-	var render_begin := 0
-	var last_input_state: Dictionary = {}
-	const FRAME_GAP_US := 50000
+func set_frame_audit(enabled: bool) -> void:
+	audit_enabled = enabled
+	view_trace.set_enabled(enabled)
+	diagnostics.set_enabled(enabled)
+	engine.SetDiagnosticsEnabled(enabled or dev_console.performance_open())
 
-	func configure(value: Node) -> void:
-		host = value
-		process_priority = -10000
-		RenderingServer.frame_pre_draw.connect(_before_render)
-		RenderingServer.frame_post_draw.connect(_drawn)
-
-	func _process(_delta: float) -> void:
-		if is_instance_valid(host): process_begin = host.engine.TimingClockUs()
-
-	func _before_render() -> void:
-		if is_instance_valid(host): render_begin = host.engine.TimingClockUs()
-
-	func _drawn() -> void:
-		if not is_instance_valid(host) or host._closing: return
-		var now: int = host.engine.TimingClockUs()
-		if previous_draw > 0 and now - previous_draw >= FRAME_GAP_US:
-			host._timing("frame_gap", {"begin_us": previous_draw, "end_us": now, "duration_us": now - previous_draw, "threshold_us": FRAME_GAP_US, "process_begin_us": process_begin, "render_begin_us": render_begin})
-		previous_draw = now
-		if not is_instance_valid(host.field): return
-		var field: Node2D = host.field
-		if not is_instance_valid(field.adapter): return
-		var spatial: Node = field.spatial
-		var input_state := {"map": str(field.adapter.map_key()), "room": str(field.snapshot.get("execution_room", "")),
-			"ui_busy": is_instance_valid(host.ui) and host.ui.is_busy(), "reading": host._reading,
-			"background_execution": host._background_execution, "draining": host._draining,
-			"queued_events": host._queue.size(), "map_switching": field.adapter.switching(),
-			"submitted": is_instance_valid(spatial) and spatial.submitted,
-			"options": spatial.options.size() if is_instance_valid(spatial) else 0,
-			"input_enabled": spatial.enabled() if is_instance_valid(spatial) else false,
-			"formal_selection_ready": host._formal_selection_ready(),
-			"intent_actor": str(host._dv_intent.get("actor", "")), "intent_action": str(host._dv_intent.get("action", {}).get("id", "")),
-			"physical_jobs": field._daily.keys()}
-		if input_state != last_input_state:
-			last_input_state = input_state.duplicate(true)
-			host._timing("input_gate_state", input_state)
-		var viewport_rect := field.get_viewport_rect()
-		for key in field.actors:
-			var actor = field.actors[key]
-			if not is_instance_valid(actor): continue
-			var room := str(field.adapter.entered_room(actor.position)) if field.adapter.has_method("entered_room") else ""
-			var location := str(field.adapter.map_key()) + "/" + room
-			if room != "" and locations.get(key, "") != location:
-				locations[key] = location
-				host._timing("physical_location", {"actor": key, "location": location, "position": [actor.position.x, actor.position.y], "initial": not first_visible.has("located:" + str(key))})
-				first_visible["located:" + str(key)] = true
-			var screen: Vector2 = actor.get_global_transform_with_canvas().origin
-			if actor.is_visible_in_tree() and viewport_rect.has_point(screen):
-				var visible_key := str(key) + "@" + location
-				if not first_visible.has(visible_key):
-					first_visible[visible_key] = true
-					host._timing("actor_in_viewport", {"actor": key, "location": location, "screen": [screen.x, screen.y], "scope": "visible node and viewport bounds; occlusion/recognition require PNG review"})
-
-class PlayerViewTraceInner extends Node:
-	var host: Node
-	var record_visible: Callable
-	var record_input: Callable
-	var _last_frame := ""
-	var _last_data: Dictionary = {}
-	var _wired: Dictionary = {}
-	var _control_context: Dictionary = {}
-	var _closing := false
-	var _timed_presentations: Dictionary = {}
-
-	func configure(owner_node: Node, visible_sink: Callable, input_sink: Callable) -> void:
-		process_mode = Node.PROCESS_MODE_ALWAYS
-		host = owner_node
-		record_visible = visible_sink
-		record_input = input_sink
-		RenderingServer.frame_post_draw.connect(_after_draw)
-
-	func begin_shutdown() -> void:
-		if _closing: return
-		_closing = true
-		if RenderingServer.frame_post_draw.is_connected(_after_draw):
-			RenderingServer.frame_post_draw.disconnect(_after_draw)
-
-	func _exit_tree() -> void:
-		begin_shutdown()
-
-	func _input(event: InputEvent) -> void:
-		if _closing or not record_input.is_valid(): return
-		var data: Dictionary = {}
-		if event is InputEventKey and not event.echo:
-			data = {"device": "keyboard", "key": OS.get_keycode_string(event.keycode), "pressed": event.pressed,
-				"unicode": event.unicode, "shift": event.shift_pressed, "ctrl": event.ctrl_pressed}
-		elif event is InputEventMouseButton:
-			data = {"device": "mouse", "button": event.button_index, "pressed": event.pressed,
-				"position": [event.position.x, event.position.y], "double_click": event.double_click}
-		elif event is InputEventJoypadButton:
-			data = {"device": "joypad_button", "device_id": event.device,
-				"button": event.button_index, "pressed": event.pressed, "pressure": event.pressure}
-		elif event is InputEventJoypadMotion:
-			data = {"device": "joypad_axis", "device_id": event.device,
-				"axis": event.axis, "value": event.axis_value}
-		if not data.is_empty():
-			data.merge(_context())
-			record_input.call(data)
-
-	func _context() -> Dictionary:
-		if is_instance_valid(host.title_layer): return {"panel": "title", "opening": host._opening}
-		if is_instance_valid(host.ui): return host.ui.view_trace_context()
-		return {"panel": "title"}
-
-	func _activation(control: Control, path: String) -> void:
-		if _closing or not is_instance_valid(control): return
-		var data: Dictionary = _control_context.get(control.get_instance_id(), {}).duplicate()
-		data.merge({"device": "control_signal", "path": path,
-			"text": _plain_text(control), "pressed": true})
-		record_input.call(data)
-
-	func _wire(control: Control, context: Dictionary) -> void:
-		var id := control.get_instance_id()
-		_control_context[id] = context
-		if _wired.has(id): return
-		_wired[id] = true
-		var path := str(host.get_path_to(control))
-		if control is BaseButton: control.pressed.connect(_activation.bind(control, path))
-		elif control is LineEdit:
-			control.text_changed.connect(func(value: String) -> void:
-				if _closing: return
-				var data := _context()
-				data.merge({"device": "text_control", "path": path, "value": value})
-				record_input.call(data))
-
-	func _after_draw() -> void:
-		if _closing or not is_instance_valid(host): return
-		host._timing("visible_trace_begin")
-		_collect_after_draw()
-		host._timing("visible_trace_end")
-
-	func _collect_after_draw() -> void:
-		var items: Array = []
-		# Scene callbacks cannot interleave this synchronous scan. Share its small
-		# read-only input context, then copy before adding visible-frame payload.
-		var context := _context()
-		var viewport_rect: Rect2 = host.get_viewport().get_visible_rect()
-		if is_instance_valid(host.title_layer):
-			_scan(host.title_layer, viewport_rect, items, context)
-		elif is_instance_valid(host.ui):
-			_scan(host.ui, viewport_rect, items, context)
-		var data := context.duplicate()
-		data["event"] = "visible_frame"
-		data["view_schema"] = 2
-		data["texts"] = items
-		data["objects"] = _scene_objects()
-		if data == _last_data: return
-		_last_data = data.duplicate(true)
-		var signature := JSON.stringify(data)
-		if signature == _last_frame: return
-		_last_frame = signature
-		data["frame"] = Engine.get_frames_drawn()
-		record_visible.call(data)
-		var presentation := str(data.get("presentation_id", ""))
-		if presentation != "" and str(data.get("panel", "")) in ["dialogue", "spatial"] and not _timed_presentations.has(presentation):
-			_timed_presentations[presentation] = true
-			host._timing("local_choices_frame" if str(data.get("panel", "")) == "spatial" else "first_frame_drawn", {"presentation_id": presentation, "frame": data.frame})
-
-	func _scene_objects() -> Array:
-		# Preparing a field under the title is not a player sighting. Partial
-		# coverage during the reveal is described by its actual captured frames.
-		if is_instance_valid(host.title_layer): return []
-		if not is_instance_valid(host.field): return []
-		var covered: Array[Rect2] = []
-		if is_instance_valid(host.ui):
-			for child in host.ui.get_children():
-				if child is CanvasLayer and child.visible:
-					for sub in child.get_children():
-						if sub is Control and sub.is_visible_in_tree() and sub.modulate.a > 0.001:
-							covered.append(sub.get_global_rect())
-		return host.field.player_visible_objects(covered)
-
-	func _scan(node: Node, clip: Rect2, items: Array, context: Dictionary) -> void:
-		if node is CanvasLayer and not node.visible: return
-		if node is CanvasItem and (not node.is_visible_in_tree() or node.modulate.a <= 0.001): return
-		var child_clip := clip
-		if node is Control:
-			var control: Control = node
-			var bounds := control.get_global_rect()
-			var visible_bounds := bounds.intersection(clip)
-			if not visible_bounds.has_area(): return
-			_wire(control, context)
-			var text := _plain_text(control)
-			if text != "":
-				var item := {"text": text, "content_clipped": false}
-				if control.has_meta("player_source"): item.merge(control.get_meta("player_source"))
-				if control is RichTextLabel:
-					item["visible_characters"] = control.visible_characters
-					item["complete"] = control.visible_characters < 0 or control.visible_characters >= control.get_total_character_count()
-				items.append(item)
-			if control.clip_contents or control is ScrollContainer: child_clip = visible_bounds
-		for child in node.get_children(): _scan(child, child_clip, items, context)
-
-	func _plain_text(control: Control) -> String:
-		if control is RichTextLabel: return control.get_parsed_text()
-		if control is Label or control is Button: return control.atr(control.text)
-		if control is LineEdit or control is TextEdit:
-			return control.text if control.text != "" else control.atr(control.placeholder_text)
-		return ""
-
-class DvFieldExecutorInner extends Node:
-	const WORLD_VIEW := preload("res://scenes/Shared/Field/WorldView.gd")
-	var _bodies: Dictionary = {}
-	var _worlds: Dictionary = {}
-	var _occupancy: Array[Dictionary] = []
-	var _parking: Node2D
-	var _preparing_adapters: Array[Node2D] = []
-	var _closing := false
-	var _busy := false
-	var _viewer := ""
-
-	func configure_visible(field: Node2D, initial: Dictionary) -> void:
-		if not field.execution_only: _viewer = str(initial.get("presentation", {}).get("player_actor", ""))
-		field.execution_bridge = self
-		field.execution_resource = str(initial.get("resource", ""))
-		field.execution_binding = initial
-		field.snapshot = initial
-
-	func bind_visible(field: Node2D, initial: Dictionary) -> void:
-		field.apply_snapshot(initial)
-		note_map(field)
-
-	func _ensure_parking() -> void:
-		if is_instance_valid(_parking): return
-		var viewport := _new_viewport("RetainedBodies")
-		_parking = Node2D.new()
-		_parking.process_mode = Node.PROCESS_MODE_DISABLED
-		_parking.hide()
-		viewport.add_child(_parking)
-
-	func _new_viewport(label: String) -> SubViewport:
-		var viewport := SubViewport.new()
-		viewport.name = label
-		viewport.size = Vector2i(32, 32)
-		viewport.disable_3d = true
-		viewport.world_2d = World2D.new()
-		viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
-		add_child(viewport)
-		return viewport
-
-	func _actor_binding(who: String, state: Dictionary) -> Dictionary:
-		var result: Dictionary = {}
-		for person in state.get("people", []):
-			if str(person.get("key", "")) == who:
-				result = person.duplicate(true)
-				break
-		# A place's navigation target can be shared by several people. Only the
-		# authored initial anchor fixes a new body's position; otherwise use the
-		# existing same-room, walkable and unoccupied Stand/Spawn candidates.
-		result["anchor"] = str(result.get("initial_anchor", ""))
-		var presentation: Dictionary = state.get("presentation", {})
-		if str(presentation.get("player_actor", "")) == who:
-			var init_a := str(state.get("initial_anchor", ""))
-			result.merge({"map": str(state.get("map", "")), "execution_room": str(state.get("execution_room", "")),
-				"spawn": str(state.get("spawn", "")), "anchor": init_a,
-				"sprite": str(presentation.get("player_sprite", ""))}, true)
-		return result
-
-	func _initial_point(who: String, field: Node2D, binding: Dictionary):
-		var room := str(binding.get("execution_room", ""))
-		if room == "" or str(binding.get("map", "")) != str(field.adapter.map_key()): return null
-		var declared_anchor := str(binding.get("anchor", ""))
-		if declared_anchor != "":
-			var point = field.adapter.anchor(declared_anchor)
-			if point == null or field.adapter.entered_room(point) != room or not field.adapter.walkable(point): return null
-			return null if _initial_occupied(who, field, point) else point
-		var candidates: Array = []
-		for placement in field.execution_binding.get("initial_placements", []):
-			if str(placement.get("actor", "")) == who:
-				var point = field.adapter.anchor(str(placement.get("anchor", "")))
-				if point != null: candidates.append(point)
-		candidates.append_array(field.adapter.stands())
-		var spawn := str(binding.get("spawn", ""))
-		if spawn != "":
-			var point = field.adapter.anchor(spawn)
-			if point != null: candidates.append(point)
-		var layout: Node = field.adapter.get("map")
-		var spawns: Node = layout.get_node_or_null("Spawns") if is_instance_valid(layout) else null
-		if spawns != null:
-			for marker in spawns.get_children():
-				if marker is Marker2D: candidates.append(marker.position)
-		for candidate in candidates:
-			var point: Vector2 = candidate
-			if field.adapter.entered_room(point) != room or not field.adapter.walkable(point): continue
-			if not _initial_occupied(who, field, point): return point
-		# Stand markers are preferred authored positions, not a population limit.
-		# Only a body's first materialization may choose another legal room cell.
-		if field.adapter.has_method("initial_room_candidates"):
-			for point: Vector2 in field.adapter.initial_room_candidates(room):
-				if field.adapter.entered_room(point) != room or not field.adapter.walkable(point): continue
-				if not _initial_occupied(who, field, point): return point
-		return null
-
-	func _initial_occupied(who: String, field: Node2D, point: Vector2) -> bool:
-		for id in _bodies:
-			var record: Dictionary = _bodies[id]
-			var body: CharacterBody2D = record.body
-			if id != who and is_instance_valid(body) and str(record.resource) == field.execution_resource and str(record.map) == field.adapter.map_key() and body.position.distance_to(point) < 24.0:
-				return true
-		return false
-
-	func occupied_positions(walker: CharacterBody2D, resource: String, map_key: String) -> Array[Vector2]:
-		var result: Array[Vector2] = []
-		for record: Dictionary in _bodies.values():
-			var body: CharacterBody2D = record.body
-			if is_instance_valid(body) and body != walker and str(record.resource) == resource and str(record.map) == map_key:
-				result.append(body.position)
-		return result
-
-	func occupied_at(walker: CharacterBody2D, resource: String, map_key: String, point: Vector2) -> bool:
-		# Station searches ask this for many candidates. Do not allocate a full
-		# positions array for every point; inspect the same retained bodies.
-		for record: Dictionary in _bodies.values():
-			var body: CharacterBody2D = record.body
-			if not is_instance_valid(body) or body == walker or str(record.resource) != resource or str(record.map) != map_key: continue
-			var separation := (body.position - point).abs()
-			if separation.x < 19.0 and separation.y < 15.0: return true
-		return false
-
-	func sync_obstacles(field: Node2D) -> void:
-		if _closing or not is_instance_valid(field) or not is_instance_valid(field.adapter): return
-		var root: Node2D = field.adapter.objects_root()
-		var retained: Dictionary = {}
-		for i in range(_occupancy.size() - 1, -1, -1):
-			var item: Dictionary = _occupancy[i]
-			if item.field != field: continue
-			var obstacle: StaticBody2D = item.obstacle
-			var record: Dictionary = _bodies.get(item.who, {})
-			var body: CharacterBody2D = item.body
-			if not is_instance_valid(obstacle) or obstacle.get_parent() != root or record.is_empty() or not is_instance_valid(body) or record.body != body or body.get_parent() == root or str(record.resource) != field.execution_resource or str(record.map) != field.adapter.map_key():
-				_remove_occupancy(i)
-				continue
-			retained[item.who] = item
-		for who in _bodies:
-			var record: Dictionary = _bodies[who]
-			var body: CharacterBody2D = record.body
-			if not is_instance_valid(body) or body.get_parent() == root: continue
-			if str(record.resource) != field.execution_resource or str(record.map) != field.adapter.map_key(): continue
-			if retained.has(who):
-				_update_occupancy(retained[who])
-				continue
-			var obstacle := StaticBody2D.new()
-			obstacle.set_meta("retained_occupancy", body.get_instance_id())
-			obstacle.collision_layer = body.collision_layer
-			obstacle.collision_mask = 0
-			obstacle.transform = body.transform
-			var shapes: Array[Dictionary] = []
-			for child in body.get_children():
-				if child is CollisionShape2D:
-					var shape := CollisionShape2D.new()
-					shape.shape = child.shape
-					shape.transform = child.transform
-					shape.disabled = child.disabled
-					obstacle.add_child(shape)
-					shapes.append({"source": child, "proxy": shape})
-			root.add_child(obstacle)
-			_occupancy.append({"obstacle": obstacle, "body": body, "field": field, "who": who, "shapes": shapes})
-
-	func _remove_occupancy(index: int) -> void:
-		var obstacle: StaticBody2D = _occupancy[index].obstacle
-		if is_instance_valid(obstacle):
-			obstacle.collision_layer = 0
-			obstacle.queue_free()
-		_occupancy.remove_at(index)
-
-	func _update_occupancy(item: Dictionary) -> void:
-		var obstacle: StaticBody2D = item.obstacle
-		var body: CharacterBody2D = item.body
-		obstacle.transform = body.transform
-		obstacle.collision_layer = body.collision_layer
-		for pair: Dictionary in item.shapes:
-			var source: CollisionShape2D = pair.source
-			var proxy: CollisionShape2D = pair.proxy
-			if not is_instance_valid(proxy): continue
-			if not is_instance_valid(source):
-				proxy.disabled = true
-				continue
-			if proxy.shape != source.shape: proxy.shape = source.shape
-			if proxy.transform != source.transform: proxy.transform = source.transform
-			if proxy.disabled != source.disabled: proxy.disabled = source.disabled
-
-	func _physics_process(_delta: float) -> void:
-		if _closing: return
-		for i in range(_occupancy.size() - 1, -1, -1):
-			var item: Dictionary = _occupancy[i]
-			var obstacle = item.obstacle
-			if not is_instance_valid(obstacle) or not obstacle.is_inside_tree():
-				_remove_occupancy(i)
-				continue
-			var body = item.body
-			var field = item.field
-			var record: Dictionary = _bodies.get(item.who, {}) if is_instance_valid(body) else {}
-			if not is_instance_valid(field) or not is_instance_valid(field.adapter) or record.is_empty() or str(record.map) != field.adapter.map_key() or str(record.resource) != field.execution_resource or body.get_parent() == obstacle.get_parent():
-				_remove_occupancy(i)
-				continue
-			_update_occupancy(item)
-
-	func acquire_actor(who: String, sprite_key: String, field: Node2D) -> CharacterBody2D:
-		if _closing: return null
-		var body: CharacterBody2D
-		var previous: Node2D
-		if _bodies.has(who):
-			var record: Dictionary = _bodies[who]
-			body = record.body
-			if not is_instance_valid(body) or str(record.resource) != field.execution_resource or str(record.map) != field.adapter.map_key(): return null
-			previous = record.field
-			if is_instance_valid(previous) and previous != field: _detach(who, previous)
-		else:
-			var binding := _actor_binding(who, field.execution_binding)
-			var point = _initial_point(who, field, binding)
-			if point == null or sprite_key == "": return null
-			body = field.create_body(who, sprite_key)
-			if body == null: return null
-			body.speed = 130.0 if who == _viewer else 110.0
-			body.position = point
-			field._cancel_motion(body)
-			_bodies[who] = {"body": body, "field": field, "map": str(field.adapter.map_key()), "resource": field.execution_resource}
-		if body.get_parent() != field.adapter.objects_root():
-			var actual := body.position
-			if body.get_parent() != null: body.get_parent().remove_child(body)
-			field.adapter.objects_root().add_child(body)
-			body.position = actual
-		body.process_mode = Node.PROCESS_MODE_INHERIT
-		field.actors[who] = body
-		if who == str(field.adapter.player_key()):
-			field.player = body
-			field.sight.set_process(not field.execution_only)
-		_bodies[who].field = field
-		if is_instance_valid(previous) and previous != field: sync_obstacles(previous)
-		sync_obstacles(field)
-		return body
-
-	func _detach(who: String, field: Node2D) -> void:
-		var body: CharacterBody2D = field.actors.get(who)
-		if body == null: return
-		field._daily_release(who)
-		field._cancel_motion(body)
-		field.actors.erase(who)
-		if field.player == body:
-			field.player = null
-			field.sight.set_process(false)
-
-	func park_actor(who: String, field: Node2D) -> void:
-		var body: CharacterBody2D = field.actors.get(who)
-		if body == null: return
-		_ensure_parking()
-		_bodies[who] = {"body": body, "field": null, "map": str(field.adapter.map_key()), "resource": field.execution_resource}
-		_detach(who, field)
-		var actual := body.position
-		body.get_parent().remove_child(body)
-		_parking.add_child(body)
-		body.position = actual
-
-	func retain_field(field: Node2D) -> void:
-		if not is_instance_valid(field): return
-		for who in field.actors.keys(): park_actor(str(who), field)
-
-	func note_map(field: Node2D) -> void:
-		for who in field.actors:
-			_bodies[who] = {"body": field.actors[who], "field": field, "map": str(field.adapter.map_key()), "resource": field.execution_resource}
-
-	func _hidden_field(who: String, state: Dictionary) -> Node2D:
-		var field: Node2D = _worlds.get(who)
-		var resource := str(state.get("resource", ""))
-		var source_map := str(state.get("map", ""))
-		if resource == "" or source_map == "": return null
-		if is_instance_valid(field):
-			if field.execution_resource != resource: return null
-			if field.player == null:
-				if field.adapter.has_method("prepare_map"):
-					if not await field.adapter.prepare_map(source_map, state, get_tree()): return null
-				if _closing or not is_instance_valid(field) or field._closing: return null
-				if field.adapter.map_key() != source_map: field.adapter.load_map(source_map, str(state.get("spawn", "")))
-				field.execution_binding = state
-				var binding := _actor_binding(who, state)
-				if acquire_actor(who, str(binding.get("sprite", "")), field) == null: return null
-			field.apply_snapshot(state)
-			return field
-		var packed := CAMPUS_MAP_VIEW if resource == "res://scenes/Chapter2/Field/CampusMapView.tscn" else (load(resource) as PackedScene)
-		if packed == null: return null
-		var adapter := packed.instantiate() as Node2D
-		if adapter == null: return null
-		adapter.presentation = state.get("presentation", {})
-		_preparing_adapters.append(adapter)
-		var prepared := true
-		if adapter.has_method("prepare_map"):
-			prepared = await adapter.prepare_map(source_map, state, get_tree())
-		_preparing_adapters.erase(adapter)
-		if not prepared or _closing:
-			if adapter.has_method("begin_shutdown"): adapter.begin_shutdown()
-			adapter.free()
-			return null
-		var viewport := _new_viewport("ActorExecution")
-		field = Node2D.new()
-		field.set_script(WORLD_VIEW)
-		field.execution_only = true
-		configure_visible(field, state)
-		field.hide()
-		viewport.add_child(field)
-		field.setup(adapter)
-		field.apply_snapshot(state)
-		_worlds[who] = field
-		return field if field.player != null else null
-
-	func _blocked(intent: Dictionary, serial: int, reason: String) -> Dictionary:
-		var who := str(intent.get("actor", ""))
-		var raw_act = intent.get("action", {})
-		var act_id := str(raw_act.get("id", "")) if raw_act is Dictionary else ""
-		var result := {"kind": "daily", "who": who, "serial": serial,
-			"action": act_id, "status": "blocked", "room": "", "reason": reason}
-		if _bodies.has(who):
-			var body: CharacterBody2D = _bodies[who].body
-			if is_instance_valid(body):
-				result["map"] = str(_bodies[who].map)
-				result["actual_position"] = [body.position.x, body.position.y]
-		return result
-
-	func execute(intent: Dictionary, visible_field: Node2D, execution_snapshot: Dictionary, serial: int) -> Dictionary:
-		if _closing or _busy: return _blocked(intent, serial, "executor_unavailable")
-		# Hold the same execution lock during asynchronous resource preparation.
-		_busy = true
-		var receipt := await _execute_pending(intent, visible_field, execution_snapshot, serial)
-		_busy = false
-		return receipt
-
-	func _execute_pending(intent: Dictionary, visible_field: Node2D, execution_snapshot: Dictionary, serial: int) -> Dictionary:
-		var who := str(intent.get("actor", ""))
-		var raw_act = intent.get("action", {})
-		var action := str(raw_act.get("id", "")) if raw_act is Dictionary else ""
-		var destination: Dictionary = intent.get("destination", {})
-		var source_map := str(execution_snapshot.get("map", ""))
-		var source_room := str(execution_snapshot.get("execution_room", ""))
-		if source_map == "" or source_room == "": return _blocked(intent, serial, "missing_source_geometry_binding")
-		if _bodies.has(who) and (str(_bodies[who].map) != source_map or str(_bodies[who].resource) != str(execution_snapshot.get("resource", ""))):
-			return _blocked(intent, serial, "retained_body_source_mismatch")
-		var field: Node2D
-		if is_instance_valid(visible_field) and visible_field.execution_resource == str(execution_snapshot.get("resource", "")) and visible_field.adapter.map_key() == source_map:
-			var body: CharacterBody2D = visible_field.actors.get(who)
-			if body != null and (body == visible_field.player or str(destination.get("map", "")) == source_map): field = visible_field
-		if field == null: field = await _hidden_field(who, execution_snapshot)
-		if _closing: return _blocked(intent, serial, "execution_interrupted")
-		if field == null or not field.actors.has(who): return _blocked(intent, serial, "missing_actor_geometry_binding")
-		var body: CharacterBody2D = field.actors[who]
-		if field.adapter.departure_room(body.position) != source_room:
-			return _blocked(intent, serial, "retained_body_room_mismatch")
-		if field.adapter.has_method("apply_snapshot"): field.adapter.apply_snapshot(execution_snapshot)
-		sync_obstacles(field)
-		var source_point := body.position
-		var source_geometry := "interior" if field.adapter.entered_room(source_point) == source_room else "source-side-doorway"
-		var instance := body.get_instance_id()
-		await get_tree().physics_frame
-		if _closing or not is_instance_valid(field) or field._closing:
-			return _blocked(intent, serial, "execution_interrupted")
-		var received: Dictionary = {}
-		var listener := func(event: Dictionary) -> void:
-			if str(event.get("kind", "")) == "daily" and int(event.get("serial", -1)) == serial and str(event.get("who", "")) == who and str(event.get("action", "")) == action:
-				received.merge(event, true)
-		field.field_event.connect(listener)
-		field.execute_move(destination, who, serial, action)
-		while received.is_empty() and not _closing and is_instance_valid(field) and not field._closing:
-			await get_tree().process_frame
-		if is_instance_valid(field) and field.field_event.is_connected(listener): field.field_event.disconnect(listener)
-		if received.is_empty(): return _blocked(intent, serial, "execution_interrupted")
-		received["source_map"] = source_map
-		received["source_room"] = source_room
-		received["source_geometry"] = source_geometry
-		received["source_position"] = [source_point.x, source_point.y]
-		received["actor_instance_id"] = instance
-		received["execution_world"] = "isolated-godot" if field.execution_only else "visible-godot"
-		note_map(field)
-		if str(received.get("status", "")) == "arrived":
-			var expected_room := str(destination.get("execution_room", destination.get("room", "")))
-			if str(received.get("room", "")) != expected_room or str(received.get("map", "")) != str(destination.get("map", "")):
-				received.status = "blocked"
-				received.reason = "arrival_identity_mismatch"
-		var raw_travel = raw_act.get("travel", {}) if raw_act is Dictionary else {}
-		if str(received.get("status", "")) == "arrived" and raw_travel is Dictionary and raw_travel.has("station"):
-			var station := str(raw_travel.station)
-			if str(received.get("station", "")) != station or not received.has("arrival_error") or float(received.arrival_error) > 4.0:
-				received.status = "blocked"
-				received.reason = "station_evidence_mismatch"
-		if field != visible_field and is_instance_valid(visible_field) and field.execution_resource == visible_field.execution_resource and field.adapter.map_key() == visible_field.adapter.map_key():
-			acquire_actor(who, "", visible_field)
-		return received
-
-	func begin_shutdown() -> void:
-		if _closing: return
-		_closing = true
-		for adapter in _preparing_adapters:
-			if is_instance_valid(adapter) and adapter.has_method("begin_shutdown"): adapter.begin_shutdown()
-		for field in _worlds.values():
-			if is_instance_valid(field): field.begin_shutdown()
-
-	func reset() -> void:
-		begin_shutdown()
-		for viewport in get_children():
-			remove_child(viewport)
-			viewport.queue_free()
-		_bodies.clear()
-		_worlds.clear()
-		_occupancy.clear()
-		_parking = null
-		_busy = false
-		_closing = false
-		_viewer = ""
+func console_action(choice_id: String) -> void:
+	if not is_instance_valid(field) or not flow.player_options_open: return
+	for option: Dictionary in field.spatial.options:
+		if str(option.get("id", "")) != choice_id: continue
+		var interaction: Dictionary = option.get("interaction", {})
+		var kind := str(interaction.get("kind", ""))
+		var site := "self" if kind == "self" else "person:" + str(interaction.get("person", "")) if kind == "person" else str(interaction.get("site", ""))
+		dev_console.close()
+		if kind == "doorway": field.spatial._submit(option, "", "developer-console")
+		else: field.spatial.select(choice_id, site)
+		return

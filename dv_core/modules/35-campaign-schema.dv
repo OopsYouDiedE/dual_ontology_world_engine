@@ -1,0 +1,280 @@
+// Campaign contracts shared by independently compiled chapters.
+// These constructors declare identities and handoff fields; they grant no observations.
+#include 30-session.dv
+
+fn campaign_source(path, line, id):
+    return {"path": path, "line": line, "id": id}
+
+fn cognitive_erosion(exposure_ref, thresholds, coupling_factor, basis):
+    dv_require(0 < rt_count(basis), "Erosion needs declared provenance")
+    return {"physical_ref": exposure_ref, "thresholds": thresholds, "coupling_factor": coupling_factor, "basis": basis}
+
+fn campaign_evidence_ref(atom):
+    return dv_ref("cognition", "state", atom)
+
+fn campaign_at(actor, room):
+    return dv_fact(dv_ref(actor, "state", "location"), room)
+
+fn campaign_local_object(id):
+    return dv_object(id, "perceived", {"state": [], "identity": []})
+
+fn campaign_state_object(id, fields):
+    return dv_object(id, "physical", {"state": fields, "identity": []})
+
+fn campaign_action(id, kind, known, physical, law, grants, source):
+    return dv_with(dv_with(dv_with({"id": id, "kind": kind, "precondition": known, "authority_precondition": physical}, "law", law), "grants", grants), "source_refs", dv_single(source))
+
+fn campaign_method(name, law):
+    return dv_instance(name, law)
+
+fn campaign_any(left, right):
+    return dv_not(dv_all(dv_pair(dv_not(left), dv_not(right))))
+
+fn campaign_authorized_speech(action):
+    return dv_with(action, "authority_truth_gate", {"required": true, "contract_id": "contract-8", "basis": dv_single(campaign_source("docs/design-standard.md", 462, "may-not-deceive-students"))})
+
+fn campaign_case_ref(group, field):
+    return dv_ref(rt_cat("case.", group), "state", field)
+
+fn campaign_case_claim(group, field):
+    return dv_fact(campaign_case_ref(group, field), true)
+
+fn campaign_first_night_ref(field):
+    return dv_ref("night.first", "state", field)
+
+fn campaign_positive_clock_bounds(condition):
+    var result = []
+    let op = dv_find(condition, "op", "")
+    if op == "at_least":
+        if dv_same(condition.ref, campaign_clock()):
+            rt_push(result, condition.value)
+    if op == "all":
+        let items = dv_find(condition, "items", [])
+        var i = 0
+        while i < rt_count(items):
+            let nested = campaign_positive_clock_bounds(items[i])
+            var j = 0
+            while j < rt_count(nested):
+                rt_push(result, nested[j])
+                j = j + 1
+            i = i + 1
+    return result
+
+fn campaign_clock_boundaries(condition):
+    let key = ["campaign_clock_boundaries"]
+    let cached = rt_memo_get(condition, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(condition, key, campaign_clock_boundaries_uncached(condition))
+
+fn campaign_clock_boundaries_uncached(condition):
+    if dv_find(condition, "op", "") == "not":
+        return campaign_clock_boundaries(condition.item)
+    var result = campaign_positive_clock_bounds(condition)
+    if dv_find(condition, "op", "") == "all":
+        var i = 0
+        while i < rt_count(condition.items):
+            let nested = campaign_clock_boundaries(condition.items[i])
+            var j = 0
+            while j < rt_count(nested):
+                if not dv_has(result, nested[j]):
+                    rt_push(result, nested[j])
+                j = j + 1
+            i = i + 1
+    return result
+
+fn campaign_without_clock(condition):
+    let key = ["campaign_without_clock"]
+    let cached = rt_memo_get(condition, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(condition, key, campaign_without_clock_uncached(condition))
+
+fn campaign_without_clock_uncached(condition):
+    let op = dv_find(condition, "op", "")
+    if dv_record_like(condition) and dv_has_key(condition, "ref") and dv_find(condition.ref, "object", "") == "c2.weather":
+        return dv_true()
+    if op == "at_least" and dv_same(condition.ref, campaign_clock()):
+        return dv_true()
+    if op == "not":
+        let inner = dv_find(condition, "item", false)
+        if inner != false and dv_record_like(inner) and dv_has_key(inner, "ref") and dv_find(inner.ref, "object", "") == "c2.weather":
+            return dv_true()
+        if inner != false and dv_find(inner, "op", "") == "at_least" and dv_same(inner.ref, campaign_clock()):
+            return dv_true()
+    if op == "all":
+        var items = []
+        var i = 0
+        while i < rt_count(condition.items):
+            rt_push(items, campaign_without_clock(condition.items[i]))
+            i = i + 1
+        return dv_all(items)
+    return condition
+
+fn campaign_future_goal_pending(actor, goal):
+    let kind = dv_find(goal, "kind", "")
+    if kind == "achieve":
+        return dv_truth(actor.mind, goal.proposition) != "true"
+    if kind == "communicate":
+        let method = dvp_find_action(actor.actions, dv_find(goal, "method_id", ""))
+        if method != false and dv_has_key(method, "owned_decision"):
+            return dvp_owned_decision_ready(actor, method, actor.mind)
+        return not dv_has(dv_find(actor, "completed_actions", []), dv_find(goal, "method_id", ""))
+    if kind == "know" or kind == "evidence":
+        if dv_has_key(goal, "minimum_time") and actor.mind.time < goal.minimum_time:
+            return true
+        return not dv_uncontested(dv_read(actor.mind, goal.ref))
+    return false
+
+fn campaign_index_goal_window(goal):
+    let condition = dv_find(goal, "available_when", dv_true())
+    let key = ["c1n_goal_window"]
+    let cached = rt_memo_get(condition, key)
+    var window = []
+    if cached[0]:
+        window = cached[1]
+    else:
+        window = rt_memo_put(condition, key, {"future_clock_condition": condition, "future_clock_bounds": campaign_positive_clock_bounds(condition), "future_nonclock": campaign_without_clock(condition)})
+    return dv_with_many(goal, window)
+
+fn campaign_approved(id):
+    return campaign_source("docs/design-standard.md", 0, id)
+
+fn campaign_ref(object, field):
+    return dv_ref(object, "state", field)
+
+fn campaign_body(actor):
+    return rt_cat("c2.person.", actor)
+
+fn campaign_own(actor, field):
+    return campaign_ref(campaign_body(actor), field)
+
+fn campaign_clock():
+    return dv_ref("campaign.clock", "state", "minute")
+
+fn campaign_access(gate):
+    return dv_ref("campaign.access", "state", gate)
+
+fn campaign_position_ref(actor):
+    return dv_ref(actor, "state", "location")
+
+fn campaign_window(day, start, end):
+    let origin = (day - 1) * 1440
+    return dv_all(dv_pair(dv_at_least(campaign_clock(), origin + start), dv_not(dv_at_least(campaign_clock(), origin + end))))
+
+fn campaign_people():
+    return ["detective", "huo", "shen", "su", "lucian", "gu", "quer", "ward", "selma", "ruan", "elena", "moran", "veronica", "bertrand", "margaret", "mora"]
+
+fn campaign_person_source(actor):
+    let rows = [["detective", "01_侦探.story", 11], ["huo", "02_霍铎.story", 48], ["shen", "03_沈鼎.story", 45], ["su", "04_苏泠.story", 43], ["lucian", "05_卢西安.story", 25], ["gu", "06_顾平章.story", 25], ["quer", "07_雀儿.story", 27], ["ward", "08_沃德.story", 24], ["selma", "09_赛尔玛.story", 25], ["ruan", "10_阮清越.story", 24], ["elena", "11_伊莲娜.story", 24], ["moran", "12_莫兰.story", 23], ["veronica", "13_维罗妮卡.story", 25], ["bertrand", "14_贝尔特朗.story", 26], ["margaret", "15_玛格丽特.story", 27], ["mora", "16_茉拉.story", 26]]
+    var i = 0
+    while i < rt_count(rows):
+        if rows[i][0] == actor:
+            return campaign_source(rt_cat("godot_csharp/scenes/Awakening/Script/story/生态/人物/", rows[i][1]), rows[i][2], rt_cat(actor, ".personal-values"))
+        i = i + 1
+    return campaign_approved("unknown-person-profile-needs-source")
+
+fn campaign_profile(actor):
+    var group = "living"
+    var domain = "investigation"
+    var roles = []
+    var values = ["evidence", "safety", "patient_priority", "records"]
+    if dv_has(["quer", "ward", "gu", "lucian"], actor):
+        group = "contract"
+    if dv_has(["selma", "ruan", "elena", "moran"], actor):
+        group = "astral"
+    if dv_has(["veronica", "bertrand", "margaret", "mora"], actor):
+        group = "logistics"
+    if dv_has(["mora", "shen", "ruan"], actor):
+        domain = "resources"
+    if dv_has(["selma", "veronica", "gu", "lucian"], actor):
+        domain = "research"
+    if dv_has(["bertrand", "margaret", "huo"], actor):
+        domain = "safety"
+    if actor == "huo":
+        roles = ["weight"]
+        values = ["measured_work", "records", "central_cooking", "evidence", "safety"]
+    if actor == "quer":
+        roles = ["lock"]
+        values = ["not_targeted", "evidence", "movement_freedom", "night_exception", "measured_work"]
+    if actor == "su":
+        roles = ["relay"]
+        values = ["measured_work", "signal", "evidence"]
+    if actor == "bertrand":
+        roles = ["weight"]
+        values = ["patient_priority", "records", "safety"]
+    if actor == "margaret":
+        roles = ["weight"]
+        values = ["evidence", "central_cooking", "records", "safety"]
+    if actor == "mora":
+        values = ["patient_priority", "cautious_travel", "evidence", "night_exception"]
+    if actor == "shen":
+        values = ["central_cooking", "patient_priority", "per_person", "not_targeted", "cautious_travel"]
+    if actor == "ruan":
+        values = ["records", "controlled_audit", "per_person", "committee", "witnesses", "evidence"]
+    if actor == "ward":
+        values = ["ward_authority", "committee", "records", "restriction", "no_exception", "witnesses", "evidence"]
+    if actor == "gu":
+        values = ["cautious_travel", "tradition", "records", "evidence", "contract"]
+    if actor == "lucian":
+        values = ["resonance_exclusivity", "not_targeted", "evidence", "movement_freedom", "patient_priority", "contract", "records"]
+    if actor == "selma":
+        values = ["patient_priority", "evidence", "research"]
+    if actor == "veronica":
+        values = ["avoid_ethics_review", "evidence", "records", "committee", "research"]
+    if actor == "elena":
+        values = ["tradition", "evidence", "contract", "safety", "cautious_travel"]
+    if actor == "moran":
+        values = ["avoid_isolation", "measured_work", "research"]
+    return {"id": actor, "group": group, "domain": domain, "station_roles": roles, "value_order": values, "basis": [campaign_person_source(actor), campaign_approved("chapter-two-role-groups")]}
+
+fn campaign_add_new(world, object):
+    if dv_has_key(world.objects, object.id):
+        return world
+    return dv_add_object(world, object)
+
+fn campaign_surface_action(id, kind, known, physical, law, grants, text, source):
+    return dv_with(campaign_action(id, kind, known, physical, law, grants, source), "surface", text)
+
+fn campaign_goal(proposition, when, basis):
+    return campaign_index_goal_window({"kind": "achieve", "scope": "personal", "proposition": proposition, "available_when": when, "basis": basis})
+
+fn campaign_observation_goal(ref, when, basis, time):
+    return campaign_index_goal_window({"kind": "evidence", "scope": "personal", "ref": ref, "source": "perception", "available_when": when, "basis": basis, "minimum_time": time})
+
+叙述 campaign_contract_text：
+    1. 恶魔常驻岛内，不得离岛。
+    2. 经学员本人授权，恶魔封存其在校记忆（在校经历、师生与同学关系、事故全貌）；姓名、生平与入学前技艺不在封存之列。
+    3. 恶魔维持学园基础生存设施的运转（水、炉火、照明的设施本身；不负责分配物资，不创造物资）。
+    4. 恶魔所受约束，唯有学员出于自主的行动方可解除；恶魔不得代为或强迫学员完成解除。
+    5. 恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。
+    6. 恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。
+    7. 恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。
+    8. 恶魔不得以言辞欺骗学员；学员问及本人封存之物或契约条文，须如实作答。
+    9. 恶魔不得向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。
+    10. 封存的记忆可凭对应之物恢复；恢复者自负其果。
+    11. 经其余在岛存活学员一致同意，学员可择定“尽忘归乡”，于下一次入睡时遗忘此地一切、在家乡醒来。
+    12. （终局）担保耗尽时，恶魔须将醒着且未深属此岛的学员遣返家乡，并抹去其与此地有关的一切记忆。
+
+fn campaign_person_name(actor):
+    let names = {"detective": "侦探", "huo": "霍铎", "shen": "沈鼎", "su": "苏泠", "lucian": "卢西安", "gu": "顾平章", "quer": "雀儿", "ward": "沃德", "selma": "赛尔玛", "ruan": "阮清月", "elena": "伊莲娜", "moran": "莫兰", "veronica": "维罗妮卡", "bertrand": "贝尔特朗", "margaret": "玛格丽特", "mora": "茉拉"}
+    return dv_get(names, actor)
+
+// First-night records remain shared persisted identities across the chapter handoff.
+fn campaign_handoff_fields():
+    return {"case": "case.", "first_night": "night.first", "contract": "opening.contracts", "person_identity": "opening.person.", "clock": campaign_clock(), "access": "campaign.access"}
+
+fn campaign_speech(literal, surface, scope):
+    return {"literal_ast": literal, "referents": [], "scope": scope, "time_anchor": "当前发言", "surface_ref": surface, "presuppositions": [], "implicature_candidates": []}
+
+fn campaign_public_methods(actions):
+    var result = []
+    var i = 0
+    while i < rt_count(actions):
+        let action = actions[i]
+        var method = dv_with_many(action, {"purpose_refs": dv_find(action, "purpose_refs", action.grants), "purpose_basis": action.source_refs})
+        if (action.kind == "move" or action.kind == "replay") and not dv_find(action, "once", false):
+            method = dv_with(method, "repeatable", true)
+        rt_push(result, method)
+        i = i + 1
+    return result

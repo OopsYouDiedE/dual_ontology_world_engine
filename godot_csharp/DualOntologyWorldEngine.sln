@@ -5,7 +5,9 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DualOntologyWorldEngine", "DualOntologyWorldEngine.csproj", "{36A5020D-E1AC-4CFA-8714-4699981C962A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DuelView.Session", "..\language_core\Session\DuelView.Session.csproj", "{99F11BA2-718D-4979-9591-142F4A9C9D57}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DuelView.Session", "..\dv_core\host_bridge\DuelView.Session.csproj", "{99F11BA2-718D-4979-9591-142F4A9C9D57}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DuelView.Core", "..\dv_core\base\DuelView.Core.csproj", "{B180F42A-2C4B-4F91-A9A6-15E0480458EB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,6 +18,10 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B180F42A-2C4B-4F91-A9A6-15E0480458EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B180F42A-2C4B-4F91-A9A6-15E0480458EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B180F42A-2C4B-4F91-A9A6-15E0480458EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B180F42A-2C4B-4F91-A9A6-15E0480458EB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{99F11BA2-718D-4979-9591-142F4A9C9D57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{99F11BA2-718D-4979-9591-142F4A9C9D57}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99F11BA2-718D-4979-9591-142F4A9C9D57}.Release|Any CPU.ActiveCfg = Release|Any CPU

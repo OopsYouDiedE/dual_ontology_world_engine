@@ -2,6 +2,8 @@ extends "res://scenes/UI/ModalPanel.gd"
 
 signal action_chosen(id: String)
 
+const MAP_PANEL := preload("res://scenes/UI/CampusMapPanel.gd")
+
 @onready var modal_box: PanelContainer = %ModalBox
 @onready var modal_title: Label = %ModalTitle
 @onready var modal_close_button: Button = %ModalCloseButton
@@ -277,12 +279,14 @@ func open_card(data: Dictionary) -> void:
 	modal_footer.visible = modal_footer.get_child_count() > 0
 
 func open_campus_map(data: Dictionary) -> void:
-	var body := open_modal("校区平面图", Vector2(880, 580), "campus_map", true)
-	var text := str(data.get("desc", ""))
-	if text.is_empty():
-		_ui_localized_text(body, "尚未绘入此处的路线记录。可回到现场查看道路与区域。", "No route has been recorded here yet. Return to the field to examine the paths and grounds.", "この場所の経路はまだ記録されていません。現地で道や周辺を確認できます。")
-	else:
-		_raw_text(body, text, true)
+	var body := open_modal("校区平面图", Vector2(880, 620), "campus_map", true)
+	_raw_text(body, str(data.current_label), true)
+	var drawing := MAP_PANEL.new()
+	drawing.configure(data)
+	body.add_child(drawing)
+	_ui_localized_text(body, "● 当前位置　细线：已知房间　金色圆点：已知通道", "● Current location · Outlines: known rooms · Gold circles: known passages", "● 現在地　細線：既知の部屋　金色の丸：既知の通路", "ManuscriptNote")
+	for connection: Dictionary in data.connections:
+		_raw_text(body, str(connection.label))
 
 func open_ending(data: Dictionary) -> void:
 	var body := open_modal(str(data.get("title", "案情收卷")), Vector2(800, 560), "ending", not data.has("title"))

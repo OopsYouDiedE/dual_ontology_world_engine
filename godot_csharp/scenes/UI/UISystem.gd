@@ -40,6 +40,8 @@ var _archive_result: Dictionary = {}
 var _archive_lines: Array = []
 var _presentation_music_token := 0
 var _host_input_enabled := true
+var _known_rooms: Dictionary = {}
+var _known_connections: Dictionary = {}
 
 @onready var _screen_layer: CanvasLayer = $TransitionLayer
 @onready var _screen_fader: ColorRect = $TransitionLayer/ScreenFader
@@ -71,7 +73,6 @@ func _ready() -> void:
 	dialogue_ui.choice_selected.connect(func(cid: String):
 		if _closing: return
 		dialogue_option_selected.emit(cid)
-		ui_event.emit({"kind": "choice", "id": cid})
 	)
 	dialogue_ui.dialogue_finished.connect(func(_last_choice: String):
 		if not _closing:
@@ -174,7 +175,11 @@ func _on_setting_changed(section: String, key: String, value: Variant) -> void:
 func apply_snapshot(data: Dictionary) -> void:
 	# Main publishes completed projections. UI reads them without mutating or
 	# repeatedly deep-copying the whole snapshot for a handful of display fields.
+	if str(snapshot.get("viewer", "")) != str(data.get("viewer", "")):
+		_known_rooms.clear()
+		_known_connections.clear()
 	snapshot = data
+	_learn_map(data.get("pending", {}).get("options", []))
 	casebook.apply_snapshot(snapshot)
 	if is_instance_valid(dialogue_ui): dialogue_ui.configure_cast(snapshot.get("cast", {}))
 	if is_instance_valid(hud_ui): hud_ui.apply_snapshot(snapshot)
@@ -313,8 +318,6 @@ func _on_investigation_action(id: String) -> void:
 			if str(option.get("id", "")) == action_id and bool(option.get("available", true)):
 				_pending_action = {"kind": "spatial_select", "choice_id": id, "site": str(_spatial_context.get("site", ""))}
 				return
-	else:
-		_pending_action = {"kind": "card_action", "id": id}
 
 func _flush_pending_action() -> void:
 	if _closing or host_input_blocked or _pending_action.is_empty() or _modal_cycle or _screen_motion.is_active(): return
@@ -342,6 +345,7 @@ func set_player_options(options: Array) -> void:
 	# IDs come from the current Prepare result. Opening a page never creates
 	# actions or admits a hypothesis; the field checks selection again.
 	_player_options = options.duplicate(true)
+	_learn_map(_player_options)
 
 func open_manuscript(_announce := true) -> void:
 	var data: Dictionary = snapshot.get("replay", {}).duplicate(true)
@@ -357,15 +361,44 @@ func open_card(data: Dictionary) -> void:
 	var entry_id: String = casebook.record_card(data)
 	_request_modal("card", {"entry_id": entry_id})
 
+func _learn_map(choices: Array = []) -> void:
+	var map_id := str(snapshot.get("map", ""))
+	var room_id := str(snapshot.get("execution_room", ""))
+	if map_id.is_empty() or room_id.is_empty(): return
+	if not _known_rooms.has(map_id): _known_rooms[map_id] = {}
+	_known_rooms[map_id][room_id] = {"label": str(snapshot.get("hud", {}).get("room", room_id)), "visited": true}
+	for room: Dictionary in snapshot.get("map_knowledge", {}).get("rooms", []):
+		var known_map := str(room.map)
+		if not _known_rooms.has(known_map): _known_rooms[known_map] = {}
+		var known_id := str(room.room)
+		var visited := bool(_known_rooms[known_map].get(known_id, {}).get("visited", false))
+		_known_rooms[known_map][known_id] = {"label": str(room.label), "visited": visited}
+	for door: Dictionary in snapshot.get("map_knowledge", {}).get("doors", []):
+		var from: Dictionary = door.from
+		var to: Dictionary = door.to
+		var target := str(to.room) if str(to.map) == str(from.map) else str(to.map)
+		_known_connections[str(from.map) + ":" + str(from.room) + ">" + target] = {"map": str(from.map), "from": str(from.room), "to": target, "label": str(from.label) + " → " + str(to.label)}
+	for option: Dictionary in choices:
+		var interaction: Dictionary = option.get("interaction", {})
+		if str(interaction.get("kind", "")) != "doorway" or not bool(option.get("available", true)): continue
+		var destination: Dictionary = interaction.destination
+		var next_map := str(destination.map)
+		var next_room := str(destination.get("execution_room", destination.get("room", "")))
+		if not _known_rooms.has(next_map): _known_rooms[next_map] = {}
+		if not _known_rooms[next_map].has(next_room):
+			_known_rooms[next_map][next_room] = {"label": str(option.get("label", "")), "visited": false}
+		var to := next_room if next_map == map_id else next_map
+		_known_connections[map_id + ":" + room_id + ">" + to] = {"map": map_id, "from": room_id, "to": to, "label": str(option.get("label", ""))}
+
 func open_campus_map() -> void:
-	var map_value: Variant = snapshot.get("map", {})
-	var map_data: Dictionary = {}
-	if map_value is Dictionary:
-		map_data = map_value
-	elif map_value is String or map_value is StringName:
-		# The current snapshot's map is a location ID, not authored map prose.
-		map_data = {"id": str(map_value)}
-	_request_modal("campus_map", map_data)
+	_learn_map(_player_options)
+	var map_id := str(snapshot.get("map", ""))
+	var connections: Array = []
+	for connection: Dictionary in _known_connections.values():
+		if str(connection.map) == map_id: connections.append(connection)
+	_request_modal("campus_map", {"id": map_id, "current_room": str(snapshot.get("execution_room", "")),
+		"current_label": str(snapshot.get("hud", {}).get("room", "")),
+		"rooms": _known_rooms.get(map_id, {}).duplicate(true), "connections": connections})
 
 func open_ending(data: Dictionary) -> void:
 	_request_modal("ending", data)
@@ -384,9 +417,6 @@ func _on_book_event(event: Dictionary) -> void:
 	match str(event.get("kind", "")):
 		"bookmark_save", "bookmark_load": ui_event.emit(event)
 		"open_reasoning": open_manuscript()
-		"card_action":
-			_on_investigation_action(str(event.get("id", "")))
-			settings_ui.close()
 
 func show_bookmark_result(message: String, success := false) -> void:
 	settings_ui.show_bookmark_result(message, success)
@@ -463,7 +493,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func view_trace_context() -> Dictionary:
-	if settings_ui.is_active(): return {"panel": "casebook", "page": str(settings_ui.book.get("_current_page")) if is_instance_valid(settings_ui.book) else _modal_kind, "transition": settings_ui.transition_state()}
-	if investigation_ui.is_active(): return {"panel": "investigation", "page": _modal_kind, "transition": investigation_ui.transition_state()}
-	if dialogue_ui.is_dialogue_active(): return {"panel": "dialogue"}
+	if settings_ui.is_active():
+		var context: Dictionary = settings_ui.book.page_trace_context()
+		context.transition = settings_ui.transition_state()
+		return context
+	if investigation_ui.is_active():
+		return {"panel": "spatial" if _modal_kind == "spatial" else "investigation", "page": _modal_kind,
+			"presentation_id": str(_spatial_context.get("interaction_id", "")), "transition": investigation_ui.transition_state()}
+	if dialogue_ui.is_dialogue_active():
+		return {"panel": "dialogue", "presentation_id": str(_trace_display.get("presentation_id", ""))}
 	return {"panel": "field", "modal_pending": not _pending_modal.is_empty(), "screen_transition": _screen_motion.is_active()}

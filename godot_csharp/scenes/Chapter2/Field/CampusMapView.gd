@@ -1,21 +1,22 @@
 extends Node2D
+
+const LIFECYCLE := preload("res://scenes/Host/HostLifecycle.gd")
 ## 学园多地图的适配器：载入 Maps/ 下的地图，进门口自动换图；室外分区相互重叠，走出本区核心即换到所在区，
 ## 世界坐标连续。提供寻路网格（碰撞体栅格化，半格精度）、视线墙、房间区域、交互点标记、站位与遮挡淡出。
 ## 剧情与文字不在这里。
 
 const MAPS := "res://scenes/Chapter2/Maps/%s.tscn"
 const RESOURCES := preload("res://scenes/Shared/Field/FieldResources.gd")
+const GEOMETRY := preload("res://scenes/Host/GeometryCatalog.gd")
 const MAX_RETAINED_MAPS := 3
 const PREPARE_BUDGET_USEC := 2000
 const MAX_LOCAL_NAV_GRIDS := 32
 
 static func _fail_binding(node: Node, message: String) -> void:
 	push_error(message)
-	if node.is_inside_tree(): node.get_tree().quit(1)
+	if node.is_inside_tree(): LIFECYCLE.quit.call_deferred(node.get_tree(), 1)
 
 const SEAM := 36.0
-## 地图里没有标记、由地图层补上的交互点。
-const EXTRA_SITES := {"zone_jia": {"litter": Vector2(440, 240)}, "living_floor": {"litter": Vector2(440, 240)}}
 ## 只作装饰、不开放交互的标记。
 const DECOR_MARKERS := ["transmitter", "isolation_gate", "lane", "harbor", "stele", "collapse", "counterweight"]
 static var _floor_parts: Dictionary = {}
@@ -200,8 +201,7 @@ static func _append_actor_resource(paths: Array[String], sprite: String) -> void
 	if path not in paths: paths.append(path)
 
 func _preparation_binding(map_name: String, value: Dictionary) -> Dictionary:
-	var raw = value.get("geometry_bindings", {})
-	var geometry: Dictionary = raw.get(map_name, {}) if raw is Dictionary and raw.get(map_name) is Dictionary else {}
+	var geometry: Dictionary = GEOMETRY.additions(map_name)
 	var access = value.get("access", {})
 	var maps: Dictionary = access.get("maps", {}) if access is Dictionary and access.get("maps") is Dictionary else {}
 	var sprites: Array[String] = []
@@ -299,7 +299,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		_access_refresh_pending = true
 		_refresh_access_geometry.call_deferred()
 
-## Native content provides geometric bindings; no story identity or rule is selected here.
+## Godot owns authored geometry; DV supplies semantic access and interaction identities.
 func _apply_geometry_bindings(snapshot: Dictionary, rebuild := true) -> void:
 	if map == null: return
 	var changed := _apply_record_geometry(key, _map_records[key], snapshot)
@@ -308,8 +308,7 @@ func _apply_geometry_bindings(snapshot: Dictionary, rebuild := true) -> void:
 		_build_walls()
 
 func _apply_record_geometry(map_name: String, record: Dictionary, snapshot: Dictionary) -> bool:
-	var raw_bindings = snapshot.get("geometry_bindings", {})
-	var declaration: Dictionary = raw_bindings.get(map_name, {}) if raw_bindings is Dictionary and raw_bindings.get(map_name) is Dictionary else {}
+	var declaration: Dictionary = GEOMETRY.additions(map_name)
 	if bool(record.geometry_applied) and declaration == record.geometry: return false
 	var layout: Node2D = record.node
 	var textures: Dictionary = {}
@@ -995,34 +994,9 @@ func sight_region(cell: Vector2i) -> String:
 	return _region_in_map(key, cell)
 
 static func _region_in_map(map_name: String, cell: Vector2i) -> String:
-	if map_name == "living_floor":
-		# Hall owns the shared wall columns; room names keep the DV contract.
-		var order := ["living_hall", "zone_yi", "zone_jia", "zone_bing", "zone_ding"]
-		for part: String in order:
-			if not _floor_parts.has(part): continue
-			var offset: Array = _floor_parts[part]
-			var local := cell - Vector2i(Vector2(float(offset[0]), float(offset[1])) / 32.0)
-			var size := Vector2i(16, 46) if part == "living_hall" else Vector2i(36, 22)
-			if not Rect2i(Vector2i.ZERO, size).has_point(local): continue
-			if part == "living_hall" and local.y >= 17: local.y = maxi(16, local.y - 6)
-			return part + ":" + _region_in_map(part, local)
-		return "void"
-	# 分区坐标直接对应 chapter2_art/rooms.py 的原生房间格；东区为水平镜像。
-	if map_name in ["zone_yi", "zone_jia", "zone_ding", "zone_bing"]:
-		var x := 35 - cell.x if map_name in ["zone_yi", "zone_ding"] else cell.x
-		if x >= 30: return "wc" if cell.y < 7 else ("store" if cell.y >= 14 else "foyer")
-		if x >= 22: return "hall" if cell.y < 14 else "prep"
-		if cell.y >= 9 and cell.y < 14: return "corridor"
-		return ("north_" if cell.y < 9 else "south_") + str(clampi(floori(float(x) / 7.0), 0, 2))
-	match map_name:
-		"living_hall": return "bath" if cell.y >= 32 else "hall"
-		"archive":
-			if cell.x >= 16: return "works"
-			return "vault" if cell.y < 9 else "foyer"
-		"resonance": return "silent" if cell.x >= 22 else "hall"
-		"clinic": return "safety" if cell.x >= 20 else "ward"
-		"logistics": return "kitchen" if cell.x < 13 else "dining"
-	return map_name
+	var cell_size := float(GEOMETRY.contract().cell_size)
+	var room: Dictionary = GEOMETRY.room_at(map_name, (Vector2(cell) + Vector2(0.5, 0.5)) * cell_size)
+	return str(room.get("region", "void"))
 
 static func _room_id(map_name: String, cell: Vector2i) -> String:
 	var region := _region_in_map(map_name, cell)
@@ -1133,9 +1107,7 @@ func site_geometry(defs: Dictionary) -> Dictionary:
 			var point := (m as Marker2D).position
 			result[id] = {"point": point, "reach": 46.0, "box": Rect2(point + Vector2(-16, -26), Vector2(32, 30)),
 				"marker": point + Vector2(0, -16), "title": str(m.get_meta("label", id)), "fallback": not defs.has(id)}
-	for id in EXTRA_SITES.get(key, {}):
-		var point: Vector2 = EXTRA_SITES[key][id]
-		result[id] = {"point": point, "reach": 46.0, "box": Rect2(point + Vector2(-16, -26), Vector2(32, 30)), "marker": point + Vector2(0, -16)}
+
 	return result
 
 func anchor(name: String):

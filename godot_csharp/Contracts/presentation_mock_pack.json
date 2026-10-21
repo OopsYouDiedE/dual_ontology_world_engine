@@ -1,0 +1,272 @@
+{
+  "schema": "dv-presentation-mock-v1",
+  "purpose": "独立界面演出样本；文本、选项和回放不构成正式剧情事实。",
+  "snapshot": {
+    "chapter": 1,
+    "game_time": 420,
+    "active": true,
+    "viewer": "detective",
+    "resource": "res://scenes/Chapter2/Field/CampusMapView.tscn",
+    "map": "living_floor",
+    "room": "zone_yi:north_1",
+    "execution_room": "zone_yi:north_1",
+    "logical_location": "demo-room",
+    "initial_anchor": "",
+    "spawn": "",
+    "anchor": "",
+    "field_enabled": true,
+    "player_control": true,
+    "initial_placements": [],
+    "hud": {
+      "title": "演出样本",
+      "room": "样本房间",
+      "time": "7:00"
+    },
+    "access": {
+      "dorms": true,
+      "isolation_open": false,
+      "door_prints": false,
+      "maps": {
+        "living_floor": true,
+        "zone_yi": true,
+        "living_hall": true
+      }
+    },
+    "sites": {},
+    "traces": [],
+    "people": [],
+    "presentation": {
+      "player_actor": "detective",
+      "player_sprite": "detective"
+    },
+    "cast": {
+      "detective": "detective"
+    },
+    "replay": {
+      "summary": "此页用于演示读写与空间交互。样本文字不会授予正式会话中的知识。",
+      "hypotheses": [],
+      "conflicts": [],
+      "predictions": []
+    }
+  },
+  "room_titles": {
+    "zone_yi:north_1": "样本房间",
+    "zone_yi:corridor": "样本走廊"
+  },
+  "options": {
+    "zone_yi:north_1": [
+      {
+        "id": "preview.read",
+        "label": "阅读演出样本",
+        "available": true,
+        "interaction": {
+          "kind": "self",
+          "purpose": "reflect"
+        }
+      },
+      {
+        "id": "preview.wait",
+        "label": "留心此刻的安静",
+        "available": true,
+        "interaction": {
+          "kind": "self",
+          "purpose": "wait"
+        }
+      },
+      {
+        "id": "preview.bed",
+        "label": "查看床边的界面样本",
+        "available": true,
+        "interaction": {
+          "kind": "site",
+          "site": "bed"
+        }
+      },
+      {
+        "id": "preview.go.corridor",
+        "label": "走向走廊",
+        "available": true,
+        "interaction": {
+          "kind": "doorway",
+          "destination": {
+            "map": "living_floor",
+            "room": "zone_yi:corridor",
+            "execution_room": "zone_yi:corridor",
+            "logical_location": "demo-corridor"
+          }
+        }
+      }
+    ],
+    "zone_yi:corridor": [
+      {
+        "id": "preview.read",
+        "label": "阅读演出样本",
+        "available": true,
+        "interaction": {
+          "kind": "self",
+          "purpose": "reflect"
+        }
+      },
+      {
+        "id": "preview.wait",
+        "label": "留心此刻的安静",
+        "available": true,
+        "interaction": {
+          "kind": "self",
+          "purpose": "wait"
+        }
+      },
+      {
+        "id": "preview.go.room",
+        "label": "回到样本房间",
+        "available": true,
+        "interaction": {
+          "kind": "doorway",
+          "destination": {
+            "map": "living_floor",
+            "room": "zone_yi:north_1",
+            "execution_room": "zone_yi:north_1",
+            "logical_location": "demo-room"
+          }
+        }
+      }
+    ]
+  },
+  "actions": {
+    "preview.read": {
+      "id": "preview.read",
+      "kind": "inspect",
+      "label": "阅读演出样本"
+    },
+    "preview.wait": {
+      "id": "preview.wait",
+      "kind": "inspect",
+      "label": "留心此刻的安静"
+    },
+    "preview.bed": {
+      "id": "preview.bed",
+      "kind": "inspect",
+      "label": "查看床边的界面样本"
+    },
+    "preview.go.corridor": {
+      "id": "preview.go.corridor",
+      "kind": "move",
+      "label": "走向走廊",
+      "travel": {
+        "from": "demo-room",
+        "to": "demo-corridor"
+      }
+    },
+    "preview.go.room": {
+      "id": "preview.go.room",
+      "kind": "move",
+      "label": "回到样本房间",
+      "travel": {
+        "from": "demo-corridor",
+        "to": "demo-room"
+      }
+    }
+  },
+  "presentations": {
+    "preview.read": {
+      "visible": true,
+      "speaker_name": "演出样本",
+      "surface": "阅读演出样本。",
+      "lines": [
+        "这是一段独立的界面演出文本。你可以翻阅案卷、打开地图，并从现场继续操作。",
+        "样本不读取或修改正式世界。"
+      ],
+      "source_refs": [
+        "presentation_mock_pack"
+      ]
+    },
+    "preview.wait": {
+      "visible": true,
+      "speaker_name": "演出样本",
+      "surface": "留心此刻的安静。",
+      "lines": [
+        "这是一段独立的界面演出文本。你可以翻阅案卷、打开地图，并从现场继续操作。",
+        "样本不读取或修改正式世界。"
+      ],
+      "source_refs": [
+        "presentation_mock_pack"
+      ]
+    },
+    "preview.bed": {
+      "visible": true,
+      "speaker_name": "演出样本",
+      "surface": "查看床边的界面样本。",
+      "lines": [
+        "这是一段独立的界面演出文本。你可以翻阅案卷、打开地图，并从现场继续操作。",
+        "样本不读取或修改正式世界。"
+      ],
+      "source_refs": [
+        "presentation_mock_pack"
+      ]
+    },
+    "preview.go.corridor": {
+      "visible": true,
+      "speaker_name": "演出样本",
+      "surface": "走向走廊。",
+      "lines": [
+        "这是一段独立的界面演出文本。你可以翻阅案卷、打开地图，并从现场继续操作。",
+        "样本不读取或修改正式世界。"
+      ],
+      "source_refs": [
+        "presentation_mock_pack"
+      ]
+    },
+    "preview.go.room": {
+      "visible": true,
+      "speaker_name": "演出样本",
+      "surface": "回到样本房间。",
+      "lines": [
+        "这是一段独立的界面演出文本。你可以翻阅案卷、打开地图，并从现场继续操作。",
+        "样本不读取或修改正式世界。"
+      ],
+      "source_refs": [
+        "presentation_mock_pack"
+      ]
+    }
+  },
+  "casebook": {},
+  "replay_frames": [
+    {
+      "sequence": 0,
+      "kind": "dialogue",
+      "actor": "detective",
+      "action": "preview.read",
+      "text": "演出样本：桌面、翻页、对白和选项共用正式呈现组件。",
+      "duration": 1.7,
+      "data": {
+        "source": "presentation-mock"
+      }
+    },
+    {
+      "sequence": 1,
+      "kind": "move",
+      "actor": "detective",
+      "action": "preview.go.corridor",
+      "text": "演出样本：走向走廊。",
+      "duration": 0.3,
+      "data": {
+        "source": "presentation-mock",
+        "position": {
+          "map": "living_floor",
+          "room": "zone_yi:corridor"
+        }
+      }
+    },
+    {
+      "sequence": 2,
+      "kind": "dialogue",
+      "actor": "detective",
+      "action": "preview.wait",
+      "text": "演出样本：本段使用演出时钟播放。",
+      "duration": 1.2,
+      "data": {
+        "source": "presentation-mock"
+      }
+    }
+  ]
+}

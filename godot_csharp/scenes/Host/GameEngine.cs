@@ -17,7 +17,52 @@ public partial class GameEngine : Node
     private bool faulted;
     private DvSession? session;
     private string optionsJson = "{}";
-    private string snapshotJson = "{}";
+    private GDict snapshotCache = new();
+    private string snapshotJson { get => Json.Stringify(snapshotCache); set => snapshotCache = Parse(value); }
+    private readonly Dictionary<string, GDict> projectionCache = new(StringComparer.Ordinal);
+    private bool timingEnabled;
+    private const int TimingCapacity = 4096;
+    private int timingCount, liveTimingCount;
+    private long timingDropped, liveTimingDropped;
+    private SmartReplay? replay;
+    public void SetDiagnosticsEnabled(bool value) => timingEnabled = value;
+    public bool IsDeveloperMode() => session?.DevMode == true;
+    public bool IsDispatchIdle() => !busy && !maintenance && (faulted || commands.Count == 0);
+    public void RecordHostFailure(string message)
+    {
+        faulted = true;
+        hostErrors.Add(new { phase = "physical-settlement", error = message });
+        Report(new InvalidOperationException(message));
+    }
+    public bool CanBackgroundTick() => session is not null && !busy && !maintenance && !closing && !faulted
+        && commands.Count == 0 && pendingEvent.Length == 0 && snapshotCache.ContainsKey("pending")
+        && snapshotCache["pending"].AsGodotDictionary().GetValueOrDefault("status", "").AsString() == "awaiting_input";
+    public void DevCommand(string command) => Dispatch(new GDict { ["kind"] = "dev_command", ["command"] = command });
+    public void LoadReplay(string path) => Dispatch(new GDict { ["kind"] = "replay_load", ["path"] = path });
+    public void ReplayPlay(double speed = 1) { replay?.Play(speed); }
+    public void ReplayPause() { replay?.Pause(); }
+    public GDict ReplayStep() => ReplayValue(replay?.Step());
+    public GArray ReplayAdvance(double seconds)
+    {
+        GArray frames = new();
+        if (replay is not null) foreach (var frame in replay.Advance(seconds)) frames.Add(ReplayValue(frame));
+        return frames;
+    }
+    private static GDict ReplayValue(ReplayFrame? frame) => frame is null ? new() : new GDict {
+        ["sequence"] = frame.Sequence, ["kind"] = frame.Kind, ["actor"] = frame.Actor,
+        ["action"] = frame.Action, ["text"] = frame.Text, ["duration"] = frame.DurationSeconds,
+        ["data"] = GodotHostValues.Dictionary(frame.Data) };
+    private GDict Project(DvSession current, string viewer, bool full = false)
+    {
+        var delta = current.Project(viewer, full);
+        GDict snapshot = !delta.Reset && projectionCache.TryGetValue(viewer, out var previous)
+            ? previous.Duplicate(false) : new();
+        foreach (var key in delta.Removed) snapshot.Remove(key);
+        foreach (var pair in delta.Changed) snapshot[pair.Key] = GodotHostValues.Value(pair.Value);
+        snapshot["state_version"] = delta.Version;
+        projectionCache[viewer] = snapshot;
+        return snapshot;
+    }
     private string pendingEvent = "";
     private readonly Queue<(long Id, string Json)> commands = new();
     private readonly HashSet<string> completedEvents = new(StringComparer.Ordinal);
@@ -33,21 +78,27 @@ public partial class GameEngine : Node
     public long TimingClockUs() => (Stopwatch.GetTimestamp() - timingOrigin) * 1000000L / Stopwatch.Frequency;
     private void Stamp(string stage, string id, string details = "", long? command = null)
     {
+        if (!timingEnabled) return;
         var row = JsonSerializer.Serialize(new { real_us = TimingClockUs(), stage,
             interaction_id = id, command_id = command ?? activeCommand,
             thread_id = System.Environment.CurrentManagedThreadId, details });
         timings.Enqueue(row);
         liveTimings.Enqueue(row);
+        if (Interlocked.Increment(ref timingCount) > TimingCapacity && timings.TryDequeue(out _)) { Interlocked.Decrement(ref timingCount); Interlocked.Increment(ref timingDropped); }
+        if (Interlocked.Increment(ref liveTimingCount) > TimingCapacity && liveTimings.TryDequeue(out _)) { Interlocked.Decrement(ref liveTimingCount); Interlocked.Increment(ref liveTimingDropped); }
     }
     public GArray PollTimings()
     {
         GArray result = new();
-        while (liveTimings.TryDequeue(out var row)) result.Add(row);
+        while (result.Count < 256 && liveTimings.TryDequeue(out var row)) { Interlocked.Decrement(ref liveTimingCount); result.Add(row); }
         return result;
     }
 
-    public void RecordTiming(GDict value) => Stamp(value.GetValueOrDefault("stage", "").AsString(),
-        value.GetValueOrDefault("interaction_id", interaction).AsString(), Json.Stringify(value));
+    public void RecordTiming(GDict value)
+    {
+        if (timingEnabled) Stamp(value.GetValueOrDefault("stage", "").AsString(),
+            value.GetValueOrDefault("interaction_id", interaction).AsString(), Json.Stringify(value));
+    }
 
     public void ConfigureSession(GDict options)
     {
@@ -64,7 +115,7 @@ public partial class GameEngine : Node
         ConfigureSession(options);
     }
 
-    public GDict Snapshot() => Parse(snapshotJson);
+    public GDict Snapshot() => snapshotCache.Duplicate(false);
 
     // Read the same completed host projection; never traverse a worker-owned DV state.
     public string ReadMilestoneProgressJson() => snapshotJson;
@@ -77,21 +128,12 @@ public partial class GameEngine : Node
         current.PhaseObserver = (stage, details) => Stamp("dv_" + stage, timingId, details, command);
     }
 
-    private GDict Materialize(string json, string timingId, string projection)
-    {
-        // JSON parsing constructs only an exclusively owned data graph. No
-        // scene nodes or shared resources enter the worker. Publish it after
-        // await completes, then leave all graph mutation to the main thread.
-        Stamp("materialize_begin", timingId, projection);
-        var value = Parse(json);
-        Stamp("materialize_end", timingId, projection);
-        return value;
-    }
 
     public GArray Dispatch(GDict input)
     {
         var json = Json.Stringify(input);
-        inputs.Add(json);
+        var kind = input.GetValueOrDefault("kind", "").AsString();
+        if (kind is not ("npc_tick" or "prepare_ahead" or "cancel_ahead")) inputs.Add(json);
         var command = ++nextCommand;
         Stamp("command_received", input.GetValueOrDefault("interaction_id", interaction).AsString(), input.GetValueOrDefault("kind", "").AsString(), command);
         if (closing) return new();
@@ -141,13 +183,13 @@ public partial class GameEngine : Node
                             BindPhases(current, timingId, queued.Id);
                             Stamp("open_end", timingId);
                             Stamp("snapshot_begin", timingId);
-                            var initialSnapshot = current.Snapshot(current.Viewer);
+                            var initialSnapshot = Project(current, current.Viewer, true);
                             Stamp("snapshot_end", timingId);
-                            if (kind == "load") RequireRestorableSnapshot(initialSnapshot);
+                            if (kind == "load") RequireRestorableSnapshot(Json.Stringify(initialSnapshot));
                             var journal = kind == "load" ? ReadBoundCasebook(savePath, current.Viewer, save!) : (Json: "{}", Warning: "");
                             return (Session: current, Snapshot: initialSnapshot, Viewer: current.Viewer,
                                 Casebook: journal.Json, Warning: journal.Warning,
-                                ProjectedSnapshot: Materialize(initialSnapshot, timingId, "viewer"),
+                                ProjectedSnapshot: initialSnapshot,
                                 ProjectedCasebook: Parse(journal.Json));
                         });
                         Stamp("handoff_begin", timingId, kind);
@@ -157,12 +199,12 @@ public partial class GameEngine : Node
                             ["resource"] = snapshot["resource"], ["snapshot"] = snapshot,
                             ["casebook"] = journalData, ["casebook_warning"] = opened.Warning } };
                         session = opened.Session;
-                        snapshotJson = opened.Snapshot;
+                        snapshotCache = opened.Snapshot;
                         casebookViewer = opened.Viewer;
                         casebookJson = opened.Casebook;
                         Stamp("handoff_end", timingId, kind);
                     }
-                    else if (kind == "view_ready" || kind == "dv_next" || kind == "select")
+                    else if (kind == "view_ready" || kind == "dv_next" || kind == "select" || kind == "npc_tick")
                     {
                         if (session is null) throw new InvalidOperationException("Session is not open");
                         // An acknowledgement cannot redispatch an already executing intention.
@@ -173,33 +215,82 @@ public partial class GameEngine : Node
                         {
                             BindPhases(current, timingId, queued.Id);
                             Stamp("prepare_begin", timingId, selection);
-                            var intent = current.Prepare(selection);
+                            var token = input.GetValueOrDefault("preview_token", "").AsString();
+                            IReadOnlyDictionary<string, object?> intent;
+                            var beforeVersion = current.Version;
+                            if (kind == "npc_tick") intent = current.PrepareBackgroundValue();
+                            else if (token.Length == 0 || !current.TryAdoptPrepared(token, out intent)) intent = current.PrepareValue(selection);
                             Stamp("prepare_end", timingId);
-                            var projectedIntent = Materialize(intent, timingId, "intent");
+                            var projectedIntent = GodotHostValues.Dictionary(intent);
                             var ready = projectedIntent.GetValueOrDefault("status", "").AsString() == "prepared";
-                            var actor = ready ? projectedIntent["actor"].AsString() : null;
+                            var actor = ready ? projectedIntent["actor"].AsString() : "";
                             Stamp("snapshot_begin", timingId);
-                            var executionSnapshot = ready ? current.Snapshot(actor!) : "{}";
-                            var viewer = current.Viewer;
-                            // JSON strings can be shared; the two Godot graphs are
-                            // independently materialized before either is published.
-                            var viewerSnapshot = ready && string.Equals(actor, viewer, StringComparison.Ordinal)
-                                ? executionSnapshot : current.Snapshot(viewer);
+                            var projectedViewer = Project(current, current.Viewer);
+                            var projectedExecution = ready
+                                ? (actor == current.Viewer ? projectedViewer : GodotHostValues.Dictionary(current.ExecutorProjection(actor)))
+                                : new GDict();
                             Stamp("snapshot_end", timingId);
-                            var projectedViewer = Materialize(viewerSnapshot, timingId, "viewer");
-                            var projectedExecution = Materialize(executionSnapshot, timingId, "executor");
-                            GArray delivered = new() {
-                                new GDict { ["kind"] = "state", ["snapshot"] = projectedViewer },
-                                new GDict { ["kind"] = "dv_action", ["intent"] = projectedIntent,
-                                    ["execution_snapshot"] = projectedExecution } };
-                            return (Snapshot: viewerSnapshot, Events: delivered,
+                            GArray delivered = new();
+                            if (kind != "npc_tick" || current.Version != beforeVersion)
+                            {
+                                delivered.Add(new GDict { ["kind"] = "state", ["snapshot"] = projectedViewer });
+                                delivered.Add(new GDict { ["kind"] = "dv_action", ["intent"] = projectedIntent,
+                                    ["execution_snapshot"] = projectedExecution });
+                            }
+                            return (Snapshot: projectedViewer, Events: delivered,
                                 Pending: ready ? projectedIntent["action_event"].AsString() : "");
                         });
                         Stamp("handoff_begin", timingId, kind);
-                        snapshotJson = prepared.Snapshot;
+                        snapshotCache = prepared.Snapshot;
                         pendingEvent = prepared.Pending;
                         events = prepared.Events;
                         Stamp("handoff_end", timingId, kind);
+                    }
+                    else if (kind == "prepare_ahead")
+                    {
+                        var current = session;
+                        if (current is null || pendingEvent.Length != 0) continue;
+                        var choice = input["choice_id"].AsString();
+                        var preview = await Task.Run(() => current.PrepareAhead(choice));
+                        events.Add(new GDict { ["kind"] = "prepared_ahead", ["choice_id"] = choice,
+                            ["token"] = preview.Token, ["state_version"] = preview.BaseVersion });
+                    }
+                    else if (kind == "cancel_ahead")
+                    {
+                        var current = session;
+                        if (current is not null) await Task.Run(current.CancelPrepared);
+                    }
+                    else if (kind == "dev_command")
+                    {
+                        var current = session ?? throw new InvalidOperationException("Start a session before using the console.");
+                        var parts = input["command"].AsString().Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length == 0) continue;
+                        var argument = parts.Length == 2 ? parts[1] : "";
+                        if (parts[0] == "inspect")
+                        {
+                            var inspected = await Task.Run(() => GodotHostValues.Dictionary(current.Inspect(argument.Length == 0 ? current.Viewer : argument)));
+                            events.Add(new GDict { ["kind"] = "dev_inspect", ["data"] = inspected });
+                        }
+                        else
+                        {
+                            RequireNoPendingExecution();
+                            var changed = await Task.Run(() => { current.ExecuteDebug(parts[0], argument); return Project(current, current.Viewer, true); });
+                            snapshotCache = changed;
+                            var result = changed.GetValueOrDefault("development_result", new GDict()).AsGodotDictionary();
+                            if (result.GetValueOrDefault("resync", false).AsBool())
+                            {
+                                var rebuilding = changed.Duplicate(false);
+                                rebuilding["development_resync"] = true;
+                                events.Add(new GDict { ["kind"] = "dev_state", ["snapshot"] = rebuilding });
+                            }
+                            events.Add(new GDict { ["kind"] = "dev_error", ["message"] = result.GetValueOrDefault("message", "开发命令已完成。") });
+                        }
+                    }
+                    else if (kind == "replay_load")
+                    {
+                        var path = ProjectSettings.GlobalizePath(input["path"].AsString());
+                        replay = await Task.Run(() => SmartReplay.Load(path));
+                        events.Add(new GDict { ["kind"] = "replay_loaded", ["count"] = replay.Count });
                     }
                     else if (kind == "dv_complete")
                     {
@@ -217,29 +308,35 @@ public partial class GameEngine : Node
                         {
                             BindPhases(current, timingId, queued.Id);
                             Stamp("complete_begin", timingId, actionEvent);
-                            var presentation = current.Complete(json, current.Viewer);
+                            var presentation = current.CompleteValue(json, current.Viewer);
                             Stamp("complete_end", timingId, actionEvent);
                             Stamp("snapshot_begin", timingId);
-                            var projected = current.Snapshot(current.Viewer);
+                            var projectedViewer = Project(current, current.Viewer);
                             Stamp("snapshot_end", timingId);
-                            var projectedViewer = Materialize(projected, timingId, "viewer");
-                            var projectedPresentation = Materialize(presentation, timingId, "presentation");
+                            var projectedPresentation = GodotHostValues.Dictionary(presentation);
                             GArray delivered = new() {
+                                new GDict { ["kind"] = "dv_commit", ["action_event"] = actionEvent,
+                                    ["outcome"] = projectedPresentation.GetValueOrDefault("outcome", projectedPresentation.GetValueOrDefault("status", "rejected")),
+                                    ["actor"] = projectedPresentation.GetValueOrDefault("completed_actor", projectedPresentation.GetValueOrDefault("actor", "")) },
                                 new GDict { ["kind"] = "state", ["snapshot"] = projectedViewer },
                                 new GDict { ["kind"] = "dv_present", ["presentation"] = projectedPresentation } };
-                            return (Snapshot: projected, Events: delivered);
+                            return (Snapshot: projectedViewer, Events: delivered);
                         });
                         Stamp("handoff_begin", timingId, kind);
                         completedEvents.Add(actionEvent);
                         pendingEvent = "";
-                        snapshotJson = completed.Snapshot;
+                        snapshotCache = completed.Snapshot;
                         events = completed.Events;
                         Stamp("handoff_end", timingId, kind);
                     }
                 }
                 catch (Exception error)
                 {
-                    if (kind == "load" && session is null)
+                    if (kind is "dev_command" or "replay_load" or "prepare_ahead")
+                    {
+                        events.Add(new GDict { ["kind"] = "dev_error", ["message"] = error.Message });
+                    }
+                    else if (kind == "load" && session is null)
                     {
                         // File validation did not install or mutate a session. Keep the book usable.
                         hostErrors.Add(new { phase = kind, error = error.ToString() });
@@ -315,6 +412,7 @@ public partial class GameEngine : Node
     private void InstallRestored((DvSession Session, string Snapshot) restored)
     {
         session = restored.Session;
+        projectionCache.Clear();
         snapshotJson = restored.Snapshot;
         casebookViewer = restored.Session.Viewer;
         casebookJson = "{}";
@@ -419,6 +517,8 @@ public partial class GameEngine : Node
             }
             var current = session;
             if (current is null) return;
+            phase = "close";
+            await Task.Run(current.Close);
             phase = "trace";
             var tracePath = Path.Combine(path, "session.dvdag");
             try
@@ -474,7 +574,7 @@ public partial class GameEngine : Node
                 {
                     using var result = new FileStream(Path.Combine(path, "close-result.dvlog"), FileMode.CreateNew, System.IO.FileAccess.Write);
                     result.Write(DuelView.Compiled.BinaryEvidence.Magic);
-                    var closeRecord = System.Text.Json.JsonSerializer.SerializeToElement(new { complete = errors.Count == 0, audit_mode = session?.AuditMode, trace_policy = session?.AuditMode == true ? "full" : "omitted-gameplay", session_opened = session is not null, unprocessed_commands = commands.Count, pending_action = pendingEvent, errors });
+                    var closeRecord = System.Text.Json.JsonSerializer.SerializeToElement(new { complete = errors.Count == 0, audit_mode = session?.AuditMode, trace_policy = session?.AuditMode == true ? "full" : "omitted-gameplay", session_opened = session is not null, unprocessed_commands = commands.Count, pending_action = pendingEvent, timing_policy = "bounded-ring", timing_capacity = TimingCapacity, timing_dropped = timingDropped, live_timing_dropped = liveTimingDropped, errors });
                     DuelView.Compiled.BinaryEvidence.WriteFrame(result, closeRecord);
                 }
             }

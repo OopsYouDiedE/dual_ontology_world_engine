@@ -1,0 +1,195 @@
+[
+  {
+    "name": "asset_pipeline",
+    "description": "Build selected maps, art or UI assets. Import only the selected pipeline.",
+    "handler": "tool_actions:assets",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "living-floor",
+            "chapter-maps",
+            "anime-cast",
+            "pixel-cast",
+            "dialogue-cast",
+            "character-atlas",
+            "desk",
+            "desk-surfaces",
+            "room-props",
+            "scene-surfaces",
+            "materials",
+            "ui-theme",
+            "ui-paper",
+            "ui-desk",
+            "translations",
+            "geometry-contract"
+          ]
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "operation"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "music_pipeline",
+    "description": "Render or export existing MuseScore soundtrack sources.",
+    "handler": "tool_actions:music",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "compiler_prewarm",
+    "description": "Build/cache the standalone C3 compiler on explicit request.",
+    "handler": "tool_actions:compiler_prewarm",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "dv_cli",
+    "description": "Run the standalone Core text interface, a single command or smart replay.",
+    "handler": "tool_actions:cli",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "map_workspace",
+    "description": "Open the pure-GDScript map sandbox or tools editor.",
+    "handler": "tool_actions:sandbox",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "godot": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "map",
+            "editor"
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "rpg_adapter",
+    "description": "Invoke one asset-adapter operation without loading other pipelines.",
+    "handler": "tool_actions:adapter",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "operation"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "diagnostics",
+    "description": "Run one explicitly selected diagnostic tool; no startup or automatic checks.",
+    "handler": "tool_actions:diagnostics",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "logic-session",
+            "checkpoint",
+            "raw-dag",
+            "capture-save",
+            "profile",
+            "timing",
+            "hitches",
+            "encode",
+            "geometry",
+            "paths"
+          ]
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "operation"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "openWorldHint": false
+    }
+  }
+]

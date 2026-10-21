@@ -1,0 +1,946 @@
+// Production campaign and host projections.
+#include 20-core.dv
+#include 30-session.dv
+#include 40-chapter1.dv
+#include 50-chapter2.dv
+
+// Diagnostics and formal-model runners live in checks/65-debug-runner.dv.
+
+// Source module: language_core/game/player-content.dv
+// Presentation migrated from the existing first-chapter authored cards and routes.
+// Labels offer an interaction, not its unobserved result. Card prose is post-execution only.
+fn c1_ui_ends(text, suffix):
+    return rt_length(suffix) <= rt_length(text) and rt_slice(text, rt_length(text) - rt_length(suffix), rt_length(suffix)) == suffix
+
+fn c1_player_scene(scene):
+    var actors = []
+    var i = 0
+    while i < rt_count(scene.actors):
+        let actor = scene.actors[i]
+        var actions = []
+        var j = 0
+        while j < rt_count(actor.actions):
+            rt_push(actions, c1_player_display(actor.actions[j]))
+            j = j + 1
+        rt_push(actors, dv_with(actor, "actions", actions))
+        i = i + 1
+    return dv_with(scene, "actors", actors)
+
+fn c1_player_display(action):
+    var result = action
+    if action.kind == "move" and dv_has_key(action, "travel"):
+        let rooms = {"R05": "自己的卧室", "R06": "霍铎的卧室", "R07": "沈鼎的卧室", "R08": "苏泠的卧室", "hall": "活动厅", "foyer": "门厅", "pantry": "茶水间", "corridor": "走廊"}
+        if dv_has_key(rooms, action.travel.to):
+            result = dv_with(result, "label", rt_cat("前往", dv_get(rooms, action.travel.to)))
+    let cards = [
+        {"id": "E1", "title": "隔离门", "text": c1_visible_E1()},
+        {"id": "E2", "title": "墙角的木楔与门底的灰", "text": c1_visible_E2()},
+        {"id": "E3", "title": "灰上的鞋印", "text": c1_visible_E3()},
+        {"id": "E4", "title": "门底的湿布", "text": c1_visible_E4()},
+        {"id": "E5", "title": "地上的音叉", "text": c1_visible_E5()},
+        {"id": "E6", "title": "书桌上的乐谱", "text": c1_visible_E6()},
+        {"id": "E7", "title": "长桌上的石板", "text": c1_visible_E7()},
+        {"id": "E8", "title": "铜口", "text": c1_visible_E8()},
+        {"id": "E9", "title": "水槽里的杯子", "text": c1_visible_E9()},
+        {"id": "E10", "title": "碗柜上的罐子", "text": c1_visible_E10()},
+        {"id": "E11", "title": "书架", "text": c1_visible_E11()},
+        {"id": "E12", "title": "风衣", "text": c1_visible_E12()}]
+    var i = 0
+    while i < rt_count(cards):
+        let card = cards[i]
+        if c1_ui_ends(action.id, rt_cat(".inspect.", card.id)):
+            result = dv_with_many(result, {"label": rt_cat("检视", card.title), "presentation": c1_op_presentation("detective", "visible-inspection", [card.text])})
+        i = i + 1
+    let named = {".opening.wake": "回想醒来前的事", ".opening.empty-slot": "查看自己的标签柜", ".opening.wear-coat": "穿上风衣", ".identify-own-lens": "辨认自己的放大镜", ".replay": "在手稿上重演昨夜", ".sound_trial": "进行声路试验", ".reask_question": "询问当前的问题", ".compare_sole": "查看自己的鞋底", ".loss_testimony": "请苏泠说说声路试验中的所闻", ".talk.slate_code": "询问石板刻痕", ".talk.slate_person": "询问石板上的人形线条", ".talk.frame_hollow": "询问门框的声响", ".talk.cups_known": "询问杯子的摆放", ".talk.starter_kept": "询问罐中留存的酵头", ".talk.recalled_copper": "询问关于铜口的记忆", ".talk.recalled_names": "询问关于姓名的记忆"}
+    i = 0
+    while i < rt_count(named):
+        if c1_ui_ends(action.id, named[i][0]):
+            result = dv_with(result, "label", named[i][1])
+        i = i + 1
+    if c1_ui_ends(action.id, ".touch_latch"):
+        result = dv_with(result, "label", "走近并触碰插闩")
+    if action.kind == "answer":
+        let answers = {"me": "闩门的是我", "V1_0": "苏泠在卧室", "V1_1": "苏泠在活动厅", "V1_2": "苏泠在备餐间", "V3_0": "声音来自铜口在墙内与门框处的管道漏音", "V3_1": "门外有人呼喊", "V4_0": "喊的是闩门，别开", "V4_1": "喊的是开门", "trust": "说明为何信任霍铎的速记并闩门"}
+        let id = dv_find(action, "answer_id", "")
+        if dv_has_key(answers, id):
+            result = dv_with(result, "label", rt_cat("答辩：", dv_get(answers, id)))
+    if c1_ui_ends(action.id, ".reask_question"):
+        let questions = {"opening": "正式问题尚未提出。", "questions_open": c1_question_text("prompt"), "identity": c1_question_text("prompt"), "voice_source": c1_question_text("voice_source"), "words": c1_question_text("words"), "trust": c1_question_text("trust")}
+        result = dv_with(result, "presentation", {"lines": [{"template": "当前问题：{question}", "bindings": [{"name": "question", "ref": dv_ref("question", "state", "current"), "labels": questions}]}]})
+    if c1_ui_ends(action.id, ".compare_sole"):
+        result = dv_with(result, "presentation", {"actor": "detective", "lines": [{"template": "马球靴的鞋底纹路，与门前灰上的印迹一模一样。靴齿里嵌着同样的炭灰。", "when": c1_statement("boots_fit")} ]})
+    if c1_ui_ends(action.id, ".identify-own-lens"):
+        result = dv_with(result, "presentation", {"actor": "detective", "lines": [{"template": "风衣内袋里的铜框放大镜，把柄刻痕与石板上的图记完全吻合。", "when": c1_statement("lens_mine")} ]})
+    if c1_ui_ends(action.id, ".opening.wear-coat"):
+        result = dv_with(result, "presentation", {"actor": "detective", "lines": [{"template": "你披上了这件熟悉的呢料风衣，领口与袖口早已磨平。", "when": dv_fact(dv_ref("coat", "state", "worn_by"), "detective")} ]})
+    if c1_ui_ends(action.id, ".sound_trial"):
+        result = dv_with(result, "presentation", {"voice": "visible-action", "lines": [{"template": "声路试验完成。各处听见了什么，还需分别询问实际在场的人。", "when": dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true)} ]})
+    if c1_ui_ends(action.id, ".loss_testimony"):
+        result = dv_with(result, "presentation", {"actor": "su", "lines": [{"template": "苏泠：‘昨夜我听见的“开门”，和刚才铜管漏出的那半句很像。我当时把声音当成了门外的人……可我并没有看见他。’"} ]})
+    if c1_ui_ends(action.id, ".talk.frame_hollow"):
+        result = dv_with(result, "presentation", {"actor": "su", "lines": [{"template": "苏泠用音叉轻敲门框：‘门框后面是空的，贴着走去主楼的传声铜管。松动的接头就在这里。’"} ]})
+    if c1_ui_ends(action.id, ".talk.slate_code"):
+        result = dv_with(result, "presentation", {"actor": "huo", "lines": [{"template": "霍铎摸了摸石板上的刻痕：‘⊥是落闩，✕是切勿开门，◎指研习长桌旁的传声铜口。这是我的速记习惯。’"} ]})
+    if c1_ui_ends(action.id, ".talk.cups_known"):
+        result = dv_with(result, "presentation", {"actor": "shen", "lines": [{"template": "沈鼎擦着水槽里的杯子：‘阿泠喜淡茶不加糖，老霍嗜甜必加两勺。我这双手比脑子灵光，早就习惯这么泡茶了。’"} ]})
+    if c1_ui_ends(action.id, ".talk.starter_kept"):
+        result = dv_with(result, "presentation", {"actor": "shen", "lines": [{"template": "沈鼎揭开陶罐看了看：‘罐壁上留着好几层旧面痕。我喂它的动作这么顺手……可这罐子从哪儿来，谁在这里养过，我想不起来。’"} ]})
+    return result
+
+fn c1_player_replay_summary(actor):
+    let candidates = dv_find(actor.policy, "hypotheses", [])
+    var i = 0
+    while i < rt_count(candidates):
+        let candidate = candidates[i]
+        if dvs_working_explanation(actor, candidate):
+            let model = dvs_cached_model(actor, candidate)
+            if dv_explanation_model_complete(model, "explained", actor.mind.revision):
+                return "重演结果：已有解释与现有观察相符。这仍是推演，尚不是正式答辩。"
+        i = i + 1
+    if dv_find(actor.policy, "model_budget", 0) <= 0:
+        return "这次重演尚未形成能够完整说明现有观察的解释。推演总预算已耗尽。"
+    return "这次重演尚未形成能够完整说明现有观察的解释。"
+
+// Source module: language_core/game/presentation.dv
+// Authored location bindings. Geometry remains owned by the existing map assets.
+fn dvg_place(location):
+    let places = {
+        "living_hall": {"map": "living_floor", "room": "living_hall:hall", "spawn": "living_hall_east_south"},
+        "central_hall": {"map": "central_hall", "room": "central_hall:central_hall"},
+        "lecture": {"map": "lecture", "room": "lecture:lecture"},
+        "logistics": {"map": "logistics", "room": "logistics:dining"},
+        "clinic": {"map": "clinic", "room": "clinic:ward"},
+        "greenhouse": {"map": "greenhouse", "room": "greenhouse:greenhouse"},
+        "document_workshop": {"map": "archive", "room": "archive:works"},
+        "resonance_hall": {"map": "resonance", "room": "resonance:hall"},
+        "quiet_room": {"map": "resonance", "room": "resonance:silent"},
+        "white_tower_safe": {"map": "clinic", "room": "clinic:safety"},
+        "washroom": {"map": "living_floor", "room": "living_hall:bath"},
+        "resonance": {"map": "resonance", "room": "resonance:hall"},
+        "outdoor_meter": {"map": "campus_n", "room": "campus_n:campus_n", "anchor": "site:outdoor_meter"},
+        "outdoor_high": {"map": "campus_n", "room": "campus_n:campus_n", "anchor": "site:outdoor_high"},
+        "outdoor_alley": {"map": "campus_sw", "room": "campus_sw:campus_sw", "anchor": "lane_east"},
+        "oath_court": {"map": "campus_s", "room": "campus_s:campus_s", "anchor": "site:oath_court"},
+        "threshold.contract": {"map": "living_floor", "room": "living_hall:hall", "anchor": "living_hall_west_north"},
+        "threshold.astral": {"map": "living_floor", "room": "living_hall:hall", "anchor": "living_hall_west_south"},
+        "threshold.logistics": {"map": "living_floor", "room": "living_hall:hall", "anchor": "living_hall_east_north"},
+        "dorm.contract": {"map": "living_floor", "room": "zone_jia:hall"},
+        "dorm.astral": {"map": "living_floor", "room": "zone_bing:hall"},
+        "dorm.logistics": {"map": "living_floor", "room": "zone_ding:hall"},
+        "dorm.yi": {"map": "living_floor", "room": "zone_yi:hall"},
+        "foyer": {"map": "living_floor", "room": "zone_yi:foyer", "spawn": "zone_yi_from_hall"},
+        "hall": {"map": "living_floor", "room": "zone_yi:hall"},
+        "R05": {"map": "living_floor", "room": "zone_yi:north_1", "anchor": "site:bed"},
+        "R06": {"map": "living_floor", "room": "zone_yi:south_1"},
+        "R07": {"map": "living_floor", "room": "zone_yi:south_2"},
+        "R08": {"map": "living_floor", "room": "zone_yi:north_2"},
+        "corridor": {"map": "living_floor", "room": "zone_yi:corridor"},
+        "pantry": {"map": "living_floor", "room": "zone_yi:prep"}}
+    return dv_find(places, location, {"map": "", "room": location})
+
+fn dvg_intent(state):
+    let intent = dvs_session_intent(state)
+    if intent.status == "awaiting_input":
+        var options = []
+        let actor = state.actors[state.cursor]
+        var i = 0
+        while i < rt_count(intent.options):
+            let option = intent.options[i]
+            let action = dvp_find_action(actor.actions, option.id)
+            var offered = dv_with_many(option, {"kind": action.kind, "interaction": dvg_interaction(action), "cost": dv_get(state.costs, action.kind).actual})
+            if action.kind == "replay":
+                offered = dv_with(offered, "replay_input", dvg_manual_replay_input(actor, action))
+            rt_push(options, offered)
+            i = i + 1
+        return dv_with(intent, "options", options)
+    if intent.status != "prepared":
+        return intent
+    let travel = dv_find(intent.action, "travel", [])
+    if intent.action.kind != "move" and not dv_has_key(travel, "station"):
+        return intent
+    let target = dv_find(travel, "to", "")
+    let place = dvg_place(target)
+    var destination = dv_with_many(place, {"execution_room": place.room, "logical_location": target})
+    if dv_has_key(travel, "station"):
+        destination = dv_with(destination, "departure_station", travel.station)
+    return dv_with(intent, "destination", destination)
+
+// Presentation bindings contain no observed values or additional action admission.
+// The host selects from the already admitted IDs; Prepare rechecks the same action.
+fn dvg_self_purpose(action):
+    if dv_find(action, "known_opportunity_wait", false) or action.kind == "wait":
+        return "wait"
+    if action.kind == "replay" or action.kind == "infer":
+        return "reasoning"
+    return "personal"
+
+fn dvg_interaction(action):
+    if dv_has_key(action, "interaction"):
+        let interaction = action.interaction
+        if dv_find(interaction, "kind", "") == "self":
+            return dv_with(interaction, "purpose", dv_find(interaction, "purpose", dvg_self_purpose(action)))
+        return interaction
+    let travel = dv_find(action, "travel", [])
+    if action.kind == "move" and dv_has_key(travel, "to"):
+        return {"kind": "doorway", "destination": dvg_place(travel.to)}
+    if dv_has_key(travel, "station"):
+        return {"kind": "site", "site": rt_slice(travel.station, 5, rt_length(travel.station) - 5)}
+    let sites = {"E1": "E1", "E2": "E2", "E3": "E2", "E4": "E2", "E5": "E2", "E6": "E6", "E7": "E7", "E8": "transmitter", "E9": "E10", "E10": "E10", "E11": "E11", "E12": "E12"}
+    var i = 0
+    while i < rt_count(sites):
+        if c1_ui_ends(action.id, rt_cat(".inspect.", sites[i][0])):
+            return {"kind": "site", "site": sites[i][1]}
+        i = i + 1
+    let named = {".opening.wake": "bed", ".opening.wear-coat": "E12", ".identify-own-lens": "E12", ".compare_sole": "E2", ".sound_trial": "transmitter", ".reask_question": "transmitter", ".opening.empty-slot": "zone_rules"}
+    i = 0
+    while i < rt_count(named):
+        if c1_ui_ends(action.id, named[i][0]):
+            return {"kind": "site", "site": named[i][1]}
+        i = i + 1
+    if action.kind == "answer":
+        return {"kind": "site", "site": "transmitter"}
+    let request = dv_find(dv_find(action, "speech", []), "request", [])
+    if dv_has_key(request, "target"):
+        return {"kind": "person", "person": request.target}
+    let listeners = dv_find(action, "listeners", [])
+    if rt_count(listeners) == 1:
+        return {"kind": "person", "person": listeners[0]}
+    return {"kind": "self", "purpose": dvg_self_purpose(action)}
+
+fn dvg_clock(time):
+    let minute = rt_floor(time)
+    let hour = rt_floor(minute / 60)
+    let rest = minute - hour * 60
+    var text = rt_show(rest)
+    if rest < 10:
+        text = rt_cat("0", text)
+    return rt_cat(rt_show(hour - rt_floor(hour / 24) * 24), rt_cat(":", text))
+
+fn dvg_presentation(state, viewer):
+    var result = dvs_session_presentation(state, viewer)
+    let actor = dv_find(result, "actor", "")
+    var display = ""
+    var i = 0
+    while i < rt_count(state.actors):
+        if state.actors[i].id == viewer:
+            let subject = state.actors[i]
+            let name = dv_read(subject.mind, c1_op_person_ref(actor, "name"))
+            if dv_uncontested(name):
+                display = name.value
+            if display == "":
+                display = c1_op_known_speaker_label(subject.mind, actor)
+            if display == "":
+                display = c2d_known_speaker_name(subject.mind, actor)
+            if actor == viewer and dv_find(result, "status", "") == "applied" and c1_ui_ends(dv_find(result, "action_id", ""), ".replay"):
+                result = dv_with(result, "lines", dv_append(dv_find(result, "lines", []), c1_player_replay_summary(subject)))
+        i = i + 1
+    return dv_with(result, "speaker_name", display)
+
+fn dvg_cast():
+    return {"detective": "detective", "huo": "engineer", "shen": "chef", "su": "musician", "lucian": "poet", "gu": "archaeologist", "quer": "thief", "ward": "lawyer", "selma": "naturalist", "ruan": "chessplayer", "elena": "dancer", "moran": "painter", "veronica": "chemist", "bertrand": "marksman", "margaret": "architect", "mora": "doctor"}
+
+// A navigation destination is not a per-person initial placement.
+fn dvg_initial_anchor(actor, location):
+    if actor == "detective" and location == "R05":
+        return "site:bed"
+    return ""
+
+fn dvg_people(state, viewer):
+    let sprites = dvg_cast()
+    var viewer_mind = state.actors[0].mind
+    var viewer_index = 0
+    while viewer_index < rt_count(state.actors):
+        if state.actors[viewer_index].id == viewer:
+            viewer_mind = state.actors[viewer_index].mind
+        viewer_index = viewer_index + 1
+    var people = []
+    var i = 0
+    while i < rt_count(state.actors):
+        let actor = state.actors[i]
+        let position = dv_read(state.physical, campaign_position_ref(actor.id))
+        if actor.id != viewer and dv_uncontested(position) and dv_has_key(sprites, actor.id):
+            let place = dvg_place(position.value)
+            if place.map != "":
+                var person = {"key": actor.id, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": position.value, "initial_anchor": dvg_initial_anchor(actor.id, position.value), "spawn": dv_find(place, "spawn", ""), "present": true, "sprite": dv_find(sprites, actor.id, ""), "frame": ""}
+                let known_name = dv_read(viewer_mind, c1_op_person_ref(actor.id, "name"))
+                var title = "同伴"
+                if dv_uncontested(known_name):
+                    title = known_name.value
+                person = dv_with(person, "title", title)
+                if dv_has_key(place, "anchor"):
+                    person = dv_with(person, "anchor", place.anchor)
+                rt_push(people, person)
+        i = i + 1
+    return people
+
+// The map adapter gates destination maps. Keep the occupied map available for
+// materialization and local movement; only a doorway to another map is gated.
+fn dvg_map_access(state, current_map):
+    let zones = [{"map": "zone_yi", "group": "living"}, {"map": "zone_jia", "group": "contract"}, {"map": "zone_bing", "group": "astral"}, {"map": "zone_ding", "group": "logistics"}]
+    var maps = {"living_hall": true}
+    var i = 0
+    while i < rt_count(zones):
+        let zone = zones[i]
+        var condition = c1dep_can_cross()
+        if zone.group != "living":
+            condition = dv_all([campaign_case_claim(zone.group, "outer_latch_released"), dv_fact(c1_other_access_ref(zone.group), true)])
+        let opened = dv_truth(state.physical, condition) == "true"
+        maps = dv_with(maps, zone.map, opened)
+        if current_map == zone.map:
+            maps = dv_with(maps, "living_hall", opened)
+        i = i + 1
+    return maps
+
+// Spatial additions are content declarations. Sampling and safety remain DV actions.
+fn dvg_site_titles(map):
+    if map == "living_floor":
+        return {"bed": {"title": "床"}, "transmitter": {"title": "铜口"}, "zone_rules": {"title": "公告框"}, "E1": {"title": "隔离门"}, "E2": {"title": "门底与木楔"}, "E6": {"title": "苏泠的书桌"}, "E7": {"title": "长桌上的石板"}, "E10": {"title": "备餐柜台"}, "E11": {"title": "置物架"}, "E12": {"title": "风衣"}}
+    return {}
+
+fn dvg_sprite_sites(map):
+    if map == "living_floor":
+        return {"N1Bed": "bed", "N1Coat": "E12", "R05Shelf": "E11", "R05ShelfTrace": "E11", "Transmitter": "transmitter", "InnerBolt": "E1", "Slate": "E7", "Jar": "E10"}
+    return {}
+
+// Read only the owner's stored comparison and still-current direct observations.
+// No world reads, model calls, assumption dumps or new knowledge.
+fn dvg_replay_comparison(subject, stored, hypothesis, comparison):
+    let public = c1_hist_public_feature(dv_find(comparison, "feature", []))
+    if public == false:
+        return false
+    let observed = dv_find(comparison, "observed_cells", [])
+    if rt_count(observed) != 1:
+        return false
+    let input = observed[0]
+    if not dv_same(input.ref, public.observation.ref):
+        return false
+    let cell = input.cell
+    let current = dv_read(subject.mind, public.observation.ref)
+    if not dv_uncontested(cell) or not dv_uncontested(current):
+        return false
+    if not dv_same(cell, current) or not (0 < cell.confidence):
+        return false
+    // A known/inferred Boolean alone is not proof of an acquired observation.
+    var observation_action_ids = []
+    let claims = dv_find(cell, "claims", [])
+    var i = 0
+    while i < rt_count(claims):
+        let claim = claims[i]
+        if claim.subject == subject.id and claim.source == "perception" and 0 < claim.trust:
+            if dv_same_local_ref(subject.id, claim.ref, public.observation.ref) and dv_has(subject.mind.seen, claim.id) and dv_same(claim.value, cell.value):
+                let dependency = dv_find(claim, "dependency", [])
+                // dv_perceive records [action_event, local_ref]; this is the
+                // receipt action ID, not the later observation event ID.
+                if rt_count(dependency) == 2 and rt_count(claim.id) == 3:
+                    if dependency[0] == claim.id[0] and dependency[0] != "inference" and dv_same_local_ref(subject.id, dependency[1], public.observation.ref):
+                        if not dv_has(observation_action_ids, dependency[0]):
+                            rt_push(observation_action_ids, dependency[0])
+        i = i + 1
+    if rt_count(observation_action_ids) == 0:
+        return false
+    let result = dv_find(comparison, "result", "unknown")
+    let labels = {"match": "已取得对应观察；这项假设的推演与观察相容。", "contradiction": "已取得对应观察；这项假设的推演与观察矛盾。", "unknown": "已取得对应观察；这项假设的推演尚不足以比对。"}
+    return {"title": public.public_observation_label, "text": dv_find(labels, result, labels.unknown), "result": result, "model_event": stored.event, "source_refs": dv_find(hypothesis, "basis", []), "observation_action_ids": observation_action_ids}
+
+// Only models already produced by this viewer's paid replay are readable here.
+// Projection does not enumerate policy candidates, run models or grant facts.
+fn dvg_manual_history_title(hypothesis, subject):
+    let variables = c1_manual_replay_variables()
+    let assignments = dv_find(hypothesis, "variable_assignments", [])
+    var parts = []
+    var i = 0
+    while i < rt_count(assignments):
+        var j = 0
+        while j < rt_count(variables):
+            if variables[j].id == assignments[i].variable and dv_truth(subject.mind, dv_find(variables[j], "available_when", dv_true())) == "true":
+                let values = variables[j].values
+                var k = 0
+                while k < rt_count(values):
+                    if dv_same(values[k].value, assignments[i].value):
+                        if 0 < rt_count(parts):
+                            rt_push(parts, "；")
+                        rt_push(parts, rt_cat(variables[j].label, rt_cat("：", values[k].label)))
+                    k = k + 1
+            j = j + 1
+        i = i + 1
+    return rt_cat("本人提交的组合假设：", rt_text_join(parts))
+
+fn dvg_replay_titles():
+    return {"me": "闩门者是自己", "V1_0": "苏泠当时在卧室", "V1_1": "苏泠当时在活动厅", "V1_2": "苏泠当时在茶水间", "V2_0": "霍铎当时在铜口旁", "V2_1": "霍铎当时在卧室", "V2_2": "霍铎当时在门厅", "V3_0": "呼声经过铜管传来", "V3_1": "呼声来自门外的人", "V4_0": "原话是闩门，别开", "V4_1": "原话是开门", "V5_0": "自己选择相信霍铎", "V5_1": "自己选择相信苏泠", "V5_2": "自己没有相信两人", "V6_0": "昨夜之前彼此陌生", "V6_1": "昨夜之前彼此熟悉", "trust": "信任霍铎速记的理由"}
+
+// Read-only public candidate descriptions. No model is run by this projection.
+fn dvg_manual_replay_input(actor, action):
+    let titles = dvg_replay_titles()
+    let manual = dv_with(actor, "manual_input", true)
+    let refs = dvp_goal_refs(actor)
+    let all = dv_find(actor.policy, "hypotheses", [])
+    var named = []
+    var cases = []
+    var variables = []
+    var i = 0
+    while i < rt_count(all):
+        let candidate = all[i]
+        if dvs_manual_candidate_available(actor, candidate) and dvp_eligible(manual, dv_with(action, "replay_hypothesis_id", candidate.id), actor.mind, refs):
+            if dv_find(candidate, "group", "") == "six-variable-history":
+                var assignments = candidate.variable_assignments
+                if dv_truth(actor.mind, c1_manual_history_gate()) != "true":
+                    assignments = []
+                    var assignment_index = 0
+                    while assignment_index < rt_count(candidate.variable_assignments):
+                        if candidate.variable_assignments[assignment_index].variable != "V6":
+                            rt_push(assignments, candidate.variable_assignments[assignment_index])
+                        assignment_index = assignment_index + 1
+                rt_push(cases, {"id": candidate.id, "assignments": assignments})
+            else:
+                if dv_has_key(titles, candidate.id):
+                    rt_push(named, {"id": candidate.id, "label": dv_get(titles, candidate.id)})
+        i = i + 1
+    let declared = c1_manual_replay_variables()
+    i = 0
+    while i < rt_count(declared):
+        if dv_truth(actor.mind, dv_find(declared[i], "available_when", dv_true())) == "true":
+            rt_push(variables, dv_without(declared[i], "available_when"))
+        i = i + 1
+    var assumption = ""
+    if dv_truth(actor.mind, c1_manual_history_gate()) != "true":
+        assumption = "当前暂按彼此陌生推演，尚未查明。"
+    return {"named": named, "variables": variables, "cases": cases, "initial_assumption": assumption}
+
+fn dvg_replay(state, viewer):
+    var i = 0
+    while i < rt_count(state.actors):
+        let actor = state.actors[i]
+        if actor.id == viewer:
+            let key = ["host-replay-v2"]
+            let cached = rt_memo_get(actor, key)
+            if cached[0]:
+                return cached[1]
+            return rt_memo_put(actor, key, dvg_replay_build(state, viewer))
+        i = i + 1
+    return false
+
+fn dvg_replay_build(state, viewer):
+    var subject = false
+    var actor_index = 0
+    while actor_index < rt_count(state.actors):
+        if state.actors[actor_index].id == viewer:
+            subject = state.actors[actor_index]
+        actor_index = actor_index + 1
+    if subject == false:
+        return {"summary": "", "hypotheses": [], "conflicts": [], "predictions": []}
+    let simulations = dv_find(subject, "simulations", [])
+    let titles = dvg_replay_titles()
+    var rows = []
+    var pass = 0
+    // Keep the latest paid manual choice visible, followed by produced
+    // explanations, so the display cap cannot hide the requested reconstruction.
+    while pass < 3 and rt_count(rows) < 16:
+        var i = 0
+        while i < rt_count(simulations) and rt_count(rows) < 16:
+            let stored = simulations[i][1]
+            let hypothesis = dv_find(stored, "source_hypothesis", false)
+            let explained = dv_find(stored, "status", "") == "explained"
+            let selected = hypothesis != false and dv_find(subject, "last_manual_replay", "") == dv_find(hypothesis, "id", "")
+            if hypothesis != false and dv_find(stored, "event", "") != "" and ((pass == 0 and selected) or (pass == 1 and explained and not selected) or (pass == 2 and not explained and not selected)):
+                let current = dvs_cached_model(subject, hypothesis)
+                var status = dv_find(current, "status", "stale-or-unavailable")
+                if status == "explained" and not dv_find(stored, "plan_complete", false):
+                    status = "unknown"
+                let labels = {"explained": "与现有观察相符；仍属推演解释。", "inconsistent": "与已取得的观察存在矛盾。", "unknown": "现有结果不足以完成比对。", "stale-or-unavailable": "这份旧推演需结合当前认识重新核对。", "not-simulated": "尚无可用推演结果。"}
+                var lines = [dv_find(labels, status, "这份推演尚未形成确定结论。")]
+                if dv_has_key(stored, "plan_complete") and not stored.plan_complete:
+                    rt_push(lines, "本次重演未完成，不能据此认定整个假设成立。")
+                if not dv_has_key(stored, "plan_complete"):
+                    rt_push(lines, "旧记录未保存重演的完成状态。")
+                rt_push(lines, rt_cat("该次推演记录的观察比对：", rt_show(rt_count(dv_find(stored, "comparisons", [])))))
+                rt_push(lines, rt_cat("该次推演记录的矛盾：", rt_show(rt_count(dv_find(stored, "contradictions", [])))))
+                var readable_comparisons = []
+                let comparisons = dv_find(stored, "comparisons", [])
+                var comparison_index = 0
+                while comparison_index < rt_count(comparisons):
+                    let readable = dvg_replay_comparison(subject, stored, hypothesis, comparisons[comparison_index])
+                    if readable != false:
+                        rt_push(readable_comparisons, readable)
+                        rt_push(lines, rt_cat(readable.title, rt_cat("：", readable.text)))
+                    comparison_index = comparison_index + 1
+                if rt_count(readable_comparisons) == 0:
+                    rt_push(lines, "暂无可公开的逐项观察比对；未显示的项目不能据此认定成立。")
+                if status == "stale-or-unavailable" and 0 < rt_count(readable_comparisons):
+                    rt_push(lines, "以上逐项关系来自该次旧推演，尚未重新核对为当前假设结论。")
+                var title = dv_find(hypothesis, "label", dv_find(hypothesis, "title", dv_find(titles, hypothesis.id, rt_cat("已执行重演 ", rt_show(i + 1)))))
+                if dv_find(hypothesis, "group", "") == "six-variable-history":
+                    title = dvg_manual_history_title(hypothesis, subject)
+                rt_push(rows, {"title": rt_cat("假设：", title), "lines": lines, "model_event": stored.event, "source_revision": dv_find(stored, "source_revision", -1), "source_refs": dv_find(hypothesis, "basis", []), "status": status, "comparisons": readable_comparisons})
+            i = i + 1
+        pass = pass + 1
+    var summary = "尚未执行重演。调查取得线索后，可从可用行动中发起推演。"
+    if 0 < rt_count(simulations):
+        summary = rt_cat("本人已有推演记录：", rt_show(rt_count(simulations)))
+        if rt_count(rows) < rt_count(simulations):
+            summary = rt_cat(summary, rt_cat("；本页显示：", rt_show(rt_count(rows))))
+    return {"summary": summary, "hypotheses": rows, "conflicts": [], "predictions": [], "total_records": rt_count(simulations), "shown_records": rt_count(rows)}
+
+// Only the viewer's current logical location is named; no remote positions.
+fn dvg_location_title(location):
+    let titles = {"R05": "自己的卧室 · R-05", "R06": "霍铎的卧室 · R-06", "R07": "沈鼎的卧室 · R-07", "R08": "苏泠的卧室 · R-08", "hall": "乙区 · 活动厅", "foyer": "乙区 · 门厅", "corridor": "乙区 · 宿舍走廊", "pantry": "乙区 · 备餐间", "living_hall": "生活翼 · 公共起居厅", "washroom": "生活翼 · 盥洗室", "central_hall": "中央厅", "lecture": "讲堂", "logistics": "后勤院 · 食堂", "clinic": "诊疗所", "greenhouse": "温室", "document_workshop": "文献工房", "resonance_hall": "共鸣厅", "resonance": "共鸣厅", "quiet_room": "沉静室", "white_tower_safe": "白塔院 · 安全端", "outdoor_meter": "室外 · 仪器阵", "outdoor_high": "室外 · 高地通路", "outdoor_alley": "室外 · 夹道", "oath_court": "誓约庭", "threshold.contract": "生活翼 · 甲区门外", "threshold.astral": "生活翼 · 丙区门外", "threshold.logistics": "生活翼 · 丁区门外", "dorm.contract": "甲区 · 活动厅", "dorm.astral": "丙区 · 活动厅", "dorm.logistics": "丁区 · 活动厅", "dorm.yi": "乙区 · 活动厅"}
+    return dv_find(titles, location, "现场")
+
+// Map knowledge is reconstructed from the subject's saved experience. Native
+// geometry and other actors' authoritative positions do not grant room names.
+fn dvg_known_room(location):
+    let place = dvg_place(location)
+    return {"map": place.map, "room": place.room, "label": dvg_location_title(location)}
+
+fn dvg_known_room_add(rooms, room):
+    if room.map == "":
+        return rooms
+    var i = 0
+    while i < rt_count(rooms):
+        if rooms[i].map == room.map and rooms[i].room == room.room:
+            return rooms
+        i = i + 1
+    return dv_append(rooms, room)
+
+fn dvg_known_door_add(knowledge, origin, destination):
+    let from = dvg_known_room(origin)
+    let to = dvg_known_room(destination)
+    let rooms = dvg_known_room_add(dvg_known_room_add(knowledge.rooms, from), to)
+    if from.map == "" or to.map == "" or (from.map == to.map and from.room == to.room):
+        return dv_with(knowledge, "rooms", rooms)
+    var i = 0
+    while i < rt_count(knowledge.doors):
+        let door = knowledge.doors[i]
+        let forward = door.from.map == from.map and door.from.room == from.room and door.to.map == to.map and door.to.room == to.room
+        let reverse = door.from.map == to.map and door.from.room == to.room and door.to.map == from.map and door.to.room == from.room
+        if forward or reverse:
+            return dv_with(knowledge, "rooms", rooms)
+        i = i + 1
+    return {"rooms": rooms, "doors": dv_append(knowledge.doors, {"from": from, "to": to})}
+
+fn dvg_subject_map_knowledge(actor):
+    let key = ["host-known-map"]
+    let cached = rt_memo_get(actor, key)
+    if cached[0]:
+        return cached[1]
+    var knowledge = {"rooms": [], "doors": []}
+    let current = dv_read(actor.mind, actor.location_ref)
+    if dv_uncontested(current):
+        knowledge = dv_with(knowledge, "rooms", dvg_known_room_add(knowledge.rooms, dvg_known_room(current.value)))
+    var i = 0
+    while i < rt_count(actor.mind.history):
+        let batch = actor.mind.history[i]
+        if dv_find(batch, "kind", "") == "observation-batch":
+            let observations = batch.observations
+            var j = 0
+            while j < rt_count(observations):
+                let observed = observations[j]
+                if observed.source == "perception" and dv_same_local_ref(actor.id, observed.ref, actor.location_ref):
+                    knowledge = dv_with(knowledge, "rooms", dvg_known_room_add(knowledge.rooms, dvg_known_room(observed.value)))
+                j = j + 1
+        i = i + 1
+    let completed = dv_find(actor, "completed_actions", [])
+    let offered = dv_find(actor, "offered_actions", [])
+    i = 0
+    while i < rt_count(actor.actions):
+        let action = actor.actions[i]
+        let travel = dv_find(action, "travel", [])
+        if action.kind == "move" and (dv_has(completed, action.id) or dv_has(offered, action.id)) and dv_has_key(travel, "from") and dv_has_key(travel, "to"):
+            knowledge = dvg_known_door_add(knowledge, travel.from, travel.to)
+        i = i + 1
+    return rt_memo_put(actor, key, knowledge)
+
+fn dvg_map_knowledge(state, viewer, intent):
+    var i = 0
+    while i < rt_count(state.actors):
+        let actor = state.actors[i]
+        if actor.id == viewer:
+            var knowledge = dvg_subject_map_knowledge(actor)
+            if intent.status == "awaiting_input" and state.cursor == i:
+                var j = 0
+                while j < rt_count(intent.options):
+                    let action = dvp_find_action(actor.actions, intent.options[j].id)
+                    let travel = dv_find(action, "travel", [])
+                    if action.kind == "move" and dv_has_key(travel, "from") and dv_has_key(travel, "to"):
+                        knowledge = dvg_known_door_add(knowledge, travel.from, travel.to)
+                    j = j + 1
+            return knowledge
+        i = i + 1
+    return {"rooms": [], "doors": []}
+
+fn dvg_snapshot(state, viewer):
+    return dvg_snapshot_with_intent(state, viewer, dvg_intent(state))
+
+// A host may reuse this read-only intent only until the next state transition.
+// The standalone DV entry above still projects directly from its own state.
+fn dvg_snapshot_location(state, viewer):
+    let position = dv_read(state.physical, campaign_position_ref(viewer))
+    if dv_uncontested(position):
+        return dv_with(dvg_place(position.value), "logical_location", position.value)
+    return {"map": "", "room": "", "logical_location": ""}
+
+// Static resources are projected once for each observer/map pair.
+fn dvg_snapshot_static(state, viewer):
+    let place = dvg_snapshot_location(state, viewer)
+    let key = ["host-static-v2", viewer, place.map]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    let cast = dvg_cast()
+    return rt_memo_put([], key, {"resource": "res://scenes/Chapter2/Field/CampusMapView.tscn", "field_enabled": true, "initial_placements": [], "sites": dvg_site_titles(place.map), "presentation": {"player_actor": viewer, "player_sprite": dv_find(cast, viewer, "")}, "cast": cast, "sprite_sites": dvg_sprite_sites(place.map)})
+
+fn dvg_host_access(state, map):
+    return {"dorms": true, "isolation_open": dv_truth(state.physical, dv_fact(c1dep_ref("open"), true)) == "true", "door_prints": false, "maps": dvg_map_access(state, map)}
+
+fn dvg_snapshot_dynamic(state, viewer, intent):
+    let place = dvg_snapshot_location(state, viewer)
+    let snapshot = {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": place.logical_location, "initial_anchor": dvg_initial_anchor(viewer, place.logical_location), "spawn": dv_find(place, "spawn", ""), "anchor": dv_find(place, "anchor", ""), "player_control": dv_find(state, "player_actor", "") == viewer, "hud": {"title": "安眠者有福", "room": dvg_location_title(place.logical_location), "time": dvg_clock(state.physical.time)}, "map_knowledge": dvg_map_knowledge(state, viewer, intent), "access": dvg_host_access(state, place.map), "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "pending": intent, "chapter_summary": dvg_chapter_summary(state), "replay": dvg_replay(state, viewer)}
+    if dv_find(state.story, "development_mode", dv_find(state, "development_mode", false)):
+        return dv_with(snapshot, "development_result", dv_find(state.story, "development_result", false))
+    return snapshot
+
+// A field executor needs geometry, bodies, access and its intent. It does not
+// materialize another person's casebook, replay hypotheses or dialogue view.
+fn dvg_executor_snapshot(state, actor, intent):
+    let place = dvg_snapshot_location(state, actor)
+    return dv_with_many(dvg_snapshot_static(state, actor), {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": actor, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": place.logical_location, "initial_anchor": dvg_initial_anchor(actor, place.logical_location), "spawn": dv_find(place, "spawn", ""), "anchor": dv_find(place, "anchor", ""), "player_control": false, "access": dvg_host_access(state, place.map), "people": dvg_people(state, actor), "pending": intent})
+
+fn dvg_snapshot_with_intent(state, viewer, intent):
+    return dv_with_many(dvg_snapshot_static(state, viewer), dvg_snapshot_dynamic(state, viewer, intent))
+
+// A system closing record is not fed into any actor's cognition or choices.
+fn dvg_chapter_summary(state):
+    if dv_find(state.story, "chapter", 1) != 2:
+        return false
+    if dv_truth(state.physical, dv_fact(c2daily_ref("council_closed"), true)) != "true":
+        return false
+    return c2daily_chapter_summary(state.physical)
+
+// Source module: language_core/game/campaign.dv
+// Production composition. Chapter content owns its transition conditions.
+fn dvg_open():
+    return dvg_open_config({"seed": 1, "profile": "Standard_Detective", "detective_zone": "zone_yi"})
+
+// UI ownership and viewing are host configuration, separate from campaign rules.
+fn dvg_host_open(options):
+    let controller = dv_find(options, "controller", "player")
+    let viewer = dv_find(options, "viewer", "detective")
+    dv_require(dv_has(["player", "ai"], controller), "Unsupported host controller")
+    var state = dvg_open_config(dv_find(options, "campaign", {}))
+    var found = false
+    var i = 0
+    while i < rt_count(state.actors):
+        let actor = state.actors[i]
+        if actor.id == viewer:
+            found = true
+            dv_require(dv_has_key(dvg_cast(), viewer), "Host viewer has no visual cast binding")
+            dv_require(dv_local(state.bindings, viewer, viewer) != "", "Host viewer has no projection binding")
+            let position = dv_read(state.physical, actor.location_ref)
+            dv_require(dv_uncontested(position), "Host viewer has no settled location")
+            dv_require(dvg_place(position.value).map != "", "Host viewer has no map binding")
+        i = i + 1
+    dv_require(found, "Unknown host viewer")
+    var player = ""
+    if controller == "player":
+        player = viewer
+    state = dvs_set_player(state, player)
+    return dvs_owned_state_update(state, {"story": dv_with(state.story, "host_viewer", viewer)})
+
+fn dvg_host_viewer(state):
+    return dv_find(state.story, "host_viewer", "detective")
+
+// Configuration is retained as evidence and carried into chapter policy inheritance.
+fn dvg_run_config(config):
+    let result = {"seed": dv_find(config, "seed", 1), "profile": dv_find(config, "profile", "Standard_Detective"), "detective_zone": dv_find(config, "detective_zone", "zone_yi"), "su_initial_room": dv_find(config, "su_initial_room", "hall"), "private_execution_benefit_multiplier": dv_find(config, "private_execution_benefit_multiplier", 1), "homecoming_negotiation": dv_find(config, "homecoming_negotiation", false)}
+    dv_require(rt_floor(result.seed) == result.seed and 0 <= result.seed, "Opening seed must be a nonnegative integer")
+    dv_require(dv_has(["hall", "R08", "R05"], result.su_initial_room), "Unsupported initial Su room")
+    dv_require(result.private_execution_benefit_multiplier == 1 or result.private_execution_benefit_multiplier == 2, "Private execution benefit multiplier must be 1 or 2")
+    dv_require(result.homecoming_negotiation == true or result.homecoming_negotiation == false, "Homecoming negotiation must be boolean")
+    return result
+
+fn dvg_configure_actor_policies(scene, config):
+    var actors = []
+    var i = 0
+    while i < rt_count(scene.actors):
+        let actor = scene.actors[i]
+        var actions = actor.actions
+        let initial_profile = dv_find(dv_find(actor, "cognitive_initialization", []), "profile", [])
+        if dv_find(actor.policy, "allow_manipulation_candidates", dv_find(initial_profile, "allow_manipulation_candidates", false)):
+            actions = []
+            var j = 0
+            while j < rt_count(actor.actions):
+                var action = actor.actions[j]
+                let speech = dv_find(action, "speech", [])
+                if dv_find(action, "manipulation", false) != false or dv_find(speech, "manipulation", false) != false:
+                    action = dv_with(action, "manual_only", false)
+                rt_push(actions, action)
+                j = j + 1
+        rt_push(actors, dv_with_many(actor, {"actions": actions, "policy": dv_with_many(actor.policy, {"private_execution_benefit_multiplier": config.private_execution_benefit_multiplier, "homecoming_negotiation": config.homecoming_negotiation})}))
+        i = i + 1
+    return dv_with_many(scene, {"actors": actors, "run_config": config})
+
+// Relocation changes only the actual room and its owner's initial self-location.
+// Existing identity bindings are retained; no third-party location or sound is granted.
+fn dvg_configure_initial_room(scene, config):
+    if config.su_initial_room == "hall":
+        return scene
+    let basis = [{"path": "user:current-request", "line": 0, "id": "counterfactual-su-initial-room"}]
+    let ref = dv_ref("su", "state", "location")
+    dv_require(dv_local(scene.bindings, "su", "su") == "su", "Su initial location requires its existing identity binding")
+    let physical = dv_store(scene.physical, ref, dv_with(dv_field(config.su_initial_room), "basis", basis))
+    var actors = []
+    var i = 0
+    while i < rt_count(scene.actors):
+        var actor = scene.actors[i]
+        if actor.id == "su":
+            actor = dv_with_many(actor, {"location": config.su_initial_room, "mind": dv_store(actor.mind, actor.location_ref, dv_with(dv_field(config.su_initial_room), "basis", basis))})
+        rt_push(actors, actor)
+        i = i + 1
+    return dv_with_many(scene, {"physical": physical, "actors": actors})
+
+// Initial configuration changes the declared cognition and starting room only.
+// Budgets and receipts retain their production contracts; no result is seeded.
+fn dvg_open_config(config):
+    let run_config = dvg_run_config(config)
+    var scene = c1n_install_scene(c1dep_install_scene(c1_campaign_scene()))
+    scene = dvg_configure_initial_room(scene, run_config)
+    let zone = dv_find(config, "detective_zone", "zone_yi")
+    let profile = dv_find(config, "profile", "Standard_Detective")
+    if zone != "zone_yi":
+        scene = c1_other_place_detective(scene, zone, profile)
+    scene = c1c_install_scene(scene, dv_find(config, "seed", 1), profile)
+    scene = dv_with_many(scene, {"chapter": 1, "game_duration_budget": 5 * 1440 - scene.physical.time, "execution_scope": "DV production session; Godot execution receipts; offscreen non-movement uses DV world laws"})
+    scene = dvg_configure_actor_policies(scene, run_config)
+    return dvs_session_open(c1_player_scene(scene), "enabled")
+
+fn dvg_chapter_two_ready(state):
+    return c1n_morning_ready(state.physical)
+
+fn dvg_extend(state):
+    if dv_find(state.story, "chapter", 0) != 1 or not dvg_chapter_two_ready(state):
+        return state
+    let live = dv_with_many(state.story, {"physical": state.physical, "actors": state.actors, "bindings": state.bindings})
+    let expanded = dvg_configure_actor_policies(dv_with(c2h_install_scene(c2daily_install_scene(c2d_install_scene(c2_extend_scene(live)))), "chapter", 2), dvg_run_config(dv_find(state.story, "run_config", [])))
+    var events = state.events
+    dvs_event(events, "chapter_content_available", "", state.physical.time, [], {"chapter": 2, "source": campaign_approved("chapter-state-inheritance"), "movement": false})
+    // Content availability neither relocates a resident nor grants perceptions.
+    return dvs_owned_state_update(state, {"story": expanded, "physical": expanded.physical, "actors": expanded.actors, "bindings": expanded.bindings, "events": events, "horizon": 5 * 1440, "duration_budget": 5 * 1440 - state.run_start, "idle": 0})
+
+fn dvg_refresh_goals(current):
+    var actors = current.actors
+    var i = current.cursor
+    var changed = false
+    let chapter = dv_find(current.story, "chapter", 1)
+    // The production scheduler selects the actor before content preparation.
+    while i < current.cursor + 1:
+        let actor = current.actors[i]
+        if dv_find(actor, "scheduled_action", false) == false and (dv_has(campaign_people(), actor.id) or actor.id == "demon") and (actor.mind.revision != dv_find(actor, "campaign_goals_revision", -1) or actor.mind.time != dv_find(actor, "campaign_goals_time", -1) or chapter != dv_find(actor, "campaign_goals_chapter", 0)):
+            var refreshed = actor
+            if chapter == 1:
+                if actor.id != "demon":
+                    refreshed = c1n_refresh_actor_goals(actor)
+                actors = dvs_replace(actors, i, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter}))
+            else:
+                let needs_c1_wait = (actor.id == "selma" and dv_truth(actor.mind, campaign_case_claim("astral", "west_passage_checked")) != "true") or (actor.id == "mora" and dv_truth(actor.mind, campaign_case_claim("logistics", "observation_complete")) != "true")
+                let in_living = (dv_truth(actor.mind, campaign_at(actor.id, "living_hall")) == "true")
+                let case_open = (dv_truth(actor.mind, c2d_case_gate(actor.mind)) == "true")
+                // Goal windows, speech receipts and daily protocol fields all
+                // participate; an investigation-only signature misses these inputs.
+                refreshed = c2h_refresh_actor(c2d_refresh_actor_goals(actor))
+                refreshed = c1n_known_future_wait_actor(refreshed)
+                actors = dvs_replace(actors, i, dv_with_many(refreshed, {"campaign_goals_revision": actor.mind.revision, "campaign_goals_time": actor.mind.time, "campaign_goals_chapter": chapter, "c2_goals_in_living": in_living, "c2_goals_case_open": case_open, "c2_goals_needs_wait": needs_c1_wait}))
+            changed = true
+        i = i + 1
+    if changed:
+        return dvs_owned_state_update(current, {"actors": actors})
+    return current
+
+fn dvg_prepare(state):
+    var current = dvg_extend(state)
+    while dvs_session_active(current) and dv_find(current, "pending", false) == false and not dv_find(current, "awaiting_player", false):
+        if dv_find(current, "player_selection", "") == "":
+            rt_phase("schedule-start", "")
+            current = dvs_schedule(current)
+            rt_phase("schedule-end", "")
+        if dv_find(current, "pending", false) == false and dvs_session_active(current):
+            rt_phase("goals-start", "")
+            current = dvg_refresh_goals(current)
+            rt_phase("goals-end", "")
+            current = dvs_prepare_actor(current)
+        if dv_find(current, "pending", false) == false:
+            current = dvg_extend(current)
+    return current
+
+fn dvg_complete(state, receipt):
+    let completed = dvg_extend(dvs_session_complete(state, receipt))
+    if dv_has_key(completed.story, "background_waiting_cursor"):
+        let cursor = completed.story.background_waiting_cursor
+        let current = dvs_owned_state_update(completed, {"story": dv_without(completed.story, "background_waiting_cursor"), "cursor": cursor, "awaiting_player": false, "player_selection": ""})
+        return dvs_prepare_actor(dvg_refresh_goals(current))
+    return completed
+
+// Background work consumes the current decision instant only. Future due actions
+// remain queued while the human reads or walks within the current room.
+fn dvg_prepare_background(state, viewer):
+    if not dv_find(state, "awaiting_player", false) or dv_find(state, "pending", false) != false or not dvs_session_active(state):
+        return state
+    let waiting = state.cursor
+    var offset = 0
+    var index = dv_find(state.story, "background_scan_cursor", waiting + 1)
+    while offset < rt_count(state.actors):
+        if rt_count(state.actors) <= index:
+            index = 0
+        let actor = dvs_erosion_update(state.actors[index], state.physical, state.physical.time)
+        let queued = dv_find(actor, "scheduled_action", false)
+        if actor.id != viewer and dvs_actor_can_act(actor):
+            let story = dv_with_many(state.story, {"background_waiting_cursor": waiting, "background_scan_cursor": index + 1})
+            let current = dvs_owned_state_update(state, {"story": story, "actors": dvs_replace(state.actors, index, actor), "cursor": index, "awaiting_player": false, "player_selection": ""})
+            if queued != false:
+                if queued.due <= state.physical.time:
+                    return dvs_dispatch_due(current, index)
+            else:
+                let fresh = dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", [])) or dvs_idle_inputs_changed(actor, state)
+                if fresh and 0 < dv_find(actor.policy, "budget", 0) and not dvs_idle_guard_matches(actor, state):
+                    let prepared = dvs_prepare_actor(dvg_refresh_goals(current))
+                    return dvs_owned_state_update(prepared, {"story": dv_without(prepared.story, "background_waiting_cursor"), "cursor": waiting, "awaiting_player": true, "player_selection": ""})
+        index = index + 1
+        offset = offset + 1
+    return state
+
+fn dvg_trace_snapshot(state):
+    return dvs_trace_snapshot(state)
+
+// Geometry identifiers bind to native authored material facts, never an oracle.
+fn dvg_traces(world):
+    let mapping = {"ash": "ash_wedge", "boots": "boots_toward_bolt", "cloth": "cloth_after_boots", "dent": "fork_dent", "joint_west": "pipe_layout", "joint_east": "pipe_layout", "shelf_R05": "shelf_old", "shelf_R06": "shelf_old", "shelf_R07": "shelf_old", "shelf_R08": "shelf_old", "shelf_EN": "shelf_old", "shelf_ES": "shelf_old"}
+    var result = []
+    var i = 0
+    while i < rt_count(mapping):
+        result = dv_with(result, mapping[i][0], dv_truth(world, dv_fact(campaign_evidence_ref(mapping[i][1]), true)) == "true")
+        i = i + 1
+    return result
+
+
+// Developer administration is marked in the same session event stream. These
+// commands are available only in a session explicitly opened for development.
+fn dvg_dev_result(state, command, status, message, details):
+    let result = dv_with_many({"status": status, "command": command, "message": message, "development": true, "game_time": state.physical.time}, details)
+    return dvs_owned_state_update(state, {"story": dv_with(state.story, "development_result", result)})
+
+fn dvg_dev_actor_index(state, actor):
+    var i = 0
+    while i < rt_count(state.actors):
+        if state.actors[i].id == actor:
+            return i
+        i = i + 1
+    return -1
+
+fn dvg_dev_next_due(state, target):
+    var index = -1
+    var due = target + 1
+    var i = 0
+    while i < rt_count(state.actors):
+        let queued = dv_find(state.actors[i], "scheduled_action", false)
+        if queued != false:
+            if queued.due < due:
+                index = i
+                due = queued.due
+        i = i + 1
+    return {"index": index, "time": due}
+
+fn dvg_dev_restore_input(state, original, viewer_index):
+    let restored = dvs_owned_state_update(state, {"story": dv_without(state.story, "background_waiting_cursor"), "cursor": viewer_index, "awaiting_player": false, "player_selection": "", "player_actor": dv_find(original, "player_actor", "")})
+    if dv_find(original, "awaiting_player", false):
+        return dvs_prepare_actor(dvg_refresh_goals(restored))
+    return restored
+
+fn dvg_dev_time(state, minutes, viewer, viewer_index):
+    let target = state.physical.time + minutes
+    if minutes < 0:
+        return dvg_dev_result(state, "time", "rejected", "时间增量须为非负数。", {})
+    if state.horizon < target:
+        return dvg_dev_result(state, "time", "rejected", "目标时刻超过本会话声明的时间预算。", {"horizon": state.horizon, "requested_time": target})
+    var events = state.events
+    let command_event = dvs_event(events, "development_command", viewer, state.physical.time, [], {"command": "time", "minutes": minutes, "target": target, "development": true, "executor": "development-formal-model"})
+    var current = dvs_owned_state_update(state, {"events": events, "cursor": viewer_index, "awaiting_player": true, "player_selection": "", "idle": 0})
+    var running = true
+    while running:
+        let due = dvg_dev_next_due(current, target)
+        if target <= current.physical.time and (due.index < 0 or target < due.time):
+            running = false
+        else:
+            if due.index >= 0 and due.time <= current.physical.time:
+                if current.limit <= current.executed:
+                    return dvg_dev_result(dvg_dev_restore_input(current, state, viewer_index), "time", "stopped", "行动预算已用尽，推进停在当前时刻。", {"requested_time": target, "resync": true})
+                let pending_state = dvs_dispatch_due(current, due.index)
+                let pending = dv_find(pending_state, "pending", false)
+                if pending != false:
+                    let receipt = {"action_event": pending.action_event, "outcome": "applied", "actual": pending.model.actual, "executor": "development-formal-model", "development": true, "command_event": command_event}
+                    current = dvg_extend(dvs_session_complete(pending_state, receipt))
+                    current = dvs_owned_state_update(current, {"story": dv_without(current.story, "background_waiting_cursor"), "cursor": viewer_index, "awaiting_player": true, "player_selection": ""})
+                else:
+                    current = dvs_owned_state_update(pending_state, {"cursor": viewer_index, "awaiting_player": true})
+            else:
+                let event_count = rt_count(current.events)
+                var planned = current
+                if current.executed < current.limit:
+                    planned = dvg_prepare_background(current, viewer)
+                if dv_find(planned, "pending", false) != false:
+                    let pending = planned.pending
+                    let receipt = {"action_event": pending.action_event, "outcome": "applied", "actual": pending.model.actual, "executor": "development-formal-model", "development": true, "command_event": command_event}
+                    current = dvg_extend(dvs_session_complete(planned, receipt))
+                    current = dvs_owned_state_update(current, {"story": dv_without(current.story, "background_waiting_cursor"), "cursor": viewer_index, "awaiting_player": true, "player_selection": ""})
+                else:
+                    current = planned
+                    if rt_count(current.events) == event_count:
+                        let next_due = dvg_dev_next_due(current, target)
+                        var boundary = target
+                        if next_due.index >= 0:
+                            boundary = dv_min(boundary, next_due.time)
+                        let next_time = dvs_environment_next_time(current.physical, current.story, boundary)
+                        var next_events = current.events
+                        let physical = dvs_environment(dv_with(current.physical, "time", next_time), current.story, next_events, command_event)
+                        current = dvg_extend(dvs_owned_state_update(current, {"physical": physical, "events": next_events, "idle": 0}))
+    current = dvg_dev_restore_input(current, state, viewer_index)
+    return dvg_dev_result(current, "time", "applied", "时间推进完成。", {"requested_time": target, "resync": true, "command_event": command_event})
+
+fn dvg_dev_teleport(state, target, viewer, index):
+    let place = dvg_place(target)
+    if place.map == "":
+        return dvg_dev_result(state, "tp", "rejected", "没有这个逻辑地点。", {"target": target})
+    let actor = state.actors[index]
+    if dv_find(actor, "scheduled_action", false) != false:
+        return dvg_dev_result(state, "tp", "rejected", "当前角色的在途行动结算后可以移动。", {})
+    var events = state.events
+    let event = dvs_event(events, "development_command", viewer, state.physical.time, [], {"command": "tp", "target": target, "development": true})
+    let ref = actor.location_ref
+    let source = [{"kind": "development-command", "event": event, "authority": "explicit-development-session"}]
+    let law_id = rt_cat("development.tp.", event)
+    let law = dv_axiom(law_id, 1, dv_true(), [dv_assign(ref, target)])
+    let adopted = dv_adopt(state.physical, law, "enforce", 1, source)
+    let execution = dv_execute(adopted, law_id, law_id, adopted.time, adopted.revision)
+    let physical = dv_suspend(execution.world, law_id)
+    let observations = dv_perceive(physical, actor.mind, state.bindings, [ref], event, physical.time)
+    let mind = dv_update_mind(actor.mind, observations, actor.mind.revision, dvs_observation_profile(actor)).world
+    dvs_event(events, "observation", actor.id, physical.time, [event], {"observations": observations, "revision_before": actor.mind.revision, "revision_after": mind.revision, "bindings": state.bindings, "grants": [ref], "execution_id": law_id, "development": true})
+    let relocated = dv_with_many(dv_without(actor, "idle_guard"), {"mind": mind, "location": target, "decision_time": -1})
+    let current = dvs_owned_state_update(state, {"physical": physical, "actors": dvs_replace(state.actors, index, relocated), "events": events, "idle": 0})
+    return dvg_dev_result(dvg_dev_restore_input(current, state, index), "tp", "applied", "角色已移动至目标地点。", {"target": target, "resync": true, "command_event": event})
+
+fn dvg_dev_command(state, command, argument):
+    if not dv_find(state.story, "development_mode", dv_find(state, "development_mode", false)):
+        return dvg_dev_result(state, command, "rejected", "请通过开发模式打开会话。", {})
+    if dv_find(state, "pending", false) != false:
+        return dvg_dev_result(state, command, "rejected", "请等待当前现场行动完成。", {})
+    state = dvs_owned_state_update(state, {"story": dv_with(state.story, "development_mode", true)})
+    let viewer = dvg_host_viewer(state)
+    let index = dvg_dev_actor_index(state, viewer)
+    if command == "tp":
+        return dvg_dev_teleport(state, argument, viewer, index)
+    if command == "time":
+        var minutes = argument
+        if rt_is_text(argument):
+            if not rt_is_number(argument):
+                return dvg_dev_result(state, command, "rejected", "请输入 time +分钟数。", {})
+            minutes = rt_number(argument)
+        return dvg_dev_time(state, minutes, viewer, index)
+    return dvg_dev_result(state, command, "rejected", "该命令由控制台的查看或行动入口处理。", {})

@@ -1,4 +1,6 @@
 extends RefCounted
+
+const LIFECYCLE := preload("res://scenes/Host/HostLifecycle.gd")
 ## 配乐与音效的静态入口：转给自动加载的 GameAudio；它不在时（无头检查脚本）什么也不做。
 
 static func _hub() -> Node:
@@ -42,9 +44,4 @@ static func release_audio() -> void:
 	if hub: hub.release_audio()
 
 static func quit_cleanly(exit_code := 0) -> void:
-	var hub := _hub()
-	if hub:
-		await hub.quit_cleanly(exit_code)
-	else:
-		var tree := Engine.get_main_loop() as SceneTree
-		if tree: tree.quit(exit_code)
+	await LIFECYCLE.quit(Engine.get_main_loop() as SceneTree, exit_code)
