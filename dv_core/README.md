@@ -46,6 +46,11 @@ python mcp/build/build_session.py --partition --out dv_core/host_bridge/obj/dv
 python mcp/editor_lsp/check_dv.py --format json dv_core/modules/30-session.dv
 ```
 
+终端源码及协议见 [cli/README.md](cli/README.md)。默认启动后等待命令，
+不会自动运行 AI；status/options 只读，next 显式单步，act 执行当前人工选项。
+`--jsonl` 提供文本自动化协议，`--replay` 只读播放已有记录。
+AI 行为测试须另经用户批准并指定指标；上述构建与入口说明不构成测试授权。
+
 需要 .NET 8 SDK 与 Python 3。MSBuild 可用 `-p:DvPython=<路径>` 指定 Python。20/30 分模块生成到 base 的 DVKernel；35–60 分模块生成到 host_bridge 的 DVProgram。各模块以本地 UTF-16 位置解析，只导入依赖的函数和名义类型接口；正文变化按模块使缓存失效，接口变化影响消费者。生成文件位于各项目 `obj/dv/modules/`，内容不变时保留时间戳。MCP/LSP 初始化在后台预热共享编译器缓存；编辑器通过 [dv-check.json](dv-check.json) 选择诊断闭包。
 
 Godot 热路径使用只读 .NET 值图和按观察者版本的 StateDelta。文本客户端继续使用 JSON 接口。保存来自最近已提交状态；Trace 只读，Close 幂等。提前准备保存独立候选，正式选择消费版本匹配的结果；后台 NPC 继续经过现场 Execute 和 Complete。细节见 [宿主接口](host_bridge/README.md)。
