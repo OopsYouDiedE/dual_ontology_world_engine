@@ -1,14 +1,11 @@
 // Persistent-by-copy data operations. Unchanged branches are frozen and thawed
 // only when accessed through an output owner, so output mutations stay independent.
 
-fn dv_pair(a, b):
-    return [a, b]
+dv_pair(a, b) = [a, b]
 
-fn dv_single(a):
-    return [a]
+dv_single(a) = [a]
 
-fn dv_list3(a, b, c):
-    return [a, b, c]
+dv_list3(a, b, c) = [a, b, c]
 
 fn dv_and(a, b):
     if a:
@@ -28,25 +25,20 @@ fn dv_require(condition, message):
     else:
         return rt_fail(message)
 
-fn dv_clone(value):
-    return rt_copy_value(value)
+dv_clone(value) = rt_copy_value(value)
 
-fn dv_same(a, b):
-    return rt_same_value(a, b)
+dv_same(a, b) = rt_same_value(a, b)
 
 fn dv_append(items, value):
     var r = dv_clone(items)
     rt_push(r, dv_clone(value))
     return r
 
-fn dv_has(items, value):
-    return rt_has_value(items, value)
+dv_has(items, value) = rt_has_value(items, value)
 
-fn dv_find(record, key, fallback):
-    return rt_record_find(record, key, fallback)
+dv_find(record, key, fallback) = rt_record_find(record, key, fallback)
 
-fn dv_has_key(record, key):
-    return 0 <= rt_record_index(record, key)
+dv_has_key(record, key) = 0 <= rt_record_index(record, key)
 
 fn dv_record_like(value):
     if rt_is_list(value):
@@ -65,11 +57,9 @@ fn dv_record_like(value):
     else:
         return false
 
-fn dv_get(record, key):
-    return rt_record_find(record, key, "__dv_missing_field_sentinel__")
+dv_get(record, key) = rt_record_find(record, key, "__dv_missing_field_sentinel__")
 
-fn dv_with(record, key, value):
-    return rt_record_with(record, key, value)
+dv_with(record, key, value) = rt_record_with(record, key, value)
 
 fn dv_m2(k1, v1, k2, v2):
     return dv_pair(dv_pair(k1, v1), dv_pair(k2, v2))
@@ -116,11 +106,9 @@ fn dv_max(a, b):
 fn dv_cell(value, confidence, time, claims):
     return dv_with_many({"known": true, "value": dv_clone(value), "confidence": dv_unit(confidence), "time": time}, {"claims": [], "basis": claims, "conflicted": false})
 
-fn dv_entity_ref(id):
-    return {"type": "entity-ref", "id": id}
+dv_entity_ref(id) = {"type": "entity-ref", "id": id}
 
-fn dv_ref(object_id, facet, field):
-    return {"type": "ref", "object": object_id, "facet": facet, "field": field}
+dv_ref(object_id, facet, field) = {"type": "ref", "object": object_id, "facet": facet, "field": field}
 
 fn dv_scoped_ref(subject, object_id, facet, field):
     return dv_with(dv_ref(object_id, facet, field), "subject", subject)
@@ -316,20 +304,182 @@ fn dv_stage_store_owned(owned, ref, cell):
 
 // Law schema is data. Adoption in each world determines how the schema is used.
 
-fn dv_true():
-    return {"op": "constant", "value": "true"}
+dv_true() = {"op": "constant", "value": "true"}
 
-fn dv_fact(ref, expected):
-    return {"op": "equals", "ref": ref, "value": expected}
+dv_fact(ref, expected) = {"op": "equals", "ref": ref, "value": expected}
 
-fn dv_at_least(ref, minimum):
-    return {"op": "at_least", "ref": ref, "value": minimum}
+dv_at_least(ref, minimum) = {"op": "at_least", "ref": ref, "value": minimum}
 
-fn dv_all(conditions):
-    return {"op": "all", "items": conditions}
+dv_all(conditions) = {"op": "all", "items": conditions}
 
-fn dv_not(condition):
-    return {"op": "not", "item": condition}
+dv_not(condition) = {"op": "not", "item": condition}
+
+// Record-shaped equalities and updates are ordinary law data. They retain the
+// three-valued premise evaluator and the same atomic effect staging path.
+dv_matches(object_id, facet, fields) = dv_all([for entry in fields: dv_fact(dv_ref(object_id, facet, entry[0]), entry[1])])
+
+dv_writes(object_id, facet, fields) = [for entry in fields: dv_assign(dv_ref(object_id, facet, entry[0]), entry[1])]
+
+// A declaration analyzer reports dependencies; it does not observe a world.
+fn dv_condition_inputs(condition):
+    let unsupported = {"complete": false, "reads": []}
+    if not dv_record_like(condition) or not dv_has_key(condition, "op"):
+        return unsupported
+    let op = condition.op
+    if op == "constant":
+        return {"complete": dv_has_key(condition, "value") and dv_has(["true", "false", "unknown"], dv_find(condition, "value", "")), "reads": []}
+    if op == "not":
+        if not dv_has_key(condition, "item"):
+            return unsupported
+        return dv_condition_inputs(condition.item)
+    if op == "all":
+        if not dv_has_key(condition, "items") or not rt_is_list(condition.items):
+            return unsupported
+        var reads = []
+        var complete = true
+        var i = 0
+        while i < rt_count(condition.items):
+            let part = dv_condition_inputs(condition.items[i])
+            complete = complete and part.complete
+            var j = 0
+            while j < rt_count(part.reads):
+                if not dv_has(reads, part.reads[j]):
+                    rt_push(reads, dv_clone(part.reads[j]))
+                j = j + 1
+            i = i + 1
+        return {"complete": complete, "reads": reads}
+    if (op != "equals" and op != "at_least") or not dv_has_key(condition, "ref") or not dv_has_key(condition, "value"):
+        return unsupported
+    let ref = condition.ref
+    if not dv_record_like(ref) or dv_find(ref, "type", "") != "ref":
+        return unsupported
+    if not rt_is_text(dv_find(ref, "object", false)) or not rt_is_text(dv_find(ref, "facet", false)) or not rt_is_text(dv_find(ref, "field", false)):
+        return unsupported
+    if not rt_is_text(dv_find(ref, "subject", "")):
+        return unsupported
+    if op == "at_least" and not rt_is_numeric_value(condition.value):
+        return unsupported
+    return {"complete": true, "reads": [dv_clone(ref)]}
+
+// Reference records are maps: field order and omitted/empty subject do not
+// change a read. An unspecified owner cannot prove a distinct explicit scope.
+fn dv_time_ref_relation(ref, clock):
+    if not dv_record_like(clock) or dv_find(clock, "type", "") != "ref":
+        return "unknown"
+    if not rt_is_text(dv_find(clock, "object", false)) or not rt_is_text(dv_find(clock, "facet", false)) or not rt_is_text(dv_find(clock, "field", false)) or not rt_is_text(dv_find(clock, "subject", "")):
+        return "unknown"
+    if ref.object != clock.object or ref.facet != clock.facet or ref.field != clock.field:
+        return "different"
+    if dv_find(ref, "subject", "") != dv_find(clock, "subject", ""):
+        return "unknown"
+    return "same"
+
+// This boundary only analyzes declared predicates. The caller owns stability
+// checks for non-clock inputs and ordered effects between samples.
+fn dv_time_boundary(condition, clock, now, until, policy):
+    dv_require(policy == "invalidate" or policy == "minute", "Unknown time analysis policy")
+    dv_require(rt_is_numeric_value(now) and rt_is_numeric_value(until), "Invalid time analysis interval")
+    if until < now:
+        return {"complete": false, "next": now}
+    let fallback = {"complete": false, "next": dv_min(until, now + 1)}
+    if not dv_record_like(condition) or not dv_has_key(condition, "op"):
+        return fallback
+    let op = condition.op
+    if op == "constant":
+        if not dv_has_key(condition, "value") or not dv_has(["true", "false", "unknown"], condition.value):
+            return fallback
+        return {"complete": true, "next": until}
+    if op == "not":
+        if not dv_has_key(condition, "item"):
+            return fallback
+        return dv_time_boundary(condition.item, clock, now, until, policy)
+    if op == "all":
+        if not dv_has_key(condition, "items") or not rt_is_list(condition.items):
+            return fallback
+        var next = until
+        var i = 0
+        while i < rt_count(condition.items):
+            let part = dv_time_boundary(condition.items[i], clock, now, until, policy)
+            if not part.complete:
+                return fallback
+            next = dv_min(next, part.next)
+            i = i + 1
+        return {"complete": true, "next": next}
+    let inputs = dv_condition_inputs(condition)
+    if not inputs.complete:
+        return fallback
+    if clock == false:
+        if policy == "minute":
+            return {"complete": true, "next": until}
+        return fallback
+    let relation = dv_time_ref_relation(condition.ref, clock)
+    if relation == "unknown":
+        return fallback
+    if relation == "different":
+        return {"complete": true, "next": until}
+    if not rt_is_numeric_value(condition.value):
+        return fallback
+    if policy == "minute":
+        if op != "at_least":
+            return fallback
+        if until < condition.value:
+            return {"complete": true, "next": until}
+        if now < condition.value:
+            let delta = condition.value - now
+            var steps = 1
+            while steps < delta:
+                steps = steps + 1
+            return {"complete": true, "next": dv_min(until, now + steps)}
+        return {"complete": true, "next": until}
+    if now < condition.value:
+        return {"complete": true, "next": dv_min(until, condition.value)}
+    if op == "equals" and now == condition.value:
+        return {"complete": true, "next": now}
+    return {"complete": true, "next": until}
+
+fn dv_analyze_time(condition, clock, now, until, policy):
+    let boundary = dv_time_boundary(condition, clock, now, until, policy)
+    let inputs = dv_condition_inputs(condition)
+    var solver = "minute-step"
+    var reason = "unsupported-predicate"
+    if boundary.complete:
+        solver = "event-boundary"
+        reason = "declared-boundary"
+    if not boundary.complete and inputs.complete and (dv_find(condition, "op", "") == "equals" or dv_find(condition, "op", "") == "at_least"):
+        if clock == false:
+            reason = "clock-not-declared"
+        else:
+            if dv_time_ref_relation(condition.ref, clock) == "unknown":
+                reason = "ambiguous-clock-reference"
+            else:
+                if policy == "minute" and condition.op == "equals":
+                    reason = "clock-equality-needs-sampling"
+    if until < now:
+        solver = "none"
+        reason = "expired-interval"
+    return dv_with_many(boundary, {"solver": solver, "reason": reason, "policy": policy, "from": now, "until": until, "reads": inputs.reads, "scope": "declaration", "assumptions": ["non-clock inputs remain stable", "caller rechecks state changes and ordered effects"], "numeric_semantics": "runtime-values"})
+
+// Snapshot diagnostics expose unknown and conflicted inputs separately. They
+// do not claim that effects or a postcondition have already been verified.
+fn dv_analyze_law(world, name):
+    let adoption = dv_get(world.adoptions, name)
+    let law = adoption.law
+    let inputs = dv_condition_inputs(law.premise)
+    var unknown = []
+    var conflicted = []
+    var i = 0
+    while i < rt_count(inputs.reads):
+        let ref = inputs.reads[i]
+        let cell = dv_read(world, ref)
+        if not cell.known:
+            rt_push(unknown, ref)
+        if cell.conflicted:
+            rt_push(conflicted, ref)
+        i = i + 1
+    var truth = "unknown"
+    if inputs.complete:
+        truth = dv_truth(world, law.premise)
+    return {"world": world.id, "subject": world.subject, "revision": world.revision, "law": name, "law_version": law.version, "mode": adoption.mode, "active": adoption.active, "premise": truth, "complete": inputs.complete, "reads": inputs.reads, "unknown": unknown, "conflicted": conflicted, "effects_verified": false, "scope": "input-snapshot", "numeric_semantics": "runtime-values"}
 
 fn dv_truth(world, proposition):
     // Non-list owners retain memo's original Expected List error before the
@@ -393,14 +543,16 @@ fn dv_truth_uncached(world, proposition):
                         else:
                             return rt_fail("Unknown proposition operator")
 
-fn dv_assign(ref, value):
-    return {"op": "assign", "ref": ref, "value": value}
+dv_assign(ref, value) = {"op": "assign", "ref": ref, "value": value}
 
-fn dv_increment(ref, amount):
-    return {"op": "increment", "ref": ref, "value": amount}
+dv_increment(ref, amount) = {"op": "increment", "ref": ref, "value": amount}
 
 fn dv_axiom(name, version, premise, effects):
     return {"name": name, "version": version, "premise": dv_clone(premise), "effects": dv_clone(effects)}
+
+// The postcondition is checked on the same candidate used by verify and run.
+// It never repairs a candidate or changes an unknown proposition into false.
+dv_contract(name, version, premise, effects, postcondition) = dv_with(dv_axiom(name, version, premise, effects), "postcondition", postcondition)
 
 fn dv_instance(id, law):
     return dv_with_many(law, {"schema": law.name, "name": id})
@@ -474,7 +626,7 @@ fn dv_premise_confidence(world, proposition):
                 return dv_read(world, proposition.ref).confidence
 
 fn dv_result(status, world, changes, basis):
-    return {"status": status, "world": dv_clone(world), "changes": changes, "basis": basis}
+    return {"status": status, "world": dv_clone(world), "changes": dv_clone(changes), "basis": dv_clone(basis)}
 
 fn dv_stage(world, effects, time, basis, confidence):
     var stage = dv_clone(world)
@@ -559,10 +711,15 @@ fn dv_infer_stage(world, effects, time, basis, confidence, law_name, event_id):
     else:
         return dv_result(status, world, [], basis)
 
-fn dv_apply_law(world, name, mode, event_id, time, expected_revision):
+// One evaluator stages effects for both operations. Verification returns the
+// unchanged input as .world and labels the candidate as a non-executable view.
+// Run always reevaluates the current input; a verification is not a commit token.
+fn dv_evaluate_law_value(world, name, mode, event_id, time, expected_revision, operation):
+    dv_require(operation == "verify" or operation == "run", "Expected verify or run")
     dv_require((world.revision == expected_revision), "Stale world revision")
     dv_require((not dv_has(world.seen, event_id)), "Repeated world event")
     dv_require((not (time < dv_find(world, "time", 0))), "World time cannot move backwards")
+    dv_require((world.domain == "physical" and mode == "enforce") or (world.domain == "mind" and (mode == "infer" or mode == "predict")), "Evaluation mode is incompatible with world")
     var adoption = dv_get(world.adoptions, name)
     var law = adoption.law
     var basis = adoption.basis
@@ -586,6 +743,14 @@ fn dv_apply_law(world, name, mode, event_id, time, expected_revision):
                 if (not (staged.status == "ready")):
                     return staged
                 else:
+                    if dv_has_key(law, "postcondition"):
+                        let post_truth = dv_truth(staged.world, law.postcondition)
+                        if post_truth != "true":
+                            return dv_result(rt_cat("postcondition-", post_truth), world, [], basis)
+                    if operation == "verify":
+                        let candidate = dv_with_many(staged.world, {"domain": "verification", "source_domain": world.domain, "source_revision": expected_revision})
+                        let assessment = {"world": world.id, "subject": world.subject, "revision": expected_revision, "law": name, "law_version": law.version, "mode": mode, "event": event_id, "time": time, "precision": "runtime-discrete", "scope": "input-snapshot"}
+                        return dv_with_many(dv_result("verified", world, dv_clone(staged.changes), dv_clone(basis)), {"candidate": candidate, "assessment": assessment})
                     var next = staged.world
                     var revision = (expected_revision + 1)
                     var event = dv_with_many({"id": event_id, "time": time, "law": name, "law_version": law.version}, {"changes": staged.changes, "basis": basis})
@@ -594,14 +759,29 @@ fn dv_apply_law(world, name, mode, event_id, time, expected_revision):
                     next = dv_with_many(next, {"revision": revision, "time": time})
                     return {"status": "applied", "world": next, "changes": dv_clone(staged.changes), "basis": dv_clone(basis), "event": event_id, "time": time}
 
+// Every completed prediction result, including a blocked one, remains outside
+// the authoritative mind domain. Verification still returns its original input.
+fn dv_evaluate_law(world, name, mode, event_id, time, expected_revision, operation):
+    let result = dv_evaluate_law_value(world, name, mode, event_id, time, expected_revision, operation)
+    if operation == "run" and mode == "predict":
+        return dv_with_many(result, {"world": dv_with_many(result.world, {"domain": "prediction", "source_revision": expected_revision}), "source_revision": expected_revision})
+    return result
+
+dv_apply_law(world, name, mode, event_id, time, expected_revision) = dv_evaluate_law(world, name, mode, event_id, time, expected_revision, "run")
+
+dv_verify(world, name, mode, event_id, time, expected_revision) = dv_evaluate_law(world, name, mode, event_id, time, expected_revision, "verify")
+
+// A compact request keeps operation explicit and never infers a subject's mode
+// from authoritative physics. Existing execute/predict/infer entry points remain.
+dv_evaluate(world, name, request) = dv_evaluate_law(world, name, request.mode, request.event, request.time, request.revision, request.operation)
+
 fn dv_execute(physical, name, event_id, time, expected_revision):
     dv_domain(physical, "physical")
     return dv_apply_law(physical, name, "enforce", event_id, time, expected_revision)
 
 fn dv_predict(mind, name, event_id, time, expected_revision):
     dv_domain(mind, "mind")
-    var result = dv_apply_law(mind, name, "predict", event_id, time, expected_revision)
-    return dv_with_many(result, {"world": dv_with_many(result.world, {"domain": "prediction", "source_revision": expected_revision}), "source_revision": expected_revision})
+    return dv_apply_law(mind, name, "predict", event_id, time, expected_revision)
 
 fn dv_infer(mind, name, event_id, time, expected_revision):
     dv_domain(mind, "mind")
@@ -620,29 +800,47 @@ fn dv_norm(mind, name):
 
 // Generic operational axioms. No chapter identities, answers or authored dialogue.
 
-axiom door_open(door):
-    return dv_axiom("door_open", 1, dv_all(dv_pair(dv_fact(dv_ref(door, "mechanical", "inside_latch"), false), dv_fact(dv_ref(door, "mechanical", "outside_latch"), false))), dv_single(dv_assign(dv_ref(door, "mechanical", "closed"), false)))
+function law = door_open(door)
+    law = dv_axiom("door_open", 1, dv_matches(door, "mechanical", {"inside_latch": false, "outside_latch": false}), dv_writes(door, "mechanical", {"closed": false}))
+end
 
-axiom door_self_close(door):
-    return dv_axiom("door_self_close", 1, dv_all(dv_pair(dv_fact(dv_ref(door, "mechanical", "automatic"), true), dv_fact(dv_ref(door, "mechanical", "held"), false))), dv_pair(dv_assign(dv_ref(door, "mechanical", "closed"), true), dv_assign(dv_ref(door, "mechanical", "gap"), 0)))
+door_self_close(door) = dv_axiom("door_self_close", 1, dv_matches(door, "mechanical", {"automatic": true, "held": false}), dv_writes(door, "mechanical", {"closed": true, "gap": 0}))
 
-axiom door_latch(door):
-    return dv_axiom("door_latch", 1, dv_fact(dv_ref(door, "mechanical", "closed"), true), dv_single(dv_assign(dv_ref(door, "mechanical", "inside_latch"), true)))
+door_latch(door) = dv_axiom("door_latch", 1, dv_matches(door, "mechanical", {"closed": true}), dv_writes(door, "mechanical", {"inside_latch": true}))
 
-axiom door_seal(door):
-    return dv_axiom("door_seal", 1, dv_fact(dv_ref(door, "mechanical", "closed"), true), dv_single(dv_assign(dv_ref(door, "mechanical", "sealed"), true)))
+door_seal(door) = dv_axiom("door_seal", 1, dv_matches(door, "mechanical", {"closed": true}), dv_writes(door, "mechanical", {"sealed": true}))
 
-axiom channel_reconfigure(channel, gain):
-    return dv_axiom("channel_reconfigure", 1, dv_true(), dv_single(dv_assign(dv_ref(channel, "transport", "gain"), dv_unit(gain))))
+channel_reconfigure(channel, gain) = dv_axiom("channel_reconfigure", 1, dv_true(), dv_writes(channel, "transport", {"gain": dv_unit(gain)}))
 
-axiom channel_flow(channel):
-    return dv_axiom("channel_flow", 1, dv_fact(dv_ref(channel, "transport", "enabled"), true), [])
+channel_flow(channel) = dv_axiom("channel_flow", 1, dv_matches(channel, "transport", {"enabled": true}), [])
 
 
 // Observation adaptation is an explicit trusted boundary. Minds receive no world pointer.
 
-fn dv_binding(physical, local, subject):
-    return {"physical": physical, "local": local, "subject": subject}
+dv_binding(physical, local, subject) = {"physical": physical, "local": local, "subject": subject}
+
+// Bind explicitly named identities in one call. Only empty perceived objects
+// are created; neither physical facets nor physical law adoption enter the mind.
+fn dv_bind(physical, mind, aliases):
+    dv_domain(physical, "physical")
+    dv_domain(mind, "mind")
+    dv_require(dv_record_like(aliases), "Bindings require physical-to-local identity pairs")
+    var next = dv_clone(mind)
+    var bindings = []
+    var i = 0
+    while i < rt_count(aliases):
+        let source = aliases[i][0]
+        let local = aliases[i][1]
+        dv_require(dv_has_key(physical.objects, source), "Cannot bind an unknown physical object")
+        dv_require(0 < rt_length(source) and 0 < rt_length(local), "Binding identities must be nonempty")
+        rt_push(bindings, dv_binding(source, local, mind.subject))
+        if not dv_has_key(next.objects, local):
+            next = dv_add_object(next, dv_object(local, "perceived", []))
+        i = i + 1
+    dv_validate_bindings(bindings, mind.subject)
+    return {"mind": next, "bindings": bindings, "subject": mind.subject, "source_world": physical.id, "source_revision": physical.revision}
+
+dv_view(physical, subject, aliases) = dv_bind(physical, dv_world(rt_cat("mind:", subject), "mind", subject), aliases)
 
 // Subject-specific index over the exact binding value. Ambiguity remains a
 // lookup error only for the requested physical identity, as with the linear scan.
@@ -1408,23 +1606,66 @@ fn dv_balance_candidate(index, goal, variables, laws, limits, prices):
         j = j + 1
     return {index: index, choices: choices, values: values, degree: degree, charges: costs, cost: dv_balance_dot(costs, prices), feasible: feasible}
 
-// Search produces a witness; it does not certify its own optimality.
-fn dv_imprint_solve(capability, goal, variables, laws, limits, prices):
-    dv_require(capability, "Imprint capability is required")
-    dv_require(rt_count(prices) == rt_count(limits.balances), "Resource price dimensions differ")
+// Budget units remain covered candidate indices, including certified skipped blocks.
+// Preprocessing and interval checks are diagnostics, not new gameplay resource charges.
+fn dv_balance_search_limit(total, limits):
     dv_require(limits.search_budget >= 0 and rt_floor(limits.search_budget) == limits.search_budget, "Invalid search budget")
-    let total = dv_balance_extent(variables)
-    var visited = 0
-    var best = false
-    while visited < total and visited < limits.search_budget and (visited + 1) * 2 <= limits.work_remaining:
-        let candidate = dv_balance_candidate(visited, goal, variables, laws, limits, prices)
-        if candidate.feasible:
-            if best == false:
-                best = candidate
+    dv_require(limits.work_remaining >= 0, "Negative imprint work budget")
+    var covered = dv_min(total, limits.search_budget)
+    if covered * 2 > limits.work_remaining:
+        // Runtime floor accepts only Number. Bisect Number indices and compare
+        // their charges with the exact balance; never pass that balance to floor.
+        var lower = 0
+        var upper = covered
+        while lower < upper:
+            let middle = lower + rt_floor((upper - lower + 1) / 2)
+            if middle * 2 <= limits.work_remaining:
+                lower = middle
             else:
-                if candidate.cost < best.cost:
-                    best = candidate
-        visited = visited + 1
+                upper = middle - 1
+        covered = lower
+    return covered
+
+fn dv_balance_stop_reason(visited, total, limits):
+    if visited == total:
+        return "domain-covered"
+    let search_stop = visited >= limits.search_budget
+    let work_stop = (visited + 1) * 2 > limits.work_remaining
+    if search_stop and work_stop:
+        return "search-and-work-budget"
+    if search_stop:
+        return "search-budget"
+    if work_stop:
+        return "work-budget"
+    return "prefix-stop"
+
+// This analyzes the existing finite linear schema, not arbitrary nonlinear formulas.
+// The recommendation is a setup-cost heuristic; it makes no elapsed-time guarantee.
+fn dv_imprint_analyze(goal, variables, laws, limits, prices):
+    dv_require(rt_count(prices) == rt_count(limits.balances), "Resource price dimensions differ")
+    let total = dv_balance_extent(variables)
+    dv_require(rt_count(goal.coefficients) == rt_count(variables), "Balance dimensions differ")
+    var i = 0
+    while i < rt_count(laws):
+        dv_require(rt_count(laws[i].coefficients) == rt_count(variables), "Balance dimensions differ")
+        i = i + 1
+    var option_count = 0
+    i = 0
+    while i < rt_count(variables):
+        option_count = option_count + rt_count(variables[i].options)
+        i = i + 1
+    let candidate_limit = dv_balance_search_limit(total, limits)
+    let branch_applicable = rt_count(variables) > 0
+    var recommended = "enumerate"
+    var reason = "reference-path-has-lower-setup-cost"
+    if branch_applicable and option_count * 2 < candidate_limit:
+        recommended = "branch_bound"
+        reason = "cartesian-prefix-exceeds-linear-bound-preparation"
+    if not branch_applicable:
+        reason = "zero-dimensional-reference-domain"
+    return {family: "finite-linear-cartesian", arithmetic: "exact-rational", branch_bound_applicable: branch_applicable, recommended: recommended, selection_reason: reason, total: total, candidate_limit: candidate_limit, option_count: option_count, budget_covers_domain: candidate_limit == total, stop_reason: dv_balance_stop_reason(candidate_limit, total, limits), budget_unit: "covered-candidate-prefix", work_per_covered_candidate: 2, bound_scope: "separable-linear-intervals-may-be-loose", requirements: "finite-nonempty-options; matching-linear-dimensions; exact-numeric-values; nonnegative-charges-and-prices", validation: "shape-and-budget; selected-solver-validates-numeric-options", time_guarantee: "none"}
+
+fn dv_balance_finish(best, visited, total, limits, algorithm, evaluated, bound_checks, preprocessed, coverage, analysis):
     var status = "Unresolved"
     if best != false:
         status = "Feasible"
@@ -1433,7 +1674,217 @@ fn dv_imprint_solve(capability, goal, variables, laws, limits, prices):
     else:
         if visited == total:
             status = "Infeasible"
-    return {status: status, best: best, visited: visited, total: total, revision: limits.revision, subject: limits.subject}
+    var proof_kind = "enumerated-prefix-v1"
+    if algorithm == "branch_bound":
+        proof_kind = "linear-interval-prefix-v1"
+    return {status: status, best: best, visited: visited, total: total, revision: limits.revision, subject: limits.subject, algorithm: algorithm, proof_kind: proof_kind, coverage: coverage, arithmetic: "exact-rational", complete: visited == total, stop_reason: dv_balance_stop_reason(visited, total, limits), covered_candidates: visited, charged_work: visited * 2, candidate_evaluations: evaluated, pruned_candidates: visited - evaluated, bound_checks: bound_checks, preprocessed_options: preprocessed, counter_scope: "search-diagnostics-not-total-runtime-or-certificate-authority", analysis: analysis}
+
+// Reference enumeration remains available and retains the original prefix and tie order.
+fn dv_imprint_enumerate(goal, variables, laws, limits, prices, analysis):
+    let total = analysis.total
+    var visited = 0
+    var best = false
+    while visited < analysis.candidate_limit:
+        let candidate = dv_balance_candidate(visited, goal, variables, laws, limits, prices)
+        if candidate.feasible:
+            if best == false:
+                best = candidate
+            else:
+                if candidate.cost < best.cost:
+                    best = candidate
+        visited = visited + 1
+    return dv_balance_finish(best, visited, total, limits, "enumerate", visited, 0, 0, [], analysis)
+
+fn dv_balance_zeroes(count):
+    var result = []
+    var i = 0
+    while i < count:
+        rt_push(result, rt_exact("0"))
+        i = i + 1
+    return result
+
+// Each option contributes [degree, law totals..., resource charges..., price].
+// Bounds take extrema of the products themselves, so signed coefficients are safe.
+fn dv_balance_interval_model(goal, variables, laws, limits, prices):
+    dv_require(rt_count(prices) == rt_count(limits.balances), "Resource price dimensions differ")
+    dv_require(rt_count(goal.coefficients) == rt_count(variables), "Balance dimensions differ")
+    let field_count = 2 + rt_count(laws) + rt_count(prices)
+    var exact_prices = []
+    var balances = []
+    var law_totals = []
+    var i = 0
+    while i < rt_count(prices):
+        let price = rt_exact(prices[i])
+        let balance = rt_exact(limits.balances[i])
+        dv_require(price >= 0, "Negative resource price")
+        dv_require(balance >= 0, "Negative resource balance")
+        rt_push(exact_prices, price)
+        rt_push(balances, balance)
+        i = i + 1
+    i = 0
+    while i < rt_count(laws):
+        dv_require(rt_count(laws[i].coefficients) == rt_count(variables), "Balance dimensions differ")
+        rt_push(law_totals, rt_exact(laws[i].total))
+        i = i + 1
+    var domains = []
+    var widths = [1]
+    var lower = [dv_balance_zeroes(field_count)]
+    var upper = [dv_balance_zeroes(field_count)]
+    var option_count = 0
+    i = 0
+    while i < rt_count(variables):
+        var domain = []
+        var minimum = []
+        var maximum = []
+        var choice = 0
+        while choice < rt_count(variables[i].options):
+            let option = variables[i].options[choice]
+            let value = rt_exact(option.value)
+            dv_require(rt_count(option.cost) == rt_count(prices), "Resource cost dimensions differ")
+            var terms = [rt_exact(goal.coefficients[i]) * value]
+            var j = 0
+            while j < rt_count(laws):
+                rt_push(terms, rt_exact(laws[j].coefficients[i]) * value)
+                j = j + 1
+            var cost = rt_exact("0")
+            j = 0
+            while j < rt_count(prices):
+                let charge = rt_exact(option.cost[j])
+                dv_require(charge >= 0, "Negative imprint charge")
+                rt_push(terms, charge)
+                cost = cost + charge * exact_prices[j]
+                j = j + 1
+            rt_push(terms, cost)
+            rt_push(domain, terms)
+            if choice == 0:
+                minimum = dv_clone(terms)
+                maximum = dv_clone(terms)
+            else:
+                j = 0
+                while j < field_count:
+                    rt_replace(minimum, j, dv_min(minimum[j], terms[j]))
+                    rt_replace(maximum, j, dv_max(maximum[j], terms[j]))
+                    j = j + 1
+            choice = choice + 1
+            option_count = option_count + 1
+        var next_lower = []
+        var next_upper = []
+        var field_index = 0
+        while field_index < field_count:
+            rt_push(next_lower, lower[i][field_index] + minimum[field_index])
+            rt_push(next_upper, upper[i][field_index] + maximum[field_index])
+            field_index = field_index + 1
+        rt_push(domains, domain)
+        rt_push(widths, widths[i] * rt_count(domain))
+        rt_push(lower, next_lower)
+        rt_push(upper, next_upper)
+        i = i + 1
+    return {domains: domains, widths: widths, lower: lower, upper: upper, field_count: field_count, goal_minimum: rt_exact(goal.minimum), law_totals: law_totals, balances: balances, option_count: option_count}
+
+fn dv_balance_interval_kind(model, depth, fixed, best):
+    let lower = model.lower[depth]
+    let upper = model.upper[depth]
+    let goal_lower = fixed[0] + lower[0]
+    let goal_upper = fixed[0] + upper[0]
+    if goal_upper < model.goal_minimum or goal_upper < 0 or goal_lower > 1:
+        return "goal-bound"
+    var j = 0
+    while j < rt_count(model.law_totals):
+        let field = 1 + j
+        if model.law_totals[j] < fixed[field] + lower[field] or model.law_totals[j] > fixed[field] + upper[field]:
+            return "law-bound"
+        j = j + 1
+    j = 0
+    while j < rt_count(model.balances):
+        let field = 1 + rt_count(model.law_totals) + j
+        if fixed[field] + lower[field] > model.balances[j]:
+            return "resource-bound"
+        j = j + 1
+    if best != false:
+        let field = model.field_count - 1
+        if fixed[field] + lower[field] >= best.cost:
+            return "cost-bound"
+    return ""
+
+fn dv_balance_interval_choices(model, index):
+    var choices = []
+    var cursor = index
+    var i = 0
+    while i < rt_count(model.domains):
+        let count = rt_count(model.domains[i])
+        let quotient = rt_floor(cursor / count)
+        rt_push(choices, cursor - quotient * count)
+        cursor = quotient
+        i = i + 1
+    return choices
+
+// Largest aligned low-coordinate block first; no recursive call stack is required.
+fn dv_balance_interval_probe(model, start, best):
+    let choices = dv_balance_interval_choices(model, start)
+    var fixed = dv_balance_zeroes(model.field_count)
+    var depth = rt_count(model.domains)
+    var checks = 0
+    while depth >= 0:
+        let width = model.widths[depth]
+        if rt_floor(start / width) * width == start:
+            checks = checks + 1
+            let kind = dv_balance_interval_kind(model, depth, fixed, best)
+            if kind != "":
+                return {depth: depth, kind: kind, bound_checks: checks}
+        if depth > 0:
+            let terms = model.domains[depth - 1][choices[depth - 1]]
+            var j = 0
+            while j < model.field_count:
+                rt_replace(fixed, j, fixed[j] + terms[j])
+                j = j + 1
+        depth = depth - 1
+    return {depth: 0, kind: "candidate", bound_checks: checks}
+
+fn dv_imprint_branch_bound(goal, variables, laws, limits, prices, analysis):
+    if analysis.candidate_limit == 0:
+        return dv_balance_finish(false, 0, analysis.total, limits, "branch_bound", 0, 0, 0, [], analysis)
+    let model = dv_balance_interval_model(goal, variables, laws, limits, prices)
+    var visited = 0
+    var evaluated = 0
+    var bound_checks = 0
+    var coverage = []
+    var best = false
+    while visited < analysis.candidate_limit:
+        let probe = dv_balance_interval_probe(model, visited, best)
+        let count = dv_min(model.widths[probe.depth], analysis.candidate_limit - visited)
+        bound_checks = bound_checks + probe.bound_checks
+        if probe.kind == "candidate":
+            let candidate = dv_balance_candidate(visited, goal, variables, laws, limits, prices)
+            evaluated = evaluated + 1
+            if candidate.feasible:
+                if best == false:
+                    best = candidate
+                else:
+                    if candidate.cost < best.cost:
+                        best = candidate
+        rt_push(coverage, {start: visited, depth: probe.depth, count: count, kind: probe.kind})
+        visited = visited + count
+    return dv_balance_finish(best, visited, analysis.total, limits, "branch_bound", evaluated, bound_checks, model.option_count, coverage, analysis)
+
+// Search produces a witness and coverage certificate; verification remains separate.
+fn dv_imprint_solve_with(capability, goal, variables, laws, limits, prices, algorithm):
+    dv_require(capability, "Imprint capability is required")
+    dv_require(algorithm == "auto" or algorithm == "enumerate" or algorithm == "branch_bound", "Unknown imprint solver")
+    let base_analysis = dv_imprint_analyze(goal, variables, laws, limits, prices)
+    var selected = algorithm
+    if selected == "auto":
+        selected = base_analysis.recommended
+    var fallback_reason = ""
+    if selected == "branch_bound" and not base_analysis.branch_bound_applicable:
+        selected = "enumerate"
+        fallback_reason = "unsupported-bound-model-reference-fallback"
+    let analysis = dv_with_many(base_analysis, {requested_algorithm: algorithm, selected_algorithm: selected, fallback_reason: fallback_reason})
+    if selected == "branch_bound":
+        return dv_imprint_branch_bound(goal, variables, laws, limits, prices, analysis)
+    return dv_imprint_enumerate(goal, variables, laws, limits, prices, analysis)
+
+fn dv_imprint_solve(capability, goal, variables, laws, limits, prices):
+    return dv_imprint_solve_with(capability, goal, variables, laws, limits, prices, "auto")
 
 // Numeric witnesses retain meaning after the JSON exchange representation is read back.
 fn dv_balance_same_numbers(left, right):
@@ -1449,36 +1900,122 @@ fn dv_balance_same_numbers(left, right):
 fn dv_balance_same_witness(left, right):
     return left.index == right.index and left.feasible == right.feasible and dv_same(left.choices, right.choices) and dv_balance_same_numbers(left.values, right.values) and dv_balance_same_numbers(left.charges, right.charges) and rt_exact(left.degree) == right.degree and rt_exact(left.cost) == right.cost
 
+// Reconstruct high-coordinate contributions from the original model, never the proof.
+fn dv_balance_interval_fixed(model, start, depth):
+    let choices = dv_balance_interval_choices(model, start)
+    var fixed = dv_balance_zeroes(model.field_count)
+    var i = depth
+    while i < rt_count(model.domains):
+        let terms = model.domains[i][choices[i]]
+        var j = 0
+        while j < model.field_count:
+            rt_replace(fixed, j, fixed[j] + terms[j])
+            j = j + 1
+        i = i + 1
+    return fixed
+
+fn dv_balance_check_coverage(result, goal, variables, laws, limits, prices, verified):
+    let coverage = dv_find(result, "coverage", false)
+    if not rt_is_list(coverage):
+        return false
+    if result.visited == 0:
+        return rt_count(coverage) == 0
+    let model = dv_balance_interval_model(goal, variables, laws, limits, prices)
+    var cursor = 0
+    var i = 0
+    while i < rt_count(coverage):
+        let block = coverage[i]
+        if not dv_record_like(block):
+            return false
+        let start = dv_find(block, "start", -1)
+        let depth = dv_find(block, "depth", -1)
+        let count = dv_find(block, "count", -1)
+        let kind = dv_find(block, "kind", "")
+        if not rt_is_numeric_value(start) or not rt_is_numeric_value(depth) or not rt_is_numeric_value(count):
+            return false
+        if start != cursor or rt_floor(start) != start or depth < 0 or depth > rt_count(variables) or rt_floor(depth) != depth:
+            return false
+        let width = model.widths[depth]
+        if count <= 0 or count > width or rt_floor(count) != count or start + count > result.visited:
+            return false
+        if rt_floor(start / width) * width != start:
+            return false
+        if count < width and start + count != result.visited:
+            return false
+        if kind == "candidate":
+            if depth != 0 or count != 1:
+                return false
+            var candidate = verified
+            if verified == false:
+                candidate = dv_balance_candidate(start, goal, variables, laws, limits, prices)
+            else:
+                if start != verified.index:
+                    candidate = dv_balance_candidate(start, goal, variables, laws, limits, prices)
+            if candidate.feasible:
+                if verified == false:
+                    return false
+                if candidate.cost < verified.cost:
+                    return false
+        else:
+            if kind != "goal-bound" and kind != "law-bound" and kind != "resource-bound" and kind != "cost-bound":
+                return false
+            let fixed = dv_balance_interval_fixed(model, start, depth)
+            if dv_balance_interval_kind(model, depth, fixed, verified) != kind:
+                return false
+        cursor = start + count
+        i = i + 1
+    return cursor == result.visited
+
 // Trusted finite proof kernel: reconstruct the witness and independently check coverage.
 // The caller supplies the original model; certificates cannot replace its constraints.
 fn dv_imprint_check(result, goal, variables, laws, limits, prices):
+    if not dv_record_like(result):
+        return false
     let total = dv_balance_extent(variables)
     if result.total != total or result.revision != limits.revision or result.subject != limits.subject:
+        return false
+    if not rt_is_numeric_value(result.visited):
         return false
     if result.visited < 0 or result.visited > total or result.visited > limits.search_budget or result.visited * 2 > limits.work_remaining or rt_floor(result.visited) != result.visited:
         return false
     var best = result.best
     var verified = false
     if best != false:
+        if not dv_record_like(best):
+            return false
+        if not rt_is_numeric_value(dv_find(best, "index", false)):
+            return false
+        if not rt_is_list(dv_find(best, "choices", false)) or not rt_is_list(dv_find(best, "values", false)) or not rt_is_list(dv_find(best, "charges", false)):
+            return false
+        if not dv_has_key(best, "degree") or not dv_has_key(best, "cost"):
+            return false
         if best.index < 0 or best.index >= result.visited or rt_floor(best.index) != best.index:
             return false
         verified = dv_balance_candidate(best.index, goal, variables, laws, limits, prices)
         if not verified.feasible or not dv_balance_same_witness(best, verified):
             return false
-    var i = 0
-    while i < result.visited:
-        var alternative = verified
-        if best == false:
-            alternative = dv_balance_candidate(i, goal, variables, laws, limits, prices)
-        else:
-            if i != best.index:
-                alternative = dv_balance_candidate(i, goal, variables, laws, limits, prices)
-        if alternative.feasible:
+    let proof_kind = dv_find(result, "proof_kind", "enumerated-prefix-v1")
+    if proof_kind == "linear-interval-prefix-v1":
+        if not dv_balance_check_coverage(result, goal, variables, laws, limits, prices, verified):
+            return false
+    else:
+        if proof_kind != "enumerated-prefix-v1":
+            return false
+        // Legacy six-field certificates retain the original independent enumeration.
+        var i = 0
+        while i < result.visited:
+            var alternative = verified
             if best == false:
-                return false
-            if alternative.cost < best.cost:
-                return false
-        i = i + 1
+                alternative = dv_balance_candidate(i, goal, variables, laws, limits, prices)
+            else:
+                if i != best.index:
+                    alternative = dv_balance_candidate(i, goal, variables, laws, limits, prices)
+            if alternative.feasible:
+                if best == false:
+                    return false
+                if alternative.cost < best.cost:
+                    return false
+            i = i + 1
     if result.visited == total:
         if best == false:
             return result.status == "Infeasible"

@@ -49,9 +49,15 @@ def sources(entries, overrides=None):
             return
         stack.append(path)
         text = overrides[path] if path in overrides else path.read_text(encoding='utf-8-sig')
-        lines = text.replace('\r\n', '\n').replace('\r', '\n').splitlines(keepends=True)
+        # Only LF is structural. Unicode paragraph/line separators are authored
+        # text and must reach the compiler unchanged.
+        normalized = text.replace('\r\n', '\n').replace('\r', '\n')
+        parts = normalized.split('\n')
+        lines = [part + '\n' for part in parts[:-1]] + [parts[-1]]
         for index, line in enumerate(lines):
-            if not line.lstrip().startswith('#include'):
+            # Includes are top-level directives. An indented #include can be
+            # literal prose, which the compiler's raw-text scanner owns.
+            if not line.startswith('#include'):
                 continue
             match = re.fullmatch(r'#include\s+(.+?)\s*', line.strip())
             if not match:

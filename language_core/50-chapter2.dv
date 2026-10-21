@@ -2,6 +2,34 @@
 // Install into a committed chapter-one handoff; retain every existing mind and world object.
 // Missing environment/physiology inputs remain unknown, never replaced by authored outcomes.
 
+// 文件内称谓只展开为原有标识，不改变对象身份或授予认识。
+称谓 后勤院 为「logistics」。
+称谓 配给柜 为「c2.counter」。
+称谓 余量 为「remaining」。
+称谓 配给总账 为「c2.ledger」。
+称谓 已点数 为「counted」。
+称谓 开放状态 为「open」。
+称谓 粮仓 为「c2.granary」。
+称谓 双闩状态 为「double_bolts」。
+称谓 总粮仓锁定 为「total_store_locked」。
+称谓 储备已入账 为「reserve_added」。
+称谓 已收储备 为「reserve_received」。
+称谓 持钥人 为「key_owner」。
+称谓 正在照护 为「busy_care」。
+称谓 诊疗室 为「clinic」。
+称谓 饥饿状态 为「hungry」。
+称谓 持有口粮 为「rations」。
+称谓 已食用份数 为「consumed」。
+称谓 锁定状态 为「locked」。
+称谓 存活状态 为「alive」。
+称谓 侦探 为「detective」。
+称谓 起居厅 为「living_hall」。
+称谓 卢西安 为「lucian」。
+称谓 雀儿 为「quer」。
+称谓 共鸣厅 为「resonance_hall」。
+称谓 中央厅 为「central_hall」。
+称谓 白塔安全端 为「white_tower_safe」。
+
 fn c2_source(file, line, id):
     return c1_source(rt_cat("godot_csharp/scenes/Awakening/Script/story/续篇/", file), line, id)
 
@@ -450,17 +478,41 @@ axiom c2_open_granary_law(actor):
     let access = c1_any(dv_fact(c2_ref("c2.granary", "key_owner"), actor), dv_fact(c2_own(actor, "can_lock"), true))
     return dv_axiom("c2_open_granary_law", 1, dv_all([c2_at(actor, "logistics"), c2_alive(actor), access]), dv_single(dv_assign(c2_ref("c2.granary", "locked"), false)))
 
-axiom c2_initial_count_law(actor):
-    return dv_axiom("c2_initial_count_law", 1, dv_all([c2_at(actor, "logistics"), c2_alive(actor), dv_fact(c2_ref("c2.counter", "remaining"), 99), dv_fact(c2_ref("c2.ledger", "counted"), 0)]), [dv_assign(c2_ref("c2.ledger", "counted"), 99)])
+法则 c2_initial_count_law，给定 行动者：
+    当 行动者 位于 后勤院。
+    并且 c2_alive(行动者)。
+    并且 配给柜 的 余量 等于 99。
+    并且 配给总账 的 已点数 等于 0。
+    则 配给总账 的 已点数 变为 99。
 
-axiom c2_distribute_law(actor):
-    return dv_axiom("c2_distribute_law", 1, dv_all([c2_at(actor, "logistics"), c2_alive(actor), dv_fact(c2_ref("c2.ledger", "counted"), 99), dv_fact(c2_ref("c2.counter", "open"), false)]), dv_single(dv_assign(c2_ref("c2.counter", "open"), true)))
+法则 c2_distribute_law，给定 行动者：
+    当 行动者 位于 后勤院。
+    并且 c2_alive(行动者)。
+    并且 配给总账 的 已点数 等于 99。
+    并且 配给柜 的 开放状态 等于 false。
+    则 配给柜 的 开放状态 变为 true。
 
-axiom c2_total_store_open_law(actor):
-    return dv_axiom("c2_total_store_open_law", 1, dv_all([c2i_granary_support(), c2_window(3, 720, 840), c2_at(actor, "logistics"), dv_fact(c2_own(actor, "can_lock"), true), dv_fact(c2_ref("c2.granary", "double_bolts"), false), dv_fact(c2_ref("c2.granary", "total_store_locked"), true), dv_fact(c2_ref("c2.granary", "reserve_added"), false), c2_alive(actor)]), [dv_assign(c2_ref("c2.granary", "total_store_locked"), false), dv_assign(c2_ref("c2.granary", "reserve_added"), true), dv_increment(c2_ref("c2.counter", "remaining"), 672), dv_increment(c2_ref("c2.ledger", "reserve_received"), 672)])
+法则 c2_total_store_open_law，给定 行动者：
+    当 c2i_granary_support()。
+    并且 c2_window(3, 720, 840)。
+    并且 行动者 位于 后勤院。
+    并且 c2_own(行动者, "can_lock") 等于 true。
+    并且 粮仓 的 双闩状态 等于 false。
+    并且 粮仓 的 总粮仓锁定 等于 true。
+    并且 粮仓 的 储备已入账 等于 false。
+    并且 c2_alive(行动者)。
+    则 粮仓 的 总粮仓锁定 变为 false。
+    并使 粮仓 的 储备已入账 变为 true。
+    并使 配给柜 的 余量 增加 672。
+    并使 配给总账 的 已收储备 增加 672。
 
-axiom c2_give_key_law(actor, target):
-    return dv_axiom("c2_give_key_law", 1, dv_all([c2_at(actor, "logistics"), c1_at(target, "logistics"), dv_fact(c2_ref("c2.granary", "key_owner"), actor), c2_alive(actor), c2_alive(target)]), dv_single(dv_assign(c2_ref("c2.granary", "key_owner"), target)))
+法则 c2_give_key_law，给定 行动者、目标：
+    当 行动者 位于 后勤院。
+    并且 目标 位于 后勤院。
+    并且 粮仓 的 持钥人 等于 行动者。
+    并且 c2_alive(行动者)。
+    并且 c2_alive(目标)。
+    则 粮仓 的 持钥人 变为 目标。
 
 axiom c2_night_take_variant_law(actor, patient, registered):
     var need = dv_fact(c2_own(actor, "hungry"), true)
@@ -484,8 +536,14 @@ axiom c2_night_take_law(actor, patient):
     return c2_night_take_variant_law(actor, patient, false)
 
 
-axiom c2_report_law(actor):
-    return dv_axiom("c2_report_law", 1, dv_all([c2_at(actor, "logistics"), dv_at_least(c2_own(actor, "owe_notes"), 1), dv_fact(c2_own(actor, "pending_notes"), 0), dv_fact(c2_own(actor, "busy_care"), false), c2_alive(actor)]), [dv_increment(c2_own(actor, "owe_notes"), -1), dv_increment(c2_ref("c2.ledger", "night_recorded"), 1)])
+法则 c2_report_law，给定 行动者：
+    当 行动者 位于 后勤院。
+    并且 c2_own(行动者, "owe_notes") 至少 1。
+    并且 c2_own(行动者, "pending_notes") 等于 0。
+    并且 c2_own(行动者, 正在照护) 等于 false。
+    并且 c2_alive(行动者)。
+    则 c2_own(行动者, "owe_notes") 增加 -1。
+    并使 配给总账 的 "night_recorded" 增加 1。
 
 axiom c2_night_eat_law(actor):
     var room = rt_cat("dorm.", c2_profile(actor).group)
@@ -493,23 +551,64 @@ axiom c2_night_eat_law(actor):
         room = "living_hall"
     return dv_axiom("c2_night_eat_law", 1, dv_all([c2_at(actor, room), c2_any_night(), dv_fact(c2_own(actor, "hungry"), true), dv_at_least(c2_own(actor, "rations"), 1), c2_alive(actor)]), [dv_increment(c2_own(actor, "rations"), -1), dv_increment(c2_own(actor, "consumed"), 1), dv_assign(c2_own(actor, "hungry"), false), dv_increment(c2_ref(rt_cat("c2.litter.", c2_profile(actor).group), "crumbs"), 1)])
 
-axiom c2_deliver_patient_law(actor):
-    return dv_axiom("c2_deliver_patient_law", 1, dv_all([c2_at(actor, "clinic"), c1_at("moran", "clinic"), c2_alive("moran"), dv_fact(c2_own("moran", "hungry"), true), dv_fact(c2_ref("c2.bowl", "portions"), 0), dv_at_least(c2_own(actor, "rations"), 1), dv_fact(c2_own("moran", "fever"), true), c2_alive(actor)]), [dv_increment(c2_own(actor, "rations"), -1), dv_increment(c2_ref("c2.bowl", "portions"), 1), dv_assign(c2_ref("c2.kitchen", "cooked"), true)])
+法则 c2_deliver_patient_law，给定 行动者：
+    当 行动者 位于 诊疗室。
+    并且 "moran" 位于 诊疗室。
+    并且 c2_alive("moran")。
+    并且 c2_own("moran", 饥饿状态) 等于 true。
+    并且 "c2.bowl" 的 "portions" 等于 0。
+    并且 c2_own(行动者, 持有口粮) 至少 1。
+    并且 c2_own("moran", "fever") 等于 true。
+    并且 c2_alive(行动者)。
+    则 c2_own(行动者, 持有口粮) 增加 -1。
+    并使 "c2.bowl" 的 "portions" 增加 1。
+    并使 "c2.kitchen" 的 "cooked" 变为 true。
 
-axiom c2_feed_patient_law(actor):
-    return dv_axiom("c2_feed_patient_law", 1, dv_all([c2_at(actor, "clinic"), c1_at("moran", "clinic"), c2_alive("moran"), dv_fact(c2_own("moran", "hungry"), true), dv_fact(c2_own("moran", "fever"), true), dv_at_least(c2_ref("c2.bowl", "portions"), 1), c2_alive(actor)]), [dv_increment(c2_ref("c2.bowl", "portions"), -1), dv_assign(c2_ref("c2.bowl", "residue"), true), dv_increment(c2_own("moran", "consumed"), 1), dv_assign(c2_own("moran", "hungry"), false), dv_assign(c2_own(actor, "busy_care"), true)])
+法则 c2_feed_patient_law，给定 行动者：
+    当 行动者 位于 诊疗室。
+    并且 "moran" 位于 诊疗室。
+    并且 c2_alive("moran")。
+    并且 c2_own("moran", 饥饿状态) 等于 true。
+    并且 c2_own("moran", "fever") 等于 true。
+    并且 "c2.bowl" 的 "portions" 至少 1。
+    并且 c2_alive(行动者)。
+    则 "c2.bowl" 的 "portions" 增加 -1。
+    并使 "c2.bowl" 的 "residue" 变为 true。
+    并使 c2_own("moran", 已食用份数) 增加 1。
+    并使 c2_own("moran", 饥饿状态) 变为 false。
+    并使 c2_own(行动者, 正在照护) 变为 true。
 
-axiom c2_leave_care_law(actor):
-    return dv_axiom("c2_leave_care_law", 1, dv_fact(c2_own(actor, "busy_care"), true), dv_single(dv_assign(c2_own(actor, "busy_care"), false)))
+法则 c2_leave_care_law，给定 行动者：
+    前提 dv_fact(c2_own(行动者, 正在照护), true)。
+    则 c2_own(行动者, 正在照护) 变为 false。
 
-axiom c2_latch_request_law(sender, target):
-    return dv_axiom("c2_latch_request_law", 1, dv_all([c1_at(sender, "logistics"), c1_at(target, "logistics"), dv_fact(c2_ref("c2.granary", "latch_loose"), true)]), dv_single(dv_assign(c2_own(sender, "repair_requested"), true)))
+法则 c2_latch_request_law，给定 发起者、目标：
+    当 发起者 位于 后勤院。
+    并且 目标 位于 后勤院。
+    并且 粮仓 的 "latch_loose" 等于 true。
+    则 c2_own(发起者, "repair_requested") 变为 true。
 
-axiom c2_check_structure_law(actor):
-    return dv_axiom("c2_check_structure_law", 1, dv_all([c2_at(actor, "logistics"), c2_window(2, 720, 1080), c2_alive(actor), dv_fact(c2_own(actor, "can_structure"), true), dv_fact(c2_ref("c2.granary", "structure_checked"), false)]), [dv_assign(c2_ref("c2.granary", "structure_checked"), true)])
+法则 c2_check_structure_law，给定 行动者：
+    当 行动者 位于 后勤院。
+    并且 c2_window(2, 720, 1080)。
+    并且 c2_alive(行动者)。
+    并且 c2_own(行动者, "can_structure") 等于 true。
+    并且 粮仓 的 "structure_checked" 等于 false。
+    则 粮仓 的 "structure_checked" 变为 true。
 
-axiom c2_repair_latch_law(actor):
-    return dv_axiom("c2_repair_latch_law", 1, dv_all([c2_at(actor, "logistics"), c2i_granary_support(), c2_window(3, 720, 840), dv_fact(c2_own(actor, "can_lock"), true), dv_fact(c2_ref("c2.granary", "lift_mm"), 4), dv_fact(c2_ref("c2.granary", "structure_checked"), true), dv_fact(c2_ref("c2.granary", "latch_loose"), true), c2_alive(actor)]), [dv_assign(c2_ref("c2.granary", "latch_loose"), false), dv_assign(c2_ref("c2.granary", "tool_marks"), true), dv_assign(c2_ref("c2.granary", "double_bolts"), false), dv_assign(c2_ref("c2.granary", "locked"), false)])
+法则 c2_repair_latch_law，给定 行动者：
+    当 行动者 位于 后勤院。
+    并且 c2i_granary_support()。
+    并且 c2_window(3, 720, 840)。
+    并且 c2_own(行动者, "can_lock") 等于 true。
+    并且 粮仓 的 "lift_mm" 等于 4。
+    并且 粮仓 的 "structure_checked" 等于 true。
+    并且 粮仓 的 "latch_loose" 等于 true。
+    并且 c2_alive(行动者)。
+    则 粮仓 的 "latch_loose" 变为 false。
+    并使 粮仓 的 "tool_marks" 变为 true。
+    并使 粮仓 的 双闩状态 变为 false。
+    并使 粮仓 的 锁定状态 变为 false。
 
 fn c2_norm_available(norm):
     if norm.id == "records_supplement":
@@ -518,17 +617,30 @@ fn c2_norm_available(norm):
         return dv_all([dv_fact(c2_ref("c2.daily", "draft_notes"), true), dv_fact(c2_ref("c2.dialogue.person.ward", "said.ward.c2.discuss-forbid"), true)])
     return dv_true()
 
-axiom c2_propose_law(actor, norm):
-    return dv_axiom("c2_propose_law", 1, dv_all([c2_alive(actor), c2_norm_available(norm), dv_fact(c2_ref(c2_norm_object(norm.id), "owner"), actor)]), dv_single(dv_assign(c2_ref(c2_norm_object(norm.id), "proposed"), true)))
+法则 c2_propose_law，给定 行动者、规约：
+    当 c2_alive(行动者)。
+    并且 c2_norm_available(规约)。
+    并且 c2_norm_object(规约.id) 的 "owner" 等于 行动者。
+    则 c2_norm_object(规约.id) 的 "proposed" 变为 true。
 
-axiom c2_post_law(actor, norm):
-    return dv_axiom("c2_post_law", 1, dv_all([c2_at(actor, norm.board), dv_fact(c2_ref(c2_norm_object(norm.id), "owner"), actor), dv_fact(c2_ref(c2_norm_object(norm.id), "proposed"), true), dv_fact(c2_ref(c2_norm_object(norm.id), "posted"), false)]), dv_single(dv_assign(c2_ref(c2_norm_object(norm.id), "posted"), true)))
+法则 c2_post_law，给定 行动者、规约：
+    当 行动者 位于 规约.board。
+    并且 c2_norm_object(规约.id) 的 "owner" 等于 行动者。
+    并且 c2_norm_object(规约.id) 的 "proposed" 等于 true。
+    并且 c2_norm_object(规约.id) 的 "posted" 等于 false。
+    则 c2_norm_object(规约.id) 的 "posted" 变为 true。
 
-axiom c2_read_norm_law(actor, norm):
-    return dv_axiom("c2_read_norm_law", 1, dv_all([c2_at(actor, norm.board), dv_fact(c2_ref(c2_norm_object(norm.id), "posted"), true), dv_fact(c2_own(actor, rt_cat("read.", norm.id)), false)]), dv_single(dv_assign(c2_own(actor, rt_cat("read.", norm.id)), true)))
+法则 c2_read_norm_law，给定 行动者、规约：
+    当 行动者 位于 规约.board。
+    并且 c2_norm_object(规约.id) 的 "posted" 等于 true。
+    并且 c2_own(行动者, rt_cat("read.", 规约.id)) 等于 false。
+    则 c2_own(行动者, rt_cat("read.", 规约.id)) 变为 true。
 
-axiom c2_decide_norm_law(actor, norm, accepted):
-    return dv_axiom("c2_decide_norm_law", 1, dv_all([dv_fact(c2_own(actor, rt_cat("decided.", norm.id)), false), c2_alive(actor)]), dv_pair(dv_assign(c2_own(actor, rt_cat("decided.", norm.id)), true), dv_assign(c2_own(actor, rt_cat("accepted.", norm.id)), accepted)))
+法则 c2_decide_norm_law，给定 行动者、规约、是否接受：
+    当 c2_own(行动者, rt_cat("decided.", 规约.id)) 等于 false。
+    并且 c2_alive(行动者)。
+    则 c2_own(行动者, rt_cat("decided.", 规约.id)) 变为 true。
+    并使 c2_own(行动者, rt_cat("accepted.", 规约.id)) 变为 是否接受。
 
 fn c2_norm_actions(actor, norm):
     let object = c2_norm_object(norm.id)
@@ -575,11 +687,23 @@ axiom c2_missed_meal_law(actor, day, meal, end):
     let suffix = rt_cat(rt_show(day), rt_cat(".", meal))
     return dv_axiom("c2_missed_meal_law", 1, dv_all([dv_at_least(c2_clock(), (day - 1) * 1440 + end), dv_fact(c2_own(actor, rt_cat("eaten.", suffix)), false), dv_fact(c2_own(actor, rt_cat("hunger_checked.", suffix)), false), c2_alive(actor)]), dv_pair(dv_assign(c2_own(actor, "hungry"), true), dv_assign(c2_own(actor, rt_cat("hunger_checked.", suffix)), true)))
 
-axiom c2_terminal_exposure_law(actor):
-    return dv_axiom("c2_terminal_exposure_law", 1, dv_all([c2_alive(actor), dv_fact(c2_own(actor, "dead"), true), dv_fact(c2_own(actor, "exposure_terminal"), true)]), dv_single(dv_assign(c2_own(actor, "alive"), false)))
+法则 c2_terminal_exposure_law，给定 行动者：
+    当 c2_alive(行动者)。
+    并且 c2_own(行动者, "dead") 等于 true。
+    并且 c2_own(行动者, "exposure_terminal") 等于 true。
+    则 c2_own(行动者, 存活状态) 变为 false。
 
-axiom c2_first_wind_law():
-    return dv_axiom("c2_first_wind_law", 1, dv_all(dv_pair(dv_at_least(c2_clock(), 1980), dv_fact(c2_ref("c2.weather", "phase"), "falling_ash"))), [dv_assign(c2_ref("c2.weather", "phase"), "wind_started"), dv_assign(c2_ref("c2.weather", "severe_air"), false), dv_assign(c2_ref("c2.weather", "wind"), true), dv_assign(c2_ref("c2.weather", "ash_falling"), false), dv_assign(c2_ref("c2.corridor.north", "intake_safe"), true), dv_assign(c2_ref("c2.corridor.east", "intake_safe"), true), dv_increment(c2_ref("c2.weather", "environment_epoch"), 1), dv_increment(c2_ref("c2.meter", "environment_epoch"), 1)])
+法则 c2_first_wind_law：
+    当 c2_clock() 至少 1980。
+    并且 "c2.weather" 的 "phase" 等于 "falling_ash"。
+    则 "c2.weather" 的 "phase" 变为 "wind_started"。
+    并使 "c2.weather" 的 "severe_air" 变为 false。
+    并使 "c2.weather" 的 "wind" 变为 true。
+    并使 "c2.weather" 的 "ash_falling" 变为 false。
+    并使 "c2.corridor.north" 的 "intake_safe" 变为 true。
+    并使 "c2.corridor.east" 的 "intake_safe" 变为 true。
+    并使 "c2.weather" 的 "environment_epoch" 增加 1。
+    并使 "c2.meter" 的 "environment_epoch" 增加 1。
 
 fn c2_weather_changes():
     return [
@@ -745,38 +869,92 @@ fn c2_inspections(actor):
         i = i + 1
     return result
 
-axiom c2_duty_assist_rations_law():
-    return dv_axiom("c2_duty_assist_rations_law", 1, dv_all([c2_at("detective", "living_hall"), c2_alive("detective"), dv_fact(c2_ref("c2.counter", "open"), true), dv_fact(c2_ref("c2.duty", "rations_assisted"), false)]), [dv_assign(c2_ref("c2.duty", "rations_assisted"), true)])
+法则 c2_duty_assist_rations_law：
+    当 侦探 位于 起居厅。
+    并且 c2_alive(侦探)。
+    并且 配给柜 的 开放状态 等于 true。
+    并且 "c2.duty" 的 "rations_assisted" 等于 false。
+    则 "c2.duty" 的 "rations_assisted" 变为 true。
 
-axiom c2_duty_assist_prop_law():
-    return dv_axiom("c2_duty_assist_prop_law", 1, dv_all([c2_at("detective", "logistics"), c2_alive("detective"), dv_fact(c2_ref("c2.granary", "latch_loose"), true), dv_fact(c2_ref("c2.duty", "prop_assisted"), false)]), [dv_assign(c2_ref("c2.duty", "prop_assisted"), true)])
+法则 c2_duty_assist_prop_law：
+    当 侦探 位于 后勤院。
+    并且 c2_alive(侦探)。
+    并且 粮仓 的 "latch_loose" 等于 true。
+    并且 "c2.duty" 的 "prop_assisted" 等于 false。
+    则 "c2.duty" 的 "prop_assisted" 变为 true。
 
-axiom c2_duty_assist_medicine_law():
-    return dv_axiom("c2_duty_assist_medicine_law", 1, dv_all([c2_at("detective", "clinic"), c2_alive("detective"), dv_fact(c2_own("moran", "fever"), true), dv_fact(c2_ref("c2.duty", "medicine_assisted"), false)]), [dv_assign(c2_ref("c2.duty", "medicine_assisted"), true)])
+法则 c2_duty_assist_medicine_law：
+    当 侦探 位于 诊疗室。
+    并且 c2_alive(侦探)。
+    并且 c2_own("moran", "fever") 等于 true。
+    并且 "c2.duty" 的 "medicine_assisted" 等于 false。
+    则 "c2.duty" 的 "medicine_assisted" 变为 true。
 
-axiom c2_duty_comfort_law():
-    return dv_axiom("c2_duty_comfort_law", 1, dv_all([c2_at("detective", "living_hall"), c2_alive("detective"), c2_any_night(), dv_fact(c2_ref("c2.duty", "comforted"), false)]), [dv_assign(c2_ref("c2.duty", "comforted"), true)])
+法则 c2_duty_comfort_law：
+    当 侦探 位于 起居厅。
+    并且 c2_alive(侦探)。
+    并且 c2_any_night()。
+    并且 "c2.duty" 的 "comforted" 等于 false。
+    则 "c2.duty" 的 "comforted" 变为 true。
 
-axiom c2_hero_airlock_brace_law():
-    return dv_axiom("c2_hero_airlock_brace_law", 1, dv_all([c2_at("lucian", "living_hall"), c2_alive("lucian"), c2_night(4), dv_fact(c2_ref("c2.corridor.north", "airlock_hazard"), true), dv_fact(c2_ref("c2.corridor.north", "airlock_held"), false)]), [dv_assign(c2_ref("c2.corridor.north", "airlock_held"), true)])
+法则 c2_hero_airlock_brace_law：
+    当 卢西安 位于 起居厅。
+    并且 c2_alive(卢西安)。
+    并且 c2_night(4)。
+    并且 "c2.corridor.north" 的 "airlock_hazard" 等于 true。
+    并且 "c2.corridor.north" 的 "airlock_held" 等于 false。
+    则 "c2.corridor.north" 的 "airlock_held" 变为 true。
 
-axiom c2_hero_valve_repair_law():
-    return dv_axiom("c2_hero_valve_repair_law", 1, dv_all([c2_at("quer", "logistics"), c2_alive("quer"), c2_night(3), dv_fact(c2_ref("c2.granary", "water_valve_hazard"), true), dv_fact(c2_ref("c2.granary", "water_valve_repaired"), false)]), [dv_assign(c2_ref("c2.granary", "water_valve_repaired"), true)])
+法则 c2_hero_valve_repair_law：
+    当 雀儿 位于 后勤院。
+    并且 c2_alive(雀儿)。
+    并且 c2_night(3)。
+    并且 粮仓 的 "water_valve_hazard" 等于 true。
+    并且 粮仓 的 "water_valve_repaired" 等于 false。
+    则 粮仓 的 "water_valve_repaired" 变为 true。
 
-axiom c2_hero_pulley_brace_law(actor):
-    return dv_axiom("c2_hero_pulley_brace_law", 1, dv_all([c2_at(actor, "logistics"), c2_alive(actor), c2_night(4), dv_fact(c2_ref("c2.granary", "pulley_hazard"), true), dv_fact(c2_ref("c2.granary", "pulley_braced"), false)]), [dv_assign(c2_ref("c2.granary", "pulley_braced"), true)])
+法则 c2_hero_pulley_brace_law，给定 行动者：
+    当 行动者 位于 后勤院。
+    并且 c2_alive(行动者)。
+    并且 c2_night(4)。
+    并且 粮仓 的 "pulley_hazard" 等于 true。
+    并且 粮仓 的 "pulley_braced" 等于 false。
+    则 粮仓 的 "pulley_braced" 变为 true。
 
-axiom c2_hero_timber_brace_law():
-    return dv_axiom("c2_hero_timber_brace_law", 1, dv_all([c2_at("margaret", "living_hall"), c2_alive("margaret"), c2_night(4), dv_fact(c2_ref("c2.granary", "timber_hazard"), true), dv_fact(c2_ref("c2.granary", "timber_braced"), false)]), [dv_assign(c2_ref("c2.granary", "timber_braced"), true)])
+法则 c2_hero_timber_brace_law：
+    当 "margaret" 位于 起居厅。
+    并且 c2_alive("margaret")。
+    并且 c2_night(4)。
+    并且 粮仓 的 "timber_hazard" 等于 true。
+    并且 粮仓 的 "timber_braced" 等于 false。
+    则 粮仓 的 "timber_braced" 变为 true。
 
-axiom c2_moran_acute_collapse_law():
-    return dv_axiom("c2_moran_acute_collapse_law", 1, dv_all([c2_at("moran", "outdoor_alley"), c2_alive("moran"), dv_at_least(c2_own("moran", "erosion_exposure"), 8), dv_fact(c2_own("moran", "in_coma"), false)]), [dv_assign(c2_own("moran", "in_coma"), true)])
+法则 c2_moran_acute_collapse_law：
+    当 "moran" 位于 "outdoor_alley"。
+    并且 c2_alive("moran")。
+    并且 c2_own("moran", "erosion_exposure") 至少 8。
+    并且 c2_own("moran", "in_coma") 等于 false。
+    则 c2_own("moran", "in_coma") 变为 true。
 
-axiom c2_moran_sketch_outdoor_law():
-    return dv_axiom("c2_moran_sketch_outdoor_law", 1, dv_all([c2_at("moran", "outdoor_alley"), c2_can_act("moran"), c2_night(4), dv_fact(c2_ref("case.astral", "evening_choice"), "go"), dv_fact(c2_own("moran", "evening_sketch_completed"), false)]), [dv_assign(c2_own("moran", "evening_sketch_completed"), true)])
+法则 c2_moran_sketch_outdoor_law：
+    当 "moran" 位于 "outdoor_alley"。
+    并且 c2_can_act("moran")。
+    并且 c2_night(4)。
+    并且 "case.astral" 的 "evening_choice" 等于 "go"。
+    并且 c2_own("moran", "evening_sketch_completed") 等于 false。
+    则 c2_own("moran", "evening_sketch_completed") 变为 true。
 
-axiom c2_bertrand_rescue_law():
-    return dv_axiom("c2_bertrand_rescue_law", 1, dv_all([c2_can_act("bertrand"), c2_at("bertrand", "outdoor_alley"), c2_at("moran", "outdoor_alley"), c2_alive("moran"), dv_fact(c2_own("moran", "in_coma"), true), dv_fact(c2_own("bertrand", "carrying"), ""), dv_fact(c2_own("moran", "carried_by"), "")]), [dv_assign(c2_own("bertrand", "carrying"), "moran"), dv_assign(c2_own("moran", "carried_by"), "bertrand"), dv_assign(c2_own("bertrand", "rescue_exposed"), true)])
+法则 c2_bertrand_rescue_law：
+    当 c2_can_act("bertrand")。
+    并且 "bertrand" 位于 "outdoor_alley"。
+    并且 "moran" 位于 "outdoor_alley"。
+    并且 c2_alive("moran")。
+    并且 c2_own("moran", "in_coma") 等于 true。
+    并且 c2_own("bertrand", "carrying") 等于 ""。
+    并且 c2_own("moran", "carried_by") 等于 ""。
+    则 c2_own("bertrand", "carrying") 变为 "moran"。
+    并使 c2_own("moran", "carried_by") 变为 "bertrand"。
+    并使 c2_own("bertrand", "rescue_exposed") 变为 true。
 
 fn c2_rescue_edges():
     return [{"from": "outdoor_alley", "to": "outdoor_high", "gate": "north"}, {"from": "outdoor_high", "to": "outdoor_meter", "gate": "north"}, {"from": "outdoor_meter", "to": "central_hall", "gate": "north"}, {"from": "central_hall", "to": "living_hall", "gate": "north"}]
@@ -795,38 +973,91 @@ fn c2_carry_moran_action(origin, target, gate):
     let grants = [c2_position_ref("bertrand"), c2_position_ref("moran"), c2_own("bertrand", "carrying"), c2_own("moran", "carried_by")]
     return dv_with_many(c2_action(id, "move", law.premise, law.premise, id, grants, rt_cat("扶住昏迷的莫兰，从", rt_cat(c2_place_label(origin), rt_cat("逐段搬至", rt_cat(c2_place_label(target), "。")))), c2_approved("actual-contact-and-segmented-rescue")), {"repeatable": true, "travel": {"from": origin, "to": target, "gate": gate}, "predict_law": id, "public_observers": c2_people(), "public_grants": grants})
 
-axiom c2_moran_fatal_settle_law():
-    return dv_axiom("c2_moran_fatal_settle_law", 1, dv_all([c2_alive("moran"), dv_at_least(c2_clock(), 6120), dv_fact(c2_own("moran", "in_coma"), true), dv_at_least(c2_own("moran", "erosion_exposure"), 8), dv_fact(c2_own("moran", "dead"), false), dv_fact(c2_own("moran", "anti_erosion_treated"), false)]), [dv_assign(c2_own("moran", "dead"), true), dv_assign(c2_own("moran", "alive"), false), dv_assign(c2_ref("c2.casualty", "moran_dead"), true), dv_assign(c2_ref("c2.casualty", "casualty_occurred"), true)])
+法则 c2_moran_fatal_settle_law：
+    当 c2_alive("moran")。
+    并且 c2_clock() 至少 6120。
+    并且 c2_own("moran", "in_coma") 等于 true。
+    并且 c2_own("moran", "erosion_exposure") 至少 8。
+    并且 c2_own("moran", "dead") 等于 false。
+    并且 c2_own("moran", "anti_erosion_treated") 等于 false。
+    则 c2_own("moran", "dead") 变为 true。
+    并使 c2_own("moran", 存活状态) 变为 false。
+    并使 "c2.casualty" 的 "moran_dead" 变为 true。
+    并使 "c2.casualty" 的 "casualty_occurred" 变为 true。
 
-axiom c2_bertrand_petrification_settle_law():
-    return dv_axiom("c2_bertrand_petrification_settle_law", 1, dv_all([c2_alive("bertrand"), dv_at_least(c2_clock(), 6120), dv_fact(c2_own("bertrand", "rescue_exposed"), true), dv_at_least(c2_own("bertrand", "erosion_exposure"), 8), dv_fact(c2_own("bertrand", "stone_stupor"), false), dv_fact(c2_own("bertrand", "anti_erosion_treated"), false)]), [dv_assign(c2_own("bertrand", "stone_stupor"), true), dv_assign(c2_ref("c2.casualty", "bertrand_stupor"), true), dv_assign(c2_ref("c2.casualty", "casualty_occurred"), true)])
+法则 c2_bertrand_petrification_settle_law：
+    当 c2_alive("bertrand")。
+    并且 c2_clock() 至少 6120。
+    并且 c2_own("bertrand", "rescue_exposed") 等于 true。
+    并且 c2_own("bertrand", "erosion_exposure") 至少 8。
+    并且 c2_own("bertrand", "stone_stupor") 等于 false。
+    并且 c2_own("bertrand", "anti_erosion_treated") 等于 false。
+    则 c2_own("bertrand", "stone_stupor") 变为 true。
+    并使 "c2.casualty" 的 "bertrand_stupor" 变为 true。
+    并使 "c2.casualty" 的 "casualty_occurred" 变为 true。
 
-axiom c2_unconventional_drive_demon_law():
-    return dv_axiom("c2_unconventional_drive_demon_law", 1, dv_all([c2_night(4), c2_alive("detective"), c2_at("detective", "living_hall"), dv_fact(c2_ref("c2.corridor.north", "airlock_hazard"), true), dv_fact(c2_ref("c2.demon", "intervention_requested"), false)]), [dv_assign(c2_ref("c2.demon", "intervention_requested"), true)])
+法则 c2_unconventional_drive_demon_law：
+    当 c2_night(4)。
+    并且 c2_alive(侦探)。
+    并且 侦探 位于 起居厅。
+    并且 "c2.corridor.north" 的 "airlock_hazard" 等于 true。
+    并且 "c2.demon" 的 "intervention_requested" 等于 false。
+    则 "c2.demon" 的 "intervention_requested" 变为 true。
 
-axiom c2_unconventional_iron_wedge_law():
-    return dv_axiom("c2_unconventional_iron_wedge_law", 1, dv_all([c2_night(4), c2_alive("detective"), c2_at("detective", "living_hall"), dv_fact(c2_ref("c2.corridor.north", "airlock_hazard"), true), dv_fact(c2_ref("c2.corridor.north", "airlock_held"), false)]), [dv_assign(c2_ref("c2.corridor.north", "airlock_held"), true)])
+法则 c2_unconventional_iron_wedge_law：
+    当 c2_night(4)。
+    并且 c2_alive(侦探)。
+    并且 侦探 位于 起居厅。
+    并且 "c2.corridor.north" 的 "airlock_hazard" 等于 true。
+    并且 "c2.corridor.north" 的 "airlock_held" 等于 false。
+    则 "c2.corridor.north" 的 "airlock_held" 变为 true。
 
-axiom c2_unconventional_false_alarm_law():
-    return dv_axiom("c2_unconventional_false_alarm_law", 1, dv_all([c2_night(4), c2_alive("detective"), c2_at("detective", "logistics"), dv_fact(c2_ref("c2.weather", "severe_air"), true), dv_fact(c2_ref("c2.corridor.north", "airlock_hazard"), true), dv_fact(c2_ref("c2.kitchen", "fake_alarm"), false)]), [dv_assign(c2_ref("c2.kitchen", "fake_alarm"), true)])
+法则 c2_unconventional_false_alarm_law：
+    当 c2_night(4)。
+    并且 c2_alive(侦探)。
+    并且 侦探 位于 后勤院。
+    并且 "c2.weather" 的 "severe_air" 等于 true。
+    并且 "c2.corridor.north" 的 "airlock_hazard" 等于 true。
+    并且 "c2.kitchen" 的 "fake_alarm" 等于 false。
+    则 "c2.kitchen" 的 "fake_alarm" 变为 true。
 
-axiom c2_elena_dead_hand_law():
-    return dv_axiom("c2_elena_dead_hand_law", 1, dv_all([c2_at("elena", "resonance_hall"), c2_alive("elena"), dv_fact(c2_ref("case.astral", "elena_betrayed"), true)]), [dv_assign(c2_ref("c2.corridor.north", "roof_collapsed"), true), dv_assign(c2_own("elena", "dead"), true), dv_assign(c2_own("elena", "alive"), false)])
+法则 c2_elena_dead_hand_law：
+    当 "elena" 位于 共鸣厅。
+    并且 c2_alive("elena")。
+    并且 "case.astral" 的 "elena_betrayed" 等于 true。
+    则 "c2.corridor.north" 的 "roof_collapsed" 变为 true。
+    并使 c2_own("elena", "dead") 变为 true。
+    并使 c2_own("elena", 存活状态) 变为 false。
 
-axiom c2_veronica_dead_hand_law():
-    return dv_axiom("c2_veronica_dead_hand_law", 1, dv_all([c2_at("veronica", "logistics"), c2_alive("veronica"), dv_fact(c2_own("veronica", "exiled"), true)]), [dv_assign(c2_ref("c2.corridor.east", "acid_gas_released"), true)])
+法则 c2_veronica_dead_hand_law：
+    当 "veronica" 位于 后勤院。
+    并且 c2_alive("veronica")。
+    并且 c2_own("veronica", "exiled") 等于 true。
+    则 "c2.corridor.east" 的 "acid_gas_released" 变为 true。
 
-axiom c2_bertrand_dead_hand_law():
-    return dv_axiom("c2_bertrand_dead_hand_law", 1, dv_all([c2_at("bertrand", "central_hall"), c2_alive("bertrand"), dv_fact(c2_ref("c2.casualty", "casualty_occurred"), true), dv_fact(c2_ref("c2.trial", "community_covenant_failed"), true)]), [dv_assign(c2_ref("c2.trial", "traitor_executed"), true)])
+法则 c2_bertrand_dead_hand_law：
+    当 "bertrand" 位于 中央厅。
+    并且 c2_alive("bertrand")。
+    并且 "c2.casualty" 的 "casualty_occurred" 等于 true。
+    并且 "c2.trial" 的 "community_covenant_failed" 等于 true。
+    则 "c2.trial" 的 "traitor_executed" 变为 true。
 
-axiom c2_ruan_dead_hand_law():
-    return dv_axiom("c2_ruan_dead_hand_law", 1, dv_all([c2_at("ruan", "clinic"), c2_alive("ruan"), dv_fact(c2_ref("c2.granary", "destroyed"), true)]), [dv_assign(c2_ref("c2.clinic", "sedative_administered"), true)])
+法则 c2_ruan_dead_hand_law：
+    当 "ruan" 位于 诊疗室。
+    并且 c2_alive("ruan")。
+    并且 粮仓 的 "destroyed" 等于 true。
+    则 "c2.clinic" 的 "sedative_administered" 变为 true。
 
-axiom c2_detective_intercom_law():
-    return dv_axiom("c2_detective_intercom_law", 1, dv_all([c2_at("detective", "living_hall"), dv_fact(c2_ref("c2.trial", "detective_imprisoned"), true), dv_fact(c2_ref("c2.trial", "intercom_reversed"), false)]), [dv_assign(c2_ref("c2.trial", "intercom_reversed"), true)])
+法则 c2_detective_intercom_law：
+    当 侦探 位于 起居厅。
+    并且 "c2.trial" 的 "detective_imprisoned" 等于 true。
+    并且 "c2.trial" 的 "intercom_reversed" 等于 false。
+    则 "c2.trial" 的 "intercom_reversed" 变为 true。
 
-axiom c2_detective_ascension_law():
-    return dv_axiom("c2_detective_ascension_law", 1, dv_all([c2_at("detective", "living_hall"), c2_all_companions_fallen()]), [dv_assign(c2_ref("c2.ascension", "godhood_achieved"), true)])
+法则 c2_detective_ascension_law：
+    当 侦探 位于 起居厅。
+    并且 c2_all_companions_fallen()。
+    则 "c2.ascension" 的 "godhood_achieved" 变为 true。
 
 fn c2_all_companions_fallen():
     let people = c2_people()
@@ -947,8 +1178,12 @@ fn c2_patient_contact(actor, patient):
         i = i + 1
     return dv_not(dv_all(c2_negated_conditions(contacts)))
 
-axiom c2_take_anti_erosion_law():
-    return dv_axiom("c2_take_anti_erosion_law", 1, dv_all([c2_can_act("mora"), c2_at("mora", "white_tower_safe"), dv_fact(c2_ref("case.logistics", "anti_erosion_mixed"), true), dv_fact(c2_own("mora", "anti_erosion_carried"), false)]), [dv_assign(c2_own("mora", "anti_erosion_carried"), true)])
+法则 c2_take_anti_erosion_law：
+    当 c2_can_act("mora")。
+    并且 "mora" 位于 白塔安全端。
+    并且 "case.logistics" 的 "anti_erosion_mixed" 等于 true。
+    并且 c2_own("mora", "anti_erosion_carried") 等于 false。
+    则 c2_own("mora", "anti_erosion_carried") 变为 true。
 
 axiom c2_administer_anti_erosion_law(patient):
     let illness = c1_any(dv_fact(c2_own(patient, "in_coma"), true), c1_any(dv_fact(c2_own(patient, "fever"), true), dv_fact(c2_own(patient, "rescue_exposed"), true)))
@@ -2063,14 +2298,27 @@ fn c2i_goals(actor):
         rt_push(goals, c2_goal(dv_fact(c2_ref("c2.granary", "total_store_locked"), false), c2_window(3, 720, 840), [c2_approved("three-person-granary-opening")]))
     return goals
 
-axiom c2i_reserve_column_law():
-    return dv_axiom("c2i_reserve_column_law", 1, dv_all([c2_at("ruan", "logistics"), dv_fact(c2_ref("c2.ledger", "supplement_column"), false)]), dv_single(dv_assign(c2_ref("c2.ledger", "supplement_column"), true)))
+法则 c2i_reserve_column_law：
+    当 "ruan" 位于 后勤院。
+    并且 配给总账 的 "supplement_column" 等于 false。
+    则 配给总账 的 "supplement_column" 变为 true。
 
 axiom c2i_complete_pending_law(actor):
     return c2i_complete_pending_purpose_law(actor, "self")
 
-axiom c2i_complete_pending_purpose_law(actor, purpose):
-    return dv_axiom("c2i_complete_pending_purpose_law", 1, dv_all([c2_at(actor, "logistics"), c2_alive(actor), dv_at_least(c2_own(actor, "pending_notes"), 1), dv_at_least(c2_own(actor, rt_cat("pending.", purpose)), 1), dv_at_least(c2_own(actor, "owe_notes"), 1), dv_fact(c2_own(actor, "busy_care"), false)]), [dv_increment(c2_own(actor, "pending_notes"), -1), dv_increment(c2_own(actor, rt_cat("pending.", purpose)), -1), dv_assign(c2_own(actor, rt_cat("purpose_clarified.", purpose)), true), dv_increment(c2_own(actor, "owe_notes"), -1), dv_increment(c2_ref("c2.ledger", "pending_registered"), -1), dv_increment(c2_ref("c2.ledger", "night_recorded"), 1)])
+法则 c2i_complete_pending_purpose_law，给定 行动者、purpose：
+    当 行动者 位于 后勤院。
+    并且 c2_alive(行动者)。
+    并且 c2_own(行动者, "pending_notes") 至少 1。
+    并且 c2_own(行动者, rt_cat("pending.", purpose)) 至少 1。
+    并且 c2_own(行动者, "owe_notes") 至少 1。
+    并且 c2_own(行动者, 正在照护) 等于 false。
+    则 c2_own(行动者, "pending_notes") 增加 -1。
+    并使 c2_own(行动者, rt_cat("pending.", purpose)) 增加 -1。
+    并使 c2_own(行动者, rt_cat("purpose_clarified.", purpose)) 变为 true。
+    并使 c2_own(行动者, "owe_notes") 增加 -1。
+    并使 配给总账 的 "pending_registered" 增加 -1。
+    并使 配给总账 的 "night_recorded" 增加 1。
 
 fn c2i_record_install(domain, adoptions, actor, mode):
     let source = [c2_approved("actual-reserved-column-and-pending-entry")]
@@ -2112,8 +2360,14 @@ fn c2i_erosion_parameters(actor):
     // while acute coma is independently enforced at the actual hazard site.
     return [{"at": 1, "rank": 0}, {"at": 2, "rank": 1}, {"at": 4, "rank": 2, "when": dv_at_least(c2_clock(), 6120)}, {"at": 6, "rank": 3, "when": dv_fact(c2_own(actor, "stone_stupor"), true)}, {"at": 8, "rank": 4, "when": dv_fact(c2_own(actor, "dead"), true)}]
 
-axiom c2i_outdoor_danger_law(actor):
-    return dv_axiom("c2i_outdoor_danger_law", 1, dv_all([c2_at(actor, "outdoor_alley"), c2_alive(actor), dv_fact(c2_ref("c2.weather", "earthquake_recent"), true), dv_fact(c2_ref("c2.weather", "severe_air"), true), dv_fact(c2_own(actor, "evening_sketch_exposed"), false)]), [dv_increment(c2_own(actor, "erosion_exposure"), 8), dv_assign(c2_own(actor, "evening_sketch_exposed"), true)])
+法则 c2i_outdoor_danger_law，给定 行动者：
+    当 行动者 位于 "outdoor_alley"。
+    并且 c2_alive(行动者)。
+    并且 "c2.weather" 的 "earthquake_recent" 等于 true。
+    并且 "c2.weather" 的 "severe_air" 等于 true。
+    并且 c2_own(行动者, "evening_sketch_exposed") 等于 false。
+    则 c2_own(行动者, "erosion_exposure") 增加 8。
+    并使 c2_own(行动者, "evening_sketch_exposed") 变为 true。
 
 fn c2i_evening_actions(actor):
     if actor != "moran":
@@ -2157,14 +2411,21 @@ fn c2i_evening_actions(actor):
     rt_push(result, dv_with(local_watch, "id", "moran.c2.inspect.current-watch-living"))
     return result
 
-axiom c2i_evening_choice_law(actor, value):
-    return dv_axiom("c2i_evening_choice_law", 1, dv_all([c2_alive(actor), c2_night(4)]), dv_single(dv_assign(c2_ref("case.astral", "evening_choice"), value)))
+法则 c2i_evening_choice_law，给定 行动者、取值：
+    当 c2_alive(行动者)。
+    并且 c2_night(4)。
+    则 "case.astral" 的 "evening_choice" 变为 取值。
 
-axiom c2i_meter_safe_law():
-    return dv_axiom("c2i_meter_safe_law", 1, dv_all([dv_fact(c2_ref("c2.weather", "wind"), true), dv_fact(c2_ref("c2.weather", "severe_air"), false), dv_fact(c2_ref("c2.meter", "safe"), false)]), dv_single(dv_assign(c2_ref("c2.meter", "safe"), true)))
+法则 c2i_meter_safe_law：
+    当 "c2.weather" 的 "wind" 等于 true。
+    并且 "c2.weather" 的 "severe_air" 等于 false。
+    并且 "c2.meter" 的 "safe" 等于 false。
+    则 "c2.meter" 的 "safe" 变为 true。
 
-axiom c2i_meter_stale_law():
-    return dv_axiom("c2i_meter_stale_law", 1, dv_all([dv_fact(c2_ref("c2.weather", "severe_air"), true), dv_fact(c2_ref("c2.meter", "safe"), true)]), dv_single(dv_assign(c2_ref("c2.meter", "safe"), false)))
+法则 c2i_meter_stale_law：
+    当 "c2.weather" 的 "severe_air" 等于 true。
+    并且 "c2.meter" 的 "safe" 等于 true。
+    则 "c2.meter" 的 "safe" 变为 false。
 
 // One navigation intention at a time. Local ready work outranks a trip;
 // all completion goals remain available to the shared planner.
@@ -2324,20 +2585,28 @@ fn c2_work_specs():
 
 fn c2_work_purpose(field):
     if field == "wedge_set":
-        return "检查结构后置楔，持续托住门框。"
+        叙述：
+            检查结构后置楔，持续托住门框。
     if field == "lift_mm":
-        return "核对载荷并操作千斤顶，持续保持抬升。"
+        叙述：
+            核对载荷并操作千斤顶，持续保持抬升。
     if field == "lock_no_pry":
-        return "拆验锁具，记录实际痕迹。"
+        叙述：
+            拆验锁具，记录实际痕迹。
     if field == "emergency_inventory_majority" or field == "joined_inventory" or field == "ward_half_paper":
-        return "查找并出示各自实际持有的散页，核对清册与授权上下文。"
+        叙述：
+            查找并出示各自实际持有的散页，核对清册与授权上下文。
     if field == "day_sketch_exposed":
-        return "自行判断写生机会，记录实际观察与身体感受。"
+        叙述：
+            自行判断写生机会，记录实际观察与身体感受。
     if field == "key_returned":
-        return "核对代管依据与现场记录，办理钥匙交接。"
+        叙述：
+            核对代管依据与现场记录，办理钥匙交接。
     if field == "gu_apologized" or field == "abandoned_child_misunderstanding_resolved":
-        return "依据实际取得的材料，重新评估并说明先前判断。"
-    return "承担自己能做的现场核对，所见与结果另行记录。"
+        叙述：
+            依据实际取得的材料，重新评估并说明先前判断。
+    叙述：
+        承担自己能做的现场核对，所见与结果另行记录。
 
 fn c2_quer_restriction():
     return dv_fact(c1n_ref("ward.restriction_announced"), true)
@@ -2545,8 +2814,12 @@ fn c2_safety_actions(actor):
         rt_push(actions, release)
     return actions
 
-axiom c2_guard_post_law(actor):
-    return dv_axiom("c2_guard_post_law", 1, dv_all([c2_at(actor, "living_hall"), c2_at("moran", "living_hall"), c2_alive(actor), c2_night(4)]), [dv_assign(c2_own(actor, "guard_active"), true)])
+法则 c2_guard_post_law，给定 行动者：
+    当 行动者 位于 起居厅。
+    并且 "moran" 位于 起居厅。
+    并且 c2_alive(行动者)。
+    并且 c2_night(4)。
+    则 c2_own(行动者, "guard_active") 变为 true。
 
 fn c2_safety_install(domain, adoptions, actor, mode):
     let source = [c2_approved("user:2026-10-18-owned-measurement-and-continuing-duty")]
@@ -2745,8 +3018,8 @@ fn c2_safety_goals(actor):
     return goals
 
 // Owner motives are declarations; opportunities and consequences still require real execution.
-fn c2_color_encouragement_text():
-    return "那层颜色确实罕见。莫兰，想画就再去看一眼吧。"
+叙述 c2_color_encouragement_text：
+    那层颜色确实罕见。莫兰，想画就再去看一眼吧。
 
 fn c2m_source():
     return c2_approved("user:2026-10-18-personal-active-motives")
@@ -2988,8 +3261,12 @@ fn c2m_other_people(actor):
 fn c2m_ration_contact_effects():
     return [dv_assign(c2_ref("c2.ledger", "drawer_contact_since_mark"), true)]
 
-axiom c2m_ink_contact_law():
-    return dv_axiom("c2m_ink_contact_law", 1, dv_all([dv_fact(c2_ref("c2.ledger", "ration_latch_unfastened"), true), dv_fact(c2_ref("c2.ledger", "verification_ink"), true), dv_fact(c2_ref("c2.ledger", "drawer_contact_since_mark"), true), dv_fact(c2_ref("c2.ledger", "ink_disturbed"), false)]), [dv_assign(c2_ref("c2.ledger", "ink_disturbed"), true)])
+法则 c2m_ink_contact_law：
+    当 配给总账 的 "ration_latch_unfastened" 等于 true。
+    并且 配给总账 的 "verification_ink" 等于 true。
+    并且 配给总账 的 "drawer_contact_since_mark" 等于 true。
+    并且 配给总账 的 "ink_disturbed" 等于 false。
+    则 配给总账 的 "ink_disturbed" 变为 true。
 
 
 // Optional daily opportunities. Speech marks record execution, never scheduled outcomes.
@@ -3135,13 +3412,17 @@ axiom c2daily_council_end_law():
     return dv_axiom("c2daily_council_end_law", 1, dv_all(pre), [dv_assign(c2daily_ref("council_ended"), true), dv_assign(c2daily_ref("council_closed"), true)])
 
 // user:2026-10-18章末授权：截止只收束议事，不代替真实签名。
-axiom c2daily_council_close_law():
-    return dv_axiom("c2daily_council_close_law", 1, dv_all([dv_at_least(c2_clock(), 6330), dv_fact(c2daily_ref("council_closed"), false)]), [dv_assign(c2daily_ref("council_closed"), true)])
+法则 c2daily_council_close_law：
+    当 c2_clock() 至少 6330。
+    并且 c2daily_ref("council_closed") 等于 false。
+    则 c2daily_ref("council_closed") 变为 true。
 
 // The low hum and aftershock persist through closing; this is a present signal,
 // not a historical pulse. The environment never writes a mind.
-axiom c2daily_tremor_law():
-    return dv_axiom("c2daily_tremor_law", 1, dv_all([dv_fact(c2daily_ref("council_closed"), true), dv_fact(c2daily_ref("underground_tremor"), false)]), [dv_assign(c2daily_ref("underground_tremor"), true)])
+法则 c2daily_tremor_law：
+    当 c2daily_ref("council_closed") 等于 true。
+    并且 c2daily_ref("underground_tremor") 等于 false。
+    则 c2daily_ref("underground_tremor") 变为 true。
 
 fn c2daily_closing_fields():
     var fields = ["council_closed", "council_ended", "underground_tremor", "votes.open_plan", "votes.seal_plan", "votes.committee_plan"]
@@ -3622,11 +3903,13 @@ axiom c2d_row_law(row):
         i = i + 1
     return dv_axiom("c2d_row_law", 1, dv_all([c2_at(row.actor, row.room), row.when]), effects)
 
-axiom c2d_spoke_law(actor, method, room):
-    return dv_axiom("c2d_spoke_law", 1, c2_at(actor, room), dv_single(dv_assign(c2d_mark(actor, method), true)))
+法则 c2d_spoke_law，给定 行动者、method、room：
+    前提 c2_at(行动者, room)。
+    则 c2d_mark(行动者, method) 变为 true。
 
-axiom c2d_read_scope_law():
-    return dv_axiom("c2d_read_scope_law", 1, dv_fact(c2d_ref("indoor_rule"), "入夜之后，诸位留于室内。"), dv_single(dv_assign(c2d_person_ref("detective", "scope_undefined"), true)))
+法则 c2d_read_scope_law：
+    前提 dv_fact(c2d_ref("indoor_rule"), "入夜之后，诸位留于室内。")。
+    则 c2d_person_ref(侦探, "scope_undefined") 变为 true。
 
 fn c2d_action(row):
     var prerequisites = [c2_at(row.actor, row.room), row.when, row.literal]
@@ -3695,11 +3978,21 @@ fn c2d_action(row):
         action = dv_with_many(action, {"case_method": true, "case_base_when": known})
     return action
 
-axiom c2d_start_watch_law():
-    return dv_axiom("c2d_start_watch_law", 1, dv_all([c1_at("bertrand", "logistics"), c2_any_night(), c2_alive("bertrand")]), dv_single(dv_assign(c2d_person_ref("bertrand", "watching"), true)))
+法则 c2d_start_watch_law：
+    当 "bertrand" 位于 后勤院。
+    并且 c2_any_night()。
+    并且 c2_alive("bertrand")。
+    则 c2d_person_ref("bertrand", "watching") 变为 true。
 
-axiom c2d_small_shadow_law(person):
-    return dv_axiom("c2d_small_shadow_law", 1, dv_all([c1_at("bertrand", "logistics"), c2_any_night(), dv_fact(c2d_person_ref("bertrand", "watching"), true), c2_alive("bertrand"), dv_fact(c2d_person_ref("bertrand", "small_shadow_seen"), false), c1_at(person, "logistics"), c2_alive(person)]), dv_single(dv_assign(c2d_person_ref("bertrand", "small_shadow_seen"), true)))
+法则 c2d_small_shadow_law，给定 person：
+    当 "bertrand" 位于 后勤院。
+    并且 c2_any_night()。
+    并且 c2d_person_ref("bertrand", "watching") 等于 true。
+    并且 c2_alive("bertrand")。
+    并且 c2d_person_ref("bertrand", "small_shadow_seen") 等于 false。
+    并且 person 位于 后勤院。
+    并且 c2_alive(person)。
+    则 c2d_person_ref("bertrand", "small_shadow_seen") 变为 true。
 
 fn c2d_watch_actions(actor):
     if actor != "bertrand":
@@ -4147,14 +4440,19 @@ fn c2h_consent_requires(actor):
 
 fn c2h_objection(actor):
     if dv_has(["ward", "veronica", "ruan"], actor):
-        return "我对契约履行的安全仍有保留，暂不赞成。条文、本人实证与履行结果需要分别核对。"
+        叙述：
+            我对契约履行的安全仍有保留，暂不赞成。条文、本人实证与履行结果需要分别核对。
     if dv_has(["huo", "su", "moran", "gu"], actor):
-        return "尽忘意味着放弃在这里取得的认识。我仍要比较求知与生存的价值，现在保留意见。"
+        叙述：
+            尽忘意味着放弃在这里取得的认识。我仍要比较求知与生存的价值，现在保留意见。
     if dv_has(["margaret", "shen", "mora", "bertrand"], actor):
-        return "粮仓和病人的责任还要依据我实际知道的情况核对。我暂不把归乡当作这些责任已经解决。"
+        叙述：
+            粮仓和病人的责任还要依据我实际知道的情况核对。我暂不把归乡当作这些责任已经解决。
     if actor == "quer" or actor == "elena":
-        return "旧怨是否真正修复，岛外是否有可以依靠的承诺，都要由我自己确认。现在我保留意见。"
-    return "我还愿意继续核对留岛与尽忘归乡的代价，暂不赞成。"
+        叙述：
+            旧怨是否真正修复，岛外是否有可以依靠的承诺，都要由我自己确认。现在我保留意见。
+    叙述：
+        我还愿意继续核对留岛与尽忘归乡的代价，暂不赞成。
 
 fn c2h_rows():
     var rows = []

@@ -15,6 +15,8 @@ RETIRED = re.compile(r'\b(AgentPilot|PilotNavigation|GameSession|WorldSession|Wo
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--removed-manifest', type=Path,
+                        help='Optional JSON list of removed repository paths for a specific cleanup')
     args = parser.parse_args()
     if args.out.exists():
         raise ValueError('Use a new output path; never overwrite source audit evidence')
@@ -22,8 +24,12 @@ def main():
         ['git', 'ls-files', '--cached', '--others', '--exclude-standard', '-z'], cwd=ROOT
     ).decode().split('\0')) - {''})
     files, issues, existing_missing = [], [], []
-    removed_path = ROOT/'artifacts/partial-bootstrap-core/single-action-path/removed-files.json'
-    removed = json.loads(removed_path.read_text(encoding='utf-8'))
+    removed = set()
+    if args.removed_manifest is not None:
+        manifest = json.loads(args.removed_manifest.read_text(encoding='utf-8'))
+        if not isinstance(manifest, list) or any(not isinstance(path, str) for path in manifest):
+            raise ValueError('--removed-manifest must contain a JSON array of repository-relative paths')
+        removed = set(manifest)
     for name in names:
         path = ROOT / name
         if not path.is_file() or name.startswith(('artifacts/', 'music/', 'tmp/', 'scratch/')):
@@ -52,6 +58,7 @@ def main():
             files.append(entry)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps({'scope': 'active tracked and non-ignored source; historical artifacts and temporary output excluded',
+                                   'removed_manifest': str(args.removed_manifest) if args.removed_manifest else None,
                                    'files': files, 'issues': issues, 'existing_missing_resources': existing_missing}, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
     print(args.out)
     if issues:
@@ -60,10 +67,14 @@ def main():
 
 
 def role(name):
-    if name.startswith('language_core/verification/scenarios/') or name.startswith('language_core/game/'):
+    if name in {'language_core/40-chapter1.dv', 'language_core/50-chapter2.dv', 'language_core/60-game.dv'}:
         return 'native content / production composition'
-    if name.startswith('language_core/verification/session/') or name.startswith('language_core/core/'):
+    if name in {'language_core/20-core.dv', 'language_core/30-session.dv'}:
         return 'compiled DV mechanism; prediction and authority remain separate'
+    if name == 'language_core/10-compiler.dv' or name.startswith('language_core/compiler/'):
+        return 'DV compiler / bootstrap / generated-code runtime support'
+    if name == 'language_core/70-checks.dv':
+        return 'isolated judgment and engineering fixtures; outside production content'
     if name.startswith('language_core/Session/') or name.startswith('godot_csharp/scenes/Host/'):
         return 'single session serialization / dispatch / passive view trace'
     if name.startswith('godot_csharp/scenes/Shared/Field') or name.startswith('godot_csharp/scenes/Story/'):

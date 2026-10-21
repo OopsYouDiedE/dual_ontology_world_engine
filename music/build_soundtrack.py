@@ -3,18 +3,19 @@
     python music/build_soundtrack.py                  # 编译曲谱，由 MuseScore 4 导出并后处理生成游戏配乐、音效与提示音
     python music/build_soundtrack.py --only night     # 只编译某一首曲目（或某个音效 id）
     python music/build_soundtrack.py --scores         # 只核对/更新曲谱，不渲染游戏 OGG
-    python music/build_soundtrack.py --export         # 另用 MuseScore 4 导出 PDF / MusicXML / MIDI / MP3
-    python music/build_soundtrack.py --rewrite-scores # 从 cues.py 更新 .mscz（严格保留原谱乐器名称与音色设置）并导出全部产物
+    python music/build_soundtrack.py --export         # 将 PDF / MusicXML / MIDI / MP3 导出至 artifacts/releases/soundtrack
+    python music/build_soundtrack.py --export --export-dir <目录> # 指定发行导出目录
+    python music/build_soundtrack.py --rewrite-scores # 从 cues.py 更新 .mscz（保留乐器名称，应用明确指定的音色与混音设置）并导出全部产物
     python music/build_soundtrack.py --from-mscz      # 直接以现有 .mscz 为唯一源，经 MuseScore 4 编译进游戏（跳过 cues.py 比对）
 
 编译流程说明：
-1. 乐器名称保护：更新或导出 `.mscz` 时，严格保留 `.mscz` 中既有的 `<Part>` 乐器名称、简称、通道、移调与 `audiosettings.json` 音色设置。
+1. 乐器名称保护：更新或导出 `.mscz` 时，保留原谱乐器身份和记谱移调；仅按明确的 explicit_sound 声明更新音色/键位，按源混音表更新原生混音。
 2. MuseScore 4 原生渲染：直接调用 `MuseScore4.exe` 将 `.mscz` 渲染为无损立体声波形，并导出 `.pdf`、`.musicxml`、`.mid`、`.mp3`。
 3. 游戏音频后处理（切空白、尾音回叠无缝循环、动态收拢与响度统一）：
    - 自动检测并裁除首部空白前导；
    - 按曲谱精确小节/速度时值计算循环点 `t_score`：对循环配乐，将末尾余音与混响尾段（Tail）平滑包络回叠至循环开头，
-     并在接缝处施加微交叉淡化，实现零静音空隙、零爆音的无缝循环；对含延长记号收束的主题曲，自动裁除尾部静音段并平滑淡出；
-   - 经总线动态压缩与响度对齐（目标 RMS -19.0 dBFS，峰值上限 -1.2 dBFS）编码写入游戏 OGG。
+     并在接缝处施加微交叉淡化，降低循环边界的不连续；编码后仍须检查接缝；对含延长记号收束的主题曲，自动裁除尾部静音段并平滑淡出；
+   - 经总线动态压缩与响度对齐（各曲目标 RMS -21 至 -24 dBFS，PCM 峰值上限 -1.8 dBFS，编码峰值另测）编码写入游戏 OGG。
 """
 import argparse
 import concurrent.futures
@@ -42,6 +43,7 @@ ASSETS = os.path.join(ROOT, 'godot_csharp', 'ShareAsset', 'Internal')
 MUSIC_OUT = os.path.join(ASSETS, 'Props', 'Audio', 'Music')
 SFX_OUT = os.path.join(ASSETS, 'Props', 'Audio', 'Sfx')
 VOICE_OUT = os.path.join(ASSETS, 'Characters', 'voices')
+EXPORT_OUT = os.path.join(ROOT, 'artifacts', 'releases', 'soundtrack')
 SCORE_NAMES = {
     'main_theme': 'Main Theme',
     'door_side': 'The Near Side of the Door',
@@ -75,9 +77,15 @@ def _run_musescore_export(musescore, mscz, out_path, extra=()):
         raise RuntimeError(f'MuseScore 4 未能导出 {out_path}')
 
 
-def export_score(musescore, mscz):
-    """用 MuseScore 4 打开曲谱并导出 PDF、MusicXML、MIDI 与 MP3。"""
-    base = os.path.splitext(mscz)[0]
+def score_export_base(mscz, directory):
+    directory = os.path.abspath(directory)
+    os.makedirs(directory, exist_ok=True)
+    return os.path.join(directory, os.path.splitext(os.path.basename(mscz))[0])
+
+
+def export_score(musescore, mscz, directory=EXPORT_OUT):
+    """将 PDF、MusicXML、MIDI 与 MP3 写入独立发行目录，保留原谱。"""
+    base = score_export_base(mscz, directory)
     tasks = [
         (base + '.pdf', ()),
         (base + '.musicxml', ()),
@@ -130,14 +138,14 @@ def postprocess_musescore_audio(stereo_lr, sr, mscz_path, piece):
                 fade_curve = np.maximum(0.0, np.cos(np.linspace(0.0, np.pi / 2, tail_len, dtype=np.float32))) ** 1.5
                 body[:, :tail_len] += tail[:, :tail_len] * fade_curve[None, :]
 
-        # 在循环边界施加 15ms 微平滑过渡，确保首尾采样连续无爆音
-        xfade = min(int(0.015 * sr), body.shape[1] // 8)
+        # 用对称包络校准首尾采样；原实现只能混合局部波形，不能保证边界连续。
+        xfade = min(int(0.080 * sr), body.shape[1] // 8)
         if xfade > 8:
-            w = np.linspace(0.0, 1.0, xfade, dtype=np.float32)[None, :]
-            seam_start = body[:, :xfade].copy()
-            seam_end = body[:, -xfade:].copy()
-            body[:, :xfade] = seam_start * w + seam_end * (1.0 - w) * 0.15
-            body[:, -xfade:] = seam_end * (1.0 - w * 0.5) + seam_start * (w * 0.5)
+            boundary = (body[:, :1].copy() + body[:, -1:].copy()) * 0.5
+            u = np.linspace(0.0, 1.0, xfade, dtype=np.float32)[None, :]
+            ease = 0.5 - 0.5 * np.cos(np.pi * u)
+            body[:, :xfade] += (boundary - body[:, :1]) * (1.0 - ease)
+            body[:, -xfade:] += (boundary - body[:, -1:]) * ease
         out = body
         final_dur = loop_samples / sr
     else:
@@ -164,6 +172,15 @@ def postprocess_musescore_audio(stereo_lr, sr, mscz_path, piece):
     target_rms = CUE_TARGET_RMS.get(piece.slug, -22.0)
     compressed = synth.compress(out.astype(np.float64), ratio=min(float(piece.squeeze), 1.35))
     processed = synth.master(compressed, target_rms_db=target_rms, ceiling_db=-1.8).astype(np.float32)
+    if piece.loop and not has_fermata_last and processed.shape[1] > 64:
+        # Master compression may change the two end samples independently.
+        # Re-align the rendered periodic boundary after mastering.
+        n = min(int(0.080 * sr), processed.shape[1] // 8)
+        avg = (processed[:, :1] + processed[:, -1:]) * 0.5
+        u = np.linspace(0.0, 1.0, n, dtype=np.float32)[None, :]
+        ease = 0.5 - 0.5 * np.cos(np.pi * u)
+        processed[:, :n] += (avg - processed[:, :1]) * (1.0 - ease)
+        processed[:, -n:] += (avg - processed[:, -1:]) * ease
     return processed, final_dur
 
 
@@ -195,7 +212,7 @@ SAMPLED = {
     'violin': (0, 40, -3.0), 'xylophone': (0, 13, -11.0),
     'framedrum': (128, 0, -11.0), 'tabla': (0, 0, -12.0), 'bassdrum': (128, 48, 0.0),
     'cellos': (41, 48, -4.0), 'basses': (51, 48, 2.0), 'cellos_pizz': (40, 45, 9.0), 'basses_pizz': (50, 45, 7.0),
-    'templeblocks': (1, 115, -3.0), 'dagu': (128, 0, -4.0),
+    'templeblocks': (1, 115, -3.0), 'dagu': (128, 48, -4.0),
 }
 SYNTH_TRIM = {'tanpura': -8.0, 'tabla': -12.0, 'framedrum': -11.0, 'bianzhong': -10.0, 'bianqing': -11.0}
 SEND = {
@@ -318,9 +335,9 @@ def _compile_cue(make, args, musescore):
             raise RuntimeError('\n'.join(msg))
 
     if rewrite and not musescore:
-        write_midi(piece, base + '.mid')
+        write_midi(piece, score_export_base(mscz_path, args.export_dir) + '.mid')
     if musescore and (rewrite or args.export):
-        export_score(musescore, mscz_path)
+        export_score(musescore, mscz_path, args.export_dir)
     if args.scores:
         return f'{piece.slug}: {len(piece.bars)} 小节（曲谱已就绪）'
 
@@ -347,6 +364,8 @@ def main():
                     help='直接将现有 .mscz 经 MuseScore 4 编译导出为游戏音频（不核对 cues.py）')
     ap.add_argument('--export', action='store_true',
                     help='重新用 MuseScore 4 导出 PDF / MusicXML / MIDI / MP3')
+    ap.add_argument('--export-dir', default=EXPORT_OUT,
+                    help='原声/乐谱导出目录（默认 artifacts/releases/soundtrack）')
     ap.add_argument('--jobs', type=int, default=4,
                     help='并行调用 MuseScore 4 的工作线程数（默认 4）')
     args = ap.parse_args()

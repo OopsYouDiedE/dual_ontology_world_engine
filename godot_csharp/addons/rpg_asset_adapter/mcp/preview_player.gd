@@ -1,6 +1,8 @@
 extends CharacterBody2D
 ## Simple movable stand-in used to inspect TileMap collision and scale.
 
+const PREVIEW_FRAMES: SpriteFrames = preload("res://ShareAsset/Internal/Characters/PixelCast/detective.tres")
+
 @export var speed := 120.0
 @export var map_pixel_size := Vector2(640, 480)
 
@@ -18,7 +20,7 @@ func _ready() -> void:
 	camera.make_current()
 	var sprite := Sprite2D.new()
 	sprite.name = "StaticCharacter"
-	sprite.texture = load("res://ShareAsset/Internal/Characters/atlas/06_detective.tres")
+	sprite.texture = PREVIEW_FRAMES.get_frame_texture(&"idle_front", 0)
 	sprite.offset = Vector2(0, -23)
 	add_child(sprite)
 

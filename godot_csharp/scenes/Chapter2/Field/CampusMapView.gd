@@ -4,7 +4,10 @@ extends Node2D
 ## 剧情与文字不在这里。
 
 const MAPS := "res://scenes/Chapter2/Maps/%s.tscn"
-const MAP_ZONE_YI := preload("res://scenes/Chapter2/Maps/zone_yi.tscn")
+const RESOURCES := preload("res://scenes/Shared/Field/FieldResources.gd")
+const MAX_RETAINED_MAPS := 3
+const PREPARE_BUDGET_USEC := 2000
+const MAX_LOCAL_NAV_GRIDS := 32
 
 static func _fail_binding(node: Node, message: String) -> void:
 	push_error(message)
@@ -12,10 +15,10 @@ static func _fail_binding(node: Node, message: String) -> void:
 
 const SEAM := 36.0
 ## 地图里没有标记、由地图层补上的交互点。
-const EXTRA_SITES := {"zone_jia": {"litter": Vector2(440, 240)}}
+const EXTRA_SITES := {"zone_jia": {"litter": Vector2(440, 240)}, "living_floor": {"litter": Vector2(440, 240)}}
 ## 只作装饰、不开放交互的标记。
 const DECOR_MARKERS := ["transmitter", "isolation_gate", "lane", "harbor", "stele", "collapse", "counterweight"]
-static var _packed_maps: Dictionary = {}
+static var _floor_parts: Dictionary = {}
 static var _static_routes: Dictionary = {}
 static var _static_spawns: Dictionary = {}
 static var _static_meta: Dictionary = {}
@@ -44,7 +47,7 @@ static func _ensure_static_manifest() -> void:
 				elif e.has("cells"):
 					var cl: Array = e.cells
 					pt = Vector2((cl[0] + cl[2]) * 16.0, (cl[1] + cl[3]) * 16.0)
-				edges.append({"to": str(e.get("target", "")), "point": pt})
+				edges.append({"to": "living_floor" if str(e.get("target", "")) == "living_hall" else str(e.get("target", "")), "point": pt})
 		_static_routes[rname] = edges
 		var spawns: Dictionary = rinfo.get("spawns", {})
 		var sp_dict := {}
@@ -61,15 +64,20 @@ static func _ensure_static_manifest() -> void:
 			meta_dict["map_size"] = Vector2(sz[0], sz[1])
 		_static_meta[rname] = meta_dict
 
+	# Only exterior doors remain map edges; the five interiors share one floor.
+	var floor_edges: Array = []
+	for edge: Dictionary in _static_routes.get("living_hall", []):
+		if str(edge.to).begins_with("zone_"): continue
+		var point: Vector2 = edge.point
+		floor_edges.append({"to": edge.to, "point": point + Vector2(1120, 128 + (192 if point.y >= 544 else 0))})
+	_static_routes["living_floor"] = floor_edges
+
 func _get_packed_map(map_name: String) -> PackedScene:
-	if map_name == "zone_yi": return MAP_ZONE_YI
-	var packed: PackedScene = _packed_maps.get(map_name)
-	if packed == null:
-		var path := MAPS % map_name
-		if ResourceLoader.exists(path):
-			packed = load(path) as PackedScene
-			if packed != null: _packed_maps[map_name] = packed
-	return packed
+	var path := MAPS % map_name
+	var packed := RESOURCES.ready(path) as PackedScene
+	# Compatibility for callers that deliberately construct a map synchronously.
+	# The production host and cross-map executor await prepare_map first.
+	return packed if packed != null else (load(path) as PackedScene if ResourceLoader.exists(path) else null)
 
 var field: Node2D
 var map: Node2D
@@ -80,18 +88,206 @@ var occluders: Array[Sprite2D] = []
 var _grids: Dictionary = {}
 var _solid_regions: Dictionary = {}
 var _blocked_rects: Dictionary = {}
+var _blocked_cells: Dictionary = {}
 var _walls: Dictionary = {}
 var _seen: Dictionary = {}
 var _access: Dictionary = {}
 var _access_shapes: Dictionary = {}
+var _access_refresh_pending := false
 var _last_allowed_position := Vector2.ZERO
 var presentation: Dictionary = {}
 var _player_sprite := ""
 var _routes: Dictionary = {}
 var _route_target_next := ""
-var _geometry_signature := ""
-var _geometry_nodes: Array[Node] = []
 var _stage_bounds_cache: Dictionary = {}
+var _stage_ready: Dictionary = {}
+var _stage_light_cache: Dictionary = {}
+var _local_grids: Dictionary = {}
+var _doorway_cache: Dictionary = {}
+var _map_records: Dictionary = {}
+var _map_order: Array[String] = []
+var _preparing: Dictionary = {}
+var _room_candidates: Dictionary = {}
+var _navigation_rooms: Dictionary = {}
+var _closing := false
+var _prefetching := false
+
+func _cancelled() -> bool:
+	return _closing or (is_instance_valid(field) and field._closing)
+
+## May run before setup, when this adapter has no parent yet. The host supplies
+## its SceneTree in that case. False means cancelled or unavailable, never arrived.
+func prepare_map(next: String, value: Dictionary, tree: SceneTree = null) -> bool:
+	if tree == null: tree = get_tree()
+	if tree == null or next == "" or _cancelled(): return false
+	var binding := _preparation_binding(next, value)
+	if _prepared_for(next, binding): return true
+	while _preparing.has(next):
+		await tree.process_frame
+		if _cancelled(): return false
+		if _prepared_for(next, binding): return true
+	_preparing[next] = true
+	var paths: Array[String] = [MAPS % next]
+	var declaration: Dictionary = binding.geometry
+	for prop in declaration.get("props", []):
+		var path := str(prop.get("texture", ""))
+		if path not in paths: paths.append(path)
+	for sprite in binding.sprites: _append_actor_resource(paths, str(sprite))
+	var resources: Dictionary = await RESOURCES.wait_for(paths, tree, _cancelled)
+	if resources.is_empty():
+		_preparing.erase(next)
+		return false
+	if not _map_records.has(next):
+		var packed := resources.get(MAPS % next) as PackedScene
+		if packed == null:
+			_preparing.erase(next)
+			return false
+		var instantiated_layout := packed.instantiate() as Node2D
+		if instantiated_layout == null:
+			_preparing.erase(next)
+			return false
+		_map_records[next] = _new_map_record(instantiated_layout)
+		_touch_map(next)
+		_trim_maps(next)
+	var record: Dictionary = _map_records[next]
+	var layout: Node2D = record.node
+	var architecture := layout.get_node_or_null("Architecture") as Sprite2D
+	if architecture != null and architecture.texture != null and not bool(record.relief_ready):
+		var relief := architecture.texture.resource_path.get_basename() + ".relief.tres"
+		if ResourceLoader.exists(relief):
+			var relief_resources: Dictionary = await RESOURCES.wait_for([relief], tree, _cancelled)
+			if relief_resources.is_empty():
+				_preparing.erase(next)
+				return false
+			architecture.texture = relief_resources[relief] as Texture2D
+		record.relief_ready = true
+	# Preparing an inactive layout does not change the visible field's geometry,
+	# map, observer, bodies or live input/arrival state.
+	if layout != map:
+		_apply_record_geometry(next, record, value)
+		var access = value.get("access", {})
+		var maps: Dictionary = access.get("maps", {}) if access is Dictionary and access.get("maps") is Dictionary else {}
+		_apply_record_access(next, record, maps)
+	var ready := false
+	while not _cancelled() and is_instance_valid(layout):
+		# Access shapes are refreshed outside physics callbacks. Wait for that
+		# already queued refresh before planning on an active map's grid.
+		if layout == map and _access_refresh_pending:
+			await tree.process_frame
+			continue
+		_build_grid_for(next, layout)
+		ready = await _prepare_room_candidates(next, layout, tree)
+		if ready: ready = await _prepare_stage_bounds(next, layout, tree)
+		if ready and (layout != map or not _access_refresh_pending): break
+		# A live binding can invalidate the grid between preparation slices.
+		# Rebuild from the new geometry instead of reporting a physical failure.
+	_preparing.erase(next)
+	if not ready or _cancelled(): return false
+	# Keep the batch's actor frames alive until this prepared map is used or
+	# evicted; they may not have an instantiated body yet.
+	record.resources = resources
+	record.prepared_binding = binding.duplicate(true)
+	_touch_map(next)
+	_trim_maps(next)
+	return true
+
+static func _append_actor_resource(paths: Array[String], sprite: String) -> void:
+	if sprite == "": return
+	var path: String = RESOURCES.actor_path(sprite)
+	if path == "":
+		# Keep a missing binding visible to the normal preparation error path.
+		path = "res://ShareAsset/Internal/Characters/PixelCast/%s.tres" % sprite
+	if path not in paths: paths.append(path)
+
+func _preparation_binding(map_name: String, value: Dictionary) -> Dictionary:
+	var raw = value.get("geometry_bindings", {})
+	var geometry: Dictionary = raw.get(map_name, {}) if raw is Dictionary and raw.get(map_name) is Dictionary else {}
+	var access = value.get("access", {})
+	var maps: Dictionary = access.get("maps", {}) if access is Dictionary and access.get("maps") is Dictionary else {}
+	var sprites: Array[String] = []
+	var viewer_sprite := str(value.get("presentation", {}).get("player_sprite", ""))
+	if viewer_sprite != "": sprites.append(viewer_sprite)
+	for person in value.get("people", []):
+		if str(person.get("map", "")) != map_name or not bool(person.get("present", true)): continue
+		var sprite := str(person.get("sprite", ""))
+		if sprite != "" and sprite not in sprites: sprites.append(sprite)
+	sprites.sort()
+	return {"geometry": geometry, "access": maps, "sprites": sprites}
+
+func _prepared_for(map_name: String, binding: Dictionary) -> bool:
+	return _map_records.has(map_name) and _grids.has(map_name) and _room_candidates.has(map_name) and _stage_ready.has(map_name) and not (map_name == key and _access_refresh_pending) and _map_records[map_name].get("prepared_binding", {}) == binding
+
+func _new_map_record(layout: Node2D) -> Dictionary:
+	if layout.has_meta("floor_parts"): _floor_parts = layout.get_meta("floor_parts")
+	for exit in layout.get_node("Exits").get_children():
+		if str(exit.get_meta("target", "")) == "living_hall":
+			exit.set_meta("target", "living_floor")
+			exit.set_meta("spawn", "living_hall_" + str(exit.get_meta("spawn", "")))
+	return {"node": layout, "geometry": {}, "geometry_applied": false,
+		"geometry_nodes": [], "access_shapes": {}, "relief_ready": false, "resources": {}}
+
+func _touch_map(name: String) -> void:
+	_map_order.erase(name)
+	_map_order.append(name)
+
+func _trim_maps(keep := "") -> void:
+	for name in _map_order.duplicate():
+		if _map_records.size() <= MAX_RETAINED_MAPS: break
+		if str(name) == key or str(name) == keep or str(name) == _route_target_next or _preparing.has(name): continue
+		var layout: Node2D = _map_records[name].node
+		# Retained actor ownership is held by DvFieldExecutor, outside these layouts.
+		if is_instance_valid(layout) and not layout.is_inside_tree(): layout.free()
+		_map_records.erase(name)
+		_map_order.erase(name)
+		_invalidate_map(str(name))
+		_stage_ready.erase(name)
+		_stage_light_cache.erase(name)
+		_doorway_cache.erase(name)
+		for region in _stage_bounds_cache.keys():
+			if str(region).begins_with(str(name) + ":"): _stage_bounds_cache.erase(region)
+
+## Opportunistic preparation is sequential and bounded to adjacent map resources.
+## It reads bindings only; access and formal movement still use the live snapshot.
+func prefetch_snapshot(value: Dictionary) -> void:
+	if _prefetching or _cancelled() or not is_inside_tree(): return
+	_prefetching = true
+	var origin := key
+	var graph := _map_routes()
+	var count := 0
+	for edge in graph.get(origin, []):
+		var next := str(edge.get("to", ""))
+		if next == "" or next == key: continue
+		if _cancelled() or key != origin: break
+		await prepare_map(next, value, get_tree())
+		count += 1
+		if count >= MAX_RETAINED_MAPS - 1: break
+	_prefetching = false
+
+func begin_shutdown() -> void:
+	if _closing: return
+	_closing = true
+	_switching = false
+	_route_target_next = ""
+	_access_refresh_pending = false
+	for record: Dictionary in _map_records.values():
+		var layout: Node2D = record.node
+		if is_instance_valid(layout) and not layout.is_inside_tree(): layout.free()
+	_map_records.clear()
+	_map_order.clear()
+	_preparing.clear()
+
+func _exit_tree() -> void:
+	begin_shutdown()
+
+func _invalidate_map(map_name: String) -> void:
+	_grids.erase(map_name)
+	_solid_regions.erase(map_name)
+	_blocked_rects.erase(map_name)
+	_blocked_cells.erase(map_name)
+	_room_candidates.erase(map_name)
+	_navigation_rooms.erase(map_name)
+	_local_grids.erase(map_name)
+	_walls.erase(map_name)
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	_apply_geometry_bindings(snapshot)
@@ -99,39 +295,48 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	var next: Dictionary = (raw_access.get("maps", {}) if raw_access is Dictionary and raw_access.get("maps") is Dictionary else {})
 	if next == _access: return
 	_access = next.duplicate(true)
-	if map: _refresh_access_geometry.call_deferred()
+	if map:
+		_access_refresh_pending = true
+		_refresh_access_geometry.call_deferred()
 
 ## Native content provides geometric bindings; no story identity or rule is selected here.
 func _apply_geometry_bindings(snapshot: Dictionary, rebuild := true) -> void:
 	if map == null: return
+	var changed := _apply_record_geometry(key, _map_records[key], snapshot)
+	if changed and rebuild:
+		_build_grid()
+		_build_walls()
+
+func _apply_record_geometry(map_name: String, record: Dictionary, snapshot: Dictionary) -> bool:
 	var raw_bindings = snapshot.get("geometry_bindings", {})
-	var declaration: Dictionary = (raw_bindings.get(key, {}) if raw_bindings is Dictionary and raw_bindings.get(key) is Dictionary else {})
-	var signature := JSON.stringify(declaration)
-	if signature == _geometry_signature: return
-	_geometry_signature = signature
-	for node in _geometry_nodes:
+	var declaration: Dictionary = raw_bindings.get(map_name, {}) if raw_bindings is Dictionary and raw_bindings.get(map_name) is Dictionary else {}
+	if bool(record.geometry_applied) and declaration == record.geometry: return false
+	var layout: Node2D = record.node
+	var textures: Dictionary = {}
+	for prop in declaration.get("props", []):
+		var path := str(prop.get("texture", ""))
+		var texture := RESOURCES.ready(path) as Texture2D
+		if texture == null: texture = load(path) as Texture2D
+		if texture == null:
+			_fail_binding(self, "Missing native geometry texture: " + str(prop.get("id", "")))
+			return false
+		textures[str(prop.id)] = texture
+	for node in record.geometry_nodes:
 		if is_instance_valid(node):
 			node.get_parent().remove_child(node)
 			node.queue_free()
-	_geometry_nodes.clear()
-	var textures: Dictionary = {}
-	for prop in declaration.get("props", []):
-		var texture := load(str(prop.get("texture", ""))) as Texture2D
-		if texture == null:
-			_fail_binding(self, "Missing native geometry texture: " + str(prop.get("id", "")))
-			return
-		textures[str(prop.id)] = texture
+	record.geometry_nodes.clear()
 	for site in declaration.get("sites", []):
 		var id := str(site.get("id", ""))
-		if id == "" or map.get_node("Sites").has_node(NodePath(id)):
+		if id == "" or layout.get_node("Sites").has_node(NodePath(id)):
 			_fail_binding(self, "Duplicate or empty native geometry site: " + id)
 			continue
 		var marker := Marker2D.new()
 		marker.name = id
 		marker.position = Vector2(float(site.point[0]), float(site.point[1]))
 		marker.set_meta("label", str(site.get("label", id)))
-		map.get_node("Sites").add_child(marker)
-		_geometry_nodes.append(marker)
+		layout.get_node("Sites").add_child(marker)
+		record.geometry_nodes.append(marker)
 	for prop in declaration.get("props", []):
 		var texture: Texture2D = textures[str(prop.id)]
 		var sprite := Sprite2D.new()
@@ -140,8 +345,8 @@ func _apply_geometry_bindings(snapshot: Dictionary, rebuild := true) -> void:
 		sprite.position = Vector2(float(prop.position[0]), float(prop.position[1]))
 		sprite.centered = false
 		sprite.offset = Vector2(-texture.get_width() / 2.0, -texture.get_height())
-		map.get_node("Objects").add_child(sprite)
-		_geometry_nodes.append(sprite)
+		layout.get_node("Objects").add_child(sprite)
+		record.geometry_nodes.append(sprite)
 		if prop.has("footprint"):
 			var rect: Array = prop.footprint
 			var shape := RectangleShape2D.new()
@@ -149,11 +354,12 @@ func _apply_geometry_bindings(snapshot: Dictionary, rebuild := true) -> void:
 			var solid := CollisionShape2D.new()
 			solid.shape = shape
 			solid.position = sprite.position + Vector2(float(rect[0]), float(rect[1])) + shape.size / 2.0
-			map.get_node("Solids").add_child(solid)
-			_geometry_nodes.append(solid)
-	_grids.clear()
-	_solid_regions.clear()
-	if rebuild: _build_grid()
+			layout.get_node("Solids").add_child(solid)
+			record.geometry_nodes.append(solid)
+	record.geometry = declaration.duplicate(true)
+	record.geometry_applied = true
+	_invalidate_map(map_name)
+	return true
 
 func can_enter(next: String) -> bool:
 	return bool(_access.get(next, true))
@@ -162,28 +368,41 @@ func blocked_entry() -> void:
 	_switching = false
 	if map: field.player.position = _last_allowed_position
 
+func finish_transition() -> void:
+	_switching = false
+
 ## A closed destination blocks the same doorway for keyboard movement and navigation.
 ## The authored exit shape supplies geometry; availability comes from the live snapshot.
 func _refresh_access_geometry() -> void:
-	if not is_instance_valid(map): return
-	var solids := map.get_node_or_null("Solids")
-	if solids == null: return
-	for exit in map.get_node("Exits").get_children():
-		var barrier: CollisionShape2D = _access_shapes.get(exit.name)
+	_access_refresh_pending = false
+	if _closing or not is_instance_valid(map) or not _map_records.has(key): return
+	if _apply_record_access(key, _map_records[key], _access):
+		_build_grid()
+		_build_walls()
+
+func _apply_record_access(map_name: String, record: Dictionary, access: Dictionary) -> bool:
+	var layout: Node2D = record.node
+	var solids := layout.get_node_or_null("Solids")
+	if solids == null: return false
+	var changed := false
+	for exit in layout.get_node("Exits").get_children():
+		var disabled := bool(access.get(str(exit.get_meta("gate", exit.get_meta("target", ""))), true))
+		var barrier: CollisionShape2D = record.access_shapes.get(exit.name)
 		if not is_instance_valid(barrier):
 			var source := exit.get_node("Shape") as CollisionShape2D
 			barrier = CollisionShape2D.new()
 			barrier.name = "Access_" + str(exit.name)
 			barrier.shape = source.shape
 			barrier.position = exit.position + source.position
-			barrier.disabled = can_enter(str(exit.get_meta("target")))
+			barrier.disabled = disabled
 			solids.add_child(barrier)
-			_access_shapes[exit.name] = barrier
-		else:
-			barrier.disabled = can_enter(str(exit.get_meta("target")))
-	_grids.clear()
-	_solid_regions.clear()
-	_build_grid()
+			record.access_shapes[exit.name] = barrier
+			changed = true
+		elif barrier.disabled != disabled:
+			barrier.disabled = disabled
+			changed = true
+	if changed: _invalidate_map(map_name)
+	return changed
 
 func setup() -> bool:
 	_player_sprite = str(presentation.get("player_sprite", ""))
@@ -204,18 +423,52 @@ func stage_bounds(p: Vector2) -> Rect2:
 	var region := sight_region(Vector2i((p / 32.0).floor()))
 	var cache_key := key + ":" + region
 	if _stage_bounds_cache.has(cache_key): return _stage_bounds_cache[cache_key]
-	var rows: Array = map.get_meta("terrain_rows", [])
-	var bounds := Rect2(p, Vector2.ONE)
-	var found := false
+	# All authored regions are prepared before the chapter is revealed. A
+	# malformed/empty region must not introduce a full-map scan during walking.
+	return Rect2(p - Vector2(16, 16), Vector2(32, 32))
+
+func stage_lights(p: Vector2) -> Array:
+	var region := sight_region(Vector2i((p / 32.0).floor()))
+	return _stage_light_cache.get(key, {}).get(region, [])
+
+func presentation_capacity() -> Vector2i:
+	var result := Vector2i.ZERO
+	for declarations: Array in _stage_light_cache.get(key, {}).values():
+		var windows := 0
+		for declaration in declarations:
+			if str(declaration.get("kind", "")) == "window": windows += 1
+		result.x = maxi(result.x, declarations.size())
+		result.y = maxi(result.y, windows)
+	return result
+
+## Cache every room in one pass while the book still covers the chapter.
+## Only static terrain labels enter this cache; access/occupancy stays live.
+func _prepare_stage_bounds(map_name: String, layout: Node2D, tree: SceneTree) -> bool:
+	if _stage_ready.has(map_name): return true
+	var rows: Array = layout.get_meta("terrain_rows", [])
+	var regions := {}
+	var slice_start := Time.get_ticks_usec()
 	for y in rows.size():
 		var row: String = rows[y]
 		for x in row.length():
-			if sight_region(Vector2i(x, y)) == region:
-				var cell := Rect2(Vector2(x, y) * 32.0, Vector2(32, 32))
-				bounds = bounds.merge(cell) if found else cell
-				found = true
-	_stage_bounds_cache[cache_key] = bounds
-	return bounds
+			var region := _region_in_map(map_name, Vector2i(x, y))
+			var cell := Rect2(Vector2(x, y) * 32.0, Vector2(32, 32))
+			regions[region] = (regions[region] as Rect2).merge(cell) if regions.has(region) else cell
+		if Time.get_ticks_usec() - slice_start >= PREPARE_BUDGET_USEC:
+			await tree.process_frame
+			if _cancelled(): return false
+			slice_start = Time.get_ticks_usec()
+	var lights := {}
+	for region in regions:
+		_stage_bounds_cache[map_name + ":" + str(region)] = regions[region]
+		var declarations: Array = []
+		for declaration in layout.get_meta("stage_lights", []):
+			var point := Vector2(float(declaration.point[0]), float(declaration.point[1]))
+			if (regions[region] as Rect2).grow(12).has_point(point): declarations.append(declaration)
+		lights[region] = declarations
+	_stage_light_cache[map_name] = lights
+	_stage_ready[map_name] = true
+	return true
 
 func camera_point(p: Vector2) -> Vector2:
 	if not sight_terrain_fog(): return p
@@ -242,34 +495,110 @@ func station(target: String, who: String) -> Dictionary:
 		var id := target.substr(5)
 		if not geometry.has(id): return {}
 		return {"point": geometry[id].point, "radius": float(geometry[id].reach)}
+	_ensure_room_candidates()
+	var occupied: Array[Vector2] = field.occupied_positions(actor)
+	var has_free_floor := false
+	for point: Vector2 in _room_candidates[key].get(target, {}).get("fallback", []):
+		if not _point_occupied(point, occupied, true):
+			has_free_floor = true
+			break
+	if not has_free_floor: return {}
 	var preferred: Array[Vector2] = []
 	for point: Vector2 in stands():
-		if entered_room(point) == target and walkable(point, actor) and not field.position_occupied(actor, point):
+		if entered_room(point) == target and walkable(point, actor) and not _point_occupied(point, occupied):
 			preferred.append(point)
-	var open_points: Array[Vector2] = []
-	var fallback: Array[Vector2] = []
-	var grid := nav_grid(actor)
-	for y in range(grid.region.size.y):
-		for x in range(grid.region.size.x):
-			var cell := Vector2i(x, y)
-			if grid.is_point_solid(cell): continue
-			var point := grid.get_point_position(cell)
-			if entered_room(point) != target: continue
-			if field.position_occupied(actor, point): continue
-			fallback.append(point)
-			# Prefer room interior with turning space rather than a narrow door recess.
-			var can_turn := true
-			for offset in [Vector2.LEFT * 16, Vector2.RIGHT * 16, Vector2.UP * 16, Vector2.DOWN * 16]:
-				if entered_room(point + offset) != target or not walkable(point + offset, actor):
-					can_turn = false
-					break
-			if can_turn: open_points.append(point)
-	var nearer := func(a: Vector2, b: Vector2) -> bool: return a.distance_squared_to(actor.position) < b.distance_squared_to(actor.position)
-	preferred.sort_custom(nearer)
-	open_points.sort_custom(nearer)
-	fallback.sort_custom(nearer)
-	return {} if fallback.is_empty() else {"point": actor.position, "radius": 0.0,
-		"room_target": true, "approach_groups": [preferred, open_points, fallback]}
+	preferred.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.distance_squared_to(actor.position) < b.distance_squared_to(actor.position))
+	# Usually a retained Stand is reachable. Do not scan/sort every floor point
+	# until the preferred group has actually failed its real navigation query.
+	return {"point": actor.position, "radius": 0.0, "room_target": true,
+		"approach_groups": [preferred,
+			func(): return _ordered_room_candidates(target, "open", actor, occupied),
+			func(): return _ordered_room_candidates(target, "fallback", actor, occupied)]}
+
+func _point_occupied(point: Vector2, occupied: Array[Vector2], grid_cell := false) -> bool:
+	for position in occupied:
+		var separation := (position - point).abs()
+		if grid_cell:
+			if separation.x <= 19.0 and separation.y <= 15.0: return true
+		elif separation.x < 19.0 and separation.y < 15.0:
+			return true
+	return false
+
+func _ensure_room_candidates() -> void:
+	if _room_candidates.has(key): return
+	var rooms := {}
+	var navigation := {}
+	var grid: AStarGrid2D = _grids[key]
+	for y in grid.region.size.y:
+		_append_room_row(key, map, y, rooms, navigation)
+	_room_candidates[key] = rooms
+	_navigation_rooms[key] = navigation
+
+## Initial placement shares the prepared geometry used by ordinary movement.
+## Prefer room interiors with turning clearance; never offer doors or void cells.
+## The host still checks live occupancy and never relocates an existing body.
+func initial_room_candidates(room: String) -> Array[Vector2]:
+	_ensure_room_candidates()
+	var result: Array[Vector2] = []
+	var candidates: Dictionary = _room_candidates[key].get(room, {})
+	result.assign(candidates.get("open", []))
+	result.append_array(candidates.get("fallback", []))
+	return result
+
+func _ordered_room_candidates(room: String, group: String, actor: CharacterBody2D, occupied: Array[Vector2]) -> Array[Vector2]:
+	_ensure_room_candidates()
+	var result: Array[Vector2] = []
+	for point: Vector2 in _room_candidates[key].get(room, {}).get(group, []):
+		if not _point_occupied(point, occupied, true): result.append(point)
+	result.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.distance_squared_to(actor.position) < b.distance_squared_to(actor.position))
+	return result
+
+func _prepare_room_candidates(map_name: String, layout: Node2D, tree: SceneTree) -> bool:
+	if _room_candidates.has(map_name): return true
+	var grid: AStarGrid2D = _grids[map_name]
+	var rooms := {}
+	var navigation := {}
+	var slice_start := Time.get_ticks_usec()
+	for y in grid.region.size.y:
+		if _cancelled() or _grids.get(map_name) != grid: return false
+		_append_room_row(map_name, layout, y, rooms, navigation)
+		if Time.get_ticks_usec() - slice_start >= PREPARE_BUDGET_USEC:
+			await tree.process_frame
+			if _cancelled(): return false
+			slice_start = Time.get_ticks_usec()
+	if _grids.get(map_name) != grid: return false
+	_room_candidates[map_name] = rooms
+	_navigation_rooms[map_name] = navigation
+	return true
+
+func _append_room_row(map_name: String, layout: Node2D, y: int, rooms: Dictionary, navigation: Dictionary) -> void:
+	var grid: AStarGrid2D = _grids[map_name]
+	var rows: Array = layout.get_meta("terrain_rows", [])
+	var outdoor: bool = layout.has_meta("outdoor_core")
+	for x in grid.region.size.x:
+		var cell := Vector2i(x, y)
+		var point := grid.get_point_position(cell)
+		var room := _room_id(map_name, Vector2i((point / 32.0).floor()))
+		if not navigation.has(room): navigation[room] = []
+		navigation[room].append(cell)
+		if grid.is_point_solid(cell): continue
+		if room == "void": continue
+		if not outdoor and _mark_in_rows(rows, Vector2i((point / 32.0).floor())) not in [".", "S"]: continue
+		if not rooms.has(room): rooms[room] = {"open": [], "fallback": []}
+		rooms[room].fallback.append(point)
+		var can_turn := true
+		for offset in [Vector2.LEFT * 16, Vector2.RIGHT * 16, Vector2.UP * 16, Vector2.DOWN * 16]:
+			var near: Vector2 = point + offset
+			var near_cell := Vector2i((near / 32.0).floor())
+			if _room_id(map_name, near_cell) != room or not _walkable_on_map(map_name, near) or (not outdoor and _mark_in_rows(rows, near_cell) not in [".", "S"]):
+				can_turn = false
+				break
+		if can_turn: rooms[room].open.append(point)
+
+static func _mark_in_rows(rows: Array, cell: Vector2i) -> String:
+	if cell.y < 0 or cell.y >= rows.size(): return ""
+	var row: String = rows[cell.y]
+	return row.substr(cell.x, 1) if cell.x >= 0 and cell.x < row.length() else ""
 
 func _map_routes() -> Dictionary:
 	_ensure_static_manifest()
@@ -304,9 +633,14 @@ func execute_destination(destination: Dictionary, who: String, serial: int, acti
 			return
 		var origin := key
 		_route_target_next = str(edge.to)
+		# Start the next map's I/O and layout preparation while walking toward
+		# its authored exit. It has no effect on the body or receipt.
+		prepare_map(str(edge.to), field.snapshot, get_tree())
 		await field._follow_route(actor, edge.point)
 		await get_tree().physics_frame
 		await get_tree().process_frame
+		while _switching and not field._closing:
+			await get_tree().process_frame
 		_route_target_next = ""
 		if field._closing or not is_instance_valid(actor): return
 		if key == origin:
@@ -326,33 +660,38 @@ func play_replay(_ev: Dictionary) -> void: pass
 
 func load_map(next: String, _spawn: String) -> void:
 	if key == next and map != null: return
-	var packed := _get_packed_map(next)
-	if packed == null: return
+	if not _map_records.has(next):
+		var packed := _get_packed_map(next)
+		if packed == null: return
+		_map_records[next] = _new_map_record(packed.instantiate() as Node2D)
 	if map:
-		# 先停掉旧图出口的检测并断开信号，再释放旧图，避免物理回调里改动碰撞体。
+		# Keep the inactive layout detached: no collision world, area callbacks,
+		# actors or processing run in a cached room.
 		for exit in map.get_node("Exits").get_children():
 			var area := exit as Area2D
 			area.monitoring = false
 			for c in area.body_entered.get_connections(): area.body_entered.disconnect(c.callable)
 			for c in area.body_exited.get_connections(): area.body_exited.disconnect(c.callable)
 		remove_child(map)
-		map.queue_free()
 	key = next
-	_geometry_signature = ""
-	_geometry_nodes.clear()
-	_access_shapes.clear()
-	map = packed.instantiate()
+	var record: Dictionary = _map_records[next]
+	map = record.node
+	_access_shapes = record.access_shapes
 	add_child(map)
 	var architecture := map.get_node_or_null("Architecture") as Sprite2D
-	if architecture != null and architecture.texture != null:
+	if architecture != null and architecture.texture != null and not bool(record.relief_ready):
 		var relief := architecture.texture.resource_path.get_basename() + ".relief.tres"
 		if ResourceLoader.exists(relief): architecture.texture = load(relief)
+		record.relief_ready = true
 	occluders.clear()
 	for node in map.get_node("Objects").get_children():
 		if node is Sprite2D and node.has_meta("occluder"): occluders.append(node)
-	_switching = false
+	# WorldView releases an in-flight transition after the retained body and
+	# collision proxies are attached, and after any visible fade has completed.
 	armed = false
 	for exit in map.get_node("Exits").get_children():
+		if bool(exit.get_meta("internal_gate", false)): continue
+		(exit as Area2D).monitoring = true
 		(exit as Area2D).body_entered.connect(_on_exit_entered.bind(exit))
 		(exit as Area2D).body_exited.connect(_on_exit_left)
 	var raw_access = field.snapshot.get("access", {})
@@ -360,7 +699,10 @@ func load_map(next: String, _spawn: String) -> void:
 	_access = maps.duplicate(true) if maps is Dictionary else {}
 	_apply_geometry_bindings(field.snapshot, false)
 	_refresh_access_geometry()
+	_build_grid()
 	_build_walls()
+	_touch_map(next)
+	_trim_maps()
 
 func spawn_point(spawn: String) -> Vector2:
 	var marker := map.get_node_or_null("Spawns/" + spawn) as Marker2D
@@ -375,47 +717,24 @@ func spawn_point(spawn: String) -> Vector2:
 ## Cross-map placement is only the authored doorway transform or a continuous seam.
 ## Missing authored geometry blocks the transition before the source map is removed.
 func valid_transition(next: String, spawn: String, at: Vector2, use_at: bool) -> bool:
-	if _route_target_next != next: return false
-	_ensure_static_manifest()
-	var point := at
-	var has_spawn := false
-	if _static_spawns.has(next) and _static_spawns[next].has(spawn):
-		has_spawn = true
-		if not use_at: point = _static_spawns[next][spawn]
-	var valid := use_at or has_spawn
-	var size: Vector2 = _static_meta.get(next, {}).get("map_size", Vector2.ZERO)
-	if size != Vector2.ZERO and not Rect2(Vector2.ZERO, size).has_point(point):
-		valid = false
-	if valid and field.execution_bridge != null:
-		valid = not field.execution_bridge.occupied_at(field.player, field.execution_resource, next, point)
-	if not valid or use_at or not _static_spawns.has(next):
-		var packed := _get_packed_map(next)
-		if packed == null: return false
-		var layout := packed.instantiate() as Node2D
-		var marker: Marker2D = layout.get_node_or_null("Spawns/" + spawn) as Marker2D if spawn != "" else null
-		point = at if use_at else (marker.position if marker != null else Vector2.ZERO)
-		valid = use_at or marker != null
-		if use_at:
-			valid = map.has_meta("outdoor_origin") and layout.has_meta("outdoor_origin") and layout.has_meta("outdoor_core")
-			if valid:
-				var source_world: Vector2 = field.player.position + (map.get_meta("outdoor_origin") as Vector2)
-				var target_world: Vector2 = at + (layout.get_meta("outdoor_origin") as Vector2)
-				valid = source_world.distance_to(target_world) <= 0.01 and (layout.get_meta("outdoor_core") as Rect2).has_point(target_world)
-		size = layout.get_meta("map_size", Vector2.ZERO)
-		valid = valid and Rect2(Vector2.ZERO, size).has_point(point)
-		if valid and field.execution_bridge != null:
-			valid = not field.execution_bridge.occupied_at(field.player, field.execution_resource, next, point)
-		var solids := layout.get_node_or_null("Solids")
-		if valid and solids != null:
-			for node in solids.get_children():
-				var shape := node as CollisionShape2D
-				if shape == null or shape.disabled or shape.shape is not RectangleShape2D: continue
-				var extent: Vector2 = (shape.shape as RectangleShape2D).size
-				if Rect2(shape.position - extent / 2.0, extent).grow_individual(10, 1, 10, 14).has_point(point):
-					valid = false
-					break
-		layout.free()
-	return valid
+	if _route_target_next != next or not _map_records.has(next): return false
+	var layout: Node2D = _map_records[next].node
+	var marker: Marker2D = layout.get_node_or_null("Spawns/" + spawn) as Marker2D if spawn != "" else null
+	if not use_at and marker == null: return false
+	var point := at if use_at else marker.position
+	if use_at:
+		if not map.has_meta("outdoor_origin") or not layout.has_meta("outdoor_origin") or not layout.has_meta("outdoor_core"): return false
+		var source_world: Vector2 = field.player.position + (map.get_meta("outdoor_origin") as Vector2)
+		var target_world: Vector2 = at + (layout.get_meta("outdoor_origin") as Vector2)
+		if source_world.distance_to(target_world) > 0.01 or not (layout.get_meta("outdoor_core") as Rect2).has_point(target_world): return false
+	var size: Vector2 = layout.get_meta("map_size", Vector2.ZERO)
+	if not Rect2(Vector2.ZERO, size).has_point(point): return false
+	# A doorway transform has an authored continuous footpoint. Check the same
+	# inflated physical footprints as before, without snapping it to a grid cell.
+	for rect: Rect2 in _blocked_rects.get(next, []):
+		if rect.has_point(point): return false
+	if field.execution_bridge != null and field.execution_bridge.occupied_at(field.player, field.execution_resource, next, point): return false
+	return true
 
 func stands() -> Array:
 	var result := []
@@ -433,7 +752,7 @@ func door_point(fallback: Vector2) -> Vector2:
 # ------------------------------------------------------------- movement ---
 
 func _on_exit_entered(body: Node, exit: Area2D) -> void:
-	if body != field.player or not armed or _route_target_next != str(exit.get_meta("target")): return
+	if body != field.player or not armed or _route_target_next != str(exit.get_meta("target", "")): return
 	armed = false
 	_switching = true
 	field._cancel_motion(field.player)
@@ -474,25 +793,28 @@ func _check_region() -> void:
 
 ## 碰撞体（墙与家具）栅格化为寻路网格：半格精度，人物脚底留出余量。每张图只建一次。
 func _build_grid() -> void:
-	if _grids.has(key): return
-	var size: Vector2 = map.get_meta("map_size", Vector2(1024, 1024))
+	_build_grid_for(key, map)
+
+func _build_grid_for(map_name: String, layout: Node2D) -> void:
+	if _grids.has(map_name): return
+	var size: Vector2 = layout.get_meta("map_size", Vector2(1024, 1024))
 	var grid := AStarGrid2D.new()
 	grid.region = Rect2i(0, 0, int(size.x / 16.0), int(size.y / 16.0))
 	grid.cell_size = Vector2(16, 16)
 	grid.offset = Vector2(8, 8)
 	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
 	grid.update()
-	_grids[key] = grid
-	_blocked_rects[key] = []
+	_grids[map_name] = grid
+	_blocked_rects[map_name] = []
 	var regions: Array[Rect2i] = []
-	var solids := map.get_node_or_null("Solids")
+	var solids := layout.get_node_or_null("Solids")
 	if solids != null:
 		for shape_node in solids.get_children():
 			var cs := shape_node as CollisionShape2D
 			if cs == null or cs.disabled or not (cs.shape is RectangleShape2D): continue
 			var half: Vector2 = (cs.shape as RectangleShape2D).size / 2.0
 			var rect := Rect2(cs.position - half, half * 2.0).grow_individual(10, 1, 10, 14)
-			_blocked_rects[key].append(rect)
+			_blocked_rects[map_name].append(rect)
 			var x0 := maxi(0, int(ceil((rect.position.x - 8.0) / 16.0)))
 			var y0 := maxi(0, int(ceil((rect.position.y - 8.0) / 16.0)))
 			var x1 := mini(grid.region.size.x - 1, int(floor((rect.end.x - 8.0) / 16.0)))
@@ -501,9 +823,20 @@ func _build_grid() -> void:
 				var r := Rect2i(x0, y0, x1 - x0 + 1, y1 - y0 + 1)
 				grid.fill_solid_region(r, true)
 				regions.append(r)
-	_solid_regions[key] = regions
+	_solid_regions[map_name] = regions
+	var buckets := {}
+	for rect: Rect2 in _blocked_rects[map_name]:
+		var first := Vector2i((rect.position / 16.0).floor())
+		var last := Vector2i((rect.end / 16.0).floor())
+		for y in range(maxi(0, first.y), mini(grid.region.end.y - 1, last.y) + 1):
+			for x in range(maxi(0, first.x), mini(grid.region.end.x - 1, last.x) + 1):
+				var cell := Vector2i(x, y)
+				if grid.is_point_solid(cell): continue
+				if not buckets.has(cell): buckets[cell] = []
+				buckets[cell].append(rect)
+	_blocked_cells[map_name] = buckets
 
-func nav_grid(walker: CharacterBody2D) -> AStarGrid2D:
+func nav_grid(walker: CharacterBody2D, writable := false) -> AStarGrid2D:
 	var base: AStarGrid2D = _grids[key]
 	var other_cells: Array[Vector2i] = []
 	for position: Vector2 in field.occupied_positions(walker):
@@ -514,7 +847,7 @@ func nav_grid(walker: CharacterBody2D) -> AStarGrid2D:
 				var cell := Vector2i(x, y)
 				if base.region.has_point(cell) and not base.is_point_solid(cell):
 					other_cells.append(cell)
-	if other_cells.is_empty():
+	if other_cells.is_empty() and not writable:
 		return base
 	var grid := AStarGrid2D.new()
 	grid.region = base.region
@@ -538,13 +871,92 @@ func manual_exit_target(point: Vector2) -> String:
 		if can_enter(target) and rectangle.has_point(point): return target
 	return ""
 
+## Only authored exit rectangles supply near-door interaction geometry.
+## This query does not move bodies, change access or start a transition.
+func manual_exit_targets_near(point: Vector2, radius: float) -> Array[String]:
+	var targets: Array[String] = []
+	if not armed or map == null: return targets
+	for exit in map.get_node("Exits").get_children():
+		var shape := exit.get_node_or_null("Shape") as CollisionShape2D
+		if shape == null or not shape.shape is RectangleShape2D: continue
+		var target := str(exit.get_meta("target", ""))
+		if target == "" or not can_enter(target): continue
+		var rectangle := Rect2(exit.position + shape.position - shape.shape.size / 2.0, shape.shape.size)
+		var nearest := point.clamp(rectangle.position, rectangle.end)
+		if point.distance_to(nearest) <= radius and target not in targets: targets.append(target)
+	return targets
+
 func walkable(p: Vector2, _walker: CharacterBody2D = null) -> bool:
-	var grid: AStarGrid2D = _grids.get(key)
-	var c := Vector2i(p / 16.0)
-	if grid == null or not grid.region.has_point(c) or grid.is_point_solid(c): return false
-	for rect: Rect2 in _blocked_rects.get(key, []):
+	return _walkable_on_map(key, p)
+
+func _walkable_on_map(map_name: String, p: Vector2) -> bool:
+	var grid: AStarGrid2D = _grids.get(map_name)
+	var cell := Vector2i((p / 16.0).floor())
+	if grid == null or not grid.region.has_point(cell) or grid.is_point_solid(cell): return false
+	for rect: Rect2 in _blocked_cells.get(map_name, {}).get(cell, []):
 		if rect.has_point(p): return false
 	return true
+
+func local_nav_grid(walker: CharacterBody2D, room: String, destination_room: String) -> AStarGrid2D:
+	var base: AStarGrid2D = _grids[key]
+	if not _local_grids.has(key): _local_grids[key] = {}
+	var cache: Dictionary = _local_grids[key]
+	var token := room + "\n" + destination_room
+	if not cache.has(token):
+		# The room pair is a small geometric window. Avoid allocating the whole
+		# residential floor for every mouse click or controller interaction.
+		var bounds := Rect2()
+		var found := false
+		for candidate in [room, destination_room]:
+			if candidate == "": continue
+			var region: String = str(candidate) if key == "living_floor" else str(candidate).trim_prefix(key + ":")
+			var cache_key: String = key + ":" + region
+			if _stage_bounds_cache.has(cache_key):
+				var part: Rect2 = _stage_bounds_cache[cache_key]
+				bounds = bounds.merge(part) if found else part
+				found = true
+		var area := base.region
+		if found:
+			var start := Vector2i((bounds.position / 16.0).floor())
+			var end := Vector2i((bounds.end / 16.0).ceil())
+			area = Rect2i(start, end - start).intersection(base.region)
+		var grid := AStarGrid2D.new()
+		grid.region = area
+		grid.cell_size = base.cell_size
+		grid.offset = base.offset
+		grid.diagonal_mode = base.diagonal_mode
+		grid.update()
+		for y in range(area.position.y, area.end.y):
+			for x in range(area.position.x, area.end.x):
+				var cell := Vector2i(x, y)
+				grid.set_point_solid(cell, not _local_cell_admitted(base, cell, room, destination_room))
+		if cache.size() >= MAX_LOCAL_NAV_GRIDS: cache.erase(cache.keys()[0])
+		cache[token] = {"grid": grid, "occupied": []}
+	var record: Dictionary = cache[token]
+	var grid: AStarGrid2D = record.grid
+	# Queries consume the grid synchronously and never mutate it. Restore only
+	# the previous occupancy overlay; room masks and authored walls remain.
+	for cell: Vector2i in record.occupied:
+		grid.set_point_solid(cell, not _local_cell_admitted(base, cell, room, destination_room))
+	var occupied: Array[Vector2i] = []
+	var seen := {}
+	for position: Vector2 in field.occupied_positions(walker):
+		var first := Vector2i(((position - Vector2(19, 15) - grid.offset) / grid.cell_size).ceil())
+		var last := Vector2i(((position + Vector2(19, 15) - grid.offset) / grid.cell_size).floor())
+		for y in range(first.y, last.y + 1):
+			for x in range(first.x, last.x + 1):
+				var cell := Vector2i(x, y)
+				if grid.region.has_point(cell) and not seen.has(cell):
+					seen[cell] = true
+					occupied.append(cell)
+					grid.set_point_solid(cell, true)
+	record.occupied = occupied
+	return grid
+
+func _local_cell_admitted(base: AStarGrid2D, cell: Vector2i, room: String, destination_room: String) -> bool:
+	if not base.region.has_point(cell) or base.is_point_solid(cell): return false
+	var candidate_room := room_of(base.get_point_position(cell))
+	return candidate_room == room or candidate_room == destination_room
 
 ## 室外楼体挡人物视线；室内按当前房间显示。
 func _build_walls() -> void:
@@ -580,14 +992,29 @@ func sight_terrain_fog() -> bool: return not map.has_meta("outdoor_core")
 func sight_point(p: Vector2) -> Vector2: return p if sight_terrain_fog() else p + Vector2(0, -8)
 
 func sight_region(cell: Vector2i) -> String:
+	return _region_in_map(key, cell)
+
+static func _region_in_map(map_name: String, cell: Vector2i) -> String:
+	if map_name == "living_floor":
+		# Hall owns the shared wall columns; room names keep the DV contract.
+		var order := ["living_hall", "zone_yi", "zone_jia", "zone_bing", "zone_ding"]
+		for part: String in order:
+			if not _floor_parts.has(part): continue
+			var offset: Array = _floor_parts[part]
+			var local := cell - Vector2i(Vector2(float(offset[0]), float(offset[1])) / 32.0)
+			var size := Vector2i(16, 46) if part == "living_hall" else Vector2i(36, 22)
+			if not Rect2i(Vector2i.ZERO, size).has_point(local): continue
+			if part == "living_hall" and local.y >= 17: local.y = maxi(16, local.y - 6)
+			return part + ":" + _region_in_map(part, local)
+		return "void"
 	# 分区坐标直接对应 chapter2_art/rooms.py 的原生房间格；东区为水平镜像。
-	if key in ["zone_yi", "zone_jia", "zone_ding", "zone_bing"]:
-		var x := 35 - cell.x if key in ["zone_yi", "zone_ding"] else cell.x
+	if map_name in ["zone_yi", "zone_jia", "zone_ding", "zone_bing"]:
+		var x := 35 - cell.x if map_name in ["zone_yi", "zone_ding"] else cell.x
 		if x >= 30: return "wc" if cell.y < 7 else ("store" if cell.y >= 14 else "foyer")
 		if x >= 22: return "hall" if cell.y < 14 else "prep"
 		if cell.y >= 9 and cell.y < 14: return "corridor"
 		return ("north_" if cell.y < 9 else "south_") + str(clampi(floori(float(x) / 7.0), 0, 2))
-	match key:
+	match map_name:
 		"living_hall": return "bath" if cell.y >= 32 else "hall"
 		"archive":
 			if cell.x >= 16: return "works"
@@ -595,15 +1022,29 @@ func sight_region(cell: Vector2i) -> String:
 		"resonance": return "silent" if cell.x >= 22 else "hall"
 		"clinic": return "safety" if cell.x >= 20 else "ward"
 		"logistics": return "kitchen" if cell.x < 13 else "dining"
-	return key
+	return map_name
 
-func room_of(p: Vector2) -> String: return key + ":" + sight_region(Vector2i((p / 32.0).floor()))
+static func _room_id(map_name: String, cell: Vector2i) -> String:
+	var region := _region_in_map(map_name, cell)
+	return region if map_name == "living_floor" else map_name + ":" + region
+
+func room_of(p: Vector2) -> String: return _room_id(key, Vector2i((p / 32.0).floor()))
 ## A source-side threshold belongs to its departure room, but is not arrival.
 func departure_room(p: Vector2) -> String:
 	var entered := entered_room(p)
 	if entered != "": return entered
-	if walkable(p) and _terrain_mark(Vector2i((p / 32.0).floor())) == "D": return room_of(p)
+	if _terrain_mark(Vector2i((p / 32.0).floor())) == "D" and _departure_footpoint_clear(p): return room_of(p)
 	return ""
+
+## Source identity uses the retained body's continuous footpoint. Its nav-cell
+## centre can lie inside a neighbouring inflated wall although the body is clear.
+## Keep the original inflation and all destination/navigation checks unchanged.
+func _departure_footpoint_clear(p: Vector2) -> bool:
+	var grid: AStarGrid2D = _grids.get(key)
+	if grid == null or not grid.region.has_point(Vector2i((p / 16.0).floor())): return false
+	for rect: Rect2 in _blocked_rects.get(key, []):
+		if rect.has_point(p): return false
+	return true
 
 func _terrain_mark(cell: Vector2i) -> String:
 	var rows: Array = map.get_meta("terrain_rows", []) if map else []
@@ -616,6 +1057,9 @@ func doorway_rooms(p: Vector2) -> Array[String]:
 	var start := Vector2i((p / 32.0).floor())
 	var result: Array[String] = []
 	if _terrain_mark(start) != "D": return result
+	if not _doorway_cache.has(key): _doorway_cache[key] = {}
+	var cache: Dictionary = _doorway_cache[key]
+	if cache.has(start): return cache[start]
 	var pending: Array[Vector2i] = [start]
 	var seen := {start: true}
 	while not pending.is_empty():
@@ -629,7 +1073,44 @@ func doorway_rooms(p: Vector2) -> Array[String]:
 			elif mark in [".", "S"]:
 				var room := room_of(Vector2(adjacent) * 32.0 + Vector2(16,16))
 				if room not in result: result.append(room)
+	# Door components are immutable authored geometry. Cache all their cells;
+	# formal availability and access checks remain in the live action path.
+	for cell in seen: cache[cell] = result
 	return result
+
+## An authored open floor boundary is a passage without a D marker. This query
+## proves only the current adjacent crossing; it never moves or admits an actor.
+func passage_at(source: Vector2, attempted: Vector2, from_room: String, to_room: String, walker: CharacterBody2D) -> Dictionary:
+	if map == null or not is_instance_valid(walker) or from_room == "" or to_room == "" or from_room == to_room: return {}
+	if walker.position != source or departure_room(source) != from_room or entered_room(source) != from_room or entered_room(attempted) != to_room: return {}
+	var source_cell := Vector2i((source / 32.0).floor())
+	var target_cell := Vector2i((attempted / 32.0).floor())
+	var difference := (target_cell - source_cell).abs()
+	if difference.x + difference.y != 1: return {}
+	if _terrain_mark(source_cell) not in [".", "S"] or _terrain_mark(target_cell) not in [".", "S"]: return {}
+	# One existing terrain cell is the maximum near-boundary probe. Navigation,
+	# inflated obstacles and the real body's collision remain unchanged.
+	if source.distance_to(attempted) > 32.0 or not walkable(source, walker) or not walkable(attempted, walker): return {}
+	if walker.test_move(walker.global_transform, attempted - source): return {}
+	return {"kind": "open-boundary", "map": key, "from_room": from_room, "to_room": to_room,
+		"source_point": source, "target_point": attempted, "landing": attempted}
+
+## A click on a threshold ends just inside the requested neighbour, never at
+## an arbitrary room station. This is geometry only, not entry permission.
+func doorway_landing(p: Vector2, target_room: String, walker: CharacterBody2D) -> Variant:
+	if target_room not in doorway_rooms(p): return null
+	var best := INF
+	var found: Variant = null
+	for point: Vector2 in _room_candidates.get(key, {}).get(target_room, {}).get("fallback", []):
+		var distance := point.distance_squared_to(p)
+		# Authored thresholds may be three 32-pixel tiles deep. Include the
+		# first interior navigation centre even when clicking the near edge.
+		if distance > 16384.0 or distance >= best: continue
+		if entered_room(point) != target_room or not walkable(point, walker): continue
+		if field.position_occupied(walker, point): continue
+		best = distance
+		found = point
+	return found
 
 func entered_room(p: Vector2) -> String:
 	if map == null: return ""

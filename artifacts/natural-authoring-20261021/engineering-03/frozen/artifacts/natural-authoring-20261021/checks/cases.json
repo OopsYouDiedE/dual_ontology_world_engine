@@ -1,0 +1,233 @@
+[
+  {
+    "id": "natural-behavior",
+    "file": "behavior.dv",
+    "outputs": [
+      {
+        "prefix": "RAW ",
+        "value": "第一行保留中文标点：，。！？\nfn pretend() = \"unterminated\n#include deliberately-missing.dv\n#define 当 while\n// 原文不是注释；未配对括号 { [ (\n路径 C:\\story\\new\\file.dv；原样的 \\n 与 \\\" 都是文本。\n引号“甲”、‘乙’、「丙」与 ASCII \"quoted\"。\n非 BMP：😀、𠮷；行分隔字符：甲 乙。\n\n    额外四格缩进保留。\n最后一行。"
+      },
+      {
+        "prefix": "DIALOGUE ",
+        "value": [
+          "第一句：「请核对。」",
+          "\"\"",
+          "    保留额外缩进的第二句。",
+          "#include deliberately-missing-dialogue.dv",
+          "最后一句😀。"
+        ]
+      },
+      {
+        "prefix": "CRLF ",
+        "value": "第一行。\n\n第二行😀。"
+      },
+      {
+        "prefix": "TERMINAL ",
+        "value": "文件末尾没有换行。"
+      }
+    ],
+    "markers": [
+      "SCENARIO literal-text-and-conditional-dialogue completed",
+      "SCENARIO law-structure-three-valued-logic-and-explicit-execution completed",
+      "SCENARIO action-data-once-surface-and-independent-ownership completed"
+    ]
+  },
+  {
+    "id": "legacy-compatibility",
+    "file": "legacy-compatibility.dv",
+    "markers": [
+      "SCENARIO legacy-formula-local-and-call-compatibility completed",
+      "SCENARIO new-natural-declarations-coexist-with-legacy-names completed"
+    ]
+  },
+  {
+    "id": "law-missing-premise",
+    "file": "negative/law-missing-premise.dv",
+    "reject": {
+      "message": "法则需要前提或当分句",
+      "line": 3,
+      "column": 1
+    }
+  },
+  {
+    "id": "law-missing-effects",
+    "file": "negative/law-missing-effects.dv",
+    "reject": {
+      "message": "法则需要效果或则分句",
+      "line": 3,
+      "column": 1
+    }
+  },
+  {
+    "id": "law-duplicate-premise",
+    "file": "negative/law-duplicate-premise.dv",
+    "reject": {
+      "message": "重复分句：前提",
+      "line": 5,
+      "column": 5
+    }
+  },
+  {
+    "id": "law-duplicate-effects",
+    "file": "negative/law-duplicate-effects.dv",
+    "reject": {
+      "message": "重复分句：效果",
+      "line": 6,
+      "column": 5
+    }
+  },
+  {
+    "id": "law-mixed-premise",
+    "file": "negative/law-mixed-premise.dv",
+    "reject": {
+      "message": "前提与当分句不能同时使用",
+      "line": 3,
+      "column": 1
+    }
+  },
+  {
+    "id": "law-mixed-effects",
+    "file": "negative/law-mixed-effects.dv",
+    "reject": {
+      "message": "效果与则分句不能同时使用",
+      "line": 3,
+      "column": 1
+    }
+  },
+  {
+    "id": "law-unknown-clause",
+    "file": "negative/law-unknown-clause.dv",
+    "reject": {
+      "message": "未知法则分句：因而",
+      "line": 5,
+      "column": 5
+    }
+  },
+  {
+    "id": "action-unknown-clause",
+    "file": "negative/action-unknown-clause.dv",
+    "reject": {
+      "message": "未知行动分句：自动成功",
+      "line": 11,
+      "column": 5
+    }
+  },
+  {
+    "id": "action-missing-known",
+    "file": "negative/action-missing-known.dv",
+    "reject": {
+      "message": "缺少必要分句：precondition",
+      "line": 3,
+      "column": 1
+    }
+  },
+  {
+    "id": "action-duplicate-known",
+    "file": "negative/action-duplicate-known.dv",
+    "reject": {
+      "message": "重复分句：precondition",
+      "line": 11,
+      "column": 5
+    }
+  },
+  {
+    "id": "unbound-after-nonbmp",
+    "file": "negative/unbound-after-nonbmp.dv",
+    "reject": {
+      "message": "unbound local",
+      "line": 8,
+      "column": 44
+    }
+  },
+  {
+    "id": "duplicate-declaration",
+    "file": "negative/duplicate-declaration.dv",
+    "reject": {
+      "message": "duplicate or reserved function",
+      "line": 6,
+      "column": 1
+    }
+  },
+  {
+    "id": "empty-prose",
+    "file": "negative/empty-prose.dv",
+    "reject": {
+      "message": "叙述或台词需要缩进的正文",
+      "line": 4,
+      "column": 1
+    }
+  },
+  {
+    "id": "unclosed-quote",
+    "file": "negative/unclosed-quote.dv",
+    "reject": {
+      "message": "中文引号必须在本行闭合",
+      "line": 4,
+      "column": 7
+    }
+  },
+  {
+    "id": "included-source-location",
+    "file": "negative/include-entry.dv",
+    "reject": {
+      "message": "unbound local",
+      "file": "negative/included-error.dv",
+      "line": 2,
+      "column": 7
+    }
+  },
+  {
+    "id": "law-bare-boolean",
+    "file": "negative/law-bare-boolean.dv",
+    "reject": {
+      "message": "条件需要三值命题",
+      "line": 4,
+      "column": 7
+    }
+  },
+  {
+    "id": "alias-after-declaration",
+    "file": "negative/alias-after-declaration.dv",
+    "reject": {
+      "message": "define 或称谓必须位于本文件声明之前",
+      "line": 6,
+      "column": 1
+    }
+  },
+  {
+    "id": "alias-nontext",
+    "file": "negative/alias-nontext.dv",
+    "reject": {
+      "message": "称谓须绑定文字",
+      "line": 3,
+      "column": 9
+    }
+  },
+  {
+    "id": "negation-bare-boolean",
+    "file": "negative/negation-bare-boolean.dv",
+    "reject": {
+      "message": "条件需要三值命题",
+      "line": 4,
+      "column": 9
+    }
+  },
+  {
+    "id": "conjunction-bare-boolean",
+    "file": "negative/conjunction-bare-boolean.dv",
+    "reject": {
+      "message": "条件需要三值命题",
+      "line": 4,
+      "column": 14
+    }
+  },
+  {
+    "id": "disjunction-bare-boolean",
+    "file": "negative/disjunction-bare-boolean.dv",
+    "reject": {
+      "message": "条件需要三值命题",
+      "line": 4,
+      "column": 7
+    }
+  }
+]

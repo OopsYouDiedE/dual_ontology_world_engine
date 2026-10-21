@@ -5,6 +5,7 @@ signal arrived
 const ARRIVAL_RADIUS := 0.1
 const STUCK_DISTANCE := 0.5
 const STUCK_SECONDS := 0.5
+const MAX_ROUTE_STEPS_PER_TICK := 32
 
 var sprite: AnimatedSprite2D
 var facing := "front"
@@ -198,22 +199,29 @@ func _finish_travel(ok: bool, reason: String) -> void:
 	arrived.emit()
 
 func _physics_process(delta: float) -> void:
-	if not travelling:
+	if not travelling or delta <= 0.0:
 		return
-	var difference := target - position
-	if difference.length() > ARRIVAL_RADIUS:
-		# 最后一步也走碰撞检测，不把落在障碍内的终点当成已到达。
-		velocity = difference.normalized() * minf(speed, difference.length() / delta)
-		face_vector(difference)
-		pose("walk")
-		move_and_slide()
-	if position.distance_to(target) <= ARRIVAL_RADIUS:
+	# A waypoint does not consume a whole physics tick. Spend the remaining
+	# distance on the next segment, keeping every corner and every collision.
+	var remaining := speed * delta
+	for _step in MAX_ROUTE_STEPS_PER_TICK:
+		var difference := target - position
+		if difference.length() > ARRIVAL_RADIUS:
+			if remaining <= 0.0: break
+			var motion := difference.limit_length(remaining)
+			# move_and_slide integrates over the full physics delta on each call.
+			# Dividing this segment's motion by that same delta avoids extra speed.
+			velocity = motion / delta
+			face_vector(difference)
+			pose("walk")
+			move_and_slide()
+			remaining = maxf(0.0, remaining - motion.length())
+			if position.distance_to(target) > ARRIVAL_RADIUS: break
 		waypoint += 1
-		if waypoint < path.size():
-			target = path[waypoint]
-		else:
+		if waypoint >= path.size():
 			_finish_travel(true, "arrived")
 			return
+		target = path[waypoint]
 	if position.distance_to(_progress_point) >= STUCK_DISTANCE:
 		_progress_point = position
 		_stuck_time = 0.0

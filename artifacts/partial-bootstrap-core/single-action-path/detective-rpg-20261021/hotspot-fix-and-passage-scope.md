@@ -1,0 +1,26 @@
+# 热点可发现性落地与连续过门修复范围
+
+2026-10-21。经主代理授权，并与integration_inventory确认WorldView整合已完成后，仅局部修改该文件的_process家具命中、HintOverlay._draw和SpatialInput._unhandled_input。未构建、未运行。对应AGENTS与tools/README只增补说明。
+
+## 本轮新增
+
+- WorldView.gd:585起保留真实家具命中、原_player_object_drawn和in_sight过滤；优先选择已有sprite_sites映射且site_visible的实际物件，普通家具标题留为fallback，避免StudyTable先出现便吞掉Slate的点击。站点、碰撞、reach及正式动作链不变。
+- WorldView.gd:1231起仅当field_active、can_submit且site_visible时，从choices_for的available选项绘制固定“当前可交互”圆标；物件与人物使用source.site_box/site_marker。没有把缺失new改成true，没有把可交互解释成新证据或已取得；减少动态时仍为静态。
+- WorldView.gd:1860起E无合法近热点及唯一门候选时，在can_submit已就绪的前提下发三语UI interaction_hint。它只走现有Main.show_aside，未提交select、世界动作或剧情对白。连续过门仍按其既有独占状态处理，不另发第二个动作。
+
+三文件git diff --check退出0；只有两文档CRLF下一次Git操作转LF提示。未做GDScript解析、构建、输入、碰撞或画面验收，待主代理统一运行。E7具体title由主代理在内容投影修订。
+
+## perf连续过门实际覆盖的失败恢复
+
+只读检查perf/chapter1-seamless-controls-20261021以及已整合工作树，看到明确的同图连续过门恢复实现。当前WorldView._request_continuous要求destination.map等于当前map、源房/目标房不相同、真实脚点在含两房的门道内；Main还复核同resource、同map及已准备的连续请求。它不是一般跨图移动接口。
+
+当连续请求phase=arrived，而落定的权威snapshot仍处from_room，synchronize_continuous_snapshot将其置为reconciling。_reconcile_rejected_arrival用原房和目标房的真实导航/占位网格，沿原speed、move_and_slide走回_last_source_position；只在真实departure_room回到from_room后释放请求，不直接改position、不提交第二份Complete。回源无路、几何改变或动态受阻时记录原因并每0.2秒重建路线重试。因而它确实处理了一类“同图连续过门已跨过、Complete未承认”的位置失配；此前笼统称所有此类路径均未处理已不准确。
+
+适用边界：
+
+- 它只看当前player的_continuous请求，不覆盖普通DvFieldExecutor执行的跨图动作、离屏NPC动作、普通站点接近、多个地图中途转交后失败。
+- 它让身体真实回到DV保留的源房，不是在失败Complete提交实际中间地点；与failed-motion-host-receipt-plan的正式实际终点同步是不同合同。
+- 若回源路被持续占据或通行已变化，重试仍可能持续等待；代码存在blocked诊断，不足以证明可必然恢复。
+- 已整合实现没有我能找到的字面passage_rejected状态名；相关实际状态是arrived→reconciling及continuous_reconciliation_*记录，具体结论按这些源码路径。
+
+因此不能宣称原先跨图/跨房中途失败问题已全面修复。其余失败终点仍需内容显式allowed_stop与同次rejected Complete的位置子提交方案；当前只报告已实现的真实回源范围，不补猜实机结果。

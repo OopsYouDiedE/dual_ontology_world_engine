@@ -1,0 +1,175 @@
+Godot Engine v4.6.1.stable.mono.official.14d19694e - https://godotengine.org
+Vulkan 1.4.329 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+
+--res://scenes/UI/painterly_surface.gdshader--
+  121 |  SPECULAR = .5;
+  122 |  CLEARCOAT = coat_amount;
+E 123->  CLEARCOAT_GLOSS = .72;
+  124 | }
+  125 | 
+SHADER ERROR: Unknown identifier in expression: 'CLEARCOAT_GLOSS'.
+   at: (null) (res://scenes/UI/painterly_surface.gdshader:123)
+   GDScript backtrace (most recent call first):
+       [0] _style_geometry (res://scenes/UI/DeskStage3D.gd:176)
+       [1] _style_geometry (res://scenes/UI/DeskStage3D.gd:243)
+       [2] _build_stage (res://scenes/UI/DeskStage3D.gd:47)
+       [3] _ready (res://scenes/UI/DeskStage3D.gd:37)
+       [4] _run (res://tools/capture_title_3d.gd:224)
+ERROR: Shader compilation failed.
+   at: set_code (servers/rendering/renderer_rd/forward_clustered/scene_shader_forward_clustered.cpp:181)
+   GDScript backtrace (most recent call first):
+       [0] _style_geometry (res://scenes/UI/DeskStage3D.gd:176)
+       [1] _style_geometry (res://scenes/UI/DeskStage3D.gd:243)
+       [2] _build_stage (res://scenes/UI/DeskStage3D.gd:47)
+       [3] _ready (res://scenes/UI/DeskStage3D.gd:37)
+       [4] _run (res://tools/capture_title_3d.gd:224)
+--res://scenes/UI/desk_glass.gdshader--
+   25 |  SPECULAR = .70;
+   26 |  CLEARCOAT = .25;
+E  27->  CLEARCOAT_GLOSS = .92;
+   28 | }
+   29 | 
+SHADER ERROR: Unknown identifier in expression: 'CLEARCOAT_GLOSS'.
+   at: (null) (res://scenes/UI/desk_glass.gdshader:27)
+   GDScript backtrace (most recent call first):
+       [0] _style_geometry (res://scenes/UI/DeskStage3D.gd:166)
+       [1] _style_geometry (res://scenes/UI/DeskStage3D.gd:243)
+       [2] _build_stage (res://scenes/UI/DeskStage3D.gd:47)
+       [3] _ready (res://scenes/UI/DeskStage3D.gd:37)
+       [4] _run (res://tools/capture_title_3d.gd:224)
+ERROR: Shader compilation failed.
+   at: set_code (servers/rendering/renderer_rd/forward_clustered/scene_shader_forward_clustered.cpp:181)
+   GDScript backtrace (most recent call first):
+       [0] _style_geometry (res://scenes/UI/DeskStage3D.gd:166)
+       [1] _style_geometry (res://scenes/UI/DeskStage3D.gd:243)
+       [2] _build_stage (res://scenes/UI/DeskStage3D.gd:47)
+       [3] _ready (res://scenes/UI/DeskStage3D.gd:37)
+       [4] _run (res://tools/capture_title_3d.gd:224)
+WARNING: GameAudio: 缺少音频 res://ShareAsset/Internal/Props/Audio/Music/main_theme.ogg
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _load (res://scenes/Shared/Audio/GameAudio.gd:110)
+       [1] play_music (res://scenes/Shared/Audio/GameAudio.gd:51)
+       [2] music (res://scenes/Shared/Audio/Sound.gd:11)
+       [3] _ready (res://scenes/UI/TitleUI.gd:100)
+       [4] _run (res://tools/capture_title_3d.gd:224)
+CAPTURED cover-page PAGE cover TURNING false
+CAPTURED pointer-left PAGE cover TURNING false
+CAPTURED pointer-right PAGE cover TURNING false
+CAPTURED light-00 PAGE cover TURNING false
+CAPTURED light-01 PAGE cover TURNING false
+CAPTURED light-02 PAGE cover TURNING false
+CAPTURED light-03 PAGE cover TURNING false
+CAPTURED light-04 PAGE cover TURNING false
+CAPTURED light-05 PAGE cover TURNING false
+CAPTURED light-06 PAGE cover TURNING false
+CAPTURED light-07 PAGE cover TURNING false
+CAPTURED light-08 PAGE cover TURNING false
+CAPTURED light-09 PAGE cover TURNING false
+CAPTURED light-10 PAGE cover TURNING false
+CAPTURED light-11 PAGE cover TURNING false
+CAPTURED reduced-motion-still PAGE cover TURNING false
+CAPTURED settings-open-000 PAGE settings TURNING true
+CAPTURED settings-open-001 PAGE settings TURNING true
+CAPTURED settings-open-002 PAGE settings TURNING true
+CAPTURED settings-open-003 PAGE settings TURNING true
+CAPTURED settings-open-004 PAGE settings TURNING true
+CAPTURED settings-open-005 PAGE settings TURNING true
+CAPTURED settings-open-006 PAGE settings TURNING true
+CAPTURED settings-open-007 PAGE settings TURNING true
+CAPTURED settings-open-008 PAGE settings TURNING true
+CAPTURED settings-open-009 PAGE settings TURNING true
+CAPTURED settings-open-010 PAGE settings TURNING true
+CAPTURED settings-open-011 PAGE settings TURNING true
+CAPTURED settings-open-012 PAGE settings TURNING true
+CAPTURED settings-page PAGE settings TURNING false
+CAPTURED paper-to-load-000 PAGE load TURNING true
+CAPTURED paper-to-load-001 PAGE load TURNING true
+CAPTURED paper-to-load-002 PAGE load TURNING true
+CAPTURED paper-to-load-003 PAGE load TURNING true
+CAPTURED paper-to-load-004 PAGE load TURNING true
+CAPTURED paper-to-load-005 PAGE load TURNING true
+CAPTURED paper-to-load-006 PAGE load TURNING true
+CAPTURED paper-to-load-007 PAGE load TURNING true
+CAPTURED paper-to-load-008 PAGE load TURNING true
+CAPTURED paper-to-load-009 PAGE load TURNING true
+CAPTURED paper-to-load-010 PAGE load TURNING true
+CAPTURED load-from-paper PAGE load TURNING false
+CAPTURED paper-to-settings-000 PAGE settings TURNING true
+CAPTURED paper-to-settings-001 PAGE settings TURNING true
+CAPTURED paper-to-settings-002 PAGE settings TURNING true
+CAPTURED paper-to-settings-003 PAGE settings TURNING true
+CAPTURED paper-to-settings-004 PAGE settings TURNING true
+CAPTURED paper-to-settings-005 PAGE settings TURNING true
+CAPTURED paper-to-settings-006 PAGE settings TURNING true
+CAPTURED paper-to-settings-007 PAGE settings TURNING true
+CAPTURED paper-to-settings-008 PAGE settings TURNING true
+CAPTURED paper-to-settings-009 PAGE settings TURNING true
+CAPTURED settings-from-paper PAGE settings TURNING false
+CAPTURED settings-close-000 PAGE cover TURNING true
+CAPTURED settings-close-001 PAGE cover TURNING true
+CAPTURED settings-close-002 PAGE cover TURNING true
+CAPTURED settings-close-003 PAGE cover TURNING true
+CAPTURED settings-close-004 PAGE cover TURNING true
+CAPTURED settings-close-005 PAGE cover TURNING true
+CAPTURED settings-close-006 PAGE cover TURNING true
+CAPTURED settings-close-007 PAGE cover TURNING true
+CAPTURED settings-close-008 PAGE cover TURNING true
+CAPTURED settings-close-009 PAGE cover TURNING true
+CAPTURED settings-close-010 PAGE cover TURNING true
+CAPTURED settings-close-011 PAGE cover TURNING true
+CAPTURED settings-close-012 PAGE cover TURNING true
+CAPTURED cover-after-settings PAGE cover TURNING false
+CAPTURED load-open-000 PAGE load TURNING true
+CAPTURED load-open-001 PAGE load TURNING true
+CAPTURED load-open-002 PAGE load TURNING true
+CAPTURED load-open-003 PAGE load TURNING true
+CAPTURED load-open-004 PAGE load TURNING true
+CAPTURED load-open-005 PAGE load TURNING true
+CAPTURED load-open-006 PAGE load TURNING true
+CAPTURED load-open-007 PAGE load TURNING true
+CAPTURED load-open-008 PAGE load TURNING true
+CAPTURED load-open-009 PAGE load TURNING true
+CAPTURED load-open-010 PAGE load TURNING true
+CAPTURED load-open-011 PAGE load TURNING true
+CAPTURED load-open-012 PAGE load TURNING true
+CAPTURED load-page PAGE load TURNING false
+CAPTURED load-close-000 PAGE cover TURNING true
+CAPTURED load-close-001 PAGE cover TURNING true
+CAPTURED load-close-002 PAGE cover TURNING true
+CAPTURED load-close-003 PAGE cover TURNING true
+CAPTURED load-close-004 PAGE cover TURNING true
+CAPTURED load-close-005 PAGE cover TURNING true
+CAPTURED load-close-006 PAGE cover TURNING true
+CAPTURED load-close-007 PAGE cover TURNING true
+CAPTURED load-close-008 PAGE cover TURNING true
+CAPTURED load-close-009 PAGE cover TURNING true
+CAPTURED load-close-010 PAGE cover TURNING true
+CAPTURED load-close-011 PAGE cover TURNING true
+CAPTURED load-close-012 PAGE cover TURNING true
+CAPTURED cover-after-load PAGE cover TURNING false
+CAPTURED start-open-000 PAGE start TURNING true
+CAPTURED start-open-001 PAGE start TURNING true
+CAPTURED start-open-002 PAGE start TURNING true
+CAPTURED start-open-003 PAGE start TURNING true
+CAPTURED start-open-004 PAGE start TURNING true
+CAPTURED start-open-005 PAGE start TURNING true
+CAPTURED start-open-006 PAGE start TURNING true
+CAPTURED start-open-007 PAGE start TURNING true
+CAPTURED start-open-008 PAGE start TURNING true
+CAPTURED start-open-009 PAGE start TURNING true
+CAPTURED start-open-010 PAGE start TURNING true
+CAPTURED start-open-011 PAGE start TURNING true
+CAPTURED start-open-012 PAGE start TURNING true
+WARNING: GameAudio: 缺少音频 res://ShareAsset/Internal/Props/Audio/Sfx/ui_click.ogg
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _load (res://scenes/Shared/Audio/GameAudio.gd:110)
+       [1] play_sfx (res://scenes/Shared/Audio/GameAudio.gd:83)
+       [2] sfx (res://scenes/Shared/Audio/Sound.gd:26)
+       [3] _request (res://scenes/UI/TitleUI.gd:238)
+       [4] _turn_to (res://scenes/UI/TitleUI.gd:452)
+CAPTURED start-page PAGE start TURNING false
+UI_CAPTURE_COMPLETE code=0 frames=109 elapsed_us=13468497
+WARNING: 7 RIDs of type "Texture" were leaked.
+   at: finalize (servers/rendering/rendering_device.cpp:7505)

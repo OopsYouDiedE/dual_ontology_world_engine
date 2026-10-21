@@ -1,33 +1,16 @@
-[gd_scene load_steps=10 format=3 uid="uid://ci7ywhuq68r5c"]
+[gd_scene load_steps=8 format=3 uid="uid://ci7ywhuq68r5c"]
 
 [ext_resource type="Script" path="res://scenes/UI/TitleUI.gd" id="title"]
 [ext_resource type="Theme" path="res://scenes/UI/Styles/TitleTheme.tres" id="theme"]
 [ext_resource type="Texture2D" path="res://ShareAsset/External/CampiPhlegraei/campi_phlegraei_plate_vi.jpg" id="plate"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/UIDesk/desk-painted.png" id="desk"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/UIDesk/glow.png" id="glow"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/UIDesk/book_light.png" id="book_light"]
+[ext_resource type="Script" path="res://scenes/UI/DeskStage3D.gd" id="stage"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/UIDesk/Painterly3D/reference-paper.webp" id="paper"]
+[ext_resource type="Shader" path="res://scenes/UI/paper_mount.gdshader" id="paper_mount"]
 
-[sub_resource type="CanvasItemMaterial" id="glow_add"]
-blend_mode = 1
-
-[sub_resource type="Shader" id="book_light_shader"]
-code = "shader_type canvas_item;
-// Smooth independent cover lighting. The background is a baked photographic layer.
-uniform float flicker_intensity = 0.96;
-
-void fragment() {
-	vec4 base = texture(TEXTURE, UV) * COLOR;
-	float falloff = exp(-distance(SCREEN_UV, vec2(0.04, 0.27)) * 1.4);
-	vec3 light = mix(vec3(0.67, 0.69, 0.71), vec3(1.12, 1.05, 0.94), falloff * flicker_intensity);
-	float grain = fract(sin(dot(floor(UV * vec2(580.0, 820.0)), vec2(12.9898, 78.233))) * 43758.5453);
-	float ink = 1.0 - smoothstep(0.12, 0.5, dot(base.rgb, vec3(0.299, 0.587, 0.114)));
-	base.rgb *= light * (1.0 + ink * (grain - 0.5) * 0.055);
-	COLOR = base;
-}
-"
-
-[sub_resource type="ShaderMaterial" id="book_light_material"]
-shader = SubResource("book_light_shader")
+[sub_resource type="ShaderMaterial" id="PaperMount"]
+resource_local_to_scene = true
+shader = ExtResource("paper_mount")
+shader_parameter/paper_size = Vector2(416, 596)
 
 [node name="TitleUI" type="Control"]
 layout_mode = 3
@@ -39,86 +22,40 @@ grow_vertical = 2
 theme = ExtResource("theme")
 script = ExtResource("title")
 
-[node name="DeskBackground" type="TextureRect" parent="."]
-texture_filter = 2
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("desk")
-expand_mode = 1
-stretch_mode = 6
-
-[node name="Glow" type="TextureRect" parent="."]
-visible = false
-texture_filter = 1
-material = SubResource("glow_add")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("glow")
-expand_mode = 1
-stretch_mode = 6
-
-[node name="Lit" type="Control" parent="."]
-material = SubResource("book_light_material")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="Pages" type="Control" parent="Lit"]
-use_parent_material = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="Plane" type="Control" parent="Lit"]
-use_parent_material = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-scale = Vector2(1, 0.87)
-pivot_offset = Vector2(842, 468)
-mouse_filter = 2
-
-[node name="Cover" type="SubViewportContainer" parent="Lit/Plane"]
-texture_filter = 2
-use_parent_material = true
-layout_mode = 0
-offset_left = 552.0
-offset_top = 58.0
-offset_right = 1132.0
-offset_bottom = 878.0
-rotation = 0.0698132
-pivot_offset = Vector2(290, 410)
-stretch = true
-
-[node name="Viewport" type="SubViewport" parent="Lit/Plane/Cover"]
-disable_3d = true
+[node name="StageViewport" type="SubViewport" parent="."]
 handle_input_locally = false
+size = Vector2i(1280, 992)
+own_world_3d = true
+msaa_3d = 1
+positional_shadow_atlas_size = 4096
+positional_shadow_atlas_quad_0 = 1
+positional_shadow_atlas_quad_1 = 1
+positional_shadow_atlas_quad_2 = 0
+positional_shadow_atlas_quad_3 = 0
+render_target_update_mode = 4
+
+[node name="DeskWorld" type="Node3D" parent="StageViewport"]
+script = ExtResource("stage")
+
+[node name="DeskProjection" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="CoverViewport" type="SubViewport" parent="."]
+disable_3d = true
+handle_input_locally = true
+transparent_bg = true
 canvas_item_default_texture_filter = 1
 size = Vector2i(580, 820)
 render_target_update_mode = 4
 
-[node name="CoverRoot" type="Control" parent="Lit/Plane/Cover/Viewport"]
+[node name="CoverRoot" type="Control" parent="CoverViewport"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -127,7 +64,19 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("theme")
 
-[node name="Cloth" type="PanelContainer" parent="Lit/Plane/Cover/Viewport/CoverRoot"]
+[node name="PaperGround" type="TextureRect" parent="CoverViewport/CoverRoot"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("paper")
+expand_mode = 1
+
+[node name="Cloth" type="PanelContainer" parent="CoverViewport/CoverRoot"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -137,72 +86,59 @@ grow_vertical = 2
 mouse_filter = 2
 theme_type_variation = &"TitleCover"
 
-[node name="Spine" type="ColorRect" parent="Lit/Plane/Cover/Viewport/CoverRoot"]
-layout_mode = 1
-anchors_preset = 9
-anchor_bottom = 1.0
-offset_right = 28.0
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="SlipShadow" type="ColorRect" parent="Lit/Plane/Cover/Viewport/CoverRoot"]
+[node name="Slip" type="PanelContainer" parent="CoverViewport/CoverRoot"]
+material = SubResource("PaperMount")
 layout_mode = 0
-offset_left = 88.0
-offset_top = 100.0
-offset_right = 528.0
-offset_bottom = 660.0
-mouse_filter = 2
-
-[node name="Slip" type="PanelContainer" parent="Lit/Plane/Cover/Viewport/CoverRoot"]
-layout_mode = 0
-offset_left = 84.0
-offset_top = 96.0
-offset_right = 524.0
-offset_bottom = 742.0
+offset_left = 82.0
+offset_top = 108.0
+offset_right = 498.0
+offset_bottom = 704.0
 theme_type_variation = &"TitleSlip"
 
-[node name="Column" type="VBoxContainer" parent="Lit/Plane/Cover/Viewport/CoverRoot/Slip"]
+[node name="Column" type="VBoxContainer" parent="CoverViewport/CoverRoot/Slip"]
+use_parent_material = false
 layout_mode = 2
 theme_type_variation = &"TitleColumn"
 
-[node name="Plate" type="PanelContainer" parent="Lit/Plane/Cover/Viewport/CoverRoot/Slip/Column"]
-custom_minimum_size = Vector2(400, 240)
+[node name="Plate" type="PanelContainer" parent="CoverViewport/CoverRoot/Slip/Column"]
+custom_minimum_size = Vector2(376, 230)
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"TitleMount"
 
-[node name="Picture" type="TextureRect" parent="Lit/Plane/Cover/Viewport/CoverRoot/Slip/Column/Plate"]
+[node name="Picture" type="TextureRect" parent="CoverViewport/CoverRoot/Slip/Column/Plate"]
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("plate")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="TitleLabel" type="Label" parent="Lit/Plane/Cover/Viewport/CoverRoot/Slip/Column"]
+[node name="TitleLabel" type="Label" parent="CoverViewport/CoverRoot/Slip/Column"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"PixelDisplay"
 text = "安眠者有福"
 horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="Rule" type="Control" parent="Lit/Plane/Cover/Viewport/CoverRoot/Slip/Column"]
+[node name="Rule" type="Control" parent="CoverViewport/CoverRoot/Slip/Column"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Menu" type="VBoxContainer" parent="Lit/Plane/Cover/Viewport/CoverRoot/Slip/Column"]
+[node name="Menu" type="VBoxContainer" parent="CoverViewport/CoverRoot/Slip/Column"]
 layout_mode = 2
 theme_type_variation = &"TitleMenu"
 
-[node name="StartButton" type="Button" parent="Lit/Plane/Cover/Viewport/CoverRoot/Slip/Column/Menu"]
+[node name="StartButton" type="Button" parent="CoverViewport/CoverRoot/Slip/Column/Menu"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 theme_type_variation = &"TitleMenuButton"
 text = "开始阅读"
 
-[node name="ContinueButton" type="Button" parent="Lit/Plane/Cover/Viewport/CoverRoot/Slip/Column/Menu"]
+[node name="ContinueButton" type="Button" parent="CoverViewport/CoverRoot/Slip/Column/Menu"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
@@ -210,14 +146,14 @@ theme_type_variation = &"TitleMenuButton"
 disabled = true
 text = "续读"
 
-[node name="SettingsButton" type="Button" parent="Lit/Plane/Cover/Viewport/CoverRoot/Slip/Column/Menu"]
+[node name="SettingsButton" type="Button" parent="CoverViewport/CoverRoot/Slip/Column/Menu"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 theme_type_variation = &"TitleMenuButton"
 text = "凡例"
 
-[node name="QuitButton" type="Button" parent="Lit/Plane/Cover/Viewport/CoverRoot/Slip/Column/Menu"]
+[node name="QuitButton" type="Button" parent="CoverViewport/CoverRoot/Slip/Column/Menu"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4

@@ -1,4 +1,4 @@
-"""MCP access to the existing First Awakening recipes, never a parallel renderer."""
+"""MCP access to shared furniture and material recipes used by current maps."""
 from __future__ import annotations
 
 import hashlib
@@ -9,14 +9,12 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 import workflow as w
-import pixel_handoff
 
 sys.path.insert(0, str(w.GAME / 'tools'))
-import build_first_awakening_interior as builder
-from first_awakening_art import palette, props, architecture, layout, placement
+from first_awakening_art import palette, props, architecture
 
 SOURCE = w.GAME / 'AssetsSource/Internal/Props/FirstAwakeningInterior'
-OUTPUT = builder.TARGET
+OUTPUT = w.GAME / 'ShareAsset/Internal/Props/FirstAwakeningInterior'
 RECIPE_DIR = w.GAME / 'tools/first_awakening_art'
 
 # Explicit public drawing entry points. Helpers such as slab/leg need an existing canvas.
@@ -35,7 +33,7 @@ def _hash(path: Path) -> str:
 
 def _sources() -> dict:
     current = {str(p.relative_to(w.REPO)).replace('\\', '/'): _hash(p)
-            for p in [Path(builder.__file__), *sorted(RECIPE_DIR.glob('*.py'))]}
+            for p in sorted(RECIPE_DIR.glob('*.py'))}
     if '_loaded_source_hashes' in globals() and current != _loaded_source_hashes:
         raise ValueError('Recipe source changed since this MCP process loaded; restart before rendering or reporting provenance')
     return current
@@ -55,12 +53,12 @@ def _protect_original(source: Path, record: Path, kind: str) -> None:
 
 
 def native_art_catalog() -> dict:
-    """Read Claude's user-identified life-wing recipe catalog and actual material ramps."""
+    """Read the shared recipe catalog and actual material ramps."""
     ramps = {key: ['#%02x%02x%02x' % tuple(c[:3]) for c in value]
              for key, value in vars(palette).items()
              if key.isupper() and isinstance(value, list) and value
              and isinstance(value[0], tuple)}
-    return dict(grid=layout.CELL, map_size=[layout.W, layout.H],
+    return dict(grid=32,
         actor_design=[32, 48], actor_runtime_carrier=[64, 64],
         ramps=ramps,
         floor_materials=['oak','corridor','study','prep','hall'],
@@ -73,13 +71,13 @@ def native_art_catalog() -> dict:
             layers='Runtime architecture is a flattened painted background; furniture, doors and bolt are separate sprites.',
             caveats='mix/shift/alpha blending add colours beyond base ramps. Pixel count alone cannot assess quality. Baked contact shadows require rebuild after furniture moves.'),
         source_reference='docs/design-standard.md',
-        scope='All current architecture and prop recipes; no invented character animation frames.')
+        scope='Shared furniture and material recipes restored from repository history. No complete scene reconstruction or character animation generation.')
 
 
 def read_native_recipe(module: str) -> dict:
     """Read the actual recipe source for understanding and deliberate edits; fixed module allowlist."""
-    if module not in {'pixel', 'palette', 'props', 'architecture', 'layout', 'placement', 'mind_ui'}:
-        raise ValueError('module must be pixel, palette, props, architecture, layout, placement or mind_ui')
+    if module not in {'pixel', 'palette', 'props', 'architecture', 'layout'}:
+        raise ValueError('module must be pixel, palette, props, architecture or layout')
     path = RECIPE_DIR / (module + '.py')
     return dict(path=str(path), sha256=_hash(path), source=path.read_text(encoding='utf-8'),
                 note='Restart the MCP process after editing Python recipes so imported modules are refreshed.')
@@ -164,41 +162,6 @@ def render_native_material(name: str, material: str, crop: list[int], replace: b
     return info
 
 
-def rebuild_native_interior(mode: str = 'verify') -> dict:
-    """Render every life-wing recipe through the existing builder.
-    verify compares pixels/layout without changing runtime files; rebuild deliberately replaces
-    only files owned by this builder. Both save a report in the existing tilemap-workflow archive.
-    """
-    if mode not in ('verify', 'rebuild'):
-        raise ValueError('mode must be verify or rebuild')
-    _sources()
-    canvases, data, manifest = builder.render()
-    comparisons = []
-    for name, canvas in canvases.items():
-        path = w.within(OUTPUT / (name + '.png'), OUTPUT)
-        expected = canvas.image()
-        equal = False
-        if path.exists():
-            with Image.open(path) as im:
-                current = im.convert('RGBA')
-                equal = current.size == expected.size and current.tobytes() == expected.tobytes()
-        comparisons.append(dict(name=name, size=list(expected.size), runtime_matches=equal,
-            pixel_sha256=hashlib.sha256(expected.tobytes()).hexdigest()))
-    layout_path = OUTPUT / 'layout.json'
-    layout_matches = layout_path.exists() and json.loads(layout_path.read_text(encoding='utf-8')) == data
-    manifest['source_hashes'] = _sources()
-    if mode == 'rebuild':
-        for name, canvas in canvases.items():
-            canvas.save(w.within(OUTPUT / (name + '.png'), OUTPUT))
-        w.save_json(layout_path, data)
-        w.save_json(OUTPUT / 'manifest.json', manifest)
-    report = dict(mode=mode, sprites=len(canvases)-1, images=comparisons,
-        layout_matches=layout_matches, matches_before_write=layout_matches and all(x['runtime_matches'] for x in comparisons),
-        source_hashes=_sources(),
-        runtime_written=mode == 'rebuild', art_review='not performed by this tool',
-        next_action='Inspect 1x pixels and runtime doors/occlusion. This is not a playthrough result.')
-    w.save_json(w.REPORT / 'native-art-check.json', report)
-    return report
 
 
 def native_art_contact_sheet() -> dict:
@@ -219,63 +182,3 @@ def native_art_contact_sheet() -> dict:
     path = w.REPORT/'native-props-review.png'
     sheet.save(path)
     return dict(path=str(path), count=len(sprites), status='offline recipe review, not runtime capture')
-
-
-def export_native_handoff(replace: bool = False) -> dict:
-    """Export all current props as editable static Aseprite sources and an untrimmed PNG/JSON atlas.
-    Also export R-05 with background and furniture as separate named layers. Furniture interiors
-    and the architectural background stay flattened exactly as their current source recipes do.
-    These editing sources are not automatically consumed by the recipe rebuilder.
-    """
-    _sources()
-    canvases, data, _ = builder.render()
-    sprites = {name: canvas.image() for name, canvas in canvases.items() if name != 'life_wing'}
-    source_outputs = {SOURCE/'life_wing.aseprite': pixel_handoff._make_aseprite([
-        ('architecture (painted, flattened)',canvases['life_wing'].image())])}
-    for name, im in sprites.items():
-        source_outputs[SOURCE/(name+'.aseprite')] = pixel_handoff._make_aseprite([(name, im)])
-    room_layers = [('architecture (painted, flattened)', canvases['life_wing'].image().crop((0,0,320,320)))]
-    for item in sorted(placement.dorm(0), key=lambda item: item['position'][1]):
-        sprite = sprites[item['sprite']]
-        layer = Image.new('RGBA',(320,320))
-        x,y = item['position']
-        layer.alpha_composite(sprite,(int(x-sprite.width/2),y-sprite.height))
-        room_layers.append((item['name'],layer))
-    source_outputs[SOURCE/'room-05-handoff.aseprite'] = pixel_handoff._make_aseprite(room_layers)
-    tile_w = max(im.width for im in sprites.values()) + 2
-    tile_h = max(im.height for im in sprites.values()) + 2
-    columns = 6
-    atlas = Image.new('RGBA',(tile_w*columns, tile_h*((len(sprites)+columns-1)//columns)))
-    frames = []
-    for i,(name,im) in enumerate(sprites.items()):
-        x,y=(i%columns)*tile_w,(i//columns)*tile_h
-        atlas.alpha_composite(im,(x,y))
-        frames.append(dict(filename=name,frame=dict(x=x,y=y,w=im.width,h=im.height),
-            rotated=False,trimmed=False,spriteSourceSize=dict(x=0,y=0,w=im.width,h=im.height),
-            sourceSize=dict(w=im.width,h=im.height),duration=100,
-            anchor=[im.width/2,im.height],collision=None))
-    atlas_path = OUTPUT/'native-props-atlas.png'
-    atlas_json = OUTPUT/'native-props-atlas.json'
-    manifest_path = SOURCE/'native-handoff.json'
-    destinations = [*source_outputs,atlas_path,atlas_json,manifest_path]
-    for path in destinations:
-        w.within(path,SOURCE if path in source_outputs or path == manifest_path else OUTPUT)
-    if not replace and any(p.exists() for p in destinations):
-        raise ValueError('Handoff exists. replace=true deliberately replaces editable sources; preserve artist edits first.')
-    SOURCE.mkdir(parents=True,exist_ok=True)
-    OUTPUT.mkdir(parents=True,exist_ok=True)
-    for path, content in source_outputs.items(): path.write_bytes(content)
-    atlas.save(atlas_path)
-    w.save_json(atlas_json,dict(frames=frames,meta=dict(image=atlas_path.name,size=dict(w=atlas.width,h=atlas.height),
-        scale='1',app='rpg-tilemap native recipe handoff',note='Independent static props, not animation frames.')))
-    manifest = dict(source_hashes=_sources(), source_files=[str(p) for p in source_outputs],
-        atlas=str(atlas_path),metadata=str(atlas_json),room_layers=[n for n,_ in room_layers],
-        placements=data['furniture'],
-        limitations=['Static single-frame documents; no fabricated character animation.',
-            'Each furniture source has one painted layer; background room architecture is flattened.',
-            'Room handoff is an offline editing reference, without characters, runtime lights or interaction.',
-            'Aseprite edits require explicit export/integration; rebuilding Python recipes overwrites their runtime PNGs.'],
-        artistic_acceptance='pending')
-    w.save_json(manifest_path,manifest)
-    return dict(sources=len(source_outputs),room_layers=len(room_layers),manifest=str(manifest_path),
-        atlas=str(atlas_path),metadata=str(atlas_json),artistic_acceptance='pending')

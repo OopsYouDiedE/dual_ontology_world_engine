@@ -11,6 +11,8 @@ import argparse
 import shutil
 from pathlib import Path
 
+from asset_sources import require_originals
+
 from PIL import Image
 from build_anime_cast import ALPHA_BOUND_THRESHOLD, HEIGHTS, gutter_cut
 
@@ -22,6 +24,7 @@ MOODS = ("calm", "thoughtful", "worried", "angry", "warm", "hooked")
 
 def build(key: str) -> None:
     path = SOURCE / f"{key}-sheet.png"
+    require_originals([path], "DialogueCast")
     with Image.open(path) as image:
         if "A" not in image.getbands():
             raise ValueError(f"{path.name}: transparent alpha required")
@@ -83,8 +86,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--only", nargs="+", choices=list(HEIGHTS))
     args = parser.parse_args()
+    keys = list(args.only or HEIGHTS)
+    require_originals((SOURCE / f"{key}-sheet.png" for key in keys), "DialogueCast")
     errors = []
-    for key in args.only or HEIGHTS:
+    for key in keys:
         try:
             build(key)
         except (ValueError, FileNotFoundError) as error:

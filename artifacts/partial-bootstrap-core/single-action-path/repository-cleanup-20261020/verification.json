@@ -1,0 +1,690 @@
+{
+  "baseline": "6166be88b96864271b33a1624c0568cb728581c7",
+  "scope": "Repository cleanup engineering verification; no gameplay, flow regression or Godot import.",
+  "build_attempts": [
+    {
+      "name": "godot-build",
+      "command": [
+        "/tmp/dv-cleanup-dotnet/dotnet",
+        "build",
+        "godot_csharp/DualOntologyWorldEngine.sln",
+        "-m:1",
+        "--disable-build-servers",
+        "-p:NuGetAudit=false",
+        "-p:DvPython=/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3"
+      ],
+      "exit_code": 1,
+      "elapsed_seconds": 3.05,
+      "log": "godot-build.log"
+    },
+    {
+      "name": "language-build",
+      "command": [
+        "/tmp/dv-cleanup-dotnet/dotnet",
+        "build",
+        "language_core/LanguageCore.sln",
+        "-m:1",
+        "--disable-build-servers",
+        "-p:NuGetAudit=false",
+        "-p:DvPython=/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-c",
+        "Release"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 45.68,
+      "log": "language-build.log"
+    }
+  ],
+  "build_recheck": {
+    "command": [
+      "/tmp/dv-cleanup-dotnet/dotnet",
+      "build",
+      "godot_csharp/DualOntologyWorldEngine.sln",
+      "-m:1",
+      "--disable-build-servers",
+      "-p:NuGetAudit=false",
+      "-p:DvPython=/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 35.71,
+    "log": "godot-build-portable.log"
+  },
+  "build_logs": {
+    "godot-build.log": "/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.csproj : warning : The local source '/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\GodotSharp\\Tools\\nupkgs' doesn't exist.\n/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.csproj : warning : The local source '/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\GodotSharp\\Tools\\nupkgs' doesn't exist.\n  Determining projects to restore...\n/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.csproj : error NU1301: The local source '/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\GodotSharp\\Tools\\nupkgs' doesn't exist. [/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.sln]\n/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.csproj : error NU1301: The local source '/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\GodotSharp\\Tools\\nupkgs' doesn't exist. [/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.sln]\n/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.csproj : error NU1301: The local source '/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\GodotSharp\\Tools\\nupkgs' doesn't exist. [/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.sln]\n  Failed to restore /workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.csproj (in 85 ms).\n  Restored /workspace/scratch/d80ba4506519/repo_cleanup/language_core/Session/DuelView.Session.csproj (in 84 ms).\n\nBuild FAILED.\n\n/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.csproj : warning : The local source '/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\GodotSharp\\Tools\\nupkgs' doesn't exist.\n/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.csproj : warning : The local source '/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\GodotSharp\\Tools\\nupkgs' doesn't exist.\n/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.csproj : error NU1301: The local source '/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\GodotSharp\\Tools\\nupkgs' doesn't exist. [/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.sln]\n/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.csproj : error NU1301: The local source '/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\GodotSharp\\Tools\\nupkgs' doesn't exist. [/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.sln]\n/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.csproj : error NU1301: The local source '/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/C:\\Users\\iii\\Desktop\\Godot_v4.6.1-stable_mono_win64\\GodotSharp\\Tools\\nupkgs' doesn't exist. [/workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.sln]\n    2 Warning(s)\n    3 Error(s)\n\nTime Elapsed 00:00:02.62\n",
+    "language-build.log": "  Determining projects to restore...\n  Restored /workspace/scratch/d80ba4506519/repo_cleanup/language_core/compiler/seed/Seed.csproj (in 85 ms).\n  1 of 2 projects are up-to-date for restore.\n  Seed -> /workspace/scratch/d80ba4506519/repo_cleanup/language_core/compiler/seed/bin/Release/net8.0/Seed.dll\n  DuelView.Session -> /workspace/scratch/d80ba4506519/repo_cleanup/language_core/Session/bin/Release/net8.0/DuelView.Session.dll\n\nBuild succeeded.\n    0 Warning(s)\n    0 Error(s)\n\nTime Elapsed 00:00:45.47\n",
+    "godot-build-portable.log": "  Determining projects to restore...\n  Restored /workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/DualOntologyWorldEngine.csproj (in 824 ms).\n  1 of 2 projects are up-to-date for restore.\n  DuelView.Session -> /workspace/scratch/d80ba4506519/repo_cleanup/language_core/Session/bin/Debug/net8.0/DuelView.Session.dll\n  DualOntologyWorldEngine -> /workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/.godot/mono/temp/bin/Debug/DualOntologyWorldEngine.dll\n\nBuild succeeded.\n    0 Warning(s)\n    0 Error(s)\n\nTime Elapsed 00:00:35.51\n"
+  },
+  "dv_diagnostics": [
+    {
+      "entry": "10-compiler.dv",
+      "command": [
+        "python3",
+        "language_core/tools/check_dv.py",
+        "--format",
+        "json",
+        "language_core/10-compiler.dv"
+      ],
+      "exit_code": 0,
+      "diagnostics": "{\"success\": true, \"diagnostics\": [], \"sources\": [\"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/10-compiler.dv\"], \"compiler\": \"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/obj/dv-toolchain/a51218f061d4f8482e7b40ea911f958810db7c934c5fec8160b53417bdbe9cd3/c3/bin/Release/net8.0/Program.dll\", \"raw\": \"\", \"scope\": \"syntax, names, calls and implemented type constraints; content is not executed\"}\n",
+      "stderr": ""
+    },
+    {
+      "entry": "30-session.dv",
+      "command": [
+        "python3",
+        "language_core/tools/check_dv.py",
+        "--format",
+        "json",
+        "language_core/30-session.dv"
+      ],
+      "exit_code": 0,
+      "diagnostics": "{\"success\": true, \"diagnostics\": [], \"sources\": [\"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/20-core.dv\", \"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/30-session.dv\", \"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/40-chapter1.dv\", \"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/50-chapter2.dv\", \"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/60-game.dv\"], \"compiler\": \"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/obj/dv-toolchain/a51218f061d4f8482e7b40ea911f958810db7c934c5fec8160b53417bdbe9cd3/c3/bin/Release/net8.0/Program.dll\", \"raw\": \"\", \"scope\": \"syntax, names, calls and implemented type constraints; content is not executed\"}\n",
+      "stderr": ""
+    },
+    {
+      "entry": "70-checks.dv",
+      "command": [
+        "python3",
+        "language_core/tools/check_dv.py",
+        "--format",
+        "json",
+        "language_core/70-checks.dv"
+      ],
+      "exit_code": 0,
+      "diagnostics": "{\"success\": true, \"diagnostics\": [], \"sources\": [\"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/20-core.dv\", \"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/30-session.dv\", \"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/40-chapter1.dv\", \"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/50-chapter2.dv\", \"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/60-game.dv\", \"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/70-checks.dv\"], \"compiler\": \"/workspace/scratch/d80ba4506519/repo_cleanup/language_core/obj/dv-toolchain/a51218f061d4f8482e7b40ea911f958810db7c934c5fec8160b53417bdbe9cd3/c3/bin/Release/net8.0/Program.dll\", \"raw\": \"\", \"scope\": \"syntax, names, calls and implemented type constraints; content is not executed\"}\n",
+      "stderr": ""
+    }
+  ],
+  "targeted_engineering_checks": {
+    "syntax_and_configuration": {
+      "status": "ok",
+      "details": {
+        "python_sources": [
+          "godot_csharp/addons/rpg_asset_adapter/mcp/check.py",
+          "godot_csharp/addons/rpg_asset_adapter/mcp/check_native_art.py",
+          "godot_csharp/addons/rpg_asset_adapter/mcp/check_pixel_handoff.py",
+          "godot_csharp/addons/rpg_asset_adapter/mcp/check_production.py",
+          "godot_csharp/addons/rpg_asset_adapter/mcp/demo.py",
+          "godot_csharp/addons/rpg_asset_adapter/mcp/native_art.py",
+          "godot_csharp/addons/rpg_asset_adapter/mcp/pixel_handoff.py",
+          "godot_csharp/addons/rpg_asset_adapter/mcp/production.py",
+          "godot_csharp/addons/rpg_asset_adapter/mcp/server.py",
+          "godot_csharp/addons/rpg_asset_adapter/mcp/ui_workflow.py",
+          "godot_csharp/addons/rpg_asset_adapter/mcp/workflow.py",
+          "godot_csharp/tools/asset_sources.py",
+          "godot_csharp/tools/build_anime_cast.py",
+          "godot_csharp/tools/build_chapter2_scenes.py",
+          "godot_csharp/tools/build_character_atlas.py",
+          "godot_csharp/tools/build_dialogue_cast.py",
+          "godot_csharp/tools/build_mind_ui_translations.py",
+          "godot_csharp/tools/build_pixel_cast.py",
+          "godot_csharp/tools/build_room_table_props.py",
+          "godot_csharp/tools/build_surface_materials.py",
+          "godot_csharp/tools/build_ui_desk.py",
+          "godot_csharp/tools/build_ui_paper.py",
+          "godot_csharp/tools/build_ui_theme.py",
+          "godot_csharp/tools/chapter2_art/__init__.py",
+          "godot_csharp/tools/chapter2_art/buildings.py",
+          "godot_csharp/tools/chapter2_art/nature.py",
+          "godot_csharp/tools/chapter2_art/oblique.py",
+          "godot_csharp/tools/chapter2_art/outdoor.py",
+          "godot_csharp/tools/chapter2_art/painter.py",
+          "godot_csharp/tools/chapter2_art/props_archive.py",
+          "godot_csharp/tools/chapter2_art/props_core.py",
+          "godot_csharp/tools/chapter2_art/props_service.py",
+          "godot_csharp/tools/chapter2_art/rooms.py",
+          "godot_csharp/tools/encode_dv_capture.py",
+          "godot_csharp/tools/first_awakening_art/__init__.py",
+          "godot_csharp/tools/first_awakening_art/architecture.py",
+          "godot_csharp/tools/first_awakening_art/layout.py",
+          "godot_csharp/tools/first_awakening_art/palette.py",
+          "godot_csharp/tools/first_awakening_art/pixel.py",
+          "godot_csharp/tools/first_awakening_art/props.py",
+          "godot_csharp/tools/map_text.py",
+          "godot_csharp/tools/profile_dv_capture.py",
+          "godot_csharp/tools/publish_geometry_assets.py",
+          "godot_csharp/tools/report_runtime_hitches.py",
+          "godot_csharp/tools/summarize_interaction_timing.py",
+          "language_core/editors/visualstudio/package.py",
+          "language_core/tools/binary_evidence.py",
+          "language_core/tools/build_session.py",
+          "language_core/tools/check_dv.py",
+          "language_core/tools/debug_checkpoints.py",
+          "language_core/tools/dv_lsp.py",
+          "language_core/tools/dv_toolchain.py",
+          "language_core/tools/raw_dag.py",
+          "language_core/tools/run_debug.py",
+          "music/build_soundtrack.py",
+          "music/cues.py",
+          "music/interpret.py",
+          "music/score_io.py",
+          "music/sf2.py",
+          "music/sfx.py",
+          "music/synth.py",
+          "tools/audit_action_paths.py",
+          "tools/check_geometry_contracts.py"
+        ],
+        "xml_config": "parsed",
+        "dv_check_config": "parsed",
+        "whitespace": "clean"
+      }
+    },
+    "imports_and_map_labels": {
+      "status": "ok",
+      "details": {
+        "imported": [
+          "build_anime_cast",
+          "build_dialogue_cast",
+          "build_pixel_cast",
+          "build_character_atlas",
+          "build_chapter2_scenes",
+          "chapter2_art.painter",
+          "chapter2_art.outdoor",
+          "native_art",
+          "ui_workflow",
+          "server"
+        ],
+        "manifest_labels": "resolved without changing wording",
+        "resolved_rooms": [
+          "living_hall",
+          "zone_jia",
+          "zone_yi",
+          "zone_bing",
+          "zone_ding",
+          "central_hall",
+          "lecture",
+          "archive",
+          "counterweight",
+          "resonance",
+          "clinic",
+          "logistics",
+          "granary",
+          "greenhouse"
+        ]
+      }
+    },
+    "missing_art_inputs": {
+      "status": "ok",
+      "details": {
+        "rejections": [
+          {
+            "entry": "build_chapter2_scenes.py",
+            "exit_code": 1,
+            "reason": "FileNotFoundError: Full outdoor reconstruction requires the original campus-site source and its terrain data. Supply --site-source; missing: /workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/AssetsSource/Internal/Props/Chapter2/CampusSite/campus.py, /workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/AssetsSource/Internal/Props/Chapter2/CampusSite/render_site.py, /workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/AssetsSource/Internal/Props/Chapter2/CampusSite/site.json"
+          },
+          {
+            "entry": "build_anime_cast.py",
+            "exit_code": 1,
+            "reason": "FileNotFoundError: Missing AnimeCast original inputs; existing runtime assets have not been changed. Restore these sources before rebuilding: /workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/AssetsSource/Internal/Characters/AnimeCast/detective-compact.png"
+          },
+          {
+            "entry": "build_dialogue_cast.py",
+            "exit_code": 1,
+            "reason": "FileNotFoundError: Missing DialogueCast original inputs; existing runtime assets have not been changed. Restore these sources before rebuilding: /workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/AssetsSource/Internal/Characters/DialogueCast/detective-sheet.png"
+          },
+          {
+            "entry": "build_pixel_cast.py",
+            "exit_code": 1,
+            "reason": "FileNotFoundError: No PixelCast master and palette original inputs were selected. Restore the original artwork or supply its source directory."
+          },
+          {
+            "entry": "build_character_atlas.py",
+            "exit_code": 1,
+            "reason": "FileNotFoundError: Missing FrontStanding original inputs; existing runtime assets have not been changed. Restore these sources before rebuilding: /workspace/scratch/d80ba4506519/repo_cleanup/godot_csharp/AssetsSource/Internal/Characters/FrontStanding/front-standing-generated.png"
+          }
+        ],
+        "published_assets": "unchanged"
+      }
+    },
+    "soundtrack_export_routing": {
+      "status": "ok",
+      "details": {
+        "outputs": [
+          "Blessed Sleepers - Main Theme.pdf",
+          "Blessed Sleepers - Main Theme.musicxml",
+          "Blessed Sleepers - Main Theme.mid",
+          "Blessed Sleepers - Main Theme.mp3"
+        ],
+        "source_preserved": true,
+        "default_output": "artifacts/releases/soundtrack",
+        "mode": "mocked MuseScore invocation; no audio rendering"
+      }
+    },
+    "mcp_transport": {
+      "status": "error",
+      "error": "Traceback (most recent call last):\n  File \"/tmp/dv-cleanup-mcp-deps/mcp/client/_probe.py\", line 70, in negotiate_auto\n    raw = await session.send_discover(version)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/dv-cleanup-mcp-deps/mcp/client/session.py\", line 752, in send_discover\n    raw = await self._dispatcher.send_raw_request(data[\"method\"], data.get(\"params\"), opts)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/dv-cleanup-mcp-deps/mcp/shared/jsonrpc_dispatcher.py\", line 442, in send_raw_request\n    raise MCPError(code=REQUEST_TIMEOUT, message=f\"Request {method!r} timed out\") from None\nmcp.shared.exceptions.MCPError: Request 'server/discover' timed out\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/workspace/scratch/d80ba4506519/cleanup_control/verify_cleanup.py\", line 94, in mcp_discovery\n    async with Client(StdioServerParameters(command=sys.executable, args=[str(GAME / \"addons/rpg_asset_adapter/mcp/server.py\")], env=dict(os.environ))) as client:\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/dv-cleanup-mcp-deps/mcp/client/client.py\", line 458, in __aenter__\n    async with AsyncExitStack() as exit_stack:\n               ^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py\", line 754, in __aexit__\n    raise exc_details[1]\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py\", line 737, in __aexit__\n    cb_suppress = await cb(*exc_details)\n                  ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/dv-cleanup-mcp-deps/mcp/client/session.py\", line 514, in __aexit__\n    result = await self._task_group.__aexit__(exc_type, exc_val, exc_tb)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/dv-cleanup-mcp-deps/anyio/_backends/_asyncio.py\", line 851, in __aexit__\n    raise exc_val\n  File \"/tmp/dv-cleanup-mcp-deps/mcp/client/client.py\", line 465, in __aenter__\n    await negotiate_auto(session)\n  File \"/tmp/dv-cleanup-mcp-deps/mcp/client/_probe.py\", line 81, in negotiate_auto\n    await session.initialize()  # every other rpc-error → legacy (the denylist)\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/dv-cleanup-mcp-deps/mcp/client/session.py\", line 654, in initialize\n    result = await self.send_request(\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/dv-cleanup-mcp-deps/mcp/client/session.py\", line 586, in send_request\n    raw = await self._dispatcher.send_raw_request(method, data.get(\"params\"), opts)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/dv-cleanup-mcp-deps/mcp/shared/jsonrpc_dispatcher.py\", line 416, in send_raw_request\n    outcome = await receive.receive()\n              ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/dv-cleanup-mcp-deps/anyio/streams/memory.py\", line 126, in receive\n    await receive_event.wait()\n  File \"/tmp/dv-cleanup-mcp-deps/anyio/_backends/_asyncio.py\", line 1936, in wait\n    await self._event.wait()\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/locks.py\", line 212, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/workspace/scratch/d80ba4506519/cleanup_control/verify_cleanup.py\", line 16, in check\n    report[name] = dict(status=\"ok\", details=function())\n                                             ^^^^^^^^^^\n  File \"/workspace/scratch/d80ba4506519/cleanup_control/verify_cleanup.py\", line 111, in <lambda>\n    check(\"mcp_transport\", lambda: asyncio.run(asyncio.wait_for(mcp_discovery(), timeout=45)))\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py\", line 195, in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py\", line 691, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/timeouts.py\", line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n"
+    }
+  },
+  "mcp_transport_recheck": {
+    "server_sha256": "ef9db7db94afdffa3aef695ea9ad1f7367bb7950778383ced0b480042f98f406",
+    "sdk": "mcp 2.3.0 from /tmp/dv-cleanup-mcp-deps",
+    "scope": "one read-only MCP stdio check; no engine or image generation",
+    "status": "ok",
+    "details": {
+      "transport": "real MCP stdio",
+      "tools": [
+        "adapt_asset",
+        "audit_layout",
+        "build_tiles",
+        "compose_map",
+        "create_plan",
+        "draw_asset",
+        "export_aseprite",
+        "export_godot",
+        "inspect_godot_ui",
+        "inspect_image",
+        "inspect_pixel_style",
+        "layered_sprite",
+        "measure_dialogue_text",
+        "native_art_catalog",
+        "native_art_contact_sheet",
+        "next_task",
+        "quantize_asset",
+        "read_native_recipe",
+        "read_plan",
+        "render_native_material",
+        "render_native_prop",
+        "review_dialogue",
+        "tilemap_workflow",
+        "ui_design_contract",
+        "update_task"
+      ],
+      "catalog": "read successfully",
+      "host_scene": "rejected before engine execution"
+    },
+    "elapsed_seconds": 1.252
+  },
+  "theme_outputs": {
+    "theme_output_comparison": [
+      {
+        "file": "TitleTheme.tres",
+        "generator_output_unchanged": true,
+        "committed_bytes_unchanged": true,
+        "generator_matches_committed": true,
+        "sha256": "6d328a381e8f612414614184b1c0949cc450657253bf46b0569237e0f23edb7f"
+      },
+      {
+        "file": "DialogueTheme.tres",
+        "generator_output_unchanged": true,
+        "committed_bytes_unchanged": true,
+        "generator_matches_committed": true,
+        "sha256": "7417b8921bf96f2565a88b016117b6c8f444163ef67761eb475681dddab1f1f4"
+      }
+    ],
+    "python_syntax": "parsed",
+    "game_run": false,
+    "dotnet_build": false
+  },
+  "independent_reference_review_before_final_repairs": {
+    "reviewer": "dv_core_audit",
+    "review_type": "independent_read_only_static_reference_review",
+    "baseline_commit": "6166be88b96864271b33a1624c0568cb728581c7",
+    "reviewed_at_utc": "2026-10-20T05:28:52.180475+00:00",
+    "result": "No unexplained new runtime dependency loss found. Twelve deleted translation outputs must be recreated by Godot CSV import before running or exporting.",
+    "deletion_scope": {
+      "unique_paths": 132,
+      "all_present_in_complete_baseline_tree": true,
+      "baseline_blob_count": 2082,
+      "tree_truncated": false,
+      "paths_sha256": "5b48c9b17e1cc4ff9890cb03dcbd6dc429b7dee50f1642bf5c955f25405ff944",
+      "manifests_sha256": {
+        "godot_changes.json": "b722fb4e019de024e8a841076fdc4da5cc605d25c21892049472b602595d6710",
+        "root_changes.json": "6a1754cbdacd5268571a276ff2db32c2f1b63a85805276a72a22186c2eed2e90",
+        "tools_changes.json": "82e9fcd3cd0a2654bdcd0f25c47f85bac66415c5180e3f1a7441ec3f03fe7f3a"
+      }
+    },
+    "coverage": {
+      "retained_text_files_scanned": 333,
+      "unique_res_string_fragments_scanned": 888,
+      "extensions": [
+        ".cs",
+        ".gd",
+        ".tscn",
+        ".tres",
+        ".godot",
+        ".dv",
+        ".py",
+        ".ps1",
+        ".json",
+        ".cfg",
+        ".import"
+      ],
+      "existence_source": "Complete remote Git tree minus manifested deletions plus local additions; absent local binaries were not treated as absent resources.",
+      "baseline_comparison": "Original downloaded Git baseline versus working text; deleted-name and directory-prefix search also included retained tools.",
+      "sidecar_limit": "770 retained image/font/audio .import bodies were not downloaded; their source-file pairing was checked against the full tree. All four CSV .import bodies were read."
+    },
+    "new_unexplained_missing_runtime_resources": [],
+    "generated_runtime_dependencies": {
+      "count": 12,
+      "consumer": "godot_csharp/project.godot:145",
+      "stems": [
+        "dialogue_names",
+        "first_awakening_ui",
+        "mind_language",
+        "replay_ui"
+      ],
+      "directory": "godot_csharp/scenes/Shared/Locale/i18n/",
+      "languages": [
+        "zh_CN",
+        "en",
+        "ja"
+      ],
+      "evidence": "Every retained CSV has keys,zh_CN,en,ja headers; every retained .csv.import uses csv_translation and its source_file and all three dest_files match exactly. The union of the four output lists equals the 12 translation deletions. Import configurations are unchanged from baseline.",
+      "required_preparation": "Run Godot editor import on the complete checkout before runtime/export; project.godot intentionally continues referencing the generated .translation paths.",
+      "godot_import_executed_by_reviewer": false
+    },
+    "dynamic_families": [
+      {
+        "family": "Runtime character bodies and portraits",
+        "source": "language_core/60-game.dv:226-227",
+        "consumers": [
+          "godot_csharp/scenes/Shared/Field/WorldView.gd:14-15,529-540",
+          "godot_csharp/scenes/UI/DialogueUI.gd:101-104"
+        ],
+        "result": "All 16 cast keys have retained PixelCast/<key>.tres, AnimeCast/<key>.tres and DialogueCast/<key>_calm.tres. All three families and their PNG/sidecar dependencies remain in the full tree. No legacy animation_v2 dependency remains; capture_maps.gd:9 now uses PixelCast/detective.tres."
+      },
+      {
+        "family": "Chapter2 maps, route manifest and relief textures",
+        "sources": [
+          "godot_csharp/ShareAsset/Internal/Props/Chapter2/manifest.json",
+          "godot_csharp/scenes/Chapter2/Field/CampusMapView.gd:6-7,25-71,347-349"
+        ],
+        "result": "All 20 manifest map names resolve to retained .tscn files; all manifest exit targets name retained maps. Each map Architecture texture has its matching retained .relief.tres, whose diffuse/normal dependencies exist. Entire Chapter2 props family is preserved."
+      },
+      {
+        "family": "Import sidecars",
+        "result": "28 deleted PNGs have their own 28 sidecars deleted. All 774 retained .import filenames still have a retained source at the corresponding path; no newly orphaned source pairing."
+      },
+      {
+        "family": "Soundtrack exports",
+        "sources": [
+          "godot_csharp/scenes/Shared/Audio/GameAudio.gd:6-7,48-54,82-88",
+          "music/build_soundtrack.py"
+        ],
+        "result": "No surviving scene/runtime/tool input reads the 36 removed music/ PDF, MusicXML, MIDI or MP3 files. Ten .mscz files, SoundFont and generators remain. Runtime uses separate OGG paths, not these exports."
+      },
+      {
+        "family": "Removed themes, banner, mind UI, tool entry points and split C# file",
+        "result": "No retained executable/text-resource consumer references the deleted legacy names. ReadMilestoneProgressJson() is preserved verbatim in GameEngine.cs:69; only its empty-purpose partial-class file is removed. Retained DialogueTheme/TitleTheme resource dependencies exist."
+      }
+    ],
+    "preexisting_gaps": [
+      {
+        "kind": "runtime_geometry_asset",
+        "resource": "res://ShareAsset/Internal/Props/Outdoor/dial_meter.svg",
+        "sources": [
+          "language_core/60-game.dv:293,306",
+          "godot_csharp/scenes/Chapter2/Field/CampusMapView.gd:117-123"
+        ],
+        "evidence": "Production dvg_geometry_bindings() declares campus_n outdoor_dial with this texture; CampusMapView loads it and reports a missing native geometry texture on null. The reference is identical in baseline; neither the SVG nor its .import exists in the complete baseline tree. No file in this missing family is part of the deletion set."
+      },
+      {
+        "kind": "runtime_audio_generation_required",
+        "resources": [
+          "res://ShareAsset/Internal/Props/Audio/Music/%s.ogg",
+          "res://ShareAsset/Internal/Props/Audio/Sfx/%s.ogg"
+        ],
+        "sources": [
+          "godot_csharp/scenes/Shared/Audio/GameAudio.gd:6-7,106-111",
+          "godot_csharp/scenes/UI/TitleUI.gd:61,163,201"
+        ],
+        "evidence": "Complete baseline has no OGG blobs and no Props/Audio/ files. Title requests main_theme and ui_click. Existing generator supplies these families; removed MP3 exports never fulfilled the OGG paths."
+      },
+      {
+        "kind": "art_production_inputs",
+        "resource": "godot_csharp/AssetsSource/",
+        "evidence": "No baseline tree entries. Character originals/palettes and complete outdoor site inputs remain unavailable. Current runtime sheets/room textures remain; restored shared pure-art helper modules do not restore every original input."
+      },
+      {
+        "kind": "editor_preview_tool",
+        "resource": "res://ShareAsset/Internal/Characters/atlas/06_detective.tres",
+        "sources": [
+          "godot_csharp/addons/rpg_asset_adapter/mcp/preview_player.gd:21",
+          "godot_csharp/addons/rpg_asset_adapter/mcp/export_map.gd:6"
+        ],
+        "evidence": "Preexisting direct load of an absent atlas. Parent was notified and delegated its repair to the tools agent; not caused by a deletion. At this review snapshot, that file still contains the old reference."
+      },
+      {
+        "kind": "optional_asset_adapter_samples",
+        "resources": [
+          "res://AssetsSource/External/Victorian/",
+          "res://ShareAsset/External/Victorian/victorian_config.tres"
+        ],
+        "evidence": "Optional adapter configurations/tests reference source or generated samples absent from the original tree; none is removed this round. Preview scene/output targets created by the generic workflow are output locations, not new missing runtime inputs."
+      }
+    ],
+    "protected_bytes": {
+      "design_document": "docs/design-standard.md",
+      "body_read": false,
+      "bytes": 152271,
+      "git_blob_sha1": "58bbf0177b5c5c1c2533b72f30359ee69be67f46",
+      "matches_remote_baseline": true,
+      "seven_dv_files_unchanged_from_local_baseline": true
+    },
+    "validation_limits": [
+      "Static source/resource and configuration review only; no game, flow, session, import or build run by this reviewer.",
+      "Filename existence does not establish PNG visual quality or correct runtime behavior.",
+      "Arbitrary externally supplied resource paths cannot be exhaustively enumerated; current declared cast/map families and literal references were checked."
+    ]
+  },
+  "historical_drawing_sources": {
+    "commit": "1403465243def4fdc21d148d97208d70ca362b70",
+    "files": [
+      {
+        "path": "godot_csharp/tools/first_awakening_art/__init__.py",
+        "sha": "6a31dd1b57b735ce315d059513424f04a6e7a049",
+        "size": 215,
+        "restored_blob_sha": "6a31dd1b57b735ce315d059513424f04a6e7a049",
+        "matches_historical_blob": true
+      },
+      {
+        "path": "godot_csharp/tools/first_awakening_art/architecture.py",
+        "sha": "8247be52a5ef2625dc16824fe846c5ae9a45f779",
+        "size": 33777,
+        "restored_blob_sha": "8247be52a5ef2625dc16824fe846c5ae9a45f779",
+        "matches_historical_blob": true
+      },
+      {
+        "path": "godot_csharp/tools/first_awakening_art/layout.py",
+        "sha": "f8518592567f5a1c811f081b62a4cfdc3e528cc1",
+        "size": 2704,
+        "restored_blob_sha": "f8518592567f5a1c811f081b62a4cfdc3e528cc1",
+        "matches_historical_blob": true
+      },
+      {
+        "path": "godot_csharp/tools/first_awakening_art/palette.py",
+        "sha": "33da09f871bf0947e59dbfccc2e584e07c063afa",
+        "size": 2872,
+        "restored_blob_sha": "33da09f871bf0947e59dbfccc2e584e07c063afa",
+        "matches_historical_blob": true
+      },
+      {
+        "path": "godot_csharp/tools/first_awakening_art/pixel.py",
+        "sha": "a98055ddcfa266502f187e79599f60e7f8bc097d",
+        "size": 7547,
+        "restored_blob_sha": "a98055ddcfa266502f187e79599f60e7f8bc097d",
+        "matches_historical_blob": true
+      },
+      {
+        "path": "godot_csharp/tools/first_awakening_art/props.py",
+        "sha": "eb6901eb1ee9557637677ead47e2748900bdddd0",
+        "size": 36138,
+        "restored_blob_sha": "eb6901eb1ee9557637677ead47e2748900bdddd0",
+        "matches_historical_blob": true
+      }
+    ]
+  },
+  "restored_runtime_svg": {
+    "base_commit": "6166be88b96864271b33a1624c0568cb728581c7",
+    "status": "restored_original_bytes",
+    "restored_files": [
+      {
+        "path": "godot_csharp/ShareAsset/Internal/Props/Outdoor/dial_meter.svg",
+        "source_commit": "51414f1461f09c045acf890ccfaa85c5fc8a8714",
+        "blob_sha": "1466ed1806b9765945f228e3ce56f3baceb47248",
+        "sha256": "867c4fa22b11f28c6deaa873d2db4b9ce3c848b9a8ea928a0e085b8f5e1def81",
+        "size": 603,
+        "git_blob_identical": true
+      }
+    ],
+    "source_history": {
+      "pull_request": 2,
+      "head_commit": "f126c5ab93f11d3a6df40a910dbfa7a6e51d0cb5",
+      "added_commit": "0367e0d2b9da6ff2fe314974c67f14f2d0078f8e",
+      "removed_commit": "f126c5ab93f11d3a6df40a910dbfa7a6e51d0cb5",
+      "deletion_parent": "51414f1461f09c045acf890ccfaa85c5fc8a8714",
+      "main_path_history": [],
+      "note": "The main branch contains the squashed PR. The original SVG was recovered from the deletion parent in the PR source history."
+    },
+    "import_sidecar": {
+      "path": "godot_csharp/ShareAsset/Internal/Props/Outdoor/dial_meter.svg.import",
+      "status": "not_found_in_source_history",
+      "restored": false,
+      "evidence": [
+        "Exact .svg.import path commit query at the PR head returned no entries.",
+        "The Outdoor directory at deletion parent 51414f1461f09c045acf890ccfaa85c5fc8a8714 contains only dial_meter.svg."
+      ],
+      "note": "No import settings were invented. Godot must import the restored original SVG before use."
+    },
+    "consumer": {
+      "path": "language_core/60-game.dv",
+      "line": 293,
+      "function": "dvg_geometry_bindings",
+      "id": "outdoor_dial",
+      "texture": "res://ShareAsset/Internal/Props/Outdoor/dial_meter.svg"
+    },
+    "validation": {
+      "git_blob_identity": "verified",
+      "godot_or_game_executed": false,
+      "dv_or_geometry_parameters_changed": false
+    },
+    "sources": [
+      "https://api.github.com/repos/OopsYouDiedE/dual_ontology_world_engine/pulls/2",
+      "https://api.github.com/repos/OopsYouDiedE/dual_ontology_world_engine/commits?path=godot_csharp%2FShareAsset%2FInternal%2FProps%2FOutdoor%2Fdial_meter.svg&sha=f126c5ab93f11d3a6df40a910dbfa7a6e51d0cb5&per_page=100",
+      "https://github.com/OopsYouDiedE/dual_ontology_world_engine/blob/51414f1461f09c045acf890ccfaa85c5fc8a8714/godot_csharp/ShareAsset/Internal/Props/Outdoor/dial_meter.svg"
+    ]
+  },
+  "final_repairs": {
+    "dial_meter": "Recovered the exact original SVG; production DV and geometry unchanged.",
+    "preview_player": "Replaced nonexistent atlas reference with PixelCast idle_front frame; existing movement/collision/offset retained. No Godot rendering performed.",
+    "nuget": "Removed original hard-coded user package path; final Godot solution build succeeded.",
+    "mcp": "Restricted sandbox blocked SDK stdio even for empty server; same repository service and SDK passed real read-only stdio outside that restriction. No SDK downgrade or protocol edit."
+  },
+  "final_action_path_audit": {
+    "issues": [],
+    "existing_missing_resources": [
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/mcp/export_map.gd",
+        "reason": "missing literal Godot resource",
+        "target": "scenes/TileMapWorkflow/Preview.tscn"
+      },
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/mcp/workflow.py",
+        "reason": "missing literal Godot resource",
+        "target": "scenes/TileMapWorkflow/Preview.tscn"
+      },
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/mcp/workflow.py",
+        "reason": "missing literal Godot resource",
+        "target": "scenes/TileMapWorkflow/Preview.tscn"
+      },
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/rpg_adapter_config.gd",
+        "reason": "missing literal Godot resource",
+        "target": "ShareAsset/External/Victorian/victorian_config.tres"
+      },
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/test_adapter.gd",
+        "reason": "missing literal Godot resource",
+        "target": "imported_assets/test_victorian/tilesets/Victorian.tres"
+      },
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/test_adapter.gd",
+        "reason": "missing literal Godot resource",
+        "target": "imported_assets/test_victorian/scenes/$!Victorian_V2_Doors_Small_Lit_r0_c0_double.tscn"
+      },
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/test_adapter.gd",
+        "reason": "missing literal Godot resource",
+        "target": "imported_assets/test_victorian/scenes/$!Victorian_V2_Doors_Small_Lit_r0_c0_single.tscn"
+      },
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/test_adapter.gd",
+        "reason": "missing literal Godot resource",
+        "target": "imported_assets/test_victorian/scenes/$!Victorian_V2_Doors_Large_Lit_r0_c0_double.tscn"
+      },
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/test_adapter.gd",
+        "reason": "missing literal Godot resource",
+        "target": "imported_assets/test_victorian/scenes/$!Victorian_V2_Doors_Large_Lit_r0_c0_single.tscn"
+      },
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/test_adapter.gd",
+        "reason": "missing literal Godot resource",
+        "target": "imported_assets/test_victorian/scenes/w_1_h_1_v_4_2_Treasure_Chest_Animations_Front_Back_Lit_0.tscn"
+      },
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/test_adapter.gd",
+        "reason": "missing literal Godot resource",
+        "target": "imported_assets/test_victorian/scenes/w_1_h_1_v_4_2_Treasure_Chest_Animations_Front_Back_Lit_1.tscn"
+      },
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/test_adapter.gd",
+        "reason": "missing literal Godot resource",
+        "target": "imported_assets/test_victorian/scenes/w_1_h_2_v_4_2_Treasure_Chest_Animations_Left_Right_Lit_0.tscn"
+      },
+      {
+        "path": "godot_csharp/addons/rpg_asset_adapter/test_adapter.gd",
+        "reason": "missing literal Godot resource",
+        "target": "imported_assets/test_victorian/scenes/w_3_h_3_h_3_2_fountainwater_0.tscn"
+      }
+    ],
+    "source_count": 124
+  },
+  "unchanged_protected_sources": [
+    {
+      "path": "docs/design-standard.md",
+      "sha": "58bbf0177b5c5c1c2533b72f30359ee69be67f46"
+    },
+    {
+      "path": "language_core/10-compiler.dv",
+      "sha": "83ab55ed2d447778101f0bf4930636da72b56499"
+    },
+    {
+      "path": "language_core/20-core.dv",
+      "sha": "b99218ccbd5c35e5d304773ffe7e2c10795e3cfa"
+    },
+    {
+      "path": "language_core/30-session.dv",
+      "sha": "1da88ef7c0a35862ef9e3e085e4ab42817d005fa"
+    },
+    {
+      "path": "language_core/40-chapter1.dv",
+      "sha": "a74a3d06421631371248ec57467f90f9c1cf0f5f"
+    },
+    {
+      "path": "language_core/50-chapter2.dv",
+      "sha": "5323d2b47a8558f0b5a73543e04c33a3e4496dd8"
+    },
+    {
+      "path": "language_core/60-game.dv",
+      "sha": "2c6097769e487d86cf5a01b5b49fd872980b237e"
+    },
+    {
+      "path": "language_core/70-checks.dv",
+      "sha": "3624a0c30e9c603cb2f7c1d2031e88b18b899c5c"
+    },
+    {
+      "path": "language_core/Session/Session.cs",
+      "sha": "e519fb7a12c3619664670c38ad1209d6c32e273d"
+    },
+    {
+      "path": "language_core/compiler/Runtime.cs",
+      "sha": "99ea3b2d09d681de0653850580825832b1ad435e"
+    },
+    {
+      "path": "language_core/compiler/seed/Program.cs",
+      "sha": "cce0481829780a7475eec4761c41ae93427b0e9f"
+    }
+  ]
+}

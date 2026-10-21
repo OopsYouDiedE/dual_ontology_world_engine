@@ -11,7 +11,9 @@ Writes
 Chapter-1 furniture is referenced from FirstAwakeningInterior, not duplicated.
 Interior exits name the outdoors as "campus"; they are pointed at the outdoor region that holds
 their spawn point (outdoor.py cuts the outdoors into six regions).
-Every pixel comes from the recipes in tools/first_awakening_art and tools/chapter2_art.
+Shared drawing recipes are in tools/first_awakening_art and tools/chapter2_art.
+Default labels come from the published manifest. Full outdoor reconstruction additionally
+requires --site-source; original artwork and terrain inputs are never synthesized as fallback.
 """
 from __future__ import annotations
 
@@ -32,7 +34,7 @@ OUT = GAME / "ShareAsset/Internal/Props/Chapter2"
 CH1 = "res://ShareAsset/Internal/Props/FirstAwakeningInterior"
 SCENES = GAME / "scenes/Chapter2/Maps"
 CELL = 32
-COMPILED = GAME / "scenes/Chapter2/Script/generated_chapter_02.json"
+TEXT_SOURCE = OUT / "manifest.json"
 
 
 def title_key(key):
@@ -43,17 +45,33 @@ def label_key(key, site):
     return f"资源.场点.{key}.{site}.标签"
 
 
-def load_room_text(path=COMPILED):
-    compiled = read_json(path)
-    chapters = compiled.get("chapters") if isinstance(compiled, dict) else None
-    if not isinstance(chapters, list) or any(not isinstance(c, dict) for c in chapters):
-        raise ValueError("Compiled chapters must be an array of objects")
-    matching = [c for c in chapters if c.get("id") == "chapter2"]
-    if len(matching) != 1 or not isinstance(matching[0].get("design"), dict):
-        raise ValueError("Expected exactly one chapter2 design")
+def load_room_text(path=TEXT_SOURCE):
+    """Read existing published map labels or an explicit flat text-binding input.
+
+    The default manifest preserves the current asset wording. It is not a DV
+    gameplay authority and does not recreate the retired story compiler.
+    """
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(f"Map text input is missing: {path}. Supply --text-source with the published manifest or an explicit text-binding table.")
+    source = read_json(path)
+    if not isinstance(source, dict):
+        raise ValueError("Map text input must be a manifest or a text-binding object")
+    if isinstance(source.get("rooms"), dict):
+        text = {}
+        for key in rooms.TEXT_SITES:
+            entry = source["rooms"].get(key)
+            if not isinstance(entry, dict):
+                raise ValueError(f"Missing published map label source: {key}")
+            indices = site_indices(entry.get("sites"), key)
+            text[title_key(key)] = entry.get("title")
+            for site, index in indices.items():
+                text[label_key(key, site)] = entry["sites"][index].get("label")
+    else:
+        text = source.get("text", source)
     keys = [k for key, sites in rooms.TEXT_SITES.items()
             for k in (title_key(key), *(label_key(key, site) for site in sites))]
-    return require_strings(matching[0]["design"].get("text"), keys, ("资源.地图.", "资源.场点."))
+    return require_strings(text, keys, ("资源.地图.", "资源.场点."))
 
 
 def validate_maps(keys):
@@ -140,9 +158,9 @@ def scene_text(source, key, text):
     return replace_spans(source, edits)
 
 
-def update_text_only(keys, compiled=COMPILED, scenes=SCENES, manifest_path=OUT / "manifest.json"):
+def update_text_only(keys, text_source=TEXT_SOURCE, scenes=SCENES, manifest_path=OUT / "manifest.json"):
     validate_maps(keys)
-    text = load_room_text(compiled)
+    text = load_room_text(text_source)
     manifest_source = manifest_path.read_bytes().decode("utf-8")
     manifest = parse_json(manifest_source)
     entries = manifest.get("rooms") if isinstance(manifest, dict) else None
@@ -163,9 +181,9 @@ def update_text_only(keys, compiled=COMPILED, scenes=SCENES, manifest_path=OUT /
     return publish(candidates)
 
 
-def update_sites_only(keys, compiled=COMPILED, scenes=SCENES, manifest_path=OUT / "manifest.json"):
+def update_sites_only(keys, text_source=TEXT_SOURCE, scenes=SCENES, manifest_path=OUT / "manifest.json"):
     validate_maps(keys)
-    text_table = load_room_text(compiled)
+    text_table = load_room_text(text_source)
     manifest = read_json(manifest_path)
     authored = {room["key"]: resolve_room_text(room, text_table) for room in rooms.all_rooms()}
     candidates = {}
@@ -247,10 +265,10 @@ def validate_links(manifest):
         raise ValueError(f"Invalid map links: {bad}")
 
 
-def update_geometry_only(keys, compiled=COMPILED, scenes=SCENES, manifest_path=OUT / "manifest.json", repaint=False):
+def update_geometry_only(keys, text_source=TEXT_SOURCE, scenes=SCENES, manifest_path=OUT / "manifest.json", repaint=False):
     """Regenerate selected interiors; optionally repaint their baked floor shadows."""
     validate_maps(keys)
-    text_table = load_room_text(compiled)
+    text_table = load_room_text(text_source)
     manifest = read_json(manifest_path)
     spawn_region = existing_outdoor_spawns(manifest, scenes)
     authored = {room["key"]: resolve_room_text(room, text_table) for room in rooms.all_rooms()}
@@ -286,6 +304,47 @@ def update_geometry_only(keys, compiled=COMPILED, scenes=SCENES, manifest_path=O
         manifest["rooms"][key]["geometry_objects"] = [item for item in room["furniture"] if "texture" in item]
     validate_links(manifest)
     candidates[manifest_path] = json.dumps(manifest, ensure_ascii=False, indent=1).encode("utf-8")
+    return publish(candidates)
+
+
+def update_stands_only(keys, scenes=SCENES, manifest_path=OUT / "manifest.json"):
+    """Append capacity markers without rewriting published art, geometry or text."""
+    validate_maps(keys)
+    manifest = read_json(manifest_path)
+    fps = {**CH1_FP, **{name: entry.get("footprint") for name, entry in manifest.get("props", {}).items()}}
+    authored = {room["key"]: room for room in rooms.all_rooms()}
+    candidates = {}
+    for key in keys:
+        room = authored[key]
+        room["furniture"] = resolve(room["furniture"], fps)
+        points = stands(room)
+        previous = stands({**room, "stand_capacity": {}})
+        path = scenes / f"{key}.tscn"
+        source = path.read_bytes().decode("utf-8")
+        markers = []
+        for match in re.finditer(r'(?ms)^\[node\b.*?(?=^\[|\Z)', source):
+            header = match[0].splitlines()[0]
+            if 'parent="Stands"' not in header:
+                continue
+            name = re.search(r'name="([^"]+)"', header)
+            position = re.search(r'^position = Vector2\(([-\d.]+), ([-\d.]+)\)\r?$', match[0], re.M)
+            if 'type="Marker2D"' not in header or name is None or position is None:
+                raise ValueError(f"Unsupported published Stand: {key}")
+            markers.append((name[1], [float(position[1]), float(position[2])], match.end()))
+        published = [(name, point) for name, point, _ in markers]
+        expected = [(f"s{i:02d}", point) for i, point in enumerate(points)]
+        if published == expected:
+            continue
+        old = [(f"s{i:02d}", point) for i, point in enumerate(previous)]
+        if not markers or published != old or points[:len(previous)] != previous:
+            raise ValueError(f"Published Stands differ from their source recipe: {key}; retain the scene for review")
+        newline = "\r\n" if "\r\n" in source else "\n"
+        added = "".join(newline.join([
+            f'[node name="s{i:02d}" type="Marker2D" parent="Stands"]',
+            f'position = Vector2({x}, {y})', "", "",
+        ]) for i, (x, y) in enumerate(points[len(previous):], len(previous)))
+        end = markers[-1][2]
+        candidates[path] = (source[:end] + added + source[end:]).encode("utf-8")
     return publish(candidates)
 
 # Chapter-1 sprite footprints (w, h) measured from its placement table.
@@ -350,11 +409,26 @@ def stands(room, n=16):
             if all(rows[y + dy][x + dx] in painter.WALKABLE for dy in (-1, 0, 1) for dx in (-1, 0, 1)):
                 ok.append((x, y))
     if not ok:
+        if room.get("stand_capacity"):
+            raise ValueError(f"No legal standing candidates for {room['key']}")
         return []
     cx = sum(p[0] for p in ok) / len(ok); cy = sum(p[1] for p in ok) / len(ok)
     pick = [min(ok, key=lambda p: (p[0] - cx) ** 2 + (p[1] - cy) ** 2)]
     while len(pick) < min(n, len(ok)):
         pick.append(max(ok, key=lambda p: min((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 for q in pick)))
+    # Preserve the original markers and their order. Whole-building spreading
+    # alone does not guarantee enough initial places in each occupied region.
+    for name, capacity in room.get("stand_capacity", {}).items():
+        bounds = [r[1:] for r in room.get("regions", []) if r[0] == name]
+        if len(bounds) != 1 or not isinstance(capacity, int) or capacity < 0:
+            raise ValueError(f"Invalid standing capacity: {room['key']}:{name}")
+        x0, y0, x1, y1 = bounds[0]
+        within = lambda p: x0 <= p[0] < x1 and y0 <= p[1] < y1
+        while sum(within(p) for p in pick) < capacity:
+            available = [p for p in ok if within(p) and p not in pick]
+            if not available:
+                raise ValueError(f"Insufficient legal standing candidates: {room['key']}:{name}")
+            pick.append(max(available, key=lambda p: min((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 for q in pick)))
     return [[x * CELL + CELL // 2, y * CELL + CELL - 4] for x, y in pick]
 
 
@@ -461,43 +535,59 @@ def main():
     parser = argparse.ArgumentParser()
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--text-only", nargs="+", metavar="MAP", help="Update existing interior titles and labels without rebuilding geometry.")
-    modes.add_argument("--sites-only", nargs="+", metavar="MAP", help="Regenerate marker geometry with compiled text, using existing textures.")
+    modes.add_argument("--sites-only", nargs="+", metavar="MAP", help="Regenerate marker geometry with published labels, using existing textures.")
+    modes.add_argument("--stands-only", nargs="+", metavar="MAP", help="Append declared standing capacity while preserving all other published scene bytes.")
     modes.add_argument("--geometry-only", nargs="+", metavar="MAP", help="Regenerate selected interiors from recipes and existing PNGs; do not paint or import assets.")
     modes.add_argument("--interiors-only", nargs="+", metavar="MAP", help="Regenerate selected interiors and their baked floor shadows, without outdoors.")
+    parser.add_argument("--text-source", type=Path, default=TEXT_SOURCE,
+                        help="Published map manifest or explicit flat text-binding JSON; does not run a story compiler.")
+    parser.add_argument("--site-source", type=Path,
+                        help="Complete authoring source directory for full outdoor reconstruction (campus.py, render_site.py, site.json and their data).")
     args = parser.parse_args()
     if args.text_only:
-        print(f"room text: {update_text_only(args.text_only)} file(s) changed")
+        print(f"room text: {update_text_only(args.text_only, text_source=args.text_source)} file(s) changed")
         return
     if args.sites_only:
-        print(f"generated sites: {update_sites_only(args.sites_only)} file(s) changed")
+        print(f"generated sites: {update_sites_only(args.sites_only, text_source=args.text_source)} file(s) changed")
+        return
+    if args.stands_only:
+        print(f"generated stands: {update_stands_only(args.stands_only)} file(s) changed")
         return
     if args.interiors_only:
-        print(f"generated interiors: {update_geometry_only(args.interiors_only, repaint=True)} file(s) changed")
+        print(f"generated interiors: {update_geometry_only(args.interiors_only, text_source=args.text_source, repaint=True)} file(s) changed")
         return
     if args.geometry_only:
-        print(f"generated geometry: {update_geometry_only(args.geometry_only)} file(s) changed")
+        print(f"generated geometry: {update_geometry_only(args.geometry_only, text_source=args.text_source)} file(s) changed")
         return
     from chapter2_art import outdoor, painter
 
-    text_table = load_room_text()
+    if args.site_source is not None:
+        outdoor.SITE_DIR = args.site_source.resolve()
+    outdoor.require_site_source()
+    text_table = load_room_text(args.text_source)
     all_rooms = [resolve_room_text(room, text_table) for room in rooms.all_rooms()]
     canvases, ch1, fps = sprites_and_footprints()
-    (OUT / "rooms").mkdir(parents=True, exist_ok=True)
-    (OUT / "props").mkdir(parents=True, exist_ok=True)
-    SCENES.mkdir(parents=True, exist_ok=True)
-    manifest = {"source": "godot_csharp/tools/build_chapter2_scenes.py", "rooms": {}, "props": {}}
+    # Resolve every external source and the outdoor build before publishing any
+    # runtime image. Missing terrain/original art must not leave partial outputs.
     sprite_paths, sizes = {}, {}
     for name, can in canvases.items():
-        path = OUT / "props" / f"{name}.png"
-        can.save(path)
         sprite_paths[name] = f"res://ShareAsset/Internal/Props/Chapter2/props/{name}.png"
         sizes[name] = (can.w, can.h)
-        manifest["props"][name] = {"size": [can.w, can.h], "footprint": fps.get(name), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
     for name, can in ch1.items():
         if name not in sprite_paths:
             sprite_paths[name] = f"{CH1}/{name}.png"
             sizes[name] = (can.w, can.h)
+    for room in all_rooms:
+        register_external_sprites(room, sprite_paths, sizes)
     regions, spawn_region, outdoor_sprites = outdoor.build(sizes, fps)
+    (OUT / "rooms").mkdir(parents=True, exist_ok=True)
+    (OUT / "props").mkdir(parents=True, exist_ok=True)
+    SCENES.mkdir(parents=True, exist_ok=True)
+    manifest = {"source": "godot_csharp/tools/build_chapter2_scenes.py", "rooms": {}, "props": {}}
+    for name, can in canvases.items():
+        path = OUT / "props" / f"{name}.png"
+        can.save(path)
+        manifest["props"][name] = {"size": [can.w, can.h], "footprint": fps.get(name), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
     for name, can in outdoor_sprites.items():
         can.save(OUT / "props" / f"{name}.png")
         sprite_paths[name] = f"res://ShareAsset/Internal/Props/Chapter2/props/{name}.png"

@@ -12,4 +12,9 @@
 - [ProbLog API 与 semiring](https://problog.readthedocs.io/en/latest/api.html)：概率逻辑的 term、clause、公式与半环接口可供未来设计参考。概率解释重叠、独立性、归一化与模型语义仍需处理；实现一个加乘接口不等于已经证明概率计算正确。
 - [Lean 的类型系统与证明](https://lean-lang.org/doc/reference/latest/The-Type-System/)：可借鉴小核/外层分离。Lean 能在假设与公理下陈述理论，不能简单说成所有命题都无条件地全宇宙为真；本引擎本轮目标也不是 Lean 证明器或量子概率系统。
 
+## 函数与多种演算支持补充
+
+- [MATLAB function](https://www.mathworks.com/help/matlab/ref/function.html)：具名输入/输出与 `function ... end` 的参考。DV 借鉴函数头，仍采用自身的名义类型、列表返回与明确赋值检查，不承诺 MATLAB 矩阵、调用端解构、nargout 或完整语言兼容。
+- [SciPy solve_ivp](https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html)：连续初值问题可以按刚性和精度需要选择不同积分方法，局部误差容差与事件检测具有独立边界，单步内多个零点可能漏检。它是未来连续模型的技术参照；当前 DV 有限域和离散时钟分析未依赖 SciPy，也不借其文档宣称已有连续积分器或全局误差证明。
+
 参考用于技术分析，不作为剧情、人物或玩法设定依据。本语言尚未声称对应某一完整概率逻辑体系的已验证实现。

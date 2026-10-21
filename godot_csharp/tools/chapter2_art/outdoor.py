@@ -1,7 +1,7 @@
 """Chapter-2 outdoors at true proportions: the whole campus, the harbour road and the harbour.
 
 Scale 24 px per metre in a three-quarter view (oblique.py). Positions, sizes and paths come
-from artifacts/remake-chapter2/campus-site (Corvo terrain scaled 0.5, siting in site.json, the
+from an explicit campus-site authoring directory (Corvo terrain scaled 0.5, siting in site.json, the
 building list and paths in campus.py, the harbour road in render_site.py). The map 'up' is the
 campus axis (bearing about 2 degrees, nearly north).
 
@@ -29,7 +29,7 @@ from . import nature as NT
 from .oblique import SHADOW, Face, Frame, bayer, hash2, part_shadow, quad, render
 
 ROOT = Path(__file__).resolve().parents[3]
-SITE_DIR = ROOT / "artifacts/remake-chapter2/campus-site"
+SITE_DIR = ROOT / "godot_csharp/AssetsSource/Internal/Props/Chapter2/CampusSite"
 K = 24
 U0, U1, V0, V1 = -128.0, 206.0, -160.0, 84.0
 W, H = int((U1 - U0) * K), int((V1 - V0) * K)
@@ -86,7 +86,17 @@ SEA = R("#0b1f2c", "#10293a", "#163448", "#1c4156", "#244f64", "#2f6072", "#3f74
 FOAM = R("#a9c4c2", "#cfe0dc", "#eef4f1")
 
 
+def require_site_source():
+    """Fail before any runtime output when the external terrain authoring input is absent."""
+    missing = [str(SITE_DIR / name) for name in ("campus.py", "render_site.py", "site.json")
+               if not (SITE_DIR / name).is_file()]
+    if missing:
+        raise FileNotFoundError("Full outdoor reconstruction requires the original campus-site source and its terrain data. "
+                                "Supply --site-source; missing: " + ", ".join(missing))
+
+
 def _campus():
+    require_site_source()
     sys.path.insert(0, str(SITE_DIR))
     import campus as S                     # noqa: E402  (site scripts, scaled terrain)
     import render_site as RS               # noqa: E402

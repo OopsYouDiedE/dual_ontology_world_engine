@@ -1,275 +1,237 @@
-# Godot 游戏宿主维护与路径规范
+# Godot 游戏宿主维护
 
-## 空间输入与分段计时（2026-10-19）
+## 范围与依据
 
-用户裁定同房间内WASD/鼠标行走为宿主接近，不提交DV、不结算时间或步数。SpatialInput负责连续碰撞、鼠标路径及近距热点；WorldView保留现场实体，CampusMapView提供几何与动态人物避让。跨房间边界只提交DV已准入的移动ID，实际执行前不更改逻辑地点；NPC正式移动仍用同一执行器。人物碰撞mask包含其他人物，站点接近点排除已占用终点，不移动旁人让路或传送到达。
+本目录负责 Godot 场景、渲染、物理、碰撞、输入、UI 与音效。工程使用 Godot 4.6.1 .NET、.NET 8，通过 `DualOntologyWorldEngine.csproj` 单向引用 `../language_core/Session/DuelView.Session.csproj`。DV 负责决策、报价、效果、观察、传播与结算；宿主只传递正式输入、执行现场意图并呈现观察者收到的数据。
 
-awaiting_input仅更新现场资格表，不打开全局列表。单一近距动作直接提交，多动作在物件旁显示局部纸面标签；随身动作从本人局部手稿入口访问。空间绑定及中文标题由原生DV声明提供，宿主不拆解剧情动作ID或编造内容。Main在正式执行前复核人工热点接触，进入共享Prepare/Complete。
+用户当轮指令优先，其余工作、验收与证据要求遵循根目录 `AGENTS.md`。内容设计依据是 `../docs/design-standard.md`；工程文档不另立人物、谜题或剧情结论。调整本目录架构、合同、命令或排错方式时同步维护本文，历史任务与原始记录通过 Git 和任务目录溯源。
 
-GameEngine以Stopwatch单调微秒写interaction-timing.dvlog，按interaction_id关联请求、命令排队、Prepare、快照、现场执行、Complete、绘制首帧及阅读结束；局部行走单列起止及实测游戏钟。PlayerViewTrace在实际frame_post_draw后标记首帧，不能把待显示正文当成已绘制。`python godot_csharp/tools/summarize_interaction_timing.py <宿主interaction-timing.dvlog> --out <新dvlog>`只读整理，缺段为null，阅读/等待与CPU耗时分别解释。
+## 现役模块与入口
 
-PaperFrame使用生成主题内的双线StyleBox，供HUD、对白及局部选择共用；姓名栏关闭自身滚动，长正文仍可滚动，立绘下不重复姓名。主题仍通过build_ui_theme.py重生，禁止直接手改生成tres。集中修改后统一工程排错，再以实际空间输入与截图检查；性能采集保留脚本/GPU/.NET来源。profile_dv_capture.py的`--controller=player`使用人工输入协议、自动开始，不代选剧情；其模式名player不代表独立盲玩。
+| 路径 | 职责 |
+| --- | --- |
+| `project.godot` | 主场景、自动加载、插件、输入映射与翻译资源 |
+| `scenes/Host/Main.tscn`、`Main.gd` | 正式宿主、UI 总装、现场执行与观察者呈现调度 |
+| `scenes/Host/GameEngine.cs` | 唯一 DV 会话持有者、后台串行命令队列、快照缓存、保存与计时 |
+| `scenes/Host/FrameArchive.cs` | 后台 PNG 编码、二进制记录与原子封存 |
+| `scenes/Shared/Field/WorldView.gd` | 人物实体、现场移动、局部输入、可见区域与房间舞台 |
+| `scenes/Chapter2/Field/CampusMapView.gd`、`.tscn` | 统一地图适配器、几何、导航、站点与跨图转交 |
+| `scenes/Chapter2/Maps/` | 现役地图场景 |
+| `scenes/Story/StoryActor.gd` | 现役人物身体、精灵与动作呈现 |
+| `scenes/UI/UISystem.gd`、`.tscn` | 汇聚子界面，以纯数据事件与 Main 通信 |
+| `scenes/UI/TitleUI`、`SettingsUI`、`FieldHUD`、`InvestigationUI`、`DialogueUI` | 各自的 `.gd` 与 `.tscn`，分别负责标题、设置、HUD、调查与对白 |
+| `scenes/Shared/Audio/`、`Settings/`、`Locale/` | 自动加载服务、设置及本地化 |
+| `addons/dv_checker/` | DV 检查编辑面板；维护要求见该目录 AGENTS |
+| `addons/rpg_asset_adapter/` | 编辑器资产适配器；子工具入口以其 README 为准 |
 
-## Core 与现场接线（2026-10-19）
+`Main.gd` 内部保留 `RuntimeDiagnostics`、`PlayerViewTrace`、`DvFieldExecutor`；`WorldView.gd` 内部保留呈现绑定、词汇、视野、提示、房间舞台、空间输入与导航辅助类。UI 只收发字典等纯数据，不直接持有 Core 对象；Core 不依赖 Godot 节点。完整语言及 Session 合同见 `../language_core/AGENTS.md` 与 `../language_core/Session/README.md`。
 
-正式入口使用 `GameEngine.ConfigureSession` 的 `{controller: "player"|"ai", viewer?: string, campaign?: record}`，只允许新会话打开前配置。默认主体、内容参数与可视资源绑定在 DV `dvg_host_open` / `dvg_host_viewer`；宿主不另写人物标识或决策规则。玩家候选与 AI 规划最终进入同一 Prepare/Complete，控制方式不在在途动作中切换。
+## 正式动作与后台调度
 
-Main 的导出参数与 `--dv-controller=player|ai`、`--dv-viewer=`、`--dv-profile=`、`--dv-zone=`、`--dv-seed=` 配置同一入口；`--dv-auto-start` 仅触发正常 start，不选择动作。GameEngine 串行消费输入，后台完成 DV 状态转换和观察者/执行主体快照，主线程读取缓存。`dv_action.execution_snapshot` 仅供现场执行，不送入观察者正文。
+唯一动作链是 `Prepare → 现场执行/世界法则回执 → Complete → 呈现`。预测、推演和界面显示不发布真实行动效果。准备好的 `dv_action` 带执行主体的 `execution_snapshot`，只交现场适配器；观察者正文仍按本人的实际观察与收闻过滤。
 
-Main → DvFieldExecutor → WorldView 使用唯一保留的人物实体执行移动。离屏场地使用独立 World2D 的同一地图、寻路和碰撞代码；切图保留真实实体和终点，初次物化核对声明地点与合法出生点。回执核对主体、序号、动作、地图、房间及显式站点到达误差。缺资源或绑定返回 blocked，不以逻辑执行器替代几何到达。唯一 Complete 在执行器返回后提交，普通现场信号不重复结算。
+`GameEngine` 串行消费输入，在后台完成打开、Prepare、Complete、快照构建及 JSON 到独占 Godot Dictionary/Array 的物化；工作线程不访问 Node、场景树或共享呈现资源，任务完成后才把数据图交给主线程。生产 `view` 事件自带 `snapshot`，Main 直接使用它；UI 把已完成的快照当作只读数据，编辑内容另作独立副本。`Snapshot()` 与 `ReadMilestoneProgressJson()` 均在 `GameEngine.cs` 中，只读取已完成的 JSON 缓存，不遍历工作线程持有的 DV 状态；前者保留兼容解析入口，生产视图事件不重复调用它。命令异常冻结继续分派，不能自动重试一个可能已经提交的转换。完成回执按 DV 行动标识去重，等待回执期间不重新分派意图。
 
-显式保存/恢复拒绝现场 pending；异步存取等待后台工作后再次核对。关闭等待后台工作并保留现场 pending；错误停止继续准备并记录到关闭证据。用户输入与显示记录先保存，原始会话和存档仍流式封存。工程构建与界面专项观察分别报告，不据此宣称完整剧情或五日达成。
+`view_ready` 或 `dv_next` 启动下一步；显示完成不另行构造第二套 Prepare 路径。阅读期间 Main 可发送正式 `dv_next`：仅远离当前观察房间、且目的地也不进入该房间的 NPC，允许沿同一 Godot 执行器与 Complete 推进。玩家动作、同房动作和新的可见对白留在前台队列；正在阅读的正文与 HUD 不被后继快照替换。空呈现的下一调度提示只发一次，不预写回执、跳过碰撞或后台代选玩家动作。
 
+阅读结束后，队列中的 `state` / `view` 等待仍在途的后台现场执行结束，再同步观察者快照，避免旧的人员投影重新取得实体并取消 NPC 的真实移动。该等待不阻塞现场回执或 Complete 的直接派发。执行器的单动作锁覆盖异步资源准备、实际移动和回执收集的整个期间。
 
-本目录为 Godot 4.6.1 .NET 游戏宿主，负责场景树、渲染、空间与碰撞、物理与输入、UI 及音效呈现。通过 ProjectReference 单向引用 language_core/Session；Godot 类型、运行时专属状态和素材完全由本目录管理。设计与验收标准详见 [统一设计规范](../docs/design-standard.md)。
+Prepare 返回逻辑完成时刻已到达的单个意图，其他主体的排队动作由 DV 保存。`execution_cost` 是该动作完整费用，DV 对已等待时间去重结算；宿主不另推游戏钟。未完成的现场执行继续使用同一 pending。
 
-**同步修改规则**：本目录发生架构、模块合同、命令或排错方式调整时，必须同步修改本文件（`godot_csharp/AGENTS.md`）。
+## 新会话配置与播放倍率
 
-`addons/dv_checker` 提供 DV 编辑与检查底部面板，通过 `language_core/tools/check_dv.py --format json` 调用实际编译器。它支持仓库外部于 Godot 项目根目录的 DV 文件；诊断保留源文件位置，不执行剧情，也不改变当前游戏宿主的 Core 引用。插件维护方式见该目录 AGENTS.md 与 README.md。
+`GameEngine.ConfigureSession` 接受 `{controller: "player"|"ai", viewer?: string, campaign?: record}`，只允许在打开会话前设置。默认主体、内容参数和资源绑定由 DV 提供。玩家候选与 AI 规划共用同一正式动作链，不在在途动作中切换控制方式。
 
-`scenes/Host/DvRuntime.cs` 接入独立的 `language_core/Session` 生成类库，只负责 Godot 与 DV 会话的序列化边界。Open/Prepare/Complete/Save/Restore 使用同一份 DV 会话状态；现场须给出真实完成回执。Main/GameEngine 已调用 DvSession.OpenCampaign，正式项目移除旧 Core/GameSession 引用及旧检查工具编译入口。Prepare 在后台计算，EventsReady 把意图交回 Main；移动经 WorldView 的实际导航回执，显示只来自 DV 的本人行动/实际听闻。旧 AI pilot 接口尚未迁移，地图跨章和现场完整性待实机核对。构建通过 `-p:DvPython=<Python路径>` 指定生成器环境。
+Main 的导出属性以及 `--dv-controller=`、`--dv-viewer=`、`--dv-profile=`、`--dv-zone=`、`--dv-seed=` 参数配置同一入口。`--dv-auto-start` 只触发开始操作，不选择世界动作。正常游玩默认一倍速，`--dv-speed=` 可设置 0.25 至 8；`physics_ticks_per_second` 按 `60 × max(1, speed)` 设置，四倍时为 240，保持物理单步间隔。DV 分钟费用、预算和判断不随播放倍率重写；实测游戏时间不得用现实时间乘倍率代替。
 
-## 单一动作实现（2026-10-14）
+普通游玩默认 `audit=false`，显式 `--dv-audit` 启用完整来源记录。普通模式仍保留推理实际需要的历史状态、输入、可见正文、计时及存档；关闭清单注明记录策略。性能采集工具固定开启审计，两种模式的证据和速度分别解释。
 
-本节覆盖本文及旧文档中的 r20、旧 Core、解释链和旧工具入口描述。用户要求清理整个项目的旧动作实现；旧源码只能从 Git 历史查阅，历史 artifacts、保护基线、`.story` 与译文保留，不重新编译成可运行旧路径。
+## 空间输入与现场执行
 
-唯一正式动作链是 `verification/session/30-runner.dv` 的 prepare → 执行回执 → complete：DV 负责主体决策、报价、权威效果、观察、传播与结算；Godot Main → WorldView 只执行移动并返回现场结果；非移动使用同一 complete 的 DV 世界法则。命令行 formal-model 是同一接口的逻辑执行适配，不含 Godot 几何，不能冒称实机验收。预测与推演不发布真实行动效果。
+门槛 D 格的出发房间身份使用保留身体的连续脚点核对原膨胀障碍矩形；相邻导航格中心落在墙内不能单独抹去合法门槛脚点的出发身份。导航、目的地、站点半径及到达误差仍按原规则核对，不把门槛出发当作目标到达。
 
-宿主只保留 GameEngine → DvSession → 生成 DV 类库，不保留旧坐席 token、DispatchField、舞台动作分派或第二个 DvRuntime 会话持有者。界面呈现完成不单独触发 Prepare，只有 view_ready / dv_next 启动下一步；等待回执时不重新分派意图。
+同房间内 WASD/鼠标行走由宿主寻路和真实碰撞执行，不提交 DV，不扣游戏时间或动作步数，也不产生观察、答案或成功交互。`awaiting_input` 更新现场资格表；玩家接近物件或人物后交互，单一动作直接提交，多动作在接触点显示局部选择。随身/等待操作仍由 DV 资格表准入。Main 在正式执行前复核人工热点接触。
 
-构建：`dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false`；必要时用 `-p:DvPython=<Python路径>`。DV 编译器自举与编辑器继续使用现有工具，seed 只持有语法 Reader/Value，不含世界执行或解释器。两份解决方案均引用 Session。
+跨房间仅提交 DV 已准入的移动 ID。鼠标点击门道时先按实际几何匹配唯一邻室并真实走到门口；E 可在近距门口发起同一动作，多义门不猜选。门道 D 格可用于出发核对，但不作为到达邻室或获得观察的依据。
 
-旧 verify、FullTest、guarded_level3、PlayerTranscript、回放与旧会话检查入口已移除，不再执行。原保护清单和原始证据保持原字节；本次架构清理不是同条件耗时优化，不建立或重置测量基线。一级三份记录与三级保护运行工具需要以后按 DV 合同重新实现；本轮不以构建或短启动记录代替任何完整验收级别。
+同图房间也可共享没有 D 标记的开放地板边界。`CampusMapView.passage_at(source, attempted, from_room, to_room, walker)` 仅查询已载入 authored 几何：真实身体仍在 source、两点分别属于指定室内、地形为相邻的可行走地板格、探测不超过一个现有地形格，且原导航障碍与身体 `test_move` 均允许该短步时，返回 source/target/landing 证据。WorldView 只把该证据匹配到当前唯一可用的同图跨房动作；WASD 到边界、近距 E 与边界点击均保留 Prepare、真实碰撞及 Complete。该查询不造门、不改碰撞、站点或半径，不写位置、不授予房间或观察；远距地板点击仍先在源房真实行走。镜头显示边界与逻辑房间、准入及现场到达分别处理。
 
-只读逐文件审计和清理报告继续放在 `artifacts/partial-bootstrap-core/single-action-path/`。禁止流程回归以及以计数评价游戏的约束继续有效。
+在途连续通行提示只投影真实 `continuous_request` 阶段和取消标记：准备、通行、取消、核对或返回源处。提示优先于普通热点/控制说明，不依赖 `can_submit` 再次开放；对白、模态界面、关闭及隐藏执行场仍抑制。三语正文不含内部调度术语，不创建行动、剧情或知识，不宣称到达；请求清除即恢复原现场提示。
 
-## 测评方式约束
+E 的近门候选统一汇总同图 D 格邻室与跨图 `Exits/Shape` 矩形。`CampusMapView.manual_exit_targets_near(point, radius)` 只查询实际出口几何、armed 与通行值，不执行移动；`SpatialInput._near_door()` 只接受当前 `available` 的 doorway 选项，按行动 ID 去重，全部近门候选仅一个时才沿原正式链提交。现场可操作且 `spatial.can_submit()` 成立、无热点提示时，HUD 显示该候选的已交付 label 与 E；否则显示三语通用控制提示，不从隐藏状态补目标。模态与对白期间不显示该提示。新热点火花绘制复用 `site_visible`，低动态设置保留静态标记并停止闪烁时钟。
 
-- 严格遵循根目录用户裁定：禁止执行流程回归（包括 `flow`、`flow2`、`flow_check.gd`、`check_flow.gd` 及统一回归调用）。
-- 禁止以“xx 项通过”、断言数量、通过率或“全绿”评估游戏、人物或修改效果；所有机制检查仅用于定位具体工程问题，不构成验收依据。
-- 验收必须使用新的正式游戏会话，逐段核对玩家实际可见信息、真实输入与执行回执、画面表现及推进；涉及停滞、折返或画面问题时，必须说明当时信息并查看对应截图。
-- 三级测试默认由引擎自身的侦探替代玩家输入（使用主体认知、动机与共同决策机制在正式游戏循环中执行），测试 Agent 负责独立审查；只有用户明确要求盲玩时才采用独立盲玩。
-- 关键节点耗时由只读 `*.Measurement.cs` 通道复制正式会话已提交的进度，并由 FullTest 写入独立诊断流；不创建缺失进度组，不调用推理、判题、观察或输入，不把诊断提供给主体。变化时刻以相邻采样区间表示，玩家画面与执行回执另行核对。此通道、正式输入、计时、剧本和判定均受根目录的保护基线约束。
+家具命中保留实际绘制与视野过滤，优先选择已有 `sprite_sites` 绑定且当前可见的现场物件，普通家具名称只作回退。静态“当前可交互”标记仅来自当前 `available` 的 site/person 候选，并同时要求现场 active、`spatial.can_submit()` 和 `site_visible`；该标记不表示 new、未取得或新观察，不改站点与接触半径。E 没有合法近热点或唯一门候选时，在可提交边界只显示三语 UI 短提示，不生成对白、世界事件或行动资格。
 
-## 宿主与核心合同
+悬停与鼠标按下共用 `WorldView.pointer_hit(point)`，输入为现场本地坐标，保留站点可见性、绘制过滤和映射家具优先规则。鼠标按下在原 `_unhandled_input` 与 enabled/UI 门禁后，用本次 `event.position` 经现场 canvas 变换逆矩阵换算并立即查询；地面导航也使用同一点，不读取上帧 hovered 或另查鼠标全局位置代替该次事件。采集器同包输入不能以等待一帧替代生产命中合同。
 
-1. **分层隔离原则与模块架构**：
-   - UI 控件严禁直接访问 Core 对象引用；Core 严禁依赖任何 Godot 场景或节点。
-   - UI 结构划分为 6 个解耦独立模块：主界面（TitleUI）、设置界面（SettingsUI）、游戏内 HUD（FieldHUD）、调查界面（InvestigationUI：手稿/卡片/笔记本/地图/终局）、游戏场景显示（WorldView）、文本显示（DialogueUI：对白/选项/旁白/闪白/转场淡入淡出）；顶层由 `UISystem.tscn` / `UISystem.gd` 负责装配与生命周期路由，以纯数据字典通信，防止隐式代码耦合。
-   - 宿主现场辅助类（`RuntimeDiagnostics`、`PlayerViewTrace`、`DvFieldExecutor`）以内部类整合进 `Host/Main.gd`；现场导航与渲染辅助（`FieldVocabulary`、`PresentationBindings`、`SightMask`、`HintOverlay`、`RoomStage`、`SpatialInput`、`FieldNavigation`）以内部类整合进 `Shared/Field/WorldView.gd`。
-   - `Host/Main.tscn` 与 `Host/GameEngine.cs` 是唯一胶水，负责双向数据转发：将 Core 演算结果与回执转为纯数据派发给 UI 和现场，将玩家/坐席操作转为 Core 意图交由世界引擎裁决。
+人工同图连续过门因明确 `released` 取消时，只在真实源房、身体停止、空转交链且 executor 捕获的 Prepared 起点与实际终点精确相等的子集中生成 `continuous_cancel` 重试证明。WorldView 提供原生取消候选；Main 独立核对当前 Prepared 意图、请求、主体、行动、序号、两房、地图、实际脚点与 `interior` / `source-side-doorway` 源几何后，才签入 `source-cancel-v1`、`action_event` 及 `identity_verified`，移除来件自行声明的证明。DV 只授当前同签名的人工新输入重试资格；原动作仍 rejected，费用、位置与观察不改，不自动重发。宿主显示三语取消短提示，不宣称到达。请求时脚点另记 `request_source_position`，不能替代 Prepared 起点；实际返回但坐标不同、跨图、其他取消原因及持续受阻不属于该重试合同。
 
-2. **主体共同决策与适配**：
-   - 当前生产源码按用户要求恢复 `5b8c7dbe` 的 r20 时期提交；使用该版 Core 主体决策与宿主坐席适配，未提交的新版 `SubjectiveAgent`/Diagnostics 合同封存后移出。设计合规需另行核对，不因旧版推进较快而推定合格。
-   - 宿主（`PlayerController`、`AgentPilot`、`ActionLearning`）仅负责将界面/现场当前可见的选项与操作转换为语义候选，并将真实执行阶段（开始、接触、完成、失败、无进展、中断）反馈给 Core，回执保持幂等。
-   - 宿主严禁按席位另设行为评分或主观偏好，角色差异完全由 `.story` 声明的个人动机、已知信息与能力预算决定。
+跨图及跨房动作真实执行一部分后失败，可能保留与 DV 拒绝结果不一致的实体地点；此缺口尚未修复。预备资源与入口校验不能代替最终站点成功，也不能保证动态受阻后仍在源图；不得传送身体、伪改保留实体记录或放宽源身份核对掩盖失败。涉及部分终点的正式合同须另行处理。
 
-3. **保存与状态恢复**：
-   - `WorldSession.Save` 与 `SessionPersistence` 提供空闲会话的原子持久化协议，仅记录差异片段。
-   - 章节恢复使用专用构造加载，不重新触发观察、效果或初始化。非空闲点与未支持状态应明确拒绝保存。
+正式移动沿 `Main → DvFieldExecutor → WorldView.execute_move`，现场成功后才执行 Complete。回执核对主体、序号、行动、地图、逻辑房间、执行房间和显式站点，保留真实终点、站点范围与到达误差。`destination.room`、`execution_room`、`departure_station` 各司其职；依赖现场接触的观察只由成功 Complete 产生。缺少人物、地图、站点或合法出生点必须返回失败，不把命令行逻辑执行当作几何到达。
 
-4. **现场表现与空间导航**：
-   - 现场表现（演员节点、资产、地图、站位、热点与出口）严格由剧本编译物声明驱动。
-   - 人物移动受正式物理、碰撞与视线遮挡约束；导航仅基于本人已见区域规划，不预读未知几何或直接设置坐标。
+人物碰撞包含其他人物，不移动旁人让路，不传送至目标。站点接近核对原半径和房间，枚举合法候选并避开已占终点。连续脚点与导航格中心共同核对原障碍膨胀范围；保持显式站点原半径和 4 px 到达误差。普通房间终点依次选择可达空闲 Stand、具有转身空间的房间格及其他合法房间格，各组按实际距离排序。
 
-5. **AI 坐席与全量复测**：
-   - AI 坐席（`AgentPilot.gd` / `GameEngine.ConfigureAiSeat`）驱动玩家席位，基于本人认知与声明规则，通过正式现场与 UI 动作进行游戏。
-   - 实际复测使用 `full_test.py`，完整记录真实决策、输入、回执与渲染截图。评估以实际行为合理性为准，不采用计数汇总。
+鼠标路线与 StoryActor 每个物理帧按原速度乘 delta 分配移动距离，航点结束后继续消费剩余距离，每帧最多处理 32 段，每段经过 `move_and_slide`。只合并同方向共线点，保留拐角、站点、速度、碰撞与受阻判定；不以直接改位置补足最后一步。局部房间的可走范围写入独立 AStarGrid2D，不修改地图共享的基础导航网格。房间候选索引只缓存静态几何，实时占位仍按真实主体位置核对。
 
-## 一、场景（.tscn）与 UI 架构（2026-10-19 统一）
+初次物化使用 DV 声明的 `people.initial_anchor`；地点移动锚点不自动变成所有人的出生点。缺初次锚点时只选既有、同房、可走且未占用的 Stand/Spawn。切图沿用已存在的真实实体与终点。室外到达按实际地图边界及可走格判断。
 
-所有 UI 界面，包括负责窗口 UI 和核心沟通的容器，全部统一为一个 `.tscn` 和一个 `.gd` 文件：
-- **统一 UI 场景**：`scenes/UI/UISystem.tscn`
-- **统一 UI 脚本**：`scenes/UI/UISystem.gd`
+离屏执行使用独立 World2D 中的同一地图、导航与碰撞逻辑。`DvFieldExecutor` 持有唯一人物实体，并按原资源、地图、坐标及碰撞形状提供占位查询；其他场地为同图人物建立不带脚本、渲染或 DV 状态的静态占位体，随真实位置刷新。执行、换图与实体转交后更新占位；出生点受阻时保留源图并返回受阻，不移动原实体。真实状态、已执行动作和尚未绘制的正文分别留痕。
 
-旧的脚手架与分散面板组件（`UI/Panels/`、`UI/Components/`、`UI/Workbench/`）已完全清理并删除。
+相同人物与场地的静态占位体复用，实时同步实体变换、碰撞层与形状；只在主体不再属于该资源/地图、实体转交或场地关闭时撤销，避免每次快照重建一批碰撞节点。
 
-### 场景结构与层级
+## 地图、呈现与资源
 
-| 层级 | 节点 | 职责 |
-| :--- | :--- | :--- |
-| **TitleLayer** (30) | `TitleBox` / `DeskBackground` | 卷首封面、标题、开始阅读、凡例与合卷退出 |
-| **HUDLayer** (10) | `TopBar` / `HintLabel` / `HoverTip` / `AsideLabel` / `FlashLabel` | 常驻状态栏（房间名、章节名、时钟）、底部提示、悬停热点提示、旁白与全屏警示 |
-| **DialogueLayer** (20) | `DialoguePanel` / `VBox` | 角色正文、讲话者名字、交互选择项、翻页提示 |
-| **ModalLayer** (25) | `ModalFrame` / `ModalBody` | 模态弹窗系统：证物卡片、手账簿、案情推演手稿、校区平面图、系统设置与终局结算 |
+生活翼同层统一使用 `Maps/living_floor.tscn`，由 `tools/build_living_floor.py` 组合五张已发布场景生成；原场景和纹理保留为生成输入。四寝区隔离门是同图物理屏障，使用 DV 提供的各区放行值，不触发切图。逻辑房间标识保持 `zone_*:*` / `living_hall:*`，执行地图统一为 `living_floor`；室外分区及不同建筑不合并。公共厅中段补接六格以避免原局部底图相互重叠，门、标记、碰撞与灯光同步变换。
 
-### 宿主承接与信号契约
+地图源可通过 `stand_capacity` 声明各几何区域的站位容量。`tools/build_chapter2_scenes.py --stands-only <地图...>` 保留原有 Stand 顺序，只从原障碍、门道及邻格过滤后的候选补齐不足；发布前复核已发行标记与源配方一致，只更新 Stand 标记，不重绘地图或改动碰撞。生活翼随后使用 `tools/build_living_floor.py --stands-only` 同步新增标记并保留其他已发布内容；运行时仍只使用已发行的合法 Stand/Spawn，不临时移动旁人或放宽出生规则。
 
-- 顶层宿主胶水为 `Host/Main.tscn` 与 `Host/GameEngine.cs`。
-- `Main.gd` 直接实例化 `UISystem.tscn`，通过以下标准接口通信：
-  - `show_title()` / `show_hud()` / `apply_snapshot(snapshot)`
-  - `start_dialogue(speech)` / `advance_dialogue()` / `dialogue_option_selected(id)`
-  - `open_card(data)` / `open_notebook()` / `open_manuscript()` / `open_campus_map()` / `open_settings()` / `open_ending(data)`
-  - `ui_event(event_name, data)` 信号回传用户操作，与 Core 保持纯数据驱动解耦。
+实际盲测可通过 `profile_dv_capture.py --controller player --window-mode offscreen` 启动真实 Main 场景，使用保存的渲染截图及 `input.json` 瞬时输入包操作普通视口输入。默认离屏且不可聚焦，保留图形渲染与物理，不使用 headless 逻辑运行替代；独立盲玩代理只读取该轮画面与通用输入协议。`--window-mode window` 可恢复可见窗口。
 
-## 二、资源类型与样式规范
+`dvg_snapshot.geometry_bindings` 提供地图站点、道具、纹理、位置与 footprint。`CampusMapView` 按声明建立 Marker2D、Sprite2D、碰撞与导航；相同声明不重复重建。场景和动态呈现均由内容声明驱动，宿主不以解析剧情动作 ID 替代空间绑定。
 
-1. **UI Style 统一规范**：
-   - 界面样式、调色板与排版统一使用 `Style` 类 Resource（如 `Theme` / `StyleBox`）。
-   - 严禁在 `.tscn` 节点中随意写 `theme_override_*`，脚本中不调用 `add_theme_*_override` 或直接 `new` 样式盒；通过 `theme_type_variation` 或主题自定义条目读取样式。
-2. **Resource 格式约束（.tres）**：
-   - 除原生二进制素材（图片、音频、字体、模型等）外，Resource 统一保存为文本格式 `.tres`，禁止使用二进制 `.res`。
+`CampusMapView.prepare_map(map, snapshot, tree)` 异步准备资源、几何与导航，返回 false 表示不可用或关闭取消，不表示移动结果。Main 在首次可见/离屏 setup 前传入自己的 SceneTree 并等待；跨图执行也等待准备后重新核对源实体、源图与真实入口。`FieldResources.gd` 通过线程加载请求准备资源，以有限缓存和批内强引用管理生命周期；Node 实例化及几何编辑仍在主线程。每个适配器按三个地图布局的上限淘汰空闲缓存，当前显示和在途准备的布局保留到交接完成。房间候选索引按约 2 ms 预算分帧准备；`prefetch_snapshot` 只在可见场地预备邻接地图，隐藏场地按正式行动需要准备，不改变当前地图、通行资格、主体归属或 DV 状态。实际实体、占位和可见淡入完成后才由 `finish_transition()` 释放切换状态。关闭取消等待并释放离树布局，已排队的 access 刷新拒绝关闭后清空的记录。
 
-## 三、素材与资产管理
+`ShareAsset/Internal/Props/Chapter2/manifest.json` 是运行时路由、出生点与尺寸输入。`CampusMapView` 根据建筑底图基名动态载入 `rooms/*.relief.tres`，这些 CanvasTexture 依赖相应 `*-normal.png`。动态路径与资源侧车都属于依赖检查范围，不能仅按场景中的字面引用删除资源。
 
-1. **生产源与运行时资产物理隔离**：
-   - `AssetsSource/`：生产源仓库（配置 `.gdignore`），存放高分辨率原画、PSD、切片工程等。
-   - `ShareAsset/`：运行时正式资产库，游戏引擎在运行时唯一合法引用的素材目录。
-2. **资产族（Asset Families）归类**：
-   - `External/<Package>/`：外部引入资产包。
-   - `Internal/Characters/<Family>/`：角色资产（像素帧、半身立绘、动作图集）。
-   - `Internal/Identity/`：身份物、徽记、证物小图标。
-   - `Internal/Props/<Family>/`：家具、道具、场景瓦片。
-3. **规格标准**：
-   - 地图基础格为 **32×32 像素**，角色基础设计为 **32×48 像素**。
+场景基础格为 32×32，角色基础设计格为 32×48。正式人物优先使用 `Characters/PixelCast/<key>.tres`，缺失时按现有合同回退至 AnimeCast；对白使用 DialogueCast 立绘。共享家具和证物仍分布于 `FirstAwakeningInterior` 与 `AwakeningEvidence`，它们由现役统一地图消费。资源职责、来源与重建前提见 `ShareAsset/Internal/Characters/README-zh.md` 和 `ShareAsset/Internal/Props/Chapter2/README.md`。
 
-## 四、常用命令与工作流
+重绘三向六姿素材可使用 `tools/publish_redrawn_cast.py --source <源目录> --review <新审阅目录>`。原画中 alpha>=200 定义正式二值覆盖，边界检查与发布使用同一覆盖定义；整批检查后才替换 PNG。沿用现役 .tres 的单元、姿态顺序、动画费用和节奏，每个人全姿态使用同一缩放并对齐原脚点；不改变碰撞与人物状态。审阅目录保存像素预览、原画/旧资产/新资产指纹。原有 bounds(path) 默认阈值保持不变，新发布器显式选择覆盖阈值；这属于美术覆盖规则，不是剧情或物理验收规则。
 
-- **构建项目**：`dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers`
-- **编译剧本**：`python godot_csharp/tools/compile_story.py`（检查一致性加 `--check`）
-- **重新导入素材**：`& $env:GODOT --headless --editor --path godot_csharp --import`
-- **实际行为复测（FullTest）**：`python godot_csharp/tools/full_test.py --name <运行名>`
-- **一级验收 UI 导出**：
-  ```powershell
-  & $env:GODOT --path godot_csharp --script res://tools/capture_player_transcript.gd
-  python godot_csharp/tools/export_ui_transcript.py artifacts/basic-ui-system/player-traces/ui-full-output.jsonl
-  ```
-- **二级 UI 选段截图**：
-  ```powershell
-  & $env:GODOT --path godot_csharp --script res://tools/capture_story_ui_samples.gd -- --round=<轮次名>
-  ```
-- **盲玩实时录像**（仅在用户明确要求盲玩时使用）：
-  ```powershell
-  python godot_csharp/tools/record_blind_session.py run --session=<fresh-id> --agent=<name>
-  ```
+运行时资产放在 `ShareAsset/`；若提供高分辨率源稿、切片工程等生产输入，放在受 `.gdignore` 保护的 `AssetsSource/`。当前 Git 树并未包含全部历史生产源和配方，重建前必须核对输入实际存在；缺源时保留现有运行资产并报告缺口，不把它们当可随时重生的缓存。生成文件从对应工具重建，不直接修改成品；调整路径同步核对场景、动态资源路径、插件配置及生成工具。删除资产时只移除该资产对应的导入侧车，保留其他 `.import` 的导入配置。
 
-## 五、工程排错工具
+UI 样式、颜色与排版统一由 Theme/StyleBox 等 Resource 维护；不在节点中随意添加 `theme_override_*`，也不在脚本中临时覆盖主题或新造样式盒。非原生二进制素材的 Resource 使用文本 `.tres`。现役 `DialogueTheme.tres`、`TitleTheme.tres` 与 `OverlayTheme.tres` 均由 `tools/build_ui_theme.py` 生成；共有字体和纹理属于其依赖，不与未使用的主题分支一起删除。对白、调查纸页、HUD 与独立推演手稿的版式和接口维护在 `../docs/ui-presentation.md`。普通阅读区使用命名主题变体与轻规线，避免重新引入默认控件外壳或闭合重框。
 
-以下检查项目与脚本仅用于定位特定工程问题或底层序列化异常，**严禁作为游戏通关、人物行为或体验改善的评价依据**：
+标题桌面采用 `TitleUI.tscn` / `TitleUI.gd` 与 `DeskStage3D.gd` 的真实 3D 实现：桌面、书本、灯具及摆件使用真实几何，在同一 `Camera3D`、同一空间尺度与光照下渲染；火焰、灯光能量与受光材质必须使用一致的闪烁驱动。透视、遮挡、接触关系和投影由共同场景承担，不得用相互独立的屏幕贴片伪造不同视角的物体。`BookProjection3D.gd` 负责显示和输入的共同相机契约，将屏幕射线与书页平面的交点逆映射到 `580×820` 的页面 SubViewport，并把真实鼠标输入交给原生 Control；相机偏移、窗口缩放与视觉位置变化时必须保持命中一致。
 
-- `godot --headless --path godot_csharp --script res://scenes/Shared/check/check_session_save.gd`：保存与恢复底层检查。
-- `dotnet run --project godot_csharp/scenes/Shared/check/SaveCheck/SaveCheck.csproj -c Release -- write <tmp_dir>`：纯 .NET 保存机制排错。
-- `dotnet run --project godot_csharp/scenes/Shared/check/PlayerControllerCheck/PlayerControllerCheck.csproj -c Release`：玩家输入适配器边界排错。
-- 新版 `UnifiedHostCheck` 与新增合同检查已随新版源码封存，不用于此恢复基线。
+`BookLeafTurn3D.gd` 及 `book_leaf_mesh_3d.gdshader` 提供具有独立正背面、真实厚度和边缘的页面网格；硬书皮使用 rigid-cover 行为，纸页允许曲面弯折，书脊位置、翻页方向与下层页面状态保持一致。旧页内容通过独立 SubViewport 的 `UPDATE_ONCE` 渲染后冻结，生产翻页路径不得逐帧执行 GPU 图像回读或重建页面纹理；截图工具为记录证据而读取图像不属于生产动画路径。`reduce_motion` 开启时直接落到目标页面并结束当前动画，恢复正常输入，同时停用视差及明显闪烁，不得留下半翻书页或输入锁。
 
-## 六、严禁硬编码剧情
+标题材质按颜色与表面数据分别维护：当前 `reference-material-atlas.webp`、`reference-cloth.webp`、`reference-paper.webp` 为参考图辅助生成的颜色素材；`tools/build_desk_surface_maps.py` 使用 Blender CPU Cycles 从独立微表面节点烘焙 `reference-normal.png`、`reference-roughness.png` 及布面/纸面裁切图。法线使用 OpenGL 切线空间 +Y，粗糙度使用线性数据，二者不按颜色纹理转换。静态书体与翻页网格保留切线，法线框架随页面变形和背面 UV 同步；UI 字样不参与表面高度生成。`BookSurfaceDetail3D.gd` 提供静态书体倒角，`paper_mount.gdshader` 仅修饰纸签背景边缘。玻璃使用透明材质和场景反射，能力边界与资产来源写入对应 AssetsSource README。
 
-严禁将剧情内容、对白文案、角色台词或谜题答案写入引擎代码（无论是 C# 还是 GDScript）。所有具体剧情与设定查验必须通过剧本编译物（`.story` 产物）和本地化词汇表读取。
+桌面实物比例的唯一输入为 `AssetsSource/Internal/Props/UIDesk/Painterly3D/desk_physical_spec.json`：记录书封毫米基准、实物规格来源、各道具目标尺寸和布局。几何生成器按实际网格顶点标定，输出 `ShareAsset/Internal/Props/UIDesk/Painterly3D/desk-physical-layout.json` 的测量尺寸和灯芯顶点；`DeskStage3D.gd` 从该配置读取灯芯与火焰尺寸，不另写独立灯光位置常量。改变道具体量时同步核对落桌、整段翻页扫掠、屏幕遮挡及反射体积。相机俯角与取景距离独立维护，拉近镜头不得隐含降低俯角；按照设计规范指定的俯角保持近景，物体放大时不得拉远或扩大视野来强行容纳全体道具。构图通过实际摆放与自然裁切调整，开书只平移跟随阅读页。按钮射线激活成功不能替代画面遮挡检查。
 
-2026-10-14 的正式切换覆盖上文旧 r20 生产架构描述。旧文件仅为迁移来源；不得调用旧坐席适配冒充 DV 会话。新 ReadMilestoneProgressJson 只读 DV 快照，历史测量工具字段尚需迁移，旧基线不能与新实现作同条件性能比较。
+`tools/build_painterly_desk.py` 使用 Blender 4.2 生成桌面几何；可编辑源稿保存到 `AssetsSource/Internal/Props/UIDesk/Painterly3D/painterly_desk.blend`，运行资源为 `ShareAsset/Internal/Props/UIDesk/Painterly3D/desk.glb` 与同目录 WebP 材质。源稿与运行资源分开管理，运行场景不依赖 Blender 在线执行。`tools/capture_title_3d.gd` 是当前 3D 标题界面的观察入口，必须使用有可见渲染窗口的 Godot .NET 构建，并预先完成 C# 编译；它仅实例化生产 TitleUI，通过真实输入检查页面与按钮，输出 PNG 和二进制 `ui-input.dvlog`，不加载 Main、不启动 DV 会话，不能据此宣称游戏或存档恢复已验收。`tools/capture_title_book.gd` 保留为旧 2D 入口，其结果不代表当前 3D 标题界面。上述为实现与验证契约，验收状态以实际运行证据为准。
 
-第二章 CampusMapView 从 DV 快照读取呈现绑定，不再读取旧第二章剧情 JSON。地图通路由场景出口与室外核心区域构建，实际寻路和出口触发后才返回完成；无在场身体或无法跨图执行的 NPC 返回未执行，不能据此改变 DV 地点。该离屏执行缺口仍待补齐。
+以下既有载入与路径恢复约束保留原文，未因本次标题界面工作重新验收：
 
-DV正式移动入口为WorldView.execute_move：地图适配器提供目的地执行，否则使用同一站点导航。按2026-10-19裁定，SpatialInput另承接无DV结算的同房间键鼠接近；跨房间及热点行动仍回到正式入口。旧stage、快照进出场和让路移动不恢复，快照不代替行走。短启动工程排错使用`--script res://tools/dv_host_startup_probe.gd -- --out=<新绝对证据目录>`，八秒后封存截图与快照，拒绝覆盖旧目录；不得称为完整游戏验收。
+续读列出 user://saves/*.dvsave，也可显式选择文件，向 Main 发 load/path；GameEngine 在原串行队列用 DvSession.RestoreFile 恢复，拒绝尚待现场回执的存档。文件验证失败不安装会话，load_error 返回书页；不得据此声称跨版本与现场恢复已验收。
 
-三级无桌面输入采集：tools/dv_level3_capture.gd 在屏幕外、不取焦点的正式 Main 渲染实例中设置 Engine.time_scale=4；使用 -- --out=<新绝对目录> --mode=blind|detective --seconds=<现实秒>。input.json 仅接受 key、click、stop，通过 Input.parse_input_event 进入正常输入；detective 模式仅自动开始和继续对白，不选择世界动作。截图可提供盲玩者，measurement.jsonl/end.dvlog 只供主审查，不得向盲玩者提供。该工具不补齐尚未接入的人工动作入口，不将默认自主侦探视为盲玩者决策，不执行流程回归。原始证据只新增，关闭时保留宿主原始输入与可见记录。四倍只加速 Godot 计时、物理与呈现，不改变 DV 行动费用或推演预算；DV 游戏钟取实测快照，不按倍速换算。
-侦探组自动继续对白至少间隔1.5现实秒，首次出现也先等待，保留正文实际绘制机会；初版过快跳读的采集只作工程试运行，单独保留，不与修订版混为同一计时规则。
+`UITransition.gd` 管理可取消的进入/退出状态，过渡使用现实时间，不受游戏播放倍率影响；`reduce_motion` 修改实时生效并使当前过渡落定。`ModalPanel.gd` 负责打开、退出期间的输入锁、焦点圈定/恢复和完成信号，实际退场后才发 closed。UISystem 串行切换设置、调查及其各面板，上层弹窗阻止底层对白或现场消费同一输入；现场选择在弹窗退场后发回原 site 与 choice_id。Title 的设置层高于标题层；游戏内视图替换等待原 UI 的 `transition_out`，卷首交接遵循下述揭页契约。UISystem 提供可等待的 `transition_in/out` 与 `fade_in/out`，屏幕遮罩覆盖期间保持 busy；WorldView 只在目标准备完成后进行可见跨图淡变。
 
-2026-10-14续测：正式UI默认人工控制，GameEngine.SetPlayerControlled仅配置DV席位，不选择行动；DV awaiting_input 提供可执行候选，UI选择回传同一Prepare，现场仍经WorldView和Complete。dv_level3_capture每200现实毫秒采集实际已绘制帧，frames.dvlog记录真实时刻；--seconds=0保持运行直到外部stop，四倍游戏时速不变。encode_dv_capture.py <目录>按原采集时间生成5fps recording.mp4，真实间隔不匀时明确保留末帧，不重跑游戏也不改游戏时间。
-正式对白沿DV呈现返回的actor与speaker_name标注说话者；宿主不填默认人物姓名。
-DV呈现中的显式换行逐段交给原对白继续流程，保留原文本顺序与输入确认，避免多段证物挤在同一矮框中。
-采集另记录input-events.jsonl的协议实际消费时刻与host-events.jsonl的宿主交付时刻；后者为私有审查数据，不向盲玩者提供。prepare交付只证明已准备，不冒充执行、推演正确、答案接受或交接时刻；真实节点仍与正式事件及可见画面核对，无法精确定位时保留采样区间/记录不足。
-界面仅依据DV返回的实际答辩事件显示接受/未接受，提交本身不作接受，也不作章节交接。
+对白、回看、提示各自取消旧任务；空对白与立即完成的低动态效果也提供可等待的完成结果。换行保留正文顺序与来源，立绘通过线程请求预备后绑定，旧请求不覆盖新说话者。重入、关闭或新提示不得遗留能隐藏当前界面的旧回调。
 
-移动 destination 的 room 为逻辑呈现目标，execution_room 可声明当前地图的实际到达房间，departure_station 为站点；三者不可混用。地图适配器支持 site: 声明的现有热点站点，沿用热点既有可达范围。WorldView 同地点移动仍走原寻路/碰撞；现场事件保留站点、接近目标、实际终点、范围和原到达容差。显式 travel.station 的行动在 Main 核对同一主体/序号/行动/站点/房间及实际到达误差后才提交成功。没有手部动画或独立接触碰撞时，不将站点到达证据描述为手部动画验收。
+`DialogueUI` 的当前显示及回看称谓只使用该条已交付的 `speaker_name`；缺失或为空时留空，不回退内部 `speaker` ID，也不从旧条目缓存补名。内部 `speaker` 仅可继续用于立绘资源映射等非称谓用途；原始逐行来源字段仍照实保留，不能由显示层替另一观察者补出人物身份。
 
-2026-10-15：批量初始化可使用独占采用表构建器，先复制继承表，每条声明仍立即执行原验证顺序，再仅追加独立条目；finish核对旧前缀与长度，修订号按成功追加数增长，一次持久更新世界，空批保持原世界。中间采用表不得发布、分叉或当作任意更新入口，world/mind/预测仍保持原独立复制合同。
-证据目标可显式声明refresh_until命题；仅本人尚不知该命题为真时，在目标组合时把minimum_time刷新为本人mind.time。此操作不改旧观察或认知，不授权新的传输频道，也不代选检视；本人时刻未推进时不承诺刷新有效。每个目标可独立停止刷新，原预算与判答不变。
-Session新增流式WriteTrace/WriteSave，二进制Trace/Save保留rational原子和共享节点，JSON标签只用于进程内兼容。宿主关闭等待在途工作、先保存输入与可见记录，再后台流式写原始会话及存档；先写.partial，成功才改为正式文件名，失败保留部分文件。SessionClose在该关闭路径仅调用一次，不自动重试。close-result.dvlog明确各阶段错误与complete，TraceClosed仅表示关闭结束，不能代替证据完整性判断。新建证据目录不得覆盖既有目录；异常也必须释放关闭等待。必要工程检查对照中性值的序列化、别名、验证首错与目标新鲜度，不作游戏评价。
-采集可在原5Hz截图之后追加私有render-state.dvlog，只读现有actor/AnimatedSprite2D可见性、位置、动画帧与当前纹理引用，并关联原real_ms和文件名；不加载资源、触发动作或更改呈现。失效节点、空纹理、无效动画帧与诊断文件打开失败容错。该记录不给盲玩者；额外磁盘开销随新来源封存，实际采样间隙照实保留，不能以隐藏节点状态代选行动或代替PNG实视。
+`RoomStage` 负责当前房间构图、局部灯光与有上限的粒子；离屏执行不创建舞台特效。`reduce_motion` 关闭微尘及缩放动画。房间构图、着色器和灯光不改变碰撞、门洞、DV 目的地或人物认识。对白保留原透明立绘与滚动正文、原文顺序、说话者映射和用户继续操作，不能把界面播放完成当作行动成功。
 
-## DV 到期意图合同（2026-10-16）
+Session 呈现保留 surface/lines 和 `source_refs`。Main 为发出的正文记录 `execution_event`、`source_id`、`source_field`、`emitted_line_index`、`paragraph_index` 与 `line_id`。过滤后的显示序号不冒充源行号，缺少来源不补造；`PlayerViewTrace` 在实际 `frame_post_draw` 后记录首帧，待显示正文与已绘制正文分开。
 
-Prepare 返回已经到达逻辑完成时刻的单个意图，其他主体的排队行动由 DV 保存。宿主继续实际移动并回报现场结果，Complete 才发布效果。execution_cost 是该行动完整费用，已等待的游戏时长由 DV 去重结算；宿主不另推游戏时钟。尚未完成的现场执行继续使用同一 pending，不重新 Prepare。本轮仅进行无窗口逻辑检验，几何与呈现尚未验收。
+## 卷首加载与揭页
 
-## 可见正文的执行来源（2026-10-19）
+开始阅读和标题续读立即发出正式请求，并把当前书页保留到现场真实就绪。`Main._view` 在标题后装配 `WorldView` 与 `UISystem`，等待地图、人物、已请求立绘、视野光效、镜头、HUD 和实际绘制帧，再调用 `TitleUI.transition_to_field` 单次揭页；不能先翻到占位页或撤去标题后才装配。`_opening` 与 `UISystem.host_input_blocked` 覆盖整个准备和揭页期间，低动态仅省略运动。游戏内视图替换保留其屏幕遮罩。接口、错误边界及二级观察入口 `tools/capture_start_reveal.gd` 见 [卷首加载与揭页](../docs/title-opening.md)；其截图不能代替剧情验收或同条件性能比较。
 
-Session presentation 保留原有surface/lines，并透传动作source_refs。Main为实际发出的正文标注execution_event、source_id（动作ID）、source_field、emitted_line_index与paragraph_index，line_id由真实执行事件和输出字段/序号组成。该序号是过滤后的显示序号，不冒称源文件行号或原声明索引。source_refs保留原声明提供的路径/行/ID，不补造缺少的来源。ChapterDialogue把这些只读元数据保留到已绘制控件与PlayerViewTrace，既不变更正文，也不写入人物认识。旧证据不补写编号。
+## 共享书本、案卷与界面设置
 
-## 原生空间声明与局部几何生成（2026-10-19）
+`CasebookUI.gd` 在游戏内实例化同一 `TitleUI.tscn`，设置 `mode = "casebook"` 并提供 `CasebookData`；卷首使用 `mode = "title"`。这两种入口共享 `DeskStage3D`、实体书、翻页材质、页面 SubViewport 与 `BookProjection3D` 的原生输入路径。`BookSettingsPage.gd` 提供共同设置页，`BookArchivePage.gd` 提供目录、记录、详情及个人批注；不要另造一套屏幕贴片或游戏内设置界面。翻页、焦点、文本编辑、窗口适配与减少动态设置须遵守同一物理书契约。
 
-`dvg_snapshot.geometry_bindings`按地图键提供sites与props的纯几何数据；CampusMapView创建Marker2D、Sprite2D及声明footprint对应的真实碰撞，并重建导航栅格。声明只在内容DV中保存，宿主不绑定具体剧情ID；同声明重复刷新不重建节点，切图重新应用目的图的声明。出生锚点与最终路径使用同一实际图中的节点。几何外观不授予读数、调查结论或采信。
+三份现役主题共用生成器中的 paper / ink / hand 语义色与字体角色：`TitleTheme` 负责卷首和案卷书页，`DialogueTheme` 负责对白，`OverlayTheme` 负责 `FieldHUD` 与独立 `InvestigationUI`。现场报头、纸页边距、正文、个人笔迹、选择行与焦点状态均使用主题 variation；不得在场景或脚本中另造局部配色与字号。生成与 `--check` 必须覆盖三份主题，补齐 Overlay 样式时不得顺带改写 Title / Dialogue 的设计。
 
-`python godot_csharp/tools/build_chapter2_scenes.py --geometry-only <interior-key...>`从rooms配方和既有PNG重新生成目标室内场景与manifest，不重画图片、不启动Godot。geometry_sites只存ID与坐标，显示标题由native snapshot.sites提供；text-only/sites-only保留这些无文本marker。几何生成日志与图片指纹检查只用于工程来源核对，不能代替实际到达和画面验收。
+三语界面使用 `GameLocale` 的 `zh_CN`、`ja`、`en`，偏好保存于 `user://language.cfg`；音量、显示及辅助功能由 `GameSettings` 保存于 `user://settings.cfg`。它们只影响宿主呈现，不进入 Core、正式会话、世界存档或案卷侧车。切换语言只翻译界面文案，不改写已收到的原始正文、人物发言或玩家批注；刷新时保留当前编辑内容、焦点与滚动位置。
 
-初次物化与导航分开：native snapshot/people.initial_anchor是主体的明确初次锚点；地点anchor保留作移动目的地，不被所有同房人物共同当作出生点。缺初次锚点时只选既有同房且可走、未占用的Stand/Spawn；显式锚点也核占位。已有实体沿用真实位置。室外entered_room以地图实际边界及可走栅格判定，不读取不存在的室内terrain_rows；门区、跨图和最终物理回执仍独立核验。
+`CasebookData.gd` 是按 viewer 隔离的纯 UI 数据投影，导出结构为 `{version: 1, viewer, entries, notes, next_note}`。来源限于 `DialogueUI.line_read` 已交付的正文行、实际打开的可见卡片以及显式提供且标记 acquired 的案卷记录；不能扫描 `snapshot.people` 等几何投影补出未见人物，也不能以隐藏的行动标签替代条目标题。看过物件与拥有物件分别记录，显示或收录本身不授予世界物品、行动资格或新知识。
 
-## 集中修复与四倍播放（2026-10-19）
+正文条目保留原始 `lines` 数组及 `line_id`、`source_field`、`emitted_line_index`、`paragraph_index`、`execution_event` / `trace_id`、`source_id` / `source_refs`、说话者等已交付字段。列表摘要不能替代逐行来源；缺失字段不补造，显示序号不冒充源行号。图版及立绘只沿已经交付的可见卡片或明确取得记录引用资源，不按剧情编号解锁素材。
 
-### 自动采集与性能记录（2026-10-19）
+个人批注使用 `personal = true` 的独立 notes 记录，保留原文、关联条目、时间和地点，与证词、证物正文明确区分。案卷中的推演入口交给独立的 `InvestigationUI`；批注可以作为玩家草稿显示，不自动成为正式答案、世界事实或行动提交。正式调查、预测与行动仍走既有纯数据 UI 事件和宿主链。
 
-`python godot_csharp/tools/profile_dv_capture.py --out <新绝对目录> --godot <Godot .NET exe> --dotnet-trace <dotnet-trace.exe> --seconds 90` 包装现有正式渲染采集入口，启动 Godot `--debug`，并在启动游戏进程后立即附加 dotnet-trace 的 cpu-sampling；需要本地脚本/GPU控制台分析时显式加`--native-profiling full`，默认off。依赖 Python 3 与 dotnet-trace；Godot 原生脚本分析与 .NET 调用栈分别封存，不把前者称为 C# 分析。托管采样默认80秒（窗口减10秒，可用`--managed-seconds`指定更短正整数），提前结束并排空轨迹，避免原生宿主退出时留下不完整EventPipe尾部；未采样的启动区间与窗口尾部如实保留。截图及实际现实毫秒索引、游戏时钟和宿主关闭证据沿用原合同；启动至分析器退出的总耗时单列，包含封存与分析器收尾，不冒充玩家游戏时长。源码及程序集前后指纹另存，拒绝覆盖证据目录。热点报告同时检查退出码和错误正文，实际脚本/GPU分析启动标记单列，不把文件存在或工具退出0冒充有效报告。分析器开销计入本轮，不与无分析器窗口宣称同条件速度比较。
+`CasebookUI` 保存并恢复打开前的暂停状态，以 `reading_changed` 告知 Main 阅读占用；保存或切换书签期间保持交互锁。载入后 Main 必须清除旧视图队列、释放旧 UI 与现场执行器绑定，并隔离旧的异步呈现回调，待新快照装配后按既有 `view_ready` 链恢复调度。书本打开、关闭、换语言或编辑笔记均不得额外派发世界动作。
 
-用户指定轻量模型记录画面时，使用全新上下文的该模型，仅提供本轮原始 PNG 与时间索引。记录实际查看的文件、采样时刻、可辨正文、人物外观、界面及场景变化；未查看区间与无法辨认内容保留未知，不用隐藏状态补写画面，不替代引擎侦探选择行动。证据审查与剧情、人物机制验收分列。
+## 保存、计时与证据
 
-按用户最新要求，先集中修订本批已发现的源与几何缺口，再冻结、统一工程排错与四倍播放检查；中途发现需改源则结束该批次，保留原失败证据。本轮不以局部几何夹具或按钮工程触发宣称正式三级验收。
+Main 的呈现队列按约 2 毫秒批次跨帧排空，保持全部事件的原顺序；单个事件可能超过预算，不能把此预算当作帧率保证。排空期间仅锁住新的现场操作，当前对白输入和已接受的物理执行照常完成。新开局及标题读档共用播放配置，`--dv-speed` 限于有限的 0.25–8，物理步频为 `ceil(60 × max(1, speed))`，每帧步数上限为 `ceil(8 × max(1, speed))`；读档不改写保存的控制者。
 
-Main.playback_speed默认1，`--dv-speed=`可在0.25至8间设置，打开会话前应用Engine.time_scale；physics_ticks_per_second按60×max(1,speed)设置，四倍时240以维持单步物理间隔。输入记录host_configuration中的倍率与帧频；不把倍率写成DV费用、分钟或推演预算，不按倍率推算未发生的剧情节点。采集脚本需要现实秒窗口时使用ignore_time_scale计时，原始会话与纯几何夹具分列。
+存档辅助实机入口为 `tools/run_saved_game_capture.py` 与 `tools/capture_saved_game.gd`，配置、证据、输入与失败处理见 `tools/SAVED_GAME_CAPTURE.md`。正式新开局、恢复诊断与玩家 UI 输入诊断分列；请求检查点必须在采集截止前，实际保存以边界落定时间为准。
 
-原生矢量道具通过`python godot_csharp/tools/publish_geometry_assets.py Internal/Props/Outdoor`从AssetsSource原字节发布至ShareAsset；AssetsSource受.gdignore保护，生产纹理只引用正式发布目录。
+`input_gate_state` 在实际绘制后的输入门状态变化时记录 UI 占用、阅读、提交锁、待执行主体/动作、现场任务、地图切换和队列长度。它只诊断“强制等待”，不修改准入、调度或输入锁；与实际输入、Prepare/Complete、现场执行和玩家截图配对解释。
 
-室内家具位置改变后使用`--interiors-only <interior-key...>`重生所选场景、manifest和底图烘焙阴影，避免旧阴影残留；该入口不重建室外。仅新增已有贴图而不改变原阴影时才使用geometry-only。两者都从源码生成，不手改tscn。
+显式保存/恢复拒绝现场 pending，异步维护先等待后台任务并再次核对。关闭允许保留真实 pending，等待在途工作后分别封存输入、可见正文、计时、会话及存档。每项输出独立捕获异常，一项失败仍尝试其余项；先写 `.partial`，成功才发布正式名，失败保留部分文件。Session 的写接口自行发布，宿主不重复改名；关闭链只调用一次 SessionClose。证据目录独占创建，不覆盖既有记录，异常也释放关闭等待。`TraceClosed` 只表示关闭结束，完整性依 `close-result.dvlog` 中各阶段结果判断。
 
-站点接近保持原半径和房间约束，除既有连续方向样本外枚举半径内全部可走格中心，避免窄合法接近点被有限方向漏掉。Campus.walkable同时核对格中心合法性与查询连续脚点是否落入原矩形障碍的膨胀范围；不删除碰撞或扩大站点半径。实际到达仍由CharacterBody2D移动、终点、房间和到达误差回执核验。
+新运行记录使用带校验的二进制格式：输入、可见正文、计时、采样、帧索引、关闭回执为 `.dvlog`，原始会话为 `.dvdag`，存档为 `.dvsave`；保留全部字段、精确数、顺序及共享不可变节点。JSON 只用于进程内消息、编译配置和不承载运行轨迹的小型工程元数据。旧 JSON 记录仅只读兼容，不能成为新轨迹格式；含逐段原始记录的分析输出同样写 `.dvlog`。
 
-## 房间舞台与游玩记录策略（2026-10-19）
+`GameEngine` 用 Stopwatch 单调微秒记录 interaction_id/command_id 关联的排队、Prepare、快照、现场执行、Complete、绘制首帧与阅读结束；局部行走单列真实起止和游戏钟。`PollTimings` 消费在线副本，不清掉封存用完整记录。缺段保留未知，CPU、阅读、等待和实测游戏时间分别解释。
 
-RoomStage只处理当前房间构图、局部PointLight2D、窗光和有上限的GPUParticles2D；CampusMapView缓存地形分区边界供镜头取景，不改变门洞、导航或DV目的地。build_chapter2_scenes.py从实际窗/壁灯/灯具配方生成stage_lights元数据；室外保持原取景，离屏执行器不创建舞台特效。reduce_motion关闭微尘并取消缩放动画。灯光采用暖瓷白/淡玫瑰与冷蓝灰，沿用设计中的专属色边界。
+阶段观察器按每个 Prepare/Complete 命令重新绑定，记录 thread_id；投影、JSON、Godot 物化及主线程交接分别计时。同一命令可有 intent、viewer、executor 多个物化段，分析应按 command_id、阶段及 details 配对，不以一个 interaction 内首次同名阶段合并多个动作或快照。
 
-对白按可见窗口约65%宽布局；透明立绘框从左侧破框，portrait_etch shader保留原alpha并降低饱和度，paper_surface提供低对比纸面纹理；PaperFrame绘制主题色双线和角花。长正文仍可滚动。表面着色、灯光和特效不作为新增热点、观察或人物认识。
+`RuntimeDiagnostics` 在实际 `frame_post_draw` 记录较长绘制间隔、位置变化与节点视口命中。视口命中不代表穿透遮挡可见或人物已经认出对象。脚本/GPU 与 .NET 栈分别封存；墙钟重叠不等于 CPU 归因，未知残差、未闭合阶段、采样缺口及分析器自身开销均如实记录。
 
-资源生产：python godot_csharp/tools/build_ui_theme.py；python godot_csharp/tools/build_room_table_props.py；python godot_csharp/tools/build_chapter2_scenes.py --geometry-only <地图键...>。表格道具继续从原生像素配方生成，保持尺寸、锚点与碰撞范围；不直接修补生成PNG或tres。
+`FrameArchive` 只接收主线程复制的 RGBA8 像素，后台串行完成无损 PNG 编码、哈希及原子写盘，不调用 Godot 场景/资源 API。PNG 成功后才追加帧索引，最多八个未完成图像任务；队列满则记录 backpressure 与采样缺口，不阻塞主线程或默默丢图。主线程读回/复制与后台排队/编码/写盘分别计时。后台同序追加已序列化记录，文本不能静默丢弃；关闭先记录真实游玩终点，再排空任务、完成通知及其追加的索引，封存尾部时间单列。
 
-Main默认audit=false，--dv-audit配置完整证据；GameEngine关闭时普通模式跳过session.dvdag，保留save/输入/可见正文/计时。close-result明确audit_mode与trace_policy，complete只表示该策略规定的保存完成。profile_dv_capture.py始终启用--dv-audit；不得把普通模式与审计模式记录称为同条件耗时比较。本批按用户要求暂停所有验证，先集中完成修改。
+### 案卷与书签持久化
 
-## 人工认知与阅读期调度（2026-10-19，用户追加裁定）
+Main 在调用书签保存或载入接口前复核宿主呈现边界：正文阅读、待交付事件/延后输入、队列排空、地图准备/切换、现场执行及已提交但尚未返回的 Complete 投影均须落定。载入或书页已打开时的请求若未满足边界，仍提示先读完正文并等待现场动作结束，记录 `bookmark_boundary_rejected`。书页未占用时可排队请求保存：`_bookmark_requested` 仅暂存下一次 `dv_next`，既有现场动作、Complete 和正文继续完成；宿主边界与 C# `IsBookmarkBoundaryReady()` 同时就绪后才进入原保存接口。暂存的下一次调度在获得安全边界后转入原延后输入队列，保存成功或失败后恢复；关闭、错误及换会话时清除旧请求。不能仅凭 DV 无现场 pending 就保存尚未读出的正文。`_completion_pending` 从真实回执安排提交起保持到 `dv_present` 或错误回传，覆盖清空现场意图到后台 Complete 返回之间的空窗。
 
-Main阅读时发送正式dv_next，GameEngine仍单队列后台Prepare。仅远离当前观察房间、且目的地也不进入该房间的NPC可在阅读期间使用现有Godot执行器/Complete实际推进；玩家动作、同房间动作和新可见对白保留在前台队列。正在阅读的正文和HUD不被后继快照替换；实际状态、尚未绘制正文及真实物理执行分别留痕。空呈现的下一调度提示只能发一次，不预写回执或跳过碰撞，不后台代选玩家动作。人工轻量认知的合同由language_core/verification/AGENTS.md维护；本批继续暂停验证。
+保存使用独立 `_bookmark_saving`，与载入锁共同驱动现有书本操作锁；操作期间不关闭、重入或再提交书签，暂停状态保持。书签成功/失败事件在 `_dv_events` 直接处理，不进入被阅读占用挡住的呈现队列；事件解除对应操作锁，延后输入在阅读及操作锁均释放后恢复。已接受的 `dv_complete` 回执保留送达通道，C# 仍自行等待既有工作并复核命令/现场边界，不由 UI 锁代替。
 
-## 冗余地图接口清理（2026-10-19）
+宿主发出 `bookmark_loaded` 后，`_view()` 仍须明确返回现场装配是否成功；`_install_bookmark` 只有在成功且载入 generation 未变化时才解除操作锁并发送 `view_ready`。资源或地图准备失败时保留操作锁、暂停旧现场，记录 `bookmark_view_failed`，以 `PROCESS_MODE_ALWAYS` 的错误对话框说明“宿主已载入、现场未装配”，显示载入前备份路径并提示关闭后从续读重新选择备份；不假装回滚旧会话，不继续派发动作，也不另建回退会话。
 
-写入退役Awakening.tscn/map_layout.tres的旧地图Python包装移除。现役地图仍由build_chapter2_scenes.py消费chapter2_art配方；共享家具、独立资源族生产器及仍有调用的MCP/编辑器接口保留，不能因名称包含Awakening而删除生产共享资源。旧场景README改为迁移导航，不再列退役回归命令。此清理不重生成资源、不构建或运行游戏，既有project.godot修改保留。
+`PlayerViewTraceInner` 使用 `PROCESS_MODE_ALWAYS`，Main 在卷首或现场子树装配后把它移到最后一个子节点，使只记录、不消费输入的 `_input` 先于书页的消费路径收到按键和鼠标。暂停期间的真实输入与控件激活分别留痕；记录节点不得调用输入 handled 或代为派发行动。
 
-## 门槛出发与一倍游玩（2026-10-19）
+退出由 `Sound.quit_cleanly()` / `GameAudio.quit_cleanly()` 统一协调：Main 的菜单退出与窗口关闭都进入该路径，不另行调用 SceneTree.quit。GameAudio 先启动全部 lifecycle_hosts 的 `begin_shutdown()`，再等待支持该接口的宿主 `wait_for_shutdown()`，最后排空音频并退出。Main 的 `begin_shutdown()` 保持幂等且不等待，只启动唯一的 C# `CloseTrace()`；`wait_for_shutdown()` 先调用它，若 `_shutdown_finished` 已置位则立即返回，否则等待 `shutdown_completed`。`TraceClosed` 回调先置完成标志再发信号，避免信号先到导致永等。等待关系不反向依赖音频退出；C# 异常也须结束关闭等待，实际封存完整性仍以 `close-result.dvlog` 各阶段结果为准。
 
-正常游玩默认一倍速；独立采集仍通过显式参数决定倍率。门道D格不作为进入房间或观察的证据。CampusMapView.departure_room仅在真实可走的源侧D格返回其几何分区，供DvFieldExecutor核对起点；entered_room继续只承认室内地板/台阶，到达回执要求不变。源/目标房间、动作、主体、序号与真实位置照常核对；回执标明source_geometry，不能以门槛出发证明目标已达。
+`scenes/Host/CasebookPersistence.cs` 是 `GameEngine` 的 partial 实现，不引入第二个会话或另写世界存档。主线程只接受可序列化的纯数据字典，按条目、批注及逐行来源白名单保留字段；Node、Resource、Callable 和设置/语言偏好不进入记录。工作线程只消费独占数据或不可变字符串，不访问 Godot Node 或共享 Dictionary；完成后在主线程物化回传数据。
 
-鼠标点击门道时，SpatialInput只从DV已准入移动中匹配该实际连通门道的唯一邻室；先真实寻路到门口，走过边界或到达门口再请求正式动作。E可在近距门口请求同一动作；多义门不猜选。doorway_rooms只查询几何相邻分区，不开放未知移动或全局列表。用户实际失败记录与本轮工程排错独立保存，不以启动代替实际移动验收。
+| 宿主接口 | 合同 |
+| --- | --- |
+| `UpdateCasebook(Dictionary data)` | 更新当前 viewer 的 UI 案卷缓存，供关闭保存使用；不推进或修改 DV。 |
+| `ReadCasebook()` | 返回独立字典，调用者不能借此改写宿主缓存。 |
+| `SaveBookmark(Dictionary data)` | 等待既有工作后复核维护锁、关闭/故障状态、静止命令队列及无现场 pending，再调用当前 Session 的 `WriteSave`。 |
+| `LoadBookmark(String path, Dictionary currentData)` | 先用 `DvSession.RestoreFile` 验证候选并拒绝 `pending.status = prepared`；安装前为当前会话写入全新世界备份和绑定案卷。 |
 
-## 一倍速直接输入的现场复测（2026-10-19）
+手动书签写入新建的 `user://saves/<UTC>-bookmark-<唯一标识>.dvsave`；载入前备份使用 `<UTC>-before-load-<唯一标识>.dvsave`。保存必须沿用 Session 的 `.partial` 到正式名发布契约，拒绝覆盖旧文件。常规忙碌、无效文件或侧车失败通过 `bookmark_error` 返回可读信息，不把它们转成全局故障停机。`bookmark_saved` 返回 path；`bookmark_loaded` 返回 path、backup_path、snapshot、casebook 和 casebook_warning。错误记录中的 save_written / casebook_written 区分世界保存与案卷保存，不能把前者成功写成整对文件均成功。
 
-profile_dv_capture.py新增--speed，默认4保留独立历史测量口径，一倍交互复测显式--speed 1。捕获脚本在run.dvlog写出前读取同一--dv-speed，禁止元数据写4而实际窗口为1。input.json的key可带duration_ms（1至5000现实毫秒），通过普通Input.parse_input_event按下、按单调现实毫秒截止时刻松开，并记录实际松键时刻；不写玩家坐标、DV状态或动作回执。
+同名 `<basename>.casebook.dvlog` 使用现有 `BinaryEvidence` 写入单个二进制封装记录：`{version: 1, viewer, save_sha256, casebook}`。SHA256 绑定实际 `.dvsave` 字节，读取时验证二进制头、版本、记录数量、外层与案卷内层 viewer 以及哈希；不凭文件名认定归属。旧存档没有侧车时允许恢复空案卷；损坏、错配或异 viewer 的侧车不导入，返回警告。正式会话恢复仍以 `.dvsave` 为准，不从案卷重建世界。
 
-用户授权Luna依据新会话可见截图操控卧室到走廊，主代理查看关键PNG并核对实际输入、源侧门道回执和独立现实耗时。操作代理不读设计、源码、隐藏测量、旧记录或预写路线。此为指定空间行为复测，不能称为完整盲玩或剧情通关；性能分析器及截图开销纳入本轮现实耗时，采样尾部与封存分列。
+游戏内切换前须成功完成当前会话的全新备份与配套案卷；若世界备份已写入而侧车失败，保留备份及失败证据，当前会话不切换。候选有效、备份完成且宿主门限再次通过后才调用 `InstallRestored`。初始标题 `load/path` 同样读取可选的绑定侧车，并随 `view` 事件交付 casebook / casebook_warning。`CloseTrace` 在原有自动 `save.dvsave` 成功后追加 `save.casebook.dvlog`，侧车失败独立记入关闭结果，不吞掉其他证据阶段，也不覆盖或删除已产生的世界保存。
 
-## 被动卡顿与位置记录（2026-10-19）
-RuntimeDiagnostics按真实frame_post_draw记录>=50ms间隔、实际碰撞体房间变化和首次进入视口的节点；视口命中不代表穿透遮挡可见或人物已认出，须核对PNG。GameEngine命令独立编号，记录Prepare、Complete、快照、交付及DV内部阶段；PollTimings只读消费在线副本，关闭归档保留完整原队列。采集器live-timing按200ms追加，keyframes关联随后真实PNG；截图及日志自身开销单独计时。report_runtime_hitches.py只读分析每个绘制间隔与>=100ms命令等待，墙钟重叠分解不等于CPU归因，重叠优先与未知残差明确记录，正常行走/阅读/人工停顿单列。保留未闭合阶段，不补猜原因。测试由Luna仅依本轮图像经既有InputEvent协议操纵，主审查核对关键PNG；不代选剧情答案。
+## 工程命令与验证边界
 
-## 后台原图封存与四倍物理盲测（2026-10-19）
-FrameArchive只接收主线程复制出的RGBA8像素；后台.NET任务串行执行无损PNG编码与原子写盘，不调用Godot资源/场景API。RGBA SHA-256保留像素来源，PNG成功出现后才追加frames索引。最多八个未完成任务，满队列明确记录capture_backpressure，保留采样缺口，不阻塞主线程或默默丢图。主线程纹理读回、像素复制入队、后台排队/编码/写盘和哈希各自计时。失败保留.partial及错误；结束先记录真实游玩终点，再等待宿主与归档结束，封存尾部时间单列。
-中性像素/禁止覆盖排错入口：Godot --headless --path godot_csharp --script res://tools/probe_frame_archive.gd -- --out=<新目录>，不加载游戏或推进DV；用普通PNG解码核对RGBA字节及SHA，检查已有文件字节与错误留存。
-CampusMapView首次装图先采用当前访问声明，一次性加入内容几何和门禁后建立导航；动态几何/访问更新保留原重建合同。通用房间目的地优先选同房且四向16px可走的转身空间，无此点才保留原最近点；不改变显式热点半径、碰撞体或到达回执。Main初始字段快照只应用一次。
-四倍测试显式--speed 4；physics_ticks_per_second=240，max_physics_steps_per_frame=32，连续碰撞单步时间保持。普通窗口仍默认1倍，DV费用不变。盲玩Luna只读本轮PNG/输入与采样索引，自主选路，留意门边停滞、横移、折返、对白、输入响应和同伴可见行为，不能读取源码、历史、设计或隐藏诊断，也不预写路线。不同倍率的旧窗口只作条件不同的诊断参照，不作同条件速度宣称。
-RuntimeDiagnostics补记process开始及render前边界；PlayerViewTrace与view构建单独插桩，保留未归因残差。后台编码时间不并入主线程阻塞分解。成果沿用real-game-capture任务目录，优化后另起独占窗口。
+从仓库根目录执行：
 
-本轮定位分析器自身开销时，保持四倍物理、完整审计、截图与.NET采样，另起新会话切换native-profiling；不开脚本/GPU控制台分析不代表关闭全部分析器。该条件差异在launch/result明确保留，原有完整分析窗口不改写。先看新窗口实际间隔，不能依据周期相近直接判定根因。
+```powershell
+dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false
+python language_core/tools/check_dv.py --format json language_core/60-game.dv
+python godot_csharp/tools/build_ui_theme.py --check
+```
 
-FrameArchive亦串行追加已序列化文本，输入、可见采样元数据与在线计时写盘不占主线程；同一路径保持队列次序。图像容量独立计数，文本不得静默丢弃；文本异常记录text-error及capture-close.archive_errors，不循环写入失败日志。关闭循环持续消费PNG完成通知，并排空这些通知新追加的frames/时序记录后才退出，真实捕获终点保持原值。中性探针补查文本先后顺序。
+构建可用 `-p:DvPython=<Python路径>` 指定生成器。共享 `NuGet.Config` 使用 nuget.org，不提交个人机器的绝对包源路径；离线包源按开发者环境显式配置。通过环境变量 `GODOT` 指定 Godot .NET 程序；重新导入与运行命令为：
 
-## 禁止JSON轨迹（2026-10-19）
+```powershell
+& $env:GODOT --headless --editor --path godot_csharp --import
+& $env:GODOT --path godot_csharp -- --dv-controller=player --dv-speed=1
+```
 
-新的输入、可见正文、计时、渲染采样、帧索引与关闭回执落盘为DVLOG2二进制.dvlog；原始会话为.dvdag，存档为.dvsave。FrameArchive的AppendRecords仅在后台解析进程内JSON消息，再编码二进制帧，PNG原像素合同不变；WriteRecord保存小型单条二进制元数据。JSON.stringify/JsonSerializer仍可用于内存中的Godot接口，不能直接写作运行记录。Session的写接口自行创建.partial、成功后发布正式名，宿主不再次改名；失败保留部分文件并在close-result.dvlog注明。
+只在任务确有需要且符合当轮授权时启动工程探针、采集或游戏。现役 `tools/dv_host_startup_probe.gd` 是短启动排错；`tools/profile_dv_capture.py` 包装 `tools/dv_level3_capture.gd`，记录实际输入、画面、计时与 .NET 采样。其 `--native-profiling full` 显式启用原生控制台分析，默认 off；`--speed` 默认 4，一倍复测显式设为 1。`tools/encode_dv_capture.py`、`report_runtime_hitches.py`、`summarize_interaction_timing.py` 消费已有记录；工具参数与格式以现役源码及 README 为准，缺失的旧探针不重新列为入口。
 
-profile_dv_capture、encode_dv_capture、report_runtime_hitches及summarize_interaction_timing使用language_core/tools/binary_evidence.py读取新记录，旧JSON仅只读兼容。工程源码指纹、启动参数和小型汇总不承载逐事件状态，可沿用工程JSON。此存储修订不是同条件性能或游戏验收证据；完整行为与画面须另起实际会话验证。
+`tools/capture_casebook_ui.gd` 是共享书本的独立 UI 采集入口，使用经批准的有限可见正文/图版夹具，不运行 Main、DV 或 Core。它记录真实投影输入、页面与原生控件呈现，不能证明正式观察者实际取得证物、个人批注产生世界效果、完整书签恢复或剧情行为。夹具范围、语言临时切换、输出及期限见 `tools/README.md`；构建、采集和玩法验收分别报告，未执行的检查不得写作通过。
 
-新会话result、evidence-summary及含逐段原始记录的卡顿/交互分析输出也使用.dvlog；源码指纹和编译配置JSON不记录会话轨迹。
+禁止执行根目录列明的流程回归，不能以断言数量、通过率或“全绿”评价游戏。构建、语法、生成物一致性仅用于工程排错。一级是无窗口正式 DV 逻辑输出；二级 UI 检查实际截图；三级只有明确要求最终效果时执行，默认由引擎侦探提供正式输入。独立盲玩需要用户明确指定，操作代理只看本轮允许的画面和输入资料，不读设计、源码或隐藏诊断，不预写路线和答案。具体时限与倍率按当轮约定，不沿用历史任务窗口。
 
-## 审计后空间与封存修复（2026-10-19）
+完整行为结论依新正式会话的实际输入、可见结果和回执；图片、正文、原始事件、计时和来源分别保存，未发生/未覆盖/记录不足分别说明。不得放宽预算、正确条件、碰撞或计时规则制造提速，不把四倍播放、精简审计、纯几何夹具或短启动当作剧情通关和同条件性能改善。先完成当轮整批修改，再按要求统一排错和冻结；中途改源则结束该批次并保留失败证据。
 
-geometry-only/interiors-only从已生成室外场景的outdoor_core、outdoor_origin与manifest出生点解析抽象campus出口，与全量生成共用出口解析和链接核对；重叠室外图按核心区确定归属。缺出生点、归属多义或链接缺失时在发布前报错，不把抽象地图名写入运行场景。
 
-DvFieldExecutor按保留实体的资源、地图和真实坐标提供占位查询；离屏世界为同地图、当前场地之外的实体建立只含原碰撞形状的StaticBody2D占位体。它们没有人物脚本、渲染或DV状态；正式执行串行，每次执行、换图及实体转交后刷新，逐物理帧跟随原实体真实位置，原实体离开该图或转入本场地时清除占位体，不移动原实体。动态导航、站点候选和跨图出生点核对同一占位来源；出生点被占用时保留源图并返回受阻。普通房间到达按可达的空闲Stand、具有转身空间的房间格、其他合法房间格依次选择，各组按实际距离排序；显式热点半径、导航锚点及4px到达误差保持原合同。
+## 人工重演与可见记录扫描
 
-关闭时输入、可见正文及计时分别封存为.partial并在成功后发布；各输出独立捕获异常，单份失败仍尝试其余记录、原始会话及存档。close-result.dvlog记录实际错误，TraceClosed只表示关闭结束。
+InvestigationUI 的假设表单由当前 DV replay_input 提供，所有选择初始未选。UISystem 与 WorldView 只拆出原 action_id 核对当前选项与接触，再沿原字符串链保留整个纯数据封装；不在 UI 运行模型或判定答案。Session 边界解析后由 DV 重核候选和正式执行。
 
-纯几何工程排错入口为Godot --path godot_csharp --script res://tools/probe_retained_geometry.gd -- --out=<新绝对目录>。夹具不加载Main、不打开DV会话；仅核对跨视口占位、真实CharacterBody碰撞、普通房间站点与地图图边，输出二进制记录及实际PNG。不作为游戏流程、人物选择或剧情达成证据。
+PlayerViewTrace 每个实际绘制帧仍完整检查文本与可见对象；一次同步扫描共用只读的小型界面上下文，向可见记录添加字段前独立复制，不减采样、不跨帧缓存、不改变输入控制激活记录。扫描优化与插桩采集开销需分别实测，不按代码改动推断帧率收益。
+
+## 共享输入工程索引
+
+右键／B 逐层返回、手柄导航及 `GameSettings` 控制绑定迁移见 `docs/chapter1-input.md`。`UIInput.gd` 仅负责宿主呈现；现场移动沿既有 `move_*` 路径。`tools/probe_ui_input.gd` 使用隔离用户数据与原生 Controls，输出二进制输入观察，不运行 Main／DV，也不证明物理手柄、书页画面、地图或剧情验收；实际状态以本次运行日志和证据为准。
+
+## 连续过门与开卷宿主
+
+Main 的初始视图在不透明 TitleUI 下完成 prepare_map / prepare_presentation(initial)、视野与 UI 装配及真实绘制屏障，沿用现役 title-ready 纸页揭幕；现场 host_input_blocked 与 field.ui_busy 在揭幕完成前保持关闭，不重新接入旧 BookOpeningPage 启动状态机。视图失败停止事件消费并在书页报告，已开始会话不可原地重复新建。连续跨门请求仅在可用玩家选项与真实源侧门道内发生，宿主独立核对 prepared 身份后允许唯一边界，仍走正常物理回执与 Complete。缓存失效、取消、界面接口与性能证据边界见 `../docs/chapter1-continuity.md`。
+
+
+连续过门的 continuous_request 在权威拒绝后的真实回源期间（含受阻重试）仍非空；书签边界必须等待它清除，不能因 Complete 已结束而保存或切换尚未协调的身体位置。

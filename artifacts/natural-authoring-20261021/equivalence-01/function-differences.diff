@@ -1,0 +1,1478 @@
+--- before/F_c1_deep_resonance_law
++++ after/F_c1_deep_resonance_law
+@@ -1,3 +1,3 @@
+-static object F_c1_deep_resonance_law(object v_actor) {
+-return F_dv_axiom("c1_deep_resonance_law",R.number("1"),F_c1_at(v_actor,F_dv_get(F_c1_deep_resonance_site(v_actor),"room")),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c1_deep_resonance_ref(v_actor),true)});
++static object F_c1_deep_resonance_law(object v_行动者) {
++return F_dv_axiom("c1_deep_resonance_law",R.number("1"),F_c1_at(v_行动者,F_dv_get(F_c1_deep_resonance_site(v_行动者),"room")),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c1_deep_resonance_ref(v_行动者),true)});
+ }
+--- before/F_c1_evidence_contact
++++ after/F_c1_evidence_contact
+@@ -1,3 +1,3 @@
+-static object F_c1_evidence_contact(object v_actor,object v_evidence) {
+-return F_dv_axiom("c1_evidence_contact",R.number("1"),F_c1_evidence_contact_premise(v_actor,v_evidence),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c1_evidence_contact_ref(v_actor,v_evidence),true)});
++static object F_c1_evidence_contact(object v_行动者,object v_evidence) {
++return F_dv_axiom("c1_evidence_contact",R.number("1"),F_c1_evidence_contact_premise(v_行动者,v_evidence),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c1_evidence_contact_ref(v_行动者,v_evidence),true)});
+ }
+--- before/F_c1_hist_alarm_wake
++++ after/F_c1_hist_alarm_wake
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_alarm_wake(object v_knowledge) {
+-return F_dv_axiom("c1_hist_alarm_wake",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","own_alarm_anchor"),true),F_dv_single(F_dv_assign(F_dv_ref("past.detective","state","intent"),"seek-instruction")));
++return F_dv_axiom("c1_hist_alarm_wake",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","own_alarm_anchor"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("past.detective","state","intent"),"seek-instruction")});
+ }
+--- before/F_c1_hist_begin_return
++++ after/F_c1_hist_begin_return
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_begin_return(object v_history,object v_knowledge) {
+-return F_dv_axiom("c1_hist_begin_return",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref("past.detective","state","location"),"foyer"),F_dv_fact(F_dv_ref(v_knowledge,"state","predicted_bolt"),true))),F_dv_single(F_dv_assign(F_dv_ref("past.detective","state","intent"),"return-report")));
++return F_dv_axiom("c1_hist_begin_return",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref("past.detective","state","location"),"foyer"),F_dv_fact(F_dv_ref(v_knowledge,"state","predicted_bolt"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("past.detective","state","intent"),"return-report")});
+ }
+--- before/F_c1_hist_close_for_smoke
++++ after/F_c1_hist_close_for_smoke
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_close_for_smoke(object v_history) {
+-return F_dv_axiom("c1_hist_close_for_smoke",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref("past.detective","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.detective","state","intent"),"inspect-first"),F_dv_fact(F_dv_ref("cognition","state","predicted_ash_fan"),true))),F_dv_list3(F_dv_assign(F_dv_ref(v_history,"state","door_open"),false),F_dv_assign(F_dv_ref(v_history,"state","door_wedged"),false),F_dv_assign(F_dv_ref(v_history,"state","door_changed"),true)));
++return F_dv_axiom("c1_hist_close_for_smoke",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("past.detective","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.detective","state","intent"),"inspect-first"),F_dv_fact(F_dv_ref("cognition","state","predicted_ash_fan"),true)}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_dv_ref(v_history,"state","door_open"),false),F_dv_assign(F_dv_ref(v_history,"state","door_wedged"),false),F_dv_assign(F_dv_ref(v_history,"state","door_changed"),true)});
+ }
+--- before/F_c1_hist_cloth
++++ after/F_c1_hist_cloth
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_cloth(object v_history,object v_knowledge) {
+-return F_dv_axiom("c1_hist_cloth",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"state","cloth_placed"),true),F_dv_fact(F_dv_ref(v_history,"state","prints_exist"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_cloth_over_heel"),true)));
++return F_dv_axiom("c1_hist_cloth",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"state","cloth_placed"),true),F_dv_fact(F_dv_ref(v_history,"state","prints_exist"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_cloth_over_heel"),true)});
+ }
+--- before/F_c1_hist_cloth_response
++++ after/F_c1_hist_cloth_response
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_cloth_response(object v_history,object v_knowledge) {
+-return F_dv_axiom("c1_hist_cloth_response",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref("past.shen","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.shen","state","intent"),"place-wet-cloth"),F_dv_fact(F_dv_ref(v_knowledge,"state","predicted_ash_fan"),true),F_dv_fact(F_dv_ref(v_history,"state","door_open"),false)}),F_dv_single(F_dv_assign(F_dv_ref(v_history,"state","cloth_placed"),true)));
++return F_dv_axiom("c1_hist_cloth_response",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref("past.shen","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.shen","state","intent"),"place-wet-cloth"),F_dv_fact(F_dv_ref(v_knowledge,"state","predicted_ash_fan"),true),F_dv_fact(F_dv_ref(v_history,"state","door_open"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_history,"state","cloth_placed"),true)});
+ }
+--- before/F_c1_hist_coordinate
++++ after/F_c1_hist_coordinate
+@@ -1,3 +1,3 @@
+-static object F_c1_hist_coordinate(object v_knowledge,object v_history,object v_atom,object v_polarity,object v_variable,object v_value) {
+-return F_dv_axiom("c1_hist_coordinate",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state",v_atom),v_polarity),F_dv_single(F_dv_assign(F_dv_ref(v_history,"actual",v_variable),v_value)));
++static object F_c1_hist_coordinate(object v_knowledge,object v_history,object v_atom,object v_polarity,object v_variable,object v_取值) {
++return F_dv_axiom("c1_hist_coordinate",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state",v_atom),v_polarity),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_history,"actual",v_variable),v_取值)});
+ }
+--- before/F_c1_hist_familiar_relations
++++ after/F_c1_hist_familiar_relations
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_familiar_relations(object v_history,object v_preference,object v_huo_trust,object v_su_trust) {
+-return F_dv_axiom("c1_hist_familiar_relations",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"inputs","familiar"),true),F_dv_fact(F_dv_ref(v_history,"inputs","trust_choice"),v_preference))),F_dv_pair(F_dv_assign(F_dv_ref(v_history,"relationships","trust_huo"),v_huo_trust),F_dv_assign(F_dv_ref(v_history,"relationships","trust_su"),v_su_trust)));
++return F_dv_axiom("c1_hist_familiar_relations",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"inputs","familiar"),true),F_dv_fact(F_dv_ref(v_history,"inputs","trust_choice"),v_preference)}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref(v_history,"relationships","trust_huo"),v_huo_trust),F_dv_assign(F_dv_ref(v_history,"relationships","trust_su"),v_su_trust)});
+ }
+--- before/F_c1_hist_footprint
++++ after/F_c1_hist_footprint
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_footprint(object v_history,object v_knowledge,object v_sole,object v_direction,object v_result_field) {
+-return F_dv_axiom("c1_hist_footprint",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_dv_fact(F_dv_ref(v_history,"state","door_changed"),true),F_dv_fact(F_dv_ref(v_history,"state","at_origin"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","predicted_ash_fan"),true),F_dv_fact(F_dv_ref(v_history,"state","sole"),v_sole),F_dv_fact(F_dv_ref(v_history,"state","direction"),v_direction)}),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state",v_result_field),true)));
++return F_dv_axiom("c1_hist_footprint",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_dv_fact(F_dv_ref(v_history,"state","door_changed"),true),F_dv_fact(F_dv_ref(v_history,"state","at_origin"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","predicted_ash_fan"),true),F_dv_fact(F_dv_ref(v_history,"state","sole"),v_sole),F_dv_fact(F_dv_ref(v_history,"state","direction"),v_direction)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state",v_result_field),true)});
+ }
+--- before/F_c1_hist_fork_tap
++++ after/F_c1_hist_fork_tap
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_fork_tap(object v_history,object v_knowledge) {
+-return F_dv_axiom("c1_hist_fork_tap",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref("past.su","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.su","state","intent"),"wait-at-door"),F_dv_fact(F_dv_ref(v_history,"state","door_open"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_fork_dent"),true)));
++return F_dv_axiom("c1_hist_fork_tap",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("past.su","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.su","state","intent"),"wait-at-door"),F_dv_fact(F_dv_ref(v_history,"state","door_open"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_fork_dent"),true)});
+ }
+--- before/F_c1_hist_guard_call
++++ after/F_c1_hist_guard_call
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_guard_call(object v_history) {
+-return F_dv_axiom("c1_hist_guard_call",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"state","huo_instruction"),"BoltKeepShut"),F_dv_fact(F_dv_ref("past.huo","state","location"),"hall"))),F_dv_pair(F_dv_assign(F_dv_ref("past.huo","state","intent"),"guard-tube"),F_dv_assign(F_dv_ref(v_history,"state","huo_called_corridor"),true)));
++return F_dv_axiom("c1_hist_guard_call",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"state","huo_instruction"),"BoltKeepShut"),F_dv_fact(F_dv_ref("past.huo","state","location"),"hall")}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref("past.huo","state","intent"),"guard-tube"),F_dv_assign(F_dv_ref(v_history,"state","huo_called_corridor"),true)});
+ }
+--- before/F_c1_hist_heard_argument
++++ after/F_c1_hist_heard_argument
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_heard_argument(object v_history,object v_knowledge,object v_su_report,object v_heard) {
+-return F_dv_axiom("c1_hist_heard_argument",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref(v_history,"state","latching_complete"),true),F_dv_fact(F_dv_ref(v_history,"state","det_heard_relay"),true),F_dv_fact(F_dv_ref(v_history,"state","det_heard_su_report"),v_su_report))),F_dv_single(F_dv_assign(F_c1_hist_claim_ref("actual_heard"),v_heard)));
++return F_dv_axiom("c1_hist_heard_argument",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref(v_history,"state","latching_complete"),true),F_dv_fact(F_dv_ref(v_history,"state","det_heard_relay"),true),F_dv_fact(F_dv_ref(v_history,"state","det_heard_su_report"),v_su_report)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c1_hist_claim_ref("actual_heard"),v_heard)});
+ }
+--- before/F_c1_hist_huo_tail_open_intent
++++ after/F_c1_hist_huo_tail_open_intent
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_huo_tail_open_intent(object v_history) {
+-return F_dv_axiom("c1_hist_huo_tail_open_intent",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref("past.huo","belief","outside_wants_open"),true),F_dv_fact(F_dv_ref("past.huo","state","location"),"foyer"))),F_dv_single(F_dv_assign(F_dv_ref("past.huo","state","intent"),"open-and-listen")));
++return F_dv_axiom("c1_hist_huo_tail_open_intent",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref("past.huo","belief","outside_wants_open"),true),F_dv_fact(F_dv_ref("past.huo","state","location"),"foyer")}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("past.huo","state","intent"),"open-and-listen")});
+ }
+--- before/F_c1_hist_inspection_preview
++++ after/F_c1_hist_inspection_preview
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_inspection_preview(object v_priority) {
+-return F_dv_axiom("c1_hist_inspection_preview",R.number("1"),F_dv_true(),F_dv_single(F_dv_assign(F_dv_ref("response.outcome","state","value"),v_priority)));
++return F_dv_axiom("c1_hist_inspection_preview",R.number("1"),F_dv_true(),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("response.outcome","state","value"),v_priority)});
+ }
+--- before/F_c1_hist_instruction_record
++++ after/F_c1_hist_instruction_record
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_instruction_record(object v_history,object v_knowledge,object v_words) {
+-return F_dv_axiom("c1_hist_instruction_record",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"heard_form","past.huo"),"full"),F_dv_fact(F_dv_ref(v_history,"heard_words","past.huo"),v_words))),F_dv_pair(F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_slate_first"),true),F_dv_assign(F_dv_ref(v_history,"state","huo_instruction"),v_words)));
++return F_dv_axiom("c1_hist_instruction_record",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"heard_form","past.huo"),"full"),F_dv_fact(F_dv_ref(v_history,"heard_words","past.huo"),v_words)}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_slate_first"),true),F_dv_assign(F_dv_ref(v_history,"state","huo_instruction"),v_words)});
+ }
+--- before/F_c1_hist_latch
++++ after/F_c1_hist_latch
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_latch(object v_history,object v_knowledge) {
+-return F_dv_axiom("c1_hist_latch",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref("past.detective","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.detective","state","intent"),"latch-request"),F_dv_fact(F_dv_ref(v_history,"state","det_heard_relay"),true))),new System.Collections.Generic.List<object>(6) {F_dv_assign(F_dv_ref(v_history,"state","door_open"),false),F_dv_assign(F_dv_ref(v_history,"state","door_wedged"),false),F_dv_assign(F_dv_ref(v_history,"state","door_changed"),true),F_dv_assign(F_dv_ref(v_history,"state","at_origin"),true),F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_bolt"),true),F_dv_assign(F_dv_ref(v_history,"state","latching_complete"),true)});
++return F_dv_axiom("c1_hist_latch",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("past.detective","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.detective","state","intent"),"latch-request"),F_dv_fact(F_dv_ref(v_history,"state","det_heard_relay"),true)}),new System.Collections.Generic.List<object>(6) {F_dv_assign(F_dv_ref(v_history,"state","door_open"),false),F_dv_assign(F_dv_ref(v_history,"state","door_wedged"),false),F_dv_assign(F_dv_ref(v_history,"state","door_changed"),true),F_dv_assign(F_dv_ref(v_history,"state","at_origin"),true),F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_bolt"),true),F_dv_assign(F_dv_ref(v_history,"state","latching_complete"),true)});
+ }
+--- before/F_c1_hist_layout_known
++++ after/F_c1_hist_layout_known
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_layout_known(object v_knowledge,object v_history) {
+-return F_dv_axiom("c1_hist_layout_known",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_knowledge,"state","pipe_layout"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","heads_lost"),true))),F_dv_pair(F_dv_assign(F_dv_ref(v_history,"loose_junction","R08"),true),F_dv_assign(F_dv_ref(v_history,"loose_junction","foyer"),true)));
++return F_dv_axiom("c1_hist_layout_known",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_knowledge,"state","pipe_layout"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","heads_lost"),true)}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref(v_history,"loose_junction","R08"),true),F_dv_assign(F_dv_ref(v_history,"loose_junction","foyer"),true)});
+ }
+--- before/F_c1_hist_open_door
++++ after/F_c1_hist_open_door
+@@ -1,3 +1,3 @@
+-static object F_c1_hist_open_door(object v_history,object v_actor,object v_knowledge) {
+-return F_dv_axiom("c1_hist_open_door",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_actor,"state","location"),"foyer"),F_dv_fact(F_dv_ref(v_actor,"state","intent"),"open-and-listen"))),F_dv_list3(F_dv_assign(F_dv_ref(v_history,"state","door_open"),true),F_dv_assign(F_dv_ref(v_history,"state","door_wedged"),true),F_dv_assign(F_dv_ref(v_actor,"state","intent"),"wait-at-door")));
++static object F_c1_hist_open_door(object v_history,object v_行动者,object v_knowledge) {
++return F_dv_axiom("c1_hist_open_door",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"foyer"),F_dv_fact(F_dv_ref(v_行动者,"state","intent"),"open-and-listen")}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_dv_ref(v_history,"state","door_open"),true),F_dv_assign(F_dv_ref(v_history,"state","door_wedged"),true),F_dv_assign(F_dv_ref(v_行动者,"state","intent"),"wait-at-door")});
+ }
+--- before/F_c1_hist_open_full_interpretation
++++ after/F_c1_hist_open_full_interpretation
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_open_full_interpretation(object v_history,object v_listener) {
+-return F_dv_axiom("c1_hist_open_full_interpretation",R.number("1"),F_dv_fact(F_dv_ref(v_history,"heard_words",v_listener),"OpenSaveMe"),F_dv_single(F_dv_assign(F_dv_ref(v_listener,"belief","outside_wants_open"),true)));
++return F_dv_axiom("c1_hist_open_full_interpretation",R.number("1"),F_dv_fact(F_dv_ref(v_history,"heard_words",v_listener),"OpenSaveMe"),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_listener,"belief","outside_wants_open"),true)});
+ }
+--- before/F_c1_hist_open_interpretation
++++ after/F_c1_hist_open_interpretation
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_open_interpretation(object v_history,object v_listener) {
+-return F_dv_axiom("c1_hist_open_interpretation",R.number("1"),F_dv_fact(F_dv_ref(v_history,"heard_words",v_listener),"Open"),F_dv_single(F_dv_assign(F_dv_ref(v_listener,"belief","outside_wants_open"),true)));
++return F_dv_axiom("c1_hist_open_interpretation",R.number("1"),F_dv_fact(F_dv_ref(v_history,"heard_words",v_listener),"Open"),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_listener,"belief","outside_wants_open"),true)});
+ }
+--- before/F_c1_hist_origin
++++ after/F_c1_hist_origin
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_origin(object v_history,object v_knowledge,object v_su_room,object v_huo_room) {
+-return F_dv_axiom("c1_hist_origin",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"inputs","su_origin"),v_su_room),F_dv_fact(F_dv_ref(v_history,"inputs","huo_origin"),v_huo_room))),new System.Collections.Generic.List<object>(12) {F_dv_assign(F_dv_ref("past.su","state","location"),v_su_room),F_dv_assign(F_dv_ref("past.huo","state","location"),v_huo_room),F_dv_assign(F_dv_ref("past.detective","state","location"),"R05"),F_dv_assign(F_dv_ref("past.shen","state","location"),"pantry"),F_dv_assign(F_dv_ref(v_history,"state","door_open"),false),F_dv_assign(F_dv_ref(v_history,"state","door_wedged"),false),F_dv_assign(F_dv_ref(v_history,"state","door_changed"),false),F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_bolt"),false),F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_ash_fan"),false),F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_wedge_soot"),false),F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_boots_bolt"),false),F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_cloth_over_heel"),false)});
++return F_dv_axiom("c1_hist_origin",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"inputs","su_origin"),v_su_room),F_dv_fact(F_dv_ref(v_history,"inputs","huo_origin"),v_huo_room)}),new System.Collections.Generic.List<object>(12) {F_dv_assign(F_dv_ref("past.su","state","location"),v_su_room),F_dv_assign(F_dv_ref("past.huo","state","location"),v_huo_room),F_dv_assign(F_dv_ref("past.detective","state","location"),"R05"),F_dv_assign(F_dv_ref("past.shen","state","location"),"pantry"),F_dv_assign(F_dv_ref(v_history,"state","door_open"),false),F_dv_assign(F_dv_ref(v_history,"state","door_wedged"),false),F_dv_assign(F_dv_ref(v_history,"state","door_changed"),false),F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_bolt"),false),F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_ash_fan"),false),F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_wedge_soot"),false),F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_boots_bolt"),false),F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_cloth_over_heel"),false)});
+ }
+--- before/F_c1_hist_outside_full
++++ after/F_c1_hist_outside_full
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_outside_full(object v_history,object v_listener,object v_words) {
+-return F_dv_axiom("c1_hist_outside_full",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"OutsideDoor"),F_dv_fact(F_dv_ref(v_history,"state","words"),v_words),F_dv_fact(F_dv_ref(v_listener,"state","location"),"outside_door"))),F_dv_list3(F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"full"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),v_words),F_dv_assign(F_dv_ref(v_history,"heard_origin",v_listener),"OutsideDoor")));
++return F_dv_axiom("c1_hist_outside_full",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"OutsideDoor"),F_dv_fact(F_dv_ref(v_history,"state","words"),v_words),F_dv_fact(F_dv_ref(v_listener,"state","location"),"outside_door")}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"full"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),v_words),F_dv_assign(F_dv_ref(v_history,"heard_origin",v_listener),"OutsideDoor")});
+ }
+--- before/F_c1_hist_outside_junction
++++ after/F_c1_hist_outside_junction
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_outside_junction(object v_history,object v_listener,object v_room) {
+-return F_dv_axiom("c1_hist_outside_junction",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"OutsideDoor"),F_dv_fact(F_dv_ref(v_listener,"state","location"),v_room),F_dv_fact(F_dv_ref(v_history,"loose_junction","foyer"),true),F_dv_fact(F_dv_ref(v_history,"loose_junction",v_room),true)}),F_dv_pair(F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"muffled-full"),F_dv_assign(F_dv_ref(v_history,"heard_origin",v_listener),"unresolved")));
++return F_dv_axiom("c1_hist_outside_junction",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"OutsideDoor"),F_dv_fact(F_dv_ref(v_listener,"state","location"),v_room),F_dv_fact(F_dv_ref(v_history,"loose_junction","foyer"),true),F_dv_fact(F_dv_ref(v_history,"loose_junction",v_room),true)}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"muffled-full"),F_dv_assign(F_dv_ref(v_history,"heard_origin",v_listener),"unresolved")});
+ }
+--- before/F_c1_hist_outside_muffled
++++ after/F_c1_hist_outside_muffled
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_outside_muffled(object v_history,object v_listener) {
+-return F_dv_axiom("c1_hist_outside_muffled",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"OutsideDoor"),F_dv_fact(F_dv_ref(v_listener,"state","location"),"foyer"))),F_dv_pair(F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"muffled-full"),F_dv_assign(F_dv_ref(v_history,"heard_origin",v_listener),"unresolved")));
++return F_dv_axiom("c1_hist_outside_muffled",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"OutsideDoor"),F_dv_fact(F_dv_ref(v_listener,"state","location"),"foyer")}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"muffled-full"),F_dv_assign(F_dv_ref(v_history,"heard_origin",v_listener),"unresolved")});
+ }
+--- before/F_c1_hist_outside_received
++++ after/F_c1_hist_outside_received
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_outside_received(object v_history,object v_listener,object v_room,object v_words) {
+-return F_dv_axiom("c1_hist_outside_received",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"OutsideDoor"),F_dv_fact(F_dv_ref(v_history,"state","words"),v_words),F_dv_fact(F_dv_ref(v_listener,"state","location"),v_room))),F_dv_list3(F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"muffled-full"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),v_words),F_dv_assign(F_dv_ref(v_history,"heard_origin",v_listener),"unresolved")));
++return F_dv_axiom("c1_hist_outside_received",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"OutsideDoor"),F_dv_fact(F_dv_ref(v_history,"state","words"),v_words),F_dv_fact(F_dv_ref(v_listener,"state","location"),v_room)}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"muffled-full"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),v_words),F_dv_assign(F_dv_ref(v_history,"heard_origin",v_listener),"unresolved")});
+ }
+--- before/F_c1_hist_print_occurrence
++++ after/F_c1_hist_print_occurrence
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_print_occurrence(object v_history,object v_knowledge) {
+-return F_dv_axiom("c1_hist_print_occurrence",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","predicted_boots_bolt"),true),F_dv_single(F_dv_assign(F_dv_ref(v_history,"state","prints_exist"),true)));
++return F_dv_axiom("c1_hist_print_occurrence",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","predicted_boots_bolt"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_history,"state","prints_exist"),true)});
+ }
+--- before/F_c1_hist_receive_request
++++ after/F_c1_hist_receive_request
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_receive_request(object v_history,object v_knowledge) {
+-return F_dv_axiom("c1_hist_receive_request",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref("past.detective","state","location"),"hall"),F_dv_fact(F_dv_ref("past.huo","state","location"),"hall"),F_dv_fact(F_dv_ref(v_history,"state","huo_instruction"),"BoltKeepShut"))),F_dv_pair(F_dv_assign(F_dv_ref(v_history,"state","request_received"),true),F_dv_assign(F_dv_ref(v_history,"state","det_heard_relay"),true)));
++return F_dv_axiom("c1_hist_receive_request",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("past.detective","state","location"),"hall"),F_dv_fact(F_dv_ref("past.huo","state","location"),"hall"),F_dv_fact(F_dv_ref(v_history,"state","huo_instruction"),"BoltKeepShut")}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref(v_history,"state","request_received"),true),F_dv_assign(F_dv_ref(v_history,"state","det_heard_relay"),true)});
+ }
+--- before/F_c1_hist_report
++++ after/F_c1_hist_report
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_report(object v_history,object v_knowledge) {
+-return F_dv_axiom("c1_hist_report",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref(v_knowledge,"state","predicted_bolt"),true),F_dv_fact(F_dv_ref("past.detective","state","location"),"hall"),F_dv_fact(F_dv_ref("past.huo","state","location"),"hall"))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_slate_second"),true)));
++return F_dv_axiom("c1_hist_report",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref(v_knowledge,"state","predicted_bolt"),true),F_dv_fact(F_dv_ref("past.detective","state","location"),"hall"),F_dv_fact(F_dv_ref("past.huo","state","location"),"hall")}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_slate_second"),true)});
+ }
+--- before/F_c1_hist_response_bridge
++++ after/F_c1_hist_response_bridge
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_response_bridge(object v_history,object v_choice,object v_intent) {
+-return F_dv_axiom("c1_hist_response_bridge",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"response","detective"),v_choice),F_dv_fact(F_dv_ref(v_history,"state","request_received"),true))),F_dv_single(F_dv_assign(F_dv_ref("past.detective","state","intent"),v_intent)));
++return F_dv_axiom("c1_hist_response_bridge",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"response","detective"),v_choice),F_dv_fact(F_dv_ref(v_history,"state","request_received"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("past.detective","state","intent"),v_intent)});
+ }
+--- before/F_c1_hist_room_alarm
++++ after/F_c1_hist_room_alarm
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_room_alarm(object v_history,object v_listener,object v_room) {
+-return F_dv_axiom("c1_hist_room_alarm",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"Tube"),F_dv_fact(F_dv_ref(v_listener,"state","location"),v_room))),F_dv_pair(F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"alarm-only"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),"unintelligible")));
++return F_dv_axiom("c1_hist_room_alarm",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"Tube"),F_dv_fact(F_dv_ref(v_listener,"state","location"),v_room)}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"alarm-only"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),"unintelligible")});
+ }
+--- before/F_c1_hist_room_silence
++++ after/F_c1_hist_room_silence
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_room_silence(object v_history,object v_listener,object v_room) {
+-return F_dv_axiom("c1_hist_room_silence",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"OutsideDoor"),F_dv_fact(F_dv_ref(v_listener,"state","location"),v_room))),F_dv_pair(F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"no-intelligible-voice"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),"unintelligible")));
++return F_dv_axiom("c1_hist_room_silence",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"OutsideDoor"),F_dv_fact(F_dv_ref(v_listener,"state","location"),v_room)}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"no-intelligible-voice"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),"unintelligible")});
+ }
+--- before/F_c1_hist_score
++++ after/F_c1_hist_score
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_score(object v_history,object v_knowledge) {
+-return F_dv_axiom("c1_hist_score",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref("past.su","state","location"),"R08"),F_dv_fact(F_dv_ref("past.su","state","intent"),"write-score"),F_dv_fact(F_dv_ref(v_history,"state","door_open"),false))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_score_tail"),true)));
++return F_dv_axiom("c1_hist_score",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("past.su","state","location"),"R08"),F_dv_fact(F_dv_ref("past.su","state","intent"),"write-score"),F_dv_fact(F_dv_ref(v_history,"state","door_open"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_score_tail"),true)});
+ }
+--- before/F_c1_hist_shen_smoke_response
++++ after/F_c1_hist_shen_smoke_response
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_shen_smoke_response(object v_history) {
+-return F_dv_axiom("c1_hist_shen_smoke_response",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref("past.shen","belief","smoke"),true),F_dv_fact(F_dv_ref(v_history,"state","door_open"),false))),F_dv_single(F_dv_assign(F_dv_ref("past.shen","state","intent"),"place-wet-cloth")));
++return F_dv_axiom("c1_hist_shen_smoke_response",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref("past.shen","belief","smoke"),true),F_dv_fact(F_dv_ref(v_history,"state","door_open"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("past.shen","state","intent"),"place-wet-cloth")});
+ }
+--- before/F_c1_hist_smoke
++++ after/F_c1_hist_smoke
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_smoke(object v_history,object v_knowledge) {
+-return F_dv_axiom("c1_hist_smoke",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"state","smoke_due"),true),F_dv_fact(F_dv_ref(v_history,"state","door_open"),true))),F_dv_pair(F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_ash_fan"),true),F_dv_assign(F_dv_ref(v_history,"state","smoke_entered"),true)));
++return F_dv_axiom("c1_hist_smoke",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"state","smoke_due"),true),F_dv_fact(F_dv_ref(v_history,"state","door_open"),true)}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_ash_fan"),true),F_dv_assign(F_dv_ref(v_history,"state","smoke_entered"),true)});
+ }
+--- before/F_c1_hist_smoke_due
++++ after/F_c1_hist_smoke_due
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_smoke_due(object v_history) {
+-return F_dv_axiom("c1_hist_smoke_due",R.number("1"),F_dv_true(),F_dv_single(F_dv_assign(F_dv_ref(v_history,"state","smoke_due"),true)));
++return F_dv_axiom("c1_hist_smoke_due",R.number("1"),F_dv_true(),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_history,"state","smoke_due"),true)});
+ }
+--- before/F_c1_hist_smoke_pantry
++++ after/F_c1_hist_smoke_pantry
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_smoke_pantry(object v_history) {
+-return F_dv_axiom("c1_hist_smoke_pantry",R.number("1"),F_dv_fact(F_dv_ref(v_history,"state","smoke_entered"),true),F_dv_single(F_dv_assign(F_dv_ref("past.shen","belief","smoke"),true)));
++return F_dv_axiom("c1_hist_smoke_pantry",R.number("1"),F_dv_fact(F_dv_ref(v_history,"state","smoke_entered"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("past.shen","belief","smoke"),true)});
+ }
+--- before/F_c1_hist_social_preview
++++ after/F_c1_hist_social_preview
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_social_preview(object v_speaker,object v_expected,object v_result) {
+-return F_dv_axiom("c1_hist_social_preview",R.number("1"),F_dv_fact(F_dv_ref(v_speaker,"relationship","trust"),v_expected),F_dv_single(F_dv_assign(F_dv_ref("response.outcome","state","value"),v_result)));
++return F_dv_axiom("c1_hist_social_preview",R.number("1"),F_dv_fact(F_dv_ref(v_speaker,"relationship","trust"),v_expected),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("response.outcome","state","value"),v_result)});
+ }
+--- before/F_c1_hist_su_begin_score
++++ after/F_c1_hist_su_begin_score
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_su_begin_score(object v_history) {
+-return F_dv_axiom("c1_hist_su_begin_score",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref("past.su","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.su","state","intent"),"wait-at-door"),F_dv_fact(F_dv_ref(v_history,"state","door_open"),false))),F_dv_single(F_dv_assign(F_dv_ref("past.su","state","intent"),"write-score")));
++return F_dv_axiom("c1_hist_su_begin_score",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("past.su","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.su","state","intent"),"wait-at-door"),F_dv_fact(F_dv_ref(v_history,"state","door_open"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("past.su","state","intent"),"write-score")});
+ }
+--- before/F_c1_hist_su_open_intent
++++ after/F_c1_hist_su_open_intent
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_su_open_intent(object v_history) {
+-return F_dv_axiom("c1_hist_su_open_intent",R.number("1"),F_dv_fact(F_dv_ref("past.su","belief","outside_wants_open"),true),F_dv_single(F_dv_assign(F_dv_ref("past.su","state","intent"),"open-and-listen")));
++return F_dv_axiom("c1_hist_su_open_intent",R.number("1"),F_dv_fact(F_dv_ref("past.su","belief","outside_wants_open"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("past.su","state","intent"),"open-and-listen")});
+ }
+--- before/F_c1_hist_su_report
++++ after/F_c1_hist_su_report
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_su_report(object v_history) {
+-return F_dv_axiom("c1_hist_su_report",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref("past.su","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.detective","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.su","belief","outside_wants_open"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_history,"state","det_heard_su_report"),true)));
++return F_dv_axiom("c1_hist_su_report",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("past.su","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.detective","state","location"),"foyer"),F_dv_fact(F_dv_ref("past.su","belief","outside_wants_open"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_history,"state","det_heard_su_report"),true)});
+ }
+--- before/F_c1_hist_travel
++++ after/F_c1_hist_travel
+@@ -1,3 +1,3 @@
+-static object F_c1_hist_travel(object v_actor,object v_origin,object v_target,object v_permitted_intent) {
+-return F_dv_axiom("c1_hist_travel",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_actor,"state","location"),v_origin),F_dv_fact(F_dv_ref(v_actor,"state","intent"),v_permitted_intent))),F_dv_single(F_dv_assign(F_dv_ref(v_actor,"state","location"),v_target)));
++static object F_c1_hist_travel(object v_行动者,object v_起点,object v_目标,object v_permitted_intent) {
++return F_dv_axiom("c1_hist_travel",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),v_起点),F_dv_fact(F_dv_ref(v_行动者,"state","intent"),v_permitted_intent)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_行动者,"state","location"),v_目标)});
+ }
+--- before/F_c1_hist_tube_alarm_only
++++ after/F_c1_hist_tube_alarm_only
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_tube_alarm_only(object v_history,object v_listener) {
+-return F_dv_axiom("c1_hist_tube_alarm_only",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"Tube"),F_dv_fact(F_dv_ref(v_listener,"state","location"),"R05"))),F_dv_pair(F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"alarm-only"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),"unintelligible")));
++return F_dv_axiom("c1_hist_tube_alarm_only",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"Tube"),F_dv_fact(F_dv_ref(v_listener,"state","location"),"R05")}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"alarm-only"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),"unintelligible")});
+ }
+--- before/F_c1_hist_tube_full
++++ after/F_c1_hist_tube_full
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_tube_full(object v_history,object v_listener,object v_words) {
+-return F_dv_axiom("c1_hist_tube_full",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"Tube"),F_dv_fact(F_dv_ref(v_history,"state","words"),v_words),F_dv_fact(F_dv_ref(v_listener,"state","location"),"hall"))),F_dv_list3(F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"full"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),v_words),F_dv_assign(F_dv_ref(v_history,"heard_origin",v_listener),"Tube")));
++return F_dv_axiom("c1_hist_tube_full",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"Tube"),F_dv_fact(F_dv_ref(v_history,"state","words"),v_words),F_dv_fact(F_dv_ref(v_listener,"state","location"),"hall")}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"full"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),v_words),F_dv_assign(F_dv_ref(v_history,"heard_origin",v_listener),"Tube")});
+ }
+--- before/F_c1_hist_tube_hum
++++ after/F_c1_hist_tube_hum
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_tube_hum(object v_history,object v_listener) {
+-return F_dv_axiom("c1_hist_tube_hum",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"Tube"),F_dv_fact(F_dv_ref(v_listener,"state","location"),"pantry"))),F_dv_pair(F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"hum"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),"unintelligible")));
++return F_dv_axiom("c1_hist_tube_hum",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"Tube"),F_dv_fact(F_dv_ref(v_listener,"state","location"),"pantry")}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"hum"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),"unintelligible")});
+ }
+--- before/F_c1_hist_tube_tail
++++ after/F_c1_hist_tube_tail
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_tube_tail(object v_history,object v_listener,object v_room,object v_words,object v_tail) {
+-return F_dv_axiom("c1_hist_tube_tail",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"Tube"),F_dv_fact(F_dv_ref(v_history,"state","words"),v_words),F_dv_fact(F_dv_ref(v_listener,"state","location"),v_room),F_dv_fact(F_dv_ref(v_history,"loose_junction",v_room),true)}),F_dv_list3(F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"tail"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),v_tail),F_dv_assign(F_dv_ref(v_history,"heard_origin",v_listener),"unresolved")));
++return F_dv_axiom("c1_hist_tube_tail",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref(v_history,"state","voice_source"),"Tube"),F_dv_fact(F_dv_ref(v_history,"state","words"),v_words),F_dv_fact(F_dv_ref(v_listener,"state","location"),v_room),F_dv_fact(F_dv_ref(v_history,"loose_junction",v_room),true)}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_dv_ref(v_history,"heard_form",v_listener),"tail"),F_dv_assign(F_dv_ref(v_history,"heard_words",v_listener),v_tail),F_dv_assign(F_dv_ref(v_history,"heard_origin",v_listener),"unresolved")});
+ }
+--- before/F_c1_hist_visit_door
++++ after/F_c1_hist_visit_door
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_visit_door(object v_history) {
+-return F_dv_axiom("c1_hist_visit_door",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref("past.detective","state","location"),"hall"),F_dv_fact(F_dv_ref(v_history,"state","request_received"),true))),F_dv_single(F_dv_assign(F_dv_ref("past.detective","state","intent"),"visit-door")));
++return F_dv_axiom("c1_hist_visit_door",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref("past.detective","state","location"),"hall"),F_dv_fact(F_dv_ref(v_history,"state","request_received"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("past.detective","state","intent"),"visit-door")});
+ }
+--- before/F_c1_hist_voice_input
++++ after/F_c1_hist_voice_input
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_voice_input(object v_history,object v_source,object v_words) {
+-return F_dv_axiom("c1_hist_voice_input",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_history,"inputs","source"),v_source),F_dv_fact(F_dv_ref(v_history,"inputs","words"),v_words))),F_dv_pair(F_dv_assign(F_dv_ref(v_history,"state","voice_source"),v_source),F_dv_assign(F_dv_ref(v_history,"state","words"),v_words)));
++return F_dv_axiom("c1_hist_voice_input",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_history,"inputs","source"),v_source),F_dv_fact(F_dv_ref(v_history,"inputs","words"),v_words)}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref(v_history,"state","voice_source"),v_source),F_dv_assign(F_dv_ref(v_history,"state","words"),v_words)});
+ }
+--- before/F_c1_hist_wedge_soot
++++ after/F_c1_hist_wedge_soot
+@@ -1,3 +1,3 @@
+ static object F_c1_hist_wedge_soot(object v_history,object v_knowledge) {
+-return F_dv_axiom("c1_hist_wedge_soot",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref(v_history,"state","smoke_due"),true),F_dv_fact(F_dv_ref(v_history,"state","door_open"),true),F_dv_fact(F_dv_ref(v_history,"state","door_wedged"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_wedge_soot"),true)));
++return F_dv_axiom("c1_hist_wedge_soot",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref(v_history,"state","smoke_due"),true),F_dv_fact(F_dv_ref(v_history,"state","door_open"),true),F_dv_fact(F_dv_ref(v_history,"state","door_wedged"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","predicted_wedge_soot"),true)});
+ }
+--- before/F_c1_identify_own_lens
++++ after/F_c1_identify_own_lens
+@@ -1,3 +1,3 @@
+-static object F_c1_identify_own_lens(object v_actor) {
+-return F_c1_once(F_c1_action(R.cat(v_actor,".identify-own-lens"),"inspect",F_dv_all(F_dv_pair(F_c1_at(v_actor,"R05"),F_dv_fact(F_dv_ref("coat","identity","owner"),v_actor))),F_dv_all(F_dv_pair(F_c1_at(v_actor,"R05"),F_dv_fact(F_dv_ref("coat","identity","owner"),v_actor))),"",F_dv_single(F_c1_knowledge("lens_mine")),F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story",R.number("6"),"s1_wake.006;E12 personal ownership")));
++static object F_c1_identify_own_lens(object v_行动者) {
++return F_dv_clone(new System.Collections.Generic.List<object>(8) {F_dv_pair("id",R.cat(v_行动者,".identify-own-lens")),F_dv_pair("kind","inspect"),F_dv_pair("precondition",F_dv_all(F_dv_pair(F_c1_at(v_行动者,"R05"),F_dv_fact(F_dv_ref("coat","identity","owner"),v_行动者)))),F_dv_pair("authority_precondition",F_dv_all(F_dv_pair(F_c1_at(v_行动者,"R05"),F_dv_fact(F_dv_ref("coat","identity","owner"),v_行动者)))),F_dv_pair("law",""),F_dv_pair("grants",F_dv_single(F_c1_knowledge("lens_mine"))),F_dv_pair("source_refs",new System.Collections.Generic.List<object>(1) {F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story",R.number("6"),"s1_wake.006;E12 personal ownership")}),F_dv_pair("once",true)});
+ }
+--- before/F_c1_infer_0
++++ after/F_c1_infer_0
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_0(object v_knowledge) {
+-return F_dv_axiom("c1_infer_0",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_knowledge,"state","boots_toward_bolt"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","boots_fit"),true)}),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","me"),true)));
++return F_dv_axiom("c1_infer_0",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_knowledge,"state","boots_toward_bolt"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","boots_fit"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","me"),true)});
+ }
+--- before/F_c1_infer_1
++++ after/F_c1_infer_1
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_1(object v_knowledge) {
+-return F_dv_axiom("c1_infer_1",R.number("1"),F_dv_all(F_dv_append(F_dv_list3(F_dv_fact(F_dv_ref(v_knowledge,"state","slate_marks"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","slate_code"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","slate_person"),true)),F_dv_fact(F_dv_ref(v_knowledge,"state","lens_mine"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","me"),true)));
++return F_dv_axiom("c1_infer_1",R.number("1"),F_dv_all(F_dv_append(F_dv_list3(F_dv_fact(F_dv_ref(v_knowledge,"state","slate_marks"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","slate_code"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","slate_person"),true)),F_dv_fact(F_dv_ref(v_knowledge,"state","lens_mine"),true))),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","me"),true)});
+ }
+--- before/F_c1_infer_10
++++ after/F_c1_infer_10
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_10(object v_knowledge) {
+-return F_dv_axiom("c1_infer_10",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_knowledge,"state","starter_layers"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","starter_kept"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","familiar"),true)));
++return F_dv_axiom("c1_infer_10",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_knowledge,"state","starter_layers"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","starter_kept"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","familiar"),true)});
+ }
+--- before/F_c1_infer_11
++++ after/F_c1_infer_11
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_11(object v_knowledge) {
+-return F_dv_axiom("c1_infer_11",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","recalled_names"),true),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","familiar"),true)));
++return F_dv_axiom("c1_infer_11",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","recalled_names"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","familiar"),true)});
+ }
+--- before/F_c1_infer_12
++++ after/F_c1_infer_12
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_12(object v_knowledge) {
+-return F_dv_axiom("c1_infer_12",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","recalled_trust"),true),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","heed_huo"),true)));
++return F_dv_axiom("c1_infer_12",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","recalled_trust"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","heed_huo"),true)});
+ }
+--- before/F_c1_infer_13
++++ after/F_c1_infer_13
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_13(object v_knowledge) {
+-return F_dv_axiom("c1_infer_13",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_knowledge,"state","recalled_trust"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","familiar"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","trust_reason"),true)));
++return F_dv_axiom("c1_infer_13",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_knowledge,"state","recalled_trust"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","familiar"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","trust_reason"),true)});
+ }
+--- before/F_c1_infer_14
++++ after/F_c1_infer_14
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_14(object v_knowledge) {
+-return F_dv_axiom("c1_infer_14",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","su_room"),true),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","su_hall"),false)));
++return F_dv_axiom("c1_infer_14",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","su_room"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","su_hall"),false)});
+ }
+--- before/F_c1_infer_15
++++ after/F_c1_infer_15
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_15(object v_knowledge) {
+-return F_dv_axiom("c1_infer_15",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","su_room"),true),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","su_pantry"),false)));
++return F_dv_axiom("c1_infer_15",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","su_room"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","su_pantry"),false)});
+ }
+--- before/F_c1_infer_16
++++ after/F_c1_infer_16
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_16(object v_knowledge) {
+-return F_dv_axiom("c1_infer_16",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","huo_copper"),true),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","huo_room"),false)));
++return F_dv_axiom("c1_infer_16",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","huo_copper"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","huo_room"),false)});
+ }
+--- before/F_c1_infer_17
++++ after/F_c1_infer_17
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_17(object v_knowledge) {
+-return F_dv_axiom("c1_infer_17",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","huo_copper"),true),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","huo_foyer"),false)));
++return F_dv_axiom("c1_infer_17",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","huo_copper"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","huo_foyer"),false)});
+ }
+--- before/F_c1_infer_18
++++ after/F_c1_infer_18
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_18(object v_knowledge) {
+-return F_dv_axiom("c1_infer_18",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","heed_huo"),true),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","heed_su"),false)));
++return F_dv_axiom("c1_infer_18",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","heed_huo"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","heed_su"),false)});
+ }
+--- before/F_c1_infer_19
++++ after/F_c1_infer_19
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_19(object v_knowledge) {
+-return F_dv_axiom("c1_infer_19",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","heed_huo"),true),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","heed_neither"),false)));
++return F_dv_axiom("c1_infer_19",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","heed_huo"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","heed_neither"),false)});
+ }
+--- before/F_c1_infer_2
++++ after/F_c1_infer_2
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_2(object v_knowledge) {
+-return F_dv_axiom("c1_infer_2",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","recalled_bolt"),true),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","me"),true)));
++return F_dv_axiom("c1_infer_2",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","recalled_bolt"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","me"),true)});
+ }
+--- before/F_c1_infer_3
++++ after/F_c1_infer_3
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_3(object v_knowledge) {
+-return F_dv_axiom("c1_infer_3",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_knowledge,"state","recalled_bolt"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","bolt_down"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","me"),true)));
++return F_dv_axiom("c1_infer_3",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_knowledge,"state","recalled_bolt"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","bolt_down"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","me"),true)});
+ }
+--- before/F_c1_infer_4
++++ after/F_c1_infer_4
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_4(object v_knowledge) {
+-return F_dv_axiom("c1_infer_4",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref(v_knowledge,"state","pipe_layout"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","sound_trial"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","heads_lost"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","remote_voice"),true)));
++return F_dv_axiom("c1_infer_4",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref(v_knowledge,"state","pipe_layout"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","sound_trial"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","heads_lost"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","remote_voice"),true)});
+ }
+--- before/F_c1_infer_5
++++ after/F_c1_infer_5
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_5(object v_knowledge) {
+-return F_dv_axiom("c1_infer_5",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref(v_knowledge,"state","frame_hollow"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","pipe_layout"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","heads_lost"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","remote_voice"),true)));
++return F_dv_axiom("c1_infer_5",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref(v_knowledge,"state","frame_hollow"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","pipe_layout"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","heads_lost"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","remote_voice"),true)});
+ }
+--- before/F_c1_infer_6
++++ after/F_c1_infer_6
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_6(object v_knowledge) {
+-return F_dv_axiom("c1_infer_6",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_knowledge,"state","slate_code"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","slate_marks"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","words_bolt"),true)));
++return F_dv_axiom("c1_infer_6",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_knowledge,"state","slate_code"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","slate_marks"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","words_bolt"),true)});
+ }
+--- before/F_c1_infer_7
++++ after/F_c1_infer_7
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_7(object v_knowledge) {
+-return F_dv_axiom("c1_infer_7",R.number("1"),F_dv_all(F_dv_list3(F_dv_fact(F_dv_ref(v_knowledge,"state","score_partial"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","heads_lost"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","slate_code"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","words_bolt"),true)));
++return F_dv_axiom("c1_infer_7",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref(v_knowledge,"state","score_partial"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","heads_lost"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","slate_code"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","words_bolt"),true)});
+ }
+--- before/F_c1_infer_8
++++ after/F_c1_infer_8
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_8(object v_knowledge) {
+-return F_dv_axiom("c1_infer_8",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","recalled_copper"),true),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","huo_copper"),true)));
++return F_dv_axiom("c1_infer_8",R.number("1"),F_dv_fact(F_dv_ref(v_knowledge,"state","recalled_copper"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","huo_copper"),true)});
+ }
+--- before/F_c1_infer_9
++++ after/F_c1_infer_9
+@@ -1,3 +1,3 @@
+ static object F_c1_infer_9(object v_knowledge) {
+-return F_dv_axiom("c1_infer_9",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_knowledge,"state","cups_preferences"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","cups_known"),true))),F_dv_single(F_dv_assign(F_dv_ref(v_knowledge,"state","familiar"),true)));
++return F_dv_axiom("c1_infer_9",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_knowledge,"state","cups_preferences"),true),F_dv_fact(F_dv_ref(v_knowledge,"state","cups_known"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_knowledge,"state","familiar"),true)});
+ }
+--- before/F_c1_inspect_E1
++++ after/F_c1_inspect_E1
+@@ -1,3 +1,3 @@
+-static object F_c1_inspect_E1(object v_actor) {
+-return F_c1_once(F_c1_action(R.cat(v_actor,".inspect.E1"),"inspect",F_c1_at(v_actor,"foyer"),F_c1_at(v_actor,"foyer"),"",F_dv_single(F_c1_knowledge("bolt_down")),F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("69"),"E1")));
++static object F_c1_inspect_E1(object v_行动者) {
++return F_dv_clone(new System.Collections.Generic.List<object>(8) {F_dv_pair("id",R.cat(v_行动者,".inspect.E1")),F_dv_pair("kind","inspect"),F_dv_pair("precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"foyer")),F_dv_pair("authority_precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"foyer")),F_dv_pair("law",""),F_dv_pair("grants",F_dv_single(F_c1_knowledge("bolt_down"))),F_dv_pair("source_refs",new System.Collections.Generic.List<object>(1) {F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("69"),"E1")}),F_dv_pair("once",true)});
+ }
+--- before/F_c1_inspect_E11
++++ after/F_c1_inspect_E11
+@@ -1,3 +1,3 @@
+-static object F_c1_inspect_E11(object v_actor) {
+-return F_c1_once(F_c1_action(R.cat(v_actor,".inspect.E11"),"inspect",F_c1_at(v_actor,"R05"),F_c1_at(v_actor,"R05"),"",F_dv_single(F_c1_knowledge("shelf_old")),F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("79"),"E11")));
++static object F_c1_inspect_E11(object v_行动者) {
++return F_dv_clone(new System.Collections.Generic.List<object>(8) {F_dv_pair("id",R.cat(v_行动者,".inspect.E11")),F_dv_pair("kind","inspect"),F_dv_pair("precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"R05")),F_dv_pair("authority_precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"R05")),F_dv_pair("law",""),F_dv_pair("grants",F_dv_single(F_c1_knowledge("shelf_old"))),F_dv_pair("source_refs",new System.Collections.Generic.List<object>(1) {F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("79"),"E11")}),F_dv_pair("once",true)});
+ }
+--- before/F_c1_inspect_E12
++++ after/F_c1_inspect_E12
+@@ -1,3 +1,3 @@
+-static object F_c1_inspect_E12(object v_actor) {
+-return F_c1_once(F_c1_action(R.cat(v_actor,".inspect.E12"),"inspect",F_c1_at(v_actor,"R05"),F_c1_at(v_actor,"R05"),"",F_dv_single(F_dv_ref("coat","identity","owner")),F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("80"),"E12")));
++static object F_c1_inspect_E12(object v_行动者) {
++return F_dv_clone(new System.Collections.Generic.List<object>(8) {F_dv_pair("id",R.cat(v_行动者,".inspect.E12")),F_dv_pair("kind","inspect"),F_dv_pair("precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"R05")),F_dv_pair("authority_precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"R05")),F_dv_pair("law",""),F_dv_pair("grants",F_dv_single(F_dv_ref("coat","identity","owner"))),F_dv_pair("source_refs",new System.Collections.Generic.List<object>(1) {F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("80"),"E12")}),F_dv_pair("once",true)});
+ }
+--- before/F_c1_inspect_E2
++++ after/F_c1_inspect_E2
+@@ -1,3 +1,3 @@
+-static object F_c1_inspect_E2(object v_actor) {
+-return F_c1_once(F_c1_action(R.cat(v_actor,".inspect.E2"),"inspect",F_c1_at(v_actor,"foyer"),F_c1_at(v_actor,"foyer"),"",new System.Collections.Generic.List<object>(0) {},F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("70"),"E2")));
++static object F_c1_inspect_E2(object v_行动者) {
++return F_dv_clone(new System.Collections.Generic.List<object>(8) {F_dv_pair("id",R.cat(v_行动者,".inspect.E2")),F_dv_pair("kind","inspect"),F_dv_pair("precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"foyer")),F_dv_pair("authority_precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"foyer")),F_dv_pair("law",""),F_dv_pair("grants",new System.Collections.Generic.List<object>(0) {}),F_dv_pair("source_refs",new System.Collections.Generic.List<object>(1) {F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("70"),"E2")}),F_dv_pair("once",true)});
+ }
+--- before/F_c1_inspect_E3
++++ after/F_c1_inspect_E3
+@@ -1,3 +1,3 @@
+-static object F_c1_inspect_E3(object v_actor) {
+-return F_c1_once(F_c1_action(R.cat(v_actor,".inspect.E3"),"inspect",F_c1_at(v_actor,"foyer"),F_c1_at(v_actor,"foyer"),"",F_dv_single(F_c1_knowledge("boots_toward_bolt")),F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("71"),"E3")));
++static object F_c1_inspect_E3(object v_行动者) {
++return F_dv_clone(new System.Collections.Generic.List<object>(8) {F_dv_pair("id",R.cat(v_行动者,".inspect.E3")),F_dv_pair("kind","inspect"),F_dv_pair("precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"foyer")),F_dv_pair("authority_precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"foyer")),F_dv_pair("law",""),F_dv_pair("grants",F_dv_single(F_c1_knowledge("boots_toward_bolt"))),F_dv_pair("source_refs",new System.Collections.Generic.List<object>(1) {F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("71"),"E3")}),F_dv_pair("once",true)});
+ }
+--- before/F_c1_inspect_E4
++++ after/F_c1_inspect_E4
+@@ -1,3 +1,3 @@
+-static object F_c1_inspect_E4(object v_actor) {
+-return F_c1_once(F_c1_action(R.cat(v_actor,".inspect.E4"),"inspect",F_c1_at(v_actor,"foyer"),F_c1_at(v_actor,"foyer"),"",F_dv_single(F_c1_knowledge("cloth_after_boots")),F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("72"),"E4")));
++static object F_c1_inspect_E4(object v_行动者) {
++return F_dv_clone(new System.Collections.Generic.List<object>(8) {F_dv_pair("id",R.cat(v_行动者,".inspect.E4")),F_dv_pair("kind","inspect"),F_dv_pair("precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"foyer")),F_dv_pair("authority_precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"foyer")),F_dv_pair("law",""),F_dv_pair("grants",F_dv_single(F_c1_knowledge("cloth_after_boots"))),F_dv_pair("source_refs",new System.Collections.Generic.List<object>(1) {F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("72"),"E4")}),F_dv_pair("once",true)});
+ }
+--- before/F_c1_inspect_E6
++++ after/F_c1_inspect_E6
+@@ -1,3 +1,3 @@
+-static object F_c1_inspect_E6(object v_actor) {
+-return F_c1_once(F_c1_action(R.cat(v_actor,".inspect.E6"),"inspect",F_c1_at(v_actor,"R08"),F_c1_at(v_actor,"R08"),"",F_dv_pair(F_c1_knowledge("score_partial"),F_c1_knowledge("score_in_room")),F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("74"),"E6")));
++static object F_c1_inspect_E6(object v_行动者) {
++return F_dv_clone(new System.Collections.Generic.List<object>(8) {F_dv_pair("id",R.cat(v_行动者,".inspect.E6")),F_dv_pair("kind","inspect"),F_dv_pair("precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"R08")),F_dv_pair("authority_precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"R08")),F_dv_pair("law",""),F_dv_pair("grants",F_dv_pair(F_c1_knowledge("score_partial"),F_c1_knowledge("score_in_room"))),F_dv_pair("source_refs",new System.Collections.Generic.List<object>(1) {F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("74"),"E6")}),F_dv_pair("once",true)});
+ }
+--- before/F_c1_inspect_E8
++++ after/F_c1_inspect_E8
+@@ -1,3 +1,3 @@
+-static object F_c1_inspect_E8(object v_actor) {
+-return F_c1_once(F_c1_action(R.cat(v_actor,".inspect.E8"),"inspect",F_c1_at(v_actor,"hall"),F_c1_at(v_actor,"hall"),"",F_dv_single(F_c1_knowledge("pipe_layout")),F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("76"),"E8")));
++static object F_c1_inspect_E8(object v_行动者) {
++return F_dv_clone(new System.Collections.Generic.List<object>(8) {F_dv_pair("id",R.cat(v_行动者,".inspect.E8")),F_dv_pair("kind","inspect"),F_dv_pair("precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"hall")),F_dv_pair("authority_precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"hall")),F_dv_pair("law",""),F_dv_pair("grants",F_dv_single(F_c1_knowledge("pipe_layout"))),F_dv_pair("source_refs",new System.Collections.Generic.List<object>(1) {F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("76"),"E8")}),F_dv_pair("once",true)});
+ }
+--- before/F_c1_latch_contact_law
++++ after/F_c1_latch_contact_law
+@@ -1,3 +1,3 @@
+ static object F_c1_latch_contact_law() {
+-return F_dv_axiom("c1_latch_contact_law",R.number("1"),F_dv_all(F_dv_pair(F_c1_at("detective","foyer"),F_dv_fact(F_c1_latch_contact_ref(),false))),F_dv_single(F_dv_assign(F_c1_latch_contact_ref(),true)));
++return F_dv_axiom("c1_latch_contact_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref("detective","state","location"),"foyer"),F_dv_fact(F_c1_latch_contact_ref(),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c1_latch_contact_ref(),true)});
+ }
+--- before/F_c1_meeting
++++ after/F_c1_meeting
+@@ -1,3 +1,3 @@
+ static object F_c1_meeting(object v_requester,object v_speaker,object v_room) {
+-return F_dv_axiom("c1_meeting",R.number("1"),F_dv_all(F_dv_pair(F_dv_fact(F_dv_ref(v_requester,"state","location"),v_room),F_dv_fact(F_dv_ref(v_speaker,"state","location"),v_room))),new System.Collections.Generic.List<object>(0) {});
++return F_dv_axiom("c1_meeting",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_requester,"state","location"),v_room),F_dv_fact(F_dv_ref(v_speaker,"state","location"),v_room)}),new System.Collections.Generic.List<object>(0) {});
+ }
+--- before/F_c1_move
++++ after/F_c1_move
+@@ -1,3 +1,3 @@
+-static object F_c1_move(object v_actor,object v_origin,object v_target) {
+-return F_dv_axiom("c1_move",R.number("1"),F_dv_fact(F_dv_ref(v_actor,"state","location"),v_origin),F_dv_single(F_dv_assign(F_dv_ref(v_actor,"state","location"),v_target)));
++static object F_c1_move(object v_行动者,object v_起点,object v_目标) {
++return F_dv_axiom("c1_move",R.number("1"),F_dv_fact(F_dv_ref(v_行动者,"state","location"),v_起点),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_行动者,"state","location"),v_目标)});
+ }
+--- before/F_c1_op_bite_silver
++++ after/F_c1_op_bite_silver
+@@ -1,3 +1,3 @@
+ static object F_c1_op_bite_silver() {
+-return F_dv_axiom("c1_op_bite_silver",R.number("1"),F_dv_all(F_dv_pair(F_c1_at("shen","hall"),F_c1_op_property("opening.silver","location","opening.cabinet"))),F_dv_pair(F_dv_assign(F_dv_ref("opening.silver","state","last_bite_by"),"shen"),F_dv_assign(F_dv_ref("opening.silver","state","last_test"),"bite")));
++return F_dv_axiom("c1_op_bite_silver",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref("shen","state","location"),"hall"),F_c1_op_property("opening.silver","location","opening.cabinet")}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref("opening.silver","state","last_bite_by"),"shen"),F_dv_assign(F_dv_ref("opening.silver","state","last_test"),"bite")});
+ }
+--- before/F_c1_op_contract_text
++++ after/F_c1_op_contract_text
+@@ -1,3 +1,3 @@
+ static object F_c1_op_contract_text() {
+-return "1. 恶魔常驻岛内，不得离岛。\n2. 经学员本人授权，恶魔封存其在校记忆（在校经历、师生与同学关系、事故全貌）；姓名、生平与入学前技艺不在封存之列。\n3. 恶魔维持学园基础生存设施的运转（水、炉火、照明的设施本身；不负责分配物资，不创造物资）。\n4. 恶魔所受约束，唯有学员出于自主的行动方可解除；恶魔不得代为或强迫学员完成解除。\n5. 恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。\n6. 恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。\n7. 恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。\n8. 恶魔不得以言辞欺骗学员；学员问及本人封存之物或契约条文，须如实作答。\n9. 恶魔不得向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。\n10. 封存的记忆可凭对应之物恢复；恢复者自负其果。\n11. 经其余在岛存活学员一致同意，学员可择定“尽忘归乡”，于下一次入睡时遗忘此地一切、在家乡醒来。\n12. （终局）担保耗尽时，恶魔须将醒着且未深属此岛的学员遣返家乡，并抹去其与此地有关的一切记忆。";
++return "1. \u6076\u9B54\u5E38\u9A7B\u5C9B\u5185\uFF0C\u4E0D\u5F97\u79BB\u5C9B\u3002\n2. \u7ECF\u5B66\u5458\u672C\u4EBA\u6388\u6743\uFF0C\u6076\u9B54\u5C01\u5B58\u5176\u5728\u6821\u8BB0\u5FC6\uFF08\u5728\u6821\u7ECF\u5386\u3001\u5E08\u751F\u4E0E\u540C\u5B66\u5173\u7CFB\u3001\u4E8B\u6545\u5168\u8C8C\uFF09\uFF1B\u59D3\u540D\u3001\u751F\u5E73\u4E0E\u5165\u5B66\u524D\u6280\u827A\u4E0D\u5728\u5C01\u5B58\u4E4B\u5217\u3002\n3. \u6076\u9B54\u7EF4\u6301\u5B66\u56ED\u57FA\u7840\u751F\u5B58\u8BBE\u65BD\u7684\u8FD0\u8F6C\uFF08\u6C34\u3001\u7089\u706B\u3001\u7167\u660E\u7684\u8BBE\u65BD\u672C\u8EAB\uFF1B\u4E0D\u8D1F\u8D23\u5206\u914D\u7269\u8D44\uFF0C\u4E0D\u521B\u9020\u7269\u8D44\uFF09\u3002\n4. \u6076\u9B54\u6240\u53D7\u7EA6\u675F\uFF0C\u552F\u6709\u5B66\u5458\u51FA\u4E8E\u81EA\u4E3B\u7684\u884C\u52A8\u65B9\u53EF\u89E3\u9664\uFF1B\u6076\u9B54\u4E0D\u5F97\u4EE3\u4E3A\u6216\u5F3A\u8FEB\u5B66\u5458\u5B8C\u6210\u89E3\u9664\u3002\n5. \u6076\u9B54\u987B\u516C\u5F00\u5B83\u81EA\u5DF1\u6240\u7ACB\u4E4B\u89C4\uFF1B\u89C4\u5219\u8BB8\u8BFA\u7684\u8DEF\u5F84\u5FC5\u987B\u771F\u5B9E\u53EF\u884C\u3002\n6. \u6076\u9B54\u987B\u4F20\u6388\u5B66\u5458\u7406\u89E3\u5904\u5883\u4E0E\u7EE7\u7EED\u5B66\u4E60\u6240\u9700\u4E4B\u77E5\uFF1B\u5B66\u5458\u81EA\u8D1F\u5176\u9009\u62E9\u7684\u540E\u679C\u3002\n7. \u6076\u9B54\u4E0D\u5F97\u4F24\u5BB3\u5B66\u5458\u8EAB\u5FC3\uFF0C\u4E0D\u5F97\u62D8\u7981\u5B66\u5458\uFF0C\u4E0D\u5F97\u4EE4\u5B66\u5458\u56E0\u65E0\u77E5\u800C\u6B7B\u3002\n8. \u6076\u9B54\u4E0D\u5F97\u4EE5\u8A00\u8F9E\u6B3A\u9A97\u5B66\u5458\uFF1B\u5B66\u5458\u95EE\u53CA\u672C\u4EBA\u5C01\u5B58\u4E4B\u7269\u6216\u5951\u7EA6\u6761\u6587\uFF0C\u987B\u5982\u5B9E\u4F5C\u7B54\u3002\n9. \u6076\u9B54\u4E0D\u5F97\u5411\u5B66\u5458\u63D0\u53CA\u5C01\u5B58\u4E4B\u7269\u7684\u6240\u5728\u4E0E\u53D6\u56DE\u4E4B\u6CD5\uFF0C\u4E0D\u5F97\u4FC3\u5176\u53D6\u56DE\uFF1B\u5B66\u5458\u81EA\u884C\u95EE\u53CA\u8005\uFF0C\u4F9D\u524D\u6761\u4F5C\u7B54\u3002\n10. \u5C01\u5B58\u7684\u8BB0\u5FC6\u53EF\u51ED\u5BF9\u5E94\u4E4B\u7269\u6062\u590D\uFF1B\u6062\u590D\u8005\u81EA\u8D1F\u5176\u679C\u3002\n11. \u7ECF\u5176\u4F59\u5728\u5C9B\u5B58\u6D3B\u5B66\u5458\u4E00\u81F4\u540C\u610F\uFF0C\u5B66\u5458\u53EF\u62E9\u5B9A\u201C\u5C3D\u5FD8\u5F52\u4E61\u201D\uFF0C\u4E8E\u4E0B\u4E00\u6B21\u5165\u7761\u65F6\u9057\u5FD8\u6B64\u5730\u4E00\u5207\u3001\u5728\u5BB6\u4E61\u9192\u6765\u3002\n12. \uFF08\u7EC8\u5C40\uFF09\u62C5\u4FDD\u8017\u5C3D\u65F6\uFF0C\u6076\u9B54\u987B\u5C06\u9192\u7740\u4E14\u672A\u6DF1\u5C5E\u6B64\u5C9B\u7684\u5B66\u5458\u9063\u8FD4\u5BB6\u4E61\uFF0C\u5E76\u62B9\u53BB\u5176\u4E0E\u6B64\u5730\u6709\u5173\u7684\u4E00\u5207\u8BB0\u5FC6\u3002";
+ }
+--- before/F_c1_op_play_audition
++++ after/F_c1_op_play_audition
+@@ -1,3 +1,3 @@
+ static object F_c1_op_play_audition() {
+-return F_dv_axiom("c1_op_play_audition",R.number("1"),F_dv_all(F_dv_pair(F_c1_at("su","hall"),F_c1_op_property("opening.audition","location","opening.cabinet"))),F_dv_pair(F_dv_assign(F_dv_ref("opening.audition","state","last_operator"),"su"),F_dv_assign(F_dv_ref("opening.audition","state","last_output"),"audible")));
++return F_dv_axiom("c1_op_play_audition",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref("su","state","location"),"hall"),F_c1_op_property("opening.audition","location","opening.cabinet")}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref("opening.audition","state","last_operator"),"su"),F_dv_assign(F_dv_ref("opening.audition","state","last_output"),"audible")});
+ }
+--- before/F_c1_op_prepare_tea
++++ after/F_c1_op_prepare_tea
+@@ -1,3 +1,3 @@
+ static object F_c1_op_prepare_tea() {
+-return F_dv_axiom("c1_op_prepare_tea",R.number("1"),F_c1_at("shen","hall"),F_dv_pair(F_dv_assign(F_dv_ref("opening.tea","state","prepared"),true),F_dv_assign(F_dv_ref("opening.tea","state","prepared_by"),"shen")));
++return F_dv_axiom("c1_op_prepare_tea",R.number("1"),F_c1_at("shen","hall"),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_dv_ref("opening.tea","state","prepared"),true),F_dv_assign(F_dv_ref("opening.tea","state","prepared_by"),"shen")});
+ }
+--- before/F_c1_op_scrape_testpiece
++++ after/F_c1_op_scrape_testpiece
+@@ -1,3 +1,3 @@
+ static object F_c1_op_scrape_testpiece() {
+-return F_dv_axiom("c1_op_scrape_testpiece",R.number("1"),F_dv_all(F_dv_pair(F_c1_at("huo","hall"),F_c1_op_property("opening.testpiece","location","opening.cabinet"))),F_dv_single(F_dv_assign(F_dv_ref("opening.testpiece","state","last_scraped_by"),"huo")));
++return F_dv_axiom("c1_op_scrape_testpiece",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref("huo","state","location"),"hall"),F_c1_op_property("opening.testpiece","location","opening.cabinet")}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("opening.testpiece","state","last_scraped_by"),"huo")});
+ }
+--- before/F_c1_op_wake
++++ after/F_c1_op_wake
+@@ -1,3 +1,3 @@
+-static object F_c1_op_wake(object v_id) {
+-return F_dv_axiom(R.cat("c1_op_wake.",v_id),R.number("1"),F_c1_at(v_id,F_c1_op_wake_room(v_id)),F_dv_single(F_dv_assign(F_dv_ref(v_id,"body","awake"),true)));
++static object F_c1_op_wake(object v_标识) {
++return F_dv_axiom(R.cat("c1_op_wake.",v_标识),R.number("1"),F_c1_at(v_标识,F_c1_op_wake_room(v_标识)),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_标识,"body","awake"),true)});
+ }
+--- before/F_c1_op_wake_lines
++++ after/F_c1_op_wake_lines
+@@ -1,15 +1,15 @@
+ static object F_c1_op_wake_lines(object v_id) {
+ if (R.Bool(R.eq(v_id,"detective"))) {
+-return new System.Collections.Generic.List<object>(3) {"我记得的最后一件事，是上船。","衣架上挂着一件风衣。右手袖口磨得发亮——我写字时总拿那儿蹭桌沿。是我的。","先出去，看看这是什么地方。"};
++return new System.Collections.Generic.List<object>(3) {"\u6211\u8BB0\u5F97\u7684\u6700\u540E\u4E00\u4EF6\u4E8B\uFF0C\u662F\u4E0A\u8239\u3002","\u8863\u67B6\u4E0A\u6302\u7740\u4E00\u4EF6\u98CE\u8863\u3002\u53F3\u624B\u8896\u53E3\u78E8\u5F97\u53D1\u4EAE\u2014\u2014\u6211\u5199\u5B57\u65F6\u603B\u62FF\u90A3\u513F\u8E6D\u684C\u6CBF\u3002\u662F\u6211\u7684\u3002","\u5148\u51FA\u53BB\uFF0C\u770B\u770B\u8FD9\u662F\u4EC0\u4E48\u5730\u65B9\u3002"};
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"huo"))) {
+-return new System.Collections.Generic.List<object>(5) {"……","手先去摸床沿。床板是榫接的，没用一颗钉子。","上船以后的事，没了。","挂钩上缠着机油布。顺时针，三圈半。我缠的。","起来。"};
++return new System.Collections.Generic.List<object>(5) {"\u2026\u2026","\u624B\u5148\u53BB\u6478\u5E8A\u6CBF\u3002\u5E8A\u677F\u662F\u69AB\u63A5\u7684\uFF0C\u6CA1\u7528\u4E00\u9897\u9489\u5B50\u3002","\u4E0A\u8239\u4EE5\u540E\u7684\u4E8B\uFF0C\u6CA1\u4E86\u3002","\u6302\u94A9\u4E0A\u7F20\u7740\u673A\u6CB9\u5E03\u3002\u987A\u65F6\u9488\uFF0C\u4E09\u5708\u534A\u3002\u6211\u7F20\u7684\u3002","\u8D77\u6765\u3002"};
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"shen"))) {
+-return new System.Collections.Generic.List<object>(5) {"……","哎哟，这胳膊。酸得跟揉了半宿面似的。","昨儿……昨儿干啥了？就记得上了条船。","桌上那块磨刀石，中间都磨出槽了。谁这么舍得用。","先找口水喝。"};
++return new System.Collections.Generic.List<object>(5) {"\u2026\u2026","\u54CE\u54DF\uFF0C\u8FD9\u80F3\u818A\u3002\u9178\u5F97\u8DDF\u63C9\u4E86\u534A\u5BBF\u9762\u4F3C\u7684\u3002","\u6628\u513F\u2026\u2026\u6628\u513F\u5E72\u5565\u4E86\uFF1F\u5C31\u8BB0\u5F97\u4E0A\u4E86\u6761\u8239\u3002","\u684C\u4E0A\u90A3\u5757\u78E8\u5200\u77F3\uFF0C\u4E2D\u95F4\u90FD\u78E8\u51FA\u69FD\u4E86\u3002\u8C01\u8FD9\u4E48\u820D\u5F97\u7528\u3002","\u5148\u627E\u53E3\u6C34\u559D\u3002"};
+ } else {
+ }
+-return new System.Collections.Generic.List<object>(5) {"……","墙里有一个很低的音，一直没断。","最后记得的，是船上的汽笛。","手指在被面上敲。四四拍。不知道敲了多久。","……那个音还在。"};
++return new System.Collections.Generic.List<object>(5) {"\u2026\u2026","\u5899\u91CC\u6709\u4E00\u4E2A\u5F88\u4F4E\u7684\u97F3\uFF0C\u4E00\u76F4\u6CA1\u65AD\u3002","\u6700\u540E\u8BB0\u5F97\u7684\uFF0C\u662F\u8239\u4E0A\u7684\u6C7D\u7B1B\u3002","\u624B\u6307\u5728\u88AB\u9762\u4E0A\u6572\u3002\u56DB\u56DB\u62CD\u3002\u4E0D\u77E5\u9053\u6572\u4E86\u591A\u4E45\u3002","\u2026\u2026\u90A3\u4E2A\u97F3\u8FD8\u5728\u3002"};
+ }
+--- before/F_c1_op_wear_coat
++++ after/F_c1_op_wear_coat
+@@ -1,3 +1,3 @@
+ static object F_c1_op_wear_coat() {
+-return F_dv_axiom("c1_op_wear_coat",R.number("1"),F_dv_all(F_dv_pair(F_c1_at("detective","R05"),F_dv_fact(F_dv_ref("coat","identity","owner"),"detective"))),F_dv_single(F_dv_assign(F_dv_ref("coat","state","worn_by"),"detective")));
++return F_dv_axiom("c1_op_wear_coat",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref("detective","state","location"),"R05"),F_dv_fact(F_dv_ref("coat","identity","owner"),"detective")}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("coat","state","worn_by"),"detective")});
+ }
+--- before/F_c1_opening_emit
++++ after/F_c1_opening_emit
+@@ -1,3 +1,3 @@
+ static object F_c1_opening_emit(object v_question) {
+-return F_dv_axiom("c1_opening_emit",R.number("1"),F_dv_fact(F_dv_ref(v_question,"state","stage"),"opening"),F_dv_single(F_dv_assign(F_dv_ref(v_question,"state","stage"),"prompt")));
++return F_dv_axiom("c1_opening_emit",R.number("1"),F_dv_fact(F_dv_ref(v_question,"state","stage"),"opening"),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_question,"state","stage"),"prompt")});
+ }
+--- before/F_c1_original_question_open
++++ after/F_c1_original_question_open
+@@ -1,3 +1,3 @@
+ static object F_c1_original_question_open(object v_question) {
+-return F_dv_axiom("c1_original_question_open",R.number("1"),F_dv_fact(F_dv_ref(v_question,"state","stage"),"voice_source"),F_dv_single(F_dv_assign(F_dv_ref(v_question,"state","outstanding_complete"),true)));
++return F_dv_axiom("c1_original_question_open",R.number("1"),F_dv_fact(F_dv_ref(v_question,"state","stage"),"voice_source"),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_question,"state","outstanding_complete"),true)});
+ }
+--- before/F_c1_other_accept
++++ after/F_c1_other_accept
+@@ -1,3 +1,3 @@
+-static object F_c1_other_accept(object v_group,object v_actor) {
+-return F_dv_axiom(R.cat(R.cat("c1_other_accept.",v_group),R.cat(".",v_actor)),R.number("1"),F_c1_other_claim(v_group,"open"),F_dv_list3(F_dv_assign(F_c1_other_ref(v_group,R.cat("receipt.",v_actor)),true),F_dv_assign(F_c1_other_ref(v_group,R.cat("level.",v_actor)),R.number("1")),F_dv_assign(F_dv_ref(R.cat("personal.",v_actor),"state","current"),R.cat(v_group,".reason"))));
++static object F_c1_other_accept(object v_分区,object v_行动者) {
++return F_dv_axiom(R.cat(R.cat("c1_other_accept.",v_分区),R.cat(".",v_行动者)),R.number("1"),F_c1_other_claim(v_分区,"open"),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_c1_other_ref(v_分区,R.cat("receipt.",v_行动者)),true),F_dv_assign(F_c1_other_ref(v_分区,R.cat("level.",v_行动者)),R.number("1")),F_dv_assign(F_dv_ref(R.cat("personal.",v_行动者),"state","current"),R.cat(v_分区,".reason"))});
+ }
+--- before/F_c1_other_handoff_text
++++ after/F_c1_other_handoff_text
+@@ -1,47 +1,47 @@
+ static object F_c1_other_handoff_text(object v_id) {
+ if (R.Bool(R.eq(v_id,"ward"))) {
+-return "开锁的人已经核对了。出去以后，那把钥匙的来路还得写清楚。";
++return "\u5F00\u9501\u7684\u4EBA\u5DF2\u7ECF\u6838\u5BF9\u4E86\u3002\u51FA\u53BB\u4EE5\u540E\uFF0C\u90A3\u628A\u94A5\u5319\u7684\u6765\u8DEF\u8FD8\u5F97\u5199\u6E05\u695A\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"quer"))) {
+-return "我答了。你还要把我堵在这儿？门开了，让开一点。";
++return "\u6211\u7B54\u4E86\u3002\u4F60\u8FD8\u8981\u628A\u6211\u5835\u5728\u8FD9\u513F\uFF1F\u95E8\u5F00\u4E86\uFF0C\u8BA9\u5F00\u4E00\u70B9\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"lucian"))) {
+-return "名字答对了，缘由还空着呢。沃德，留一行空白总比填错强。";
++return "\u540D\u5B57\u7B54\u5BF9\u4E86\uFF0C\u7F18\u7531\u8FD8\u7A7A\u7740\u5462\u3002\u6C83\u5FB7\uFF0C\u7559\u4E00\u884C\u7A7A\u767D\u603B\u6BD4\u586B\u9519\u5F3A\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"gu"))) {
+-return "门开了。先莫争，外面若有文书，读过再说。";
++return "\u95E8\u5F00\u4E86\u3002\u5148\u83AB\u4E89\uFF0C\u5916\u9762\u82E5\u6709\u6587\u4E66\uFF0C\u8BFB\u8FC7\u518D\u8BF4\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"elena"))) {
+-return "我慢一点。阮清月……出去以后，你也别先走。";
++return "\u6211\u6162\u4E00\u70B9\u3002\u962E\u6E05\u6708\u2026\u2026\u51FA\u53BB\u4EE5\u540E\uFF0C\u4F60\u4E5F\u522B\u5148\u8D70\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"ruan"))) {
+-return "我在这儿。你先扶住门框，等站稳了再迈那一步。";
++return "\u6211\u5728\u8FD9\u513F\u3002\u4F60\u5148\u6276\u4F4F\u95E8\u6846\uFF0C\u7B49\u7AD9\u7A33\u4E86\u518D\u8FC8\u90A3\u4E00\u6B65\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"selma"))) {
+-return "我的本子带上了。门内查到的，跟出去以后查到的，分开记。";
++return "\u6211\u7684\u672C\u5B50\u5E26\u4E0A\u4E86\u3002\u95E8\u5185\u67E5\u5230\u7684\uFF0C\u8DDF\u51FA\u53BB\u4EE5\u540E\u67E5\u5230\u7684\uFF0C\u5206\u5F00\u8BB0\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"moran"))) {
+-return "外面的光不一样。等我站到门边再画，别挡着伊莲娜。";
++return "\u5916\u9762\u7684\u5149\u4E0D\u4E00\u6837\u3002\u7B49\u6211\u7AD9\u5230\u95E8\u8FB9\u518D\u753B\uFF0C\u522B\u6321\u7740\u4F0A\u83B2\u5A1C\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"mora"))) {
+-return "人先出去。试剂的事还没说清；有谁不舒服，别瞒着。";
++return "\u4EBA\u5148\u51FA\u53BB\u3002\u8BD5\u5242\u7684\u4E8B\u8FD8\u6CA1\u8BF4\u6E05\uFF1B\u6709\u8C01\u4E0D\u8212\u670D\uFF0C\u522B\u7792\u7740\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"veronica"))) {
+-return "取走一瓶东西和拿它做了什么，是两件事。先把原瓶找到。";
++return "\u53D6\u8D70\u4E00\u74F6\u4E1C\u897F\u548C\u62FF\u5B83\u505A\u4E86\u4EC0\u4E48\uFF0C\u662F\u4E24\u4EF6\u4E8B\u3002\u5148\u628A\u539F\u74F6\u627E\u5230\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"bertrand"))) {
+-return "我站门边。一个一个过去，先看落脚的地方。";
++return "\u6211\u7AD9\u95E8\u8FB9\u3002\u4E00\u4E2A\u4E00\u4E2A\u8FC7\u53BB\uFF0C\u5148\u770B\u843D\u811A\u7684\u5730\u65B9\u3002";
+ } else {
+ }
+-return "门框没歪。慢慢过，别拿身体去撞那道闩。";
++return "\u95E8\u6846\u6CA1\u6B6A\u3002\u6162\u6162\u8FC7\uFF0C\u522B\u62FF\u8EAB\u4F53\u53BB\u649E\u90A3\u9053\u95E9\u3002";
+ }
+--- before/F_c1_other_introduction
++++ after/F_c1_other_introduction
+@@ -1,47 +1,47 @@
+ static object F_c1_other_introduction(object v_id) {
+ if (R.Bool(R.eq(v_id,"quer"))) {
+-return "叫我雀儿就行。别站门前——让我看一眼那道闩。";
++return "\u53EB\u6211\u96C0\u513F\u5C31\u884C\u3002\u522B\u7AD9\u95E8\u524D\u2014\u2014\u8BA9\u6211\u770B\u4E00\u773C\u90A3\u9053\u95E9\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"lucian"))) {
+-return "卢西安。名字还记得，半句诗也还记得；偏偏缺了我们怎么到这儿来的那一段。";
++return "\u5362\u897F\u5B89\u3002\u540D\u5B57\u8FD8\u8BB0\u5F97\uFF0C\u534A\u53E5\u8BD7\u4E5F\u8FD8\u8BB0\u5F97\uFF1B\u504F\u504F\u7F3A\u4E86\u6211\u4EEC\u600E\u4E48\u5230\u8FD9\u513F\u6765\u7684\u90A3\u4E00\u6BB5\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"ward"))) {
+-return "沃德。先说姓名，再说各自记得的最后一件事。不要混在一起。";
++return "\u6C83\u5FB7\u3002\u5148\u8BF4\u59D3\u540D\uFF0C\u518D\u8BF4\u5404\u81EA\u8BB0\u5F97\u7684\u6700\u540E\u4E00\u4EF6\u4E8B\u3002\u4E0D\u8981\u6DF7\u5728\u4E00\u8D77\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"gu"))) {
+-return "顾平章。容老朽擦擦眼镜。纸上的东西还在，人却想不起来，真是怪事。";
++return "\u987E\u5E73\u7AE0\u3002\u5BB9\u8001\u673D\u64E6\u64E6\u773C\u955C\u3002\u7EB8\u4E0A\u7684\u4E1C\u897F\u8FD8\u5728\uFF0C\u4EBA\u5374\u60F3\u4E0D\u8D77\u6765\uFF0C\u771F\u662F\u602A\u4E8B\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"ruan"))) {
+-return "阮清月。那盘棋先别碰。我们还不知道谁摆的，也不知道轮到谁。";
++return "\u962E\u6E05\u6708\u3002\u90A3\u76D8\u68CB\u5148\u522B\u78B0\u3002\u6211\u4EEC\u8FD8\u4E0D\u77E5\u9053\u8C01\u6446\u7684\uFF0C\u4E5F\u4E0D\u77E5\u9053\u8F6E\u5230\u8C01\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"elena"))) {
+-return "伊莲娜。别拉我起来……脚踝疼。你们谁知道这里是什么地方？";
++return "\u4F0A\u83B2\u5A1C\u3002\u522B\u62C9\u6211\u8D77\u6765\u2026\u2026\u811A\u8E1D\u75BC\u3002\u4F60\u4EEC\u8C01\u77E5\u9053\u8FD9\u91CC\u662F\u4EC0\u4E48\u5730\u65B9\uFF1F";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"selma"))) {
+-return "赛尔玛。请别动窗台上的苗。我得先弄清楚本子上哪些是我记的。";
++return "\u8D5B\u5C14\u739B\u3002\u8BF7\u522B\u52A8\u7A97\u53F0\u4E0A\u7684\u82D7\u3002\u6211\u5F97\u5148\u5F04\u6E05\u695A\u672C\u5B50\u4E0A\u54EA\u4E9B\u662F\u6211\u8BB0\u7684\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"moran"))) {
+-return "莫兰。等一等，那层绿马上要散了。你们说，我听着。";
++return "\u83AB\u5170\u3002\u7B49\u4E00\u7B49\uFF0C\u90A3\u5C42\u7EFF\u9A6C\u4E0A\u8981\u6563\u4E86\u3002\u4F60\u4EEC\u8BF4\uFF0C\u6211\u542C\u7740\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"mora"))) {
+-return "茉拉。刚才谁在咳嗽？先让我看看，再说别的。";
++return "\u8309\u62C9\u3002\u521A\u624D\u8C01\u5728\u54B3\u55FD\uFF1F\u5148\u8BA9\u6211\u770B\u770B\uFF0C\u518D\u8BF4\u522B\u7684\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"bertrand"))) {
+-return "贝尔特朗。门外有动静。先别挤过去，给彼此留条退路。";
++return "\u8D1D\u5C14\u7279\u6717\u3002\u95E8\u5916\u6709\u52A8\u9759\u3002\u5148\u522B\u6324\u8FC7\u53BB\uFF0C\u7ED9\u5F7C\u6B64\u7559\u6761\u9000\u8DEF\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_id,"veronica"))) {
+-return "维罗妮卡。谁动过这排器具？不知道也直说，别替别人猜。";
++return "\u7EF4\u7F57\u59AE\u5361\u3002\u8C01\u52A8\u8FC7\u8FD9\u6392\u5668\u5177\uFF1F\u4E0D\u77E5\u9053\u4E5F\u76F4\u8BF4\uFF0C\u522B\u66FF\u522B\u4EBA\u731C\u3002";
+ } else {
+ }
+-return "玛格丽特。先别都靠那面墙。这根梁的搭法，我得再看一遍。";
++return "\u739B\u683C\u4E3D\u7279\u3002\u5148\u522B\u90FD\u9760\u90A3\u9762\u5899\u3002\u8FD9\u6839\u6881\u7684\u642D\u6CD5\uFF0C\u6211\u5F97\u518D\u770B\u4E00\u904D\u3002";
+ }
+--- before/F_c1_other_report_surface
++++ after/F_c1_other_report_surface
+@@ -1,11 +1,11 @@
+ static object F_c1_other_report_surface(object v_group) {
+ if (R.Bool(R.eq(v_group,"contract"))) {
+-return "；藏处是壁炉砖槽；未经公开授权，背着同行私藏。我将此定为窃取。";
++return "\uFF1B\u85CF\u5904\u662F\u58C1\u7089\u7816\u69FD\uFF1B\u672A\u7ECF\u516C\u5F00\u6388\u6743\uFF0C\u80CC\u7740\u540C\u884C\u79C1\u85CF\u3002\u6211\u5C06\u6B64\u5B9A\u4E3A\u7A83\u53D6\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_group,"astral"))) {
+-return "；她单方面止损，为保住多数而拉闸封门。";
++return "\uFF1B\u5979\u5355\u65B9\u9762\u6B62\u635F\uFF0C\u4E3A\u4FDD\u4F4F\u591A\u6570\u800C\u62C9\u95F8\u5C01\u95E8\u3002";
+ } else {
+ }
+-return "；她未经医嘱，进行了激进的酸试验。";
++return "\uFF1B\u5979\u672A\u7ECF\u533B\u5631\uFF0C\u8FDB\u884C\u4E86\u6FC0\u8FDB\u7684\u9178\u8BD5\u9A8C\u3002";
+ }
+--- before/F_c1_question_text
++++ after/F_c1_question_text
+@@ -1,14 +1,14 @@
+ static object F_c1_question_text(object v_stage) {
+ if (R.Bool(R.eq(v_stage,"prompt"))) {
+-return "门是谁闩上的？";
++return "\u95E8\u662F\u8C01\u95E9\u4E0A\u7684\uFF1F";
+ } else {
+ if (R.Bool(R.eq(v_stage,"voice_source"))) {
+-return "苏泠听见的呼喊来自哪里？";
++return "\u82CF\u6CE0\u542C\u89C1\u7684\u547C\u558A\u6765\u81EA\u54EA\u91CC\uFF1F";
+ } else {
+ if (R.Bool(R.eq(v_stage,"words"))) {
+-return "原话是什么？";
++return "\u539F\u8BDD\u662F\u4EC0\u4E48\uFF1F";
+ } else {
+-return "既听同伴说门外有人，为何仍闩门？";
++return "\u65E2\u542C\u540C\u4F34\u8BF4\u95E8\u5916\u6709\u4EBA\uFF0C\u4E3A\u4F55\u4ECD\u95E9\u95E8\uFF1F";
+ }
+ }
+ }
+
+--- before/F_c1_replay_action
++++ after/F_c1_replay_action
+@@ -1,3 +1,3 @@
+-static object F_c1_replay_action(object v_actor) {
+-return F_c1_action(R.cat(v_actor,".replay"),"replay",F_c1_statement("bolt_down"),F_dv_true(),"",new System.Collections.Generic.List<object>(0) {},F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/模拟侦探.story",R.number("340"),"replay"));
++static object F_c1_replay_action(object v_行动者) {
++return F_dv_clone(new System.Collections.Generic.List<object>(7) {F_dv_pair("id",R.cat(v_行动者,".replay")),F_dv_pair("kind","replay"),F_dv_pair("precondition",F_c1_statement("bolt_down")),F_dv_pair("authority_precondition",F_dv_true()),F_dv_pair("law",""),F_dv_pair("grants",new System.Collections.Generic.List<object>(0) {}),F_dv_pair("source_refs",new System.Collections.Generic.List<object>(1) {F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/模拟侦探.story",R.number("340"),"replay")})});
+ }
+--- before/F_c1_sole_test
++++ after/F_c1_sole_test
+@@ -1,3 +1,3 @@
+-static object F_c1_sole_test(object v_actor) {
+-return F_c1_once(F_c1_action(R.cat(v_actor,".compare_sole"),"experiment",F_dv_all(F_dv_pair(F_c1_at(v_actor,"foyer"),F_dv_fact(F_dv_ref(v_actor,"state","identity"),"detective"))),F_c1_at(v_actor,"foyer"),"",F_dv_single(F_c1_knowledge("boots_fit")),F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("81"),"exp_E3.002")));
++static object F_c1_sole_test(object v_行动者) {
++return F_dv_clone(new System.Collections.Generic.List<object>(8) {F_dv_pair("id",R.cat(v_行动者,".compare_sole")),F_dv_pair("kind","experiment"),F_dv_pair("precondition",F_dv_all(F_dv_pair(F_c1_at(v_行动者,"foyer"),F_dv_fact(F_dv_ref(v_行动者,"state","identity"),"detective")))),F_dv_pair("authority_precondition",F_dv_fact(F_dv_ref(v_行动者,"state","location"),"foyer")),F_dv_pair("law",""),F_dv_pair("grants",F_dv_single(F_c1_knowledge("boots_fit"))),F_dv_pair("source_refs",new System.Collections.Generic.List<object>(1) {F_c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story",R.number("81"),"exp_E3.002")}),F_dv_pair("once",true)});
+ }
+--- before/F_c1_sound_trial
++++ after/F_c1_sound_trial
+@@ -1,3 +1,3 @@
+-static object F_c1_sound_trial(object v_actor,object v_ritual,object v_room) {
+-return F_dv_axiom("c1_sound_trial",R.number("1"),F_dv_fact(F_dv_ref(v_actor,"state","location"),v_room),F_dv_single(F_dv_assign(F_dv_ref(v_ritual,"state","sound_trial_done"),true)));
++static object F_c1_sound_trial(object v_行动者,object v_ritual,object v_room) {
++return F_dv_axiom("c1_sound_trial",R.number("1"),F_dv_fact(F_dv_ref(v_行动者,"state","location"),v_room),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(v_ritual,"state","sound_trial_done"),true)});
+ }
+--- before/F_c1_visible_E1
++++ after/F_c1_visible_E1
+@@ -1,3 +1,3 @@
+ static object F_c1_visible_E1() {
+-return "门内侧的插闩落在闩槽里。\n门外侧另有一道横闩，从这一侧拉不动。\n门上的猫眼，玻璃外侧糊满烟灰，看出去一片黑。\n门内侧压着一张泛黄的旧纸，题头是铅印的《事故隔离规程》，没有署名和落款日期。\n旧纸写着：泄漏后，各寝区的隔离门从外侧落闩。查明本区事故经过，由当值者向铜口陈述前，不得开启。\n末行另写：急病者可经铜口呼叫转移。";
++return "\u95E8\u5185\u4FA7\u7684\u63D2\u95E9\u843D\u5728\u95E9\u69FD\u91CC\u3002\n\u95E8\u5916\u4FA7\u53E6\u6709\u4E00\u9053\u6A2A\u95E9\uFF0C\u4ECE\u8FD9\u4E00\u4FA7\u62C9\u4E0D\u52A8\u3002\n\u95E8\u4E0A\u7684\u732B\u773C\uFF0C\u73BB\u7483\u5916\u4FA7\u7CCA\u6EE1\u70DF\u7070\uFF0C\u770B\u51FA\u53BB\u4E00\u7247\u9ED1\u3002\n\u95E8\u5185\u4FA7\u538B\u7740\u4E00\u5F20\u6CDB\u9EC4\u7684\u65E7\u7EB8\uFF0C\u9898\u5934\u662F\u94C5\u5370\u7684\u300A\u4E8B\u6545\u9694\u79BB\u89C4\u7A0B\u300B\uFF0C\u6CA1\u6709\u7F72\u540D\u548C\u843D\u6B3E\u65E5\u671F\u3002\n\u65E7\u7EB8\u5199\u7740\uFF1A\u6CC4\u6F0F\u540E\uFF0C\u5404\u5BDD\u533A\u7684\u9694\u79BB\u95E8\u4ECE\u5916\u4FA7\u843D\u95E9\u3002\u67E5\u660E\u672C\u533A\u4E8B\u6545\u7ECF\u8FC7\uFF0C\u7531\u5F53\u503C\u8005\u5411\u94DC\u53E3\u9648\u8FF0\u524D\uFF0C\u4E0D\u5F97\u5F00\u542F\u3002\n\u672B\u884C\u53E6\u5199\uFF1A\u6025\u75C5\u8005\u53EF\u7ECF\u94DC\u53E3\u547C\u53EB\u8F6C\u79FB\u3002";
+ }
+--- before/F_c1_visible_E10
++++ after/F_c1_visible_E10
+@@ -1,3 +1,3 @@
+ static object F_c1_visible_E10() {
+-return "罐里的酵种还活着，冒着细泡。\n罐壁上一层摞一层干结的旧面痕，数不清。";
++return "\u7F50\u91CC\u7684\u9175\u79CD\u8FD8\u6D3B\u7740\uFF0C\u5192\u7740\u7EC6\u6CE1\u3002\n\u7F50\u58C1\u4E0A\u4E00\u5C42\u645E\u4E00\u5C42\u5E72\u7ED3\u7684\u65E7\u9762\u75D5\uFF0C\u6570\u4E0D\u6E05\u3002";
+ }
+--- before/F_c1_visible_E11
++++ after/F_c1_visible_E11
+@@ -1,3 +1,3 @@
+ static object F_c1_visible_E11() {
+-return "书架积着灰。灰上留着几块干净的长方形，边缘整齐——这里原先摆过东西。单凭灰痕，还看不出摆了多久。\n架沿上有半枚手印，压在灰上。";
++return "\u4E66\u67B6\u79EF\u7740\u7070\u3002\u7070\u4E0A\u7559\u7740\u51E0\u5757\u5E72\u51C0\u7684\u957F\u65B9\u5F62\uFF0C\u8FB9\u7F18\u6574\u9F50\u2014\u2014\u8FD9\u91CC\u539F\u5148\u6446\u8FC7\u4E1C\u897F\u3002\u5355\u51ED\u7070\u75D5\uFF0C\u8FD8\u770B\u4E0D\u51FA\u6446\u4E86\u591A\u4E45\u3002\n\u67B6\u6CBF\u4E0A\u6709\u534A\u679A\u624B\u5370\uFF0C\u538B\u5728\u7070\u4E0A\u3002";
+ }
+--- before/F_c1_visible_E12
++++ after/F_c1_visible_E12
+@@ -1,3 +1,3 @@
+ static object F_c1_visible_E12() {
+-return "一件深棕长风衣。\n口袋里：一支石墨笔，一把折叠放大镜，几只证物袋。\n放大镜是黄铜圆框，带一截短柄。";
++return "\u4E00\u4EF6\u6DF1\u68D5\u957F\u98CE\u8863\u3002\n\u53E3\u888B\u91CC\uFF1A\u4E00\u652F\u77F3\u58A8\u7B14\uFF0C\u4E00\u628A\u6298\u53E0\u653E\u5927\u955C\uFF0C\u51E0\u53EA\u8BC1\u7269\u888B\u3002\n\u653E\u5927\u955C\u662F\u9EC4\u94DC\u5706\u6846\uFF0C\u5E26\u4E00\u622A\u77ED\u67C4\u3002";
+ }
+--- before/F_c1_visible_E2
++++ after/F_c1_visible_E2
+@@ -1,3 +1,3 @@
+ static object F_c1_visible_E2() {
+-return "门内地面铺着一片扇形的灰，窄端贴着门缝，向门厅里散开。\n东南墙角躺着一枚木楔：上面一层灰，底面干净。楔尖有新的磨痕。\n门底边有一道擦痕。";
++return "\u95E8\u5185\u5730\u9762\u94FA\u7740\u4E00\u7247\u6247\u5F62\u7684\u7070\uFF0C\u7A84\u7AEF\u8D34\u7740\u95E8\u7F1D\uFF0C\u5411\u95E8\u5385\u91CC\u6563\u5F00\u3002\n\u4E1C\u5357\u5899\u89D2\u8EBA\u7740\u4E00\u679A\u6728\u6954\uFF1A\u4E0A\u9762\u4E00\u5C42\u7070\uFF0C\u5E95\u9762\u5E72\u51C0\u3002\u6954\u5C16\u6709\u65B0\u7684\u78E8\u75D5\u3002\n\u95E8\u5E95\u8FB9\u6709\u4E00\u9053\u64E6\u75D5\u3002";
+ }
+--- before/F_c1_visible_E3
++++ after/F_c1_visible_E3
+@@ -1,3 +1,3 @@
+ static object F_c1_visible_E3() {
+-return "灰上有一枚马球靴印，踩得很清楚。\n鞋尖朝着门侧的插闩。\n鞋跟一端被什么东西压过。";
++return "\u7070\u4E0A\u6709\u4E00\u679A\u9A6C\u7403\u9774\u5370\uFF0C\u8E29\u5F97\u5F88\u6E05\u695A\u3002\n\u978B\u5C16\u671D\u7740\u95E8\u4FA7\u7684\u63D2\u95E9\u3002\n\u978B\u8DDF\u4E00\u7AEF\u88AB\u4EC0\u4E48\u4E1C\u897F\u538B\u8FC7\u3002";
+ }
+--- before/F_c1_visible_E4
++++ after/F_c1_visible_E4
+@@ -1,3 +1,3 @@
+ static object F_c1_visible_E4() {
+-return "一条拧过的湿抹布，沿门底压成一条直线，正好贴着闭合的门。\n布的一端压住了靴印的鞋跟边缘。";
++return "\u4E00\u6761\u62E7\u8FC7\u7684\u6E7F\u62B9\u5E03\uFF0C\u6CBF\u95E8\u5E95\u538B\u6210\u4E00\u6761\u76F4\u7EBF\uFF0C\u6B63\u597D\u8D34\u7740\u95ED\u5408\u7684\u95E8\u3002\n\u5E03\u7684\u4E00\u7AEF\u538B\u4F4F\u4E86\u9774\u5370\u7684\u978B\u8DDF\u8FB9\u7F18\u3002";
+ }
+--- before/F_c1_visible_E5
++++ after/F_c1_visible_E5
+@@ -1,3 +1,3 @@
+ static object F_c1_visible_E5() {
+-return "地上一把纯银音叉，柄上刻着“S.L.”。\n门框齐肩高的地方，有一个很小的凹痕。";
++return "\u5730\u4E0A\u4E00\u628A\u7EAF\u94F6\u97F3\u53C9\uFF0C\u67C4\u4E0A\u523B\u7740\u201CS.L.\u201D\u3002\n\u95E8\u6846\u9F50\u80A9\u9AD8\u7684\u5730\u65B9\uFF0C\u6709\u4E00\u4E2A\u5F88\u5C0F\u7684\u51F9\u75D5\u3002";
+ }
+--- before/F_c1_visible_E6
++++ after/F_c1_visible_E6
+@@ -1,3 +1,3 @@
+ static object F_c1_visible_E6() {
+-return "一页手写乐谱，只有一小节。\n前两拍是弱音，各记着一个问号；后两拍重读，字是“开门”。同样的一小节记了两遍。\n旁注：“门外？”\n下方换了一种墨迹：“他们关了门。”";
++return "\u4E00\u9875\u624B\u5199\u4E50\u8C31\uFF0C\u53EA\u6709\u4E00\u5C0F\u8282\u3002\n\u524D\u4E24\u62CD\u662F\u5F31\u97F3\uFF0C\u5404\u8BB0\u7740\u4E00\u4E2A\u95EE\u53F7\uFF1B\u540E\u4E24\u62CD\u91CD\u8BFB\uFF0C\u5B57\u662F\u201C\u5F00\u95E8\u201D\u3002\u540C\u6837\u7684\u4E00\u5C0F\u8282\u8BB0\u4E86\u4E24\u904D\u3002\n\u65C1\u6CE8\uFF1A\u201C\u95E8\u5916\uFF1F\u201D\n\u4E0B\u65B9\u6362\u4E86\u4E00\u79CD\u58A8\u8FF9\uFF1A\u201C\u4ED6\u4EEC\u5173\u4E86\u95E8\u3002\u201D";
+ }
+--- before/F_c1_visible_E7
++++ after/F_c1_visible_E7
+@@ -1,3 +1,3 @@
+ static object F_c1_visible_E7() {
+-return "一块小石板，粉笔速记两行。\n第一行：主楼：⊥门 ✕开 ◎\n第二行：一个小小的放大镜图样，后面是“⊥✓”。";
++return "\u4E00\u5757\u5C0F\u77F3\u677F\uFF0C\u7C89\u7B14\u901F\u8BB0\u4E24\u884C\u3002\n\u7B2C\u4E00\u884C\uFF1A\u4E3B\u697C\uFF1A\u22A5\u95E8 \u2715\u5F00 \u25CE\n\u7B2C\u4E8C\u884C\uFF1A\u4E00\u4E2A\u5C0F\u5C0F\u7684\u653E\u5927\u955C\u56FE\u6837\uFF0C\u540E\u9762\u662F\u201C\u22A5\u2713\u201D\u3002";
+ }
+--- before/F_c1_visible_E8
++++ after/F_c1_visible_E8
+@@ -1,3 +1,3 @@
+ static object F_c1_visible_E8() {
+-return "铜口嵌在活动厅北墙上，下方铜牌刻着一个符号：◎。\n一根铜管从铜口后面出来：一路沿北墙向西，穿墙进门厅，贴着墙下到隔离门的门框；另一路向东，钻进活动厅与 R-08 之间的墙里。\n那道墙上与门框北侧各有一个管接头，一碰就晃——接口松了。";
++return "\u94DC\u53E3\u5D4C\u5728\u6D3B\u52A8\u5385\u5317\u5899\u4E0A\uFF0C\u4E0B\u65B9\u94DC\u724C\u523B\u7740\u4E00\u4E2A\u7B26\u53F7\uFF1A\u25CE\u3002\n\u4E00\u6839\u94DC\u7BA1\u4ECE\u94DC\u53E3\u540E\u9762\u51FA\u6765\uFF1A\u4E00\u8DEF\u6CBF\u5317\u5899\u5411\u897F\uFF0C\u7A7F\u5899\u8FDB\u95E8\u5385\uFF0C\u8D34\u7740\u5899\u4E0B\u5230\u9694\u79BB\u95E8\u7684\u95E8\u6846\uFF1B\u53E6\u4E00\u8DEF\u5411\u4E1C\uFF0C\u94BB\u8FDB\u6D3B\u52A8\u5385\u4E0E R-08 \u4E4B\u95F4\u7684\u5899\u91CC\u3002\n\u90A3\u9053\u5899\u4E0A\u4E0E\u95E8\u6846\u5317\u4FA7\u5404\u6709\u4E00\u4E2A\u7BA1\u63A5\u5934\uFF0C\u4E00\u78B0\u5C31\u6643\u2014\u2014\u63A5\u53E3\u677E\u4E86\u3002";
+ }
+--- before/F_c1_visible_E9
++++ after/F_c1_visible_E9
+@@ -1,3 +1,3 @@
+ static object F_c1_visible_E9() {
+-return "水槽里四只用过的杯子，各不相同：\n一只青瓷小杯，杯底没有糖渍；\n一只刻着 H 的凹痕锡杯，杯底一层厚糖渍；\n一只缺口白杯；\n一只粗瓷大杯。";
++return "\u6C34\u69FD\u91CC\u56DB\u53EA\u7528\u8FC7\u7684\u676F\u5B50\uFF0C\u5404\u4E0D\u76F8\u540C\uFF1A\n\u4E00\u53EA\u9752\u74F7\u5C0F\u676F\uFF0C\u676F\u5E95\u6CA1\u6709\u7CD6\u6E0D\uFF1B\n\u4E00\u53EA\u523B\u7740 H \u7684\u51F9\u75D5\u9521\u676F\uFF0C\u676F\u5E95\u4E00\u5C42\u539A\u7CD6\u6E0D\uFF1B\n\u4E00\u53EA\u7F3A\u53E3\u767D\u676F\uFF1B\n\u4E00\u53EA\u7C97\u74F7\u5927\u676F\u3002";
+ }
+--- before/F_c1dep_inner_law
++++ after/F_c1dep_inner_law
+@@ -1,3 +1,3 @@
+-static object F_c1dep_inner_law(object v_actor) {
+-return F_dv_axiom("c1dep_inner_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_c1_at(v_actor,"foyer"),F_dv_fact(F_c1dep_ref("outer_released"),true),F_dv_fact(F_c1dep_ref("inner_down"),true)}),F_dv_single(F_dv_assign(F_c1dep_ref("inner_down"),false)));
++static object F_c1dep_inner_law(object v_行动者) {
++return F_dv_axiom("c1dep_inner_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"foyer"),F_dv_fact(F_c1dep_ref("outer_released"),true),F_dv_fact(F_c1dep_ref("inner_down"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c1dep_ref("inner_down"),false)});
+ }
+--- before/F_c1dep_open_law
++++ after/F_c1dep_open_law
+@@ -1,3 +1,3 @@
+-static object F_c1dep_open_law(object v_actor) {
+-return F_dv_axiom("c1dep_open_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c1_at(v_actor,"foyer"),F_dv_fact(F_c1dep_ref("outer_released"),true),F_dv_fact(F_c1dep_ref("inner_down"),false),F_dv_fact(F_c1dep_ref("open"),false)}),F_dv_single(F_dv_assign(F_c1dep_ref("open"),true)));
++static object F_c1dep_open_law(object v_行动者) {
++return F_dv_axiom("c1dep_open_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"foyer"),F_dv_fact(F_c1dep_ref("outer_released"),true),F_dv_fact(F_c1dep_ref("inner_down"),false),F_dv_fact(F_c1dep_ref("open"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c1dep_ref("open"),true)});
+ }
+--- before/F_c1dep_outer_law
++++ after/F_c1dep_outer_law
+@@ -1,3 +1,3 @@
+ static object F_c1dep_outer_law() {
+-return F_dv_axiom("c1dep_outer_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c1dep_complete(),F_c2_at("demon","living_hall"),F_dv_fact(F_dv_ref("demon.body","state","manifested"),true),F_dv_fact(F_c1dep_ref("outer_released"),false)}),new System.Collections.Generic.List<object>(4) {F_dv_assign(F_c1dep_ref("outer_released"),true),F_dv_assign(F_c2_access("living_exit"),true),F_dv_assign(F_dv_ref("demon.body","state","manifested"),false),F_dv_assign(F_dv_ref("demon.body","state","latch_hand_trace"),"long-narrow-hand")});
++return F_dv_axiom("c1dep_outer_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c1dep_complete(),F_dv_fact(F_dv_ref("demon","state","location"),"living_hall"),F_dv_fact(F_dv_ref("demon.body","state","manifested"),true),F_dv_fact(F_c1dep_ref("outer_released"),false)}),new System.Collections.Generic.List<object>(4) {F_dv_assign(F_c1dep_ref("outer_released"),true),F_dv_assign(F_c2_access("living_exit"),true),F_dv_assign(F_dv_ref("demon.body","state","manifested"),false),F_dv_assign(F_dv_ref("demon.body","state","latch_hand_trace"),"long-narrow-hand")});
+ }
+--- before/F_c1dep_pick_contract_law
++++ after/F_c1dep_pick_contract_law
+@@ -1,3 +1,3 @@
+ static object F_c1dep_pick_contract_law() {
+-return F_dv_axiom("c1dep_pick_contract_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c1_at("quer","dorm.contract"),F_dv_at_least(F_c1_other_clock_ref(),R.number("630")),F_c1_other_claim("contract","quer_insulted"),F_dv_fact(F_c1dep_ref("quer_has_wire"),true),F_dv_fact(F_c1_other_ref("contract","outer_latch_released"),false)}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_c1_other_ref("contract","outer_latch_released"),true),F_dv_assign(F_c1_other_access_ref("contract"),true),F_dv_assign(F_c1dep_ref("contract_picked_by_quer"),true)});
++return F_dv_axiom("c1dep_pick_contract_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_dv_fact(F_dv_ref("quer","state","location"),"dorm.contract"),F_dv_at_least(F_c1_other_clock_ref(),R.number("630")),F_c1_other_claim("contract","quer_insulted"),F_dv_fact(F_c1dep_ref("quer_has_wire"),true),F_dv_fact(F_c1_other_ref("contract","outer_latch_released"),false)}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_c1_other_ref("contract","outer_latch_released"),true),F_dv_assign(F_c1_other_access_ref("contract"),true),F_dv_assign(F_c1dep_ref("contract_picked_by_quer"),true)});
+ }
+--- before/F_c1dep_pick_law
++++ after/F_c1dep_pick_law
+@@ -1,3 +1,3 @@
+ static object F_c1dep_pick_law() {
+-return F_dv_axiom("c1dep_pick_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c1_at("quer","living_hall"),F_dv_at_least(F_c1_other_clock_ref(),R.number("780")),F_dv_fact(F_c1dep_ref("outer_released"),false),F_dv_fact(F_c1dep_ref("quer_has_wire"),true)}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_c1dep_ref("outer_released"),true),F_dv_assign(F_c1dep_ref("picked_by_quer"),true),F_dv_assign(F_c2_access("living_exit"),true)});
++return F_dv_axiom("c1dep_pick_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref("quer","state","location"),"living_hall"),F_dv_at_least(F_c1_other_clock_ref(),R.number("780")),F_dv_fact(F_c1dep_ref("outer_released"),false),F_dv_fact(F_c1dep_ref("quer_has_wire"),true)}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_c1dep_ref("outer_released"),true),F_dv_assign(F_c1dep_ref("picked_by_quer"),true),F_dv_assign(F_c2_access("living_exit"),true)});
+ }
+--- before/F_c1n_call_law
++++ after/F_c1n_call_law
+@@ -1,3 +1,3 @@
+-static object F_c1n_call_law(object v_actor) {
+-return F_dv_axiom("c1n_call_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c1_at(v_actor,"living_hall"),F_c2_window(R.number("1"),R.number("1440"),R.number("1800")),F_dv_fact(F_c1n_night_seen_ref(v_actor),true),F_dv_fact(F_c1n_call_ref(v_actor),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c1n_call_ref(v_actor),true)});
++static object F_c1n_call_law(object v_行动者) {
++return F_dv_axiom("c1n_call_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"living_hall"),F_c2_window(R.number("1"),R.number("1440"),R.number("1800")),F_dv_fact(F_c1n_night_seen_ref(v_行动者),true),F_dv_fact(F_c1n_call_ref(v_行动者),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c1n_call_ref(v_行动者),true)});
+ }
+--- before/F_c1n_law
++++ after/F_c1n_law
+@@ -1,3 +1,3 @@
+-static object F_c1n_law(object v_row) {
+-return F_dv_axiom("c1n_law",R.number("1"),F_c1n_pre(v_row),F_dv_append(F_dv_get(v_row,"effects"),F_dv_assign(F_c1n_mark(F_dv_get(v_row,"id")),true)));
++static object F_c1n_law(object v_条目) {
++return F_dv_axiom("c1n_law",R.number("1"),F_c1n_pre(v_条目),F_dv_append(F_dv_get(v_条目,"effects"),F_dv_assign(F_c1n_mark(F_dv_get(v_条目,"id")),true)));
+ }
+--- before/F_c1n_night_seen_law
++++ after/F_c1n_night_seen_law
+@@ -1,3 +1,3 @@
+-static object F_c1n_night_seen_law(object v_actor) {
+-return F_dv_axiom("c1n_night_seen_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_c1_at(v_actor,"living_hall"),F_c2_window(R.number("1"),R.number("1440"),R.number("1800"))}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c1n_night_seen_ref(v_actor),true)});
++static object F_c1n_night_seen_law(object v_行动者) {
++return F_dv_axiom("c1n_night_seen_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"living_hall"),F_c2_window(R.number("1"),R.number("1440"),R.number("1800"))}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c1n_night_seen_ref(v_行动者),true)});
+ }
+--- before/F_c1n_wait_law
++++ after/F_c1n_wait_law
+@@ -1,3 +1,3 @@
+-static object F_c1n_wait_law(object v_actor,object v_minutes) {
+-return F_dv_axiom("c1n_wait_law",R.number("1"),F_dv_true(),new System.Collections.Generic.List<object>(1) {F_dv_increment(F_c1n_wait_ref(v_actor),v_minutes)});
++static object F_c1n_wait_law(object v_行动者,object v_minutes) {
++return F_dv_axiom("c1n_wait_law",R.number("1"),F_dv_true(),new System.Collections.Generic.List<object>(1) {F_dv_increment(F_c1n_wait_ref(v_行动者),v_minutes)});
+ }
+--- before/F_c2_bertrand_dead_hand_law
++++ after/F_c2_bertrand_dead_hand_law
+@@ -1,3 +1,3 @@
+ static object F_c2_bertrand_dead_hand_law() {
+-return F_dv_axiom("c2_bertrand_dead_hand_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c2_at("bertrand","central_hall"),F_c2_alive("bertrand"),F_dv_fact(F_c2_ref("c2.casualty","casualty_occurred"),true),F_dv_fact(F_c2_ref("c2.trial","community_covenant_failed"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.trial","traitor_executed"),true)});
++return F_dv_axiom("c2_bertrand_dead_hand_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref("bertrand","state","location"),"central_hall"),F_c2_alive("bertrand"),F_dv_fact(F_dv_ref("c2.casualty","state","casualty_occurred"),true),F_dv_fact(F_dv_ref("c2.trial","state","community_covenant_failed"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.trial","state","traitor_executed"),true)});
+ }
+--- before/F_c2_bertrand_petrification_settle_law
++++ after/F_c2_bertrand_petrification_settle_law
+@@ -1,3 +1,3 @@
+ static object F_c2_bertrand_petrification_settle_law() {
+-return F_dv_axiom("c2_bertrand_petrification_settle_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(6) {F_c2_alive("bertrand"),F_dv_at_least(F_c2_clock(),R.number("6120")),F_dv_fact(F_c2_own("bertrand","rescue_exposed"),true),F_dv_at_least(F_c2_own("bertrand","erosion_exposure"),R.number("8")),F_dv_fact(F_c2_own("bertrand","stone_stupor"),false),F_dv_fact(F_c2_own("bertrand","anti_erosion_treated"),false)}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_c2_own("bertrand","stone_stupor"),true),F_dv_assign(F_c2_ref("c2.casualty","bertrand_stupor"),true),F_dv_assign(F_c2_ref("c2.casualty","casualty_occurred"),true)});
++return F_dv_axiom("c2_bertrand_petrification_settle_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(6) {F_c2_alive("bertrand"),F_dv_at_least(F_c2_clock(),R.number("6120")),F_dv_fact(F_c2_own("bertrand","rescue_exposed"),true),F_dv_at_least(F_c2_own("bertrand","erosion_exposure"),R.number("8")),F_dv_fact(F_c2_own("bertrand","stone_stupor"),false),F_dv_fact(F_c2_own("bertrand","anti_erosion_treated"),false)}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_c2_own("bertrand","stone_stupor"),true),F_dv_assign(F_dv_ref("c2.casualty","state","bertrand_stupor"),true),F_dv_assign(F_dv_ref("c2.casualty","state","casualty_occurred"),true)});
+ }
+--- before/F_c2_bertrand_rescue_law
++++ after/F_c2_bertrand_rescue_law
+@@ -1,3 +1,3 @@
+ static object F_c2_bertrand_rescue_law() {
+-return F_dv_axiom("c2_bertrand_rescue_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(7) {F_c2_can_act("bertrand"),F_c2_at("bertrand","outdoor_alley"),F_c2_at("moran","outdoor_alley"),F_c2_alive("moran"),F_dv_fact(F_c2_own("moran","in_coma"),true),F_dv_fact(F_c2_own("bertrand","carrying"),""),F_dv_fact(F_c2_own("moran","carried_by"),"")}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_c2_own("bertrand","carrying"),"moran"),F_dv_assign(F_c2_own("moran","carried_by"),"bertrand"),F_dv_assign(F_c2_own("bertrand","rescue_exposed"),true)});
++return F_dv_axiom("c2_bertrand_rescue_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(7) {F_c2_can_act("bertrand"),F_dv_fact(F_dv_ref("bertrand","state","location"),"outdoor_alley"),F_dv_fact(F_dv_ref("moran","state","location"),"outdoor_alley"),F_c2_alive("moran"),F_dv_fact(F_c2_own("moran","in_coma"),true),F_dv_fact(F_c2_own("bertrand","carrying"),""),F_dv_fact(F_c2_own("moran","carried_by"),"")}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_c2_own("bertrand","carrying"),"moran"),F_dv_assign(F_c2_own("moran","carried_by"),"bertrand"),F_dv_assign(F_c2_own("bertrand","rescue_exposed"),true)});
+ }
+--- before/F_c2_check_structure_law
++++ after/F_c2_check_structure_law
+@@ -1,3 +1,3 @@
+-static object F_c2_check_structure_law(object v_actor) {
+-return F_dv_axiom("c2_check_structure_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_at(v_actor,"logistics"),F_c2_window(R.number("2"),R.number("720"),R.number("1080")),F_c2_alive(v_actor),F_dv_fact(F_c2_own(v_actor,"can_structure"),true),F_dv_fact(F_c2_ref("c2.granary","structure_checked"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.granary","structure_checked"),true)});
++static object F_c2_check_structure_law(object v_行动者) {
++return F_dv_axiom("c2_check_structure_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"logistics"),F_c2_window(R.number("2"),R.number("720"),R.number("1080")),F_c2_alive(v_行动者),F_dv_fact(F_c2_own(v_行动者,"can_structure"),true),F_dv_fact(F_dv_ref("c2.granary","state","structure_checked"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.granary","state","structure_checked"),true)});
+ }
+--- before/F_c2_color_encouragement_text
++++ after/F_c2_color_encouragement_text
+@@ -1,3 +1,3 @@
+ static object F_c2_color_encouragement_text() {
+-return "那层颜色确实罕见。莫兰，想画就再去看一眼吧。";
++return "\u90A3\u5C42\u989C\u8272\u786E\u5B9E\u7F55\u89C1\u3002\u83AB\u5170\uFF0C\u60F3\u753B\u5C31\u518D\u53BB\u770B\u4E00\u773C\u5427\u3002";
+ }
+--- before/F_c2_decide_norm_law
++++ after/F_c2_decide_norm_law
+@@ -1,3 +1,3 @@
+-static object F_c2_decide_norm_law(object v_actor,object v_norm,object v_accepted) {
+-return F_dv_axiom("c2_decide_norm_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_c2_own(v_actor,R.cat("decided.",F_dv_get(v_norm,"id"))),false),F_c2_alive(v_actor)}),F_dv_pair(F_dv_assign(F_c2_own(v_actor,R.cat("decided.",F_dv_get(v_norm,"id"))),true),F_dv_assign(F_c2_own(v_actor,R.cat("accepted.",F_dv_get(v_norm,"id"))),v_accepted)));
++static object F_c2_decide_norm_law(object v_行动者,object v_规约,object v_是否接受) {
++return F_dv_axiom("c2_decide_norm_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_c2_own(v_行动者,R.cat("decided.",F_dv_get(v_规约,"id"))),false),F_c2_alive(v_行动者)}),new System.Collections.Generic.List<object>(2) {F_dv_assign(F_c2_own(v_行动者,R.cat("decided.",F_dv_get(v_规约,"id"))),true),F_dv_assign(F_c2_own(v_行动者,R.cat("accepted.",F_dv_get(v_规约,"id"))),v_是否接受)});
+ }
+--- before/F_c2_deliver_patient_law
++++ after/F_c2_deliver_patient_law
+@@ -1,3 +1,3 @@
+-static object F_c2_deliver_patient_law(object v_actor) {
+-return F_dv_axiom("c2_deliver_patient_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(8) {F_c2_at(v_actor,"clinic"),F_c1_at("moran","clinic"),F_c2_alive("moran"),F_dv_fact(F_c2_own("moran","hungry"),true),F_dv_fact(F_c2_ref("c2.bowl","portions"),R.number("0")),F_dv_at_least(F_c2_own(v_actor,"rations"),R.number("1")),F_dv_fact(F_c2_own("moran","fever"),true),F_c2_alive(v_actor)}),new System.Collections.Generic.List<object>(3) {F_dv_increment(F_c2_own(v_actor,"rations"),R.sub(R.number("0"),R.number("1"))),F_dv_increment(F_c2_ref("c2.bowl","portions"),R.number("1")),F_dv_assign(F_c2_ref("c2.kitchen","cooked"),true)});
++static object F_c2_deliver_patient_law(object v_行动者) {
++return F_dv_axiom("c2_deliver_patient_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(8) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"clinic"),F_dv_fact(F_dv_ref("moran","state","location"),"clinic"),F_c2_alive("moran"),F_dv_fact(F_c2_own("moran","hungry"),true),F_dv_fact(F_dv_ref("c2.bowl","state","portions"),R.number("0")),F_dv_at_least(F_c2_own(v_行动者,"rations"),R.number("1")),F_dv_fact(F_c2_own("moran","fever"),true),F_c2_alive(v_行动者)}),new System.Collections.Generic.List<object>(3) {F_dv_increment(F_c2_own(v_行动者,"rations"),R.sub(R.number("0"),R.number("1"))),F_dv_increment(F_dv_ref("c2.bowl","state","portions"),R.number("1")),F_dv_assign(F_dv_ref("c2.kitchen","state","cooked"),true)});
+ }
+--- before/F_c2_detective_ascension_law
++++ after/F_c2_detective_ascension_law
+@@ -1,3 +1,3 @@
+ static object F_c2_detective_ascension_law() {
+-return F_dv_axiom("c2_detective_ascension_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_c2_at("detective","living_hall"),F_c2_all_companions_fallen()}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.ascension","godhood_achieved"),true)});
++return F_dv_axiom("c2_detective_ascension_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref("detective","state","location"),"living_hall"),F_c2_all_companions_fallen()}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.ascension","state","godhood_achieved"),true)});
+ }
+--- before/F_c2_detective_intercom_law
++++ after/F_c2_detective_intercom_law
+@@ -1,3 +1,3 @@
+ static object F_c2_detective_intercom_law() {
+-return F_dv_axiom("c2_detective_intercom_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_c2_at("detective","living_hall"),F_dv_fact(F_c2_ref("c2.trial","detective_imprisoned"),true),F_dv_fact(F_c2_ref("c2.trial","intercom_reversed"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.trial","intercom_reversed"),true)});
++return F_dv_axiom("c2_detective_intercom_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("detective","state","location"),"living_hall"),F_dv_fact(F_dv_ref("c2.trial","state","detective_imprisoned"),true),F_dv_fact(F_dv_ref("c2.trial","state","intercom_reversed"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.trial","state","intercom_reversed"),true)});
+ }
+--- before/F_c2_distribute_law
++++ after/F_c2_distribute_law
+@@ -1,3 +1,3 @@
+-static object F_c2_distribute_law(object v_actor) {
+-return F_dv_axiom("c2_distribute_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c2_at(v_actor,"logistics"),F_c2_alive(v_actor),F_dv_fact(F_c2_ref("c2.ledger","counted"),R.number("99")),F_dv_fact(F_c2_ref("c2.counter","open"),false)}),F_dv_single(F_dv_assign(F_c2_ref("c2.counter","open"),true)));
++static object F_c2_distribute_law(object v_行动者) {
++return F_dv_axiom("c2_distribute_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"logistics"),F_c2_alive(v_行动者),F_dv_fact(F_dv_ref("c2.ledger","state","counted"),R.number("99")),F_dv_fact(F_dv_ref("c2.counter","state","open"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.counter","state","open"),true)});
+ }
+--- before/F_c2_duty_assist_medicine_law
++++ after/F_c2_duty_assist_medicine_law
+@@ -1,3 +1,3 @@
+ static object F_c2_duty_assist_medicine_law() {
+-return F_dv_axiom("c2_duty_assist_medicine_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c2_at("detective","clinic"),F_c2_alive("detective"),F_dv_fact(F_c2_own("moran","fever"),true),F_dv_fact(F_c2_ref("c2.duty","medicine_assisted"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.duty","medicine_assisted"),true)});
++return F_dv_axiom("c2_duty_assist_medicine_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref("detective","state","location"),"clinic"),F_c2_alive("detective"),F_dv_fact(F_c2_own("moran","fever"),true),F_dv_fact(F_dv_ref("c2.duty","state","medicine_assisted"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.duty","state","medicine_assisted"),true)});
+ }
+--- before/F_c2_duty_assist_prop_law
++++ after/F_c2_duty_assist_prop_law
+@@ -1,3 +1,3 @@
+ static object F_c2_duty_assist_prop_law() {
+-return F_dv_axiom("c2_duty_assist_prop_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c2_at("detective","logistics"),F_c2_alive("detective"),F_dv_fact(F_c2_ref("c2.granary","latch_loose"),true),F_dv_fact(F_c2_ref("c2.duty","prop_assisted"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.duty","prop_assisted"),true)});
++return F_dv_axiom("c2_duty_assist_prop_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref("detective","state","location"),"logistics"),F_c2_alive("detective"),F_dv_fact(F_dv_ref("c2.granary","state","latch_loose"),true),F_dv_fact(F_dv_ref("c2.duty","state","prop_assisted"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.duty","state","prop_assisted"),true)});
+ }
+--- before/F_c2_duty_assist_rations_law
++++ after/F_c2_duty_assist_rations_law
+@@ -1,3 +1,3 @@
+ static object F_c2_duty_assist_rations_law() {
+-return F_dv_axiom("c2_duty_assist_rations_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c2_at("detective","living_hall"),F_c2_alive("detective"),F_dv_fact(F_c2_ref("c2.counter","open"),true),F_dv_fact(F_c2_ref("c2.duty","rations_assisted"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.duty","rations_assisted"),true)});
++return F_dv_axiom("c2_duty_assist_rations_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref("detective","state","location"),"living_hall"),F_c2_alive("detective"),F_dv_fact(F_dv_ref("c2.counter","state","open"),true),F_dv_fact(F_dv_ref("c2.duty","state","rations_assisted"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.duty","state","rations_assisted"),true)});
+ }
+--- before/F_c2_duty_comfort_law
++++ after/F_c2_duty_comfort_law
+@@ -1,3 +1,3 @@
+ static object F_c2_duty_comfort_law() {
+-return F_dv_axiom("c2_duty_comfort_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c2_at("detective","living_hall"),F_c2_alive("detective"),F_c2_any_night(),F_dv_fact(F_c2_ref("c2.duty","comforted"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.duty","comforted"),true)});
++return F_dv_axiom("c2_duty_comfort_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref("detective","state","location"),"living_hall"),F_c2_alive("detective"),F_c2_any_night(),F_dv_fact(F_dv_ref("c2.duty","state","comforted"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.duty","state","comforted"),true)});
+ }
+--- before/F_c2_elena_dead_hand_law
++++ after/F_c2_elena_dead_hand_law
+@@ -1,3 +1,3 @@
+ static object F_c2_elena_dead_hand_law() {
+-return F_dv_axiom("c2_elena_dead_hand_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_c2_at("elena","resonance_hall"),F_c2_alive("elena"),F_dv_fact(F_c2_ref("case.astral","elena_betrayed"),true)}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_c2_ref("c2.corridor.north","roof_collapsed"),true),F_dv_assign(F_c2_own("elena","dead"),true),F_dv_assign(F_c2_own("elena","alive"),false)});
++return F_dv_axiom("c2_elena_dead_hand_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("elena","state","location"),"resonance_hall"),F_c2_alive("elena"),F_dv_fact(F_dv_ref("case.astral","state","elena_betrayed"),true)}),new System.Collections.Generic.List<object>(3) {F_dv_assign(F_dv_ref("c2.corridor.north","state","roof_collapsed"),true),F_dv_assign(F_c2_own("elena","dead"),true),F_dv_assign(F_c2_own("elena","alive"),false)});
+ }
+--- before/F_c2_feed_patient_law
++++ after/F_c2_feed_patient_law
+@@ -1,3 +1,3 @@
+-static object F_c2_feed_patient_law(object v_actor) {
+-return F_dv_axiom("c2_feed_patient_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(7) {F_c2_at(v_actor,"clinic"),F_c1_at("moran","clinic"),F_c2_alive("moran"),F_dv_fact(F_c2_own("moran","hungry"),true),F_dv_fact(F_c2_own("moran","fever"),true),F_dv_at_least(F_c2_ref("c2.bowl","portions"),R.number("1")),F_c2_alive(v_actor)}),new System.Collections.Generic.List<object>(5) {F_dv_increment(F_c2_ref("c2.bowl","portions"),R.sub(R.number("0"),R.number("1"))),F_dv_assign(F_c2_ref("c2.bowl","residue"),true),F_dv_increment(F_c2_own("moran","consumed"),R.number("1")),F_dv_assign(F_c2_own("moran","hungry"),false),F_dv_assign(F_c2_own(v_actor,"busy_care"),true)});
++static object F_c2_feed_patient_law(object v_行动者) {
++return F_dv_axiom("c2_feed_patient_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(7) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"clinic"),F_dv_fact(F_dv_ref("moran","state","location"),"clinic"),F_c2_alive("moran"),F_dv_fact(F_c2_own("moran","hungry"),true),F_dv_fact(F_c2_own("moran","fever"),true),F_dv_at_least(F_dv_ref("c2.bowl","state","portions"),R.number("1")),F_c2_alive(v_行动者)}),new System.Collections.Generic.List<object>(5) {F_dv_increment(F_dv_ref("c2.bowl","state","portions"),R.sub(R.number("0"),R.number("1"))),F_dv_assign(F_dv_ref("c2.bowl","state","residue"),true),F_dv_increment(F_c2_own("moran","consumed"),R.number("1")),F_dv_assign(F_c2_own("moran","hungry"),false),F_dv_assign(F_c2_own(v_行动者,"busy_care"),true)});
+ }
+--- before/F_c2_first_wind_law
++++ after/F_c2_first_wind_law
+@@ -1,3 +1,3 @@
+ static object F_c2_first_wind_law() {
+-return F_dv_axiom("c2_first_wind_law",R.number("1"),F_dv_all(F_dv_pair(F_dv_at_least(F_c2_clock(),R.number("1980")),F_dv_fact(F_c2_ref("c2.weather","phase"),"falling_ash"))),new System.Collections.Generic.List<object>(8) {F_dv_assign(F_c2_ref("c2.weather","phase"),"wind_started"),F_dv_assign(F_c2_ref("c2.weather","severe_air"),false),F_dv_assign(F_c2_ref("c2.weather","wind"),true),F_dv_assign(F_c2_ref("c2.weather","ash_falling"),false),F_dv_assign(F_c2_ref("c2.corridor.north","intake_safe"),true),F_dv_assign(F_c2_ref("c2.corridor.east","intake_safe"),true),F_dv_increment(F_c2_ref("c2.weather","environment_epoch"),R.number("1")),F_dv_increment(F_c2_ref("c2.meter","environment_epoch"),R.number("1"))});
++return F_dv_axiom("c2_first_wind_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_at_least(F_c2_clock(),R.number("1980")),F_dv_fact(F_dv_ref("c2.weather","state","phase"),"falling_ash")}),new System.Collections.Generic.List<object>(8) {F_dv_assign(F_dv_ref("c2.weather","state","phase"),"wind_started"),F_dv_assign(F_dv_ref("c2.weather","state","severe_air"),false),F_dv_assign(F_dv_ref("c2.weather","state","wind"),true),F_dv_assign(F_dv_ref("c2.weather","state","ash_falling"),false),F_dv_assign(F_dv_ref("c2.corridor.north","state","intake_safe"),true),F_dv_assign(F_dv_ref("c2.corridor.east","state","intake_safe"),true),F_dv_increment(F_dv_ref("c2.weather","state","environment_epoch"),R.number("1")),F_dv_increment(F_dv_ref("c2.meter","state","environment_epoch"),R.number("1"))});
+ }
+--- before/F_c2_give_key_law
++++ after/F_c2_give_key_law
+@@ -1,3 +1,3 @@
+-static object F_c2_give_key_law(object v_actor,object v_target) {
+-return F_dv_axiom("c2_give_key_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_at(v_actor,"logistics"),F_c1_at(v_target,"logistics"),F_dv_fact(F_c2_ref("c2.granary","key_owner"),v_actor),F_c2_alive(v_actor),F_c2_alive(v_target)}),F_dv_single(F_dv_assign(F_c2_ref("c2.granary","key_owner"),v_target)));
++static object F_c2_give_key_law(object v_行动者,object v_目标) {
++return F_dv_axiom("c2_give_key_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"logistics"),F_dv_fact(F_dv_ref(v_目标,"state","location"),"logistics"),F_dv_fact(F_dv_ref("c2.granary","state","key_owner"),v_行动者),F_c2_alive(v_行动者),F_c2_alive(v_目标)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.granary","state","key_owner"),v_目标)});
+ }
+--- before/F_c2_guard_post_law
++++ after/F_c2_guard_post_law
+@@ -1,3 +1,3 @@
+-static object F_c2_guard_post_law(object v_actor) {
+-return F_dv_axiom("c2_guard_post_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c2_at(v_actor,"living_hall"),F_c2_at("moran","living_hall"),F_c2_alive(v_actor),F_c2_night(R.number("4"))}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_own(v_actor,"guard_active"),true)});
++static object F_c2_guard_post_law(object v_行动者) {
++return F_dv_axiom("c2_guard_post_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"living_hall"),F_dv_fact(F_dv_ref("moran","state","location"),"living_hall"),F_c2_alive(v_行动者),F_c2_night(R.number("4"))}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_own(v_行动者,"guard_active"),true)});
+ }
+--- before/F_c2_hero_airlock_brace_law
++++ after/F_c2_hero_airlock_brace_law
+@@ -1,3 +1,3 @@
+ static object F_c2_hero_airlock_brace_law() {
+-return F_dv_axiom("c2_hero_airlock_brace_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_at("lucian","living_hall"),F_c2_alive("lucian"),F_c2_night(R.number("4")),F_dv_fact(F_c2_ref("c2.corridor.north","airlock_hazard"),true),F_dv_fact(F_c2_ref("c2.corridor.north","airlock_held"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.corridor.north","airlock_held"),true)});
++return F_dv_axiom("c2_hero_airlock_brace_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_dv_fact(F_dv_ref("lucian","state","location"),"living_hall"),F_c2_alive("lucian"),F_c2_night(R.number("4")),F_dv_fact(F_dv_ref("c2.corridor.north","state","airlock_hazard"),true),F_dv_fact(F_dv_ref("c2.corridor.north","state","airlock_held"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.corridor.north","state","airlock_held"),true)});
+ }
+--- before/F_c2_hero_pulley_brace_law
++++ after/F_c2_hero_pulley_brace_law
+@@ -1,3 +1,3 @@
+-static object F_c2_hero_pulley_brace_law(object v_actor) {
+-return F_dv_axiom("c2_hero_pulley_brace_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_at(v_actor,"logistics"),F_c2_alive(v_actor),F_c2_night(R.number("4")),F_dv_fact(F_c2_ref("c2.granary","pulley_hazard"),true),F_dv_fact(F_c2_ref("c2.granary","pulley_braced"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.granary","pulley_braced"),true)});
++static object F_c2_hero_pulley_brace_law(object v_行动者) {
++return F_dv_axiom("c2_hero_pulley_brace_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"logistics"),F_c2_alive(v_行动者),F_c2_night(R.number("4")),F_dv_fact(F_dv_ref("c2.granary","state","pulley_hazard"),true),F_dv_fact(F_dv_ref("c2.granary","state","pulley_braced"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.granary","state","pulley_braced"),true)});
+ }
+--- before/F_c2_hero_timber_brace_law
++++ after/F_c2_hero_timber_brace_law
+@@ -1,3 +1,3 @@
+ static object F_c2_hero_timber_brace_law() {
+-return F_dv_axiom("c2_hero_timber_brace_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_at("margaret","living_hall"),F_c2_alive("margaret"),F_c2_night(R.number("4")),F_dv_fact(F_c2_ref("c2.granary","timber_hazard"),true),F_dv_fact(F_c2_ref("c2.granary","timber_braced"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.granary","timber_braced"),true)});
++return F_dv_axiom("c2_hero_timber_brace_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_dv_fact(F_dv_ref("margaret","state","location"),"living_hall"),F_c2_alive("margaret"),F_c2_night(R.number("4")),F_dv_fact(F_dv_ref("c2.granary","state","timber_hazard"),true),F_dv_fact(F_dv_ref("c2.granary","state","timber_braced"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.granary","state","timber_braced"),true)});
+ }
+--- before/F_c2_hero_valve_repair_law
++++ after/F_c2_hero_valve_repair_law
+@@ -1,3 +1,3 @@
+ static object F_c2_hero_valve_repair_law() {
+-return F_dv_axiom("c2_hero_valve_repair_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_at("quer","logistics"),F_c2_alive("quer"),F_c2_night(R.number("3")),F_dv_fact(F_c2_ref("c2.granary","water_valve_hazard"),true),F_dv_fact(F_c2_ref("c2.granary","water_valve_repaired"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.granary","water_valve_repaired"),true)});
++return F_dv_axiom("c2_hero_valve_repair_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_dv_fact(F_dv_ref("quer","state","location"),"logistics"),F_c2_alive("quer"),F_c2_night(R.number("3")),F_dv_fact(F_dv_ref("c2.granary","state","water_valve_hazard"),true),F_dv_fact(F_dv_ref("c2.granary","state","water_valve_repaired"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.granary","state","water_valve_repaired"),true)});
+ }
+--- before/F_c2_initial_count_law
++++ after/F_c2_initial_count_law
+@@ -1,3 +1,3 @@
+-static object F_c2_initial_count_law(object v_actor) {
+-return F_dv_axiom("c2_initial_count_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c2_at(v_actor,"logistics"),F_c2_alive(v_actor),F_dv_fact(F_c2_ref("c2.counter","remaining"),R.number("99")),F_dv_fact(F_c2_ref("c2.ledger","counted"),R.number("0"))}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.ledger","counted"),R.number("99"))});
++static object F_c2_initial_count_law(object v_行动者) {
++return F_dv_axiom("c2_initial_count_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"logistics"),F_c2_alive(v_行动者),F_dv_fact(F_dv_ref("c2.counter","state","remaining"),R.number("99")),F_dv_fact(F_dv_ref("c2.ledger","state","counted"),R.number("0"))}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.ledger","state","counted"),R.number("99"))});
+ }
+--- before/F_c2_latch_request_law
++++ after/F_c2_latch_request_law
+@@ -1,3 +1,3 @@
+-static object F_c2_latch_request_law(object v_sender,object v_target) {
+-return F_dv_axiom("c2_latch_request_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_c1_at(v_sender,"logistics"),F_c1_at(v_target,"logistics"),F_dv_fact(F_c2_ref("c2.granary","latch_loose"),true)}),F_dv_single(F_dv_assign(F_c2_own(v_sender,"repair_requested"),true)));
++static object F_c2_latch_request_law(object v_发起者,object v_目标) {
++return F_dv_axiom("c2_latch_request_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref(v_发起者,"state","location"),"logistics"),F_dv_fact(F_dv_ref(v_目标,"state","location"),"logistics"),F_dv_fact(F_dv_ref("c2.granary","state","latch_loose"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_own(v_发起者,"repair_requested"),true)});
+ }
+--- before/F_c2_leave_care_law
++++ after/F_c2_leave_care_law
+@@ -1,3 +1,3 @@
+-static object F_c2_leave_care_law(object v_actor) {
+-return F_dv_axiom("c2_leave_care_law",R.number("1"),F_dv_fact(F_c2_own(v_actor,"busy_care"),true),F_dv_single(F_dv_assign(F_c2_own(v_actor,"busy_care"),false)));
++static object F_c2_leave_care_law(object v_行动者) {
++return F_dv_axiom("c2_leave_care_law",R.number("1"),F_dv_fact(F_c2_own(v_行动者,"busy_care"),true),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_own(v_行动者,"busy_care"),false)});
+ }
+--- before/F_c2_moran_acute_collapse_law
++++ after/F_c2_moran_acute_collapse_law
+@@ -1,3 +1,3 @@
+ static object F_c2_moran_acute_collapse_law() {
+-return F_dv_axiom("c2_moran_acute_collapse_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c2_at("moran","outdoor_alley"),F_c2_alive("moran"),F_dv_at_least(F_c2_own("moran","erosion_exposure"),R.number("8")),F_dv_fact(F_c2_own("moran","in_coma"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_own("moran","in_coma"),true)});
++return F_dv_axiom("c2_moran_acute_collapse_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref("moran","state","location"),"outdoor_alley"),F_c2_alive("moran"),F_dv_at_least(F_c2_own("moran","erosion_exposure"),R.number("8")),F_dv_fact(F_c2_own("moran","in_coma"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_own("moran","in_coma"),true)});
+ }
+--- before/F_c2_moran_fatal_settle_law
++++ after/F_c2_moran_fatal_settle_law
+@@ -1,3 +1,3 @@
+ static object F_c2_moran_fatal_settle_law() {
+-return F_dv_axiom("c2_moran_fatal_settle_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(6) {F_c2_alive("moran"),F_dv_at_least(F_c2_clock(),R.number("6120")),F_dv_fact(F_c2_own("moran","in_coma"),true),F_dv_at_least(F_c2_own("moran","erosion_exposure"),R.number("8")),F_dv_fact(F_c2_own("moran","dead"),false),F_dv_fact(F_c2_own("moran","anti_erosion_treated"),false)}),new System.Collections.Generic.List<object>(4) {F_dv_assign(F_c2_own("moran","dead"),true),F_dv_assign(F_c2_own("moran","alive"),false),F_dv_assign(F_c2_ref("c2.casualty","moran_dead"),true),F_dv_assign(F_c2_ref("c2.casualty","casualty_occurred"),true)});
++return F_dv_axiom("c2_moran_fatal_settle_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(6) {F_c2_alive("moran"),F_dv_at_least(F_c2_clock(),R.number("6120")),F_dv_fact(F_c2_own("moran","in_coma"),true),F_dv_at_least(F_c2_own("moran","erosion_exposure"),R.number("8")),F_dv_fact(F_c2_own("moran","dead"),false),F_dv_fact(F_c2_own("moran","anti_erosion_treated"),false)}),new System.Collections.Generic.List<object>(4) {F_dv_assign(F_c2_own("moran","dead"),true),F_dv_assign(F_c2_own("moran","alive"),false),F_dv_assign(F_dv_ref("c2.casualty","state","moran_dead"),true),F_dv_assign(F_dv_ref("c2.casualty","state","casualty_occurred"),true)});
+ }
+--- before/F_c2_moran_sketch_outdoor_law
++++ after/F_c2_moran_sketch_outdoor_law
+@@ -1,3 +1,3 @@
+ static object F_c2_moran_sketch_outdoor_law() {
+-return F_dv_axiom("c2_moran_sketch_outdoor_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_at("moran","outdoor_alley"),F_c2_can_act("moran"),F_c2_night(R.number("4")),F_dv_fact(F_c2_ref("case.astral","evening_choice"),"go"),F_dv_fact(F_c2_own("moran","evening_sketch_completed"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_own("moran","evening_sketch_completed"),true)});
++return F_dv_axiom("c2_moran_sketch_outdoor_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_dv_fact(F_dv_ref("moran","state","location"),"outdoor_alley"),F_c2_can_act("moran"),F_c2_night(R.number("4")),F_dv_fact(F_dv_ref("case.astral","state","evening_choice"),"go"),F_dv_fact(F_c2_own("moran","evening_sketch_completed"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_own("moran","evening_sketch_completed"),true)});
+ }
+--- before/F_c2_post_law
++++ after/F_c2_post_law
+@@ -1,3 +1,3 @@
+-static object F_c2_post_law(object v_actor,object v_norm) {
+-return F_dv_axiom("c2_post_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c2_at(v_actor,F_dv_get(v_norm,"board")),F_dv_fact(F_c2_ref(F_c2_norm_object(F_dv_get(v_norm,"id")),"owner"),v_actor),F_dv_fact(F_c2_ref(F_c2_norm_object(F_dv_get(v_norm,"id")),"proposed"),true),F_dv_fact(F_c2_ref(F_c2_norm_object(F_dv_get(v_norm,"id")),"posted"),false)}),F_dv_single(F_dv_assign(F_c2_ref(F_c2_norm_object(F_dv_get(v_norm,"id")),"posted"),true)));
++static object F_c2_post_law(object v_行动者,object v_规约) {
++return F_dv_axiom("c2_post_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),F_dv_get(v_规约,"board")),F_dv_fact(F_dv_ref(F_c2_norm_object(F_dv_get(v_规约,"id")),"state","owner"),v_行动者),F_dv_fact(F_dv_ref(F_c2_norm_object(F_dv_get(v_规约,"id")),"state","proposed"),true),F_dv_fact(F_dv_ref(F_c2_norm_object(F_dv_get(v_规约,"id")),"state","posted"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(F_c2_norm_object(F_dv_get(v_规约,"id")),"state","posted"),true)});
+ }
+--- before/F_c2_propose_law
++++ after/F_c2_propose_law
+@@ -1,3 +1,3 @@
+-static object F_c2_propose_law(object v_actor,object v_norm) {
+-return F_dv_axiom("c2_propose_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_c2_alive(v_actor),F_c2_norm_available(v_norm),F_dv_fact(F_c2_ref(F_c2_norm_object(F_dv_get(v_norm,"id")),"owner"),v_actor)}),F_dv_single(F_dv_assign(F_c2_ref(F_c2_norm_object(F_dv_get(v_norm,"id")),"proposed"),true)));
++static object F_c2_propose_law(object v_行动者,object v_规约) {
++return F_dv_axiom("c2_propose_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_c2_alive(v_行动者),F_c2_norm_available(v_规约),F_dv_fact(F_dv_ref(F_c2_norm_object(F_dv_get(v_规约,"id")),"state","owner"),v_行动者)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref(F_c2_norm_object(F_dv_get(v_规约,"id")),"state","proposed"),true)});
+ }
+--- before/F_c2_read_norm_law
++++ after/F_c2_read_norm_law
+@@ -1,3 +1,3 @@
+-static object F_c2_read_norm_law(object v_actor,object v_norm) {
+-return F_dv_axiom("c2_read_norm_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_c2_at(v_actor,F_dv_get(v_norm,"board")),F_dv_fact(F_c2_ref(F_c2_norm_object(F_dv_get(v_norm,"id")),"posted"),true),F_dv_fact(F_c2_own(v_actor,R.cat("read.",F_dv_get(v_norm,"id"))),false)}),F_dv_single(F_dv_assign(F_c2_own(v_actor,R.cat("read.",F_dv_get(v_norm,"id"))),true)));
++static object F_c2_read_norm_law(object v_行动者,object v_规约) {
++return F_dv_axiom("c2_read_norm_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),F_dv_get(v_规约,"board")),F_dv_fact(F_dv_ref(F_c2_norm_object(F_dv_get(v_规约,"id")),"state","posted"),true),F_dv_fact(F_c2_own(v_行动者,R.cat("read.",F_dv_get(v_规约,"id"))),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_own(v_行动者,R.cat("read.",F_dv_get(v_规约,"id"))),true)});
+ }
+--- before/F_c2_repair_latch_law
++++ after/F_c2_repair_latch_law
+@@ -1,3 +1,3 @@
+-static object F_c2_repair_latch_law(object v_actor) {
+-return F_dv_axiom("c2_repair_latch_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(8) {F_c2_at(v_actor,"logistics"),F_c2i_granary_support(),F_c2_window(R.number("3"),R.number("720"),R.number("840")),F_dv_fact(F_c2_own(v_actor,"can_lock"),true),F_dv_fact(F_c2_ref("c2.granary","lift_mm"),R.number("4")),F_dv_fact(F_c2_ref("c2.granary","structure_checked"),true),F_dv_fact(F_c2_ref("c2.granary","latch_loose"),true),F_c2_alive(v_actor)}),new System.Collections.Generic.List<object>(4) {F_dv_assign(F_c2_ref("c2.granary","latch_loose"),false),F_dv_assign(F_c2_ref("c2.granary","tool_marks"),true),F_dv_assign(F_c2_ref("c2.granary","double_bolts"),false),F_dv_assign(F_c2_ref("c2.granary","locked"),false)});
++static object F_c2_repair_latch_law(object v_行动者) {
++return F_dv_axiom("c2_repair_latch_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(8) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"logistics"),F_c2i_granary_support(),F_c2_window(R.number("3"),R.number("720"),R.number("840")),F_dv_fact(F_c2_own(v_行动者,"can_lock"),true),F_dv_fact(F_dv_ref("c2.granary","state","lift_mm"),R.number("4")),F_dv_fact(F_dv_ref("c2.granary","state","structure_checked"),true),F_dv_fact(F_dv_ref("c2.granary","state","latch_loose"),true),F_c2_alive(v_行动者)}),new System.Collections.Generic.List<object>(4) {F_dv_assign(F_dv_ref("c2.granary","state","latch_loose"),false),F_dv_assign(F_dv_ref("c2.granary","state","tool_marks"),true),F_dv_assign(F_dv_ref("c2.granary","state","double_bolts"),false),F_dv_assign(F_dv_ref("c2.granary","state","locked"),false)});
+ }
+--- before/F_c2_report_law
++++ after/F_c2_report_law
+@@ -1,3 +1,3 @@
+-static object F_c2_report_law(object v_actor) {
+-return F_dv_axiom("c2_report_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_at(v_actor,"logistics"),F_dv_at_least(F_c2_own(v_actor,"owe_notes"),R.number("1")),F_dv_fact(F_c2_own(v_actor,"pending_notes"),R.number("0")),F_dv_fact(F_c2_own(v_actor,"busy_care"),false),F_c2_alive(v_actor)}),new System.Collections.Generic.List<object>(2) {F_dv_increment(F_c2_own(v_actor,"owe_notes"),R.sub(R.number("0"),R.number("1"))),F_dv_increment(F_c2_ref("c2.ledger","night_recorded"),R.number("1"))});
++static object F_c2_report_law(object v_行动者) {
++return F_dv_axiom("c2_report_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"logistics"),F_dv_at_least(F_c2_own(v_行动者,"owe_notes"),R.number("1")),F_dv_fact(F_c2_own(v_行动者,"pending_notes"),R.number("0")),F_dv_fact(F_c2_own(v_行动者,"busy_care"),false),F_c2_alive(v_行动者)}),new System.Collections.Generic.List<object>(2) {F_dv_increment(F_c2_own(v_行动者,"owe_notes"),R.sub(R.number("0"),R.number("1"))),F_dv_increment(F_dv_ref("c2.ledger","state","night_recorded"),R.number("1"))});
+ }
+--- before/F_c2_ruan_dead_hand_law
++++ after/F_c2_ruan_dead_hand_law
+@@ -1,3 +1,3 @@
+ static object F_c2_ruan_dead_hand_law() {
+-return F_dv_axiom("c2_ruan_dead_hand_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_c2_at("ruan","clinic"),F_c2_alive("ruan"),F_dv_fact(F_c2_ref("c2.granary","destroyed"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.clinic","sedative_administered"),true)});
++return F_dv_axiom("c2_ruan_dead_hand_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("ruan","state","location"),"clinic"),F_c2_alive("ruan"),F_dv_fact(F_dv_ref("c2.granary","state","destroyed"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.clinic","state","sedative_administered"),true)});
+ }
+--- before/F_c2_take_anti_erosion_law
++++ after/F_c2_take_anti_erosion_law
+@@ -1,3 +1,3 @@
+ static object F_c2_take_anti_erosion_law() {
+-return F_dv_axiom("c2_take_anti_erosion_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c2_can_act("mora"),F_c2_at("mora","white_tower_safe"),F_dv_fact(F_c2_ref("case.logistics","anti_erosion_mixed"),true),F_dv_fact(F_c2_own("mora","anti_erosion_carried"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_own("mora","anti_erosion_carried"),true)});
++return F_dv_axiom("c2_take_anti_erosion_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_c2_can_act("mora"),F_dv_fact(F_dv_ref("mora","state","location"),"white_tower_safe"),F_dv_fact(F_dv_ref("case.logistics","state","anti_erosion_mixed"),true),F_dv_fact(F_c2_own("mora","anti_erosion_carried"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_own("mora","anti_erosion_carried"),true)});
+ }
+--- before/F_c2_terminal_exposure_law
++++ after/F_c2_terminal_exposure_law
+@@ -1,3 +1,3 @@
+-static object F_c2_terminal_exposure_law(object v_actor) {
+-return F_dv_axiom("c2_terminal_exposure_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_c2_alive(v_actor),F_dv_fact(F_c2_own(v_actor,"dead"),true),F_dv_fact(F_c2_own(v_actor,"exposure_terminal"),true)}),F_dv_single(F_dv_assign(F_c2_own(v_actor,"alive"),false)));
++static object F_c2_terminal_exposure_law(object v_行动者) {
++return F_dv_axiom("c2_terminal_exposure_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_c2_alive(v_行动者),F_dv_fact(F_c2_own(v_行动者,"dead"),true),F_dv_fact(F_c2_own(v_行动者,"exposure_terminal"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_own(v_行动者,"alive"),false)});
+ }
+--- before/F_c2_total_store_open_law
++++ after/F_c2_total_store_open_law
+@@ -1,3 +1,3 @@
+-static object F_c2_total_store_open_law(object v_actor) {
+-return F_dv_axiom("c2_total_store_open_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(8) {F_c2i_granary_support(),F_c2_window(R.number("3"),R.number("720"),R.number("840")),F_c2_at(v_actor,"logistics"),F_dv_fact(F_c2_own(v_actor,"can_lock"),true),F_dv_fact(F_c2_ref("c2.granary","double_bolts"),false),F_dv_fact(F_c2_ref("c2.granary","total_store_locked"),true),F_dv_fact(F_c2_ref("c2.granary","reserve_added"),false),F_c2_alive(v_actor)}),new System.Collections.Generic.List<object>(4) {F_dv_assign(F_c2_ref("c2.granary","total_store_locked"),false),F_dv_assign(F_c2_ref("c2.granary","reserve_added"),true),F_dv_increment(F_c2_ref("c2.counter","remaining"),R.number("672")),F_dv_increment(F_c2_ref("c2.ledger","reserve_received"),R.number("672"))});
++static object F_c2_total_store_open_law(object v_行动者) {
++return F_dv_axiom("c2_total_store_open_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(8) {F_c2i_granary_support(),F_c2_window(R.number("3"),R.number("720"),R.number("840")),F_dv_fact(F_dv_ref(v_行动者,"state","location"),"logistics"),F_dv_fact(F_c2_own(v_行动者,"can_lock"),true),F_dv_fact(F_dv_ref("c2.granary","state","double_bolts"),false),F_dv_fact(F_dv_ref("c2.granary","state","total_store_locked"),true),F_dv_fact(F_dv_ref("c2.granary","state","reserve_added"),false),F_c2_alive(v_行动者)}),new System.Collections.Generic.List<object>(4) {F_dv_assign(F_dv_ref("c2.granary","state","total_store_locked"),false),F_dv_assign(F_dv_ref("c2.granary","state","reserve_added"),true),F_dv_increment(F_dv_ref("c2.counter","state","remaining"),R.number("672")),F_dv_increment(F_dv_ref("c2.ledger","state","reserve_received"),R.number("672"))});
+ }
+--- before/F_c2_unconventional_drive_demon_law
++++ after/F_c2_unconventional_drive_demon_law
+@@ -1,3 +1,3 @@
+ static object F_c2_unconventional_drive_demon_law() {
+-return F_dv_axiom("c2_unconventional_drive_demon_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_night(R.number("4")),F_c2_alive("detective"),F_c2_at("detective","living_hall"),F_dv_fact(F_c2_ref("c2.corridor.north","airlock_hazard"),true),F_dv_fact(F_c2_ref("c2.demon","intervention_requested"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.demon","intervention_requested"),true)});
++return F_dv_axiom("c2_unconventional_drive_demon_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_night(R.number("4")),F_c2_alive("detective"),F_dv_fact(F_dv_ref("detective","state","location"),"living_hall"),F_dv_fact(F_dv_ref("c2.corridor.north","state","airlock_hazard"),true),F_dv_fact(F_dv_ref("c2.demon","state","intervention_requested"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.demon","state","intervention_requested"),true)});
+ }
+--- before/F_c2_unconventional_false_alarm_law
++++ after/F_c2_unconventional_false_alarm_law
+@@ -1,3 +1,3 @@
+ static object F_c2_unconventional_false_alarm_law() {
+-return F_dv_axiom("c2_unconventional_false_alarm_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(6) {F_c2_night(R.number("4")),F_c2_alive("detective"),F_c2_at("detective","logistics"),F_dv_fact(F_c2_ref("c2.weather","severe_air"),true),F_dv_fact(F_c2_ref("c2.corridor.north","airlock_hazard"),true),F_dv_fact(F_c2_ref("c2.kitchen","fake_alarm"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.kitchen","fake_alarm"),true)});
++return F_dv_axiom("c2_unconventional_false_alarm_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(6) {F_c2_night(R.number("4")),F_c2_alive("detective"),F_dv_fact(F_dv_ref("detective","state","location"),"logistics"),F_dv_fact(F_dv_ref("c2.weather","state","severe_air"),true),F_dv_fact(F_dv_ref("c2.corridor.north","state","airlock_hazard"),true),F_dv_fact(F_dv_ref("c2.kitchen","state","fake_alarm"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.kitchen","state","fake_alarm"),true)});
+ }
+--- before/F_c2_unconventional_iron_wedge_law
++++ after/F_c2_unconventional_iron_wedge_law
+@@ -1,3 +1,3 @@
+ static object F_c2_unconventional_iron_wedge_law() {
+-return F_dv_axiom("c2_unconventional_iron_wedge_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_night(R.number("4")),F_c2_alive("detective"),F_c2_at("detective","living_hall"),F_dv_fact(F_c2_ref("c2.corridor.north","airlock_hazard"),true),F_dv_fact(F_c2_ref("c2.corridor.north","airlock_held"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.corridor.north","airlock_held"),true)});
++return F_dv_axiom("c2_unconventional_iron_wedge_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_night(R.number("4")),F_c2_alive("detective"),F_dv_fact(F_dv_ref("detective","state","location"),"living_hall"),F_dv_fact(F_dv_ref("c2.corridor.north","state","airlock_hazard"),true),F_dv_fact(F_dv_ref("c2.corridor.north","state","airlock_held"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.corridor.north","state","airlock_held"),true)});
+ }
+--- before/F_c2_veronica_dead_hand_law
++++ after/F_c2_veronica_dead_hand_law
+@@ -1,3 +1,3 @@
+ static object F_c2_veronica_dead_hand_law() {
+-return F_dv_axiom("c2_veronica_dead_hand_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_c2_at("veronica","logistics"),F_c2_alive("veronica"),F_dv_fact(F_c2_own("veronica","exiled"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.corridor.east","acid_gas_released"),true)});
++return F_dv_axiom("c2_veronica_dead_hand_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("veronica","state","location"),"logistics"),F_c2_alive("veronica"),F_dv_fact(F_c2_own("veronica","exiled"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.corridor.east","state","acid_gas_released"),true)});
+ }
+--- before/F_c2_work_purpose
++++ after/F_c2_work_purpose
+@@ -1,31 +1,31 @@
+ static object F_c2_work_purpose(object v_field) {
+ if (R.Bool(R.eq(v_field,"wedge_set"))) {
+-return "检查结构后置楔，持续托住门框。";
++return "\u68C0\u67E5\u7ED3\u6784\u540E\u7F6E\u6954\uFF0C\u6301\u7EED\u6258\u4F4F\u95E8\u6846\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_field,"lift_mm"))) {
+-return "核对载荷并操作千斤顶，持续保持抬升。";
++return "\u6838\u5BF9\u8F7D\u8377\u5E76\u64CD\u4F5C\u5343\u65A4\u9876\uFF0C\u6301\u7EED\u4FDD\u6301\u62AC\u5347\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_field,"lock_no_pry"))) {
+-return "拆验锁具，记录实际痕迹。";
++return "\u62C6\u9A8C\u9501\u5177\uFF0C\u8BB0\u5F55\u5B9E\u9645\u75D5\u8FF9\u3002";
+ } else {
+ }
+ if (R.Bool((R.Bool((R.Bool(R.eq(v_field,"emergency_inventory_majority")) ? (object)(true) : (object)(R.eq(v_field,"joined_inventory")))) ? (object)(true) : (object)(R.eq(v_field,"ward_half_paper"))))) {
+-return "查找并出示各自实际持有的散页，核对清册与授权上下文。";
++return "\u67E5\u627E\u5E76\u51FA\u793A\u5404\u81EA\u5B9E\u9645\u6301\u6709\u7684\u6563\u9875\uFF0C\u6838\u5BF9\u6E05\u518C\u4E0E\u6388\u6743\u4E0A\u4E0B\u6587\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_field,"day_sketch_exposed"))) {
+-return "自行判断写生机会，记录实际观察与身体感受。";
++return "\u81EA\u884C\u5224\u65AD\u5199\u751F\u673A\u4F1A\uFF0C\u8BB0\u5F55\u5B9E\u9645\u89C2\u5BDF\u4E0E\u8EAB\u4F53\u611F\u53D7\u3002";
+ } else {
+ }
+ if (R.Bool(R.eq(v_field,"key_returned"))) {
+-return "核对代管依据与现场记录，办理钥匙交接。";
++return "\u6838\u5BF9\u4EE3\u7BA1\u4F9D\u636E\u4E0E\u73B0\u573A\u8BB0\u5F55\uFF0C\u529E\u7406\u94A5\u5319\u4EA4\u63A5\u3002";
+ } else {
+ }
+ if (R.Bool((R.Bool(R.eq(v_field,"gu_apologized")) ? (object)(true) : (object)(R.eq(v_field,"abandoned_child_misunderstanding_resolved"))))) {
+-return "依据实际取得的材料，重新评估并说明先前判断。";
++return "\u4F9D\u636E\u5B9E\u9645\u53D6\u5F97\u7684\u6750\u6599\uFF0C\u91CD\u65B0\u8BC4\u4F30\u5E76\u8BF4\u660E\u5148\u524D\u5224\u65AD\u3002";
+ } else {
+ }
+-return "承担自己能做的现场核对，所见与结果另行记录。";
++return "\u627F\u62C5\u81EA\u5DF1\u80FD\u505A\u7684\u73B0\u573A\u6838\u5BF9\uFF0C\u6240\u89C1\u4E0E\u7ED3\u679C\u53E6\u884C\u8BB0\u5F55\u3002";
+ }
+--- before/F_c2d_read_scope_law
++++ after/F_c2d_read_scope_law
+@@ -1,3 +1,3 @@
+ static object F_c2d_read_scope_law() {
+-return F_dv_axiom("c2d_read_scope_law",R.number("1"),F_dv_fact(F_c2d_ref("indoor_rule"),"入夜之后，诸位留于室内。"),F_dv_single(F_dv_assign(F_c2d_person_ref("detective","scope_undefined"),true)));
++return F_dv_axiom("c2d_read_scope_law",R.number("1"),F_dv_fact(F_c2d_ref("indoor_rule"),"入夜之后，诸位留于室内。"),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2d_person_ref("detective","scope_undefined"),true)});
+ }
+--- before/F_c2d_small_shadow_law
++++ after/F_c2d_small_shadow_law
+@@ -1,3 +1,3 @@
+ static object F_c2d_small_shadow_law(object v_person) {
+-return F_dv_axiom("c2d_small_shadow_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(7) {F_c1_at("bertrand","logistics"),F_c2_any_night(),F_dv_fact(F_c2d_person_ref("bertrand","watching"),true),F_c2_alive("bertrand"),F_dv_fact(F_c2d_person_ref("bertrand","small_shadow_seen"),false),F_c1_at(v_person,"logistics"),F_c2_alive(v_person)}),F_dv_single(F_dv_assign(F_c2d_person_ref("bertrand","small_shadow_seen"),true)));
++return F_dv_axiom("c2d_small_shadow_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(7) {F_dv_fact(F_dv_ref("bertrand","state","location"),"logistics"),F_c2_any_night(),F_dv_fact(F_c2d_person_ref("bertrand","watching"),true),F_c2_alive("bertrand"),F_dv_fact(F_c2d_person_ref("bertrand","small_shadow_seen"),false),F_dv_fact(F_dv_ref(v_person,"state","location"),"logistics"),F_c2_alive(v_person)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2d_person_ref("bertrand","small_shadow_seen"),true)});
+ }
+--- before/F_c2d_spoke_law
++++ after/F_c2d_spoke_law
+@@ -1,3 +1,3 @@
+-static object F_c2d_spoke_law(object v_actor,object v_method,object v_room) {
+-return F_dv_axiom("c2d_spoke_law",R.number("1"),F_c2_at(v_actor,v_room),F_dv_single(F_dv_assign(F_c2d_mark(v_actor,v_method),true)));
++static object F_c2d_spoke_law(object v_行动者,object v_method,object v_room) {
++return F_dv_axiom("c2d_spoke_law",R.number("1"),F_c2_at(v_行动者,v_room),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2d_mark(v_行动者,v_method),true)});
+ }
+--- before/F_c2d_start_watch_law
++++ after/F_c2d_start_watch_law
+@@ -1,3 +1,3 @@
+ static object F_c2d_start_watch_law() {
+-return F_dv_axiom("c2d_start_watch_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_c1_at("bertrand","logistics"),F_c2_any_night(),F_c2_alive("bertrand")}),F_dv_single(F_dv_assign(F_c2d_person_ref("bertrand","watching"),true)));
++return F_dv_axiom("c2d_start_watch_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("bertrand","state","location"),"logistics"),F_c2_any_night(),F_c2_alive("bertrand")}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2d_person_ref("bertrand","watching"),true)});
+ }
+--- before/F_c2h_objection
++++ after/F_c2h_objection
+@@ -1,19 +1,19 @@
+ static object F_c2h_objection(object v_actor) {
+ if (R.Bool(F_dv_has(new System.Collections.Generic.List<object>(3) {"ward","veronica","ruan"},v_actor))) {
+-return "我对契约履行的安全仍有保留，暂不赞成。条文、本人实证与履行结果需要分别核对。";
++return "\u6211\u5BF9\u5951\u7EA6\u5C65\u884C\u7684\u5B89\u5168\u4ECD\u6709\u4FDD\u7559\uFF0C\u6682\u4E0D\u8D5E\u6210\u3002\u6761\u6587\u3001\u672C\u4EBA\u5B9E\u8BC1\u4E0E\u5C65\u884C\u7ED3\u679C\u9700\u8981\u5206\u522B\u6838\u5BF9\u3002";
+ } else {
+ }
+ if (R.Bool(F_dv_has(new System.Collections.Generic.List<object>(4) {"huo","su","moran","gu"},v_actor))) {
+-return "尽忘意味着放弃在这里取得的认识。我仍要比较求知与生存的价值，现在保留意见。";
++return "\u5C3D\u5FD8\u610F\u5473\u7740\u653E\u5F03\u5728\u8FD9\u91CC\u53D6\u5F97\u7684\u8BA4\u8BC6\u3002\u6211\u4ECD\u8981\u6BD4\u8F83\u6C42\u77E5\u4E0E\u751F\u5B58\u7684\u4EF7\u503C\uFF0C\u73B0\u5728\u4FDD\u7559\u610F\u89C1\u3002";
+ } else {
+ }
+ if (R.Bool(F_dv_has(new System.Collections.Generic.List<object>(4) {"margaret","shen","mora","bertrand"},v_actor))) {
+-return "粮仓和病人的责任还要依据我实际知道的情况核对。我暂不把归乡当作这些责任已经解决。";
++return "\u7CAE\u4ED3\u548C\u75C5\u4EBA\u7684\u8D23\u4EFB\u8FD8\u8981\u4F9D\u636E\u6211\u5B9E\u9645\u77E5\u9053\u7684\u60C5\u51B5\u6838\u5BF9\u3002\u6211\u6682\u4E0D\u628A\u5F52\u4E61\u5F53\u4F5C\u8FD9\u4E9B\u8D23\u4EFB\u5DF2\u7ECF\u89E3\u51B3\u3002";
+ } else {
+ }
+ if (R.Bool((R.Bool(R.eq(v_actor,"quer")) ? (object)(true) : (object)(R.eq(v_actor,"elena"))))) {
+-return "旧怨是否真正修复，岛外是否有可以依靠的承诺，都要由我自己确认。现在我保留意见。";
++return "\u65E7\u6028\u662F\u5426\u771F\u6B63\u4FEE\u590D\uFF0C\u5C9B\u5916\u662F\u5426\u6709\u53EF\u4EE5\u4F9D\u9760\u7684\u627F\u8BFA\uFF0C\u90FD\u8981\u7531\u6211\u81EA\u5DF1\u786E\u8BA4\u3002\u73B0\u5728\u6211\u4FDD\u7559\u610F\u89C1\u3002";
+ } else {
+ }
+-return "我还愿意继续核对留岛与尽忘归乡的代价，暂不赞成。";
++return "\u6211\u8FD8\u613F\u610F\u7EE7\u7EED\u6838\u5BF9\u7559\u5C9B\u4E0E\u5C3D\u5FD8\u5F52\u4E61\u7684\u4EE3\u4EF7\uFF0C\u6682\u4E0D\u8D5E\u6210\u3002";
+ }
+--- before/F_c2i_complete_pending_purpose_law
++++ after/F_c2i_complete_pending_purpose_law
+@@ -1,3 +1,3 @@
+-static object F_c2i_complete_pending_purpose_law(object v_actor,object v_purpose) {
+-return F_dv_axiom("c2i_complete_pending_purpose_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(6) {F_c2_at(v_actor,"logistics"),F_c2_alive(v_actor),F_dv_at_least(F_c2_own(v_actor,"pending_notes"),R.number("1")),F_dv_at_least(F_c2_own(v_actor,R.cat("pending.",v_purpose)),R.number("1")),F_dv_at_least(F_c2_own(v_actor,"owe_notes"),R.number("1")),F_dv_fact(F_c2_own(v_actor,"busy_care"),false)}),new System.Collections.Generic.List<object>(6) {F_dv_increment(F_c2_own(v_actor,"pending_notes"),R.sub(R.number("0"),R.number("1"))),F_dv_increment(F_c2_own(v_actor,R.cat("pending.",v_purpose)),R.sub(R.number("0"),R.number("1"))),F_dv_assign(F_c2_own(v_actor,R.cat("purpose_clarified.",v_purpose)),true),F_dv_increment(F_c2_own(v_actor,"owe_notes"),R.sub(R.number("0"),R.number("1"))),F_dv_increment(F_c2_ref("c2.ledger","pending_registered"),R.sub(R.number("0"),R.number("1"))),F_dv_increment(F_c2_ref("c2.ledger","night_recorded"),R.number("1"))});
++static object F_c2i_complete_pending_purpose_law(object v_行动者,object v_purpose) {
++return F_dv_axiom("c2i_complete_pending_purpose_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(6) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"logistics"),F_c2_alive(v_行动者),F_dv_at_least(F_c2_own(v_行动者,"pending_notes"),R.number("1")),F_dv_at_least(F_c2_own(v_行动者,R.cat("pending.",v_purpose)),R.number("1")),F_dv_at_least(F_c2_own(v_行动者,"owe_notes"),R.number("1")),F_dv_fact(F_c2_own(v_行动者,"busy_care"),false)}),new System.Collections.Generic.List<object>(6) {F_dv_increment(F_c2_own(v_行动者,"pending_notes"),R.sub(R.number("0"),R.number("1"))),F_dv_increment(F_c2_own(v_行动者,R.cat("pending.",v_purpose)),R.sub(R.number("0"),R.number("1"))),F_dv_assign(F_c2_own(v_行动者,R.cat("purpose_clarified.",v_purpose)),true),F_dv_increment(F_c2_own(v_行动者,"owe_notes"),R.sub(R.number("0"),R.number("1"))),F_dv_increment(F_dv_ref("c2.ledger","state","pending_registered"),R.sub(R.number("0"),R.number("1"))),F_dv_increment(F_dv_ref("c2.ledger","state","night_recorded"),R.number("1"))});
+ }
+--- before/F_c2i_evening_choice_law
++++ after/F_c2i_evening_choice_law
+@@ -1,3 +1,3 @@
+-static object F_c2i_evening_choice_law(object v_actor,object v_value) {
+-return F_dv_axiom("c2i_evening_choice_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_c2_alive(v_actor),F_c2_night(R.number("4"))}),F_dv_single(F_dv_assign(F_c2_ref("case.astral","evening_choice"),v_value)));
++static object F_c2i_evening_choice_law(object v_行动者,object v_取值) {
++return F_dv_axiom("c2i_evening_choice_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_c2_alive(v_行动者),F_c2_night(R.number("4"))}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("case.astral","state","evening_choice"),v_取值)});
+ }
+--- before/F_c2i_meter_safe_law
++++ after/F_c2i_meter_safe_law
+@@ -1,3 +1,3 @@
+ static object F_c2i_meter_safe_law() {
+-return F_dv_axiom("c2i_meter_safe_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_c2_ref("c2.weather","wind"),true),F_dv_fact(F_c2_ref("c2.weather","severe_air"),false),F_dv_fact(F_c2_ref("c2.meter","safe"),false)}),F_dv_single(F_dv_assign(F_c2_ref("c2.meter","safe"),true)));
++return F_dv_axiom("c2i_meter_safe_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(3) {F_dv_fact(F_dv_ref("c2.weather","state","wind"),true),F_dv_fact(F_dv_ref("c2.weather","state","severe_air"),false),F_dv_fact(F_dv_ref("c2.meter","state","safe"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.meter","state","safe"),true)});
+ }
+--- before/F_c2i_meter_stale_law
++++ after/F_c2i_meter_stale_law
+@@ -1,3 +1,3 @@
+ static object F_c2i_meter_stale_law() {
+-return F_dv_axiom("c2i_meter_stale_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_c2_ref("c2.weather","severe_air"),true),F_dv_fact(F_c2_ref("c2.meter","safe"),true)}),F_dv_single(F_dv_assign(F_c2_ref("c2.meter","safe"),false)));
++return F_dv_axiom("c2i_meter_stale_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref("c2.weather","state","severe_air"),true),F_dv_fact(F_dv_ref("c2.meter","state","safe"),true)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.meter","state","safe"),false)});
+ }
+--- before/F_c2i_outdoor_danger_law
++++ after/F_c2i_outdoor_danger_law
+@@ -1,3 +1,3 @@
+-static object F_c2i_outdoor_danger_law(object v_actor) {
+-return F_dv_axiom("c2i_outdoor_danger_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_c2_at(v_actor,"outdoor_alley"),F_c2_alive(v_actor),F_dv_fact(F_c2_ref("c2.weather","earthquake_recent"),true),F_dv_fact(F_c2_ref("c2.weather","severe_air"),true),F_dv_fact(F_c2_own(v_actor,"evening_sketch_exposed"),false)}),new System.Collections.Generic.List<object>(2) {F_dv_increment(F_c2_own(v_actor,"erosion_exposure"),R.number("8")),F_dv_assign(F_c2_own(v_actor,"evening_sketch_exposed"),true)});
++static object F_c2i_outdoor_danger_law(object v_行动者) {
++return F_dv_axiom("c2i_outdoor_danger_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(5) {F_dv_fact(F_dv_ref(v_行动者,"state","location"),"outdoor_alley"),F_c2_alive(v_行动者),F_dv_fact(F_dv_ref("c2.weather","state","earthquake_recent"),true),F_dv_fact(F_dv_ref("c2.weather","state","severe_air"),true),F_dv_fact(F_c2_own(v_行动者,"evening_sketch_exposed"),false)}),new System.Collections.Generic.List<object>(2) {F_dv_increment(F_c2_own(v_行动者,"erosion_exposure"),R.number("8")),F_dv_assign(F_c2_own(v_行动者,"evening_sketch_exposed"),true)});
+ }
+--- before/F_c2i_reserve_column_law
++++ after/F_c2i_reserve_column_law
+@@ -1,3 +1,3 @@
+ static object F_c2i_reserve_column_law() {
+-return F_dv_axiom("c2i_reserve_column_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_c2_at("ruan","logistics"),F_dv_fact(F_c2_ref("c2.ledger","supplement_column"),false)}),F_dv_single(F_dv_assign(F_c2_ref("c2.ledger","supplement_column"),true)));
++return F_dv_axiom("c2i_reserve_column_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(2) {F_dv_fact(F_dv_ref("ruan","state","location"),"logistics"),F_dv_fact(F_dv_ref("c2.ledger","state","supplement_column"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.ledger","state","supplement_column"),true)});
+ }
+--- before/F_c2m_ink_contact_law
++++ after/F_c2m_ink_contact_law
+@@ -1,3 +1,3 @@
+ static object F_c2m_ink_contact_law() {
+-return F_dv_axiom("c2m_ink_contact_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_c2_ref("c2.ledger","ration_latch_unfastened"),true),F_dv_fact(F_c2_ref("c2.ledger","verification_ink"),true),F_dv_fact(F_c2_ref("c2.ledger","drawer_contact_since_mark"),true),F_dv_fact(F_c2_ref("c2.ledger","ink_disturbed"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_c2_ref("c2.ledger","ink_disturbed"),true)});
++return F_dv_axiom("c2m_ink_contact_law",R.number("1"),F_dv_all(new System.Collections.Generic.List<object>(4) {F_dv_fact(F_dv_ref("c2.ledger","state","ration_latch_unfastened"),true),F_dv_fact(F_dv_ref("c2.ledger","state","verification_ink"),true),F_dv_fact(F_dv_ref("c2.ledger","state","drawer_contact_since_mark"),true),F_dv_fact(F_dv_ref("c2.ledger","state","ink_disturbed"),false)}),new System.Collections.Generic.List<object>(1) {F_dv_assign(F_dv_ref("c2.ledger","state","ink_disturbed"),true)});
+ }

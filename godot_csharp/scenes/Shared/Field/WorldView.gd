@@ -4,6 +4,7 @@ extends Node2D
 ## 接口与分层见设计第四部分 §2。
 
 const ACTOR := preload("res://scenes/Story/StoryActor.gd")
+const RESOURCES := preload("res://scenes/Shared/Field/FieldResources.gd")
 const FieldNavigation := FieldNavigationInner
 const FieldVocabulary := FieldVocabularyInner
 const Bindings := PresentationBindingsInner
@@ -27,6 +28,9 @@ signal closing
 var adapter: Node2D
 ## 宿主注入：界面是否占用（对白、弹窗）；以及界面的淡入淡出。
 var ui_busy := func() -> bool: return false
+## Only the host can open the delivered player-option cycle. This gate applies
+## to formal selections, not local movement while other actors are executing.
+var formal_selection_ready := func() -> bool: return false
 var fader: Object
 
 var player: CharacterBody2D
@@ -46,6 +50,7 @@ var execution_resource := ""
 var execution_transitions: Array = []
 
 var snapshot: Dictionary = {}
+var presentation_error := ""
 var sites: Dictionary = {}           # id → {title, point, reach, box?, marker?, person?, new}
 var nearest := ""
 var hovered := ""
@@ -119,6 +124,92 @@ func setup(map_adapter: Node2D) -> void:
 		room_stage.field = self
 		add_child(room_stage)
 
+## Prepare the installed scene while the host still covers it with the book.
+## This never advances DV or changes bodies' positions. The host owns the final
+## physics/render barrier, after its UI has also finished preparing.
+func prepare_presentation(initial: Dictionary) -> bool:
+	presentation_error = ""
+	if _closing or not is_inside_tree(): return false
+	if execution_only: return _presentation_failure("离屏执行场地不能作为开卷现场。")
+	var prepared_adapter := adapter
+	var prepared_map: Node2D = adapter.get("map") if is_instance_valid(adapter) else null
+	if not _presentation_bindings_ready(initial, prepared_adapter, prepared_map): return false
+	# setup/apply_snapshot can queue an access-geometry refresh on the live map.
+	# Reusing prepare_map waits for that refresh and its navigation data, while
+	# retaining the resources and nodes already prepared before installation.
+	if adapter.has_method("prepare_map"):
+		var prepared: bool = await adapter.prepare_map(str(initial.get("map", "")), initial, get_tree())
+		if _closing or not is_inside_tree(): return false
+		if not prepared: return _presentation_failure("现场几何与导航尚未完成准备。")
+	if not _presentation_bindings_ready(initial, prepared_adapter, prepared_map): return false
+	# Sight normally updates as a child after this node's process callback.
+	# Resolve it first here so the very first exposed frame has its furniture,
+	# character visibility, room lighting and final initial camera composition.
+	sight.prepare_presentation()
+	_sync_scene_visibility()
+	await room_stage.prepare_presentation()
+	if _closing: return false
+	var own_room := str(snapshot.get("execution_room", execution_binding.get("execution_room", "")))
+	if own_room != "" and adapter.has_method("local_nav_grid"):
+		adapter.local_nav_grid(player, own_room, "")
+		for option in snapshot.get("pending", {}).get("options", []):
+			var binding: Dictionary = option.get("interaction", {})
+			var destination: Dictionary = binding.get("destination", {})
+			if str(binding.get("kind", "")) == "doorway" and str(destination.get("map", "")) == adapter.map_key():
+				adapter.local_nav_grid(player, own_room, str(destination.get("room", "")))
+				await get_tree().process_frame
+				if _closing: return false
+	return _presentation_bindings_ready(initial, prepared_adapter, prepared_map)
+
+func _presentation_failure(message: String) -> bool:
+	presentation_error = message
+	return false
+
+func _presentation_bindings_ready(initial: Dictionary, prepared_adapter: Node2D, prepared_map: Node2D) -> bool:
+	if _closing or not is_inside_tree(): return false
+	if not is_instance_valid(prepared_adapter) or adapter != prepared_adapter or not adapter.is_inside_tree():
+		return _presentation_failure("现场地图适配器尚未完成装配。")
+	var expected_map := str(initial.get("map", ""))
+	if expected_map == "" or str(adapter.map_key()) != expected_map or not is_instance_valid(prepared_map) \
+		or adapter.get("map") != prepared_map or not prepared_map.is_inside_tree():
+		return _presentation_failure("现场地图尚未完成装配：" + expected_map)
+	if adapter.switching(): return _presentation_failure("现场地图仍在切换。")
+	if not is_instance_valid(camera) or not is_instance_valid(sight) or not is_instance_valid(room_stage) or not is_instance_valid(spatial):
+		return _presentation_failure("现场视野与呈现组件尚未完成装配。")
+	var expected_player := str(initial.get("presentation", {}).get("player_actor", ""))
+	if expected_player == "" or not is_instance_valid(player) or actors.get(expected_player) != player:
+		return _presentation_failure("现场主角尚未完成装配。")
+	var required: Array[String] = [expected_player]
+	for person in initial.get("people", []):
+		if str(person.get("map", "")) != expected_map or not bool(person.get("present", true)): continue
+		var key := str(person.get("key", ""))
+		if key not in required: required.append(key)
+	for key in required:
+		var actor: CharacterBody2D = actors.get(key)
+		if not is_instance_valid(actor) or not actor.is_inside_tree() or not is_ancestor_of(actor):
+			return _presentation_failure("现场人物尚未完成装配：" + key)
+		var sprite := actor.get("sprite") as AnimatedSprite2D
+		if not is_instance_valid(sprite) or sprite.sprite_frames == null \
+			or not sprite.sprite_frames.has_animation(sprite.animation) \
+			or sprite.sprite_frames.get_frame_count(sprite.animation) == 0:
+			return _presentation_failure("现场人物图像尚未完成准备：" + key)
+		var collision_ready := false
+		for child in actor.get_children():
+			if child is CollisionShape2D and child.shape != null and not child.disabled:
+				collision_ready = true
+				break
+		if not collision_ready: return _presentation_failure("现场人物碰撞尚未完成准备：" + key)
+	return true
+
+func continuous_request() -> Dictionary:
+	return spatial.continuous_request() if is_instance_valid(spatial) else {}
+
+func is_continuous_action(action: String, destination: Dictionary) -> bool:
+	return is_instance_valid(spatial) and spatial.is_continuous_action(action, destination)
+
+func reject_continuous_request(choice_id: String, reason := "request_rejected") -> void:
+	if is_instance_valid(spatial): spatial.reject_continuous_request(choice_id, reason)
+
 func begin_shutdown() -> void:
 	if _closing: return
 	_closing = true
@@ -143,6 +234,8 @@ func apply_snapshot(value: Dictionary) -> void:
 	if not execution_only and adapter.fixed_actors().is_empty(): _spawn_people()
 	if execution_bridge != null: execution_bridge.sync_obstacles(self)
 	_build_sites()
+	if is_instance_valid(spatial): spatial.synchronize_continuous_snapshot()
+	if not execution_only and adapter.has_method("prefetch_snapshot"): adapter.prefetch_snapshot(value)
 
 func field_active() -> bool:
 	return not execution_only and player != null and not _closing and bool(snapshot.get("field_enabled", false)) and not ui_busy.call() and not adapter.switching()
@@ -457,8 +550,7 @@ func _physics_process(delta: float) -> void:
 	_update_daily(delta)
 	_pick_nearest()
 
-func _process(_delta: float) -> void:
-	if _closing or player == null: return
+func _sync_scene_visibility() -> void:
 	var fog: bool = adapter.sight_terrain_fog()
 	var objects: Node = adapter.objects_root()
 	if fog and objects:
@@ -469,45 +561,85 @@ func _process(_delta: float) -> void:
 		var actor: CharacterBody2D = actors[key]
 		if is_instance_valid(actor) and actor != player:
 			actor.visible = in_sight(actor.position)
+
+## The point is in this field's local coordinates for both hover and click.
+func pointer_hit(point: Vector2) -> Dictionary:
+	if not field_active(): return {"site": "", "text": ""}
+	var site_id := ""
+	var best := INF
+	for id in sites:
+		if site_visible(id) and site_box(id).grow(3).has_point(point):
+			var distance := site_box(id).get_center().distance_squared_to(point)
+			if distance < best:
+				best = distance
+				site_id = id
+	if site_id != "": return {"site": site_id, "text": str(sites[site_id].title)}
+	var objects: Node = adapter.objects_root()
+	var furniture_fallback := ""
+	if objects:
+		var hits: Dictionary = adapter.furniture_hits(to_global(point))
+		for object_name in hits.get("nodes", []):
+			var furniture := objects.get_node_or_null(str(object_name)) as Sprite2D
+			if furniture and _player_object_drawn(furniture) and in_sight(furniture.position):
+				var mapped_site := _player_object_site(furniture)
+				if sites.has(mapped_site) and site_visible(mapped_site):
+					return {"site": mapped_site, "text": str(sites[mapped_site].title)}
+				if furniture_fallback == "": furniture_fallback = _player_object_title(furniture)
+	return {"site": "", "text": furniture_fallback}
+
+func _process(_delta: float) -> void:
+	if _closing or player == null: return
+	_sync_scene_visibility()
 	var active := field_active()
 	if active and not _was_active: _active_since = Time.get_ticks_msec()
 	_was_active = active
 	hovered = ""
+	var hover_text := ""
 	if active:
-		var mouse := get_global_mouse_position()
-		var best := INF
-		for id in sites:
-			if site_visible(id) and site_box(id).grow(3).has_point(mouse):
-				var d := site_box(id).get_center().distance_squared_to(mouse)
-				if d < best:
-					best = d
-					hovered = id
-	var hover_text := str(sites[hovered].title) if sites.has(hovered) else ""
-	if active and hover_text == "" and objects:
-		var hits: Dictionary = adapter.furniture_hits(get_global_mouse_position())
-		for object_name in hits.get("nodes", []):
-			var furniture := objects.get_node_or_null(str(object_name)) as Sprite2D
-			if furniture and _player_object_drawn(furniture) and in_sight(furniture.position):
-				var site := _player_object_site(furniture)
-				if sites.has(site) and site_visible(site): hovered = site
-				hover_text = _player_object_title(furniture)
-				if sites.has(site): hover_text = str(sites[site].title)
-				break
+		var hit := pointer_hit(get_local_mouse_position())
+		hovered = str(hit.site)
+		hover_text = str(hit.text)
 	if hover_text != _hover_text or hover_text != "":
 		_hover_text = hover_text
 		hover_changed.emit(hover_text, get_viewport().get_mouse_position())
 	var focus := hovered if sites.has(hovered) else nearest
 	var hint := "" if not active or not sites.has(focus) else str(sites[focus].title) + ("　［E］" if focus == nearest else "")
+	var passage_hint := ""
+	if not execution_only and not _closing and not ui_busy.call() and not adapter.switching() and is_instance_valid(spatial):
+		passage_hint = spatial.continuous_hint()
+	if passage_hint != "":
+		hint = passage_hint
+	elif active and hint == "" and is_instance_valid(spatial) and spatial.can_submit():
+		var door: Dictionary = spatial._near_door()
+		if not door.is_empty() and bool(door.get("available", true)):
+			var label := str(door.get("label", ""))
+			if label != "": hint = label + "　［E］"
+		if hint == "": hint = _field_controls_hint()
 	if hint != _hint_text:
 		_hint_text = hint
 		hint_changed.emit(hint)
 
+## Interface guidance only; no target is inferred from hidden world state.
+func _field_controls_hint() -> String:
+	var locale := TranslationServer.get_locale()
+	if locale.begins_with("ja"):
+		return "WASD／クリック：移動　E：調べる　R：手稿　Tab：記録　T：待つ"
+	if locale.begins_with("en"):
+		return "WASD / click: walk · E: interact · R: notes · Tab: casebook · T: wait"
+	return "WASD／鼠标：行走　E：交互　R：手稿　Tab：案卷　T：等待"
+
 func _pick_nearest() -> void:
 	nearest = ""
-	if not field_active(): return
+	if not field_active() or not is_instance_valid(spatial) or not spatial.can_submit(): return
 	var best := INF
 	for id in sites:
 		if not site_visible(id): continue
+		var actionable := false
+		for option: Dictionary in spatial.choices_for(id):
+			if bool(option.get("available", true)):
+				actionable = true
+				break
+		if not actionable: continue
 		var d := player.position.distance_to(site_point(id))
 		if d <= float(sites[id].reach) and d < best:
 			best = d
@@ -531,13 +663,13 @@ func _make_actor(key: String, sprite_key: String) -> CharacterBody2D:
 func create_body(key: String, sprite_key: String) -> CharacterBody2D:
 	var actor := CharacterBody2D.new()
 	actor.set_script(ACTOR)
-	var path := PIXEL_FRAMES % sprite_key
-	if not ResourceLoader.exists(path): path = ANIME_FRAMES % sprite_key
-	if not ResourceLoader.exists(path):
+	var path: String = RESOURCES.actor_path(sprite_key)
+	if path == "":
 		actor.free()
 		Bindings.fail(self, "Missing actor asset binding: " + key + " -> " + sprite_key)
 		return null
-	actor.standard = load(path)
+	actor.standard = RESOURCES.ready(path) as SpriteFrames
+	if actor.standard == null: actor.standard = load(path)
 	actor.name = key
 	adapter.objects_root().add_child(actor)
 	actor.collision_mask = 3
@@ -580,6 +712,17 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 		# setup already adopted the retained body at its actual endpoint; prevent cyclical floor reloads
 		return
 	if player == null: return
+	var retained_player := player
+	var source_map := str(adapter.map_key())
+	if adapter.has_method("prepare_map"):
+		var prepared: bool = await adapter.prepare_map(key, snapshot, get_tree())
+		if _closing: return
+		if player != retained_player or str(adapter.map_key()) != source_map:
+			if str(adapter.map_key()) == source_map and adapter.has_method("finish_transition"): adapter.finish_transition()
+			return
+		if not prepared:
+			adapter.blocked_entry()
+			return
 	if adapter.has_method("valid_transition") and not adapter.valid_transition(key, spawn, at, use_at):
 		adapter.blocked_entry()
 		return
@@ -587,7 +730,22 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 		adapter.blocked_entry()
 		field_event.emit({"kind": "blocked_move", "map": key})
 		return
-	var source_map := str(adapter.map_key())
+	var transition_fader: Object = fader if not execution_only and is_instance_valid(fader) and fader.has_method("fade_out") and fader.has_method("fade_in") else null
+	if transition_fader != null:
+		# I/O and navigation are ready before covering the visible field. Hidden
+		# execution keeps the same physical transfer without presentation waits.
+		var covered: bool = await transition_fader.fade_out()
+		if _closing: return
+		if player != retained_player or str(adapter.map_key()) != source_map:
+			if str(adapter.map_key()) == source_map and adapter.has_method("finish_transition"): adapter.finish_transition()
+			if is_instance_valid(transition_fader): await transition_fader.fade_in()
+			return
+		# Bodies and access may have changed while the cover animated. Placement
+		# still requires the current authoritative entry and actual free geometry.
+		if not covered or (adapter.has_method("valid_transition") and not adapter.valid_transition(key, spawn, at, use_at)) or (not _applying_scene and adapter.has_method("can_enter") and not adapter.can_enter(key)):
+			adapter.blocked_entry()
+			if is_instance_valid(transition_fader): await transition_fader.fade_in()
+			return
 	var source_point := player.position
 	for actor_key in actors.keys():
 		if actor_key == _player_key: continue
@@ -616,6 +774,9 @@ func load_map(key: String, spawn: String, at := Vector2.ZERO, use_at := false) -
 	if not execution_only and adapter.fixed_actors().is_empty(): _spawn_people()
 	if execution_bridge != null: execution_bridge.sync_obstacles(self)
 	_build_sites()
+	if is_instance_valid(transition_fader): await transition_fader.fade_in()
+	if _closing: return
+	if adapter.has_method("finish_transition"): adapter.finish_transition()
 	if not _applying_scene and adapter.map_key() != "":
 		field_event.emit({"kind": "move", "map": adapter.map_key()})
 
@@ -635,6 +796,20 @@ func _after_map_load() -> void:
 ## Only the prepared DV movement intent enters physical execution.
 func execute_move(destination: Dictionary, who: String, serial: int, action: String) -> void:
 	execution_transitions.clear()
+	if bool(destination.get("continuous_walk", false)):
+		# Only Main may set this flag after matching a prepared formal intent.
+		# Do not allocate a second route or move the retained body for the player.
+		if who == _player_key and is_instance_valid(spatial):
+			spatial.accept_continuous_passage(destination, who, serial, action)
+		else:
+			_daily_report(who, serial, "blocked", "", action, {"reason": "continuous_actor_mismatch"})
+		return
+	if adapter.has_method("prepare_map"):
+		var prepared: bool = await adapter.prepare_map(str(adapter.map_key()), snapshot, get_tree())
+		if _closing: return
+		if not prepared:
+			_daily_report(who, serial, "blocked", "", action, {"reason": "geometry_preparation_failed"})
+			return
 	if adapter.has_method("execute_destination"):
 		adapter.execute_destination(destination, who, serial, action)
 		return
@@ -734,7 +909,9 @@ func _daily_go(ev: Dictionary) -> void:
 	var destination := Vector2.ZERO
 	var best_route := PackedVector2Array()
 	var best_cost := INF
-	for group in station.get("approach_groups", [_station_approaches(station, grid)]):
+	var groups: Array = station.approach_groups if station.has("approach_groups") else [_station_approaches(station, grid)]
+	for candidate_group in groups:
+		var group: Array = candidate_group.call() if candidate_group is Callable else candidate_group
 		for point: Vector2 in group:
 			if adapter.entered_room(point) != str(ev.room) or not adapter.walkable(point, actor): continue
 			if position_occupied(actor, point): continue
@@ -926,11 +1103,13 @@ class SightMaskInner extends Node2D:
 	var _origin := Vector2i(-999, -999)
 	var _entry := Vector2i(-999, -999)
 	var _clock := 0.0
+	var _region_cells: Dictionary = {}
 
 	func reset() -> void:
 		visible_cells.clear()
 		seen_cells = {}
 		active_region = ""
+		_region_cells.clear()
 		_origin = Vector2i(-999, -999)
 		_entry = Vector2i(-999, -999)
 		queue_redraw()
@@ -944,11 +1123,25 @@ class SightMaskInner extends Node2D:
 	func terrain_known(point: Vector2) -> bool:
 		return seen_cells.has(Vector2i((point / cell_size).floor()))
 
+	func prepare_presentation() -> void:
+		# Preserve the observer's seen cells; force only its normal current-view
+		# calculation before the field is exposed by the title transition.
+		_origin = Vector2i(-999, -999)
+		_entry = Vector2i(-999, -999)
+		_process(0.0)
+
 	func _process(delta: float) -> void:
 		if Engine.is_editor_hint() or host == null: return
 		_clock += delta
 		var entry := Vector2i((host.sight_entry_origin() / cell_size).floor())
 		var origin := entry if _terrain_fog() else Vector2i((host.sight_origin() / cell_size).floor())
+		# Indoor visibility depends on the entered region, not on every step
+		# within it. Reset on map changes; retain each observer's own seen cells.
+		if _origin != Vector2i(-999, -999) and _terrain_fog() and host.sight_region(entry) == active_region:
+			_origin = origin
+			_entry = entry
+			_clock = 0.0
+			return
 		if origin == _origin and entry == _entry and _clock < 0.5: return
 		_clock = 0.0
 		_origin = origin
@@ -961,32 +1154,24 @@ class SightMaskInner extends Node2D:
 		var size: Vector2i = host.sight_size()
 		if _terrain_fog():
 			var entry := Vector2i((host.sight_entry_origin() / cell_size).floor())
-			_reveal_room(entry, size)
-			if active_region != "":
-				for y in range(size.y):
-					for x in range(size.x):
+			active_region = host.sight_region(entry)
+			if active_region == "": return
+			if not _region_cells.has(active_region):
+				var cells: Array[Vector2i] = []
+				for y in size.y:
+					for x in size.x:
 						var cell := Vector2i(x, y)
-						if host.sight_region(cell) == active_region:
-							visible_cells[cell] = true
+						if host.sight_region(cell) == active_region: cells.append(cell)
+				_region_cells[active_region] = cells
+			for cell: Vector2i in _region_cells[active_region]:
+				visible_cells[cell] = true
+				seen_cells[cell] = true
 			return
 		for y in range(maxi(0, origin.y - sight_radius), mini(size.y, origin.y + sight_radius + 1)):
 			for x in range(maxi(0, origin.x - sight_radius), mini(size.x, origin.x + sight_radius + 1)):
 				var target := Vector2i(x, y)
 				if (target - origin).length_squared() > sight_radius * sight_radius: continue
 				if _clear(origin, target): visible_cells[target] = true
-
-	func _reveal_room(origin: Vector2i, size: Vector2i) -> void:
-		if not _terrain_fog(): return
-		var region: String = host.sight_region(origin)
-		if region == "":
-			active_region = ""
-			return
-		active_region = region
-		for y in range(size.y):
-			for x in range(size.x):
-				var cell := Vector2i(x, y)
-				if host.sight_region(cell) == region:
-					seen_cells[cell] = true
 
 	func _terrain_fog() -> bool:
 		return host != null and host.has_method("sight_terrain_fog") and host.sight_terrain_fog()
@@ -1003,23 +1188,26 @@ class SightMaskInner extends Node2D:
 	func _draw() -> void:
 		if host == null: return
 		var size: Vector2i = host.sight_size()
-		var rect_size := Vector2(cell_size, cell_size)
-		if _terrain_fog():
-			for y in range(size.y):
-				for x in range(size.x):
+		var indoor := _terrain_fog()
+		# Adjacent cells with the same shade form one rectangle. This is the
+		# identical mask, with far fewer CanvasItem draw commands on large maps.
+		for y in size.y:
+			var run_start := 0
+			var previous := -1
+			for x in range(size.x + 1):
+				var shade := -1
+				if x < size.x:
 					var cell := Vector2i(x, y)
-					if visible_cells.has(cell) or not host.sight_interior(cell): continue
-					var shade := remembered_shade if seen_cells.has(cell) else unseen_shade
-					draw_rect(Rect2(Vector2(cell * cell_size), rect_size), shade, true)
-			return
-		for y in range(size.y):
-			for x in range(size.x):
-				var cell := Vector2i(x, y)
-				if visible_cells.has(cell):
-					seen_cells[cell] = true
-					continue
-				var shade := remembered_shade if seen_cells.has(cell) else unseen_shade
-				draw_rect(Rect2(Vector2(cell * cell_size), rect_size), shade, true)
+					if visible_cells.has(cell):
+						if not indoor: seen_cells[cell] = true
+					elif not indoor or host.sight_interior(cell):
+						shade = 1 if seen_cells.has(cell) else 0
+				if shade == previous: continue
+				if previous >= 0:
+					var color := remembered_shade if previous == 1 else unseen_shade
+					draw_rect(Rect2(Vector2(run_start, y) * cell_size, Vector2(x - run_start, 1) * cell_size), color, true)
+				run_start = x
+				previous = shade
 
 class HintOverlayInner extends Node2D:
 	var hover_color: Color = Color(0.9, 0.8, 0.4, 0.9)
@@ -1037,8 +1225,12 @@ class HintOverlayInner extends Node2D:
 			unlit.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
 			material = unlit
 
+	func _reduced_motion() -> bool:
+		var settings := get_node_or_null("/root/GameSettings")
+		return settings != null and bool(settings.get_value("accessibility", "reduce_motion"))
+
 	func _process(delta: float) -> void:
-		clock += delta
+		if not _reduced_motion(): clock += delta
 		queue_redraw()
 
 	func _draw() -> void:
@@ -1046,17 +1238,31 @@ class HintOverlayInner extends Node2D:
 		var sites: Dictionary = source.get("sites") if source.get("sites") != null else {}
 		var hovered: String = str(source.get("hovered")) if source.get("hovered") != null else ""
 		var nearest: String = str(source.get("nearest")) if source.get("nearest") != null else ""
+		var reduced := _reduced_motion()
+		var can_mark: bool = source.field_active() and is_instance_valid(source.spatial) and source.spatial.can_submit()
 		for id: String in sites.keys():
+			if not source.site_visible(id): continue
 			var data: Dictionary = sites[id]
-			var box: Rect2 = data.get("box", Rect2())
+			var box: Rect2 = source.site_box(id)
 			if box.size == Vector2.ZERO: continue
+			var actionable := false
+			if can_mark:
+				for option: Dictionary in source.spatial.choices_for(id):
+					if bool(option.get("available", true)):
+						actionable = true
+						break
+			# A fixed marker means a currently offered interaction, never new evidence.
+			if actionable:
+				var marker: Vector2 = source.site_marker(id)
+				draw_circle(marker, 3.0, spark_edge_color, false, 1.0)
+				draw_circle(marker, 1.0, spark_center_color)
 			if id == hovered:
 				draw_rect(box, hover_color, false, 2.0)
 			elif id == nearest and hovered == "":
 				draw_rect(box, near_color, false, 1.0)
 			elif bool(data.get("new", false)):
 				var phase := fposmod(clock * 2.0, 1.0)
-				var spark_radius := int(round(1.0 + phase * 3.0))
+				var spark_radius := 2 if reduced else int(round(1.0 + phase * 3.0))
 				_draw_spark(box.position + box.size * 0.5, spark_radius)
 
 	func _draw_spark(center: Vector2, radius: int) -> void:
@@ -1069,11 +1275,16 @@ class RoomStageInner extends Node2D:
 	var field: Node2D
 	var _map: Node2D
 	var _room := ""
-	var _lights: Array[Node2D] = []
+	var _light_pool: Array[PointLight2D] = []
+	var _beam_pool: Array[Polygon2D] = []
+	var _dust_pool: Array[GPUParticles2D] = []
+	var _glow: GradientTexture2D
 	var _veil: ColorRect
 	var _layer: CanvasLayer
 	var _bounds := Rect2()
 	var _reduce_motion := false
+	var _warming := false
+	var _prepared_map: Node2D
 
 	func _ready() -> void:
 		var settings := get_node_or_null("/root/GameSettings")
@@ -1095,8 +1306,47 @@ class RoomStageInner extends Node2D:
 		_veil.material = mat
 		_layer.add_child(_veil)
 
+	func prepare_presentation() -> void:
+		if not is_instance_valid(field.adapter.map) or _prepared_map == field.adapter.map: return
+		_warming = true
+		_map = field.adapter.map
+		_ensure_glow()
+		var capacity: Vector2i = field.adapter.presentation_capacity() if field.adapter.has_method("presentation_capacity") else Vector2i.ZERO
+		for index in capacity.x:
+			_ensure_light(index)
+			var light := _light_pool[index]
+			light.position = field.player.position
+			light.energy = 0.001
+			light.enabled = true
+			light.show()
+		for index in capacity.y: _window_beam(field.player.position, index, true)
+		# Give the renderer a covered frame to compile the same light/particle
+		# pipelines that will be reused when the player first leaves the bedroom.
+		await get_tree().process_frame
+		if field._closing: return
+		if DisplayServer.get_name() != "headless": await RenderingServer.frame_post_draw
+		if field._closing: return
+		_prepared_map = _map
+		_room = str(field.adapter.room_of(field.player.position))
+		_bounds = field.adapter.stage_bounds(field.player.position)
+		_rebuild_lights(field.adapter.sight_terrain_fog())
+		_warming = false
+
+		var indoor: bool = field.adapter.sight_terrain_fog()
+		_rebuild_lights(indoor)
+		_veil.visible = indoor
+		if indoor:
+			var viewport: Vector2 = get_viewport_rect().size
+			var dimensions := _bounds.size.max(Vector2.ONE)
+			var zoom := clampf(minf(viewport.x * 0.9 / dimensions.x, viewport.y * 0.88 / dimensions.y), 2.0, 3.4)
+			field.camera.zoom = Vector2.ONE * zoom
+		field.camera.position = field.adapter.camera_point(field.player.position)
+		field.camera.reset_smoothing()
+		field.camera.force_update_scroll()
+		_process(0.0)
+
 	func _process(delta: float) -> void:
-		if not is_instance_valid(field.player) or field.adapter.map == null: return
+		if _warming or not is_instance_valid(field.player) or field.adapter.map == null: return
 		var adapter: Node2D = field.adapter
 		var room: String = adapter.room_of(field.player.position)
 		var indoor: bool = adapter.sight_terrain_fog()
@@ -1116,74 +1366,104 @@ class RoomStageInner extends Node2D:
 		_veil.material.set_shader_parameter("pixel_size", Vector2.ONE / viewport)
 
 	func _rebuild_lights(indoor: bool) -> void:
-		for node in _lights:
-			remove_child(node)
-			node.queue_free()
-		_lights.clear()
+		for light in _light_pool:
+			light.enabled = false
+			light.hide()
+		for beam in _beam_pool: beam.hide()
+		for dust in _dust_pool:
+			dust.speed_scale = 0.0
+			dust.hide()
 		if not indoor:
 			field.camera.zoom = Vector2(2, 2)
 			return
-		var gradient := Gradient.new()
-		gradient.offsets = PackedFloat32Array([0, 0.16, 0.48, 1])
-		gradient.colors = PackedColorArray([Color(1,1,1,1), Color(1,1,1,0.82), Color(1,1,1,0.26), Color(1,1,1,0)])
-		var glow := GradientTexture2D.new()
-		glow.gradient = gradient
-		glow.width = 256
-		glow.height = 256
-		glow.fill = GradientTexture2D.FILL_RADIAL
-		glow.fill_from = Vector2(0.5, 0.5)
-		glow.fill_to = Vector2(1, 0.5)
-		for declaration in _map.get_meta("stage_lights", []):
+		_ensure_glow()
+		var light_index := 0
+		var window_index := 0
+		var declarations: Array = field.adapter.stage_lights(field.player.position) if field.adapter.has_method("stage_lights") else _map.get_meta("stage_lights", [])
+		for declaration in declarations:
 			var point := Vector2(float(declaration.point[0]), float(declaration.point[1]))
 			if not _bounds.grow(12).has_point(point): continue
 			var window: bool = str(declaration.kind) == "window"
-			var light := PointLight2D.new()
+			_ensure_light(light_index)
+			var light := _light_pool[light_index]
+			light_index += 1
 			light.position = point
-			light.texture = glow
 			light.texture_scale = 1.1 if window else 1.45
 			light.color = Color(0.63, 0.79, 0.94) if window else Color(1.0, 0.81, 0.71)
 			light.energy = 0.6 if window else 0.9
-			light.height = 48.0
-			light.shadow_enabled = false
-			light.range_z_min = -100
-			light.range_z_max = 100
-			add_child(light)
-			_lights.append(light)
-			if window: _window_beam(point)
+			light.enabled = true
+			light.show()
+			if window:
+				_window_beam(point, window_index)
+				window_index += 1
 
-	func _window_beam(point: Vector2) -> void:
-		var beam := Polygon2D.new()
+	func _ensure_glow() -> void:
+		if _glow != null: return
+		var gradient := Gradient.new()
+		gradient.offsets = PackedFloat32Array([0, 0.16, 0.48, 1])
+		gradient.colors = PackedColorArray([Color(1,1,1,1), Color(1,1,1,0.82), Color(1,1,1,0.26), Color(1,1,1,0)])
+		_glow = GradientTexture2D.new()
+		_glow.gradient = gradient
+		_glow.width = 256
+		_glow.height = 256
+		_glow.fill = GradientTexture2D.FILL_RADIAL
+		_glow.fill_from = Vector2(0.5, 0.5)
+		_glow.fill_to = Vector2(1, 0.5)
+
+	func _ensure_light(index: int) -> void:
+		if index < _light_pool.size(): return
+		var created := PointLight2D.new()
+		created.texture = _glow
+		created.height = 48.0
+		created.shadow_enabled = false
+		created.range_z_min = -100
+		created.range_z_max = 100
+		add_child(created)
+		_light_pool.append(created)
+
+	func _window_beam(point: Vector2, index: int, prepare_particles := false) -> void:
+		if index >= _beam_pool.size():
+			var created := Polygon2D.new()
+			created.polygon = PackedVector2Array([Vector2(-12,0), Vector2(12,0), Vector2(92,160), Vector2(30,160)])
+			created.vertex_colors = PackedColorArray([Color(0.6,0.76,0.9,0.12),Color(0.6,0.76,0.9,0.12),Color(0.6,0.76,0.9,0),Color(0.6,0.76,0.9,0)])
+			created.z_index = 25
+			add_child(created)
+			_beam_pool.append(created)
+		var beam := _beam_pool[index]
 		beam.position = point
-		beam.polygon = PackedVector2Array([Vector2(-12,0), Vector2(12,0), Vector2(92,160), Vector2(30,160)])
-		beam.vertex_colors = PackedColorArray([Color(0.6,0.76,0.9,0.12),Color(0.6,0.76,0.9,0.12),Color(0.6,0.76,0.9,0),Color(0.6,0.76,0.9,0)])
-		beam.z_index = 25
-		add_child(beam)
-		_lights.append(beam)
-		if _reduce_motion: return
-		var dust := GPUParticles2D.new()
+		beam.show()
+		if _reduce_motion and not prepare_particles: return
+		if index >= _dust_pool.size():
+			var created := GPUParticles2D.new()
+			created.amount = 18
+			created.lifetime = 8.0
+			created.preprocess = 4.0
+			created.local_coords = true
+			created.visibility_rect = Rect2(-64,-80,176,200)
+			created.z_index = 26
+			var motion := ParticleProcessMaterial.new()
+			motion.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+			motion.emission_box_extents = Vector3(28,60,0)
+			motion.direction = Vector3(0.2,-1,0)
+			motion.spread = 35
+			motion.initial_velocity_min = 1.0
+			motion.initial_velocity_max = 3.0
+			motion.gravity = Vector3.ZERO
+			motion.color = Color(0.8,0.86,0.91,0.18)
+			motion.scale_min = 0.35
+			motion.scale_max = 0.8
+			created.process_material = motion
+			add_child(created)
+			_dust_pool.append(created)
+		var dust := _dust_pool[index]
 		dust.position = point + Vector2(30, 70)
-		dust.amount = 18
-		dust.lifetime = 8.0
-		dust.preprocess = 4.0
-		dust.visibility_rect = Rect2(-64,-80,176,200)
-		dust.z_index = 26
-		var motion := ParticleProcessMaterial.new()
-		motion.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
-		motion.emission_box_extents = Vector3(28,60,0)
-		motion.direction = Vector3(0.2,-1,0)
-		motion.spread = 35
-		motion.initial_velocity_min = 1.0
-		motion.initial_velocity_max = 3.0
-		motion.gravity = Vector3.ZERO
-		motion.color = Color(0.8,0.86,0.91,0.18)
-		motion.scale_min = 0.35
-		motion.scale_max = 0.8
-		dust.process_material = motion
-		add_child(dust)
-		_lights.append(dust)
+		dust.speed_scale = 1.0
+		dust.show()
 
 class SpatialInputInner extends Node:
 	const NAV := FieldNavigationInner
+	const MAX_ROUTE_STEPS_PER_TICK := 32
+	const PASSAGE_LOOKAHEAD := 160.0
 	var field: Node2D
 	var options: Array = []
 	var submitted := false
@@ -1195,13 +1475,298 @@ class SpatialInputInner extends Node:
 	var _progress := Vector2.ZERO
 	var _stuck := 0.0
 	var _pending_door: Dictionary = {}
+	var _continuous: Dictionary = {}
+	var _passage_heading := Vector2.ZERO
+	var _last_source_position := Vector2.ZERO
+	var _gate_waiting := false
+	var _retry_after_usec := 0
+	var _preview_pair := ""
+	var _reconcile_route := PackedVector2Array()
+	var _reconcile_retry := 0.0
+	var _reconcile_stuck := 0.0
+
+	func continuous_request() -> Dictionary:
+		return _continuous.duplicate(true)
+
+	func continuous_hint() -> String:
+		if _continuous.is_empty(): return ""
+		var phase := str(_continuous.get("phase", ""))
+		var locale := TranslationServer.get_locale()
+		if phase == "reconciling":
+			return "元の場所へ戻っています。お待ちください。" if locale.begins_with("ja") else "Returning to the starting place. Please wait." if locale.begins_with("en") else "正在返回原处，请稍候。"
+		if bool(_continuous.get("cancelled", false)):
+			return "通行を取り消しています。お待ちください。" if locale.begins_with("ja") else "Cancelling passage. Please wait." if locale.begins_with("en") else "正在取消通行，请稍候。"
+		if phase == "requested":
+			return "通行の準備中です（方向キーを離すと取消）。" if locale.begins_with("ja") else "Preparing passage (release direction to cancel)." if locale.begins_with("en") else "正在准备通行（松开方向可取消）。"
+		if phase == "prepared":
+			return "通行中です（方向キーを離すと取消）。" if locale.begins_with("ja") else "Passing through (release direction to cancel)." if locale.begins_with("en") else "正在通行（松开方向可取消）。"
+		if phase in ["arrived", "settling"]:
+			return "通行を確認しています。お待ちください。" if locale.begins_with("ja") else "Confirming passage. Please wait." if locale.begins_with("en") else "正在确认通行，请稍候。"
+		return ""
+
+	func is_continuous_action(action: String, destination: Dictionary) -> bool:
+		if _continuous.is_empty() or str(_continuous.get("phase", "")) != "requested": return false
+		return action == str(_continuous.choice_id) and str(destination.get("map", "")) == str(_continuous.map) and str(destination.get("execution_room", destination.get("room", ""))) == str(_continuous.to_room)
+
+	func reject_continuous_request(choice_id: String, reason: String) -> void:
+		if _continuous.is_empty() or str(_continuous.choice_id) != choice_id: return
+		# A prepared intent owns a receipt. Rejection here is only the host's
+		# acknowledgement of Request failure or an already completed receipt.
+		if str(_continuous.phase) == "prepared":
+			_cancel_continuous(reason)
+			return
+		if str(_continuous.phase) in ["arrived", "reconciling"]:
+			# Releasing the host request cannot discard a body still on the
+			# other side. Only its authoritative arrival or real return can.
+			synchronize_continuous_snapshot()
+			return
+		_stamp("continuous_request_released", str(_continuous.request_id), {"reason": reason})
+		_continuous.clear()
+		_gate_waiting = false
+		_retry_after_usec = Time.get_ticks_usec() + 200000
+
+	func synchronize_continuous_snapshot() -> void:
+		if _continuous.is_empty(): return
+		var authoritative_room := str(field.snapshot.get("execution_room", ""))
+		if str(_continuous.phase) == "arrived" and authoritative_room == str(_continuous.to_room):
+			_stamp("continuous_arrival_committed", str(_continuous.request_id), {"room": authoritative_room})
+			_continuous.clear()
+			_gate_waiting = false
+		elif str(_continuous.phase) == "arrived" and authoritative_room == str(_continuous.from_room):
+			var pending: Dictionary = field.snapshot.get("pending", {})
+			# The old prepared snapshot still names the source while Complete
+			# is pending. Only a settled authority response can reject arrival.
+			if str(pending.get("status", "")) in ["idle", "awaiting_input"]:
+				_stop_walk("authoritative-arrival-rejected")
+				_continuous.phase = "reconciling"
+				_continuous.reconciliation_state = "planning"
+				_reconcile_route.clear()
+				_reconcile_retry = 0.0
+				_reconcile_stuck = 0.0
+				_gate_waiting = false
+				_stamp("continuous_reconciliation_begin", str(_continuous.request_id), {"room": authoritative_room, "position": [field.player.position.x, field.player.position.y]})
+
+	func _finish_reconciliation_if_safe() -> bool:
+		if str(field.adapter.departure_room(field.player.position)) != str(_continuous.from_room): return false
+		_stamp("continuous_reconciliation_finished", str(_continuous.request_id), {"room": _continuous.from_room, "position": [field.player.position.x, field.player.position.y]})
+		_continuous.clear()
+		_reconcile_route.clear()
+		_reconcile_retry = 0.0
+		_reconcile_stuck = 0.0
+		_gate_waiting = false
+		_stop_walk("authoritative-source-restored")
+		return true
+
+	func _reconciliation_blocked(reason: String) -> void:
+		_reconcile_route.clear()
+		_reconcile_retry = 0.2
+		_reconcile_stuck = 0.0
+		field.player.pose("idle")
+		if str(_continuous.get("reconciliation_state", "")) != "blocked":
+			_stamp("continuous_reconciliation_blocked", str(_continuous.request_id), {"reason": reason})
+		_continuous.reconciliation_state = "blocked"
+
+	func _reconcile_rejected_arrival(delta: float) -> bool:
+		if _continuous.is_empty() or str(_continuous.phase) != "reconciling": return false
+		if _finish_reconciliation_if_safe(): return true
+		_reconcile_retry = maxf(0.0, _reconcile_retry - delta)
+		if _reconcile_retry > 0.0: return true
+		if _reconcile_route.is_empty():
+			# Rebuild the occupancy overlay for every retry. Recovery uses only
+			# the same two rooms and never replays a formal selection/receipt.
+			var grid := _local_grid(str(_continuous.to_room))
+			_reconcile_route = NAV.route_on_grid(field.player.position, _last_source_position, grid)
+			if _reconcile_route.is_empty():
+				_reconciliation_blocked("no_source_return_route")
+				return true
+			_reconcile_route.append(_last_source_position)
+			_continuous.reconciliation_state = "returning"
+			_stamp("continuous_reconciliation_route", str(_continuous.request_id), {"points": _reconcile_route.size()})
+		_begin_walk()
+		var before: Vector2 = field.player.position
+		var remaining: float = field.player.speed * delta
+		for _segment in MAX_ROUTE_STEPS_PER_TICK:
+			if _reconcile_route.is_empty() or remaining <= 0.0: break
+			var difference: Vector2 = _reconcile_route[0] - field.player.position
+			if difference.length() > 1.0:
+				var motion := difference.limit_length(remaining)
+				var next: Vector2 = field.player.position + motion
+				if str(field.adapter.room_of(next)) not in [str(_continuous.from_room), str(_continuous.to_room)] or not field.adapter.walkable(next, field.player):
+					_reconciliation_blocked("source_return_geometry_changed")
+					return true
+				_move_body(motion, delta)
+				remaining = maxf(0.0, remaining - motion.length())
+				if _finish_reconciliation_if_safe(): return true
+				if field.player.position.distance_to(_reconcile_route[0]) > 1.0: break
+			_reconcile_route.remove_at(0)
+		if field.player.position.distance_to(before) >= 0.5:
+			_reconcile_stuck = 0.0
+		else:
+			_reconcile_stuck += delta
+			if _reconcile_stuck >= 0.35: _reconciliation_blocked("source_return_obstructed")
+		return true
+
+	func accept_continuous_passage(destination: Dictionary, who: String, serial: int, action: String) -> void:
+		if not is_continuous_action(action, destination) or who != str(field._player_key):
+			field._daily_report(who, serial, "blocked", "", action, {"reason": "continuous_request_mismatch"})
+			return
+		_continuous.phase = "prepared"
+		_continuous.serial = serial
+		_continuous.action = action
+		_continuous.prepared_usec = Time.get_ticks_usec()
+		if str(field.adapter.departure_room(field.player.position)) != str(_continuous.from_room):
+			_continuous.cancelled = true
+			_continuous.cancel_reason = "continuous_source_changed"
+		_stamp("continuous_passage_prepared", str(_continuous.request_id), {"serial": serial, "from_room": _continuous.from_room, "to_room": _continuous.to_room, "request_to_prepare_usec": Time.get_ticks_usec() - int(_continuous.requested_usec)})
+		if bool(_continuous.cancelled): _finish_cancel_if_safe()
+
+	func _request_continuous(option: Dictionary, heading: Vector2, source: String, attempted: Variant = null) -> void:
+		if not _continuous.is_empty() or Time.get_ticks_usec() < _retry_after_usec or not _can_select(option): return
+		var binding: Dictionary = option.get("interaction", {})
+		var destination: Dictionary = binding.get("destination", {})
+		var from_room := str(field.snapshot.get("execution_room", ""))
+		var to_room := str(destination.get("execution_room", destination.get("room", "")))
+		if str(binding.get("kind", "")) != "doorway" or str(destination.get("map", "")) != field.adapter.map_key() or to_room == "" or to_room == from_room: return
+		if str(field.adapter.departure_room(field.player.position)) != from_room: return
+		# Room-local motion must not reserve or charge a formal crossing. The
+		# request needs a real source-side doorway or an adjacent authored open
+		# floor boundary, with input pointing towards the neighbour's interior.
+		var passage: Dictionary = {}
+		if attempted is Vector2 and field.adapter.has_method("passage_at"):
+			passage = field.adapter.passage_at(field.player.position, attempted, from_room, to_room, field.player)
+		var landing: Variant = passage.get("landing")
+		if passage.is_empty():
+			var neighbours: Array[String] = field.adapter.doorway_rooms(field.player.position)
+			if from_room not in neighbours or to_room not in neighbours: return
+			landing = field.adapter.doorway_landing(field.player.position, to_room, field.player)
+		if landing == null or heading.normalized().dot(((landing as Vector2) - field.player.position).normalized()) <= 0.15: return
+		var id := _id()
+		_last_source_position = field.player.position
+		_passage_heading = heading.normalized()
+		_continuous = {"request_id": id, "choice_id": str(option.id), "actor": str(field._player_key), "map": str(field.adapter.map_key()),
+			"from_room": from_room, "to_room": to_room, "phase": "requested", "cancelled": false, "cancel_reason": "",
+			"source_position": [field.player.position.x, field.player.position.y], "requested_usec": Time.get_ticks_usec()}
+		if not passage.is_empty():
+			_continuous.passage_kind = "open-boundary"
+			_continuous.boundary_source = [passage.source_point.x, passage.source_point.y]
+			_continuous.boundary_target = [passage.target_point.x, passage.target_point.y]
+		_stamp("continuous_request_begin", id, {"choice_id": option.id, "from_room": from_room, "to_room": to_room, "source": source})
+		field.field_event.emit({"kind": "select", "choice_id": option.id, "site": "", "interaction_id": id,
+			"continuous_walk": continuous_request(), "context": field.context()})
+
+	func _cancel_continuous(reason: String) -> void:
+		if _continuous.is_empty() or str(_continuous.phase) in ["arrived", "settling", "reconciling"]: return
+		_continuous.cancelled = true
+		_continuous.cancel_reason = reason
+		_finish_cancel_if_safe()
+
+	func _finish_cancel_if_safe() -> void:
+		if _continuous.is_empty() or str(_continuous.phase) != "prepared" or not bool(_continuous.cancelled): return
+		var room := str(field.adapter.departure_room(field.player.position))
+		if room != str(_continuous.from_room): return
+		_continuous.phase = "settling"
+		_stop_walk("continuous-source-cancelled")
+		field.player.velocity = Vector2.ZERO
+		var proof := {"continuous_walk": true, "request_id": _continuous.request_id, "reason": _continuous.cancel_reason,
+			"prepared_to_receipt_usec": Time.get_ticks_usec() - int(_continuous.prepared_usec)}
+		# Native geometry evidence only. Main independently binds pending identity.
+		if str(_continuous.cancel_reason) == "released" and field.adapter.map_key() == str(_continuous.map) and not field.adapter.switching() and field.execution_transitions.is_empty():
+			proof.merge({"source_cancel_candidate": true, "from_room": _continuous.from_room, "to_room": _continuous.to_room,
+				"request_source_position": _continuous.source_position.duplicate(),
+				"actual_position": [field.player.position.x, field.player.position.y]}, true)
+		field._daily_report(str(field._player_key), int(_continuous.serial), "blocked", room, str(_continuous.action), proof)
+
+	func _return_cancelled_passage(delta: float) -> bool:
+		if _continuous.is_empty() or str(_continuous.phase) != "prepared" or not bool(_continuous.cancelled): return false
+		_finish_cancel_if_safe()
+		if str(_continuous.get("phase", "")) != "prepared": return false
+		# A thick threshold can span both logical labels. If cancelled midway,
+		# walk the retained body back through the same collision world before
+		# issuing a blocked receipt. No position assignment or fake arrival.
+		var motion: Vector2 = (_last_source_position - field.player.position).limit_length(field.player.speed * delta)
+		_move_body(motion, delta)
+		_finish_cancel_if_safe()
+		return true
+
+	func _check_continuous_arrival() -> void:
+		if _continuous.is_empty() or str(_continuous.phase) != "prepared": return
+		var entered := str(field.adapter.entered_room(field.player.position))
+		if entered == str(_continuous.from_room): _last_source_position = field.player.position
+		if bool(_continuous.cancelled):
+			_finish_cancel_if_safe()
+			return
+		if entered != str(_continuous.to_room): return
+		if not field.adapter.walkable(field.player.position, field.player): return
+		_continuous.phase = "arrived"
+		var proof := {"continuous_walk": true, "request_id": _continuous.request_id, "reason": "continuous_threshold_arrival",
+			"request_to_arrival_usec": Time.get_ticks_usec() - int(_continuous.requested_usec),
+			"prepared_to_arrival_usec": Time.get_ticks_usec() - int(_continuous.prepared_usec)}
+		_stamp("continuous_physical_arrival", str(_continuous.request_id), proof)
+		field._daily_report(str(field._player_key), int(_continuous.serial), "arrived", entered, str(_continuous.action), proof)
+
+	func _control_room() -> String:
+		if not _continuous.is_empty():
+			return str(_continuous.to_room) if str(_continuous.phase) == "arrived" else str(_continuous.from_room)
+		return str(field.snapshot.get("execution_room", ""))
+
+	func _option_for_room(room: String) -> Dictionary:
+		var found: Dictionary = {}
+		for option in options:
+			if not bool(option.get("available", true)): continue
+			var binding: Dictionary = option.get("interaction", {})
+			var destination: Dictionary = binding.get("destination", {})
+			if str(binding.get("kind", "")) == "doorway" and str(destination.get("map", "")) == field.adapter.map_key() and str(destination.get("execution_room", destination.get("room", ""))) == room:
+				if not found.is_empty(): return {}
+				found = option
+		return found
+
+	func _prepare_ahead(direction: Vector2) -> void:
+		if direction == Vector2.ZERO or not _continuous.is_empty(): return
+		var heading := direction.normalized()
+		var current := _door_option(field.player.position)
+		if not current.is_empty():
+			_request_continuous(current, heading, "entering-doorway")
+			if not _continuous.is_empty(): return
+		for distance in range(16, int(PASSAGE_LOOKAHEAD) + 1, 16):
+			var point: Vector2 = field.player.position + heading * distance
+			if not field.adapter.walkable(point, field.player): return
+			var option := _door_option(point)
+			if not option.is_empty():
+				# Look-ahead performs geometry preparation only. A player may
+				# approach and turn away inside a room without any DV action.
+				var target := str(option.get("interaction", {}).get("destination", {}).get("room", ""))
+				var pair := str(field.adapter.map_key()) + "\n" + _control_room() + "\n" + target
+				if pair != _preview_pair:
+					_local_grid(target)
+					_preview_pair = pair
+				return
 
 	func set_options(value: Array) -> void:
 		options = value
+		_preview_pair = ""
 		submitted = false
+		synchronize_continuous_snapshot()
+		if not _continuous.is_empty() and str(_continuous.phase) == "settling":
+			reject_continuous_request(str(_continuous.choice_id), "cancelled_receipt_acknowledged")
 
 	func enabled() -> bool:
 		return is_instance_valid(field) and field.field_active() and bool(field.snapshot.get("player_control", false)) and not submitted and not field._daily.has(field.player.name)
+
+	func release_submission() -> void:
+		submitted = false
+
+	func can_submit() -> bool:
+		return enabled() and field.formal_selection_ready.call()
+
+	func _can_select(option: Dictionary) -> bool:
+		if not field.formal_selection_ready.call(): return false
+		var pending: Dictionary = field.snapshot.get("pending", {})
+		if str(pending.get("status", "")) != "awaiting_input": return false
+		var choice_id := str(option.get("id", ""))
+		if choice_id == "": return false
+		for current in pending.get("options", []):
+			if str(current.get("id", "")) == choice_id: return true
+		return false
 
 	func _stamp(stage: String, id: String, data: Dictionary = {}) -> void:
 		field.field_event.emit({"kind": "timing", "stage": stage, "interaction_id": id, "details": data})
@@ -1211,6 +1776,7 @@ class SpatialInputInner extends Node:
 		return "spatial-%d-%d" % [Time.get_ticks_usec(), _sequence]
 
 	func _stop_walk(reason: String) -> void:
+		_cancel_continuous(reason)
 		_route.clear()
 		_site = ""
 		_pending_door = {}
@@ -1231,51 +1797,91 @@ class SpatialInputInner extends Node:
 	func _physics_process(delta: float) -> void:
 		if not enabled():
 			if _walking: _stop_walk("input-blocked")
+			elif not _continuous.is_empty(): _cancel_continuous("input-blocked")
 			return
+		if _reconcile_rejected_arrival(delta): return
+		if _return_cancelled_passage(delta): return
 		var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		if direction != Vector2.ZERO:
+			if not _continuous.is_empty() and str(_continuous.phase) in ["requested", "prepared"] and direction.dot(_passage_heading) < -0.15:
+				_cancel_continuous("turned-back")
+				if _return_cancelled_passage(delta): return
 			_route.clear()
 			_site = ""
 			_pending_door = {}
 			_begin_walk()
+			_prepare_ahead(direction)
 			_step(direction * field.player.speed * delta, delta)
 		elif not _route.is_empty():
 			_begin_walk()
-			var difference: Vector2 = _route[0] - field.player.position
-			if difference.length() <= 1.0:
+			var remaining: float = field.player.speed * delta
+			for _segment in MAX_ROUTE_STEPS_PER_TICK:
+				var difference: Vector2 = _route[0] - field.player.position
+				if difference.length() > 1.0:
+					if remaining <= 0.0: break
+					var motion := difference.limit_length(remaining)
+					_prepare_ahead(difference)
+					_step(motion, delta)
+					# A doorway can submit a formal action and clear the local route.
+					if _route.is_empty() or not enabled(): return
+					remaining = maxf(0.0, remaining - motion.length())
+					if field.player.position.distance_to(_route[0]) > 1.0: break
 				_route.remove_at(0)
 				if _route.is_empty():
 					var site := _site
 					var door := _pending_door
 					_stop_walk("arrived")
 					if site != "": _interact(site)
-					elif not door.is_empty(): _submit(door, "", "doorway-click")
+					elif not door.is_empty() and _continuous.is_empty(): _submit(door, "", "doorway-click")
+					return
+			if field.player.position.distance_to(_progress) >= 0.5:
+				_progress = field.player.position
+				_stuck = 0.0
 			else:
-				_step(difference.limit_length(field.player.speed * delta), delta)
-				if field.player.position.distance_to(_progress) >= 0.5:
-					_progress = field.player.position
-					_stuck = 0.0
-				else:
-					_stuck += delta
-					if _stuck >= 0.5: _stop_walk("blocked")
+				_stuck += delta
+				if _stuck >= 0.5 and not _gate_waiting: _stop_walk("blocked")
 		elif _walking:
 			_stop_walk("released")
 
 	func _step(motion: Vector2, delta: float) -> void:
 		var next: Vector2 = field.player.position + motion
-		var room := str(field.snapshot.get("execution_room", field.snapshot.get("room", "")))
+		var room := _control_room()
 		var next_room: String = field.adapter.room_of(next)
 		var exit_map: String = field.adapter.manual_exit_target(next) if field.adapter.has_method("manual_exit_target") else ""
+		var admitted := not _continuous.is_empty() and str(_continuous.phase) == "prepared" and not bool(_continuous.cancelled) and next_room == str(_continuous.to_room)
+		if exit_map == "" and (next_room == room or admitted):
+			_gate_waiting = false
+			_move_body(motion, delta)
+			_check_continuous_arrival()
+			return
 		if next_room != room or exit_map != "":
 			if not field.adapter.walkable(next, field.player): return
-			_stop_walk("doorway")
+			if exit_map == "":
+				# An in-flight request never admits a second boundary. Keep the
+				# player's current legal movement and click route intact while the
+				# formal Prepare/Complete handshake settles this one doorway.
+				if _continuous.is_empty():
+					var candidate := _option_for_room(next_room)
+					if not candidate.is_empty(): _request_continuous(candidate, motion, "doorway-boundary", next)
+				if not _gate_waiting:
+					_gate_waiting = true
+					_stamp("continuous_gate_wait", _walk_id, {"room": room, "destination": next_room})
+				return
+			if not _continuous.is_empty(): return
 			for option in options:
 				var binding: Dictionary = option.get("interaction", {})
 				var destination: Dictionary = binding.get("destination", {})
 				if str(binding.get("kind", "")) == "doorway" and ((exit_map != "" and str(destination.get("map", "")) == exit_map) or (exit_map == "" and str(destination.get("map", "")) == field.adapter.map_key() and str(destination.get("room", "")) == next_room)):
+					if not _can_select(option):
+						_gate_waiting = true
+						return
+					_stop_walk("doorway")
 					_submit(option, "", "doorway")
 					return
 			return
+
+	func _move_body(motion: Vector2, delta: float) -> void:
+		if motion == Vector2.ZERO: return
 		field.player.velocity = motion / maxf(delta, 0.000001)
 		field.player.face_vector(motion)
 		field.player.pose("walk")
@@ -1285,26 +1891,45 @@ class SpatialInputInner extends Node:
 	func _unhandled_input(event: InputEvent) -> void:
 		if not enabled() or event.is_echo(): return
 		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			var site := str(field.hovered)
+			var point: Vector2 = field.get_global_transform_with_canvas().affine_inverse() * event.position
+			var hit: Dictionary = field.pointer_hit(point)
+			var site := str(hit.site)
 			if site != "": _approach(site)
-			else: _navigate(field.get_global_mouse_position())
+			else: _navigate(point)
 			get_viewport().set_input_as_handled()
 		elif event.is_action_pressed("interact") or event.is_action_pressed("dialogue_continue"):
 			var site := str(field.nearest)
 			if site != "": _interact(site)
 			else:
 				var door := _near_door()
-				if not door.is_empty(): _submit(door, "", "doorway-interact")
+				if not door.is_empty():
+					# The interact key may use the ordinary formal movement route;
+					# only held movement or a spatial destination keeps local control.
+					if _continuous.is_empty(): _submit(door, "", "doorway-interact")
+				elif can_submit():
+					var locale := TranslationServer.get_locale()
+					var text := "今はここで実行できる操作がありません。" if locale.begins_with("ja") else "There is no interaction available here right now." if locale.begins_with("en") else "此处暂时没有可执行的交互。"
+					field.field_event.emit({"kind": "interaction_hint", "text": text})
 			get_viewport().set_input_as_handled()
-		elif event.is_action_pressed("manuscript") or event.is_action_pressed("wait"):
-			_show_self_choices()
+		elif event.is_action_pressed("wait"):
+			request_wait()
 			get_viewport().set_input_as_handled()
 
 	func _navigate(point: Vector2) -> void:
+		if not _continuous.is_empty() and str(_continuous.phase) != "arrived":
+			_cancel_continuous("new-target")
+			return
 		_stop_walk("new-target")
 		var door := _door_option(point)
 		var destination_room: String = field.adapter.room_of(point)
-		var own_room := str(field.snapshot.get("execution_room", ""))
+		var own_room := _control_room()
+		if not door.is_empty() and field.adapter.has_method("doorway_landing"):
+			var destination: Dictionary = door.get("interaction", {}).get("destination", {})
+			destination_room = str(destination.get("execution_room", destination.get("room", "")))
+			var boundary: Dictionary = field.adapter.passage_at(field.player.position, point, own_room, destination_room, field.player) if field.adapter.has_method("passage_at") else {}
+			var landing: Variant = boundary.get("landing") if not boundary.is_empty() else field.adapter.doorway_landing(point, destination_room, field.player)
+			if landing == null: return
+			point = landing as Vector2
 		if not field.in_sight(point) and door.is_empty():
 			var doorway_visible := false
 			for direction in field.APPROACH:
@@ -1318,44 +1943,60 @@ class SpatialInputInner extends Node:
 		_route = NAV.route_on_grid(field.player.position, point, _local_grid(destination_room if destination_room != own_room else ""))
 		if not _route.is_empty():
 			_route.append(point)
-			_pending_door = door
+			if destination_room != own_room:
+				var passage := door if not door.is_empty() else _option_for_room(destination_room)
+				if not passage.is_empty(): _request_continuous(passage, point - field.player.position, "doorway-click", point)
 
 	func _door_option(point: Vector2) -> Dictionary:
 		if not field.adapter.has_method("doorway_rooms"): return {}
 		var rooms: Array[String] = field.adapter.doorway_rooms(point)
-		var own_room := str(field.snapshot.get("execution_room", ""))
-		if own_room not in rooms: return {}
+		var own_room := _control_room()
 		var found: Dictionary = {}
 		for option in options:
+			if not bool(option.get("available", true)): continue
 			var binding: Dictionary = option.get("interaction", {})
 			var target: Dictionary = binding.get("destination", {})
-			var room := str(target.get("room", ""))
-			if str(binding.get("kind", "")) == "doorway" and str(target.get("map", "")) == field.adapter.map_key() and room != own_room and room in rooms:
+			var room := str(target.get("execution_room", target.get("room", "")))
+			if str(binding.get("kind", "")) != "doorway" or str(target.get("map", "")) != field.adapter.map_key() or room == own_room: continue
+			var open_passage: Dictionary = field.adapter.passage_at(field.player.position, point, own_room, room, field.player) if field.adapter.has_method("passage_at") else {}
+			if (own_room in rooms and room in rooms) or not open_passage.is_empty():
 				if not found.is_empty(): return {}
 				found = option
 		return found
 
 	func _near_door() -> Dictionary:
-		var nearest: Dictionary = {}
-		var best := INF
-		for offset in [Vector2.ZERO, Vector2.UP * 24, Vector2.DOWN * 24, Vector2.LEFT * 24, Vector2.RIGHT * 24]:
-			var point: Vector2 = field.player.position + offset
-			if not field.adapter.walkable(point, field.player): continue
-			var choice := _door_option(point)
-			if not choice.is_empty() and offset.length_squared() < best:
-				nearest = choice
-				best = offset.length_squared()
-		return nearest
+		var candidates: Dictionary = {}
+		var own_room := str(field.snapshot.get("execution_room", ""))
+		if field.adapter.has_method("doorway_rooms"):
+			for offset in [Vector2.ZERO, Vector2.UP * 24, Vector2.DOWN * 24, Vector2.LEFT * 24, Vector2.RIGHT * 24]:
+				var point: Vector2 = field.player.position + offset
+				if not field.adapter.walkable(point, field.player): continue
+				var rooms: Array[String] = field.adapter.doorway_rooms(point)
+				for option: Dictionary in options:
+					if not bool(option.get("available", true)): continue
+					var binding: Dictionary = option.get("interaction", {})
+					var target: Dictionary = binding.get("destination", {})
+					var room := str(target.get("execution_room", target.get("room", "")))
+					if str(binding.get("kind", "")) != "doorway" or str(target.get("map", "")) != field.adapter.map_key() or room == own_room: continue
+					var open_passage: Dictionary = field.adapter.passage_at(field.player.position, point, own_room, room, field.player) if field.adapter.has_method("passage_at") else {}
+					if (own_room in rooms and room in rooms) or not open_passage.is_empty():
+						candidates[str(option.id)] = option
+		if field.adapter.has_method("manual_exit_targets_near"):
+			var targets: Array[String] = field.adapter.manual_exit_targets_near(field.player.position, 24.0)
+			for option: Dictionary in options:
+				if not bool(option.get("available", true)): continue
+				var binding: Dictionary = option.get("interaction", {})
+				var destination: Dictionary = binding.get("destination", {})
+				if str(binding.get("kind", "")) == "doorway" and str(destination.get("map", "")) in targets:
+					candidates[str(option.id)] = option
+		# One currently admitted action across every nearby doorway, or no guess.
+		return candidates.values()[0] if candidates.size() == 1 else {}
 
 	func _local_grid(destination_room := "") -> AStarGrid2D:
-		var grid: AStarGrid2D = field.adapter.nav_grid(field.player)
-		var room := str(field.snapshot.get("execution_room", ""))
-		for y in range(grid.region.position.y, grid.region.end.y):
-			for x in range(grid.region.position.x, grid.region.end.x):
-				var cell := Vector2i(x, y)
-				var candidate_room: String = field.adapter.room_of(grid.get_point_position(cell))
-				if candidate_room != room and candidate_room != destination_room: grid.set_point_solid(cell)
-		return grid
+		# This room mask belongs to this request. Never write it into the map's
+		# shared grid when there happen to be no other bodies in the room.
+		var room := _control_room()
+		return field.adapter.local_nav_grid(field.player, room, destination_room)
 
 	func _approach(site: String) -> void:
 		if not field.site_visible(site): return
@@ -1392,36 +2033,57 @@ class SpatialInputInner extends Node:
 		return result
 
 	func _interact(site: String) -> void:
-		if not _in_reach(site): return
+		if not _continuous.is_empty():
+			_cancel_continuous("interaction-requested")
+			return
+		if not can_submit() or not _in_reach(site): return
 		_stop_walk("interaction")
-		var choices := choices_for(site)
-		if choices.size() == 1: _submit(choices[0], site, "hotspot")
+		var choices: Array = []
+		for option: Dictionary in choices_for(site):
+			if bool(option.get("available", true)) and _can_select(option): choices.append(option)
+		if choices.is_empty():
+			field.field_event.emit({"kind": "interaction_hint", "text": tr("此处暂时没有可进行的调查或交谈。")})
+		elif choices.size() == 1: _submit(choices[0], site, "hotspot")
 		elif choices.size() > 1:
 			var id := _id()
 			_stamp("input_request", id, {"site": site, "request": "local-choices"})
 			field.field_event.emit({"kind": "spatial_choices", "interaction_id": id, "site": site, "title": field.sites[site].title, "options": choices, "screen_position": field.get_global_transform_with_canvas() * field.site_point(site)})
 
-	func _show_self_choices() -> void:
+	func request_wait() -> void:
+		if not can_submit(): return
+		if not _continuous.is_empty():
+			_cancel_continuous("self-interaction-requested")
+			return
 		var choices: Array = []
 		for option in options:
-			if str(option.get("interaction", {}).get("kind", "")) == "self": choices.append(option)
-		if choices.is_empty(): return
+			var binding: Dictionary = option.get("interaction", {})
+			if str(binding.get("kind", "")) == "self" and str(binding.get("purpose", "")) == "wait": choices.append(option)
+		if choices.is_empty():
+			field.field_event.emit({"kind": "interaction_hint", "text": tr("此刻没有已知的等待安排，可以先调查身边的物件或与人交谈。")})
+			return
 		var id := _id()
 		_stamp("input_request", id, {"site": "self", "request": "local-choices"})
-		field.field_event.emit({"kind": "spatial_choices", "interaction_id": id, "site": "self", "title": "随身手稿", "options": choices, "screen_position": field.get_global_transform_with_canvas() * field.player.position})
+		field.field_event.emit({"kind": "spatial_choices", "interaction_id": id, "site": "self", "title": tr("在此等候"), "options": choices, "screen_position": field.get_global_transform_with_canvas() * field.player.position})
 
 	func select(id: String, site: String) -> void:
-		if submitted or (site != "self" and not _in_reach(site)): return
+		if submitted or not _continuous.is_empty() or (site != "self" and not _in_reach(site)): return
+		var action_id := id
+		if id.begins_with("{"):
+			var envelope: Variant = JSON.parse_string(id)
+			if envelope is not Dictionary or not envelope.get("action_id") is String or not envelope.get("hypothesis_id") is String: return
+			action_id = str(envelope.action_id)
 		for option in options:
-			if str(option.id) == id and ((site == "self" and str(option.get("interaction", {}).get("kind", "")) == "self") or option in choices_for(site)):
-				_submit(option, site, "local-choice")
+			if str(option.id) == action_id and ((site == "self" and str(option.get("interaction", {}).get("kind", "")) == "self") or option in choices_for(site)):
+				_submit(option, site, "local-choice", id)
 				return
 
-	func _submit(option: Dictionary, site: String, source: String) -> void:
+	func _submit(option: Dictionary, site: String, source: String, selection := "") -> void:
+		if not can_submit() or submitted or not _continuous.is_empty() or not _can_select(option): return
 		var id := _id()
-		_stamp("input_request", id, {"choice_id": option.id, "site": site, "source": source, "game_time": field.snapshot.get("game_time", 0)})
+		var payload := str(option.id) if selection.is_empty() else selection
+		_stamp("input_request", id, {"choice_id": payload, "action_id": option.id, "site": site, "source": source, "game_time": field.snapshot.get("game_time", 0)})
 		submitted = true
-		field.field_event.emit({"kind": "select", "choice_id": option.id, "site": site, "interaction_id": id, "context": field.context()})
+		field.field_event.emit({"kind": "select", "choice_id": payload, "site": site, "interaction_id": id, "context": field.context()})
 
 class FieldNavigationInner extends RefCounted:
 	const CLICK_TARGET_WIDTH := 24.0
@@ -1455,7 +2117,20 @@ class FieldNavigationInner extends RefCounted:
 		var from := _free_endpoint(grid, start)
 		var to := _free_endpoint(grid, finish)
 		if from.x < 0 or to.x < 0: return PackedVector2Array()
-		return grid.get_point_path(from, to)
+		return _without_collinear_points(grid.get_point_path(from, to))
+
+	## Remove only redundant points on the same directed segment. No diagonal
+	## shortcut, wall clearance, endpoint or turn is changed by this reduction.
+	static func _without_collinear_points(points: PackedVector2Array) -> PackedVector2Array:
+		if points.size() < 3: return points
+		var result := PackedVector2Array([points[0]])
+		for index in range(1, points.size() - 1):
+			var before := points[index] - result[result.size() - 1]
+			var after := points[index + 1] - points[index]
+			if before.cross(after) == 0.0 and before.dot(after) > 0.0: continue
+			result.append(points[index])
+		result.append(points[points.size() - 1])
+		return result
 
 	static func _free_endpoint(grid: AStarGrid2D, point: Vector2) -> Vector2i:
 		var cell := Vector2i(((point - grid.offset) / grid.cell_size).round())

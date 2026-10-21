@@ -1679,14 +1679,87 @@ fn dvp_rejected_signature(actor, action, mind):
         opportunity = {"context": dv_find(actor, "visible_context", []), "observed_location": dv_find(actor, "visible_context_location", false), "visibility_available": dv_find(actor, "visible_context_clear", false)}
     return {"precondition": dvp_rejected_condition_signature(mind, action.precondition), "prediction": prediction, "location": location, "opportunity": opportunity}
 
+// A control retry token comes from a rejected native contact receipt or a
+// verified source-side cancellation with exactly equal start/end positions.
+// It never grants facts, bypasses subject admission, or changes AI retry guards.
+// The host attests only a real, identity-checked manual cancellation in the
+// source room. This authorizes a fresh input attempt, never a target success.
+fn dvs_manual_continuous_cancel(action, receipt, subject):
+    let field = dv_find(receipt, "field", [])
+    let proof = dv_find(field, "continuous_cancel", false)
+    if proof == false or not dv_record_like(proof):
+        return false
+    if dv_find(proof, "version", "") != "source-cancel-v1" or not dv_find(proof, "identity_verified", false):
+        return false
+    if action.kind != "move" or dv_has_key(dv_find(action, "travel", []), "station"):
+        return false
+    let travel = dv_find(action, "travel", [])
+    if dv_find(travel, "from", "") == "" or dv_find(travel, "to", "") == "" or travel.from == travel.to:
+        return false
+    if dv_find(field, "kind", "") != "daily" or dv_find(field, "status", "") != "blocked" or not dv_find(field, "continuous_walk", false):
+        return false
+    if dv_find(field, "reason", "") != "released" or dv_find(proof, "reason", "") != "released":
+        return false
+    if dv_find(field, "who", "") != subject or dv_find(field, "action", "") != action.id or dv_find(proof, "actor", "") != subject or dv_find(proof, "action", "") != action.id or dv_find(proof, "action_event", "") != receipt.action_event:
+        return false
+    let request = dv_find(field, "request_id", "")
+    let serial = dv_find(field, "serial", false)
+    if request == "" or request != dv_find(proof, "request_id", "") or not rt_is_numeric_value(serial) or serial <= 0 or not dv_same(serial, dv_find(proof, "serial", false)):
+        return false
+    let from_room = dv_find(proof, "from_room", "")
+    let to_room = dv_find(proof, "to_room", "")
+    let map = dv_find(proof, "map", "")
+    if from_room == "" or to_room == "" or from_room == to_room or map == "" or dv_find(field, "source_room", "") != from_room or dv_find(field, "room", "") != from_room or dv_find(field, "source_map", "") != map or dv_find(field, "map", "") != map:
+        return false
+    if not dv_same(dv_find(field, "transitions", false), []) or not dv_same(dv_find(proof, "transitions", false), []):
+        return false
+    let fields = ["source_position", "actual_position"]
+    var i = 0
+    while i < rt_count(fields):
+        let position = dv_find(field, fields[i], false)
+        if not rt_is_list(position) or rt_count(position) != 2 or not dv_same(position, dv_find(proof, fields[i], false)):
+            return false
+        if not rt_is_numeric_value(position[0]) or not rt_is_numeric_value(position[1]):
+            return false
+        i = i + 1
+    if not dv_same(field.source_position, field.actual_position):
+        return false
+    let source_geometry = dv_find(field, "source_geometry", "")
+    if not dv_has(["interior", "source-side-doorway"], source_geometry) or dv_find(proof, "source_geometry", "") != source_geometry:
+        return false
+    return true
+
+fn dvs_manual_contact_failure(action, receipt, subject):
+    if dv_find(receipt, "executor", "") != "godot" or dv_find(receipt, "outcome", "") != "rejected":
+        return ""
+    if dvs_manual_continuous_cancel(action, receipt, subject):
+        return "native-continuous-source-cancel"
+    let field = dv_find(receipt, "field", [])
+    if dv_find(field, "executor", "") == "dv-world" and dv_find(field, "contact", true) == false:
+        let site = dv_find(field, "site", "")
+        if site != "" and site != "self":
+            return "contact-out-of-reach"
+    if dv_find(field, "kind", "") != "daily" or dv_find(field, "status", "") != "blocked" or dv_find(field, "who", "") != subject or dv_find(field, "action", "") != action.id or dv_find(field, "reason", "") != "":
+        return ""
+    let proof = ["station", "approach_point", "station_point", "station_radius", "arrival_tolerance", "actual_position", "arrival_error"]
+    var i = 0
+    while i < rt_count(proof):
+        if not dv_has_key(field, proof[i]):
+            return ""
+        i = i + 1
+    return "native-motion-blocked"
+
 fn dvp_eligible_base(actor, action, mind, relevant):
     if dv_find(action, "manual_only", false) and not dv_find(actor, "manual_input", false):
         return false
     var id = action.id
-    var used = dv_find(actor, "used", [])
+    // Success limits and attempt history are deliberately separate.
+    var used = dv_find(actor, "completed_actions", [])
+    let retry = dv_find(dv_find(actor, "manual_contact_retries", []), id, false)
+    let explicit_contact_retry = dv_find(actor, "manual_input", false) and retry != false and (dv_find(retry, "failure_class", "") != "native-continuous-source-cancel" or dv_same(dv_find(retry, "source_signature", false), dvp_rejected_signature(actor, action, mind)))
     let rejected = dv_find(dv_find(actor, "rejected_attempt_signatures", []), id, false)
     if rejected != false:
-        if dv_same(rejected, dvp_rejected_signature(actor, action, mind)):
+        if dv_same(rejected, dvp_rejected_signature(actor, action, mind)) and not explicit_contact_retry:
             return false
     if dv_and((not dv_find(actor, "cognition_blocked", false)), dv_and(dv_find(action, "argument_available", true), (dv_truth(mind, action.precondition) == "true"))):
         if action.kind == "inspect":
@@ -1724,7 +1797,7 @@ fn dvp_eligible_base(actor, action, mind, relevant):
                 return dv_and((dvs_speech_truth(actor.mind, action.speech) == "true"), local_2)
             else:
                 if (action.kind == "replay"):
-                    return 0 < dv_find(actor.policy, "model_budget", 0) and (not dv_same(dv_find(dv_find(actor, "replay_attempt_signatures", []), id, false), dvp_input_signature(actor, action, relevant)))
+                    return 0 < dv_find(actor.policy, "model_budget", 0) and dvs_replay_has_available_candidate(dvp_actor_view(actor, mind)) and (not dv_same(dv_find(dv_find(actor, "replay_attempt_signatures", []), dvs_replay_attempt_key(action), false), dvs_replay_input_signature(actor, action, relevant)))
                 else:
                     if dv_find(action, "once", false):
                         return (not dv_has(used, id))
@@ -2138,7 +2211,7 @@ fn dvp_plan(actor, bindings, costs):
                             let req_room = dv_find(action, "required_room", "")
                             if req_room != "" and req_room != node.room:
                                 spatially_possible = false
-                    if spatially_possible and (depth == 0 or not dv_find(action, "known_opportunity_wait", false)) and dvp_eligible(node_actor, action, mind, relevant):
+                    if spatially_possible and not dv_has(node.tasks, action.id) and (depth == 0 or not dv_find(action, "known_opportunity_wait", false)) and dvp_eligible(node_actor, action, mind, relevant):
                         if dv_has_key(actor.policy, "remaining_game_time"):
                             if (actor.policy.remaining_game_time < (dv_find(node, "elapsed", 0) + dv_get(costs, action.kind).maximum.time)):
                                 time_blocked = (time_blocked + 1)
@@ -5846,46 +5919,7 @@ fn dvs_dispatch_due(state, index):
 // it does not synchronize a mind clock or establish cognition's full dependency set.
 // Non-clock reads are stable only while the caller separately retains their inputs.
 fn dvs_known_clock_boundary(condition, clock, now, limit):
-    let fallback = {"complete": false, "next": dv_min(limit, now + 1)}
-    if not dv_record_like(condition) or not dv_has_key(condition, "op"):
-        return fallback
-    let op = condition.op
-    if op == "constant":
-        if not dv_has_key(condition, "value"):
-            return fallback
-        return {"complete": true, "next": limit}
-    if op == "not":
-        if not dv_has_key(condition, "item"):
-            return fallback
-        return dvs_known_clock_boundary(condition.item, clock, now, limit)
-    if op == "all":
-        if not dv_has_key(condition, "items") or not rt_is_list(condition.items):
-            return fallback
-        var next = limit
-        var i = 0
-        while i < rt_count(condition.items):
-            let part = dvs_known_clock_boundary(condition.items[i], clock, now, limit)
-            if not part.complete:
-                return fallback
-            next = dv_min(next, part.next)
-            i = i + 1
-        return {"complete": true, "next": next}
-    if (op != "equals" and op != "at_least") or not dv_has_key(condition, "ref") or not dv_has_key(condition, "value"):
-        return fallback
-    if not dv_record_like(condition.ref) or dv_find(condition.ref, "type", "") != "ref" or not dv_has_key(condition.ref, "object") or not dv_has_key(condition.ref, "facet") or not dv_has_key(condition.ref, "field"):
-        return fallback
-    if clock == false:
-        return fallback
-    if not dv_same(condition.ref, clock):
-        return {"complete": true, "next": limit}
-    if not rt_is_numeric_value(condition.value):
-        return fallback
-    if now < condition.value:
-        // Invalidation may precede an ordinary tick; it never advances time.
-        return {"complete": true, "next": dv_min(condition.value, limit)}
-    if op == "equals" and now == condition.value:
-        return {"complete": true, "next": dv_min(now, limit)}
-    return {"complete": true, "next": limit}
+    return dv_time_boundary(condition, clock, now, limit, "invalidate")
 
 // Complete owned state except administrative scan/dispatch cursors. Their
 // append-only event inputs are checked separately; no mind or budget is removed.
@@ -6128,7 +6162,6 @@ fn dvs_prepare_actor(state):
         if dv_find(state, "player_selection", "") == "":
             actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"remaining_game_time": horizon - time, "plan_budget": dv_find(actor, "planning_limit", dv_find(actor.policy, "plan_budget", 0))}))
             if dv_find(state, "player_actor", "") != actor.id:
-                actor = dv_with(actor, "policy", dv_with_many(actor.policy, {"fast_approximation": true, "lookahead_limit": 4, "positive_move_root_stop": true, "plan_depth": 1, "plan_budget": 32}))
                 if dvs_idle_proof_supported(actor):
                     idle_before = rt_snapshot(dvs_idle_subject_input(actor, costs))
                     idle_events_before = rt_count(events)
@@ -6345,11 +6378,23 @@ fn dvs_session_complete(state, receipt):
                 actor = actors[index]
     if dv_and((action.kind == "replay"), (result.execution.status == "applied")):
         var candidates = dv_find(actor.policy, "hypotheses", [])
+        let manual_id = dv_find(action, "replay_hypothesis_id", "")
+        if manual_id != "":
+            let selected = dvs_manual_candidate(actor, manual_id)
+            candidates = []
+            // Complete may occur after a queued wait; never reuse stale admission.
+            if selected != false:
+                candidates = [selected]
+                actor = dv_with(actor, "last_manual_replay", manual_id)
+            else:
+                dvs_event(events, "manual_replay_unavailable", id, time, [parent], {"action_id": action.id, "hypothesis_id": manual_id, "reason": "subject-admission-changed"})
         var k = 0
         var simulations = dv_find(actor, "simulations", [])
         var coverages = []
         var factor_rejections = []
         actor = dv_with_many(actor, {"model_paid_event": parent, "policy": dv_with(actor.policy, "model_work_remaining", dv_find(model, "work_limit", 0))})
+        // Paid constraint proofs still exclude competitors. Selecting one model
+        // must not make evidence-backed formal answers require exhaustive replay.
         if (0 < rt_count(dv_find(actor.policy, "factor_constraints", []))):
             var prune = dvs_factor_prune(actor, events, time, parent)
             var certificates = []
@@ -6365,7 +6410,7 @@ fn dvs_session_complete(state, receipt):
                 false
             else:
                 coverages = dv_with(coverages, coverage_key, dvs_factor_coverage(actor, candidate, events))
-            if dv_and(dvp_topic(actor, candidate), dv_and((0 < rt_count(dv_find(candidate, "basis", []))), (dv_truth(actor.mind, dv_find(candidate, "available_when", dv_true())) == "true"))):
+            if dvs_replay_candidate_available(actor, candidate):
                 if dvs_factor_covered(candidate, dv_get(coverages, coverage_key).certificates):
                     rt_push(factor_rejections, candidate.id)
                 else:
@@ -6387,7 +6432,9 @@ fn dvs_session_complete(state, receipt):
                         simulations = dv_with(simulations, candidate.id, dv_with_many(simulation, {"event": events[(rt_count(events) - 1)].id, "source_revision": actor.mind.revision}))
                         actor = dv_with_many(actor, {"model_previous_event": events[(rt_count(events) - 1)].id, "last_cognitive_event": events[(rt_count(events) - 1)].id, "policy": dv_with_many(actor.policy, {"model_budget": simulation.remaining, "model_work_remaining": simulation.work_remaining})})
             k = (k + 1)
-        actor = dv_with_many(actor, {"simulations": simulations, "factor_rejections": {"source_revision": actor.mind.revision, "ids": factor_rejections}})
+        actor = dv_with(actor, "simulations", simulations)
+        if manual_id == "":
+            actor = dv_with(actor, "factor_rejections", {"source_revision": actor.mind.revision, "ids": factor_rejections})
     if dv_has_key(actor, "location_ref"):
         var cell = dv_read(physical, actor.location_ref)
         if cell.known:
@@ -6395,11 +6442,17 @@ fn dvs_session_complete(state, receipt):
     if dv_has_key(action, "answer"):
         actor = dv_with(actor, "answer_attempt_signatures", dv_with(dv_find(actor, "answer_attempt_signatures", []), action.id, dvp_input_signature(actor, action, choice.relevant_refs)))
     if (action.kind == "replay"):
-        actor = dv_with(actor, "replay_attempt_signatures", dv_with(dv_find(actor, "replay_attempt_signatures", []), action.id, dvp_input_signature(actor, action, choice.relevant_refs)))
+        actor = dv_with(actor, "replay_attempt_signatures", dv_with(dv_find(actor, "replay_attempt_signatures", []), dvs_replay_attempt_key(action), dvs_replay_input_signature(actor, action, choice.relevant_refs)))
         if result.execution.status == "applied" and id == dv_find(state, "player_actor", ""):
             actor = dv_with(actor, "manual_replay_refresh", true)
     if action.kind == "inspect" and result.execution.status == "applied":
         actor = dv_with(actor, "inspection_attempt_signatures", dv_with(dv_find(actor, "inspection_attempt_signatures", []), action.id, dvp_inspection_signature(actor, action, actor.mind)))
+    var retry = false
+    if result.execution.status != "applied" and id == dv_find(state, "player_actor", ""):
+        let failure_class = dvs_manual_contact_failure(action, receipt, id)
+        if failure_class != "":
+            retry = {"failure_class": failure_class, "action_event": action_event, "source_signature": dvp_rejected_signature(actor, action, actor.mind)}
+    actor = dv_with(actor, "manual_contact_retries", dv_with(dv_find(actor, "manual_contact_retries", []), action.id, retry))
     if result.execution.status != "applied":
         actor = dv_with(actor, "rejected_attempt_signatures", dv_with(dv_find(actor, "rejected_attempt_signatures", []), action.id, dvp_rejected_signature(actor, action, actor.mind)))
     else:
@@ -6658,32 +6711,7 @@ fn dvs_environment(physical, story, events, parent):
 
 // Match the old minute lattice, including a fractional action completion.
 fn dvs_environment_boundary(condition, clock, now, due):
-    let op = condition.op
-    if op == "constant":
-        return due
-    if op == "not":
-        return dvs_environment_boundary(condition.item, clock, now, due)
-    if op == "all":
-        var next = due
-        var i = 0
-        while i < rt_count(condition.items):
-            next = dv_min(next, dvs_environment_boundary(condition.items[i], clock, now, due))
-            i = i + 1
-        return next
-    if not dv_same(condition.ref, clock):
-        return due
-    if op != "at_least" or not rt_is_numeric_value(condition.value):
-        return dv_min(due, now + 1)
-    // A distant bound cannot be crossed in this wait: do not count toward it.
-    if due < condition.value:
-        return due
-    if now < condition.value:
-        let delta = condition.value - now
-        var steps = 1
-        while steps < delta:
-            steps = steps + 1
-        return dv_min(due, now + steps)
-    return due
+    return dv_time_boundary(condition, clock, now, due, "minute").next
 
 // A process that can still change the world requires another ordinary minute.
 // This retains repeated increments, conflicting writes and ordered cascades.
@@ -6811,6 +6839,76 @@ fn dvs_set_player(state, actor):
 fn dvs_control_state(state, actors, events, cursor, player, selection, waiting):
     return dvs_owned_state_update(state, {"actors": actors, "events": events, "cursor": cursor, "player_actor": player, "player_selection": selection, "awaiting_player": waiting})
 
+// Manual envelopes are transient input; permanent action identity is unchanged.
+fn dvs_manual_selection(selection):
+    if rt_is_text(selection):
+        return {"action_id": selection, "hypothesis_id": ""}
+    dv_require(rt_is_list(selection), "Player selection must be an action ID or data envelope")
+    dv_require(rt_is_text(dv_find(selection, "action_id", false)), "Player action ID must be text")
+    dv_require(rt_is_text(dv_find(selection, "hypothesis_id", "")), "Player hypothesis ID must be text")
+    return selection
+
+// Admission and paid Complete use the same subject-local candidate conditions.
+fn dvs_replay_candidate_available(actor, candidate):
+    return dvp_topic(actor, candidate) and 0 < rt_count(dv_find(candidate, "basis", [])) and dv_truth(actor.mind, dv_find(candidate, "available_when", dv_true())) == "true"
+
+fn dvs_replay_has_available_candidate(actor):
+    let candidates = dv_find(actor.policy, "hypotheses", [])
+    // A factor-only replay has no candidate catalog to enable. Keep its existing
+    // paid constraint path; a populated catalog must have an enabled candidate.
+    if rt_count(candidates) == 0:
+        return 0 < rt_count(dv_find(actor.policy, "factor_constraints", []))
+    let key = ["dvs_replay_has_available_candidate", actor.id, candidates, dv_has_key(actor, "question_ref"), dv_find(actor, "question_ref", false), dv_find(actor.policy, "topic_bindings", []), dv_find(actor, "heard_topics", [])]
+    let cached = rt_memo_get(actor.mind, key)
+    if cached[0]:
+        return cached[1]
+    var i = 0
+    while i < rt_count(candidates):
+        if dvs_replay_candidate_available(actor, candidates[i]):
+            return rt_memo_put(actor.mind, key, true)
+        i = i + 1
+    return rt_memo_put(actor.mind, key, false)
+
+fn dvs_manual_candidate_available(actor, candidate):
+    return dvs_replay_candidate_available(actor, candidate) and dv_truth(actor.mind, dv_find(candidate, "manual_available_when", dv_true())) == "true"
+
+fn dvs_manual_candidate(actor, id):
+    let candidates = dv_find(actor.policy, "hypotheses", [])
+    var i = 0
+    while i < rt_count(candidates):
+        let candidate = candidates[i]
+        if candidate.id == id:
+            if dvs_manual_candidate_available(actor, candidate):
+                return candidate
+            return false
+        i = i + 1
+    return false
+
+fn dvs_replay_attempt_key(action):
+    let id = dv_find(action, "replay_hypothesis_id", "")
+    if id == "":
+        return action.id
+    return rt_json_stringify([action.id, id])
+
+fn dvs_replay_input_signature(actor, action, refs):
+    let original = dvp_input_signature(actor, action, refs)
+    if dv_find(action, "replay_hypothesis_id", "") == "":
+        return original
+    return dv_with_many(original, {"hypothesis_id": action.replay_hypothesis_id, "subject_revision": actor.mind.revision})
+
+fn dvs_manual_action(actor, selection):
+    let input = dvs_manual_selection(selection)
+    var action = dvp_find_action(actor.actions, input.action_id)
+    dv_require(action != false, "Unknown player action")
+    let hypothesis = dv_find(input, "hypothesis_id", "")
+    if action.kind == "replay":
+        dv_require(hypothesis != "", "Choose a hypothesis before replay")
+        dv_require(dvs_manual_candidate(actor, hypothesis) != false, "Hypothesis is no longer available to this subject")
+        action = dv_with(action, "replay_hypothesis_id", hypothesis)
+    else:
+        dv_require(hypothesis == "", "Hypotheses apply only to replay")
+    return action
+
 fn dvs_player_options(actor):
     var result = []
     let view = dv_with(actor, "manual_input", true)
@@ -6828,15 +6926,14 @@ fn dvs_player_options(actor):
 fn dvs_select_player(state, id):
     dv_require(dv_find(state, "awaiting_player", false), "Player input is not currently requested")
     let actor = state.actors[state.cursor]
-    let action = dvp_find_action(actor.actions, id)
+    let action = dvs_manual_action(actor, id)
     let view = dv_with(actor, "manual_input", true)
-    dv_require(action != false, "Unknown player action")
     dv_require(dvp_eligible(view, action, actor.mind, dvp_goal_refs(actor)), "Player action is no longer available")
     return dvs_control_state(state, state.actors, state.events, state.cursor, dv_find(state, "player_actor", ""), id, false)
 
 fn dvs_player_choice(actor, id):
-    let action = dvp_find_action(actor.actions, id)
+    let action = dvs_manual_action(actor, id)
     let view = dv_with(actor, "manual_input", true)
-    dv_require(action != false and dvp_eligible(view, action, actor.mind, dvp_goal_refs(actor)), "Player action failed subject admission")
+    dv_require(dvp_eligible(view, action, actor.mind, dvp_goal_refs(actor)), "Player action failed subject admission")
     return {"action": action, "score": 0, "plan_expansions": 0, "plans": [], "relevant_refs": dvp_goal_refs(actor), "dependency_cache": dv_find(actor, "dependency_cache", false), "controller": "player"}
 

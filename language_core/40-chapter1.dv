@@ -8,6 +8,20 @@
 // E2 or E9/E10 may show the motive; the full reason remains personally supported.
 // Speech candidates share the one actual opening transition. Every fragment uses original words.
 
+// 文件内称谓只展开为原有标识，不改变对象身份或授予认识。
+称谓 乙区门厅 为「foyer」。
+称谓 乙区大厅 为「hall」。
+称谓 侦探 为「detective」。
+称谓 所在地 为「location」。
+称谓 备餐间 为「pantry」。
+称谓 开放状态 为「open」。
+称谓 恶魔 为「demon」。
+称谓 起居厅 为「living_hall」。
+称谓 雀儿 为「quer」。
+称谓 沈鼎 为「shen」。
+称谓 霍铎 为「huo」。
+称谓 苏泠 为「su」。
+
 fn c1_source(path, line, id):
     return {"path": path, "line": line, "id": id}
 
@@ -146,29 +160,67 @@ fn c1_position(actor, room):
 fn c1_edges():
     return [dv_pair("R05", "corridor"), dv_pair("R06", "corridor"), dv_pair("R07", "corridor"), dv_pair("R08", "corridor"), dv_pair("corridor", "hall"), dv_pair("hall", "pantry"), dv_pair("hall", "foyer")]
 
-fn c1_inspect_E1(actor):
-    return c1_once(c1_action(rt_cat(actor, ".inspect.E1"), "inspect", c1_at(actor, "foyer"), c1_at(actor, "foyer"), "", dv_single(c1_knowledge("bolt_down")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 69, "E1")))
+行动 c1_inspect_E1，给定 行动者：
+    编号 rt_cat(行动者, ".inspect.E1")。
+    类别 "inspect"。
+    本人须知 行动者 位于 乙区门厅。
+    现场要求 行动者 位于 乙区门厅。
+    遵循 ""。
+    可获知 dv_single(c1_knowledge("bolt_down"))。
+    依据 [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 69, "E1")]。
+    仅一次 true。
 
-fn c1_visible_E1():
-    return "门内侧的插闩落在闩槽里。\n门外侧另有一道横闩，从这一侧拉不动。\n门上的猫眼，玻璃外侧糊满烟灰，看出去一片黑。\n门内侧压着一张泛黄的旧纸，题头是铅印的《事故隔离规程》，没有署名和落款日期。\n旧纸写着：泄漏后，各寝区的隔离门从外侧落闩。查明本区事故经过，由当值者向铜口陈述前，不得开启。\n末行另写：急病者可经铜口呼叫转移。"
+叙述 c1_visible_E1：
+    门内侧的插闩落在闩槽里。
+    门外侧另有一道横闩，从这一侧拉不动。
+    门上的猫眼，玻璃外侧糊满烟灰，看出去一片黑。
+    门内侧压着一张泛黄的旧纸，题头是铅印的《事故隔离规程》，没有署名和落款日期。
+    旧纸写着：泄漏后，各寝区的隔离门从外侧落闩。查明本区事故经过，由当值者向铜口陈述前，不得开启。
+    末行另写：急病者可经铜口呼叫转移。
 
-fn c1_inspect_E2(actor):
-    return c1_once(c1_action(rt_cat(actor, ".inspect.E2"), "inspect", c1_at(actor, "foyer"), c1_at(actor, "foyer"), "", [], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 70, "E2")))
+行动 c1_inspect_E2，给定 行动者：
+    编号 rt_cat(行动者, ".inspect.E2")。
+    类别 "inspect"。
+    本人须知 行动者 位于 乙区门厅。
+    现场要求 行动者 位于 乙区门厅。
+    遵循 ""。
+    可获知 []。
+    依据 [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 70, "E2")]。
+    仅一次 true。
 
-fn c1_visible_E2():
-    return "门内地面铺着一片扇形的灰，窄端贴着门缝，向门厅里散开。\n东南墙角躺着一枚木楔：上面一层灰，底面干净。楔尖有新的磨痕。\n门底边有一道擦痕。"
+叙述 c1_visible_E2：
+    门内地面铺着一片扇形的灰，窄端贴着门缝，向门厅里散开。
+    东南墙角躺着一枚木楔：上面一层灰，底面干净。楔尖有新的磨痕。
+    门底边有一道擦痕。
 
-fn c1_inspect_E3(actor):
-    return c1_once(c1_action(rt_cat(actor, ".inspect.E3"), "inspect", c1_at(actor, "foyer"), c1_at(actor, "foyer"), "", dv_single(c1_knowledge("boots_toward_bolt")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 71, "E3")))
+行动 c1_inspect_E3，给定 行动者：
+    编号 rt_cat(行动者, ".inspect.E3")。
+    类别 "inspect"。
+    本人须知 行动者 位于 乙区门厅。
+    现场要求 行动者 位于 乙区门厅。
+    遵循 ""。
+    可获知 dv_single(c1_knowledge("boots_toward_bolt"))。
+    依据 [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 71, "E3")]。
+    仅一次 true。
 
-fn c1_visible_E3():
-    return "灰上有一枚马球靴印，踩得很清楚。\n鞋尖朝着门侧的插闩。\n鞋跟一端被什么东西压过。"
+叙述 c1_visible_E3：
+    灰上有一枚马球靴印，踩得很清楚。
+    鞋尖朝着门侧的插闩。
+    鞋跟一端被什么东西压过。
 
-fn c1_inspect_E4(actor):
-    return c1_once(c1_action(rt_cat(actor, ".inspect.E4"), "inspect", c1_at(actor, "foyer"), c1_at(actor, "foyer"), "", dv_single(c1_knowledge("cloth_after_boots")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 72, "E4")))
+行动 c1_inspect_E4，给定 行动者：
+    编号 rt_cat(行动者, ".inspect.E4")。
+    类别 "inspect"。
+    本人须知 行动者 位于 乙区门厅。
+    现场要求 行动者 位于 乙区门厅。
+    遵循 ""。
+    可获知 dv_single(c1_knowledge("cloth_after_boots"))。
+    依据 [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 72, "E4")]。
+    仅一次 true。
 
-fn c1_visible_E4():
-    return "一条拧过的湿抹布，沿门底压成一条直线，正好贴着闭合的门。\n布的一端压住了靴印的鞋跟边缘。"
+叙述 c1_visible_E4：
+    一条拧过的湿抹布，沿门底压成一条直线，正好贴着闭合的门。
+    布的一端压住了靴印的鞋跟边缘。
 
 fn c1_inspect_E5(actor):
     var local_1 = false
@@ -178,14 +230,25 @@ fn c1_inspect_E5(actor):
         local_1 = dv_single(c1_knowledge("fork_dent"))
     return c1_once(c1_action(rt_cat(actor, ".inspect.E5"), "inspect", c1_at(actor, "foyer"), c1_at(actor, "foyer"), "", local_1, c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 73, "E5")))
 
-fn c1_visible_E5():
-    return "地上一把纯银音叉，柄上刻着“S.L.”。\n门框齐肩高的地方，有一个很小的凹痕。"
+叙述 c1_visible_E5：
+    地上一把纯银音叉，柄上刻着“S.L.”。
+    门框齐肩高的地方，有一个很小的凹痕。
 
-fn c1_inspect_E6(actor):
-    return c1_once(c1_action(rt_cat(actor, ".inspect.E6"), "inspect", c1_at(actor, "R08"), c1_at(actor, "R08"), "", dv_pair(c1_knowledge("score_partial"), c1_knowledge("score_in_room")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 74, "E6")))
+行动 c1_inspect_E6，给定 行动者：
+    编号 rt_cat(行动者, ".inspect.E6")。
+    类别 "inspect"。
+    本人须知 行动者 位于 "R08"。
+    现场要求 行动者 位于 "R08"。
+    遵循 ""。
+    可获知 dv_pair(c1_knowledge("score_partial"), c1_knowledge("score_in_room"))。
+    依据 [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 74, "E6")]。
+    仅一次 true。
 
-fn c1_visible_E6():
-    return "一页手写乐谱，只有一小节。\n前两拍是弱音，各记着一个问号；后两拍重读，字是“开门”。同样的一小节记了两遍。\n旁注：“门外？”\n下方换了一种墨迹：“他们关了门。”"
+叙述 c1_visible_E6：
+    一页手写乐谱，只有一小节。
+    前两拍是弱音，各记着一个问号；后两拍重读，字是“开门”。同样的一小节记了两遍。
+    旁注：“门外？”
+    下方换了一种墨迹：“他们关了门。”
 
 fn c1_inspect_E7(actor):
     var local_1 = false
@@ -195,14 +258,25 @@ fn c1_inspect_E7(actor):
         local_1 = dv_single(c1_knowledge("slate_marks"))
     return c1_once(c1_action(rt_cat(actor, ".inspect.E7"), "inspect", c1_at(actor, "hall"), c1_at(actor, "hall"), "", local_1, c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 75, "E7")))
 
-fn c1_visible_E7():
-    return "一块小石板，粉笔速记两行。\n第一行：主楼：⊥门 ✕开 ◎\n第二行：一个小小的放大镜图样，后面是“⊥✓”。"
+叙述 c1_visible_E7：
+    一块小石板，粉笔速记两行。
+    第一行：主楼：⊥门 ✕开 ◎
+    第二行：一个小小的放大镜图样，后面是“⊥✓”。
 
-fn c1_inspect_E8(actor):
-    return c1_once(c1_action(rt_cat(actor, ".inspect.E8"), "inspect", c1_at(actor, "hall"), c1_at(actor, "hall"), "", dv_single(c1_knowledge("pipe_layout")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 76, "E8")))
+行动 c1_inspect_E8，给定 行动者：
+    编号 rt_cat(行动者, ".inspect.E8")。
+    类别 "inspect"。
+    本人须知 行动者 位于 乙区大厅。
+    现场要求 行动者 位于 乙区大厅。
+    遵循 ""。
+    可获知 dv_single(c1_knowledge("pipe_layout"))。
+    依据 [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 76, "E8")]。
+    仅一次 true。
 
-fn c1_visible_E8():
-    return "铜口嵌在活动厅北墙上，下方铜牌刻着一个符号：◎。\n一根铜管从铜口后面出来：一路沿北墙向西，穿墙进门厅，贴着墙下到隔离门的门框；另一路向东，钻进活动厅与 R-08 之间的墙里。\n那道墙上与门框北侧各有一个管接头，一碰就晃——接口松了。"
+叙述 c1_visible_E8：
+    铜口嵌在活动厅北墙上，下方铜牌刻着一个符号：◎。
+    一根铜管从铜口后面出来：一路沿北墙向西，穿墙进门厅，贴着墙下到隔离门的门框；另一路向东，钻进活动厅与 R-08 之间的墙里。
+    那道墙上与门框北侧各有一个管接头，一碰就晃——接口松了。
 
 fn c1_inspect_E9(actor):
     var local_1 = false
@@ -212,8 +286,12 @@ fn c1_inspect_E9(actor):
         local_1 = dv_single(c1_knowledge("cups_preferences"))
     return c1_once(c1_action(rt_cat(actor, ".inspect.E9"), "inspect", c1_at(actor, "pantry"), c1_at(actor, "pantry"), "", local_1, c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 77, "E9")))
 
-fn c1_visible_E9():
-    return "水槽里四只用过的杯子，各不相同：\n一只青瓷小杯，杯底没有糖渍；\n一只刻着 H 的凹痕锡杯，杯底一层厚糖渍；\n一只缺口白杯；\n一只粗瓷大杯。"
+叙述 c1_visible_E9：
+    水槽里四只用过的杯子，各不相同：
+    一只青瓷小杯，杯底没有糖渍；
+    一只刻着 H 的凹痕锡杯，杯底一层厚糖渍；
+    一只缺口白杯；
+    一只粗瓷大杯。
 
 fn c1_inspect_E10(actor):
     var local_1 = false
@@ -223,23 +301,48 @@ fn c1_inspect_E10(actor):
         local_1 = dv_single(c1_knowledge("starter_layers"))
     return c1_once(c1_action(rt_cat(actor, ".inspect.E10"), "inspect", c1_at(actor, "pantry"), c1_at(actor, "pantry"), "", local_1, c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 78, "E10")))
 
-fn c1_visible_E10():
-    return "罐里的酵种还活着，冒着细泡。\n罐壁上一层摞一层干结的旧面痕，数不清。"
+叙述 c1_visible_E10：
+    罐里的酵种还活着，冒着细泡。
+    罐壁上一层摞一层干结的旧面痕，数不清。
 
-fn c1_inspect_E11(actor):
-    return c1_once(c1_action(rt_cat(actor, ".inspect.E11"), "inspect", c1_at(actor, "R05"), c1_at(actor, "R05"), "", dv_single(c1_knowledge("shelf_old")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 79, "E11")))
+行动 c1_inspect_E11，给定 行动者：
+    编号 rt_cat(行动者, ".inspect.E11")。
+    类别 "inspect"。
+    本人须知 行动者 位于 "R05"。
+    现场要求 行动者 位于 "R05"。
+    遵循 ""。
+    可获知 dv_single(c1_knowledge("shelf_old"))。
+    依据 [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 79, "E11")]。
+    仅一次 true。
 
-fn c1_visible_E11():
-    return "书架积着灰。灰上留着几块干净的长方形，边缘整齐——这里原先摆过东西。单凭灰痕，还看不出摆了多久。\n架沿上有半枚手印，压在灰上。"
+叙述 c1_visible_E11：
+    书架积着灰。灰上留着几块干净的长方形，边缘整齐——这里原先摆过东西。单凭灰痕，还看不出摆了多久。
+    架沿上有半枚手印，压在灰上。
 
-fn c1_inspect_E12(actor):
-    return c1_once(c1_action(rt_cat(actor, ".inspect.E12"), "inspect", c1_at(actor, "R05"), c1_at(actor, "R05"), "", dv_single(dv_ref("coat", "identity", "owner")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 80, "E12")))
+行动 c1_inspect_E12，给定 行动者：
+    编号 rt_cat(行动者, ".inspect.E12")。
+    类别 "inspect"。
+    本人须知 行动者 位于 "R05"。
+    现场要求 行动者 位于 "R05"。
+    遵循 ""。
+    可获知 dv_single(dv_ref("coat", "identity", "owner"))。
+    依据 [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 80, "E12")]。
+    仅一次 true。
 
-fn c1_identify_own_lens(actor):
-    return c1_once(c1_action(rt_cat(actor, ".identify-own-lens"), "inspect", dv_all(dv_pair(c1_at(actor, "R05"), dv_fact(dv_ref("coat", "identity", "owner"), actor))), dv_all(dv_pair(c1_at(actor, "R05"), dv_fact(dv_ref("coat", "identity", "owner"), actor))), "", dv_single(c1_knowledge("lens_mine")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 6, "s1_wake.006;E12 personal ownership")))
+行动 c1_identify_own_lens，给定 行动者：
+    编号 rt_cat(行动者, ".identify-own-lens")。
+    类别 "inspect"。
+    本人须知 dv_all(dv_pair(c1_at(行动者, "R05"), dv_fact(dv_ref("coat", "identity", "owner"), 行动者)))。
+    现场要求 dv_all(dv_pair(c1_at(行动者, "R05"), dv_fact(dv_ref("coat", "identity", "owner"), 行动者)))。
+    遵循 ""。
+    可获知 dv_single(c1_knowledge("lens_mine"))。
+    依据 [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 6, "s1_wake.006;E12 personal ownership")]。
+    仅一次 true。
 
-fn c1_visible_E12():
-    return "一件深棕长风衣。\n口袋里：一支石墨笔，一把折叠放大镜，几只证物袋。\n放大镜是黄铜圆框，带一截短柄。"
+叙述 c1_visible_E12：
+    一件深棕长风衣。
+    口袋里：一支石墨笔，一把折叠放大镜，几只证物袋。
+    放大镜是黄铜圆框，带一截短柄。
 
 fn c1_infer_rules():
     return [c1_infer_0("cognition"), c1_infer_1("cognition"), c1_infer_2("cognition"), c1_infer_3("cognition"), c1_infer_4("cognition"), c1_infer_5("cognition"), c1_infer_6("cognition"), c1_infer_7("cognition"), c1_infer_8("cognition"), c1_infer_9("cognition"), c1_infer_10("cognition"), c1_infer_11("cognition"), c1_infer_12("cognition"), c1_infer_13("cognition"), c1_infer_14("cognition"), c1_infer_15("cognition"), c1_infer_16("cognition"), c1_infer_17("cognition"), c1_infer_18("cognition"), c1_infer_19("cognition")]
@@ -382,13 +485,13 @@ fn c1_answer_V6_0(actor):
     return dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".answer.V6_0"), "answer", dv_all(dv_pair(c1_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), c1_at(actor, "hall"), "", [], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 115, "V6_0")), "answer", dv_fact(c1_knowledge("familiar"), false)), "answer_id", "V6_0"), "topic", "trust")
 
 fn c1_hypothesis_V6_0():
-    return dv_with(dv_with(dv_with({"id": "V6_0", "proposition": dv_fact(c1_knowledge("familiar"), false), "prior": 0.5, "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 115, "V6_0"))}, "available_when", dv_fact(dv_ref("question", "state", "open_trust"), true)), "assumptions", dv_single(dv_fact(c1_knowledge("familiar"), false))), "group", "trust")
+    return dv_with(dv_with(dv_with(dv_with({"id": "V6_0", "proposition": dv_fact(c1_knowledge("familiar"), false), "prior": 0.5, "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 115, "V6_0"))}, "available_when", dv_fact(dv_ref("question", "state", "open_trust"), true)), "assumptions", dv_single(dv_fact(c1_knowledge("familiar"), false))), "group", "trust"), "manual_available_when", c1_manual_history_gate())
 
 fn c1_answer_V6_1(actor):
     return dv_with(dv_with(dv_with(c1_action(rt_cat(actor, ".answer.V6_1"), "answer", dv_all(dv_pair(c1_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), c1_at(actor, "hall"), "", [], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 116, "V6_1")), "answer", dv_fact(c1_knowledge("familiar"), true)), "answer_id", "V6_1"), "topic", "trust")
 
 fn c1_hypothesis_V6_1():
-    return dv_with(dv_with(dv_with({"id": "V6_1", "proposition": dv_fact(c1_knowledge("familiar"), true), "prior": 0.5, "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 116, "V6_1"))}, "available_when", dv_fact(dv_ref("question", "state", "open_trust"), true)), "assumptions", dv_single(dv_fact(c1_knowledge("familiar"), true))), "group", "trust")
+    return dv_with(dv_with(dv_with(dv_with({"id": "V6_1", "proposition": dv_fact(c1_knowledge("familiar"), true), "prior": 0.5, "basis": dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 116, "V6_1"))}, "available_when", dv_fact(dv_ref("question", "state", "open_trust"), true)), "assumptions", dv_single(dv_fact(c1_knowledge("familiar"), true))), "group", "trust"), "manual_available_when", c1_manual_history_gate())
 
 fn c1_answer_actions(actor):
     let actions = [c1_answer_me(actor), c1_answer_V1_0(actor), c1_answer_V1_1(actor), c1_answer_V1_2(actor), c1_answer_V2_0(actor), c1_answer_V2_1(actor), c1_answer_V2_2(actor), c1_answer_V3_0(actor), c1_answer_V3_1(actor), c1_answer_V4_0(actor), c1_answer_V4_1(actor), c1_answer_V5_0(actor), c1_answer_V5_1(actor), c1_answer_V5_2(actor), c1_answer_trust(actor), c1_answer_V6_0(actor), c1_answer_V6_1(actor)]
@@ -436,8 +539,15 @@ fn c1_talk_recalled_copper(actor):
 fn c1_talk_recalled_names(actor):
     return dv_with(c1_once(c1_observe_as(c1_action(rt_cat(actor, ".talk.recalled_names"), "talk", c1_at(actor, "pantry"), dv_all(dv_pair(c1_at(actor, "pantry"), c1_at("shen", "pantry"))), "", dv_single(c1_knowledge("recalled_names")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 92, "recall_shen.003")), "testimony", "shen", 0.85)), "surface", "沈鼎回想起：阿泠的茶不放糖，老霍的放两勺，那位喝清茶不放奶。‘阿泠’这称呼，他自己也不知怎么脱口而出。")
 
-fn c1_sole_test(actor):
-    return c1_once(c1_action(rt_cat(actor, ".compare_sole"), "experiment", dv_all(dv_pair(c1_at(actor, "foyer"), dv_fact(dv_ref(actor, "state", "identity"), "detective"))), c1_at(actor, "foyer"), "", dv_single(c1_knowledge("boots_fit")), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 81, "exp_E3.002")))
+行动 c1_sole_test，给定 行动者：
+    编号 rt_cat(行动者, ".compare_sole")。
+    类别 "experiment"。
+    本人须知 dv_all(dv_pair(c1_at(行动者, 乙区门厅), dv_fact(dv_ref(行动者, "state", "identity"), 侦探)))。
+    现场要求 行动者 位于 乙区门厅。
+    遵循 ""。
+    可获知 dv_single(c1_knowledge("boots_fit"))。
+    依据 [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 81, "exp_E3.002")]。
+    仅一次 true。
 
 fn c1_sound_action(actor):
     var local_1 = false
@@ -456,8 +566,10 @@ fn c1_latch_contact_ref():
 fn c1_latch_contact_source():
     return c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story", 161, "recall_detective.002; bodily-flash-only")
 
-axiom c1_latch_contact_law():
-    return dv_axiom("c1_latch_contact_law", 1, dv_all(dv_pair(c1_at("detective", "foyer"), dv_fact(c1_latch_contact_ref(), false))), dv_single(dv_assign(c1_latch_contact_ref(), true)))
+法则 c1_latch_contact_law：
+    当 侦探 位于 乙区门厅。
+    并且 c1_latch_contact_ref() 等于 false。
+    则 c1_latch_contact_ref() 变为 true。
 
 fn c1_latch_contact_method(world, actor, mode):
     if actor != "detective":
@@ -472,14 +584,21 @@ fn c1_latch_contact_action():
     action = dv_with_many(action, {"resonance": {"passive": true, "basis": [c1_latch_contact_source()]}, "travel": {"from": "foyer", "to": "foyer", "station": "site:E1"}, "predict_law": "detective.touch_latch", "grant_observation_sources": [{"ref": c1_latch_contact_ref(), "source": "perception", "origin": "own-executed-contact", "trust": 1}], "presentation": {"actor": "detective", "voice": "bodily-flash", "publish_after": "actual-applied-execution", "knowledge_effect": "none", "lines": [{"template": "指腹压上铁闩的一瞬，有什么东西从很远的地方晃了一下。", "bindings": []}, {"template": "霍铎说闩。我就闩了。……我信他。", "bindings": []}, {"template": "一句转述，我就去闩了门。我凭的是什么？", "bindings": []}]}})
     return action
 
-fn c1_replay_action(actor):
-    return c1_action(rt_cat(actor, ".replay"), "replay", c1_statement("bolt_down"), dv_true(), "", [], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/模拟侦探.story", 340, "replay"))
+行动 c1_replay_action，给定 行动者：
+    编号 rt_cat(行动者, ".replay")。
+    类别 "replay"。
+    本人须知 c1_statement("bolt_down")。
+    现场要求 dv_true()。
+    遵循 ""。
+    可获知 []。
+    依据 [c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/模拟侦探.story", 340, "replay")]。
 
 fn c1_raw_question_object():
     return c1_state_object("question", dv_with(dv_with(dv_with(dv_with(dv_with({"current": dv_field("opening"), "stage": dv_field("opening"), "original": dv_field("门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？"), "awake_scope": dv_field(true)}, "requires_evidence", dv_with(dv_field(true), "basis", dv_single(c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/07_答辩.story", 3, "answer_open.002")))), "open_identity", dv_field(false)), "open_voice_source", dv_field(false)), "open_words", dv_field(false)), "open_trust", dv_field(false)))
 
-axiom c1_truth_contract(subject):
-    return dv_axiom("c1_truth_contract", 1, dv_true(), [])
+法则 c1_truth_contract，给定 subject：
+    前提 dv_true()。
+    效果 []。
 
 fn c1_register_speech_contract(world):
     var basis = dv_single(c1_source("docs/design-standard.md", 462, "contract-8-no-deception"))
@@ -504,8 +623,9 @@ fn c1_question_object():
     world = dv_store(world, dv_ref("question", "state", "solved_trust"), dv_field(false))
     return world.objects.question
 
-axiom c1_original_question_open(question):
-    return dv_axiom("c1_original_question_open", 1, dv_fact(dv_ref(question, "state", "stage"), "voice_source"), dv_single(dv_assign(dv_ref(question, "state", "outstanding_complete"), true)))
+法则 c1_original_question_open，给定 question：
+    前提 dv_fact(dv_ref(question, "state", "stage"), "voice_source")。
+    则 question 的 "outstanding_complete" 变为 true。
 
 fn c1_reask_question(actor):
     return dv_with(c1_observe_as(c1_action(rt_cat(actor, ".reask_question"), "talk", c1_at(actor, "hall"), dv_all(dv_pair(c1_at(actor, "hall"), c1_at("demon", "hall"))), "", [dv_ref("question", "state", "current"), dv_ref("question", "state", "stage"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete"), dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust")], c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story", 47, "clock_question.001")), "perception", "direct", 1), "repeatable", true)
@@ -976,15 +1096,19 @@ fn dvs_scenario_base():
 
 fn c1_question_text(stage):
     if (stage == "prompt"):
-        return "门是谁闩上的？"
+        叙述：
+            门是谁闩上的？
     else:
         if (stage == "voice_source"):
-            return "苏泠听见的呼喊来自哪里？"
+            叙述：
+                苏泠听见的呼喊来自哪里？
         else:
             if (stage == "words"):
-                return "原话是什么？"
+                叙述：
+                    原话是什么？
             else:
-                return "既听同伴说门外有人，为何仍闩门？"
+                叙述：
+                    既听同伴说门外有人，为何仍闩门？
 
 fn c1_person_policy(id):
     let policy = c1_base_person_policy(id)
@@ -1036,8 +1160,9 @@ fn c1_evidence_contact_premise(actor, evidence):
         return c1_at(actor, "foyer")
     return dv_all([c1_at(actor, "R05"), c1_at("detective", "R05"), c1_at("huo", "R05"), c1_at("shen", "R05"), c1_at("su", "R05")])
 
-axiom c1_evidence_contact(actor, evidence):
-    return dv_axiom("c1_evidence_contact", 1, c1_evidence_contact_premise(actor, evidence), [dv_assign(c1_evidence_contact_ref(actor, evidence), true)])
+法则 c1_evidence_contact，给定 行动者、evidence：
+    前提 c1_evidence_contact_premise(行动者, evidence)。
+    则 c1_evidence_contact_ref(行动者, evidence) 变为 true。
 
 fn c1_evidence_contact_methods(world, actor, mode):
     var result = world
@@ -1141,8 +1266,9 @@ fn c1_recall_advice_responses():
         i = i + 1
     return result
 
-axiom c1_deep_resonance_law(actor):
-    return dv_axiom("c1_deep_resonance_law", 1, c1_at(actor, c1_deep_resonance_site(actor).room), [dv_assign(c1_deep_resonance_ref(actor), true)])
+法则 c1_deep_resonance_law，给定 行动者：
+    前提 c1_at(行动者, c1_deep_resonance_site(行动者).room)。
+    则 c1_deep_resonance_ref(行动者) 变为 true。
 
 fn c1_deep_resonance_action(actor):
     let site = c1_deep_resonance_site(actor)
@@ -1206,8 +1332,9 @@ fn c1_answer_conflict_response(actor, key):
 fn c1_palm_invitation_ref():
     return dv_ref("ritual", "state", "palm_comparison_invited")
 
-axiom c1_palm_invitation_law(room):
-    return dv_axiom("c1_palm_invitation_law", 1, c1_at("detective", room), [dv_assign(c1_palm_invitation_ref(), true)])
+法则 c1_palm_invitation_law，给定 room：
+    前提 c1_at(侦探, room)。
+    则 c1_palm_invitation_ref() 变为 true。
 
 fn c1_palm_invitation_action(room):
     let name = rt_cat("detective.invite-palms.", room)
@@ -1249,74 +1376,112 @@ fn c1_palm_invitation_action(room):
 // 场面/05_声路与交谈.story:13, sound_test.003; explicit formal action marker.
 // This marker does not simulate acoustic bands or infer unheard sound contents.
 
-axiom c1_infer_0(knowledge):
-    return dv_axiom("c1_infer_0", 1, dv_all([dv_fact(dv_ref(knowledge, "state", "boots_toward_bolt"), true), dv_fact(dv_ref(knowledge, "state", "boots_fit"), true)]), dv_single(dv_assign(dv_ref(knowledge, "state", "me"), true)))
+法则 c1_infer_0，给定 knowledge：
+    当 knowledge 的 "boots_toward_bolt" 等于 true。
+    并且 knowledge 的 "boots_fit" 等于 true。
+    则 knowledge 的 "me" 变为 true。
 
-axiom c1_infer_1(knowledge):
-    return dv_axiom("c1_infer_1", 1, dv_all(dv_append(dv_list3(dv_fact(dv_ref(knowledge, "state", "slate_marks"), true), dv_fact(dv_ref(knowledge, "state", "slate_code"), true), dv_fact(dv_ref(knowledge, "state", "slate_person"), true)), dv_fact(dv_ref(knowledge, "state", "lens_mine"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "me"), true)))
+法则 c1_infer_1，给定 knowledge：
+    前提 dv_all(dv_append(dv_list3(dv_fact(dv_ref(knowledge, "state", "slate_marks"), true), dv_fact(dv_ref(knowledge, "state", "slate_code"), true), dv_fact(dv_ref(knowledge, "state", "slate_person"), true)), dv_fact(dv_ref(knowledge, "state", "lens_mine"), true)))。
+    则 knowledge 的 "me" 变为 true。
 
-axiom c1_infer_2(knowledge):
-    return dv_axiom("c1_infer_2", 1, dv_fact(dv_ref(knowledge, "state", "recalled_bolt"), true), dv_single(dv_assign(dv_ref(knowledge, "state", "me"), true)))
+法则 c1_infer_2，给定 knowledge：
+    前提 dv_fact(dv_ref(knowledge, "state", "recalled_bolt"), true)。
+    则 knowledge 的 "me" 变为 true。
 
-axiom c1_infer_3(knowledge):
-    return dv_axiom("c1_infer_3", 1, dv_all(dv_pair(dv_fact(dv_ref(knowledge, "state", "recalled_bolt"), true), dv_fact(dv_ref(knowledge, "state", "bolt_down"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "me"), true)))
+法则 c1_infer_3，给定 knowledge：
+    当 knowledge 的 "recalled_bolt" 等于 true。
+    并且 knowledge 的 "bolt_down" 等于 true。
+    则 knowledge 的 "me" 变为 true。
 
-axiom c1_infer_4(knowledge):
-    return dv_axiom("c1_infer_4", 1, dv_all(dv_list3(dv_fact(dv_ref(knowledge, "state", "pipe_layout"), true), dv_fact(dv_ref(knowledge, "state", "sound_trial"), true), dv_fact(dv_ref(knowledge, "state", "heads_lost"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "remote_voice"), true)))
+法则 c1_infer_4，给定 knowledge：
+    当 knowledge 的 "pipe_layout" 等于 true。
+    并且 knowledge 的 "sound_trial" 等于 true。
+    并且 knowledge 的 "heads_lost" 等于 true。
+    则 knowledge 的 "remote_voice" 变为 true。
 
-axiom c1_infer_5(knowledge):
-    return dv_axiom("c1_infer_5", 1, dv_all(dv_list3(dv_fact(dv_ref(knowledge, "state", "frame_hollow"), true), dv_fact(dv_ref(knowledge, "state", "pipe_layout"), true), dv_fact(dv_ref(knowledge, "state", "heads_lost"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "remote_voice"), true)))
+法则 c1_infer_5，给定 knowledge：
+    当 knowledge 的 "frame_hollow" 等于 true。
+    并且 knowledge 的 "pipe_layout" 等于 true。
+    并且 knowledge 的 "heads_lost" 等于 true。
+    则 knowledge 的 "remote_voice" 变为 true。
 
-axiom c1_infer_6(knowledge):
-    return dv_axiom("c1_infer_6", 1, dv_all(dv_pair(dv_fact(dv_ref(knowledge, "state", "slate_code"), true), dv_fact(dv_ref(knowledge, "state", "slate_marks"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "words_bolt"), true)))
+法则 c1_infer_6，给定 knowledge：
+    当 knowledge 的 "slate_code" 等于 true。
+    并且 knowledge 的 "slate_marks" 等于 true。
+    则 knowledge 的 "words_bolt" 变为 true。
 
-axiom c1_infer_7(knowledge):
-    return dv_axiom("c1_infer_7", 1, dv_all(dv_list3(dv_fact(dv_ref(knowledge, "state", "score_partial"), true), dv_fact(dv_ref(knowledge, "state", "heads_lost"), true), dv_fact(dv_ref(knowledge, "state", "slate_code"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "words_bolt"), true)))
+法则 c1_infer_7，给定 knowledge：
+    当 knowledge 的 "score_partial" 等于 true。
+    并且 knowledge 的 "heads_lost" 等于 true。
+    并且 knowledge 的 "slate_code" 等于 true。
+    则 knowledge 的 "words_bolt" 变为 true。
 
-axiom c1_infer_8(knowledge):
-    return dv_axiom("c1_infer_8", 1, dv_fact(dv_ref(knowledge, "state", "recalled_copper"), true), dv_single(dv_assign(dv_ref(knowledge, "state", "huo_copper"), true)))
+法则 c1_infer_8，给定 knowledge：
+    前提 dv_fact(dv_ref(knowledge, "state", "recalled_copper"), true)。
+    则 knowledge 的 "huo_copper" 变为 true。
 
-axiom c1_infer_9(knowledge):
-    return dv_axiom("c1_infer_9", 1, dv_all(dv_pair(dv_fact(dv_ref(knowledge, "state", "cups_preferences"), true), dv_fact(dv_ref(knowledge, "state", "cups_known"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "familiar"), true)))
+法则 c1_infer_9，给定 knowledge：
+    当 knowledge 的 "cups_preferences" 等于 true。
+    并且 knowledge 的 "cups_known" 等于 true。
+    则 knowledge 的 "familiar" 变为 true。
 
-axiom c1_infer_10(knowledge):
-    return dv_axiom("c1_infer_10", 1, dv_all(dv_pair(dv_fact(dv_ref(knowledge, "state", "starter_layers"), true), dv_fact(dv_ref(knowledge, "state", "starter_kept"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "familiar"), true)))
+法则 c1_infer_10，给定 knowledge：
+    当 knowledge 的 "starter_layers" 等于 true。
+    并且 knowledge 的 "starter_kept" 等于 true。
+    则 knowledge 的 "familiar" 变为 true。
 
-axiom c1_infer_11(knowledge):
-    return dv_axiom("c1_infer_11", 1, dv_fact(dv_ref(knowledge, "state", "recalled_names"), true), dv_single(dv_assign(dv_ref(knowledge, "state", "familiar"), true)))
+法则 c1_infer_11，给定 knowledge：
+    前提 dv_fact(dv_ref(knowledge, "state", "recalled_names"), true)。
+    则 knowledge 的 "familiar" 变为 true。
 
-axiom c1_infer_12(knowledge):
-    return dv_axiom("c1_infer_12", 1, dv_fact(dv_ref(knowledge, "state", "recalled_trust"), true), dv_single(dv_assign(dv_ref(knowledge, "state", "heed_huo"), true)))
+法则 c1_infer_12，给定 knowledge：
+    前提 dv_fact(dv_ref(knowledge, "state", "recalled_trust"), true)。
+    则 knowledge 的 "heed_huo" 变为 true。
 
-axiom c1_infer_13(knowledge):
-    return dv_axiom("c1_infer_13", 1, dv_all(dv_pair(dv_fact(dv_ref(knowledge, "state", "recalled_trust"), true), dv_fact(dv_ref(knowledge, "state", "familiar"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "trust_reason"), true)))
+法则 c1_infer_13，给定 knowledge：
+    当 knowledge 的 "recalled_trust" 等于 true。
+    并且 knowledge 的 "familiar" 等于 true。
+    则 knowledge 的 "trust_reason" 变为 true。
 
-axiom c1_infer_14(knowledge):
-    return dv_axiom("c1_infer_14", 1, dv_fact(dv_ref(knowledge, "state", "su_room"), true), dv_single(dv_assign(dv_ref(knowledge, "state", "su_hall"), false)))
+法则 c1_infer_14，给定 knowledge：
+    前提 dv_fact(dv_ref(knowledge, "state", "su_room"), true)。
+    则 knowledge 的 "su_hall" 变为 false。
 
-axiom c1_infer_15(knowledge):
-    return dv_axiom("c1_infer_15", 1, dv_fact(dv_ref(knowledge, "state", "su_room"), true), dv_single(dv_assign(dv_ref(knowledge, "state", "su_pantry"), false)))
+法则 c1_infer_15，给定 knowledge：
+    前提 dv_fact(dv_ref(knowledge, "state", "su_room"), true)。
+    则 knowledge 的 "su_pantry" 变为 false。
 
-axiom c1_infer_16(knowledge):
-    return dv_axiom("c1_infer_16", 1, dv_fact(dv_ref(knowledge, "state", "huo_copper"), true), dv_single(dv_assign(dv_ref(knowledge, "state", "huo_room"), false)))
+法则 c1_infer_16，给定 knowledge：
+    前提 dv_fact(dv_ref(knowledge, "state", "huo_copper"), true)。
+    则 knowledge 的 "huo_room" 变为 false。
 
-axiom c1_infer_17(knowledge):
-    return dv_axiom("c1_infer_17", 1, dv_fact(dv_ref(knowledge, "state", "huo_copper"), true), dv_single(dv_assign(dv_ref(knowledge, "state", "huo_foyer"), false)))
+法则 c1_infer_17，给定 knowledge：
+    前提 dv_fact(dv_ref(knowledge, "state", "huo_copper"), true)。
+    则 knowledge 的 "huo_foyer" 变为 false。
 
-axiom c1_infer_18(knowledge):
-    return dv_axiom("c1_infer_18", 1, dv_fact(dv_ref(knowledge, "state", "heed_huo"), true), dv_single(dv_assign(dv_ref(knowledge, "state", "heed_su"), false)))
+法则 c1_infer_18，给定 knowledge：
+    前提 dv_fact(dv_ref(knowledge, "state", "heed_huo"), true)。
+    则 knowledge 的 "heed_su" 变为 false。
 
-axiom c1_infer_19(knowledge):
-    return dv_axiom("c1_infer_19", 1, dv_fact(dv_ref(knowledge, "state", "heed_huo"), true), dv_single(dv_assign(dv_ref(knowledge, "state", "heed_neither"), false)))
+法则 c1_infer_19，给定 knowledge：
+    前提 dv_fact(dv_ref(knowledge, "state", "heed_huo"), true)。
+    则 knowledge 的 "heed_neither" 变为 false。
 
-axiom c1_move(actor, origin, target):
-    return dv_axiom("c1_move", 1, dv_fact(dv_ref(actor, "state", "location"), origin), dv_single(dv_assign(dv_ref(actor, "state", "location"), target)))
+法则 c1_move，给定 行动者、起点、目标：
+    前提 dv_fact(dv_ref(行动者, "state", 所在地), 起点)。
+    则 行动者 的 所在地 变为 目标。
 
-axiom c1_opening_emit(question):
-    return dv_axiom("c1_opening_emit", 1, dv_fact(dv_ref(question, "state", "stage"), "opening"), dv_single(dv_assign(dv_ref(question, "state", "stage"), "prompt")))
+法则 c1_opening_emit，给定 question：
+    前提 dv_fact(dv_ref(question, "state", "stage"), "opening")。
+    则 question 的 "stage" 变为 "prompt"。
 
-axiom c1_question_emit(question):
-    return dv_axiom("c1_question_emit", 1, dv_fact(dv_ref(question, "state", "stage"), "prompt"), [dv_assign(dv_ref(question, "state", "open_identity"), true), dv_assign(dv_ref(question, "state", "outstanding_complete"), true), dv_assign(dv_ref(question, "state", "current"), "identity"), dv_assign(dv_ref(question, "state", "stage"), "identity")])
+法则 c1_question_emit，给定 question：
+    前提 dv_fact(dv_ref(question, "state", "stage"), "prompt")。
+    则 question 的 "open_identity" 变为 true。
+    并使 question 的 "outstanding_complete" 变为 true。
+    并使 question 的 "current" 变为 "identity"。
+    并使 question 的 "stage" 变为 "identity"。
 
 axiom c1_question_accept(question, stage):
     var effects = [dv_assign(dv_ref(question, "state", rt_cat("solved_", stage)), true), dv_assign(dv_ref(question, "state", rt_cat("open_", stage)), false), dv_assign(dv_ref(question, "state", "last_accepted"), stage)]
@@ -1335,11 +1500,14 @@ axiom c1_question_accept(question, stage):
     rt_push(effects, dv_assign(dv_ref(question, "state", "stage"), next))
     return dv_axiom("c1_question_accept", 1, dv_fact(dv_ref(question, "state", rt_cat("open_", stage)), true), effects)
 
-axiom c1_meeting(requester, speaker, room):
-    return dv_axiom("c1_meeting", 1, dv_all(dv_pair(dv_fact(dv_ref(requester, "state", "location"), room), dv_fact(dv_ref(speaker, "state", "location"), room))), [])
+法则 c1_meeting，给定 requester、speaker、room：
+    当 requester 的 所在地 等于 room。
+    并且 speaker 的 所在地 等于 room。
+    效果 []。
 
-axiom c1_sound_trial(actor, ritual, room):
-    return dv_axiom("c1_sound_trial", 1, dv_fact(dv_ref(actor, "state", "location"), room), dv_single(dv_assign(dv_ref(ritual, "state", "sound_trial_done"), true)))
+法则 c1_sound_trial，给定 行动者、ritual、room：
+    前提 dv_fact(dv_ref(行动者, "state", 所在地), room)。
+    则 ritual 的 "sound_trial_done" 变为 true。
 
 // Shared defeasible rule. The caller adopts it openly into each person's policy.
 // Provenance: design §4.2/§4.7 and the user's explicit 2026-10-12 pragmatic choice.
@@ -1394,95 +1562,209 @@ fn c1_opening_listener_model(listener, scope_check_estimate, basis):
 // Its literal source claim is not a complete causal account of what the latch actor heard.
 // The sharing goal concerns an actual transmission, never a predicted listener acceptance.
 
-axiom c1_hist_smoke(history, knowledge):
-    return dv_axiom("c1_hist_smoke", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "smoke_due"), true), dv_fact(dv_ref(history, "state", "door_open"), true))), dv_pair(dv_assign(dv_ref(knowledge, "state", "predicted_ash_fan"), true), dv_assign(dv_ref(history, "state", "smoke_entered"), true)))
+法则 c1_hist_smoke，给定 history、knowledge：
+    当 history 的 "smoke_due" 等于 true。
+    并且 history 的 "door_open" 等于 true。
+    则 knowledge 的 "predicted_ash_fan" 变为 true。
+    并使 history 的 "smoke_entered" 变为 true。
 
-axiom c1_hist_wedge_soot(history, knowledge):
-    return dv_axiom("c1_hist_wedge_soot", 1, dv_all(dv_list3(dv_fact(dv_ref(history, "state", "smoke_due"), true), dv_fact(dv_ref(history, "state", "door_open"), true), dv_fact(dv_ref(history, "state", "door_wedged"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_wedge_soot"), true)))
+法则 c1_hist_wedge_soot，给定 history、knowledge：
+    当 history 的 "smoke_due" 等于 true。
+    并且 history 的 "door_open" 等于 true。
+    并且 history 的 "door_wedged" 等于 true。
+    则 knowledge 的 "predicted_wedge_soot" 变为 true。
 
-axiom c1_hist_footprint(history, knowledge, sole, direction, result_field):
-    return dv_axiom("c1_hist_footprint", 1, dv_all([dv_fact(dv_ref(history, "state", "door_changed"), true), dv_fact(dv_ref(history, "state", "at_origin"), true), dv_fact(dv_ref(knowledge, "state", "predicted_ash_fan"), true), dv_fact(dv_ref(history, "state", "sole"), sole), dv_fact(dv_ref(history, "state", "direction"), direction)]), dv_single(dv_assign(dv_ref(knowledge, "state", result_field), true)))
+法则 c1_hist_footprint，给定 history、knowledge、sole、direction、result_field：
+    当 history 的 "door_changed" 等于 true。
+    并且 history 的 "at_origin" 等于 true。
+    并且 knowledge 的 "predicted_ash_fan" 等于 true。
+    并且 history 的 "sole" 等于 sole。
+    并且 history 的 "direction" 等于 direction。
+    则 knowledge 的 result_field 变为 true。
 
-axiom c1_hist_cloth(history, knowledge):
-    return dv_axiom("c1_hist_cloth", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "cloth_placed"), true), dv_fact(dv_ref(history, "state", "prints_exist"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_cloth_over_heel"), true)))
+法则 c1_hist_cloth，给定 history、knowledge：
+    当 history 的 "cloth_placed" 等于 true。
+    并且 history 的 "prints_exist" 等于 true。
+    则 knowledge 的 "predicted_cloth_over_heel" 变为 true。
 
-axiom c1_hist_tube_full(history, listener, words):
-    return dv_axiom("c1_hist_tube_full", 1, dv_all(dv_list3(dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(history, "state", "words"), words), dv_fact(dv_ref(listener, "state", "location"), "hall"))), dv_list3(dv_assign(dv_ref(history, "heard_form", listener), "full"), dv_assign(dv_ref(history, "heard_words", listener), words), dv_assign(dv_ref(history, "heard_origin", listener), "Tube")))
+法则 c1_hist_tube_full，给定 history、listener、words：
+    当 history 的 "voice_source" 等于 "Tube"。
+    并且 history 的 "words" 等于 words。
+    并且 listener 的 所在地 等于 乙区大厅。
+    则 history 的 "heard_form" 的 listener 变为 "full"。
+    并使 history 的 "heard_words" 的 listener 变为 words。
+    并使 history 的 "heard_origin" 的 listener 变为 "Tube"。
 
-axiom c1_hist_tube_tail(history, listener, room, words, tail):
-    return dv_axiom("c1_hist_tube_tail", 1, dv_all([dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(history, "state", "words"), words), dv_fact(dv_ref(listener, "state", "location"), room), dv_fact(dv_ref(history, "loose_junction", room), true)]), dv_list3(dv_assign(dv_ref(history, "heard_form", listener), "tail"), dv_assign(dv_ref(history, "heard_words", listener), tail), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
+法则 c1_hist_tube_tail，给定 history、listener、room、words、tail：
+    当 history 的 "voice_source" 等于 "Tube"。
+    并且 history 的 "words" 等于 words。
+    并且 listener 的 所在地 等于 room。
+    并且 history 的 "loose_junction" 的 room 等于 true。
+    则 history 的 "heard_form" 的 listener 变为 "tail"。
+    并使 history 的 "heard_words" 的 listener 变为 tail。
+    并使 history 的 "heard_origin" 的 listener 变为 "unresolved"。
 
-axiom c1_hist_tube_hum(history, listener):
-    return dv_axiom("c1_hist_tube_hum", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(listener, "state", "location"), "pantry"))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "hum"), dv_assign(dv_ref(history, "heard_words", listener), "unintelligible")))
+法则 c1_hist_tube_hum，给定 history、listener：
+    当 history 的 "voice_source" 等于 "Tube"。
+    并且 listener 的 所在地 等于 备餐间。
+    则 history 的 "heard_form" 的 listener 变为 "hum"。
+    并使 history 的 "heard_words" 的 listener 变为 "unintelligible"。
 
-axiom c1_hist_tube_alarm_only(history, listener):
-    return dv_axiom("c1_hist_tube_alarm_only", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(listener, "state", "location"), "R05"))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "alarm-only"), dv_assign(dv_ref(history, "heard_words", listener), "unintelligible")))
+法则 c1_hist_tube_alarm_only，给定 history、listener：
+    当 history 的 "voice_source" 等于 "Tube"。
+    并且 listener 的 所在地 等于 "R05"。
+    则 history 的 "heard_form" 的 listener 变为 "alarm-only"。
+    并使 history 的 "heard_words" 的 listener 变为 "unintelligible"。
 
-axiom c1_hist_outside_full(history, listener, words):
-    return dv_axiom("c1_hist_outside_full", 1, dv_all(dv_list3(dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(history, "state", "words"), words), dv_fact(dv_ref(listener, "state", "location"), "outside_door"))), dv_list3(dv_assign(dv_ref(history, "heard_form", listener), "full"), dv_assign(dv_ref(history, "heard_words", listener), words), dv_assign(dv_ref(history, "heard_origin", listener), "OutsideDoor")))
+法则 c1_hist_outside_full，给定 history、listener、words：
+    当 history 的 "voice_source" 等于 "OutsideDoor"。
+    并且 history 的 "words" 等于 words。
+    并且 listener 的 所在地 等于 "outside_door"。
+    则 history 的 "heard_form" 的 listener 变为 "full"。
+    并使 history 的 "heard_words" 的 listener 变为 words。
+    并使 history 的 "heard_origin" 的 listener 变为 "OutsideDoor"。
 
-axiom c1_hist_outside_muffled(history, listener):
-    return dv_axiom("c1_hist_outside_muffled", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(listener, "state", "location"), "foyer"))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "muffled-full"), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
+法则 c1_hist_outside_muffled，给定 history、listener：
+    当 history 的 "voice_source" 等于 "OutsideDoor"。
+    并且 listener 的 所在地 等于 乙区门厅。
+    则 history 的 "heard_form" 的 listener 变为 "muffled-full"。
+    并使 history 的 "heard_origin" 的 listener 变为 "unresolved"。
 
-axiom c1_hist_outside_junction(history, listener, room):
-    return dv_axiom("c1_hist_outside_junction", 1, dv_all([dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(listener, "state", "location"), room), dv_fact(dv_ref(history, "loose_junction", "foyer"), true), dv_fact(dv_ref(history, "loose_junction", room), true)]), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "muffled-full"), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
+法则 c1_hist_outside_junction，给定 history、listener、room：
+    当 history 的 "voice_source" 等于 "OutsideDoor"。
+    并且 listener 的 所在地 等于 room。
+    并且 history 的 "loose_junction" 的 乙区门厅 等于 true。
+    并且 history 的 "loose_junction" 的 room 等于 true。
+    则 history 的 "heard_form" 的 listener 变为 "muffled-full"。
+    并使 history 的 "heard_origin" 的 listener 变为 "unresolved"。
 
-axiom c1_hist_origin(history, knowledge, su_room, huo_room):
-    return dv_axiom("c1_hist_origin", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "inputs", "su_origin"), su_room), dv_fact(dv_ref(history, "inputs", "huo_origin"), huo_room))), [dv_assign(dv_ref("past.su", "state", "location"), su_room), dv_assign(dv_ref("past.huo", "state", "location"), huo_room), dv_assign(dv_ref("past.detective", "state", "location"), "R05"), dv_assign(dv_ref("past.shen", "state", "location"), "pantry"), dv_assign(dv_ref(history, "state", "door_open"), false), dv_assign(dv_ref(history, "state", "door_wedged"), false), dv_assign(dv_ref(history, "state", "door_changed"), false), dv_assign(dv_ref(knowledge, "state", "predicted_bolt"), false), dv_assign(dv_ref(knowledge, "state", "predicted_ash_fan"), false), dv_assign(dv_ref(knowledge, "state", "predicted_wedge_soot"), false), dv_assign(dv_ref(knowledge, "state", "predicted_boots_bolt"), false), dv_assign(dv_ref(knowledge, "state", "predicted_cloth_over_heel"), false)])
+法则 c1_hist_origin，给定 history、knowledge、su_room、huo_room：
+    当 history 的 "inputs" 的 "su_origin" 等于 su_room。
+    并且 history 的 "inputs" 的 "huo_origin" 等于 huo_room。
+    则 "past.su" 的 所在地 变为 su_room。
+    并使 "past.huo" 的 所在地 变为 huo_room。
+    并使 "past.detective" 的 所在地 变为 "R05"。
+    并使 "past.shen" 的 所在地 变为 备餐间。
+    并使 history 的 "door_open" 变为 false。
+    并使 history 的 "door_wedged" 变为 false。
+    并使 history 的 "door_changed" 变为 false。
+    并使 knowledge 的 "predicted_bolt" 变为 false。
+    并使 knowledge 的 "predicted_ash_fan" 变为 false。
+    并使 knowledge 的 "predicted_wedge_soot" 变为 false。
+    并使 knowledge 的 "predicted_boots_bolt" 变为 false。
+    并使 knowledge 的 "predicted_cloth_over_heel" 变为 false。
 
-axiom c1_hist_reset_records(history, knowledge):
-    return dv_axiom("c1_hist_reset_records", 1, dv_fact(dv_ref("past.detective", "state", "location"), "R05"), [dv_assign(dv_ref(knowledge, "state", "predicted_fork_dent"), false), dv_assign(dv_ref(knowledge, "state", "predicted_slate_first"), false), dv_assign(dv_ref(knowledge, "state", "predicted_slate_second"), false), dv_assign(dv_ref(knowledge, "state", "predicted_score_tail"), false), dv_assign(dv_ref(history, "state", "smoke_due"), false), dv_assign(dv_ref(history, "state", "cloth_placed"), false)])
+法则 c1_hist_reset_records，给定 history、knowledge：
+    前提 dv_fact(dv_ref("past.detective", "state", 所在地), "R05")。
+    则 knowledge 的 "predicted_fork_dent" 变为 false。
+    并使 knowledge 的 "predicted_slate_first" 变为 false。
+    并使 knowledge 的 "predicted_slate_second" 变为 false。
+    并使 knowledge 的 "predicted_score_tail" 变为 false。
+    并使 history 的 "smoke_due" 变为 false。
+    并使 history 的 "cloth_placed" 变为 false。
 
-axiom c1_hist_smoke_due(history):
-    return dv_axiom("c1_hist_smoke_due", 1, dv_true(), dv_single(dv_assign(dv_ref(history, "state", "smoke_due"), true)))
+法则 c1_hist_smoke_due，给定 history：
+    前提 dv_true()。
+    则 history 的 "smoke_due" 变为 true。
 
-axiom c1_hist_voice_input(history, source, words):
-    return dv_axiom("c1_hist_voice_input", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "inputs", "source"), source), dv_fact(dv_ref(history, "inputs", "words"), words))), dv_pair(dv_assign(dv_ref(history, "state", "voice_source"), source), dv_assign(dv_ref(history, "state", "words"), words)))
+法则 c1_hist_voice_input，给定 history、source、words：
+    当 history 的 "inputs" 的 "source" 等于 source。
+    并且 history 的 "inputs" 的 "words" 等于 words。
+    则 history 的 "voice_source" 变为 source。
+    并使 history 的 "words" 变为 words。
 
-axiom c1_hist_open_interpretation(history, listener):
-    return dv_axiom("c1_hist_open_interpretation", 1, dv_fact(dv_ref(history, "heard_words", listener), "Open"), dv_single(dv_assign(dv_ref(listener, "belief", "outside_wants_open"), true)))
+法则 c1_hist_open_interpretation，给定 history、listener：
+    前提 dv_fact(dv_ref(history, "heard_words", listener), "Open")。
+    则 listener 的 "belief" 的 "outside_wants_open" 变为 true。
 
-axiom c1_hist_su_open_intent(history):
-    return dv_axiom("c1_hist_su_open_intent", 1, dv_fact(dv_ref("past.su", "belief", "outside_wants_open"), true), dv_single(dv_assign(dv_ref("past.su", "state", "intent"), "open-and-listen")))
+法则 c1_hist_su_open_intent，给定 history：
+    前提 dv_fact(dv_ref("past.su", "belief", "outside_wants_open"), true)。
+    则 "past.su" 的 "intent" 变为 "open-and-listen"。
 
-axiom c1_hist_huo_tail_open_intent(history):
-    return dv_axiom("c1_hist_huo_tail_open_intent", 1, dv_all(dv_pair(dv_fact(dv_ref("past.huo", "belief", "outside_wants_open"), true), dv_fact(dv_ref("past.huo", "state", "location"), "foyer"))), dv_single(dv_assign(dv_ref("past.huo", "state", "intent"), "open-and-listen")))
+法则 c1_hist_huo_tail_open_intent，给定 history：
+    当 "past.huo" 的 "belief" 的 "outside_wants_open" 等于 true。
+    并且 "past.huo" 的 所在地 等于 乙区门厅。
+    则 "past.huo" 的 "intent" 变为 "open-and-listen"。
 
-axiom c1_hist_instruction_record(history, knowledge, words):
-    return dv_axiom("c1_hist_instruction_record", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "heard_form", "past.huo"), "full"), dv_fact(dv_ref(history, "heard_words", "past.huo"), words))), dv_pair(dv_assign(dv_ref(knowledge, "state", "predicted_slate_first"), true), dv_assign(dv_ref(history, "state", "huo_instruction"), words)))
+法则 c1_hist_instruction_record，给定 history、knowledge、words：
+    当 history 的 "heard_form" 的 "past.huo" 等于 "full"。
+    并且 history 的 "heard_words" 的 "past.huo" 等于 words。
+    则 knowledge 的 "predicted_slate_first" 变为 true。
+    并使 history 的 "huo_instruction" 变为 words。
 
-axiom c1_hist_guard_call(history):
-    return dv_axiom("c1_hist_guard_call", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "huo_instruction"), "BoltKeepShut"), dv_fact(dv_ref("past.huo", "state", "location"), "hall"))), dv_pair(dv_assign(dv_ref("past.huo", "state", "intent"), "guard-tube"), dv_assign(dv_ref(history, "state", "huo_called_corridor"), true)))
+法则 c1_hist_guard_call，给定 history：
+    当 history 的 "huo_instruction" 等于 "BoltKeepShut"。
+    并且 "past.huo" 的 所在地 等于 乙区大厅。
+    则 "past.huo" 的 "intent" 变为 "guard-tube"。
+    并使 history 的 "huo_called_corridor" 变为 true。
 
-axiom c1_hist_travel(actor, origin, target, permitted_intent):
-    return dv_axiom("c1_hist_travel", 1, dv_all(dv_pair(dv_fact(dv_ref(actor, "state", "location"), origin), dv_fact(dv_ref(actor, "state", "intent"), permitted_intent))), dv_single(dv_assign(dv_ref(actor, "state", "location"), target)))
+法则 c1_hist_travel，给定 行动者、起点、目标、permitted_intent：
+    当 行动者 的 所在地 等于 起点。
+    并且 行动者 的 "intent" 等于 permitted_intent。
+    则 行动者 的 所在地 变为 目标。
 
-axiom c1_hist_open_door(history, actor, knowledge):
-    return dv_axiom("c1_hist_open_door", 1, dv_all(dv_pair(dv_fact(dv_ref(actor, "state", "location"), "foyer"), dv_fact(dv_ref(actor, "state", "intent"), "open-and-listen"))), dv_list3(dv_assign(dv_ref(history, "state", "door_open"), true), dv_assign(dv_ref(history, "state", "door_wedged"), true), dv_assign(dv_ref(actor, "state", "intent"), "wait-at-door")))
+法则 c1_hist_open_door，给定 history、行动者、knowledge：
+    当 行动者 的 所在地 等于 乙区门厅。
+    并且 行动者 的 "intent" 等于 "open-and-listen"。
+    则 history 的 "door_open" 变为 true。
+    并使 history 的 "door_wedged" 变为 true。
+    并使 行动者 的 "intent" 变为 "wait-at-door"。
 
-axiom c1_hist_fork_tap(history, knowledge):
-    return dv_axiom("c1_hist_fork_tap", 1, dv_all(dv_list3(dv_fact(dv_ref("past.su", "state", "location"), "foyer"), dv_fact(dv_ref("past.su", "state", "intent"), "wait-at-door"), dv_fact(dv_ref(history, "state", "door_open"), true))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_fork_dent"), true)))
+法则 c1_hist_fork_tap，给定 history、knowledge：
+    当 "past.su" 的 所在地 等于 乙区门厅。
+    并且 "past.su" 的 "intent" 等于 "wait-at-door"。
+    并且 history 的 "door_open" 等于 true。
+    则 knowledge 的 "predicted_fork_dent" 变为 true。
 
-axiom c1_hist_receive_request(history, knowledge):
-    return dv_axiom("c1_hist_receive_request", 1, dv_all(dv_list3(dv_fact(dv_ref("past.detective", "state", "location"), "hall"), dv_fact(dv_ref("past.huo", "state", "location"), "hall"), dv_fact(dv_ref(history, "state", "huo_instruction"), "BoltKeepShut"))), dv_pair(dv_assign(dv_ref(history, "state", "request_received"), true), dv_assign(dv_ref(history, "state", "det_heard_relay"), true)))
+法则 c1_hist_receive_request，给定 history、knowledge：
+    当 "past.detective" 的 所在地 等于 乙区大厅。
+    并且 "past.huo" 的 所在地 等于 乙区大厅。
+    并且 history 的 "huo_instruction" 等于 "BoltKeepShut"。
+    则 history 的 "request_received" 变为 true。
+    并使 history 的 "det_heard_relay" 变为 true。
 
-axiom c1_hist_response_bridge(history, choice, intent):
-    return dv_axiom("c1_hist_response_bridge", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "response", "detective"), choice), dv_fact(dv_ref(history, "state", "request_received"), true))), dv_single(dv_assign(dv_ref("past.detective", "state", "intent"), intent)))
+法则 c1_hist_response_bridge，给定 history、choice、intent：
+    当 history 的 "response" 的 侦探 等于 choice。
+    并且 history 的 "request_received" 等于 true。
+    则 "past.detective" 的 "intent" 变为 intent。
 
-axiom c1_hist_latch(history, knowledge):
-    return dv_axiom("c1_hist_latch", 1, dv_all(dv_list3(dv_fact(dv_ref("past.detective", "state", "location"), "foyer"), dv_fact(dv_ref("past.detective", "state", "intent"), "latch-request"), dv_fact(dv_ref(history, "state", "det_heard_relay"), true))), [dv_assign(dv_ref(history, "state", "door_open"), false), dv_assign(dv_ref(history, "state", "door_wedged"), false), dv_assign(dv_ref(history, "state", "door_changed"), true), dv_assign(dv_ref(history, "state", "at_origin"), true), dv_assign(dv_ref(knowledge, "state", "predicted_bolt"), true), dv_assign(dv_ref(history, "state", "latching_complete"), true)])
+法则 c1_hist_latch，给定 history、knowledge：
+    当 "past.detective" 的 所在地 等于 乙区门厅。
+    并且 "past.detective" 的 "intent" 等于 "latch-request"。
+    并且 history 的 "det_heard_relay" 等于 true。
+    则 history 的 "door_open" 变为 false。
+    并使 history 的 "door_wedged" 变为 false。
+    并使 history 的 "door_changed" 变为 true。
+    并使 history 的 "at_origin" 变为 true。
+    并使 knowledge 的 "predicted_bolt" 变为 true。
+    并使 history 的 "latching_complete" 变为 true。
 
-axiom c1_hist_close_for_smoke(history):
-    return dv_axiom("c1_hist_close_for_smoke", 1, dv_all(dv_list3(dv_fact(dv_ref("past.detective", "state", "location"), "foyer"), dv_fact(dv_ref("past.detective", "state", "intent"), "inspect-first"), dv_fact(dv_ref("cognition", "state", "predicted_ash_fan"), true))), dv_list3(dv_assign(dv_ref(history, "state", "door_open"), false), dv_assign(dv_ref(history, "state", "door_wedged"), false), dv_assign(dv_ref(history, "state", "door_changed"), true)))
+法则 c1_hist_close_for_smoke，给定 history：
+    当 "past.detective" 的 所在地 等于 乙区门厅。
+    并且 "past.detective" 的 "intent" 等于 "inspect-first"。
+    并且 "cognition" 的 "predicted_ash_fan" 等于 true。
+    则 history 的 "door_open" 变为 false。
+    并使 history 的 "door_wedged" 变为 false。
+    并使 history 的 "door_changed" 变为 true。
 
-axiom c1_hist_report(history, knowledge):
-    return dv_axiom("c1_hist_report", 1, dv_all(dv_list3(dv_fact(dv_ref(knowledge, "state", "predicted_bolt"), true), dv_fact(dv_ref("past.detective", "state", "location"), "hall"), dv_fact(dv_ref("past.huo", "state", "location"), "hall"))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_slate_second"), true)))
+法则 c1_hist_report，给定 history、knowledge：
+    当 knowledge 的 "predicted_bolt" 等于 true。
+    并且 "past.detective" 的 所在地 等于 乙区大厅。
+    并且 "past.huo" 的 所在地 等于 乙区大厅。
+    则 knowledge 的 "predicted_slate_second" 变为 true。
 
-axiom c1_hist_score(history, knowledge):
-    return dv_axiom("c1_hist_score", 1, dv_all(dv_list3(dv_fact(dv_ref("past.su", "state", "location"), "R08"), dv_fact(dv_ref("past.su", "state", "intent"), "write-score"), dv_fact(dv_ref(history, "state", "door_open"), false))), dv_single(dv_assign(dv_ref(knowledge, "state", "predicted_score_tail"), true)))
+法则 c1_hist_score，给定 history、knowledge：
+    当 "past.su" 的 所在地 等于 "R08"。
+    并且 "past.su" 的 "intent" 等于 "write-score"。
+    并且 history 的 "door_open" 等于 false。
+    则 knowledge 的 "predicted_score_tail" 变为 true。
 
-axiom c1_hist_cloth_response(history, knowledge):
-    return dv_axiom("c1_hist_cloth_response", 1, dv_all([dv_fact(dv_ref("past.shen", "state", "location"), "foyer"), dv_fact(dv_ref("past.shen", "state", "intent"), "place-wet-cloth"), dv_fact(dv_ref(knowledge, "state", "predicted_ash_fan"), true), dv_fact(dv_ref(history, "state", "door_open"), false)]), dv_single(dv_assign(dv_ref(history, "state", "cloth_placed"), true)))
+法则 c1_hist_cloth_response，给定 history、knowledge：
+    当 "past.shen" 的 所在地 等于 乙区门厅。
+    并且 "past.shen" 的 "intent" 等于 "place-wet-cloth"。
+    并且 knowledge 的 "predicted_ash_fan" 等于 true。
+    并且 history 的 "door_open" 等于 false。
+    则 history 的 "cloth_placed" 变为 true。
 
 axiom c1_hist_argument_source(history, knowledge, source, loss):
     var local_1 = false
@@ -1497,23 +1779,35 @@ axiom c1_hist_argument_source(history, knowledge, source, loss):
         local_2 = "OpenSaveMe"
     return dv_axiom("c1_hist_argument_source", 1, dv_all([dv_fact(dv_ref(history, "state", "voice_source"), source), dv_fact(dv_ref(history, "heard_form", "past.su"), local_1), dv_fact(dv_ref(history, "heard_words", "past.su"), local_2), dv_fact(dv_ref(knowledge, "state", "predicted_bolt"), true)]), dv_pair(dv_assign(c1_hist_claim_ref("voice_source"), source), dv_assign(c1_hist_claim_ref("transmission_loss"), loss)))
 
-axiom c1_hist_coordinate(knowledge, history, atom, polarity, variable, value):
-    return dv_axiom("c1_hist_coordinate", 1, dv_fact(dv_ref(knowledge, "state", atom), polarity), dv_single(dv_assign(dv_ref(history, "actual", variable), value)))
+法则 c1_hist_coordinate，给定 knowledge、history、atom、polarity、variable、取值：
+    前提 dv_fact(dv_ref(knowledge, "state", atom), polarity)。
+    则 history 的 "actual" 的 variable 变为 取值。
 
-axiom c1_hist_su_report(history):
-    return dv_axiom("c1_hist_su_report", 1, dv_all(dv_list3(dv_fact(dv_ref("past.su", "state", "location"), "foyer"), dv_fact(dv_ref("past.detective", "state", "location"), "foyer"), dv_fact(dv_ref("past.su", "belief", "outside_wants_open"), true))), dv_single(dv_assign(dv_ref(history, "state", "det_heard_su_report"), true)))
+法则 c1_hist_su_report，给定 history：
+    当 "past.su" 的 所在地 等于 乙区门厅。
+    并且 "past.detective" 的 所在地 等于 乙区门厅。
+    并且 "past.su" 的 "belief" 的 "outside_wants_open" 等于 true。
+    则 history 的 "det_heard_su_report" 变为 true。
 
-axiom c1_hist_heard_argument(history, knowledge, su_report, heard):
-    return dv_axiom("c1_hist_heard_argument", 1, dv_all(dv_list3(dv_fact(dv_ref(history, "state", "latching_complete"), true), dv_fact(dv_ref(history, "state", "det_heard_relay"), true), dv_fact(dv_ref(history, "state", "det_heard_su_report"), su_report))), dv_single(dv_assign(c1_hist_claim_ref("actual_heard"), heard)))
+法则 c1_hist_heard_argument，给定 history、knowledge、su_report、heard：
+    当 history 的 "latching_complete" 等于 true。
+    并且 history 的 "det_heard_relay" 等于 true。
+    并且 history 的 "det_heard_su_report" 等于 su_report。
+    则 c1_hist_claim_ref("actual_heard") 变为 heard。
 
-axiom c1_hist_familiar_relations(history, preference, huo_trust, su_trust):
-    return dv_axiom("c1_hist_familiar_relations", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "inputs", "familiar"), true), dv_fact(dv_ref(history, "inputs", "trust_choice"), preference))), dv_pair(dv_assign(dv_ref(history, "relationships", "trust_huo"), huo_trust), dv_assign(dv_ref(history, "relationships", "trust_su"), su_trust)))
+法则 c1_hist_familiar_relations，给定 history、preference、huo_trust、su_trust：
+    当 history 的 "inputs" 的 "familiar" 等于 true。
+    并且 history 的 "inputs" 的 "trust_choice" 等于 preference。
+    则 history 的 "relationships" 的 "trust_huo" 变为 huo_trust。
+    并使 history 的 "relationships" 的 "trust_su" 变为 su_trust。
 
-axiom c1_hist_social_preview(speaker, expected, result):
-    return dv_axiom("c1_hist_social_preview", 1, dv_fact(dv_ref(speaker, "relationship", "trust"), expected), dv_single(dv_assign(dv_ref("response.outcome", "state", "value"), result)))
+法则 c1_hist_social_preview，给定 speaker、expected、result：
+    前提 dv_fact(dv_ref(speaker, "relationship", "trust"), expected)。
+    则 "response.outcome" 的 "value" 变为 result。
 
-axiom c1_hist_inspection_preview(priority):
-    return dv_axiom("c1_hist_inspection_preview", 1, dv_true(), dv_single(dv_assign(dv_ref("response.outcome", "state", "value"), priority)))
+法则 c1_hist_inspection_preview，给定 priority：
+    前提 dv_true()。
+    则 "response.outcome" 的 "value" 变为 priority。
 
 fn c1_hist_variable_specs():
     return [["V1", "R08", "su_room", true, 1], ["V1", "hall", "su_hall", true, 1], ["V1", "pantry", "su_pantry", true, 1], ["V2", "hall", "huo_copper", true, 11], ["V2", "R06", "huo_room", true, 11], ["V2", "foyer", "huo_foyer", true, 11], ["V3", "Tube", "remote_voice", true, 21], ["V3", "OutsideDoor", "remote_voice", false, 21], ["V4", "BoltKeepShut", "words_bolt", true, 30], ["V4", "OpenSaveMe", "words_bolt", false, 30], ["V5", "huo", "heed_huo", true, 39], ["V5", "su", "heed_su", true, 39], ["V5", "self", "heed_neither", true, 39], ["V6", false, "familiar", false, 49], ["V6", true, "familiar", true, 50]]
@@ -1576,11 +1870,21 @@ fn c1_hist_assumptions(su_room, huo_room, source, words, preference, familiar):
 fn c1_hist_claim_slots():
     return dv_list3(dv_with({"slot_id": "actual_heard", "ref": c1_hist_claim_ref("actual_heard"), "trace_at": 160, "feature_index": 0}, "value_from_prediction", true), dv_with({"slot_id": "voice_source", "ref": c1_hist_claim_ref("voice_source"), "trace_at": 160, "feature_index": 4}, "value_from_prediction", true), dv_with({"slot_id": "transmission_loss", "ref": c1_hist_claim_ref("transmission_loss"), "trace_at": 160, "feature_index": 6}, "value_from_prediction", true))
 
-fn c1_hist_feature(predicted, observed):
-    return {"proposition": dv_fact(c1_knowledge(predicted), true), "observation": dv_fact(c1_knowledge(observed), true), "at": 160}
+fn c1_hist_feature(predicted, observed, label):
+    return {"proposition": dv_fact(c1_knowledge(predicted), true), "observation": dv_fact(c1_knowledge(observed), true), "at": 160, "public_observation_label": label}
 
 fn c1_hist_features():
-    return [c1_hist_feature("predicted_bolt", "bolt_down"), c1_hist_feature("predicted_wedge_soot", "ash_wedge"), c1_hist_feature("predicted_boots_bolt", "boots_toward_bolt"), c1_hist_feature("predicted_cloth_over_heel", "cloth_after_boots"), c1_hist_feature("predicted_slate_first", "slate_marks"), c1_hist_feature("predicted_slate_second", "slate_person"), c1_hist_feature("predicted_score_tail", "score_partial")]
+    return [c1_hist_feature("predicted_bolt", "bolt_down", "隔离门内闩"), c1_hist_feature("predicted_wedge_soot", "ash_wedge", "木楔上的烟灰"), c1_hist_feature("predicted_boots_bolt", "boots_toward_bolt", "靴印朝向内闩"), c1_hist_feature("predicted_cloth_over_heel", "cloth_after_boots", "湿布压住靴印"), c1_hist_feature("predicted_slate_first", "slate_marks", "石板第一行刻痕"), c1_hist_feature("predicted_slate_second", "slate_person", "石板第二行图记"), c1_hist_feature("predicted_score_tail", "score_partial", "乐谱中的残缺词句")]
+
+// Exact content whitelist; old unlabeled records stay private.
+fn c1_hist_public_feature(feature):
+    let declared = c1_hist_features()
+    var i = 0
+    while i < rt_count(declared):
+        if dv_same(feature, declared[i]):
+            return declared[i]
+        i = i + 1
+    return false
 
 fn c1_hist_response_world(preference):
     var mind = dv_world(rt_cat("history-response-", preference), "mind", "modeled.detective")
@@ -1626,26 +1930,49 @@ fn c1_hist_response_model(preference):
 fn c1_hist_response_models():
     return dv_list3(dv_pair("history.huo", c1_hist_response_model("huo")), dv_pair("history.su", c1_hist_response_model("su")), dv_pair("history.self", c1_hist_response_model("self")))
 
-axiom c1_hist_alarm_wake(knowledge):
-    return dv_axiom("c1_hist_alarm_wake", 1, dv_fact(dv_ref(knowledge, "state", "own_alarm_anchor"), true), dv_single(dv_assign(dv_ref("past.detective", "state", "intent"), "seek-instruction")))
+法则 c1_hist_alarm_wake，给定 knowledge：
+    前提 dv_fact(dv_ref(knowledge, "state", "own_alarm_anchor"), true)。
+    则 "past.detective" 的 "intent" 变为 "seek-instruction"。
 
-axiom c1_hist_visit_door(history):
-    return dv_axiom("c1_hist_visit_door", 1, dv_all(dv_pair(dv_fact(dv_ref("past.detective", "state", "location"), "hall"), dv_fact(dv_ref(history, "state", "request_received"), true))), dv_single(dv_assign(dv_ref("past.detective", "state", "intent"), "visit-door")))
+法则 c1_hist_visit_door，给定 history：
+    当 "past.detective" 的 所在地 等于 乙区大厅。
+    并且 history 的 "request_received" 等于 true。
+    则 "past.detective" 的 "intent" 变为 "visit-door"。
 
-axiom c1_hist_begin_return(history, knowledge):
-    return dv_axiom("c1_hist_begin_return", 1, dv_all(dv_pair(dv_fact(dv_ref("past.detective", "state", "location"), "foyer"), dv_fact(dv_ref(knowledge, "state", "predicted_bolt"), true))), dv_single(dv_assign(dv_ref("past.detective", "state", "intent"), "return-report")))
+法则 c1_hist_begin_return，给定 history、knowledge：
+    当 "past.detective" 的 所在地 等于 乙区门厅。
+    并且 knowledge 的 "predicted_bolt" 等于 true。
+    则 "past.detective" 的 "intent" 变为 "return-report"。
 
-axiom c1_hist_su_begin_score(history):
-    return dv_axiom("c1_hist_su_begin_score", 1, dv_all(dv_list3(dv_fact(dv_ref("past.su", "state", "location"), "foyer"), dv_fact(dv_ref("past.su", "state", "intent"), "wait-at-door"), dv_fact(dv_ref(history, "state", "door_open"), false))), dv_single(dv_assign(dv_ref("past.su", "state", "intent"), "write-score")))
+法则 c1_hist_su_begin_score，给定 history：
+    当 "past.su" 的 所在地 等于 乙区门厅。
+    并且 "past.su" 的 "intent" 等于 "wait-at-door"。
+    并且 history 的 "door_open" 等于 false。
+    则 "past.su" 的 "intent" 变为 "write-score"。
 
-axiom c1_hist_print_occurrence(history, knowledge):
-    return dv_axiom("c1_hist_print_occurrence", 1, dv_fact(dv_ref(knowledge, "state", "predicted_boots_bolt"), true), dv_single(dv_assign(dv_ref(history, "state", "prints_exist"), true)))
+法则 c1_hist_print_occurrence，给定 history、knowledge：
+    前提 dv_fact(dv_ref(knowledge, "state", "predicted_boots_bolt"), true)。
+    则 history 的 "prints_exist" 变为 true。
 
-axiom c1_hist_shen_smoke_response(history):
-    return dv_axiom("c1_hist_shen_smoke_response", 1, dv_all(dv_pair(dv_fact(dv_ref("past.shen", "belief", "smoke"), true), dv_fact(dv_ref(history, "state", "door_open"), false))), dv_single(dv_assign(dv_ref("past.shen", "state", "intent"), "place-wet-cloth")))
+法则 c1_hist_shen_smoke_response，给定 history：
+    当 "past.shen" 的 "belief" 的 "smoke" 等于 true。
+    并且 history 的 "door_open" 等于 false。
+    则 "past.shen" 的 "intent" 变为 "place-wet-cloth"。
 
-axiom c1_hist_episode_registers(history):
-    return dv_axiom("c1_hist_episode_registers", 1, dv_true(), [dv_assign(dv_ref(history, "state", "request_received"), false), dv_assign(dv_ref(history, "state", "det_heard_relay"), false), dv_assign(dv_ref(history, "state", "det_heard_su_report"), false), dv_assign(dv_ref(history, "state", "prints_exist"), false), dv_assign(dv_ref("past.su", "state", "intent"), "idle"), dv_assign(dv_ref("past.huo", "state", "intent"), "idle"), dv_assign(dv_ref("past.shen", "state", "intent"), "idle"), dv_assign(dv_ref("past.detective", "state", "intent"), "idle"), dv_assign(dv_ref("past.su", "belief", "outside_wants_open"), false), dv_assign(dv_ref("past.huo", "belief", "outside_wants_open"), false), dv_assign(dv_ref(history, "state", "at_origin"), false), dv_assign(dv_ref(history, "state", "latching_complete"), false)])
+法则 c1_hist_episode_registers，给定 history：
+    前提 dv_true()。
+    则 history 的 "request_received" 变为 false。
+    并使 history 的 "det_heard_relay" 变为 false。
+    并使 history 的 "det_heard_su_report" 变为 false。
+    并使 history 的 "prints_exist" 变为 false。
+    并使 "past.su" 的 "intent" 变为 "idle"。
+    并使 "past.huo" 的 "intent" 变为 "idle"。
+    并使 "past.shen" 的 "intent" 变为 "idle"。
+    并使 "past.detective" 的 "intent" 变为 "idle"。
+    并使 "past.su" 的 "belief" 的 "outside_wants_open" 变为 false。
+    并使 "past.huo" 的 "belief" 的 "outside_wants_open" 变为 false。
+    并使 history 的 "at_origin" 变为 false。
+    并使 history 的 "latching_complete" 变为 false。
 
 fn c1_hist_setup(mind):
     var result = c1_add_objects(mind, [c1_local_object("history_claims"), c1_local_object("history"), c1_local_object("past.su"), c1_local_object("past.huo"), c1_local_object("past.detective"), c1_local_object("past.shen")])
@@ -1687,11 +2014,15 @@ fn c1_hist_adopt_shared(mind):
     result = c1_hist_adopt(result, "history.cloth", c1_hist_cloth("history", "cognition"))
     return result
 
-axiom c1_hist_open_full_interpretation(history, listener):
-    return dv_axiom("c1_hist_open_full_interpretation", 1, dv_fact(dv_ref(history, "heard_words", listener), "OpenSaveMe"), dv_single(dv_assign(dv_ref(listener, "belief", "outside_wants_open"), true)))
+法则 c1_hist_open_full_interpretation，给定 history、listener：
+    前提 dv_fact(dv_ref(history, "heard_words", listener), "OpenSaveMe")。
+    则 listener 的 "belief" 的 "outside_wants_open" 变为 true。
 
-axiom c1_hist_layout_known(knowledge, history):
-    return dv_axiom("c1_hist_layout_known", 1, dv_all(dv_pair(dv_fact(dv_ref(knowledge, "state", "pipe_layout"), true), dv_fact(dv_ref(knowledge, "state", "heads_lost"), true))), dv_pair(dv_assign(dv_ref(history, "loose_junction", "R08"), true), dv_assign(dv_ref(history, "loose_junction", "foyer"), true)))
+法则 c1_hist_layout_known，给定 knowledge、history：
+    当 knowledge 的 "pipe_layout" 等于 true。
+    并且 knowledge 的 "heads_lost" 等于 true。
+    则 history 的 "loose_junction" 的 "R08" 变为 true。
+    并使 history 的 "loose_junction" 的 乙区门厅 变为 true。
 
 fn c1_hist_source_id(source, words):
     return rt_cat(rt_cat(source, "."), words)
@@ -1762,14 +2093,25 @@ fn c1_hist_add_source_laws(mind):
         i = (i + 1)
     return result
 
-axiom c1_hist_room_alarm(history, listener, room):
-    return dv_axiom("c1_hist_room_alarm", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "voice_source"), "Tube"), dv_fact(dv_ref(listener, "state", "location"), room))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "alarm-only"), dv_assign(dv_ref(history, "heard_words", listener), "unintelligible")))
+法则 c1_hist_room_alarm，给定 history、listener、room：
+    当 history 的 "voice_source" 等于 "Tube"。
+    并且 listener 的 所在地 等于 room。
+    则 history 的 "heard_form" 的 listener 变为 "alarm-only"。
+    并使 history 的 "heard_words" 的 listener 变为 "unintelligible"。
 
-axiom c1_hist_outside_received(history, listener, room, words):
-    return dv_axiom("c1_hist_outside_received", 1, dv_all(dv_list3(dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(history, "state", "words"), words), dv_fact(dv_ref(listener, "state", "location"), room))), dv_list3(dv_assign(dv_ref(history, "heard_form", listener), "muffled-full"), dv_assign(dv_ref(history, "heard_words", listener), words), dv_assign(dv_ref(history, "heard_origin", listener), "unresolved")))
+法则 c1_hist_outside_received，给定 history、listener、room、words：
+    当 history 的 "voice_source" 等于 "OutsideDoor"。
+    并且 history 的 "words" 等于 words。
+    并且 listener 的 所在地 等于 room。
+    则 history 的 "heard_form" 的 listener 变为 "muffled-full"。
+    并使 history 的 "heard_words" 的 listener 变为 words。
+    并使 history 的 "heard_origin" 的 listener 变为 "unresolved"。
 
-axiom c1_hist_room_silence(history, listener, room):
-    return dv_axiom("c1_hist_room_silence", 1, dv_all(dv_pair(dv_fact(dv_ref(history, "state", "voice_source"), "OutsideDoor"), dv_fact(dv_ref(listener, "state", "location"), room))), dv_pair(dv_assign(dv_ref(history, "heard_form", listener), "no-intelligible-voice"), dv_assign(dv_ref(history, "heard_words", listener), "unintelligible")))
+法则 c1_hist_room_silence，给定 history、listener、room：
+    当 history 的 "voice_source" 等于 "OutsideDoor"。
+    并且 listener 的 所在地 等于 room。
+    则 history 的 "heard_form" 的 listener 变为 "no-intelligible-voice"。
+    并使 history 的 "heard_words" 的 listener 变为 "unintelligible"。
 
 fn c1_hist_stage(at, laws):
     return {"at": at, "laws": laws, "optional": true}
@@ -1868,8 +2210,9 @@ fn c1_hist_order(stages):
         count = (count + 1)
     return result
 
-axiom c1_hist_smoke_pantry(history):
-    return dv_axiom("c1_hist_smoke_pantry", 1, dv_fact(dv_ref(history, "state", "smoke_entered"), true), dv_single(dv_assign(dv_ref("past.shen", "belief", "smoke"), true)))
+法则 c1_hist_smoke_pantry，给定 history：
+    前提 dv_fact(dv_ref(history, "state", "smoke_entered"), true)。
+    则 "past.shen" 的 "belief" 的 "smoke" 变为 true。
 
 fn c1_hist_timeline(su_room, huo_room, source, words, preference):
     var stages = []
@@ -1904,12 +2247,32 @@ fn c1_hist_timeline(su_room, huo_room, source, words, preference):
     rt_push(stages, c1_hist_stage(160, dv_list3(rt_cat("history.argument.source.", source), "history.argument.heard.both", "history.argument.heard.relay")))
     return c1_hist_order(stages)
 
+fn c1_manual_history_gate():
+    let cups = dv_fact(c1_knowledge("cups_preferences"), true)
+    let starter = dv_fact(c1_knowledge("starter_layers"), true)
+    let names = dv_fact(c1_knowledge("recalled_names"), true)
+    // Three-valued disjunction through the existing all/not proposition model.
+    return dv_not(dv_all([dv_not(dv_fact(c1_knowledge("familiar"), true)), dv_not(dv_fact(c1_knowledge("familiar"), false)), dv_not(dv_all([cups, starter])), dv_not(dv_all([cups, names])), dv_not(dv_all([starter, names]))]))
+
+fn c1_manual_replay_variables():
+    return [
+        {"id": "V1", "label": "苏泠当时的位置", "values": [{"value": "R08", "label": "卧室"}, {"value": "hall", "label": "活动厅"}, {"value": "pantry", "label": "茶水间"}]},
+        {"id": "V2", "label": "霍铎当时的位置", "values": [{"value": "hall", "label": "铜口旁"}, {"value": "R06", "label": "卧室"}, {"value": "foyer", "label": "门厅"}]},
+        {"id": "V3", "label": "呼声的来源", "values": [{"value": "Tube", "label": "传声管"}, {"value": "OutsideDoor", "label": "门外"}]},
+        {"id": "V4", "label": "当时的话语", "values": [{"value": "BoltKeepShut", "label": "闩门，别开"}, {"value": "OpenSaveMe", "label": "开门救人"}]},
+        {"id": "V5", "label": "自己当时的选择", "values": [{"value": "huo", "label": "相信霍铎"}, {"value": "su", "label": "相信苏泠"}, {"value": "self", "label": "都不相信"}]},
+        {"id": "V6", "label": "昨夜之前的关系（假设）", "available_when": c1_manual_history_gate(), "values": [{"value": false, "label": "彼此陌生"}, {"value": true, "label": "彼此熟悉"}]}
+    ]
+
 fn c1_hist_candidate(number, su_room, huo_room, source, words, preference, familiar):
+    var manual_gate = dv_true()
+    if familiar:
+        manual_gate = c1_manual_history_gate()
     var assumptions = c1_hist_assumptions(su_room, huo_room, source, words, preference, familiar)
     rt_push(assumptions, dv_fact(c1_knowledge("own_alarm_anchor"), true))
     rt_push(assumptions, dv_fact(dv_ref("history", "state", "sole"), "PoloBoot"))
     rt_push(assumptions, dv_fact(dv_ref("history", "state", "direction"), "Bolt"))
-    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"id": rt_cat("history-case-", rt_show(number)), "question": "original_q2_complete", "group": "six-variable-history", "prior": 0.5}, "proposition", dv_all(c1_hist_assumptions(su_room, huo_room, source, words, preference, familiar))), "basis", dv_pair(c1_source("docs/design-standard.md", 703, "public-six-variable-candidate-space"), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/声路与真相.story", 102, "fixed-external-event-catalog"))), "available_when", dv_fact(dv_ref("question", "state", "outstanding_complete"), true)), "assumptions", assumptions), "variable_assignments", c1_hist_assignments(su_room, huo_room, source, words, preference, familiar)), "timeline", c1_hist_timeline(su_room, huo_room, source, words, preference)), "start_time", 0), "features", c1_hist_features()), "claim_slots", c1_hist_claim_slots())
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"id": rt_cat("history-case-", rt_show(number)), "question": "original_q2_complete", "group": "six-variable-history", "prior": 0.5, "manual_available_when": manual_gate}, "proposition", dv_all(c1_hist_assumptions(su_room, huo_room, source, words, preference, familiar))), "basis", dv_pair(c1_source("docs/design-standard.md", 703, "public-six-variable-candidate-space"), c1_source("godot_csharp/scenes/Awakening/Script/story/第一章/声路与真相.story", 102, "fixed-external-event-catalog"))), "available_when", dv_fact(dv_ref("question", "state", "outstanding_complete"), true)), "assumptions", assumptions), "variable_assignments", c1_hist_assignments(su_room, huo_room, source, words, preference, familiar)), "timeline", c1_hist_timeline(su_room, huo_room, source, words, preference)), "start_time", 0), "features", c1_hist_features()), "claim_slots", c1_hist_claim_slots())
 
 fn c1_hist_candidates():
     var result = []
@@ -2205,8 +2568,12 @@ axiom c1_other_question_open(group):
         i = (i + 1)
     return dv_axiom(rt_cat("c1_other_question_open.", group), 1, dv_fact(c1_other_ref(group, "open"), false), effects)
 
-axiom c1_other_accept(group, actor):
-    return dv_axiom(rt_cat(rt_cat("c1_other_accept.", group), rt_cat(".", actor)), 1, c1_other_claim(group, "open"), dv_list3(dv_assign(c1_other_ref(group, rt_cat("receipt.", actor)), true), dv_assign(c1_other_ref(group, rt_cat("level.", actor)), 1), dv_assign(dv_ref(rt_cat("personal.", actor), "state", "current"), rt_cat(group, ".reason"))))
+法则 c1_other_accept，给定 分区、行动者：
+    名为 rt_cat(rt_cat("c1_other_accept.", 分区), rt_cat(".", 行动者))。
+    前提 c1_other_claim(分区, 开放状态)。
+    则 c1_other_ref(分区, rt_cat("receipt.", 行动者)) 变为 true。
+    并使 c1_other_ref(分区, rt_cat("level.", 行动者)) 变为 1。
+    并使 rt_cat("personal.", 行动者) 的 "current" 变为 rt_cat(分区, ".reason")。
 
 // A valid duty report permits a real release action at the shared living hall.
 axiom c1_other_release(group, clock_ref):
@@ -2690,28 +3057,40 @@ fn c1_other_groups_install_scene(scene):
 
 fn c1_other_introduction(id):
     if id == "quer":
-        return "叫我雀儿就行。别站门前——让我看一眼那道闩。"
+        叙述：
+            叫我雀儿就行。别站门前——让我看一眼那道闩。
     if id == "lucian":
-        return "卢西安。名字还记得，半句诗也还记得；偏偏缺了我们怎么到这儿来的那一段。"
+        叙述：
+            卢西安。名字还记得，半句诗也还记得；偏偏缺了我们怎么到这儿来的那一段。
     if id == "ward":
-        return "沃德。先说姓名，再说各自记得的最后一件事。不要混在一起。"
+        叙述：
+            沃德。先说姓名，再说各自记得的最后一件事。不要混在一起。
     if id == "gu":
-        return "顾平章。容老朽擦擦眼镜。纸上的东西还在，人却想不起来，真是怪事。"
+        叙述：
+            顾平章。容老朽擦擦眼镜。纸上的东西还在，人却想不起来，真是怪事。
     if id == "ruan":
-        return "阮清月。那盘棋先别碰。我们还不知道谁摆的，也不知道轮到谁。"
+        叙述：
+            阮清月。那盘棋先别碰。我们还不知道谁摆的，也不知道轮到谁。
     if id == "elena":
-        return "伊莲娜。别拉我起来……脚踝疼。你们谁知道这里是什么地方？"
+        叙述：
+            伊莲娜。别拉我起来……脚踝疼。你们谁知道这里是什么地方？
     if id == "selma":
-        return "赛尔玛。请别动窗台上的苗。我得先弄清楚本子上哪些是我记的。"
+        叙述：
+            赛尔玛。请别动窗台上的苗。我得先弄清楚本子上哪些是我记的。
     if id == "moran":
-        return "莫兰。等一等，那层绿马上要散了。你们说，我听着。"
+        叙述：
+            莫兰。等一等，那层绿马上要散了。你们说，我听着。
     if id == "mora":
-        return "茉拉。刚才谁在咳嗽？先让我看看，再说别的。"
+        叙述：
+            茉拉。刚才谁在咳嗽？先让我看看，再说别的。
     if id == "bertrand":
-        return "贝尔特朗。门外有动静。先别挤过去，给彼此留条退路。"
+        叙述：
+            贝尔特朗。门外有动静。先别挤过去，给彼此留条退路。
     if id == "veronica":
-        return "维罗妮卡。谁动过这排器具？不知道也直说，别替别人猜。"
-    return "玛格丽特。先别都靠那面墙。这根梁的搭法，我得再看一遍。"
+        叙述：
+            维罗妮卡。谁动过这排器具？不知道也直说，别替别人猜。
+    叙述：
+        玛格丽特。先别都靠那面墙。这根梁的搭法，我得再看一遍。
 
 fn c1_other_clock_ref():
     return dv_ref("campaign.clock", "state", "minute")
@@ -2724,28 +3103,40 @@ fn c1_other_threshold(group):
 
 fn c1_other_handoff_text(id):
     if id == "ward":
-        return "开锁的人已经核对了。出去以后，那把钥匙的来路还得写清楚。"
+        叙述：
+            开锁的人已经核对了。出去以后，那把钥匙的来路还得写清楚。
     if id == "quer":
-        return "我答了。你还要把我堵在这儿？门开了，让开一点。"
+        叙述：
+            我答了。你还要把我堵在这儿？门开了，让开一点。
     if id == "lucian":
-        return "名字答对了，缘由还空着呢。沃德，留一行空白总比填错强。"
+        叙述：
+            名字答对了，缘由还空着呢。沃德，留一行空白总比填错强。
     if id == "gu":
-        return "门开了。先莫争，外面若有文书，读过再说。"
+        叙述：
+            门开了。先莫争，外面若有文书，读过再说。
     if id == "elena":
-        return "我慢一点。阮清月……出去以后，你也别先走。"
+        叙述：
+            我慢一点。阮清月……出去以后，你也别先走。
     if id == "ruan":
-        return "我在这儿。你先扶住门框，等站稳了再迈那一步。"
+        叙述：
+            我在这儿。你先扶住门框，等站稳了再迈那一步。
     if id == "selma":
-        return "我的本子带上了。门内查到的，跟出去以后查到的，分开记。"
+        叙述：
+            我的本子带上了。门内查到的，跟出去以后查到的，分开记。
     if id == "moran":
-        return "外面的光不一样。等我站到门边再画，别挡着伊莲娜。"
+        叙述：
+            外面的光不一样。等我站到门边再画，别挡着伊莲娜。
     if id == "mora":
-        return "人先出去。试剂的事还没说清；有谁不舒服，别瞒着。"
+        叙述：
+            人先出去。试剂的事还没说清；有谁不舒服，别瞒着。
     if id == "veronica":
-        return "取走一瓶东西和拿它做了什么，是两件事。先把原瓶找到。"
+        叙述：
+            取走一瓶东西和拿它做了什么，是两件事。先把原瓶找到。
     if id == "bertrand":
-        return "我站门边。一个一个过去，先看落脚的地方。"
-    return "门框没歪。慢慢过，别拿身体去撞那道闩。"
+        叙述：
+            我站门边。一个一个过去，先看落脚的地方。
+    叙述：
+        门框没歪。慢慢过，别拿身体去撞那道闩。
 
 fn c1_other_handoff_action(id):
     let person = c1_other_person(id)
@@ -2765,10 +3156,13 @@ fn c1_other_report_time(group):
 
 fn c1_other_report_surface(group):
     if group == "contract":
-        return "；藏处是壁炉砖槽；未经公开授权，背着同行私藏。我将此定为窃取。"
+        叙述：
+            ；藏处是壁炉砖槽；未经公开授权，背着同行私藏。我将此定为窃取。
     if group == "astral":
-        return "；她单方面止损，为保住多数而拉闸封门。"
-    return "；她未经医嘱，进行了激进的酸试验。"
+        叙述：
+            ；她单方面止损，为保住多数而拉闸封门。
+    叙述：
+        ；她未经医嘱，进行了激进的酸试验。
 
 fn c1_other_submission(group, option):
     return dv_all([c1_other_identity(group, option), c1_other_claim(group, "evidence_complete"), c1_other_claim(group, "report_basis")])
@@ -3192,20 +3586,47 @@ fn c1dep_can_cross():
 fn c1dep_entered(world, actor):
     return dv_truth(world, dv_fact(c1dep_cross_ref(actor), true)) == "true"
 
-axiom c1dep_outer_law():
-    return dv_axiom("c1dep_outer_law", 1, dv_all([c1dep_complete(), c2_at("demon", "living_hall"), dv_fact(dv_ref("demon.body", "state", "manifested"), true), dv_fact(c1dep_ref("outer_released"), false)]), [dv_assign(c1dep_ref("outer_released"), true), dv_assign(c2_access("living_exit"), true), dv_assign(dv_ref("demon.body", "state", "manifested"), false), dv_assign(dv_ref("demon.body", "state", "latch_hand_trace"), "long-narrow-hand")])
+法则 c1dep_outer_law：
+    当 c1dep_complete()。
+    并且 恶魔 位于 起居厅。
+    并且 "demon.body" 的 "manifested" 等于 true。
+    并且 c1dep_ref("outer_released") 等于 false。
+    则 c1dep_ref("outer_released") 变为 true。
+    并使 c2_access("living_exit") 变为 true。
+    并使 "demon.body" 的 "manifested" 变为 false。
+    并使 "demon.body" 的 "latch_hand_trace" 变为 "long-narrow-hand"。
 
-axiom c1dep_pick_law():
-    return dv_axiom("c1dep_pick_law", 1, dv_all([c1_at("quer", "living_hall"), dv_at_least(c1_other_clock_ref(), 780), dv_fact(c1dep_ref("outer_released"), false), dv_fact(c1dep_ref("quer_has_wire"), true)]), [dv_assign(c1dep_ref("outer_released"), true), dv_assign(c1dep_ref("picked_by_quer"), true), dv_assign(c2_access("living_exit"), true)])
+法则 c1dep_pick_law：
+    当 雀儿 位于 起居厅。
+    并且 c1_other_clock_ref() 至少 780。
+    并且 c1dep_ref("outer_released") 等于 false。
+    并且 c1dep_ref("quer_has_wire") 等于 true。
+    则 c1dep_ref("outer_released") 变为 true。
+    并使 c1dep_ref("picked_by_quer") 变为 true。
+    并使 c2_access("living_exit") 变为 true。
 
-axiom c1dep_pick_contract_law():
-    return dv_axiom("c1dep_pick_contract_law", 1, dv_all([c1_at("quer", "dorm.contract"), dv_at_least(c1_other_clock_ref(), 630), c1_other_claim("contract", "quer_insulted"), dv_fact(c1dep_ref("quer_has_wire"), true), dv_fact(c1_other_ref("contract", "outer_latch_released"), false)]), [dv_assign(c1_other_ref("contract", "outer_latch_released"), true), dv_assign(c1_other_access_ref("contract"), true), dv_assign(c1dep_ref("contract_picked_by_quer"), true)])
+法则 c1dep_pick_contract_law：
+    当 雀儿 位于 "dorm.contract"。
+    并且 c1_other_clock_ref() 至少 630。
+    并且 c1_other_claim("contract", "quer_insulted")。
+    并且 c1dep_ref("quer_has_wire") 等于 true。
+    并且 c1_other_ref("contract", "outer_latch_released") 等于 false。
+    则 c1_other_ref("contract", "outer_latch_released") 变为 true。
+    并使 c1_other_access_ref("contract") 变为 true。
+    并使 c1dep_ref("contract_picked_by_quer") 变为 true。
 
-axiom c1dep_inner_law(actor):
-    return dv_axiom("c1dep_inner_law", 1, dv_all([c1_at(actor, "foyer"), dv_fact(c1dep_ref("outer_released"), true), dv_fact(c1dep_ref("inner_down"), true)]), dv_single(dv_assign(c1dep_ref("inner_down"), false)))
+法则 c1dep_inner_law，给定 行动者：
+    当 行动者 位于 乙区门厅。
+    并且 c1dep_ref("outer_released") 等于 true。
+    并且 c1dep_ref("inner_down") 等于 true。
+    则 c1dep_ref("inner_down") 变为 false。
 
-axiom c1dep_open_law(actor):
-    return dv_axiom("c1dep_open_law", 1, dv_all([c1_at(actor, "foyer"), dv_fact(c1dep_ref("outer_released"), true), dv_fact(c1dep_ref("inner_down"), false), dv_fact(c1dep_ref("open"), false)]), dv_single(dv_assign(c1dep_ref("open"), true)))
+法则 c1dep_open_law，给定 行动者：
+    当 行动者 位于 乙区门厅。
+    并且 c1dep_ref("outer_released") 等于 true。
+    并且 c1dep_ref("inner_down") 等于 false。
+    并且 c1dep_ref(开放状态) 等于 false。
+    则 c1dep_ref(开放状态) 变为 true。
 
 axiom c1dep_cross_law(actor, outward):
     var origin = "living_hall"
@@ -3684,12 +4105,30 @@ fn c1_op_property(object, field, value):
 
 fn c1_op_wake_lines(id):
     if id == "detective":
-        return ["我记得的最后一件事，是上船。", "衣架上挂着一件风衣。右手袖口磨得发亮——我写字时总拿那儿蹭桌沿。是我的。", "先出去，看看这是什么地方。"]
+        台词：
+            我记得的最后一件事，是上船。
+            衣架上挂着一件风衣。右手袖口磨得发亮——我写字时总拿那儿蹭桌沿。是我的。
+            先出去，看看这是什么地方。
     if id == "huo":
-        return ["……", "手先去摸床沿。床板是榫接的，没用一颗钉子。", "上船以后的事，没了。", "挂钩上缠着机油布。顺时针，三圈半。我缠的。", "起来。"]
+        台词：
+            ……
+            手先去摸床沿。床板是榫接的，没用一颗钉子。
+            上船以后的事，没了。
+            挂钩上缠着机油布。顺时针，三圈半。我缠的。
+            起来。
     if id == "shen":
-        return ["……", "哎哟，这胳膊。酸得跟揉了半宿面似的。", "昨儿……昨儿干啥了？就记得上了条船。", "桌上那块磨刀石，中间都磨出槽了。谁这么舍得用。", "先找口水喝。"]
-    return ["……", "墙里有一个很低的音，一直没断。", "最后记得的，是船上的汽笛。", "手指在被面上敲。四四拍。不知道敲了多久。", "……那个音还在。"]
+        台词：
+            ……
+            哎哟，这胳膊。酸得跟揉了半宿面似的。
+            昨儿……昨儿干啥了？就记得上了条船。
+            桌上那块磨刀石，中间都磨出槽了。谁这么舍得用。
+            先找口水喝。
+    台词：
+        ……
+        墙里有一个很低的音，一直没断。
+        最后记得的，是船上的汽笛。
+        手指在被面上敲。四四拍。不知道敲了多久。
+        ……那个音还在。
 
 fn c1_op_person_object(id, detective_name):
     var recall = "boarding"
@@ -3714,14 +4153,20 @@ fn c1_op_objects(detective_name):
     rt_push(result, c1_state_object("opening.wake.su", {"low_wall_tone": dv_field(true), "finger_meter": dv_field("4/4")}))
     return result
 
-axiom c1_op_wake(id):
-    return dv_axiom(rt_cat("c1_op_wake.", id), 1, c1_at(id, c1_op_wake_room(id)), dv_single(dv_assign(dv_ref(id, "body", "awake"), true)))
+法则 c1_op_wake，给定 标识：
+    名为 rt_cat("c1_op_wake.", 标识)。
+    前提 c1_at(标识, c1_op_wake_room(标识))。
+    则 标识 的 "body" 的 "awake" 变为 true。
 
-axiom c1_op_wear_coat():
-    return dv_axiom("c1_op_wear_coat", 1, dv_all(dv_pair(c1_at("detective", "R05"), dv_fact(dv_ref("coat", "identity", "owner"), "detective"))), dv_single(dv_assign(dv_ref("coat", "state", "worn_by"), "detective")))
+法则 c1_op_wear_coat：
+    当 侦探 位于 "R05"。
+    并且 "coat" 的 "identity" 的 "owner" 等于 侦探。
+    则 "coat" 的 "worn_by" 变为 侦探。
 
-axiom c1_op_prepare_tea():
-    return dv_axiom("c1_op_prepare_tea", 1, c1_at("shen", "hall"), dv_pair(dv_assign(dv_ref("opening.tea", "state", "prepared"), true), dv_assign(dv_ref("opening.tea", "state", "prepared_by"), "shen")))
+法则 c1_op_prepare_tea：
+    前提 c1_at(沈鼎, 乙区大厅)。
+    则 "opening.tea" 的 "prepared" 变为 true。
+    并使 "opening.tea" 的 "prepared_by" 变为 沈鼎。
 
 axiom c1_op_serve_tea():
     var effects = []
@@ -3734,14 +4179,22 @@ axiom c1_op_serve_tea():
     rt_push(effects, dv_assign(dv_ref("opening.cup.su", "state", "sugar_added"), false))
     return dv_axiom("c1_op_serve_tea", 1, dv_all(dv_pair(c1_at("shen", "hall"), c1_op_property("opening.tea", "prepared", true))), effects)
 
-axiom c1_op_bite_silver():
-    return dv_axiom("c1_op_bite_silver", 1, dv_all(dv_pair(c1_at("shen", "hall"), c1_op_property("opening.silver", "location", "opening.cabinet"))), dv_pair(dv_assign(dv_ref("opening.silver", "state", "last_bite_by"), "shen"), dv_assign(dv_ref("opening.silver", "state", "last_test"), "bite")))
+法则 c1_op_bite_silver：
+    当 沈鼎 位于 乙区大厅。
+    并且 c1_op_property("opening.silver", 所在地, "opening.cabinet")。
+    则 "opening.silver" 的 "last_bite_by" 变为 沈鼎。
+    并使 "opening.silver" 的 "last_test" 变为 "bite"。
 
-axiom c1_op_scrape_testpiece():
-    return dv_axiom("c1_op_scrape_testpiece", 1, dv_all(dv_pair(c1_at("huo", "hall"), c1_op_property("opening.testpiece", "location", "opening.cabinet"))), dv_single(dv_assign(dv_ref("opening.testpiece", "state", "last_scraped_by"), "huo")))
+法则 c1_op_scrape_testpiece：
+    当 霍铎 位于 乙区大厅。
+    并且 c1_op_property("opening.testpiece", 所在地, "opening.cabinet")。
+    则 "opening.testpiece" 的 "last_scraped_by" 变为 霍铎。
 
-axiom c1_op_play_audition():
-    return dv_axiom("c1_op_play_audition", 1, dv_all(dv_pair(c1_at("su", "hall"), c1_op_property("opening.audition", "location", "opening.cabinet"))), dv_pair(dv_assign(dv_ref("opening.audition", "state", "last_operator"), "su"), dv_assign(dv_ref("opening.audition", "state", "last_output"), "audible")))
+法则 c1_op_play_audition：
+    当 苏泠 位于 乙区大厅。
+    并且 c1_op_property("opening.audition", 所在地, "opening.cabinet")。
+    则 "opening.audition" 的 "last_operator" 变为 苏泠。
+    并使 "opening.audition" 的 "last_output" 变为 "audible"。
 
 fn c1_op_rules():
     var result = []
@@ -4262,8 +4715,19 @@ fn c1_op_install_purposes(actor):
         policy = dv_with(policy, "desires", dv_append(dv_find(policy, "desires", []), c1_op_desire(actor.id)))
     return dv_with(actor, "policy", policy)
 
-fn c1_op_contract_text():
-    return "1. 恶魔常驻岛内，不得离岛。\n2. 经学员本人授权，恶魔封存其在校记忆（在校经历、师生与同学关系、事故全貌）；姓名、生平与入学前技艺不在封存之列。\n3. 恶魔维持学园基础生存设施的运转（水、炉火、照明的设施本身；不负责分配物资，不创造物资）。\n4. 恶魔所受约束，唯有学员出于自主的行动方可解除；恶魔不得代为或强迫学员完成解除。\n5. 恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。\n6. 恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。\n7. 恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。\n8. 恶魔不得以言辞欺骗学员；学员问及本人封存之物或契约条文，须如实作答。\n9. 恶魔不得向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。\n10. 封存的记忆可凭对应之物恢复；恢复者自负其果。\n11. 经其余在岛存活学员一致同意，学员可择定“尽忘归乡”，于下一次入睡时遗忘此地一切、在家乡醒来。\n12. （终局）担保耗尽时，恶魔须将醒着且未深属此岛的学员遣返家乡，并抹去其与此地有关的一切记忆。"
+叙述 c1_op_contract_text：
+    1. 恶魔常驻岛内，不得离岛。
+    2. 经学员本人授权，恶魔封存其在校记忆（在校经历、师生与同学关系、事故全貌）；姓名、生平与入学前技艺不在封存之列。
+    3. 恶魔维持学园基础生存设施的运转（水、炉火、照明的设施本身；不负责分配物资，不创造物资）。
+    4. 恶魔所受约束，唯有学员出于自主的行动方可解除；恶魔不得代为或强迫学员完成解除。
+    5. 恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。
+    6. 恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。
+    7. 恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。
+    8. 恶魔不得以言辞欺骗学员；学员问及本人封存之物或契约条文，须如实作答。
+    9. 恶魔不得向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。
+    10. 封存的记忆可凭对应之物恢复；恢复者自负其果。
+    11. 经其余在岛存活学员一致同意，学员可择定“尽忘归乡”，于下一次入睡时遗忘此地一切、在家乡醒来。
+    12. （终局）担保耗尽时，恶魔须将醒着且未深属此岛的学员遣返家乡，并抹去其与此地有关的一切记忆。
 
 fn c1_op_contract_candidates():
     // Full-contract questions belong to the second-day permission dialogue.
@@ -4367,8 +4831,9 @@ fn c1n_rows_build():
 fn c1n_pre(row):
     return dv_all([c1_at(row.actor, "living_hall"), c2_window(1, row.start, row.end), row.when, dv_fact(c1n_mark(row.id), false)])
 
-axiom c1n_law(row):
-    return dv_axiom("c1n_law", 1, c1n_pre(row), dv_append(row.effects, dv_assign(c1n_mark(row.id), true)))
+法则 c1n_law，给定 条目：
+    前提 c1n_pre(条目)。
+    效果 dv_append(条目.effects, dv_assign(c1n_mark(条目.id), true))。
 
 fn c1n_action(row):
     var action = c2_action(row.id, row.kind, c1n_pre(row), c1n_pre(row), row.id, dv_append(row.grants, c1n_mark(row.id)), row.text, c1n_source(row.id))
@@ -4678,8 +5143,9 @@ fn c1n_wait_id(actor, minutes):
 fn c1n_wait_ref(actor):
     return dv_ref(rt_cat("night.wait.", actor), "state", "elapsed")
 
-axiom c1n_wait_law(actor, minutes):
-    return dv_axiom("c1n_wait_law", 1, dv_true(), [dv_increment(c1n_wait_ref(actor), minutes)])
+法则 c1n_wait_law，给定 行动者、minutes：
+    前提 dv_true()。
+    则 c1n_wait_ref(行动者) 增加 minutes。
 
 // Callers must supply a future opportunity from this actor's own authored intention
 // or actual received information, never another mind or a physical future fact.
@@ -4931,14 +5397,20 @@ fn c1n_known_future_wait_actor(actor):
 fn c1n_call_ref(actor):
     return dv_ref(rt_cat("night.call.", actor), "state", "heard")
 
-axiom c1n_call_law(actor):
-    return dv_axiom("c1n_call_law", 1, dv_all([c1_at(actor, "living_hall"), c2_window(1, 1440, 1800), dv_fact(c1n_night_seen_ref(actor), true), dv_fact(c1n_call_ref(actor), false)]), [dv_assign(c1n_call_ref(actor), true)])
+法则 c1n_call_law，给定 行动者：
+    当 行动者 位于 起居厅。
+    并且 c2_window(1, 1440, 1800)。
+    并且 c1n_night_seen_ref(行动者) 等于 true。
+    并且 c1n_call_ref(行动者) 等于 false。
+    则 c1n_call_ref(行动者) 变为 true。
 
 fn c1n_night_seen_ref(actor):
     return dv_ref(rt_cat("night.call.", actor), "state", "night_observed")
 
-axiom c1n_night_seen_law(actor):
-    return dv_axiom("c1n_night_seen_law", 1, dv_all([c1_at(actor, "living_hall"), c2_window(1, 1440, 1800)]), [dv_assign(c1n_night_seen_ref(actor), true)])
+法则 c1n_night_seen_law，给定 行动者：
+    当 行动者 位于 起居厅。
+    并且 c2_window(1, 1440, 1800)。
+    则 c1n_night_seen_ref(行动者) 变为 true。
 
 
 // Content-owned configuration. Callers supply approved numeric budgets and value lists.

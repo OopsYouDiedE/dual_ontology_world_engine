@@ -1,0 +1,678 @@
+{
+  "kind": "engineering-source-migration",
+  "writes_requested": true,
+  "scope": "Exact authored prose and pure action constructors; no execution",
+  "files": [
+    {
+      "path": "language_core/40-chapter1.dv",
+      "before_sha256": "5817f7fa5abbe01f88dab21ba0c1d0ec6321adaf0461058684a139369e9ada7c",
+      "after_sha256": "7fb982ac97cea4b7e332ff212c321d50e5094076ad66d2a607006d23ee6fd92a",
+      "changes": [
+        {
+          "name": "c1_inspect_E1",
+          "kind": "action",
+          "line": 149,
+          "start": 9057,
+          "end": 9323,
+          "before": "fn c1_inspect_E1(actor):\n    return c1_once(c1_action(rt_cat(actor, \".inspect.E1\"), \"inspect\", c1_at(actor, \"foyer\"), c1_at(actor, \"foyer\"), \"\", dv_single(c1_knowledge(\"bolt_down\")), c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 69, \"E1\")))",
+          "after": "行动 c1_inspect_E1，给定 actor：\n    编号 rt_cat(actor, \".inspect.E1\")。\n    类别 \"inspect\"。\n    本人须知 actor 位于 \"foyer\"。\n    现场要求 actor 位于 \"foyer\"。\n    遵循 \"\"。\n    可获知 dv_single(c1_knowledge(\"bolt_down\"))。\n    依据 [c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 69, \"E1\")]。\n    仅一次 true。"
+        },
+        {
+          "name": "c1_visible_E1",
+          "kind": "narration",
+          "line": 152,
+          "start": 9325,
+          "end": 9522,
+          "before": "fn c1_visible_E1():\n    return \"门内侧的插闩落在闩槽里。\\n门外侧另有一道横闩，从这一侧拉不动。\\n门上的猫眼，玻璃外侧糊满烟灰，看出去一片黑。\\n门内侧压着一张泛黄的旧纸，题头是铅印的《事故隔离规程》，没有署名和落款日期。\\n旧纸写着：泄漏后，各寝区的隔离门从外侧落闩。查明本区事故经过，由当值者向铜口陈述前，不得开启。\\n末行另写：急病者可经铜口呼叫转移。\"",
+          "after": "叙述 c1_visible_E1：\n    门内侧的插闩落在闩槽里。\n    门外侧另有一道横闩，从这一侧拉不动。\n    门上的猫眼，玻璃外侧糊满烟灰，看出去一片黑。\n    门内侧压着一张泛黄的旧纸，题头是铅印的《事故隔离规程》，没有署名和落款日期。\n    旧纸写着：泄漏后，各寝区的隔离门从外侧落闩。查明本区事故经过，由当值者向铜口陈述前，不得开启。\n    末行另写：急病者可经铜口呼叫转移。"
+        },
+        {
+          "name": "c1_inspect_E2",
+          "kind": "action",
+          "line": 155,
+          "start": 9524,
+          "end": 9756,
+          "before": "fn c1_inspect_E2(actor):\n    return c1_once(c1_action(rt_cat(actor, \".inspect.E2\"), \"inspect\", c1_at(actor, \"foyer\"), c1_at(actor, \"foyer\"), \"\", [], c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 70, \"E2\")))",
+          "after": "行动 c1_inspect_E2，给定 actor：\n    编号 rt_cat(actor, \".inspect.E2\")。\n    类别 \"inspect\"。\n    本人须知 actor 位于 \"foyer\"。\n    现场要求 actor 位于 \"foyer\"。\n    遵循 \"\"。\n    可获知 []。\n    依据 [c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 70, \"E2\")]。\n    仅一次 true。"
+        },
+        {
+          "name": "c1_visible_E2",
+          "kind": "narration",
+          "line": 158,
+          "start": 9758,
+          "end": 9861,
+          "before": "fn c1_visible_E2():\n    return \"门内地面铺着一片扇形的灰，窄端贴着门缝，向门厅里散开。\\n东南墙角躺着一枚木楔：上面一层灰，底面干净。楔尖有新的磨痕。\\n门底边有一道擦痕。\"",
+          "after": "叙述 c1_visible_E2：\n    门内地面铺着一片扇形的灰，窄端贴着门缝，向门厅里散开。\n    东南墙角躺着一枚木楔：上面一层灰，底面干净。楔尖有新的磨痕。\n    门底边有一道擦痕。"
+        },
+        {
+          "name": "c1_inspect_E3",
+          "kind": "action",
+          "line": 161,
+          "start": 9863,
+          "end": 10137,
+          "before": "fn c1_inspect_E3(actor):\n    return c1_once(c1_action(rt_cat(actor, \".inspect.E3\"), \"inspect\", c1_at(actor, \"foyer\"), c1_at(actor, \"foyer\"), \"\", dv_single(c1_knowledge(\"boots_toward_bolt\")), c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 71, \"E3\")))",
+          "after": "行动 c1_inspect_E3，给定 actor：\n    编号 rt_cat(actor, \".inspect.E3\")。\n    类别 \"inspect\"。\n    本人须知 actor 位于 \"foyer\"。\n    现场要求 actor 位于 \"foyer\"。\n    遵循 \"\"。\n    可获知 dv_single(c1_knowledge(\"boots_toward_bolt\"))。\n    依据 [c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 71, \"E3\")]。\n    仅一次 true。"
+        },
+        {
+          "name": "c1_visible_E3",
+          "kind": "narration",
+          "line": 164,
+          "start": 10139,
+          "end": 10214,
+          "before": "fn c1_visible_E3():\n    return \"灰上有一枚马球靴印，踩得很清楚。\\n鞋尖朝着门侧的插闩。\\n鞋跟一端被什么东西压过。\"",
+          "after": "叙述 c1_visible_E3：\n    灰上有一枚马球靴印，踩得很清楚。\n    鞋尖朝着门侧的插闩。\n    鞋跟一端被什么东西压过。"
+        },
+        {
+          "name": "c1_inspect_E4",
+          "kind": "action",
+          "line": 167,
+          "start": 10216,
+          "end": 10490,
+          "before": "fn c1_inspect_E4(actor):\n    return c1_once(c1_action(rt_cat(actor, \".inspect.E4\"), \"inspect\", c1_at(actor, \"foyer\"), c1_at(actor, \"foyer\"), \"\", dv_single(c1_knowledge(\"cloth_after_boots\")), c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 72, \"E4\")))",
+          "after": "行动 c1_inspect_E4，给定 actor：\n    编号 rt_cat(actor, \".inspect.E4\")。\n    类别 \"inspect\"。\n    本人须知 actor 位于 \"foyer\"。\n    现场要求 actor 位于 \"foyer\"。\n    遵循 \"\"。\n    可获知 dv_single(c1_knowledge(\"cloth_after_boots\"))。\n    依据 [c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 72, \"E4\")]。\n    仅一次 true。"
+        },
+        {
+          "name": "c1_visible_E4",
+          "kind": "narration",
+          "line": 170,
+          "start": 10492,
+          "end": 10570,
+          "before": "fn c1_visible_E4():\n    return \"一条拧过的湿抹布，沿门底压成一条直线，正好贴着闭合的门。\\n布的一端压住了靴印的鞋跟边缘。\"",
+          "after": "叙述 c1_visible_E4：\n    一条拧过的湿抹布，沿门底压成一条直线，正好贴着闭合的门。\n    布的一端压住了靴印的鞋跟边缘。"
+        },
+        {
+          "name": "c1_visible_E5",
+          "kind": "narration",
+          "line": 181,
+          "start": 11007,
+          "end": 11080,
+          "before": "fn c1_visible_E5():\n    return \"地上一把纯银音叉，柄上刻着“S.L.”。\\n门框齐肩高的地方，有一个很小的凹痕。\"",
+          "after": "叙述 c1_visible_E5：\n    地上一把纯银音叉，柄上刻着“S.L.”。\n    门框齐肩高的地方，有一个很小的凹痕。"
+        },
+        {
+          "name": "c1_inspect_E6",
+          "kind": "action",
+          "line": 184,
+          "start": 11082,
+          "end": 11377,
+          "before": "fn c1_inspect_E6(actor):\n    return c1_once(c1_action(rt_cat(actor, \".inspect.E6\"), \"inspect\", c1_at(actor, \"R08\"), c1_at(actor, \"R08\"), \"\", dv_pair(c1_knowledge(\"score_partial\"), c1_knowledge(\"score_in_room\")), c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 74, \"E6\")))",
+          "after": "行动 c1_inspect_E6，给定 actor：\n    编号 rt_cat(actor, \".inspect.E6\")。\n    类别 \"inspect\"。\n    本人须知 actor 位于 \"R08\"。\n    现场要求 actor 位于 \"R08\"。\n    遵循 \"\"。\n    可获知 dv_pair(c1_knowledge(\"score_partial\"), c1_knowledge(\"score_in_room\"))。\n    依据 [c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 74, \"E6\")]。\n    仅一次 true。"
+        },
+        {
+          "name": "c1_visible_E6",
+          "kind": "narration",
+          "line": 187,
+          "start": 11379,
+          "end": 11495,
+          "before": "fn c1_visible_E6():\n    return \"一页手写乐谱，只有一小节。\\n前两拍是弱音，各记着一个问号；后两拍重读，字是“开门”。同样的一小节记了两遍。\\n旁注：“门外？”\\n下方换了一种墨迹：“他们关了门。”\"",
+          "after": "叙述 c1_visible_E6：\n    一页手写乐谱，只有一小节。\n    前两拍是弱音，各记着一个问号；后两拍重读，字是“开门”。同样的一小节记了两遍。\n    旁注：“门外？”\n    下方换了一种墨迹：“他们关了门。”"
+        },
+        {
+          "name": "c1_visible_E7",
+          "kind": "narration",
+          "line": 198,
+          "start": 11964,
+          "end": 12051,
+          "before": "fn c1_visible_E7():\n    return \"一块小石板，粉笔速记两行。\\n第一行：主楼：⊥门 ✕开 ◎\\n第二行：一个小小的放大镜图样，后面是“⊥✓”。\"",
+          "after": "叙述 c1_visible_E7：\n    一块小石板，粉笔速记两行。\n    第一行：主楼：⊥门 ✕开 ◎\n    第二行：一个小小的放大镜图样，后面是“⊥✓”。"
+        },
+        {
+          "name": "c1_inspect_E8",
+          "kind": "action",
+          "line": 201,
+          "start": 12053,
+          "end": 12319,
+          "before": "fn c1_inspect_E8(actor):\n    return c1_once(c1_action(rt_cat(actor, \".inspect.E8\"), \"inspect\", c1_at(actor, \"hall\"), c1_at(actor, \"hall\"), \"\", dv_single(c1_knowledge(\"pipe_layout\")), c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 76, \"E8\")))",
+          "after": "行动 c1_inspect_E8，给定 actor：\n    编号 rt_cat(actor, \".inspect.E8\")。\n    类别 \"inspect\"。\n    本人须知 actor 位于 \"hall\"。\n    现场要求 actor 位于 \"hall\"。\n    遵循 \"\"。\n    可获知 dv_single(c1_knowledge(\"pipe_layout\"))。\n    依据 [c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 76, \"E8\")]。\n    仅一次 true。"
+        },
+        {
+          "name": "c1_visible_E8",
+          "kind": "narration",
+          "line": 204,
+          "start": 12321,
+          "end": 12472,
+          "before": "fn c1_visible_E8():\n    return \"铜口嵌在活动厅北墙上，下方铜牌刻着一个符号：◎。\\n一根铜管从铜口后面出来：一路沿北墙向西，穿墙进门厅，贴着墙下到隔离门的门框；另一路向东，钻进活动厅与 R-08 之间的墙里。\\n那道墙上与门框北侧各有一个管接头，一碰就晃——接口松了。\"",
+          "after": "叙述 c1_visible_E8：\n    铜口嵌在活动厅北墙上，下方铜牌刻着一个符号：◎。\n    一根铜管从铜口后面出来：一路沿北墙向西，穿墙进门厅，贴着墙下到隔离门的门框；另一路向东，钻进活动厅与 R-08 之间的墙里。\n    那道墙上与门框北侧各有一个管接头，一碰就晃——接口松了。"
+        },
+        {
+          "name": "c1_visible_E9",
+          "kind": "narration",
+          "line": 215,
+          "start": 12925,
+          "end": 13031,
+          "before": "fn c1_visible_E9():\n    return \"水槽里四只用过的杯子，各不相同：\\n一只青瓷小杯，杯底没有糖渍；\\n一只刻着 H 的凹痕锡杯，杯底一层厚糖渍；\\n一只缺口白杯；\\n一只粗瓷大杯。\"",
+          "after": "叙述 c1_visible_E9：\n    水槽里四只用过的杯子，各不相同：\n    一只青瓷小杯，杯底没有糖渍；\n    一只刻着 H 的凹痕锡杯，杯底一层厚糖渍；\n    一只缺口白杯；\n    一只粗瓷大杯。"
+        },
+        {
+          "name": "c1_visible_E10",
+          "kind": "narration",
+          "line": 226,
+          "start": 13485,
+          "end": 13554,
+          "before": "fn c1_visible_E10():\n    return \"罐里的酵种还活着，冒着细泡。\\n罐壁上一层摞一层干结的旧面痕，数不清。\"",
+          "after": "叙述 c1_visible_E10：\n    罐里的酵种还活着，冒着细泡。\n    罐壁上一层摞一层干结的旧面痕，数不清。"
+        },
+        {
+          "name": "c1_inspect_E11",
+          "kind": "action",
+          "line": 229,
+          "start": 13556,
+          "end": 13821,
+          "before": "fn c1_inspect_E11(actor):\n    return c1_once(c1_action(rt_cat(actor, \".inspect.E11\"), \"inspect\", c1_at(actor, \"R05\"), c1_at(actor, \"R05\"), \"\", dv_single(c1_knowledge(\"shelf_old\")), c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 79, \"E11\")))",
+          "after": "行动 c1_inspect_E11，给定 actor：\n    编号 rt_cat(actor, \".inspect.E11\")。\n    类别 \"inspect\"。\n    本人须知 actor 位于 \"R05\"。\n    现场要求 actor 位于 \"R05\"。\n    遵循 \"\"。\n    可获知 dv_single(c1_knowledge(\"shelf_old\"))。\n    依据 [c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 79, \"E11\")]。\n    仅一次 true。"
+        },
+        {
+          "name": "c1_visible_E11",
+          "kind": "narration",
+          "line": 232,
+          "start": 13823,
+          "end": 13921,
+          "before": "fn c1_visible_E11():\n    return \"书架积着灰。灰上留着几块干净的长方形，边缘整齐——这里原先摆过东西。单凭灰痕，还看不出摆了多久。\\n架沿上有半枚手印，压在灰上。\"",
+          "after": "叙述 c1_visible_E11：\n    书架积着灰。灰上留着几块干净的长方形，边缘整齐——这里原先摆过东西。单凭灰痕，还看不出摆了多久。\n    架沿上有半枚手印，压在灰上。"
+        },
+        {
+          "name": "c1_inspect_E12",
+          "kind": "action",
+          "line": 235,
+          "start": 13923,
+          "end": 14198,
+          "before": "fn c1_inspect_E12(actor):\n    return c1_once(c1_action(rt_cat(actor, \".inspect.E12\"), \"inspect\", c1_at(actor, \"R05\"), c1_at(actor, \"R05\"), \"\", dv_single(dv_ref(\"coat\", \"identity\", \"owner\")), c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 80, \"E12\")))",
+          "after": "行动 c1_inspect_E12，给定 actor：\n    编号 rt_cat(actor, \".inspect.E12\")。\n    类别 \"inspect\"。\n    本人须知 actor 位于 \"R05\"。\n    现场要求 actor 位于 \"R05\"。\n    遵循 \"\"。\n    可获知 dv_single(dv_ref(\"coat\", \"identity\", \"owner\"))。\n    依据 [c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 80, \"E12\")]。\n    仅一次 true。"
+        },
+        {
+          "name": "c1_identify_own_lens",
+          "kind": "action",
+          "line": 238,
+          "start": 14200,
+          "end": 14650,
+          "before": "fn c1_identify_own_lens(actor):\n    return c1_once(c1_action(rt_cat(actor, \".identify-own-lens\"), \"inspect\", dv_all(dv_pair(c1_at(actor, \"R05\"), dv_fact(dv_ref(\"coat\", \"identity\", \"owner\"), actor))), dv_all(dv_pair(c1_at(actor, \"R05\"), dv_fact(dv_ref(\"coat\", \"identity\", \"owner\"), actor))), \"\", dv_single(c1_knowledge(\"lens_mine\")), c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story\", 6, \"s1_wake.006;E12 personal ownership\")))",
+          "after": "行动 c1_identify_own_lens，给定 actor：\n    编号 rt_cat(actor, \".identify-own-lens\")。\n    类别 \"inspect\"。\n    本人须知 dv_all(dv_pair(c1_at(actor, \"R05\"), dv_fact(dv_ref(\"coat\", \"identity\", \"owner\"), actor)))。\n    现场要求 dv_all(dv_pair(c1_at(actor, \"R05\"), dv_fact(dv_ref(\"coat\", \"identity\", \"owner\"), actor)))。\n    遵循 \"\"。\n    可获知 dv_single(c1_knowledge(\"lens_mine\"))。\n    依据 [c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story\", 6, \"s1_wake.006;E12 personal ownership\")]。\n    仅一次 true。"
+        },
+        {
+          "name": "c1_visible_E12",
+          "kind": "narration",
+          "line": 241,
+          "start": 14652,
+          "end": 14737,
+          "before": "fn c1_visible_E12():\n    return \"一件深棕长风衣。\\n口袋里：一支石墨笔，一把折叠放大镜，几只证物袋。\\n放大镜是黄铜圆框，带一截短柄。\"",
+          "after": "叙述 c1_visible_E12：\n    一件深棕长风衣。\n    口袋里：一支石墨笔，一把折叠放大镜，几只证物袋。\n    放大镜是黄铜圆框，带一截短柄。"
+        },
+        {
+          "name": "c1_sole_test",
+          "kind": "action",
+          "line": 439,
+          "start": 35861,
+          "end": 36214,
+          "before": "fn c1_sole_test(actor):\n    return c1_once(c1_action(rt_cat(actor, \".compare_sole\"), \"experiment\", dv_all(dv_pair(c1_at(actor, \"foyer\"), dv_fact(dv_ref(actor, \"state\", \"identity\"), \"detective\"))), c1_at(actor, \"foyer\"), \"\", dv_single(c1_knowledge(\"boots_fit\")), c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 81, \"exp_E3.002\")))",
+          "after": "行动 c1_sole_test，给定 actor：\n    编号 rt_cat(actor, \".compare_sole\")。\n    类别 \"experiment\"。\n    本人须知 dv_all(dv_pair(c1_at(actor, \"foyer\"), dv_fact(dv_ref(actor, \"state\", \"identity\"), \"detective\")))。\n    现场要求 actor 位于 \"foyer\"。\n    遵循 \"\"。\n    可获知 dv_single(c1_knowledge(\"boots_fit\"))。\n    依据 [c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story\", 81, \"exp_E3.002\")]。\n    仅一次 true。"
+        },
+        {
+          "name": "c1_replay_action",
+          "kind": "action",
+          "line": 477,
+          "start": 39301,
+          "end": 39518,
+          "before": "fn c1_replay_action(actor):\n    return c1_action(rt_cat(actor, \".replay\"), \"replay\", c1_statement(\"bolt_down\"), dv_true(), \"\", [], c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/模拟侦探.story\", 340, \"replay\"))",
+          "after": "行动 c1_replay_action，给定 actor：\n    编号 rt_cat(actor, \".replay\")。\n    类别 \"replay\"。\n    本人须知 c1_statement(\"bolt_down\")。\n    现场要求 dv_true()。\n    遵循 \"\"。\n    可获知 []。\n    依据 [c1_source(\"godot_csharp/scenes/Awakening/Script/story/第一章/模拟侦探.story\", 340, \"replay\")]。"
+        },
+        {
+          "name": "c1_question_text",
+          "kind": "narration-return",
+          "line": 983,
+          "start": 76378,
+          "end": 76402,
+          "before": "        return \"门是谁闩上的？\"",
+          "after": "        叙述：\n            门是谁闩上的？"
+        },
+        {
+          "name": "c1_question_text",
+          "kind": "narration-return",
+          "line": 986,
+          "start": 76451,
+          "end": 76484,
+          "before": "            return \"苏泠听见的呼喊来自哪里？\"",
+          "after": "            叙述：\n                苏泠听见的呼喊来自哪里？"
+        },
+        {
+          "name": "c1_question_text",
+          "kind": "narration-return",
+          "line": 989,
+          "start": 76534,
+          "end": 76565,
+          "before": "                return \"原话是什么？\"",
+          "after": "                叙述：\n                    原话是什么？"
+        },
+        {
+          "name": "c1_question_text",
+          "kind": "narration-return",
+          "line": 991,
+          "start": 76584,
+          "end": 76625,
+          "before": "                return \"既听同伴说门外有人，为何仍闩门？\"",
+          "after": "                叙述：\n                    既听同伴说门外有人，为何仍闩门？"
+        },
+        {
+          "name": "c1_other_introduction",
+          "kind": "narration-return",
+          "line": 2910,
+          "start": 203891,
+          "end": 203930,
+          "before": "        return \"叫我雀儿就行。别站门前——让我看一眼那道闩。\"",
+          "after": "        叙述：\n            叫我雀儿就行。别站门前——让我看一眼那道闩。"
+        },
+        {
+          "name": "c1_other_introduction",
+          "kind": "narration-return",
+          "line": 2912,
+          "start": 203954,
+          "end": 204006,
+          "before": "        return \"卢西安。名字还记得，半句诗也还记得；偏偏缺了我们怎么到这儿来的那一段。\"",
+          "after": "        叙述：\n            卢西安。名字还记得，半句诗也还记得；偏偏缺了我们怎么到这儿来的那一段。"
+        },
+        {
+          "name": "c1_other_introduction",
+          "kind": "narration-return",
+          "line": 2914,
+          "start": 204028,
+          "end": 204073,
+          "before": "        return \"沃德。先说姓名，再说各自记得的最后一件事。不要混在一起。\"",
+          "after": "        叙述：\n            沃德。先说姓名，再说各自记得的最后一件事。不要混在一起。"
+        },
+        {
+          "name": "c1_other_introduction",
+          "kind": "narration-return",
+          "line": 2916,
+          "start": 204093,
+          "end": 204142,
+          "before": "        return \"顾平章。容老朽擦擦眼镜。纸上的东西还在，人却想不起来，真是怪事。\"",
+          "after": "        叙述：\n            顾平章。容老朽擦擦眼镜。纸上的东西还在，人却想不起来，真是怪事。"
+        },
+        {
+          "name": "c1_other_introduction",
+          "kind": "narration-return",
+          "line": 2918,
+          "start": 204164,
+          "end": 204210,
+          "before": "        return \"阮清月。那盘棋先别碰。我们还不知道谁摆的，也不知道轮到谁。\"",
+          "after": "        叙述：\n            阮清月。那盘棋先别碰。我们还不知道谁摆的，也不知道轮到谁。"
+        },
+        {
+          "name": "c1_other_introduction",
+          "kind": "narration-return",
+          "line": 2920,
+          "start": 204233,
+          "end": 204278,
+          "before": "        return \"伊莲娜。别拉我起来……脚踝疼。你们谁知道这里是什么地方？\"",
+          "after": "        叙述：\n            伊莲娜。别拉我起来……脚踝疼。你们谁知道这里是什么地方？"
+        },
+        {
+          "name": "c1_other_introduction",
+          "kind": "narration-return",
+          "line": 2922,
+          "start": 204301,
+          "end": 204347,
+          "before": "        return \"赛尔玛。请别动窗台上的苗。我得先弄清楚本子上哪些是我记的。\"",
+          "after": "        叙述：\n            赛尔玛。请别动窗台上的苗。我得先弄清楚本子上哪些是我记的。"
+        },
+        {
+          "name": "c1_other_introduction",
+          "kind": "narration-return",
+          "line": 2924,
+          "start": 204370,
+          "end": 204411,
+          "before": "        return \"莫兰。等一等，那层绿马上要散了。你们说，我听着。\"",
+          "after": "        叙述：\n            莫兰。等一等，那层绿马上要散了。你们说，我听着。"
+        },
+        {
+          "name": "c1_other_introduction",
+          "kind": "narration-return",
+          "line": 2926,
+          "start": 204433,
+          "end": 204471,
+          "before": "        return \"茉拉。刚才谁在咳嗽？先让我看看，再说别的。\"",
+          "after": "        叙述：\n            茉拉。刚才谁在咳嗽？先让我看看，再说别的。"
+        },
+        {
+          "name": "c1_other_introduction",
+          "kind": "narration-return",
+          "line": 2928,
+          "start": 204497,
+          "end": 204539,
+          "before": "        return \"贝尔特朗。门外有动静。先别挤过去，给彼此留条退路。\"",
+          "after": "        叙述：\n            贝尔特朗。门外有动静。先别挤过去，给彼此留条退路。"
+        },
+        {
+          "name": "c1_other_introduction",
+          "kind": "narration-return",
+          "line": 2930,
+          "start": 204565,
+          "end": 204608,
+          "before": "        return \"维罗妮卡。谁动过这排器具？不知道也直说，别替别人猜。\"",
+          "after": "        叙述：\n            维罗妮卡。谁动过这排器具？不知道也直说，别替别人猜。"
+        },
+        {
+          "name": "c1_other_introduction",
+          "kind": "narration-return",
+          "line": 2931,
+          "start": 204609,
+          "end": 204649,
+          "before": "    return \"玛格丽特。先别都靠那面墙。这根梁的搭法，我得再看一遍。\"",
+          "after": "    叙述：\n        玛格丽特。先别都靠那面墙。这根梁的搭法，我得再看一遍。"
+        },
+        {
+          "name": "c1_other_handoff_text",
+          "kind": "narration-return",
+          "line": 2944,
+          "start": 204938,
+          "end": 204983,
+          "before": "        return \"开锁的人已经核对了。出去以后，那把钥匙的来路还得写清楚。\"",
+          "after": "        叙述：\n            开锁的人已经核对了。出去以后，那把钥匙的来路还得写清楚。"
+        },
+        {
+          "name": "c1_other_handoff_text",
+          "kind": "narration-return",
+          "line": 2946,
+          "start": 205005,
+          "end": 205045,
+          "before": "        return \"我答了。你还要把我堵在这儿？门开了，让开一点。\"",
+          "after": "        叙述：\n            我答了。你还要把我堵在这儿？门开了，让开一点。"
+        },
+        {
+          "name": "c1_other_handoff_text",
+          "kind": "narration-return",
+          "line": 2948,
+          "start": 205069,
+          "end": 205113,
+          "before": "        return \"名字答对了，缘由还空着呢。沃德，留一行空白总比填错强。\"",
+          "after": "        叙述：\n            名字答对了，缘由还空着呢。沃德，留一行空白总比填错强。"
+        },
+        {
+          "name": "c1_other_handoff_text",
+          "kind": "narration-return",
+          "line": 2950,
+          "start": 205133,
+          "end": 205170,
+          "before": "        return \"门开了。先莫争，外面若有文书，读过再说。\"",
+          "after": "        叙述：\n            门开了。先莫争，外面若有文书，读过再说。"
+        },
+        {
+          "name": "c1_other_handoff_text",
+          "kind": "narration-return",
+          "line": 2952,
+          "start": 205193,
+          "end": 205231,
+          "before": "        return \"我慢一点。阮清月……出去以后，你也别先走。\"",
+          "after": "        叙述：\n            我慢一点。阮清月……出去以后，你也别先走。"
+        },
+        {
+          "name": "c1_other_handoff_text",
+          "kind": "narration-return",
+          "line": 2954,
+          "start": 205253,
+          "end": 205292,
+          "before": "        return \"我在这儿。你先扶住门框，等站稳了再迈那一步。\"",
+          "after": "        叙述：\n            我在这儿。你先扶住门框，等站稳了再迈那一步。"
+        },
+        {
+          "name": "c1_other_handoff_text",
+          "kind": "narration-return",
+          "line": 2956,
+          "start": 205315,
+          "end": 205359,
+          "before": "        return \"我的本子带上了。门内查到的，跟出去以后查到的，分开记。\"",
+          "after": "        叙述：\n            我的本子带上了。门内查到的，跟出去以后查到的，分开记。"
+        },
+        {
+          "name": "c1_other_handoff_text",
+          "kind": "narration-return",
+          "line": 2958,
+          "start": 205382,
+          "end": 205423,
+          "before": "        return \"外面的光不一样。等我站到门边再画，别挡着伊莲娜。\"",
+          "after": "        叙述：\n            外面的光不一样。等我站到门边再画，别挡着伊莲娜。"
+        },
+        {
+          "name": "c1_other_handoff_text",
+          "kind": "narration-return",
+          "line": 2960,
+          "start": 205445,
+          "end": 205486,
+          "before": "        return \"人先出去。试剂的事还没说清；有谁不舒服，别瞒着。\"",
+          "after": "        叙述：\n            人先出去。试剂的事还没说清；有谁不舒服，别瞒着。"
+        },
+        {
+          "name": "c1_other_handoff_text",
+          "kind": "narration-return",
+          "line": 2962,
+          "start": 205512,
+          "end": 205555,
+          "before": "        return \"取走一瓶东西和拿它做了什么，是两件事。先把原瓶找到。\"",
+          "after": "        叙述：\n            取走一瓶东西和拿它做了什么，是两件事。先把原瓶找到。"
+        },
+        {
+          "name": "c1_other_handoff_text",
+          "kind": "narration-return",
+          "line": 2964,
+          "start": 205581,
+          "end": 205618,
+          "before": "        return \"我站门边。一个一个过去，先看落脚的地方。\"",
+          "after": "        叙述：\n            我站门边。一个一个过去，先看落脚的地方。"
+        },
+        {
+          "name": "c1_other_handoff_text",
+          "kind": "narration-return",
+          "line": 2965,
+          "start": 205619,
+          "end": 205651,
+          "before": "    return \"门框没歪。慢慢过，别拿身体去撞那道闩。\"",
+          "after": "    叙述：\n        门框没歪。慢慢过，别拿身体去撞那道闩。"
+        },
+        {
+          "name": "c1_other_report_surface",
+          "kind": "narration-return",
+          "line": 2985,
+          "start": 206569,
+          "end": 206617,
+          "before": "        return \"；藏处是壁炉砖槽；未经公开授权，背着同行私藏。我将此定为窃取。\"",
+          "after": "        叙述：\n            ；藏处是壁炉砖槽；未经公开授权，背着同行私藏。我将此定为窃取。"
+        },
+        {
+          "name": "c1_other_report_surface",
+          "kind": "narration-return",
+          "line": 2987,
+          "start": 206644,
+          "end": 206680,
+          "before": "        return \"；她单方面止损，为保住多数而拉闸封门。\"",
+          "after": "        叙述：\n            ；她单方面止损，为保住多数而拉闸封门。"
+        },
+        {
+          "name": "c1_other_report_surface",
+          "kind": "narration-return",
+          "line": 2988,
+          "start": 206681,
+          "end": 206711,
+          "before": "    return \"；她未经医嘱，进行了激进的酸试验。\"",
+          "after": "    叙述：\n        ；她未经医嘱，进行了激进的酸试验。"
+        },
+        {
+          "name": "c1_op_wake_lines",
+          "kind": "dialogue-return",
+          "line": 3931,
+          "start": 283015,
+          "end": 283105,
+          "before": "        return [\"我记得的最后一件事，是上船。\", \"衣架上挂着一件风衣。右手袖口磨得发亮——我写字时总拿那儿蹭桌沿。是我的。\", \"先出去，看看这是什么地方。\"]",
+          "after": "        台词：\n            我记得的最后一件事，是上船。\n            衣架上挂着一件风衣。右手袖口磨得发亮——我写字时总拿那儿蹭桌沿。是我的。\n            先出去，看看这是什么地方。"
+        },
+        {
+          "name": "c1_op_wake_lines",
+          "kind": "dialogue-return",
+          "line": 3933,
+          "start": 283126,
+          "end": 283218,
+          "before": "        return [\"……\", \"手先去摸床沿。床板是榫接的，没用一颗钉子。\", \"上船以后的事，没了。\", \"挂钩上缠着机油布。顺时针，三圈半。我缠的。\", \"起来。\"]",
+          "after": "        台词：\n            ……\n            手先去摸床沿。床板是榫接的，没用一颗钉子。\n            上船以后的事，没了。\n            挂钩上缠着机油布。顺时针，三圈半。我缠的。\n            起来。"
+        },
+        {
+          "name": "c1_op_wake_lines",
+          "kind": "dialogue-return",
+          "line": 3935,
+          "start": 283240,
+          "end": 283342,
+          "before": "        return [\"……\", \"哎哟，这胳膊。酸得跟揉了半宿面似的。\", \"昨儿……昨儿干啥了？就记得上了条船。\", \"桌上那块磨刀石，中间都磨出槽了。谁这么舍得用。\", \"先找口水喝。\"]",
+          "after": "        台词：\n            ……\n            哎哟，这胳膊。酸得跟揉了半宿面似的。\n            昨儿……昨儿干啥了？就记得上了条船。\n            桌上那块磨刀石，中间都磨出槽了。谁这么舍得用。\n            先找口水喝。"
+        },
+        {
+          "name": "c1_op_wake_lines",
+          "kind": "dialogue-return",
+          "line": 3936,
+          "start": 283343,
+          "end": 283432,
+          "before": "    return [\"……\", \"墙里有一个很低的音，一直没断。\", \"最后记得的，是船上的汽笛。\", \"手指在被面上敲。四四拍。不知道敲了多久。\", \"……那个音还在。\"]",
+          "after": "    台词：\n        ……\n        墙里有一个很低的音，一直没断。\n        最后记得的，是船上的汽笛。\n        手指在被面上敲。四四拍。不知道敲了多久。\n        ……那个音还在。"
+        },
+        {
+          "name": "c1_op_contract_text",
+          "kind": "narration",
+          "line": 4523,
+          "start": 328284,
+          "end": 328812,
+          "before": "fn c1_op_contract_text():\n    return \"1. 恶魔常驻岛内，不得离岛。\\n2. 经学员本人授权，恶魔封存其在校记忆（在校经历、师生与同学关系、事故全貌）；姓名、生平与入学前技艺不在封存之列。\\n3. 恶魔维持学园基础生存设施的运转（水、炉火、照明的设施本身；不负责分配物资，不创造物资）。\\n4. 恶魔所受约束，唯有学员出于自主的行动方可解除；恶魔不得代为或强迫学员完成解除。\\n5. 恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。\\n6. 恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。\\n7. 恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。\\n8. 恶魔不得以言辞欺骗学员；学员问及本人封存之物或契约条文，须如实作答。\\n9. 恶魔不得向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。\\n10. 封存的记忆可凭对应之物恢复；恢复者自负其果。\\n11. 经其余在岛存活学员一致同意，学员可择定“尽忘归乡”，于下一次入睡时遗忘此地一切、在家乡醒来。\\n12. （终局）担保耗尽时，恶魔须将醒着且未深属此岛的学员遣返家乡，并抹去其与此地有关的一切记忆。\"",
+          "after": "叙述 c1_op_contract_text：\n    1. 恶魔常驻岛内，不得离岛。\n    2. 经学员本人授权，恶魔封存其在校记忆（在校经历、师生与同学关系、事故全貌）；姓名、生平与入学前技艺不在封存之列。\n    3. 恶魔维持学园基础生存设施的运转（水、炉火、照明的设施本身；不负责分配物资，不创造物资）。\n    4. 恶魔所受约束，唯有学员出于自主的行动方可解除；恶魔不得代为或强迫学员完成解除。\n    5. 恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。\n    6. 恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。\n    7. 恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。\n    8. 恶魔不得以言辞欺骗学员；学员问及本人封存之物或契约条文，须如实作答。\n    9. 恶魔不得向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。\n    10. 封存的记忆可凭对应之物恢复；恢复者自负其果。\n    11. 经其余在岛存活学员一致同意，学员可择定“尽忘归乡”，于下一次入睡时遗忘此地一切、在家乡醒来。\n    12. （终局）担保耗尽时，恶魔须将醒着且未深属此岛的学员遣返家乡，并抹去其与此地有关的一切记忆。"
+        }
+      ]
+    },
+    {
+      "path": "language_core/50-chapter2.dv",
+      "before_sha256": "116ed3a01bbaf2d72dd7f6608a1c9a351f9ab78d4b71231648d18c720d146087",
+      "after_sha256": "6ef529584c650d36fc35906fbf608a7d95341d10ac1c5fb300d6b7b51576072c",
+      "changes": [
+        {
+          "name": "c2_work_purpose",
+          "kind": "narration-return",
+          "line": 2560,
+          "start": 182306,
+          "end": 182338,
+          "before": "        return \"检查结构后置楔，持续托住门框。\"",
+          "after": "        叙述：\n            检查结构后置楔，持续托住门框。"
+        },
+        {
+          "name": "c2_work_purpose",
+          "kind": "narration-return",
+          "line": 2562,
+          "start": 182366,
+          "end": 182401,
+          "before": "        return \"核对载荷并操作千斤顶，持续保持抬升。\"",
+          "after": "        叙述：\n            核对载荷并操作千斤顶，持续保持抬升。"
+        },
+        {
+          "name": "c2_work_purpose",
+          "kind": "narration-return",
+          "line": 2564,
+          "start": 182433,
+          "end": 182462,
+          "before": "        return \"拆验锁具，记录实际痕迹。\"",
+          "after": "        叙述：\n            拆验锁具，记录实际痕迹。"
+        },
+        {
+          "name": "c2_work_purpose",
+          "kind": "narration-return",
+          "line": 2566,
+          "start": 182572,
+          "end": 182615,
+          "before": "        return \"查找并出示各自实际持有的散页，核对清册与授权上下文。\"",
+          "after": "        叙述：\n            查找并出示各自实际持有的散页，核对清册与授权上下文。"
+        },
+        {
+          "name": "c2_work_purpose",
+          "kind": "narration-return",
+          "line": 2568,
+          "start": 182654,
+          "end": 182692,
+          "before": "        return \"自行判断写生机会，记录实际观察与身体感受。\"",
+          "after": "        叙述：\n            自行判断写生机会，记录实际观察与身体感受。"
+        },
+        {
+          "name": "c2_work_purpose",
+          "kind": "narration-return",
+          "line": 2570,
+          "start": 182725,
+          "end": 182761,
+          "before": "        return \"核对代管依据与现场记录，办理钥匙交接。\"",
+          "after": "        叙述：\n            核对代管依据与现场记录，办理钥匙交接。"
+        },
+        {
+          "name": "c2_work_purpose",
+          "kind": "narration-return",
+          "line": 2572,
+          "start": 182851,
+          "end": 182890,
+          "before": "        return \"依据实际取得的材料，重新评估并说明先前判断。\"",
+          "after": "        叙述：\n            依据实际取得的材料，重新评估并说明先前判断。"
+        },
+        {
+          "name": "c2_work_purpose",
+          "kind": "narration-return",
+          "line": 2573,
+          "start": 182891,
+          "end": 182926,
+          "before": "    return \"承担自己能做的现场核对，所见与结果另行记录。\"",
+          "after": "    叙述：\n        承担自己能做的现场核对，所见与结果另行记录。"
+        },
+        {
+          "name": "c2_color_encouragement_text",
+          "kind": "narration",
+          "line": 2985,
+          "start": 214904,
+          "end": 214973,
+          "before": "fn c2_color_encouragement_text():\n    return \"那层颜色确实罕见。莫兰，想画就再去看一眼吧。\"",
+          "after": "叙述 c2_color_encouragement_text：\n    那层颜色确实罕见。莫兰，想画就再去看一眼吧。"
+        },
+        {
+          "name": "c2h_objection",
+          "kind": "narration-return",
+          "line": 4407,
+          "start": 313856,
+          "end": 313911,
+          "before": "        return \"我对契约履行的安全仍有保留，暂不赞成。条文、本人实证与履行结果需要分别核对。\"",
+          "after": "        叙述：\n            我对契约履行的安全仍有保留，暂不赞成。条文、本人实证与履行结果需要分别核对。"
+        },
+        {
+          "name": "c2h_objection",
+          "kind": "narration-return",
+          "line": 4409,
+          "start": 313964,
+          "end": 314018,
+          "before": "        return \"尽忘意味着放弃在这里取得的认识。我仍要比较求知与生存的价值，现在保留意见。\"",
+          "after": "        叙述：\n            尽忘意味着放弃在这里取得的认识。我仍要比较求知与生存的价值，现在保留意见。"
+        },
+        {
+          "name": "c2h_objection",
+          "kind": "narration-return",
+          "line": 4411,
+          "start": 314083,
+          "end": 314140,
+          "before": "        return \"粮仓和病人的责任还要依据我实际知道的情况核对。我暂不把归乡当作这些责任已经解决。\"",
+          "after": "        叙述：\n            粮仓和病人的责任还要依据我实际知道的情况核对。我暂不把归乡当作这些责任已经解决。"
+        },
+        {
+          "name": "c2h_objection",
+          "kind": "narration-return",
+          "line": 4413,
+          "start": 314185,
+          "end": 314241,
+          "before": "        return \"旧怨是否真正修复，岛外是否有可以依靠的承诺，都要由我自己确认。现在我保留意见。\"",
+          "after": "        叙述：\n            旧怨是否真正修复，岛外是否有可以依靠的承诺，都要由我自己确认。现在我保留意见。"
+        },
+        {
+          "name": "c2h_objection",
+          "kind": "narration-return",
+          "line": 4414,
+          "start": 314242,
+          "end": 314279,
+          "before": "    return \"我还愿意继续核对留岛与尽忘归乡的代价，暂不赞成。\"",
+          "after": "    叙述：\n        我还愿意继续核对留岛与尽忘归乡的代价，暂不赞成。"
+        }
+      ]
+    }
+  ]
+}

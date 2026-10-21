@@ -3,9 +3,12 @@ extends Node
 ## 场景脚本经 Sound.gd 调用，自动加载缺席时（无头检查脚本）静默跳过。
 ## 曲目与音效由 music/build_soundtrack.py 生成，曲目用途见 docs/design-standard.md 第五部分。
 
+const MusicContext := preload("res://scenes/Shared/Audio/MusicContext.gd")
 const MUSIC_PATH := "res://ShareAsset/Internal/Props/Audio/Music/%s.ogg"
 const SFX_PATH := "res://ShareAsset/Internal/Props/Audio/Sfx/%s.ogg"
 const MUSIC_DB := -9.0
+# A through-composed title must end naturally; repeat only background cues.
+const NON_LOOPING_CUES := {"main_theme": true}
 const DUCK_DB := -9.0
 const SILENT_DB := -60.0
 const SFX_VOICES := 8
@@ -19,6 +22,9 @@ var _sfx: Array[AudioStreamPlayer] = []
 var _next_sfx := 0
 var _cache := {}
 var _quitting := false
+var _scene_music := ""
+var _music_token_serial := 0
+var _presentation_music_token := 0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -45,8 +51,38 @@ static func _bus_or_master(bus: StringName) -> StringName:
 func current_music() -> String:
 	return _current
 
+func apply_music_scene(snapshot: Dictionary) -> void:
+	var next := MusicContext.background(snapshot)
+	if next == "": return
+	_scene_music = next
+	if _presentation_music_token == 0:
+		play_music(_scene_music)
+
+func begin_presentation_music(presentation: Dictionary) -> int:
+	if _scene_music == "" or not MusicContext.is_formal_confrontation(presentation):
+		return 0
+	_music_token_serial += 1
+	_presentation_music_token = _music_token_serial
+	play_music("confrontation", 0.8)
+	return _presentation_music_token
+
+func end_presentation_music(token: int) -> void:
+	# A late callback from an old UI must not interrupt a new presentation.
+	if token == 0 or token != _presentation_music_token: return
+	_presentation_music_token = 0
+	if _scene_music != "": play_music(_scene_music, 1.2)
+
+func _clear_music_context() -> void:
+	_scene_music = ""
+	_presentation_music_token = 0
+
 func play_music(id: String, fade := 1.6) -> void:
-	if id == _current:
+	if id == "main_theme": _clear_music_context()
+	# Formal confrontation is scoped to delivered dialogue, never a generic BGM.
+	if id == "confrontation" and _presentation_music_token == 0:
+		id = _scene_music
+		if id == "": return
+	if id == _current and _music[_active].playing:
 		return
 	var stream := _load(MUSIC_PATH % id)
 	if stream == null:
@@ -54,7 +90,7 @@ func play_music(id: String, fade := 1.6) -> void:
 	_current = id
 	var looped: AudioStream = stream.duplicate()
 	if looped is AudioStreamOggVorbis:
-		looped.loop = true
+		looped.loop = not NON_LOOPING_CUES.has(id)
 	var old := _music[_active]
 	_active = 1 - _active
 	var new := _music[_active]
@@ -64,6 +100,7 @@ func play_music(id: String, fade := 1.6) -> void:
 	_fade_to(new, old, fade)
 
 func stop_music(fade := 1.6) -> void:
+	_clear_music_context()
 	_current = ""
 	_fade_to(null, _music[_active], fade)
 
@@ -112,6 +149,7 @@ func _load(path: String) -> AudioStream:
 
 ## Release playback before the audio server and scene tree are destroyed.
 func release_audio() -> void:
+	_clear_music_context()
 	if _fade:
 		_fade.kill()
 		_fade = null
@@ -148,7 +186,14 @@ func release_audio_and_wait_for_mix() -> bool:
 func quit_cleanly(exit_code := 0) -> void:
 	if _quitting: return
 	_quitting = true
-	get_tree().call_group("lifecycle_hosts", "begin_shutdown")
+	# Start all host drains before awaiting any one of them. World/session files
+	# must be sealed before audio teardown is allowed to terminate the process.
+	var hosts := get_tree().get_nodes_in_group("lifecycle_hosts")
+	for host in hosts:
+		if is_instance_valid(host) and host.has_method("begin_shutdown"): host.begin_shutdown()
+	for host in hosts:
+		if is_instance_valid(host) and host.has_method("wait_for_shutdown"):
+			await host.wait_for_shutdown()
 	var drained: bool = await release_audio_and_wait_for_mix()
 	get_tree().quit(exit_code if drained else (exit_code if exit_code != 0 else 1))
 

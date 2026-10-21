@@ -1,0 +1,13 @@
+# 05严格零位移取消重试：DV实施记录
+
+2026-10-21，主代理批准后仅修改根共享30-session.dv及language_core/AGENTS.md、README.md。candidate04和所有旧runtime保持未改；未构建、检查或启动会话。
+
+新增dvs_manual_continuous_cancel只接受源侧证明source-cancel-v1：外层godot rejected前提由调用者核对；内部匹配daily blocked、released、非站点跨房move、非空request、主体/动作/serial/外层action_event、源/终点map与room、空transitions、原始与规范化证明中的两组有限二维坐标。最后额外要求source_position与actual_position精确相同，且raw/nested source_geometry相同并属于interior/source-side-doorway。此处source_position是独立现场执行器核对源身份后采集的真正执行开始点，不是请求发出位置。
+
+规范化证明必须由Main在独立匹配Prepared request/actor/action/serial/source/target/map及原始回执后生成identity_verified；WorldView只能提供真实安全停止候选，不能自己声明身份已核验。DV的raw/nested重复匹配不替代Main独立匹配。
+
+成功分类native-continuous-source-cancel只写现有manual_contact_retries[action.id]，并绑定本次source_signature；临时manual_input且当前拒绝签名相同才可使用此类token。成功/后续同动作Complete仍覆盖清除。没有自动重派、不改rejected结果/费用/used/逻辑地点、不记completed、不授予目标观察或答案；自主相同签名禁重试保留。
+
+静态复读了helper、准入、Complete记录及合同；原station/contact失败路径保留。中途移动后返回（即使仍源房）未纳入；source_position!=actual_position时不授连续取消token。此前continuous-cancel-retry-dv-proposal.patch是较宽的审阅提案，实际应用额外添加了零位移和source_geometry限制，并把缺travel访问改为安全dv_find。
+
+行为、往返源侧、同按键重新触发、旧serial拒绝、存档保持与实际画面均尚未复核；后续由主代理集中检查及新05隔离窗口验证。

@@ -1,4 +1,6 @@
 using DuelView.Compiled;
+using System.Buffers;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -7,6 +9,9 @@ using System.Text.Json.Serialization;
 public sealed class DvSession
 {
     private object state;
+    // Owned by the serialized session worker; never published as a mutable DV value.
+    // Every transition invalidates this before it can change state or throw.
+    private object? intentProjection;
     private readonly bool audit;
     public Action<string, string>? PhaseObserver { get; set; }
     public bool AuditMode => audit;
@@ -31,7 +36,31 @@ public sealed class DvSession
         return new(DVProgram.HostOpen(configuration), audit);
     }
     public string Viewer => R.Text(Run(() => DVProgram.HostViewer(state)));
-    public string Snapshot(string viewer) => HostJson(Run(() => DVProgram.CampaignSnapshot(state, viewer)));
+    public string Snapshot(string viewer)
+    {
+        var intent = IntentProjection();
+        PhaseObserver?.Invoke("snapshot_projection_begin", viewer);
+        var projected = Run(() => DVProgram.CampaignSnapshotWithIntent(state, viewer, intent));
+        PhaseObserver?.Invoke("snapshot_projection_end", viewer);
+        return EncodeHost(projected, "snapshot:" + viewer);
+    }
+
+    private object IntentProjection()
+    {
+        if (intentProjection is not null) return intentProjection;
+        PhaseObserver?.Invoke("intent_projection_begin", "");
+        intentProjection = Run(() => DVProgram.SessionIntent(state));
+        PhaseObserver?.Invoke("intent_projection_end", "");
+        return intentProjection;
+    }
+
+    private string EncodeHost(object value, string projection)
+    {
+        PhaseObserver?.Invoke("host_json_begin", projection);
+        var json = HostJson(value);
+        PhaseObserver?.Invoke("host_json_end", projection);
+        return json;
+    }
 
     public static DvSession Open(string scenario) => new(DVProgram.SessionOpen(R.json_parse(scenario)));
     public static DvSession Restore(string snapshot)
@@ -47,20 +76,30 @@ public sealed class DvSession
 
     public string Prepare(string selection = "")
     {
-        if (selection.Length > 0) state = Run(() => DVProgram.SelectPlayer(state, selection));
+        intentProjection = null;
+        if (selection.Length > 0) state = Run(() => DVProgram.SelectPlayer(state, selection.StartsWith("{", StringComparison.Ordinal) ? ParseValue(selection) : selection));
         state = Run(() => DVProgram.SessionPrepare(state));
-        return HostJson(Run(() => DVProgram.SessionIntent(state)));
+        return EncodeHost(IntentProjection(), "intent");
     }
 
     public string Complete(string receipt, string viewer)
     {
+        intentProjection = null;
         state = Run(() => DVProgram.SessionComplete(state, ParseValue(receipt)));
-        return HostJson(Run(() => DVProgram.SessionPresentation(state, viewer)));
+        return EncodeHost(Run(() => DVProgram.SessionPresentation(state, viewer)), "presentation");
     }
 
-    public string Trace() => R.Text(R.json_stringify(Run(() => DVProgram.SessionClose(state))));
+    public string Trace()
+    {
+        intentProjection = null;
+        return R.Text(R.json_stringify(Run(() => DVProgram.SessionClose(state))));
+    }
 
-    public void WriteTrace(string path) => R.WriteEvidenceFile(path, Run(() => DVProgram.SessionClose(state)));
+    public void WriteTrace(string path)
+    {
+        intentProjection = null;
+        R.WriteEvidenceFile(path, Run(() => DVProgram.SessionClose(state)));
+    }
     public void WriteSave(string path) => R.WriteEvidenceFile(path, DurableState());
     public static DvSession RestoreFile(string path)
     {
@@ -90,13 +129,6 @@ public sealed class DvSession
         }
     }
 
-    private static object SnapshotValue(object value) => value switch
-    {
-        Rational exact => new Dictionary<string, string> { ["$dv_rational"] = exact.ToString() },
-        object dvList when R.TryItems(dvList, out var items) => items.Select(SnapshotValue).ToArray(),
-        _ => value
-    };
-
     private static object ParseValue(string json)
     {
         using var document = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 512 });
@@ -115,22 +147,69 @@ public sealed class DvSession
         _ => throw new JsonException("Unsupported DV value")
     };
 
-    private static string HostJson(object value) => JsonSerializer.Serialize(HostValue(value));
-    private static object HostValue(object value)
+    // Preserve the existing JSON shape without first allocating a second complete
+    // dictionary/array tree. This reads DV containers and never thaws or edits them.
+    private static string HostJson(object value)
     {
-        if (value is Rational) return SnapshotValue(value);
-        if (!R.TryItems(value, out var items)) return value;
+        var output = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(output, new JsonWriterOptions { MaxDepth = 64 }))
+            WriteHostValue(writer, value);
+        return Encoding.UTF8.GetString(output.WrittenSpan);
+    }
+
+    private static void StartHostContainer(Utf8JsonWriter writer, bool record)
+    {
+        if (record) writer.WriteStartObject(); else writer.WriteStartArray();
+    }
+
+    private static void WriteHostValue(Utf8JsonWriter writer, object value)
+    {
+        // The former object-value converter checks depth before every value,
+        // including a primitive inside the 64th array or record. An empty
+        // container may still end at depth 64 without visiting another value.
+        if (writer.CurrentDepth >= 64) throw new JsonException("DV host projection exceeds the JSON nesting limit of 64");
+        switch (value)
+        {
+            case string text: writer.WriteStringValue(text); return;
+            case bool flag: writer.WriteBooleanValue(flag); return;
+            case double number: writer.WriteNumberValue(number); return;
+        }
+        if (value is Rational exact)
+        {
+            StartHostContainer(writer, record: true);
+            // The former Dictionary<string, string> tag used the serializer's
+            // direct string writer; preserve its legal depth-64 object leaf.
+            writer.WriteString("$dv_rational", exact.ToString());
+            writer.WriteEndObject();
+            return;
+        }
+        if (!R.TryItems(value, out var items))
+        {
+            JsonSerializer.Serialize(writer, value);
+            return;
+        }
         if (items.Count > 0 && items.All(item => R.TryItems(item, out var pair) && pair.Count == 2 && pair[0] is string))
         {
-            var record = new Dictionary<string, object>();
+            // Keep the first insertion order and the last value for duplicate
+            // keys, exactly as the former Dictionary<string, object> projection.
+            var record = new Dictionary<string, object>(items.Count, StringComparer.Ordinal);
             foreach (var item in items)
             {
                 var pair = R.Items(item);
-                record[(string)pair[0]] = HostValue(pair[1]);
+                record[(string)pair[0]] = pair[1];
             }
-            return record;
+            StartHostContainer(writer, record: true);
+            foreach (var pair in record)
+            {
+                writer.WritePropertyName(pair.Key);
+                WriteHostValue(writer, pair.Value);
+            }
+            writer.WriteEndObject();
+            return;
         }
-        return items.Select(HostValue).ToArray();
+        StartHostContainer(writer, record: false);
+        foreach (var item in items) WriteHostValue(writer, item);
+        writer.WriteEndArray();
     }
 }
 
@@ -145,6 +224,7 @@ public static partial class DVProgram
     internal static object SetPlayer(object state, object actor) => F_dvs_set_player(state, actor);
     internal static object SelectPlayer(object state, object id) => F_dvs_select_player(state, id);
     internal static object CampaignSnapshot(object state, object viewer) => F_dvg_snapshot(state, viewer);
+    internal static object CampaignSnapshotWithIntent(object state, object viewer, object intent) => F_dvg_snapshot_with_intent(state, viewer, intent);
     internal static object SessionOpen(object scenario) => F_dvs_session_open(scenario, "enabled");
     internal static object SessionActive(object state) => F_dvs_session_active(state);
     internal static object SessionPrepare(object state) => F_dvg_prepare(state);

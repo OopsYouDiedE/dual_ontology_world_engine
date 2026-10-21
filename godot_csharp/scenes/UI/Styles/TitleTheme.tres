@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=36 format=3 uid="uid://desx2ma08f07d"]
+[gd_resource type="Theme" load_steps=70 format=3 uid="uid://desx2ma08f07d"]
 
 [ext_resource type="FontFile" uid="uid://1mrmumh7kkwu" path="res://ShareAsset/External/ZhaohuaTypeWriter/ZhaohuaTypeWriter.ttf" id="font_zhaohua"]
 [ext_resource type="FontFile" uid="uid://wv7t0k0kjb08" path="res://ShareAsset/External/NotoSerifSC/NotoSerifSC[wght].ttf" id="font_noto"]
@@ -11,7 +11,16 @@
 [ext_resource type="FontFile" uid="uid://efwuolvoxfi0" path="res://ShareAsset/External/ZenKurenaido/ZenKurenaido-Regular.ttf" id="font_kurenaido"]
 [ext_resource type="FontFile" uid="uid://5taqf2dxpeah" path="res://ShareAsset/External/newtegomin/NewTegomin-Regular.ttf" id="font_tegomin"]
 [ext_resource type="Texture2D" uid="uid://di8b1hqq18tsx" path="res://ShareAsset/Internal/Props/UIPaper/paper_pixel.png" id="paper_texture"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/UIDesk/cover-painted.png" id="cloth_texture"]
+[ext_resource type="Texture2D" path="res://scenes/UI/Styles/native-close.svg" id="native_close"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/UIDesk/Painterly3D/check-on.svg" id="book_check_on"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/UIDesk/Painterly3D/check-off.svg" id="book_check_off"]
+[ext_resource type="Texture2D" path="res://scenes/UI/Styles/native-radio-on.svg" id="native_radio_on"]
+[ext_resource type="Texture2D" path="res://scenes/UI/Styles/native-radio-off.svg" id="native_radio_off"]
+[ext_resource type="Texture2D" path="res://scenes/UI/Styles/native-submenu.svg" id="native_submenu"]
+[ext_resource type="Texture2D" path="res://scenes/UI/Styles/native-submenu-mirrored.svg" id="native_submenu_mirrored"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/UIDesk/Painterly3D/reference-cloth.webp" id="cloth_texture"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/UIDesk/Painterly3D/reference-paper.webp" id="blank_leaf_texture"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/UIDesk/Painterly3D/slider-mark.svg" id="book_slider_mark"]
 
 [sub_resource type="SystemFont" id="system_fallback"]
 font_names = PackedStringArray("Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC")
@@ -102,17 +111,89 @@ content_margin_left = 3.0
 content_margin_right = 3.0
 bg_color = Color(0.882353, 0.835294, 0.709804, 0.8)
 
+[sub_resource type="StyleBoxFlat" id="native_window_embedded_border"]
+content_margin_left = 8.0
+content_margin_top = 28.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.85)
+expand_margin_left = 8.0
+expand_margin_top = 36.0
+expand_margin_right = 8.0
+expand_margin_bottom = 8.0
+shadow_color = Color(0.133333, 0.109804, 0.0823529, 0.18)
+shadow_size = 8
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="native_window_embedded_unfocused_border"]
+content_margin_left = 8.0
+content_margin_top = 28.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.6)
+expand_margin_left = 8.0
+expand_margin_top = 36.0
+expand_margin_right = 8.0
+expand_margin_bottom = 8.0
+shadow_color = Color(0.133333, 0.109804, 0.0823529, 0.18)
+shadow_size = 8
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="native_dialog_panel"]
+content_margin_left = 24.0
+content_margin_top = 18.0
+content_margin_right = 24.0
+content_margin_bottom = 16.0
+bg_color = Color(0.917647, 0.878431, 0.768627, 1)
+
+[sub_resource type="StyleBoxFlat" id="native_popup_panel"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0.917647, 0.878431, 0.768627, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.75)
+shadow_color = Color(0.133333, 0.109804, 0.0823529, 0.18)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="native_menu_hover"]
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.72)
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 0.75)
+
+[sub_resource type="StyleBoxFlat" id="native_menu_separator"]
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+draw_center = false
+border_width_top = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.55)
+
 [sub_resource type="StyleBoxTexture" id="title_cloth"]
 texture = ExtResource("cloth_texture")
 axis_stretch_horizontal = 0
 axis_stretch_vertical = 0
 
-[sub_resource type="StyleBoxFlat" id="title_slip"]
+[sub_resource type="StyleBoxTexture" id="title_slip"]
+texture = ExtResource("blank_leaf_texture")
 content_margin_left = 20.0
 content_margin_top = 20.0
 content_margin_right = 20.0
 content_margin_bottom = 24.0
-draw_center = false
 
 [sub_resource type="StyleBoxFlat" id="title_plate"]
 bg_color = Color(0.133333, 0.109804, 0.0823529, 1)
@@ -121,6 +202,148 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.133333, 0.109804, 0.0823529, 1)
+
+[sub_resource type="StyleBoxTexture" id="book_leaf"]
+texture = ExtResource("blank_leaf_texture")
+content_margin_left = 42.0
+content_margin_top = 36.0
+content_margin_right = 36.0
+content_margin_bottom = 24.0
+
+[sub_resource type="StyleBoxFlat" id="book_image_mount"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.45)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="BookNoteEdit_normal"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.22)
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="BookNoteEdit_focus"]
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="BookLineEdit_normal"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.22)
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="BookLineEdit_focus"]
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="book_slider_track"]
+content_margin_top = 3.0
+content_margin_bottom = 3.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.8)
+
+[sub_resource type="StyleBoxFlat" id="book_slider_ink"]
+content_margin_top = 3.0
+content_margin_bottom = 3.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 0.65)
+
+[sub_resource type="StyleBoxFlat" id="book_slider_ink_hi"]
+content_margin_top = 3.0
+content_margin_bottom = 3.0
+draw_center = false
+border_width_bottom = 2
+border_color = Color(0.184314, 0.231373, 0.341176, 1)
+
+[sub_resource type="StyleBoxFlat" id="book_slider_focus"]
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 0.4)
+
+[sub_resource type="StyleBoxFlat" id="book_option"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.55)
+
+[sub_resource type="StyleBoxFlat" id="book_option_hover"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.4)
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 1)
+
+[sub_resource type="StyleBoxFlat" id="book_action"]
+content_margin_left = 10.0
+content_margin_top = 7.0
+content_margin_right = 10.0
+content_margin_bottom = 7.0
+draw_center = false
+
+[sub_resource type="StyleBoxFlat" id="book_action_hover"]
+content_margin_left = 10.0
+content_margin_top = 7.0
+content_margin_right = 10.0
+content_margin_bottom = 7.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.4)
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 1)
+
+[sub_resource type="StyleBoxFlat" id="book_action_pressed"]
+content_margin_left = 10.0
+content_margin_top = 7.0
+content_margin_right = 10.0
+content_margin_bottom = 7.0
+bg_color = Color(0.882353, 0.835294, 0.709804, 0.72)
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 1)
+
+[sub_resource type="StyleBoxFlat" id="book_action_focus"]
+draw_center = false
+border_width_bottom = 2
+border_color = Color(0.184314, 0.231373, 0.341176, 1)
+
+[sub_resource type="StyleBoxFlat" id="book_option_focus"]
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 1)
+
+[sub_resource type="StyleBoxFlat" id="book_index"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.494118, 0.435294, 0.345098, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="book_index_focus"]
+draw_center = false
+border_width_bottom = 1
+border_color = Color(0.184314, 0.231373, 0.341176, 1)
 
 [sub_resource type="StyleBoxFlat" id="title_flat"]
 content_margin_left = 24.0
@@ -133,14 +356,128 @@ draw_center = false
 content_margin_left = 24.0
 content_margin_top = 6.0
 content_margin_right = 24.0
-content_margin_bottom = 3.0
+content_margin_bottom = 5.0
 draw_center = false
-border_width_bottom = 3
+border_width_bottom = 1
 border_color = Color(0.133333, 0.109804, 0.0823529, 1)
 
 [resource]
 default_font = SubResource("font_body")
 default_font_size = 18
+AcceptDialog/constants/buttons_separation = 16
+AcceptDialog/styles/panel = SubResource("native_dialog_panel")
+BookBody/base_type = &"RichTextLabel"
+BookBody/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookBody/font_sizes/bold_font_size = 18
+BookBody/font_sizes/normal_font_size = 18
+BookBody/fonts/bold_font = SubResource("font_deck")
+BookBody/fonts/normal_font = SubResource("font_body")
+BookCaption/base_type = &"RichTextLabel"
+BookCaption/colors/default_color = Color(0.352941, 0.298039, 0.231373, 1)
+BookCaption/font_sizes/bold_font_size = 14
+BookCaption/font_sizes/normal_font_size = 14
+BookCaption/fonts/normal_font = SubResource("font_body")
+BookCaptionLabel/base_type = &"Label"
+BookCaptionLabel/colors/font_color = Color(0.352941, 0.298039, 0.231373, 1)
+BookCaptionLabel/font_sizes/font_size = 14
+BookCaptionLabel/fonts/font = SubResource("font_body")
+BookColumn/base_type = &"VBoxContainer"
+BookColumn/constants/separation = 12
+BookHandText/base_type = &"RichTextLabel"
+BookHandText/colors/default_color = Color(0.184314, 0.231373, 0.341176, 1)
+BookHandText/font_sizes/bold_font_size = 18
+BookHandText/font_sizes/normal_font_size = 18
+BookHandText/fonts/normal_font = SubResource("font_hand")
+BookHeading/base_type = &"Label"
+BookHeading/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookHeading/font_sizes/font_size = 32
+BookHeading/fonts/font = SubResource("font_deck")
+BookImageMount/base_type = &"PanelContainer"
+BookImageMount/styles/panel = SubResource("book_image_mount")
+BookIndexButton/base_type = &"Button"
+BookIndexButton/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookIndexButton/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 1)
+BookIndexButton/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookIndexButton/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookIndexButton/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookIndexButton/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookIndexButton/font_sizes/font_size = 22
+BookIndexButton/fonts/font = SubResource("font_deck")
+BookIndexButton/styles/disabled = SubResource("book_option")
+BookIndexButton/styles/focus = SubResource("book_index_focus")
+BookIndexButton/styles/hover = SubResource("book_option_hover")
+BookIndexButton/styles/hover_pressed = SubResource("book_option_hover")
+BookIndexButton/styles/normal = SubResource("book_index")
+BookIndexButton/styles/pressed = SubResource("book_option_hover")
+BookLeaf/base_type = &"PanelContainer"
+BookLeaf/styles/panel = SubResource("book_leaf")
+BookLineEdit/base_type = &"LineEdit"
+BookLineEdit/colors/font_color = Color(0.184314, 0.231373, 0.341176, 1)
+BookLineEdit/font_sizes/font_size = 18
+BookLineEdit/fonts/font = SubResource("font_hand")
+BookLineEdit/styles/focus = SubResource("BookLineEdit_focus")
+BookLineEdit/styles/normal = SubResource("BookLineEdit_normal")
+BookNoteEdit/base_type = &"TextEdit"
+BookNoteEdit/colors/font_color = Color(0.184314, 0.231373, 0.341176, 1)
+BookNoteEdit/font_sizes/font_size = 18
+BookNoteEdit/fonts/font = SubResource("font_hand")
+BookNoteEdit/styles/focus = SubResource("BookNoteEdit_focus")
+BookNoteEdit/styles/normal = SubResource("BookNoteEdit_normal")
+BookOption/base_type = &"Button"
+BookOption/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookOption/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 1)
+BookOption/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookOption/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookOption/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookOption/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookOption/font_sizes/font_size = 18
+BookOption/fonts/font = SubResource("font_register")
+BookOption/styles/disabled = SubResource("book_option")
+BookOption/styles/focus = SubResource("book_option_focus")
+BookOption/styles/hover = SubResource("book_option_hover")
+BookOption/styles/hover_pressed = SubResource("book_option_hover")
+BookOption/styles/normal = SubResource("book_option")
+BookOption/styles/pressed = SubResource("book_option_hover")
+BookRow/base_type = &"VBoxContainer"
+BookRow/constants/separation = 4
+BookSectionHeading/base_type = &"Label"
+BookSectionHeading/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookSectionHeading/font_sizes/font_size = 22
+BookSectionHeading/fonts/font = SubResource("font_deck")
+BookToggle/base_type = &"CheckButton"
+BookToggle/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+BookToggle/colors/font_hover_color = Color(0.184314, 0.231373, 0.341176, 1)
+BookToggle/colors/font_pressed_color = Color(0.184314, 0.231373, 0.341176, 1)
+BookToggle/fonts/font = SubResource("font_register")
+BookToggle/icons/checked = ExtResource("book_check_on")
+BookToggle/icons/checked_disabled = ExtResource("book_check_on")
+BookToggle/icons/checked_disabled_mirrored = ExtResource("book_check_on")
+BookToggle/icons/checked_mirrored = ExtResource("book_check_on")
+BookToggle/icons/unchecked = ExtResource("book_check_off")
+BookToggle/icons/unchecked_disabled = ExtResource("book_check_off")
+BookToggle/icons/unchecked_disabled_mirrored = ExtResource("book_check_off")
+BookToggle/icons/unchecked_mirrored = ExtResource("book_check_off")
+Button/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 0.55)
+Button/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Button/font_sizes/font_size = 18
+Button/fonts/font = SubResource("font_body")
+Button/styles/disabled = SubResource("book_action")
+Button/styles/focus = SubResource("book_action_focus")
+Button/styles/hover = SubResource("book_action_hover")
+Button/styles/hover_pressed = SubResource("book_action_pressed")
+Button/styles/normal = SubResource("book_action")
+Button/styles/pressed = SubResource("book_action_pressed")
+HSlider/icons/grabber = ExtResource("book_slider_mark")
+HSlider/icons/grabber_disabled = ExtResource("book_slider_mark")
+HSlider/icons/grabber_highlight = ExtResource("book_slider_mark")
+HSlider/styles/focus = SubResource("book_slider_focus")
+HSlider/styles/grabber_area = SubResource("book_slider_ink")
+HSlider/styles/grabber_area_highlight = SubResource("book_slider_ink_hi")
+HSlider/styles/slider = SubResource("book_slider_track")
 Label/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 Label/styles/normal = SubResource("transparent_text")
 Paper/colors/rule = Color(0.494118, 0.435294, 0.345098, 0.7)
@@ -178,6 +515,42 @@ PixelTitle/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
 PixelTitle/constants/pixel_scale = 2
 PixelTitle/font_sizes/font_size = 32
 PixelTitle/fonts/font = SubResource("font_head")
+PopupMenu/colors/font_accelerator_color = Color(0.352941, 0.298039, 0.231373, 1)
+PopupMenu/colors/font_color = Color(0.133333, 0.109804, 0.0823529, 1)
+PopupMenu/colors/font_disabled_color = Color(0.352941, 0.298039, 0.231373, 0.55)
+PopupMenu/colors/font_hover_color = Color(0.184314, 0.231373, 0.341176, 1)
+PopupMenu/colors/font_outline_color = Color(0.917647, 0.878431, 0.768627, 0)
+PopupMenu/colors/font_separator_color = Color(0.352941, 0.298039, 0.231373, 1)
+PopupMenu/colors/font_separator_outline_color = Color(0.917647, 0.878431, 0.768627, 0)
+PopupMenu/constants/gutter_compact = 1
+PopupMenu/constants/h_separation = 10
+PopupMenu/constants/icon_max_width = 20
+PopupMenu/constants/indent = 16
+PopupMenu/constants/item_end_padding = 6
+PopupMenu/constants/item_start_padding = 6
+PopupMenu/constants/outline_size = 0
+PopupMenu/constants/separator_outline_size = 0
+PopupMenu/constants/v_separation = 10
+PopupMenu/font_sizes/font_separator_size = 14
+PopupMenu/font_sizes/font_size = 18
+PopupMenu/fonts/font = SubResource("font_body")
+PopupMenu/fonts/font_separator = SubResource("font_register")
+PopupMenu/icons/checked = ExtResource("book_check_on")
+PopupMenu/icons/checked_disabled = ExtResource("book_check_on")
+PopupMenu/icons/radio_checked = ExtResource("native_radio_on")
+PopupMenu/icons/radio_checked_disabled = ExtResource("native_radio_on")
+PopupMenu/icons/radio_unchecked = ExtResource("native_radio_off")
+PopupMenu/icons/radio_unchecked_disabled = ExtResource("native_radio_off")
+PopupMenu/icons/submenu = ExtResource("native_submenu")
+PopupMenu/icons/submenu_mirrored = ExtResource("native_submenu_mirrored")
+PopupMenu/icons/unchecked = ExtResource("book_check_off")
+PopupMenu/icons/unchecked_disabled = ExtResource("book_check_off")
+PopupMenu/styles/hover = SubResource("native_menu_hover")
+PopupMenu/styles/labeled_separator_left = SubResource("native_menu_separator")
+PopupMenu/styles/labeled_separator_right = SubResource("native_menu_separator")
+PopupMenu/styles/panel = SubResource("native_popup_panel")
+PopupMenu/styles/separator = SubResource("native_menu_separator")
+PopupPanel/styles/panel = SubResource("native_popup_panel")
 RichTextLabel/colors/default_color = Color(0.133333, 0.109804, 0.0823529, 1)
 RichTextLabel/font_sizes/bold_font_size = 18
 RichTextLabel/font_sizes/normal_font_size = 18
@@ -192,14 +565,6 @@ Title/colors/page_dark = Color(0.737255, 0.682353, 0.556863, 1)
 Title/colors/page_light = Color(0.839216, 0.792157, 0.67451, 1)
 Title/colors/slip_shadow = Color(0.0392157, 0.0235294, 0.0156863, 0.45)
 Title/colors/spine = Color(0, 0, 0, 0.28)
-Title/constants/book_angle = 40
-Title/constants/book_h = 820
-Title/constants/book_w = 580
-Title/constants/book_x = 842
-Title/constants/book_y = 468
-Title/constants/elev_q = 87
-Title/constants/slip_shadow = 4
-Title/constants/thickness = 8
 TitleColumn/base_type = &"VBoxContainer"
 TitleColumn/constants/separation = 14
 TitleCover/base_type = &"PanelContainer"
@@ -213,7 +578,7 @@ TitleMenuButton/colors/font_focus_color = Color(0.133333, 0.109804, 0.0823529, 1
 TitleMenuButton/colors/font_hover_color = Color(0.133333, 0.109804, 0.0823529, 1)
 TitleMenuButton/colors/font_hover_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
 TitleMenuButton/colors/font_pressed_color = Color(0.133333, 0.109804, 0.0823529, 1)
-TitleMenuButton/font_sizes/font_size = 20
+TitleMenuButton/font_sizes/font_size = 22
 TitleMenuButton/fonts/font = SubResource("font_register")
 TitleMenuButton/styles/disabled = SubResource("title_flat")
 TitleMenuButton/styles/focus = SubResource("title_under")
@@ -229,3 +594,16 @@ VScrollBar/styles/grabber = SubResource("scroll_grabber")
 VScrollBar/styles/grabber_highlight = SubResource("scroll_grabber_hi")
 VScrollBar/styles/grabber_pressed = SubResource("scroll_grabber_hi")
 VScrollBar/styles/scroll = SubResource("scroll_track")
+Window/colors/title_color = Color(0.133333, 0.109804, 0.0823529, 1)
+Window/colors/title_outline_modulate = Color(0.917647, 0.878431, 0.768627, 0)
+Window/constants/close_h_offset = 18
+Window/constants/close_v_offset = 24
+Window/constants/resize_margin = 4
+Window/constants/title_height = 36
+Window/constants/title_outline_size = 0
+Window/font_sizes/title_font_size = 22
+Window/fonts/title_font = SubResource("font_deck")
+Window/icons/close = ExtResource("native_close")
+Window/icons/close_pressed = ExtResource("native_close")
+Window/styles/embedded_border = SubResource("native_window_embedded_border")
+Window/styles/embedded_unfocused_border = SubResource("native_window_embedded_unfocused_border")

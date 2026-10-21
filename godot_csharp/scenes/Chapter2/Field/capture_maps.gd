@@ -6,7 +6,7 @@ const MAPS := ["living_hall", "zone_jia", "zone_yi", "zone_bing", "zone_ding", "
 	"counterweight", "resonance", "clinic", "logistics", "granary", "greenhouse",
 	"campus_nw", "campus_n", "campus_ne", "campus_sw", "campus_s", "harbor"]
 const ACTOR := preload("res://scenes/Story/StoryActor.gd")
-const FRAMES := preload("res://ShareAsset/Internal/Characters/animation_v2/detective.tres")
+const FRAMES := preload("res://ShareAsset/Internal/Characters/PixelCast/detective.tres")
 
 func _initialize() -> void:
 	root.size = Vector2i(1600, 1200)

@@ -1,0 +1,140 @@
+{
+  "scope": "neutral compiler and Core engineering only; no chapters or gameplay",
+  "status": "completed",
+  "cases": [
+    {
+      "id": "syntax-positive",
+      "outcome": "compiled-and-executed",
+      "executions": [
+        {
+          "argv": [],
+          "outcome": "completed",
+          "diagnostic": null,
+          "marker": "CHECK syntax-positive completed"
+        }
+      ],
+      "generated_sha256": "99e503b0c851768167019c20990d16d43e3d8b759d2c35beb044398c9451d711"
+    },
+    {
+      "id": "syntax-branch-output-unset",
+      "outcome": "expected-compiler-rejection",
+      "diagnostic": "named output not assigned on every path: value"
+    },
+    {
+      "id": "syntax-loop-output-unset",
+      "outcome": "expected-compiler-rejection",
+      "diagnostic": "named output not assigned on every path: value"
+    },
+    {
+      "id": "syntax-output-read-before-write",
+      "outcome": "expected-compiler-rejection",
+      "diagnostic": "named output read before assignment: value"
+    },
+    {
+      "id": "syntax-named-return-expression",
+      "outcome": "expected-compiler-rejection",
+      "diagnostic": "named-output return takes no expression; assign the outputs first"
+    },
+    {
+      "id": "syntax-duplicate-output",
+      "outcome": "expected-compiler-rejection",
+      "diagnostic": "reserved, duplicate or shadowed local"
+    },
+    {
+      "id": "syntax-missing-end",
+      "outcome": "expected-compiler-rejection",
+      "diagnostic": "expected end before end of source"
+    },
+    {
+      "id": "syntax-conflicting-output-type",
+      "outcome": "expected-compiler-rejection",
+      "diagnostic": "conflicting named output and return types"
+    },
+    {
+      "id": "core-boundaries",
+      "outcome": "compiled-and-executed",
+      "executions": [
+        {
+          "argv": [],
+          "outcome": "completed",
+          "diagnostic": null,
+          "marker": "CHECK core-boundaries completed"
+        },
+        {
+          "argv": [
+            "stale"
+          ],
+          "outcome": "expected-runtime-rejection",
+          "diagnostic": "Stale world revision",
+          "marker": null
+        },
+        {
+          "argv": [
+            "repeated"
+          ],
+          "outcome": "expected-runtime-rejection",
+          "diagnostic": "Repeated world event",
+          "marker": null
+        },
+        {
+          "argv": [
+            "backwards-time"
+          ],
+          "outcome": "expected-runtime-rejection",
+          "diagnostic": "World time cannot move backwards",
+          "marker": null
+        },
+        {
+          "argv": [
+            "verification-execution"
+          ],
+          "outcome": "expected-runtime-rejection",
+          "diagnostic": "Evaluation mode is incompatible with world",
+          "marker": null
+        },
+        {
+          "argv": [
+            "duplicate-binding"
+          ],
+          "outcome": "expected-runtime-rejection",
+          "diagnostic": "Ambiguous physical binding",
+          "marker": null
+        }
+      ],
+      "generated_sha256": "d874970eef0e6fb3bd31cbd39ae7a92b5ec54f7a354bd782da13b1fc24749cba"
+    },
+    {
+      "id": "finite-solvers",
+      "outcome": "compiled-and-executed",
+      "executions": [
+        {
+          "argv": [],
+          "outcome": "completed",
+          "diagnostic": null,
+          "marker": "CHECK finite-solvers completed"
+        },
+        {
+          "argv": [
+            "empty-domain"
+          ],
+          "outcome": "expected-runtime-rejection",
+          "diagnostic": "Balance variable has an empty domain",
+          "marker": null
+        },
+        {
+          "argv": [
+            "no-capability"
+          ],
+          "outcome": "expected-runtime-rejection",
+          "diagnostic": "Imprint capability is required",
+          "marker": null
+        }
+      ],
+      "generated_sha256": "d043cf0085e4e5401d87bd6d5c7ecab59448722cab6494ec46b0585f059ee538"
+    }
+  ],
+  "limitations": [
+    "No formal session, gameplay, UI, or wall-clock speed claim",
+    "Solver operation counters are not total runtime costs"
+  ]
+}

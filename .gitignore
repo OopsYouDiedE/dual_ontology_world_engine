@@ -4,7 +4,6 @@
 .vs/
 bin/
 obj/
-*.uid
 *.csproj.old
 .coverage
 __pycache__/
@@ -18,10 +17,16 @@ artifacts/releases/
 *.autosave
 .mscbackup/
 *.wav
-# Runtime voice blips are preloaded by StoryDialogue.gd and must ship with the project.
+# Runtime voice assets must ship with the project.
 !godot_csharp/ShareAsset/Internal/Characters/voices/*.wav
 godot_csharp/imported_assets/
-csharp/**/*.import
+# Godot regenerates these from the tracked CSV and .csv.import files.
+godot_csharp/**/*.translation
+# Legacy soundtrack exports; current exports go to artifacts/releases/soundtrack/.
+/music/Blessed Sleepers - *.mp3
+/music/Blessed Sleepers - *.mid
+/music/Blessed Sleepers - *.pdf
+/music/Blessed Sleepers - *.musicxml
 
 runs/
 artifacts/basic-ui-system/player-traces/*

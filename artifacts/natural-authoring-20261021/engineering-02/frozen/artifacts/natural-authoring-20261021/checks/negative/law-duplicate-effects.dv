@@ -1,0 +1,6 @@
+#include ../../../../language_core/20-core.dv
+
+法则 duplicate_effects：
+    前提 dv_true()
+    效果 []
+    效果 [dv_assign(dv_ref("sample", "state", "value"), 1)]

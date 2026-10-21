@@ -1,0 +1,8 @@
+#include ../../../../language_core/20-core.dv
+
+叙述 preceding：
+    前文😀𠮷及甲 乙。
+
+法则 unbound：
+    当 dv_true()
+    则 「sample」的「value」变为 rt_length(「😀」) + missing_value。
