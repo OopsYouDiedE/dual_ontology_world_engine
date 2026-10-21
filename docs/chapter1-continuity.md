@@ -22,13 +22,13 @@
 
 ## 新游戏开卷
 
-TitleUI 的开始按钮只发一次 `start`，`begin_opening(kind)` 锁住当前印刷页面并显示准备状态。Main 保留不透明标题，完成地图、身体、碰撞、视野、房间舞台、局部导航、UI 与真实物理/绘制帧后，`transition_to_field()` 用现役纸页揭幕显露已绘制现场。整合沿用较新的 title-ready 揭幕，不重新接入旧开卷页状态机；`BookOpeningPage` 作为可复用组件保留，不作为第二条生产启动路径。
+TitleUI 的开始按钮只发一次 `start`，`begin_opening(kind)` 锁住当前印刷页面并显示准备状态。Main 保留不透明标题，完成地图、身体、碰撞、视野、房间舞台、局部导航、UI 与真实物理/绘制帧后，`transition_to_field()` 用现役纸页揭幕显露已绘制现场。开卷统一使用 title-ready 揭幕，旧 `BookOpeningPage` 已退役。
 
 Main 在现场装配前设置 `UISystem.host_input_blocked`，揭幕后经 `set_host_input_blocked(false)` 释放。`_field_input_busy()` 同时考虑开卷、模态阅读、关闭、书签和视图失效状态；`_formal_selection_ready()` 另核对正式选项周期。初始化或视图失败停止后续事件消费；书签装配失败保留载入锁和备份提示，已开始的会话不可在原对象上重复新建。
 
 TitleUI 接口为 `begin_opening(kind)`、`set_loading_stage(stage)`、`cancel_opening()`、`transition_to_field()` 和 `show_start_error()`。自动开局复用这条路径。减少动态效果偏好直接完成揭幕并恢复输入。更完整的装配/揭幕合同见 `title-opening.md`。
 
-标题、案卷、设置、对白、现场 HUD、推演窗口及原生通知共享 `build_ui_theme.py` 的纸张、墨色、字体与焦点样式；原生关闭和菜单图标也由生成器输出。书页内容保持原生 Control，实物书本几何与镜头不承担界面状态。
+标题、案卷、设置、对白、现场 HUD、推演窗口及原生通知共享 `mcp/asset_pipeline/build_ui_theme.py` 的纸张、墨色、字体与焦点样式；原生关闭和菜单图标也由生成器输出。书页内容保持原生 Control，实物书本几何与镜头不承担界面状态。资料卡与案卷由 `UISystem` 交给 `CasebookUI`；推演、地图和结束页归 `InvestigationUI`。
 
 ## 验证口径
 

@@ -4,30 +4,33 @@
 
 本目录负责场景、渲染、物理、输入、界面、音频和应用生命周期。`DualOntologyWorldEngine.csproj` 单向引用 `../dv_core/host_bridge/DuelView.Session.csproj`。Core 负责世界权威、主体认知、规划、报价、行动效果和观察；宿主执行正式意图并呈现收到的数据。
 
-用户当轮指令优先。本轮要求所有 Step 的源码实现完成后才进入测试、检验、构建与探针阶段；实施期间只阅读和修改源码。采用明确的数据所有权与状态转换，不加入多层回退或第二套动作规则。多人协作按文件划定所有权，共享检出不由子代理自行提交。
+用户当轮指令优先。本轮完整收尾禁止测试、检验、构建与探针，只阅读必要源码并直接修改。采用明确的数据所有权与状态转换，不加入多层回退或第二套动作规则。多人协作按文件划定所有权，共享检出不由子代理自行提交。源码和文档完成不表示运行已经通过。
 
 ## 模块
 
 | 路径 | 职责 |
 | --- | --- |
 | `scenes/Host/Main.gd` | 组装宿主、呈现队列、会话事件路由、书签交接 |
-| `scenes/Host/HostFlow.gd` | Main 的显式运行状态，字段通过 `main.flow` 访问 |
+| `scenes/Host/HostFlow.gd` | Main 的三个状态轴，由集中 transition 管理状态转换 |
 | `scenes/Host/GameEngine.cs` | 唯一正式 DvSession、串行后台命令、只读快照缓存、开发和回放桥 |
 | `scenes/Host/GodotHostValues.cs` | Core 原生只读值图到 Godot Dictionary/Array 的转换 |
 | `scenes/Host/CasebookPersistence.cs` | 世界书签与观察者案卷的配对保存、恢复 |
 | `scenes/Host/DvFieldExecutor.gd` | 保留人物身体、离屏物理世界、移动事务与占位 |
-| `scenes/Host/RuntimeDiagnostics.gd`、`PlayerViewTrace.gd` | 显式启用的帧诊断与呈现记录 |
+| `scenes/Host/HostPresentation.gd`、`Contracts/presentation_catalog.json` | 将 Core 的中立语义投影绑定到 Godot 呈现资源 |
+| `scenes/Host/RuntimeDiagnostics.gd`、`PlayerViewTrace.gd` | 常开输入事件记录及显式启用的帧诊断、可见记录 |
 | `scenes/Host/DevConsole.gd` | CanvasLayer 128；控制、双本体与规划、性能、回放四面板 |
 | `scenes/Host/HostLifecycle.gd` | 统一退出顺序：宿主完成关闭、音频释放、SceneTree 退出 |
-| `scenes/Host/GeometryCatalog.gd` | 缓存读取 `Contracts/geometry_contract.json` |
-| `scenes/Host/MockSession.gd` | 独立演出样本，读取 `Contracts/presentation_mock_pack.json` |
+| `scenes/Host/GeometryCatalog.gd` | 几何合同的唯一运行读取、路由、锚点及场景绑定入口 |
+| `scenes/Host/MockSession.gd` | 纯 GDScript 演出样本，读取 `Contracts/presentation_mock_pack.json` |
+| `scenes/Host/ReplayStage.gd`、`ReplaySession.gd` | 独立 SubViewport 中的真实场景、人物、碰撞和书页回放 |
+| `scenes/UI/ReplayPreferences.gd` | 回放界面的独立内存设置与只读入口约束 |
 | `scenes/Shared/Field/WorldView.gd` | 人物、连续行走、空间输入、视野与房间舞台 |
 | `scenes/Chapter2/Field/CampusMapView.gd` | 地图装配、导航、碰撞、门与跨图执行 |
 | `scenes/UI/UISystem.gd` | 子界面总装、单一模态所有者、纯数据事件 |
 | `scenes/UI/TitleUI`、`CasebookUI`、`BookSettingsPage` | 标题、案卷阅读、设置书页 |
 | `scenes/UI/DialogueUI`、`InvestigationUI`、`CampusMapPanel` | 对白、调查选项、已知地图 |
 
-详细事件合同见 `scenes/Host/README.md`。Core 不依赖 Godot，UI 不持有 Core 对象。
+详细事件合同见 `scenes/Host/README.md`。Core 输出 `view_kind`、`actor`、`location_title` 等中立语义字段；Godot 的 res 资源由 HostPresentation 与 presentation_catalog 增补。Core 不依赖 Godot，UI 不持有 Core 对象。Main 只在正式会话路径动态加载 C# 入口；纯 GDScript Mock 可独立启动。
 
 ## 权威与执行
 
@@ -41,7 +44,9 @@ GameEngine 在单一后台队列中使用 DvSession，工作线程不访问场�
 
 ## 移动事务
 
-所有 move、station 与跨图移动，包括玩家和 NPC，开始执行时保存 rollback anchor：原地图、房间、连续脚点、源投影与动作标识。原位置作为占位保留到 Core Complete 返回真实 outcome。`applied` 提交并释放占位；`blocked` / `rejected` 恢复同一身体、地图、房间、位置与障碍，再释放事务。离屏与可见世界共享身体登记，跨图交接在结算后接入可见场。
+所有 move、station 与跨图移动，包括玩家和 NPC，开始执行时保存 rollback anchor：原地图、房间、连续脚点、源投影与动作标识，并保留实际走过的 trail。原位置作为占位保留到 Core Complete 返回真实 outcome。`applied` 提交并释放占位；`blocked` / `rejected` 时，玩家沿真实 trail 反向行走并接受碰撞，恢复原地图与障碍后释放事务；离屏 NPC 可直接恢复到其已保存锚点。离屏与可见世界共享身体登记，跨图交接在结算后接入可见场。
+
+每次实际移动事务将归一化轨迹写入原回执的 `receipt.field.trajectory`。跨图记录保留 `entered_by` 的真实 from/to 映射，供同一事件的回放消费；轨迹记录不产生额外 Complete 或行动费用。
 
 `restore_movement_anchor` 返回恢复是否完成。只有成功恢复才释放回滚锚点与占位；地图准备失败或场地已关闭返回失败，保留事务，并由 `GameEngine.RecordHostFailure` 登记具体失败供关闭封存使用。宿主不得把未完成恢复报告为成功，也不重新提交已经完成的 Core 动作。
 
@@ -57,7 +62,9 @@ Main 进入关闭时停止新输入与新动作请求，继续接收已经进入
 
 ## 几何与资产
 
-`Contracts/geometry_contract.json` 是 Godot 几何合同，含 cell_size、maps 和 additions。房间提供完整执行 ID、region、rect 和精确 rects；门、站点、站位、出生点和出口来自正式场景。CampusMapView 的房间分类、额外物件和地图页共用该合同。仅一个 region 的地图保留统一区域语义；多区域地图无匹配为 void。DV 只使用语义位置和锚点 ID。
+`Contracts/geometry_contract.json` 是路由、锚点、房间、站点、站位、出生点、出口与室外坐标的唯一发布合同，含 cell_size、maps 和 additions。房间提供完整执行 ID、region、rect 和精确 rects；出口同时声明 point、path、rect、target、spawn、internal_gate 和可选 gate。室外坐标使用 outdoor_origin/core/cores/origins。CampusMapView、WorldView 与地图页通过 GeometryCatalog 使用该合同，正式场景提供画面与碰撞实例。外部 living_hall 目标在发布时显式映射为 living_floor 及其带前缀出生点，运行端不重复推导旧别名。仅一个 region 的地图保留统一区域语义；多区域地图无匹配为 void。DV 只使用语义位置和锚点 ID。
+
+GeometryCatalog 只负责运行读取与绑定。完整场景/合同校对函数位于 `../mcp/sandboxes/GeometryContractValidator.gd`，由 MapSandbox 在 bind_layout 前调用；校对逻辑不进入生产 Host。
 
 运行资产放 `ShareAsset/`；生产源在 `../mcp/asset_pipeline/sources/`，生成器在 `../mcp/asset_pipeline/`。缺失源稿不等于运行资产可删除。场景和导入资源使用 Godot 原生资源；移除旧资产时同步移除该资产侧车，保留其他导入配置。
 
@@ -73,16 +80,20 @@ Main 在地图、人物、碰撞、UI、物理注册与实际绘制完成后揭�
 
 ## 诊断、控制台与演出样本
 
-普通启动不连接逐帧取证信号，不扫描 UI 树。`--dv-audit` 或控制台 `audit on` 明确启用。关闭审计会解绑绘制和输入控件信号。时序存储为 4096 条环，每次 PollTimings 最多消费 256 条；关闭清单记录丢弃量。控制台性能面板单独保存 120 帧，离开面板停止采样。
+PlayerViewTrace 常开完整原始输入事件记录，通过 node_added 为新增控件接线。普通启动不逐帧扫描 UI 树；`--dv-audit` 或控制台 `audit on` 才开启逐帧扫描和可见记录，关闭审计保留事件输入记录。呈现样本使用 `kind: presentation`，并保留实际身体样本与原始输入。时序存储为 4096 条环，每次 PollTimings 最多消费 256 条；关闭清单记录丢弃量。
+
+控制台 Inspector 只在页面打开时每 0.25 秒刷新 Physical、Mind 和按 score 排序的候选树。性能页使用固定 120 帧环，记录 FPS、frame、prepare、complete、navigation，并按帧累计阶段耗时；离开页面关闭诊断采样。
 
 3D 书页记录表达页面纹理内容与冻结状态，不把 2D 控件可见性当作屏幕遮挡证明。`view_schema=3` 的 text_scope、visibility_basis 与 screen_text_visibility 明确此边界；实际遮挡证据由工具侧渲染帧承担。
 
-F12 或反引号打开控制台。status / options 读取当前观察者投影；act 使用当前正式选项与空间接触。inspect / tp / time 需要 `--dv-dev` 会话，Core 负责开发修改。回放载入 dvdag / dvlog，Godot 与 CLI 使用 `dv_core/host_bridge/SmartReplay.cs`；播放、暂停、单步与 1 / 2 / 4 / 8 倍速按演出时钟工作，不修改现场世界。
+F12 或反引号打开控制台。status / options 读取当前观察者投影；act 使用当前正式选项与空间接触。inspect / tp / time 需要 `--dv-dev` 会话，Core 负责开发修改。回放载入 dvdag / dvlog，Godot 与 CLI 使用 `dv_core/host_bridge/SmartReplay.cs`。ReplayStage 在独立 SubViewport 中组合 ReplaySession、Main、WorldView、StoryActor 和真实 3D 书页 UI；播放、暂停、单步与 1 / 2 / 4 / 8 倍速由演出时钟控制。
 
-`--dv-mock` 使用标准演出包，不创建正式 DvSession，可演示标题揭页、对白、选项、地图和案卷。样本身份明确，样本不读取或写入正式世界。`--dv-auto-start` 跳过手动开始操作；不选择世界行动。正式参数包括 `--dv-controller=`、`--dv-viewer=`、`--dv-profile=`、`--dv-zone=`、`--dv-seed=`、`--dv-speed=`。播放倍率只改变宿主时钟与物理步频，不改写 DV 费用。
+回放先消费记录的输入、事件回执和实际 trajectory，通过 WorldView 路径执行、StoryActor 碰撞及已记录门道坐标变换呈现移动，并以 action_event 去重。旧记录缺少轨迹时只按正式几何作语义重建并注明范围；缺少源位置时保留原文本，不补造移动。回放设置写入独立内存 ReplayPreferences，书签只展示记录清单，回放界面不打开系统文件选择器、不调用正式保存恢复，也不修改现场世界。
+
+`--dv-mock` 使用标准演出包和 ReplayClock，提供案卷、表单、对白、门和地图样本，不创建正式 DvSession。独立纯 GDScript 入口为 `python ../mcp/godot_workspace.py --mock-ui`（从本目录执行）或统一 MCP 的 `ui_mock`，临时工程不创建 C# 项目。样本身份明确，样本不读取或写入正式世界。`--dv-auto-start` 跳过手动开始操作；不选择世界行动。正式参数包括 `--dv-controller=`、`--dv-viewer=`、`--dv-profile=`、`--dv-zone=`、`--dv-seed=`、`--dv-speed=`。播放倍率只改变宿主时钟与物理步频，不改写 DV 费用。
 
 ## 工具边界
 
 开发工具位于 `../mcp/verification/`，地图沙盒位于 `../mcp/sandboxes/`。工具工作区由 MCP 接线到生产场景；游戏项目不包含 addons、tools、FrameArchive 或验证脚本。FrameArchive 的图像读取、编码与封存属于工具工程。现役工具路径和运行方式见 `../mcp/README.md`。
 
-只有在本轮全部实现完成后才由主代理统一进入检验阶段。验收结论必须对应实际运行证据；源码实现、工具输出、画面取证各自说明范围。
+本轮没有执行测试、检查、构建或探针，不宣称运行通过。验收结论必须对应实际运行证据；源码实现、工具输出、画面取证各自说明范围。

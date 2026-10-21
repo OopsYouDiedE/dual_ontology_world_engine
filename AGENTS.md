@@ -19,7 +19,7 @@
 | `dv_core/checks/70-checks.dv` | 隔离检查、权威 oracle、夹具和报告 |
 | `dv_core/compiler/`、`dv_core/host_bridge/` | 最小自举编译器、平台 ABI 与 .NET 会话接口 |
 | `godot_csharp/` | Godot 场景、物理、输入与呈现 |
-| `mcp/build/`、`asset_pipeline/`、`editor_lsp/`、`rpg_adapter/`、`verification/` | 按需加载的构建、生成、编辑与诊断工具 |
+| `mcp/build/`、`mcp/asset_pipeline/`、`mcp/editor_lsp/`、`mcp/rpg_adapter/`、`mcp/verification/` | 按需加载的构建、生成、编辑与诊断工具 |
 | `mcp/music_pipeline/` | 曲谱、音频生成源码及构建说明 |
 | `artifacts/<任务>/` | 报告与证据；`.scratch/` 为任务结束时清理的临时输出 |
 
@@ -33,7 +33,9 @@ Core 的 verify/run 共用同一法则求值器，绑定对象对应不授予事
 
 正式动作链由 `30-session.dv` 实现并由 `60-game.dv` 整合：Prepare → 现场执行/世界法则回执 → Complete。DV 负责决策、报价、权威效果、观察、传播与结算；Godot Main → WorldView 执行物理移动并返回现场结果。命令行 `formal-model` 适配同一接口，不包含 Godot 几何。预测与推演不发布真实行动效果。
 
-宿主只持有 GameEngine → DvSession → 生成的 DV 类库。等待回执时不重复分派意图。阅读与同房行走期间通过显式 BackgroundPrepare 处理可执行 NPC；返回的动作仍交给同一物理执行器与 Complete。人工动作的提前准备按状态版本和观察者消费，失效即重新 Prepare。seed 是包含 Reader/Value 和代码发射的最小 C0 自举编译器，不含世界执行或第二套会话。
+宿主只持有 GameEngine → DvSession → 生成的 DV 类库。Core 原生值入口与 CLI 使用同一动作链；Core 发布中立身份和投影，Godot 自己映射场景、人物图像和 HUD。等待回执时不重复分派意图。阅读与同房行走期间通过显式 BackgroundPrepare 处理可执行 NPC；返回的动作仍交给同一物理执行器与 Complete。人工动作的提前准备按状态版本和观察者消费，失效即重新 Prepare。seed 是包含 Reader/Value 和代码发射的最小 C0 自举编译器，不含世界执行或第二套会话。
+
+模块编译以每份 DV 源为单位导入函数和名义类型接口，源码偏移为模块本地位置。20/30 构成独立基础程序集，35–60 构成内容程序集；章节之间依赖公共35。缓存以源码、导出接口、编译器和生成器版本决定失效，生成文件清单由生成器维护。MCP/LSP 初始化在后台预热编译器，游戏循环不承担预热工作。
 
 移动目的地分别声明逻辑地点、执行房间与站点。同房间 WASD/鼠标接近由宿主寻路和真实碰撞执行，不进入 DV、不扣游戏时间或动作步数；热点交互与跨房间走正式 Prepare/Complete。显式站点回执核对主体、序号、行动、站点和房间，保留实际终点、站点范围及到达误差。依赖接触的观察只在对应成功 Complete 后产生，局部行走不授予观察或答案。
 
@@ -60,11 +62,11 @@ VS Code 默认解决方案为 `godot_csharp/DualOntologyWorldEngine.sln`；编�
 
 ## 工具与临时文件
 
-复用工具统一放在 `mcp/`，由 `mcp/server.py` 的静态目录按需加载。资产生成、编译、编辑器、取证和检查脚本均在工具域；`godot_csharp` 只包含运行代码、场景、契约与发布资源。`FrameArchive.cs` 仅编入临时工具工程。
+复用工具统一放在 `mcp/`；`mcp/tools.json` 统一声明公开操作及路由，`mcp/server.py` 根据目录按需加载。资产生成与发布、编译、编辑器、取证和检查脚本均在工具域；`godot_csharp` 只包含运行代码、场景、契约与发布资源。`FrameArchive.cs` 仅编入临时工具工程。地图沙盒和 UI Mock 使用独立纯 GDScript 工作区，正式回放以独立视口消费记录，页面恢复不提交会话动作。
 
 一次性脚本放在被忽略的 `.scratch/`。任务提交前删除本轮临时脚本并确认没有本轮遗留；已有其他工作不覆盖。工具启动的临时 Godot 工程在退出时清理。新增可复用能力直接归入对应 MCP 管线。
 
-实施顺序服从用户当前指令。本轮全部 Step 的实现和接线完成前，不设置或执行测试、构建、探针与检验。重构围绕明确的状态所有权、一次提交和单一入口，按真实失败语义处理错误。
+实施顺序、测试与复核范围服从用户当前指令。用户禁止测试或复核时，按已有结论完成源码、接线、清理与提交，全程不运行测试、构建、探针或额外检验。重构围绕明确的状态所有权、一次提交和单一入口，按真实失败语义处理错误。
 
 ## 工作流程
 

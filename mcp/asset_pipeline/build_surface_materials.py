@@ -49,7 +49,7 @@ texture_filter = 1
 ''', encoding="utf-8")
         records.append({"diffuse": diffuse, "source_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
                         "normal": normal_uri, "material": material.name})
-    (ROOMS / "relief-manifest.json").write_text(json.dumps({"generator": "tools/build_surface_materials.py",
+    (ROOMS / "relief-manifest.json").write_text(json.dumps({"generator": "mcp/asset_pipeline/build_surface_materials.py",
         "method": "Gaussian prefilter, shallow luminance gradient, normalized tangent vector; diffuse unchanged",
         "surfaces": records}, indent=2) + "\n", encoding="utf-8")
     print("Wrote interior relief sidecars; diffuse textures unchanged.")

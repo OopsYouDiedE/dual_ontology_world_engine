@@ -6,7 +6,6 @@
     "game_time": 420,
     "active": true,
     "viewer": "detective",
-    "resource": "res://scenes/Chapter2/Field/CampusMapView.tscn",
     "map": "living_floor",
     "room": "zone_yi:north_1",
     "execution_room": "zone_yi:north_1",
@@ -17,11 +16,6 @@
     "field_enabled": true,
     "player_control": true,
     "initial_placements": [],
-    "hud": {
-      "title": "演出样本",
-      "room": "样本房间",
-      "time": "7:00"
-    },
     "access": {
       "dorms": true,
       "isolation_open": false,
@@ -32,21 +26,182 @@
         "living_hall": true
       }
     },
-    "sites": {},
     "traces": [],
-    "people": [],
+    "people": [
+      {
+        "key": "huo",
+        "map": "living_floor",
+        "room": "zone_yi:north_1",
+        "execution_room": "zone_yi:north_1",
+        "title": "样本讲述者",
+        "present": true,
+        "initial_anchor": "",
+        "anchor": ""
+      }
+    ],
     "presentation": {
-      "player_actor": "detective",
-      "player_sprite": "detective"
-    },
-    "cast": {
-      "detective": "detective"
+      "player_actor": "detective"
     },
     "replay": {
-      "summary": "此页用于演示读写与空间交互。样本文字不会授予正式会话中的知识。",
-      "hypotheses": [],
-      "conflicts": [],
-      "predictions": []
+      "summary": "独立演出样本：此页演示已提供假设、组合选择与个人草稿，不作正式剧情判定。",
+      "hypotheses": [
+        {
+          "id": "preview.h1",
+          "text": "样本假设 A：先查看演示物件，再经过门道。"
+        }
+      ],
+      "conflicts": [
+        "样本对照：两个示范顺序尚未被正式采纳。"
+      ],
+      "predictions": [
+        "样本预测：选择完整组合后，可以看到表单提交后的呈现。"
+      ]
+    },
+    "view_kind": "world",
+    "location_title": "演出样本房间",
+    "state_version": 0,
+    "map_knowledge": {
+      "rooms": [
+        {
+          "map": "living_floor",
+          "room": "zone_yi:north_1",
+          "label": "样本房间"
+        },
+        {
+          "map": "living_floor",
+          "room": "zone_yi:corridor",
+          "label": "样本走廊"
+        }
+      ],
+      "doors": [
+        {
+          "from": {
+            "map": "living_floor",
+            "room": "zone_yi:north_1",
+            "label": "演出样本房间"
+          },
+          "to": {
+            "map": "living_floor",
+            "room": "zone_yi:corridor",
+            "label": "演出样本走廊"
+          }
+        }
+      ]
+    },
+    "pending": {
+      "status": "awaiting_input",
+      "actor": "detective",
+      "options": [
+        {
+          "id": "preview.read",
+          "label": "阅读演出样本",
+          "available": true,
+          "interaction": {
+            "kind": "self",
+            "purpose": "reflect"
+          }
+        },
+        {
+          "id": "preview.reconstruct",
+          "label": "提交演出样本重演表单",
+          "available": true,
+          "interaction": {
+            "kind": "self",
+            "purpose": "replay"
+          },
+          "replay_input": {
+            "initial_assumption": "这些选项仅用于独立 UI 演出。",
+            "named": [
+              {
+                "id": "preview.h1",
+                "label": "样本假设 A"
+              }
+            ],
+            "variables": [
+              {
+                "id": "sequence",
+                "label": "样本行动顺序",
+                "values": [
+                  {
+                    "label": "先阅读，再过门",
+                    "value": "read-first"
+                  },
+                  {
+                    "label": "先过门，再阅读",
+                    "value": "walk-first"
+                  }
+                ]
+              },
+              {
+                "id": "evidence",
+                "label": "样本使用的记录",
+                "values": [
+                  {
+                    "label": "演示证据卡",
+                    "value": "card"
+                  }
+                ]
+              }
+            ],
+            "cases": [
+              {
+                "id": "preview.combination",
+                "assignments": [
+                  {
+                    "variable": "sequence",
+                    "value": "read-first"
+                  },
+                  {
+                    "variable": "evidence",
+                    "value": "card"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "preview.wait",
+          "label": "留心此刻的安静",
+          "available": true,
+          "interaction": {
+            "kind": "self",
+            "purpose": "wait"
+          }
+        },
+        {
+          "id": "preview.bed",
+          "label": "查看床边的界面样本",
+          "available": true,
+          "interaction": {
+            "kind": "site",
+            "site": "bed"
+          }
+        },
+        {
+          "id": "preview.go.corridor",
+          "label": "走向走廊",
+          "available": true,
+          "interaction": {
+            "kind": "doorway",
+            "destination": {
+              "map": "living_floor",
+              "room": "zone_yi:corridor",
+              "execution_room": "zone_yi:corridor",
+              "logical_location": "demo-corridor"
+            }
+          }
+        },
+        {
+          "id": "preview.talk",
+          "label": "听取样本对白",
+          "available": true,
+          "interaction": {
+            "kind": "person",
+            "person": "huo"
+          }
+        }
+      ]
     }
   },
   "room_titles": {
@@ -62,6 +217,65 @@
         "interaction": {
           "kind": "self",
           "purpose": "reflect"
+        }
+      },
+      {
+        "id": "preview.reconstruct",
+        "label": "提交演出样本重演表单",
+        "available": true,
+        "interaction": {
+          "kind": "self",
+          "purpose": "replay"
+        },
+        "replay_input": {
+          "initial_assumption": "这些选项仅用于独立 UI 演出。",
+          "named": [
+            {
+              "id": "preview.h1",
+              "label": "样本假设 A"
+            }
+          ],
+          "variables": [
+            {
+              "id": "sequence",
+              "label": "样本行动顺序",
+              "values": [
+                {
+                  "label": "先阅读，再过门",
+                  "value": "read-first"
+                },
+                {
+                  "label": "先过门，再阅读",
+                  "value": "walk-first"
+                }
+              ]
+            },
+            {
+              "id": "evidence",
+              "label": "样本使用的记录",
+              "values": [
+                {
+                  "label": "演示证据卡",
+                  "value": "card"
+                }
+              ]
+            }
+          ],
+          "cases": [
+            {
+              "id": "preview.combination",
+              "assignments": [
+                {
+                  "variable": "sequence",
+                  "value": "read-first"
+                },
+                {
+                  "variable": "evidence",
+                  "value": "card"
+                }
+              ]
+            }
+          ]
         }
       },
       {
@@ -95,6 +309,15 @@
             "logical_location": "demo-corridor"
           }
         }
+      },
+      {
+        "id": "preview.talk",
+        "label": "听取样本对白",
+        "available": true,
+        "interaction": {
+          "kind": "person",
+          "person": "huo"
+        }
       }
     ],
     "zone_yi:corridor": [
@@ -105,6 +328,65 @@
         "interaction": {
           "kind": "self",
           "purpose": "reflect"
+        }
+      },
+      {
+        "id": "preview.reconstruct",
+        "label": "提交演出样本重演表单",
+        "available": true,
+        "interaction": {
+          "kind": "self",
+          "purpose": "replay"
+        },
+        "replay_input": {
+          "initial_assumption": "这些选项仅用于独立 UI 演出。",
+          "named": [
+            {
+              "id": "preview.h1",
+              "label": "样本假设 A"
+            }
+          ],
+          "variables": [
+            {
+              "id": "sequence",
+              "label": "样本行动顺序",
+              "values": [
+                {
+                  "label": "先阅读，再过门",
+                  "value": "read-first"
+                },
+                {
+                  "label": "先过门，再阅读",
+                  "value": "walk-first"
+                }
+              ]
+            },
+            {
+              "id": "evidence",
+              "label": "样本使用的记录",
+              "values": [
+                {
+                  "label": "演示证据卡",
+                  "value": "card"
+                }
+              ]
+            }
+          ],
+          "cases": [
+            {
+              "id": "preview.combination",
+              "assignments": [
+                {
+                  "variable": "sequence",
+                  "value": "read-first"
+                },
+                {
+                  "variable": "evidence",
+                  "value": "card"
+                }
+              ]
+            }
+          ]
         }
       },
       {
@@ -165,6 +447,16 @@
         "from": "demo-corridor",
         "to": "demo-room"
       }
+    },
+    "preview.reconstruct": {
+      "id": "preview.reconstruct",
+      "kind": "replay",
+      "label": "提交样本组合"
+    },
+    "preview.talk": {
+      "id": "preview.talk",
+      "kind": "talk",
+      "label": "听取样本对白"
     }
   },
   "presentations": {
@@ -227,29 +519,838 @@
       "source_refs": [
         "presentation_mock_pack"
       ]
+    },
+    "preview.reconstruct": {
+      "visible": true,
+      "speaker_name": "演出样本",
+      "surface": "样本重演表单已送达呈现层。",
+      "lines": [
+        "这里演示具名假设和组合假设的选择结果。此结果只存在于样本会话。"
+      ],
+      "source_refs": [
+        "presentation_mock_pack"
+      ],
+      "action_kind": "replay"
+    },
+    "preview.talk": {
+      "visible": true,
+      "speaker_name": "样本讲述者",
+      "actor": "huo",
+      "surface": "这是一段带称谓与人物立绘的样本对白。",
+      "lines": [
+        "界面继续使用实际的 DialogueUI、案卷归档与3D书页。"
+      ],
+      "source_refs": [
+        "presentation_mock_pack"
+      ],
+      "action_kind": "talk"
     }
   },
-  "casebook": {},
+  "casebook": {
+    "version": 1,
+    "viewer": "detective",
+    "entries": [
+      {
+        "id": "preview.evidence",
+        "category": "evidence",
+        "title": "演示证据卡",
+        "text": "此卡只用于演出包。展示来源、正文与关联记录。",
+        "acquired": true,
+        "source": "presentation_mock_pack",
+        "source_refs": [
+          "presentation_mock_pack"
+        ],
+        "game_time": 420,
+        "place": "演出样本房间",
+        "related": [
+          "preview.evidence"
+        ]
+      },
+      {
+        "id": "preview.items",
+        "category": "items",
+        "title": "演示物件条目",
+        "text": "样本物件展示调查所得，不表示正式世界物品。",
+        "acquired": true,
+        "source": "presentation_mock_pack",
+        "source_refs": [
+          "presentation_mock_pack"
+        ],
+        "game_time": 420,
+        "place": "演出样本房间",
+        "related": [
+          "preview.evidence"
+        ]
+      },
+      {
+        "id": "preview.people",
+        "category": "people",
+        "title": "样本人物条目",
+        "text": "此人物称谓是演出样本。",
+        "acquired": true,
+        "source": "presentation_mock_pack",
+        "source_refs": [
+          "presentation_mock_pack"
+        ],
+        "game_time": 420,
+        "place": "演出样本房间",
+        "related": [
+          "preview.evidence"
+        ],
+        "image": "res://ShareAsset/Internal/Characters/DialogueCast/detective_calm.tres"
+      },
+      {
+        "id": "preview.gallery",
+        "category": "gallery",
+        "title": "演示图像条目",
+        "text": "此页复用当前宿主的人物图像资源。",
+        "acquired": true,
+        "source": "presentation_mock_pack",
+        "source_refs": [
+          "presentation_mock_pack"
+        ],
+        "game_time": 420,
+        "place": "演出样本房间",
+        "related": [
+          "preview.evidence"
+        ],
+        "image": "res://ShareAsset/Internal/Characters/DialogueCast/detective_calm.tres"
+      },
+      {
+        "id": "preview.records",
+        "category": "records",
+        "title": "演示行动记录",
+        "text": "样本记事：阅读、过门与表单都使用同一呈现组件。",
+        "acquired": true,
+        "source": "presentation_mock_pack",
+        "source_refs": [
+          "presentation_mock_pack"
+        ],
+        "game_time": 420,
+        "place": "演出样本房间",
+        "related": [
+          "preview.evidence"
+        ]
+      }
+    ],
+    "notes": [
+      {
+        "id": "note:1",
+        "category": "hypotheses",
+        "title": "演出样本草稿",
+        "text": "这条草稿可编辑，不授予正式世界知识。",
+        "personal": true,
+        "related": [
+          "preview.evidence"
+        ],
+        "game_time": 420,
+        "place": "演出样本房间"
+      }
+    ],
+    "next_note": 2
+  },
   "replay_frames": [
     {
       "sequence": 0,
-      "kind": "dialogue",
+      "kind": "snapshot",
       "actor": "detective",
-      "action": "preview.read",
-      "text": "演出样本：桌面、翻页、对白和选项共用正式呈现组件。",
-      "duration": 1.7,
+      "action": "",
+      "text": "演出样本：真实世界视图与标题揭页。",
+      "duration": 0.3,
       "data": {
-        "source": "presentation-mock"
+        "contract": "dv-replay-v2",
+        "source": "presentation-mock",
+        "snapshot": {
+          "chapter": 1,
+          "game_time": 420,
+          "active": true,
+          "viewer": "detective",
+          "map": "living_floor",
+          "room": "zone_yi:north_1",
+          "execution_room": "zone_yi:north_1",
+          "logical_location": "demo-room",
+          "initial_anchor": "",
+          "spawn": "",
+          "anchor": "",
+          "field_enabled": true,
+          "player_control": true,
+          "initial_placements": [],
+          "access": {
+            "dorms": true,
+            "isolation_open": false,
+            "door_prints": false,
+            "maps": {
+              "living_floor": true,
+              "zone_yi": true,
+              "living_hall": true
+            }
+          },
+          "traces": [],
+          "people": [
+            {
+              "key": "huo",
+              "map": "living_floor",
+              "room": "zone_yi:north_1",
+              "execution_room": "zone_yi:north_1",
+              "title": "样本讲述者",
+              "present": true,
+              "initial_anchor": "",
+              "anchor": ""
+            }
+          ],
+          "presentation": {
+            "player_actor": "detective"
+          },
+          "replay": {
+            "summary": "独立演出样本：此页演示已提供假设、组合选择与个人草稿，不作正式剧情判定。",
+            "hypotheses": [
+              {
+                "id": "preview.h1",
+                "text": "样本假设 A：先查看演示物件，再经过门道。"
+              }
+            ],
+            "conflicts": [
+              "样本对照：两个示范顺序尚未被正式采纳。"
+            ],
+            "predictions": [
+              "样本预测：选择完整组合后，可以看到表单提交后的呈现。"
+            ]
+          },
+          "view_kind": "world",
+          "location_title": "演出样本房间",
+          "state_version": 0,
+          "map_knowledge": {
+            "rooms": [
+              {
+                "map": "living_floor",
+                "room": "zone_yi:north_1",
+                "label": "样本房间"
+              },
+              {
+                "map": "living_floor",
+                "room": "zone_yi:corridor",
+                "label": "样本走廊"
+              }
+            ],
+            "doors": [
+              {
+                "from": {
+                  "map": "living_floor",
+                  "room": "zone_yi:north_1",
+                  "label": "演出样本房间"
+                },
+                "to": {
+                  "map": "living_floor",
+                  "room": "zone_yi:corridor",
+                  "label": "演出样本走廊"
+                }
+              }
+            ]
+          },
+          "pending": {
+            "status": "awaiting_input",
+            "actor": "detective",
+            "options": [
+              {
+                "id": "preview.read",
+                "label": "阅读演出样本",
+                "available": true,
+                "interaction": {
+                  "kind": "self",
+                  "purpose": "reflect"
+                }
+              },
+              {
+                "id": "preview.reconstruct",
+                "label": "提交演出样本重演表单",
+                "available": true,
+                "interaction": {
+                  "kind": "self",
+                  "purpose": "replay"
+                },
+                "replay_input": {
+                  "initial_assumption": "这些选项仅用于独立 UI 演出。",
+                  "named": [
+                    {
+                      "id": "preview.h1",
+                      "label": "样本假设 A"
+                    }
+                  ],
+                  "variables": [
+                    {
+                      "id": "sequence",
+                      "label": "样本行动顺序",
+                      "values": [
+                        {
+                          "label": "先阅读，再过门",
+                          "value": "read-first"
+                        },
+                        {
+                          "label": "先过门，再阅读",
+                          "value": "walk-first"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "evidence",
+                      "label": "样本使用的记录",
+                      "values": [
+                        {
+                          "label": "演示证据卡",
+                          "value": "card"
+                        }
+                      ]
+                    }
+                  ],
+                  "cases": [
+                    {
+                      "id": "preview.combination",
+                      "assignments": [
+                        {
+                          "variable": "sequence",
+                          "value": "read-first"
+                        },
+                        {
+                          "variable": "evidence",
+                          "value": "card"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "preview.wait",
+                "label": "留心此刻的安静",
+                "available": true,
+                "interaction": {
+                  "kind": "self",
+                  "purpose": "wait"
+                }
+              },
+              {
+                "id": "preview.bed",
+                "label": "查看床边的界面样本",
+                "available": true,
+                "interaction": {
+                  "kind": "site",
+                  "site": "bed"
+                }
+              },
+              {
+                "id": "preview.go.corridor",
+                "label": "走向走廊",
+                "available": true,
+                "interaction": {
+                  "kind": "doorway",
+                  "destination": {
+                    "map": "living_floor",
+                    "room": "zone_yi:corridor",
+                    "execution_room": "zone_yi:corridor",
+                    "logical_location": "demo-corridor"
+                  }
+                }
+              },
+              {
+                "id": "preview.talk",
+                "label": "听取样本对白",
+                "available": true,
+                "interaction": {
+                  "kind": "person",
+                  "person": "huo"
+                }
+              }
+            ]
+          }
+        },
+        "casebook": {
+          "version": 1,
+          "viewer": "detective",
+          "entries": [
+            {
+              "id": "preview.evidence",
+              "category": "evidence",
+              "title": "演示证据卡",
+              "text": "此卡只用于演出包。展示来源、正文与关联记录。",
+              "acquired": true,
+              "source": "presentation_mock_pack",
+              "source_refs": [
+                "presentation_mock_pack"
+              ],
+              "game_time": 420,
+              "place": "演出样本房间",
+              "related": [
+                "preview.evidence"
+              ]
+            },
+            {
+              "id": "preview.items",
+              "category": "items",
+              "title": "演示物件条目",
+              "text": "样本物件展示调查所得，不表示正式世界物品。",
+              "acquired": true,
+              "source": "presentation_mock_pack",
+              "source_refs": [
+                "presentation_mock_pack"
+              ],
+              "game_time": 420,
+              "place": "演出样本房间",
+              "related": [
+                "preview.evidence"
+              ]
+            },
+            {
+              "id": "preview.people",
+              "category": "people",
+              "title": "样本人物条目",
+              "text": "此人物称谓是演出样本。",
+              "acquired": true,
+              "source": "presentation_mock_pack",
+              "source_refs": [
+                "presentation_mock_pack"
+              ],
+              "game_time": 420,
+              "place": "演出样本房间",
+              "related": [
+                "preview.evidence"
+              ],
+              "image": "res://ShareAsset/Internal/Characters/DialogueCast/detective_calm.tres"
+            },
+            {
+              "id": "preview.gallery",
+              "category": "gallery",
+              "title": "演示图像条目",
+              "text": "此页复用当前宿主的人物图像资源。",
+              "acquired": true,
+              "source": "presentation_mock_pack",
+              "source_refs": [
+                "presentation_mock_pack"
+              ],
+              "game_time": 420,
+              "place": "演出样本房间",
+              "related": [
+                "preview.evidence"
+              ],
+              "image": "res://ShareAsset/Internal/Characters/DialogueCast/detective_calm.tres"
+            },
+            {
+              "id": "preview.records",
+              "category": "records",
+              "title": "演示行动记录",
+              "text": "样本记事：阅读、过门与表单都使用同一呈现组件。",
+              "acquired": true,
+              "source": "presentation_mock_pack",
+              "source_refs": [
+                "presentation_mock_pack"
+              ],
+              "game_time": 420,
+              "place": "演出样本房间",
+              "related": [
+                "preview.evidence"
+              ]
+            }
+          ],
+          "notes": [
+            {
+              "id": "note:1",
+              "category": "hypotheses",
+              "title": "演出样本草稿",
+              "text": "这条草稿可编辑，不授予正式世界知识。",
+              "personal": true,
+              "related": [
+                "preview.evidence"
+              ],
+              "game_time": 420,
+              "place": "演出样本房间"
+            }
+          ],
+          "next_note": 2
+        }
       }
     },
     {
       "sequence": 1,
+      "kind": "input",
+      "actor": "detective",
+      "action": "",
+      "text": "演出样本：打开实际3D案卷。",
+      "duration": 1.2,
+      "data": {
+        "contract": "dv-replay-v2",
+        "source": "presentation-mock",
+        "input": {
+          "device": "ui_semantic",
+          "kind": "open_notebook"
+        },
+        "context": {
+          "panel": "casebook",
+          "modal_kind": "notebook",
+          "modal_data": {
+            "page": "index"
+          },
+          "book_state": {
+            "page": "index"
+          },
+          "casebook": {
+            "version": 1,
+            "viewer": "detective",
+            "entries": [
+              {
+                "id": "preview.evidence",
+                "category": "evidence",
+                "title": "演示证据卡",
+                "text": "此卡只用于演出包。展示来源、正文与关联记录。",
+                "acquired": true,
+                "source": "presentation_mock_pack",
+                "source_refs": [
+                  "presentation_mock_pack"
+                ],
+                "game_time": 420,
+                "place": "演出样本房间",
+                "related": [
+                  "preview.evidence"
+                ]
+              },
+              {
+                "id": "preview.items",
+                "category": "items",
+                "title": "演示物件条目",
+                "text": "样本物件展示调查所得，不表示正式世界物品。",
+                "acquired": true,
+                "source": "presentation_mock_pack",
+                "source_refs": [
+                  "presentation_mock_pack"
+                ],
+                "game_time": 420,
+                "place": "演出样本房间",
+                "related": [
+                  "preview.evidence"
+                ]
+              },
+              {
+                "id": "preview.people",
+                "category": "people",
+                "title": "样本人物条目",
+                "text": "此人物称谓是演出样本。",
+                "acquired": true,
+                "source": "presentation_mock_pack",
+                "source_refs": [
+                  "presentation_mock_pack"
+                ],
+                "game_time": 420,
+                "place": "演出样本房间",
+                "related": [
+                  "preview.evidence"
+                ],
+                "image": "res://ShareAsset/Internal/Characters/DialogueCast/detective_calm.tres"
+              },
+              {
+                "id": "preview.gallery",
+                "category": "gallery",
+                "title": "演示图像条目",
+                "text": "此页复用当前宿主的人物图像资源。",
+                "acquired": true,
+                "source": "presentation_mock_pack",
+                "source_refs": [
+                  "presentation_mock_pack"
+                ],
+                "game_time": 420,
+                "place": "演出样本房间",
+                "related": [
+                  "preview.evidence"
+                ],
+                "image": "res://ShareAsset/Internal/Characters/DialogueCast/detective_calm.tres"
+              },
+              {
+                "id": "preview.records",
+                "category": "records",
+                "title": "演示行动记录",
+                "text": "样本记事：阅读、过门与表单都使用同一呈现组件。",
+                "acquired": true,
+                "source": "presentation_mock_pack",
+                "source_refs": [
+                  "presentation_mock_pack"
+                ],
+                "game_time": 420,
+                "place": "演出样本房间",
+                "related": [
+                  "preview.evidence"
+                ]
+              }
+            ],
+            "notes": [
+              {
+                "id": "note:1",
+                "category": "hypotheses",
+                "title": "演出样本草稿",
+                "text": "这条草稿可编辑，不授予正式世界知识。",
+                "personal": true,
+                "related": [
+                  "preview.evidence"
+                ],
+                "game_time": 420,
+                "place": "演出样本房间"
+              }
+            ],
+            "next_note": 2
+          }
+        }
+      }
+    },
+    {
+      "sequence": 2,
+      "kind": "input",
+      "actor": "detective",
+      "action": "",
+      "text": "演出样本：翻到证据条目。",
+      "duration": 1.2,
+      "data": {
+        "contract": "dv-replay-v2",
+        "source": "presentation-mock",
+        "input": {
+          "device": "ui_semantic",
+          "kind": "open_card"
+        },
+        "context": {
+          "panel": "casebook",
+          "modal_kind": "card",
+          "modal_data": {
+            "entry_id": "preview.evidence"
+          },
+          "book_state": {
+            "page": "entry:preview.evidence"
+          },
+          "casebook": {
+            "version": 1,
+            "viewer": "detective",
+            "entries": [
+              {
+                "id": "preview.evidence",
+                "category": "evidence",
+                "title": "演示证据卡",
+                "text": "此卡只用于演出包。展示来源、正文与关联记录。",
+                "acquired": true,
+                "source": "presentation_mock_pack",
+                "source_refs": [
+                  "presentation_mock_pack"
+                ],
+                "game_time": 420,
+                "place": "演出样本房间",
+                "related": [
+                  "preview.evidence"
+                ]
+              },
+              {
+                "id": "preview.items",
+                "category": "items",
+                "title": "演示物件条目",
+                "text": "样本物件展示调查所得，不表示正式世界物品。",
+                "acquired": true,
+                "source": "presentation_mock_pack",
+                "source_refs": [
+                  "presentation_mock_pack"
+                ],
+                "game_time": 420,
+                "place": "演出样本房间",
+                "related": [
+                  "preview.evidence"
+                ]
+              },
+              {
+                "id": "preview.people",
+                "category": "people",
+                "title": "样本人物条目",
+                "text": "此人物称谓是演出样本。",
+                "acquired": true,
+                "source": "presentation_mock_pack",
+                "source_refs": [
+                  "presentation_mock_pack"
+                ],
+                "game_time": 420,
+                "place": "演出样本房间",
+                "related": [
+                  "preview.evidence"
+                ],
+                "image": "res://ShareAsset/Internal/Characters/DialogueCast/detective_calm.tres"
+              },
+              {
+                "id": "preview.gallery",
+                "category": "gallery",
+                "title": "演示图像条目",
+                "text": "此页复用当前宿主的人物图像资源。",
+                "acquired": true,
+                "source": "presentation_mock_pack",
+                "source_refs": [
+                  "presentation_mock_pack"
+                ],
+                "game_time": 420,
+                "place": "演出样本房间",
+                "related": [
+                  "preview.evidence"
+                ],
+                "image": "res://ShareAsset/Internal/Characters/DialogueCast/detective_calm.tres"
+              },
+              {
+                "id": "preview.records",
+                "category": "records",
+                "title": "演示行动记录",
+                "text": "样本记事：阅读、过门与表单都使用同一呈现组件。",
+                "acquired": true,
+                "source": "presentation_mock_pack",
+                "source_refs": [
+                  "presentation_mock_pack"
+                ],
+                "game_time": 420,
+                "place": "演出样本房间",
+                "related": [
+                  "preview.evidence"
+                ]
+              }
+            ],
+            "notes": [
+              {
+                "id": "note:1",
+                "category": "hypotheses",
+                "title": "演出样本草稿",
+                "text": "这条草稿可编辑，不授予正式世界知识。",
+                "personal": true,
+                "related": [
+                  "preview.evidence"
+                ],
+                "game_time": 420,
+                "place": "演出样本房间"
+              }
+            ],
+            "next_note": 2
+          }
+        }
+      }
+    },
+    {
+      "sequence": 3,
+      "kind": "input",
+      "actor": "detective",
+      "action": "",
+      "text": "演出样本：恢复真实重演表单。",
+      "duration": 1.2,
+      "data": {
+        "contract": "dv-replay-v2",
+        "source": "presentation-mock",
+        "input": {
+          "device": "ui_semantic",
+          "kind": "open_reasoning"
+        },
+        "context": {
+          "panel": "investigation",
+          "page": "manuscript",
+          "modal_kind": "manuscript",
+          "modal_data": {
+            "summary": "独立演出样本：此页演示已提供假设、组合选择与个人草稿，不作正式剧情判定。",
+            "hypotheses": [
+              {
+                "id": "preview.h1",
+                "text": "样本假设 A：先查看演示物件，再经过门道。"
+              }
+            ],
+            "conflicts": [
+              "样本对照：两个示范顺序尚未被正式采纳。"
+            ],
+            "predictions": [
+              "样本预测：选择完整组合后，可以看到表单提交后的呈现。"
+            ],
+            "options": [
+              {
+                "id": "preview.reconstruct",
+                "label": "提交演出样本重演表单",
+                "available": true,
+                "interaction": {
+                  "kind": "self",
+                  "purpose": "replay"
+                },
+                "replay_input": {
+                  "initial_assumption": "这些选项仅用于独立 UI 演出。",
+                  "named": [
+                    {
+                      "id": "preview.h1",
+                      "label": "样本假设 A"
+                    }
+                  ],
+                  "variables": [
+                    {
+                      "id": "sequence",
+                      "label": "样本行动顺序",
+                      "values": [
+                        {
+                          "label": "先阅读，再过门",
+                          "value": "read-first"
+                        },
+                        {
+                          "label": "先过门，再阅读",
+                          "value": "walk-first"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "evidence",
+                      "label": "样本使用的记录",
+                      "values": [
+                        {
+                          "label": "演示证据卡",
+                          "value": "card"
+                        }
+                      ]
+                    }
+                  ],
+                  "cases": [
+                    {
+                      "id": "preview.combination",
+                      "assignments": [
+                        {
+                          "variable": "sequence",
+                          "value": "read-first"
+                        },
+                        {
+                          "variable": "evidence",
+                          "value": "card"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sequence": 4,
+      "kind": "input",
+      "actor": "detective",
+      "action": "",
+      "text": "演出样本：合上阅读页。",
+      "duration": 0.3,
+      "data": {
+        "contract": "dv-replay-v2",
+        "source": "presentation-mock",
+        "input": {
+          "device": "ui_semantic",
+          "kind": "close_modal"
+        },
+        "context": {
+          "panel": "field"
+        }
+      }
+    },
+    {
+      "sequence": 5,
       "kind": "move",
       "actor": "detective",
       "action": "preview.go.corridor",
-      "text": "演出样本：走向走廊。",
+      "text": "演出样本：角色经真实碰撞与门道走向走廊；本片段记录语义终点。",
       "duration": 0.3,
       "data": {
+        "contract": "dv-replay-v2",
         "source": "presentation-mock",
         "position": {
           "map": "living_floor",
@@ -258,15 +1359,92 @@
       }
     },
     {
-      "sequence": 2,
-      "kind": "dialogue",
+      "sequence": 6,
+      "kind": "presentation",
       "actor": "detective",
-      "action": "preview.wait",
-      "text": "演出样本：本段使用演出时钟播放。",
-      "duration": 1.2,
+      "action": "preview.read",
+      "text": "演出样本：实际对白层与案卷归档。",
+      "duration": 2.0,
       "data": {
-        "source": "presentation-mock"
+        "contract": "dv-replay-v2",
+        "source": "presentation-mock",
+        "presentation": {
+          "visible": true,
+          "speaker_name": "演出样本",
+          "surface": "阅读演出样本。",
+          "lines": [
+            "这是一段独立的界面演出文本。你可以翻阅案卷、打开地图，并从现场继续操作。",
+            "样本不读取或修改正式世界。"
+          ],
+          "source_refs": [
+            "presentation_mock_pack"
+          ],
+          "presentation_id": "mock-replay-dialogue",
+          "execution_event": "mock-replay-dialogue",
+          "actor": "detective",
+          "action_id": "preview.read",
+          "action_kind": "inspect",
+          "status": "applied",
+          "outcome": "applied"
+        }
       }
     }
-  ]
+  ],
+  "inspector": {
+    "sample": true,
+    "actor": "detective",
+    "physical": {
+      "scope": "presentation-mock",
+      "game_time": 420,
+      "positions": []
+    },
+    "mind": {
+      "scope": "presentation-mock",
+      "known": [
+        "演示证据卡"
+      ],
+      "unknown": [
+        "正式世界状态"
+      ],
+      "hypotheses": [
+        "preview.h1"
+      ]
+    },
+    "planning": {
+      "status": "sample",
+      "plans": [
+        {
+          "path": [
+            "preview.read"
+          ],
+          "score": 3,
+          "value": 3,
+          "prediction_basis": "演出样本比较列"
+        },
+        {
+          "path": [
+            "preview.go.corridor"
+          ],
+          "score": 2,
+          "value": 2,
+          "prediction_basis": "演出样本比较列"
+        },
+        {
+          "path": [
+            "preview.wait"
+          ],
+          "score": 1,
+          "value": 1,
+          "prediction_basis": "演出样本比较列"
+        }
+      ],
+      "selected_path": [
+        "preview.read"
+      ]
+    },
+    "policy": {
+      "source": "presentation_mock_pack"
+    },
+    "scheduled_action": false
+  }
 }

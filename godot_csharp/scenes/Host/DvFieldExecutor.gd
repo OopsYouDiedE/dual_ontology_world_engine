@@ -1,6 +1,7 @@
 extends Node
 
 const CAMPUS_MAP_VIEW := preload("res://scenes/Chapter2/Field/CampusMapView.tscn")
+const GEOMETRY := preload("res://scenes/Host/GeometryCatalog.gd")
 const WORLD_VIEW := preload("res://scenes/Shared/Field/WorldView.gd")
 var _bodies: Dictionary = {}
 var _worlds: Dictionary = {}
@@ -13,8 +14,15 @@ var _viewer := ""
 var _transactions: Dictionary = {}
 var _rollback_obstacles: Array[Dictionary] = []
 var _resync_targets: Dictionary = {}
+var navigation_sampling := false
+var timing_sink: Callable
 
 func configure_visible(field: Node2D, initial: Dictionary) -> void:
+	field.navigation_sampling = navigation_sampling
+	if field.execution_only:
+		field.field_event.connect(func(event: Dictionary):
+			if str(event.get("kind", "")) == "timing" and timing_sink.is_valid(): timing_sink.call(event)
+		)
 	if not field.execution_only:
 		_viewer = str(initial.get("presentation", {}).get("player_actor", ""))
 		if bool(initial.get("development_resync", false)):
@@ -83,11 +91,8 @@ func _initial_point(who: String, field: Node2D, binding: Dictionary):
 	if spawn != "":
 		var point = field.adapter.anchor(spawn)
 		if point != null: candidates.append(point)
-	var layout: Node = field.adapter.get("map")
-	var spawns: Node = layout.get_node_or_null("Spawns") if is_instance_valid(layout) else null
-	if spawns != null:
-		for marker in spawns.get_children():
-			if marker is Marker2D: candidates.append(marker.position)
+	for marker: Dictionary in GEOMETRY.map_data(str(field.adapter.map_key())).get("spawns", {}).values():
+		candidates.append(GEOMETRY.point(marker.point))
 	for candidate in candidates:
 		var point: Vector2 = candidate
 		if field.adapter.entered_room(point) != room or not field.adapter.walkable(point): continue
@@ -244,6 +249,8 @@ func _update_occupancy(item: Dictionary) -> void:
 
 func _physics_process(_delta: float) -> void:
 	if _closing: return
+	for transaction: Dictionary in _transactions.values():
+		if not bool(transaction.get("rolling_back", false)): _sample_transaction(transaction)
 	for i in range(_occupancy.size() - 1, -1, -1):
 		var item: Dictionary = _occupancy[i]
 		var obstacle = item.obstacle
@@ -414,7 +421,8 @@ func _execute_pending(intent: Dictionary, visible_field: Node2D, execution_snaps
 	var instance := body.get_instance_id()
 	_transactions[str(intent.action_event)] = {"actor": who, "field": field,
 		"map": source_map, "room": source_room, "position": source_point,
-		"resource": field.execution_resource, "snapshot": execution_snapshot, "serial": serial}
+		"resource": field.execution_resource, "snapshot": execution_snapshot, "serial": serial,
+		"trail": [{"map": source_map, "position": source_point}], "rolling_back": false}
 	sync_obstacles(field)
 	if is_instance_valid(visible_field) and visible_field != field: sync_obstacles(visible_field)
 	await get_tree().physics_frame
@@ -430,6 +438,15 @@ func _execute_pending(intent: Dictionary, visible_field: Node2D, execution_snaps
 		await get_tree().process_frame
 	if is_instance_valid(field) and field.field_event.is_connected(listener): field.field_event.disconnect(listener)
 	if received.is_empty(): return _blocked(intent, serial, "execution_interrupted")
+	var transaction: Dictionary = _transactions[str(intent.action_event)]
+	_sample_transaction(transaction)
+	var trajectory: Array = []
+	for sample: Dictionary in transaction.trail:
+		var point: Vector2 = sample.position
+		var item := {"map": str(sample.map), "position": [point.x, point.y]}
+		if sample.has("entered_by"): item.entered_by = sample.entered_by
+		trajectory.append(item)
+	received["trajectory"] = trajectory
 	received["source_map"] = source_map
 	received["source_room"] = source_room
 	received["source_geometry"] = source_geometry
@@ -457,6 +474,8 @@ func settle(action_event: String, outcome: String, visible_field: Node2D, animat
 	var field: Node2D = transaction.field
 	_busy = true
 	if outcome != "applied":
+		_sample_transaction(transaction)
+		transaction.rolling_back = true
 		var restored: bool = await field.restore_movement_anchor(who, transaction, transaction.snapshot, animate)
 		if not restored:
 			_busy = false
@@ -496,3 +515,23 @@ func reset() -> void:
 	_busy = false
 	_closing = false
 	_viewer = ""
+
+func set_navigation_sampling(active: bool) -> void:
+	navigation_sampling = active
+	for world: Node2D in _worlds.values(): world.navigation_sampling = active
+
+## Keep the actual body path until Complete resolves the provisional movement.
+## Sampling exists only for in-flight movement transactions, independent of UI audit.
+func _sample_transaction(transaction: Dictionary) -> void:
+	var field: Node2D = transaction.field
+	var body: CharacterBody2D = field.actors[str(transaction.actor)]
+	var map_id := str(field.adapter.map_key())
+	var trail: Array = transaction.trail
+	var previous: Dictionary = trail.back()
+	if str(previous.map) != map_id:
+		var crossing: Dictionary = field.execution_transitions.back()
+		trail.append({"map": str(crossing.from_map), "position": GEOMETRY.point(crossing.from_position)})
+		trail.append({"map": map_id, "position": GEOMETRY.point(crossing.to_position), "entered_by": crossing.duplicate(true)})
+		previous = trail.back()
+	if Vector2(previous.position).distance_to(body.position) >= 0.5:
+		trail.append({"map": map_id, "position": body.position})

@@ -1,6 +1,8 @@
 extends Node2D
 ## Pure GDScript map authoring workspace. Uses the production actor and collisions.
 
+const GEOMETRY = preload("res://scenes/Host/GeometryCatalog.gd")
+const VALIDATOR = preload("res://sandboxes/GeometryContractValidator.gd")
 const ACTOR = preload("res://scenes/Story/StoryActor.gd")
 const FRAMES = preload("res://ShareAsset/Internal/Characters/PixelCast/detective.tres")
 var contract: Dictionary
@@ -19,7 +21,7 @@ var ambient: CanvasModulate
 var glow: GradientTexture2D
 
 func _ready() -> void:
-	contract = JSON.parse_string(FileAccess.get_file_as_string("res://Contracts/geometry_contract.json"))
+	contract = GEOMETRY.contract()
 	var layer := CanvasLayer.new()
 	layer.layer = 128
 	add_child(layer)
@@ -88,20 +90,19 @@ func _load_map(next: String) -> void:
 	camera.position_smoothing_speed = 9.0
 	actor.add_child(camera)
 	markers.clear()
-	var missing: Array[String] = []
+	var mismatches: Array[String] = VALIDATOR.validate_layout(map_key, layout)
 	for group: String in ["spawns", "stands", "sites", "stations"]:
 		for id in item[group]:
 			var marker: Dictionary = item[group][id]
 			markers.add_item(group + "/" + str(id))
 			markers.set_item_metadata(markers.item_count - 1, marker.point)
-			if not layout.has_node(str(marker.path)):
-				missing.append(str(marker.path))
 	for site: Dictionary in contract.additions.get(map_key, {}).get("sites", []):
 		markers.add_item("sites/" + str(site.id))
 		markers.set_item_metadata(markers.item_count - 1, site.point)
 	if markers.item_count > 0: _place_at_marker(0)
 	status.text = "%s · %d 个锚点 · %s" % [map_key, markers.item_count,
-		"锚点齐全" if missing.is_empty() else "缺少：" + ", ".join(missing)]
+		"完整契约相符" if mismatches.is_empty() else "契约差异：" + ", ".join(mismatches)]
+	GEOMETRY.bind_layout(map_key, layout)
 	set_physics_process(true)
 	queue_redraw()
 

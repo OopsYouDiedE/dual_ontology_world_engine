@@ -1,5 +1,9 @@
 extends Node2D
 
+var input_direction: Callable
+var navigation_sampling := false
+var _navigation_sequence := 0
+
 const LIFECYCLE := preload("res://scenes/Host/HostLifecycle.gd")
 ## 通用世界现场：执行正式 DV 移动意图，承接人物、视线、悬停、碰撞与镜头。
 ## 地图适配器提供几何、房间、锚点和道具显示；完成回执经 field_event 交回宿主。
@@ -791,23 +795,17 @@ func restore_movement_anchor(who: String, anchor: Dictionary, state: Dictionary,
 	var body: CharacterBody2D = actors[who]
 	_cancel_motion(body)
 	_daily_release(who)
-	var source_map := str(anchor.map)
-	var source_position: Vector2 = anchor.position
-	var visible_player := not execution_only and body == player
-	var covered := animate and visible_player and is_instance_valid(fader)
-	if covered:
-		var shown: bool = await fader.fade_out()
-		if _closing or not shown: return false
-	if adapter.map_key() != source_map:
-		var prepared: bool = await adapter.prepare_map(source_map, state, get_tree())
-		if _closing or not prepared: return false
-		for other in actors.keys():
-			if str(other) != who: execution_bridge.park_actor(str(other), self)
-		body.reparent(self, false)
-		adapter.load_map(source_map, str(state.get("spawn", "")))
-		body.reparent(adapter.objects_root(), false)
-		_cached_object_sprites.clear()
-	body.position = source_position
+	if body == player and is_instance_valid(spatial): spatial.begin_rollback()
+	if animate and not execution_only:
+		var restored: bool = await _walk_rollback_trail(body, anchor.trail, state)
+		if not restored: return false
+		# Spend the final sub-pixel remainder through the real collision body.
+		body.move_and_collide(Vector2(anchor.position) - body.position)
+		if body.position.distance_to(Vector2(anchor.position)) > 0.5: return false
+	else:
+		if str(adapter.map_key()) != str(anchor.map):
+			if not await _restore_map_transform(body, str(anchor.map), Vector2(anchor.position), state): return false
+		body.position = Vector2(anchor.position)
 	body.velocity = Vector2.ZERO
 	if execution_only or body == player:
 		snapshot = state
@@ -818,8 +816,47 @@ func restore_movement_anchor(who: String, anchor: Dictionary, state: Dictionary,
 	execution_bridge.note_map(self)
 	execution_bridge.sync_obstacles(self)
 	adapter.finish_transition()
-	if covered: await fader.fade_in()
+	return str(adapter.map_key()) == str(anchor.map) and adapter.departure_room(body.position) == str(anchor.room)
+
+func _walk_rollback_trail(body: CharacterBody2D, trail: Array, state: Dictionary) -> bool:
+	var index := trail.size() - 1
+	while index >= 0:
+		var map_id := str(adapter.map_key())
+		var route := PackedVector2Array()
+		var crossing: Dictionary = {}
+		while index >= 0 and str(trail[index].map) == map_id:
+			var sample: Dictionary = trail[index]
+			route.append(Vector2(sample.position))
+			if sample.has("entered_by"): crossing = sample.entered_by
+			index -= 1
+		if not route.is_empty():
+			var result: Dictionary = await _follow(body, route)
+			if _closing or not bool(result.get("ok", false)): return false
+		if index < 0: return true
+		# The sole position transform is the inverse of the actual authored
+		# cross-map transfer. Each side is approached along recorded physics.
+		if crossing.is_empty() or str(crossing.from_map) != str(trail[index].map): return false
+		if body.position.distance_to(Vector2(crossing.to_position[0], crossing.to_position[1])) > 2.0: return false
+		var point := Vector2(crossing.from_position[0], crossing.from_position[1])
+		if not await _restore_map_transform(body, str(crossing.from_map), point, state): return false
 	return true
+
+func _restore_map_transform(body: CharacterBody2D, map_id: String, point: Vector2, state: Dictionary) -> bool:
+	var prepared: bool = await adapter.prepare_map(map_id, state, get_tree())
+	if _closing or not prepared: return false
+	for other in actors.keys():
+		if actors[other] != body: execution_bridge.park_actor(str(other), self)
+	body.reparent(self, false)
+	adapter.load_map(map_id, "")
+	body.reparent(adapter.objects_root(), false)
+	body.position = point
+	body.velocity = Vector2.ZERO
+	_cached_object_sprites.clear()
+	if body == player: _after_map_load()
+	execution_bridge.note_map(self)
+	execution_bridge.sync_obstacles(self)
+	await get_tree().physics_frame
+	return not _closing
 
 func _after_map_load() -> void:
 	sight.reset()
@@ -885,8 +922,17 @@ func _follow(actor: CharacterBody2D, route: PackedVector2Array) -> Dictionary:
 			return {"ok": false, "reason": "cancelled"}
 	return actor.travel_result
 
+func navigation_route(start: Vector2, finish: Vector2, grid: AStarGrid2D) -> PackedVector2Array:
+	if not navigation_sampling: return FieldNavigation.route_on_grid(start, finish, grid)
+	_navigation_sequence += 1
+	var query_id := "%d:%d" % [get_instance_id(), _navigation_sequence]
+	field_event.emit({"kind": "timing", "stage": "navigation_begin", "details": {"query_id": query_id, "map": str(adapter.map_key()), "from": [start.x, start.y], "to": [finish.x, finish.y]}})
+	var result := FieldNavigation.route_on_grid(start, finish, grid)
+	field_event.emit({"kind": "timing", "stage": "navigation_end", "details": {"query_id": query_id, "map": str(adapter.map_key()), "from": [start.x, start.y], "to": [finish.x, finish.y]}})
+	return result
+
 func _follow_route(actor: CharacterBody2D, destination: Vector2) -> Dictionary:
-	var route := FieldNavigation.route_on_grid(actor.position, destination, adapter.nav_grid(actor))
+	var route := navigation_route(actor.position, destination, adapter.nav_grid(actor))
 	if route.is_empty():
 		_cancel_motion(actor)
 		return {"ok": false, "reason": "no_route"}
@@ -960,7 +1006,7 @@ func _daily_go(ev: Dictionary) -> void:
 			for other in _daily.values():
 				if point.distance_to(other.destination) < 28.0: reserved = true
 			if reserved: continue
-			var route := FieldNavigation.route_on_grid(actor.position, point, grid)
+			var route := navigation_route(actor.position, point, grid)
 			if route.is_empty(): continue
 			var cost := _route_cost(actor.position, route, point)
 			if cost < best_cost:
@@ -1130,7 +1176,7 @@ class PresentationBindingsInner:
 
 	static func fail(node: Node, message: String) -> void:
 		push_error(message)
-		if node.is_inside_tree(): LIFECYCLE.quit.call_deferred(node.get_tree(), 1)
+		if node.is_inside_tree(): LIFECYCLE.binding_failure.call_deferred(node, message)
 
 class SightMaskInner extends Node2D:
 	var cell_size: int = 32
@@ -1524,6 +1570,15 @@ class SpatialInputInner extends Node:
 	var _preview_pair := ""
 	var _preview_choice := ""
 
+	func begin_rollback() -> void:
+		submitted = true
+		_continuous.clear()
+		_route.clear()
+		_site = ""
+		_pending_door = {}
+		_walking = false
+		_gate_waiting = false
+
 	func finish_transaction(applied: bool) -> void:
 		_continuous.clear()
 		_gate_waiting = false
@@ -1793,7 +1848,7 @@ class SpatialInputInner extends Node:
 			elif not _continuous.is_empty(): _cancel_continuous("input-blocked")
 			return
 		if _return_cancelled_passage(delta): return
-		var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+		var direction: Vector2 = field.input_direction.call() if field.input_direction.is_valid() else Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		if direction != Vector2.ZERO:
 			if not _continuous.is_empty() and str(_continuous.phase) in ["requested", "prepared"] and direction.dot(_passage_heading) < -0.15:
 				_cancel_continuous("turned-back")
@@ -1933,7 +1988,7 @@ class SpatialInputInner extends Node:
 				if str(binding.get("kind", "")) == "doorway" and str(binding.get("destination", {}).get("room", "")) == destination_room: admitted = true
 			if not doorway_visible or (not admitted and door.is_empty()): return
 		if not field.adapter.walkable(point, field.player): return
-		_route = NAV.route_on_grid(field.player.position, point, _local_grid(destination_room if destination_room != own_room else ""))
+		_route = field.navigation_route(field.player.position, point, _local_grid(destination_room if destination_room != own_room else ""))
 		if not _route.is_empty():
 			_route.append(point)
 			if destination_room != own_room:
@@ -2007,7 +2062,7 @@ class SpatialInputInner extends Node:
 		for point in field._station_approaches(station, grid):
 			if field.adapter.entered_room(point) != str(field.snapshot.get("execution_room", "")) or not field.adapter.walkable(point, field.player): continue
 			if field.position_occupied(field.player, point): continue
-			var route := NAV.route_on_grid(field.player.position, point, grid)
+			var route := field.navigation_route(field.player.position, point, grid)
 			if route.is_empty(): continue
 			var distance: float = field._route_cost(field.player.position, route, point)
 			if distance < best:

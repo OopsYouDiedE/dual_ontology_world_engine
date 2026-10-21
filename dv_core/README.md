@@ -46,15 +46,19 @@ python mcp/build/build_session.py --partition --out dv_core/host_bridge/obj/dv
 python mcp/editor_lsp/check_dv.py --format json dv_core/modules/30-session.dv
 ```
 
-需要 .NET 8 SDK 与 Python 3。MSBuild 可用 `-p:DvPython=<路径>` 指定 Python。20/30 生成到 base 的 DVKernel；35–60 生成到 host_bridge 的 DVProgram。模块解析缓存按编译器指纹、源文本和 UTF-16 偏移寻址；生成内容不变时保留文件时间戳。编辑器通过 [dv-check.json](dv-check.json) 选择编译器、生产或独立检查闭包。
+需要 .NET 8 SDK 与 Python 3。MSBuild 可用 `-p:DvPython=<路径>` 指定 Python。20/30 分模块生成到 base 的 DVKernel；35–60 分模块生成到 host_bridge 的 DVProgram。各模块以本地 UTF-16 位置解析，只导入依赖的函数和名义类型接口；正文变化按模块使缓存失效，接口变化影响消费者。生成文件位于各项目 `obj/dv/modules/`，内容不变时保留时间戳。MCP/LSP 初始化在后台预热共享编译器缓存；编辑器通过 [dv-check.json](dv-check.json) 选择诊断闭包。
 
 Godot 热路径使用只读 .NET 值图和按观察者版本的 StateDelta。文本客户端继续使用 JSON 接口。保存来自最近已提交状态；Trace 只读，Close 幂等。提前准备保存独立候选，正式选择消费版本匹配的结果；后台 NPC 继续经过现场 Execute 和 Complete。细节见 [宿主接口](host_bridge/README.md)。
+
+Core 的宿主投影只发布 actor、逻辑地图/房间/站点身份、已获得的名称、位置标题和逻辑时刻。场景路径、人物 sprite、动画帧、站点资源映射和 HUD 布局由 Godot 自己的呈现契约绑定，CLI 消费相同中立字段。
 
 ## 正式逻辑与记录
 
 `python mcp/verification/run_debug.py --out <新目录> --timeout <秒数>` 从 checks/65-debug-runner.dv 运行正式逻辑。执行器明确标为 formal-model，几何、碰撞与画面由 Godot 现场提供。存档、轨迹与宿主记录分别使用 .dvsave、.dvdag、.dvlog。JSON-Lines 只用于文本客户端 stdin/stdout 通信。当前任务的执行阶段、范围与时限按用户指令安排。
 
-CLI 的 status/options/act/next 使用同一 DvSession；--dev 开启 inspect/tp/time。SmartReplay 供 CLI 与游戏控制台共用，按动作和对白类型设定节拍，忽略原始现实等待，支持 Play/Pause/Step 与 1/2/4/8 倍速。
+CLI 的 status/options/act/next 使用同一 DvSession；--dev 开启 inspect/tp/time，单次 --command 的错误返回退出码 1。SmartReplay 供 CLI 与游戏控制台共用，`dv-replay-v2` 帧保留检查点、原始设备输入、身体/UI 上下文、玩家呈现和语义事件，按动作和对白类型设定节拍，忽略原始现实等待，支持 Play/Pause/Step 与 1/2/4/8 倍速。回放使用日志已记录内容，不修改正式会话；旧记录缺少实际坐标时按逻辑位置重建。
+
+70 的 `domain_evaluation_complete` 表示实际完成了领域分析，`domain_evaluation_reason` 说明未进入的具体原因；完整性失败、初始状态缺失、无效轨迹或配置不符不会被记为已完成。领域分析得出负面结论仍属于完成，`main_causal_supported` 单独报告主因果结论。
 
 ## 实现范围与文档
 

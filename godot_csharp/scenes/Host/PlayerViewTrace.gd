@@ -9,89 +9,153 @@ var _wired: Dictionary = {}
 var _control_context: Dictionary = {}
 var _closing := false
 var _enabled := false
+var _capture_inputs := true
+var _input_sequence := 0
+var _last_snapshot_version := -2
+var _last_snapshot_viewer := ""
 var _connections: Array[Dictionary] = []
 var _timed_presentations: Dictionary = {}
 
-func configure(owner_node: Node, visible_sink: Callable, input_sink: Callable, enabled := false) -> void:
+func configure(owner_node: Node, visible_sink: Callable, input_sink: Callable, enabled := false, capture_inputs := true) -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	host = owner_node
 	record_visible = visible_sink
 	record_input = input_sink
+	_capture_inputs = capture_inputs
+	set_process_input(capture_inputs)
+	if capture_inputs:
+		get_tree().node_added.connect(_node_added)
+		_wire_subtree(host)
 	set_enabled(enabled)
 
 func set_enabled(enabled: bool) -> void:
 	_enabled = enabled
-	set_process_input(enabled)
-	if not enabled:
-		for connection: Dictionary in _connections:
-			var control: Node = connection.node.get_ref()
-			if is_instance_valid(control): control.disconnect(str(connection.signal), connection.callback)
-		_connections.clear()
-		_wired.clear()
-		_control_context.clear()
-		_timed_presentations.clear()
 	if enabled and not RenderingServer.frame_post_draw.is_connected(_after_draw):
 		RenderingServer.frame_post_draw.connect(_after_draw)
 	elif not enabled and RenderingServer.frame_post_draw.is_connected(_after_draw):
 		RenderingServer.frame_post_draw.disconnect(_after_draw)
+	if not enabled:
+		_timed_presentations.clear()
+		_last_frame = ""
+		_last_data = {}
 
 func begin_shutdown() -> void:
 	if _closing: return
 	_closing = true
 	set_enabled(false)
+	set_process_input(false)
+	if get_tree().node_added.is_connected(_node_added): get_tree().node_added.disconnect(_node_added)
+	for connection: Dictionary in _connections:
+		var control: Node = connection.node.get_ref()
+		if is_instance_valid(control): control.disconnect(str(connection.signal), connection.callback)
+	_connections.clear()
+	_wired.clear()
 
 func _exit_tree() -> void:
 	begin_shutdown()
 
 func _input(event: InputEvent) -> void:
-	if _closing or not _enabled or not record_input.is_valid(): return
+	if _closing or not _capture_inputs: return
 	var data: Dictionary = {}
 	if event is InputEventKey and not event.echo:
-		data = {"device": "keyboard", "key": OS.get_keycode_string(event.keycode), "pressed": event.pressed,
-			"unicode": event.unicode, "shift": event.shift_pressed, "ctrl": event.ctrl_pressed}
+		data = {"device": "keyboard", "key": OS.get_keycode_string(event.keycode),
+			"keycode": event.keycode, "physical_keycode": event.physical_keycode,
+			"pressed": event.pressed, "unicode": event.unicode, "shift": event.shift_pressed,
+			"ctrl": event.ctrl_pressed, "alt": event.alt_pressed, "meta": event.meta_pressed}
 	elif event is InputEventMouseButton:
 		data = {"device": "mouse", "button": event.button_index, "pressed": event.pressed,
-			"position": [event.position.x, event.position.y], "double_click": event.double_click}
+			"position": [event.position.x, event.position.y], "double_click": event.double_click,
+			"factor": event.factor, "button_mask": event.button_mask}
+	elif event is InputEventMouseMotion:
+		data = {"device": "mouse_motion", "position": [event.position.x, event.position.y],
+			"relative": [event.relative.x, event.relative.y], "button_mask": event.button_mask}
 	elif event is InputEventJoypadButton:
 		data = {"device": "joypad_button", "device_id": event.device,
 			"button": event.button_index, "pressed": event.pressed, "pressure": event.pressure}
 	elif event is InputEventJoypadMotion:
 		data = {"device": "joypad_axis", "device_id": event.device,
 			"axis": event.axis, "value": event.axis_value}
-	if not data.is_empty():
-		data.merge(_context())
-		record_input.call(data)
+	elif event is InputEventAction:
+		data = {"device": "action", "action": event.action, "pressed": event.pressed, "strength": event.strength}
+	if data.is_empty(): return
+	_input_sequence += 1
+	data.seq = _input_sequence
+	data.cause_input = _input_sequence
+	_record_input(data)
 
 func _context() -> Dictionary:
 	if is_instance_valid(host.title_layer):
-		var book: Control = host.title_layer.get_child(0)
-		return book.page_trace_context()
+		var title: Control = host.title_layer.get_child(0)
+		var context: Dictionary = title.page_trace_context()
+		context.book_state = title.capture_replay_state()
+		return context
 	if is_instance_valid(host.ui): return host.ui.view_trace_context()
 	return {"panel": "title"}
 
-func _activation(control: Control, path: String) -> void:
-	if _closing or not _enabled or not is_instance_valid(control): return
-	var data: Dictionary = _control_context.get(control.get_instance_id(), {}).duplicate()
-	data.merge({"device": "control_signal", "path": path,
-		"text": _plain_text(control), "pressed": true})
+func _record_input(data: Dictionary) -> void:
+	if _closing or not _capture_inputs: return
+	data.real_us = host.engine.TimingClockUs()
+	data.frame = Engine.get_frames_drawn()
+	data.physics_frame = Engine.get_physics_frames()
+	data.context = _context()
+	data.viewport_size = [host.get_viewport().get_visible_rect().size.x, host.get_viewport().get_visible_rect().size.y]
+	data.bodies = host.capture_replay_bodies()
 	record_input.call(data)
 
-func _wire(control: Control, context: Dictionary) -> void:
+func record_snapshot(snapshot: Dictionary, casebook: Dictionary) -> void:
+	if not _capture_inputs or snapshot.is_empty(): return
+	var version := int(snapshot.get("state_version", -1))
+	var viewer := str(snapshot.get("viewer", ""))
+	if version == _last_snapshot_version and viewer == _last_snapshot_viewer: return
+	_last_snapshot_version = version
+	_last_snapshot_viewer = viewer
+	_record_input({"kind": "replay_snapshot", "snapshot": snapshot, "casebook": casebook})
+
+func record_presentation(presentation: Dictionary) -> void:
+	_record_input({"kind": "presentation", "presentation": presentation})
+
+func record_page() -> void:
+	_record_input({"kind": "replay_context", "casebook": host._casebook.export_data()})
+
+func _activation(control: Control, path: String) -> void:
+	if _closing or not _capture_inputs or not is_instance_valid(control): return
+	_record_input({"device": "control_signal", "path": path,
+		"text": _plain_text(control), "pressed": true, "cause_input": _input_sequence})
+
+func _node_added(node: Node) -> void:
+	if host.is_ancestor_of(node) and node is Control: _wire.call_deferred(node)
+
+func _wire_subtree(node: Node) -> void:
+	if node is Control: _wire(node)
+	for child in node.get_children(): _wire_subtree(child)
+
+func _wire(control: Control, _context_value: Dictionary = {}) -> void:
+	if not _capture_inputs or not is_instance_valid(control): return
+	var owner: Node = control
+	while owner != host and owner != null:
+		if owner.has_meta("replay_surface"): return
+		owner = owner.get_parent()
 	var id := control.get_instance_id()
-	_control_context[id] = context
 	if _wired.has(id): return
 	_wired[id] = true
 	var path := str(host.get_path_to(control))
+	if control is OptionButton:
+		var selection_callback := func(index: int) -> void:
+			_record_input({"device": "selection_control", "path": path, "value": index, "cause_input": _input_sequence})
+		control.item_selected.connect(selection_callback)
+		_connections.append({"node": weakref(control), "signal": "item_selected", "callback": selection_callback})
+	if control is Range:
+		var range_callback := func(value: float) -> void:
+			_record_input({"device": "range_control", "path": path, "value": value, "cause_input": _input_sequence})
+		control.value_changed.connect(range_callback)
+		_connections.append({"node": weakref(control), "signal": "value_changed", "callback": range_callback})
 	if control is BaseButton:
 		var callback := _activation.bind(control, path)
 		control.pressed.connect(callback)
 		_connections.append({"node": weakref(control), "signal": "pressed", "callback": callback})
-	elif control is LineEdit:
-		var callback := func(value: String) -> void:
-			if _closing or not _enabled: return
-			var data := _context()
-			data.merge({"device": "text_control", "path": path, "value": value})
-			record_input.call(data)
+	elif control is LineEdit or control is TextEdit:
+		var callback := func(_value: String = "") -> void:
+			_record_input({"device": "text_control", "path": path, "value": control.text, "cause_input": _input_sequence})
 		control.text_changed.connect(callback)
 		_connections.append({"node": weakref(control), "signal": "text_changed", "callback": callback})
 

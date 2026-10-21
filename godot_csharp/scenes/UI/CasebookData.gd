@@ -7,7 +7,6 @@ const SECTIONS := ["evidence", "items", "people", "gallery", "hypotheses", "reco
 var viewer := ""
 var entries: Array[Dictionary] = []
 var notes: Array[Dictionary] = []
-var _actions: Dictionary = {}
 var _cast: Dictionary = {}
 var _snapshot: Dictionary = {}
 var _next_note := 1
@@ -18,7 +17,6 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		# A viewpoint switch must not retain another person's private archive.
 		entries.clear()
 		notes.clear()
-		_actions.clear()
 		_next_note = 1
 	viewer = next_viewer
 	_snapshot = snapshot
@@ -35,22 +33,12 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 					_upsert(item)
 	changed.emit()
 
-func note_action(intent: Dictionary) -> void:
-	var action: Dictionary = intent.get("action", {})
-	var id := str(action.get("id", ""))
-	if id != "":
-		_actions[id] = {"label": str(action.get("label", "")), "kind": str(action.get("kind", ""))}
-	for value in intent.get("options", []):
-		if value is Dictionary:
-			_actions[str(value.get("id", ""))] = {"label": str(value.get("label", "")), "kind": str(value.get("kind", ""))}
-
 func record_presentation(result: Dictionary, lines: Array) -> void:
 	if not bool(result.get("visible", false)) or str(result.get("status", "")) != "applied" or lines.is_empty(): return
 	var event := str(result.get("execution_event", ""))
 	if event == "": return
 	var source := str(result.get("action_id", ""))
-	var action: Dictionary = _actions.get(source, {})
-	var action_kind := str(result.get("action_kind", action.get("kind", "")))
+	var action_kind := str(result.get("action_kind", ""))
 	var voice := str(result.get("voice", ""))
 	var texts: Array[String] = []
 	for line in lines:
@@ -160,7 +148,6 @@ func export_data() -> Dictionary:
 func restore_data(data: Dictionary, expected_viewer: String) -> void:
 	entries.clear()
 	notes.clear()
-	_actions.clear()
 	viewer = expected_viewer
 	_next_note = 1
 	if int(data.get("version", 0)) != 1 or str(data.get("viewer", "")) != expected_viewer:

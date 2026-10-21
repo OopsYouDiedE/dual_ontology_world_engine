@@ -1,8 +1,12 @@
 extends CanvasLayer
 
 const CONSOLE_THEME := preload("res://scenes/UI/Styles/OverlayTheme.tres")
-const GEOMETRY := preload("res://scenes/Host/GeometryCatalog.gd")
-const FRAME_CAPACITY := 120
+const REPLAY_STAGE := preload("res://scenes/Host/ReplayStage.gd")
+const INSPECT_INTERVAL := 0.25
+const INSPECT_TAB := 1
+const PERFORMANCE_TAB := 2
+const REPLAY_TAB := 3
+
 var host: Node
 var engine: Node
 var panel: PanelContainer
@@ -11,21 +15,38 @@ var command: LineEdit
 var output: TextEdit
 var physical: TextEdit
 var mind: TextEdit
-var planning: TextEdit
+var queue: TextEdit
 var actor: LineEdit
+var inspect_status: Label
+var planning_status: Label
+var planning_table: Tree
+var planning_detail: TextEdit
 var performance: Label
 var graph: Control
+var navigation_table: Tree
 var replay_text: TextEdit
 var replay_status: Label
-var replay_board: Control
+var replay_stage: Control
+var replay_play: Button
+var replay_step: Button
 var file_dialog: FileDialog
-var frame_times: Array[float] = []
+var _history := PerformanceRing.new()
 var _phase_starts: Dictionary = {}
-var _durations: Dictionary = {}
+var _sampling := false
+var _sampling_start_us := 0
 var _last_clock := 0
+var _inspect_actor := ""
+var _inspect_elapsed := INSPECT_INTERVAL
+var _inspect_pending := false
+var _inspect_failed := false
+var _inspection_key := ""
+var _selected_plan_path := ""
 var _replay_speed := 1.0
 var _replay_playing := false
 var _replay_count := 0
+var _replay_index := -1
+var _replay_tail_remaining := 0.0
+var _step_pending := false
 
 func _ready() -> void:
 	layer = 128
@@ -69,10 +90,10 @@ func _build() -> void:
 	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	file_dialog.filters = PackedStringArray(["*.dvdag,*.dvlog ; DV 记录"])
-	file_dialog.file_selected.connect(func(path: String): engine.LoadReplay(path))
+	file_dialog.file_selected.connect(_load_replay)
 	add_child(file_dialog)
 	panel.hide()
-	_append("help 显示命令。tp、time、inspect 需要以 --dv-dev 开启会话。")
+	_append("help 显示命令。tp、time、inspect 需要以 --dv-dev 开启会话；演出样本单独提供只读 Inspector。")
 
 func _tab(title: String) -> VBoxContainer:
 	var page := VBoxContainer.new()
@@ -95,6 +116,16 @@ func _text_area(parent: Node) -> TextEdit:
 	parent.add_child(area)
 	return area
 
+func _labeled_text(parent: Node, title: String) -> TextEdit:
+	var column := VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	parent.add_child(column)
+	var label := Label.new()
+	label.text = title
+	column.add_child(label)
+	return _text_area(column)
+
 func _build_commands(page: VBoxContainer) -> void:
 	output = _text_area(page)
 	command = LineEdit.new()
@@ -106,67 +137,110 @@ func _build_inspect(page: VBoxContainer) -> void:
 	var toolbar := HBoxContainer.new()
 	page.add_child(toolbar)
 	actor = LineEdit.new()
-	actor.placeholder_text = "主体 ID（留空为当前观察者）"
+	actor.placeholder_text = "主体 ID（留空为当前观察者，Enter 应用）"
 	actor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	actor.text_submitted.connect(func(_value: String): _select_inspect_actor())
 	toolbar.add_child(actor)
-	toolbar.add_child(_button("读取", func(): engine.DevCommand("inspect " + actor.text.strip_edges())))
+	toolbar.add_child(_button("查看主体", _select_inspect_actor))
+	inspect_status = Label.new()
+	inspect_status.text = "打开本页后每 0.25 秒读取当前状态。"
+	page.add_child(inspect_status)
 	var columns := HSplitContainer.new()
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	columns.size_flags_stretch_ratio = 1.2
 	page.add_child(columns)
-	physical = _text_area(columns)
-	mind = _text_area(columns)
-	physical.text = "客观物理世界"
-	mind.text = "主体本人知道、相信与尚未获得的内容"
-	var label := Label.new()
-	label.text = "规划与行动队列"
-	page.add_child(label)
-	planning = _text_area(page)
-	planning.custom_minimum_size.y = 140
+	physical = _labeled_text(columns, "Physical · 客观物理世界")
+	mind = _labeled_text(columns, "Mind · 所选主体的认识")
+	var lower := HSplitContainer.new()
+	lower.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lower.size_flags_stretch_ratio = 1.0
+	page.add_child(lower)
+	queue = _labeled_text(lower, "行动队列 · 策略 · 侵蚀")
+	queue.custom_minimum_size.x = 240
+	var plans := VBoxContainer.new()
+	plans.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	plans.size_flags_stretch_ratio = 2.5
+	lower.add_child(plans)
+	planning_status = Label.new()
+	planning_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	planning_status.text = "规划候选按净分降序；同分保留原记录次序。"
+	plans.add_child(planning_status)
+	planning_table = Tree.new()
+	planning_table.columns = 9
+	planning_table.column_titles_visible = true
+	planning_table.hide_root = true
+	planning_table.select_mode = Tree.SELECT_ROW
+	planning_table.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	planning_table.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	planning_table.custom_minimum_size.y = 120
+	var titles := ["序", "候选路径", "净分", "总值", "信息", "验证", "进展", "成就", "机会"]
+	for index in range(titles.size()):
+		planning_table.set_column_title(index, titles[index])
+		planning_table.set_column_expand(index, index == 1)
+		planning_table.set_column_custom_minimum_width(index, 190 if index == 1 else 55)
+	planning_table.item_selected.connect(_plan_selected)
+	plans.add_child(planning_table)
+	planning_detail = _text_area(plans)
+	planning_detail.custom_minimum_size.y = 90
+	planning_detail.size_flags_stretch_ratio = 0.6
 
 func _build_performance(page: VBoxContainer) -> void:
 	performance = Label.new()
+	performance.text = "等待本页的实际帧与阶段记录。"
 	page.add_child(performance)
 	graph = FrameGraph.new()
+	graph.history = _history
 	graph.custom_minimum_size.y = 180
 	graph.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_child(graph)
 	var explanation := Label.new()
-	explanation.text = "最近 120 帧；切离本页停止采样。Prepare、Complete、物理执行按命令与阶段配对。"
+	explanation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	explanation.text = "固定 120 帧环：帧耗时、FPS、当帧完成的 Prepare / Complete / 寻路耗时。离开本页停止采样；下表显示最近 24 次已采样寻路。"
 	page.add_child(explanation)
+	navigation_table = Tree.new()
+	navigation_table.columns = 4
+	navigation_table.column_titles_visible = true
+	navigation_table.hide_root = true
+	navigation_table.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	navigation_table.size_flags_stretch_ratio = 0.6
+	navigation_table.custom_minimum_size.y = 120
+	for index in range(4):
+		navigation_table.set_column_title(index, ["采样帧", "寻路 query", "地图 / 主体", "耗时 ms"][index])
+		navigation_table.set_column_expand(index, index == 1 or index == 2)
+	page.add_child(navigation_table)
 
 func _build_replay(page: VBoxContainer) -> void:
 	var controls := HBoxContainer.new()
 	page.add_child(controls)
 	controls.add_child(_button("载入记录", func(): file_dialog.popup_centered_ratio(0.75)))
-	controls.add_child(_button("Play", func():
-		engine.ReplayPlay(_replay_speed)
-		_replay_playing = true
-	))
-	controls.add_child(_button("Pause", func():
-		engine.ReplayPause()
-		_replay_playing = false
-	))
-	controls.add_child(_button("Step", func():
-		engine.ReplayPause()
-		_replay_playing = false
-		_show_frame(engine.ReplayStep())
-	))
+	if engine.HasReplaySample(): controls.add_child(_button("演出样本", _load_replay_sample))
+	replay_play = _button("Play", _play_replay)
+	controls.add_child(replay_play)
+	controls.add_child(_button("Pause", _pause_replay))
+	replay_step = _button("Step", _step_replay)
+	controls.add_child(replay_step)
 	for value: float in [1.0, 2.0, 4.0, 8.0]:
 		controls.add_child(_button("%d×" % int(value), func():
 			_replay_speed = value
+			replay_stage.set_playing(_replay_playing or _step_pending, value)
 			if _replay_playing: engine.ReplayPlay(value)
 		))
 	replay_status = Label.new()
-	replay_status.text = "尚未载入记录。动作使用演出时钟，移动 0.3 秒，对白按文本长度显示。"
+	replay_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	replay_status.text = "载入记录后，在独立 Main / WorldView / UI 中重放。现实静默由演出时钟压缩。"
 	page.add_child(replay_status)
 	var columns := HSplitContainer.new()
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_child(columns)
-	replay_board = ReplayBoard.new()
-	replay_board.custom_minimum_size = Vector2(420, 260)
-	replay_board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	columns.add_child(replay_board)
-	replay_text = _text_area(columns)
+	replay_stage = REPLAY_STAGE.new()
+	replay_stage.custom_minimum_size = Vector2(560, 315)
+	replay_stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	replay_stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	replay_stage.size_flags_stretch_ratio = 3.0
+	columns.add_child(replay_stage)
+	replay_text = _labeled_text(columns, "当前片段与原始数据")
+	replay_text.custom_minimum_size.x = 220
+	_update_replay_controls()
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode in [KEY_F12, KEY_QUOTELEFT]:
@@ -182,12 +256,11 @@ func open() -> void:
 	_last_clock = Time.get_ticks_usec()
 	set_process(true)
 	_sampling_changed()
-	command.grab_focus()
+	if tabs.current_tab == 0: command.grab_focus()
 
 func close() -> void:
 	panel.hide()
-	engine.ReplayPause()
-	_replay_playing = false
+	_pause_replay()
 	set_process(false)
 	_sampling_changed()
 
@@ -195,11 +268,23 @@ func is_open() -> bool:
 	return is_instance_valid(panel) and panel.visible
 
 func performance_open() -> bool:
-	return is_open() and tabs.current_tab == 2
+	return is_open() and tabs.current_tab == PERFORMANCE_TAB
 
 func _sampling_changed() -> void:
-	engine.SetDiagnosticsEnabled(host.audit_enabled or performance_open())
-	if not performance_open(): _phase_starts.clear()
+	var enabled := performance_open()
+	engine.SetDiagnosticsEnabled(host.audit_enabled or enabled)
+	host.set_navigation_sampling(enabled)
+	if enabled != _sampling:
+		_sampling = enabled
+		_phase_starts.clear()
+		if enabled:
+			_history.clear()
+			navigation_table.clear()
+			_sampling_start_us = engine.TimingClockUs()
+			_last_clock = Time.get_ticks_usec()
+	if is_open() and tabs.current_tab == INSPECT_TAB:
+		_inspect_elapsed = INSPECT_INTERVAL
+	if not is_open() or tabs.current_tab != REPLAY_TAB: _pause_replay()
 
 func begin_shutdown() -> void:
 	close()
@@ -209,41 +294,231 @@ func _process(_delta: float) -> void:
 	var now := Time.get_ticks_usec()
 	var seconds := float(now - _last_clock) / 1000000.0
 	_last_clock = now
+	if tabs.current_tab == INSPECT_TAB:
+		_inspect_elapsed += seconds
+		if _inspect_elapsed >= INSPECT_INTERVAL: _request_inspection()
 	if performance_open():
-		frame_times.append(seconds * 1000.0)
-		if frame_times.size() > FRAME_CAPACITY: frame_times.pop_front()
-		graph.samples = frame_times
-		graph.queue_redraw()
-		_consume_timings()
-		var total := 0.0
-		var peak := 0.0
-		for value: float in frame_times:
-			total += value
-			peak = maxf(peak, value)
-		performance.text = "帧均值 %.2f ms  ·  峰值 %.2f ms\nPrepare %.2f ms  ·  Complete %.2f ms  ·  物理 %.2f ms" % [total / frame_times.size(), peak, float(_durations.get("prepare", 0.0)), float(_durations.get("complete", 0.0)), float(_durations.get("physical", 0.0))]
-	if tabs.current_tab == 3:
-		for frame: Dictionary in engine.ReplayAdvance(seconds): _show_frame(frame)
-		replay_board.advance(seconds * _replay_speed if _replay_playing else 0.0)
+		var sample := _consume_timings()
+		sample.frame = Engine.get_process_frames()
+		sample.frame_ms = seconds * 1000.0
+		sample.fps = float(Engine.get_frames_per_second())
+		_history.push(sample)
+		_show_performance(sample)
+	if tabs.current_tab == REPLAY_TAB: _advance_replay(seconds)
 
-func _consume_timings() -> void:
+func _select_inspect_actor() -> void:
+	_inspect_actor = actor.text.strip_edges()
+	_inspect_failed = false
+	_inspection_key = ""
+	_inspect_elapsed = INSPECT_INTERVAL
+	_request_inspection()
+
+func _request_inspection() -> void:
+	if _inspect_pending or _inspect_failed: return
+	if not engine.CanInspect():
+		inspect_status.text = "正式 Inspector 需要 --dv-dev 会话；演出样本提供标记为样本的只读数据。"
+		_inspect_elapsed = 0.0
+		return
+	if not engine.IsDispatchIdle(): return
+	_inspect_elapsed = 0.0
+	_inspect_pending = true
+	engine.DevCommand("inspect " + _inspect_actor)
+
+func _show_inspection(data: Dictionary) -> void:
+	_inspect_pending = false
+	_inspect_failed = false
+	var who := str(data.get("actor", ""))
+	var version := str(data.get("version", ""))
+	var source := "演出样本" if bool(data.get("sample", false)) else "正式开发会话"
+	inspect_status.text = "%s · %s · 版本 %s · 每 0.25 秒读取" % [source, who, version]
+	var key := "%s:%s:%s" % [who, version, str(data.get("planning_event", ""))]
+	if key == _inspection_key: return
+	_inspection_key = key
+	physical.text = JSON.stringify(data.get("physical", {}), "  ")
+	mind.text = JSON.stringify(data.get("mind", {}), "  ")
+	queue.text = JSON.stringify({"actor": who, "scheduled_action": data.get("scheduled_action", false), "policy": data.get("policy", {}), "erosion": data.get("erosion", 0), "erosion_rank": data.get("erosion_rank", 0), "erosion_stage": data.get("erosion_stage", ""), "erosion_memory_truncated": data.get("erosion_memory_truncated", false)}, "  ")
+	var choice: Dictionary = data.get("planning", {}) if data.get("planning", {}) is Dictionary else {}
+	_show_plans(choice, str(data.get("planning_event", "")))
+
+func _path_text(value: Array) -> String:
+	var names := PackedStringArray()
+	for part: Variant in value: names.append(str(part))
+	return names.join(" → ")
+
+func _number(value: Variant) -> float:
+	if value is Dictionary:
+		var parts := str(value["$dv_rational"]).split("/")
+		return float(parts[0]) / float(parts[1]) if parts.size() == 2 else float(parts[0])
+	return float(value)
+
+func _number_text(value: Variant) -> String:
+	return "—" if value == null else "%.3f" % _number(value)
+
+func _show_plans(choice: Dictionary, event_id: String) -> void:
+	planning_table.clear()
+	planning_detail.text = ""
+	var rows: Array[Dictionary] = []
+	for candidate: Dictionary in choice.get("plans", []):
+		rows.append({"order": rows.size(), "plan": candidate})
+	rows.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		var a := _number(left.plan.score)
+		var b := _number(right.plan.score)
+		return a > b if a != b else int(left.order) < int(right.order)
+	)
+	var selected: Array = choice.get("selected_path", [])
+	planning_status.text = "%d 个已记录候选 · 净分 %s · 展开 %s · 完成层 %s\n选中：%s · 停止：%s · 来源：%s" % [rows.size(), _number_text(choice.get("score")), str(choice.get("plan_expansions", "—")), str(choice.get("completed_layers", "—")), _path_text(selected), str(choice.get("stop", "—")), event_id]
+	var root := planning_table.create_item()
+	for row: Dictionary in rows:
+		var candidate: Dictionary = row.plan
+		var path: Array = candidate.get("path", [])
+		var path_text := _path_text(path)
+		var item := planning_table.create_item(root)
+		item.set_text(0, str(int(row.order) + 1))
+		item.set_text(1, ("✓ " if path == selected else "") + path_text)
+		item.set_text(2, _number_text(candidate.get("score")))
+		var value: Dictionary = candidate.get("value", {})
+		for index in range(6):
+			item.set_text(index + 3, _number_text(value.get(["value", "information", "verification", "progress", "achievement", "opportunity"][index])))
+		item.set_tooltip_text(1, path_text)
+		item.set_metadata(0, candidate)
+		if path_text == _selected_plan_path: item.select(0)
+	if rows.is_empty(): planning_detail.text = "当前记录没有展开候选。\n" + JSON.stringify(choice, "  ")
+
+func _plan_selected() -> void:
+	var item := planning_table.get_selected()
+	if item == null: return
+	var candidate: Dictionary = item.get_metadata(0)
+	_selected_plan_path = _path_text(candidate.get("path", []))
+	planning_detail.text = JSON.stringify(candidate, "  ")
+
+func _consume_timings() -> Dictionary:
+	var sample := {"prepare_ms": 0.0, "complete_ms": 0.0, "navigation_ms": 0.0, "physical_ms": 0.0, "prepare_count": 0, "complete_count": 0, "navigation_count": 0, "physical_count": 0, "navigation_queries": []}
 	for raw: String in engine.PollTimings():
 		var row: Dictionary = JSON.parse_string(raw)
+		if float(row.real_us) < _sampling_start_us: continue
 		var stage := str(row.stage)
 		var family := ""
 		if stage in ["prepare_begin", "prepare_end"]: family = "prepare"
 		elif stage in ["complete_begin", "complete_end"]: family = "complete"
 		elif stage in ["execution_begin", "execution_end"]: family = "physical"
+		elif stage in ["navigation_begin", "navigation_end"]: family = "navigation"
 		if family.is_empty(): continue
+		var details: Dictionary = {}
 		var key := "%s:%s:%s" % [row.command_id, row.interaction_id, family]
-		if family == "physical":
+		if family == "physical" or family == "navigation":
 			var envelope: Dictionary = JSON.parse_string(str(row.details))
-			key = "physical:" + str(envelope.get("details", {}).get("action_event", ""))
+			details = envelope.get("details", {})
+			key = family + ":" + str(details["query_id" if family == "navigation" else "action_event"])
 		if stage.ends_with("_begin"):
-			_phase_starts[key] = float(row.real_us)
-			if _phase_starts.size() > 64: _phase_starts.erase(_phase_starts.keys()[0])
+			_phase_starts[key] = {"at": float(row.real_us), "details": details}
 		elif _phase_starts.has(key):
-			_durations[family] = (float(row.real_us) - float(_phase_starts[key])) / 1000.0
+			var start: Dictionary = _phase_starts[key]
+			var duration := (float(row.real_us) - float(start.at)) / 1000.0
+			sample[family + "_ms"] += duration
+			sample[family + "_count"] += 1
+			if family == "navigation":
+				var query: Dictionary = start.details.duplicate(true)
+				query.merge(details, true)
+				query.duration_ms = duration
+				query.real_us = row.real_us
+				sample.navigation_queries.append(query)
 			_phase_starts.erase(key)
+	return sample
+
+func _show_performance(latest: Dictionary) -> void:
+	var sums := {"frame_ms": 0.0, "fps": 0.0, "prepare_ms": 0.0, "complete_ms": 0.0, "navigation_ms": 0.0, "physical_ms": 0.0, "prepare_count": 0.0, "complete_count": 0.0, "navigation_count": 0.0, "physical_count": 0.0}
+	var peak := 0.0
+	for index in range(_history.count):
+		var sample: Dictionary = _history.at(index)
+		for key: String in sums: sums[key] += float(sample[key])
+		peak = maxf(peak, float(sample.frame_ms))
+	performance.text = "%d / 120 帧 · FPS %.1f · 帧均值 %.2f ms · 峰值 %.2f ms\n阶段均值：Prepare %s · Complete %s · 寻路 %s · 现场执行 %s" % [_history.count, float(sums.fps) / _history.count, float(sums.frame_ms) / _history.count, peak, _phase_average(sums, "prepare"), _phase_average(sums, "complete"), _phase_average(sums, "navigation"), _phase_average(sums, "physical")]
+	graph.queue_redraw()
+	if latest.navigation_queries.is_empty(): return
+	navigation_table.clear()
+	var root := navigation_table.create_item()
+	var shown := 0
+	for index in range(_history.count - 1, -1, -1):
+		var sample: Dictionary = _history.at(index)
+		var queries: Array = sample.navigation_queries
+		for query_index in range(queries.size() - 1, -1, -1):
+			var query: Dictionary = queries[query_index]
+			var item := navigation_table.create_item(root)
+			item.set_text(0, str(sample.frame))
+			item.set_text(1, str(query.query_id))
+			item.set_text(2, "%s / %s" % [str(query.get("map", "")), str(query.get("actor", ""))])
+			item.set_text(3, "%.3f" % float(query.duration_ms))
+			item.set_tooltip_text(1, JSON.stringify(query, "  "))
+			shown += 1
+			if shown == 24: return
+
+func _phase_average(sums: Dictionary, family: String) -> String:
+	var count := int(sums[family + "_count"])
+	return "—" if count == 0 else "%.2f ms (%d 次)" % [float(sums[family + "_ms"]) / count, count]
+
+func _load_replay(path: String) -> void:
+	_prepare_replay_load()
+	replay_status.text = "载入记录：" + path
+	engine.LoadReplay(path)
+
+func _load_replay_sample() -> void:
+	_prepare_replay_load()
+	replay_status.text = "载入独立演出样本。"
+	engine.LoadReplaySample()
+
+func _prepare_replay_load() -> void:
+	_pause_replay()
+	_replay_count = 0
+	_replay_index = -1
+	replay_stage.reset()
+	replay_text.text = ""
+	_update_replay_controls()
+
+func _play_replay() -> void:
+	if _replay_count == 0: return
+	if _replay_index + 1 >= _replay_count and not replay_stage.busy() and _replay_tail_remaining <= 0.0: return
+	_step_pending = false
+	_replay_playing = true
+	engine.ReplayPlay(_replay_speed)
+	replay_stage.set_playing(true, _replay_speed)
+	_update_replay_controls()
+
+func _pause_replay() -> void:
+	engine.ReplayPause()
+	_replay_playing = false
+	_step_pending = false
+	replay_stage.set_playing(false, _replay_speed)
+	_update_replay_controls()
+
+func _step_replay() -> void:
+	if _replay_count == 0 or _step_pending: return
+	engine.ReplayPause()
+	_replay_playing = false
+	_step_pending = true
+	replay_stage.set_playing(true, _replay_speed)
+	_advance_replay(0.0)
+
+func _advance_replay(seconds: float) -> void:
+	_update_replay_controls()
+	replay_stage.advance(seconds * _replay_speed if _replay_playing or _step_pending else 0.0)
+	if _step_pending:
+		if replay_stage.busy(): return
+		_step_pending = false
+		_show_frame(engine.ReplayStep(), false)
+		replay_stage.set_playing(false, _replay_speed)
+		_update_replay_controls()
+		return
+	if not _replay_playing or replay_stage.busy(): return
+	for frame: Dictionary in engine.ReplayAdvance(seconds): _show_frame(frame, true)
+	if _replay_index + 1 == _replay_count and not replay_stage.busy():
+		_replay_tail_remaining -= seconds * _replay_speed
+		if _replay_tail_remaining <= 0.0:
+			_pause_replay()
+			replay_status.text += " · 已到记录末尾"
+
+func _update_replay_controls() -> void:
+	replay_play.disabled = _replay_count == 0 or (_replay_index + 1 >= _replay_count and not replay_stage.busy() and _replay_tail_remaining <= 0.0)
+	replay_step.disabled = _replay_count == 0 or _step_pending or _replay_index + 1 >= _replay_count
 
 func _command(line: String) -> void:
 	var text := line.strip_edges()
@@ -253,12 +528,15 @@ func _command(line: String) -> void:
 	var parts := text.split(" ", false, 1)
 	var argument := str(parts[1]) if parts.size() > 1 else ""
 	match parts[0]:
-		"help": _append("status：本人投影\noptions：当前合法动作\nact <choice>：从普通空间交互执行动作\ninspect [actor]：客观 / 本人 / 规划\ntp <actor> <place>：开发位置编辑\ntime <minutes>：开发时间推进\naudit on|off：帧与输入取证\n关闭控制台后返回现场。")
+		"help": _append("status：本人投影\noptions：当前合法动作\nact <choice>：从普通空间交互执行动作\ninspect [actor]：打开实时客观 / 本人 / 规划面板\ntp <actor> <place>：开发位置编辑\ntime <minutes>：开发时间推进\naudit on|off：帧与输入取证\n关闭控制台后返回现场。")
 		"status": _append(JSON.stringify(engine.Snapshot(), "  "))
 		"options":
 			for option: Dictionary in engine.Snapshot().get("pending", {}).get("options", []): _append("%s  %s" % [option.get("id", ""), option.get("label", "")])
 		"act": host.console_action(argument)
-		"inspect": engine.DevCommand(text)
+		"inspect":
+			actor.text = argument
+			tabs.current_tab = INSPECT_TAB
+			_select_inspect_actor()
 		"tp", "time": engine.DevCommand(text)
 		"audit":
 			if argument in ["on", "off"]:
@@ -275,93 +553,86 @@ func _append(text: String) -> void:
 func receive(event: Dictionary) -> void:
 	match str(event.kind):
 		"dev_error":
-			_append(str(event.get("message", "")))
-			if tabs.current_tab == 3: replay_status.text = str(event.get("message", ""))
-		"dev_inspect":
-			var data: Dictionary = event.data
-			physical.text = JSON.stringify(data.get("physical", {}), "  ")
-			mind.text = JSON.stringify(data.get("mind", {}), "  ")
-			planning.text = JSON.stringify({"planning": data.get("planning", {}), "scheduled_action": data.get("scheduled_action", false), "policy": data.get("policy", {}), "erosion": data.get("erosion", 0), "erosion_rank": data.get("erosion_rank", 0), "erosion_stage": data.get("erosion_stage", ""), "erosion_memory_truncated": data.get("erosion_memory_truncated", false), "actor": data.get("actor", "")}, "  ")
-			tabs.current_tab = 1
+			var message := str(event.get("message", ""))
+			_append(message)
+			if _inspect_pending:
+				_inspect_pending = false
+				_inspect_failed = true
+				inspect_status.text = message
+			if tabs.current_tab == REPLAY_TAB: replay_status.text = message
+		"dev_inspect": _show_inspection(event.data)
 		"replay_loaded":
+			_pause_replay()
 			_replay_count = int(event.count)
-			_replay_playing = false
-			replay_board.reset()
-			replay_status.text = "已载入 %d 个演出片段。" % _replay_count
-			_show_frame(engine.ReplayStep())
+			_replay_index = -1
+			replay_stage.reset()
+			replay_status.text = "已载入 %d 个片段。" % _replay_count
+			_show_frame(engine.ReplayStep(), false)
+			_update_replay_controls()
 
-func _show_frame(frame: Dictionary) -> void:
+func _show_frame(frame: Dictionary, animate: bool) -> void:
 	if frame.is_empty(): return
-	replay_status.text = "%d / %d  ·  %s  ·  %s  ·  %.2f 秒" % [int(frame.sequence) + 1, _replay_count, frame.kind, frame.actor, float(frame.duration)]
-	replay_text.text = str(frame.text) + "\n\n" + JSON.stringify(frame.data, "  ")
-	replay_board.present(frame, _replay_playing)
+	_replay_index = int(frame.sequence)
+	_replay_tail_remaining = float(frame.duration)
+	var data: Dictionary = frame.data
+	var source := str(data.get("source", ""))
+	if data.get("physical_coordinates_recorded", true) == false: source += " · 逻辑位置重建"
+	replay_status.text = "%d / %d · %s · %s · %.2f 秒 · %d×\n%s" % [_replay_index + 1, _replay_count, frame.kind, frame.actor, float(frame.duration), int(_replay_speed), source]
+	replay_text.text = str(frame.text) + "\n\n" + JSON.stringify(data, "  ")
+	replay_stage.present(frame, animate)
+	_update_replay_controls()
+
+class PerformanceRing extends RefCounted:
+	const CAPACITY := 120
+	var samples: Array[Dictionary] = []
+	var cursor := 0
+	var count := 0
+	func _init() -> void:
+		samples.resize(CAPACITY)
+	func clear() -> void:
+		cursor = 0
+		count = 0
+		samples.fill({})
+	func push(value: Dictionary) -> void:
+		samples[cursor] = value
+		cursor = (cursor + 1) % CAPACITY
+		count = mini(count + 1, CAPACITY)
+	func at(index: int) -> Dictionary:
+		return samples[(cursor - count + index + CAPACITY) % CAPACITY]
 
 class FrameGraph extends Control:
-	var samples: Array[float] = []
+	var history: RefCounted
 	func _draw() -> void:
+		if history.count == 0: return
+		var series := [
+			{"key": "frame_ms", "name": "帧", "color": Color(0.25, 0.78, 0.56)},
+			{"key": "prepare_ms", "name": "Prepare", "color": Color(0.95, 0.64, 0.25)},
+			{"key": "complete_ms", "name": "Complete", "color": Color(0.82, 0.42, 0.50)},
+			{"key": "navigation_ms", "name": "寻路", "color": Color(0.72, 0.56, 0.92)}
+		]
 		var ceiling := 33.4
-		for value: float in samples: ceiling = maxf(ceiling, value)
-		var plot := Rect2(Vector2(8, 16), size - Vector2(16, 32))
+		var fps_ceiling := 60.0
+		for index in range(history.count):
+			var sample: Dictionary = history.at(index)
+			for metric: Dictionary in series: ceiling = maxf(ceiling, float(sample[metric.key]))
+			fps_ceiling = maxf(fps_ceiling, float(sample.fps))
+		var plot := Rect2(Vector2(12, 42), size - Vector2(24, 62))
 		var guide := plot.end.y - 16.7 / ceiling * plot.size.y
 		draw_line(Vector2(plot.position.x, guide), Vector2(plot.end.x, guide), Color(0.5, 0.5, 0.5, 0.5))
-		var points := PackedVector2Array()
-		for index in range(samples.size()): points.append(Vector2(plot.position.x + plot.size.x * index / 119.0, plot.end.y - samples[index] / ceiling * plot.size.y))
-		if points.size() > 1: draw_polyline(points, Color(0.3, 0.8, 0.6), 2.0)
-
-class ReplayBoard extends Control:
-	var map_id := ""
-	var markers: Dictionary = {}
-	var _from: Dictionary = {}
-	var _to: Dictionary = {}
-	var _elapsed := 0.0
-	var _duration := 0.3
-	func reset() -> void:
-		map_id = ""
-		markers.clear()
-		_from.clear()
-		_to.clear()
-		queue_redraw()
-	func present(frame: Dictionary, animate: bool) -> void:
-		var data: Dictionary = frame.data
-		var position: Dictionary = data.get("position", {})
-		if position.is_empty(): return
-		var next_map := str(position.get("map", ""))
-		if map_id != next_map:
-			markers.clear()
-			map_id = next_map
-		var room: Dictionary = GEOMETRY.room_data(map_id, str(position.get("room", "")))
-		if room.is_empty(): return
-		var raw: Array = room.rect
-		var point := Vector2(float(raw[0]) + float(raw[2]) / 2.0, float(raw[1]) + float(raw[3]) / 2.0)
-		var who := str(frame.actor)
-		_from = {"actor": who, "point": markers.get(who, point)}
-		_to = {"actor": who, "point": point}
-		_duration = float(frame.duration)
-		_elapsed = 0.0 if animate else _duration
-		markers[who] = _from.point if animate else point
-		queue_redraw()
-	func advance(seconds: float) -> void:
-		if _to.is_empty(): return
-		_elapsed = minf(_duration, _elapsed + seconds)
-		markers[str(_to.actor)] = Vector2(_from.point).lerp(Vector2(_to.point), _elapsed / _duration)
-		queue_redraw()
-	func _draw() -> void:
 		var font := get_theme_default_font()
-		draw_string(font, Vector2(12, 24), "记录位置示意 · " + map_id, HORIZONTAL_ALIGNMENT_LEFT, -1, 16)
-		var rooms: Array = GEOMETRY.map_data(map_id).get("rooms", [])
-		if rooms.is_empty(): return
-		var bounds := Rect2()
-		for room: Dictionary in rooms:
-			var raw: Array = room.rect
-			var rect := Rect2(float(raw[0]), float(raw[1]), float(raw[2]), float(raw[3]))
-			bounds = rect if bounds.size == Vector2.ZERO else bounds.merge(rect)
-		var scale_value := minf((size.x - 32.0) / bounds.size.x, (size.y - 64.0) / bounds.size.y)
-		var offset := Vector2(16, 44) - bounds.position * scale_value
-		for room: Dictionary in rooms:
-			var raw: Array = room.rect
-			var rect := Rect2(Vector2(float(raw[0]), float(raw[1])) * scale_value + offset, Vector2(float(raw[2]), float(raw[3])) * scale_value)
-			draw_rect(rect, Color(0.4, 0.4, 0.4, 0.4), false, 1.0)
-		for who in markers:
-			var point: Vector2 = markers[who] * scale_value + offset
-			draw_circle(point, 5.0, Color(0.95, 0.6, 0.3))
-			draw_string(font, point + Vector2(8, -4), str(who), HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
+		var legend_x := 12.0
+		for metric: Dictionary in series:
+			draw_string(font, Vector2(legend_x, 20), str(metric.name), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, metric.color)
+			legend_x += 95.0
+			var points := PackedVector2Array()
+			for index in range(history.count):
+				var value := float(history.at(index)[metric.key])
+				points.append(Vector2(plot.position.x + plot.size.x * index / 119.0, plot.end.y - value / ceiling * plot.size.y))
+			if points.size() > 1: draw_polyline(points, metric.color, 2.0)
+		var fps_points := PackedVector2Array()
+		for index in range(history.count):
+			fps_points.append(Vector2(plot.position.x + plot.size.x * index / 119.0, plot.end.y - float(history.at(index).fps) / fps_ceiling * plot.size.y))
+		var fps_color := Color(0.35, 0.65, 0.95)
+		if fps_points.size() > 1: draw_polyline(fps_points, fps_color, 1.5)
+		draw_string(font, Vector2(legend_x, 20), "FPS", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, fps_color)
+		draw_string(font, Vector2(12, size.y - 4), "左轴 %.1f ms · 参考线 16.7 ms / 右轴 %.0f FPS" % [ceiling, fps_ceiling], HORIZONTAL_ALIGNMENT_LEFT, -1, 12)

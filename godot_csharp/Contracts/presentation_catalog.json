@@ -1,0 +1,21 @@
+{
+  "schema": "dv-host-presentation-v1",
+  "title": "安眠者有福",
+  "views": { "world": "res://scenes/Chapter2/Field/CampusMapView.tscn" },
+  "actors": {
+    "detective": "detective", "huo": "engineer", "shen": "chef", "su": "musician",
+    "lucian": "poet", "gu": "archaeologist", "quer": "thief", "ward": "lawyer",
+    "selma": "naturalist", "ruan": "chessplayer", "elena": "dancer", "moran": "painter",
+    "veronica": "chemist", "bertrand": "marksman", "margaret": "architect", "mora": "doctor"
+  },
+  "maps": {
+    "living_floor": {
+      "site_titles": {
+        "bed": {"title": "床"}, "transmitter": {"title": "铜口"}, "zone_rules": {"title": "公告框"},
+        "E1": {"title": "隔离门"}, "E2": {"title": "门底与木楔"}, "E6": {"title": "苏泠的书桌"},
+        "E7": {"title": "长桌上的石板"}, "E10": {"title": "备餐柜台"}, "E11": {"title": "置物架"}, "E12": {"title": "风衣"}
+      },
+      "sprite_sites": {"N1Bed":"bed", "N1Coat":"E12", "R05Shelf":"E11", "R05ShelfTrace":"E11", "Transmitter":"transmitter", "InnerBolt":"E1", "Slate":"E7", "Jar":"E10"}
+    }
+  }
+}

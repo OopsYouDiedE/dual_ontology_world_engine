@@ -1,4 +1,5 @@
 """LSP transport for DV compiler diagnostics. The compiler remains the authority."""
+import importlib
 import json
 import os
 from pathlib import Path
@@ -18,8 +19,27 @@ def path_from_uri(uri):
     return Path(path)
 
 
+def prewarm_workspace(params):
+    """Schedule the repository's shared compiler worker from a known workspace."""
+    configured = os.environ.get('DV_CHECKER')
+    roots = [Path(configured).resolve().parents[2]] if configured else []
+    if params.get('rootUri'):
+        roots.append(path_from_uri(params['rootUri']))
+    elif params.get('rootPath'):
+        roots.append(Path(params['rootPath']))
+    roots += [path_from_uri(folder['uri']) for folder in params.get('workspaceFolders') or []]
+    for root in roots:
+        for directory in (root, *root.parents):
+            build = directory / 'mcp/build'
+            if (build / 'prewarm.py').is_file():
+                sys.path.insert(0, str(build))
+                importlib.import_module('prewarm').start_prewarm()
+                return
+
+
 class Server:
-    def __init__(self):
+    def __init__(self, writer=None):
+        self.writer = writer
         self.documents = {}
         self.write_lock = threading.Lock()
         self.state_lock = threading.Lock()
@@ -28,7 +48,11 @@ class Server:
         self.stopping = False
 
     def send(self, value):
-        payload = json.dumps({"jsonrpc": "2.0", **value}, ensure_ascii=False).encode("utf-8")
+        message = {"jsonrpc": "2.0", **value}
+        if self.writer is not None:
+            self.writer(message)
+            return
+        payload = json.dumps(message, ensure_ascii=False).encode("utf-8")
         with self.write_lock:
             sys.stdout.buffer.write(f"Content-Length: {len(payload)}\r\n\r\n".encode() + payload)
             sys.stdout.buffer.flush()
@@ -103,6 +127,7 @@ class Server:
         params = message.get("params") or {}
         request = message.get("id")
         if method == "initialize":
+            prewarm_workspace(params)
             self.send({"id": request, "result": {"capabilities": {
                 "textDocumentSync": {"openClose": True, "change": 1, "save": {"includeText": True}}},
                 "serverInfo": {"name": "DuelView compiler checker", "version": "0.1.0"}}})

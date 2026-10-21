@@ -300,7 +300,7 @@ public sealed class DvSession
         return HostValues.Freeze(new Dictionary<string, object?>
         {
             ["viewer"] = viewer, ["version"] = Version, ["chapter"] = snapshot.GetValueOrDefault("chapter"),
-            ["game_time"] = snapshot.GetValueOrDefault("game_time"), ["location"] = HostValues.Text(HostValues.Map(snapshot, "hud"), "room"),
+            ["game_time"] = snapshot.GetValueOrDefault("game_time"), ["location"] = HostValues.Text(snapshot, "location_title"),
             ["room"] = room, ["map"] = map, ["people"] = Array.AsReadOnly(people),
             ["observations"] = observations.AsReadOnly(), ["status"] = HostValues.Text(Intent, "status"),
             ["active"] = Active, ["development_mode"] = DevMode

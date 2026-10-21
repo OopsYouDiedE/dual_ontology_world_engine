@@ -102,30 +102,6 @@ func stand_up() -> void:
 	sprite.position.y = foot_offset
 	pose("idle")
 
-func sit_down(direction: String, cushion_height: float, duration := 0.4) -> void:
-	seated = false
-	facing = direction
-	sprite.sprite_frames = standard
-	sprite.flip_h = direction == "right"
-	var animation := "sit_" + ("left" if direction == "right" else direction)
-	sprite.play(animation)
-	sprite.pause()
-	var count := standard.get_frame_count(animation)
-	for index in count:
-		sprite.frame = index
-		sprite.position.y = foot_offset - cushion_height * float(index) / maxi(1, count - 1)
-		await get_tree().create_timer(duration / count).timeout
-	sit_at(direction, cushion_height)
-
-func rise_from_seat(duration := 0.4) -> void:
-	var animation := "sit_" + ("left" if seat_direction == "right" else seat_direction)
-	var count := standard.get_frame_count(animation)
-	for index in range(count - 1, -1, -1):
-		sprite.frame = index
-		sprite.position.y = foot_offset - seat_height * float(index) / maxi(1, count - 1)
-		await get_tree().create_timer(duration / count).timeout
-	stand_up()
-
 func hold_seat() -> void:
 	facing = seat_direction
 	sprite.sprite_frames = standard
@@ -140,13 +116,6 @@ func face_point(point: Vector2) -> void:
 	if not seated and position.distance_squared_to(point) > 1.0:
 		face_vector(point - position)
 		pose("idle")
-
-func perform(action: String, mirrored := false) -> void:
-	sprite.sprite_frames = special
-	sprite.flip_h = mirrored
-	sprite.play(action)
-	await sprite.animation_finished
-	pose("idle")
 
 func face_vector(direction: Vector2) -> void:
 	if absf(direction.x) > absf(direction.y):
@@ -169,19 +138,6 @@ func follow_path(points: PackedVector2Array) -> Dictionary:
 	await arrived
 	return travel_result
 
-## 暂停不结束路线；恢复时重新计受阻时间，原来的 arrived 等待仍然有效。
-func pause_travel() -> void:
-	travelling = false
-	velocity = Vector2.ZERO
-	pose("idle")
-
-func resume_travel() -> void:
-	if path.is_empty(): return
-	travelling = true
-	_progress_point = position
-	_stuck_time = 0.0
-
-## 成功、受阻和取消都释放 arrived 等待者；调用方通过回值或 travel_result 区分结果。
 func stop_travel(reason := "cancelled") -> void:
 	if travelling or not path.is_empty():
 		_finish_travel(false, reason)

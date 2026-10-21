@@ -13,5 +13,8 @@
   </ItemGroup>
   <Target Name="GenerateDvMechanism" BeforeTargets="CoreCompile">
     <Exec Command="&quot;$(DvPython)&quot; &quot;$(MSBuildProjectDirectory)/../../mcp/build/build_session.py&quot; --base-only --out &quot;$(MSBuildProjectDirectory)/obj/dv&quot;" />
+    <ItemGroup>
+      <Compile Include="$(MSBuildProjectDirectory)/obj/dv/modules/*.g.cs" />
+    </ItemGroup>
   </Target>
 </Project>

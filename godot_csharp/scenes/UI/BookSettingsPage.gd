@@ -5,6 +5,8 @@ extends VBoxContainer
 
 const LocaleSettings := preload("res://scenes/Shared/Locale/LocaleSettings.gd")
 
+var settings_endpoint: Node
+var locale_endpoint: Node
 var _settings: Node
 var _locale: Node
 var _texts: Array[Dictionary] = []
@@ -18,8 +20,9 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	theme_type_variation = &"BookColumn"
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_settings = get_node_or_null("/root/GameSettings")
-	_locale = get_node_or_null("/root/GameLocale")
+	_settings = settings_endpoint if settings_endpoint != null else get_node_or_null("/root/GameSettings")
+	_locale = locale_endpoint if locale_endpoint != null else get_node_or_null("/root/GameLocale")
+	if _locale != null: _locale.language_changed.connect(func(_code: String): _refresh_content())
 	_build_language_choices()
 	if _settings != null:
 		_build_settings()

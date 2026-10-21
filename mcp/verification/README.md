@@ -7,6 +7,8 @@
 
 ## 工具工程入口
 
+统一 MCP 中，Python 命令属于 `diagnostics`，GDScript 采集与观察属于 `godot_tools`。地图截图为 `capture-maps`，UI 采集为 `capture-casebook`、`capture-period`、`capture-start-reveal`、`capture-title`，宿主入口为 `capture-saved-game`、`capture-level3`、`host-startup`，独立观察为 `ui-input`、`living-floor`、`music-context`。路由直接指向本目录现役脚本；列举工具不执行它们。`ui-input` 自动采用一次性工具用户数据。
+
 所有命令从仓库根目录执行。`mcp/godot_workspace.py` 链接生产场景、成品、
 契约和本目录，创建独立临时 Godot 工程。`--csharp` 构建工具程序集并编入
 `FrameArchive.cs`，随后导入该工程资源，再启动指定脚本。FrameArchive 的
@@ -405,3 +407,11 @@ Transient `input.json` packets now also accept `click` with numeric `button` (1 
 `run_saved_game_capture.py` 与 `profile_dv_capture.py` 共用 `capture_result.py` 的完成合同：运行进程正常退出、达到请求的采集时长、唯一新宿主会话、完整 end 与 capture-close 记录、宿主 close-result 完成、零归档/脚本/加载错误、源码和工具工程指纹未变化。请求的检查点也必须全部完成。托管采样还要求发现目标进程、采样器正常退出、可读的报告；采样成功不能替代宿主封存。
 
 两入口收集 stdout、stderr 和原生日志。游戏、采样发现、采样进程及报告均有期限，超时只终止本次启动的进程并保留证据。`dv_level3_capture.gd` 在结束时释放所有登记的按键、手柄按钮和轴，包括没有 duration_ms 的显式长按；capture_saved_game 共用该输入实现。底层关闭等待有期限，capture-close 明确记录 host_closed、archive_idle、complete 与 timeout。
+
+## 逻辑记录与领域分析完成语义
+
+`run_debug.py` 分别写出三个结果：`evidence_complete` 表示正常停止、记录封存、配置与源码一致；`causal_check_complete` 直接采用 70-checks 的 `domain_evaluation_complete`；`main_causal_supported` 表示已完成分析中的主因果支持结论。`causal_check_reason` 保留 `completed`、`invalid_integrity`、`missing_initial_state`、`invalid_trace` 或 `configuration_mismatch`，工具启动失败和超时另写 `causal_check_status` 与具体错误。
+
+只有证据完整且领域分析实际完成时，逻辑工具返回 0。完成分析后得到负面领域判断，仍属于已完成分析；调用方应读取主因果结论和领域报告。未进入分析、证据不完整或执行失败返回非零，保留对应原始证据。
+
+几何工具共享 `mcp/asset_pipeline/scene_geometry.py` 的场景读取规则，覆盖锚点、房间、出口碰撞矩形、内部门禁、跨图出生点及室外坐标。`living_hall` 外部目标在合同发布时统一为 `living_floor`；内部门禁不进入跨地图出口清单。这里维护现有检查器的合同接线，工具只在明确请求时执行。

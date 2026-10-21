@@ -55,7 +55,6 @@ func _refresh_chrome() -> void:
 	modal_close_button.text = _text("合上", "Close", "閉じる")
 	match _current_panel:
 		"replay": modal_kicker.text = _text("案情研究", "INQUIRY", "推論手稿")
-		"notebook": modal_kicker.text = _text("随身记录", "FIELD NOTES", "調査記録")
 		"campus_map": modal_kicker.text = _text("学园图志", "CAMPUS ATLAS", "学園案内")
 		"ending": modal_kicker.text = _text("阶段记述", "CHAPTER RECORD", "章の記録")
 		"spatial": modal_kicker.text = _text("此时 · 此地", "HERE & NOW", "今、この場所で")
@@ -123,25 +122,6 @@ func _choose(id: String, content_serial: int) -> void:
 	# close() locks every control before a callback can dispatch a second action.
 	close()
 	action_chosen.emit(id)
-
-func open_notebook(data: Dictionary) -> void:
-	var body := open_modal("随身手账", Vector2(820, 560), "notebook", true)
-	var people: Array = data.get("people", [])
-	if people.is_empty():
-		body.add_child(_paragraph(_text("此页尚无可读记录。", "There are no entries to read on this page yet.", "このページにはまだ読める記録がありません。"), "ManuscriptNote"))
-	else:
-		for value in people:
-			if not value is Dictionary: continue
-			var person: Dictionary = value
-			var heading := Label.new()
-			heading.theme_type_variation = &"EditorialSubtitle"
-			heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			heading.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
-			heading.text = str(person.get("name", ""))
-			body.add_child(heading)
-			var entry := _paragraph(str(person.get("desc", "")))
-			entry.bbcode_enabled = false
-			body.add_child(entry)
 
 func open_manuscript(data: Dictionary) -> void:
 	# This page presents only supplied observer data. It neither runs a replay
@@ -264,19 +244,6 @@ func _supplied_texts(value: Variant) -> Array[String]:
 		elif not body.is_empty(): result.append(body)
 		elif not title.is_empty(): result.append(title)
 	return result
-
-func open_card(data: Dictionary) -> void:
-	var body := open_modal(str(data.get("title", "证物卡片")), Vector2(760, 500), "card", not data.has("title"))
-	_raw_text(body, str(data.get("text", data.get("body", ""))), true)
-	var actions: Array = data.get("actions", [])
-	for value in actions:
-		if value is not Dictionary: continue
-		var act: Dictionary = value
-		var btn := _action_button(act, "TextAction")
-		if not act.has("label") and not act.has("text"): _bind_ui_text(btn, "确定")
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		modal_footer.add_child(btn)
-	modal_footer.visible = modal_footer.get_child_count() > 0
 
 func open_campus_map(data: Dictionary) -> void:
 	var body := open_modal("校区平面图", Vector2(880, 620), "campus_map", true)

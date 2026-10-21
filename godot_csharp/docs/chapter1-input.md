@@ -47,25 +47,20 @@ PageUp／PageDown 与 LB／RB 在案卷列表中翻阅前后分页，抵达边�
 
 ## 有限输入探针
 
-`tools/probe_ui_input.gd` 使用生产 `UIInput`、`BookProjection3D`、`ModalPanel`、`GameSettings` 与原生 Controls，向 viewport 注入按下／释放和轴事件，观察漂移、禁用控件跳过、A 激活、滑杆、按住重复、回中停止、滚动、两层返回以及设置往返和迁移。
+临时工具工程中的 `res://tools/probe_ui_input.gd` 使用生产 `UIInput`、`BookProjection3D`、`ModalPanel`、`GameSettings` 与原生 Controls，向 viewport 注入按下／释放和轴事件，观察漂移、禁用控件跳过、A 激活、滑杆、按住重复、回中停止、滚动、两层返回以及设置往返和迁移。
 
 夹具不含正式剧情文本，不运行 Main、不创建 DV 会话、不执行 Core。投影辅助器使用最小舞台对象的非鼠标接口，因此不验证真实书页射线命中、渲染、地图碰撞、第一章性能或物理手柄兼容性。
 
-先构建 Godot .NET 工程并导入资源，保证 `FrameArchive.cs` 可实例化；Python 生成器也需要在 `PATH` 找到 `dotnet`。以下命令在仓库根执行，`GODOT` 指向 Godot .NET 程序：
+`mcp/godot_workspace.py --csharp` 创建隔离的临时工具工程、导入所需资源并编译工具侧 C#。`FrameArchive.cs` 只在临时工程编译，正式游戏工程不包含采集工具。工作区负责隔离工具的用户目录，Python 入口需要在 `PATH` 找到 `dotnet`。获得本轮探针授权后，在仓库根执行以下命令；`GODOT` 指向 Godot .NET 程序：
 
 ```bash
-dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false -p:DvPython=python3
-"$GODOT" --headless --editor --path godot_csharp --import
-input_run="$(mktemp -d /tmp/dv-input.XXXXXX)"
-XDG_DATA_HOME="$input_run/user-data" XDG_CONFIG_HOME="$input_run/config" \
-  "$GODOT" --headless --path godot_csharp --script res://tools/probe_ui_input.gd \
-  -- --out="$input_run/evidence" >"$input_run/native.log" 2>&1
+python mcp/godot_workspace.py --csharp --script res://tools/probe_ui_input.gd --godot "$GODOT" --headless -- --out=/tmp/dv-input-evidence-NEW
 ```
 
-`--out` 必须是尚不存在的绝对路径。每次使用新用户数据目录，因为设置观察会写入夹具自己的偏好；已有 `user://settings.cfg` 时探针拒绝执行。Windows 的单独工作树不会自动隔离同名项目用户数据，应在一次性项目副本设置唯一项目名并保持 `use_custom_user_dir = false`，或使用已确认有效的其他隔离方式，再执行：
+`--out` 必须改为本轮尚不存在的新绝对路径。设置观察写入工作区自己的偏好，已有 `user://settings.cfg` 时探针拒绝执行。Linux 与 Windows 都通过同一工作区入口隔离用户目录，保留正式项目的设置。Windows 示例：
 
 ```powershell
-& $env:GODOT --headless --path C:/Temp/dv-input-NEW/godot_csharp --script res://tools/probe_ui_input.gd -- --out=C:/Temp/dv-input-evidence-NEW
+python mcp/godot_workspace.py --csharp --script res://tools/probe_ui_input.gd --godot $env:GODOT --headless -- --out=C:/Temp/dv-input-evidence-NEW
 ```
 
 完成后通过 `FrameArchive.WriteRecord` 写入 `input-observations.dvlog`，保留实际注入事件、单调时间、观察、失败项和范围标志。退出码 0 表示该次有限观察无报告失败，1 表示观察失败，2 表示参数、用户数据或 .NET 前置条件不满足；引擎也可能在脚本加载错误时提前退出。保留原始引擎日志和失败证据，不覆盖目录，不为得到成功输出而放宽条件。

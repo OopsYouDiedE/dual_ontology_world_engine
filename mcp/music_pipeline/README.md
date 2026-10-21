@@ -26,7 +26,7 @@ python mcp/music_pipeline/build_soundtrack.py --from-mscz
 
 PDF、MusicXML、MIDI、MP3 默认写入仓库根目录的 `artifacts/releases/soundtrack/`，可通过 `--export-dir <目录>` 修改。生成器默认不会把这些发行副本重新写回 `mcp/music_pipeline/`。该默认目录已被 Git 忽略。
 
-顶层 MCP 入口 `python mcp/server.py` 的 `music_pipeline` 工具调用同一生成器，`arguments` 接受上述命令行选项；工具模块在调用时加载。
+顶层 MCP 入口 `python mcp/server.py` 的 `music_pipeline` 工具提供 `render`、`scores`、`rewrite-scores`、`from-mscz`、`export`、`audit` 操作。未给 `operation` 时保持默认 `render`；`arguments` 接受原有命令行选项。`export` 采用 `--export --scores`，`audit` 调用 `audit_score_assets.py` 并接受其 `--out` 参数。音乐、音效和人物短音可用 `arguments=["--only","<ID>"]` 选定；对应模块在调用时加载。
 
 需要 Python、NumPy，以及写入 OGG 时使用的 `soundfile`。安装 MuseScore 4 后，可通过 `MUSESCORE` 环境变量指定程序路径；未发现 MuseScore 时脚本会提示使用内置合成器，并跳过相应发行导出。该回退使用 `cues.py`，即使传入 `--from-mscz` 也不会改成读取原谱渲染；若要求以现有曲谱为唯一输入，须先配置 MuseScore。内置合成器与 MuseScore 的音色和渲染结果可能不同。
 

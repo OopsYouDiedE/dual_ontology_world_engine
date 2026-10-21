@@ -2,39 +2,27 @@
 import argparse
 import json
 from pathlib import Path
-import re
+
+from scene_geometry import OUTDOOR_FIELDS, outdoor_metadata, scene_exits, scene_point, scene_source, vector
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME = ROOT / 'godot_csharp'
 CONTRACT = GAME / 'Contracts/geometry_contract.json'
 
 
-def point(text, name='position'):
-    match = re.search(r'^' + re.escape(name) + r' = Vector2\(([^,]+),\s*([^)]+)\)', text, re.MULTILINE)
-    return [float(match[1]), float(match[2])] if match else [0, 0]
-
-
 def scene_markers(path):
-    text = path.read_text(encoding='utf-8')
+    nodes, shapes = scene_source(path)
     result = {'scene': 'res://' + path.relative_to(GAME).as_posix(),
-              'size': point(text, 'metadata/map_size'), 'sites': {}, 'stations': {},
-              'stands': {}, 'spawns': {}, 'exits': []}
+              'size': vector(nodes['']['fields']['metadata/map_size']), 'sites': {}, 'stations': {},
+              'stands': {}, 'spawns': {}, 'exits': scene_exits(nodes, shapes), **outdoor_metadata(nodes)}
     groups = {'Sites': 'sites', 'Stations': 'stations', 'Stands': 'stands', 'Spawns': 'spawns'}
-    for block in re.findall(r'(?ms)^\[node\b.*?(?=^\[|\Z)', text):
-        header = dict(re.findall(r'(\w+)="([^"]*)"', block.splitlines()[0]))
-        parent, name = header.get('parent'), header['name']
-        if parent in groups:
-            value = {'point': point(block), 'path': parent + '/' + name}
-            label = re.search(r'^metadata/label = (.+)$', block, re.MULTILINE)
-            if label:
-                value['label'] = json.loads(label[1])
+    for node_path, node in nodes.items():
+        parent, _, name = node_path.rpartition('/')
+        if parent in groups and node['type'] == 'Marker2D':
+            value = {'point': scene_point(nodes, node_path), 'path': node_path}
+            if 'metadata/label' in node['fields']:
+                value['label'] = json.loads(node['fields']['metadata/label'])
             result[groups[parent]][name] = value
-        if parent == 'Exits':
-            target = re.search(r'^metadata/target = "([^"]+)"', block, re.MULTILINE)
-            if target:
-                spawn = re.search(r'^metadata/spawn = "([^"]+)"', block, re.MULTILINE)
-                result['exits'].append({'id': name, 'target': target[1], 'point': point(block),
-                                        'spawn': spawn[1] if spawn else ''})
     return result
 
 
@@ -52,7 +40,14 @@ def main():
                     if len(item['rooms']) == 1 or any(
                         rx <= x < rx + width and ry <= y < ry + height
                         for rx, ry, width, height in room['rects'])), '')
+        for field in OUTDOOR_FIELDS:
+            item.pop(field, None)
         item.update(update)
+        for door in item['doors']:
+            if door.get('target_map') == 'living_hall':
+                door['target_map'] = 'living_floor'
+                if door['to'] == 'living_hall':
+                    door['to'] = 'living_floor'
     args.out.write_text(json.dumps(contract, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
 

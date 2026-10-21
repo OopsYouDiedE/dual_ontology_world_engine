@@ -19,13 +19,15 @@
 
 通过 `python mcp/godot_workspace.py --editor` 打开工具工程。正式游戏工程只读取发布资产。工具工程将 `res://AssetsSource` 映射到 `mcp/asset_pipeline/sources`，将 `res://ShareAsset` 映射到游戏发布资产目录。游戏地图基础格为32px；转换器会优先使用文件名或图像尺寸识别外部素材的原生格子，因此识别出的48px素材仍按48px处理。默认输入目录为 `res://AssetsSource/External/Victorian`，输出目录为 `res://ShareAsset/External/Victorian`，其中 `tilesets/Victorian.tres` 是地图使用的 TileSet，`atlases/` 保存重组图集。
 
-命令行在仓库根目录执行，`godot` 替换为本机 Godot 4.6 Mono 可执行文件：
+命令行在仓库根目录执行，通过 `GODOT`、`GODOT_BIN` 或 `--godot` 指定本机 Godot 4.6 可执行文件：
 
 ```text
 python mcp/godot_workspace.py --headless --script res://addons/rpg_asset_adapter/run_batch_convert.gd
 ```
 
 批处理会覆盖对应的已有转换产物。仅制作地图时无需重复转换。
+
+统一 MCP 的 `godot_tools` 提供 `adapter-batch`、`adapter-conversion`、`adapter-visual`、`adapter-render`、`adapter-metadata` 和 `adapter-tagged-slice`。这些路由使用独立工具工程，不要求 C# 构建。Python 工程入口由 `adapter_checks` 提供；绘图、地图、像素交接和 UI 度量函数由 `rpg_adapter` 提供。所有入口以 `mcp/tools.json` 为同一目录。
 
 ## 转换边界
 

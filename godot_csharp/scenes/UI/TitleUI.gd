@@ -8,6 +8,7 @@ signal field_reveal_finished(cancelled: bool)
 
 const Sound = preload("res://scenes/Shared/Audio/Sound.gd")
 const BookSettingsPage = preload("res://scenes/UI/BookSettingsPage.gd")
+const ReplayPreferences = preload("res://scenes/UI/ReplayPreferences.gd")
 const BookArchivePage = preload("res://scenes/UI/BookArchivePage.gd")
 const UIInput = preload("res://scenes/Shared/Input/UIInput.gd")
 const Transition = preload("res://scenes/UI/UITransition.gd")
@@ -33,6 +34,10 @@ const LOADING_TEXTS := {
 
 
 var mode := "title"
+var replay_mode := false
+var _replay_preferences: Node
+var _replay_bookmarks: Array[String] = []
+var _listed_bookmarks: Array[String] = []
 var initial_page := "index"
 var archive: RefCounted
 var _external_blocked := false
@@ -102,6 +107,10 @@ var _field_reveal_cancelled := false
 var _field_reveal_complete := false
 
 func _ready() -> void:
+	if replay_mode:
+		_replay_preferences = ReplayPreferences.new()
+		_replay_preferences.restore_data(ReplayPreferences.capture(get_node_or_null("/root/GameSettings")))
+		add_child(_replay_preferences)
 	_projection_surface.texture = _stage_viewport.get_texture()
 	if mode == "title":
 		# Compile the reveal shader with the normal title, before gameplay starts.
@@ -129,7 +138,7 @@ func _ready() -> void:
 	quit_button.pressed.connect(_request.bind("quit"))
 	settings_button.pressed.connect(open_settings)
 	continue_button.pressed.connect(open_load_book)
-	var settings := get_node_or_null("/root/GameSettings")
+	var settings := _replay_preferences if replay_mode else get_node_or_null("/root/GameSettings")
 	if settings != null:
 		_reduce_motion = bool(settings.get_value("accessibility", "reduce_motion"))
 		settings.setting_changed.connect(_on_setting_changed)
@@ -334,6 +343,7 @@ func _on_page_transition(_request_id: int, shown: bool, cancelled: bool) -> void
 	if not cancelled: transition_finished.emit(shown)
 
 func _on_setting_changed(section: String, key: String, value: Variant) -> void:
+	if section == "language" and replay_mode: _localize()
 	if section == "accessibility" and key == "reduce_motion":
 		_reduce_motion = bool(value)
 		_desk.set_reduce_motion(_reduce_motion)
@@ -372,6 +382,7 @@ func _notification(what: int) -> void:
 		_projection.reset_navigation()
 
 func _language() -> String:
+	if replay_mode and _replay_preferences != null: return _replay_preferences.current_language()
 	var locale := TranslationServer.get_locale()
 	return "ja" if locale.begins_with("ja") else "en" if locale.begins_with("en") else "zh_CN"
 
@@ -840,7 +851,11 @@ func _show_leaf(page: String) -> void:
 	_leaf_content = null
 	_leaf_scroll.scroll_vertical = 0
 	if page == "settings":
-		_leaf_body.add_child(BookSettingsPage.new())
+		var settings_page := BookSettingsPage.new()
+		if replay_mode:
+			settings_page.settings_endpoint = _replay_preferences
+			settings_page.locale_endpoint = _replay_preferences
+		_leaf_body.add_child(settings_page)
 	elif page == "load":
 		_populate_bookmarks()
 	else:
@@ -861,18 +876,22 @@ func _populate_bookmarks() -> void:
 			ui_event.emit({"kind": "bookmark_save"})
 		)
 	var paths: Array[String] = []
-	var directory := DirAccess.open("user://saves")
-	if directory != null:
-		for file in directory.get_files():
-			if file.ends_with(".dvsave"): paths.append("user://saves/" + file)
-	# Normal shutdown saves remain valid bookmarks; list without rewriting them.
-	var sessions := DirAccess.open("user://dv-sessions")
-	if sessions != null:
-		for folder in sessions.get_directories():
-			var path := "user://dv-sessions/" + folder + "/save.dvsave"
-			if FileAccess.file_exists(path): paths.append(path)
-	paths.sort()
-	paths.reverse()
+	if replay_mode:
+		paths.assign(_replay_bookmarks)
+	else:
+		var directory := DirAccess.open("user://saves")
+		if directory != null:
+			for file in directory.get_files():
+				if file.ends_with(".dvsave"): paths.append("user://saves/" + file)
+		# Normal shutdown saves remain valid bookmarks; list without rewriting them.
+		var sessions := DirAccess.open("user://dv-sessions")
+		if sessions != null:
+			for folder in sessions.get_directories():
+				var path := "user://dv-sessions/" + folder + "/save.dvsave"
+				if FileAccess.file_exists(path): paths.append(path)
+		paths.sort()
+		paths.reverse()
+	_listed_bookmarks.assign(paths)
 	if paths.is_empty(): _leaf_text(tr("尚无书签。请选择已有存档继续阅读。"))
 	for path in paths:
 		var actual := ProjectSettings.globalize_path(path)
@@ -954,6 +973,9 @@ func _leaf_button(text: String, action: Callable) -> Button:
 	return button
 
 func _choose_save() -> void:
+	if replay_mode:
+		show_bookmark_message(tr("回放中的文件选择保持只读。"))
+		return
 	if not is_instance_valid(_file_dialog):
 		_file_dialog = FileDialog.new()
 		_file_dialog.use_native_dialog = true
@@ -975,3 +997,22 @@ func page_trace_context() -> Dictionary:
 	return {"panel": "title" if mode == "title" else "casebook", "page": _current_page,
 		"projected_3d": true, "turning": _turning, "opening": _request_pending,
 		"page_texture": "frozen" if _turning else "live", "frozen_source_page": _frozen_page, "occlusion_evidence": "rendered-frame"}
+
+## Read-only page navigation data for the isolated replay viewport. Frozen-page
+## texture membership remains distinct from actual screen visibility evidence.
+func capture_replay_state() -> Dictionary:
+	_capture_page_state()
+	return {"page": _current_page, "history": _page_history.duplicate(),
+		"page_states": _page_states.duplicate(true), "turning": _turning,
+		"frozen_source_page": _frozen_page, "bookmarks": _listed_bookmarks.duplicate(),
+		"preferences": _replay_preferences.capture_data() if replay_mode else ReplayPreferences.capture(get_node_or_null("/root/GameSettings"))}
+
+func restore_replay_state(state: Dictionary) -> void:
+	var page := str(state.get("page", "cover" if mode == "title" else "index"))
+	if replay_mode:
+		_replay_bookmarks.assign(state.get("bookmarks", []))
+		if state.has("preferences"): _replay_preferences.restore_data(state.preferences)
+	_page_states = state.get("page_states", {}).duplicate(true)
+	if page != _current_page: await _turn_to(page)
+	_page_history.assign(state.get("history", []))
+	_restore_page_state()

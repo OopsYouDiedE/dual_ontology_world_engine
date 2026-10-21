@@ -11,7 +11,7 @@ DuelView（DV）世界与心智引擎，以及 Godot 游戏宿主。唯一正式
 | `dv_core/modules/35-campaign-schema.dv` | 人物目录、位置与时钟引用、公共构造器、跨章结构 |
 | `dv_core/modules/40-chapter1.dv`、`50-chapter2.dv` | 各自依赖 35 的章节内容 |
 | `dv_core/modules/60-game.dv` | 生产组合、连续章节与宿主投影 |
-| `dv_core/base/`、`host_bridge/` | 独立 Core 程序集、内容程序集、原生值桥与 StateDelta |
+| `dv_core/base/`、`dv_core/host_bridge/` | 独立 Core 程序集、内容程序集、原生值桥与 StateDelta |
 | `dv_core/cli/` | 无 Godot 依赖的文本、JSON-Lines、TUI 与智能回放 |
 | `dv_core/checks/` | 独立逻辑运行器与 oracle，生产入口不引用 |
 | `godot_csharp/` | 正式场景、运行脚本、Shader、契约与发布资源 |
@@ -19,7 +19,9 @@ DuelView（DV）世界与心智引擎，以及 Godot 游戏宿主。唯一正式
 | `docs/design-standard.md` | 世界、人物、剧情和玩法的设计规范 |
 | `artifacts/` | 任务报告及原始证据 |
 
-20/30 生成到 `DuelView.Core`，35–60 生成到 `DuelView.Session`。编译器缓存模块解析结果；输入不变时生成文件保持原时间戳。章节编辑不要求重新生成基础 Core。生成物位于各项目 `obj/`，原始资产位于 `mcp/asset_pipeline/sources/`。
+20/30 生成到 `DuelView.Core`，35–60 生成到 `DuelView.Session`。各模块独立解析并生成 C#，依赖通过函数和名义类型接口传递；模块正文变化只使自身生成缓存失效，接口变化影响消费者。输入不变时生成文件保持原时间戳。MCP/LSP 初始化启动共享编译器的后台预热。生成物位于各项目 `obj/`，原始资产位于 `mcp/asset_pipeline/sources/`。
+
+Core 提供原生值会话和 CLI 两种宿主入口，二者使用同一 Prepare/Complete 实现。Core 只发布逻辑身份、位置、时间及观察者投影；Godot 的场景、角色图像、动画帧与 HUD 由宿主呈现目录映射。章节40/50分别依赖公共35，调试65和检查70保持在生产闭包之外。
 
 ## 构建和游玩
 
@@ -53,11 +55,11 @@ python mcp/asset_pipeline/export_geometry.py
 ### UI 和现场交互
 
 ```powershell
-& $env:GODOT --path godot_csharp -- --dv-mock --dv-auto-start
+python mcp/godot_workspace.py --mock-ui --godot $env:GODOT
 & $env:GODOT --path godot_csharp -- --dv-dev --dv-controller=player
 ```
 
-MockSession 读取 `Contracts/presentation_mock_pack.json`，驱动正式翻页、对白、案卷、重演与现场界面。开发会话按反引号或 F12 打开 CanvasLayer 128 控制台：命令、双状态 Inspector、最近 120 帧性能和回放四个面板。`act` 使用当前候选；`inspect` 查看指定主体；`tp`、`time +N` 记录开发操作并同步现场。
+纯 GDScript MockSession 读取 `Contracts/presentation_mock_pack.json`，驱动正式翻页、对白、案卷、重演与现场界面；独立 UI 工作区无需 C# 或 DV 编译。开发会话按反引号或 F12 打开 CanvasLayer 128 控制台：命令、实时 Inspector、最近 120 帧环形性能记录和回放四个面板。Inspector 列出主客观状态、调度队列和按评分排列的候选；性能面板记录 FPS、Prepare、Complete 与寻路，关闭采样时停止写入。`act` 使用当前候选；`inspect` 查看指定主体；`tp`、`time +N` 记录开发操作并同步现场。
 
 ### Core 和文本控制
 
@@ -67,10 +69,10 @@ dotnet run --project dv_core/cli/DvCli.csproj -- --jsonl
 dotnet run --project dv_core/cli/DvCli.csproj -- --replay <记录.dvdag> --speed 4
 ```
 
-文本命令包含 `status`、`options`、`act <编号或ID>`、`next`、`save <路径>`、`trace <路径>` 与 `quit`。`--dev` 开启 `inspect`、`tp`、`time`。CLI 将执行器标为 `formal-model`，复用正式 Prepare/Complete。游戏控制台和 CLI 共用 SmartReplay：移动 0.3 秒、一般行动 0.6 秒、对白按字数 0.8–2 秒，忽略录制时的现实等待，支持单步及 1/2/4/8 倍速。
+文本命令包含 `status`、`options`、`act <编号或ID>`、`next`、`save <路径>`、`trace <路径>` 与 `quit`。`--dev` 开启 `inspect`、`tp`、`time`。CLI 将执行器标为 `formal-model`，复用正式 Prepare/Complete；`--command` 执行失败退出 1。游戏控制台和 CLI 共用 SmartReplay：移动 0.3 秒、一般行动 0.6 秒、对白按字数 0.8–2 秒，忽略录制时的现实等待，支持单步及 1/2/4/8 倍速。Godot 在独立视口中使用实际 Main、WorldView、StoryActor 和 UI 场景呈现回放，消费日志中的输入、身体、页面和案卷状态。旧记录缺少的数据按实际记录范围展示。
 
 ## 工具和文档
 
-`python mcp/server.py` 启动统一 stdio MCP 服务。工具清单从静态 JSON 加载，资产与图像依赖仅在相应调用时导入。工具命令、编辑器工作区与资产生成说明见 [mcp/README.md](mcp/README.md)。音乐源与构建方式见 [音乐管线](mcp/music_pipeline/README.md)。
+`python mcp/server.py` 启动统一 stdio MCP 服务。`mcp/tools.json` 是公开操作与调用路由的唯一目录；列出工具时只读取静态数据，具体依赖在操作调用时加载。资产生成和发布、Godot 采集及输入工具、独立沙盒、编辑器和音乐子命令均由该目录提供入口。工具命令、工作区与资产生成说明见 [mcp/README.md](mcp/README.md)。音乐源与构建方式见 [音乐管线](mcp/music_pipeline/README.md)。
 
 [维护约束](AGENTS.md)、[Core 说明](dv_core/README.md)、[语法参考](dv_core/SYNTAX.md)、[宿主接口](dv_core/host_bridge/README.md) 记录现役入口和语义。新轨迹使用 `.dvdag` / `.dvsave` / `.dvlog`；JSONL 仅用于文本进程通信。工程构建、形式逻辑、物理现场和实际画面各自保留对应证据。临时脚本放在 `.scratch/`，本轮任务结束时清理。

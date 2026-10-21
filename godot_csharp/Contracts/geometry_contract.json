@@ -207,21 +207,37 @@
       "exits": [
         {
           "id": "south",
+          "path": "Exits/south",
           "target": "campus_n",
+          "spawn": "archive_front",
           "point": [
             256.0,
             592.0
           ],
-          "spawn": "archive_front"
+          "rect": [
+            224.0,
+            576.0,
+            64.0,
+            32.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "down",
+          "path": "Exits/down",
           "target": "counterweight",
+          "spawn": "from_stairs",
           "point": [
             64.0,
             544.0
           ],
-          "spawn": "from_stairs"
+          "rect": [
+            32.0,
+            512.0,
+            64.0,
+            64.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -385,48 +401,88 @@
       "exits": [
         {
           "id": "中央厅北",
+          "path": "Exits/中央厅北",
           "target": "central_hall",
+          "spawn": "north",
           "point": [
             672.0,
             1598.0
           ],
-          "spawn": "north"
+          "rect": [
+            654.0,
+            1580.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "中央厅南",
+          "path": "Exits/中央厅南",
           "target": "central_hall",
+          "spawn": "south",
           "point": [
             672.0,
             2433.0
           ],
-          "spawn": "south"
+          "rect": [
+            654.0,
+            2415.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "中央厅东",
+          "path": "Exits/中央厅东",
           "target": "central_hall",
+          "spawn": "east",
           "point": [
             1089.0,
             2016.0
           ],
-          "spawn": "east"
+          "rect": [
+            1071.0,
+            1998.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "名录库",
+          "path": "Exits/名录库",
           "target": "archive",
+          "spawn": "south",
           "point": [
             672.0,
             1161.0
           ],
-          "spawn": "south"
+          "rect": [
+            654.0,
+            1143.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "诊疗所",
+          "path": "Exits/诊疗所",
           "target": "clinic",
+          "spawn": "south",
           "point": [
             2016.0,
             2961.0
           ],
-          "spawn": "south"
+          "rect": [
+            1998.0,
+            2943.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -500,7 +556,81 @@
             2961.0
           ]
         }
-      ]
+      ],
+      "outdoor_origin": [
+        2400.0,
+        0.0
+      ],
+      "outdoor_core": [
+        2688.0,
+        0.0,
+        2448.0,
+        2928.0
+      ],
+      "outdoor_origins": {
+        "campus_nw": [
+          0.0,
+          0.0
+        ],
+        "campus_n": [
+          2400.0,
+          0.0
+        ],
+        "campus_ne": [
+          4848.0,
+          0.0
+        ],
+        "campus_sw": [
+          0.0,
+          2640.0
+        ],
+        "campus_s": [
+          2400.0,
+          2640.0
+        ],
+        "harbor": [
+          4848.0,
+          2640.0
+        ]
+      },
+      "outdoor_cores": {
+        "campus_nw": [
+          0.0,
+          0.0,
+          2688.0,
+          2928.0
+        ],
+        "campus_n": [
+          2688.0,
+          0.0,
+          2448.0,
+          2928.0
+        ],
+        "campus_ne": [
+          5136.0,
+          0.0,
+          2880.0,
+          2928.0
+        ],
+        "campus_sw": [
+          0.0,
+          2928.0,
+          2688.0,
+          2928.0
+        ],
+        "campus_s": [
+          2688.0,
+          2928.0,
+          2448.0,
+          2928.0
+        ],
+        "harbor": [
+          5136.0,
+          2928.0,
+          2880.0,
+          2928.0
+        ]
+      }
     },
     "campus_ne": {
       "scene": "res://scenes/Chapter2/Maps/campus_ne.tscn",
@@ -534,12 +664,20 @@
       "exits": [
         {
           "id": "温室",
+          "path": "Exits/温室",
           "target": "greenhouse",
+          "spawn": "south",
           "point": [
             624.0,
             2265.0
           ],
-          "spawn": "south"
+          "rect": [
+            606.0,
+            2247.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -573,7 +711,81 @@
             2265.0
           ]
         }
-      ]
+      ],
+      "outdoor_origin": [
+        4848.0,
+        0.0
+      ],
+      "outdoor_core": [
+        5136.0,
+        0.0,
+        2880.0,
+        2928.0
+      ],
+      "outdoor_origins": {
+        "campus_nw": [
+          0.0,
+          0.0
+        ],
+        "campus_n": [
+          2400.0,
+          0.0
+        ],
+        "campus_ne": [
+          4848.0,
+          0.0
+        ],
+        "campus_sw": [
+          0.0,
+          2640.0
+        ],
+        "campus_s": [
+          2400.0,
+          2640.0
+        ],
+        "harbor": [
+          4848.0,
+          2640.0
+        ]
+      },
+      "outdoor_cores": {
+        "campus_nw": [
+          0.0,
+          0.0,
+          2688.0,
+          2928.0
+        ],
+        "campus_n": [
+          2688.0,
+          0.0,
+          2448.0,
+          2928.0
+        ],
+        "campus_ne": [
+          5136.0,
+          0.0,
+          2880.0,
+          2928.0
+        ],
+        "campus_sw": [
+          0.0,
+          2928.0,
+          2688.0,
+          2928.0
+        ],
+        "campus_s": [
+          2688.0,
+          2928.0,
+          2448.0,
+          2928.0
+        ],
+        "harbor": [
+          5136.0,
+          2928.0,
+          2880.0,
+          2928.0
+        ]
+      }
     },
     "campus_nw": {
       "scene": "res://scenes/Chapter2/Maps/campus_nw.tscn",
@@ -605,21 +817,37 @@
       "exits": [
         {
           "id": "生活翼北门",
-          "target": "living_hall",
+          "path": "Exits/生活翼北门",
+          "target": "living_floor",
+          "spawn": "living_hall_north_door",
           "point": [
             1924.0,
             3014.0
           ],
-          "spawn": "north_door"
+          "rect": [
+            1906.0,
+            2996.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "共鸣厅",
+          "path": "Exits/共鸣厅",
           "target": "resonance",
+          "spawn": "south",
           "point": [
             1344.0,
             1881.0
           ],
-          "spawn": "south"
+          "rect": [
+            1326.0,
+            1863.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -646,8 +874,8 @@
         {
           "id": "生活翼北门",
           "from": "campus_nw:campus_nw",
-          "to": "living_hall",
-          "target_map": "living_hall",
+          "to": "living_floor",
+          "target_map": "living_floor",
           "point": [
             1924.0,
             3014.0
@@ -663,7 +891,81 @@
             1881.0
           ]
         }
-      ]
+      ],
+      "outdoor_origin": [
+        0.0,
+        0.0
+      ],
+      "outdoor_core": [
+        0.0,
+        0.0,
+        2688.0,
+        2928.0
+      ],
+      "outdoor_origins": {
+        "campus_nw": [
+          0.0,
+          0.0
+        ],
+        "campus_n": [
+          2400.0,
+          0.0
+        ],
+        "campus_ne": [
+          4848.0,
+          0.0
+        ],
+        "campus_sw": [
+          0.0,
+          2640.0
+        ],
+        "campus_s": [
+          2400.0,
+          2640.0
+        ],
+        "harbor": [
+          4848.0,
+          2640.0
+        ]
+      },
+      "outdoor_cores": {
+        "campus_nw": [
+          0.0,
+          0.0,
+          2688.0,
+          2928.0
+        ],
+        "campus_n": [
+          2688.0,
+          0.0,
+          2448.0,
+          2928.0
+        ],
+        "campus_ne": [
+          5136.0,
+          0.0,
+          2880.0,
+          2928.0
+        ],
+        "campus_sw": [
+          0.0,
+          2928.0,
+          2688.0,
+          2928.0
+        ],
+        "campus_s": [
+          2688.0,
+          2928.0,
+          2448.0,
+          2928.0
+        ],
+        "harbor": [
+          5136.0,
+          2928.0,
+          2880.0,
+          2928.0
+        ]
+      }
     },
     "campus_s": {
       "scene": "res://scenes/Chapter2/Maps/campus_s.tscn",
@@ -957,39 +1259,71 @@
       "exits": [
         {
           "id": "诊疗所",
+          "path": "Exits/诊疗所",
           "target": "clinic",
+          "spawn": "south",
           "point": [
             2016.0,
             321.0
           ],
-          "spawn": "south"
+          "rect": [
+            1998.0,
+            303.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "后勤院西",
+          "path": "Exits/后勤院西",
           "target": "logistics",
+          "spawn": "west",
           "point": [
             1142.0,
             984.0
           ],
-          "spawn": "west"
+          "rect": [
+            1124.0,
+            966.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "后勤院东",
+          "path": "Exits/后勤院东",
           "target": "logistics",
+          "spawn": "east",
           "point": [
             1833.0,
             984.0
           ],
-          "spawn": "east"
+          "rect": [
+            1815.0,
+            966.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "粮仓",
+          "path": "Exits/粮仓",
           "target": "granary",
+          "spawn": "south",
           "point": [
             2016.0,
             921.0
           ],
-          "spawn": "south"
+          "rect": [
+            1998.0,
+            903.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -1053,7 +1387,81 @@
             921.0
           ]
         }
-      ]
+      ],
+      "outdoor_origin": [
+        2400.0,
+        2640.0
+      ],
+      "outdoor_core": [
+        2688.0,
+        2928.0,
+        2448.0,
+        2928.0
+      ],
+      "outdoor_origins": {
+        "campus_nw": [
+          0.0,
+          0.0
+        ],
+        "campus_n": [
+          2400.0,
+          0.0
+        ],
+        "campus_ne": [
+          4848.0,
+          0.0
+        ],
+        "campus_sw": [
+          0.0,
+          2640.0
+        ],
+        "campus_s": [
+          2400.0,
+          2640.0
+        ],
+        "harbor": [
+          4848.0,
+          2640.0
+        ]
+      },
+      "outdoor_cores": {
+        "campus_nw": [
+          0.0,
+          0.0,
+          2688.0,
+          2928.0
+        ],
+        "campus_n": [
+          2688.0,
+          0.0,
+          2448.0,
+          2928.0
+        ],
+        "campus_ne": [
+          5136.0,
+          0.0,
+          2880.0,
+          2928.0
+        ],
+        "campus_sw": [
+          0.0,
+          2928.0,
+          2688.0,
+          2928.0
+        ],
+        "campus_s": [
+          2688.0,
+          2928.0,
+          2448.0,
+          2928.0
+        ],
+        "harbor": [
+          5136.0,
+          2928.0,
+          2880.0,
+          2928.0
+        ]
+      }
     },
     "campus_sw": {
       "scene": "res://scenes/Chapter2/Maps/campus_sw.tscn",
@@ -1103,30 +1511,54 @@
       "exits": [
         {
           "id": "生活翼北门",
-          "target": "living_hall",
+          "path": "Exits/生活翼北门",
+          "target": "living_floor",
+          "spawn": "living_hall_north_door",
           "point": [
             1924.0,
             374.0
           ],
-          "spawn": "north_door"
+          "rect": [
+            1906.0,
+            356.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "夹道西",
-          "target": "living_hall",
+          "path": "Exits/夹道西",
+          "target": "living_floor",
+          "spawn": "living_hall_west_lane",
           "point": [
             1795.0,
             736.0
           ],
-          "spawn": "west_lane"
+          "rect": [
+            1777.0,
+            718.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "夹道东",
-          "target": "living_hall",
+          "path": "Exits/夹道东",
+          "target": "living_floor",
+          "spawn": "living_hall_east_lane",
           "point": [
             2054.0,
             736.0
           ],
-          "spawn": "east_lane"
+          "rect": [
+            2036.0,
+            718.0,
+            36.0,
+            36.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -1153,8 +1585,8 @@
         {
           "id": "生活翼北门",
           "from": "campus_sw:campus_sw",
-          "to": "living_hall",
-          "target_map": "living_hall",
+          "to": "living_floor",
+          "target_map": "living_floor",
           "point": [
             1924.0,
             374.0
@@ -1163,8 +1595,8 @@
         {
           "id": "夹道西",
           "from": "campus_sw:campus_sw",
-          "to": "living_hall",
-          "target_map": "living_hall",
+          "to": "living_floor",
+          "target_map": "living_floor",
           "point": [
             1795.0,
             736.0
@@ -1173,14 +1605,88 @@
         {
           "id": "夹道东",
           "from": "campus_sw:campus_sw",
-          "to": "living_hall",
-          "target_map": "living_hall",
+          "to": "living_floor",
+          "target_map": "living_floor",
           "point": [
             2054.0,
             736.0
           ]
         }
-      ]
+      ],
+      "outdoor_origin": [
+        0.0,
+        2640.0
+      ],
+      "outdoor_core": [
+        0.0,
+        2928.0,
+        2688.0,
+        2928.0
+      ],
+      "outdoor_origins": {
+        "campus_nw": [
+          0.0,
+          0.0
+        ],
+        "campus_n": [
+          2400.0,
+          0.0
+        ],
+        "campus_ne": [
+          4848.0,
+          0.0
+        ],
+        "campus_sw": [
+          0.0,
+          2640.0
+        ],
+        "campus_s": [
+          2400.0,
+          2640.0
+        ],
+        "harbor": [
+          4848.0,
+          2640.0
+        ]
+      },
+      "outdoor_cores": {
+        "campus_nw": [
+          0.0,
+          0.0,
+          2688.0,
+          2928.0
+        ],
+        "campus_n": [
+          2688.0,
+          0.0,
+          2448.0,
+          2928.0
+        ],
+        "campus_ne": [
+          5136.0,
+          0.0,
+          2880.0,
+          2928.0
+        ],
+        "campus_sw": [
+          0.0,
+          2928.0,
+          2688.0,
+          2928.0
+        ],
+        "campus_s": [
+          2688.0,
+          2928.0,
+          2448.0,
+          2928.0
+        ],
+        "harbor": [
+          5136.0,
+          2928.0,
+          2880.0,
+          2928.0
+        ]
+      }
     },
     "central_hall": {
       "scene": "res://scenes/Chapter2/Maps/central_hall.tscn",
@@ -1394,39 +1900,71 @@
       "exits": [
         {
           "id": "north",
+          "path": "Exits/north",
           "target": "campus_n",
+          "spawn": "hall_north",
           "point": [
             416.0,
             16.0
           ],
-          "spawn": "hall_north"
+          "rect": [
+            384.0,
+            0.0,
+            64.0,
+            32.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "south",
+          "path": "Exits/south",
           "target": "campus_n",
+          "spawn": "hall_south",
           "point": [
             416.0,
             816.0
           ],
-          "spawn": "hall_south"
+          "rect": [
+            384.0,
+            800.0,
+            64.0,
+            32.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "west",
+          "path": "Exits/west",
           "target": "lecture",
+          "spawn": "from_central",
           "point": [
             16.0,
             416.0
           ],
-          "spawn": "from_central"
+          "rect": [
+            0.0,
+            384.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "east",
+          "path": "Exits/east",
           "target": "campus_n",
+          "spawn": "hall_east",
           "point": [
             816.0,
             416.0
           ],
-          "spawn": "hall_east"
+          "rect": [
+            800.0,
+            384.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -1662,12 +2200,20 @@
       "exits": [
         {
           "id": "south",
+          "path": "Exits/south",
           "target": "campus_s",
+          "spawn": "clinic_front",
           "point": [
             288.0,
             336.0
           ],
-          "spawn": "clinic_front"
+          "rect": [
+            256.0,
+            320.0,
+            64.0,
+            32.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -1891,12 +2437,20 @@
       "exits": [
         {
           "id": "up",
+          "path": "Exits/up",
           "target": "archive",
+          "spawn": "stairs",
           "point": [
             64.0,
             240.0
           ],
-          "spawn": "stairs"
+          "rect": [
+            32.0,
+            224.0,
+            64.0,
+            32.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -1990,12 +2544,20 @@
       "exits": [
         {
           "id": "south",
+          "path": "Exits/south",
           "target": "campus_s",
+          "spawn": "granary_front",
           "point": [
             160.0,
             272.0
           ],
-          "spawn": "granary_front"
+          "rect": [
+            128.0,
+            256.0,
+            64.0,
+            32.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -2201,12 +2763,20 @@
       "exits": [
         {
           "id": "south",
+          "path": "Exits/south",
           "target": "campus_ne",
+          "spawn": "greenhouse_front",
           "point": [
             192.0,
             976.0
           ],
-          "spawn": "greenhouse_front"
+          "rect": [
+            160.0,
+            960.0,
+            64.0,
+            32.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -2319,7 +2889,81 @@
           ]
         }
       ],
-      "doors": []
+      "doors": [],
+      "outdoor_origin": [
+        4848.0,
+        2640.0
+      ],
+      "outdoor_core": [
+        5136.0,
+        2928.0,
+        2880.0,
+        2928.0
+      ],
+      "outdoor_origins": {
+        "campus_nw": [
+          0.0,
+          0.0
+        ],
+        "campus_n": [
+          2400.0,
+          0.0
+        ],
+        "campus_ne": [
+          4848.0,
+          0.0
+        ],
+        "campus_sw": [
+          0.0,
+          2640.0
+        ],
+        "campus_s": [
+          2400.0,
+          2640.0
+        ],
+        "harbor": [
+          4848.0,
+          2640.0
+        ]
+      },
+      "outdoor_cores": {
+        "campus_nw": [
+          0.0,
+          0.0,
+          2688.0,
+          2928.0
+        ],
+        "campus_n": [
+          2688.0,
+          0.0,
+          2448.0,
+          2928.0
+        ],
+        "campus_ne": [
+          5136.0,
+          0.0,
+          2880.0,
+          2928.0
+        ],
+        "campus_sw": [
+          0.0,
+          2928.0,
+          2688.0,
+          2928.0
+        ],
+        "campus_s": [
+          2688.0,
+          2928.0,
+          2448.0,
+          2928.0
+        ],
+        "harbor": [
+          5136.0,
+          2928.0,
+          2880.0,
+          2928.0
+        ]
+      }
     },
     "lecture": {
       "scene": "res://scenes/Chapter2/Maps/lecture.tscn",
@@ -2491,12 +3135,20 @@
       "exits": [
         {
           "id": "east",
+          "path": "Exits/east",
           "target": "central_hall",
+          "spawn": "west",
           "point": [
             688.0,
             320.0
           ],
-          "spawn": "west"
+          "rect": [
+            672.0,
+            288.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -3543,30 +4195,126 @@
       "exits": [
         {
           "id": "living_hall_north_door",
+          "path": "Exits/living_hall_north_door",
           "target": "campus_sw",
+          "spawn": "living_north",
           "point": [
             1376.0,
             144.0
           ],
-          "spawn": "living_north"
+          "rect": [
+            1344.0,
+            128.0,
+            64.0,
+            32.0
+          ],
+          "internal_gate": false
+        },
+        {
+          "id": "living_hall_west_north",
+          "path": "Exits/living_hall_west_north",
+          "target": "",
+          "spawn": "from_hall",
+          "point": [
+            1136.0,
+            384.0
+          ],
+          "rect": [
+            1120.0,
+            352.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": true,
+          "gate": "zone_jia"
+        },
+        {
+          "id": "living_hall_west_south",
+          "path": "Exits/living_hall_west_south",
+          "target": "",
+          "spawn": "from_hall",
+          "point": [
+            1136.0,
+            1088.0
+          ],
+          "rect": [
+            1120.0,
+            1056.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": true,
+          "gate": "zone_bing"
+        },
+        {
+          "id": "living_hall_east_north",
+          "path": "Exits/living_hall_east_north",
+          "target": "",
+          "spawn": "from_hall",
+          "point": [
+            1616.0,
+            384.0
+          ],
+          "rect": [
+            1600.0,
+            352.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": true,
+          "gate": "zone_ding"
+        },
+        {
+          "id": "living_hall_east_south",
+          "path": "Exits/living_hall_east_south",
+          "target": "",
+          "spawn": "from_hall",
+          "point": [
+            1616.0,
+            1088.0
+          ],
+          "rect": [
+            1600.0,
+            1056.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": true,
+          "gate": "zone_yi"
         },
         {
           "id": "living_hall_west_lane",
+          "path": "Exits/living_hall_west_lane",
           "target": "campus_sw",
+          "spawn": "lane_west",
           "point": [
             1136.0,
             640.0
           ],
-          "spawn": "lane_west"
+          "rect": [
+            1120.0,
+            608.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "living_hall_east_lane",
+          "path": "Exits/living_hall_east_lane",
           "target": "campus_sw",
+          "spawn": "lane_east",
           "point": [
             1616.0,
             640.0
           ],
-          "spawn": "lane_east"
+          "rect": [
+            1600.0,
+            608.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -5184,66 +5932,122 @@
       "exits": [
         {
           "id": "north_door",
+          "path": "Exits/north_door",
           "target": "campus_sw",
+          "spawn": "living_north",
           "point": [
             256.0,
             16.0
           ],
-          "spawn": "living_north"
+          "rect": [
+            224.0,
+            0.0,
+            64.0,
+            32.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "west_north",
+          "path": "Exits/west_north",
           "target": "zone_jia",
+          "spawn": "from_hall",
           "point": [
             16.0,
             256.0
           ],
-          "spawn": "from_hall"
+          "rect": [
+            0.0,
+            224.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "west_south",
+          "path": "Exits/west_south",
           "target": "zone_bing",
+          "spawn": "from_hall",
           "point": [
             16.0,
             768.0
           ],
-          "spawn": "from_hall"
+          "rect": [
+            0.0,
+            736.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "east_north",
+          "path": "Exits/east_north",
           "target": "zone_ding",
+          "spawn": "from_hall",
           "point": [
             496.0,
             256.0
           ],
-          "spawn": "from_hall"
+          "rect": [
+            480.0,
+            224.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "east_south",
+          "path": "Exits/east_south",
           "target": "zone_yi",
+          "spawn": "from_hall",
           "point": [
             496.0,
             768.0
           ],
-          "spawn": "from_hall"
+          "rect": [
+            480.0,
+            736.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "west_lane",
+          "path": "Exits/west_lane",
           "target": "campus_sw",
+          "spawn": "lane_west",
           "point": [
             16.0,
             512.0
           ],
-          "spawn": "lane_west"
+          "rect": [
+            0.0,
+            480.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "east_lane",
+          "path": "Exits/east_lane",
           "target": "campus_sw",
+          "spawn": "lane_east",
           "point": [
             496.0,
             512.0
           ],
-          "spawn": "lane_east"
+          "rect": [
+            480.0,
+            480.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -5562,21 +6366,37 @@
       "exits": [
         {
           "id": "west",
+          "path": "Exits/west",
           "target": "campus_s",
+          "spawn": "logistics_west",
           "point": [
             16.0,
             320.0
           ],
-          "spawn": "logistics_west"
+          "rect": [
+            0.0,
+            288.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         },
         {
           "id": "east",
+          "path": "Exits/east",
           "target": "campus_s",
+          "spawn": "logistics_east",
           "point": [
             976.0,
             320.0
           ],
-          "spawn": "logistics_east"
+          "rect": [
+            960.0,
+            288.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -5819,12 +6639,20 @@
       "exits": [
         {
           "id": "south",
+          "path": "Exits/south",
           "target": "campus_nw",
+          "spawn": "resonance_front",
           "point": [
             352.0,
             496.0
           ],
-          "spawn": "resonance_front"
+          "rect": [
+            320.0,
+            480.0,
+            64.0,
+            32.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -6074,12 +6902,20 @@
       "exits": [
         {
           "id": "isolation_gate",
-          "target": "living_hall",
+          "path": "Exits/isolation_gate",
+          "target": "living_floor",
+          "spawn": "living_hall_west_south",
           "point": [
             1136.0,
             384.0
           ],
-          "spawn": "west_south"
+          "rect": [
+            1120.0,
+            352.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -6394,8 +7230,8 @@
         {
           "id": "isolation_gate",
           "from": "zone_bing:foyer",
-          "to": "living_hall",
-          "target_map": "living_hall",
+          "to": "living_floor",
+          "target_map": "living_floor",
           "point": [
             1136.0,
             384.0
@@ -6590,12 +7426,20 @@
       "exits": [
         {
           "id": "isolation_gate",
-          "target": "living_hall",
+          "path": "Exits/isolation_gate",
+          "target": "living_floor",
+          "spawn": "living_hall_east_north",
           "point": [
             16.0,
             384.0
           ],
-          "spawn": "east_north"
+          "rect": [
+            0.0,
+            352.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -6910,8 +7754,8 @@
         {
           "id": "isolation_gate",
           "from": "zone_ding:foyer",
-          "to": "living_hall",
-          "target_map": "living_hall",
+          "to": "living_floor",
+          "target_map": "living_floor",
           "point": [
             16.0,
             384.0
@@ -7106,12 +7950,20 @@
       "exits": [
         {
           "id": "isolation_gate",
-          "target": "living_hall",
+          "path": "Exits/isolation_gate",
+          "target": "living_floor",
+          "spawn": "living_hall_west_north",
           "point": [
             1136.0,
             384.0
           ],
-          "spawn": "west_north"
+          "rect": [
+            1120.0,
+            352.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -7426,8 +8278,8 @@
         {
           "id": "isolation_gate",
           "from": "zone_jia:foyer",
-          "to": "living_hall",
-          "target_map": "living_hall",
+          "to": "living_floor",
+          "target_map": "living_floor",
           "point": [
             1136.0,
             384.0
@@ -7704,12 +8556,20 @@
       "exits": [
         {
           "id": "isolation_gate",
-          "target": "living_hall",
+          "path": "Exits/isolation_gate",
+          "target": "living_floor",
+          "spawn": "living_hall_east_south",
           "point": [
             16.0,
             384.0
           ],
-          "spawn": "east_south"
+          "rect": [
+            0.0,
+            352.0,
+            32.0,
+            64.0
+          ],
+          "internal_gate": false
         }
       ],
       "rooms": [
@@ -8024,8 +8884,8 @@
         {
           "id": "isolation_gate",
           "from": "zone_yi:foyer",
-          "to": "living_hall",
-          "target_map": "living_hall",
+          "to": "living_floor",
+          "target_map": "living_floor",
           "point": [
             16.0,
             384.0

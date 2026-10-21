@@ -29,15 +29,17 @@ def ui_design_contract() -> dict:
 
 def _engine(request):
     executable=os.environ.get('GODOT') or os.environ.get('GODOT_BIN') or shutil.which('godot')
-    if not executable: raise ValueError('Set GODOT_BIN to the project Godot 4.6 .NET executable')
+    if not executable: raise ValueError('Set GODOT_BIN to a Godot 4.6 executable')
     w.REPORT.mkdir(parents=True,exist_ok=True)
     request_path=w.REPORT/'ui-request.json'
     report_path=w.REPORT/'ui-engine-report.json'
     w.save_json(request_path,request)
     if report_path.exists(): report_path.unlink()
-    args=[executable,'--headless','--path',str(w.prepare()),'--log-file',str(w.REPORT/'ui-engine.log'),
-          '--script','res://addons/rpg_asset_adapter/mcp/ui_inspect.gd','--',str(request_path)]
-    result=subprocess.run(args,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=90)
+    with w.workspace(isolated_user_data=True) as work:
+        w.import_assets(work, executable, w.REPORT / 'ui-import.log')
+        args=[executable,'--headless','--path',str(work),'--log-file',str(w.REPORT/'ui-engine.log'),
+              '--script','res://addons/rpg_asset_adapter/mcp/ui_inspect.gd','--',str(request_path)]
+        result=subprocess.run(args,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=90)
     log=result.stdout+'\n'+result.stderr
     (w.REPORT/'ui-engine-output.log').write_text(log,encoding='utf-8')
     diagnostics=[line for line in log.splitlines() if line.startswith('ERROR:')]

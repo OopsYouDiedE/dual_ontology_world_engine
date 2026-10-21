@@ -238,14 +238,14 @@ fn v_judge_full(manifest, raw_trace, oracle):
         rt_push(result, stage_times[stage_index])
         stage_index = (stage_index + 1)
     rt_push(result, v_ready_deadline(manifest, trace, oracle))
-    return {"mode": "read_only", "findings": result, "limitations": "No gameplay, aesthetic, or statistical conclusion is inferred from engineering output"}
+    return {"mode": "read_only", "domain_evaluation_complete": true, "domain_evaluation_reason": "completed", "findings": result, "limitations": "No gameplay, aesthetic, or statistical conclusion is inferred from engineering output"}
 
 fn v_judge(manifest, raw_trace, oracle):
     if dv_record_like(raw_trace):
         var initial = dv_find(raw_trace, "initial", [])
         var integrity = v_integrity(manifest, raw_trace)
         if (not (integrity.status == "supported")):
-            return {"mode": "read_only", "findings": dv_single(integrity), "limitations": "损坏的来源或事件基线不进入领域重演"}
+            return {"mode": "read_only", "domain_evaluation_complete": false, "domain_evaluation_reason": "invalid_integrity", "findings": dv_single(integrity), "limitations": "损坏的来源或事件基线不进入领域重演"}
         else:
             var local_1 = false
             if dv_record_like(initial):
@@ -255,9 +255,9 @@ fn v_judge(manifest, raw_trace, oracle):
             if local_1:
                 return v_judge_full(manifest, raw_trace, oracle)
             else:
-                return {"mode": "read_only", "findings": dv_single(v_finding("run_intake", "insufficient_evidence", "缺少完整冻结初始物理与人物快照，不能重演来源或给出全局成立结论", [])), "limitations": "未进入领域重演"}
+                return {"mode": "read_only", "domain_evaluation_complete": false, "domain_evaluation_reason": "missing_initial_state", "findings": dv_single(v_finding("run_intake", "insufficient_evidence", "缺少完整冻结初始物理与人物快照，不能重演来源或给出全局成立结论", [])), "limitations": "未进入领域重演"}
     else:
-        return {"mode": "read_only", "findings": dv_single(v_finding("run_intake", "invalid_run", "轨迹交换数据不是合法只读记录", [])), "limitations": "未进入领域重演"}
+        return {"mode": "read_only", "domain_evaluation_complete": false, "domain_evaluation_reason": "invalid_trace", "findings": dv_single(v_finding("run_intake", "invalid_run", "轨迹交换数据不是合法只读记录", [])), "limitations": "未进入领域重演"}
 
 fn v_main():
     dv_require((rt_arg_count() == 3), "Historical JSON read-only intake: manifest.json trace.json oracle.json; current binary runs use CausalCheckBridge")
@@ -271,13 +271,17 @@ fn v_binary_judge(manifest, evidence):
     let requested = dv_get(manifest, "run_config")
     var report = []
     if not dv_same(actual, requested):
-        report = {"mode": "read_only", "findings": [v_finding("run_configuration", "invalid_run", "Sealed session configuration differs from the requested and emitted configuration", [])], "limitations": "Configuration mismatch; no domain replay entered"}
+        report = {"mode": "read_only", "domain_evaluation_complete": false, "domain_evaluation_reason": "configuration_mismatch", "findings": [v_finding("run_configuration", "invalid_run", "Sealed session configuration differs from the requested and emitted configuration", [])], "limitations": "Configuration mismatch; no domain replay entered"}
     else:
         report = v_judge(manifest, evidence.trace, dvs_chapter1_oracle())
     return dv_with_many(report, {"contract": "chapter1-causal", "evidence_executor": "formal-model", "geometry": false, "raw_sha256": manifest.raw_sha256, "run_config": actual})
 
 fn v_binary_summary(report):
-    return {"type": "causal_check", "mode": "read_only", "contract": report.contract, "evidence_executor": report.evidence_executor, "geometry": false, "domain_evaluation_complete": true, "main_causal_supported": v_main_causal_supported(report, dvs_chapter1_oracle()), "raw_sha256": report.raw_sha256}
+    let complete = dv_find(report, "domain_evaluation_complete", false)
+    var supported = false
+    if complete:
+        supported = v_main_causal_supported(report, dvs_chapter1_oracle())
+    return {"type": "causal_check", "mode": "read_only", "contract": report.contract, "evidence_executor": report.evidence_executor, "geometry": false, "domain_evaluation_complete": complete, "domain_evaluation_reason": dv_find(report, "domain_evaluation_reason", "not_entered"), "main_causal_supported": supported, "raw_sha256": report.raw_sha256}
 
 fn v_event_precedes(events, prior, current):
     var i = 0

@@ -24,7 +24,7 @@
     book_light.png  册子表面的乘色光照（屏幕坐标，标题页的册子着色器按屏幕 UV 取样）
     cloth.png       册子布面封皮（128 原生像素可平铺，放大 2 倍）
 
-册子的位置、尺寸、转角、厚度与纵深缩短由 tools/build_ui_theme.py 从本文件读出写进 TitleTheme，
+册子的位置、尺寸、转角、厚度与纵深缩短由 mcp/asset_pipeline/build_ui_theme.py 从本文件读出写进 TitleTheme，
 标题页脚本按这些常量摆放册子，与烘焙的投影对齐。
 
     python mcp/asset_pipeline/build_ui_desk.py

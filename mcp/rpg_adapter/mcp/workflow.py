@@ -19,7 +19,7 @@ GAME = REPO / 'godot_csharp'
 SOURCES = REPO / 'mcp/asset_pipeline/sources'
 SOURCE = SOURCES / 'Internal/Props/TileMapWorkflow'
 sys.path.insert(0, str(REPO / 'mcp'))
-from godot_workspace import prepare
+from godot_workspace import import_assets, workspace
 OUTPUT = GAME / 'ShareAsset/Internal/Props/TileMapWorkflow'
 REPORT = REPO / 'artifacts/tilemap-workflow'
 DIRECTIONS = [(0,-1,1),(1,0,2),(0,1,4),(-1,0,8),(1,-1,16),(1,1,32),(-1,1,64),(-1,-1,128)]
@@ -383,13 +383,15 @@ def compose_map(rows: list[str], spawn: list[int], props: list[dict] | None = No
 def export_godot() -> dict:
     """Run fixed Godot exporter; GODOT_BIN or PATH selects executable, not tool input. No arbitrary scripts."""
     godot=os.environ.get('GODOT') or os.environ.get('GODOT_BIN') or shutil.which('godot')
-    if not godot: raise ValueError('Set GODOT_BIN to Godot 4.6 .NET executable')
+    if not godot: raise ValueError('Set GODOT_BIN to a Godot 4.6 executable')
     build=OUTPUT/'build.json'
     if not build.exists(): raise ValueError('compose_map must run first')
     REPORT.mkdir(parents=True,exist_ok=True)
-    result=subprocess.run([godot,'--headless','--log-file',str(REPORT/'godot-engine.log'),'--path',str(prepare()),'--script',
-        'res://addons/rpg_asset_adapter/mcp/export_map.gd','--',str(build)],
-        capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=120)
+    with workspace() as work:
+        import_assets(work, godot, REPORT / 'godot-import.log')
+        result=subprocess.run([godot,'--headless','--log-file',str(REPORT/'godot-engine.log'),'--path',str(work),'--script',
+            'res://addons/rpg_asset_adapter/mcp/export_map.gd','--',str(build)],
+            capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=120)
     log=result.stdout+'\n'+result.stderr
     REPORT.mkdir(parents=True,exist_ok=True)
     (REPORT/'godot-export.log').write_text(log,encoding='utf-8')

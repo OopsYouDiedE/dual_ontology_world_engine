@@ -15,10 +15,13 @@ python mcp/server.py
 ```
 
 If the environment is inside the Godot project, put `.gdignore` at its root so
-Godot does not import it. `GODOT_BIN` names the Godot .NET executable for explicitly
+Godot does not import it. `GODOT_BIN` names the Godot executable for explicitly
 requested UI inspection; starting this service does not launch Godot. The repository server owns stdio transport and imports an operation only when it is called.
 Use tool `rpg_adapter` with `{ "operation": "inspect_image", "arguments": { ... } }`.
 The former adapter `server.py` command forwards to the repository entrypoint.
+Operation choices and function routes are declared once in `mcp/tools.json`.
+UI inspection and map export import assets in a pure-GDScript temporary workspace
+and release that workspace when the call ends.
 
 ## Available work
 
@@ -76,4 +79,7 @@ Run only the check needed for the selected engineering question after edits are
 complete. These tools do not establish gameplay, narrative, artistic or performance
 acceptance. Do not run a combined flow regression.
 
-The current refactor migrates existing check paths only; protocol assertions and execution are deferred until all implementation Steps are complete.
+The existing scripts are callable through `adapter_checks` with `operation`
+`workflow`, `native-art`, `pixel-handoff`, `production`, or `demo`. Godot adapter
+conversion and rendering entries use `godot_tools`; the editor plugin uses
+`map_workspace` with `mode=editor`. Listing tools does not run any of these scripts.

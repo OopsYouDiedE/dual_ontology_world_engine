@@ -9,6 +9,8 @@ signal reopen_requested
 const BOOK_SCENE := preload("res://scenes/UI/TitleUI.tscn")
 var archive: RefCounted
 var restore_previous_focus := false
+var pause_world := true
+var replay_mode := false
 var book: Control
 var _active := false
 var _closing := false
@@ -29,11 +31,12 @@ func open(page := "settings") -> void:
 		return
 	_active = true
 	_was_paused = get_tree().paused
-	get_tree().paused = true
+	if pause_world: get_tree().paused = true
 	reading_changed.emit(true)
 	visible = true
 	book = BOOK_SCENE.instantiate()
 	book.mode = "casebook"
+	book.replay_mode = replay_mode
 	book.initial_page = page
 	book.archive = archive
 	book.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -56,7 +59,7 @@ func close() -> void:
 	_active = false
 	_closing = false
 	visible = false
-	get_tree().paused = _was_paused
+	if pause_world: get_tree().paused = _was_paused
 	reading_changed.emit(false)
 	closed.emit()
 
@@ -91,7 +94,7 @@ func begin_shutdown() -> void:
 	if _shutting_down: return
 	_shutting_down = true
 	if _active:
-		get_tree().paused = _was_paused
+		if pause_world: get_tree().paused = _was_paused
 		reading_changed.emit(false)
 	_active = false
 	visible = false

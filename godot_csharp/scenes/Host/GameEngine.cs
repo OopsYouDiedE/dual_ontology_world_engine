@@ -27,6 +27,8 @@ public partial class GameEngine : Node
     private SmartReplay? replay;
     public void SetDiagnosticsEnabled(bool value) => timingEnabled = value;
     public bool IsDeveloperMode() => session?.DevMode == true;
+    public bool CanInspect() => session?.DevMode == true;
+    public bool HasReplaySample() => false;
     public bool IsDispatchIdle() => !busy && !maintenance && (faulted || commands.Count == 0);
     public void RecordHostFailure(string message)
     {
@@ -196,7 +198,7 @@ public partial class GameEngine : Node
                         var snapshot = opened.ProjectedSnapshot;
                         var journalData = opened.ProjectedCasebook;
                         events = new GArray { new GDict { ["kind"] = "view",
-                            ["resource"] = snapshot["resource"], ["snapshot"] = snapshot,
+                            ["snapshot"] = snapshot,
                             ["casebook"] = journalData, ["casebook_warning"] = opened.Warning } };
                         session = opened.Session;
                         snapshotCache = opened.Snapshot;
@@ -382,33 +384,6 @@ public partial class GameEngine : Node
             throw new InvalidOperationException("Session persistence is unavailable while a Godot action awaits its execution receipt");
     }
 
-    private void RequireIdle(bool requireSession = true)
-    {
-        if (busy || maintenance || closing) throw new InvalidOperationException("Use the awaited persistence boundary while session work is active");
-        RequireNoPendingExecution();
-        if (requireSession && session is null) throw new InvalidOperationException("Session is not open");
-    }
-
-    public string Save()
-    {
-        RequireIdle();
-        try { return session!.Save(); }
-        catch (Exception error) { hostErrors.Add(new { phase = "save-sync", error = error.ToString() }); throw; }
-    }
-
-    public void Restore(string json)
-    {
-        RequireIdle(requireSession: false);
-        try { InstallRestored(Task.Run(() => RestoreValue(json)).GetAwaiter().GetResult()); }
-        catch (Exception error) { hostErrors.Add(new { phase = "restore-sync", error = error.ToString() }); throw; }
-    }
-
-    private static (DvSession Session, string Snapshot) RestoreValue(string json)
-    {
-        var current = DvSession.Restore(json);
-        return (current, current.Snapshot(current.Viewer));
-    }
-
     private void InstallRestored((DvSession Session, string Snapshot) restored)
     {
         session = restored.Session;
@@ -421,54 +396,6 @@ public partial class GameEngine : Node
         // Commands accepted for the previous state cannot be replayed into a restored state.
         commands.Clear();
         faulted = false;
-    }
-
-    // Internal Task APIs deliberately stay out of Godot's Variant method binding.
-    internal Task<string> SaveAsync()
-    {
-        if (closing || maintenance) throw new InvalidOperationException("Session persistence is unavailable");
-        RequireNoPendingExecution();
-        maintenance = true;
-        var operation = SaveAfterAsync(work);
-        work = operation;
-        return operation;
-    }
-
-    private async Task<string> SaveAfterAsync(Task previous)
-    {
-        await Task.Yield();
-        try
-        {
-            await previous;
-            RequireNoPendingExecution();
-            var current = session ?? throw new InvalidOperationException("Session is not open");
-            return await Task.Run(current.Save);
-        }
-        catch (Exception error) { hostErrors.Add(new { phase = "save", error = error.ToString() }); throw; }
-        finally { maintenance = false; StartPump(); }
-    }
-
-    internal Task RestoreAsync(string json)
-    {
-        if (closing || maintenance) throw new InvalidOperationException("Session persistence is unavailable");
-        RequireNoPendingExecution();
-        maintenance = true;
-        var operation = RestoreAfterAsync(work, json);
-        work = operation;
-        return operation;
-    }
-
-    private async Task RestoreAfterAsync(Task previous, string json)
-    {
-        await Task.Yield();
-        try
-        {
-            await previous;
-            RequireNoPendingExecution();
-            InstallRestored(await Task.Run(() => RestoreValue(json)));
-        }
-        catch (Exception error) { hostErrors.Add(new { phase = "restore", error = error.ToString() }); throw; }
-        finally { maintenance = false; StartPump(); }
     }
 
     public void RecordVisible(GDict value) => visible.Add(Json.Stringify(value));

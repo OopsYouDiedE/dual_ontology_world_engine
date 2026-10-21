@@ -3,8 +3,8 @@ extends Node
 ## 持久化到 user://settings.cfg（只写入玩家改过的项，其余跟随默认），启动时读取并立即生效，
 ## 改动经 setting_changed 通知界面。图像、声音、按键由本脚本直接生效；
 ## pixel_titles / paper_texture / text_scale / high_contrast / plain_fonts / reduce_motion / screen_flash
-## 只存储并发信号，由界面代码消费；text_speed / auto_advance / auto_advance_delay / hold_fast_forward
-## 由 ChapterDialogue 读取。语言不在此处存储，读写都转给 GameLocale。
+## 只存储并发信号，由界面代码消费；text_speed 由 DialogueUI 读取。
+## 语言读写转给 GameLocale。
 ## 无头检查脚本里自动加载缺席时，读取方应经 get_node_or_null("/root/GameSettings") 取用并回退到默认。
 
 signal setting_changed(section: String, key: String, value)
@@ -16,19 +16,17 @@ const CONTROL_BINDINGS_VERSION := 1
 const BASE_WINDOW := Vector2i(1280, 992)
 const SECTIONS := ["graphics", "language", "audio", "controls", "accessibility"]
 
-## 可改键的动作（显示顺序）与分组。分组 id：move 移动 / world 现场 / dialogue 对话 / replay 回放 / system 系统。
+## 可改键的动作（显示顺序）与分组。分组 id：move 移动 / world 现场 / dialogue 对话 / system 系统。
 const CONTROL_ACTIONS := [
 	"move_up", "move_down", "move_left", "move_right", "interact",
 	"notebook", "manuscript", "campus_map", "wait", "cancel",
-	"dialogue_continue", "dialogue_choose", "dialogue_history", "fast_forward",
-	"replay_pause", "replay_speed", "replay_skip",
+	"dialogue_continue", "dialogue_history", "fast_forward",
 	"settings", "book_prev", "book_next",
 ]
 const ACTION_GROUPS := {
 	"move_up": "move", "move_down": "move", "move_left": "move", "move_right": "move",
 	"interact": "world", "notebook": "world", "manuscript": "world", "campus_map": "world", "wait": "world", "cancel": "world",
-	"dialogue_continue": "dialogue", "dialogue_choose": "dialogue", "dialogue_history": "dialogue", "fast_forward": "dialogue",
-	"replay_pause": "replay", "replay_speed": "replay", "replay_skip": "replay",
+	"dialogue_continue": "dialogue", "dialogue_history": "dialogue", "fast_forward": "dialogue",
 	"settings": "system", "book_prev": "system", "book_next": "system",
 }
 ## 移动键按物理位置匹配（换键盘布局后 WASD 仍是左手那一排），其余按键帽字符匹配。
@@ -45,12 +43,8 @@ const ACTION_NAMES := {
 	"wait": ["原地等待", "Wait", "待つ"],
 	"cancel": ["返回 / 关闭", "Back / close", "戻る・閉じる"],
 	"dialogue_continue": ["继续对话", "Continue dialogue", "会話を続ける"],
-	"dialogue_choose": ["确认回应", "Confirm response", "選択を決定"],
 	"dialogue_history": ["对话回看", "Dialogue history", "会話履歴"],
 	"fast_forward": ["快进对话", "Fast-forward dialogue", "会話の早送り"],
-	"replay_pause": ["回放暂停", "Pause replay", "一時停止"],
-	"replay_speed": ["回放加速", "Replay speed", "再生速度"],
-	"replay_skip": ["跳过回放", "Skip replay", "スキップ"],
 	"settings": ["设置", "Settings", "設定"],
 	"book_prev": ["前一页", "Previous page", "前のページ"],
 	"book_next": ["后一页", "Next page", "次のページ"],
@@ -79,8 +73,6 @@ const SPEC := {
 	"accessibility": {
 		"text_scale": {"default": 1.0, "type": "choice", "allowed": [1.0, 1.25, 1.5]},
 		"text_speed": {"default": 1.0, "type": "choice", "allowed": [0.5, 1.0, 2.0, 0.0]},
-		"auto_advance": {"default": false, "type": "bool"},
-		"auto_advance_delay": {"default": 2.0, "type": "range", "min": 0.5, "max": 10.0},
 		"reduce_motion": {"default": false, "type": "bool"},
 		"high_contrast": {"default": false, "type": "bool"},
 		"plain_fonts": {"default": false, "type": "bool"},
@@ -93,7 +85,6 @@ var _values := {}
 ## 免得覆盖命令行给的 --resolution、--disable-vsync 之类。
 var _explicit := {}
 var _default_events := {}
-var _hold_fast_forward := true
 var _unfocused := false
 var _save_pending := false
 var _loading := true
@@ -141,7 +132,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # ==================================================================== query ===
 
-## 出厂默认：{section: {key: value}}。controls 为每个动作一组序列化事件，外加 hold_fast_forward；language 取系统语言。
+## 出厂默认：{section: {key: value}}。controls 为每个动作一组序列化事件；language 取系统语言。
 func defaults() -> Dictionary:
 	var result := {}
 	for section in SPEC:
@@ -149,7 +140,7 @@ func defaults() -> Dictionary:
 		for key in SPEC[section]:
 			result[section][key] = SPEC[section][key].default
 	result["language"] = {"locale": _system_locale_code()}
-	var controls := {"hold_fast_forward": true}
+	var controls := {}
 	for action in CONTROL_ACTIONS:
 		controls[action] = _copy_events(_default_events[action])
 	result["controls"] = controls
@@ -160,8 +151,6 @@ func get_value(section: String, key: String) -> Variant:
 		"language":
 			return current_language() if key == "locale" else null
 		"controls":
-			if key == "hold_fast_forward":
-				return _hold_fast_forward
 			if _default_events.has(key):
 				var list: Array = []
 				for event in action_events(key):
@@ -182,11 +171,6 @@ func set_value(section: String, key: String, value: Variant) -> bool:
 			else: TranslationServer.set_locale(str(value))
 			return true
 		"controls":
-			if key == "hold_fast_forward":
-				_hold_fast_forward = bool(value)
-				_mark(section, key)
-				setting_changed.emit(section, key, _hold_fast_forward)
-				return true
 			if _default_events.has(key) and value is Array:
 				var events: Array[InputEvent] = []
 				for entry in value:
@@ -286,9 +270,6 @@ func reset_action(action: String) -> void:
 func reset_controls() -> void:
 	for action in CONTROL_ACTIONS:
 		reset_action(action)
-	_hold_fast_forward = true
-	_explicit.erase("controls/hold_fast_forward")
-	setting_changed.emit("controls", "hold_fast_forward", true)
 	_save_later()
 
 func action_label(action: String) -> String:
@@ -602,7 +583,6 @@ func flush() -> void:
 	for section in SPEC:
 		for key in SPEC[section]:
 			if _is_explicit(section, key): file.set_value(section, key, _values[section][key])
-	if _is_explicit("controls", "hold_fast_forward"): file.set_value("controls", "hold_fast_forward", _hold_fast_forward)
 	for action in CONTROL_ACTIONS:
 		if _is_explicit("controls", action):
 			file.set_value("controls", "bindings_version", CONTROL_BINDINGS_VERSION)
@@ -622,9 +602,6 @@ func _load() -> void:
 			if file.has_section_key(section, key):
 				_values[section][key] = _normalize(SPEC[section][key], file.get_value(section, key))
 				_mark(section, key)
-	if file.has_section_key("controls", "hold_fast_forward"):
-		_hold_fast_forward = bool(file.get_value("controls", "hold_fast_forward"))
-		_mark("controls", "hold_fast_forward")
 	for action in CONTROL_ACTIONS:
 		if not file.has_section_key("controls", action): continue
 		var stored: Variant = file.get_value("controls", action)

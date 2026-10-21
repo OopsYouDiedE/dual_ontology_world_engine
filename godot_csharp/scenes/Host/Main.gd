@@ -1,8 +1,9 @@
 extends Node
 signal shutdown_completed
-## 单一窗口：把输入交给 C#，把输出交给视图或 GUI，不持有剧情与章节规则。
+## 单一窗口：把输入交给会话端点，把输出交给视图或 GUI，不持有剧情与章节规则。
 
-const EngineScript := preload("res://scenes/Host/GameEngine.cs")
+const ENGINE_PATH := "res://scenes/Host/GameEngine.cs"
+const PRESENTATION := preload("res://scenes/Host/HostPresentation.gd")
 const UI_SCENE := preload("res://scenes/UI/UISystem.tscn")
 const TITLE_SCENE := preload("res://scenes/UI/TitleUI.tscn")
 const FIELD_SCRIPT := preload("res://scenes/Shared/Field/WorldView.gd")
@@ -21,10 +22,14 @@ const NOTICE_THEME := preload("res://scenes/UI/Styles/OverlayTheme.tres")
 @export var campaign_options: Dictionary = {}
 @export var viewer := ""
 @export_range(0.25, 8.0, 0.25) var playback_speed := 1.0
+## An isolated replay viewport supplies a read-only session and owns its lifetime.
+var session_override: Node
+var replay_mode := false
 var flow := HOST_FLOW.new()
 var dev_console: CanvasLayer
 var diagnostics: Node
 var audit_enabled := false
+var navigation_sampling := false
 var _preview_tokens: Dictionary = {}
 var _npc_tick_at := 0
 var field_executor: Node
@@ -50,37 +55,42 @@ func _timing(stage: String, details: Dictionary = {}) -> void:
 	engine.RecordTiming({"stage": stage, "interaction_id": _interaction_id, "details": details})
 
 func _ready() -> void:
-	get_tree().auto_accept_quit = false
-	add_to_group("lifecycle_hosts")
-	get_window().title = "安眠者有福"
-	audit_enabled = "--dv-audit" in OS.get_cmdline_user_args()
-	engine = MOCK_SESSION.new() if "--dv-mock" in OS.get_cmdline_user_args() else EngineScript.new()
+	if not replay_mode:
+		get_tree().auto_accept_quit = false
+		add_to_group("lifecycle_hosts")
+		get_window().title = str(PRESENTATION.catalog().title)
+	audit_enabled = not replay_mode and "--dv-audit" in OS.get_cmdline_user_args()
+	if session_override != null: engine = session_override
+	elif "--dv-mock" in OS.get_cmdline_user_args(): engine = MOCK_SESSION.new()
+	else: engine = load(ENGINE_PATH).new()
 	engine.name = "Engine"
 	add_child(engine)
 	engine.EventsReady.connect(_dv_events)
 	engine.TraceClosed.connect(func():
-		flow.shutdown_finished = true
+		flow.transition("shutdown_finished", true)
 		shutdown_completed.emit()
 	)
 	view_trace = VIEW_TRACE.new()
 	view_trace.name = "PlayerViewTrace"
 	add_child(view_trace)
-	view_trace.configure(self, engine.RecordVisible, engine.RecordInput, audit_enabled)
+	view_trace.configure(self, engine.RecordVisible, engine.RecordInput, audit_enabled, not replay_mode)
 	diagnostics = DIAGNOSTICS.new()
 	add_child(diagnostics)
 	diagnostics.configure(self, audit_enabled)
 	engine.SetDiagnosticsEnabled(audit_enabled)
-	dev_console = DEV_CONSOLE.new()
-	add_child(dev_console)
-	dev_console.configure(self, engine)
+	if not replay_mode:
+		dev_console = DEV_CONSOLE.new()
+		add_child(dev_console)
+		dev_console.configure(self, engine)
 	field_executor = FIELD_EXECUTOR.new()
 	field_executor.name = "DvFieldExecutor"
+	field_executor.timing_sink = engine.RecordTiming
 	add_child(field_executor)
 	_home()
-	if "--dv-auto-start" in OS.get_cmdline_user_args(): dispatch.call_deferred({"kind": "start"})
+	if not replay_mode and "--dv-auto-start" in OS.get_cmdline_user_args(): dispatch.call_deferred({"kind": "start"})
 
 func _dispose_views(keep_title := false) -> void:
-	flow.player_options_open = false
+	flow.transition("player_options_open", false)
 	if is_instance_valid(field):
 		if is_instance_valid(field_executor): field_executor.retain_field(field)
 		field.begin_shutdown()
@@ -105,6 +115,7 @@ func _home() -> void:
 	add_child(title_layer)
 	var title: Control = TITLE_SCENE.instantiate()
 	title.mode = "title"
+	title.replay_mode = replay_mode
 	title_layer.add_child(title)
 	title.ui_event.connect(dispatch)
 	if is_instance_valid(view_trace): move_child(view_trace, get_child_count() - 1)
@@ -159,6 +170,7 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	if ev.has("casebook"):
 		_casebook.restore_data(ev.casebook, str(initial.get("viewer", "")))
 	ui.casebook = _casebook
+	if replay_mode: ui.set_replay_mode(true)
 	ui.host_input_blocked = true
 	ui.start_covered = not is_instance_valid(opening_title)
 	ui.name = "UI"
@@ -172,6 +184,7 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	add_child(field)
 	field.ui_busy = _field_input_busy
 	field.formal_selection_ready = _formal_selection_ready
+	if replay_mode: field.input_direction = engine.InputDirection
 	field.fader = ui
 	field.field_event.connect(_field_input)
 	field.hover_changed.connect(ui.show_hover)
@@ -218,7 +231,7 @@ func _view(ev: Dictionary, begin := true) -> bool:
 		await ui.transition_in()
 	# 等场景加入树并应用快照后才开始脚本；这也是可见视图的普通握手。
 	if flow.closing or generation != _session_generation: return false
-	flow.opening = false
+	flow.transition("opening", false)
 	ui.set_host_input_blocked(false)
 	if begin: dispatch.call_deferred({"kind": "view_ready"})
 	if str(ev.get("casebook_warning", "")) != "":
@@ -228,8 +241,8 @@ func _view(ev: Dictionary, begin := true) -> bool:
 func _view_error(message: String, replacing: bool) -> void:
 	if replacing: return # The bookmark owner reports its backup and holds the lock.
 	if is_instance_valid(title_layer):
-		flow.opening = false
-		flow.opening_failed = true
+		flow.transition("opening", false)
+		flow.transition("opening_failed", true)
 		_queue.clear()
 		title_layer.get_child(0).show_start_error(message, false)
 		_timing("title_opening_failed", {"message": message})
@@ -292,11 +305,11 @@ func dispatch(input: Dictionary) -> void:
 			ui.show_bookmark_result(tr("请先读完当前正文并等待现场动作结束，再保存或载入书签。"))
 		return
 	if input_kind == "bookmark_save":
-		flow.bookmark_requested = true
+		flow.transition("bookmark_requested", true)
 		_try_bookmark_save()
 		return
 	if input_kind == "bookmark_load":
-		flow.bookmark_loading = true
+		flow.transition("bookmark_loading", true)
 		if is_instance_valid(ui): ui.set_bookmark_loading(true)
 		engine.LoadBookmark(str(input.get("path", "")), _casebook.export_data())
 		return
@@ -308,7 +321,8 @@ func dispatch(input: Dictionary) -> void:
 		return
 	if str(input.get("kind", "")) == "quit":
 		engine.RecordInput({"device": "ui_semantic", "kind": "quit"})
-		await Sound.quit_cleanly()
+		if replay_mode: begin_shutdown()
+		else: await Sound.quit_cleanly()
 		return
 	if str(input.get("kind", "")) == "start":
 		if flow.started: return
@@ -317,23 +331,23 @@ func dispatch(input: Dictionary) -> void:
 			if is_instance_valid(title_layer): title_layer.get_child(0).cancel_opening()
 			return
 		engine.ConfigureSession(options)
-		flow.started = true
+		flow.transition("started", true)
 	elif str(input.get("kind", "")) == "load":
 		if flow.started: return
 		if not _configure_load_playback():
 			if is_instance_valid(title_layer): title_layer.get_child(0).cancel_opening()
 			return
-		flow.started = true
+		flow.transition("started", true)
 	if input_kind in ["start", "load"]:
-		flow.opening = true
+		flow.transition("opening", true)
 		if is_instance_valid(title_layer): title_layer.get_child(0).begin_opening(input_kind)
 		_timing("title_opening_requested", {"kind": input_kind})
-	if input_kind in ["start", "load", "view_ready", "dv_next", "select", "dv_complete"]: flow.player_options_open = false
+	if input_kind in ["start", "load", "view_ready", "dv_next", "select", "dv_complete"]: flow.transition("player_options_open", false)
 	engine.Dispatch(input)
 
 func _process(_delta: float) -> void:
 	if flow.bookmark_requested: _try_bookmark_save()
-	var can_background := (flow.player_options_open or flow.reading) and not flow.book_reading and not flow.closing and not flow.opening and not flow.bookmark_loading and not flow.bookmark_saving and not flow.bookmark_requested
+	var can_background := flow.allows_background()
 	if can_background and not flow.background_execution and _dv_intent.is_empty() and not flow.completion_pending and (flow.reading or _queue.is_empty()) and engine.CanBackgroundTick() and Time.get_ticks_msec() >= _npc_tick_at:
 		_npc_tick_at = Time.get_ticks_msec() + 250
 		engine.Dispatch({"kind": "npc_tick"})
@@ -341,8 +355,8 @@ func _process(_delta: float) -> void:
 func _try_bookmark_save() -> void:
 	if not flow.bookmark_requested or not flow.started or flow.closing or flow.bookmark_loading or flow.bookmark_saving: return
 	if not _bookmark_boundary_ready() or not engine.IsBookmarkBoundaryReady(): return
-	flow.bookmark_requested = false
-	flow.bookmark_saving = true
+	flow.transition("bookmark_requested", false)
+	flow.transition("bookmark_saving", true)
 	# Once the safe boundary is owned, use the normal persistence continuation
 	# queue. Its existing next-request deduplication also covers late callbacks.
 	if not _bookmark_next.is_empty():
@@ -407,6 +421,7 @@ func _configure_load_playback() -> bool:
 	return _apply_playback(speed, "restored-session")
 
 func _apply_playback(speed: float, control_mode: String) -> bool:
+	if replay_mode: return true
 	if not is_finite(speed) or speed < 0.25 or speed > 8.0:
 		_show_error("Playback speed must be between 0.25 and 8")
 		return false
@@ -432,10 +447,10 @@ func _show_error(message: String) -> void:
 func _field_input_busy() -> bool:
 	# Local movement only owns geometry. Background NPC work must not freeze
 	# an otherwise free player's feet; formal actions have a separate gate.
-	return (is_instance_valid(dev_console) and dev_console.is_open()) or flow.closing or flow.view_faulted or flow.opening or flow.opening_failed or flow.bookmark_loading or flow.bookmark_saving or flow.bookmark_requested or not is_instance_valid(ui) or ui.is_busy()
+	return (is_instance_valid(dev_console) and dev_console.is_open()) or flow.blocks_input() or not is_instance_valid(ui) or ui.is_busy()
 
 func _formal_selection_ready() -> bool:
-	return flow.player_options_open and not _field_input_busy() and not flow.draining and _queue.is_empty() \
+	return flow.allows_selection() and not _field_input_busy() and _queue.is_empty() \
 		and not flow.completion_pending and not flow.background_execution and _book_deferred_inputs.is_empty() and _dv_intent.is_empty()
 
 func _field_input(input: Dictionary) -> void:
@@ -539,7 +554,7 @@ func _normalize_continuous_cancel(input: Dictionary) -> Dictionary:
 
 func _drain() -> void:
 	if flow.draining or flow.closing or flow.opening_failed: return
-	flow.draining = true
+	flow.transition("draining", true)
 	var generation := _session_generation
 	var slice_started := Time.get_ticks_usec()
 	var slice_frame := Engine.get_process_frames()
@@ -584,7 +599,7 @@ func _drain() -> void:
 				var lines := _presentation_lines(result)
 				if is_instance_valid(ui): ui.prepare_presentation(result)
 				if not lines.is_empty():
-					flow.reading = true
+					flow.transition("reading", true)
 					# Start the ordinary serialized Prepare while this frozen text is read.
 					# Remote NPCs still execute real Godot movement and return Complete.
 					ev.advance_requested = true
@@ -592,28 +607,28 @@ func _drain() -> void:
 					_timing("presentation_begin", {"execution_event": result.get("execution_event", "")})
 					await ui.present({"kind": "lines", "lines": lines, "trace_id": str(result.get("execution_event", "")), "presentation_id": str(result.get("presentation_id", result.get("execution_event", "")))})
 					if generation != _session_generation: break
-					flow.reading = false
+					flow.transition("reading", false)
 					_timing("reading_finished", {"execution_event": result.get("execution_event", "")})
 				if not bool(ev.get("advance_requested", false)):
 					dispatch.call_deferred({"kind": "dv_next"})
 			"view":
 				if not await _view(ev):
-					if not flow.closing and generation == _session_generation: flow.view_faulted = true
+					if not flow.closing and generation == _session_generation: flow.transition("view_faulted", true)
 					_queue.clear()
 					break
 			"state": await _apply(ev.snapshot)
 			"error":
-				flow.bookmark_requested = false
+				flow.transition("bookmark_requested", false)
 				_bookmark_next = {}
 				_view_error(str(ev.message), false)
 			"load_error":
-				flow.bookmark_requested = false
+				flow.transition("bookmark_requested", false)
 				_bookmark_next = {}
-				flow.started = false
-				flow.opening = false
+				flow.transition("started", false)
+				flow.transition("opening", false)
 				if is_instance_valid(title_layer): title_layer.get_child(0).show_load_error(str(ev.message))
 			_: push_error("Unknown DV host event: " + str(ev.get("kind", "")))
-	flow.draining = false
+	flow.transition("draining", false)
 	_try_bookmark_save()
 	if not _queue.is_empty() and not flow.closing and not flow.view_faulted: _drain.call_deferred()
 
@@ -621,7 +636,7 @@ func _drain() -> void:
 ## Emitted line ordinals are not claimed to be original declaration line numbers.
 func _presentation_line(result: Dictionary, text: String, field_name: String, index: int, paragraph: int) -> Dictionary:
 	var event := str(result.get("execution_event", ""))
-	return {"text": text, "speaker": str(result.get("actor", "")), "speaker_name": str(result.get("speaker_name", "")),
+	return {"text": text, "speaker": str(result.get("speaker", result.get("actor", ""))), "speaker_name": str(result.get("speaker_name", "")),
 		"trace_id": event, "execution_event": event, "source_id": str(result.get("action_id", "")),
 		"line_id": "%s:%s:%d:%d" % [event, field_name, index, paragraph], "source_field": field_name,
 		"emitted_line_index": index, "paragraph_index": paragraph, "source_refs": result.get("source_refs", [])}
@@ -649,7 +664,7 @@ func _apply(snapshot: Dictionary) -> void:
 	_timing("ui_apply_begin")
 	if _view_resource != "" and str(snapshot.resource) != _view_resource:
 		if not await _view({"resource": snapshot.resource, "snapshot": snapshot}, false) and not flow.closing:
-			flow.view_faulted = true
+			flow.transition("view_faulted", true)
 			_queue.clear()
 		_timing("ui_apply_end")
 		return
@@ -660,10 +675,10 @@ func _apply(snapshot: Dictionary) -> void:
 
 func begin_shutdown() -> void:
 	if flow.closing: return
-	flow.closing = true
-	flow.bookmark_requested = false
+	flow.transition("closing", true)
+	flow.transition("bookmark_requested", false)
 	_bookmark_next = {}
-	flow.reading = false
+	flow.transition("reading", false)
 	if is_instance_valid(view_trace): view_trace.begin_shutdown()
 	if is_instance_valid(diagnostics): diagnostics.set_enabled(false)
 	if is_instance_valid(dev_console): dev_console.begin_shutdown()
@@ -694,17 +709,22 @@ func _exit_tree() -> void:
 	begin_shutdown()
 
 func _dv_events(events: Array) -> void:
-	for ev in events:
+	for source: Dictionary in events:
+		if source.has("snapshot") and not replay_mode:
+			view_trace.record_snapshot(source.snapshot, _casebook.export_data())
+		if str(source.get("kind", "")) == "dv_present" and not replay_mode:
+			view_trace.record_presentation(source.presentation)
+		var ev: Dictionary = PRESENTATION.event(source)
 		if str(ev.get("kind", "")) == "dv_commit":
 			var settled: bool = await field_executor.settle(str(ev.action_event), str(ev.outcome), field, not flow.closing)
 			if not settled:
-				flow.completion_pending = false
-				flow.view_faulted = true
+				flow.transition("completion_pending", false)
+				flow.transition("view_faulted", true)
 				engine.RecordHostFailure("Movement rollback did not complete for " + str(ev.action_event))
 				return
 			continue
 		if flow.closing:
-			if str(ev.get("kind", "")) in ["dv_present", "error"]: flow.completion_pending = false
+			if str(ev.get("kind", "")) in ["dv_present", "error"]: flow.transition("completion_pending", false)
 			continue
 		if str(ev.get("kind", "")) == "prepared_ahead":
 			if int(ev.state_version) == int(engine.Snapshot().get("state_version", -1)):
@@ -714,21 +734,21 @@ func _dv_events(events: Array) -> void:
 			for choice in _preview_tokens.keys():
 				if int(_preview_tokens[choice].state_version) != int(ev.snapshot.get("state_version", -1)): _preview_tokens.erase(choice)
 		if str(ev.get("kind", "")) in ["dev_inspect", "dev_error", "replay_loaded"]:
-			dev_console.receive(ev)
+			if is_instance_valid(dev_console): dev_console.receive(ev)
 			continue
-		if str(ev.get("kind", "")) in ["view", "state", "dv_action", "dv_present", "error", "bookmark_loaded"]: flow.player_options_open = false
+		if str(ev.get("kind", "")) in ["view", "state", "dv_action", "dv_present", "error", "bookmark_loaded"]: flow.transition("player_options_open", false)
 		if flow.view_faulted:
 			if str(ev.get("kind", "")) == "error": _show_error(str(ev.message))
 			continue
-		if str(ev.get("kind", "")) in ["dv_present", "error"]: flow.completion_pending = false
+		if str(ev.get("kind", "")) in ["dv_present", "error"]: flow.transition("completion_pending", false)
 		if str(ev.get("kind", "")) == "bookmark_loaded":
 			_install_bookmark(ev)
 			continue
 		if str(ev.get("kind", "")) in ["bookmark_saved", "bookmark_error"]:
 			if str(ev.get("kind", "")) == "bookmark_saved" or str(ev.get("operation", "")) == "save":
-				flow.bookmark_saving = false
+				flow.transition("bookmark_saving", false)
 			if str(ev.get("kind", "")) == "bookmark_error" and str(ev.get("operation", "")) == "load":
-				flow.bookmark_loading = false
+				flow.transition("bookmark_loading", false)
 			if is_instance_valid(ui): ui.set_bookmark_loading(flow.bookmark_loading or flow.bookmark_saving)
 			if not flow.book_reading: _on_book_reading_changed(false)
 			if is_instance_valid(ui):
@@ -756,7 +776,8 @@ func _has_deferred_next() -> bool:
 	return false
 
 func _on_book_reading_changed(active: bool) -> void:
-	flow.book_reading = active
+	flow.transition("book_reading", active)
+	if is_instance_valid(view_trace): view_trace.record_page()
 	if active or flow.closing or flow.bookmark_loading or flow.bookmark_saving: return
 	var deferred := _book_deferred_inputs
 	_book_deferred_inputs = []
@@ -765,17 +786,17 @@ func _on_book_reading_changed(active: bool) -> void:
 
 func _install_bookmark(event: Dictionary) -> void:
 	_session_generation += 1
-	flow.bookmark_requested = false
+	flow.transition("bookmark_requested", false)
 	_bookmark_next = {}
-	flow.view_faulted = false
-	flow.player_options_open = false
+	flow.transition("view_faulted", false)
+	flow.transition("player_options_open", false)
 	var generation := _session_generation
 	# The host already owns the restored session. Bind its archive immediately,
 	# so closing the window during map preparation cannot save the old notes.
 	# The departing UI keeps its old object until disposal; it cannot mutate this.
 	_casebook = CASEBOOK_DATA.new()
 	_casebook.restore_data(event.get("casebook", {}), str(event.snapshot.get("viewer", "")))
-	flow.reading = false
+	flow.transition("reading", false)
 	_queue.clear()
 	_book_deferred_inputs.clear()
 	_dv_intent.clear()
@@ -787,13 +808,13 @@ func _install_bookmark(event: Dictionary) -> void:
 		"casebook_warning": event.get("casebook_warning", ""), "replace_session": true}, false)
 	if flow.closing or generation != _session_generation: return
 	if not installed:
-		flow.bookmark_loading = true
+		flow.transition("bookmark_loading", true)
 		get_tree().paused = true
 		if is_instance_valid(ui): ui.set_bookmark_loading(true)
 		_timing("bookmark_view_failed", {"path": event.get("path", ""), "backup_path": event.get("backup_path", "")})
 		_show_bookmark_view_error(str(event.get("backup_path", "")))
 		return
-	flow.bookmark_loading = false
+	flow.transition("bookmark_loading", false)
 	if is_instance_valid(ui): ui.set_bookmark_loading(false)
 	if not flow.closing: dispatch.call_deferred({"kind": "view_ready"})
 
@@ -803,11 +824,11 @@ func _background_npc_intent(ev: Dictionary) -> bool:
 	return str(intent.get("status", "")) == "prepared" and str(intent.get("actor", "")) != str(field.snapshot.get("viewer", ""))
 
 func _execute_reading_npc(ev: Dictionary) -> void:
-	flow.background_execution = true
+	flow.transition("background_execution", true)
 	_timing("reading_npc_execution_begin", {"actor": ev.intent.actor, "action_event": ev.intent.action_event})
 	await _dv_execute(ev.intent, ev.get("execution_snapshot", {}))
 	_timing("reading_npc_execution_end", {"actor": ev.intent.actor, "action_event": ev.intent.action_event})
-	flow.background_execution = false
+	flow.transition("background_execution", false)
 
 func _dv_execute(intent: Dictionary, execution_snapshot: Dictionary) -> void:
 	if str(intent.get("status", "")) == "awaiting_input":
@@ -815,7 +836,7 @@ func _dv_execute(intent: Dictionary, execution_snapshot: Dictionary) -> void:
 			field.reject_continuous_request(str(_continuous_selection.get("choice_id", "")), "prepare_returned_to_input")
 			_continuous_selection.clear()
 		field.spatial.set_options(intent.options)
-		flow.player_options_open = true
+		flow.transition("player_options_open", true)
 		if is_instance_valid(ui): ui.set_player_options(intent.options)
 		_timing("player_options_ready", {"options": intent.options.size()})
 		return
@@ -825,7 +846,7 @@ func _dv_execute(intent: Dictionary, execution_snapshot: Dictionary) -> void:
 			_continuous_selection.clear()
 		return
 	_dv_intent = intent
-	flow.player_options_open = false
+	flow.transition("player_options_open", false)
 	_dv_serial += 1
 	var action: Dictionary = intent.action
 	_timing("execution_begin", {"action_event": intent.action_event, "actor": intent.actor})
@@ -882,17 +903,17 @@ func _dv_complete(outcome: String, execution: Dictionary) -> void:
 				# transition, so release it alongside its one rejected receipt.
 				field.reject_continuous_request(str(_continuous_selection.get("choice_id", "")), "execution_rejected")
 		_continuous_selection.clear()
-	flow.player_options_open = false
+	flow.transition("player_options_open", false)
 	# NPCs may finish before a queued player action. Keep that player's
 	# contact until their own receipt, so delayed inspection is still checked.
 	if str(_dv_intent.get("actor", "")) == str(field.snapshot.get("viewer", "")):
 		_interaction_site = ""
 	_dv_intent = {}
-	flow.completion_pending = true
+	flow.transition("completion_pending", true)
 	dispatch.call_deferred({"kind": "dv_complete", "receipt": receipt})
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_CLOSE_REQUEST and not flow.closing:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and not replay_mode and not flow.closing:
 		await Sound.quit_cleanly()
 
 
@@ -900,7 +921,7 @@ func set_frame_audit(enabled: bool) -> void:
 	audit_enabled = enabled
 	view_trace.set_enabled(enabled)
 	diagnostics.set_enabled(enabled)
-	engine.SetDiagnosticsEnabled(enabled or dev_console.performance_open())
+	engine.SetDiagnosticsEnabled(enabled or (is_instance_valid(dev_console) and dev_console.performance_open()))
 
 func console_action(choice_id: String) -> void:
 	if not is_instance_valid(field) or not flow.player_options_open: return
@@ -913,3 +934,41 @@ func console_action(choice_id: String) -> void:
 		if kind == "doorway": field.spatial._submit(option, "", "developer-console")
 		else: field.spatial.select(choice_id, site)
 		return
+
+## Recorded positions belong to the host's real bodies. They are replay data,
+## never authority, observations, or inferred screen visibility.
+func capture_replay_bodies() -> Array:
+	var result: Array = []
+	if not is_instance_valid(field): return result
+	for who in field.actors:
+		var body: CharacterBody2D = field.actors[who]
+		if not is_instance_valid(body): continue
+		result.append({"actor": str(who), "map": str(field.adapter.map_key()),
+			"room": str(field.adapter.room_of(body.position)), "position": [body.position.x, body.position.y],
+			"velocity": [body.velocity.x, body.velocity.y], "seated": bool(body.seated)})
+	return result
+
+func set_navigation_sampling(active: bool) -> void:
+	navigation_sampling = active
+	if is_instance_valid(field): field.navigation_sampling = active
+	if is_instance_valid(field_executor): field_executor.set_navigation_sampling(active)
+
+## Replay owns a private scene graph and never enters the live action queue.
+func install_replay_snapshot(value: Dictionary, archive: Dictionary) -> bool:
+	flow.transition("started", true)
+	var snapshot: Dictionary = PRESENTATION.snapshot(value)
+	if not archive.is_empty(): _casebook.restore_data(archive, str(value.viewer))
+	var rebuild := not is_instance_valid(field) or str(field.adapter.map_key()) != str(snapshot.map)
+	if rebuild:
+		var installed: bool = await _view({"resource": snapshot.resource, "snapshot": snapshot,
+			"casebook": archive if not archive.is_empty() else _casebook.export_data(), "replace_session": true}, false)
+		if not installed: return false
+	else:
+		await _apply(snapshot)
+	var pending: Dictionary = snapshot.get("pending", {})
+	var options: Array = pending.get("options", []) if str(pending.get("status", "")) == "awaiting_input" else []
+	field.spatial.set_options(options)
+	ui.set_player_options(options)
+	flow.transition("player_options_open", true)
+	flow.transition("opening", false)
+	return true

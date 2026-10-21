@@ -40,9 +40,10 @@ def checked(argv, **kwargs):
     return result
 
 
-def sources(entries, overrides=None):
+def source_graph(entries, overrides=None):
     overrides = overrides or {}
     result, seen, stack = [], set(), []
+    dependencies = {}
 
     def visit(path):
         path = Path(path).resolve()
@@ -51,6 +52,7 @@ def sources(entries, overrides=None):
         if path in seen:
             return
         stack.append(path)
+        dependencies[path] = []
         text = overrides[path] if path in overrides else path.read_text(encoding='utf-8-sig')
         # Only LF is structural. Unicode paragraph/line separators are authored
         # text and must reach the compiler unchanged.
@@ -68,8 +70,10 @@ def sources(entries, overrides=None):
             relative = Path(match[1])
             if relative.is_absolute() or relative.drive or relative.suffix != '.dv':
                 raise ValueError(f'{path}:{index + 1}: include requires a relative .dv path')
+            dependency = (path.parent / relative).resolve()
+            dependencies[path].append(dependency)
             try:
-                visit(path.parent / relative)
+                visit(dependency)
             except OSError as error:
                 raise ValueError(f'{path}:{index + 1}: {error}') from error
             lines[index] = '\n'
@@ -79,7 +83,11 @@ def sources(entries, overrides=None):
 
     for entry in entries:
         visit(entry)
-    return result
+    return result, dependencies
+
+
+def sources(entries, overrides=None):
+    return source_graph(entries, overrides)[0]
 
 
 @contextmanager

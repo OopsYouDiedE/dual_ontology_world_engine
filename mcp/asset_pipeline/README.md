@@ -1,0 +1,29 @@
+# 资产生成与发布
+
+本目录维护地图、角色、UI、材质、原始素材和几何契约的生成入口。所有命令从仓库根目录运行；统一 MCP 工具是 `asset_pipeline`，`operation` 枚举直接来自 `mcp/tools.json`。
+
+| 工作 | MCP operation | 源与输出 |
+| --- | --- | --- |
+| 地图 | `living-floor`、`chapter-maps` | 组合现有场景、显式地图文字和原始室外素材，发布 Chapter2 场景与资源 |
+| 角色 | `anime-cast`、`pixel-cast`、`dialogue-cast`、`character-atlas` | 读取对应原稿，发布角色资源 |
+| 书桌与材质 | `desk`、`desk-surfaces`、`room-props`、`scene-surfaces`、`materials` | Blender 或图像制作源，发布几何、纹理与材质 |
+| UI | `ui-theme`、`ui-paper`、`ui-desk`、`translations` | 主题、纸纹、书桌与本地化资源 |
+| 选定原稿发布 | `publish-reference-desk`、`publish-redrawn-cast`、`publish-geometry-assets` | 按各发布器的原稿、复核记录和目录参数发布成品 |
+| 共享几何合同 | `geometry-contract` | 从场景提取锚点、出口、门禁与室外坐标，保留合同中已声明的房间区域和连接 |
+
+`arguments` 是脚本原有参数列表。书桌的两个 Blender 入口读取 `BLENDER` 环境变量或 PATH。角色发布的 `--source`、`--review` 等输入保持显式；缺少原稿时先补齐原稿。地图生成器的 `--site-source` 和文字输入遵循其命令参数，已有发布成品不会被当作缺失原稿的替代来源。
+
+## 目录和共享库
+
+- `sources/` 保存原始图片、模型、制作参数、来源记录与许可；`godot_csharp/ShareAsset/` 保存游戏读取的成品。
+- `first_awakening_art/` 保存共享像素绘图、调色和家具/材质函数；`chapter2_art/` 组合这些函数制作当前地图。RPG MCP 的 `native_art_catalog`、`read_native_recipe` 和绘图操作调用同一组模块，并报告实际源码哈希。这些库不提供完整旧场景或缺失角色原稿的重建入口。
+- `asset_sources.py`、`map_text.py`、`scene_geometry.py` 是共享读取库，通过上表的工具入口使用。
+- `capture_maps.gd` 通过 `godot_tools` 的 `capture-maps` 或临时 Godot 工程调用，采集输出保存在用户指定的任务目录。
+
+## 几何发布
+
+`export_geometry.py` 与独立 Python 几何检查入口共用 `scene_geometry.py` 读取场景。合同包含 markers 的 point/path/room、全部出口 Area2D 的 point/path/rect/target/spawn/internal_gate/gate，以及场景声明的 `outdoor_origin`、`outdoor_core`、`outdoor_cores`、`outdoor_origins`。内部门禁保留在出口清单中，跨地图路由只使用有目标的外部门。
+
+场景中的旧外部目标 `living_hall` 在发布时映射到 `living_floor`，目标出生点显式加 `living_hall_` 前缀；`doors` 的对应 target_map/to 同步更新。`living_hall:hall` 等内部房间标识保持原义。运行端读取发布合同，不再重复推导这项映射。
+
+独立静态入口是 `diagnostics` 的 `geometry`；Godot MapSandbox 使用同一合同核对实际加载场景。它们只在明确调用时运行。生成、静态对照、物理运动和人工画面观察各自报告其结果。

@@ -14,9 +14,15 @@ python mcp/editor_lsp/check_dv.py --format json dv_core/compiler/10-compiler.dv
 
 构建工具先构建 `compiler/seed/Seed.csproj`，用 C0 编译 `10-compiler.dv` 得到 C1，再由 C1 得到 C2、C2 得到 C3；每阶段把生成源与 Runtime 交给 .NET 8。C2/C3 的生成源码逐字节比较，固定点不同就停止。缓存位于 `dv_core/obj/dv-toolchain/<来源指纹>/`，缓存输入包含编译器源与 compiler 目录中除 bin/obj 外的文件，共用锁避免多个编辑器并发覆盖。
 
-`build_session.py` 按模块缓存 AST，缓存输入包含编译器指纹、文本及 UTF-16 偏移。`--base-only` 只生成20/30的 DVKernel，`--partition` 生成35–60的 DVProgram并引用基础程序集；内容相同时保留生成文件时间戳。它默认组合 `60-game.dv` 的 include 闭包，生成 `DVProgram.cs`、模块范围和来源清单；Session 项目引用 `obj/dv/DVProgram.cs`。这些是可重建输出，不能手改或冒称独立源实现。仅比较生成源固定点不等于形式化证明或正式游戏验收。环境缺失、SDK 错误或未运行阶段如实说明，不沿用历史构建记录。
+`build_session.py` 以单个模块为解析、语义分析与代码生成单元。每个模块使用从零开始的 UTF-16 源位置，导入依赖模块导出的函数名、参数元数、Mapping 标记和名义类型接口；编译器只处理本模块的函数体。AST 缓存由编译器指纹与模块文本寻址，生成缓存再加入导入接口、类声明和生成器版本。前一个文件长度改变不移动后续文件的位置；依赖正文改变且导出接口不变时，消费者的生成缓存继续有效。生成内容相同时保留文件时间戳。
 
-`mcp/build/dv_toolchain.py` 的 `sources()` 只解析从行首开始的相对 `#include`，保留 define/称谓作用域与 UTF-16 源位置边界，拒绝循环和缺失依赖。缩进正文中的 `#include` 保持文字；源适配只规范 CRLF/CR，不把 U+2028 等文字字符拆成源码行。裸编译器接口接收已经组合的源与范围数据；编辑器使用 [dv-check.json](../dv-check.json) 选择编译器、生产或独立检查闭包，生产组不含 oracle。
+`--base-only` 将20/30分别生成到 `base/obj/dv/modules/*.g.cs`，共同构成 `DuelView.Core.DVKernel`；`--partition` 将35–60分别生成到 `host_bridge/obj/dv/modules/*.g.cs`，共同构成引用基础程序集的 `DVProgram`。小型 `DVKernel.cs` / `DVProgram.cs` 只保留 partial 类声明，MSBuild 在生成步骤后纳入本次模块文件。完整工具程序使用同一模块生成流程；65与70保持各自的独立闭包。`source-manifest.json` 记录规范化源码、模块生成缓存、导出接口摘要和输出文件清单；旧合并源、范围文件和已退役输出由生成器清理。这些均为可重建输出。
+
+MCP 与仓库内 LSP 的初始化通过 `mcp/build/prewarm.py` 启动后台预热，初始化请求不等待编译。预热进程与正式构建使用同一自举缓存锁，日志位于 `dv_core/obj/dv-toolchain/prewarm.log`。预热不属于游戏循环，完成状态以实际进程退出码为准。生成源固定点、编译完成、游戏行为和性能测量分别报告；未运行阶段保持未运行。
+
+`mcp/build/dv_toolchain.py` 的 `source_graph()` 只解析从行首开始的相对 `#include`，返回依赖顺序、直接依赖图与各模块文本；`sources()` 保留原有调用接口。define/称谓和 UTF-16 位置属于各自源码。缩进正文中的 `#include` 保持文字；源适配只规范 CRLF/CR，不拆分 U+2028 等正文字符。编辑器使用 [dv-check.json](../dv-check.json) 选择编译器、生产或独立检查闭包，生产组不含 oracle。
+
+裸编译器有两种工程接口：`<源> <输出> --check|--emit [范围JSON]` 保留整组诊断与自举调用；`<单模块源> <输出> --module <配置JSON>` 使用独立模块。模块配置依次为导入函数签名、导入名义类型、导出接口路径、目标类头和 AST 缓存路径；导出文件是 `[本模块函数签名, 本模块名义类型]`。名称、元数、重复导出及名义类型语义由 DV 编译器处理，Python 只组织依赖和缓存。
 
 ## 前端与当前类型边界
 

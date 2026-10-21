@@ -200,8 +200,18 @@
         (do (if (rt_lt 1 i) (set result (rt_cat result ",")) false)
           (set result (rt_cat result (emit (rt_at xs i) scope signatures))) (set i (rt_add i 1))))
       (rt_cat result ")"))))))
-(defn signatures_of (forms)
-  (let (signatures (rt_list) i 0 mains 0)
+(defn signatures_import (imported)
+  (let (signatures (rt_list) i 0)
+    (do
+      (while (rt_lt i (rt_count imported))
+        (let (entry (rt_at imported i) name (rt_at (rt_at imported i) 0))
+          (do
+            (if (rt_lt (lookup signatures name) 0) false (rt_fail (rt_cat "DV: duplicate imported function " name)))
+            (rt_push signatures entry)
+            (set i (rt_add i 1)))))
+      signatures)))
+(defn signatures_extend (forms imported)
+  (let (signatures (signatures_import imported) i 0 mains 0)
     (do
       (while (rt_lt i (rt_count forms))
         (let (n (rt_at forms i) xs (children n))
@@ -217,6 +227,7 @@
                 (if (rt_eq head "main") (do (arity n xs 2) (set mains (rt_add mains 1))) (bad n "unsupported declaration"))))
             (set i (rt_add i 1)))))
       (if (either (rt_eq mains 1) (both (compiler_library_mode) (rt_eq mains 0))) signatures (rt_fail "DV: exactly one main required")))))
+(defn signatures_of (forms) (signatures_extend forms (rt_list)))
 (defn emit_function (n signatures)
  (if (rt_eq (kind (rt_at (children n) 3)) "surfacebody") (sf_emit_lowered n signatures)
   (let (xs (children n) name (sym (rt_at xs 1)) params (children (rt_at xs 2)) scope (rt_list) i 0 result (rt_cat "public static object F_" name))
@@ -254,10 +265,10 @@
                (if (if (rt_eq (kind original) "surface") (rt_eq (sym (rt_at xs 1)) "main") false)
                 (rt_push result (sf_call "main" (sf_list1 (sf_call "main" (rt_list) offset)) offset)) false)))
             (set i (rt_add i 1))))) result)))
-(defn compile (source)
-  (let (forms (lower_declarations (compiler_parse source)) checked (ck_program forms) signatures (signatures_of forms) i 0 parts (rt_list))
+(defn emit_program (forms signatures header)
+  (let (i 0 parts (rt_list))
     (do
-      (rt_push parts "using DuelView.Compiled;\npublic static partial class DVProgram {\n")
+      (rt_push parts header)
       (while (rt_lt i (rt_count forms))
         (let (n (rt_at forms i) xs (children n))
           (do
@@ -268,6 +279,9 @@
             (set i (rt_add i 1)))))
       (rt_push parts "}\n")
       (rt_text_join parts))))
+(defn compile (source)
+  (let (forms (lower_declarations (compiler_parse source)) checked (ck_program forms) signatures (signatures_of forms))
+    (emit_program forms signatures "using DuelView.Compiled;\npublic static partial class DVProgram {\n")))
 ; Surface frontend. Tokens retain source offsets. All elaboration lives in DV.
 (defn sf_list1 (a) (let (r (rt_list)) (do (rt_push r a) r)))
 (defn sf_list3 (a b c) (let (r (pair a b)) (do (rt_push r c) r)))
@@ -996,7 +1010,7 @@
         (ck_body (rt_at data 1) locals vars defs ret) (ck_body (rt_at data 2) locals vars defs ret))
        (do (ck_expr data locals defs) (if (rt_eq tag "return") (ck_expect data ret locals defs) false)))))
     (set i (rt_add i 1))))) true)))
-(defn ck_program (forms)
+(defn ck_definitions (forms)
  (let (defs (rt_list) i 0)
   (do
    (while (rt_lt i (rt_count forms))
@@ -1005,6 +1019,12 @@
       (if (rt_eq (kind (rt_at xs 3)) "surfacebody")
        (let (data (payload (rt_at xs 3))) (rt_push defs (pair (sym (rt_at xs 1)) (pair (rt_at (rt_at data 2) 1) (if (rt_eq (rt_at data 1) "Mapping") "Value" (rt_at data 1)))))) false) false)
      (set i (rt_add i 1)))))
+   defs)))
+(defn ck_program_with (forms imported)
+ (let (defs (copy imported) own (ck_definitions forms) i 0)
+  (do
+   (while (rt_lt i (rt_count own))
+    (do (rt_push defs (rt_at own i)) (set i (rt_add i 1))))
    (set i 0)
    (while (rt_lt i (rt_count forms))
     (let (xs (children (rt_at forms i))) (do
@@ -1015,6 +1035,7 @@
          (do (rt_push env (pair (sym (rt_at (rt_at params 0) j)) (rt_at (rt_at params 1) j))) (rt_push vars (sym (rt_at (rt_at params 0) j))) (set j (rt_add j 1))))
          (ck_body (rt_at body 0) env vars defs (if (rt_eq (rt_at body 1) "Mapping") "Value" (rt_at body 1))))) false) false)
      (set i (rt_add i 1))))) true)))
+(defn ck_program (forms) (ck_program_with forms (rt_list)))
 (defn lookup_index (items name)
  (let (i 0 found -1) (do (while (rt_lt i (rt_count items)) (do (if (rt_eq (rt_at (rt_at items i) 0) name) (set found i) false) (set i (rt_add i 1)))) found)))
 
@@ -1092,10 +1113,10 @@
    (set result (rt_cat result (rt_cat "if (R.Bool(" (rt_cat (emit (rt_at data 2) locals signatures) (rt_cat ")) comp_result_" (rt_cat suffix (rt_cat ".Add(" (rt_cat (emit (rt_at data 3) locals signatures) ");}"))))))))
    (rt_cat result (rt_cat "return (object)comp_result_" (rt_cat suffix ";})"))))))
 
-; Module caches store compiler AST only. Each range key includes normalized source,
-; source offset and compiler fingerprint; aliases remain local to their source file.
+; Module caches store compiler AST only. --module parses at local offset zero;
+; imported function/type interfaces contain no dependency bodies or aliases.
 (defn compiler_library_mode ()
- (if (rt_lt 2 (rt_arg_count)) (has (words "--check --emit") (rt_arg 2)) false))
+ (if (rt_lt 2 (rt_arg_count)) (has (words "--check --emit --module") (rt_arg 2)) false))
 (defn compiler_parse_module (source range)
  (let (cache (if (rt_lt 2 (rt_count range)) (rt_at range 2) "")
        parsed false)
@@ -1108,6 +1129,16 @@
      parsed)))))
 (defn compiler_check_mode ()
  (if (rt_lt 2 (rt_arg_count)) (rt_eq (rt_arg 2) "--check") false))
+(defn compiler_module_mode ()
+ (if (rt_lt 2 (rt_arg_count)) (rt_eq (rt_arg 2) "--module") false))
+(defn compile_module (source config)
+ (let (forms (lower_declarations (compiler_parse_module source (sf_list3 0 (rt_length source) (rt_at config 4))))
+       signatures (signatures_extend forms (rt_at config 0))
+       checked (ck_program_with forms (rt_at config 1))
+       output (emit_program forms signatures (rt_at config 3)))
+  (do
+   (rt_compiler_cache_write (rt_at config 2) (pair (signatures_of forms) (ck_definitions forms)))
+   output)))
 (defn compiler_parse (source)
  (if (rt_lt 3 (rt_arg_count))
   (let (ranges (rt_json_parse (rt_read (rt_arg 3))) result (rt_list) i 0)
@@ -1116,5 +1147,6 @@
      (do (while (rt_lt j (rt_count forms)) (do (rt_push result (rt_at forms j)) (set j (rt_add j 1))))
       (set i (rt_add i 1))))) result))
   (sf_parse source)))
-(main (let (output (compile (rt_read (rt_arg 0))))
+(main (let (source (rt_read (rt_arg 0))
+            output (if (compiler_module_mode) (compile_module source (rt_json_parse (rt_read (rt_arg 3)))) (compile source)))
  (if (compiler_check_mode) (rt_print "DV check complete") (rt_write (rt_arg 1) output))))

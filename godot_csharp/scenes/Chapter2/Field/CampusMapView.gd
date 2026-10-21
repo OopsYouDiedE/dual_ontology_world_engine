@@ -5,7 +5,6 @@ const LIFECYCLE := preload("res://scenes/Host/HostLifecycle.gd")
 ## 世界坐标连续。提供寻路网格（碰撞体栅格化，半格精度）、视线墙、房间区域、交互点标记、站位与遮挡淡出。
 ## 剧情与文字不在这里。
 
-const MAPS := "res://scenes/Chapter2/Maps/%s.tscn"
 const RESOURCES := preload("res://scenes/Shared/Field/FieldResources.gd")
 const GEOMETRY := preload("res://scenes/Host/GeometryCatalog.gd")
 const MAX_RETAINED_MAPS := 3
@@ -14,67 +13,13 @@ const MAX_LOCAL_NAV_GRIDS := 32
 
 static func _fail_binding(node: Node, message: String) -> void:
 	push_error(message)
-	if node.is_inside_tree(): LIFECYCLE.quit.call_deferred(node.get_tree(), 1)
+	if node.is_inside_tree(): LIFECYCLE.binding_failure.call_deferred(node, message)
 
 const SEAM := 36.0
 ## 只作装饰、不开放交互的标记。
 const DECOR_MARKERS := ["transmitter", "isolation_gate", "lane", "harbor", "stele", "collapse", "counterweight"]
-static var _floor_parts: Dictionary = {}
-static var _static_routes: Dictionary = {}
-static var _static_spawns: Dictionary = {}
-static var _static_meta: Dictionary = {}
-
-static func _ensure_static_manifest() -> void:
-	if not _static_routes.is_empty(): return
-	var manifest_path := "res://ShareAsset/Internal/Props/Chapter2/manifest.json"
-	if not FileAccess.file_exists(manifest_path): return
-	var f := FileAccess.open(manifest_path, FileAccess.READ)
-	if f == null: return
-	var raw := f.get_as_text()
-	f.close()
-	var json = JSON.parse_string(raw)
-	if not (json is Dictionary): return
-	var rooms: Dictionary = json.get("rooms", {})
-	for rname in rooms:
-		var rinfo: Dictionary = rooms[rname]
-		var exits_list: Array = rinfo.get("exits", [])
-		var edges: Array = []
-		for e in exits_list:
-			if e is Dictionary:
-				var pt := Vector2.ZERO
-				if e.has("rect_px"):
-					var rx: Array = e.rect_px
-					pt = Vector2(rx[0] + rx[2] / 2.0, rx[1] + rx[3] / 2.0)
-				elif e.has("cells"):
-					var cl: Array = e.cells
-					pt = Vector2((cl[0] + cl[2]) * 16.0, (cl[1] + cl[3]) * 16.0)
-				edges.append({"to": "living_floor" if str(e.get("target", "")) == "living_hall" else str(e.get("target", "")), "point": pt})
-		_static_routes[rname] = edges
-		var spawns: Dictionary = rinfo.get("spawns", {})
-		var sp_dict := {}
-		for sname in spawns:
-			var pt: Array = spawns[sname]
-			sp_dict[sname] = Vector2(pt[0], pt[1])
-		_static_spawns[rname] = sp_dict
-		var meta_dict := {}
-		if rinfo.has("cells"):
-			var cl: Array = rinfo.cells
-			meta_dict["map_size"] = Vector2(cl[0] * 32.0, cl[1] * 32.0)
-		elif rinfo.has("size_px"):
-			var sz: Array = rinfo.size_px
-			meta_dict["map_size"] = Vector2(sz[0], sz[1])
-		_static_meta[rname] = meta_dict
-
-	# Only exterior doors remain map edges; the five interiors share one floor.
-	var floor_edges: Array = []
-	for edge: Dictionary in _static_routes.get("living_hall", []):
-		if str(edge.to).begins_with("zone_"): continue
-		var point: Vector2 = edge.point
-		floor_edges.append({"to": edge.to, "point": point + Vector2(1120, 128 + (192 if point.y >= 544 else 0))})
-	_static_routes["living_floor"] = floor_edges
-
 func _get_packed_map(map_name: String) -> PackedScene:
-	var path := MAPS % map_name
+	var path := str(GEOMETRY.map_data(map_name).scene)
 	var packed := RESOURCES.ready(path) as PackedScene
 	# Compatibility for callers that deliberately construct a map synchronously.
 	# The production host and cross-map executor await prepare_map first.
@@ -98,7 +43,6 @@ var _access_refresh_pending := false
 var _last_allowed_position := Vector2.ZERO
 var presentation: Dictionary = {}
 var _player_sprite := ""
-var _routes: Dictionary = {}
 var _route_target_next := ""
 var _stage_bounds_cache: Dictionary = {}
 var _stage_ready: Dictionary = {}
@@ -128,7 +72,8 @@ func prepare_map(next: String, value: Dictionary, tree: SceneTree = null) -> boo
 		if _cancelled(): return false
 		if _prepared_for(next, binding): return true
 	_preparing[next] = true
-	var paths: Array[String] = [MAPS % next]
+	var scene_path := str(GEOMETRY.map_data(next).scene)
+	var paths: Array[String] = [scene_path]
 	var declaration: Dictionary = binding.geometry
 	for prop in declaration.get("props", []):
 		var path := str(prop.get("texture", ""))
@@ -139,7 +84,7 @@ func prepare_map(next: String, value: Dictionary, tree: SceneTree = null) -> boo
 		_preparing.erase(next)
 		return false
 	if not _map_records.has(next):
-		var packed := resources.get(MAPS % next) as PackedScene
+		var packed := resources.get(scene_path) as PackedScene
 		if packed == null:
 			_preparing.erase(next)
 			return false
@@ -147,7 +92,7 @@ func prepare_map(next: String, value: Dictionary, tree: SceneTree = null) -> boo
 		if instantiated_layout == null:
 			_preparing.erase(next)
 			return false
-		_map_records[next] = _new_map_record(instantiated_layout)
+		_map_records[next] = _new_map_record(next, instantiated_layout)
 		_touch_map(next)
 		_trim_maps(next)
 	var record: Dictionary = _map_records[next]
@@ -217,12 +162,8 @@ func _preparation_binding(map_name: String, value: Dictionary) -> Dictionary:
 func _prepared_for(map_name: String, binding: Dictionary) -> bool:
 	return _map_records.has(map_name) and _grids.has(map_name) and _room_candidates.has(map_name) and _stage_ready.has(map_name) and not (map_name == key and _access_refresh_pending) and _map_records[map_name].get("prepared_binding", {}) == binding
 
-func _new_map_record(layout: Node2D) -> Dictionary:
-	if layout.has_meta("floor_parts"): _floor_parts = layout.get_meta("floor_parts")
-	for exit in layout.get_node("Exits").get_children():
-		if str(exit.get_meta("target", "")) == "living_hall":
-			exit.set_meta("target", "living_floor")
-			exit.set_meta("spawn", "living_hall_" + str(exit.get_meta("spawn", "")))
+func _new_map_record(map_name: String, layout: Node2D) -> Dictionary:
+	GEOMETRY.bind_layout(map_name, layout)
 	return {"node": layout, "geometry": {}, "geometry_applied": false,
 		"geometry_nodes": [], "access_shapes": {}, "relief_ready": false, "resources": {}}
 
@@ -485,7 +426,6 @@ func camera_limits() -> Rect2:
 func seen_cells() -> Dictionary:
 	if not _seen.has(key): _seen[key] = {}
 	return _seen[key]
-func set_prop(_id: String, _state: String) -> void: pass
 func station(target: String, who: String) -> Dictionary:
 	var actor: CharacterBody2D = field.actors.get(who)
 	if actor == null: return {}
@@ -600,9 +540,7 @@ static func _mark_in_rows(rows: Array, cell: Vector2i) -> String:
 	return row.substr(cell.x, 1) if cell.x >= 0 and cell.x < row.length() else ""
 
 func _map_routes() -> Dictionary:
-	_ensure_static_manifest()
-	if not _static_routes.is_empty(): return _static_routes
-	return _routes
+	return GEOMETRY.routes()
 
 func _next_edge(destination: String) -> Dictionary:
 	var graph := _map_routes()
@@ -655,14 +593,13 @@ func execute_destination(destination: Dictionary, who: String, serial: int, acti
 	var target := str(destination.get("departure_station", destination.get("room", "")))
 	var execution_room := str(destination.get("execution_room", destination.get("room", "")))
 	field.move_to_station(target, execution_room, who, serial, action)
-func play_replay(_ev: Dictionary) -> void: pass
 
 func load_map(next: String, _spawn: String) -> void:
 	if key == next and map != null: return
 	if not _map_records.has(next):
 		var packed := _get_packed_map(next)
 		if packed == null: return
-		_map_records[next] = _new_map_record(packed.instantiate() as Node2D)
+		_map_records[next] = _new_map_record(next, packed.instantiate() as Node2D)
 	if map:
 		# Keep the inactive layout detached: no collision world, area callbacks,
 		# actors or processing run in a cached room.
@@ -704,23 +641,18 @@ func load_map(next: String, _spawn: String) -> void:
 	_trim_maps()
 
 func spawn_point(spawn: String) -> Vector2:
-	var marker := map.get_node_or_null("Spawns/" + spawn) as Marker2D
-	if marker: return marker.position
-	# 要的出生点这张图上没有：用图上自己的第一个出生点，不落到图外的固定坐标。
-	var spawns := map.get_node_or_null("Spawns")
-	if spawns and spawns.get_child_count() > 0: return (spawns.get_child(0) as Marker2D).position
-	if map.has_meta("outdoor_core"):
-		return (map.get_meta("outdoor_core") as Rect2).get_center() - (map.get_meta("outdoor_origin") as Vector2)
-	return Vector2(64, 64)
+	var spawns: Dictionary = GEOMETRY.map_data(key).spawns
+	var id := spawn if spawn != "" else str(spawns.keys()[0])
+	return GEOMETRY.point(spawns[id].point)
 
 ## Cross-map placement is only the authored doorway transform or a continuous seam.
 ## Missing authored geometry blocks the transition before the source map is removed.
 func valid_transition(next: String, spawn: String, at: Vector2, use_at: bool) -> bool:
 	if _route_target_next != next or not _map_records.has(next): return false
 	var layout: Node2D = _map_records[next].node
-	var marker: Marker2D = layout.get_node_or_null("Spawns/" + spawn) as Marker2D if spawn != "" else null
-	if not use_at and marker == null: return false
-	var point := at if use_at else marker.position
+	var spawns: Dictionary = GEOMETRY.map_data(next).spawns
+	if not use_at and not spawns.has(spawn): return false
+	var point: Vector2 = at if use_at else GEOMETRY.point(spawns[spawn].point)
 	if use_at:
 		if not map.has_meta("outdoor_origin") or not layout.has_meta("outdoor_origin") or not layout.has_meta("outdoor_core"): return false
 		var source_world: Vector2 = field.player.position + (map.get_meta("outdoor_origin") as Vector2)
@@ -737,16 +669,12 @@ func valid_transition(next: String, spawn: String, at: Vector2, use_at: bool) ->
 
 func stands() -> Array:
 	var result := []
-	if map == null: return result
-	var node := map.get_node_or_null("Stands")
-	if node:
-		for m in node.get_children(): result.append((m as Marker2D).position)
+	for marker: Dictionary in GEOMETRY.map_data(key).get("stands", {}).values(): result.append(GEOMETRY.point(marker.point))
 	return result
 
 func door_point(fallback: Vector2) -> Vector2:
-	if map == null: return fallback
-	var spawns := map.get_node_or_null("Spawns")
-	return (spawns.get_child(0) as Marker2D).position if spawns and spawns.get_child_count() > 0 else fallback
+	var spawns: Dictionary = GEOMETRY.map_data(key).get("spawns", {})
+	return GEOMETRY.point(spawns.values()[0].point) if not spawns.is_empty() else fallback
 
 # ------------------------------------------------------------- movement ---
 
@@ -1098,40 +1026,17 @@ func room_name(_p: Vector2) -> String: return str(map.get_meta("title", key)) if
 
 func site_geometry(defs: Dictionary) -> Dictionary:
 	var result := {}
-	if map == null: return result
-	var markers := map.get_node_or_null("Sites")
-	if markers:
-		for m in markers.get_children():
-			var id := String(m.name)
-			if not defs.has(id) and id in DECOR_MARKERS: continue
-			var point := (m as Marker2D).position
-			result[id] = {"point": point, "reach": 46.0, "box": Rect2(point + Vector2(-16, -26), Vector2(32, 30)),
-				"marker": point + Vector2(0, -16), "title": str(m.get_meta("label", id)), "fallback": not defs.has(id)}
-
+	for id in GEOMETRY.markers(key, "sites"):
+		if not defs.has(id) and id in DECOR_MARKERS: continue
+		var marker: Dictionary = GEOMETRY.markers(key, "sites")[id]
+		var point: Vector2 = GEOMETRY.point(marker.point)
+		result[id] = {"point": point, "reach": float(marker.get("reach", 46.0)),
+			"box": Rect2(point + Vector2(-16, -26), Vector2(32, 30)),
+			"marker": point + Vector2(0, -16), "title": str(marker.get("label", id)), "fallback": not defs.has(id)}
 	return result
 
-func anchor(name: String):
-	if map == null: return null
-	if name.begins_with("slot:"):
-		var key := name.substr(5)
-		var marker := map.get_node_or_null("Stations/" + key) as Marker2D
-		if marker: return marker.position
-		marker = map.get_node_or_null("Sites/" + key) as Marker2D
-		if marker: return marker.position
-		marker = map.get_node_or_null("Stands/" + key) as Marker2D
-		return marker.position if marker else null
-	if name.begins_with("site:"):
-		var key := name.substr(5)
-		var marker := map.get_node_or_null("Sites/" + key) as Marker2D
-		if marker: return marker.position
-		marker = map.get_node_or_null("Stations/" + key) as Marker2D
-		return marker.position if marker else null
-	var st := map.get_node_or_null("Stations/" + name) as Marker2D
-	if st: return st.position
-	var site := map.get_node_or_null("Sites/" + name) as Marker2D
-	if site: return site.position
-	var spawn := map.get_node_or_null("Spawns/" + name) as Marker2D
-	return spawn.position if spawn else null
+func anchor(name: String) -> Variant:
+	return GEOMETRY.anchor(key, name)
 
 func furniture_hits(pos: Vector2) -> Dictionary:
 	var names: Array = []

@@ -11,47 +11,15 @@ from itertools import combinations
 import json
 import math
 from pathlib import Path
-import re
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'mcp/asset_pipeline'))
+from scene_geometry import OUTDOOR_FIELDS, outdoor_metadata, scene_exits, scene_point, scene_source, vector
+
 GAME = ROOT / "godot_csharp"
 CONTRACT = GAME / "Contracts/geometry_contract.json"
 GROUPS = {"sites": "Sites", "stations": "Stations", "stands": "Stands", "spawns": "Spawns"}
-
-
-def scene_source(path: Path):
-    nodes, shapes = {}, {}
-    text = path.read_text(encoding="utf-8")
-    for block in re.findall(r"(?ms)^\[(?:node|sub_resource)\b.*?(?=^\[|\Z)", text):
-        header = dict(re.findall(r'(\w+)="([^"]*)"', block.splitlines()[0]))
-        fields = dict(re.findall(r"(?m)^([^\n=]+) = (.+)$", block))
-        if block.startswith("[sub_resource"):
-            shapes[header["id"]] = {"type": header["type"], "fields": fields}
-        else:
-            parent = header.get("parent")
-            key = "" if parent is None else header["name"] if parent == "." else parent + "/" + header["name"]
-            nodes[key] = {"type": header.get("type", ""), "fields": fields}
-    return nodes, shapes
-
-
-def vector(value: str):
-    match = re.fullmatch(r"Vector2\(([^,]+),\s*([^)]+)\)", value)
-    if match is None:
-        raise ValueError("Expected Vector2, got " + value)
-    return [float(match[1]), float(match[2])]
-
-
-def scene_point(nodes, path):
-    result = [0.0, 0.0]
-    while True:
-        fields = nodes[path]["fields"]
-        if float(fields.get("rotation", "0")) != 0 or vector(fields.get("scale", "Vector2(1, 1)")) != [1, 1]:
-            raise ValueError("Static marker parser requires unrotated, unscaled parents: " + path)
-        point = vector(fields.get("position", "Vector2(0, 0)"))
-        result = [result[0] + point[0], result[1] + point[1]]
-        if path == "":
-            return result
-        path = path.rsplit("/", 1)[0] if "/" in path else ""
 
 
 def equal_point(left, right):
@@ -109,6 +77,9 @@ def inspect_contract(contract_path: Path):
         counts = {group: 0 for group in GROUPS}
         coverage[name] = counts
         require(equal_point(vector(nodes[""]["fields"]["metadata/map_size"]), item["size"]), prefix + "map size differs from scene")
+        authored_outdoor = outdoor_metadata(nodes)
+        require({field: item[field] for field in OUTDOOR_FIELDS if field in item} == authored_outdoor,
+                prefix + "outdoor coordinate metadata differs from scene")
         room_ids = {room["id"] for room in item["rooms"]}
         require(len(room_ids) == len(item["rooms"]), prefix + "duplicate room IDs")
         require(bool(room_ids), prefix + "no room regions")
@@ -135,25 +106,23 @@ def inspect_contract(contract_path: Path):
                 counts[group] += 1
 
         exits = {entry["id"]: entry for entry in item["exits"]}
-        source_exits = {path.split("/", 1)[1] for path, node in nodes.items()
-                        if path.startswith("Exits/") and "metadata/target" in node["fields"]}
+        source_exits = {entry["id"]: entry for entry in scene_exits(nodes, shapes)}
         require(len(exits) == len(item["exits"]), prefix + "duplicate exit IDs")
-        require(set(exits) == source_exits, prefix + "exit inventory differs from scene")
+        require(set(exits) == set(source_exits), prefix + "exit inventory differs from scene")
         for exit_id, entry in exits.items():
-            label, path = prefix + "exit/" + exit_id, "Exits/" + exit_id
-            if path not in nodes:
+            label = prefix + "exit/" + exit_id
+            if exit_id not in source_exits:
                 continue
-            fields = nodes[path]["fields"]
-            require(equal_point(scene_point(nodes, path), entry["point"]), label + " coordinates differ")
-            require(json.loads(fields["metadata/target"]) == entry["target"], label + " target differs")
-            require(json.loads(fields.get("metadata/spawn", '""')) == entry["spawn"], label + " target spawn differs")
-            require(entry["target"] in maps, label + " target map is missing")
-            if entry["target"] in maps:
-                require(entry["spawn"] in maps[entry["target"]]["spawns"], label + " target spawn is missing")
-            shape = nodes.get(path + "/Shape", {})
-            reference = re.fullmatch(r'SubResource\("([^"]+)"\)', shape.get("fields", {}).get("shape", ""))
-            require(shape.get("type") == "CollisionShape2D" and reference is not None and reference[1] in shapes,
-                    label + " has no declared collision shape")
+            authored = source_exits[exit_id]
+            require(equal_point(authored['point'], entry['point']), label + " coordinates differ")
+            for field in ('path', 'rect', 'target', 'spawn', 'internal_gate', 'gate'):
+                require(entry.get(field) == authored.get(field), label + ' ' + field + ' differs')
+            if entry['internal_gate']:
+                require(bool(entry.get('gate')), label + ' internal gate has no access key')
+            elif entry['target']:
+                require(entry['target'] in maps, label + " target map is missing")
+                if entry['target'] in maps:
+                    require(entry['spawn'] in maps[entry['target']]['spawns'], label + " target spawn is missing")
 
         rows = json.loads(nodes[""]["fields"].get("metadata/terrain_rows", "[]"))
         components = doorway_components(rows, item, contract["cell_size"])
@@ -181,7 +150,8 @@ def inspect_contract(contract_path: Path):
                 pair = frozenset((door["from"], door["to"]))
                 require(pair <= components[index][1], label + " rooms do not border its authored doorway")
                 declared_pairs[index].add(pair)
-        require(external_ids == set(exits), prefix + "external door inventory differs from exits")
+        routed_exits = {key for key, entry in exits.items() if entry['target'] and not entry['internal_gate']}
+        require(external_ids == routed_exits, prefix + "external door inventory differs from exits")
         for index, (_, neighbours) in enumerate(components):
             actual_pairs = {frozenset(pair) for pair in combinations(neighbours, 2)}
             require(actual_pairs == declared_pairs[index], prefix + "doorway component " + str(index) + " room connections differ")

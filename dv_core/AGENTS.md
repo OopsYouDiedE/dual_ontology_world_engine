@@ -48,7 +48,7 @@ python mcp/editor_lsp/dv_lsp.py
 
 实际逻辑会话入口为 `python mcp/verification/run_debug.py --out artifacts/partial-bootstrap-core/<新目录> --timeout <本轮授权秒数>`，默认源码为 `dv_core/checks/65-debug-runner.dv`。需要阶段恢复或插桩时按该任务范围显式选择，不能由普通清理自行追加。
 
-`mcp/build/dv_toolchain.py` 统一解析从行首开始的相对 `#include`：依赖先于引用者，同一路径只加载一次，循环与缺失文件报告位置，引用行保留空行。缩进正文中的 `#include` 必须原样保留；只规范 CRLF/CR，不拆分 U+2028 等文字字符。各模块的 define/称谓和源位置边界独立，裸编译器需要组合后的源与范围数据。C0→C1→C2→C3 使用 `10-compiler.dv`、seed 与 Runtime，自举缓存按来源指纹区分，并核对 C2/C3 生成源固定点。
+`mcp/build/dv_toolchain.py` 统一解析从行首开始的相对 `#include`：依赖先于引用者，同一路径只加载一次，循环与缺失文件报告位置，引用行保留空行。缩进正文中的 `#include` 必须原样保留；只规范 CRLF/CR，不拆分 U+2028 等文字字符。各模块的 define/称谓和源位置边界独立。裸编译器 `--module` 接收单模块源及导入接口；`--check/--emit` 保留组合源与范围接口。C0→C1→C2→C3 使用 `10-compiler.dv`、seed 与 Runtime，自举缓存按来源指纹区分，并核对 C2/C3 生成源固定点。
 
 `dv-check.json` 将编译器、生产和只读检查分组。生产组必须先于 include 生产的检查组，编辑 20–60 不带入 oracle；70 单独选择检查闭包。`check_dv.py` 只调用真实 C3 的 `--check`，不执行内容。`dv_lsp.py` 处理未保存缓冲区与过期诊断；VS Code、VS2022 和 Godot 客户端不各自实现语义分析。生成程序集、复制的服务端与安装包分别放在 obj/bin、客户端生成目录和 artifacts/releases，不把这些输出当作第二份源码。
 
@@ -80,9 +80,11 @@ python mcp/editor_lsp/dv_lsp.py
 
 唯一动作链为 `60-game.dv` → `30-session.dv` Prepare → 宿主实际执行/世界法则回执 → Complete。DV 负责选择、报价、权威效果、观察、传播与结算；Godot Main → WorldView 执行空间与碰撞。界面呈现结束本身不另起 Prepare，等待回执时不重复分派意图。
 
-同房间 WASD/鼠标接近由宿主真实寻路与碰撞执行，不提交 DV、不扣 DV 时间或行动步数；热点交互与跨房间仍走共同链。`dvs_player_options` 只返回本人准入候选，60 附加 kind/interaction 与原生资源绑定，不返回隐藏值。`dvs_select_player` 再核对资格；人工 `manual_only` 只在临时只读 `manual_input` 视图开放，不写回自主人物。
+同房间 WASD/鼠标接近由宿主真实寻路与碰撞执行，不提交 DV、不扣 DV 时间或行动步数；热点交互与跨房间仍走共同链。`dvs_player_options` 只返回本人准入候选，60 附加 kind/interaction 与逻辑站点、人物身份，不返回隐藏值。`dvs_select_player` 再核对资格；人工 `manual_only` 只在临时只读 `manual_input` 视图开放，不写回自主人物。
 
 Session 以不可变 DV 值与版本号维护状态。HostSnapshot/HostIntent 直接返回 .NET 只读值图，Godot 主线程物化 Variant；StateDelta 按观察者和版本发布变化的顶层字段与新增事件。静态目录只发送一次，执行者投影仅包含执行所需字段。JSON 接口保留给文本客户端，不进入正式 Godot 热路径。Trace 只读；Close 幂等；Save 取最近已完成的提交点，在途意图留在轨迹中。接口细节见 host_bridge README。
+
+Core 发布中立 actor/map/room/site/station 身份、位置标题和逻辑时刻。Godot 场景路径、sprite、动画帧、站点视觉映射和 HUD 布局只由宿主的呈现契约绑定。逻辑地图、房间与行动站点继续属于正式执行合同；移动视觉资源不改写其标识或领域规则。
 
 逻辑地点、当前地图执行房间和 `travel.station` 分别声明。回执核对主体、动作事件、站点、地图/房间、实际终点与到达误差；缺资源或绑定返回真实失败。现场接触成功后才发布相关观察，初次锚点与移动目的地分开。源侧门道可以支持出发房间核对，不能冒充目标房间到达；物理开启与授权放行独立。场景、坐标、资源和 `execution_snapshot` 不写入人物认识。
 
@@ -108,6 +110,10 @@ Session 以不可变 DV 值与版本号维护状态。HostSnapshot/HostIntent �
 
 新原始事件、快照、存档、实际输入、正文投影与计时使用校验二进制 `.dvdag/.dvsave/.dvlog`。JSON/JSONL/gzip 不用于新运行轨迹落盘；JSON 仅用于进程内接口、编译配置和小型工程汇总，旧记录只读兼容。保留全部原字段、顺序、来源、精确 Rational 与同文字符串区别；DAG 节点定义先于引用，事件、checkpoint、final、seal 与 `.partial` 边界完整。
 
+SmartReplay 共用 `dv-replay-v2` 帧合同，保留 snapshot、原始 input、presentation、身体/UI 上下文及语义事件。回放时钟按内容节拍压缩现实静默，原始输入时间与 seq/state_version/action_event 关联仍留在帧数据中。实际坐标只来自已记录身体或实际回执，旧日志按逻辑位置重建并明确来源；只读投影不创建会话、执行动作或授予观察。Godot 回放使用独立场景，正式会话不接收回放输入。
+
+检查报告的 `domain_evaluation_complete` 以真实完成领域分析为准。未进入时记录明确 reason，负面领域结论仍报告分析已完成；`main_causal_supported` 保持独立。原始证据完整和检查进程正常退出本身不填写领域完成标志。
+
 `rt_json_write` 拒绝新文件记录；`rt_json_print` 在记录器开启后写二进制投影，解析/字符串交换仍为平台功能。`WriteTrace/WriteSave` 独占写 partial 并在完整封存后发布，恢复文件必须验证 seal；失败保留原字节，不自动重试或覆盖。阶段存档只能来自正式实际执行，恢复核对完整源码、配置及提交身份，不改历史来源。
 
 完整审计与普通游玩分开。`R.AuditMode` 按 AsyncLocal 作用域隔离，Session 打开时确定策略并随存档保留。精简模式仅裁剪已明确允许的事件大字段，正式推理需要的 inference、observation/listener_parse、factor_prune 历史仍保留；不能关闭消费者或把缺失伪装为完整证据。读取器、关闭与恢复合同见 [host_bridge/README.md](host_bridge/README.md)。
@@ -125,6 +131,6 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 
 ## 分区编译与开发接口
 
-20/30 编译到 `base/obj/dv/DVKernel.cs`，35–60 编译到 `host_bridge/obj/dv/DVProgram.cs`。解析缓存按编译器指纹、模块文本和 UTF-16 偏移寻址；输入不变时生成文件保持时间戳。调试65与检查70单独生成，均不编入正式宿主。
+20/30 分模块编译到 `base/obj/dv/modules/*.g.cs`，构成 DVKernel；35–60 分模块编译到 `host_bridge/obj/dv/modules/*.g.cs`，构成 DVProgram。单模块 `--module` 只导入依赖的函数与名义类型接口，源码偏移从零开始；正文、导出接口和编译器版本各自参与对应缓存失效。小型 DVKernel.cs / DVProgram.cs 只承载 partial 类声明。MSBuild 在生成步骤后纳入模块文件，输入不变时保留时间戳。MCP/LSP 后台预热复用同一自举锁；调试65与检查70独立生成，均不编入正式宿主。
 
 `--dv-dev` 明确开启开发会话。Inspector 可以并排查看权威世界与指定心智；tp/time 记录开发事件。时间推进沿实际队列和世界时间边界结算，保留 Prepare/Complete 的正式结果。开发记录单独标识，人物认知仍来自既有观察。Godot 在开发变更后重建保留实体。

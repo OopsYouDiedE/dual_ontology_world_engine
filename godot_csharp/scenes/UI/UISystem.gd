@@ -3,7 +3,6 @@ extends Control
 ## UI presentation and one modal owner; only pure data crosses the Host boundary.
 signal ui_event(event: Dictionary)
 signal step_dialogue
-signal dialogue_option_selected(choice_id: String)
 signal casebook_reading_changed(active: bool)
 
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
@@ -42,6 +41,10 @@ var _presentation_music_token := 0
 var _host_input_enabled := true
 var _known_rooms: Dictionary = {}
 var _known_connections: Dictionary = {}
+var _casebook_trace_data: Dictionary = {}
+var _casebook_trace_dirty := true
+var _replay_mode := false
+var _replay_context_serial := 0
 
 @onready var _screen_layer: CanvasLayer = $TransitionLayer
 @onready var _screen_fader: ColorRect = $TransitionLayer/ScreenFader
@@ -70,10 +73,6 @@ func _ready() -> void:
 	dialogue_ui.dialogue_step.connect(func():
 		if not _closing: step_dialogue.emit()
 	)
-	dialogue_ui.choice_selected.connect(func(cid: String):
-		if _closing: return
-		dialogue_option_selected.emit(cid)
-	)
 	dialogue_ui.dialogue_finished.connect(func(_last_choice: String):
 		if not _closing:
 			step_dialogue.emit()
@@ -88,12 +87,15 @@ func _ready() -> void:
 	investigation_ui.closed.connect(_on_modal_closed)
 	settings_ui = CASEBOOK_SCRIPT.new()
 	settings_ui.archive = casebook
+	settings_ui.pause_world = not _replay_mode
+	settings_ui.replay_mode = _replay_mode
 	add_child(settings_ui)
 	settings_ui.restore_previous_focus = false
 	settings_ui.closed.connect(_on_modal_closed)
 	settings_ui.reopen_requested.connect(open_settings)
 	settings_ui.reading_changed.connect(func(active: bool): casebook_reading_changed.emit(active))
 	settings_ui.ui_event.connect(_on_book_event)
+	casebook.changed.connect(func(): _casebook_trace_dirty = true)
 	var settings := get_node_or_null("/root/GameSettings")
 	if settings != null: settings.setting_changed.connect(_on_setting_changed)
 	_sync_overlay_input()
@@ -208,7 +210,7 @@ func present(ev: Dictionary) -> Dictionary:
 		"close", "interaction_closed": close_modal(false)
 	return {}
 
-func _request_modal(kind: String, data: Dictionary = {}) -> void:
+func _request_modal(kind: String, data: Dictionary = {}, view_state: Dictionary = {}) -> void:
 	if _closing or host_input_blocked or not _host_input_enabled or not _pending_action.is_empty(): return
 	# Settings is a child reading layer. Preserve the sheet beneath it, including
 	# its reading position; returning must not dispatch or re-run any world action.
@@ -225,11 +227,13 @@ func _request_modal(kind: String, data: Dictionary = {}) -> void:
 		_return_focus = weakref(focused) if focused != null else null
 	_modal_cycle = true
 	_pending_modal = {"kind": kind, "data": data}
+	if not view_state.is_empty(): _pending_modal["view_state"] = view_state
 	_sync_overlay_input()
 	if settings_ui.is_active():
 		if kind in ["settings", "notebook", "card", "bookmarks"]:
 			_pending_modal.clear()
 			_modal_kind = kind
+			_active_modal = {"kind": kind, "data": data}
 			settings_ui.open(_book_page(kind, data))
 		else:
 			settings_ui.close()
@@ -263,7 +267,7 @@ func _activate_pending_modal() -> void:
 		"spatial":
 			_spatial_context = data
 			investigation_ui.show_spatial_choices(data)
-	if request.has("view_state") and _modal_kind != "settings":
+	if request.has("view_state") and _modal_kind not in ["settings", "notebook", "bookmarks", "card"]:
 		investigation_ui.restore_view_state(request.view_state)
 	_sync_overlay_input()
 
@@ -407,6 +411,7 @@ func open_settings(_page := "rules") -> void:
 	_request_modal("settings")
 
 func _book_page(kind: String, data: Dictionary) -> String:
+	if data.has("page"): return str(data.page)
 	match kind:
 		"settings": return "settings"
 		"bookmarks": return "load"
@@ -493,13 +498,55 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func view_trace_context() -> Dictionary:
+	if _casebook_trace_dirty and (settings_ui.is_active() or investigation_ui.is_active()):
+		_casebook_trace_data = casebook.export_data()
+		_casebook_trace_dirty = false
 	if settings_ui.is_active():
 		var context: Dictionary = settings_ui.book.page_trace_context()
 		context.transition = settings_ui.transition_state()
+		context.modal_kind = _modal_kind
+		context.modal_data = _active_modal.get("data", {}).duplicate(true)
+		context.casebook = _casebook_trace_data
+		context.book_state = settings_ui.book.capture_replay_state()
 		return context
 	if investigation_ui.is_active():
 		return {"panel": "spatial" if _modal_kind == "spatial" else "investigation", "page": _modal_kind,
-			"presentation_id": str(_spatial_context.get("interaction_id", "")), "transition": investigation_ui.transition_state()}
+			"presentation_id": str(_spatial_context.get("interaction_id", "")), "transition": investigation_ui.transition_state(),
+			"modal_kind": _modal_kind, "modal_data": _active_modal.get("data", {}).duplicate(true),
+			"view_state": investigation_ui.capture_view_state(), "casebook": _casebook_trace_data}
 	if dialogue_ui.is_dialogue_active():
 		return {"panel": "dialogue", "presentation_id": str(_trace_display.get("presentation_id", ""))}
 	return {"panel": "field", "modal_pending": not _pending_modal.is_empty(), "screen_transition": _screen_motion.is_active()}
+
+func set_replay_mode(enabled: bool) -> void:
+	_replay_mode = enabled
+	if is_instance_valid(settings_ui):
+		settings_ui.pause_world = not enabled
+		settings_ui.replay_mode = enabled
+
+func restore_replay_context(context: Dictionary) -> void:
+	set_replay_mode(true)
+	_replay_context_serial += 1
+	var serial := _replay_context_serial
+	if context.get("casebook") is Dictionary:
+		casebook.restore_data(context.casebook, str(snapshot.get("viewer", "")))
+	var panel := str(context.get("panel", "field"))
+	if panel == "casebook":
+		var page := str(context.get("page", "index"))
+		if not settings_ui.is_open() or str(settings_ui.book.page_trace_context().get("page", "")) != page:
+			_request_modal(str(context.get("modal_kind", "notebook")), {"page": page})
+		await get_tree().process_frame
+		while serial == _replay_context_serial and not _closing and (not settings_ui.is_open() or settings_ui.transition_state() == "turning"):
+			await get_tree().process_frame
+		if serial == _replay_context_serial and not _closing:
+			await settings_ui.book.restore_replay_state(context.get("book_state", {"page": page}))
+	elif panel in ["investigation", "spatial"]:
+		var kind := str(context.get("modal_kind", context.get("page", "spatial")))
+		var data: Dictionary = context.get("modal_data", {})
+		var view_state: Dictionary = context.get("view_state", {})
+		if investigation_ui.is_open() and _modal_kind == kind and _active_modal.get("data", {}) == data:
+			investigation_ui.restore_view_state(view_state)
+		else:
+			_request_modal(kind, data, view_state)
+	elif panel in ["field", "dialogue"]:
+		close_modal(false)

@@ -6,7 +6,7 @@
 
 对白、调查纸页、现场选项及 HUD 共用近代印刷的阅读层级：暖纸、深褐墨、宋体标题、克制的手写批注、短规线与疏朗版心。普通区域依靠留白和纸色区分，不叠加完整双线框、角花或默认现代控件外壳。键盘焦点仍保留明确的墨色下划线；禁用状态不能只靠装饰表达。
 
-`godot_csharp/tools/build_ui_theme.py` 维护主题资源。对白使用 `DialogueTheme.tres`，调查与 HUD 使用 `OverlayTheme.tres`；标题实体书继续使用 `TitleTheme.tres`。新增外观通过命名的 Theme 类型变体加入生成器，场景选择变体，不在每个控件上另写字体、颜色或 StyleBox。
+`mcp/asset_pipeline/build_ui_theme.py` 维护主题资源。对白使用 `DialogueTheme.tres`，调查与 HUD 使用 `OverlayTheme.tres`；标题实体书继续使用 `TitleTheme.tres`。新增外观通过命名的 Theme 类型变体加入生成器，场景选择变体，不在每个控件上另写字体、颜色或 StyleBox。
 
 | 用途 | 主题类型 |
 | --- | --- |
@@ -25,7 +25,7 @@
 
 `InvestigationUI` 的外纸页按当前视口限制宽高，正文在内部滚动，标题、关闭按钮和页脚保持可达。长现场候选保留完整文字；操作按钮继续使用正式传入的 ID 和可用状态。提示文字靠近指针时限制宽度，并在屏幕边缘反向安放。
 
-`open_notebook`、`open_card`、`open_campus_map` 与 `open_ending` 只排版传入的数据。书本中的资料整理由实体书模块负责；推演通过 `open_manuscript` 保持独立界面。
+资料卡与案卷由 `UISystem` 路由到 `CasebookUI`，实体书模块负责书内资料整理。`InvestigationUI` 通过 `open_manuscript`、`open_campus_map` 与 `open_ending` 呈现推演、地图和结束页，只排版各自传入的数据。
 
 ## 嵌套界面与输入所有权
 
@@ -43,12 +43,12 @@
 
 ## 实际画面复查
 
-从仓库根目录运行工程构建与资源导入后，使用有图形渲染能力的 Godot .NET 运行：
+采集工具由 `mcp/godot_workspace.py` 创建隔离的临时工具工程，接入生产场景与资源。`FrameArchive.cs` 只在该工具工程编译。获得本轮采集授权后，从仓库根目录使用有图形渲染能力的 Godot .NET 运行：
 
 ```powershell
-& $env:GODOT --path godot_csharp --script res://tools/capture_period_ui.gd -- --out=<新的绝对路径>
+python mcp/godot_workspace.py --csharp --script res://tools/capture_period_ui.gd --godot $env:GODOT -- --out=C:/Temp/dv-ui-review-NEW
 ```
 
-`capture_period_ui.gd` 先启动正常 Main 开场，取得实际对白和观察者快照，再关闭该会话；后续在独立的生产 UI 实例中检查手稿、凡例嵌套返回、长正文与选项、语言及不同视口。长文本和选项样张仅用于排版，明确记为样张，断开 Core，不选择剧情路线或答案。UI 选项预览只暂时改动内存中的呈现设置，结束后恢复，不写入用户的设置文件。
+临时工程内的 `res://tools/capture_period_ui.gd` 先启动正常 Main 开场，取得实际对白和观察者快照，再关闭该会话；后续在独立的生产 UI 实例中检查手稿、凡例嵌套返回、长正文与选项、语言及不同视口。长文本和选项样张仅用于排版，明确记为样张，断开 Core，不选择剧情路线或答案。工作区隔离工具的用户目录；UI 选项预览只暂时改动内存中的呈现设置，结束后恢复。`--out` 改为本轮尚不存在的新绝对路径。
 
 输出包括 PNG 和带校验的二进制 `ui-review.dvlog`。截图、实际键鼠输入、显示数据来源、嵌套返回与几何记录分别保存。默认检查 1280×720 和 1600×900，并检查减少动态效果时的纸页状态。每轮使用新目录，保留失败证据；修改源码后重新运行，不能把前后两个版本的画面混为同一轮结果。该入口属于二级 UI 检查，不代表剧情通关、完整推演行为或性能验收。

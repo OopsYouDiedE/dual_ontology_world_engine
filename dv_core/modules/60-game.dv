@@ -236,9 +236,6 @@ fn dvg_presentation(state, viewer):
         i = i + 1
     return dv_with(result, "speaker_name", display)
 
-fn dvg_cast():
-    return {"detective": "detective", "huo": "engineer", "shen": "chef", "su": "musician", "lucian": "poet", "gu": "archaeologist", "quer": "thief", "ward": "lawyer", "selma": "naturalist", "ruan": "chessplayer", "elena": "dancer", "moran": "painter", "veronica": "chemist", "bertrand": "marksman", "margaret": "architect", "mora": "doctor"}
-
 // A navigation destination is not a per-person initial placement.
 fn dvg_initial_anchor(actor, location):
     if actor == "detective" and location == "R05":
@@ -246,7 +243,6 @@ fn dvg_initial_anchor(actor, location):
     return ""
 
 fn dvg_people(state, viewer):
-    let sprites = dvg_cast()
     var viewer_mind = state.actors[0].mind
     var viewer_index = 0
     while viewer_index < rt_count(state.actors):
@@ -258,10 +254,10 @@ fn dvg_people(state, viewer):
     while i < rt_count(state.actors):
         let actor = state.actors[i]
         let position = dv_read(state.physical, campaign_position_ref(actor.id))
-        if actor.id != viewer and dv_uncontested(position) and dv_has_key(sprites, actor.id):
+        if actor.id != viewer and dv_uncontested(position):
             let place = dvg_place(position.value)
             if place.map != "":
-                var person = {"key": actor.id, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": position.value, "initial_anchor": dvg_initial_anchor(actor.id, position.value), "spawn": dv_find(place, "spawn", ""), "present": true, "sprite": dv_find(sprites, actor.id, ""), "frame": ""}
+                var person = {"key": actor.id, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": position.value, "initial_anchor": dvg_initial_anchor(actor.id, position.value), "spawn": dv_find(place, "spawn", ""), "present": true}
                 let known_name = dv_read(viewer_mind, c1_op_person_ref(actor.id, "name"))
                 var title = "同伴"
                 if dv_uncontested(known_name):
@@ -290,17 +286,6 @@ fn dvg_map_access(state, current_map):
             maps = dv_with(maps, "living_hall", opened)
         i = i + 1
     return maps
-
-// Spatial additions are content declarations. Sampling and safety remain DV actions.
-fn dvg_site_titles(map):
-    if map == "living_floor":
-        return {"bed": {"title": "床"}, "transmitter": {"title": "铜口"}, "zone_rules": {"title": "公告框"}, "E1": {"title": "隔离门"}, "E2": {"title": "门底与木楔"}, "E6": {"title": "苏泠的书桌"}, "E7": {"title": "长桌上的石板"}, "E10": {"title": "备餐柜台"}, "E11": {"title": "置物架"}, "E12": {"title": "风衣"}}
-    return {}
-
-fn dvg_sprite_sites(map):
-    if map == "living_floor":
-        return {"N1Bed": "bed", "N1Coat": "E12", "R05Shelf": "E11", "R05ShelfTrace": "E11", "Transmitter": "transmitter", "InnerBolt": "E1", "Slate": "E7", "Jar": "E10"}
-    return {}
 
 // Read only the owner's stored comparison and still-current direct observations.
 // No world reads, model calls, assumption dumps or new knowledge.
@@ -578,22 +563,21 @@ fn dvg_snapshot_location(state, viewer):
         return dv_with(dvg_place(position.value), "logical_location", position.value)
     return {"map": "", "room": "", "logical_location": ""}
 
-// Static resources are projected once for each observer/map pair.
+// The engine publishes stable identities. Each host binds its own assets and layout.
 fn dvg_snapshot_static(state, viewer):
     let place = dvg_snapshot_location(state, viewer)
-    let key = ["host-static-v2", viewer, place.map]
+    let key = ["host-identity-v3", viewer, place.map]
     let cached = rt_memo_get([], key)
     if cached[0]:
         return cached[1]
-    let cast = dvg_cast()
-    return rt_memo_put([], key, {"resource": "res://scenes/Chapter2/Field/CampusMapView.tscn", "field_enabled": true, "initial_placements": [], "sites": dvg_site_titles(place.map), "presentation": {"player_actor": viewer, "player_sprite": dv_find(cast, viewer, "")}, "cast": cast, "sprite_sites": dvg_sprite_sites(place.map)})
+    return rt_memo_put([], key, {"view_kind": "world", "field_enabled": true, "initial_placements": [], "presentation": {"player_actor": viewer}})
 
 fn dvg_host_access(state, map):
     return {"dorms": true, "isolation_open": dv_truth(state.physical, dv_fact(c1dep_ref("open"), true)) == "true", "door_prints": false, "maps": dvg_map_access(state, map)}
 
 fn dvg_snapshot_dynamic(state, viewer, intent):
     let place = dvg_snapshot_location(state, viewer)
-    let snapshot = {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": place.logical_location, "initial_anchor": dvg_initial_anchor(viewer, place.logical_location), "spawn": dv_find(place, "spawn", ""), "anchor": dv_find(place, "anchor", ""), "player_control": dv_find(state, "player_actor", "") == viewer, "hud": {"title": "安眠者有福", "room": dvg_location_title(place.logical_location), "time": dvg_clock(state.physical.time)}, "map_knowledge": dvg_map_knowledge(state, viewer, intent), "access": dvg_host_access(state, place.map), "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "pending": intent, "chapter_summary": dvg_chapter_summary(state), "replay": dvg_replay(state, viewer)}
+    let snapshot = {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": viewer, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": place.logical_location, "initial_anchor": dvg_initial_anchor(viewer, place.logical_location), "spawn": dv_find(place, "spawn", ""), "anchor": dv_find(place, "anchor", ""), "player_control": dv_find(state, "player_actor", "") == viewer, "location_title": dvg_location_title(place.logical_location), "map_knowledge": dvg_map_knowledge(state, viewer, intent), "access": dvg_host_access(state, place.map), "traces": dvg_traces(state.physical), "people": dvg_people(state, viewer), "pending": intent, "chapter_summary": dvg_chapter_summary(state), "replay": dvg_replay(state, viewer)}
     if dv_find(state.story, "development_mode", dv_find(state, "development_mode", false)):
         return dv_with(snapshot, "development_result", dv_find(state.story, "development_result", false))
     return snapshot
@@ -606,6 +590,13 @@ fn dvg_executor_snapshot(state, actor, intent):
 
 fn dvg_snapshot_with_intent(state, viewer, intent):
     return dv_with_many(dvg_snapshot_static(state, viewer), dvg_snapshot_dynamic(state, viewer, intent))
+
+// Older trace checkpoints contain only recorded physical and actor values. Read
+// those values directly; absent session knowledge and UI content stay absent.
+fn dvg_recorded_snapshot(record, viewer):
+    let place = dvg_snapshot_location(record, viewer)
+    let snapshot = {"game_time": record.physical.time, "active": false, "viewer": viewer, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": place.logical_location, "initial_anchor": dvg_initial_anchor(viewer, place.logical_location), "spawn": dv_find(place, "spawn", ""), "anchor": dv_find(place, "anchor", ""), "player_control": false, "location_title": dvg_location_title(place.logical_location), "map_knowledge": {"rooms": [], "doors": []}, "access": dvg_host_access(record, place.map), "traces": dvg_traces(record.physical), "people": dvg_people(record, viewer), "pending": {"status": "replay", "options": []}, "chapter_summary": false, "replay": {"summary": "", "hypotheses": [], "conflicts": [], "predictions": [], "total_records": 0, "shown_records": 0}}
+    return dv_with_many(dvg_snapshot_static(record, viewer), snapshot)
 
 // A system closing record is not fed into any actor's cognition or choices.
 fn dvg_chapter_summary(state):
@@ -632,7 +623,6 @@ fn dvg_host_open(options):
         let actor = state.actors[i]
         if actor.id == viewer:
             found = true
-            dv_require(dv_has_key(dvg_cast(), viewer), "Host viewer has no visual cast binding")
             dv_require(dv_local(state.bindings, viewer, viewer) != "", "Host viewer has no projection binding")
             let position = dv_read(state.physical, actor.location_ref)
             dv_require(dv_uncontested(position), "Host viewer has no settled location")

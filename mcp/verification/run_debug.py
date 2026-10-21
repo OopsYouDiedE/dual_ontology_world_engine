@@ -572,17 +572,25 @@ def main():
                                            and result.get('logical_loop_finished') and result['raw_sealing_complete']
                                            and result['source_unchanged'] and result.get('run_config_matches') is True)
         result['causal_check_complete'] = False
+        result['main_causal_supported'] = False
         if result['evidence_complete']:
             try:
                 result['causal_check'] = causal_check(out, result, hashes, checker_normalized,
                                                      execution_env, args.causal_timeout)
+                result['causal_check_reason'] = result['causal_check']['domain_evaluation_reason']
                 result['causal_check_complete'] = result['causal_check'].get('domain_evaluation_complete') is True
+                result['causal_check_status'] = 'completed' if result['causal_check_complete'] else 'not-completed'
+                result['main_causal_supported'] = (result['causal_check_complete'] and
+                                                  result['causal_check'].get('main_causal_supported') is True)
             except subprocess.TimeoutExpired:
+                result['causal_check_status'] = 'timeout'
                 result['causal_check_error'] = f'Read-only causality analysis exceeded {args.causal_timeout} seconds'
             except Exception as error:
+                result['causal_check_status'] = 'error'
                 result['causal_check_error'] = str(error)
         else:
             result['causal_check_status'] = 'not-run-incomplete-evidence'
+            result['causal_check_reason'] = 'incomplete_evidence'
         result['source_unchanged'] = all(Path(path).is_file() and sha_file(path) == digest
                                          for path, digest in {**hashes, **restore_input_hashes}.items())
         result['evidence_complete'] = result['evidence_complete'] and result['source_unchanged']

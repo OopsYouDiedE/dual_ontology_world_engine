@@ -280,7 +280,7 @@ def main():
         records.append({"map": key, "world_size": [len(room["rows"][0])*CELL,len(room["rows"])*CELL],
                         "texture_density": SCALE, "layers": {k: {"path": p.relative_to(GAME).as_posix(), "sha256": sha(p)} for k,p in files.items()}})
         print(f"surface {key}: {len(layers)} editable layers, density {SCALE}x")
-    manifest = {"version": 1, "generator": "tools/build_scene_surfaces.py", "source_material_sha256": sha(SOURCE/"materials.png"),
+    manifest = {"version": 1, "generator": "mcp/asset_pipeline/build_scene_surfaces.py", "source_material_sha256": sha(SOURCE/"materials.png"),
                 "source_architecture_sha256": sha(SOURCE/"architecture.png"), "source_ground_sha256": sha(SOURCE/"ground.png"),
                 "architecture_crop_boxes_at_1254": ARCH_BOXES,
                 "materials": MATERIALS, "maps": records, "geometry_changed": False, "furniture_baked": False}

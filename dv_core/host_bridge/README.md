@@ -26,7 +26,9 @@
 
 ## 增量和缓存
 
-每个观察者独立缓存投影和最后交付版本。静态资源表只在初次投影、地图或章节变化时构造；动态快照按会话版本构造，逐字段与上一份不可变 DV 值比较。未变字段复用相同的只读 .NET 对象，变化字段才转换。`HostStateDelta.Reset` 时宿主建立新快照，其他情况下合并 `Changed` 并移除 `Removed`。Godot 适配层将变化字段转成 Variant，再交接主线程。所有场景、节点、物理和 UI 操作留在主线程。
+每个观察者独立缓存投影和最后交付版本。静态身份投影只在初次投影、地图或章节变化时构造；动态快照按会话版本构造，逐字段与上一份不可变 DV 值比较。未变字段复用相同的只读 .NET 对象，变化字段才转换。`HostStateDelta.Reset` 时宿主建立新快照，其他情况下合并 `Changed` 并移除 `Removed`。Godot 适配层将变化字段转成 Variant，再交接主线程。所有场景、节点、物理和 UI 操作留在主线程。
+
+Core 输出稳定的 actor、map、room、site、station 标识，`view_kind` 表示宿主视图用途，`location_title` 和 `game_time` 提供位置名称与逻辑时刻。Core 不携带 Godot 场景路径、sprite 名称、动画帧或 HUD 布局。Godot 在自己的 `Contracts/presentation_catalog.json` 和 `HostPresentation.gd` 中把这些身份绑定到场景、人物形象、站点标题与界面；CLI 直接消费中立投影。人物名称仍由观察者已经取得的认识决定。
 
 投影中的 Rational 保持 `{"$dv_rational":"..."}` 标签。记录保持字段第一次出现的顺序和最后一个值；列表保持顺序，空列表保持数组。原生 DV 值没有暴露给宿主写入。
 
@@ -50,6 +52,19 @@ Godot 用 `--dv-dev`，CLI 用 `--dev`。该配置写入 `story.development_mode
 
 ## 共享回放
 
-`SmartReplay.Load(path)` 读取 `.dvdag` 或 `.dvlog`，CLI 和游戏控制台共享一个解析器。它验证原始二进制帧及 DAG 引用链，提取行动、对白、实际输入、现场快照和开发事件。原始日志不被修改，权威事件和玩家呈现的来源标记分别保留。
+`SmartReplay.Load(path)` 读取 `.dvdag` 或 `.dvlog`，CLI 和游戏控制台共享一个解析器。读取器核对原始二进制帧及 DAG 引用链，依记录顺序提取检查点、行动、对白、原始设备输入、现场快照、可见正文和开发事件。原始日志不被修改，权威事件与玩家呈现保留各自来源。
 
-节拍由事件类型决定：移动 0.3 秒、调查和一般事件 0.6 秒、对白按文本长度限制在 0.8–2 秒。录制时的现实时间间隔不参与计算。`Play(1/2/4/8)`、`Pause()`、`Step()`、`Advance(seconds)` 控制播放；`ReplayFrame.Data` 保留现成的 snapshot/presentation 或行动目的地投影。该播放器呈现已经记录的结果，不重新执行 DV 动作或生成观察。
+共享帧为 `ReplayFrame(sequence, kind, actor, action, text, duration, data)`，`data.contract` 为 `dv-replay-v2`。`data.record_index` 保留记录序号；已有的 `seq`、`frame`、`state_version`、`action_event`、`presentation_id`、`interaction_id`、`cause_input`、`viewport_size`、`real_us`、`physics_frame`、`bodies`、`context` 和 `casebook` 原样透传。宿主据这些关联恢复已记录的身体轨迹与 UI 页面。
+
+| kind | data 中的内容 |
+| --- | --- |
+| `snapshot` | 完整中立 `snapshot`；新输入日志的 `replay_snapshot` 同时携带真实身体和 UI 上下文 |
+| `input` | 完整原始 `input`、设备和已有回执；`recorded_interval_seconds` 保留相邻输入的原现实时间差 |
+| `presentation` | 已交付玩家的完整 `presentation` 与当时文本 |
+| `move`、`dialogue`、`investigate`、`rejected` | 已记录的行动及结果；移动包含逻辑 `position`，实际完成回执存在时附 `receipt` 和 `actual_position` |
+| `visible` | 完整 `visible` 记录及 `texts`、`panel` |
+| `event` | 其他已记录事件的身份、正文和来源；完成回执也保留为独立事件 |
+
+DAG 初始检查点先于事件播放，最终检查点在已记录事件之后发布。完整会话使用只读快照投影；旧轨迹仅有 `physical/actors` 时使用 `dvg_recorded_snapshot`，只读出已记录的逻辑现场与人物，未记录的案卷和地图知识保持空。旧日志没有实际身体坐标时，宿主只能呈现逻辑位置重建，不能宣称复现原操作轨迹。
+
+节拍由内容决定：移动和带身体记录的输入 0.3 秒，调查 0.6 秒，标题与对白按文本长度限制在 0.8–2 秒；元数据与检查点不加入等待。输入保留的原时差供身体路径解释，录制时的静默时间不加入播放时钟。`Play(1/2/4/8)`、`Pause()`、`Step()`、`Advance(seconds)` 控制播放。Godot 在独立回放场景中使用同一帧驱动 WorldView、StoryActor 和 UI；正式 DvSession 不接收回放命令，回放也不生成新的观察。

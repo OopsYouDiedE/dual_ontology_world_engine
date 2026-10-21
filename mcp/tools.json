@@ -1,31 +1,92 @@
 [
   {
     "name": "asset_pipeline",
-    "description": "Build selected maps, art or UI assets. Import only the selected pipeline.",
-    "handler": "tool_actions:assets",
+    "description": "Build or publish selected maps, art, UI and geometry assets. arguments contains the selected script command-line options; publisher source/review inputs remain explicit.",
+    "routes": {
+      "living-floor": {
+        "kind": "python",
+        "path": "asset_pipeline/build_living_floor.py"
+      },
+      "chapter-maps": {
+        "kind": "python",
+        "path": "asset_pipeline/build_chapter2_scenes.py"
+      },
+      "anime-cast": {
+        "kind": "python",
+        "path": "asset_pipeline/build_anime_cast.py"
+      },
+      "pixel-cast": {
+        "kind": "python",
+        "path": "asset_pipeline/build_pixel_cast.py"
+      },
+      "dialogue-cast": {
+        "kind": "python",
+        "path": "asset_pipeline/build_dialogue_cast.py"
+      },
+      "character-atlas": {
+        "kind": "python",
+        "path": "asset_pipeline/build_character_atlas.py"
+      },
+      "desk": {
+        "kind": "blender",
+        "path": "asset_pipeline/build_painterly_desk.py",
+        "timeout": 1800
+      },
+      "desk-surfaces": {
+        "kind": "blender",
+        "path": "asset_pipeline/build_desk_surface_maps.py",
+        "timeout": 1800
+      },
+      "room-props": {
+        "kind": "python",
+        "path": "asset_pipeline/build_room_table_props.py"
+      },
+      "scene-surfaces": {
+        "kind": "python",
+        "path": "asset_pipeline/build_scene_surfaces.py"
+      },
+      "materials": {
+        "kind": "python",
+        "path": "asset_pipeline/build_surface_materials.py"
+      },
+      "ui-theme": {
+        "kind": "python",
+        "path": "asset_pipeline/build_ui_theme.py"
+      },
+      "ui-paper": {
+        "kind": "python",
+        "path": "asset_pipeline/build_ui_paper.py"
+      },
+      "ui-desk": {
+        "kind": "python",
+        "path": "asset_pipeline/build_ui_desk.py"
+      },
+      "translations": {
+        "kind": "python",
+        "path": "asset_pipeline/build_mind_ui_translations.py"
+      },
+      "geometry-contract": {
+        "kind": "python",
+        "path": "asset_pipeline/export_geometry.py"
+      },
+      "publish-reference-desk": {
+        "kind": "python",
+        "path": "asset_pipeline/publish_reference_desk.py"
+      },
+      "publish-redrawn-cast": {
+        "kind": "python",
+        "path": "asset_pipeline/publish_redrawn_cast.py"
+      },
+      "publish-geometry-assets": {
+        "kind": "python",
+        "path": "asset_pipeline/publish_geometry_assets.py"
+      }
+    },
     "inputSchema": {
       "type": "object",
       "properties": {
         "operation": {
-          "type": "string",
-          "enum": [
-            "living-floor",
-            "chapter-maps",
-            "anime-cast",
-            "pixel-cast",
-            "dialogue-cast",
-            "character-atlas",
-            "desk",
-            "desk-surfaces",
-            "room-props",
-            "scene-surfaces",
-            "materials",
-            "ui-theme",
-            "ui-paper",
-            "ui-desk",
-            "translations",
-            "geometry-contract"
-          ]
+          "type": "string"
         },
         "arguments": {
           "type": "array",
@@ -34,23 +95,71 @@
           }
         }
       },
+      "additionalProperties": false,
       "required": [
         "operation"
-      ],
-      "additionalProperties": false
+      ]
     },
     "annotations": {
       "readOnlyHint": false,
       "openWorldHint": false
-    }
+    },
+    "selector": "operation"
   },
   {
     "name": "music_pipeline",
-    "description": "Render or export existing MuseScore soundtrack sources.",
-    "handler": "tool_actions:music",
+    "description": "Render music, effects and voices; write or export MuseScore sources; audit score assets. render is the default. Use arguments [\"--only\", \"<cue/effect/voice ID>\"] to select one item. audit requires --out.",
+    "routes": {
+      "render": {
+        "kind": "python",
+        "path": "music_pipeline/build_soundtrack.py",
+        "timeout": 3600
+      },
+      "scores": {
+        "kind": "python",
+        "path": "music_pipeline/build_soundtrack.py",
+        "arguments": [
+          "--scores"
+        ],
+        "timeout": 3600
+      },
+      "rewrite-scores": {
+        "kind": "python",
+        "path": "music_pipeline/build_soundtrack.py",
+        "arguments": [
+          "--scores",
+          "--rewrite-scores"
+        ],
+        "timeout": 3600
+      },
+      "from-mscz": {
+        "kind": "python",
+        "path": "music_pipeline/build_soundtrack.py",
+        "arguments": [
+          "--from-mscz"
+        ],
+        "timeout": 3600
+      },
+      "export": {
+        "kind": "python",
+        "path": "music_pipeline/build_soundtrack.py",
+        "arguments": [
+          "--export",
+          "--scores"
+        ],
+        "timeout": 3600
+      },
+      "audit": {
+        "kind": "python",
+        "path": "music_pipeline/audit_score_assets.py"
+      }
+    },
     "inputSchema": {
       "type": "object",
       "properties": {
+        "operation": {
+          "type": "string"
+        },
         "arguments": {
           "type": "array",
           "items": {
@@ -58,22 +167,29 @@
           }
         }
       },
-      "required": [],
       "additionalProperties": false
     },
     "annotations": {
       "readOnlyHint": false,
       "openWorldHint": false
-    }
+    },
+    "selector": "operation",
+    "default": "render"
   },
   {
     "name": "compiler_prewarm",
-    "description": "Build/cache the standalone C3 compiler on explicit request.",
-    "handler": "tool_actions:compiler_prewarm",
+    "description": "Wait for or build the shared standalone compiler cache and return its executable path.",
+    "routes": {
+      "run": {
+        "kind": "function",
+        "module": "build/dv_toolchain.py",
+        "function": "compiler",
+        "result_key": "compiler"
+      }
+    },
     "inputSchema": {
       "type": "object",
       "properties": {},
-      "required": [],
       "additionalProperties": false
     },
     "annotations": {
@@ -82,9 +198,83 @@
     }
   },
   {
+    "name": "build_tools",
+    "description": "Run an explicitly selected compiler/session or .NET build. session takes build_session.py options including required --out. Build operations do not run game sessions.",
+    "routes": {
+      "session": {
+        "kind": "python",
+        "path": "build/build_session.py"
+      },
+      "language": {
+        "kind": "command",
+        "command": [
+          "dotnet",
+          "build",
+          "dv_core/LanguageCore.sln",
+          "--disable-build-servers",
+          "-p:NuGetAudit=false"
+        ]
+      },
+      "host": {
+        "kind": "command",
+        "command": [
+          "dotnet",
+          "build",
+          "godot_csharp/DualOntologyWorldEngine.sln",
+          "--disable-build-servers",
+          "-p:NuGetAudit=false"
+        ]
+      },
+      "cli": {
+        "kind": "command",
+        "command": [
+          "dotnet",
+          "build",
+          "dv_core/cli/DvCli.csproj",
+          "--disable-build-servers",
+          "-p:NuGetAudit=false"
+        ]
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "operation"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "openWorldHint": false
+    },
+    "selector": "operation"
+  },
+  {
     "name": "dv_cli",
-    "description": "Run the standalone Core text interface, a single command or smart replay.",
-    "handler": "tool_actions:cli",
+    "description": "Run the standalone Core text interface, one command or recorded replay. stdin supplies batch input; use the direct CLI command for an interactive terminal.",
+    "routes": {
+      "run": {
+        "kind": "command",
+        "command": [
+          "dotnet",
+          "run",
+          "--project",
+          "dv_core/cli/DvCli.csproj",
+          "--"
+        ]
+      }
+    },
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -93,9 +283,11 @@
           "items": {
             "type": "string"
           }
+        },
+        "stdin": {
+          "type": "string"
         }
       },
-      "required": [],
       "additionalProperties": false
     },
     "annotations": {
@@ -105,23 +297,73 @@
   },
   {
     "name": "map_workspace",
-    "description": "Open the pure-GDScript map sandbox or tools editor.",
-    "handler": "tool_actions:sandbox",
+    "description": "Open the pure-GDScript map sandbox or tools editor in a temporary workspace. Returns a PID and launch log. map is the default.",
+    "routes": {
+      "map": {
+        "kind": "workspace",
+        "name": "map",
+        "flags": [
+          "--sandbox"
+        ]
+      },
+      "editor": {
+        "kind": "workspace",
+        "name": "editor",
+        "flags": [
+          "--editor"
+        ]
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string"
+        },
+        "godot": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "openWorldHint": false
+    },
+    "selector": "mode",
+    "default": "map"
+  },
+  {
+    "name": "ui_mock",
+    "description": "Open Main with the pure-GDScript mock session in a temporary project. No C# project, compiler build or DV session is used; the workspace launcher supplies --dv-mock.",
+    "routes": {
+      "run": {
+        "kind": "workspace",
+        "name": "ui-mock",
+        "flags": [
+          "--mock-ui"
+        ]
+      }
+    },
     "inputSchema": {
       "type": "object",
       "properties": {
         "godot": {
           "type": "string"
         },
-        "mode": {
-          "type": "string",
-          "enum": [
-            "map",
-            "editor"
-          ]
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
-      "required": [],
       "additionalProperties": false
     },
     "annotations": {
@@ -131,8 +373,134 @@
   },
   {
     "name": "rpg_adapter",
-    "description": "Invoke one asset-adapter operation without loading other pipelines.",
-    "handler": "tool_actions:adapter",
+    "description": "Invoke one asset-adapter function. arguments is its named-parameter object. Image, map, native drawing, pixel handoff, work-record and UI operations share their original implementations.",
+    "routes": {
+      "inspect_image": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/workflow.py",
+        "function": "inspect_image"
+      },
+      "draw_asset": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/workflow.py",
+        "function": "draw_asset"
+      },
+      "adapt_asset": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/workflow.py",
+        "function": "adapt_asset"
+      },
+      "build_tiles": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/workflow.py",
+        "function": "build_tiles"
+      },
+      "audit_layout": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/workflow.py",
+        "function": "audit_layout"
+      },
+      "compose_map": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/workflow.py",
+        "function": "compose_map"
+      },
+      "export_godot": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/workflow.py",
+        "function": "export_godot"
+      },
+      "tilemap_workflow": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/workflow.py",
+        "function": "tilemap_workflow"
+      },
+      "native_art_catalog": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/native_art.py",
+        "function": "native_art_catalog"
+      },
+      "read_native_recipe": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/native_art.py",
+        "function": "read_native_recipe"
+      },
+      "render_native_prop": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/native_art.py",
+        "function": "render_native_prop"
+      },
+      "render_native_material": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/native_art.py",
+        "function": "render_native_material"
+      },
+      "native_art_contact_sheet": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/native_art.py",
+        "function": "native_art_contact_sheet"
+      },
+      "inspect_pixel_style": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/pixel_handoff.py",
+        "function": "inspect_pixel_style"
+      },
+      "quantize_asset": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/pixel_handoff.py",
+        "function": "quantize_asset"
+      },
+      "layered_sprite": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/pixel_handoff.py",
+        "function": "layered_sprite"
+      },
+      "export_aseprite": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/pixel_handoff.py",
+        "function": "export_aseprite"
+      },
+      "review_dialogue": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/production.py",
+        "function": "review_dialogue"
+      },
+      "create_plan": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/production.py",
+        "function": "create_plan"
+      },
+      "read_plan": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/production.py",
+        "function": "read_plan"
+      },
+      "update_task": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/production.py",
+        "function": "update_task"
+      },
+      "next_task": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/production.py",
+        "function": "next_task"
+      },
+      "ui_design_contract": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/ui_workflow.py",
+        "function": "ui_design_contract"
+      },
+      "inspect_godot_ui": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/ui_workflow.py",
+        "function": "inspect_godot_ui"
+      },
+      "measure_dialogue_text": {
+        "kind": "function",
+        "module": "rpg_adapter/mcp/ui_workflow.py",
+        "function": "measure_dialogue_text"
+      }
+    },
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -143,37 +511,71 @@
           "type": "object"
         }
       },
+      "additionalProperties": false,
       "required": [
         "operation"
-      ],
-      "additionalProperties": false
+      ]
     },
     "annotations": {
       "readOnlyHint": false,
       "openWorldHint": false
-    }
+    },
+    "selector": "operation"
   },
   {
     "name": "diagnostics",
-    "description": "Run one explicitly selected diagnostic tool; no startup or automatic checks.",
-    "handler": "tool_actions:diagnostics",
+    "description": "Run one explicitly selected Python diagnostic. Output directories and run scopes are passed through arguments. Discovery never starts checks or sessions.",
+    "routes": {
+      "logic-session": {
+        "kind": "python",
+        "path": "verification/run_debug.py",
+        "timeout": 7200
+      },
+      "checkpoint": {
+        "kind": "python",
+        "path": "verification/debug_checkpoints.py"
+      },
+      "raw-dag": {
+        "kind": "python",
+        "path": "verification/raw_dag.py"
+      },
+      "capture-save": {
+        "kind": "python",
+        "path": "verification/run_saved_game_capture.py",
+        "timeout": 7200
+      },
+      "profile": {
+        "kind": "python",
+        "path": "verification/profile_dv_capture.py",
+        "timeout": 7200
+      },
+      "timing": {
+        "kind": "python",
+        "path": "verification/summarize_interaction_timing.py"
+      },
+      "hitches": {
+        "kind": "python",
+        "path": "verification/report_runtime_hitches.py"
+      },
+      "encode": {
+        "kind": "python",
+        "path": "verification/encode_dv_capture.py",
+        "timeout": 3600
+      },
+      "geometry": {
+        "kind": "python",
+        "path": "verification/check_geometry_contracts.py"
+      },
+      "paths": {
+        "kind": "python",
+        "path": "verification/audit_action_paths.py"
+      }
+    },
     "inputSchema": {
       "type": "object",
       "properties": {
         "operation": {
-          "type": "string",
-          "enum": [
-            "logic-session",
-            "checkpoint",
-            "raw-dag",
-            "capture-save",
-            "profile",
-            "timing",
-            "hitches",
-            "encode",
-            "geometry",
-            "paths"
-          ]
+          "type": "string"
         },
         "arguments": {
           "type": "array",
@@ -182,14 +584,278 @@
           }
         }
       },
+      "additionalProperties": false,
       "required": [
         "operation"
-      ],
-      "additionalProperties": false
+      ]
     },
     "annotations": {
       "readOnlyHint": false,
       "openWorldHint": false
-    }
+    },
+    "selector": "operation"
+  },
+  {
+    "name": "godot_tools",
+    "description": "Run one existing Godot capture, physics/input observation or asset-adapter tool in an isolated temporary project. C# and rendering requirements are declared per operation. Supply script --out and scope options in arguments.",
+    "routes": {
+      "capture-maps": {
+        "kind": "godot",
+        "script": "res://asset_pipeline/capture_maps.gd"
+      },
+      "capture-casebook": {
+        "kind": "godot",
+        "script": "res://tools/capture_casebook_ui.gd",
+        "csharp": true
+      },
+      "capture-period": {
+        "kind": "godot",
+        "script": "res://tools/capture_period_ui.gd",
+        "csharp": true
+      },
+      "capture-saved-game": {
+        "kind": "godot",
+        "script": "res://tools/capture_saved_game.gd",
+        "csharp": true,
+        "timeout": 7200
+      },
+      "capture-start-reveal": {
+        "kind": "godot",
+        "script": "res://tools/capture_start_reveal.gd",
+        "csharp": true
+      },
+      "capture-title": {
+        "kind": "godot",
+        "script": "res://tools/capture_title_3d.gd",
+        "csharp": true
+      },
+      "capture-level3": {
+        "kind": "godot",
+        "script": "res://tools/dv_level3_capture.gd",
+        "csharp": true,
+        "timeout": 7200
+      },
+      "host-startup": {
+        "kind": "godot",
+        "script": "res://tools/dv_host_startup_probe.gd",
+        "csharp": true
+      },
+      "ui-input": {
+        "kind": "godot",
+        "script": "res://tools/probe_ui_input.gd",
+        "csharp": true,
+        "flags": [
+          "--isolated-user-data"
+        ]
+      },
+      "living-floor": {
+        "kind": "godot",
+        "script": "res://tools/check_living_floor.gd",
+        "headless": true
+      },
+      "music-context": {
+        "kind": "godot",
+        "script": "res://tools/check_music_context.gd",
+        "headless": true
+      },
+      "adapter-batch": {
+        "kind": "godot",
+        "script": "res://addons/rpg_asset_adapter/run_batch_convert.gd",
+        "headless": true
+      },
+      "adapter-conversion": {
+        "kind": "godot",
+        "script": "res://addons/rpg_asset_adapter/test_adapter.gd"
+      },
+      "adapter-visual": {
+        "kind": "godot",
+        "script": "res://addons/rpg_asset_adapter/test_visual.gd"
+      },
+      "adapter-render": {
+        "kind": "godot",
+        "script": "res://addons/rpg_asset_adapter/test_render.gd"
+      },
+      "adapter-metadata": {
+        "kind": "godot",
+        "script": "res://addons/rpg_asset_adapter/test_metadata.gd",
+        "headless": true
+      },
+      "adapter-tagged-slice": {
+        "kind": "godot",
+        "script": "res://addons/rpg_asset_adapter/test_tagged_slice.gd",
+        "headless": true
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "type": "string"
+        },
+        "godot": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "operation"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "openWorldHint": false
+    },
+    "selector": "operation"
+  },
+  {
+    "name": "adapter_checks",
+    "description": "Run one explicitly requested existing adapter engineering script. These scripts may create preview assets and reports. Tool discovery never runs them.",
+    "routes": {
+      "workflow": {
+        "kind": "python",
+        "path": "rpg_adapter/mcp/check.py"
+      },
+      "native-art": {
+        "kind": "python",
+        "path": "rpg_adapter/mcp/check_native_art.py"
+      },
+      "pixel-handoff": {
+        "kind": "python",
+        "path": "rpg_adapter/mcp/check_pixel_handoff.py"
+      },
+      "production": {
+        "kind": "python",
+        "path": "rpg_adapter/mcp/check_production.py"
+      },
+      "demo": {
+        "kind": "python",
+        "path": "rpg_adapter/mcp/demo.py"
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "operation"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "openWorldHint": false
+    },
+    "selector": "operation"
+  },
+  {
+    "name": "editor_tools",
+    "description": "Use the common compiler checker/LSP diagnostic publisher or prepare/package editor clients. check takes CLI arguments and optional stdin; lsp-diagnostics takes {path, text?, version?}; client operations take CLI argument arrays. lsp-config returns stdio launch settings.",
+    "routes": {
+      "check": {
+        "kind": "python",
+        "path": "editor_lsp/check_dv.py"
+      },
+      "lsp-diagnostics": {
+        "kind": "function",
+        "module": "editor_lsp/mcp_actions.py",
+        "function": "lsp_diagnostics"
+      },
+      "lsp-config": {
+        "kind": "function",
+        "module": "editor_lsp/mcp_actions.py",
+        "function": "lsp_config"
+      },
+      "vscode-prepare": {
+        "kind": "command",
+        "command": [
+          "node",
+          "prepare.js"
+        ],
+        "cwd": "mcp/editor_lsp/clients/vscode"
+      },
+      "vscode-dependencies": {
+        "kind": "command",
+        "command": [
+          "npm",
+          "ci"
+        ],
+        "cwd": "mcp/editor_lsp/clients/vscode"
+      },
+      "vscode-package": {
+        "kind": "command",
+        "command": [
+          "npm",
+          "run",
+          "package"
+        ],
+        "cwd": "mcp/editor_lsp/clients/vscode"
+      },
+      "visualstudio-build": {
+        "kind": "command",
+        "command": [
+          "dotnet",
+          "build",
+          "mcp/editor_lsp/clients/visualstudio/DuelView.VisualStudio.csproj",
+          "-c",
+          "Release"
+        ]
+      },
+      "visualstudio-package": {
+        "kind": "python",
+        "path": "editor_lsp/clients/visualstudio/package.py",
+        "arguments": [
+          "--out",
+          "artifacts/releases/dv/DuelView.VisualStudio.vsix"
+        ]
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "type": "string"
+        },
+        "arguments": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "object"
+            }
+          ]
+        },
+        "stdin": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "operation"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "openWorldHint": false
+    },
+    "selector": "operation"
   }
 ]
