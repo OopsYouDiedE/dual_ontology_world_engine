@@ -41,6 +41,8 @@ var _casebook: RefCounted = CASEBOOK_DATA.new()
 var _book_reading := false
 var _bookmark_loading := false
 var _bookmark_saving := false
+var _bookmark_requested := false
+var _bookmark_next: Dictionary = {}
 var _session_generation := 0
 var _book_deferred_inputs: Array[Dictionary] = []
 
@@ -159,7 +161,7 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	field.name = "WorldView"
 	field.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(field)
-	field.ui_busy = ui.is_busy
+	field.ui_busy = _field_input_busy
 	field.fader = ui
 	field.field_event.connect(_field_input)
 	field.hover_changed.connect(ui.show_hover)
@@ -212,19 +214,23 @@ func dispatch(input: Dictionary) -> void:
 	var input_kind := str(input.get("kind", ""))
 	# Keep accepted physical receipts deliverable while persistence waits on work.
 	if _bookmark_loading and input_kind != "dv_complete": return
+	# Finish already prepared actions and their presentation before saving.
+	# Holding only the next Prepare keeps receipt delivery and reading live.
+	if _bookmark_requested and input_kind == "dv_next":
+		if _bookmark_next.is_empty(): _bookmark_next = input.duplicate(true)
+		return
 	if (_book_reading or _bookmark_saving) and input_kind in ["dv_next", "view_ready", "select"]:
 		if input_kind != "dv_next" or not _has_deferred_next(): _book_deferred_inputs.append(input.duplicate(true))
 		return
 	if _bookmark_saving and input_kind != "dv_complete": return
-	if input_kind in ["bookmark_save", "bookmark_load"] and not _bookmark_boundary_ready():
+	if (input_kind == "bookmark_load" or (input_kind == "bookmark_save" and _book_reading)) and not _bookmark_boundary_ready():
 		_timing("bookmark_boundary_rejected", {"operation": input_kind})
 		if is_instance_valid(ui):
 			ui.show_bookmark_result(tr("请先读完当前正文并等待现场动作结束，再保存或载入书签。"))
 		return
 	if input_kind == "bookmark_save":
-		_bookmark_saving = true
-		if is_instance_valid(ui): ui.set_bookmark_loading(true)
-		engine.SaveBookmark(_casebook.export_data())
+		_bookmark_requested = true
+		_try_bookmark_save()
 		return
 	if input_kind == "bookmark_load":
 		_bookmark_loading = true
@@ -246,8 +252,25 @@ func dispatch(input: Dictionary) -> void:
 		_started = true
 	elif str(input.get("kind", "")) == "load":
 		if _started: return
+		if not _configure_load_playback(): return
 		_started = true
 	engine.Dispatch(input)
+
+func _process(_delta: float) -> void:
+	if _bookmark_requested: _try_bookmark_save()
+
+func _try_bookmark_save() -> void:
+	if not _bookmark_requested or not _started or _closing or _bookmark_loading or _bookmark_saving: return
+	if not _bookmark_boundary_ready() or not engine.IsBookmarkBoundaryReady(): return
+	_bookmark_requested = false
+	_bookmark_saving = true
+	# Once the safe boundary is owned, use the normal persistence continuation
+	# queue. Its existing next-request deduplication also covers late callbacks.
+	if not _bookmark_next.is_empty():
+		if not _has_deferred_next(): _book_deferred_inputs.append(_bookmark_next)
+		_bookmark_next = {}
+	if is_instance_valid(ui): ui.set_bookmark_loading(true)
+	engine.SaveBookmark(_casebook.export_data())
 
 func _bookmark_boundary_ready() -> bool:
 	# Session saves cannot reconstruct unread host presentation or in-flight maps.
@@ -285,14 +308,30 @@ func _session_options() -> Dictionary:
 	if str(options.controller) not in ["player", "ai"]:
 		_show_error("Invalid --dv-controller: " + str(options.controller))
 		return {}
+	if not _apply_playback(speed, str(options.controller)): return {}
+	return options
+
+func _configure_load_playback() -> bool:
+	var speed := playback_speed
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--dv-speed="):
+			var value := argument.trim_prefix("--dv-speed=")
+			if not value.is_valid_float():
+				_show_error("Invalid --dv-speed: " + value)
+				return false
+			speed = float(value)
+	# The saved session owns its controller; only host playback is configured.
+	return _apply_playback(speed, "restored-session")
+
+func _apply_playback(speed: float, control_mode: String) -> bool:
 	if not is_finite(speed) or speed < 0.25 or speed > 8.0:
 		_show_error("Playback speed must be between 0.25 and 8")
-		return {}
+		return false
 	Engine.time_scale = speed
 	Engine.physics_ticks_per_second = ceili(60.0 * maxf(1.0, speed))
 	Engine.max_physics_steps_per_frame = ceili(8.0 * maxf(1.0, speed))
-	engine.RecordInput({"device": "host_configuration", "controller": str(options.controller), "playback_speed": speed, "physics_ticks_per_second": Engine.physics_ticks_per_second, "max_physics_steps_per_frame": Engine.max_physics_steps_per_frame})
-	return options
+	engine.RecordInput({"device": "host_configuration", "controller": control_mode, "playback_speed": speed, "physics_ticks_per_second": Engine.physics_ticks_per_second, "max_physics_steps_per_frame": Engine.max_physics_steps_per_frame})
+	return true
 
 func _show_error(message: String) -> void:
 	push_error(message)
@@ -302,6 +341,11 @@ func _show_error(message: String) -> void:
 	add_child(dialog)
 	dialog.confirmed.connect(dialog.queue_free)
 	dialog.popup_centered(Vector2i(640, 240))
+
+func _field_input_busy() -> bool:
+	# A yielded presentation batch may still contain newer action eligibility.
+	# Do not accept a world click against an intermediate observer projection.
+	return _draining or not _queue.is_empty() or _completion_pending or _bookmark_loading or _bookmark_saving or _bookmark_requested or not is_instance_valid(ui) or ui.is_busy()
 
 func _field_input(input: Dictionary) -> void:
 	match str(input.get("kind", "")):
@@ -333,7 +377,19 @@ func _drain() -> void:
 	if _draining or _closing: return
 	_draining = true
 	var generation := _session_generation
+	var slice_started := Time.get_ticks_usec()
+	var slice_frame := Engine.get_process_frames()
 	while not _queue.is_empty() and not _closing and generation == _session_generation:
+		# Reading can accumulate many completed NPC projections. Preserve every
+		# event in order, but let rendering and input run between bounded batches.
+		if Engine.get_process_frames() != slice_frame:
+			slice_frame = Engine.get_process_frames()
+			slice_started = Time.get_ticks_usec()
+		elif Time.get_ticks_usec() - slice_started >= 2000:
+			_timing("presentation_queue_yield", {"remaining": _queue.size()})
+			await get_tree().process_frame
+			slice_frame = Engine.get_process_frames()
+			slice_started = Time.get_ticks_usec()
 		while _book_reading and not _closing and generation == _session_generation:
 			await get_tree().process_frame
 		if _closing or generation != _session_generation: break
@@ -367,12 +423,18 @@ func _drain() -> void:
 					dispatch.call_deferred({"kind": "dv_next"})
 			"view": await _view(ev)
 			"state": await _apply(ev.snapshot)
-			"error": _show_error(str(ev.message))
+			"error":
+				_bookmark_requested = false
+				_bookmark_next = {}
+				_show_error(str(ev.message))
 			"load_error":
+				_bookmark_requested = false
+				_bookmark_next = {}
 				_started = false
 				if is_instance_valid(title_layer): title_layer.get_child(0).show_load_error(str(ev.message))
 			_: push_error("Unknown DV host event: " + str(ev.get("kind", "")))
 	_draining = false
+	_try_bookmark_save()
 	if not _queue.is_empty() and not _closing: _drain.call_deferred()
 
 ## IDs name the actual execution and emitted field; source_refs retain authored provenance.
@@ -416,6 +478,8 @@ func _apply(snapshot: Dictionary) -> void:
 func begin_shutdown() -> void:
 	if _closing: return
 	_closing = true
+	_bookmark_requested = false
+	_bookmark_next = {}
 	_reading = false
 	if is_instance_valid(view_trace): view_trace.begin_shutdown()
 	_queue.clear()
@@ -482,6 +546,8 @@ func _on_book_reading_changed(active: bool) -> void:
 
 func _install_bookmark(event: Dictionary) -> void:
 	_session_generation += 1
+	_bookmark_requested = false
+	_bookmark_next = {}
 	var generation := _session_generation
 	# The host already owns the restored session. Bind its archive immediately,
 	# so closing the window during map preparation cannot save the old notes.

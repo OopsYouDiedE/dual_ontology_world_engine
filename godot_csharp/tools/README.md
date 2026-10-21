@@ -189,6 +189,11 @@ and scripts when retaining their derivatives.
 
 ## Capture and inspection
 
+`run_saved_game_capture.py` and `capture_saved_game.gd` capture the production
+Host, request safe bookmark pairs and resume them through the ordinary load path.
+See [SAVED_GAME_CAPTURE.md](SAVED_GAME_CAPTURE.md) for commands, source fingerprints,
+input packets, copy-failure handling and the limits of restored-run evidence.
+
 `build_living_floor.py` composes the five published living-wing scenes into
 `Maps/living_floor.tscn`. Source scenes and textures remain reconstruction inputs.
 It aligns shared door columns and inserts six hall rows to keep the north and

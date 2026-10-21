@@ -147,6 +147,10 @@ public partial class GameEngine
         finally { maintenance = false; StartPump(); }
     }
 
+    // Main-thread advisory gate; SaveBookmark still rechecks after acquiring maintenance.
+    public bool IsBookmarkBoundaryReady() => !closing && !faulted && !maintenance && !busy
+        && commands.Count == 0 && pendingEvent.Length == 0 && session is not null;
+
     private void RequireBookmarkStart()
     {
         if (closing) throw new InvalidOperationException("会话正在关闭，暂不能操作书签。");
