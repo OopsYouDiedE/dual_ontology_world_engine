@@ -380,10 +380,12 @@ def main():
     parser.add_argument('--gc-mode', choices=('server', 'workstation'), default=None)
     parser.add_argument('--gc-heaps', type=int, default=None)
     parser.add_argument('--profile', action='store_true', help='Build an instrumented DV session and report per-function and work-type time')
+    parser.add_argument('--reuse-program', type=Path, help='Reuse a previously fingerprinted Release program with identical complete source inputs')
     parser.add_argument('--evidence-from', type=Path, help='Only project an existing binary packet stream into a new --out directory; never build or execute a session')
     parser.add_argument('--causal-timeout', type=int, default=300,
                         help='Separate time limit for read-only 70-checks after a complete sealed session')
     parser.add_argument('--opt-causal-index', choices=('on', 'off'), default='on', help='Read-only checker event/ancestor index; does not affect session decisions')
+    parser.add_argument('--opt-evidence-index', choices=('on', 'off'), default='on', help='Reuse decoded immutable journal fields during read-only evidence validation')
     parser.add_argument('--detective-profile', default='Standard_Detective', choices=('Standard', 'Foolish', 'Standard_Detective', 'Foolish_Detective', 'Shura_Detective'))
     parser.add_argument('--opening-seed', type=int, default=1)
     parser.add_argument('--homecoming-negotiation', action='store_true', help='Enable declared homecoming negotiation candidates; does not seed votes or outcomes')
@@ -480,7 +482,7 @@ def main():
     normalized = {str(path): hashlib.sha256(text.encode('utf-8')).hexdigest() for path, text in modules}
     checker_normalized = {str(path): hashlib.sha256(text.encode('utf-8')).hexdigest() for path, text in checker_modules}
     (out / 'source-hashes.json').write_text(json.dumps(hashes, indent=2), encoding='utf-8')
-    provenance = {'format': 'dv-debug-provenance-v1', 'source_hashes': hashes, 'source_manifest_sha256': sha_file(out / 'source-hashes.json'), 'run_config': run_config, 'instrumented': args.profile, 'verification_config': {'opt_causal_index': args.opt_causal_index == 'on', 'timeout_seconds': args.causal_timeout}}
+    provenance = {'format': 'dv-debug-provenance-v1', 'source_hashes': hashes, 'source_manifest_sha256': sha_file(out / 'source-hashes.json'), 'run_config': run_config, 'instrumented': args.profile, 'verification_config': {'opt_causal_index': args.opt_causal_index == 'on', 'timeout_seconds': args.causal_timeout, 'opt_evidence_index': args.opt_evidence_index == 'on'}}
     provenance_path = out / 'run-provenance.dv.json'
     provenance_path.write_text(json.dumps(dv_record(provenance), ensure_ascii=True), encoding='utf-8')
     restore_input_hashes = {}
@@ -500,6 +502,31 @@ def main():
     (build / 'Program.csproj').write_text(project, encoding='utf-8')
     build_start = time.monotonic()
     build_stages = []
+    if args.reuse_program:
+        if resume_bundle:
+            raise ValueError('A restored session requires its own generated entry point')
+        reuse = args.reuse_program.resolve()
+        compiled = json.loads((reuse.parent / 'compiled-program.json').read_text(encoding='utf-8'))
+        if compiled.get('source_hashes') != hashes:
+            raise ValueError('Reusable program source fingerprints differ from this run')
+        for relative, digest in compiled['binaries'].items():
+            source = (reuse / relative).resolve()
+            if not source.is_relative_to(reuse) or not source.is_file() or sha_file(source) != digest:
+                raise ValueError('Reusable program binary fingerprint mismatch: ' + relative)
+        for source in reuse.iterdir():
+            if source.name == 'obj':
+                continue
+            target = build / source.name
+            if source.is_dir():
+                shutil.copytree(source, target, dirs_exist_ok=True)
+            else:
+                shutil.copy2(source, target)
+        build_stages.append({'stage': 'verified-program-reuse', 'completed': True,
+                             'elapsed_seconds': time.monotonic() - build_start, 'source': str(reuse)})
+        commands = []
+        (out / 'build-timing.json').write_text(json.dumps({
+            'elapsed_seconds': time.monotonic() - build_start, 'stages': build_stages,
+            'scope': 'engineering program reuse only; excludes session execution'}, indent=2), encoding='utf-8')
     for index, cmd in enumerate(commands):
         stage_start = time.monotonic()
         stage_completed = False
@@ -521,6 +548,11 @@ def main():
     if not build_consistent:
         write_result(out, {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': False, 'source_unchanged': False, 'trace_written': False, 'error': 'Sources changed during build or generated inputs differ; session not started.'})
         return 1
+    binaries = {path.relative_to(build).as_posix(): sha_file(path)
+                for path in (build / 'bin' / 'Release' / 'net8.0').rglob('*') if path.is_file()}
+    (out / 'compiled-program.json').write_text(json.dumps({
+        'schema': 'dv-compiled-program-v1', 'source_hashes': hashes, 'binaries': binaries,
+        'instrumented': args.profile}, indent=2), encoding='utf-8')
     execution_env = env.copy()
     for name in ('cow', 'mask', 'lazyinternal', 'mask_verify'):
         execution_env['DV_OPT_' + name.upper()] = '1' if run_config.get('opt_' + name, False) else '0'
@@ -565,7 +597,7 @@ def main():
         if args.raw_format == 'dag':
             raw_source = out / (trace_name if result['raw_written'] else trace_name + '.partial')
             try:
-                raw_summary = inspect_journal(raw_source, out / 'raw-event-index.dvlog')
+                raw_summary = inspect_journal(raw_source, out / 'raw-event-index.dvlog', optimize=args.opt_evidence_index == 'on')
                 with (out / 'raw-dag-summary.json').open('x', encoding='utf-8') as output:
                     json.dump(raw_summary, output, ensure_ascii=False, indent=2)
                 result['raw_dag_summary'] = 'raw-dag-summary.json'
