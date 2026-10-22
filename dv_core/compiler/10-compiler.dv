@@ -107,8 +107,8 @@
 (defn reserved (name) (either (ck_bounded name) (has (words "if let set while do true false") name)))
 (defn runtime_name (name) (if (rt_lt (rt_length name) 3) false (rt_eq (rt_slice name 0 3) "rt_")))
 (defn native_arity (name)
-  (if (has (words "rt_list rt_arg_count rt_raw_abort rt_audit_mode") name) 0
-    (if (has (words "rt_compiler_cache_read rt_number rt_is_number rt_is_numeric_value rt_is_text rt_not rt_length rt_code rt_show rt_count rt_is_list rt_copy_value rt_snapshot rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify rt_json_print rt_raw_open rt_raw_event rt_raw_finish rt_raw_ref rt_text_join rt_id_start rt_id_part rt_normalize rt_exact rt_floor") name) 1
+  (if (has (words "rt_list rt_arg_count rt_raw_abort rt_audit_mode rt_record_cache_enabled") name) 0
+    (if (has (words "rt_record_like_cached rt_ref_key_text_cached rt_ref_lookup_key_cached rt_compiler_cache_read rt_number rt_is_number rt_is_numeric_value rt_is_text rt_not rt_length rt_code rt_show rt_count rt_is_list rt_copy_value rt_snapshot rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify rt_json_print rt_raw_open rt_raw_event rt_raw_finish rt_raw_ref rt_text_join rt_id_start rt_id_part rt_normalize rt_exact rt_floor") name) 1
       (if (has (words "rt_compiler_cache_write rt_phase rt_add rt_sub rt_mul rt_div rt_lt rt_eq rt_memo_get rt_has_value rt_record_with_many rt_same_value rt_cat rt_chr rt_push rt_at rt_write rt_json_write rt_raw_checkpoint rt_record_index") name) 2
         (if (has (words "rt_slice rt_replace rt_record_find rt_record_with rt_memo_put rt_list_with_index") name) 3 -1)))))
 (defn lookup (signatures name)

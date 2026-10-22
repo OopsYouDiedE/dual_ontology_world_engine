@@ -332,7 +332,9 @@ def export(out, destination=None, scope='正式逻辑会话已输出到stdout的
                     blocks = [(p.get('surface_voice'), [p.get('surface', '')]), (p.get('voice'), p.get('lines', []))]
                     emitted = False
                     for kind, texts in blocks:
-                        paragraphs = [part.strip() for text in texts for part in text.splitlines() if part.strip()]
+                        paragraphs = [part.strip() for text in texts
+                                      for part in (text.get('text', '') if isinstance(text, dict) else text).splitlines()
+                                      if part.strip()]
                         if not paragraphs:
                             continue
                         emitted = True
@@ -381,18 +383,28 @@ def main():
     parser.add_argument('--evidence-from', type=Path, help='Only project an existing binary packet stream into a new --out directory; never build or execute a session')
     parser.add_argument('--causal-timeout', type=int, default=300,
                         help='Separate time limit for read-only 70-checks after a complete sealed session')
-    parser.add_argument('--detective-profile', default='Standard_Detective', choices=('Standard_Detective', 'Foolish_Detective', 'Shura_Detective'))
+    parser.add_argument('--detective-profile', default='Standard_Detective', choices=('Standard', 'Foolish', 'Standard_Detective', 'Foolish_Detective', 'Shura_Detective'))
     parser.add_argument('--opening-seed', type=int, default=1)
     parser.add_argument('--homecoming-negotiation', action='store_true', help='Enable declared homecoming negotiation candidates; does not seed votes or outcomes')
     parser.add_argument('--su-initial-room', choices=('hall', 'R08', 'R05'), default='hall')
     parser.add_argument('--private-execution-benefit-multiplier', type=int, choices=(1, 2), default=1)
-    parser.add_argument('--detective-zone', default='zone_yi', choices=('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding'))
+    parser.add_argument('--detective-zone', default='zone_yi', choices=('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding', 'none'))
     parser.add_argument('--trace-compression', choices=('none',), default='none', help='Deprecated compatibility argument; JSON recordings are prohibited')
     parser.add_argument('--raw-format', choices=('dag',), default='dag', help='Lossless typed binary DAG; JSON recording is forbidden')
+    optimization_names = ('readview', 'plancache', 'prune', 'lazytext', 'recordcache')
+    for name in optimization_names:
+        parser.add_argument('--opt-' + name, choices=('on', 'off'), default='on')
+    parser.add_argument('--prune-top-k', type=int, default=3)
+    parser.add_argument('--selective-planning', choices=('on', 'off'), default='on')
     args = parser.parse_args()
+    args.detective_profile = {'Standard': 'Standard_Detective', 'Foolish': 'Foolish_Detective'}.get(args.detective_profile, args.detective_profile)
+    if args.prune_top_k < 1:
+        parser.error('--prune-top-k must be positive')
     if args.opening_seed < 0:
         parser.error('--opening-seed must be nonnegative')
     run_config = {'seed': args.opening_seed, 'profile': args.detective_profile, 'detective_zone': args.detective_zone, 'su_initial_room': args.su_initial_room, 'private_execution_benefit_multiplier': args.private_execution_benefit_multiplier, 'homecoming_negotiation': args.homecoming_negotiation}
+    run_config.update({'opt_' + name: getattr(args, 'opt_' + name) == 'on' for name in optimization_names})
+    run_config.update(prune_top_k=args.prune_top_k, selective_planning=args.selective_planning == 'on')
     if args.projection_every < 1:
         parser.error('--projection-every must be positive')
     if args.projection_every > 1 and args.raw_format != 'dag':
@@ -417,6 +429,8 @@ def main():
             resume_bundle, resume_save = validate_bundle(args.resume_checkpoint)
             saved_config = resume_bundle['metadata']['run_config']
             config_options = {'--opening-seed': 'seed', '--detective-profile': 'profile', '--detective-zone': 'detective_zone', '--su-initial-room': 'su_initial_room', '--private-execution-benefit-multiplier': 'private_execution_benefit_multiplier', '--homecoming-negotiation': 'homecoming_negotiation'}
+            config_options.update({'--opt-' + name: 'opt_' + name for name in optimization_names})
+            config_options.update({'--prune-top-k': 'prune_top_k', '--selective-planning': 'selective_planning'})
             explicit_options = {item.split('=', 1)[0] for item in sys.argv[1:]}
             for option, key in config_options.items():
                 if option in explicit_options and run_config[key] != saved_config[key]:
@@ -487,6 +501,7 @@ def main():
         write_result(out, {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': False, 'source_unchanged': False, 'trace_written': False, 'error': 'Sources changed during build or generated inputs differ; session not started.'})
         return 1
     execution_env = env.copy()
+    execution_env['DV_OPT_RECORDCACHE'] = '1' if run_config.get('opt_recordcache', False) else '0'
     execution_env['DOTNET_gcServer'] = '1' if args.gc_mode == 'server' else '0'
     execution_env['DOTNET_GCHeapCount'] = format(args.gc_heaps, 'x')
     if args.profile:
@@ -503,6 +518,7 @@ def main():
     try:
         with (out / 'stdout.dvlog').open('xb') as stdout, (out / 'stderr.txt').open('wb') as stderr:
             program_args = [str(out / trace_name), args.detective_profile, args.detective_zone, args.raw_format, str(args.opening_seed), args.su_initial_room, str(args.private_execution_benefit_multiplier), str(args.homecoming_negotiation).lower(), str(args.projection_every), str(provenance_path), str(resume_save) if resume_save else '']
+            program_args.append(json.dumps(dv_record(run_config), ensure_ascii=True, separators=(',', ':')))
             process = subprocess.run(['dotnet', str(build / 'bin/Release/net8.0/Program.dll'), *program_args], cwd=ROOT, env=execution_env, stdout=stdout, stderr=stderr, timeout=args.timeout)
             result['exit_code'] = process.returncode
     except subprocess.TimeoutExpired:

@@ -290,6 +290,8 @@ fn dvg_unknown_person_label(actor, viewer):
     return "陌生学员"
 
 fn dvg_presentation(state, viewer):
+    if dv_find(dv_find(state.story, "run_config", []), "opt_readview", false):
+        state = rt_snapshot(state)
     var result = dvs_session_presentation(state, viewer)
     let actor = dv_find(result, "speaker", dv_find(result, "actor", ""))
     var display = ""
@@ -316,7 +318,9 @@ fn dvg_presentation(state, viewer):
         if dv_find(result, "failure_class", "") == "activity-interrupted":
             feedback = "等待被新的动静打断了。"
         result = dv_with_many(result, {"visible": true, "voice": "execution-feedback", "surface_voice": "execution-feedback", "surface": "", "lines": [feedback]})
-    let judgment = dv_find(result, "judgment", [])
+    var judgment = dv_find(result, "judgment", [])
+    if not rt_is_list(judgment):
+        judgment = []
     if dv_find(result, "actor", "") == viewer and dv_find(result, "status", "") == "applied":
         var receipt = ""
         if dv_find(judgment, "status", "") == "answer_accepted":
@@ -764,12 +768,19 @@ fn dvg_host_viewer(state):
 
 // Configuration is retained as evidence and carried into chapter policy inheritance.
 fn dvg_run_config(config):
-    let result = {"seed": dv_find(config, "seed", 1), "profile": dv_find(config, "profile", "Standard_Detective"), "detective_zone": dv_find(config, "detective_zone", "zone_yi"), "su_initial_room": dv_find(config, "su_initial_room", "hall"), "private_execution_benefit_multiplier": dv_find(config, "private_execution_benefit_multiplier", 1), "homecoming_negotiation": dv_find(config, "homecoming_negotiation", false), "selective_planning": dv_find(config, "selective_planning", true)}
+    let result = {"seed": dv_find(config, "seed", 1), "profile": dv_find(config, "profile", "Standard_Detective"), "detective_zone": dv_find(config, "detective_zone", "zone_yi"), "su_initial_room": dv_find(config, "su_initial_room", "hall"), "private_execution_benefit_multiplier": dv_find(config, "private_execution_benefit_multiplier", 1), "homecoming_negotiation": dv_find(config, "homecoming_negotiation", false), "selective_planning": dv_find(config, "selective_planning", true), "opt_readview": dv_find(config, "opt_readview", true), "opt_plancache": dv_find(config, "opt_plancache", true), "opt_prune": dv_find(config, "opt_prune", true), "opt_lazytext": dv_find(config, "opt_lazytext", true), "opt_recordcache": dv_find(config, "opt_recordcache", true), "prune_top_k": dv_find(config, "prune_top_k", 3)}
     dv_require(rt_floor(result.seed) == result.seed and 0 <= result.seed, "Opening seed must be a nonnegative integer")
     dv_require(dv_has(["hall", "R08", "R05"], result.su_initial_room), "Unsupported initial Su room")
     dv_require(result.private_execution_benefit_multiplier == 1 or result.private_execution_benefit_multiplier == 2, "Private execution benefit multiplier must be 1 or 2")
     dv_require(result.homecoming_negotiation == true or result.homecoming_negotiation == false, "Homecoming negotiation must be boolean")
     dv_require(result.selective_planning == true or result.selective_planning == false, "Selective planning must be boolean")
+    dv_require(dv_has(["zone_yi", "zone_jia", "zone_bing", "zone_ding", "none"], result.detective_zone), "Unsupported detective zone")
+    dv_require(0 < result.prune_top_k and rt_floor(result.prune_top_k) == result.prune_top_k, "Pruning Top-K must be a positive integer")
+    let switches = [result.opt_readview, result.opt_plancache, result.opt_prune, result.opt_lazytext, result.opt_recordcache]
+    var i = 0
+    while i < rt_count(switches):
+        dv_require(switches[i] == true or switches[i] == false, "Optimization switches must be boolean")
+        i = i + 1
     return result
 
 fn dvg_configure_actor_policies(scene, config):
@@ -789,7 +800,7 @@ fn dvg_configure_actor_policies(scene, config):
                     action = dv_with(action, "manual_only", false)
                 rt_push(actions, action)
                 j = j + 1
-        rt_push(actors, dv_with_many(actor, {"actions": actions, "policy": dv_with_many(actor.policy, {"private_execution_benefit_multiplier": config.private_execution_benefit_multiplier, "homecoming_negotiation": config.homecoming_negotiation, "selective_planning": config.selective_planning})}))
+        rt_push(actors, dv_with_many(actor, {"actions": actions, "policy": dv_with_many(actor.policy, {"private_execution_benefit_multiplier": config.private_execution_benefit_multiplier, "homecoming_negotiation": config.homecoming_negotiation, "selective_planning": config.selective_planning, "opt_readview": config.opt_readview, "opt_plancache": config.opt_plancache, "opt_prune": config.opt_prune, "opt_lazytext": config.opt_lazytext, "opt_recordcache": config.opt_recordcache, "prune_top_k": config.prune_top_k})}))
         i = i + 1
     return dv_with_many(scene, {"actors": actors, "run_config": config})
 
@@ -814,15 +825,33 @@ fn dvg_configure_initial_room(scene, config):
 
 // Initial configuration changes the declared cognition and starting room only.
 // Budgets and receipts retain their production contracts; no result is seeded.
+// Counterfactual initial population: no detective can decide, speak or receive.
+// Keep the identity object for authored references, but give it no physical room.
+fn dvg_without_detective(scene):
+    var actors = []
+    var i = 0
+    while i < rt_count(scene.actors):
+        let actor = scene.actors[i]
+        if actor.id != "detective":
+            var mind = actor.mind
+            if dv_has_key(mind.objects, "detective"):
+                mind = dv_store(mind, dv_ref("detective", "state", "location"), dv_unknown())
+            rt_push(actors, dv_with(actor, "mind", mind))
+        i = i + 1
+    let physical = dv_store(scene.physical, dv_ref("detective", "state", "location"), dv_field(""))
+    return dv_with_many(scene, {"actors": actors, "physical": physical})
+
 fn dvg_open_config(config):
     let run_config = dvg_run_config(config)
     var scene = c1n_install_scene(c1dep_install_scene(c1_campaign_scene()))
     scene = dvg_configure_initial_room(scene, run_config)
     let zone = dv_find(config, "detective_zone", "zone_yi")
     let profile = dv_find(config, "profile", "Standard_Detective")
-    if zone != "zone_yi":
+    if zone != "zone_yi" and zone != "none":
         scene = c1_other_place_detective(scene, zone, profile)
     scene = c1c_install_scene(scene, dv_find(config, "seed", 1), profile)
+    if zone == "none":
+        scene = dvg_without_detective(scene)
     scene = dv_with_many(scene, {"chapter": 1, "game_duration_budget": 5 * 1440 - scene.physical.time, "execution_scope": "DV production session; host execution receipts; offscreen non-movement uses DV world laws"})
     scene = dvg_configure_actor_policies(scene, run_config)
     scene = campaign_install_visible_objects(dv_with(scene, "physical", c1_add_objects(scene.physical, c1_visible_site_objects())))
@@ -842,6 +871,8 @@ fn dvg_extend(state):
     return dvs_owned_state_update(state, {"story": expanded, "physical": expanded.physical, "actors": expanded.actors, "bindings": expanded.bindings, "events": events, "horizon": 5 * 1440, "duration_budget": 5 * 1440 - state.run_start, "idle": 0})
 
 fn dvg_refresh_goals(current):
+    if dv_find(dv_find(current.story, "run_config", []), "opt_readview", false):
+        current = rt_snapshot(current)
     var actors = current.actors
     var i = current.cursor
     var changed = false

@@ -174,3 +174,5 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 `--dv-dev` 明确开启开发会话。Inspector 可以并排查看权威世界与指定心智；tp/time 记录开发事件。时间推进沿实际队列和世界时间边界结算，保留 Prepare/Complete 的正式结果。开发记录单独标识，人物认知仍来自既有观察。Godot 在开发变更后重建保留实体。
 
 选择性根层可先按完整动作声明稳定排列：有 grants 的非 move/answer/wait 任务优先，实际声明时长短者先，同长和其他项保留原相对顺序。记录 candidate_order、candidate_order_scans、candidate_order_reuses；这只决定逐一真实求值的次序，不等于预先满足条件或获得观察。Prepare、Complete 等入口可以接收冻结整态；凡追加 state.events 的实际入口必须先取得独立事件列表，返回值显式携带新列表。禁止借写只读父态。
+
+两章 CLI 激进优化入口及开关合同见 `../docs/cli-optimization.md` 的 2026-10-22 节；本轮用户的 180 秒运行授权优先于历史窗口。原始 DAG 事件封包可附进程单调耗时，旧证据不补造时间。

@@ -56,7 +56,7 @@ class RawDagIndex:
             PRAGMA journal_mode=OFF;
             PRAGMA synchronous=OFF;
             CREATE TABLE nodes(id INTEGER PRIMARY KEY, offset INTEGER NOT NULL);
-            CREATE TABLE events(id TEXT PRIMARY KEY, root INTEGER NOT NULL, ordinal INTEGER UNIQUE NOT NULL, seq INTEGER NOT NULL);
+            CREATE TABLE events(id TEXT PRIMARY KEY, root INTEGER NOT NULL, ordinal INTEGER UNIQUE NOT NULL, seq INTEGER NOT NULL, process_elapsed_ms REAL);
             CREATE TABLE checkpoints(name TEXT NOT NULL, root INTEGER NOT NULL, events INTEGER NOT NULL, seq INTEGER NOT NULL);
         ''')
         self.reader = self.source.open('rb')
@@ -170,7 +170,10 @@ class RawDagIndex:
                             raise ValueError('Invalid event commit')
                         if self.record_field(root, 'id') != event_id:
                             raise ValueError('Event ID differs from original frozen value')
-                        self.db.execute('INSERT INTO events VALUES (?, ?, ?, ?)', (event_id, root, ordinal, sequence))
+                        elapsed = payload.get('process_elapsed_ms')
+                        if elapsed is not None and (type(elapsed) not in (int, float) or not math.isfinite(elapsed) or elapsed < 0):
+                            raise ValueError('Invalid monotonic event timestamp')
+                        self.db.execute('INSERT INTO events VALUES (?, ?, ?, ?, ?)', (event_id, root, ordinal, sequence, elapsed))
                         events += 1
                         last_event = event_id
                         last_commit_bytes = source.tell()
@@ -269,11 +272,12 @@ class RawDagIndex:
 
     def write_event_index(self, destination):
         with RecordWriter(destination) as output:
-            for event_id, root, ordinal, sequence in self.db.execute('SELECT id, root, ordinal, seq FROM events ORDER BY ordinal'):
+            for event_id, root, ordinal, sequence, elapsed in self.db.execute('SELECT id, root, ordinal, seq, process_elapsed_ms FROM events ORDER BY ordinal'):
                 time = self.record_field(root, 'time')
                 item = {'event_id': event_id, 'node_id': str(root), 'ordinal': ordinal, 'commit_frame': sequence,
                         'type': self.record_field(root, 'type'), 'actor': self.record_field(root, 'actor'),
                         'game_time': time['rational'] if isinstance(time, dict) and set(time) == {'rational'} else time, 'raw_source': str(self.source),
+                        'process_elapsed_ms': elapsed,
                         'scope': 'original committed event; no reconstruction of uncommitted work'}
                 output.append(item)
 

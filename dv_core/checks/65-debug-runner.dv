@@ -75,6 +75,36 @@ fn dvg_debug_completion(events, action_event):
     rt_fail("Stage checkpoint has no matching actual execution and host receipt")
     return false
 
+// Keep only the real receipt suffix and that instant's viewer, not a future mind.
+// This capsule is a read-only projection input and never enters the session.
+fn dvg_debug_text_capsule(state, viewer):
+    state = rt_snapshot(state)
+    var start = rt_count(state.events) - 1
+    var visible = false
+    var found = false
+    while 0 <= start and not found:
+        let event = state.events[start]
+        if event.actor == viewer and dv_has(["listener_parse", "observation", "speech_received_pending"], event.type):
+            visible = true
+        if event.type == "action_execution":
+            found = true
+            visible = visible or event.actor == viewer
+        else:
+            start = start - 1
+    if not found or not visible:
+        return false
+    var events = []
+    while start < rt_count(state.events):
+        rt_push(events, state.events[start])
+        start = start + 1
+    var actors = []
+    var i = 0
+    while i < rt_count(state.actors):
+        if state.actors[i].id == viewer:
+            rt_push(actors, state.actors[i])
+        i = i + 1
+    return rt_snapshot({"events": events, "actors": actors, "physical": {"time": state.physical.time}, "story": {"run_config": state.story.run_config}})
+
 fn dvg_debug_stage(state, config, run_config, steps, boundary, before_time, action_event, inherited_events, provenance):
     dv_require(dv_find(state, "pending", false) == false, "Stage checkpoint requires a completed action with no pending receipt")
     let last = rt_count(state.events) - 1
@@ -100,6 +130,11 @@ fn dvg_debug_loop(initial, config, run_config, initial_steps, initial_cursor, re
     var steps = initial_steps
     var last_flush_steps = steps
     var presentations = []
+    var deferred_text = []
+    let lazytext = dv_find(run_config, "opt_lazytext", false)
+    var viewers = [config.viewer]
+    if dv_find(run_config, "detective_zone", "") == "none":
+        viewers = [for subject in state.actors: subject.id]
     var last_complete_time = state.physical.time
     var limit = state.limit
     if config.max_steps != false:
@@ -116,9 +151,18 @@ fn dvg_debug_loop(initial, config, run_config, initial_steps, initial_cursor, re
         if pending != false:
             state = dvg_complete(state, {"action_event": pending.action_event, "outcome": "applied", "actual": pending.model.actual, "executor": "formal-model"})
             steps = steps + 1
-            let presentation = dvg_presentation(state, config.viewer)
-            if dv_find(presentation, "visible", false):
-                rt_push(presentations, rt_snapshot({"type": "player_presentation", "step": steps, "viewer": config.viewer, "presentation": presentation}))
+            var viewer_index = 0
+            while viewer_index < rt_count(viewers):
+                let viewer = viewers[viewer_index]
+                if lazytext:
+                    let capsule = dvg_debug_text_capsule(state, viewer)
+                    if capsule != false:
+                        rt_push(deferred_text, {"step": steps, "viewer": viewer, "state": capsule})
+                else:
+                    let presentation = dvg_presentation(state, viewer)
+                    if dv_find(presentation, "visible", false):
+                        rt_push(presentations, rt_snapshot({"type": "player_presentation", "step": steps, "viewer": viewer, "presentation": presentation}))
+                viewer_index = viewer_index + 1
             if raw_format == "dag" and 0 < rt_count(provenance):
                 if before_time < 2880 and 2880 <= state.physical.time:
                     rt_raw_checkpoint("stage-day3", dvg_debug_stage(state, config, run_config, steps, 2880, before_time, pending.action_event, inherited_events, provenance))
@@ -129,6 +173,13 @@ fn dvg_debug_loop(initial, config, run_config, initial_steps, initial_cursor, re
             cursor = dvg_debug_flush(state, presentations, cursor, config, steps, projection_every)
             presentations = []
             last_flush_steps = steps
+    var text_index = 0
+    while text_index < rt_count(deferred_text):
+        let deferred = deferred_text[text_index]
+        let presentation = dvg_presentation(deferred.state, deferred.viewer)
+        if dv_find(presentation, "visible", false):
+            rt_push(presentations, rt_snapshot({"type": "player_presentation", "step": deferred.step, "viewer": deferred.viewer, "presentation": presentation}))
+        text_index = text_index + 1
     if cursor < rt_count(state.events) or 0 < rt_count(presentations):
         cursor = dvg_debug_flush(state, presentations, cursor, config, steps, projection_every)
     let active = dvs_session_active(state)
@@ -163,6 +214,9 @@ fn dvg_debug_run():
     if 7 < rt_arg_count():
         dv_require(rt_arg(7) == "true" or rt_arg(7) == "false", "Homecoming negotiation argument must be true or false")
         run_config = dv_with(run_config, "homecoming_negotiation", rt_arg(7) == "true")
+    // Final argument carries the complete frozen configuration, including switches.
+    if 11 < rt_arg_count() and rt_arg(11) != "":
+        run_config = rt_json_parse(rt_arg(11))
     run_config = dvg_run_config(run_config)
     var state = dvg_open_config(run_config)
     state = dvs_owned_state_update(state, {"story": dv_with(state.story, "debug_phase_progress", dv_find(config, "phase_progress", false))})

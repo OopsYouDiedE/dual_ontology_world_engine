@@ -43,6 +43,8 @@ dv_find(record, key, fallback) = rt_record_find(record, key, fallback)
 dv_has_key(record, key) = 0 <= rt_record_index(record, key)
 
 fn dv_record_like(value):
+    if rt_record_cache_enabled():
+        return rt_record_like_cached(value)
     if rt_is_list(value):
         var i = 0
         var valid = true
@@ -126,6 +128,8 @@ fn dv_same_local_ref(subject, left, right):
 // An internal lookup key, not a replacement for ref equality or persistence.
 // Canonical text refs use length framing; every other value retains its JSON key.
 fn dv_ref_key_text(value):
+    if rt_record_cache_enabled():
+        return rt_ref_key_text_cached(value)
     if not rt_is_text(value):
         return false
     var i = 0
@@ -138,6 +142,8 @@ fn dv_ref_key_text(value):
     return true
 
 fn dv_ref_lookup_key(ref):
+    if rt_record_cache_enabled():
+        return rt_ref_lookup_key_cached(ref)
     if not rt_is_list(ref):
         return rt_cat("J", rt_json_stringify(ref))
     let count = rt_count(ref)

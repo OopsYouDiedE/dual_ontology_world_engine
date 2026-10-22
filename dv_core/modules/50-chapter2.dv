@@ -1483,7 +1483,17 @@ fn c2_navigation_goals(actor, goals):
         let goal = goals[i]
         let room = dv_find(goal, "navigation_room", "")
         let basis = dv_find(goal, "basis", [])
-        let when = c2_navigation_condition(dv_find(goal, "available_when", dv_true()), actor.id)
+        let condition = dv_find(goal, "available_when", dv_true())
+        var when = false
+        if dv_find(actor.policy, "opt_plancache", false):
+            let key = ["navigation-condition-v1", actor.id]
+            let cached = rt_memo_get(condition, key)
+            if cached[0]:
+                when = cached[1]
+            else:
+                when = rt_memo_put(condition, key, c2_navigation_condition(condition, actor.id))
+        else:
+            when = c2_navigation_condition(condition, actor.id)
         if room != "" and 0 < rt_count(basis) and c2_navigation_pending(actor, goal) and dv_truth(actor.mind, when) == "true":
             let ready = dv_truth(actor.mind, dv_all(dv_find(goal, "navigation_requirements", []))) == "true"
             if dv_truth(actor.mind, campaign_at(actor.id, room)) == "true":
@@ -1508,6 +1518,16 @@ fn c2_navigation_goals(actor, goals):
 // The returned prefix contains only owned, known-open movement laws. Searching
 // the declared map beyond that gate never grants access or assumes it can open.
 fn c2_navigation_route(actor, target):
+    if not dv_find(actor.policy, "opt_plancache", false):
+        return c2_navigation_route_uncached(actor, target)
+    actor = rt_snapshot(actor)
+    let key = ["c2_navigation_route-complete-knowledge-v1", actor.id, actor.mind.revision, actor.mind.time, dv_find(actor, "location", ""), actor.policy, target]
+    let cached = rt_memo_get(actor.mind, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(actor.mind, key, c2_navigation_route_uncached(actor, target))
+
+fn c2_navigation_route_uncached(actor, target):
     let direct = c2i_known_route(actor, target)
     if direct != false:
         return direct
@@ -2359,6 +2379,16 @@ fn c2i_navigation_focus(actor, rows):
 
 // Intermediate intention follows an owned, known-open path; execution still checks each gate.
 fn c2i_known_route(actor, target):
+    if not dv_find(actor.policy, "opt_plancache", false):
+        return c2i_known_route_uncached(actor, target)
+    actor = rt_snapshot(actor)
+    let key = ["c2i_known_route-complete-knowledge-v1", actor.id, actor.mind.revision, actor.mind.time, dv_find(actor, "location", ""), actor.policy, target]
+    let cached = rt_memo_get(actor.mind, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(actor.mind, key, c2i_known_route_uncached(actor, target))
+
+fn c2i_known_route_uncached(actor, target):
     let position = dv_read(actor.mind, campaign_position_ref(actor.id))
     if not dv_uncontested(position) or position.value == target:
         return false
@@ -4068,7 +4098,22 @@ fn c2d_trial_evidence_goals(actor):
 
 fn c2d_goals(actor):
     var goals = []
-    let rows = c2d_rows()
+    var rows = c2d_rows()
+    if dv_find(actor.policy, "opt_plancache", false):
+        let allowed = dv_find(actor.policy, "allow_manipulation_candidates", false)
+        let key = ["owned-declared-goal-rows-v1", actor.id, allowed]
+        let cached = rt_memo_get(rows, key)
+        if cached[0]:
+            rows = cached[1]
+        else:
+            var selected = []
+            var row_index = 0
+            while row_index < rt_count(rows):
+                let row = rows[row_index]
+                if row.actor == actor.id and (not dv_find(row, "manual_only", false) or (dv_has_key(row, "manipulation") and allowed)):
+                    rt_push(selected, row)
+                row_index = row_index + 1
+            rows = rt_memo_put(rows, key, selected)
     let tasks = c2daily_tasks()
     goals = dv_clone(c2d_goal_head(actor.id, tasks))
     // Invocation-local reuse: actor/mind remain unchanged throughout this loop.

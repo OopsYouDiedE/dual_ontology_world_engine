@@ -227,6 +227,10 @@ public static class R
     private sealed class ValueCaches
     {
         internal readonly object SnapshotLock = new();
+        // Sample once per execution context; CLI captures this in run_config.
+        internal readonly bool RecordCacheEnabled = Environment.GetEnvironmentVariable("DV_OPT_RECORDCACHE") == "1";
+        internal readonly ConditionalWeakTable<FrozenList, RecordShape> RecordShapes = new();
+        internal readonly ConditionalWeakTable<FrozenList, RefLookupText> RefLookupTexts = new();
         internal readonly FrozenList EmptySnapshot = new(Array.Empty<object>(), unchecked(14695981039346656037UL * 1099511628211UL), 14695981039346656037UL)
         {
             CompatibleSequenceHash = 14695981039346656037UL,
@@ -544,6 +548,68 @@ public static class R
         if (record is not FrozenList && v is FrozenList)
             return ReadItem(ReadItem(record, foundIndex), 1);
         return v;
+    }
+    // Pure structural projections only. Never retain a mutable lookup result.
+    private sealed record RecordShape(bool Valid);
+    private sealed record RefLookupText(string Text);
+    public static object record_cache_enabled() => Caches.RecordCacheEnabled ? BoolTrue : BoolFalse;
+    private static FrozenList? UnchangedSnapshot(object value, ValueCaches caches)
+    {
+        if (value is FrozenList frozen) return frozen;
+        if (value is List<object> list && caches.MutableStates.TryGetValue(list, out var state)) return state.Backbone;
+        return null;
+    }
+    private static bool RecordLikeValue(object value)
+    {
+        if (!TryItems(value, out var entries)) return false;
+        for (var i = 0; i < entries.Count; i++)
+            if (!TryItems(entries[i], out var pair) || pair.Count != 2) return false;
+        return true;
+    }
+    public static object record_like_cached(object value)
+    {
+        var caches = Caches;
+        var frozen = UnchangedSnapshot(value, caches);
+        var valid = frozen is null ? RecordLikeValue(value)
+            : caches.RecordShapes.GetValue(frozen, key => new RecordShape(RecordLikeValue(key))).Valid;
+        return valid ? BoolTrue : BoolFalse;
+    }
+    private static bool RefKeyText(object value)
+    {
+        if (value is not string text) return false;
+        // Match DV's UTF-16-unit rule, including rejection of valid surrogate pairs.
+        foreach (var unit in text)
+            if (char.IsSurrogate(unit) || unit == '\uFFFD') return false;
+        return true;
+    }
+    public static object ref_key_text_cached(object value) => RefKeyText(value) ? BoolTrue : BoolFalse;
+    private static readonly string[] RefLookupFields = ["type", "object", "facet", "field", "subject"];
+    private static string RefLookupKeyValue(object value)
+    {
+        if (!TryItems(value, out var entries) || (entries.Count != 4 && entries.Count != 5))
+            return "J" + (string)json_stringify(value);
+        for (var i = 0; i < entries.Count; i++)
+        {
+            if (!TryItems(entries[i], out var pair) || pair.Count != 2
+                || !Equals(pair[0], RefLookupFields[i]) || !RefKeyText(pair[1]))
+                return "J" + (string)json_stringify(value);
+        }
+        if (!Equals(Items(entries[0])[1], "ref")) return "J" + (string)json_stringify(value);
+        var result = new StringBuilder("R");
+        result.Append(entries.Count.ToString(CultureInfo.InvariantCulture)).Append(':');
+        for (var i = 0; i < entries.Count; i++)
+        {
+            var text = (string)Items(entries[i])[1];
+            result.Append(text.Length.ToString(CultureInfo.InvariantCulture)).Append(':').Append(text);
+        }
+        return result.ToString();
+    }
+    public static object ref_lookup_key_cached(object value)
+    {
+        var caches = Caches;
+        var frozen = UnchangedSnapshot(value, caches);
+        return frozen is null ? RefLookupKeyValue(value)
+            : caches.RefLookupTexts.GetValue(frozen, key => new RefLookupText(RefLookupKeyValue(key))).Text;
     }
     private static readonly object MissingSentinel = new();
 
@@ -1587,6 +1653,8 @@ public static class R
     private sealed record RawNode(long Id, long Frame);
     private sealed class RawDagWriter
     {
+        private readonly long clockStarted = System.Diagnostics.Stopwatch.GetTimestamp();
+        private readonly double startupMilliseconds = (DateTime.UtcNow - System.Diagnostics.Process.GetCurrentProcess().StartTime.ToUniversalTime()).TotalMilliseconds;
         private readonly string destination;
         private readonly string partial;
         private readonly FileStream stream;
@@ -1608,10 +1676,11 @@ public static class R
             {
                 chainDigest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 stream.Write(BinaryEvidence.Magic);
-                BeginFrame("header", 4);
+                BeginFrame("header", 5);
                 frameBuffer.Text("format"); frameBuffer.Text("dv-raw-dag-v2");
                 frameBuffer.Text("value_encoding"); frameBuffer.Text("typed binary atoms and prior node references");
                 frameBuffer.Text("checksum"); frameBuffer.Text("sha256(previous-ascii + LF + sequence-ascii + LF + binary-payload)");
+                frameBuffer.Text("clock_origin"); frameBuffer.Text("process-start UTC anchor plus monotonic elapsed; event commit emission, includes initialization");
                 CompleteFrame();
                 FlushCommit();
             }
@@ -1713,10 +1782,11 @@ public static class R
             var node = Node(frozen);
             try
             {
-                BeginFrame("event", 4);
+                BeginFrame("event", 5);
                 frameBuffer.Text("event_id"); frameBuffer.Text(id);
                 frameBuffer.Text("root"); frameBuffer.Integer(node.Id);
                 frameBuffer.Text("ordinal"); frameBuffer.Integer(eventCount);
+                frameBuffer.Text("process_elapsed_ms"); frameBuffer.Value(startupMilliseconds + System.Diagnostics.Stopwatch.GetElapsedTime(clockStarted).TotalMilliseconds, 0);
                 CompleteFrame();
                 FlushCommit(); eventCount++;
             }

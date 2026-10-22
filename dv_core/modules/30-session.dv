@@ -2345,6 +2345,23 @@ fn dvp_beam_limit(frontier, limit):
         i = i + 1
     return result
 
+// Retain the owner's highest scored forecast candidates before performing
+// successor simulation. Equal scores retain the existing declaration order.
+// This is a bounded approximation for every actor, never a role whitelist.
+fn dvp_pruned_edges(edges, edge, limit):
+    var result = []
+    var inserted = false
+    var i = 0
+    while i < rt_count(edges):
+        if not inserted and edges[i].score < edge.score:
+            rt_push(result, edge)
+            inserted = true
+        rt_push(result, edges[i])
+        i = i + 1
+    if not inserted:
+        rt_push(result, edge)
+    return dvp_beam_limit(result, limit)
+
 fn dvp_dependency_methods(actor):
     let key = ["dvp_dependency_methods"]
     let cached = rt_memo_get(actor.actions, key)
@@ -2534,7 +2551,11 @@ fn dvp_plan(actor, bindings, costs):
     if fast_approx:
         depth_limit = 1
         budget = dv_min(budget, 32)
-    let lookahead_limit = dv_find(actor.policy, "lookahead_limit", 6)
+    let prune = dv_find(actor.policy, "opt_prune", false)
+    let prune_top_k = dv_max(1, dv_find(actor.policy, "prune_top_k", 3))
+    var lookahead_limit = dv_find(actor.policy, "lookahead_limit", 6)
+    if prune:
+        lookahead_limit = dv_min(lookahead_limit, prune_top_k)
     var goals = dvp_goal_refs(actor)
     var probes = dvp_probe_refs(actor)
     rt_phase("planning-dependencies-start", actor.id)
@@ -2771,7 +2792,11 @@ fn dvp_plan(actor, bindings, costs):
                                 partial_layer = true
                                 layer_complete = false
                         if selective and not first_supported and (depth + 1 < depth_limit) and not dv_find(action, "known_opportunity_wait", false) and dv_has_key(action, "predict_law"):
-                            rt_push(deferred, {"node": node, "action": action, "path": path, "score": score, "opportunity_keys": opportunity_keys, "opportunity_value": opportunity_value})
+                            let edge = {"node": node, "action": action, "path": path, "score": score, "opportunity_keys": opportunity_keys, "opportunity_value": opportunity_value}
+                            if prune:
+                                deferred = dvp_pruned_edges(deferred, edge, prune_top_k)
+                            else:
+                                rt_push(deferred, edge)
                         if not selective and (depth + 1 < depth_limit) and not dv_find(action, "known_opportunity_wait", false) and dv_and((0 < rt_count(relevant)), dv_has_key(action, "predict_law")):
                             var name = action.predict_law
                             var adoptions = mind.adoptions
@@ -2872,7 +2897,7 @@ fn dvp_plan(actor, bindings, costs):
         if local_2 != false:
             if dv_find(local_2, "known_opportunity_wait", false):
                 local_3 = "selective-declared-wait"
-    let completed_choice = dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "strategy": strategy, "approximation": selective or fast_approx, "time_blocked": time_blocked, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": completed_layers, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer, "planning_work": {"cache_hit": false, "candidates_considered": candidates_considered, "candidates_skipped": candidates_skipped, "partial_layer": partial_layer, "examined_layers": depth, "completed_layers": completed_layers, "candidate_order": candidate_order, "candidate_order_scans": candidate_order_scans, "candidate_order_reuses": candidate_order_reuses, "admission_checks": admission_checks, "eligible_evaluations": eligible_evaluations, "forecasts": forecasts, "forecast_reuses": forecast_reuses, "expanded_nodes": expanded, "peak_frontier": peak_frontier, "candidate_paths": eligible_evaluations - route_work.eligible_evaluations, "retained_paths": rt_count(plans), "route_reuses": 0, "route_stop": route_work.reason, "skipped_expansion": selective and (stop == "selective-current-task" or stop == "selective-first-supported-task"), "stop_reason": local_3, "reused_work": {"forecast_cache_hits": forecast_reuses, "dependency_expansions": dependencies.reused_expanded}, "budget_limit": budget, "depth_limit": depth_limit, "lookahead_limit": lookahead_limit}})
+    let completed_choice = dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "strategy": strategy, "approximation": selective or fast_approx or prune, "time_blocked": time_blocked, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": completed_layers, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer, "planning_work": {"cache_hit": false, "candidates_considered": candidates_considered, "candidates_skipped": candidates_skipped, "partial_layer": partial_layer, "examined_layers": depth, "completed_layers": completed_layers, "candidate_order": candidate_order, "candidate_order_scans": candidate_order_scans, "candidate_order_reuses": candidate_order_reuses, "admission_checks": admission_checks, "eligible_evaluations": eligible_evaluations, "forecasts": forecasts, "forecast_reuses": forecast_reuses, "expanded_nodes": expanded, "peak_frontier": peak_frontier, "candidate_paths": eligible_evaluations - route_work.eligible_evaluations, "retained_paths": rt_count(plans), "route_reuses": 0, "route_stop": route_work.reason, "skipped_expansion": selective and (stop == "selective-current-task" or stop == "selective-first-supported-task"), "stop_reason": local_3, "reused_work": {"forecast_cache_hits": forecast_reuses, "dependency_expansions": dependencies.reused_expanded}, "budget_limit": budget, "depth_limit": depth_limit, "lookahead_limit": lookahead_limit}})
     return dv_with_many(completed_choice, {"plan_expansions": expanded - slice_start_expanded, "search_slices": search_slices, "continuation": false, "planning_work": dv_with_many(completed_choice.planning_work, {"scope": "completed-search-across-slices", "search_slices": search_slices})})
 
 fn dvp_find_action(actions, id):
