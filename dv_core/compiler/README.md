@@ -135,3 +135,7 @@ FrozenList 是封闭的 `IReadOnlyList<object>`，独占底层数组；`R.Items`
 CLI 性能选项 `DV_OPT_RECORDCACHE=1` 在会话值缓存上下文创建时读取；原生 `record_like_cached`、`ref_key_text_cached`、`ref_lookup_key_cached` 只返回纯结构布尔/字符串，使用有效 FrozenList/Backbone 身份，不改变记录读取、别名或精确数。DV 通过 `rt_record_cache_enabled` 选择，关闭保留原实现。原始 DAG 事件封包的 process_elapsed_ms 为记录时序元数据，不进入世界值。
 
 激进优化 ABI 新增 cow_enabled/stage_store_cow、mask_enabled/cell_uncontested、lazyinternal_enabled 和 dirty_next。前三类开关在值缓存上下文创建时采样；dirty_next 使用上下文私有的反向依赖队列，按不可变声明索引及 subject 隔离，不写人物或物理事实。具体配置、断言及未覆盖路径见 ../../docs/cli-optimization.md。
+
+### 只读因果索引补充
+
+`rt_causal_prior_index(events, position, id)` 为三个参数的平台操作，返回 `[supported, value]`。显式 `ConfigureCausalIndex(true)` 工具作用域内，完整文本事件图的 ID 首次出现位置小于 position 时 value 为真；不支持的值域或异常结构返回 supported=false，由 DV 保持原相等、错误与报告顺序。缓存随冻结事件集合身份失效。祖先闭包保留 BFS 顺序列表和私有 HashSet，最多八项；HashSet 不作为 DV 值发布。
