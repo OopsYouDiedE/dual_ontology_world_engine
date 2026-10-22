@@ -2279,6 +2279,38 @@ fn dvp_context_communication(action, goals):
 // A personal choice is not automatically progress: use the owner's declared
 // ordinal values, including a sacrifice before a lower-ranked benefit. This is
 // motivation for choosing an action, never an execution or answer prohibition.
+// Optional exploration routing must not rewrite an action already serving an
+// available owner goal. This only coordinates candidate construction; it grants
+// no utility, state, priority to a clue, or permission to execute.
+fn dvp_owned_task_ready(actor, goals):
+    if not dv_find(actor.policy, "coordinate_owned_tasks", false):
+        return false
+    var i = 0
+    while i < rt_count(goals):
+        let goal = goals[i]
+        if dv_find(goal, "scope", "") == "personal" and 0 < rt_count(dv_find(goal, "basis", [])) and dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true":
+            let kind = dv_find(goal, "kind", "")
+            var pending = false
+            if kind == "achieve" and dv_find(goal, "navigation_commitment", false):
+                pending = dv_truth(actor.mind, goal.proposition) != "true"
+            if kind == "evidence" and dv_has_key(goal, "ref"):
+                pending = not dvp_source_supported_since(dv_read(actor.mind, goal.ref), dv_find(goal, "source", "perception"), dv_find(goal, "minimum_time", 0))
+            if pending:
+                var a = 0
+                while a < rt_count(actor.actions):
+                    let action = actor.actions[a]
+                    let practical = kind == "evidence" and dv_find(action, "inquiry_purpose", "") == "practical-access" and dv_has(dv_find(action, "grants", []), goal.ref)
+                    if (kind == "achieve" or practical) and dvp_eligible(actor, action, actor.mind, []) and dvp_personal_motivation(actor, action) >= 0:
+                        if practical:
+                            return true
+                        if kind == "achieve":
+                            let work = dvp_achievement_pending_work(actor, action, [goal])
+                            if work.value > 0:
+                                return true
+                    a = a + 1
+        i = i + 1
+    return false
+
 fn dvp_personal_motivation(actor, action):
     if not dv_has_key(action, "personal_choice"):
         return 0
@@ -8218,12 +8250,12 @@ fn dvs_session_presentation(state, viewer):
             var voice = "narration"
             if dv_has_key(action, "speech"):
                 voice = "dialogue"
-            let surface_voice = voice
+            let surface_voice = dv_find(presentation, "surface_voice", voice)
             voice = dv_find(presentation, "voice", voice)
             var travel = []
             if applied and visible:
                 travel = dv_find(action, "travel", [])
-            return {"status": execution.status, "failure_class": dv_find(execution, "failure_class", ""), "reason": dv_find(execution, "reason", ""), "actor": event.actor, "speaker": dv_find(presentation, "actor", event.actor), "action_id": action.id, "action_kind": action.kind, "execution_event": event.id, "source_refs": dv_find(action, "source_refs", []), "voice": voice, "surface_voice": surface_voice, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation), "travel": travel, "judgment": judgment}
+            return {"status": execution.status, "failure_class": dv_find(execution, "failure_class", ""), "reason": dv_find(execution, "reason", ""), "actor": event.actor, "speaker": dv_find(presentation, "actor", event.actor), "action_id": action.id, "action_kind": action.kind, "execution_event": event.id, "source_refs": dv_find(action, "source_refs", []), "voice": voice, "surface_voice": surface_voice, "presentation_kind": dv_find(presentation, "kind", ""), "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation), "travel": travel, "judgment": judgment}
         i = i - 1
     return {"status": "idle", "game_time": state.physical.time}
 

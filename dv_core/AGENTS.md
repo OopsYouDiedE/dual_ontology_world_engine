@@ -184,3 +184,7 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 调试65的 stop_at_chapter_end 必须同时有客观收束记录与记录观察者正式章末检视的成功回执；通常使用 detective，无侦探配置使用实际记录人物集合中的任一见证者。截止、公约成功及实际观察分别报告；不改变内容行动或延长时域。合同见 ../docs/cli-optimization.md。
 
 价值收益显式开关、实用通行检查与实际门闩声/拒绝协作的传播合同见 ../docs/cli-optimization.md；不得把门外声响投影为已知外闩状态，NPC 回应只由已收听到的具体行为触发。
+
+可选调查导航与已有本人可执行目标的协调使用通用 coordinate_owned_tasks 合同；不按单条线索或人物身份提前返回，不额外加分。接口与边界见 ../docs/cli-optimization.md。
+
+非语言听觉事件以 environmental-sound 中性呈现，不把真实日志行动者自动投射成听者已辨认的声源；surface_voice/category透传合同见 ../docs/cli-optimization.md。

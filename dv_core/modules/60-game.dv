@@ -338,6 +338,9 @@ fn dvg_presentation(state, viewer):
             if rt_count(lines) == 0 and dv_find(result, "surface", "") == "":
                 lines = dv_append(lines, rt_cat("已抵达", rt_cat(title, "。")))
             result = dv_with_many(result, {"lines": lines, "arrival": {"logical_location": destination, "title": title, "source": dv_find(result, "execution_event", "")}})
+    if dv_find(result, "presentation_kind", "") == "environmental-sound":
+        display = "现场声响"
+        identity_source = "actually-audible-event; emitter-identity-not-presented"
     return dv_with_many(result, {"speaker_name": display, "speaker_name_source": identity_source, "presentation_mind_revision": revision})
 
 // A navigation destination is not a per-person initial placement.
