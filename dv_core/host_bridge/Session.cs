@@ -10,6 +10,7 @@ public sealed partial class DvSession
     private object? intentProjection;
     private IReadOnlyDictionary<string, object?>? nativeIntent;
     private object? closedTrace;
+    private int committedDecisionEventCursor;
     private readonly bool audit;
     private readonly bool developer;
     private readonly Dictionary<string, ViewerProjection> viewers = new(StringComparer.Ordinal);
@@ -43,8 +44,11 @@ public sealed partial class DvSession
         state = R.record_with(R.record_with(value, "story", story), "audit_mode", audit);
         if (HasPending(state)) throw new InvalidDataException("A restorable session must be saved at a committed action boundary.");
         lastCommittedState = R.snapshot(state);
+        committedDecisionEventCursor = Events(state).Count;
         performance.Configure(audit, developer, R.Text(Field(state, "player_actor", "")),
             R.Items(Field(state, "actors", new List<object>())).Count, PerformanceGameMinute());
+        var savedController = R.Text(Field(value, "performance_controller", ""));
+        if (savedController.Length > 0) performance.ConfigureController(savedController);
     }
 
     private object Run(Func<object> operation, bool speculative = false)
@@ -63,6 +67,23 @@ public sealed partial class DvSession
     private static object Field(object value, string name, object fallback) => R.record_find(value, name, fallback);
     private static bool HasPending(object value) => Field(value, "pending", false) is not false;
     private static IReadOnlyList<object> Events(object value) => R.Items(Field(value, "events", new List<object>()));
+    private void RecordCommittedDecisions()
+    {
+        var events = Events(state);
+        var player = R.Text(Field(state, "player_actor", ""));
+        while (committedDecisionEventCursor < events.Count)
+        {
+            var entry = events[committedDecisionEventCursor++];
+            if (R.Text(Field(entry, "type", "")) != "action_selected") continue;
+            var actor = R.Text(Field(entry, "actor", ""));
+            var data = Field(entry, "data", new List<object>());
+            var action = Field(data, "action", new List<object>());
+            var source = player.Length > 0 && string.Equals(actor, player, StringComparison.Ordinal)
+                ? performance.ControllerKind : "engine";
+            performance.RecordDecision(source, actor, R.Text(Field(entry, "id", "")),
+                R.Text(Field(action, "id", "")), R.Num(Field(entry, "time", PerformanceGameMinute())));
+        }
+    }
     private void BeginTransition()
     {
         if (IsClosed) throw new InvalidOperationException("The session is closed.");
@@ -87,9 +108,13 @@ public sealed partial class DvSession
             var configuration = HostValues.Parse(options);
             var auditMode = R.Bool(Field(configuration, "audit", false));
             var developerMode = R.Bool(Field(configuration, "developer", false));
+            var controller = R.Text(Field(configuration, "controller", ""));
+            if (controller is "human" or "llm") configuration = R.record_with(configuration, "controller", "player");
             using var scope = R.UseAudit(auditMode);
             using var output = R.UseOutput(diagnosticOutput);
-            return new DvSession(DVProgram.HostOpen(configuration), auditMode, developerMode) { DiagnosticOutput = diagnosticOutput };
+            var session = new DvSession(DVProgram.HostOpen(configuration), auditMode, developerMode) { DiagnosticOutput = diagnosticOutput };
+            if (controller is "human" or "llm") session.SetPerformanceController(controller);
+            return session;
         });
     public static DvSession Open(string scenario) =>
         OpenMeasured("open-scenario", () => new DvSession(DVProgram.SessionOpen(HostValues.Parse(scenario))));
@@ -124,8 +149,12 @@ public sealed partial class DvSession
         using var performanceScope = Measure("prepare");
         BeginTransition();
         if (selection.Length > 0)
+        {
             state = Run(() => DVProgram.SelectPlayer(state, SelectionValue(selection)));
+            RecordCommittedDecisions();
+        }
         state = Run(() => DVProgram.SessionPrepare(state));
+        RecordCommittedDecisions();
         RememberCommitted();
         return Intent;
     }
@@ -141,6 +170,7 @@ public sealed partial class DvSession
         {
             BeginTransition();
             state = advanced;
+            RecordCommittedDecisions();
             RememberCommitted();
         }
         return Intent;
@@ -168,6 +198,7 @@ public sealed partial class DvSession
         using var performanceScope = Measure("adopt-prepared");
         BeginTransition();
         state = R.copy_value(candidate.State);
+        RecordCommittedDecisions();
         using (R.UseAudit(audit))
         {
             var events = Events(state);
@@ -192,6 +223,7 @@ public sealed partial class DvSession
         var eventCursor = Events(state).Count;
         BeginTransition();
         state = Run(() => DVProgram.SessionComplete(state, receipt));
+        RecordCommittedDecisions();
         RememberCommitted();
         object projected;
         using (Measure("presentation", "projection"))
@@ -371,11 +403,13 @@ public sealed partial class DvSession
         using var performanceScope = Measure("development", "development");
         BeginTransition();
         state = Run(() => DVProgram.DevelopmentCommand(state, command, argument));
+        committedDecisionEventCursor = Events(state).Count;
         RememberCommitted();
         return Materialize(Viewer);
     }
 
-    private object DurableState() => R.record_with(lastCommittedState, "audit_mode", audit);
+    private object DurableState() => R.record_with(
+        R.record_with(lastCommittedState, "audit_mode", audit), "performance_controller", performance.ControllerKind);
     public string Save()
     {
         using var performanceScope = Measure("save-json", "persistence");
@@ -391,6 +425,7 @@ public sealed partial class DvSession
     public void Close()
     {
         if (IsClosed) return;
+        performance.StopWallClock();
         using var performanceScope = Measure("close", "persistence");
         CancelPrepared();
         closedTrace = R.snapshot(Run(() => DVProgram.SessionClose(state)));

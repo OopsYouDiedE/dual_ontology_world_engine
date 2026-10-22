@@ -60,7 +60,7 @@ PlayerViewTrace 的完整原始输入事件记录常开，新增控件通过 nod
 
 3D 页的文本记录描述页面纹理成员与冻结页身份，冻结旧页不扫描下一页控件。G7 记录不证明逐像素遮挡，实际遮挡由渲染图像承担证据。记录存在、页面纹理有内容与玩家实际可见分别表述。
 
-DevConsole layer=128；输入反引号/F12。Inspector 页每 0.25 秒刷新 Physical、Mind 和按 score 排序的候选 Tree，离页停止刷新。性能页保存固定 120 帧环，记录 FPS、frame、prepare、complete、navigation，并按帧累计阶段耗时。性能页关闭时停止诊断采样。DvSession 的累计耗时和每游戏小时统计持续运行，GameEngine.PerformanceSummary/PerformanceSnapshot 暴露只读数据；性能页每 0.25 秒读取轻量摘要，并将累计引擎秒数、每游戏小时耗时、投影、初始化和归档列在帧信息下。CloseTrace 独立写入 `engine-performance.md/.hourly.csv/.operations.csv/.dvlog`，普通精简记录同样导出，异常保留部分文件并记入关闭清单。统计不读取正在变动的 DV 状态，实际口径见 [引擎耗时记录](../../../docs/engine-performance.md)。
+DevConsole layer=128；输入反引号/F12。Inspector 页每 0.25 秒刷新 Physical、Mind 和按 score 排序的候选 Tree，离页停止刷新。性能页保存固定 120 帧环，记录 FPS、frame、prepare、complete、navigation，并按帧累计阶段耗时。性能页关闭时停止诊断采样。DvSession 的累计耗时和每游戏小时统计持续运行，GameEngine.PerformanceSummary/PerformanceSnapshot 暴露只读数据；性能页每 0.25 秒读取轻量摘要，并将累计引擎秒数、每游戏小时耗时、投影、初始化和归档列在帧信息下。性能摘要同时显示每游戏小时的引擎正式决策数，以及人类／大模型控制模式下的现实用时。现实用时在开局／恢复完成后开始，覆盖阅读、思考、模型调用、输入等待、现场执行和引擎；CloseTrace 发起时先冻结计时，以排除归档等待。CloseTrace 独立写入 `engine-performance.md/.hourly.csv/.operations.csv/.decisions.csv/.dvlog`，普通精简记录同样导出，异常保留部分文件并记入关闭清单。统计不读取正在变动的 DV 状态，实际口径见 [引擎耗时记录](../../../docs/engine-performance.md)。
 
 ## 记录回放
 

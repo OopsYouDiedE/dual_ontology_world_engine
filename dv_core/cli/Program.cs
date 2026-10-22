@@ -32,6 +32,8 @@ internal sealed class Cli
     private readonly string interactionSession = Guid.NewGuid().ToString("N");
     private readonly Stopwatch recordingClock = Stopwatch.StartNew();
     private IReadOnlyDictionary<string, object?> replayPreview = HostValues.Empty;
+    private IReadOnlyDictionary<string, object?> replayPerformance = HostValues.Empty;
+    private string replayControllerKind = "";
     private IReadOnlyList<IReadOnlyDictionary<string, object?>> replayOptions = Array.Empty<IReadOnlyDictionary<string, object?>>();
     private string replaySelected = "";
     private string replayChoiceActor = "";
@@ -112,6 +114,7 @@ internal sealed class Cli
         var viewer = "detective";
         var explicitViewer = false;
         var controller = "player";
+        var explicitController = false;
         var developer = false;
         var audit = false;
         var speed = 1d;
@@ -144,7 +147,7 @@ internal sealed class Cli
                 case "--dev": developer = debugErrors = true; break;
                 case "--audit": audit = true; break;
                 case "--viewer": viewer = Value(); explicitViewer = true; break;
-                case "--controller": controller = Value(); break;
+                case "--controller": controller = Value().ToLowerInvariant(); explicitController = true; break;
                 case "--restore": restore = Value(); break;
                 case "--save": savePath = Value(); break;
                 case "--trace": tracePath = Value(); break;
@@ -164,7 +167,8 @@ internal sealed class Cli
         }
         if (interactiveReplay && replayPath is null) throw new ArgumentException("--interactive: --replay");
         if (jsonLines && tui) throw new ArgumentException("--jsonl and --tui are separate output modes.");
-        if (controller is not ("player" or "ai")) throw new ArgumentException("--controller must be player or ai.");
+        if (controller is not ("player" or "human" or "llm" or "ai"))
+            throw new ArgumentException("--controller must be player, human, llm or ai.");
         if (speed is not (1 or 2 or 4 or 8)) throw new ArgumentException("--speed must be 1, 2, 4 or 8.");
         if (replayPath is not null && (restore is not null || savePath is not null || tracePath is not null || performancePath is not null))
             throw new ArgumentException("Recorded replay does not restore or save live sessions.");
@@ -177,7 +181,7 @@ internal sealed class Cli
         if (!preview && (previewRooms != 3 || previewCurrent != 1)) throw new ArgumentException("Preview room controls require --preview.");
         if (preview)
         {
-            if (replayPath is not null || restore is not null || savePath is not null || tracePath is not null || performancePath is not null || command is not null || controller != "player" || developer || audit || campaign.Count > 0)
+            if (replayPath is not null || restore is not null || savePath is not null || tracePath is not null || performancePath is not null || command is not null || controller is not ("player" or "human") || developer || audit || campaign.Count > 0)
                 throw new ArgumentException("--preview is a session-free UI example; do not combine it with session or replay options.");
             var model = TerminalProjection.Preview(previewRooms, previewCurrent) with { Zoom = terminalZoom, ShowScores = showScores, MapView = explicitMap ? mapView : "both" };
             if (exportUi is not null)
@@ -209,6 +213,11 @@ internal sealed class Cli
         {
             session = restore is not null ? DvSession.RestoreFile(restore) : DvSession.OpenConfiguredCampaign(
                 JsonSerializer.Serialize(new { controller, viewer, campaign, audit, developer }, Json), tui && !developer ? TextWriter.Null : Console.Error);
+            if (restore is not null && explicitController)
+                session.SetPerformanceController(controller switch
+                {
+                    "player" or "human" => "human", "llm" => "llm", _ => "engine"
+                });
             if (tui && !developer) session.DiagnosticOutput = TextWriter.Null;
             // A caller explicitly advances with next/act. Opening/status does not run NPCs.
         }
@@ -316,6 +325,9 @@ internal sealed class Cli
             {
                 case "": case "step": case "next": player.Pause(); ShowFrame(player.Step()); break;
                 case "options": Emit("options", VisibleOptions()); break;
+                case "perf": case "performance":
+                    if (argument.Length > 0) throw new ArgumentException("录制回放仅查看当前帧已有的统计，不写入会话性能报告。");
+                    Emit("performance", HostValues.Map(CurrentPreview(false), "performance")); break;
                 case "pause": player.Pause(); Emit("replay", ReplayStatus()); break;
                 case "play":
                     player.Play(argument.Length == 0 ? player.Speed : double.Parse(argument, CultureInfo.InvariantCulture));
@@ -323,12 +335,13 @@ internal sealed class Cli
                     break;
                 case "restart":
                     player.Restart(); replaySnapshot = HostValues.Empty; replayPreview = HostValues.Empty;
+                    replayPerformance = HostValues.Empty; replayControllerKind = "";
                     replayGameTime = null;
                     replayOptions = Array.Empty<IReadOnlyDictionary<string, object?>>(); replaySelected = "";
                     replayChoiceActor = "";
                     terminalFrame = null; terminalEntries.Clear(); roomOrder.Clear(); interactionPhase = "";
                     Emit("replay", ReplayStatus()); break;
-                default: throw new ArgumentException("status / options / map / view / play / pause / step / restart / quit");
+                default: throw new ArgumentException("status / options / map / view / perf / play / pause / step / restart / quit");
             }
             return;
         }
@@ -523,12 +536,15 @@ internal sealed class Cli
     private void RecordPhase(DvSession current, string phase, ChoiceFocus selected,
         IReadOnlyDictionary<string, object?>? presentation = null)
     {
+        var performance = current.PerformanceSummary();
         var record = new Dictionary<string, object?>(FocusPayload(selected, phase), StringComparer.Ordinal)
         {
             ["kind"] = "cli_interaction", ["viewer"] = Observer,
             ["real_us"] = (long)(recordingClock.Elapsed.TotalMilliseconds * 1000),
             ["input_mode"] = jsonLines ? "jsonl" : tui ? "tui" : "text",
             ["controller"] = ControllerIsAutonomous(current) ? "ai" : "player",
+            ["controller_kind"] = PerformanceControllerKind(current, performance),
+            ["performance"] = performance,
             ["source_state_version"] = selected.Version, ["state_version"] = current.Version,
             ["preview"] = phase == "result" ? current.Preview(selected.Actor, true) : selected.Preview,
             ["presentation"] = presentation ?? HostValues.Empty
@@ -556,7 +572,7 @@ internal sealed class Cli
             ["snapshot"] = DisplaySnapshot(snapshot),
             ["status"] = observation is null ? HostValues.Empty : HostValues.Map(observation, "status"),
             ["subjective"] = observation is null ? HostValues.Empty : HostValues.Map(observation, "subjective"),
-            ["performance"] = session?.PerformanceSummary() ?? HostValues.Map(source, "performance")
+            ["performance"] = session?.PerformanceSummary() ?? RecordedPerformance(source)
         };
         if (objective) value["objective"] = HostValues.Map(source, "objective");
         return HostValues.Freeze(value);
@@ -615,6 +631,25 @@ internal sealed class Cli
     private static bool ControllerIsAutonomous(DvSession current) =>
         current.Materialize(current.Viewer).GetValueOrDefault("player_control") is not true;
 
+    private static string NormalizeControllerKind(string value) => value.ToLowerInvariant() switch
+    {
+        "player" or "human" => "human", "llm" => "llm", "ai" or "engine" => "engine", _ => ""
+    };
+
+    private static string PerformanceControllerKind(DvSession current, IReadOnlyDictionary<string, object?>? performance = null)
+    {
+        var kind = NormalizeControllerKind(HostValues.Text(performance ?? current.PerformanceSummary(), "controller_kind"));
+        return kind.Length > 0 ? kind : ControllerIsAutonomous(current) ? "engine" : "human";
+    }
+
+    private static string ControllerLabel(string kind) => kind switch
+    {
+        "human" => "人类", "llm" => "LLM", "engine" => "自主", _ => "—"
+    };
+
+    private IReadOnlyDictionary<string, object?> RecordedPerformance(IReadOnlyDictionary<string, object?> source) =>
+        replayPerformance.Count > 0 ? replayPerformance : HostValues.Map(source, "performance");
+
     private void EmitIntent(IReadOnlyDictionary<string, object?> intent) => Emit("intent", new
     {
         status = HostValues.Text(intent, "status"),
@@ -624,12 +659,18 @@ internal sealed class Cli
         awaiting_input = HostValues.Text(intent, "status") == "awaiting_input"
     });
 
-    private object ReplayStatus() => new
+    private object ReplayStatus()
     {
-        mode = "recorded-replay", index = replay?.Index, count = replay?.Count, speed = replay?.Speed,
-        playing = replay?.Playing, viewer = Observer, phase = interactionPhase,
-        snapshot = HostValues.Map(CurrentPreview(false), "snapshot"), options = VisibleOptions(), selected = replayChoiceActor == Observer ? replaySelected : ""
-    };
+        var preview = CurrentPreview(false);
+        return new
+        {
+            mode = "recorded-replay", index = replay?.Index, count = replay?.Count, speed = replay?.Speed,
+            playing = replay?.Playing, viewer = Observer, phase = interactionPhase,
+            controller_kind = replayControllerKind.Length > 0 ? replayControllerKind : null,
+            performance = HostValues.Map(preview, "performance"),
+            snapshot = HostValues.Map(preview, "snapshot"), options = VisibleOptions(), selected = replayChoiceActor == Observer ? replaySelected : ""
+        };
+    }
 
     private async Task PlayReplay()
     {
@@ -690,6 +731,14 @@ internal sealed class Cli
             replaySnapshot = snapshot;
         var frameSnapshot = HostValues.Map(frame.Data, "snapshot");
         var framePreviewSnapshot = HostValues.Map(HostValues.Map(frame.Data, "preview"), "snapshot");
+        var performance = HostValues.Map(frame.Data, "performance");
+        if (performance.Count == 0) performance = HostValues.Map(HostValues.Map(frame.Data, "preview"), "performance");
+        if (performance.Count == 0) performance = HostValues.Map(frameSnapshot, "performance");
+        if (performance.Count > 0) replayPerformance = performance;
+        var controllerKind = NormalizeControllerKind(HostValues.Text(frame.Data, "controller_kind"));
+        if (controllerKind.Length == 0) controllerKind = NormalizeControllerKind(HostValues.Text(performance, "controller_kind"));
+        if (controllerKind.Length == 0) controllerKind = NormalizeControllerKind(HostValues.Text(frame.Data, "controller"));
+        if (controllerKind.Length > 0) replayControllerKind = controllerKind;
         var recordedTime = frame.Data.GetValueOrDefault("game_time") ??
             framePreviewSnapshot.GetValueOrDefault("game_time") ?? frameSnapshot.GetValueOrDefault("game_time");
         if (recordedTime is not null) replayGameTime = recordedTime;
@@ -740,7 +789,7 @@ internal sealed class Cli
             ["options"] = VisibleOptions(), ["selected"] = replayChoiceActor == Observer ? replaySelected : "",
             ["preview"] = CurrentPreview(mapView != "subjective")
         };
-        foreach (var key in new[] { "interaction_contract", "interaction_id", "state_version", "source_state_version", "record_index", "result_record_indices", "input_record_index", "controller", "input_mode", "selection_recorded", "result_kind" })
+        foreach (var key in new[] { "interaction_contract", "interaction_id", "state_version", "source_state_version", "record_index", "result_record_indices", "input_record_index", "controller", "controller_kind", "performance", "input_mode", "selection_recorded", "result_kind" })
             if (frame.Data.TryGetValue(key, out var value)) values[key] = value;
         var outcome = HostValues.Text(HostValues.Map(frame.Data, "presentation"), "outcome");
         if (outcome.Length > 0) values["outcome"] = outcome;
@@ -799,14 +848,19 @@ internal sealed class Cli
         var snapshot = HostValues.Map(preview, "snapshot");
         var status = session?.TextStatus(Observer) ?? HostValues.Map(preview, "status");
         var choices = VisibleOptions();
-        var mode = session is null ? $"回放 {replay?.Index + 1}/{replay?.Count} · {replay?.Speed}× · {(replay?.Playing == true ? "播放" : "暂停")}" : ControllerIsAutonomous(session) ? "自主" : "人工";
+        var performance = session?.PerformanceSummary() ?? HostValues.Map(preview, "performance");
+        var controllerKind = session is { } live ? PerformanceControllerKind(live, performance) : replayControllerKind;
+        if (controllerKind.Length == 0) controllerKind = NormalizeControllerKind(HostValues.Text(performance, "controller_kind"));
+        var mode = session is null
+            ? $"回放 {replay?.Index + 1}/{replay?.Count} · {replay?.Speed}× · {(replay?.Playing == true ? "播放" : "暂停")}" + (controllerKind.Length > 0 ? " · " + ControllerLabel(controllerKind) : "")
+            : ControllerLabel(controllerKind);
         var phase = session is null
             ? interactionPhase.Length > 0 ? "帧内：" + interactionPhase : ""
             : interactionPhase.Length > 0 ? interactionPhase : StateLabel(HostValues.Text(session.Intent, "status"));
         var model = TerminalProjection.FromSnapshot(snapshot, status, choices, terminalEntries.ToArray(), mode,
             phase, "", session is null ? replayChoiceActor == Observer ? replaySelected : "" : focus?.Actor == Observer ? focus.Id : "", preview, mapView) with
             { Zoom = terminalZoom, ShowActors = showActors, ShowScores = showScores,
-              Performance = session?.PerformanceSummary() ?? HostValues.Map(preview, "performance"),
+              Performance = performance,
               Paginate = tui, PageIndex = terminalPage };
         if (orderedViewer != model.Actor) { roomOrder.Clear(); orderedViewer = model.Actor; }
         foreach (var room in model.Rooms) if (!roomOrder.ContainsKey(room.Id)) roomOrder.Add(room.Id, roomOrder.Count);
@@ -884,10 +938,19 @@ internal sealed class Cli
     private static string FormatPerformance(IReadOnlyDictionary<string, object?> metrics)
     {
         static string Number(object? value) => value is null ? "—" : Convert.ToDouble(value, CultureInfo.InvariantCulture).ToString("0.###", CultureInfo.InvariantCulture);
+        static string Seconds(object? value) => value is null ? "—" : Number(Convert.ToDouble(value, CultureInfo.InvariantCulture) / 1000d);
+        var controllerKind = NormalizeControllerKind(HostValues.Text(metrics, "controller_kind"));
         var text = new StringBuilder();
-        text.AppendLine($"引擎 {Number(Convert.ToDouble(metrics["engine_ms"], CultureInfo.InvariantCulture) / 1000d)} 秒 · 推进 {Number(metrics["advanced_game_minutes"])} 游戏分钟 · 每游戏小时 {Number(metrics["seconds_per_game_hour"])} 秒");
+        text.AppendLine($"引擎计算 {Seconds(metrics.GetValueOrDefault("engine_ms"))} 秒 · 推进 {Number(metrics.GetValueOrDefault("advanced_game_minutes"))} 游戏分钟 · 每游戏小时 {Number(metrics.GetValueOrDefault("seconds_per_game_hour"))} 计算秒");
+        text.AppendLine($"引擎正式决策 {Number(metrics.GetValueOrDefault("engine_decisions"))} 次 · 每游戏小时 {Number(metrics.GetValueOrDefault("engine_decisions_per_game_hour"))} 次");
+        text.AppendLine($"控制器 {ControllerLabel(controllerKind)} · 外部正式选择 {Number(metrics.GetValueOrDefault("controller_decisions"))} 次 · 每游戏小时 {Number(metrics.GetValueOrDefault("controller_decisions_per_game_hour"))} 次");
+        text.AppendLine($"会话墙钟 {Seconds(metrics.GetValueOrDefault("elapsed_wall_ms"))} 秒 · 每游戏小时 {Number(metrics.GetValueOrDefault("elapsed_wall_seconds_per_game_hour"))} 秒");
+        if (controllerKind is "human" or "llm")
+            text.AppendLine($"{ControllerLabel(controllerKind)}实际耗时 {Seconds(metrics.GetValueOrDefault("controller_wall_ms"))} 秒 · 每游戏小时 {Number(metrics.GetValueOrDefault("controller_seconds_per_game_hour"))} 秒（含阅读思考、模型调用、输入等待和执行）");
+        foreach (var row in HostValues.List(metrics, "decisions").OfType<IReadOnlyDictionary<string, object?>>())
+            text.AppendLine($"主体 {HostValues.Text(row, "actor", "—")} · {ControllerLabel(NormalizeControllerKind(HostValues.Text(row, "controller_kind")))} · 正式决策 {Number(row.GetValueOrDefault("decisions"))} 次 · 每游戏小时 {Number(row.GetValueOrDefault("decisions_per_game_hour"))} 次");
         foreach (var row in HostValues.List(metrics, "operations").OfType<IReadOnlyDictionary<string, object?>>())
-            text.AppendLine($"{HostValues.Text(row, "category_label")}/{HostValues.Text(row, "label")} {HostValues.Text(row, "actor")} · {row["calls"]} 次 · 排他 {Number(row["self_ms"])} ms · 均值 {Number(row["mean_ms"])} ms · P95上界 {Number(row["p95_upper_ms"])} ms · 峰值 {Number(row["max_ms"])} ms");
+            text.AppendLine($"{HostValues.Text(row, "category_label")}/{HostValues.Text(row, "label")} {HostValues.Text(row, "actor")} · {Number(row.GetValueOrDefault("calls"))} 次 · 排他 {Number(row.GetValueOrDefault("self_ms"))} ms · 均值 {Number(row.GetValueOrDefault("mean_ms"))} ms · P95上界 {Number(row.GetValueOrDefault("p95_upper_ms"))} ms · 峰值 {Number(row.GetValueOrDefault("max_ms"))} ms");
         return text.ToString().TrimEnd();
     }
 
@@ -912,7 +975,7 @@ DV Core CLI
   --map subjective|objective|both
   --ui-zoom fit|detail|compact --width 120 --height 42 --no-color
   --export-ui NEW.svg --command COMMAND
-  --controller player|ai --viewer ID --profile NAME --zone ID --seed N
+  --controller player|human|llm|ai --viewer ID --profile NAME --zone ID --seed N
   --dev --audit --restore FILE --save FILE --trace FILE
   --scores | --no-scores
   --performance NEW_PREFIX
@@ -924,5 +987,13 @@ page N|next|prev  capture NEW.svg  zoom fit|in|out
 save NEW.dvsave  trace NEW.dvdag  perf [NEW_PREFIX]  scores on|off|auto
 play 1|2|4|8  pause  step  restart  view follow
 inspect ID  tp PLACE  time MINUTES  help  quit
+
+controller: player（默认）与 human 均为人类；llm 为外部大模型；ai 为自主引擎。
+--jsonl 仅指定输入输出格式，不会自动把人类会话记为 LLM。
+--restore 默认保留存档的控制器统计分类；显式 --controller 仅调整诊断分类，不改变世界控制权。
+人类和 LLM 默认隐藏 AI 评分；--scores 或 scores on 可显式显示。
+perf 显示引擎计算耗时、正式决策数/游戏小时、控制者选择数及会话墙钟耗时。
+墙钟从打开会话完成开始，到关闭会话为止，包含阅读思考、模型调用、输入等待和执行。
+--replay 的 perf 只读当前已播放帧记录的统计；缺失字段显示 —，不新增测量或导出报告。
 """;
 }

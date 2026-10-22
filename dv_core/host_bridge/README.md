@@ -27,13 +27,17 @@
 | `Save()`、`WriteSave(path)` | 保存最近已提交的稳定状态 |
 | `Restore(value)`、`RestoreFile(path)` | 恢复稳定会话，保留审计和开发模式 |
 | `PerformanceSummary()`、`PerformanceSnapshot()` | 只读轻量摘要及完整分项/小时汇总，不推进会话 |
-| `WritePerformanceReport(prefix)` | 导出中文报告、小时/操作聚合 CSV 及二进制采样 |
+| `WritePerformanceReport(prefix)` | 导出中文报告、小时/操作/主体决策聚合 CSV 及二进制计算和决策引用尾部 |
+| `SetPerformanceController(kind)` | 首次操作前设置 engine/human/llm 诊断来源，须符合真实控制权 |
+| `StopPerformanceClock()` | 幂等停止现实游玩时长，不修改世界或关闭会话；Close 自动调用 |
 
 `Prepare`、`Complete`、`Snapshot` 继续提供进程内 JSON 交换。正式 Godot 路径使用值图与增量接口，省去 JSON 编码和重新解析。文本协议的 JSONL 用于 stdin/stdout；持久轨迹保持二进制格式。
 
 ## 引擎统计
 
 所有正式会话常开低频作用域计时，按实际前进的游戏分钟折算每游戏小时的现实计算秒数。正式计算、提前准备、认知、选策、Complete、投影、初始化和归档分别记录，嵌套只以排他耗时求和。原始尾部采样最多 8192 条，累计与小时汇总保持完整；零推进保留缺失比率。指标、异常范围、导出格式和小时归属详见 [引擎耗时记录](../../docs/engine-performance.md)。只读回放仅消费已记录摘要，不创建新会话或把播放耗时当作历史引擎耗时。
+
+`dv-performance-v2` 增加正式决策与现实游玩时间。决策以本会话新增的 `action_selected` 为准，区分 engine/human/llm；未采用分支、UI 聚焦、候选节点、历史存档事件和开发选择不计入。每游戏小时决策数与每游戏小时计算耗时共用实际推进分母。现实游玩从打开／恢复完成至关闭请求，包含阅读、思考、模型调用、输入等待、执行及计算；人类／大模型用时不是纯思考或纯推理耗时。小时表按事件时刻记录决策，按当时游戏时刻累计现实停留。新增 `.decisions.csv` 按主体与控制来源汇总；二进制另保留有淘汰计数的 8192 条决策引用尾部。诊断来源只在首次操作前设置，须符合真实 player_actor；存档顶层 `performance_controller` 保留来源，恢复后的数量和时长重新起算。
 
 ## 增量和缓存
 

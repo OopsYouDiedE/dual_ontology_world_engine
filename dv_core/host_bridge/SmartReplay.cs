@@ -485,7 +485,8 @@ public sealed class SmartReplay
         // Keep the chosen alternatives and source version from the focus boundary.
         // Only the actual recorded result may replace the post-confirmation view.
         var projectedKeys = new[] { "preview", "snapshot", "snapshot_ref", "presentation", "viewer", "presentation_viewer", "position", "actual_position", "travel", "action", "detail",
-            "receipt", "status", "game_time", "result_kind", "action_event", "state_version", "event_id" };
+            "receipt", "status", "game_time", "result_kind", "action_event", "state_version", "event_id",
+            "performance", "controller_kind", "controller" };
         foreach (var key in projectedKeys)
             if (result.TryGetValue(key, out var value)) data[key] = value;
         if (Get(Get(data, "preview"), "snapshot") is not null)

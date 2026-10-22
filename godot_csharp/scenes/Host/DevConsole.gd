@@ -188,7 +188,10 @@ func _build_inspect(page: VBoxContainer) -> void:
 
 func _build_performance(page: VBoxContainer) -> void:
 	performance = Label.new()
+	performance.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	performance.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	performance.text = "等待本页的实际帧与阶段记录。"
+	performance.tooltip_text = "摘要每 0.25 秒刷新。人类 / 大模型用时为会话打开完成至关闭的实际用时，包含阅读、思考、模型调用、输入、执行和引擎处理；未推进游戏时间时不计算每小时比率。"
 	page.add_child(performance)
 	graph = FrameGraph.new()
 	graph.history = _history
@@ -282,6 +285,8 @@ func _sampling_changed() -> void:
 		if enabled:
 			_history.clear()
 			navigation_table.clear()
+			_engine_performance.clear()
+			_engine_performance_at_us = 0
 			_sampling_start_us = engine.TimingClockUs()
 			_last_clock = Time.get_ticks_usec()
 	if is_open() and tabs.current_tab == INSPECT_TAB:
@@ -439,10 +444,16 @@ func _show_performance(latest: Dictionary) -> void:
 	if now - _engine_performance_at_us >= 250000 and engine.has_method("PerformanceSummary"):
 		_engine_performance = engine.PerformanceSummary()
 		_engine_performance_at_us = now
-	if not _engine_performance.is_empty():
-		var rate: Variant = _engine_performance.get("seconds_per_game_hour")
-		var rate_text := "—" if rate == null else "%.3f 秒" % float(rate)
-		performance.text += "\n累计引擎 %.3f 秒 · 推进 %.1f 游戏分钟 · 每游戏小时 %s\n投影 %.3f 秒 · 开局/恢复 %.3f 秒 · 保存/归档 %.3f 秒" % [float(_engine_performance.get("engine_ms", 0.0)) / 1000.0, float(_engine_performance.get("advanced_game_minutes", 0.0)), rate_text, float(_engine_performance.get("projection_ms", 0.0)) / 1000.0, float(_engine_performance.get("startup_ms", 0.0)) / 1000.0, float(_engine_performance.get("persistence_ms", 0.0)) / 1000.0]
+	if _engine_performance.is_empty():
+		performance.text += "\n会话统计：—"
+	else:
+		performance.text += "\n引擎 %s 秒/游戏小时 · 引擎决策 %s 次/游戏小时" % [_performance_rate("seconds_per_game_hour"), _performance_rate("engine_decisions_per_game_hour")]
+		var totals := "累计引擎 %s 秒 · 推进 %s 游戏分钟" % [_performance_number("engine_ms", "%.3f", 1000.0), _performance_number("advanced_game_minutes", "%.1f")]
+		var controller := str(_engine_performance.get("controller_kind", ""))
+		if controller in ["human", "llm"]:
+			totals = "%s %s 秒/游戏小时 · %s" % ["人类用时" if controller == "human" else "大模型用时", _performance_rate("controller_seconds_per_game_hour"), totals]
+		performance.text += "\n" + totals
+		performance.text += "\n投影 %s 秒 · 开局/恢复 %s 秒 · 保存/归档 %s 秒" % [_performance_number("projection_ms", "%.3f", 1000.0), _performance_number("startup_ms", "%.3f", 1000.0), _performance_number("persistence_ms", "%.3f", 1000.0)]
 	graph.queue_redraw()
 	if latest.navigation_queries.is_empty(): return
 	navigation_table.clear()
@@ -461,6 +472,17 @@ func _show_performance(latest: Dictionary) -> void:
 			item.set_tooltip_text(1, JSON.stringify(query, "  "))
 			shown += 1
 			if shown == 24: return
+
+func _performance_number(key: String, pattern: String = "%.3f", divisor: float = 1.0) -> String:
+	var value: Variant = _engine_performance.get(key)
+	if value == null: return "—"
+	var number := float(value) / divisor
+	return pattern % number if is_finite(number) and number >= 0.0 else "—"
+
+func _performance_rate(key: String) -> String:
+	var advanced: Variant = _engine_performance.get("advanced_game_minutes")
+	if advanced == null or not is_finite(float(advanced)) or float(advanced) <= 0.0: return "—"
+	return _performance_number(key)
 
 func _phase_average(sums: Dictionary, family: String) -> String:
 	var count := int(sums[family + "_count"])

@@ -247,7 +247,7 @@ public static class TerminalView
             string.IsNullOrWhiteSpace(actorTitle) ? "" : "视角 " + actorTitle, PhaseLabel(model.Phase) };
         Add(Lines(string.Join("  ·  ", status.Where(value => value.Length > 0)), model.Paginate ? inner - 12 : inner, Muted));
         var statusRow = rows.Count - 1;
-        if (model.Performance.Count > 0) Add(Lines(PerformanceLine(model.Performance), inner, Muted));
+        Add(Lines(PerformanceLine(model), inner, Muted));
         Add(new[] { new Line("") });
         var headerRows = rows.Count;
         if (model.ShowActors)
@@ -461,20 +461,41 @@ public static class TerminalView
         if (edges.Count == 0) yield return new("—", Muted, Scope: title, Parent: passages);
     }
 
-    private static string PerformanceLine(IReadOnlyDictionary<string, object?> performance)
+    private static string PerformanceLine(TerminalModel model)
     {
-        static string Number(IReadOnlyDictionary<string, object?> values, string key, double divisor = 1)
+        var performance = model.Performance;
+        static double? Number(IReadOnlyDictionary<string, object?> values, string key)
         {
             var text = Convert.ToString(values.GetValueOrDefault(key), CultureInfo.InvariantCulture);
-            return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) && double.IsFinite(value)
-                ? (value / divisor).ToString("0.###", CultureInfo.InvariantCulture) : "—";
+            return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) && double.IsFinite(value) && value >= 0
+                ? value : null;
         }
-        return "每游戏小时 " + Number(performance, "seconds_per_game_hour") + "秒  ·  累计引擎 " +
-            Number(performance, "engine_ms", 1000) + "秒  ·  推进 " + Number(performance, "advanced_game_minutes") + "游戏分钟";
+        static string Format(double? value, double divisor = 1) => value is double number
+            ? (number / divisor).ToString("0.###", CultureInfo.InvariantCulture) : "—";
+        var advanced = Number(performance, "advanced_game_minutes");
+        string Rate(string key) => advanced is > 0 ? Format(Number(performance, key)) : "—";
+        var rates = "引擎 " + Rate("seconds_per_game_hour") + " 秒/游戏小时  ·  引擎决策 " +
+            Rate("engine_decisions_per_game_hour") + " 次/游戏小时";
+        var totals = "累计引擎 " + Format(Number(performance, "engine_ms"), 1000) + " 秒  ·  推进 " +
+            Format(advanced) + " 游戏分钟";
+        var controller = ControllerKind(model);
+        if (controller is "human" or "llm")
+            totals = (controller == "human" ? "人类用时 " : "大模型用时 ") +
+                Rate("controller_seconds_per_game_hour") + " 秒/游戏小时  ·  " + totals;
+        return rates + "\n" + totals;
     }
 
-    private static bool ScoresVisible(TerminalModel model) => model.ShowScores ??
-        !(model.Mode.Contains("人工", StringComparison.Ordinal) || model.Mode.Contains("manual", StringComparison.OrdinalIgnoreCase));
+    private static string ControllerKind(TerminalModel model)
+    {
+        var kind = Convert.ToString(model.Performance.GetValueOrDefault("controller_kind"), CultureInfo.InvariantCulture);
+        if (kind is "engine" or "human" or "llm") return kind;
+        if (model.Mode.Contains("LLM", StringComparison.OrdinalIgnoreCase) || model.Mode.Contains("大模型", StringComparison.Ordinal)) return "llm";
+        if (model.Mode.Contains("人类", StringComparison.Ordinal) || model.Mode.Contains("人工", StringComparison.Ordinal) ||
+            model.Mode.Contains("human", StringComparison.OrdinalIgnoreCase) || model.Mode.Contains("manual", StringComparison.OrdinalIgnoreCase)) return "human";
+        return "engine";
+    }
+
+    private static bool ScoresVisible(TerminalModel model) => model.ShowScores ?? (ControllerKind(model) == "engine");
     private static string Known(string value) => value is "未记录" or "时间未记录" ? "" : value;
     private static string PhaseLabel(string value) => value switch
     {

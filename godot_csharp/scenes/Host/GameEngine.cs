@@ -408,6 +408,7 @@ public partial class GameEngine : Node
     {
         if (closing) return;
         closing = true;
+        session?.StopPerformanceClock();
         string? path = null;
         var ownsDirectory = false;
         var phase = "await-work";
@@ -421,6 +422,8 @@ public partial class GameEngine : Node
                 errors.Add(new { phase, error = error.ToString() });
             }
             errors.AddRange(hostErrors);
+            // Opening may have completed while shutdown awaited the worker.
+            session?.StopPerformanceClock();
             phase = "create-directory";
             path = ProjectSettings.GlobalizePath("user://dv-sessions/" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-ffff"));
             if (Directory.Exists(path)) throw new IOException("Evidence directory already exists");
