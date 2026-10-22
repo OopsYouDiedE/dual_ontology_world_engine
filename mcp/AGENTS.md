@@ -32,3 +32,5 @@ run_debug 的新增优化开关默认 on；mask/dirty verify 默认 off，仅作
 复用程序要求 v2 完整来源/生成源文件/Release程序集集合及插桩、编译器、入口合同一致，复制后再次校验；旧v1记录须重新构建，不补造指纹。只读原始事件索引可保留原始 parent_ids 和 host_action_event，章末汇总必须以这些索引、实际执行投影及completion互相核验，不以非空摘要代替达成。
 
 矩阵会话及本工具域读者按固定场景持有 OS lease，清理等待lease和旧进程结束后，在同一原生PowerShell内核对路径及reparse point并删除固定目录。外层运行由Windows Job Object管理全树；超时/中断/清理失败保留 matrix-running.lock，人工核对在途进程、读者及部分证据后才可恢复，不自动删锁重试。构建、会话执行、后处理、命令墙钟及含清理的场景墙钟分别报告。实现合同及有限合成检查见 `../docs/cli-optimization.md`。
+
+`opt-evidence-index` 同时控制二进制 payload 原字节校验复用与只读节点缓存；所有帧仍完整解码、校验类型、帧哈希及有序链。节点缓存按 8192 项和 16 MiB 原始帧字节双限驱逐（Python 对象实际内存另有开销），不得省略原字段或未投影尾部报告。有限合成读取差分不构成正式会话或整局后处理性能验收。

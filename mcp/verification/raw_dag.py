@@ -19,6 +19,7 @@ Interrupted/invalid tails remain in the original file and are reported, never fi
 """
 import argparse
 from fractions import Fraction
+from collections import OrderedDict
 import hashlib
 import json
 import math
@@ -51,6 +52,9 @@ def _integer(value):
 class RawDagIndex:
     def __init__(self, source, optimize=True):
         self.optimize = optimize
+        # Bounded by wire bytes and entry count; cached values are read-only.
+        self._node_cache = OrderedDict()
+        self._node_cache_bytes = 0
         self.source = Path(source).resolve()
         self._guard = case_guard(self.source)
         self._guard.__enter__()
@@ -93,7 +97,7 @@ class RawDagIndex:
     def __exit__(self, *_):
         self.close()
 
-    def _payload(self, raw, expected_seq, previous, envelope=None):
+    def _payload(self, raw, expected_seq, previous, envelope=None, payload_bytes=None):
         if self.binary:
             if envelope is None:
                 envelope = decode(raw[36:])
@@ -103,7 +107,9 @@ class RawDagIndex:
                 raise ValueError('Binary DAG sequence/checksum predecessor mismatch')
             payload = envelope['payload']
             if not isinstance(payload, dict): raise ValueError('Invalid binary DAG payload')
-            checksum = hashlib.sha256(previous.encode('ascii') + b'\n' + str(expected_seq).encode('ascii') + b'\n' + encode(payload)).hexdigest()
+            chain = hashlib.sha256(previous.encode('ascii') + b'\n' + str(expected_seq).encode('ascii') + b'\n')
+            chain.update(payload_bytes if payload_bytes is not None else encode(payload))
+            checksum = chain.hexdigest()
             if checksum != envelope['sha256']: raise ValueError('Binary DAG chain checksum mismatch')
             return payload, checksum
         if not raw.endswith(b'\n'):
@@ -146,7 +152,7 @@ class RawDagIndex:
             while True:
                 offset = source.tell()
                 try:
-                    frame = read_frame(source) if self.binary else None
+                    frame = read_frame(source, payload_span=self.optimize) if self.binary else None
                     raw = frame[0] if frame is not None else (b'' if self.binary else source.readline())
                 except (ValueError, UnicodeDecodeError) as issue:
                     error = {'byte_offset': offset, 'frame': sequence, 'error': str(issue)}
@@ -159,7 +165,7 @@ class RawDagIndex:
                     if seal:
                         raise ValueError('Frames after final seal')
                     envelope = frame[1] if self.binary and self.optimize else None
-                    payload, checksum = self._payload(raw, sequence, previous, envelope)
+                    payload, checksum = self._payload(raw, sequence, previous, envelope, frame[2] if self.binary and self.optimize else None)
                     kind = payload.get('kind')
                     if final and kind != 'seal':
                         raise ValueError('Only the final seal may follow the final checkpoint')
@@ -183,6 +189,7 @@ class RawDagIndex:
                             elif not isinstance(item, (str, bool, int, float)) or isinstance(item, float) and not math.isfinite(item):
                                 raise ValueError('Unsupported DV atom')
                         self.db.execute('INSERT INTO nodes VALUES (?, ?)', (node_id, offset))
+                        self._cache_node(node_id, items, len(raw))
                         nodes += 1
                     elif kind == 'event':
                         root, ordinal, event_id = payload.get('root'), payload.get('ordinal'), payload.get('event_id')
@@ -246,13 +253,32 @@ class RawDagIndex:
             'original_tail_preserved': True,
         }
 
+    def _cache_node(self, node_id, items, size):
+        if not self.optimize or size > 16 * 1024 * 1024:
+            return
+        old = self._node_cache.pop(node_id, None)
+        if old is not None:
+            self._node_cache_bytes -= old[1]
+        self._node_cache[node_id] = (items, size)
+        self._node_cache_bytes += size
+        while self._node_cache_bytes > 16 * 1024 * 1024 or len(self._node_cache) > 8192:
+            _, (_, removed) = self._node_cache.popitem(last=False)
+            self._node_cache_bytes -= removed
+
     def node(self, node_id):
+        """Borrow validated items for read-only use; callers must not mutate them."""
+        cached = self._node_cache.get(int(node_id)) if self.optimize else None
+        if cached is not None:
+            self._node_cache.move_to_end(int(node_id))
+            return cached[0]
         row = self.db.execute('SELECT offset FROM nodes WHERE id=?', (int(node_id),)).fetchone()
         if row is None:
             raise ValueError(f'Node {node_id} is not in the validated prefix')
         self.reader.seek(row[0])
         envelope = read_frame(self.reader)[1] if self.binary else json.loads(self.reader.readline(), parse_constant=_reject_constant, parse_int=_parse_integer)
-        return envelope['payload']['items']
+        items = envelope['payload']['items']
+        self._cache_node(int(node_id), items, self.reader.tell() - row[0])
+        return items
 
     def record_fields(self, root):
         fields = {}
