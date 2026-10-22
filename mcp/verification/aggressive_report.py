@@ -191,6 +191,11 @@ def _summarize(directory, root):
         type(elapsed) in (int, float) and math.isfinite(elapsed) and 0 <= elapsed <= 180 and
         closing and item['closing_state_confirmed'])
     item['text_scope'] = 'recorded player_presentation packets; count is not a completeness claim'
+    command_elapsed = item.get('command_wall_seconds')
+    item['command_speed_target_scope'] = 'entire run_debug command including build and postprocessing; excludes matrix cleanup/reporting'
+    item['command_speed_target_met'] = (bool(item['speed_target_met'] and
+        math.isfinite(command_elapsed) and 0 <= command_elapsed <= 180)
+        if type(command_elapsed) in (int, float) else None)
     return item
 
 
@@ -254,12 +259,12 @@ def point_text(point):
 def markdown(summary):
     lines = ['# CLI 性能证据汇总', '',
              '仅读取已发布结果、二进制投影和事件索引；不打开原始 DAG，不推算缺失时间。正式运行窗口与 180 秒会话执行目标分别报告；执行耗时不冒充包含构建/后处理的命令总墙钟。', '',
-             '| 场景 | 执行秒 | 超时 | 源码未变 | 证据完整 | 正文条目 | 180 秒目标 |',
-             '| --- | ---: | --- | --- | --- | ---: | --- |']
+             '| 场景 | 执行秒 | 超时 | 源码未变 | 证据完整 | 正文条目 | 会话180秒 | 整命令180秒 |',
+             '| --- | ---: | --- | --- | --- | ---: | --- | --- |']
     for item in summary['scenarios']:
         lines.append('| ' + ' | '.join(show(item.get(k)) for k in
                      ('scenario', 'execution_seconds', 'timeout', 'source_unchanged', 'evidence_complete',
-                      'text_entries', 'speed_target_met')) + ' |')
+                      'text_entries', 'speed_target_met', 'command_speed_target_met')) + ' |')
     lines += ['', '| 场景 | 首次有效检视 | 第一章实际交接 | 章末真实检视 |', '| --- | --- | --- | --- |']
     for item in summary['scenarios']:
         lines.append('| ' + show(item['scenario']) + ' | ' + ' | '.join(

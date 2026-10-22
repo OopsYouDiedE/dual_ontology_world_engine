@@ -50,7 +50,8 @@ def run_case(name, profile, zone, options, reuse, causal_timeout, *, timeout=300
     cleanup_seconds = time.monotonic() - case_started
     command = case_command(destination, profile, zone, options, reuse, timeout, causal_timeout)
     state = {'phase': 'running', 'scenario': name, 'matrix_pid': os.getpid(),
-             'command': command, 'session_limit_seconds': timeout, 'parallel_sessions': 1}
+             'command': command, 'session_limit_seconds': timeout, 'matrix_parallel_sessions': 1,
+             'concurrency_scope': 'this matrix only; external diagnostic processes are not measured'}
     publish(OUTPUT / 'matrix-state.json', state)
     def launched(pid):
         state['owned_gate_pid'] = pid
@@ -71,6 +72,8 @@ def run_case(name, profile, zone, options, reuse, causal_timeout, *, timeout=300
                 comparison_conditions=f'{len(OPTIMIZATIONS)}-registered-flags-off-selective' if name.startswith('baseline-') else
                                       f'{len(OPTIMIZATIONS)}-registered-flags-off-precise-separate-policy' if name.startswith('precise-') else
                                       'all-on-or-single-ablation-selective')
+    item['command_speed_target_met'] = bool(item.get('speed_target_met') and command_elapsed <= 180)
+    item['command_speed_target_scope'] = 'entire run_debug command including build and postprocessing; excludes matrix cleanup/reporting'
     publish(OUTPUT / (name + '-measurement.json'), item)
     publish(OUTPUT / 'matrix-state.json', {'phase': 'case-complete', 'scenario': name,
                                           'execution_seconds': item.get('execution_seconds'),
