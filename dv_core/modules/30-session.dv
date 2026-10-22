@@ -140,6 +140,10 @@ fn dvs_dirty_refs(condition):
         return cached[1]
     let op = condition.op
     var refs = []
+    if op == "held_for":
+        let declared = dv_condition_inputs(condition)
+        dv_require(declared.complete, "Invalid held-for dependency declaration")
+        return rt_memo_put(condition, ["dirty-declaration-refs-v1"], declared.reads)
     if op == "equals" or op == "at_least":
         rt_push(refs, condition.ref)
     else:

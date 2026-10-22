@@ -1,4 +1,4 @@
-#include ../../modules/20-core.dv
+#include ../../modules/30-session.dv
 
 // Isolated mechanism fixture: no campaign, actors, scheduling or AI session.
 fn dvg_debug_run():
@@ -9,14 +9,25 @@ fn dvg_debug_run():
     world = dv_add_object(world, dv_object("clock", "fixture", {"state": {"minute": dv_cell(129, 1, 129, [])}}))
     let condition = dv_held_for(symptom, true, clock, 120)
     dv_require(dv_truth(world, condition) == "false", "Premature duration")
+    let config = {"opt_dirty": true}
+    dv_require(dvs_dirty_truth(world, condition, config, "held-fixture") == "false", "Dirty duration evaluated prematurely")
+    let dependencies = dvs_dirty_refs(condition)
+    dv_require(dv_has(dependencies, symptom) and dv_has(dependencies, clock), "Dirty duration omitted target or clock")
     let bound = dv_time_boundary(dv_time_materialize(world, condition), clock, 129, 200, "minute")
     dv_require(bound.complete and bound.next == 130, "Incorrect duration boundary")
     let static_bound = dv_time_boundary(condition, clock, 129, 200, "minute")
     dv_require(not static_bound.complete and static_bound.next == 130, "Static analysis overstated duration completeness")
     world = dv_store(world, clock, dv_cell(130, 1, 130, []))
     dv_require(dv_truth(world, condition) == "true", "Duration endpoint not included")
+    dv_require(dvs_dirty_truth(world, condition, config, "held-fixture") == "true", "Dirty duration reused old clock value")
     let law = dv_axiom("settle", 1, condition, [dv_assign(dv_ref("patient", "state", "settled"), true)])
     world = dv_adopt(world, law, "enforce", 1, ["isolated-duration-fixture"])
+    let processes = [{"law": "settle"}]
+    dv_require(dvs_dirty_clock_boundary(world, processes, clock, 129, 200) == 130, "Dirty duration boundary omitted dynamic onset")
+    let before_endpoint = dv_store(world, clock, dv_cell(129, 1, 129, []))
+    dv_require(dvs_environment_reference_next_time(before_endpoint, processes, clock, 129, 200) == 130, "Duration reference disagrees with dirty boundary")
+    let index = dvs_dirty_environment_index(world, processes)
+    dv_require(dv_has(index[0].refs, symptom) and dv_has(index[0].refs, clock), "Environment omitted age dependencies")
     let execution = dv_execute(world, "settle", "fixture-execution", 130, world.revision)
     dv_require(execution.status == "applied" and dv_truth(execution.world, dv_fact(dv_ref("patient", "state", "settled"), true)) == "true", "Formal law did not consume duration")
     world = dv_store(world, symptom, dv_cell(true, 1, 20, []))

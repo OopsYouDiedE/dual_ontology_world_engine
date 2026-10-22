@@ -20,4 +20,6 @@
 
 20新增dv_held_for(ref,value,clock,duration)，读取正式字段的最后写入时间及显式时钟，未知或冲突保持unknown。同值重新写入、心智重新观察会保守重启计龄。30依赖枚举保留目标与时钟。无世界的声明时间分析保守；环境仅把当前已记录字段时间物化为时钟阈值，防止无条件逐分钟轮询，并保持同一正式法则求值。
 
-中性夹具dv_core/checks/fixtures/duration-predicate.dv仅导入20，不启动会话/AI，检查时长端点、同值重写的保守计龄、不同值、目标/时钟未知、冲突、静态/现场边界及正式法则提交。通过现役build_session生成后dotnet build成功、执行exit0；没有游戏行为或伤亡验收含义。最终正式300秒会话仍待本候选冻结及同源两profile执行；因果工具将用causal-timeout1，超时不称通过。
+中性夹具dv_core/checks/fixtures/duration-predicate.dv导入20/30，不启动会话/AI，检查时长端点、同值重写的保守计龄、不同值、目标/时钟未知、冲突、静态/现场边界及正式法则提交。同时覆盖dirty真值的时钟变化失效、环境目标/时钟依赖、动态时界与参考扫描一致。通过现役build_session生成后dotnet build成功、执行exit0；没有游戏行为或伤亡验收含义。最终正式300秒会话仍待本候选冻结及同源两profile执行；因果工具将用causal-timeout1，超时不称通过。
+
+整合main 6ce6d133与策略S4 6594a137后，首次Standard进入第二章时发现新dirty refs未登记held_for，实际崩溃，未作为游戏验收成功。现已补齐dirty refs；静态时界缓存保留aged叶子，动态时界从当前字段时间求值，参考扫描同步口径，不用生产全扫兜底。新正式会话必须替换此次失败输出。
