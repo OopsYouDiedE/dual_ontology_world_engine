@@ -17,6 +17,8 @@ public sealed record TerminalModel
     public string MapView { get; init; } = "subjective";
     public string ActorTitle { get; init; } = "";
     public bool ShowActors { get; init; }
+    public bool? ShowScores { get; init; }
+    public IReadOnlyDictionary<string, object?> Performance { get; init; } = HostValues.Empty;
     public int PageIndex { get; init; }
     public bool Paginate { get; init; }
     public IReadOnlyList<TerminalRoom> Rooms { get; init; } = Array.Empty<TerminalRoom>();
@@ -31,6 +33,7 @@ public sealed record TerminalModel
 public sealed record TerminalRoom
 {
     public string Id { get; init; } = "";
+    public string Region { get; init; } = "";
     public string Title { get; init; } = "未记录";
     public IReadOnlyList<string> Lines { get; init; } = Array.Empty<string>();
     public IReadOnlyList<TerminalMember> Members { get; init; } = Array.Empty<TerminalMember>();
@@ -80,14 +83,23 @@ public sealed record TerminalEntry
     public string Kind { get; init; } = "";
 }
 
-/// <summary>Pure observer presentation. ANSI and SVG share the exact same cell layout.</summary>
+/// <summary>Pure observer presentation. ANSI and SVG share the same cell layout.</summary>
 public static class TerminalView
 {
     private const string Background = "#0b1424", Ink = "#eadfca";
     private const string Teal = "#65d8c4", Muted = "#93a8bb", Amber = "#edbd72";
-    private sealed record Line(string Text, string Color = Ink, bool Bold = false, string Scope = "", Line? Parent = null);
+    private sealed record Line(string Text, string Color = Ink, bool Bold = false,
+        string Scope = "", Line? Parent = null, bool KeepWithNext = false);
     private sealed record Block(string Title, List<Line> Lines, bool Complete = true);
+    private sealed record RoomBlock(string Region, List<Line> Lines);
     private sealed record Cell(string Glyph, string Color, string Back, bool Continuation = false, bool Bold = false);
+    private sealed record Placement(int X, int Width, Line Value);
+    private sealed class Row : List<Placement>
+    {
+        public Row() { }
+        public Row(IEnumerable<Placement> values) : base(values) { }
+    }
+    private sealed record Page(int Start, int End, List<Row> Rows);
 
     public static string Render(TerminalModel model, int width = 120, int height = 40, bool color = true)
     {
@@ -107,7 +119,11 @@ public static class TerminalView
                     foreground = cell.Color;
                     background = cell.Back;
                 }
-                if (color && cell.Bold != bold) { output.Append(cell.Bold ? "\u001b[1m" : "\u001b[22m"); bold = cell.Bold; }
+                if (color && cell.Bold != bold)
+                {
+                    output.Append(cell.Bold ? "\u001b[1m" : "\u001b[22m");
+                    bold = cell.Bold;
+                }
                 output.Append(cell.Glyph);
             }
             if (color) { output.Append("\u001b[0m"); foreground = background = null; bold = false; }
@@ -131,20 +147,42 @@ public static class TerminalView
         svg.Append("<title>").Append(Xml(model.IsPreview ? "预览" : model.Title)).Append("</title>\n");
         for (var y = 0; y < canvas.Height; y++)
         {
-            for (var x = 0; x < canvas.Width; x++)
+            for (var x = 0; x < canvas.Width;)
             {
-                var cell = canvas.Cells[y, x];
-                svg.Append(CultureInfo.InvariantCulture, $"<rect x=\"{x * cw}\" y=\"{y * ch}\" width=\"{cw}\" height=\"{ch}\" fill=\"{cell.Back}\"/>\n");
+                var start = x;
+                var back = canvas.Cells[y, x].Back;
+                while (x < canvas.Width && canvas.Cells[y, x].Back == back) x++;
+                svg.Append(CultureInfo.InvariantCulture, $"<rect x=\"{start * cw}\" y=\"{y * ch}\" width=\"{(x - start) * cw}\" height=\"{ch}\" fill=\"{back}\"/>\n");
             }
         }
         for (var y = 0; y < canvas.Height; y++)
-            for (var x = 0; x < canvas.Width; x++)
+        {
+            for (var x = 0; x < canvas.Width;)
             {
-                var cell = canvas.Cells[y, x];
-                if (cell.Continuation || cell.Glyph == " ") continue;
-                svg.Append(CultureInfo.InvariantCulture, $"<text x=\"{x * cw}\" y=\"{y * ch + 15}\" fill=\"{cell.Color}\" font-size=\"16\" font-weight=\"{(cell.Bold ? 700 : 400)}\" font-family=\"Cascadia Mono, Noto Sans Mono CJK SC, Microsoft YaHei, monospace\" xml:space=\"preserve\">");
-                svg.Append(Xml(cell.Glyph)).Append("</text>\n");
+                var first = canvas.Cells[y, x];
+                if (first.Continuation || first.Glyph == " ") { x++; continue; }
+                var start = x;
+                var run = new StringBuilder();
+                var contentLength = 0;
+                var end = start;
+                while (x < canvas.Width)
+                {
+                    var cell = canvas.Cells[y, x];
+                    if (cell.Color != first.Color || cell.Back != first.Back || cell.Bold != first.Bold) break;
+                    if (!cell.Continuation) run.Append(cell.Glyph);
+                    x++;
+                    if (cell.Continuation || cell.Glyph != " ")
+                    {
+                        contentLength = run.Length;
+                        end = x;
+                    }
+                }
+                run.Length = contentLength;
+                if (run.Length == 0) continue;
+                svg.Append(CultureInfo.InvariantCulture, $"<text x=\"{start * cw}\" y=\"{y * ch + 15}\" textLength=\"{(end - start) * cw}\" lengthAdjust=\"spacingAndGlyphs\" fill=\"{first.Color}\" font-size=\"16\" font-weight=\"{(first.Bold ? 700 : 400)}\" font-family=\"Cascadia Mono, Noto Sans Mono CJK SC, Microsoft YaHei, monospace\" xml:space=\"preserve\">");
+                svg.Append(Xml(run.ToString())).Append("</text>\n");
             }
+        }
         return svg.Append("</svg>\n").ToString();
     }
 
@@ -152,21 +190,71 @@ public static class TerminalView
     {
         var width = Math.Clamp(requestedWidth, 60, 300);
         var inner = width - 4;
-        var rows = new List<List<(int X, int Width, Line Value)>>();
-        void Add(IEnumerable<Line> lines) { foreach (var line in lines) rows.Add(new() { (2, inner, line) }); }
+        var rows = new List<Row>();
+        void Add(IEnumerable<Line> lines)
+        {
+            foreach (var line in lines) rows.Add(new Row { new(2, inner, line) });
+        }
+        void AddColumns(IReadOnlyList<Line> left, IReadOnlyList<Line> right, int leftWidth, int rightWidth)
+        {
+            for (var i = 0; i < Math.Max(left.Count, right.Count); i++)
+            {
+                var row = new Row();
+                if (i < left.Count) row.Add(new(2, leftWidth, left[i]));
+                if (i < right.Count) row.Add(new(6 + leftWidth, rightWidth, right[i]));
+                rows.Add(row);
+            }
+        }
+        void AddMap(string title, IReadOnlyList<TerminalRoom> rooms, IReadOnlyList<TerminalEdge> edges)
+        {
+            if (width < 118 || rooms.Count < 2)
+            {
+                Add(MapLines(title, rooms, edges, model, inner, requestedHeight));
+                return;
+            }
+            var leftWidth = (inner - 4) / 2;
+            var rightWidth = inner - leftWidth - 4;
+            var blocks = RoomBlocks(title, rooms, model, leftWidth, requestedHeight);
+            if (blocks.Count < 2)
+            {
+                Add(MapLines(title, rooms, edges, model, inner, requestedHeight));
+                return;
+            }
+            Add(new[] { new Line(title, Muted, KeepWithNext: true) });
+            var total = blocks.Sum(block => block.Lines.Count);
+            var running = 0;
+            var split = 1;
+            var distance = int.MaxValue;
+            for (var i = 1; i < blocks.Count; i++)
+            {
+                running += blocks[i - 1].Lines.Count;
+                var candidate = Math.Abs(total - running * 2);
+                if (candidate < distance) { distance = candidate; split = i; }
+            }
+            var left = blocks.Take(split).SelectMany(block => block.Lines).ToList();
+            var right = blocks.Skip(split).SelectMany(block => block.Lines).ToList();
+            var rightRegion = blocks[split].Region;
+            if (rightRegion.Length > 0 && right.Count > 0 && right[0].Text != rightRegion)
+                right.Insert(0, new Line(rightRegion, Teal, true, title + " · " + rightRegion, KeepWithNext: true));
+            AddColumns(left, right, leftWidth, rightWidth);
+            Add(new[] { new Line("") });
+            Add(PassageLines(title, rooms, edges, inner));
+        }
+
         Add(Lines(model.Title, inner, Teal, true));
         var actorTitle = string.IsNullOrWhiteSpace(model.ActorTitle) ? model.Actor : model.ActorTitle;
         var status = new[] { model.IsPreview ? "预览" : Known(model.Mode), Known(model.Clock),
             string.IsNullOrWhiteSpace(actorTitle) ? "" : "视角 " + actorTitle, PhaseLabel(model.Phase) };
         Add(Lines(string.Join("  ·  ", status.Where(value => value.Length > 0)), model.Paginate ? inner - 12 : inner, Muted));
         var statusRow = rows.Count - 1;
+        if (model.Performance.Count > 0) Add(Lines(PerformanceLine(model.Performance), inner, Muted));
         Add(new[] { new Line("") });
         var headerRows = rows.Count;
         if (model.ShowActors)
         {
-            Add(new[] { new Line("视角", Teal, true) });
+            Add(new[] { new Line("视角", Teal, true, KeepWithNext: true) });
             foreach (var actor in model.Actors)
-                Add(Lines((actor.Selected ? "> " : "· ") + actor.Title + "  " + actor.Id, inner, actor.Selected ? Teal : Ink));
+                Add(Lines((actor.Selected ? "> " : "· ") + actor.Title, inner, actor.Selected ? Teal : Ink));
             if (model.Actors.Count == 0) Add(new[] { new Line("—", Muted) });
             Add(new[] { new Line("") });
         }
@@ -175,7 +263,7 @@ public static class TerminalView
         {
             var choices = Choices(model, inner, true);
             showCompleteChoices = !choices.Complete;
-            Add(Lines(choices.Title, inner, Teal, true));
+            Add(Lines(choices.Title, inner, Teal, true).Select(line => line with { KeepWithNext = true }));
             Add(choices.Lines);
             Add(new[] { new Line("") });
         }
@@ -183,34 +271,25 @@ public static class TerminalView
         {
             var leftWidth = (inner - 4) / 2;
             var rightWidth = inner - leftWidth - 4;
-            var left = MapLines("客观世界", model.ObjectiveRooms, model.ObjectiveEdges, model, leftWidth, requestedHeight);
-            var right = MapLines("主观认知", model.Rooms, model.Edges, model, rightWidth, requestedHeight);
-            for (var i = 0; i < Math.Max(left.Count, right.Count); i++)
-            {
-                var row = new List<(int X, int Width, Line Value)>();
-                if (i < left.Count) row.Add((2, leftWidth, left[i]));
-                if (i < right.Count) row.Add((6 + leftWidth, rightWidth, right[i]));
-                rows.Add(row);
-            }
+            AddColumns(MapLines("客观世界", model.ObjectiveRooms, model.ObjectiveEdges, model, leftWidth, requestedHeight),
+                MapLines("主观认知", model.Rooms, model.Edges, model, rightWidth, requestedHeight), leftWidth, rightWidth);
         }
         else
         {
-            if (model.MapView is "objective" or "both")
-                Add(MapLines("客观世界", model.ObjectiveRooms, model.ObjectiveEdges, model, inner, requestedHeight));
+            if (model.MapView is "objective" or "both") AddMap("客观世界", model.ObjectiveRooms, model.ObjectiveEdges);
             if (model.MapView == "both") Add(new[] { new Line("") });
-            if (model.MapView != "objective")
-                Add(MapLines("主观认知", model.Rooms, model.Edges, model, inner, requestedHeight));
+            if (model.MapView != "objective") AddMap("主观认知", model.Rooms, model.Edges);
         }
         if (showCompleteChoices && model.Options.Count > 0)
         {
             var choices = Choices(model, inner);
             Add(new[] { new Line("") });
-            Add(Lines(choices.Title, inner, Teal, true));
+            Add(Lines(choices.Title, inner, Teal, true).Select(line => line with { KeepWithNext = true }));
             Add(choices.Lines);
         }
         if (model.Entries.Count > 0)
         {
-            Add(new[] { new Line(""), new Line("记录", Muted) });
+            Add(new[] { new Line(""), new Line("记录", Muted, KeepWithNext: true) });
             Add(Events(model, inner).Lines);
         }
         var canvasHeight = rows.Count + 2;
@@ -219,33 +298,18 @@ public static class TerminalView
         if (model.Paginate)
         {
             canvasHeight = Math.Clamp(requestedHeight, 24, 100);
-            // Reserve scope and room headings when a list continues on another page.
-            var pageSize = Math.Max(1, canvasHeight - 4 - headerRows);
-            var bodyCount = Math.Max(0, rows.Count - headerRows);
-            pageCount = Math.Max(1, (bodyCount + pageSize - 1) / pageSize);
+            var pages = Paginate(rows, headerRows, canvasHeight - headerRows - 2);
+            pageCount = pages.Count;
             var requestedPage = model.PageIndex;
             if (requestedPage < 0)
             {
                 var selectedRow = rows.FindIndex(headerRows, row => row.Any(item => item.Value.Text.StartsWith("> ", StringComparison.Ordinal)));
-                requestedPage = selectedRow < headerRows ? 0 : (selectedRow - headerRows) / pageSize;
+                requestedPage = pages.FindIndex(page => selectedRow >= page.Start && selectedRow < page.End);
             }
             pageIndex = Math.Clamp(requestedPage, 0, pageCount - 1);
             var marker = $"{pageIndex + 1}/{pageCount}";
-            rows[statusRow].Add((2 + inner - marker.Length, marker.Length, new Line(marker, Muted)));
-            var pageRows = rows.Skip(headerRows + pageIndex * pageSize).Take(pageSize).ToList();
-            var continuation = new List<List<(int X, int Width, Line Value)>>();
-            if (pageIndex > 0)
-            {
-                var columns = pageRows.SelectMany(row => row).Where(item => !string.IsNullOrWhiteSpace(item.Value.Text))
-                    .GroupBy(item => (item.X, item.Width)).Select(group => group.First()).ToArray();
-                var scopes = columns.Where(item => item.Value.Scope.Length > 0 && item.Value.Text != item.Value.Scope)
-                    .Select(item => (item.X, item.Width, new Line(item.Value.Scope, Muted))).ToList();
-                var parents = columns.Where(item => item.Value.Parent is not null)
-                    .Select(item => (item.X, item.Width, item.Value.Parent!)).ToList();
-                if (scopes.Count > 0) continuation.Add(scopes);
-                if (parents.Count > 0) continuation.Add(parents);
-            }
-            rows = rows.Take(headerRows).Concat(continuation).Concat(pageRows).ToList();
+            rows[statusRow].Add(new(2 + inner - marker.Length, marker.Length, new Line(marker, Muted)));
+            rows = rows.Take(headerRows).Concat(pages[pageIndex].Rows).ToList();
         }
         var canvas = new Canvas(width, canvasHeight, pageIndex, pageCount);
         for (var i = 0; i < rows.Count; i++)
@@ -253,45 +317,164 @@ public static class TerminalView
         return canvas;
     }
 
+    private static List<Page> Paginate(List<Row> rows, int headerRows, int capacity)
+    {
+        capacity = Math.Max(1, capacity);
+        var pages = new List<Page>();
+        var start = headerRows;
+        while (start < rows.Count)
+        {
+            while (start < rows.Count && rows[start].All(item => string.IsNullOrWhiteSpace(item.Value.Text))) start++;
+            if (start == rows.Count) break;
+            var continuation = new List<Row>();
+            if (pages.Count > 0)
+            {
+                var columns = rows.Skip(start).Take(capacity).SelectMany(row => row)
+                    .Where(item => !string.IsNullOrWhiteSpace(item.Value.Text))
+                    .GroupBy(item => (item.X, item.Width)).Select(group => group.First()).ToArray();
+                var scopes = new Row(columns.Where(item => item.Value.Scope.Length > 0 && item.Value.Text != item.Value.Scope)
+                    .Select(item => new Placement(item.X, item.Width, new Line(item.Value.Scope, Muted, KeepWithNext: true))));
+                var parents = new Row(columns.Where(item => item.Value.Parent is not null)
+                    .Select(item => new Placement(item.X, item.Width, item.Value.Parent!)));
+                if (scopes.Count > 0 && capacity > 2) continuation.Add(scopes);
+                if (parents.Count > 0 && capacity > 2) continuation.Add(parents);
+            }
+            var available = Math.Max(1, capacity - continuation.Count);
+            var end = Math.Min(rows.Count, start + available);
+            if (end < rows.Count)
+            {
+                while (end > start + 1 && rows[end - 1].Any(item => item.Value.KeepWithNext)) end--;
+            }
+            var pageRows = continuation.Concat(rows.Skip(start).Take(end - start)).ToList();
+            pages.Add(new(start, end, pageRows));
+            start = end;
+        }
+        if (pages.Count == 0) pages.Add(new(headerRows, headerRows, new List<Row>()));
+        return pages;
+    }
+
     private static List<Line> MapLines(string title, IReadOnlyList<TerminalRoom> rooms,
         IReadOnlyList<TerminalEdge> edges, TerminalModel model, int width, int height)
     {
-        var content = new List<Line> { new(title, Muted), new("") };
-        var spacing = model.Zoom == "detail" || model.Zoom == "fit" && rooms.Count * 5 < height;
-        foreach (var room in rooms.OrderByDescending(room => room.IsCurrent))
-        {
-            var heading = new Line("- " + Missing(room.Title), room.IsCurrent ? Teal : Ink, true);
-            content.AddRange(Indented("- ", Missing(room.Title), width, heading.Color, true)
-                .Select((line, index) => line with { Parent = index == 0 ? null : heading }));
-            void AddMemberLines(IEnumerable<Line> lines) => content.AddRange(lines.Select(line => line with { Parent = heading }));
-            foreach (var member in room.Members)
-            {
-                AddMemberLines(Indented("    ", Missing(member.Title), width, member.IsViewer ? Teal : Ink, true));
-                if (!string.IsNullOrWhiteSpace(member.Detail))
-                    AddMemberLines(Indented("      ", member.Detail, width, Muted));
-            }
-            if (room.IsCurrent && !room.Members.Any(member => member.IsViewer))
-                AddMemberLines(Indented("    ", string.IsNullOrWhiteSpace(model.ActorTitle) ? model.Actor : model.ActorTitle, width, Teal, true));
-            foreach (var line in room.Lines.Where(line => !string.IsNullOrWhiteSpace(line)))
-                AddMemberLines(Indented("    ", line, width, Muted));
-            if (spacing) content.Add(new(""));
-        }
-        if (rooms.Count == 0) content.Add(new("—", Muted));
-        content.Add(new(""));
-        var passages = new Line("通道", Muted);
-        content.Add(passages);
-        var names = rooms.GroupBy(room => room.Id, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First().Title, StringComparer.Ordinal);
-        foreach (var edge in edges)
-        {
-            var from = names.GetValueOrDefault(edge.From, edge.From);
-            var to = names.GetValueOrDefault(edge.To, edge.To);
-            var state = string.IsNullOrWhiteSpace(edge.State) || edge.State == "状态未记录" ? "" : "  [" + edge.State + "]";
-            content.AddRange(Indented("  ", from + " — " + to + state, width, Muted).Select(line => line with { Parent = passages }));
-        }
-        if (edges.Count == 0) content.Add(new("—", Muted, Parent: passages));
-        return content.Select(line => line with { Scope = title }).ToList();
+        var content = new List<Line> { new(title, Muted, Scope: title, KeepWithNext: true) };
+        content.AddRange(RoomBlocks(title, rooms, model, width, height).SelectMany(block => block.Lines));
+        if (rooms.Count == 0) content.Add(new("—", Muted, Scope: title));
+        while (content.Count > 0 && content[^1].Text.Length == 0) content.RemoveAt(content.Count - 1);
+        content.Add(new("", Scope: title));
+        content.AddRange(PassageLines(title, rooms, edges, width));
+        return content;
     }
 
+    private static List<RoomBlock> RoomBlocks(string title, IReadOnlyList<TerminalRoom> rooms,
+        TerminalModel model, int width, int height)
+    {
+        var blocks = new List<RoomBlock>();
+        var spacing = model.Zoom == "detail" || model.Zoom == "fit" && rooms.Count * 5 < height;
+        foreach (var region in rooms.GroupBy(RoomRegion, StringComparer.Ordinal)
+                     .OrderBy(group => RegionOrder(group.Key)).ThenBy(group => group.Key, StringComparer.Ordinal))
+        {
+            var scope = region.Key.Length == 0 ? title : title + " · " + region.Key;
+            var firstInRegion = true;
+            List<Line> BeginBlock()
+            {
+                var lines = new List<Line>();
+                if (firstInRegion && region.Key.Length > 0)
+                    lines.Add(new(region.Key, Teal, true, scope, KeepWithNext: true));
+                firstInRegion = false;
+                return lines;
+            }
+            var sorted = region.OrderBy(room => RoomName(room), StringComparer.Ordinal).ThenBy(room => room.Id, StringComparer.Ordinal).ToArray();
+            foreach (var room in sorted.Where(room => !IsEmpty(room)))
+            {
+                var lines = BeginBlock();
+                var heading = new Line("- " + RoomName(room), room.IsCurrent ? Teal : Ink, true, scope, KeepWithNext: true);
+                lines.AddRange(Indented("- ", RoomName(room), width, heading.Color, true)
+                    .Select((line, index) => line with { Scope = scope, Parent = index == 0 ? null : heading, KeepWithNext = true }));
+                var members = room.Members.ToList();
+                if (room.IsCurrent && !members.Any(member => member.IsViewer))
+                    members.Add(new TerminalMember { Id = model.Actor, Title = string.IsNullOrWhiteSpace(model.ActorTitle) ? model.Actor : model.ActorTitle,
+                        Kind = "actor", IsViewer = true });
+                foreach (var member in members.OrderBy(member => member.Kind is "actor" or "person" || member.IsViewer ? 0 : 1)
+                             .ThenBy(member => member.Title, StringComparer.Ordinal).ThenBy(member => member.Id, StringComparer.Ordinal))
+                {
+                    lines.AddRange(Indented("    ", Missing(member.Title), width, member.IsViewer ? Teal : Ink, true)
+                        .Select(line => line with { Scope = scope, Parent = heading }));
+                    if (!string.IsNullOrWhiteSpace(member.Detail))
+                        lines.AddRange(Indented("      ", member.Detail, width, Muted)
+                            .Select(line => line with { Scope = scope, Parent = heading }));
+                }
+                foreach (var detail in room.Lines.Where(line => !string.IsNullOrWhiteSpace(line)))
+                    lines.AddRange(Indented("    ", detail, width, Muted).Select(line => line with { Scope = scope, Parent = heading }));
+                if (spacing) lines.Add(new("", Scope: scope));
+                blocks.Add(new(region.Key, lines));
+            }
+            var empty = sorted.Where(IsEmpty).ToArray();
+            if (empty.Length > 0)
+            {
+                var lines = BeginBlock();
+                var prefix = title == "客观世界" ? "空：" : "未记录成员：";
+                lines.AddRange(Indented("  ", prefix + string.Join("、", empty.Select(RoomName)), width, Muted)
+                    .Select(line => line with { Scope = scope }));
+                blocks.Add(new(region.Key, lines));
+            }
+        }
+        return blocks;
+    }
+
+    private static bool IsEmpty(TerminalRoom room) => !room.IsCurrent && room.Members.Count == 0 && room.Lines.All(string.IsNullOrWhiteSpace);
+    private static string RoomRegion(TerminalRoom room)
+    {
+        if (!string.IsNullOrWhiteSpace(room.Region)) return room.Region.Trim();
+        var separator = room.Title.IndexOf('·');
+        return separator > 0 ? room.Title[..separator].Trim() : "";
+    }
+    private static int RegionOrder(string region)
+    {
+        if (region.Length == 0) return 100;
+        var index = "甲乙丙丁戊己庚辛壬癸".IndexOf(region[0]);
+        return index >= 0 ? index : 20;
+    }
+    private static string RoomName(TerminalRoom room)
+    {
+        var title = Missing(room.Title);
+        var region = RoomRegion(room);
+        var separator = title.IndexOf('·');
+        return separator > 0 && title[..separator].Trim() == region ? title[(separator + 1)..].Trim() : title;
+    }
+
+    private static IEnumerable<Line> PassageLines(string title, IReadOnlyList<TerminalRoom> rooms,
+        IReadOnlyList<TerminalEdge> edges, int width)
+    {
+        var passages = new Line("通道", Muted, Scope: title, KeepWithNext: true);
+        yield return passages;
+        var names = rooms.GroupBy(room => room.Id, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First().Title.Replace(" · ", " "), StringComparer.Ordinal);
+        foreach (var edge in edges.OrderBy(edge => names.GetValueOrDefault(edge.From, edge.From), StringComparer.Ordinal)
+                     .ThenBy(edge => names.GetValueOrDefault(edge.To, edge.To), StringComparer.Ordinal))
+        {
+            var from = names.GetValueOrDefault(edge.From, "（未记录房间）");
+            var to = names.GetValueOrDefault(edge.To, "（未记录房间）");
+            var state = string.IsNullOrWhiteSpace(edge.State) || edge.State == "状态未记录" ? "" : "  [" + edge.State + "]";
+            foreach (var line in Indented("  ", from + " <-> " + to + state, width, Muted))
+                yield return line with { Scope = title, Parent = passages };
+        }
+        if (edges.Count == 0) yield return new("—", Muted, Scope: title, Parent: passages);
+    }
+
+    private static string PerformanceLine(IReadOnlyDictionary<string, object?> performance)
+    {
+        static string Number(IReadOnlyDictionary<string, object?> values, string key, double divisor = 1)
+        {
+            var text = Convert.ToString(values.GetValueOrDefault(key), CultureInfo.InvariantCulture);
+            return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) && double.IsFinite(value)
+                ? (value / divisor).ToString("0.###", CultureInfo.InvariantCulture) : "—";
+        }
+        return "每游戏小时 " + Number(performance, "seconds_per_game_hour") + "秒  ·  累计引擎 " +
+            Number(performance, "engine_ms", 1000) + "秒  ·  推进 " + Number(performance, "advanced_game_minutes") + "游戏分钟";
+    }
+
+    private static bool ScoresVisible(TerminalModel model) => model.ShowScores ??
+        !(model.Mode.Contains("人工", StringComparison.Ordinal) || model.Mode.Contains("manual", StringComparison.OrdinalIgnoreCase));
     private static string Known(string value) => value is "未记录" or "时间未记录" ? "" : value;
     private static string PhaseLabel(string value) => value switch
     {
@@ -305,7 +488,9 @@ public static class TerminalView
         var result = new List<Line>();
         foreach (var entry in model.Entries)
         {
-            if (!string.IsNullOrWhiteSpace(entry.Title)) result.AddRange(Lines(entry.Title, width, entry.Kind == "error" ? Amber : Muted));
+            if (!string.IsNullOrWhiteSpace(entry.Title))
+                result.AddRange(Lines(entry.Title, width, entry.Kind == "error" ? Amber : Muted)
+                    .Select(line => line with { KeepWithNext = !string.IsNullOrWhiteSpace(entry.Text) }));
             if (!string.IsNullOrWhiteSpace(entry.Text)) result.AddRange(Lines(entry.Text, width));
             result.Add(new(""));
         }
@@ -329,33 +514,19 @@ public static class TerminalView
         {
             var option = model.Options[index];
             var prefix = (option.Selected ? "> " : "· ") + $"{index + 1:00}  ";
-            var score = OptionScore(option);
-            var scoreWidth = TextWidth(score);
-            var labelWidth = Math.Max(prefix.Length + 1, width - scoreWidth - 3);
-            var suffix = option.Disambiguator.Length == 0 ? "" : " [" + option.Disambiguator + "]";
-            var available = labelWidth - prefix.Length;
-            var separateSuffix = compact && TextWidth(suffix) >= available;
-            var fullLabel = Missing(option.Title) + suffix;
-            var label = compact ? SingleLine(Missing(option.Title), separateSuffix ? available : available - TextWidth(suffix)) +
-                (separateSuffix ? "" : suffix) : fullLabel;
+            var cost = option.HasCost
+                ? hasSharedCost && option.Detail == sharedCost ? "" : option.Detail.Length == 0 ? "费用 0" : option.Detail
+                : hasSharedCost ? "费用未记录" : "";
+            var metadata = string.Join("  ", new[] { cost, ScoresVisible(model) ? OptionScore(option) : "" }.Where(value => value.Length > 0));
+            var labelWidth = Math.Max(TextWidth(prefix) + 2, width - TextWidth(metadata) - (metadata.Length == 0 ? 0 : 2));
+            var fullLabel = Missing(option.Title) + (option.Disambiguator.Length == 0 ? "" : " [" + option.Disambiguator + "]");
+            var label = compact ? SingleLine(fullLabel, labelWidth - TextWidth(prefix)) : fullLabel;
             if (compact && label != fullLabel) complete = false;
             var lines = Indented(prefix, label, labelWidth, option.Selected ? Teal : Ink, option.Selected).ToList();
-            var first = lines[0];
-            first = first with { Text = first.Text + new string(' ', Math.Max(1, width - scoreWidth - TextWidth(first.Text))) + score };
-            result.Add(first with { Scope = title });
+            var first = lines[0] with { Text = lines[0].Text + (metadata.Length == 0 ? "" : "  " + metadata), Scope = title };
+            result.Add(first);
             if (!compact)
-            {
                 result.AddRange(lines.Skip(1).Select(line => line with { Scope = title, Parent = first }));
-            }
-            if (separateSuffix)
-                result.AddRange(Indented(new string(' ', prefix.Length), suffix.TrimStart(), width, Muted)
-                    .Select(line => line with { Scope = title, Parent = first }));
-            var costDetail = option.HasCost
-                ? hasSharedCost && option.Detail == sharedCost ? "" : option.Detail.Length == 0 ? "0" : option.Detail
-                : hasSharedCost ? "费用未记录" : "";
-            if (costDetail.Length > 0)
-                result.AddRange(Indented(new string(' ', prefix.Length), costDetail, width, Muted)
-                    .Select(line => line with { Scope = title, Parent = first }));
             if (!compact && model.Zoom == "detail") result.Add(new("", Scope: title));
         }
         return new Block(title, result, complete);
@@ -382,6 +553,7 @@ public static class TerminalView
 
     private static string SingleLine(string value, int width)
     {
+        if (width <= 0) return "";
         var text = Clean(value).Replace('\n', ' ');
         if (TextWidth(text) <= width) return text;
         var result = new StringBuilder();
@@ -398,8 +570,8 @@ public static class TerminalView
 
     private static string Missing(string value) => string.IsNullOrWhiteSpace(value) ? "未记录" : value;
     private static IEnumerable<Line> Indented(string indent, string value, int width, string color = Ink, bool bold = false) =>
-        Lines(value, Math.Max(1, width - indent.Length), color, bold).Select((line, index) =>
-            line with { Text = (index == 0 ? indent : new string(' ', indent.Length)) + line.Text });
+        Lines(value, Math.Max(1, width - TextWidth(indent)), color, bold).Select((line, index) =>
+            line with { Text = (index == 0 ? indent : new string(' ', TextWidth(indent))) + line.Text });
 
     private static List<Line> Lines(string value, int width, string color = Ink, bool bold = false)
     {
@@ -418,7 +590,6 @@ public static class TerminalView
         return result;
     }
 
-    // Strip terminal commands in their entirety, including OSC hyperlinks and CSI sequences.
     private static string Clean(string value)
     {
         var result = new StringBuilder();
@@ -446,7 +617,7 @@ public static class TerminalView
     {
         if (Rune.GetUnicodeCategory(rune) is UnicodeCategory.NonSpacingMark or UnicodeCategory.EnclosingMark) return 0;
         var n = rune.Value;
-        return n >= 0x1100 && (n <= 0x115f || n == 0x2329 || n == 0x232a ||
+        return n == 0x2014 || n >= 0x1100 && (n <= 0x115f || n == 0x2329 || n == 0x232a ||
             n is >= 0x2e80 and <= 0xa4cf || n is >= 0xac00 and <= 0xd7a3 ||
             n is >= 0xf900 and <= 0xfaff || n is >= 0xfe10 and <= 0xfe19 ||
             n is >= 0xfe30 and <= 0xfe6f || n is >= 0xff01 and <= 0xff60 ||
@@ -468,10 +639,12 @@ public static class TerminalView
             Width = width; Height = height;
             PageIndex = pageIndex; PageCount = pageCount;
             Cells = new Cell[height, width];
-            for (var y = 0; y < height; y++) for (var x = 0; x < width; x++) Cells[y, x] = new(" ", Ink, Background);
+            for (var y = 0; y < height; y++)
+                for (var x = 0; x < width; x++) Cells[y, x] = new(" ", Ink, Background);
         }
         public void Put(int x, int y, string text, string color, int available, bool bold = false)
         {
+            if (y < 0 || y >= Height) return;
             var end = Math.Min(Width, x + available);
             foreach (var rune in Clean(text).EnumerateRunes())
             {
@@ -484,7 +657,7 @@ public static class TerminalView
                     if (previous >= 0) Cells[y, previous] = Cells[y, previous] with { Glyph = Cells[y, previous].Glyph + rune };
                     continue;
                 }
-                if (x + size > end || y < 0 || y >= Height) break;
+                if (x + size > end) break;
                 Cells[y, x] = new(rune.ToString(), color, Cells[y, x].Back, Bold: bold);
                 if (size == 2) Cells[y, x + 1] = new("", color, Cells[y, x + 1].Back, true, bold);
                 x += size;

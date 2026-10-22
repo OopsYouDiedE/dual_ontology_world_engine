@@ -17,15 +17,30 @@ internal static class TerminalProjection
         float number when float.IsFinite(number) => number.ToString("G8", CultureInfo.InvariantCulture),
         _ => Value(value)
     };
-    private static string MemberTitle(IReadOnlyDictionary<string, object?> member, bool identifiers)
+
+    private static string MemberTitle(IReadOnlyDictionary<string, object?> member, bool objective)
     {
         var id = EntityId(member);
         var title = new[] { Text(member, "title"), Text(member, "label"), Text(member, "name") }
-            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value) && value != id) ?? "";
-        var missing = string.IsNullOrWhiteSpace(title) || title == id;
-        if (missing) title = "（未记录名称）";
-        return identifiers && id.Length > 0 && (missing || Text(member, "kind") is "person" or "actor") ? title + " / " + id : title;
+            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value) && value != id) ?? "（未记录名称）";
+        if (objective && title.StartsWith("自己的", StringComparison.Ordinal))
+        {
+            var owner = Text(member, "owner_title");
+            title = (owner.Length > 0 ? owner + "的" : "") + title[3..];
+        }
+        if (objective && title is "同伴" or "本人")
+            title = Text(member, "objective_title", Text(member, "true_name", "（未记录名称）"));
+        return title;
     }
+
+    private static bool IsPerson(string kind) => kind is "person" or "actor" or "character" or "npc";
+    private static bool IsMapMember(IReadOnlyDictionary<string, object?> member)
+    {
+        var kind = Text(member, "kind");
+        return IsPerson(kind) || kind is "" or "object" or "item" or "physical" or "physical_object" or
+            "container" or "furniture" or "prop" or "equipment" or "door" or "passage" or "evidence_object";
+    }
+
     private static string Cost(object? value)
     {
         if (value is null) return "";
@@ -46,27 +61,34 @@ internal static class TerminalProjection
         return double.TryParse(numerator, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) && number == 0;
     }
 
+    private static string KindLabel(string kind) => kind switch
+    {
+        "move" => "移动", "observe" or "inspect" => "检视", "talk" or "speak" or "communicate" => "交谈",
+        "recall" => "回想", "replay" => "重演", "infer" or "reason" => "推理", "wait" => "等待",
+        "interact" => "互动", "experiment" => "实验", "collect" => "收取", _ => ""
+    };
+
     private static (string Label, string Disambiguator)[] OptionLabels(IReadOnlyList<IReadOnlyDictionary<string, object?>> options)
     {
         var labels = options.Select(option => (Label: Text(option, "label").Trim(), Disambiguator: "")).ToArray();
         for (var i = 0; i < labels.Length; i++)
-            if (labels[i].Label.Length == 0) labels[i].Label = "（未记录标签）";
+            if (labels[i].Label.Length == 0 || labels[i].Label == Text(options[i], "id")) labels[i].Label = "（未记录标签）";
         foreach (var group in Enumerable.Range(0, labels.Length).GroupBy(index => labels[index].Label, StringComparer.Ordinal)
                      .Where(group => group.Count() > 1).Select(group => group.ToArray()))
         {
-            foreach (var index in group)
+            var hints = group.ToDictionary(index => index, index =>
             {
-                var id = Text(options[index], "id");
-                var parts = id.Split('.', StringSplitOptions.RemoveEmptyEntries);
-                var suffix = id;
-                for (var length = 1; length <= parts.Length; length++)
-                {
-                    suffix = string.Join(".", parts.TakeLast(length));
-                    if (group.Where(other => other != index).All(other =>
-                        string.Join(".", Text(options[other], "id").Split('.', StringSplitOptions.RemoveEmptyEntries).TakeLast(length)) != suffix)) break;
-                }
-                if (suffix.Length == 0) suffix = "未记录标识";
-                labels[index].Disambiguator = suffix;
+                var option = options[index];
+                var context = Text(option, "context_label", Text(option, "target_title", Text(option, "location_title")));
+                return string.Join(" · ", new[] { context, KindLabel(Text(option, "kind")), Cost(option.GetValueOrDefault("cost")) }
+                    .Where(value => value.Length > 0).Distinct(StringComparer.Ordinal));
+            });
+            for (var ordinal = 0; ordinal < group.Length; ordinal++)
+            {
+                var index = group[ordinal];
+                var hint = hints[index];
+                var unique = hint.Length > 0 && group.Count(other => hints[other] == hint) == 1;
+                labels[index].Disambiguator = unique ? hint : "候选 " + (ordinal + 1).ToString(CultureInfo.InvariantCulture);
             }
         }
         return labels;
@@ -87,15 +109,15 @@ internal static class TerminalProjection
         }).ToArray();
         var actorTitle = Text(snapshot, "viewer_title", Text(status, "viewer_name", Text(status, "viewer_title")));
         if (string.IsNullOrWhiteSpace(actorTitle) || actorTitle == viewer)
-            actorTitle = actors.FirstOrDefault(actor => actor.Id == viewer)?.Title ?? "（未记录名称） / " + viewer;
-        if (actorTitle == "（未记录名称）" && viewer.Length > 0) actorTitle += " / " + viewer;
+            actorTitle = actors.FirstOrDefault(actor => actor.Id == viewer)?.Title ?? "（未记录名称）";
         var recordedObserver = HostValues.Map(previewData, "observers").GetValueOrDefault(viewer) as IReadOnlyDictionary<string, object?>;
         var previewViewer = Text(previewData, "viewer", Text(HostValues.Map(previewData, "snapshot"), "viewer"));
         var subjective = recordedObserver is not null
             ? HostValues.Map(recordedObserver, "subjective")
             : viewer.Length > 0 && previewViewer == viewer ? HostValues.Map(previewData, "subjective") : HostValues.Empty;
         var objective = HostValues.Map(previewData, "objective");
-        var rooms = subjective.Count > 0 ? ProjectRooms(subjective, viewer) : LegacyRooms(snapshot, status, viewer, actorTitle);
+        var comparisons = mapView == "both" ? objective : HostValues.Empty;
+        var rooms = subjective.Count > 0 ? ProjectRooms(subjective, viewer, false, comparisons) : LegacyRooms(snapshot, status, viewer, actorTitle);
         var edges = ProjectEdges(subjective.Count > 0 ? subjective : HostValues.Map(snapshot, "map_knowledge"));
         var labels = OptionLabels(options);
         var choices = options.Select((option, index) => new TerminalOption
@@ -115,33 +137,142 @@ internal static class TerminalProjection
             Location = Text(snapshot, "location_title", Text(status, "location", "—")), Clock = clock, Phase = phase,
             Source = source, Rooms = rooms, Edges = edges, Options = choices, Entries = entries,
             ObjectiveRooms = ProjectRooms(objective, viewer, true), ObjectiveEdges = ProjectEdges(objective),
-            MapView = mapView, Footer = ""
+            Performance = HostValues.Map(previewData, "performance"), MapView = mapView, Footer = ""
         };
     }
 
-    private static IReadOnlyList<TerminalRoom> ProjectRooms(IReadOnlyDictionary<string, object?> map, string viewer, bool identifiers = false) =>
-        Records(map, "rooms").Select(room =>
+    private static string RoomTitle(IReadOnlyDictionary<string, object?> room) =>
+        Text(room, "label", Text(room, "title", Text(room, "room", "—")));
+
+    private static string RoomRegion(IReadOnlyDictionary<string, object?> room)
+    {
+        var region = Text(room, "region");
+        if (region.Length > 0) return region;
+        var title = RoomTitle(room);
+        var divider = title.IndexOf('·');
+        return divider > 0 ? title[..divider].Trim() : "";
+    }
+
+    private static string ParentId(IReadOnlyDictionary<string, object?> member)
+    {
+        var carrier = Text(member, "carrier");
+        return carrier.Length > 0 ? carrier : Text(member, "container");
+    }
+
+    private static IReadOnlyList<TerminalRoom> ProjectRooms(IReadOnlyDictionary<string, object?> map, string viewer,
+        bool objective = false, IReadOnlyDictionary<string, object?>? comparison = null)
+    {
+        var comparisonMembers = new Dictionary<string, (string Room, IReadOnlyDictionary<string, object?> Member)>(StringComparer.Ordinal);
+        if (comparison is not null)
+            foreach (var room in Records(comparison, "rooms"))
+                foreach (var member in Records(room, "members").Where(IsMapMember))
+                {
+                    var id = EntityId(member);
+                    if (id.Length > 0) comparisonMembers.TryAdd(id, (Identity(room), member));
+                }
+        return Records(map, "rooms").Select(room =>
         {
-            var members = Records(room, "members").Select(member => new TerminalMember
+            var source = Records(room, "members").Where(IsMapMember).ToArray();
+            var byId = source.Where(member => EntityId(member).Length > 0)
+                .GroupBy(EntityId, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+            var nested = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var pair in byId)
             {
-                Id = EntityId(member), Title = MemberTitle(member, identifiers),
-                Kind = Text(member, "kind"), Detail = Text(member, "detail"),
-                IsViewer = viewer.Length > 0 && EntityId(member) == viewer || member.GetValueOrDefault("is_viewer") is true
-            }).ToArray();
+                var parent = ParentId(pair.Value);
+                if (parent.Length == 0 || parent == pair.Key || !byId.ContainsKey(parent)) continue;
+                var ancestors = new HashSet<string>(StringComparer.Ordinal) { pair.Key };
+                var cursor = parent;
+                while (cursor.Length > 0 && byId.TryGetValue(cursor, out var ancestor) && ancestors.Add(cursor)) cursor = ParentId(ancestor);
+                if (cursor.Length == 0 || !byId.ContainsKey(cursor)) nested[pair.Key] = parent;
+            }
+            var children = nested.GroupBy(pair => pair.Value, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.Select(pair => byId[pair.Key])
+                    .OrderBy(member => MemberTitle(member, objective), StringComparer.Ordinal)
+                    .ThenBy(EntityId, StringComparer.Ordinal).ToArray(), StringComparer.Ordinal);
+
+            string Difference(IReadOnlyDictionary<string, object?> member)
+            {
+                if (objective || !comparisonMembers.TryGetValue(EntityId(member), out var other)) return "";
+                if (Identity(room) != other.Room) return "认知位置与客观不同";
+                var parent = ParentId(member);
+                var otherParent = ParentId(other.Member);
+                return parent.Length > 0 && otherParent.Length > 0 && parent != otherParent ? "认知容纳关系与客观不同" : "";
+            }
+
+            string Contents(IReadOnlyDictionary<string, object?> member)
+            {
+                if (!children.TryGetValue(EntityId(member), out var items)) return "";
+                var carried = items.Where(item => Text(item, "carrier") == EntityId(member)).Select(Inline).ToArray();
+                var contained = items.Where(item => Text(item, "carrier") != EntityId(member)).Select(Inline).ToArray();
+                return string.Join("；", new[]
+                {
+                    carried.Length > 0 ? "携带：" + string.Join("、", carried) : "",
+                    contained.Length > 0 ? "内含：" + string.Join("、", contained) : ""
+                }.Where(value => value.Length > 0));
+            }
+
+            string Inline(IReadOnlyDictionary<string, object?> member)
+            {
+                var detail = string.Join("；", new[] { Contents(member), Difference(member) }.Where(value => value.Length > 0));
+                return MemberTitle(member, objective) + (detail.Length > 0 ? "（" + detail + "）" : "");
+            }
+
+            string Details(IReadOnlyDictionary<string, object?> member)
+            {
+                var details = new List<string>();
+                var recorded = Text(member, "detail");
+                if (recorded.Length > 0) details.Add(recorded);
+                var owner = Text(member, "owner_title");
+                if (owner.Length > 0 && !IsPerson(Text(member, "kind"))) details.Add("所属：" + owner);
+                var parent = ParentId(member);
+                if (parent.Length > 0 && !nested.ContainsKey(EntityId(member)))
+                {
+                    var parentTitle = byId.TryGetValue(parent, out var knownParent) ? MemberTitle(knownParent, objective) : "";
+                    details.Add(Text(member, "carrier").Length > 0
+                        ? parentTitle.Length > 0 ? "携带者：" + parentTitle : "携带者未具名"
+                        : parentTitle.Length > 0 ? "容器：" + parentTitle : "位置：容器内");
+                }
+                var contents = Contents(member);
+                if (contents.Length > 0) details.Add(contents);
+                var difference = Difference(member);
+                if (difference.Length > 0) details.Add(difference);
+                return string.Join(" · ", details.Distinct(StringComparer.Ordinal));
+            }
+
+            var members = source.Where(member => !nested.ContainsKey(EntityId(member)))
+                .Select(member => new TerminalMember
+                {
+                    Id = EntityId(member), Title = MemberTitle(member, objective), Kind = Text(member, "kind"), Detail = Details(member),
+                    IsViewer = viewer.Length > 0 && EntityId(member) == viewer || member.GetValueOrDefault("is_viewer") is true
+                }).OrderBy(member => IsPerson(member.Kind) ? 0 : 1)
+                .ThenBy(member => member.Title, StringComparer.Ordinal).ThenBy(member => member.Id, StringComparer.Ordinal).ToArray();
             return new TerminalRoom
             {
-                Id = Identity(room), Title = Text(room, "label", Text(room, "title", Text(room, "room", "—"))),
+                Id = Identity(room), Title = RoomTitle(room), Region = RoomRegion(room),
                 IsCurrent = room.GetValueOrDefault("is_current") is bool isCurrent ? isCurrent : members.Any(member => member.IsViewer),
                 Members = members
             };
-        }).ToArray();
+        }).OrderBy(room => room.Region, StringComparer.Ordinal).ThenBy(room => room.Title, StringComparer.Ordinal)
+            .ThenBy(room => room.Id, StringComparer.Ordinal).ToArray();
+    }
+
+    private static string DoorState(IReadOnlyDictionary<string, object?> door)
+    {
+        var label = Text(door, "state_label").Trim().Trim('[', ']');
+        if (label.Length > 0) return label is "unknown" or "未明" ? "未知" : label;
+        return Text(door, "state") switch
+        {
+            "open" or "opened" => "开", "closed" or "shut" => "关", "locked" => "锁",
+            "blocked" or "sealed" => "封闭", "conflicted" => "有争议", "unknown" or "" => "未知",
+            "开" => "开", "关" => "关", "锁" => "锁", _ => "未知"
+        };
+    }
 
     private static IReadOnlyList<TerminalEdge> ProjectEdges(IReadOnlyDictionary<string, object?> map) =>
         Records(map, "doors").Select(door => new TerminalEdge
         {
-            From = Identity(HostValues.Map(door, "from")), To = Identity(HostValues.Map(door, "to")),
-            State = Text(door, "state", "")
-        }).ToArray();
+            From = Identity(HostValues.Map(door, "from")), To = Identity(HostValues.Map(door, "to")), State = DoorState(door)
+        }).OrderBy(edge => edge.From, StringComparer.Ordinal).ThenBy(edge => edge.To, StringComparer.Ordinal).ToArray();
 
     private static IReadOnlyList<TerminalRoom> LegacyRooms(IReadOnlyDictionary<string, object?> snapshot,
         IReadOnlyDictionary<string, object?> status, string viewer, string actorTitle)
@@ -154,34 +285,28 @@ internal static class TerminalProjection
                 ["map"] = Text(snapshot, "map"), ["room"] = Text(snapshot, "room"),
                 ["label"] = Text(snapshot, "location_title", Text(status, "location", "—"))
             });
-        return known.Select(room =>
+        var projected = new List<object?>();
+        foreach (var room in known)
         {
             var here = Identity(room) == current;
-            var members = Records(room, "members").Select(member => new TerminalMember
-            {
-                Id = EntityId(member), Title = MemberTitle(member, false),
-                Kind = Text(member, "kind"), Detail = Text(member, "detail"), IsViewer = viewer.Length > 0 && EntityId(member) == viewer
-            }).ToList();
+            var members = Records(room, "members").ToList();
             if (here)
             {
                 foreach (var person in Records(snapshot, "people").Where(person => Identity(person) == current))
                 {
                     var id = EntityId(person);
-                    if (id.Length > 0 && members.Any(member => member.Id == id)) continue;
-                    members.Add(new TerminalMember
-                    {
-                        Id = id, Title = MemberTitle(person, false), Kind = "actor", IsViewer = id == viewer
-                    });
+                    if (id.Length > 0 && members.Any(member => EntityId(member) == id)) continue;
+                    members.Add(HostValues.Freeze(new Dictionary<string, object?>(person, StringComparer.Ordinal)
+                    { ["id"] = id, ["kind"] = "person", ["is_viewer"] = id == viewer }));
                 }
-                if (!members.Any(member => member.IsViewer) && actorTitle.Length > 0)
-                    members.Insert(0, new TerminalMember { Id = viewer, Title = actorTitle, Kind = "actor", IsViewer = true });
+                if (!members.Any(member => EntityId(member) == viewer) && actorTitle.Length > 0)
+                    members.Add(HostValues.Freeze(new Dictionary<string, object?>
+                    { ["id"] = viewer, ["title"] = actorTitle, ["kind"] = "person", ["is_viewer"] = true }));
             }
-            return new TerminalRoom
-            {
-                Id = Identity(room), Title = Text(room, "label", Text(room, "title", Text(room, "room", "—"))),
-                IsCurrent = here, Members = members
-            };
-        }).ToArray();
+            projected.Add(HostValues.Freeze(new Dictionary<string, object?>(room, StringComparer.Ordinal)
+            { ["members"] = members.ToArray(), ["is_current"] = here }));
+        }
+        return ProjectRooms(HostValues.Freeze(new Dictionary<string, object?> { ["rooms"] = projected.ToArray() }), viewer);
     }
 
     internal static TerminalModel Preview(int roomCount = 3, int currentRoom = 1)

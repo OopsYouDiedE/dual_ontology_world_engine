@@ -12,7 +12,8 @@ internal sealed class Cli
     private DvSession? session;
     private SmartReplay? replay;
     private bool jsonLines, tui, quit, interactiveReplay, oneCommand, debugErrors;
-    private string? savePath, tracePath;
+    private string? savePath, tracePath, performancePath;
+    private bool? showScores;
     private readonly List<TerminalEntry> terminalEntries = new();
     private IReadOnlyDictionary<string, object?> replaySnapshot = HostValues.Empty;
     private object? replayGameTime;
@@ -92,6 +93,12 @@ internal sealed class Cli
                 if (cli.tracePath is { } trace)
                     try { current.WriteTrace(trace); }
                     catch (Exception error) { cli.Error(error); exitCode = 1; }
+                var prefix = cli.performancePath ?? ((cli.tracePath ?? cli.savePath) is { } saveFile
+                    ? Path.ChangeExtension(saveFile, null) + ".performance"
+                    : Path.Combine("artifacts", "performance",
+                        DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff", CultureInfo.InvariantCulture) + "-" + cli.interactionSession[..8], "engine"));
+                try { current.WritePerformanceReport(prefix); }
+                catch (Exception error) { cli.Error(error); exitCode = 1; }
             }
             cli.RestoreConsoleMode();
             cli.cancellation.Dispose();
@@ -141,6 +148,9 @@ internal sealed class Cli
                 case "--restore": restore = Value(); break;
                 case "--save": savePath = Value(); break;
                 case "--trace": tracePath = Value(); break;
+                case "--performance": performancePath = Value(); break;
+                case "--scores": showScores = true; break;
+                case "--no-scores": showScores = false; break;
                 case "--command": command = Value(); break;
                 case "--replay": replayPath = Value(); break;
                 case "--interactive": interactiveReplay = true; break;
@@ -156,7 +166,7 @@ internal sealed class Cli
         if (jsonLines && tui) throw new ArgumentException("--jsonl and --tui are separate output modes.");
         if (controller is not ("player" or "ai")) throw new ArgumentException("--controller must be player or ai.");
         if (speed is not (1 or 2 or 4 or 8)) throw new ArgumentException("--speed must be 1, 2, 4 or 8.");
-        if (replayPath is not null && (restore is not null || savePath is not null || tracePath is not null))
+        if (replayPath is not null && (restore is not null || savePath is not null || tracePath is not null || performancePath is not null))
             throw new ArgumentException("Recorded replay does not restore or save live sessions.");
         Console.InputEncoding = Encoding.UTF8;
         Console.OutputEncoding = new UTF8Encoding(false);
@@ -167,9 +177,9 @@ internal sealed class Cli
         if (!preview && (previewRooms != 3 || previewCurrent != 1)) throw new ArgumentException("Preview room controls require --preview.");
         if (preview)
         {
-            if (replayPath is not null || restore is not null || savePath is not null || tracePath is not null || command is not null || controller != "player" || developer || audit || campaign.Count > 0)
+            if (replayPath is not null || restore is not null || savePath is not null || tracePath is not null || performancePath is not null || command is not null || controller != "player" || developer || audit || campaign.Count > 0)
                 throw new ArgumentException("--preview is a session-free UI example; do not combine it with session or replay options.");
-            var model = TerminalProjection.Preview(previewRooms, previewCurrent) with { Zoom = terminalZoom, MapView = explicitMap ? mapView : "both" };
+            var model = TerminalProjection.Preview(previewRooms, previewCurrent) with { Zoom = terminalZoom, ShowScores = showScores, MapView = explicitMap ? mapView : "both" };
             if (exportUi is not null)
             {
                 using var stream = new FileStream(exportUi, FileMode.CreateNew, FileAccess.Write);
@@ -265,6 +275,13 @@ internal sealed class Cli
             case "help": Emit("help", Help); return;
             case "quit": case "exit": quit = true; return;
             case "status": Emit("status", CurrentStatus()); return;
+            case "scores":
+                showScores = argument.ToLowerInvariant() switch
+                {
+                    "on" => true, "off" => false, "auto" or "" => null,
+                    _ => throw new ArgumentException("scores on / off / auto")
+                };
+                Emit("status", CurrentStatus()); return;
             case "capture":
                 if (!tui || argument.Length == 0) throw new ArgumentException("capture <new.svg>");
                 exportFramePath = argument;
@@ -330,6 +347,9 @@ internal sealed class Cli
                 FocusChoice(current, argument);
                 ConfirmChoice(current); break;
             case "inspect": Emit("inspect", current.Inspect(argument.Length == 0 ? Observer : argument)); break;
+            case "perf": case "performance":
+                if (argument.Length > 0) current.WritePerformanceReport(argument);
+                Emit("performance", current.PerformanceSnapshot()); break;
             case "tp": case "time":
                 focus = null; interactionPhase = "";
                 Emit("development", current.ExecuteDebug(name.ToLowerInvariant(), argument)); break;
@@ -535,7 +555,8 @@ internal sealed class Cli
             ["viewer"] = Observer, ["actors"] = session is null ? RecordedActors() : HostValues.List(source, "actors"),
             ["snapshot"] = DisplaySnapshot(snapshot),
             ["status"] = observation is null ? HostValues.Empty : HostValues.Map(observation, "status"),
-            ["subjective"] = observation is null ? HostValues.Empty : HostValues.Map(observation, "subjective")
+            ["subjective"] = observation is null ? HostValues.Empty : HostValues.Map(observation, "subjective"),
+            ["performance"] = session?.PerformanceSummary() ?? HostValues.Map(source, "performance")
         };
         if (objective) value["objective"] = HostValues.Map(source, "objective");
         return HostValues.Freeze(value);
@@ -704,7 +725,7 @@ internal sealed class Cli
             return;
         }
         if (kind is "presentation" or "frame") AddTranscript(kind, data);
-        if (!tui && kind is not ("status" or "options" or "map" or "views" or "interaction" or "frame" or "presentation" or "intent" or "replay"))
+        if (kind == "performance" || (!tui && kind is not ("status" or "options" or "map" or "views" or "interaction" or "frame" or "presentation" or "intent" or "replay")))
         {
             Console.WriteLine(Format(kind, data)); return;
         }
@@ -784,7 +805,9 @@ internal sealed class Cli
             : interactionPhase.Length > 0 ? interactionPhase : StateLabel(HostValues.Text(session.Intent, "status"));
         var model = TerminalProjection.FromSnapshot(snapshot, status, choices, terminalEntries.ToArray(), mode,
             phase, "", session is null ? replayChoiceActor == Observer ? replaySelected : "" : focus?.Actor == Observer ? focus.Id : "", preview, mapView) with
-            { Zoom = terminalZoom, ShowActors = showActors, Paginate = tui, PageIndex = terminalPage };
+            { Zoom = terminalZoom, ShowActors = showActors, ShowScores = showScores,
+              Performance = session?.PerformanceSummary() ?? HostValues.Map(preview, "performance"),
+              Paginate = tui, PageIndex = terminalPage };
         if (orderedViewer != model.Actor) { roomOrder.Clear(); orderedViewer = model.Actor; }
         foreach (var room in model.Rooms) if (!roomOrder.ContainsKey(room.Id)) roomOrder.Add(room.Id, roomOrder.Count);
         model = model with { Rooms = model.Rooms.OrderBy(room => roomOrder[room.Id]).ToArray() };
@@ -839,6 +862,7 @@ internal sealed class Cli
     private static string Format(string kind, object data)
     {
         if (data is string text) return text;
+        if (kind == "performance" && data is IReadOnlyDictionary<string, object?> metrics) return FormatPerformance(metrics);
         if (data is ReplayFrame frame) return $"[{frame.Sequence} {frame.Kind}] {frame.Text}";
         if (kind == "status" && data is IReadOnlyDictionary<string, object?> status)
             return Header(status) + "\n" + JsonSerializer.Serialize(status, Json);
@@ -855,6 +879,16 @@ internal sealed class Cli
                 (surface.Length == 0 ? "" : (speaker.Length == 0 ? "" : speaker + ": ") + surface + "\n") + string.Join("\n", lines.Where(text => text.Length > 0));
         }
         return JsonSerializer.Serialize(data, Json);
+    }
+
+    private static string FormatPerformance(IReadOnlyDictionary<string, object?> metrics)
+    {
+        static string Number(object? value) => value is null ? "—" : Convert.ToDouble(value, CultureInfo.InvariantCulture).ToString("0.###", CultureInfo.InvariantCulture);
+        var text = new StringBuilder();
+        text.AppendLine($"引擎 {Number(Convert.ToDouble(metrics["engine_ms"], CultureInfo.InvariantCulture) / 1000d)} 秒 · 推进 {Number(metrics["advanced_game_minutes"])} 游戏分钟 · 每游戏小时 {Number(metrics["seconds_per_game_hour"])} 秒");
+        foreach (var row in HostValues.List(metrics, "operations").OfType<IReadOnlyDictionary<string, object?>>())
+            text.AppendLine($"{HostValues.Text(row, "category_label")}/{HostValues.Text(row, "label")} {HostValues.Text(row, "actor")} · {row["calls"]} 次 · 排他 {Number(row["self_ms"])} ms · 均值 {Number(row["mean_ms"])} ms · P95上界 {Number(row["p95_upper_ms"])} ms · 峰值 {Number(row["max_ms"])} ms");
+        return text.ToString().TrimEnd();
     }
 
     private void Error(Exception error)
@@ -880,12 +914,14 @@ DV Core CLI
   --export-ui NEW.svg --command COMMAND
   --controller player|ai --viewer ID --profile NAME --zone ID --seed N
   --dev --audit --restore FILE --save FILE --trace FILE
+  --scores | --no-scores
+  --performance NEW_PREFIX
   --replay FILE --interactive --speed 1|2|4|8
 
 status  options  views  view ID  map subjective|objective|both
 focus 01|ID|JSON  confirm  cancel  act 01|ID|JSON  next
 page N|next|prev  capture NEW.svg  zoom fit|in|out
-save NEW.dvsave  trace NEW.dvdag
+save NEW.dvsave  trace NEW.dvdag  perf [NEW_PREFIX]  scores on|off|auto
 play 1|2|4|8  pause  step  restart  view follow
 inspect ID  tp PLACE  time MINUTES  help  quit
 """;

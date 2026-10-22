@@ -7,6 +7,7 @@ public sealed partial class DvSession
     private readonly Dictionary<string, IReadOnlyDictionary<string, object?>> observerSnapshots = new(StringComparer.Ordinal);
     private readonly Dictionary<string, IReadOnlyList<IReadOnlyDictionary<string, object?>>> observerChoices = new(StringComparer.Ordinal);
     private readonly Dictionary<string, IReadOnlyDictionary<string, object?>> objectiveMaps = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IReadOnlyDictionary<string, object?>> observerPreviews = new(StringComparer.Ordinal);
     private IReadOnlyList<IReadOnlyDictionary<string, object?>> observerActors = Array.Empty<IReadOnlyDictionary<string, object?>>();
     private readonly List<(int Cursor, object Event)> interactions = new();
 
@@ -16,12 +17,15 @@ public sealed partial class DvSession
         observerSnapshots.Clear();
         observerChoices.Clear();
         objectiveMaps.Clear();
+        observerPreviews.Clear();
         observerActors = Array.Empty<IReadOnlyDictionary<string, object?>>();
     }
 
     private void EnsureObservers()
     {
         if (observerVersion == Version) return;
+        using var performanceScope = Measure("observer-subjects", "projection");
+        observerPreviews.Clear();
         // DV projection memoization may replace owned list entries; pin the actor references for this read.
         var actors = R.Items(Field(state, "actors", new List<object>())).ToArray();
         var directory = new List<IReadOnlyDictionary<string, object?>>();
@@ -33,7 +37,7 @@ public sealed partial class DvSession
             observerSnapshots[id] = value;
             // Administrative actor identity is distinct from the names held in each mind.
             directory.Add(HostValues.Freeze(new Dictionary<string, object?>
-            { ["id"] = id, ["title"] = HostValues.Text(HostValues.Map(value, "snapshot"), "viewer_title", id) }));
+            { ["id"] = id, ["title"] = HostValues.Text(HostValues.Map(value, "snapshot"), "viewer_title", "（未记录名称）") }));
         }
         observerActors = directory.AsReadOnly();
         foreach (var id in observerSnapshots.Keys.ToArray())
@@ -82,6 +86,7 @@ public sealed partial class DvSession
     {
         _ = ObserverBase(viewer);
         if (observerChoices.TryGetValue(viewer, out var found)) return found;
+        using var performanceScope = Measure("observer-options", "projection");
         var raw = Run(() => DVProgram.ObserverOptions(state, viewer), speculative: true);
         var options = R.Items(raw).Select(HostValues.Record).ToList();
         var actors = R.Items(Field(state, "actors", new List<object>()));
@@ -179,12 +184,12 @@ public sealed partial class DvSession
         var people = HostValues.List(subjective, "rooms").OfType<IReadOnlyDictionary<string, object?>>()
             .Where(item => HostValues.Text(item, "map") == map && HostValues.Text(item, "room") == room)
             .SelectMany(item => HostValues.List(item, "members").OfType<IReadOnlyDictionary<string, object?>>())
-            .Where(item => HostValues.Text(item, "kind") == "person" && item.GetValueOrDefault("is_viewer") is not true)
+            .Where(item => HostValues.Text(item, "kind") is "person" or "actor" && item.GetValueOrDefault("is_viewer") is not true)
             .Select(item => (object?)HostValues.Freeze(new Dictionary<string, object?>
             { ["id"] = HostValues.Text(item, "id"), ["name"] = HostValues.Text(item, "title") })).ToArray();
         return HostValues.Freeze(new Dictionary<string, object?>
         {
-            ["viewer"] = viewer, ["viewer_name"] = HostValues.Text(snapshot, "viewer_title", viewer), ["version"] = Version,
+            ["viewer"] = viewer, ["viewer_name"] = HostValues.Text(snapshot, "viewer_title", "（未记录名称）"), ["version"] = Version,
             ["chapter"] = snapshot.GetValueOrDefault("chapter"), ["game_time"] = snapshot.GetValueOrDefault("game_time"),
             ["location"] = HostValues.Text(snapshot, "location_title"), ["room"] = room, ["map"] = map,
             ["people"] = Array.AsReadOnly(people), ["status"] = HostValues.Text(Intent, "status"),
@@ -195,33 +200,43 @@ public sealed partial class DvSession
     public IReadOnlyDictionary<string, object?> Preview(string viewer, bool includeObjective = false)
     {
         var selected = ObserverBase(viewer);
-        var options = ObserverOptions(viewer);
-        var observers = new Dictionary<string, object?>(StringComparer.Ordinal);
-        foreach (var pair in observerSnapshots)
+        var cacheKey = viewer + (includeObjective ? "|objective" : "|subjective");
+        if (observerPreviews.TryGetValue(cacheKey, out var cached)) return cached;
+        Dictionary<string, object?> result;
+        using (Measure("observer-preview", "projection"))
         {
-            var entry = new Dictionary<string, object?>(pair.Value, StringComparer.Ordinal)
+            var options = ObserverOptions(viewer);
+            var observers = new Dictionary<string, object?>(StringComparer.Ordinal);
+            foreach (var pair in observerSnapshots)
             {
-                ["status"] = TextStatus(pair.Key),
-                ["options"] = observerChoices.TryGetValue(pair.Key, out var choices)
-                    ? choices : Array.Empty<IReadOnlyDictionary<string, object?>>()
-            };
-            observers[pair.Key] = HostValues.Freeze(entry);
-        }
-        var result = new Dictionary<string, object?>(selected, StringComparer.Ordinal)
-        {
-            ["viewer"] = viewer, ["version"] = Version, ["status"] = TextStatus(viewer),
-            ["options"] = options, ["actors"] = observerActors, ["observers"] = HostValues.Freeze(observers)
-        };
-        if (includeObjective)
-        {
-            if (!objectiveMaps.TryGetValue(viewer, out var objective))
-            {
-                objective = HostValues.Record(Run(() => DVProgram.ObserverObjective(state, viewer), speculative: true));
-                objectiveMaps[viewer] = objective;
+                var entry = new Dictionary<string, object?>(pair.Value, StringComparer.Ordinal)
+                {
+                    ["status"] = TextStatus(pair.Key),
+                    ["options"] = observerChoices.TryGetValue(pair.Key, out var choices)
+                        ? choices : Array.Empty<IReadOnlyDictionary<string, object?>>()
+                };
+                observers[pair.Key] = HostValues.Freeze(entry);
             }
-            result["objective"] = objective;
+            result = new Dictionary<string, object?>(selected, StringComparer.Ordinal)
+            {
+                ["viewer"] = viewer, ["version"] = Version, ["status"] = TextStatus(viewer),
+                ["options"] = options, ["actors"] = observerActors, ["observers"] = HostValues.Freeze(observers)
+            };
+            if (includeObjective)
+            {
+                if (!objectiveMaps.TryGetValue(viewer, out var objective))
+                {
+                    using var objectiveScope = Measure("observer-objective", "projection");
+                    objective = HostValues.Record(Run(() => DVProgram.ObserverObjective(state, viewer), speculative: true));
+                    objectiveMaps[viewer] = objective;
+                }
+                result["objective"] = objective;
+            }
         }
-        return HostValues.Freeze(result);
+        result["performance"] = PerformanceSummary();
+        var preview = HostValues.Freeze(result);
+        observerPreviews[cacheKey] = preview;
+        return preview;
     }
 
     public void RecordInteraction(IReadOnlyDictionary<string, object?> payload)

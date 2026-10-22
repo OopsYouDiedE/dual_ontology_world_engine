@@ -82,7 +82,7 @@ Main 在地图、人物、碰撞、UI、物理注册与实际绘制完成后揭�
 
 PlayerViewTrace 常开完整原始输入事件记录，通过 node_added 为新增控件接线。普通启动不逐帧扫描 UI 树；`--dv-audit` 或控制台 `audit on` 才开启逐帧扫描和可见记录，关闭审计保留事件输入记录。呈现样本使用 `kind: presentation`，并保留实际身体样本与原始输入。时序存储为 4096 条环，每次 PollTimings 最多消费 256 条；关闭清单记录丢弃量。
 
-控制台 Inspector 只在页面打开时每 0.25 秒刷新 Physical、Mind 和按 score 排序的候选树。性能页使用固定 120 帧环，记录 FPS、frame、prepare、complete、navigation，并按帧累计阶段耗时；离开页面关闭诊断采样。
+控制台 Inspector 只在页面打开时每 0.25 秒刷新 Physical、Mind 和按 score 排序的候选树。性能页使用固定 120 帧环，记录 FPS、frame、prepare、complete、navigation，并按帧累计阶段耗时；离开页面关闭诊断采样。DvSession 的累计与游戏小时统计常开并独立于此帧采样开关；性能页每 0.25 秒只读轻量摘要，关闭归档写 engine-performance 报告和二进制采样，导出失败记入关闭清单。嵌套用排他耗时相加，初始化/投影/归档/开发命令独立列出，时间口径见 `../docs/engine-performance.md`。
 
 3D 书页记录表达页面纹理内容与冻结状态，不把 2D 控件可见性当作屏幕遮挡证明。`view_schema=3` 的 text_scope、visibility_basis 与 screen_text_visibility 明确此边界；实际遮挡证据由工具侧渲染帧承担。
 

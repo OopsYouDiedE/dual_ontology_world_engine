@@ -306,7 +306,7 @@ fn c1_inspect_E10(actor):
     本人须知 行动者 位于 "R05"。
     现场要求 行动者 位于 "R05"。
     遵循 ""。
-    可获知 dv_single(dv_ref("coat", "identity", "owner"))。
+    可获知 [dv_ref("coat", "identity", "owner"), dv_ref("coat", "state", "name"), dv_ref("coat", "state", "location"), dv_ref("coat", "state", "worn_by"), dv_ref("lens", "state", "name"), dv_ref("lens", "state", "location"), dv_ref("graphite_pencil", "state", "name"), dv_ref("graphite_pencil", "state", "location"), dv_ref("evidence_bags", "state", "name"), dv_ref("evidence_bags", "state", "location")]。
     依据 [campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 80, "E12")]。
     仅一次 true。
 
@@ -341,8 +341,7 @@ fn c1_move_name(actor, origin, target):
     return rt_cat(rt_cat(rt_cat(actor, ".move."), origin), rt_cat(".", target))
 
 fn c1_place_label(place):
-    let names = {"R05": "五号卧室", "R06": "六号卧室", "R07": "七号卧室", "R08": "八号卧室", "hall": "活动厅", "foyer": "门厅", "pantry": "茶水间", "corridor": "走廊"}
-    return dv_find(names, place, "房间")
+    return campaign_location_title(place)
 
 fn c1_move_action(actor, origin, target):
     var name = c1_move_name(actor, origin, target)
@@ -633,7 +632,11 @@ fn c1_physical_world():
     world = c1_add_objects(world, c1_room_objects())
     world = dv_add_object(world, c1_physical_cognition())
     world = dv_add_object(world, c1_question_object())
-    world = dv_add_object(world, dv_object("coat", "physical", {"state": [], "identity": dv_single(dv_pair("owner", dv_field("detective")))}))
+    world = dv_add_object(world, dv_with(campaign_state_object("coat", {"name": dv_field("风衣"), "location": dv_field("R05"), "worn_by": dv_field("")}), "facets", {"state": {"name": dv_field("风衣"), "location": dv_field("R05"), "worn_by": dv_field("")}, "identity": {"owner": dv_field("detective")}}))
+    // The coat starts on its hook; its pockets travel only when the coat is worn.
+    world = dv_add_object(world, campaign_state_object("lens", {"name": dv_field("黄铜放大镜"), "location": dv_field("coat")}))
+    world = dv_add_object(world, campaign_state_object("graphite_pencil", {"name": dv_field("石墨笔"), "location": dv_field("coat")}))
+    world = dv_add_object(world, campaign_state_object("evidence_bags", {"name": dv_field("证物袋"), "location": dv_field("coat")}))
     world = dv_add_object(world, campaign_state_object("ritual", dv_single(dv_pair("sound_trial_done", dv_field(false)))))
     world = dv_store(world, c1_latch_contact_ref(), dv_field(false))
     while (i < rt_count(people)):
@@ -664,6 +667,9 @@ fn c1_subjective_world(actor):
     mind = dv_add_object(mind, campaign_local_object("question"))
     mind = dv_add_object(mind, c1_memory_object(actor))
     mind = dv_add_object(mind, campaign_local_object("coat"))
+    mind = dv_add_object(mind, campaign_local_object("lens"))
+    mind = dv_add_object(mind, campaign_local_object("graphite_pencil"))
+    mind = dv_add_object(mind, campaign_local_object("evidence_bags"))
     if (actor == "detective"):
         mind = dv_store(mind, dv_ref("coat", "identity", "owner"), dv_with(dv_field("detective"), "basis", dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 6, "s1_wake.006"))))
     mind = c1_adopt_inferences(mind)
@@ -1012,7 +1018,7 @@ fn c1_costs():
 
 fn c1_bindings():
     var people = ["demon", "detective", "huo", "shen", "su"]
-    var objects = ["demon", "detective", "huo", "shen", "su", "cognition", "question", "ritual", "coat"]
+    var objects = ["demon", "detective", "huo", "shen", "su", "cognition", "question", "ritual", "coat", "lens", "graphite_pencil", "evidence_bags"]
     var result = []
     var i = 0
     var j = 0
@@ -2934,8 +2940,8 @@ fn c1_other_desire_action(id):
     let person = c1_other_person(id)
     let room = c1_other_case(person.group).room
     let ref = dv_ref(rt_cat("personal.", id), "state", "material_detail")
-    let action = c1_once(campaign_intent_action(rt_cat(id, ".follow-own-interest"), "inspect", campaign_at(id, room), campaign_at(id, room), "", dv_single(ref), person.material_label, person.material_source))
-    return dv_with_many(action, {"label": person.material_label, "surface": rt_cat(person.intention_surface, rt_cat("\n", person.material_surface)), "purpose_refs": dv_single(ref), "motive_basis": dv_single(person.desire_source)})
+    let action = c1_once(campaign_intent_action(rt_cat(id, ".follow-own-interest"), "inspect", campaign_at(id, room), campaign_at(id, room), "", dv_single(ref), rt_cat("进一步", person.material_label), person.material_source))
+    return dv_with_many(action, {"label": rt_cat("进一步", person.material_label), "surface": rt_cat(person.intention_surface, rt_cat("\n", person.material_surface)), "purpose_refs": dv_single(ref), "motive_basis": dv_single(person.desire_source)})
 
 // Install the actual residents, their private rules and objects, copper channels,
 // scoped formal questions, and answer transitions. Release/departure needs the
@@ -4112,7 +4118,7 @@ fn c1_op_person_object(id, detective_name):
     return campaign_state_object(rt_cat("opening.personal.", id), fields)
 
 fn c1_op_objects(detective_name):
-    var result = [campaign_state_object("opening.roles", {"custodian": dv_field("demon"), "teacher": dv_field("demon")}), campaign_state_object("opening.facilities", {"grain_store": dv_field(true), "water_supply": dv_field(true), "fire": dv_field(true), "drawing_exists": dv_field(true), "unheard_sounds_available": dv_field(true)}), campaign_state_object("opening.contracts", {"detective_party_not_custodian": dv_field(true), "full_text": dv_field(campaign_contract_text())}), campaign_state_object("opening.cabinet", {"location": dv_field("hall"), "position_description": dv_field("铜口下方"), "labels": dv_field([detective_name, "霍铎", "沈鼎", "苏泠"])}), campaign_state_object("opening.slot.detective", {"label": dv_field(detective_name), "door_open": dv_field(true), "contents": dv_field("empty")}), campaign_state_object("opening.slot.huo", {"label": dv_field("霍铎"), "contents": dv_field("test-piece")}), campaign_state_object("opening.slot.shen", {"label": dv_field("沈鼎"), "contents": dv_field("silver")}), campaign_state_object("opening.slot.su", {"label": dv_field("苏泠"), "contents": dv_field("audition-access")}), campaign_state_object("opening.silver", {"location": dv_field("opening.cabinet"), "authenticity": dv_field("genuine")}), campaign_state_object("opening.testpiece", {"location": dv_field("opening.cabinet")}), campaign_state_object("opening.audition", {"location": dv_field("opening.cabinet")}), campaign_state_object("opening.tea", {"location": dv_field("hall"), "prepared": dv_field(false)}), campaign_state_object("opening.public_history", {"alarm_last_night": dv_field(true), "main_building_call": dv_field(true), "door_latched_this_side": dv_field(true), "caller_not_returned": dv_field(true)})]
+    var result = [campaign_state_object("opening.roles", {"custodian": dv_field("demon"), "teacher": dv_field("demon")}), campaign_state_object("opening.facilities", {"grain_store": dv_field(true), "water_supply": dv_field(true), "fire": dv_field(true), "drawing_exists": dv_field(true), "unheard_sounds_available": dv_field(true)}), campaign_state_object("opening.contracts", {"detective_party_not_custodian": dv_field(true), "full_text": dv_field(campaign_contract_text())}), campaign_state_object("opening.cabinet", {"location": dv_field("hall"), "position_description": dv_field("铜口下方"), "labels": dv_field([detective_name, "霍铎", "沈鼎", "苏泠"])}), campaign_state_object("opening.slot.detective", {"location": dv_field("opening.cabinet"), "label": dv_field(detective_name), "door_open": dv_field(true), "contents": dv_field("empty")}), campaign_state_object("opening.slot.huo", {"location": dv_field("opening.cabinet"), "label": dv_field("霍铎"), "contents": dv_field("test-piece")}), campaign_state_object("opening.slot.shen", {"location": dv_field("opening.cabinet"), "label": dv_field("沈鼎"), "contents": dv_field("silver")}), campaign_state_object("opening.slot.su", {"location": dv_field("opening.cabinet"), "label": dv_field("苏泠"), "contents": dv_field("audition-access")}), campaign_state_object("opening.silver", {"location": dv_field("opening.cabinet"), "authenticity": dv_field("genuine")}), campaign_state_object("opening.testpiece", {"location": dv_field("opening.cabinet")}), campaign_state_object("opening.audition", {"location": dv_field("opening.cabinet")}), campaign_state_object("opening.tea", {"location": dv_field("hall"), "prepared": dv_field(false)}), campaign_state_object("opening.public_history", {"alarm_last_night": dv_field(true), "main_building_call": dv_field(true), "door_latched_this_side": dv_field(true), "caller_not_returned": dv_field(true)})]
     var people = c1_op_people()
     var i = 0
     while i < rt_count(people):
@@ -4134,6 +4140,7 @@ fn c1_op_objects(detective_name):
     当 侦探 位于 "R05"。
     并且 "coat" 的 "identity" 的 "owner" 等于 侦探。
     则 "coat" 的 "worn_by" 变为 侦探。
+    并使 "coat" 的 所在地 变为 侦探。
 
 法则 c1_op_prepare_tea：
     前提 campaign_at(沈鼎, 乙区大厅)。
@@ -4196,6 +4203,9 @@ fn c1_op_wake_action(id):
     var grants = [dv_ref(id, "body", "awake"), c1_op_person_ref(id, "name"), c1_op_person_ref(id, "profession"), c1_op_person_ref(id, "last_recall")]
     if id == "detective":
         rt_push(grants, dv_ref("coat", "identity", "owner"))
+        rt_push(grants, dv_ref("coat", "state", "name"))
+        rt_push(grants, dv_ref("coat", "state", "location"))
+        rt_push(grants, dv_ref("coat", "state", "worn_by"))
     if id == "huo":
         rt_push(grants, dv_ref("opening.wake.huo", "state", "bed_join"))
         rt_push(grants, dv_ref("opening.wake.huo", "state", "oilcloth_wrap"))
@@ -4265,7 +4275,7 @@ fn c1_op_morning_candidates():
         if people[i] == "detective":
             rt_push(result, dv_with(c1_op_wake_action(people[i]), "personal_purpose", {"subject": people[i], "id": "current-self-observation", "basis": dv_single(c1_memory_source(people[i]))}))
         i = i + 1
-    var wear = c1_once(campaign_intent_action("detective.opening.wear-coat", "inspect", dv_all(dv_pair(campaign_at("detective", "R05"), dv_fact(dv_ref("coat", "identity", "owner"), "detective"))), campaign_at("detective", "R05"), "opening.wear-coat", [dv_ref("coat", "state", "worn_by")], "穿上风衣", c1_op_source(6, "s1_wake.006; s2_meet.008")))
+    var wear = c1_once(campaign_intent_action("detective.opening.wear-coat", "inspect", dv_all(dv_pair(campaign_at("detective", "R05"), dv_fact(dv_ref("coat", "identity", "owner"), "detective"))), campaign_at("detective", "R05"), "opening.wear-coat", [dv_ref("coat", "state", "worn_by"), dv_ref("coat", "state", "location")], "穿上风衣", c1_op_source(6, "s1_wake.006; s2_meet.008")))
     rt_push(result, dv_with(wear, "owner", "detective"))
     rt_push(result, c1_op_physical_action("shen", "shen.opening.prepare-tea", "opening.prepare-tea", [dv_ref("opening.tea", "state", "prepared"), dv_ref("opening.tea", "state", "prepared_by")], c1_op_source(11, "s2_meet.009"), "泡茶", "沈鼎把茶泡上。"))
     return result
@@ -4315,7 +4325,7 @@ fn c1_op_desire_candidates(detective_name):
     var material_claim = dv_all([c1_op_property("opening.silver", "location", "opening.cabinet"), c1_op_property("opening.facilities", "grain_store", true), c1_op_property("opening.facilities", "water_supply", true), c1_op_property("opening.facilities", "fire", true), c1_op_property("opening.facilities", "drawing_exists", true), c1_op_property("opening.facilities", "unheard_sounds_available", true)])
     var offer = c1_op_dialogue("demon", "demon.opening.desire-offer", material_claim, "介绍岛上的工作与资源", "银元在柜里，沈师傅。粮仓、水窖、灶火，岛上也都有。那张减少不可逆损失的闭式热机图纸，此地有人画过，霍先生。此地还有诸位从未听过的声音，苏小姐。", c1_op_source(31, "s3_broadcast.021"), c1_op_people())
     offer = dv_with(offer, "speech", dv_with(offer.speech, "shown_material_refs", [dv_ref("opening.silver", "state", "location"), dv_ref("opening.testpiece", "state", "location"), dv_ref("opening.audition", "state", "location")]))
-    var empty_slot = c1_once(campaign_intent_action("detective.opening.empty-slot", "inspect", campaign_at("detective", "hall"), campaign_at("detective", "hall"), "", [dv_ref("opening.slot.detective", "state", "label"), dv_ref("opening.slot.detective", "state", "door_open"), dv_ref("opening.slot.detective", "state", "contents")], "检视自己的标签柜", c1_op_source(35, "s4_rewards.020")))
+    var empty_slot = c1_once(campaign_intent_action("detective.opening.empty-slot", "inspect", campaign_at("detective", "hall"), campaign_at("detective", "hall"), "", [dv_ref("opening.cabinet", "state", "location"), dv_ref("opening.slot.detective", "state", "location"), dv_ref("opening.slot.detective", "state", "label"), dv_ref("opening.slot.detective", "state", "door_open"), dv_ref("opening.slot.detective", "state", "contents")], "检视自己的标签柜", c1_op_source(35, "s4_rewards.020")))
     empty_slot = dv_with(dv_with(empty_slot, "owner", "detective"), "presentation", c1_op_presentation("detective", "private-monologue", ["柜上有一格贴着我的名字。小门开着，里面什么也没有。"]))
     var ask_reward = c1_op_question("detective", "detective.opening.ask-reward", "询问自己的报偿", "那我的呢？", c1_op_source(36, "s4_rewards.016"), dv_single("demon"))
     ask_reward = dv_with(ask_reward, "precondition", dv_all(dv_pair(campaign_at("detective", "hall"), c1_op_property("opening.slot.detective", "contents", "empty"))))
@@ -4515,7 +4525,7 @@ fn c1_op_slot_inspections():
         var id = ids[i]
         var known = dv_all(dv_pair(campaign_at(id, "hall"), c1_op_property("opening.cabinet", "position_description", "铜口下方")))
         var slot = rt_cat("opening.slot.", id)
-        var refs = [dv_ref(slot, "state", "label"), dv_ref(slot, "state", "contents")]
+        var refs = [dv_ref("opening.cabinet", "state", "location"), dv_ref(slot, "state", "location"), dv_ref(slot, "state", "label"), dv_ref(slot, "state", "contents")]
         if id != "detective":
             rt_push(refs, dv_ref(c1_op_reward_object(id), "state", "location"))
         var action = c1_once(campaign_intent_action(rt_cat(id, ".opening.inspect-reward-slot"), "inspect", known, campaign_at(id, "hall"), "", refs, "检视本人领取柜", c1_op_source(29, "s4_rewards.004")))

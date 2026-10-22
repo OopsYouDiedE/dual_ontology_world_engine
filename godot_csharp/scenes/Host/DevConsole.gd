@@ -22,6 +22,8 @@ var planning_status: Label
 var planning_table: Tree
 var planning_detail: TextEdit
 var performance: Label
+var _engine_performance: Dictionary = {}
+var _engine_performance_at_us: int = 0
 var graph: Control
 var navigation_table: Tree
 var replay_text: TextEdit
@@ -433,6 +435,14 @@ func _show_performance(latest: Dictionary) -> void:
 		for key: String in sums: sums[key] += float(sample[key])
 		peak = maxf(peak, float(sample.frame_ms))
 	performance.text = "%d / 120 帧 · FPS %.1f · 帧均值 %.2f ms · 峰值 %.2f ms\n阶段均值：Prepare %s · Complete %s · 寻路 %s · 现场执行 %s" % [_history.count, float(sums.fps) / _history.count, float(sums.frame_ms) / _history.count, peak, _phase_average(sums, "prepare"), _phase_average(sums, "complete"), _phase_average(sums, "navigation"), _phase_average(sums, "physical")]
+	var now := Time.get_ticks_usec()
+	if now - _engine_performance_at_us >= 250000 and engine.has_method("PerformanceSummary"):
+		_engine_performance = engine.PerformanceSummary()
+		_engine_performance_at_us = now
+	if not _engine_performance.is_empty():
+		var rate: Variant = _engine_performance.get("seconds_per_game_hour")
+		var rate_text := "—" if rate == null else "%.3f 秒" % float(rate)
+		performance.text += "\n累计引擎 %.3f 秒 · 推进 %.1f 游戏分钟 · 每游戏小时 %s\n投影 %.3f 秒 · 开局/恢复 %.3f 秒 · 保存/归档 %.3f 秒" % [float(_engine_performance.get("engine_ms", 0.0)) / 1000.0, float(_engine_performance.get("advanced_game_minutes", 0.0)), rate_text, float(_engine_performance.get("projection_ms", 0.0)) / 1000.0, float(_engine_performance.get("startup_ms", 0.0)) / 1000.0, float(_engine_performance.get("persistence_ms", 0.0)) / 1000.0]
 	graph.queue_redraw()
 	if latest.navigation_queries.is_empty(): return
 	navigation_table.clear()

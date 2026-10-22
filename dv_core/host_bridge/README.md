@@ -26,8 +26,14 @@
 | `Trace()`、`WriteTrace(path)` | 读取当前或已关闭的轨迹，不关闭会话 |
 | `Save()`、`WriteSave(path)` | 保存最近已提交的稳定状态 |
 | `Restore(value)`、`RestoreFile(path)` | 恢复稳定会话，保留审计和开发模式 |
+| `PerformanceSummary()`、`PerformanceSnapshot()` | 只读轻量摘要及完整分项/小时汇总，不推进会话 |
+| `WritePerformanceReport(prefix)` | 导出中文报告、小时/操作聚合 CSV 及二进制采样 |
 
 `Prepare`、`Complete`、`Snapshot` 继续提供进程内 JSON 交换。正式 Godot 路径使用值图与增量接口，省去 JSON 编码和重新解析。文本协议的 JSONL 用于 stdin/stdout；持久轨迹保持二进制格式。
+
+## 引擎统计
+
+所有正式会话常开低频作用域计时，按实际前进的游戏分钟折算每游戏小时的现实计算秒数。正式计算、提前准备、认知、选策、Complete、投影、初始化和归档分别记录，嵌套只以排他耗时求和。原始尾部采样最多 8192 条，累计与小时汇总保持完整；零推进保留缺失比率。指标、异常范围、导出格式和小时归属详见 [引擎耗时记录](../../docs/engine-performance.md)。只读回放仅消费已记录摘要，不创建新会话或把播放耗时当作历史引擎耗时。
 
 ## 增量和缓存
 
@@ -81,10 +87,29 @@ Godot 用 `--dv-dev`，CLI 用 `--dev`。该配置写入 `story.development_mode
 
 ## CLI 观察预览
 
-`Preview` 的主观地图只读取指定角色 mind；客观地图读取 physical 与完整地点目录。房间包含独立 `members` 列表，人物、物体分别列出，`is_current` 分别取对应状态中的本人位置。预览不刷新事实、不推进逻辑时刻、不改变会话版本。
+`Preview` 的主观地图只读取指定角色 mind；客观地图读取 physical 与完整地点目录。房间包含区域信息与独立 `members` 列表，人物先于物体，各类内稳定排序；`is_current` 分别取对应状态中的本人位置。所有权、实际携带者与容器位置独立，物体只沿本投影已知且无冲突的位置链归组；携带物与容器内容附在对应主体或容器下。事件和谜题状态从空间成员中过滤，具有物理身份的开场道具仍是实物。主观不因客观名称、容纳关系或门状态存在就取得该信息。仅在双图检阅中，两边都已列出的同一成员具有明确而不同的位置或容纳关系时，附加认知差异标识；单边缺失不自动认定为认知错误。预览不刷新事实、不推进逻辑时刻、不改变会话版本。
 
-预览结构为 `viewer / snapshot / status / subjective / options / actors / observers`，显式请求时附 `objective`。`observers[id]` 保存该角色的认知地图和展示快照；未计算的选项评分保持空。缓存按会话版本失效，界面重绘复用结果。CLI 的 stdout 按当前观察者与地图模式裁剪；完整预览仍保留在二进制回放记录中。
+预览结构为 `viewer / snapshot / status / subjective / options / actors / observers / performance`，显式请求时附 `objective`。`performance` 为会话诊断摘要，独立于物理世界与人物认识；新交互记录随预览保留，旧回放缺失时不补造。`observers[id]` 保存该角色的认知地图和展示快照；未计算的选项评分保持空。缓存按会话版本失效，界面重绘复用结果。CLI 的 stdout 按当前观察者与地图模式裁剪；完整预览仍保留在二进制回放记录中。
 
 `snapshot.actors` 和各 `observers[id].snapshot.actors` 同步保存预览的行政人物目录，供回放视角栏显示姓名；主观成员仍独立采用该观察者实际取得的身份信息。已经 prepared 而不在当前候选集中的动作保留原行动 `label`、实际费用及选择事件来源；标签先取匹配的 `action_selected`，再取当前意图/原行动，均缺失时显示 `（未记录标签）`。
 
 选项 `ai_score` 必须与 `score_kind` 一起消费：`immediate` 是当前只读单步估值，`recorded-root` 来自同认知修订的实际单步规划条目，`recorded-choice` 来自最终选择事件。`score_event` 指向该条记录。`planning_status=evaluated-root` 表示已有实际根节点评估；有同修订规划记录而缺该候选根条目时标记 `unexpanded`，同时保留其独立的即时估值和 `planning_event` 来源。仅凭数值 `-0.01` 不能推断未展开；有根评估记录的负分照实显示。
+
+
+### 物体、地点与通道字段
+
+内容对象以 `map_kind`、`map_title` 提供中立展示类别与名称，实际物理位置写入 `state.location`。成员输出 `id/title/kind/is_viewer`，以及独立的 `owner/owner_title/carrier/container`；后两项引用同视图的成员身份，CLI 只将它们转换成“携带／内含”的层级。房间输出 `region` 和 `logical_location`，标题采用“区域 · 房间”。通道输出 `state/state_label/known/state_refs/state_scope`，物理开闭与管理通行资格保留不同来源，没有状态证据时保持未知。
+
+风衣初始位于 R-05，放大镜、石墨笔与证物袋在风衣内。穿衣成功后风衣的位置才变为侦探，内含物仍属于风衣；衣袋名称与容纳关系由实际 E12 检视完成后发布。所有权不能替代实际携带位置，显示元数据也不授予隐藏物品知识。开场的领取柜、银元、金属试件、试听机与茶具具有正式物理身份，保留为实物；抽象记录不进入实物列表。
+
+### 即时评分分项
+
+选项的 `score_breakdown` 对应当前即时估值，保留 `scope` 和 `formula`。它包含信息、验证、进展、成就四项原值及加权值，信息权重、进展权重、机会价值、时间罚项、总值、机会清单及原始 `value_details`。当前公式为：
+
+```text
+action_value = (information + verification) * information_weight
+             + (progress + achievement) * progress_weight
+total = action_value + opportunity * progress_weight - actual.time * time_cost
+```
+
+`computation_penalty` 与 `stamina_penalty` 为 0，明确当前即时公式没有这两项扣分；实际行动费用仍独立保留在 `cost`。分项直接读取现有估值函数，不改变权重、预算、费用或行动顺序，也不为了区分候选人为打破同分。若展示分数来自已记录根节点或最终选择，仍按 `score_kind/score_event` 标识；当前即时分项不能冒充历史规划分数的拆解。

@@ -29,9 +29,7 @@ fn c1_player_scene(scene):
 fn c1_player_display(action):
     var result = action
     if action.kind == "move" and dv_has_key(action, "travel"):
-        let rooms = {"R05": "自己的卧室", "R06": "霍铎的卧室", "R07": "沈鼎的卧室", "R08": "苏泠的卧室", "hall": "活动厅", "foyer": "门厅", "pantry": "茶水间", "corridor": "走廊"}
-        if dv_has_key(rooms, action.travel.to):
-            result = dv_with(result, "label", rt_cat("前往", dv_get(rooms, action.travel.to)))
+        result = dv_with(result, "label", rt_cat("前往", campaign_location_title(action.travel.to)))
     let cards = [
         {"id": "E1", "title": "隔离门", "text": c1_visible_E1()},
         {"id": "E2", "title": "墙角的木楔与门底的灰", "text": c1_visible_E2()},
@@ -469,14 +467,10 @@ fn dvg_replay_build(state, viewer):
 
 // Only the viewer's current logical location is named; no remote positions.
 fn dvg_location_title(location):
-    let titles = {"R05": "卧室 · R-05", "R06": "卧室 · R-06", "R07": "卧室 · R-07", "R08": "卧室 · R-08", "hall": "乙区 · 活动厅", "foyer": "乙区 · 门厅", "corridor": "乙区 · 宿舍走廊", "pantry": "乙区 · 备餐间", "living_hall": "生活翼 · 公共起居厅", "washroom": "生活翼 · 盥洗室", "central_hall": "中央厅", "lecture": "讲堂", "logistics": "后勤院 · 食堂", "clinic": "诊疗所", "greenhouse": "温室", "document_workshop": "文献工房", "resonance_hall": "共鸣厅", "resonance": "共鸣厅", "quiet_room": "沉静室", "white_tower_safe": "白塔院 · 安全端", "outdoor_meter": "室外 · 仪器阵", "outdoor_high": "室外 · 高地通路", "outdoor_alley": "室外 · 夹道", "oath_court": "誓约庭", "threshold.contract": "生活翼 · 甲区门外", "threshold.astral": "生活翼 · 丙区门外", "threshold.logistics": "生活翼 · 丁区门外", "dorm.contract": "甲区 · 活动厅", "dorm.astral": "丙区 · 活动厅", "dorm.logistics": "丁区 · 活动厅", "dorm.yi": "乙区 · 活动厅"}
-    return dv_find(titles, location, "现场")
-
-// Map knowledge is reconstructed from the subject's saved experience. Native
-// geometry and other actors' authoritative positions do not grant room names.
+    return campaign_location_title(location)
 fn dvg_known_room(location):
     let place = dvg_place(location)
-    return {"map": place.map, "room": place.room, "label": dvg_location_title(location)}
+    return {"map": place.map, "room": place.room, "logical_location": location, "label": dvg_location_title(location), "region": campaign_location_region(location)}
 
 fn dvg_known_room_add(rooms, room):
     if room.map == "":
@@ -941,10 +935,26 @@ fn dvg_dev_command(state, command, argument):
 // Read-only observer projections. These values never enter a subject's mind.
 fn dvg_preview_room(location):
     let place = dvg_place(location)
-    var title = dvg_location_title(location)
-    if title == "现场":
-        title = location
-    return {"map": place.map, "room": place.room, "label": title, "members": [], "is_current": false}
+    return {"map": place.map, "room": place.room, "logical_location": location, "label": dvg_location_title(location), "region": campaign_location_region(location), "members": [], "is_current": false}
+
+fn dvg_preview_location(world, id):
+    // Wearing and actual possession override a stale resting-place observation.
+    let fields = ["worn_by", "carrier", "held_by", "holder"]
+    var i = 0
+    while i < rt_count(fields):
+        let held = dv_read(world, dv_ref(id, "state", fields[i]))
+        if dv_uncontested(held) and rt_is_text(held.value) and held.value != "":
+            return held
+        i = i + 1
+    let location = dv_read(world, dv_ref(id, "state", "location"))
+    if dv_uncontested(location):
+        return location
+    if world.domain == "physical":
+        let object = dv_find(world.objects, id, [])
+        let declared = dv_find(object, "location", "")
+        if rt_is_text(declared) and declared != "":
+            return dv_field(declared)
+    return location
 
 fn dvg_preview_room_location(world, location):
     let places = dvg_places()
@@ -958,7 +968,7 @@ fn dvg_preview_room_location(world, location):
         if dv_has(visited, location):
             return ""
         rt_push(visited, location)
-        let parent = dv_read(world, dv_ref(location, "state", "location"))
+        let parent = dvg_preview_location(world, location)
         if not dv_uncontested(parent):
             return ""
         location = parent.value
@@ -1016,10 +1026,26 @@ fn dvg_preview_name(world, id, fallback):
     let state_name = dv_read(world, dv_ref(id, "state", "name"))
     if dv_uncontested(state_name) and rt_is_text(state_name.value):
         return state_name.value
+    let owners = ["detective", "huo", "shen", "su"]
+    var slot_index = 0
+    while slot_index < rt_count(owners):
+        if id == rt_cat("opening.slot.", owners[slot_index]):
+            let label = dv_read(world, dv_ref(id, "state", "label"))
+            if dv_uncontested(label) and rt_is_text(label.value):
+                return rt_cat(label.value, "的标签柜")
+        slot_index = slot_index + 1
     let opening_name = dv_read(world, c1_op_person_ref(id, "name"))
     if dv_uncontested(opening_name) and rt_is_text(opening_name.value):
         return opening_name.value
-    if world.domain == "mind" and dv_has(campaign_people(), id):
+    if world.domain == "physical":
+        if dv_has(campaign_people(), id) or id == "demon":
+            return campaign_person_name(id)
+        let object = dv_find(world.objects, id, [])
+        return dv_find(object, "map_title", fallback)
+    let speaker = c1_op_known_speaker_label(world, id)
+    if speaker != "":
+        return speaker
+    if dv_has(campaign_people(), id):
         let introduced = c2d_known_speaker_name(world, id)
         if introduced != "":
             return introduced
@@ -1052,6 +1078,12 @@ fn dvg_preview_actor_object(state, actor, world):
         return local
     return actor.id
 
+fn dvg_preview_relation_id(identities, id):
+    let person = dv_find(identities, id, false)
+    if person != false:
+        return person.id
+    return id
+
 fn dvg_preview_members(state, world, viewer, rooms):
     var identities = []
     var actor_index = 0
@@ -1063,37 +1095,65 @@ fn dvg_preview_members(state, world, viewer, rooms):
     var i = 0
     while i < rt_count(world.objects):
         let id = world.objects[i][0]
-        let location = dv_read(world, dv_ref(id, "state", "location"))
-        if dv_uncontested(location) and rt_is_text(location.value):
-            var kind = "object"
-            var fallback = id
+        let object = world.objects[i][1]
+        let descriptor = campaign_object_descriptor(id)
+        let location = dvg_preview_location(world, id)
+        let person = dv_find(identities, id, false)
+        var kind = dv_find(object, "map_kind", descriptor.map_kind)
+        if person != false:
+            kind = "person"
+        if dv_has(["person", "object", "item", "container", "furniture", "equipment", "door", "passage"], kind) and dv_uncontested(location) and rt_is_text(location.value):
             var identity = id
             var self = false
-            let person = dv_find(identities, id, false)
+            var fallback = "物品"
+            if world.domain == "physical":
+                fallback = dv_find(object, "map_title", descriptor.map_title)
+                if fallback == "":
+                    fallback = "物品"
             if person != false:
-                kind = "person"
-                fallback = "同伴"
                 identity = person.id
                 self = person.is_viewer
+                fallback = "同伴"
             if self:
                 fallback = "本人"
             var title = dvg_preview_name(world, id, fallback)
             if person != false:
                 title = dvg_preview_person_name(state, world, identity, id, fallback)
+            var carrier = ""
+            var container = ""
+            if dv_has_key(identities, location.value):
+                carrier = dvg_preview_relation_id(identities, location.value)
+            else:
+                if not dv_has_key(dvg_places(), location.value) and dv_has_key(world.objects, location.value):
+                    container = location.value
+            var owner = ""
+            var owner_title = ""
+            var ownership = dv_read(world, dv_ref(id, "identity", "owner"))
+            if not dv_uncontested(ownership):
+                ownership = dv_read(world, dv_ref(id, "state", "owner"))
+            if dv_uncontested(ownership) and rt_is_text(ownership.value) and ownership.value != "":
+                owner = dvg_preview_relation_id(identities, ownership.value)
+                owner_title = dvg_preview_person_name(state, world, owner, ownership.value, "未具名者")
             let room_location = dvg_preview_room_location(world, location.value)
-            rooms = dvg_preview_add_member(rooms, room_location, {"id": identity, "title": title, "kind": kind, "is_viewer": self})
+            let member = {"id": identity, "title": title, "kind": kind, "is_viewer": self, "owner": owner, "owner_title": owner_title, "carrier": carrier, "container": container}
+            rooms = dvg_preview_add_member(rooms, room_location, member)
         i = i + 1
     return rooms
 
-fn dvg_preview_site_title(action, site):
-    let label = dv_find(action, "label", "")
-    if rt_length(label) > 2:
-        let verb = rt_slice(label, 0, 2)
-        if verb == "检视" or verb == "查看" or verb == "辨认":
-            return rt_slice(label, 2, rt_length(label) - 2)
-    return site
+fn dvg_preview_site_descriptor(action, site, location):
+    // An interaction anchor has a neutral noun, independent of candidate prose.
+    let sites = {"E1": ["departure.door", "隔离门"], "E2": ["site:door-floor", "门边地面"], "E6": ["site:score", "书桌与乐谱"], "E7": ["site:slate", "长桌与石板"], "E10": ["site:pantry-counter", "备餐柜与水槽"], "E11": ["site:shelf", "书架"], "E12": ["coat", "风衣"], "transmitter": ["site:transmitter", "传声铜口"], "zone_rules": ["opening.slot.detective", "标签柜"]}
+    if site == "bed":
+        return {"id": rt_cat("site:bed:", location), "title": "床", "kind": "object", "is_viewer": false}
+    if dv_has_key(sites, site):
+        let item = dv_get(sites, site)
+        return {"id": item[0], "title": item[1], "kind": "object", "is_viewer": false}
+    let descriptor = campaign_object_descriptor(site)
+    if descriptor.map_kind == "object":
+        return {"id": site, "title": descriptor.map_title, "kind": "object", "is_viewer": false}
+    return false
 
-fn dvg_preview_sites(rooms, actor, allowed, objective):
+fn dvg_preview_sites(rooms, actor, world, allowed, objective):
     var i = 0
     while i < rt_count(actor.actions):
         let action = actor.actions[i]
@@ -1104,10 +1164,80 @@ fn dvg_preview_sites(rooms, actor, allowed, objective):
             if location == "":
                 location = dvp_extract_required_room(dv_find(action, "precondition", []), actor.location_ref)
             if interaction.kind == "site" and location != "":
-                let site = interaction.site
-                rooms = dvg_preview_add_member(rooms, location, {"id": rt_cat("site:", site), "title": dvg_preview_site_title(action, site), "kind": "object", "is_viewer": false})
+                var member = dvg_preview_site_descriptor(action, interaction.site, location)
+                if member != false:
+                    let recorded = dvg_preview_location(world, member.id)
+                    if dv_uncontested(recorded):
+                        // The existing member owns the containment/carrying relation.
+                        // Never recreate a moved item at its old action's required room.
+                        location = dvg_preview_room_location(world, recorded.value)
+                    rooms = dvg_preview_add_member(rooms, location, member)
         i = i + 1
     return rooms
+
+fn dvg_preview_doors(world, doors):
+    var result = []
+    var i = 0
+    while i < rt_count(doors):
+        let door = doors[i]
+        let origin = dv_find(door.from, "logical_location", "")
+        let destination = dv_find(door.to, "logical_location", "")
+        var status = "unknown"
+        var label = "未明"
+        var basis = []
+        let isolation = (origin == "foyer" and destination == "living_hall") or (origin == "living_hall" and destination == "foyer")
+        if isolation:
+            let opened = dv_read(world, c1dep_ref("open"))
+            let inner = dv_read(world, c1dep_ref("inner_down"))
+            let outer = dv_read(world, c1dep_ref("outer_released"))
+            if dv_uncontested(opened) and opened.value == true:
+                status = "open"
+                label = "开"
+                basis = [c1dep_ref("open")]
+            else:
+                if (dv_uncontested(inner) and inner.value == true) or (dv_uncontested(outer) and outer.value == false):
+                    status = "locked"
+                    label = "锁"
+                    basis = [c1dep_ref("inner_down"), c1dep_ref("outer_released")]
+                else:
+                    if dv_uncontested(opened) and opened.value == false:
+                        status = "closed"
+                        label = "关"
+                        basis = [c1dep_ref("open")]
+        else:
+            let edges = c2_edges()
+            var edge_index = 0
+            while edge_index < rt_count(edges):
+                let edge = edges[edge_index]
+                if (edge.from == origin and edge.to == destination) or (edge.from == destination and edge.to == origin):
+                    let access = dv_read(world, campaign_access(edge.gate))
+                    if dv_uncontested(access):
+                        basis = [campaign_access(edge.gate)]
+                        if access.value == true:
+                            status = "open"
+                            label = "通"
+                        else:
+                            status = "closed"
+                            label = "未开放"
+                edge_index = edge_index + 1
+            let groups = ["contract", "astral", "logistics"]
+            var group_index = 0
+            while group_index < rt_count(groups):
+                let group = groups[group_index]
+                if origin == rt_cat("dorm.", group) or destination == rt_cat("dorm.", group):
+                    let access = dv_read(world, campaign_access(group))
+                    if dv_uncontested(access):
+                        basis = [campaign_access(group)]
+                        if access.value == true:
+                            status = "open"
+                            label = "通"
+                        else:
+                            status = "closed"
+                            label = "未开放"
+                group_index = group_index + 1
+        rt_push(result, dv_with_many(door, {"state": status, "state_label": label, "known": status != "unknown", "state_refs": basis, "state_scope": world.domain}))
+        i = i + 1
+    return result
 
 fn dvg_preview_subject(state, actor, intent):
     let knowledge = dvg_map_knowledge(state, actor.id, intent)
@@ -1128,7 +1258,7 @@ fn dvg_preview_subject(state, actor, intent):
         while i < rt_count(dv_find(intent, "options", [])):
             rt_push(allowed, intent.options[i].id)
             i = i + 1
-    rooms = dvg_preview_sites(rooms, actor, allowed, false)
+    rooms = dvg_preview_sites(rooms, actor, actor.mind, allowed, false)
     let position = dv_read(actor.mind, actor.location_ref)
     var place = {"map": "", "room": "", "label": ""}
     if dv_uncontested(position) and rt_is_text(position.value):
@@ -1136,7 +1266,7 @@ fn dvg_preview_subject(state, actor, intent):
         if room_location != "":
             place = dvg_preview_room(room_location)
             rooms = dvg_preview_add_member(rooms, room_location, {"id": actor.id, "title": dvg_preview_person_name(state, actor.mind, actor.id, actor.location_ref.object, "本人"), "kind": "person", "is_viewer": true})
-    let subjective = {"rooms": rooms, "doors": knowledge.doors}
+    let subjective = {"rooms": rooms, "doors": dvg_preview_doors(actor.mind, knowledge.doors)}
     let snapshot = {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": actor.id, "viewer_title": dvg_preview_person_name(state, actor.mind, actor.id, actor.location_ref.object, "本人"), "map": place.map, "room": place.room, "location_title": place.label, "map_knowledge": subjective, "people": [], "player_control": dv_find(state, "player_actor", "") == actor.id}
     return {"snapshot": snapshot, "subjective": subjective}
 
@@ -1148,10 +1278,11 @@ fn dvg_preview_objective(state, viewer):
     while i < rt_count(places):
         rooms = dvg_preview_add_room(rooms, places[i][0])
         i = i + 1
+    rooms = dvg_preview_members(state, state.physical, viewer, rooms)
     i = 0
     while i < rt_count(state.actors):
         let actor = state.actors[i]
-        rooms = dvg_preview_sites(rooms, actor, [], true)
+        rooms = dvg_preview_sites(rooms, actor, state.physical, [], true)
         var j = 0
         while j < rt_count(actor.actions):
             let action = actor.actions[j]
@@ -1161,8 +1292,7 @@ fn dvg_preview_objective(state, viewer):
                 knowledge = dvg_known_door_add(knowledge, travel.from, travel.to)
             j = j + 1
         i = i + 1
-    rooms = dvg_preview_members(state, state.physical, viewer, rooms)
-    return {"rooms": rooms, "doors": knowledge.doors}
+    return {"rooms": rooms, "doors": dvg_preview_doors(state.physical, knowledge.doors)}
 
 fn dvg_observer_options(state, viewer):
     let actor = state.actors[dvg_dev_actor_index(state, viewer)]
@@ -1188,8 +1318,16 @@ fn dvg_observer_options(state, viewer):
                     opportunity = opportunity + opportunities[j].weight
                     j = j + 1
                 let cost = dv_get(state.costs, action.kind).actual
-                let score = value.value + opportunity * dv_find(actor.policy, "progress_weight", 1) - cost.time * dv_find(actor.policy, "time_cost", 0.01)
-                var option = {"id": action.id, "label": label, "available": true, "kind": action.kind, "interaction": dvg_interaction(action), "cost": cost, "ai_score": score, "score_kind": "immediate", "mind_revision": actor.mind.revision}
+                let information_weight = dv_find(actor.policy, "information_weight", 1)
+                let progress_weight = dv_find(actor.policy, "progress_weight", 1)
+                let time_cost = dv_find(actor.policy, "time_cost", 0.01)
+                let weighted_opportunity = opportunity * progress_weight
+                let time_penalty = cost.time * time_cost
+                let score = value.value + weighted_opportunity - time_penalty
+                // Equal inputs legitimately retain equal scores. Counts describe
+                // owner-known opportunities, never the unseen outcome's truth.
+                let breakdown = {"action_value": value.value, "information": value.information, "verification": value.verification, "progress": value.progress, "achievement": value.achievement, "information_weight": information_weight, "progress_weight": progress_weight, "information_component": value.information * information_weight, "verification_component": value.verification * information_weight, "progress_component": value.progress * progress_weight, "achievement_component": value.achievement * progress_weight, "opportunity": opportunity, "weighted_opportunity": weighted_opportunity, "time_cost": time_cost, "time_penalty": time_penalty, "computation_penalty": 0, "stamina_penalty": 0, "total": score, "opportunities": opportunities, "value_details": value, "scope": "subject-current-immediate", "formula": "action_value + weighted_opportunity - time_penalty"}
+                var option = {"id": action.id, "label": label, "available": true, "kind": action.kind, "interaction": dvg_interaction(action), "cost": cost, "ai_score": score, "score_kind": "immediate", "score_breakdown": breakdown, "mind_revision": actor.mind.revision}
                 if action.kind == "replay":
                     option = dv_with(option, "replay_input", dvg_manual_replay_input(actor, action))
                 rt_push(result, option)

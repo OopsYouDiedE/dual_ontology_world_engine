@@ -43,15 +43,22 @@ public sealed partial class DvSession
         state = R.record_with(R.record_with(value, "story", story), "audit_mode", audit);
         if (HasPending(state)) throw new InvalidDataException("A restorable session must be saved at a committed action boundary.");
         lastCommittedState = R.snapshot(state);
+        performance.Configure(audit, developer, R.Text(Field(state, "player_actor", "")),
+            R.Items(Field(state, "actors", new List<object>())).Count, PerformanceGameMinute());
     }
 
     private object Run(Func<object> operation, bool speculative = false)
     {
         using var scope = R.UseAudit(audit);
-        using var phases = R.UsePhases(speculative ? null : PhaseObserver);
+        using var phases = R.UsePhases((stage, actor) =>
+        {
+            ObservePerformancePhase(stage, actor);
+            if (!speculative) PhaseObserver?.Invoke(stage, actor);
+        });
         using var recording = R.UseRawRecording(!speculative);
         using var output = R.UseOutput(speculative ? TextWriter.Null : DiagnosticOutput);
-        return operation();
+        try { return operation(); }
+        catch { performance.RecordFailure(); throw; }
     }
     private static object Field(object value, string name, object fallback) => R.record_find(value, name, fallback);
     private static bool HasPending(object value) => Field(value, "pending", false) is not false;
@@ -71,28 +78,31 @@ public sealed partial class DvSession
         if (!HasPending(state)) lastCommittedState = R.snapshot(state);
     }
 
-    public static DvSession OpenCampaign(string player = "") => new(DVProgram.SetPlayer(DVProgram.CampaignOpen(), player));
+    public static DvSession OpenCampaign(string player = "") =>
+        OpenMeasured("open-campaign", () => new DvSession(DVProgram.SetPlayer(DVProgram.CampaignOpen(), player)));
     public static DvSession OpenConfiguredCampaign(string options) => OpenConfiguredCampaign(options, Console.Error);
-    public static DvSession OpenConfiguredCampaign(string options, TextWriter diagnosticOutput)
-    {
-        var configuration = HostValues.Parse(options);
-        var auditMode = R.Bool(Field(configuration, "audit", false));
-        var developerMode = R.Bool(Field(configuration, "developer", false));
-        using var scope = R.UseAudit(auditMode);
-        using var output = R.UseOutput(diagnosticOutput);
-        return new(DVProgram.HostOpen(configuration), auditMode, developerMode) { DiagnosticOutput = diagnosticOutput };
-    }
-    public static DvSession Open(string scenario) => new(DVProgram.SessionOpen(HostValues.Parse(scenario)));
-    public static DvSession Restore(string snapshot)
+    public static DvSession OpenConfiguredCampaign(string options, TextWriter diagnosticOutput) =>
+        OpenMeasured("open-configured", () =>
+        {
+            var configuration = HostValues.Parse(options);
+            var auditMode = R.Bool(Field(configuration, "audit", false));
+            var developerMode = R.Bool(Field(configuration, "developer", false));
+            using var scope = R.UseAudit(auditMode);
+            using var output = R.UseOutput(diagnosticOutput);
+            return new DvSession(DVProgram.HostOpen(configuration), auditMode, developerMode) { DiagnosticOutput = diagnosticOutput };
+        });
+    public static DvSession Open(string scenario) =>
+        OpenMeasured("open-scenario", () => new DvSession(DVProgram.SessionOpen(HostValues.Parse(scenario))));
+    public static DvSession Restore(string snapshot) => OpenMeasured("restore-value", () =>
     {
         var value = HostValues.Parse(snapshot);
-        return new(value, R.Bool(Field(value, "audit_mode", true)));
-    }
-    public static DvSession RestoreFile(string path)
+        return new DvSession(value, R.Bool(Field(value, "audit_mode", true)));
+    });
+    public static DvSession RestoreFile(string path) => OpenMeasured("restore-file", () =>
     {
         var value = R.ReadEvidenceFile(path);
-        return new(value, R.Bool(Field(value, "audit_mode", true)));
-    }
+        return new DvSession(value, R.Bool(Field(value, "audit_mode", true)));
+    });
 
     public string Viewer => R.Text(Run(() => DVProgram.HostViewer(state)));
     public bool Active => !IsClosed && R.Bool(Run(() => DVProgram.SessionActive(state)));
@@ -101,6 +111,7 @@ public sealed partial class DvSession
     private object IntentProjection()
     {
         if (intentProjection is not null) return intentProjection;
+        using var performanceScope = Measure("intent", "projection");
         PhaseObserver?.Invoke("intent_projection_begin", "");
         intentProjection = R.snapshot(Run(() => DVProgram.SessionIntent(state)));
         PhaseObserver?.Invoke("intent_projection_end", "");
@@ -110,6 +121,7 @@ public sealed partial class DvSession
     public IReadOnlyDictionary<string, object?> PrepareValue(string selection = "")
     {
         if (selection.Length == 0 && (HasPending(state) || R.Bool(Field(state, "awaiting_player", false)))) return Intent;
+        using var performanceScope = Measure("prepare");
         BeginTransition();
         if (selection.Length > 0)
             state = Run(() => DVProgram.SelectPlayer(state, SelectionValue(selection)));
@@ -123,6 +135,7 @@ public sealed partial class DvSession
     public IReadOnlyDictionary<string, object?> PrepareBackgroundValue()
     {
         if (IsClosed || HasPending(state) || !R.Bool(Field(state, "awaiting_player", false))) return Intent;
+        using var performanceScope = Measure("background-prepare");
         var advanced = Run(() => DVProgram.PrepareBackground(state, Viewer));
         if (!ReferenceEquals(advanced, state))
         {
@@ -136,6 +149,7 @@ public sealed partial class DvSession
     public PreparedPreview PrepareAhead(string selection)
     {
         if (preview is { } saved && saved.Public.BaseVersion == Version && saved.Public.Selection == selection) return saved.Public;
+        using var performanceScope = Measure("prepare-ahead", "speculation");
         if (HasPending(state) || !R.Bool(Field(state, "awaiting_player", false)))
             throw new InvalidOperationException("PrepareAhead requires the current player's input boundary.");
         var firstEvent = Events(state).Count;
@@ -151,6 +165,7 @@ public sealed partial class DvSession
     {
         intent = HostValues.Empty;
         if (preview is not { } candidate || candidate.Public.Token != token || candidate.Public.BaseVersion != Version || IsClosed) return false;
+        using var performanceScope = Measure("adopt-prepared");
         BeginTransition();
         state = R.copy_value(candidate.State);
         using (R.UseAudit(audit))
@@ -168,6 +183,7 @@ public sealed partial class DvSession
     public IReadOnlyDictionary<string, object?> CompleteValue(IReadOnlyDictionary<string, object?> receipt, string viewer) => CompleteDv(HostValues.ToDv(receipt), viewer);
     private IReadOnlyDictionary<string, object?> CompleteDv(object receipt, string viewer)
     {
+        using var performanceScope = Measure("complete");
         var pending = Field(state, "pending", false);
         var action = Field(pending, "action", new List<object>());
         var actionEvent = R.Text(Field(pending, "action_event", ""));
@@ -177,7 +193,9 @@ public sealed partial class DvSession
         BeginTransition();
         state = Run(() => DVProgram.SessionComplete(state, receipt));
         RememberCommitted();
-        var projected = Run(() => DVProgram.SessionPresentation(state, viewer));
+        object projected;
+        using (Measure("presentation", "projection"))
+            projected = Run(() => DVProgram.SessionPresentation(state, viewer));
         var presentation = new Dictionary<string, object?>(HostValues.Record(projected), StringComparer.Ordinal);
         var outcome = "";
         var events = Events(state);
@@ -190,6 +208,7 @@ public sealed partial class DvSession
             outcome = R.Text(Field(Field(result, "execution", new List<object>()), "status", ""));
             break;
         }
+        performance.RecordOutcome(outcome);
         presentation["outcome"] = outcome;
         presentation["action_event"] = actionEvent;
         presentation["completed_actor"] = actor;
@@ -226,6 +245,7 @@ public sealed partial class DvSession
     {
         if (!viewers.TryGetValue(viewer, out var cache)) viewers[viewer] = cache = new();
         if (cache.Version == Version) return cache;
+        using var performanceScope = Measure("host-snapshot", "projection");
         PhaseObserver?.Invoke("snapshot_projection_begin", viewer);
         var dynamic = RawFields(Run(() => DVProgram.DynamicSnapshot(state, viewer, IntentProjection())));
         var map = (string)dynamic["map"];
@@ -253,6 +273,7 @@ public sealed partial class DvSession
     public string Snapshot(string viewer) => JsonSerializer.Serialize(Materialize(viewer));
     public HostStateDelta Project(string viewer, bool forceFull = false)
     {
+        using var performanceScope = Measure("host-delta", "projection");
         var cache = Projection(viewer);
         var reset = forceFull || cache.DeliveredVersion < 0 || cache.DeliveredMap != cache.Map;
         var changed = new Dictionary<string, object?>(StringComparer.Ordinal);
@@ -270,6 +291,7 @@ public sealed partial class DvSession
     {
         if (actor == Viewer) return Materialize(actor);
         if (executors.TryGetValue(actor, out var found) && found.Version == Version) return found.Value;
+        using var performanceScope = Measure("executor-snapshot", "projection");
         var value = HostValues.Record(Run(() => DVProgram.ExecutorSnapshot(state, actor, IntentProjection())));
         executors[actor] = (Version, value);
         return value;
@@ -277,6 +299,7 @@ public sealed partial class DvSession
 
     public IReadOnlyDictionary<string, object?> TextStatus()
     {
+        using var performanceScope = Measure("text-status", "projection");
         var viewer = Viewer;
         var snapshot = Materialize(viewer);
         var room = HostValues.Text(snapshot, "room");
@@ -313,6 +336,7 @@ public sealed partial class DvSession
     public IReadOnlyDictionary<string, object?> Inspect(string actor)
     {
         if (!DevMode) throw new InvalidOperationException("Inspect requires a development session (--dv-dev / --dev).");
+        using var performanceScope = Measure("inspect", "projection");
         var selected = R.Items(Field(state, "actors", new List<object>())).First(item => R.Text(Field(item, "id", "")) == actor);
         var details = new Dictionary<string, object?>
         {
@@ -344,6 +368,7 @@ public sealed partial class DvSession
     {
         if (!DevMode) throw new InvalidOperationException("Development commands require --dv-dev / --dev.");
         if (HasPending(state)) throw new InvalidOperationException("Finish the current action before a development command.");
+        using var performanceScope = Measure("development", "development");
         BeginTransition();
         state = Run(() => DVProgram.DevelopmentCommand(state, command, argument));
         RememberCommitted();
@@ -351,17 +376,37 @@ public sealed partial class DvSession
     }
 
     private object DurableState() => R.record_with(lastCommittedState, "audit_mode", audit);
-    public string Save() => JsonSerializer.Serialize(DurableState(), SnapshotOptions);
-    public void WriteSave(string path) => R.WriteEvidenceFile(path, DurableState());
+    public string Save()
+    {
+        using var performanceScope = Measure("save-json", "persistence");
+        try { return JsonSerializer.Serialize(DurableState(), SnapshotOptions); }
+        catch { performance.RecordFailure(); throw; }
+    }
+    public void WriteSave(string path)
+    {
+        using var performanceScope = Measure("save", "persistence");
+        try { R.WriteEvidenceFile(path, DurableState()); }
+        catch { performance.RecordFailure(); throw; }
+    }
     public void Close()
     {
         if (IsClosed) return;
+        using var performanceScope = Measure("close", "persistence");
         CancelPrepared();
         closedTrace = R.snapshot(Run(() => DVProgram.SessionClose(state)));
     }
     private object TraceValue() => closedTrace ?? R.snapshot(Run(() => DVProgram.TraceSnapshot(state)));
-    public string Trace() => JsonSerializer.Serialize(RecordedTraceValue(), SnapshotOptions);
-    public void WriteTrace(string path) => R.WriteEvidenceFile(path, RecordedTraceValue());
+    public string Trace()
+    {
+        using var performanceScope = Measure("trace-json", "persistence");
+        return JsonSerializer.Serialize(RecordedTraceValue(), SnapshotOptions);
+    }
+    public void WriteTrace(string path)
+    {
+        using var performanceScope = Measure("trace", "persistence");
+        try { R.WriteEvidenceFile(path, RecordedTraceValue()); }
+        catch { performance.RecordFailure(); throw; }
+    }
 
     private static readonly JsonSerializerOptions SnapshotOptions = new()
     {

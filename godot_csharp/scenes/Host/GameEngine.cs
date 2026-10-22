@@ -118,6 +118,10 @@ public partial class GameEngine : Node
     }
 
     public GDict Snapshot() => snapshotCache.Duplicate(false);
+    public GDict PerformanceSummary() => session is { } current
+        ? GodotHostValues.Dictionary(current.PerformanceSummary()) : new();
+    public GDict PerformanceSnapshot() => session is { } current
+        ? GodotHostValues.Dictionary(current.PerformanceSnapshot()) : new();
 
     // Read the same completed host projection; never traverse a worker-owned DV state.
     public string ReadMilestoneProgressJson() => snapshotJson;
@@ -495,13 +499,22 @@ public partial class GameEngine : Node
         }
         finally
         {
+            if (ownsDirectory && path is not null && session is { } measured)
+            {
+                try { await Task.Run(() => measured.WritePerformanceReport(Path.Combine(path, "engine-performance"))); }
+                catch (Exception error)
+                {
+                    GD.PushError(error.ToString());
+                    errors.Add(new { phase = "performance-report", error = error.ToString() });
+                }
+            }
             try
             {
                 if (ownsDirectory && path is not null)
                 {
                     using var result = new FileStream(Path.Combine(path, "close-result.dvlog"), FileMode.CreateNew, System.IO.FileAccess.Write);
                     result.Write(DuelView.Compiled.BinaryEvidence.Magic);
-                    var closeRecord = System.Text.Json.JsonSerializer.SerializeToElement(new { complete = errors.Count == 0, audit_mode = session?.AuditMode, trace_policy = session?.AuditMode == true ? "full" : "omitted-gameplay", session_opened = session is not null, unprocessed_commands = commands.Count, pending_action = pendingEvent, timing_policy = "bounded-ring", timing_capacity = TimingCapacity, timing_dropped = timingDropped, live_timing_dropped = liveTimingDropped, errors });
+                    var closeRecord = System.Text.Json.JsonSerializer.SerializeToElement(new { complete = errors.Count == 0, audit_mode = session?.AuditMode, trace_policy = session?.AuditMode == true ? "full" : "omitted-gameplay", session_opened = session is not null, unprocessed_commands = commands.Count, pending_action = pendingEvent, performance_policy = "always-on-session-aggregates-and-bounded-tail", performance_prefix = "engine-performance", timing_policy = "bounded-ring", timing_capacity = TimingCapacity, timing_dropped = timingDropped, live_timing_dropped = liveTimingDropped, errors });
                     DuelView.Compiled.BinaryEvidence.WriteFrame(result, closeRecord);
                 }
             }

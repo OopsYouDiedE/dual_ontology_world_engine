@@ -107,7 +107,13 @@ fn c2_can_act(actor):
     return dv_all([c2_alive(actor), dv_fact(campaign_own(actor, "in_coma"), false), dv_fact(campaign_own(actor, "stone_stupor"), false)])
 
 fn c2_object(id, room, fields):
-    return dv_with(campaign_state_object(id, fields), "location", room)
+    var state = fields
+    if room != "" and not dv_has_key(state, "location"):
+        state = dv_with(state, "location", dv_field(room))
+    let descriptor = campaign_object_descriptor(id)
+    if descriptor.map_kind == "object" and not dv_has_key(state, "name"):
+        state = dv_with(state, "name", dv_field(descriptor.map_title))
+    return dv_with(campaign_state_object(id, state), "location", room)
 
 fn c2_initial_body(actor):
     var fields = {"alive": dv_field(true), "dead": dv_field(false), "stone_stupor": dv_field(false), "exiled": dv_field(false), "rations": dv_field(0), "consumed": dv_field(0), "hungry": dv_field(false), "owe_notes": dv_field(0), "pending_notes": dv_field(0), "busy_care": dv_field(false), "station": dv_field(""), "guard_commitment": dv_field(false), "guard_response_ready": dv_unknown(), "repair_requested": dv_field(false), "watched": dv_field(false), "night_taken": dv_field(false), "exposure_terminal": dv_unknown(), "reason_committed": dv_field(false), "norm_conflict_driven": dv_field(false), "fever": dv_unknown(), "day_sketch_exposed": dv_field(false), "evening_sketch_exposed": dv_field(false), "evening_sketch_completed": dv_field(false), "anti_erosion_treated": dv_field(false), "anti_erosion_carried": dv_field(false), "erosion_exposure": dv_field(0), "restriction_withdrawn": dv_field(false), "guard_active": dv_field(false), "support_active": dv_field(false), "in_coma": dv_field(false), "sketch_lured": dv_field(false), "rescue_exposed": dv_field(false), "seal_present": dv_field(actor == "ward"), "carrying": dv_field(""), "carried_by": dv_field("")}
@@ -236,8 +242,7 @@ axiom c2_move_law(actor, origin, target, gate):
     return dv_axiom("c2_move_law", 1, dv_all(conditions), effects)
 
 fn c2_place_label(place):
-    let names = {"living_hall": "起居厅", "central_hall": "中央厅", "lecture": "讲堂", "logistics": "后勤院", "clinic": "诊疗室", "greenhouse": "温室", "document_workshop": "文献工房", "resonance_hall": "共鸣厅", "quiet_room": "沉静室", "white_tower_safe": "白塔安全端", "washroom": "盥洗室", "oath_court": "誓约庭", "outdoor_meter": "户外仪器阵", "outdoor_high": "户外高地", "outdoor_alley": "户外小径", "dorm.contract": "甲区寝室", "dorm.astral": "丙区寝室", "dorm.logistics": "丁区寝室", "threshold.contract": "甲区门外", "threshold.astral": "丙区门外", "threshold.logistics": "丁区门外", "hall": "乙区大厅", "foyer": "乙区门厅", "corridor": "乙区走廊", "pantry": "备餐间"}
-    return dv_find(names, place, place)
+    return campaign_location_title(place)
 
 fn c2_move_action(actor, origin, target, gate):
     let id = rt_cat(actor, rt_cat(".c2.move.", rt_cat(origin, rt_cat(".", target))))
@@ -284,7 +289,17 @@ fn c2_inspect_action(actor, object, room, fields, label, text, source):
     while i < rt_count(fields):
         rt_push(grants, campaign_ref(object, fields[i]))
         i = i + 1
-    return dv_with_many(campaign_surface_action(rt_cat(actor, rt_cat(".c2.inspect.", object)), "inspect", campaign_at(actor, room), campaign_at(actor, room), "", grants, label, text, source), {"repeatable": true, "presentation": c2_inspection_presentation(actor, object, fields), "required_room": room})
+    let descriptor = campaign_object_descriptor(object)
+    if descriptor.map_kind == "object":
+        rt_push(grants, campaign_ref(object, "name"))
+        rt_push(grants, campaign_ref(object, "location"))
+    var intent_label = label
+    if dv_has(["核对现场操作与证据", "检视现场实物与痕迹"], label) and descriptor.map_title != "":
+        intent_label = rt_cat(label, rt_cat("：", descriptor.map_title))
+    var action = dv_with_many(campaign_surface_action(rt_cat(actor, rt_cat(".c2.inspect.", object)), "inspect", campaign_at(actor, room), campaign_at(actor, room), "", grants, intent_label, text, source), {"repeatable": true, "presentation": c2_inspection_presentation(actor, object, fields), "required_room": room})
+    if descriptor.map_kind == "object":
+        action = dv_with(action, "interaction", {"kind": "site", "site": object})
+    return action
 
 fn c2_visible_line(when, template, bindings, source):
     return {"when": when, "template": template, "bindings": bindings, "source": source}
