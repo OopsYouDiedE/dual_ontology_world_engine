@@ -42,3 +42,6 @@ run_debug 的新增优化开关默认 on；mask/dirty verify 默认 off，仅作
 
 run_debug显式将opt_plancache/opt_declcache分别写入DV_OPT_PLANCACHE/DV_OPT_DECLCACHE；完整run_config与runtime_environment继续留证。两者控制核心显式缓存组，不禁用全局memo，不代替各自dirty/replaycache等开关。
 evidence-index 的二进制读取可使用游标解码及精确固定形状节点封包快路；快路必须逐字节核对全部固定标签、长度、键与顺序，变量仍完整解码，异常回退参照解码器。通用格式、损坏格式、整数/浮点/UTF-8/重复键/深度与提交校验不得因快路省略。关闭开关使用原解码器；stdout 投影优化也由相同开关回退。
+
+
+统一FLAGS含taskgraph/storyflow/stateindex三项，均默认on并参与全关/独立消融。run_debug明确设置DV_OPT_STATEINDEX并留证，65核对实际环境与配置。compiled-program v2运行时捕获合同同时要求runtimespeed/stateindex；新增开关不能静默忽略。策略近似与内容重写边界见../docs/cli-optimization.md。

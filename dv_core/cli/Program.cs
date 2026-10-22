@@ -173,6 +173,14 @@ internal sealed class Cli
                 case "--profile": campaign["profile"] = Value(); break;
                 case "--zone": campaign["detective_zone"] = Value(); break;
                 case "--seed": campaign["seed"] = int.Parse(Value(), CultureInfo.InvariantCulture); break;
+                case "--opt-taskgraph": case "--opt-storyflow": case "--opt-stateindex":
+                    var optimization = args[i][6..];
+                    campaign["opt_" + optimization] = Value().ToLowerInvariant() switch
+                    {
+                        "on" => true, "off" => false,
+                        _ => throw new ArgumentException("--opt-" + optimization + " must be on or off.")
+                    };
+                    break;
                 case "--planning":
                     campaign["selective_planning"] = Value().ToLowerInvariant() switch
                     {
@@ -183,6 +191,14 @@ internal sealed class Cli
                 default: throw new ArgumentException($"Unknown argument: {args[i]}");
             }
         }
+        if (restore is not null && campaign.Keys.Any(key => key is "opt_taskgraph" or "opt_storyflow"))
+            throw new ArgumentException("Restored sessions retain saved taskgraph/storyflow policies; these switches require a new session.");
+        if (replayPath is not null && campaign.Keys.Any(key => key is "opt_taskgraph" or "opt_storyflow" or "opt_stateindex"))
+            throw new ArgumentException("Optimization switches configure live sessions, not recorded replay.");
+        if (campaign.TryGetValue("opt_stateindex", out var stateIndex))
+            Environment.SetEnvironmentVariable("DV_OPT_STATEINDEX", stateIndex is false ? "0" : "1");
+        else if (replayPath is null && restore is null)
+            Environment.SetEnvironmentVariable("DV_OPT_STATEINDEX", "1");
         if (interactiveReplay && replayPath is null) throw new ArgumentException("--interactive: --replay");
         if (jsonLines && tui) throw new ArgumentException("--jsonl and --tui are separate output modes.");
         if (controller is not ("player" or "human" or "llm" or "ai"))
@@ -1466,6 +1482,7 @@ DV Core CLI
   --export-ui NEW.svg --command COMMAND
   --controller player|human|llm|ai --viewer ID --profile NAME --zone ID --seed N
   --planning selective|precise
+  --opt-taskgraph on|off  --opt-storyflow on|off  --opt-stateindex on|off (default on)
   --dev --audit --restore FILE --save FILE --trace FILE
   --scores | --no-scores
   --performance NEW_PREFIX

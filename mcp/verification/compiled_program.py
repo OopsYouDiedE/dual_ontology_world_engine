@@ -24,7 +24,8 @@ def compiler_fingerprint():
     return result.hexdigest()
 
 
-RUNTIME_CONTRACT = {'opt_runtimespeed': 'DV_OPT_RUNTIMESPEED; 1=on, 0=off; same compiled binary'}
+RUNTIME_CONTRACT = {name: env + '; 1=on, 0=off; same compiled binary' for name, env in
+                    (('opt_runtimespeed', 'DV_OPT_RUNTIMESPEED'), ('opt_stateindex', 'DV_OPT_STATEINDEX'))}
 SCHEMA = 'dv-compiled-program-v2'
 BINARY_ROOT = 'bin/Release/net8.0/'
 REQUIRED_BINARIES = {BINARY_ROOT + name for name in
@@ -69,7 +70,8 @@ def verify(program, compiled, hashes, instrumented, normalized, compiler_id, ent
         raise ValueError('Reusable program schema/source fingerprints differ')
     runtime_config = compiled.get('runtime_config_at_capture')
     if (compiled.get('runtime_switch_contract') != RUNTIME_CONTRACT or not isinstance(runtime_config, dict) or
-            set(runtime_config) != {'opt_runtimespeed'} or type(runtime_config['opt_runtimespeed']) is not bool):
+            set(runtime_config) != set(RUNTIME_CONTRACT) or
+            any(type(runtime_config[key]) is not bool for key in RUNTIME_CONTRACT)):
         raise ValueError('Reusable program runtime-switch metadata differs')
     if compiled.get('entry_kind') != entry_kind:
         raise ValueError('Reusable program entry point differs')
@@ -94,7 +96,7 @@ def verify(program, compiled, hashes, instrumented, normalized, compiler_id, ent
 
 
 def capture(program, hashes, instrumented, normalized, compiler_id, entry_kind='fresh-debug', runtime_config=None):
-    runtime_config = {'opt_runtimespeed': True} if runtime_config is None else runtime_config
+    runtime_config = {key: True for key in RUNTIME_CONTRACT} if runtime_config is None else runtime_config
     value = {'runtime_switch_contract': RUNTIME_CONTRACT, 'runtime_config_at_capture': runtime_config,
              'schema': SCHEMA, 'source_hashes': hashes, 'instrumented': instrumented, 'entry_kind': entry_kind,
              'binaries': files(program, True), 'program_sources': files(program, False)}

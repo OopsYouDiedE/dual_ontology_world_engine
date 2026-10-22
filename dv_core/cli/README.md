@@ -148,3 +148,6 @@ python mcp/verification/render_terminal_export.py --console-log artifacts/cli-ai
 ```
 
 这条命令只读取已有日志。非 Windows 环境使用 `--font` 指定中文字体；新运行器的自动失败采集可用 `--failure-font` 指定。CLI 的 JSONL 错误保留 `kind=error`、实际 `message`，并提供 `stage`、`error_type`；stderr 同时显示中文阶段与原错误。仅解开反射调用包装，不查询人物或世界私有状态，不补猜异常中未提供的实例标识。
+
+
+原生CLI支持`--opt-taskgraph on|off`、`--opt-storyflow on|off`和`--opt-stateindex on|off`，默认on。新会话将配置交给60及独立运行时上下文；恢复保留taskgraph/storyflow政策，显式覆盖两项会报错；stateindex可显式设置运行环境，但必须匹配存档配置，否则拒绝恢复。taskgraph是本人任务策略近似，storyflow是内容重写，stateindex是存储优化；参见[CLI优化合同](../../docs/cli-optimization.md)。

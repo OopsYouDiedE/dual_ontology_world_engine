@@ -43,6 +43,9 @@ public sealed partial class DvSession
         using var valuesScope = R.UseValues(valueContext);
         audit = auditMode;
         var story = R.record_find(value, "story", new List<object>());
+        var runConfiguration = Field(story, "run_config", new List<object>());
+        if (R.Bool(Field(runConfiguration, "opt_stateindex", true)) != R.Bool(R.stateindex_enabled()))
+            throw new InvalidDataException("State-index runtime differs from saved/configured policy; set --opt-stateindex (or DV_OPT_STATEINDEX) to the recorded value.");
         developer = developerMode ?? R.Bool(R.record_find(story, "development_mode", false));
         story = R.record_with(story, "development_mode", developer);
         state = R.record_with(R.record_with(value, "story", story), "audit_mode", audit);

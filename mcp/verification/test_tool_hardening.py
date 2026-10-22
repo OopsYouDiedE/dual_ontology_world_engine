@@ -146,9 +146,10 @@ class FiniteTools(unittest.TestCase):
         target = self.root / 'new' / 'program'
         compiled.copy_verified(source, target, hashes, False, normalized, 'compiler')
         self.assertEqual(compiled.files(target, True), value['binaries'])
-        off = compiled.capture(target, hashes, False, normalized, 'compiler', runtime_config={'opt_runtimespeed': False})
+        off = compiled.capture(target, hashes, False, normalized, 'compiler', runtime_config={'opt_runtimespeed': False, 'opt_stateindex': False})
         self.assertEqual(off['binaries'], value['binaries'])
         self.assertFalse(off['runtime_config_at_capture']['opt_runtimespeed'])
+        self.assertFalse(off['runtime_config_at_capture']['opt_stateindex'])
         original = compiled.shutil.copy2
         def corrupt(src, dst):
             result = original(src, dst)

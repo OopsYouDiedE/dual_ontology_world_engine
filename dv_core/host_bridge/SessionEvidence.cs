@@ -40,6 +40,11 @@ public sealed partial class DvSession
             ["assembly_mvid"] = typeof(DVProgram).Assembly.ManifestModule.ModuleVersionId.ToString(),
             ["runtime"] = Environment.Version.ToString(), ["audit"] = audit, ["development"] = developer,
             ["selective_planning"] = selective,
+            ["opt_taskgraph"] = R.Bool(Field(configuration, "opt_taskgraph", true)),
+            ["opt_storyflow"] = R.Bool(Field(configuration, "opt_storyflow", true)),
+            ["opt_stateindex"] = R.Bool(Field(configuration, "opt_stateindex", true)),
+            ["taskgraph_semantics"] = "owner-policy approximation; not exhaustive",
+            ["storyflow_semantics"] = "content-policy rewrite; similar intended effects, not trace equivalence",
             ["planning_mode"] = selective ? "selective-task-v1" : "full-declared",
             ["planning_mode_approximation"] = selective,
             ["planning_search_scope"] = selective ? "user-authorized approximation; not exhaustive" : "declared policy and budget; completeness follows recorded stop and proof"

@@ -155,7 +155,8 @@ def causal_check(out, result, source_hashes, normalized, env, timeout, causal_in
             raise ValueError('Causal checker inputs differ from the source frozen before the session')
         compiled = capture_program(work, source_hashes, False, normalized, compiler_id,
                                    entry_kind='causal-check-70',
-                                   runtime_config={'opt_runtimespeed': env.get('DV_OPT_RUNTIMESPEED', '1') != '0'})
+                                   runtime_config={'opt_runtimespeed': env.get('DV_OPT_RUNTIMESPEED', '1') != '0',
+                                                   'opt_stateindex': env.get('DV_OPT_STATEINDEX', '1') != '0'})
         manifest_target = out / 'compiled-causal-program.json'
         pending = manifest_target.with_suffix('.json.partial')
         pending.write_text(json.dumps(compiled, indent=2), encoding='utf-8')
@@ -547,7 +548,7 @@ def _main():
                            'opt_causalbuildcache': args.opt_causalbuildcache == 'on',
                            'timeout_seconds': args.causal_timeout,
                            'opt_evidence_index': args.opt_evidence_index == 'on'}
-    provenance = {'format': 'dv-debug-provenance-v1', 'source_hashes': hashes, 'source_manifest_sha256': sha_file(out / 'source-hashes.json'), 'run_config': run_config, 'instrumented': args.profile, 'runtime_config': {'opt_runtimespeed': args.opt_runtimespeed == 'on'}, 'verification_config': verification_config,
+    provenance = {'format': 'dv-debug-provenance-v1', 'source_hashes': hashes, 'source_manifest_sha256': sha_file(out / 'source-hashes.json'), 'run_config': run_config, 'instrumented': args.profile, 'runtime_config': {'opt_runtimespeed': run_config['opt_runtimespeed'], 'opt_stateindex': run_config['opt_stateindex']}, 'verification_config': verification_config,
                   'verification_config_sha256': hashlib.sha256(json.dumps(verification_config, sort_keys=True).encode('utf-8')).hexdigest()}
     provenance_path = out / 'run-provenance.dv.json'
     provenance_path.write_text(json.dumps(dv_record(provenance), ensure_ascii=True), encoding='utf-8')
@@ -605,10 +606,11 @@ def _main():
         return 1
     compiled = capture_program(build, hashes, args.profile, normalized, compiler_fingerprint(),
                                entry_kind='checkpoint-resume' if resume_bundle else 'fresh-debug',
-                               runtime_config={'opt_runtimespeed': args.opt_runtimespeed == 'on'})
+                               runtime_config={'opt_runtimespeed': run_config['opt_runtimespeed'], 'opt_stateindex': run_config['opt_stateindex']})
     (out / 'compiled-program.json').write_text(json.dumps(compiled, indent=2), encoding='utf-8')
     execution_env = env.copy()
-    execution_env['DV_OPT_RUNTIMESPEED'] = '1' if args.opt_runtimespeed == 'on' else '0'
+    execution_env['DV_OPT_RUNTIMESPEED'] = '1' if run_config['opt_runtimespeed'] else '0'
+    execution_env['DV_OPT_STATEINDEX'] = '1' if run_config['opt_stateindex'] else '0'
     for name in ('cow', 'mask', 'lazyinternal', 'mask_verify'):
         execution_env['DV_OPT_' + name.upper()] = '1' if run_config.get('opt_' + name, False) else '0'
     execution_env['DV_OPT_APPENDSHARE'] = '1' if run_config.get('opt_appendshare', False) else '0'
@@ -631,8 +633,9 @@ def _main():
     start = time.monotonic()
     trace_name = 'raw-events.dvdag'
     result = {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'detective_profile': args.detective_profile, 'detective_zone': args.detective_zone, 'raw_format': args.raw_format, 'build_elapsed_seconds': build_elapsed, 'build_stages': build_stages, 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.upper().startswith(('DOTNET_GC', 'DOTNET_TIERED', 'COMPLUS_TIERED', 'DV_OPT_'))}}
-    result['runtime_config'] = {'opt_runtimespeed': args.opt_runtimespeed == 'on'}
-    result['runtime_config_matches'] = ((execution_env['DV_OPT_RUNTIMESPEED'] == '1') == run_config['opt_runtimespeed'])
+    result['runtime_config'] = {'opt_runtimespeed': run_config['opt_runtimespeed'], 'opt_stateindex': run_config['opt_stateindex']}
+    result['runtime_config_matches'] = all((execution_env['DV_OPT_' + name.upper()] == '1') == run_config['opt_' + name]
+                                           for name in ('runtimespeed', 'stateindex'))
     result['projection_every'] = args.projection_every
     result['resumed'] = resume_bundle is not None
     result['restore_input_hashes'] = restore_input_hashes

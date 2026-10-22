@@ -259,6 +259,7 @@ fn dvg_debug_run():
     if 11 < rt_arg_count() and rt_arg(11) != "":
         run_config = rt_json_parse(rt_arg(11))
     run_config = dvg_run_config(run_config)
+    dv_require(run_config.opt_stateindex == rt_stateindex_enabled(), "State-index runtime environment differs from run configuration")
     var state = dvg_open_config(run_config)
     state = dvs_owned_state_update(state, {"story": dv_with(state.story, "debug_phase_progress", dv_find(config, "phase_progress", false))})
     if raw_format == "dag":
@@ -270,6 +271,7 @@ fn dvg_debug_resume(checkpoint):
     dv_require(checkpoint.format == "dv-debug-stage-v1" and checkpoint.after_complete == true, "Unsupported or uncompleted checkpoint")
     dv_require(rt_arg(3) == "dag", "Restored runs require online raw DAG")
     dv_require(dv_same(checkpoint.run_config, checkpoint.state.story.run_config), "Checkpoint configuration differs from saved session")
+    dv_require(checkpoint.run_config.opt_stateindex == rt_stateindex_enabled(), "Restored state-index runtime differs from saved configuration")
     dv_require(dv_find(checkpoint.state, "pending", false) == false, "Checkpoint still awaits a completion receipt")
     let current_provenance = rt_json_parse(rt_read(rt_arg(9)))
     dv_require(dv_same(checkpoint.provenance.source_hashes, current_provenance.source_hashes), "Restore source fingerprints differ")

@@ -166,9 +166,9 @@ readview 还可复用条件读取输入已经存在的有效不可变 Backbone�
 
 ### 2026-10-23 工具来源与串行矩阵
 
-`--reuse-program` 只接受 `dv-compiled-program-v2`：完整编译器/seed源码集合、生成源与工程文件、完整Release/net8.0二进制集合、必需Program.dll/deps/runtimeconfig、插桩标志、编译器身份和fresh/resume入口均须一致；复制后对目标重验。不对旧v1清单补写证明。运行时开关捕获配置与环境合同写入清单；runtimespeed on/off可共用同一二进制，实际run_config和DV_OPT_RUNTIMESPEED分别核对留证。
+`--reuse-program` 只接受 `dv-compiled-program-v2`：完整编译器/seed源码集合、生成源与工程文件、完整Release/net8.0二进制集合、必需Program.dll/deps/runtimeconfig、插桩标志、编译器身份和fresh/resume入口均须一致；复制后对目标重验。不对旧v1清单补写证明。运行时开关捕获配置与环境合同写入清单；runtimespeed on/off可共用同一二进制，实际run_config和DV_OPT_RUNTIMESPEED分别核对留证。新增stateindex同样支持同一程序集切换，并在复用元数据中要求独立布尔捕获项。
 
-`diagnostics/aggressive-matrix` 默认 `--timeout 300`，这只设置会话进程窗口，不自行授权运行。baseline保持selective on并将统一FLAGS全部置off；原16项加replaycache、runtimespeed共18项，消融使用同一名单。`--mode precise-baseline` 另外关闭selective，使用precise-*目录并明确不是同一策略基线。离线causal窗口、外层launcher窗口和清理等待分别配置。构建、会话、后处理、实际命令墙钟及含清理的场景墙钟分列；180秒目标仅指会话执行，不代表总命令耗时。
+`diagnostics/aggressive-matrix` 默认 `--timeout 300`，这只设置会话进程窗口，不自行授权运行。baseline保持selective on并将统一FLAGS全部置off；原18项加taskgraph、storyflow、stateindex共21项，消融使用同一名单。`--mode precise-baseline` 另外关闭selective，使用precise-*目录并明确不是同一策略基线。离线causal窗口、外层launcher窗口和清理等待分别配置。构建、会话、后处理、实际命令墙钟及含清理的场景墙钟分列；180秒目标仅指会话执行，不代表总命令耗时。
 
 固定场景使用OS lease协调run_debug、raw_dag和aggressive_report读者。清理先等待旧进程和读者，严格限制到任务根下白名单场景目录；Windows删除在同一原生PowerShell中核对完整目标路径和reparse point。复用来源在待清理目录内时直接拒绝。Windows外层launcher使用Job Object和启动gate，分派前绑定整棵子进程树；超时后终止并等待树退出，任何未知退出/清理失败保留矩阵失败锁，须先人工核对再恢复。Windows读者采用独占字节lease串行化；未遵守lease的旧工具还通过命令行路径盘点保守等待，任意隐藏或外部读者不保证可自动识别，删除共享冲突按失败处理。
 
@@ -221,3 +221,14 @@ S5内容接线由本人价值形成实际门内观察与窄条款协商，条款
 DAG 解码继续使用同一 evidence-index 开关：以字节游标和 unpack_from 读取标量，消除逐原子 BytesIO/read 闭包；列表中的标量及单字段 node 引用按原始深度完整读取。常见节点封包仅在外层 map 数量、键顺序、固定字符串、类型标签和长度全部逐字节匹配时直接构造等值解码对象，items 仍完整解码；其他形状进入通用游标路径，格式异常回退原解码器保留诊断。帧 SHA、DAG 有序链、精确有理数、引用顺序、事件提交和封存规则保持原合同。关闭 evidence-index 仍用原 BytesIO 解码器及原投影路径。该实现不依赖额外运行时或第三方包。
 
 后续同份封存 DAG 一次完整读取实测 42.340 秒，原始摘要与事件索引字节完全一致；此前索引读取为 91.452 秒，两次观察相差约 53.7%。并行负载未受控，不能作为隔离性能比较，也不代表完整命令 180 秒验收。有限前缀及损坏差分依据见同任务报告 decoder 测量。
+
+
+## 2026-10-23 独立重写开关合同
+
+`--opt-taskgraph on|off`、`--opt-storyflow on|off`、`--opt-stateindex on|off` 均默认 on，各自进入完整 run_config、布尔验证及全部主体 policy；run_debug 和消融矩阵使用同一 FLAGS 名单。原生 DvCli 同样接受三个开关，新开局传入配置；恢复保留既有taskgraph/storyflow策略，显式覆盖两项时报错；stateindex允许显式设置运行环境，但必须与保存配置相同，否则拒绝恢复，不能静默忽略。帮助与只读参数检查不启动自主会话。
+
+`opt_taskgraph` 是30读取的本人任务策略近似，`opt_storyflow` 是50读取的内容策略重写；两者分别允许关闭回到各自参照路径。策略和内容重写旨在保持相似游戏效果，不属于逐行动、逐事件或完整搜索的等价优化。它们仍只消费本人认识、实际收据及声明，不能预置谜底、死亡、伤病或他人同意；正式 Prepare/现场执行/Complete 与真实调查来源继续有效。具体实现与有限机制验证由相应模块任务记录说明，接线不证明整局效果。
+
+`opt_stateindex` 是独立运行时存储优化，执行环境 `DV_OPT_STATEINDEX` 的 `1/0` 在新 ValueContext 创建时采样，DV 入口可用 `rt_stateindex_enabled()` 核对实际值。run_debug 在执行前明确设置环境，65核对环境与规范化配置一致。该开关不依赖 taskgraph/storyflow，也不按 profile 选择结果；与已有 cow 共同覆盖的路径须按两个开关组合报告。复用程序集的 runtime_switch_contract 和 runtime_config_at_capture 同时保留 runtimespeed/stateindex，旧v2清单缺少新运行时合同会明确拒绝，须从当前源码重新构建，不补写历史证明。完整文件与来源指纹仍须一致；同一二进制可用不同运行配置启动，不能把捕获时配置冒充本次执行配置。
+
+三个开关均属于 FLAGS，baseline 全关及 ablation-taskgraph/storyflow/stateindex 使用统一路径权限与清理规则；增加开关不授权正式会话或扩大运行窗口。实际配置、运行时环境、来源封存、机制差分、人物效果及整局性能结论分别记录。
