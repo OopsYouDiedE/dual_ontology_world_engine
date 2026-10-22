@@ -178,6 +178,7 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 两章 CLI 激进优化入口及开关合同见 `../docs/cli-optimization.md` 的 2026-10-22 节；本轮用户的 180 秒运行授权优先于历史窗口。原始 DAG 事件封包可附进程单调耗时，旧证据不补造时间。
 
 追加激进 CLI 开关 cow/mask/lazyinternal/dirty/planreuse/blackbox 的作用域、近似边界与调试断言统一见 `../docs/cli-optimization.md`。私有 stage 更新共享未变对象；所有人物使用同一剪枝参数，缓存必须包含完整知识版本。不得将开关接线或机制差分当作正式会话验收。
+显式启用本人 value_sensitive_progress 时，`personal_choice` 规划收益遵循本人价值顺序首个非零影响；empirical_initiative/counterfactual_initiative 只缩放本人预期信息收益，默认 1。策略影响不得修改正式资格、答案判定或观察。参数接口详见 docs/cli-optimization.md。
 
 规划器的 Top-K 仅容纳存在本人 active/predict 采纳的后继候选，避免不可预测项占用可展开名额；统一 CLI 深度上限的默认值及调试参数见 cli-optimization。测试窗口遵从用户当前授权，不能将搜索深度调整当作未知前提的补值机制。
 调试65的 stop_at_chapter_end 必须同时有客观收束记录与记录观察者正式章末检视的成功回执；通常使用 detective，无侦探配置使用实际记录人物集合中的任一见证者。截止、公约成功及实际观察分别报告；不改变内容行动或延长时域。合同见 ../docs/cli-optimization.md。
@@ -196,9 +197,13 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 current_appraisals只维护本人appraisal facet中的当前可撤销评价，不作为权威事实；更新须保存旧值、输入、真实来源及假设事件，未知撤回，提升mind revision。接口及认知顺序见 ../docs/cli-optimization.md。
 模型切片共享限同次付费重演的等价完整计算；完整本人遮蔽初态、声明、响应模型、假设、特征、深度与来源一致才可命中。复用必须留原事件引用与实际/复用工作量，预算截断结果不入缓存；Complete结束删除局部缓存，不把共享切片当成整模型证明。
 等价重演切片共享独立使用opt_replaycache，默认true；CLI --opt-replaycache on|off经60会话配置、布尔校验与全部主体策略进入30实际机制。off保留普通付费计算，单列实际工作量差异，不能把有限投影一致性扩大为整局行为验收。
-显式启用本人 value_sensitive_progress 时，`personal_choice` 规划收益遵循本人价值顺序首个非零影响；empirical_initiative/counterfactual_initiative 只缩放本人预期信息收益，默认 1。策略影响不得修改正式资格、答案判定或观察。参数接口详见 docs/cli-optimization.md。
 
 
 价值收益显式开关、实用通行检查与实际门闩声/拒绝协作的传播合同见 ../docs/cli-optimization.md；不得把门外声响投影为已知外闩状态，NPC 回应只由已收听到的具体行为触发。
 
 持续值参与infer时，推理签名必须保留目标字段time及显式clock的完整单元格；普通值前提仍可省略不参与语义的time。病程enforce会话证据与后续infer签名补丁的有限机制验证分别报告。
+价值收益显式开关、实用通行检查与实际门闩声/拒绝协作的传播合同见 ../docs/cli-optimization.md；不得把门外声响投影为已知外闩状态，NPC 回应只由已收听到的具体行为触发。
+
+可选调查导航与已有本人可执行目标的协调使用通用 coordinate_owned_tasks 合同；不按单条线索或人物身份提前返回，不额外加分。接口与边界见 ../docs/cli-optimization.md。
+
+非语言听觉事件以 environmental-sound 中性呈现，不把真实日志行动者自动投射成听者已辨认的声源；surface_voice/category透传合同见 ../docs/cli-optimization.md。
