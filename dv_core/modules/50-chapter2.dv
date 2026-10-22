@@ -2943,6 +2943,7 @@ fn c2_safety_actions(actor):
     并且 "moran" 位于 起居厅。
     并且 c2_alive(行动者)。
     并且 c2_night(4)。
+    并且 campaign_own(行动者, "guard_commitment") 等于 true。
     则 campaign_own(行动者, "guard_active") 变为 true。
 
 fn c2_safety_install(domain, adoptions, actor, mode):
@@ -3145,7 +3146,13 @@ fn c2_safety_goals(actor):
             if candidate != false and dvp_owned_decision_ready(actor, candidate, actor.mind):
                 rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_own(actor.id, "guard_commitment"), true), c2_night(4), source), {"navigation_room": "living_hall", "navigation_methods": [rt_cat(actor.id, ".c2.guard.undertake")]}))
         rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_own(actor.id, "guard_active"), true), dv_all([c2_night(4), dv_fact(campaign_own(actor.id, "guard_commitment"), true)]), source), {"navigation_room": "living_hall", "navigation_methods": [rt_cat(actor.id, ".c2.guard.take-post")]}))
-        rt_push(goals, campaign_goal(campaign_at(actor.id, "living_hall"), dv_all([c2_night(4), dv_fact(campaign_own(actor.id, "guard_active"), true)]), source))
+        // A personally undertaken shift is already a continuing location
+        // intention before take-post. Give it the same maintained-route
+        // semantics as other owned presence duties, so an unrelated stale
+        // reading does not create a fresh departure reward between promise
+        // and actual arrival. Real release/movement still clears actual duty.
+        let holding_shift = campaign_any(dv_fact(campaign_own(actor.id, "guard_commitment"), true), dv_fact(campaign_own(actor.id, "guard_active"), true))
+        rt_push(goals, dv_with_many(campaign_goal(campaign_at(actor.id, "living_hall"), dv_all([c2_night(4), holding_shift]), source), {"navigation_room": "living_hall", "maintain_presence": true}))
     if dv_has(["margaret", "huo"], actor.id):
         rt_push(goals, campaign_goal(campaign_at(actor.id, "logistics"), dv_all([campaign_window(3, 720, 840), dv_fact(campaign_own(actor.id, "support_active"), true), dv_fact(campaign_ref("c2.granary", "total_store_locked"), true)]), source))
         var job = "margaret.c2.granary.wedge"
