@@ -17,3 +17,20 @@
 
 未改共用调度、推理接口、病程、药物、粮仓和夜间行动。未运行正式会话、AI 调度、Godot 或流程回归。语法检查只核对语法、名称、调用与已实施类型约束，不代表正式行为、合作恢复或伤亡因果验收。统一复测交主代理。
 最终源码执行 python mcp/editor_lsp/check_dv.py --format json dv_core/modules/50-chapter2.dv：success=true，diagnostics=[]，退出码 0。git diff --check 未报告空白错误。
+
+## 三人集结与本人前提的有限静态复核
+
+范围：只审读 50 的导航、工作承担、现场检视/公开回执以及 30 的正式 Complete 传播；未读设计，未执行正式会话或 AI 测试。
+
+未发现必须补异地邀约才能解锁的结构闭环。现有 quiet_room all-present 请求确实不能召集远处的人，它只在已知目标现场时提供当面请求。但是三位居民另有独立的本人工作承担候选：c2_work_specs 从各自调查行生成 undertake；c2d_goals 由本人时间窗口、未完成发言及本人未决定上下文生成普通 communicate 目标，c2_safety_goals 同时给普通工作承担目标声明 navigation_room=item.room。该阶段不要求前一步证据或其他两人已在房间，故可沿 c2_navigation_route/c2i_known_route 的本人已知、已开放路径真实逐步接近 quiet_room。承担本项工作本身仍为普通个人价值选择，不自动承诺、不赋予证据、不保证被选中。故无需通过异地邀约、加分或强制到场另造第二条集结链。
+
+已承担后的实际调查目标则保留 row.requirements，包括完整材料、前一步回执及三人在场；c2_navigation_goals 不把未满足这些条件的实际对质提前当作可执行。是否三人会在 150 分钟窗口内真实重合、会否另选日常事项，静态检查无法证明，留给主代理正式复测。
+
+本人来源闭合：
+
+1. 完整底稿与通风检视在真实 applied Complete 后通过 c2i_actions.public_observers/public_grants、dvs_visible_action_grants 仅投影给实际同房且可视的见证者；迟到者有 quiet_room 本地调查 inspect 和对应现场观察目标，未从客观 world 直接回填。
+2. 伊莲娜的 gesture_identified、阮清月的 rescue_intention_explained、赛尔玛的 abandoned_child_misunderstanding_resolved 均列入本地调查 inspect 字段与 talk_fields；前一步实际执行后既有同房可视回执，亦经 dvs_speech_hearing 约束的真实收闻传播。talk 不通过预测向其他人写同意。
+3. 新三人条件由本人心智中的 campaign_at 检查。已启用 notice_co_presence 的正式章节演员在真实接触/Complete 以及下一轮感知更新取得实际同房身份/位置；权威条件仍独立核对实际三人在场。
+4. 阮清月的 astral_ledger_support 为本人自己的实际行动回执，后续实际划栏使用它及原有规则采纳，不能由赛尔玛撤回一句话替代。
+
+本次静态复核无源码追加，无工程接口变更；没有调用构建、语法检查或运行探针。结论只为不存在上述必然前提闭环，不宣称标准配置已经集结或 Foolish 必然失败。
