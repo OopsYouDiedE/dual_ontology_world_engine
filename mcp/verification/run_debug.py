@@ -392,7 +392,7 @@ def main():
     parser.add_argument('--detective-zone', default='zone_yi', choices=('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding', 'none'))
     parser.add_argument('--trace-compression', choices=('none',), default='none', help='Deprecated compatibility argument; JSON recordings are prohibited')
     parser.add_argument('--raw-format', choices=('dag',), default='dag', help='Lossless typed binary DAG; JSON recording is forbidden')
-    optimization_names = ('readview', 'plancache', 'prune', 'lazytext', 'recordcache', 'predicate', 'predicatecache', 'declcache', 'gc', 'appendshare', 'cow', 'mask', 'lazyinternal', 'dirty', 'planreuse', 'blackbox')
+    optimization_names = ('readview', 'plancache', 'replaycache', 'prune', 'lazytext', 'recordcache', 'predicate', 'predicatecache', 'declcache', 'gc', 'appendshare', 'cow', 'mask', 'lazyinternal', 'dirty', 'planreuse', 'blackbox')
     for name in optimization_names:
         parser.add_argument('--opt-' + name, choices=('on', 'off'), default='on')
     parser.add_argument('--prune-top-k', type=int, default=3)

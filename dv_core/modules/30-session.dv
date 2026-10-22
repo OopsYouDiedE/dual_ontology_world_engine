@@ -5900,6 +5900,8 @@ fn dvs_model_probe_key(actor, hypothesis, time):
     return [actor.id, initial, dv_find(actor, "response_models", []), dv_find(actor.policy, "Replay_Depth", rt_count(plan)), plan, dv_find(hypothesis, "assumptions", []), dv_find(hypothesis, "features", []), dv_find(hypothesis, "prior", 0.5), hypothesis.basis, start]
 
 fn dvs_model_probe(actor, hypothesis, events, time, parent):
+    if not dv_find(actor.policy, "opt_replaycache", true):
+        return {"result": dvs_model_execute(actor, hypothesis, events, time, parent), "cache": []}
     let key = dvs_model_probe_key(actor, hypothesis, time)
     let cache = dv_find(actor, "model_probe_cache", [])
     var i = 0
