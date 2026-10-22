@@ -674,6 +674,63 @@ fn dvs_ready(actor, events, time, parent):
             dvs_event(events, "why_not_ready", actor.id, time, parents, report)
         return dv_with(actor, "last_readiness_report", report)
 
+// Current private appraisals are replaceable evaluations, not competing fact
+// claims. A changed/unknown personal input retracts the old current evaluation;
+// immutable events retain its exact previous value and source time.
+fn dvs_current_appraisals(actor, events, time, parent):
+    let declarations = dv_find(actor.policy, "current_appraisals", [])
+    if rt_count(declarations) == 0:
+        return actor
+    dv_domain(actor.mind, "mind")
+    dv_require(actor.mind.subject == actor.id, "Appraisal mind must belong to its evaluator")
+    var inputs_by_id = dv_find(actor, "current_appraisal_inputs", [])
+    var mind = actor.mind
+    var cognitive = dv_find(actor, "last_cognitive_event", parent)
+    var i = 0
+    while i < rt_count(declarations):
+        let declaration = declarations[i]
+        let ref = declaration.ref
+        dv_require(dv_find(ref, "subject", "") == actor.id and ref.facet == "appraisal", "Current appraisal must be explicitly owned and scoped to appraisal facet")
+        dv_require(0 < rt_count(declaration.basis), "Current appraisal needs a declared personal basis")
+        let refs = dvs_sim_refs(declaration.when)
+        var inputs = []
+        var j = 0
+        while j < rt_count(refs):
+            dv_require(dv_find(refs[j], "subject", actor.id) == actor.id, "Cross-subject appraisal input")
+            dv_require(not dv_same_local_ref(actor.id, refs[j], ref), "Current appraisal cannot depend on itself")
+            rt_push(inputs, {"ref": refs[j], "cell": dv_read(mind, refs[j])})
+            j = j + 1
+        let hypothesis = dv_find(actor, "hypothesis", false)
+        var hypothesis_id = ""
+        if hypothesis != false:
+            hypothesis_id = hypothesis.id
+        let required = dv_find(declaration, "hypothesis_id", hypothesis_id)
+        let hypothesis_event = dv_find(actor, "hypothesis_event", "")
+        let signature = {"inputs": inputs, "hypothesis_id": hypothesis_id, "declaration": declaration}
+        if not dv_same(signature, dv_find(inputs_by_id, declaration.id, false)):
+            var truth = dv_truth(mind, declaration.when)
+            if hypothesis_id != required:
+                truth = "false"
+            var next = dv_unknown()
+            if truth == "true":
+                next = dv_cell(declaration.value, 1, time, declaration.basis)
+            if truth == "false":
+                next = dv_cell(declaration.otherwise, 1, time, declaration.basis)
+            next = dv_with_many(next, {"time": time, "evaluation_kind": "current-private-appraisal", "evaluation_id": declaration.id, "input_signature": signature})
+            let before = dv_read(mind, ref)
+            let changed = before.known != next.known or not dv_same(before.value, next.value) or dv_find(before, "conflicted", false)
+            // Source refresh is a new current evaluation even if its value
+            // agrees. The signature excludes mere hypothesis-event reissuance.
+            mind = dv_with(dv_store(mind, ref, next), "revision", mind.revision + 1)
+            var parents = dvs_support_parents(actor.mind, refs, events, actor)
+            parents = dv_explanation_merge(parents, [cognitive])
+            if hypothesis_event != "":
+                parents = dv_explanation_merge(parents, [hypothesis_event])
+            cognitive = dvs_event(events, "private_appraisal_updated", actor.id, time, parents, {"id": declaration.id, "ref": ref, "before": before, "after": next, "value_changed": changed, "condition_truth": truth, "inputs": inputs, "hypothesis_event": hypothesis_event, "meaning": "replaceable-personal-evaluation-not-world-fact"})
+            inputs_by_id = dv_with(inputs_by_id, declaration.id, signature)
+        i = i + 1
+    return dv_with_many(actor, {"mind": mind, "current_appraisal_inputs": inputs_by_id, "last_cognitive_event": cognitive})
+
 fn dvs_reason(actor, events, time, parent):
     var refreshed = dvs_refresh_derivations(actor, events, time, parent)
     if dv_find(refreshed, "cognition_blocked", false):
@@ -800,7 +857,9 @@ fn dvs_prepare_cognition(actor, events, time, parent, chapter):
             actor = dv_with(actor, "reason_fixed_input", rt_snapshot(completed))
         else:
             actor = dv_with(actor, "reason_fixed_input", false)
-    actor = dvs_ready(dvs_hypotheses(dvs_pragmatics_reconsider(actor, events, time, parent), events, time, parent), events, time, parent)
+    actor = dvs_hypotheses(dvs_pragmatics_reconsider(actor, events, time, parent), events, time, parent)
+    actor = dvs_current_appraisals(actor, events, time, parent)
+    actor = dvs_ready(actor, events, time, parent)
     actor = dvs_update_support_events(actor, events)
     actor = dvs_capture_public_topics(actor, events, time, parent)
     actor = dvs_materialize_arguments(dvs_arguments(actor, events, time, parent))
@@ -825,6 +884,7 @@ fn dvs_prepare_manual_cognition(actor, events, time, parent, chapter):
         if dv_same(input, completed) and not dv_find(actor, "cognition_blocked", false):
             actor = dv_with(actor, "reason_fixed_input", rt_snapshot(completed))
     actor = dvs_pragmatics_reconsider(actor, events, time, parent)
+    actor = dvs_current_appraisals(actor, events, time, parent)
     actor = dvs_update_support_events(actor, events)
     actor = dvs_capture_public_topics(actor, events, time, parent)
     return dv_with_many(actor, {"cognition_input": false, "cognition_reused": false, "reason_reused": reused, "cognition_mode": "manual-light", "speech_choice_values": []})
@@ -1619,7 +1679,19 @@ fn dvs_pending_request(actor, action):
     while dv_and((rt_count(result) == 0), (i < rt_count(requests))):
         var request = requests[i]
         if dv_and((request.topic == topic), (not dv_has(answered, request.parse_event))):
-            result = request
+            var matches = dv_find(action, "response_requester", request.requester) == request.requester
+            let request_action = dv_find(action, "response_request_action", "")
+            if request_action != "":
+                matches = false
+                let receipts = dv_find(actor, "received_speeches", [])
+                var receipt_index = 0
+                while receipt_index < rt_count(receipts):
+                    let receipt = receipts[receipt_index]
+                    if receipt.parse_event == request.parse_event and receipt.speaker == request.requester and receipt.action_id == request_action and dv_find(action, "response_requester", request.requester) == request.requester:
+                        matches = true
+                    receipt_index = receipt_index + 1
+            if matches:
+                result = request
         i = (i + 1)
     return result
 
@@ -2015,6 +2087,7 @@ fn dvp_probe_refs(actor):
                     local_1 = feature
                 refs = dvp_merge_refs(refs, dvs_sim_refs(dv_find(feature, "observation", local_1)))
                 i = (i + 1)
+            refs = dvp_merge_refs(refs, dv_find(hypothesis, "external_inputs", []))
     return refs
 
 fn dvp_scope(actor, action, bindings):
@@ -2277,7 +2350,7 @@ fn dvp_eligible_base(actor, action, mind, relevant):
                     if (0 < rt_count(request)):
                         local_2 = (dvs_request_context(actor, action, request.requester) != false)
                     else:
-                        local_2 = dv_and((not dv_has(used, id)), dv_or(dv_has_key(dv_find(actor, "visible_context", []), dv_find(action, "offer_to", "")), dv_find(action, "opportunity_requirement", false) != false and dvp_communication_progress(actor, action)))
+                        local_2 = not dv_find(action, "requires_actual_request", false) and dv_and((not dv_has(used, id)), dv_or(dv_has_key(dv_find(actor, "visible_context", []), dv_find(action, "offer_to", "")), dv_find(action, "opportunity_requirement", false) != false and dvp_communication_progress(actor, action)))
                 else:
                     if dv_has_key(action.speech, "request"):
                         var context = dvs_request_context(actor, action, action.speech.request.target)
@@ -2472,7 +2545,7 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
                                 known_features = known_features + 1
                         fi = fi + 1
                     let cached = dvs_cached_model(actor, hypothesis)
-                    if known_features > 0 and 0 < rt_count(dv_find(hypothesis, "basis", [])) and not dv_explanation_model_complete(cached, "explained", mind.revision) and dv_find(cached, "status", "unknown") != "inconsistent":
+                    if known_features > 0 and dvs_replay_candidate_available(actor, hypothesis) and not dv_explanation_model_complete(cached, "explained", mind.revision) and dv_find(cached, "status", "unknown") != "inconsistent":
                         verification = verification + 1
     let achievement_work = dvp_achievement_pending_work(actor, action, context.achievements)
     let achievement = achievement_work.value
@@ -5932,6 +6005,35 @@ fn dvs_slice_feature(hypothesis, feature, plan, plan_io):
         i = i + 1
     return {"timeline": timeline, "assumptions": assumptions, "feature": dv_without(feature, "at"), "original_feature": feature, "size": rt_count(timeline) + rt_count(assumptions), "mask_plan": plan}
 
+// Reuse only an identical completed causal probe within this paid replay.
+// The initial masked value includes the full owner's mind and declarations;
+// irrelevant alternative mask laws may coincide only when their values do.
+fn dvs_model_probe_key(actor, hypothesis, time):
+    let plan = dvs_sim_plan(hypothesis)
+    let start = dv_find(hypothesis, "start_time", time)
+    let mask = dv_find(hypothesis, "mask_plan", plan)
+    let initial = dvs_sim_mask_response(actor, dvs_sim_mask(actor.mind, mask, start), mask)
+    return [actor.id, initial, dv_find(actor, "response_models", []), dv_find(actor.policy, "Replay_Depth", rt_count(plan)), plan, dv_find(hypothesis, "assumptions", []), dv_find(hypothesis, "features", []), dv_find(hypothesis, "prior", 0.5), hypothesis.basis, start]
+
+fn dvs_model_probe(actor, hypothesis, events, time, parent):
+    if not dv_find(actor.policy, "opt_replaycache", true):
+        return {"result": dvs_model_execute(actor, hypothesis, events, time, parent), "cache": []}
+    let key = dvs_model_probe_key(actor, hypothesis, time)
+    let cache = dv_find(actor, "model_probe_cache", [])
+    var i = 0
+    while i < rt_count(cache):
+        let saved = cache[i]
+        if dv_same(saved.key, key) and saved.result.expanded <= dvs_sim_work_budget(actor):
+            let result = dv_with_many(saved.result, {"expanded": 0, "total_expanded": 0, "remaining": dv_find(actor.policy, "model_budget", 0), "work_remaining": dvs_sim_work_budget(actor), "reused_work": saved.result.expanded, "reused_from_event": saved.event})
+            dvs_event(events, "model_probe_reuse", actor.id, time, dvs_cognitive_parents(actor, [parent, saved.event]), {"hypothesis": hypothesis, "source_event": saved.event, "result": result, "scope": "identical-completed-causal-probe-not-new-prediction"})
+            return {"result": result, "cache": cache}
+        i = i + 1
+    let result = dvs_model_execute(actor, hypothesis, events, time, parent)
+    var next = cache
+    if result.plan_complete and rt_count(result.failures) == 0 and result.stop_reason != "budget-exhausted":
+        next = dv_append(cache, {"key": key, "result": result, "event": events[rt_count(events) - 1].id})
+    return {"result": result, "cache": next}
+
 fn dvs_model(actor, hypothesis, events, time, parent):
     let features = dv_find(hypothesis, "features", [])
     let plan = dvs_sim_plan(hypothesis)
@@ -5959,12 +6061,13 @@ fn dvs_model(actor, hypothesis, events, time, parent):
     if (not (smallest.size * 2 < full_size)):
         return dvs_model_execute(actor, hypothesis, events, time, parent)
     let trial = dv_with_many(hypothesis, {"timeline": smallest.timeline, "assumptions": smallest.assumptions, "features": [smallest.feature], "mask_plan": smallest.mask_plan, "evaluation_scope": {"kind": "causal-refutation", "feature": smallest.original_feature}})
-    let probe = dvs_model_execute(actor, trial, events, time, parent)
+    let probed = dvs_model_probe(actor, trial, events, time, parent)
+    let probe = probed.result
     if (probe.status == "inconsistent"):
-        return dv_with(probe, "evaluation_scope", trial.evaluation_scope)
+        return dv_with_many(probe, {"evaluation_scope": trial.evaluation_scope, "model_probe_cache": probed.cache})
     let next = dv_with_many(actor, {"model_previous_event": events[rt_count(events) - 1].id, "policy": dv_with_many(actor.policy, {"model_budget": probe.remaining, "model_work_remaining": probe.work_remaining})})
     let result = dvs_model_execute(next, hypothesis, events, time, parent)
-    return dv_with_many(result, {"probe_expanded": probe.expanded, "expanded": probe.expanded + result.expanded, "total_expanded": probe.expanded + result.total_expanded})
+    return dv_with_many(result, {"probe_expanded": probe.expanded, "probe_reused_work": dv_find(probe, "reused_work", 0), "model_probe_cache": probed.cache, "expanded": probe.expanded + result.expanded, "total_expanded": probe.expanded + result.total_expanded})
 
 // ---- Merged source module: 35-model-argument.dv ----
 // Glue between paid prediction evidence, explicit abduction and real submissions.
@@ -7755,7 +7858,9 @@ fn dvs_session_complete(state, receipt):
                 actors = dvs_replace(actors, index, actor)
                 actors = dvs_public_grants(actors, index, dv_with_many(action, {"speech": {"channel": "formal-receipt", "literal_ast": dv_true()}, "listeners": judgment.accepted_listeners, "public_grants": judgment.accepted_public_grants}), physical, bindings, events, time, parent, rt_cat(action_event, "-accepted"))
                 actor = actors[index]
-    if dv_and((action.kind == "replay"), (result.execution.status == "applied")):
+    if action.kind == "replay" and result.execution.status == "applied" and not dvs_replay_has_available_candidate(actor):
+        dvs_event(events, "replay_deferred", id, time, [parent], {"action_id": action.id, "reason": "no-executable-plan-with-known-external-inputs", "model_budget": dv_find(actor.policy, "model_budget", 0)})
+    if action.kind == "replay" and result.execution.status == "applied" and dvs_replay_has_available_candidate(actor):
         var candidates = dv_find(actor.policy, "hypotheses", [])
         let manual_id = dv_find(action, "replay_hypothesis_id", "")
         if manual_id != "":
@@ -7768,6 +7873,7 @@ fn dvs_session_complete(state, receipt):
             else:
                 dvs_event(events, "manual_replay_unavailable", id, time, [parent], {"action_id": action.id, "hypothesis_id": manual_id, "reason": "subject-admission-changed"})
         var k = 0
+        actor = dv_with(actor, "model_probe_cache", [])
         var simulations = dv_find(actor, "simulations", [])
         var coverages = []
         var factor_rejections = []
@@ -7806,12 +7912,14 @@ fn dvs_session_complete(state, receipt):
                             dvs_event(events, "model_recheck", id, time, dvs_model_parent_ids(actor, parent, dv_find(cached, "event", "")), {"actor_before": dv_without(actor, "simulations"), "actor_id": actor.id, "actor_revision": actor.mind.revision, "model_before": cached, "hypothesis": candidate, "result": recheck})
                             local_8 = recheck
                         simulation = local_8
+                        actor = dv_with(actor, "model_probe_cache", dv_find(simulation, "model_probe_cache", actor.model_probe_cache))
+                        simulation = dv_without(simulation, "model_probe_cache")
                         simulation = dv_with_many(simulation, {"validation_inputs": dv_explanation_merge(dv_explanation_model_inputs(actor.mind, simulation), dvs_model_observed_inputs(simulation)), "source_adoptions": actor.mind.adoptions, "source_response_models": dv_find(actor, "response_models", [])})
                         simulation = dv_with_many(simulation, {"source_mind_time": actor.mind.time, "source_hypothesis": candidate, "source_replay_depth": dv_find(actor.policy, "Replay_Depth", rt_count(dvs_sim_plan(candidate)))})
                         simulations = dv_with(simulations, candidate.id, dv_with_many(simulation, {"event": events[(rt_count(events) - 1)].id, "source_revision": actor.mind.revision}))
                         actor = dv_with_many(actor, {"model_previous_event": events[(rt_count(events) - 1)].id, "last_cognitive_event": events[(rt_count(events) - 1)].id, "policy": dv_with_many(actor.policy, {"model_budget": simulation.remaining, "model_work_remaining": simulation.work_remaining})})
             k = (k + 1)
-        actor = dv_with(actor, "simulations", simulations)
+        actor = dv_without(dv_with(actor, "simulations", simulations), "model_probe_cache")
         if manual_id == "":
             actor = dv_with(actor, "factor_rejections", {"source_revision": actor.mind.revision, "ids": factor_rejections})
     if dv_has_key(actor, "location_ref"):
@@ -8489,7 +8597,18 @@ fn dvs_manual_selection(selection):
 
 // Admission and paid Complete use the same subject-local candidate conditions.
 fn dvs_replay_candidate_available(actor, candidate):
-    return dvp_topic(actor, candidate) and 0 < rt_count(dv_find(candidate, "basis", [])) and dv_truth(actor.mind, dv_find(candidate, "available_when", dv_true())) == "true"
+    return dvp_topic(actor, candidate) and 0 < rt_count(dv_find(candidate, "basis", [])) and dv_truth(actor.mind, dv_find(candidate, "available_when", dv_true())) == "true" and 0 < rt_count(dvs_sim_plan(candidate)) and dvs_replay_inputs_known(actor.mind, candidate)
+
+// External receipts are read from this owner only. False is a known value;
+// assumptions and predicted outputs never satisfy missing external inputs.
+fn dvs_replay_inputs_known(mind, candidate):
+    let refs = dv_find(candidate, "external_inputs", [])
+    var i = 0
+    while i < rt_count(refs):
+        if not dv_uncontested(dv_read(mind, refs[i])):
+            return false
+        i = i + 1
+    return true
 
 fn dvs_replay_has_available_candidate(actor):
     let candidates = dv_find(actor.policy, "hypotheses", [])

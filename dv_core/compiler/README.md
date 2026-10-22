@@ -139,3 +139,6 @@ CLI 性能选项 `DV_OPT_RECORDCACHE=1` 在会话值缓存上下文创建时读�
 ### 只读因果索引补充
 
 `rt_causal_prior_index(events, position, id)` 为三个参数的平台操作，返回 `[supported, value]`。显式 `ConfigureCausalIndex(true)` 工具作用域内，完整文本事件图的 ID 首次出现位置小于 position 时 value 为真；不支持的值域或异常结构返回 supported=false，由 DV 保持原相等、错误与报告顺序。缓存随冻结事件集合身份失效。祖先闭包保留 BFS 顺序列表和私有 HashSet，最多八项；HashSet 不作为 DV 值发布。
+
+
+`DV_OPT_RUNTIMESPEED` 在 ValueContext 创建时读取，未设置或非 `0` 时开启，`0` 关闭。开启后，由 Thaw 创建的 List<object> 子类把可变元数据存入自身；普通外部 List 以及跨 ValueContext 的访问仍走各上下文自己的弱表。根与子分支继续独立复制，父关系继续为弱引用，任何写入仍逐级失效；不绕过 Invalidate 或改变重复键规则。SnapshotValue 对已经不可变的子值省去递归调用，并在已持有同一快照锁时直接复用文本 pair 的内部构造；快照池、哈希、精确数、全部字段与二进制证据仍走原合同。关闭恢复弱表根与原递归/加锁路径。有限机制差分不能证明正式会话耗时收益。

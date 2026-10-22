@@ -19,10 +19,16 @@ CLI 的 JPG 由已经记录的同一画布离线导出，覆盖实际聚焦、�
 
 性能流与 live 世界 DAG 记录器分开：当前 CLI 没有打开 live `RawDagWriter`，最近实测 `world_cut` 未生效，完整历史仍保留。报告不得把未接线的压缩或尚未实现的规划器墙钟硬期限列为已完成优化；既有实测与评估集中见 `../docs/cli-optimization.md`。
 
-两章 CLI 激进优化入口及开关合同见 `../docs/cli-optimization.md` 的 2026-10-22 节；本轮用户的 180 秒运行授权优先于历史窗口。原始 DAG 事件封包可附进程单调耗时，旧证据不补造时间。
+两章 CLI 激进优化入口及开关合同见 `../docs/cli-optimization.md` 的 2026-10-22 节；实际运行窗口以用户本轮明确授权为准，不从历史窗口或默认参数推定。原始 DAG 事件封包可附进程单调耗时，旧证据不补造时间。
 
 激进优化诊断可用 aggressive_report.py 只读汇总固定输出目录；它不启动 AI、不展开原始 DAG。--profile 的 DV_PROFILE_NATIVE 条件编译细分 Runtime 热点，无插桩 Release 不包含这些探针。判定只读视图与字段 cell 缓存均按 CLI 显式开关采样于执行上下文，不读取人物策略档。
 
 run_debug 的新增优化开关默认 on；mask/dirty verify 默认 off，仅作排错。prune 深度、时间桶和核验间隔写入配置指纹与恢复一致性检查。主会话耗时与构建、离线领域核验耗时分别记录，不以进程后处理时间替代游戏计时。
 
 只读因果检查可独立关闭 causal-index；检查器开关和时限记录在 provenance.verification_config，不混入人物策略。索引只加速查找，不删检查，实际命中与关闭路径须保持等价。
+
+矩阵工具 `run_aggressive_matrix.py` 的默认会话进程窗口为300秒，默认值不构成AI测试授权。baseline 保持 selective on并关闭统一 FLAGS 中全部优化；precise-baseline 单列策略条件。FLAGS 同时供 run_debug 与矩阵使用，新增 replaycache/runtimespeed 分别由 DV 策略及 CLR 环境消费者接线，配置、环境与复用元数据均留证。
+
+复用程序要求 v2 完整来源/生成源文件/Release程序集集合及插桩、编译器、入口合同一致，复制后再次校验；旧v1记录须重新构建，不补造指纹。只读原始事件索引可保留原始 parent_ids 和 host_action_event，章末汇总必须以这些索引、实际执行投影及completion互相核验，不以非空摘要代替达成。
+
+矩阵会话及本工具域读者按固定场景持有 OS lease，清理等待lease和旧进程结束后，在同一原生PowerShell内核对路径及reparse point并删除固定目录。外层运行由Windows Job Object管理全树；超时/中断/清理失败保留 matrix-running.lock，人工核对在途进程、读者及部分证据后才可恢复，不自动删锁重试。构建、会话执行、后处理、命令墙钟及含清理的场景墙钟分别报告。实现合同及有限合成检查见 `../docs/cli-optimization.md`。

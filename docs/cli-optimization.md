@@ -145,9 +145,13 @@ readview 还可复用条件读取输入已经存在的有效不可变 Backbone�
 ### 主体动机与主动实证
 
 `personal_choice` 的规划收益读取本人 `value_order` 的首个非零影响；牺牲较高价值不再被无条件计为正进展。主体可配置 `empirical_initiative`、`counterfactual_initiative`（0–1，默认 1），分别缩放检视/试验/声路试验与重演预期信息收益，不修改正式资格、认知更新、答案判定或世界效果。侦探配置 Standard 为 1/1，Foolish 为 0.01/0.03，表达用户指定的主动实证与反事实倾向差异；这些数值是策略参数，不是剧情结果保证。
+
+2026-10-22 居民因果候选：寝区私人理由假设在本人真实初查后开放；source_strength仅形成小于1的私人prior，不写入权威理由。居民均可走同一材料检视、向当事人实际提问、本人回想、正式完整答复链。私人愤怒由本人已获的授权缺失／伤者与落闸自述／酸泡及无医嘱材料与本人既有成见共同评估；报告旗标本身不等于愤怒。愤怒影响继续调查与提交答复的目标动机，所有行动仍须正式资格与Complete；取得实际完整证据后撤回评估。此为经用户授权的内容及动机策略变化，须建立新基线，不声称等价性能优化。
 只读因果索引同时保留闭包的 BFS 顺序列表和文本成员集合；成员查询不再线性扫描顺序列表。完整性检查用 ID 首次出现位置判断当前事件以前的成员关系，仍逐事件、逐父引用执行原判定并返回原始 ID 顺序；非文本 ID、非文本父引用及异常结构回退原 DV 路径。此优化仍由同一 `opt-causal-index` 控制。
 
 丙区完整草图的 shared_inspection 声明复用正式 Complete 后的同房 public_observers/public_grants，仅实际在场且具备可视资格者取得检视结果；询问本身仍为证词。丁区医嘱记录在茉拉实际报告时随 materials 展示，复用同一公共观察路径。两者不初始化侦探知识、不降低证词阈值；修改取证机会后须重新验证，不继承旧基线的行为结论。
+
+居民回复可声明 response_requester/response_request_action；待回复项按同一parse_event关联本人received_requests与received_speeches，核对requester和真实行动ID。requires_actual_request=true时没有匹配待回复项即不可执行，Complete仅消费该匹配项。完整答复使用独立complete_receipt/complete_level及接受法则，仍核对裁决者在场；正确理由和情绪修订依赖本人逐项实际材料链，不只依赖末端旗标。
 `opt-dirty` 的认知阶段按本人采纳表、mind.subject、外部推理签名和 profile 建立独立有序队列。依赖同时包括前提及效果目标的完整单元格、对象存在性和采纳状态；不依赖角色身份。inactive/non-infer 条目保留位置，不解释其条件和效果；零推理预算不建立索引。前向影响同轮处理，后向影响留到下一轮，预算用尽不取走下一候选。未知活动推理操作符明确报错。
 
 世界时界缓存静态条件树的时钟关系和阈值；equals/未知时钟关系保留一分钟保守采样，数值阈值沿原分钟格取整，反向区间维持原 due 返回行为。它仅减少反复解析条件树，环境下一时刻的真值/效果扫描仍保留。`opt-dirty-verify` 的抽样时钟核验调用独立完整参考扫描，正常返回和现场仍可改变世界的一分钟提前返回均核对结果；参考扫描仅由显式核验开关启用，不在生产默认路径运行。有限机制差分与正式会话验收分别报告。
@@ -155,3 +159,24 @@ readview 还可复用条件读取输入已经存在的有效不可变 Backbone�
 规划剪枝先检查主体本人采纳的预测法则是否存在、active 且 mode=predict，不能展开的候选不占用 Top-K 槽位；保留候选仍按本人原评分和稳定顺序排列。预测仍由既有求值器执行，不授予真实观察。统一深度与这种剪枝不能弥补实际未知的提交前提或未被听者采纳的证词；此类未达成须在事件证据中单列。
 
 本人价值收益按 `value_sensitive_progress` 显式启用；未启用的现有 NPC 保留原 personal_choice 进展计法。侦探两配置启用，本轮不改变其他人物策略。`inquiry_purpose=practical-access` 的实际门闩检查不受主动科研意愿缩放。门外金属声仅传播 `latch_sound`，不授予外闩/通行状态；本人听见后有前往门厅现场核对的目标，正式检查、拔闩、开门和跨门仍逐步执行。拒绝现场协作是全配置同样合法的本人价值取舍；NPC 回应必须已有实际收到该拒绝的回执，不读 profile、不预设态度。
+完整模型可以声明external_inputs引用清单；重演准入与Complete统一要求这些单元格在本人心智中已知且无冲突，值为false同样满足已知性。无timeline/predict_laws的裸命题不进入执行模型预算，空候选目录的合法factor-only路径保留。缺失输入仍进入本人取证探针，输入变化重新检查，模型总预算保持原声明。第一章完整历史声明管路、吞音与七项实物比较输入；own_alarm_anchor仍为显式假设。
+`opt_runtimespeed` 保留在完整运行配置并按布尔值校验；运行时由 `DV_OPT_RUNTIMESPEED` 消费，该字段不改变人物策略。CLI、来源记录与独立消融使用同一个开关值。
+
+
+当前私人评价采用policy.current_appraisals：声明明确限定本人subject及appraisal facet，以本人实际输入和可选的当前hypothesis_id求值；确定条件产生当前值，条件否定产生otherwise，未知则撤回为未知。更新替换当前评价槽并提升mind revision，历史值与具体输入保存在private_appraisal_updated不可变事件中，不新增互斥事实claim、不以置信度压过旧值。自动与人工轻量认知在个人推理后刷新该接口，内容层声明实际冲突及成见，无通用角色身份分支。
+
+### 2026-10-23 工具来源与串行矩阵
+
+`--reuse-program` 只接受 `dv-compiled-program-v2`：完整编译器/seed源码集合、生成源与工程文件、完整Release/net8.0二进制集合、必需Program.dll/deps/runtimeconfig、插桩标志、编译器身份和fresh/resume入口均须一致；复制后对目标重验。不对旧v1清单补写证明。运行时开关捕获配置与环境合同写入清单；runtimespeed on/off可共用同一二进制，实际run_config和DV_OPT_RUNTIMESPEED分别核对留证。
+
+`diagnostics/aggressive-matrix` 默认 `--timeout 300`，这只设置会话进程窗口，不自行授权运行。baseline保持selective on并将统一FLAGS全部置off；原16项加replaycache、runtimespeed共18项，消融使用同一名单。`--mode precise-baseline` 另外关闭selective，使用precise-*目录并明确不是同一策略基线。离线causal窗口、外层launcher窗口和清理等待分别配置。构建、会话、后处理、实际命令墙钟及含清理的场景墙钟分列；180秒目标仅指会话执行，不代表总命令耗时。
+
+固定场景使用OS lease协调run_debug、raw_dag和aggressive_report读者。清理先等待旧进程和读者，严格限制到任务根下白名单场景目录；Windows删除在同一原生PowerShell中核对完整目标路径和reparse point。复用来源在待清理目录内时直接拒绝。Windows外层launcher使用Job Object和启动gate，分派前绑定整棵子进程树；超时后终止并等待树退出，任何未知退出/清理失败保留矩阵失败锁，须先人工核对再恢复。Windows读者采用独占字节lease串行化；未遵守lease的旧工具还通过命令行路径盘点保守等待，任意隐藏或外部读者不保证可自动识别，删除共享冲突按失败处理。
+
+原始事件索引补充原始父事件ID与host action_event（后者是actionN，不是eN事件编号）；on/off均从原始节点读取。章末检视须由completion、实际inspect/applied投影、host_completion及已提交索引互相对应，且council_closed明确known/true/无冲突才计入会话速度目标。缺少新索引字段的旧记录保持证据不足。报告含公共35模块指纹，完整编译输入指纹和运行时环境另列。中文报告已恢复；不从工程封存完整推断剧情达成。
+
+有限合成验证入口为 `python -B mcp/verification/test_tool_hardening.py -v`，仅处理小型模拟二进制记录、文件清单与短命Python进程，不编译或运行DV正式会话。
+付费重演内的等价完整因果切片可显式复用：键包含主体、完整遮蔽初态、响应模型、Replay_Depth、切片计划、假设、比较特征、置信度、basis与起时。仅完整且非预算截断的结果入局部缓存；复用记录指向原计算事件，expanded=0与reused_work分列，不重写原预测的来源。缓存在该次Complete内传递，结束即移除；不复用不完整整模型，也不据此宣称竞争候选覆盖完成。
+`--opt-replaycache on|off` 是付费重演中等价完整切片共享的独立开关，默认on；60保存并向全部主体传递opt_replaycache，off直接执行普通付费切片，不读取/写入共享缓存。它不归入行动计划opt-plancache。消融矩阵须将replaycache纳入统一开关列表与全关基线。
+65章末只读伤病投影分别保留本章重伤经历、当前运动障碍、当前呼吸衰竭与实际有效给药；缺失字段保持未知，不由发热、旧伤或目标人数补值。工具报告的这些字段不写回任何主体心智。
+矩阵额外包含只读evidence-index与causal-index的独立消融，全关基线共关闭18项会话开关和2项只读工具开关。只读优化贡献以对应后处理耗时报告，不伪称改变人物决策速度；离线因果检查超时时，该项贡献只能作截断测量。

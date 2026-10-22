@@ -184,8 +184,11 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 `personal_choice` 规划收益遵循本人价值顺序首个非零影响；empirical_initiative/counterfactual_initiative 只缩放本人预期信息收益，默认 1。策略影响不得修改正式资格、答案判定或观察。参数接口详见 docs/cli-optimization.md。
 
 `held_for` 持续值前提同时声明目标与时钟读取，静态时间分析保守，环境快照时间分析只物化已记录的字段时刻；来源、语法与限制见SYNTAX/DESIGN。病程与治疗规则归内容层，不能通过主体profile选择伤亡。
+
+居民私人假设、材料冲突评估与真实回想路径的内容合同见 ../docs/cli-optimization.md；私人prior/情绪不作客观事实，不能用报告旗标替代本人可知冲突或跳过实际提问与Complete。
 只读因果工具的 `rt_causal_prior_index(events, position, id)` 只返回受支持标志与此前 ID 成员关系；它不判定完整性。文本索引保留首次位置，事件查找保留最后匹配，闭包列表保留原 BFS 顺序；异常结构回退 DV 原路径。仅显式工具作用域启用，接口说明见 compiler/README.md。
 
+定向回复的response_requester/response_request_action与requires_actual_request合同见 ../docs/cli-optimization.md；本人收闻及待回复项必须以同一parse_event关联，选择与Complete消费同一项。
 `opt_dirty` 认知队列以采纳表、mind.subject、外部签名和 profile 隔离，完整前提/效果单元格及对象存在性均为唤醒依赖；inactive/non-infer 保留顺序位置且不预读其声明，零预算不建立索引。时界静态计划仅替代条件树重复分析，运行时真值/效果扫描仍保留；未知活动操作符明确报错。`opt_dirty_verify` 抽样参考扫描同时覆盖正常和提前返回。合同与实测限制见 `../docs/cli-optimization.md`。
 显式启用本人 value_sensitive_progress 时，`personal_choice` 规划收益遵循本人价值顺序首个非零影响；empirical_initiative/counterfactual_initiative 只缩放本人预期信息收益，默认 1。策略影响不得修改正式资格、答案判定或观察。参数接口详见 docs/cli-optimization.md。
 
@@ -195,3 +198,10 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 价值收益显式开关、实用通行检查与实际门闩声/拒绝协作的传播合同见 ../docs/cli-optimization.md；不得把门外声响投影为已知外闩状态，NPC 回应只由已收听到的具体行为触发。
 
 持续值参与infer时，推理签名必须保留目标字段time及显式clock的完整单元格；普通值前提仍可省略不参与语义的time。病程enforce会话证据与后续infer签名补丁的有限机制验证分别报告。
+重演external_inputs是模型声明的本人外部收据依赖；未知或冲突时暂缓，不从假设/预测回填，也不要求值必须为预期答案。准入、人工选择和Complete共用检查，缺失输入进入本人调查探针；无可执行计划不消耗执行模型预算，合法空目录factor-only路径保留。
+
+运行时 `DV_OPT_RUNTIMESPEED` 合同见 compiler/README.md：仅优化可变元数据存放和不可变子值快照路径；保留 List<object> ABI、上下文隔离、弱父关系、失效传播和完整二进制字段。CLI 开关接线与正式会话性能测量分别报告。
+
+current_appraisals只维护本人appraisal facet中的当前可撤销评价，不作为权威事实；更新须保存旧值、输入、真实来源及假设事件，未知撤回，提升mind revision。接口及认知顺序见 ../docs/cli-optimization.md。
+模型切片共享限同次付费重演的等价完整计算；完整本人遮蔽初态、声明、响应模型、假设、特征、深度与来源一致才可命中。复用必须留原事件引用与实际/复用工作量，预算截断结果不入缓存；Complete结束删除局部缓存，不把共享切片当成整模型证明。
+等价重演切片共享独立使用opt_replaycache，默认true；CLI --opt-replaycache on|off经60会话配置、布尔校验与全部主体策略进入30实际机制。off保留普通付费计算，单列实际工作量差异，不能把有限投影一致性扩大为整局行为验收。
