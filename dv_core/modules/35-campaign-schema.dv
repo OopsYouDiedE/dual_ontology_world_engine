@@ -24,6 +24,10 @@ fn campaign_state_object(id, fields):
 fn campaign_action(id, kind, known, physical, law, grants, source):
     return dv_with(dv_with(dv_with({"id": id, "kind": kind, "precondition": known, "authority_precondition": physical}, "law", law), "grants", grants), "source_refs", dv_single(source))
 
+// Intent is selected before execution; surface and speech remain Complete-only prose.
+fn campaign_intent_action(id, kind, known, physical, law, grants, label, source):
+    return dv_with(campaign_action(id, kind, known, physical, law, grants, source), "label", label)
+
 fn campaign_method(name, law):
     return dv_instance(name, law)
 
@@ -233,8 +237,8 @@ fn campaign_add_new(world, object):
         return world
     return dv_add_object(world, object)
 
-fn campaign_surface_action(id, kind, known, physical, law, grants, text, source):
-    return dv_with(campaign_action(id, kind, known, physical, law, grants, source), "surface", text)
+fn campaign_surface_action(id, kind, known, physical, law, grants, label, text, source):
+    return dv_with(campaign_intent_action(id, kind, known, physical, law, grants, label, source), "surface", text)
 
 fn campaign_goal(proposition, when, basis):
     return campaign_index_goal_window({"kind": "achieve", "scope": "personal", "proposition": proposition, "available_when": when, "basis": basis})

@@ -66,6 +66,8 @@ DevConsole layer=128；输入反引号/F12。Inspector 页每 0.25 秒刷新 Phy
 
 SmartReplay 是 Core 文本入口和 Godot 共用的只读记录播放器。ReplayStage 在独立 SubViewport 中使用 ReplaySession、Main、WorldView、StoryActor 与真实 3D 书页 UI，按演出时钟播放、暂停、单步和调速。舞台仍在消费当前帧时不提前推进下一段。
 
+交互采用 `focus → confirm` 两拍。定位帧安装已记录的前态与选中项；确认帧从 `data.result_kind` 读取移动、对白、调查或拒绝类型，演出后安装已记录后态。`cancel` 清除定位。`ReplaySession.SetInteraction` 只更新展示元数据；每次时钟更新最多交付一个新的可见拍，零时长元数据也有消费上限。记录中的思考停顿不进入播放时钟。
+
 回放消费记录的输入、事件回执和 `receipt.field.trajectory`，经过 WorldView 路径执行与 StoryActor 的真实碰撞，并采用记录的 entered_by from/to 处理跨图门道。输入与回执通过 action_event 去重。实际身体样本和原始输入用于重现已记录动作；回放不提交新的正式世界行动。
 
 旧日志没有 trajectory 时，播放器按正式几何进行语义重建并标明范围；缺少源位置时只保留原文本，不捏造人物移动。这种记录的显示不代表原始逐帧画面，也不补造缺失证据。

@@ -60,7 +60,7 @@ fn c1_question_call_rule():
 
 fn c1_shallow_question_action(actor):
     let source = campaign_source("user:current-request", 0, "owner-report-of-heard-question-presumption")
-    var action = c1_once(campaign_action(rt_cat(actor, ".question.report-presumption"), "talk", campaign_at(actor, "hall"), campaign_at(actor, "hall"), "", [], source))
+    var action = c1_once(campaign_intent_action(rt_cat(actor, ".question.report-presumption"), "talk", campaign_at(actor, "hall"), campaign_at(actor, "hall"), "", [], "请求说明当前指认的依据", source))
     action = dv_with_many(action, {"speech": dv_with(c1_speech(dv_true(), source, "own-defeasible-interpretation"), "surface", "问话提到了门外的呼喊，我先把它理解成求救；声音从哪里来，仍该核对。"), "listeners": ["demon", "huo", "shen", "su"], "owner_interpretation_requirement": {"subject": actor, "interpretation_id": "outside-help-presumption", "required_status": "accepted"}, "personal_purpose": {"subject": actor, "id": "state-provisional-reading", "basis": [source]}})
     return c1_inquiry_choice(action, "chapter1-inquiry", false)
 
@@ -209,7 +209,7 @@ fn c1_inspect_E5(actor):
         local_1 = dv_pair(campaign_evidence_ref("fork_dent"), campaign_evidence_ref("frame_hollow"))
     else:
         local_1 = dv_single(campaign_evidence_ref("fork_dent"))
-    return c1_once(campaign_action(rt_cat(actor, ".inspect.E5"), "inspect", campaign_at(actor, "foyer"), campaign_at(actor, "foyer"), "", local_1, campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 73, "E5")))
+    return c1_once(campaign_intent_action(rt_cat(actor, ".inspect.E5"), "inspect", campaign_at(actor, "foyer"), campaign_at(actor, "foyer"), "", local_1, "检视地上的音叉", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 73, "E5")))
 
 叙述 c1_visible_E5：
     地上一把纯银音叉，柄上刻着“S.L.”。
@@ -237,7 +237,7 @@ fn c1_inspect_E7(actor):
         local_1 = dv_list3(campaign_evidence_ref("slate_marks"), campaign_evidence_ref("slate_code"), campaign_evidence_ref("slate_person"))
     else:
         local_1 = dv_single(campaign_evidence_ref("slate_marks"))
-    return c1_once(campaign_action(rt_cat(actor, ".inspect.E7"), "inspect", campaign_at(actor, "hall"), campaign_at(actor, "hall"), "", local_1, campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 75, "E7")))
+    return c1_once(campaign_intent_action(rt_cat(actor, ".inspect.E7"), "inspect", campaign_at(actor, "hall"), campaign_at(actor, "hall"), "", local_1, "检视长桌上的石板", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 75, "E7")))
 
 叙述 c1_visible_E7：
     一块小石板，粉笔速记两行。
@@ -265,7 +265,7 @@ fn c1_inspect_E9(actor):
         local_1 = dv_pair(campaign_evidence_ref("cups_preferences"), campaign_evidence_ref("cups_known"))
     else:
         local_1 = dv_single(campaign_evidence_ref("cups_preferences"))
-    return c1_once(campaign_action(rt_cat(actor, ".inspect.E9"), "inspect", campaign_at(actor, "pantry"), campaign_at(actor, "pantry"), "", local_1, campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 77, "E9")))
+    return c1_once(campaign_intent_action(rt_cat(actor, ".inspect.E9"), "inspect", campaign_at(actor, "pantry"), campaign_at(actor, "pantry"), "", local_1, "检视水槽里的杯子", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 77, "E9")))
 
 叙述 c1_visible_E9：
     水槽里四只用过的杯子，各不相同：
@@ -280,7 +280,7 @@ fn c1_inspect_E10(actor):
         local_1 = dv_pair(campaign_evidence_ref("starter_layers"), campaign_evidence_ref("starter_kept"))
     else:
         local_1 = dv_single(campaign_evidence_ref("starter_layers"))
-    return c1_once(campaign_action(rt_cat(actor, ".inspect.E10"), "inspect", campaign_at(actor, "pantry"), campaign_at(actor, "pantry"), "", local_1, campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 78, "E10")))
+    return c1_once(campaign_intent_action(rt_cat(actor, ".inspect.E10"), "inspect", campaign_at(actor, "pantry"), campaign_at(actor, "pantry"), "", local_1, "检视碗柜上的罐子", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 78, "E10")))
 
 叙述 c1_visible_E10：
     罐里的酵种还活着，冒着细泡。
@@ -340,9 +340,13 @@ fn c1_adopt_inferences(mind):
 fn c1_move_name(actor, origin, target):
     return rt_cat(rt_cat(rt_cat(actor, ".move."), origin), rt_cat(".", target))
 
+fn c1_place_label(place):
+    let names = {"R05": "五号卧室", "R06": "六号卧室", "R07": "七号卧室", "R08": "八号卧室", "hall": "活动厅", "foyer": "门厅", "pantry": "茶水间", "corridor": "走廊"}
+    return dv_find(names, place, "房间")
+
 fn c1_move_action(actor, origin, target):
     var name = c1_move_name(actor, origin, target)
-    return dv_with_many(campaign_action(name, "move", campaign_at(actor, origin), campaign_at(actor, origin), name, dv_single(dv_ref(actor, "state", "location")), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story", 19, "重演通路")), {"predict_law": name, "travel": {"from": origin, "to": target}})
+    return dv_with_many(campaign_intent_action(name, "move", campaign_at(actor, origin), campaign_at(actor, origin), name, dv_single(dv_ref(actor, "state", "location")), rt_cat("前往", c1_place_label(target)), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/实体登记.story", 19, "重演通路")), {"predict_law": name, "travel": {"from": origin, "to": target}})
 
 fn c1_add_move_methods(world, actor, mode):
     var edges = c1_edges()
@@ -373,103 +377,103 @@ fn c1_statement(atom):
     return dv_fact(campaign_evidence_ref(atom), true)
 
 fn c1_answer_me(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.me"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 11, "me")), "answer", dv_fact(campaign_evidence_ref("me"), true)), "answer_id", "me"), "topic", "identity")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.me"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], "答辩：我闩了门", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 11, "me")), "answer", dv_fact(campaign_evidence_ref("me"), true)), "answer_id", "me"), "topic", "identity")
 
 fn c1_hypothesis_me():
     return dv_with(dv_with(dv_with({"id": "me", "proposition": dv_fact(campaign_evidence_ref("me"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 11, "me"))}, "available_when", dv_fact(dv_ref("question", "state", "open_identity"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("me"), true))), "group", "identity")
 
 fn c1_answer_V1_0(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V1_0"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 101, "V1_0")), "answer", dv_fact(campaign_evidence_ref("su_room"), true)), "answer_id", "V1_0"), "topic", "identity")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V1_0"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], "答辩：苏泠在卧室", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 101, "V1_0")), "answer", dv_fact(campaign_evidence_ref("su_room"), true)), "answer_id", "V1_0"), "topic", "identity")
 
 fn c1_hypothesis_V1_0():
     return dv_with(dv_with(dv_with({"id": "V1_0", "proposition": dv_fact(campaign_evidence_ref("su_room"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 101, "V1_0"))}, "available_when", dv_fact(dv_ref("question", "state", "open_identity"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("su_room"), true))), "group", "identity")
 
 fn c1_answer_V1_1(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V1_1"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 102, "V1_1")), "answer", dv_fact(campaign_evidence_ref("su_hall"), true)), "answer_id", "V1_1"), "topic", "identity")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V1_1"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], "答辩：苏泠在活动厅", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 102, "V1_1")), "answer", dv_fact(campaign_evidence_ref("su_hall"), true)), "answer_id", "V1_1"), "topic", "identity")
 
 fn c1_hypothesis_V1_1():
     return dv_with(dv_with(dv_with({"id": "V1_1", "proposition": dv_fact(campaign_evidence_ref("su_hall"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 102, "V1_1"))}, "available_when", dv_fact(dv_ref("question", "state", "open_identity"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("su_hall"), true))), "group", "identity")
 
 fn c1_answer_V1_2(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V1_2"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 103, "V1_2")), "answer", dv_fact(campaign_evidence_ref("su_pantry"), true)), "answer_id", "V1_2"), "topic", "identity")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V1_2"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], "答辩：苏泠在茶水间", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 103, "V1_2")), "answer", dv_fact(campaign_evidence_ref("su_pantry"), true)), "answer_id", "V1_2"), "topic", "identity")
 
 fn c1_hypothesis_V1_2():
     return dv_with(dv_with(dv_with({"id": "V1_2", "proposition": dv_fact(campaign_evidence_ref("su_pantry"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 103, "V1_2"))}, "available_when", dv_fact(dv_ref("question", "state", "open_identity"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("su_pantry"), true))), "group", "identity")
 
 fn c1_answer_V2_0(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V2_0"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 104, "V2_0")), "answer", dv_fact(campaign_evidence_ref("huo_copper"), true)), "answer_id", "V2_0"), "topic", "identity")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V2_0"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], "答辩：霍铎在铜口旁", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 104, "V2_0")), "answer", dv_fact(campaign_evidence_ref("huo_copper"), true)), "answer_id", "V2_0"), "topic", "identity")
 
 fn c1_hypothesis_V2_0():
     return dv_with(dv_with(dv_with({"id": "V2_0", "proposition": dv_fact(campaign_evidence_ref("huo_copper"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 104, "V2_0"))}, "available_when", dv_fact(dv_ref("question", "state", "open_identity"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("huo_copper"), true))), "group", "identity")
 
 fn c1_answer_V2_1(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V2_1"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 105, "V2_1")), "answer", dv_fact(campaign_evidence_ref("huo_room"), true)), "answer_id", "V2_1"), "topic", "identity")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V2_1"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], "答辩：霍铎在卧室", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 105, "V2_1")), "answer", dv_fact(campaign_evidence_ref("huo_room"), true)), "answer_id", "V2_1"), "topic", "identity")
 
 fn c1_hypothesis_V2_1():
     return dv_with(dv_with(dv_with({"id": "V2_1", "proposition": dv_fact(campaign_evidence_ref("huo_room"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 105, "V2_1"))}, "available_when", dv_fact(dv_ref("question", "state", "open_identity"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("huo_room"), true))), "group", "identity")
 
 fn c1_answer_V2_2(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V2_2"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 106, "V2_2")), "answer", dv_fact(campaign_evidence_ref("huo_foyer"), true)), "answer_id", "V2_2"), "topic", "identity")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V2_2"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_identity"), true))), campaign_at(actor, "hall"), "", [], "答辩：霍铎在门厅", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 106, "V2_2")), "answer", dv_fact(campaign_evidence_ref("huo_foyer"), true)), "answer_id", "V2_2"), "topic", "identity")
 
 fn c1_hypothesis_V2_2():
     return dv_with(dv_with(dv_with({"id": "V2_2", "proposition": dv_fact(campaign_evidence_ref("huo_foyer"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 106, "V2_2"))}, "available_when", dv_fact(dv_ref("question", "state", "open_identity"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("huo_foyer"), true))), "group", "identity")
 
 fn c1_answer_V3_0(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V3_0"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_voice_source"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 107, "V3_0")), "answer", dv_fact(campaign_evidence_ref("remote_voice"), true)), "answer_id", "V3_0"), "topic", "voice_source")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V3_0"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_voice_source"), true))), campaign_at(actor, "hall"), "", [], "答辩：呼声来自传声管", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 107, "V3_0")), "answer", dv_fact(campaign_evidence_ref("remote_voice"), true)), "answer_id", "V3_0"), "topic", "voice_source")
 
 fn c1_hypothesis_V3_0():
     return dv_with(dv_with(dv_with({"id": "V3_0", "proposition": dv_fact(campaign_evidence_ref("remote_voice"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 107, "V3_0"))}, "available_when", dv_fact(dv_ref("question", "state", "open_voice_source"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("remote_voice"), true))), "group", "voice_source")
 
 fn c1_answer_V3_1(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V3_1"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_voice_source"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 108, "V3_1")), "answer", dv_fact(campaign_evidence_ref("remote_voice"), false)), "answer_id", "V3_1"), "topic", "voice_source")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V3_1"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_voice_source"), true))), campaign_at(actor, "hall"), "", [], "答辩：呼声来自门外", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 108, "V3_1")), "answer", dv_fact(campaign_evidence_ref("remote_voice"), false)), "answer_id", "V3_1"), "topic", "voice_source")
 
 fn c1_hypothesis_V3_1():
     return dv_with(dv_with(dv_with({"id": "V3_1", "proposition": dv_fact(campaign_evidence_ref("remote_voice"), false), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 108, "V3_1"))}, "available_when", dv_fact(dv_ref("question", "state", "open_voice_source"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("remote_voice"), false))), "group", "voice_source")
 
 fn c1_answer_V4_0(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V4_0"), "answer", dv_all([campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_words"), true), c1_statement("words_bolt"), c1_statement("score_partial")]), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 109, "V4_0")), "answer", dv_fact(campaign_evidence_ref("words_bolt"), true)), "answer_id", "V4_0"), "topic", "words")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V4_0"), "answer", dv_all([campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_words"), true), c1_statement("words_bolt"), c1_statement("score_partial")]), campaign_at(actor, "hall"), "", [], "答辩：喊的是闩门，别开", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 109, "V4_0")), "answer", dv_fact(campaign_evidence_ref("words_bolt"), true)), "answer_id", "V4_0"), "topic", "words")
 
 fn c1_hypothesis_V4_0():
     return dv_with(dv_with(dv_with({"id": "V4_0", "proposition": dv_fact(campaign_evidence_ref("words_bolt"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 109, "V4_0"))}, "available_when", dv_fact(dv_ref("question", "state", "open_words"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("words_bolt"), true))), "group", "words")
 
 fn c1_answer_V4_1(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V4_1"), "answer", dv_all([campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_words"), true), dv_not(c1_statement("words_bolt")), c1_statement("score_partial")]), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 110, "V4_1")), "answer", dv_fact(campaign_evidence_ref("words_bolt"), false)), "answer_id", "V4_1"), "topic", "words")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V4_1"), "answer", dv_all([campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_words"), true), dv_not(c1_statement("words_bolt")), c1_statement("score_partial")]), campaign_at(actor, "hall"), "", [], "答辩：喊的是开门救人", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 110, "V4_1")), "answer", dv_fact(campaign_evidence_ref("words_bolt"), false)), "answer_id", "V4_1"), "topic", "words")
 
 fn c1_hypothesis_V4_1():
     return dv_with(dv_with(dv_with({"id": "V4_1", "proposition": dv_fact(campaign_evidence_ref("words_bolt"), false), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 110, "V4_1"))}, "available_when", dv_fact(dv_ref("question", "state", "open_words"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("words_bolt"), false))), "group", "words")
 
 fn c1_answer_V5_0(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V5_0"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 111, "V5_0")), "answer", dv_fact(campaign_evidence_ref("heed_huo"), true)), "answer_id", "V5_0"), "topic", "trust")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V5_0"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), campaign_at(actor, "hall"), "", [], "答辩：当时相信霍铎", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 111, "V5_0")), "answer", dv_fact(campaign_evidence_ref("heed_huo"), true)), "answer_id", "V5_0"), "topic", "trust")
 
 fn c1_hypothesis_V5_0():
     return dv_with(dv_with(dv_with({"id": "V5_0", "proposition": dv_fact(campaign_evidence_ref("heed_huo"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 111, "V5_0"))}, "available_when", dv_fact(dv_ref("question", "state", "open_trust"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("heed_huo"), true))), "group", "trust")
 
 fn c1_answer_V5_1(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V5_1"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 112, "V5_1")), "answer", dv_fact(campaign_evidence_ref("heed_su"), true)), "answer_id", "V5_1"), "topic", "trust")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V5_1"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), campaign_at(actor, "hall"), "", [], "答辩：当时相信苏泠", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 112, "V5_1")), "answer", dv_fact(campaign_evidence_ref("heed_su"), true)), "answer_id", "V5_1"), "topic", "trust")
 
 fn c1_hypothesis_V5_1():
     return dv_with(dv_with(dv_with({"id": "V5_1", "proposition": dv_fact(campaign_evidence_ref("heed_su"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 112, "V5_1"))}, "available_when", dv_fact(dv_ref("question", "state", "open_trust"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("heed_su"), true))), "group", "trust")
 
 fn c1_answer_V5_2(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V5_2"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 113, "V5_2")), "answer", dv_fact(campaign_evidence_ref("heed_neither"), true)), "answer_id", "V5_2"), "topic", "trust")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V5_2"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), campaign_at(actor, "hall"), "", [], "答辩：当时自行判断", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 113, "V5_2")), "answer", dv_fact(campaign_evidence_ref("heed_neither"), true)), "answer_id", "V5_2"), "topic", "trust")
 
 fn c1_hypothesis_V5_2():
     return dv_with(dv_with(dv_with({"id": "V5_2", "proposition": dv_fact(campaign_evidence_ref("heed_neither"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 113, "V5_2"))}, "available_when", dv_fact(dv_ref("question", "state", "open_trust"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("heed_neither"), true))), "group", "trust")
 
 fn c1_answer_trust(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.trust"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 28, "trust")), "answer", dv_fact(campaign_evidence_ref("trust_reason"), true)), "answer_id", "trust"), "topic", "trust")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.trust"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), campaign_at(actor, "hall"), "", [], "答辩：说明信任与闩门的理由", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 28, "trust")), "answer", dv_fact(campaign_evidence_ref("trust_reason"), true)), "answer_id", "trust"), "topic", "trust")
 
 fn c1_hypothesis_trust():
     return dv_with(dv_with(dv_with({"id": "trust", "proposition": dv_fact(campaign_evidence_ref("trust_reason"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 28, "trust"))}, "available_when", dv_fact(dv_ref("question", "state", "open_trust"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("trust_reason"), true))), "group", "trust")
 
 fn c1_answer_V6_0(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V6_0"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 115, "V6_0")), "answer", dv_fact(campaign_evidence_ref("familiar"), false)), "answer_id", "V6_0"), "topic", "trust")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V6_0"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), campaign_at(actor, "hall"), "", [], "答辩：此前彼此陌生", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 115, "V6_0")), "answer", dv_fact(campaign_evidence_ref("familiar"), false)), "answer_id", "V6_0"), "topic", "trust")
 
 fn c1_hypothesis_V6_0():
     return dv_with(dv_with(dv_with(dv_with({"id": "V6_0", "proposition": dv_fact(campaign_evidence_ref("familiar"), false), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 115, "V6_0"))}, "available_when", dv_fact(dv_ref("question", "state", "open_trust"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("familiar"), false))), "group", "trust"), "manual_available_when", c1_manual_history_gate())
 
 fn c1_answer_V6_1(actor):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".answer.V6_1"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), campaign_at(actor, "hall"), "", [], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 116, "V6_1")), "answer", dv_fact(campaign_evidence_ref("familiar"), true)), "answer_id", "V6_1"), "topic", "trust")
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".answer.V6_1"), "answer", dv_all(dv_pair(campaign_at(actor, "hall"), dv_fact(dv_ref("question", "state", "open_trust"), true))), campaign_at(actor, "hall"), "", [], "答辩：此前彼此熟悉", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 116, "V6_1")), "answer", dv_fact(campaign_evidence_ref("familiar"), true)), "answer_id", "V6_1"), "topic", "trust")
 
 fn c1_hypothesis_V6_1():
     return dv_with(dv_with(dv_with(dv_with({"id": "V6_1", "proposition": dv_fact(campaign_evidence_ref("familiar"), true), "prior": 0.5, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 116, "V6_1"))}, "available_when", dv_fact(dv_ref("question", "state", "open_trust"), true)), "assumptions", dv_single(dv_fact(campaign_evidence_ref("familiar"), true))), "group", "trust"), "manual_available_when", c1_manual_history_gate())
@@ -500,25 +504,25 @@ fn c1_hypotheses():
     return result
 
 fn c1_talk_slate_code(actor):
-    return c1_once(c1_observe_as(campaign_action(rt_cat(actor, ".talk.slate_code"), "talk", campaign_at(actor, "hall"), dv_all(dv_pair(campaign_at(actor, "hall"), campaign_at("huo", "hall"))), "", dv_single(campaign_evidence_ref("slate_code")), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 83, "help_E7.003")), "testimony", "huo", 0.9))
+    return c1_once(c1_observe_as(campaign_intent_action(rt_cat(actor, ".talk.slate_code"), "talk", campaign_at(actor, "hall"), dv_all(dv_pair(campaign_at(actor, "hall"), campaign_at("huo", "hall"))), "", dv_single(campaign_evidence_ref("slate_code")), "询问石板刻痕", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 83, "help_E7.003")), "testimony", "huo", 0.9))
 
 fn c1_talk_slate_person(actor):
-    return c1_once(c1_observe_as(campaign_action(rt_cat(actor, ".talk.slate_person"), "talk", campaign_at(actor, "hall"), dv_all(dv_pair(campaign_at(actor, "hall"), campaign_at("huo", "hall"))), "", dv_single(campaign_evidence_ref("slate_person")), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 84, "help_E7.005")), "testimony", "huo", 0.9))
+    return c1_once(c1_observe_as(campaign_intent_action(rt_cat(actor, ".talk.slate_person"), "talk", campaign_at(actor, "hall"), dv_all(dv_pair(campaign_at(actor, "hall"), campaign_at("huo", "hall"))), "", dv_single(campaign_evidence_ref("slate_person")), "询问石板上的人形线条", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 84, "help_E7.005")), "testimony", "huo", 0.9))
 
 fn c1_talk_frame_hollow(actor):
-    return c1_once(c1_observe_as(campaign_action(rt_cat(actor, ".talk.frame_hollow"), "talk", campaign_at(actor, "foyer"), dv_all(dv_pair(campaign_at(actor, "foyer"), campaign_at("su", "foyer"))), "", dv_single(campaign_evidence_ref("frame_hollow")), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 82, "help_E5.004")), "testimony", "su", 0.9))
+    return c1_once(c1_observe_as(campaign_intent_action(rt_cat(actor, ".talk.frame_hollow"), "talk", campaign_at(actor, "foyer"), dv_all(dv_pair(campaign_at(actor, "foyer"), campaign_at("su", "foyer"))), "", dv_single(campaign_evidence_ref("frame_hollow")), "询问门框的声响", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 82, "help_E5.004")), "testimony", "su", 0.9))
 
 fn c1_talk_cups_known(actor):
-    return c1_once(c1_observe_as(campaign_action(rt_cat(actor, ".talk.cups_known"), "talk", campaign_at(actor, "pantry"), dv_all(dv_pair(campaign_at(actor, "pantry"), campaign_at("shen", "pantry"))), "", dv_single(campaign_evidence_ref("cups_known")), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 85, "help_E9.003")), "testimony", "shen", 0.85))
+    return c1_once(c1_observe_as(campaign_intent_action(rt_cat(actor, ".talk.cups_known"), "talk", campaign_at(actor, "pantry"), dv_all(dv_pair(campaign_at(actor, "pantry"), campaign_at("shen", "pantry"))), "", dv_single(campaign_evidence_ref("cups_known")), "询问杯子的摆放", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 85, "help_E9.003")), "testimony", "shen", 0.85))
 
 fn c1_talk_starter_kept(actor):
-    return c1_once(c1_observe_as(campaign_action(rt_cat(actor, ".talk.starter_kept"), "talk", campaign_at(actor, "pantry"), dv_all(dv_pair(campaign_at(actor, "pantry"), campaign_at("shen", "pantry"))), "", dv_single(campaign_evidence_ref("starter_kept")), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 86, "help_E10.002")), "testimony", "shen", 0.85))
+    return c1_once(c1_observe_as(campaign_intent_action(rt_cat(actor, ".talk.starter_kept"), "talk", campaign_at(actor, "pantry"), dv_all(dv_pair(campaign_at(actor, "pantry"), campaign_at("shen", "pantry"))), "", dv_single(campaign_evidence_ref("starter_kept")), "询问罐中酵头", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 86, "help_E10.002")), "testimony", "shen", 0.85))
 
 fn c1_talk_recalled_copper(actor):
-    return c1_once(c1_observe_as(campaign_action(rt_cat(actor, ".talk.recalled_copper"), "talk", campaign_at(actor, "hall"), dv_all(dv_pair(campaign_at(actor, "hall"), campaign_at("huo", "hall"))), "", dv_single(campaign_evidence_ref("recalled_copper")), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 91, "recall_huo.003")), "testimony", "huo", 0.85))
+    return c1_once(c1_observe_as(campaign_intent_action(rt_cat(actor, ".talk.recalled_copper"), "talk", campaign_at(actor, "hall"), dv_all(dv_pair(campaign_at(actor, "hall"), campaign_at("huo", "hall"))), "", dv_single(campaign_evidence_ref("recalled_copper")), "询问关于铜口的记忆", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 91, "recall_huo.003")), "testimony", "huo", 0.85))
 
 fn c1_talk_recalled_names(actor):
-    return dv_with(c1_once(c1_observe_as(campaign_action(rt_cat(actor, ".talk.recalled_names"), "talk", campaign_at(actor, "pantry"), dv_all(dv_pair(campaign_at(actor, "pantry"), campaign_at("shen", "pantry"))), "", dv_single(campaign_evidence_ref("recalled_names")), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 92, "recall_shen.003")), "testimony", "shen", 0.85)), "surface", "沈鼎回想起：阿泠的茶不放糖，老霍的放两勺，那位喝清茶不放奶。‘阿泠’这称呼，他自己也不知怎么脱口而出。")
+    return dv_with(c1_once(c1_observe_as(campaign_intent_action(rt_cat(actor, ".talk.recalled_names"), "talk", campaign_at(actor, "pantry"), dv_all(dv_pair(campaign_at(actor, "pantry"), campaign_at("shen", "pantry"))), "", dv_single(campaign_evidence_ref("recalled_names")), "询问关于姓名的记忆", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 92, "recall_shen.003")), "testimony", "shen", 0.85)), "surface", "沈鼎回想起：阿泠的茶不放糖，老霍的放两勺，那位喝清茶不放奶。‘阿泠’这称呼，他自己也不知怎么脱口而出。")
 
 行动 c1_sole_test，给定 行动者：
     编号 rt_cat(行动者, ".compare_sole")。
@@ -536,10 +540,10 @@ fn c1_sound_action(actor):
         local_1 = dv_list3(campaign_evidence_ref("sound_trial"), dv_ref("ritual", "state", "sound_trial_done"), campaign_evidence_ref("heads_lost"))
     else:
         local_1 = dv_pair(campaign_evidence_ref("sound_trial"), dv_ref("ritual", "state", "sound_trial_done"))
-    return dv_with(dv_with(c1_once(campaign_action(rt_cat(actor, ".sound_trial"), "sound_test", dv_all(dv_pair(campaign_at(actor, "hall"), c1_statement("pipe_layout"))), campaign_at(actor, "hall"), rt_cat(actor, ".sound_trial"), local_1, campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 88, "sound_test.003"))), "public_observers", ["detective", "huo", "shen", "su"]), "public_grants", dv_single(dv_ref("ritual", "state", "sound_trial_done")))
+    return dv_with(dv_with(c1_once(campaign_intent_action(rt_cat(actor, ".sound_trial"), "sound_test", dv_all(dv_pair(campaign_at(actor, "hall"), c1_statement("pipe_layout"))), campaign_at(actor, "hall"), rt_cat(actor, ".sound_trial"), local_1, "进行声路试验", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 88, "sound_test.003"))), "public_observers", ["detective", "huo", "shen", "su"]), "public_grants", dv_single(dv_ref("ritual", "state", "sound_trial_done")))
 
 fn c1_loss_testimony(actor):
-    return c1_once(c1_observe_as(campaign_action(rt_cat(actor, ".loss_testimony"), "talk", dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true), dv_all(dv_list3(campaign_at(actor, "hall"), campaign_at("su", "hall"), dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true))), "", dv_single(campaign_evidence_ref("heads_lost")), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 89, "sound_test.007")), "testimony", "su", 0.9))
+    return c1_once(c1_observe_as(campaign_intent_action(rt_cat(actor, ".loss_testimony"), "talk", dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true), dv_all(dv_list3(campaign_at(actor, "hall"), campaign_at("su", "hall"), dv_fact(dv_ref("ritual", "state", "sound_trial_done"), true))), "", dv_single(campaign_evidence_ref("heads_lost")), "请在场者说明声路试验中的所闻", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/可习得命题.story", 89, "sound_test.007")), "testimony", "su", 0.9))
 
 fn c1_latch_contact_ref():
     return dv_ref("ritual", "state", "present_latch_contact.detective")
@@ -561,7 +565,7 @@ fn c1_latch_contact_action():
     let known = dv_all([campaign_at("detective", "foyer"), c1_statement("bolt_down"), dv_fact(c1_latch_contact_ref(), false)])
     let physical = dv_all(dv_pair(campaign_at("detective", "foyer"), dv_fact(c1_latch_contact_ref(), false)))
     let grants = [c1_latch_contact_ref(), campaign_evidence_ref("recalled_bolt"), campaign_evidence_ref("recalled_trust")]
-    var action = c1_observe_as(campaign_action("detective.touch_latch", "move", known, physical, "detective.touch_latch", grants, c1_latch_contact_source()), "recall", "detective", 0.85)
+    var action = c1_observe_as(campaign_intent_action("detective.touch_latch", "move", known, physical, "detective.touch_latch", grants, "走近并触碰插闩", c1_latch_contact_source()), "recall", "detective", 0.85)
     action = dv_with_many(action, {"resonance": {"passive": true, "basis": [c1_latch_contact_source()]}, "travel": {"from": "foyer", "to": "foyer", "station": "site:E1"}, "predict_law": "detective.touch_latch", "grant_observation_sources": [{"ref": c1_latch_contact_ref(), "source": "perception", "origin": "own-executed-contact", "trust": 1}], "presentation": {"actor": "detective", "voice": "bodily-flash", "publish_after": "actual-applied-execution", "knowledge_effect": "none", "lines": [{"template": "指腹压上铁闩的一瞬，有什么东西从很远的地方晃了一下。", "bindings": []}, {"template": "霍铎说闩。我就闩了。……我信他。", "bindings": []}, {"template": "一句转述，我就去闩了门。我凭的是什么？", "bindings": []}]}})
     return action
 
@@ -609,7 +613,7 @@ fn c1_question_object():
     则 question 的 "outstanding_complete" 变为 true。
 
 fn c1_reask_question(actor):
-    return dv_with(c1_observe_as(campaign_action(rt_cat(actor, ".reask_question"), "talk", campaign_at(actor, "hall"), dv_all(dv_pair(campaign_at(actor, "hall"), campaign_at("demon", "hall"))), "", [dv_ref("question", "state", "current"), dv_ref("question", "state", "stage"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete"), dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust")], campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story", 47, "clock_question.001")), "perception", "direct", 1), "repeatable", true)
+    return dv_with(c1_observe_as(campaign_intent_action(rt_cat(actor, ".reask_question"), "talk", campaign_at(actor, "hall"), dv_all(dv_pair(campaign_at(actor, "hall"), campaign_at("demon", "hall"))), "", [dv_ref("question", "state", "current"), dv_ref("question", "state", "stage"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete"), dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust")], "询问当前题目", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/策略轨道.story", 47, "clock_question.001")), "perception", "direct", 1), "repeatable", true)
 
 fn c1_room_objects():
     return [campaign_local_object("hall"), campaign_local_object("foyer"), campaign_local_object("pantry"), campaign_local_object("corridor"), campaign_local_object("R05"), campaign_local_object("R06"), campaign_local_object("R07"), campaign_local_object("R08")]
@@ -747,7 +751,7 @@ fn c1_personal_goals(actor):
             return dv_list3(c1_personal_goal("frame_hollow", actor), c1_personal_goal("score_partial", actor), c1_personal_goal("heads_lost", actor))
 
 fn c1_professional_reply(actor, atom, surface, source):
-    return dv_with(dv_with(dv_with(campaign_action(rt_cat(rt_cat(actor, ".reply."), atom), "talk", c1_statement(atom), dv_true(), "", [], source), "response_topic", atom), "listeners", ["detective", "huo", "shen", "su"]), "speech", dv_with(c1_speech(c1_statement(atom), source, "professional-observation"), "surface", surface))
+    return dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(rt_cat(actor, ".reply."), atom), "talk", c1_statement(atom), dv_true(), "", [], "说明本人取得的观察", source), "response_topic", atom), "listeners", ["detective", "huo", "shen", "su"]), "speech", dv_with(c1_speech(c1_statement(atom), source, "professional-observation"), "surface", surface))
 
 fn c1_professional_replies(actor):
     var replies = c1_requested_replies(actor)
@@ -944,7 +948,7 @@ fn c1_speech(literal, surface, scope):
     return dv_with(dv_with(dv_with({"literal_ast": literal, "referents": [], "scope": scope, "time_anchor": "今晨醒来至当前发言"}, "surface_ref", surface), "presuppositions", []), "implicature_candidates", [])
 
 fn c1_raw_opening_action():
-    return dv_with(dv_with(dv_with(c1_once(campaign_action("demon.opening", "opening", dv_fact(dv_ref("question", "state", "stage"), "opening"), dv_fact(dv_ref("question", "state", "stage"), "opening"), "demon.opening", dv_single(dv_ref("question", "state", "stage")), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"))), "speech", dv_with(dv_with(c1_speech(dv_all(dv_list3(dv_fact(dv_ref("question", "state", "awake_scope"), true), dv_fact(dv_ref("question", "state", "memory_removed"), true), dv_fact(dv_ref("question", "state", "not_injury"), true))), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"), "awake_self"), "surface", "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。诸位所需之知，我会教。我所立之规，已贴在活动厅的公告框里。"), "implicature_candidates", dv_single(dv_single(dv_pair("id", "short_stay"))))), "listeners", ["detective", "huo", "shen", "su"]), "public_grants", [])
+    return dv_with(dv_with(dv_with(c1_once(campaign_intent_action("demon.opening", "opening", dv_fact(dv_ref("question", "state", "stage"), "opening"), dv_fact(dv_ref("question", "state", "stage"), "opening"), "demon.opening", dv_single(dv_ref("question", "state", "stage")), "向铜口播报开场规则", campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"))), "speech", dv_with(dv_with(c1_speech(dv_all(dv_list3(dv_fact(dv_ref("question", "state", "awake_scope"), true), dv_fact(dv_ref("question", "state", "memory_removed"), true), dv_fact(dv_ref("question", "state", "not_injury"), true))), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 28, "s3_broadcast.019"), "awake_self"), "surface", "诸位初涉斯地，记忆有缺，并非伤病，请勿惊惶。诸位所需之知，我会教。我所立之规，已贴在活动厅的公告框里。"), "implicature_candidates", dv_single(dv_single(dv_pair("id", "short_stay"))))), "listeners", ["detective", "huo", "shen", "su"]), "public_grants", [])
 
 fn c1_opening_action():
     return campaign_authorized_speech(c1_raw_opening_action())
@@ -989,7 +993,7 @@ fn c1_raw_question_action(stage, surface, first):
     var speech = dv_with_many(c1_speech(dv_true(), surface, "heard-public-question"), {"utterance_type": "question", "surface": rt_cat(c1_question_text(stage), " 每一问，说一句结论，再拿出一件撑得住它的东西。")})
     if stage == "prompt" or stage == "voice_source":
         speech = dv_with(speech, "implicature_candidates", [{"id": "outside-help-presumption"}])
-    return dv_with_many(c1_once(campaign_action(rt_cat("demon.question.", stage), local_1, dv_fact(dv_ref("question", "state", "stage"), stage), dv_fact(dv_ref("question", "state", "stage"), stage), local_2, dv_single(dv_ref("question", "state", "stage")), surface)), {"speech": speech, "listeners": ["detective", "huo", "shen", "su"], "public_grants": [dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust"), dv_ref("question", "state", "current"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete")]})
+    return dv_with_many(c1_once(campaign_intent_action(rt_cat("demon.question.", stage), local_1, dv_fact(dv_ref("question", "state", "stage"), stage), dv_fact(dv_ref("question", "state", "stage"), stage), local_2, dv_single(dv_ref("question", "state", "stage")), "提出当前案件问题", surface)), {"speech": speech, "listeners": ["detective", "huo", "shen", "su"], "public_grants": [dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust"), dv_ref("question", "state", "current"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete")]})
 
 fn c1_question_action(stage, surface, first):
     return campaign_authorized_speech(c1_raw_question_action(stage, surface, first))
@@ -1159,13 +1163,13 @@ fn c1_evidence_contact_methods(world, actor, mode):
 
 fn c1_compare_wedge_action(actor):
     let name = rt_cat(actor, ".compare.E2")
-    var action = c1_once(campaign_action(name, "move", campaign_at(actor, "foyer"), campaign_at(actor, "foyer"), name, [c1_evidence_contact_ref(actor, "E2"), campaign_evidence_ref("ash_wedge")], campaign_source("user", 0, "E2厚度、擦痕和灰扇现场比对")))
+    var action = c1_once(campaign_intent_action(name, "move", campaign_at(actor, "foyer"), campaign_at(actor, "foyer"), name, [c1_evidence_contact_ref(actor, "E2"), campaign_evidence_ref("ash_wedge")], "对照木楔与门底痕迹", campaign_source("user", 0, "E2厚度、擦痕和灰扇现场比对")))
     return dv_with_many(action, {"predict_law": name, "travel": {"from": "foyer", "to": "foyer", "station": "site:E2"}, "surface": "把木楔的厚度贴着门底擦痕比过，再对照门缝向内散开的灰扇。木楔曾撑起门缝，烟灰从门缝进入。", "sensory_mode": "executed-physical-comparison"})
 
 fn c1_compare_palms_action(actor):
     let name = rt_cat(actor, ".compare.E11")
     let premise = c1_evidence_contact_premise(actor, "E11")
-    var action = c1_once(campaign_action(name, "move", premise, premise, name, [c1_evidence_contact_ref(actor, "E11"), campaign_evidence_ref("hand_not_mine")], campaign_source("user", 0, "E11四人在场逐一比对掌宽")))
+    var action = c1_once(campaign_intent_action(name, "move", premise, premise, name, [c1_evidence_contact_ref(actor, "E11"), campaign_evidence_ref("hand_not_mine")], "对照掌印与手掌", campaign_source("user", 0, "E11四人在场逐一比对掌宽")))
     return dv_with_many(action, {"predict_law": name, "travel": {"from": "R05", "to": "R05", "station": "site:E11"}, "surface": "四个人都在书架旁，依次将手掌靠近灰上的半枚手印，比过掌宽。侦探、霍铎、沈鼎、苏泠，都与它不合。", "sensory_mode": "executed-four-person-palm-comparison"})
 
 
@@ -1187,11 +1191,11 @@ fn c1_recall_advice_question():
     let known = dv_all([campaign_at("shen", "pantry"), c1_statement("starter_kept"), dv_fact(c1_deep_resonance_ref("shen"), false)])
     let literal = c1_statement("starter_kept")
     let speech = dv_with_many(c1_speech(literal, source, "owner-request-for-advice"), {"utterance_type": "question", "surface": "罐子是我的。可这事……你说呢？", "request": {"target": "detective", "topic": "recall_advice"}})
-    return dv_with_many(c1_once(campaign_action("shen.recall_advice.ask", "talk", known, campaign_at("shen", "pantry"), "", [], source)), {"speech": speech, "listeners": ["detective"], "opportunity_requirement": {"location": "pantry", "participants": ["shen", "detective"], "mode": "all-present"}, "received_speech_requirement": {"speaker": "demon", "action_id": "demon.opening.desire-offer"}})
+    return dv_with_many(c1_once(campaign_intent_action("shen.recall_advice.ask", "talk", known, campaign_at("shen", "pantry"), "", [], "询问是否触碰回想之物", source)), {"speech": speech, "listeners": ["detective"], "opportunity_requirement": {"location": "pantry", "participants": ["shen", "detective"], "mode": "all-present"}, "received_speech_requirement": {"speaker": "demon", "action_id": "demon.opening.desire-offer"}})
 
 fn c1_recall_advice_actions():
     let path = "godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story"
-    let rows = [{"id": "touch", "text": "碰吧。我在边上。", "line": 137}, {"id": "decline", "text": "别往下想了。不知道那是什么，先别碰。", "line": 140}, {"id": "own", "text": "这是你的东西。你自己拿主意。", "line": 143}, {"id": "selective-truth", "text": "罐子你照样喂着。先把自己的罐子拿稳，我就在旁边。", "line": 134}]
+    let rows = [{"id": "touch", "label": "建议触碰回想之物", "text": "碰吧。我在边上。", "line": 137}, {"id": "decline", "label": "建议暂缓触碰回想之物", "text": "别往下想了。不知道那是什么，先别碰。", "line": 140}, {"id": "own", "label": "请物主自行决定", "text": "这是你的东西。你自己拿主意。", "line": 143}, {"id": "selective-truth", "label": "以随身物件鼓励触碰", "text": "罐子你照样喂着。先把自己的罐子拿稳，我就在旁边。", "line": 134}]
     var result = []
     var i = 0
     while i < rt_count(rows):
@@ -1213,7 +1217,7 @@ fn c1_recall_advice_actions():
         speech = dv_with(speech, "advice", {"id": advice_id, "topic": "recall_advice", "targets": ["shen"], "proposed_action_ids": ["shen.deep-resonance"], "position": position, "basis": [source]})
         if row.id == "selective-truth":
             speech = dv_with(speech, "manipulation", {"method": "selective-true-owned-object-framing", "advice_id": advice_id, "targets": ["shen"], "action_ids": ["shen.deep-resonance"], "consequence_when": dv_fact(c1_deep_resonance_ref("shen"), true), "basis": [source, campaign_source(path, 134, "recall_hesitate_shen.002")]})
-        let action = c1_once(campaign_action(rt_cat("detective.recall_advice.", row.id), "talk", known, campaign_at("detective", "pantry"), "", [], source))
+        let action = c1_once(campaign_intent_action(rt_cat("detective.recall_advice.", row.id), "talk", known, campaign_at("detective", "pantry"), "", [], row.label, source))
         rt_push(result, dv_with_many(action, {"speech": speech, "listeners": ["shen"], "manual_only": true, "response_topic": "recall_advice", "requires_actual_request": true, "response_once": true, "received_speech_requirement": {"speaker": "shen", "action_id": "shen.recall_advice.ask"}, "opportunity_requirement": {"location": "pantry", "participants": ["detective", "shen"], "mode": "all-present"}}))
         i = i + 1
     return result
@@ -1235,7 +1239,7 @@ fn c1_recall_advice_responses():
             let id = rt_cat(rt_cat("shen.recall_advice.", options[i]), suffix)
             let known = campaign_at("shen", "pantry")
             let speech = dv_with(c1_speech(dv_true(), source, "owner-advice-stance-not-execution"), "surface", surface)
-            let action = c1_once(campaign_action(id, "talk", known, known, "", [], source))
+            let action = c1_once(campaign_intent_action(id, "talk", known, known, "", [], rt_cat(dv_get({"true": "采纳", "false": "不采纳"}, rt_show(accepted)), "回想建议"), source))
             rt_push(result, dv_with_many(action, {"speech": speech, "listeners": ["detective"], "received_speech_requirement": {"speaker": "detective", "action_id": rt_cat("detective.recall_advice.", options[i])}, "advice_decision": {"advice_id": rt_cat("recall_advice.", options[i]), "accepted": accepted, "assessment_action_id": "shen.deep-resonance"}}))
             stance_index = stance_index + 1
         i = i + 1
@@ -1257,7 +1261,7 @@ fn c1_deep_resonance_action(actor):
         rt_push(grants, campaign_evidence_ref("recalled_names"))
         surface = "沈鼎的拇指沿着罐壁上一层层干面痕继续摸索。阿泠的茶不放糖，老霍的放两勺，那位清茶不放奶。阿泠……这称呼怎么脱口就来了。"
     let prerequisite = dv_all([campaign_at(actor, site.room), c1_statement(site.evidence)])
-    var action = c1_once(campaign_action(rt_cat(actor, ".deep-resonance"), "move", prerequisite, campaign_at(actor, site.room), rt_cat(actor, ".deep-resonance"), grants, source))
+    var action = c1_once(campaign_intent_action(rt_cat(actor, ".deep-resonance"), "move", prerequisite, campaign_at(actor, site.room), rt_cat(actor, ".deep-resonance"), grants, "触碰熟悉的物件以尝试回想", source))
     var requires = c1_statement(site.evidence)
     if actor == "huo":
         requires = dv_all([requires, c1_op_property("opening.facilities", "drawing_exists", true)])
@@ -1300,7 +1304,7 @@ fn c1_answer_conflict_response(actor, key):
         surface = "你前后的答辩对不上。哪一处证物让你改了判断？我要看根据。"
     if actor == "shen":
         surface = "你前后说得不一样。我得先弄清你改口的根据，才敢让身边的人跟着做。"
-    var action = c1_once(campaign_action(rt_cat(rt_cat(actor, ".respond-defense-conflict."), key), "talk", campaign_at(actor, "hall"), campaign_at(actor, "hall"), "", [], campaign_source("user", 0, "实际前后矛盾答辩引起的道德谴责与疑虑")))
+    var action = c1_once(campaign_intent_action(rt_cat(rt_cat(actor, ".respond-defense-conflict."), key), "talk", campaign_at(actor, "hall"), campaign_at(actor, "hall"), "", [], "回应答辩中的冲突", campaign_source("user", 0, "实际前后矛盾答辩引起的道德谴责与疑虑")))
     return dv_with_many(action, {"received_claim_conflict": {"speaker": "detective", "key": key}, "speech": dv_with(c1_speech(dv_true(), surface, "own-moral-appraisal-of-actually-heard-defense"), "surface", surface), "listeners": ["detective", "huo", "shen", "su"], "personal_purpose": {"subject": actor, "id": "question-contradictory-defense", "basis": c1_op_desire(actor).basis}})
 
 
@@ -1315,7 +1319,7 @@ fn c1_palm_invitation_action(room):
     let name = rt_cat("detective.invite-palms.", room)
     let claim = dv_fact(c1_palm_invitation_ref(), true)
     let surface = "我在R-05书架的灰上看见半枚手印。请一起到书架旁，逐一比过我们四人的掌宽。"
-    var action = c1_once(campaign_action(name, "talk", dv_all([campaign_at("detective", room), c1_statement("shelf_old")]), campaign_at("detective", room), name, [c1_palm_invitation_ref()], campaign_source("user", 0, "E11亲见后正式邀请与实际收闻同行机会")))
+    var action = c1_once(campaign_intent_action(name, "talk", dv_all([campaign_at("detective", room), c1_statement("shelf_old")]), campaign_at("detective", room), name, [c1_palm_invitation_ref()], "邀请在场者对照掌印", campaign_source("user", 0, "E11亲见后正式邀请与实际收闻同行机会")))
     return dv_with_many(action, {"predict_law": name, "speech": dv_with(c1_speech(claim, surface, "own-comparison-invitation"), "surface", surface), "listeners": ["huo", "shen", "su"], "surface": surface})
 
 // Native chapter law definitions. The original .story files are provenance only.
@@ -2314,7 +2318,7 @@ fn c1_hist_share_basis():
     return dv_single(campaign_source("docs/design-standard.md", 1500, "approved-estimated-argument-sharing-and-paid-scope-reassessment"))
 
 fn c1_hist_share_action(actor):
-    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(campaign_action(rt_cat(actor, ".share.original_q2_complete"), "talk", campaign_at(actor, "hall"), campaign_at(actor, "hall"), "", [], campaign_source("docs/design-standard.md", 1500, "approved-actual-argument-sharing")), "speech_from_argument", true), "argument_slots", dv_list3("actual_heard", "voice_source", "transmission_loss")), "argument_question", "original_q2_complete"), "topic", "original_q2_complete"), "listeners", ["detective", "huo", "shen", "su"]), "speech", dv_with(c1_speech(dv_true(), "本人形成的历史解释；估计性、置信度与来源由实际论证生成。", "estimated-history-argument"), "channel", "speech")), "reassessment_source_scope", "awake_self"), "reassessment_scope_refs", dv_single(dv_ref("question", "state", "awake_scope")))
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(campaign_intent_action(rt_cat(actor, ".share.original_q2_complete"), "talk", campaign_at(actor, "hall"), campaign_at(actor, "hall"), "", [], "说明已经核对的重演解释", campaign_source("docs/design-standard.md", 1500, "approved-actual-argument-sharing")), "speech_from_argument", true), "argument_slots", dv_list3("actual_heard", "voice_source", "transmission_loss")), "argument_question", "original_q2_complete"), "topic", "original_q2_complete"), "listeners", ["detective", "huo", "shen", "su"]), "speech", dv_with(c1_speech(dv_true(), "本人形成的历史解释；估计性、置信度与来源由实际论证生成。", "estimated-history-argument"), "channel", "speech")), "reassessment_source_scope", "awake_self"), "reassessment_scope_refs", dv_single(dv_ref("question", "state", "awake_scope")))
 
 fn c1_hist_share_goal(actor):
     return dv_with({"kind": "communicate", "method_id": rt_cat(actor, ".share.original_q2_complete"), "requires_argument": true, "basis": c1_hist_share_basis()}, "available_when", campaign_at(actor, "hall"))
@@ -2449,18 +2453,18 @@ fn c1_other_people():
 
 fn c1_other_people_build():
     var result = []
-    rt_push(result, {"id": "quer", "name": "雀儿", "group": "contract", "desire": "一个不会赶她走的地方", "initial_surface": "门。门闩在外面。", "material_surface": "袋子还在，口扎得死紧。我的结。", "intention_surface": "先看看那道门闩。", "memory_surface": "怎么来的？上船，然后……不知道。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 47, "opening_quer.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 46, "opening_quer.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 48, "opening_quer.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/07_雀儿.story", 10, "quer.desire")})
-    rt_push(result, {"id": "lucian", "name": "卢西安", "group": "contract", "desire": "言灵的完美韵律", "initial_surface": "嘴边有一句诗，念到一半，韵脚找不着了。", "material_surface": "桌上的笔记是我的字，比平时潦草。", "intention_surface": "先找那个韵。", "memory_surface": "上船之后呢？也找不着了。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 31, "opening_lucian.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 30, "opening_lucian.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 32, "opening_lucian.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/05_卢西安.story", 10, "lucian.desire")})
-    rt_push(result, {"id": "ward", "name": "沃德", "group": "contract", "desire": "成为定规则的人", "initial_surface": "纸。笔。都在桌上。", "material_surface": "笔尖是新削的。", "intention_surface": "从现在开始记。", "memory_surface": "上船以后的事，一个字也没有记下。这不像我。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 55, "opening_ward.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 54, "opening_ward.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 56, "opening_ward.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/08_沃德.story", 10, "ward.desire")})
-    rt_push(result, {"id": "gu", "name": "顾平章", "group": "contract", "desire": "读通古代铭文", "initial_surface": "老花镜搁在枕边，镜片上溅了一点墨。", "material_surface": "枕边这摞拓片，是哪里的碑？", "intention_surface": "先把镜片擦干净。", "memory_surface": "老朽记得上了船。再往后，就记不起了。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 39, "opening_gu.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 38, "opening_gu.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 40, "opening_gu.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/06_顾平章.story", 10, "gu.desire")})
-    rt_push(result, {"id": "ruan", "name": "阮清月", "group": "astral", "desire": "赢下与恶魔的对局", "initial_surface": "枕边一枚黑子，凉的。", "material_surface": "桌上一盘棋下到中盘。轮到黑走。我记不起这一手要下在哪。", "intention_surface": "先不下。", "memory_surface": "上船，然后是一段空白。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 71, "opening_ruan.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 70, "opening_ruan.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 72, "opening_ruan.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/10_阮清越.story", 10, "ruan.desire")})
-    rt_push(result, {"id": "elena", "name": "伊莲娜", "group": "astral", "desire": "治好脚踝，查明仪式真相", "initial_surface": "左脚踝缠着绷带。一动，疼得眼前发白。", "material_surface": "脚尖自己绷了一下，像要起步。", "intention_surface": "别站。再躺一会儿。", "memory_surface": "我是怎么伤的？只记得上船。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 79, "opening_elena.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 78, "opening_elena.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 80, "opening_elena.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/11_伊莲娜.story", 10, "elena.desire")})
-    rt_push(result, {"id": "selma", "name": "赛尔玛", "group": "astral", "desire": "为源质这一新物种定名", "initial_surface": "窗台上一盆苗，没见过，叶背亮得像抹了油。", "material_surface": "本子上画着这片叶子，编号那一栏空着。我画的，我没编。", "intention_surface": "查看叶子和本子。", "memory_surface": "船靠岸了吗？想不起来。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 63, "opening_selma.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 62, "opening_selma.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 64, "opening_selma.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/09_赛尔玛.story", 10, "selma.desire")})
-    rt_push(result, {"id": "moran", "name": "莫兰", "group": "astral", "desire": "看见更多的以太色层", "initial_surface": "窗光是灰的。灰底下，还有一层很淡的绿。", "material_surface": "速写本摊着，炭笔滚在手边。", "intention_surface": "那层绿要散了。", "memory_surface": "船……之后是白的。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 87, "opening_moran.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 86, "opening_moran.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 88, "opening_moran.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/12_莫兰.story", 10, "moran.desire")})
-    rt_push(result, {"id": "mora", "name": "茉拉", "group": "logistics", "desire": "不再失去病人", "initial_surface": "药包。……在。", "material_surface": "围裙兜里有半卷绷带。", "intention_surface": "外面有人咳嗽。", "memory_surface": "上船以后的事，想不起来。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 119, "opening_mora.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 118, "opening_mora.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 120, "opening_mora.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/16_茉拉.story", 10, "mora.desire")})
-    rt_push(result, {"id": "bertrand", "name": "贝尔特朗", "group": "logistics", "desire": "护住平民同伴", "initial_surface": "手先摸到床边的提灯。灯油还有半截。", "material_surface": "左肩的皮垫磨亮了。那是托枪的地方，可枪不在。", "intention_surface": "门外有动静。", "memory_surface": "上船。然后就是这间屋子。中间缺了一段。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 103, "opening_bertrand.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 102, "opening_bertrand.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 104, "opening_bertrand.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story", 10, "bertrand.desire")})
-    rt_push(result, {"id": "veronica", "name": "维罗妮卡", "group": "logistics", "desire": "独立研究，证明理化能解释一切", "initial_surface": "一股试剂味，很淡，像是乙醚挥发过。", "material_surface": "器具都在架上，摆得比我习惯的还整齐。谁替我摆的？", "intention_surface": "先查瓶签。", "memory_surface": "最后记得的事：上船。之后的，一件也想不起来。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 95, "opening_veronica.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 94, "opening_veronica.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 96, "opening_veronica.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/13_维罗妮卡.story", 10, "veronica.desire")})
-    rt_push(result, {"id": "margaret", "name": "玛格丽特", "group": "logistics", "desire": "亲手建成、被人承认", "initial_surface": "天花板的梁是斜搭的。这跨度，搭得有点悬。", "material_surface": "卷尺和铅垂还挂在腰上，睡觉都没解。", "intention_surface": "先看看这屋子承不承得住。", "memory_surface": "我记得上船。之后的事，一点也想不起来。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 111, "opening_margaret.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 110, "opening_margaret.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 112, "opening_margaret.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/15_玛格丽特.story", 10, "margaret.desire")})
+    rt_push(result, {"id": "quer", "material_label": "检视随身袋子的扎口", "name": "雀儿", "group": "contract", "desire": "一个不会赶她走的地方", "initial_surface": "门。门闩在外面。", "material_surface": "袋子还在，口扎得死紧。我的结。", "intention_surface": "先看看那道门闩。", "memory_surface": "怎么来的？上船，然后……不知道。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 47, "opening_quer.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 46, "opening_quer.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 48, "opening_quer.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/07_雀儿.story", 10, "quer.desire")})
+    rt_push(result, {"id": "lucian", "material_label": "检视桌上的手稿", "name": "卢西安", "group": "contract", "desire": "言灵的完美韵律", "initial_surface": "嘴边有一句诗，念到一半，韵脚找不着了。", "material_surface": "桌上的笔记是我的字，比平时潦草。", "intention_surface": "先找那个韵。", "memory_surface": "上船之后呢？也找不着了。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 31, "opening_lucian.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 30, "opening_lucian.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 32, "opening_lucian.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/05_卢西安.story", 10, "lucian.desire")})
+    rt_push(result, {"id": "ward", "material_label": "检视纸笔", "name": "沃德", "group": "contract", "desire": "成为定规则的人", "initial_surface": "纸。笔。都在桌上。", "material_surface": "笔尖是新削的。", "intention_surface": "从现在开始记。", "memory_surface": "上船以后的事，一个字也没有记下。这不像我。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 55, "opening_ward.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 54, "opening_ward.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 56, "opening_ward.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/08_沃德.story", 10, "ward.desire")})
+    rt_push(result, {"id": "gu", "material_label": "检视枕边的拓片", "name": "顾平章", "group": "contract", "desire": "读通古代铭文", "initial_surface": "老花镜搁在枕边，镜片上溅了一点墨。", "material_surface": "枕边这摞拓片，是哪里的碑？", "intention_surface": "先把镜片擦干净。", "memory_surface": "老朽记得上了船。再往后，就记不起了。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 39, "opening_gu.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 38, "opening_gu.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 40, "opening_gu.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/06_顾平章.story", 10, "gu.desire")})
+    rt_push(result, {"id": "ruan", "material_label": "检视桌上的棋局", "name": "阮清月", "group": "astral", "desire": "赢下与恶魔的对局", "initial_surface": "枕边一枚黑子，凉的。", "material_surface": "桌上一盘棋下到中盘。轮到黑走。我记不起这一手要下在哪。", "intention_surface": "先不下。", "memory_surface": "上船，然后是一段空白。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 71, "opening_ruan.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 70, "opening_ruan.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 72, "opening_ruan.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/10_阮清越.story", 10, "ruan.desire")})
+    rt_push(result, {"id": "elena", "material_label": "查看自己的脚踝", "name": "伊莲娜", "group": "astral", "desire": "治好脚踝，查明仪式真相", "initial_surface": "左脚踝缠着绷带。一动，疼得眼前发白。", "material_surface": "脚尖自己绷了一下，像要起步。", "intention_surface": "别站。再躺一会儿。", "memory_surface": "我是怎么伤的？只记得上船。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 79, "opening_elena.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 78, "opening_elena.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 80, "opening_elena.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/11_伊莲娜.story", 10, "elena.desire")})
+    rt_push(result, {"id": "selma", "material_label": "对照窗台的苗与笔记", "name": "赛尔玛", "group": "astral", "desire": "为源质这一新物种定名", "initial_surface": "窗台上一盆苗，没见过，叶背亮得像抹了油。", "material_surface": "本子上画着这片叶子，编号那一栏空着。我画的，我没编。", "intention_surface": "查看叶子和本子。", "memory_surface": "船靠岸了吗？想不起来。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 63, "opening_selma.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 62, "opening_selma.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 64, "opening_selma.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/09_赛尔玛.story", 10, "selma.desire")})
+    rt_push(result, {"id": "moran", "material_label": "检视速写本和炭笔", "name": "莫兰", "group": "astral", "desire": "看见更多的以太色层", "initial_surface": "窗光是灰的。灰底下，还有一层很淡的绿。", "material_surface": "速写本摊着，炭笔滚在手边。", "intention_surface": "那层绿要散了。", "memory_surface": "船……之后是白的。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 87, "opening_moran.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 86, "opening_moran.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 88, "opening_moran.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/12_莫兰.story", 10, "moran.desire")})
+    rt_push(result, {"id": "mora", "material_label": "检视随身的绷带", "name": "茉拉", "group": "logistics", "desire": "不再失去病人", "initial_surface": "药包。……在。", "material_surface": "围裙兜里有半卷绷带。", "intention_surface": "外面有人咳嗽。", "memory_surface": "上船以后的事，想不起来。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 119, "opening_mora.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 118, "opening_mora.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 120, "opening_mora.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/16_茉拉.story", 10, "mora.desire")})
+    rt_push(result, {"id": "bertrand", "material_label": "检视左肩的皮垫", "name": "贝尔特朗", "group": "logistics", "desire": "护住平民同伴", "initial_surface": "手先摸到床边的提灯。灯油还有半截。", "material_surface": "左肩的皮垫磨亮了。那是托枪的地方，可枪不在。", "intention_surface": "门外有动静。", "memory_surface": "上船。然后就是这间屋子。中间缺了一段。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 103, "opening_bertrand.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 102, "opening_bertrand.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 104, "opening_bertrand.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story", 10, "bertrand.desire")})
+    rt_push(result, {"id": "veronica", "material_label": "检视器具和瓶签", "name": "维罗妮卡", "group": "logistics", "desire": "独立研究，证明理化能解释一切", "initial_surface": "一股试剂味，很淡，像是乙醚挥发过。", "material_surface": "器具都在架上，摆得比我习惯的还整齐。谁替我摆的？", "intention_surface": "先查瓶签。", "memory_surface": "最后记得的事：上船。之后的，一件也想不起来。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 95, "opening_veronica.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 94, "opening_veronica.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 96, "opening_veronica.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/13_维罗妮卡.story", 10, "veronica.desire")})
+    rt_push(result, {"id": "margaret", "material_label": "检视卷尺和铅垂", "name": "玛格丽特", "group": "logistics", "desire": "亲手建成、被人承认", "initial_surface": "天花板的梁是斜搭的。这跨度，搭得有点悬。", "material_surface": "卷尺和铅垂还挂在腰上，睡觉都没解。", "intention_surface": "先看看这屋子承不承得住。", "memory_surface": "我记得上船。之后的事，一点也想不起来。", "memory_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 111, "opening_margaret.003"), "initial_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 110, "opening_margaret.002"), "material_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/10_开场独白.story", 112, "opening_margaret.004"), "desire_source": campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/15_玛格丽特.story", 10, "margaret.desire")})
     return result
 
 fn c1_other_person(id):
@@ -2486,21 +2490,21 @@ fn c1_other_case(group):
 fn c1_other_traces(group):
     var result = []
     if (group == "contract"):
-        rt_push(result, {"id": "wet_rubbing", "surface": "顾平章的拓片墨迹未干。", "excluded_actor": "gu", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 18, "拓片墨未干")})
+        rt_push(result, {"id": "wet_rubbing", "title": "拓片", "surface": "顾平章的拓片墨迹未干。", "excluded_actor": "gu", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 18, "拓片墨未干")})
     if (group == "contract"):
-        rt_push(result, {"id": "continuous_manuscript", "surface": "卢西安的手稿写满三页，墨迹连贯。", "excluded_actor": "lucian", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 19, "手稿写满三页")})
+        rt_push(result, {"id": "continuous_manuscript", "title": "手稿", "surface": "卢西安的手稿写满三页，墨迹连贯。", "excluded_actor": "lucian", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 19, "手稿写满三页")})
     if (group == "contract"):
-        rt_push(result, {"id": "lock_checklist", "surface": "沃德的柜锁清单上压着笔痕，写的是记录。", "excluded_actor": "ward", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 20, "清单上的笔痕")})
+        rt_push(result, {"id": "lock_checklist", "title": "柜锁清单", "surface": "沃德的柜锁清单上压着笔痕，写的是记录。", "excluded_actor": "ward", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 20, "清单上的笔痕")})
     if (group == "astral"):
-        rt_push(result, {"id": "continuous_specimen_notes", "surface": "赛尔玛的标本笔记一条接一条，时刻连着。", "excluded_actor": "selma", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 37, "标本笔记不断")})
+        rt_push(result, {"id": "continuous_specimen_notes", "title": "标本笔记", "surface": "赛尔玛的标本笔记一条接一条，时刻连着。", "excluded_actor": "selma", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 37, "标本笔记不断")})
     if (group == "astral"):
-        rt_push(result, {"id": "remaining_sketches", "surface": "莫兰的速写本撕掉了一页，剩下的都是共鸣厅里的人，没有门。", "excluded_actor": "moran", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 38, "速写本缺页")})
+        rt_push(result, {"id": "remaining_sketches", "title": "速写本", "surface": "莫兰的速写本撕掉了一页，剩下的都是共鸣厅里的人，没有门。", "excluded_actor": "moran", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 38, "速写本缺页")})
     if (group == "logistics"):
-        rt_push(result, {"id": "sealed_medicine", "surface": "茉拉药包的封条完好。", "excluded_actor": "mora", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 54, "药包封条完好")})
+        rt_push(result, {"id": "sealed_medicine", "title": "药包封条", "surface": "茉拉药包的封条完好。", "excluded_actor": "mora", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 54, "药包封条完好")})
     if (group == "logistics"):
-        rt_push(result, {"id": "lamp_and_no_reagent", "surface": "玛格丽特的提灯灯油耗了一半，手上没有试剂味。", "excluded_actor": "margaret", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 55, "提灯油耗一半")})
+        rt_push(result, {"id": "lamp_and_no_reagent", "title": "提灯与持灯者的手", "surface": "玛格丽特的提灯灯油耗了一半，手上没有试剂味。", "excluded_actor": "margaret", "needs_actual_witness": false, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 55, "提灯油耗一半")})
     if (group == "logistics"):
-        rt_push(result, {"id": "matching_lamps", "surface": "两盏提灯的灯油耗相同。", "excluded_actor": "bertrand", "needs_actual_witness": true, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 56, "两盏灯互证")})
+        rt_push(result, {"id": "matching_lamps", "title": "两盏提灯", "surface": "两盏提灯的灯油耗相同。", "excluded_actor": "bertrand", "needs_actual_witness": true, "source": campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 56, "两盏灯互证")})
     return result
 
 fn c1_other_identity(group, actor):
@@ -2565,7 +2569,7 @@ axiom c1_other_release(group, clock_ref):
 
 fn c1_other_open_action(group, speaker):
     var spec = c1_other_case(group)
-    var action = c1_once(campaign_action(rt_cat("other.question.", group), "question", campaign_at(speaker, "living_hall"), dv_all(dv_pair(campaign_at(speaker, "living_hall"), dv_fact(campaign_case_ref(group, "open"), false))), rt_cat("other.open.", group), [], spec.source))
+    var action = c1_once(campaign_intent_action(rt_cat("other.question.", group), "question", campaign_at(speaker, "living_hall"), dv_all(dv_pair(campaign_at(speaker, "living_hall"), dv_fact(campaign_case_ref(group, "open"), false))), rt_cat("other.open.", group), [], rt_cat("提出", rt_cat(spec.zone, "的问题")), spec.source))
     var speech = dv_with_many(c1_speech(dv_true(), spec.source, "group-question-not-an-asserted-answer"), {"surface": rt_cat("铜口里传来声音：", spec.prompt), "utterance_type": "question", "channel": rt_cat("copper.", group)})
     var listeners = []
     var grants = dv_pair(campaign_case_ref(group, "open"), campaign_case_ref(group, "current"))
@@ -2587,14 +2591,14 @@ fn c1_other_inspections(id):
     while (i < rt_count(rows)):
         var row = rows[i]
         var ref = campaign_case_ref(person.group, rt_cat("trace.", row.id))
-        var action = c1_once(campaign_action(rt_cat(rt_cat(id, ".inspect."), row.id), "inspect", campaign_at(id, spec.room), campaign_at(id, spec.room), "", dv_single(ref), row.source))
-        rt_push(result, dv_with(action, "surface", row.surface))
+        var action = c1_once(campaign_intent_action(rt_cat(rt_cat(id, ".inspect."), row.id), "inspect", campaign_at(id, spec.room), campaign_at(id, spec.room), "", dv_single(ref), rt_cat("检视", row.title), row.source))
+        rt_push(result, dv_with_many(action, {"label": rt_cat("检视", row.title), "surface": row.surface}))
         i = (i + 1)
     if id == "lucian":
         let departed = campaign_any(campaign_at("quer", "threshold.contract"), campaign_at("quer", "living_hall"))
-        rt_push(result, dv_with(campaign_action("lucian.inspect.quer-departure", "inspect", dv_all([campaign_at(id, spec.room), departed]), dv_all([campaign_at(id, spec.room), departed]), "", [dv_ref("quer", "state", "location")], spec.source), "surface", "卢西安从门边确认雀儿已经走出甲区。"))
+        rt_push(result, dv_with(campaign_intent_action("lucian.inspect.quer-departure", "inspect", dv_all([campaign_at(id, spec.room), departed]), dv_all([campaign_at(id, spec.room), departed]), "", [dv_ref("quer", "state", "location")], "查看门边同伴的去向", spec.source), "surface", "卢西安从门边确认雀儿已经走出甲区。"))
     var own_ref = dv_ref(rt_cat("personal.", id), "state", "material_detail")
-    rt_push(result, dv_with(c1_once(campaign_action(rt_cat(id, ".inspect.own-material"), "inspect", campaign_at(id, spec.room), campaign_at(id, spec.room), "", dv_single(own_ref), person.material_source)), "surface", person.material_surface))
+    rt_push(result, dv_with_many(c1_once(campaign_intent_action(rt_cat(id, ".inspect.own-material"), "inspect", campaign_at(id, spec.room), campaign_at(id, spec.room), "", dv_single(own_ref), person.material_label, person.material_source)), {"label": person.material_label, "surface": person.material_surface}))
     return result
 
 fn c1_other_answer_actions(id):
@@ -2607,7 +2611,7 @@ fn c1_other_answer_actions(id):
         var answer = c1_other_submission(person.group, option)
         var action_id = rt_cat(rt_cat(rt_cat(id, ".answer."), person.group), rt_cat(".", option))
         var known = dv_all([campaign_at(id, spec.room), campaign_case_claim(person.group, "open"), answer, dv_at_least(campaign_clock(), c1_other_report_time(person.group))])
-        var action = campaign_action(action_id, "answer", known, known, "", [], spec.source)
+        var action = campaign_intent_action(action_id, "answer", known, known, "", [], rt_cat("提交人物答复：", c1_other_person(option).name), spec.source)
         var speech = dv_with(c1_speech(answer, spec.source, "literal-actor-only-not-motive"), "surface", rt_cat(c1_other_person(option).name, c1_other_report_surface(person.group)))
         rt_push(result, dv_with_many(action, {"answer": answer, "answer_id": action_id, "topic": rt_cat(person.group, ".identity"), "speech": dv_with(speech, "channel", rt_cat("copper.", person.group)), "listeners": dv_single("demon"), "authority_precondition": dv_all([campaign_at(id, spec.room), campaign_case_claim(person.group, "open"), campaign_at("demon", "living_hall"), dv_at_least(campaign_clock(), c1_other_report_time(person.group))]), "purpose_refs": dv_single(campaign_case_ref(person.group, rt_cat("receipt.", id)))}))
         i = (i + 1)
@@ -2678,6 +2682,7 @@ fn c1_other_mind(id):
     var spec = c1_other_case(person.group)
     var mind = dv_with(dv_world(rt_cat("mind.", id), "mind", id), "time", 480)
     mind = dv_add_object(mind, c1_position(id, spec.room))
+    mind = dv_store(mind, dv_ref(id, "identity", "name"), dv_with(dv_field(person.name), "basis", [person.initial_source]))
     mind = dv_add_object(mind, campaign_local_object(rt_cat("case.", person.group)))
     var people = c1_other_people()
     var peer_index = 0
@@ -2761,6 +2766,7 @@ fn c1_other_group_extend(world, group):
             fields = dv_with(fields, rt_cat("receipt.", person.id), dv_field(false))
             fields = dv_with(fields, rt_cat("level.", person.id), dv_field(0))
             result = dv_add_object(result, c1_position(person.id, spec.room))
+            result = dv_store(result, dv_ref(person.id, "identity", "name"), dv_with(dv_field(person.name), "basis", [person.initial_source]))
             result = dv_add_object(result, campaign_state_object(rt_cat("personal.", person.id), {"material_detail": dv_field(person.material_surface), "current": dv_field("")}))
             result = dv_adopt(result, campaign_method(rt_cat(rt_cat("other.accept.", group), rt_cat(".", person.id)), c1_other_accept(group, person.id)), "enforce", 1, dv_single(spec.source))
         i = (i + 1)
@@ -2807,7 +2813,7 @@ fn c1_other_personal_replies(id):
     while (i < rt_count(people)):
         var other = people[i]
         if dv_and((other.group == person.group), (not (other.id == id))):
-            var action = campaign_action(rt_cat(rt_cat(id, ".reply.own-material."), other.id), "talk", known, campaign_at(id, c1_other_case(person.group).room), "", [], person.material_source)
+            var action = campaign_intent_action(rt_cat(rt_cat(id, ".reply.own-material."), other.id), "talk", known, campaign_at(id, c1_other_case(person.group).room), "", [], "说明本人查看的随身物件", person.material_source)
             var speech = dv_with(c1_speech(known, person.material_source, "personally-inspected-material-not-night-witness"), "surface", person.material_surface)
             rt_push(result, dv_with_many(action, {"speech": speech, "listeners": dv_single(other.id), "offer_to": other.id, "response_topic": rt_cat("own_material.", id)}))
         i = (i + 1)
@@ -2818,7 +2824,7 @@ fn c1_other_release_action(group, speaker, clock_ref):
     var surface = "从起居厅一侧抬起寝区外闩，正式宣告放行。"
     if group == "contract":
         surface = "代管者复核已被挑开的甲区门闩，正式宣告沃德等人可以离开。"
-    let action = campaign_action(rt_cat("other.release.", group), "help", law.premise, law.premise, rt_cat("other.release.", group), [campaign_case_ref(group, "outer_latch_released"), campaign_case_ref(group, "formal_release"), c1_other_access_ref(group), dv_ref("demon.body", "state", "manifested")], c1_other_case(group).source)
+    let action = campaign_intent_action(rt_cat("other.release.", group), "help", law.premise, law.premise, rt_cat("other.release.", group), [campaign_case_ref(group, "outer_latch_released"), campaign_case_ref(group, "formal_release"), c1_other_access_ref(group), dv_ref("demon.body", "state", "manifested")], rt_cat("释放", rt_cat(c1_other_case(group).zone, "外闩")), c1_other_case(group).source)
     return dv_with_many(action, {"surface": surface, "predict_law": rt_cat("other.release.", group), "speech": dv_with_many(c1_speech(dv_true(), c1_other_case(group).source, "actual-formal-release"), {"surface": surface, "channel": rt_cat("copper.", group)}), "listeners": c1_other_group_listeners(group, ""), "public_grants": [campaign_case_ref(group, "outer_latch_released"), campaign_case_ref(group, "formal_release"), c1_other_access_ref(group), campaign_clock()]})
 
 fn c1_other_departure_source(id):
@@ -2868,9 +2874,9 @@ fn c1_other_departure_actions(id):
     var room = c1_other_case(person.group).room
     var source = c1_other_departure_source(id)
     var ref = campaign_case_ref(person.group, "outer_latch_released")
-    var inspect = dv_with(campaign_action(rt_cat(id, ".inspect.outer-latch"), "inspect", campaign_at(id, room), campaign_at(id, room), "", dv_pair(ref, c1_other_access_ref(person.group)), source.source), "repeatable", true)
+    var inspect = dv_with_many(campaign_intent_action(rt_cat(id, ".inspect.outer-latch"), "inspect", campaign_at(id, room), campaign_at(id, room), "", dv_pair(ref, c1_other_access_ref(person.group)), "检视寝区外闩", source.source), {"repeatable": true, "label": "检视寝区外闩"})
     var premise = c1_other_depart(id).premise
-    var depart = dv_with_many(campaign_action(rt_cat(id, ".leave-dormitory"), "move", premise, premise, rt_cat("other.depart.", id), dv_single(dv_ref(id, "state", "location")), source.source), {"predict_law": rt_cat("other.depart.", id), "surface": rt_cat(c1_other_person(id).name, "离开寝区。"), "next_observation_surface": "跨过门槛，来到本寝区的门外。", "later_intention_surface": source.surface, "travel": {"from": room, "to": c1_other_threshold(person.group), "gate": person.group}})
+    var depart = dv_with_many(campaign_intent_action(rt_cat(id, ".leave-dormitory"), "move", premise, premise, rt_cat("other.depart.", id), dv_single(dv_ref(id, "state", "location")), "离开寝区", source.source), {"predict_law": rt_cat("other.depart.", id), "surface": rt_cat(c1_other_person(id).name, "离开寝区。"), "next_observation_surface": "跨过门槛，来到本寝区的门外。", "later_intention_surface": source.surface, "travel": {"from": room, "to": c1_other_threshold(person.group), "gate": person.group}})
     if id == "quer":
         depart = dv_with_many(depart, {"public_observers": ["lucian", "ward", "gu"], "public_grants": [dv_ref("quer", "state", "location")]})
     depart = dv_with(depart, "personal_choice", {"group": "leave-open-dormitory", "requires": premise, "prohibits": dv_not(dv_true()), "promotes": ["leave_confinement"], "sacrifices": [], "basis": dv_single(person.initial_source)})
@@ -2895,10 +2901,10 @@ fn c1_other_group_listeners(group, except):
 fn c1_other_wake_action(id):
     let person = c1_other_person(id)
     let room = c1_other_case(person.group).room
-    let literal = dv_fact(dv_ref(rt_cat("personal.", id), "state", "initial_surface"), person.initial_surface)
-    let action = c1_once(campaign_action(rt_cat(id, ".wake-and-introduce"), "talk", dv_all(dv_pair(campaign_at(id, room), literal)), campaign_at(id, room), "", [], person.initial_source))
+    let literal = dv_all([dv_fact(dv_ref(rt_cat("personal.", id), "state", "initial_surface"), person.initial_surface), dv_fact(dv_ref(id, "identity", "name"), person.name)])
+    let action = c1_once(campaign_intent_action(rt_cat(id, ".wake-and-introduce"), "talk", dv_all(dv_pair(campaign_at(id, room), literal)), campaign_at(id, room), "", [], "向同伴自我介绍", person.initial_source))
     let text = rt_cat(person.initial_surface, rt_cat("\n", c1_other_introduction(id)))
-    return dv_with_many(action, {"speech": dv_with(c1_speech(literal, person.initial_source, "own-current-perception"), "surface", text), "listeners": c1_other_group_listeners(person.group, id), "surface": text})
+    return dv_with_many(action, {"label": "向同伴自我介绍", "speech": dv_with(c1_speech(literal, person.initial_source, "own-current-perception"), "surface", text), "listeners": c1_other_group_listeners(person.group, id), "surface": text})
 
 fn c1_other_trace_conversations(id):
     let person = c1_other_person(id)
@@ -2916,10 +2922,10 @@ fn c1_other_trace_conversations(id):
             let ref = campaign_case_ref(person.group, rt_cat("trace.", trace.id))
             let literal = dv_fact(ref, true)
             let prefix = rt_cat(rt_cat(id, ".material."), rt_cat(peer, rt_cat(".", trace.id)))
-            let request = dv_with_many(c1_speech(dv_true(), trace.source, "request-personal-observation"), {"surface": rt_cat(c1_other_person(peer).name, "，这件东西你查看过吗？把你看到的告诉我。"), "utterance_type": "question", "request": {"target": peer, "topic": topic}})
-            rt_push(result, dv_with_many(campaign_action(rt_cat(prefix, ".ask"), "talk", campaign_at(id, spec.room), campaign_at(id, spec.room), "", [], trace.source), {"speech": request, "listeners": dv_single(peer), "purpose_refs": dv_single(ref)}))
+            let request = dv_with_many(c1_speech(dv_true(), trace.source, "request-personal-observation"), {"surface": rt_cat("你查看过", rt_cat(trace.title, "吗？把你看到的告诉我。")), "utterance_type": "question", "request": {"target": peer, "topic": topic}})
+            rt_push(result, dv_with_many(campaign_intent_action(rt_cat(prefix, ".ask"), "talk", campaign_at(id, spec.room), campaign_at(id, spec.room), "", [], rt_cat("问同伴：", trace.title), trace.source), {"label": rt_cat("问同伴：", trace.title), "label_parts": [{"text": "问"}, {"ref": dv_ref(peer, "identity", "name"), "fallback": "同伴"}, {"text": rt_cat("：", trace.title)}], "speech": request, "listeners": dv_single(peer), "purpose_refs": dv_single(ref)}))
             let report = dv_with(c1_speech(literal, trace.source, "personally-observed-trace-not-night-witness"), "surface", trace.surface)
-            rt_push(result, dv_with_many(campaign_action(rt_cat(prefix, ".report"), "talk", dv_all(dv_pair(campaign_at(id, spec.room), literal)), campaign_at(id, spec.room), "", [], trace.source), {"speech": report, "listeners": dv_single(peer), "offer_to": peer, "response_topic": topic, "purpose_refs": dv_single(ref)}))
+            rt_push(result, dv_with_many(campaign_intent_action(rt_cat(prefix, ".report"), "talk", dv_all(dv_pair(campaign_at(id, spec.room), literal)), campaign_at(id, spec.room), "", [], rt_cat("告知同伴：", trace.title), trace.source), {"label": rt_cat("告知同伴：", trace.title), "label_parts": [{"text": "告知"}, {"ref": dv_ref(peer, "identity", "name"), "fallback": "同伴"}, {"text": rt_cat("：", trace.title)}], "speech": report, "listeners": dv_single(peer), "offer_to": peer, "response_topic": topic, "purpose_refs": dv_single(ref)}))
             j = j + 1
         i = i + 1
     return result
@@ -2928,8 +2934,8 @@ fn c1_other_desire_action(id):
     let person = c1_other_person(id)
     let room = c1_other_case(person.group).room
     let ref = dv_ref(rt_cat("personal.", id), "state", "material_detail")
-    let action = c1_once(campaign_action(rt_cat(id, ".follow-own-interest"), "inspect", campaign_at(id, room), campaign_at(id, room), "", dv_single(ref), person.material_source))
-    return dv_with_many(action, {"surface": rt_cat(person.intention_surface, rt_cat("\n", person.material_surface)), "purpose_refs": dv_single(ref), "motive_basis": dv_single(person.desire_source)})
+    let action = c1_once(campaign_intent_action(rt_cat(id, ".follow-own-interest"), "inspect", campaign_at(id, room), campaign_at(id, room), "", dv_single(ref), person.material_label, person.material_source))
+    return dv_with_many(action, {"label": person.material_label, "surface": rt_cat(person.intention_surface, rt_cat("\n", person.material_surface)), "purpose_refs": dv_single(ref), "motive_basis": dv_single(person.desire_source)})
 
 // Install the actual residents, their private rules and objects, copper channels,
 // scoped formal questions, and answer transitions. Release/departure needs the
@@ -3109,7 +3115,7 @@ fn c1_other_handoff_action(id):
     let receipt = campaign_case_claim(person.group, rt_cat("receipt.", id))
     let ready = dv_all(dv_pair(campaign_at(id, c1_other_threshold(person.group)), receipt))
     let text = c1_other_handoff_text(id)
-    return dv_with_many(c1_once(campaign_action(rt_cat(id, ".doorway-handoff"), "talk", ready, campaign_at(id, c1_other_threshold(person.group)), "", [], person.initial_source)), {"speech": dv_with(c1_speech(receipt, person.initial_source, "own-answer-receipt-and-next-intention"), "surface", text), "listeners": c1_other_group_listeners(person.group, id), "surface": text})
+    return dv_with_many(c1_once(campaign_intent_action(rt_cat(id, ".doorway-handoff"), "talk", ready, campaign_at(id, c1_other_threshold(person.group)), "", [], "说明答复收据与下一步打算", person.initial_source)), {"speech": dv_with(c1_speech(receipt, person.initial_source, "own-answer-receipt-and-next-intention"), "surface", text), "listeners": c1_other_group_listeners(person.group, id), "surface": text})
 
 
 // Each flag below is produced by a real Complete, then observed by the actor.
@@ -3136,25 +3142,25 @@ fn c1_other_submission(group, option):
 fn c1_other_activity_rows(group):
     if group == "contract":
         return [
-            {"id": "keys_found", "actor": "ward", "after": "", "time": 480, "text": "沃德搜出一把钥匙和半角红墨残纸：‘……交由 J.C. 开启内柜，取走……切勿令外人知晓’。缺失的上下文还不能说明有无授权。"},
-            {"id": "wax_ash_seen", "actor": "ward", "after": "keys_found", "time": 480, "text": "柜锁旁有火漆屑，地上煤灰足印朝向壁炉。沃德把钥匙与纸片摆在桌上，要求雀儿解释。"},
-            {"id": "quer_insulted", "actor": "ward", "after": "wax_ash_seen", "time": 480, "text": "沃德称雀儿未经公开授权，背着同行私藏。雀儿攥紧袖口：‘搜也搜了，还要我认什么？’卢西安走到她身旁。"},
-            {"id": "evidence_complete", "actor": "gu", "after": "wax_ash_seen", "time": 480, "text": "顾平章沿煤灰足印摸到壁炉砖槽，取出蜡布筒。筒中物件与残纸指向同一内柜；这能确认雀儿取出并私藏，不能证明她没有私下授权。"},
-            {"id": "report_basis", "actor": "ward", "after": "evidence_complete", "time": 480, "text": "沃德逐项核对：雀儿、壁炉砖槽、未经公开授权而背着同行私藏。人、处、行为齐备；他借恶魔的字面公约做局，把‘未经公开授权’直接等同于‘擅取窃私’，试图借此确立律法仲裁的支配权。"}
+            {"id": "keys_found", "actor": "ward", "after": "", "time": 480, "label": "搜查钥匙与文书", "text": "沃德搜出一把钥匙和半角红墨残纸：‘……交由 J.C. 开启内柜，取走……切勿令外人知晓’。缺失的上下文还不能说明有无授权。"},
+            {"id": "wax_ash_seen", "actor": "ward", "after": "keys_found", "time": 480, "label": "检视柜锁与壁炉周围", "text": "柜锁旁有火漆屑，地上煤灰足印朝向壁炉。沃德把钥匙与纸片摆在桌上，要求雀儿解释。"},
+            {"id": "quer_insulted", "actor": "ward", "after": "wax_ash_seen", "time": 480, "label": "提出私藏物件的指控", "text": "沃德称雀儿未经公开授权，背着同行私藏。雀儿攥紧袖口：‘搜也搜了，还要我认什么？’卢西安走到她身旁。"},
+            {"id": "evidence_complete", "actor": "gu", "after": "wax_ash_seen", "time": 480, "label": "检视壁炉砖槽", "text": "顾平章沿煤灰足印摸到壁炉砖槽，取出蜡布筒。筒中物件与残纸指向同一内柜；这能确认雀儿取出并私藏，不能证明她没有私下授权。"},
+            {"id": "report_basis", "actor": "ward", "after": "evidence_complete", "time": 480, "label": "核对人、地点与取存行为", "text": "沃德逐项核对：雀儿、壁炉砖槽、未经公开授权而背着同行私藏。人、处、行为齐备；他借恶魔的字面公约做局，把‘未经公开授权’直接等同于‘擅取窃私’，试图借此确立律法仲裁的支配权。"}
         ]
     if group == "astral":
         return [
-            {"id": "care_given", "actor": "selma", "after": "", "time": 480, "text": "伊莲娜左踝肿痛，无法负重。赛尔玛重新固定绷带，让她躺稳，端来水。"},
-            {"id": "ruan_admitted", "actor": "ruan", "after": "care_given", "time": 480, "text": "阮清月承认：‘闸是我拉的。再迟一刻，外面的人也会被卷进去。’这说明她拉闸，不等于她已说明门内人的意思。"},
-            {"id": "evidence_complete", "actor": "selma", "after": "ruan_admitted", "time": 480, "text": "赛尔玛安抚莫兰，等他呼吸平稳后接过半截伸手草图。纸上只有门内伸出的手，手腕以下的动作被截断。"},
-            {"id": "report_basis", "actor": "selma", "after": "evidence_complete", "time": 480, "text": "赛尔玛把阮清月的拉闸自认与半截草图并置：现有材料支持‘单方面止损保多数’的表层解释；阮清月静坐旁观，早已看出恶魔借半截信息诱导弃子仇恨的企图，留待棋局后手翻转。"},
-            {"id": "west_passage_checked", "actor": "selma", "after": "report_basis", "time": 1890, "text": "赛尔玛从门边检查西夹道：昨夜积气已经散尽，伊莲娜的伤踝也已固定，可以有人搀扶着慢行。现在才具备安全开门条件。"}
+            {"id": "care_given", "actor": "selma", "after": "", "time": 480, "label": "固定伤踝并送水", "text": "伊莲娜左踝肿痛，无法负重。赛尔玛重新固定绷带，让她躺稳，端来水。"},
+            {"id": "ruan_admitted", "actor": "ruan", "after": "care_given", "time": 480, "label": "说明拉闸经过", "text": "阮清月承认：‘闸是我拉的。再迟一刻，外面的人也会被卷进去。’这说明她拉闸，不等于她已说明门内人的意思。"},
+            {"id": "evidence_complete", "actor": "selma", "after": "ruan_admitted", "time": 480, "label": "安抚同伴并查看草图", "text": "赛尔玛安抚莫兰，等他呼吸平稳后接过半截伸手草图。纸上只有门内伸出的手，手腕以下的动作被截断。"},
+            {"id": "report_basis", "actor": "selma", "after": "evidence_complete", "time": 480, "label": "对照自述与草图", "text": "赛尔玛把阮清月的拉闸自认与半截草图并置：现有材料支持‘单方面止损保多数’的表层解释；阮清月静坐旁观，早已看出恶魔借半截信息诱导弃子仇恨的企图，留待棋局后手翻转。"},
+            {"id": "west_passage_checked", "actor": "selma", "after": "report_basis", "time": 1890, "label": "检查西夹道通行条件", "text": "赛尔玛从门边检查西夹道：昨夜积气已经散尽，伊莲娜的伤踝也已固定，可以有人搀扶着慢行。现在才具备安全开门条件。"}
         ]
     return [
-        {"id": "care_given", "actor": "mora", "after": "", "time": 480, "text": "贝尔特朗高烧，额头烫手。茉拉给他补水、降温，守在床边记录呼吸与体温。"},
-        {"id": "evidence_complete", "actor": "veronica", "after": "care_given", "time": 780, "text": "午后，试剂杯边泛起酸泡。茉拉拦住维罗妮卡：‘没有医嘱，不准再试。’维罗妮卡承认取走白塔柜试剂，却没有在争执中说明旧伤用途。"},
-        {"id": "report_basis", "actor": "mora", "after": "evidence_complete", "time": 780, "text": "茉拉按亲见的酸泡、试剂取用和争执记录‘未经医嘱的激进酸试验’。维罗妮卡冷眼相对，深知恶魔意在挑动医护与炼金内耗，暗中留存滴定试样作为反制实据。"},
-        {"id": "observation_complete", "actor": "mora", "after": "report_basis", "time": 2010, "text": "茉拉完成隔夜留观：贝尔特朗退热后情况稳定，可以转移。她收起记录，确认此刻才适合开门。"}
+        {"id": "care_given", "actor": "mora", "after": "", "time": 480, "label": "为高烧同伴补水降温", "text": "贝尔特朗高烧，额头烫手。茉拉给他补水、降温，守在床边记录呼吸与体温。"},
+        {"id": "evidence_complete", "actor": "veronica", "after": "care_given", "time": 780, "label": "核对试剂使用", "text": "午后，试剂杯边泛起酸泡。茉拉拦住维罗妮卡：‘没有医嘱，不准再试。’维罗妮卡承认取走白塔柜试剂，却没有在争执中说明旧伤用途。"},
+        {"id": "report_basis", "actor": "mora", "after": "evidence_complete", "time": 780, "label": "整理试剂取用与照护记录", "text": "茉拉按亲见的酸泡、试剂取用和争执记录‘未经医嘱的激进酸试验’。维罗妮卡冷眼相对，深知恶魔意在挑动医护与炼金内耗，暗中留存滴定试样作为反制实据。"},
+        {"id": "observation_complete", "actor": "mora", "after": "report_basis", "time": 2010, "label": "检查留观情况", "text": "茉拉完成隔夜留观：贝尔特朗退热后情况稳定，可以转移。她收起记录，确认此刻才适合开门。"}
     ]
 
 axiom c1_other_activity_law(group, row):
@@ -3184,7 +3190,7 @@ fn c1_other_activity_actor(actor, group):
     var actions = dv_clone(result.actions)
     var goals = dv_clone(result.policy.goals)
     let source = c1_other_case(group).source
-    rt_push(actions, dv_with(campaign_surface_action(rt_cat(actor.id, ".other.inspect-clock"), "inspect", dv_true(), dv_true(), "", [campaign_clock()], "查看寝区钟面。", source), "repeatable", true))
+    rt_push(actions, dv_with(campaign_surface_action(rt_cat(actor.id, ".other.inspect-clock"), "inspect", dv_true(), dv_true(), "", [campaign_clock()], "查看寝区钟面", "查看寝区钟面。", source), "repeatable", true))
     rt_push(goals, dv_with(campaign_observation_goal(campaign_clock(), dv_true(), [source], 0), "refresh_refs", [campaign_clock()]))
     let rows = c1_other_activity_rows(group)
     var witnesses = []
@@ -3205,7 +3211,7 @@ fn c1_other_activity_actor(actor, group):
             let method = rt_cat(rt_cat("other.activity.", group), rt_cat(".", row.id))
             let law = c1_other_activity_law(group, row)
             mind = dv_adopt(mind, campaign_method(method, law), "predict", 1, [source])
-            var activity = dv_with_many(campaign_surface_action(rt_cat(actor.id, rt_cat(".activity.", row.id)), "help", law.premise, law.premise, method, [ref], row.text, source), {"predict_law": method, "public_observers": witnesses, "public_grants": [ref]})
+            var activity = dv_with_many(campaign_surface_action(rt_cat(actor.id, rt_cat(".activity.", row.id)), "help", law.premise, law.premise, method, [ref], row.label, row.text, source), {"predict_law": method, "public_observers": witnesses, "public_grants": [ref]})
             if row.id == "west_passage_checked" or row.id == "observation_complete":
                 activity = dv_with_many(activity, {"speech": dv_with_many(c1_speech(dv_true(), source, "actual-safety-report"), {"surface": row.text, "channel": rt_cat("copper.", group)}), "listeners": ["demon"], "public_grants": [campaign_case_ref(group, "care_given"), ref, campaign_clock()]})
             rt_push(actions, activity)
@@ -3393,12 +3399,12 @@ fn c1_other_place_detective(scene, zone, profile):
                     if dv_local(bindings, peer.id, "detective") == "":
                         rt_push(bindings, dv_binding(peer.id, peer.id, "detective"))
                     let ready = campaign_at("detective", c1_other_case(group).room)
-                    let seen = campaign_surface_action(rt_cat("detective.other.see.", peer.id), "inspect", ready, dv_all([ready, campaign_at(peer.id, c1_other_case(group).room)]), "", [dv_ref(peer.id, "state", "location")], rt_cat("看到同在寝区的", peer.name), c1_other_case(group).source)
+                    let seen = campaign_surface_action(rt_cat("detective.other.see.", peer.id), "inspect", ready, dv_all([ready, campaign_at(peer.id, c1_other_case(group).room)]), "", [dv_ref(peer.id, "state", "location")], "查看寝区在场的人", rt_cat("看到同在寝区的", peer.name), c1_other_case(group).source)
                     actor = dv_with_many(actor, {"mind": mind, "actions": dv_append(actor.actions, seen), "policy": dv_with(actor.policy, "goals", dv_append(actor.policy.goals, campaign_observation_goal(dv_ref(peer.id, "state", "location"), ready, [c1_other_case(group).source], 0)))})
                 peer_index = peer_index + 1
             let source = c1_other_case(group).source
             let public_refs = [campaign_case_ref(group, "open"), campaign_case_ref(group, "current"), current_ref, campaign_case_ref(group, "receipt.detective"), campaign_case_ref(group, "complete_receipt.detective"), campaign_case_ref(group, "outer_latch_released"), campaign_case_ref(group, "formal_release"), c1_other_access_ref(group), campaign_clock()]
-            let recheck = dv_with(campaign_surface_action("detective.other.reask-question", "inspect", here, here, "", public_refs, "在寝区铜口核对当前实际公开的题目与答复记录。", source), "repeatable", true)
+            let recheck = dv_with(campaign_surface_action("detective.other.reask-question", "inspect", here, here, "", public_refs, "核对寝区公开题目与答复记录", "在寝区铜口核对当前实际公开的题目与答复记录。", source), "repeatable", true)
             var local_actions = dv_append(actor.actions, recheck)
             var local_goals = dv_clone(actor.policy.goals)
             rt_push(local_goals, campaign_observation_goal(current_ref, here, [source], 0))
@@ -3419,7 +3425,7 @@ fn c1_other_place_detective(scene, zone, profile):
                 let answer_id = rt_cat("detective.answer.", rt_cat(group, rt_cat(".", option)))
                 let answer_ready = dv_all([here, campaign_case_claim(group, "open"), literal, dv_at_least(campaign_clock(), c1_other_report_time(group))])
                 let surface = c1_other_literal_report_surface(group, option)
-                let answer_action = dv_with_many(campaign_surface_action(answer_id, "answer", answer_ready, answer_ready, "", [], surface, source), {"answer": literal, "answer_id": answer_id, "topic": rt_cat(group, ".identity"), "content_grade": "literal-actor-and-material-only", "speech": dv_with_many(c1_speech(literal, source, "locally-supported-literal-report-not-motive"), {"surface": surface, "channel": rt_cat("copper.", group)}), "listeners": ["demon"]})
+                let answer_action = dv_with_many(campaign_surface_action(answer_id, "answer", answer_ready, answer_ready, "", [], rt_cat("提交人物答复：", c1_other_person(option).name), surface, source), {"answer": literal, "answer_id": answer_id, "topic": rt_cat(group, ".identity"), "content_grade": "literal-actor-and-material-only", "speech": dv_with_many(c1_speech(literal, source, "locally-supported-literal-report-not-motive"), {"surface": surface, "channel": rt_cat("copper.", group)}), "listeners": ["demon"]})
                 rt_push(local_actions, c1_other_case_choice(answer_action, group, "literal"))
                 rt_push(answers, {"id": answer_id, "stage": rt_cat(group, ".identity"), "content_grade": "literal-actor-and-material-only", "condition": literal, "required_support": literal, "question_match": campaign_case_claim(group, "open"), "answer_complete": literal, "require_argument": false, "accepted_law": rt_cat("other.accept.", rt_cat(group, ".detective")), "progress_ref": campaign_case_ref(group, "level.detective"), "completion_ref": campaign_case_ref(group, "receipt.detective"), "accepted_listeners": ["detective", "demon"], "accepted_public_grants": [campaign_case_ref(group, "receipt.detective"), campaign_case_ref(group, "level.detective"), current_ref], "source_refs": [source]})
                 let reasons = c1_other_case(group).reason_options
@@ -3430,7 +3436,7 @@ fn c1_other_place_detective(scene, zone, profile):
                     let complete_id = rt_cat(answer_id, rt_cat(".reason.", reason))
                     let ready = dv_all([answer_ready, campaign_case_claim(group, "receipt.detective"), complete])
                     let complete_surface = c1_other_reason_report_surface(group, option, reason)
-                    let complete_action = dv_with_many(campaign_surface_action(complete_id, "answer", ready, ready, "", [], complete_surface, source), {"answer": complete, "answer_id": complete_id, "topic": rt_cat(group, ".reason"), "content_grade": "complete-causal-account", "speech": dv_with_many(c1_speech(complete, source, "personally-supported-causal-account"), {"surface": complete_surface, "channel": rt_cat("copper.", group)}), "listeners": ["demon"]})
+                    let complete_action = dv_with_many(campaign_surface_action(complete_id, "answer", ready, ready, "", [], "提交完整经过与理由", complete_surface, source), {"answer": complete, "answer_id": complete_id, "topic": rt_cat(group, ".reason"), "content_grade": "complete-causal-account", "speech": dv_with_many(c1_speech(complete, source, "personally-supported-causal-account"), {"surface": complete_surface, "channel": rt_cat("copper.", group)}), "listeners": ["demon"]})
                     rt_push(local_actions, c1_other_case_choice(complete_action, group, "complete"))
                     rt_push(answers, {"id": complete_id, "stage": rt_cat(group, ".reason"), "content_grade": "complete-causal-account", "condition": complete, "required_support": complete, "question_match": dv_all([campaign_case_claim(group, "open"), campaign_case_claim(group, "receipt.detective")]), "answer_complete": complete, "require_argument": false, "accepted_law": rt_cat("other.complete-accept.", rt_cat(group, ".detective")), "progress_ref": campaign_case_ref(group, "complete_level.detective"), "completion_ref": campaign_case_ref(group, "complete_receipt.detective"), "accepted_listeners": ["detective", "demon"], "accepted_public_grants": [campaign_case_ref(group, "complete_receipt.detective"), campaign_case_ref(group, "complete_level.detective"), current_ref], "source_refs": [source]})
                     reason_index = reason_index + 1
@@ -3445,7 +3451,7 @@ fn c1_other_place_detective(scene, zone, profile):
                 let law = dv_axiom(move_id, 1, pre, [dv_assign(dv_ref("detective", "state", "location"), targets[move_index])])
                 world = dv_adopt(world, campaign_method(move_id, law), "enforce", 1, [source])
                 mind = dv_adopt(actor.mind, campaign_method(move_id, law), "predict", 1, [source])
-                let action = dv_with_many(campaign_surface_action(move_id, "move", pre, pre, move_id, [dv_ref("detective", "state", "location")], "确认外闩已经打开后，跨过门槛。", source), {"predict_law": move_id, "travel": {"from": origins[move_index], "to": targets[move_index], "gate": group}})
+                let action = dv_with_many(campaign_surface_action(move_id, "move", pre, pre, move_id, [dv_ref("detective", "state", "location")], "跨过寝区门槛", "确认外闩已经打开后，跨过门槛。", source), {"predict_law": move_id, "travel": {"from": origins[move_index], "to": targets[move_index], "gate": group}})
                 actor = dv_with_many(actor, {"mind": mind, "actions": dv_append(actor.actions, c1_other_case_choice(action, group, "departure"))})
                 move_index = move_index + 1
             let truth = c1_other_truth_rows(group)
@@ -3460,10 +3466,10 @@ fn c1_other_place_detective(scene, zone, profile):
                 if row.kind != "talk":
                     mind = dv_store(mind, campaign_case_ref(group, row.id), dv_with(dv_field(false), "basis", [c1_other_case(group).source]))
                 mind = dv_adopt(mind, campaign_method(method, law), "predict", 1, [c1_other_case(group).source])
-                var action = dv_with(campaign_surface_action(method, row.kind, law.premise, law.premise, method, [campaign_case_ref(group, row.id)], row.text, c1_other_case(group).source), "predict_law", method)
+                var action = dv_with(campaign_surface_action(method, row.kind, law.premise, law.premise, method, [campaign_case_ref(group, row.id)], row.label, row.text, c1_other_case(group).source), "predict_law", method)
                 if row.kind == "talk":
                     let after = campaign_case_claim(group, row.after)
-                    action = dv_with_many(campaign_surface_action(rt_cat("detective.truth.ask.", row.id), "talk", dv_all([campaign_at("detective", c1_other_case(group).room), after]), dv_all([campaign_at("detective", c1_other_case(group).room), campaign_at(row.partner, c1_other_case(group).room)]), "", [], "请看这份已核对的材料。你能说明自己记得的经过吗？", c1_other_case(group).source), {"speech": dv_with_many(c1_speech(after, c1_other_case(group).source, "actual-evidence-question"), {"surface": "请看这份已核对的材料。你能说明自己记得的经过吗？", "request": {"target": row.partner, "topic": rt_cat("truth.", row.id)}}), "listeners": [row.partner], "purpose_refs": [campaign_case_ref(group, row.id)]})
+                    action = dv_with_many(campaign_surface_action(rt_cat("detective.truth.ask.", row.id), "talk", dv_all([campaign_at("detective", c1_other_case(group).room), after]), dv_all([campaign_at("detective", c1_other_case(group).room), campaign_at(row.partner, c1_other_case(group).room)]), "", [], row.label, "请看这份已核对的材料。你能说明自己记得的经过吗？", c1_other_case(group).source), {"speech": dv_with_many(c1_speech(after, c1_other_case(group).source, "actual-evidence-question"), {"surface": "请看这份已核对的材料。你能说明自己记得的经过吗？", "request": {"target": row.partner, "topic": rt_cat("truth.", row.id)}}), "listeners": [row.partner], "purpose_refs": [campaign_case_ref(group, row.id)]})
                 let actions = dv_append(actor.actions, c1_other_case_choice(action, group, "investigate"))
                 var goals = dv_append(actor.policy.goals, campaign_goal(campaign_case_claim(group, row.id), campaign_at("detective", c1_other_case(group).room), [c1_other_case(group).source]))
                 if row.kind == "talk":
@@ -3493,9 +3499,9 @@ fn c1_other_place_detective(scene, zone, profile):
                 let law = c1_other_truth_law(group, row)
                 var mind = dv_store(actor.mind, ref, dv_with(dv_field(false), "basis", [source]))
                 mind = dv_adopt(mind, campaign_method(method, law), "predict", 1, [source])
-                let recall = dv_with_many(campaign_surface_action(rt_cat(actor.id, rt_cat(".truth.recall.", row.id)), "help", law.premise, law.premise, method, [ref], "他重新看向来问者递出的材料，试着把自己的记忆接起来。", source), {"predict_law": method, "received_speech_requirement": {"speaker": "detective", "action_id": rt_cat("detective.truth.ask.", row.id)}})
+                let recall = dv_with_many(campaign_surface_action(rt_cat(actor.id, rt_cat(".truth.recall.", row.id)), "help", law.premise, law.premise, method, [ref], "回想与材料有关的经过", "他重新看向来问者递出的材料，试着把自己的记忆接起来。", source), {"predict_law": method, "received_speech_requirement": {"speaker": "detective", "action_id": rt_cat("detective.truth.ask.", row.id)}})
                 let claim = dv_fact(ref, true)
-                let reply = dv_with_many(campaign_surface_action(rt_cat(actor.id, rt_cat(".truth.reply.", row.id)), "talk", dv_all([claim, campaign_at(actor.id, c1_other_case(group).room)]), campaign_at(actor.id, c1_other_case(group).room), "", [], row.text, source), {"speech": dv_with(c1_speech(claim, source, "own-recollection-after-request"), "surface", row.text), "listeners": ["detective"], "response_topic": rt_cat("truth.", row.id), "requires_actual_request": true})
+                let reply = dv_with_many(campaign_surface_action(rt_cat(actor.id, rt_cat(".truth.reply.", row.id)), "talk", dv_all([claim, campaign_at(actor.id, c1_other_case(group).room)]), campaign_at(actor.id, c1_other_case(group).room), "", [], "说明本人回想起的经过", row.text, source), {"speech": dv_with(c1_speech(claim, source, "own-recollection-after-request"), "surface", row.text), "listeners": ["detective"], "response_topic": rt_cat("truth.", row.id), "requires_actual_request": true})
                 let actions = dv_append(dv_append(actor.actions, recall), reply)
                 let goals = dv_append(actor.policy.goals, campaign_goal(claim, campaign_case_claim(group, row.after), [source]))
                 rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": reply.id, "available_when": claim, "requires_argument": false, "basis": [source]})
@@ -3508,18 +3514,18 @@ fn c1_other_place_detective(scene, zone, profile):
 fn c1_other_truth_rows(group):
     if group == "contract":
         return [
-            {"id": "seal_examined", "actor": "detective", "after": "evidence_complete", "time": 480, "kind": "inspect", "partner": "", "text": "侦探对照火漆指模、封口和纸片毛边：封缄曾由同一只手压合，红墨残纸是从完整文书新撕下的。它说明有人交接，不能独自补出授权者。"},
-            {"id": "quer_recalled", "actor": "detective", "after": "seal_examined", "time": 480, "kind": "talk", "partner": "quer", "text": "侦探把封口与毛边递给雀儿。她盯着火漆，想起有人将钥匙和文书交到她掌中，叮嘱她取出内柜物件并藏妥。她承认藏入壁炉砖槽；这不是她自行决定的偷窃。"}
+            {"id": "seal_examined", "actor": "detective", "after": "evidence_complete", "time": 480, "kind": "inspect", "partner": "", "label": "对照火漆封口与纸边", "text": "侦探对照火漆指模、封口和纸片毛边：封缄曾由同一只手压合，红墨残纸是从完整文书新撕下的。它说明有人交接，不能独自补出授权者。"},
+            {"id": "quer_recalled", "actor": "detective", "after": "seal_examined", "time": 480, "kind": "talk", "partner": "quer", "label": "询问钥匙与文书的交接", "text": "侦探把封口与毛边递给雀儿。她盯着火漆，想起有人将钥匙和文书交到她掌中，叮嘱她取出内柜物件并藏妥。她承认藏入壁炉砖槽；这不是她自行决定的偷窃。"}
         ]
     if group == "astral":
         return [
-            {"id": "moran_calmed", "actor": "detective", "after": "evidence_complete", "time": 480, "kind": "talk", "partner": "moran", "text": "侦探没有催问，陪莫兰把呼吸放缓。他终于同意打开画夹暗层，取出未被截去的完整草图。"},
-            {"id": "gesture_examined", "actor": "detective", "after": "moran_calmed", "time": 480, "kind": "inspect", "partner": "", "text": "完整草图中，伊莲娜伸出的手接着做了明确的劈切手势。半截画面遮住的，正是这个后续动作。"},
-            {"id": "elena_identified", "actor": "detective", "after": "gesture_examined", "time": 480, "kind": "talk", "partner": "elena", "text": "伊莲娜辨认完整草图：‘是我的手。我让她关。’阮清月确实拉闸，却不是单方面把她抛下。"}
+            {"id": "moran_calmed", "actor": "detective", "after": "evidence_complete", "time": 480, "kind": "talk", "partner": "moran", "label": "安抚同伴并请求查看画夹", "text": "侦探没有催问，陪莫兰把呼吸放缓。他终于同意打开画夹暗层，取出未被截去的完整草图。"},
+            {"id": "gesture_examined", "actor": "detective", "after": "moran_calmed", "time": 480, "kind": "inspect", "partner": "", "label": "检视完整草图", "text": "完整草图中，伊莲娜伸出的手接着做了明确的劈切手势。半截画面遮住的，正是这个后续动作。"},
+            {"id": "elena_identified", "actor": "detective", "after": "gesture_examined", "time": 480, "kind": "talk", "partner": "elena", "label": "询问草图中的手势", "text": "伊莲娜辨认完整草图：‘是我的手。我让她关。’阮清月确实拉闸，却不是单方面把她抛下。"}
         ]
     return [
-        {"id": "old_scar_examined", "actor": "detective", "after": "evidence_complete", "time": 480, "kind": "inspect", "partner": "veronica", "text": "维罗妮卡同意卷起左袖。侦探查看的是左臂旧疤，边缘已愈合，与贝尔特朗今天的高烧分属不同病史。"},
-        {"id": "veronica_explained", "actor": "detective", "after": "old_scar_examined", "time": 480, "kind": "talk", "partner": "veronica", "text": "维罗妮卡说明：左臂三道旧疤来自R-07强酸络合剂的自体耐受标定。她依据此前在自己身上做的标定救治贝尔特朗；今天的酸泡争执不能抹去旧疤与救治用途。"}
+        {"id": "old_scar_examined", "actor": "detective", "after": "evidence_complete", "time": 480, "kind": "inspect", "partner": "veronica", "label": "检视左臂旧疤", "text": "维罗妮卡同意卷起左袖。侦探查看的是左臂旧疤，边缘已愈合，与贝尔特朗今天的高烧分属不同病史。"},
+        {"id": "veronica_explained", "actor": "detective", "after": "old_scar_examined", "time": 480, "kind": "talk", "partner": "veronica", "label": "询问旧疤与试剂用途", "text": "维罗妮卡说明：左臂三道旧疤来自R-07强酸络合剂的自体耐受标定。她依据此前在自己身上做的标定救治贝尔特朗；今天的酸泡争执不能抹去旧疤与救治用途。"}
     ]
 
 axiom c1_other_truth_law(group, row):
@@ -3611,8 +3617,8 @@ axiom c1dep_join_law(actor, group):
         pre = dv_all([pre, dv_at_least(campaign_clock(), 690)])
     return dv_axiom("c1dep_join_law", 1, pre, dv_single(dv_assign(dv_ref(actor, "state", "location"), "living_hall")))
 
-fn c1dep_speech(actor, id, room, when, literal, text, source):
-    return dv_with_many(campaign_surface_action(id, "talk", dv_all([campaign_at(actor, room), when, literal]), campaign_at(actor, room), "", [], text, source), {"speech": dv_with_many(c1_speech(literal, source, "current-doorway-dialogue"), {"surface": text, "channel": "door.living"}), "listeners": dv_append(campaign_people(), "demon")})
+fn c1dep_speech(actor, id, room, when, literal, label, text, source):
+    return dv_with_many(campaign_surface_action(id, "talk", dv_all([campaign_at(actor, room), when, literal]), campaign_at(actor, room), "", [], label, text, source), {"speech": dv_with_many(c1_speech(literal, source, "current-doorway-dialogue"), {"surface": text, "channel": "door.living"}), "listeners": dv_append(campaign_people(), "demon")})
 
 fn c1dep_actions(actor):
     var actions = []
@@ -3620,60 +3626,60 @@ fn c1dep_actions(actor):
     let four = ["detective", "huo", "shen", "su"]
     if dv_has(four, actor):
         let fields = [c1dep_ref("outer_released"), c1dep_ref("inner_down"), c1dep_ref("open"), campaign_access("living_exit")]
-        rt_push(actions, dv_with(campaign_surface_action(rt_cat(actor, ".departure.inspect-door"), "inspect", campaign_at(actor, "foyer"), campaign_at(actor, "foyer"), "", fields, "查看门内的插闩和门外的横闩。", c1dep_source("11_门外的人.story", 8, "door_voices.005")), "repeatable", true))
+        rt_push(actions, dv_with(campaign_surface_action(rt_cat(actor, ".departure.inspect-door"), "inspect", campaign_at(actor, "foyer"), campaign_at(actor, "foyer"), "", fields, "检视隔离门内外门闩", "查看门内的插闩和门外的横闩。", c1dep_source("11_门外的人.story", 8, "door_voices.005")), "repeatable", true))
         if actor == "detective":
             let inner = dv_all([campaign_at(actor, "foyer"), dv_fact(c1dep_ref("outer_released"), true), dv_fact(c1dep_ref("inner_down"), true)])
-            rt_push(actions, dv_with_many(campaign_surface_action(rt_cat(actor, ".departure.draw-inner"), "help", inner, inner, rt_cat(actor, ".departure.draw-inner"), dv_single(c1dep_ref("inner_down")), "拔出门内的插闩。", source), {"predict_law": rt_cat(actor, ".departure.draw-inner"), "public_observers": four, "public_grants": [c1dep_ref("inner_down")]}))
+            rt_push(actions, dv_with_many(campaign_surface_action(rt_cat(actor, ".departure.draw-inner"), "help", inner, inner, rt_cat(actor, ".departure.draw-inner"), dv_single(c1dep_ref("inner_down")), "拔出门内插闩", "拔出门内的插闩。", source), {"predict_law": rt_cat(actor, ".departure.draw-inner"), "public_observers": four, "public_grants": [c1dep_ref("inner_down")]}))
             let open = dv_all([campaign_at(actor, "foyer"), dv_fact(c1dep_ref("outer_released"), true), dv_fact(c1dep_ref("inner_down"), false)])
-            rt_push(actions, dv_with_many(campaign_surface_action(rt_cat(actor, ".departure.open-door"), "help", open, open, rt_cat(actor, ".departure.open-door"), dv_single(c1dep_ref("open")), "拉开隔离门。", c1dep_source("08_终局.story", 8, "s10_open")), {"predict_law": rt_cat(actor, ".departure.open-door"), "speech": dv_with_many(c1_speech(dv_true(), c1dep_source("08_终局.story", 8, "s10_open"), "actual-door-open"), {"surface": "拉开隔离门。", "channel": "door.living"}), "listeners": ["huo", "shen", "su"], "public_grants": [c1dep_ref("outer_released"), c1dep_ref("inner_down"), c1dep_ref("open"), campaign_access("living_exit")]}))
+            rt_push(actions, dv_with_many(campaign_surface_action(rt_cat(actor, ".departure.open-door"), "help", open, open, rt_cat(actor, ".departure.open-door"), dv_single(c1dep_ref("open")), "拉开隔离门", "拉开隔离门。", c1dep_source("08_终局.story", 8, "s10_open")), {"predict_law": rt_cat(actor, ".departure.open-door"), "speech": dv_with_many(c1_speech(dv_true(), c1dep_source("08_终局.story", 8, "s10_open"), "actual-door-open"), {"surface": "拉开隔离门。", "channel": "door.living"}), "listeners": ["huo", "shen", "su"], "public_grants": [c1dep_ref("outer_released"), c1dep_ref("inner_down"), c1dep_ref("open"), campaign_access("living_exit")]}))
         let out = dv_all([campaign_at(actor, "foyer"), c1dep_can_cross()])
         let back = dv_all([campaign_at(actor, "living_hall"), c1dep_can_cross()])
         let out_id = rt_cat(actor, ".departure.cross-out")
         let in_id = rt_cat(actor, ".departure.cross-in")
-        rt_push(actions, dv_with_many(campaign_surface_action(out_id, "move", out, out, out_id, [dv_ref(actor, "state", "location"), c1dep_cross_ref(actor), campaign_clock()], "跨过门槛，走进起居厅。", c1dep_source("08_终局.story", 24, "s10_open.003：是否迈出由本人选择")), {"predict_law": out_id, "repeatable": true, "travel": {"from": "foyer", "to": "living_hall", "gate": "living_exit"}}))
-        rt_push(actions, dv_with_many(campaign_surface_action(in_id, "move", back, back, in_id, dv_single(dv_ref(actor, "state", "location")), "穿过隔离门，回到门厅。", source), {"predict_law": in_id, "repeatable": true, "travel": {"from": "living_hall", "to": "foyer", "gate": "living_exit"}}))
+        rt_push(actions, dv_with_many(campaign_surface_action(out_id, "move", out, out, out_id, [dv_ref(actor, "state", "location"), c1dep_cross_ref(actor), campaign_clock()], "前往起居厅", "跨过门槛，走进起居厅。", c1dep_source("08_终局.story", 24, "s10_open.003：是否迈出由本人选择")), {"predict_law": out_id, "repeatable": true, "travel": {"from": "foyer", "to": "living_hall", "gate": "living_exit"}}))
+        rt_push(actions, dv_with_many(campaign_surface_action(in_id, "move", back, back, in_id, dv_single(dv_ref(actor, "state", "location")), "回到门厅", "穿过隔离门，回到门厅。", source), {"predict_law": in_id, "repeatable": true, "travel": {"from": "living_hall", "to": "foyer", "gate": "living_exit"}}))
     if actor != "demon" and campaign_profile(actor).group != "living":
         let group = campaign_profile(actor).group
         let pre = c1dep_join_law(actor, group).premise
         let id = rt_cat(actor, ".departure.join-living")
-        rt_push(actions, dv_with_many(campaign_surface_action(id, "move", pre, pre, id, dv_single(dv_ref(actor, "state", "location")), "从寝区门外走进起居厅。", c1_other_departure_source(actor).source), {"predict_law": id, "repeatable": true, "travel": {"from": rt_cat("threshold.", group), "to": "living_hall", "gate": "living"}}))
+        rt_push(actions, dv_with_many(campaign_surface_action(id, "move", pre, pre, id, dv_single(dv_ref(actor, "state", "location")), "从寝区门外前往起居厅", "从寝区门外走进起居厅。", c1_other_departure_source(actor).source), {"predict_law": id, "repeatable": true, "travel": {"from": rt_cat("threshold.", group), "to": "living_hall", "gate": "living"}}))
     if actor == "quer":
-        rt_push(actions, dv_with(campaign_surface_action("quer.departure.inspect-yi-outer", "inspect", campaign_at(actor, "living_hall"), campaign_at(actor, "living_hall"), "", [c1dep_ref("outer_released")], "查看乙区门外的横闩。", source), "repeatable", true))
+        rt_push(actions, dv_with(campaign_surface_action("quer.departure.inspect-yi-outer", "inspect", campaign_at(actor, "living_hall"), campaign_at(actor, "living_hall"), "", [c1dep_ref("outer_released")], "检视乙区外闩", "查看乙区门外的横闩。", source), "repeatable", true))
         let own_pre = c1dep_pick_contract_law().premise
-        rt_push(actions, dv_with_many(campaign_surface_action("quer.departure.pick-contract", "experiment", own_pre, own_pre, "quer.departure.pick-contract", [campaign_case_ref("contract", "outer_latch_released"), c1_other_access_ref("contract"), c1dep_ref("contract_picked_by_quer")], "雀儿受够了盘问，从袖口拉出精钢丝，探过门缝挑起甲区外闩。卢西安收起手稿，跟上她。", campaign_source("docs/design-standard.md", 0, "甲区开锁机会")), {"predict_law": "quer.departure.pick-contract", "public_observers": ["lucian", "ward", "gu"], "public_grants": [campaign_case_ref("contract", "outer_latch_released"), c1_other_access_ref("contract")]}))
+        rt_push(actions, dv_with_many(campaign_surface_action("quer.departure.pick-contract", "experiment", own_pre, own_pre, "quer.departure.pick-contract", [campaign_case_ref("contract", "outer_latch_released"), c1_other_access_ref("contract"), c1dep_ref("contract_picked_by_quer")], "用钢丝挑开甲区外闩", "雀儿受够了盘问，从袖口拉出精钢丝，探过门缝挑起甲区外闩。卢西安收起手稿，跟上她。", campaign_source("docs/design-standard.md", 0, "甲区开锁机会")), {"predict_law": "quer.departure.pick-contract", "public_observers": ["lucian", "ward", "gu"], "public_grants": [campaign_case_ref("contract", "outer_latch_released"), c1_other_access_ref("contract")]}))
         let pre = c1dep_pick_law().premise
         let pick_source = c1dep_source("12_雀儿撬门.story", 7, "quer_opens.001-002")
-        let pick = campaign_surface_action("quer.departure.pick-outer", "experiment", pre, pre, "quer.departure.pick-outer", [c1dep_ref("outer_released"), c1dep_ref("picked_by_quer"), campaign_access("living_exit")], "细铁丝拨了四下，外侧的横闩抬了起来。", pick_source)
+        let pick = campaign_surface_action("quer.departure.pick-outer", "experiment", pre, pre, "quer.departure.pick-outer", [c1dep_ref("outer_released"), c1dep_ref("picked_by_quer"), campaign_access("living_exit")], "用铁丝挑开外闩", "细铁丝拨了四下，外侧的横闩抬了起来。", pick_source)
         rt_push(actions, dv_with_many(pick, {"predict_law": "quer.departure.pick-outer", "speech": dv_with_many(c1_speech(dv_true(), pick_source, "actual-latch-sound"), {"surface": "门外传来细铁丝拨动和横闩抬起的金属响声。", "channel": "door.living"}), "listeners": four, "public_grants": [c1dep_ref("outer_released"), campaign_access("living_exit")]}))
         let receipt = dv_at_least(campaign_clock(), 690)
-        let call = c1dep_speech(actor, "quer.departure.call-inside", "living_hall", receipt, dv_true(), "里头有人？", c1dep_source("11_门外的人.story", 5, "door_voices.002：询问部分"))
+        let call = c1dep_speech(actor, "quer.departure.call-inside", "living_hall", receipt, dv_true(), "呼唤门内的人", "里头有人？", c1dep_source("11_门外的人.story", 5, "door_voices.002：询问部分"))
         rt_push(actions, dv_with(call, "speech", dv_with(call.speech, "utterance_type", "question")))
         let self = dv_fact(c1dep_ref("contract_picked_by_quer"), true)
-        let reply = c1dep_speech(actor, "quer.departure.answer-door", "living_hall", self, self, "甲区的，叫我雀儿。那边的门让我挑开了。你们这扇，我也可以看看。", c1dep_source("11_门外的人.story", 8, "door_voices.005"))
+        let reply = c1dep_speech(actor, "quer.departure.answer-door", "living_hall", self, self, "隔门自报姓名", "甲区的，叫我雀儿。那边的门让我挑开了。你们这扇，我也可以看看。", c1dep_source("11_门外的人.story", 8, "door_voices.005"))
         rt_push(actions, dv_with(reply, "response_topic", "door_identity"))
     if actor == "lucian":
         let receipt = dv_at_least(campaign_clock(), 690)
-        rt_push(actions, dv_with(c1dep_speech(actor, "lucian.departure.rebuke-quer", "living_hall", receipt, dv_true(), "雀儿，贴着门板喊，里头听得见，礼数可就丢了。", c1dep_source("11_门外的人.story", 6, "door_voices.003")), "received_speech_requirement", {"speaker": "quer", "action_id": "quer.departure.call-inside"}))
+        rt_push(actions, dv_with(c1dep_speech(actor, "lucian.departure.rebuke-quer", "living_hall", receipt, dv_true(), "提醒同伴隔门交谈的礼数", "雀儿，贴着门板喊，里头听得见，礼数可就丢了。", c1dep_source("11_门外的人.story", 6, "door_voices.003")), "received_speech_requirement", {"speaker": "quer", "action_id": "quer.departure.call-inside"}))
     if actor == "detective":
-        var ask = c1dep_speech(actor, "detective.departure.ask-door", "foyer", dv_true(), dv_true(), "门外是谁？", c1dep_source("11_门外的人.story", 7, "door_voices.004"))
+        var ask = c1dep_speech(actor, "detective.departure.ask-door", "foyer", dv_true(), dv_true(), "询问门外人的身份", "门外是谁？", c1dep_source("11_门外的人.story", 7, "door_voices.004"))
         ask = dv_with_many(ask, {"speech": dv_with(ask.speech, "request", {"target": "quer", "topic": "door_identity"}), "request_transport": {"channel": "door.living"}, "received_speech_requirement": {"speaker": "quer", "action_id": "quer.departure.call-inside"}})
         rt_push(actions, ask)
     if actor == "su":
         let picked = dv_all([campaign_at(actor, "living_hall"), dv_fact(c1dep_ref("picked_by_quer"), true)])
-        rt_push(actions, c1dep_speech(actor, "su.departure.picked-rebuke", "living_hall", picked, picked, "门不是你答开的，是雀儿从外侧挑开的。你甚至没能说清门外究竟发生了什么。", c1dep_source("08_终局.story", 26, "su_picked_rebuke")))
+        rt_push(actions, c1dep_speech(actor, "su.departure.picked-rebuke", "living_hall", picked, picked, "指出门闩是从外侧打开的", "门不是你答开的，是雀儿从外侧挑开的。你甚至没能说清门外究竟发生了什么。", c1dep_source("08_终局.story", 26, "su_picked_rebuke")))
         let unpicked = dv_all([campaign_at(actor, "living_hall"), dv_fact(c1dep_ref("picked_by_quer"), false), dv_fact(c1dep_ref("outer_released"), true)])
-        rt_push(actions, c1dep_speech(actor, "su.departure.praise", "living_hall", unpicked, unpicked, "你辨清了声路和木楔。门外的人不是因开门而死的。", c1dep_source("08_终局.story", 29, "su_unpicked_praise")))
+        rt_push(actions, c1dep_speech(actor, "su.departure.praise", "living_hall", unpicked, unpicked, "评价声路与木楔的核查", "你辨清了声路和木楔。门外的人不是因开门而死的。", c1dep_source("08_终局.story", 29, "su_unpicked_praise")))
     if actor == "shen":
         let picked = dv_all([campaign_at(actor, "living_hall"), dv_fact(c1dep_ref("picked_by_quer"), true)])
-        rt_push(actions, c1dep_speech(actor, "shen.departure.picked-doubt", "living_hall", picked, picked, "方才在门内，你言语前后遮掩；门外的事，你终究没有给大家一个交代。", c1dep_source("08_终局.story", 27, "shen_picked_doubt")))
+        rt_push(actions, c1dep_speech(actor, "shen.departure.picked-doubt", "living_hall", picked, picked, "质疑门外事件的交代", "方才在门内，你言语前后遮掩；门外的事，你终究没有给大家一个交代。", c1dep_source("08_终局.story", 27, "shen_picked_doubt")))
     if actor == "huo":
         let picked = dv_all([campaign_at(actor, "living_hall"), dv_fact(c1dep_ref("picked_by_quer"), true)])
-        rt_push(actions, c1dep_speech(actor, "huo.departure.picked-cold", "living_hall", picked, picked, "若是连自己做过的事都说不分明，日后如何同路？", c1dep_source("08_终局.story", 28, "huo_picked_cold")))
+        rt_push(actions, c1dep_speech(actor, "huo.departure.picked-cold", "living_hall", picked, picked, "质疑答复的可信程度", "若是连自己做过的事都说不分明，日后如何同路？", c1dep_source("08_终局.story", 28, "huo_picked_cold")))
         let unpicked = dv_all([campaign_at(actor, "living_hall"), dv_fact(c1dep_ref("picked_by_quer"), false), dv_fact(c1dep_ref("outer_released"), true)])
-        rt_push(actions, c1dep_speech(actor, "huo.departure.trust", "living_hall", unpicked, unpicked, "四步始业之答，堂堂正正。靴印与木楔的真相，我信你。", c1dep_source("08_终局.story", 30, "huo_unpicked_trust")))
+        rt_push(actions, c1dep_speech(actor, "huo.departure.trust", "living_hall", unpicked, unpicked, "表明对答复的信任", "四步始业之答，堂堂正正。靴印与木楔的真相，我信你。", c1dep_source("08_终局.story", 30, "huo_unpicked_trust")))
     if actor == "demon":
         let manifestation = c1dep_manifest_law()
-        rt_push(actions, dv_with_many(campaign_surface_action("demon.departure.manifest", "help", manifestation.premise, manifestation.premise, "demon.departure.manifest", [dv_ref("demon.body", "state", "manifested")], "虚影在门闩前凝实，修长窄薄的手掌获得了可以碰触物体的重量。", source), {"predict_law": "demon.departure.manifest", "repeatable": true}))
+        rt_push(actions, dv_with_many(campaign_surface_action("demon.departure.manifest", "help", manifestation.premise, manifestation.premise, "demon.departure.manifest", [dv_ref("demon.body", "state", "manifested")], "凝实身体以接触门闩", "虚影在门闩前凝实，修长窄薄的手掌获得了可以碰触物体的重量。", source), {"predict_law": "demon.departure.manifest", "repeatable": true}))
         let groups = ["contract", "astral", "logistics"]
         var g = 0
         while g < rt_count(groups):
@@ -3685,31 +3691,31 @@ fn c1dep_actions(actor):
                 if people[p].group == group:
                     rt_push(refs, campaign_case_ref(group, rt_cat("receipt.", people[p].id)))
                 p = p + 1
-            rt_push(actions, dv_with(campaign_surface_action(rt_cat("demon.departure.inspect.", group), "inspect", campaign_at(actor, "living_hall"), campaign_at(actor, "living_hall"), "", refs, "核对铜口答复记录与寝区外闩。", c1_other_case(group).source), "repeatable", true))
+            rt_push(actions, dv_with(campaign_surface_action(rt_cat("demon.departure.inspect.", group), "inspect", campaign_at(actor, "living_hall"), campaign_at(actor, "living_hall"), "", refs, rt_cat("核对", rt_cat(c1_other_case(group).zone, "的答复与外闩")), "核对铜口答复记录与寝区外闩。", c1_other_case(group).source), "repeatable", true))
             rt_push(actions, c1_other_release_action(group, actor, campaign_clock()))
             g = g + 1
         let solved_refs = [dv_ref("question", "state", "solved_identity"), dv_ref("question", "state", "solved_voice_source"), dv_ref("question", "state", "solved_words"), dv_ref("question", "state", "solved_trust")]
-        rt_push(actions, dv_with(campaign_surface_action("demon.departure.inspect-accepted", "inspect", campaign_at(actor, "living_hall"), campaign_at(actor, "living_hall"), "", solved_refs, "查看已认定的答复。", source), "repeatable", true))
-        rt_push(actions, dv_with(campaign_surface_action("demon.departure.inspect-body", "inspect", dv_true(), dv_true(), "", dv_single(campaign_position_ref(actor)), "看了看周围。", source), "repeatable", true))
-        rt_push(actions, dv_with(campaign_surface_action("demon.departure.inspect-outer", "inspect", campaign_at(actor, "living_hall"), campaign_at(actor, "living_hall"), "", dv_single(c1dep_ref("outer_released")), "查看隔离门外侧的横闩。", source), "repeatable", true))
+        rt_push(actions, dv_with(campaign_surface_action("demon.departure.inspect-accepted", "inspect", campaign_at(actor, "living_hall"), campaign_at(actor, "living_hall"), "", solved_refs, "查看已认定的答复", "查看已认定的答复。", source), "repeatable", true))
+        rt_push(actions, dv_with(campaign_surface_action("demon.departure.inspect-body", "inspect", dv_true(), dv_true(), "", dv_single(campaign_position_ref(actor)), "查看周围", "看了看周围。", source), "repeatable", true))
+        rt_push(actions, dv_with(campaign_surface_action("demon.departure.inspect-outer", "inspect", campaign_at(actor, "living_hall"), campaign_at(actor, "living_hall"), "", dv_single(c1dep_ref("outer_released")), "检视隔离门外闩", "查看隔离门外侧的横闩。", source), "repeatable", true))
         let after_answer = dv_all([campaign_at(actor, "living_hall"), c1dep_complete()])
-        rt_push(actions, dv_with(campaign_surface_action("demon.departure.inspect-clock", "inspect", after_answer, after_answer, "", [campaign_clock()], "查看起居厅钟面。", source), "repeatable", true))
+        rt_push(actions, dv_with(campaign_surface_action("demon.departure.inspect-clock", "inspect", after_answer, after_answer, "", [campaign_clock()], "查看起居厅钟面", "查看起居厅钟面。", source), "repeatable", true))
         let pre = c1dep_outer_law().premise
-        let lifted = campaign_surface_action("demon.departure.release-outer", "help", pre, pre, "demon.departure.release-outer", [c1dep_ref("outer_released"), campaign_access("living_exit"), dv_ref("demon.body", "state", "manifested")], "外侧的横闩，被一只手抬了起来。", source)
+        let lifted = campaign_surface_action("demon.departure.release-outer", "help", pre, pre, "demon.departure.release-outer", [c1dep_ref("outer_released"), campaign_access("living_exit"), dv_ref("demon.body", "state", "manifested")], "抬起外闩", "外侧的横闩，被一只手抬了起来。", source)
         rt_push(actions, dv_with_many(lifted, {"predict_law": "demon.departure.release-outer", "speech": dv_with_many(c1_speech(dv_true(), source, "actual-latch-sound"), {"surface": "门外传来横闩抬起的金属响声。", "channel": "door.living"}), "listeners": four, "public_grants": [c1dep_ref("outer_released"), campaign_access("living_exit")]}))
     let hand_ref = dv_ref("demon.body", "state", "hand_shape")
     let owner_ref = dv_ref("demon.body", "state", "shelf_print_owner")
     let hand_source = campaign_source("docs/design-standard.md", 0, "架沿手印的观察与询问")
     if dv_has(four, actor):
         let present = dv_all([campaign_at(actor, "living_hall"), campaign_at("demon", "living_hall"), dv_fact(dv_ref("demon.body", "state", "manifested"), true)])
-        rt_push(actions, campaign_surface_action(rt_cat(actor, ".departure.inspect-hand"), "inspect", campaign_at(actor, "living_hall"), present, "", [hand_ref], "他手形修长，掌面窄薄。仅凭外形，还不能断定架沿的半枚手印属于他。", hand_source))
+        rt_push(actions, campaign_surface_action(rt_cat(actor, ".departure.inspect-hand"), "inspect", campaign_at(actor, "living_hall"), present, "", [hand_ref], "检视门边人的手形", "他手形修长，掌面窄薄。仅凭外形，还不能断定架沿的半枚手印属于他。", hand_source))
         let seen_print = dv_fact(campaign_evidence_ref("hand_not_mine"), true)
-        var ask = c1dep_speech(actor, rt_cat(actor, ".departure.ask-print"), "living_hall", seen_print, dv_true(), "架上的手印，是你的吗？", hand_source)
+        var ask = c1dep_speech(actor, rt_cat(actor, ".departure.ask-print"), "living_hall", seen_print, dv_true(), "询问架沿手印", "架上的手印，是你的吗？", hand_source)
         ask = dv_with_many(ask, {"speech": dv_with_many(ask.speech, {"channel": "local", "request": {"target": "demon", "topic": "shelf.print-owner"}}), "purpose_refs": [owner_ref]})
         rt_push(actions, ask)
     if actor == "demon":
         let claim = dv_fact(owner_ref, "demon")
-        var reply = c1dep_speech(actor, "demon.departure.answer-print", "living_hall", claim, claim, "是。诸位封存之物，是我取走的。", hand_source)
+        var reply = c1dep_speech(actor, "demon.departure.answer-print", "living_hall", claim, claim, "答复手印与封存物的去向", "是。诸位封存之物，是我取走的。", hand_source)
         reply = dv_with_many(reply, {"precondition": dv_all([campaign_at(actor, "living_hall"), claim]), "authority_precondition": campaign_at(actor, "living_hall"), "speech": dv_with(reply.speech, "channel", "local"), "response_topic": "shelf.print-owner", "requires_actual_request": true})
         rt_push(actions, campaign_authorized_speech(reply))
     return c1_public_methods(actions)
@@ -4201,24 +4207,24 @@ fn c1_op_wake_action(id):
         rt_push(grants, dv_ref("opening.wake.su", "state", "low_wall_tone"))
         rt_push(grants, dv_ref("opening.wake.su", "state", "finger_meter"))
     var kind = "inspect"
-    return dv_with(dv_with(c1_once(campaign_action(rt_cat(id, ".opening.wake"), kind, known, known, rt_cat("opening.wake.", id), grants, c1_memory_source(id))), "owner", id), "presentation", c1_op_presentation(id, "private-monologue", c1_op_wake_lines(id)))
+    return dv_with(dv_with(c1_once(campaign_intent_action(rt_cat(id, ".opening.wake"), kind, known, known, rt_cat("opening.wake.", id), grants, "回想醒来前的事", c1_memory_source(id))), "owner", id), "presentation", c1_op_presentation(id, "private-monologue", c1_op_wake_lines(id)))
 
-fn c1_op_physical_action(id, name, law, grants, source, surface):
-    return dv_with(dv_with(c1_once(campaign_action(name, "inspect", campaign_at(id, "hall"), campaign_at(id, "hall"), law, grants, source)), "owner", id), "presentation", c1_op_presentation(id, "visible-action", dv_single(surface)))
+fn c1_op_physical_action(id, name, law, grants, source, label, surface):
+    return dv_with(dv_with(c1_once(campaign_intent_action(name, "inspect", campaign_at(id, "hall"), campaign_at(id, "hall"), law, grants, label, source)), "owner", id), "presentation", c1_op_presentation(id, "visible-action", dv_single(surface)))
 
 fn c1_op_reward_actions():
-    return [dv_with(c1_op_physical_action("shen", "shen.opening.bite-silver", "opening.bite-silver", [dv_ref("opening.silver", "state", "authenticity"), dv_ref("opening.silver", "state", "last_bite_by")], c1_op_source(30, "s3_broadcast.020"), "沈鼎走到柜前，咬了一枚银元。"), "sensory_mode", "tactile-inspection"), c1_op_physical_action("huo", "huo.opening.scrape-testpiece", "opening.scrape-testpiece", [dv_ref("opening.testpiece", "state", "last_scraped_by")], c1_op_source(30, "s3_broadcast.020"), "霍铎把试件举到灯下，刮配合面。"), dv_with(c1_op_physical_action("su", "su.opening.play-audition", "opening.play-audition", [dv_ref("opening.audition", "state", "last_operator"), dv_ref("opening.audition", "state", "last_output")], c1_op_source(30, "s3_broadcast.020"), "苏泠摇响了柜旁的试听机。"), "sensory_mode", "auditory-playback")]
+    return [dv_with(c1_op_physical_action("shen", "shen.opening.bite-silver", "opening.bite-silver", [dv_ref("opening.silver", "state", "authenticity"), dv_ref("opening.silver", "state", "last_bite_by")], c1_op_source(30, "s3_broadcast.020"), "咬验领取柜中的银元", "沈鼎走到柜前，咬了一枚银元。"), "sensory_mode", "tactile-inspection"), c1_op_physical_action("huo", "huo.opening.scrape-testpiece", "opening.scrape-testpiece", [dv_ref("opening.testpiece", "state", "last_scraped_by")], c1_op_source(30, "s3_broadcast.020"), "检视领取柜中的试件", "霍铎把试件举到灯下，刮配合面。"), dv_with(c1_op_physical_action("su", "su.opening.play-audition", "opening.play-audition", [dv_ref("opening.audition", "state", "last_operator"), dv_ref("opening.audition", "state", "last_output")], c1_op_source(30, "s3_broadcast.020"), "操作领取柜旁的试听机", "苏泠摇响了柜旁的试听机。"), "sensory_mode", "auditory-playback")]
 
-fn c1_op_dialogue(id, name, literal, surface, source, listeners):
+fn c1_op_dialogue(id, name, literal, label, surface, source, listeners):
     var known = dv_all(dv_pair(campaign_at(id, "hall"), literal))
     var speech = dv_with(c1_speech(literal, source, "present-opening-scene"), "surface", surface)
-    var result = c1_once(dv_with_many(campaign_action(name, "talk", known, known, "", [], source), {"speech": speech, "listeners": listeners, "owner": id}))
+    var result = c1_once(dv_with_many(campaign_intent_action(name, "talk", known, known, "", [], label, source), {"speech": speech, "listeners": listeners, "owner": id}))
     if id == "demon":
         return campaign_authorized_speech(result)
     return result
 
-fn c1_op_question(id, name, surface, source, listeners):
-    var action = c1_op_dialogue(id, name, dv_true(), surface, source, listeners)
+fn c1_op_question(id, name, label, surface, source, listeners):
+    var action = c1_op_dialogue(id, name, dv_true(), label, surface, source, listeners)
     return dv_with(action, "speech", dv_with(action.speech, "utterance_type", "question"))
 
 fn c1_op_reward_refs(id):
@@ -4259,29 +4265,29 @@ fn c1_op_morning_candidates():
         if people[i] == "detective":
             rt_push(result, dv_with(c1_op_wake_action(people[i]), "personal_purpose", {"subject": people[i], "id": "current-self-observation", "basis": dv_single(c1_memory_source(people[i]))}))
         i = i + 1
-    var wear = c1_once(campaign_action("detective.opening.wear-coat", "inspect", dv_all(dv_pair(campaign_at("detective", "R05"), dv_fact(dv_ref("coat", "identity", "owner"), "detective"))), campaign_at("detective", "R05"), "opening.wear-coat", [dv_ref("coat", "state", "worn_by")], c1_op_source(6, "s1_wake.006; s2_meet.008")))
+    var wear = c1_once(campaign_intent_action("detective.opening.wear-coat", "inspect", dv_all(dv_pair(campaign_at("detective", "R05"), dv_fact(dv_ref("coat", "identity", "owner"), "detective"))), campaign_at("detective", "R05"), "opening.wear-coat", [dv_ref("coat", "state", "worn_by")], "穿上风衣", c1_op_source(6, "s1_wake.006; s2_meet.008")))
     rt_push(result, dv_with(wear, "owner", "detective"))
-    rt_push(result, c1_op_physical_action("shen", "shen.opening.prepare-tea", "opening.prepare-tea", [dv_ref("opening.tea", "state", "prepared"), dv_ref("opening.tea", "state", "prepared_by")], c1_op_source(11, "s2_meet.009"), "沈鼎把茶泡上。"))
+    rt_push(result, c1_op_physical_action("shen", "shen.opening.prepare-tea", "opening.prepare-tea", [dv_ref("opening.tea", "state", "prepared"), dv_ref("opening.tea", "state", "prepared_by")], c1_op_source(11, "s2_meet.009"), "泡茶", "沈鼎把茶泡上。"))
     return result
 
 fn c1_op_meet_candidates():
     var listeners = c1_op_people()
-    var welcome = c1_op_dialogue("shen", "shen.opening.welcome", c1_op_property("opening.tea", "prepared", true), "哟，又醒一个。进来坐，茶刚泡上。", c1_op_source(11, "s2_meet.009"), listeners)
-    var shen_name = c1_op_dialogue("shen", "shen.opening.introduce", dv_all(dv_pair(dv_fact(c1_op_person_ref("shen", "name"), "沈鼎"), dv_fact(c1_op_person_ref("shen", "profession"), "烧菜"))), "我姓沈，沈鼎，烧菜的。", c1_op_source(12, "s2_meet.010"), listeners)
-    var huo_name = c1_op_dialogue("huo", "huo.opening.introduce", dv_all(dv_pair(dv_fact(c1_op_person_ref("huo", "name"), "霍铎"), dv_fact(c1_op_person_ref("huo", "profession"), "钳工"))), "……霍铎。钳工。", c1_op_source(13, "s2_meet.011"), listeners)
-    var su_name = c1_op_dialogue("su", "su.opening.introduce", dv_all(dv_pair(dv_fact(c1_op_person_ref("su", "name"), "苏泠"), dv_fact(c1_op_person_ref("su", "profession"), "弹琴"))), "苏泠。弹琴的。", c1_op_source(14, "s2_meet.006"), listeners)
-    var ask_name = c1_op_question("shen", "shen.opening.ask-name", "你呢？穿这么一身风衣，不像跑船的。", c1_op_source(15, "s2_meet.008"), dv_single("detective"))
+    var welcome = c1_op_dialogue("shen", "shen.opening.welcome", c1_op_property("opening.tea", "prepared", true), "招呼刚醒来的同伴", "哟，又醒一个。进来坐，茶刚泡上。", c1_op_source(11, "s2_meet.009"), listeners)
+    var shen_name = c1_op_dialogue("shen", "shen.opening.introduce", dv_all(dv_pair(dv_fact(c1_op_person_ref("shen", "name"), "沈鼎"), dv_fact(c1_op_person_ref("shen", "profession"), "烧菜"))), "向同伴自我介绍", "我姓沈，沈鼎，烧菜的。", c1_op_source(12, "s2_meet.010"), listeners)
+    var huo_name = c1_op_dialogue("huo", "huo.opening.introduce", dv_all(dv_pair(dv_fact(c1_op_person_ref("huo", "name"), "霍铎"), dv_fact(c1_op_person_ref("huo", "profession"), "钳工"))), "向同伴自我介绍", "……霍铎。钳工。", c1_op_source(13, "s2_meet.011"), listeners)
+    var su_name = c1_op_dialogue("su", "su.opening.introduce", dv_all(dv_pair(dv_fact(c1_op_person_ref("su", "name"), "苏泠"), dv_fact(c1_op_person_ref("su", "profession"), "弹琴"))), "向同伴自我介绍", "苏泠。弹琴的。", c1_op_source(14, "s2_meet.006"), listeners)
+    var ask_name = c1_op_question("shen", "shen.opening.ask-name", "询问刚到同伴的姓名", "你呢？穿这么一身风衣，不像跑船的。", c1_op_source(15, "s2_meet.008"), dv_single("detective"))
     return [welcome, shen_name, huo_name, su_name, ask_name]
 
 fn c1_op_tea_candidates(detective_name):
     var listeners = c1_op_people()
-    var introduce = c1_op_dialogue("detective", "detective.opening.introduce", dv_all(dv_pair(dv_fact(c1_op_person_ref("detective", "name"), detective_name), dv_fact(c1_op_person_ref("detective", "profession"), "侦探"))), rt_cat(detective_name, "。……做侦探的。"), c1_op_source(19, "s2_tea.001"), listeners)
-    var memory = c1_op_dialogue("shen", "shen.opening.memory-report", dv_fact(c1_op_person_ref("shen", "last_recall"), "boarding"), "都还记得啥？我就记得上船。下了跳板往后，脑子里白茫茫一片。", c1_op_source(20, "s2_tea.016"), listeners)
-    var serve = c1_op_physical_action("shen", "shen.opening.serve-tea", "opening.serve-tea", [dv_ref("opening.cup.su", "state", "contents"), dv_ref("opening.cup.su", "state", "sugar_added"), dv_ref("opening.cup.su", "state", "served_by")], c1_op_source(21, "s2_tea.011"), "他把茶一杯一杯推过来。推到苏泠面前的那杯，他没有放糖。")
+    var introduce = c1_op_dialogue("detective", "detective.opening.introduce", dv_all(dv_pair(dv_fact(c1_op_person_ref("detective", "name"), detective_name), dv_fact(c1_op_person_ref("detective", "profession"), "侦探"))), "向同伴自我介绍", rt_cat(detective_name, "。……做侦探的。"), c1_op_source(19, "s2_tea.001"), listeners)
+    var memory = c1_op_dialogue("shen", "shen.opening.memory-report", dv_fact(c1_op_person_ref("shen", "last_recall"), "boarding"), "询问并交流登船记忆", "都还记得啥？我就记得上船。下了跳板往后，脑子里白茫茫一片。", c1_op_source(20, "s2_tea.016"), listeners)
+    var serve = c1_op_physical_action("shen", "shen.opening.serve-tea", "opening.serve-tea", [dv_ref("opening.cup.su", "state", "contents"), dv_ref("opening.cup.su", "state", "sugar_added"), dv_ref("opening.cup.su", "state", "served_by")], c1_op_source(21, "s2_tea.011"), "将茶分给在场同伴", "他把茶一杯一杯推过来。推到苏泠面前的那杯，他没有放糖。")
     serve = dv_with_many(serve, {"public_observers": listeners, "public_grants": [dv_ref("opening.cup.su", "state", "contents"), dv_ref("opening.cup.su", "state", "sugar_added"), dv_ref("opening.cup.su", "state", "served_by")]})
-    var su_ask = c1_op_question("su", "su.opening.ask-sugar", "……你怎么知道我喝茶不放糖？", c1_op_source(22, "s2_tea.012"), listeners)
+    var su_ask = c1_op_question("su", "su.opening.ask-sugar", "询问泡茶的习惯", "……你怎么知道我喝茶不放糖？", c1_op_source(22, "s2_tea.012"), listeners)
     su_ask = dv_with_many(su_ask, {"precondition": dv_all(dv_pair(campaign_at("su", "hall"), c1_op_property("opening.cup.su", "sugar_added", false))), "authority_precondition": dv_all(dv_pair(campaign_at("su", "hall"), c1_op_property("opening.cup.su", "sugar_added", false)))})
-    var shen_reply = c1_op_dialogue("shen", "shen.opening.body-habit", c1_op_property("opening.cup.su", "served_by", "shen"), "嗯？……顺手吧。", c1_op_source(23, "s2_tea.013"), listeners)
+    var shen_reply = c1_op_dialogue("shen", "shen.opening.body-habit", c1_op_property("opening.cup.su", "served_by", "shen"), "说明泡茶的习惯", "嗯？……顺手吧。", c1_op_source(23, "s2_tea.013"), listeners)
     shen_reply = dv_with(shen_reply, "speech", dv_with(shen_reply.speech, "scope", "own-bodily-action-appraisal-not-recovered-familiarity"))
     return [introduce, memory, serve, su_ask, shen_reply]
 
@@ -4294,7 +4300,7 @@ fn c1_op_broadcast_candidates():
 
 fn c1_op_reward_candidates(detective_name):
     var cabinet_claim = dv_all(dv_pair(c1_op_property("opening.cabinet", "position_description", "铜口下方"), c1_op_property("opening.cabinet", "labels", [detective_name, "霍铎", "沈鼎", "苏泠"])))
-    var invitation = c1_op_dialogue("demon", "demon.opening.reward-invitation", cabinet_claim, "诸位的报偿，就在铜口下方的领取柜里，各有名签。请亲手核验。", c1_op_source(29, "s4_rewards.004"), c1_op_people())
+    var invitation = c1_op_dialogue("demon", "demon.opening.reward-invitation", cabinet_claim, "邀请领取报偿", "诸位的报偿，就在铜口下方的领取柜里，各有名签。请亲手核验。", c1_op_source(29, "s4_rewards.004"), c1_op_people())
     invitation = dv_with(invitation, "speech", dv_with(invitation.speech, "shown_material_refs", [dv_ref("opening.cabinet", "state", "position_description"), dv_ref("opening.cabinet", "state", "labels")]))
     var candidates = [invitation]
     var rewards = c1_op_reward_actions()
@@ -4307,25 +4313,25 @@ fn c1_op_reward_candidates(detective_name):
 
 fn c1_op_desire_candidates(detective_name):
     var material_claim = dv_all([c1_op_property("opening.silver", "location", "opening.cabinet"), c1_op_property("opening.facilities", "grain_store", true), c1_op_property("opening.facilities", "water_supply", true), c1_op_property("opening.facilities", "fire", true), c1_op_property("opening.facilities", "drawing_exists", true), c1_op_property("opening.facilities", "unheard_sounds_available", true)])
-    var offer = c1_op_dialogue("demon", "demon.opening.desire-offer", material_claim, "银元在柜里，沈师傅。粮仓、水窖、灶火，岛上也都有。那张减少不可逆损失的闭式热机图纸，此地有人画过，霍先生。此地还有诸位从未听过的声音，苏小姐。", c1_op_source(31, "s3_broadcast.021"), c1_op_people())
+    var offer = c1_op_dialogue("demon", "demon.opening.desire-offer", material_claim, "介绍岛上的工作与资源", "银元在柜里，沈师傅。粮仓、水窖、灶火，岛上也都有。那张减少不可逆损失的闭式热机图纸，此地有人画过，霍先生。此地还有诸位从未听过的声音，苏小姐。", c1_op_source(31, "s3_broadcast.021"), c1_op_people())
     offer = dv_with(offer, "speech", dv_with(offer.speech, "shown_material_refs", [dv_ref("opening.silver", "state", "location"), dv_ref("opening.testpiece", "state", "location"), dv_ref("opening.audition", "state", "location")]))
-    var empty_slot = c1_once(campaign_action("detective.opening.empty-slot", "inspect", campaign_at("detective", "hall"), campaign_at("detective", "hall"), "", [dv_ref("opening.slot.detective", "state", "label"), dv_ref("opening.slot.detective", "state", "door_open"), dv_ref("opening.slot.detective", "state", "contents")], c1_op_source(35, "s4_rewards.020")))
+    var empty_slot = c1_once(campaign_intent_action("detective.opening.empty-slot", "inspect", campaign_at("detective", "hall"), campaign_at("detective", "hall"), "", [dv_ref("opening.slot.detective", "state", "label"), dv_ref("opening.slot.detective", "state", "door_open"), dv_ref("opening.slot.detective", "state", "contents")], "检视自己的标签柜", c1_op_source(35, "s4_rewards.020")))
     empty_slot = dv_with(dv_with(empty_slot, "owner", "detective"), "presentation", c1_op_presentation("detective", "private-monologue", ["柜上有一格贴着我的名字。小门开着，里面什么也没有。"]))
-    var ask_reward = c1_op_question("detective", "detective.opening.ask-reward", "那我的呢？", c1_op_source(36, "s4_rewards.016"), dv_single("demon"))
+    var ask_reward = c1_op_question("detective", "detective.opening.ask-reward", "询问自己的报偿", "那我的呢？", c1_op_source(36, "s4_rewards.016"), dv_single("demon"))
     ask_reward = dv_with(ask_reward, "precondition", dv_all(dv_pair(campaign_at("detective", "hall"), c1_op_property("opening.slot.detective", "contents", "empty"))))
-    var contract = c1_op_dialogue("demon", "demon.opening.other-contract", c1_op_property("opening.contracts", "detective_party_not_custodian", true), "与你立约的，不是我。", c1_op_source(37, "s4_rewards.017"), c1_op_people())
-    var shen_keep = c1_op_dialogue("shen", "shen.opening.accept-work", c1_op_reward_requirement("shen"), "……钱是真的。这活我接着干。", c1_op_source(39, "s3_broadcast.022"), c1_op_people())
+    var contract = c1_op_dialogue("demon", "demon.opening.other-contract", c1_op_property("opening.contracts", "detective_party_not_custodian", true), "答复立约者的问题", "与你立约的，不是我。", c1_op_source(37, "s4_rewards.017"), c1_op_people())
+    var shen_keep = c1_op_dialogue("shen", "shen.opening.accept-work", c1_op_reward_requirement("shen"), "答应继续做饭", "……钱是真的。这活我接着干。", c1_op_source(39, "s3_broadcast.022"), c1_op_people())
     shen_keep = dv_with(shen_keep, "speech", dv_with(shen_keep.speech, "intention_report", {"subject": "shen", "purpose": "keep-working", "basis": c1_op_reward_refs("shen"), "automatic_world_effect": "none"}))
-    var huo_stay = c1_op_dialogue("huo", "huo.opening.seek-drawing", c1_op_reward_requirement("huo"), "我留下。那张图，我得找。", c1_op_source(40, "s4_rewards.023"), c1_op_people())
+    var huo_stay = c1_op_dialogue("huo", "huo.opening.seek-drawing", c1_op_reward_requirement("huo"), "表明留下寻找图纸的意愿", "我留下。那张图，我得找。", c1_op_source(40, "s4_rewards.023"), c1_op_people())
     huo_stay = dv_with(huo_stay, "speech", dv_with(huo_stay.speech, "intention_report", {"subject": "huo", "purpose": "seek-offered-drawing", "basis": c1_op_reward_refs("huo"), "automatic_world_effect": "none"}))
     return [offer, empty_slot, ask_reward, contract, shen_keep, huo_stay]
 
 fn c1_op_investigation_candidates():
-    var first = c1_op_dialogue("demon", "demon.opening.public-alarm", dv_all(dv_pair(c1_op_property("opening.public_history", "alarm_last_night", true), c1_op_property("opening.public_history", "main_building_call", true))), "昨夜警铃骤起。主楼曾有人向诸位呼喊。", c1_op_source(44, "s5_question.002"), c1_op_people())
-    var second = c1_op_dialogue("demon", "demon.opening.public-latch", dv_all(dv_pair(c1_op_property("opening.public_history", "door_latched_this_side", true), c1_op_property("opening.public_history", "caller_not_returned", true))), "通往主楼之门，在诸位这一侧闩上了。那人再没有回来。", c1_op_source(45, "s5_question.003"), c1_op_people())
+    var first = c1_op_dialogue("demon", "demon.opening.public-alarm", dv_all(dv_pair(c1_op_property("opening.public_history", "alarm_last_night", true), c1_op_property("opening.public_history", "main_building_call", true))), "说明昨夜的警铃与呼声", "昨夜警铃骤起。主楼曾有人向诸位呼喊。", c1_op_source(44, "s5_question.002"), c1_op_people())
+    var second = c1_op_dialogue("demon", "demon.opening.public-latch", dv_all(dv_pair(c1_op_property("opening.public_history", "door_latched_this_side", true), c1_op_property("opening.public_history", "caller_not_returned", true))), "说明昨夜门闩的情况", "通往主楼之门，在诸位这一侧闩上了。那人再没有回来。", c1_op_source(45, "s5_question.003"), c1_op_people())
     var question = c1_question_action("prompt", c1_op_source(46, "s5_question.004"), true)
     question = dv_with(question, "speech", dv_with(question.speech, "surface", "此为始业之问：门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？"))
-    var invitation = c1_op_dialogue("demon", "demon.opening.investigate-invitation", dv_true(), "记不得，并不妨碍作答。痕迹还在。答案备好了，到铜口来。", c1_op_source(47, "s5_question.017"), c1_op_people())
+    var invitation = c1_op_dialogue("demon", "demon.opening.investigate-invitation", dv_true(), "邀请调查并提交答复", "记不得，并不妨碍作答。痕迹还在。答案备好了，到铜口来。", c1_op_source(47, "s5_question.017"), c1_op_people())
     invitation = dv_with(invitation, "speech", dv_with(invitation.speech, "utterance_type", "invitation"))
     return [first, second, dv_with(question, "owner", "demon"), invitation]
 
@@ -4339,7 +4345,7 @@ fn c1_op_maintenance_actions():
     var i = 0
     while i < rt_count(ids):
         var id = ids[i]
-        var action = c1_op_dialogue(id, rt_cat(id, ".opening.maintain-interpretation"), c1_op_reward_requirement(id), surfaces[i], c1_op_source(30, "s3_broadcast.020; authoring-attitude-report"), c1_op_people())
+        var action = c1_op_dialogue(id, rt_cat(id, ".opening.maintain-interpretation"), c1_op_reward_requirement(id), "坚持本人现有的解释", surfaces[i], c1_op_source(30, "s3_broadcast.020; authoring-attitude-report"), c1_op_people())
         var attitude = {"subject": id, "interpretation_id": "short_stay", "required_status": "accepted", "basis": c1_op_reward_refs(id), "source_event_requirement": "owner-existing-interpretation-receipt"}
         action = dv_with_many(action, {"owner_interpretation_requirement": attitude, "speech": dv_with_many(action.speech, {"utterance_type": "attitude-report", "attitude_report": attitude, "asserted_body_duration": "none"})})
         rt_push(result, action)
@@ -4512,10 +4518,10 @@ fn c1_op_slot_inspections():
         var refs = [dv_ref(slot, "state", "label"), dv_ref(slot, "state", "contents")]
         if id != "detective":
             rt_push(refs, dv_ref(c1_op_reward_object(id), "state", "location"))
-        var action = c1_once(campaign_action(rt_cat(id, ".opening.inspect-reward-slot"), "inspect", known, campaign_at(id, "hall"), "", refs, c1_op_source(29, "s4_rewards.004")))
+        var action = c1_once(campaign_intent_action(rt_cat(id, ".opening.inspect-reward-slot"), "inspect", known, campaign_at(id, "hall"), "", refs, "检视本人领取柜", c1_op_source(29, "s4_rewards.004")))
         rt_push(result, dv_with_many(action, {"owner": id, "received_speech_requirement": c1_op_invitation_requirement(), "personal_purpose": {"subject": id, "id": "verify-personally-addressed-offer", "basis": [c1_op_source(29, "s4_rewards.004")]}}))
         i = i + 1
-    var look = c1_once(campaign_action("shen.opening.look-arrival", "inspect", campaign_at("shen", "hall"), dv_all(dv_pair(campaign_at("shen", "hall"), campaign_at("detective", "hall"))), "", [dv_ref("coat", "state", "worn_by")], c1_op_source(15, "s2_meet.008")))
+    var look = c1_once(campaign_intent_action("shen.opening.look-arrival", "inspect", campaign_at("shen", "hall"), dv_all(dv_pair(campaign_at("shen", "hall"), campaign_at("detective", "hall"))), "", [dv_ref("coat", "state", "worn_by")], "查看刚到同伴的衣着", c1_op_source(15, "s2_meet.008")))
     rt_push(result, dv_with_many(look, {"owner": "shen", "opportunity_requirement": {"location": "hall", "participants": ["detective"], "mode": "all-present"}}))
     return result
 
@@ -4696,8 +4702,8 @@ fn c1n_mark(id):
 fn c1n_judgment_ref():
     return campaign_first_night_ref("detective.evidence_judgment_stance")
 
-fn c1n_row(actor, id, start, end, when, text):
-    return {"actor": actor, "id": rt_cat("night.", id), "start": start, "end": end, "when": when, "text": text, "kind": "talk", "effects": [], "grants": [], "literal": dv_true()}
+fn c1n_row(actor, id, start, end, when, label, text):
+    return {"actor": actor, "id": rt_cat("night.", id), "start": start, "end": end, "when": when, "label": label, "text": text, "kind": "talk", "effects": [], "grants": [], "literal": dv_true()}
 
 fn c1n_rows():
     let key = ["authored-declaration", "c1n_rows"]
@@ -4709,56 +4715,56 @@ fn c1n_rows():
 fn c1n_rows_build():
     var rows = []
     let meet = dv_all([campaign_at("detective", "living_hall"), campaign_at("huo", "living_hall"), campaign_at("shen", "living_hall")])
-    rt_push(rows, c1n_row("quer", "greeting", 750, 810, meet, "老霍！沈叔！……咦，我怎么张嘴就这么叫了？"))
-    let apron = c1n_row("shen", "apron", 750, 810, campaign_at("quer", "living_hall"), "沈鼎摸了摸围裙口袋，摸出一点零嘴，递向雀儿。")
+    rt_push(rows, c1n_row("quer", "greeting", 750, 810, meet, "向熟悉的同伴打招呼", "老霍！沈叔！……咦，我怎么张嘴就这么叫了？"))
+    let apron = c1n_row("shen", "apron", 750, 810, campaign_at("quer", "living_hall"), "从围裙口袋取出零嘴", "沈鼎摸了摸围裙口袋，摸出一点零嘴，递向雀儿。")
     rt_push(rows, dv_with_many(apron, {"kind": "help", "public_observers": campaign_people(), "public_grants": [c1n_mark(apron.id)]}))
-    var show = c1n_row("ward", "show-evidence", 840, 930, dv_all([dv_fact(campaign_case_ref("contract", "evidence_complete"), true), dv_fact(campaign_case_ref("contract", "keys_found"), true), dv_fact(campaign_case_ref("contract", "wax_ash_seen"), true)]), "沃德摊开半角红纸，又放下管网图的蜡布筒。")
+    var show = c1n_row("ward", "show-evidence", 840, 930, dv_all([dv_fact(campaign_case_ref("contract", "evidence_complete"), true), dv_fact(campaign_case_ref("contract", "keys_found"), true), dv_fact(campaign_case_ref("contract", "wax_ash_seen"), true)]), "出示红纸与蜡布筒", "沃德摊开半角红纸，又放下管网图的蜡布筒。")
     show = dv_with_many(show, {"kind": "help", "effects": [dv_assign(dv_ref("night.evidence", "state", "displayed"), true)], "grants": [dv_ref("night.evidence", "state", "displayed")], "public_observers": campaign_people(), "public_grants": [dv_ref("night.evidence", "state", "displayed")]})
     rt_push(rows, show)
-    var restriction = c1n_row("ward", "ward-claim", 840, 930, dv_fact(dv_ref("night.evidence", "state", "displayed"), true), "先限制雀儿的自由，待事情查明。")
+    var restriction = c1n_row("ward", "ward-claim", 840, 930, dv_fact(dv_ref("night.evidence", "state", "displayed"), true), "提议限制行动", "先限制雀儿的自由，待事情查明。")
     restriction = dv_with_many(restriction, {"effects": [dv_assign(campaign_first_night_ref("ward.restriction_announced"), true)], "grants": [campaign_first_night_ref("ward.restriction_announced")], "public_grants": [campaign_first_night_ref("ward.restriction_announced")]})
     rt_push(rows, restriction)
     let inspected = dv_all([dv_fact(dv_ref("night.evidence", "state", "wax_seal_intact"), true), dv_fact(dv_ref("night.evidence", "state", "fresh_torn_edge"), true)])
     let uncommitted = dv_fact(c1n_judgment_ref(), "uncommitted")
-    var judgment = c1n_row("detective", "defer-judgment", 840, 930, dv_all([inspected, uncommitted]), "蜡布筒的火漆封口完好，红纸毛边却是新撕的。另一半多半仍在文献工房；明日到现场勘验，再作判断。")
+    var judgment = c1n_row("detective", "defer-judgment", 840, 930, dv_all([inspected, uncommitted]), "提议先核对材料再判断", "蜡布筒的火漆封口完好，红纸毛边却是新撕的。另一半多半仍在文献工房；明日到现场勘验，再作判断。")
     judgment = dv_with_many(judgment, {"received": {"speaker": "ward", "action_id": "night.ward-claim"}, "effects": [dv_assign(c1n_judgment_ref(), "deferred")], "grants": [c1n_judgment_ref()], "public_grants": [c1n_judgment_ref()]})
     rt_push(rows, judgment)
-    var assent = c1n_row("detective", "provisional-assent", 840, 930, dv_all([dv_fact(dv_ref("night.evidence", "state", "displayed"), true), uncommitted]), "沃德已经摆出材料，我暂且附和先限制行动，先按他的说法处理。")
+    var assent = c1n_row("detective", "provisional-assent", 840, 930, dv_all([dv_fact(dv_ref("night.evidence", "state", "displayed"), true), uncommitted]), "暂时附和限制行动的提议", "沃德已经摆出材料，我暂且附和先限制行动，先按他的说法处理。")
     assent = dv_with_many(assent, {"received": {"speaker": "ward", "action_id": "night.ward-claim"}, "effects": [dv_assign(c1n_judgment_ref(), "provisional-assent")], "grants": [c1n_judgment_ref()], "public_grants": [c1n_judgment_ref()]})
     rt_push(rows, assent)
-    var defer = c1n_row("gu", "corroborate", 840, 930, dv_fact(c1n_judgment_ref(), "deferred"), "孤证不立。待明日去文献工房，把另一半找来核对。")
+    var defer = c1n_row("gu", "corroborate", 840, 930, dv_fact(c1n_judgment_ref(), "deferred"), "提出补充核验", "孤证不立。待明日去文献工房，把另一半找来核对。")
     defer = dv_with(defer, "received", {"speaker": "detective", "action_id": "night.defer-judgment"})
     rt_push(rows, defer)
-    rt_push(rows, c1n_row("detective", "ask-closed-doors", 960, 1101, dv_true(), "丙区、丁区里的人怎么样了？伤者还好吗？"))
-    var count = c1n_row("shen", "count-provisions", 1110, 1230, dv_true(), "实际清点甲乙两区带来的余粮，按八份备餐用量记账。")
+    rt_push(rows, c1n_row("detective", "ask-closed-doors", 960, 1101, dv_true(), "询问其他寝区与伤者", "丙区、丁区里的人怎么样了？伤者还好吗？"))
+    var count = c1n_row("shen", "count-provisions", 1110, 1230, dv_true(), "清点各区带来的余粮", "实际清点甲乙两区带来的余粮，按八份备餐用量记账。")
     count = dv_with_many(count, {"kind": "inspect", "effects": [dv_assign(dv_ref("night.provisions", "state", "counted"), true)], "grants": [dv_ref("night.provisions", "state", "counted"), dv_ref("night.provisions", "state", "bread"), dv_ref("night.provisions", "state", "onion"), dv_ref("night.provisions", "state", "meat")]})
     rt_push(rows, count)
-    var cook = c1n_row("shen", "cook", 1110, 1230, dv_all([dv_fact(dv_ref("night.provisions", "state", "counted"), true), dv_at_least(dv_ref("night.provisions", "state", "bread"), 8), dv_at_least(dv_ref("night.provisions", "state", "onion"), 8), dv_at_least(dv_ref("night.provisions", "state", "meat"), 8)]), "沈鼎用甲乙两区清点出的余粮，烤面包，煮洋葱碎肉汤，备出八人份。")
+    var cook = c1n_row("shen", "cook", 1110, 1230, dv_all([dv_fact(dv_ref("night.provisions", "state", "counted"), true), dv_at_least(dv_ref("night.provisions", "state", "bread"), 8), dv_at_least(dv_ref("night.provisions", "state", "onion"), 8), dv_at_least(dv_ref("night.provisions", "state", "meat"), 8)]), "准备八人份晚餐", "沈鼎用甲乙两区清点出的余粮，烤面包，煮洋葱碎肉汤，备出八人份。")
     cook = dv_with_many(cook, {"kind": "help", "effects": [dv_increment(dv_ref("night.provisions", "state", "bread"), -8), dv_increment(dv_ref("night.provisions", "state", "onion"), -8), dv_increment(dv_ref("night.provisions", "state", "meat"), -8), dv_assign(dv_ref("night.provisions", "state", "evening_servings"), 8)], "grants": [dv_ref("night.provisions", "state", "bread"), dv_ref("night.provisions", "state", "onion"), dv_ref("night.provisions", "state", "meat"), dv_ref("night.provisions", "state", "evening_servings"), dv_ref("night.provisions", "state", "consumed")], "public_observers": campaign_people(), "public_grants": [dv_ref("night.provisions", "state", "evening_servings"), dv_ref("night.provisions", "state", "consumed")]})
     rt_push(rows, cook)
-    rt_push(rows, c1n_row("quer", "cold-hand", 1260, 1440, campaign_at("detective", "living_hall"), "壁炉边，雀儿压低声音：递钥匙的那只手，很凉。那人说，‘别让它落进下面那东西手里。’我只知道自己听到了这句话。"))
-    var partner = c1n_row("quer", "partner", 1260, 1440, dv_all([campaign_at("detective", "living_hall"), dv_fact(c1n_judgment_ref(), "deferred")]), "明日一起去文献工房。我替你开学园里的锁，咱们搭档，怎么样？")
+    rt_push(rows, c1n_row("quer", "cold-hand", 1260, 1440, campaign_at("detective", "living_hall"), "讲述递钥匙时的记忆", "壁炉边，雀儿压低声音：递钥匙的那只手，很凉。那人说，‘别让它落进下面那东西手里。’我只知道自己听到了这句话。"))
+    var partner = c1n_row("quer", "partner", 1260, 1440, dv_all([campaign_at("detective", "living_hall"), dv_fact(c1n_judgment_ref(), "deferred")]), "邀请明日结伴核查", "明日一起去文献工房。我替你开学园里的锁，咱们搭档，怎么样？")
     partner = dv_with_many(partner, {"received": {"speaker": "detective", "action_id": "night.defer-judgment"}, "effects": [dv_assign(campaign_first_night_ref("partner_offered"), true)], "grants": [campaign_first_night_ref("partner_offered")], "public_grants": [campaign_first_night_ref("partner_offered")]})
     rt_push(rows, partner)
-    var accept = c1n_row("detective", "accept-partner", 1260, 1440, dv_all([campaign_at("quer", "living_hall"), dv_fact(c1n_judgment_ref(), "deferred")]), "好。明日先去文献工房，到了现场再核对。")
+    var accept = c1n_row("detective", "accept-partner", 1260, 1440, dv_all([campaign_at("quer", "living_hall"), dv_fact(c1n_judgment_ref(), "deferred")]), "答应结伴核查", "好。明日先去文献工房，到了现场再核对。")
     accept = dv_with_many(accept, {"received": {"speaker": "quer", "action_id": "night.partner"}, "effects": [dv_assign(campaign_first_night_ref("partner_promised"), true)], "grants": [campaign_first_night_ref("partner_promised")], "public_grants": [campaign_first_night_ref("partner_promised")]})
     rt_push(rows, accept)
-    rt_push(rows, c1n_row("huo", "watch-offer", 1260, 1440, campaign_at("detective", "living_hall"), "夜里总得有人醒着。我跟你分班，先把这一夜守过去。"))
-    var watch = c1n_row("detective", "watch-agree", 1260, 1440, campaign_at("huo", "living_hall"), "我们分班守夜。交班时把听见、看见的事情说清楚。")
+    rt_push(rows, c1n_row("huo", "watch-offer", 1260, 1440, campaign_at("detective", "living_hall"), "提出分班守夜", "夜里总得有人醒着。我跟你分班，先把这一夜守过去。"))
+    var watch = c1n_row("detective", "watch-agree", 1260, 1440, campaign_at("huo", "living_hall"), "答应分班守夜", "我们分班守夜。交班时把听见、看见的事情说清楚。")
     watch = dv_with_many(watch, {"received": {"speaker": "huo", "action_id": "night.watch-offer"}, "effects": [dv_assign(campaign_first_night_ref("watch_agreed"), true)], "grants": [campaign_first_night_ref("watch_agreed")], "public_grants": [campaign_first_night_ref("watch_agreed")]})
     rt_push(rows, watch)
     let diners = ["detective", "huo", "shen", "su", "quer", "ward", "gu", "lucian"]
     var diner_index = 0
     while diner_index < rt_count(diners):
         let diner = diners[diner_index]
-        var meal = c1n_row(diner, rt_cat("eat.", diner), 1110, 1260, dv_at_least(dv_ref("night.provisions", "state", "evening_servings"), 1), "取一份烤面包和洋葱碎肉汤，用过晚餐。")
+        var meal = c1n_row(diner, rt_cat("eat.", diner), 1110, 1260, dv_at_least(dv_ref("night.provisions", "state", "evening_servings"), 1), "领取并食用晚餐", "取一份烤面包和洋葱碎肉汤，用过晚餐。")
         meal = dv_with_many(meal, {"kind": "help", "effects": [dv_increment(dv_ref("night.provisions", "state", "evening_servings"), -1), dv_increment(dv_ref("night.provisions", "state", "consumed"), 1)], "grants": [dv_ref("night.provisions", "state", "evening_servings"), dv_ref("night.provisions", "state", "consumed")], "public_observers": campaign_people(), "public_grants": [c1n_mark(meal.id)]})
         rt_push(rows, meal)
         diner_index = diner_index + 1
-    var first_watch = c1n_row("huo", "first-watch", 1320, 1440, dv_fact(campaign_first_night_ref("watch_agreed"), true), "霍铎留在壁炉旁守前半夜，留意门口和走廊里的实际动静。")
+    var first_watch = c1n_row("huo", "first-watch", 1320, 1440, dv_fact(campaign_first_night_ref("watch_agreed"), true), "承担前半夜值守", "霍铎留在壁炉旁守前半夜，留意门口和走廊里的实际动静。")
     first_watch = dv_with(first_watch, "kind", "help")
     rt_push(rows, first_watch)
-    var second_watch = c1n_row("detective", "second-watch", 1440, 1800, dv_fact(campaign_first_night_ref("watch_agreed"), true), "侦探接过后半夜的守候，核对门口和走廊里的动静。")
+    var second_watch = c1n_row("detective", "second-watch", 1440, 1800, dv_fact(campaign_first_night_ref("watch_agreed"), true), "接替后半夜值守", "侦探接过后半夜的守候，核对门口和走廊里的动静。")
     second_watch = dv_with(second_watch, "kind", "help")
     rt_push(rows, second_watch)
     let lure_targets = ["huo", "su"]
@@ -4770,7 +4776,7 @@ fn c1n_rows_build():
         var text = "石板上确实留下了那些刻痕。你还想弄懂它，就继续沿着它追索吧。"
         if target == "su":
             text = "那份乐谱确实还有残缺的部分。你还想听全，就继续沿着它追索吧。"
-        var lure = c1n_row("detective", rt_cat("selective-recall.", target), 1110, 1440, literal, text)
+        var lure = c1n_row("detective", rt_cat("selective-recall.", target), 1110, 1440, literal, "谈论封存物与回想", text)
         let source = c1n_source("user:2026-10-18-selective-truth-owner-choice")
         lure = dv_with_many(lure, {"literal": literal, "manual_only": true, "opportunity_requirement": {"location": "living_hall", "participants": [target], "mode": "all-present"}, "personal_choice": {"group": rt_cat("first-night-recall.", target), "requires": literal, "prohibits": dv_not(dv_true()), "promotes": ["pursue_desire"], "sacrifices": ["understand_cost", "safety"], "require_positive": true, "basis": [source]}, "manipulation": {"method": "selective-true-fragment-omitting-retrieval-cost", "targets": [target], "action_ids": [rt_cat(target, ".deep-resonance")], "consequence_when": dv_fact(c1_deep_resonance_ref(target), true), "basis": [source]}})
         rt_push(rows, lure)
@@ -4785,7 +4791,7 @@ fn c1n_pre(row):
     效果 dv_append(条目.effects, dv_assign(c1n_mark(条目.id), true))。
 
 fn c1n_action(row):
-    var action = campaign_surface_action(row.id, row.kind, c1n_pre(row), c1n_pre(row), row.id, dv_append(row.grants, c1n_mark(row.id)), row.text, c1n_source(row.id))
+    var action = campaign_surface_action(row.id, row.kind, c1n_pre(row), c1n_pre(row), row.id, dv_append(row.grants, c1n_mark(row.id)), row.label, row.text, c1n_source(row.id))
     action = dv_with(action, "predict_law", row.id)
     if row.kind == "talk":
         var listeners = []
@@ -4819,22 +4825,22 @@ fn c1n_inspections(actor):
         return []
     let here = campaign_at(actor, "living_hall")
     var actions = []
-    rt_push(actions, dv_with(campaign_surface_action(rt_cat("night.inspect-room.", actor), "inspect", here, here, "", [campaign_first_night_ref("watch_agreed"), dv_ref("night.provisions", "state", "evening_servings")], "查看公共备餐和守夜交班的实际情况。", c1n_source("room-status")), "repeatable", true))
+    rt_push(actions, dv_with(campaign_surface_action(rt_cat("night.inspect-room.", actor), "inspect", here, here, "", [campaign_first_night_ref("watch_agreed"), dv_ref("night.provisions", "state", "evening_servings")], "查看备餐与守夜交班", "查看公共备餐和守夜交班的实际情况。", c1n_source("room-status")), "repeatable", true))
     if actor == "detective":
         let pre = dv_all([here, dv_fact(dv_ref("night.evidence", "state", "displayed"), true)])
-        let inspection = campaign_surface_action("night.inspect-evidence", "inspect", pre, pre, "", [dv_ref("night.evidence", "state", "displayed"), dv_ref("night.evidence", "state", "wax_seal_intact"), dv_ref("night.evidence", "state", "fresh_torn_edge")], "近看蜡布筒的火漆封口与红纸的新撕毛边。", c1n_source("inspect-evidence"))
+        let inspection = campaign_surface_action("night.inspect-evidence", "inspect", pre, pre, "", [dv_ref("night.evidence", "state", "displayed"), dv_ref("night.evidence", "state", "wax_seal_intact"), dv_ref("night.evidence", "state", "fresh_torn_edge")], "检视蜡布筒封口与红纸边缘", "近看蜡布筒的火漆封口与红纸的新撕毛边。", c1n_source("inspect-evidence"))
         rt_push(actions, dv_with(c1_inquiry_choice(inspection, "first-night-evidence-judgment", true), "received_speech_requirement", {"speaker": "ward", "action_id": "night.ward-claim"}))
     if actor == "detective":
-        rt_push(actions, campaign_surface_action("night.inspect-displayed", "inspect", here, here, "", [dv_ref("night.evidence", "state", "displayed")], "查看沃德是否已把证物摆在面前。", c1n_source("displayed")))
+        rt_push(actions, campaign_surface_action("night.inspect-displayed", "inspect", here, here, "", [dv_ref("night.evidence", "state", "displayed")], "查看桌面是否摆出证物", "查看沃德是否已把证物摆在面前。", c1n_source("displayed")))
     let call_source = c1n_source("personally-heard-midnight-copper-call")
     let night_when = dv_all([campaign_window(1, 1440, 1800), dv_fact(c1n_night_seen_ref(actor), true)])
     let notice_id = rt_cat(actor, ".night.notice-time")
     let notice_when = dv_all([campaign_at(actor, "living_hall"), campaign_window(1, 1440, 1800)])
-    rt_push(actions, dv_with(campaign_surface_action(notice_id, "inspect", notice_when, notice_when, notice_id, [campaign_clock(), c1n_night_seen_ref(actor)], "留意起居厅里此刻的光线与时钟，确认已经入夜。", c1n_source("own-observed-midnight-time")), "predict_law", notice_id))
+    rt_push(actions, dv_with(campaign_surface_action(notice_id, "inspect", notice_when, notice_when, notice_id, [campaign_clock(), c1n_night_seen_ref(actor)], "查看光线与时钟", "留意起居厅里此刻的光线与时钟，确认已经入夜。", c1n_source("own-observed-midnight-time")), "predict_law", notice_id))
     let call_ref = c1n_call_ref(actor)
     let call_id = rt_cat(actor, ".night.hear-private-call")
     let call_when = dv_all([campaign_at(actor, "living_hall"), night_when, dv_fact(call_ref, false)])
-    var call = campaign_surface_action(call_id, "inspect", call_when, call_when, call_id, [call_ref], "铜口深处有个声音，低低唤着你。那种熟悉感只落进你自己的耳中。", call_source)
+    var call = campaign_surface_action(call_id, "inspect", call_when, call_when, call_id, [call_ref], "聆听铜口的声音", "铜口深处有个声音，低低唤着你。那种熟悉感只落进你自己的耳中。", call_source)
     call = dv_with_many(call, {"predict_law": call_id, "night_call_requirement": {"basis": [call_source], "night_when": night_when}, "sensory_mode": "private-night-copper-call", "grant_observation_sources": [{"ref": call_ref, "source": "perception", "origin": "personally-heard-midnight-copper-call", "trust": 1}], "purpose_refs": [call_ref]})
     rt_push(actions, call)
     return actions
@@ -5167,7 +5173,7 @@ fn c1n_known_wait_actor(actor, target, basis):
             let known = dv_true()
             let result = dv_at_least(c1n_wait_ref(actor.id), elapsed.value + minutes)
             let text = rt_cat(rt_cat("留在原处，等候本人已知的下一次作息机会（", rt_show(minutes)), "分钟）。")
-            var action = campaign_surface_action(id, c1n_wait_kind(minutes), known, dv_true(), id, [c1n_wait_ref(actor.id), campaign_clock()], text, c1n_source("own-bounded-wait"))
+            var action = campaign_surface_action(id, c1n_wait_kind(minutes), known, dv_true(), id, [c1n_wait_ref(actor.id), campaign_clock()], rt_cat("等待", rt_cat(rt_show(minutes), "分钟")), text, c1n_source("own-bounded-wait"))
             let wait_choices = dv_find(actor.policy, "known_opportunity_wait_choices", [])
             var choice_index = 0
             while choice_index < rt_count(wait_choices):
@@ -5328,4 +5334,3 @@ fn c1c_install_scene(scene, seed, profile):
         rt_push(actors, actor)
         i = i + 1
     return dv_with_many(scene, {"actors": actors, "opening_seed": seed, "detective_profile": profile})
-

@@ -103,8 +103,8 @@ fn c1_player_replay_summary(actor):
 
 // Source module: language_core/game/presentation.dv
 // Authored location bindings. Geometry remains owned by the existing map assets.
-fn dvg_place(location):
-    let places = {
+fn dvg_places():
+    return {
         "living_hall": {"map": "living_floor", "room": "living_hall:hall", "spawn": "living_hall_east_south"},
         "central_hall": {"map": "central_hall", "room": "central_hall:central_hall"},
         "lecture": {"map": "lecture", "room": "lecture:lecture"},
@@ -136,7 +136,9 @@ fn dvg_place(location):
         "R08": {"map": "living_floor", "room": "zone_yi:north_2"},
         "corridor": {"map": "living_floor", "room": "zone_yi:corridor"},
         "pantry": {"map": "living_floor", "room": "zone_yi:prep"}}
-    return dv_find(places, location, {"map": "", "room": location})
+
+fn dvg_place(location):
+    return dv_find(dvg_places(), location, {"map": "", "room": location})
 
 fn dvg_intent(state):
     let intent = dvs_session_intent(state)
@@ -467,7 +469,7 @@ fn dvg_replay_build(state, viewer):
 
 // Only the viewer's current logical location is named; no remote positions.
 fn dvg_location_title(location):
-    let titles = {"R05": "自己的卧室 · R-05", "R06": "霍铎的卧室 · R-06", "R07": "沈鼎的卧室 · R-07", "R08": "苏泠的卧室 · R-08", "hall": "乙区 · 活动厅", "foyer": "乙区 · 门厅", "corridor": "乙区 · 宿舍走廊", "pantry": "乙区 · 备餐间", "living_hall": "生活翼 · 公共起居厅", "washroom": "生活翼 · 盥洗室", "central_hall": "中央厅", "lecture": "讲堂", "logistics": "后勤院 · 食堂", "clinic": "诊疗所", "greenhouse": "温室", "document_workshop": "文献工房", "resonance_hall": "共鸣厅", "resonance": "共鸣厅", "quiet_room": "沉静室", "white_tower_safe": "白塔院 · 安全端", "outdoor_meter": "室外 · 仪器阵", "outdoor_high": "室外 · 高地通路", "outdoor_alley": "室外 · 夹道", "oath_court": "誓约庭", "threshold.contract": "生活翼 · 甲区门外", "threshold.astral": "生活翼 · 丙区门外", "threshold.logistics": "生活翼 · 丁区门外", "dorm.contract": "甲区 · 活动厅", "dorm.astral": "丙区 · 活动厅", "dorm.logistics": "丁区 · 活动厅", "dorm.yi": "乙区 · 活动厅"}
+    let titles = {"R05": "卧室 · R-05", "R06": "卧室 · R-06", "R07": "卧室 · R-07", "R08": "卧室 · R-08", "hall": "乙区 · 活动厅", "foyer": "乙区 · 门厅", "corridor": "乙区 · 宿舍走廊", "pantry": "乙区 · 备餐间", "living_hall": "生活翼 · 公共起居厅", "washroom": "生活翼 · 盥洗室", "central_hall": "中央厅", "lecture": "讲堂", "logistics": "后勤院 · 食堂", "clinic": "诊疗所", "greenhouse": "温室", "document_workshop": "文献工房", "resonance_hall": "共鸣厅", "resonance": "共鸣厅", "quiet_room": "沉静室", "white_tower_safe": "白塔院 · 安全端", "outdoor_meter": "室外 · 仪器阵", "outdoor_high": "室外 · 高地通路", "outdoor_alley": "室外 · 夹道", "oath_court": "誓约庭", "threshold.contract": "生活翼 · 甲区门外", "threshold.astral": "生活翼 · 丙区门外", "threshold.logistics": "生活翼 · 丁区门外", "dorm.contract": "甲区 · 活动厅", "dorm.astral": "丙区 · 活动厅", "dorm.logistics": "丁区 · 活动厅", "dorm.yi": "乙区 · 活动厅"}
     return dv_find(titles, location, "现场")
 
 // Map knowledge is reconstructed from the subject's saved experience. Native
@@ -934,3 +936,262 @@ fn dvg_dev_command(state, command, argument):
             minutes = rt_number(argument)
         return dvg_dev_time(state, minutes, viewer, index)
     return dvg_dev_result(state, command, "rejected", "该命令由控制台的查看或行动入口处理。", {})
+
+
+// Read-only observer projections. These values never enter a subject's mind.
+fn dvg_preview_room(location):
+    let place = dvg_place(location)
+    var title = dvg_location_title(location)
+    if title == "现场":
+        title = location
+    return {"map": place.map, "room": place.room, "label": title, "members": [], "is_current": false}
+
+fn dvg_preview_room_location(world, location):
+    let places = dvg_places()
+    var visited = []
+    var remaining = rt_count(world.objects) + 1
+    while 0 < remaining:
+        if not rt_is_text(location) or location == "":
+            return ""
+        if dv_has_key(places, location):
+            return location
+        if dv_has(visited, location):
+            return ""
+        rt_push(visited, location)
+        let parent = dv_read(world, dv_ref(location, "state", "location"))
+        if not dv_uncontested(parent):
+            return ""
+        location = parent.value
+        remaining = remaining - 1
+    return ""
+
+fn dvg_preview_add_room(rooms, location):
+    if not rt_is_text(location) or location == "":
+        return rooms
+    return dvg_known_room_add(rooms, dvg_preview_room(location))
+
+fn dvg_preview_add_member(rooms, location, member):
+    if not rt_is_text(location) or location == "":
+        return rooms
+    let place = dvg_preview_room(location)
+    if place.map == "":
+        return rooms
+    var existing = 0
+    while existing < rt_count(rooms):
+        let saved = rooms[existing]
+        if saved.map == place.map and saved.room == place.room:
+            let members = dv_find(saved, "members", [])
+            var index = 0
+            while index < rt_count(members):
+                if members[index].id == member.id:
+                    return rooms
+                index = index + 1
+        existing = existing + 1
+    rooms = dvg_preview_add_room(rooms, location)
+    var result = []
+    var i = 0
+    while i < rt_count(rooms):
+        var room = rooms[i]
+        if room.map == place.map and room.room == place.room:
+            var members = dv_find(room, "members", [])
+            var found = false
+            var j = 0
+            while j < rt_count(members):
+                if members[j].id == member.id:
+                    found = true
+                j = j + 1
+            if not found:
+                members = dv_append(members, member)
+            room = dv_with(room, "members", members)
+            if dv_find(member, "is_viewer", false):
+                room = dv_with(room, "is_current", true)
+        rt_push(result, room)
+        i = i + 1
+    return result
+
+fn dvg_preview_name(world, id, fallback):
+    let name = dv_read(world, dv_ref(id, "identity", "name"))
+    if dv_uncontested(name) and rt_is_text(name.value):
+        return name.value
+    let state_name = dv_read(world, dv_ref(id, "state", "name"))
+    if dv_uncontested(state_name) and rt_is_text(state_name.value):
+        return state_name.value
+    let opening_name = dv_read(world, c1_op_person_ref(id, "name"))
+    if dv_uncontested(opening_name) and rt_is_text(opening_name.value):
+        return opening_name.value
+    if world.domain == "mind" and dv_has(campaign_people(), id):
+        let introduced = c2d_known_speaker_name(world, id)
+        if introduced != "":
+            return introduced
+    return fallback
+
+fn dvg_preview_person_name(state, world, person, local, fallback):
+    let recorded = dvg_preview_name(world, local, "")
+    if recorded != "":
+        return recorded
+    if local != person:
+        let aliased = dvg_preview_name(world, person, "")
+        if aliased != "":
+            return aliased
+    return fallback
+
+fn dvg_preview_actor_object(state, actor, world):
+    if world.domain == "mind" and world.subject == actor.id:
+        return actor.location_ref.object
+    var physical = actor.id
+    var i = 0
+    while i < rt_count(state.bindings):
+        let binding = state.bindings[i]
+        if binding.subject == actor.id and binding.local == actor.location_ref.object:
+            physical = binding.physical
+        i = i + 1
+    if world.domain == "physical":
+        return physical
+    let local = dv_local(state.bindings, physical, world.subject)
+    if local != "":
+        return local
+    return actor.id
+
+fn dvg_preview_members(state, world, viewer, rooms):
+    var identities = []
+    var actor_index = 0
+    while actor_index < rt_count(state.actors):
+        let actor = state.actors[actor_index]
+        let local = dvg_preview_actor_object(state, actor, world)
+        identities = dv_with(identities, local, {"id": actor.id, "is_viewer": actor.id == viewer})
+        actor_index = actor_index + 1
+    var i = 0
+    while i < rt_count(world.objects):
+        let id = world.objects[i][0]
+        let location = dv_read(world, dv_ref(id, "state", "location"))
+        if dv_uncontested(location) and rt_is_text(location.value):
+            var kind = "object"
+            var fallback = id
+            var identity = id
+            var self = false
+            let person = dv_find(identities, id, false)
+            if person != false:
+                kind = "person"
+                fallback = "同伴"
+                identity = person.id
+                self = person.is_viewer
+            if self:
+                fallback = "本人"
+            var title = dvg_preview_name(world, id, fallback)
+            if person != false:
+                title = dvg_preview_person_name(state, world, identity, id, fallback)
+            let room_location = dvg_preview_room_location(world, location.value)
+            rooms = dvg_preview_add_member(rooms, room_location, {"id": identity, "title": title, "kind": kind, "is_viewer": self})
+        i = i + 1
+    return rooms
+
+fn dvg_preview_site_title(action, site):
+    let label = dv_find(action, "label", "")
+    if rt_length(label) > 2:
+        let verb = rt_slice(label, 0, 2)
+        if verb == "检视" or verb == "查看" or verb == "辨认":
+            return rt_slice(label, 2, rt_length(label) - 2)
+    return site
+
+fn dvg_preview_sites(rooms, actor, allowed, objective):
+    var i = 0
+    while i < rt_count(actor.actions):
+        let action = actor.actions[i]
+        if objective or dv_has(allowed, action.id):
+            let interaction = dvg_interaction(action)
+            let travel = dv_find(action, "travel", [])
+            var location = dv_find(action, "required_room", dv_find(travel, "from", ""))
+            if location == "":
+                location = dvp_extract_required_room(dv_find(action, "precondition", []), actor.location_ref)
+            if interaction.kind == "site" and location != "":
+                let site = interaction.site
+                rooms = dvg_preview_add_member(rooms, location, {"id": rt_cat("site:", site), "title": dvg_preview_site_title(action, site), "kind": "object", "is_viewer": false})
+        i = i + 1
+    return rooms
+
+fn dvg_preview_subject(state, actor, intent):
+    let knowledge = dvg_map_knowledge(state, actor.id, intent)
+    var rooms = []
+    var i = 0
+    while i < rt_count(knowledge.rooms):
+        rt_push(rooms, dv_with_many(knowledge.rooms[i], {"members": [], "is_current": false}))
+        i = i + 1
+    rooms = dvg_preview_members(state, actor.mind, actor.id, rooms)
+    var allowed = dv_append(dv_find(actor, "completed_actions", []), "")
+    let offered = dv_find(actor, "offered_actions", [])
+    i = 0
+    while i < rt_count(offered):
+        rt_push(allowed, offered[i])
+        i = i + 1
+    if dv_find(intent, "status", "") == "awaiting_input" and state.actors[state.cursor].id == actor.id:
+        i = 0
+        while i < rt_count(dv_find(intent, "options", [])):
+            rt_push(allowed, intent.options[i].id)
+            i = i + 1
+    rooms = dvg_preview_sites(rooms, actor, allowed, false)
+    let position = dv_read(actor.mind, actor.location_ref)
+    var place = {"map": "", "room": "", "label": ""}
+    if dv_uncontested(position) and rt_is_text(position.value):
+        let room_location = dvg_preview_room_location(actor.mind, position.value)
+        if room_location != "":
+            place = dvg_preview_room(room_location)
+            rooms = dvg_preview_add_member(rooms, room_location, {"id": actor.id, "title": dvg_preview_person_name(state, actor.mind, actor.id, actor.location_ref.object, "本人"), "kind": "person", "is_viewer": true})
+    let subjective = {"rooms": rooms, "doors": knowledge.doors}
+    let snapshot = {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "viewer": actor.id, "viewer_title": dvg_preview_person_name(state, actor.mind, actor.id, actor.location_ref.object, "本人"), "map": place.map, "room": place.room, "location_title": place.label, "map_knowledge": subjective, "people": [], "player_control": dv_find(state, "player_actor", "") == actor.id}
+    return {"snapshot": snapshot, "subjective": subjective}
+
+fn dvg_preview_objective(state, viewer):
+    var rooms = []
+    var knowledge = {"rooms": [], "doors": []}
+    let places = dvg_places()
+    var i = 0
+    while i < rt_count(places):
+        rooms = dvg_preview_add_room(rooms, places[i][0])
+        i = i + 1
+    i = 0
+    while i < rt_count(state.actors):
+        let actor = state.actors[i]
+        rooms = dvg_preview_sites(rooms, actor, [], true)
+        var j = 0
+        while j < rt_count(actor.actions):
+            let action = actor.actions[j]
+            let travel = dv_find(action, "travel", [])
+            if action.kind == "move" and dv_has_key(travel, "from") and dv_has_key(travel, "to"):
+                rooms = dvg_preview_add_room(dvg_preview_add_room(rooms, travel.from), travel.to)
+                knowledge = dvg_known_door_add(knowledge, travel.from, travel.to)
+            j = j + 1
+        i = i + 1
+    rooms = dvg_preview_members(state, state.physical, viewer, rooms)
+    return {"rooms": rooms, "doors": knowledge.doors}
+
+fn dvg_observer_options(state, viewer):
+    let actor = state.actors[dvg_dev_actor_index(state, viewer)]
+    let goals = dvp_goal_refs(actor)
+    let probes = dvp_probe_refs(actor)
+    let relevant = dvp_merge_refs(goals, probes)
+    let context = dvp_value_context(actor)
+    var view = actor
+    if dv_find(state, "player_actor", "") == viewer:
+        view = dv_with(actor, "manual_input", true)
+    var result = []
+    var i = 0
+    while i < rt_count(actor.actions):
+        let action = actor.actions[i]
+        if dvp_eligible(view, action, actor.mind, goals):
+            var label = dvs_action_label(actor, action)
+            if label != "":
+                let value = dvp_action_value_context(view, action, state.bindings, relevant, probes, context)
+                let opportunities = dvp_opportunities(view, action)
+                var opportunity = 0
+                var j = 0
+                while j < rt_count(opportunities):
+                    opportunity = opportunity + opportunities[j].weight
+                    j = j + 1
+                let cost = dv_get(state.costs, action.kind).actual
+                let score = value.value + opportunity * dv_find(actor.policy, "progress_weight", 1) - cost.time * dv_find(actor.policy, "time_cost", 0.01)
+                var option = {"id": action.id, "label": label, "available": true, "kind": action.kind, "interaction": dvg_interaction(action), "cost": cost, "ai_score": score, "score_kind": "immediate", "mind_revision": actor.mind.revision}
+                if action.kind == "replay":
+                    option = dv_with(option, "replay_input", dvg_manual_replay_input(actor, action))
+                rt_push(result, option)
+        i = i + 1
+    return result

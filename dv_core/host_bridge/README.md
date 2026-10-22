@@ -7,6 +7,7 @@
 | 接口 | 用途 |
 | --- | --- |
 | `OpenConfiguredCampaign(options)` | 接受 `controller`、`viewer`、`campaign`、`audit`、`developer` 开局配置 |
+| `OpenConfiguredCampaign(options, diagnosticOutput)`、`DiagnosticOutput` | 配置初始化及正式求值的诊断输出；普通 TUI 使用空输出，诊断不混入玩家正文 |
 | `PrepareValue(selection)`、`Intent` | 通过 DV 重核候选，返回当前意图的只读 .NET 值图 |
 | `CompleteValue(receipt, viewer)` | 接收现场回执、结算权威效果、返回观察者呈现与真实 `outcome` |
 | `Project(viewer, forceFull)` | 返回 `HostStateDelta`，含版本、基版本、重置标志、变化字段和删除字段 |
@@ -15,7 +16,11 @@
 | `PrepareAhead(selection)`、`TryAdoptPrepared(token, out intent)` | 提前计算候选分支；正式选择在原状态版本仍有效时采用 |
 | `CancelPrepared()` | 丢弃候选分支，保持正式状态与费用 |
 | `PrepareBackgroundValue()` | 在人工等待边界调度同刻 NPC，沿唯一 pending/Complete 闭环执行 |
-| `TextStatus()` | 当前观察者的位置、同房人物、近期实际观察及输入状态 |
+| `TextStatus(viewer)` | 指定观察者的位置、同房人物、近期实际观察及输入状态；无参数时使用会话观察者 |
+| `Actors`、`ObserverOptions(viewer)` | 预览角色清单、指定角色当前可选行动及实际认知评分 |
+| `Preview(viewer, includeObjective)` | 按角色读取主观地图；显式请求时附完整客观地图，保持会话版本与认知不变 |
+| `IsScheduled(actor, actionId)` | 只读核对该人物的选择是否仍在调度队列，不推进状态 |
+| `RecordInteraction(payload)` | 记录 focus、confirm、result、cancel，与正式事件保持因果次序 |
 | `Inspect(actor)`、`ExecuteDebug(command, argument)` | 显式开发会话中的双状态查看、位置及时间命令 |
 | `Close()` | 追加一次关闭事件并缓存已封存轨迹，重复调用保持结果 |
 | `Trace()`、`WriteTrace(path)` | 读取当前或已关闭的轨迹，不关闭会话 |
@@ -52,19 +57,34 @@ Godot 用 `--dv-dev`，CLI 用 `--dev`。该配置写入 `story.development_mode
 
 ## 共享回放
 
-`SmartReplay.Load(path)` 读取 `.dvdag` 或 `.dvlog`，CLI 和游戏控制台共享一个解析器。读取器核对原始二进制帧及 DAG 引用链，依记录顺序提取检查点、行动、对白、原始设备输入、现场快照、可见正文和开发事件。原始日志不被修改，权威事件与玩家呈现保留各自来源。
+`SmartReplay.Load(path, cancellationToken)` 读取 `.dvdag` 或 `.dvlog`，CLI 和 Godot 共用解析器。读取器核对二进制帧、DAG 引用链与封存信息，逐记录和节点响应取消；不可变共享节点只转换一次。完整会话轨迹按原始事件顺序读取，CLI 交互记录按发生时的事件游标插入导出轨迹，正式事件保持原值。
 
-共享帧为 `ReplayFrame(sequence, kind, actor, action, text, duration, data)`，`data.contract` 为 `dv-replay-v2`。`data.record_index` 保留记录序号；已有的 `seq`、`frame`、`state_version`、`action_event`、`presentation_id`、`interaction_id`、`cause_input`、`viewport_size`、`real_us`、`physics_frame`、`bodies`、`context` 和 `casebook` 原样透传。宿主据这些关联恢复已记录的身体轨迹与 UI 页面。
+共享帧为 `ReplayFrame(sequence, kind, actor, action, text, duration, data)`，`data.contract` 为 `dv-replay-v2`，交互合同为 `dv-interaction-v1`。
 
-| kind | data 中的内容 |
+| kind | 展示内容 |
 | --- | --- |
-| `snapshot` | 完整中立 `snapshot`；新输入日志的 `replay_snapshot` 同时携带真实身体和 UI 上下文 |
-| `input` | 完整原始 `input`、设备和已有回执；`recorded_interval_seconds` 保留相邻输入的原现实时间差 |
-| `presentation` | 已交付玩家的完整 `presentation` 与当时文本 |
-| `move`、`dialogue`、`investigate`、`rejected` | 已记录的行动及结果；移动包含逻辑 `position`，实际完成回执存在时附 `receipt` 和 `actual_position` |
-| `visible` | 完整 `visible` 记录及 `texts`、`panel` |
-| `event` | 其他已记录事件的身份、正文和来源；完成回执也保留为独立事件 |
+| `focus` | 已记录的候选、评分、选中项及前态预览，持续 0.45 秒 |
+| `confirm` | 同一交互的确认及实际结果；执行事件和呈现合并到此帧，后态只取已记录结果 |
+| `cancel` | 清除已定位选项，保持未执行 |
+| `snapshot` | 已记录检查点；无等待时间 |
+| `input`、`presentation`、`visible`、`event` | 历史宿主输入、呈现及其他元数据，保留其来源 |
 
-DAG 初始检查点先于事件播放，最终检查点在已记录事件之后发布。完整会话使用只读快照投影；旧轨迹仅有 `physical/actors` 时使用 `dvg_recorded_snapshot`，只读出已记录的逻辑现场与人物，未记录的案卷和地图知识保持空。旧日志没有实际身体坐标时，宿主只能呈现逻辑位置重建，不能宣称复现原操作轨迹。
+`interaction_id` 关联定位、确认和结果，`data.result_kind` 保留 move、dialogue、investigate 或 rejected，Godot 用它选择原演出路径。`record_index`、`input_record_index` 和 `result_record_indices` 指向原记录；展示帧避免重复嵌套完整预览。根快照可用 `snapshot_ref: "preview.snapshot"` 指定。原输入的时差保留在记录中，录制时的思考和静默不进入演示时钟。
 
-节拍由内容决定：移动和带身体记录的输入 0.3 秒，调查 0.6 秒，标题与对白按文本长度限制在 0.8–2 秒；元数据与检查点不加入等待。输入保留的原时差供身体路径解释，录制时的静默时间不加入播放时钟。`Play(1/2/4/8)`、`Pause()`、`Step()`、`Advance(seconds)` 控制播放。Godot 在独立回放场景中使用同一帧驱动 WorldView、StoryActor 和 UI；正式 DvSession 不接收回放命令，回放也不生成新的观察。
+旧轨迹存在实际 `action_execution` 时派生定位和确认两拍，`selection_recorded=false`；缺失的候选、评分和中间认知快照保持空。初始与最终检查点分别放在事件前后，不能拿最终状态补造中间现场。只有逻辑位置的旧记录仍只支持逻辑重建。
+
+定位帧只读取已记录 option/action 的 `label`；执行正文、`surface` 和台词只进入确认后的结果。历史执行投影的 `label` 可能是结果正文，不能充当行动标签；标签缺失显示 `（未记录标签）`，不使用当前剧本或行动 ID 补写旧记录。检查点中的 `actors` 与 `viewer_title` 从同一检查点已记录的各主体本人认知提取，`name_source` 为 `recorded-actor-mind`，不替换任何主观地图成员的称呼。
+
+旧交互的选项标签为空或等于行动 ID 时，读取器只从同份记录此前的匹配 `action_selected` 获取明确 `label`，取不到则显示 `（未记录标签）`；该适配覆盖交互与预览内的选项，不改写原始二进制。其他已记录标签保持原文；旧记录将观察正文写入标签的污染无法据文本可靠修复，需要用更新后的内容重新生成记录，才能取得明确的行动意图标签。
+
+`Play(1/2/4/8)`、`Pause()`、`Step()`、`Advance(seconds)` 控制播放。每次更新最多交付一个新的可见拍，零时长元数据每次最多消费 256 帧。CLI 的交互播放持续读取 pause、step 和 quit；Godot 在独立回放场景中驱动 WorldView、StoryActor 和 UI。回放不向正式 DvSession 提交命令，也不产生新的观察。
+
+## CLI 观察预览
+
+`Preview` 的主观地图只读取指定角色 mind；客观地图读取 physical 与完整地点目录。房间包含独立 `members` 列表，人物、物体分别列出，`is_current` 分别取对应状态中的本人位置。预览不刷新事实、不推进逻辑时刻、不改变会话版本。
+
+预览结构为 `viewer / snapshot / status / subjective / options / actors / observers`，显式请求时附 `objective`。`observers[id]` 保存该角色的认知地图和展示快照；未计算的选项评分保持空。缓存按会话版本失效，界面重绘复用结果。CLI 的 stdout 按当前观察者与地图模式裁剪；完整预览仍保留在二进制回放记录中。
+
+`snapshot.actors` 和各 `observers[id].snapshot.actors` 同步保存预览的行政人物目录，供回放视角栏显示姓名；主观成员仍独立采用该观察者实际取得的身份信息。已经 prepared 而不在当前候选集中的动作保留原行动 `label`、实际费用及选择事件来源；标签先取匹配的 `action_selected`，再取当前意图/原行动，均缺失时显示 `（未记录标签）`。
+
+选项 `ai_score` 必须与 `score_kind` 一起消费：`immediate` 是当前只读单步估值，`recorded-root` 来自同认知修订的实际单步规划条目，`recorded-choice` 来自最终选择事件。`score_event` 指向该条记录。`planning_status=evaluated-root` 表示已有实际根节点评估；有同修订规划记录而缺该候选根条目时标记 `unexpanded`，同时保留其独立的即时估值和 `planning_event` 来源。仅凭数值 `-0.01` 不能推断未展开；有根评估记录的负分照实显示。

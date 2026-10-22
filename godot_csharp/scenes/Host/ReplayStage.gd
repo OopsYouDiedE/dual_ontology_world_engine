@@ -116,17 +116,27 @@ func _drain() -> void:
 
 func _apply_frame(frame: Dictionary, generation: int) -> void:
 	var data: Dictionary = frame.get("data", {})
+	var recorded_snapshot: Dictionary = data.get("snapshot", {})
+	if recorded_snapshot.is_empty() and data.get("preview") is Dictionary:
+		recorded_snapshot = data.preview.get("snapshot", {})
+	var phase := str(frame.kind)
+	var kind := str(data.get("result_kind", "presentation" if data.has("presentation") else "event")) if phase == "confirm" else phase
+	if phase in ["focus", "confirm", "cancel"]:
+		_session.ClearInput()
+		_session.SetInteraction(phase, str(frame.actor), str(frame.action), data.get("options", []))
 	if data.has("viewport_size"):
 		var dimensions: Array = data.viewport_size
 		_viewport.size = Vector2i(int(dimensions[0]), int(dimensions[1]))
-	if data.has("snapshot"):
-		_session.SetSnapshot(data.snapshot)
+	if not recorded_snapshot.is_empty() and phase != "confirm":
+		_session.SetSnapshot(recorded_snapshot)
+		if phase in ["focus", "cancel"]:
+			_session.SetInteraction(phase, str(frame.actor), str(frame.action), data.get("options", []))
 		var installed: bool = await _host.install_replay_snapshot(_session.Snapshot(), data.get("casebook", {}))
 		if not installed or generation != _generation: return
 		await _apply_bodies(data.get("bodies", []), false)
-	elif str(frame.kind) == "move":
+	elif kind == "move":
 		await _move(frame)
-	elif data.has("receipt") and data.receipt is Dictionary and data.receipt.get("field") is Dictionary:
+	elif phase != "focus" and phase != "cancel" and data.has("receipt") and data.receipt is Dictionary and data.receipt.get("field") is Dictionary:
 		var receipt: Dictionary = data.receipt
 		var physical: Dictionary = receipt.field
 		if physical.has("trajectory") or physical.has("source_position"):
@@ -139,13 +149,18 @@ func _apply_frame(frame: Dictionary, generation: int) -> void:
 	elif data.has("bodies"):
 		await _apply_bodies(data.bodies, false)
 	if generation != _generation: return
+	if phase == "confirm" and not recorded_snapshot.is_empty():
+		_session.SetSnapshot(recorded_snapshot)
+		_session.SetInteraction(phase, str(frame.actor), str(frame.action), data.get("options", []))
+		if not await _host.install_replay_snapshot(_session.Snapshot(), data.get("casebook", {})): return
+		if generation != _generation: return
 	var context: Dictionary = data.get("context", {})
-	if context.is_empty() and str(frame.kind) == "visible": context = data.get("visible", {})
+	if context.is_empty() and kind == "visible": context = data.get("visible", {})
 	await _restore_context(context, data.get("casebook", {}))
 	if generation != _generation: return
-	match str(frame.kind):
+	match kind:
 		"input": await _input_record(data.get("input", {}), data.has("bodies"))
-		"presentation", "dialogue", "investigate":
+		"presentation", "dialogue", "investigate", "rejected":
 			var presentation: Dictionary = data.get("presentation", {})
 			if presentation.is_empty():
 				presentation = {"visible": true, "surface": str(frame.text), "lines": [],

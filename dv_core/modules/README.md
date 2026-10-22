@@ -21,6 +21,14 @@
 
 `map_knowledge` 返回 `rooms: [{map, room, label}]` 与 `doors: [{from: {map, room, label}, to: {map, room, label}}]`。房间来自本人的已知位置与定位观察历史；门路来自本人已完成移动和曾实际获得的合法行动。`offered_actions` 在玩家输入阶段记录已准入 ID，让看过但尚未走过的门路随存档保留。投影可从存档的认知、完成动作和已准入 ID 恢复，不读取几何源中的全部房间或授予远处人物位置。人物投影中的可选 `anchor` 是当前逻辑位置的站点 ID；开发命令同步身体时使用该值，常规初次放置继续使用 `initial_anchor`。
 
+## 行动标签与结果正文
+
+`campaign_intent_action(..., label, source)` 声明行动意图；`campaign_surface_action(..., label, text, source)` 分开接收意图与完成正文。40/50 的调查、对话、提案和活动记录分别保存 `label` 与 `surface`/`text`/`speech.surface`，标签不复制检视结果或整段台词，询问物件的标签保留具体物件名。行动资格、费用与权威前提保持各自原有来源。
+
+`dvs_action_label(actor, action)` 是玩家选项、观察者选项和实际选中行动共同使用的标签入口，只读取 `label`；缺失时为 `（未记录标签）`。可选 `label_parts` 由文本片段或 `{ref, fallback}` 片段组成，引用仅从本人 `mind` 读取，未知人物使用“同伴”。选中时把当时解析出的标签写入 action 并随 `action_selected` 保存。结果正文与台词仍由成功的 Complete 产生，选项不得回退读取结果正文。
+
+主观姓名读取本人已持有的 `identity.name`、`state.name`、`opening.personal.<id>.state.name` 或 `c2.dialogue.person.<id>.state.name`；新寝区与第二章自报姓名通过原有话语解析传播。自身保留姓名，其他人物未被认识时保持“同伴”。旧轨迹若没有实际姓名字段，保留“本人”或“同伴”，不按行动 ID 或现行人物目录补写历史姓名，不反写世界或补造观察。
+
 ## 规划与惰性认知
 
 `plan_depth` 和 `lookahead_limit` 分别控制前瞻层数与有序 beam 宽度，原 planning_limit 控制工作预算。beam 按分数降序、耗时升序排列，同分同耗时保留声明次序。visited 只包含实际展开节点；被 beam 淘汰的候选不占用支配记录。默认展开已声明层数；`greedy_root_stop` 显式选择即时收益根停止，`positive_move_root_stop` 显式允许正收益移动根停止，`fast_approximation` 保留既有一层近似语义。

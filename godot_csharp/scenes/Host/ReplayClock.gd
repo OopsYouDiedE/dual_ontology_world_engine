@@ -32,10 +32,14 @@ func advance(seconds: float) -> Array:
 	var ready: Array = []
 	if not playing: return ready
 	remaining -= seconds * speed
-	while remaining <= 0.0 and cursor < frames.size():
+	while remaining <= 0.0 and cursor < frames.size() and ready.size() < 256:
 		var frame: Dictionary = frames[cursor]
 		cursor += 1
 		ready.append(frame)
-		remaining += float(frame.duration)
+		var duration := float(frame.duration)
+		remaining += duration
+		if duration > 0.0:
+			remaining = duration
+			break
 	if cursor >= frames.size() and remaining <= 0.0: playing = false
 	return ready

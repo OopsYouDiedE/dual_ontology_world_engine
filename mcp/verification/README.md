@@ -13,6 +13,17 @@ terminal-export。该工具只解析CLI生成的rect/text SVG子集，不启动�
 它是渲染导出而非物理终端屏幕截取。需要Pillow，默认使用Windows微软雅黑；
 清理上一轮输出后，本轮路径独占创建。
 
+`capture_cli.py --out <本任务固定测试目录> --timeout 90 --format tui` 转发操作者逐行输入，
+不代选动作或开启自主循环；默认 player，可显式指定 --controller ai、--viewer ID、
+--format jsonl 或 --replay FILE。原始 stdin/stdout/stderr 按原字节写入校验二进制
+console.dvlog，CLI 封存 session.dvdag/dvsave，并核对源码和程序集身份。
+默认 90 秒硬超时，范围 0..600 秒；超时只终止本次子进程树，返回 124 并保留
+console.dvlog.partial 与现有证据。输入线程及管道退出等待有界，避免 stdin 或
+子进程封存阻塞采集器。MCP 入口 diagnostics / cli-capture。
+CLI 的 capture 单独保存当前 UI；截图不改写为行动。PNG 转换保留 SVG 标题字重。
+
+`check_cli_protocol.py --out <本任务固定测试目录> --timeout 90` 串行检查人工选择和内置 AI，以及各自一次到期行动及回放。人工选择若先入队，仅再完成当前最先到期的一次行动，不追跑后续剧情。每条命令最多等待 25 秒，每个采集窗口最多 90 秒；仅选择当前显示的首项，不读取客观答案决定行动。检查 JSON 命令输入、视角与版本、评分保留、取消清除、定位/确认、排程边界和播放暂停，完整原始数据仍由 capture_cli 写入二进制记录；summary.json 只存工程结果。
+
 ## 工具工程入口
 
 统一 MCP 中，Python 命令属于 `diagnostics`，GDScript 采集与观察属于 `godot_tools`。地图截图为 `capture-maps`，UI 采集为 `capture-casebook`、`capture-period`、`capture-start-reveal`、`capture-title`，宿主入口为 `capture-saved-game`、`capture-level3`、`host-startup`，独立观察为 `ui-input`、`living-floor`、`music-context`。路由直接指向本目录现役脚本；列举工具不执行它们。`ui-input` 自动采用一次性工具用户数据。
@@ -380,7 +391,7 @@ Core 的 `SmartReplay` 由 CLI 和游戏开发控制台共用。它直接读取 
 
 ```powershell
 dotnet run --project dv_core/cli/DvCli.csproj -- --replay artifacts/capture/session.dvdag --speed 4 --tui
-dotnet run --project dv_core/cli/DvCli.csproj -- --replay artifacts/capture/visible.dvlog --step --jsonl
+dotnet run --project dv_core/cli/DvCli.csproj -- --replay artifacts/capture/visible.dvlog --command step --jsonl
 ```
 
 该入口播放已记录的结果，忽略录制期间的现实等待；原始日志保持原字节。

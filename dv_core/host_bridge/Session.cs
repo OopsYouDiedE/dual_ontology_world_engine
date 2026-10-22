@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 /// <summary>The single state owner for Godot, development commands and the text host.</summary>
-public sealed class DvSession
+public sealed partial class DvSession
 {
     private object state;
     private object lastCommittedState;
@@ -16,6 +16,7 @@ public sealed class DvSession
     private readonly Dictionary<string, (long Version, IReadOnlyDictionary<string, object?> Value)> executors = new(StringComparer.Ordinal);
     private PreviewBranch? preview;
     public Action<string, string>? PhaseObserver { get; set; }
+    public TextWriter DiagnosticOutput { get; set; } = Console.Error;
     public bool AuditMode => audit;
     public bool DevMode => developer;
     public bool IsClosed => closedTrace is not null;
@@ -49,7 +50,7 @@ public sealed class DvSession
         using var scope = R.UseAudit(audit);
         using var phases = R.UsePhases(speculative ? null : PhaseObserver);
         using var recording = R.UseRawRecording(!speculative);
-        using var output = R.UseOutput(speculative ? TextWriter.Null : Console.Error);
+        using var output = R.UseOutput(speculative ? TextWriter.Null : DiagnosticOutput);
         return operation();
     }
     private static object Field(object value, string name, object fallback) => R.record_find(value, name, fallback);
@@ -63,6 +64,7 @@ public sealed class DvSession
         nativeIntent = null;
         preview = null;
         executors.Clear();
+        ClearObserverProjection();
     }
     private void RememberCommitted()
     {
@@ -70,14 +72,15 @@ public sealed class DvSession
     }
 
     public static DvSession OpenCampaign(string player = "") => new(DVProgram.SetPlayer(DVProgram.CampaignOpen(), player));
-    public static DvSession OpenConfiguredCampaign(string options)
+    public static DvSession OpenConfiguredCampaign(string options) => OpenConfiguredCampaign(options, Console.Error);
+    public static DvSession OpenConfiguredCampaign(string options, TextWriter diagnosticOutput)
     {
         var configuration = HostValues.Parse(options);
         var auditMode = R.Bool(Field(configuration, "audit", false));
         var developerMode = R.Bool(Field(configuration, "developer", false));
         using var scope = R.UseAudit(auditMode);
-        using var output = R.UseOutput(Console.Error);
-        return new(DVProgram.HostOpen(configuration), auditMode, developerMode);
+        using var output = R.UseOutput(diagnosticOutput);
+        return new(DVProgram.HostOpen(configuration), auditMode, developerMode) { DiagnosticOutput = diagnosticOutput };
     }
     public static DvSession Open(string scenario) => new(DVProgram.SessionOpen(HostValues.Parse(scenario)));
     public static DvSession Restore(string snapshot)
@@ -357,8 +360,8 @@ public sealed class DvSession
         closedTrace = R.snapshot(Run(() => DVProgram.SessionClose(state)));
     }
     private object TraceValue() => closedTrace ?? R.snapshot(Run(() => DVProgram.TraceSnapshot(state)));
-    public string Trace() => JsonSerializer.Serialize(TraceValue(), SnapshotOptions);
-    public void WriteTrace(string path) => R.WriteEvidenceFile(path, TraceValue());
+    public string Trace() => JsonSerializer.Serialize(RecordedTraceValue(), SnapshotOptions);
+    public void WriteTrace(string path) => R.WriteEvidenceFile(path, RecordedTraceValue());
 
     private static readonly JsonSerializerOptions SnapshotOptions = new()
     {

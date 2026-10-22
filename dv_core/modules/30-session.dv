@@ -6264,6 +6264,7 @@ fn dvs_prepare_actor(state):
                     actor = dv_with(actor, "idle_guard", rt_snapshot(guard))
             actors = dvs_replace(actors, index, actor)
         else:
+            action = dv_with(action, "label", dvs_action_label(actor, action))
             var id = actor.id
             var mind = actor.mind
             var model = dv_get(costs, action.kind)
@@ -6968,6 +6969,27 @@ fn dvs_manual_action(actor, selection):
         dv_require(hypothesis == "", "Hypotheses apply only to replay")
     return action
 
+// Labels describe intent. Optional parts read only the acting subject's own fields.
+// Result prose and speech are published by Complete, never offered as a label.
+fn dvs_action_label(actor, action):
+    var label = dv_find(action, "label", "（未记录标签）")
+    let parts = dv_find(action, "label_parts", [])
+    if 0 < rt_count(parts):
+        label = ""
+        var i = 0
+        while i < rt_count(parts):
+            let part = parts[i]
+            var text = dv_find(part, "text", dv_find(part, "fallback", ""))
+            if dv_has_key(part, "ref"):
+                let value = dv_read(actor.mind, part.ref)
+                if dv_uncontested(value) and rt_is_text(value.value):
+                    text = value.value
+            label = rt_cat(label, text)
+            i = i + 1
+    if label == "":
+        return "（未记录标签）"
+    return label
+
 fn dvs_player_options(actor):
     var result = []
     let view = dv_with(actor, "manual_input", true)
@@ -6976,7 +6998,7 @@ fn dvs_player_options(actor):
     while i < rt_count(actor.actions):
         let action = actor.actions[i]
         if dvp_eligible(view, action, actor.mind, refs):
-            let label = dv_find(action, "label", dv_find(action, "surface", dv_find(dv_find(action, "speech", []), "surface", "")))
+            let label = dvs_action_label(actor, action)
             if label != "":
                 rt_push(result, {"id": action.id, "label": label, "available": true})
         i = i + 1
@@ -6995,4 +7017,3 @@ fn dvs_player_choice(actor, id):
     let view = dv_with(actor, "manual_input", true)
     dv_require(dvp_eligible(view, action, actor.mind, dvp_goal_refs(actor)), "Player action failed subject admission")
     return {"action": action, "score": 0, "plan_expansions": 0, "plans": [], "relevant_refs": dvp_goal_refs(actor), "dependency_cache": dv_find(actor, "dependency_cache", false), "controller": "player"}
-

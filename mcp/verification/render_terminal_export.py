@@ -41,10 +41,15 @@ def main():
                 draw.rectangle((x, y, x + w - 1, y + h - 1), fill=attrs["fill"])
         elif tag == "text":
             size = int(float(attrs.get("font-size", "16")))
-            if size not in fonts:
-                fonts[size] = ImageFont.truetype(str(font_path), size)
-            draw.text((float(attrs["x"]), float(attrs["y"])), element.text or "", font=fonts[size],
-                      fill=attrs.get("fill", "#dbe6ed"), anchor="ls")
+            bold = attrs.get("font-weight", "400") in ("bold", "600", "700", "800", "900")
+            bold_path = font_path.with_name("msyhbd.ttc") if font_path.name.lower() == "msyh.ttc" else font_path
+            actual_font = bold_path if bold and bold_path.is_file() else font_path
+            key = (str(actual_font), size)
+            if key not in fonts:
+                fonts[key] = ImageFont.truetype(str(actual_font), size)
+            synthetic_bold = 1 if bold and actual_font == font_path else 0
+            draw.text((float(attrs["x"]), float(attrs["y"])), element.text or "", font=fonts[key],
+                      fill=attrs.get("fill", "#dbe6ed"), anchor="ls", stroke_width=synthetic_bold)
         else:
             raise ValueError(f"Unsupported SVG element {tag}; use the CLI's cell export")
     args.out.parent.mkdir(parents=True, exist_ok=True)

@@ -17,11 +17,19 @@
 | `cli/` | 无 Godot 依赖的文本、JSON-Lines 与 TUI 控制端 |
 | `../mcp/build/`、`../mcp/editor_lsp/`、`../mcp/verification/` | 构建、编辑器与诊断工具 |
 
-CLI 的 status/options 不推进会话；next 单步推进 Prepare 或 formal-model Complete，act 只消费当前人工候选并推进到下一人工边界。自主控制使用显式 `--controller ai`，不由启动自动循环。CLI 与游戏共享 SmartReplay；记录回放不创建正式会话。入口及封存规则见 [cli/README.md](cli/README.md)。Core AI 测试按用户批准的要求和指标执行，工程构建不替代该批准。
+CLI 的 status/options/view/map 只读；focus 聚焦当前真实候选，confirm 重核版本并完成一个正式行动，act 便捷调用相同两阶段。next 在 Prepare 后显示聚焦，再次 next 才确认 Complete，不循环排空后续 NPC 工作。自主控制使用显式 `--controller ai`，不由启动自动循环。人工、外部模型与引擎自主行为共用相同选择与两步回放合同。CLI 与游戏共享 SmartReplay；记录回放不创建正式会话。入口及封存规则见 [cli/README.md](cli/README.md)。测试范围按用户当前指令执行；有限采集使用硬超时并保留失败与部分记录。
 
-CLI的TerminalModel仅为观察者投影和只读回放的显示模型；房间/连接来自本人map_knowledge，不从执行者或开发Inspect补真值。ANSI与SVG由同一单元画布生成；--preview必须在创建会话前返回，明确标注UI示例，不能触发自主调度。回放重启清空显示缓存，不用历史帧恢复或分叉会话。截图导出工具归mcp/verification，并在tools.json登记；预览、必要构建和Core AI验收分别报告。
+CLI 的 TerminalModel 仅为观察者和只读回放显示模型。主观房间/连接/成员来自本人实际认识；显式 map objective/both 可检阅客观完整地图，两个投影独立保留，不向角色授予事实或改变准入。view 仅换检阅人物，不换正式控制者。房间一级标题，人物/物体二级标题，候选展示 Core 实际评分；旧记录缺失项保持缺失。ANSI 与 SVG 由同一单元画布生成；--preview 在创建会话前返回，使用短预览标签。回放重启清空显示缓存，不用历史帧恢复或分叉会话。截图工具归 mcp/verification 并登记 tools.json；真实界面检查、预览和正式行为分别报告。
 
 CLI空间视图上方为房间分组列表，下方为通道逐条端点列表。不能从列表相邻推导连接；本人只归入实际所属房间。缩放命令仅调整显示密度，不推进会话或改变终端字号，所有内容仍完整换行保留。界面不添加说明段落或教程；预览保持短状态标识，完整来源留在证据元数据。预览房间数/位置参数不能注入正式状态。
+
+候选 `label` 在 DV 内容层声明行动意图；观察正文与台词不得回退为候选标题，依赖接触的结果仍只由成功 Complete 发布。已准备动作使用本次选择或原候选的标签；确无记录时标明缺失。评分携带 `score_kind`，区分根节点、最终选择与当前即时求值；未展开须有评估状态依据，不能按数值猜测。角色目录随回放记录保存，主观姓名仍受本人认识约束。播放状态与帧内交互阶段分别显示，时间只取已记录的游戏时刻。
+
+CLI的capture命令只导出当前观察者UI；实际行动与截图分别输入和记录，不由截图入口代选动作。同一任务的新测试按根 AGENTS 递归清理并替换旧输出；本轮导出文件独占创建，失败清除待导出标记。当前轮原始输入、控制台与正式封存使用二进制记录。几步人工UI检查不自动扩大为Core AI循环或整局验收。
+
+开局 idle 的人工 focus 先调用一次 Prepare，再核对真实候选；不自动 Complete。固定检阅视角下 next 仍可确认 Core 已准备的 NPC 行动，按真实 actor、action_id 和状态版本核对，Complete 的正文按检阅者投影；视角切换不取得其他人物的人工控制权。
+
+CLI 交互记录区分 actor、viewer 和 result 的 presentation_viewer；回放合并保留正文来源，按该观察者与 visible 筛选，不用行动主体代替正文观察者。JSON-Lines 实时交互的候选与评分同样服从当前检阅者投影。
 
 [README.md](README.md) 维护实际目录、入口和状态；[DESIGN.md](DESIGN.md) 维护当前架构与语义合同；[compiler/README.md](compiler/README.md) 维护编译器及平台 ABI；[host_bridge/README.md](host_bridge/README.md) 维护宿主边界；[SYNTAX.md](SYNTAX.md) 区分执行子集与完整语法方案，现行语法入口为 [docs/syntax.md](../docs/syntax.md)。修改语法、内置操作、声明字段、接口、目录或构建命令时，同轮修正对应文档与本文件，不把未接线提案写成已实现能力。
 

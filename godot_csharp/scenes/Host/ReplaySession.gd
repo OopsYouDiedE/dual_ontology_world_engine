@@ -44,3 +44,7 @@ func ReplayInput(event: InputEvent, has_positions: bool) -> void:
 
 func ClearInput() -> void:
 	for action in _directions: _directions[action] = 0.0
+
+func SetInteraction(phase: String, actor: String, action: String, options: Array) -> void:
+	_snapshot.replay_interaction = {"phase": phase, "actor": actor,
+		"selected": "" if phase == "cancel" else action, "options": options.duplicate(true)}
