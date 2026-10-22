@@ -89,6 +89,7 @@ fn c2_norms_build():
         {"id": "shen_kitchen", "title": "统一烹饪", "owner": "shen", "board": "living_hall", "surface": "粮仓钥匙交给做饭的人，统一煮粥，先喂饿着的人。", "promotes": ["central_cooking", "patient_priority", "records"], "sacrifices": [], "mode": "prefer", "method": "cook_and_feed", "source": c2_source("03_规矩与结局.story", 113, "ShenKitchen")},
         {"id": "veronica_evidence", "title": "实物与登记要求", "owner": "veronica", "board": "lecture", "surface": "指控须有实物为证；取用须有记录。", "promotes": ["evidence", "records"], "sacrifices": [], "mode": "forbid", "method": "unsupported_accusation", "source": c2_source("03_规矩与结局.story", 127, "VeronicaEvidence")},
         {"id": "lucian_no_brand", "title": "查验前的行动自由", "owner": "lucian", "board": "lecture", "surface": "未经查验，不得以“私取”之名限制任何人行走。", "promotes": ["evidence", "not_targeted", "movement_freedom", "night_exception"], "sacrifices": ["restriction"], "mode": "forbid", "method": "unverified_restriction", "source": c2_source("03_规矩与结局.story", 141, "LucianNoBrand")},
+        {"id": "measurement_pause", "title": "震后复测与返程约定", "owner": "detective", "board": "living_hall", "surface": "风止或震动以后先暂停外出，重新核对读数；读数不安全就留在门内，安全后再约定路线和返程。我愿在门内值守，实际在场时再共同核对。", "promotes": ["measured_work", "understand_cost"], "sacrifices": ["pursue_desire", "avoid_attachment"], "mode": "forbid", "method": "outdoor_travel", "source": campaign_approved("user:2026-10-23-real-negotiated-measurement-pause")},
         {"id": "open_plan", "title": "开放议案", "owner": "huo", "board": "central_hall", "surface": "外出前核对源质计与风向，按安全读数安排劳作，约定返程与停行条件。", "promotes": ["measured_work"], "sacrifices": ["cautious_travel", "committee"], "mode": "permit", "method": "measured_outing", "source": campaign_approved("第五部分：OpenPlan当前公约提案")},
         {"id": "seal_plan", "title": "封闭议案", "owner": "gu", "board": "central_hall", "surface": "读数不明、风止或地震之后，先留在安全处，复测后再定行程。", "promotes": ["cautious_travel", "tradition"], "sacrifices": ["measured_work"], "mode": "forbid", "method": "outdoor_travel", "source": campaign_approved("第五部分：SealPlan当前公约提案")},
         {"id": "committee_plan", "title": "公物登记议案", "owner": "ward", "board": "central_hall", "surface": "公用粮水药逐项登记，列明取用、补记和结余，供众人核对。", "promotes": ["committee", "ward_authority", "records"], "sacrifices": ["measured_work"], "mode": "require", "method": "collect_and_count", "source": campaign_approved("第五部分：CommitteePlan当前公约提案")}]
@@ -267,6 +268,8 @@ fn c2_norm_condition(norm, actor):
     let night = c2_any_night()
     if norm.id == "ward_night":
         return night
+    if norm.id == "measurement_pause":
+        return campaign_any(dv_fact(campaign_ref("c2.meter", "safe"), false), campaign_any(dv_fact(campaign_ref("c2.weather", "wind"), false), dv_fact(campaign_ref("c2.weather", "earthquake_recent"), true)))
     if norm.id == "seal_plan":
         return campaign_any(dv_fact(campaign_ref("c2.weather", "wind"), false), dv_fact(campaign_ref("c2.weather", "earthquake_recent"), true))
     if norm.id == "mora_night":
@@ -530,6 +533,8 @@ axiom c2_night_eat_law(actor):
     并使 粮仓 的 锁定状态 变为 false。
 
 fn c2_norm_available(norm):
+    if norm.id == "measurement_pause":
+        return dv_all([campaign_window(4, 1050, 1260), campaign_any(dv_fact(campaign_ref("c2.weather", "wind"), false), dv_fact(campaign_ref("c2.weather", "earthquake_recent"), true))])
     if norm.id == "records_supplement":
         return dv_all([dv_fact(campaign_ref("c2.daily", "draft_notes"), true), dv_fact(campaign_ref("c2.dialogue.person.ruan", "said.ruan.c2.discuss-supplement"), true)])
     if norm.id == "night_forbid":
@@ -567,7 +572,10 @@ fn c2_norm_actions(actor, norm):
     if actor == norm.owner:
         let id = rt_cat(actor, rt_cat(".c2.propose.", norm.id))
         let speech = dv_with_many(campaign_speech(dv_fact(campaign_ref(object, "text"), norm.surface), norm.source, "personal-norm-proposal"), {"surface": norm.surface, "utterance_type": "proposal", "norm_proposal": norm})
-        rt_push(result, dv_with_many(campaign_surface_action(id, "talk", dv_all([campaign_at(actor, norm.board), c2_alive(actor), c2_norm_available(norm)]), dv_all([campaign_at(actor, norm.board), c2_alive(actor), c2_norm_available(norm)]), id, dv_single(campaign_ref(object, "proposed")), rt_cat("提出：", norm.title), norm.surface, norm.source), {"speech": speech, "listeners": campaign_people()}))
+        var proposal = dv_with_many(campaign_surface_action(id, "talk", dv_all([campaign_at(actor, norm.board), c2_alive(actor), c2_norm_available(norm)]), dv_all([campaign_at(actor, norm.board), c2_alive(actor), c2_norm_available(norm)]), id, dv_single(campaign_ref(object, "proposed")), rt_cat("提出：", norm.title), norm.surface, norm.source), {"speech": speech, "listeners": campaign_people()})
+        if norm.id == "measurement_pause":
+            proposal = dv_with(proposal, "personal_choice", {"group": "measurement-pause-proposal", "requires": c2_norm_available(norm), "prohibits": dv_fact(campaign_ref(object, "proposed"), true), "promotes": norm.promotes, "sacrifices": norm.sacrifices, "require_positive": true, "basis": [norm.source]})
+        rt_push(result, proposal)
         let post_id = rt_cat(actor, rt_cat(".c2.post.", norm.id))
         let pre = dv_all(dv_pair(campaign_at(actor, norm.board), dv_fact(campaign_ref(object, "proposed"), true)))
         rt_push(result, campaign_surface_action(post_id, "help", pre, pre, post_id, dv_single(campaign_ref(object, "posted")), rt_cat("张贴：", norm.title), dvs_surface_parts(["在公告板上贴出：", norm.surface]), norm.source))
@@ -1061,6 +1069,8 @@ fn c2_hero_actions(actor):
     return c2_hero_substitutions(actor)
 
 fn c2_moran_outing_heard(actor):
+    if c2_received_requirement(actor, {"speaker": "demon", "action_id": "demon.c2.relay.moran-outing.false"}) or c2_received_requirement(actor, {"speaker": "demon", "action_id": "demon.c2.relay.moran-outing.true"}):
+        return true
     return c2_received_requirement(actor, {"speaker": "moran", "action_id": "moran.c2.sketch.evening.go.false"}) or c2_received_requirement(actor, {"speaker": "moran", "action_id": "moran.c2.sketch.evening.go.true"})
 
 fn c2_casualty_actions(actor):
@@ -1692,7 +1702,7 @@ fn c2_personal_goal_templates_build(id):
     var i = 0
     while i < rt_count(norms):
         let norm = norms[i]
-        if norm.owner == id:
+        if norm.owner == id and norm.id != "measurement_pause":
             rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_ref(c2_norm_object(norm.id), "posted"), true), dv_at_least(campaign_clock(), 2250), [norm.source]), {"navigation_room": norm.board, "navigation_requirements": [c2_norm_available(norm)], "navigation_methods": [rt_cat(id, rt_cat(".c2.propose.", norm.id)), rt_cat(id, rt_cat(".c2.post.", norm.id))]}))
         rt_push(goals, campaign_observation_goal(campaign_ref(c2_norm_object(norm.id), "posted"), dv_all([campaign_at(id, norm.board), dv_at_least(campaign_clock(), 2250)]), [norm.source], 0))
         rt_push(goals, campaign_observation_goal(campaign_ref(c2_norm_object(norm.id), "text"), dv_fact(campaign_ref(c2_norm_object(norm.id), "posted"), true), [norm.source], 0))
@@ -1784,8 +1794,26 @@ fn c2_personal_goal_templates(id):
 
 fn c2_personal_goals(actor):
     var goals = dv_clone(c2_personal_goal_templates(actor.id))
+    // Refresh only by a real look at this board during the negotiation window.
+    let board_when = dv_all([c2_night(4), campaign_at(actor.id, "living_hall")])
+    rt_push(goals, campaign_observation_goal(campaign_ref(c2_norm_object("measurement_pause"), "posted"), board_when, [campaign_approved("user:2026-10-23-local-board-recheck-at-evening-meeting")], 5580))
     if actor.id == "demon":
+        if c2_moran_outing_heard(actor):
+            let relay = "demon.c2.relay.moran-outing.false"
+            var pending = not dv_has(dv_find(actor, "completed_actions", []), relay)
+            if c2_received_requirement(actor, {"speaker": "moran", "action_id": "moran.c2.sketch.evening.go.true"}):
+                pending = not dv_has(dv_find(actor, "completed_actions", []), "demon.c2.relay.moran-outing.true")
+            if pending:
+                rt_push(goals, dv_with(campaign_goal(campaign_at(actor.id, "logistics"), c2_night(4), [campaign_approved("user:2026-10-23-real-heard-route-relay-not-remote-patient-facts")]), "navigation_room", "logistics"))
         return goals
+    if actor.id == "detective":
+        let scientific_choice = {"personal_choice": {"promotes": ["measured_work", "understand_cost"], "sacrifices": ["pursue_desire", "avoid_attachment"]}}
+        if dvp_personal_motivation(actor, scientific_choice) > 0:
+            let when = campaign_window(4, 1050, 1260)
+            rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("c2.weather", "environment_epoch"), when, [campaign_approved("user:2026-10-23-owner-empirical-evening-inquiry")], 5370), {"navigation_room": "living_hall", "navigation_methods": ["detective.c2.inspect.weather"]}))
+            let object = c2_norm_object("measurement_pause")
+            let ready = dv_all([when, campaign_any(dv_fact(campaign_ref("c2.weather", "wind"), false), dv_fact(campaign_ref("c2.weather", "earthquake_recent"), true))])
+            rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_ref(object, "posted"), true), ready, [campaign_approved("user:2026-10-23-real-negotiated-measurement-pause")]), {"navigation_room": "living_hall", "navigation_methods": ["detective.c2.propose.measurement_pause", "detective.c2.post.measurement_pause"]}))
     let investigations = c2i_goals(actor)
     var investigation_index = 0
     while investigation_index < rt_count(investigations):
@@ -2268,7 +2296,6 @@ fn c2i_goals(actor):
         // speaker-dependent options can exist. This grants no color or advice.
         if not c2_received_requirement(actor, {"speaker": "demon", "action_id": "demon.c2.truth-color"}):
             rt_push(goals, dv_with_many(campaign_goal(campaign_at(id, "living_hall"), campaign_window(4, 1050, 1260), [campaign_approved("user:2026-10-22-evening-research-meeting")]), {"navigation_room": "living_hall", "maintain_presence": true}))
-        rt_push(goals, campaign_observation_goal(campaign_ref("c2.meter", "safe"), campaign_window(4, 1020, 1260), [campaign_approved("read-actual-meter-before-evening-outing")], 0))
         rt_push(goals, c2i_watch_goal(actor, c2_night(4), [campaign_approved("actual-current-supervision-not-permanent-flag")], 5370))
         rt_push(goals, campaign_goal(campaign_at("moran", "outdoor_alley"), dv_fact(campaign_ref("case.astral", "evening_choice"), "go"), [campaign_approved("execute-actual-personal-sketch-choice")]))
         rt_push(goals, campaign_goal(dv_fact(campaign_ref("case.astral", "evening_choice"), "go"), c2_night(4), [campaign_approved("evening-research-opportunity-not-compulsory-outcome")]))
@@ -2392,12 +2419,12 @@ fn c2i_evening_actions(actor):
             let speech = dv_with(campaign_speech(dv_true(), source, "evening-sketch-choice"), "surface", option.text)
             var action = campaign_surface_action(id, "talk", ready, when, law, [result_ref], option.label, option.text, source)
             action = dv_with(action, "owned_safety_choice", ready)
-            action = dv_with_many(action, {"personal_choice": choice, "speech": speech, "listeners": campaign_people(), "received_speech_requirement": {"speaker": "demon", "action_id": "demon.c2.truth-color"}})
+            action = dv_with_many(action, {"personal_choice": choice, "speech": speech, "listeners": c2d_people(), "received_speech_requirement": {"speaker": "demon", "action_id": "demon.c2.truth-color"}})
             rt_push(result, action)
             i = i + 1
         watch_index = watch_index + 1
     let unsafe = dv_all([when, dv_fact(campaign_ref("c2.meter", "safe"), false)])
-    let unsafe_choice = {"group": "moran.evening-sketch", "requires": unsafe, "prohibits": campaign_any(dv_fact(result_ref, "stay"), dv_fact(result_ref, "go")), "promotes": ["measured_work", "safety"], "sacrifices": ["research"], "basis": [source]}
+    let unsafe_choice = {"group": "moran.evening-sketch", "requires": unsafe, "prohibits": campaign_any(dv_fact(result_ref, "stay"), dv_fact(result_ref, "go")), "promotes": ["safety", "cautious_travel"], "sacrifices": ["research"], "basis": [source]}
     let unsafe_action = dv_with(campaign_surface_action("moran.c2.sketch.evening.stay.unsafe", "help", unsafe, when, "moran.c2.sketch.evening.stay", [result_ref], "留在安全处等待新读数", "我看到的读数不安全，先留在安全处。", source), "owned_safety_choice", unsafe)
     rt_push(result, dv_with_many(unsafe_action, {"personal_choice": unsafe_choice, "received_speech_requirement": {"speaker": "demon", "action_id": "demon.c2.truth-color"}}))
     let watch = c2_inspect_action(actor, campaign_body(actor), "central_hall", ["watched"], "查看身边的同行者", "看看谁还在身边，是否有人正负责监督这次外出。", source)
@@ -2878,7 +2905,13 @@ fn c2_refresh_content_actions(actor):
             var heard = "moran.c2.sketch.evening.go.false"
             if c2_received_requirement(actor, {"speaker": "moran", "action_id": "moran.c2.sketch.evening.go.true"}):
                 heard = "moran.c2.sketch.evening.go.true"
-            action = dv_with(action, "received_speech_requirement", {"speaker": "moran", "action_id": heard})
+            var speaker = "moran"
+            if not c2_received_requirement(actor, {"speaker": speaker, "action_id": heard}):
+                speaker = "demon"
+                heard = "demon.c2.relay.moran-outing.false"
+                if c2_received_requirement(actor, {"speaker": speaker, "action_id": "demon.c2.relay.moran-outing.true"}):
+                    heard = "demon.c2.relay.moran-outing.true"
+            action = dv_with(action, "received_speech_requirement", {"speaker": speaker, "action_id": heard})
         if dv_has_key(action, "partner_decision"):
             let base = dv_find(action, "owned_precondition_base", action.precondition)
             let choice = dv_find(action, "owned_choice_base", action.personal_choice)
@@ -2988,7 +3021,7 @@ fn c2_safety_goals(actor):
             if candidate != false and dvp_owned_decision_ready(actor, candidate, actor.mind):
                 rt_push(goals, dv_with_many(campaign_goal(c2_work_accepted(actor.id, item.id), item.when, [campaign_approved("user:2026-10-18-real-owned-cooperation-and-retraction")]), {"navigation_room": item.room, "navigation_methods": [rt_cat(item.id, ".undertake")]}))
         work_index = work_index + 1
-    let outward = actor.id == "moran" or dv_truth(actor.mind, dv_fact(campaign_own(actor.id, "accepted.seal_plan"), true)) == "true" or dv_truth(actor.mind, dv_fact(campaign_own(actor.id, "accepted.open_plan"), true)) == "true"
+    let outward = dv_truth(actor.mind, dv_fact(campaign_own(actor.id, "accepted.measurement_pause"), true)) == "true" or dv_truth(actor.mind, dv_fact(campaign_own(actor.id, "accepted.seal_plan"), true)) == "true" or dv_truth(actor.mind, dv_fact(campaign_own(actor.id, "accepted.open_plan"), true)) == "true"
     if outward and c2_owned_recheck_needed(actor):
         let previous = dv_read(actor.mind, campaign_ref("c2.meter", "safe"))
         let sample = c2_sample_claim(previous)
@@ -3000,6 +3033,12 @@ fn c2_safety_goals(actor):
             minimum = environment.time
         rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("c2.meter", "safe"), dv_at_least(campaign_clock(), 1980), source, minimum), {"navigation_room": "outdoor_meter", "navigation_methods": [rt_cat(actor.id, ".c2.sample.meter")]}))
     if dv_has(["detective", "bertrand", "huo"], actor.id):
+        // A fresh unsafe sample completes the empirical part of an adopted
+        // pause. Return to the agreed door instead of polling away its duty.
+        if dv_truth(actor.mind, dv_fact(campaign_own(actor.id, "accepted.measurement_pause"), true)) == "true" and dv_truth(actor.mind, dv_fact(campaign_ref("c2.meter", "safe"), false)) == "true":
+            let resolved = dv_truth(actor.mind, dv_fact(campaign_ref("case.astral", "evening_choice"), "go")) == "true" or dv_truth(actor.mind, dv_fact(campaign_ref("case.astral", "evening_choice"), "stay")) == "true"
+            if not resolved:
+                rt_push(goals, dv_with_many(campaign_goal(campaign_at(actor.id, "living_hall"), campaign_window(4, 1050, 1800), source), {"navigation_room": "living_hall", "maintain_presence": true}))
         if c2_owned_safety_notice(actor):
             let candidate = dvp_find_action(actor.actions, rt_cat(actor.id, ".c2.guard.undertake"))
             if candidate != false and dvp_owned_decision_ready(actor, candidate, actor.mind):
@@ -3358,6 +3397,14 @@ fn c2daily_rows_build():
     rt_push(rows, c2daily_after(c2daily_say("mora", "mora.c2.care-defiance", "central_hall", notes_window, "说明照护病人的底线", "如果夜里有人发烧快咽气，我不管你的账本是锁着的还是空的。药和粥我照样拿，名字我照样签。你如果要按‘私取’来审判一个救命的医生，那就当着全校十六人的面来审。", ["ward"]), "ruan", "ruan.c2.counter-gambit"))
     let quake = dv_all([campaign_window(4, 1050, 1260), dv_fact(campaign_ref("c2.weather", "earthquake_recent"), true)])
     let color = dv_fact(c2daily_ref("rare_color_layer"), "夹道罕见紫金以太色层")
+    var relay_index = 0
+    while relay_index < 2:
+        let suffix = rt_show(relay_index == 1)
+        let declaration = rt_cat("moran.c2.sketch.evening.go.", suffix)
+        let relay_id = rt_cat("demon.c2.relay.moran-outing.", suffix)
+        let relay = c2d_row("demon", relay_id, "logistics", c2_night(4), dv_true(), "向夜巡者转述外出宣告", "莫兰刚才在我面前说想沿夹道外出写生。这是他当时宣告的去向，我不知道他现在在哪里，也不知道他的身体情况。", campaign_approved("user:2026-10-23-real-heard-route-relay-not-remote-patient-facts"))
+        rt_push(rows, dv_with_many(relay, {"listeners": ["bertrand"], "received_speech_requirement": {"speaker": "moran", "action_id": declaration}}))
+        relay_index = relay_index + 1
     rt_push(rows, dv_with(c2d_row("demon", "demon.c2.truth-color", "living_hall", quake, color, "介绍夹道的色层", "夹道有罕见的紫金以太色层。", campaign_approved("actual-truthful-color-temptation-after-quake")), "opportunity", {"location": "living_hall", "participants": ["moran"], "mode": "all-present"}))
     let recent_quake = dv_fact(campaign_ref("c2.weather", "earthquake_recent"), true)
     let color_warning = dv_with(c2daily_say("veronica", "veronica.c2.color-refute", "living_hall", quake, "提醒颜色不能证明安全", "颜色好看，不能证明安全。震后要在现场测量浓度，核对读数取得的时刻，再谈能不能出去；别让一句真话把人引出门。", ["moran", "demon"]), "literal", recent_quake)
