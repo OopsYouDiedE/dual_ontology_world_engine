@@ -416,7 +416,6 @@ axiom c2_open_granary_law(actor):
 
 法则 c2_total_store_open_law，给定 行动者：
     当 c2i_granary_support()。
-    并且 campaign_window(3, 720, 840)。
     并且 行动者 位于 后勤院。
     并且 campaign_own(行动者, "can_lock") 等于 true。
     并且 粮仓 的 双闩状态 等于 false。
@@ -521,7 +520,6 @@ axiom c2_night_eat_law(actor):
 法则 c2_repair_latch_law，给定 行动者：
     当 行动者 位于 后勤院。
     并且 c2i_granary_support()。
-    并且 campaign_window(3, 720, 840)。
     并且 campaign_own(行动者, "can_lock") 等于 true。
     并且 粮仓 的 "lift_mm" 等于 4。
     并且 粮仓 的 "structure_checked" 等于 true。
@@ -728,7 +726,7 @@ fn c2_supply_actions(actor):
     rt_push(result, campaign_surface_action(distribute, "help", c2_distribute_law(actor).premise, c2_distribute_law(actor).premise, distribute, [campaign_ref("c2.counter", "open")], "开启配给台", "配给台开始发粮。", campaign_approved("counter-99-is-independent-of-total-granary-key")))
     if actor == "quer":
         let total_store = rt_cat(actor, ".c2.open.total_store")
-        let ready = dv_all([c2_total_store_open_law(actor).premise, c2_work_accepted(actor, "quer.c2.granary.precision")])
+        let ready = dv_all([campaign_window(3, 720, 840), c2_total_store_open_law(actor).premise, c2_work_accepted(actor, "quer.c2.granary.precision")])
         rt_push(result, dv_with(campaign_surface_action(total_store, "experiment", ready, c2_total_store_open_law(actor).premise, total_store, [campaign_ref("c2.granary", "total_store_locked"), campaign_ref("c2.granary", "reserve_added"), campaign_ref("c2.counter", "remaining"), campaign_ref("c2.ledger", "reserve_received")], "推开总库门并清点存粮", "在结构楔与千斤顶持续承托下推开总库门，将实际新增存粮并入配给库存。", campaign_approved("总库开启需要修闩与解锁的实际结果")), "work_operation", "quer.c2.granary.precision"))
     if actor != "shen":
         let give = rt_cat(actor, ".c2.give_key.shen")
@@ -761,7 +759,7 @@ fn c2_special_actions(actor):
         rt_push(result, dv_with_many(campaign_surface_action("margaret.c2.request.repair_latch", "talk", pre, pre, "margaret.c2.request.repair_latch", [], "请求修理粮仓门闩", "粮仓的门闩松了。雀儿，请你修一修。", source), {"speech": speech, "listeners": ["quer"]}))
     if actor == "quer":
         let physical = c2_repair_latch_law(actor).premise
-        let pre = dv_all([physical, c2_work_accepted(actor, "quer.c2.granary.precision")])
+        let pre = dv_all([campaign_window(3, 720, 840), physical, c2_work_accepted(actor, "quer.c2.granary.precision")])
         let id = rt_cat(actor, ".c2.repair.latch")
         rt_push(result, dv_with(campaign_surface_action(id, "experiment", pre, physical, id, [campaign_ref("c2.granary", "latch_loose"), campaign_ref("c2.granary", "tool_marks"), campaign_ref("c2.granary", "double_bolts"), campaign_ref("c2.granary", "locked")], "修整粮仓门闩与双栓", "趁门框抬起四毫米，双钩同时挑开两根门栓，再紧固门闩。", c2_source("10_执行.story", 17, "RepairLatch")), "work_operation", "quer.c2.granary.precision"))
     if actor == "mora" or actor == "selma" or actor == "shen":
@@ -2209,10 +2207,13 @@ fn c2sf_action(actor, action):
     return result
 
 fn c2i_premise(row):
-    return dv_all([c2i_physical_premise(row), c2_work_accepted(row.actor, row.id)])
+    return dv_all([c2i_physical_premise(row), row.when, c2_work_accepted(row.actor, row.id)])
 
 fn c2i_physical_premise(row):
-    var conditions = dv_append(row.requirements, dv_all([campaign_at(row.actor, row.room), c2_alive(row.actor), row.when]))
+    var physical_when = row.when
+    if row.object == "case.contract" or row.object == "c2.granary":
+        physical_when = dv_true()
+    var conditions = dv_append(row.requirements, dv_all([campaign_at(row.actor, row.room), c2_alive(row.actor), physical_when]))
     if row.field == "wedge_set" or row.field == "lift_mm":
         rt_push(conditions, dv_fact(campaign_own(row.actor, "support_active"), false))
     if row.field == "emergency_inventory_majority":
@@ -2323,6 +2324,10 @@ fn c2i_actions(actor):
                 action = dv_with(action, "received_speech_requirement", {"any_of": invitations})
             if c2sf_case_row(row):
                 action = dv_with(action, "storyflow_case_row", row)
+            if row.object == "case.contract":
+                action = dv_with(action, "storyflow_document", true)
+            if row.object == "c2.granary":
+                action = dv_with(action, "storyflow_granary", true)
             if actor == "quer" and row.field != "lock_no_pry":
                 action = dv_with(action, "work_operation", row.id)
             if row.field == "wedge_set" or row.field == "lift_mm":
@@ -2368,8 +2373,11 @@ fn c2i_goals(actor):
     var goals = []
     if id == "quer" and c2_quer_concerned(actor):
         rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_own("ward", "restriction_withdrawn"), true), dv_all([dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_fact(campaign_ref("case.contract", "lock_no_pry"), true)]), [campaign_approved("actual-restriction-withdrawal-receipt")]), {"navigation_room": "document_workshop", "navigation_methods": ["quer.c2.ask-restriction-status"]}))
+    if c2g_enabled(actor) and id == "detective" and c2g_review_requested(actor, "ward") and c2g_review_requested(actor, "quer") and dv_truth(actor.mind, dv_fact(campaign_own("ward", "restriction_withdrawn"), true)) != "true":
+        let unresolved = dv_true()
+        rt_push(goals, dv_with_many(campaign_goal(campaign_at(id, "document_workshop"), unresolved, [campaign_approved("actual-attendance-after-review-invitations")]), {"navigation_room": "document_workshop", "maintain_presence": true}))
     if id == "ward" or id == "quer":
-        if c2_received_requirement(actor, {"speaker": "detective", "action_id": rt_cat("detective.c2.contract-review.request.", id)}):
+        if c2g_review_heard(actor):
             rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_true(), [campaign_approved("actual-heard-contract-review-request")]), {"navigation_room": "document_workshop", "navigation_methods": [rt_cat(id, ".c2.investigation.inspect.document_workshop")]}))
         rt_push(goals, campaign_observation_goal(campaign_ref("case.contract", "cabinet_key_holder"), campaign_at(id, "document_workshop"), [campaign_approved("actual-key-custody-receipt")], 0))
     goals = c2m_concat(goals, c2m_goals(actor))
@@ -2445,8 +2453,13 @@ fn c2i_goals(actor):
             row = c2sf_row(row)
         if row.actor == id and not (streamlined and row.field == "patient_thanked"):
             let completion = dv_fact(campaign_ref(row.object, row.field), c2i_value(row))
-            var undertaking = dv_all([row.when, c2_work_accepted(id, row.id)])
+            var undertaking_when = row.when
+            if c2g_enabled(actor) and (row.object == "case.contract" or row.object == "c2.granary"):
+                undertaking_when = dv_true()
+            var undertaking = dv_all([undertaking_when, c2_work_accepted(id, row.id)])
             var navigation_requirements = row.requirements
+            if c2g_enabled(actor) and row.object == "case.contract":
+                undertaking = undertaking_when
             if streamlined:
                 undertaking = row.when
                 navigation_requirements = []
@@ -2474,12 +2487,20 @@ fn c2i_goals(actor):
                 field_index = field_index + 1
         place_index = place_index + 1
     if dv_has(["detective", "margaret", "huo", "quer"], id):
+        var granary_when = campaign_window(3, 720, 840)
+        var granary_minimum = 3600
+        if c2g_enabled(actor):
+            granary_when = c2g_granary_available(actor)
+            granary_minimum = 0
         let granary_fields = ["structure_checked", "wedge_set", "lift_mm", "double_bolts"]
         var field_index = 0
         while field_index < rt_count(granary_fields):
-            rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("c2.granary", granary_fields[field_index]), campaign_window(3, 720, 840), [campaign_approved("actual-cooperation-observation")], 3600), {"navigation_room": "logistics", "navigation_methods": [rt_cat(id, ".c2.inspect.c2.granary"), rt_cat(id, ".c2.investigation.inspect.logistics")]}))
+            rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("c2.granary", granary_fields[field_index]), granary_when, [campaign_approved("actual-cooperation-observation")], granary_minimum), {"navigation_room": "logistics", "navigation_methods": [rt_cat(id, ".c2.inspect.c2.granary"), rt_cat(id, ".c2.investigation.inspect.logistics")]}))
             field_index = field_index + 1
-        rt_push(goals, campaign_goal(dv_fact(campaign_ref("c2.granary", "total_store_locked"), false), campaign_window(3, 720, 840), [campaign_approved("three-person-granary-opening")]))
+        rt_push(goals, campaign_goal(dv_fact(campaign_ref("c2.granary", "total_store_locked"), false), granary_when, [campaign_approved("three-person-granary-opening")]))
+    if c2g_enabled(actor) and dv_has(["detective", "margaret", "huo", "quer"], id):
+        let live = dv_all([c2g_granary_available(actor), dv_fact(campaign_ref("c2.granary", "total_store_locked"), true)])
+        rt_push(goals, dv_with_many(campaign_goal(campaign_at(id, "logistics"), live, [campaign_approved("user:2026-10-23-storyflow-real-granary-work")]), {"navigation_room": "logistics", "maintain_presence": true}))
     return goals
 
 法则 c2i_reserve_column_law：
@@ -2740,6 +2761,137 @@ fn c2i_navigation_input(actor):
 
 // Work decisions belong to their owner. An invitation is a heard request;
 // neither it nor a partnership promise changes another body's physical skill.
+// Storyflow changes ordinary coordination, never the physical work receipts.
+fn c2g_enabled(actor):
+    return dv_find(actor.policy, "opt_storyflow", true)
+
+fn c2g_work(id):
+    if id == "":
+        return false
+    let key = ["storyflow-granary-work-v1", id]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    let specs = c2_work_specs()
+    var i = 0
+    while i < rt_count(specs):
+        if specs[i].id == id:
+            return rt_memo_put([], key, specs[i].room == "document_workshop" or specs[i].field == "wedge_set" or specs[i].field == "lift_mm" or specs[i].field == "double_bolts")
+        i = i + 1
+    return false
+
+fn c2g_without_clock(condition):
+    if dv_has_key(condition, "ref") and dv_same(condition.ref, campaign_clock()):
+        return dv_true()
+    let op = dv_find(condition, "op", "")
+    if op == "all" or op == "any":
+        var items = []
+        var i = 0
+        while i < rt_count(condition.items):
+            rt_push(items, c2g_without_clock(condition.items[i]))
+            i = i + 1
+        if op == "all":
+            return dv_all(items)
+        var negative = []
+        i = 0
+        while i < rt_count(items):
+            rt_push(negative, dv_not(items[i]))
+            i = i + 1
+        return dv_not(dv_all(negative))
+    if op == "not":
+        // Time-window upper bounds use not(at_least(clock,...)).
+        if dv_has_key(condition.item, "ref") and dv_same(condition.item.ref, campaign_clock()):
+            return dv_true()
+        return dv_not(c2g_without_clock(condition.item))
+    return condition
+
+fn c2g_request_receipt(actor, job):
+    var alternatives = [{"speaker": "detective", "action_id": rt_cat(job, ".request")}]
+    let rooms = c2_rooms()
+    var i = 0
+    while i < rt_count(rooms):
+        rt_push(alternatives, {"speaker": "detective", "action_id": rt_cat(job, rt_cat(".request.storyflow.", rooms[i]))})
+        i = i + 1
+    return {"any_of": alternatives}
+
+fn c2g_work_heard(actor, job):
+    return c2_received_requirement(actor, c2g_request_receipt(actor, job))
+
+fn c2g_without_consent(condition, actor, job):
+    if dv_same(condition, c2_work_accepted(actor, job)):
+        return dv_true()
+    if dv_find(condition, "op", "") == "all":
+        var items = []
+        var i = 0
+        while i < rt_count(condition.items):
+            rt_push(items, c2g_without_consent(condition.items[i], actor, job))
+            i = i + 1
+        return dv_all(items)
+    return condition
+
+fn c2g_granary_available(actor):
+    if actor.id == "detective":
+        return dv_all([dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_fact(campaign_own("ward", "restriction_withdrawn"), true), dv_fact(campaign_ref("c2.granary", "total_store_locked"), true)])
+    let jobs = ["margaret.c2.granary.wedge", "huo.c2.granary.jack", "quer.c2.granary.precision"]
+    var i = 0
+    while i < rt_count(jobs):
+        if c2g_work_heard(actor, jobs[i]):
+            return dv_true()
+        i = i + 1
+    return dv_not(dv_true())
+
+fn c2g_review_requested(actor, target):
+    let completed = dv_find(actor, "completed_actions", [])
+    if dv_has(completed, rt_cat("detective.c2.contract-review.request.", target)):
+        return true
+    let rooms = c2_rooms()
+    var i = 0
+    while i < rt_count(rooms):
+        if dv_has(completed, rt_cat("detective.c2.contract-review.storyflow.", rt_cat(target, rt_cat(".", rooms[i])))):
+            return true
+        i = i + 1
+    return false
+
+fn c2g_review_heard(actor):
+    if c2_received_requirement(actor, {"speaker": "detective", "action_id": rt_cat("detective.c2.contract-review.request.", actor.id)}):
+        return true
+    if not c2g_enabled(actor):
+        return false
+    let rooms = c2_rooms()
+    var i = 0
+    while i < rt_count(rooms):
+        if c2_received_requirement(actor, {"speaker": "detective", "action_id": rt_cat("detective.c2.contract-review.storyflow.", rt_cat(actor.id, rt_cat(".", rooms[i])))}):
+            return true
+        i = i + 1
+    return false
+
+fn c2g_storyflow_action(actor, original):
+    var action = original
+    if dv_find(action, "storyflow_only", false) and not c2g_enabled(actor):
+        return dv_with(action, "precondition", dv_not(dv_true()))
+    if not c2g_enabled(actor):
+        return action
+    if dv_find(action, "legacy_granary_request", false):
+        return dv_with(action, "precondition", dv_not(dv_true()))
+    let job = dv_find(action, "work_decision", dv_find(action, "work_operation", dv_find(action, "work_reply", "")))
+    if c2g_work(job) and dv_find(action, "work_refusal", false):
+        action = dv_with(action, "received_speech_requirement", c2g_request_receipt(actor, job))
+    var affected = c2g_work(job)
+    if dv_find(action, "storyflow_document", false):
+        affected = true
+        action = dv_with(action, "precondition", c2g_without_consent(action.precondition, actor.id, action.id))
+    if dv_find(action, "storyflow_granary", false):
+        affected = true
+    if dv_has([rt_cat(actor.id, ".c2.repair.latch"), rt_cat(actor.id, ".c2.open.total_store")], action.id):
+        affected = true
+    if affected:
+        action = dv_with(action, "precondition", c2g_without_clock(action.precondition))
+        if dv_has_key(action, "personal_choice"):
+            action = dv_with(action, "personal_choice", dv_with(action.personal_choice, "requires", c2g_without_clock(action.personal_choice.requires)))
+        if dv_has_key(action, "work_decision") and dv_has_key(action, "received_speech_requirement"):
+            action = dv_with(action, "received_speech_requirement", c2g_request_receipt(actor, job))
+    return action
+
 fn c2_work_accepted(actor, id):
     return dv_fact(campaign_own(actor, rt_cat("work.accepted.", id)), true)
 
@@ -2899,8 +3051,24 @@ fn c2_cooperation_rows():
             if requester != item.actor:
                 var invite = c2d_row(requester, rt_cat(item.id, ".request"), item.room, item_active, dv_true(), rt_cat("请求协作：", item.purpose), rt_cat("请你自己判断能否承担这一项：", item.purpose), source)
                 invite = dv_with_many(invite, {"repeatable": false, "request": {"target": item.actor, "topic": rt_cat("work.", item.id)}, "opportunity": {"location": item.room, "participants": [item.actor], "mode": "all-present"}})
+                if item.field == "wedge_set" or item.field == "lift_mm" or item.field == "double_bolts":
+                    invite = dv_with(invite, "legacy_granary_request", true)
                 rt_push(rows, invite)
         i = i + 1
+    let reviewed_granary = dv_all([dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_fact(campaign_own("ward", "restriction_withdrawn"), true)])
+    let meeting_rooms = c2_rooms()
+    var meeting_index = 0
+    while meeting_index < rt_count(meeting_rooms):
+        var job_index = 0
+        while job_index < rt_count(work):
+            let job = work[job_index]
+            if job.field == "wedge_set" or job.field == "lift_mm" or job.field == "double_bolts":
+                let room = meeting_rooms[meeting_index]
+                var request = c2d_row("detective", rt_cat(job.id, rt_cat(".request.storyflow.", room)), room, dv_all([dv_fact(campaign_ref("c2.granary", "total_store_locked"), true), reviewed_granary]), dv_true(), "当面商议粮仓协作", rt_cat("请你到后勤院自行核对并决定是否承担：", job.purpose), source)
+                request = dv_with_many(request, {"storyflow_only": true, "request": {"target": job.actor, "topic": rt_cat("work.", job.id)}, "opportunity": {"location": room, "participants": [job.actor], "mode": "all-present"}})
+                rt_push(rows, request)
+            job_index = job_index + 1
+        meeting_index = meeting_index + 1
     let reviewed = dv_all([dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_fact(campaign_ref("case.contract", "lock_no_pry"), true)])
     let reviewers = ["ward", "quer"]
     var reviewer_index = 0
@@ -2916,6 +3084,17 @@ fn c2_cooperation_rows():
     var status = c2d_row("quer", "quer.c2.ask-restriction-status", "document_workshop", dv_true(), dv_true(), "询问指控是否撤回", "先前的指控是否已经撤回？请把现在的依据说清楚。", source)
     status = dv_with_many(status, {"concern_question": true, "repeatable": true, "request": {"target": "ward", "topic": "restriction-status"}})
     rt_push(rows, status)
+    meeting_index = 0
+    while meeting_index < rt_count(meeting_rooms):
+        reviewer_index = 0
+        while reviewer_index < rt_count(reviewers):
+            let reviewer = reviewers[reviewer_index]
+            let room = meeting_rooms[meeting_index]
+            var invitation = c2d_row("detective", rt_cat("detective.c2.contract-review.storyflow.", rt_cat(reviewer, rt_cat(".", room))), room, reviewed, dv_true(), "当面邀请复核指控依据", "清册与锁具已有实际核对结果。请回文献工房当面复核，先把指控与自由限制的依据说清楚。", source)
+            invitation = dv_with_many(invitation, {"storyflow_only": true, "request": {"target": reviewer, "topic": "contract-review"}, "opportunity": {"location": room, "participants": [reviewer], "mode": "all-present"}})
+            rt_push(rows, invitation)
+            reviewer_index = reviewer_index + 1
+        meeting_index = meeting_index + 1
     let withdrawn = dv_fact(campaign_own("ward", "restriction_withdrawn"), true)
     rt_push(rows, dv_with_many(c2d_reply("ward", "ward.c2.reply-withdrawn", "document_workshop", withdrawn, withdrawn, "restriction-status", "答复指控撤回事宜", "我已经撤回先前那项指控。", source), {"repeatable": true, "listeners": ["quer", "detective"], "public_observers": campaign_people(), "public_grants": [campaign_own("ward", "restriction_withdrawn")]}))
     let people = campaign_people()
@@ -3194,6 +3373,7 @@ fn c2_refresh_content_actions(actor):
                 qualification = dv_not(dv_true())
             action = dv_with(action, "precondition", qualification)
             action = dv_with(action, "personal_choice", dv_with(action.personal_choice, "requires", qualification))
+        action = c2g_storyflow_action(actor, action)
         // A supporter can physically leave; doing so releases the operation.
         // Its own continuing-duty goal is considered by the shared planner.
         action = c2sf_action(actor, action)
@@ -3223,7 +3403,10 @@ fn c2_safety_goals(actor):
         if item.actor == actor.id:
             let candidate = dvp_find_action(actor.actions, rt_cat(item.id, ".undertake"))
             if candidate != false and dvp_owned_decision_ready(actor, candidate, actor.mind):
-                rt_push(goals, dv_with_many(campaign_goal(c2_work_accepted(actor.id, item.id), item.when, [campaign_approved("user:2026-10-18-real-owned-cooperation-and-retraction")]), {"navigation_room": item.room, "navigation_methods": [rt_cat(item.id, ".undertake")]}))
+                var work_when = item.when
+                if c2g_enabled(actor) and c2g_work(item.id):
+                    work_when = dv_true()
+                rt_push(goals, dv_with_many(campaign_goal(c2_work_accepted(actor.id, item.id), work_when, [campaign_approved("user:2026-10-18-real-owned-cooperation-and-retraction")]), {"navigation_room": item.room, "navigation_methods": [rt_cat(item.id, ".undertake")]}))
         work_index = work_index + 1
     let outward = dv_truth(actor.mind, dv_fact(campaign_own(actor.id, "accepted.measurement_pause"), true)) == "true" or dv_truth(actor.mind, dv_fact(campaign_own(actor.id, "accepted.seal_plan"), true)) == "true" or dv_truth(actor.mind, dv_fact(campaign_own(actor.id, "accepted.open_plan"), true)) == "true"
     if outward and c2_owned_recheck_needed(actor):
@@ -4254,7 +4437,7 @@ fn c2d_action(row):
         action = dv_with(action, "speech", dv_with_many(speech, {"utterance_type": "proposal", "norm_proposal": row.norm_proposal}))
     if dv_has_key(row, "personal_choice"):
         action = dv_with(action, "personal_choice", row.personal_choice)
-    let metadata = ["public_grants", "public_observers", "work_decision", "work_reply", "work_clearance", "work_refusal", "concern_question", "repeatable", "manual_only", "safety_warning", "guard_decision", "advice_decision", "owned_decision", "owner_utility", "partner_decision", "completed_action_requirement"]
+    let metadata = ["storyflow_only", "legacy_granary_request", "public_grants", "public_observers", "work_decision", "work_reply", "work_clearance", "work_refusal", "concern_question", "repeatable", "manual_only", "safety_warning", "guard_decision", "advice_decision", "owned_decision", "owner_utility", "partner_decision", "completed_action_requirement"]
     var metadata_index = 0
     while metadata_index < rt_count(metadata):
         if dv_has_key(row, metadata[metadata_index]):
@@ -4492,6 +4675,10 @@ fn c2d_goals(actor):
                 when = dv_not(dv_true())
             if not dv_find(row, "repeatable", false):
                 when = dv_all([when, dv_fact(c2d_mark(actor.id, row.id), false)])
+            if dv_find(row, "legacy_granary_request", false) and c2g_enabled(actor):
+                when = dv_not(dv_true())
+            if dv_find(row, "storyflow_only", false) and not c2g_enabled(actor):
+                when = dv_not(dv_true())
             if dv_has_key(row, "owned_decision"):
                 let candidate = dvp_find_action(actor.actions, row.id)
                 if candidate == false or not dvp_owned_decision_ready(actor, candidate, actor.mind):
