@@ -232,3 +232,10 @@ DAG 解码继续使用同一 evidence-index 开关：以字节游标和 unpack_f
 `opt_stateindex` 是独立运行时存储优化，执行环境 `DV_OPT_STATEINDEX` 的 `1/0` 在新 ValueContext 创建时采样，DV 入口可用 `rt_stateindex_enabled()` 核对实际值。run_debug 在执行前明确设置环境，65核对环境与规范化配置一致。该开关不依赖 taskgraph/storyflow，也不按 profile 选择结果；与已有 cow 共同覆盖的路径须按两个开关组合报告。复用程序集的 runtime_switch_contract 和 runtime_config_at_capture 同时保留 runtimespeed/stateindex，旧v2清单缺少新运行时合同会明确拒绝，须从当前源码重新构建，不补写历史证明。完整文件与来源指纹仍须一致；同一二进制可用不同运行配置启动，不能把捕获时配置冒充本次执行配置。
 
 三个开关均属于 FLAGS，baseline 全关及 ablation-taskgraph/storyflow/stateindex 使用统一路径权限与清理规则；增加开关不授权正式会话或扩大运行窗口。实际配置、运行时环境、来源封存、机制差分、人物效果及整局性能结论分别记录。
+
+
+### 第二章 storyflow 内容合同
+
+`opt_storyflow` 开启时，文献取证和专业协作可在实际条件成立后执行，不再受原有短日期窗口限制。`storyflow_document`、`storyflow_granary`、`storyflow_case_row` 标记对应内容变换；`storyflow_only` 与 `legacy_granary_request` 区分新旧请求候选。关闭时保留原候选窗口及承担/邀请路径。新旧路径共同经过正式资格、实际现场和 Complete，权威法则不读取侦探策略名称。
+
+普通承担、重复邀请和礼仪对白可以合并或省略，未实际发生的对白不出现在完成记录。实际材料、本人所知、专业技能、协作同意与支承仍是条件；雀儿未解的顾虑不能因简化专业操作而消失。天气突变、测量时效、暴露、病程与救治不属于调查窗口放宽。该开关属于内容/策略变化，不声称轨迹等价。
