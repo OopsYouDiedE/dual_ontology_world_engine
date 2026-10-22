@@ -11,6 +11,9 @@ fn v_events(trace):
     return dv_find(trace, "events", [])
 
 fn v_event(events, id):
+    let indexed = rt_causal_event_index(events, id)
+    if indexed[0]:
+        return indexed[1]
     var i = rt_count(events)
     var found = []
     var matched = false
@@ -32,6 +35,9 @@ fn v_first(events, type, actor):
     return found
 
 fn v_ancestor(events, child, ancestor):
+    let indexed = rt_causal_ancestor_index(events, child, ancestor)
+    if indexed[0]:
+        return indexed[1]
     var queue = dv_single(child)
     var visited = []
     var cursor = 0
@@ -54,6 +60,9 @@ fn v_ancestor(events, child, ancestor):
     return found
 
 fn v_ancestors(events, child):
+    let indexed = rt_causal_ancestors_index(events, child)
+    if indexed[0]:
+        return indexed[1]
     var queue = dv_single(child)
     var visited = []
     var cursor = 0

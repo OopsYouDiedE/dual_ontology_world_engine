@@ -1,5 +1,6 @@
 using DuelView.Compiled;
 using System.Globalization;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -10,16 +11,26 @@ internal static class CausalCheckBridge
     {
         try
         {
-            if (args.Length != 3)
-                throw new ArgumentException("Usage: causal-check manifest.dv.json raw-events.dvdag report.dvdag");
+            if (args.Length != 3 && args.Length != 4)
+                throw new ArgumentException("Usage: causal-check manifest.dv.json raw-events.dvdag report.dvdag [--opt-causal-index=on|off]");
+            var option = args.Length == 4 ? args[3] : "--opt-causal-index=on";
+            if (option != "--opt-causal-index=on" && option != "--opt-causal-index=off")
+                throw new ArgumentException("Unknown causal index switch");
+            R.ConfigureCausalIndex(option == "--opt-causal-index=on");
             R.Arguments = args;
             using var output = R.UseOutput(Console.Error);
             using var audit = R.UseAudit(true);
             using var recording = R.UseRawRecording(false);
             var manifest = R.json_parse(R.read(args[0]));
             var expectedHash = R.Text(R.record_find(manifest, "raw_sha256", ""));
+            var stage = Stopwatch.StartNew();
+            Console.Error.WriteLine("causal-stage dag-read-start " + option);
             var sealedValue = ReadSealedJournal(args[1], expectedHash);
+            Console.Error.WriteLine("causal-stage dag-read-complete elapsed_ms=" + stage.Elapsed.TotalMilliseconds.ToString("R", CultureInfo.InvariantCulture));
+            stage.Restart();
+            Console.Error.WriteLine("causal-stage domain-check-start");
             var report = DVProgram.JudgeBinaryEvidence(manifest, sealedValue);
+            Console.Error.WriteLine("causal-stage domain-check-complete elapsed_ms=" + stage.Elapsed.TotalMilliseconds.ToString("R", CultureInfo.InvariantCulture));
             R.WriteEvidenceFile(args[2], report);
             var summary = R.record_with(DVProgram.BinaryEvidenceSummary(report), "report", Path.GetFullPath(args[2]));
             using var stream = Console.OpenStandardOutput();

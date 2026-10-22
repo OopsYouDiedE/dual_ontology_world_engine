@@ -24,3 +24,5 @@ CLI 的 JPG 由已经记录的同一画布离线导出，覆盖实际聚焦、�
 激进优化诊断可用 aggressive_report.py 只读汇总固定输出目录；它不启动 AI、不展开原始 DAG。--profile 的 DV_PROFILE_NATIVE 条件编译细分 Runtime 热点，无插桩 Release 不包含这些探针。判定只读视图与字段 cell 缓存均按 CLI 显式开关采样于执行上下文，不读取人物策略档。
 
 run_debug 的新增优化开关默认 on；mask/dirty verify 默认 off，仅作排错。prune 深度、时间桶和核验间隔写入配置指纹与恢复一致性检查。主会话耗时与构建、离线领域核验耗时分别记录，不以进程后处理时间替代游戏计时。
+
+只读因果检查可独立关闭 causal-index；检查器开关和时限记录在 provenance.verification_config，不混入人物策略。索引只加速查找，不删检查，实际命中与关闭路径须保持等价。

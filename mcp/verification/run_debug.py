@@ -100,7 +100,7 @@ def dv_record(value):
     return value
 
 
-def causal_check(out, result, source_hashes, normalized, env, timeout):
+def causal_check(out, result, source_hashes, normalized, env, timeout, causal_index='on'):
     """Read the sealed binary journal with the isolated 70-checks entry."""
     work = out / 'causal-program'
     work.mkdir()
@@ -138,14 +138,14 @@ def causal_check(out, result, source_hashes, normalized, env, timeout):
     started = time.monotonic()
     with (out / 'causal-check.dvlog').open('xb') as stdout, (out / 'causal-check-stderr.txt').open('xb') as stderr:
         process = subprocess.run(['dotnet', str(work / 'bin/Release/net8.0/Program.dll'),
-                                  str(manifest_path), str(out / result['raw_path']), str(report_path)],
+                                  str(manifest_path), str(out / result['raw_path']), str(report_path), '--opt-causal-index=' + causal_index],
                                  cwd=ROOT, env=env, stdout=stdout, stderr=stderr, timeout=timeout)
     if process.returncode:
         raise RuntimeError(f'Causal checker exited {process.returncode}; see causal-check-stderr.txt')
     packets = [record(item) for item in records(out / 'causal-check.dvlog')]
     if len(packets) != 1 or packets[0].get('type') != 'causal_check' or not report_path.is_file():
         raise ValueError('Causal checker did not publish its binary report and summary')
-    return {**packets[0], 'build_elapsed_seconds': build_seconds,
+    return {**packets[0], 'opt_causal_index': causal_index == 'on', 'build_elapsed_seconds': build_seconds,
             'execution_elapsed_seconds': time.monotonic() - started,
             'report': report_path.name, 'summary': 'causal-check.dvlog'}
 
@@ -383,6 +383,7 @@ def main():
     parser.add_argument('--evidence-from', type=Path, help='Only project an existing binary packet stream into a new --out directory; never build or execute a session')
     parser.add_argument('--causal-timeout', type=int, default=300,
                         help='Separate time limit for read-only 70-checks after a complete sealed session')
+    parser.add_argument('--opt-causal-index', choices=('on', 'off'), default='on', help='Read-only checker event/ancestor index; does not affect session decisions')
     parser.add_argument('--detective-profile', default='Standard_Detective', choices=('Standard', 'Foolish', 'Standard_Detective', 'Foolish_Detective', 'Shura_Detective'))
     parser.add_argument('--opening-seed', type=int, default=1)
     parser.add_argument('--homecoming-negotiation', action='store_true', help='Enable declared homecoming negotiation candidates; does not seed votes or outcomes')
@@ -479,7 +480,7 @@ def main():
     normalized = {str(path): hashlib.sha256(text.encode('utf-8')).hexdigest() for path, text in modules}
     checker_normalized = {str(path): hashlib.sha256(text.encode('utf-8')).hexdigest() for path, text in checker_modules}
     (out / 'source-hashes.json').write_text(json.dumps(hashes, indent=2), encoding='utf-8')
-    provenance = {'format': 'dv-debug-provenance-v1', 'source_hashes': hashes, 'source_manifest_sha256': sha_file(out / 'source-hashes.json'), 'run_config': run_config, 'instrumented': args.profile}
+    provenance = {'format': 'dv-debug-provenance-v1', 'source_hashes': hashes, 'source_manifest_sha256': sha_file(out / 'source-hashes.json'), 'run_config': run_config, 'instrumented': args.profile, 'verification_config': {'opt_causal_index': args.opt_causal_index == 'on', 'timeout_seconds': args.causal_timeout}}
     provenance_path = out / 'run-provenance.dv.json'
     provenance_path.write_text(json.dumps(dv_record(provenance), ensure_ascii=True), encoding='utf-8')
     restore_input_hashes = {}
@@ -618,7 +619,7 @@ def main():
         if result['evidence_complete']:
             try:
                 result['causal_check'] = causal_check(out, result, hashes, checker_normalized,
-                                                     execution_env, args.causal_timeout)
+                                                     execution_env, args.causal_timeout, args.opt_causal_index)
                 result['causal_check_reason'] = result['causal_check']['domain_evaluation_reason']
                 result['causal_check_complete'] = result['causal_check'].get('domain_evaluation_complete') is True
                 result['causal_check_status'] = 'completed' if result['causal_check_complete'] else 'not-completed'
