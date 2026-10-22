@@ -187,3 +187,5 @@ readview 还可复用条件读取输入已经存在的有效不可变 Backbone�
 明确导航任务通过目标结构 `navigation_commitment=true` 表达持续到完成的本人行动承诺；普通可反复满足的地点偏好不会占用此承诺，避免一般回厅愿望阻断多段调查路线。协调器不改变承诺目标本身的分数、合法性或成立条件。
 
 非语言声响可声明 `presentation.kind=environmental-sound` 与 `surface_voice=narration`；Core透传呈现类别/语态，宿主显示“现场声响”，不将未知发声来源显示为已辨认的人物对白。真实事件的行动者和听觉传播依据仍完整保留，声响呈现不改变听者知识。
+
+S5内容接线由本人价值形成实际门内观察与窄条款协商，条款通过真实提出/张贴/收闻/自行采纳后才约束本人；教师只能转述实际收到的外出宣告路线，不传播远端位置或伤情。取消无条款来源的Moran强制复测需求并保留已有危险读数。这些是内容及动机模型变更，不属于等价性能优化；实测与参数见artifacts/perf-opt/aggressive/branch-survival/survival-wiring-review.md。
