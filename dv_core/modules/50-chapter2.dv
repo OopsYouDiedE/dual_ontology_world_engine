@@ -2321,7 +2321,7 @@ fn c2i_goals(actor):
         let granary_fields = ["structure_checked", "wedge_set", "lift_mm", "double_bolts"]
         var field_index = 0
         while field_index < rt_count(granary_fields):
-            rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("c2.granary", granary_fields[field_index]), campaign_window(3, 720, 840), [campaign_approved("actual-cooperation-observation")], 0), {"navigation_room": "logistics", "navigation_methods": [rt_cat(id, ".c2.inspect.c2.granary"), rt_cat(id, ".c2.investigation.inspect.logistics")]}))
+            rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("c2.granary", granary_fields[field_index]), campaign_window(3, 720, 840), [campaign_approved("actual-cooperation-observation")], 3600), {"navigation_room": "logistics", "navigation_methods": [rt_cat(id, ".c2.inspect.c2.granary"), rt_cat(id, ".c2.investigation.inspect.logistics")]}))
             field_index = field_index + 1
         rt_push(goals, campaign_goal(dv_fact(campaign_ref("c2.granary", "total_store_locked"), false), campaign_window(3, 720, 840), [campaign_approved("three-person-granary-opening")]))
     return goals
