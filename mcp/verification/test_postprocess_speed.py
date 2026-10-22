@@ -35,6 +35,46 @@ class PostprocessChecks(unittest.TestCase):
         for payload in (forward, reverse):
             self.assertEqual(encode(decode(payload)), payload)
 
+    def test_indexed_decoder_differential(self):
+        import random
+        from binary_evidence import decode_indexed
+        rng = random.Random(180)
+        values = [None, -0.0, -2**63, 2**63-1, [], {},
+                  {'b': [1, {'nested': '原始'}], 'a': False},
+                  {'seq': 4, 'prev': '0'*64,
+                   'payload': {'kind': 'node', 'node_id': 3, 'items': ['x', {'node': 0}]},
+                   'sha256': 'f'*64}]
+        cases = [encode(value) for value in values]
+        import struct
+        cases += [b'\x04' + struct.pack('<d', float('nan')),
+                  b'\x05\x01\x00\x00\x00\xff',
+                  b'\x07\x02\x00\x00\x00' + encode('same') + encode(1) + encode('same') + encode(2)]
+        for encoded in list(cases):
+            cases.extend(encoded[:length] for length in range(len(encoded)))
+            for offset in range(len(encoded)):
+                damaged = bytearray(encoded)
+                damaged[offset] ^= 255
+                cases.append(bytes(damaged))
+        cases += [rng.randbytes(rng.randrange(80)) for _ in range(1000)]
+        def outcome(decoder, payload):
+            try:
+                result = decoder(payload)
+                return ('value', encode(result))
+            except (ValueError, RecursionError) as issue:
+                return ('error', type(issue), str(issue))
+        for payload in cases:
+            self.assertEqual(outcome(decode, payload), outcome(decode_indexed, payload), payload)
+        # Make the documented format depth limit reachable independently of the
+        # interpreter stack ceiling and its context-dependent error wording.
+        import sys
+        old_limit = sys.getrecursionlimit()
+        try:
+            sys.setrecursionlimit(5000)
+            deep = b'\x08\x01\x00\x00\x00' * 514 + b'\x00'
+            self.assertEqual(outcome(decode, deep), outcome(decode_indexed, deep))
+        finally:
+            sys.setrecursionlimit(old_limit)
+
     def test_projection_on_off(self):
         from run_debug import export
         from binary_evidence import RecordWriter

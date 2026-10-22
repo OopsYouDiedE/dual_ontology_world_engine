@@ -13,6 +13,10 @@ import struct
 
 MAGIC = b'DVLOG2\r\n'
 MAX_FRAME = 256 * 1024 * 1024
+_INT64 = struct.Struct('<q').unpack_from
+_DOUBLE = struct.Struct('<d').unpack_from
+_UINT32 = struct.Struct('<I').unpack_from
+_NODE_ATOM = b'\x07\x01\x00\x00\x00\x05\x04\x00\x00\x00node\x03'
 
 
 def encode(value):
@@ -84,6 +88,129 @@ def decode(payload, spans=None):
     return value
 
 
+def _decode_cursor(payload, spans=None, start=0, end=None, depth=0):
+    """Equivalent cursor decoder for indexed reads; no per-atom BytesIO reads."""
+    position, limit = start, len(payload) if end is None else end
+    integer, real, length = _INT64, _DOUBLE, _UINT32
+    def get(depth=0):
+        nonlocal position
+        if depth > 512: raise ValueError('Binary evidence nesting exceeds 512')
+        if position >= limit: raise ValueError('Truncated binary value')
+        tag = payload[position]
+        position += 1
+        if tag == 0: return None
+        if tag == 1: return False
+        if tag == 2: return True
+        if tag == 3 or tag == 4:
+            if position + 8 > limit: raise ValueError('Truncated binary value')
+            value = integer(payload, position)[0] if tag == 3 else real(payload, position)[0]
+            position += 8
+            if tag == 4 and not math.isfinite(value): raise ValueError('Nonfinite evidence number')
+            return value
+        if tag == 5 or tag == 7 or tag == 8:
+            if position + 4 > limit: raise ValueError('Truncated binary value')
+            count = length(payload, position)[0]
+            position += 4
+            if tag == 5:
+                end = position + count
+                if end > limit: raise ValueError('Truncated binary value')
+                value = payload[position:end].decode('utf-8', errors='strict')
+                position = end
+                return value
+            if count > limit: raise ValueError('Invalid binary collection length')
+            if tag == 8:
+                if depth > 510: return [get(depth + 1) for _ in range(count)]
+                values = []
+                for _ in range(count):
+                    if position >= limit: raise ValueError('Truncated binary value')
+                    atom = payload[position]
+                    if atom == 5:
+                        if position + 5 > limit: raise ValueError('Truncated binary value')
+                        size = length(payload, position + 1)[0]
+                        end = position + 5 + size
+                        if end > limit: raise ValueError('Truncated binary value')
+                        values.append(payload[position + 5:end].decode('utf-8', errors='strict'))
+                        position = end
+                    elif atom == 3 or atom == 4:
+                        if position + 9 > limit: raise ValueError('Truncated binary value')
+                        value = integer(payload, position + 1)[0] if atom == 3 else real(payload, position + 1)[0]
+                        if atom == 4 and not math.isfinite(value): raise ValueError('Nonfinite evidence number')
+                        values.append(value)
+                        position += 9
+                    elif atom < 3:
+                        values.append(None if atom == 0 else atom == 2)
+                        position += 1
+                    elif atom == 7 and payload.startswith(_NODE_ATOM, position) and position + 23 <= limit:
+                        values.append({'node': integer(payload, position + 15)[0]})
+                        position += 23
+                    else:
+                        values.append(get(depth + 1))
+                return values
+            value = {}
+            track_spans = spans is not None and depth == 0
+            for _ in range(count):
+                key = get(depth + 1)
+                if not isinstance(key, str) or key in value: raise ValueError('Invalid/duplicate binary map key')
+                start = position
+                value[key] = get(depth + 1)
+                if track_spans: spans[key] = (start, position)
+            return value
+        raise ValueError(f'Unknown binary value tag: {tag}')
+    value = get(depth)
+    if position != limit: raise ValueError('Trailing binary value bytes')
+    return value
+
+
+# Exact fixed-shape matching only elides generic decoding of constant schema
+# atoms. Every variable value is still decoded and every hash is still checked.
+_NODE_START = b'\x07' + struct.pack('<I', 4) + encode('seq') + b'\x03'
+_NODE_PREV = encode('prev') + b'\x05' + struct.pack('<I', 64)
+_NODE_PAYLOAD_KEY = encode('payload')
+_NODE_PAYLOAD = (b'\x07' + struct.pack('<I', 3) + encode('kind') + encode('node')
+                 + encode('node_id') + b'\x03')
+_NODE_ITEMS = encode('items')
+_NODE_SHA = encode('sha256') + b'\x05' + struct.pack('<I', 64)
+
+
+def decode_indexed(payload, spans=None):
+    """Decode indexed reads, recognizing the exact common node envelope shape."""
+    position = len(_NODE_START)
+    if payload.startswith(_NODE_START) and payload.startswith(_NODE_PREV, position + 8):
+        sequence = struct.unpack_from('<q', payload, position)[0]
+        position += 8 + len(_NODE_PREV)
+        previous_start = position
+        position += 64
+        if payload.startswith(_NODE_PAYLOAD_KEY, position):
+            position += len(_NODE_PAYLOAD_KEY)
+            payload_start = position
+            if payload.startswith(_NODE_PAYLOAD, position):
+                position += len(_NODE_PAYLOAD)
+                if position + 8 <= len(payload):
+                    node_id = struct.unpack_from('<q', payload, position)[0]
+                    position += 8
+                    suffix = len(payload) - len(_NODE_SHA) - 64
+                    if payload.startswith(_NODE_ITEMS, position) and suffix >= position + len(_NODE_ITEMS) and payload.startswith(_NODE_SHA, suffix):
+                        items_start = position + len(_NODE_ITEMS)
+                        try:
+                            # Atoms have the same original nesting depth (items=2).
+                            items = _decode_cursor(payload, start=items_start, end=suffix, depth=2)
+                            previous = payload[previous_start:previous_start + 64].decode('utf-8', errors='strict')
+                            checksum = payload[-64:].decode('utf-8', errors='strict')
+                        except (ValueError, UnicodeDecodeError, RecursionError):
+                            # Preserve the generic decoder's exact first failure.
+                            return decode(payload, spans)
+                        if spans is not None:
+                            spans['payload'] = (payload_start, suffix)
+                        return {'seq': sequence, 'prev': previous,
+                                'payload': {'kind': 'node', 'node_id': node_id, 'items': items},
+                                'sha256': checksum}
+    try:
+        return _decode_cursor(payload, spans)
+    except (ValueError, RecursionError):
+        # Invalid evidence retains the established exact diagnostic behavior.
+        return decode(payload, spans)
+
+
 def write_frame(stream, value):
     payload = encode(value)
     if len(payload) > MAX_FRAME: raise ValueError('Binary frame exceeds size limit')
@@ -107,7 +234,7 @@ def read_frame(stream, payload_span=False):
     if len(checksum) != 32 or len(payload) != size: raise ValueError('Truncated binary frame')
     if hashlib.sha256(payload).digest() != checksum: raise ValueError('Binary frame checksum mismatch')
     spans = {} if payload_span else None
-    value = decode(payload, spans)
+    value = decode_indexed(payload, spans) if payload_span else decode(payload)
     frame = (prefix + checksum + payload, value)
     if payload_span:
         span = spans.get('payload')

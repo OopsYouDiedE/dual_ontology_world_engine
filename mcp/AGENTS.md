@@ -41,3 +41,4 @@ run_debug 的新增优化开关默认 on；mask/dirty verify 默认 off，仅作
 证据投影在 evidence-index 下复用不可变来源的绝对路径，索引记录直接编码二进制，不经临时 JSON 往返。run_debug 的 postprocess_stages 分别记录原始证据核验/索引、stdout 正文/索引、因果构建/检查及两次来源核验；失败仍保留各段已发生现实耗时。
 
 run_debug显式将opt_plancache/opt_declcache分别写入DV_OPT_PLANCACHE/DV_OPT_DECLCACHE；完整run_config与runtime_environment继续留证。两者控制核心显式缓存组，不禁用全局memo，不代替各自dirty/replaycache等开关。
+evidence-index 的二进制读取可使用游标解码及精确固定形状节点封包快路；快路必须逐字节核对全部固定标签、长度、键与顺序，变量仍完整解码，异常回退参照解码器。通用格式、损坏格式、整数/浮点/UTF-8/重复键/深度与提交校验不得因快路省略。关闭开关使用原解码器；stdout 投影优化也由相同开关回退。
