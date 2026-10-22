@@ -576,6 +576,8 @@ fn dvs_choose(actor, bindings, costs):
     let duty = dvs_obligation_choice(actor, costs)
     if duty != false:
         return duty
+    if dv_find(actor.policy, "opt_taskgraph", true):
+        return dvp_taskgraph(actor, bindings, costs)
     // Selective decisions have their own task continuation and sleeping inputs.
     // Do not build the full actor memo key just to perform one current-task scan.
     if dv_find(actor.policy, "selective_planning", false):
@@ -770,7 +772,7 @@ fn dvs_choice_event(events, kind, actor, time, parents, choice):
     var data = []
     var i = 0
     while i < rt_count(choice):
-        if not dv_has(["planning_task_cache", "dependency_cache", "continuation"], choice[i][0]):
+        if not dv_has(["planning_task_cache", "taskgraph_task", "dependency_cache", "continuation"], choice[i][0]):
             rt_push(data, choice[i])
         i = i + 1
     return dvs_event(events, kind, actor, time, parents, data)
@@ -814,7 +816,7 @@ fn dvs_reason_input(actor):
 
 fn dvs_cognition_signature(actor):
     actor = rt_snapshot(actor)
-    let ignored = ["cognition_fixed_input", "cognition_event_cursor", "cognition_time", "cognition_input", "cognition_reused", "cognition_stop", "reason_fixed_input", "reason_reused", "last_reason_report", "last_readiness_report", "decision_time", "decision_revision", "idle_guard", "support_events_cursor", "heard_utterances_cursor", "planning_work_total", "dependency_work_total", "planning_task_cache", "dependency_cache", "planned_followup", "planned_path", "last_cognitive_event", "planning_continuation"]
+    let ignored = ["cognition_fixed_input", "cognition_event_cursor", "cognition_time", "cognition_input", "cognition_reused", "cognition_stop", "reason_fixed_input", "reason_reused", "last_reason_report", "last_readiness_report", "decision_time", "decision_revision", "idle_guard", "support_events_cursor", "heard_utterances_cursor", "planning_work_total", "dependency_work_total", "planning_task_cache", "taskgraph_task", "dependency_cache", "planned_followup", "planned_path", "last_cognitive_event", "planning_continuation"]
     var result = []
     var i = 0
     while i < rt_count(actor):
@@ -1934,7 +1936,7 @@ fn dvp_memo_input(actor, costs):
     while i < rt_count(actor):
         let entry = actor[i]
         let key = entry[0]
-        if not dv_has(["reason_fixed_input", "reason_reused", "decision_time", "decision_revision", "planning_work_total", "last_cognitive_event", "dependency_work_total", "cognition_input", "last_cognition_revision", "last_cognition_time", "cognition_reused", "cognition_cache_reuses", "cognition_stop", "last_reason_report", "last_readiness_report", "cognition_fixed_input", "cognition_event_cursor", "cognition_time", "idle_guard", "planning_continuation", "planning_task_cache", "dependency_cache", "planned_followup", "planned_path", "support_events_cursor", "heard_utterances_cursor"], key):
+        if not dv_has(["reason_fixed_input", "reason_reused", "decision_time", "decision_revision", "planning_work_total", "last_cognitive_event", "dependency_work_total", "cognition_input", "last_cognition_revision", "last_cognition_time", "cognition_reused", "cognition_cache_reuses", "cognition_stop", "last_reason_report", "last_readiness_report", "cognition_fixed_input", "cognition_event_cursor", "cognition_time", "idle_guard", "planning_continuation", "planning_task_cache", "taskgraph_task", "dependency_cache", "planned_followup", "planned_path", "support_events_cursor", "heard_utterances_cursor"], key):
             if key == "policy":
                 rt_push(result, dv_pair(key, policy))
             else:
@@ -2084,7 +2086,8 @@ fn dvp_goal_refs(actor):
         var goal = goals[i]
         if dv_and(dvp_topic(actor, goal), (dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true")):
             if dv_has_key(goal, "ref"):
-                refs = dvp_add_ref(refs, goal.ref)
+                if dv_find(goal, "kind", "know") != "evidence" or dvp_evidence_due(actor, goal):
+                    refs = dvp_add_ref(refs, goal.ref)
             else:
                 if dv_has_key(goal, "proposition"):
                     refs = dvp_merge_refs(refs, dvp_unmet_refs(mind, goal.proposition, true))
@@ -2408,6 +2411,13 @@ fn dvp_source_supported_since(cell, source, minimum_time):
         i = (i + 1)
     return found
 
+// A receipt required no earlier than a future instant cannot be earned by
+// inspecting now. Keep the requirement pending until the real owner's clock
+// reaches it; hypothetical writes never advance this evidence boundary.
+fn dvp_evidence_due(actor, goal):
+    let origin = dv_find(actor, "planning_evidence_mind", actor.mind)
+    return dv_find(goal, "minimum_time", 0) <= dv_find(origin, "time", 0)
+
 fn dvp_needs_evidence(actor, ref):
     var goals = dv_find(actor.policy, "goals", [])
     var i = 0
@@ -2415,7 +2425,7 @@ fn dvp_needs_evidence(actor, ref):
     while (i < rt_count(goals)):
         var goal = goals[i]
         if dv_and(dvp_topic(actor, goal), (dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true")):
-            if (dv_find(goal, "kind", "know") == "evidence"):
+            if (dv_find(goal, "kind", "know") == "evidence") and dvp_evidence_due(actor, goal):
                 if dv_has_key(goal, "ref"):
                     if dv_same(goal.ref, ref):
                         var cell = dv_read(actor.mind, ref)
@@ -2444,7 +2454,7 @@ fn dvp_value_context(actor):
     while i < rt_count(goals):
         let goal = goals[i]
         let kind = dv_find(goal, "kind", "know")
-        if kind == "evidence" and dv_has_key(goal, "ref"):
+        if kind == "evidence" and dv_has_key(goal, "ref") and dvp_evidence_due(actor, goal):
             if dvp_topic(actor, goal) and dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true":
                 if not dvp_source_supported_since(dv_read(evidence_mind, goal.ref), dv_find(goal, "source", "perception"), dv_find(goal, "minimum_time", 0)):
                     rt_push(evidence, goal.ref)
@@ -2485,7 +2495,7 @@ fn dvp_owned_task_ready(actor, goals):
             var pending = false
             if kind == "achieve" and dv_find(goal, "navigation_commitment", false):
                 pending = dv_truth(actor.mind, goal.proposition) != "true"
-            if kind == "evidence" and dv_has_key(goal, "ref"):
+            if kind == "evidence" and dv_has_key(goal, "ref") and dvp_evidence_due(actor, goal):
                 pending = not dvp_source_supported_since(dv_read(actor.mind, goal.ref), dv_find(goal, "source", "perception"), dv_find(goal, "minimum_time", 0))
             if pending:
                 var a = 0
@@ -2930,6 +2940,217 @@ fn dvp_selective_successor(actor, edge, costs):
         return {"node": false, "forecasts": forecasts, "forecast_reuses": reuses}
     let candidate = {"mind": prediction.world, "visible_context": context, "path": edge.path, "score": edge.score - edge.opportunity_value * dv_find(actor.policy, "progress_weight", 1), "room": room, "tasks": tasks, "seen": dv_append(node.seen, seen), "key": dv_list3(seen, achieved, edge.opportunity_keys), "prediction_basis": adoption.basis, "elapsed": dv_find(node, "elapsed", 0) + dv_get(costs, action.kind).maximum.time, "achievements": achieved, "opportunities": edge.opportunity_keys}
     return {"node": candidate, "forecasts": forecasts, "forecast_reuses": reuses}
+
+// Event-driven task selection. Only navigation edges have successors; an
+// inspection, conversation, acceptance or other terminal task always requires
+// a real Prepare/Complete before the next task can be considered completed.
+fn dvp_taskgraph_goal_pending(actor, goal):
+    if not dvp_topic(actor, goal) or rt_count(dv_find(goal, "basis", [])) == 0:
+        return false
+    if dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) != "true":
+        return false
+    let completion = dv_find(goal, "navigation_completion", false)
+    if completion != false and dv_truth(actor.mind, completion) == "true":
+        return false
+    let requirements = dv_find(goal, "navigation_requirements", [])
+    var i = 0
+    while i < rt_count(requirements):
+        if dv_truth(actor.mind, requirements[i]) != "true":
+            return false
+        i = i + 1
+    let kind = dv_find(goal, "kind", "know")
+    if kind == "evidence" and dv_has_key(goal, "ref"):
+        let origin = dv_find(actor, "planning_evidence_mind", actor.mind)
+        return dvp_evidence_due(actor, goal) and not dvp_source_supported_since(dv_read(origin, goal.ref), dv_find(goal, "source", "perception"), dv_find(goal, "minimum_time", 0))
+    if kind == "achieve":
+        return dv_truth(actor.mind, goal.proposition) != "true"
+    if kind == "communicate":
+        return not dv_has(dv_find(actor, "completed_actions", []), dv_find(goal, "method_id", ""))
+    return false
+
+fn dvp_taskgraph_better(candidate, best, committed):
+    if best == false:
+        return true
+    if best.score < candidate.score:
+        return true
+    return best.score == candidate.score and dv_same(candidate.task_id, committed) and not dv_same(best.task_id, committed)
+
+fn dvp_taskgraph_choice(actor, candidate, input, dependencies, work, reason):
+    var action = false
+    var path = []
+    var plans = []
+    var score = 0
+    var task = false
+    if candidate != false:
+        path = candidate.path
+        score = candidate.score
+        if rt_count(path) > 0:
+            action = dvp_find_action(actor.actions, path[0])
+        let plan = {"path": path, "score": score, "value": candidate.value, "relevant_refs": dependencies.refs, "probe_refs": dvp_probe_refs(actor), "mind_revision": actor.mind.revision, "evaluated_at_game_time": dv_find(actor, "decision_time", actor.mind.time), "score_scope": "taskgraph-owned-task-or-navigation", "prediction_basis": candidate.basis, "task_id": candidate.task_id, "fulfillment": "requires-real-completion"}
+        plans = [plan]
+        task = {"task_id": candidate.task_id, "path": path, "input": input}
+    let choice = {"action": action, "score": score, "plan_expansions": work.expanded_nodes, "plans": plans, "selected_path": path, "relevant_refs": dependencies.refs, "stop": reason, "strategy": "taskgraph-v1", "approximation": true, "time_blocked": work.time_blocked, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "planning_work": work, "completed_layers": 0}
+    if task != false:
+        task = dv_with(task, "result", choice)
+    return dv_with(choice, "taskgraph_task", task)
+
+fn dvp_taskgraph(actor, bindings, costs):
+    actor = rt_snapshot(actor)
+    let real_actor = actor
+    let input = rt_snapshot([dvp_memo_input(dv_without(actor, "taskgraph_task"), costs), actor.mind.revision, bindings, costs])
+    let previous = dv_find(actor, "taskgraph_task", false)
+    var committed = false
+    if previous != false:
+        committed = previous.task_id
+        if dv_same(previous.input, input):
+            let reused = previous.result
+            let work = {"scope": "identical-complete-taskgraph-input", "cache_hit": true, "expanded_nodes": 0, "candidates_considered": 0, "admission_checks": 0, "eligible_evaluations": 0, "forecasts": 0, "forecast_reuses": 0, "time_blocked": 0, "stop_reason": "taskgraph-identical-input", "reused_work": reused.planning_work}
+            return dv_with_many(reused, {"taskgraph_task": previous, "plan_expansions": 0, "dependency_expansions": 0, "stop": "taskgraph-identical-input", "planning_work": work})
+    actor = dv_with(actor, "policy", dv_with(actor.policy, "goals", dvp_refresh_current_evidence(actor, dv_find(actor.policy, "goals", []))))
+    let refs = dvp_merge_refs(dvp_goal_refs(actor), dvp_probe_refs(actor))
+    let dependencies = dvp_cached_dependencies(actor, refs, dv_find(actor.policy, "dependency_budget", dv_find(actor, "planning_limit", dv_find(actor.policy, "plan_budget", 0))))
+    let relevant = dependencies.refs
+    let probes = dvp_probe_refs(actor)
+    let budget = dv_find(actor.policy, "plan_budget", 0)
+    var root_room = ""
+    if dv_has_key(actor, "location_ref"):
+        let position = dv_read(actor.mind, actor.location_ref)
+        if dv_uncontested(position):
+            root_room = position.value
+    var frontier = [{"mind": actor.mind, "room": root_room, "path": [], "cost": 0, "elapsed": 0, "basis": [], "visible_context": dv_find(actor, "visible_context", [])}]
+    var visited = [root_room]
+    var best = false
+    var fallback = false
+    var expanded = 0
+    var considered = 0
+    var admissions = 0
+    var evaluated = 0
+    var forecasts = 0
+    var forecast_reuses = 0
+    var blocked = 0
+    var reason = "taskgraph-no-supported-task"
+    var committed_found = false
+    while 0 < rt_count(frontier) and expanded < budget:
+        var next = []
+        var n = 0
+        while n < rt_count(frontier) and expanded < budget:
+            let node = frontier[n]
+            var view = dvp_actor_view(dv_with(actor, "visible_context", node.visible_context), node.mind)
+            // Navigation successors share this decision's actual evidence origin.
+            view = dv_with(view, "planning_evidence_mind", real_actor.mind)
+            let context = dvp_value_context(view)
+            let actions = dvp_room_actions(actor.actions, node.room, dv_find(actor, "location_ref", false))
+            expanded = expanded + 1
+            var a = 0
+            while a < rt_count(actions):
+                let action = actions[a]
+                considered = considered + 1
+                admissions = admissions + 1
+                if dvp_eligible(view, action, node.mind, relevant):
+                    let cost = dv_get(costs, action.kind)
+                    if dv_find(actor.policy, "remaining_game_time", node.elapsed + cost.maximum.time) < node.elapsed + cost.maximum.time:
+                        blocked = blocked + 1
+                    else:
+                        evaluated = evaluated + 1
+                        let value = dvp_action_value_context(view, action, bindings, relevant, probes, context)
+                        forecasts = forecasts + dv_find(value, "forecasts", 0)
+                        forecast_reuses = forecast_reuses + dv_find(value, "forecast_reuses", 0)
+                        let score = value.value - node.cost - cost.actual.time * dv_find(actor.policy, "time_cost", 0.01)
+                        if score > 0 and not dv_find(action, "known_opportunity_wait", false):
+                            let candidate = {"task_id": ["action", action.id], "path": dv_append(node.path, action.id), "score": score, "value": value, "basis": node.basis}
+                            if action.kind == "wait":
+                                if rt_count(node.path) == 0 and dvp_taskgraph_better(candidate, fallback, committed):
+                                    fallback = candidate
+                            else:
+                                if dvp_taskgraph_better(candidate, best, committed):
+                                    best = candidate
+                                if dv_same(candidate.task_id, committed):
+                                    committed_found = true
+                        if action.kind == "move" and dv_has_key(action, "travel") and action.travel.from != action.travel.to and not dv_has(visited, action.travel.to):
+                            let adoption = dv_find(node.mind.adoptions, dv_find(action, "predict_law", ""), false)
+                            if adoption != false and adoption.active and adoption.mode == "predict":
+                                let prediction = dvp_forecast(node.mind, action.predict_law)
+                                if dv_find(prediction, "planning_cache_hit", false):
+                                    forecast_reuses = forecast_reuses + 1
+                                else:
+                                    forecasts = forecasts + 1
+                                if prediction.status == "applied":
+                                    let predicted_view = dvp_actor_view(view, prediction.world)
+                                    let position = dv_read(prediction.world, actor.location_ref)
+                                    if dv_uncontested(position) and position.value == action.travel.to:
+                                        next = dv_append(next, {"mind": prediction.world, "room": action.travel.to, "path": dv_append(node.path, action.id), "cost": node.cost + cost.actual.time * dv_find(actor.policy, "time_cost", 0.01), "elapsed": node.elapsed + cost.maximum.time, "basis": dv_explanation_merge(node.basis, adoption.basis), "visible_context": dv_find(predicted_view, "visible_context", [])})
+                                        visited = dv_append(visited, action.travel.to)
+                a = a + 1
+            // A declared navigation goal values access, never fulfillment or a
+            // future observation. Its own basis, conditions and requirements
+            // must hold in this personal prediction; room occupancy is not added.
+            let goals = dv_find(actor.policy, "goals", [])
+            var g = 0
+            while g < rt_count(goals):
+                let goal = goals[g]
+                let goal_id = ["goal", goal]
+                if dv_find(goal, "navigation_room", "") == node.room and dvp_taskgraph_goal_pending(view, goal):
+                    let benefit = dv_find(goal, "weight", 1) * dv_find(actor.policy, "progress_weight", 1)
+                    let score = benefit - node.cost
+                    if score > 0 and rt_count(node.path) > 0:
+                        let candidate = {"task_id": goal_id, "path": node.path, "score": score, "value": {"information": 0, "verification": 0, "progress": 0, "achievement": 0, "value": benefit, "access_only": true, "goal": goal}, "basis": node.basis}
+                        if dvp_taskgraph_better(candidate, best, committed):
+                            best = candidate
+                        if dv_same(goal_id, committed):
+                            committed_found = true
+                    if rt_count(node.path) == 0 and dv_same(goal_id, committed):
+                        // Reaching the agreed room does not complete the task.
+                        // Try its declared methods; otherwise retain the task
+                        // while waiting for a real participant/input change.
+                        var ready = false
+                        let methods = dv_find(goal, "navigation_methods", [])
+                        var m = 0
+                        while m < rt_count(methods):
+                            let method = dvp_find_action(actor.actions, methods[m])
+                            if method != false:
+                                considered = considered + 1
+                                admissions = admissions + 1
+                                let method_cost = dv_get(costs, method.kind)
+                                if dv_find(actor.policy, "remaining_game_time", method_cost.maximum.time) < method_cost.maximum.time:
+                                    blocked = blocked + 1
+                                else:
+                                    if dvp_eligible(view, method, node.mind, relevant):
+                                        evaluated = evaluated + 1
+                                        let value = dvp_action_value_context(view, method, bindings, relevant, probes, context)
+                                        forecasts = forecasts + dv_find(value, "forecasts", 0)
+                                        forecast_reuses = forecast_reuses + dv_find(value, "forecast_reuses", 0)
+                                        let net = value.value - method_cost.actual.time * dv_find(actor.policy, "time_cost", 0.01)
+                                        if net > 0:
+                                            ready = true
+                                            let candidate = {"task_id": goal_id, "path": [method.id], "score": net, "value": value, "basis": node.basis}
+                                            if dvp_taskgraph_better(candidate, best, committed):
+                                                best = candidate
+                            m = m + 1
+                        if not ready and benefit > 0:
+                            let candidate = {"task_id": goal_id, "path": [], "score": benefit, "value": {"information": 0, "verification": 0, "progress": 0, "achievement": 0, "value": benefit, "access_only": true, "waiting_for_real_input": true, "goal": goal}, "basis": node.basis}
+                            if dvp_taskgraph_better(candidate, best, committed):
+                                best = candidate
+                        committed_found = true
+                g = g + 1
+            n = n + 1
+        // A supported current task or nearest legal navigation is sufficient.
+        // An existing task is re-evaluated until reached or invalid; strictly
+        // better owner-valued alternatives can replace it. No full-search claim.
+        if best != false and (committed == false or committed_found):
+            frontier = []
+            reason = "taskgraph-supported-task"
+        else:
+            frontier = next
+    if best != false and reason == "taskgraph-no-supported-task":
+        reason = "taskgraph-task-reselected"
+    if best == false:
+        best = fallback
+        if best != false:
+            reason = "taskgraph-declared-wait"
+    if 0 < rt_count(frontier) and budget <= expanded:
+        reason = "taskgraph-navigation-budget"
+    let work = {"scope": "current-owned-tasks-and-personal-navigation-only", "cache_hit": false, "expanded_nodes": expanded, "candidates_considered": considered, "admission_checks": admissions, "eligible_evaluations": evaluated, "forecasts": forecasts, "forecast_reuses": forecast_reuses, "time_blocked": blocked, "stop_reason": reason, "commitment_revalidated": committed_found, "complete_search": false}
+    return dvp_taskgraph_choice(real_actor, best, input, dependencies, work, reason)
 
 fn dvp_plan(actor, bindings, costs):
     actor = rt_snapshot(actor)
@@ -3585,7 +3806,7 @@ fn dvp_inspection_freshness(actor, mind):
         let goal = goals[i]
         if dv_find(goal, "kind", "") == "evidence" and dv_has_key(goal, "ref"):
             let name = dv_ref_lookup_key(goal.ref)
-            let entries = dv_append(dv_find(index, name, []), {"ref": goal.ref, "minimum_time": dv_find(goal, "minimum_time", 0), "available": dv_truth(mind, dv_find(goal, "available_when", dv_true()))})
+            let entries = dv_append(dv_find(index, name, []), {"ref": goal.ref, "minimum_time": dv_find(goal, "minimum_time", 0), "available": dv_truth(mind, dv_find(goal, "available_when", dv_true())), "due": dvp_evidence_due(actor, goal)})
             // Private construction; publish only the complete independent index.
             let owned_entries = dv_clone(entries)
             let position = rt_record_index(index, name)
@@ -7314,7 +7535,7 @@ fn dvs_idle_subject_input(actor, costs):
     while i < rt_count(actor):
         let entry = actor[i]
         let key = entry[0]
-        if not dv_has(["idle_guard", "decision_time", "decision_revision", "support_events_cursor", "heard_utterances_cursor", "cognition_fixed_input", "cognition_event_cursor", "cognition_time", "cognition_reused", "cognition_stop", "reason_fixed_input", "reason_reused", "last_reason_report", "last_readiness_report", "planning_task_cache", "dependency_cache", "planning_work_total", "dependency_work_total"], key):
+        if not dv_has(["idle_guard", "decision_time", "decision_revision", "support_events_cursor", "heard_utterances_cursor", "cognition_fixed_input", "cognition_event_cursor", "cognition_time", "cognition_reused", "cognition_stop", "reason_fixed_input", "reason_reused", "last_reason_report", "last_readiness_report", "planning_task_cache", "taskgraph_task", "dependency_cache", "planning_work_total", "dependency_work_total"], key):
             if key == "policy":
                 rt_push(result, dv_pair(key, policy))
             else:
@@ -7693,6 +7914,8 @@ fn dvs_prepare_actor(state):
             let prepared = {"input": rt_snapshot(dvs_cognition_signature(actor)), "event_cursor": rt_count(events), "time": time}
             choice = dv_with(choice, "continuation", dv_with(choice.continuation, "prepared_cognition", prepared))
         var action = choice.action
+        if dv_find(actor.policy, "opt_taskgraph", true):
+            actor = dv_with(actor, "taskgraph_task", dv_find(choice, "taskgraph_task", false))
         if dv_find(actor.policy, "opt_planreuse", false):
             actor = dv_with(actor, "planning_task_cache", dv_find(choice, "planning_task_cache", false))
         actor = dv_with_many(actor, {"dependency_work_total": dv_find(actor, "dependency_work_total", 0) + dv_find(choice, "dependency_expansions", 0), "decision_revision": actor.mind.revision, "dependency_cache": choice.dependency_cache, "planning_continuation": dv_find(choice, "continuation", false), "planned_followup": "", "planned_path": [], "planning_work_total": dv_find(actor, "planning_work_total", 0) + choice.plan_expansions, "policy": dv_with(actor.policy, "plan_budget", dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)})
