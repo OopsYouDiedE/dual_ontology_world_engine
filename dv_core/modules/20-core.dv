@@ -309,7 +309,7 @@ fn dv_with_path(record, keys, depth, value):
 // Private transaction builder: owned is a fresh dv_clone, never a published world.
 // Only law stages and dv_update_mind may call this; observed cells are copied.
 fn dv_stage_store_owned(owned, ref, cell):
-    if rt_cow_enabled():
+    if rt_cow_enabled() or rt_stateindex_enabled():
         let fast = rt_stage_store_cow(owned, ref, cell)
         if fast != false:
             return fast

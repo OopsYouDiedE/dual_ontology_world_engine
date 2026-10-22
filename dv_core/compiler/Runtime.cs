@@ -252,6 +252,7 @@ public static class R
             MembershipHashEligible = true
         };
         internal readonly MutableStateTable MutableStates = new();
+        internal readonly bool StateIndexEnabled = Environment.GetEnvironmentVariable("DV_OPT_STATEINDEX") != "0";
         internal readonly bool RuntimeSpeedEnabled = Environment.GetEnvironmentVariable("DV_OPT_RUNTIMESPEED") != "0";
         internal readonly ConditionalWeakTable<FrozenList, ValueMemo> ValueMemos = new();
         internal readonly ConditionalWeakTable<FrozenList, JsonEncoding> JsonEncodings = new();
@@ -938,6 +939,7 @@ public static class R
         if (EqValue(op, "equals")) return SameValue(actual, expected) ? "true" : "false";
         return Bool(lt(actual, expected)) ? "false" : "true";
     }
+    public static object stateindex_enabled() => Caches.StateIndexEnabled ? BoolTrue : BoolFalse;
     public static object cow_enabled() => Caches.CowEnabled ? BoolTrue : BoolFalse;
     public static object mask_enabled() => Caches.MaskEnabled ? BoolTrue : BoolFalse;
     // Inspect record spines without exposing/thawing any child. Irregular ABI
@@ -953,11 +955,69 @@ public static class R
         }
         return true;
     }
+    // Reuse the ordinary record slot index; the only extra metadata certifies
+    // strict pair shape. Irregular/duplicate-key ABI values keep the DV path.
+    private static bool TryStateField(object record, string key, out object value, out int slot,
+        out Dictionary<string, int>? index)
+    {
+        value = false; slot = -1; index = null;
+        if (!TryItems(record, out var entries)) return false;
+        var frozen = UnchangedSnapshot(record, Caches);
+        if (frozen is not null)
+        {
+            if (!Bool(record_like_cached(frozen))) return false;
+            index = FrozenIndex(frozen);
+        }
+        else if (record is List<object> mutable)
+        {
+            var state = MutableStates.GetOrCreateValue(mutable);
+            if (!state.StatePairShapeChecked)
+            {
+                state.StatePairShape = RecordLikeValue(mutable);
+                state.StatePairShapeChecked = true;
+            }
+            if (!state.StatePairShape) return false;
+            index = MutableIndex(mutable); // links mutable key pairs for invalidation
+        }
+        if (index is null || index.Count != entries.Count) return false;
+        if (index.TryGetValue(key, out slot)) value = RawItem(entries[slot], 1);
+        else slot = -1;
+        return true;
+    }
+    private static object StageStoreIndexed(object owned, object reference, object cell)
+    {
+        if (!TryRawField(reference, "object", out var rawId, out var idSlot) || idSlot < 0 || rawId is not string id
+            || !TryRawField(reference, "facet", out var rawFacet, out var facetSlot) || facetSlot < 0 || rawFacet is not string facet
+            || !TryRawField(reference, "field", out var rawField, out var fieldSlot) || fieldSlot < 0 || rawField is not string field)
+            return BoolFalse;
+        if (!TryStateField(owned, "objects", out var objects, out var objectsSlot, out _) || objectsSlot < 0
+            || !TryStateField(objects, id, out var entity, out var entitySlot, out var objectIndex) || entitySlot < 0
+            || !TryStateField(entity, "facets", out var facets, out var facetsSlot, out _) || facetsSlot < 0
+            || !TryStateField(facets, facet, out var fields, out var fieldsSlot, out _)) return BoolFalse;
+        if (fieldsSlot < 0) fields = new List<object>();
+        if (!TryStateField(fields, field, out _, out _, out _)) return BoolFalse;
+        var updated = record_with(entity, "facets", record_with(facets, facet, record_with(fields, field, cell)));
+        var mutableObjects = ReadItem(ReadItem(owned, objectsSlot), 1);
+        // The selected key is unchanged and unique. Preserve the validated slots
+        // after the value-only write; ancestor snapshots are still invalidated.
+        replace(mutableObjects, NumberValue(entitySlot), FrozenTextPair(id, snapshot(updated)));
+        var state = MutableStates.GetOrCreateValue(MutableItems(mutableObjects));
+        state.Index = objectIndex;
+        state.IndexChecked = true;
+        state.StatePairShape = true;
+        state.StatePairShapeChecked = true;
+        return owned;
+    }
     public static object stage_store_cow(object owned, object reference, object cell)
     {
         // Admission and law/effect order remain DV's responsibility. This fast
         // path substitutes only the private builder's record update operation.
         if (owned is not List<object>) return BoolFalse;
+        if (Caches.StateIndexEnabled)
+        {
+            var indexed = StageStoreIndexed(owned, reference, cell);
+            if (indexed is not false) return indexed;
+        }
         if (!TryRawField(reference, "object", out var rawId, out var idSlot) || idSlot < 0 || rawId is not string id
             || !TryRawField(reference, "facet", out var rawFacet, out var facetSlot) || facetSlot < 0 || rawFacet is not string facet
             || !TryRawField(reference, "field", out var rawField, out var fieldSlot) || fieldSlot < 0 || rawField is not string field)
@@ -1585,6 +1645,7 @@ public static class R
     private sealed class MutableState
     {
         internal int RecordReads;
+        internal bool StatePairShapeChecked, StatePairShape;
         internal FrozenList? Backbone;
         internal FrozenList? AppendBase;
         internal bool IndexChecked;
@@ -1667,6 +1728,7 @@ public static class R
         {
             initial.Backbone = null;
             initial.AppendBase = null;
+            initial.StatePairShapeChecked = false;
             initial.IndexChecked = false;
             initial.Index = null;
             return;
@@ -1685,6 +1747,7 @@ public static class R
                 state.Invalidation = invalidation;
                 state.Backbone = null;
                 state.AppendBase = null;
+                state.StatePairShapeChecked = false;
                 state.IndexChecked = false;
                 state.Index = null;
                 if (state.Parent is { } first)

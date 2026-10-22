@@ -209,3 +209,4 @@ current_appraisals只维护本人appraisal facet中的当前可撤销评价，�
 非语言听觉事件以 environmental-sound 中性呈现，不把真实日志行动者自动投射成听者已辨认的声源；surface_voice/category透传合同见 ../docs/cli-optimization.md。
 
 核心规划缓存与静态声明索引的独立关闭范围见../docs/cli-optimization.md“核心缓存关闭合同”。30使用显式plan/declaration缓存组，保留原memo键；不得通过禁用所有rt_memo干扰dirty、付费重演及证据索引。首夜等待刷新不再按角色ID改写规划深度。
+`opt_stateindex` / `DV_OPT_STATEINDEX` 与 `rt_stateindex_enabled()` 的私有 stage 写入索引合同见 compiler/README.md。它只复用既有 record slots 优化严格唯一文本键对象表的值替换；未知/异常/重复键保留旧路径，公开动作与会话所有权不变。运行配置由宿主在创建 ValueContext 前确定；有限 ABI 别名差分不代替正式会话验收。
