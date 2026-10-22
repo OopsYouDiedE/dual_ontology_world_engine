@@ -149,3 +149,9 @@ readview 还可复用条件读取输入已经存在的有效不可变 Backbone�
 丙区完整草图的 shared_inspection 声明复用正式 Complete 后的同房 public_observers/public_grants，仅实际在场且具备可视资格者取得检视结果；询问本身仍为证词。丁区医嘱记录在茉拉实际报告时随 materials 展示，复用同一公共观察路径。两者不初始化侦探知识、不降低证词阈值；修改取证机会后须重新验证，不继承旧基线的行为结论。
 
 居民回复可声明 response_requester/response_request_action；待回复项按同一parse_event关联本人received_requests与received_speeches，核对requester和真实行动ID。requires_actual_request=true时没有匹配待回复项即不可执行，Complete仅消费该匹配项。完整答复使用独立complete_receipt/complete_level及接受法则，仍核对裁决者在场；正确理由和情绪修订依赖本人逐项实际材料链，不只依赖末端旗标。
+`opt-dirty` 的认知阶段按本人采纳表、mind.subject、外部推理签名和 profile 建立独立有序队列。依赖同时包括前提及效果目标的完整单元格、对象存在性和采纳状态；不依赖角色身份。inactive/non-infer 条目保留位置，不解释其条件和效果；零推理预算不建立索引。前向影响同轮处理，后向影响留到下一轮，预算用尽不取走下一候选。未知活动推理操作符明确报错。
+
+世界时界缓存静态条件树的时钟关系和阈值；equals/未知时钟关系保留一分钟保守采样，数值阈值沿原分钟格取整，反向区间维持原 due 返回行为。它仅减少反复解析条件树，环境下一时刻的真值/效果扫描仍保留。`opt-dirty-verify` 的抽样时钟核验调用独立完整参考扫描，正常返回和现场仍可改变世界的一分钟提前返回均核对结果；参考扫描仅由显式核验开关启用，不在生产默认路径运行。有限机制差分与正式会话验收分别报告。
+
+
+当前私人评价采用policy.current_appraisals：声明明确限定本人subject及appraisal facet，以本人实际输入和可选的当前hypothesis_id求值；确定条件产生当前值，条件否定产生otherwise，未知则撤回为未知。更新替换当前评价槽并提升mind revision，历史值与具体输入保存在private_appraisal_updated不可变事件中，不新增互斥事实claim、不以置信度压过旧值。自动与人工轻量认知在个人推理后刷新该接口，内容层声明实际冲突及成见，无通用角色身份分支。

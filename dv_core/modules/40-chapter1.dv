@@ -3376,15 +3376,13 @@ fn c1_other_inquiry_scene(scene):
                 rt_push(full_chain, campaign_case_claim(group, rows[proof_index].id))
                 proof_index = proof_index + 1
             let final = dv_all(full_chain)
-            let angry = dv_ref(rt_cat("personal.", actor.id), "appraisal", "angry")
+            let angry = dv_scoped_ref(actor.id, rt_cat("personal.", actor.id), "appraisal", "angry")
             var mind = dv_store(actor.mind, angry, dv_with(dv_field(false), "basis", [person.initial_source]))
             let bias = c1_other_preconception(actor.id)
+            var appraisals = dv_find(actor.policy, "current_appraisals", [])
             if bias != false:
                 let conflict = dv_all([c1_other_moral_conflict(actor.id), dv_not(final)])
-                let appraisal = dv_axiom(rt_cat(actor.id, ".appraise-conflict"), 1, conflict, [dv_assign(angry, true)])
-                mind = dv_adopt(mind, campaign_method(rt_cat(actor.id, ".appraise-conflict"), appraisal), "infer", 1, bias.basis)
-            let revise = dv_axiom(rt_cat(actor.id, ".revise-appraisal"), 1, final, [dv_assign(angry, false)])
-            mind = dv_adopt(mind, campaign_method(rt_cat(actor.id, ".revise-appraisal"), revise), "infer", 1, [source])
+                rt_push(appraisals, {"id": rt_cat(actor.id, ".current-moral-conflict"), "ref": angry, "when": conflict, "value": true, "otherwise": false, "hypothesis_id": rt_cat(rt_cat(group, ".reason."), bias.preferred), "basis": bias.basis})
             var actions = dv_clone(actor.actions)
             var goals = []
             let complete_ref = campaign_case_ref(group, rt_cat("complete_receipt.", actor.id))
@@ -3438,7 +3436,7 @@ fn c1_other_inquiry_scene(scene):
             let reason = campaign_case_ref(group, rt_cat("reason.", c1_other_case(group).authority_reason))
             let inference = dv_axiom(rt_cat(actor.id, ".material-reason"), 1, final, [dv_assign(reason, true)])
             mind = dv_adopt(mind, campaign_method(rt_cat(actor.id, ".material-reason"), inference), "infer", 1, [source])
-            actor = dv_with_many(actor, {"mind": mind, "actions": actions, "policy": dv_with(actor.policy, "goals", goals)})
+            actor = dv_with_many(actor, {"mind": mind, "actions": actions, "policy": dv_with_many(actor.policy, {"goals": goals, "current_appraisals": appraisals})})
         rt_push(actors, actor)
         i = i + 1
     return dv_with_many(scene, {"physical": world, "actors": actors})
