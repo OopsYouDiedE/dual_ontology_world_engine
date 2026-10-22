@@ -693,7 +693,9 @@ fn dvs_current_appraisals(actor, events, time, parent):
             rt_push(inputs, {"ref": refs[j], "cell": dv_read(mind, refs[j])})
             j = j + 1
         let hypothesis = dv_find(actor, "hypothesis", false)
-        let hypothesis_id = dv_find(hypothesis, "id", "")
+        var hypothesis_id = ""
+        if hypothesis != false:
+            hypothesis_id = hypothesis.id
         let required = dv_find(declaration, "hypothesis_id", hypothesis_id)
         let hypothesis_event = dv_find(actor, "hypothesis_event", "")
         let signature = {"inputs": inputs, "hypothesis_id": hypothesis_id, "declaration": declaration}
