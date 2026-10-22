@@ -81,6 +81,14 @@ fn v_ancestors(events, child):
         cursor = (cursor + 1)
     return visited
 
+// First occurrence before this event equals membership in the original ID prefix.
+// Non-text/malformed graphs retain the original equality and error path.
+fn v_prior_id(events, position, ids, id):
+    let indexed = rt_causal_prior_index(events, position, id)
+    if indexed[0]:
+        return indexed[1]
+    return dv_has(ids, id)
+
 fn v_integrity(manifest, trace):
     var events = v_events(trace)
     var ids = []
@@ -101,11 +109,11 @@ fn v_integrity(manifest, trace):
             if (status == "supported"):
                 status = "insufficient_evidence"
                 reason = "事件缺少类型、本人、时刻或完整记录，不能进入重演"
-        if dv_or(dv_same(id, false), dv_has(ids, id)):
+        if dv_or(dv_same(id, false), v_prior_id(events, i, ids, id)):
             status = "invalid_run"
             reason = "Missing or duplicate immutable event identity"
         while (j < rt_count(parents)):
-            if (not dv_has(ids, parents[j])):
+            if (not v_prior_id(events, i, ids, parents[j])):
                 status = "invalid_run"
                 reason = "Causal parent absent or forward reference"
             else:
