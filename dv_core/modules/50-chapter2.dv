@@ -2369,6 +2369,8 @@ fn c2i_goals(actor):
     if id == "quer" and c2_quer_concerned(actor):
         rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_own("ward", "restriction_withdrawn"), true), dv_all([dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_fact(campaign_ref("case.contract", "lock_no_pry"), true)]), [campaign_approved("actual-restriction-withdrawal-receipt")]), {"navigation_room": "document_workshop", "navigation_methods": ["quer.c2.ask-restriction-status"]}))
     if id == "ward" or id == "quer":
+        if c2_received_requirement(actor, {"speaker": "detective", "action_id": rt_cat("detective.c2.contract-review.request.", id)}):
+            rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_true(), [campaign_approved("actual-heard-contract-review-request")]), {"navigation_room": "document_workshop", "navigation_methods": [rt_cat(id, ".c2.investigation.inspect.document_workshop")]}))
         rt_push(goals, campaign_observation_goal(campaign_ref("case.contract", "cabinet_key_holder"), campaign_at(id, "document_workshop"), [campaign_approved("actual-key-custody-receipt")], 0))
     goals = c2m_concat(goals, c2m_goals(actor))
     if id == "bertrand" and c2_moran_outing_heard(actor):
@@ -2900,6 +2902,14 @@ fn c2_cooperation_rows():
                 rt_push(rows, invite)
         i = i + 1
     let reviewed = dv_all([dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_fact(campaign_ref("case.contract", "lock_no_pry"), true)])
+    let reviewers = ["ward", "quer"]
+    var reviewer_index = 0
+    while reviewer_index < rt_count(reviewers):
+        let reviewer = reviewers[reviewer_index]
+        var invitation = c2d_row("detective", rt_cat("detective.c2.contract-review.request.", reviewer), "central_hall", reviewed, dv_true(), "邀请当面复核清册与锁具", "清册已经拼合。请和我回文献工房，当面核对清册、锁具和先前限制的依据。", source)
+        invitation = dv_with_many(invitation, {"request": {"target": reviewer, "topic": "contract-review"}, "opportunity": {"location": "central_hall", "participants": [reviewer], "mode": "all-present"}})
+        rt_push(rows, invitation)
+        reviewer_index = reviewer_index + 1
     var withdraw = c2d_row("ward", "ward.c2.withdraw-restriction", "document_workshop", reviewed, reviewed, "撤回先前的指控", "清册与锁具已核清。我撤回针对雀儿的窃取指控；代管钥匙的归还也请按现场记录核对。", source)
     withdraw = dv_with_many(withdraw, {"effects": [dv_assign(campaign_own("ward", "restriction_withdrawn"), true)], "public_grants": [campaign_own("ward", "restriction_withdrawn")], "public_observers": campaign_people(), "personal_choice": {"group": "ward.reconsider-restriction", "requires": reviewed, "prohibits": dv_fact(campaign_own("ward", "restriction_withdrawn"), true), "promotes": ["records", "evidence", "witnesses"], "sacrifices": ["ward_authority"], "basis": [source]}})
     rt_push(rows, withdraw)
