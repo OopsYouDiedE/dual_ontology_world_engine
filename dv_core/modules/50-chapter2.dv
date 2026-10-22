@@ -2170,7 +2170,6 @@ fn c2sf_ceremony_ids():
         if c2sf_case_row(rows[i]):
             ids = dv_with(ids, rt_cat(rows[i].id, ".undertake"), true)
             ids = dv_with(ids, rt_cat(rows[i].id, ".request"), true)
-            ids = dv_with(ids, rt_cat(rows[i].id, ".refuse-restriction"), true)
         i = i + 1
     let hosts = ["detective", "quer"]
     let guests = ["mora", "bertrand", "veronica"]
@@ -2197,13 +2196,20 @@ fn c2sf_action(actor, action):
     let row = c2sf_row(action.storyflow_case_row)
     if row.field == "patient_thanked":
         return dv_with(action, "precondition", dv_not(dv_true()))
-    let pre = dv_all([c2i_physical_premise(row), c2_can_act(actor.id), dv_fact(campaign_ref(row.object, row.field), false)])
+    var owned_clearance = dv_true()
+    var sacrifices = []
+    var basis = [campaign_approved("user:2026-10-23-similar-effect-content-rewrite")]
+    if actor.id == "quer" and dv_has_key(action, "work_operation"):
+        basis = c2_cooperation_basis(actor, basis)
+        if c2_quer_concerned(actor):
+            owned_clearance = c2_work_accepted(actor.id, row.id)
+            sacrifices = ["not_targeted", "movement_freedom"]
+    let pre = dv_all([c2i_physical_premise(row), c2_can_act(actor.id), dv_fact(campaign_ref(row.object, row.field), false), owned_clearance])
     var promotes = ["evidence", "measured_work"]
     if row.object == "case.logistics":
         promotes = ["evidence", "patient_priority", "measured_work"]
-    var result = dv_with_many(action, {"precondition": pre, "authority_precondition": c2i_physical_premise(row), "personal_choice": {"group": row.id, "requires": pre, "prohibits": dv_fact(campaign_ref(row.object, row.field), true), "promotes": promotes, "sacrifices": [], "require_positive": true, "basis": [campaign_approved("user:2026-10-23-similar-effect-content-rewrite")]}})
+    var result = dv_with_many(action, {"precondition": pre, "authority_precondition": c2i_physical_premise(row), "personal_choice": {"group": row.id, "requires": pre, "prohibits": dv_fact(campaign_ref(row.object, row.field), true), "promotes": promotes, "sacrifices": sacrifices, "require_positive": true, "basis": basis}})
     result = dv_without(result, "received_speech_requirement")
-    result = dv_without(result, "work_operation")
     return result
 
 fn c2i_premise(row):
