@@ -8,6 +8,8 @@ Core 投影提供 `view_kind`、`actor`、`location_title` 等中立语义字段
 
 `GameEngine.Snapshot()` 返回最新已完成图的浅副本。嵌套字典和数组按只读使用。`Project(viewer)` 只转换 StateDelta.Changed，移除 Removed，保留上轮静态值。执行者与 viewer 相同复用图；其他主体使用 ExecutorProjection。持久化通过 CasebookPersistence 的文件入口处理。
 
+正式新会话和恢复会话均登记 `SetExecutionContext("godot", "godot")`。证据目录在打开前由宿主分配；打开／恢复完成后立即调用 `StartPerformanceRecording`，投影和后续实际操作沿同一会话前缀流式记录。来源标签不依赖历史 trace 的自由文本。
+
 ## 输入
 
 | kind | 字段 | 行为 |
@@ -40,6 +42,8 @@ Core 投影提供 `view_kind`、`actor`、`location_title` 等中立语义字段
 
 Complete 的顺序为 `dv_commit → state → dv_present`。dv_commit 不等待读完文本。阅读期间先接入完成的身体状态，后续文字在阅读队列中保持原顺序。Main 的正常状态快照不会覆盖更高版本的现场。
 
+人工／LLM 决策请求在带实际候选的 `awaiting_input` 投影交付 UI 后调用 `BeginDecisionInterface`；重复交付不重启计时。`select` 到达宿主时将阶段切为 `response`，正式决策进入会话状态时由 Core 自动以 `accepted` 结束该区间。失败输入记录 `failed`，关闭或替换会话中断尚未结束的区间。引擎自主控制不创建人工等待区间，整段会话墙钟不作为人工／LLM 接口耗时。
+
 ## 事务与几何
 
 执行器记录 `{actor, map, room, position, resource, snapshot, serial}` 作为 rollback anchor，并保留实际走过的 trail。记录以 action_event 为键，开始移动时保留源占位。applied 后提交；拒绝后玩家沿 trail 反向执行真实碰撞行走，恢复原地图障碍；离屏 NPC 可直接恢复已保存的源锚点。该规则覆盖 station、同图和跨图、玩家及 NPC。
@@ -56,11 +60,15 @@ CampusMapView 从 additions 装配额外站点和物件，用 rooms.rects 分类
 
 退出统一调用 HostLifecycle.quit；它先广播 begin_shutdown，再等待 wait_for_shutdown，最后释放音频并退出。Main 停止新输入后继续接收已执行动作的 receipt / commit。尚未进入执行的 prepared 留在轨迹与关闭清单的 pending_action 中，存档取 Core 最近提交点；退出不生成失败尝试、收费或行动步数。手动过门在退出时返回 blocked，由 Complete 触发统一回滚。身体、地图和界面过渡保留到物理事务及 IsDispatchIdle 边界排空，然后关闭场景并调用 GameEngine.CloseTrace。后者关闭 Core、写独立记录与最新已提交存档，最后发 TraceClosed。
 
+CloseTrace 复用该会话打开时分配的目录和 `engine-performance` 前缀，在等待归档前冻结现实窗口；进入关闭时尚未完成的打开任务返回后再次幂等冻结。统计原始采样持续写入二进制流，退出时由 `WritePerformanceReport` 封存同一前缀，关闭清单标记 `streamed-session-samples-and-aggregates`。初始化失败但已经创建的候选会话也独立关闭并封存，避免未安装会话遗留打开的记录流。
+
+切换书签先构造并物化候选、核对书签与案卷绑定，再保存当前会话备份。上述步骤失败时只关闭候选，原会话继续可用。候选和备份就绪后，旧会话停止计时、关闭并封存旧统计及已启用的审计 trace，再安装新会话；新会话使用独立目录、前缀和统计窗口。旧统计封存失败保留具体错误和路径，并作为切换警告交付，不重试 Close、不重新提交行动，也不把旧流继续归入新会话。
+
 PlayerViewTrace 的完整原始输入事件记录常开，新增控件通过 node_added 接线。`--dv-audit` 或 `Main.set_frame_audit(true)` 开启逐帧扫描和可见记录，关闭审计保留输入事件记录。呈现样本采用 `kind: presentation`，与 SmartReplay 的读取合同一致；记录保留完整身体样本和原始输入。
 
 3D 页的文本记录描述页面纹理成员与冻结页身份，冻结旧页不扫描下一页控件。G7 记录不证明逐像素遮挡，实际遮挡由渲染图像承担证据。记录存在、页面纹理有内容与玩家实际可见分别表述。
 
-DevConsole layer=128；输入反引号/F12。Inspector 页每 0.25 秒刷新 Physical、Mind 和按 score 排序的候选 Tree，离页停止刷新。性能页保存固定 120 帧环，记录 FPS、frame、prepare、complete、navigation，并按帧累计阶段耗时。性能页关闭时停止诊断采样。DvSession 的累计耗时和每游戏小时统计持续运行，GameEngine.PerformanceSummary/PerformanceSnapshot 暴露只读数据；性能页每 0.25 秒读取轻量摘要，并将累计引擎秒数、每游戏小时耗时、投影、初始化和归档列在帧信息下。性能摘要同时显示每游戏小时的引擎正式决策数，以及人类／大模型控制模式下的现实用时。现实用时在开局／恢复完成后开始，覆盖阅读、思考、模型调用、输入等待、现场执行和引擎；CloseTrace 发起时先冻结计时，以排除归档等待。CloseTrace 独立写入 `engine-performance.md/.hourly.csv/.operations.csv/.decisions.csv/.dvlog`，普通精简记录同样导出，异常保留部分文件并记入关闭清单。统计不读取正在变动的 DV 状态，实际口径见 [引擎耗时记录](../../../docs/engine-performance.md)。
+DevConsole layer=128；输入反引号/F12。Inspector 页每 0.25 秒刷新 Physical、Mind 和按 score 排序的候选 Tree，离页停止刷新。性能页保存固定 120 帧环，记录 frame、prepare、complete、navigation 和 physical 的毫秒耗时，阶段时长归入实际完成帧；保留帧均值与峰值，移除重复 FPS 采样和曲线。离页停止帧诊断，DvSession 的会话累计统计继续运行。GameEngine.PerformanceSummary/PerformanceSnapshot 提供只读数据；页首每 0.25 秒显示 `game_hours_per_real_hour`、`decisions_per_real_hour`、`interface_hours_per_real_hour`，分母统一为 `elapsed_wall_ms` 对应的现实小时，同时注明控制来源、真实采样时长和游戏推进量。零现实覆盖或缺失字段显示缺失，真实零推进显示零。引擎、投影、初始化和归档留在拆解行，人工／LLM 的接口区间与整个会话现实窗口分别记录。普通精简记录同样流式采集并导出报告，异常保留部分文件并记入关闭清单。统计摘要不遍历工作线程正在修改的 DV 状态，实际口径见 [引擎耗时记录](../../../docs/engine-performance.md)。
 
 ## 记录回放
 
@@ -80,4 +88,4 @@ MockSession 与正式桥暴露相同 Godot 信号和调用面，使用 `Contract
 
 从仓库根目录运行 `python mcp/godot_workspace.py --mock-ui`，或调用统一 MCP 的 `ui_mock`，会建立以 `Main.tscn` 为主场景的纯 GDScript 工程并传入 `--dv-mock`。该路径不创建 C# 项目、不构建或打开正式 DvSession，工具用户数据和临时工程随窗口关闭清理。
 
-本轮仅完成实现、接线与文档，没有执行测试、检查、构建或探针；本文不声明运行通过。
+测试、检查、构建与探针的范围和时机服从用户当前授权；源码与接线说明不作为实际运行通过的证据。

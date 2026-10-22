@@ -16,6 +16,7 @@ public partial class GameEngine : Node
     private bool maintenance;
     private bool faulted;
     private DvSession? session;
+    private string? evidenceDirectory;
     private string optionsJson = "{}";
     private GDict snapshotCache = new();
     private string snapshotJson { get => Json.Stringify(snapshotCache); set => snapshotCache = Parse(value); }
@@ -134,6 +135,63 @@ public partial class GameEngine : Node
         current.PhaseObserver = (stage, details) => Stamp("dv_" + stage, timingId, details, command);
     }
 
+    private static string NewSessionEvidenceDirectory()
+    {
+        var name = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fffffff", System.Globalization.CultureInfo.InvariantCulture) + "-" + Guid.NewGuid().ToString("N");
+        var path = ProjectSettings.GlobalizePath("user://dv-sessions/" + name);
+        if (Directory.Exists(path)) throw new IOException("Evidence directory already exists");
+        Directory.CreateDirectory(path);
+        return path;
+    }
+
+    private static void StartSessionRecording(DvSession current, string directory)
+    {
+        current.SetExecutionContext("godot", "godot");
+        current.StartPerformanceRecording(Path.Combine(directory, "engine-performance"));
+    }
+
+    // A replaced or rejected candidate owns its recorder until this one close.
+    // Errors are returned to the transaction instead of retrying a partial seal.
+    private static string SealSessionEvidence(DvSession current, string directory, string reason, string backupPath = "")
+    {
+        var errors = new List<string>();
+        try { current.StopPerformanceClock(); }
+        catch (Exception error) { errors.Add("stop-clock: " + error); }
+        try { current.Close(); }
+        catch (Exception error) { errors.Add("close: " + error); }
+        if (current.AuditMode)
+        {
+            try { current.WriteTrace(Path.Combine(directory, "session.dvdag")); }
+            catch (Exception error) { errors.Add("trace: " + error); }
+        }
+        try { current.WritePerformanceReport(Path.Combine(directory, "engine-performance")); }
+        catch (Exception error) { errors.Add("performance-report: " + error); }
+        try
+        {
+            using var output = new FileStream(Path.Combine(directory, "close-result.dvlog"), FileMode.CreateNew, System.IO.FileAccess.Write);
+            output.Write(DuelView.Compiled.BinaryEvidence.Magic);
+            DuelView.Compiled.BinaryEvidence.WriteFrame(output, JsonSerializer.SerializeToElement(new
+            {
+                complete = errors.Count == 0, reason, backup_path = backupPath,
+                audit_mode = current.AuditMode, trace_policy = current.AuditMode ? "full" : "omitted-gameplay",
+                performance_policy = "streamed-session-samples-and-aggregates", performance_prefix = "engine-performance", errors
+            }));
+        }
+        catch (Exception error) { errors.Add("close-result: " + error); }
+        return string.Join("\n", errors);
+    }
+
+    private void BeginDeliveredDecision()
+    {
+        var current = session;
+        if (current is null || closing || faulted || !snapshotCache.ContainsKey("pending")) return;
+        var pending = snapshotCache["pending"].AsGodotDictionary();
+        if (pending.GetValueOrDefault("status", "").AsString() != "awaiting_input") return;
+        var options = pending.GetValueOrDefault("options", new GArray());
+        if (options.VariantType != Variant.Type.Array || options.AsGodotArray().Count == 0) return;
+        current.BeginDecisionInterface(current.Viewer, "decision");
+    }
+
 
     public GArray Dispatch(GDict input)
     {
@@ -148,6 +206,8 @@ public partial class GameEngine : Node
             Report(new InvalidOperationException("Session dispatch stopped after a host worker error"));
             return new();
         }
+        if (kind == "select" && session is { } current)
+            current.SetDecisionInterfacePhase(current.Viewer, "response");
         commands.Enqueue((command, json));
         StartPump();
         return new();
@@ -181,11 +241,15 @@ public partial class GameEngine : Node
                         if (session is not null) throw new InvalidOperationException("Session is already open");
                         var options = optionsJson;
                         var savePath = kind == "load" ? NormalizeBookmarkPath(input.GetValueOrDefault("path", "").AsString()) : "";
+                        var recordingDirectory = NewSessionEvidenceDirectory();
                         var opened = await Task.Run(() =>
                         {
                             using var save = kind == "load" ? OpenBookmarkForRead(savePath) : null;
                             Stamp("open_begin", timingId);
                             var current = kind == "load" ? DvSession.RestoreFile(savePath) : DvSession.OpenConfiguredCampaign(options);
+                            try
+                            {
+                            StartSessionRecording(current, recordingDirectory);
                             BindPhases(current, timingId, queued.Id);
                             Stamp("open_end", timingId);
                             Stamp("snapshot_begin", timingId);
@@ -197,6 +261,13 @@ public partial class GameEngine : Node
                                 Casebook: journal.Json, Warning: journal.Warning,
                                 ProjectedSnapshot: initialSnapshot,
                                 ProjectedCasebook: Parse(journal.Json));
+                            }
+                            catch (Exception error)
+                            {
+                                var sealError = SealSessionEvidence(current, recordingDirectory, "open-not-installed");
+                                if (sealError.Length > 0) throw new AggregateException(error, new IOException(sealError));
+                                throw;
+                            }
                         });
                         Stamp("handoff_begin", timingId, kind);
                         var snapshot = opened.ProjectedSnapshot;
@@ -205,6 +276,7 @@ public partial class GameEngine : Node
                             ["snapshot"] = snapshot,
                             ["casebook"] = journalData, ["casebook_warning"] = opened.Warning } };
                         session = opened.Session;
+                        evidenceDirectory = recordingDirectory;
                         snapshotCache = opened.Snapshot;
                         casebookViewer = opened.Viewer;
                         casebookJson = opened.Casebook;
@@ -217,6 +289,7 @@ public partial class GameEngine : Node
                         if (pendingEvent.Length != 0) continue;
                         var selection = kind == "select" ? input["choice_id"].AsString() : "";
                         var current = session;
+                        if (kind == "select") current.SetDecisionInterfacePhase(current.Viewer, "response");
                         var prepared = await Task.Run(() =>
                         {
                             BindPhases(current, timingId, queued.Id);
@@ -338,6 +411,8 @@ public partial class GameEngine : Node
                 }
                 catch (Exception error)
                 {
+                    if (kind == "select" && session is { } failedSelection)
+                        failedSelection.EndDecisionInterface(failedSelection.Viewer, "failed");
                     if (kind is "dev_command" or "replay_load" or "prepare_ahead")
                     {
                         events.Add(new GDict { ["kind"] = "dev_error", ["message"] = error.Message });
@@ -362,6 +437,7 @@ public partial class GameEngine : Node
                     Stamp("events_delivered", timingId, kind);
                     Stamp("delivery_begin", timingId, kind);
                     EmitSignal(SignalName.EventsReady, events);
+                    BeginDeliveredDecision();
                     Stamp("delivery_end", timingId, kind);
                 }
                 Stamp("command_finished", timingId, kind);
@@ -388,11 +464,12 @@ public partial class GameEngine : Node
             throw new InvalidOperationException("Session persistence is unavailable while a Godot action awaits its execution receipt");
     }
 
-    private void InstallRestored((DvSession Session, string Snapshot) restored)
+    private void InstallRestored((DvSession Session, string Snapshot) restored, GDict preparedSnapshot, string directory)
     {
         session = restored.Session;
+        evidenceDirectory = directory;
         projectionCache.Clear();
-        snapshotJson = restored.Snapshot;
+        snapshotCache = preparedSnapshot;
         casebookViewer = restored.Session.Viewer;
         casebookJson = "{}";
         pendingEvent = "";
@@ -424,10 +501,8 @@ public partial class GameEngine : Node
             errors.AddRange(hostErrors);
             // Opening may have completed while shutdown awaited the worker.
             session?.StopPerformanceClock();
-            phase = "create-directory";
-            path = ProjectSettings.GlobalizePath("user://dv-sessions/" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-ffff"));
-            if (Directory.Exists(path)) throw new IOException("Evidence directory already exists");
-            Directory.CreateDirectory(path);
+            phase = "evidence-directory";
+            path = evidenceDirectory ??= NewSessionEvidenceDirectory();
             ownsDirectory = true;
             // A failed output must not suppress independent evidence or the save.
             foreach (var output in new (string, IEnumerable<string>)[] {
@@ -517,7 +592,7 @@ public partial class GameEngine : Node
                 {
                     using var result = new FileStream(Path.Combine(path, "close-result.dvlog"), FileMode.CreateNew, System.IO.FileAccess.Write);
                     result.Write(DuelView.Compiled.BinaryEvidence.Magic);
-                    var closeRecord = System.Text.Json.JsonSerializer.SerializeToElement(new { complete = errors.Count == 0, audit_mode = session?.AuditMode, trace_policy = session?.AuditMode == true ? "full" : "omitted-gameplay", session_opened = session is not null, unprocessed_commands = commands.Count, pending_action = pendingEvent, performance_policy = "always-on-session-aggregates-and-bounded-tail", performance_prefix = "engine-performance", timing_policy = "bounded-ring", timing_capacity = TimingCapacity, timing_dropped = timingDropped, live_timing_dropped = liveTimingDropped, errors });
+                    var closeRecord = System.Text.Json.JsonSerializer.SerializeToElement(new { complete = errors.Count == 0, audit_mode = session?.AuditMode, trace_policy = session?.AuditMode == true ? "full" : "omitted-gameplay", session_opened = session is not null, unprocessed_commands = commands.Count, pending_action = pendingEvent, performance_policy = "streamed-session-samples-and-aggregates", performance_prefix = "engine-performance", timing_policy = "bounded-ring", timing_capacity = TimingCapacity, timing_dropped = timingDropped, live_timing_dropped = liveTimingDropped, errors });
                     DuelView.Compiled.BinaryEvidence.WriteFrame(result, closeRecord);
                 }
             }

@@ -1,13 +1,11 @@
-"""Run a timed engine-controlled CLI demonstration without selecting actions."""
+"""Run only engine-AI decisions within one hard, real-time process budget."""
 import argparse
 import base64
-import hashlib
 import json
 import os
 from pathlib import Path
 import queue
 import subprocess
-import sys
 import threading
 import time
 
@@ -19,44 +17,60 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', required=True, type=Path)
     parser.add_argument('--seconds', required=True, type=float)
-    parser.add_argument('--grace', type=float, default=90)
+    parser.add_argument('--grace', type=float, default=40,
+                        help='Shutdown reserve inside the hard timeout, never extra test time.')
+    parser.add_argument('--hard-timeout', type=float, default=300)
+    parser.add_argument('--source-revision', default='')
     parser.add_argument('--cli', type=Path, default=Path('dv_core/cli/bin/Release/net8.0/dv-cli.dll'))
     args = parser.parse_args()
-    if not 0 < args.seconds <= 3600 or not 0 < args.grace <= 300:
-        parser.error('seconds must be in (0,3600], grace in (0,300]')
+    if not 0 < args.hard_timeout <= 300:
+        parser.error('hard-timeout must be in (0,300]')
+    if not 0 < args.grace < args.hard_timeout or not 0 < args.seconds <= args.hard_timeout - args.grace:
+        parser.error('seconds plus shutdown reserve must fit inside hard-timeout')
     output = args.out.resolve()
     output.mkdir(parents=True, exist_ok=False)
-    root = Path(__file__).resolve().parents[2]
-    files = sorted(set([*root.glob('dv_core/**/*.cs'), *root.glob('dv_core/modules/*.dv'),
-                        *args.cli.resolve().parent.glob('*.dll'), Path(__file__),
-                        Path(__file__).with_name('binary_evidence.py'),
-                        Path(__file__).with_name('capture_cli.py')]))
-    files = [p for p in files if not any(part in ('obj', 'bin') for part in p.relative_to(root).parts)
-             or p.parent == args.cli.resolve().parent]
-    fingerprints = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
     command = ['dotnet', str(args.cli.resolve()), '--jsonl', '--controller', 'ai',
                '--viewer', 'detective', '--trace', str(output / 'session.dvdag'),
                '--save', str(output / 'session.dvsave'), '--performance', str(output / 'engine')]
+    if args.source_revision:
+        command.extend(['--source-revision', args.source_revision])
     origin = time.monotonic_ns()
+    started = time.monotonic()
+    hard_deadline = started + args.hard_timeout
+    decision_deadline = min(started + args.seconds, hard_deadline - args.grace)
     lock = threading.Lock()
     messages = queue.Queue()
+    finished = threading.Event()
+    timed_out = threading.Event()
+    recording_open = threading.Event()
+    recording_open.set()
     exit_code = 1
     reason = 'not_started'
     advances = 0
-    window_start = None
     latest_status = {}
     partial = output / 'console.dvlog.partial'
     with RecordWriter(partial) as writer:
         def record(kind, **values):
             with lock:
+                if not recording_open.is_set():
+                    return
                 writer.append({'kind': kind, 'real_ns': time.monotonic_ns() - origin, **values})
                 writer.stream.flush()
 
-        record('launch', command=command, source_sha256=fingerprints,
-               requested_seconds=args.seconds, grace_seconds=args.grace,
-               scope='engine AI; fixed detective observer; formal-model; compact recording')
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+        record('launch', command=command, source_revision=args.source_revision or None,
+               requested_seconds=args.seconds, hard_timeout_seconds=args.hard_timeout,
+               shutdown_reserve_seconds=args.grace,
+               scope='engine AI decisions only; fixed detective observer; formal-model',
+               source_validation='not-run-by-user-request')
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        def watchdog():
+            if not finished.wait(max(0, hard_deadline - time.monotonic())):
+                timed_out.set()
+                stop_tree(process)
+
+        watchdog_thread = threading.Thread(target=watchdog, daemon=True)
+        watchdog_thread.start()
 
         def pump(pipe, kind):
             pending = b''
@@ -79,8 +93,8 @@ def main():
                 if kind == 'stdout':
                     messages.put({'kind': 'eof'})
 
-        pumps = [threading.Thread(target=pump, args=(process.stdout, 'stdout')),
-                 threading.Thread(target=pump, args=(process.stderr, 'stderr'))]
+        pumps = [threading.Thread(target=pump, args=(process.stdout, 'stdout'), daemon=True),
+                 threading.Thread(target=pump, args=(process.stderr, 'stderr'), daemon=True)]
         for thread in pumps:
             thread.start()
 
@@ -93,9 +107,9 @@ def main():
         def reply(deadline):
             nonlocal latest_status
             while True:
-                remaining = deadline - time.monotonic()
+                remaining = min(deadline, hard_deadline) - time.monotonic()
                 if remaining <= 0:
-                    raise TimeoutError('In-flight CLI operation exceeded its deadline and grace')
+                    raise TimeoutError('AI decision deadline reached')
                 item = messages.get(timeout=remaining)
                 kind = item.get('kind')
                 data = item.get('data') or {}
@@ -109,19 +123,18 @@ def main():
 
         try:
             send('view detective')
-            reply(time.monotonic() + args.grace)
-            window_start = time.monotonic()
-            deadline = window_start + args.seconds
-            record('window_start', requested_seconds=args.seconds)
+            reply(decision_deadline)
+            record('window_start', remaining_seconds=max(0, decision_deadline - time.monotonic()),
+                   clock_basis='process launch; opening included')
             last_progress = -30.0
             reason = 'window_elapsed'
-            while time.monotonic() < deadline:
+            while time.monotonic() < decision_deadline:
                 if latest_status.get('active') is False:
                     reason = 'session_inactive'
                     break
                 send('next')
                 advances += 1
-                item = reply(deadline + args.grace)
+                item = reply(hard_deadline - min(10, args.grace / 2))
                 if item.get('kind') == 'intent':
                     intent = item.get('data') or {}
                     if intent.get('awaiting_input'):
@@ -130,44 +143,50 @@ def main():
                     if intent.get('status') in ('stopped', 'closed'):
                         reason = 'session_inactive'
                         break
-                elapsed = time.monotonic() - window_start
+                elapsed = time.monotonic() - started
                 if elapsed - last_progress >= 30:
                     last_progress = elapsed
-                    print(f'AI window {elapsed:.1f}/{args.seconds:g}s; next inputs {advances}; '
+                    print(f'AI decisions {elapsed:.1f}/{args.seconds:g}s; next inputs {advances}; '
                           f'game time {latest_status.get("game_time", "unknown")}', flush=True)
-            record('window_end', reason=reason, elapsed_seconds=time.monotonic() - window_start,
+            record('window_end', reason=reason, elapsed_seconds=time.monotonic() - started,
                    next_inputs=advances, last_status=latest_status)
             send('quit')
             process.stdin.close()
-            exit_code = process.wait(timeout=args.grace)
+            exit_code = process.wait(timeout=max(.001, hard_deadline - time.monotonic()))
         except (Exception, KeyboardInterrupt) as error:
-            reason = 'driver_error'
+            reason = 'hard_timeout' if timed_out.is_set() else 'driver_error'
             record('driver_error', error=str(error), next_inputs=advances)
-            print(f'Demo stopped: {error}', flush=True)
-            if isinstance(error, (TimeoutError, queue.Empty, subprocess.TimeoutExpired, KeyboardInterrupt)):
+            print(f'AI session stopped: {error}', flush=True)
+            try:
+                if process.poll() is None:
+                    try:
+                        send('quit')
+                        process.stdin.close()
+                    except (OSError, ValueError):
+                        pass
+                    process.wait(timeout=max(.001, hard_deadline - time.monotonic()))
+            except subprocess.TimeoutExpired:
+                timed_out.set()
                 stop_tree(process)
-            else:
-                # A CLI error may already be executing its one-shot Close.
-                # Let it preserve that failure before resorting to termination.
-                try:
-                    process.stdin.close()
-                    process.wait(timeout=args.grace)
-                except (OSError, subprocess.TimeoutExpired):
-                    stop_tree(process)
-            exit_code = 124 if isinstance(error, (TimeoutError, queue.Empty, subprocess.TimeoutExpired)) else 1
+            exit_code = 124 if timed_out.is_set() or isinstance(error, (TimeoutError, queue.Empty, subprocess.TimeoutExpired)) else 1
         finally:
+            if process.poll() is None:
+                timed_out.set()
+                stop_tree(process)
             for thread in pumps:
-                thread.join(timeout=10)
-            changed = [str(p) for p in files if not p.is_file() or
-                       hashlib.sha256(p.read_bytes()).hexdigest() != fingerprints[str(p)]]
+                thread.join(timeout=max(0, min(2, hard_deadline - time.monotonic())))
+            finished.set()
             pipes_complete = all(not thread.is_alive() for thread in pumps)
-            record('closed', exit_code=exit_code, reason=reason, changed_sources=changed,
-                   pipes_complete=pipes_complete)
+            record('closed', exit_code=exit_code, reason=reason, hard_timeout=timed_out.is_set(),
+                   elapsed_seconds=time.monotonic() - started, pipes_complete=pipes_complete)
+            with lock:
+                recording_open.clear()
     if pipes_complete:
         partial.rename(output / 'console.dvlog')
-    print(f'Demo closed: exit={exit_code}, reason={reason}, changed_sources={len(changed)}', flush=True)
-    return exit_code or (1 if changed or not pipes_complete else 0)
+    print(f'AI session closed: exit={exit_code}, reason={reason}, elapsed={time.monotonic() - started:.1f}s', flush=True)
+    return exit_code or (0 if pipes_complete else 1)
 
 
 if __name__ == '__main__':
     raise SystemExit(main())
+

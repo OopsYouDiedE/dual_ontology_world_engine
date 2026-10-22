@@ -25,11 +25,43 @@ fn campaign_state_object(id, fields):
         state = dv_with(state, "name", dv_field(descriptor.map_title))
     return dv_with_many(dv_object(id, "physical", {"state": state, "identity": []}), descriptor)
 
+// Visibility is an authored field whitelist, separate from map metadata.
+// Installing local identities still leaves every value unknown. The common
+// perception path reads these fields only at actual co-location boundaries.
+fn campaign_install_visible_objects(scene):
+    var visible = []
+    var i = 0
+    while i < rt_count(scene.physical.objects):
+        let object = scene.physical.objects[i][1]
+        if 0 < rt_count(dv_find(object, "visible_fields", [])):
+            rt_push(visible, object.id)
+        i = i + 1
+    var actors = []
+    var bindings = scene.bindings
+    i = 0
+    while i < rt_count(scene.actors):
+        let actor = scene.actors[i]
+        var mind = actor.mind
+        var j = 0
+        while j < rt_count(visible):
+            let id = visible[j]
+            if dv_local(bindings, id, actor.id) == "":
+                if not dv_has_key(mind.objects, id):
+                    mind = dv_add_object(mind, campaign_local_object(id))
+                bindings = dv_append(bindings, dv_binding(id, id, actor.id))
+            j = j + 1
+        rt_push(actors, dv_with_many(actor, {"mind": mind, "policy": dv_with(actor.policy, "notice_visible_objects", true)}))
+        i = i + 1
+    return dv_with_many(scene, {"actors": actors, "bindings": bindings})
+
 // Authored presentation metadata never grants a field to a subject's mind.
 fn campaign_object_descriptor(id):
     let names = {"coat": "风衣", "lens": "黄铜放大镜", "graphite_pencil": "石墨笔", "evidence_bags": "证物袋", "opening.cabinet": "领取柜", "opening.silver": "银元", "opening.testpiece": "金属试件", "opening.audition": "试听机", "opening.tea": "茶具", "c2.granary": "粮仓", "c2.counter": "配给台", "c2.ledger": "公物台账", "c2.bowl": "粥碗", "c2.kitchen": "炉灶", "c2.meter": "源质计", "c2.seal": "印章"}
     if dv_has_key(names, id):
-        return {"map_kind": "object", "map_title": dv_get(names, id)}
+        return {"map_kind": "object", "map_title": dv_get(names, id), "visible_fields": ["name", "location"]}
+    let sites = {"site:bed:R05": "床", "site:bed:R06": "床", "site:bed:R07": "床", "site:bed:R08": "床", "site:shelf": "书架", "site:slate": "长桌与石板", "site:transmitter": "传声铜口", "site:door-floor": "门边地面", "site:score": "书桌与乐谱", "site:pantry-counter": "备餐柜与水槽"}
+    if dv_has_key(sites, id):
+        return {"map_kind": "object", "map_title": dv_get(sites, id), "visible_fields": ["name", "location"]}
     if dv_has(campaign_people(), id) or id == "demon":
         return {"map_kind": "person", "map_title": campaign_person_name(id)}
     let people = ["detective", "huo", "shen", "su"]

@@ -4131,6 +4131,18 @@ fn c1_op_objects(detective_name):
     rt_push(result, campaign_state_object("opening.wake.su", {"low_wall_tone": dv_field(true), "finger_meter": dv_field("4/4")}))
     return result
 
+// Existing room fixtures gain neutral physical identities. Their names and
+// positions are visible; traces, inscriptions, contents and ownership still
+// belong to the corresponding paid inspection or introduction.
+fn c1_visible_site_objects():
+    let sites = [["site:bed:R05", "R05"], ["site:bed:R06", "R06"], ["site:bed:R07", "R07"], ["site:bed:R08", "R08"], ["site:shelf", "R05"], ["site:slate", "hall"], ["site:transmitter", "hall"], ["site:door-floor", "foyer"], ["site:score", "R08"], ["site:pantry-counter", "pantry"]]
+    var result = []
+    var i = 0
+    while i < rt_count(sites):
+        rt_push(result, campaign_state_object(sites[i][0], {"location": dv_field(sites[i][1])}))
+        i = i + 1
+    return result
+
 法则 c1_op_wake，给定 标识：
     名为 rt_cat("c1_op_wake.", 标识)。
     前提 campaign_at(标识, c1_op_wake_room(标识))。

@@ -245,7 +245,7 @@ fn dvs_choose(actor, bindings, costs):
     let key = ["dvp_plan", dvp_memo_input(actor, costs), bindings, costs]
     let cached = rt_memo_get(actor.mind, key)
     if cached[0]:
-        return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "dependency_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions, "reused_dependency_expansions": dv_find(cached[1], "dependency_expansions", 0)}))
+        return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "dependency_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions, "reused_dependency_expansions": dv_find(cached[1], "dependency_expansions", 0), "planning_work": {"cache_hit": true, "candidates_considered": 0, "eligible_evaluations": 0, "forecasts": 0, "expanded_nodes": 0, "reused_work": dv_find(cached[1], "planning_work", [])}}))
     return dvs_honor_planned_followup(actor, rt_memo_put(actor.mind, key, dvp_plan(actor, bindings, costs)))
 
 // Keep the actor's own predicted next step after a successful move, provided
@@ -1345,6 +1345,74 @@ fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent):
     else:
         return actor
 
+// Content explicitly declares which neutral state fields can be seen from
+// the same room. A container's children are not in that room, and identities,
+// contents and inspection evidence are absent unless separately declared.
+fn dvs_visible_object_catalog(objects):
+    let key = ["visible-object-catalog-v1"]
+    let cached = rt_memo_get(objects, key)
+    if cached[0]:
+        return cached[1]
+    var rooms = []
+    var i = 0
+    while i < rt_count(objects):
+        let object = objects[i][1]
+        let fields = dv_find(object, "visible_fields", [])
+        if 0 < rt_count(fields):
+            let state = dv_find(object.facets, "state", [])
+            let location = dv_find(state, "location", dv_unknown())
+            if dv_uncontested(location) and rt_is_text(location.value):
+                var visible = []
+                var j = 0
+                while j < rt_count(fields):
+                    let cell = dv_find(state, fields[j], dv_unknown())
+                    if dv_uncontested(cell):
+                        rt_push(visible, dv_pair(fields[j], cell))
+                    j = j + 1
+                let room = dv_find(rooms, location.value, [])
+                rooms = dv_with(rooms, location.value, dv_with(room, object.id, visible))
+        i = i + 1
+    return rt_memo_put(objects, key, rooms)
+
+fn dvs_visible_objects(actor, physical):
+    if not dv_find(actor.policy, "notice_visible_objects", false):
+        return []
+    if dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true())) != "true":
+        return []
+    let own = dv_read(physical, actor.location_ref)
+    if not dv_uncontested(own) or not rt_is_text(own.value):
+        return []
+    return dv_find(dvs_visible_object_catalog(physical.objects), own.value, [])
+
+fn dvs_notice_visible_objects(actor, physical, bindings, events, time, parent):
+    if not dv_find(actor.policy, "notice_visible_objects", false):
+        return actor
+    let context = dvs_visible_objects(actor, physical)
+    let previous = dv_find(actor, "visible_objects", [])
+    if dv_same(context, previous):
+        return actor
+    var grants = []
+    var i = 0
+    while i < rt_count(context):
+        let object = context[i]
+        let old_fields = dv_find(previous, object[0], [])
+        var j = 0
+        while j < rt_count(object[1]):
+            let field = object[1][j]
+            if not dv_same(field[1], dv_find(old_fields, field[0], false)):
+                rt_push(grants, dv_ref(object[0], "state", field[0]))
+            j = j + 1
+        i = i + 1
+    var event = dvs_event(events, "room_perception", actor.id, time, dvs_cognitive_parents(actor, [parent]), {"visible_before": previous, "visible_after": context, "grants": grants, "scope": "actual-same-room-visible-fields"})
+    var mind = actor.mind
+    if 0 < rt_count(grants):
+        let observations = dv_perceive(physical, mind, bindings, grants, event, time)
+        if 0 < rt_count(observations):
+            let next = dv_update_mind(mind, observations, mind.revision, dvs_observation_profile(actor)).world
+            event = dvs_event_prepared(events, "observation", actor.id, time, [event], {"observations": observations, "revision_before": mind.revision, "revision_after": next.revision, "bindings": bindings, "grants": grants, "execution_id": event})
+            mind = next
+    return dv_with_many(actor, {"visible_objects": context, "mind": mind, "last_cognitive_event": event})
+
 fn dvs_visible_action_grants(actors, speaker_index, action, before, physical, bindings, events, time, parent, execution_id):
     var listeners = dv_find(action, "public_observers", [])
     var grants = dv_find(action, "public_grants", [])
@@ -2160,6 +2228,7 @@ fn dvp_cached_dependencies(actor, seeds, budget):
             return dv_with_many(result, {"cache_hit": false, "cache": local_2})
 
 fn dvp_plan(actor, bindings, costs):
+    rt_phase("planning-index-start", actor.id)
     let indexed = dvp_actor_view(actor, dv_with_many(actor.mind, {"history": [], "seen": []}))
     rt_push(indexed, dv_pair("planning_choice_groups", dvp_choice_groups(actor.actions)))
     actor = indexed
@@ -2185,7 +2254,9 @@ fn dvp_plan(actor, bindings, costs):
     let lookahead_limit = dv_find(actor.policy, "lookahead_limit", 6)
     var goals = dvp_goal_refs(actor)
     var probes = dvp_probe_refs(actor)
+    rt_phase("planning-dependencies-start", actor.id)
     var dependencies = dvp_cached_dependencies(actor, dvp_merge_refs(goals, probes), dv_find(actor.policy, "dependency_budget", dv_find(actor, "planning_limit", budget)))
+    rt_phase("planning-dependencies-end", actor.id)
     var relevant = dependencies.refs
     var expanded = 0
     var best = false
@@ -2207,12 +2278,18 @@ fn dvp_plan(actor, bindings, costs):
     let initial_seen = dvp_state_key(root_room, [], initial_context)
     let init_key = dv_list3(initial_seen, initial_achievements, initial_access)
     var plans = []
+    var candidates_considered = 0
+    var eligible_evaluations = 0
+    var forecasts = 0
+    var peak_frontier = 1
     var frontier = dv_single({"mind": actor.mind, "visible_context": initial_context, "path": [], "score": 0, "room": root_room, "tasks": [], "seen": dv_single(initial_seen), "key": init_key, "achievements": initial_achievements, "opportunities": initial_access})
     var depth = 0
     var time_blocked = 0
     var stop = "complete-depth"
     var actions = actor.actions
     var visited = []
+    rt_phase("planning-index-end", actor.id)
+    rt_phase("planning-expand-start", actor.id)
     // Only expanded nodes enter visited. Beam eviction never reserves a state.
     while dv_and((depth < depth_limit), (0 < rt_count(frontier))):
         if ((budget - expanded) < rt_count(frontier)):
@@ -2234,6 +2311,7 @@ fn dvp_plan(actor, bindings, costs):
                 expanded = (expanded + 1)
                 while (i < rt_count(node_actions)):
                     var action = node_actions[i]
+                    candidates_considered = candidates_considered + 1
                     var local_1 = false
                     var spatially_possible = true
                     if node.room != "":
@@ -2256,6 +2334,7 @@ fn dvp_plan(actor, bindings, costs):
                     else:
                         local_1 = false
                     if local_1:
+                        eligible_evaluations = eligible_evaluations + 1
                         var value = dvp_action_value_context(node_actor, action, bindings, relevant, probes, value_context)
                         let opportunities = dvp_opportunities(node_actor, action)
                         var opportunity_keys = node.opportunities
@@ -2276,7 +2355,10 @@ fn dvp_plan(actor, bindings, costs):
                             current_action = action
                             current_score = score
                             current_value = value
-                        rt_push(plans, dv_with_many({"path": path, "score": score, "value": value, "relevant_refs": relevant}, {"probe_refs": probes, "mind_revision": actor.mind.revision, "prediction_basis": dv_find(node, "prediction_basis", [])}))
+                        var score_scope = "planned-path"
+                        if depth == 0:
+                            score_scope = "root-immediate"
+                        rt_push(plans, dv_with_many({"path": path, "score": score, "value": value, "relevant_refs": relevant}, {"probe_refs": probes, "mind_revision": actor.mind.revision, "evaluated_at_game_time": dv_find(actor, "decision_time", actor.mind.time), "score_scope": score_scope, "prediction_basis": dv_find(node, "prediction_basis", [])}))
                         if (best_score < score):
                             best_score = score
                             best_path = path
@@ -2287,7 +2369,10 @@ fn dvp_plan(actor, bindings, costs):
                             if dv_has_key(adoptions, name):
                                 var adoption = dv_get(adoptions, name)
                                 if dv_and(adoption.active, (adoption.mode == "predict")):
+                                    forecasts = forecasts + 1
+                                    rt_phase("planning-forecast-start", actor.id)
                                     var prediction = dvp_forecast(mind, name)
+                                    rt_phase("planning-forecast-end", actor.id)
                                     if (prediction.status == "applied"):
                                         var predicted = prediction.world
                                         let predicted_actor = dvp_actor_view(node_actor, predicted)
@@ -2328,7 +2413,9 @@ fn dvp_plan(actor, bindings, costs):
             if depth == 1:
                 best_after_successor_layer = {"path": best_path, "net_score": best_score}
             frontier = next_frontier
+            peak_frontier = dv_max(peak_frontier, rt_count(frontier))
             depth = (depth + 1)
+    rt_phase("planning-expand-end", actor.id)
     var local_2 = false
     if (0 < best_score):
         local_2 = best
@@ -2339,7 +2426,7 @@ fn dvp_plan(actor, bindings, costs):
         local_3 = "duration-budget"
     else:
         local_3 = stop
-    return dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "time_blocked": time_blocked, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": depth, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer})
+    return dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "time_blocked": time_blocked, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": depth, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer, "planning_work": {"cache_hit": false, "candidates_considered": candidates_considered, "eligible_evaluations": eligible_evaluations, "forecasts": forecasts, "expanded_nodes": expanded, "peak_frontier": peak_frontier, "candidate_paths": rt_count(plans), "budget_limit": budget, "depth_limit": depth_limit, "lookahead_limit": lookahead_limit}})
 
 fn dvp_find_action(actions, id):
     let key = ["dvp-find-action", id]
@@ -6021,9 +6108,9 @@ fn dvs_idle_physical_input(physical, story):
     return result
 
 fn dvs_idle_contact_input(actor, physical, actors):
-    if not dv_find(actor.policy, "notice_co_presence", false):
+    if not dv_find(actor.policy, "notice_co_presence", false) and not dv_find(actor.policy, "notice_visible_objects", false):
         return false
-    return {"context": dvs_visible_context(actor, physical, actors), "position": dv_read(physical, actor.location_ref), "visible": dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true()))}
+    return {"context": dvs_visible_context(actor, physical, actors), "objects": dvs_visible_objects(actor, physical), "position": dv_read(physical, actor.location_ref), "visible": dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true()))}
 
 // A sleep record follows an unchanged complete cognition pass. Pending input
 // or a blocked pass keeps the actor awake; topic receipts remain explicit.
@@ -6207,6 +6294,7 @@ fn dvs_prepare_actor(state):
             dvs_debug_phase(story, actor.id, time, "cognition-start")
             actor = dvs_drain_received_speech(actor, events, time)
             actor = dvs_notice_peers(actor, physical, actors, bindings, events, time, parent)
+            actor = dvs_notice_visible_objects(actor, physical, bindings, events, time, parent)
             if dv_find(state, "player_actor", "") == actor.id:
                 actor = dvs_prepare_manual_cognition(actor, events, time, parent, dv_find(story, "chapter", 1))
             else:
@@ -6238,7 +6326,7 @@ fn dvs_prepare_actor(state):
             dvs_debug_phase(story, actor.id, time, "choice-start")
             choice = dvs_choose(actor, bindings, costs)
             dvs_debug_phase(story, actor.id, time, "choice-end")
-        choice = dv_with_many(choice, {"cognition_reused": dv_find(actor, "cognition_reused", false), "reason_reused": dv_find(actor, "reason_reused", false)})
+        choice = dv_with_many(choice, {"cognition_reused": dv_find(actor, "cognition_reused", false), "reason_reused": dv_find(actor, "reason_reused", false), "evaluated_at_game_time": time, "mind_revision": actor.mind.revision})
         actor = dv_with(actor, "dependency_work_total", dv_find(actor, "dependency_work_total", 0) + dv_find(choice, "dependency_expansions", 0))
         actor = dv_with(actor, "decision_revision", actor.mind.revision)
         var action = choice.action
@@ -6270,7 +6358,7 @@ fn dvs_prepare_actor(state):
             var model = dv_get(costs, action.kind)
             var action_event = rt_cat("action", rt_show(executed))
             var ledger = actor.ledger
-            parent = dvs_event_prepared(events, "action_selected", id, time, dvs_selection_parents(actor, action, choice, events, parent), dv_with_many({"action": action, "revision_before": mind.revision, "score": choice.score, "hypothesis": dv_find(actor, "hypothesis", false)}, {"plan_expansions": choice.plan_expansions, "plans": choice.plans, "owned_decision": dvs_owned_decision_selection(actor, action)}))
+            parent = dvs_event_prepared(events, "action_selected", id, time, dvs_selection_parents(actor, action, choice, events, parent), dv_with_many({"action": action, "revision_before": mind.revision, "score": choice.score, "hypothesis": dv_find(actor, "hypothesis", false)}, {"plan_expansions": choice.plan_expansions, "plans": choice.plans, "selected_path": dv_find(choice, "selected_path", []), "planning_stop": dv_find(choice, "stop", "manual-choice"), "planning_work": dv_find(choice, "planning_work", []), "owned_decision": dvs_owned_decision_selection(actor, action)}))
             parent = dvs_event(events, "planning_choice", id, time, dv_single(parent), dv_without(choice, "dependency_cache"))
             var bounds = dv_action_cost_bounds(model.minimum, model.maximum)
             if dv_or((horizon < (time + bounds.maximum.time)), (horizon < (time + model.actual.time))):
@@ -6527,6 +6615,11 @@ fn dvs_session_complete(state, receipt):
         actors = dvs_speech_owned(actors, index, action, events, time, parent, physical)
         actors = dvs_public_grants(actors, index, action, physical, bindings, events, time, parent, action_event)
     actor = actors[index]
+    if result.execution.status == "applied":
+        // Arrival and changed room contents are observed at this real receipt,
+        // so the result frame and the next choice share the same visible scene.
+        actor = dvs_notice_peers(actor, physical, actors, bindings, events, time, execution_event)
+        actor = dvs_notice_visible_objects(actor, physical, bindings, events, time, execution_event)
     executed = (executed + 1)
     idle = 0
     actors = dvs_replace(actors, index, actor)
@@ -6880,7 +6973,10 @@ fn dvs_session_presentation(state, viewer):
                 voice = "dialogue"
             let surface_voice = voice
             voice = dv_find(presentation, "voice", voice)
-            return {"status": event.data.receipt.execution.status, "actor": event.actor, "action_id": action.id, "action_kind": action.kind, "execution_event": event.id, "source_refs": dv_find(action, "source_refs", []), "voice": voice, "surface_voice": surface_voice, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation), "judgment": judgment}
+            var travel = []
+            if applied and visible:
+                travel = dv_find(action, "travel", [])
+            return {"status": event.data.receipt.execution.status, "actor": event.actor, "speaker": dv_find(presentation, "actor", event.actor), "action_id": action.id, "action_kind": action.kind, "execution_event": event.id, "source_refs": dv_find(action, "source_refs", []), "voice": voice, "surface_voice": surface_voice, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation), "travel": travel, "judgment": judgment}
         i = i - 1
     return {"status": "idle", "game_time": state.physical.time}
 

@@ -18,6 +18,39 @@ internal static class TerminalProjection
         _ => Value(value)
     };
 
+    internal static string GameClock(object? value, bool includeDay = false)
+    {
+        if (value is null or false) return "";
+        var text = Value(value);
+        var parts = text.Split('/');
+        if (!double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var minutes)) return "";
+        if (parts.Length == 2)
+        {
+            if (!double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var denominator) || denominator == 0) return "";
+            minutes /= denominator;
+        }
+        if (!double.IsFinite(minutes) || minutes < 0 || minutes > long.MaxValue) return "";
+        var whole = (long)minutes;
+        return (includeDay ? $"第{whole / 1440 + 1}日 " : "") + $"{whole % 1440 / 60:00}:{whole % 60:00}";
+    }
+
+    private static string ScoreDetails(IReadOnlyDictionary<string, object?> option)
+    {
+        var breakdown = HostValues.Map(option, "immediate_breakdown");
+        if (breakdown.Count == 0) breakdown = HostValues.Map(option, "score_breakdown");
+        if (Text(breakdown, "scope") != "subject-current-immediate") return "";
+        var labels = new (string Key, string Label)[]
+        {
+            ("information_component", "信息"), ("verification_component", "核验"),
+            ("progress_component", "进展"), ("achievement_component", "达成"),
+            ("weighted_opportunity", "机会"), ("time_penalty", "时间扣分")
+        };
+        var parts = labels.Where(item => breakdown.ContainsKey(item.Key))
+            .Select(item => item.Label + " " + Score(breakdown[item.Key]));
+        return "即时分项：" + string.Join(" · ", parts) +
+            (breakdown.TryGetValue("total", out var total) ? " · 合计 " + Score(total) : "");
+    }
+
     private static string MemberTitle(IReadOnlyDictionary<string, object?> member, bool objective)
     {
         var id = EntityId(member);
@@ -126,18 +159,20 @@ internal static class TerminalProjection
             Detail = Cost(option.GetValueOrDefault("cost")), HasCost = option.GetValueOrDefault("cost") is not null,
             Score = Score(option.GetValueOrDefault("ai_score") ?? option.GetValueOrDefault("score")),
             ScoreKind = Text(option, "score_kind"), PlanningStatus = Text(option, "planning_status"),
+            SelectionScore = option.GetValueOrDefault("selection_score") is null or false ? "" : Score(option["selection_score"]),
+            SelectionClock = GameClock(option.GetValueOrDefault("selection_game_time")),
+            ScoreDetail = ScoreDetails(option),
             Selected = Text(option, "id") == selected && selected.Length > 0
         }).ToArray();
-        var clock = Value(snapshot.GetValueOrDefault("game_time") ?? status.GetValueOrDefault("game_time"));
-        if (double.TryParse(clock, CultureInfo.InvariantCulture, out var minutes) && double.IsFinite(minutes))
-            clock = $"第{(long)minutes / 1440 + 1}日 {(long)minutes % 1440 / 60:00}:{(long)minutes % 60:00}";
+        var clock = GameClock(snapshot.GetValueOrDefault("game_time") ?? status.GetValueOrDefault("game_time"), true);
         return new TerminalModel
         {
             Title = "DV CORE / 观察台", Mode = mode, Actor = viewer, ActorTitle = actorTitle, Actors = actors,
             Location = Text(snapshot, "location_title", Text(status, "location", "—")), Clock = clock, Phase = phase,
             Source = source, Rooms = rooms, Edges = edges, Options = choices, Entries = entries,
             ObjectiveRooms = ProjectRooms(objective, viewer, true), ObjectiveEdges = ProjectEdges(objective),
-            Performance = HostValues.Map(previewData, "performance"), MapView = mapView, Footer = ""
+            Performance = HostValues.Map(previewData, "performance"), MapView = mapView,
+            OptionTimeBasis = Text(previewData, "option_time_basis", "current"), Footer = ""
         };
     }
 

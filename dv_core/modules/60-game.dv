@@ -102,6 +102,13 @@ fn c1_player_replay_summary(actor):
 // Source module: language_core/game/presentation.dv
 // Authored location bindings. Geometry remains owned by the existing map assets.
 fn dvg_places():
+    let key = ["host-place-directory-v2"]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, dvg_places_build())
+
+fn dvg_places_build():
     return {
         "living_hall": {"map": "living_floor", "room": "living_hall:hall", "spawn": "living_hall_east_south"},
         "central_hall": {"map": "central_hall", "room": "central_hall:central_hall"},
@@ -218,23 +225,38 @@ fn dvg_clock(time):
 
 fn dvg_presentation(state, viewer):
     var result = dvs_session_presentation(state, viewer)
-    let actor = dv_find(result, "actor", "")
+    let actor = dv_find(result, "speaker", dv_find(result, "actor", ""))
     var display = ""
+    var identity_source = "unidentified"
+    var revision = -1
     var i = 0
     while i < rt_count(state.actors):
         if state.actors[i].id == viewer:
             let subject = state.actors[i]
-            let name = dv_read(subject.mind, c1_op_person_ref(actor, "name"))
-            if dv_uncontested(name):
-                display = name.value
-            if display == "":
-                display = c1_op_known_speaker_label(subject.mind, actor)
-            if display == "":
-                display = c2d_known_speaker_name(subject.mind, actor)
+            revision = subject.mind.revision
+            display = dvg_preview_name(subject.mind, actor, "")
+            if display != "":
+                identity_source = "viewer-mind"
+            else:
+                if actor == viewer:
+                    display = "本人"
+                else:
+                    display = "同伴"
+                if actor == "":
+                    display = "现场记录"
             if actor == viewer and dv_find(result, "status", "") == "applied" and c1_ui_ends(dv_find(result, "action_id", ""), ".replay"):
                 result = dv_with(result, "lines", dv_append(dv_find(result, "lines", []), c1_player_replay_summary(subject)))
         i = i + 1
-    return dv_with(result, "speaker_name", display)
+    let travel = dv_find(result, "travel", [])
+    if dv_find(result, "visible", false) and dv_find(result, "status", "") == "applied" and dv_find(result, "actor", "") == viewer and dv_find(result, "action_kind", "") == "move":
+        let destination = dv_find(travel, "to", "")
+        if destination != "" and destination != dv_find(travel, "from", ""):
+            let title = dvg_location_title(destination)
+            var lines = dv_find(result, "lines", [])
+            if rt_count(lines) == 0 and dv_find(result, "surface", "") == "":
+                lines = dv_append(lines, rt_cat("已抵达", rt_cat(title, "。")))
+            result = dv_with_many(result, {"lines": lines, "arrival": {"logical_location": destination, "title": title, "source": dv_find(result, "execution_event", "")}})
+    return dv_with_many(result, {"speaker_name": display, "speaker_name_source": identity_source, "presentation_mind_revision": revision})
 
 // A navigation destination is not a per-person initial placement.
 fn dvg_initial_anchor(actor, location):
@@ -496,10 +518,47 @@ fn dvg_known_door_add(knowledge, origin, destination):
         if forward or reverse:
             return dv_with(knowledge, "rooms", rooms)
         i = i + 1
-    return {"rooms": rooms, "doors": dv_append(knowledge.doors, {"from": from, "to": to})}
+    return {"rooms": rooms, "doors": dv_append(knowledge.doors, {"from": from, "to": to, "connection_known": true, "passage_action_ids": []})}
+
+fn dvg_known_passage_add(knowledge, origin, destination, action_id):
+    let from = dvg_place(origin)
+    let to = dvg_place(destination)
+    var doors = []
+    var i = 0
+    while i < rt_count(knowledge.doors):
+        var door = knowledge.doors[i]
+        let forward = door.from.map == from.map and door.from.room == from.room and door.to.map == to.map and door.to.room == to.room
+        let reverse = door.from.map == to.map and door.from.room == to.room and door.to.map == from.map and door.to.room == from.room
+        if forward or reverse:
+            var actions = dv_find(door, "passage_action_ids", [])
+            if not dv_has(actions, action_id):
+                actions = dv_append(actions, action_id)
+            door = dv_with_many(door, {"passage_action_ids": actions, "passage_observed": true, "passage_scope": "own-successful-completion"})
+        rt_push(doors, door)
+        i = i + 1
+    return dv_with(knowledge, "doors", doors)
+
+fn dvg_observed_map_rooms(history, subject, location_ref):
+    let key = ["host-observed-rooms-v1", subject, location_ref]
+    let cached = rt_memo_get(history, key)
+    if cached[0]:
+        return cached[1]
+    var rooms = []
+    var i = 0
+    while i < rt_count(history):
+        let batch = history[i]
+        if dv_find(batch, "kind", "") == "observation-batch":
+            var j = 0
+            while j < rt_count(batch.observations):
+                let observed = batch.observations[j]
+                if observed.source == "perception" and dv_same_local_ref(subject, observed.ref, location_ref):
+                    rooms = dvg_known_room_add(rooms, dvg_known_room(observed.value))
+                j = j + 1
+        i = i + 1
+    return rt_memo_put(history, key, rooms)
 
 fn dvg_subject_map_knowledge(actor):
-    let key = ["host-known-map"]
+    let key = ["host-known-map-v3"]
     let cached = rt_memo_get(actor, key)
     if cached[0]:
         return cached[1]
@@ -507,26 +566,21 @@ fn dvg_subject_map_knowledge(actor):
     let current = dv_read(actor.mind, actor.location_ref)
     if dv_uncontested(current):
         knowledge = dv_with(knowledge, "rooms", dvg_known_room_add(knowledge.rooms, dvg_known_room(current.value)))
+    let observed_rooms = dvg_observed_map_rooms(actor.mind.history, actor.id, actor.location_ref)
     var i = 0
-    while i < rt_count(actor.mind.history):
-        let batch = actor.mind.history[i]
-        if dv_find(batch, "kind", "") == "observation-batch":
-            let observations = batch.observations
-            var j = 0
-            while j < rt_count(observations):
-                let observed = observations[j]
-                if observed.source == "perception" and dv_same_local_ref(actor.id, observed.ref, actor.location_ref):
-                    knowledge = dv_with(knowledge, "rooms", dvg_known_room_add(knowledge.rooms, dvg_known_room(observed.value)))
-                j = j + 1
+    while i < rt_count(observed_rooms):
+        knowledge = dv_with(knowledge, "rooms", dvg_known_room_add(knowledge.rooms, observed_rooms[i]))
         i = i + 1
     let completed = dv_find(actor, "completed_actions", [])
     let offered = dv_find(actor, "offered_actions", [])
+    let routes = dvg_preview_action_routes(actor.actions)
     i = 0
-    while i < rt_count(actor.actions):
-        let action = actor.actions[i]
-        let travel = dv_find(action, "travel", [])
-        if action.kind == "move" and (dv_has(completed, action.id) or dv_has(offered, action.id)) and dv_has_key(travel, "from") and dv_has_key(travel, "to"):
-            knowledge = dvg_known_door_add(knowledge, travel.from, travel.to)
+    while i < rt_count(routes):
+        let route = routes[i]
+        if dv_has(completed, route.action_id) or dv_has(offered, route.action_id):
+            knowledge = dvg_known_door_add(knowledge, route.from, route.to)
+            if dv_has(completed, route.action_id):
+                knowledge = dvg_known_passage_add(knowledge, route.from, route.to, route.action_id)
         i = i + 1
     return rt_memo_put(actor, key, knowledge)
 
@@ -694,8 +748,9 @@ fn dvg_open_config(config):
     if zone != "zone_yi":
         scene = c1_other_place_detective(scene, zone, profile)
     scene = c1c_install_scene(scene, dv_find(config, "seed", 1), profile)
-    scene = dv_with_many(scene, {"chapter": 1, "game_duration_budget": 5 * 1440 - scene.physical.time, "execution_scope": "DV production session; Godot execution receipts; offscreen non-movement uses DV world laws"})
+    scene = dv_with_many(scene, {"chapter": 1, "game_duration_budget": 5 * 1440 - scene.physical.time, "execution_scope": "DV production session; host execution receipts; offscreen non-movement uses DV world laws"})
     scene = dvg_configure_actor_policies(scene, run_config)
+    scene = campaign_install_visible_objects(dv_with(scene, "physical", c1_add_objects(scene.physical, c1_visible_site_objects())))
     return dvs_session_open(c1_player_scene(scene), "enabled")
 
 fn dvg_chapter_two_ready(state):
@@ -705,7 +760,7 @@ fn dvg_extend(state):
     if dv_find(state.story, "chapter", 0) != 1 or not dvg_chapter_two_ready(state):
         return state
     let live = dv_with_many(state.story, {"physical": state.physical, "actors": state.actors, "bindings": state.bindings})
-    let expanded = dvg_configure_actor_policies(dv_with(c2h_install_scene(c2daily_install_scene(c2d_install_scene(c2_extend_scene(live)))), "chapter", 2), dvg_run_config(dv_find(state.story, "run_config", [])))
+    let expanded = campaign_install_visible_objects(dvg_configure_actor_policies(dv_with(c2h_install_scene(c2daily_install_scene(c2d_install_scene(c2_extend_scene(live)))), "chapter", 2), dvg_run_config(dv_find(state.story, "run_config", []))))
     var events = state.events
     dvs_event(events, "chapter_content_available", "", state.physical.time, [], {"chapter": 2, "source": campaign_approved("chapter-state-inheritance"), "movement": false})
     // Content availability neither relocates a resident nor grants perceptions.
@@ -933,6 +988,18 @@ fn dvg_dev_command(state, command, argument):
 
 
 // Read-only observer projections. These values never enter a subject's mind.
+// Directory entries name the selectable inspectors from their own recorded
+// identity. They do not require building any room or object projection.
+fn dvg_observer_directory(state):
+    var result = []
+    var i = 0
+    while i < rt_count(state.actors):
+        let actor = state.actors[i]
+        let title = dvg_preview_person_name(state, actor.mind, actor.id, actor.location_ref.object, "未记录名称")
+        rt_push(result, {"id": actor.id, "title": title})
+        i = i + 1
+    return result
+
 fn dvg_preview_room(location):
     let place = dvg_place(location)
     return {"map": place.map, "room": place.room, "logical_location": location, "label": dvg_location_title(location), "region": campaign_location_region(location), "members": [], "is_current": false}
@@ -1084,7 +1151,56 @@ fn dvg_preview_relation_id(identities, id):
         return person.id
     return id
 
-fn dvg_preview_members(state, world, viewer, rooms):
+// One immutable world index is reused throughout this projection. Reading the
+// index never publishes observations, follows another world's containment or
+// turns an unknown name into an authored physical identity.
+fn dvg_preview_index(world):
+    let key = ["host-world-member-index-v3"]
+    let cached = rt_memo_get(world, key)
+    if cached[0]:
+        return cached[1]
+    rt_phase("observer-index-start", dv_find(world, "subject", ""))
+    var entries = []
+    var i = 0
+    while i < rt_count(world.objects):
+        let id = world.objects[i][0]
+        let location = dvg_preview_location(world, id)
+        var name = ""
+        if dv_uncontested(location):
+            name = dvg_preview_name(world, id, "")
+        rt_push(entries, dv_pair(id, {"location": location, "name": name}))
+        i = i + 1
+    var result = []
+    i = 0
+    while i < rt_count(entries):
+        let entry = entries[i]
+        var room = ""
+        if dv_uncontested(entry[1].location):
+            room = dvg_preview_index_room(entries, entry[1].location.value)
+        rt_push(result, dv_pair(entry[0], dv_with(entry[1], "room", room)))
+        i = i + 1
+    rt_phase("observer-index-end", dv_find(world, "subject", ""))
+    return rt_memo_put(world, key, result)
+
+fn dvg_preview_index_room(entries, location):
+    let places = dvg_places()
+    var visited = []
+    var remaining = rt_count(entries) + 1
+    while 0 < remaining and rt_is_text(location) and location != "":
+        if dv_has_key(places, location):
+            return location
+        if dv_has(visited, location):
+            return ""
+        rt_push(visited, location)
+        let parent = dv_find(entries, location, false)
+        if parent == false or not dv_uncontested(parent.location):
+            return ""
+        location = parent.location.value
+        remaining = remaining - 1
+    return ""
+
+fn dvg_preview_members(state, world, viewer, rooms, entries):
+    rt_phase("observer-members-start", viewer)
     var identities = []
     var actor_index = 0
     while actor_index < rt_count(state.actors):
@@ -1097,7 +1213,8 @@ fn dvg_preview_members(state, world, viewer, rooms):
         let id = world.objects[i][0]
         let object = world.objects[i][1]
         let descriptor = campaign_object_descriptor(id)
-        let location = dvg_preview_location(world, id)
+        let indexed = dv_get(entries, id)
+        let location = indexed.location
         let person = dv_find(identities, id, false)
         var kind = dv_find(object, "map_kind", descriptor.map_kind)
         if person != false:
@@ -1116,7 +1233,9 @@ fn dvg_preview_members(state, world, viewer, rooms):
                 fallback = "同伴"
             if self:
                 fallback = "本人"
-            var title = dvg_preview_name(world, id, fallback)
+            var title = indexed.name
+            if title == "":
+                title = fallback
             if person != false:
                 title = dvg_preview_person_name(state, world, identity, id, fallback)
             var carrier = ""
@@ -1134,10 +1253,11 @@ fn dvg_preview_members(state, world, viewer, rooms):
             if dv_uncontested(ownership) and rt_is_text(ownership.value) and ownership.value != "":
                 owner = dvg_preview_relation_id(identities, ownership.value)
                 owner_title = dvg_preview_person_name(state, world, owner, ownership.value, "未具名者")
-            let room_location = dvg_preview_room_location(world, location.value)
+            let room_location = indexed.room
             let member = {"id": identity, "title": title, "kind": kind, "is_viewer": self, "owner": owner, "owner_title": owner_title, "carrier": carrier, "container": container}
             rooms = dvg_preview_add_member(rooms, room_location, member)
         i = i + 1
+    rt_phase("observer-members-end", viewer)
     return rooms
 
 fn dvg_preview_site_descriptor(action, site, location):
@@ -1153,29 +1273,65 @@ fn dvg_preview_site_descriptor(action, site, location):
         return {"id": site, "title": descriptor.map_title, "kind": "object", "is_viewer": false}
     return false
 
-fn dvg_preview_sites(rooms, actor, world, allowed, objective):
+fn dvg_preview_sites(rooms, actor, world, allowed, objective, entries):
+    rt_phase("observer-sites-start", dv_find(world, "subject", ""))
+    let sites = dvg_preview_action_sites(actor)
+    var i = 0
+    while i < rt_count(sites):
+        let site = sites[i]
+        if objective or dv_has(allowed, site.action_id):
+            var location = site.location
+            let recorded = dv_find(entries, site.member.id, false)
+            if recorded != false and dv_uncontested(recorded.location):
+                // The recorded containment/carrying chain owns placement.
+                location = recorded.room
+            rooms = dvg_preview_add_member(rooms, location, site.member)
+        i = i + 1
+    rt_phase("observer-sites-end", dv_find(world, "subject", ""))
+    return rooms
+
+// Actions and their site descriptors are immutable declarations. Cache only
+// geometry and neutral names here; admission and observed values stay live.
+fn dvg_preview_action_sites(actor):
+    let key = ["host-action-sites-v2", actor.location_ref]
+    let cached = rt_memo_get(actor.actions, key)
+    if cached[0]:
+        return cached[1]
+    var result = []
     var i = 0
     while i < rt_count(actor.actions):
         let action = actor.actions[i]
-        if objective or dv_has(allowed, action.id):
-            let interaction = dvg_interaction(action)
+        let interaction = dvg_interaction(action)
+        if interaction.kind == "site":
             let travel = dv_find(action, "travel", [])
             var location = dv_find(action, "required_room", dv_find(travel, "from", ""))
             if location == "":
                 location = dvp_extract_required_room(dv_find(action, "precondition", []), actor.location_ref)
-            if interaction.kind == "site" and location != "":
-                var member = dvg_preview_site_descriptor(action, interaction.site, location)
+            if location != "":
+                let member = dvg_preview_site_descriptor(action, interaction.site, location)
                 if member != false:
-                    let recorded = dvg_preview_location(world, member.id)
-                    if dv_uncontested(recorded):
-                        // The existing member owns the containment/carrying relation.
-                        // Never recreate a moved item at its old action's required room.
-                        location = dvg_preview_room_location(world, recorded.value)
-                    rooms = dvg_preview_add_member(rooms, location, member)
+                    rt_push(result, {"action_id": action.id, "location": location, "member": member})
         i = i + 1
-    return rooms
+    return rt_memo_put(actor.actions, key, result)
+
+fn dvg_preview_action_routes(actions):
+    let key = ["host-action-routes-v1"]
+    let cached = rt_memo_get(actions, key)
+    if cached[0]:
+        return cached[1]
+    var result = []
+    var i = 0
+    while i < rt_count(actions):
+        let action = actions[i]
+        let travel = dv_find(action, "travel", [])
+        if action.kind == "move" and dv_has_key(travel, "from") and dv_has_key(travel, "to"):
+            rt_push(result, {"action_id": action.id, "from": travel.from, "to": travel.to})
+        i = i + 1
+    return rt_memo_put(actions, key, result)
 
 fn dvg_preview_doors(world, doors):
+    rt_phase("observer-doors-start", dv_find(world, "subject", ""))
+    let edges = c2_edges()
     var result = []
     var i = 0
     while i < rt_count(doors):
@@ -1205,7 +1361,6 @@ fn dvg_preview_doors(world, doors):
                         label = "关"
                         basis = [c1dep_ref("open")]
         else:
-            let edges = c2_edges()
             var edge_index = 0
             while edge_index < rt_count(edges):
                 let edge = edges[edge_index]
@@ -1235,18 +1390,23 @@ fn dvg_preview_doors(world, doors):
                             status = "closed"
                             label = "未开放"
                 group_index = group_index + 1
-        rt_push(result, dv_with_many(door, {"state": status, "state_label": label, "known": status != "unknown", "state_refs": basis, "state_scope": world.domain}))
+        let passed = 0 < rt_count(dv_find(door, "passage_action_ids", []))
+        if status == "unknown" and passed:
+            label = "曾通过 · 现况未知"
+        rt_push(result, dv_with_many(door, {"state": status, "state_label": label, "known": status != "unknown", "connection_known": true, "passage_observed": passed, "state_refs": basis, "state_scope": world.domain}))
         i = i + 1
+    rt_phase("observer-doors-end", dv_find(world, "subject", ""))
     return result
 
 fn dvg_preview_subject(state, actor, intent):
     let knowledge = dvg_map_knowledge(state, actor.id, intent)
+    let entries = dvg_preview_index(actor.mind)
     var rooms = []
     var i = 0
     while i < rt_count(knowledge.rooms):
         rt_push(rooms, dv_with_many(knowledge.rooms[i], {"members": [], "is_current": false}))
         i = i + 1
-    rooms = dvg_preview_members(state, actor.mind, actor.id, rooms)
+    rooms = dvg_preview_members(state, actor.mind, actor.id, rooms, entries)
     var allowed = dv_append(dv_find(actor, "completed_actions", []), "")
     let offered = dv_find(actor, "offered_actions", [])
     i = 0
@@ -1258,11 +1418,11 @@ fn dvg_preview_subject(state, actor, intent):
         while i < rt_count(dv_find(intent, "options", [])):
             rt_push(allowed, intent.options[i].id)
             i = i + 1
-    rooms = dvg_preview_sites(rooms, actor, actor.mind, allowed, false)
+    rooms = dvg_preview_sites(rooms, actor, actor.mind, allowed, false, entries)
     let position = dv_read(actor.mind, actor.location_ref)
     var place = {"map": "", "room": "", "label": ""}
     if dv_uncontested(position) and rt_is_text(position.value):
-        let room_location = dvg_preview_room_location(actor.mind, position.value)
+        let room_location = dvg_preview_index_room(entries, position.value)
         if room_location != "":
             place = dvg_preview_room(room_location)
             rooms = dvg_preview_add_member(rooms, room_location, {"id": actor.id, "title": dvg_preview_person_name(state, actor.mind, actor.id, actor.location_ref.object, "本人"), "kind": "person", "is_viewer": true})
@@ -1274,27 +1434,28 @@ fn dvg_preview_objective(state, viewer):
     var rooms = []
     var knowledge = {"rooms": [], "doors": []}
     let places = dvg_places()
+    let entries = dvg_preview_index(state.physical)
     var i = 0
     while i < rt_count(places):
         rooms = dvg_preview_add_room(rooms, places[i][0])
         i = i + 1
-    rooms = dvg_preview_members(state, state.physical, viewer, rooms)
+    rooms = dvg_preview_members(state, state.physical, viewer, rooms, entries)
     i = 0
     while i < rt_count(state.actors):
         let actor = state.actors[i]
-        rooms = dvg_preview_sites(rooms, actor, state.physical, [], true)
+        rooms = dvg_preview_sites(rooms, actor, state.physical, [], true, entries)
+        let routes = dvg_preview_action_routes(actor.actions)
         var j = 0
-        while j < rt_count(actor.actions):
-            let action = actor.actions[j]
-            let travel = dv_find(action, "travel", [])
-            if action.kind == "move" and dv_has_key(travel, "from") and dv_has_key(travel, "to"):
-                rooms = dvg_preview_add_room(dvg_preview_add_room(rooms, travel.from), travel.to)
-                knowledge = dvg_known_door_add(knowledge, travel.from, travel.to)
+        while j < rt_count(routes):
+            let route = routes[j]
+            rooms = dvg_preview_add_room(dvg_preview_add_room(rooms, route.from), route.to)
+            knowledge = dvg_known_door_add(knowledge, route.from, route.to)
             j = j + 1
         i = i + 1
     return {"rooms": rooms, "doors": dvg_preview_doors(state.physical, knowledge.doors)}
 
 fn dvg_observer_options(state, viewer):
+    rt_phase("observer-options-start", viewer)
     let actor = state.actors[dvg_dev_actor_index(state, viewer)]
     let goals = dvp_goal_refs(actor)
     let probes = dvp_probe_refs(actor)
@@ -1327,9 +1488,10 @@ fn dvg_observer_options(state, viewer):
                 // Equal inputs legitimately retain equal scores. Counts describe
                 // owner-known opportunities, never the unseen outcome's truth.
                 let breakdown = {"action_value": value.value, "information": value.information, "verification": value.verification, "progress": value.progress, "achievement": value.achievement, "information_weight": information_weight, "progress_weight": progress_weight, "information_component": value.information * information_weight, "verification_component": value.verification * information_weight, "progress_component": value.progress * progress_weight, "achievement_component": value.achievement * progress_weight, "opportunity": opportunity, "weighted_opportunity": weighted_opportunity, "time_cost": time_cost, "time_penalty": time_penalty, "computation_penalty": 0, "stamina_penalty": 0, "total": score, "opportunities": opportunities, "value_details": value, "scope": "subject-current-immediate", "formula": "action_value + weighted_opportunity - time_penalty"}
-                var option = {"id": action.id, "label": label, "available": true, "kind": action.kind, "interaction": dvg_interaction(action), "cost": cost, "ai_score": score, "score_kind": "immediate", "score_breakdown": breakdown, "mind_revision": actor.mind.revision}
+                var option = {"id": action.id, "label": label, "available": true, "kind": action.kind, "interaction": dvg_interaction(action), "cost": cost, "ai_score": score, "score_kind": "immediate", "score_breakdown": breakdown, "immediate_score": score, "immediate_breakdown": breakdown, "score_game_time": state.physical.time, "mind_revision": actor.mind.revision}
                 if action.kind == "replay":
                     option = dv_with(option, "replay_input", dvg_manual_replay_input(actor, action))
                 rt_push(result, option)
         i = i + 1
+    rt_phase("observer-options-end", viewer)
     return result

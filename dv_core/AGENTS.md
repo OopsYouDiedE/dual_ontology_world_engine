@@ -25,9 +25,13 @@ CLI 空间视图按区域组织房间，区域内客观空房合并，主观无�
 
 物体中立展示元数据使用 `map_kind/map_title`，不占用 DV 对象内部类型语义。预览成员的 `owner/owner_title` 与 `carrier/container` 分开，后两者仅引用当前视图的成员身份；房间带 `region/logical_location`，通道带 `state/state_label/known/state_refs/state_scope`。物理开关与管理通行资格按来源区分，未知不猜测。内容新增容纳或穿戴关系必须经对应实际 Complete 发布给主体，不能由客观预览同步认识。
 
-候选 `label` 在 DV 内容层声明行动意图；观察正文与台词不得回退为候选标题，依赖接触的结果仍只由成功 Complete 发布。已准备动作使用本次选择或原候选的标签；确无记录时标明缺失。评分携带 `score_kind`，区分根节点、最终选择与当前即时求值；未展开须有评估状态依据，不能按数值猜测。角色目录随回放记录保存，主观姓名仍受本人认识约束。播放状态与帧内交互阶段分别显示，时间只取已记录的游戏时刻。
+候选 `label` 在 DV 内容层声明行动意图；观察正文与台词不得回退为候选标题，依赖接触的结果仍只由成功 Complete 发布。已准备动作使用本次选择或原候选的标签；确无记录时标明缺失。历史根分、选择时的路径分与当前即时估值分别保留来源事件、认知修订和游戏时刻；`immediate_breakdown` 只解释当前即时分，不得被当成历史根分或路径分的拆解。`score_kind` 与实际评估状态一起消费，不能按负分或同分猜测未展开。角色目录随回放记录保存，主观姓名仍受本人认识约束。播放状态与帧内交互阶段分别显示，时间只取已记录的游戏时刻；关闭与在途动作不能继续显示成新的待执行聚焦。
 
-CLI 顶部固定显示会话统计摘要；人工评分默认隐藏，显式 scores/--scores 只改变呈现。性能采集由 DvSession 的实际同步操作和现有阶段边界完成，以累计排他耗时除以实际正式推进的游戏小时；初始化、投影、归档、开发时间跳跃分别记录。小时表公开覆盖量与起点归属规则，原始采样为有丢弃计数的固定尾部环，累计汇总不随环淘汰。决策计数仅消费正式状态中本会话新增的 action_selected，按 engine/human/llm 区分；未采用预备分支、UI 聚焦、候选搜索、开发命令及恢复前历史不重计。每游戏小时决策率共用实际正式推进分母。现实游玩从打开／恢复完成计至宿主关闭请求，覆盖阅读、思考、模型调用、输入等待与执行，独立于同步引擎耗时；零推进比率缺失。控制来源在首次操作前确定、与真实控制权一致，只有诊断标签随存档保存，恢复开启新统计会话。CLI 支持 player/human/llm/ai，JSONL 格式不自动决定来源。报告与接口详见 `../docs/engine-performance.md`；没有实际运行时不得填写实测结果。
+CLI 时间栏下固定显示三个 `dv-performance-v3` 指标：游戏小时/现实小时、正式决策次/现实小时、当前控制来源累计接口小时/现实小时；原始现实用时与游戏推进量注明采样窗口。移除旧每游戏小时耗时、每游戏小时决策数和每计算小时决策数等重复口径。现实分母从打开／恢复完成至宿主关闭请求，初始化与关闭归档单列；零现实分母缺失，现实分母有效但游戏未推进时速度为 0。短窗口按实际累计量计算，不声称已测完整现实小时或整局收益。人工评分默认隐藏，显式 scores/--scores 只改变呈现。
+
+引擎接口耗时为正式 engine 与 speculation 的排他墙钟总和，未采用的提前计算仍计实际消耗。人工/模型接口从可选请求真正交付开始，到正式选择被接受、取消或关闭结束；只记录宿主实际提供的 request/response 等阶段，不用整段会话时间替代接口等待，也不推测模型内部耗时。没有真实接口测量时保留缺失。等待可能与引擎计算重叠，各来源累计耗时不能直接相加冒充整段现实时间。操作报告明确分开 inclusive/exclusive 总计与均值，P95 是含子项时长的直方图上界；触发主体、观察者和投影范围分别归属。正式选择事件的 planning_work 只累计实际候选、资格、预测和展开工作，缓存命中的 reused_work 不重复累计；预算、深度与选择顺序保持原声明。
+
+决策只消费本次正式状态新增的 action_selected，按 engine/human/llm 区分；未采用分支、UI 聚焦、候选节点、开发操作和恢复前历史不重计。选择、排队、Complete、pending 与 durable 截止分列，pending 不自动算失败。原始计算、决策和接口边界缓冲写入唯一二进制流，关闭后写 seal 并原子发布；内存固定尾部仅供在线查看及临时快照导出，不使流式证据随淘汰丢失。流未开启前的缺失前缀、写入失败和快照导出尾部范围必须明示。控制来源首次操作前确定且与真实控制权一致；诊断标签随存档保留，恢复统计重新起算。CLI 支持 player/human/llm/ai，JSONL 不自动决定来源。接口与报告详见 `../docs/engine-performance.md`；没有实际运行时不得填写实测结果。
 
 CLI的capture命令只导出当前观察者UI；实际行动与截图分别输入和记录，不由截图入口代选动作。同一任务的新测试按根 AGENTS 递归清理并替换旧输出；本轮导出文件独占创建，失败清除待导出标记。当前轮原始输入、控制台与正式封存使用二进制记录。几步人工UI检查不自动扩大为Core AI循环或整局验收。
 
@@ -100,7 +104,9 @@ python mcp/editor_lsp/dv_lsp.py
 
 同房间 WASD/鼠标接近由宿主真实寻路与碰撞执行，不提交 DV、不扣 DV 时间或行动步数；热点交互与跨房间仍走共同链。`dvs_player_options` 只返回本人准入候选，60 附加 kind/interaction 与逻辑站点、人物身份，不返回隐藏值。`dvs_select_player` 再核对资格；人工 `manual_only` 只在临时只读 `manual_input` 视图开放，不写回自主人物。
 
-Session 以不可变 DV 值与版本号维护状态。HostSnapshot/HostIntent 直接返回 .NET 只读值图，Godot 主线程物化 Variant；StateDelta 按观察者和版本发布变化的顶层字段与新增事件。静态目录只发送一次，执行者投影仅包含执行所需字段。JSON 接口保留给文本客户端，不进入正式 Godot 热路径。Trace 只读；Close 幂等；Save 取最近已完成的提交点，在途意图留在轨迹中。接口细节见 host_bridge README。
+Session 以不可变 DV 值与版本号维护状态。HostSnapshot/HostIntent 直接返回 .NET 只读值图，Godot 主线程物化 Variant；StateDelta 按观察者和版本发布变化的顶层字段与新增事件。Actors 只取轻量角色目录；主观预览只为请求的 viewer 构造，客观地图显式请求时才计算并在同一 Version 共享，不因目录或普通主观查看构造全体认知地图。静态目录只发送一次，执行者投影仅包含执行所需字段；缓存只复用不可变结果，失效按真实状态版本及声明依赖，不跳过任何正式主体求值。JSON 接口保留给文本客户端，不进入正式 Godot 热路径。Trace 只读；Close 幂等；Save 取最近已完成的提交点，在途意图留在轨迹中。接口细节见 host_bridge README。
+
+普通环境感知的 visible_fields 只发布当前直接同房、已经声明可见的中性 name/location；不能由候选标签、客观地图或轻量目录补写人物事实，也不能展开未检视的容器与随身物品内容。实际依赖接触的观察仍经成功 Complete 发布。通道 passage_observed 说明过去真实通行及其来源，与当前门状态分别保留；过去通过不等于现在永久开放，当前证据不足时保持未知。
 
 Core 发布中立 actor/map/room/site/station 身份、位置标题和逻辑时刻。Godot 场景路径、sprite、动画帧、站点视觉映射和 HUD 布局只由宿主的呈现契约绑定。逻辑地图、房间与行动站点继续属于正式执行合同；移动视觉资源不改写其标识或领域规则。
 
@@ -127,6 +133,8 @@ Core 发布中立 actor/map/room/site/station 身份、位置标题和逻辑时�
 平台冻结/复制、重复键、首错、数值相等与缓存失效合同见 [compiler/README.md](compiler/README.md)。公开事件经不可变快照边界，不能借独占构建器恢复可变历史。C# 不绕过 ABI 修改 `Items` 返回值；CLR 数组只在宿主证据编码边界支持，不加入 DV 值域。
 
 新原始事件、快照、存档、实际输入、正文投影与计时使用校验二进制 `.dvdag/.dvsave/.dvlog`。JSON/JSONL/gzip 不用于新运行轨迹落盘；JSON 仅用于进程内接口、编译配置和小型工程汇总，旧记录只读兼容。保留全部原字段、顺序、来源、精确 Rational 与同文字符串区别；DAG 节点定义先于引用，事件、checkpoint、final、seal 与 `.partial` 边界完整。
+
+轨迹保留结构化 provenance、cut、lifecycle、pending_actions；存档保留 archive_provenance 与 archive_cut。来源必须按实际 host/executor 与是否 Godot 执行填报，formal-model 不能被固定 scope 标签写成 Godot 现场。trace 与 durable 的游戏时刻、事件及版本分别注明；selections_not_in_save 表示正式选择尚未进入最近可恢复提交点，不能算作失败，也不能把 trace 的选择总数当作存档总数。Preview.observers 严格只有本次 viewer，recorded_viewers 明列该视角，projection_scope 区分 viewer-only 与 viewer-and-objective，不将其他缓存视角写成当前帧取得的证据。性能摘要在所需投影完成后取得一次，交互帧顶层和嵌套预览引用同一摘要，缓存不保存时钟；measured_until_ticks 与世界状态版本分别记录。
 
 SmartReplay 共用 `dv-replay-v2` 帧合同，保留 snapshot、原始 input、presentation、身体/UI 上下文及语义事件。回放时钟按内容节拍压缩现实静默，原始输入时间与 seq/state_version/action_event 关联仍留在帧数据中。实际坐标只来自已记录身体或实际回执，旧日志按逻辑位置重建并明确来源；只读投影不创建会话、执行动作或授予观察。Godot 回放使用独立场景，正式会话不接收回放输入。
 

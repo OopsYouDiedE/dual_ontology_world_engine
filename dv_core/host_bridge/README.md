@@ -17,8 +17,8 @@
 | `CancelPrepared()` | 丢弃候选分支，保持正式状态与费用 |
 | `PrepareBackgroundValue()` | 在人工等待边界调度同刻 NPC，沿唯一 pending/Complete 闭环执行 |
 | `TextStatus(viewer)` | 指定观察者的位置、同房人物、近期实际观察及输入状态；无参数时使用会话观察者 |
-| `Actors`、`ObserverOptions(viewer)` | 预览角色清单、指定角色当前可选行动及实际认知评分 |
-| `Preview(viewer, includeObjective)` | 按角色读取主观地图；显式请求时附完整客观地图，保持会话版本与认知不变 |
+| `Actors`、`ObserverOptions(viewer)` | 轻量角色目录、指定角色当前候选及带实际来源的评分；不构造全体认知地图 |
+| `Preview(viewer, includeObjective)` | 只投影请求角色的主观地图；显式请求时附同 Version 共享的客观地图，保持认知不变 |
 | `IsScheduled(actor, actionId)` | 只读核对该人物的选择是否仍在调度队列，不推进状态 |
 | `RecordInteraction(payload)` | 记录 focus、confirm、result、cancel，与正式事件保持因果次序 |
 | `Inspect(actor)`、`ExecuteDebug(command, argument)` | 显式开发会话中的双状态查看、位置及时间命令 |
@@ -27,21 +27,35 @@
 | `Save()`、`WriteSave(path)` | 保存最近已提交的稳定状态 |
 | `Restore(value)`、`RestoreFile(path)` | 恢复稳定会话，保留审计和开发模式 |
 | `PerformanceSummary()`、`PerformanceSnapshot()` | 只读轻量摘要及完整分项/小时汇总，不推进会话 |
-| `WritePerformanceReport(prefix)` | 导出中文报告、小时/操作/主体决策聚合 CSV 及二进制计算和决策引用尾部 |
+| `WritePerformanceReport(prefix)` | 导出中文报告及派生 CSV；关闭时封存对应正式二进制流，其他新前缀导出明确标记的尾部快照 |
 | `SetPerformanceController(kind)` | 首次操作前设置 engine/human/llm 诊断来源，须符合真实控制权 |
+| `BeginDecisionInterface(actor, phase)`、`SetDecisionInterfacePhase(actor, phase)`、`EndDecisionInterface(actor, outcome)` | 外部请求实际交付、已观测阶段切换、接受或取消边界 |
+| `StartPerformanceRecording(prefix)` | 为会话开启唯一缓冲二进制原始采样流，保留完整实际计算、决策与接口记录 |
+| `SetPerformanceProvenance(value)`、`SetPerformanceLifecycle(value)` | 发布实际宿主来源及 trace/durable 动作生命周期边界 |
+| `RecordPerformancePlanning(actor, eventId, work, stopReason)` | 在正式新增选择事件边界累计本次实际规划工作 |
 | `StopPerformanceClock()` | 幂等停止现实游玩时长，不修改世界或关闭会话；Close 自动调用 |
 
 `Prepare`、`Complete`、`Snapshot` 继续提供进程内 JSON 交换。正式 Godot 路径使用值图与增量接口，省去 JSON 编码和重新解析。文本协议的 JSONL 用于 stdin/stdout；持久轨迹保持二进制格式。
 
 ## 引擎统计
 
-所有正式会话常开低频作用域计时，按实际前进的游戏分钟折算每游戏小时的现实计算秒数。正式计算、提前准备、认知、选策、Complete、投影、初始化和归档分别记录，嵌套只以排他耗时求和。原始尾部采样最多 8192 条，累计与小时汇总保持完整；零推进保留缺失比率。指标、异常范围、导出格式和小时归属详见 [引擎耗时记录](../../docs/engine-performance.md)。只读回放仅消费已记录摘要，不创建新会话或把播放耗时当作历史引擎耗时。
+`dv-performance-v3` 的三个主指标统一使用现实游玩小时作分母：`game_hours_per_real_hour` 表示游戏小时/现实小时，`decisions_per_real_hour` 表示正式选择次/现实小时，`interface_hours_per_real_hour` 表示当前控制来源累计接口小时/现实小时。主界面另附真实采样时长与游戏推进量，不再同时显示倒数方向的每游戏小时耗时或每计算小时吞吐。零现实分母为缺失；现实时间有效而游戏未推进时速度为 0。短窗口比率不是完整现实小时实测或整局预测。
 
-`dv-performance-v2` 增加正式决策与现实游玩时间。决策以本会话新增的 `action_selected` 为准，区分 engine/human/llm；未采用分支、UI 聚焦、候选节点、历史存档事件和开发选择不计入。每游戏小时决策数与每游戏小时计算耗时共用实际推进分母。现实游玩从打开／恢复完成至关闭请求，包含阅读、思考、模型调用、输入等待、执行及计算；人类／大模型用时不是纯思考或纯推理耗时。小时表按事件时刻记录决策，按当时游戏时刻累计现实停留。新增 `.decisions.csv` 按主体与控制来源汇总；二进制另保留有淘汰计数的 8192 条决策引用尾部。诊断来源只在首次操作前设置，须符合真实 player_actor；存档顶层 `performance_controller` 保留来源，恢复后的数量和时长重新起算。
+现实游玩从打开／恢复完成至关闭请求，包含阅读、思考、输入等待、执行、投影和引擎处理；初始化与关闭归档单列。引擎接口累计正式计算加提前准备的排他墙钟，包括未采用的实际提前计算。人工或模型接口从真实选择请求交付开始，到正式接受、取消或关闭为止；没有请求记录时保持缺失，不用整段会话时间替代。
+
+宿主在选项真正可见后调用 `BeginDecisionInterface`，同一主体重绘不重启计时；实际收到输入或模型响应时调用 `SetDecisionInterfacePhase`。只有宿主报告的阶段才记录，网络、排队、模型内部推理不作推测。人类/模型的正式 `action_selected` 自动写 accepted 和事件引用；取消使用 `EndDecisionInterface`，关闭记录未完成区间。外部等待可与 NPC 引擎工作重叠，来源耗时不可直接相加当作整段现实时间。
+
+决策仅以本会话新增正式 `action_selected` 为准，区分 engine/human/llm；未采用分支、UI 聚焦、候选节点、恢复前历史和开发选择不计入。主指标使用全体正式选择总数，来源表保留各来源数量及相同现实分母的比率。来源须在首次操作前确定且符合真实 player_actor；仅 `performance_controller` 标签随存档保留，恢复后的累计重新起算。
+
+报告拆开正式计算、提前准备、认知、规划索引/展开/预测、Complete、投影、初始化和归档。操作的 inclusive/exclusive 总计与均值分列，只有排他值可沿嵌套求和；P95 是含子项时长的直方图上界。`trigger_actor`、`viewer`、`projection_scope` 分开，不能把触发全局投影的主体误当作该投影唯一成本所属者。`planning_work` 按正式事件累计实际候选检查、资格求值、预测、节点展开和峰值前沿，缓存命中的 `reused_work` 不重新累计，不修改预算、深度或顺序。
+
+`StartPerformanceRecording` 从当前保留记录开始缓冲顺序写 `.dvlog.partial`；后续原始计算、正式选择和外部接口边界不因内存尾部淘汰而丢失。各类内存尾部最多 8192 条，供在线显示及新前缀快照导出。主录制只在正式关闭后写汇总与 seal 并原子发布，普通 `perf` 不关闭它，`perf NEW_PREFIX` 的原始文件明确为尾部快照。开启前缺失前缀、运行期写入错误和 partial 不能冒充完整证据。指标、原始边界、导出字段和片段归属详见 [引擎耗时记录](../../docs/engine-performance.md)。回放只消费已记录摘要，不创建新统计会话或把播放时长当作历史现实时间。
 
 ## 增量和缓存
 
 每个观察者独立缓存投影和最后交付版本。静态身份投影只在初次投影、地图或章节变化时构造；动态快照按会话版本构造，逐字段与上一份不可变 DV 值比较。未变字段复用相同的只读 .NET 对象，变化字段才转换。`HostStateDelta.Reset` 时宿主建立新快照，其他情况下合并 `Changed` 并移除 `Removed`。Godot 适配层将变化字段转成 Variant，再交接主线程。所有场景、节点、物理和 UI 操作留在主线程。
+
+`Actors` 只取得轻量角色目录，不依赖全体观察者地图。主观预览按请求 viewer 构造和缓存；读取一个角色不主动展开其余角色的心智。客观地图仅在 includeObjective 或相应显式检阅请求中计算，同一 Version 的客观底图共享，观察者标记另行投影。界面重绘复用已取得的不可变结果；正式状态转换按实际版本和声明依赖失效，不跳过认知、调度或其他正式主体。缓存不是第二份可写世界状态。
 
 Core 输出稳定的 actor、map、room、site、station 标识，`view_kind` 表示宿主视图用途，`location_title` 和 `game_time` 提供位置名称与逻辑时刻。Core 不携带 Godot 场景路径、sprite 名称、动画帧或 HUD 布局。Godot 在自己的 `Contracts/presentation_catalog.json` 和 `HostPresentation.gd` 中把这些身份绑定到场景、人物形象、站点标题与界面；CLI 直接消费中立投影。人物名称仍由观察者已经取得的认识决定。
 
@@ -56,6 +70,10 @@ Core 输出稳定的 actor、map、room、site、station 标识，`view_kind` �
 ## 退出保存点
 
 会话打开、完成实际 Complete、或 Prepare 返回无 pending 的稳定边界时更新 `lastCommittedState`。动作已经准备而现场仍在执行时，退出存档取最近已提交快照；现场的半完成状态保留在轨迹中。恢复因此不会把 prepared 状态交给续读。完整轨迹与可恢复存档用途独立，`Trace` 不追加停止事件，显式 `Close` 只追加一次。
+
+轨迹带结构化 `provenance`、`cut`、`lifecycle` 和 `pending_actions`，存档带 `archive_provenance` 与 `archive_cut`。来源按实际 host/executor、控制者、检阅者、是否 Godot 执行及可取得的源码/程序集信息填写；formal-model 不再由固定说明冒充 Godot 现场执行。
+
+截止信息分别列 trace 与 durable 的游戏时刻、最后事件及状态版本。生命周期分别累计当前和存档点的选择、排队、Complete 与 pending；Complete 包含成功和拒绝的真实回执，结果由 outcomes 区分。`selections_not_in_save` 表示正式尾部选择尚未进入最近可恢复提交点，不能把它算成失败，也不能以 trace 选择数冒充存档选择数。排队尚未到期、等待宿主回执、关闭原因均按真实边界保留。
 
 存档使用 `.dvsave`，轨迹使用 `.dvdag`，宿主记录使用 `.dvlog`。二进制写入先创建独占 partial 文件，完整封存后发布；恢复读取完整节点、序号、摘要及 seal。
 
@@ -93,22 +111,36 @@ Godot 用 `--dv-dev`，CLI 用 `--dev`。该配置写入 `story.development_mode
 
 `Preview` 的主观地图只读取指定角色 mind；客观地图读取 physical 与完整地点目录。房间包含区域信息与独立 `members` 列表，人物先于物体，各类内稳定排序；`is_current` 分别取对应状态中的本人位置。所有权、实际携带者与容器位置独立，物体只沿本投影已知且无冲突的位置链归组；携带物与容器内容附在对应主体或容器下。事件和谜题状态从空间成员中过滤，具有物理身份的开场道具仍是实物。主观不因客观名称、容纳关系或门状态存在就取得该信息。仅在双图检阅中，两边都已列出的同一成员具有明确而不同的位置或容纳关系时，附加认知差异标识；单边缺失不自动认定为认知错误。预览不刷新事实、不推进逻辑时刻、不改变会话版本。
 
-预览结构为 `viewer / snapshot / status / subjective / options / actors / observers / performance`，显式请求时附 `objective`。`performance` 为会话诊断摘要，独立于物理世界与人物认识；新交互记录随预览保留，旧回放缺失时不补造。`observers[id]` 保存该角色的认知地图和展示快照；未计算的选项评分保持空。缓存按会话版本失效，界面重绘复用结果。CLI 的 stdout 按当前观察者与地图模式裁剪；完整预览仍保留在二进制回放记录中。
+预览结构为 `viewer / snapshot / status / subjective / options / actors / observers / performance`，显式请求时附 `objective`。`actors` 为轻量目录，`observers` 严格只包含本次请求的 viewer，`recorded_viewers=[viewer]`，`projection_scope` 为 `viewer-only` 或 `viewer-and-objective`；不把其他缓存视角混入本帧。目录读取不触发全角色地图。没有请求的视角不补造成已经取得的历史投影；回放的某一视角缺失时保持缺失。选项和评分按实际请求取得，缓存按会话版本失效，重绘复用不可变结果。CLI stdout 按当前观察者与地图模式裁剪；记录保留本次实际请求的预览，不为封存主动展开全体角色。
+
+`performance` 独立于物理世界和人物认识。在本帧所需投影完成后取一次新摘要，交互帧顶层与嵌套预览使用同一份统计；缓存预览不缓存时钟。`measured_until_ticks` 和 Stopwatch 频率标明采样截止，状态版本标明世界截止，二者分开；旧回放缺失时不补造。
 
 `snapshot.actors` 和各 `observers[id].snapshot.actors` 同步保存预览的行政人物目录，供回放视角栏显示姓名；主观成员仍独立采用该观察者实际取得的身份信息。已经 prepared 而不在当前候选集中的动作保留原行动 `label`、实际费用及选择事件来源；标签先取匹配的 `action_selected`，再取当前意图/原行动，均缺失时显示 `（未记录标签）`。
 
-选项 `ai_score` 必须与 `score_kind` 一起消费：`immediate` 是当前只读单步估值，`recorded-root` 来自同认知修订的实际单步规划条目，`recorded-choice` 来自最终选择事件。`score_event` 指向该条记录。`planning_status=evaluated-root` 表示已有实际根节点评估；有同修订规划记录而缺该候选根条目时标记 `unexpanded`，同时保留其独立的即时估值和 `planning_event` 来源。仅凭数值 `-0.01` 不能推断未展开；有根评估记录的负分照实显示。
+选项区分当前即时估值、历史实际根评估及选择时的路径分。`ai_score` 与 `score_kind` 一起消费，来源保留事件、认知修订和游戏时刻；已经排队的动作可以保留选择时的路径分，同时显示当前即时分，两者不能被解释为同一时点同一口径。历史选择路径来自真实 planning_choice/action_selected 记录，不用当前瞬时值倒推。
+
+| 口径 | 分数与分项 | 来源 |
+| --- | --- | --- |
+| 当前即时 | `immediate_score`、`immediate_breakdown` | `score_game_time`、`mind_revision` |
+| 已记录根评估 | `root_score`；显示时 `ai_score`、`score_kind=recorded-root` | `root_event`、`root_game_time`、`root_mind_revision`，以及 `score_event` |
+| 选择时路径分 | `selection_score`、`selection_score_kind=recorded-path`、`selection_path` | `selection_event`、`selection_game_time`、`selection_mind_revision` |
+
+根分的 `score_breakdown` 只包含 `scope=recorded-root`、`total`、`source_event` 和 `components_recorded=false`，明确没有记录可供展开的历史组成，不能把即时组成复制进去。在途候选保留 `action_state=queued` 或 `prepared`、`selected=true`，用于展示原选择的状态和理由。
+
+`planning_status=evaluated-root` 表示确有对应根评估；实际规划记录缺少该根条目时标记 `unexpanded`，独立即时估值仍可存在。仅凭负分、同分或即时值大小不能推断是否展开。`immediate_breakdown` 只对应当前即时估值，不能给历史根分或路径分套用该分项。
 
 
 ### 物体、地点与通道字段
 
-内容对象以 `map_kind`、`map_title` 提供中立展示类别与名称，实际物理位置写入 `state.location`。成员输出 `id/title/kind/is_viewer`，以及独立的 `owner/owner_title/carrier/container`；后两项引用同视图的成员身份，CLI 只将它们转换成“携带／内含”的层级。房间输出 `region` 和 `logical_location`，标题采用“区域 · 房间”。通道输出 `state/state_label/known/state_refs/state_scope`，物理开闭与管理通行资格保留不同来源，没有状态证据时保持未知。
+内容对象以 `map_kind`、`map_title` 提供中立展示类别与名称，实际物理位置写入 `state.location`。成员输出 `id/title/kind/is_viewer`，以及独立的 `owner/owner_title/carrier/container`；后两项引用同视图的成员身份，CLI 只将它们转换成“携带／内含”的层级。房间输出 `region` 和 `logical_location`，标题采用“区域 · 房间”。通道输出 `state/state_label/known/state_refs/state_scope`，物理开闭与管理通行资格保留不同来源，没有状态证据时保持未知。`passage_observed` 单独记录过去真实通行的事实和来源，不把历史通过改写成当前永久开放。
+
+普通环境感知由声明的 `visible_fields` 仅发布直接同房对象的中性 name/location。该观察发生在正式认知/结算边界，不在预览读取时授予事实。只知道同房名称与位置不等于取得检视内容、谜题答案、随身物品或容器内部；候选标签、客观地图和角色目录都不能替代主体实际观察。
 
 风衣初始位于 R-05，放大镜、石墨笔与证物袋在风衣内。穿衣成功后风衣的位置才变为侦探，内含物仍属于风衣；衣袋名称与容纳关系由实际 E12 检视完成后发布。所有权不能替代实际携带位置，显示元数据也不授予隐藏物品知识。开场的领取柜、银元、金属试件、试听机与茶具具有正式物理身份，保留为实物；抽象记录不进入实物列表。
 
 ### 即时评分分项
 
-选项的 `score_breakdown` 对应当前即时估值，保留 `scope` 和 `formula`。它包含信息、验证、进展、成就四项原值及加权值，信息权重、进展权重、机会价值、时间罚项、总值、机会清单及原始 `value_details`。当前公式为：
+选项的 `immediate_breakdown` 对应当前即时估值，保留 `scope` 和 `formula`。它包含信息、验证、进展、成就四项原值及加权值，信息权重、进展权重、机会价值、时间罚项、总值、机会清单及原始 `value_details`。当前公式为：
 
 ```text
 action_value = (information + verification) * information_weight

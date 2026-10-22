@@ -25,6 +25,7 @@ public sealed class SmartReplay
         internal CancellationToken Cancellation;
         internal long RecordIndex = -1;
         internal string Viewer = "detective";
+        internal bool ViewerRecorded;
         internal double? LastInputRealUs;
         internal readonly Dictionary<string, object> Receipts = new(StringComparer.Ordinal);
         internal readonly Dictionary<string, Interaction> Interactions = new(StringComparer.Ordinal);
@@ -165,7 +166,7 @@ public sealed class SmartReplay
             var final = Get(trace, "final") ?? Get(value, "last_live_session");
             if (final is not null) AppendCheckpoint(new Dictionary<string, object?>
             {
-                ["checkpoint"] = "final", ["record"] = final
+                ["checkpoint"] = "final", ["record"] = new Dictionary<string, object?> { ["state"] = final, ["trace"] = trace }
             }, frames, context);
             return;
         }
@@ -289,7 +290,11 @@ public sealed class SmartReplay
                     ["game_time"] = Native(Get(value, projected ? "game_time" : "time"))
                 };
                 Add(frames, "focus", actor, actionId, label, focus, value, context, 0.45);
-                detail["phase"] = "confirm";
+                detail["phase"] = status == "applied" ? "completed" : status.Length > 0 ? "rejected" : "confirm";
+                detail["action_state"] = detail["phase"];
+                detail["option_time_basis"] = "decision-boundary";
+                detail["selection_game_time"] = Native(Get(selection, "time"));
+                detail["result_game_time"] = detail["game_time"];
                 detail["interaction_id"] = interactionId;
                 detail["interaction_contract"] = InteractionContract;
                 detail["selected"] = actionId;
@@ -404,6 +409,8 @@ public sealed class SmartReplay
         context.Cancellation.ThrowIfCancellationRequested();
         var phase = Text(payload, "phase");
         var id = Text(payload, "interaction_id");
+        var viewer = Text(payload, "viewer");
+        if (viewer.Length > 0) { context.Viewer = viewer; context.ViewerRecorded = true; }
         var actor = Text(payload, "actor");
         if (actor.Length == 0) actor = Text(payload, "viewer");
         var action = Text(payload, "action_id");
@@ -418,6 +425,12 @@ public sealed class SmartReplay
         data["selected"] = phase == "cancel" ? "" : action;
         data["phase"] = phase;
         data["options"] = RecordedOptions(data.GetValueOrDefault("options"), actor, context);
+        var selectedOption = Items(data["options"]).FirstOrDefault(option => Text(option, "id") == action);
+        if (!data.ContainsKey("selection_game_time"))
+            data["selection_game_time"] = Get(selectedOption, "selection_game_time") ?? data.GetValueOrDefault("game_time");
+        if (!data.ContainsKey("selection_state_version"))
+            data["selection_state_version"] = data.GetValueOrDefault("source_state_version") ?? data.GetValueOrDefault("state_version");
+        data["option_time_basis"] = "decision-boundary";
         if (data.GetValueOrDefault("preview") is IReadOnlyDictionary<string, object?> preview)
             data["preview"] = RecordedPreview(preview, actor, context);
         if (Get(Get(payload, "preview"), "snapshot") is not null)
@@ -482,11 +495,14 @@ public sealed class SmartReplay
     {
         var confirmation = frames[interaction.Confirm];
         var data = new Dictionary<string, object?>(confirmation.Data, StringComparer.Ordinal);
+        if (!data.ContainsKey("selection_game_time")) data["selection_game_time"] = data.GetValueOrDefault("game_time");
+        if (!data.ContainsKey("selection_state_version"))
+            data["selection_state_version"] = data.GetValueOrDefault("source_state_version") ?? data.GetValueOrDefault("state_version");
         // Keep the chosen alternatives and source version from the focus boundary.
         // Only the actual recorded result may replace the post-confirmation view.
         var projectedKeys = new[] { "preview", "snapshot", "snapshot_ref", "presentation", "viewer", "presentation_viewer", "position", "actual_position", "travel", "action", "detail",
             "receipt", "status", "game_time", "result_kind", "action_event", "state_version", "event_id",
-            "performance", "controller_kind", "controller" };
+            "performance", "controller_kind", "controller", "measurement_cut", "provenance", "lifecycle" };
         foreach (var key in projectedKeys)
             if (result.TryGetValue(key, out var value)) data[key] = value;
         if (Get(Get(data, "preview"), "snapshot") is not null)
@@ -502,7 +518,21 @@ public sealed class SmartReplay
             pair.Key is not ("options" or "input" or "result" or "result_record" or "result_records"))
             .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal));
         data["result_record_index"] = context.RecordIndex;
-        data["phase"] = "confirm";
+        var outcome = Text(Get(result, "presentation"), "outcome");
+        if (outcome.Length == 0) outcome = Text(result, "status");
+        if (outcome.Length == 0) outcome = Text(Get(Get(result, "receipt"), "execution"), "status");
+        var actionState = outcome switch
+        {
+            "applied" or "completed" => "completed", "scheduled" => "scheduled",
+            "" => Text(data, "action_state") is { Length: > 0 } recordedState ? recordedState : "confirm",
+            _ => "rejected"
+        };
+        data["phase"] = actionState;
+        data["action_state"] = actionState;
+        data["option_time_basis"] = "decision-boundary";
+        data["view_time_basis"] = "recorded-result";
+        if (result.TryGetValue("game_time", out var resultTime)) data["result_game_time"] = resultTime;
+        if (result.TryGetValue("state_version", out var resultVersion)) data["result_state_version"] = resultVersion;
         if (text.Length == 0) text = confirmation.Text;
         var duration = Text(data, "result_kind") == "move" ? 0.3 : Math.Clamp(text.Length / 24d, 0.6, 2.0);
         frames[interaction.Confirm] = confirmation with { Text = text, DurationSeconds = duration, Data = HostValues.Freeze(data) };
@@ -525,7 +555,7 @@ public sealed class SmartReplay
             (Get(record, "physical") is not null ? record : Get(trace, checkpoint == "initial" ? "initial" : "final"));
         if (state is null || Get(state, "physical") is null || Get(state, "actors") is null) return;
         var viewer = Text(Get(state, "story"), "host_viewer");
-        if (viewer.Length > 0) context.Viewer = viewer;
+        if (viewer.Length > 0 && (!context.ViewerRecorded || checkpoint == "initial")) context.Viewer = viewer;
         var dvState = state is IReadOnlyDictionary<string, object?> ? HostValues.ToDv(state) : state;
         var projected = Get(state, "story") is not null
             ? DVProgram.ReplaySnapshot(dvState, context.Viewer)
@@ -551,12 +581,48 @@ public sealed class SmartReplay
         };
         var viewerTitle = directory.FirstOrDefault(actor => Text(actor, "id") == context.Viewer);
         if (viewerTitle is not null) snapshot["viewer_title"] = Text(viewerTitle, "title");
-        Add(frames, "snapshot", context.Viewer, "", checkpoint == "initial" ? "记录开始现场" : "记录提交现场",
-            new Dictionary<string, object?>
+        var metadata = new Dictionary<string, object?>
+        {
+            ["snapshot"] = HostValues.Freeze(snapshot), ["checkpoint"] = checkpoint,
+            ["source"] = "recorded-checkpoint", ["physical_coordinates_recorded"] = false,
+            ["phase"] = checkpoint == "final" ? "closed" : "snapshot",
+            ["game_time"] = ConvertNative(Get(Get(state, "physical"), "time"), context),
+            ["selected"] = "", ["options"] = Array.Empty<object?>(), ["option_time_basis"] = "current"
+        };
+        foreach (var key in new[] { "provenance", "cut", "lifecycle", "pending_actions", "performance", "controller_kind", "measurement_cut" })
+            if ((Get(record, key) ?? Get(trace, key)) is { } recorded) metadata[key] = ConvertNative(recorded, context);
+        if (checkpoint == "final" && !metadata.ContainsKey("pending_actions"))
+            metadata["pending_actions"] = RecordedPending(state, context);
+        Add(frames, "snapshot", context.Viewer, "", checkpoint == "initial" ? "记录开始现场" : "记录结束现场",
+            metadata, value, context, 0);
+    }
+
+    private static IReadOnlyList<object?> RecordedPending(object state, ReadContext context)
+    {
+        var result = new List<object?>();
+        void AddPending(string actor, object? action, object? start, object? due, string phase)
+        {
+            var id = Text(action, "id");
+            if (actor.Length == 0 || id.Length == 0) return;
+            var label = Text(action, "label");
+            result.Add(HostValues.Freeze(new Dictionary<string, object?>
             {
-                ["snapshot"] = HostValues.Freeze(snapshot), ["checkpoint"] = checkpoint,
-                ["source"] = "recorded-checkpoint", ["physical_coordinates_recorded"] = false
-            }, value, context, 0);
+                ["actor"] = actor, ["action_id"] = id,
+                ["label"] = label.Length == 0 || label == id ? "（未记录标签）" : label,
+                ["start"] = ConvertNative(start, context), ["due"] = ConvertNative(due, context),
+                ["action_state"] = phase, ["source"] = "recorded-checkpoint"
+            }));
+        }
+        foreach (var actor in Items(Get(state, "actors")))
+        {
+            var scheduled = Get(actor, "scheduled_action");
+            if (scheduled is null or false) continue;
+            AddPending(Text(actor, "id"), Get(scheduled, "action"), Get(scheduled, "start"), Get(scheduled, "due"), "scheduled");
+        }
+        var pending = Get(state, "pending");
+        if (pending is not null and not false)
+            AddPending(Text(pending, "id"), Get(pending, "action"), Get(Get(pending, "quote"), "scheduled_start"), Get(pending, "time"), "prepared");
+        return result.AsReadOnly();
     }
 
     private static void AppendPresentation(object value, object record, List<ReplayFrame> frames, HashSet<string> seen, ReadContext context)

@@ -49,6 +49,7 @@ public sealed partial class DvSession
             R.Items(Field(state, "actors", new List<object>())).Count, PerformanceGameMinute());
         var savedController = R.Text(Field(value, "performance_controller", ""));
         if (savedController.Length > 0) performance.ConfigureController(savedController);
+        UpdateEvidenceLifecycle();
     }
 
     private object Run(Func<object> operation, bool speculative = false)
@@ -74,6 +75,7 @@ public sealed partial class DvSession
         while (committedDecisionEventCursor < events.Count)
         {
             var entry = events[committedDecisionEventCursor++];
+            ObserveLifecycle(entry);
             if (R.Text(Field(entry, "type", "")) != "action_selected") continue;
             var actor = R.Text(Field(entry, "actor", ""));
             var data = Field(entry, "data", new List<object>());
@@ -82,6 +84,10 @@ public sealed partial class DvSession
                 ? performance.ControllerKind : "engine";
             performance.RecordDecision(source, actor, R.Text(Field(entry, "id", "")),
                 R.Text(Field(action, "id", "")), R.Num(Field(entry, "time", PerformanceGameMinute())));
+            var work = Field(data, "planning_work", false);
+            if (work is not false)
+                RecordPerformancePlanning(actor, R.Text(Field(entry, "id", "")), HostValues.Record(work),
+                    R.Text(Field(data, "planning_stop", "")));
         }
     }
     private void BeginTransition()
@@ -96,7 +102,15 @@ public sealed partial class DvSession
     }
     private void RememberCommitted()
     {
-        if (!HasPending(state)) lastCommittedState = R.snapshot(state);
+        if (!HasPending(state))
+        {
+            lastCommittedState = R.snapshot(state);
+            durableVersion = Version;
+            durableSelectedCount = selectedCount;
+            durableScheduledCount = scheduledCount;
+            durableCompletedCount = completedCount;
+        }
+        UpdateEvidenceLifecycle();
     }
 
     public static DvSession OpenCampaign(string player = "") =>
@@ -408,8 +422,12 @@ public sealed partial class DvSession
         return Materialize(Viewer);
     }
 
-    private object DurableState() => R.record_with(
-        R.record_with(lastCommittedState, "audit_mode", audit), "performance_controller", performance.ControllerKind);
+    private object DurableState()
+    {
+        var durable = R.record_with(R.record_with(lastCommittedState, "audit_mode", audit), "performance_controller", performance.ControllerKind);
+        durable = R.record_with(durable, "archive_provenance", HostValues.ToDv(Provenance()));
+        return R.record_with(durable, "archive_cut", HostValues.ToDv(EvidenceCut()));
+    }
     public string Save()
     {
         using var performanceScope = Measure("save-json", "persistence");
@@ -429,6 +447,8 @@ public sealed partial class DvSession
         using var performanceScope = Measure("close", "persistence");
         CancelPrepared();
         closedTrace = R.snapshot(Run(() => DVProgram.SessionClose(state)));
+        shutdownReason = R.Text(Field(closedTrace, "status", "closed"));
+        UpdateEvidenceLifecycle();
     }
     private object TraceValue() => closedTrace ?? R.snapshot(Run(() => DVProgram.TraceSnapshot(state)));
     public string Trace()

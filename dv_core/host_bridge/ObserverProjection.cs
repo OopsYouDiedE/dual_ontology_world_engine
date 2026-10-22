@@ -6,7 +6,8 @@ public sealed partial class DvSession
     private long observerVersion = -1;
     private readonly Dictionary<string, IReadOnlyDictionary<string, object?>> observerSnapshots = new(StringComparer.Ordinal);
     private readonly Dictionary<string, IReadOnlyList<IReadOnlyDictionary<string, object?>>> observerChoices = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, IReadOnlyDictionary<string, object?>> objectiveMaps = new(StringComparer.Ordinal);
+    private IReadOnlyDictionary<string, object?>? objectiveMap;
+    private readonly Dictionary<string, object> observerSubjects = new(StringComparer.Ordinal);
     private readonly Dictionary<string, IReadOnlyDictionary<string, object?>> observerPreviews = new(StringComparer.Ordinal);
     private IReadOnlyList<IReadOnlyDictionary<string, object?>> observerActors = Array.Empty<IReadOnlyDictionary<string, object?>>();
     private readonly List<(int Cursor, object Event)> interactions = new();
@@ -16,7 +17,8 @@ public sealed partial class DvSession
         observerVersion = -1;
         observerSnapshots.Clear();
         observerChoices.Clear();
-        objectiveMaps.Clear();
+        objectiveMap = null;
+        observerSubjects.Clear();
         observerPreviews.Clear();
         observerActors = Array.Empty<IReadOnlyDictionary<string, object?>>();
     }
@@ -24,34 +26,17 @@ public sealed partial class DvSession
     private void EnsureObservers()
     {
         if (observerVersion == Version) return;
-        using var performanceScope = Measure("observer-subjects", "projection");
+        using var performanceScope = Measure("observer-directory", "projection", projectionScope: "actor-directory");
         observerPreviews.Clear();
-        // DV projection memoization may replace owned list entries; pin the actor references for this read.
+        // Pin only actor identities here. Opening a directory must not project every mind.
         var actors = R.Items(Field(state, "actors", new List<object>())).ToArray();
-        var directory = new List<IReadOnlyDictionary<string, object?>>();
-        var intent = IntentProjection();
         foreach (var actor in actors)
         {
             var id = R.Text(Field(actor, "id", ""));
-            var value = HostValues.Record(Run(() => DVProgram.ObserverSubject(state, actor, intent), speculative: true));
-            observerSnapshots[id] = value;
-            // Administrative actor identity is distinct from the names held in each mind.
-            directory.Add(HostValues.Freeze(new Dictionary<string, object?>
-            { ["id"] = id, ["title"] = HostValues.Text(HostValues.Map(value, "snapshot"), "viewer_title", "（未记录名称）") }));
+            observerSubjects[id] = actor;
         }
-        observerActors = directory.AsReadOnly();
-        foreach (var id in observerSnapshots.Keys.ToArray())
-        {
-            var subject = observerSnapshots[id];
-            var snapshot = new Dictionary<string, object?>(HostValues.Map(subject, "snapshot"), StringComparer.Ordinal)
-            {
-                ["actors"] = observerActors
-            };
-            observerSnapshots[id] = HostValues.Freeze(new Dictionary<string, object?>(subject, StringComparer.Ordinal)
-            {
-                ["snapshot"] = HostValues.Freeze(snapshot)
-            });
-        }
+        observerActors = Array.AsReadOnly(R.Items(Run(() => DVProgram.ObserverDirectory(state), speculative: true))
+            .Select(HostValues.Record).ToArray());
         observerVersion = Version;
     }
 
@@ -63,7 +48,19 @@ public sealed partial class DvSession
     private IReadOnlyDictionary<string, object?> ObserverBase(string viewer)
     {
         EnsureObservers();
-        if (!observerSnapshots.TryGetValue(viewer, out var value)) throw new ArgumentException("未知视角 · " + viewer, nameof(viewer));
+        if (observerSnapshots.TryGetValue(viewer, out var value)) return value;
+        if (!observerSubjects.TryGetValue(viewer, out var actor)) throw new ArgumentException("未知视角 · " + viewer, nameof(viewer));
+        using var performanceScope = Measure("observer-subject", "projection", viewer: viewer, projectionScope: "one-subject");
+        var projected = HostValues.Record(Run(() => DVProgram.ObserverSubject(state, actor, IntentProjection()), speculative: true));
+        var snapshot = new Dictionary<string, object?>(HostValues.Map(projected, "snapshot"), StringComparer.Ordinal)
+        {
+            ["actors"] = observerActors, ["state_version"] = Version
+        };
+        value = HostValues.Freeze(new Dictionary<string, object?>(projected, StringComparer.Ordinal)
+        {
+            ["snapshot"] = HostValues.Freeze(snapshot)
+        });
+        observerSnapshots[viewer] = value;
         return value;
     }
 
@@ -82,93 +79,135 @@ public sealed partial class DvSession
         return false;
     }
 
+    private int observerEventCursor;
+    private readonly Dictionary<(string Actor, string Type), object> observerEvents = new();
+
+    private object? LatestObserverEvent(string actor, string type)
+    {
+        var events = Events(state);
+        while (observerEventCursor < events.Count)
+        {
+            var entry = events[observerEventCursor++];
+            var kind = R.Text(Field(entry, "type", ""));
+            if (kind is "planning_choice" or "action_selected")
+                observerEvents[(R.Text(Field(entry, "actor", "")), kind)] = entry;
+        }
+        return observerEvents.GetValueOrDefault((actor, type));
+    }
+
     public IReadOnlyList<IReadOnlyDictionary<string, object?>> ObserverOptions(string viewer)
     {
-        _ = ObserverBase(viewer);
+        EnsureObservers();
+        if (!observerSubjects.TryGetValue(viewer, out var actor)) throw new ArgumentException("未知视角 · " + viewer, nameof(viewer));
         if (observerChoices.TryGetValue(viewer, out var found)) return found;
-        using var performanceScope = Measure("observer-options", "projection");
+        using var performanceScope = Measure("observer-options", "projection", viewer: viewer, projectionScope: "one-subject-options");
         var raw = Run(() => DVProgram.ObserverOptions(state, viewer), speculative: true);
         var options = R.Items(raw).Select(HostValues.Record).ToList();
-        var actors = R.Items(Field(state, "actors", new List<object>()));
-        var actor = actors.First(item => R.Text(Field(item, "id", "")) == viewer);
         var revision = Field(Field(actor, "mind", new List<object>()), "revision", -1d);
-        var events = Events(state);
-        // Reuse scores that the planner actually produced for this same cognitive revision.
-        for (var index = events.Count - 1; index >= 0; index--)
+        var planning = LatestObserverEvent(viewer, "planning_choice");
+        if (planning is not null)
         {
-            var entry = events[index];
-            if (R.Text(Field(entry, "actor", "")) != viewer || R.Text(Field(entry, "type", "")) != "planning_choice") continue;
-            var data = Field(entry, "data", new List<object>());
+            var data = Field(planning, "data", new List<object>());
             var plans = R.Items(Field(data, "plans", new List<object>()));
             var currentPlans = plans.Where(plan => R.Bool(R.same_value(Field(plan, "mind_revision", -2d), revision))).ToArray();
-            if (currentPlans.Length == 0) break;
-            for (var item = 0; item < options.Count; item++)
-            {
-                var option = options[item];
-                var id = HostValues.Text(option, "id");
-                object? score = null;
-                foreach (var plan in currentPlans)
+            if (currentPlans.Length > 0)
+                for (var item = 0; item < options.Count; item++)
                 {
-                    var path = R.Items(Field(plan, "path", new List<object>()));
-                    if (path.Count != 1 || R.Text(path[0]) != id) continue;
-                    score = Field(plan, "score", false);
-                    break;
-                }
-                if (score is null)
-                {
-                    options[item] = HostValues.Freeze(new Dictionary<string, object?>(option, StringComparer.Ordinal)
+                    var option = options[item];
+                    var id = HostValues.Text(option, "id");
+                    var root = currentPlans.FirstOrDefault(plan =>
                     {
-                        ["planning_status"] = "unexpanded", ["planning_event"] = Field(entry, "id", "")
+                        var path = R.Items(Field(plan, "path", new List<object>()));
+                        return path.Count == 1 && R.Text(path[0]) == id;
                     });
-                    continue;
+                    var scored = new Dictionary<string, object?>(option, StringComparer.Ordinal)
+                    {
+                        ["immediate_score"] = option.GetValueOrDefault("immediate_score") ?? option.GetValueOrDefault("ai_score"),
+                        ["immediate_breakdown"] = option.GetValueOrDefault("immediate_breakdown") ?? option.GetValueOrDefault("score_breakdown"),
+                        ["planning_status"] = root is null ? "unexpanded" : "evaluated-root",
+                        ["planning_event"] = Field(planning, "id", "")
+                    };
+                    if (root is not null)
+                    {
+                        var score = HostValues.FromDv(Field(root, "score", false));
+                        scored["root_score"] = score;
+                        scored["root_event"] = Field(planning, "id", "");
+                        scored["root_game_time"] = Field(planning, "time", false);
+                        scored["root_mind_revision"] = HostValues.FromDv(revision);
+                        scored["ai_score"] = score;
+                        scored["score_kind"] = "recorded-root";
+                        scored["score_event"] = Field(planning, "id", "");
+                        scored["score_breakdown"] = HostValues.Freeze(new Dictionary<string, object?>
+                        {
+                            ["scope"] = "recorded-root", ["total"] = score,
+                            ["source_event"] = Field(planning, "id", ""), ["components_recorded"] = false
+                        });
+                    }
+                    options[item] = HostValues.Freeze(scored);
                 }
-                var scored = new Dictionary<string, object?>(option, StringComparer.Ordinal)
-                {
-                    ["ai_score"] = HostValues.FromDv(score), ["score_kind"] = "recorded-root",
-                    ["score_event"] = Field(entry, "id", ""), ["planning_status"] = "evaluated-root"
-                };
-                options[item] = HostValues.Freeze(scored);
-            }
-            break;
         }
-        if (HostValues.Text(Intent, "status") == "prepared" && HostValues.Text(Intent, "actor") == viewer)
+        var intent = Intent;
+        var prepared = HostValues.Text(intent, "status") == "prepared" && HostValues.Text(intent, "actor") == viewer;
+        var scheduled = Field(actor, "scheduled_action", false);
+        var selectedAction = prepared ? HostValues.Map(intent, "action") :
+            scheduled is not false ? HostValues.Record(Field(scheduled, "action", new List<object>())) : HostValues.Empty;
+        var selectedId = HostValues.Text(selectedAction, "id");
+        if (selectedId.Length > 0)
         {
-            var action = HostValues.Map(Intent, "action");
-            var id = HostValues.Text(action, "id");
-            if (id.Length > 0 && !options.Any(option => HostValues.Text(option, "id") == id))
-            {
-                var label = HostValues.Text(action, "label");
-                var kind = HostValues.Text(action, "kind");
-                var original = R.Items(Field(actor, "actions", new List<object>()))
-                    .FirstOrDefault(candidate => R.Text(Field(candidate, "id", "")) == id);
-                if (label.Length == 0 && original is not null) label = R.Text(Field(original, "label", ""));
-                var selected = new Dictionary<string, object?>
+            var selectedIndex = options.FindIndex(option => HostValues.Text(option, "id") == selectedId);
+            var original = R.Items(Field(actor, "actions", new List<object>()))
+                .FirstOrDefault(candidate => R.Text(Field(candidate, "id", "")) == selectedId);
+            var label = HostValues.Text(selectedAction, "label");
+            if (label.Length == 0 && original is not null) label = R.Text(Field(original, "label", ""));
+            var kind = HostValues.Text(selectedAction, "kind");
+            var selected = selectedIndex >= 0 ? new Dictionary<string, object?>(options[selectedIndex], StringComparer.Ordinal) :
+                new Dictionary<string, object?>
                 {
-                    ["id"] = id, ["label"] = label.Length > 0 && label != id ? label : "（未记录标签）",
-                    ["kind"] = kind, ["available"] = true, ["selected"] = true,
+                    ["id"] = selectedId, ["label"] = label.Length > 0 && label != selectedId ? label : "（未记录标签）",
+                    ["kind"] = kind, ["available"] = false,
                     ["cost"] = HostValues.FromDv(Field(Field(Field(state, "costs", new List<object>()), kind, new List<object>()), "actual", new List<object>()))
                 };
-                for (var index = events.Count - 1; index >= 0; index--)
+            selected["selected"] = true;
+            selected["action_state"] = prepared ? "prepared" : "scheduled";
+            var chosen = LatestObserverEvent(viewer, "action_selected");
+            if (chosen is not null)
+            {
+                var data = Field(chosen, "data", new List<object>());
+                if (R.Text(Field(Field(data, "action", new List<object>()), "id", "")) == selectedId)
                 {
-                    var entry = events[index];
-                    if (R.Text(Field(entry, "actor", "")) != viewer || R.Text(Field(entry, "type", "")) != "action_selected") continue;
-                    var data = Field(entry, "data", new List<object>());
-                    if (R.Text(Field(Field(data, "action", new List<object>()), "id", "")) == id)
+                    var score = Field(data, "score", false);
+                    var recordedLabel = R.Text(Field(Field(data, "action", new List<object>()), "label", Field(data, "label", "")));
+                    if (recordedLabel.Length > 0 && recordedLabel != selectedId) selected["label"] = recordedLabel;
+                    selected["selection_event"] = Field(chosen, "id", "");
+                    selected["selection_game_time"] = Field(chosen, "time", false);
+                    var recordedPath = Field(data, "selected_path", false);
+                    if (recordedPath is not false) selected["selection_path"] = HostValues.FromDv(recordedPath);
+                    if (score is not false)
                     {
-                        var recordedLabel = R.Text(Field(Field(data, "action", new List<object>()), "label", Field(data, "label", "")));
-                        if (recordedLabel.Length > 0 && recordedLabel != id) selected["label"] = recordedLabel;
-                        var score = Field(data, "score", false);
-                        if (score is not false)
+                        selected["selection_score"] = HostValues.FromDv(score);
+                        selected["selection_score_kind"] = "recorded-path";
+                        if (!selected.ContainsKey("ai_score"))
                         {
                             selected["ai_score"] = HostValues.FromDv(score);
                             selected["score_kind"] = "recorded-choice";
-                            selected["score_event"] = Field(entry, "id", "");
+                            selected["score_event"] = Field(chosen, "id", "");
+                        }
+                        var plan = R.Items(Field(data, "plans", new List<object>())).FirstOrDefault(candidate =>
+                        {
+                            var path = R.Items(Field(candidate, "path", new List<object>()));
+                            return path.Count > 0 && R.Text(path[0]) == selectedId &&
+                                R.Bool(R.same_value(Field(candidate, "score", false), score));
+                        });
+                        if (plan is not null)
+                        {
+                            selected["selection_path"] = HostValues.FromDv(Field(plan, "path", new List<object>()));
+                            selected["selection_mind_revision"] = HostValues.FromDv(Field(plan, "mind_revision", false));
                         }
                     }
-                    break;
                 }
-                options.Add(HostValues.Freeze(selected));
             }
+            if (selectedIndex >= 0) options[selectedIndex] = HostValues.Freeze(selected);
+            else options.Add(HostValues.Freeze(selected));
         }
         var result = options.AsReadOnly();
         observerChoices[viewer] = result;
@@ -197,47 +236,65 @@ public sealed partial class DvSession
         });
     }
 
+    private IReadOnlyDictionary<string, object?> ObjectiveForViewer(string viewer)
+    {
+        if (objectiveMap is null)
+        {
+            using var scope = Measure("observer-objective", "projection", projectionScope: "shared-physical-world");
+            objectiveMap = HostValues.Record(Run(() => DVProgram.ObserverObjective(state, ""), speculative: true));
+        }
+        var rooms = HostValues.List(objectiveMap, "rooms").OfType<IReadOnlyDictionary<string, object?>>()
+            .Select(room => (object?)HostValues.Freeze(new Dictionary<string, object?>(room, StringComparer.Ordinal)
+            {
+                ["members"] = Array.AsReadOnly(HostValues.List(room, "members").OfType<IReadOnlyDictionary<string, object?>>()
+                    .Select(member => (object?)HostValues.Freeze(new Dictionary<string, object?>(member, StringComparer.Ordinal)
+                    {
+                        ["is_viewer"] = HostValues.Text(member, "id") == viewer
+                    })).ToArray())
+            })).ToArray();
+        return HostValues.Freeze(new Dictionary<string, object?>(objectiveMap, StringComparer.Ordinal)
+        {
+            ["rooms"] = Array.AsReadOnly(rooms), ["viewer"] = viewer
+        });
+    }
+
     public IReadOnlyDictionary<string, object?> Preview(string viewer, bool includeObjective = false)
     {
         var selected = ObserverBase(viewer);
         var cacheKey = viewer + (includeObjective ? "|objective" : "|subjective");
-        if (observerPreviews.TryGetValue(cacheKey, out var cached)) return cached;
-        Dictionary<string, object?> result;
-        using (Measure("observer-preview", "projection"))
+        if (!observerPreviews.TryGetValue(cacheKey, out var cached))
         {
-            var options = ObserverOptions(viewer);
-            var observers = new Dictionary<string, object?>(StringComparer.Ordinal);
-            foreach (var pair in observerSnapshots)
+            Dictionary<string, object?> result;
+            using (Measure("observer-preview", "projection", viewer: viewer, projectionScope: "requested-view"))
             {
-                var entry = new Dictionary<string, object?>(pair.Value, StringComparer.Ordinal)
+                var options = ObserverOptions(viewer);
+                var status = TextStatus(viewer);
+                var observation = HostValues.Freeze(new Dictionary<string, object?>(selected, StringComparer.Ordinal)
                 {
-                    ["status"] = TextStatus(pair.Key),
-                    ["options"] = observerChoices.TryGetValue(pair.Key, out var choices)
-                        ? choices : Array.Empty<IReadOnlyDictionary<string, object?>>()
+                    ["status"] = status, ["options"] = options
+                });
+                result = new Dictionary<string, object?>(observation, StringComparer.Ordinal)
+                {
+                    ["viewer"] = viewer, ["version"] = Version, ["actors"] = observerActors,
+                    ["projection_scope"] = includeObjective ? "viewer-and-objective" : "viewer-only",
+                    ["recorded_viewers"] = Array.AsReadOnly(new object?[] { viewer }),
+                    ["observers"] = HostValues.Freeze(new Dictionary<string, object?> { [viewer] = observation })
                 };
-                observers[pair.Key] = HostValues.Freeze(entry);
+                if (includeObjective) result["objective"] = ObjectiveForViewer(viewer);
             }
-            result = new Dictionary<string, object?>(selected, StringComparer.Ordinal)
-            {
-                ["viewer"] = viewer, ["version"] = Version, ["status"] = TextStatus(viewer),
-                ["options"] = options, ["actors"] = observerActors, ["observers"] = HostValues.Freeze(observers)
-            };
-            if (includeObjective)
-            {
-                if (!objectiveMaps.TryGetValue(viewer, out var objective))
-                {
-                    using var objectiveScope = Measure("observer-objective", "projection");
-                    objective = HostValues.Record(Run(() => DVProgram.ObserverObjective(state, viewer), speculative: true));
-                    objectiveMaps[viewer] = objective;
-                }
-                result["objective"] = objective;
-            }
+            cached = HostValues.Freeze(result);
+            observerPreviews[cacheKey] = cached;
         }
-        result["performance"] = PerformanceSummary();
-        var preview = HostValues.Freeze(result);
-        observerPreviews[cacheKey] = preview;
-        return preview;
+        // Projection is cached; wall-clock measurements always use the current cut.
+        return WithPerformance(cached, PerformanceSummary());
     }
+
+    public static IReadOnlyDictionary<string, object?> WithPerformance(IReadOnlyDictionary<string, object?> value,
+        IReadOnlyDictionary<string, object?> performance) =>
+        HostValues.Freeze(new Dictionary<string, object?>(value, StringComparer.Ordinal)
+        {
+            ["performance"] = performance, ["measured_until_ticks"] = performance.GetValueOrDefault("measured_until_ticks")
+        });
 
     public void RecordInteraction(IReadOnlyDictionary<string, object?> payload)
     {
@@ -256,7 +313,7 @@ public sealed partial class DvSession
 
     private object RecordedTraceValue()
     {
-        var trace = TraceValue();
+        var trace = DecorateTrace(TraceValue());
         if (interactions.Count == 0) return trace;
         var events = Events(trace);
         var recorded = new List<object>(events.Count + interactions.Count);
@@ -274,6 +331,7 @@ public sealed partial class DvSession
 
 public static partial class DVProgram
 {
+    internal static object ObserverDirectory(object state) => F_dvg_observer_directory(state);
     internal static object ObserverSubject(object state, object actor, object intent) => F_dvg_preview_subject(state, actor, intent);
     internal static object ObserverObjective(object state, object viewer) => F_dvg_preview_objective(state, viewer);
     internal static object ObserverOptions(object state, object viewer) => F_dvg_observer_options(state, viewer);

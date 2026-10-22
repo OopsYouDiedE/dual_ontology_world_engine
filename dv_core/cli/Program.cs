@@ -20,6 +20,9 @@ internal sealed class Cli
     private ReplayFrame? terminalFrame;
     private int terminalWidth = 120, terminalHeight = 42;
     private int terminalPage;
+    private int actionPage = -1;
+    private bool expandActions;
+    private string optionTimeBasis = "current";
     private bool noColor, showActors;
     private string? exportFramePath;
     private string terminalZoom = "fit";
@@ -115,6 +118,7 @@ internal sealed class Cli
         var explicitViewer = false;
         var controller = "player";
         var explicitController = false;
+        var sourceRevision = "";
         var developer = false;
         var audit = false;
         var speed = 1d;
@@ -152,6 +156,7 @@ internal sealed class Cli
                 case "--save": savePath = Value(); break;
                 case "--trace": tracePath = Value(); break;
                 case "--performance": performancePath = Value(); break;
+                case "--source-revision": sourceRevision = Value(); break;
                 case "--scores": showScores = true; break;
                 case "--no-scores": showScores = false; break;
                 case "--command": command = Value(); break;
@@ -219,6 +224,11 @@ internal sealed class Cli
                     "player" or "human" => "human", "llm" => "llm", _ => "engine"
                 });
             if (tui && !developer) session.DiagnosticOutput = TextWriter.Null;
+            session.SetExecutionContext("cli", "formal-model", sourceRevision);
+            performancePath ??= (tracePath ?? savePath) is { } artifact
+                ? Path.ChangeExtension(artifact, null) + ".performance"
+                : Path.Combine("artifacts", "performance", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff", CultureInfo.InvariantCulture) + "-" + interactionSession[..8], "engine");
+            session.StartPerformanceRecording(performancePath);
             // A caller explicitly advances with next/act. Opening/status does not run NPCs.
         }
         displayViewer = session?.Viewer ?? viewer;
@@ -284,6 +294,16 @@ internal sealed class Cli
             case "help": Emit("help", Help); return;
             case "quit": case "exit": quit = true; return;
             case "status": Emit("status", CurrentStatus()); return;
+            case "actions":
+                switch (argument.ToLowerInvariant())
+                {
+                    case "next": case "+": actionPage = Math.Max(0, actionPage) + 1; expandActions = false; break;
+                    case "prev": case "-": actionPage = Math.Max(0, actionPage - 1); expandActions = false; break;
+                    case "all": expandActions = true; break;
+                    case "compact": case "": expandActions = false; actionPage = -1; break;
+                    default: throw new ArgumentException("actions next / prev / all / compact");
+                }
+                Emit("status", CurrentStatus()); return;
             case "scores":
                 showScores = argument.ToLowerInvariant() switch
                 {
@@ -355,7 +375,13 @@ internal sealed class Cli
             case "confirm": ConfirmChoice(current); break;
             case "cancel":
                 if (focus is { } cancelled) RecordPhase(current, "cancel", cancelled);
+                current.EndDecisionInterface(current.Viewer, "cancelled");
                 focus = null; interactionPhase = ""; Emit("status", CurrentStatus()); break;
+            case "decision-phase":
+                if (argument is not ("request" or "response" or "reading" or "confirmation"))
+                    throw new ArgumentException("decision-phase request / response / reading / confirmation");
+                current.SetDecisionInterfacePhase(current.Viewer, argument);
+                Emit("performance", current.PerformanceSummary()); break;
             case "act":
                 FocusChoice(current, argument);
                 ConfirmChoice(current); break;
@@ -398,6 +424,7 @@ internal sealed class Cli
             roomOrder.Clear();
             orderedViewer = "";
             terminalPage = 0;
+            actionPage = -1;
         }
         displayViewer = actor;
     }
@@ -437,6 +464,9 @@ internal sealed class Cli
         if (!options.Any(option => HostValues.Text(option, "id") == id)) throw new ArgumentException("选项已失效");
         if (focus is { } previous) RecordPhase(current, "cancel", previous);
         focus = NewFocus(current, id, selection, current.Viewer, options);
+        current.SetDecisionInterfacePhase(current.Viewer, "confirmation");
+        actionPage = -1;
+        optionTimeBasis = "current";
         terminalPage = -1;
         interactionPhase = "聚焦";
         RecordPhase(current, "focus", focus);
@@ -455,6 +485,8 @@ internal sealed class Cli
         var options = current.ObserverOptions(actor);
         if (followReplayActor) ChangeDisplayViewer(actor);
         focus = NewFocus(current, id, id, actor, options);
+        actionPage = -1;
+        optionTimeBasis = "current";
         terminalPage = -1;
         interactionPhase = "聚焦";
         RecordPhase(current, "focus", focus);
@@ -464,7 +496,7 @@ internal sealed class Cli
     private ChoiceFocus NewFocus(DvSession current, string id, string selection, string actor,
         IReadOnlyList<IReadOnlyDictionary<string, object?>> options) =>
         new(id, selection, actor, current.Version, "cli-" + interactionSession + "-" + (++interactionSequence).ToString(CultureInfo.InvariantCulture),
-            options, current.Preview(actor, true));
+            options, current.Preview(Observer, mapView != "subjective"));
 
     private void ConfirmChoice(DvSession current)
     {
@@ -513,8 +545,8 @@ internal sealed class Cli
         }
         var presentation = current.CompleteFormal(Observer);
         RecordPhase(current, "result", selected, presentation);
-        Emit("presentation", presentation);
         interactionPhase = "完成";
+        Emit("presentation", presentation);
         Emit("status", CurrentStatus());
     }
 
@@ -536,7 +568,9 @@ internal sealed class Cli
     private void RecordPhase(DvSession current, string phase, ChoiceFocus selected,
         IReadOnlyDictionary<string, object?>? presentation = null)
     {
+        var projected = phase == "result" ? current.Preview(Observer, mapView != "subjective") : selected.Preview;
         var performance = current.PerformanceSummary();
+        var measuredPreview = DvSession.WithPerformance(projected, performance);
         var record = new Dictionary<string, object?>(FocusPayload(selected, phase), StringComparer.Ordinal)
         {
             ["kind"] = "cli_interaction", ["viewer"] = Observer,
@@ -545,8 +579,14 @@ internal sealed class Cli
             ["controller"] = ControllerIsAutonomous(current) ? "ai" : "player",
             ["controller_kind"] = PerformanceControllerKind(current, performance),
             ["performance"] = performance,
+            ["measured_until_ticks"] = performance.GetValueOrDefault("measured_until_ticks"),
             ["source_state_version"] = selected.Version, ["state_version"] = current.Version,
-            ["preview"] = phase == "result" ? current.Preview(selected.Actor, true) : selected.Preview,
+            ["selection_state_version"] = selected.Version,
+            ["selection_game_time"] = HostValues.Map(selected.Preview, "snapshot").GetValueOrDefault("game_time"),
+            ["result_game_time"] = phase == "result" ? HostValues.Map(projected, "snapshot").GetValueOrDefault("game_time") : null,
+            ["result_state_version"] = phase == "result" ? current.Version : null,
+            ["option_time_basis"] = phase == "result" ? "decision-boundary" : "current",
+            ["preview"] = measuredPreview,
             ["presentation"] = presentation ?? HostValues.Empty
         };
         if (phase == "result") record["presentation_viewer"] = Observer;
@@ -621,6 +661,7 @@ internal sealed class Cli
     private IReadOnlyList<IReadOnlyDictionary<string, object?>> VisibleOptions()
     {
         if (session is { } current) return current.ObserverOptions(Observer);
+        if (interactionPhase.StartsWith("结束", StringComparison.Ordinal)) return Array.Empty<IReadOnlyDictionary<string, object?>>();
         if (replayChoiceActor == Observer) return replayOptions;
         var observers = HostValues.Map(replayPreview, "observers");
         if (observers.GetValueOrDefault(Observer) is IReadOnlyDictionary<string, object?> observation)
@@ -628,8 +669,7 @@ internal sealed class Cli
         return Array.Empty<IReadOnlyDictionary<string, object?>>();
     }
 
-    private static bool ControllerIsAutonomous(DvSession current) =>
-        current.Materialize(current.Viewer).GetValueOrDefault("player_control") is not true;
+    private static bool ControllerIsAutonomous(DvSession current) => !current.PlayerControlled;
 
     private static string NormalizeControllerKind(string value) => value.ToLowerInvariant() switch
     {
@@ -750,13 +790,32 @@ internal sealed class Cli
         if (followReplayActor && frame.Actor.Length > 0 && frame.Kind is ("focus" or "confirm")) ChangeDisplayViewer(frame.Actor);
         if (frame.Data.ContainsKey("options"))
             replayOptions = HostValues.List(frame.Data, "options").OfType<IReadOnlyDictionary<string, object?>>().ToArray();
+        optionTimeBasis = HostValues.Text(frame.Data, "option_time_basis", "current");
         if (frame.Kind == "cancel") { replaySelected = ""; interactionPhase = "取消"; }
         if (frame.Kind is "focus" or "confirm")
         {
             terminalPage = -1;
+            actionPage = -1;
             replaySelected = frame.Action;
             interactionPhase = frame.Kind == "focus" ? "聚焦" :
                 HostValues.Text(HostValues.Map(frame.Data, "presentation"), "outcome") == "scheduled" ? "已排程" : "确认";
+        }
+        var recordedPhase = HostValues.Text(frame.Data, "phase", HostValues.Text(frame.Data, "action_state"));
+        if (recordedPhase.Length > 0)
+            interactionPhase = recordedPhase switch
+            {
+                "focus" => "聚焦", "confirm" or "awaiting-result" => "待结果", "completed" or "applied" => "已执行",
+                "scheduled" => "已排程", "rejected" => "被拒绝", "cancel" or "cancelled" => "取消",
+                "closed" => "结束", "not_prepared" or "selection_changed" => "未执行", _ => recordedPhase
+            };
+        if (recordedPhase == "closed")
+        {
+            replaySelected = "";
+            replayChoiceActor = "";
+            replayOptions = Array.Empty<IReadOnlyDictionary<string, object?>>();
+            optionTimeBasis = "current";
+            var pending = HostValues.List(frame.Data, "pending_actions").Count;
+            if (pending > 0) interactionPhase += " · 待执行 " + pending.ToString(CultureInfo.InvariantCulture);
         }
         Emit("frame", frame);
     }
@@ -771,6 +830,7 @@ internal sealed class Cli
                 visible = new { phase = HostValues.Text(interaction, "phase"), viewer = Observer,
                     options = VisibleOptions(), selected = "", state_version = session?.Version };
             Console.WriteLine(JsonSerializer.Serialize(new { kind, scope = session is null ? "recorded-replay" : "formal-model", data = visible }, Json));
+            MarkDecisionInterfaceVisible(kind);
             return;
         }
         if (kind is "presentation" or "frame") AddTranscript(kind, data);
@@ -779,6 +839,16 @@ internal sealed class Cli
             Console.WriteLine(Format(kind, data)); return;
         }
         RenderCurrent();
+        MarkDecisionInterfaceVisible(kind);
+    }
+
+    private void MarkDecisionInterfaceVisible(string kind)
+    {
+        if (session is not { } current || !current.PlayerControlled || Observer != current.Viewer) return;
+        var status = HostValues.Text(current.Intent, "status");
+        if (status is not ("awaiting_input" or "idle")) return;
+        if (jsonLines && kind is not ("options" or "intent")) return;
+        current.BeginDecisionInterface(current.Viewer, PerformanceControllerKind(current) == "llm" ? "request" : "reading");
     }
 
     private ReplayFrame DisplayReplayFrame(ReplayFrame frame)
@@ -789,7 +859,7 @@ internal sealed class Cli
             ["options"] = VisibleOptions(), ["selected"] = replayChoiceActor == Observer ? replaySelected : "",
             ["preview"] = CurrentPreview(mapView != "subjective")
         };
-        foreach (var key in new[] { "interaction_contract", "interaction_id", "state_version", "source_state_version", "record_index", "result_record_indices", "input_record_index", "controller", "controller_kind", "performance", "input_mode", "selection_recorded", "result_kind" })
+        foreach (var key in new[] { "interaction_contract", "interaction_id", "state_version", "source_state_version", "record_index", "result_record_indices", "input_record_index", "controller", "controller_kind", "performance", "input_mode", "selection_recorded", "result_kind", "option_time_basis", "selection_game_time", "selection_state_version", "result_game_time", "result_state_version", "action_state", "provenance", "cut", "lifecycle", "pending_actions", "measured_until_ticks" })
             if (frame.Data.TryGetValue(key, out var value)) values[key] = value;
         var outcome = HostValues.Text(HostValues.Map(frame.Data, "presentation"), "outcome");
         if (outcome.Length > 0) values["outcome"] = outcome;
@@ -812,34 +882,66 @@ internal sealed class Cli
         return mapView != "subjective" || frame.Actor.Length == 0 || frame.Actor == Observer;
     }
 
+    private void AppendTranscript(string id, object? time, string speaker, string text, string kind)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        if (id.Length > 0 && terminalEntries.Any(entry => entry.Id == id)) return;
+        terminalEntries.Add(new TerminalEntry
+        {
+            Id = id, Clock = time is null ? "" : TerminalProjection.GameClock(time, true),
+            Speaker = speaker, Title = "", Text = text, Kind = kind
+        });
+        if (terminalEntries.Count > TranscriptCapacity) terminalEntries.RemoveAt(0);
+    }
+
     private void AddTranscript(string kind, object data)
     {
-        var title = "";
-        var text = "";
+        IReadOnlyDictionary<string, object?> presentation = HostValues.Empty;
+        object? time = null;
+        var actor = "";
+        var id = "";
         if (data is ReplayFrame recorded)
         {
             if (recorded.Kind is not ("presentation" or "visible" or "dialogue" or "investigate" or "rejected" or "move" or "confirm")) return;
             if (!PresentationVisibleToObserver(recorded)) return;
-            title = recorded.Actor;
-            if (recorded.Kind == "confirm" && HostValues.Map(recorded.Data, "presentation") is { Count: > 0 } shown)
+            presentation = HostValues.Map(recorded.Data, "presentation");
+            actor = recorded.Actor;
+            time = recorded.Data.GetValueOrDefault("result_game_time") ?? recorded.Data.GetValueOrDefault("game_time") ?? replayGameTime;
+            id = HostValues.Text(presentation, "action_event", HostValues.Text(recorded.Data, "interaction_id",
+                "replay-" + recorded.Sequence.ToString(CultureInfo.InvariantCulture)));
+            if (presentation.Count == 0)
             {
-                title = HostValues.Text(shown, "speaker_name", recorded.Actor);
-                text = PresentationBody(shown);
+                AppendTranscript(id, time, actor == Observer ? "本人" : "同伴", recorded.Text, recorded.Kind);
+                return;
             }
-            else text = recorded.Text;
         }
-        if (kind == "presentation" && data is IReadOnlyDictionary<string, object?> presentation)
+        else if (kind == "presentation" && data is IReadOnlyDictionary<string, object?> shown)
         {
-            if (presentation.GetValueOrDefault("visible") is false) return;
-            text = PresentationBody(presentation);
-            var outcome = HostValues.Text(presentation, "outcome");
-            if (text.Length == 0 && outcome.Length > 0 && outcome != "applied") text = outcome;
-            title = HostValues.Text(presentation, "speaker_name");
+            presentation = shown;
+            actor = HostValues.Text(shown, "completed_actor", HostValues.Text(shown, "actor"));
+            time = shown.GetValueOrDefault("game_time") ?? session?.TextStatus(Observer).GetValueOrDefault("game_time");
+            id = HostValues.Text(shown, "action_event");
         }
-        if (string.IsNullOrWhiteSpace(text)) return;
-        if (terminalEntries.LastOrDefault() is { } last && last.Title == title && last.Text == text) return;
-        terminalEntries.Add(new TerminalEntry { Title = title, Text = text, Kind = kind });
-        if (terminalEntries.Count > TranscriptCapacity) terminalEntries.RemoveAt(0);
+        if (presentation.Count == 0 || presentation.GetValueOrDefault("visible") is false) return;
+        var speaker = HostValues.Text(presentation, "speaker_name");
+        if (speaker.Length == 0) speaker = actor == Observer ? "本人" : "同伴";
+        var lines = HostValues.List(presentation, "lines");
+        var body = string.Join("\n", lines.Select(line => line is string text ? text :
+            line is IReadOnlyDictionary<string, object?> map ? HostValues.Text(map, "text") : "")).Trim();
+        var surface = HostValues.Text(presentation, "surface").Trim();
+        if (surface.Length > 0 && surface != body) AppendTranscript(id + "-surface", time, speaker, surface, kind);
+        for (var index = 0; index < lines.Count; index++)
+        {
+            var line = lines[index];
+            var text = line is string literal ? literal : line is IReadOnlyDictionary<string, object?> map ? HostValues.Text(map, "text") : "";
+            var name = line is IReadOnlyDictionary<string, object?> named ? HostValues.Text(named, "speaker_name", speaker) : speaker;
+            AppendTranscript(id + "-line-" + index.ToString(CultureInfo.InvariantCulture), time, name, text, kind);
+        }
+        if (surface.Length == 0 && body.Length == 0)
+        {
+            var outcome = HostValues.Text(presentation, "outcome");
+            if (outcome.Length > 0 && outcome != "applied") AppendTranscript(id, time, speaker, outcome, kind);
+        }
     }
 
     private void RenderCurrent()
@@ -858,9 +960,10 @@ internal sealed class Cli
             ? interactionPhase.Length > 0 ? "帧内：" + interactionPhase : ""
             : interactionPhase.Length > 0 ? interactionPhase : StateLabel(HostValues.Text(session.Intent, "status"));
         var model = TerminalProjection.FromSnapshot(snapshot, status, choices, terminalEntries.ToArray(), mode,
-            phase, "", session is null ? replayChoiceActor == Observer ? replaySelected : "" : focus?.Actor == Observer ? focus.Id : "", preview, mapView) with
+            phase, "actions next/prev/all · page next/prev · map · perf · quit", session is null ? replayChoiceActor == Observer ? replaySelected : "" : focus?.Actor == Observer ? focus.Id : "", preview, mapView) with
             { Zoom = terminalZoom, ShowActors = showActors, ShowScores = showScores,
               Performance = performance,
+              ActionPageIndex = actionPage, ExpandActions = expandActions, OptionTimeBasis = optionTimeBasis,
               Paginate = tui, PageIndex = terminalPage };
         if (orderedViewer != model.Actor) { roomOrder.Clear(); orderedViewer = model.Actor; }
         foreach (var room in model.Rooms) if (!roomOrder.ContainsKey(room.Id)) roomOrder.Add(room.Id, roomOrder.Count);
@@ -874,6 +977,7 @@ internal sealed class Cli
             Console.Clear();
         }
         terminalPage = TerminalView.GetPageInfo(model, width, height).Index;
+        actionPage = TerminalView.GetActionPageInfo(model).Index;
         if (exportFramePath is { } path)
         {
             exportFramePath = null;
@@ -941,16 +1045,18 @@ internal sealed class Cli
         static string Seconds(object? value) => value is null ? "—" : Number(Convert.ToDouble(value, CultureInfo.InvariantCulture) / 1000d);
         var controllerKind = NormalizeControllerKind(HostValues.Text(metrics, "controller_kind"));
         var text = new StringBuilder();
-        text.AppendLine($"引擎计算 {Seconds(metrics.GetValueOrDefault("engine_ms"))} 秒 · 推进 {Number(metrics.GetValueOrDefault("advanced_game_minutes"))} 游戏分钟 · 每游戏小时 {Number(metrics.GetValueOrDefault("seconds_per_game_hour"))} 计算秒");
-        text.AppendLine($"引擎正式决策 {Number(metrics.GetValueOrDefault("engine_decisions"))} 次 · 每游戏小时 {Number(metrics.GetValueOrDefault("engine_decisions_per_game_hour"))} 次");
-        text.AppendLine($"控制器 {ControllerLabel(controllerKind)} · 外部正式选择 {Number(metrics.GetValueOrDefault("controller_decisions"))} 次 · 每游戏小时 {Number(metrics.GetValueOrDefault("controller_decisions_per_game_hour"))} 次");
-        text.AppendLine($"会话墙钟 {Seconds(metrics.GetValueOrDefault("elapsed_wall_ms"))} 秒 · 每游戏小时 {Number(metrics.GetValueOrDefault("elapsed_wall_seconds_per_game_hour"))} 秒");
-        if (controllerKind is "human" or "llm")
-            text.AppendLine($"{ControllerLabel(controllerKind)}实际耗时 {Seconds(metrics.GetValueOrDefault("controller_wall_ms"))} 秒 · 每游戏小时 {Number(metrics.GetValueOrDefault("controller_seconds_per_game_hour"))} 秒（含阅读思考、模型调用、输入等待和执行）");
-        foreach (var row in HostValues.List(metrics, "decisions").OfType<IReadOnlyDictionary<string, object?>>())
-            text.AppendLine($"主体 {HostValues.Text(row, "actor", "—")} · {ControllerLabel(NormalizeControllerKind(HostValues.Text(row, "controller_kind")))} · 正式决策 {Number(row.GetValueOrDefault("decisions"))} 次 · 每游戏小时 {Number(row.GetValueOrDefault("decisions_per_game_hour"))} 次");
+        text.AppendLine($"推进 {Number(metrics.GetValueOrDefault("game_hours_per_real_hour"))} 游戏小时/现实小时 · 正式决策 {Number(metrics.GetValueOrDefault("decisions_per_real_hour"))} 次/现实小时");
+        text.AppendLine($"{ControllerLabel(controllerKind)}接口 {Number(metrics.GetValueOrDefault("interface_hours_per_real_hour"))} 消耗小时/现实小时 · 累计 {Seconds(metrics.GetValueOrDefault("interface_total_ms"))} 秒");
+        text.AppendLine($"采样 {Seconds(metrics.GetValueOrDefault("elapsed_wall_ms"))} 现实秒 · 推进 {Number(metrics.GetValueOrDefault("advanced_game_minutes"))} 游戏分钟 · 已提交 {Number(metrics.GetValueOrDefault("total_decisions"))} 次");
+        foreach (var source in HostValues.List(metrics, "decision_sources").OfType<IReadOnlyDictionary<string, object?>>())
+            text.AppendLine($"{HostValues.Text(source, "controller_label")} · {Number(source.GetValueOrDefault("decisions"))} 次 · {Number(source.GetValueOrDefault("decisions_per_real_hour"))} 次/现实小时 · {Number(source.GetValueOrDefault("interface_hours_per_real_hour"))} 消耗小时/现实小时");
+        var lifecycle = HostValues.Map(metrics, "lifecycle");
+        if (lifecycle.Count > 0)
+            text.AppendLine($"已选择 {Number(lifecycle.GetValueOrDefault("selected"))} · 已排程 {Number(lifecycle.GetValueOrDefault("scheduled"))} · 已完成 {Number(lifecycle.GetValueOrDefault("completed"))} · 待执行 {Number(lifecycle.GetValueOrDefault("pending"))} · 未进入存档 {Number(lifecycle.GetValueOrDefault("selections_not_in_save"))}");
+        foreach (var category in HostValues.List(metrics, "categories").OfType<IReadOnlyDictionary<string, object?>>())
+            text.AppendLine($"{HostValues.Text(category, "label")} · 排他 {Seconds(category.GetValueOrDefault("exclusive_total_ms"))} 秒");
         foreach (var row in HostValues.List(metrics, "operations").OfType<IReadOnlyDictionary<string, object?>>())
-            text.AppendLine($"{HostValues.Text(row, "category_label")}/{HostValues.Text(row, "label")} {HostValues.Text(row, "actor")} · {Number(row.GetValueOrDefault("calls"))} 次 · 排他 {Number(row.GetValueOrDefault("self_ms"))} ms · 均值 {Number(row.GetValueOrDefault("mean_ms"))} ms · P95上界 {Number(row.GetValueOrDefault("p95_upper_ms"))} ms · 峰值 {Number(row.GetValueOrDefault("max_ms"))} ms");
+            text.AppendLine($"{HostValues.Text(row, "category_label")}/{HostValues.Text(row, "label")} · {Number(row.GetValueOrDefault("calls"))} 次 · 排他 {Number(row.GetValueOrDefault("exclusive_total_ms"))} ms · 含子项 {Number(row.GetValueOrDefault("inclusive_total_ms"))} ms · 排他均值 {Number(row.GetValueOrDefault("exclusive_mean_ms"))} ms · 含子项均值 {Number(row.GetValueOrDefault("inclusive_mean_ms"))} ms · P95上界 {Number(row.GetValueOrDefault("inclusive_p95_upper_ms"))} ms · 检阅 {HostValues.Text(row, "viewer", "—")} · 范围 {HostValues.Text(row, "projection_scope", "—")}");
         return text.ToString().TrimEnd();
     }
 
@@ -979,11 +1085,13 @@ DV Core CLI
   --dev --audit --restore FILE --save FILE --trace FILE
   --scores | --no-scores
   --performance NEW_PREFIX
+  --source-revision RECORDED_REVISION
   --replay FILE --interactive --speed 1|2|4|8
 
 status  options  views  view ID  map subjective|objective|both
 focus 01|ID|JSON  confirm  cancel  act 01|ID|JSON  next
 page N|next|prev  capture NEW.svg  zoom fit|in|out
+actions next|prev|all|compact  decision-phase request|response|reading|confirmation
 save NEW.dvsave  trace NEW.dvdag  perf [NEW_PREFIX]  scores on|off|auto
 play 1|2|4|8  pause  step  restart  view follow
 inspect ID  tp PLACE  time MINUTES  help  quit
@@ -992,8 +1100,9 @@ controller: player（默认）与 human 均为人类；llm 为外部大模型；
 --jsonl 仅指定输入输出格式，不会自动把人类会话记为 LLM。
 --restore 默认保留存档的控制器统计分类；显式 --controller 仅调整诊断分类，不改变世界控制权。
 人类和 LLM 默认隐藏 AI 评分；--scores 或 scores on 可显式显示。
-perf 显示引擎计算耗时、正式决策数/游戏小时、控制者选择数及会话墙钟耗时。
-墙钟从打开会话完成开始，到关闭会话为止，包含阅读思考、模型调用、输入等待和执行。
+perf 显示游戏小时/现实小时、正式决策次/现实小时、接口消耗小时/现实小时及分项报告。
+现实会话从打开完成计至关闭请求；人工/LLM接口单独累计请求交付至正式接受的区间。
+decision-phase 为外部适配器标记实际请求、响应、阅读或确认阶段，不推进游戏。
 --replay 的 perf 只读当前已播放帧记录的统计；缺失字段显示 —，不新增测量或导出报告。
 """;
 }

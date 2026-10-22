@@ -105,20 +105,27 @@ public partial class GameEngine
     {
         await Task.Yield();
         var backupWritten = false;
+        DvSession? candidate = null;
+        string? candidateDirectory = null;
+        var installed = false;
         try
         {
             await previous;
             var current = RequireBookmarkBoundary();
+            var recordingDirectory = NewSessionEvidenceDirectory();
+            candidateDirectory = recordingDirectory;
             var restored = await Task.Run(() =>
             {
                 // Keep the exact source bytes stable while RestoreFile and the
                 // sidecar hash validation read them (including on Windows).
                 using var save = OpenBookmarkForRead(path);
-                var candidate = DvSession.RestoreFile(path);
-                var snapshot = candidate.Snapshot(candidate.Viewer);
+                var restoredSession = DvSession.RestoreFile(path);
+                candidate = restoredSession;
+                StartSessionRecording(restoredSession, recordingDirectory);
+                var snapshot = restoredSession.Snapshot(restoredSession.Viewer);
                 RequireRestorableSnapshot(snapshot);
-                var journal = ReadBoundCasebook(path, candidate.Viewer, save);
-                return (Session: candidate, Snapshot: snapshot, Casebook: journal.Json, Warning: journal.Warning);
+                var journal = ReadBoundCasebook(path, restoredSession.Viewer, save);
+                return (Session: restoredSession, Snapshot: snapshot, Casebook: journal.Json, Warning: journal.Warning);
             });
             if (!ReferenceEquals(current, RequireBookmarkBoundary()))
                 throw new InvalidOperationException("当前会话已改变，请重新打开书签。");
@@ -130,8 +137,17 @@ public partial class GameEngine
             backupWritten = true;
             if (!ReferenceEquals(current, RequireBookmarkBoundary()))
                 throw new InvalidOperationException("当前会话已改变；已保留切换前备份。");
-            InstallRestored((restored.Session, restored.Snapshot));
+            var previousDirectory = evidenceDirectory ?? NewSessionEvidenceDirectory();
+            var sealError = await Task.Run(() => SealSessionEvidence(current, previousDirectory, "bookmark-replaced", backupPath));
+            InstallRestored((restored.Session, restored.Snapshot), snapshotData, recordingDirectory);
+            installed = true;
             casebookJson = restored.Casebook;
+            var warning = restored.Warning;
+            if (sealError.Length > 0)
+            {
+                hostErrors.Add(new { phase = "bookmark-previous-performance", directory = previousDirectory, error = sealError });
+                warning += (warning.Length == 0 ? "" : "\n") + "切换前会话的统计封存未完整完成：" + sealError + "\n记录位置：" + previousDirectory;
+            }
             Stamp("bookmark_loaded", interaction, path);
             if (!closing) EmitSignal(SignalName.EventsReady, new GArray
             {
@@ -139,11 +155,27 @@ public partial class GameEngine
                 {
                     ["kind"] = "bookmark_loaded", ["path"] = path, ["backup_path"] = backupPath,
                     ["snapshot"] = snapshotData, ["casebook"] = journalData,
-                    ["casebook_warning"] = restored.Warning
+                    ["casebook_warning"] = warning
                 }
             });
+            if (!closing) BeginDeliveredDecision();
         }
-        catch (Exception error) { EmitBookmarkError("load", path, error, backupWritten ? backupPath : ""); }
+        catch (Exception error)
+        {
+            var reportedError = error;
+            if (candidate is not null && !installed && candidateDirectory is not null)
+            {
+                var abandoned = candidate;
+                var abandonedDirectory = candidateDirectory;
+                var sealError = await Task.Run(() => SealSessionEvidence(abandoned, abandonedDirectory, "bookmark-not-installed"));
+                if (sealError.Length > 0)
+                {
+                    hostErrors.Add(new { phase = "bookmark-candidate-performance", directory = abandonedDirectory, error = sealError });
+                    reportedError = new AggregateException(error, new IOException(sealError));
+                }
+            }
+            EmitBookmarkError("load", path, reportedError, backupWritten ? backupPath : "");
+        }
         finally { maintenance = false; StartPump(); }
     }
 

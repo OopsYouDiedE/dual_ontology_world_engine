@@ -10,25 +10,36 @@ public static class HostValues
     public static readonly IReadOnlyDictionary<string, object?> Empty =
         new ReadOnlyDictionary<string, object?>(new Dictionary<string, object?>());
 
-    public static object? FromDv(object value)
+    public static object? FromDv(object value) => FromDv(value, new Dictionary<object, object?>(ReferenceEqualityComparer.Instance));
+
+    private static object? FromDv(object value, Dictionary<object, object?> converted)
     {
         if (value is Rational exact)
             return Freeze(new Dictionary<string, object?> { ["$dv_rational"] = exact.ToString() });
         if (!R.TryItems(value, out var items)) return value;
+        if (converted.TryGetValue(value, out var shared)) return shared;
         if (items.Count > 0 && items.All(item => R.TryItems(item, out var pair) && pair.Count == 2 && pair[0] is string))
-            return Record(value);
-        return Array.AsReadOnly(items.Select(FromDv).ToArray());
+            return Record(value, converted);
+        var list = Array.AsReadOnly(items.Select(item => FromDv(item, converted)).ToArray());
+        converted[value] = list;
+        return list;
     }
 
-    public static IReadOnlyDictionary<string, object?> Record(object value)
+    public static IReadOnlyDictionary<string, object?> Record(object value) =>
+        Record(value, new Dictionary<object, object?>(ReferenceEqualityComparer.Instance));
+
+    private static IReadOnlyDictionary<string, object?> Record(object value, Dictionary<object, object?> converted)
     {
+        if (converted.TryGetValue(value, out var shared) && shared is IReadOnlyDictionary<string, object?> map) return map;
         var result = new Dictionary<string, object?>(StringComparer.Ordinal);
         foreach (var item in R.Items(value))
         {
             var pair = R.Items(item);
-            result[(string)pair[0]] = FromDv(pair[1]);
+            result[(string)pair[0]] = FromDv(pair[1], converted);
         }
-        return Freeze(result);
+        var frozen = Freeze(result);
+        converted[value] = frozen;
+        return frozen;
     }
 
     public static IReadOnlyDictionary<string, object?> Freeze(Dictionary<string, object?> values) =>

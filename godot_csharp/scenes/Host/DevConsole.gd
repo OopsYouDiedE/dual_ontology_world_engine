@@ -191,7 +191,7 @@ func _build_performance(page: VBoxContainer) -> void:
 	performance.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	performance.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	performance.text = "等待本页的实际帧与阶段记录。"
-	performance.tooltip_text = "摘要每 0.25 秒刷新。人类 / 大模型用时为会话打开完成至关闭的实际用时，包含阅读、思考、模型调用、输入、执行和引擎处理；未推进游戏时间时不计算每小时比率。"
+	performance.tooltip_text = "摘要每 0.25 秒刷新。推进、决策频率和接口耗时率共用累计现实小时分母。人工 / LLM 接口耗时记录实际决策请求交付至输入被接受的区间；未记录区间保持缺失。现实采样窗口从打开 / 恢复完成到关闭请求，短窗口比率是样本累计值。"
 	page.add_child(performance)
 	graph = FrameGraph.new()
 	graph.history = _history
@@ -200,7 +200,7 @@ func _build_performance(page: VBoxContainer) -> void:
 	page.add_child(graph)
 	var explanation := Label.new()
 	explanation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	explanation.text = "固定 120 帧环：帧耗时、FPS、当帧完成的 Prepare / Complete / 寻路耗时。离开本页停止采样；下表显示最近 24 次已采样寻路。"
+	explanation.text = "固定 120 帧环：帧耗时和当帧完成的 Prepare / Complete / 寻路 / 现场执行耗时，单位均为毫秒。离开本页停止帧采样；会话累计统计继续记录。下表显示最近 24 次已采样寻路。"
 	page.add_child(explanation)
 	navigation_table = Tree.new()
 	navigation_table.columns = 4
@@ -308,7 +308,6 @@ func _process(_delta: float) -> void:
 		var sample := _consume_timings()
 		sample.frame = Engine.get_process_frames()
 		sample.frame_ms = seconds * 1000.0
-		sample.fps = float(Engine.get_frames_per_second())
 		_history.push(sample)
 		_show_performance(sample)
 	if tabs.current_tab == REPLAY_TAB: _advance_replay(seconds)
@@ -433,27 +432,27 @@ func _consume_timings() -> Dictionary:
 	return sample
 
 func _show_performance(latest: Dictionary) -> void:
-	var sums := {"frame_ms": 0.0, "fps": 0.0, "prepare_ms": 0.0, "complete_ms": 0.0, "navigation_ms": 0.0, "physical_ms": 0.0, "prepare_count": 0.0, "complete_count": 0.0, "navigation_count": 0.0, "physical_count": 0.0}
+	var sums := {"frame_ms": 0.0, "prepare_ms": 0.0, "complete_ms": 0.0, "navigation_ms": 0.0, "physical_ms": 0.0, "prepare_count": 0.0, "complete_count": 0.0, "navigation_count": 0.0, "physical_count": 0.0}
 	var peak := 0.0
 	for index in range(_history.count):
 		var sample: Dictionary = _history.at(index)
 		for key: String in sums: sums[key] += float(sample[key])
 		peak = maxf(peak, float(sample.frame_ms))
-	performance.text = "%d / 120 帧 · FPS %.1f · 帧均值 %.2f ms · 峰值 %.2f ms\n阶段均值：Prepare %s · Complete %s · 寻路 %s · 现场执行 %s" % [_history.count, float(sums.fps) / _history.count, float(sums.frame_ms) / _history.count, peak, _phase_average(sums, "prepare"), _phase_average(sums, "complete"), _phase_average(sums, "navigation"), _phase_average(sums, "physical")]
+	var frame_summary := "%d / 120 帧 · 帧均值 %.2f ms · 峰值 %.2f ms\n阶段均值：Prepare %s · Complete %s · 寻路 %s · 现场执行 %s" % [_history.count, float(sums.frame_ms) / maxi(_history.count, 1), peak, _phase_average(sums, "prepare"), _phase_average(sums, "complete"), _phase_average(sums, "navigation"), _phase_average(sums, "physical")]
 	var now := Time.get_ticks_usec()
 	if now - _engine_performance_at_us >= 250000 and engine.has_method("PerformanceSummary"):
 		_engine_performance = engine.PerformanceSummary()
 		_engine_performance_at_us = now
 	if _engine_performance.is_empty():
-		performance.text += "\n会话统计：—"
+		performance.text = "会话统计：—"
 	else:
-		performance.text += "\n引擎 %s 秒/游戏小时 · 引擎决策 %s 次/游戏小时" % [_performance_rate("seconds_per_game_hour"), _performance_rate("engine_decisions_per_game_hour")]
-		var totals := "累计引擎 %s 秒 · 推进 %s 游戏分钟" % [_performance_number("engine_ms", "%.3f", 1000.0), _performance_number("advanced_game_minutes", "%.1f")]
 		var controller := str(_engine_performance.get("controller_kind", ""))
-		if controller in ["human", "llm"]:
-			totals = "%s %s 秒/游戏小时 · %s" % ["人类用时" if controller == "human" else "大模型用时", _performance_rate("controller_seconds_per_game_hour"), totals]
-		performance.text += "\n" + totals
-		performance.text += "\n投影 %s 秒 · 开局/恢复 %s 秒 · 保存/归档 %s 秒" % [_performance_number("projection_ms", "%.3f", 1000.0), _performance_number("startup_ms", "%.3f", 1000.0), _performance_number("persistence_ms", "%.3f", 1000.0)]
+		var controller_label := str(_engine_performance.get("controller_label", ""))
+		if controller_label.is_empty():
+			controller_label = "人工" if controller == "human" else "LLM" if controller == "llm" else "引擎"
+		performance.text = "推进 %s 游戏小时/现实小时 · 决策 %s 次/现实小时\n%s接口 %s 小时/现实小时 · 采样 %s 现实秒 / 推进 %s 游戏分钟" % [_performance_rate("game_hours_per_real_hour"), _performance_rate("decisions_per_real_hour"), controller_label, _performance_rate("interface_hours_per_real_hour"), _performance_number("elapsed_wall_ms", "%.1f", 1000.0), _performance_number("advanced_game_minutes", "%.1f")]
+		performance.text += "\n累计拆解：引擎 %s 秒 · 投影 %s 秒 · 开局/恢复 %s 秒 · 保存/归档 %s 秒" % [_performance_number("engine_ms", "%.3f", 1000.0), _performance_number("projection_ms", "%.3f", 1000.0), _performance_number("startup_ms", "%.3f", 1000.0), _performance_number("persistence_ms", "%.3f", 1000.0)]
+	performance.text += "\n\n" + frame_summary
 	graph.queue_redraw()
 	if latest.navigation_queries.is_empty(): return
 	navigation_table.clear()
@@ -480,8 +479,8 @@ func _performance_number(key: String, pattern: String = "%.3f", divisor: float =
 	return pattern % number if is_finite(number) and number >= 0.0 else "—"
 
 func _performance_rate(key: String) -> String:
-	var advanced: Variant = _engine_performance.get("advanced_game_minutes")
-	if advanced == null or not is_finite(float(advanced)) or float(advanced) <= 0.0: return "—"
+	var elapsed: Variant = _engine_performance.get("elapsed_wall_ms")
+	if elapsed == null or not is_finite(float(elapsed)) or float(elapsed) <= 0.0: return "—"
 	return _performance_number(key)
 
 func _phase_average(sums: Dictionary, family: String) -> String:
@@ -640,14 +639,13 @@ class FrameGraph extends Control:
 			{"key": "frame_ms", "name": "帧", "color": Color(0.25, 0.78, 0.56)},
 			{"key": "prepare_ms", "name": "Prepare", "color": Color(0.95, 0.64, 0.25)},
 			{"key": "complete_ms", "name": "Complete", "color": Color(0.82, 0.42, 0.50)},
-			{"key": "navigation_ms", "name": "寻路", "color": Color(0.72, 0.56, 0.92)}
+			{"key": "navigation_ms", "name": "寻路", "color": Color(0.72, 0.56, 0.92)},
+			{"key": "physical_ms", "name": "现场执行", "color": Color(0.35, 0.65, 0.95)}
 		]
 		var ceiling := 33.4
-		var fps_ceiling := 60.0
 		for index in range(history.count):
 			var sample: Dictionary = history.at(index)
 			for metric: Dictionary in series: ceiling = maxf(ceiling, float(sample[metric.key]))
-			fps_ceiling = maxf(fps_ceiling, float(sample.fps))
 		var plot := Rect2(Vector2(12, 42), size - Vector2(24, 62))
 		var guide := plot.end.y - 16.7 / ceiling * plot.size.y
 		draw_line(Vector2(plot.position.x, guide), Vector2(plot.end.x, guide), Color(0.5, 0.5, 0.5, 0.5))
@@ -661,10 +659,4 @@ class FrameGraph extends Control:
 				var value := float(history.at(index)[metric.key])
 				points.append(Vector2(plot.position.x + plot.size.x * index / 119.0, plot.end.y - value / ceiling * plot.size.y))
 			if points.size() > 1: draw_polyline(points, metric.color, 2.0)
-		var fps_points := PackedVector2Array()
-		for index in range(history.count):
-			fps_points.append(Vector2(plot.position.x + plot.size.x * index / 119.0, plot.end.y - float(history.at(index).fps) / fps_ceiling * plot.size.y))
-		var fps_color := Color(0.35, 0.65, 0.95)
-		if fps_points.size() > 1: draw_polyline(fps_points, fps_color, 1.5)
-		draw_string(font, Vector2(legend_x, 20), "FPS", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, fps_color)
-		draw_string(font, Vector2(12, size.y - 4), "左轴 %.1f ms · 参考线 16.7 ms / 右轴 %.0f FPS" % [ceiling, fps_ceiling], HORIZONTAL_ALIGNMENT_LEFT, -1, 12)
+		draw_string(font, Vector2(12, size.y - 4), "纵轴 %.1f ms · 参考线 16.7 ms" % ceiling, HORIZONTAL_ALIGNMENT_LEFT, -1, 12)
