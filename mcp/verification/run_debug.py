@@ -13,6 +13,8 @@ import sys
 import time
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "build"))
 from dv_toolchain import LANGUAGE, ROOT, PROJECT, BUILD, VERIFICATION, environment, sources
+from compiled_program import copy_verified, capture as capture_program, compiler_inputs, compiler_fingerprint
+from matrix_lifecycle import case_guard, FLAGS
 from raw_dag import inspect_journal
 from binary_evidence import RecordWriter, iter_packets, records
 from debug_checkpoints import validate_bundle, export_available, sha_file
@@ -370,7 +372,7 @@ def export(out, destination=None, scope='正式逻辑会话已输出到stdout的
     return (complete, summary) if with_summary else complete
 
 
-def main():
+def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--entry', type=Path, default=LANGUAGE / 'checks/65-debug-runner.dv')
     parser.add_argument('--out', type=Path, required=True)
@@ -380,10 +382,12 @@ def main():
     parser.add_argument('--gc-mode', choices=('server', 'workstation'), default=None)
     parser.add_argument('--gc-heaps', type=int, default=None)
     parser.add_argument('--profile', action='store_true', help='Build an instrumented DV session and report per-function and work-type time')
+    parser.add_argument('--reuse-program', type=Path, help='Reuse a previously fingerprinted Release program with identical complete source inputs')
     parser.add_argument('--evidence-from', type=Path, help='Only project an existing binary packet stream into a new --out directory; never build or execute a session')
     parser.add_argument('--causal-timeout', type=int, default=300,
                         help='Separate time limit for read-only 70-checks after a complete sealed session')
     parser.add_argument('--opt-causal-index', choices=('on', 'off'), default='on', help='Read-only checker event/ancestor index; does not affect session decisions')
+    parser.add_argument('--opt-evidence-index', choices=('on', 'off'), default='on', help='Reuse decoded immutable journal fields during read-only evidence validation')
     parser.add_argument('--detective-profile', default='Standard_Detective', choices=('Standard', 'Foolish', 'Standard_Detective', 'Foolish_Detective', 'Shura_Detective'))
     parser.add_argument('--opening-seed', type=int, default=1)
     parser.add_argument('--homecoming-negotiation', action='store_true', help='Enable declared homecoming negotiation candidates; does not seed votes or outcomes')
@@ -392,7 +396,7 @@ def main():
     parser.add_argument('--detective-zone', default='zone_yi', choices=('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding', 'none'))
     parser.add_argument('--trace-compression', choices=('none',), default='none', help='Deprecated compatibility argument; JSON recordings are prohibited')
     parser.add_argument('--raw-format', choices=('dag',), default='dag', help='Lossless typed binary DAG; JSON recording is forbidden')
-    optimization_names = ('readview', 'plancache', 'prune', 'lazytext', 'recordcache', 'predicate', 'predicatecache', 'declcache', 'gc', 'appendshare', 'cow', 'mask', 'lazyinternal', 'dirty', 'planreuse', 'blackbox')
+    optimization_names = FLAGS
     for name in optimization_names:
         parser.add_argument('--opt-' + name, choices=('on', 'off'), default='on')
     parser.add_argument('--prune-top-k', type=int, default=3)
@@ -472,15 +476,16 @@ def main():
     checker_modules = sources([LANGUAGE / 'checks/70-checks.dv'])
     inputs = [path for path, _ in modules]
     inputs += [path for path, _ in checker_modules]
-    inputs += [LANGUAGE / 'compiler/Runtime.cs', LANGUAGE / 'compiler/10-compiler.dv', BUILD / 'build_session.py', BUILD / 'dv_toolchain.py']
-    inputs += [VERIFICATION / p for p in ('run_debug.py', 'raw_dag.py', 'binary_evidence.py', 'debug_checkpoints.py', 'DebugCheckpointResume.cs', 'CausalCheckBridge.cs')]
+    inputs += compiler_inputs()
+    inputs += [BUILD / 'build_session.py', BUILD / 'dv_toolchain.py']
+    inputs += [VERIFICATION / p for p in ('run_debug.py', 'raw_dag.py', 'binary_evidence.py', 'debug_checkpoints.py', 'DebugCheckpointResume.cs', 'CausalCheckBridge.cs', 'compiled_program.py', 'matrix_lifecycle.py')]
     if args.profile:
         inputs += [VERIFICATION / 'DvProfiler.cs']
     hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     normalized = {str(path): hashlib.sha256(text.encode('utf-8')).hexdigest() for path, text in modules}
     checker_normalized = {str(path): hashlib.sha256(text.encode('utf-8')).hexdigest() for path, text in checker_modules}
     (out / 'source-hashes.json').write_text(json.dumps(hashes, indent=2), encoding='utf-8')
-    provenance = {'format': 'dv-debug-provenance-v1', 'source_hashes': hashes, 'source_manifest_sha256': sha_file(out / 'source-hashes.json'), 'run_config': run_config, 'instrumented': args.profile, 'verification_config': {'opt_causal_index': args.opt_causal_index == 'on', 'timeout_seconds': args.causal_timeout}}
+    provenance = {'format': 'dv-debug-provenance-v1', 'source_hashes': hashes, 'source_manifest_sha256': sha_file(out / 'source-hashes.json'), 'run_config': run_config, 'instrumented': args.profile, 'runtime_config': {'opt_runtimespeed': args.opt_runtimespeed == 'on'}, 'verification_config': {'opt_causal_index': args.opt_causal_index == 'on', 'timeout_seconds': args.causal_timeout, 'opt_evidence_index': args.opt_evidence_index == 'on'}}
     provenance_path = out / 'run-provenance.dv.json'
     provenance_path.write_text(json.dumps(dv_record(provenance), ensure_ascii=True), encoding='utf-8')
     restore_input_hashes = {}
@@ -500,6 +505,17 @@ def main():
     (build / 'Program.csproj').write_text(project, encoding='utf-8')
     build_start = time.monotonic()
     build_stages = []
+    if args.reuse_program:
+        if resume_bundle:
+            raise ValueError('A restored session requires its own generated entry point')
+        reuse = args.reuse_program.resolve()
+        copy_verified(reuse, build, hashes, args.profile, normalized, compiler_fingerprint())
+        build_stages.append({'stage': 'verified-program-reuse', 'completed': True,
+                             'elapsed_seconds': time.monotonic() - build_start, 'source': str(reuse)})
+        commands = []
+        (out / 'build-timing.json').write_text(json.dumps({
+            'elapsed_seconds': time.monotonic() - build_start, 'stages': build_stages,
+            'scope': 'engineering program reuse only; excludes session execution'}, indent=2), encoding='utf-8')
     for index, cmd in enumerate(commands):
         stage_start = time.monotonic()
         stage_completed = False
@@ -516,12 +532,20 @@ def main():
     build_consistent = (
         all(Path(p).is_file() and hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in hashes.items())
         and {entry['path']: entry['sha256'] for entry in manifest['modules']} == normalized
+        and manifest.get('profile_instrumented') is args.profile
+        and manifest.get('compiler') == compiler_fingerprint()
+        and (build / 'Program.csproj').read_text(encoding='utf-8') == project
         and hashlib.sha256((build / 'Runtime.cs').read_bytes()).hexdigest() == hashes[str(LANGUAGE / 'compiler/Runtime.cs')]
         and all(Path(p).is_file() and sha_file(p) == h for p, h in restore_input_hashes.items()))
     if not build_consistent:
         write_result(out, {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': False, 'source_unchanged': False, 'trace_written': False, 'error': 'Sources changed during build or generated inputs differ; session not started.'})
         return 1
+    compiled = capture_program(build, hashes, args.profile, normalized, compiler_fingerprint(),
+                               entry_kind='checkpoint-resume' if resume_bundle else 'fresh-debug',
+                               runtime_config={'opt_runtimespeed': args.opt_runtimespeed == 'on'})
+    (out / 'compiled-program.json').write_text(json.dumps(compiled, indent=2), encoding='utf-8')
     execution_env = env.copy()
+    execution_env['DV_OPT_RUNTIMESPEED'] = '1' if args.opt_runtimespeed == 'on' else '0'
     for name in ('cow', 'mask', 'lazyinternal', 'mask_verify'):
         execution_env['DV_OPT_' + name.upper()] = '1' if run_config.get('opt_' + name, False) else '0'
     execution_env['DV_OPT_APPENDSHARE'] = '1' if run_config.get('opt_appendshare', False) else '0'
@@ -534,9 +558,16 @@ def main():
     if args.profile:
         execution_env['DV_PROFILE_PATH'] = str(out / 'profile-raw.json')
     execution_env['DV_BINARY_STDOUT'] = '1'
+    if (any(not Path(path).is_file() or sha_file(path) != digest for path, digest in hashes.items())
+            or compiler_fingerprint() != manifest['compiler']):
+        write_result(out, {'session_started': False, 'build_source_consistent': False,
+                           'source_unchanged': False, 'error': 'Sources changed after program fingerprinting; session not started.'})
+        return 1
     start = time.monotonic()
     trace_name = 'raw-events.dvdag'
-    result = {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'detective_profile': args.detective_profile, 'detective_zone': args.detective_zone, 'raw_format': args.raw_format, 'build_elapsed_seconds': build_elapsed, 'build_stages': build_stages, 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.upper().startswith(('DOTNET_GC', 'DOTNET_TIERED', 'COMPLUS_TIERED'))}}
+    result = {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': True, 'entry': str(args.entry.resolve()), 'detective_profile': args.detective_profile, 'detective_zone': args.detective_zone, 'raw_format': args.raw_format, 'build_elapsed_seconds': build_elapsed, 'build_stages': build_stages, 'gc_mode_requested': args.gc_mode, 'gc_heap_count_requested': args.gc_heaps, 'runtime_environment': {key: value for key, value in execution_env.items() if key.upper().startswith(('DOTNET_GC', 'DOTNET_TIERED', 'COMPLUS_TIERED', 'DV_OPT_'))}}
+    result['runtime_config'] = {'opt_runtimespeed': args.opt_runtimespeed == 'on'}
+    result['runtime_config_matches'] = ((execution_env['DV_OPT_RUNTIMESPEED'] == '1') == run_config['opt_runtimespeed'])
     result['projection_every'] = args.projection_every
     result['resumed'] = resume_bundle is not None
     result['restore_input_hashes'] = restore_input_hashes
@@ -565,7 +596,7 @@ def main():
         if args.raw_format == 'dag':
             raw_source = out / (trace_name if result['raw_written'] else trace_name + '.partial')
             try:
-                raw_summary = inspect_journal(raw_source, out / 'raw-event-index.dvlog')
+                raw_summary = inspect_journal(raw_source, out / 'raw-event-index.dvlog', optimize=args.opt_evidence_index == 'on')
                 with (out / 'raw-dag-summary.json').open('x', encoding='utf-8') as output:
                     json.dump(raw_summary, output, ensure_ascii=False, indent=2)
                 result['raw_dag_summary'] = 'raw-dag-summary.json'
@@ -592,7 +623,7 @@ def main():
             result['output_well_formed'], evidence = export(out, raw_format=args.raw_format, with_summary=True)
             result['text_exported'] = True
             result['actual_run_config'] = evidence.get('run_config')
-            result['run_config_matches'] = result['actual_run_config'] == run_config
+            result['run_config_matches'] = result['actual_run_config'] == run_config and result['runtime_config_matches']
             result['event_packet_source'] = 'stdout.dvlog'
             result['stdout_projection_coverage'] = evidence.get('projection_coverage')
             coverage = evidence.get('projection_coverage', {})
@@ -640,6 +671,15 @@ def main():
         result['postprocess_elapsed_seconds'] = time.monotonic() - postprocess_start
         write_result(out, result)
     return 0 if result['evidence_complete'] and result['causal_check_complete'] else 1
+
+
+def main():
+    # Same-case readers/runners hold an OS lease until all postprocessing ends.
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--out', type=Path)
+    known, _ = parser.parse_known_args()
+    with case_guard(known.out):
+        return _main()
 
 
 if __name__ == '__main__':
