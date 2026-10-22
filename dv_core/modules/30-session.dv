@@ -1,5 +1,27 @@
 #include 20-core.dv
 
+// Named reuse groups preserve the original memo keys and computations.
+// Off returns a miss and never populates that group's memo partitions.
+fn dvs_plan_cache_get(owner, key):
+    if not rt_memo_group_enabled("plan"):
+        return [false, false]
+    return rt_memo_get(owner, key)
+
+fn dvs_plan_cache_put(owner, key, value):
+    if rt_memo_group_enabled("plan"):
+        return rt_memo_put(owner, key, value)
+    return value
+
+fn dvs_declaration_cache_get(owner, key):
+    if not rt_memo_group_enabled("declaration"):
+        return [false, false]
+    return rt_memo_get(owner, key)
+
+fn dvs_declaration_cache_put(owner, key, value):
+    if rt_memo_group_enabled("declaration"):
+        return rt_memo_put(owner, key, value)
+    return value
+
 // The selector receives only one actor snapshot. No authority or oracle argument.
 
 fn dvs_event(events, kind, actor, time, parents, data):
@@ -451,7 +473,7 @@ fn dvs_hypotheses(actor, events, time, parent):
 // contains declarations only; the subject's complete admission is still checked.
 fn dvs_obligation_actions(actions):
     let key = ["dvs-obligation-actions-v1"]
-    let cached = rt_memo_get(actions, key)
+    let cached = dvs_declaration_cache_get(actions, key)
     if cached[0]:
         return cached[1]
     var result = []
@@ -460,7 +482,7 @@ fn dvs_obligation_actions(actions):
         if dv_find(actions[i], "obligation", false):
             rt_push(result, actions[i])
         i = i + 1
-    return rt_memo_put(actions, key, result)
+    return dvs_declaration_cache_put(actions, key, result)
 
 fn dvs_scan_obligations(actor, now, costs):
     let actions = dvs_obligation_actions(actor.actions)
@@ -564,10 +586,10 @@ fn dvs_choose(actor, bindings, costs):
             return dvp_task_remember(actor, bindings, costs, dvp_plan(actor, bindings, costs))
         return dvp_plan(actor, bindings, costs)
     let key = ["dvp_plan", dvp_memo_input(actor, costs), bindings, costs]
-    let cached = rt_memo_get(actor.mind, key)
+    let cached = dvs_plan_cache_get(actor.mind, key)
     if cached[0]:
         return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "dependency_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions, "reused_dependency_expansions": dv_find(cached[1], "dependency_expansions", 0), "planning_work": {"cache_hit": true, "candidates_considered": 0, "candidates_skipped": 0, "partial_layer": false, "examined_layers": 0, "completed_layers": 0, "candidate_order": "cached-plan", "candidate_order_scans": 0, "candidate_order_reuses": 0, "admission_checks": 0, "eligible_evaluations": 0, "forecasts": 0, "forecast_reuses": 0, "expanded_nodes": 0, "skipped_expansion": true, "stop_reason": "identical-complete-plan-input", "reused_work": dv_find(cached[1], "planning_work", [])}}))
-    return dvs_honor_planned_followup(actor, rt_memo_put(actor.mind, key, dvp_plan(actor, bindings, costs)))
+    return dvs_honor_planned_followup(actor, dvs_plan_cache_put(actor.mind, key, dvp_plan(actor, bindings, costs)))
 
 // Keep the actor's own predicted next step after a successful move, provided
 // the fresh plan still finds that action directly eligible and valuable.
@@ -758,7 +780,7 @@ fn dvs_reason_input(actor):
     actor = rt_snapshot(actor)
     let adoptions = actor.mind.adoptions
     let key = ["reason_input_refs"]
-    let cached = rt_memo_get(adoptions, key)
+    let cached = dvs_declaration_cache_get(adoptions, key)
     var refs = []
     if cached[0]:
         refs = cached[1]
@@ -773,7 +795,7 @@ fn dvs_reason_input(actor):
                     refs = dvp_add_ref(refs, adoption.law.effects[j].ref)
                     j = j + 1
             i = i + 1
-        rt_memo_put(adoptions, key, refs)
+        dvs_declaration_cache_put(adoptions, key, refs)
     let derivations = dv_find(actor, "inference_derivations", [])
     var i = 0
     while i < rt_count(derivations):
@@ -893,7 +915,7 @@ fn dvs_prepare_manual_cognition(actor, events, time, parent, chapter):
 fn dvp_choice_groups(actions):
     actions = rt_snapshot(actions)
     let key = ["dvp-choice-groups-v1"]
-    let cached = rt_memo_get(actions, key)
+    let cached = dvs_declaration_cache_get(actions, key)
     if cached[0]:
         return cached[1]
     var groups = []
@@ -904,7 +926,7 @@ fn dvp_choice_groups(actions):
             let group = action.personal_choice.group
             groups = dv_with(groups, group, dv_append(dv_find(groups, group, []), action))
         i = i + 1
-    return rt_memo_put(actions, key, groups)
+    return dvs_declaration_cache_put(actions, key, groups)
 
 // Ordinal personal values are owned by the subject, not by the proposed action.
 
@@ -1804,7 +1826,7 @@ fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent):
 fn dvs_visible_object_catalog(objects):
     objects = rt_snapshot(objects)
     let key = ["visible-object-catalog-v1"]
-    let cached = rt_memo_get(objects, key)
+    let cached = dvs_declaration_cache_get(objects, key)
     if cached[0]:
         return cached[1]
     var rooms = []
@@ -1826,7 +1848,7 @@ fn dvs_visible_object_catalog(objects):
                 let room = dv_find(rooms, location.value, [])
                 rooms = dv_with(rooms, location.value, dv_with(room, object.id, visible))
         i = i + 1
-    return rt_memo_put(objects, key, rooms)
+    return dvs_declaration_cache_put(objects, key, rooms)
 
 fn dvs_visible_objects(actor, physical):
     if not dv_find(actor.policy, "notice_visible_objects", false):
@@ -1950,10 +1972,10 @@ fn dvp_topic(actor, item):
     if not rt_is_list(mind):
         return dvp_topic_scan(actor, topic, question, bindings)
     let key = ["dvp_topic", item, dv_has_key(actor, "question_ref"), dv_find(actor, "question_ref", false), bindings, dv_find(actor, "heard_topics", [])]
-    let cached = rt_memo_get(mind, key)
+    let cached = dvs_plan_cache_get(mind, key)
     if cached[0]:
         return cached[1]
-    return rt_memo_put(mind, key, dvp_topic_scan(actor, topic, question, bindings))
+    return dvs_plan_cache_put(mind, key, dvp_topic_scan(actor, topic, question, bindings))
 
 fn dvp_topic_scan(actor, topic, question, bindings):
     var i = 0
@@ -2011,7 +2033,7 @@ fn dvp_dependency_add(graph, ref, inputs):
 
 fn dvp_dependency_topology(mind, methods):
     let key = ["dvp_dependency_topology-ref-key-v1", methods]
-    let cached = rt_memo_get(mind.adoptions, key)
+    let cached = dvs_declaration_cache_get(mind.adoptions, key)
     if cached[0]:
         return cached[1]
     var graph = []
@@ -2034,7 +2056,7 @@ fn dvp_dependency_topology(mind, methods):
             graph = dvp_dependency_add(graph, method.scope[j], inputs)
             j = j + 1
         i = i + 1
-    return rt_memo_put(mind.adoptions, key, graph)
+    return dvs_declaration_cache_put(mind.adoptions, key, graph)
 
 fn dvp_dependencies(mind, seeds, budget, methods):
     let graph = dvp_dependency_topology(mind, methods)
@@ -2092,7 +2114,7 @@ fn dvp_probe_refs(actor):
 
 fn dvp_scope(actor, action, bindings):
     let key = ["dvp-owned-action-scope-v1", actor.id, bindings]
-    let cached = rt_memo_get(action, key)
+    let cached = dvs_plan_cache_get(action, key)
     if cached[0]:
         return cached[1]
     var declared = dv_find(action, "purpose_refs", [])
@@ -2108,7 +2130,7 @@ fn dvp_scope(actor, action, bindings):
             else:
                 refs = dvp_add_ref(refs, dv_ref(local, ref.facet, ref.field))
         i = (i + 1)
-    return rt_memo_put(action, key, refs)
+    return dvs_plan_cache_put(action, key, refs)
 
 fn dvp_answer_reward(actor, action, mind):
     if dv_find(action, "answer_form", "complete-answer") == "supporting-statement":
@@ -2748,7 +2770,7 @@ fn dvp_pruned_edges(edges, edge, limit):
 
 fn dvp_dependency_methods(actor):
     let key = ["dvp_dependency_methods"]
-    let cached = rt_memo_get(actor.actions, key)
+    let cached = dvs_declaration_cache_get(actor.actions, key)
     if cached[0]:
         return cached[1]
     var actions = actor.actions
@@ -2758,16 +2780,20 @@ fn dvp_dependency_methods(actor):
         if not dv_find(actions[i], "known_opportunity_wait", false):
             rt_push(methods, {"scope": dv_find(actions[i], "purpose_refs", dv_find(actions[i], "grants", [])), "premise": actions[i].precondition, "owner_refs": dvp_owner_requirement_refs(actions[i])})
         i = (i + 1)
-    return rt_memo_put(actor.actions, key, methods)
+    return dvs_declaration_cache_put(actor.actions, key, methods)
 
 fn dvp_cached_dependencies(actor, seeds, budget):
     let methods = dvp_dependency_methods(actor)
     let signature = {"seeds": seeds, "budget": budget, "adoptions": actor.mind.adoptions, "methods": methods}
-    let cache = dv_find(actor, "dependency_cache", false)
+    var cache = false
+    if dv_find(actor.policy, "opt_plancache", true) and rt_memo_group_enabled("plan"):
+        cache = dv_find(actor, "dependency_cache", false)
     if cache != false:
         if dv_same(cache.signature, signature):
             return dv_with_many(cache.result, {"expanded": 0, "reused_expanded": cache.result.expanded, "cache_hit": true, "cache": cache})
     let result = dvp_dependencies(actor.mind, seeds, budget, methods)
+    if not dv_find(actor.policy, "opt_plancache", true) or not rt_memo_group_enabled("plan"):
+        return dv_with_many(result, {"reused_expanded": 0, "cache_hit": false, "cache": false})
     // An identical bounded prefix is reusable too. Its original budget stop
     // remains explicit; caching it never upgrades it to a complete closure.
     return dv_with_many(result, {"reused_expanded": 0, "cache_hit": false, "cache": {"signature": signature, "result": result}})
@@ -3291,7 +3317,7 @@ fn dvp_plan(actor, bindings, costs):
 
 fn dvp_find_action(actions, id):
     let key = ["dvp-find-action", id]
-    let cached = rt_memo_get(actions, key)
+    let cached = dvs_declaration_cache_get(actions, key)
     if cached[0]:
         return cached[1]
     var i = 0
@@ -3300,7 +3326,7 @@ fn dvp_find_action(actions, id):
         if (actions[i].id == id):
             result = actions[i]
         i = (i + 1)
-    return rt_memo_put(actions, key, result)
+    return dvs_declaration_cache_put(actions, key, result)
 
 // A forecast may discard old co-presence but never discover a peer at a new
 // location. The search carries this filtered record forward, so returning to a
@@ -3462,11 +3488,11 @@ fn dvp_refresh_current_evidence(actor, goals):
 // Pure prediction only; this cache never writes actual action or evidence events.
 fn dvp_forecast(mind, name):
     let key = ["dvp_forecast", name]
-    let cached = rt_memo_get(mind, key)
+    let cached = dvs_plan_cache_get(mind, key)
     if cached[0]:
         return dv_with(cached[1], "planning_cache_hit", true)
     let result = dv_predict(dv_with_many(mind, {"domain": "mind", "history": [], "seen": []}), name, rt_cat("planning-forecast-", rt_show(mind.revision)), dv_find(mind, "time", 0), mind.revision)
-    rt_memo_put(mind, key, result)
+    dvs_plan_cache_put(mind, key, result)
     return dv_with(result, "planning_cache_hit", false)
 
 // Catalog-only filtering; dynamic eligibility is still checked on the node mind.
@@ -3474,7 +3500,7 @@ fn dvp_room_actions(actions, room, location_ref):
     if room == "" or location_ref == false:
         return actions
     let key = ["dvp_room_actions", room, location_ref]
-    let cached = rt_memo_get(actions, key)
+    let cached = dvs_declaration_cache_get(actions, key)
     if cached[0]:
         return cached[1]
     var result = []
@@ -3490,7 +3516,7 @@ fn dvp_room_actions(actions, room, location_ref):
         if required == "" or required == room:
             rt_push(result, action)
         i = i + 1
-    return rt_memo_put(actions, key, result)
+    return dvs_declaration_cache_put(actions, key, result)
 
 // Reorder only the selective root's declaration list. A grant is a declared
 // opportunity to observe, never a claim that its content is true or useful.
@@ -3499,7 +3525,7 @@ fn dvp_selective_action_order(actions, costs):
     actions = rt_snapshot(actions)
     costs = rt_snapshot(costs)
     let key = ["dvp-selective-action-order-v1", costs]
-    let cached = rt_memo_get(actions, key)
+    let cached = dvs_declaration_cache_get(actions, key)
     if cached[0]:
         return {"actions": cached[1], "scanned": 0, "reused": 1}
     var priority = []
@@ -3534,14 +3560,14 @@ fn dvp_selective_action_order(actions, costs):
     while i < rt_count(remaining):
         rt_push(result, remaining[i])
         i = i + 1
-    rt_memo_put(actions, key, result)
+    dvs_declaration_cache_put(actions, key, result)
     return {"actions": result, "scanned": rt_count(actions), "reused": 0}
 
 // Every inspection in the same mind reuses the evidence refresh and availability reads.
 fn dvp_inspection_freshness(actor, mind):
     let declared = dv_find(actor.policy, "goals", [])
     let key = ["dvp_inspection_freshness-ref-key-v1", declared]
-    let cached = rt_memo_get(mind, key)
+    let cached = dvs_plan_cache_get(mind, key)
     if cached[0]:
         return cached[1]
     let goals = dvp_refresh_current_evidence(dvp_actor_view(actor, mind), declared)
@@ -3561,7 +3587,7 @@ fn dvp_inspection_freshness(actor, mind):
             else:
                 rt_push(index, pair)
         i = i + 1
-    return rt_memo_put(mind, key, index)
+    return dvs_plan_cache_put(mind, key, index)
 
 
 // Structured speech: authority is checked by execution, cognition by each owner.
@@ -4634,10 +4660,10 @@ fn dvs_sim_refs(proposition):
 fn dvs_sim_plan(hypothesis):
     let key = ["compiled-model-plan", dv_has_key(hypothesis, "timeline"), dv_find(hypothesis, "predict_laws", [])]
     let timeline = dv_find(hypothesis, "timeline", [])
-    let cached = rt_memo_get(timeline, key)
+    let cached = dvs_declaration_cache_get(timeline, key)
     if cached[0]:
         return cached[1]
-    return rt_memo_put(timeline, key, dvs_sim_plan_build(hypothesis))
+    return dvs_declaration_cache_put(timeline, key, dvs_sim_plan_build(hypothesis))
 
 fn dvs_sim_plan_build(hypothesis):
     var timeline = dv_find(hypothesis, "timeline", [])
@@ -6408,7 +6434,7 @@ fn dvs_argument_action(actor, action):
 fn dvs_materialize_arguments(actor):
     var actions = actor.actions
     let key = ["dvs_argument_action_positions"]
-    let cached = rt_memo_get(actions, key)
+    let cached = dvs_declaration_cache_get(actions, key)
     var positions = []
     var i = 0
     if cached[0]:
@@ -6418,7 +6444,7 @@ fn dvs_materialize_arguments(actor):
             if dv_has_key(actions[i], "argument_slots"):
                 rt_push(positions, i)
             i = i + 1
-        rt_memo_put(actions, key, positions)
+        dvs_declaration_cache_put(actions, key, positions)
     if rt_count(positions) == 0:
         return actor
     var result = actions
@@ -7400,14 +7426,14 @@ fn dvs_declared_conditions_cached(value):
     if not rt_is_list(value):
         return []
     let key = ["dvs-declared-conditions-subtree-v1"]
-    let cached = rt_memo_get(value, key)
+    let cached = dvs_declaration_cache_get(value, key)
     if cached[0]:
         return cached[1]
     var conditions = []
     if dv_record_like(value):
         if dv_has_key(value, "op"):
             if not dv_has(["assign", "increment"], value.op):
-                return rt_memo_put(value, key, [value])
+                return dvs_declaration_cache_put(value, key, [value])
     var i = 0
     while i < rt_count(value):
         let nested = dvs_declared_conditions_cached(value[i])
@@ -7416,12 +7442,12 @@ fn dvs_declared_conditions_cached(value):
             rt_push(conditions, nested[j])
             j = j + 1
         i = i + 1
-    return rt_memo_put(value, key, conditions)
+    return dvs_declaration_cache_put(value, key, conditions)
 
 fn dvs_idle_window_boundary(actor, story, now, limit):
     let clock = dv_find(story, "clock_ref", false)
     let key = ["dvs_idle_declared_conditions", actor.policy, actor.mind.adoptions]
-    let cached = rt_memo_get(actor.actions, key)
+    let cached = dvs_declaration_cache_get(actor.actions, key)
     var conditions = []
     if cached[0]:
         conditions = cached[1]
@@ -7434,7 +7460,7 @@ fn dvs_idle_window_boundary(actor, story, now, limit):
             conditions = dvs_declared_conditions_cached(declarations)
         else:
             conditions = dvs_declared_conditions([actor.actions, actor.policy, actor.mind.adoptions])
-        rt_memo_put(actor.actions, key, conditions)
+        dvs_declaration_cache_put(actor.actions, key, conditions)
     var boundary = dvs_known_clock_boundary(dv_all(conditions), clock, now, limit)
     let duties = dvs_obligation_actions(actor.actions)
     var duty_index = 0
@@ -8649,15 +8675,15 @@ fn dvs_replay_has_available_candidate(actor):
     if rt_count(candidates) == 0:
         return 0 < rt_count(dv_find(actor.policy, "factor_constraints", []))
     let key = ["dvs_replay_has_available_candidate", actor.id, candidates, dv_has_key(actor, "question_ref"), dv_find(actor, "question_ref", false), dv_find(actor.policy, "topic_bindings", []), dv_find(actor, "heard_topics", [])]
-    let cached = rt_memo_get(actor.mind, key)
+    let cached = dvs_plan_cache_get(actor.mind, key)
     if cached[0]:
         return cached[1]
     var i = 0
     while i < rt_count(candidates):
         if dvs_replay_candidate_available(actor, candidates[i]):
-            return rt_memo_put(actor.mind, key, true)
+            return dvs_plan_cache_put(actor.mind, key, true)
         i = i + 1
-    return rt_memo_put(actor.mind, key, false)
+    return dvs_plan_cache_put(actor.mind, key, false)
 
 fn dvs_manual_candidate_available(actor, candidate):
     return dvs_replay_candidate_available(actor, candidate) and dv_truth(actor.mind, dv_find(candidate, "manual_available_when", dv_true())) == "true"

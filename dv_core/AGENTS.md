@@ -207,3 +207,5 @@ current_appraisals只维护本人appraisal facet中的当前可撤销评价，�
 可选调查导航与已有本人可执行目标的协调使用通用 coordinate_owned_tasks 合同；不按单条线索或人物身份提前返回，不额外加分。接口与边界见 ../docs/cli-optimization.md。
 
 非语言听觉事件以 environmental-sound 中性呈现，不把真实日志行动者自动投射成听者已辨认的声源；surface_voice/category透传合同见 ../docs/cli-optimization.md。
+
+核心规划缓存与静态声明索引的独立关闭范围见../docs/cli-optimization.md“核心缓存关闭合同”。30使用显式plan/declaration缓存组，保留原memo键；不得通过禁用所有rt_memo干扰dirty、付费重演及证据索引。首夜等待刷新不再按角色ID改写规划深度。

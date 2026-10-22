@@ -37,3 +37,5 @@ run_debug 的新增优化开关默认 on；mask/dirty verify 默认 off，仅作
 
 性能报告分别列会话与整命令180秒达标；命令实测缺失保持未知。矩阵并发字段仅描述自身，不能作为跨检出没有并行工作的证明。
 证据投影在 evidence-index 下复用不可变来源的绝对路径，索引记录直接编码二进制，不经临时 JSON 往返。run_debug 的 postprocess_stages 分别记录原始证据核验/索引、stdout 正文/索引、因果构建/检查及两次来源核验；失败仍保留各段已发生现实耗时。
+
+run_debug显式将opt_plancache/opt_declcache分别写入DV_OPT_PLANCACHE/DV_OPT_DECLCACHE；完整run_config与runtime_environment继续留证。两者控制核心显式缓存组，不禁用全局memo，不代替各自dirty/replaycache等开关。

@@ -557,6 +557,8 @@ def _main():
     for name in ('cow', 'mask', 'lazyinternal', 'mask_verify'):
         execution_env['DV_OPT_' + name.upper()] = '1' if run_config.get('opt_' + name, False) else '0'
     execution_env['DV_OPT_APPENDSHARE'] = '1' if run_config.get('opt_appendshare', False) else '0'
+    execution_env['DV_OPT_PLANCACHE'] = '1' if run_config.get('opt_plancache', False) else '0'
+    execution_env['DV_OPT_DECLCACHE'] = '1' if run_config.get('opt_declcache', False) else '0'
     execution_env['DV_OPT_READVIEW'] = '1' if run_config.get('opt_readview', False) else '0'
     execution_env['DV_OPT_RECORDCACHE'] = '1' if run_config.get('opt_recordcache', False) else '0'
     execution_env['DV_OPT_PREDICATE'] = '1' if run_config.get('opt_predicate', False) else '0'
