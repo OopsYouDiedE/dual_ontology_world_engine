@@ -2157,6 +2157,16 @@ fn c2i_actions(actor):
             i = i + 1
     return result
 
+// Supervision is learned by a real local inspection, after travelling to it.
+// Sampling the outdoor meter cannot supply who is currently accompanying us.
+fn c2i_watch_goal(actor, when, source, minimum):
+    var room = "central_hall"
+    var method = "moran.c2.inspect.current-watch"
+    if dv_truth(actor.mind, campaign_at(actor.id, "living_hall")) == "true":
+        room = "living_hall"
+        method = "moran.c2.inspect.current-watch-living"
+    return dv_with_many(campaign_observation_goal(campaign_own("moran", "watched"), when, source, minimum), {"navigation_room": room, "navigation_methods": [method]})
+
 fn c2i_goals(actor):
     let id = actor.id
     var goals = []
@@ -2204,7 +2214,7 @@ fn c2i_goals(actor):
         rt_push(goals, campaign_goal(dv_fact(campaign_ref("c2.ledger", "supplement_column"), true), dv_fact(campaign_own("ruan", "accepted.records_supplement"), true), [campaign_approved("implement-reserved-column-after-acceptance")]))
     if id == "moran":
         rt_push(goals, campaign_observation_goal(campaign_ref("c2.meter", "safe"), campaign_window(4, 1020, 1260), [campaign_approved("read-actual-meter-before-evening-outing")], 0))
-        rt_push(goals, campaign_observation_goal(campaign_own("moran", "watched"), c2_night(4), [campaign_approved("actual-current-supervision-not-permanent-flag")], 5370))
+        rt_push(goals, c2i_watch_goal(actor, c2_night(4), [campaign_approved("actual-current-supervision-not-permanent-flag")], 5370))
         rt_push(goals, campaign_goal(campaign_at("moran", "outdoor_alley"), dv_fact(campaign_ref("case.astral", "evening_choice"), "go"), [campaign_approved("execute-actual-personal-sketch-choice")]))
         rt_push(goals, campaign_goal(dv_fact(campaign_ref("case.astral", "evening_choice"), "go"), c2_night(4), [campaign_approved("evening-research-opportunity-not-compulsory-outcome")]))
         rt_push(goals, campaign_goal(campaign_at("moran", "clinic"), dv_fact(campaign_own("moran", "fever"), true), [campaign_approved("actual-discomfort-motivates-return-to-care")]))
@@ -2953,7 +2963,7 @@ fn c2_safety_goals(actor):
             if dv_uncontested(active):
                 minimum = dv_max(minimum, active.time)
             i = i + 1
-        rt_push(goals, campaign_observation_goal(campaign_own("moran", "watched"), c2_night(4), source, minimum))
+        rt_push(goals, c2i_watch_goal(actor, c2_night(4), source, minimum))
     return goals
 
 // Owner motives are declarations; opportunities and consequences still require real execution.
@@ -3133,6 +3143,27 @@ fn c2m_observation_goal_templates(id, groups):
         i = i + 1
     return rt_memo_put(groups, key, result)
 
+// Travel to inspect an owned opportunity retains its declared time window.
+// Nonclock facts remain unknown until local inspection; they are not supplied.
+fn c2m_travel_window(condition):
+    let refs = dvs_sim_refs(condition)
+    var clock_only = 0 < rt_count(refs)
+    var i = 0
+    while i < rt_count(refs):
+        if not dv_same(refs[i], campaign_clock()):
+            clock_only = false
+        i = i + 1
+    if clock_only:
+        return condition
+    if dv_find(condition, "op", "") == "all":
+        var items = []
+        i = 0
+        while i < rt_count(condition.items):
+            rt_push(items, c2m_travel_window(condition.items[i]))
+            i = i + 1
+        return dv_all(items)
+    return dv_true()
+
 fn c2m_goals(actor):
     var result = []
     let rows = c2m_rows()
@@ -3148,9 +3179,7 @@ fn c2m_goals(actor):
                 when = dv_all([available, motive])
                 // Travel expresses an intention to inspect a possible opportunity, not foreknowledge of the room.
                 if dv_truth(actor.mind, completion) != "true":
-                    var travel_when = motive
-                    if row.actor == "ruan":
-                        travel_when = dv_all([motive, campaign_window(3, 1080, 1260)])
+                    let travel_when = dv_all([motive, c2m_travel_window(available)])
                     rt_push(result, c2m_row_goal(row, actor.id, travel_when, completion, true))
             rt_push(result, c2m_row_goal(row, actor.id, when, completion, false))
         i = i + 1
