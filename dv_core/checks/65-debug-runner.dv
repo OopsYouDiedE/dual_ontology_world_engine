@@ -34,12 +34,16 @@ fn dvg_debug_config():
 // Read-only stopping evidence; these limits never mean narrative completion.
 fn dvg_debug_stop_evidence(state, steps, limit):
     var actors = []
+    var injury_facts = []
     var reasons = []
     var i = 0
     while i < rt_count(state.actors):
         let actor = state.actors[i]
+        rt_push(injury_facts, {"actor": actor.id, "alive": dv_read(state.physical, campaign_own(actor.id, "alive")), "dead": dv_read(state.physical, campaign_own(actor.id, "dead")), "in_coma": dv_read(state.physical, campaign_own(actor.id, "in_coma")), "stone_stupor": dv_read(state.physical, campaign_own(actor.id, "stone_stupor")), "erosion_exposure": dv_read(state.physical, campaign_own(actor.id, "erosion_exposure"))})
         rt_push(actors, {"actor": actor.id, "action_quota": dv_find(actor.policy, "budget", 0), "reason_budget": dv_find(actor.policy, "reason_budget", 0), "model_budget": dv_find(actor.policy, "model_budget", 0), "planning_limit": dv_find(actor, "planning_limit", 0), "scheduled_action": dv_find(actor, "scheduled_action", false), "can_act": dvs_actor_can_act(actor)})
         i = i + 1
+    if dvg_chapter_summary(state) != false:
+        rt_push(reasons, "actual-chapter-two-closing-record")
     if limit <= steps:
         rt_push(reasons, "diagnostic-action-window")
     if state.limit <= state.executed:
@@ -50,7 +54,7 @@ fn dvg_debug_stop_evidence(state, steps, limit):
         rt_push(reasons, "action-exceeds-remaining-time")
     if rt_count(state.actors) <= state.idle and dvs_scheduled_count(state.actors) == 0:
         rt_push(reasons, "no-scheduled-or-admissible-action")
-    return {"reasons": reasons, "actors": actors, "executed": state.executed, "session_limit": state.limit, "diagnostic_limit": limit, "game_time": state.physical.time, "horizon": state.horizon, "idle": state.idle, "scheduled_count": dvs_scheduled_count(state.actors), "narrative_completion": "see-actual-closing-record", "chapter_summary": dvg_chapter_summary(state)}
+    return {"reasons": reasons, "actors": actors, "injury_facts": injury_facts, "executed": state.executed, "session_limit": state.limit, "diagnostic_limit": limit, "game_time": state.physical.time, "horizon": state.horizon, "idle": state.idle, "scheduled_count": dvs_scheduled_count(state.actors), "narrative_completion": "see-actual-closing-record", "chapter_summary": dvg_chapter_summary(state)}
 
 // Projection buffering changes diagnostic delivery only. Every dvs_event still
 // commits its original value to the raw DAG before the event is published.
@@ -78,16 +82,17 @@ fn dvg_debug_completion(events, action_event):
 // Keep only the real receipt suffix and that instant's viewer, not a future mind.
 // This capsule is a read-only projection input and never enters the session.
 fn dvg_debug_text_capsule(state, viewer):
-    state = rt_snapshot(state)
     var start = rt_count(state.events) - 1
     var visible = false
     var found = false
+    var replay = false
     while 0 <= start and not found:
         let event = state.events[start]
         if event.actor == viewer and dv_has(["listener_parse", "observation", "speech_received_pending"], event.type):
             visible = true
         if event.type == "action_execution":
             found = true
+            replay = c1_ui_ends(event.data.action.id, ".replay")
             visible = visible or event.actor == viewer
         else:
             start = start - 1
@@ -101,7 +106,12 @@ fn dvg_debug_text_capsule(state, viewer):
     var i = 0
     while i < rt_count(state.actors):
         if state.actors[i].id == viewer:
-            rt_push(actors, state.actors[i])
+            let subject = state.actors[i]
+            if replay:
+                rt_push(actors, rt_snapshot(subject))
+            else:
+                let mind = dv_with_many(subject.mind, {"history": [], "seen": []})
+                rt_push(actors, rt_snapshot({"id": subject.id, "mind": mind, "pending_heard": dv_find(subject, "pending_heard", [])}))
         i = i + 1
     return rt_snapshot({"events": events, "actors": actors, "physical": {"time": state.physical.time}, "story": {"run_config": state.story.run_config}})
 
@@ -144,7 +154,7 @@ fn dvg_debug_loop(initial, config, run_config, initial_steps, initial_cursor, re
     if resumed:
         inherited_events = rt_count(state.events)
     rt_json_print({"type": "debug_start", "configuration": config, "run_config": run_config, "executor": "formal-model", "geometry": false, "raw_format": raw_format, "projection_every": projection_every, "resumed": resumed, "initial_steps": steps, "inherited_event_count": inherited_events, "run_start_game_time": state.physical.time, "presentation_scope": "stdout contains flushed projection only; every original committed event remains in raw DAG"})
-    while dvs_session_active(state) and steps < limit:
+    while dvs_session_active(state) and steps < limit and (not dv_find(run_config, "stop_at_chapter_end", false) or dvg_chapter_summary(state) == false):
         let before_time = last_complete_time
         state = dvg_prepare(state)
         let pending = dv_find(state, "pending", false)

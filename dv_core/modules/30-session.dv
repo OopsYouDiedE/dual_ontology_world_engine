@@ -6926,6 +6926,31 @@ fn dvs_declared_conditions(value):
         i = i + 1
     return conditions
 
+// Internal read-only declaration index. The caller supplies a fully frozen
+// declaration graph; recursive children therefore keep immutable identities.
+// Cache keys include each complete subtree, never selected policy fields.
+fn dvs_declared_conditions_cached(value):
+    if not rt_is_list(value):
+        return []
+    let key = ["dvs-declared-conditions-subtree-v1"]
+    let cached = rt_memo_get(value, key)
+    if cached[0]:
+        return cached[1]
+    var conditions = []
+    if dv_record_like(value):
+        if dv_has_key(value, "op"):
+            if not dv_has(["assign", "increment"], value.op):
+                return rt_memo_put(value, key, [value])
+    var i = 0
+    while i < rt_count(value):
+        let nested = dvs_declared_conditions_cached(value[i])
+        var j = 0
+        while j < rt_count(nested):
+            rt_push(conditions, nested[j])
+            j = j + 1
+        i = i + 1
+    return rt_memo_put(value, key, conditions)
+
 fn dvs_idle_window_boundary(actor, story, now, limit):
     let clock = dv_find(story, "clock_ref", false)
     let key = ["dvs_idle_declared_conditions", actor.policy, actor.mind.adoptions]
@@ -6934,7 +6959,14 @@ fn dvs_idle_window_boundary(actor, story, now, limit):
     if cached[0]:
         conditions = cached[1]
     else:
-        conditions = dvs_declared_conditions([actor.actions, actor.policy, actor.mind.adoptions])
+        if dv_find(actor.policy, "opt_declcache", false):
+            // The existing outer memo already depends on this entire graph.
+            // Freeze the same declarations for subtree identity reuse; no
+            // condition is evaluated by this read-only declaration index.
+            let declarations = rt_snapshot([actor.actions, actor.policy, actor.mind.adoptions])
+            conditions = dvs_declared_conditions_cached(declarations)
+        else:
+            conditions = dvs_declared_conditions([actor.actions, actor.policy, actor.mind.adoptions])
         rt_memo_put(actor.actions, key, conditions)
     var boundary = dvs_known_clock_boundary(dv_all(conditions), clock, now, limit)
     let duties = dvs_obligation_actions(actor.actions)
@@ -7710,12 +7742,16 @@ fn dvs_owned_state_update(state, updates):
 // ---- Merged source module: 32-environment.dv ----
 // Physical processes read physical conditions. They never publish private knowledge.
 fn dvs_environment(physical, story, events, parent):
+    let readview = dv_find(dv_find(story, "run_config", []), "opt_readview", false)
     var world = physical
     let time = dv_find(world, "time", 0)
     let clock = dv_find(story, "clock_ref", false)
     if clock != false:
         world = dv_store(world, clock, dv_cell(time, 1, time, [parent]))
-    let processes = dv_find(story, "world_processes", [])
+    var processes = dv_find(story, "world_processes", [])
+    if readview:
+        world = rt_snapshot(world)
+        processes = rt_snapshot(processes)
     var i = 0
     while i < rt_count(processes):
         let process = processes[i]
@@ -7736,6 +7772,8 @@ fn dvs_environment(physical, story, events, parent):
                 world = execution.world
                 if execution.status == "applied" and dv_find(process, "once", false):
                     world = dv_suspend(world, process.law)
+                if readview:
+                    world = rt_snapshot(world)
                 parent = dvs_event(events, "physical_process", "", time, [parent], {"process": process, "revision_before": before.revision, "revision_after": world.revision, "suspended": not dv_get(world.adoptions, process.law).active, "execution": dv_without(execution, "world")})
         i = i + 1
     return world
@@ -7747,10 +7785,15 @@ fn dvs_environment_boundary(condition, clock, now, due):
 // A process that can still change the world requires another ordinary minute.
 // This retains repeated increments, conflicting writes and ordered cascades.
 fn dvs_environment_next_time(world, story, due):
+    let readview = dv_find(dv_find(story, "run_config", []), "opt_readview", false)
+    if readview:
+        world = rt_snapshot(world)
     let clock = dv_find(story, "clock_ref", false)
     let now = world.time
     var next = due
-    let processes = dv_find(story, "world_processes", [])
+    var processes = dv_find(story, "world_processes", [])
+    if readview:
+        processes = rt_snapshot(processes)
     var i = 0
     while i < rt_count(processes):
         let adoption = dv_get(world.adoptions, processes[i].law)

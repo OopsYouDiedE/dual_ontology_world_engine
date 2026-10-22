@@ -227,8 +227,12 @@ public static class R
     private sealed class ValueCaches
     {
         internal readonly object SnapshotLock = new();
+        internal readonly bool ReadViewEnabled = Environment.GetEnvironmentVariable("DV_OPT_READVIEW") == "1";
         // Sample once per execution context; CLI captures this in run_config.
         internal readonly bool RecordCacheEnabled = Environment.GetEnvironmentVariable("DV_OPT_RECORDCACHE") == "1";
+        internal readonly bool PredicateEnabled = Environment.GetEnvironmentVariable("DV_OPT_PREDICATE") == "1";
+        internal readonly bool PredicateCacheEnabled = Environment.GetEnvironmentVariable("DV_OPT_PREDICATECACHE") == "1";
+        internal readonly ConditionalWeakTable<FrozenList, PredicateCellCache> PredicateCells = new();
         internal readonly ConditionalWeakTable<FrozenList, RecordShape> RecordShapes = new();
         internal readonly ConditionalWeakTable<FrozenList, RefLookupText> RefLookupTexts = new();
         internal readonly FrozenList EmptySnapshot = new(Array.Empty<object>(), unchecked(14695981039346656037UL * 1099511628211UL), 14695981039346656037UL)
@@ -302,6 +306,38 @@ public static class R
         private readonly TextWriter? previous = ConsoleOutputContext.Value;
         public ConsoleOutputScope(TextWriter writer) => ConsoleOutputContext.Value = writer;
         public void Dispose() => ConsoleOutputContext.Value = previous;
+    }
+    // Reuse only a previously validated snapshot. Freezing an arbitrary fresh
+    // graph here could inspect unused malformed/cyclic branches before the
+    // original permission/field error. memo_get has already prepared these
+    // backbones on the hot dv_truth miss path.
+    public static object read_view(object value)
+    {
+        var caches = Caches;
+        if (!caches.ReadViewEnabled || value is FrozenList) return value;
+        return UnchangedSnapshot(value, caches) ?? value;
+    }
+    // The view must not turn reference-valued subjects or lookup keys into
+    // different identities. This non-throwing guard never thaws input branches.
+    // Invalid/unusual refs retain every original read and its error ordering.
+    public static object read_ref_view_safe(object reference)
+    {
+        if (!Caches.ReadViewEnabled || !TryItems(reference, out var pairs)) return BoolFalse;
+        object? objectId = null, facet = null, field = null, subject = null;
+        var hasSubject = false;
+        for (var i = 0; i < pairs.Count; i++)
+        {
+            if (!TryItems(pairs[i], out var pair) || pair.Count < 2 || pair[0] is not string key) return BoolFalse;
+            switch (key)
+            {
+                case "object": objectId = pair[1]; break;
+                case "facet": facet = pair[1]; break;
+                case "field": field = pair[1]; break;
+                case "subject": subject = pair[1]; hasSubject = true; break;
+            }
+        }
+        return objectId is string && facet is string && field is string && (!hasSubject || subject is string)
+            ? BoolTrue : BoolFalse;
     }
     public static string[] Arguments = [];
     public static string Text(object x) => x as string ?? throw new Exception("Expected Text");
@@ -489,6 +525,9 @@ public static class R
     }
     public static object record_find(object record, object key, object fallback)
     {
+#if DV_PROFILE_NATIVE
+        using var __nativeProfile = DvProfiler.Enter("rt_record_find");
+#endif
         var entries = Items(record);
         int foundIndex = -1;
         if (key is string name)
@@ -611,6 +650,82 @@ public static class R
         return frozen is null ? RefLookupKeyValue(value)
             : caches.RefLookupTexts.GetValue(frozen, key => new RefLookupText(RefLookupKeyValue(key))).Text;
     }
+    private sealed class PredicateCellCache
+    {
+        internal readonly Dictionary<(string Facet, string Field), object> Cells = new();
+    }
+    private static readonly object PredicateMissingCell = new();
+    private static object PredicateReadCell(object entity, object facet, object field)
+    {
+        var facets = PredicateField(entity, "facets");
+        if (Num(record_index(facets, facet)) < 0) return PredicateMissingCell;
+        var fields = record_find(facets, facet, "__dv_missing_field_sentinel__");
+        if (Num(record_index(fields, field)) < 0) return PredicateMissingCell;
+        return record_find(fields, field, "__dv_missing_field_sentinel__");
+    }
+    private static object PredicateReadCellCached(object entity, object facet, object field, ValueCaches caches)
+    {
+        // Non-text keys retain runtime EqValue/reference semantics unchanged.
+        if (entity is not FrozenList frozen || facet is not string facetName || field is not string fieldName)
+            return PredicateReadCell(entity, facet, field);
+        var cache = caches.PredicateCells.GetOrCreateValue(frozen);
+        lock (cache)
+        {
+            var key = (facetName, fieldName);
+            if (cache.Cells.TryGetValue(key, out var cell)) return cell;
+            // Store only successful reads or declared absence, never exceptions.
+            cell = PredicateReadCell(frozen, facetName, fieldName);
+            // Bound arbitrary missing-field probes; eviction changes work only.
+            if (cache.Cells.Count >= 256) cache.Cells.Clear();
+            cache.Cells.Add(key, cell);
+            return cell;
+        }
+    }
+    public static object predicate_enabled() => Caches.PredicateEnabled ? BoolTrue : BoolFalse;
+    private static object PredicateField(object record, string key) => record_find(record, key, "__dv_missing_field_sentinel__");
+    // False delegates unsupported representations to the original DV path.
+    // Borrow only immutable graphs. No mutable cell or world result is cached.
+    public static object predicate_leaf(object world, object proposition)
+    {
+        // Do not substitute a mutable owner's backbone: reference-valued keys
+        // and subjects must retain the original lookup/equality behavior.
+        var frozenWorld = world as FrozenList;
+        var frozenProposition = proposition as FrozenList;
+        if (frozenWorld is null || frozenProposition is null) return BoolFalse;
+        var op = PredicateField(frozenProposition, "op");
+        if (!EqValue(op, "equals") && !EqValue(op, "at_least")) return BoolFalse;
+        var reference = PredicateField(frozenProposition, "ref");
+        // Access rejection precedes missing-object handling, as in dv_read.
+        if (Num(record_index(reference, "subject")) >= 0)
+        {
+            var subject = PredicateField(reference, "subject");
+            if (!EqValue(subject, "") && !EqValue(subject, PredicateField(frozenWorld, "subject")))
+                throw new Exception("Cross-subject reference access");
+        }
+        var objects = PredicateField(frozenWorld, "objects");
+        var id = PredicateField(reference, "object");
+        if (Num(record_index(objects, id)) < 0) return "unknown";
+        var entity = record_find(objects, id, "__dv_missing_field_sentinel__");
+        // dv_read reads both ref fields to build its key before reading facets.
+        var facet = PredicateField(reference, "facet");
+        var field = PredicateField(reference, "field");
+        // World/subject checks and both reference-field reads precede reuse.
+        // Immutable object identity permits reuse across unrelated world updates.
+        var caches = Caches;
+        var cell = caches.PredicateCacheEnabled
+            ? PredicateReadCellCached(entity, facet, field, caches)
+            : PredicateReadCell(entity, facet, field);
+        if (ReferenceEquals(cell, PredicateMissingCell)) return "unknown";
+        // dv_or arguments are eager: missing conflicted errors even if unknown.
+        // Its boolean type is checked only when known=true.
+        var known = Bool(PredicateField(cell, "known"));
+        var conflicted = PredicateField(cell, "conflicted");
+        if (!known || Bool(conflicted)) return "unknown";
+        var actual = PredicateField(cell, "value");
+        var expected = PredicateField(frozenProposition, "value");
+        if (EqValue(op, "equals")) return SameValue(actual, expected) ? "true" : "false";
+        return Bool(lt(actual, expected)) ? "false" : "true";
+    }
     private static readonly object MissingSentinel = new();
 
     // Structural value equality reads existing branches without materializing mutable copies.
@@ -725,6 +840,9 @@ public static class R
     // Batch independent-copy update, preserving ordered pairs and duplicate-key rules.
     public static object record_with_many(object record, object updates)
     {
+#if DV_PROFILE_NATIVE
+        using var __nativeProfile = DvProfiler.Enter("rt_record_with_many");
+#endif
         var changes = Items(updates);
         if (changes.Count == 0) return record;
         // Lookups may thaw a mutable owner's child slots. Iterate a frozen update
@@ -1159,6 +1277,9 @@ public static class R
     private static ConditionalWeakTable<List<object>, MutableState> MutableStates => Caches.MutableStates;
     private static List<object> Thaw(FrozenList frozen)
     {
+#if DV_PROFILE_NATIVE
+        using var __nativeProfile = DvProfiler.Enter("rt_Thaw");
+#endif
         var result = frozen.CopyRoot();
         MutableStates.Add(result, new MutableState { Backbone = frozen });
         return result;
@@ -1240,6 +1361,9 @@ public static class R
     private const long RecordLayoutPoolCharacterLimit = 65536;
     private static Dictionary<string, int>? FrozenIndex(FrozenList record)
     {
+#if DV_PROFILE_NATIVE
+        using var __nativeProfile = DvProfiler.Enter("rt_FrozenIndex");
+#endif
         if (record.IndexChecked) return record.Index;
         lock (SnapshotLock)
         {
@@ -1313,6 +1437,9 @@ public static class R
     }
     private static Dictionary<string, int>? MutableIndex(List<object> record)
     {
+#if DV_PROFILE_NATIVE
+        using var __nativeProfile = DvProfiler.Enter("rt_MutableIndex");
+#endif
         var state = MutableStates.GetOrCreateValue(record);
         if (state.IndexChecked) return state.Index;
         var index = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -1369,6 +1496,9 @@ public static class R
     private static object SnapshotValue(object value) => SnapshotValue(value, Caches);
     private static object SnapshotValue(object value, ValueCaches caches)
     {
+#if DV_PROFILE_NATIVE
+        using var __nativeProfile = DvProfiler.Enter("rt_SnapshotValue");
+#endif
         if (value is FrozenList || value is not List<object> items) return value;
         if (items.Count == 0)
         {
@@ -1451,6 +1581,9 @@ public static class R
     }
     private static object ReadItem(object owner, int index)
     {
+#if DV_PROFILE_NATIVE
+        using var __nativeProfile = DvProfiler.Enter("rt_ReadItem");
+#endif
         if (owner is FrozenList readOnly) return readOnly[index];
         var items = MutableItems(owner);
         var value = items[index];
@@ -1744,6 +1877,9 @@ public static class R
         }
         private RawNode FrozenNode(FrozenList frozen)
         {
+#if DV_PROFILE_NATIVE
+        using var __nativeProfile = DvProfiler.Enter("rt_FrozenNode");
+#endif
             if (nodes.TryGetValue(frozen, out var known)) return known;
             try
             {

@@ -20,3 +20,5 @@ CLI 的 JPG 由已经记录的同一画布离线导出，覆盖实际聚焦、�
 性能流与 live 世界 DAG 记录器分开：当前 CLI 没有打开 live `RawDagWriter`，最近实测 `world_cut` 未生效，完整历史仍保留。报告不得把未接线的压缩或尚未实现的规划器墙钟硬期限列为已完成优化；既有实测与评估集中见 `../docs/cli-optimization.md`。
 
 两章 CLI 激进优化入口及开关合同见 `../docs/cli-optimization.md` 的 2026-10-22 节；本轮用户的 180 秒运行授权优先于历史窗口。原始 DAG 事件封包可附进程单调耗时，旧证据不补造时间。
+
+激进优化诊断可用 aggressive_report.py 只读汇总固定输出目录；它不启动 AI、不展开原始 DAG。--profile 的 DV_PROFILE_NATIVE 条件编译细分 Runtime 热点，无插桩 Release 不包含这些探针。判定只读视图与字段 cell 缓存均按 CLI 显式开关采样于执行上下文，不读取人物策略档。

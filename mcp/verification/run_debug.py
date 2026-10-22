@@ -70,7 +70,7 @@ def summarize_profile(raw_path, modules, destination):
               'mean_exclusive_ms_per_call': item['exclusive_ticks'] * 1000 / frequency / item['calls'],
               'share_of_profiled_dv_percent': item['exclusive_ticks'] * 100 / total if total else 0}
              for kind, item in grouped.items()]
-    result = {'basis': 'Generated DV function calls; exclusive time includes direct platform ABI calls and profiler overhead. Work types are function-name groups; nested calls are charged to their own group. This is an instrumented formal-model run, not gameplay acceptance.',
+    result = {'basis': 'Generated DV calls and selected native runtime scopes; exclusive time includes uninstrumented ABI calls and profiler overhead. Work types are function-name groups; nested calls are charged to their own group. This is an instrumented formal-model run, not gameplay acceptance.',
               'process_elapsed_ms': raw['process_ticks'] * 1000 / frequency,
               'profiled_dv_exclusive_ms': total * 1000 / frequency,
               'work_types': sorted(types, key=lambda item: -item['exclusive_ms']),
@@ -377,8 +377,8 @@ def main():
     parser.add_argument('--timeout', type=int, default=600)
     parser.add_argument('--projection-every', type=int, default=1, help='Flush diagnostic stdout every N actual completed steps; N>1 requires online raw DAG')
     parser.add_argument('--resume-checkpoint', type=Path, help='Explicit validated stage checkpoint bundle; never initializes a fresh session')
-    parser.add_argument('--gc-mode', choices=('server', 'workstation'), default='server')
-    parser.add_argument('--gc-heaps', type=int, default=min(4, os.cpu_count() or 1))
+    parser.add_argument('--gc-mode', choices=('server', 'workstation'), default=None)
+    parser.add_argument('--gc-heaps', type=int, default=None)
     parser.add_argument('--profile', action='store_true', help='Build an instrumented DV session and report per-function and work-type time')
     parser.add_argument('--evidence-from', type=Path, help='Only project an existing binary packet stream into a new --out directory; never build or execute a session')
     parser.add_argument('--causal-timeout', type=int, default=300,
@@ -391,12 +391,18 @@ def main():
     parser.add_argument('--detective-zone', default='zone_yi', choices=('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding', 'none'))
     parser.add_argument('--trace-compression', choices=('none',), default='none', help='Deprecated compatibility argument; JSON recordings are prohibited')
     parser.add_argument('--raw-format', choices=('dag',), default='dag', help='Lossless typed binary DAG; JSON recording is forbidden')
-    optimization_names = ('readview', 'plancache', 'prune', 'lazytext', 'recordcache')
+    optimization_names = ('readview', 'plancache', 'prune', 'lazytext', 'recordcache', 'predicate', 'predicatecache', 'declcache', 'gc')
     for name in optimization_names:
         parser.add_argument('--opt-' + name, choices=('on', 'off'), default='on')
     parser.add_argument('--prune-top-k', type=int, default=3)
     parser.add_argument('--selective-planning', choices=('on', 'off'), default='on')
+    parser.add_argument('--stop-at-chapter-end', choices=('on', 'off'), default='on', help='Stop only after the actual chapter-two closing record exists')
     args = parser.parse_args()
+    # Single-thread CLI defaults; explicit GC arguments retain precedence.
+    if args.gc_mode is None:
+        args.gc_mode = 'workstation' if args.opt_gc == 'on' else 'server'
+    if args.gc_heaps is None:
+        args.gc_heaps = 1 if args.opt_gc == 'on' else min(4, os.cpu_count() or 1)
     args.detective_profile = {'Standard': 'Standard_Detective', 'Foolish': 'Foolish_Detective'}.get(args.detective_profile, args.detective_profile)
     if args.prune_top_k < 1:
         parser.error('--prune-top-k must be positive')
@@ -404,7 +410,7 @@ def main():
         parser.error('--opening-seed must be nonnegative')
     run_config = {'seed': args.opening_seed, 'profile': args.detective_profile, 'detective_zone': args.detective_zone, 'su_initial_room': args.su_initial_room, 'private_execution_benefit_multiplier': args.private_execution_benefit_multiplier, 'homecoming_negotiation': args.homecoming_negotiation}
     run_config.update({'opt_' + name: getattr(args, 'opt_' + name) == 'on' for name in optimization_names})
-    run_config.update(prune_top_k=args.prune_top_k, selective_planning=args.selective_planning == 'on')
+    run_config.update(prune_top_k=args.prune_top_k, selective_planning=args.selective_planning == 'on', stop_at_chapter_end=args.stop_at_chapter_end == 'on')
     if args.projection_every < 1:
         parser.error('--projection-every must be positive')
     if args.projection_every > 1 and args.raw_format != 'dag':
@@ -430,12 +436,16 @@ def main():
             saved_config = resume_bundle['metadata']['run_config']
             config_options = {'--opening-seed': 'seed', '--detective-profile': 'profile', '--detective-zone': 'detective_zone', '--su-initial-room': 'su_initial_room', '--private-execution-benefit-multiplier': 'private_execution_benefit_multiplier', '--homecoming-negotiation': 'homecoming_negotiation'}
             config_options.update({'--opt-' + name: 'opt_' + name for name in optimization_names})
-            config_options.update({'--prune-top-k': 'prune_top_k', '--selective-planning': 'selective_planning'})
+            config_options.update({'--prune-top-k': 'prune_top_k', '--selective-planning': 'selective_planning', '--stop-at-chapter-end': 'stop_at_chapter_end'})
             explicit_options = {item.split('=', 1)[0] for item in sys.argv[1:]}
             for option, key in config_options.items():
                 if option in explicit_options and run_config[key] != saved_config[key]:
                     raise ValueError(f'Restore configuration conflicts with checkpoint: {option}')
             run_config = saved_config
+            if "--gc-mode" not in explicit_options:
+                args.gc_mode = "workstation" if run_config.get("opt_gc", False) else "server"
+            if "--gc-heaps" not in explicit_options:
+                args.gc_heaps = 1 if run_config.get("opt_gc", False) else min(4, os.cpu_count() or 1)
             args.profile = resume_bundle['metadata']['provenance'].get('instrumented', False)
             args.opening_seed = run_config['seed']
             args.detective_profile = run_config['profile']
@@ -473,9 +483,11 @@ def main():
         ['dotnet', 'build', str(build / 'Program.csproj'), '-c', 'Release', '--disable-build-servers', '-p:NuGetAudit=false']]
     shutil.copyfile(LANGUAGE / 'compiler/Runtime.cs', build / 'Runtime.cs')
     project = PROJECT
+    if args.profile:
+        project = project.replace("<OutputType>Exe</OutputType>", "<OutputType>Exe</OutputType><DefineConstants>$(DefineConstants);DV_PROFILE_NATIVE</DefineConstants>")
     if resume_bundle:
         shutil.copyfile(VERIFICATION / 'DebugCheckpointResume.cs', build / 'DebugCheckpointResume.cs')
-        project = PROJECT.replace('<OutputType>Exe</OutputType>', '<OutputType>Exe</OutputType><StartupObject>DebugCheckpointResume</StartupObject>')
+        project = project.replace('<OutputType>Exe</OutputType>', '<OutputType>Exe</OutputType><StartupObject>DebugCheckpointResume</StartupObject>')
     (build / 'Program.csproj').write_text(project, encoding='utf-8')
     build_start = time.monotonic()
     build_stages = []
@@ -501,7 +513,10 @@ def main():
         write_result(out, {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': False, 'source_unchanged': False, 'trace_written': False, 'error': 'Sources changed during build or generated inputs differ; session not started.'})
         return 1
     execution_env = env.copy()
+    execution_env['DV_OPT_READVIEW'] = '1' if run_config.get('opt_readview', False) else '0'
     execution_env['DV_OPT_RECORDCACHE'] = '1' if run_config.get('opt_recordcache', False) else '0'
+    execution_env['DV_OPT_PREDICATE'] = '1' if run_config.get('opt_predicate', False) else '0'
+    execution_env['DV_OPT_PREDICATECACHE'] = '1' if run_config.get('opt_predicatecache', False) else '0'
     execution_env['DOTNET_gcServer'] = '1' if args.gc_mode == 'server' else '0'
     execution_env['DOTNET_GCHeapCount'] = format(args.gc_heaps, 'x')
     if args.profile:
