@@ -355,7 +355,7 @@ fn c2_inspection_presentation(actor, object, fields):
         rt_push(lines, c2_visible_line(dv_all([dv_fact(campaign_ref(object, "council_closed"), true), dv_fact(campaign_ref(object, "council_ended"), false)]), "议事时段已经结束，公约签名尚未齐备。未签名、未投票与未决事项仍按实际记录保留。", [], closing_source))
         rt_push(lines, c2_visible_line(dv_fact(campaign_ref(object, "underground_tremor"), true), "铜口底噪里夹着极轻的共鸣，脚下仍能觉出余震。来由尚待查明。", [], closing_source))
     if object == "case.contract" or object == "case.astral" or object == "case.logistics":
-        let names = {"lock_no_pry": "锁具检查", "emergency_inventory_majority": "大半张清册的查找", "ward_half_paper": "另一半清册的出示", "joined_inventory": "清册拼合", "ladder_lowered": "备用梯放下", "copper_filings": "铜屑勘查", "seven_step_scuffs": "步位擦痕勘查", "palm_print": "掌印勘查", "vent_pressure_formula": "通风压差算式核对", "moran_reassured": "画夹持有人的安抚", "complete_draft": "完整底稿出示", "r07_skin_test": "R-07皮试记录查找", "three_old_scars": "旧疤核对", "medicine_key_given": "药柜钥匙交接"}
+        let names = {"lock_no_pry": "锁具检查", "emergency_inventory_majority": "大半张清册的查找", "ward_half_paper": "另一半清册的出示", "joined_inventory": "清册拼合", "ladder_lowered": "备用梯放下", "copper_filings": "铜屑勘查", "seven_step_scuffs": "步位擦痕勘查", "palm_print": "掌印勘查", "vent_pressure_formula": "通风压差算式核对", "moran_reassured": "画夹持有人的安抚", "complete_draft": "完整底稿出示", "gesture_identified": "本人断后手势的说明", "rescue_intention_explained": "关闸与后续救援意图的说明", "abandoned_child_misunderstanding_resolved": "弃子定性的现场撤回", "r07_skin_test": "R-07皮试记录查找", "three_old_scars": "旧疤核对", "medicine_key_given": "药柜钥匙交接"}
         var i = 0
         while i < rt_count(fields):
             let label = dv_find(names, fields[i], "现场操作")
@@ -2089,7 +2089,7 @@ fn c2i_rows_build():
         c2i_row("quer", "quer.c2.resonance.copper", "resonance_hall", resonance, "case.astral", "copper_filings", [dv_fact(campaign_ref("case.astral", "ladder_lowered"), true)], "检视平台管口", "平台的管口下留着细小铜屑。"),
         c2i_row("detective", "detective.c2.resonance.steps", "resonance_hall", resonance, "case.astral", "seven_step_scuffs", [dv_fact(campaign_ref("case.astral", "ladder_lowered"), true)], "对照七星步位与地面", "顺着七星步位，逐一比对地面的擦痕。"),
         c2i_row("detective", "detective.c2.resonance.palm", "resonance_hall", resonance, "case.astral", "palm_print", [dv_fact(campaign_ref("case.astral", "ladder_lowered"), true)], "检视梯子与平台边缘", "梯上与平台边缘留着掌印，位置与攀援线路相接。"),
-        c2i_row("detective", "detective.c2.resonance.pressure", "quiet_room", resonance, "case.astral", "vent_pressure_formula", [], "检视备用通风道的标记", "检查备用通风道，抄下标注时刻与压差的算式，保留两者的对应关系。"),
+        c2i_row("detective", "detective.c2.resonance.pressure", "quiet_room", resonance, "case.astral", "vent_pressure_formula", [], "检视备用通风道的标记", "检查备用通风道，逐项核对标注时刻、压差与开闭闸次序：关门后的通风安排仍为门内保留生路，不能仅从落闸推定放弃救援。"),
         c2i_row("quer", "quer.c2.safety.acid-drawer", "white_tower_safe", safety, "case.logistics", "r07_skin_test", [], "打开日志抽屉", "实际开启已可操作的抽屉，取出R-07自体皮试记录。"),
         c2i_row("margaret", "margaret.c2.granary.wedge", "logistics", campaign_window(3, 720, 840), "c2.granary", "wedge_set", [c2i_granary_team(), dv_fact(campaign_own("margaret", "can_structure"), true), dv_fact(campaign_ref("c2.granary", "structure_checked"), true)], "放置结构楔", "按昨日勘查位置置入结构楔，托住变形门框。"),
         c2i_row("huo", "huo.c2.granary.jack", "logistics", campaign_window(3, 720, 840), "c2.granary", "lift_mm", [c2i_granary_team(), dv_fact(campaign_own("huo", "can_weight"), true), dv_fact(campaign_own("margaret", "support_active"), true), dv_fact(campaign_ref("c2.granary", "wedge_set"), true)], "用千斤顶承托门框", "以千斤顶和滑轮抬升门框四毫米，保持载荷，让雀儿操作双栓。")]
@@ -2099,8 +2099,13 @@ fn c2i_rows_build():
     rt_push(rows, c2i_row("gu", "gu.c2.document.apology", "document_workshop", document, "case.contract", "gu_apologized", [dv_fact(campaign_ref("case.contract", "joined_inventory"), true)], "为先前的指认致歉", "清册拼合了，锁也没有撬痕。老朽先前失察，在这里致歉。"))
     rt_push(rows, c2i_row("ward", "ward.c2.document.return-key", "document_workshop", document, "case.contract", "key_returned", [dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_fact(campaign_ref("case.contract", "cabinet_key_holder"), "ward"), campaign_at("quer", "document_workshop")], "归还代管钥匙", "证据已核清。我把代管的钥匙当面归还雀儿。"))
     rt_push(rows, c2i_row("detective", "detective.c2.astral.reassure", "quiet_room", resonance, "case.astral", "moran_reassured", [campaign_at("moran", "quiet_room")], "安抚画夹的主人", "先别急着解释，把画夹取来，我们逐页看清楚。"))
-    rt_push(rows, c2i_row("moran", "moran.c2.astral.draft", "quiet_room", resonance, "case.astral", "complete_draft", [dv_fact(campaign_ref("case.astral", "moran_reassured"), true)], "展出画夹中的底稿", "翻开画夹暗层，展出完整底稿：两指向下，作劈切之势。"))
-    rt_push(rows, c2i_row("elena", "elena.c2.astral.identify", "quiet_room", resonance, "case.astral", "abandoned_child_misunderstanding_resolved", [dv_fact(campaign_ref("case.astral", "complete_draft"), true)], "说明草图中的手势", "是双指向下的劈切，不是弃子的手势。此前的误会应当撤回。"))
+    rt_push(rows, c2i_row("moran", "moran.c2.astral.draft", "quiet_room", resonance, "case.astral", "complete_draft", [dv_fact(campaign_ref("case.astral", "moran_reassured"), true)], "展出画夹中的底稿", "翻开画夹暗层，展出完整底稿：门内的伊莲娜双指向下作劈切之势；完整手腕与门闸方向一并保留，不能再把截断的伸手草图单独当作求救遭弃的证据。"))
+    let astral_evidence = [dv_fact(campaign_ref("case.astral", "complete_draft"), true), dv_fact(campaign_ref("case.astral", "vent_pressure_formula"), true)]
+    let astral_confrontation = [campaign_at("ruan", "quiet_room"), campaign_at("elena", "quiet_room"), campaign_at("selma", "quiet_room")]
+    rt_push(rows, c2i_row("elena", "elena.c2.astral.identify", "quiet_room", resonance, "case.astral", "gesture_identified", c2m_concat(astral_evidence, astral_confrontation), "对照底稿说明自己的断后手势", "底稿画的是我双指向下要求关闸。我当时主动留下断后；请把这个手势与备用通风的时刻、压差一起核对，不要只凭半张草图替我下结论。"))
+    rt_push(rows, c2i_row("ruan", "ruan.c2.astral.explain-rescue", "quiet_room", resonance, "case.astral", "rescue_intention_explained", c2m_concat(c2m_concat(astral_evidence, astral_confrontation), [dv_fact(campaign_ref("case.astral", "gesture_identified"), true)]), "当面对照备用通风与关闸意图", "伊莲娜要求关闸的手势与备用通风算式相合。我拉闸时仍保留了门内的通风和救援安排；先前只说弃一保三，省略了她主动断后与后续救援，这个说法必须纠正。"))
+    rt_push(rows, c2i_row("selma", "selma.c2.astral.withdraw-abandonment", "quiet_room", resonance, "case.astral", "abandoned_child_misunderstanding_resolved", c2m_concat(c2m_concat(astral_evidence, astral_confrontation), [dv_fact(campaign_ref("case.astral", "gesture_identified"), true), dv_fact(campaign_ref("case.astral", "rescue_intention_explained"), true)]), "依据完整材料撤回弃子定性", "完整底稿、备用通风算式和你们当面的说明已经对上。我撤回阮清月放弃伊莲娜的定性；此后合作按实际安排核对，不再拿这半张草图拒绝协作。"))
+    rt_push(rows, c2i_row("ruan", "ruan.c2.astral.restore-ledger-support", "quiet_room", resonance, campaign_body("ruan"), "astral_ledger_support", c2m_concat(astral_confrontation, [dv_fact(campaign_ref("case.astral", "abandoned_child_misunderstanding_resolved"), true)]), "确认恢复台账协作", "既然弃子的定性已按完整证据撤回，我愿恢复这次配给台账的协作。补记栏仍按本人采纳的规则和现场取用记录办理，不替任何人预先销账。"))
     let assembled = dv_all([campaign_at("mora", "white_tower_safe"), campaign_at("bertrand", "white_tower_safe"), campaign_at("veronica", "white_tower_safe")])
     rt_push(rows, c2i_row("veronica", "veronica.c2.safety.scars", "white_tower_safe", safety, "case.logistics", "three_old_scars", [assembled, dv_fact(campaign_ref("case.logistics", "r07_skin_test"), true)], "出示旧疤并核对记录", "卷起左袖，露出三道旧疤，按日期和R-07自体皮试记录核对。"))
     rt_push(rows, c2i_row("mora", "mora.c2.safety.apology-key", "white_tower_safe", safety, "case.logistics", "medicine_key_given", [assembled, dv_fact(campaign_ref("case.logistics", "three_old_scars"), true)], "致歉并交接药柜钥匙", "是我误会了。药柜钥匙交给你，我们把抗侵蚀剂配出来。"))
@@ -2205,13 +2210,13 @@ fn c2i_actions(actor):
                 action = dv_with(action, "work_operation", row.id)
             if row.field == "wedge_set" or row.field == "lift_mm":
                 action = dv_with(action, "repeatable", true)
-            let talk_fields = ["gu_apologized", "key_returned", "moran_reassured", "abandoned_child_misunderstanding_resolved", "medicine_key_given"]
+            let talk_fields = ["gu_apologized", "key_returned", "moran_reassured", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved", "astral_ledger_support", "medicine_key_given"]
             if dv_has(talk_fields, row.field):
                 action = dv_with_many(action, {"kind": "talk", "speech": dv_with(campaign_speech(dv_true(), campaign_approved("chapter-two-evidence-led-dialogue"), "case-resolution"), "surface", row.text), "listeners": campaign_people()})
             rt_push(result, action)
         i = i + 1
     // Evidence becomes available to another actor through an actual local inspection.
-    let places = [{"object": "case.contract", "room": "document_workshop", "fields": ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]}, {"object": "case.astral", "room": "resonance_hall", "fields": ["ladder_lowered", "copper_filings", "seven_step_scuffs", "palm_print"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["vent_pressure_formula", "moran_reassured", "complete_draft"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["r07_skin_test", "three_old_scars", "medicine_key_given", "anti_erosion_mixed"]}, {"object": "c2.granary", "room": "logistics", "fields": ["wedge_set", "lift_mm", "double_bolts", "reserve_added"]}]
+    let places = [{"object": "case.contract", "room": "document_workshop", "fields": ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]}, {"object": "case.astral", "room": "resonance_hall", "fields": ["ladder_lowered", "copper_filings", "seven_step_scuffs", "palm_print"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["vent_pressure_formula", "moran_reassured", "complete_draft", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["r07_skin_test", "three_old_scars", "medicine_key_given", "anti_erosion_mixed"]}, {"object": "c2.granary", "room": "logistics", "fields": ["wedge_set", "lift_mm", "double_bolts", "reserve_added"]}]
     i = 0
     while i < rt_count(places):
         let place = places[i]
@@ -2302,7 +2307,7 @@ fn c2i_goals(actor):
         rt_push(goals, campaign_goal(campaign_at("moran", "outdoor_alley"), dv_fact(campaign_ref("case.astral", "evening_choice"), "go"), [campaign_approved("execute-actual-personal-sketch-choice")]))
         rt_push(goals, campaign_goal(dv_fact(campaign_ref("case.astral", "evening_choice"), "go"), c2_night(4), [campaign_approved("evening-research-opportunity-not-compulsory-outcome")]))
         rt_push(goals, campaign_goal(campaign_at("moran", "clinic"), dv_fact(campaign_own("moran", "fever"), true), [campaign_approved("actual-discomfort-motivates-return-to-care")]))
-    let evidence_places = [{"object": "case.contract", "room": "document_workshop", "fields": ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]}, {"object": "case.astral", "room": "resonance_hall", "fields": ["ladder_lowered", "copper_filings", "seven_step_scuffs", "palm_print"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["vent_pressure_formula", "moran_reassured", "complete_draft"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["r07_skin_test", "three_old_scars", "medicine_key_given", "anti_erosion_mixed"]}]
+    let evidence_places = [{"object": "case.contract", "room": "document_workshop", "fields": ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]}, {"object": "case.astral", "room": "resonance_hall", "fields": ["ladder_lowered", "copper_filings", "seven_step_scuffs", "palm_print"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["vent_pressure_formula", "moran_reassured", "complete_draft", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["r07_skin_test", "three_old_scars", "medicine_key_given", "anti_erosion_mixed"]}]
     var place_index = 0
     while place_index < rt_count(evidence_places):
         let place = evidence_places[place_index]
@@ -2324,6 +2329,7 @@ fn c2i_goals(actor):
 法则 c2i_reserve_column_law：
     当 "ruan" 位于 后勤院。
     并且 配给总账 的 "supplement_column" 等于 false。
+    并且 campaign_own("ruan", "astral_ledger_support") 等于 true。
     则 配给总账 的 "supplement_column" 变为 true。
 
 axiom c2i_complete_pending_law(actor):
@@ -2636,7 +2642,7 @@ fn c2_work_purpose(field):
     if field == "key_returned":
         叙述：
             核对代管依据与现场记录，办理钥匙交接。
-    if field == "gu_apologized" or field == "abandoned_child_misunderstanding_resolved":
+    if field == "gu_apologized" or dv_has(["gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved", "astral_ledger_support"], field):
         叙述：
             依据实际取得的材料，重新评估并说明先前判断。
     叙述：
@@ -2703,7 +2709,7 @@ fn c2_cooperation_rows():
             var refuse = c2d_row("quer", rt_cat(item.id, ".refuse-restriction"), item.room, item_active, dv_true(), rt_cat("说明保留意见：", item.purpose), "先前对我的指控还没有向我澄清，却先叫我替你们开锁？把依据说清楚，再谈这次合作。", source)
             refuse = dv_with_many(refuse, {"work_refusal": true, "work_reply": item.id, "repeatable": false, "owned_decision": c2_work_decision(item, "declined", source), "effects": [dv_assign(campaign_own("quer", rt_cat("work.accepted.", item.id)), false), dv_assign(decided, true)], "public_observers": campaign_people(), "public_grants": [decided, campaign_own("quer", rt_cat("work.accepted.", item.id))], "personal_choice": {"group": rt_cat("work.", item.id), "requires": item_active, "prohibits": dv_fact(decided, true), "promotes": ["not_targeted", "movement_freedom", "evidence"], "sacrifices": ["measured_work"], "basis": [source]}})
             rt_push(rows, refuse)
-        if item.actor == "quer" or item.actor == "huo" or item.actor == "margaret":
+        if item.actor == "quer" or item.actor == "huo" or item.actor == "margaret" or dv_has(["complete_draft", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved", "astral_ledger_support"], item.field):
             var requester = "detective"
             if requester != item.actor:
                 var invite = c2d_row(requester, rt_cat(item.id, ".request"), item.room, item_active, dv_true(), rt_cat("请求协作：", item.purpose), rt_cat("请你自己判断能否承担这一项：", item.purpose), source)
