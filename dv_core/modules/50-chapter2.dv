@@ -2107,8 +2107,10 @@ fn c2i_rows_build():
     rt_push(rows, c2i_row("selma", "selma.c2.astral.withdraw-abandonment", "quiet_room", resonance, "case.astral", "abandoned_child_misunderstanding_resolved", c2m_concat(c2m_concat(astral_evidence, astral_confrontation), [dv_fact(campaign_ref("case.astral", "gesture_identified"), true), dv_fact(campaign_ref("case.astral", "rescue_intention_explained"), true)]), "依据完整材料撤回弃子定性", "完整底稿、备用通风算式和你们当面的说明已经对上。我撤回阮清月放弃伊莲娜的定性；此后合作按实际安排核对，不再拿这半张草图拒绝协作。"))
     rt_push(rows, c2i_row("ruan", "ruan.c2.astral.restore-ledger-support", "quiet_room", resonance, campaign_body("ruan"), "astral_ledger_support", c2m_concat(astral_confrontation, [dv_fact(campaign_ref("case.astral", "abandoned_child_misunderstanding_resolved"), true)]), "确认恢复台账协作", "既然弃子的定性已按完整证据撤回，我愿恢复这次配给台账的协作。补记栏仍按本人采纳的规则和现场取用记录办理，不替任何人预先销账。"))
     let assembled = dv_all([campaign_at("mora", "white_tower_safe"), campaign_at("veronica", "white_tower_safe"), c2_can_act("mora"), c2_can_act("veronica")])
-    rt_push(rows, c2i_row("veronica", "veronica.c2.safety.scars", "white_tower_safe", safety, "case.logistics", "three_old_scars", [assembled, dv_fact(campaign_ref("case.logistics", "r07_skin_test"), true)], "出示旧疤并核对记录", "卷起左袖，露出三道旧疤，按日期和R-07自体皮试记录核对。"))
-    rt_push(rows, c2i_row("mora", "mora.c2.safety.apology-key", "white_tower_safe", safety, "case.logistics", "medicine_key_given", [assembled, dv_fact(campaign_ref("case.logistics", "medicine_key_holder"), "mora"), dv_fact(campaign_ref("case.logistics", "r07_skin_test"), true), dv_fact(campaign_ref("case.logistics", "three_old_scars"), true)], "致歉并交接药柜钥匙", "是我误会了。药柜钥匙交给你，我们把抗侵蚀剂配出来。"))
+    let confrontation = dv_all([assembled, campaign_at("bertrand", "white_tower_safe"), c2_can_act("bertrand"), campaign_any(dv_all([campaign_at("detective", "white_tower_safe"), c2_can_act("detective")]), dv_all([campaign_at("quer", "white_tower_safe"), c2_can_act("quer")]))])
+    rt_push(rows, c2i_row("veronica", "veronica.c2.safety.scars", "white_tower_safe", safety, "case.logistics", "three_old_scars", [confrontation, dv_fact(campaign_ref("case.logistics", "r07_skin_test"), true)], "出示旧疤并核对记录", "卷起左袖，露出三道旧疤，按日期和R-07自体皮试记录核对。"))
+    rt_push(rows, c2i_row("bertrand", "bertrand.c2.safety.thanks", "white_tower_safe", safety, "case.logistics", "patient_thanked", [confrontation, dv_fact(campaign_ref("case.logistics", "three_old_scars"), true)], "当面确认旧日清创并致谢", "贝尔特朗当面确认那次清创救治的是自己，向维罗妮卡致谢。"))
+    rt_push(rows, c2i_row("mora", "mora.c2.safety.apology-key", "white_tower_safe", safety, "case.logistics", "medicine_key_given", [confrontation, dv_fact(campaign_ref("case.logistics", "patient_thanked"), true), dv_fact(campaign_ref("case.logistics", "medicine_key_holder"), "mora"), dv_fact(campaign_ref("case.logistics", "r07_skin_test"), true), dv_fact(campaign_ref("case.logistics", "three_old_scars"), true)], "致歉并交接药柜钥匙", "是我误会了。药柜钥匙交给你，我们把抗侵蚀剂配出来。"))
     rt_push(rows, c2i_row("mora", "mora.c2.safety.prepare", "white_tower_safe", safety, "case.logistics", "medicine_materials_checked", [assembled, dv_fact(campaign_ref("case.logistics", "medicine_key_given"), true), dv_fact(campaign_ref("case.logistics", "medicine_key_holder"), "veronica"), dv_fact(campaign_ref("case.logistics", "medicine_restricted"), false)], "共同核对配药材料与用量", "茉拉与维罗妮卡打开药柜，按R-07自体皮试记录逐项核对现有材料、用量和耐受标定。"))
     rt_push(rows, c2i_row("veronica", "veronica.c2.safety.mix", "white_tower_safe", safety, "case.logistics", "anti_erosion_mixed", [assembled, dv_fact(campaign_ref("case.logistics", "medicine_key_given"), true), dv_fact(campaign_ref("case.logistics", "medicine_materials_checked"), true), dv_fact(campaign_ref("case.logistics", "medicine_key_holder"), "veronica"), dv_fact(campaign_ref("case.logistics", "medicine_restricted"), false)], "配制抗侵蚀剂", "依皮试记录核对材料与用量，配成抗侵蚀剂，贴妥标签。"))
     rt_push(rows, c2i_row("moran", "moran.c2.sketch.day", "outdoor_high", campaign_window(3, 720, 1020), campaign_body("moran"), "day_sketch_exposed", [dv_fact(campaign_ref("c2.weather", "daylight"), true)], "前往高地写生", "在高地对着光写生，返程前察觉灰尘刺激，身体发热。"))
@@ -2217,17 +2219,29 @@ fn c2i_actions(actor):
                 rt_push(grants, campaign_own("moran", "fever"))
                 rt_push(grants, campaign_own("moran", "erosion_exposure"))
             var action = dv_with_many(campaign_surface_action(row.id, "experiment", pre, c2i_physical_premise(row), row.id, grants, row.label, row.text, campaign_approved("chapter-two-real-investigation-contact")), {"public_observers": campaign_people(), "public_grants": visible_grants})
+            if dv_has(["three_old_scars", "patient_thanked", "medicine_key_given"], row.field):
+                var invitations = []
+                let hosts = ["detective", "quer"]
+                let rooms = ["living_hall", "clinic", "white_tower_safe"]
+                var host_index = 0
+                while host_index < rt_count(hosts):
+                    var room_index = 0
+                    while room_index < rt_count(rooms):
+                        rt_push(invitations, {"speaker": hosts[host_index], "action_id": rt_cat(hosts[host_index], rt_cat(".c2.safety.invite.", rt_cat(actor, rt_cat(".", rooms[room_index]))))})
+                        room_index = room_index + 1
+                    host_index = host_index + 1
+                action = dv_with(action, "received_speech_requirement", {"any_of": invitations})
             if actor == "quer" and row.field != "lock_no_pry":
                 action = dv_with(action, "work_operation", row.id)
             if row.field == "wedge_set" or row.field == "lift_mm":
                 action = dv_with(action, "repeatable", true)
-            let talk_fields = ["gu_apologized", "key_returned", "moran_reassured", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved", "astral_ledger_support", "medicine_key_given"]
+            let talk_fields = ["gu_apologized", "key_returned", "moran_reassured", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved", "astral_ledger_support", "medicine_key_given", "patient_thanked"]
             if dv_has(talk_fields, row.field):
                 action = dv_with_many(action, {"kind": "talk", "speech": dv_with(campaign_speech(dv_true(), campaign_approved("chapter-two-evidence-led-dialogue"), "case-resolution"), "surface", row.text), "listeners": campaign_people()})
             rt_push(result, action)
         i = i + 1
     // Evidence becomes available to another actor through an actual local inspection.
-    let places = [{"object": "case.contract", "room": "document_workshop", "fields": ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]}, {"object": "case.astral", "room": "resonance_hall", "fields": ["ladder_lowered", "copper_filings", "seven_step_scuffs", "palm_print"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["vent_pressure_formula", "moran_reassured", "complete_draft", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["r07_skin_test", "three_old_scars", "medicine_key_given", "medicine_materials_checked", "medicine_key_holder", "medicine_restricted", "anti_erosion_mixed"]}, {"object": "c2.granary", "room": "logistics", "fields": ["wedge_set", "lift_mm", "double_bolts", "reserve_added"]}]
+    let places = [{"object": "case.contract", "room": "document_workshop", "fields": ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]}, {"object": "case.astral", "room": "resonance_hall", "fields": ["ladder_lowered", "copper_filings", "seven_step_scuffs", "palm_print"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["vent_pressure_formula", "moran_reassured", "complete_draft", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["r07_skin_test", "three_old_scars", "patient_thanked", "medicine_key_given", "medicine_materials_checked", "medicine_key_holder", "medicine_restricted", "anti_erosion_mixed"]}, {"object": "c2.granary", "room": "logistics", "fields": ["wedge_set", "lift_mm", "double_bolts", "reserve_added"]}]
     i = 0
     while i < rt_count(places):
         let place = places[i]
@@ -2291,6 +2305,36 @@ fn c2i_goals(actor):
             rt_push(goals, campaign_observation_goal(campaign_own(patient, "respiratory_failure"), c2_patient_contact(id, patient), [campaign_approved("actual-contact-before-care-or-rescue")], 5370))
             rt_push(goals, campaign_observation_goal(campaign_own(patient, "anti_erosion_treated"), c2_patient_contact(id, patient), [campaign_approved("actual-contact-before-care-or-rescue")], 0))
             patient_index = patient_index + 1
+    if id == "detective" or id == "quer":
+        let guests = ["mora", "bertrand", "veronica"]
+        let rooms = ["living_hall", "clinic", "white_tower_safe"]
+        let completed = dv_find(actor, "completed_actions", [])
+        var invited = false
+        var guest_index = 0
+        while guest_index < rt_count(guests):
+            var room_index = 0
+            while room_index < rt_count(rooms):
+                if dv_has(completed, rt_cat(id, rt_cat(".c2.safety.invite.", rt_cat(guests[guest_index], rt_cat(".", rooms[room_index]))))):
+                    invited = true
+                room_index = room_index + 1
+            guest_index = guest_index + 1
+        if invited:
+            rt_push(goals, dv_with_many(campaign_goal(campaign_at(id, "white_tower_safe"), dv_all([campaign_window(3, 780, 1020), dv_fact(campaign_ref("case.logistics", "medicine_key_given"), false)]), [campaign_approved("actual-inviter-attends-medicine-confrontation")]), {"navigation_room": "white_tower_safe", "maintain_presence": true}))
+    if dv_has(["mora", "bertrand", "veronica"], id):
+        let hosts = ["detective", "quer"]
+        let rooms = ["living_hall", "clinic", "white_tower_safe"]
+        var invited = false
+        var host_index = 0
+        while host_index < rt_count(hosts):
+            var room_index = 0
+            while room_index < rt_count(rooms):
+                let invite_id = rt_cat(hosts[host_index], rt_cat(".c2.safety.invite.", rt_cat(id, rt_cat(".", rooms[room_index]))))
+                if c2_received_requirement(actor, {"speaker": hosts[host_index], "action_id": invite_id}):
+                    invited = true
+                room_index = room_index + 1
+            host_index = host_index + 1
+        if invited:
+            rt_push(goals, dv_with_many(campaign_goal(campaign_at(id, "white_tower_safe"), campaign_window(3, 780, 1020), [campaign_approved("actual-heard-invitation-to-medicine-confrontation")]), {"navigation_room": "white_tower_safe", "maintain_presence": true}))
     let rows = c2i_rows()
     let closing = c2i_closing_navigation(actor)
     if closing != false:
@@ -2318,7 +2362,7 @@ fn c2i_goals(actor):
         rt_push(goals, campaign_goal(campaign_at("moran", "outdoor_alley"), dv_fact(campaign_ref("case.astral", "evening_choice"), "go"), [campaign_approved("execute-actual-personal-sketch-choice")]))
         rt_push(goals, campaign_goal(dv_fact(campaign_ref("case.astral", "evening_choice"), "go"), c2_night(4), [campaign_approved("evening-research-opportunity-not-compulsory-outcome")]))
         rt_push(goals, campaign_goal(campaign_at("moran", "clinic"), dv_fact(campaign_own("moran", "fever"), true), [campaign_approved("actual-discomfort-motivates-return-to-care")]))
-    let evidence_places = [{"object": "case.contract", "room": "document_workshop", "fields": ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]}, {"object": "case.astral", "room": "resonance_hall", "fields": ["ladder_lowered", "copper_filings", "seven_step_scuffs", "palm_print"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["vent_pressure_formula", "moran_reassured", "complete_draft", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["r07_skin_test", "three_old_scars", "medicine_key_given", "medicine_materials_checked", "medicine_key_holder", "medicine_restricted", "anti_erosion_mixed"]}]
+    let evidence_places = [{"object": "case.contract", "room": "document_workshop", "fields": ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]}, {"object": "case.astral", "room": "resonance_hall", "fields": ["ladder_lowered", "copper_filings", "seven_step_scuffs", "palm_print"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["vent_pressure_formula", "moran_reassured", "complete_draft", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["r07_skin_test", "three_old_scars", "patient_thanked", "medicine_key_given", "medicine_materials_checked", "medicine_key_holder", "medicine_restricted", "anti_erosion_mixed"]}]
     var place_index = 0
     while place_index < rt_count(evidence_places):
         let place = evidence_places[place_index]
@@ -2708,6 +2752,26 @@ fn c2_cooperation_rows():
     var accept = c2d_row("detective", "detective.c2.partner.accept", "living_hall", accept_when, dv_true(), "答应承担清册核对", "好。我承担清册核对；专业操作由你自己决定。", source)
     accept = dv_with_many(accept, {"received_speech_requirement": {"any_of": [{"speaker": "quer", "action_id": "quer.c2.partner.offer"}, {"speaker": "quer", "action_id": "night.partner"}]}, "effects": [dv_assign(campaign_first_night_ref("partner_promised"), true)], "partner_decision": "accept", "public_grants": [campaign_first_night_ref("partner_promised")], "personal_choice": {"group": "detective.partner", "requires": early, "prohibits": dv_fact(campaign_first_night_ref("partner_promised"), true), "promotes": ["evidence"], "sacrifices": [], "basis": [source]}})
     rt_push(rows, accept)
+    let medicine_hosts = ["detective", "quer"]
+    let medicine_guests = ["mora", "bertrand", "veronica"]
+    let medicine_meeting = campaign_window(3, 780, 1020)
+    let invitation_rooms = ["living_hall", "clinic", "white_tower_safe"]
+    var host_index = 0
+    while host_index < rt_count(medicine_hosts):
+        var guest_index = 0
+        while guest_index < rt_count(medicine_guests):
+            var room_index = 0
+            while room_index < rt_count(invitation_rooms):
+                let host = medicine_hosts[host_index]
+                let guest = medicine_guests[guest_index]
+                let room = invitation_rooms[room_index]
+                let invite_id = rt_cat(host, rt_cat(".c2.safety.invite.", rt_cat(guest, rt_cat(".", room))))
+                var invitation = c2d_row(host, invite_id, room, medicine_meeting, dv_true(), "邀请到白塔当面对质", "请到白塔安全端，把旧试药的记录、伤情与各人的说法当面核清。", source)
+                invitation = dv_with_many(invitation, {"listeners": [guest], "request": {"target": guest, "topic": "medicine-confrontation"}, "opportunity": {"location": room, "participants": [guest], "mode": "all-present"}, "repeatable": false})
+                rt_push(rows, invitation)
+                room_index = room_index + 1
+            guest_index = guest_index + 1
+        host_index = host_index + 1
     let work = c2_work_specs()
     var i = 0
     while i < rt_count(work):
@@ -3225,7 +3289,9 @@ fn c2m_actions(actor):
             while j < rt_count(row.effects):
                 rt_push(grants, row.effects[j].ref)
                 j = j + 1
-            let ready = c2m_ready(row)
+            var ready = c2m_ready(row)
+            if row.id == "mora.c2.motive.restrict-medicine":
+                ready = dv_all([ready, dv_fact(dv_scoped_ref("mora", "personal.mora", "appraisal", "angry"), true)])
             var action = dv_with(campaign_surface_action(row.id, "experiment", ready, c2m_authority(row), row.id, grants, row.label, row.text, c2m_source()), "predict_law", row.id)
             action = dv_with(action, "personal_choice", {"group": row.id, "requires": ready, "prohibits": dv_fact(campaign_ref(row.object, row.field), true), "promotes": row.promotes, "sacrifices": row.sacrifices, "require_positive": true, "basis": [c2m_source()]})
             if row.private:
