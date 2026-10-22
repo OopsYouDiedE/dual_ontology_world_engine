@@ -342,6 +342,27 @@ dv_all(conditions) = {"op": "all", "items": conditions}
 
 dv_not(condition) = {"op": "not", "item": condition}
 
+// Materialize only a timestamp already stored in this evaluated world. This
+// analyzes a boundary under stable nonclock inputs; it predicts no state change.
+fn dv_time_materialize(world, condition):
+    if condition.op == "held_for":
+        let cell = dv_read(world, condition.ref)
+        if cell.known and not cell.conflicted:
+            if not dv_same(cell.value, condition.value):
+                return dv_fact(condition.ref, condition.value)
+            return dv_all([dv_fact(condition.ref, condition.value), dv_at_least(condition.clock, cell.time + condition.duration)])
+        return condition
+    if condition.op == "not":
+        return dv_not(dv_time_materialize(world, condition.item))
+    if condition.op == "all":
+        var items = []
+        var i = 0
+        while i < rt_count(condition.items):
+            rt_push(items, dv_time_materialize(world, condition.items[i]))
+            i = i + 1
+        return dv_all(items)
+    return condition
+
 // Record-shaped equalities and updates are ordinary law data. They retain the
 // three-valued premise evaluator and the same atomic effect staging path.
 dv_matches(object_id, facet, fields) = dv_all([for entry in fields: dv_fact(dv_ref(object_id, facet, entry[0]), entry[1])])
@@ -376,6 +397,14 @@ fn dv_condition_inputs(condition):
                 j = j + 1
             i = i + 1
         return {"complete": complete, "reads": reads}
+    if op == "held_for":
+        if not dv_has_key(condition, "ref") or not dv_has_key(condition, "value") or not dv_has_key(condition, "clock") or not dv_has_key(condition, "duration"):
+            return unsupported
+        let target = dv_condition_inputs(dv_fact(condition.ref, condition.value))
+        let clock = dv_condition_inputs(dv_at_least(condition.clock, 0))
+        if not target.complete or not clock.complete or not rt_is_numeric_value(condition.duration) or condition.duration < 0:
+            return unsupported
+        return {"complete": true, "reads": [condition.ref, condition.clock]}
     if (op != "equals" and op != "at_least") or not dv_has_key(condition, "ref") or not dv_has_key(condition, "value"):
         return unsupported
     let ref = condition.ref
@@ -433,6 +462,10 @@ fn dv_time_boundary(condition, clock, now, until, policy):
             next = dv_min(next, part.next)
             i = i + 1
         return {"complete": true, "next": next}
+    // The onset belongs to the evaluated cell, not to declaration syntax.
+    // Without a world argument retain conservative minute reconsideration.
+    if op == "held_for":
+        return fallback
     let inputs = dv_condition_inputs(condition)
     if not inputs.complete:
         return fallback
@@ -570,6 +603,15 @@ fn dv_truth_uncached(world, proposition):
                 if dv_or((not cell.known), cell.conflicted):
                     return "unknown"
                 else:
+                    if op == "held_for":
+                        if not dv_same(cell.value, proposition.value):
+                            return "false"
+                        let clock = dv_read(world, proposition.clock)
+                        if not clock.known or clock.conflicted or not rt_is_numeric_value(clock.value) or not rt_is_numeric_value(cell.time):
+                            return "unknown"
+                        if clock.value < cell.time + proposition.duration:
+                            return "false"
+                        return "true"
                     if (op == "equals"):
                         if dv_same(cell.value, proposition.value):
                             return "true"
@@ -583,6 +625,10 @@ fn dv_truth_uncached(world, proposition):
                                 return "true"
                         else:
                             return rt_fail("Unknown proposition operator")
+
+// A successful assignment starts the interval; a later different value ends it.
+// Perceptions conservatively use their own recorded observation time.
+dv_held_for(ref, value, clock, duration) = {"op": "held_for", "ref": ref, "value": value, "clock": clock, "duration": duration}
 
 dv_assign(ref, value) = {"op": "assign", "ref": ref, "value": value}
 

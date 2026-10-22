@@ -1,0 +1,33 @@
+#include ../../modules/20-core.dv
+
+// Isolated mechanism fixture: no campaign, actors, scheduling or AI session.
+fn dvg_debug_run():
+    let symptom = dv_ref("patient", "state", "symptom")
+    let clock = dv_ref("clock", "state", "minute")
+    var world = dv_world("duration-fixture", "physical", "")
+    world = dv_add_object(world, dv_object("patient", "fixture", {"state": {"symptom": dv_cell(true, 1, 10, []), "settled": dv_field(false)}}))
+    world = dv_add_object(world, dv_object("clock", "fixture", {"state": {"minute": dv_cell(129, 1, 129, [])}}))
+    let condition = dv_held_for(symptom, true, clock, 120)
+    dv_require(dv_truth(world, condition) == "false", "Premature duration")
+    let bound = dv_time_boundary(dv_time_materialize(world, condition), clock, 129, 200, "minute")
+    dv_require(bound.complete and bound.next == 130, "Incorrect duration boundary")
+    let static_bound = dv_time_boundary(condition, clock, 129, 200, "minute")
+    dv_require(not static_bound.complete and static_bound.next == 130, "Static analysis overstated duration completeness")
+    world = dv_store(world, clock, dv_cell(130, 1, 130, []))
+    dv_require(dv_truth(world, condition) == "true", "Duration endpoint not included")
+    let law = dv_axiom("settle", 1, condition, [dv_assign(dv_ref("patient", "state", "settled"), true)])
+    world = dv_adopt(world, law, "enforce", 1, ["isolated-duration-fixture"])
+    let execution = dv_execute(world, "settle", "fixture-execution", 130, world.revision)
+    dv_require(execution.status == "applied" and dv_truth(execution.world, dv_fact(dv_ref("patient", "state", "settled"), true)) == "true", "Formal law did not consume duration")
+    world = dv_store(world, symptom, dv_cell(true, 1, 20, []))
+    dv_require(dv_truth(world, condition) == "false", "Repeated observation did not conservatively restart age")
+    world = dv_store(world, symptom, dv_cell(false, 1, 20, []))
+    dv_require(dv_truth(world, condition) == "false", "Different value satisfied duration")
+    world = dv_store(world, symptom, dv_unknown())
+    dv_require(dv_truth(world, condition) == "unknown", "Unknown target became a duration proof")
+    world = dv_store(world, symptom, dv_with(dv_cell(true, 1, 10, []), "conflicted", true))
+    dv_require(dv_truth(world, condition) == "unknown", "Conflicted target became a duration proof")
+    world = dv_store(world, symptom, dv_cell(true, 1, 10, []))
+    world = dv_store(world, clock, dv_unknown())
+    dv_require(dv_truth(world, condition) == "unknown", "Unknown clock became a duration proof")
+    return {"scope": "isolated-duration-predicate-and-formal-law", "result": "duration endpoint, conservative restart, unknown/conflict and formal execution checked; no game outcome claimed"}

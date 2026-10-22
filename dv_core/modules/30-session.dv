@@ -1838,6 +1838,8 @@ fn dvp_unmet_refs(mind, proposition, include_known):
                 return result
             else:
                 if dv_or(include_known, (not (dv_truth(mind, proposition) == "true"))):
+                    if op == "held_for":
+                        return [proposition.ref, proposition.clock]
                     return dv_single(proposition.ref)
                 else:
                     return []
@@ -4405,6 +4407,8 @@ fn dvs_pragmatics_reconsider(actor, events, time, parent):
 
 fn dvs_sim_refs(proposition):
     var op = proposition.op
+    if op == "held_for":
+        return [proposition.ref, proposition.clock]
     if dv_or((op == "equals"), (op == "at_least")):
         return dv_single(proposition.ref)
     else:
@@ -8099,7 +8103,7 @@ fn dvs_environment_next_time(world, story, due):
     while i < rt_count(processes):
         let adoption = dv_get(world.adoptions, processes[i].law)
         if adoption.active and adoption.mode == "enforce":
-            next = dv_min(next, dvs_environment_boundary(adoption.law.premise, clock, now, due))
+            next = dv_min(next, dvs_environment_boundary(dv_time_materialize(world, adoption.law.premise), clock, now, due))
             if dv_truth(world, adoption.law.premise) == "true":
                 let staged = dv_stage(world, adoption.law.effects, now, adoption.basis, adoption.confidence)
                 var j = 0
