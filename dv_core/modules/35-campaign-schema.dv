@@ -226,13 +226,13 @@ fn campaign_future_goal_pending(actor, goal):
 
 fn campaign_index_goal_window(goal):
     let condition = dv_find(goal, "available_when", dv_true())
-    let key = ["c1n_goal_window"]
+    let key = ["c1n_goal_window-v2"]
     let cached = rt_memo_get(condition, key)
     var window = []
     if cached[0]:
         window = cached[1]
     else:
-        window = rt_memo_put(condition, key, {"future_clock_condition": condition, "future_clock_bounds": campaign_positive_clock_bounds(condition), "future_nonclock": campaign_without_clock(condition)})
+        window = rt_memo_put(condition, key, {"future_clock_condition": condition, "future_clock_bounds": campaign_positive_clock_bounds(condition), "future_clock_boundaries": campaign_clock_boundaries(condition), "future_nonclock": campaign_without_clock(condition)})
     return dv_with_many(goal, window)
 
 fn campaign_approved(id):

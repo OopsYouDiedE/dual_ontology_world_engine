@@ -26,11 +26,28 @@ fn dvs_event_storage(kind, data):
     while index < rt_count(data):
         let entry = data[index]
         if not dv_has(["mind_before", "mind_after", "physical_before", "physical_after", "actor_before", "actor_after"], entry[0]) or dv_has(keep, entry[0]):
-            rt_push(result, entry)
+            if kind == "action_execution" and entry[0] == "receipt":
+                // Ordinary play retains settlement, changes and source identity.
+                // The nested execution world otherwise keeps every physical
+                // history prefix alive despite removing physical_before/after.
+                let execution = entry[1].execution
+                let world = execution.world
+                let reference = rt_raw_ref(world)
+                if reference != false:
+                    // This is an actual prior DAG node, not a summary standing in
+                    // for missing evidence. Without a recorder keep the full value.
+                    let cut = {"world": world.id, "revision": world.revision, "time": dv_find(world, "time", 0), "raw_ref": reference, "storage": "raw-dag-world-reference"}
+                    let compact = dv_with(dv_without(execution, "world"), "world_cut", cut)
+                    rt_push(result, dv_pair("receipt", dv_with(entry[1], "execution", compact)))
+                else:
+                    rt_push(result, entry)
+            else:
+                rt_push(result, entry)
         index = index + 1
     return result
 
 fn dvs_find_event_by_id(events, id):
+    events = rt_snapshot(events)
     if (rt_length(id) > 1 and rt_chr(id, 0) == "e"):
         let num_str = rt_slice(id, 1, rt_length(id) - 1)
         if rt_is_number(num_str):
@@ -241,7 +258,62 @@ fn dvs_hypotheses(actor, events, time, parent):
         actor = dv_with(actor, "last_cognitive_event", event)
     return dv_with_many(actor, {"hypothesis": best, "hypothesis_event": event})
 
+// Declared duties are scheduled work, not utility-search preferences. The index
+// contains declarations only; the subject's complete admission is still checked.
+fn dvs_obligation_actions(actions):
+    let key = ["dvs-obligation-actions-v1"]
+    let cached = rt_memo_get(actions, key)
+    if cached[0]:
+        return cached[1]
+    var result = []
+    var i = 0
+    while i < rt_count(actions):
+        if dv_find(actions[i], "obligation", false):
+            rt_push(result, actions[i])
+        i = i + 1
+    return rt_memo_put(actions, key, result)
+
+fn dvs_scan_obligations(actor, now, costs):
+    let actions = dvs_obligation_actions(actor.actions)
+    var best = false
+    var earliest = now + 1
+    var considered = 0
+    var admitted = 0
+    var i = 0
+    while i < rt_count(actions):
+        let action = actions[i]
+        let due = dv_find(action, "obligation_due", 0)
+        if due <= now and due < earliest:
+            considered = considered + 1
+            let relevant = dvs_sim_refs(action.precondition)
+            if dvp_eligible(actor, action, actor.mind, relevant):
+                admitted = admitted + 1
+                let model = dv_get(costs, action.kind)
+                if dv_action_cost_le(model.maximum, actor.ledger.balances):
+                    if not dv_has_key(actor.policy, "remaining_game_time") or model.maximum.time <= actor.policy.remaining_game_time:
+                        best = action
+                        earliest = due
+        i = i + 1
+    return {"action": best, "considered": considered, "admitted": admitted}
+
+fn dvs_due_obligation(actor, now, costs):
+    return dvs_scan_obligations(actor, now, costs).action
+
+fn dvs_obligation_choice(actor, costs):
+    let scanned = dvs_scan_obligations(actor, dv_find(actor, "decision_time", actor.mind.time), costs)
+    let action = scanned.action
+    if action == false:
+        return false
+    let refs = dvs_sim_refs(action.precondition)
+    let reason = "declared-obligation-due"
+    let work = {"cache_hit": false, "candidates_considered": scanned.considered, "admission_checks": scanned.considered, "eligible_evaluations": scanned.admitted, "forecasts": 0, "forecast_reuses": 0, "expanded_nodes": 0, "candidate_paths": 1, "skipped_expansion": true, "stop_reason": reason, "candidate_order": "declared-obligation", "candidate_order_scans": 0, "candidate_order_reuses": 0}
+    let plan = {"path": [action.id], "score": 0, "relevant_refs": refs, "score_scope": "declared-obligation", "mind_revision": actor.mind.revision, "evaluated_at_game_time": dv_find(actor, "decision_time", actor.mind.time)}
+    return {"action": action, "score": 0, "plan_expansions": 0, "plans": [plan], "selected_path": [action.id], "relevant_refs": refs, "stop": reason, "strategy": "declared-obligation-v1", "approximation": false, "time_blocked": 0, "dependency_expansions": 0, "dependency_cache": dv_find(actor, "dependency_cache", false), "planning_work": work}
+
 fn dvs_choose(actor, bindings, costs):
+    let duty = dvs_obligation_choice(actor, costs)
+    if duty != false:
+        return duty
     // Selective decisions have their own task continuation and sleeping inputs.
     // Do not build the full actor memo key just to perform one current-task scan.
     if dv_find(actor.policy, "selective_planning", false):
@@ -249,7 +321,7 @@ fn dvs_choose(actor, bindings, costs):
     let key = ["dvp_plan", dvp_memo_input(actor, costs), bindings, costs]
     let cached = rt_memo_get(actor.mind, key)
     if cached[0]:
-        return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "dependency_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions, "reused_dependency_expansions": dv_find(cached[1], "dependency_expansions", 0), "planning_work": {"cache_hit": true, "candidates_considered": 0, "candidates_skipped": 0, "partial_layer": false, "examined_layers": 0, "completed_layers": 0, "admission_checks": 0, "eligible_evaluations": 0, "forecasts": 0, "forecast_reuses": 0, "expanded_nodes": 0, "skipped_expansion": true, "stop_reason": "identical-complete-plan-input", "reused_work": dv_find(cached[1], "planning_work", [])}}))
+        return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "dependency_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions, "reused_dependency_expansions": dv_find(cached[1], "dependency_expansions", 0), "planning_work": {"cache_hit": true, "candidates_considered": 0, "candidates_skipped": 0, "partial_layer": false, "examined_layers": 0, "completed_layers": 0, "candidate_order": "cached-plan", "candidate_order_scans": 0, "candidate_order_reuses": 0, "admission_checks": 0, "eligible_evaluations": 0, "forecasts": 0, "forecast_reuses": 0, "expanded_nodes": 0, "skipped_expansion": true, "stop_reason": "identical-complete-plan-input", "reused_work": dv_find(cached[1], "planning_work", [])}}))
     return dvs_honor_planned_followup(actor, rt_memo_put(actor.mind, key, dvp_plan(actor, bindings, costs)))
 
 // Keep the actor's own predicted next step after a successful move, provided
@@ -374,13 +446,14 @@ fn dvs_choice_event(events, kind, actor, time, parents, choice):
     var data = []
     var i = 0
     while i < rt_count(choice):
-        if choice[i][0] != "dependency_cache":
+        if not dv_has(["dependency_cache", "continuation"], choice[i][0]):
             rt_push(data, choice[i])
         i = i + 1
     return dvs_event(events, kind, actor, time, parents, data)
 
 // Stage-local memo: only inference is reused; other cognition keeps its normal order.
 fn dvs_reason_input(actor):
+    actor = rt_snapshot(actor)
     let adoptions = actor.mind.adoptions
     let key = ["reason_input_refs"]
     let cached = rt_memo_get(adoptions, key)
@@ -416,7 +489,8 @@ fn dvs_reason_input(actor):
     return {"adoptions": adoptions, "inputs": cells, "derivations": derivations, "signatures": dv_find(actor, "inference_signatures", []), "budget": dv_find(actor.policy, "reason_budget", 0), "blocked": dv_find(actor, "cognition_blocked", false)}
 
 fn dvs_cognition_signature(actor):
-    let ignored = ["cognition_fixed_input", "cognition_event_cursor", "cognition_time", "cognition_input", "cognition_reused", "cognition_stop", "reason_fixed_input", "reason_reused", "last_reason_report", "last_readiness_report", "decision_time", "decision_revision", "idle_guard", "support_events_cursor", "heard_utterances_cursor", "planning_work_total", "dependency_work_total", "dependency_cache", "planned_followup", "planned_path", "last_cognitive_event"]
+    actor = rt_snapshot(actor)
+    let ignored = ["cognition_fixed_input", "cognition_event_cursor", "cognition_time", "cognition_input", "cognition_reused", "cognition_stop", "reason_fixed_input", "reason_reused", "last_reason_report", "last_readiness_report", "decision_time", "decision_revision", "idle_guard", "support_events_cursor", "heard_utterances_cursor", "planning_work_total", "dependency_work_total", "dependency_cache", "planned_followup", "planned_path", "last_cognitive_event", "planning_continuation"]
     var result = []
     var i = 0
     while i < rt_count(actor):
@@ -437,19 +511,39 @@ fn dvs_cognition_signature(actor):
     return result
 
 fn dvs_owned_events_stable(events, actor, cursor):
+    events = rt_snapshot(events)
     var i = cursor
     while i < rt_count(events):
         if events[i].actor == actor.id:
-            if not dv_has(["planning_stop", "planning_stop_reused", "action_wait"], events[i].type):
+            if not dv_has(["planning_stop", "planning_stop_reused", "planning_yield", "action_wait"], events[i].type):
                 return false
         i = i + 1
     return true
 
+fn dvs_has_active_communication_goal(actor):
+    let goals = dv_find(actor.policy, "communication_goals", [])
+    var i = 0
+    while i < rt_count(goals):
+        let goal = goals[i]
+        if 0 < rt_count(dv_find(goal, "basis", [])) and dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true":
+            return true
+        i = i + 1
+    return false
+
 fn dvs_prepare_cognition(actor, events, time, parent, chapter):
     let cognition_before = dvs_cognition_signature(actor)
+    let continuation = dv_find(actor, "planning_continuation", false)
+    if continuation != false and dv_find(actor.policy, "selective_planning", false):
+        let prepared = dv_find(continuation, "prepared_cognition", false)
+        // A candidate slice continues the same decision after its cognition pass.
+        // Reuse only that completed input at the same time with no new owned
+        // event; this is not a fixed-point claim for a later or precise decision.
+        if prepared != false:
+            if prepared.time == time and prepared.event_cursor <= rt_count(events) and dv_same(cognition_before, prepared.input) and dvs_owned_events_stable(events, actor, prepared.event_cursor):
+                return dv_with_many(actor, {"cognition_reused": true, "reason_reused": true, "cognition_stop": "same-decision-prepared-cognition"})
     // Real time alone cannot change an unchanged mind. Paid listener forecasts
     // also compare observation ages, so their time-sensitive pass stays awake.
-    let time_stable = time == dv_find(actor, "cognition_time", -1) or rt_count(dv_find(actor.policy, "communication_goals", [])) == 0
+    let time_stable = time == dv_find(actor, "cognition_time", -1) or not dvs_has_active_communication_goal(actor)
     if time_stable and dv_same(cognition_before, dv_find(actor, "cognition_fixed_input", false)) and dvs_owned_events_stable(events, actor, dv_find(actor, "cognition_event_cursor", 0)):
         return dv_with_many(actor, {"cognition_reused": true, "reason_reused": true, "cognition_stop": "unchanged-complete-owned-input"})
     let input = dvs_reason_input(actor)
@@ -492,6 +586,11 @@ fn dvs_prepare_manual_cognition(actor, events, time, parent, chapter):
 
 // ---- Merged source module: 16-personal-choice.dv ----
 fn dvp_choice_groups(actions):
+    actions = rt_snapshot(actions)
+    let key = ["dvp-choice-groups-v1"]
+    let cached = rt_memo_get(actions, key)
+    if cached[0]:
+        return cached[1]
     var groups = []
     var i = 0
     while i < rt_count(actions):
@@ -500,7 +599,7 @@ fn dvp_choice_groups(actions):
             let group = action.personal_choice.group
             groups = dv_with(groups, group, dv_append(dv_find(groups, group, []), action))
         i = i + 1
-    return groups
+    return rt_memo_put(actions, key, groups)
 
 // Ordinal personal values are owned by the subject, not by the proposed action.
 
@@ -973,6 +1072,7 @@ fn dvs_receive_public_claim(listener, speech, speaker, source, parse_event):
     return dv_with_many(listener, {"observed_public_claims": dv_append(history, received), "observed_claim_conflicts": conflicts})
 
 fn dvs_recorded_event_position(events, id):
+    events = rt_snapshot(events)
     var i = rt_count(events) - 1
     while i >= 0:
         if events[i].id == id:
@@ -1331,6 +1431,9 @@ fn dvs_request_context(actor, action, target):
     return false
 
 fn dvs_visible_context(actor, physical, actors):
+    actor = rt_snapshot(actor)
+    physical = rt_snapshot(physical)
+    actors = rt_snapshot(actors)
     var result = []
     if dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true())) != "true":
         return result
@@ -1382,6 +1485,7 @@ fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent):
 // the same room. A container's children are not in that room, and identities,
 // contents and inspection evidence are absent unless separately declared.
 fn dvs_visible_object_catalog(objects):
+    objects = rt_snapshot(objects)
     let key = ["visible-object-catalog-v1"]
     let cached = rt_memo_get(objects, key)
     if cached[0]:
@@ -1491,7 +1595,7 @@ fn dvp_memo_input(actor, costs):
     while i < rt_count(actor):
         let entry = actor[i]
         let key = entry[0]
-        if key != "reason_fixed_input" and key != "reason_reused" and key != "decision_time" and key != "decision_revision" and key != "planning_work_total" and key != "last_cognitive_event" and key != "dependency_work_total" and key != "cognition_input" and key != "last_cognition_revision" and key != "last_cognition_time" and key != "cognition_reused" and key != "cognition_cache_reuses" and key != "last_reason_report" and key != "last_readiness_report" and key != "cognition_fixed_input" and key != "cognition_event_cursor" and key != "cognition_time" and key != "idle_guard":
+        if not dv_has(["reason_fixed_input", "reason_reused", "decision_time", "decision_revision", "planning_work_total", "last_cognitive_event", "dependency_work_total", "cognition_input", "last_cognition_revision", "last_cognition_time", "cognition_reused", "cognition_cache_reuses", "cognition_stop", "last_reason_report", "last_readiness_report", "cognition_fixed_input", "cognition_event_cursor", "cognition_time", "idle_guard", "planning_continuation", "dependency_cache", "planned_followup", "planned_path", "support_events_cursor", "heard_utterances_cursor"], key):
             if key == "policy":
                 rt_push(result, dv_pair(key, policy))
             else:
@@ -1667,6 +1771,10 @@ fn dvp_probe_refs(actor):
     return refs
 
 fn dvp_scope(actor, action, bindings):
+    let key = ["dvp-owned-action-scope-v1", actor.id, bindings]
+    let cached = rt_memo_get(action, key)
+    if cached[0]:
+        return cached[1]
     var declared = dv_find(action, "purpose_refs", [])
     var grants = dv_find(action, "grants", [])
     var refs = declared
@@ -1680,7 +1788,7 @@ fn dvp_scope(actor, action, bindings):
             else:
                 refs = dvp_add_ref(refs, dv_ref(local, ref.facet, ref.field))
         i = (i + 1)
-    return refs
+    return rt_memo_put(action, key, refs)
 
 fn dvp_answer_reward(actor, action, mind):
     if dv_find(action, "answer_form", "complete-answer") == "supporting-statement":
@@ -1884,6 +1992,12 @@ fn dvp_eligible_base(actor, action, mind, relevant):
     var id = action.id
     // Success limits and attempt history are deliberately separate.
     var used = dv_find(actor, "completed_actions", [])
+    // These branches end in exactly the same success-limit rejection. Avoid
+    // rereading all premises and inspection evidence for a spent single-use
+    // method; answers, speech and replay retain their separate retry rules.
+    if not dv_has_key(action, "answer") and not dv_has_key(action, "speech") and action.kind != "replay":
+        if dv_has(used, id) and (dv_find(action, "once", false) or not dv_find(action, "repeatable", false)):
+            return false
     let retry = dv_find(dv_find(actor, "manual_contact_retries", []), id, false)
     let explicit_contact_retry = dv_find(actor, "manual_input", false) and retry != false and (dv_find(retry, "failure_class", "") != "native-continuous-source-cancel" or dv_same(dv_find(retry, "source_signature", false), dvp_rejected_signature(actor, action, mind)))
     let rejected = dv_find(dv_find(actor, "rejected_attempt_signatures", []), id, false)
@@ -2385,6 +2499,16 @@ fn dvp_selective_successor(actor, edge, costs):
     return {"node": candidate, "forecasts": forecasts, "forecast_reuses": reuses}
 
 fn dvp_plan(actor, bindings, costs):
+    actor = rt_snapshot(actor)
+    bindings = rt_snapshot(bindings)
+    costs = rt_snapshot(costs)
+    let planning_owner = actor
+    var planning_input = false
+    var resume = dv_find(actor, "planning_continuation", false)
+    if resume != false:
+        planning_input = rt_snapshot([dvp_memo_input(actor, costs), bindings, costs])
+        if not dv_same(resume.input, planning_input):
+            resume = false
     rt_phase("planning-index-start", actor.id)
     let selective = dv_find(actor.policy, "selective_planning", false)
     let indexed = dvp_actor_view(actor, dv_with_many(actor.mind, {"history": [], "seen": []}))
@@ -2403,6 +2527,7 @@ fn dvp_plan(actor, bindings, costs):
         let policy = dv_with(actor.policy, "goals", dvp_refresh_current_evidence(actor, owned_goals))
         rt_replace(view, rt_record_index(view, "policy"), dv_pair("policy", policy))
         actor = view
+    actor = rt_snapshot(actor)
     var budget = dv_find(actor.policy, "plan_budget", 0)
     var depth_limit = dv_find(actor.policy, "plan_depth", 2)
     let fast_approx = dv_find(actor.policy, "fast_approximation", false)
@@ -2417,12 +2542,12 @@ fn dvp_plan(actor, bindings, costs):
     rt_phase("planning-dependencies-end", actor.id)
     var relevant = dependencies.refs
     var route_work = {"candidates_considered": 0, "admission_checks": 0, "eligible_evaluations": 0, "forecasts": 0, "forecast_reuses": 0, "reason": "not-requested"}
-    if selective:
+    if selective and resume == false:
         route_work = dvp_selective_followup(actor, bindings, costs, relevant, probes, depth_limit, budget)
         if route_work.matched:
             rt_phase("planning-index-end", actor.id)
             let plan = {"path": route_work.path, "score": route_work.score, "value": route_work.value, "relevant_refs": relevant, "probe_refs": probes, "mind_revision": actor.mind.revision, "evaluated_at_game_time": dv_find(actor, "decision_time", actor.mind.time), "score_scope": "revalidated-route", "prediction_basis": route_work.prediction_basis}
-            let work = {"cache_hit": false, "candidates_considered": route_work.candidates_considered, "candidates_skipped": 0, "partial_layer": false, "examined_layers": 0, "completed_layers": 0, "admission_checks": route_work.admission_checks, "eligible_evaluations": route_work.eligible_evaluations, "forecasts": route_work.forecasts, "forecast_reuses": route_work.forecast_reuses, "expanded_nodes": 0, "candidate_paths": 0, "route_reuses": 1, "skipped_expansion": true, "stop_reason": route_work.reason, "reused_work": {"route_paths": 1, "forecast_cache_hits": route_work.forecast_reuses, "dependency_expansions": dependencies.reused_expanded}, "budget_limit": budget, "depth_limit": depth_limit, "lookahead_limit": lookahead_limit}
+            let work = {"cache_hit": false, "candidates_considered": route_work.candidates_considered, "candidates_skipped": 0, "partial_layer": false, "examined_layers": 0, "completed_layers": 0, "candidate_order": "continued-route", "candidate_order_scans": 0, "candidate_order_reuses": 0, "admission_checks": route_work.admission_checks, "eligible_evaluations": route_work.eligible_evaluations, "forecasts": route_work.forecasts, "forecast_reuses": route_work.forecast_reuses, "expanded_nodes": 0, "candidate_paths": 0, "route_reuses": 1, "skipped_expansion": true, "stop_reason": route_work.reason, "reused_work": {"route_paths": 1, "forecast_cache_hits": route_work.forecast_reuses, "dependency_expansions": dependencies.reused_expanded}, "budget_limit": budget, "depth_limit": depth_limit, "lookahead_limit": lookahead_limit}
             return {"action": route_work.action, "score": route_work.score, "plan_expansions": 0, "plans": [plan], "selected_path": route_work.path, "relevant_refs": relevant, "stop": route_work.reason, "strategy": "selective-task-v1", "approximation": true, "time_blocked": 0, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "completed_layers": 0, "planning_work": work}
     var expanded = 0
     var best = false
@@ -2448,6 +2573,9 @@ fn dvp_plan(actor, bindings, costs):
     var candidates_skipped = 0
     var partial_layer = false
     var completed_layers = 0
+    var candidate_order = "declared"
+    var candidate_order_scans = 0
+    var candidate_order_reuses = 0
     var admission_checks = route_work.admission_checks
     var eligible_evaluations = route_work.eligible_evaluations
     var forecasts = route_work.forecasts
@@ -2459,11 +2587,51 @@ fn dvp_plan(actor, bindings, costs):
     var stop = "complete-depth"
     var actions = actor.actions
     var visited = []
+    var resume_layer = false
+    var search_slices = 1
+    if selective and resume != false:
+        let saved = resume.search
+        expanded = saved.expanded
+        best = saved.best
+        best_score = saved.best_score
+        best_path = saved.best_path
+        current_action = saved.current_action
+        current_score = saved.current_score
+        current_value = saved.current_value
+        root_best = saved.root_best
+        best_after_successor_layer = saved.best_after_successor_layer
+        plans = dv_clone(saved.plans)
+        candidates_considered = saved.candidates_considered
+        candidates_skipped = saved.candidates_skipped
+        partial_layer = saved.partial_layer
+        completed_layers = saved.completed_layers
+        candidate_order = saved.candidate_order
+        candidate_order_scans = saved.candidate_order_scans
+        candidate_order_reuses = saved.candidate_order_reuses
+        admission_checks = saved.admission_checks
+        eligible_evaluations = saved.eligible_evaluations
+        forecasts = saved.forecasts
+        forecast_reuses = saved.forecast_reuses
+        peak_frontier = saved.peak_frontier
+        frontier = saved.frontier
+        depth = saved.depth
+        time_blocked = saved.time_blocked
+        stop = saved.stop
+        visited = saved.visited
+        route_work = saved.route_work
+        search_slices = saved.search_slices + 1
+        resume_layer = true
+    let slice_start_expanded = expanded
+    let slice_start_considered = candidates_considered
+    let candidate_limit = dv_max(1, dv_find(actor.policy, "selective_candidate_budget", 48))
     rt_phase("planning-index-end", actor.id)
     rt_phase("planning-expand-start", actor.id)
     // Only expanded nodes enter visited. Beam eviction never reserves a state.
     while dv_and((depth < depth_limit), (0 < rt_count(frontier))):
-        if ((budget - expanded) < rt_count(frontier)):
+        var unstarted_nodes = rt_count(frontier)
+        if resume_layer:
+            unstarted_nodes = rt_count(frontier) - resume.search.node_index - 1
+        if ((budget - expanded) < unstarted_nodes):
             stop = "incomplete-layer-budget"
             frontier = []
         else:
@@ -2476,18 +2644,48 @@ fn dvp_plan(actor, bindings, costs):
             var first_supported = false
             var layer_complete = true
             var n = 0
+            if resume_layer:
+                next_frontier = resume.search.next_frontier
+                deferred = dv_clone(resume.search.deferred)
+                task_best = resume.search.task_best
+                task_score = resume.search.task_score
+                task_path = resume.search.task_path
+                task_plan = resume.search.task_plan
+                layer_complete = resume.search.layer_complete
+                n = resume.search.node_index
             while n < rt_count(frontier) and not first_supported:
-                var node = frontier[n]
-                visited = dvp_frontier_put(visited, {"key": node.key, "score": node.score, "elapsed": dv_find(node, "elapsed", 0)})
+                var node = rt_snapshot(frontier[n])
                 var i = 0
-                var mind = frontier[n].mind
+                var continued_node = false
+                if resume_layer:
+                    continued_node = n == resume.search.node_index
+                if continued_node:
+                    i = resume.search.action_index
+                else:
+                    visited = dvp_frontier_put(visited, {"key": node.key, "score": node.score, "elapsed": dv_find(node, "elapsed", 0)})
+                var mind = node.mind
                 var node_actor = dvp_actor_view(dv_with(actor, "visible_context", node.visible_context), mind)
                 rt_push(node_actor, dv_pair("planning_achievements", node.achievements))
                 rt_push(node_actor, dv_pair("planning_opportunities", node.opportunities))
-                let node_actions = dvp_room_actions(actions, node.room, dv_find(actor, "location_ref", false))
-                let value_context = dvp_value_context(node_actor)
-                expanded = (expanded + 1)
+                node_actor = rt_snapshot(node_actor)
+                var node_actions = dvp_room_actions(actions, node.room, dv_find(actor, "location_ref", false))
+                if selective and depth == 0:
+                    let ordered = dvp_selective_action_order(node_actions, costs)
+                    node_actions = ordered.actions
+                    candidate_order = "declared-grants-short-duration"
+                    candidate_order_scans = candidate_order_scans + ordered.scanned
+                    candidate_order_reuses = candidate_order_reuses + ordered.reused
+                node_actions = rt_snapshot(node_actions)
+                let value_context = rt_snapshot(dvp_value_context(node_actor))
+                if not continued_node:
+                    expanded = (expanded + 1)
                 while i < rt_count(node_actions) and not first_supported:
+                    if selective and candidate_limit <= candidates_considered - slice_start_considered:
+                        if planning_input == false:
+                            planning_input = rt_snapshot([dvp_memo_input(planning_owner, costs), bindings, costs])
+                        let saved = {"expanded": expanded, "best": best, "best_score": best_score, "best_path": best_path, "current_action": current_action, "current_score": current_score, "current_value": current_value, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer, "plans": plans, "candidates_considered": candidates_considered, "candidates_skipped": candidates_skipped, "partial_layer": partial_layer, "completed_layers": completed_layers, "candidate_order": candidate_order, "candidate_order_scans": candidate_order_scans, "candidate_order_reuses": candidate_order_reuses, "admission_checks": admission_checks, "eligible_evaluations": eligible_evaluations, "forecasts": forecasts, "forecast_reuses": forecast_reuses, "peak_frontier": peak_frontier, "frontier": frontier, "depth": depth, "time_blocked": time_blocked, "stop": stop, "visited": visited, "route_work": route_work, "search_slices": search_slices, "next_frontier": next_frontier, "deferred": deferred, "task_best": task_best, "task_score": task_score, "task_path": task_path, "task_plan": task_plan, "layer_complete": layer_complete, "node_index": n, "action_index": i}
+                        rt_phase("planning-expand-end", actor.id)
+                        return {"action": false, "score": best_score, "plan_expansions": expanded - slice_start_expanded, "plans": [], "selected_path": best_path, "relevant_refs": relevant, "stop": "selective-candidate-slice", "strategy": "selective-task-v1", "approximation": true, "time_blocked": 0, "dependency_expansions": dependencies.expanded, "dependency_cache": dependencies.cache, "continuation": {"input": planning_input, "search": saved}, "search_resume": {"depth": depth, "node": n, "candidate": i, "slices": search_slices, "candidate_limit": candidate_limit}, "planning_work": {"scope": "unfinished-search-slice", "candidates_considered": candidates_considered - slice_start_considered, "expanded_nodes": expanded - slice_start_expanded, "stop_reason": "selective-candidate-slice"}}
                     var action = node_actions[i]
                     candidates_considered = candidates_considered + 1
                     var local_1 = false
@@ -2614,6 +2812,7 @@ fn dvp_plan(actor, bindings, costs):
                                                 next_frontier = dvp_beam_limit(dvp_frontier_put(next_frontier, candidate_node), lookahead_limit)
                     i = (i + 1)
                 n = (n + 1)
+            resume_layer = false
             if selective:
                 if task_best != false:
                     best = task_best
@@ -2673,7 +2872,8 @@ fn dvp_plan(actor, bindings, costs):
         if local_2 != false:
             if dv_find(local_2, "known_opportunity_wait", false):
                 local_3 = "selective-declared-wait"
-    return dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "strategy": strategy, "approximation": selective or fast_approx, "time_blocked": time_blocked, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": completed_layers, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer, "planning_work": {"cache_hit": false, "candidates_considered": candidates_considered, "candidates_skipped": candidates_skipped, "partial_layer": partial_layer, "examined_layers": depth, "completed_layers": completed_layers, "admission_checks": admission_checks, "eligible_evaluations": eligible_evaluations, "forecasts": forecasts, "forecast_reuses": forecast_reuses, "expanded_nodes": expanded, "peak_frontier": peak_frontier, "candidate_paths": eligible_evaluations - route_work.eligible_evaluations, "retained_paths": rt_count(plans), "route_reuses": 0, "route_stop": route_work.reason, "skipped_expansion": selective and (stop == "selective-current-task" or stop == "selective-first-supported-task"), "stop_reason": local_3, "reused_work": {"forecast_cache_hits": forecast_reuses, "dependency_expansions": dependencies.reused_expanded}, "budget_limit": budget, "depth_limit": depth_limit, "lookahead_limit": lookahead_limit}})
+    let completed_choice = dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "strategy": strategy, "approximation": selective or fast_approx, "time_blocked": time_blocked, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": completed_layers, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer, "planning_work": {"cache_hit": false, "candidates_considered": candidates_considered, "candidates_skipped": candidates_skipped, "partial_layer": partial_layer, "examined_layers": depth, "completed_layers": completed_layers, "candidate_order": candidate_order, "candidate_order_scans": candidate_order_scans, "candidate_order_reuses": candidate_order_reuses, "admission_checks": admission_checks, "eligible_evaluations": eligible_evaluations, "forecasts": forecasts, "forecast_reuses": forecast_reuses, "expanded_nodes": expanded, "peak_frontier": peak_frontier, "candidate_paths": eligible_evaluations - route_work.eligible_evaluations, "retained_paths": rt_count(plans), "route_reuses": 0, "route_stop": route_work.reason, "skipped_expansion": selective and (stop == "selective-current-task" or stop == "selective-first-supported-task"), "stop_reason": local_3, "reused_work": {"forecast_cache_hits": forecast_reuses, "dependency_expansions": dependencies.reused_expanded}, "budget_limit": budget, "depth_limit": depth_limit, "lookahead_limit": lookahead_limit}})
+    return dv_with_many(completed_choice, {"plan_expansions": expanded - slice_start_expanded, "search_slices": search_slices, "continuation": false, "planning_work": dv_with_many(completed_choice.planning_work, {"scope": "completed-search-across-slices", "search_slices": search_slices})})
 
 fn dvp_find_action(actions, id):
     let key = ["dvp-find-action", id]
@@ -2708,6 +2908,7 @@ fn dvp_view_visible_context(actor, mind):
     return result
 
 fn dvp_actor_view(actor, mind):
+    actor = rt_snapshot(actor)
     var result = []
     var i = 0
     while (i < rt_count(actor)):
@@ -2876,6 +3077,51 @@ fn dvp_room_actions(actions, room, location_ref):
             rt_push(result, action)
         i = i + 1
     return rt_memo_put(actions, key, result)
+
+// Reorder only the selective root's declaration list. A grant is a declared
+// opportunity to observe, never a claim that its content is true or useful.
+// Exact admission and value checks still decide whether this task can stop.
+fn dvp_selective_action_order(actions, costs):
+    actions = rt_snapshot(actions)
+    costs = rt_snapshot(costs)
+    let key = ["dvp-selective-action-order-v1", costs]
+    let cached = rt_memo_get(actions, key)
+    if cached[0]:
+        return {"actions": cached[1], "scanned": 0, "reused": 1}
+    var priority = []
+    var remaining = []
+    var i = 0
+    while i < rt_count(actions):
+        let action = actions[i]
+        if action.kind != "move" and not dv_has_key(action, "answer") and not dv_find(action, "known_opportunity_wait", false) and 0 < rt_count(dv_find(action, "grants", [])):
+            let duration = dv_find(dv_find(dv_find(costs, action.kind, []), "actual", []), "time", 1000000)
+            let entry = {"action": action, "duration": duration}
+            var ordered = []
+            var inserted = false
+            var j = 0
+            while j < rt_count(priority):
+                if not inserted and duration < priority[j].duration:
+                    rt_push(ordered, entry)
+                    inserted = true
+                rt_push(ordered, priority[j])
+                j = j + 1
+            if not inserted:
+                rt_push(ordered, entry)
+            priority = ordered
+        else:
+            rt_push(remaining, action)
+        i = i + 1
+    var result = []
+    i = 0
+    while i < rt_count(priority):
+        rt_push(result, priority[i].action)
+        i = i + 1
+    i = 0
+    while i < rt_count(remaining):
+        rt_push(result, remaining[i])
+        i = i + 1
+    rt_memo_put(actions, key, result)
+    return {"actions": result, "scanned": rt_count(actions), "reused": 0}
 
 // Every inspection in the same mind reuses the evidence refresh and availability reads.
 fn dvp_inspection_freshness(actor, mind):
@@ -4682,11 +4928,18 @@ fn dvs_factor_law_allowed(allowed, law):
 fn dvs_factor_roots(actor, mind, ref, events, cutoff, remaining, allowed):
     var cell = dv_read(mind, ref)
     var result = dvs_factor_proof_result(false, remaining, 0, [], [])
-    var i = 0
     if (not (remaining < 1)):
         result = dvs_factor_proof_result(false, (remaining - 1), 0, [], [])
         if dv_and(dv_uncontested(cell), dv_and((0 < cell.confidence), dv_and((not dv_find(cell, "estimated", false)), (not (dv_find(cell, "source", "") == "abduction"))))):
-            while dv_and((i < cutoff), (not result.valid)):
+            // The same ordered receipt candidates are shared by recursive proof
+            // reads. Exact claim, cell, law, cutoff and budget checks remain below.
+            let support_index = dvs_support_event_index(events, actor.id)
+            let positions = dv_find(support_index.refs, dvs_support_ref_key(actor.id, ref), [])
+            var candidate_index = 0
+            while dv_and((candidate_index < rt_count(positions)), (not result.valid)):
+                let i = positions[candidate_index]
+                if cutoff <= i:
+                    return result
                 var event = events[i]
                 if (event.actor == actor.id):
                     var kind = event.type
@@ -4717,7 +4970,7 @@ fn dvs_factor_roots(actor, mind, ref, events, cutoff, remaining, allowed):
                                     result = dvs_factor_proof_result(true, result.remaining, confidence, steps, roots)
                     if (kind == "inference"):
                         result = dvs_factor_inference(actor, mind, ref, cell, events, i, data, event, result.remaining, allowed)
-                i = (i + 1)
+                candidate_index = candidate_index + 1
     return result
 
 fn dvs_factor_refs_proof(actor, mind, refs, events, cutoff, remaining, allowed):
@@ -5691,6 +5944,7 @@ fn dvs_materialize_arguments(actor):
     return dv_with(actor, "actions", result)
 
 fn dvs_update_support_events(actor, events):
+    events = rt_snapshot(events)
     var support = dv_find(actor, "support_events", [])
     var cursor = dv_find(actor, "support_events_cursor", 0)
     let total = rt_count(events)
@@ -6110,9 +6364,12 @@ fn dvs_factor_candidate_rejected(actor, candidate):
     return dv_and((rejections.source_revision == actor.mind.revision), dv_has(rejections.ids, candidate.id))
 
 fn dvs_capture_heard_utterances(actor, events):
+    events = rt_snapshot(events)
     var heard = dv_find(actor, "heard_utterances", [])
     var i = dv_find(actor, "heard_utterances_cursor", 0)
     let total = rt_count(events)
+    if i == total and dv_has_key(actor, "heard_utterances"):
+        return actor
     while (i < total):
         var event = events[i]
         if dv_and((event.actor == actor.id), (event.type == "listener_parse")):
@@ -6385,22 +6642,124 @@ fn dvs_scheduled_count(actors):
         i = i + 1
     return count
 
+// Only content-declared waiting activities may stop before their chosen duration.
+// An answer, movement or other ordinary action never enters this path.
+fn dvs_interruptible_wait(action):
+    if not dv_find(action, "interruptible", false) or dv_find(action, "activity", "") != "wait":
+        return false
+    let kind = action.kind
+    return kind == "wait" or (5 <= rt_length(kind) and rt_slice(kind, 0, 5) == "wait.")
+
+fn dvs_validate_interruptible_wait(action, model):
+    dv_require(dvs_interruptible_wait(action), "Interruptible action must be an explicit wait activity")
+    dv_require(not dv_has_key(action, "answer") and not dv_has_key(action, "speech") and not dv_has_key(action, "travel"), "Interruptible wait cannot contain another action")
+    dv_require(model.minimum.time == 0 and 0 < model.actual.time, "Interruptible wait requires a zero time lower bound and positive duration")
+    return true
+
+// These events already passed actual hearing or observation admission. Remote
+// actions and private physical changes are not wake signals for this subject.
+fn dvs_wait_input_events(actor, events, cursor):
+    events = rt_snapshot(events)
+    var sources = []
+    var i = cursor
+    while i < rt_count(events):
+        let event = events[i]
+        if event.actor == actor.id and dv_has(["speech_received_pending", "listener_parse", "observation", "co_presence", "room_perception"], event.type):
+            rt_push(sources, event.id)
+        i = i + 1
+    return sources
+
+fn dvs_interrupt_waits(state):
+    state = rt_snapshot(state)
+    var actors = state.actors
+    var events = false
+    var changed = false
+    let time = state.physical.time
+    var i = 0
+    while i < rt_count(actors):
+        var actor = actors[i]
+        let original = dv_find(actor, "scheduled_action", false)
+        if original != false:
+            if time < original.due and dvs_interruptible_wait(original.action) and dv_has_key(original, "wait_watch"):
+                var queued = original
+                let watch = queued.wait_watch
+                var source_events = state.events
+                if events != false:
+                    source_events = events
+                var sources = dvs_wait_input_events(actor, source_events, watch.event_cursor)
+                let heard = dv_find(actor, "pending_heard", [])
+                var h = 0
+                while h < rt_count(heard):
+                    if not dv_has(sources, heard[h].source):
+                        rt_push(sources, heard[h].source)
+                    h = h + 1
+                let contact = dvs_idle_contact_input(actor, state.physical, actors)
+                let visible_change = not dv_same(contact, watch.contact)
+                if visible_change:
+                    if events == false:
+                        events = dv_clone(state.events)
+                    let start = rt_count(events)
+                    actor = dvs_notice_peers(actor, state.physical, actors, state.bindings, events, time, queued.parent)
+                    actor = dvs_notice_visible_objects(actor, state.physical, state.bindings, events, time, queued.parent)
+                    sources = dv_explanation_merge(sources, dvs_wait_input_events(actor, events, start))
+                if visible_change or 0 < rt_count(sources):
+                    if events == false:
+                        events = dv_clone(state.events)
+                    let elapsed = time - queued.start
+                    dv_require(0 <= elapsed and elapsed < queued.model.actual.time, "Invalid interrupted wait duration")
+                    let interruption = {"reason": "activity-interrupted", "failure_class": "activity-interrupted", "action_id": queued.action.id, "start": queued.start, "planned_due": queued.due, "time": time, "elapsed": elapsed, "source_events": sources, "visible_change": visible_change}
+                    let interrupted = dvs_event(events, "wait_interrupted", actor.id, time, dv_explanation_merge([queued.parent], sources), interruption)
+                    // The declared variable-duration quote still charges every
+                    // non-time component. The complete wait law must not run.
+                    let model = dv_with(queued.model, "actual", dv_with(queued.model.actual, "time", elapsed))
+                    queued = dv_with_many(queued, {"model": model, "due": time, "parent": interrupted, "activity_interruption": dv_with(interruption, "event", interrupted)})
+                else:
+                    // Consume only an unrelated event suffix; no idle decision
+                    // or fictional observation is emitted while waiting.
+                    if watch.event_cursor != rt_count(source_events):
+                        queued = dv_with(queued, "wait_watch", dv_with(watch, "event_cursor", rt_count(source_events)))
+                if not dv_same(queued, original):
+                    actors = dvs_replace(actors, i, dv_with(actor, "scheduled_action", queued))
+                    changed = true
+        i = i + 1
+    if not changed:
+        return state
+    var updates = {"actors": actors}
+    if events != false:
+        updates = dv_with(updates, "events", events)
+    return dvs_owned_state_update(state, updates)
+
+fn dvs_interrupted_wait_due(actors, time):
+    var i = 0
+    while i < rt_count(actors):
+        let queued = dv_find(actors[i], "scheduled_action", false)
+        if queued != false:
+            if queued.due <= time and dv_find(queued, "activity_interruption", false) != false:
+                return i
+        i = i + 1
+    return -1
+
 fn dvs_dispatch_due(state, index):
+    state = rt_snapshot(state)
     let updated_actor = dvs_erosion_update(state.actors[index], state.physical, state.physical.time)
-    state = dvs_owned_state_update(state, {"actors": dvs_replace(state.actors, index, updated_actor)})
     if not dvs_actor_can_act(updated_actor):
         let cancelled = dv_with(updated_actor, "scheduled_action", false)
         return dvs_owned_state_update(state, {"actors": dvs_replace(state.actors, index, cancelled), "cursor": index, "idle": 0})
-    let queued = state.actors[index].scheduled_action
+    let queued = updated_actor.scheduled_action
     let time = state.physical.time
-    let actor = dvs_drain_received_speech(dv_with(state.actors[index], "scheduled_action", false), state.events, time)
+    // This dispatch owns the only mutable event root; prior event subtrees stay
+    // immutable. A frozen host state is otherwise consumed as a read-only value.
+    var events = dv_clone(state.events)
+    let actor = dvs_drain_received_speech(dv_with(updated_actor, "scheduled_action", false), events, time)
     let action = queued.action
     let bounds = dv_action_cost_bounds(queued.model.minimum, queued.model.maximum)
     let event = rt_cat("action", rt_show(state.executed))
-    let quote = dv_with(dv_action_cost_quote(actor.ledger, state.physical, dv_find(action, "law", action.id), event, bounds), "scheduled_start", queued.start)
-    var events = state.events
+    var quote = dv_with(dv_action_cost_quote(actor.ledger, state.physical, dv_find(action, "law", action.id), event, bounds), "scheduled_start", queued.start)
+    let interruption = dv_find(queued, "activity_interruption", false)
+    if interruption != false:
+        quote = dv_with(quote, "activity_interruption", interruption)
     let parent = dvs_event(events, "cost_quote", actor.id, time, [queued.parent], quote)
-    let pending = {"index": index, "actor": actor, "parent": parent, "time": time, "action": action, "id": actor.id, "mind": actor.mind, "model": queued.model, "action_event": event, "ledger": actor.ledger, "quote": quote, "choice": queued.choice}
+    let pending = {"index": index, "actor": actor, "parent": parent, "time": time, "action": action, "id": actor.id, "mind": actor.mind, "model": queued.model, "action_event": event, "ledger": actor.ledger, "quote": quote, "choice": queued.choice, "activity_interruption": interruption}
     return dvs_owned_state_update(state, {"actors": dvs_replace(state.actors, index, actor), "events": events, "pending": pending, "idle": 0})
 
 // Scan eligibility without running cognition. Ties preserve cyclic actor order.
@@ -6413,6 +6772,8 @@ fn dvs_known_clock_boundary(condition, clock, now, limit):
 // Complete owned state except administrative scan/dispatch cursors. Their
 // append-only event inputs are checked separately; no mind or budget is removed.
 fn dvs_idle_subject_input(actor, costs):
+    actor = rt_snapshot(actor)
+    costs = rt_snapshot(costs)
     var policy = dv_with(actor.policy, "plan_budget", dv_find(actor, "planning_limit", dv_find(actor.policy, "plan_budget", 0)))
     var maximum = 0
     var i = 0
@@ -6436,6 +6797,7 @@ fn dvs_idle_subject_input(actor, costs):
     return result
 
 fn dvs_idle_story_input(story):
+    story = rt_snapshot(story)
     var result = []
     var i = 0
     while i < rt_count(story):
@@ -6465,7 +6827,10 @@ fn dvs_idle_physical_input(physical, story):
 fn dvs_idle_contact_input(actor, physical, actors):
     if not dv_find(actor.policy, "notice_co_presence", false) and not dv_find(actor.policy, "notice_visible_objects", false):
         return false
-    return {"context": dvs_visible_context(actor, physical, actors), "objects": dvs_visible_objects(actor, physical), "position": dv_read(physical, actor.location_ref), "visible": dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true()))}
+    var context = []
+    if dv_find(actor.policy, "notice_co_presence", false):
+        context = dvs_visible_context(actor, physical, actors)
+    return {"context": context, "objects": dvs_visible_objects(actor, physical), "position": dv_read(physical, actor.location_ref), "visible": dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true()))}
 
 // A sleep record follows an unchanged complete cognition pass. Pending input
 // or a blocked pass keeps the actor awake; topic receipts remain explicit.
@@ -6473,10 +6838,19 @@ fn dvs_idle_proof_supported(actor):
     if 0 < rt_count(dv_find(actor, "pending_heard", [])) or dv_find(actor, "cognition_blocked", false):
         return false
     let topics = dv_find(actor.policy, "topic_bindings", [])
+    var unchanged_capture = false
     var i = 0
     while i < rt_count(topics):
         if dv_truth(actor.mind, topics[i].heard_when) == "true" and not dv_has_key(dv_find(actor, "heard_topics", []), topics[i].topic):
-            return false
+            // A true condition alone is not a heard-topic receipt. In particular
+            // a constant personal declaration has no observation refs to cite.
+            // An unchanged completed cognition pass has already tried capture;
+            // retry only when its owned input or actual source events change.
+            if not unchanged_capture:
+                let fixed = dv_find(actor, "cognition_fixed_input", false)
+                if fixed == false or not dv_same(fixed, dvs_cognition_signature(actor)):
+                    return false
+                unchanged_capture = true
         i = i + 1
     return true
 
@@ -6537,14 +6911,22 @@ fn dvs_idle_window_boundary(actor, story, now, limit):
     else:
         conditions = dvs_declared_conditions([actor.actions, actor.policy, actor.mind.adoptions])
         rt_memo_put(actor.actions, key, conditions)
-    let boundary = dvs_known_clock_boundary(dv_all(conditions), clock, now, limit)
+    var boundary = dvs_known_clock_boundary(dv_all(conditions), clock, now, limit)
+    let duties = dvs_obligation_actions(actor.actions)
+    var duty_index = 0
+    while duty_index < rt_count(duties):
+        let due = dv_find(duties[duty_index], "obligation_due", 0)
+        if now < due and due < boundary.next and not dv_has(dv_find(actor, "completed_actions", []), duties[duty_index].id):
+            boundary = dv_with(boundary, "next", due)
+        duty_index = duty_index + 1
     // Listener models compare current time with recorded observation ages.
     // An unsupported time dependency keeps the ordinary minute recheck.
-    if 0 < rt_count(dv_find(actor.policy, "communication_goals", [])):
-        return {"complete": false, "next": dv_min(limit, now + 1)}
+    if dvs_has_active_communication_goal(actor):
+        return {"complete": false, "next": dv_min(boundary.next, dv_min(limit, now + 1))}
     return boundary
 
 fn dvs_schedule(state):
+    state = rt_snapshot(state)
     var updated = state.actors
     var erosion_index = 0
     var any_eroded = false
@@ -6556,7 +6938,9 @@ fn dvs_schedule(state):
             any_eroded = true
         erosion_index = erosion_index + 1
     if any_eroded:
-        state = dvs_owned_state_update(state, {"actors": updated})
+        state = rt_snapshot(dvs_owned_state_update(state, {"actors": updated}))
+    state = rt_snapshot(dvs_interrupt_waits(state))
+    updated = state.actors
     var current = state
     var due_index = -1
     var due_time = state.horizon + 1
@@ -6565,6 +6949,8 @@ fn dvs_schedule(state):
     var event_wake_index = -1
     var event_wake_time = state.horizon + 1
     var ready_index = -1
+    var obligation_index = -1
+    var obligation_time = state.horizon + 1
     var offset = 0
     var index = state.cursor
     while offset < rt_count(state.actors):
@@ -6573,27 +6959,31 @@ fn dvs_schedule(state):
         if not dvs_actor_can_act(actor):
             if queued != false:
                 updated = dvs_replace(updated, index, dv_with(actor, "scheduled_action", false))
-                state = dvs_owned_state_update(state, {"actors": updated})
+                state = rt_snapshot(dvs_owned_state_update(state, {"actors": updated}))
         else:
             if queued != false:
                 if queued.due < due_time:
                     due_time = queued.due
                     due_index = index
             else:
+                if state.physical.time < state.horizon and 0 < dv_find(actor.policy, "budget", 0):
+                    let duty = dvs_due_obligation(actor, state.physical.time, state.costs)
+                    if duty != false:
+                        let due = dv_find(duty, "obligation_due", 0)
+                        if due < obligation_time:
+                            obligation_index = index
+                            obligation_time = due
                 // No-action is not a permanent property of a mind revision:
                 // time, local arrivals and content goals can create a new opportunity.
-                if state.physical.time < state.horizon and ready_index < 0 and 0 < dv_find(actor.policy, "budget", 0) and (dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", [])) or dvs_idle_inputs_changed(actor, state)):
+                if state.physical.time < state.horizon and ready_index < 0 and 0 < dv_find(actor.policy, "budget", 0) and (dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", [])) or dvs_idle_inputs_changed(actor, state) or dv_find(actor, "planning_continuation", false) != false):
                     if dvs_idle_guard_matches(actor, state):
                         let guard = actor.idle_guard
-                        var events = state.events
-                        var reason = "unchanged-owned-fixed-point; no-new-cognition-or-choice"
-                        if dv_find(guard, "proof", "fixed-point") == "approximate-yield":
-                            reason = "unchanged-owned-input; selective-search-not-repeated"
-                        dvs_event(events, "planning_stop_reused", actor.id, state.physical.time, [guard.source_stop], {"source_stop": guard.source_stop, "proof_time": guard.time, "until": guard.until, "reason": reason, "proof": dv_find(guard, "proof", "fixed-point"), "time_analysis_complete": dv_find(guard, "time_analysis_complete", true), "planning_work": {"cache_hit": true, "candidates_considered": 0, "candidates_skipped": 0, "partial_layer": false, "examined_layers": 0, "completed_layers": 0, "admission_checks": 0, "eligible_evaluations": 0, "forecasts": 0, "forecast_reuses": 0, "expanded_nodes": 0, "skipped_expansion": true, "stop_reason": reason, "reused_work": {"source_stop": guard.source_stop}}})
-                        let advanced = dv_with_many(guard, {"event_cursor": rt_count(events), "event_anchor": events[rt_count(events) - 1]})
+                        // No decision or world change occurs while an activity is unchanged.
+                        // Keep its original stop proof and consume only the examined suffix.
+                        let advanced = dv_with_many(guard, {"event_cursor": rt_count(state.events), "event_anchor": state.events[rt_count(state.events) - 1]})
                         let sleeping = dv_with_many(actor, {"decision_time": state.physical.time, "decision_revision": actor.mind.revision, "idle_guard": advanced})
                         updated = dvs_replace(updated, index, sleeping)
-                        state = dvs_owned_state_update(state, {"actors": updated, "events": events, "idle": state.idle + 1})
+                        state = rt_snapshot(dvs_owned_state_update(state, {"actors": updated, "idle": state.idle + 1}))
                     else:
                         ready_index = index
                 let wake_guard = dv_find(actor, "idle_guard", false)
@@ -6610,11 +7000,13 @@ fn dvs_schedule(state):
         offset = offset + 1
     if due_index >= 0 and due_time <= state.physical.time:
         return dvs_dispatch_due(state, due_index)
+    if obligation_index >= 0:
+        return dvs_owned_state_update(state, {"cursor": obligation_index})
     if ready_index >= 0:
         return dvs_owned_state_update(state, {"cursor": ready_index})
     if due_index < 0 and event_wake_index >= 0 and event_wake_time < state.horizon:
         var physical = state.physical
-        var events = state.events
+        var events = dv_clone(state.events)
         let parent = dvs_event(events, "action_wait", "", physical.time, [], {"until": event_wake_time, "waiting": 0, "reason": "declared-subject-time-boundary"})
         while physical.time < event_wake_time:
             let next_time = dvs_environment_next_time(physical, state.story, event_wake_time)
@@ -6622,16 +7014,20 @@ fn dvs_schedule(state):
         return dvs_owned_state_update(state, {"physical": physical, "events": events, "cursor": event_wake_index, "idle": 0})
     if due_index >= 0:
         var physical = state.physical
-        var events = state.events
+        var events = dv_clone(state.events)
         let until = dv_min(due_time, wake_time)
         let parent = dvs_event(events, "action_wait", "", physical.time, [], {"until": until, "waiting": dvs_scheduled_count(state.actors)})
         // Visit authored clock boundaries and any unsettled process cascade.
+        current = dvs_owned_state_update(state, {"events": events, "idle": 0})
         while physical.time < until:
             var next_time = dvs_environment_next_time(physical, state.story, until)
             if until < next_time:
                 next_time = until
             physical = dvs_environment(dv_with(physical, "time", next_time), state.story, events, parent)
-        current = dvs_owned_state_update(state, {"physical": physical, "events": events, "idle": 0})
+            current = dvs_interrupt_waits(dvs_owned_state_update(current, {"physical": physical, "events": events}))
+            let interrupted = dvs_interrupted_wait_due(current.actors, physical.time)
+            if interrupted >= 0:
+                return dvs_dispatch_due(current, interrupted)
         if until < due_time:
             return dvs_owned_state_update(current, {"cursor": wake_index})
         return dvs_dispatch_due(current, due_index)
@@ -6644,6 +7040,7 @@ fn dvs_debug_phase(story, actor, time, phase):
     return true
 
 fn dvs_session_prepare(state):
+    state = rt_snapshot(state)
     if dv_has_key(state, "pending"):
         return state
     if dv_find(state, "awaiting_player", false) and dv_find(state, "player_selection", "") == "":
@@ -6657,10 +7054,11 @@ fn dvs_session_prepare(state):
 // The caller has selected the actor; content may refresh its own declarations first.
 // This remains the same prepare phase, not a second dispatch or execution path.
 fn dvs_prepare_actor(state):
+    state = rt_snapshot(state)
     let story = state.story
     var physical = state.physical
     var actors = state.actors
-    var events = state.events
+    var events = dv_clone(state.events)
     var bindings = state.bindings
     var costs = state.costs
     var run_start = state.run_start
@@ -6731,8 +7129,19 @@ fn dvs_prepare_actor(state):
             choice = dvs_choose(actor, bindings, costs)
             dvs_debug_phase(story, actor.id, time, "choice-end")
         choice = dv_with_many(choice, {"cognition_reused": dv_find(actor, "cognition_reused", false), "reason_reused": dv_find(actor, "reason_reused", false), "cognition_stop": dv_find(actor, "cognition_stop", "ordinary-cognition-pass"), "evaluated_at_game_time": time, "mind_revision": actor.mind.revision})
+        if dv_find(choice, "continuation", false) != false:
+            // The decision has already completed cognition. Retain its exact
+            // input and real event boundary only while this search is unfinished.
+            let prepared = {"input": rt_snapshot(dvs_cognition_signature(actor)), "event_cursor": rt_count(events), "time": time}
+            choice = dv_with(choice, "continuation", dv_with(choice.continuation, "prepared_cognition", prepared))
         var action = choice.action
-        actor = dv_with_many(actor, {"dependency_work_total": dv_find(actor, "dependency_work_total", 0) + dv_find(choice, "dependency_expansions", 0), "decision_revision": actor.mind.revision, "dependency_cache": choice.dependency_cache, "planned_followup": "", "planned_path": [], "planning_work_total": dv_find(actor, "planning_work_total", 0) + choice.plan_expansions, "policy": dv_with(actor.policy, "plan_budget", dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)})
+        actor = dv_with_many(actor, {"dependency_work_total": dv_find(actor, "dependency_work_total", 0) + dv_find(choice, "dependency_expansions", 0), "decision_revision": actor.mind.revision, "dependency_cache": choice.dependency_cache, "planning_continuation": dv_find(choice, "continuation", false), "planned_followup": "", "planned_path": [], "planning_work_total": dv_find(actor, "planning_work_total", 0) + choice.plan_expansions, "policy": dv_with(actor.policy, "plan_budget", dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)})
+        if dv_find(choice, "continuation", false) != false:
+            // A bounded search slice has not selected an action. Keep it runnable
+            // at this same game time; never turn unfinished candidates into sleep.
+            dvs_choice_event(events, "planning_yield", actor.id, time, dv_single(parent), choice)
+            actors = dvs_replace(actors, index, actor)
+            return dvs_owned_state_update(state, {"actors": actors, "events": events, "cursor": cursor, "idle": 0, "awaiting_player": false, "player_selection": ""})
         if (action == false):
             if (0 < dv_find(choice, "time_blocked", 0)):
                 duration_blocked = true
@@ -6751,7 +7160,8 @@ fn dvs_prepare_actor(state):
                 if selective:
                     horizon_boundary = horizon
                     proof = "approximate-yield"
-                let sleep_limit = dv_min(time + 60, horizon_boundary)
+                // Reconsider at declared changes or the horizon, without periodic polling.
+                let sleep_limit = horizon_boundary
                 let boundary = dvs_idle_window_boundary(actor, story, time, sleep_limit)
                 if (boundary.complete or selective) and time < boundary.next:
                     let guard = {"time": time, "until": boundary.next, "source_stop": stop, "proof": proof, "time_analysis_complete": boundary.complete, "declared_time_boundary": boundary.complete and boundary.next < sleep_limit, "cognition_pass_unchanged": dv_find(actor, "cognition_fixed_input", false) != false, "reason_pass_stop": dv_find(dv_find(actor, "last_reason_report", []), "stop", "not-run"), "subject": dvs_idle_subject_input(actor, costs), "contact": dvs_idle_contact_input(actor, physical, actors), "bindings": bindings, "costs": costs, "story": dvs_idle_story_input(story), "event_cursor": rt_count(events), "event_anchor": events[rt_count(events) - 1]}
@@ -6779,7 +7189,10 @@ fn dvs_prepare_actor(state):
                     dvs_event(events, "resource_rejected", id, time, dv_single(parent), {"action": action, "ledger": ledger})
                     idle = (idle + 1)
                 else:
-                    let queued = {"action": action, "choice": {"relevant_refs": choice.relevant_refs, "selected_path": dv_find(choice, "selected_path", [])}, "model": model, "start": time, "due": time + model.actual.time, "parent": parent}
+                    var queued = {"action": action, "choice": {"relevant_refs": choice.relevant_refs, "selected_path": dv_find(choice, "selected_path", [])}, "model": model, "start": time, "due": time + model.actual.time, "parent": parent}
+                    if dv_find(action, "interruptible", false):
+                        dvs_validate_interruptible_wait(action, model)
+                        queued = dv_with(queued, "wait_watch", {"contact": dvs_idle_contact_input(actor, physical, actors), "event_cursor": rt_count(events)})
                     actor = dv_with(actor, "scheduled_action", queued)
                     dvs_event(events, "action_scheduled", id, time, [parent], {"action_id": action.id, "due": queued.due, "duration": model.actual.time})
                     idle = 0
@@ -6789,10 +7202,11 @@ fn dvs_prepare_actor(state):
     return {"player_actor": dv_find(state, "player_actor", ""), "story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial, "awaiting_player": false, "player_selection": ""}
 
 fn dvs_session_complete(state, receipt):
+    state = rt_snapshot(state)
     let story = state.story
     var physical = state.physical
     var actors = state.actors
-    var events = state.events
+    var events = dv_clone(state.events)
     var bindings = state.bindings
     var costs = state.costs
     var run_start = state.run_start
@@ -6818,6 +7232,7 @@ fn dvs_session_complete(state, receipt):
     var ledger = pending.ledger
     var quote = pending.quote
     let choice = pending.choice
+    let interruption = dv_find(pending, "activity_interruption", false)
     dv_require(receipt.action_event == action_event, "Completion belongs to another action")
     var before = physical
     var result = false
@@ -6832,14 +7247,31 @@ fn dvs_session_complete(state, receipt):
         local_3 = true
     if local_3 and dvs_owned_decision_completion_selection(actor, action, events, parent) == false:
         local_3 = false
-    if dv_or((not (receipt.outcome == "applied")), (not dv_and((dv_truth(physical, dv_find(action, "authority_precondition", action.precondition)) == "true"), local_3))):
+    if interruption != false:
+        dv_require(dvs_interruptible_wait(action) and dv_same(dv_find(quote, "activity_interruption", false), interruption), "Interrupted wait quote mismatch")
+        dv_require(interruption.elapsed == model.actual.time and quote.scheduled_start + model.actual.time == interruption.time and interruption.time == time, "Interrupted wait elapsed time mismatch")
+        // The host still supplies the real receipt, but the chosen full wait did
+        // not finish. Settle elapsed time without executing its full-duration law.
         local_2 = dv_action_cost_finish(ledger, physical, quote, model.actual, "rejected")
     else:
-        if (dv_find(action, "law", "") == ""):
-            local_2 = dv_action_cost_finish(ledger, physical, quote, model.actual, "applied")
+        if dv_or((not (receipt.outcome == "applied")), (not dv_and((dv_truth(physical, dv_find(action, "authority_precondition", action.precondition)) == "true"), local_3))):
+            local_2 = dv_action_cost_finish(ledger, physical, quote, model.actual, "rejected")
         else:
-            local_2 = dv_action_cost_execute(ledger, physical, quote, model.actual)
+            if (dv_find(action, "law", "") == ""):
+                local_2 = dv_action_cost_finish(ledger, physical, quote, model.actual, "applied")
+            else:
+                local_2 = dv_action_cost_execute(ledger, physical, quote, model.actual)
     result = local_2
+    if result.execution.status != "applied":
+        var failure_class = dvs_manual_contact_failure(action, receipt, id)
+        var reason = result.execution.status
+        if interruption != false:
+            failure_class = "activity-interrupted"
+            reason = "activity-interrupted"
+        if failure_class != "":
+            reason = failure_class
+        // These are engine classifications, never a serialized private premise.
+        result = dv_with(result, "execution", dv_with_many(result.execution, {"failure_class": failure_class, "reason": reason}))
     physical = result.execution.world
     time = dv_find(physical, "time", time)
     actor = dv_with(actor, "ledger", result.ledger)
@@ -7009,7 +7441,7 @@ fn dvs_session_complete(state, receipt):
         if failure_class != "":
             retry = {"failure_class": failure_class, "action_event": action_event, "source_signature": dvp_rejected_signature(actor, action, actor.mind)}
     actor = dv_with(actor, "manual_contact_retries", dv_with(dv_find(actor, "manual_contact_retries", []), action.id, retry))
-    if result.execution.status != "applied":
+    if result.execution.status != "applied" and interruption == false:
         actor = dv_with(actor, "rejected_attempt_signatures", dv_with(dv_find(actor, "rejected_attempt_signatures", []), action.id, dvp_rejected_signature(actor, action, actor.mind)))
     else:
         actor = dv_with(actor, "rejected_attempt_signatures", dv_with(dv_find(actor, "rejected_attempt_signatures", []), action.id, false))
@@ -7073,7 +7505,8 @@ fn dvs_trace_snapshot(state):
     return {"events": events, "initial": initial, "final": {"physical": physical, "actors": actors}, "status": status, "time": dv_find(physical, "time", 0), "game_time_unit": "minute", "configuration": {"cost_model": costs, "formal_answers": dv_find(story, "formal_answers", []), "source_refs": dv_find(story, "source_refs", []), "time_origin": {"run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "unit": "minute"}, "report_labels": dv_find(story, "report_labels", []), "bindings": bindings}, "scope": dv_find(story, "execution_scope", "DV formal model; no Godot host input or geometry")}
 
 fn dvs_session_close(state):
-    var events = state.events
+    state = rt_snapshot(state)
+    var events = dv_clone(state.events)
     if rt_count(events) == 0 or events[rt_count(events) - 1].type != "session_stopped":
         let parent = events[rt_count(events) - 1].id
         var status = dvs_session_status(state)
@@ -7081,7 +7514,7 @@ fn dvs_session_close(state):
             status = "host-closed-during-active-session"
         dvs_event(events, "session_stopped", "", state.physical.time, [parent], {"reason": status, "actions_executed": state.executed})
         rt_print(rt_json_stringify({"type": "session_stopped", "status": status, "game_time": state.physical.time}))
-    return dvs_trace_snapshot(state)
+    return dvs_trace_snapshot(dvs_owned_state_update(state, {"events": events}))
 
 // A real, settled action reports its completion time to its own actor.
 // No other physical fields or inactive actors are synchronized.
@@ -7170,6 +7603,7 @@ fn dvs_public_grants(actors, speaker_index, action, physical, bindings, events, 
 // as evidence of contact. Never filter the mind's generic seen list: unrelated
 // or repeated invocations must still fail their normal duplicate checks.
 fn dvs_public_projection_inputs(events, execution_id):
+    events = rt_snapshot(events)
     var by_subject = []
     var sources = []
     var repeated = false
@@ -7363,9 +7797,10 @@ fn dvs_session_intent(state):
         if dv_find(state, "awaiting_player", false):
             return {"status": "awaiting_input", "active": true, "game_time": state.physical.time, "options": dvs_player_options(state.actors[state.cursor])}
         return {"status": "idle", "active": dvs_session_active(state), "game_time": state.physical.time}
-    return {"status": "prepared", "actor": pending.id, "action_event": pending.action_event, "action": pending.action, "bounds": pending.quote.bounds, "execution_cost": pending.model.actual, "game_time": pending.time}
+    return {"status": "prepared", "actor": pending.id, "action_event": pending.action_event, "action": pending.action, "bounds": pending.quote.bounds, "execution_cost": pending.model.actual, "game_time": pending.time, "activity_interruption": dv_find(pending, "activity_interruption", false)}
 
 fn dvs_session_presentation(state, viewer):
+    state = rt_snapshot(state)
     var i = rt_count(state.events) - 1
     var perceived = false
     var heard = false
@@ -7373,14 +7808,15 @@ fn dvs_session_presentation(state, viewer):
     while 0 <= i:
         let event = state.events[i]
         if event.actor == viewer and (event.type == "answer_accepted" or event.type == "answer_rejected"):
-            judgment = {"status": event.type, "event_id": event.id, "game_time": event.time}
+            judgment = {"status": event.type, "event_id": event.id, "game_time": event.time, "reason": dv_find(event.data, "reason", ""), "stage": dv_find(event.data, "stage", "")}
         if event.actor == viewer and (event.type == "listener_parse" or event.type == "observation"):
             perceived = true
         if event.actor == viewer and (event.type == "listener_parse" or event.type == "speech_received_pending"):
             heard = true
         if event.type == "action_execution":
             let action = event.data.action
-            let applied = event.data.receipt.execution.status == "applied"
+            let execution = event.data.receipt.execution
+            let applied = execution.status == "applied"
             let visible = event.actor == viewer or (heard or (perceived and not dv_has_key(action, "speech")))
             var surface = ""
             var presentation = []
@@ -7395,7 +7831,7 @@ fn dvs_session_presentation(state, viewer):
             var travel = []
             if applied and visible:
                 travel = dv_find(action, "travel", [])
-            return {"status": event.data.receipt.execution.status, "actor": event.actor, "speaker": dv_find(presentation, "actor", event.actor), "action_id": action.id, "action_kind": action.kind, "execution_event": event.id, "source_refs": dv_find(action, "source_refs", []), "voice": voice, "surface_voice": surface_voice, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation), "travel": travel, "judgment": judgment}
+            return {"status": execution.status, "failure_class": dv_find(execution, "failure_class", ""), "reason": dv_find(execution, "reason", ""), "actor": event.actor, "speaker": dv_find(presentation, "actor", event.actor), "action_id": action.id, "action_kind": action.kind, "execution_event": event.id, "source_refs": dv_find(action, "source_refs", []), "voice": voice, "surface_voice": surface_voice, "game_time": event.time, "visible": applied and visible, "surface": surface, "lines": dvs_present_lines(state, viewer, presentation), "travel": travel, "judgment": judgment}
         i = i - 1
     return {"status": "idle", "game_time": state.physical.time}
 

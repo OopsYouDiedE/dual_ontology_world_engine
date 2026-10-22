@@ -12,6 +12,7 @@ public sealed record TerminalModel
     public string Phase { get; init; } = "未记录";
     public string Source { get; init; } = "未记录";
     public string Footer { get; init; } = "命令：未记录";
+    public string TranscriptNotice { get; init; } = "";
     public bool IsPreview { get; init; }
     public string Zoom { get; init; } = "fit";
     public string MapView { get; init; } = "subjective";
@@ -91,6 +92,7 @@ public sealed record TerminalEntry
     public string Id { get; init; } = "";
     public string Clock { get; init; } = "";
     public string Speaker { get; init; } = "";
+    public string Voice { get; init; } = "";
     public string GroupId { get; init; } = "";
 }
 
@@ -100,8 +102,8 @@ public sealed record TerminalRenderResult(string Text, string? Svg, int PageInde
 /// <summary>Pure observer presentation. ANSI and SVG share the same cell layout.</summary>
 public static class TerminalView
 {
-    private const string Background = "#0b1424", Ink = "#eadfca";
-    private const string Teal = "#65d8c4", Muted = "#93a8bb", Amber = "#edbd72";
+    private const string Background = "#171914", Ink = "#e7dec7";
+    private const string Teal = "#c9b88a", Muted = "#a7a293", Amber = "#cfab72";
     private sealed record Line(string Text, string Color = Ink, bool Bold = false,
         string Scope = "", Line? Parent = null, bool KeepWithNext = false);
     private sealed record Block(string Title, List<Line> Lines);
@@ -297,6 +299,8 @@ public static class TerminalView
         Add(Lines(string.Join("  ·  ", status.Where(value => value.Length > 0)), model.Paginate ? inner - 12 : inner, Muted));
         var statusRow = rows.Count - 1;
         Add(Lines(PerformanceLine(model), inner, Muted));
+        if (!string.IsNullOrWhiteSpace(model.TranscriptNotice))
+            Add(Lines(model.TranscriptNotice, inner, Muted));
         Add(new[] { new Line("") });
         var headerRows = rows.Count;
         if (model.ShowActors)
@@ -307,6 +311,10 @@ public static class TerminalView
             if (model.Actors.Count == 0) Add(new[] { new Line("—", Muted) });
             Add(new[] { new Line("") });
         }
+        // The current event is the primary reading surface. Keep it full width
+        // before candidates and maps; diagnostic detail remains expandable.
+        if (model.Entries.Count > 0)
+            Add(Events(model with { Entries = latestEntries }, inner).Lines);
         if (model.Options.Count > 0)
         {
             var choices = Choices(model, inner, model.Paginate && !model.ExpandActions);
@@ -316,8 +324,6 @@ public static class TerminalView
         }
         if (model.MapView == "both")
         {
-            if (model.Entries.Count > 0)
-                Add(Events(model with { Entries = latestEntries }, inner).Lines);
             if (width >= 100)
             {
                 var leftWidth = (inner - 4) / 2;
@@ -343,37 +349,11 @@ public static class TerminalView
             var title = objective ? "客观世界" : subjectiveTitle;
             var rooms = objective ? model.ObjectiveRooms : model.Rooms;
             var edges = objective ? model.ObjectiveEdges : model.Edges;
-            if (width >= 100 && model.Entries.Count > 0)
+            AddMap(title, rooms, edges);
+            if (earlierEntries.Length > 0)
             {
-                var leftWidth = (inner - 4) / 2;
-                var rightWidth = inner - leftWidth - 4;
-                var mapLines = MapLines(title, rooms, edges, model, leftWidth, requestedHeight);
-                var recentLines = new List<Line> { new("最近记录 · 新→旧", Teal, true, "最近记录", KeepWithNext: true) };
-                var split = entryGroups.Count;
-                while (split > 0)
-                {
-                    var groupLines = Events(model with { Entries = entryGroups[split - 1].ToArray() }, rightWidth).Lines.Skip(1).ToArray();
-                    if (split < entryGroups.Count && recentLines.Count + groupLines.Length > mapLines.Count) break;
-                    recentLines.AddRange(groupLines);
-                    split--;
-                }
-                AddColumns(mapLines, recentLines, leftWidth, rightWidth);
-                if (split > 0)
-                {
-                    Add(new[] { new Line("") });
-                    Add(Events(model with { Entries = entryGroups.Take(split).SelectMany(group => group).ToArray() }, inner, "较早记录").Lines);
-                }
-            }
-            else
-            {
-                if (model.Entries.Count > 0)
-                    Add(Events(model with { Entries = latestEntries }, inner).Lines);
-                AddMap(title, rooms, edges);
-                if (earlierEntries.Length > 0)
-                {
-                    Add(new[] { new Line("") });
-                    Add(Events(model with { Entries = earlierEntries }, inner, "较早记录").Lines);
-                }
+                Add(new[] { new Line("") });
+                Add(Events(model with { Entries = earlierEntries }, inner, "较早记录").Lines);
             }
         }
         var footer = string.IsNullOrWhiteSpace(model.Footer) ? new List<Line>() : Lines(model.Footer, inner, Muted);
@@ -583,18 +563,19 @@ public static class TerminalView
                 ? value : null;
         }
         static string Format(double? value, double divisor = 1) => value is double number
-            ? (number / divisor).ToString("0.###", CultureInfo.InvariantCulture) : "—";
+            ? (number / divisor).ToString("G4", CultureInfo.InvariantCulture) : "—";
         var label = Convert.ToString(performance.GetValueOrDefault("controller_label"), CultureInfo.InvariantCulture);
         if (string.IsNullOrWhiteSpace(label)) label = ControllerKind(model) switch
         {
             "human" => "人工", "llm" => "LLM", _ => "引擎"
         };
-        var rates = "推进 " + Format(Number(performance, "game_hours_per_real_hour")) + " 游戏小时/现实小时  ·  决策 " +
-            Format(Number(performance, "decisions_per_real_hour")) + " 次/现实小时";
-        var costs = label + "接口 " + Format(Number(performance, "interface_hours_per_real_hour")) + " 小时/现实小时";
+        var rates = "每现实小时：游戏 " + Format(Number(performance, "game_hours_per_real_hour")) + " h · 决策 " +
+            Format(Number(performance, "decisions_per_real_hour")) + " 次 · " + label + "接口 " +
+            Format(Number(performance, "interface_hours_per_real_hour")) + " h";
+        if (model.Zoom != "detail") return rates;
         var wall = Number(performance, "elapsed_wall_ms");
         var duration = wall is double milliseconds ? Format(milliseconds, 1000) + " 秒" : "—";
-        return rates + "\n" + costs + "  ·  采样 " + duration + " / 推进 " +
+        return rates + "\n采样 " + duration + " / 推进 " +
             Format(Number(performance, "advanced_game_minutes")) + " 游戏分";
     }
 
@@ -615,7 +596,7 @@ public static class TerminalView
         "focus" or "focused" => "聚焦", "confirm" or "confirmed" => "已确认·待结果",
         "awaiting_player" or "awaiting_input" => "待选", "prepared" => "待确认",
         "applied" or "completed" => "已执行", "scheduled" => "已排程·待执行",
-        "rejected" => "未执行", "closed" or "stopped" => "已结束", "cancel" or "cancelled" => "已取消",
+        "rejected" => "被拒绝", "closed" => "本次记录停止", "stopped" => "会话已停止", "cancel" or "cancelled" => "已取消",
         "未记录" or "未准备" or "只读" => "", _ => value
     };
 
@@ -633,12 +614,15 @@ public static class TerminalView
 
     private static Block Events(TerminalModel model, int width, string scope = "最近记录")
     {
-        var result = new List<Line> { new(scope + " · 新→旧", Teal, true, scope, KeepWithNext: true) };
-        foreach (var group in EntryGroups(model.Entries).AsEnumerable().Reverse())
+        var groups = EntryGroups(model.Entries);
+        var headingText = groups.Count > 1 ? scope + " · 新→旧" : scope == "最近记录" ? "当前记录" : scope;
+        var result = new List<Line> { new(headingText, Teal, true, scope, KeepWithNext: true) };
+        foreach (var group in groups.AsEnumerable().Reverse())
         foreach (var entry in group)
         {
             var speaker = string.IsNullOrWhiteSpace(entry.Speaker) ? entry.Title : entry.Speaker;
             if (string.IsNullOrWhiteSpace(speaker) || speaker == "未记录") speaker = "观察记录";
+            speaker = TerminalProjection.VoiceHeading(speaker, entry.Voice);
             var title = (string.IsNullOrWhiteSpace(entry.Clock) ? "时间未记录" : entry.Clock) + " · " + speaker;
             var heading = new Line(title, entry.Kind == "error" ? Amber : Muted, true, scope,
                 KeepWithNext: !string.IsNullOrWhiteSpace(entry.Text));
@@ -663,9 +647,11 @@ public static class TerminalView
         var actionPage = GetActionPageInfo(model);
         var start = compact ? actionPage.Index * 5 : 0;
         var count = compact ? Math.Min(5, model.Options.Count - start) : model.Options.Count;
+        var detailedScores = model.ShowScores == true || model.Zoom == "detail";
         var title = (model.OptionTimeBasis == "decision-boundary" ? "当时的候选" : "行动") +
             (compact && count < model.Options.Count ? $"  {start + 1:00}–{start + count:00}/{model.Options.Count:00}" : "") +
-            (hasSharedCost ? "  ·  各项 " + (sharedCost.Length > 0 ? sharedCost : "费用 0") : "");
+            (hasSharedCost ? "  ·  各项 " + (sharedCost.Length > 0 ? sharedCost : "费用 0") : "") +
+            (ScoresVisible(model) && !detailedScores ? "  ·  评分详情 scores on" : "");
         for (var index = start; index < start + count; index++)
         {
             var option = model.Options[index];
@@ -673,7 +659,9 @@ public static class TerminalView
             var cost = option.HasCost
                 ? hasSharedCost && option.Detail == sharedCost ? "" : option.Detail.Length == 0 ? "费用 0" : option.Detail
                 : hasSharedCost ? "费用未记录" : "";
-            var metadata = string.Join("  ", new[] { cost, ScoresVisible(model) ? OptionScore(option) : "" }.Where(value => value.Length > 0));
+            var metadata = string.Join("  ", new[] { cost,
+                ScoresVisible(model) && (detailedScores || option.Selected) ? OptionScore(option, detailedScores) : ""
+            }.Where(value => value.Length > 0));
             var fullLabel = Missing(option.Title) + (option.Disambiguator.Length == 0 ? "" : " [" + option.Disambiguator + "]");
             var label = fullLabel + (metadata.Length == 0 ? "" : "  " + metadata);
             var lines = Indented(prefix, label, width, option.Selected ? Teal : Ink, option.Selected).ToList();
@@ -690,7 +678,7 @@ public static class TerminalView
         return new Block(title, result);
     }
 
-    private static string OptionScore(TerminalOption option)
+    private static string OptionScore(TerminalOption option, bool detailed)
     {
         var score = string.IsNullOrWhiteSpace(option.Score) ? "—" : option.Score;
         var kind = option.ScoreKind switch
@@ -701,8 +689,10 @@ public static class TerminalView
         };
         var current = option.PlanningStatus == "unexpanded" ? "当前未展开" : kind == "未估值" ? kind : kind + " " + score;
         if (!option.Selected || option.SelectionScore.Length == 0) return "AI " + current;
+        if (!detailed) return "AI 选择 " + option.SelectionScore;
         var when = option.SelectionClock.Length > 0 ? option.SelectionClock + " " : "";
-        return "AI " + when + "选择路径 " + option.SelectionScore + " · " + current;
+        var repeated = option.ScoreKind == "recorded-choice" && option.Score == option.SelectionScore;
+        return "AI " + when + "选择路径 " + option.SelectionScore + (repeated ? "" : " · " + current);
     }
 
     private static int TextWidth(string value)

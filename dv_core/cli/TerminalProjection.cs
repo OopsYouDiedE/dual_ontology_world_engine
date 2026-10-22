@@ -138,6 +138,21 @@ internal static class TerminalProjection
         return labels;
     }
 
+    internal static string VoiceHeading(string speaker, string voice)
+    {
+        var label = voice switch
+        {
+            "" or "dialogue" => "",
+            "visible-action" => "现场记录",
+            "visible-inspection" => "观察记录",
+            "execution-feedback" => "行动反馈",
+            "formal-receipt" => "答辩回执",
+            "bodily-flash" => "本人回想",
+            _ => "叙述"
+        };
+        return label.Length == 0 ? speaker : speaker.Length == 0 || speaker == label ? label : label + " · " + speaker;
+    }
+
     internal static TerminalModel FromSnapshot(IReadOnlyDictionary<string, object?> snapshot,
         IReadOnlyDictionary<string, object?> status, IReadOnlyList<IReadOnlyDictionary<string, object?>> options,
         IReadOnlyList<TerminalEntry> entries, string mode, string phase, string source, string selected = "",

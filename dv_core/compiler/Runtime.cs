@@ -227,6 +227,13 @@ public static class R
     private sealed class ValueCaches
     {
         internal readonly object SnapshotLock = new();
+        internal readonly FrozenList EmptySnapshot = new(Array.Empty<object>(), unchecked(14695981039346656037UL * 1099511628211UL), 14695981039346656037UL)
+        {
+            CompatibleSequenceHash = 14695981039346656037UL,
+            MembershipHash = unchecked(14695981039346656037UL * 1099511628211UL) ^ 5UL,
+            MembershipHashChecked = true,
+            MembershipHashEligible = true
+        };
         internal readonly ConditionalWeakTable<List<object>, MutableState> MutableStates = new();
         internal readonly ConditionalWeakTable<FrozenList, ValueMemo> ValueMemos = new();
         internal readonly ConditionalWeakTable<FrozenList, JsonEncoding> JsonEncodings = new();
@@ -398,15 +405,39 @@ public static class R
     public static object normalize(object s) => Text(s).Normalize(NormalizationForm.FormC);
     public static object replace(object list, object index, object value) { Invalidate(list); MutableItems(list)[Index(index)] = value; return list; }
     public static object list() => new List<object>();
-    public static object push(object a, object b) { Invalidate(a); MutableItems(a).Add(b); return a; }
+    public static object push(object a, object b)
+    {
+        var items = MutableItems(a);
+        if (!MutableStates.TryGetValue(items, out var state))
+        {
+            items.Add(b);
+            return a;
+        }
+        // Retain only a certified, unchanged immutable prefix. A later write to
+        // any old child invalidates this prefix through the ordinary owner links.
+        var prefix = state.Backbone ?? state.AppendBase;
+        Invalidate(a);
+        items.Add(b);
+        state.AppendBase = prefix;
+        return a;
+    }
     public static object at(object a, object i) => ReadItem(a, Index(i));
     // Persistent spine only: mirror dvs_replace's equality and selected reads.
     public static object list_with_index(object items, object index, object value)
     {
         var source = Items(items);
         var result = new List<object>(source.Count);
+        if (index is double selected)
+        {
+            // The source position is always a finite non-negative integer.
+            // Double equality therefore has the same result as eq here,
+            // including negative zero, fractions and non-finite indices.
+            for (var i = 0; i < source.Count; i++)
+                result.Add(i == selected ? value : ReadItem(items, i));
+            return result;
+        }
         for (var i = 0; i < source.Count; i++)
-            result.Add(Bool(eq((double)i, index)) ? value : ReadItem(items, i));
+            result.Add(Bool(eq(NumberValue(i), index)) ? value : ReadItem(items, i));
         return result;
     }
     public static object count(object a) => a switch
@@ -433,24 +464,24 @@ public static class R
                 var frozen = record as FrozenList;
                 if (frozen is null && entries is List<object> mutable && MutableStates.TryGetValue(mutable, out var state)) frozen = state.Backbone;
                 var index = frozen is not null ? FrozenIndex(frozen) : MutableIndex((List<object>)entries);
-                if (index is not null) return index.TryGetValue(name, out var found) ? (double)found : -1d;
+                if (index is not null) return index.TryGetValue(name, out var found) ? NumberValue(found) : NumberMinusOne;
             }
             for (var i = entries.Count - 1; i >= 0; i--)
             {
                 var entry = entries[i];
                 var k = RawItem(entry, 0);
                 if (ReferenceEquals(k, name) || (k is string s && string.Equals(s, name, StringComparison.Ordinal)))
-                    return (double)i;
+                    return NumberValue(i);
             }
-            return -1d;
+            return NumberMinusOne;
         }
         for (var i = entries.Count - 1; i >= 0; i--)
         {
             var entry = entries[i];
             var k = RawItem(entry, 0);
-            if (Bool(eq(k, key))) return (double)i;
+            if (Bool(eq(k, key))) return NumberValue(i);
         }
-        return -1d;
+        return NumberMinusOne;
     }
     public static object record_find(object record, object key, object fallback)
     {
@@ -720,6 +751,7 @@ public static class R
             var valueHash = value is FrozenList child ? child.Hash : unchecked((ulong)HashCode.Combine(value.GetType(), value));
             var hash = unchecked((14695981039346656037UL ^ keyHash) * 1099511628211UL);
             hash = unchecked((hash ^ valueHash) * 1099511628211UL);
+            var sequenceHash = hash;
             hash = unchecked((hash ^ 2UL) * 1099511628211UL);
             if (!caches.SnapshotPool.TryGetValue(hash, out var bucket))
             {
@@ -735,7 +767,7 @@ public static class R
                     : Equals(existing[1], value);
                 if (equal) return existing;
             }
-            var pair = new FrozenList(new object[] { key, value }, hash);
+            var pair = new FrozenList(new object[] { key, value }, hash, sequenceHash);
             var keyEligible = TryMembershipHash(key, out var compatibleKey);
             var valueEligible = TryMembershipHash(value, out var compatibleValue);
             var eligible = keyEligible && valueEligible;
@@ -743,6 +775,7 @@ public static class R
             {
                 var compatible = unchecked((14695981039346656037UL ^ compatibleKey) * 1099511628211UL);
                 compatible = unchecked((compatible ^ compatibleValue) * 1099511628211UL);
+                pair.CompatibleSequenceHash = compatible;
                 pair.MembershipHash = unchecked((compatible ^ 2UL) * 1099511628211UL) ^ 5UL;
             }
             pair.MembershipHashEligible = eligible;
@@ -754,43 +787,104 @@ public static class R
     private sealed class ValueMemo
     {
         internal readonly Dictionary<string, MemoPartition> Partitions = new(StringComparer.Ordinal);
+        private static string PartitionName(object key) => TryItems(key, out var parts) && parts.Count > 0 && parts[0] is string tag ? tag : "";
+        internal bool TryPartition(object key, out MemoPartition partition) => Partitions.TryGetValue(PartitionName(key), out partition!);
         internal MemoPartition Partition(object key)
         {
-            var name = TryItems(key, out var parts) && parts.Count > 0 && parts[0] is string tag ? tag : "";
+            var name = PartitionName(key);
             if (!Partitions.TryGetValue(name, out var partition)) Partitions[name] = partition = new();
             return partition;
         }
     }
+    private sealed class MemoKeyComparer : IEqualityComparer<object>
+    {
+        internal static readonly MemoKeyComparer Instance = new();
+        public new bool Equals(object? left, object? right)
+        {
+            if (ReferenceEquals(left, right)) return true;
+            if (left is null || right is null) return false;
+            if (!TryItems(left, out var a) || !TryItems(right, out var b)) return object.Equals(left, right);
+            return SameStorageList(a, b);
+        }
+        private static bool SameStorageList(IReadOnlyList<object> left, IReadOnlyList<object> right)
+        {
+            if (ReferenceEquals(left, right)) return true;
+            if (left.Count != right.Count) return false;
+            for (var i = 0; i < left.Count; i++)
+            {
+                var a = left[i]; var b = right[i];
+                if (ReferenceEquals(a, b)) continue;
+                if (a is double x && b is double y)
+                {
+                    if (BitConverter.DoubleToInt64Bits(x) != BitConverter.DoubleToInt64Bits(y)) return false;
+                }
+                else if (TryItems(a, out var al) && TryItems(b, out var bl))
+                {
+                    if (!SameStorageList(al, bl)) return false;
+                }
+                else if (!object.Equals(a, b)) return false;
+            }
+            return true;
+        }
+        public int GetHashCode(object value)
+        {
+            var hash = StorageHash(value, Caches);
+            return unchecked((int)(hash ^ (hash >> 32)));
+        }
+        private static ulong StorageHash(object value, ValueCaches caches)
+        {
+            if (value is FrozenList frozen) return frozen.Hash;
+            if (value is not List<object> list) return unchecked((ulong)HashCode.Combine(value.GetType(), value));
+            if (caches.MutableStates.TryGetValue(list, out var state) && state.Backbone is { } basis) return basis.Hash;
+            var hash = 14695981039346656037UL;
+            for (var i = 0; i < list.Count; i++)
+                hash = unchecked((hash ^ StorageHash(list[i], caches)) * 1099511628211UL);
+            return unchecked((hash ^ (ulong)list.Count) * 1099511628211UL);
+        }
+    }
     private sealed class MemoPartition
     {
-        internal readonly Dictionary<object, object> Values = new();
+        // Only put stores frozen keys. A lookup may borrow its current raw key
+        // during this call; the comparer never retains or changes that input.
+        internal readonly Dictionary<object, object> Values = new(MemoKeyComparer.Instance);
         internal readonly Queue<object> Order = new();
     }
     private static ConditionalWeakTable<FrozenList, ValueMemo> ValueMemos => Caches.ValueMemos;
     public static object memo_get(object owner, object key)
     {
-        lock (SnapshotLock)
+        var caches = Caches;
+        lock (caches.SnapshotLock)
         {
-            var identity = owner is FrozenList fl ? fl : (FrozenList)SnapshotValue(Items(owner));
-            var frozenKey = key is FrozenList fk ? fk : SnapshotValue(key);
-            if (ValueMemos.TryGetValue(identity, out var ownerMemo) && ownerMemo.Partition(frozenKey).Values.TryGetValue(frozenKey, out var result))
-                return new List<object> { true, copy_value(result) };
-            return new List<object> { BoolFalse, BoolFalse };
+            var identity = owner is FrozenList fl ? fl : (FrozenList)SnapshotValue(Items(owner), caches);
+            if (caches.ValueMemos.TryGetValue(identity, out var ownerMemo) && ownerMemo.TryPartition(key, out var partition))
+            {
+                if (partition.Values.TryGetValue(key, out var result))
+                    return new List<object>(2) { BoolTrue, copy_value(result) };
+            }
+            else
+            {
+                // Retain the original validation on a new owner or partition,
+                // without allocating an empty partition just for a miss.
+                _ = SnapshotValue(key, caches);
+                if (ownerMemo is not null) ArgumentNullException.ThrowIfNull(key);
+            }
+            return new List<object>(2) { BoolFalse, BoolFalse };
         }
     }
     public static object memo_put(object owner, object key, object value)
     {
-        lock (SnapshotLock)
+        var caches = Caches;
+        lock (caches.SnapshotLock)
         {
-            var identity = (FrozenList)SnapshotValue(Items(owner));
-            var frozenKey = SnapshotValue(key);
-            var memo = ValueMemos.GetOrCreateValue(identity).Partition(frozenKey);
+            var identity = (FrozenList)SnapshotValue(Items(owner), caches);
+            var frozenKey = SnapshotValue(key, caches);
+            var memo = caches.ValueMemos.GetOrCreateValue(identity).Partition(frozenKey);
             if (!memo.Values.ContainsKey(frozenKey))
             {
                 if (memo.Values.Count >= 512) memo.Values.Remove(memo.Order.Dequeue());
                 memo.Order.Enqueue(frozenKey);
             }
-            memo.Values[frozenKey] = SnapshotValue(value);
+            memo.Values[frozenKey] = SnapshotValue(value, caches);
             return value;
         }
     }
@@ -810,14 +904,27 @@ public static class R
         // It is adopted once and never exposed or modified after publication.
         private readonly object[] children;
         private static readonly List<object> InvalidIndexSource = [];
-        internal FrozenList(object[] ownedChildren, ulong hash)
+        internal FrozenList(object[] ownedChildren, ulong hash, ulong sequenceHash)
         {
             children = ownedChildren;
             Hash = hash;
+            SequenceHash = sequenceHash;
         }
         // List copies the private array into its own backing store in one pass;
         // the immutable source remains private and cannot be mutated by its owner.
-        internal List<object> CopyRoot() => new(children);
+        internal List<object> CopyRoot()
+        {
+            if (children.Length == 0) return new List<object>();
+            // Histories and event roots usually append immediately after copying.
+            // Reserve a short suffix once instead of allocating an exact-size
+            // copy and then a second, doubled array for its very first append.
+            var extra = children.Length >= 64 ? 16 : 2;
+            var capacity = children.Length <= int.MaxValue - extra ? children.Length + extra : children.Length;
+            var result = new List<object>(capacity);
+            result.AddRange(children);
+            return result;
+        }
+        internal void CopyPrefixTo(object[] destination) => Array.Copy(children, destination, children.Length);
         public int Count => children.Length;
         public object this[int index]
         {
@@ -851,6 +958,8 @@ public static class R
             public void Dispose() { }
         }
         internal readonly ulong Hash;
+        internal readonly ulong SequenceHash;
+        internal ulong CompatibleSequenceHash;
         internal int RecordReads;
         internal volatile bool IndexChecked;
         internal Dictionary<string, int>? Index;
@@ -972,6 +1081,7 @@ public static class R
     {
         internal int RecordReads;
         internal FrozenList? Backbone;
+        internal FrozenList? AppendBase;
         internal bool IndexChecked;
         internal Dictionary<string, int>? Index;
         internal object? Invalidation;
@@ -1011,6 +1121,7 @@ public static class R
         if (initial.Parent is null && initial.OtherParents is not { Count: > 0 })
         {
             initial.Backbone = null;
+            initial.AppendBase = null;
             initial.IndexChecked = false;
             initial.Index = null;
             return;
@@ -1028,6 +1139,7 @@ public static class R
             {
                 state.Invalidation = invalidation;
                 state.Backbone = null;
+                state.AppendBase = null;
                 state.IndexChecked = false;
                 state.Index = null;
                 if (state.Parent is { } first)
@@ -1192,14 +1304,44 @@ public static class R
     private static object SnapshotValue(object value, ValueCaches caches)
     {
         if (value is FrozenList || value is not List<object> items) return value;
+        if (items.Count == 0)
+        {
+            // A fresh empty literal needs no weak mutable-state registration.
+            // Existing parent links remain intact and still invalidate normally.
+            if (caches.MutableStates.TryGetValue(items, out var emptyState)) emptyState.Backbone = caches.EmptySnapshot;
+            return caches.EmptySnapshot;
+        }
         var state = caches.MutableStates.GetOrCreateValue(items);
         if (state.Backbone is not null) return state.Backbone;
+        if (items.Count == 2 && items[0] is string key
+            && items[1] is string or double or bool or Rational or FrozenList or List<object>)
+        {
+            // Text-headed pairs are common transient values. Reuse the same
+            // frozen-pair pool without allocating a candidate array on a hit.
+            // Link a mutable child before freezing, just as the general path
+            // does, so its later writes invalidate this owner's backbone.
+            var valuePart = items[1];
+            if (valuePart is List<object> mutablePart) LinkParent(mutablePart, items, caches.MutableStates);
+            var pair = (FrozenList)FrozenTextPair(key, SnapshotValue(valuePart, caches));
+            state.Backbone = pair;
+            state.AppendBase = null;
+            return pair;
+        }
         MaintainSnapshots(caches);
         var children = items.Count == 0 ? Array.Empty<object>() : new object[items.Count];
         ulong hash = 14695981039346656037UL;
         ulong compatibleHash = hash;
         var compatible = true;
-        for (var i = 0; i < items.Count; i++)
+        var start = 0;
+        if (state.AppendBase is { } prefix && prefix.Count >= 64 && prefix.Count <= items.Count)
+        {
+            prefix.CopyPrefixTo(children);
+            start = prefix.Count;
+            hash = prefix.SequenceHash;
+            compatibleHash = prefix.CompatibleSequenceHash;
+            compatible = prefix.MembershipHashEligible;
+        }
+        for (var i = start; i < items.Count; i++)
         {
             if (items[i] is List<object> mutableChild) LinkParent(mutableChild, items, caches.MutableStates);
             var child = children[i] = SnapshotValue(items[i], caches);
@@ -1209,6 +1351,7 @@ public static class R
             var part = child is FrozenList list ? list.Hash : unchecked((ulong)HashCode.Combine(child.GetType(), child));
             hash = unchecked((hash ^ part) * 1099511628211UL);
         }
+        var sequenceHash = hash;
         hash = unchecked((hash ^ (ulong)items.Count) * 1099511628211UL);
         if (!caches.SnapshotPool.TryGetValue(hash, out var bucket))
         {
@@ -1224,9 +1367,9 @@ public static class R
                 same = existing[j] is double left && children[j] is double right
                     ? BitConverter.DoubleToInt64Bits(left) == BitConverter.DoubleToInt64Bits(right)
                     : Equals(existing[j], children[j]);
-            if (same) { state.Backbone = existing; return existing; }
+            if (same) { state.Backbone = existing; state.AppendBase = null; return existing; }
         }
-        var frozen = new FrozenList(children, hash)
+        var frozen = new FrozenList(children, hash, sequenceHash)
         {
             Index = state.Index,
             IndexChecked = state.IndexChecked,
@@ -1234,8 +1377,10 @@ public static class R
             MembershipHashEligible = compatible,
             MembershipHashChecked = true
         };
+        frozen.CompatibleSequenceHash = compatibleHash;
         bucket.Add(new WeakReference<FrozenList>(frozen));
         state.Backbone = frozen;
+        state.AppendBase = null;
         return frozen;
     }
     private static object ReadItem(object owner, int index)

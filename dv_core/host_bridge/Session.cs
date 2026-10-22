@@ -159,8 +159,8 @@ public sealed partial class DvSession
         return new DvSession(context, value, R.Bool(Field(value, "audit_mode", true)));
     });
 
-    public string Viewer => R.Text(Run(() => DVProgram.HostViewer(state)));
-    public bool Active => !IsClosed && R.Bool(Run(() => DVProgram.SessionActive(state)));
+    public string Viewer => R.Text(Run(() => DVProgram.HostViewer(R.snapshot(state))));
+    public bool Active => !IsClosed && R.Bool(Run(() => DVProgram.SessionActive(R.snapshot(state))));
     public IReadOnlyDictionary<string, object?> Intent
     {
         get
@@ -191,7 +191,7 @@ public sealed partial class DvSession
             state = Run(() => DVProgram.SelectPlayer(state, SelectionValue(selection)));
             RecordCommittedDecisions();
         }
-        state = Run(() => DVProgram.SessionPrepare(state));
+        state = Run(() => DVProgram.SessionPrepare(R.snapshot(state)));
         RecordCommittedDecisions();
         RememberCommitted();
         return Intent;
@@ -204,8 +204,9 @@ public sealed partial class DvSession
         using var valuesScope = R.UseValues(valueContext);
         if (IsClosed || HasPending(state) || !R.Bool(Field(state, "awaiting_player", false))) return Intent;
         using var performanceScope = Measure("background-prepare");
-        var advanced = Run(() => DVProgram.PrepareBackground(state, Viewer));
-        if (!ReferenceEquals(advanced, state))
+        var previous = R.snapshot(state);
+        var advanced = Run(() => DVProgram.PrepareBackground(previous, Viewer));
+        if (!ReferenceEquals(advanced, previous))
         {
             BeginTransition();
             state = advanced;
@@ -224,8 +225,8 @@ public sealed partial class DvSession
         var firstEvent = Events(state).Count;
         var branch = R.copy_value(R.snapshot(state));
         branch = Run(() => DVProgram.SelectPlayer(branch, SelectionValue(selection)), speculative: true);
-        branch = Run(() => DVProgram.SessionPrepare(branch), speculative: true);
-        var intent = converter.Record(Run(() => DVProgram.SessionIntent(branch), speculative: true));
+        branch = Run(() => DVProgram.SessionPrepare(R.snapshot(branch)), speculative: true);
+        var intent = converter.Record(Run(() => DVProgram.SessionIntent(R.snapshot(branch)), speculative: true));
         var candidate = new PreparedPreview(Guid.NewGuid().ToString("N"), Version, selection, intent);
         preview = new PreviewBranch(candidate, R.snapshot(branch), firstEvent);
         return candidate;
@@ -269,12 +270,12 @@ public sealed partial class DvSession
         var actionId = R.Text(Field(action, "id", ""));
         var eventCursor = Events(state).Count;
         BeginTransition();
-        state = Run(() => DVProgram.SessionComplete(state, receipt));
+        state = Run(() => DVProgram.SessionComplete(R.snapshot(state), receipt));
         RecordCommittedDecisions();
         RememberCommitted();
         object projected;
         using (Measure("presentation", "projection"))
-            projected = Run(() => DVProgram.SessionPresentation(state, viewer));
+            projected = Run(() => DVProgram.SessionPresentation(R.snapshot(state), viewer));
         var presentation = new Dictionary<string, object?>(converter.Record(projected), StringComparer.Ordinal);
         var outcome = "";
         var events = Events(state);
@@ -327,11 +328,11 @@ public sealed partial class DvSession
         if (cache.Version == Version) return cache;
         using var performanceScope = Measure("host-snapshot", "projection");
         PhaseObserver?.Invoke("snapshot_projection_begin", viewer);
-        var dynamic = RawFields(Run(() => DVProgram.DynamicSnapshot(state, viewer, IntentProjection())));
+        var dynamic = RawFields(Run(() => DVProgram.DynamicSnapshot(R.snapshot(state), viewer, IntentProjection())));
         var map = (string)dynamic["map"];
         var chapter = Convert.ToInt32(dynamic["chapter"]);
         if (cache.Version < 0 || cache.Map != map || cache.Chapter != chapter)
-            cache.Static = RawFields(Run(() => DVProgram.StaticSnapshot(state, viewer)));
+            cache.Static = RawFields(Run(() => DVProgram.StaticSnapshot(R.snapshot(state), viewer)));
         var next = new Dictionary<string, object>(cache.Static, StringComparer.Ordinal);
         foreach (var pair in dynamic) next[pair.Key] = pair.Value;
         var values = new Dictionary<string, object?>(next.Count, StringComparer.Ordinal);
@@ -376,7 +377,7 @@ public sealed partial class DvSession
         if (actor == Viewer) return Materialize(actor);
         if (executors.TryGetValue(actor, out var found) && found.Version == Version) return found.Value;
         using var performanceScope = Measure("executor-snapshot", "projection");
-        var value = converter.Record(Run(() => DVProgram.ExecutorSnapshot(state, actor, IntentProjection())));
+        var value = converter.Record(Run(() => DVProgram.ExecutorSnapshot(R.snapshot(state), actor, IntentProjection())));
         executors[actor] = (Version, value);
         return value;
     }
@@ -486,11 +487,11 @@ public sealed partial class DvSession
         using var performanceScope = Measure("close", "persistence");
         CancelPrepared();
         CaptureClosingPreview();
-        closedTrace = R.snapshot(Run(() => DVProgram.SessionClose(state)));
+        closedTrace = R.snapshot(Run(() => DVProgram.SessionClose(R.snapshot(state))));
         shutdownReason = R.Text(Field(closedTrace, "status", "closed"));
         UpdateEvidenceLifecycle();
     }
-    private object TraceValue() => closedTrace ?? R.snapshot(Run(() => DVProgram.TraceSnapshot(state)));
+    private object TraceValue() => closedTrace ?? R.snapshot(Run(() => DVProgram.TraceSnapshot(R.snapshot(state))));
     public string Trace()
     {
         using var performanceScope = Measure("trace-json", "persistence");

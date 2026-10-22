@@ -23,18 +23,25 @@ def game_minute(value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', required=True, type=Path)
-    parser.add_argument('--seconds', required=True, type=float)
+    parser.add_argument('--seconds', type=float, default=41,
+                        help='Decision window from process launch; opening is included.')
     parser.add_argument('--game-minutes', type=float,
                         help='Stop after at least this many actually advanced game minutes; never assign the clock.')
     parser.add_argument('--planning', choices=('selective', 'precise'), default='selective')
-    parser.add_argument('--grace', type=float, default=40,
+    parser.add_argument('--grace', type=float, default=4,
                         help='Shutdown reserve inside the hard timeout, never extra test time.')
-    parser.add_argument('--hard-timeout', type=float, default=300)
+    parser.add_argument('--hard-timeout', type=float, default=45)
+    parser.add_argument('--burst-ms', type=int, default=200,
+                        help='Bounded engine-only batches; all focus and result records remain in the replay.')
     parser.add_argument('--source-revision', default='')
+    parser.add_argument('--failure-font', type=Path,
+                        help='CJK font for offline failure JPGs; Windows defaults to Microsoft YaHei.')
     parser.add_argument('--cli', type=Path, default=Path('dv_core/cli/bin/Release/net8.0/dv-cli.dll'))
     args = parser.parse_args()
-    if not 0 < args.hard_timeout <= 300:
-        parser.error('hard-timeout must be in (0,300]')
+    if not 0 < args.hard_timeout <= 45:
+        parser.error('hard-timeout must be in (0,45]')
+    if not 1 <= args.burst_ms <= 1000:
+        parser.error('burst-ms must be in [1,1000]')
     if args.game_minutes is not None and args.game_minutes <= 0:
         parser.error('game-minutes must be positive')
     if not 0 < args.grace < args.hard_timeout or not 0 < args.seconds <= args.hard_timeout - args.grace:
@@ -49,6 +56,8 @@ def main():
     origin = time.monotonic_ns()
     started = time.monotonic()
     hard_deadline = started + args.hard_timeout
+    # Leave a small part of the authorized window for OS termination/reaping.
+    termination_deadline = hard_deadline - min(.25, args.hard_timeout / 20)
     decision_deadline = min(started + args.seconds, hard_deadline - args.grace)
     lock = threading.Lock()
     messages = queue.Queue()
@@ -67,20 +76,24 @@ def main():
                 if not recording_open.is_set():
                     return
                 writer.append({'kind': kind, 'real_ns': time.monotonic_ns() - origin, **values})
-                writer.stream.flush()
 
         record('launch', command=command, source_revision=args.source_revision or None,
                requested_seconds=args.seconds, hard_timeout_seconds=args.hard_timeout,
                requested_game_minutes=args.game_minutes, planning=args.planning,
-               shutdown_reserve_seconds=args.grace,
+               shutdown_reserve_seconds=args.grace, burst_ms=args.burst_ms,
+               replay_coverage='every formal focus/confirm/result; screenshots exported after the AI process exits',
                scope='engine AI decisions only; fixed detective observer; formal-model',
                source_validation='not-run-by-user-request')
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        popen_options = {'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == 'nt' else {'start_new_session': True}
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **popen_options)
 
         def watchdog():
-            if not finished.wait(max(0, hard_deadline - time.monotonic())):
+            if not finished.wait(max(0, termination_deadline - time.monotonic())):
                 timed_out.set()
-                stop_tree(process)
+                # The already-built CLI is the measured process; no build or
+                # rasterizer is launched beneath it. Terminate it immediately.
+                if process.poll() is None:
+                    process.kill()
 
         watchdog_thread = threading.Thread(target=watchdog, daemon=True)
         watchdog_thread.start()
@@ -127,7 +140,8 @@ def main():
                 kind = item.get('kind')
                 data = item.get('data') or {}
                 if kind in ('error', 'protocol_error', 'eof'):
-                    raise RuntimeError(str(item))
+                    message = item.get('message') or data.get('message') or ('CLI output ended' if kind == 'eof' else str(item))
+                    raise RuntimeError(message)
                 if kind == 'status':
                     latest_status = data
                     return item
@@ -149,7 +163,8 @@ def main():
                 if latest_status.get('active') is False:
                     reason = 'session_inactive'
                     break
-                send('next')
+                remaining_ms = max(1, min(args.burst_ms, int((decision_deadline - time.monotonic()) * 1000)))
+                send(f'advance {remaining_ms}')
                 advances += 1
                 item = reply(hard_deadline - min(10, args.grace / 2))
                 if item.get('kind') == 'intent':
@@ -163,10 +178,10 @@ def main():
                 elapsed = time.monotonic() - started
                 if elapsed - last_progress >= 30:
                     last_progress = elapsed
-                    print(f'AI decisions {elapsed:.1f}/{args.seconds:g}s; next inputs {advances}; '
+                    print(f'AI decisions {elapsed:.1f}/{args.seconds:g}s; batch inputs {advances}; '
                           f'game time {latest_status.get("game_time", "unknown")}', flush=True)
             record('window_end', reason=reason, elapsed_seconds=time.monotonic() - started,
-                   next_inputs=advances, last_status=latest_status,
+                   batch_inputs=advances, last_status=latest_status,
                    initial_game_time=initial_game_time,
                    actual_game_minutes=game_minute(latest_status.get('game_time', initial_game_time)) - initial_game_time)
             send('quit')
@@ -174,7 +189,7 @@ def main():
             exit_code = process.wait(timeout=max(.001, hard_deadline - time.monotonic()))
         except (Exception, KeyboardInterrupt) as error:
             reason = 'hard_timeout' if timed_out.is_set() else 'driver_error'
-            record('driver_error', error=str(error), next_inputs=advances)
+            record('driver_error', error=str(error), batch_inputs=advances)
             print(f'AI session stopped: {error}', flush=True)
             try:
                 if process.poll() is None:
@@ -186,15 +201,18 @@ def main():
                     process.wait(timeout=max(.001, hard_deadline - time.monotonic()))
             except subprocess.TimeoutExpired:
                 timed_out.set()
-                stop_tree(process)
+                stop_tree(process, hard_deadline)
             exit_code = 124 if timed_out.is_set() or isinstance(error, (TimeoutError, queue.Empty, subprocess.TimeoutExpired)) else 1
         finally:
             if process.poll() is None:
                 timed_out.set()
-                stop_tree(process)
+                stop_tree(process, hard_deadline)
             for thread in pumps:
                 thread.join(timeout=max(0, min(2, hard_deadline - time.monotonic())))
             finished.set()
+            if timed_out.is_set():
+                reason = 'hard_timeout'
+                exit_code = 124
             pipes_complete = all(not thread.is_alive() for thread in pumps)
             record('closed', exit_code=exit_code, reason=reason, hard_timeout=timed_out.is_set(),
                    elapsed_seconds=time.monotonic() - started, pipes_complete=pipes_complete)
@@ -202,8 +220,23 @@ def main():
                 recording_open.clear()
     if pipes_complete:
         partial.rename(output / 'console.dvlog')
-    print(f'AI session closed: exit={exit_code}, reason={reason}, elapsed={time.monotonic() - started:.1f}s', flush=True)
-    return exit_code or (0 if pipes_complete else 1)
+    ai_elapsed = time.monotonic() - started
+    result_code = exit_code or (0 if pipes_complete else 1)
+    print(f'AI session closed: exit={result_code}, reason={reason}, elapsed={ai_elapsed:.3f}s', flush=True)
+    if result_code:
+        # This happens strictly after the measured process has exited and its
+        # console writer has closed. It never reruns the failed game opening.
+        try:
+            from render_terminal_export import render_console_log
+            font_path = args.failure_font or Path(os.environ.get('WINDIR', 'C:/Windows')) / 'Fonts/msyh.ttc'
+            evidence = output / 'console.dvlog' if pipes_complete else partial
+            capture = render_console_log(evidence, output / 'failure-capture', font_path)
+            print(f'Failure console JPGs: {capture["images"]}; offline export {capture["elapsed_seconds"]:.3f}s; AI runtime unchanged', flush=True)
+        except Exception as error:
+            with (output / 'failure-capture-error.txt').open('x', encoding='utf-8') as report:
+                report.write(str(error))
+            print(f'Failure JPG export incomplete: {error}', flush=True)
+    return result_code
 
 
 if __name__ == '__main__':

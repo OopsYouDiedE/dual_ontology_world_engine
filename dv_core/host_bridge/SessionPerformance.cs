@@ -178,7 +178,7 @@ internal sealed class SessionPerformance
     }
 
     private static readonly string[] PlanningSums =
-        ["candidates_considered", "candidates_skipped", "admission_checks", "eligible_evaluations", "forecasts", "forecast_reuses", "expanded_nodes", "candidate_paths", "retained_paths", "route_reuses", "skipped_expansion", "partial_layer", "examined_layers", "completed_layers"];
+        ["candidates_considered", "candidates_skipped", "candidate_order_scans", "candidate_order_reuses", "admission_checks", "eligible_evaluations", "forecasts", "forecast_reuses", "expanded_nodes", "candidate_paths", "retained_paths", "route_reuses", "skipped_expansion", "partial_layer", "examined_layers", "completed_layers"];
     private static readonly string[] PlanningMaxima = ["peak_frontier", "budget_limit", "depth_limit", "lookahead_limit"];
 
     private static double? PlanningNumber(object? value)
@@ -211,7 +211,7 @@ internal sealed class SessionPerformance
                     ? skipped ? 1d : 0d : PlanningNumber(value);
                 if (number is { } amount)
                 {
-                    var currentReuse = field is "route_reuses" or "forecast_reuses" or "skipped_expansion";
+                    var currentReuse = field is "route_reuses" or "forecast_reuses" or "candidate_order_reuses" or "skipped_expansion";
                     aggregate.Work[field] = aggregate.Work.GetValueOrDefault(field) + (cacheHit && !currentReuse ? 0 : amount);
                 }
             }
@@ -1070,11 +1070,11 @@ internal sealed class SessionPerformance
             text.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
             foreach (var row in planningRows)
                 text.AppendLine($"| {row["actor"]} | {row["decisions"]} | {row["cache_hits"]} | {Number(row["candidates_considered"])} | {Number(row["admission_checks"])} | {Number(row["eligible_evaluations"])} | {Number(row["forecasts"])} | {Number(row["forecast_reuses"])} | {Number(row["expanded_nodes"])} | {Number(row["retained_paths"])} | {Number(row["route_reuses"])} | {Number(row["skipped_expansion"])} | {Number(row["peak_frontier"])} |");
-            text.AppendLine("\n| 主体 | 已枚举但跳过的候选 | 部分遍历次数 | 进入求值的层 | 完整求值的层 |");
-            text.AppendLine("| --- | ---: | ---: | ---: | ---: |");
+            text.AppendLine("\n| 主体 | 已枚举但跳过的候选 | 排序声明检查 | 排序缓存复用 | 部分遍历次数 | 进入求值的层 | 完整求值的层 |");
+            text.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
             foreach (var row in planningRows)
-                text.AppendLine($"| {row["actor"]} | {Number(row["candidates_skipped"])} | {Number(row["partial_layer"])} | {Number(row["examined_layers"])} | {Number(row["completed_layers"])} |");
-            text.AppendLine("跳过候选只计已经生成的当前候选列表中实际未求值的余项，不估算尚未展开的后继。提前选到支持任务的部分层不算完整层，不宣称已比较该层所有选项。");
+                text.AppendLine($"| {row["actor"]} | {Number(row["candidates_skipped"])} | {Number(row["candidate_order_scans"])} | {Number(row["candidate_order_reuses"])} | {Number(row["partial_layer"])} | {Number(row["examined_layers"])} | {Number(row["completed_layers"])} |");
+            text.AppendLine("跳过候选只计已经生成的当前候选列表中实际未求值的余项，不估算尚未展开的后继。排序声明检查与其缓存复用单列，不冒充资格求值。选择性根层优先检查声明有 grants 的非移动、非答题、非等待任务，并按实际声明时长稳定排序；准入与价值仍真实求值。提前选到支持任务的部分层不算完整层，不宣称已比较该层所有选项。");
             text.AppendLine("实际工作来自正式 action_selected 的 planning_work。缓存命中的 reused_work 是此前工作的来源，不重复累计；缺失计数保持缺失。路径与预测复用记录实际命中，skipped_expansion 累计本次选择跳过展开的次数。峰值前沿及预算/深度/展望限制取观测最大值，工作次数取实际累计。selective-task-v1 是用户允许的任务选择近似，不是完整穷举；full-declared 沿声明范围求解，是否完成仍以实际预算停止和证明为准，两种模式的结果与耗时分别比较。");
             text.AppendLine();
             foreach (var row in planningRows)

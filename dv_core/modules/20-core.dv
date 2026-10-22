@@ -31,7 +31,9 @@ dv_same(a, b) = rt_same_value(a, b)
 
 fn dv_append(items, value):
     var r = dv_clone(items)
-    rt_push(r, dv_clone(value))
+    // The fresh mutable root materializes its own child on first access.
+    // Snapshot now preserves independent-copy semantics without an unused thaw.
+    rt_push(r, rt_snapshot(value))
     return r
 
 dv_has(items, value) = rt_has_value(items, value)
@@ -65,6 +67,9 @@ fn dv_m2(k1, v1, k2, v2):
     return dv_pair(dv_pair(k1, v1), dv_pair(k2, v2))
 
 fn dv_without(record, key):
+    // Read an immutable source so omitting one field does not thaw every retained
+    // pair merely to freeze it again. The returned root still owns its writes.
+    record = rt_snapshot(record)
     var result = []
     var i = 0
     while (i < rt_count(record)):
@@ -72,7 +77,7 @@ fn dv_without(record, key):
         if (entry[0] == key):
             false
         else:
-            rt_push(result, dv_clone(entry))
+            rt_push(result, rt_snapshot(entry))
         i = (i + 1)
     return result
 
@@ -89,7 +94,7 @@ fn dv_unit(x):
     return x
 
 fn dv_unknown():
-    return dv_with_many({"known": false, "value": false, "confidence": 0, "time": -1}, {"claims": [], "conflicted": false})
+    return {"known": false, "value": false, "confidence": 0, "time": -1, "claims": [], "conflicted": false}
 
 fn dv_min(a, b):
     if (a < b):
@@ -104,7 +109,7 @@ fn dv_max(a, b):
         return a
 
 fn dv_cell(value, confidence, time, claims):
-    return dv_with_many({"known": true, "value": dv_clone(value), "confidence": dv_unit(confidence), "time": time}, {"claims": [], "basis": claims, "conflicted": false})
+    return dv_with_many({"known": true, "value": rt_snapshot(value), "confidence": dv_unit(confidence), "time": time}, {"claims": [], "basis": claims, "conflicted": false})
 
 dv_entity_ref(id) = {"type": "entity-ref", "id": id}
 
@@ -224,7 +229,9 @@ fn dv_read_fields(objects, id, ref):
 fn dv_store(world, ref, cell):
     var objects = world.objects
     var id = ref.object
-    dv_require(dv_has_key(objects, id), "Unknown object identity")
+    if not dv_has_key(objects, id):
+        // Failure metadata identifies the write without exposing any cell values.
+        dv_require(false, rt_cat("Unknown object identity: ", rt_json_stringify({"operation": "dv_store", "object": id, "world": world.id, "domain": world.domain, "subject": world.subject, "facet": ref.facet, "field": ref.field})))
     var object = dv_get(objects, id)
     var facets = object.facets
     var facet = ref.facet
@@ -291,7 +298,9 @@ fn dv_with_path(record, keys, depth, value):
 // Only law stages and dv_update_mind may call this; observed cells are copied.
 fn dv_stage_store_owned(owned, ref, cell):
     let objects = owned.objects
-    dv_require(dv_has_key(objects, ref.object), "Unknown object identity")
+    if not dv_has_key(objects, ref.object):
+        // Keep transaction admission strict; report only identity and path metadata.
+        dv_require(false, rt_cat("Unknown object identity: ", rt_json_stringify({"operation": "dv_stage_store_owned", "object": ref.object, "world": owned.id, "domain": owned.domain, "subject": owned.subject, "facet": ref.facet, "field": ref.field})))
     let object = dv_get(objects, ref.object)
     let facets = object.facets
     let fields = dv_find(facets, ref.facet, [])

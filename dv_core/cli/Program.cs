@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
@@ -15,6 +16,7 @@ internal sealed class Cli
     private string? savePath, tracePath, performancePath;
     private bool? showScores;
     private readonly List<TerminalEntry> terminalEntries = new();
+    private bool transcriptTruncated;
     private IReadOnlyDictionary<string, object?> replaySnapshot = HostValues.Empty;
     private object? replayGameTime;
     private ReplayFrame? terminalFrame;
@@ -24,6 +26,8 @@ internal sealed class Cli
     private bool expandActions;
     private string optionTimeBasis = "current";
     private bool noColor, showActors;
+    private bool batchAdvance;
+    private string terminalHistory = "latest";
     private string? exportFramePath;
     private string terminalZoom = "fit";
     private string mapView = "subjective";
@@ -40,8 +44,9 @@ internal sealed class Cli
     private IReadOnlyList<IReadOnlyDictionary<string, object?>> replayOptions = Array.Empty<IReadOnlyDictionary<string, object?>>();
     private string replaySelected = "";
     private string replayChoiceActor = "";
-    private sealed record ChoiceFocus(string Id, string Selection, string Actor, long Version, string InteractionId,
+    private sealed record ChoiceFocus(string Id, string Selection, string Actor, string Label, long Version, string InteractionId,
         IReadOnlyList<IReadOnlyDictionary<string, object?>> Options, IReadOnlyDictionary<string, object?> Preview);
+    private sealed record CapturedPage(string path, int page, int page_count, int? frame, object? game_time);
     private readonly Dictionary<string, int> roomOrder = new(StringComparer.Ordinal);
     private string orderedViewer = "";
     private readonly CancellationTokenSource cancellation = new();
@@ -144,6 +149,7 @@ internal sealed class Cli
                 case "--preview-rooms": previewRooms = int.Parse(Value(), CultureInfo.InvariantCulture); break;
                 case "--preview-current": previewCurrent = int.Parse(Value(), CultureInfo.InvariantCulture); break;
                 case "--ui-zoom": terminalZoom = Value(); break;
+                case "--ui-history": terminalHistory = ParseHistory(Value()); break;
                 case "--export-ui": exportUi = Value(); break;
                 case "--width": terminalWidth = int.Parse(Value(), CultureInfo.InvariantCulture); break;
                 case "--height": terminalHeight = int.Parse(Value(), CultureInfo.InvariantCulture); break;
@@ -304,6 +310,10 @@ internal sealed class Cli
             case "help": Emit("help", Help); return;
             case "quit": case "exit": quit = true; return;
             case "status": Emit("status", CurrentStatus()); return;
+            case "history":
+                terminalHistory = ParseHistory(argument);
+                terminalPage = 0;
+                Emit("status", CurrentStatus()); return;
             case "actions":
                 switch (argument.ToLowerInvariant())
                 {
@@ -384,6 +394,7 @@ internal sealed class Cli
         {
             case "options": Emit("options", VisibleOptions()); break;
             case "next": AdvanceOne(current); break;
+            case "advance": AdvanceBatch(current, argument); break;
             case "focus": case "select": FocusChoice(current, argument); break;
             case "confirm": ConfirmChoice(current); break;
             case "cancel":
@@ -424,7 +435,7 @@ internal sealed class Cli
     private void SetMap(string value)
     {
         var next = ParseMap(value);
-        if (next == "subjective" && mapView != "subjective") terminalEntries.Clear();
+        if (next == "subjective" && mapView != "subjective") ClearTranscript();
         mapView = next;
         terminalPage = 0;
     }
@@ -433,7 +444,7 @@ internal sealed class Cli
     {
         if (displayViewer != actor)
         {
-            terminalEntries.Clear();
+            ClearTranscript();
             roomOrder.Clear();
             orderedViewer = "";
             terminalPage = 0;
@@ -443,6 +454,38 @@ internal sealed class Cli
     }
 
     private string Observer => displayViewer.Length > 0 ? displayViewer : session?.Viewer ?? HostValues.Text(replaySnapshot, "viewer");
+
+    private static string ParseHistory(string value) => value.ToLowerInvariant() switch
+    {
+        "latest" or "" => "latest", "recent" => "recent",
+        _ => throw new ArgumentException("history latest / recent")
+    };
+
+    private void AdvanceBatch(DvSession current, string argument)
+    {
+        if (!jsonLines || !ControllerIsAutonomous(current))
+            throw new InvalidOperationException("advance requires --jsonl --controller ai");
+        if (!int.TryParse(argument, NumberStyles.None, CultureInfo.InvariantCulture, out var budget) || budget is < 1 or > 1000)
+            throw new ArgumentException("advance <1..1000 real milliseconds>");
+        var clock = Stopwatch.StartNew();
+        batchAdvance = true;
+        try
+        {
+            do
+            {
+                if (!current.Active) break;
+                var version = current.Version;
+                var wasFocused = focus is not null;
+                AdvanceOne(current);
+                // No second schedule, invented input, or clock assignment: this
+                // is the same focus/confirm chain, with its UI transport batched.
+                if (current.Version == version && (focus is not null) == wasFocused) break;
+            }
+            while (clock.ElapsedMilliseconds < budget && !quit);
+        }
+        finally { batchAdvance = false; }
+        Emit("status", CurrentStatus());
+    }
 
     private void AdvanceOne(DvSession current)
     {
@@ -495,9 +538,11 @@ internal sealed class Cli
         var id = HostValues.Text(action, "id");
         if (id.Length == 0) id = HostValues.Text(intent, "action_id");
         if (id.Length == 0) throw new InvalidOperationException("行动标识 —");
-        var options = current.ObserverOptions(actor, showScores == true);
         if (followReplayActor) ChangeDisplayViewer(actor);
-        focus = NewFocus(current, id, id, actor, options);
+        var options = actor == Observer
+            ? current.ObserverOptions(actor, showScores == true)
+            : Array.Empty<IReadOnlyDictionary<string, object?>>();
+        focus = NewFocus(current, id, id, actor, options, HostValues.Text(action, "label"));
         actionPage = -1;
         optionTimeBasis = "current";
         terminalPage = -1;
@@ -507,8 +552,10 @@ internal sealed class Cli
     }
 
     private ChoiceFocus NewFocus(DvSession current, string id, string selection, string actor,
-        IReadOnlyList<IReadOnlyDictionary<string, object?>> options) =>
-        new(id, selection, actor, current.Version, "cli-" + interactionSession + "-" + (++interactionSequence).ToString(CultureInfo.InvariantCulture),
+        IReadOnlyList<IReadOnlyDictionary<string, object?>> options, string label = "") =>
+        new(id, selection, actor, label.Length > 0 ? label : options.Where(option => HostValues.Text(option, "id") == id)
+            .Select(option => HostValues.Text(option, "label")).FirstOrDefault() ?? "", current.Version,
+            "cli-" + interactionSession + "-" + (++interactionSequence).ToString(CultureInfo.InvariantCulture),
             options, current.Preview(Observer, mapView != "subjective", showScores == true));
 
     private void ConfirmChoice(DvSession current)
@@ -558,9 +605,13 @@ internal sealed class Cli
         }
         var presentation = current.CompleteFormal(Observer);
         RecordPhase(current, "result", selected, presentation);
-        interactionPhase = "完成";
+        var outcome = HostValues.Text(presentation, "outcome", HostValues.Text(presentation, "status"));
+        interactionPhase = outcome == "rejected"
+            ? HostValues.Text(presentation, "failure_class") == "activity-interrupted" ? "等待被打断" : "被拒绝"
+            : "已执行";
+        terminalPage = 0;
         Emit("presentation", presentation);
-        Emit("status", CurrentStatus());
+        if (!batchAdvance) Emit("status", CurrentStatus());
     }
 
     private static string SelectionId(string selection)
@@ -574,7 +625,8 @@ internal sealed class Cli
         HostValues.Freeze(new Dictionary<string, object?>
         {
             ["phase"] = phase, ["interaction_id"] = selected.InteractionId, ["actor"] = selected.Actor,
-            ["action_id"] = selected.Id, ["selection"] = selected.Selection, ["state_version"] = selected.Version,
+            ["action_id"] = selected.Id, ["label"] = selected.Label,
+            ["selection"] = selected.Selection, ["state_version"] = selected.Version,
             ["options"] = selected.Options
         });
 
@@ -668,13 +720,14 @@ internal sealed class Cli
         ChangeDisplayViewer(actor);
         followReplayActor = false;
         roomOrder.Clear();
-        terminalEntries.Clear();
+        ClearTranscript();
     }
 
     private IReadOnlyList<IReadOnlyDictionary<string, object?>> VisibleOptions()
     {
         if (session is { } current) return current.ObserverOptions(Observer, showScores == true);
-        if (interactionPhase.StartsWith("结束", StringComparison.Ordinal)) return Array.Empty<IReadOnlyDictionary<string, object?>>();
+        if (interactionPhase.StartsWith("本次记录停止", StringComparison.Ordinal) || interactionPhase == "会话已停止")
+            return Array.Empty<IReadOnlyDictionary<string, object?>>();
         if (replayChoiceActor == Observer) return replayOptions;
         var observers = HostValues.Map(replayPreview, "observers");
         if (observers.GetValueOrDefault(Observer) is IReadOnlyDictionary<string, object?> observation)
@@ -736,7 +789,7 @@ internal sealed class Cli
         replayOptions = Array.Empty<IReadOnlyDictionary<string, object?>>();
         replaySelected = replayChoiceActor = interactionPhase = "";
         terminalFrame = null;
-        terminalEntries.Clear();
+        ClearTranscript();
         roomOrder.Clear();
         orderedViewer = "";
         terminalPage = 0;
@@ -826,41 +879,100 @@ internal sealed class Cli
         directory = Path.GetFullPath(directory);
         if (Directory.Exists(directory) || File.Exists(directory)) throw new IOException("导出目录必须是新路径：" + directory);
         Directory.CreateDirectory(directory);
-        var completed = player.Frames.Select((frame, index) => (frame, index))
-            .Where(item => IsOwnCompletedReplayFrame(item.frame)).ToArray();
-        var visible = completed.Where(item => HasReplayBody(item.frame)).ToArray();
-        var selected = new List<(string Name, int Index)>();
-        if (visible.Length > 0) selected.Add(("01-first-result", visible[0].index));
-        if (visible.Length > 1) selected.Add(("02-next-result", visible[1].index));
-        if (completed.Length > 0) selected.Add(("03-last-action", completed[^1].index));
-        selected.Add(("04-record-end", player.Count - 1));
-        var captures = new List<object>();
-        foreach (var selection in selected)
+        var indexPath = Path.Combine(directory, "coverage.csv");
+        var partial = indexPath + ".partial";
+        var savedHistory = terminalHistory;
+        var captured = new Dictionary<string, (int Frame, IReadOnlyList<CapturedPage> Pages)>(StringComparer.Ordinal);
+        var exportClock = Stopwatch.StartNew();
+        var frameCount = 0;
+        var imageCount = 0;
+        var reusedFrames = 0;
+        var lastBody = "";
+        static string Csv(object? value)
         {
-            SeekReplay((selection.Index + 1).ToString(CultureInfo.InvariantCulture), render: false);
-            captures.Add(new { role = selection.Name, frame = selection.Index + 1,
-                action_public_label = player.Current is { } frame ? ReplayPublicLabel(frame) : "（未记录标签）",
-                pages = CaptureCurrentPages(Path.Combine(directory, selection.Name)) });
+            var text = value is null ? "" : value is string literal ? literal : JsonSerializer.Serialize(value, Json);
+            return "\"" + text.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
         }
+        try
+        {
+            // Every recorded frame is visited once. Repeated offscreen work is
+            // represented explicitly in the index; no live session is opened.
+            terminalHistory = "latest";
+            ResetReplay();
+            using (var stream = new FileStream(partial, FileMode.CreateNew, FileAccess.Write))
+            using (var index = new StreamWriter(stream, new UTF8Encoding(false)))
+            {
+                index.WriteLine("frame,sequence,kind,phase,game_time,viewer,actor,action_id,action_public_label,coverage,representative_frame,page,page_count,svg_path,semantic_sha256,new_visible_text,own_action,checkpoint");
+                for (var position = 0; position < player.Count; position++)
+                {
+                    cancellation.Token.ThrowIfCancellationRequested();
+                    var frame = player.Step() ?? throw new InvalidOperationException("回放在记录末尾之前结束");
+                    ShowFrame(frame, emit: false);
+                    var ownAction = frame.Actor == Observer && frame.Kind is ("focus" or "confirm");
+                    var checkpoint = HostValues.Text(frame.Data, "checkpoint");
+                    var body = terminalEntries.Count > 0 ? terminalEntries[^1].GroupId : "";
+                    var newBody = body != lastBody && body.Length > 0;
+                    lastBody = body;
+                    var model = CurrentModel();
+                    var semantic = model with
+                    {
+                        Mode = "", Clock = "", Performance = HostValues.Empty,
+                        PageIndex = 0, ActionPageIndex = -1, ExpandActions = true,
+                        TranscriptNotice = ""
+                    };
+                    var key = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new
+                    {
+                        model = semantic,
+                        own_action = ownAction ? frame.Action : "",
+                        checkpoint
+                    }, Json)));
+                    var reused = captured.TryGetValue(key, out var representative);
+                    if (!reused)
+                    {
+                        var prefix = Path.Combine(directory, $"frame-{position + 1:000000}-{frame.Kind}");
+                        var pages = CaptureCurrentPages(prefix, model);
+                        representative = (position + 1, pages);
+                        captured.Add(key, representative);
+                        imageCount += pages.Count;
+                    }
+                    else reusedFrames++;
+                    foreach (var page in representative.Pages)
+                        index.WriteLine(string.Join(",", new object?[]
+                        {
+                            position + 1, frame.Sequence, frame.Kind, interactionPhase, replayGameTime,
+                            Observer, frame.Actor, frame.Action, ReplayPublicLabel(frame),
+                            reused ? "same-visible-content-clock-and-metrics-omitted" : "rendered",
+                            representative.Frame, page.page, page.page_count,
+                            Path.GetFileName(page.path), key, newBody, ownAction, checkpoint
+                        }.Select(Csv)));
+                    frameCount++;
+                }
+            }
+            File.Move(partial, indexPath);
+        }
+        finally { terminalHistory = savedHistory; }
         Emit("capture_summary", new
         {
             source = "recorded-replay-svg-export", viewer = Observer, numbering = "one-based",
-            frame_count = player.Count, first_result_recorded = visible.Length > 0,
-            next_result_recorded = visible.Length > 1, completed_action_recorded = completed.Length > 0,
-            captures
+            frame_count = player.Count, indexed_frames = frameCount, rendered_states = captured.Count,
+            rendered_pages = imageCount, reused_frames = reusedFrames, coverage_index = indexPath,
+            transcript_window = "latest complete visible event; earlier events covered at their own frames",
+            deduplication = "identical observer content; frame number, running clock and performance metrics remain in the index and original replay",
+            export_elapsed_seconds = exportClock.Elapsed.TotalSeconds, opens_live_session = false
         });
     }
 
-    private IReadOnlyList<object> CaptureCurrentPages(string prefix)
+    private IReadOnlyList<CapturedPage> CaptureCurrentPages(string prefix, TerminalModel? sourceModel = null)
     {
         if (!tui || string.IsNullOrWhiteSpace(prefix)) throw new ArgumentException("capture all NEW_PREFIX");
         var savedPage = terminalPage;
         var savedActionPage = actionPage;
         var savedExpanded = expandActions;
-        var captures = new List<object>();
+        var captures = new List<CapturedPage>();
         try
         {
             expandActions = true;
+            sourceModel ??= CurrentModel();
             var count = 1;
             for (var page = 0; page < count; page++)
             {
@@ -868,11 +980,11 @@ internal sealed class Cli
                 terminalPage = page;
                 var path = Path.GetFullPath(prefix + (page == 0 ? "" : $"-page-{page + 1:00}") + ".svg");
                 exportFramePath = path;
-                var rendered = RenderCurrent(writeConsole: false);
+                var rendered = RenderCurrent(writeConsole: false,
+                    preparedModel: sourceModel with { PageIndex = page, ActionPageIndex = -1, ExpandActions = true });
                 count = rendered.PageCount;
-                if (count > 16) throw new InvalidOperationException($"当前帧需要 {count} 页，超过批量采集的 16 页上限；已导出首张，剩余内容未导出。");
-                captures.Add(new { path, page = rendered.PageIndex + 1, page_count = rendered.PageCount,
-                    frame = replay is null ? (int?)null : replay.Index + 1, game_time = replayGameTime });
+                captures.Add(new CapturedPage(path, rendered.PageIndex + 1, rendered.PageCount,
+                    replay is null ? (int?)null : replay.Index + 1, replayGameTime));
             }
         }
         finally
@@ -981,8 +1093,13 @@ internal sealed class Cli
             {
                 "focus" => "聚焦", "confirm" or "awaiting-result" => "待结果", "completed" or "applied" => "已执行",
                 "scheduled" => "已排程", "rejected" => "被拒绝", "cancel" or "cancelled" => "取消",
-                "closed" => "结束", "not_prepared" or "selection_changed" => "未执行", _ => recordedPhase
+                "closed" => "本次记录停止", "stopped" => "会话已停止",
+                "not_prepared" or "selection_changed" => "未执行", _ => recordedPhase
             };
+        if (recordedPhase is "completed" or "applied" or "rejected") terminalPage = 0;
+        if (recordedPhase == "rejected" && frame.Actor == Observer && PresentationVisibleToObserver(frame) &&
+            HostValues.Text(HostValues.Map(frame.Data, "presentation"), "failure_class") == "activity-interrupted")
+            interactionPhase = "等待被打断";
         if (recordedPhase == "closed")
         {
             replaySelected = "";
@@ -990,7 +1107,7 @@ internal sealed class Cli
             replayOptions = Array.Empty<IReadOnlyDictionary<string, object?>>();
             optionTimeBasis = "current";
             var pending = HostValues.List(frame.Data, "pending_actions").Count;
-            if (pending > 0) interactionPhase += " · 待执行 " + pending.ToString(CultureInfo.InvariantCulture);
+            if (pending > 0) interactionPhase += " · 尚有在途行动 " + pending.ToString(CultureInfo.InvariantCulture);
         }
         if (emit) Emit("frame", frame);
         else AddTranscript("frame", frame);
@@ -998,6 +1115,9 @@ internal sealed class Cli
 
     private void Emit(string kind, object data)
     {
+        // The complete interaction is recorded by RecordPhase. Autonomous
+        // batches avoid re-projecting private NPC turns for the stdout pipe.
+        if (batchAdvance) return;
         if (jsonLines)
         {
             object visible = data is ReplayFrame frame ? DisplayReplayFrame(frame) : data;
@@ -1036,7 +1156,7 @@ internal sealed class Cli
             ["preview"] = CurrentPreview(mapView != "subjective")
         };
         foreach (var key in new[] { "interaction_contract", "interaction_id", "state_version", "source_state_version", "record_index", "result_record_indices", "input_record_index", "controller", "controller_kind", "performance", "input_mode", "selection_recorded", "result_kind", "option_time_basis", "selection_game_time", "selection_state_version", "result_game_time", "result_state_version", "action_state", "provenance", "cut", "lifecycle", "pending_actions", "measured_until_ticks" })
-            if (frame.Data.TryGetValue(key, out var value)) values[key] = value;
+            if ((key != "pending_actions" || mapView != "subjective") && frame.Data.TryGetValue(key, out var value)) values[key] = value;
         var outcome = HostValues.Text(HostValues.Map(frame.Data, "presentation"), "outcome");
         if (outcome.Length > 0) values["outcome"] = outcome;
         var visible = PresentationVisibleToObserver(frame);
@@ -1046,7 +1166,9 @@ internal sealed class Cli
             var presentation = HostValues.Map(frame.Data, "presentation");
             text = presentation.Count > 0 ? PresentationBody(presentation) : frame.Text;
         }
-        return frame with { Text = text, Data = HostValues.Freeze(values) };
+        var privateActor = mapView == "subjective" && frame.Actor != Observer;
+        return frame with { Actor = privateActor ? "" : frame.Actor,
+            Action = privateActor ? "" : frame.Action, Text = text, Data = HostValues.Freeze(values) };
     }
 
     private bool PresentationVisibleToObserver(ReplayFrame frame)
@@ -1058,17 +1180,24 @@ internal sealed class Cli
         return mapView != "subjective" || frame.Actor.Length == 0 || frame.Actor == Observer;
     }
 
-    private void AppendTranscript(string id, object? time, string speaker, string text, string kind, string groupId = "")
+    private void ClearTranscript()
+    {
+        terminalEntries.Clear();
+        transcriptTruncated = false;
+    }
+
+    private void AppendTranscript(string id, object? time, string speaker, string text, string kind, string groupId = "", string voice = "")
     {
         if (string.IsNullOrWhiteSpace(text)) return;
         if (id.Length > 0 && terminalEntries.Any(entry => entry.Id == id)) return;
         terminalEntries.Add(new TerminalEntry
         {
             Id = id, Clock = time is null ? "" : TerminalProjection.GameClock(time, true),
-            Speaker = speaker, Title = "", Text = text, Kind = kind, GroupId = groupId.Length > 0 ? groupId : id
+            Speaker = speaker, Voice = voice, Title = "", Text = text, Kind = kind, GroupId = groupId.Length > 0 ? groupId : id
         });
         while (terminalEntries.Count > TranscriptCapacity && terminalEntries[0].GroupId != terminalEntries[^1].GroupId)
         {
+            transcriptTruncated = true;
             var oldest = terminalEntries[0].GroupId;
             do { terminalEntries.RemoveAt(0); }
             while (terminalEntries.Count > 0 && oldest.Length > 0 && terminalEntries[0].GroupId == oldest);
@@ -1081,18 +1210,32 @@ internal sealed class Cli
         object? time = null;
         var actor = "";
         var id = "";
+        var ownRejected = false;
+        var interrupted = false;
         if (data is ReplayFrame recorded)
         {
             if (recorded.Kind is not ("presentation" or "visible" or "dialogue" or "investigate" or "rejected" or "move" or "confirm")) return;
-            if (!PresentationVisibleToObserver(recorded)) return;
             presentation = HostValues.Map(recorded.Data, "presentation");
             actor = recorded.Actor;
             time = recorded.Data.GetValueOrDefault("result_game_time") ?? recorded.Data.GetValueOrDefault("game_time") ?? replayGameTime;
             id = HostValues.Text(presentation, "action_event", HostValues.Text(recorded.Data, "interaction_id",
                 "replay-" + recorded.Sequence.ToString(CultureInfo.InvariantCulture)));
+            ownRejected = actor == Observer && (recorded.Kind == "rejected" ||
+                HostValues.Text(recorded.Data, "action_state", HostValues.Text(recorded.Data, "phase")) == "rejected" ||
+                HostValues.Text(presentation, "outcome", HostValues.Text(presentation, "status")) == "rejected");
+            if (!PresentationVisibleToObserver(recorded))
+            {
+                // A generic receipt for one's own refusal reveals no hidden
+                // cause. Never inspect or display another actor's private result.
+                if (ownRejected) AppendTranscript(id + "-feedback", time, "本人",
+                    "本次行动未执行：现场条件尚未满足。", "error", id, "execution-feedback");
+                return;
+            }
             if (presentation.Count == 0)
             {
-                AppendTranscript(id, time, actor == Observer ? "本人" : "同伴", recorded.Text, recorded.Kind);
+                AppendTranscript(id, time, actor == Observer ? "本人" : "未辨明身份",
+                    ownRejected ? "本次行动未执行：现场条件尚未满足。" : recorded.Text,
+                    ownRejected ? "error" : recorded.Kind, voice: ownRejected ? "execution-feedback" : "");
                 return;
             }
         }
@@ -1102,41 +1245,60 @@ internal sealed class Cli
             actor = HostValues.Text(shown, "completed_actor", HostValues.Text(shown, "actor"));
             time = shown.GetValueOrDefault("game_time") ?? session?.TextStatus(Observer).GetValueOrDefault("game_time");
             id = HostValues.Text(shown, "action_event");
+            ownRejected = actor == Observer && HostValues.Text(shown, "outcome", HostValues.Text(shown, "status")) == "rejected";
         }
-        if (presentation.Count == 0 || presentation.GetValueOrDefault("visible") is false) return;
+        if (presentation.Count == 0) return;
+        if (presentation.GetValueOrDefault("visible") is false)
+        {
+            if (ownRejected) AppendTranscript(id + "-feedback", time, "本人",
+                "本次行动未执行：现场条件尚未满足。", "error", id, "execution-feedback");
+            return;
+        }
+        interrupted = ownRejected && HostValues.Text(presentation, "failure_class") == "activity-interrupted";
         var speaker = HostValues.Text(presentation, "speaker_name");
-        if (speaker.Length == 0) speaker = actor == Observer ? "本人" : "同伴";
+        if (speaker.Length == 0) speaker = actor == Observer ? "本人" : "未辨明身份";
+        var blocks = PresentationBlocks(presentation, speaker);
+        for (var index = 0; index < blocks.Count; index++)
+            AppendTranscript(id + "-block-" + index.ToString(CultureInfo.InvariantCulture), time,
+                blocks[index].Speaker, blocks[index].Text, ownRejected && !interrupted ? "error" : kind, id, blocks[index].Voice);
+        if (blocks.Count == 0)
+        {
+            if (ownRejected) AppendTranscript(id + "-feedback", time, speaker,
+                interrupted ? "等待被新的动静打断了。" : "本次行动未执行：现场条件尚未满足。",
+                interrupted ? kind : "error", id, "execution-feedback");
+        }
+    }
+
+    private static IReadOnlyList<(string Speaker, string Voice, string Text)> PresentationBlocks(
+        IReadOnlyDictionary<string, object?> presentation, string speaker)
+    {
+        var voice = HostValues.Text(presentation, "voice");
         var lines = HostValues.List(presentation, "lines");
         var body = string.Join("\n", lines.Select(line => line is string text ? text :
             line is IReadOnlyDictionary<string, object?> map ? HostValues.Text(map, "text") : "")).Trim();
         var surface = HostValues.Text(presentation, "surface").Trim();
-        var blocks = new List<(string Speaker, string Text)>();
-        void AddBlock(string name, string text)
+        var blocks = new List<(string Speaker, string Voice, string Text)>();
+        void AddBlock(string name, string recordedVoice, string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return;
-            if (blocks.Count > 0 && blocks[^1].Speaker == name)
-                blocks[^1] = (name, blocks[^1].Text + "\n" + text);
-            else blocks.Add((name, text));
+            if (blocks.Count > 0 && blocks[^1].Speaker == name && blocks[^1].Voice == recordedVoice)
+                blocks[^1] = (name, recordedVoice, blocks[^1].Text + "\n" + text);
+            else blocks.Add((name, recordedVoice, text));
         }
-        if (surface.Length > 0 && surface != body) AddBlock(speaker, surface);
+        if (surface.Length > 0 && surface != body)
+            AddBlock(speaker, HostValues.Text(presentation, "surface_voice", voice), surface);
         for (var index = 0; index < lines.Count; index++)
         {
             var line = lines[index];
             var text = line is string literal ? literal : line is IReadOnlyDictionary<string, object?> map ? HostValues.Text(map, "text") : "";
             var name = line is IReadOnlyDictionary<string, object?> named ? HostValues.Text(named, "speaker_name", speaker) : speaker;
-            AddBlock(name, text);
+            var lineVoice = line is IReadOnlyDictionary<string, object?> voiced ? HostValues.Text(voiced, "voice", voice) : voice;
+            AddBlock(name, lineVoice, text);
         }
-        for (var index = 0; index < blocks.Count; index++)
-            AppendTranscript(id + "-block-" + index.ToString(CultureInfo.InvariantCulture), time,
-                blocks[index].Speaker, blocks[index].Text, kind, id);
-        if (surface.Length == 0 && body.Length == 0)
-        {
-            var outcome = HostValues.Text(presentation, "outcome");
-            if (outcome.Length > 0 && outcome != "applied") AppendTranscript(id, time, speaker, outcome, kind);
-        }
+        return blocks;
     }
 
-    private TerminalRenderResult RenderCurrent(bool writeConsole = true)
+    private TerminalModel CurrentModel()
     {
         var preview = CurrentPreview(mapView != "subjective");
         var snapshot = HostValues.Map(preview, "snapshot");
@@ -1151,15 +1313,28 @@ internal sealed class Cli
         var phase = session is null
             ? interactionPhase.Length > 0 ? "帧内：" + interactionPhase : ""
             : interactionPhase.Length > 0 ? interactionPhase : StateLabel(HostValues.Text(session.Intent, "status"));
-        var model = TerminalProjection.FromSnapshot(snapshot, status, choices, terminalEntries.ToArray(), mode,
+        var shownEntries = terminalHistory == "latest" && terminalEntries.Count > 0
+            ? terminalEntries.Where(entry => entry.GroupId == terminalEntries[^1].GroupId).ToArray()
+            : terminalEntries.ToArray();
+        var model = TerminalProjection.FromSnapshot(snapshot, status, choices, shownEntries, mode,
             phase, "actions next/prev/all · page next/prev · map · perf · quit", session is null ? replayChoiceActor == Observer ? replaySelected : "" : focus?.Actor == Observer ? focus.Id : "", preview, mapView) with
             { Zoom = terminalZoom, ShowActors = showActors, ShowScores = showScores,
               Performance = performance,
+              TranscriptNotice = terminalHistory == "recent" && transcriptTruncated && terminalEntries.Count > 0
+                  ? "近期正文自 " + (string.IsNullOrWhiteSpace(terminalEntries[0].Clock) ? "时间未记录" : terminalEntries[0].Clock) +
+                    (session is null ? " 起 · 更早记录用 seek N 回看" : " 起 · 更早记录可在回放中查看")
+                  : "",
               ActionPageIndex = actionPage, ExpandActions = expandActions, OptionTimeBasis = optionTimeBasis,
               Paginate = tui, PageIndex = terminalPage };
         if (orderedViewer != model.Actor) { roomOrder.Clear(); orderedViewer = model.Actor; }
         foreach (var room in model.Rooms) if (!roomOrder.ContainsKey(room.Id)) roomOrder.Add(room.Id, roomOrder.Count);
         model = model with { Rooms = model.Rooms.OrderBy(room => roomOrder[room.Id]).ToArray() };
+        return model;
+    }
+
+    private TerminalRenderResult RenderCurrent(bool writeConsole = true, TerminalModel? preparedModel = null)
+    {
+        var model = preparedModel ?? CurrentModel();
         var width = terminalWidth;
         var height = terminalHeight;
         if (!Console.IsOutputRedirected && tui)
@@ -1197,7 +1372,7 @@ internal sealed class Cli
 
     private static string StateLabel(string status) => status switch
     {
-        "awaiting_input" => "待选", "prepared" => "待确认", "stopped" or "closed" => "结束", _ => "就绪"
+        "awaiting_input" => "待选", "prepared" => "待确认", "stopped" or "closed" => "会话已停止", _ => "就绪"
     };
 
     private static string Header(IReadOnlyDictionary<string, object?> status) =>
@@ -1225,12 +1400,13 @@ internal sealed class Cli
                 $"[{index + 1:00}] {HostValues.Text(option, "id")} | {HostValues.Text(option, "label")} | 耗费 {JsonSerializer.Serialize(option.GetValueOrDefault("cost"), Json)} | {JsonSerializer.Serialize(option.GetValueOrDefault("interaction"), Json)}"));
         if (kind == "presentation" && data is IReadOnlyDictionary<string, object?> presentation)
         {
-            var lines = HostValues.List(presentation, "lines").Select(line => line is string text ? text :
-                line is IReadOnlyDictionary<string, object?> item ? HostValues.Text(item, "text") : "");
-            var surface = HostValues.Text(presentation, "surface");
             var speaker = HostValues.Text(presentation, "speaker_name");
-            return $"[{HostValues.Text(presentation, "outcome")}]\n" +
-                (surface.Length == 0 ? "" : (speaker.Length == 0 ? "" : speaker + ": ") + surface + "\n") + string.Join("\n", lines.Where(text => text.Length > 0));
+            var blocks = PresentationBlocks(presentation, speaker);
+            return $"[{HostValues.Text(presentation, "outcome")}]\n" + string.Join("\n", blocks.Select(block =>
+            {
+                var heading = TerminalProjection.VoiceHeading(block.Speaker, block.Voice);
+                return (heading.Length == 0 ? "" : heading + ": ") + block.Text;
+            }));
         }
         return JsonSerializer.Serialize(data, Json);
     }
@@ -1259,8 +1435,19 @@ internal sealed class Cli
     private void Error(Exception error)
     {
         if (debugErrors) Console.Error.WriteLine(error);
-        if (jsonLines) Console.WriteLine(JsonSerializer.Serialize(new { kind = "error", message = error.Message }, Json));
-        else Console.Error.WriteLine(error.Message);
+        // Reflection wrappers hide the useful compiler/runtime message. Expose
+        // only the actual error text/type, never inspect actor or world state.
+        var reported = error;
+        while (reported is System.Reflection.TargetInvocationException && reported.InnerException is { } inner)
+            reported = inner;
+        var stage = session is null && replay is null ? "startup" : "operation";
+        var stageLabel = stage == "startup" ? "启动失败" : "操作失败";
+        if (jsonLines)
+            Console.WriteLine(JsonSerializer.Serialize(new
+            {
+                kind = "error", stage, error_type = reported.GetType().Name, message = reported.Message
+            }, Json));
+        Console.Error.WriteLine(stageLabel + " · " + reported.Message);
     }
 
     private void Cancel(object? sender, ConsoleCancelEventArgs args)
@@ -1275,7 +1462,7 @@ DV Core CLI
   --tui | --jsonl
   --preview --preview-rooms 1..24 --preview-current N
   --map subjective|objective|both
-  --ui-zoom fit|detail|compact --width 120 --height 42 --no-color
+  --ui-zoom fit|detail|compact --ui-history latest|recent --width 120 --height 42 --no-color
   --export-ui NEW.svg --command COMMAND
   --controller player|human|llm|ai --viewer ID --profile NAME --zone ID --seed N
   --planning selective|precise
@@ -1286,7 +1473,8 @@ DV Core CLI
   --replay FILE --interactive --speed 1|2|4|8
 
 status  options  views  view ID  map subjective|objective|both
-focus 01|ID|JSON  confirm  cancel  act 01|ID|JSON  next
+focus 01|ID|JSON  confirm  cancel  act 01|ID|JSON  next  advance 1..1000
+history latest|recent
 page N|next|prev  capture NEW.svg  capture all NEW_PREFIX  zoom fit|in|out
 actions next|prev|all|compact  decision-phase request|response|reading|confirmation
 save NEW.dvsave  trace NEW.dvdag  perf [NEW_PREFIX]  scores on|off|auto
@@ -1305,7 +1493,9 @@ perf 显示游戏小时/现实小时、正式决策次/现实小时、接口消�
 decision-phase 为外部适配器标记实际请求、响应、阅读或确认阶段，不推进游戏。
 --replay 的 perf 只读当前已播放帧记录的统计；缺失字段显示 —，不新增测量或导出报告。
 seek / replay frame 使用与标题相同的一基帧号，从记录起点静默恢复该视角的正文上下文，只绘制目标帧。
-replay capture 在固定 --viewer 下导出前两个本人可见完成结果、最后本人完成行动、记录末帧及其续页；每帧最多16页，超限明确失败，不截去内容冒充完整。
+advance 仅用于 --jsonl --controller ai，参数为单批现实毫秒预算；保留每次正式聚焦、确认与结果，只合并协议输出。
+history latest 默认显示最新完整事件；recent 展开近期事件，原始回放保留全部正文。
+replay capture 在固定 --viewer 下顺序处理所有记录帧，导出变化画面的全部续页；coverage.csv 逐帧说明图片和复用范围。
 capture all 展开当前行动列表并导出全部页；这些是记录界面的SVG导出，不是操作系统终端截屏。
 """;
 }
