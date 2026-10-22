@@ -13,7 +13,7 @@ CASE_NAMES = ('S1', 'S2-jia', 'S2-bing', 'S2-ding', 'S3-none', 'S4-foolish', 'S1
 FLAGS = ('readview', 'plancache', 'prune', 'lazytext', 'recordcache', 'predicate',
          'predicatecache', 'declcache', 'gc', 'appendshare', 'cow', 'mask',
          'lazyinternal', 'dirty', 'planreuse', 'blackbox', 'replaycache', 'runtimespeed')
-TOOL_FLAGS = ('evidence-index', 'causal-index')
+TOOL_FLAGS = ('evidence-index', 'causal-index', 'causalbuildcache')
 ALLOWED = {*CASE_NAMES, *('baseline-' + x for x in CASE_NAMES),
            *('precise-' + x for x in CASE_NAMES), *('ablation-' + x for x in FLAGS + TOOL_FLAGS)}
 _held = {}

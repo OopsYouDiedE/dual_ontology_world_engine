@@ -102,33 +102,73 @@ def dv_record(value):
     return value
 
 
-def causal_check(out, result, source_hashes, normalized, env, timeout, causal_index='on'):
+def causal_check(out, result, source_hashes, normalized, env, timeout, causal_index='on',
+                 causalbuildcache='on', reuse_program=None):
     """Read the sealed binary journal with the isolated 70-checks entry."""
     work = out / 'causal-program'
     work.mkdir()
     runtime = LANGUAGE / 'compiler/Runtime.cs'
     bridge = VERIFICATION / 'CausalCheckBridge.cs'
-    shutil.copyfile(runtime, work / 'Runtime.cs')
-    shutil.copyfile(bridge, work / bridge.name)
     project = PROJECT.replace('<OutputType>Exe</OutputType>',
                               '<OutputType>Exe</OutputType><StartupObject>CausalCheckBridge</StartupObject>')
-    (work / 'Program.csproj').write_text(project, encoding='utf-8')
     commands = [
         [sys.executable, str(BUILD / 'build_session.py'), '--entry', str(LANGUAGE / 'checks/70-checks.dv'),
          '--out', str(work), '--main', 'false'],
         ['dotnet', 'build', str(work / 'Program.csproj'), '-c', 'Release', '--disable-build-servers', '-p:NuGetAudit=false']]
     build_started = time.monotonic()
-    for index, command in enumerate(commands):
-        with (out / f'causal-build-{index}.txt').open('xb') as log:
-            subprocess.run(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
-                           check=True, timeout=240)
-    generated = json.loads((work / 'source-manifest.json').read_text(encoding='utf-8'))
-    if ({entry['path']: entry['sha256'] for entry in generated['modules']} != normalized or
+    timing = result['causal_stages'] = {'build_mode': 'build', 'stage': 'build', 'build_complete': False,
+                                       'opt_causalbuildcache': causalbuildcache == 'on'}
+    compiler_id = compiler_fingerprint()
+    candidate = Path(reuse_program).resolve().parent / 'causal-program' if reuse_program else None
+    reusable = (causalbuildcache == 'on' and candidate is not None and
+                (candidate.parent / 'compiled-causal-program.json').is_file())
+    try:
+        if reusable:
+            timing['build_mode'] = 'reuse-validation'
+            timing['reuse_source'] = str(candidate)
+            copy_verified(candidate, work, source_hashes, False, normalized, compiler_id,
+                          entry_kind='causal-check-70', manifest_name='compiled-causal-program.json')
+        else:
+            timing['cache_miss'] = ('disabled' if causalbuildcache != 'on' else
+                                    'no-source' if candidate is None else 'no-verified-manifest')
+            shutil.copyfile(runtime, work / 'Runtime.cs')
+            shutil.copyfile(bridge, work / bridge.name)
+            (work / 'Program.csproj').write_text(project, encoding='utf-8')
+            for index, command in enumerate(commands):
+                timing['stage'] = 'dv-generation' if index == 0 else 'dotnet-build'
+                stage_started = time.monotonic()
+                try:
+                    with (out / f'causal-build-{index}.txt').open('xb') as log:
+                        subprocess.run(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                       check=True, timeout=240)
+                finally:
+                    timing[timing['stage'] + '_seconds'] = time.monotonic() - stage_started
+        timing['stage'] = 'source-verification'
+        generated = json.loads((work / 'source-manifest.json').read_text(encoding='utf-8'))
+        if ({entry['path']: entry['sha256'] for entry in generated['modules']} != normalized or
+            generated.get('compiler') != compiler_id or generated.get('profile_instrumented') is not False or
+            compiler_fingerprint() != compiler_id or
+            (work / 'Program.csproj').read_text(encoding='utf-8') != project or
             sha_file(work / 'Runtime.cs') != source_hashes[str(runtime)] or
             sha_file(work / bridge.name) != source_hashes[str(bridge)] or
             any(not Path(path).is_file() or sha_file(path) != digest for path, digest in source_hashes.items())):
-        raise ValueError('Causal checker inputs differ from the source frozen before the session')
-    build_seconds = time.monotonic() - build_started
+            raise ValueError('Causal checker inputs differ from the source frozen before the session')
+        compiled = capture_program(work, source_hashes, False, normalized, compiler_id,
+                                   entry_kind='causal-check-70',
+                                   runtime_config={'opt_runtimespeed': env.get('DV_OPT_RUNTIMESPEED', '1') != '0'})
+        manifest_target = out / 'compiled-causal-program.json'
+        pending = manifest_target.with_suffix('.json.partial')
+        pending.write_text(json.dumps(compiled, indent=2), encoding='utf-8')
+        pending.replace(manifest_target)
+        if reusable:
+            timing['build_mode'] = 'verified-reuse'
+        timing['build_complete'] = True
+    except subprocess.TimeoutExpired:
+        timing['timeout_stage'] = timing['stage']
+        raise
+    finally:
+        timing['build_elapsed_seconds'] = time.monotonic() - build_started
+    build_seconds = timing['build_elapsed_seconds']
     manifest = {'format': 'dv-causal-intake-v1', 'integrity': 'verified',
                 'executor': 'formal-model', 'geometry': False,
                 'raw_sha256': result['raw_sha256'], 'run_config': result['run_config'],
@@ -138,15 +178,23 @@ def causal_check(out, result, source_hashes, normalized, env, timeout, causal_in
     manifest_path.write_text(json.dumps(dv_record(manifest), ensure_ascii=True), encoding='utf-8')
     report_path = out / 'causal-report.dvdag'
     started = time.monotonic()
-    with (out / 'causal-check.dvlog').open('xb') as stdout, (out / 'causal-check-stderr.txt').open('xb') as stderr:
-        process = subprocess.run(['dotnet', str(work / 'bin/Release/net8.0/Program.dll'),
-                                  str(manifest_path), str(out / result['raw_path']), str(report_path), '--opt-causal-index=' + causal_index],
-                                 cwd=ROOT, env=env, stdout=stdout, stderr=stderr, timeout=timeout)
+    timing['stage'] = 'execution'
+    try:
+        with (out / 'causal-check.dvlog').open('xb') as stdout, (out / 'causal-check-stderr.txt').open('xb') as stderr:
+            process = subprocess.run(['dotnet', str(work / 'bin/Release/net8.0/Program.dll'),
+                                      str(manifest_path), str(out / result['raw_path']), str(report_path), '--opt-causal-index=' + causal_index],
+                                     cwd=ROOT, env=env, stdout=stdout, stderr=stderr, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        timing['timeout_stage'] = 'execution'
+        raise
+    finally:
+        timing['execution_elapsed_seconds'] = time.monotonic() - started
     if process.returncode:
         raise RuntimeError(f'Causal checker exited {process.returncode}; see causal-check-stderr.txt')
     packets = [record(item) for item in records(out / 'causal-check.dvlog')]
     if len(packets) != 1 or packets[0].get('type') != 'causal_check' or not report_path.is_file():
         raise ValueError('Causal checker did not publish its binary report and summary')
+    timing['stage'] = 'completed'
     return {**packets[0], 'opt_causal_index': causal_index == 'on', 'build_elapsed_seconds': build_seconds,
             'execution_elapsed_seconds': time.monotonic() - started,
             'report': report_path.name, 'summary': 'causal-check.dvlog'}
@@ -391,6 +439,8 @@ def _main():
     parser.add_argument('--gc-heaps', type=int, default=None)
     parser.add_argument('--profile', action='store_true', help='Build an instrumented DV session and report per-function and work-type time')
     parser.add_argument('--reuse-program', type=Path, help='Reuse a previously fingerprinted Release program with identical complete source inputs')
+    parser.add_argument('--opt-causalbuildcache', choices=('on', 'off'), default='on',
+                        help='Reuse the verified sibling causal-program of --reuse-program; still execute every causal check')
     parser.add_argument('--evidence-from', type=Path, help='Only project an existing binary packet stream into a new --out directory; never build or execute a session')
     parser.add_argument('--causal-timeout', type=int, default=300,
                         help='Separate time limit for read-only 70-checks after a complete sealed session')
@@ -493,7 +543,12 @@ def _main():
     normalized = {str(path): hashlib.sha256(text.encode('utf-8')).hexdigest() for path, text in modules}
     checker_normalized = {str(path): hashlib.sha256(text.encode('utf-8')).hexdigest() for path, text in checker_modules}
     (out / 'source-hashes.json').write_text(json.dumps(hashes, indent=2), encoding='utf-8')
-    provenance = {'format': 'dv-debug-provenance-v1', 'source_hashes': hashes, 'source_manifest_sha256': sha_file(out / 'source-hashes.json'), 'run_config': run_config, 'instrumented': args.profile, 'runtime_config': {'opt_runtimespeed': args.opt_runtimespeed == 'on'}, 'verification_config': {'opt_causal_index': args.opt_causal_index == 'on', 'timeout_seconds': args.causal_timeout, 'opt_evidence_index': args.opt_evidence_index == 'on'}}
+    verification_config = {'opt_causal_index': args.opt_causal_index == 'on',
+                           'opt_causalbuildcache': args.opt_causalbuildcache == 'on',
+                           'timeout_seconds': args.causal_timeout,
+                           'opt_evidence_index': args.opt_evidence_index == 'on'}
+    provenance = {'format': 'dv-debug-provenance-v1', 'source_hashes': hashes, 'source_manifest_sha256': sha_file(out / 'source-hashes.json'), 'run_config': run_config, 'instrumented': args.profile, 'runtime_config': {'opt_runtimespeed': args.opt_runtimespeed == 'on'}, 'verification_config': verification_config,
+                  'verification_config_sha256': hashlib.sha256(json.dumps(verification_config, sort_keys=True).encode('utf-8')).hexdigest()}
     provenance_path = out / 'run-provenance.dv.json'
     provenance_path.write_text(json.dumps(dv_record(provenance), ensure_ascii=True), encoding='utf-8')
     restore_input_hashes = {}
@@ -670,7 +725,8 @@ def _main():
         if result['evidence_complete']:
             try:
                 result['causal_check'] = causal_check(out, result, hashes, checker_normalized,
-                                                     execution_env, args.causal_timeout, args.opt_causal_index)
+                                                     execution_env, args.causal_timeout, args.opt_causal_index,
+                                                     args.opt_causalbuildcache, args.reuse_program)
                 result['causal_check_reason'] = result['causal_check']['domain_evaluation_reason']
                 result['causal_check_complete'] = result['causal_check'].get('domain_evaluation_complete') is True
                 result['causal_check_status'] = 'completed' if result['causal_check_complete'] else 'not-completed'
@@ -678,7 +734,8 @@ def _main():
                                                   result['causal_check'].get('main_causal_supported') is True)
             except subprocess.TimeoutExpired:
                 result['causal_check_status'] = 'timeout'
-                result['causal_check_error'] = f'Read-only causality analysis exceeded {args.causal_timeout} seconds'
+                stage = result.get('causal_stages', {}).get('timeout_stage', 'unknown')
+                result['causal_check_error'] = f'Read-only causal checker timed out during {stage}'
             except Exception as error:
                 result['causal_check_status'] = 'error'
                 result['causal_check_error'] = str(error)

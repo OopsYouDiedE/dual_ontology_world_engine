@@ -180,6 +180,14 @@ readview 还可复用条件读取输入已经存在的有效不可变 Backbone�
 65章末只读伤病投影分别保留本章重伤经历、当前运动障碍、当前呼吸衰竭与实际有效给药；缺失字段保持未知，不由发热、旧伤或目标人数补值。工具报告的这些字段不写回任何主体心智。
 矩阵额外包含只读evidence-index与causal-index的独立消融，全关基线共关闭18项会话开关和2项只读工具开关。只读优化贡献以对应后处理耗时报告，不伪称改变人物决策速度；离线因果检查超时时，该项贡献只能作截断测量。
 
+### 只读因果程序集复用（2026-10-23）
+
+`--opt-causalbuildcache on|off` 默认 on，是第三项只读 TOOL_FLAGS，矩阵全关和 `ablation-causalbuildcache` 均由同一名单接线。它仅尝试复用 `--reuse-program <旧输出>/program` 的兄弟 `<旧输出>/causal-program`。没有来源或缺少独立 `compiled-causal-program.json` 时照常构建；构建完成后以原子替换封存 v2 manifest，供下一局使用。已有 manifest 不匹配则拒绝，不降级冒称命中。
+
+复用校验沿用完整 source_hashes（含检查入口闭包、Bridge、Runtime、编译器和生成器）、全部生成源文件与 Release 程序集集合、compiler、normalized模块和未插桩状态。入口独立为 `causal-check-70`，复制前后均校验；另核对精确含 CausalCheckBridge StartupObject 的项目文本、当前完整源码、Runtime/Bridge及编译器指纹。每次生成新的 intake 并实际执行同一因果检查，不复用报告、不省略原始证据校验。工具开关写入 provenance.verification_config 及 verification_config_sha256，保持与人物 run_config 分离。
+
+`result.causal_stages` 即使超时也记录 build_mode、build_elapsed_seconds、实际发生的 dv-generation/dotnet-build 秒数、execution_elapsed_seconds及 timeout_stage；构建命令仍各自240秒，执行使用 causal-timeout。未进入执行时不伪造执行耗时。有限合成工具检查覆盖命中后仍启动检查、缺manifest构建、关闭开关重建、来源/入口/二进制失配拒绝、构建与执行超时分段；尚未运行本改动的正式会话或测得整命令收益，不能据此宣布180秒达标。
+
 本人价值收益按 `value_sensitive_progress` 显式启用；未启用的现有 NPC 保留原 personal_choice 进展计法。侦探两配置启用，本轮不改变其他人物策略。`inquiry_purpose=practical-access` 的实际门闩检查不受主动科研意愿缩放。门外金属声仅传播 `latch_sound`，不授予外闩/通行状态；本人听见后有前往门厅现场核对的目标，正式检查、拔闩、开门和跨门仍逐步执行。拒绝现场协作是全配置同样合法的本人价值取舍；NPC 回应必须已有实际收到该拒绝的回执，不读 profile、不预设态度。
 
 `coordinate_owned_tasks` 允许本人按已声明、当前可执行且未完成的个人目标协调可选调查导航：已有行动可满足目标，或可现场完成实用检查时，不再自动为其他可选调查改写导航选择。通用规则只读取目标结构、本人采纳/资格及本人策略，不匹配人物、线索或门状态标识；不额外增加效用或行动优先分。声音正文只说明实际声响，不断言未目击的操作者或外闩状态。
