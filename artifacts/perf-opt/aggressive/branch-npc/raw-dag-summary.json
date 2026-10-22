@@ -1,0 +1,55 @@
+{
+  "format": "dv-raw-dag-v2",
+  "source": "C:\\Users\\iii\\.codex\\worktrees\\aggressive-npc-causality\\dual_ontology_world_engine\\artifacts\\perf-opt\\aggressive\\branch-npc\\raw-events.dvdag",
+  "source_sha256": "3a07937f66965599dcb44f9fc1099124eb7498a6885b744edf36e809280429b3",
+  "source_bytes": 571225562,
+  "validated_frames": 846730,
+  "validated_nodes": 815369,
+  "source_changed_during_scan": false,
+  "committed_events": 31355,
+  "last_committed_event": "e31354",
+  "validated_bytes": 571225562,
+  "last_commit_bytes": 571225562,
+  "residual_tail_bytes": 0,
+  "uncommitted_suffix_bytes": 0,
+  "initial_checkpoint_observed": true,
+  "final_checkpoint_observed": true,
+  "seal_observed": true,
+  "last_checkpoint": {
+    "name": "final",
+    "root": 815368,
+    "events": 31355,
+    "frame": 846728
+  },
+  "checkpoint_commits": [
+    {
+      "name": "initial",
+      "root": 24149,
+      "events": 1,
+      "frame": 24152
+    },
+    {
+      "name": "stage-day3",
+      "root": 506019,
+      "events": 16504,
+      "frame": 522526
+    },
+    {
+      "name": "stage-day5",
+      "root": 738592,
+      "events": 28000,
+      "frame": 766596
+    },
+    {
+      "name": "final",
+      "root": 815368,
+      "events": 31355,
+      "frame": 846728
+    }
+  ],
+  "invalid_tail": null,
+  "complete_sealing": true,
+  "scope": "complete sealed raw values",
+  "uncompleted_computation": "unknown; calculations without a committed event are not reconstructed",
+  "original_tail_preserved": true
+}
