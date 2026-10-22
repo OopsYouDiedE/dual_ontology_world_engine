@@ -4,7 +4,7 @@
 
 分支 opt/fix-foolish 已先合并 main f79e77f4（合并提交 bc7f06ef），再完成本候选。主代理提供内容边界及用户全部授权；子代理和独立审查不读取设计文件。没有修改丙丁取证或 NPC 成见安装区域，没有在 NPC、判答或规划器读取 profile。
 
-本轮正式 formal-model 对照达到 S4 的有限目标：Standard 四问获接受并自行过门；Foolish 实际拒绝现场查验，没有提交任何答案，三位同伴因真实收到该拒绝而表达异议或不满，后来雀儿实际挑开外闩，Foolish 只先听到金属声，亲到门厅检查，才拔内闩、开门并实际走进起居厅。两个配置同源、seed=1、zone_yi、统一CLI深度上限3、TopK3，既有优化默认开；各自正式窗口300秒，先Standard后Foolish串行运行。没有Godot几何、碰撞、画面或真实输入验收。
+本轮正式 formal-model 对照达到 S4 的有限目标：Standard 四问获接受并自行过门；Foolish 实际拒绝现场查验，没有提交任何答案，三位同伴因真实收到该拒绝而表达异议或不满，后来雀儿实际挑开外闩，Foolish 只先听到金属声，亲到门厅检查，才拔内闩、开门并实际走进起居厅。已移除按 latch_sound 单线索提前返回的分支，改由通用本人目标协调。两个配置同源、seed=1、zone_yi、统一CLI深度上限3、TopK3，既有优化默认开；各自正式窗口300秒，先Standard后Foolish串行运行。没有Godot几何、碰撞、画面或真实输入验收。
 
 ## 实现和因果边界
 
@@ -52,15 +52,25 @@ Foolish e2244 的真实观察仅为 departure.door.latch_sound；outer_released=
 
 两个配置 source-hashes.json 完全相同；result.dvlog 均报告 source_unchanged=true、evidence_complete=true、raw_sealing_complete=true。各自有完整玩家可见正文、stdout二进制事件投影、带校验原始DAG及最终封存。当前新测试替换此前Standard/Foolish目录，没有拼接旧证据。
 
-- Standard 正式会话222.906现实秒，36,414提交事件；原始SHA-256 dab8eb4744a7969ceaebfaee813ac1741bbacf5492a6f76535f0973b4a51e2c9。只读因果诊断超过300秒，causal_check_status=timeout，不能宣称完整因果诊断成功。
-- Foolish 正式会话224.704现实秒，36,439提交事件；原始SHA-256 b0002ba84ad744e4120d97aa306197d48f65d750943c69fbc8626bc6ab8a184e。只读因果检查完成，但main_causal_supported=false；未完成第一章答辩，不能伪装成剧情成功。
+- Standard 正式会话172.046现实秒，36,414提交事件；原始SHA-256 a83e44a1638eeddbe8e2998d6ed8145d31a6013c2a5a4acd741355902399372e。只读因果诊断超过本轮授权的1秒，causal_check_status=timeout，不能宣称完整因果诊断成功。
+- Foolish 正式会话177.343现实秒，36,439提交事件；原始SHA-256 3acd28a5a5596486584793058a98133a53b845ac6936000a7aad3ac54e506ef5。只读因果诊断超过本轮授权的1秒，causal_check_status=timeout，不能宣称完整因果诊断成功。未完成第一章答辩，不能伪装成剧情成功。
 - 两者本轮停止均有 objective-chapter-two-closing-record 和 actual-viewer-closing-inspection。Standard e36411、Foolish e36436 是第5日09:31观察者实际章末检视。这个结束事实不替代其他章节目标的逐项验收，也不作为剧情体验完全成功结论。
 - 会话时长仅记录窗口事实；这次修改包含本人策略和内容行为变化，未做同条件速度改善结论。
 
 证据位于本目录 Standard/ 与 Foolish/ 下 result.dvlog、02-引擎输出的玩家可见动作.txt、actual-event-index.dvlog、stdout.dvlog、raw-events.dvdag、source-hashes.json。巨大原始证据和编译工程仅保留本机，未提交Git。
 
+## 通用目标协调及中间失败处理
+
+主审指出单独检查 latch_sound 来暂停可选导航属于特定线索优先。本轮删除该条件。30中的 dvp_owned_task_ready 只读取本人 coordinate_owned_tasks 策略、已有个人目标的依据/可用条件、navigation_commitment 结构以及本人合法行动的预测满足情况；实用证据目标按动作目的类别判断。函数不匹配任何人物、线索、门或出口 ID，不增加效用分，也不赋予行动合法性。
+
+navigation_commitment 表达“持续执行直到完成”的本人任务承诺；它适用于任意主体的任意此类目标。本轮内容仅给四个已有脱困目标加此声明，目标条件、内容、分数与合法性保持原值；尚未实测其他领域使用此字段。此协调改变可选候选构造，是明确策略修复，不能描述为纯性能优化。
+
+中间初版通用协调曾把所有普通可重复满足的个人地点愿望也视作承诺，导致Standard调查时在大厅与走廊往返，未完成原四问。该会话正常结束并封存后才改源码；没有继续跑该失败源码的Foolish。修正为显式持续任务结构后，根代理按固定目录规则删除该失败测试输出；当前同源两局重新运行并整体替换结果。没有混用失败轮与当前轮结果。
+
+声音surface和speech已都改为实际金属声。当前Foolish正文第97行为“门外传来几下金属拨动声，接着是一声闩杆碰响。”；Standard相应正文为“门外响起闩杆碰撞的金属声。”不再把未目击的操作者作业或外闩成功抬起写成玩家已知事实。
+
 ## 独立只读复核
 
-新上下文 s4_evidence_review 未读设计、未运行额外测试，独立核对提交/接受、实际出门、拒绝/收听/同伴异议及声后门状态观察的上述事件顺序，结论支持本轮有限目标。它未全量重新解码原始DAG，不声称完整因果证明。
+新上下文 generic_coordination_review 未读设计、未运行额外测试，独立检查本轮通用协调源码和正式事件。两配置正式事件均已复核，无阻断性源码问题；明确苏/霍对白对侦探是speech_unheard，沈鼎对白实际被侦探解析。两轮原始DAG未由该审查全量重解；因果诊断均1秒超时，不能声称完整因果证明通过。
 
-保留的呈现风险：现有 surface-action 正文将雀儿动作写成“细铁丝拨了四下，外侧的横闩抬了起来”，比主体内部实际取得的纯声响事实更确定。内部知识链未越权，但本轮没有修正该呈现来源差异，也不能把此句当成侦探现场目击。未因这项风险另改源码而拼接不同源码的验收。
+独立复核指出虽然声响正文已中性，当前两局的旧呈现壳仍将Foolish声音标为“陌生学员·7 · 对白”。根代理授权随后只补通用environmental-sound元数据/投影，并以有限实际投影夹具验证，不再重跑两次整局。当前正式双局证据属于这项呈现补丁之前；补丁后的源和工程验证见 presentation-check.md、presentation-source-manifest.json，最终同源码正式测试由根代理覆盖。不得把夹具结果冒充新整局画面或主体行为验收。
