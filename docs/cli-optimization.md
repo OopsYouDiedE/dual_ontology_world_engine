@@ -147,3 +147,5 @@ readview 还可复用条件读取输入已经存在的有效不可变 Backbone�
 只读因果索引同时保留闭包的 BFS 顺序列表和文本成员集合；成员查询不再线性扫描顺序列表。完整性检查用 ID 首次出现位置判断当前事件以前的成员关系，仍逐事件、逐父引用执行原判定并返回原始 ID 顺序；非文本 ID、非文本父引用及异常结构回退原 DV 路径。此优化仍由同一 `opt-causal-index` 控制。
 
 丙区完整草图的 shared_inspection 声明复用正式 Complete 后的同房 public_observers/public_grants，仅实际在场且具备可视资格者取得检视结果；询问本身仍为证词。丁区医嘱记录在茉拉实际报告时随 materials 展示，复用同一公共观察路径。两者不初始化侦探知识、不降低证词阈值；修改取证机会后须重新验证，不继承旧基线的行为结论。
+
+居民回复可声明 response_requester/response_request_action；待回复项按同一parse_event关联本人received_requests与received_speeches，核对requester和真实行动ID。requires_actual_request=true时没有匹配待回复项即不可执行，Complete仅消费该匹配项。完整答复使用独立complete_receipt/complete_level及接受法则，仍核对裁决者在场；正确理由和情绪修订依赖本人逐项实际材料链，不只依赖末端旗标。

@@ -1530,7 +1530,19 @@ fn dvs_pending_request(actor, action):
     while dv_and((rt_count(result) == 0), (i < rt_count(requests))):
         var request = requests[i]
         if dv_and((request.topic == topic), (not dv_has(answered, request.parse_event))):
-            result = request
+            var matches = dv_find(action, "response_requester", request.requester) == request.requester
+            let request_action = dv_find(action, "response_request_action", "")
+            if request_action != "":
+                matches = false
+                let receipts = dv_find(actor, "received_speeches", [])
+                var receipt_index = 0
+                while receipt_index < rt_count(receipts):
+                    let receipt = receipts[receipt_index]
+                    if receipt.parse_event == request.parse_event and receipt.speaker == request.requester and receipt.action_id == request_action and dv_find(action, "response_requester", request.requester) == request.requester:
+                        matches = true
+                    receipt_index = receipt_index + 1
+            if matches:
+                result = request
         i = (i + 1)
     return result
 
@@ -2186,7 +2198,7 @@ fn dvp_eligible_base(actor, action, mind, relevant):
                     if (0 < rt_count(request)):
                         local_2 = (dvs_request_context(actor, action, request.requester) != false)
                     else:
-                        local_2 = dv_and((not dv_has(used, id)), dv_or(dv_has_key(dv_find(actor, "visible_context", []), dv_find(action, "offer_to", "")), dv_find(action, "opportunity_requirement", false) != false and dvp_communication_progress(actor, action)))
+                        local_2 = not dv_find(action, "requires_actual_request", false) and dv_and((not dv_has(used, id)), dv_or(dv_has_key(dv_find(actor, "visible_context", []), dv_find(action, "offer_to", "")), dv_find(action, "opportunity_requirement", false) != false and dvp_communication_progress(actor, action)))
                 else:
                     if dv_has_key(action.speech, "request"):
                         var context = dvs_request_context(actor, action, action.speech.request.target)
