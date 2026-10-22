@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Threading;
 using System.Collections;
 using System.Buffers;
@@ -249,7 +249,8 @@ public static class R
             MembershipHashChecked = true,
             MembershipHashEligible = true
         };
-        internal readonly ConditionalWeakTable<List<object>, MutableState> MutableStates = new();
+        internal readonly MutableStateTable MutableStates = new();
+        internal readonly bool RuntimeSpeedEnabled = Environment.GetEnvironmentVariable("DV_OPT_RUNTIMESPEED") != "0";
         internal readonly ConditionalWeakTable<FrozenList, ValueMemo> ValueMemos = new();
         internal readonly ConditionalWeakTable<FrozenList, JsonEncoding> JsonEncodings = new();
         internal readonly Dictionary<ulong, List<WeakReference<FrozenList>>> SnapshotPool = new();
@@ -1208,51 +1209,50 @@ public static class R
     }
     private static object FrozenTextPair(string key, object value)
     {
-        // The caller has already frozen the value. Unknown external atoms keep
-        // the existing delayed validation path instead of introducing an error
-        // at record construction. Only valid immutable DV values use this path.
+        // Public construction must acquire the same context lock as snapshot.
+        var caches = Caches;
+        lock (caches.SnapshotLock) return FrozenTextPairCore(key, value, caches);
+    }
+    private static object FrozenTextPairCore(string key, object value, ValueCaches caches)
+    {
         if (value is not (string or double or bool or Rational or FrozenList))
             return new List<object> { key, value };
-        var caches = Caches;
-        lock (caches.SnapshotLock)
+        MaintainSnapshots(caches);
+        var keyHash = unchecked((ulong)HashCode.Combine(key.GetType(), key));
+        var valueHash = value is FrozenList child ? child.Hash : unchecked((ulong)HashCode.Combine(value.GetType(), value));
+        var hash = unchecked((14695981039346656037UL ^ keyHash) * 1099511628211UL);
+        hash = unchecked((hash ^ valueHash) * 1099511628211UL);
+        var sequenceHash = hash;
+        hash = unchecked((hash ^ 2UL) * 1099511628211UL);
+        if (!caches.SnapshotPool.TryGetValue(hash, out var bucket))
         {
-            MaintainSnapshots(caches);
-            var keyHash = unchecked((ulong)HashCode.Combine(key.GetType(), key));
-            var valueHash = value is FrozenList child ? child.Hash : unchecked((ulong)HashCode.Combine(value.GetType(), value));
-            var hash = unchecked((14695981039346656037UL ^ keyHash) * 1099511628211UL);
-            hash = unchecked((hash ^ valueHash) * 1099511628211UL);
-            var sequenceHash = hash;
-            hash = unchecked((hash ^ 2UL) * 1099511628211UL);
-            if (!caches.SnapshotPool.TryGetValue(hash, out var bucket))
-            {
-                caches.SnapshotPool[hash] = bucket = new();
-                caches.SnapshotBucketOrder.Enqueue(hash);
-            }
-            for (var i = bucket.Count - 1; i >= 0; i--)
-            {
-                if (!bucket[i].TryGetTarget(out var existing)) { bucket.RemoveAt(i); continue; }
-                if (existing.Count != 2 || !Equals(existing[0], key)) continue;
-                var equal = existing[1] is double left && value is double right
-                    ? BitConverter.DoubleToInt64Bits(left) == BitConverter.DoubleToInt64Bits(right)
-                    : Equals(existing[1], value);
-                if (equal) return existing;
-            }
-            var pair = new FrozenList(new object[] { key, value }, hash, sequenceHash);
-            var keyEligible = TryMembershipHash(key, out var compatibleKey);
-            var valueEligible = TryMembershipHash(value, out var compatibleValue);
-            var eligible = keyEligible && valueEligible;
-            if (eligible)
-            {
-                var compatible = unchecked((14695981039346656037UL ^ compatibleKey) * 1099511628211UL);
-                compatible = unchecked((compatible ^ compatibleValue) * 1099511628211UL);
-                pair.CompatibleSequenceHash = compatible;
-                pair.MembershipHash = unchecked((compatible ^ 2UL) * 1099511628211UL) ^ 5UL;
-            }
-            pair.MembershipHashEligible = eligible;
-            pair.MembershipHashChecked = true;
-            bucket.Add(new WeakReference<FrozenList>(pair));
-            return pair;
+            caches.SnapshotPool[hash] = bucket = new();
+            caches.SnapshotBucketOrder.Enqueue(hash);
         }
+        for (var i = bucket.Count - 1; i >= 0; i--)
+        {
+            if (!bucket[i].TryGetTarget(out var existing)) { bucket.RemoveAt(i); continue; }
+            if (existing.Count != 2 || !Equals(existing[0], key)) continue;
+            var equal = existing[1] is double left && value is double right
+                ? BitConverter.DoubleToInt64Bits(left) == BitConverter.DoubleToInt64Bits(right)
+                : Equals(existing[1], value);
+            if (equal) return existing;
+        }
+        var pair = new FrozenList(new object[] { key, value }, hash, sequenceHash);
+        var keyEligible = TryMembershipHash(key, out var compatibleKey);
+        var valueEligible = TryMembershipHash(value, out var compatibleValue);
+        var eligible = keyEligible && valueEligible;
+        if (eligible)
+        {
+            var compatible = unchecked((14695981039346656037UL ^ compatibleKey) * 1099511628211UL);
+            compatible = unchecked((compatible ^ compatibleValue) * 1099511628211UL);
+            pair.CompatibleSequenceHash = compatible;
+            pair.MembershipHash = unchecked((compatible ^ 2UL) * 1099511628211UL) ^ 5UL;
+        }
+        pair.MembershipHashEligible = eligible;
+        pair.MembershipHashChecked = true;
+        bucket.Add(new WeakReference<FrozenList>(pair));
+        return pair;
     }
     private sealed class ValueMemo
     {
@@ -1392,12 +1392,12 @@ public static class R
         }
         // List copies the private array into its own backing store in one pass;
         // the immutable source remains private and cannot be mutated by its owner.
-        internal List<object> CopyRoot()
+        internal List<object> CopyRoot(MutableStateTable? owner = null)
         {
-            if (Count == 0) return new List<object>();
+            if (Count == 0) return owner is null ? new List<object>() : new OwnedList(0, owner);
             var extra = Count >= 64 ? 16 : 2;
             var capacity = Count <= int.MaxValue - extra ? Count + extra : Count;
-            var result = new List<object>(capacity);
+            List<object> result = owner is null ? new List<object>(capacity) : new OwnedList(capacity, owner);
             AppendTo(result);
             return result;
         }
@@ -1585,18 +1585,55 @@ public static class R
         internal WeakReference<List<object>>? Parent;
         internal List<WeakReference<List<object>>>? OtherParents;
     }
-    private static ConditionalWeakTable<List<object>, MutableState> MutableStates => Caches.MutableStates;
-    private static List<object> Thaw(FrozenList frozen)
+    // Runtime-owned roots retain the public List<object> ABI while keeping their
+    // ownership metadata beside the list. External/plain lists and crossings
+    // into another ValueContext still use that context's weak table.
+    private sealed class OwnedList(int capacity, MutableStateTable owner) : List<object>(capacity)
+    {
+        internal readonly MutableStateTable Owner = owner;
+        internal MutableState? State;
+    }
+    private sealed class MutableStateTable
+    {
+        private readonly ConditionalWeakTable<List<object>, MutableState> external = new();
+        internal bool TryGetValue(List<object> list, out MutableState state)
+        {
+            if (list is OwnedList owned && ReferenceEquals(owned.Owner, this))
+            { state = owned.State!; return state is not null; }
+            return external.TryGetValue(list, out state!);
+        }
+        internal MutableState GetOrCreateValue(List<object> list)
+        {
+            if (list is OwnedList owned && ReferenceEquals(owned.Owner, this))
+                return owned.State ??= new MutableState();
+            return external.GetOrCreateValue(list);
+        }
+        internal void Add(List<object> list, MutableState state)
+        {
+            if (list is OwnedList owned && ReferenceEquals(owned.Owner, this))
+            {
+                if (owned.State is not null) throw new ArgumentException("Duplicate mutable owner");
+                owned.State = state;
+            }
+            else external.Add(list, state);
+        }
+    }
+    private static MutableStateTable MutableStates => Caches.MutableStates;
+    private static List<object> Thaw(FrozenList frozen, List<object>? parent = null)
     {
 #if DV_PROFILE_NATIVE
         using var __nativeProfile = DvProfiler.Enter("rt_Thaw");
 #endif
-        var result = frozen.CopyRoot();
-        MutableStates.Add(result, new MutableState { Backbone = frozen });
+        var caches = Caches;
+        var result = frozen.CopyRoot(caches.RuntimeSpeedEnabled ? caches.MutableStates : null);
+        var state = new MutableState { Backbone = frozen };
+        if (parent is not null && caches.RuntimeSpeedEnabled) state.Parent = new(parent);
+        caches.MutableStates.Add(result, state);
+        if (parent is not null && !caches.RuntimeSpeedEnabled) LinkParent(result, parent, caches.MutableStates);
         return result;
     }
     private static void LinkParent(List<object> child, List<object> parent) => LinkParent(child, parent, MutableStates);
-    private static void LinkParent(List<object> child, List<object> parent, ConditionalWeakTable<List<object>, MutableState> states)
+    private static void LinkParent(List<object> child, List<object> parent, MutableStateTable states)
     {
         var state = states.GetOrCreateValue(child);
         if (state.Parent is null) { state.Parent = new(parent); return; }
@@ -1829,7 +1866,9 @@ public static class R
             // does, so its later writes invalidate this owner's backbone.
             var valuePart = items[1];
             if (valuePart is List<object> mutablePart) LinkParent(mutablePart, items, caches.MutableStates);
-            var pair = (FrozenList)FrozenTextPair(key, SnapshotValue(valuePart, caches));
+            var frozenPart = caches.RuntimeSpeedEnabled && valuePart is not List<object> ? valuePart : SnapshotValue(valuePart, caches);
+            var pair = (FrozenList)(caches.RuntimeSpeedEnabled
+                ? FrozenTextPairCore(key, frozenPart, caches) : FrozenTextPair(key, frozenPart));
             state.Backbone = pair;
             state.AppendBase = null;
             return pair;
@@ -1859,7 +1898,9 @@ public static class R
         for (var i = start; i < items.Count; i++)
         {
             if (items[i] is List<object> mutableChild) LinkParent(mutableChild, items, caches.MutableStates);
-            var child = children[i - offset] = SnapshotValue(items[i], caches);
+            var item = items[i];
+            var child = children[i - offset] = caches.RuntimeSpeedEnabled && item is not List<object>
+                ? item : SnapshotValue(item, caches);
             if (TryMembershipHash(child, out var valueHash))
                 compatibleHash = unchecked((compatibleHash ^ valueHash) * 1099511628211UL);
             else compatible = false;
@@ -1912,8 +1953,7 @@ public static class R
         if (value is FrozenList frozen)
         {
             // Materialize only this owner's selected branch, preserving siblings.
-            value = Thaw(frozen);
-            LinkParent((List<object>)value, items);
+            value = Thaw(frozen, items);
             items[index] = value;
         }
         return value;
