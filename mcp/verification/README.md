@@ -5,11 +5,13 @@
 `godot_csharp/ShareAsset`。资产生成器在 `mcp/asset_pipeline`；下文保留相关
 生成与采集前提的导航。
 
+同一任务使用固定测试输出目录。每次新测试前，先等待旧进程结束，核对绝对路径并递归清理上一轮输出；新测试替换旧测试，不滚动归档或复制历史记录。空目录和独占创建要求适用于清理后的本轮写入；失败记录与 partial 保存到下一轮清理为止。清理规则见仓库根 AGENTS.md。
+
 `render_terminal_export.py --svg <CLI导出.svg> --out <新.png> [--font <中文字体>]`
 将CLI生产渲染器的定位单元画布导出为PNG。MCP入口为diagnostics /
 terminal-export。该工具只解析CLI生成的rect/text SVG子集，不启动会话；
 它是渲染导出而非物理终端屏幕截取。需要Pillow，默认使用Windows微软雅黑；
-路径独占创建，不覆盖旧图。
+清理上一轮输出后，本轮路径独占创建。
 
 ## 工具工程入口
 
@@ -21,16 +23,16 @@ terminal-export。该工具只解析CLI生成的rect/text SVG子集，不启动�
 唯一工具资源路径为 `res://tools/FrameArchive.cs`。
 
 ```powershell
-python mcp/godot_workspace.py --csharp --godot $env:GODOT --script res://tools/capture_title_3d.gd -- --out=C:/Temp/title-NEW
-python mcp/godot_workspace.py --csharp --godot $env:GODOT --script res://tools/capture_start_reveal.gd -- --out=C:/Temp/opening-NEW --dv-audit
-python mcp/verification/run_saved_game_capture.py --out artifacts/capture/new-001 --seconds 90 --mode detective
-python mcp/verification/profile_dv_capture.py --out artifacts/profile/new-001 --seconds 90 --godot $env:GODOT
+python mcp/godot_workspace.py --csharp --godot $env:GODOT --script res://tools/capture_title_3d.gd -- --out=C:/Temp/title-current
+python mcp/godot_workspace.py --csharp --godot $env:GODOT --script res://tools/capture_start_reveal.gd -- --out=C:/Temp/opening-current --dv-audit
+python mcp/verification/run_saved_game_capture.py --out artifacts/capture/current --seconds 90 --mode detective
+python mcp/verification/profile_dv_capture.py --out artifacts/profile/current --seconds 90 --godot $env:GODOT
 ```
 
 两个 Python 采集启动器共用 `capture_workspace.py`：建立工具工程、构建、
 导入资源，再冻结源码/实际工具程序集/导入资源指纹，最后启动渲染进程。
 宿主帧取证显式开启 `--dv-audit`。临时工作区退出时清理，证据保存在指定
-的新目录。UI-only 工具不打开 DV 会话；使用 Main 的工具通过现役 `flow`
+的本任务固定目录，新测试前清理旧输出。UI-only 工具不打开 DV 会话；使用 Main 的工具通过现役 `flow`
 读取开局、阅读、关闭和书签状态，现场执行仍由 `field_executor` 承担。
 
 `--sandbox` 和默认编辑器工具工程采用纯 GDScript MapSandbox 主场景，
@@ -209,11 +211,11 @@ save restoration still requires a separate fresh-session/physical-state review.
 
 `capture_casebook_ui.gd` hosts production `TitleUI`, `CasebookUI`,
 `BookArchivePage` and `InvestigationUI` in a rendered Godot .NET tool workspace.
-The launcher builds and imports before starting the script; supply a new absolute output directory. Do not
-use `--headless` or reuse an existing evidence directory.
+The launcher builds and imports before starting the script; supply a task-fixed absolute output directory cleared before each new test. Do not
+use `--headless`.
 
 ```powershell
-python mcp/godot_workspace.py --csharp --godot $env:GODOT --script res://tools/capture_casebook_ui.gd -- --outpath=C:/Temp/casebook-ui-capture-NEW --frames
+python mcp/godot_workspace.py --csharp --godot $env:GODOT --script res://tools/capture_casebook_ui.gd -- --outpath=C:/Temp/casebook-ui-capture-current --frames
 ```
 
 `--out=` is an alias for `--outpath=`. The default capture saves key page-turn
@@ -223,8 +225,8 @@ preference: when enabled, pages settle directly and the log records that no
 page-turn-angle evidence was captured. PNGs, binary `ui-input.dvlog` and
 `capture-manifest.dvlog` are written through `FrameArchive`; archives publish
 from `.partial` only after the background queue drains. The tool has a 41-second
-soft deadline and a 44-second hard deadline. Failure preserves available images,
-records and partial files instead of replacing previous evidence.
+soft deadline and a 44-second hard deadline. Failure keeps the current test images,
+records and partial files until the next test clears and replaces that output directory.
 
 The fixture is a bounded, approved excerpt of delivered text and artwork from
 `40-chapter1.dv` (E2/E7), with one portrait. Its binary metadata identifies it as

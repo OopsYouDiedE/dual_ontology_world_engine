@@ -51,14 +51,14 @@ Core 的 verify/run 共用同一法则求值器，绑定对象对应不授予事
 dotnet build godot_csharp/DualOntologyWorldEngine.sln -m:1 --disable-build-servers -p:NuGetAudit=false
 dotnet build dv_core/LanguageCore.sln -c Release --disable-build-servers -p:NuGetAudit=false
 python mcp/editor_lsp/check_dv.py --format json dv_core/modules/30-session.dv
-python mcp/verification/audit_action_paths.py --out <新JSON路径>
+python mcp/verification/audit_action_paths.py --out <本任务固定报告路径>
 ```
 
 素材变更后用 Godot 编辑器重新导入；PowerShell 命令为 `& $env:GODOT --headless --editor --path godot_csharp --import`。音乐发行导出写入 `artifacts/releases/soundtrack/`，游戏音频路径与前提见 [mcp/music_pipeline/README.md](mcp/music_pipeline/README.md)。
 
-VS Code 默认解决方案为 `godot_csharp/DualOntologyWorldEngine.sln`；编译器/seed 工作切换到 `dv_core/LanguageCore.sln`。工作区排除 artifacts、tmp、scratch 的历史工程发现、搜索与监视，保留其原始内容。配置依据扩展 schema 维护；配置修复与实际编辑器重载观察分别报告。
+VS Code 默认解决方案为 `godot_csharp/DualOntologyWorldEngine.sln`；编译器/seed 工作切换到 `dv_core/LanguageCore.sln`。工作区排除 artifacts、tmp、scratch 的历史工程发现、搜索与监视；测试输出按下文替换规则管理。配置依据扩展 schema 维护；配置修复与实际编辑器重载观察分别报告。
 
-旧 verify、FullTest、guarded_level3、PlayerTranscript、回放和旧会话检查入口已退役，不重新调用。三级保护运行工具仍须按现行 DV 合同建立后才能用于受保护比较；旧保护清单与证据保留原字节。
+旧 verify、FullTest、guarded_level3、PlayerTranscript、回放和旧会话检查入口已退役，不重新调用。三级保护运行工具仍须按现行 DV 合同建立后才能用于受保护比较；旧测试清单与证据遵循测试输出替换规则。
 
 ## 工具与临时文件
 
@@ -75,11 +75,11 @@ VS Code 默认解决方案为 `godot_csharp/DualOntologyWorldEngine.sln`；编�
 1. 开始前核对分支与工作区，保留他人及此前工作，不回退或覆盖非本轮改动。并行工作划定文件范围，公共接口由主代理整合。
 2. 依据用户要求、设计规范、现役 README 与源码确定范围、依赖和本轮验收项。主代理负责设计判断。
 3. 生成文件通过对应源与工具再生；调整路径或资源时，同时核对场景、资源依赖、动态加载、插件配置与生成器。来源不全时保留所需成品，说明重建前提。
-4. 整批修改、接线和静态审读完成后统一工程排错。用户要求集中测试时先冻结源码，再启动授权窗口；需要修复时结束该批并保留失败证据，不拼接不同源码的结果。测试次数、时限与失败处理以当前用户指令为准。
+4. 整批修改、接线和静态审读完成后统一工程排错。用户要求集中测试时先冻结源码，再启动授权窗口；需要修复时结束该批并如实报告失败，新测试替换旧输出，不拼接不同源码的结果。测试次数、时限与失败处理以当前用户指令为准。
 5. 按本文件的触发条件执行必要验证，记录具体结果与未覆盖范围。涉及画面或交互的效果结论须实际核查资源、布局、遮挡、碰撞、输入和截图。
-6. 完成本轮修改后提交并推送。提交前复核完整差异，保留与本轮无关的源、素材、保护基线和历史证据。自动清理不扩展为删除其他任务的原始记录。
+6. 完成本轮修改后提交并推送。提交前复核完整差异，保留与本轮无关的源码、素材和他人工作；清理限定于本任务测试输出，不扩展到其他任务。
 
-逐文件清理与动作路径报告放在 `artifacts/partial-bootstrap-core/single-action-path/` 的本轮子目录；同一任务持续复用其目录，新证据独占创建，不覆盖原始记录。静态路径审计不执行会话，也不代替人工源码审读或游戏验收。
+逐文件清理与动作路径报告放在 `artifacts/partial-bootstrap-core/single-action-path/` 的本任务固定目录；新测试清理并替换旧测试输出。静态路径审计不执行会话，也不代替人工源码审读或游戏验收。
 
 ### 内容审计标记
 
@@ -95,11 +95,11 @@ VS Code 默认解决方案为 `godot_csharp/DualOntologyWorldEngine.sln`；编�
 
 | 级别 | 入口、证据与边界 |
 | --- | --- |
-| 一级：正式 DV 逻辑输出 | `python mcp/verification/run_debug.py --out artifacts/partial-bootstrap-core/<新目录> --timeout <本轮授权秒数>`，执行生产 formal-model 会话，不启动 Godot。保留源码指纹、原始 stdout/stderr、轨迹、调试投影与玩家可见正文；按事件编号检查行动前提、回执、称谓、叙述、顺序、重复和缺失。源文推导与实际轨迹分别保存。一级不含画面、几何、碰撞或输入验收。 |
+| 一级：正式 DV 逻辑输出 | `python mcp/verification/run_debug.py --out artifacts/partial-bootstrap-core/<本任务固定测试目录> --timeout <本轮授权秒数>`，执行生产 formal-model 会话，不启动 Godot。保留源码指纹、原始 stdout/stderr、轨迹、调试投影与玩家可见正文；按事件编号检查行动前提、回执、称谓、叙述、顺序、重复和缺失。源文推导与实际轨迹分别保存。一级不含画面、几何、碰撞或输入验收。 |
 | 二级：Godot UI | 使用现役 DV 内容的有限片段检查各场景组合、显示与交互，实际查看截图；不默认扩大为全局会话。 |
 | 三级：游戏本体 | 仅在用户明确要求最终效果测试时执行。默认由引擎自身的侦探以本人认知、动机和共同决策提供输入，经真实碰撞、交互和显示完成。测试 Agent 不代选动作、不预写路线或答案。 |
 
-只有明确要求盲玩时才采用独立盲玩 Agent，从新会话开始；它只接收启动方式、通用输入协议和评价要求，不接收谜底、正确顺序、源码、历史或本轮全程记录、设计内容。引擎侦探与独立盲玩均保存全部实际输入及玩家可见信息，报告明确采用哪种方式。体验失败须如实保留，修复后按授权窗口开启新会话和新上下文审查；盲玩复测另换盲玩 Agent。不得注入状态、预置答案、按帧快进通关或人为延长流程满足指标。
+只有明确要求盲玩时才采用独立盲玩 Agent，从新会话开始；它只接收启动方式、通用输入协议和评价要求，不接收谜底、正确顺序、源码、历史或本轮全程记录、设计内容。引擎侦探与独立盲玩均保存全部实际输入及玩家可见信息，报告明确采用哪种方式。当前轮体验失败须如实记录，下一轮替换旧输出；修复后按授权窗口开启新会话和新上下文审查；盲玩复测另换盲玩 Agent。不得注入状态、预置答案、按帧快进通关或人为延长流程满足指标。
 
 ### 性能比较与保护基线
 
@@ -119,7 +119,9 @@ VS Code 默认解决方案为 `godot_csharp/DualOntologyWorldEngine.sln`；编�
 
 关闭等待在途工作，先保存输入与可见记录，再封存会话与存档；先写 `.partial`，成功后原子改名，失败保留部分文件与具体错误。关闭链中的 SessionClose 只调用一次，不自动重试；关闭结束不等于证据完整。异常路径也释放等待。阶段存档只能来自正式 Prepare/Complete 的真实状态，恢复校验源码、配置和完整提交标识，精确数保持原值；恢复诊断与新开局验收分列。详细读取、序列化和恢复合同见语言及 Godot AGENTS。
 
-原始证据只新增，不覆盖或自动删除。此前用户授权的历史轨迹清理仅适用于当时逐文件清单，不形成后续自动删除授权。报告区分构建、机制、人物行为、体验、封存完整性，引用本轮证据并列出失败及未验证范围；崩溃、脚本错误或缺少完成记录直接说明，不借旧报告宣布改善。
+同一任务使用固定测试输出目录，每次新测试覆盖上一轮测试。用户已授权递归删除旧测试目录：新测试启动前，先停止并等待旧测试、采集与审查进程结束，核对目标绝对路径处于本任务测试范围内，再递归清理旧截图、轨迹、存档、采样、控制台记录、测试报告、失败 `.partial` 和历史复制包；不滚动归档，不复制上一轮记录，不另建递增轮次目录规避替换。源码、设计文档、发布素材和其他任务输出不属于清理对象。工具要求空目录或独占创建时，先清理旧目录，再创建本轮文件；本轮写入期间仍遵守完整性与原子封存合同。
+
+同一次性能比较中的基线与候选共同属于当前测试，分别记录到本次比较结束；下一次比较整体替换它们。当前轮失败、超时与部分封存须如实记录，不以旧轮结果补齐。报告区分构建、机制、人物行为、体验、封存完整性，引用当前轮证据并列出失败及未验证范围；崩溃、脚本错误或缺少完成记录直接说明，不借旧报告宣布改善。
 
 ## 设计文档维护
 

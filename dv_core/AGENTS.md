@@ -37,7 +37,7 @@ CLI空间视图上方为房间分组列表，下方为通道逐条端点列表�
 4. 必要工程排错与当前明确要求的实际会话分别执行。构建、语法、配置闭包、固定点与中性容器检查只证明对应工程事实，不能宣称人物行为、剧情、画面或性能完成验收。
 5. 禁止流程回归及从其他入口间接调用已退役流程；不以断言数量、通过率或“全绿”评价项目。依据实际行为、玩家可见结果、来源和具体问题报告，未执行或未覆盖保持未知。
 6. 正式会话前冻结全部实际源码与配置；运行期间也不修改本目录文档或插件。不同源码、审计策略、运行时配置、控制方式及插桩窗口分列，不把来源不同的记录拼成同条件比较。正式实机/逻辑性能测量串行，避免资源争抢。
-7. 新证据独占创建，保留失败、超时、未刷新尾部与 `.partial`；不补造时刻、输入、来源或成功回执。恢复诊断和全新开局分别报告。阶段成果继续使用该任务的 `artifacts/<task-name>/` 目录，历史基线与原始证据只按用户明确范围处理。
+7. 同一任务使用固定测试目录；每次新测试前递归清理旧输出，以本轮记录替换，不复制或累积历史轮次。当前轮如实记录失败、超时、未刷新尾部与 `.partial`，不补造时刻、输入、来源或成功回执。恢复诊断和全新开局分别报告。具体清理范围、路径核对及比较基线规则继承根 AGENTS。
 
 一级只运行无窗口正式 DV 逻辑会话，不启动 Godot，不要求 UI 回放或三级几何检查。三级仅在用户明确要求最终效果时按根文件规则执行；默认引擎侦探，独立盲玩需要明确要求。独立证据审查不读取项目设计内容；主代理负责设计判断。工具默认超时不替代当前任务授权，不能自动运行历史多配置矩阵或延长窗口。
 
@@ -52,7 +52,7 @@ python mcp/editor_lsp/check_dv.py --format json dv_core/modules/30-session.dv
 python mcp/editor_lsp/dv_lsp.py
 ```
 
-实际逻辑会话入口为 `python mcp/verification/run_debug.py --out artifacts/partial-bootstrap-core/<新目录> --timeout <本轮授权秒数>`，默认源码为 `dv_core/checks/65-debug-runner.dv`。需要阶段恢复或插桩时按该任务范围显式选择，不能由普通清理自行追加。
+实际逻辑会话入口为 `python mcp/verification/run_debug.py --out artifacts/partial-bootstrap-core/<本任务固定测试目录> --timeout <本轮授权秒数>`，默认源码为 `dv_core/checks/65-debug-runner.dv`。启动前按根 AGENTS 清理该目录旧输出。需要阶段恢复或插桩时按该任务范围显式选择，不能由普通清理自行追加。
 
 `mcp/build/dv_toolchain.py` 统一解析从行首开始的相对 `#include`：依赖先于引用者，同一路径只加载一次，循环与缺失文件报告位置，引用行保留空行。缩进正文中的 `#include` 必须原样保留；只规范 CRLF/CR，不拆分 U+2028 等文字字符。各模块的 define/称谓和源位置边界独立。裸编译器 `--module` 接收单模块源及导入接口；`--check/--emit` 保留组合源与范围接口。C0→C1→C2→C3 使用 `10-compiler.dv`、seed 与 Runtime，自举缓存按来源指纹区分，并核对 C2/C3 生成源固定点。
 
@@ -120,7 +120,7 @@ SmartReplay 共用 `dv-replay-v2` 帧合同，保留 snapshot、原始 input、p
 
 检查报告的 `domain_evaluation_complete` 以真实完成领域分析为准。未进入时记录明确 reason，负面领域结论仍报告分析已完成；`main_causal_supported` 保持独立。原始证据完整和检查进程正常退出本身不填写领域完成标志。
 
-`rt_json_write` 拒绝新文件记录；`rt_json_print` 在记录器开启后写二进制投影，解析/字符串交换仍为平台功能。`WriteTrace/WriteSave` 独占写 partial 并在完整封存后发布，恢复文件必须验证 seal；失败保留原字节，不自动重试或覆盖。阶段存档只能来自正式实际执行，恢复核对完整源码、配置及提交身份，不改历史来源。
+`rt_json_write` 拒绝新文件记录；`rt_json_print` 在记录器开启后写二进制投影，解析/字符串交换仍为平台功能。清理上一轮输出后，`WriteTrace/WriteSave` 在本轮独占写 partial 并在完整封存后发布，恢复文件必须验证 seal；本轮失败保留原字节，不在封存过程中自动重试或覆盖，下一轮开始前统一清理。阶段存档只能来自正式实际执行，恢复核对完整源码、配置及提交身份，不改历史来源。
 
 完整审计与普通游玩分开。`R.AuditMode` 按 AsyncLocal 作用域隔离，Session 打开时确定策略并随存档保留。精简模式仅裁剪已明确允许的事件大字段，正式推理需要的 inference、observation/listener_parse、factor_prune 历史仍保留；不能关闭消费者或把缺失伪装为完整证据。读取器、关闭与恢复合同见 [host_bridge/README.md](host_bridge/README.md)。
 
