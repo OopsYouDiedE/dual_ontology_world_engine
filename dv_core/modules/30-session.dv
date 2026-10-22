@@ -5889,6 +5889,33 @@ fn dvs_slice_feature(hypothesis, feature, plan, plan_io):
         i = i + 1
     return {"timeline": timeline, "assumptions": assumptions, "feature": dv_without(feature, "at"), "original_feature": feature, "size": rt_count(timeline) + rt_count(assumptions), "mask_plan": plan}
 
+// Reuse only an identical completed causal probe within this paid replay.
+// The initial masked value includes the full owner's mind and declarations;
+// irrelevant alternative mask laws may coincide only when their values do.
+fn dvs_model_probe_key(actor, hypothesis, time):
+    let plan = dvs_sim_plan(hypothesis)
+    let start = dv_find(hypothesis, "start_time", time)
+    let mask = dv_find(hypothesis, "mask_plan", plan)
+    let initial = dvs_sim_mask_response(actor, dvs_sim_mask(actor.mind, mask, start), mask)
+    return [actor.id, initial, dv_find(actor, "response_models", []), dv_find(actor.policy, "Replay_Depth", rt_count(plan)), plan, dv_find(hypothesis, "assumptions", []), dv_find(hypothesis, "features", []), dv_find(hypothesis, "prior", 0.5), hypothesis.basis, start]
+
+fn dvs_model_probe(actor, hypothesis, events, time, parent):
+    let key = dvs_model_probe_key(actor, hypothesis, time)
+    let cache = dv_find(actor, "model_probe_cache", [])
+    var i = 0
+    while i < rt_count(cache):
+        let saved = cache[i]
+        if dv_same(saved.key, key) and saved.result.expanded <= dvs_sim_work_budget(actor):
+            let result = dv_with_many(saved.result, {"expanded": 0, "total_expanded": 0, "remaining": dv_find(actor.policy, "model_budget", 0), "work_remaining": dvs_sim_work_budget(actor), "reused_work": saved.result.expanded, "reused_from_event": saved.event})
+            dvs_event(events, "model_probe_reuse", actor.id, time, dvs_cognitive_parents(actor, [parent, saved.event]), {"hypothesis": hypothesis, "source_event": saved.event, "result": result, "scope": "identical-completed-causal-probe-not-new-prediction"})
+            return {"result": result, "cache": cache}
+        i = i + 1
+    let result = dvs_model_execute(actor, hypothesis, events, time, parent)
+    var next = cache
+    if result.plan_complete and rt_count(result.failures) == 0 and result.stop_reason != "budget-exhausted":
+        next = dv_append(cache, {"key": key, "result": result, "event": events[rt_count(events) - 1].id})
+    return {"result": result, "cache": next}
+
 fn dvs_model(actor, hypothesis, events, time, parent):
     let features = dv_find(hypothesis, "features", [])
     let plan = dvs_sim_plan(hypothesis)
@@ -5916,12 +5943,13 @@ fn dvs_model(actor, hypothesis, events, time, parent):
     if (not (smallest.size * 2 < full_size)):
         return dvs_model_execute(actor, hypothesis, events, time, parent)
     let trial = dv_with_many(hypothesis, {"timeline": smallest.timeline, "assumptions": smallest.assumptions, "features": [smallest.feature], "mask_plan": smallest.mask_plan, "evaluation_scope": {"kind": "causal-refutation", "feature": smallest.original_feature}})
-    let probe = dvs_model_execute(actor, trial, events, time, parent)
+    let probed = dvs_model_probe(actor, trial, events, time, parent)
+    let probe = probed.result
     if (probe.status == "inconsistent"):
-        return dv_with(probe, "evaluation_scope", trial.evaluation_scope)
+        return dv_with_many(probe, {"evaluation_scope": trial.evaluation_scope, "model_probe_cache": probed.cache})
     let next = dv_with_many(actor, {"model_previous_event": events[rt_count(events) - 1].id, "policy": dv_with_many(actor.policy, {"model_budget": probe.remaining, "model_work_remaining": probe.work_remaining})})
     let result = dvs_model_execute(next, hypothesis, events, time, parent)
-    return dv_with_many(result, {"probe_expanded": probe.expanded, "expanded": probe.expanded + result.expanded, "total_expanded": probe.expanded + result.total_expanded})
+    return dv_with_many(result, {"probe_expanded": probe.expanded, "probe_reused_work": dv_find(probe, "reused_work", 0), "model_probe_cache": probed.cache, "expanded": probe.expanded + result.expanded, "total_expanded": probe.expanded + result.total_expanded})
 
 // ---- Merged source module: 35-model-argument.dv ----
 // Glue between paid prediction evidence, explicit abduction and real submissions.
@@ -7727,6 +7755,7 @@ fn dvs_session_complete(state, receipt):
             else:
                 dvs_event(events, "manual_replay_unavailable", id, time, [parent], {"action_id": action.id, "hypothesis_id": manual_id, "reason": "subject-admission-changed"})
         var k = 0
+        actor = dv_with(actor, "model_probe_cache", [])
         var simulations = dv_find(actor, "simulations", [])
         var coverages = []
         var factor_rejections = []
@@ -7765,12 +7794,14 @@ fn dvs_session_complete(state, receipt):
                             dvs_event(events, "model_recheck", id, time, dvs_model_parent_ids(actor, parent, dv_find(cached, "event", "")), {"actor_before": dv_without(actor, "simulations"), "actor_id": actor.id, "actor_revision": actor.mind.revision, "model_before": cached, "hypothesis": candidate, "result": recheck})
                             local_8 = recheck
                         simulation = local_8
+                        actor = dv_with(actor, "model_probe_cache", dv_find(simulation, "model_probe_cache", actor.model_probe_cache))
+                        simulation = dv_without(simulation, "model_probe_cache")
                         simulation = dv_with_many(simulation, {"validation_inputs": dv_explanation_merge(dv_explanation_model_inputs(actor.mind, simulation), dvs_model_observed_inputs(simulation)), "source_adoptions": actor.mind.adoptions, "source_response_models": dv_find(actor, "response_models", [])})
                         simulation = dv_with_many(simulation, {"source_mind_time": actor.mind.time, "source_hypothesis": candidate, "source_replay_depth": dv_find(actor.policy, "Replay_Depth", rt_count(dvs_sim_plan(candidate)))})
                         simulations = dv_with(simulations, candidate.id, dv_with_many(simulation, {"event": events[(rt_count(events) - 1)].id, "source_revision": actor.mind.revision}))
                         actor = dv_with_many(actor, {"model_previous_event": events[(rt_count(events) - 1)].id, "last_cognitive_event": events[(rt_count(events) - 1)].id, "policy": dv_with_many(actor.policy, {"model_budget": simulation.remaining, "model_work_remaining": simulation.work_remaining})})
             k = (k + 1)
-        actor = dv_with(actor, "simulations", simulations)
+        actor = dv_without(dv_with(actor, "simulations", simulations), "model_probe_cache")
         if manual_id == "":
             actor = dv_with(actor, "factor_rejections", {"source_revision": actor.mind.revision, "ids": factor_rejections})
     if dv_has_key(actor, "location_ref"):
