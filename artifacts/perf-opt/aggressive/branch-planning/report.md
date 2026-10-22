@@ -11,7 +11,7 @@ Release 解决方案构建成功，0 警告、0 错误，60.29 秒；git diff --
 
 ## 实际结果与限制
 
-两局都到达实际第二章结束，game_time=6330，并生成完整 debug_end 及封存 DAG。S2-bing 的 c2.daily.council-close 为 e33693，真实进程事件耗时 211.994 秒；S2-ding 为 e33619，213.969 秒。不是把时域终点或主动停止当成结局：debug_end 的 stop reason 明确为 actual-chapter-two-closing-record，council_closed=true。
+两局在 game_time=6330 发生议事截止/震动节点，并生成 debug_end 及封存 DAG。S2-bing 的 c2.daily.council-close 为 e33693，真实进程事件耗时 211.994 秒；S2-ding 为 e33619，213.969 秒。65 运行器在 council_closed 后主动停止，actual-chapter-two-closing-record 是该停止逻辑的标签，不能自证剧情结局。完整公约是否成立、玩家是否实际取得章末观察尚须分别核验，本报告不宣称两章验收成功。
 
 但提高规划深度并没有修复两种第一章内容结果：
 
@@ -47,3 +47,11 @@ Release 解决方案构建成功，0 警告、0 错误，60.29 秒；git diff --
 两份 raw-dag-summary.json 均记录 final checkpoint、seal、零残尾及 complete_sealing=true；丙区 33700 个已提交事件，丁区 33626 个。原始文件 SHA-256 分别为 49303c660fc9ba997aebf21ffafca84990a6e7771881accc82436203a1611745 与 6a13e2fd832e21a2553dc971fffe89ab7eac06fe3f33a9774c319a56cdd8672a。玩家可见完整正文和调试正文在各自目录保留。
 
 最终进程已不在运行，但两份 causal-check-stderr.txt 都只到 domain-check-start，causal-check.dvlog 为零字节，未发现最终汇总文件。因此只读领域因果检查没有可用完成记录，原因未确认，不宣称整个 run_debug 成功退出或领域验收通过。原始正式会话封存完整与此检查未完成分别报告。未重复运行测试。
+
+## 丙/丁正式获取路径只读定位
+
+未读取设计文件，未修改剧情，未追加会话。丙区已有侦探检视完整草图动作（40:3865）；本轮 e805 实际执行、e806 观察。其声明只给侦探本人 grants=[gesture_examined]，没有 public_observers/public_grants。询问伊莲娜（40:3763附近）把前一步 gesture_examined 作为 speech.literal_ast，并明确 listeners=[elena]；e856 执行、e858 发言、e860 伊莲娜接收均发生。但提问没有声明共享检视，伊莲娜仅按证词信任0.45更新，仍 known=false。她自己的回想动作 law.premise 要求本人已知前一步（40:3838–3891），所以不能执行，随后 e887/e945 停止。不是通用接收漏调用，也不是将侦探本人已知误用为NPC已知。现有声明缺少目标本人对草图的直接检视/共同展示合同；把所有请求自动升为可靠观察会越过证词与感知边界。
+
+丁区 physician_permission=false 仅初始化在客观材料（40:3420）和茉拉本人心智（40:3532），没有任何 row.materials 包含该字段，也无其他该字段的观察/证词声明。茉拉 report_basis（40:3474）实际在 e1427 执行，侦探 e1429 取得公共观察，说明通用公共观察接线有效；该行 materials=[]，生成 grants 只有 report_basis 与 clock，故不能取得医嘱事实。发言 e1433 的 literal=dv_true，listeners 也只含本区原成员，没有侦探。即使把侦探补入 listeners，仍只收到真命题，无法获得 physician_permission。此处是内容声明未表达正文里医嘱断言的缺口，而非漏传播现有明确事实。
+
+最小建议：通用层保持当前显式 grants 和证词可信度合同；内容层需授权后为丙区定义真实展示/共同检视的对象、接触资格和字段，为丁区把现有医嘱断言明确表达为可收闻证词或可检视记录。不能通用地从自然正文、法则前提或作者客观状态推生这些事实；仅修30规划无法补足。上述是现有源码工程路径定位，不是设计修订授权。
