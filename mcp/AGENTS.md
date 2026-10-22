@@ -23,7 +23,7 @@ CLI 的 JPG 由已经记录的同一画布离线导出，覆盖实际聚焦、�
 
 激进优化诊断可用 aggressive_report.py 只读汇总固定输出目录；它不启动 AI、不展开原始 DAG。--profile 的 DV_PROFILE_NATIVE 条件编译细分 Runtime 热点，无插桩 Release 不包含这些探针。判定只读视图与字段 cell 缓存均按 CLI 显式开关采样于执行上下文，不读取人物策略档。
 
-run_debug 的新增优化开关默认 on；mask/dirty verify 默认 off，仅作排错。prune 深度、时间桶和核验间隔写入配置指纹与恢复一致性检查。主会话耗时与构建、离线领域核验耗时分别记录，不以进程后处理时间替代游戏计时。
+run_debug 的优化开关除实验taskgraph默认off外默认 on；mask/dirty verify 默认 off，仅作排错。prune 深度、时间桶和核验间隔写入配置指纹与恢复一致性检查。主会话耗时与构建、离线领域核验耗时分别记录，不以进程后处理时间替代游戏计时。
 
 只读因果检查可独立关闭 causal-index；检查器开关和时限记录在 provenance.verification_config，不混入人物策略。索引只加速查找，不删检查，实际命中与关闭路径须保持等价。
 
@@ -44,4 +44,6 @@ run_debug显式将opt_plancache/opt_declcache分别写入DV_OPT_PLANCACHE/DV_OPT
 evidence-index 的二进制读取可使用游标解码及精确固定形状节点封包快路；快路必须逐字节核对全部固定标签、长度、键与顺序，变量仍完整解码，异常回退参照解码器。通用格式、损坏格式、整数/浮点/UTF-8/重复键/深度与提交校验不得因快路省略。关闭开关使用原解码器；stdout 投影优化也由相同开关回退。
 
 
-统一FLAGS含taskgraph/storyflow/stateindex三项，均默认on并参与全关/独立消融。run_debug明确设置DV_OPT_STATEINDEX并留证，65核对实际环境与配置。compiled-program v2运行时捕获合同同时要求runtimespeed/stateindex；新增开关不能静默忽略。策略近似与内容重写边界见../docs/cli-optimization.md。
+统一FLAGS含taskgraph/storyflow/stateindex三项，taskgraph默认off、其余默认on，并参与全关/独立消融。run_debug明确设置DV_OPT_STATEINDEX并留证，65核对实际环境与配置。compiled-program v2运行时捕获合同同时要求runtimespeed/stateindex；新增开关不能静默忽略。策略近似与内容重写边界见../docs/cli-optimization.md。
+
+矩阵validation显式关闭taskgraph，独立消融相对生产默认翻转开关；ablation-taskgraph为显式on实验，须有opt_taskgraph=false的完整S1锚点，不能复用旧默认on锚点冒充同条件对照。

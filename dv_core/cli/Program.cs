@@ -195,6 +195,7 @@ internal sealed class Cli
             throw new ArgumentException("Restored sessions retain saved taskgraph/storyflow policies; these switches require a new session.");
         if (replayPath is not null && campaign.Keys.Any(key => key is "opt_taskgraph" or "opt_storyflow" or "opt_stateindex"))
             throw new ArgumentException("Optimization switches configure live sessions, not recorded replay.");
+        if (replayPath is null && restore is null) campaign.TryAdd("opt_taskgraph", false);
         if (campaign.TryGetValue("opt_stateindex", out var stateIndex))
             Environment.SetEnvironmentVariable("DV_OPT_STATEINDEX", stateIndex is false ? "0" : "1");
         else if (replayPath is null && restore is null)
@@ -1482,7 +1483,8 @@ DV Core CLI
   --export-ui NEW.svg --command COMMAND
   --controller player|human|llm|ai --viewer ID --profile NAME --zone ID --seed N
   --planning selective|precise
-  --opt-taskgraph on|off  --opt-storyflow on|off  --opt-stateindex on|off (default on)
+  --opt-taskgraph on|off (default off; experimental)
+  --opt-storyflow on|off  --opt-stateindex on|off (default on)
   --dev --audit --restore FILE --save FILE --trace FILE
   --scores | --no-scores
   --performance NEW_PREFIX

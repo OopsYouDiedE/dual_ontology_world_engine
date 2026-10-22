@@ -14,7 +14,7 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "build"))
 from dv_toolchain import LANGUAGE, ROOT, PROJECT, BUILD, VERIFICATION, environment, sources
 from compiled_program import copy_verified, capture as capture_program, compiler_inputs, compiler_fingerprint
-from matrix_lifecycle import case_guard, FLAGS
+from matrix_lifecycle import case_guard, FLAGS, FLAG_DEFAULTS
 from raw_dag import inspect_journal
 from binary_evidence import RecordWriter, iter_packets, records
 from debug_checkpoints import validate_bundle, export_available, sha_file
@@ -457,7 +457,8 @@ def _main():
     parser.add_argument('--raw-format', choices=('dag',), default='dag', help='Lossless typed binary DAG; JSON recording is forbidden')
     optimization_names = FLAGS
     for name in optimization_names:
-        parser.add_argument('--opt-' + name, choices=('on', 'off'), default='on')
+        parser.add_argument('--opt-' + name, choices=('on', 'off'), default=FLAG_DEFAULTS[name],
+                            help='Default ' + FLAG_DEFAULTS[name] + ('; experimental task policy' if name == 'taskgraph' else ''))
     parser.add_argument('--prune-top-k', type=int, default=3)
     parser.add_argument('--plan-depth', type=int, default=3)
     parser.add_argument('--plan-time-bucket', type=int, default=60)

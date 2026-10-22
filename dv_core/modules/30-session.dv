@@ -576,7 +576,7 @@ fn dvs_choose(actor, bindings, costs):
     let duty = dvs_obligation_choice(actor, costs)
     if duty != false:
         return duty
-    if dv_find(actor.policy, "opt_taskgraph", true):
+    if dv_find(actor.policy, "opt_taskgraph", false):
         return dvp_taskgraph(actor, bindings, costs)
     // Selective decisions have their own task continuation and sleeping inputs.
     // Do not build the full actor memo key just to perform one current-task scan.
@@ -7914,7 +7914,7 @@ fn dvs_prepare_actor(state):
             let prepared = {"input": rt_snapshot(dvs_cognition_signature(actor)), "event_cursor": rt_count(events), "time": time}
             choice = dv_with(choice, "continuation", dv_with(choice.continuation, "prepared_cognition", prepared))
         var action = choice.action
-        if dv_find(actor.policy, "opt_taskgraph", true):
+        if dv_find(actor.policy, "opt_taskgraph", false):
             actor = dv_with(actor, "taskgraph_task", dv_find(choice, "taskgraph_task", false))
         if dv_find(actor.policy, "opt_planreuse", false):
             actor = dv_with(actor, "planning_task_cache", dv_find(choice, "planning_task_cache", false))

@@ -1,4 +1,5 @@
 """Finite synthetic evidence/file/process checks. Never builds or starts a DV session."""
+import argparse
 import copy
 import hashlib
 import io
@@ -15,6 +16,7 @@ import aggressive_report as report
 import compiled_program as compiled
 import matrix_lifecycle as lifecycle
 import run_aggressive_matrix as matrix
+import run_debug
 from binary_evidence import MAGIC, encode, write_frame, RecordWriter, records
 from raw_dag import RawDagIndex
 
@@ -230,6 +232,26 @@ class FiniteTools(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         for flag in lifecycle.FLAGS + lifecycle.TOOL_FLAGS:
             self.assertIn('--opt-' + flag, result.stdout)
+
+    def test_taskgraph_defaults_and_explicit_parser_values_without_session(self):
+        class Parsed(Exception): pass
+        original = argparse.ArgumentParser.parse_args
+        for option, expected in (([], 'off'), (['--opt-taskgraph', 'on'], 'on'),
+                                 (['--opt-taskgraph', 'off'], 'off')):
+            parsed = []
+            def capture(parser, *args, **kwargs):
+                parsed.append(original(parser, *args, **kwargs))
+                raise Parsed()
+            with patch.object(sys, 'argv', ['run_debug', '--out', str(self.root / 'unused'), *option]), \
+                    patch.object(argparse.ArgumentParser, 'parse_args', capture):
+                with self.assertRaises(Parsed): run_debug._main()
+            self.assertEqual(parsed[0].opt_taskgraph, expected)
+            self.assertEqual(parsed[0].opt_storyflow, 'on')
+        validation = matrix.production_options('validation')
+        self.assertEqual(validation[validation.index('--opt-taskgraph') + 1], 'off')
+        self.assertEqual(lifecycle.FLAG_DEFAULTS['taskgraph'], 'off')
+        self.assertEqual(matrix.ablation_options('taskgraph')[-2:], ['--opt-taskgraph', 'on'])
+        self.assertEqual(matrix.ablation_options('storyflow')[-2:], ['--opt-storyflow', 'off'])
 
     def test_matrix_windows_and_baseline_policy(self):
         options = matrix.production_options('baseline')

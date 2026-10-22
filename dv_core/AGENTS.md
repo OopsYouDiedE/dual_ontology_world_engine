@@ -212,6 +212,6 @@ current_appraisals只维护本人appraisal facet中的当前可撤销评价，�
 `opt_stateindex` / `DV_OPT_STATEINDEX` 与 `rt_stateindex_enabled()` 的私有 stage 写入索引合同见 compiler/README.md。它只复用既有 record slots 优化严格唯一文本键对象表的值替换；未知/异常/重复键保留旧路径，公开动作与会话所有权不变。运行配置由宿主在创建 ValueContext 前确定；有限 ABI 别名差分不代替正式会话验收。
 
 
-独立taskgraph/storyflow/stateindex开关默认on；60保存、布尔核对并传给全部主体。taskgraph为本人策略近似，storyflow为内容重写，不标为轨迹等价；stateindex运行时DV_OPT_STATEINDEX与65配置核对、复用合同见../docs/cli-optimization.md。新增开关不授权正式会话。
+独立taskgraph开关默认off，storyflow/stateindex默认on；60保存、布尔核对并传给全部主体。taskgraph为本人策略近似，storyflow为内容重写，不标为轨迹等价；stateindex运行时DV_OPT_STATEINDEX与65配置核对、复用合同见../docs/cli-optimization.md。新增开关不授权正式会话。
 
 40的声路准备补闻复用30的请求上下文、实际收闻与回应消费，不建立第二套调度；`request_channels` 不授予听觉许可，补报不得复制物理准备表或试验结果。内容握手接线边界见../docs/cli-optimization.md。

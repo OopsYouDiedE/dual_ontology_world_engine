@@ -290,6 +290,12 @@ def markdown(summary):
                   f"领域核验状态：{show(item.get('causal_check_status'))}；核验完成：{show(item.get('causal_check_complete'))}。",
                   f"20–60 模块指纹：{show(item.get('model_fingerprint'))}。",
                   f"构建秒：{show(item.get('build_seconds'))}；会话执行秒：{show(item.get('execution_seconds'))}；后处理秒：{show(item.get('postprocess_seconds'))}；命令总墙钟秒：{show(item.get('command_wall_seconds'))}；含清理的场景总墙钟秒：{show(item.get('total_wall_seconds'))}。"]
+        configuration = item.get('run_config')
+        if isinstance(configuration, dict):
+            switches = {key: value for key, value in configuration.items() if key.startswith('opt_')}
+            lines.append('实际运行开关（result.run_config）：`' + json.dumps(switches, ensure_ascii=False, sort_keys=True) + '`。')
+        else:
+            lines.append('实际运行开关：缺少run_config，不能由场景名称补推。')
         for point in item.get('chapter_content_available', []):
             lines.append(f"章节内容开放：{point_text(point)}。内容开放不代替实际交接。")
         if item.get('answer_receipts'):

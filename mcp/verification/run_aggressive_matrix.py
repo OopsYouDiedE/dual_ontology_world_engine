@@ -9,7 +9,7 @@ from pathlib import Path
 
 from binary_evidence import records
 from aggressive_report import record, summarize
-from matrix_lifecycle import FLAGS, TOOL_FLAGS, CASE_NAMES, clean_case, managed_run
+from matrix_lifecycle import FLAGS, FLAG_DEFAULTS, TOOL_FLAGS, CASE_NAMES, clean_case, managed_run
 
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / 'artifacts' / 'perf-opt' / 'aggressive'
@@ -26,11 +26,18 @@ def publish(path, value):
 
 def production_options(mode):
     if mode not in ('baseline', 'precise-baseline'):
-        return ['--selective-planning', 'on']
+        return ['--selective-planning', 'on', '--opt-taskgraph', FLAG_DEFAULTS['taskgraph']]
     result = ['--selective-planning', 'off' if mode == 'precise-baseline' else 'on']
     for name in OPTIMIZATIONS:
         result += ['--opt-' + name, 'off']
     return result
+
+
+def ablation_options(option):
+    if option not in OPTIMIZATIONS:
+        raise ValueError('Unknown optimization: ' + option)
+    value = 'on' if FLAG_DEFAULTS.get(option, 'on') == 'off' else 'off'
+    return production_options('ablations') + ['--opt-' + option, value]
 
 
 def case_command(destination, profile, zone, options, reuse, timeout, causal_timeout):
@@ -69,9 +76,10 @@ def run_case(name, profile, zone, options, reuse, causal_timeout, *, timeout=300
                 command=command, independently_reviewed=False,
                 session_limit_seconds=timeout,
                 optimization_flags=list(OPTIMIZATIONS),
+                production_flag_defaults={name: FLAG_DEFAULTS.get(name, "on") for name in OPTIMIZATIONS},
                 comparison_conditions=f'{len(OPTIMIZATIONS)}-registered-flags-off-selective' if name.startswith('baseline-') else
                                       f'{len(OPTIMIZATIONS)}-registered-flags-off-precise-separate-policy' if name.startswith('precise-') else
-                                      'all-on-or-single-ablation-selective')
+                                      'production-defaults-or-single-toggle-selective')
     item['command_speed_target_met'] = bool(item.get('speed_target_met') and command_elapsed <= 180)
     item['command_speed_target_scope'] = 'entire run_debug command including build and postprocessing; excludes matrix cleanup/reporting'
     publish(OUTPUT / (name + '-measurement.json'), item)
@@ -111,10 +119,12 @@ def main():
             anchor = OUTPUT / 'S1'
             anchor_result = record(next(records(anchor / 'result.dvlog')))
             if not anchor_result.get('evidence_complete'):
-                raise ValueError('Ablations require a complete all-on S1 anchor')
+                raise ValueError('Ablations require a complete production-default S1 anchor')
+            if anchor_result.get('run_config', {}).get('opt_taskgraph') is not False:
+                raise ValueError('Ablations require an S1 anchor with opt_taskgraph=false')
             reuse = reuse or anchor / 'program'
             specifications = [('ablation-' + option, 'Standard', 'zone_yi',
-                               production_options('ablations') + ['--opt-' + option, 'off']) for option in OPTIMIZATIONS]
+                               ablation_options(option)) for option in OPTIMIZATIONS]
         else:
             selected = [case for case in CASES if args.case is None or case[0] == args.case]
             prefix = 'baseline-' if args.mode == 'baseline' else 'precise-' if args.mode == 'precise-baseline' else ''

@@ -19,7 +19,7 @@ static class PlanningEvidenceCheck
         mind=F_dv_adopt(mind,law,"predict",1d,L("actual-owned-opportunity-declaration"));
         var wait=Rec(P("id","wait-known"),P("kind","wait.fixture.10"),P("precondition",F_dv_true()),P("predict_law","wait-known"),P("known_opportunity_wait",true),P("wait_until",20d),P("wait_basis",L("actual-owned-opportunity-declaration")),P("repeatable",true));
         var goal=Rec(P("kind","achieve"),P("scope","personal"),P("basis",L("actual-owned-opportunity-declaration")),P("proposition",F_dv_at_least(elapsed,10d)),P("weight",0.11d));
-        var policy=Rec(P("goals",L(goal)),P("plan_budget",4d),P("dependency_budget",20d),P("time_cost",0.01d),P("remaining_game_time",100d));
+        var policy=Rec(P("opt_taskgraph",true),P("goals",L(goal)),P("plan_budget",4d),P("dependency_budget",20d),P("time_cost",0.01d),P("remaining_game_time",100d));
         var actor=Rec(P("id","self"),P("mind",mind),P("actions",L(wait)),P("policy",policy));
         var cost=Rec(P("actual",Rec(P("time",10d))),P("maximum",Rec(P("time",10d))));
         var costs=Rec(P("wait.fixture.10",cost));
@@ -51,12 +51,12 @@ static class PlanningEvidenceCheck
         var move=Rec(P("id","a-b"),P("kind","move"),P("precondition",F_dv_fact(loc,"a")),P("predict_law","a-b"),P("travel",Rec(P("from","a"),P("to","b"))),P("repeatable",true));
         var inspect=Rec(P("id","inspect-clue"),P("kind","inspect"),P("precondition",F_dv_fact(loc,"b")),P("purpose_refs",L(clue)),P("repeatable",true));
         var goal=Rec(P("kind","evidence"),P("scope","personal"),P("ref",clue),P("source","perception"),P("minimum_time",0d),P("basis",L("fixture-source")));
-        var policy=Rec(P("goals",L(goal)),P("plan_budget",8d),P("dependency_budget",20d),P("plan_depth",3d),P("selective_planning",true),P("time_cost",0.01d));
+        var policy=Rec(P("opt_taskgraph",true),P("goals",L(goal)),P("plan_budget",8d),P("dependency_budget",20d),P("plan_depth",3d),P("selective_planning",true),P("time_cost",0.01d));
         var actor=Rec(P("id","self"),P("mind",mind),P("actions",L(move,inspect)),P("location_ref",loc),P("policy",policy));
         var cost=Rec(P("actual",Rec(P("time",1d))),P("maximum",Rec(P("time",1d))));
         var costs=Rec(P("move",cost),P("inspect",cost));
         var choice=F_dvs_choose(actor,L(),costs);
-        Require((string)G(choice,"strategy")=="taskgraph-v1","taskgraph is default");
+        Require((string)G(choice,"strategy")=="taskgraph-v1","explicit taskgraph opt-in is honored");
         Require((string)G(G(choice,"action"),"id")=="a-b","taskgraph chooses legal navigation to unknown evidence");
         Require((bool)G(F_dv_read(mind,clue),"known")==false,"navigation never grants unknown inspection result");
         actor=F_dv_with(actor,"taskgraph_task",G(choice,"taskgraph_task"));

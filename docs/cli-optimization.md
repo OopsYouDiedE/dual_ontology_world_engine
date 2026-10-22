@@ -225,7 +225,7 @@ DAG 解码继续使用同一 evidence-index 开关：以字节游标和 unpack_f
 
 ## 2026-10-23 独立重写开关合同
 
-`--opt-taskgraph on|off`、`--opt-storyflow on|off`、`--opt-stateindex on|off` 均默认 on，各自进入完整 run_config、布尔验证及全部主体 policy；run_debug 和消融矩阵使用同一 FLAGS 名单。原生 DvCli 同样接受三个开关，新开局传入配置；恢复保留既有taskgraph/storyflow策略，显式覆盖两项时报错；stateindex允许显式设置运行环境，但必须与保存配置相同，否则拒绝恢复，不能静默忽略。帮助与只读参数检查不启动自主会话。
+`--opt-taskgraph on|off`、`--opt-storyflow on|off`、`--opt-stateindex on|off` 其中taskgraph默认off，storyflow/stateindex默认on，各自进入完整 run_config、布尔验证及全部主体 policy；run_debug 和消融矩阵使用同一 FLAGS 名单。原生 DvCli 同样接受三个开关，新开局传入配置；恢复保留既有taskgraph/storyflow策略，显式覆盖两项时报错；stateindex允许显式设置运行环境，但必须与保存配置相同，否则拒绝恢复，不能静默忽略。帮助与只读参数检查不启动自主会话。
 
 `opt_taskgraph` 是30读取的本人任务策略近似，`opt_storyflow` 是50读取的内容策略重写；两者分别允许关闭回到各自参照路径。策略和内容重写旨在保持相似游戏效果，不属于逐行动、逐事件或完整搜索的等价优化。它们仍只消费本人认识、实际收据及声明，不能预置谜底、死亡、伤病或他人同意；正式 Prepare/现场执行/Complete 与真实调查来源继续有效。具体实现与有限机制验证由相应模块任务记录说明，接线不证明整局效果。
 
@@ -241,3 +241,10 @@ DAG 解码继续使用同一 evidence-index 开关：以字节游标和 unpack_f
 `opt_storyflow` 开启时，文献取证和专业协作可在实际条件成立后执行，不再受原有短日期窗口限制。`storyflow_document`、`storyflow_granary`、`storyflow_case_row` 标记对应内容变换；`storyflow_only` 与 `legacy_granary_request` 区分新旧请求候选。关闭时保留原候选窗口及承担/邀请路径。新旧路径共同经过正式资格、实际现场和 Complete，权威法则不读取侦探策略名称。
 
 普通承担、重复邀请和礼仪对白可以合并或省略，未实际发生的对白不出现在完成记录。实际材料、本人所知、专业技能、协作同意与支承仍是条件；雀儿未解的顾虑不能因简化专业操作而消失。天气突变、测量时效、暴露、病程与救治不属于调查窗口放宽。该开关属于内容/策略变化，不声称轨迹等价。
+
+
+### 2026-10-23 taskgraph主候选默认关闭
+
+主候选`opt_taskgraph=false`。60规范化配置、30缺省策略、原生CLI新开局和来源缺省、run_debug及矩阵validation均使用off；显式`--opt-taskgraph on`保留为独立实验路径，不改变taskgraph算法。恢复继续保留保存策略，不把新默认覆写到旧存档。
+
+FLAGS仍保留taskgraph。矩阵validation明确传off，baseline/precise-baseline全部关闭；独立消融改为相对生产默认翻转单个开关，因此`ablation-taskgraph`明确传on，其他默认on项目传off。该项属于开启实验策略的比较，不能称为同策略等价消融；命令与完整run_config必须留证。此修正只改变默认与比较配置，不构成人物行为、整局性能或游戏效果验证。
