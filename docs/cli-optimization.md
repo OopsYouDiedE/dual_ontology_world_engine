@@ -157,3 +157,15 @@ readview 还可复用条件读取输入已经存在的有效不可变 Backbone�
 
 
 当前私人评价采用policy.current_appraisals：声明明确限定本人subject及appraisal facet，以本人实际输入和可选的当前hypothesis_id求值；确定条件产生当前值，条件否定产生otherwise，未知则撤回为未知。更新替换当前评价槽并提升mind revision，历史值与具体输入保存在private_appraisal_updated不可变事件中，不新增互斥事实claim、不以置信度压过旧值。自动与人工轻量认知在个人推理后刷新该接口，内容层声明实际冲突及成见，无通用角色身份分支。
+
+### 2026-10-23 工具来源与串行矩阵
+
+`--reuse-program` 只接受 `dv-compiled-program-v2`：完整编译器/seed源码集合、生成源与工程文件、完整Release/net8.0二进制集合、必需Program.dll/deps/runtimeconfig、插桩标志、编译器身份和fresh/resume入口均须一致；复制后对目标重验。不对旧v1清单补写证明。运行时开关捕获配置与环境合同写入清单；runtimespeed on/off可共用同一二进制，实际run_config和DV_OPT_RUNTIMESPEED分别核对留证。
+
+`diagnostics/aggressive-matrix` 默认 `--timeout 300`，这只设置会话进程窗口，不自行授权运行。baseline保持selective on并将统一FLAGS全部置off；原16项加replaycache、runtimespeed共18项，消融使用同一名单。`--mode precise-baseline` 另外关闭selective，使用precise-*目录并明确不是同一策略基线。离线causal窗口、外层launcher窗口和清理等待分别配置。构建、会话、后处理、实际命令墙钟及含清理的场景墙钟分列；180秒目标仅指会话执行，不代表总命令耗时。
+
+固定场景使用OS lease协调run_debug、raw_dag和aggressive_report读者。清理先等待旧进程和读者，严格限制到任务根下白名单场景目录；Windows删除在同一原生PowerShell中核对完整目标路径和reparse point。复用来源在待清理目录内时直接拒绝。Windows外层launcher使用Job Object和启动gate，分派前绑定整棵子进程树；超时后终止并等待树退出，任何未知退出/清理失败保留矩阵失败锁，须先人工核对再恢复。Windows读者采用独占字节lease串行化；未遵守lease的旧工具还通过命令行路径盘点保守等待，任意隐藏或外部读者不保证可自动识别，删除共享冲突按失败处理。
+
+原始事件索引补充原始父事件ID与host action_event（后者是actionN，不是eN事件编号）；on/off均从原始节点读取。章末检视须由completion、实际inspect/applied投影、host_completion及已提交索引互相对应，且council_closed明确known/true/无冲突才计入会话速度目标。缺少新索引字段的旧记录保持证据不足。报告含公共35模块指纹，完整编译输入指纹和运行时环境另列。中文报告已恢复；不从工程封存完整推断剧情达成。
+
+有限合成验证入口为 `python -B mcp/verification/test_tool_hardening.py -v`，仅处理小型模拟二进制记录、文件清单与短命Python进程，不编译或运行DV正式会话。

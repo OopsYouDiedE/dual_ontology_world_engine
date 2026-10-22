@@ -29,6 +29,7 @@ import sys
 import tempfile
 
 
+from matrix_lifecycle import case_guard
 from binary_evidence import MAGIC, encode, decode, read_frame, write_frame, RecordWriter
 
 FORMAT = 'dv-raw-dag-v2'
@@ -51,24 +52,40 @@ class RawDagIndex:
     def __init__(self, source, optimize=True):
         self.optimize = optimize
         self.source = Path(source).resolve()
-        self.temporary = tempfile.TemporaryDirectory(prefix='dv-raw-dag-')
-        self.db = sqlite3.connect(str(Path(self.temporary.name) / 'offsets.sqlite'))
-        self.db.executescript('''
-            PRAGMA journal_mode=OFF;
-            PRAGMA synchronous=OFF;
-            CREATE TABLE nodes(id INTEGER PRIMARY KEY, offset INTEGER NOT NULL);
-            CREATE TABLE events(id TEXT PRIMARY KEY, root INTEGER NOT NULL, ordinal INTEGER UNIQUE NOT NULL, seq INTEGER NOT NULL, process_elapsed_ms REAL, metadata BLOB);
-            CREATE TABLE checkpoints(name TEXT NOT NULL, root INTEGER NOT NULL, events INTEGER NOT NULL, seq INTEGER NOT NULL);
-        ''')
-        self.reader = self.source.open('rb')
-        self.binary = self.reader.read(len(MAGIC)) == MAGIC
-        self.reader.seek(0)
-        self.summary = self._scan()
+        self._guard = case_guard(self.source)
+        self._guard.__enter__()
+        self._closed = False
+        try:
+            self.temporary = tempfile.TemporaryDirectory(prefix='dv-raw-dag-')
+            self.db = sqlite3.connect(str(Path(self.temporary.name) / 'offsets.sqlite'))
+            self.db.executescript("""
+                PRAGMA journal_mode=OFF;
+                PRAGMA synchronous=OFF;
+                CREATE TABLE nodes(id INTEGER PRIMARY KEY, offset INTEGER NOT NULL);
+                CREATE TABLE events(id TEXT PRIMARY KEY, root INTEGER NOT NULL, ordinal INTEGER UNIQUE NOT NULL, seq INTEGER NOT NULL, process_elapsed_ms REAL, metadata BLOB);
+                CREATE TABLE checkpoints(name TEXT NOT NULL, root INTEGER NOT NULL, events INTEGER NOT NULL, seq INTEGER NOT NULL);
+            """)
+            self.reader = self.source.open('rb')
+            self.binary = self.reader.read(len(MAGIC)) == MAGIC
+            self.reader.seek(0)
+            self.summary = self._scan()
+        except BaseException:
+            self.close()
+            raise
 
     def close(self):
-        self.reader.close()
-        self.db.close()
-        self.temporary.cleanup()
+        if self._closed:
+            return
+        self._closed = True
+        try:
+            if hasattr(self, 'reader'):
+                self.reader.close()
+            if hasattr(self, 'db'):
+                self.db.close()
+            if hasattr(self, 'temporary'):
+                self.temporary.cleanup()
+        finally:
+            self._guard.__exit__(None, None, None)
 
     def __enter__(self):
         return self
@@ -178,7 +195,7 @@ class RawDagIndex:
                         elapsed = payload.get('process_elapsed_ms')
                         if elapsed is not None and (type(elapsed) not in (int, float) or not math.isfinite(elapsed) or elapsed < 0):
                             raise ValueError('Invalid monotonic event timestamp')
-                        metadata = encode({key: fields.get(key) for key in ('time', 'type', 'actor')}) if fields is not None else None
+                        metadata = encode(self.event_metadata(root, fields)) if fields is not None else None
                         self.db.execute('INSERT INTO events VALUES (?, ?, ?, ?, ?, ?)', (event_id, root, ordinal, sequence, elapsed, metadata))
                         events += 1
                         last_event = event_id
@@ -246,6 +263,18 @@ class RawDagIndex:
                     fields[pair[0]] = pair[1]
         return fields
 
+    def event_metadata(self, root, fields=None):
+        if fields is None:
+            fields = {key: self.record_field(root, key) for key in ('time', 'type', 'actor', 'parents', 'data')}
+        result = {key: fields.get(key) for key in ('time', 'type', 'actor')}
+        parents = fields.get('parents')
+        parent_ids = self.node(parents['node']) if isinstance(parents, dict) and set(parents) == {'node'} else None
+        result['parent_ids'] = parent_ids if isinstance(parent_ids, list) and all(isinstance(x, str) for x in parent_ids) else None
+        data = fields.get('data')
+        result['host_action_event'] = (self.record_field(data['node'], 'action_event')
+            if result['type'] == 'host_completion' and isinstance(data, dict) and set(data) == {'node'} else None)
+        return result
+
     def record_field(self, root, key):
         found = None
         for entry in self.node(root):
@@ -288,10 +317,11 @@ class RawDagIndex:
     def write_event_index(self, destination):
         with RecordWriter(destination) as output:
             for event_id, root, ordinal, sequence, elapsed, metadata in self.db.execute('SELECT id, root, ordinal, seq, process_elapsed_ms, metadata FROM events ORDER BY ordinal'):
-                fields = decode(metadata) if metadata is not None else {key: self.record_field(root, key) for key in ('time', 'type', 'actor')}
+                fields = decode(metadata) if metadata is not None else self.event_metadata(root)
                 time = fields['time']
                 item = {'event_id': event_id, 'node_id': str(root), 'ordinal': ordinal, 'commit_frame': sequence,
                         'type': fields['type'], 'actor': fields['actor'],
+                        'parent_ids': fields['parent_ids'], 'host_action_event': fields['host_action_event'],
                         'game_time': time['rational'] if isinstance(time, dict) and set(time) == {'rational'} else time, 'raw_source': str(self.source),
                         'process_elapsed_ms': elapsed,
                         'scope': 'original committed event; no reconstruction of uncommitted work'}
