@@ -3978,7 +3978,12 @@ fn c1_other_place_detective(scene, zone, profile):
                 world = dv_adopt(world, campaign_method(move_id, law), "enforce", 1, [source])
                 mind = dv_adopt(actor.mind, campaign_method(move_id, law), "predict", 1, [source])
                 let action = dv_with_many(campaign_surface_action(move_id, "move", pre, pre, move_id, [dv_ref("detective", "state", "location")], "跨过寝区门槛", "确认外闩已经打开后，跨过门槛。", source), {"predict_law": move_id, "travel": {"from": origins[move_index], "to": targets[move_index], "gate": group}})
-                actor = dv_with_many(actor, {"mind": mind, "actions": dv_append(actor.actions, c1_other_case_choice(action, group, "departure"))})
+                var exit_actions = dv_append(actor.actions, c1_other_case_choice(action, group, "departure"))
+                // Leaving an unresolved account sacrifices inquiry; after the owner
+                // has received full acceptance, the same lawful crossing is ordinary travel.
+                let accounted = dv_all([pre, campaign_case_claim(group, "complete_receipt.detective")])
+                let after_account = dv_with_many(action, {"id": rt_cat(move_id, ".after-account"), "precondition": accounted, "authority_precondition": accounted})
+                actor = dv_with_many(actor, {"mind": mind, "actions": dv_append(exit_actions, after_account)})
                 move_index = move_index + 1
             let truth = c1_other_truth_rows(group)
             var j = 0
@@ -3997,7 +4002,7 @@ fn c1_other_place_detective(scene, zone, profile):
                     action = dv_with_many(action, {"public_observers": c1_other_group_listeners(group, ""), "public_grants": [campaign_case_ref(group, row.id)]})
                 if row.kind == "talk":
                     let after = campaign_case_claim(group, row.after)
-                    action = dv_with_many(campaign_surface_action(rt_cat("detective.truth.ask.", row.id), "talk", dv_all([campaign_at("detective", c1_other_case(group).room), after]), dv_all([campaign_at("detective", c1_other_case(group).room), campaign_at(row.partner, c1_other_case(group).room)]), "", [], row.label, "请看这份已核对的材料。你能说明自己记得的经过吗？", c1_other_case(group).source), {"speech": dv_with_many(c1_speech(after, c1_other_case(group).source, "actual-evidence-question"), {"surface": "请看这份已核对的材料。你能说明自己记得的经过吗？", "request": {"target": row.partner, "topic": rt_cat("truth.", row.id)}}), "listeners": [row.partner], "purpose_refs": [campaign_case_ref(group, row.id)]})
+                    action = dv_with_many(campaign_surface_action(rt_cat("detective.truth.ask.", row.id), "talk", dv_all([campaign_at("detective", c1_other_case(group).room), after]), dv_all([campaign_at("detective", c1_other_case(group).room), campaign_at(row.partner, c1_other_case(group).room)]), "", [], row.label, "请看这份已核对的材料。你能说明自己记得的经过吗？", c1_other_case(group).source), {"speech": dv_with_many(c1_speech(after, c1_other_case(group).source, "actual-evidence-question"), {"surface": "请看这份已核对的材料。你能说明自己记得的经过吗？", "request": {"target": row.partner, "topic": rt_cat("truth.", row.id)}}), "listeners": [row.partner], "purpose_refs": [campaign_case_ref(group, row.id)], "public_observers": [row.partner], "public_grants": [campaign_case_ref(group, row.after)]})
                 let actions = dv_append(actor.actions, c1_other_case_choice(action, group, "investigate"))
                 var goals = dv_append(actor.policy.goals, campaign_goal(campaign_case_claim(group, row.id), campaign_at("detective", c1_other_case(group).room), [c1_other_case(group).source]))
                 if row.kind == "talk":
@@ -4029,7 +4034,7 @@ fn c1_other_place_detective(scene, zone, profile):
                 mind = dv_adopt(mind, campaign_method(method, law), "predict", 1, [source])
                 let recall = dv_with_many(campaign_surface_action(rt_cat(actor.id, rt_cat(".truth.recall.", row.id)), "help", law.premise, law.premise, method, [ref], "回想与材料有关的经过", "他重新看向来问者递出的材料，试着把自己的记忆接起来。", source), {"predict_law": method, "received_speech_requirement": {"speaker": "detective", "action_id": rt_cat("detective.truth.ask.", row.id)}})
                 let claim = dv_fact(ref, true)
-                let reply = dv_with_many(campaign_surface_action(rt_cat(actor.id, rt_cat(".truth.reply.", row.id)), "talk", dv_all([claim, campaign_at(actor.id, c1_other_case(group).room)]), campaign_at(actor.id, c1_other_case(group).room), "", [], "说明本人回想起的经过", row.text, source), {"speech": dv_with(c1_speech(claim, source, "own-recollection-after-request"), "surface", row.text), "listeners": ["detective"], "response_topic": rt_cat("truth.", row.id), "requires_actual_request": true})
+                let reply = dv_with_many(campaign_surface_action(rt_cat(actor.id, rt_cat(".truth.reply.", row.id)), "talk", dv_all([claim, campaign_at(actor.id, c1_other_case(group).room)]), campaign_at(actor.id, c1_other_case(group).room), "", [], "说明本人回想起的经过", row.text, source), {"speech": dv_with(c1_speech(claim, source, "own-recollection-after-request"), "surface", row.text), "listeners": ["detective"], "response_topic": rt_cat("truth.", row.id), "requires_actual_request": true, "response_requester": "detective", "response_request_action": rt_cat("detective.truth.ask.", row.id), "received_speech_requirement": {"speaker": "detective", "action_id": rt_cat("detective.truth.ask.", row.id)}})
                 let actions = dv_append(dv_append(actor.actions, recall), reply)
                 let goals = dv_append(actor.policy.goals, campaign_goal(claim, campaign_case_claim(group, row.after), [source]))
                 rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": reply.id, "available_when": claim, "requires_argument": false, "basis": [source]})
