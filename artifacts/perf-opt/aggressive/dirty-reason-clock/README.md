@@ -33,3 +33,11 @@ Full Release engineering build: `dotnet build dv_core/LanguageCore.sln -c Releas
 Reproduce the finite harness by generating 70-checks.dv with build_session.py --main false into an isolated ignored build directory, copying compiler/Runtime.cs and Mechanisms.cs there, and using the usual net8.0 project with StartupObject=Mechanisms. The checks module is only a compilation closure; the harness calls mechanism functions, not oracle or judgment entry points.
 
 Formal integration/session validation remains the main agent's next authorized phase. No new speed measurement or full-domain check was performed.
+
+## Subject-isolation follow-up
+
+The reasoning memo key is now `dirty-reason-index-v2` plus `mind.subject`, external signatures and profile, owned by the frozen adoption table. A hit can no longer skip the reference-scope validation for a different subject sharing that table. Runtime queue state already keys by subject; its complete-cell dependencies are unchanged.
+
+The finite SubjectIsolation.cs probe deliberately shares one frozen adoption table between alpha and beta. Unscoped references yield stable index values and independent first-candidate/consumed queue states. After alpha caches an alpha-scoped declaration, beta is rejected with `Cross-subject reference access` rather than returning the cached result. Final probe exited 0; its isolated Release harness compile had zero warnings/errors. No full solution rebuild or formal session was repeated.
+
+Two initial probe runs failed because the harness incorrectly required CLR reference identity to distinguish or stabilize returned DV index values. The ABI permits snapshot interning and independently owned memo return values. Those harness-only assertions were replaced with DV value equality and actual independent-queue/access-control behavior; production code was not changed in response to either harness failure.

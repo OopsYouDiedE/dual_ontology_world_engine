@@ -237,7 +237,7 @@ fn dvs_dirty_process_settled(world, adoption, config):
 fn dvs_dirty_reason_index(actor):
     let mind = actor.mind
     let adoptions = rt_snapshot(mind.adoptions)
-    let key = ["dirty-reason-index-v1", dv_find(actor, "inference_signatures", []), dv_find(mind, "profile", [])]
+    let key = ["dirty-reason-index-v2", mind.subject, dv_find(actor, "inference_signatures", []), dv_find(mind, "profile", [])]
     let cached = rt_memo_get(adoptions, key)
     if cached[0]:
         return cached[1]
