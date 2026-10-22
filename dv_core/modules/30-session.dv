@@ -2431,6 +2431,12 @@ fn dvp_action_value(actor, action, bindings, relevant, probes):
 
 fn dvp_value_context(actor):
     var evidence = []
+    // A forecast replaces cells with hypothetical values without perception
+    // claims. That replacement cannot erase evidence already received by the
+    // owner and create an information reward for inspecting the same scope.
+    // Each real planning call starts from its current mind; only descendant
+    // prediction views carry this read-only evidence origin.
+    let evidence_mind = dv_find(actor, "planning_evidence_mind", actor.mind)
     var achievements = []
     var communications = []
     let goals = dv_find(actor.policy, "goals", [])
@@ -2440,7 +2446,7 @@ fn dvp_value_context(actor):
         let kind = dv_find(goal, "kind", "know")
         if kind == "evidence" and dv_has_key(goal, "ref"):
             if dvp_topic(actor, goal) and dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true":
-                if not dvp_source_supported_since(dv_read(actor.mind, goal.ref), dv_find(goal, "source", "perception"), dv_find(goal, "minimum_time", 0)):
+                if not dvp_source_supported_since(dv_read(evidence_mind, goal.ref), dv_find(goal, "source", "perception"), dv_find(goal, "minimum_time", 0)):
                     rt_push(evidence, goal.ref)
         if kind == "achieve" and dvp_topic(actor, goal) and 0 < rt_count(dv_find(goal, "basis", [])):
             if not dv_has(dv_find(actor, "planning_achievements", []), i):
@@ -3363,6 +3369,8 @@ fn dvp_actor_view(actor, mind):
                 local_1 = entry
         rt_push(result, local_1)
         i = (i + 1)
+    if dv_find(mind, "domain", "") == "prediction" and not dv_has_key(actor, "planning_evidence_mind"):
+        result = dv_with(result, "planning_evidence_mind", actor.mind)
     return result
 
 fn dvp_dominated(nodes, candidate):
