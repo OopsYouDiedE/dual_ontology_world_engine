@@ -3908,6 +3908,7 @@ fn c1dep_entered(world, actor):
     并且 "demon.body" 的 "manifested" 等于 true。
     并且 c1dep_ref("outer_released") 等于 false。
     则 c1dep_ref("outer_released") 变为 true。
+    并使 c1dep_ref("latch_sound") 变为 true。
     并使 campaign_access("living_exit") 变为 true。
     并使 "demon.body" 的 "manifested" 变为 false。
     并使 "demon.body" 的 "latch_hand_trace" 变为 "long-narrow-hand"。
@@ -3919,6 +3920,7 @@ fn c1dep_entered(world, actor):
     并且 c1dep_ref("quer_has_wire") 等于 true。
     则 c1dep_ref("outer_released") 变为 true。
     并使 c1dep_ref("picked_by_quer") 变为 true。
+    并使 c1dep_ref("latch_sound") 变为 true。
     并使 campaign_access("living_exit") 变为 true。
 
 法则 c1dep_pick_contract_law：
@@ -3963,13 +3965,32 @@ axiom c1dep_join_law(actor, group):
 fn c1dep_speech(actor, id, room, when, literal, label, text, source):
     return dv_with_many(campaign_surface_action(id, "talk", dv_all([campaign_at(actor, room), when, literal]), campaign_at(actor, room), "", [], label, text, source), {"speech": dv_with_many(c1_speech(literal, source, "current-doorway-dialogue"), {"surface": text, "channel": "door.living"}), "listeners": dv_append(campaign_people(), "demon")})
 
+fn c1dep_cooperation_actions(actor):
+    let source = campaign_source("user:current-request", 0, "voluntary-refusal-and-actual-heard-peer-reaction")
+    var result = []
+    if actor == "detective":
+        let id = "detective.inquiry.decline-cooperation"
+        var action = c1_once(campaign_surface_action(id, "talk", campaign_at(actor, "hall"), campaign_at(actor, "hall"), "", [], "拒绝承担现场查验", "查管道、重演这些事我不做。你们去查，结论告诉我就行。", source))
+        action = dv_with_many(action, {"speech": dv_with(c1_speech(dv_true(), source, "own-voluntary-refusal"), "surface", "查管道、重演这些事我不做。你们去查，结论告诉我就行。"), "listeners": ["huo", "shen", "su"], "received_speech_requirement": {"speaker": "demon", "action_id": "demon.opening"}, "personal_choice": {"group": "own-inquiry-cooperation", "requires": campaign_at(actor, "hall"), "prohibits": dv_not(dv_true()), "promotes": ["avoid_attachment", "pursue_desire"], "sacrifices": ["understand_cost", "solve_case", "evidence"], "basis": [source]}})
+        rt_push(result, action)
+    if dv_has(["huo", "shen", "su"], actor):
+        var words = "你连现场也不愿查。往后你给的结论，我得先打个问号。"
+        if actor == "shen":
+            words = "大家还关在里面，你倒把活全推给别人。这样搭伙，我可不放心。"
+        if actor == "su":
+            words = "……你不愿查，就别替我们下结论。声音和来处，还没有弄清楚。"
+        var action = c1_once(campaign_surface_action(rt_cat(actor, ".inquiry.object-refusal"), "talk", campaign_at(actor, "hall"), campaign_at(actor, "hall"), "", [], "回应侦探刚才的拒绝", words, source))
+        action = dv_with_many(action, {"speech": dv_with(c1_speech(dv_true(), source, "reaction-to-actual-heard-refusal"), "surface", words), "listeners": ["detective", "huo", "shen", "su"], "received_speech_requirement": {"speaker": "detective", "action_id": "detective.inquiry.decline-cooperation"}})
+        rt_push(result, action)
+    return result
+
 fn c1dep_actions(actor):
-    var actions = []
+    var actions = c1dep_cooperation_actions(actor)
     let source = c1dep_source("08_终局.story", 4, "s10_steps.003")
     let four = ["detective", "huo", "shen", "su"]
     if dv_has(four, actor):
         let fields = [c1dep_ref("outer_released"), c1dep_ref("inner_down"), c1dep_ref("open"), campaign_access("living_exit")]
-        rt_push(actions, dv_with(campaign_surface_action(rt_cat(actor, ".departure.inspect-door"), "inspect", campaign_at(actor, "foyer"), campaign_at(actor, "foyer"), "", fields, "检视隔离门内外门闩", "查看门内的插闩和门外的横闩。", c1dep_source("11_门外的人.story", 8, "door_voices.005")), "repeatable", true))
+        rt_push(actions, dv_with_many(campaign_surface_action(rt_cat(actor, ".departure.inspect-door"), "inspect", campaign_at(actor, "foyer"), campaign_at(actor, "foyer"), "", fields, "检视隔离门内外门闩", "查看门内的插闩和门外的横闩。", c1dep_source("11_门外的人.story", 8, "door_voices.005")), {"repeatable": true, "inquiry_purpose": "practical-access"}))
         if actor == "detective":
             let inner = dv_all([campaign_at(actor, "foyer"), dv_fact(c1dep_ref("outer_released"), true), dv_fact(c1dep_ref("inner_down"), true)])
             rt_push(actions, dv_with_many(campaign_surface_action(rt_cat(actor, ".departure.draw-inner"), "help", inner, inner, rt_cat(actor, ".departure.draw-inner"), dv_single(c1dep_ref("inner_down")), "拔出门内插闩", "拔出门内的插闩。", source), {"predict_law": rt_cat(actor, ".departure.draw-inner"), "public_observers": four, "public_grants": [c1dep_ref("inner_down")]}))
@@ -3993,7 +4014,7 @@ fn c1dep_actions(actor):
         let pre = c1dep_pick_law().premise
         let pick_source = c1dep_source("12_雀儿撬门.story", 7, "quer_opens.001-002")
         let pick = campaign_surface_action("quer.departure.pick-outer", "experiment", pre, pre, "quer.departure.pick-outer", [c1dep_ref("outer_released"), c1dep_ref("picked_by_quer"), campaign_access("living_exit")], "用铁丝挑开外闩", "细铁丝拨了四下，外侧的横闩抬了起来。", pick_source)
-        rt_push(actions, dv_with_many(pick, {"predict_law": "quer.departure.pick-outer", "speech": dv_with_many(c1_speech(dv_true(), pick_source, "actual-latch-sound"), {"surface": "门外传来细铁丝拨动和横闩抬起的金属响声。", "channel": "door.living"}), "listeners": four, "public_grants": [c1dep_ref("outer_released"), campaign_access("living_exit")]}))
+        rt_push(actions, dv_with_many(pick, {"predict_law": "quer.departure.pick-outer", "speech": dv_with_many(c1_speech(dv_true(), pick_source, "actual-latch-sound"), {"surface": "门外传来细铁丝拨动和横闩抬起的金属响声。", "channel": "door.latch-sound"}), "listeners": four, "public_grants": [c1dep_ref("latch_sound")]}))
         let receipt = dv_at_least(campaign_clock(), 690)
         let call = c1dep_speech(actor, "quer.departure.call-inside", "living_hall", receipt, dv_true(), "呼唤门内的人", "里头有人？", c1dep_source("11_门外的人.story", 5, "door_voices.002：询问部分"))
         rt_push(actions, dv_with(call, "speech", dv_with(call.speech, "utterance_type", "question")))
@@ -4045,7 +4066,7 @@ fn c1dep_actions(actor):
         rt_push(actions, dv_with(campaign_surface_action("demon.departure.inspect-clock", "inspect", after_answer, after_answer, "", [campaign_clock()], "查看起居厅钟面", "查看起居厅钟面。", source), "repeatable", true))
         let pre = c1dep_outer_law().premise
         let lifted = campaign_surface_action("demon.departure.release-outer", "help", pre, pre, "demon.departure.release-outer", [c1dep_ref("outer_released"), campaign_access("living_exit"), dv_ref("demon.body", "state", "manifested")], "抬起外闩", "外侧的横闩，被一只手抬了起来。", source)
-        rt_push(actions, dv_with_many(lifted, {"predict_law": "demon.departure.release-outer", "speech": dv_with_many(c1_speech(dv_true(), source, "actual-latch-sound"), {"surface": "门外传来横闩抬起的金属响声。", "channel": "door.living"}), "listeners": four, "public_grants": [c1dep_ref("outer_released"), campaign_access("living_exit")]}))
+        rt_push(actions, dv_with_many(lifted, {"predict_law": "demon.departure.release-outer", "speech": dv_with_many(c1_speech(dv_true(), source, "actual-latch-sound"), {"surface": "门外传来横闩抬起的金属响声。", "channel": "door.latch-sound"}), "listeners": four, "public_grants": [c1dep_ref("latch_sound")]}))
     let hand_ref = dv_ref("demon.body", "state", "hand_shape")
     let owner_ref = dv_ref("demon.body", "state", "shelf_print_owner")
     let hand_source = campaign_source("docs/design-standard.md", 0, "架沿手印的观察与询问")
@@ -4098,9 +4119,11 @@ fn c1dep_goals(actor):
         let after_trust = dv_fact(dv_ref("question", "state", "solved_trust"), true)
         let released = dv_fact(c1dep_ref("outer_released"), true)
         let at_door = campaign_at(actor.id, "foyer")
-        let recheck = campaign_any(after_trust, campaign_any(released, at_door))
+        let sound = dv_fact(c1dep_ref("latch_sound"), true)
+        let recheck = campaign_any(sound, campaign_any(after_trust, campaign_any(released, at_door)))
+        rt_push(goals, campaign_goal(campaign_at(actor.id, "foyer"), dv_all([sound, dv_fact(c1dep_ref("outer_released"), false)]), source))
         let door_source = [c1dep_source("11_门外的人.story", 8, "door_voices.005：本人听见门外动静或在门厅现场复查")]
-        rt_push(goals, dv_with_many(campaign_observation_goal(c1dep_ref("outer_released"), recheck, door_source, 0), {"refresh_until": released, "refresh_refs": [dv_ref("question", "state", "solved_trust")]}))
+        rt_push(goals, dv_with_many(campaign_observation_goal(c1dep_ref("outer_released"), recheck, door_source, 0), {"refresh_until": released, "refresh_refs": [dv_ref("question", "state", "solved_trust"), c1dep_ref("latch_sound")]}))
         rt_push(goals, dv_with_many(campaign_observation_goal(c1dep_ref("inner_down"), recheck, door_source, 0), {"refresh_until": dv_not(dv_true()), "refresh_refs": [c1dep_ref("outer_released")]}))
         rt_push(goals, dv_with_many(campaign_observation_goal(c1dep_ref("open"), recheck, door_source, 0), {"refresh_until": dv_not(dv_true()), "refresh_refs": [c1dep_ref("outer_released")]}))
         rt_push(goals, campaign_goal(dv_fact(c1dep_ref("inner_down"), false), dv_fact(c1dep_ref("outer_released"), true), source))
@@ -4185,7 +4208,7 @@ fn c1dep_install_scene(scene):
     if dv_find(scene, "departure_installed", false):
         return scene
     var physical = dv_store(scene.physical, dv_ref("demon", "state", "location"), dv_field("living_hall"))
-    physical = campaign_add_new(physical, campaign_state_object("departure.door", {"outer_released": dv_field(false), "inner_down": dv_field(true), "open": dv_field(false), "quer_has_wire": dv_field(true), "picked_by_quer": dv_field(false), "contract_picked_by_quer": dv_field(false)}))
+    physical = campaign_add_new(physical, campaign_state_object("departure.door", {"outer_released": dv_field(false), "latch_sound": dv_field(false), "inner_down": dv_field(true), "open": dv_field(false), "quer_has_wire": dv_field(true), "picked_by_quer": dv_field(false), "contract_picked_by_quer": dv_field(false)}))
     physical = campaign_add_new(physical, campaign_state_object("demon.body", {"manifested": dv_field(false), "latch_hand_trace": dv_field("")}))
     physical = dv_store(physical, dv_ref("demon.body", "state", "hand_shape"), dv_field("long-narrow-hand"))
     physical = dv_store(physical, dv_ref("demon.body", "state", "shelf_print_owner"), dv_field("demon"))
@@ -4259,6 +4282,11 @@ fn c1dep_install_scene(scene):
                 j = j + 1
             actor = dv_with_many(actor, {"location_ref": campaign_position_ref("demon"), "observable_presence_when": dv_fact(dv_ref("demon.body", "state", "manifested"), true)})
         if dv_has(four, actor.id):
+            var opener_index = 0
+            let openers = ["demon", "quer"]
+            while opener_index < rt_count(openers):
+                rt_push(hearing, {"speaker": openers[opener_index], "channel": "door.latch-sound", "available_when": campaign_any(campaign_at(actor.id, "foyer"), campaign_at(actor.id, "hall")), "sender_locations": ["living_hall"], "listener_locations": ["foyer", "hall"], "basis": [campaign_source("user:current-request", 0, "actual-metal-latch-sound-reaches-nearby-hall; no-latch-state-grant")]})
+                opener_index = opener_index + 1
             rt_push(hearing, {"speaker": "demon", "channel": "copper.morning", "available_when": dv_true(), "sender_locations": ["living_hall"], "listener_locations": ["hall", "R05", "R06", "R07", "R08", "foyer", "pantry", "corridor"], "basis": [campaign_source("docs/design-standard.md", 506, "醒来时真实听见晨间广播的寝区管路")]})
             j = 0
             while j < rt_count(four):
@@ -5306,6 +5334,10 @@ fn c1_inquiry_navigation(actor):
         if not dv_find(old[i], "inquiry_navigation", false):
             rt_push(goals, old[i])
         i = i + 1
+    // A personally heard latch sound gives access work precedence over elective
+    // inquiry routing until the owner actually crosses; it supplies no latch state.
+    if dv_truth(actor.mind, dv_fact(c1dep_ref("latch_sound"), true)) == "true" and dv_truth(actor.mind, dv_fact(c1dep_cross_ref(actor.id), true)) != "true":
+        return dv_with(actor, "policy", dv_with(actor.policy, "goals", goals))
     var selected = false
     let position = dv_read(actor.mind, actor.location_ref)
     i = 0
@@ -5637,11 +5669,11 @@ fn c1n_night_seen_ref(actor):
 // Content-owned configuration. Callers supply approved numeric budgets and value lists.
 fn Standard_Detective(replay_depth, resistance, empirical_values, mediation_rules, basis):
     dv_require(0 < rt_count(basis), "Detective profile needs content provenance")
-    return {"cognitive_profile": "Standard_Detective", "empirical_initiative": 1, "counterfactual_initiative": 1, "Replay_Depth": replay_depth, "plan_depth": 6, "Implicature_Resistance": resistance, "scope_reference_check": true, "value_order": empirical_values, "value_basis": basis, "norm_rules": mediation_rules, "class_bias": [], "profile_basis": basis}
+    return {"cognitive_profile": "Standard_Detective", "value_sensitive_progress": true, "empirical_initiative": 1, "counterfactual_initiative": 1, "Replay_Depth": replay_depth, "plan_depth": 6, "Implicature_Resistance": resistance, "scope_reference_check": true, "value_order": empirical_values, "value_basis": basis, "norm_rules": mediation_rules, "class_bias": [], "profile_basis": basis}
 
 fn Foolish_Detective(replay_depth, resistance, values, norm_rules, class_bias, basis):
     dv_require(0 < rt_count(basis), "Detective profile needs content provenance")
-    return {"cognitive_profile": "Foolish_Detective", "empirical_initiative": 0.01, "counterfactual_initiative": 0.03, "Replay_Depth": replay_depth, "plan_depth": 2, "Implicature_Resistance": resistance, "scope_reference_check": false, "value_order": values, "value_basis": basis, "norm_rules": norm_rules, "class_bias": class_bias, "profile_basis": basis}
+    return {"cognitive_profile": "Foolish_Detective", "value_sensitive_progress": true, "empirical_initiative": 0.01, "counterfactual_initiative": 0.03, "Replay_Depth": replay_depth, "plan_depth": 2, "Implicature_Resistance": resistance, "scope_reference_check": false, "value_order": values, "value_basis": basis, "norm_rules": norm_rules, "class_bias": class_bias, "profile_basis": basis}
 
 fn cognitive_sample(key, options, basis):
     dv_require(0 < rt_count(options) and 0 < rt_count(basis), "Cognitive sampling needs options and provenance")
