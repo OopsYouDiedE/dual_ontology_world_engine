@@ -3056,9 +3056,9 @@ fn dvp_taskgraph(actor, bindings, costs):
                         forecasts = forecasts + dv_find(value, "forecasts", 0)
                         forecast_reuses = forecast_reuses + dv_find(value, "forecast_reuses", 0)
                         let score = value.value - node.cost - cost.actual.time * dv_find(actor.policy, "time_cost", 0.01)
-                        if score > 0 and not dv_find(action, "known_opportunity_wait", false):
+                        if score > 0:
                             let candidate = {"task_id": ["action", action.id], "path": dv_append(node.path, action.id), "score": score, "value": value, "basis": node.basis}
-                            if action.kind == "wait":
+                            if action.kind == "wait" or dv_find(action, "known_opportunity_wait", false):
                                 if rt_count(node.path) == 0 and dvp_taskgraph_better(candidate, fallback, committed):
                                     fallback = candidate
                             else:

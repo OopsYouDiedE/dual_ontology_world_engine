@@ -10,6 +10,36 @@ static class PlanningEvidenceCheck
     static void Require(bool v,string m) { if (!v) throw new Exception(m); }
     static object Cell(string value,double time,bool received) => F_dv_with(F_dv_cell(value,1d,time,L("fixture")),"claims",received ? L(Rec(P("source","perception"),P("value",value),P("time",time))) : L());
     static double Info(object actor,object action,object reference) => (double)G(F_dvp_action_value(actor,action,L(),L(reference),L()),"information");
+    static void CheckDeclaredWait()
+    {
+        var elapsed=F_dv_ref("owned-wait","state","elapsed");
+        var mind=F_dv_add_object(F_dv_world("wait-fixture","mind","self"),F_dv_object("owned-wait","timer",Rec(P("state",Rec(P("elapsed",F_dv_field(0d)))))));
+        mind=F_dv_with(mind,"time",10d);
+        var law=F_dv_axiom("wait-known",1d,F_dv_true(),L(Rec(P("op","increment"),P("ref",elapsed),P("value",10d))));
+        mind=F_dv_adopt(mind,law,"predict",1d,L("actual-owned-opportunity-declaration"));
+        var wait=Rec(P("id","wait-known"),P("kind","wait.fixture.10"),P("precondition",F_dv_true()),P("predict_law","wait-known"),P("known_opportunity_wait",true),P("wait_until",20d),P("wait_basis",L("actual-owned-opportunity-declaration")),P("repeatable",true));
+        var goal=Rec(P("kind","achieve"),P("scope","personal"),P("basis",L("actual-owned-opportunity-declaration")),P("proposition",F_dv_at_least(elapsed,10d)),P("weight",0.11d));
+        var policy=Rec(P("goals",L(goal)),P("plan_budget",4d),P("dependency_budget",20d),P("time_cost",0.01d),P("remaining_game_time",100d));
+        var actor=Rec(P("id","self"),P("mind",mind),P("actions",L(wait)),P("policy",policy));
+        var cost=Rec(P("actual",Rec(P("time",10d))),P("maximum",Rec(P("time",10d))));
+        var costs=Rec(P("wait.fixture.10",cost));
+        var choice=F_dvs_choose(actor,L(),costs);
+        Require((string)G(G(choice,"action"),"id")=="wait-known" && (string)G(choice,"stop")=="taskgraph-declared-wait","costed known-opportunity wait is retained as the terminal fallback");
+        Require((double)G(F_dv_read(mind,elapsed),"value")==0d && (double)G(mind,"time")==10d,"selecting wait does not advance real time or publish the predicted duration");
+        var noTime=F_dv_with(actor,"policy",F_dv_with(policy,"remaining_game_time",9d));
+        var blocked=F_dvs_choose(noTime,L(),costs);
+        Require(G(blocked,"action").Equals(false) && (double)G(blocked,"time_blocked")>0d,"wait must fit its actual declared duration budget");
+        var unadopted=F_dv_with(actor,"mind",F_dv_with(mind,"adoptions",L()));
+        Require(G(F_dvs_choose(unadopted,L(),costs),"action").Equals(false),"a target timestamp alone cannot invent a valued wait");
+        var clue=F_dv_ref("owned-wait","state","clue");
+        var investigateMind=F_dv_store(mind,clue,F_dv_unknown());
+        var inspect=Rec(P("id","inspect-now"),P("kind","inspect"),P("precondition",F_dv_true()),P("purpose_refs",L(clue)));
+        var investigateGoal=Rec(P("kind","know"),P("scope","personal"),P("basis",L("actual-current-inquiry")),P("ref",clue));
+        var investigate=F_dv_with_many(actor,Rec(P("mind",investigateMind),P("actions",L(wait,inspect)),P("policy",F_dv_with(policy,"goals",L(goal,investigateGoal)))));
+        var shortCost=Rec(P("actual",Rec(P("time",1d))),P("maximum",Rec(P("time",1d))));
+        var current=F_dvs_choose(investigate,L(),F_dv_with(costs,"inspect",shortCost));
+        Require((string)G(G(current,"action"),"id")=="inspect-now","declared wait never hides a supported current investigation");
+    }
     static void CheckTaskGraph()
     {
         var loc=F_dv_ref("self","state","location");
@@ -121,6 +151,7 @@ static class PlanningEvidenceCheck
             Require(Info(F_dv_with(freshActor,"mind",received),inspect,reference)==0d,"new real perception satisfies freshness again");
             Require(!(bool)F_dv_has_key(actor,"planning_evidence_mind"),"prediction view does not mutate real actor");
             CheckTaskGraph();
+            CheckDeclaredWait();
             Console.WriteLine($"cache={cache}: evidence origin, future boundary, taskgraph navigation/commitment/cache/knowledge invalidation confirmed");
         }
     }
