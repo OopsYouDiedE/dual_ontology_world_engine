@@ -65,3 +65,5 @@ command-id 在同实例内至多投递一次。输入投递异常或等待新 dv
 CLI 原生截图在捕获线程临时启用 per-monitor-v2 DPI awareness，将 GetWindowRect 与 PrintWindow 统一到物理像素坐标，完成后恢复调用线程上下文；不得通过缩放、补画或文字重绘修补裁切。截图元数据记录坐标空间，每个操作另记实际桥接工具 SHA-256，启动清单保留原启动版本。接口与排错见 `../docs/cli-window.md`。
 
 控制台快照允许有限只读重采样，以应对重绘时缓冲区更换；不能重投 stdin。必须在元数据中留下 read_retries/read_stable，持续失败仍报告并保留 pending。
+
+`--opt-evidence-stream on|off` 默认 on，属于 TOOL_FLAGS，只影响离线 raw DAG 读取，并留在 verification_config。开启时将平坦 node items 的解码与原子/向后引用验证合并；精确固定形状以外（含 rational）回退原解码与验证，保留损坏输入的既有错误。帧哈希、有序链、节点编号、事件、checkpoint 与 seal 仍独立核对。已验证连续节点的 offset 索引用八字节无符号数组替代每节点 SQL 行，常驻索引内存为节点数乘八字节；事件唯一性仍由 SQLite 保证，节点正文缓存沿用原双限。关闭 evidence-index 时同时停用此路径。

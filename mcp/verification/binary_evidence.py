@@ -172,7 +172,47 @@ _NODE_ITEMS = encode('items')
 _NODE_SHA = encode('sha256') + b'\x05' + struct.pack('<I', 64)
 
 
-def decode_indexed(payload, spans=None):
+def _decode_dag_items(payload, start, end, node_id):
+    """Decode and validate flat DV atoms together; unsupported shapes fall back."""
+    if payload[start:start + 1] != b'\x08' or start + 5 > end:
+        raise ValueError('Not a flat node list')
+    count = _UINT32(payload, start + 1)[0]
+    position = start + 5
+    if count > end: raise ValueError('Invalid binary collection length')
+    items = []
+    for _ in range(count):
+        if position >= end: raise ValueError('Truncated binary value')
+        tag = payload[position]
+        if tag == 5:
+            if position + 5 > end: raise ValueError('Truncated binary value')
+            size = _UINT32(payload, position + 1)[0]
+            stop = position + 5 + size
+            if stop > end: raise ValueError('Truncated binary value')
+            items.append(payload[position + 5:stop].decode('utf-8', errors='strict'))
+            position = stop
+        elif tag == 3 or tag == 4:
+            if position + 9 > end: raise ValueError('Truncated binary value')
+            value = (_INT64 if tag == 3 else _DOUBLE)(payload, position + 1)[0]
+            if tag == 4 and not math.isfinite(value): raise ValueError('Nonfinite evidence number')
+            items.append(value)
+            position += 9
+        elif tag == 1 or tag == 2:
+            items.append(tag == 2)
+            position += 1
+        elif tag == 7 and position + 23 <= end and payload.startswith(_NODE_ATOM, position):
+            reference = _INT64(payload, position + 15)[0]
+            if reference < 0 or reference >= node_id: raise ValueError('Invalid node reference')
+            items.append({'node': reference})
+            position += 23
+        else:
+            # Includes rational atoms: the reference decoder and validator keep
+            # their existing diagnostics and canonical Fraction checks.
+            raise ValueError('Use generic node validation')
+    if position != end: raise ValueError('Trailing binary value bytes')
+    return items
+
+
+def decode_indexed(payload, spans=None, evidence_stream=False):
     """Decode indexed reads, recognizing the exact common node envelope shape."""
     position = len(_NODE_START)
     if payload.startswith(_NODE_START) and payload.startswith(_NODE_PREV, position + 8):
@@ -193,7 +233,15 @@ def decode_indexed(payload, spans=None):
                         items_start = position + len(_NODE_ITEMS)
                         try:
                             # Atoms have the same original nesting depth (items=2).
-                            items = _decode_cursor(payload, start=items_start, end=suffix, depth=2)
+                            validated = False
+                            if evidence_stream:
+                                try:
+                                    items = _decode_dag_items(payload, items_start, suffix, node_id)
+                                    validated = True
+                                except (ValueError, UnicodeDecodeError):
+                                    items = _decode_cursor(payload, start=items_start, end=suffix, depth=2)
+                            else:
+                                items = _decode_cursor(payload, start=items_start, end=suffix, depth=2)
                             previous = payload[previous_start:previous_start + 64].decode('utf-8', errors='strict')
                             checksum = payload[-64:].decode('utf-8', errors='strict')
                         except (ValueError, UnicodeDecodeError, RecursionError):
@@ -201,6 +249,7 @@ def decode_indexed(payload, spans=None):
                             return decode(payload, spans)
                         if spans is not None:
                             spans['payload'] = (payload_start, suffix)
+                            spans['validated_node_items'] = validated
                         return {'seq': sequence, 'prev': previous,
                                 'payload': {'kind': 'node', 'node_id': node_id, 'items': items},
                                 'sha256': checksum}
@@ -219,11 +268,13 @@ def write_frame(stream, value):
     stream.write(payload)
 
 
-def read_frame(stream, payload_span=False):
+def read_frame(stream, payload_span=False, evidence_stream=False):
     """Validate/decode a frame; optionally expose exact top-level payload bytes.
 
     Typed values have a unique encoding after validation (including map order and
     negative zero). The span allows DAG chain validation without re-encoding.
+    With both options enabled, a fourth result marks fully validated flat DV
+    node items; callers must still verify node order, envelope, chain and commits.
     """
     prefix = stream.read(4)
     if not prefix: return None
@@ -234,11 +285,12 @@ def read_frame(stream, payload_span=False):
     if len(checksum) != 32 or len(payload) != size: raise ValueError('Truncated binary frame')
     if hashlib.sha256(payload).digest() != checksum: raise ValueError('Binary frame checksum mismatch')
     spans = {} if payload_span else None
-    value = decode_indexed(payload, spans) if payload_span else decode(payload)
+    value = decode_indexed(payload, spans, evidence_stream=evidence_stream) if payload_span else decode(payload)
     frame = (prefix + checksum + payload, value)
     if payload_span:
         span = spans.get('payload')
-        return (*frame, memoryview(payload)[slice(*span)] if span is not None else None)
+        result = (*frame, memoryview(payload)[slice(*span)] if span is not None else None)
+        return (*result, spans.get('validated_node_items', False)) if evidence_stream else result
     return frame
 
 

@@ -541,7 +541,8 @@
       },
       "raw-dag": {
         "kind": "python",
-        "path": "verification/raw_dag.py"
+        "path": "verification/raw_dag.py",
+        "description": "Read-only DAG validation/selection. --opt-evidence-stream on|off (default on) controls fused flat atom validation and dense node offsets; all frame, chain, reference and seal checks remain active."
       },
       "capture-save": {
         "kind": "python",

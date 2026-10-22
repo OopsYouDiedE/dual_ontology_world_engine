@@ -15,7 +15,7 @@ FLAGS = ('readview', 'plancache', 'prune', 'lazytext', 'recordcache', 'predicate
          'lazyinternal', 'dirty', 'planreuse', 'blackbox', 'replaycache', 'runtimespeed',
          'taskgraph', 'storyflow', 'stateindex')
 FLAG_DEFAULTS = {name: ('off' if name == 'taskgraph' else 'on') for name in FLAGS}
-TOOL_FLAGS = ('evidence-index', 'causal-index', 'causalbuildcache')
+TOOL_FLAGS = ('evidence-index', 'evidence-stream', 'causal-index', 'causalbuildcache')
 ALLOWED = {*CASE_NAMES, *('baseline-' + x for x in CASE_NAMES),
            *('precise-' + x for x in CASE_NAMES), *('ablation-' + x for x in FLAGS + TOOL_FLAGS)}
 _held = {}

@@ -11,6 +11,48 @@ from raw_dag import RawDagIndex
 
 
 class PostprocessChecks(unittest.TestCase):
+    def test_stream_journal_rejection_parity(self):
+        def journal(items, damage=None):
+            stream, previous = io.BytesIO(MAGIC), '0' * 64
+            stream.seek(0, 2)
+            payloads = [{'kind': 'header', 'format': 'dv-raw-dag-v2'},
+                        {'kind': 'node', 'node_id': 0, 'items': []},
+                        {'kind': 'checkpoint', 'name': 'initial', 'root': 0, 'events': 0},
+                        {'kind': 'node', 'node_id': 1, 'items': items},
+                        {'kind': 'checkpoint', 'name': 'final', 'root': 1, 'events': 0},
+                        {'kind': 'seal', 'events': 0, 'nodes': 2, 'final_checkpoint': True}]
+            if damage == 'seal': payloads[-1]['nodes'] = 3
+            if damage == 'after-seal': payloads.append(payloads[1])
+            for seq, payload in enumerate(payloads):
+                checksum = hashlib.sha256(previous.encode() + b'\n' + str(seq).encode() + b'\n' + encode(payload)).hexdigest()
+                write_frame(stream, {'seq': seq, 'prev': previous, 'payload': payload,
+                                     'sha256': 'x' * 64 if damage == 'chain' and seq == 3 else checksum})
+                previous = checksum
+            raw = stream.getvalue()
+            if damage == 'frame': raw = raw[:-1] + bytes([raw[-1] ^ 255])
+            if damage == 'truncated': raw = raw[:-5]
+            return raw
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / 'case.dvdag'
+            for items in ([], ['正文', -0.0, False, 2**63-1, {'node': 0}],
+                          [{'node': -1}], [{'node': 1}], [{'node': True}],
+                          [None], [{'node': 0, 'extra': 1}],
+                          [{'rational': '2/3'}], [{'rational': '2/4'}]):
+                for damage in (None, 'seal', 'chain', 'frame', 'truncated', 'after-seal'):
+                    source.write_bytes(journal(items, damage))
+                    summaries = []
+                    recovered = []
+                    for stream in (False, True):
+                        with RawDagIndex(source, evidence_stream=stream) as index:
+                            summaries.append(index.summary)
+                            index._node_cache.clear()
+                            index._node_cache_bytes = 0
+                            recovered.append([encode(index.node(node)) for node in range(index.summary['validated_nodes'])])
+                    self.assertEqual(*summaries, (items, damage))
+                    self.assertEqual(*recovered, (items, damage))
+                    if damage is not None or items in ([None], [{'node': -1}], [{'node': 1}], [{'node': True}], [{'node': 0, 'extra': 1}], [{'rational': '2/4'}]):
+                        self.assertFalse(summaries[1]['complete_sealing'])
+
     def test_exact_payload_slice(self):
         values = [None, False, True, -2**63, 2**63-1, -0.0, 1.125,
                   '原始字段\x00', [], {}, {'nested': [1, {'rational': '2/3'}]},
@@ -64,6 +106,7 @@ class PostprocessChecks(unittest.TestCase):
                 return ('error', type(issue), str(issue))
         for payload in cases:
             self.assertEqual(outcome(decode, payload), outcome(decode_indexed, payload), payload)
+            self.assertEqual(outcome(decode, payload), outcome(lambda p: decode_indexed(p, evidence_stream=True), payload), payload)
         # Make the documented format depth limit reachable independently of the
         # interpreter stack ceiling and its context-dependent error wording.
         import sys

@@ -447,6 +447,7 @@ def _main():
                         help='Separate time limit for read-only 70-checks after a complete sealed session')
     parser.add_argument('--opt-causal-index', choices=('on', 'off'), default='on', help='Read-only checker event/ancestor index; does not affect session decisions')
     parser.add_argument('--opt-evidence-index', choices=('on', 'off'), default='on', help='Reuse decoded immutable journal fields during read-only evidence validation')
+    parser.add_argument('--opt-evidence-stream', choices=('on', 'off'), default='on', help='Fuse raw node atom decoding/validation with dense offset indexing')
     parser.add_argument('--detective-profile', default='Standard_Detective', choices=('Standard', 'Foolish', 'Standard_Detective', 'Foolish_Detective', 'Shura_Detective'))
     parser.add_argument('--opening-seed', type=int, default=1)
     parser.add_argument('--homecoming-negotiation', action='store_true', help='Enable declared homecoming negotiation candidates; does not seed votes or outcomes')
@@ -548,7 +549,8 @@ def _main():
     verification_config = {'opt_causal_index': args.opt_causal_index == 'on',
                            'opt_causalbuildcache': args.opt_causalbuildcache == 'on',
                            'timeout_seconds': args.causal_timeout,
-                           'opt_evidence_index': args.opt_evidence_index == 'on'}
+                           'opt_evidence_index': args.opt_evidence_index == 'on',
+                           'opt_evidence_stream': args.opt_evidence_stream == 'on'}
     provenance = {'format': 'dv-debug-provenance-v1', 'source_hashes': hashes, 'source_manifest_sha256': sha_file(out / 'source-hashes.json'), 'run_config': run_config, 'instrumented': args.profile, 'runtime_config': {'opt_runtimespeed': run_config['opt_runtimespeed'], 'opt_stateindex': run_config['opt_stateindex']}, 'verification_config': verification_config,
                   'verification_config_sha256': hashlib.sha256(json.dumps(verification_config, sort_keys=True).encode('utf-8')).hexdigest()}
     provenance_path = out / 'run-provenance.dv.json'
@@ -669,7 +671,7 @@ def _main():
         if args.raw_format == 'dag':
             raw_source = out / (trace_name if result['raw_written'] else trace_name + '.partial')
             try:
-                raw_summary = inspect_journal(raw_source, out / 'raw-event-index.dvlog', optimize=args.opt_evidence_index == 'on')
+                raw_summary = inspect_journal(raw_source, out / 'raw-event-index.dvlog', optimize=args.opt_evidence_index == 'on', evidence_stream=args.opt_evidence_stream == 'on')
                 with (out / 'raw-dag-summary.json').open('x', encoding='utf-8') as output:
                     json.dump(raw_summary, output, ensure_ascii=False, indent=2)
                 result['raw_dag_summary'] = 'raw-dag-summary.json'

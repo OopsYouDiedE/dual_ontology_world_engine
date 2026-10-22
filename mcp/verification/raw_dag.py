@@ -13,11 +13,13 @@ file. Text value formats are explicit stdout views: trace-json shows exact atoms
 as text; dv-tagged retains their $dv_rational type tags. No JSON trace is written
 to a file. With no selection, stdout or --out receives a readable index summary.
 
-The journal is never modified. A temporary SQLite offset index bounds resident
-memory; recovery expands only the requested value, directly to the output stream.
+The journal is never modified. Event indices use temporary SQLite; dense node
+offsets use eight bytes each (or SQLite with evidence-stream off). Recovery
+expands only the requested value, directly to the output stream.
 Interrupted/invalid tails remain in the original file and are reported, never fixed.
 """
 import argparse
+from array import array
 from fractions import Fraction
 from collections import OrderedDict
 import hashlib
@@ -50,8 +52,12 @@ def _integer(value):
 
 
 class RawDagIndex:
-    def __init__(self, source, optimize=True):
+    def __init__(self, source, optimize=True, evidence_stream=True):
         self.optimize = optimize
+        self.evidence_stream = evidence_stream and optimize
+        # IDs are validated dense and ordered before appending. Eight bytes per
+        # node replace a SQL primary-key row; event uniqueness remains in SQL.
+        self._offsets = array('Q') if self.evidence_stream else None
         # Bounded by wire bytes and entry count; cached values are read-only.
         self._node_cache = OrderedDict()
         self._node_cache_bytes = 0
@@ -152,7 +158,7 @@ class RawDagIndex:
             while True:
                 offset = source.tell()
                 try:
-                    frame = read_frame(source, payload_span=self.optimize) if self.binary else None
+                    frame = read_frame(source, payload_span=self.optimize, evidence_stream=self.evidence_stream) if self.binary else None
                     raw = frame[0] if frame is not None else (b'' if self.binary else source.readline())
                 except (ValueError, UnicodeDecodeError) as issue:
                     error = {'byte_offset': offset, 'frame': sequence, 'error': str(issue)}
@@ -176,7 +182,7 @@ class RawDagIndex:
                         node_id, items = payload.get('node_id'), payload.get('items')
                         if type(node_id) is not int or node_id != nodes or not isinstance(items, list):
                             raise ValueError('Invalid node definition/order')
-                        for item in items:
+                        for item in (() if self.evidence_stream and self.binary and frame[3] else items):
                             if isinstance(item, dict):
                                 if set(item) == {'node'}:
                                     if not _integer(item['node']) or item['node'] >= node_id:
@@ -188,7 +194,10 @@ class RawDagIndex:
                                     raise ValueError('Unknown atom/reference encoding')
                             elif not isinstance(item, (str, bool, int, float)) or isinstance(item, float) and not math.isfinite(item):
                                 raise ValueError('Unsupported DV atom')
-                        self.db.execute('INSERT INTO nodes VALUES (?, ?)', (node_id, offset))
+                        if self.evidence_stream:
+                            self._offsets.append(offset)
+                        else:
+                            self.db.execute('INSERT INTO nodes VALUES (?, ?)', (node_id, offset))
                         self._cache_node(node_id, items, len(raw))
                         nodes += 1
                     elif kind == 'event':
@@ -271,7 +280,11 @@ class RawDagIndex:
         if cached is not None:
             self._node_cache.move_to_end(int(node_id))
             return cached[0]
-        row = self.db.execute('SELECT offset FROM nodes WHERE id=?', (int(node_id),)).fetchone()
+        if self.evidence_stream:
+            identifier = int(node_id)
+            row = (self._offsets[identifier],) if 0 <= identifier < len(self._offsets) else None
+        else:
+            row = self.db.execute('SELECT offset FROM nodes WHERE id=?', (int(node_id),)).fetchone()
         if row is None:
             raise ValueError(f'Node {node_id} is not in the validated prefix')
         self.reader.seek(row[0])
@@ -394,8 +407,8 @@ class RawDagIndex:
                 output.write(json.dumps(value, ensure_ascii=True, allow_nan=False, separators=(',', ':')))
 
 
-def inspect_journal(source, event_index_path=None, optimize=True):
-    with RawDagIndex(source, optimize=optimize) as index:
+def inspect_journal(source, event_index_path=None, optimize=True, evidence_stream=True):
+    with RawDagIndex(source, optimize=optimize, evidence_stream=evidence_stream) as index:
         if event_index_path is not None:
             index.write_event_index(event_index_path)
         return index.summary
@@ -404,6 +417,7 @@ def inspect_journal(source, event_index_path=None, optimize=True):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('source', type=Path)
+    parser.add_argument('--opt-evidence-stream', choices=('on', 'off'), default='on', help='Fuse flat node decoding/validation and use dense eight-byte node offsets')
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument('--event')
     selection.add_argument('--node', type=int)
@@ -422,7 +436,7 @@ def main():
         parser.error('--path requires --event, --node or --checkpoint')
     if selected and args.out and args.value_format != 'binary':
         parser.error('Text value projections use stdout; file exports require --value-format binary')
-    with RawDagIndex(args.source) as index:
+    with RawDagIndex(args.source, evidence_stream=args.opt_evidence_stream == 'on') as index:
         if args.events_out:
             index.write_event_index(args.events_out)
         partial = Path(str(args.out) + '.partial') if args.out else None
