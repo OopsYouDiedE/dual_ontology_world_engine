@@ -6,14 +6,16 @@ import tempfile
 import time
 import unittest
 
-from binary_evidence import MAGIC, encode, read_frame, write_frame
+from binary_evidence import MAGIC, encode, decode, read_frame, write_frame
 from raw_dag import RawDagIndex
 
 
 class PostprocessChecks(unittest.TestCase):
     def test_exact_payload_slice(self):
         values = [None, False, True, -2**63, 2**63-1, -0.0, 1.125,
-                  '原始字段\x00', [], {}, {'nested': [1, {'rational': '2/3'}]}]
+                  '原始字段\x00', [], {}, {'nested': [1, {'rational': '2/3'}]},
+                  {'first': -0.0, 'second': [-(2**63), {'inner': [2**63-1, []]}]},
+                  {'second': [-(2**63), {'inner': [2**63-1, []]}], 'first': -0.0}]
         for value in values:
             payload = {'kind': 'test', 'value': value}
             envelope = {'seq': 0, 'prev': '0'*64, 'payload': payload, 'sha256': 'x'}
@@ -21,8 +23,17 @@ class PostprocessChecks(unittest.TestCase):
             write_frame(stream, envelope)
             stream.seek(0)
             raw, decoded, span = read_frame(stream, payload_span=True)
-            self.assertEqual(bytes(span), encode(payload))
+            encoded = encode(payload)
+            self.assertEqual(bytes(span), encoded)
+            self.assertEqual(encode(decode(bytes(span))), encoded)
             self.assertEqual(encode(decoded), encode(envelope))
+
+    def test_map_order_is_preserved(self):
+        forward = encode({'a': 1, 'b': [2, {'c': -0.0}]})
+        reverse = encode({'b': [2, {'c': -0.0}], 'a': 1})
+        self.assertNotEqual(forward, reverse)
+        for payload in (forward, reverse):
+            self.assertEqual(encode(decode(payload)), payload)
 
     def test_cache_eviction(self):
         # Exercise both entry and wire-size eviction without allocating a world.

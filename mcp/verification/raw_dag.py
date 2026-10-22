@@ -266,6 +266,7 @@ class RawDagIndex:
             self._node_cache_bytes -= removed
 
     def node(self, node_id):
+        """Borrow validated items for read-only use; callers must not mutate them."""
         cached = self._node_cache.get(int(node_id)) if self.optimize else None
         if cached is not None:
             self._node_cache.move_to_end(int(node_id))

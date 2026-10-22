@@ -21,3 +21,9 @@ Boundaries:
 - No actual 828 MiB trace or whole-session run timed here. No claim of full postprocessing or end-to-end <=180 seconds.
 - run_debug still separately exports stdout and runs the isolated causal checker after raw DAG validation. Those costs remain and are not inferred from this microbenchmark. Complete stdout and unprojected raw tail semantics remain unchanged.
 - Parent agent owns actual full-run timing, merge, and validation under current authorization.
+
+
+Pre-merge finite follow-up:
+- Explicit encode(decode(payload)) byte equality now covers signed int64 minimum/maximum, negative zero, Unicode/NUL, nested lists/maps, and both orders of the same map keys. Opposite key orders remain different byte strings and each round-trips exactly.
+- Audited all RawDagIndex consumers found by repository Python searches: raw_dag methods record_fields/event_metadata/record_field/select/write_binary/write_value and debug_checkpoints.checkpoint_metadata. They only iterate, index, compare, encode, or read length; none appends, assigns, sorts, pops, clears, or otherwise mutates borrowed node items or nested references. record_fields creates its own map; event metadata is immediately encoded or read for output; select rebinds its local selected variable. Thus no copying boundary is required for current consumers. node() now explicitly documents the borrowed read-only contract. Future callers that need mutation must copy the returned value first.
+- The updated focused payload/cache tests and existing complete/corrupt raw-DAG differential completed successfully. No production DAG read or session started.
