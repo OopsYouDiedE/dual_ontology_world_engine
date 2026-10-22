@@ -2005,6 +2005,7 @@ fn dvp_probe_refs(actor):
                     local_1 = feature
                 refs = dvp_merge_refs(refs, dvs_sim_refs(dv_find(feature, "observation", local_1)))
                 i = (i + 1)
+            refs = dvp_merge_refs(refs, dv_find(hypothesis, "external_inputs", []))
     return refs
 
 fn dvp_scope(actor, action, bindings):
@@ -2431,7 +2432,7 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
                                 known_features = known_features + 1
                         fi = fi + 1
                     let cached = dvs_cached_model(actor, hypothesis)
-                    if known_features > 0 and 0 < rt_count(dv_find(hypothesis, "basis", [])) and not dv_explanation_model_complete(cached, "explained", mind.revision) and dv_find(cached, "status", "unknown") != "inconsistent":
+                    if known_features > 0 and dvs_replay_candidate_available(actor, hypothesis) and not dv_explanation_model_complete(cached, "explained", mind.revision) and dv_find(cached, "status", "unknown") != "inconsistent":
                         verification = verification + 1
     let achievement_work = dvp_achievement_pending_work(actor, action, context.achievements)
     let achievement = achievement_work.value
@@ -7711,7 +7712,9 @@ fn dvs_session_complete(state, receipt):
                 actors = dvs_replace(actors, index, actor)
                 actors = dvs_public_grants(actors, index, dv_with_many(action, {"speech": {"channel": "formal-receipt", "literal_ast": dv_true()}, "listeners": judgment.accepted_listeners, "public_grants": judgment.accepted_public_grants}), physical, bindings, events, time, parent, rt_cat(action_event, "-accepted"))
                 actor = actors[index]
-    if dv_and((action.kind == "replay"), (result.execution.status == "applied")):
+    if action.kind == "replay" and result.execution.status == "applied" and not dvs_replay_has_available_candidate(actor):
+        dvs_event(events, "replay_deferred", id, time, [parent], {"action_id": action.id, "reason": "no-executable-plan-with-known-external-inputs", "model_budget": dv_find(actor.policy, "model_budget", 0)})
+    if action.kind == "replay" and result.execution.status == "applied" and dvs_replay_has_available_candidate(actor):
         var candidates = dv_find(actor.policy, "hypotheses", [])
         let manual_id = dv_find(action, "replay_hypothesis_id", "")
         if manual_id != "":
@@ -8432,7 +8435,18 @@ fn dvs_manual_selection(selection):
 
 // Admission and paid Complete use the same subject-local candidate conditions.
 fn dvs_replay_candidate_available(actor, candidate):
-    return dvp_topic(actor, candidate) and 0 < rt_count(dv_find(candidate, "basis", [])) and dv_truth(actor.mind, dv_find(candidate, "available_when", dv_true())) == "true"
+    return dvp_topic(actor, candidate) and 0 < rt_count(dv_find(candidate, "basis", [])) and dv_truth(actor.mind, dv_find(candidate, "available_when", dv_true())) == "true" and 0 < rt_count(dvs_sim_plan(candidate)) and dvs_replay_inputs_known(actor.mind, candidate)
+
+// External receipts are read from this owner only. False is a known value;
+// assumptions and predicted outputs never satisfy missing external inputs.
+fn dvs_replay_inputs_known(mind, candidate):
+    let refs = dv_find(candidate, "external_inputs", [])
+    var i = 0
+    while i < rt_count(refs):
+        if not dv_uncontested(dv_read(mind, refs[i])):
+            return false
+        i = i + 1
+    return true
 
 fn dvs_replay_has_available_candidate(actor):
     let candidates = dv_find(actor.policy, "hypotheses", [])

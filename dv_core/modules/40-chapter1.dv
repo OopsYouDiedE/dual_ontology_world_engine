@@ -2481,6 +2481,17 @@ fn c1_manual_replay_variables():
         {"id": "V6", "label": "昨夜之前的关系（假设）", "available_when": c1_manual_history_gate(), "values": [{"value": false, "label": "彼此陌生"}, {"value": true, "label": "彼此熟悉"}]}
     ]
 
+// A complete comparison needs actual owner receipts, regardless of their values.
+// The alarm anchor remains an explicit hypothesis, not an acquired input.
+fn c1_hist_external_inputs():
+    var refs = [campaign_evidence_ref("pipe_layout"), campaign_evidence_ref("heads_lost")]
+    let features = c1_hist_features()
+    var i = 0
+    while i < rt_count(features):
+        refs = dvp_merge_refs(refs, dvs_sim_refs(features[i].observation))
+        i = i + 1
+    return refs
+
 fn c1_hist_candidate(number, su_room, huo_room, source, words, preference, familiar):
     var manual_gate = dv_true()
     if familiar:
@@ -2489,7 +2500,7 @@ fn c1_hist_candidate(number, su_room, huo_room, source, words, preference, famil
     rt_push(assumptions, dv_fact(campaign_evidence_ref("own_alarm_anchor"), true))
     rt_push(assumptions, dv_fact(dv_ref("history", "state", "sole"), "PoloBoot"))
     rt_push(assumptions, dv_fact(dv_ref("history", "state", "direction"), "Bolt"))
-    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"id": rt_cat("history-case-", rt_show(number)), "question": "original_q2_complete", "group": "six-variable-history", "prior": 0.5, "manual_available_when": manual_gate}, "proposition", dv_all(c1_hist_assumptions(su_room, huo_room, source, words, preference, familiar))), "basis", dv_pair(campaign_source("docs/design-standard.md", 703, "public-six-variable-candidate-space"), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/声路与真相.story", 102, "fixed-external-event-catalog"))), "available_when", dv_fact(dv_ref("question", "state", "outstanding_complete"), true)), "assumptions", assumptions), "variable_assignments", c1_hist_assignments(su_room, huo_room, source, words, preference, familiar)), "timeline", c1_hist_timeline(su_room, huo_room, source, words, preference)), "start_time", 0), "features", c1_hist_features()), "claim_slots", c1_hist_claim_slots())
+    return dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with(dv_with({"id": rt_cat("history-case-", rt_show(number)), "question": "original_q2_complete", "group": "six-variable-history", "prior": 0.5, "manual_available_when": manual_gate, "external_inputs": c1_hist_external_inputs()}, "proposition", dv_all(c1_hist_assumptions(su_room, huo_room, source, words, preference, familiar))), "basis", dv_pair(campaign_source("docs/design-standard.md", 703, "public-six-variable-candidate-space"), campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/声路与真相.story", 102, "fixed-external-event-catalog"))), "available_when", dv_fact(dv_ref("question", "state", "outstanding_complete"), true)), "assumptions", assumptions), "variable_assignments", c1_hist_assignments(su_room, huo_room, source, words, preference, familiar)), "timeline", c1_hist_timeline(su_room, huo_room, source, words, preference)), "start_time", 0), "features", c1_hist_features()), "claim_slots", c1_hist_claim_slots())
 
 fn c1_hist_candidates():
     var result = []
