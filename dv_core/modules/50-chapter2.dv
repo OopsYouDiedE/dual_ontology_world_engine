@@ -2329,9 +2329,10 @@ fn c2i_evening_actions(actor):
                 promotes = ["measured_work", "safety", "cautious_travel"]
             let id = rt_cat("moran.c2.sketch.evening.", rt_cat(option.value, rt_cat(".", rt_show(watched))))
             let law = rt_cat("moran.c2.sketch.evening.", option.value)
-            var ready = context
-            if option.value == "go":
-                ready = dv_all([context, dv_fact(campaign_ref("c2.meter", "safe"), true)])
+            // A dangerous intention remains physically possible. Actual adopted
+            // safety norms and the owner's competing reasons decide whether to go;
+            // an unsafe reading is not an author-level ban on considering it.
+            let ready = context
             let choice = {"group": "moran.evening-sketch", "requires": ready, "prohibits": campaign_any(dv_fact(result_ref, "stay"), dv_fact(result_ref, "go")), "promotes": promotes, "sacrifices": option.sacrifices, "basis": [source]}
             let speech = dv_with(campaign_speech(dv_true(), source, "evening-sketch-choice"), "surface", option.text)
             var action = campaign_surface_action(id, "talk", ready, when, law, [result_ref], option.label, option.text, source)
