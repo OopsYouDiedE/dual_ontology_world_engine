@@ -2385,6 +2385,10 @@ fn c2i_goals(actor):
     if id == "ward" or id == "quer":
         if c2g_review_heard(actor):
             rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_true(), [campaign_approved("actual-heard-contract-review-request")]), {"navigation_room": "document_workshop", "navigation_methods": [rt_cat(id, ".c2.investigation.inspect.document_workshop")]}))
+            if c2g_enabled(actor) and dv_truth(actor.mind, dv_fact(campaign_ref("case.contract", "joined_inventory"), true)) != "true":
+                let prior = dv_read(actor.mind, campaign_ref("case.contract", "joined_inventory"))
+                let minimum = dv_find(prior, "time", 0) + 1
+                rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("case.contract", "joined_inventory"), dv_true(), [campaign_approved("actual-request-to-recheck-stale-inventory-observation")], minimum), {"navigation_room": "document_workshop", "navigation_methods": [rt_cat(id, ".c2.investigation.inspect.document_workshop")]}))
         rt_push(goals, campaign_observation_goal(campaign_ref("case.contract", "cabinet_key_holder"), campaign_at(id, "document_workshop"), [campaign_approved("actual-key-custody-receipt")], 0))
     goals = c2m_concat(goals, c2m_goals(actor))
     if id == "bertrand" and c2_moran_outing_heard(actor):
@@ -2877,6 +2881,11 @@ fn c2g_storyflow_action(actor, original):
         return dv_with(action, "precondition", dv_not(dv_true()))
     if not c2g_enabled(actor):
         return action
+    if action.id == "ward.c2.withdraw-restriction":
+        // Correcting a disproved accusation preserves the adopted record procedure;
+        // authority is not an unconditional cost of every evidence-led correction.
+        let choice = action.personal_choice
+        action = dv_with(action, "personal_choice", dv_with(choice, "sacrifices", []))
     if dv_find(action, "legacy_granary_request", false):
         return dv_with(action, "precondition", dv_not(dv_true()))
     let job = dv_find(action, "work_decision", dv_find(action, "work_operation", dv_find(action, "work_reply", "")))
