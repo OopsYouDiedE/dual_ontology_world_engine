@@ -2244,6 +2244,8 @@ fn c2i_watch_goal(actor, when, source, minimum):
 fn c2i_goals(actor):
     let id = actor.id
     var goals = []
+    if id == "quer" and c2_quer_concerned(actor):
+        rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_own("ward", "restriction_withdrawn"), true), dv_all([dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_fact(campaign_ref("case.contract", "lock_no_pry"), true)]), [campaign_approved("actual-restriction-withdrawal-receipt")]), {"navigation_room": "document_workshop", "navigation_methods": ["quer.c2.ask-restriction-status"]}))
     if id == "ward" or id == "quer":
         rt_push(goals, campaign_observation_goal(campaign_ref("case.contract", "cabinet_key_holder"), campaign_at(id, "document_workshop"), [campaign_approved("actual-key-custody-receipt")], 0))
     goals = c2m_concat(goals, c2m_goals(actor))
@@ -2310,11 +2312,11 @@ fn c2i_goals(actor):
                 rt_push(goals, campaign_observation_goal(campaign_ref(place.object, place.fields[field_index]), campaign_at(id, place.room), [campaign_approved("actual-local-case-inspection")], 0))
                 field_index = field_index + 1
         place_index = place_index + 1
-    if dv_has(["margaret", "huo", "quer"], id):
+    if dv_has(["detective", "margaret", "huo", "quer"], id):
         let granary_fields = ["structure_checked", "wedge_set", "lift_mm", "double_bolts"]
         var field_index = 0
         while field_index < rt_count(granary_fields):
-            rt_push(goals, campaign_observation_goal(campaign_ref("c2.granary", granary_fields[field_index]), campaign_window(3, 720, 840), [campaign_approved("actual-cooperation-observation")], 0))
+            rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("c2.granary", granary_fields[field_index]), campaign_window(3, 720, 840), [campaign_approved("actual-cooperation-observation")], 0), {"navigation_room": "logistics", "navigation_methods": [rt_cat(id, ".c2.inspect.c2.granary"), rt_cat(id, ".c2.investigation.inspect.logistics")]}))
             field_index = field_index + 1
         rt_push(goals, campaign_goal(dv_fact(campaign_ref("c2.granary", "total_store_locked"), false), campaign_window(3, 720, 840), [campaign_approved("three-person-granary-opening")]))
     return goals
@@ -2694,6 +2696,8 @@ fn c2_cooperation_rows():
         if item.field == "lock_no_pry":
             promotes = ["not_targeted", "movement_freedom", "evidence"]
         take = dv_with_many(take, {"effects": [dv_assign(decided, true), dv_assign(campaign_own(item.actor, rt_cat("work.accepted.", item.id)), true)], "repeatable": false, "work_decision": item.id, "work_reply": item.id, "owned_decision": c2_work_decision(item, "accepted", source), "work_clearance": item.field == "lock_no_pry", "public_observers": campaign_people(), "public_grants": [decided, campaign_own(item.actor, rt_cat("work.accepted.", item.id))], "personal_choice": {"group": rt_cat("work.", item.id), "requires": item_active, "prohibits": dv_fact(decided, true), "promotes": promotes, "sacrifices": [], "require_positive": true, "basis": [source]}})
+        if item.field == "wedge_set" or item.field == "lift_mm" or item.field == "double_bolts":
+            take = dv_with(take, "received_speech_requirement", {"speaker": "detective", "action_id": rt_cat(item.id, ".request")})
         rt_push(rows, take)
         if item.actor == "quer" and item.field != "lock_no_pry":
             var refuse = c2d_row("quer", rt_cat(item.id, ".refuse-restriction"), item.room, item_active, dv_true(), rt_cat("说明保留意见：", item.purpose), "先前对我的指控还没有向我澄清，却先叫我替你们开锁？把依据说清楚，再谈这次合作。", source)
@@ -2701,8 +2705,6 @@ fn c2_cooperation_rows():
             rt_push(rows, refuse)
         if item.actor == "quer" or item.actor == "huo" or item.actor == "margaret":
             var requester = "detective"
-            if item.room == "logistics":
-                requester = "margaret"
             if requester != item.actor:
                 var invite = c2d_row(requester, rt_cat(item.id, ".request"), item.room, item_active, dv_true(), rt_cat("请求协作：", item.purpose), rt_cat("请你自己判断能否承担这一项：", item.purpose), source)
                 invite = dv_with_many(invite, {"repeatable": false, "request": {"target": item.actor, "topic": rt_cat("work.", item.id)}, "opportunity": {"location": item.room, "participants": [item.actor], "mode": "all-present"}})
@@ -2710,13 +2712,13 @@ fn c2_cooperation_rows():
         i = i + 1
     let reviewed = dv_all([dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_fact(campaign_ref("case.contract", "lock_no_pry"), true)])
     var withdraw = c2d_row("ward", "ward.c2.withdraw-restriction", "document_workshop", reviewed, reviewed, "撤回先前的指控", "清册与锁具已核清。我撤回针对雀儿的窃取指控；代管钥匙的归还也请按现场记录核对。", source)
-    withdraw = dv_with_many(withdraw, {"effects": [dv_assign(campaign_own("ward", "restriction_withdrawn"), true)], "public_grants": [campaign_own("ward", "restriction_withdrawn")], "personal_choice": {"group": "ward.reconsider-restriction", "requires": reviewed, "prohibits": dv_fact(campaign_own("ward", "restriction_withdrawn"), true), "promotes": ["records", "evidence", "witnesses"], "sacrifices": ["ward_authority"], "basis": [source]}})
+    withdraw = dv_with_many(withdraw, {"effects": [dv_assign(campaign_own("ward", "restriction_withdrawn"), true)], "public_grants": [campaign_own("ward", "restriction_withdrawn")], "public_observers": campaign_people(), "personal_choice": {"group": "ward.reconsider-restriction", "requires": reviewed, "prohibits": dv_fact(campaign_own("ward", "restriction_withdrawn"), true), "promotes": ["records", "evidence", "witnesses"], "sacrifices": ["ward_authority"], "basis": [source]}})
     rt_push(rows, withdraw)
     var status = c2d_row("quer", "quer.c2.ask-restriction-status", "document_workshop", dv_true(), dv_true(), "询问指控是否撤回", "先前的指控是否已经撤回？请把现在的依据说清楚。", source)
-    status = dv_with_many(status, {"concern_question": true, "request": {"target": "ward", "topic": "restriction-status"}})
+    status = dv_with_many(status, {"concern_question": true, "repeatable": true, "request": {"target": "ward", "topic": "restriction-status"}})
     rt_push(rows, status)
     let withdrawn = dv_fact(campaign_own("ward", "restriction_withdrawn"), true)
-    rt_push(rows, c2d_reply("ward", "ward.c2.reply-withdrawn", "document_workshop", withdrawn, withdrawn, "restriction-status", "答复指控撤回事宜", "我已经撤回先前那项指控。", source))
+    rt_push(rows, dv_with_many(c2d_reply("ward", "ward.c2.reply-withdrawn", "document_workshop", withdrawn, withdrawn, "restriction-status", "答复指控撤回事宜", "我已经撤回先前那项指控。", source), {"repeatable": true, "listeners": ["quer", "detective"], "public_observers": campaign_people(), "public_grants": [campaign_own("ward", "restriction_withdrawn")]}))
     let people = campaign_people()
     let clerks = ["ruan", "ward"]
     var clerk_index = 0
