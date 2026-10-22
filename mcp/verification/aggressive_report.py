@@ -51,7 +51,7 @@ def injury_summary(value):
     if not isinstance(value, list):
         return None
     return [{'actor': scalar(person.get('actor')),
-             **{key: cell_summary(person.get(key)) for key in ('alive', 'dead', 'in_coma', 'stone_stupor', 'erosion_exposure')}}
+             **{key: cell_summary(person.get(key)) for key in ('alive', 'dead', 'in_coma', 'stone_stupor', 'erosion_exposure', 'serious_injury', 'motor_impairment', 'respiratory_failure', 'anti_erosion_treated')}}
             for person in value if isinstance(person, dict)]
 
 
@@ -298,10 +298,10 @@ def markdown(summary):
             for key, cell in item['chapter_summary'].items():
                 lines.append('| ' + key + ' | ' + ' | '.join(show((cell or {}).get(k)) for k in ('known', 'conflicted', 'value')) + ' |')
         if item.get('injury_facts'):
-            lines += ['', '| 主体 | 存活 | 死亡 | 昏迷 | 石化沉睡 | 侵蚀暴露 |', '| --- | --- | --- | --- | --- | ---: |']
+            lines += ['', '| 主体 | 存活 | 死亡 | 昏迷 | 石化沉睡 | 侵蚀暴露 | 本章重伤经历 | 当前运动障碍 | 当前呼吸衰竭 | 实际有效给药 |', '| --- | --- | --- | --- | --- | ---: | --- | --- | --- | --- |']
             for person in item['injury_facts']:
                 cells = []
-                for key in ('alive', 'dead', 'in_coma', 'stone_stupor', 'erosion_exposure'):
+                for key in ('alive', 'dead', 'in_coma', 'stone_stupor', 'erosion_exposure', 'serious_injury', 'motor_impairment', 'respiratory_failure', 'anti_erosion_treated'):
                     cell = person.get(key) or {}
                     cells.append(show(cell.get('value')) if cell.get('known') is True and not cell.get('conflicted') else '未知/冲突')
                 lines.append('| ' + show(person.get('actor')) + ' | ' + ' | '.join(cells) + ' |')
