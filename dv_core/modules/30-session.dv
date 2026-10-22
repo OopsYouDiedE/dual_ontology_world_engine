@@ -2276,6 +2276,32 @@ fn dvp_context_communication(action, goals):
         i = i + 1
     return value
 
+// A personal choice is not automatically progress: use the owner's declared
+// ordinal values, including a sacrifice before a lower-ranked benefit. This is
+// motivation for choosing an action, never an execution or answer prohibition.
+fn dvp_personal_motivation(actor, action):
+    if not dv_has_key(action, "personal_choice"):
+        return 0
+    let order = dv_find(actor.policy, "value_order", [])
+    var i = 0
+    while i < rt_count(order):
+        let impact = dvp_personal_impact(action.personal_choice, order[i])
+        if impact != 0:
+            return impact
+        i = i + 1
+    return 0
+
+// Initiative scales only the owner's anticipated informational benefit. Actual
+// observations, legal actions, answers and physical effects remain unchanged.
+fn dvp_inquiry_initiative(actor, action):
+    var initiative = 1
+    if dv_has(["inspect", "experiment", "sound_test"], action.kind):
+        initiative = dv_find(actor.policy, "empirical_initiative", 1)
+    if action.kind == "replay":
+        initiative = dv_find(actor.policy, "counterfactual_initiative", 1)
+    dv_require(0 <= initiative and initiative <= 1, "Inquiry initiative must be between zero and one")
+    return initiative
+
 fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
     var mind = actor.mind
     var policy = actor.policy
@@ -2315,8 +2341,9 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
             information = (information + 1)
     if dvp_context_communication(action, context.communications):
         progress = 1
+    let personal_motivation = dvp_personal_motivation(actor, action)
     if dv_has_key(action, "personal_choice"):
-        progress = 1
+        progress = personal_motivation
     let private_utility = dvp_private_execution_utility(actor, action, mind)
     progress = progress + private_utility
     let owner_utility = dvp_owner_utility(actor, action, mind)
@@ -2354,7 +2381,8 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
                         verification = verification + 1
     let achievement_work = dvp_achievement_pending_work(actor, action, context.achievements)
     let achievement = achievement_work.value
-    return {"information": information, "verification": verification, "progress": progress, "private_utility": private_utility, "owner_utility": owner_utility, "achievement": achievement, "forecasts": achievement_work.forecasts, "forecast_reuses": achievement_work.forecast_reuses, "value": (((information + verification) * dv_find(policy, "information_weight", 1)) + ((progress + achievement) * dv_find(policy, "progress_weight", 1)))}
+    let initiative = dvp_inquiry_initiative(actor, action)
+    return {"information": information, "verification": verification, "progress": progress, "personal_motivation": personal_motivation, "inquiry_initiative": initiative, "private_utility": private_utility, "owner_utility": owner_utility, "achievement": achievement, "forecasts": achievement_work.forecasts, "forecast_reuses": achievement_work.forecast_reuses, "value": (((information + verification) * dv_find(policy, "information_weight", 1) * initiative) + ((progress + achievement) * dv_find(policy, "progress_weight", 1)))}
 
 // Access to an already owned communication goal is not its fulfillment.
 // Predict only the subject's adopted effect; never supply a listener or an answer.

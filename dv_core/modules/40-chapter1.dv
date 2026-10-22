@@ -5635,11 +5635,11 @@ fn c1n_night_seen_ref(actor):
 // Content-owned configuration. Callers supply approved numeric budgets and value lists.
 fn Standard_Detective(replay_depth, resistance, empirical_values, mediation_rules, basis):
     dv_require(0 < rt_count(basis), "Detective profile needs content provenance")
-    return {"cognitive_profile": "Standard_Detective", "Replay_Depth": replay_depth, "plan_depth": 6, "Implicature_Resistance": resistance, "scope_reference_check": true, "value_order": empirical_values, "value_basis": basis, "norm_rules": mediation_rules, "class_bias": [], "profile_basis": basis}
+    return {"cognitive_profile": "Standard_Detective", "empirical_initiative": 1, "counterfactual_initiative": 1, "Replay_Depth": replay_depth, "plan_depth": 6, "Implicature_Resistance": resistance, "scope_reference_check": true, "value_order": empirical_values, "value_basis": basis, "norm_rules": mediation_rules, "class_bias": [], "profile_basis": basis}
 
 fn Foolish_Detective(replay_depth, resistance, values, norm_rules, class_bias, basis):
     dv_require(0 < rt_count(basis), "Detective profile needs content provenance")
-    return {"cognitive_profile": "Foolish_Detective", "Replay_Depth": replay_depth, "plan_depth": 2, "Implicature_Resistance": resistance, "scope_reference_check": false, "value_order": values, "value_basis": basis, "norm_rules": norm_rules, "class_bias": class_bias, "profile_basis": basis}
+    return {"cognitive_profile": "Foolish_Detective", "empirical_initiative": 0.01, "counterfactual_initiative": 0.03, "Replay_Depth": replay_depth, "plan_depth": 2, "Implicature_Resistance": resistance, "scope_reference_check": false, "value_order": values, "value_basis": basis, "norm_rules": norm_rules, "class_bias": class_bias, "profile_basis": basis}
 
 fn cognitive_sample(key, options, basis):
     dv_require(0 < rt_count(options) and 0 < rt_count(basis), "Cognitive sampling needs options and provenance")
