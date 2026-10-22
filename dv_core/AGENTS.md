@@ -178,3 +178,5 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 两章 CLI 激进优化入口及开关合同见 `../docs/cli-optimization.md` 的 2026-10-22 节；本轮用户的 180 秒运行授权优先于历史窗口。原始 DAG 事件封包可附进程单调耗时，旧证据不补造时间。
 
 追加激进 CLI 开关 cow/mask/lazyinternal/dirty/planreuse/blackbox 的作用域、近似边界与调试断言统一见 `../docs/cli-optimization.md`。私有 stage 更新共享未变对象；所有人物使用同一剪枝参数，缓存必须包含完整知识版本。不得将开关接线或机制差分当作正式会话验收。
+
+规划器的 Top-K 仅容纳存在本人 active/predict 采纳的后继候选，避免不可预测项占用可展开名额；统一 CLI 深度上限的默认值及调试参数见 cli-optimization。测试窗口遵从用户当前授权，不能将搜索深度调整当作未知前提的补值机制。

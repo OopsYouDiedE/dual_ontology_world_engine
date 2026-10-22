@@ -396,7 +396,7 @@ def main():
     for name in optimization_names:
         parser.add_argument('--opt-' + name, choices=('on', 'off'), default='on')
     parser.add_argument('--prune-top-k', type=int, default=3)
-    parser.add_argument('--plan-depth', type=int, default=1)
+    parser.add_argument('--plan-depth', type=int, default=3)
     parser.add_argument('--plan-time-bucket', type=int, default=60)
     parser.add_argument('--opt-dirty-verify', type=int, nargs='?', const=100, default=0, help='Recheck dependency cache every N accesses; no argument means 100')
     parser.add_argument('--opt-mask-verify', action='store_true')
