@@ -36,3 +36,5 @@ run_debug 的新增优化开关默认 on；mask/dirty verify 默认 off，仅作
 `opt-evidence-index` 同时控制二进制 payload 原字节校验复用与只读节点缓存；所有帧仍完整解码、校验类型、帧哈希及有序链。节点缓存按 8192 项和 16 MiB 原始帧字节双限驱逐（Python 对象实际内存另有开销），不得省略原字段或未投影尾部报告。有限合成读取差分不构成正式会话或整局后处理性能验收。
 
 性能报告分别列会话与整命令180秒达标；命令实测缺失保持未知。矩阵并发字段仅描述自身，不能作为跨检出没有并行工作的证明。
+
+run_debug显式将opt_plancache/opt_declcache分别写入DV_OPT_PLANCACHE/DV_OPT_DECLCACHE；完整run_config与runtime_environment继续留证。两者控制核心显式缓存组，不禁用全局memo，不代替各自dirty/replaycache等开关。

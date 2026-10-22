@@ -5783,15 +5783,9 @@ fn c1n_known_wait_actor(actor, target, basis):
     return dv_with_many(actor, {"actions": actions, "policy": dv_with_many(actor.policy, {"goals": goals, "known_wait_active": active_wait})})
 
 fn c1n_wait_profile(actor):
-    var policy = actor.policy
-    if actor.mind.time < 1440 and dv_has(["detective", "huo", "shen", "su", "quer", "ward", "gu", "lucian"], actor.id) and dv_truth(actor.mind, campaign_at(actor.id, "living_hall")) == "true":
-        if not dv_has_key(policy, "first_night_plan_depth"):
-            policy = dv_with(policy, "first_night_plan_depth", dv_find(policy, "plan_depth", 2))
-        policy = dv_with_many(policy, {"plan_depth": 1, "first_night_plan_active": true})
-    else:
-        if dv_find(policy, "first_night_plan_active", false):
-            policy = dv_with_many(policy, {"plan_depth": policy.first_night_plan_depth, "first_night_plan_active": false})
-    return dv_with(actor, "policy", policy)
+    // Waiting remains governed by the existing declared goals and wait actions.
+    // No role or room-specific search-depth override is applied here.
+    return actor
 
 // Only positive lower bounds in the actor's declared goal conditions qualify.
 // A negated bound denotes an upper limit, so its subtree is deliberately opaque.

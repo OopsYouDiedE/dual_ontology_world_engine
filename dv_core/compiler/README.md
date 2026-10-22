@@ -142,3 +142,5 @@ CLI 性能选项 `DV_OPT_RECORDCACHE=1` 在会话值缓存上下文创建时读�
 
 
 `DV_OPT_RUNTIMESPEED` 在 ValueContext 创建时读取，未设置或非 `0` 时开启，`0` 关闭。开启后，由 Thaw 创建的 List<object> 子类把可变元数据存入自身；普通外部 List 以及跨 ValueContext 的访问仍走各上下文自己的弱表。根与子分支继续独立复制，父关系继续为弱引用，任何写入仍逐级失效；不绕过 Invalidate 或改变重复键规则。SnapshotValue 对已经不可变的子值省去递归调用，并在已持有同一快照锁时直接复用文本 pair 的内部构造；快照池、哈希、精确数、全部字段与二进制证据仍走原合同。关闭恢复弱表根与原递归/加锁路径。有限机制差分不能证明正式会话耗时收益。
+
+`rt_memo_group_enabled(group)`为一参数只读ABI，接受plan/declaration并返回上下文采样的DV_OPT_PLANCACHE/DV_OPT_DECLCACHE布尔值；未设置时为true，未知组报错。它不直接改变rt_memo_get/put；DV组包装器关闭时返回miss/原计算值，原memo键和其他缓存分区保持不变。

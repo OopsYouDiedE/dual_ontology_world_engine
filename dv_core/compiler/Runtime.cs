@@ -237,6 +237,8 @@ public static class R
         internal readonly bool ReadViewEnabled = Environment.GetEnvironmentVariable("DV_OPT_READVIEW") == "1";
         // Sample once per execution context; CLI captures this in run_config.
         internal readonly bool RecordCacheEnabled = Environment.GetEnvironmentVariable("DV_OPT_RECORDCACHE") == "1";
+        internal readonly bool PlanCacheEnabled = Environment.GetEnvironmentVariable("DV_OPT_PLANCACHE") != "0";
+        internal readonly bool DeclarationCacheEnabled = Environment.GetEnvironmentVariable("DV_OPT_DECLCACHE") != "0";
         internal readonly bool PredicateEnabled = Environment.GetEnvironmentVariable("DV_OPT_PREDICATE") == "1";
         internal readonly bool PredicateCacheEnabled = Environment.GetEnvironmentVariable("DV_OPT_PREDICATECACHE") == "1";
         internal readonly ConditionalWeakTable<FrozenList, PredicateCellCache> PredicateCells = new();
@@ -1320,6 +1322,14 @@ public static class R
         internal readonly Queue<object> Order = new();
     }
     private static ConditionalWeakTable<FrozenList, ValueMemo> ValueMemos => Caches.ValueMemos;
+    // Cache groups select reuse only. Keys, computations and unrelated memo groups
+    // remain unchanged; the caller takes its ordinary computation on a miss.
+    public static object memo_group_enabled(object group) => group switch
+    {
+        "plan" => Caches.PlanCacheEnabled ? BoolTrue : BoolFalse,
+        "declaration" => Caches.DeclarationCacheEnabled ? BoolTrue : BoolFalse,
+        _ => throw new ArgumentException("Unknown memo control group", nameof(group))
+    };
     public static object memo_get(object owner, object key)
     {
         var caches = Caches;

@@ -1,0 +1,607 @@
+diff --git a/docs/cli-optimization.md b/docs/cli-optimization.md
+index ff5417f2..33fff3cf 100644
+--- a/docs/cli-optimization.md
++++ b/docs/cli-optimization.md
+@@ -198,3 +198,9 @@ readview 还可复用条件读取输入已经存在的有效不可变 Backbone
+ 有限实测与边界见 `artifacts/perf-opt/aggressive/postprocess-speed/README.md`；这些结果不宣称 828 MiB 真实 DAG 后处理耗时或端到端 180 秒达标。
+ 
+ 报告分别保留会话进程180秒指标与整条 `run_debug` 命令180秒指标；后者包含构建及后处理，仍须实际章末检视和来源/封存核验成立。缺少命令墙钟时标为未知，不由阶段耗时相加补造。矩阵状态的 `matrix_parallel_sessions` 仅说明矩阵自身串行，不能证明其他检出没有并行诊断；正式比较须另行确认全机没有竞争会话。
++
++### 核心缓存关闭合同（2026-10-23）
++
++`--opt-plancache off` 同时关闭30的完整规划、行动预测、主题/检视/重演可用性及actor依赖结果缓存；`--opt-declcache off` 关闭30的静态动作目录、依赖拓扑、方法目录、编译模型计划与空闲声明索引。原memo键保持不变；关闭只跳过缓存读取/写入，重新执行同一计算。CLI分别设置DV_OPT_PLANCACHE和DV_OPT_DECLCACHE，Runtime在独立ValueContext创建时采样；未设置环境变量时保留原启用行为。dirty判定缓存、付费重演结果共享及证据索引仍由各自开关控制，不使用全局memo禁用。
++
++首夜等待刷新不再按角色ID、房间和首日条件压低plan_depth；现有等待目标、等待动作、资格和个人策略深度保持由原声明决定，统一prune_depth上限继续作用于所有主体。此变更只恢复规划范围，不宣称更快或已通过正式会话验收。
+diff --git a/dv_core/AGENTS.md b/dv_core/AGENTS.md
+index 60ff3ecb..c77b73d5 100644
+--- a/dv_core/AGENTS.md
++++ b/dv_core/AGENTS.md
+@@ -207,3 +207,5 @@ current_appraisals只维护本人appraisal facet中的当前可撤销评价，
+ 可选调查导航与已有本人可执行目标的协调使用通用 coordinate_owned_tasks 合同；不按单条线索或人物身份提前返回，不额外加分。接口与边界见 ../docs/cli-optimization.md。
+ 
+ 非语言听觉事件以 environmental-sound 中性呈现，不把真实日志行动者自动投射成听者已辨认的声源；surface_voice/category透传合同见 ../docs/cli-optimization.md。
++
++核心规划缓存与静态声明索引的独立关闭范围见../docs/cli-optimization.md“核心缓存关闭合同”。30使用显式plan/declaration缓存组，保留原memo键；不得通过禁用所有rt_memo干扰dirty、付费重演及证据索引。首夜等待刷新不再按角色ID改写规划深度。
+diff --git a/dv_core/compiler/10-compiler.dv b/dv_core/compiler/10-compiler.dv
+index 99c7f519..742c1be3 100644
+--- a/dv_core/compiler/10-compiler.dv
++++ b/dv_core/compiler/10-compiler.dv
+@@ -108,7 +108,7 @@
+ (defn runtime_name (name) (if (rt_lt (rt_length name) 3) false (rt_eq (rt_slice name 0 3) "rt_")))
+ (defn native_arity (name)
+   (if (has (words "rt_list rt_arg_count rt_raw_abort rt_audit_mode rt_record_cache_enabled rt_predicate_enabled rt_cow_enabled rt_mask_enabled rt_lazyinternal_enabled") name) 0
+-    (if (has (words "rt_cell_uncontested rt_read_view rt_read_ref_view_safe rt_record_like_cached rt_ref_key_text_cached rt_ref_lookup_key_cached rt_compiler_cache_read rt_number rt_is_number rt_is_numeric_value rt_is_text rt_not rt_length rt_code rt_show rt_count rt_is_list rt_copy_value rt_snapshot rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify rt_json_print rt_raw_open rt_raw_event rt_raw_finish rt_raw_ref rt_text_join rt_id_start rt_id_part rt_normalize rt_exact rt_floor") name) 1
++    (if (has (words "rt_memo_group_enabled rt_cell_uncontested rt_read_view rt_read_ref_view_safe rt_record_like_cached rt_ref_key_text_cached rt_ref_lookup_key_cached rt_compiler_cache_read rt_number rt_is_number rt_is_numeric_value rt_is_text rt_not rt_length rt_code rt_show rt_count rt_is_list rt_copy_value rt_snapshot rt_fail rt_arg rt_read rt_print rt_json_parse rt_json_stringify rt_json_print rt_raw_open rt_raw_event rt_raw_finish rt_raw_ref rt_text_join rt_id_start rt_id_part rt_normalize rt_exact rt_floor") name) 1
+       (if (has (words "rt_causal_event_index rt_causal_ancestors_index rt_predicate_leaf rt_compiler_cache_write rt_phase rt_add rt_sub rt_mul rt_div rt_lt rt_eq rt_memo_get rt_has_value rt_record_with_many rt_same_value rt_cat rt_chr rt_push rt_at rt_write rt_json_write rt_raw_checkpoint rt_record_index") name) 2
+         (if (has (words "rt_causal_prior_index rt_causal_ancestor_index rt_dirty_next rt_stage_store_cow rt_slice rt_replace rt_record_find rt_record_with rt_memo_put rt_list_with_index") name) 3 -1)))))
+ (defn lookup (signatures name)
+diff --git a/dv_core/compiler/README.md b/dv_core/compiler/README.md
+index 19b63f97..5a660d16 100644
+--- a/dv_core/compiler/README.md
++++ b/dv_core/compiler/README.md
+@@ -142,3 +142,5 @@ CLI 性能选项 `DV_OPT_RECORDCACHE=1` 在会话值缓存上下文创建时读
+ 
+ 
+ `DV_OPT_RUNTIMESPEED` 在 ValueContext 创建时读取，未设置或非 `0` 时开启，`0` 关闭。开启后，由 Thaw 创建的 List<object> 子类把可变元数据存入自身；普通外部 List 以及跨 ValueContext 的访问仍走各上下文自己的弱表。根与子分支继续独立复制，父关系继续为弱引用，任何写入仍逐级失效；不绕过 Invalidate 或改变重复键规则。SnapshotValue 对已经不可变的子值省去递归调用，并在已持有同一快照锁时直接复用文本 pair 的内部构造；快照池、哈希、精确数、全部字段与二进制证据仍走原合同。关闭恢复弱表根与原递归/加锁路径。有限机制差分不能证明正式会话耗时收益。
++
++`rt_memo_group_enabled(group)`为一参数只读ABI，接受plan/declaration并返回上下文采样的DV_OPT_PLANCACHE/DV_OPT_DECLCACHE布尔值；未设置时为true，未知组报错。它不直接改变rt_memo_get/put；DV组包装器关闭时返回miss/原计算值，原memo键和其他缓存分区保持不变。
+diff --git a/dv_core/compiler/Runtime.cs b/dv_core/compiler/Runtime.cs
+index de7765fd..5e534c8a 100644
+--- a/dv_core/compiler/Runtime.cs
++++ b/dv_core/compiler/Runtime.cs
+@@ -237,6 +237,8 @@ public static class R
+         internal readonly bool ReadViewEnabled = Environment.GetEnvironmentVariable("DV_OPT_READVIEW") == "1";
+         // Sample once per execution context; CLI captures this in run_config.
+         internal readonly bool RecordCacheEnabled = Environment.GetEnvironmentVariable("DV_OPT_RECORDCACHE") == "1";
++        internal readonly bool PlanCacheEnabled = Environment.GetEnvironmentVariable("DV_OPT_PLANCACHE") != "0";
++        internal readonly bool DeclarationCacheEnabled = Environment.GetEnvironmentVariable("DV_OPT_DECLCACHE") != "0";
+         internal readonly bool PredicateEnabled = Environment.GetEnvironmentVariable("DV_OPT_PREDICATE") == "1";
+         internal readonly bool PredicateCacheEnabled = Environment.GetEnvironmentVariable("DV_OPT_PREDICATECACHE") == "1";
+         internal readonly ConditionalWeakTable<FrozenList, PredicateCellCache> PredicateCells = new();
+@@ -1320,6 +1322,14 @@ public static class R
+         internal readonly Queue<object> Order = new();
+     }
+     private static ConditionalWeakTable<FrozenList, ValueMemo> ValueMemos => Caches.ValueMemos;
++    // Cache groups select reuse only. Keys, computations and unrelated memo groups
++    // remain unchanged; the caller takes its ordinary computation on a miss.
++    public static object memo_group_enabled(object group) => group switch
++    {
++        "plan" => Caches.PlanCacheEnabled ? BoolTrue : BoolFalse,
++        "declaration" => Caches.DeclarationCacheEnabled ? BoolTrue : BoolFalse,
++        _ => throw new ArgumentException("Unknown memo control group", nameof(group))
++    };
+     public static object memo_get(object owner, object key)
+     {
+         var caches = Caches;
+diff --git a/dv_core/modules/30-session.dv b/dv_core/modules/30-session.dv
+index ccb89456..d43a585c 100644
+--- a/dv_core/modules/30-session.dv
++++ b/dv_core/modules/30-session.dv
+@@ -1,5 +1,27 @@
+ #include 20-core.dv
+ 
++// Named reuse groups preserve the original memo keys and computations.
++// Off returns a miss and never populates that group's memo partitions.
++fn dvs_plan_cache_get(owner, key):
++    if not rt_memo_group_enabled("plan"):
++        return [false, false]
++    return rt_memo_get(owner, key)
++
++fn dvs_plan_cache_put(owner, key, value):
++    if rt_memo_group_enabled("plan"):
++        return rt_memo_put(owner, key, value)
++    return value
++
++fn dvs_declaration_cache_get(owner, key):
++    if not rt_memo_group_enabled("declaration"):
++        return [false, false]
++    return rt_memo_get(owner, key)
++
++fn dvs_declaration_cache_put(owner, key, value):
++    if rt_memo_group_enabled("declaration"):
++        return rt_memo_put(owner, key, value)
++    return value
++
+ // The selector receives only one actor snapshot. No authority or oracle argument.
+ 
+ fn dvs_event(events, kind, actor, time, parents, data):
+@@ -451,7 +473,7 @@ fn dvs_hypotheses(actor, events, time, parent):
+ // contains declarations only; the subject's complete admission is still checked.
+ fn dvs_obligation_actions(actions):
+     let key = ["dvs-obligation-actions-v1"]
+-    let cached = rt_memo_get(actions, key)
++    let cached = dvs_declaration_cache_get(actions, key)
+     if cached[0]:
+         return cached[1]
+     var result = []
+@@ -460,7 +482,7 @@ fn dvs_obligation_actions(actions):
+         if dv_find(actions[i], "obligation", false):
+             rt_push(result, actions[i])
+         i = i + 1
+-    return rt_memo_put(actions, key, result)
++    return dvs_declaration_cache_put(actions, key, result)
+ 
+ fn dvs_scan_obligations(actor, now, costs):
+     let actions = dvs_obligation_actions(actor.actions)
+@@ -564,10 +586,10 @@ fn dvs_choose(actor, bindings, costs):
+             return dvp_task_remember(actor, bindings, costs, dvp_plan(actor, bindings, costs))
+         return dvp_plan(actor, bindings, costs)
+     let key = ["dvp_plan", dvp_memo_input(actor, costs), bindings, costs]
+-    let cached = rt_memo_get(actor.mind, key)
++    let cached = dvs_plan_cache_get(actor.mind, key)
+     if cached[0]:
+         return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "dependency_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions, "reused_dependency_expansions": dv_find(cached[1], "dependency_expansions", 0), "planning_work": {"cache_hit": true, "candidates_considered": 0, "candidates_skipped": 0, "partial_layer": false, "examined_layers": 0, "completed_layers": 0, "candidate_order": "cached-plan", "candidate_order_scans": 0, "candidate_order_reuses": 0, "admission_checks": 0, "eligible_evaluations": 0, "forecasts": 0, "forecast_reuses": 0, "expanded_nodes": 0, "skipped_expansion": true, "stop_reason": "identical-complete-plan-input", "reused_work": dv_find(cached[1], "planning_work", [])}}))
+-    return dvs_honor_planned_followup(actor, rt_memo_put(actor.mind, key, dvp_plan(actor, bindings, costs)))
++    return dvs_honor_planned_followup(actor, dvs_plan_cache_put(actor.mind, key, dvp_plan(actor, bindings, costs)))
+ 
+ // Keep the actor's own predicted next step after a successful move, provided
+ // the fresh plan still finds that action directly eligible and valuable.
+@@ -758,7 +780,7 @@ fn dvs_reason_input(actor):
+     actor = rt_snapshot(actor)
+     let adoptions = actor.mind.adoptions
+     let key = ["reason_input_refs"]
+-    let cached = rt_memo_get(adoptions, key)
++    let cached = dvs_declaration_cache_get(adoptions, key)
+     var refs = []
+     if cached[0]:
+         refs = cached[1]
+@@ -773,7 +795,7 @@ fn dvs_reason_input(actor):
+                     refs = dvp_add_ref(refs, adoption.law.effects[j].ref)
+                     j = j + 1
+             i = i + 1
+-        rt_memo_put(adoptions, key, refs)
++        dvs_declaration_cache_put(adoptions, key, refs)
+     let derivations = dv_find(actor, "inference_derivations", [])
+     var i = 0
+     while i < rt_count(derivations):
+@@ -893,7 +915,7 @@ fn dvs_prepare_manual_cognition(actor, events, time, parent, chapter):
+ fn dvp_choice_groups(actions):
+     actions = rt_snapshot(actions)
+     let key = ["dvp-choice-groups-v1"]
+-    let cached = rt_memo_get(actions, key)
++    let cached = dvs_declaration_cache_get(actions, key)
+     if cached[0]:
+         return cached[1]
+     var groups = []
+@@ -904,7 +926,7 @@ fn dvp_choice_groups(actions):
+             let group = action.personal_choice.group
+             groups = dv_with(groups, group, dv_append(dv_find(groups, group, []), action))
+         i = i + 1
+-    return rt_memo_put(actions, key, groups)
++    return dvs_declaration_cache_put(actions, key, groups)
+ 
+ // Ordinal personal values are owned by the subject, not by the proposed action.
+ 
+@@ -1804,7 +1826,7 @@ fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent):
+ fn dvs_visible_object_catalog(objects):
+     objects = rt_snapshot(objects)
+     let key = ["visible-object-catalog-v1"]
+-    let cached = rt_memo_get(objects, key)
++    let cached = dvs_declaration_cache_get(objects, key)
+     if cached[0]:
+         return cached[1]
+     var rooms = []
+@@ -1826,7 +1848,7 @@ fn dvs_visible_object_catalog(objects):
+                 let room = dv_find(rooms, location.value, [])
+                 rooms = dv_with(rooms, location.value, dv_with(room, object.id, visible))
+         i = i + 1
+-    return rt_memo_put(objects, key, rooms)
++    return dvs_declaration_cache_put(objects, key, rooms)
+ 
+ fn dvs_visible_objects(actor, physical):
+     if not dv_find(actor.policy, "notice_visible_objects", false):
+@@ -1950,10 +1972,10 @@ fn dvp_topic(actor, item):
+     if not rt_is_list(mind):
+         return dvp_topic_scan(actor, topic, question, bindings)
+     let key = ["dvp_topic", item, dv_has_key(actor, "question_ref"), dv_find(actor, "question_ref", false), bindings, dv_find(actor, "heard_topics", [])]
+-    let cached = rt_memo_get(mind, key)
++    let cached = dvs_plan_cache_get(mind, key)
+     if cached[0]:
+         return cached[1]
+-    return rt_memo_put(mind, key, dvp_topic_scan(actor, topic, question, bindings))
++    return dvs_plan_cache_put(mind, key, dvp_topic_scan(actor, topic, question, bindings))
+ 
+ fn dvp_topic_scan(actor, topic, question, bindings):
+     var i = 0
+@@ -2011,7 +2033,7 @@ fn dvp_dependency_add(graph, ref, inputs):
+ 
+ fn dvp_dependency_topology(mind, methods):
+     let key = ["dvp_dependency_topology-ref-key-v1", methods]
+-    let cached = rt_memo_get(mind.adoptions, key)
++    let cached = dvs_declaration_cache_get(mind.adoptions, key)
+     if cached[0]:
+         return cached[1]
+     var graph = []
+@@ -2034,7 +2056,7 @@ fn dvp_dependency_topology(mind, methods):
+             graph = dvp_dependency_add(graph, method.scope[j], inputs)
+             j = j + 1
+         i = i + 1
+-    return rt_memo_put(mind.adoptions, key, graph)
++    return dvs_declaration_cache_put(mind.adoptions, key, graph)
+ 
+ fn dvp_dependencies(mind, seeds, budget, methods):
+     let graph = dvp_dependency_topology(mind, methods)
+@@ -2092,7 +2114,7 @@ fn dvp_probe_refs(actor):
+ 
+ fn dvp_scope(actor, action, bindings):
+     let key = ["dvp-owned-action-scope-v1", actor.id, bindings]
+-    let cached = rt_memo_get(action, key)
++    let cached = dvs_plan_cache_get(action, key)
+     if cached[0]:
+         return cached[1]
+     var declared = dv_find(action, "purpose_refs", [])
+@@ -2108,7 +2130,7 @@ fn dvp_scope(actor, action, bindings):
+             else:
+                 refs = dvp_add_ref(refs, dv_ref(local, ref.facet, ref.field))
+         i = (i + 1)
+-    return rt_memo_put(action, key, refs)
++    return dvs_plan_cache_put(action, key, refs)
+ 
+ fn dvp_answer_reward(actor, action, mind):
+     if dv_find(action, "answer_form", "complete-answer") == "supporting-statement":
+@@ -2748,7 +2770,7 @@ fn dvp_pruned_edges(edges, edge, limit):
+ 
+ fn dvp_dependency_methods(actor):
+     let key = ["dvp_dependency_methods"]
+-    let cached = rt_memo_get(actor.actions, key)
++    let cached = dvs_declaration_cache_get(actor.actions, key)
+     if cached[0]:
+         return cached[1]
+     var actions = actor.actions
+@@ -2758,16 +2780,20 @@ fn dvp_dependency_methods(actor):
+         if not dv_find(actions[i], "known_opportunity_wait", false):
+             rt_push(methods, {"scope": dv_find(actions[i], "purpose_refs", dv_find(actions[i], "grants", [])), "premise": actions[i].precondition, "owner_refs": dvp_owner_requirement_refs(actions[i])})
+         i = (i + 1)
+-    return rt_memo_put(actor.actions, key, methods)
++    return dvs_declaration_cache_put(actor.actions, key, methods)
+ 
+ fn dvp_cached_dependencies(actor, seeds, budget):
+     let methods = dvp_dependency_methods(actor)
+     let signature = {"seeds": seeds, "budget": budget, "adoptions": actor.mind.adoptions, "methods": methods}
+-    let cache = dv_find(actor, "dependency_cache", false)
++    var cache = false
++    if dv_find(actor.policy, "opt_plancache", true) and rt_memo_group_enabled("plan"):
++        cache = dv_find(actor, "dependency_cache", false)
+     if cache != false:
+         if dv_same(cache.signature, signature):
+             return dv_with_many(cache.result, {"expanded": 0, "reused_expanded": cache.result.expanded, "cache_hit": true, "cache": cache})
+     let result = dvp_dependencies(actor.mind, seeds, budget, methods)
++    if not dv_find(actor.policy, "opt_plancache", true) or not rt_memo_group_enabled("plan"):
++        return dv_with_many(result, {"reused_expanded": 0, "cache_hit": false, "cache": false})
+     // An identical bounded prefix is reusable too. Its original budget stop
+     // remains explicit; caching it never upgrades it to a complete closure.
+     return dv_with_many(result, {"reused_expanded": 0, "cache_hit": false, "cache": {"signature": signature, "result": result}})
+@@ -3291,7 +3317,7 @@ fn dvp_plan(actor, bindings, costs):
+ 
+ fn dvp_find_action(actions, id):
+     let key = ["dvp-find-action", id]
+-    let cached = rt_memo_get(actions, key)
++    let cached = dvs_declaration_cache_get(actions, key)
+     if cached[0]:
+         return cached[1]
+     var i = 0
+@@ -3300,7 +3326,7 @@ fn dvp_find_action(actions, id):
+         if (actions[i].id == id):
+             result = actions[i]
+         i = (i + 1)
+-    return rt_memo_put(actions, key, result)
++    return dvs_declaration_cache_put(actions, key, result)
+ 
+ // A forecast may discard old co-presence but never discover a peer at a new
+ // location. The search carries this filtered record forward, so returning to a
+@@ -3462,11 +3488,11 @@ fn dvp_refresh_current_evidence(actor, goals):
+ // Pure prediction only; this cache never writes actual action or evidence events.
+ fn dvp_forecast(mind, name):
+     let key = ["dvp_forecast", name]
+-    let cached = rt_memo_get(mind, key)
++    let cached = dvs_plan_cache_get(mind, key)
+     if cached[0]:
+         return dv_with(cached[1], "planning_cache_hit", true)
+     let result = dv_predict(dv_with_many(mind, {"domain": "mind", "history": [], "seen": []}), name, rt_cat("planning-forecast-", rt_show(mind.revision)), dv_find(mind, "time", 0), mind.revision)
+-    rt_memo_put(mind, key, result)
++    dvs_plan_cache_put(mind, key, result)
+     return dv_with(result, "planning_cache_hit", false)
+ 
+ // Catalog-only filtering; dynamic eligibility is still checked on the node mind.
+@@ -3474,7 +3500,7 @@ fn dvp_room_actions(actions, room, location_ref):
+     if room == "" or location_ref == false:
+         return actions
+     let key = ["dvp_room_actions", room, location_ref]
+-    let cached = rt_memo_get(actions, key)
++    let cached = dvs_declaration_cache_get(actions, key)
+     if cached[0]:
+         return cached[1]
+     var result = []
+@@ -3490,7 +3516,7 @@ fn dvp_room_actions(actions, room, location_ref):
+         if required == "" or required == room:
+             rt_push(result, action)
+         i = i + 1
+-    return rt_memo_put(actions, key, result)
++    return dvs_declaration_cache_put(actions, key, result)
+ 
+ // Reorder only the selective root's declaration list. A grant is a declared
+ // opportunity to observe, never a claim that its content is true or useful.
+@@ -3499,7 +3525,7 @@ fn dvp_selective_action_order(actions, costs):
+     actions = rt_snapshot(actions)
+     costs = rt_snapshot(costs)
+     let key = ["dvp-selective-action-order-v1", costs]
+-    let cached = rt_memo_get(actions, key)
++    let cached = dvs_declaration_cache_get(actions, key)
+     if cached[0]:
+         return {"actions": cached[1], "scanned": 0, "reused": 1}
+     var priority = []
+@@ -3534,14 +3560,14 @@ fn dvp_selective_action_order(actions, costs):
+     while i < rt_count(remaining):
+         rt_push(result, remaining[i])
+         i = i + 1
+-    rt_memo_put(actions, key, result)
++    dvs_declaration_cache_put(actions, key, result)
+     return {"actions": result, "scanned": rt_count(actions), "reused": 0}
+ 
+ // Every inspection in the same mind reuses the evidence refresh and availability reads.
+ fn dvp_inspection_freshness(actor, mind):
+     let declared = dv_find(actor.policy, "goals", [])
+     let key = ["dvp_inspection_freshness-ref-key-v1", declared]
+-    let cached = rt_memo_get(mind, key)
++    let cached = dvs_plan_cache_get(mind, key)
+     if cached[0]:
+         return cached[1]
+     let goals = dvp_refresh_current_evidence(dvp_actor_view(actor, mind), declared)
+@@ -3561,7 +3587,7 @@ fn dvp_inspection_freshness(actor, mind):
+             else:
+                 rt_push(index, pair)
+         i = i + 1
+-    return rt_memo_put(mind, key, index)
++    return dvs_plan_cache_put(mind, key, index)
+ 
+ 
+ // Structured speech: authority is checked by execution, cognition by each owner.
+@@ -4634,10 +4660,10 @@ fn dvs_sim_refs(proposition):
+ fn dvs_sim_plan(hypothesis):
+     let key = ["compiled-model-plan", dv_has_key(hypothesis, "timeline"), dv_find(hypothesis, "predict_laws", [])]
+     let timeline = dv_find(hypothesis, "timeline", [])
+-    let cached = rt_memo_get(timeline, key)
++    let cached = dvs_declaration_cache_get(timeline, key)
+     if cached[0]:
+         return cached[1]
+-    return rt_memo_put(timeline, key, dvs_sim_plan_build(hypothesis))
++    return dvs_declaration_cache_put(timeline, key, dvs_sim_plan_build(hypothesis))
+ 
+ fn dvs_sim_plan_build(hypothesis):
+     var timeline = dv_find(hypothesis, "timeline", [])
+@@ -6408,7 +6434,7 @@ fn dvs_argument_action(actor, action):
+ fn dvs_materialize_arguments(actor):
+     var actions = actor.actions
+     let key = ["dvs_argument_action_positions"]
+-    let cached = rt_memo_get(actions, key)
++    let cached = dvs_declaration_cache_get(actions, key)
+     var positions = []
+     var i = 0
+     if cached[0]:
+@@ -6418,7 +6444,7 @@ fn dvs_materialize_arguments(actor):
+             if dv_has_key(actions[i], "argument_slots"):
+                 rt_push(positions, i)
+             i = i + 1
+-        rt_memo_put(actions, key, positions)
++        dvs_declaration_cache_put(actions, key, positions)
+     if rt_count(positions) == 0:
+         return actor
+     var result = actions
+@@ -7400,14 +7426,14 @@ fn dvs_declared_conditions_cached(value):
+     if not rt_is_list(value):
+         return []
+     let key = ["dvs-declared-conditions-subtree-v1"]
+-    let cached = rt_memo_get(value, key)
++    let cached = dvs_declaration_cache_get(value, key)
+     if cached[0]:
+         return cached[1]
+     var conditions = []
+     if dv_record_like(value):
+         if dv_has_key(value, "op"):
+             if not dv_has(["assign", "increment"], value.op):
+-                return rt_memo_put(value, key, [value])
++                return dvs_declaration_cache_put(value, key, [value])
+     var i = 0
+     while i < rt_count(value):
+         let nested = dvs_declared_conditions_cached(value[i])
+@@ -7416,12 +7442,12 @@ fn dvs_declared_conditions_cached(value):
+             rt_push(conditions, nested[j])
+             j = j + 1
+         i = i + 1
+-    return rt_memo_put(value, key, conditions)
++    return dvs_declaration_cache_put(value, key, conditions)
+ 
+ fn dvs_idle_window_boundary(actor, story, now, limit):
+     let clock = dv_find(story, "clock_ref", false)
+     let key = ["dvs_idle_declared_conditions", actor.policy, actor.mind.adoptions]
+-    let cached = rt_memo_get(actor.actions, key)
++    let cached = dvs_declaration_cache_get(actor.actions, key)
+     var conditions = []
+     if cached[0]:
+         conditions = cached[1]
+@@ -7434,7 +7460,7 @@ fn dvs_idle_window_boundary(actor, story, now, limit):
+             conditions = dvs_declared_conditions_cached(declarations)
+         else:
+             conditions = dvs_declared_conditions([actor.actions, actor.policy, actor.mind.adoptions])
+-        rt_memo_put(actor.actions, key, conditions)
++        dvs_declaration_cache_put(actor.actions, key, conditions)
+     var boundary = dvs_known_clock_boundary(dv_all(conditions), clock, now, limit)
+     let duties = dvs_obligation_actions(actor.actions)
+     var duty_index = 0
+@@ -8649,15 +8675,15 @@ fn dvs_replay_has_available_candidate(actor):
+     if rt_count(candidates) == 0:
+         return 0 < rt_count(dv_find(actor.policy, "factor_constraints", []))
+     let key = ["dvs_replay_has_available_candidate", actor.id, candidates, dv_has_key(actor, "question_ref"), dv_find(actor, "question_ref", false), dv_find(actor.policy, "topic_bindings", []), dv_find(actor, "heard_topics", [])]
+-    let cached = rt_memo_get(actor.mind, key)
++    let cached = dvs_plan_cache_get(actor.mind, key)
+     if cached[0]:
+         return cached[1]
+     var i = 0
+     while i < rt_count(candidates):
+         if dvs_replay_candidate_available(actor, candidates[i]):
+-            return rt_memo_put(actor.mind, key, true)
++            return dvs_plan_cache_put(actor.mind, key, true)
+         i = i + 1
+-    return rt_memo_put(actor.mind, key, false)
++    return dvs_plan_cache_put(actor.mind, key, false)
+ 
+ fn dvs_manual_candidate_available(actor, candidate):
+     return dvs_replay_candidate_available(actor, candidate) and dv_truth(actor.mind, dv_find(candidate, "manual_available_when", dv_true())) == "true"
+diff --git a/dv_core/modules/40-chapter1.dv b/dv_core/modules/40-chapter1.dv
+index 3c244e4b..d84a5cf9 100644
+--- a/dv_core/modules/40-chapter1.dv
++++ b/dv_core/modules/40-chapter1.dv
+@@ -5783,15 +5783,9 @@ fn c1n_known_wait_actor(actor, target, basis):
+     return dv_with_many(actor, {"actions": actions, "policy": dv_with_many(actor.policy, {"goals": goals, "known_wait_active": active_wait})})
+ 
+ fn c1n_wait_profile(actor):
+-    var policy = actor.policy
+-    if actor.mind.time < 1440 and dv_has(["detective", "huo", "shen", "su", "quer", "ward", "gu", "lucian"], actor.id) and dv_truth(actor.mind, campaign_at(actor.id, "living_hall")) == "true":
+-        if not dv_has_key(policy, "first_night_plan_depth"):
+-            policy = dv_with(policy, "first_night_plan_depth", dv_find(policy, "plan_depth", 2))
+-        policy = dv_with_many(policy, {"plan_depth": 1, "first_night_plan_active": true})
+-    else:
+-        if dv_find(policy, "first_night_plan_active", false):
+-            policy = dv_with_many(policy, {"plan_depth": policy.first_night_plan_depth, "first_night_plan_active": false})
+-    return dv_with(actor, "policy", policy)
++    // Waiting remains governed by the existing declared goals and wait actions.
++    // No role or room-specific search-depth override is applied here.
++    return actor
+ 
+ // Only positive lower bounds in the actor's declared goal conditions qualify.
+ // A negated bound denotes an upper limit, so its subtree is deliberately opaque.
+diff --git a/mcp/AGENTS.md b/mcp/AGENTS.md
+index dd8512f0..14922c55 100644
+--- a/mcp/AGENTS.md
++++ b/mcp/AGENTS.md
+@@ -36,3 +36,5 @@ run_debug 的新增优化开关默认 on；mask/dirty verify 默认 off，仅作
+ `opt-evidence-index` 同时控制二进制 payload 原字节校验复用与只读节点缓存；所有帧仍完整解码、校验类型、帧哈希及有序链。节点缓存按 8192 项和 16 MiB 原始帧字节双限驱逐（Python 对象实际内存另有开销），不得省略原字段或未投影尾部报告。有限合成读取差分不构成正式会话或整局后处理性能验收。
+ 
+ 性能报告分别列会话与整命令180秒达标；命令实测缺失保持未知。矩阵并发字段仅描述自身，不能作为跨检出没有并行工作的证明。
++
++run_debug显式将opt_plancache/opt_declcache分别写入DV_OPT_PLANCACHE/DV_OPT_DECLCACHE；完整run_config与runtime_environment继续留证。两者控制核心显式缓存组，不禁用全局memo，不代替各自dirty/replaycache等开关。
+diff --git a/mcp/verification/cache_controls_check.cs b/mcp/verification/cache_controls_check.cs
+new file mode 100644
+index 00000000..46b8bf50
+--- /dev/null
++++ b/mcp/verification/cache_controls_check.cs
+@@ -0,0 +1,73 @@
++using DuelView.Compiled;
++using static DuelView.Core.DVKernel;
++
++static class CacheControlsCheck
++{
++    static List<object> L(params object[] values) => new(values);
++    static object Rec(params object[] pairs) => L(pairs);
++    static object Pair(string key, object value) => L(key, value);
++    static bool Hit(object value) => (bool)R.at(value, 0d);
++    static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
++    static bool Same(object left, object right) => R.json_stringify(left).Equals(R.json_stringify(right));
++    static object Get(object value, string key) => F_dv_get(value, key);
++    static object Without(object value, string key) => F_dv_without(value, key);
++    static object CheckCase(bool plan, bool declaration)
++    {
++        Environment.SetEnvironmentVariable("DV_OPT_PLANCACHE", plan ? "1" : "0");
++        Environment.SetEnvironmentVariable("DV_OPT_DECLCACHE", declaration ? "1" : "0");
++        using var scope = R.UseValues(new R.ValueContext());
++        var owner = R.snapshot(L("owner"));
++        var key = L("original-key", "complete-input");
++        F_dvs_plan_cache_put(owner, key, "plan-result");
++        Require(Hit(R.memo_get(owner,key)) == plan, "plan disabled must not write");
++        Require(Hit(F_dvs_plan_cache_get(owner,key)) == plan, "plan hit control");
++        var declaredKey = L("original-declaration-key");
++        F_dvs_declaration_cache_put(owner,declaredKey,"declaration-result");
++        Require(Hit(R.memo_get(owner,declaredKey)) == declaration,"declaration disabled must not write");
++        Require(Hit(F_dvs_declaration_cache_get(owner,declaredKey)) == declaration,"declaration hit control");
++        // A preexisting entry must also be ignored when the group is off.
++        R.memo_put(owner,L("prepopulated-plan"),"old");
++        Require(Hit(F_dvs_plan_cache_get(owner,L("prepopulated-plan"))) == plan,"plan disabled must not read old entry");
++        R.memo_put(owner,L("prepopulated-declaration"),"old");
++        Require(Hit(F_dvs_declaration_cache_get(owner,L("prepopulated-declaration"))) == declaration,"declaration disabled must not read old entry");
++        R.memo_put(owner,L("other-independent-group"),"retained");
++        Require(Hit(R.memo_get(owner,L("other-independent-group"))),"unrelated memo remains enabled");
++        var mind = F_dv_world("mind-fixture","mind","fixture");
++        var law = F_dv_axiom("predict-fixture",1d,F_dv_true(),L());
++        mind = F_dv_adopt(mind,law,"predict",1d,L("fixture-source"));
++        var first = F_dvp_forecast(mind,"predict-fixture");
++        var second = F_dvp_forecast(mind,"predict-fixture");
++        Require(!(bool)Get(first,"planning_cache_hit"),"first forecast miss");
++        Require((bool)Get(second,"planning_cache_hit") == plan,"second forecast hit follows control");
++        Require(Same(Without(first,"planning_cache_hit"),Without(second,"planning_cache_hit")),"forecast repeated computation parity");
++        var actor = Rec(Pair("id","fixture"),Pair("mind",mind),Pair("actions",L()),Pair("policy",Rec(Pair("opt_plancache",true))));
++        var reference = F_dv_ref("missing","facet","field");
++        var deps = F_dvp_cached_dependencies(actor,L(reference),4d);
++        actor = F_dv_with(actor,"dependency_cache",Get(deps,"cache"));
++        var deps2 = F_dvp_cached_dependencies(actor,L(reference),4d);
++        Require((bool)Get(deps2,"cache_hit") == plan,"stored dependency result follows control");
++        Require(Same(Get(deps,"refs"),Get(deps2,"refs")),"dependency refs parity");
++        Require(Same(Get(deps,"stop"),Get(deps2,"stop")),"dependency stop parity");
++        if (!plan) Require(Get(deps2,"cache").Equals(false),"disabled dependency result not saved");
++        var methodKey = L("dvp_dependency_methods");
++        Require(Hit(R.memo_get(Get(actor,"actions"),methodKey)) == declaration,"method declaration index follows independent control");
++        return Rec(Pair("forecast",Without(first,"planning_cache_hit")),Pair("dependency_refs",Get(deps,"refs")),Pair("dependency_stop",Get(deps,"stop")));
++    }
++    public static void Main()
++    {
++        foreach (var id in new[]{"detective","huo","shen","su","quer","ward","gu","lucian","demon","resident-fixture"})
++        {
++            var actor = Rec(Pair("id",id),Pair("policy",Rec(Pair("plan_depth",4d),Pair("wait_chunk_limit",60d))),Pair("mind",Rec(Pair("time",30d))));
++            Require(ReferenceEquals(actor,DVProgram.F_c1n_wait_profile(actor)),"first-night refresh must preserve actor, depth and waiting policy for " + id);
++        }
++        Console.WriteLine("first-night refresh preserves actor, depth and waiting policy across named and unknown identities");
++        object? baseline = null;
++        foreach (var plan in new[]{false,true}) foreach (var declaration in new[]{false,true})
++        {
++            var value = CheckCase(plan,declaration);
++            baseline ??= value;
++            Require(Same(value,baseline),"all switch combinations preserve forecast and dependency results");
++            Console.WriteLine($"plan={plan}, declaration={declaration}: cache reads/writes, native memo independence, forecast and dependency parity confirmed");
++        }
++    }
++}
+diff --git a/mcp/verification/check_cache_controls.py b/mcp/verification/check_cache_controls.py
+new file mode 100644
+index 00000000..45f7545f
+--- /dev/null
++++ b/mcp/verification/check_cache_controls.py
+@@ -0,0 +1,27 @@
++"""Finite cache-control mechanism check; never opens or advances a session."""
++import subprocess
++import tempfile
++from pathlib import Path
++from xml.sax.saxutils import escape
++
++ROOT = Path(__file__).resolve().parents[2]
++
++def main():
++    assembly = ROOT / 'dv_core/base/bin/Release/net8.0/DuelView.Core.dll'
++    if not assembly.is_file():
++        raise SystemExit('Build LanguageCore in Release before this finite check')
++    session = ROOT / 'dv_core/host_bridge/bin/Release/net8.0/DuelView.Session.dll'
++    if not session.is_file():
++        raise SystemExit('Build LanguageCore in Release before this finite check')
++    scratch = ROOT / '.scratch'
++    scratch.mkdir(exist_ok=True)
++    with tempfile.TemporaryDirectory(prefix='cache-controls-', dir=scratch) as folder:
++        work = Path(folder)
++        (work / 'Program.cs').write_bytes(Path(__file__).with_name('cache_controls_check.cs').read_bytes())
++        project = '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup><ItemGroup><Reference Include="DuelView.Core"><HintPath>' + escape(str(assembly)) + '</HintPath></Reference><Reference Include="DuelView.Session"><HintPath>' + escape(str(session)) + '</HintPath></Reference></ItemGroup></Project>'
++        (work / 'Check.csproj').write_text(project, encoding='utf-8')
++        subprocess.run(['dotnet', 'build', str(work / 'Check.csproj'), '-c', 'Release', '--disable-build-servers', '-p:NuGetAudit=false'], check=True, timeout=120)
++        subprocess.run(['dotnet', str(work / 'bin/Release/net8.0/Check.dll')], check=True, timeout=30)
++
++if __name__ == '__main__':
++    main()
+diff --git a/mcp/verification/run_debug.py b/mcp/verification/run_debug.py
+index 059d9ce0..81230ab1 100644
+--- a/mcp/verification/run_debug.py
++++ b/mcp/verification/run_debug.py
+@@ -549,6 +549,8 @@ def _main():
+     for name in ('cow', 'mask', 'lazyinternal', 'mask_verify'):
+         execution_env['DV_OPT_' + name.upper()] = '1' if run_config.get('opt_' + name, False) else '0'
+     execution_env['DV_OPT_APPENDSHARE'] = '1' if run_config.get('opt_appendshare', False) else '0'
++    execution_env['DV_OPT_PLANCACHE'] = '1' if run_config.get('opt_plancache', False) else '0'
++    execution_env['DV_OPT_DECLCACHE'] = '1' if run_config.get('opt_declcache', False) else '0'
+     execution_env['DV_OPT_READVIEW'] = '1' if run_config.get('opt_readview', False) else '0'
+     execution_env['DV_OPT_RECORDCACHE'] = '1' if run_config.get('opt_recordcache', False) else '0'
+     execution_env['DV_OPT_PREDICATE'] = '1' if run_config.get('opt_predicate', False) else '0'
