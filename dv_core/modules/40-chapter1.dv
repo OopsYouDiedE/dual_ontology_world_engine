@@ -592,6 +592,29 @@ fn c1_sound_ready(actor):
     action = dv_with_many(action, {"speech": dv_with_many(c1_speech(campaign_at(actor, c1_sound_station(actor)), source, "own-position-and-voluntary-commitment"), {"channel": "copper.trial.signal", "surface": words}), "listeners": ["detective", "huo", "shen", "su", "demon"], "public_grants": [c1_sound_ref(ready)], "predict_law": id, "presentation": c1_op_presentation(actor, "visible-action", [])})
     return {"action": action, "law": law}
 
+// A missed one-time position signal is recovered by a new audible request and
+// the participant's paid reply. Neither action reads another subject's mind.
+fn c1_sound_ready_query(coordinator, participant):
+    let source = c1_sound_source()
+    let ready = c1_sound_fact(rt_cat("ready.", participant), true)
+    let known = dv_all([c1_sound_pending(), c1_sound_fact("coordinator", coordinator), campaign_at(coordinator, "hall"), c1_sound_fact(rt_cat("ready.", coordinator), true), dv_not(ready)])
+    let physical = dv_all([c1_sound_pending(), c1_sound_fact("coordinator", coordinator), campaign_at(coordinator, "hall"), c1_sound_fact(rt_cat("ready.", coordinator), true)])
+    let id = rt_cat(coordinator, rt_cat(".sound.ask-ready.", participant))
+    let topic = rt_cat("sound-ready.", participant)
+    var action = campaign_intent_action(id, "talk", known, physical, id, [], "询问尚未听到的到位信号", source)
+    action = dv_with_many(action, {"speech": dv_with_many(c1_speech(dv_true(), source, "actual-position-confirmation-request"), {"channel": "copper.trial.signal", "surface": "刚才的到位信号我没有听清。请在约定的听音处再报一次到位。", "request": {"target": participant, "topic": topic}}), "listeners": [participant], "request_transport": {"channel": "copper.trial.signal"}, "purpose_refs": [c1_sound_ref(rt_cat("ready.", participant))], "repeatable": true})
+    return {"action": action, "law": dv_axiom(id, 1, physical, [])}
+
+fn c1_sound_ready_reply(participant, coordinator):
+    let source = c1_sound_source()
+    let ready = rt_cat("ready.", participant)
+    let known = dv_all([c1_sound_pending(), c1_sound_fact("coordinator", coordinator), campaign_at(participant, c1_sound_station(participant)), c1_sound_fact(ready, true)])
+    let id = rt_cat(participant, rt_cat(".sound.repeat-ready.", coordinator))
+    let literal = dv_all([campaign_at(participant, c1_sound_station(participant)), c1_sound_fact(ready, true)])
+    var action = campaign_intent_action(id, "talk", known, known, id, [], "应询问重新报告本人到位", source)
+    action = dv_with_many(action, {"speech": dv_with_many(c1_speech(literal, source, "requested-own-position-confirmation"), {"channel": "copper.trial.signal", "surface": rt_cat(rt_cat("我仍在", c1_place_label(c1_sound_station(participant))), "，会留在这里听完。铜管又响起两下短促的敲击。")}), "listeners": [coordinator], "public_grants": [c1_sound_ref(ready)], "response_topic": rt_cat("sound-ready.", participant), "requires_actual_request": true, "response_requester": coordinator, "response_request_action": rt_cat(coordinator, rt_cat(".sound.ask-ready.", participant)), "request_transport": {"channel": "copper.trial.signal"}, "repeatable": true})
+    return {"action": action, "law": dv_axiom(id, 1, known, [])}
+
 fn c1_sound_agreement():
     let source = c1_sound_source()
     let id = "demon.sound.agree-repeat"
@@ -726,6 +749,7 @@ fn c1_sound_install_scene(scene):
                 j = j + 1
             var declarations = []
             var goals = dv_clone(actor.policy.goals)
+            var request_channels = dv_clone(dv_find(actor, "request_channels", []))
             if dv_has(["detective", "huo"], actor.id):
                 let invitation = c1_sound_invite(actor.id)
                 rt_push(declarations, invitation)
@@ -733,6 +757,27 @@ fn c1_sound_install_scene(scene):
                 rt_push(goals, campaign_goal(c1_sound_fact("sound_trial_done", true), dv_all([c1_sound_pending(), c1_sound_fact("coordinator", actor.id)]), [source]))
             if dv_has(people, actor.id):
                 rt_push(declarations, c1_sound_ready(actor.id))
+                var coordinator_index = 0
+                let coordinators = ["detective", "huo"]
+                while coordinator_index < rt_count(coordinators):
+                    let coordinator = coordinators[coordinator_index]
+                    var participant_index = 0
+                    while participant_index < rt_count(people):
+                        let participant = people[participant_index]
+                        if coordinator != participant:
+                            if actor.id == coordinator:
+                                let query = c1_sound_ready_query(coordinator, participant)
+                                rt_push(declarations, query)
+                                rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": query.action.id, "available_when": query.action.precondition, "requires_argument": false, "basis": [source]})
+                            if actor.id == participant:
+                                rt_push(declarations, c1_sound_ready_reply(participant, coordinator))
+                            if actor.id == coordinator or actor.id == participant:
+                                var target = coordinator
+                                if actor.id == coordinator:
+                                    target = participant
+                                rt_push(request_channels, {"target": target, "channel": "copper.trial.signal", "available_when": dv_all([c1_sound_pending(), campaign_at(actor.id, c1_sound_station(actor.id)), c1_sound_fact("coordinator", coordinator)]), "basis": [source]})
+                        participant_index = participant_index + 1
+                    coordinator_index = coordinator_index + 1
                 rt_push(declarations, c1_sound_read_result(actor.id))
                 let report = c1_sound_report(actor.id)
                 let report_law = dv_axiom(report.id, 1, report.authority_precondition, [dv_assign(c1_sound_ref(rt_cat("hearing_reported.", actor.id)), true)])
@@ -767,7 +812,7 @@ fn c1_sound_install_scene(scene):
                     listener_rooms = ["living_hall"]
                 rt_push(hearing, {"speaker": senders[j], "channel": "copper.trial.signal", "available_when": dv_true(), "sender_locations": [sender_room], "listener_locations": listener_rooms, "basis": [source]})
                 j = j + 1
-            actor = dv_with_many(actor, {"mind": mind, "actions": c1_public_methods(actions), "hearing_grants": hearing, "policy": dv_with(actor.policy, "goals", goals)})
+            actor = dv_with_many(actor, {"mind": mind, "actions": c1_public_methods(actions), "hearing_grants": hearing, "request_channels": request_channels, "policy": dv_with(actor.policy, "goals", goals)})
         rt_push(actors, actor)
         i = i + 1
     return dv_with_many(scene, {"physical": physical, "actors": actors, "bindings": bindings, "sound_trial_installed": true})

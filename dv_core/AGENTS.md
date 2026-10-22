@@ -213,3 +213,5 @@ current_appraisals只维护本人appraisal facet中的当前可撤销评价，�
 
 
 独立taskgraph/storyflow/stateindex开关默认on；60保存、布尔核对并传给全部主体。taskgraph为本人策略近似，storyflow为内容重写，不标为轨迹等价；stateindex运行时DV_OPT_STATEINDEX与65配置核对、复用合同见../docs/cli-optimization.md。新增开关不授权正式会话。
+
+40的声路准备补闻复用30的请求上下文、实际收闻与回应消费，不建立第二套调度；`request_channels` 不授予听觉许可，补报不得复制物理准备表或试验结果。内容握手接线边界见../docs/cli-optimization.md。
