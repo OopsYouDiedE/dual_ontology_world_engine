@@ -2875,8 +2875,20 @@ fn c1_other_answer_actions(id):
         var action_id = rt_cat(rt_cat(rt_cat(id, ".answer."), person.group), rt_cat(".", option))
         var known = dv_all([campaign_at(id, spec.room), campaign_case_claim(person.group, "open"), answer, dv_true()])
         var action = campaign_intent_action(action_id, "answer", known, known, "", [], rt_cat("提交人物答复：", c1_other_person(option).name), spec.source)
-        var speech = dv_with(c1_speech(answer, spec.source, "literal-actor-only-not-motive"), "surface", rt_cat(c1_other_person(option).name, c1_other_report_surface(person.group)))
+        var speech = dv_with(c1_speech(answer, spec.source, "literal-actor-only-not-motive"), "surface", c1_other_literal_report_surface(person.group, option))
         rt_push(result, dv_with_many(action, {"answer": answer, "answer_id": action_id, "topic": rt_cat(person.group, ".identity"), "speech": dv_with(speech, "channel", rt_cat("copper.", person.group)), "listeners": dv_single("demon"), "authority_precondition": dv_all([campaign_at(id, spec.room), campaign_case_claim(person.group, "open"), campaign_at("demon", "living_hall"), dv_true()]), "purpose_refs": dv_single(campaign_case_ref(person.group, rt_cat("receipt.", id)))}))
+        let rows = c1_other_truth_rows(person.group)
+        let last = rows[rt_count(rows) - 1]
+        let reasons = spec.reason_options
+        var r = 0
+        while r < rt_count(reasons):
+            let reason = reasons[r]
+            let complete = dv_all([answer, campaign_case_claim(person.group, last.id), campaign_case_claim(person.group, rt_cat("reason.", reason))])
+            let complete_id = rt_cat(action_id, rt_cat(".reason.", reason))
+            let ready = dv_all([campaign_at(id, spec.room), campaign_case_claim(person.group, "open"), complete])
+            let surface = c1_other_reason_report_surface(person.group, option, reason)
+            rt_push(result, dv_with_many(campaign_surface_action(complete_id, "answer", ready, ready, "", [], "提交完整经过与理由", surface, spec.source), {"answer": complete, "answer_id": complete_id, "topic": rt_cat(person.group, ".reason"), "content_grade": "complete-causal-account", "speech": dv_with_many(c1_speech(complete, spec.source, "personally-supported-causal-account"), {"surface": surface, "channel": rt_cat("copper.", person.group)}), "listeners": ["demon"], "purpose_refs": [campaign_case_ref(person.group, rt_cat("receipt.", id))]}))
+            r = r + 1
         i = (i + 1)
     return result
 
@@ -2893,6 +2905,14 @@ fn c1_other_formal_answers():
             var literal = c1_other_submission(person.group, option)
             var id = rt_cat(rt_cat(rt_cat(person.id, ".answer."), person.group), rt_cat(".", option))
             rt_push(result, {"id": id, "stage": rt_cat(person.group, ".identity"), "condition": literal, "required_support": literal, "question_match": campaign_case_claim(person.group, "open"), "answer_complete": literal, "require_argument": false, "accepted_law": rt_cat(rt_cat("other.accept.", person.group), rt_cat(".", person.id)), "progress_ref": campaign_case_ref(person.group, rt_cat("level.", person.id)), "completion_ref": campaign_case_ref(person.group, rt_cat("receipt.", person.id)), "accepted_listeners": [person.id, "demon"], "accepted_public_grants": [campaign_case_ref(person.group, rt_cat("receipt.", person.id)), campaign_case_ref(person.group, rt_cat("level.", person.id)), dv_ref(rt_cat("personal.", person.id), "state", "current"), campaign_clock()], "source_refs": dv_single(spec.source)})
+            let rows = c1_other_truth_rows(person.group)
+            let last = rows[rt_count(rows) - 1]
+            var r = 0
+            while r < rt_count(spec.reason_options):
+                let reason = spec.reason_options[r]
+                let complete = dv_all([literal, campaign_case_claim(person.group, last.id), campaign_case_claim(person.group, rt_cat("reason.", reason))])
+                rt_push(result, {"id": rt_cat(id, rt_cat(".reason.", reason)), "stage": rt_cat(person.group, ".reason"), "content_grade": "complete-causal-account", "condition": complete, "required_support": complete, "question_match": campaign_case_claim(person.group, "open"), "answer_complete": complete, "require_argument": false, "accepted_law": rt_cat(rt_cat("other.accept.", person.group), rt_cat(".", person.id)), "progress_ref": campaign_case_ref(person.group, rt_cat("level.", person.id)), "completion_ref": campaign_case_ref(person.group, rt_cat("receipt.", person.id)), "accepted_listeners": [person.id, "demon"], "accepted_public_grants": [campaign_case_ref(person.group, rt_cat("receipt.", person.id)), campaign_case_ref(person.group, rt_cat("level.", person.id)), dv_ref(rt_cat("personal.", person.id), "state", "current")], "source_refs": [spec.source]})
+                r = r + 1
             j = (j + 1)
         i = (i + 1)
     return result
@@ -2913,6 +2933,17 @@ fn c1_other_preconception(id):
     if (id == "bertrand"):
         return {"preferred": "experiment", "source_strength": 1, "basis": dv_single(campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/寝区案件.story", 59, "bertrand.preconception")), "kind": "authored-preconception-not-evidence"}
     return false
+
+// An initial inspection opens private interpretation, not authoritative motive facts.
+fn c1_other_initial_inquiry(group):
+    if group == "contract":
+        return campaign_case_claim(group, "wax_ash_seen")
+    return campaign_case_claim(group, "assess_injury")
+
+fn c1_other_reason_prior(bias, option):
+    if bias != false and bias.preferred == option:
+        return 0.5 + bias.source_strength / 10
+    return 0.5
 
 fn c1_other_reason_hypotheses(id):
     var person = c1_other_person(id)
@@ -2936,7 +2967,7 @@ fn c1_other_reason_hypotheses(id):
             if (bias.preferred == option):
                 basis = bias.basis
         var proposition = campaign_case_claim(person.group, rt_cat("reason.", option))
-        rt_push(result, {"id": rt_cat(rt_cat(person.group, ".reason."), option), "question": rt_cat(person.group, ".reason"), "group": rt_cat(person.group, ".reason"), "proposition": proposition, "assumptions": dv_single(proposition), "prior": 0.5, "available_when": campaign_case_claim(person.group, rt_cat("receipt.", id)), "basis": basis, "interpretation_scope": "motive-separate-from-accepted-literal-actor", "source_preconception": bias})
+        rt_push(result, {"id": rt_cat(rt_cat(person.group, ".reason."), option), "question": rt_cat(person.group, ".reason"), "group": rt_cat(person.group, ".reason"), "proposition": proposition, "assumptions": dv_single(proposition), "prior": c1_other_reason_prior(bias, option), "available_when": c1_other_initial_inquiry(person.group), "basis": basis, "interpretation_scope": "motive-separate-from-accepted-literal-actor", "source_preconception": bias})
         i = (i + 1)
     return result
 
@@ -2979,7 +3010,7 @@ fn c1_other_policy(id):
     while (i < rt_count(reasons)):
         rt_push(hypotheses, reasons[i])
         i = (i + 1)
-    return dv_with_many(c1_player_policy(), {"hypotheses": hypotheses, "goals": goals, "desire": {"surface": person.desire, "basis": dv_single(person.desire_source), "fulfillment": "not-asserted"}, "notice_co_presence": true, "topic_bindings": dv_pair({"topic": "own_material", "heard_when": dv_true(), "completed_when": dv_not(dv_true()), "basis": dv_single(person.material_source)}, {"topic": rt_cat(person.group, ".reason"), "heard_when": campaign_case_claim(person.group, rt_cat("receipt.", id)), "completed_when": dv_not(dv_true()), "basis": dv_single(spec.source)})})
+    return dv_with_many(c1_player_policy(), {"hypotheses": hypotheses, "goals": goals, "desire": {"surface": person.desire, "basis": dv_single(person.desire_source), "fulfillment": "not-asserted"}, "notice_co_presence": true, "topic_bindings": dv_pair({"topic": "own_material", "heard_when": dv_true(), "completed_when": dv_not(dv_true()), "basis": dv_single(person.material_source)}, {"topic": rt_cat(person.group, ".reason"), "heard_when": c1_other_initial_inquiry(person.group), "completed_when": dv_not(dv_true()), "basis": dv_single(spec.source)})})
 
 fn c1_other_character(id):
     var person = c1_other_person(id)
@@ -3293,7 +3324,137 @@ fn c1_other_groups_install_scene(scene):
         else:
             rt_push(installed_actors, actors[i])
         i = i + 1
-    return dv_with_many(scene, {"physical": world, "actors": installed_actors, "bindings": bindings, "formal_answers": answers, "cost_model": dv_append(scene.cost_model, dv_pair("other_departure", c1_cost(2, campaign_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 37, "走动：2"))))})
+    return c1_other_inquiry_scene(dv_with_many(scene, {"physical": world, "actors": installed_actors, "bindings": bindings, "formal_answers": answers, "cost_model": dv_append(scene.cost_model, dv_pair("other_departure", c1_cost(2, campaign_source("godot_csharp/scenes/Awakening/Script/story/剧情时长.story", 37, "走动：2"))))}))
+
+// Reuse the authored material/recall chain for residents. Actual requests and
+// successful Complete remain necessary; no observer receives a motive on setup.
+// Private moral appraisal consumes acquired material, never a report flag.
+fn c1_other_moral_conflict(id):
+    let group = c1_other_person(id).group
+    if group == "contract":
+        return dv_all([campaign_case_claim(group, "quer_insulted"), c1_other_material(group, "key_holder", "quer"), c1_other_material(group, "scrap_instruction", "open-and-remove-privately"), c1_other_material(group, "signed_public_order", false)])
+    if group == "astral":
+        return dv_all([c1_other_material(group, "ankle_swollen", true), c1_other_material(group, "half_sketch", "hand-behind-lowered-gate"), c1_other_material(group, "admitted_operator", "ruan"), c1_other_material(group, "stated_calculation", "preserve-three")])
+    return dv_all([c1_other_material(group, "acid_blisters", true), c1_other_material(group, "physician_permission", false), c1_other_material(group, "reported_taker", "veronica"), c1_other_material(group, "reported_reagent", "R-07")])
+
+fn c1_other_inquiry_scene(scene):
+    var world = scene.physical
+    var actors = []
+    let groups = ["contract", "astral", "logistics"]
+    var g = 0
+    while g < rt_count(groups):
+        let group = groups[g]
+        let rows = c1_other_truth_rows(group)
+        var j = 0
+        while j < rt_count(rows):
+            let row = rows[j]
+            world = dv_store(world, campaign_case_ref(group, row.id), dv_field(false))
+            let people = c1_other_people()
+            var k = 0
+            while k < rt_count(people):
+                if people[k].group == group:
+                    let owner = people[k].id
+                    let law = c1_other_resident_truth_law(group, row, owner)
+                    world = dv_adopt(world, campaign_method(rt_cat(rt_cat("resident.truth.", owner), rt_cat(".", row.id)), law), "enforce", 1, [c1_other_case(group).source])
+                k = k + 1
+            j = j + 1
+        g = g + 1
+    var i = 0
+    while i < rt_count(scene.actors):
+        var actor = scene.actors[i]
+        if dv_has(c1_other_group_listeners("contract", ""), actor.id) or dv_has(c1_other_group_listeners("astral", ""), actor.id) or dv_has(c1_other_group_listeners("logistics", ""), actor.id):
+            let person = c1_other_person(actor.id)
+            let group = person.group
+            let source = c1_other_case(group).source
+            let rows = c1_other_truth_rows(group)
+            let final = campaign_case_claim(group, rows[rt_count(rows) - 1].id)
+            let angry = dv_ref(rt_cat("personal.", actor.id), "appraisal", "angry")
+            var mind = dv_store(actor.mind, angry, dv_with(dv_field(false), "basis", [person.initial_source]))
+            let bias = c1_other_preconception(actor.id)
+            if bias != false:
+                let conflict = dv_all([c1_other_moral_conflict(actor.id), dv_not(final)])
+                let appraisal = dv_axiom(rt_cat(actor.id, ".appraise-conflict"), 1, conflict, [dv_assign(angry, true)])
+                mind = dv_adopt(mind, campaign_method(rt_cat(actor.id, ".appraise-conflict"), appraisal), "infer", 1, bias.basis)
+            let revise = dv_axiom(rt_cat(actor.id, ".revise-appraisal"), 1, final, [dv_assign(angry, false)])
+            mind = dv_adopt(mind, campaign_method(rt_cat(actor.id, ".revise-appraisal"), revise), "infer", 1, [source])
+            var actions = dv_clone(actor.actions)
+            var goals = []
+            var j = 0
+            while j < rt_count(actor.policy.goals):
+                var goal = actor.policy.goals[j]
+                if dv_same(dv_find(goal, "proposition", false), campaign_case_claim(group, rt_cat("receipt.", actor.id))):
+                    goal = campaign_index_goal_window(dv_with(goal, "available_when", campaign_any(dv_fact(angry, true), final)))
+                rt_push(goals, goal)
+                j = j + 1
+            j = 0
+            while j < rt_count(rows):
+                let row = rows[j]
+                let ref = campaign_case_ref(group, row.id)
+                mind = dv_store(mind, ref, dv_with(dv_field(false), "basis", [source]))
+                let law = c1_other_resident_truth_law(group, row, actor.id)
+                let method = rt_cat(rt_cat("resident.truth.", actor.id), rt_cat(".", row.id))
+                mind = dv_adopt(mind, campaign_method(method, law), "predict", 1, [source])
+                let after = campaign_case_claim(group, row.after)
+                let ready = dv_all([campaign_at(actor.id, c1_other_case(group).room), after, dv_fact(ref, false)])
+                if row.kind != "talk":
+                    rt_push(actions, dv_with(campaign_surface_action(method, row.kind, ready, law.premise, method, [ref], row.label, c1_other_resident_truth_surface(row), source), "predict_law", method))
+                else:
+                    let ask_id = rt_cat(actor.id, rt_cat(".truth.ask.", row.id))
+                    let question = "请看这份已核对的材料。你能说明自己记得的经过吗？"
+                    rt_push(actions, dv_with_many(campaign_surface_action(ask_id, "talk", ready, dv_all([ready, campaign_at(row.partner, c1_other_case(group).room)]), "", [], row.label, question, source), {"speech": dv_with_many(c1_speech(after, source, "actual-evidence-question"), {"surface": question, "request": {"target": row.partner, "topic": rt_cat("truth.", row.id)}}), "listeners": [row.partner], "purpose_refs": [ref]}))
+                    // Every partner may answer each actual resident requester.
+                    if actor.id == row.partner:
+                        let peers = c1_other_group_listeners(group, actor.id)
+                        var k = 0
+                        while k < rt_count(peers):
+                            let peer = peers[k]
+                            let peer_method = rt_cat(rt_cat("resident.truth.", peer), rt_cat(".", row.id))
+                            let peer_law = c1_other_resident_truth_law(group, row, peer)
+                            mind = dv_adopt(mind, campaign_method(peer_method, peer_law), "predict", 1, [source])
+                            let recall = dv_with_many(campaign_surface_action(rt_cat(peer_method, ".recall"), "help", peer_law.premise, peer_law.premise, peer_method, [ref], "回想与材料有关的经过", "重新查看来问者递出的材料，试着把自己的记忆接起来。", source), {"predict_law": peer_method, "received_speech_requirement": {"speaker": peer, "action_id": rt_cat(peer, rt_cat(".truth.ask.", row.id))}})
+                            rt_push(actions, recall)
+                            let reply = dv_with_many(campaign_surface_action(rt_cat(peer_method, ".reply"), "talk", campaign_case_claim(group, row.id), campaign_at(actor.id, c1_other_case(group).room), "", [], "说明本人回想起的经过", c1_other_resident_truth_surface(row), source), {"speech": dv_with(c1_speech(campaign_case_claim(group, row.id), source, "own-recollection-after-request"), "surface", c1_other_resident_truth_surface(row)), "listeners": [peer], "response_topic": rt_cat("truth.", row.id), "requires_actual_request": true})
+                            rt_push(actions, reply)
+                            rt_push(goals, campaign_goal(campaign_case_claim(group, row.id), after, [source]))
+                            rt_push(goals, {"kind": "communicate", "scope": "personal", "method_id": reply.id, "available_when": campaign_case_claim(group, row.id), "requires_argument": false, "basis": [source]})
+                            k = k + 1
+                if actor.id == c1_other_reporter(group):
+                    rt_push(goals, campaign_goal(campaign_case_claim(group, row.id), dv_all([after, dv_fact(angry, false)]), [source]))
+                j = j + 1
+            let reason = campaign_case_ref(group, rt_cat("reason.", c1_other_case(group).authority_reason))
+            let inference = dv_axiom(rt_cat(actor.id, ".material-reason"), 1, final, [dv_assign(reason, true)])
+            mind = dv_adopt(mind, campaign_method(rt_cat(actor.id, ".material-reason"), inference), "infer", 1, [source])
+            actor = dv_with_many(actor, {"mind": mind, "actions": actions, "policy": dv_with(actor.policy, "goals", goals)})
+        rt_push(actors, actor)
+        i = i + 1
+    return dv_with_many(scene, {"physical": world, "actors": actors})
+
+fn c1_other_resident_truth_surface(row):
+    if row.id == "seal_examined":
+        return "来问的同伴对照火漆指模、封口和纸片毛边：封缄曾由同一只手压合，红墨残纸是从完整文书新撕下的。它说明有人交接，不能独自补出授权者。"
+    if row.id == "quer_recalled":
+        return "来问的同伴把封口与毛边递给雀儿。她盯着火漆，想起有人将钥匙和文书交到她掌中，叮嘱她取出内柜物件并藏妥。她承认藏入壁炉砖槽；这不是她自行决定的偷窃。"
+    if row.id == "moran_calmed":
+        return "来问的同伴没有催问，陪莫兰把呼吸放缓。他终于同意打开画夹暗层，取出未被截去的完整草图。"
+    if row.id == "gesture_examined":
+        return "完整草图中，伊莲娜伸出的手接着做了明确的劈切手势。半截画面遮住的，正是这个后续动作。"
+    if row.id == "elena_identified":
+        return "伊莲娜辨认完整草图：‘是我的手。我让她关。’阮清月确实拉闸，却不是单方面把她抛下。"
+    if row.id == "old_scar_examined":
+        return "维罗妮卡同意卷起左袖。来问的同伴查看的是左臂旧疤，边缘已愈合，与贝尔特朗今天的高烧分属不同病史。"
+    if row.id == "veronica_explained":
+        return "维罗妮卡说明：左臂三道旧疤来自R-07强酸络合剂的自体耐受标定。她依据此前在自己身上做的标定救治贝尔特朗；今天的酸泡争执不能抹去旧疤与救治用途。"
+    dv_require(false, "Unknown resident evidence row")
+    return ""
+
+axiom c1_other_resident_truth_law(group, row, owner):
+    var subject = owner
+    if row.kind == "talk":
+        subject = row.partner
+    var pre = [campaign_at(subject, c1_other_case(group).room), campaign_case_claim(group, row.after), dv_fact(campaign_case_ref(group, row.id), false)]
+    if row.partner != "":
+        rt_push(pre, campaign_at(row.partner, c1_other_case(group).room))
+    return dv_axiom(rt_cat(rt_cat("resident.truth.", owner), rt_cat(".", row.id)), 1, dv_all(pre), [dv_assign(campaign_case_ref(group, row.id), true)])
 
 fn c1_other_introduction(id):
     if id == "quer":
