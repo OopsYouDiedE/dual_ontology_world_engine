@@ -232,6 +232,58 @@ fn dvs_dirty_process_settled(world, adoption, config):
             rt_memo_put(law, key, dv_with(cached[1], "clean", true))
     return true
 
+// Reasoning has its own queue identity; signatures are external proof state.
+// A changed signature set/profile starts a fresh queue rather than hiding work.
+fn dvs_dirty_reason_index(actor):
+    let mind = actor.mind
+    let adoptions = rt_snapshot(mind.adoptions)
+    let key = ["dirty-reason-index-v2", mind.subject, dv_find(actor, "inference_signatures", []), dv_find(mind, "profile", [])]
+    let cached = rt_memo_get(adoptions, key)
+    if cached[0]:
+        return cached[1]
+    var result = []
+    var i = 0
+    while i < rt_count(adoptions):
+        let entry = adoptions[i]
+        var refs = []
+        // Keep original positions without interpreting unrelated declarations.
+        if entry[1].active and entry[1].mode == "infer":
+            let law = entry[1].law
+            refs = dvs_dirty_refs(law.premise)
+            var j = 0
+            while j < rt_count(law.effects):
+                let effect = law.effects[j]
+                dv_require(effect.op == "assign" or effect.op == "increment", rt_cat("Unindexed inference effect: ", effect.op))
+                refs = dvp_merge_refs(refs, [effect.ref])
+                j = j + 1
+            j = 0
+            while j < rt_count(refs):
+                let subject = dv_find(refs[j], "subject", "")
+                dv_require(subject == "" or subject == mind.subject, "Cross-subject reference access")
+                j = j + 1
+        rt_push(result, {"law": entry[0], "refs": refs})
+        i = i + 1
+    return rt_memo_put(adoptions, key, rt_snapshot(result))
+
+fn dvs_dirty_verify_reason(mind, adoptions, signatures, first, until, time):
+    var i = first
+    while i < until:
+        let entry = adoptions[i]
+        let law = entry[1].law
+        if entry[1].active and entry[1].mode == "infer":
+            var skip = false
+            if dv_find(signatures, entry[0], false) != false and dvs_reason_monotone_satisfied(mind, law.effects):
+                skip = true
+            if not skip and dv_truth_uncached(mind, law.premise) == "true":
+                let signature = dvs_reason_signature(mind, entry[1])
+                if not dv_same(dv_find(signatures, entry[0], false), signature):
+                    let stage = dv_stage(mind, law.effects, time, entry[1].basis, entry[1].confidence)
+                    // Alternative-basis receipts also consume budget and emit an
+                    // event. Therefore every ready stage must have been queued.
+                    dv_require(stage.status != "ready", rt_cat("Dirty inference omitted rule: ", law.name))
+        i = i + 1
+    return true
+
 fn dvs_reason_run(actor, events, time, parent):
     var mind = actor.mind
     var policy = actor.policy
@@ -240,9 +292,29 @@ fn dvs_reason_run(actor, events, time, parent):
     var changed = true
     var signatures = dv_find(actor, "inference_signatures", [])
     var derivations = dv_find(actor, "inference_derivations", [])
+    let dirty = dv_find(policy, "opt_dirty", false)
+    var dependency_index = []
+    var verify = false
+    if dirty and 0 < budget:
+        dependency_index = dvs_dirty_reason_index(actor)
+        let every = dv_find(policy, "opt_dirty_verify", 0)
+        if 0 < every:
+            let key = ["dirty-reason-verify-tick"]
+            let previous = rt_memo_get(dependency_index, key)
+            var calls = 1
+            if previous[0]:
+                calls = previous[1] + 1
+            if calls >= every:
+                verify = true
+                calls = 0
+            rt_memo_put(dependency_index, key, calls)
     while dv_and(changed, (count < budget)):
         var adoptions = mind.adoptions
         var i = 0
+        if dirty:
+            i = rt_dirty_next(mind, dependency_index, -1)
+            if verify:
+                dvs_dirty_verify_reason(mind, adoptions, signatures, 0, i, time)
         changed = false
         while dv_and((i < rt_count(adoptions)), (count < budget)):
             var entry = adoptions[i]
@@ -270,7 +342,16 @@ fn dvs_reason_run(actor, events, time, parent):
                                 count = (count + 1)
                                 signatures = dv_with(signatures, entry[0], sig)
                                 dvs_event(events, "inference_alternative_basis", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"law": law, "basis": entry[1].basis, "premises": dvs_reason_premises(mind, law.premise), "mind_revision": mind.revision})
-            i = (i + 1)
+            let previous = i
+            if dirty:
+                // Do not remove a queued candidate when this call cannot spend
+                // another inference step; it belongs to the next budget window.
+                if count < budget:
+                    i = rt_dirty_next(mind, dependency_index, previous)
+                    if verify:
+                        dvs_dirty_verify_reason(mind, adoptions, signatures, previous + 1, i, time)
+            else:
+                i = i + 1
     var local_1 = false
     if (count < budget):
         local_1 = "no-new-effective-conclusion"
@@ -8089,6 +8170,123 @@ fn dvs_environment_boundary(condition, clock, now, due):
 
 // A process that can still change the world requires another ordinary minute.
 // This retains repeated increments, conflicting writes and ordered cascades.
+// Analyze clock structure once per immutable declaration. Minute sampling is
+// an explicit classification for equality/ambiguous clock identity, matching
+// dv_time_boundary; unknown language operators are errors, not scan fallbacks.
+fn dvs_dirty_clock_plan(condition, clock):
+    let key = ["dirty-clock-plan-v2", clock]
+    let cached = rt_memo_get(condition, key)
+    if cached[0]:
+        return cached[1]
+    let op = condition.op
+    var minute = false
+    var thresholds = []
+    var aged = []
+    if op == "held_for":
+        dv_require(dv_condition_inputs(condition).complete, "Invalid held-for clock declaration")
+        return rt_memo_put(condition, key, {"minute": false, "thresholds": [], "aged": [condition]})
+    if op == "constant":
+        dv_require(dv_has(["true", "false", "unknown"], condition.value), "Invalid constant clock condition")
+    else:
+        if op == "not":
+            let child = dvs_dirty_clock_plan(condition.item, clock)
+            minute = child.minute
+            thresholds = child.thresholds
+            aged = child.aged
+        else:
+            if op == "all":
+                var i = 0
+                while i < rt_count(condition.items):
+                    let child = dvs_dirty_clock_plan(condition.items[i], clock)
+                    minute = minute or child.minute
+                aged = dvp_merge_refs(aged, child.aged)
+                    aged = dvp_merge_refs(aged, child.aged)
+                    var j = 0
+                    while j < rt_count(child.thresholds):
+                        if not dv_has(thresholds, child.thresholds[j]):
+                            rt_push(thresholds, child.thresholds[j])
+                        j = j + 1
+                    i = i + 1
+            else:
+                dv_require(op == "equals" or op == "at_least", rt_cat("Unindexed clock operator: ", op))
+                dv_require(dv_condition_inputs(condition).complete, "Invalid clock dependency declaration")
+                if clock != false:
+                    let relation = dv_time_ref_relation(condition.ref, clock)
+                    if relation == "unknown":
+                        minute = true
+                    else:
+                        if relation == "same":
+                            if op == "at_least" and rt_is_numeric_value(condition.value):
+                                rt_push(thresholds, condition.value)
+                            else:
+                                minute = true
+    return rt_memo_put(condition, key, {"minute": minute, "thresholds": thresholds, "aged": aged})
+
+fn dvs_dirty_clock_boundary(world, processes, clock, now, due):
+    let key = ["dirty-world-clock-plan-v2", world.adoptions, clock]
+    let cached = rt_memo_get(processes, key)
+    var plan = false
+    if cached[0]:
+        plan = cached[1]
+    else:
+        var minute = false
+        var thresholds = []
+        var aged = []
+        var i = 0
+        while i < rt_count(processes):
+            let adoption = dv_get(world.adoptions, processes[i].law)
+            if adoption.active and adoption.mode == "enforce":
+                let child = dvs_dirty_clock_plan(adoption.law.premise, clock)
+                minute = minute or child.minute
+                var j = 0
+                while j < rt_count(child.thresholds):
+                    if not dv_has(thresholds, child.thresholds[j]):
+                        rt_push(thresholds, child.thresholds[j])
+                    j = j + 1
+            i = i + 1
+        plan = rt_memo_put(processes, key, {"minute": minute, "thresholds": thresholds, "aged": aged})
+    if due < now:
+        return due
+    var next = due
+    if plan.minute:
+        next = dv_min(next, now + 1)
+    var i = 0
+    while i < rt_count(plan.thresholds):
+        let threshold = plan.thresholds[i]
+        if now < threshold and threshold <= due:
+            let delta = threshold - now
+            var steps = 1
+            while steps < delta:
+                steps = steps + 1
+            next = dv_min(next, now + steps)
+        i = i + 1
+    i = 0
+    while i < rt_count(plan.aged):
+        let condition = dv_time_materialize(world, plan.aged[i])
+        next = dv_min(next, dv_time_boundary(condition, clock, now, due, "minute").next)
+        i = i + 1
+    return next
+
+// Debug-only reference keeps the original scan and its first live-process return.
+// Invoke only at an explicitly requested opt_dirty_verify sample.
+fn dvs_environment_reference_next_time(world, processes, clock, now, due):
+    var next = due
+    var i = 0
+    while i < rt_count(processes):
+        let adoption = dv_get(world.adoptions, processes[i].law)
+        if adoption.active and adoption.mode == "enforce":
+            next = dv_min(next, dvs_environment_boundary(dv_time_materialize(world, adoption.law.premise), clock, now, due))
+            if dv_truth_uncached(world, adoption.law.premise) == "true":
+                let staged = dv_stage(world, adoption.law.effects, now, adoption.basis, adoption.confidence)
+                var j = 0
+                while j < rt_count(staged.changes):
+                    let change = staged.changes[j]
+                    if dv_same(change.ref, clock) or not dv_same(dvs_reason_value(change.before), dvs_reason_value(change.after)):
+                        return dv_min(due, now + 1)
+                    j = j + 1
+        i = i + 1
+    return next
+
 fn dvs_environment_next_time(world, story, due):
     let readview = dv_find(dv_find(story, "run_config", []), "opt_readview", false)
     if readview:
@@ -8099,20 +8297,46 @@ fn dvs_environment_next_time(world, story, due):
     var processes = dv_find(story, "world_processes", [])
     if readview:
         processes = rt_snapshot(processes)
+    let dirty_config = dv_find(story, "run_config", [])
+    let dirty = dv_find(dirty_config, "opt_dirty", false)
+    var verify_clock = false
+    var original_next = due
+    if dirty:
+        processes = rt_snapshot(processes)
+        next = dvs_dirty_clock_boundary(world, processes, clock, now, due)
+        let every = dv_find(dirty_config, "opt_dirty_verify", 0)
+        if 0 < every:
+            let key = ["dirty-clock-verify-tick"]
+            let previous = rt_memo_get(processes, key)
+            var calls = 1
+            if previous[0]:
+                calls = previous[1] + 1
+            if calls >= every:
+                verify_clock = true
+                calls = 0
+            rt_memo_put(processes, key, calls)
+    if verify_clock:
+        original_next = dvs_environment_reference_next_time(world, processes, clock, now, due)
     var i = 0
     while i < rt_count(processes):
         let adoption = dv_get(world.adoptions, processes[i].law)
         if adoption.active and adoption.mode == "enforce":
-            next = dv_min(next, dvs_environment_boundary(dv_time_materialize(world, adoption.law.premise), clock, now, due))
+            if not dirty:
+                next = dv_min(next, dvs_environment_boundary(dv_time_materialize(world, adoption.law.premise), clock, now, due))
             if dv_truth(world, adoption.law.premise) == "true":
                 let staged = dv_stage(world, adoption.law.effects, now, adoption.basis, adoption.confidence)
                 var j = 0
                 while j < rt_count(staged.changes):
                     let change = staged.changes[j]
                     if dv_same(change.ref, clock) or not dv_same(dvs_reason_value(change.before), dvs_reason_value(change.after)):
-                        return dv_min(due, now + 1)
+                        let immediate = dv_min(due, now + 1)
+                        if verify_clock:
+                            dv_require(immediate == original_next, "Dirty clock live-process boundary differs from reference scan")
+                        return immediate
                     j = j + 1
         i = i + 1
+    if verify_clock:
+        dv_require(next == original_next, "Dirty clock boundary differs from complete declaration scan")
     return next
 
 // ---- Merged source module: 40-host.dv ----
