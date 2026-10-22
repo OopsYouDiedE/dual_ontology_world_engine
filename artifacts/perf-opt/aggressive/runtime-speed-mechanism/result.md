@@ -17,10 +17,43 @@ Program.cs is the actual finite harness source. Build it in an independent
 net8.0 console project with ImplicitUsings and Nullable enabled and include
 compiler/Runtime.cs. The temporary project is removed after completion.
 
-Scope: value/COW mechanism equivalence only. No formal-session speed claim,
-raw-evidence writer equivalence, gameplay, UI, or whole-program acceptance.
+Scope: value/COW mechanism equivalence; supplemental complete binary evidence checks are recorded below. No formal-session speed claim, gameplay, UI, or whole-program acceptance.
 CLI integration owner must add runtimespeed to run_debug.py optimization_names
 and to its DV_OPT environment loop. No content config is necessary because
 this runtime option is sampled independently by R.ValueContext.
 
 Final frozen-source Release LanguageCore.sln build: succeeded, 0 warnings, 0 errors (38.31 seconds).
+
+
+## Supplemental binary evidence validation
+
+EvidenceProgram.cs was compiled as an independent net8.0 Release console
+program against the unchanged Runtime.cs. It creates actual OwnedList roots
+when on and ordinary List roots when off, confirms the public List ABI,
+performs nested updates, independent sibling reads and updates through shared
+external parent aliases, and includes exact 1/3, 2/7, 19/23, 29/31 and 37/41.
+Both modes write initial/final checkpoints plus actual e1/e2 raw_event values
+through RawDagWriter/FrozenNode. Both modes also WriteEvidenceFile, then use
+the production C# ReadEvidenceFile checksum/seal reader, create a mutable
+restored-owner copy, write it again, and require exact same_value roundtrips.
+
+check_evidence.py independently uses the existing read-only RawDagIndex to
+validate all six binary files, checksum chains, definition references,
+checkpoints and seals. Every expanded tagged field/item/rational value and
+ordering in both checkpoints and both events is identical on/off. All six
+files have complete_sealing=true and zero residual/uncommitted tails.
+Only the envelope process_elapsed_ms timing is excluded from equivalence;
+there is no requirement that nondeterministic timestamps or bytes match.
+The decoded checkpoint/event digest and per-file sizes are in evidence-result.txt.
+
+Static type-path inspection: Runtime.TryItems uses `case List<object>`;
+IsDvList/snapshot/copy_value/RawDagWriter.Node use subtype-compatible `is`
+patterns. FrozenNode accepts the resulting FrozenList, not the mutable CLR
+runtime type. BinaryProjection and JSON emission use TryItems. ReadEvidenceFile
+constructs standard mutable List values from decoded nodes before freezing;
+subsequent copies can become OwnedList and their serialization was exercised.
+No production `GetType()==typeof(List<object>)` exclusion was found.
+
+No production source change was needed for this supplemental validation.
+The temporary standalone project was removed. These checks do not start a
+formal session, infer game performance, or prove arbitrary concurrent mutation.
