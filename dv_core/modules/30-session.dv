@@ -2282,6 +2282,8 @@ fn dvp_context_communication(action, goals):
 fn dvp_personal_motivation(actor, action):
     if not dv_has_key(action, "personal_choice"):
         return 0
+    if not dv_find(actor.policy, "value_sensitive_progress", false):
+        return 1
     let order = dv_find(actor.policy, "value_order", [])
     var i = 0
     while i < rt_count(order):
@@ -2294,6 +2296,8 @@ fn dvp_personal_motivation(actor, action):
 // Initiative scales only the owner's anticipated informational benefit. Actual
 // observations, legal actions, answers and physical effects remain unchanged.
 fn dvp_inquiry_initiative(actor, action):
+    if dv_find(action, "inquiry_purpose", "") == "practical-access":
+        return 1
     var initiative = 1
     if dv_has(["inspect", "experiment", "sound_test"], action.kind):
         initiative = dv_find(actor.policy, "empirical_initiative", 1)

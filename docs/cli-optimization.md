@@ -143,5 +143,7 @@ readview 还可复用条件读取输入已经存在的有效不可变 Backbone�
 
 ### 主体动机与主动实证
 
-`personal_choice` 的规划收益读取本人 `value_order` 的首个非零影响；牺牲较高价值不再被无条件计为正进展。主体可配置 `empirical_initiative`、`counterfactual_initiative`（0–1，默认 1），分别缩放检视/试验/声路试验与重演预期信息收益，不修改正式资格、认知更新、答案判定或世界效果。侦探配置 Standard 为 1/1，Foolish 为 0.01/0.03，表达用户指定的主动实证与反事实倾向差异；这些数值是策略参数，不是剧情结果保证。
+启用本人 `value_sensitive_progress` 时，`personal_choice` 的规划收益读取本人 `value_order` 的首个非零影响；牺牲较高价值不再被无条件计为正进展。主体可配置 `empirical_initiative`、`counterfactual_initiative`（0–1，默认 1），分别缩放检视/试验/声路试验与重演预期信息收益，不修改正式资格、认知更新、答案判定或世界效果。侦探配置 Standard 为 1/1，Foolish 为 0.01/0.03，表达用户指定的主动实证与反事实倾向差异；这些数值是策略参数，不是剧情结果保证。
 规划剪枝先检查主体本人采纳的预测法则是否存在、active 且 mode=predict，不能展开的候选不占用 Top-K 槽位；保留候选仍按本人原评分和稳定顺序排列。预测仍由既有求值器执行，不授予真实观察。统一深度与这种剪枝不能弥补实际未知的提交前提或未被听者采纳的证词；此类未达成须在事件证据中单列。
+
+本人价值收益按 `value_sensitive_progress` 显式启用；未启用的现有 NPC 保留原 personal_choice 进展计法。侦探两配置启用，本轮不改变其他人物策略。`inquiry_purpose=practical-access` 的实际门闩检查不受主动科研意愿缩放。门外金属声仅传播 `latch_sound`，不授予外闩/通行状态；本人听见后有前往门厅现场核对的目标，正式检查、拔闩、开门和跨门仍逐步执行。拒绝现场协作是全配置同样合法的本人价值取舍；NPC 回应必须已有实际收到该拒绝的回执，不读 profile、不预设态度。
