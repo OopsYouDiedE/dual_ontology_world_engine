@@ -186,11 +186,13 @@ def field_availability(value, path):
 
 class EvidenceProjector:
     """One-pass indices point into the untouched packet file, never copy models."""
-    def __init__(self, source_path, destination):
+    def __init__(self, source_path, destination, optimize=True):
         self.source_path = source_path
+        self.optimize = optimize
+        self.resolved_source = str(source_path.resolve())
         self.digest = hashlib.sha256()
         self.summary = {
-            'schema': 'dv-evidence-index-v2', 'source': str(source_path.resolve()),
+            'schema': 'dv-evidence-index-v2', 'source': self.resolved_source,
             'projector_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             'scope': 'recorded packet projection only; original values remain in source packets/raw DAG',
             'event_inventory': {}, 'reasoning_field_inventory': {},
@@ -234,7 +236,7 @@ class EvidenceProjector:
                 detail = event.get('detail') or {}
                 if not isinstance(detail, dict):
                     detail = {}
-                reference = {'packet_source': str(self.source_path.resolve()), **pointer,
+                reference = {'packet_source': self.resolved_source if self.optimize else str(self.source_path.resolve()), **pointer,
                              'raw_event_ref': event.get('raw_event_ref', False)}
                 if kind in REASONING_FIELDS:
                     availability = {path: field_availability(detail, path) for path in REASONING_FIELDS[kind]}
@@ -249,7 +251,10 @@ class EvidenceProjector:
                             'calculation_scope': detail.get('calculation_scope', result.get('evaluation_scope', detail.get('scope'))),
                             'status': result.get('status'), 'stop_reason': result.get('stop_reason'),
                             'meaning': 'subjective calculation; full assumptions/predictions/comparisons remain at source'}
-                    self.reasoning.write(json.dumps(item, ensure_ascii=False) + '\n')
+                    if self.optimize:
+                        self.reasoning.append(item)
+                    else:
+                        self.reasoning.write(json.dumps(item, ensure_ascii=False) + '\n')
                 else:
                     role = {'action_execution': 'execution-receipt',
                             'host_completion': 'host-receipt-awaiting-DV-settlement',
@@ -260,7 +265,10 @@ class EvidenceProjector:
                             'action_kind': event.get('action_kind'), 'detail_source': reference,
                             'execution_status': detail.get('status') if kind == 'action_execution' else None,
                             'meaning': 'recorded event; no inferred narrative completion'}
-                    self.actual.write(json.dumps(item, ensure_ascii=False) + '\n')
+                    if self.optimize:
+                        self.actual.append(item)
+                    else:
+                        self.actual.write(json.dumps(item, ensure_ascii=False) + '\n')
 
     def finish(self, destination):
         self.actual.close()
@@ -293,11 +301,11 @@ def project_evidence(source_path, destination):
     return summary
 
 
-def export(out, destination=None, scope='正式逻辑会话已输出到stdout的实际可见正文；不含Godot画面。中断时未flush的原始DAG尾不在本文中，不代表完整会话正文。', raw_format='dag', with_summary=False):
+def export(out, destination=None, scope='正式逻辑会话已输出到stdout的实际可见正文；不含Godot画面。中断时未flush的原始DAG尾不在本文中，不代表完整会话正文。', raw_format='dag', with_summary=False, optimize=True):
     destination = destination or out
     source_path = out / 'stdout.dvlog'
     if not source_path.exists(): source_path = out / 'stdout.jsonl'  # old evidence, read-only
-    projector = EvidenceProjector(source_path, destination)
+    projector = EvidenceProjector(source_path, destination, optimize=optimize)
     complete = True
     # The legacy normalized packet file remains available in default JSON mode.
     # DAG mode keeps untouched stdout as its sole packet source, avoiding a duplicate.
@@ -585,7 +593,11 @@ def _main():
         result['elapsed_seconds'] = time.monotonic() - start
         result['execution_elapsed_seconds'] = result['elapsed_seconds']
         postprocess_start = time.monotonic()
+        postprocess_stages = {}
+        postprocess_stage_start = postprocess_start
         result['source_unchanged'] = all(Path(p).is_file() and hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in {**hashes, **restore_input_hashes}.items())
+        postprocess_stages['initial_source_verification_seconds'] = time.monotonic() - postprocess_stage_start
+        postprocess_stage_start = time.monotonic()
         result['raw_path'] = trace_name
         result['trace_path'] = trace_name
         result['trace_storage_encoding'] = 'dv-raw-dag-v2'
@@ -613,14 +625,18 @@ def _main():
                 result['raw_validation_error'] = str(error)
         else:
             result['raw_sealing_complete'] = bool(result['trace_written'] and not result['trace_partial_written'])
+        postprocess_stages['raw_validation_and_index_seconds'] = time.monotonic() - postprocess_stage_start
+        postprocess_stage_start = time.monotonic()
         if args.profile and (out / 'profile-raw.json').is_file():
             try:
                 summarize_profile(out / 'profile-raw.json', modules, out / 'profile-summary.json')
                 result['profile_written'] = True
             except Exception as error:
                 result['profile_error'] = str(error)
+        postprocess_stages['profile_summary_seconds'] = time.monotonic() - postprocess_stage_start
+        postprocess_stage_start = time.monotonic()
         try:
-            result['output_well_formed'], evidence = export(out, raw_format=args.raw_format, with_summary=True)
+            result['output_well_formed'], evidence = export(out, raw_format=args.raw_format, with_summary=True, optimize=args.opt_evidence_index == 'on')
             result['text_exported'] = True
             result['actual_run_config'] = evidence.get('run_config')
             result['run_config_matches'] = result['actual_run_config'] == run_config and result['runtime_config_matches']
@@ -642,9 +658,11 @@ def _main():
                 result['timeout_stage'] = 'trace-close-or-serialization' if result['logical_loop_finished'] else 'logical-session'
         except Exception as error:
             result['export_error'] = str(error)
+        postprocess_stages['stdout_export_and_index_seconds'] = time.monotonic() - postprocess_stage_start
         result['evidence_complete'] = bool(result.get('exit_code') == 0 and result.get('output_well_formed')
                                            and result.get('logical_loop_finished') and result['raw_sealing_complete']
                                            and result['source_unchanged'] and result.get('run_config_matches') is True)
+        postprocess_stage_start = time.monotonic()
         result['causal_check_complete'] = False
         result['main_causal_supported'] = False
         if result['evidence_complete']:
@@ -665,9 +683,13 @@ def _main():
         else:
             result['causal_check_status'] = 'not-run-incomplete-evidence'
             result['causal_check_reason'] = 'incomplete_evidence'
+        postprocess_stages['causal_build_and_check_seconds'] = time.monotonic() - postprocess_stage_start
+        postprocess_stage_start = time.monotonic()
         result['source_unchanged'] = all(Path(path).is_file() and sha_file(path) == digest
                                          for path, digest in {**hashes, **restore_input_hashes}.items())
         result['evidence_complete'] = result['evidence_complete'] and result['source_unchanged']
+        postprocess_stages['final_source_verification_seconds'] = time.monotonic() - postprocess_stage_start
+        result['postprocess_stages'] = postprocess_stages
         result['postprocess_elapsed_seconds'] = time.monotonic() - postprocess_start
         write_result(out, result)
     return 0 if result['evidence_complete'] and result['causal_check_complete'] else 1

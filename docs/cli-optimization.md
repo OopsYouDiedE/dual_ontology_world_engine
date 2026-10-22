@@ -198,3 +198,7 @@ readview 还可复用条件读取输入已经存在的有效不可变 Backbone�
 有限实测与边界见 `artifacts/perf-opt/aggressive/postprocess-speed/README.md`；这些结果不宣称 828 MiB 真实 DAG 后处理耗时或端到端 180 秒达标。
 
 报告分别保留会话进程180秒指标与整条 `run_debug` 命令180秒指标；后者包含构建及后处理，仍须实际章末检视和来源/封存核验成立。缺少命令墙钟时标为未知，不由阶段耗时相加补造。矩阵状态的 `matrix_parallel_sessions` 仅说明矩阵自身串行，不能证明其他检出没有并行诊断；正式比较须另行确认全机没有竞争会话。
+
+后续只读实测定位 Windows 路径解析为 stdout 投影热点：每个事件重复 Path.resolve。同一只读来源在 projector 初始化时解析并复用，索引记录直接传给二进制 writer，避免 JSON 往返；关闭 evidence-index 保留原投影路径作差分。新增 postprocess_stages 分段报告 DAG 核验/索引、stdout 正文/索引、因果构建/检查和来源核验。
+
+封存 integration-S4 的一次有竞争条件读取：828315953 字节 DAG 新核验/索引 91.452 秒；原 stdout 投影 26.251 秒，改进后同一 52179634 字节 stdout 投影 6.352 秒。正文、调试轨迹、实际事件索引、推理索引、格式通知与原结果字节一致；summary 仅 projector 源码指纹改变。原始 DAG 摘要及原始事件索引完全一致。此诊断未运行正式会话，未重复扫描整份 DAG，未测因果构建/核验；并行正式运行可能争用资源，不能拼为最终端到端验收。原始 DAG 解码仍是主要成本，尚不能声称完整命令 180 秒达标。

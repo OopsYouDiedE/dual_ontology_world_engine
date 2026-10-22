@@ -35,6 +35,31 @@ class PostprocessChecks(unittest.TestCase):
         for payload in (forward, reverse):
             self.assertEqual(encode(decode(payload)), payload)
 
+    def test_projection_on_off(self):
+        from run_debug import export
+        from binary_evidence import RecordWriter
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            event = {'type': 'action_execution', 'event_id': 'e0', 'actor': 'a',
+                     'game_time': '1/3', 'parents': ['before'], 'label': 'raw',
+                     'action_id': 'act', 'detail': {'status': 'ok', 'score': -0.0}}
+            with RecordWriter(root / 'stdout.dvlog') as output:
+                output.append({'type': 'debug_start', 'configuration': [], 'run_config': []})
+                output.append({'type': 'debug_events', 'through_step': 1,
+                               'batch': {'next': 1, 'events': [event]}})
+                event = {**event, 'type': 'mind_simulation', 'event_id': 'e1',
+                         'detail': {'hypothesis': [], 'result': {'stop_reason': 'finite'}}}
+                output.append({'type': 'debug_events', 'through_step': 2,
+                               'batch': {'next': 2, 'events': [event]}})
+                output.append({'type': 'debug_end', 'stop_evidence': {'reasons': []}})
+            outputs = []
+            for optimize in (False, True):
+                destination = root / str(optimize)
+                destination.mkdir()
+                export(root, destination=destination, optimize=optimize)
+                outputs.append({p.name: p.read_bytes() for p in destination.iterdir()})
+            self.assertEqual(outputs[0], outputs[1])
+
     def test_cache_eviction(self):
         # Exercise both entry and wire-size eviction without allocating a world.
         index = object.__new__(RawDagIndex)
