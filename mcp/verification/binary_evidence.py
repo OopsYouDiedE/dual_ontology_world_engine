@@ -44,7 +44,7 @@ def encode(value):
     return out.getvalue()
 
 
-def decode(payload):
+def decode(payload, spans=None):
     source = io.BytesIO(payload)
     def read(n):
         data = source.read(n)
@@ -69,10 +69,14 @@ def decode(payload):
             if count > len(payload): raise ValueError('Invalid binary collection length')
             if tag == 8: return [get(depth + 1) for _ in range(count)]
             value = {}
+            track_spans = spans is not None and depth == 0
             for _ in range(count):
                 key = get(depth + 1)
                 if not isinstance(key, str) or key in value: raise ValueError('Invalid/duplicate binary map key')
+                start = source.tell() if track_spans else 0
                 value[key] = get(depth + 1)
+                if track_spans:
+                    spans[key] = (start, source.tell())
             return value
         raise ValueError(f'Unknown binary value tag: {tag}')
     value = get()
@@ -88,7 +92,12 @@ def write_frame(stream, value):
     stream.write(payload)
 
 
-def read_frame(stream):
+def read_frame(stream, payload_span=False):
+    """Validate/decode a frame; optionally expose exact top-level payload bytes.
+
+    Typed values have a unique encoding after validation (including map order and
+    negative zero). The span allows DAG chain validation without re-encoding.
+    """
     prefix = stream.read(4)
     if not prefix: return None
     if len(prefix) != 4: raise ValueError('Truncated binary frame length')
@@ -97,7 +106,13 @@ def read_frame(stream):
     checksum, payload = stream.read(32), stream.read(size)
     if len(checksum) != 32 or len(payload) != size: raise ValueError('Truncated binary frame')
     if hashlib.sha256(payload).digest() != checksum: raise ValueError('Binary frame checksum mismatch')
-    return prefix + checksum + payload, decode(payload)
+    spans = {} if payload_span else None
+    value = decode(payload, spans)
+    frame = (prefix + checksum + payload, value)
+    if payload_span:
+        span = spans.get('payload')
+        return (*frame, memoryview(payload)[slice(*span)] if span is not None else None)
+    return frame
 
 
 def iter_packets(source):
