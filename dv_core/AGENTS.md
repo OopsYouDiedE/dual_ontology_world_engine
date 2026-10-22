@@ -185,3 +185,5 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 
 `opt_dirty` 认知队列以采纳表、mind.subject、外部签名和 profile 隔离，完整前提/效果单元格及对象存在性均为唤醒依赖；inactive/non-infer 保留顺序位置且不预读其声明，零预算不建立索引。时界静态计划仅替代条件树重复分析，运行时真值/效果扫描仍保留；未知活动操作符明确报错。`opt_dirty_verify` 抽样参考扫描同时覆盖正常和提前返回。合同与实测限制见 `../docs/cli-optimization.md`。
 重演external_inputs是模型声明的本人外部收据依赖；未知或冲突时暂缓，不从假设/预测回填，也不要求值必须为预期答案。准入、人工选择和Complete共用检查，缺失输入进入本人调查探针；无可执行计划不消耗执行模型预算，合法空目录factor-only路径保留。
+
+运行时 `DV_OPT_RUNTIMESPEED` 合同见 compiler/README.md：仅优化可变元数据存放和不可变子值快照路径；保留 List<object> ABI、上下文隔离、弱父关系、失效传播和完整二进制字段。CLI 开关接线与正式会话性能测量分别报告。
