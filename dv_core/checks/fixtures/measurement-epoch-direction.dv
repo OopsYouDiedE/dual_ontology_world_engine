@@ -1,0 +1,26 @@
+#include ../../modules/50-chapter2.dv
+
+// No session or AI scheduling: owned evidence snapshots only.
+fn epoch_fixture_cell(value, time):
+    return dv_with(dv_cell(value, 1, time, []), "claims", [{"id": ["actual-sample", "fixture"], "value": value, "time": time, "source": "perception", "origin": "direct"}])
+
+fn epoch_fixture_actor(weather_epoch, meter_epoch):
+    var mind = dv_world("epoch-fixture", "mind", "fixture")
+    mind = dv_add_object(mind, dv_object("c2.person.fixture", "fixture", {"state": {"accepted.measurement_pause": dv_field(true), "accepted.seal_plan": dv_field(false), "accepted.open_plan": dv_field(false)}}))
+    mind = dv_add_object(mind, dv_object("c2.weather", "fixture", {"state": {"environment_epoch": epoch_fixture_cell(weather_epoch, 6124)}}))
+    mind = dv_add_object(mind, dv_object("c2.meter", "fixture", {"state": {"safe": epoch_fixture_cell(true, 6125), "environment_epoch": epoch_fixture_cell(meter_epoch, 6125), "sample_location": epoch_fixture_cell("outdoor_meter", 6125)}}))
+    mind = dv_with(mind, "time", 6126)
+    return {"id": "fixture", "mind": mind, "actions": [], "policy": {}}
+
+fn dvg_debug_run():
+    let weather_old = c2_safety_goals(epoch_fixture_actor(3, 4))
+    dv_require(rt_count(weather_old) == 1, "Expected one owned recheck task")
+    dv_require(weather_old[0].ref.object == "c2.weather", "Newer meter must request weather observation")
+    dv_require(weather_old[0].minimum_time == 6125, "Weather observation must follow real sampled evidence")
+    dv_require(dv_same(weather_old[0].navigation_methods, ["fixture.c2.inspect.weather"]), "Weather mismatch used instrument action")
+    let meter_old = c2_safety_goals(epoch_fixture_actor(4, 3))
+    dv_require(rt_count(meter_old) == 1, "Expected one instrument refresh task")
+    dv_require(meter_old[0].ref.object == "c2.meter", "Newer weather must request instrument sample")
+    dv_require(dv_same(meter_old[0].navigation_methods, ["fixture.c2.sample.meter"]), "Instrument mismatch used weather action")
+    dv_require(rt_count(c2_safety_goals(epoch_fixture_actor(4, 4))) == 0, "Matching fresh receipts must stop repeated sampling")
+    return true

@@ -3041,7 +3041,9 @@ fn c2_safety_goals(actor):
             minimum = environment.time
         let sampled_epoch = dv_read(actor.mind, campaign_ref("c2.meter", "environment_epoch"))
         let epoch_sample = c2_sample_claim(sampled_epoch)
-        if dv_uncontested(environment) and dv_uncontested(sampled_epoch) and environment.value != sampled_epoch.value and epoch_sample != false:
+        if dv_uncontested(environment) and dv_uncontested(sampled_epoch) and sampled_epoch.value > environment.value and epoch_sample != false:
+            // Both authored epoch counters increase together on real changes.
+            // A larger sampled epoch therefore identifies older weather evidence.
             // Another reading of the same instrument cannot refresh an older
             // weather observation. Resolve that owned mismatch by looking.
             rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("c2.weather", "environment_epoch"), dv_at_least(campaign_clock(), 1980), source, epoch_sample.time), {"navigation_room": "outdoor_meter", "navigation_methods": [rt_cat(actor.id, ".c2.inspect.weather")]}))
