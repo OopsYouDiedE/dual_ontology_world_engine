@@ -4,6 +4,7 @@ import base64
 import json
 import os
 from pathlib import Path
+from fractions import Fraction
 import queue
 import subprocess
 import threading
@@ -13,10 +14,19 @@ from binary_evidence import RecordWriter
 from capture_cli import stop_tree
 
 
+def game_minute(value):
+    if isinstance(value, dict) and '$dv_rational' in value:
+        return float(Fraction(value['$dv_rational']))
+    return float(value)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', required=True, type=Path)
     parser.add_argument('--seconds', required=True, type=float)
+    parser.add_argument('--game-minutes', type=float,
+                        help='Stop after at least this many actually advanced game minutes; never assign the clock.')
+    parser.add_argument('--planning', choices=('selective', 'precise'), default='selective')
     parser.add_argument('--grace', type=float, default=40,
                         help='Shutdown reserve inside the hard timeout, never extra test time.')
     parser.add_argument('--hard-timeout', type=float, default=300)
@@ -25,12 +35,14 @@ def main():
     args = parser.parse_args()
     if not 0 < args.hard_timeout <= 300:
         parser.error('hard-timeout must be in (0,300]')
+    if args.game_minutes is not None and args.game_minutes <= 0:
+        parser.error('game-minutes must be positive')
     if not 0 < args.grace < args.hard_timeout or not 0 < args.seconds <= args.hard_timeout - args.grace:
         parser.error('seconds plus shutdown reserve must fit inside hard-timeout')
     output = args.out.resolve()
     output.mkdir(parents=True, exist_ok=False)
     command = ['dotnet', str(args.cli.resolve()), '--jsonl', '--controller', 'ai',
-               '--viewer', 'detective', '--trace', str(output / 'session.dvdag'),
+               '--viewer', 'detective', '--planning', args.planning, '--trace', str(output / 'session.dvdag'),
                '--save', str(output / 'session.dvsave'), '--performance', str(output / 'engine')]
     if args.source_revision:
         command.extend(['--source-revision', args.source_revision])
@@ -59,6 +71,7 @@ def main():
 
         record('launch', command=command, source_revision=args.source_revision or None,
                requested_seconds=args.seconds, hard_timeout_seconds=args.hard_timeout,
+               requested_game_minutes=args.game_minutes, planning=args.planning,
                shutdown_reserve_seconds=args.grace,
                scope='engine AI decisions only; fixed detective observer; formal-model',
                source_validation='not-run-by-user-request')
@@ -124,11 +137,15 @@ def main():
         try:
             send('view detective')
             reply(decision_deadline)
+            initial_game_time = game_minute(latest_status['game_time'])
             record('window_start', remaining_seconds=max(0, decision_deadline - time.monotonic()),
                    clock_basis='process launch; opening included')
             last_progress = -30.0
             reason = 'window_elapsed'
             while time.monotonic() < decision_deadline:
+                if args.game_minutes is not None and game_minute(latest_status.get('game_time', initial_game_time)) - initial_game_time >= args.game_minutes:
+                    reason = 'game_window_reached'
+                    break
                 if latest_status.get('active') is False:
                     reason = 'session_inactive'
                     break
@@ -149,7 +166,9 @@ def main():
                     print(f'AI decisions {elapsed:.1f}/{args.seconds:g}s; next inputs {advances}; '
                           f'game time {latest_status.get("game_time", "unknown")}', flush=True)
             record('window_end', reason=reason, elapsed_seconds=time.monotonic() - started,
-                   next_inputs=advances, last_status=latest_status)
+                   next_inputs=advances, last_status=latest_status,
+                   initial_game_time=initial_game_time,
+                   actual_game_minutes=game_minute(latest_status.get('game_time', initial_game_time)) - initial_game_time)
             send('quit')
             process.stdin.close()
             exit_code = process.wait(timeout=max(.001, hard_deadline - time.monotonic()))

@@ -167,6 +167,13 @@ internal sealed class Cli
                 case "--profile": campaign["profile"] = Value(); break;
                 case "--zone": campaign["detective_zone"] = Value(); break;
                 case "--seed": campaign["seed"] = int.Parse(Value(), CultureInfo.InvariantCulture); break;
+                case "--planning":
+                    campaign["selective_planning"] = Value().ToLowerInvariant() switch
+                    {
+                        "selective" => true, "precise" => false,
+                        _ => throw new ArgumentException("--planning must be selective or precise.")
+                    };
+                    break;
                 default: throw new ArgumentException($"Unknown argument: {args[i]}");
             }
         }
@@ -200,8 +207,11 @@ internal sealed class Cli
         }
         if (exportUi is not null)
         {
-            if (!tui || command is null || (replayPath is null && command is not ("status" or "options")) || (replayPath is not null && command != "step"))
-                throw new ArgumentException("--export-ui requires --preview, or --tui with a read-only --command status/options (recorded replay: step).");
+            var replayCaptureCommand = command == "step" || command?.StartsWith("seek ", StringComparison.OrdinalIgnoreCase) is true ||
+                command?.StartsWith("replay frame ", StringComparison.OrdinalIgnoreCase) is true;
+            if (!tui || command is null || (replayPath is null && command is not ("status" or "options")) ||
+                (replayPath is not null && !replayCaptureCommand))
+                throw new ArgumentException("--export-ui requires --preview, or --tui with a read-only --command status/options (recorded replay: step, seek N or replay frame N).");
             exportFramePath = exportUi;
         }
         oneCommand = command is not null;
@@ -313,6 +323,12 @@ internal sealed class Cli
                 Emit("status", CurrentStatus()); return;
             case "capture":
                 if (!tui || argument.Length == 0) throw new ArgumentException("capture <new.svg>");
+                if (argument.StartsWith("all ", StringComparison.OrdinalIgnoreCase))
+                {
+                    Emit("capture_summary", new { source = session is null ? "recorded-replay-svg-export" : "current-display-svg-export",
+                        captures = CaptureCurrentPages(argument[4..].Trim()) });
+                    return;
+                }
                 exportFramePath = argument;
                 Emit("status", CurrentStatus()); return;
             case "zoom":
@@ -353,15 +369,12 @@ internal sealed class Cli
                     player.Play(argument.Length == 0 ? player.Speed : double.Parse(argument, CultureInfo.InvariantCulture));
                     if (oneCommand) await PlayReplay(); else Emit("replay", ReplayStatus());
                     break;
+                case "seek": SeekReplay(argument); break;
+                case "replay": ReplayOperation(argument); break;
                 case "restart":
-                    player.Restart(); replaySnapshot = HostValues.Empty; replayPreview = HostValues.Empty;
-                    replayPerformance = HostValues.Empty; replayControllerKind = "";
-                    replayGameTime = null;
-                    replayOptions = Array.Empty<IReadOnlyDictionary<string, object?>>(); replaySelected = "";
-                    replayChoiceActor = "";
-                    terminalFrame = null; terminalEntries.Clear(); roomOrder.Clear(); interactionPhase = "";
+                    ResetReplay();
                     Emit("replay", ReplayStatus()); break;
-                default: throw new ArgumentException("status / options / map / view / perf / play / pause / step / restart / quit");
+                default: throw new ArgumentException("status / options / map / view / perf / play / pause / step / seek / replay / restart / quit");
             }
             return;
         }
@@ -712,6 +725,166 @@ internal sealed class Cli
         };
     }
 
+    private void ResetReplay()
+    {
+        (replay ?? throw new InvalidOperationException("回放 —")).Restart();
+        replaySnapshot = HostValues.Empty;
+        replayPreview = HostValues.Empty;
+        replayPerformance = HostValues.Empty;
+        replayControllerKind = "";
+        replayGameTime = null;
+        replayOptions = Array.Empty<IReadOnlyDictionary<string, object?>>();
+        replaySelected = replayChoiceActor = interactionPhase = "";
+        terminalFrame = null;
+        terminalEntries.Clear();
+        roomOrder.Clear();
+        orderedViewer = "";
+        terminalPage = 0;
+        actionPage = -1;
+        showActors = false;
+    }
+
+    private void SeekReplay(string argument, bool render = true)
+    {
+        var player = replay ?? throw new InvalidOperationException("seek 仅用于已记录回放");
+        var target = argument.ToLowerInvariant() switch
+        {
+            "first" => 1, "last" => player.Count,
+            _ when int.TryParse(argument, NumberStyles.None, CultureInfo.InvariantCulture, out var number) => number,
+            _ => throw new ArgumentException("seek <一基帧号|first|last>")
+        };
+        if (target < 1 || target > player.Count) throw new ArgumentOutOfRangeException(nameof(argument), $"回放帧号范围：1..{player.Count}");
+        // Replay display state is reconstructed from the recorded prefix. This
+        // never opens a session, obtains a missing observer, or renders skipped frames.
+        ResetReplay();
+        while (player.Index + 1 < target)
+        {
+            cancellation.Token.ThrowIfCancellationRequested();
+            ShowFrame(player.Step(), emit: false);
+        }
+        terminalPage = 0;
+        if (render && player.Current is { } frame) Emit("frame", frame);
+    }
+
+    private void ReplayOperation(string argument)
+    {
+        var split = argument.IndexOf(' ');
+        var operation = split < 0 ? argument : argument[..split];
+        var value = split < 0 ? "" : argument[(split + 1)..].Trim();
+        switch (operation.ToLowerInvariant())
+        {
+            case "frame": SeekReplay(value); break;
+            case "marks":
+                if (value.Length > 0) throw new ArgumentException("replay marks");
+                var player = replay ?? throw new InvalidOperationException("回放 —");
+                var marks = player.Frames.Select((frame, index) => (frame, index))
+                    .Where(item => IsOwnCompletedReplayFrame(item.frame) ||
+                        HostValues.Text(item.frame.Data, "checkpoint") is "initial" or "final")
+                    .Select(item => new
+                    {
+                        frame = item.index + 1, type = item.frame.Kind,
+                        game_time = item.frame.Data.GetValueOrDefault("result_game_time") ?? item.frame.Data.GetValueOrDefault("game_time"),
+                        observer = Observer, action_public_label = ReplayPublicLabel(item.frame)
+                    }).ToArray();
+                Emit("replay_index", new { viewer = Observer, frame_count = player.Count, numbering = "one-based", marks });
+                break;
+            case "capture": CaptureReplaySet(value); break;
+            default: throw new ArgumentException("replay frame N / replay marks / replay capture NEW_DIRECTORY");
+        }
+    }
+
+    private bool IsOwnCompletedReplayFrame(ReplayFrame frame)
+    {
+        if (frame.Kind != "confirm" || frame.Actor != Observer || !PresentationVisibleToObserver(frame)) return false;
+        var phase = HostValues.Text(frame.Data, "phase", HostValues.Text(frame.Data, "action_state"));
+        var outcome = HostValues.Text(HostValues.Map(frame.Data, "presentation"), "outcome");
+        return phase is "completed" or "applied" || outcome == "applied";
+    }
+
+    private static bool HasReplayBody(ReplayFrame frame)
+    {
+        var presentation = HostValues.Map(frame.Data, "presentation");
+        return !string.IsNullOrWhiteSpace(presentation.Count > 0 ? PresentationBody(presentation) : frame.Text);
+    }
+
+    private static string ReplayPublicLabel(ReplayFrame frame)
+    {
+        var label = HostValues.List(frame.Data, "options").OfType<IReadOnlyDictionary<string, object?>>()
+            .Where(option => HostValues.Text(option, "id") == frame.Action)
+            .Select(option => HostValues.Text(option, "label")).FirstOrDefault(value => value.Length > 0 && value != frame.Action);
+        if (string.IsNullOrWhiteSpace(label)) label = HostValues.Text(HostValues.Map(frame.Data, "action"), "label");
+        if (string.IsNullOrWhiteSpace(label)) label = HostValues.Text(frame.Data, "label");
+        return !string.IsNullOrWhiteSpace(label) && label != frame.Action ? label : "（未记录标签）";
+    }
+
+    private void CaptureReplaySet(string directory)
+    {
+        var player = replay ?? throw new InvalidOperationException("回放 —");
+        if (!tui || string.IsNullOrWhiteSpace(directory)) throw new ArgumentException("--tui: replay capture NEW_DIRECTORY");
+        if (followReplayActor) throw new ArgumentException("批量回放导出需要固定 --viewer ID 或 view ID");
+        if (player.Count == 0) throw new InvalidOperationException("回放没有可导出的帧");
+        directory = Path.GetFullPath(directory);
+        if (Directory.Exists(directory) || File.Exists(directory)) throw new IOException("导出目录必须是新路径：" + directory);
+        Directory.CreateDirectory(directory);
+        var completed = player.Frames.Select((frame, index) => (frame, index))
+            .Where(item => IsOwnCompletedReplayFrame(item.frame)).ToArray();
+        var visible = completed.Where(item => HasReplayBody(item.frame)).ToArray();
+        var selected = new List<(string Name, int Index)>();
+        if (visible.Length > 0) selected.Add(("01-first-result", visible[0].index));
+        if (visible.Length > 1) selected.Add(("02-next-result", visible[1].index));
+        if (completed.Length > 0) selected.Add(("03-last-action", completed[^1].index));
+        selected.Add(("04-record-end", player.Count - 1));
+        var captures = new List<object>();
+        foreach (var selection in selected)
+        {
+            SeekReplay((selection.Index + 1).ToString(CultureInfo.InvariantCulture), render: false);
+            captures.Add(new { role = selection.Name, frame = selection.Index + 1,
+                action_public_label = player.Current is { } frame ? ReplayPublicLabel(frame) : "（未记录标签）",
+                pages = CaptureCurrentPages(Path.Combine(directory, selection.Name)) });
+        }
+        Emit("capture_summary", new
+        {
+            source = "recorded-replay-svg-export", viewer = Observer, numbering = "one-based",
+            frame_count = player.Count, first_result_recorded = visible.Length > 0,
+            next_result_recorded = visible.Length > 1, completed_action_recorded = completed.Length > 0,
+            captures
+        });
+    }
+
+    private IReadOnlyList<object> CaptureCurrentPages(string prefix)
+    {
+        if (!tui || string.IsNullOrWhiteSpace(prefix)) throw new ArgumentException("capture all NEW_PREFIX");
+        var savedPage = terminalPage;
+        var savedActionPage = actionPage;
+        var savedExpanded = expandActions;
+        var captures = new List<object>();
+        try
+        {
+            expandActions = true;
+            var count = 1;
+            for (var page = 0; page < count; page++)
+            {
+                cancellation.Token.ThrowIfCancellationRequested();
+                terminalPage = page;
+                var path = Path.GetFullPath(prefix + (page == 0 ? "" : $"-page-{page + 1:00}") + ".svg");
+                exportFramePath = path;
+                var rendered = RenderCurrent(writeConsole: false);
+                count = rendered.PageCount;
+                if (count > 16) throw new InvalidOperationException($"当前帧需要 {count} 页，超过批量采集的 16 页上限；已导出首张，剩余内容未导出。");
+                captures.Add(new { path, page = rendered.PageIndex + 1, page_count = rendered.PageCount,
+                    frame = replay is null ? (int?)null : replay.Index + 1, game_time = replayGameTime });
+            }
+        }
+        finally
+        {
+            exportFramePath = null;
+            terminalPage = savedPage;
+            actionPage = savedActionPage;
+            expandActions = savedExpanded;
+        }
+        return captures.AsReadOnly();
+    }
+
     private async Task PlayReplay()
     {
         var player = replay ?? throw new InvalidOperationException("回放 —");
@@ -761,12 +934,14 @@ internal sealed class Cli
         }
     }
 
-    private void ShowFrame(ReplayFrame? frame)
+    private void ShowFrame(ReplayFrame? frame, bool emit = true)
     {
         if (frame is null) return;
         terminalFrame = frame;
         if (frame.Data.GetValueOrDefault("preview") is IReadOnlyDictionary<string, object?> preview)
             replayPreview = preview;
+        else if (frame.Data.ContainsKey("snapshot"))
+            replayPreview = HostValues.Empty;
         if (frame.Data.GetValueOrDefault("snapshot") is IReadOnlyDictionary<string, object?> snapshot)
             replaySnapshot = snapshot;
         var frameSnapshot = HostValues.Map(frame.Data, "snapshot");
@@ -817,7 +992,8 @@ internal sealed class Cli
             var pending = HostValues.List(frame.Data, "pending_actions").Count;
             if (pending > 0) interactionPhase += " · 待执行 " + pending.ToString(CultureInfo.InvariantCulture);
         }
-        Emit("frame", frame);
+        if (emit) Emit("frame", frame);
+        else AddTranscript("frame", frame);
     }
 
     private void Emit(string kind, object data)
@@ -834,7 +1010,7 @@ internal sealed class Cli
             return;
         }
         if (kind is "presentation" or "frame") AddTranscript(kind, data);
-        if (kind == "performance" || (!tui && kind is not ("status" or "options" or "map" or "views" or "interaction" or "frame" or "presentation" or "intent" or "replay")))
+        if (kind is "performance" or "replay_index" or "capture_summary" || (!tui && kind is not ("status" or "options" or "map" or "views" or "interaction" or "frame" or "presentation" or "intent" or "replay")))
         {
             Console.WriteLine(Format(kind, data)); return;
         }
@@ -944,7 +1120,7 @@ internal sealed class Cli
         }
     }
 
-    private void RenderCurrent()
+    private TerminalRenderResult RenderCurrent(bool writeConsole = true)
     {
         var preview = CurrentPreview(mapView != "subjective");
         var snapshot = HostValues.Map(preview, "snapshot");
@@ -974,18 +1150,22 @@ internal sealed class Cli
         {
             width = Math.Clamp(Console.WindowWidth - 1, 60, 240);
             height = Math.Clamp(Console.WindowHeight - 2, 24, 100);
-            Console.Clear();
+            if (writeConsole) Console.Clear();
         }
-        terminalPage = TerminalView.GetPageInfo(model, width, height).Index;
-        actionPage = TerminalView.GetActionPageInfo(model).Index;
+        var rendered = TerminalView.RenderFrame(model, width, height,
+            tui && !noColor && Environment.GetEnvironmentVariable("NO_COLOR") is null,
+            includeSvg: exportFramePath is not null);
+        terminalPage = rendered.PageIndex;
+        actionPage = rendered.ActionPageIndex;
         if (exportFramePath is { } path)
         {
             exportFramePath = null;
             using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
             using var writer = new StreamWriter(stream, new UTF8Encoding(false));
-            writer.Write(TerminalView.ExportSvg(model, width, height));
+            writer.Write(rendered.Svg);
         }
-        Console.WriteLine(TerminalView.Render(model, width, height, tui && !noColor && Environment.GetEnvironmentVariable("NO_COLOR") is null));
+        if (writeConsole) Console.WriteLine(rendered.Text);
+        return rendered;
     }
 
     private IReadOnlyDictionary<string, object?> ReplayObserverSnapshot(IReadOnlyDictionary<string, object?> preview)
@@ -1082,6 +1262,7 @@ DV Core CLI
   --ui-zoom fit|detail|compact --width 120 --height 42 --no-color
   --export-ui NEW.svg --command COMMAND
   --controller player|human|llm|ai --viewer ID --profile NAME --zone ID --seed N
+  --planning selective|precise
   --dev --audit --restore FILE --save FILE --trace FILE
   --scores | --no-scores
   --performance NEW_PREFIX
@@ -1090,13 +1271,15 @@ DV Core CLI
 
 status  options  views  view ID  map subjective|objective|both
 focus 01|ID|JSON  confirm  cancel  act 01|ID|JSON  next
-page N|next|prev  capture NEW.svg  zoom fit|in|out
+page N|next|prev  capture NEW.svg  capture all NEW_PREFIX  zoom fit|in|out
 actions next|prev|all|compact  decision-phase request|response|reading|confirmation
 save NEW.dvsave  trace NEW.dvdag  perf [NEW_PREFIX]  scores on|off|auto
-play 1|2|4|8  pause  step  restart  view follow
+play 1|2|4|8  pause  step  seek N|first|last  restart  view follow
+replay frame N  replay marks  replay capture NEW_DIRECTORY
 inspect ID  tp PLACE  time MINUTES  help  quit
 
 controller: player（默认）与 human 均为人类；llm 为外部大模型；ai 为自主引擎。
+planning: selective（默认）按当前任务按需展开；precise 保留内容声明的完整预算搜索。
 --jsonl 仅指定输入输出格式，不会自动把人类会话记为 LLM。
 --restore 默认保留存档的控制器统计分类；显式 --controller 仅调整诊断分类，不改变世界控制权。
 人类和 LLM 默认隐藏 AI 评分；--scores 或 scores on 可显式显示。
@@ -1104,5 +1287,8 @@ perf 显示游戏小时/现实小时、正式决策次/现实小时、接口消�
 现实会话从打开完成计至关闭请求；人工/LLM接口单独累计请求交付至正式接受的区间。
 decision-phase 为外部适配器标记实际请求、响应、阅读或确认阶段，不推进游戏。
 --replay 的 perf 只读当前已播放帧记录的统计；缺失字段显示 —，不新增测量或导出报告。
+seek / replay frame 使用与标题相同的一基帧号，从记录起点静默恢复该视角的正文上下文，只绘制目标帧。
+replay capture 在固定 --viewer 下导出前两个本人可见完成结果、最后本人完成行动、记录末帧及其续页；每帧最多16页，超限明确失败，不截去内容冒充完整。
+capture all 展开当前行动列表并导出全部页；这些是记录界面的SVG导出，不是操作系统终端截屏。
 """;
 }

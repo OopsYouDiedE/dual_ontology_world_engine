@@ -194,13 +194,16 @@ fn dv_read(world, ref):
             dv_require((subj == world.subject), "Cross-subject reference access")
     var objects = world.objects
     var id = ref.object
-    // Validate subject and the original leading reads before the pure cache.
-    // Memo hits copy the complete cell, retaining independent caller ownership.
-    let key = ["dv_read", ref]
-    let cached = rt_memo_get(world, key)
+    // Access is checked before reuse. A cell depends on its own immutable
+    // object, not on unrelated observations, the world clock or event history.
+    if not dv_has_key(objects, id):
+        return dv_unknown()
+    let object = dv_get(objects, id)
+    let key = ["dv_read-object-field-v2", ref.facet, ref.field]
+    let cached = rt_memo_get(object, key)
     if cached[0]:
         return cached[1]
-    return rt_memo_put(world, key, dv_read_fields(objects, id, ref))
+    return rt_memo_put(object, key, dv_read_fields(objects, id, ref))
 
 fn dv_read_fields(objects, id, ref):
     if dv_has_key(objects, id):

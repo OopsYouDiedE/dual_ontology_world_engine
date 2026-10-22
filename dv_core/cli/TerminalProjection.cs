@@ -9,8 +9,18 @@ internal static class TerminalProjection
     private static string Identity(IReadOnlyDictionary<string, object?> room) => Text(room, "map") + "|" + Text(room, "room");
     private static IEnumerable<IReadOnlyDictionary<string, object?>> Records(IReadOnlyDictionary<string, object?> value, string key) =>
         HostValues.List(value, key).OfType<IReadOnlyDictionary<string, object?>>();
-    private static string Value(object? value) => value is null ? "—" : value is string text ? text :
-        value is IReadOnlyDictionary<string, object?> exact && exact.TryGetValue("$dv_rational", out var rational) ? rational as string ?? "—" : JsonSerializer.Serialize(value);
+    private static string Value(object? value) => value switch
+    {
+        null => "—",
+        string text => text,
+        bool flag => flag ? "true" : "false",
+        double number when double.IsFinite(number) => number.ToString("R", CultureInfo.InvariantCulture),
+        float number when float.IsFinite(number) => number.ToString("R", CultureInfo.InvariantCulture),
+        IFormattable number when value is sbyte or byte or short or ushort or int or uint or long or ulong or decimal =>
+            number.ToString(null, CultureInfo.InvariantCulture),
+        IReadOnlyDictionary<string, object?> exact when exact.TryGetValue("$dv_rational", out var rational) => rational as string ?? "—",
+        _ => JsonSerializer.Serialize(value)
+    };
     private static string Score(object? value) => value switch
     {
         double number when double.IsFinite(number) => number.ToString("G8", CultureInfo.InvariantCulture),
@@ -150,8 +160,10 @@ internal static class TerminalProjection
             : viewer.Length > 0 && previewViewer == viewer ? HostValues.Map(previewData, "subjective") : HostValues.Empty;
         var objective = HostValues.Map(previewData, "objective");
         var comparisons = mapView == "both" ? objective : HostValues.Empty;
-        var rooms = subjective.Count > 0 ? ProjectRooms(subjective, viewer, false, comparisons) : LegacyRooms(snapshot, status, viewer, actorTitle);
-        var edges = ProjectEdges(subjective.Count > 0 ? subjective : HostValues.Map(snapshot, "map_knowledge"));
+        var rooms = mapView == "objective" ? Array.Empty<TerminalRoom>() : subjective.Count > 0
+            ? ProjectRooms(subjective, viewer, false, comparisons) : LegacyRooms(snapshot, status, viewer, actorTitle);
+        var edges = mapView == "objective" ? Array.Empty<TerminalEdge>()
+            : ProjectEdges(subjective.Count > 0 ? subjective : HostValues.Map(snapshot, "map_knowledge"));
         var labels = OptionLabels(options);
         var choices = options.Select((option, index) => new TerminalOption
         {
@@ -170,7 +182,8 @@ internal static class TerminalProjection
             Title = "DV CORE / 观察台", Mode = mode, Actor = viewer, ActorTitle = actorTitle, Actors = actors,
             Location = Text(snapshot, "location_title", Text(status, "location", "—")), Clock = clock, Phase = phase,
             Source = source, Rooms = rooms, Edges = edges, Options = choices, Entries = entries,
-            ObjectiveRooms = ProjectRooms(objective, viewer, true), ObjectiveEdges = ProjectEdges(objective),
+            ObjectiveRooms = mapView == "subjective" ? Array.Empty<TerminalRoom>() : ProjectRooms(objective, viewer, true),
+            ObjectiveEdges = mapView == "subjective" ? Array.Empty<TerminalEdge>() : ProjectEdges(objective),
             Performance = HostValues.Map(previewData, "performance"), MapView = mapView,
             OptionTimeBasis = Text(previewData, "option_time_basis", "current"), Footer = ""
         };
@@ -248,7 +261,13 @@ internal static class TerminalProjection
 
             string Inline(IReadOnlyDictionary<string, object?> member)
             {
-                var detail = string.Join("；", new[] { Contents(member), Difference(member) }.Where(value => value.Length > 0));
+                var owner = Text(member, "owner_title");
+                var detail = string.Join("；", new[]
+                {
+                    Text(member, "detail"),
+                    owner.Length > 0 && !IsPerson(Text(member, "kind")) ? "所属：" + owner : "",
+                    Contents(member), Difference(member)
+                }.Where(value => value.Length > 0).Distinct(StringComparer.Ordinal));
                 return MemberTitle(member, objective) + (detail.Length > 0 ? "（" + detail + "）" : "");
             }
 

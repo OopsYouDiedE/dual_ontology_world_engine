@@ -368,38 +368,66 @@ public sealed class SmartReplay
         return false;
     }
 
-    private static IReadOnlyList<object?> RecordedOptions(object? value, string actor, ReadContext context) =>
-        Array.AsReadOnly(Items(value).Select(option =>
+    private static IReadOnlyList<object?> RecordedOptions(object? value, string actor, ReadContext context)
+    {
+        var options = value as IReadOnlyList<object?> ?? Array.Empty<object?>();
+        object?[]? normalized = null;
+        for (var index = 0; index < options.Count; index++)
         {
-            if (option is not IReadOnlyDictionary<string, object?> fields) return option;
+            var option = options[index];
+            if (option is not IReadOnlyDictionary<string, object?> fields) continue;
             var id = Text(option, "id");
             var label = Text(option, "label");
-            if (!string.IsNullOrWhiteSpace(label) && label != id) return option;
+            if (!string.IsNullOrWhiteSpace(label) && label != id) continue;
             context.Selections.TryGetValue(InteractionKey(actor, id), out var selection);
             var data = Get(selection, "data");
             label = Text(Get(data, "action"), "label");
             if (string.IsNullOrWhiteSpace(label)) label = Text(data, "label");
             var recorded = !string.IsNullOrWhiteSpace(label) && label != id;
-            var normalized = new Dictionary<string, object?>(fields, StringComparer.Ordinal)
+            var fieldsWithLabel = new Dictionary<string, object?>(fields, StringComparer.Ordinal)
             {
                 ["label"] = recorded ? label : "（未记录标签）"
             };
-            if (recorded) normalized["label_event"] = Text(selection, "id");
-            return (object?)HostValues.Freeze(normalized);
-        }).ToArray());
+            if (recorded) fieldsWithLabel["label_event"] = Text(selection, "id");
+            normalized ??= options.ToArray();
+            normalized[index] = HostValues.Freeze(fieldsWithLabel);
+        }
+        // Native conversion already froze this list. Preserve its shared identity
+        // unless a legacy intent label actually needs repair; never cache repairs
+        // against the changing recorded-selection context.
+        return normalized is null ? options : Array.AsReadOnly(normalized);
+    }
 
     private static IReadOnlyDictionary<string, object?> RecordedPreview(IReadOnlyDictionary<string, object?> value,
         string actor, ReadContext context)
     {
         var viewer = Text(value, "viewer");
         if (viewer.Length > 0) actor = viewer;
-        var normalized = new Dictionary<string, object?>(value, StringComparer.Ordinal);
-        if (value.TryGetValue("options", out var options)) normalized["options"] = RecordedOptions(options, actor, context);
+        Dictionary<string, object?>? normalized = null;
+        void Set(string key, object? replacement)
+        {
+            normalized ??= new Dictionary<string, object?>(value, StringComparer.Ordinal);
+            normalized[key] = replacement;
+        }
+        if (value.TryGetValue("options", out var options))
+        {
+            var recorded = RecordedOptions(options, actor, context);
+            if (!ReferenceEquals(options, recorded)) Set("options", recorded);
+        }
         if (value.GetValueOrDefault("observers") is IReadOnlyDictionary<string, object?> observers)
-            normalized["observers"] = HostValues.Freeze(observers.ToDictionary(pair => pair.Key, pair =>
-                pair.Value is IReadOnlyDictionary<string, object?> observer
-                    ? (object?)RecordedPreview(observer, pair.Key, context) : pair.Value, StringComparer.Ordinal));
-        return HostValues.Freeze(normalized);
+        {
+            Dictionary<string, object?>? replacements = null;
+            foreach (var pair in observers)
+            {
+                if (pair.Value is not IReadOnlyDictionary<string, object?> observer) continue;
+                var recorded = RecordedPreview(observer, pair.Key, context);
+                if (ReferenceEquals(observer, recorded)) continue;
+                replacements ??= new Dictionary<string, object?>(observers, StringComparer.Ordinal);
+                replacements[pair.Key] = recorded;
+            }
+            if (replacements is not null) Set("observers", HostValues.Freeze(replacements));
+        }
+        return normalized is null ? value : HostValues.Freeze(normalized);
     }
 
     private static void AppendInteraction(object payload, object record, List<ReplayFrame> frames,
@@ -542,7 +570,7 @@ public sealed class SmartReplay
     {
         var lines = Lines(Get(value, "lines"));
         var surface = Text(value, "surface");
-        return surface.Length == 0 ? lines : lines.Length == 0 ? surface : surface + "\n" + lines;
+        return surface.Length == 0 ? lines : lines.Length == 0 || lines == surface ? surface : surface + "\n" + lines;
     }
 
     private static void AppendCheckpoint(object value, List<ReplayFrame> frames, ReadContext context)

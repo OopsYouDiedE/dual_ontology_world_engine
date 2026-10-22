@@ -56,6 +56,13 @@ fn campaign_install_visible_objects(scene):
 
 // Authored presentation metadata never grants a field to a subject's mind.
 fn campaign_object_descriptor(id):
+    let key = ["campaign-object-descriptor-v2", id]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, campaign_object_descriptor_build(id))
+
+fn campaign_object_descriptor_build(id):
     let names = {"coat": "风衣", "lens": "黄铜放大镜", "graphite_pencil": "石墨笔", "evidence_bags": "证物袋", "opening.cabinet": "领取柜", "opening.silver": "银元", "opening.testpiece": "金属试件", "opening.audition": "试听机", "opening.tea": "茶具", "c2.granary": "粮仓", "c2.counter": "配给台", "c2.ledger": "公物台账", "c2.bowl": "粥碗", "c2.kitchen": "炉灶", "c2.meter": "源质计", "c2.seal": "印章"}
     if dv_has_key(names, id):
         return {"map_kind": "object", "map_title": dv_get(names, id), "visible_fields": ["name", "location"]}
@@ -81,10 +88,24 @@ fn campaign_object_descriptor(id):
     return {"map_kind": "record", "map_title": ""}
 
 fn campaign_location_title(location):
+    let key = ["campaign-location-title-v2", location]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, campaign_location_title_build(location))
+
+fn campaign_location_title_build(location):
     let titles = {"R05": "乙区 · 卧室 R-05", "R06": "乙区 · 卧室 R-06", "R07": "乙区 · 卧室 R-07", "R08": "乙区 · 卧室 R-08", "hall": "乙区 · 活动厅", "foyer": "乙区 · 门厅", "corridor": "乙区 · 宿舍走廊", "pantry": "乙区 · 备餐间", "living_hall": "生活翼 · 公共起居厅", "washroom": "生活翼 · 盥洗室", "central_hall": "主楼 · 中央厅", "lecture": "主楼 · 讲堂", "logistics": "后勤院 · 食堂", "clinic": "白塔院 · 诊疗所", "greenhouse": "后勤院 · 温室", "document_workshop": "主楼 · 文献工房", "resonance_hall": "主楼 · 共鸣厅", "resonance": "主楼 · 共鸣厅", "quiet_room": "主楼 · 沉静室", "white_tower_safe": "白塔院 · 安全端", "outdoor_meter": "室外 · 仪器阵", "outdoor_high": "室外 · 高地通路", "outdoor_alley": "室外 · 夹道", "oath_court": "室外 · 誓约庭", "threshold.contract": "生活翼 · 甲区门外", "threshold.astral": "生活翼 · 丙区门外", "threshold.logistics": "生活翼 · 丁区门外", "dorm.contract": "甲区 · 活动厅", "dorm.astral": "丙区 · 活动厅", "dorm.logistics": "丁区 · 活动厅", "dorm.yi": "乙区 · 活动厅"}
     return dv_find(titles, location, "现场")
 
 fn campaign_location_region(location):
+    let key = ["campaign-location-region-v2", location]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put([], key, campaign_location_region_build(location))
+
+fn campaign_location_region_build(location):
     let titles = campaign_location_title(location)
     let regions = ["甲区", "乙区", "丙区", "丁区", "生活翼", "主楼", "后勤院", "白塔院", "室外"]
     var i = 0

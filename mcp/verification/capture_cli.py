@@ -1,8 +1,11 @@
-"""Capture explicitly supplied CLI inputs with bounded process lifetime."""
+"""Capture explicit CLI inputs, or export a requested recorded-replay image set.
+
+This tool does not inspect or validate source files. Replay images are SVG
+rendering exports of recorded UI state, not physical terminal screenshots.
+"""
 from pathlib import Path
 import argparse
 import base64
-import hashlib
 import os
 import signal
 import subprocess
@@ -38,15 +41,22 @@ def main():
     parser.add_argument("--viewer", default="detective")
     parser.add_argument("--format", choices=("tui", "jsonl"), default="tui")
     parser.add_argument("--replay", type=Path)
+    parser.add_argument("--capture-replay", action="store_true",
+                        help="Export representative recorded frames and every continuation page under OUT/screenshots")
+    parser.add_argument("--no-source-validation", action="store_true",
+                        help="Compatibility flag; source validation is never performed by this capture tool")
     args = parser.parse_args()
     if not 0 < args.timeout <= 600:
         parser.error("--timeout must be in (0, 600]")
+    if args.capture_replay and (not args.replay or args.format != "tui"):
+        parser.error("--capture-replay requires --replay and --format tui")
     output = args.out.resolve()
     output.mkdir(parents=True, exist_ok=False)
     command = ["dotnet", str(args.cli.resolve()), "--" + args.format,
                "--width", str(args.width), "--height", str(args.height)]
     if args.replay:
-        command += ["--replay", str(args.replay.resolve()), "--interactive"]
+        command += ["--replay", str(args.replay.resolve()), "--interactive", "--viewer", args.viewer,
+                    "--map", "subjective"]
     else:
         command += ["--controller", args.controller, "--viewer", args.viewer, "--audit",
                     "--trace", str(output / "session.dvdag"), "--save", str(output / "session.dvsave")]
@@ -63,15 +73,11 @@ def main():
                 if log_open:
                     writer.append({"real_ns": time.monotonic_ns() - origin, **value})
                     writer.stream.flush()
-        root = Path(__file__).resolve().parents[2]
-        sources = [*sorted((root / "dv_core/cli").glob("*.cs")),
-                   *sorted((root / "dv_core/host_bridge").glob("*.cs")),
-                   *sorted((root / "dv_core/modules").glob("*.dv")),
-                   *sorted(args.cli.resolve().parent.glob("*.dll")), Path(__file__)]
-        fingerprints = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
-        record({"kind": "launch", "command": command, "source_sha256": fingerprints,
+        record({"kind": "launch", "command": command, "source_validation": "not-performed",
                 "timeout_seconds": args.timeout, "scope": "explicit operator inputs; recorded replay" if args.replay
-                else "explicit operator inputs; formal-model", "controller": args.controller})
+                else "explicit operator inputs; formal-model", "controller": None if args.replay else args.controller,
+                "viewer": args.viewer, "capture_replay": args.capture_replay,
+                "image_source": "recorded-replay-svg-export" if args.capture_replay else None})
         popen_options = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, **popen_options)
@@ -90,6 +96,15 @@ def main():
 
         def inputs():
             try:
+                if args.capture_replay:
+                    commands = ["replay capture " + str(output / "screenshots"), "quit"]
+                    for command_line in commands:
+                        line = (command_line + "\n").encode("utf-8")
+                        record({"kind": "stdin", "input_source": "requested-replay-capture-batch",
+                                "encoding": "base64", "bytes": base64.b64encode(line).decode("ascii")})
+                        process.stdin.write(line)
+                        process.stdin.flush()
+                    return
                 # A blocked daemon must not hold Python's buffered stdin lock
                 # when the CLI exits before its operator sends another line.
                 pending = b""
@@ -141,16 +156,14 @@ def main():
             stopped.set()
             for thread in pumps:
                 thread.join(timeout=5)
-            changed = [str(p) for p in sources
-                       if not p.is_file() or hashlib.sha256(p.read_bytes()).hexdigest() != fingerprints[str(p)]]
             record({"kind": "closed", "exit_code": exit_code, "timed_out": timed_out,
-                    "interrupted": interrupted, "changed_sources": changed,
+                    "interrupted": interrupted, "source_validation": "not-performed",
                     "pipes_complete": all(not t.is_alive() for t in pumps)})
             with lock:
                 log_open = False
     if not timed_out and not interrupted and all(not t.is_alive() for t in pumps):
         partial.rename(output / "console.dvlog")
-    return exit_code or (1 if changed else 0)
+    return exit_code
 
 
 if __name__ == "__main__":

@@ -92,6 +92,9 @@ public sealed record TerminalEntry
     public string Speaker { get; init; } = "";
 }
 
+public sealed record TerminalRenderResult(string Text, string? Svg, int PageIndex, int PageCount,
+    int ActionPageIndex, int ActionPageCount);
+
 /// <summary>Pure observer presentation. ANSI and SVG share the same cell layout.</summary>
 public static class TerminalView
 {
@@ -101,7 +104,7 @@ public static class TerminalView
         string Scope = "", Line? Parent = null, bool KeepWithNext = false);
     private sealed record Block(string Title, List<Line> Lines);
     private sealed record RoomBlock(string Region, List<Line> Lines);
-    private sealed record Cell(string Glyph, string Color, string Back, bool Continuation = false, bool Bold = false);
+    private readonly record struct Cell(string Glyph, string Color, string Back, bool Continuation = false, bool Bold = false);
     private sealed record Placement(int X, int Width, Line Value);
     private sealed class Row : List<Placement>
     {
@@ -113,7 +116,22 @@ public static class TerminalView
     public static string Render(TerminalModel model, int width = 120, int height = 40, bool color = true)
     {
         var canvas = Layout(model, width, height);
-        var output = new StringBuilder();
+        return Render(canvas, color);
+    }
+
+    /// <summary>Build one immutable display canvas for text, capture, and page metadata.</summary>
+    public static TerminalRenderResult RenderFrame(TerminalModel model, int width = 120, int height = 40,
+        bool color = true, bool includeSvg = false)
+    {
+        var canvas = Layout(model, width, height);
+        var actions = GetActionPageInfo(model);
+        return new TerminalRenderResult(Render(canvas, color), includeSvg ? ExportSvg(model, canvas) : null,
+            canvas.PageIndex, canvas.PageCount, actions.Index, actions.Count);
+    }
+
+    private static string Render(Canvas canvas, bool color)
+    {
+        var output = new StringBuilder(canvas.Width * canvas.Height + canvas.Height);
         string? foreground = null, background = null;
         var bold = false;
         for (var y = 0; y < canvas.Height; y++)
@@ -151,7 +169,9 @@ public static class TerminalView
     {
         const int pageSize = 5;
         var count = Math.Max(1, (model.Options.Count + pageSize - 1) / pageSize);
-        var selected = model.Options.ToList().FindIndex(option => option.Selected);
+        var selected = -1;
+        for (var index = 0; index < model.Options.Count; index++)
+            if (model.Options[index].Selected) { selected = index; break; }
         var requested = model.ActionPageIndex < 0 ? Math.Max(0, selected) / pageSize : model.ActionPageIndex;
         return (Math.Clamp(requested, 0, count - 1), count);
     }
@@ -159,6 +179,11 @@ public static class TerminalView
     public static string ExportSvg(TerminalModel model, int width = 120, int height = 40)
     {
         var canvas = Layout(model, width, height);
+        return ExportSvg(model, canvas);
+    }
+
+    private static string ExportSvg(TerminalModel model, Canvas canvas)
+    {
         const int cw = 10, ch = 20;
         var svg = new StringBuilder();
         svg.Append(CultureInfo.InvariantCulture, $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{canvas.Width * cw}\" height=\"{canvas.Height * ch}\" viewBox=\"0 0 {canvas.Width * cw} {canvas.Height * ch}\" role=\"img\" aria-label=\"DV terminal cell rendering\">\n");
@@ -541,11 +566,7 @@ public static class TerminalView
             Format(Number(performance, "decisions_per_real_hour")) + " 次/现实小时";
         var costs = label + "接口 " + Format(Number(performance, "interface_hours_per_real_hour")) + " 小时/现实小时";
         var wall = Number(performance, "elapsed_wall_ms");
-        var duration = wall is double milliseconds
-            ? TimeSpan.FromMilliseconds(milliseconds).TotalHours >= 1
-                ? TimeSpan.FromMilliseconds(milliseconds).ToString(@"h\:mm\:ss", CultureInfo.InvariantCulture)
-                : TimeSpan.FromMilliseconds(milliseconds).ToString(@"m\:ss", CultureInfo.InvariantCulture)
-            : "—";
+        var duration = wall is double milliseconds ? Format(milliseconds, 1000) + " 秒" : "—";
         return rates + "\n" + costs + "  ·  采样 " + duration + " / 推进 " +
             Format(Number(performance, "advanced_game_minutes")) + " 游戏分";
     }
@@ -596,16 +617,15 @@ public static class TerminalView
     private static Block Choices(TerminalModel model, int width, bool compact = false)
     {
         var result = new List<Line>();
-        var commonCost = model.Options.Where(option => option.HasCost).GroupBy(option => option.Detail, StringComparer.Ordinal)
-            .OrderByDescending(group => group.Count()).FirstOrDefault();
-        var hasSharedCost = commonCost is not null && commonCost.Count() > 1;
-        var sharedCost = hasSharedCost ? commonCost!.Key : "";
+        var sharedCost = model.Options.Count > 0 ? model.Options[0].Detail : "";
+        var hasSharedCost = model.Options.Count > 1 && model.Options.All(option => option.HasCost && option.Detail == sharedCost);
+        if (!hasSharedCost) sharedCost = "";
         var actionPage = GetActionPageInfo(model);
         var start = compact ? actionPage.Index * 5 : 0;
         var count = compact ? Math.Min(5, model.Options.Count - start) : model.Options.Count;
         var title = (model.OptionTimeBasis == "decision-boundary" ? "当时的候选" : "行动") +
             (compact && count < model.Options.Count ? $"  {start + 1:00}–{start + count:00}/{model.Options.Count:00}" : "") +
-            (sharedCost.Length > 0 ? "  ·  " + sharedCost : "");
+            (hasSharedCost ? "  ·  各项 " + (sharedCost.Length > 0 ? sharedCost : "费用 0") : "");
         for (var index = start; index < start + count; index++)
         {
             var option = model.Options[index];

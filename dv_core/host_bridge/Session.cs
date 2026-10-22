@@ -13,6 +13,8 @@ public sealed partial class DvSession
     private int committedDecisionEventCursor;
     private readonly bool audit;
     private readonly bool developer;
+    private readonly R.ValueContext valueContext;
+    private readonly HostValues.Converter converter = new();
     private readonly Dictionary<string, ViewerProjection> viewers = new(StringComparer.Ordinal);
     private readonly Dictionary<string, (long Version, IReadOnlyDictionary<string, object?> Value)> executors = new(StringComparer.Ordinal);
     private PreviewBranch? preview;
@@ -35,8 +37,10 @@ public sealed partial class DvSession
     }
     private sealed record PreviewBranch(PreparedPreview Public, object State, int FirstEvent);
 
-    private DvSession(object value, bool auditMode = true, bool? developerMode = null)
+    private DvSession(R.ValueContext context, object value, bool auditMode = true, bool? developerMode = null)
     {
+        valueContext = context;
+        using var valuesScope = R.UseValues(valueContext);
         audit = auditMode;
         var story = R.record_find(value, "story", new List<object>());
         developer = developerMode ?? R.Bool(R.record_find(story, "development_mode", false));
@@ -46,7 +50,8 @@ public sealed partial class DvSession
         lastCommittedState = R.snapshot(state);
         committedDecisionEventCursor = Events(state).Count;
         performance.Configure(audit, developer, R.Text(Field(state, "player_actor", "")),
-            R.Items(Field(state, "actors", new List<object>())).Count, PerformanceGameMinute());
+            R.Items(Field(state, "actors", new List<object>())).Count, PerformanceGameMinute(),
+            R.Bool(Field(Field(story, "run_config", new List<object>()), "selective_planning", false)));
         var savedController = R.Text(Field(value, "performance_controller", ""));
         if (savedController.Length > 0) performance.ConfigureController(savedController);
         UpdateEvidenceLifecycle();
@@ -54,6 +59,7 @@ public sealed partial class DvSession
 
     private object Run(Func<object> operation, bool speculative = false)
     {
+        using var valuesScope = R.UseValues(valueContext);
         using var scope = R.UseAudit(audit);
         using var phases = R.UsePhases((stage, actor) =>
         {
@@ -65,7 +71,17 @@ public sealed partial class DvSession
         try { return operation(); }
         catch { performance.RecordFailure(); throw; }
     }
-    private static object Field(object value, string name, object fallback) => R.record_find(value, name, fallback);
+    private static object Field(object value, string name, object fallback)
+    {
+        // Host reads never acquire a mutable branch. Preserve the runtime's
+        // last matching slot and original list/index errors, but keep frozen
+        // histories and actor graphs shared until an actual DV write copies them.
+        var slot = (int)R.Num(R.record_index(value, name));
+        if (slot >= 0) return R.Items(R.Items(value)[slot])[1];
+        if (fallback is string sentinel && sentinel == "__dv_missing_field_sentinel__")
+            throw new Exception("Missing field: " + name);
+        return fallback;
+    }
     private static bool HasPending(object value) => Field(value, "pending", false) is not false;
     private static IReadOnlyList<object> Events(object value) => R.Items(Field(value, "events", new List<object>()));
     private void RecordCommittedDecisions()
@@ -86,7 +102,7 @@ public sealed partial class DvSession
                 R.Text(Field(action, "id", "")), R.Num(Field(entry, "time", PerformanceGameMinute())));
             var work = Field(data, "planning_work", false);
             if (work is not false)
-                RecordPerformancePlanning(actor, R.Text(Field(entry, "id", "")), HostValues.Record(work),
+                RecordPerformancePlanning(actor, R.Text(Field(entry, "id", "")), converter.Record(work),
                     R.Text(Field(data, "planning_stop", "")));
         }
     }
@@ -114,10 +130,10 @@ public sealed partial class DvSession
     }
 
     public static DvSession OpenCampaign(string player = "") =>
-        OpenMeasured("open-campaign", () => new DvSession(DVProgram.SetPlayer(DVProgram.CampaignOpen(), player)));
+        OpenMeasured("open-campaign", context => new DvSession(context, DVProgram.SetPlayer(DVProgram.CampaignOpen(), player)));
     public static DvSession OpenConfiguredCampaign(string options) => OpenConfiguredCampaign(options, Console.Error);
     public static DvSession OpenConfiguredCampaign(string options, TextWriter diagnosticOutput) =>
-        OpenMeasured("open-configured", () =>
+        OpenMeasured("open-configured", context =>
         {
             var configuration = HostValues.Parse(options);
             var auditMode = R.Bool(Field(configuration, "audit", false));
@@ -126,26 +142,33 @@ public sealed partial class DvSession
             if (controller is "human" or "llm") configuration = R.record_with(configuration, "controller", "player");
             using var scope = R.UseAudit(auditMode);
             using var output = R.UseOutput(diagnosticOutput);
-            var session = new DvSession(DVProgram.HostOpen(configuration), auditMode, developerMode) { DiagnosticOutput = diagnosticOutput };
+            var session = new DvSession(context, DVProgram.HostOpen(configuration), auditMode, developerMode) { DiagnosticOutput = diagnosticOutput };
             if (controller is "human" or "llm") session.SetPerformanceController(controller);
             return session;
         });
     public static DvSession Open(string scenario) =>
-        OpenMeasured("open-scenario", () => new DvSession(DVProgram.SessionOpen(HostValues.Parse(scenario))));
-    public static DvSession Restore(string snapshot) => OpenMeasured("restore-value", () =>
+        OpenMeasured("open-scenario", context => new DvSession(context, DVProgram.SessionOpen(HostValues.Parse(scenario))));
+    public static DvSession Restore(string snapshot) => OpenMeasured("restore-value", context =>
     {
         var value = HostValues.Parse(snapshot);
-        return new DvSession(value, R.Bool(Field(value, "audit_mode", true)));
+        return new DvSession(context, value, R.Bool(Field(value, "audit_mode", true)));
     });
-    public static DvSession RestoreFile(string path) => OpenMeasured("restore-file", () =>
+    public static DvSession RestoreFile(string path) => OpenMeasured("restore-file", context =>
     {
         var value = R.ReadEvidenceFile(path);
-        return new DvSession(value, R.Bool(Field(value, "audit_mode", true)));
+        return new DvSession(context, value, R.Bool(Field(value, "audit_mode", true)));
     });
 
     public string Viewer => R.Text(Run(() => DVProgram.HostViewer(state)));
     public bool Active => !IsClosed && R.Bool(Run(() => DVProgram.SessionActive(state)));
-    public IReadOnlyDictionary<string, object?> Intent => nativeIntent ??= HostValues.Record(IntentProjection());
+    public IReadOnlyDictionary<string, object?> Intent
+    {
+        get
+        {
+            using var valuesScope = R.UseValues(valueContext);
+            return nativeIntent ??= converter.Record(IntentProjection());
+        }
+    }
 
     private object IntentProjection()
     {
@@ -159,6 +182,7 @@ public sealed partial class DvSession
 
     public IReadOnlyDictionary<string, object?> PrepareValue(string selection = "")
     {
+        using var valuesScope = R.UseValues(valueContext);
         if (selection.Length == 0 && (HasPending(state) || R.Bool(Field(state, "awaiting_player", false)))) return Intent;
         using var performanceScope = Measure("prepare");
         BeginTransition();
@@ -177,6 +201,7 @@ public sealed partial class DvSession
 
     public IReadOnlyDictionary<string, object?> PrepareBackgroundValue()
     {
+        using var valuesScope = R.UseValues(valueContext);
         if (IsClosed || HasPending(state) || !R.Bool(Field(state, "awaiting_player", false))) return Intent;
         using var performanceScope = Measure("background-prepare");
         var advanced = Run(() => DVProgram.PrepareBackground(state, Viewer));
@@ -200,7 +225,7 @@ public sealed partial class DvSession
         var branch = R.copy_value(R.snapshot(state));
         branch = Run(() => DVProgram.SelectPlayer(branch, SelectionValue(selection)), speculative: true);
         branch = Run(() => DVProgram.SessionPrepare(branch), speculative: true);
-        var intent = HostValues.Record(Run(() => DVProgram.SessionIntent(branch), speculative: true));
+        var intent = converter.Record(Run(() => DVProgram.SessionIntent(branch), speculative: true));
         var candidate = new PreparedPreview(Guid.NewGuid().ToString("N"), Version, selection, intent);
         preview = new PreviewBranch(candidate, R.snapshot(branch), firstEvent);
         return candidate;
@@ -224,8 +249,16 @@ public sealed partial class DvSession
     }
     public void CancelPrepared() => preview = null;
 
-    public IReadOnlyDictionary<string, object?> CompleteValue(string receipt, string viewer) => CompleteDv(HostValues.Parse(receipt), viewer);
-    public IReadOnlyDictionary<string, object?> CompleteValue(IReadOnlyDictionary<string, object?> receipt, string viewer) => CompleteDv(HostValues.ToDv(receipt), viewer);
+    public IReadOnlyDictionary<string, object?> CompleteValue(string receipt, string viewer)
+    {
+        using var valuesScope = R.UseValues(valueContext);
+        return CompleteDv(HostValues.Parse(receipt), viewer);
+    }
+    public IReadOnlyDictionary<string, object?> CompleteValue(IReadOnlyDictionary<string, object?> receipt, string viewer)
+    {
+        using var valuesScope = R.UseValues(valueContext);
+        return CompleteDv(converter.ToDv(receipt), viewer);
+    }
     private IReadOnlyDictionary<string, object?> CompleteDv(object receipt, string viewer)
     {
         using var performanceScope = Measure("complete");
@@ -242,7 +275,7 @@ public sealed partial class DvSession
         object projected;
         using (Measure("presentation", "projection"))
             projected = Run(() => DVProgram.SessionPresentation(state, viewer));
-        var presentation = new Dictionary<string, object?>(HostValues.Record(projected), StringComparer.Ordinal);
+        var presentation = new Dictionary<string, object?>(converter.Record(projected), StringComparer.Ordinal);
         var outcome = "";
         var events = Events(state);
         for (var index = eventCursor; index < events.Count; index++)
@@ -265,6 +298,7 @@ public sealed partial class DvSession
 
     public IReadOnlyDictionary<string, object?> CompleteFormal(string viewer)
     {
+        using var valuesScope = R.UseValues(valueContext);
         var pending = Field(state, "pending", false);
         var model = Field(pending, "model", new List<object>());
         var receipt = new List<object>
@@ -305,7 +339,7 @@ public sealed partial class DvSession
         {
             if (cache.Raw.TryGetValue(pair.Key, out var old) && R.Bool(R.same_value(old, pair.Value)))
                 values[pair.Key] = cache.Value[pair.Key];
-            else values[pair.Key] = HostValues.FromDv(pair.Value);
+            else values[pair.Key] = converter.FromDv(pair.Value);
         }
         cache.Raw = next;
         cache.Value = HostValues.Freeze(values);
@@ -315,7 +349,11 @@ public sealed partial class DvSession
         PhaseObserver?.Invoke("snapshot_projection_end", viewer);
         return cache;
     }
-    public IReadOnlyDictionary<string, object?> Materialize(string viewer) => Projection(viewer).Value;
+    public IReadOnlyDictionary<string, object?> Materialize(string viewer)
+    {
+        using var valuesScope = R.UseValues(valueContext);
+        return Projection(viewer).Value;
+    }
     public string Snapshot(string viewer) => JsonSerializer.Serialize(Materialize(viewer));
     public HostStateDelta Project(string viewer, bool forceFull = false)
     {
@@ -338,7 +376,7 @@ public sealed partial class DvSession
         if (actor == Viewer) return Materialize(actor);
         if (executors.TryGetValue(actor, out var found) && found.Version == Version) return found.Value;
         using var performanceScope = Measure("executor-snapshot", "projection");
-        var value = HostValues.Record(Run(() => DVProgram.ExecutorSnapshot(state, actor, IntentProjection())));
+        var value = converter.Record(Run(() => DVProgram.ExecutorSnapshot(state, actor, IntentProjection())));
         executors[actor] = (Version, value);
         return value;
     }
@@ -365,7 +403,7 @@ public sealed partial class DvSession
             var data = Field(entry, "data", new List<object>());
             foreach (var observation in R.Items(Field(data, "observations", new List<object>())))
             {
-                observations.Add(HostValues.FromDv(observation));
+                observations.Add(converter.FromDv(observation));
                 if (observations.Count == 8) break;
             }
         }
@@ -387,14 +425,14 @@ public sealed partial class DvSession
         var details = new Dictionary<string, object?>
         {
             ["actor"] = actor, ["version"] = Version, ["development_mode"] = true,
-            ["physical"] = HostValues.FromDv(R.snapshot(Field(state, "physical", new List<object>()))),
-            ["mind"] = HostValues.FromDv(R.snapshot(Field(selected, "mind", new List<object>()))),
-            ["scheduled_action"] = HostValues.FromDv(R.snapshot(Field(selected, "scheduled_action", false))),
-            ["erosion"] = HostValues.FromDv(Field(selected, "erosion", false)),
+            ["physical"] = converter.FromDv(R.snapshot(Field(state, "physical", new List<object>()))),
+            ["mind"] = converter.FromDv(R.snapshot(Field(selected, "mind", new List<object>()))),
+            ["scheduled_action"] = converter.FromDv(R.snapshot(Field(selected, "scheduled_action", false))),
+            ["erosion"] = converter.FromDv(Field(selected, "erosion", false)),
             ["erosion_rank"] = Field(selected, "erosion_rank", 0d),
             ["erosion_stage"] = Field(selected, "erosion_stage", "early"),
             ["erosion_memory_truncated"] = Field(selected, "erosion_memory_truncated", false),
-            ["policy"] = HostValues.FromDv(R.snapshot(Field(selected, "policy", new List<object>())))
+            ["policy"] = converter.FromDv(R.snapshot(Field(selected, "policy", new List<object>())))
         };
         var events = Events(state);
         for (var index = events.Count - 1; index >= 0; index--)
@@ -403,7 +441,7 @@ public sealed partial class DvSession
             var kind = R.Text(Field(entry, "type", ""));
             if (R.Text(Field(entry, "actor", "")) == actor && kind is "planning_choice" or "planning_stop")
             {
-                details["planning"] = HostValues.FromDv(Field(entry, "data", new List<object>()));
+                details["planning"] = converter.FromDv(Field(entry, "data", new List<object>()));
                 details["planning_event"] = Field(entry, "id", "");
                 break;
             }
@@ -412,6 +450,7 @@ public sealed partial class DvSession
     }
     public IReadOnlyDictionary<string, object?> ExecuteDebug(string command, string argument)
     {
+        using var valuesScope = R.UseValues(valueContext);
         if (!DevMode) throw new InvalidOperationException("Development commands require --dv-dev / --dev.");
         if (HasPending(state)) throw new InvalidOperationException("Finish the current action before a development command.");
         using var performanceScope = Measure("development", "development");
@@ -425,8 +464,8 @@ public sealed partial class DvSession
     private object DurableState()
     {
         var durable = R.record_with(R.record_with(lastCommittedState, "audit_mode", audit), "performance_controller", performance.ControllerKind);
-        durable = R.record_with(durable, "archive_provenance", HostValues.ToDv(Provenance()));
-        return R.record_with(durable, "archive_cut", HostValues.ToDv(EvidenceCut()));
+        durable = R.record_with(durable, "archive_provenance", converter.ToDv(Provenance()));
+        return R.record_with(durable, "archive_cut", converter.ToDv(EvidenceCut()));
     }
     public string Save()
     {

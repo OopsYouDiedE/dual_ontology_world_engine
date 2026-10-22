@@ -13,14 +13,40 @@ public sealed partial class DvSession
 
     private IDisposable Measure(string operation, string category = "engine", string viewer = "", string projectionScope = "")
     {
-        var pending = Field(state, "pending", false);
-        var actor = pending is false ? "" : R.Text(Field(pending, "id", ""));
-        return performance.Begin(operation, category, actor, PerformanceGameMinute, viewer, projectionScope);
+        var valuesScope = R.UseValues(valueContext);
+        try
+        {
+            var pending = Field(state, "pending", false);
+            var actor = pending is false ? "" : R.Text(Field(pending, "id", ""));
+            return new MeasuredValues(performance.Begin(operation, category, actor, PerformanceGameMinute, viewer, projectionScope), valuesScope);
+        }
+        catch { valuesScope.Dispose(); throw; }
+    }
+
+    private sealed class MeasuredValues(IDisposable measurement, IDisposable valuesScope) : IDisposable
+    {
+        private bool disposed;
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+            // Sample the final DV clock before restoring the caller's context.
+            try { measurement.Dispose(); }
+            finally { valuesScope.Dispose(); }
+        }
     }
 
     private void ObservePerformancePhase(string phase, string actor) => performance.Phase(phase, actor);
-    public IReadOnlyDictionary<string, object?> PerformanceSnapshot() => performance.Snapshot(IsClosed);
-    public IReadOnlyDictionary<string, object?> PerformanceSummary() => performance.Summary(IsClosed);
+    public IReadOnlyDictionary<string, object?> PerformanceSnapshot()
+    {
+        using var valuesScope = R.UseValues(valueContext);
+        return performance.Snapshot(IsClosed);
+    }
+    public IReadOnlyDictionary<string, object?> PerformanceSummary()
+    {
+        using var valuesScope = R.UseValues(valueContext);
+        return performance.Summary(IsClosed);
+    }
     public void SetPerformanceController(string controller) => performance.ConfigureController(controller);
     public void SetPerformanceProvenance(IReadOnlyDictionary<string, object?> provenance) => performance.SetProvenance(provenance);
     public void SetPerformanceLifecycle(IReadOnlyDictionary<string, object?> lifecycle) => performance.SetLifecycle(lifecycle);
@@ -31,13 +57,19 @@ public sealed partial class DvSession
     public void EndDecisionInterface(string actor, string outcome = "accepted") => performance.EndInterface(actor, outcome);
     public void StartPerformanceRecording(string prefix) => performance.StartRecording(prefix);
     public void StopPerformanceClock() => performance.StopWallClock();
-    public void WritePerformanceReport(string prefix) => performance.WriteReport(prefix, IsClosed);
+    public void WritePerformanceReport(string prefix)
+    {
+        using var valuesScope = R.UseValues(valueContext);
+        performance.WriteReport(prefix, IsClosed);
+    }
 
-    private static DvSession OpenMeasured(string operation, Func<DvSession> create)
+    private static DvSession OpenMeasured(string operation, Func<R.ValueContext, DvSession> create)
     {
         var started = Stopwatch.GetTimestamp();
         var allocated = GC.GetAllocatedBytesForCurrentThread();
-        var current = create();
+        var context = new R.ValueContext();
+        using var valuesScope = R.UseValues(context);
+        var current = create(context);
         current.performance.RecordStartup(operation, started, allocated, current.PerformanceGameMinute());
         return current;
     }
@@ -79,7 +111,7 @@ internal sealed class SessionPerformance
     private double? firstGameMinute;
     private double lastGameMinute, advancedMinutes;
     private int epoch;
-    private bool auditMode, developerMode;
+    private bool auditMode, developerMode, selectivePlanning;
     private string playerActor = "";
     private int actorCount;
     private FileStream? recording;
@@ -87,11 +119,11 @@ internal sealed class SessionPerformance
     private long recordingOmittedPrefix;
     private bool recordingSealed;
 
-    internal void Configure(bool audit, bool developer, string player, int actors, double minute)
+    internal void Configure(bool audit, bool developer, string player, int actors, double minute, bool selective)
     {
         lock (gate)
         {
-            auditMode = audit; developerMode = developer; playerActor = player; actorCount = actors;
+            auditMode = audit; developerMode = developer; selectivePlanning = selective; playerActor = player; actorCount = actors;
             controllerKind = player.Length == 0 ? "engine" : "human";
             firstGameMinute = lastGameMinute = minute;
         }
@@ -146,7 +178,7 @@ internal sealed class SessionPerformance
     }
 
     private static readonly string[] PlanningSums =
-        ["candidates_considered", "eligible_evaluations", "forecasts", "expanded_nodes", "candidate_paths"];
+        ["candidates_considered", "admission_checks", "eligible_evaluations", "forecasts", "forecast_reuses", "expanded_nodes", "candidate_paths", "retained_paths", "route_reuses", "skipped_expansion"];
     private static readonly string[] PlanningMaxima = ["peak_frontier", "budget_limit", "depth_limit", "lookahead_limit"];
 
     private static double? PlanningNumber(object? value)
@@ -173,8 +205,16 @@ internal sealed class SessionPerformance
             var cacheHit = work.GetValueOrDefault("cache_hit") is true;
             if (cacheHit) aggregate.CacheHits++;
             foreach (var field in PlanningSums)
-                if (PlanningNumber(work.GetValueOrDefault(field)) is { } amount)
-                    aggregate.Work[field] = aggregate.Work.GetValueOrDefault(field) + (cacheHit ? 0 : amount);
+            {
+                var value = work.GetValueOrDefault(field);
+                var number = field == "skipped_expansion" && value is bool skipped
+                    ? skipped ? 1d : 0d : PlanningNumber(value);
+                if (number is { } amount)
+                {
+                    var currentReuse = field is "route_reuses" or "forecast_reuses" or "skipped_expansion";
+                    aggregate.Work[field] = aggregate.Work.GetValueOrDefault(field) + (cacheHit && !currentReuse ? 0 : amount);
+                }
+            }
             foreach (var field in PlanningMaxima)
                 if (PlanningNumber(work.GetValueOrDefault(field)) is { } amount)
                     aggregate.Work[field] = Math.Max(aggregate.Work.GetValueOrDefault(field), field == "peak_frontier" && cacheHit ? 0 : amount);
@@ -628,6 +668,8 @@ internal sealed class SessionPerformance
             var values = new Dictionary<string, object?>
             {
                 ["contract"] = Contract, ["closed"] = closed, ["engine_ms"] = engine,
+                ["planning_mode"] = selectivePlanning ? "selective-task-v1" : "full-declared",
+                ["planning_mode_approximation"] = selectivePlanning,
                 ["measured_until_ticks"] = now - origin, ["wall_measured_until_ticks"] = wallStarted ? wallCursor - origin : null,
                 ["stopwatch_frequency"] = Stopwatch.Frequency, ["wall_clock_stopped"] = wallStopped,
                 ["active_scopes"] = stack.Count, ["active_decision_interfaces"] = interfaceWaits.Count
@@ -737,6 +779,8 @@ internal sealed class SessionPerformance
             ["runtime"] = Environment.Version.ToString(), ["stopwatch_frequency"] = Stopwatch.Frequency,
             ["assembly_id"] = typeof(DvSession).Assembly.ManifestModule.ModuleVersionId.ToString(),
             ["audit_mode"] = auditMode, ["development_mode"] = developerMode, ["player_actor"] = playerActor, ["actor_count"] = actorCount,
+            ["planning_mode"] = selectivePlanning ? "selective-task-v1" : "full-declared",
+            ["planning_mode_approximation"] = selectivePlanning,
             ["closed"] = closed, ["active_scopes"] = stack.Count, ["active_decision_interfaces"] = interfaceWaits.Count,
             ["game_start_minute"] = firstGameMinute, ["game_end_minute"] = lastGameMinute, ["engine_ms"] = engineMs,
             ["measured_until_ticks"] = now - origin, ["wall_measured_until_ticks"] = wallStarted ? wallCursor - origin : null,
@@ -981,6 +1025,7 @@ internal sealed class SessionPerformance
         var text = new StringBuilder("# 会话决策与耗时报告\n\n");
         text.AppendLine($"会话：{snapshot["session_id"]}；开始 UTC：{snapshot["wall_started_utc"]}；结束 UTC：{snapshot["wall_stopped_utc"]}。");
         text.AppendLine($"采样现实 {Number(Convert.ToDouble(snapshot["elapsed_wall_ms"], CultureInfo.InvariantCulture) / 1000d)} 秒，实际推进 {Number(snapshot["advanced_game_minutes"])} 游戏分钟；正式选择 {Number(snapshot["total_decisions"])} 次。");
+        text.AppendLine($"本次规划配置：{snapshot["planning_mode"]}；模式近似：{snapshot["planning_mode_approximation"]}。selective-task-v1 为用户允许的任务选择近似，不声称完整穷举；full-declared 仍受声明预算、深度和实际停止原因约束。");
         text.AppendLine();
         text.AppendLine("| 核心指标 | 本窗口累计比率 | 单位 |");
         text.AppendLine("| --- | ---: | --- |");
@@ -1021,11 +1066,11 @@ internal sealed class SessionPerformance
         if (planningRows.Length > 0)
         {
             text.AppendLine("\n### 选策实际工作\n");
-            text.AppendLine("| 主体 | 有工作记录的选择 | 缓存命中 | 候选检查 | 资格求值 | 预测 | 展开节点 | 峰值前沿 |");
-            text.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
+            text.AppendLine("| 主体 | 有工作记录的选择 | 缓存命中 | 候选检查 | 准入检查 | 资格求值 | 预测 | 预测复用 | 展开节点 | 保留路径 | 路径复用 | 跳过展开 | 峰值前沿 |");
+            text.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
             foreach (var row in planningRows)
-                text.AppendLine($"| {row["actor"]} | {row["decisions"]} | {row["cache_hits"]} | {Number(row["candidates_considered"])} | {Number(row["eligible_evaluations"])} | {Number(row["forecasts"])} | {Number(row["expanded_nodes"])} | {Number(row["peak_frontier"])} |");
-            text.AppendLine("实际工作来自正式 action_selected 的 planning_work。缓存命中的 reused_work 是此前工作的来源，不重复累计；缺失计数保持缺失。峰值前沿及预算/深度/展望限制取观测最大值，工作次数取实际累计，不改变内容声明的预算或决策顺序。");
+                text.AppendLine($"| {row["actor"]} | {row["decisions"]} | {row["cache_hits"]} | {Number(row["candidates_considered"])} | {Number(row["admission_checks"])} | {Number(row["eligible_evaluations"])} | {Number(row["forecasts"])} | {Number(row["forecast_reuses"])} | {Number(row["expanded_nodes"])} | {Number(row["retained_paths"])} | {Number(row["route_reuses"])} | {Number(row["skipped_expansion"])} | {Number(row["peak_frontier"])} |");
+            text.AppendLine("实际工作来自正式 action_selected 的 planning_work。缓存命中的 reused_work 是此前工作的来源，不重复累计；缺失计数保持缺失。路径与预测复用记录实际命中，skipped_expansion 累计本次选择跳过展开的次数。峰值前沿及预算/深度/展望限制取观测最大值，工作次数取实际累计。selective-task-v1 是用户允许的任务选择近似，不是完整穷举；full-declared 沿声明范围求解，是否完成仍以实际预算停止和证明为准，两种模式的结果与耗时分别比较。");
             text.AppendLine();
             foreach (var row in planningRows)
                 if (row["stop_reasons"] is IReadOnlyDictionary<string, object?> reasons)

@@ -27,40 +27,78 @@ public static class BinaryEvidence
     }
     public static byte[] Encode(object? value)
     {
-        using var output = new MemoryStream();
-        using var writer = new BinaryWriter(output, Utf8, leaveOpen: true);
-        WriteValue(writer, value, 0);
-        return output.ToArray();
+        var writer = new Encoder();
+        writer.Value(value);
+        return writer.WrittenSpan.ToArray();
     }
-    private static void WriteValue(BinaryWriter writer, object? value, int depth)
+    // One writer owns its buffer. DAG frames can append their already encoded
+    // payload directly to an envelope without a second object-graph traversal.
+    internal sealed class Encoder
     {
-        if (depth > 512) throw new InvalidDataException("Binary evidence nesting exceeds 512");
-        switch (value)
+        private readonly ArrayBufferWriter<byte> output = new(1024);
+        internal ReadOnlySpan<byte> WrittenSpan => output.WrittenSpan;
+        internal int Count => output.WrittenCount;
+        internal void Clear() => output.Clear();
+        private void Byte(byte value)
         {
-            case null: writer.Write((byte)0); break;
-            case bool flag: writer.Write((byte)(flag ? 2 : 1)); break;
-            case int number: writer.Write((byte)3); writer.Write((long)number); break;
-            case long number: writer.Write((byte)3); writer.Write(number); break;
-            case double number when double.IsFinite(number): writer.Write((byte)4); writer.Write(number); break;
-            case string text:
-                var bytes = Utf8.GetBytes(text);
-                writer.Write((byte)5); writer.Write(bytes.Length); writer.Write(bytes); break;
-            case IDictionary<string, object?> map:
-                writer.Write((byte)7); writer.Write(map.Count);
-                foreach (var entry in map) { WriteValue(writer, entry.Key, depth + 1); WriteValue(writer, entry.Value, depth + 1); }
-                break;
-            case object?[] array:
-                // Host JSON arrays decode to CLR arrays, not DV List/FrozenList.
-                // This storage case does not expand the runtime's DV value domain.
-                writer.Write((byte)8); writer.Write(array.Length);
-                foreach (var item in array) WriteValue(writer, item, depth + 1);
-                break;
-            case JsonElement element: WriteValue(writer, FromJson(element), depth); break;
-            default:
-                if (!R.TryItems(value!, out var items)) throw new InvalidDataException("Unsupported binary evidence atom");
-                writer.Write((byte)8); writer.Write(items.Count);
-                foreach (var item in items) WriteValue(writer, item, depth + 1);
-                break;
+            output.GetSpan(1)[0] = value; output.Advance(1);
+        }
+        private void Int32(int value)
+        {
+            System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(output.GetSpan(4), value);
+            output.Advance(4);
+        }
+        internal void Integer(long value)
+        {
+            var bytes = output.GetSpan(9); bytes[0] = 3;
+            System.Buffers.Binary.BinaryPrimitives.WriteInt64LittleEndian(bytes[1..], value);
+            output.Advance(9);
+        }
+        internal void Text(string text)
+        {
+            var length = Utf8.GetByteCount(text);
+            Byte(5); Int32(length);
+            var written = Utf8.GetBytes(text.AsSpan(), output.GetSpan(length));
+            output.Advance(written);
+        }
+        internal void Utf8Text(ReadOnlySpan<byte> text)
+        {
+            Byte(5); Int32(text.Length);
+            text.CopyTo(output.GetSpan(text.Length)); output.Advance(text.Length);
+        }
+        internal void Map(int count) { Byte(7); Int32(count); }
+        internal void List(int count) { Byte(8); Int32(count); }
+        internal void Flag(bool value) => Byte(value ? (byte)2 : (byte)1);
+        internal void Value(object? value, int depth = 0)
+        {
+            if (depth > 512) throw new InvalidDataException("Binary evidence nesting exceeds 512");
+            switch (value)
+            {
+                case null: Byte(0); break;
+                case bool flag: Flag(flag); break;
+                case int number: Integer(number); break;
+                case long number: Integer(number); break;
+                case double number when double.IsFinite(number):
+                    Byte(4);
+                    System.Buffers.Binary.BinaryPrimitives.WriteInt64LittleEndian(output.GetSpan(8), BitConverter.DoubleToInt64Bits(number));
+                    output.Advance(8); break;
+                case string text: Text(text); break;
+                case IDictionary<string, object?> map:
+                    Map(map.Count);
+                    foreach (var entry in map) { Text(entry.Key); Value(entry.Value, depth + 1); }
+                    break;
+                case object?[] array:
+                    // Host arrays are storage values, not members of the DV value domain.
+                    List(array.Length);
+                    foreach (var item in array) Value(item, depth + 1);
+                    break;
+                case JsonElement element: Value(FromJson(element), depth); break;
+                default:
+                    if (!R.TryItems(value!, out var items)) throw new InvalidDataException("Unsupported binary evidence atom");
+                    List(items.Count);
+                    for (var i = 0; i < items.Count; i++) Value(items[i], depth + 1);
+                    break;
+            }
         }
     }
     public static object? FromJson(JsonElement value) => value.ValueKind switch
@@ -120,11 +158,18 @@ public static class BinaryEvidence
     }
     public static void WriteFrame(Stream stream, object? value)
     {
-        var payload = Encode(value);
+        var writer = new Encoder();
+        writer.Value(value);
+        WriteEncodedFrame(stream, writer.WrittenSpan);
+    }
+    internal static void WriteEncodedFrame(Stream stream, ReadOnlySpan<byte> payload)
+    {
         if (payload.Length > MaxFrame) throw new InvalidDataException("Binary frame exceeds size limit");
         Span<byte> prefix = stackalloc byte[4];
+        Span<byte> checksum = stackalloc byte[32];
         System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(prefix, payload.Length);
-        stream.Write(prefix); stream.Write(SHA256.HashData(payload)); stream.Write(payload);
+        SHA256.HashData(payload, checksum);
+        stream.Write(prefix); stream.Write(checksum); stream.Write(payload);
     }
     public static object? ReadFrame(Stream stream, out bool end)
     {
@@ -173,6 +218,39 @@ public static class BinaryEvidence
 // Platform/value ABI only. No reader, AST walker, evaluator or code generator.
 public static class R
 {
+    // Cache ownership follows a session, not the process. Standalone compiler
+    // callers receive their own execution-flow context on first use.
+    public sealed class ValueContext
+    {
+        internal readonly object Storage = new ValueCaches();
+    }
+    private sealed class ValueCaches
+    {
+        internal readonly object SnapshotLock = new();
+        internal readonly ConditionalWeakTable<List<object>, MutableState> MutableStates = new();
+        internal readonly ConditionalWeakTable<FrozenList, ValueMemo> ValueMemos = new();
+        internal readonly ConditionalWeakTable<FrozenList, JsonEncoding> JsonEncodings = new();
+        internal readonly Dictionary<ulong, List<WeakReference<FrozenList>>> SnapshotPool = new();
+        internal readonly Queue<ulong> SnapshotBucketOrder = new();
+        internal int SnapshotMaintenanceTicks;
+        internal int SnapshotGeneration = GC.CollectionCount(2);
+        internal int SnapshotSweepRemaining;
+        internal readonly Dictionary<ulong, List<RecordLayout>> RecordLayouts = new();
+        internal int RecordLayoutCount;
+        internal long RecordLayoutCharacters;
+        internal readonly object RawLock = new();
+        internal RawDagWriter? RawEvidence;
+        internal bool BinaryRecording;
+    }
+    private static readonly AsyncLocal<ValueContext?> ValuesContext = new();
+    private static ValueCaches Caches => (ValueCaches)(ValuesContext.Value ??= new ValueContext()).Storage;
+    public static IDisposable UseValues(ValueContext context) => new ValueScope(context);
+    private sealed class ValueScope : IDisposable
+    {
+        private readonly ValueContext? previous = ValuesContext.Value;
+        internal ValueScope(ValueContext context) => ValuesContext.Value = context ?? throw new ArgumentNullException(nameof(context));
+        public void Dispose() => ValuesContext.Value = previous;
+    }
     private static readonly AsyncLocal<Action<string, string>?> PhaseContext = new();
     public static IDisposable UsePhases(Action<string, string>? observer) => new PhaseScope(observer);
     private sealed class PhaseScope : IDisposable
@@ -417,7 +495,6 @@ public static class R
         return v;
     }
     private static readonly object MissingSentinel = new();
-    private static readonly List<object> MemoMiss = new() { false, false };
 
     // Structural value equality reads existing branches without materializing mutable copies.
     public static object same_value(object a, object b) => SameValue(a, b) ? BoolTrue : BoolFalse;
@@ -493,7 +570,7 @@ public static class R
                 var k = RawItem(entry, 0);
                 if (!found && (ReferenceEquals(k, name) || (k is string s && string.Equals(s, name, StringComparison.Ordinal))))
                 {
-                    result.Add(new List<object> { key, copy_value(value) });
+                    result.Add(new List<object> { key, snapshot(value) });
                     found = true;
                 }
                 else result.Add(frozen[i]);
@@ -507,13 +584,13 @@ public static class R
                 var k = RawItem(entry, 0);
                 if (!found && Bool(eq(k, key)))
                 {
-                    result.Add(new List<object> { key, copy_value(value) });
+                    result.Add(new List<object> { key, snapshot(value) });
                     found = true;
                 }
                 else result.Add(frozen[i]);
             }
         }
-        if (!found) result.Add(new List<object> { key, copy_value(value) });
+        if (!found) result.Add(new List<object> { key, snapshot(value) });
         if (found) InheritRecordLayout(result, frozen);
         return result;
     }
@@ -553,7 +630,7 @@ public static class R
             var key = RawItem(item, 0);
             var updatedVal = record_find(updates, key, MissingSentinel);
             if (!ReferenceEquals(updatedVal, MissingSentinel))
-                result.Add(new List<object> { key, copy_value(updatedVal) });
+                result.Add(new List<object> { key, snapshot(updatedVal) });
             else result.Add(item);
             keys.Add(key);
             if (key is string name) stringKeys?.Add(name);
@@ -572,7 +649,7 @@ public static class R
                 stringKeys = null;
                 if (keys.Exists(existing => Bool(same_value(existing, key)))) continue;
             }
-            result.Add(new List<object> { key, copy_value(record_find(updates, key, false)) });
+            result.Add(new List<object> { key, snapshot(record_find(updates, key, false)) });
             keys.Add(key);
         }
         if (result.Count == frozen.Count) InheritRecordLayout(result, frozen);
@@ -596,14 +673,14 @@ public static class R
             var pair = Items(item);
             var key = (string)pair[0];
             result.Add(updates.TryGetValue(key, out var value)
-                ? new List<object> { key, copy_value(value) } : item);
+                ? new List<object> { key, snapshot(value) } : item);
             present.Add(key);
         }
         foreach (var item in changes)
         {
             var pair = Items(item);
             var key = (string)pair[0];
-            if (present.Add(key)) result.Add(new List<object> { key, copy_value(updates[key]) });
+            if (present.Add(key)) result.Add(new List<object> { key, snapshot(updates[key]) });
         }
         return true;
     }
@@ -622,7 +699,7 @@ public static class R
         internal readonly Dictionary<object, object> Values = new();
         internal readonly Queue<object> Order = new();
     }
-    private static readonly ConditionalWeakTable<FrozenList, ValueMemo> ValueMemos = new();
+    private static ConditionalWeakTable<FrozenList, ValueMemo> ValueMemos => Caches.ValueMemos;
     public static object memo_get(object owner, object key)
     {
         lock (SnapshotLock)
@@ -631,7 +708,7 @@ public static class R
             var frozenKey = key is FrozenList fk ? fk : SnapshotValue(key);
             if (ValueMemos.TryGetValue(identity, out var ownerMemo) && ownerMemo.Partition(frozenKey).Values.TryGetValue(frozenKey, out var result))
                 return new List<object> { true, copy_value(result) };
-            return MemoMiss;
+            return new List<object> { BoolFalse, BoolFalse };
         }
     }
     public static object memo_put(object owner, object key, object value)
@@ -830,21 +907,23 @@ public static class R
         internal FrozenList? Backbone;
         internal bool IndexChecked;
         internal Dictionary<string, int>? Index;
+        internal object? Invalidation;
         // Most thawed branches have exactly one owner. Do not allocate a List
         // and its backing array for the common single-parent case.
         internal WeakReference<List<object>>? Parent;
         internal List<WeakReference<List<object>>>? OtherParents;
     }
-    private static readonly ConditionalWeakTable<List<object>, MutableState> MutableStates = new();
+    private static ConditionalWeakTable<List<object>, MutableState> MutableStates => Caches.MutableStates;
     private static List<object> Thaw(FrozenList frozen)
     {
         var result = frozen.CopyRoot();
         MutableStates.Add(result, new MutableState { Backbone = frozen });
         return result;
     }
-    private static void LinkParent(List<object> child, List<object> parent)
+    private static void LinkParent(List<object> child, List<object> parent) => LinkParent(child, parent, MutableStates);
+    private static void LinkParent(List<object> child, List<object> parent, ConditionalWeakTable<List<object>, MutableState> states)
     {
-        var state = MutableStates.GetOrCreateValue(child);
+        var state = states.GetOrCreateValue(child);
         if (state.Parent is null) { state.Parent = new(parent); return; }
         if (!state.Parent.TryGetTarget(out var first)) { state.Parent.SetTarget(parent); return; }
         if (ReferenceEquals(first, parent)) return;
@@ -859,7 +938,8 @@ public static class R
     private static void Invalidate(object value)
     {
         var list = MutableItems(value);
-        if (!MutableStates.TryGetValue(list, out var initial)) return;
+        var states = MutableStates;
+        if (!states.TryGetValue(list, out var initial)) return;
         // No ancestor can depend on this owner; invalidate only its own caches.
         if (initial.Parent is null && initial.OtherParents is not { Count: > 0 })
         {
@@ -868,24 +948,36 @@ public static class R
             initial.Index = null;
             return;
         }
-        var visited = new HashSet<List<object>>(ReferenceEqualityComparer.Instance);
-        var pending = new Stack<List<object>>();
-        pending.Push(list);
-        while (pending.TryPop(out var current))
+        // An operation-local identity handles aliases and cycles without a
+        // HashSet for every write. The usual single-owner path is iterative;
+        // allocate a work stack only when the graph actually branches.
+        var invalidation = new object();
+        Stack<List<object>>? pending = null;
+        List<object>? current = list;
+        while (current is not null)
         {
-            if (!visited.Add(current) || !MutableStates.TryGetValue(current, out var state)) continue;
-            state.Backbone = null;
-            state.IndexChecked = false;
-            state.Index = null;
-            if (state.Parent is { } first)
+            List<object>? next = null;
+            if (states.TryGetValue(current, out var state) && !ReferenceEquals(state.Invalidation, invalidation))
             {
-                if (first.TryGetTarget(out var parent)) pending.Push(parent);
-                else state.Parent = null;
+                state.Invalidation = invalidation;
+                state.Backbone = null;
+                state.IndexChecked = false;
+                state.Index = null;
+                if (state.Parent is { } first)
+                {
+                    if (first.TryGetTarget(out var parent)) next = parent;
+                    else state.Parent = null;
+                }
+                if (state.OtherParents is { } others)
+                    for (var i = others.Count - 1; i >= 0; i--)
+                    {
+                        if (!others[i].TryGetTarget(out var parent)) { others.RemoveAt(i); continue; }
+                        if (next is null) next = parent;
+                        else (pending ??= new Stack<List<object>>()).Push(parent);
+                    }
             }
-            if (state.OtherParents is { } others)
-                for (var i = others.Count - 1; i >= 0; i--)
-                    if (others[i].TryGetTarget(out var parent)) pending.Push(parent);
-                    else others.RemoveAt(i);
+            if (next is null && pending is not null && pending.TryPop(out var queued)) next = queued;
+            current = next;
         }
     }
     // Metadata only: keys and immutable last-slot indices, never field values.
@@ -894,9 +986,9 @@ public static class R
         internal readonly string[] OrderedKeys = ownedKeys;
         internal readonly Dictionary<string, int> LastSlots = lastSlots;
     }
-    private static readonly Dictionary<ulong, List<RecordLayout>> RecordLayouts = new();
-    private static int RecordLayoutCount;
-    private static long RecordLayoutCharacters;
+    private static Dictionary<ulong, List<RecordLayout>> RecordLayouts => Caches.RecordLayouts;
+    private static int RecordLayoutCount { get => Caches.RecordLayoutCount; set => Caches.RecordLayoutCount = value; }
+    private static long RecordLayoutCharacters { get => Caches.RecordLayoutCharacters; set => Caches.RecordLayoutCharacters = value; }
     private const int RecordLayoutLimit = 128;
     private const int RecordLayoutSlotLimit = 128;
     private const long RecordLayoutCharacterLimit = 4096;
@@ -995,57 +1087,55 @@ public static class R
     private static List<object> MutableItems(object value) => value is FrozenList
         ? throw new InvalidOperationException("Cannot mutate an evidence snapshot; copy it first")
         : value as List<object> ?? throw new Exception("Expected List");
-    private static readonly object SnapshotLock = new();
-    private static readonly Dictionary<ulong, List<WeakReference<FrozenList>>> SnapshotPool = new();
-    private static readonly Queue<ulong> SnapshotBucketOrder = new();
-    private static int SnapshotMaintenanceTicks;
-    private static int SnapshotGeneration = GC.CollectionCount(2);
-    private static int SnapshotSweepRemaining;
+    private static object SnapshotLock => Caches.SnapshotLock;
     // Weak targets do not remove their dictionary keys or queue entries. After a
     // full collection, retire those dead buckets incrementally, including trees
     // reached through memo_get/put rather than the public snapshot entry point.
     // Live identities are never evicted: memo keys and DAG sharing depend on them.
-    private static void MaintainSnapshots()
+    private static void MaintainSnapshots(ValueCaches caches)
     {
-        if ((++SnapshotMaintenanceTicks & 63) != 0) return;
+        if ((++caches.SnapshotMaintenanceTicks & 63) != 0) return;
         var generation = GC.CollectionCount(2);
-        if (generation != SnapshotGeneration)
+        if (generation != caches.SnapshotGeneration)
         {
-            SnapshotGeneration = generation;
-            SnapshotSweepRemaining = SnapshotBucketOrder.Count;
+            caches.SnapshotGeneration = generation;
+            caches.SnapshotSweepRemaining = caches.SnapshotBucketOrder.Count;
         }
-        var budget = Math.Min(128, SnapshotSweepRemaining);
-        SnapshotSweepRemaining -= budget;
-        while (budget-- > 0 && SnapshotBucketOrder.TryDequeue(out var key))
+        var budget = Math.Min(128, caches.SnapshotSweepRemaining);
+        caches.SnapshotSweepRemaining -= budget;
+        while (budget-- > 0 && caches.SnapshotBucketOrder.TryDequeue(out var key))
         {
-            var bucket = SnapshotPool[key];
+            var bucket = caches.SnapshotPool[key];
             bucket.RemoveAll(reference => !reference.TryGetTarget(out _));
-            if (bucket.Count == 0) SnapshotPool.Remove(key);
-            else SnapshotBucketOrder.Enqueue(key);
+            if (bucket.Count == 0) caches.SnapshotPool.Remove(key);
+            else caches.SnapshotBucketOrder.Enqueue(key);
         }
     }
     public static object snapshot(object value)
     {
-        lock (SnapshotLock)
+        if (value is not List<object>) return value;
+        var caches = Caches;
+        lock (caches.SnapshotLock)
         {
-            MaintainSnapshots();
-            return SnapshotValue(value);
+            MaintainSnapshots(caches);
+            return SnapshotValue(value, caches);
         }
     }
-    private static object SnapshotValue(object value)
+    private static object SnapshotValue(object value) => SnapshotValue(value, Caches);
+    private static object SnapshotValue(object value, ValueCaches caches)
     {
         if (value is FrozenList || value is not List<object> items) return value;
-        var state = MutableStates.GetOrCreateValue(items);
+        var state = caches.MutableStates.GetOrCreateValue(items);
         if (state.Backbone is not null) return state.Backbone;
-        MaintainSnapshots();
+        MaintainSnapshots(caches);
         var children = items.Count == 0 ? Array.Empty<object>() : new object[items.Count];
         ulong hash = 14695981039346656037UL;
         ulong compatibleHash = hash;
         var compatible = true;
         for (var i = 0; i < items.Count; i++)
         {
-            if (items[i] is List<object> mutableChild) LinkParent(mutableChild, items);
-            var child = children[i] = SnapshotValue(items[i]);
+            if (items[i] is List<object> mutableChild) LinkParent(mutableChild, items, caches.MutableStates);
+            var child = children[i] = SnapshotValue(items[i], caches);
             if (TryMembershipHash(child, out var valueHash))
                 compatibleHash = unchecked((compatibleHash ^ valueHash) * 1099511628211UL);
             else compatible = false;
@@ -1053,10 +1143,10 @@ public static class R
             hash = unchecked((hash ^ part) * 1099511628211UL);
         }
         hash = unchecked((hash ^ (ulong)items.Count) * 1099511628211UL);
-        if (!SnapshotPool.TryGetValue(hash, out var bucket))
+        if (!caches.SnapshotPool.TryGetValue(hash, out var bucket))
         {
-            SnapshotPool[hash] = bucket = new();
-            SnapshotBucketOrder.Enqueue(hash);
+            caches.SnapshotPool[hash] = bucket = new();
+            caches.SnapshotBucketOrder.Enqueue(hash);
         }
         for (var i = bucket.Count - 1; i >= 0; i--)
         {
@@ -1168,7 +1258,7 @@ public static class R
     {
         internal readonly string Text = text;
     }
-    private static readonly ConditionalWeakTable<FrozenList, JsonEncoding> JsonEncodings = new();
+    private static ConditionalWeakTable<FrozenList, JsonEncoding> JsonEncodings => Caches.JsonEncodings;
     public static object json_stringify(object value)
     {
         // Only frozen identities are cacheable. Mutable values retain the exact
@@ -1192,7 +1282,7 @@ public static class R
     private static readonly byte[] NewLineBytes = Encoding.UTF8.GetBytes(Environment.NewLine);
     // Same value encoding as json_stringify, without a whole-packet UTF-16 copy.
     private static bool binaryOutputHeader;
-    private static bool binaryRecording;
+    private static bool binaryRecording { get => Caches.BinaryRecording; set => Caches.BinaryRecording = value; }
     public static object json_print(object value)
     {
         lock (OutputLock)
@@ -1220,8 +1310,8 @@ public static class R
         if (TryItems(value, out var items)) return items.Select(BinaryProjection).ToList();
         return value;
     }
-    private static RawDagWriter? RawEvidence;
-    private static readonly object RawLock = new();
+    private static RawDagWriter? RawEvidence { get => Caches.RawEvidence; set => Caches.RawEvidence = value; }
+    private static object RawLock => Caches.RawLock;
     public static object raw_open(object path)
     {
         if (!AuditMode) throw new InvalidOperationException("Raw evidence requires audit mode");
@@ -1290,10 +1380,12 @@ public static class R
         private readonly FileStream stream;
         private readonly ConditionalWeakTable<FrozenList, RawNode> nodes = new();
         private readonly HashSet<string> eventIds = new(StringComparer.Ordinal);
+        private readonly BinaryEvidence.Encoder frameBuffer = new();
+        private readonly IncrementalHash chainDigest;
+        private readonly byte[] previous = Encoding.ASCII.GetBytes(new string('0', 64));
         private long nextNode, sequence, flushedSequence, eventCount;
-        private string previous = new('0', 64);
+        private int payloadOffset;
         private bool finished, failed;
-        private static Dictionary<string, object?> Map(params (string Key, object? Value)[] fields) => fields.ToDictionary(x => x.Key, x => x.Value);
         internal RawDagWriter(string path)
         {
             BinaryEvidence.RequireBinaryPath(path);
@@ -1302,13 +1394,16 @@ public static class R
             stream = new FileStream(partial, FileMode.CreateNew, FileAccess.Write, FileShare.Read, 1024 * 1024);
             try
             {
+                chainDigest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 stream.Write(BinaryEvidence.Magic);
-                Frame(Map(("kind", "header"), ("format", "dv-raw-dag-v2"),
-                    ("value_encoding", "typed binary atoms and prior node references"),
-                    ("checksum", "sha256(previous-ascii + LF + sequence-ascii + LF + binary-payload)")));
+                BeginFrame("header", 4);
+                frameBuffer.Text("format"); frameBuffer.Text("dv-raw-dag-v2");
+                frameBuffer.Text("value_encoding"); frameBuffer.Text("typed binary atoms and prior node references");
+                frameBuffer.Text("checksum"); frameBuffer.Text("sha256(previous-ascii + LF + sequence-ascii + LF + binary-payload)");
+                CompleteFrame();
                 FlushCommit();
             }
-            catch { stream.Dispose(); throw; }
+            catch { chainDigest?.Dispose(); stream.Dispose(); throw; }
         }
         private void RequireOpen()
         {
@@ -1320,18 +1415,42 @@ public static class R
             try { stream.Flush(); flushedSequence = sequence; }
             catch { failed = true; throw; }
         }
-        private long Frame(Dictionary<string, object?> payload)
+        private void BeginFrame(string kind, int fields)
         {
             RequireOpen();
+            frameBuffer.Clear();
+            frameBuffer.Map(4);
+            frameBuffer.Text("seq"); frameBuffer.Integer(sequence);
+            frameBuffer.Text("prev"); frameBuffer.Utf8Text(previous);
+            frameBuffer.Text("payload");
+            payloadOffset = frameBuffer.Count;
+            frameBuffer.Map(fields);
+            frameBuffer.Text("kind"); frameBuffer.Text(kind);
+        }
+        private long CompleteFrame()
+        {
             try
             {
-                var bytes = BinaryEvidence.Encode(payload);
-                using var digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-                digest.AppendData(Encoding.ASCII.GetBytes(previous + "\n" + sequence.ToString(CultureInfo.InvariantCulture) + "\n"));
-                digest.AppendData(bytes);
-                var checksum = Convert.ToHexString(digest.GetHashAndReset()).ToLowerInvariant();
-                BinaryEvidence.WriteFrame(stream, Map(("seq", sequence), ("prev", previous), ("payload", payload), ("sha256", checksum)));
-                previous = checksum;
+                Span<byte> number = stackalloc byte[20];
+                System.Buffers.Text.Utf8Formatter.TryFormat(sequence, number, out var numberLength);
+                chainDigest.AppendData(previous);
+                chainDigest.AppendData("\n"u8);
+                chainDigest.AppendData(number[..numberLength]);
+                chainDigest.AppendData("\n"u8);
+                chainDigest.AppendData(frameBuffer.WrittenSpan[payloadOffset..]);
+                Span<byte> checksum = stackalloc byte[32];
+                if (!chainDigest.TryGetHashAndReset(checksum, out var checksumLength) || checksumLength != checksum.Length)
+                    throw new InvalidDataException("Invalid DAG digest length");
+                Span<byte> text = stackalloc byte[64];
+                ReadOnlySpan<byte> hex = "0123456789abcdef"u8;
+                for (var i = 0; i < checksum.Length; i++)
+                {
+                    text[i * 2] = hex[checksum[i] >> 4];
+                    text[i * 2 + 1] = hex[checksum[i] & 15];
+                }
+                frameBuffer.Text("sha256"); frameBuffer.Utf8Text(text);
+                BinaryEvidence.WriteEncodedFrame(stream, frameBuffer.WrittenSpan);
+                text.CopyTo(previous);
                 return sequence++;
             }
             catch { failed = true; throw; }
@@ -1340,28 +1459,69 @@ public static class R
         {
             RequireOpen();
             if (!IsDvList(value)) throw new ArgumentException("Raw DAG roots must be DV lists/records");
-            var frozen = (FrozenList)snapshot(value);
+            return FrozenNode((FrozenList)snapshot(value));
+        }
+        private RawNode FrozenNode(FrozenList frozen)
+        {
             if (nodes.TryGetValue(frozen, out var known)) return known;
-            var items = new List<object?>();
-            for (var i = 0; i < frozen.Count; i++)
-                items.Add(IsDvList(frozen[i]) ? Map(("node", Node(frozen[i]).Id)) :
-                    frozen[i] is Rational exact ? Map(("rational", exact.ToString())) : frozen[i]);
-            var id = nextNode++;
-            var frame = Frame(Map(("kind", "node"), ("node_id", id), ("items", items)));
-            var result = new RawNode(id, frame); nodes.Add(frozen, result); return result;
+            try
+            {
+                // Define children before starting this parent's envelope. The
+                // second pass only reads writer-local identities; it allocates
+                // no reference dictionaries or duplicate payload tree.
+                for (var i = 0; i < frozen.Count; i++)
+                    if (frozen[i] is FrozenList child) FrozenNode(child);
+                var id = nextNode++;
+                BeginFrame("node", 3);
+                frameBuffer.Text("node_id"); frameBuffer.Integer(id);
+                frameBuffer.Text("items"); frameBuffer.List(frozen.Count);
+                for (var i = 0; i < frozen.Count; i++)
+                {
+                    var item = frozen[i];
+                    if (item is FrozenList child)
+                    {
+                        if (!nodes.TryGetValue(child, out var node)) throw new InvalidDataException("Missing prior DAG identity");
+                        frameBuffer.Map(1); frameBuffer.Text("node"); frameBuffer.Integer(node.Id);
+                    }
+                    else if (item is Rational exact)
+                    {
+                        frameBuffer.Map(1); frameBuffer.Text("rational"); frameBuffer.Text(exact.ToString());
+                    }
+                    else frameBuffer.Value(item, 3);
+                }
+                var frame = CompleteFrame();
+                var result = new RawNode(id, frame); nodes.Add(frozen, result); return result;
+            }
+            catch { failed = true; throw; }
         }
         internal void Event(object value)
         {
             var frozen = snapshot(value); var id = Text(record_find(frozen, "id", false));
             if (!eventIds.Add(id)) { failed = true; throw new InvalidOperationException("Repeated raw event ID: " + id); }
             var node = Node(frozen);
-            Frame(Map(("kind", "event"), ("event_id", id), ("root", node.Id), ("ordinal", eventCount)));
-            FlushCommit(); eventCount++;
+            try
+            {
+                BeginFrame("event", 4);
+                frameBuffer.Text("event_id"); frameBuffer.Text(id);
+                frameBuffer.Text("root"); frameBuffer.Integer(node.Id);
+                frameBuffer.Text("ordinal"); frameBuffer.Integer(eventCount);
+                CompleteFrame();
+                FlushCommit(); eventCount++;
+            }
+            catch { failed = true; throw; }
         }
         internal void Checkpoint(string name, object value)
         {
             var node = Node(value);
-            Frame(Map(("kind", "checkpoint"), ("name", name), ("root", node.Id), ("events", eventCount))); FlushCommit();
+            try
+            {
+                BeginFrame("checkpoint", 4);
+                frameBuffer.Text("name"); frameBuffer.Text(name);
+                frameBuffer.Text("root"); frameBuffer.Integer(node.Id);
+                frameBuffer.Text("events"); frameBuffer.Integer(eventCount);
+                CompleteFrame(); FlushCommit();
+            }
+            catch { failed = true; throw; }
         }
         internal object Reference(object value)
         {
@@ -1378,11 +1538,18 @@ public static class R
         internal void Finish(object value)
         {
             Checkpoint("final", value);
-            Frame(Map(("kind", "seal"), ("events", eventCount), ("nodes", nextNode), ("final_checkpoint", true)));
-            try { FlushCommit(); stream.Dispose(); File.Move(partial, destination); finished = true; }
-            catch { failed = true; stream.Dispose(); throw; }
+            try
+            {
+                BeginFrame("seal", 4);
+                frameBuffer.Text("events"); frameBuffer.Integer(eventCount);
+                frameBuffer.Text("nodes"); frameBuffer.Integer(nextNode);
+                frameBuffer.Text("final_checkpoint"); frameBuffer.Flag(true);
+                CompleteFrame();
+                FlushCommit(); stream.Dispose(); chainDigest.Dispose(); File.Move(partial, destination); finished = true;
+            }
+            catch { failed = true; stream.Dispose(); chainDigest.Dispose(); throw; }
         }
-        internal void Abort() { failed = true; stream.Dispose(); }
+        internal void Abort() { failed = true; stream.Dispose(); chainDigest.Dispose(); }
     }
     public static void WriteEvidenceFile(string path, object value)
     {
@@ -1503,19 +1670,38 @@ public static class R
 [JsonConverter(typeof(RationalJsonConverter))]
 public sealed record Rational
 {
+    private static readonly Rational Zero = new(BigInteger.Zero, BigInteger.One);
+    private static readonly Rational One = new(BigInteger.One, BigInteger.One);
+    private static readonly Rational MinusOne = new(BigInteger.MinusOne, BigInteger.One);
     public BigInteger Numerator { get; }
     public BigInteger Denominator { get; }
     public Rational(BigInteger n, BigInteger d)
     {
         if (d.IsZero) throw new DivideByZeroException();
         if (d.Sign < 0) { n = -n; d = -d; }
+        if (d.IsOne) { Numerator = n; Denominator = BigInteger.One; return; }
+        if (n.IsZero) { Numerator = BigInteger.Zero; Denominator = BigInteger.One; return; }
         var gcd = BigInteger.GreatestCommonDivisor(BigInteger.Abs(n), d);
         Numerator = n / gcd; Denominator = d / gcd;
     }
     public static Rational From(object value)
     {
         if (value is Rational q) return q;
-        var text = value is double d ? R.Num(d).ToString("R", CultureInfo.InvariantCulture) : R.Text(value);
+        string text;
+        if (value is double d)
+        {
+            d = R.Num(d);
+            if (d == 0) return Zero;
+            if (d == 1) return One;
+            if (d == -1) return MinusOne;
+            // Within the safe-integer range, the round-trip decimal spelling
+            // denotes this exact integer. Larger values and fractions must keep
+            // the original decimal conversion, not their binary significand.
+            if (d >= -9007199254740991d && d <= 9007199254740991d && d == Math.Truncate(d))
+                return new Rational(new BigInteger((long)d), BigInteger.One);
+            text = d.ToString("R", CultureInfo.InvariantCulture);
+        }
+        else text = R.Text(value);
         var slash = text.IndexOf('/');
         if (slash >= 0) return new(BigInteger.Parse(text[..slash], CultureInfo.InvariantCulture), BigInteger.Parse(text[(slash+1)..], CultureInfo.InvariantCulture));
         var exponent = text.IndexOfAny(['e', 'E']);
@@ -1526,11 +1712,37 @@ public sealed record Rational
         var n = BigInteger.Parse(text, CultureInfo.InvariantCulture);
         return power >= 0 ? new(n * BigInteger.Pow(10, power), 1) : new(n, BigInteger.Pow(10, -power));
     }
-    public Rational Add(Rational b) => new(Numerator*b.Denominator+b.Numerator*Denominator, Denominator*b.Denominator);
-    public Rational Subtract(Rational b) => new(Numerator*b.Denominator-b.Numerator*Denominator, Denominator*b.Denominator);
-    public Rational Multiply(Rational b) => new(Numerator*b.Numerator, Denominator*b.Denominator);
-    public Rational Divide(Rational b) => new(Numerator*b.Denominator, Denominator*b.Numerator);
-    public int CompareTo(Rational b) => (Numerator*b.Denominator).CompareTo(b.Numerator*Denominator);
+    public Rational Add(Rational b)
+    {
+        if (b.Numerator.IsZero) return this;
+        if (Numerator.IsZero) return b;
+        return Denominator == b.Denominator
+            ? new Rational(Numerator + b.Numerator, Denominator)
+            : new Rational(Numerator*b.Denominator+b.Numerator*Denominator, Denominator*b.Denominator);
+    }
+    public Rational Subtract(Rational b)
+    {
+        if (b.Numerator.IsZero) return this;
+        return Denominator == b.Denominator
+            ? new Rational(Numerator - b.Numerator, Denominator)
+            : new Rational(Numerator*b.Denominator-b.Numerator*Denominator, Denominator*b.Denominator);
+    }
+    public Rational Multiply(Rational b)
+    {
+        if (Numerator.IsZero || b.Numerator.IsZero) return Zero;
+        if (b.Numerator.IsOne && b.Denominator.IsOne) return this;
+        if (Numerator.IsOne && Denominator.IsOne) return b;
+        return new Rational(Numerator*b.Numerator, Denominator*b.Denominator);
+    }
+    public Rational Divide(Rational b)
+    {
+        if (b.Numerator.IsZero) throw new DivideByZeroException();
+        if (Numerator.IsZero) return Zero;
+        if (b.Numerator.IsOne && b.Denominator.IsOne) return this;
+        return new Rational(Numerator*b.Denominator, Denominator*b.Numerator);
+    }
+    public int CompareTo(Rational b) => Denominator == b.Denominator
+        ? Numerator.CompareTo(b.Numerator) : (Numerator*b.Denominator).CompareTo(b.Numerator*Denominator);
     public override string ToString() => Denominator.IsOne ? Numerator.ToString(CultureInfo.InvariantCulture) : Numerator.ToString(CultureInfo.InvariantCulture)+"/"+Denominator.ToString(CultureInfo.InvariantCulture);
 }
 public sealed class RationalJsonConverter : JsonConverter<Rational>
