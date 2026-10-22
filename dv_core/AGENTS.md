@@ -179,3 +179,6 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 
 追加激进 CLI 开关 cow/mask/lazyinternal/dirty/planreuse/blackbox 的作用域、近似边界与调试断言统一见 `../docs/cli-optimization.md`。私有 stage 更新共享未变对象；所有人物使用同一剪枝参数，缓存必须包含完整知识版本。不得将开关接线或机制差分当作正式会话验收。
 `personal_choice` 规划收益遵循本人价值顺序首个非零影响；empirical_initiative/counterfactual_initiative 只缩放本人预期信息收益，默认 1。策略影响不得修改正式资格、答案判定或观察。参数接口详见 docs/cli-optimization.md。
+
+规划器的 Top-K 仅容纳存在本人 active/predict 采纳的后继候选，避免不可预测项占用可展开名额；统一 CLI 深度上限的默认值及调试参数见 cli-optimization。测试窗口遵从用户当前授权，不能将搜索深度调整当作未知前提的补值机制。
+调试65的 stop_at_chapter_end 必须同时有客观收束记录与记录观察者正式章末检视的成功回执；通常使用 detective，无侦探配置使用实际记录人物集合中的任一见证者。截止、公约成功及实际观察分别报告；不改变内容行动或延长时域。合同见 ../docs/cli-optimization.md。

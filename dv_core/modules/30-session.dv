@@ -2978,7 +2978,12 @@ fn dvp_plan(actor, bindings, costs):
                         if selective and not first_supported and (depth + 1 < depth_limit) and not dv_find(action, "known_opportunity_wait", false) and dv_has_key(action, "predict_law"):
                             let edge = {"node": node, "action": action, "path": path, "score": score, "opportunity_keys": opportunity_keys, "opportunity_value": opportunity_value}
                             if prune:
-                                deferred = dvp_pruned_edges(deferred, edge, prune_top_k)
+                                // An edge without the owner's active prediction cannot
+                                // produce a successor. Do not let such an edge consume
+                                // one of the shared Top-K slots before forecast admission.
+                                let adoption = dv_find(mind.adoptions, action.predict_law, false)
+                                if adoption != false and adoption.active and adoption.mode == "predict":
+                                    deferred = dvp_pruned_edges(deferred, edge, prune_top_k)
                             else:
                                 rt_push(deferred, edge)
                         if not selective and (depth + 1 < depth_limit) and not dv_find(action, "known_opportunity_wait", false) and dv_and((0 < rt_count(relevant)), dv_has_key(action, "predict_law")):

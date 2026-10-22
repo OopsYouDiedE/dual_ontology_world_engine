@@ -31,6 +31,35 @@ fn dvg_run_campaign(max_steps):
 fn dvg_debug_config():
     return {"viewer": "detective", "actors": [], "event_types": [], "max_steps": false, "phase_progress": false}
 
+// A summary is an objective closing record, not evidence that a viewer saw it.
+// Only successful formal closing inspections count; candidates and navigation do not.
+// With no detective, any actually recorded resident viewer may supply the witness.
+fn dvg_debug_closing_observation(state):
+    var viewers = [dvg_debug_config().viewer]
+    if dv_find(state.story.run_config, "detective_zone", "") == "none":
+        viewers = [for subject in state.actors: subject.id]
+    var i = rt_count(state.events) - 1
+    while 0 <= i:
+        let event = state.events[i]
+        if event.type == "action_execution" and dv_has(viewers, event.actor):
+            let action = event.data.action.id
+            if dv_has([rt_cat(event.actor, ".c2.daily.closing.central_hall"), rt_cat(event.actor, ".c2.daily.closing.oath_court")], action) and event.data.receipt.execution.status == "applied":
+                var actor_index = 0
+                while actor_index < rt_count(state.actors):
+                    let actor = state.actors[actor_index]
+                    if actor.id == event.actor and dv_has(dv_find(actor, "completed_actions", []), action):
+                        dv_require(rt_count(event.parents) == 1, "Closing inspection requires a host completion")
+                        let host = dvs_find_event_by_id(state.events, event.parents[0])
+                        dv_require(host != false and host.type == "host_completion" and host.actor == actor.id, "Closing inspection requires its actual host receipt")
+                        let completion = dvg_debug_completion(state.events, host.data.action_event)
+                        return {"viewer": actor.id, "action": action, "execution_event": event.id, "completion": completion}
+                    actor_index = actor_index + 1
+        i = i - 1
+    return false
+
+fn dvg_debug_chapter_end_observed(state):
+    return dvg_chapter_summary(state) != false and dvg_debug_closing_observation(state) != false
+
 // Read-only stopping evidence; these limits never mean narrative completion.
 fn dvg_debug_stop_evidence(state, steps, limit):
     var actors = []
@@ -43,7 +72,9 @@ fn dvg_debug_stop_evidence(state, steps, limit):
         rt_push(actors, {"actor": actor.id, "action_quota": dv_find(actor.policy, "budget", 0), "reason_budget": dv_find(actor.policy, "reason_budget", 0), "model_budget": dv_find(actor.policy, "model_budget", 0), "planning_limit": dv_find(actor, "planning_limit", 0), "scheduled_action": dv_find(actor, "scheduled_action", false), "can_act": dvs_actor_can_act(actor)})
         i = i + 1
     if dvg_chapter_summary(state) != false:
-        rt_push(reasons, "actual-chapter-two-closing-record")
+        rt_push(reasons, "objective-chapter-two-closing-record")
+    if dvg_debug_closing_observation(state) != false:
+        rt_push(reasons, "actual-viewer-closing-inspection")
     if limit <= steps:
         rt_push(reasons, "diagnostic-action-window")
     if state.limit <= state.executed:
@@ -54,7 +85,7 @@ fn dvg_debug_stop_evidence(state, steps, limit):
         rt_push(reasons, "action-exceeds-remaining-time")
     if rt_count(state.actors) <= state.idle and dvs_scheduled_count(state.actors) == 0:
         rt_push(reasons, "no-scheduled-or-admissible-action")
-    return {"reasons": reasons, "actors": actors, "injury_facts": injury_facts, "executed": state.executed, "session_limit": state.limit, "diagnostic_limit": limit, "game_time": state.physical.time, "horizon": state.horizon, "idle": state.idle, "scheduled_count": dvs_scheduled_count(state.actors), "narrative_completion": "see-actual-closing-record", "chapter_summary": dvg_chapter_summary(state)}
+    return {"reasons": reasons, "actors": actors, "injury_facts": injury_facts, "executed": state.executed, "session_limit": state.limit, "diagnostic_limit": limit, "game_time": state.physical.time, "horizon": state.horizon, "idle": state.idle, "scheduled_count": dvs_scheduled_count(state.actors), "narrative_completion": "see-separate-objective-and-viewer-evidence", "council_ended": dv_truth(state.physical, dv_fact(c2daily_ref("council_ended"), true)), "closing_observation": dvg_debug_closing_observation(state), "chapter_summary": dvg_chapter_summary(state)}
 
 // Projection buffering changes diagnostic delivery only. Every dvs_event still
 // commits its original value to the raw DAG before the event is published.
@@ -154,7 +185,7 @@ fn dvg_debug_loop(initial, config, run_config, initial_steps, initial_cursor, re
     if resumed:
         inherited_events = rt_count(state.events)
     rt_json_print({"type": "debug_start", "configuration": config, "run_config": run_config, "executor": "formal-model", "geometry": false, "raw_format": raw_format, "projection_every": projection_every, "resumed": resumed, "initial_steps": steps, "inherited_event_count": inherited_events, "run_start_game_time": state.physical.time, "presentation_scope": "stdout contains flushed projection only; every original committed event remains in raw DAG"})
-    while dvs_session_active(state) and steps < limit and (not dv_find(run_config, "stop_at_chapter_end", false) or dvg_chapter_summary(state) == false):
+    while dvs_session_active(state) and steps < limit and (not dv_find(run_config, "stop_at_chapter_end", false) or not dvg_debug_chapter_end_observed(state)):
         let before_time = last_complete_time
         state = dvg_prepare(state)
         let pending = dv_find(state, "pending", false)

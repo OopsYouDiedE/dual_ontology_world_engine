@@ -396,12 +396,12 @@ def main():
     for name in optimization_names:
         parser.add_argument('--opt-' + name, choices=('on', 'off'), default='on')
     parser.add_argument('--prune-top-k', type=int, default=3)
-    parser.add_argument('--plan-depth', type=int, default=1)
+    parser.add_argument('--plan-depth', type=int, default=3)
     parser.add_argument('--plan-time-bucket', type=int, default=60)
     parser.add_argument('--opt-dirty-verify', type=int, nargs='?', const=100, default=0, help='Recheck dependency cache every N accesses; no argument means 100')
     parser.add_argument('--opt-mask-verify', action='store_true')
     parser.add_argument('--selective-planning', choices=('on', 'off'), default='on')
-    parser.add_argument('--stop-at-chapter-end', choices=('on', 'off'), default='on', help='Stop only after the actual chapter-two closing record exists')
+    parser.add_argument('--stop-at-chapter-end', choices=('on', 'off'), default='on', help='Stop after an objective chapter-two closing record and a successful closing inspection by a recorded viewer')
     args = parser.parse_args()
     # Single-thread CLI defaults; explicit GC arguments retain precedence.
     if args.gc_mode is None:
