@@ -175,7 +175,7 @@ public sealed partial class DvSession
         if (intentProjection is not null) return intentProjection;
         using var performanceScope = Measure("intent", "projection");
         PhaseObserver?.Invoke("intent_projection_begin", "");
-        intentProjection = R.snapshot(Run(() => DVProgram.SessionIntent(state)));
+        intentProjection = R.snapshot(Run(() => DVProgram.SessionIntent(R.snapshot(state))));
         PhaseObserver?.Invoke("intent_projection_end", "");
         return intentProjection;
     }
@@ -485,6 +485,7 @@ public sealed partial class DvSession
         performance.StopWallClock();
         using var performanceScope = Measure("close", "persistence");
         CancelPrepared();
+        CaptureClosingPreview();
         closedTrace = R.snapshot(Run(() => DVProgram.SessionClose(state)));
         shutdownReason = R.Text(Field(closedTrace, "status", "closed"));
         UpdateEvidenceLifecycle();

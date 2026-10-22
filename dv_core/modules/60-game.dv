@@ -49,7 +49,7 @@ fn c1_player_display(action):
         if c1_ui_ends(action.id, rt_cat(".inspect.", card.id)):
             result = dv_with_many(result, {"label": rt_cat("检视", card.title), "presentation": c1_op_presentation("detective", "visible-inspection", [card.text])})
         i = i + 1
-    let named = {".opening.wake": "回想醒来前的事", ".opening.empty-slot": "查看自己的标签柜", ".opening.wear-coat": "穿上风衣", ".identify-own-lens": "辨认放大镜上的标记", ".replay": "在手稿上重演昨夜", ".sound_trial": "进行声路试验", ".reask_question": "询问当前的问题", ".compare_sole": "查看自己的鞋底", ".loss_testimony": "请苏泠说说声路试验中的所闻", ".talk.slate_code": "询问石板刻痕", ".talk.slate_person": "询问石板上的人形线条", ".talk.frame_hollow": "询问门框的声响", ".talk.cups_known": "询问杯子的摆放", ".talk.starter_kept": "询问罐中留存的酵头", ".talk.recalled_copper": "询问关于铜口的记忆", ".talk.recalled_names": "询问关于姓名的记忆"}
+    let named = {".opening.wake": "回想醒来前的事", ".opening.empty-slot": "查看自己的标签柜", ".opening.wear-coat": "穿上风衣", ".identify-own-lens": "比对放大镜与石板上的图记", ".replay": "在手稿上重演昨夜", ".sound_trial": "进行声路试验", ".reask_question": "询问当前的问题", ".compare_sole": "查看自己的鞋底", ".loss_testimony": "请苏泠说说声路试验中的所闻", ".talk.slate_code": "询问石板刻痕", ".talk.slate_person": "询问石板上的人形线条", ".talk.frame_hollow": "询问门框的声响", ".talk.cups_known": "询问杯子的摆放", ".talk.starter_kept": "询问罐中留存的酵头", ".talk.recalled_copper": "询问关于铜口的记忆", ".talk.recalled_names": "询问关于姓名的记忆"}
     i = 0
     while i < rt_count(named):
         if c1_ui_ends(action.id, named[i][0]):
@@ -68,7 +68,7 @@ fn c1_player_display(action):
     if c1_ui_ends(action.id, ".compare_sole"):
         result = dv_with(result, "presentation", {"actor": "detective", "lines": [{"template": "马球靴的鞋底纹路，与门前灰上的印迹一模一样。靴齿里嵌着同样的炭灰。", "when": c1_statement("boots_fit")} ]})
     if c1_ui_ends(action.id, ".identify-own-lens"):
-        result = dv_with(result, "presentation", {"actor": "detective", "lines": [{"template": "风衣内袋里的铜框放大镜，把柄刻痕与石板上的图记完全吻合。", "when": c1_statement("lens_mine")} ]})
+        result = dv_with_many(result, {"label": "比对放大镜与石板上的图记", "presentation": {"actor": "detective", "lines": [{"template": "你取出风衣口袋里的放大镜，与眼前石板第二行的小图比对。黄铜圆框与短柄的轮廓完全吻合。", "when": c1_statement("lens_mine")} ]}})
     if c1_ui_ends(action.id, ".opening.wear-coat"):
         result = dv_with(result, "presentation", {"actor": "detective", "lines": [{"template": "你披上了这件熟悉的呢料风衣，领口与袖口早已磨平。", "when": dv_fact(dv_ref("coat", "state", "worn_by"), "detective")} ]})
     if c1_ui_ends(action.id, ".sound_trial"):
@@ -202,7 +202,7 @@ fn dvg_interaction(action):
         if c1_ui_ends(action.id, rt_cat(".inspect.", sites[i][0])):
             return {"kind": "site", "site": sites[i][1]}
         i = i + 1
-    let named = {".opening.wake": "bed", ".opening.wear-coat": "E12", ".identify-own-lens": "E12", ".compare_sole": "E2", ".sound_trial": "transmitter", ".reask_question": "transmitter", ".opening.empty-slot": "zone_rules"}
+    let named = {".opening.wake": "bed", ".opening.wear-coat": "E12", ".identify-own-lens": "E7", ".compare_sole": "E2", ".sound_trial": "transmitter", ".reask_question": "transmitter", ".opening.empty-slot": "zone_rules"}
     i = 0
     while i < rt_count(named):
         if c1_ui_ends(action.id, named[i][0]):
@@ -1491,22 +1491,26 @@ fn dvg_preview_objective(state, viewer):
         i = i + 1
     return {"rooms": rooms, "doors": dvg_preview_doors(state.physical, knowledge.doors)}
 
-fn dvg_observer_options(state, viewer):
+fn dvg_observer_options(state, viewer, include_immediate_scores):
     let actor = state.actors[dvg_dev_actor_index(state, viewer)]
     // This is a projection of owner-known scores. Reusing it never changes
     // eligibility or AI choice, and retains the actual scoring time.
-    let key = ["host-current-options-v4", state.bindings, state.costs, dv_find(state, "player_actor", "") == viewer]
+    let key = ["host-current-options-v5", state.bindings, state.costs, dv_find(state, "player_actor", "") == viewer, include_immediate_scores]
     let cached = rt_memo_get(actor, key)
     if cached[0]:
         return cached[1]
-    return rt_memo_put(actor, key, dvg_observer_options_build(state, viewer, actor))
+    return rt_memo_put(actor, key, dvg_observer_options_build(state, viewer, actor, include_immediate_scores))
 
-fn dvg_observer_options_build(state, viewer, actor):
+fn dvg_observer_options_build(state, viewer, actor, include_immediate_scores):
     rt_phase("observer-options-start", viewer)
     let goals = dvp_goal_refs(actor)
-    let probes = dvp_probe_refs(actor)
-    let relevant = dvp_merge_refs(goals, probes)
-    let context = dvp_value_context(actor)
+    var probes = []
+    var relevant = []
+    var context = []
+    if include_immediate_scores:
+        probes = dvp_probe_refs(actor)
+        relevant = dvp_merge_refs(goals, probes)
+        context = dvp_value_context(actor)
     var view = actor
     if dv_find(state, "player_actor", "") == viewer:
         view = dv_with(actor, "manual_input", true)
@@ -1517,24 +1521,27 @@ fn dvg_observer_options_build(state, viewer, actor):
         if dvp_eligible(view, action, actor.mind, goals):
             var label = dvs_action_label(actor, action)
             if label != "":
-                let value = dvp_action_value_context(view, action, state.bindings, relevant, probes, context)
-                let opportunities = dvp_opportunities(view, action)
-                var opportunity = 0
-                var j = 0
-                while j < rt_count(opportunities):
-                    opportunity = opportunity + opportunities[j].weight
-                    j = j + 1
                 let cost = dv_get(state.costs, action.kind).actual
-                let information_weight = dv_find(actor.policy, "information_weight", 1)
-                let progress_weight = dv_find(actor.policy, "progress_weight", 1)
-                let time_cost = dv_find(actor.policy, "time_cost", 0.01)
-                let weighted_opportunity = opportunity * progress_weight
-                let time_penalty = cost.time * time_cost
-                let score = value.value + weighted_opportunity - time_penalty
-                // Equal inputs legitimately retain equal scores. Counts describe
-                // owner-known opportunities, never the unseen outcome's truth.
-                let breakdown = {"action_value": value.value, "information": value.information, "verification": value.verification, "progress": value.progress, "achievement": value.achievement, "information_weight": information_weight, "progress_weight": progress_weight, "information_component": value.information * information_weight, "verification_component": value.verification * information_weight, "progress_component": value.progress * progress_weight, "achievement_component": value.achievement * progress_weight, "opportunity": opportunity, "weighted_opportunity": weighted_opportunity, "time_cost": time_cost, "time_penalty": time_penalty, "computation_penalty": 0, "stamina_penalty": 0, "total": score, "opportunities": opportunities, "value_details": value, "scope": "subject-current-immediate", "formula": "action_value + weighted_opportunity - time_penalty"}
-                var option = {"id": action.id, "label": label, "available": true, "kind": action.kind, "interaction": dvg_interaction(action), "cost": cost, "ai_score": score, "score_kind": "immediate", "score_breakdown": breakdown, "immediate_score": score, "immediate_breakdown": breakdown, "score_game_time": state.physical.time, "mind_revision": actor.mind.revision}
+                // The ordinary observer needs lawful labels and actual recorded
+                // planning results, not a second valuation of every alternative.
+                // Immediate values are an explicitly requested diagnostic view.
+                var option = {"id": action.id, "label": label, "available": true, "kind": action.kind, "interaction": dvg_interaction(action), "cost": cost, "score_kind": "not-evaluated", "mind_revision": actor.mind.revision}
+                if include_immediate_scores:
+                    let value = dvp_action_value_context(view, action, state.bindings, relevant, probes, context)
+                    let opportunities = dvp_opportunities(view, action)
+                    var opportunity = 0
+                    var j = 0
+                    while j < rt_count(opportunities):
+                        opportunity = opportunity + opportunities[j].weight
+                        j = j + 1
+                    let information_weight = dv_find(actor.policy, "information_weight", 1)
+                    let progress_weight = dv_find(actor.policy, "progress_weight", 1)
+                    let time_cost = dv_find(actor.policy, "time_cost", 0.01)
+                    let weighted_opportunity = opportunity * progress_weight
+                    let time_penalty = cost.time * time_cost
+                    let score = value.value + weighted_opportunity - time_penalty
+                    let breakdown = {"action_value": value.value, "information": value.information, "verification": value.verification, "progress": value.progress, "achievement": value.achievement, "information_weight": information_weight, "progress_weight": progress_weight, "information_component": value.information * information_weight, "verification_component": value.verification * information_weight, "progress_component": value.progress * progress_weight, "achievement_component": value.achievement * progress_weight, "opportunity": opportunity, "weighted_opportunity": weighted_opportunity, "time_cost": time_cost, "time_penalty": time_penalty, "computation_penalty": 0, "stamina_penalty": 0, "total": score, "opportunities": opportunities, "value_details": value, "scope": "subject-current-immediate", "formula": "action_value + weighted_opportunity - time_penalty"}
+                    option = dv_with_many(option, {"ai_score": score, "score_kind": "immediate", "score_breakdown": breakdown, "immediate_score": score, "immediate_breakdown": breakdown, "score_game_time": state.physical.time})
                 if action.kind == "replay":
                     option = dv_with(option, "replay_input", dvg_manual_replay_input(actor, action))
                 rt_push(result, option)

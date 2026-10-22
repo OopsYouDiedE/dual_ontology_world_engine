@@ -313,11 +313,11 @@ fn c1_inspect_E10(actor):
 行动 c1_identify_own_lens，给定 行动者：
     编号 rt_cat(行动者, ".identify-own-lens")。
     类别 "inspect"。
-    本人须知 dv_all(dv_pair(campaign_at(行动者, "R05"), dv_fact(dv_ref("coat", "identity", "owner"), 行动者)))。
-    现场要求 dv_all(dv_pair(campaign_at(行动者, "R05"), dv_fact(dv_ref("coat", "identity", "owner"), 行动者)))。
+    本人须知 dv_all([campaign_at(行动者, "hall"), dv_fact(dv_ref("coat", "identity", "owner"), 行动者), dv_fact(dv_ref("coat", "state", "worn_by"), 行动者), dv_fact(dv_ref("lens", "state", "location"), "coat"), c1_statement("slate_marks")])。
+    现场要求 dv_all([campaign_at(行动者, "hall"), dv_fact(dv_ref("coat", "identity", "owner"), 行动者), dv_fact(dv_ref("coat", "state", "worn_by"), 行动者), dv_fact(dv_ref("lens", "state", "location"), "coat"), c1_statement("slate_marks")])。
     遵循 ""。
     可获知 dv_single(campaign_evidence_ref("lens_mine"))。
-    依据 [campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/01_开场.story", 6, "s1_wake.006;E12 personal ownership")]。
+    依据 [campaign_source("docs/design-standard.md", 0, "E12: compare the observed carried lens with the observed slate drawing")]。
     仅一次 true。
 
 叙述 c1_visible_E12：

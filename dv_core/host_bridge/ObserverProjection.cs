@@ -11,6 +11,10 @@ public sealed partial class DvSession
     private readonly Dictionary<string, IReadOnlyDictionary<string, object?>> observerPreviews = new(StringComparer.Ordinal);
     private IReadOnlyList<IReadOnlyDictionary<string, object?>> observerActors = Array.Empty<IReadOnlyDictionary<string, object?>>();
     private readonly List<(int Cursor, object Event)> interactions = new();
+    private string lastPreviewViewer = "";
+    private bool lastPreviewObjective, lastPreviewImmediateScores;
+    private IReadOnlyDictionary<string, object?>? closingPreview;
+    private long closingPreviewVersion;
 
     private void ClearObserverProjection()
     {
@@ -35,7 +39,7 @@ public sealed partial class DvSession
             var id = R.Text(Field(actor, "id", ""));
             observerSubjects[id] = actor;
         }
-        observerActors = Array.AsReadOnly(R.Items(Run(() => DVProgram.ObserverDirectory(state), speculative: true))
+        observerActors = Array.AsReadOnly(R.Items(Run(() => DVProgram.ObserverDirectory(R.snapshot(state)), speculative: true))
             .Select(converter.Record).ToArray());
         observerVersion = Version;
     }
@@ -56,7 +60,7 @@ public sealed partial class DvSession
         if (observerSnapshots.TryGetValue(viewer, out var value)) return value;
         if (!observerSubjects.TryGetValue(viewer, out var actor)) throw new ArgumentException("未知视角 · " + viewer, nameof(viewer));
         using var performanceScope = Measure("observer-subject", "projection", viewer: viewer, projectionScope: "one-subject");
-        var projected = converter.Record(Run(() => DVProgram.ObserverSubject(state, actor, IntentProjection()), speculative: true));
+        var projected = converter.Record(Run(() => DVProgram.ObserverSubject(R.snapshot(state), R.snapshot(actor), IntentProjection()), speculative: true));
         var snapshot = new Dictionary<string, object?>(HostValues.Map(projected, "snapshot"), StringComparer.Ordinal)
         {
             ["actors"] = observerActors, ["state_version"] = Version
@@ -101,14 +105,15 @@ public sealed partial class DvSession
         return observerEvents.GetValueOrDefault((actor, type));
     }
 
-    public IReadOnlyList<IReadOnlyDictionary<string, object?>> ObserverOptions(string viewer)
+    public IReadOnlyList<IReadOnlyDictionary<string, object?>> ObserverOptions(string viewer, bool includeImmediateScores = false)
     {
         using var valuesScope = R.UseValues(valueContext);
         EnsureObservers();
         if (!observerSubjects.TryGetValue(viewer, out var actor)) throw new ArgumentException("未知视角 · " + viewer, nameof(viewer));
-        if (observerChoices.TryGetValue(viewer, out var found)) return found;
+        var cacheKey = viewer + (includeImmediateScores ? "|immediate" : "|recorded");
+        if (observerChoices.TryGetValue(cacheKey, out var found)) return found;
         using var performanceScope = Measure("observer-options", "projection", viewer: viewer, projectionScope: "one-subject-options");
-        var raw = Run(() => DVProgram.ObserverOptions(state, viewer), speculative: true);
+        var raw = Run(() => DVProgram.ObserverOptions(R.snapshot(state), viewer, includeImmediateScores), speculative: true);
         var options = R.Items(raw).Select(converter.Record).ToList();
         var revision = Field(Field(actor, "mind", new List<object>()), "revision", -1d);
         var planning = LatestObserverEvent(viewer, "planning_choice");
@@ -193,7 +198,7 @@ public sealed partial class DvSession
                     {
                         selected["selection_score"] = converter.FromDv(score);
                         selected["selection_score_kind"] = "recorded-path";
-                        if (!selected.ContainsKey("ai_score"))
+                        if (!selected.ContainsKey("ai_score") || selected["ai_score"] is null or false)
                         {
                             selected["ai_score"] = converter.FromDv(score);
                             selected["score_kind"] = "recorded-choice";
@@ -217,7 +222,7 @@ public sealed partial class DvSession
             else options.Add(HostValues.Freeze(selected));
         }
         var result = options.AsReadOnly();
-        observerChoices[viewer] = result;
+        observerChoices[cacheKey] = result;
         return result;
     }
 
@@ -250,7 +255,7 @@ public sealed partial class DvSession
         if (objectiveMap is null)
         {
             using var scope = Measure("observer-objective", "projection", projectionScope: "shared-physical-world");
-            objectiveMap = converter.Record(Run(() => DVProgram.ObserverObjective(state, ""), speculative: true));
+            objectiveMap = converter.Record(Run(() => DVProgram.ObserverObjective(R.snapshot(state), ""), speculative: true));
         }
         var rooms = HostValues.List(objectiveMap, "rooms").OfType<IReadOnlyDictionary<string, object?>>()
             .Select(room => (object?)HostValues.Freeze(new Dictionary<string, object?>(room, StringComparer.Ordinal)
@@ -267,17 +272,20 @@ public sealed partial class DvSession
         });
     }
 
-    public IReadOnlyDictionary<string, object?> Preview(string viewer, bool includeObjective = false)
+    public IReadOnlyDictionary<string, object?> Preview(string viewer, bool includeObjective = false, bool includeImmediateScores = false)
     {
         using var valuesScope = R.UseValues(valueContext);
+        lastPreviewViewer = viewer;
+        lastPreviewObjective = includeObjective;
+        lastPreviewImmediateScores = includeImmediateScores;
         var selected = ObserverBase(viewer);
-        var cacheKey = viewer + (includeObjective ? "|objective" : "|subjective");
+        var cacheKey = viewer + (includeObjective ? "|objective" : "|subjective") + (includeImmediateScores ? "|immediate" : "|recorded");
         if (!observerPreviews.TryGetValue(cacheKey, out var cached))
         {
             Dictionary<string, object?> result;
             using (Measure("observer-preview", "projection", viewer: viewer, projectionScope: "requested-view"))
             {
-                var options = ObserverOptions(viewer);
+                var options = ObserverOptions(viewer, includeImmediateScores);
                 var status = TextStatus(viewer);
                 var observation = HostValues.Freeze(new Dictionary<string, object?>(selected, StringComparer.Ordinal)
                 {
@@ -297,6 +305,15 @@ public sealed partial class DvSession
         }
         // Projection is cached; wall-clock measurements always use the current cut.
         return WithPerformance(cached, PerformanceSummary());
+    }
+
+    private void CaptureClosingPreview()
+    {
+        // This is an observation at the actual final state, never a reuse of
+        // an earlier result frame. Close must not advance the world afterwards.
+        if (lastPreviewViewer.Length == 0) return;
+        closingPreview = Preview(lastPreviewViewer, lastPreviewObjective, lastPreviewImmediateScores);
+        closingPreviewVersion = Version;
     }
 
     public static IReadOnlyDictionary<string, object?> WithPerformance(IReadOnlyDictionary<string, object?> value,
@@ -345,5 +362,5 @@ public static partial class DVProgram
     internal static object ObserverDirectory(object state) => F_dvg_observer_directory(state);
     internal static object ObserverSubject(object state, object actor, object intent) => F_dvg_preview_subject(state, actor, intent);
     internal static object ObserverObjective(object state, object viewer) => F_dvg_preview_objective(state, viewer);
-    internal static object ObserverOptions(object state, object viewer) => F_dvg_observer_options(state, viewer);
+    internal static object ObserverOptions(object state, object viewer, object includeImmediateScores) => F_dvg_observer_options(state, viewer, includeImmediateScores);
 }

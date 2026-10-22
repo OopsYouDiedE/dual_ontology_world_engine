@@ -17,8 +17,8 @@
 | `CancelPrepared()` | 丢弃候选分支，保持正式状态与费用 |
 | `PrepareBackgroundValue()` | 在人工等待边界调度同刻 NPC，沿唯一 pending/Complete 闭环执行 |
 | `TextStatus(viewer)` | 指定观察者的位置、同房人物、近期实际观察及输入状态；无参数时使用会话观察者 |
-| `Actors`、`ObserverOptions(viewer)` | 轻量角色目录、指定角色当前候选及带实际来源的评分；不构造全体认知地图 |
-| `Preview(viewer, includeObjective)` | 只投影请求角色的主观地图；显式请求时附同 Version 共享的客观地图，保持认知不变 |
+| `Actors`、`ObserverOptions(viewer, includeImmediateScores=false)` | 轻量角色目录、指定角色当前合法候选及已记录评分；显式请求才计算即时分；不构造全体认知地图 |
+| `Preview(viewer, includeObjective=false, includeImmediateScores=false)` | 只投影请求角色的主观地图；显式请求时附同 Version 共享的客观地图，保持认知不变 |
 | `IsScheduled(actor, actionId)` | 只读核对该人物的选择是否仍在调度队列，不推进状态 |
 | `RecordInteraction(payload)` | 记录 focus、confirm、result、cancel，与正式事件保持因果次序 |
 | `Inspect(actor)`、`ExecuteDebug(command, argument)` | 显式开发会话中的双状态查看、位置及时间命令 |
@@ -55,7 +55,7 @@
 
 每个 `DvSession` 持有独立的 `R.ValueContext` 与 `HostValues.Converter`。从初始化、恢复到正式运算、投影、交互记录和归档均在该上下文内使用 DV 值；嵌套作用域结束后恢复上一个上下文。快照池、可变父链、纯值备忘及原始记录器不由不同会话共享。转换器只跨调用缓存冻结的 DV 图，读取同一不可变节点可复用同一宿主只读值；转换器自己创建的只读值回写时可引用原冻结节点，外部可变容器只在单次转换中共享身份。
 
-字段读取在核对主体访问后，以实际对象和字段为备忘依赖；其他对象、历史或全局时钟改变不会令该字段重复求值。静态对象名称、房间目录与区域使用叶项缓存，避免为了取得一个房间复制整个目录。主体地图按本人完整 mind、行动目录、已完成/已提供行动、绑定、身份引用和当前人工选项复用几何；实际游戏时刻、活动状态、章节、控制权每次覆盖。即时候选以完整主体、绑定、成本和控制类型为依赖，复用时保留真正的评分时刻。客观数据仍不回填主体知识。
+字段读取在核对主体访问后，以实际对象和字段为备忘依赖；其他对象、历史或全局时钟改变不会令该字段重复求值。静态对象名称、房间目录与区域使用叶项缓存，避免为了取得一个房间复制整个目录。主体地图按本人完整 mind、行动目录、已完成/已提供行动、绑定、身份引用和当前人工选项复用几何；实际游戏时刻、活动状态、章节、控制权每次覆盖。候选以完整主体、绑定、成本、控制类型和是否请求即时估值为依赖。普通投影只枚举合法候选并叠加真实已记录根分／选择分，缺失值不当作0；显式请求才重新计算即时估值，复用时保留真正的评分时刻。只读 DV 投影消费当前不可变状态，避免读取时实体化可变子树。客观数据仍不回填主体知识。
 
 每个观察者独立缓存投影和最后交付版本。静态身份投影只在初次投影、地图或章节变化时构造；动态快照按会话版本构造，逐字段与上一份不可变 DV 值比较。未变字段复用相同的只读 .NET 对象，变化字段才转换。`HostStateDelta.Reset` 时宿主建立新快照，其他情况下合并 `Changed` 并移除 `Removed`。Godot 适配层将变化字段转成 Variant，再交接主线程。所有场景、节点、物理和 UI 操作留在主线程。
 
@@ -74,6 +74,8 @@ Core 输出稳定的 actor、map、room、site、station 标识，`view_kind` �
 ## 退出保存点
 
 会话打开、完成实际 Complete、或 Prepare 返回无 pending 的稳定边界时更新 `lastCommittedState`。动作已经准备而现场仍在执行时，退出存档取最近已提交快照；现场的半完成状态保留在轨迹中。恢复因此不会把 prepared 状态交给续读。完整轨迹与可恢复存档用途独立，`Trace` 不追加停止事件，显式 `Close` 只追加一次。
+
+关闭前按最近请求的观察者取得实际 `closing_preview`，随后不推进世界；轨迹同时保留其 `closing_preview_state_version`。回放最终检查点据此显示真实结束地图；旧记录缺少它时不回填早期预览。
 
 轨迹带结构化 `provenance`、`cut`、`lifecycle` 和 `pending_actions`，存档带 `archive_provenance` 与 `archive_cut`。来源按实际 host/executor、控制者、检阅者、是否 Godot 执行及可取得的源码/程序集信息填写；formal-model 不再由固定说明冒充 Godot 现场执行。
 

@@ -584,6 +584,11 @@ public sealed class SmartReplay
         if (state is null || Get(state, "physical") is null || Get(state, "actors") is null) return;
         var viewer = Text(Get(state, "story"), "host_viewer");
         if (viewer.Length > 0 && (!context.ViewerRecorded || checkpoint == "initial")) context.Viewer = viewer;
+        if (checkpoint == "final" && (Get(record, "closing_preview") ?? Get(trace, "closing_preview")) is { } closingPreview)
+        {
+            AppendClosingPreview(closingPreview, state, record, trace, value, frames, context);
+            return;
+        }
         var dvState = state is IReadOnlyDictionary<string, object?> ? HostValues.ToDv(state) : state;
         var projected = Get(state, "story") is not null
             ? DVProgram.ReplaySnapshot(dvState, context.Viewer)
@@ -623,6 +628,37 @@ public sealed class SmartReplay
             metadata["pending_actions"] = RecordedPending(state, context);
         Add(frames, "snapshot", context.Viewer, "", checkpoint == "initial" ? "记录开始现场" : "记录结束现场",
             metadata, value, context, 0);
+    }
+
+    private static void AppendClosingPreview(object closingPreview, object state, object? record, object? trace,
+        object envelope, List<ReplayFrame> frames, ReadContext context)
+    {
+        if (ConvertNative(closingPreview, context) is not IReadOnlyDictionary<string, object?> recordedPreview)
+            throw new InvalidDataException("Recorded closing preview is not a host projection.");
+        var snapshot = HostValues.Map(recordedPreview, "snapshot");
+        if (snapshot.Count == 0) throw new InvalidDataException("Recorded closing preview has no recorded snapshot.");
+        var viewer = HostValues.Text(snapshot, "viewer", HostValues.Text(recordedPreview, "viewer", context.Viewer));
+        var preview = RecordedPreview(recordedPreview, viewer, context);
+        var metadata = new Dictionary<string, object?>
+        {
+            ["snapshot"] = snapshot, ["preview"] = preview, ["checkpoint"] = "final",
+            ["source"] = "recorded-final-observer-preview", ["physical_coordinates_recorded"] = false,
+            ["phase"] = "closed", ["action_state"] = "closed", ["viewer"] = viewer,
+            ["game_time"] = snapshot.GetValueOrDefault("game_time") ?? ConvertNative(Get(Get(state, "physical"), "time"), context),
+            ["selected"] = "", ["options"] = Array.Empty<object?>(), ["option_time_basis"] = "current"
+        };
+        foreach (var key in new[] { "provenance", "cut", "lifecycle", "pending_actions", "performance", "controller_kind", "measurement_cut",
+                     "state_version", "closing_preview_state_version" })
+            if ((Get(record, key) ?? Get(trace, key)) is { } recorded) metadata[key] = ConvertNative(recorded, context);
+        if (!metadata.ContainsKey("pending_actions")) metadata["pending_actions"] = RecordedPending(state, context);
+        var performance = HostValues.Map(metadata, "performance");
+        if (performance.Count == 0) performance = HostValues.Map(preview, "performance");
+        if (performance.Count > 0)
+        {
+            metadata["performance"] = performance;
+            metadata["preview"] = DvSession.WithPerformance(preview, performance);
+        }
+        Add(frames, "snapshot", viewer, "", "记录结束现场", metadata, envelope, context, 0);
     }
 
     private static IReadOnlyList<object?> RecordedPending(object state, ReadContext context)

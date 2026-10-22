@@ -23,6 +23,7 @@ internal static class TerminalProjection
     };
     private static string Score(object? value) => value switch
     {
+        null or false => "—",
         double number when double.IsFinite(number) => number.ToString("G8", CultureInfo.InvariantCulture),
         float number when float.IsFinite(number) => number.ToString("G8", CultureInfo.InvariantCulture),
         _ => Value(value)
@@ -185,6 +186,7 @@ internal static class TerminalProjection
             ObjectiveRooms = mapView == "subjective" ? Array.Empty<TerminalRoom>() : ProjectRooms(objective, viewer, true),
             ObjectiveEdges = mapView == "subjective" ? Array.Empty<TerminalEdge>() : ProjectEdges(objective),
             Performance = HostValues.Map(previewData, "performance"), MapView = mapView,
+            SubjectiveProjectionRecorded = subjective.Count > 0,
             OptionTimeBasis = Text(previewData, "option_time_basis", "current"), Footer = ""
         };
     }

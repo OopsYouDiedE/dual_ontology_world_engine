@@ -313,6 +313,26 @@ public static class R
     private static readonly object NumberZero = 0d;
     private static readonly object NumberOne = 1d;
     private static readonly object NumberMinusOne = -1d;
+    // Numeric atoms are immutable. Reuse small exact integers without sharing
+    // mutable value state; preserve the distinct binary representation of -0.
+    private static readonly object[] SmallNumbers = CreateSmallNumbers();
+    private static object[] CreateSmallNumbers()
+    {
+        var values = new object[1025];
+        values[0] = NumberZero; values[1] = NumberOne;
+        for (var i = 2; i < values.Length; i++) values[i] = (double)i;
+        return values;
+    }
+    private static object NumberValue(double number)
+    {
+        if (!double.IsFinite(number)) throw new Exception("Expected finite Number");
+        if (number >= 0 && number < SmallNumbers.Length && number == Math.Truncate(number))
+        {
+            if (number != 0 || BitConverter.DoubleToInt64Bits(number) == 0) return SmallNumbers[(int)number];
+        }
+        if (number == -1) return NumberMinusOne;
+        return number;
+    }
     public static object number(object s)
     {
         // Validate Text before selecting exact finite spellings. All other
@@ -323,18 +343,18 @@ public static class R
             "0" => NumberZero,
             "1" => NumberOne,
             "-1" => NumberMinusOne,
-            _ => Num(double.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture))
+            _ => NumberValue(double.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture))
         };
     }
     public static object is_number(object s) => double.TryParse(Text(s), NumberStyles.Float, CultureInfo.InvariantCulture, out var n) && double.IsFinite(n);
     // Runtime value predicate; unlike is_number, this never parses or requires Text.
     public static object is_text(object value) => value is string;
     public static object is_numeric_value(object value) => value is double n && double.IsFinite(n) || value is Rational q && q.Denominator.Sign > 0;
-    public static object add(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Add(Rational.From(b)) : Num(Num(a) + Num(b));
-    public static object sub(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Subtract(Rational.From(b)) : Num(Num(a) - Num(b));
-    public static object mul(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Multiply(Rational.From(b)) : Num(Num(a) * Num(b));
-    public static object div(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Divide(Rational.From(b)) : Num(Num(a) / Num(b));
-    public static object lt(object a, object b) => a is Rational || b is Rational ? Rational.From(a).CompareTo(Rational.From(b)) < 0 : Num(a) < Num(b);
+    public static object add(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Add(Rational.From(b)) : NumberValue(Num(a) + Num(b));
+    public static object sub(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Subtract(Rational.From(b)) : NumberValue(Num(a) - Num(b));
+    public static object mul(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Multiply(Rational.From(b)) : NumberValue(Num(a) * Num(b));
+    public static object div(object a, object b) => a is Rational || b is Rational ? Rational.From(a).Divide(Rational.From(b)) : NumberValue(Num(a) / Num(b));
+    public static object lt(object a, object b) => (a is Rational || b is Rational ? Rational.From(a).CompareTo(Rational.From(b)) < 0 : Num(a) < Num(b)) ? BoolTrue : BoolFalse;
     private static bool EqValue(object a, object b) => (a is Rational || b is Rational) && (a is Rational || a is double) && (b is Rational || b is double) ? Rational.From(a).Equals(Rational.From(b)) : Equals(a, b);
     private static readonly object BoolTrue = true;
     private static readonly object BoolFalse = false;
@@ -346,8 +366,8 @@ public static class R
         if (value.CompareTo(Rational.From(0d)) < 0 || value.CompareTo(Rational.From(1d)) > 0) throw new Exception("Numeric refinement requires 0 <= value <= 1");
         return value;
     }
-    public static object floor(object a) => Math.Floor(Num(a));
-    public static object not(object a) => !Bool(a);
+    public static object floor(object a) => NumberValue(Math.Floor(Num(a)));
+    public static object not(object a) => Bool(a) ? BoolFalse : BoolTrue;
     public static object cat(object a, object b) => Text(a) + Text(b);
     // Generic linear concatenation, including UTF-16 fragments used by bootstrap.
     public static object text_join(object values)
@@ -356,7 +376,7 @@ public static class R
         foreach (var value in Items(values)) result.Append(Text(value));
         return result.ToString();
     }
-    public static object length(object a) => (double)Text(a).Length;
+    public static object length(object a) => NumberValue(Text(a).Length);
     private static int Index(object a) { var n = Num(a); return n >= 0 && n <= int.MaxValue && n == Math.Truncate(n) ? (int)n : throw new Exception("Invalid index"); }
     public static object slice(object a, object start, object count) => Text(a).Substring(Index(start), Index(count));
     public static object chr(object a, object i) => Text(a)[Index(i)].ToString();
@@ -391,9 +411,9 @@ public static class R
     }
     public static object count(object a) => a switch
     {
-        FrozenList frozen => (double)frozen.Count,
-        List<object> mutable => (double)mutable.Count,
-        _ => (double)Items(a).Count
+        FrozenList frozen => NumberValue(frozen.Count),
+        List<object> mutable => NumberValue(mutable.Count),
+        _ => NumberValue(Items(a).Count)
     };
     private static object RawItem(object owner, int index) => owner is FrozenList frozen
         ? frozen[index] : (owner as List<object> ?? throw new Exception("Expected List"))[index];
@@ -570,7 +590,7 @@ public static class R
                 var k = RawItem(entry, 0);
                 if (!found && (ReferenceEquals(k, name) || (k is string s && string.Equals(s, name, StringComparison.Ordinal))))
                 {
-                    result.Add(new List<object> { key, snapshot(value) });
+                    result.Add(FrozenTextPair(name, snapshot(value)));
                     found = true;
                 }
                 else result.Add(frozen[i]);
@@ -590,7 +610,7 @@ public static class R
                 else result.Add(frozen[i]);
             }
         }
-        if (!found) result.Add(new List<object> { key, snapshot(value) });
+        if (!found) result.Add(key is string textKey ? FrozenTextPair(textKey, snapshot(value)) : new List<object> { key, snapshot(value) });
         if (found) InheritRecordLayout(result, frozen);
         return result;
     }
@@ -630,7 +650,7 @@ public static class R
             var key = RawItem(item, 0);
             var updatedVal = record_find(updates, key, MissingSentinel);
             if (!ReferenceEquals(updatedVal, MissingSentinel))
-                result.Add(new List<object> { key, snapshot(updatedVal) });
+                result.Add(key is string textKey ? FrozenTextPair(textKey, snapshot(updatedVal)) : new List<object> { key, snapshot(updatedVal) });
             else result.Add(item);
             keys.Add(key);
             if (key is string name) stringKeys?.Add(name);
@@ -649,7 +669,8 @@ public static class R
                 stringKeys = null;
                 if (keys.Exists(existing => Bool(same_value(existing, key)))) continue;
             }
-            result.Add(new List<object> { key, snapshot(record_find(updates, key, false)) });
+            var value = snapshot(record_find(updates, key, false));
+            result.Add(key is string textKey ? FrozenTextPair(textKey, value) : new List<object> { key, value });
             keys.Add(key);
         }
         if (result.Count == frozen.Count) InheritRecordLayout(result, frozen);
@@ -673,16 +694,62 @@ public static class R
             var pair = Items(item);
             var key = (string)pair[0];
             result.Add(updates.TryGetValue(key, out var value)
-                ? new List<object> { key, snapshot(value) } : item);
+                ? FrozenTextPair(key, snapshot(value)) : item);
             present.Add(key);
         }
         foreach (var item in changes)
         {
             var pair = Items(item);
             var key = (string)pair[0];
-            if (present.Add(key)) result.Add(new List<object> { key, snapshot(updates[key]) });
+            if (present.Add(key)) result.Add(FrozenTextPair(key, snapshot(updates[key])));
         }
         return true;
+    }
+    private static object FrozenTextPair(string key, object value)
+    {
+        // The caller has already frozen the value. Unknown external atoms keep
+        // the existing delayed validation path instead of introducing an error
+        // at record construction. Only valid immutable DV values use this path.
+        if (value is not (string or double or bool or Rational or FrozenList))
+            return new List<object> { key, value };
+        var caches = Caches;
+        lock (caches.SnapshotLock)
+        {
+            MaintainSnapshots(caches);
+            var keyHash = unchecked((ulong)HashCode.Combine(key.GetType(), key));
+            var valueHash = value is FrozenList child ? child.Hash : unchecked((ulong)HashCode.Combine(value.GetType(), value));
+            var hash = unchecked((14695981039346656037UL ^ keyHash) * 1099511628211UL);
+            hash = unchecked((hash ^ valueHash) * 1099511628211UL);
+            hash = unchecked((hash ^ 2UL) * 1099511628211UL);
+            if (!caches.SnapshotPool.TryGetValue(hash, out var bucket))
+            {
+                caches.SnapshotPool[hash] = bucket = new();
+                caches.SnapshotBucketOrder.Enqueue(hash);
+            }
+            for (var i = bucket.Count - 1; i >= 0; i--)
+            {
+                if (!bucket[i].TryGetTarget(out var existing)) { bucket.RemoveAt(i); continue; }
+                if (existing.Count != 2 || !Equals(existing[0], key)) continue;
+                var equal = existing[1] is double left && value is double right
+                    ? BitConverter.DoubleToInt64Bits(left) == BitConverter.DoubleToInt64Bits(right)
+                    : Equals(existing[1], value);
+                if (equal) return existing;
+            }
+            var pair = new FrozenList(new object[] { key, value }, hash);
+            var keyEligible = TryMembershipHash(key, out var compatibleKey);
+            var valueEligible = TryMembershipHash(value, out var compatibleValue);
+            var eligible = keyEligible && valueEligible;
+            if (eligible)
+            {
+                var compatible = unchecked((14695981039346656037UL ^ compatibleKey) * 1099511628211UL);
+                compatible = unchecked((compatible ^ compatibleValue) * 1099511628211UL);
+                pair.MembershipHash = unchecked((compatible ^ 2UL) * 1099511628211UL) ^ 5UL;
+            }
+            pair.MembershipHashEligible = eligible;
+            pair.MembershipHashChecked = true;
+            bucket.Add(new WeakReference<FrozenList>(pair));
+            return pair;
+        }
     }
     private sealed class ValueMemo
     {

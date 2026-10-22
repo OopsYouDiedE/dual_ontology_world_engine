@@ -117,3 +117,9 @@ Prepare 先扫描到期队列与可决策主体，生产组合只刷新本次选
 HostStateDelta 按版本和观察者发布字段变化，静态目录与动态投影分离；正式 Godot 使用 .NET 只读图，文本端使用 JSON/JSON-Lines。PrepareAhead 使用隔离分支，正式采用绑定状态版本；BackgroundPrepare 在人工等待时处理当前时刻 NPC，动作继续沿统一现场执行链。
 
 几何契约归 Godot Contracts，记录 map/room/door/site/station/stand。DV 保存逻辑位置与符号绑定；地图沙盒直接读取契约和场景。presentation_mock_pack 为 UI 开发提供独立输入。显式开发会话的命令与变更均记录 development 标记。
+
+### 选择性首个支持任务与只读诊断
+
+`selective-first-supported-task` 只在根层已准入的非移动、非答题、非等待动作中使用；净分须为正，实际信息、核验或成就价值之和须为正。它允许跳过当前层余项，报告 `partial_layer`、`candidates_skipped`、`examined_layers` 与 `completed_layers`，不声称完整层最优。未满足时保留原有求解回退。支持父边的紧凑增量索引不替代完整事件，cell 缓存依赖包括当前字段、对应完整证据、主体、引用及采用事件。
+
+普通观察者候选只枚举当前合法行动并叠加真实已记录评分；`includeImmediateScores=true` 才执行附加即时估值。缺失分数不是零，不影响正式选择。只读投影消费冻结状态。关闭边界记录实际当前 `closing_preview` 及其状态版本，之后不推进世界；回放不能拿更早预览伪装最终认知。

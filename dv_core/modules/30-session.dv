@@ -249,7 +249,7 @@ fn dvs_choose(actor, bindings, costs):
     let key = ["dvp_plan", dvp_memo_input(actor, costs), bindings, costs]
     let cached = rt_memo_get(actor.mind, key)
     if cached[0]:
-        return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "dependency_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions, "reused_dependency_expansions": dv_find(cached[1], "dependency_expansions", 0), "planning_work": {"cache_hit": true, "candidates_considered": 0, "admission_checks": 0, "eligible_evaluations": 0, "forecasts": 0, "forecast_reuses": 0, "expanded_nodes": 0, "skipped_expansion": true, "stop_reason": "identical-complete-plan-input", "reused_work": dv_find(cached[1], "planning_work", [])}}))
+        return dvs_honor_planned_followup(actor, dv_with_many(cached[1], {"plan_expansions": 0, "dependency_expansions": 0, "plan_cache_hit": true, "reused_plan_expansions": cached[1].plan_expansions, "reused_dependency_expansions": dv_find(cached[1], "dependency_expansions", 0), "planning_work": {"cache_hit": true, "candidates_considered": 0, "candidates_skipped": 0, "partial_layer": false, "examined_layers": 0, "completed_layers": 0, "admission_checks": 0, "eligible_evaluations": 0, "forecasts": 0, "forecast_reuses": 0, "expanded_nodes": 0, "skipped_expansion": true, "stop_reason": "identical-complete-plan-input", "reused_work": dv_find(cached[1], "planning_work", [])}}))
     return dvs_honor_planned_followup(actor, rt_memo_put(actor.mind, key, dvp_plan(actor, bindings, costs)))
 
 // Keep the actor's own predicted next step after a successful move, provided
@@ -366,6 +366,17 @@ fn dvs_reason(actor, events, time, parent):
 
 // Fresh prepared data and borrowed data share the same immutable evidence boundary.
 fn dvs_event_prepared(events, kind, actor, time, parents, data):
+    return dvs_event(events, kind, actor, time, parents, data)
+
+// The event boundary immediately freezes this read-only projection. Borrow
+// unchanged fields here instead of cloning a whole choice before freezing it.
+fn dvs_choice_event(events, kind, actor, time, parents, choice):
+    var data = []
+    var i = 0
+    while i < rt_count(choice):
+        if choice[i][0] != "dependency_cache":
+            rt_push(data, choice[i])
+        i = i + 1
     return dvs_event(events, kind, actor, time, parents, data)
 
 // Stage-local memo: only inference is reused; other cognition keeps its normal order.
@@ -927,13 +938,17 @@ fn dvs_erosion_update(actor, physical, time):
                 rank = threshold.rank
         i = i + 1
     dv_require(0 <= rank and rank < rt_count(stages), "Invalid erosion stage")
-    var result = dv_with_many(actor, {"erosion_rank": rank, "erosion_stage": stages[rank]})
-    if dv_has_key(erosion, "incapacity_when"):
-        result = dv_with(result, "incapacitated", incapacitated)
     let memory_period = dv_find(erosion, "memory_period", 1440)
     dv_require(0 < memory_period, "Erosion memory period must be positive")
     let memory_epoch = rt_floor(time / memory_period)
-    if 2 <= rank and (not dv_find(actor, "erosion_memory_truncated", false) or dv_find(actor, "erosion_memory_epoch", -1) != memory_epoch):
+    let truncate_memory = 2 <= rank and (not dv_find(actor, "erosion_memory_truncated", false) or dv_find(actor, "erosion_memory_epoch", -1) != memory_epoch)
+    let incapacity_changed = dv_has_key(erosion, "incapacity_when") and (not dv_has_key(actor, "incapacitated") or dv_find(actor, "incapacitated", false) != incapacitated)
+    if dv_find(actor, "erosion_rank", -1) == rank and dv_find(actor, "erosion_stage", "") == stages[rank] and not incapacity_changed and not truncate_memory:
+        return actor
+    var result = dv_with_many(actor, {"erosion_rank": rank, "erosion_stage": stages[rank]})
+    if dv_has_key(erosion, "incapacity_when"):
+        result = dv_with(result, "incapacitated", incapacitated)
+    if truncate_memory:
         dv_require(dv_has_key(actor, "first_day_mind"), "Late erosion needs declared first-day memory snapshot")
         let old = actor.mind
         let memory = dv_with_many(actor.first_day_mind, {"time": time, "revision": old.revision + 1})
@@ -2407,7 +2422,7 @@ fn dvp_plan(actor, bindings, costs):
         if route_work.matched:
             rt_phase("planning-index-end", actor.id)
             let plan = {"path": route_work.path, "score": route_work.score, "value": route_work.value, "relevant_refs": relevant, "probe_refs": probes, "mind_revision": actor.mind.revision, "evaluated_at_game_time": dv_find(actor, "decision_time", actor.mind.time), "score_scope": "revalidated-route", "prediction_basis": route_work.prediction_basis}
-            let work = {"cache_hit": false, "candidates_considered": route_work.candidates_considered, "admission_checks": route_work.admission_checks, "eligible_evaluations": route_work.eligible_evaluations, "forecasts": route_work.forecasts, "forecast_reuses": route_work.forecast_reuses, "expanded_nodes": 0, "candidate_paths": 0, "route_reuses": 1, "skipped_expansion": true, "stop_reason": route_work.reason, "reused_work": {"route_paths": 1, "forecast_cache_hits": route_work.forecast_reuses, "dependency_expansions": dependencies.reused_expanded}, "budget_limit": budget, "depth_limit": depth_limit, "lookahead_limit": lookahead_limit}
+            let work = {"cache_hit": false, "candidates_considered": route_work.candidates_considered, "candidates_skipped": 0, "partial_layer": false, "examined_layers": 0, "completed_layers": 0, "admission_checks": route_work.admission_checks, "eligible_evaluations": route_work.eligible_evaluations, "forecasts": route_work.forecasts, "forecast_reuses": route_work.forecast_reuses, "expanded_nodes": 0, "candidate_paths": 0, "route_reuses": 1, "skipped_expansion": true, "stop_reason": route_work.reason, "reused_work": {"route_paths": 1, "forecast_cache_hits": route_work.forecast_reuses, "dependency_expansions": dependencies.reused_expanded}, "budget_limit": budget, "depth_limit": depth_limit, "lookahead_limit": lookahead_limit}
             return {"action": route_work.action, "score": route_work.score, "plan_expansions": 0, "plans": [plan], "selected_path": route_work.path, "relevant_refs": relevant, "stop": route_work.reason, "strategy": "selective-task-v1", "approximation": true, "time_blocked": 0, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "completed_layers": 0, "planning_work": work}
     var expanded = 0
     var best = false
@@ -2430,6 +2445,9 @@ fn dvp_plan(actor, bindings, costs):
     let init_key = dv_list3(initial_seen, initial_achievements, initial_access)
     var plans = []
     var candidates_considered = route_work.candidates_considered
+    var candidates_skipped = 0
+    var partial_layer = false
+    var completed_layers = 0
     var admission_checks = route_work.admission_checks
     var eligible_evaluations = route_work.eligible_evaluations
     var forecasts = route_work.forecasts
@@ -2455,8 +2473,10 @@ fn dvp_plan(actor, bindings, costs):
             var task_score = 0
             var task_path = []
             var task_plan = false
+            var first_supported = false
+            var layer_complete = true
             var n = 0
-            while (n < rt_count(frontier)):
+            while n < rt_count(frontier) and not first_supported:
                 var node = frontier[n]
                 visited = dvp_frontier_put(visited, {"key": node.key, "score": node.score, "elapsed": dv_find(node, "elapsed", 0)})
                 var i = 0
@@ -2467,7 +2487,7 @@ fn dvp_plan(actor, bindings, costs):
                 let node_actions = dvp_room_actions(actions, node.room, dv_find(actor, "location_ref", false))
                 let value_context = dvp_value_context(node_actor)
                 expanded = (expanded + 1)
-                while (i < rt_count(node_actions)):
+                while i < rt_count(node_actions) and not first_supported:
                     var action = node_actions[i]
                     candidates_considered = candidates_considered + 1
                     var local_1 = false
@@ -2537,7 +2557,22 @@ fn dvp_plan(actor, bindings, costs):
                             best_score = score
                             best_path = path
                             best = dvp_find_action(actions, path[0])
-                        if selective and (depth + 1 < depth_limit) and not dv_find(action, "known_opportunity_wait", false) and dv_has_key(action, "predict_law"):
+                        // A current, admitted information/verification/achievement task
+                        // may satisfy the selective decision without valuing the rest
+                        // of this root layer. An answer, move, wait or hypothesis
+                        // prior alone never qualifies for this early stop.
+                        if selective and depth == 0 and action.kind != "move" and not dv_has_key(action, "answer") and not dv_find(action, "known_opportunity_wait", false) and 0 < score and 0 < value.information + value.verification + value.achievement:
+                            task_best = action
+                            task_score = score
+                            task_path = path
+                            task_plan = plan
+                            first_supported = true
+                            let unvisited = rt_count(node_actions) - i - 1
+                            candidates_skipped = candidates_skipped + unvisited
+                            if 0 < unvisited:
+                                partial_layer = true
+                                layer_complete = false
+                        if selective and not first_supported and (depth + 1 < depth_limit) and not dv_find(action, "known_opportunity_wait", false) and dv_has_key(action, "predict_law"):
                             rt_push(deferred, {"node": node, "action": action, "path": path, "score": score, "opportunity_keys": opportunity_keys, "opportunity_value": opportunity_value})
                         if not selective and (depth + 1 < depth_limit) and not dv_find(action, "known_opportunity_wait", false) and dv_and((0 < rt_count(relevant)), dv_has_key(action, "predict_law")):
                             var name = action.predict_law
@@ -2588,6 +2623,8 @@ fn dvp_plan(actor, bindings, costs):
                         rt_push(plans, task_plan)
                     next_frontier = []
                     stop = "selective-current-task"
+                    if first_supported:
+                        stop = "selective-first-supported-task"
                     if 0 < depth:
                         stop = "selective-nearest-task"
                 else:
@@ -2601,7 +2638,7 @@ fn dvp_plan(actor, bindings, costs):
                                 next_frontier = dvp_beam_limit(dvp_frontier_put(next_frontier, successor.node), lookahead_limit)
                         edge_index = edge_index + 1
             if depth == 0:
-                root_best = {"path": best_path, "net_score": best_score}
+                root_best = {"path": best_path, "net_score": best_score, "complete": layer_complete}
                 let greedy_root = fast_approx or dv_find(actor.policy, "greedy_root_stop", false)
                 var stop_at_root = greedy_root
                 if current_action != false:
@@ -2614,6 +2651,8 @@ fn dvp_plan(actor, bindings, costs):
                 best_after_successor_layer = {"path": best_path, "net_score": best_score}
             frontier = next_frontier
             peak_frontier = dv_max(peak_frontier, rt_count(frontier))
+            if layer_complete:
+                completed_layers = completed_layers + 1
             depth = (depth + 1)
     rt_phase("planning-expand-end", actor.id)
     var local_2 = false
@@ -2634,7 +2673,7 @@ fn dvp_plan(actor, bindings, costs):
         if local_2 != false:
             if dv_find(local_2, "known_opportunity_wait", false):
                 local_3 = "selective-declared-wait"
-    return dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "strategy": strategy, "approximation": selective or fast_approx, "time_blocked": time_blocked, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": depth, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer, "planning_work": {"cache_hit": false, "candidates_considered": candidates_considered, "admission_checks": admission_checks, "eligible_evaluations": eligible_evaluations, "forecasts": forecasts, "forecast_reuses": forecast_reuses, "expanded_nodes": expanded, "peak_frontier": peak_frontier, "candidate_paths": eligible_evaluations - route_work.eligible_evaluations, "retained_paths": rt_count(plans), "route_reuses": 0, "route_stop": route_work.reason, "skipped_expansion": selective and stop == "selective-current-task", "stop_reason": local_3, "reused_work": {"forecast_cache_hits": forecast_reuses, "dependency_expansions": dependencies.reused_expanded}, "budget_limit": budget, "depth_limit": depth_limit, "lookahead_limit": lookahead_limit}})
+    return dv_with_many(dv_with_many({"action": local_2, "score": best_score, "plan_expansions": expanded, "plans": plans}, {"selected_path": best_path, "relevant_refs": relevant, "stop": local_3, "strategy": strategy, "approximation": selective or fast_approx, "time_blocked": time_blocked, "dependency_expansions": dependencies.expanded, "dependency_stop": dependencies.stop, "dependency_cache": dependencies.cache, "dependency_cache_hit": dependencies.cache_hit, "current_affordance": {"action": current_action, "net_score": current_score, "value": current_value, "authority_acceptance": "not-predicted"}}), {"completed_layers": completed_layers, "root_best": root_best, "best_after_successor_layer": best_after_successor_layer, "planning_work": {"cache_hit": false, "candidates_considered": candidates_considered, "candidates_skipped": candidates_skipped, "partial_layer": partial_layer, "examined_layers": depth, "completed_layers": completed_layers, "admission_checks": admission_checks, "eligible_evaluations": eligible_evaluations, "forecasts": forecasts, "forecast_reuses": forecast_reuses, "expanded_nodes": expanded, "peak_frontier": peak_frontier, "candidate_paths": eligible_evaluations - route_work.eligible_evaluations, "retained_paths": rt_count(plans), "route_reuses": 0, "route_stop": route_work.reason, "skipped_expansion": selective and (stop == "selective-current-task" or stop == "selective-first-supported-task"), "stop_reason": local_3, "reused_work": {"forecast_cache_hits": forecast_reuses, "dependency_expansions": dependencies.reused_expanded}, "budget_limit": budget, "depth_limit": depth_limit, "lookahead_limit": lookahead_limit}})
 
 fn dvp_find_action(actions, id):
     let key = ["dvp-find-action", id]
@@ -5655,14 +5694,27 @@ fn dvs_update_support_events(actor, events):
     var support = dv_find(actor, "support_events", [])
     var cursor = dv_find(actor, "support_events_cursor", 0)
     let total = rt_count(events)
+    if cursor == total:
+        return actor
     let subject = actor.id
+    let index_key = ["support-compact-index-v1", subject]
+    let cached_index = rt_memo_get(support, index_key)
+    var index = false
+    if cached_index[0]:
+        index = cached_index[1]
+    var added = false
     while cursor < total:
         let event = events[cursor]
         if event.actor == subject:
             let type = event.type
             if type == "observation" or type == "listener_parse" or type == "inference" or type == "model_argument_accepted":
+                if index != false:
+                    index = dvs_support_compact_add(index, event, rt_count(support), subject)
                 rt_push(support, event)
+                added = true
         cursor = cursor + 1
+    if added and index != false:
+        rt_memo_put(support, index_key, index)
     return dv_with_many(actor, {"support_events": support, "support_events_cursor": total})
 
 fn dvs_subject_support_events(events, subject):
@@ -5680,7 +5732,85 @@ fn dvs_subject_support_events(events, subject):
 
 // Index only candidate events; final claim/cell/basis matching remains below.
 fn dvs_support_ref_key(subject, ref):
-    return rt_json_stringify([ref.type, ref.object, ref.facet, ref.field, dv_find(ref, "subject", subject)])
+    let key = ["dvs_support_ref_key", subject]
+    let cached = rt_memo_get(ref, key)
+    if cached[0]:
+        return cached[1]
+    return rt_memo_put(ref, key, rt_json_stringify([ref.type, ref.object, ref.facet, ref.field, dv_find(ref, "subject", subject)]))
+
+// Only fields consumed by parent matching enter this pure index. Original
+// support events stay intact for proofs, replay and audit. Append work extends
+// the same index instead of rescanning all earlier mind snapshots.
+fn dvs_support_compact_add(index, event, position, subject):
+    var refs = index.refs
+    var accepted = index.accepted
+    if event.type == "observation" or event.type == "listener_parse":
+        let observations = event.data.observations
+        var i = 0
+        while i < rt_count(observations):
+            let observation = observations[i]
+            let key = dvs_support_ref_key(subject, observation.ref)
+            var entries = dv_find(refs, key, [])
+            rt_push(entries, {"position": position, "event": event.id, "kind": "observation", "observation": observation})
+            refs = dv_with(refs, key, entries)
+            i = i + 1
+    if event.type == "inference":
+        let changes = event.data.receipt.changes
+        var i = 0
+        while i < rt_count(changes):
+            let change = changes[i]
+            let key = dvs_support_ref_key(subject, change.ref)
+            var entries = dv_find(refs, key, [])
+            rt_push(entries, {"position": position, "event": event.id, "kind": "inference", "ref": change.ref, "after": change.after})
+            refs = dv_with(refs, key, entries)
+            i = i + 1
+    if event.type == "model_argument_accepted":
+        rt_push(accepted, {"position": position, "event": event.id})
+    return {"refs": refs, "accepted": accepted}
+
+fn dvs_support_compact_index(events, subject):
+    let key = ["support-compact-index-v1", subject]
+    let cached = rt_memo_get(events, key)
+    if cached[0]:
+        return cached[1]
+    var index = {"refs": [], "accepted": []}
+    var i = 0
+    while i < rt_count(events):
+        index = dvs_support_compact_add(index, events[i], i, subject)
+        i = i + 1
+    return rt_memo_put(events, key, index)
+
+fn dvs_support_cell_parents(cell, ref, subject, entries, accepted):
+    let key = ["support-cell-parents-v1", ref, subject, entries, accepted]
+    let cached = rt_memo_get(cell, key)
+    if cached[0]:
+        return cached[1]
+    let claims = dv_find(cell, "claims", [])
+    let basis = dv_find(cell, "basis", [])
+    var parents = []
+    var i = 0
+    var j = 0
+    while i < rt_count(entries) or j < rt_count(accepted):
+        var from_entry = j >= rt_count(accepted)
+        if i < rt_count(entries) and j < rt_count(accepted):
+            from_entry = entries[i].position < accepted[j].position
+        var parent = ""
+        if from_entry:
+            let entry = entries[i]
+            if entry.kind == "observation":
+                if dv_same_local_ref(subject, entry.observation.ref, ref) and dv_has(claims, entry.observation):
+                    parent = entry.event
+            else:
+                if dv_same(entry.ref, ref) and dv_same(entry.after, cell):
+                    parent = entry.event
+            i = i + 1
+        else:
+            if dv_has(basis, accepted[j].event):
+                parent = accepted[j].event
+            j = j + 1
+        if parent != "" and not dv_has(parents, parent):
+            rt_push(parents, parent)
+    return rt_memo_put(cell, key, parents)
 
 fn dvs_support_event_index(events, subject):
     let key = ["support-event-index", subject]
@@ -5750,40 +5880,18 @@ fn dvs_support_parents(mind, refs, events, subject_or_actor):
             cand_events = dvs_subject_support_events(events, subject)
     else:
         cand_events = dvs_subject_support_events(events, subject)
-    let support_index = dvs_support_event_index(cand_events, subject)
+    let support_index = dvs_support_compact_index(cand_events, subject)
     var parents = []
     var i = 0
     while (i < rt_count(refs)):
         var ref = refs[i]
         var cell = dv_read(mind, ref)
-        let claims = dv_find(cell, "claims", [])
-        let basis = dv_find(cell, "basis", [])
-        let ref_events = dvs_support_ref_events(cand_events, support_index, subject, ref)
+        let entries = dv_find(support_index.refs, dvs_support_ref_key(subject, ref), [])
+        let supported = dvs_support_cell_parents(cell, ref, subject, entries, support_index.accepted)
         var j = 0
-        while (j < rt_count(ref_events)):
-            var event = ref_events[j]
-            var data = event.data
-            var k = 0
-            if dv_or((event.type == "observation"), (event.type == "listener_parse")):
-                var observations = data.observations
-                while (k < rt_count(observations)):
-                    var observation = observations[k]
-                    if dv_and(dv_same_local_ref(subject, observation.ref, ref), dv_has(claims, observation)):
-                        parents = dv_explanation_merge(parents, dv_single(event.id))
-                    k = (k + 1)
-            else:
-                if (event.type == "inference"):
-                    var changes = data.receipt.changes
-                    var n = 0
-                    while (n < rt_count(changes)):
-                        var change = changes[n]
-                        if dv_and(dv_same(change.ref, ref), dv_same(change.after, cell)):
-                            parents = dv_explanation_merge(parents, dv_single(event.id))
-                        n = (n + 1)
-                else:
-                    if (event.type == "model_argument_accepted"):
-                        if dv_has(basis, event.id):
-                            parents = dv_explanation_merge(parents, dv_single(event.id))
+        while j < rt_count(supported):
+            if not dv_has(parents, supported[j]):
+                rt_push(parents, supported[j])
             j = (j + 1)
         i = (i + 1)
     return parents
@@ -6481,7 +6589,7 @@ fn dvs_schedule(state):
                         var reason = "unchanged-owned-fixed-point; no-new-cognition-or-choice"
                         if dv_find(guard, "proof", "fixed-point") == "approximate-yield":
                             reason = "unchanged-owned-input; selective-search-not-repeated"
-                        dvs_event(events, "planning_stop_reused", actor.id, state.physical.time, [guard.source_stop], {"source_stop": guard.source_stop, "proof_time": guard.time, "until": guard.until, "reason": reason, "proof": dv_find(guard, "proof", "fixed-point"), "time_analysis_complete": dv_find(guard, "time_analysis_complete", true), "planning_work": {"cache_hit": true, "candidates_considered": 0, "admission_checks": 0, "eligible_evaluations": 0, "forecasts": 0, "forecast_reuses": 0, "expanded_nodes": 0, "skipped_expansion": true, "stop_reason": reason, "reused_work": {"source_stop": guard.source_stop}}})
+                        dvs_event(events, "planning_stop_reused", actor.id, state.physical.time, [guard.source_stop], {"source_stop": guard.source_stop, "proof_time": guard.time, "until": guard.until, "reason": reason, "proof": dv_find(guard, "proof", "fixed-point"), "time_analysis_complete": dv_find(guard, "time_analysis_complete", true), "planning_work": {"cache_hit": true, "candidates_considered": 0, "candidates_skipped": 0, "partial_layer": false, "examined_layers": 0, "completed_layers": 0, "admission_checks": 0, "eligible_evaluations": 0, "forecasts": 0, "forecast_reuses": 0, "expanded_nodes": 0, "skipped_expansion": true, "stop_reason": reason, "reused_work": {"source_stop": guard.source_stop}}})
                         let advanced = dv_with_many(guard, {"event_cursor": rt_count(events), "event_anchor": events[rt_count(events) - 1]})
                         let sleeping = dv_with_many(actor, {"decision_time": state.physical.time, "decision_revision": actor.mind.revision, "idle_guard": advanced})
                         updated = dvs_replace(updated, index, sleeping)
@@ -6566,7 +6674,7 @@ fn dvs_prepare_actor(state):
     var status = state.status
     var initial = state.initial
     var index = cursor
-    var actor = dv_with(dv_without(actors[cursor], "idle_guard"), "decision_time", physical.time)
+    var actor = dv_with_many(actors[cursor], {"idle_guard": false, "decision_time": physical.time})
     var idle_before = false
     var idle_events_before = -1
     var parent = events[(rt_count(events) - 1)].id
@@ -6623,18 +6731,14 @@ fn dvs_prepare_actor(state):
             choice = dvs_choose(actor, bindings, costs)
             dvs_debug_phase(story, actor.id, time, "choice-end")
         choice = dv_with_many(choice, {"cognition_reused": dv_find(actor, "cognition_reused", false), "reason_reused": dv_find(actor, "reason_reused", false), "cognition_stop": dv_find(actor, "cognition_stop", "ordinary-cognition-pass"), "evaluated_at_game_time": time, "mind_revision": actor.mind.revision})
-        actor = dv_with(actor, "dependency_work_total", dv_find(actor, "dependency_work_total", 0) + dv_find(choice, "dependency_expansions", 0))
-        actor = dv_with(actor, "decision_revision", actor.mind.revision)
         var action = choice.action
-        actor = dv_with(actor, "dependency_cache", choice.dependency_cache)
-        actor = dv_with_many(actor, {"planned_followup": "", "planned_path": []})
-        actor = dv_with_many(actor, {"planning_work_total": dv_find(actor, "planning_work_total", 0) + choice.plan_expansions, "policy": dv_with(actor.policy, "plan_budget", dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)})
+        actor = dv_with_many(actor, {"dependency_work_total": dv_find(actor, "dependency_work_total", 0) + dv_find(choice, "dependency_expansions", 0), "decision_revision": actor.mind.revision, "dependency_cache": choice.dependency_cache, "planned_followup": "", "planned_path": [], "planning_work_total": dv_find(actor, "planning_work_total", 0) + choice.plan_expansions, "policy": dv_with(actor.policy, "plan_budget", dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)})
         if (action == false):
             if (0 < dv_find(choice, "time_blocked", 0)):
                 duration_blocked = true
             idle = (idle + 1)
             let unchanged = idle_before != false and dv_same(idle_before, dvs_idle_subject_input(actor, costs)) and idle_events_before == rt_count(events)
-            let stop = dvs_event(events, "planning_stop", actor.id, time, dv_single(parent), dv_without(choice, "dependency_cache"))
+            let stop = dvs_choice_event(events, "planning_stop", actor.id, time, dv_single(parent), choice)
             let selective = dv_find(actor.policy, "selective_planning", false)
             if (unchanged or selective) and dv_find(state, "player_actor", "") != actor.id and dv_find(choice, "time_blocked", 0) == 0 and dvs_idle_proof_supported(actor):
                 var maximum = 0
@@ -6652,7 +6756,6 @@ fn dvs_prepare_actor(state):
                 if (boundary.complete or selective) and time < boundary.next:
                     let guard = {"time": time, "until": boundary.next, "source_stop": stop, "proof": proof, "time_analysis_complete": boundary.complete, "declared_time_boundary": boundary.complete and boundary.next < sleep_limit, "cognition_pass_unchanged": dv_find(actor, "cognition_fixed_input", false) != false, "reason_pass_stop": dv_find(dv_find(actor, "last_reason_report", []), "stop", "not-run"), "subject": dvs_idle_subject_input(actor, costs), "contact": dvs_idle_contact_input(actor, physical, actors), "bindings": bindings, "costs": costs, "story": dvs_idle_story_input(story), "event_cursor": rt_count(events), "event_anchor": events[rt_count(events) - 1]}
                     actor = dv_with(actor, "idle_guard", rt_snapshot(guard))
-            actors = dvs_replace(actors, index, actor)
         else:
             action = dv_with(action, "label", dvs_action_label(actor, action))
             var id = actor.id
@@ -6660,8 +6763,12 @@ fn dvs_prepare_actor(state):
             var model = dv_get(costs, action.kind)
             var action_event = rt_cat("action", rt_show(executed))
             var ledger = actor.ledger
-            parent = dvs_event_prepared(events, "action_selected", id, time, dvs_selection_parents(actor, action, choice, events, parent), dv_with_many({"action": action, "revision_before": mind.revision, "score": choice.score, "hypothesis": dv_find(actor, "hypothesis", false)}, {"plan_expansions": choice.plan_expansions, "plans": choice.plans, "selected_path": dv_find(choice, "selected_path", []), "planning_stop": dv_find(choice, "stop", "manual-choice"), "planning_strategy": dv_find(choice, "strategy", "manual-choice"), "planning_approximation": dv_find(choice, "approximation", false), "planning_work": dv_find(choice, "planning_work", []), "owned_decision": dvs_owned_decision_selection(actor, action)}))
-            parent = dvs_event(events, "planning_choice", id, time, dv_single(parent), dv_without(choice, "dependency_cache"))
+            rt_phase("selection-evidence-start", id)
+            let selection_parents = dvs_selection_parents(actor, action, choice, events, parent)
+            rt_phase("selection-evidence-end", id)
+            rt_phase("decision-record-start", id)
+            parent = dvs_event_prepared(events, "action_selected", id, time, selection_parents, dv_with_many({"action": action, "revision_before": mind.revision, "score": choice.score, "hypothesis": dv_find(actor, "hypothesis", false)}, {"plan_expansions": choice.plan_expansions, "plans": choice.plans, "selected_path": dv_find(choice, "selected_path", []), "planning_stop": dv_find(choice, "stop", "manual-choice"), "planning_strategy": dv_find(choice, "strategy", "manual-choice"), "planning_approximation": dv_find(choice, "approximation", false), "planning_work": dv_find(choice, "planning_work", []), "owned_decision": dvs_owned_decision_selection(actor, action)}))
+            parent = dvs_choice_event(events, "planning_choice", id, time, dv_single(parent), choice)
             var bounds = dv_action_cost_bounds(model.minimum, model.maximum)
             if dv_or((horizon < (time + bounds.maximum.time)), (horizon < (time + model.actual.time))):
                 duration_blocked = true
@@ -6676,6 +6783,7 @@ fn dvs_prepare_actor(state):
                     actor = dv_with(actor, "scheduled_action", queued)
                     dvs_event(events, "action_scheduled", id, time, [parent], {"action_id": action.id, "due": queued.due, "duration": model.actual.time})
                     idle = 0
+            rt_phase("decision-record-end", id)
 
     actors = dvs_replace(actors, index, actor)
     return {"player_actor": dv_find(state, "player_actor", ""), "story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial, "awaiting_player": false, "player_selection": ""}
@@ -7005,7 +7113,9 @@ fn dvs_receipt_clock_observations(story, mind, bindings, observations, action_ev
     return result
 
 fn dvs_replace(items, index, value):
-    return rt_list_with_index(items, index, value)
+    // Domain states are persistent values. Freeze the old root so replacing one
+    // actor does not eagerly thaw every unrelated actor through generic reads.
+    return rt_list_with_index(rt_snapshot(items), index, value)
 
 fn dvs_main():
     var story = rt_json_parse(rt_read(rt_arg(0)))

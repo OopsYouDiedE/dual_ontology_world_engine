@@ -141,6 +141,12 @@ public sealed partial class DvSession
         result = R.record_with(result, "pending_actions", converter.ToDv(ScheduledActions(state)));
         result = R.record_with(result, "performance", converter.ToDv(summary));
         result = R.record_with(result, "controller_kind", performance.ControllerKind);
+        if (closingPreview is not null && closingPreviewVersion == Version)
+        {
+            result = R.record_with(result, "closing_preview", converter.ToDv(closingPreview));
+            result = R.record_with(result, "closing_preview_state_version", (double)closingPreviewVersion);
+            result = R.record_with(result, "state_version", (double)Version);
+        }
         return R.record_with(result, "scope", "DV production session; host=" + executionHost + "; executor=" + executionAdapter);
     }
 }
