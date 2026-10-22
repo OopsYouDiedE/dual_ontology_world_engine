@@ -169,3 +169,5 @@ readview 还可复用条件读取输入已经存在的有效不可变 Backbone�
 原始事件索引补充原始父事件ID与host action_event（后者是actionN，不是eN事件编号）；on/off均从原始节点读取。章末检视须由completion、实际inspect/applied投影、host_completion及已提交索引互相对应，且council_closed明确known/true/无冲突才计入会话速度目标。缺少新索引字段的旧记录保持证据不足。报告含公共35模块指纹，完整编译输入指纹和运行时环境另列。中文报告已恢复；不从工程封存完整推断剧情达成。
 
 有限合成验证入口为 `python -B mcp/verification/test_tool_hardening.py -v`，仅处理小型模拟二进制记录、文件清单与短命Python进程，不编译或运行DV正式会话。
+付费重演内的等价完整因果切片可显式复用：键包含主体、完整遮蔽初态、响应模型、Replay_Depth、切片计划、假设、比较特征、置信度、basis与起时。仅完整且非预算截断的结果入局部缓存；复用记录指向原计算事件，expanded=0与reused_work分列，不重写原预测的来源。缓存在该次Complete内传递，结束即移除；不复用不完整整模型，也不据此宣称竞争候选覆盖完成。
+`--opt-replaycache on|off` 是付费重演中等价完整切片共享的独立开关，默认on；60保存并向全部主体传递opt_replaycache，off直接执行普通付费切片，不读取/写入共享缓存。它不归入行动计划opt-plancache。消融矩阵须将replaycache纳入统一开关列表与全关基线。

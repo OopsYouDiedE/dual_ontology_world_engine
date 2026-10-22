@@ -192,3 +192,5 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 运行时 `DV_OPT_RUNTIMESPEED` 合同见 compiler/README.md：仅优化可变元数据存放和不可变子值快照路径；保留 List<object> ABI、上下文隔离、弱父关系、失效传播和完整二进制字段。CLI 开关接线与正式会话性能测量分别报告。
 
 current_appraisals只维护本人appraisal facet中的当前可撤销评价，不作为权威事实；更新须保存旧值、输入、真实来源及假设事件，未知撤回，提升mind revision。接口及认知顺序见 ../docs/cli-optimization.md。
+模型切片共享限同次付费重演的等价完整计算；完整本人遮蔽初态、声明、响应模型、假设、特征、深度与来源一致才可命中。复用必须留原事件引用与实际/复用工作量，预算截断结果不入缓存；Complete结束删除局部缓存，不把共享切片当成整模型证明。
+等价重演切片共享独立使用opt_replaycache，默认true；CLI --opt-replaycache on|off经60会话配置、布尔校验与全部主体策略进入30实际机制。off保留普通付费计算，单列实际工作量差异，不能把有限投影一致性扩大为整局行为验收。
