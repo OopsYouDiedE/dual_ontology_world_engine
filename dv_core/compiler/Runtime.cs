@@ -226,7 +226,13 @@ public static class R
     }
     private sealed class ValueCaches
     {
+        internal readonly ConditionalWeakTable<FrozenList, DirtyQueues> DirtyIndices = new();
         internal readonly object SnapshotLock = new();
+        internal readonly bool LazyInternalEnabled = Environment.GetEnvironmentVariable("DV_OPT_LAZYINTERNAL") == "1";
+        internal readonly bool CowEnabled = Environment.GetEnvironmentVariable("DV_OPT_COW") == "1";
+        internal readonly bool MaskEnabled = Environment.GetEnvironmentVariable("DV_OPT_MASK") == "1";
+        internal readonly bool MaskVerify = Environment.GetEnvironmentVariable("DV_OPT_MASK_VERIFY") == "1";
+        internal readonly ConditionalWeakTable<FrozenList, CellFlags> CellMasks = new();
         internal readonly bool AppendShareEnabled = Environment.GetEnvironmentVariable("DV_OPT_APPENDSHARE") == "1";
         internal readonly bool ReadViewEnabled = Environment.GetEnvironmentVariable("DV_OPT_READVIEW") == "1";
         // Sample once per execution context; CLI captures this in run_config.
@@ -651,6 +657,102 @@ public static class R
         return frozen is null ? RefLookupKeyValue(value)
             : caches.RefLookupTexts.GetValue(frozen, key => new RefLookupText(RefLookupKeyValue(key))).Text;
     }
+    // Reverse dependency scheduling is session-local and retains immutable inputs.
+    private sealed class DirtyBinding
+    {
+        internal string Facet = "", Field = "";
+        internal readonly SortedSet<int> Rules = new();
+        internal object Previous = PredicateMissingCell;
+    }
+    private sealed class DirtyObject
+    {
+        internal object Previous = PredicateMissingCell;
+        internal readonly Dictionary<(string, string), DirtyBinding> Bindings = new();
+    }
+    private sealed class DirtyQueue
+    {
+        internal readonly Dictionary<string, DirtyObject> Objects = new(StringComparer.Ordinal);
+        internal readonly SortedSet<int> Pending = new();
+        internal readonly List<string> Laws = new();
+        internal object Adoptions = PredicateMissingCell;
+        internal int Count;
+    }
+    private sealed class DirtyQueues
+    {
+        internal readonly Dictionary<string, DirtyQueue> Subjects = new(StringComparer.Ordinal);
+    }
+    private static object DirtyLookup(object record, string key) => record_find(record, key, PredicateMissingCell);
+    private static DirtyQueue DirtyBuild(FrozenList index)
+    {
+        var queue = new DirtyQueue();
+        var entries = Items(index);
+        queue.Count = entries.Count;
+        for (var i = 0; i < entries.Count; i++)
+        {
+            queue.Pending.Add(i);
+            queue.Laws.Add(Text(PredicateField(entries[i], "law")));
+            foreach (var reference in Items(PredicateField(entries[i], "refs")))
+            {
+                var id = Text(PredicateField(reference, "object"));
+                var facet = Text(PredicateField(reference, "facet"));
+                var field = Text(PredicateField(reference, "field"));
+                if (!queue.Objects.TryGetValue(id, out var entity)) queue.Objects.Add(id, entity = new DirtyObject());
+                if (!entity.Bindings.TryGetValue((facet, field), out var binding))
+                    entity.Bindings.Add((facet, field), binding = new DirtyBinding { Facet = facet, Field = field });
+                binding.Rules.Add(i);
+            }
+        }
+        return queue;
+    }
+    public static object dirty_next(object worldValue, object indexValue, object afterValue)
+    {
+        var world = (FrozenList)snapshot(worldValue);
+        var index = (FrozenList)snapshot(indexValue);
+        var after = checked((int)Num(afterValue));
+        var subject = Text(PredicateField(world, "subject"));
+        var holders = Caches.DirtyIndices.GetOrCreateValue(index);
+        lock (holders)
+        {
+            if (!holders.Subjects.TryGetValue(subject, out var queue))
+                holders.Subjects.Add(subject, queue = DirtyBuild(index));
+            var objects = PredicateField(world, "objects");
+            // Enumerate relevant objects, not rules. Unchanged immutable objects
+            // stop traversal; a changed cell wakes every declared dependent rule.
+            foreach (var pair in queue.Objects)
+            {
+                var entity = DirtyLookup(objects, pair.Key);
+                var bindingObject = pair.Value;
+                if (ReferenceEquals(entity, bindingObject.Previous)) continue;
+                var existenceChanged = ReferenceEquals(entity, PredicateMissingCell) != ReferenceEquals(bindingObject.Previous, PredicateMissingCell);
+                foreach (var binding in bindingObject.Bindings.Values)
+                {
+                    var cell = ReferenceEquals(entity, PredicateMissingCell) ? PredicateMissingCell
+                        : PredicateReadCell(entity, binding.Facet, binding.Field);
+                    if (existenceChanged || !ReferenceEquals(cell, binding.Previous))
+                        queue.Pending.UnionWith(binding.Rules);
+                    binding.Previous = cell;
+                }
+                bindingObject.Previous = entity;
+            }
+            var adoptions = PredicateField(world, "adoptions");
+            if (!ReferenceEquals(adoptions, queue.Adoptions))
+            {
+                for (var i = 0; i < queue.Laws.Count; i++)
+                    if (ReferenceEquals(queue.Adoptions, PredicateMissingCell)
+                        || !ReferenceEquals(DirtyLookup(adoptions, queue.Laws[i]), DirtyLookup(queue.Adoptions, queue.Laws[i])))
+                        queue.Pending.Add(i);
+                queue.Adoptions = adoptions;
+            }
+            // Earlier dirty rules remain queued for the next original pass.
+            // Later rules affected by this pass are inserted before its next step.
+            var available = queue.Pending.GetViewBetween(after + 1, queue.Count);
+            if (available.Count == 0) return NumberValue(queue.Count);
+            var next = available.Min;
+            queue.Pending.Remove(next);
+            return NumberValue(next);
+        }
+    }
+
     private sealed class PredicateCellCache
     {
         internal readonly Dictionary<(string Facet, string Field), object> Cells = new();
@@ -682,6 +784,7 @@ public static class R
             return cell;
         }
     }
+    public static object lazyinternal_enabled() => Caches.LazyInternalEnabled ? BoolTrue : BoolFalse;
     public static object predicate_enabled() => Caches.PredicateEnabled ? BoolTrue : BoolFalse;
     private static object PredicateField(object record, string key) => record_find(record, key, "__dv_missing_field_sentinel__");
     // False delegates unsupported representations to the original DV path.
@@ -719,13 +822,97 @@ public static class R
         if (ReferenceEquals(cell, PredicateMissingCell)) return "unknown";
         // dv_or arguments are eager: missing conflicted errors even if unknown.
         // Its boolean type is checked only when known=true.
-        var known = Bool(PredicateField(cell, "known"));
-        var conflicted = PredicateField(cell, "conflicted");
-        if (!known || Bool(conflicted)) return "unknown";
+        if (caches.MaskEnabled && TryCellFlags(cell, out var flags))
+        {
+            if (flags != 1) return "unknown";
+        }
+        else
+        {
+            var known = Bool(PredicateField(cell, "known"));
+            var conflicted = PredicateField(cell, "conflicted");
+            if (!known || Bool(conflicted)) return "unknown";
+        }
         var actual = PredicateField(cell, "value");
         var expected = PredicateField(frozenProposition, "value");
         if (EqValue(op, "equals")) return SameValue(actual, expected) ? "true" : "false";
         return Bool(lt(actual, expected)) ? "false" : "true";
+    }
+    public static object cow_enabled() => Caches.CowEnabled ? BoolTrue : BoolFalse;
+    public static object mask_enabled() => Caches.MaskEnabled ? BoolTrue : BoolFalse;
+    // Inspect record spines without exposing/thawing any child. Irregular ABI
+    // inputs return to the existing DV implementation before any write occurs.
+    private static bool TryRawField(object record, string key, out object value, out int slot)
+    {
+        value = false; slot = -1;
+        if (!TryItems(record, out var entries)) return false;
+        for (var i = 0; i < entries.Count; i++)
+        {
+            if (!TryItems(entries[i], out var pair) || pair.Count != 2 || pair[0] is not string name) return false;
+            if (name == key) { value = pair[1]; slot = i; }
+        }
+        return true;
+    }
+    public static object stage_store_cow(object owned, object reference, object cell)
+    {
+        // Admission and law/effect order remain DV's responsibility. This fast
+        // path substitutes only the private builder's record update operation.
+        if (owned is not List<object>) return BoolFalse;
+        if (!TryRawField(reference, "object", out var rawId, out var idSlot) || idSlot < 0 || rawId is not string id
+            || !TryRawField(reference, "facet", out var rawFacet, out var facetSlot) || facetSlot < 0 || rawFacet is not string facet
+            || !TryRawField(reference, "field", out var rawField, out var fieldSlot) || fieldSlot < 0 || rawField is not string field)
+            return BoolFalse;
+        if (!TryRawField(owned, "objects", out var objects, out var objectsSlot) || objectsSlot < 0
+            || !TryRawField(objects, id, out var entity, out var entitySlot) || entitySlot < 0
+            || !TryRawField(entity, "facets", out var facets, out var facetsSlot) || facetsSlot < 0
+            || !TryRawField(facets, facet, out var fields, out var fieldsSlot)) return BoolFalse;
+        if (fieldsSlot < 0) fields = new List<object>();
+        if (!TryRawField(fields, field, out _, out _)) return BoolFalse;
+        var updated = record_with(entity, "facets", record_with(facets, facet, record_with(fields, field, cell)));
+        // Materialize just the owned world->objects spine. The old DV loop read
+        // objects[i] through at(), thawing every unrelated object pair. Raw key
+        // reads preserve those frozen siblings and still update every duplicate.
+        var mutableObjects = ReadItem(ReadItem(owned, objectsSlot), 1);
+        var entries = Items(mutableObjects);
+        for (var i = 0; i < entries.Count; i++)
+            if (Equals(RawItem(entries[i], 0), id))
+                replace(mutableObjects, NumberValue(i), new List<object> { id, copy_value(updated) });
+        return owned;
+    }
+    private sealed record CellFlags(byte Bits);
+    private static bool TryCellFlags(object cell, out byte bits)
+    {
+        bits = 0;
+        var caches = Caches;
+        var frozen = UnchangedSnapshot(cell, caches);
+        if (frozen is null) return false;
+        if (!caches.CellMasks.TryGetValue(frozen, out var cached))
+        {
+            // Malformed cells retain the caller's exact original error order.
+            var known = record_find(frozen, "known", MissingSentinel);
+            if (known is not bool knownFlag) return false;
+            var conflicted = record_find(frozen, "conflicted", MissingSentinel);
+            if (conflicted is not bool conflictFlag) return false;
+            var value = new CellFlags((byte)((knownFlag ? 1 : 0) | (conflictFlag ? 2 : 0)));
+            cached = caches.CellMasks.GetValue(frozen, _ => value);
+        }
+        bits = cached.Bits;
+        if (caches.MaskVerify)
+        {
+            var known = Bool(PredicateField(frozen, "known"));
+            var conflicted = Bool(PredicateField(frozen, "conflicted"));
+            var encoded = (byte)((known ? 1 : 0) | (conflicted ? 2 : 0));
+            if (bits != encoded || known != ((bits & 1) != 0) || conflicted != ((bits & 2) != 0) || (bits & ~3) != 0)
+                throw new InvalidDataException("Cell mask/record bidirectional mismatch: known/conflicted");
+        }
+        return true;
+    }
+    public static object cell_uncontested(object cell)
+    {
+        if (Caches.MaskEnabled && TryCellFlags(cell, out var flags)) return flags == 1 ? BoolTrue : BoolFalse;
+        // dv_and receives known before eagerly evaluating not(conflicted).
+        var known = PredicateField(cell, "known");
+        var conflicted = Bool(PredicateField(cell, "conflicted"));
+        return Bool(known) && !conflicted ? BoolTrue : BoolFalse;
     }
     private static readonly object MissingSentinel = new();
 

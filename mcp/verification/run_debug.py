@@ -391,10 +391,14 @@ def main():
     parser.add_argument('--detective-zone', default='zone_yi', choices=('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding', 'none'))
     parser.add_argument('--trace-compression', choices=('none',), default='none', help='Deprecated compatibility argument; JSON recordings are prohibited')
     parser.add_argument('--raw-format', choices=('dag',), default='dag', help='Lossless typed binary DAG; JSON recording is forbidden')
-    optimization_names = ('readview', 'plancache', 'prune', 'lazytext', 'recordcache', 'predicate', 'predicatecache', 'declcache', 'gc', 'appendshare')
+    optimization_names = ('readview', 'plancache', 'prune', 'lazytext', 'recordcache', 'predicate', 'predicatecache', 'declcache', 'gc', 'appendshare', 'cow', 'mask', 'lazyinternal', 'dirty', 'planreuse', 'blackbox')
     for name in optimization_names:
         parser.add_argument('--opt-' + name, choices=('on', 'off'), default='on')
     parser.add_argument('--prune-top-k', type=int, default=3)
+    parser.add_argument('--plan-depth', type=int, default=1)
+    parser.add_argument('--plan-time-bucket', type=int, default=60)
+    parser.add_argument('--opt-dirty-verify', type=int, nargs='?', const=100, default=0, help='Recheck dependency cache every N accesses; no argument means 100')
+    parser.add_argument('--opt-mask-verify', action='store_true')
     parser.add_argument('--selective-planning', choices=('on', 'off'), default='on')
     parser.add_argument('--stop-at-chapter-end', choices=('on', 'off'), default='on', help='Stop only after the actual chapter-two closing record exists')
     args = parser.parse_args()
@@ -406,11 +410,14 @@ def main():
     args.detective_profile = {'Standard': 'Standard_Detective', 'Foolish': 'Foolish_Detective'}.get(args.detective_profile, args.detective_profile)
     if args.prune_top_k < 1:
         parser.error('--prune-top-k must be positive')
+    if args.plan_depth < 1 or args.plan_time_bucket < 1 or args.opt_dirty_verify < 0:
+        parser.error('Planning depth/bucket must be positive; dirty verification interval must be nonnegative')
     if args.opening_seed < 0:
         parser.error('--opening-seed must be nonnegative')
     run_config = {'seed': args.opening_seed, 'profile': args.detective_profile, 'detective_zone': args.detective_zone, 'su_initial_room': args.su_initial_room, 'private_execution_benefit_multiplier': args.private_execution_benefit_multiplier, 'homecoming_negotiation': args.homecoming_negotiation}
     run_config.update({'opt_' + name: getattr(args, 'opt_' + name) == 'on' for name in optimization_names})
     run_config.update(prune_top_k=args.prune_top_k, selective_planning=args.selective_planning == 'on', stop_at_chapter_end=args.stop_at_chapter_end == 'on')
+    run_config.update(prune_depth=args.plan_depth, plan_time_bucket=args.plan_time_bucket, opt_dirty_verify=args.opt_dirty_verify, opt_mask_verify=args.opt_mask_verify)
     if args.projection_every < 1:
         parser.error('--projection-every must be positive')
     if args.projection_every > 1 and args.raw_format != 'dag':
@@ -437,6 +444,7 @@ def main():
             config_options = {'--opening-seed': 'seed', '--detective-profile': 'profile', '--detective-zone': 'detective_zone', '--su-initial-room': 'su_initial_room', '--private-execution-benefit-multiplier': 'private_execution_benefit_multiplier', '--homecoming-negotiation': 'homecoming_negotiation'}
             config_options.update({'--opt-' + name: 'opt_' + name for name in optimization_names})
             config_options.update({'--prune-top-k': 'prune_top_k', '--selective-planning': 'selective_planning', '--stop-at-chapter-end': 'stop_at_chapter_end'})
+            config_options.update({'--plan-depth': 'prune_depth', '--plan-time-bucket': 'plan_time_bucket', '--opt-dirty-verify': 'opt_dirty_verify', '--opt-mask-verify': 'opt_mask_verify'})
             explicit_options = {item.split('=', 1)[0] for item in sys.argv[1:]}
             for option, key in config_options.items():
                 if option in explicit_options and run_config[key] != saved_config[key]:
@@ -513,6 +521,8 @@ def main():
         write_result(out, {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': False, 'source_unchanged': False, 'trace_written': False, 'error': 'Sources changed during build or generated inputs differ; session not started.'})
         return 1
     execution_env = env.copy()
+    for name in ('cow', 'mask', 'lazyinternal', 'mask_verify'):
+        execution_env['DV_OPT_' + name.upper()] = '1' if run_config.get('opt_' + name, False) else '0'
     execution_env['DV_OPT_APPENDSHARE'] = '1' if run_config.get('opt_appendshare', False) else '0'
     execution_env['DV_OPT_READVIEW'] = '1' if run_config.get('opt_readview', False) else '0'
     execution_env['DV_OPT_RECORDCACHE'] = '1' if run_config.get('opt_recordcache', False) else '0'

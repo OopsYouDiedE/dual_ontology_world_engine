@@ -133,3 +133,5 @@ FrozenList 是封闭的 `IReadOnlyList<object>`，独占底层数组；`R.Items`
 `build_session.py --profile` 只在诊断生成函数中插入 `DvProfiler`，不会给普通类库计时。中性别名、冻结更新表、精确数、异常文本、DAG 字节及固定点的工程证据分别记录；构建或编解码成功均不能宣称人物、剧情或实机体验已验收。
 
 CLI 性能选项 `DV_OPT_RECORDCACHE=1` 在会话值缓存上下文创建时读取；原生 `record_like_cached`、`ref_key_text_cached`、`ref_lookup_key_cached` 只返回纯结构布尔/字符串，使用有效 FrozenList/Backbone 身份，不改变记录读取、别名或精确数。DV 通过 `rt_record_cache_enabled` 选择，关闭保留原实现。原始 DAG 事件封包的 process_elapsed_ms 为记录时序元数据，不进入世界值。
+
+激进优化 ABI 新增 cow_enabled/stage_store_cow、mask_enabled/cell_uncontested、lazyinternal_enabled 和 dirty_next。前三类开关在值缓存上下文创建时采样；dirty_next 使用上下文私有的反向依赖队列，按不可变声明索引及 subject 隔离，不写人物或物理事实。具体配置、断言及未覆盖路径见 ../../docs/cli-optimization.md。

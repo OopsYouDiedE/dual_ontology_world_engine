@@ -1224,7 +1224,7 @@ fn c1_raw_question_action(stage, surface, first):
             local_2 = "demon.original_question"
         else:
             local_2 = ""
-    var speech = dv_with_many(c1_speech(dv_true(), surface, "heard-public-question"), {"utterance_type": "question", "surface": rt_cat(c1_question_text(stage), " 每一问，说一句结论，再拿出一件撑得住它的东西。")})
+    var speech = dv_with_many(c1_speech(dv_true(), surface, "heard-public-question"), {"utterance_type": "question", "surface": dvs_surface_parts([c1_question_text(stage), " 每一问，说一句结论，再拿出一件撑得住它的东西。"])})
     if stage == "prompt" or stage == "voice_source":
         speech = dv_with(speech, "implicature_candidates", [{"id": "outside-help-presumption"}])
     return dv_with_many(c1_once(campaign_intent_action(rt_cat("demon.question.", stage), local_1, dv_fact(dv_ref("question", "state", "stage"), stage), dv_fact(dv_ref("question", "state", "stage"), stage), local_2, dv_single(dv_ref("question", "state", "stage")), "提出当前案件问题", surface)), {"speech": speech, "listeners": ["detective", "huo", "shen", "su"], "public_grants": [dv_ref("question", "state", "open_identity"), dv_ref("question", "state", "open_voice_source"), dv_ref("question", "state", "open_words"), dv_ref("question", "state", "open_trust"), dv_ref("question", "state", "current"), dv_ref("question", "state", "original"), dv_ref("question", "state", "requires_evidence"), dv_ref("question", "state", "outstanding_complete")]})
@@ -2833,7 +2833,7 @@ fn c1_other_open_action(group, speaker):
     var spec = c1_other_case(group)
     var action = c1_once(campaign_intent_action(rt_cat("other.question.", group), "opening.notice", campaign_at(speaker, "living_hall"), dv_all(dv_pair(campaign_at(speaker, "living_hall"), dv_fact(campaign_case_ref(group, "open"), false))), rt_cat("other.open.", group), [], rt_cat("提出", rt_cat(spec.zone, "的问题")), spec.source))
     action = dv_with_many(action, {"obligation": true, "obligation_due": 480, "completed_action_requirement": {"action_id": "demon.opening"}, "obligation_basis": [spec.source]})
-    var speech = dv_with_many(c1_speech(dv_true(), spec.source, "group-question-not-an-asserted-answer"), {"surface": rt_cat("铜口里传来声音：", spec.prompt), "utterance_type": "question", "channel": rt_cat("copper.", group)})
+    var speech = dv_with_many(c1_speech(dv_true(), spec.source, "group-question-not-an-asserted-answer"), {"surface": dvs_surface_parts(["铜口里传来声音：", spec.prompt]), "utterance_type": "question", "channel": rt_cat("copper.", group)})
     var listeners = []
     var grants = dv_pair(campaign_case_ref(group, "open"), campaign_case_ref(group, "current"))
     var people = c1_other_people()
@@ -3141,7 +3141,7 @@ fn c1_other_departure_actions(id):
     var ref = campaign_case_ref(person.group, "outer_latch_released")
     var inspect = dv_with_many(campaign_intent_action(rt_cat(id, ".inspect.outer-latch"), "inspect", campaign_at(id, room), campaign_at(id, room), "", dv_pair(ref, c1_other_access_ref(person.group)), "检视寝区外闩", source.source), {"repeatable": true, "manual_only": true, "label": "检视寝区外闩"})
     var premise = c1_other_depart(id).premise
-    var depart = dv_with_many(campaign_intent_action(rt_cat(id, ".leave-dormitory"), "move", premise, premise, rt_cat("other.depart.", id), dv_single(dv_ref(id, "state", "location")), "离开寝区", source.source), {"predict_law": rt_cat("other.depart.", id), "surface": rt_cat(c1_other_person(id).name, "离开寝区。"), "next_observation_surface": "跨过门槛，来到本寝区的门外。", "later_intention_surface": source.surface, "travel": {"from": room, "to": c1_other_threshold(person.group), "gate": person.group}})
+    var depart = dv_with_many(campaign_intent_action(rt_cat(id, ".leave-dormitory"), "move", premise, premise, rt_cat("other.depart.", id), dv_single(dv_ref(id, "state", "location")), "离开寝区", source.source), {"predict_law": rt_cat("other.depart.", id), "surface": dvs_surface_parts([c1_other_person(id).name, "离开寝区。"]), "next_observation_surface": "跨过门槛，来到本寝区的门外。", "later_intention_surface": source.surface, "travel": {"from": room, "to": c1_other_threshold(person.group), "gate": person.group}})
     if id == "quer":
         depart = dv_with_many(depart, {"public_observers": ["lucian", "ward", "gu"], "public_grants": [dv_ref("quer", "state", "location")]})
     depart = dv_with(depart, "personal_choice", {"group": "leave-open-dormitory", "requires": premise, "prohibits": dv_not(dv_true()), "promotes": ["leave_confinement"], "sacrifices": [], "basis": dv_single(person.initial_source)})
@@ -3168,7 +3168,7 @@ fn c1_other_wake_action(id):
     let room = c1_other_case(person.group).room
     let literal = dv_all([dv_fact(dv_ref(rt_cat("personal.", id), "state", "initial_surface"), person.initial_surface), dv_fact(dv_ref(id, "identity", "name"), person.name)])
     let action = c1_once(campaign_intent_action(rt_cat(id, ".wake-and-introduce"), "talk", dv_all(dv_pair(campaign_at(id, room), literal)), campaign_at(id, room), "", [], "向同伴自我介绍", person.initial_source))
-    let text = rt_cat(person.initial_surface, rt_cat("\n", c1_other_introduction(id)))
+    let text = dvs_surface_parts([person.initial_surface, "\n", c1_other_introduction(id)])
     return dv_with_many(action, {"label": "回应姓名询问", "speech": dv_with(c1_speech(literal, person.initial_source, "own-current-perception"), "surface", text), "listeners": c1_other_group_listeners(person.group, id), "surface": "", "response_topic": "personal-introduction", "requires_actual_request": true})
 
 fn c1_other_trace_conversations(id):
@@ -3187,7 +3187,7 @@ fn c1_other_trace_conversations(id):
             let ref = campaign_case_ref(person.group, rt_cat("trace.", trace.id))
             let literal = dv_fact(ref, true)
             let prefix = rt_cat(rt_cat(id, ".material."), rt_cat(peer, rt_cat(".", trace.id)))
-            let request = dv_with_many(c1_speech(dv_true(), trace.source, "request-personal-observation"), {"surface": rt_cat("你查看过", rt_cat(trace.title, "吗？把你看到的告诉我。")), "utterance_type": "question", "request": {"target": peer, "topic": topic}})
+            let request = dv_with_many(c1_speech(dv_true(), trace.source, "request-personal-observation"), {"surface": dvs_surface_parts(["你查看过", trace.title, "吗？把你看到的告诉我。"]), "utterance_type": "question", "request": {"target": peer, "topic": topic}})
             rt_push(result, dv_with_many(campaign_intent_action(rt_cat(prefix, ".ask"), "talk", campaign_at(id, spec.room), campaign_at(id, spec.room), "", [], rt_cat("问同伴：", trace.title), trace.source), {"label": rt_cat("问同伴：", trace.title), "label_parts": [{"text": "问"}, {"ref": dv_ref(peer, "identity", "name"), "fallback": "同伴"}, {"text": rt_cat("：", trace.title)}], "speech": request, "listeners": dv_single(peer), "purpose_refs": dv_single(ref)}))
             let report = dv_with(c1_speech(literal, trace.source, "personally-observed-trace-not-night-witness"), "surface", trace.surface)
             rt_push(result, dv_with_many(campaign_intent_action(rt_cat(prefix, ".report"), "talk", dv_all(dv_pair(campaign_at(id, spec.room), literal)), campaign_at(id, spec.room), "", [], rt_cat("告知同伴：", trace.title), trace.source), {"label": rt_cat("告知同伴：", trace.title), "label_parts": [{"text": "告知"}, {"ref": dv_ref(peer, "identity", "name"), "fallback": "同伴"}, {"text": rt_cat("：", trace.title)}], "speech": report, "listeners": dv_single(peer), "offer_to": peer, "response_topic": topic, "purpose_refs": dv_single(ref)}))
@@ -3200,7 +3200,7 @@ fn c1_other_desire_action(id):
     let room = c1_other_case(person.group).room
     let ref = dv_ref(rt_cat("personal.", id), "state", "material_detail")
     let action = c1_once(campaign_intent_action(rt_cat(id, ".follow-own-interest"), "inspect", campaign_at(id, room), campaign_at(id, room), "", dv_single(ref), rt_cat("进一步", person.material_label), person.material_source))
-    return dv_with_many(action, {"label": rt_cat("进一步", person.material_label), "surface": rt_cat(person.intention_surface, rt_cat("\n", person.material_surface)), "purpose_refs": dv_single(ref), "motive_basis": dv_single(person.desire_source)})
+    return dv_with_many(action, {"label": rt_cat("进一步", person.material_label), "surface": dvs_surface_parts([person.intention_surface, "\n", person.material_surface]), "purpose_refs": dv_single(ref), "motive_basis": dv_single(person.desire_source)})
 
 // Install the actual residents, their private rules and objects, copper channels,
 // scoped formal questions, and answer transitions. Release/departure needs the
@@ -3741,7 +3741,7 @@ fn c1_other_place_detective(scene, zone, profile):
                     if dv_local(bindings, peer.id, "detective") == "":
                         rt_push(bindings, dv_binding(peer.id, peer.id, "detective"))
                     let ready = campaign_at("detective", c1_other_case(group).room)
-                    let seen = campaign_surface_action(rt_cat("detective.other.see.", peer.id), "inspect", ready, dv_all([ready, campaign_at(peer.id, c1_other_case(group).room)]), "", [dv_ref(peer.id, "state", "location")], "查看寝区在场的人", rt_cat("看到同在寝区的", peer.name), c1_other_case(group).source)
+                    let seen = campaign_surface_action(rt_cat("detective.other.see.", peer.id), "inspect", ready, dv_all([ready, campaign_at(peer.id, c1_other_case(group).room)]), "", [dv_ref(peer.id, "state", "location")], "查看寝区在场的人", dvs_surface_parts(["看到同在寝区的", peer.name]), c1_other_case(group).source)
                     actor = dv_with_many(actor, {"mind": mind, "actions": dv_append(actor.actions, seen), "policy": dv_with(actor.policy, "goals", dv_append(actor.policy.goals, campaign_observation_goal(dv_ref(peer.id, "state", "location"), ready, [c1_other_case(group).source], 0)))})
                 peer_index = peer_index + 1
             let source = c1_other_case(group).source
@@ -5543,7 +5543,7 @@ fn c1n_known_wait_actor(actor, target, basis):
             let id = c1n_wait_id(actor.id, minutes)
             let known = dv_true()
             let result = dv_at_least(c1n_wait_ref(actor.id), elapsed.value + minutes)
-            let text = rt_cat(rt_cat("留在原处，等候本人已知的下一次作息机会（", rt_show(minutes)), "分钟）。")
+            let text = dvs_surface_parts(["留在原处，等候本人已知的下一次作息机会（", rt_show(minutes), "分钟）。"])
             var action = campaign_surface_action(id, c1n_wait_kind(minutes), known, dv_true(), id, [c1n_wait_ref(actor.id), campaign_clock()], rt_cat("等待", rt_cat(rt_show(minutes), "分钟")), text, c1n_source("own-bounded-wait"))
             let wait_choices = dv_find(actor.policy, "known_opportunity_wait_choices", [])
             var choice_index = 0

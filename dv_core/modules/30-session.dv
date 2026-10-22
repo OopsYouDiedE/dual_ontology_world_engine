@@ -132,6 +132,106 @@ fn dvs_reason_monotone_satisfied(mind, effects):
         e = e + 1
     return true
 
+// Static declaration dependency extraction: unsupported operators fail closed.
+// Memo entries are owned by the immutable condition, not by a mutable world.
+fn dvs_dirty_refs(condition):
+    let cached = rt_memo_get(condition, ["dirty-declaration-refs-v1"])
+    if cached[0]:
+        return cached[1]
+    let op = condition.op
+    var refs = []
+    if op == "equals" or op == "at_least":
+        rt_push(refs, condition.ref)
+    else:
+        if op == "not":
+            refs = dvs_dirty_refs(condition.item)
+        else:
+            if op == "all":
+                var i = 0
+                while i < rt_count(condition.items):
+                    refs = dvp_merge_refs(refs, dvs_dirty_refs(condition.items[i]))
+                    i = i + 1
+            else:
+                dv_require(op == "constant", rt_cat("Unindexed condition operator: ", op))
+    return rt_memo_put(condition, ["dirty-declaration-refs-v1"], refs)
+
+fn dvs_dirty_inputs(world, refs):
+    var result = [world.subject]
+    var i = 0
+    while i < rt_count(refs):
+        // Full cells include unknown/conflict, provenance and confidence changes.
+        rt_push(result, [dv_has_key(world.objects, refs[i].object), dv_read(world, refs[i])])
+        i = i + 1
+    return result
+
+fn dvs_dirty_truth(world, condition, config, name):
+    if not dv_find(config, "opt_dirty", false):
+        return dv_truth(world, condition)
+    condition = rt_snapshot(condition)
+    let inputs = dvs_dirty_inputs(world, dvs_dirty_refs(condition))
+    let key = ["dirty-truth-last-v1", world.subject]
+    let cached = rt_memo_get(condition, key)
+    var calls = 1
+    if cached[0]:
+        calls = cached[1].calls + 1
+        if dv_same(inputs, cached[1].inputs):
+            let every = dv_find(config, "opt_dirty_verify", 0)
+            if 0 < every and calls >= every:
+                dv_require(dv_same(cached[1].truth, dv_truth_uncached(world, condition)), rt_cat("Dirty dependency mismatch: ", name))
+                calls = 0
+            rt_memo_put(condition, key, dv_with(cached[1], "calls", calls))
+            return cached[1].truth
+    let truth = dv_truth(world, condition)
+    rt_memo_put(condition, key, {"inputs": inputs, "truth": truth, "calls": calls})
+    return truth
+
+// No-effect world processes need not stage again until one of their complete
+// premise/output dependencies changes. Increment outputs are dependencies too.
+fn dvs_dirty_process_changed(world, adoption, config, time):
+    if not dv_find(config, "opt_dirty", false):
+        return true
+    let law = rt_snapshot(adoption.law)
+    let refkey = ["dirty-process-refs-v1"]
+    let indexed = rt_memo_get(law, refkey)
+    var refs = []
+    if indexed[0]:
+        refs = indexed[1]
+    else:
+        refs = dvs_dirty_refs(law.premise)
+        var i = 0
+        while i < rt_count(law.effects):
+            let effect = law.effects[i]
+            dv_require(effect.op == "assign" or effect.op == "increment", rt_cat("Unindexed effect operator: ", effect.op))
+            refs = dvp_merge_refs(refs, [effect.ref])
+            i = i + 1
+        rt_memo_put(law, refkey, refs)
+    let inputs = [adoption.active, adoption.mode, adoption.confidence, adoption.basis, dvs_dirty_inputs(world, refs)]
+    let key = ["dirty-process-last-v1", world.subject]
+    let cached = rt_memo_get(law, key)
+    var calls = 1
+    if cached[0]:
+        calls = cached[1].calls + 1
+        if dv_find(cached[1], "clean", false) and dv_same(inputs, cached[1].inputs):
+            let every = dv_find(config, "opt_dirty_verify", 0)
+            if 0 < every and calls >= every:
+                if adoption.active and adoption.mode == "enforce" and dv_truth_uncached(world, law.premise) == "true":
+                    let staged = dv_stage(world, law.effects, time, adoption.basis, adoption.confidence)
+                    dv_require(staged.status != "ready" or not dvs_reason_changes(staged.changes), rt_cat("Dirty process mismatch: ", law.name))
+                calls = 0
+            rt_memo_put(law, key, {"inputs": inputs, "calls": calls, "clean": true})
+            return false
+    rt_memo_put(law, key, {"inputs": inputs, "calls": calls})
+    return true
+
+fn dvs_dirty_process_settled(world, adoption, config):
+    if dv_find(config, "opt_dirty", false):
+        let law = rt_snapshot(adoption.law)
+        let key = ["dirty-process-last-v1", world.subject]
+        let cached = rt_memo_get(law, key)
+        if cached[0]:
+            rt_memo_put(law, key, dv_with(cached[1], "clean", true))
+    return true
+
 fn dvs_reason_run(actor, events, time, parent):
     var mind = actor.mind
     var policy = actor.policy
@@ -151,7 +251,7 @@ fn dvs_reason_run(actor, events, time, parent):
                 var skip = false
                 if dv_find(signatures, entry[0], false) != false and dvs_reason_monotone_satisfied(mind, law.effects):
                     skip = true
-                if not skip and (dv_truth(mind, law.premise) == "true"):
+                if not skip and (dvs_dirty_truth(mind, law.premise, policy, law.name) == "true"):
                     let sig = dvs_reason_signature(mind, entry[1])
                     if not dv_same(dv_find(signatures, entry[0], false), sig):
                         var stage = dv_stage(mind, law.effects, time, entry[1].basis, entry[1].confidence)
@@ -310,6 +410,57 @@ fn dvs_obligation_choice(actor, costs):
     let plan = {"path": [action.id], "score": 0, "relevant_refs": refs, "score_scope": "declared-obligation", "mind_revision": actor.mind.revision, "evaluated_at_game_time": dv_find(actor, "decision_time", actor.mind.time)}
     return {"action": action, "score": 0, "plan_expansions": 0, "plans": [plan], "selected_path": [action.id], "relevant_refs": refs, "stop": reason, "strategy": "declared-obligation-v1", "approximation": false, "time_blocked": 0, "dependency_expansions": 0, "dependency_cache": dv_find(actor, "dependency_cache", false), "planning_work": work}
 
+// Reuse an owned current task only while all semantic planning inputs match.
+// The time bucket is a bounded strategy approximation; exact eligibility and
+// the owner's current value are rechecked before reusing the cached task.
+// New knowledge revisions are checked before constructing/comparing the larger
+// signature, so an actual incoming observation cannot be hidden by this cache.
+fn dvp_task_reuse_guard(actor):
+    var location = dv_find(actor, "location", "")
+    if dv_has_key(actor, "location_ref"):
+        location = dv_read(actor.mind, actor.location_ref)
+    return [actor.id, actor.mind.revision, location, rt_floor(dv_find(actor, "decision_time", actor.mind.time) / dv_max(1, dv_find(actor.policy, "plan_time_bucket", 60)))]
+
+fn dvp_task_reuse_input(actor, bindings, costs):
+    let bucket = dv_max(1, dv_find(actor.policy, "plan_time_bucket", 60))
+    let mind = dv_with(actor.mind, "time", rt_floor(actor.mind.time / bucket) * bucket)
+    let policy = dv_with(actor.policy, "plan_budget", dv_min(1, dv_find(actor.policy, "plan_budget", 0)))
+    let input = dv_without(dv_with_many(actor, {"mind": mind, "policy": policy}), "ledger")
+    return [dvp_memo_input(input, costs), bindings, costs]
+
+fn dvp_effective_depth(policy):
+    var depth = dv_find(policy, "plan_depth", 2)
+    if dv_find(policy, "opt_prune", false):
+        depth = dv_min(depth, dv_max(1, dv_find(policy, "prune_depth", 2)))
+    if dv_find(policy, "fast_approximation", false):
+        depth = 1
+    return depth
+
+fn dvp_task_reuse(actor, bindings, costs):
+    let cache = dv_find(actor, "planning_task_cache", false)
+    if cache == false or dv_find(actor, "planning_continuation", false) != false:
+        return false
+    if not dv_same(cache.guard, dvp_task_reuse_guard(actor)):
+        return false
+    if not dv_same(cache.input, dvp_task_reuse_input(actor, bindings, costs)):
+        return false
+    let depth = dvp_effective_depth(actor.policy)
+    if depth < rt_count(cache.path):
+        return false
+    let view = dvp_actor_view(dv_with(actor, "planned_path", cache.path), actor.mind)
+    let route = dvp_selective_followup(view, bindings, costs, cache.refs, cache.probes, depth, dv_find(actor.policy, "plan_budget", 0))
+    if not route.matched:
+        return false
+    let work = {"cache_hit": true, "candidates_considered": route.candidates_considered, "admission_checks": route.admission_checks, "eligible_evaluations": route.eligible_evaluations, "forecasts": route.forecasts, "forecast_reuses": route.forecast_reuses, "expanded_nodes": 0, "route_reuses": 1, "skipped_expansion": true, "stop_reason": "unchanged-owned-task-revalidated"}
+    let plan = {"path": route.path, "score": route.score, "value": route.value, "relevant_refs": cache.refs, "probe_refs": cache.probes, "mind_revision": actor.mind.revision, "evaluated_at_game_time": actor.mind.time, "score_scope": "revalidated-owned-task", "prediction_basis": route.prediction_basis}
+    return {"action": route.action, "score": route.score, "plan_expansions": 0, "plans": [plan], "selected_path": route.path, "relevant_refs": cache.refs, "stop": "unchanged-owned-task-revalidated", "strategy": "selective-task-v1", "approximation": true, "time_blocked": 0, "dependency_expansions": 0, "dependency_cache": dv_find(actor, "dependency_cache", false), "planning_work": work, "planning_task_cache": cache}
+
+fn dvp_task_remember(actor, bindings, costs, choice):
+    if choice.action == false or dv_find(choice, "continuation", false) != false:
+        return dv_with(choice, "planning_task_cache", false)
+    let cache = {"guard": dvp_task_reuse_guard(actor), "input": rt_snapshot(dvp_task_reuse_input(actor, bindings, costs)), "path": dv_find(choice, "selected_path", [choice.action.id]), "refs": dv_find(choice, "relevant_refs", []), "probes": dvp_probe_refs(actor)}
+    return dv_with(choice, "planning_task_cache", rt_snapshot(cache))
+
 fn dvs_choose(actor, bindings, costs):
     let duty = dvs_obligation_choice(actor, costs)
     if duty != false:
@@ -317,6 +468,11 @@ fn dvs_choose(actor, bindings, costs):
     // Selective decisions have their own task continuation and sleeping inputs.
     // Do not build the full actor memo key just to perform one current-task scan.
     if dv_find(actor.policy, "selective_planning", false):
+        if dv_find(actor.policy, "opt_planreuse", false):
+            let reused = dvp_task_reuse(actor, bindings, costs)
+            if reused != false:
+                return reused
+            return dvp_task_remember(actor, bindings, costs, dvp_plan(actor, bindings, costs))
         return dvp_plan(actor, bindings, costs)
     let key = ["dvp_plan", dvp_memo_input(actor, costs), bindings, costs]
     let cached = rt_memo_get(actor.mind, key)
@@ -446,7 +602,7 @@ fn dvs_choice_event(events, kind, actor, time, parents, choice):
     var data = []
     var i = 0
     while i < rt_count(choice):
-        if not dv_has(["dependency_cache", "continuation"], choice[i][0]):
+        if not dv_has(["planning_task_cache", "dependency_cache", "continuation"], choice[i][0]):
             rt_push(data, choice[i])
         i = i + 1
     return dvs_event(events, kind, actor, time, parents, data)
@@ -490,7 +646,7 @@ fn dvs_reason_input(actor):
 
 fn dvs_cognition_signature(actor):
     actor = rt_snapshot(actor)
-    let ignored = ["cognition_fixed_input", "cognition_event_cursor", "cognition_time", "cognition_input", "cognition_reused", "cognition_stop", "reason_fixed_input", "reason_reused", "last_reason_report", "last_readiness_report", "decision_time", "decision_revision", "idle_guard", "support_events_cursor", "heard_utterances_cursor", "planning_work_total", "dependency_work_total", "dependency_cache", "planned_followup", "planned_path", "last_cognitive_event", "planning_continuation"]
+    let ignored = ["cognition_fixed_input", "cognition_event_cursor", "cognition_time", "cognition_input", "cognition_reused", "cognition_stop", "reason_fixed_input", "reason_reused", "last_reason_report", "last_readiness_report", "decision_time", "decision_revision", "idle_guard", "support_events_cursor", "heard_utterances_cursor", "planning_work_total", "dependency_work_total", "planning_task_cache", "dependency_cache", "planned_followup", "planned_path", "last_cognitive_event", "planning_continuation"]
     var result = []
     var i = 0
     while i < rt_count(actor):
@@ -1595,7 +1751,7 @@ fn dvp_memo_input(actor, costs):
     while i < rt_count(actor):
         let entry = actor[i]
         let key = entry[0]
-        if not dv_has(["reason_fixed_input", "reason_reused", "decision_time", "decision_revision", "planning_work_total", "last_cognitive_event", "dependency_work_total", "cognition_input", "last_cognition_revision", "last_cognition_time", "cognition_reused", "cognition_cache_reuses", "cognition_stop", "last_reason_report", "last_readiness_report", "cognition_fixed_input", "cognition_event_cursor", "cognition_time", "idle_guard", "planning_continuation", "dependency_cache", "planned_followup", "planned_path", "support_events_cursor", "heard_utterances_cursor"], key):
+        if not dv_has(["reason_fixed_input", "reason_reused", "decision_time", "decision_revision", "planning_work_total", "last_cognitive_event", "dependency_work_total", "cognition_input", "last_cognition_revision", "last_cognition_time", "cognition_reused", "cognition_cache_reuses", "cognition_stop", "last_reason_report", "last_readiness_report", "cognition_fixed_input", "cognition_event_cursor", "cognition_time", "idle_guard", "planning_continuation", "planning_task_cache", "dependency_cache", "planned_followup", "planned_path", "support_events_cursor", "heard_utterances_cursor"], key):
             if key == "policy":
                 rt_push(result, dv_pair(key, policy))
             else:
@@ -2004,7 +2160,7 @@ fn dvp_eligible_base(actor, action, mind, relevant):
     if rejected != false:
         if dv_same(rejected, dvp_rejected_signature(actor, action, mind)) and not explicit_contact_retry:
             return false
-    if dv_and((not dv_find(actor, "cognition_blocked", false)), dv_and(dv_find(action, "argument_available", true), (dv_truth(mind, action.precondition) == "true"))):
+    if dv_and((not dv_find(actor, "cognition_blocked", false)), dv_and(dv_find(action, "argument_available", true), (dvs_dirty_truth(mind, action.precondition, actor.policy, action.id) == "true"))):
         if action.kind == "inspect":
             let inspection_actor = dvp_actor_view(actor, mind)
             if dv_same(dv_find(dv_find(actor, "inspection_attempt_signatures", []), id, false), dvp_inspection_signature(inspection_actor, action, mind)):
@@ -2546,7 +2702,7 @@ fn dvp_plan(actor, bindings, costs):
         actor = view
     actor = rt_snapshot(actor)
     var budget = dv_find(actor.policy, "plan_budget", 0)
-    var depth_limit = dv_find(actor.policy, "plan_depth", 2)
+    var depth_limit = dvp_effective_depth(actor.policy)
     let fast_approx = dv_find(actor.policy, "fast_approximation", false)
     if fast_approx:
         depth_limit = 1
@@ -3672,6 +3828,39 @@ fn dvs_speech_goal_value(goals, listener, prediction):
         i = (i + 1)
     return value
 
+// The atomic route is selected from declaration shape and the owner's policy,
+// never actor identity or a campaign profile. Special receipts retain their
+// original handlers because their formal downstream decisions are observable.
+fn dvs_social_atomic_class(speech):
+    let special = ["proposal", "request", "public_claim", "manipulation", "advice", "norm_proposal"]
+    var i = 0
+    while i < rt_count(special):
+        if dv_find(speech, special[i], false) != false:
+            return rt_cat("formal-", special[i])
+        i = i + 1
+    return "ordinary-testimony"
+
+// A speaker-owned model whose candidate IDs cannot contribute to any active
+// communication goal need not simulate its entire listener world. This proves
+// zero contribution to the existing score; it never predicts listener success.
+fn dvs_social_model_required(actor, model, speech, goals, listener):
+    if not dv_find(actor.policy, "opt_blackbox", true):
+        return true
+    if dvs_social_atomic_class(speech) != "ordinary-testimony":
+        return true
+    let candidates = dvs_speech_candidates(model.policy, speech)
+    var i = 0
+    while i < rt_count(goals):
+        let targets = dv_find(goals[i], "listeners", [])
+        if rt_count(targets) == 0 or dv_has(targets, listener):
+            var j = 0
+            while j < rt_count(candidates):
+                if candidates[j].id == goals[i].interpretation_id:
+                    return true
+                j = j + 1
+        i = i + 1
+    return false
+
 fn dvs_prepare_speech_choices(actor, events, time, parent):
     var goals = dvs_speech_goals(actor)
     if rt_count(goals) == 0:
@@ -3726,7 +3915,8 @@ fn dvs_prepare_speech_choices(actor, events, time, parent):
                                     else:
                                         local_2 = false
                                     if local_2:
-                                        units = (units + dvs_speech_prediction_units(dv_get(models, listener), action.speech))
+                                        if dvs_social_model_required(actor, dv_get(models, listener), action.speech, goals, listener):
+                                            units = (units + dvs_speech_prediction_units(dv_get(models, listener), action.speech))
                                     j = (j + 1)
                                 rt_push(candidates, {"action": action, "signature": signature, "units": units, "listeners": listeners})
                                 total = (total + units)
@@ -3758,10 +3948,13 @@ fn dvs_prepare_speech_choices(actor, events, time, parent):
                 else:
                     local_3 = false
                 if local_3:
-                    units = dvs_speech_prediction_units(dv_get(models, listener), action.speech)
-                    data = dvs_speech_model_prediction(dv_get(models, listener), action.speech, actor.id, rt_cat("preselect-", action.id), time)
-                    data = dv_with_many(data, {"status": "model-based", "model": dv_get(models, listener)})
-                    value = (value + dvs_speech_goal_value(goals, listener, data))
+                    if dvs_social_model_required(actor, dv_get(models, listener), action.speech, goals, listener):
+                        units = dvs_speech_prediction_units(dv_get(models, listener), action.speech)
+                        data = dvs_speech_model_prediction(dv_get(models, listener), action.speech, actor.id, rt_cat("preselect-", action.id), time)
+                        data = dv_with_many(data, {"status": "model-based", "model": dv_get(models, listener)})
+                        value = (value + dvs_speech_goal_value(goals, listener, data))
+                    else:
+                        data = {"status": "atomic-zero-goal-contribution", "prediction": [], "social_mode": "ordinary-testimony", "reason": "owner-model-candidates-do-not-match-active-goals", "listener_outcome": "unknown-until-actual-reception"}
                 else:
                     data = {"status": "unknown-no-model", "prediction": []}
                 data = dv_with_many(data, {"listener": listener, "action": action, "source_actor_revision": actor.mind.revision, "actor_before": dv_without(dv_with_many(actor, {"policy": dv_with(actor.policy, "model_budget", remaining), "model_previous_event": budget_parent, "last_cognitive_event": choice_cognitive}), "simulations"), "budget_before": remaining, "charged_units": units, "goals": goals})
@@ -3951,6 +4144,15 @@ fn dvs_receive_scheduled_speech(listener, message, events, time):
     let observations = dvs_speech_received_observations(before, parsed, source, speaker_id, message.received_time, decision)
     if 0 < rt_count(observations):
         after = dv_update_mind(before, observations, before.revision, profile).world
+    let social_class = dvs_social_atomic_class(speech)
+    // proposal_reassess only acts on this receipt's accepted decision; it does
+    // not scan older proposals. Existing interpretations are reconsidered by
+    // the unchanged dvs_pragmatics_reconsider in the next cognitive cycle.
+    // Keep the decision gate explicit, so a future new proposal decision kind
+    // cannot accidentally enter the no-op contraction based on shape alone.
+    if dv_find(listener.policy, "opt_blackbox", true) and social_class == "ordinary-testimony" and decision.status == "ordinary" and decision.proposal == false and rt_count(candidates_actual) == 0:
+        let receipt = dvs_event_prepared(events, "listener_parse", listener.id, time, dvs_speech_cognitive_parents(dv_single(source), dv_find(listener, "last_cognitive_event", "")), dv_with_many({"mind_before": before, "mind_after": after, "literal": parsed, "observations": observations}, {"source_event": source, "speech": speech, "presuppositions": dvs_speech_presuppositions(before, speech), "audibility": audibility, "observation_profile": profile, "proposal_decision": decision, "social_mode": "atomic-ordinary-testimony", "charged_execution_units": 0, "charge_owner": "original-action-complete"}))
+        return dv_with_many(listener, {"mind": after, "received_speeches": dv_append(dv_find(listener, "received_speeches", []), {"speaker": speaker_id, "action_id": action_id, "parse_event": receipt, "source_event": source}), "interpretations": dv_find(listener, "interpretations", []), "last_interpretation_event": dv_find(listener, "last_interpretation_event", ""), "proposals": dv_find(listener, "proposals", []), "last_cognitive_event": receipt, "policy": dv_with(listener.policy, "reason_budget", dv_find(listener.policy, "reason_budget", 0)), "reassessed_proposals": dv_find(listener, "reassessed_proposals", [])})
     var interpretations = dv_find(listener, "interpretations", [])
     var last_interpretation = dv_find(listener, "last_interpretation_event", "")
     var n = 0
@@ -3966,7 +4168,7 @@ fn dvs_receive_scheduled_speech(listener, message, events, time):
         local_2 = dv_single(source)
     else:
         local_2 = dv_pair(source, proposal_event)
-    parse_event = dvs_event_prepared(events, "listener_parse", listener.id, time, dvs_speech_cognitive_parents(local_2, dv_find(listener, "last_cognitive_event", "")), dv_with_many({"mind_before": before, "mind_after": after, "literal": parsed, "observations": observations}, {"source_event": source, "speech": speech, "presuppositions": dvs_speech_presuppositions(before, speech), "audibility": audibility, "observation_profile": profile, "proposal_decision": decision}))
+    parse_event = dvs_event_prepared(events, "listener_parse", listener.id, time, dvs_speech_cognitive_parents(local_2, dv_find(listener, "last_cognitive_event", "")), dv_with_many({"mind_before": before, "mind_after": after, "literal": parsed, "observations": observations}, {"source_event": source, "speech": speech, "presuppositions": dvs_speech_presuppositions(before, speech), "audibility": audibility, "observation_profile": profile, "proposal_decision": decision, "social_mode": "formal-reception", "social_reason": social_class, "interpretation_candidates": rt_count(candidates_actual)}))
     listener = dvs_receive_request(listener, speech, parse_event, source, speaker_id)
     listener = dv_with(listener, "received_speeches", dv_append(dv_find(listener, "received_speeches", []), {"speaker": speaker_id, "action_id": action_id, "parse_event": parse_event, "source_event": source}))
     listener = dvs_receive_public_claim(listener, speech, speaker_id, source, parse_event)
@@ -6813,7 +7015,7 @@ fn dvs_idle_subject_input(actor, costs):
     while i < rt_count(actor):
         let entry = actor[i]
         let key = entry[0]
-        if not dv_has(["idle_guard", "decision_time", "decision_revision", "support_events_cursor", "heard_utterances_cursor", "cognition_fixed_input", "cognition_event_cursor", "cognition_time", "cognition_reused", "cognition_stop", "reason_fixed_input", "reason_reused", "last_reason_report", "last_readiness_report", "dependency_cache", "planning_work_total", "dependency_work_total"], key):
+        if not dv_has(["idle_guard", "decision_time", "decision_revision", "support_events_cursor", "heard_utterances_cursor", "cognition_fixed_input", "cognition_event_cursor", "cognition_time", "cognition_reused", "cognition_stop", "reason_fixed_input", "reason_reused", "last_reason_report", "last_readiness_report", "planning_task_cache", "dependency_cache", "planning_work_total", "dependency_work_total"], key):
             if key == "policy":
                 rt_push(result, dv_pair(key, policy))
             else:
@@ -7192,6 +7394,8 @@ fn dvs_prepare_actor(state):
             let prepared = {"input": rt_snapshot(dvs_cognition_signature(actor)), "event_cursor": rt_count(events), "time": time}
             choice = dv_with(choice, "continuation", dv_with(choice.continuation, "prepared_cognition", prepared))
         var action = choice.action
+        if dv_find(actor.policy, "opt_planreuse", false):
+            actor = dv_with(actor, "planning_task_cache", dv_find(choice, "planning_task_cache", false))
         actor = dv_with_many(actor, {"dependency_work_total": dv_find(actor, "dependency_work_total", 0) + dv_find(choice, "dependency_expansions", 0), "decision_revision": actor.mind.revision, "dependency_cache": choice.dependency_cache, "planning_continuation": dv_find(choice, "continuation", false), "planned_followup": "", "planned_path": [], "planning_work_total": dv_find(actor, "planning_work_total", 0) + choice.plan_expansions, "policy": dv_with(actor.policy, "plan_budget", dv_find(actor.policy, "plan_budget", 0) - choice.plan_expansions)})
         if dv_find(choice, "continuation", false) != false:
             // A bounded search slice has not selected an action. Keep it runnable
@@ -7741,7 +7945,44 @@ fn dvs_owned_state_update(state, updates):
 
 // ---- Merged source module: 32-environment.dv ----
 // Physical processes read physical conditions. They never publish private knowledge.
+fn dvs_dirty_environment_index(world, processes):
+    let key = ["dirty-environment-index-v1", world.adoptions]
+    let cached = rt_memo_get(processes, key)
+    if cached[0]:
+        return cached[1]
+    var index = []
+    var i = 0
+    while i < rt_count(processes):
+        let law = dv_get(world.adoptions, processes[i].law).law
+        var refs = dvs_dirty_refs(law.premise)
+        var j = 0
+        while j < rt_count(law.effects):
+            let effect = law.effects[j]
+            dv_require(effect.op == "assign" or effect.op == "increment", rt_cat("Unindexed effect operator: ", effect.op))
+            refs = dvp_merge_refs(refs, [effect.ref])
+            j = j + 1
+        // Validate every dependency's subject even before it is dirtied.
+        j = 0
+        while j < rt_count(refs):
+            let subject = dv_find(refs[j], "subject", "")
+            dv_require(subject == "" or subject == world.subject, "Cross-subject reference access")
+            j = j + 1
+        rt_push(index, {"law": processes[i].law, "refs": refs})
+        i = i + 1
+    return rt_memo_put(processes, key, rt_snapshot(index))
+
+fn dvs_dirty_verify_skipped(world, processes, first, until, time):
+    var i = first
+    while i < until:
+        let adoption = dv_get(world.adoptions, processes[i].law)
+        if adoption.active and adoption.mode == "enforce" and dv_truth_uncached(world, adoption.law.premise) == "true":
+            let staged = dv_stage(world, adoption.law.effects, time, adoption.basis, adoption.confidence)
+            dv_require(staged.status != "ready" or not dvs_reason_changes(staged.changes), rt_cat("Dirty queue omitted rule: ", adoption.law.name))
+        i = i + 1
+    return true
+
 fn dvs_environment(physical, story, events, parent):
+    let dirty_config = dv_find(story, "run_config", [])
     let readview = dv_find(dv_find(story, "run_config", []), "opt_readview", false)
     var world = physical
     let time = dv_find(world, "time", 0)
@@ -7752,11 +7993,32 @@ fn dvs_environment(physical, story, events, parent):
     if readview:
         world = rt_snapshot(world)
         processes = rt_snapshot(processes)
+    let dirty = dv_find(dirty_config, "opt_dirty", false)
+    var dependency_index = []
+    var verify = false
+    if dirty:
+        processes = rt_snapshot(processes)
+        dependency_index = dvs_dirty_environment_index(world, processes)
+        let verify_every = dv_find(dirty_config, "opt_dirty_verify", 0)
+        if 0 < verify_every:
+            let tick_key = ["dirty-environment-verify-tick"]
+            let tick = rt_memo_get(processes, tick_key)
+            var calls = 1
+            if tick[0]:
+                calls = tick[1] + 1
+            if calls >= verify_every:
+                verify = true
+                calls = 0
+            rt_memo_put(processes, tick_key, calls)
     var i = 0
+    if dirty:
+        i = rt_dirty_next(world, dependency_index, -1)
+        if verify:
+            dvs_dirty_verify_skipped(world, processes, 0, i, time)
     while i < rt_count(processes):
         let process = processes[i]
         let adoption = dv_get(world.adoptions, process.law)
-        if adoption.active and adoption.mode == "enforce" and dv_truth(world, adoption.law.premise) == "true":
+        if adoption.active and adoption.mode == "enforce" and dvs_dirty_truth(world, adoption.law.premise, dirty_config, adoption.law.name) == "true":
             let staged = dv_stage(world, adoption.law.effects, time, adoption.basis, adoption.confidence)
             var changed = false
             var j = 0
@@ -7775,7 +8037,13 @@ fn dvs_environment(physical, story, events, parent):
                 if readview:
                     world = rt_snapshot(world)
                 parent = dvs_event(events, "physical_process", "", time, [parent], {"process": process, "revision_before": before.revision, "revision_after": world.revision, "suspended": not dv_get(world.adoptions, process.law).active, "execution": dv_without(execution, "world")})
-        i = i + 1
+        let previous = i
+        if dirty:
+            i = rt_dirty_next(world, dependency_index, previous)
+            if verify:
+                dvs_dirty_verify_skipped(world, processes, previous + 1, i, time)
+        else:
+            i = i + 1
     return world
 
 // Match the old minute lattice, including a fractional action completion.
@@ -7812,6 +8080,25 @@ fn dvs_environment_next_time(world, story, due):
 
 // ---- Merged source module: 40-host.dv ----
 // Host commands contain an action and its execution contract, never a mind or oracle.
+// Only inert visible prose uses this representation. IDs, semantic speech AST,
+// action labels and scoring inputs remain in their existing representations.
+// Parts are captured at construction; rendering never reads a later mind.
+fn dvs_surface_parts(parts):
+    if rt_lazyinternal_enabled():
+        return rt_snapshot({"format": "surface-parts-v1", "parts": parts})
+    return dvs_render_surface({"format": "surface-parts-v1", "parts": parts})
+
+fn dvs_render_surface(surface):
+    if rt_is_text(surface):
+        return surface
+    dv_require(dv_find(surface, "format", "") == "surface-parts-v1", "Unknown visible surface representation")
+    var rendered = []
+    var i = 0
+    while i < rt_count(surface.parts):
+        rt_push(rendered, dvs_render_surface(surface.parts[i]))
+        i = i + 1
+    return rt_text_join(rendered)
+
 fn dvs_present_replace(text, token, value):
     var result = ""
     var i = 0
@@ -7889,7 +8176,7 @@ fn dvs_session_presentation(state, viewer):
             var surface = ""
             var presentation = []
             if applied and visible:
-                surface = dv_find(action, "surface", dv_find(dv_find(action, "speech", []), "surface", ""))
+                surface = dvs_render_surface(dv_find(action, "surface", dv_find(dv_find(action, "speech", []), "surface", "")))
                 presentation = dv_find(action, "presentation", [])
             var voice = "narration"
             if dv_has_key(action, "speech"):

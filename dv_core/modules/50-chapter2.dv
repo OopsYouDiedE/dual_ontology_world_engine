@@ -257,7 +257,7 @@ fn c2_move_action(actor, origin, target, gate):
         rt_push(grants, campaign_own(actor, "support_active"))
     if origin == "living_hall" and dv_has(["detective", "bertrand", "huo"], actor):
         rt_push(grants, campaign_own(actor, "guard_active"))
-    return dv_with_many(campaign_surface_action(id, "move", premise, premise, id, grants, rt_cat("前往", c2_place_label(target)), rt_cat("从", rt_cat(c2_place_label(origin), rt_cat("穿过廊门，来到", rt_cat(c2_place_label(target), "。")))), c2_source("00_通行.story", 9, "routes-and-boundaries")), {"repeatable": true, "normative_method": method, "travel": {"from": origin, "to": target, "gate": gate}, "predict_law": id, "failure_grants": [campaign_access(gate)], "failure_observe_when": campaign_at(actor, origin), "public_observers": campaign_people(), "public_grants": grants})
+    return dv_with_many(campaign_surface_action(id, "move", premise, premise, id, grants, rt_cat("前往", c2_place_label(target)), dvs_surface_parts(["从", c2_place_label(origin), "穿过廊门，来到", c2_place_label(target), "。"]), c2_source("00_通行.story", 9, "routes-and-boundaries")), {"repeatable": true, "normative_method": method, "travel": {"from": origin, "to": target, "gate": gate}, "predict_law": id, "failure_grants": [campaign_access(gate)], "failure_observe_when": campaign_at(actor, origin), "public_observers": campaign_people(), "public_grants": grants})
 
 fn c2_norm_condition(norm, actor):
     let night = c2_any_night()
@@ -566,7 +566,7 @@ fn c2_norm_actions(actor, norm):
         rt_push(result, dv_with_many(campaign_surface_action(id, "talk", dv_all([campaign_at(actor, norm.board), c2_alive(actor), c2_norm_available(norm)]), dv_all([campaign_at(actor, norm.board), c2_alive(actor), c2_norm_available(norm)]), id, dv_single(campaign_ref(object, "proposed")), rt_cat("提出：", norm.title), norm.surface, norm.source), {"speech": speech, "listeners": campaign_people()}))
         let post_id = rt_cat(actor, rt_cat(".c2.post.", norm.id))
         let pre = dv_all(dv_pair(campaign_at(actor, norm.board), dv_fact(campaign_ref(object, "proposed"), true)))
-        rt_push(result, campaign_surface_action(post_id, "help", pre, pre, post_id, dv_single(campaign_ref(object, "posted")), rt_cat("张贴：", norm.title), rt_cat("在公告板上贴出：", norm.surface), norm.source))
+        rt_push(result, campaign_surface_action(post_id, "help", pre, pre, post_id, dv_single(campaign_ref(object, "posted")), rt_cat("张贴：", norm.title), dvs_surface_parts(["在公告板上贴出：", norm.surface]), norm.source))
     let peek = rt_cat(actor, rt_cat(".c2.inspect.board.", norm.id))
     rt_push(result, dv_with(campaign_surface_action(peek, "inspect", campaign_at(actor, norm.board), campaign_at(actor, norm.board), "", dv_single(campaign_ref(object, "posted")), rt_cat("检视公告：", norm.title), "查看公告板。", norm.source), "repeatable", true))
     let read_id = rt_cat(actor, rt_cat(".c2.read.", norm.id))
@@ -585,7 +585,7 @@ fn c2_norm_actions(actor, norm):
             promotes = norm.sacrifices
             sacrifices = norm.promotes
             surface = "这条我不认。"
-        surface = rt_cat(rt_cat("针对以下条文：\n", norm.surface), rt_cat("\n", surface))
+        surface = dvs_surface_parts(["针对以下条文：\n", norm.surface, "\n", surface])
         let id = rt_cat(actor, rt_cat(".c2.", rt_cat(verb, rt_cat(".", norm.id))))
         let grants = dv_pair(campaign_own(actor, rt_cat("decided.", norm.id)), campaign_own(actor, rt_cat("accepted.", norm.id)))
         let speech = dv_with(campaign_speech(dv_true(), norm.source, "personal-norm-decision"), "surface", surface)
@@ -886,7 +886,7 @@ fn c2_carry_moran_action(origin, target, gate):
     let id = rt_cat("bertrand.c2.carry.", rt_cat(origin, rt_cat(".", target)))
     let law = c2_carry_moran_law(origin, target, gate)
     let grants = [campaign_position_ref("bertrand"), campaign_position_ref("moran"), campaign_own("bertrand", "carrying"), campaign_own("moran", "carried_by")]
-    return dv_with_many(campaign_surface_action(id, "move", law.premise, law.premise, id, grants, rt_cat("搬运伤者前往", c2_place_label(target)), rt_cat("扶住昏迷的莫兰，从", rt_cat(c2_place_label(origin), rt_cat("逐段搬至", rt_cat(c2_place_label(target), "。")))), campaign_approved("actual-contact-and-segmented-rescue")), {"repeatable": true, "travel": {"from": origin, "to": target, "gate": gate}, "predict_law": id, "public_observers": campaign_people(), "public_grants": grants})
+    return dv_with_many(campaign_surface_action(id, "move", law.premise, law.premise, id, grants, rt_cat("搬运伤者前往", c2_place_label(target)), dvs_surface_parts(["扶住昏迷的莫兰，从", c2_place_label(origin), "逐段搬至", c2_place_label(target), "。"]), campaign_approved("actual-contact-and-segmented-rescue")), {"repeatable": true, "travel": {"from": origin, "to": target, "gate": gate}, "predict_law": id, "public_observers": campaign_people(), "public_grants": grants})
 
 法则 c2_moran_fatal_settle_law：
     当 c2_alive("moran")。

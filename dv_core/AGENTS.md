@@ -176,3 +176,5 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 选择性根层可先按完整动作声明稳定排列：有 grants 的非 move/answer/wait 任务优先，实际声明时长短者先，同长和其他项保留原相对顺序。记录 candidate_order、candidate_order_scans、candidate_order_reuses；这只决定逐一真实求值的次序，不等于预先满足条件或获得观察。Prepare、Complete 等入口可以接收冻结整态；凡追加 state.events 的实际入口必须先取得独立事件列表，返回值显式携带新列表。禁止借写只读父态。
 
 两章 CLI 激进优化入口及开关合同见 `../docs/cli-optimization.md` 的 2026-10-22 节；本轮用户的 180 秒运行授权优先于历史窗口。原始 DAG 事件封包可附进程单调耗时，旧证据不补造时间。
+
+追加激进 CLI 开关 cow/mask/lazyinternal/dirty/planreuse/blackbox 的作用域、近似边界与调试断言统一见 `../docs/cli-optimization.md`。私有 stage 更新共享未变对象；所有人物使用同一剪枝参数，缓存必须包含完整知识版本。不得将开关接线或机制差分当作正式会话验收。

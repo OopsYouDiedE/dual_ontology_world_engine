@@ -270,7 +270,19 @@ fn v_binary_judge(manifest, evidence):
     let actual = evidence.last_live_session.story.run_config
     let requested = dv_get(manifest, "run_config")
     var report = []
-    if not dv_same(actual, requested):
+    // Configuration is a keyed record; JSON transport preserves a caller's
+    // insertion order, which need not match the DV constructor's field order.
+    var matches = rt_count(actual) == rt_count(requested)
+    var i = 0
+    while i < rt_count(actual):
+        let entry = actual[i]
+        if not dv_has_key(requested, entry[0]):
+            matches = false
+        else:
+            if not dv_same(entry[1], dv_get(requested, entry[0])):
+                matches = false
+        i = i + 1
+    if not matches:
         report = {"mode": "read_only", "domain_evaluation_complete": false, "domain_evaluation_reason": "configuration_mismatch", "findings": [v_finding("run_configuration", "invalid_run", "Sealed session configuration differs from the requested and emitted configuration", [])], "limitations": "Configuration mismatch; no domain replay entered"}
     else:
         report = v_judge(manifest, evidence.trace, dvs_chapter1_oracle())
