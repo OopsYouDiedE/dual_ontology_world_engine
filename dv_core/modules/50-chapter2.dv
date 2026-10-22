@@ -1256,7 +1256,7 @@ fn c2_actor_actions(actor):
 // One observation identity per scope. Weather retains the original sight locations.
 fn c2_compact_observations(actor):
     let clock = campaign_surface_action(rt_cat(actor, ".c2.inspect.clock"), "inspect", dv_true(), dv_true(), "", [campaign_clock()], "查看时钟", "看了一眼时间。", campaign_approved("campaign-clock-is-actually-observed"))
-    let places = ["hall", "living_hall", "central_hall", "logistics", "oath_court"]
+    let places = ["hall", "living_hall", "central_hall", "logistics", "oath_court", "outdoor_meter"]
     var conditions = []
     var i = 0
     while i < rt_count(places):
@@ -3039,7 +3039,14 @@ fn c2_safety_goals(actor):
             minimum = sample.time + 30
         if dv_uncontested(environment) and (sample == false or sample.time < environment.time):
             minimum = environment.time
-        rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("c2.meter", "safe"), dv_at_least(campaign_clock(), 1980), source, minimum), {"navigation_room": "outdoor_meter", "navigation_methods": [rt_cat(actor.id, ".c2.sample.meter")]}))
+        let sampled_epoch = dv_read(actor.mind, campaign_ref("c2.meter", "environment_epoch"))
+        let epoch_sample = c2_sample_claim(sampled_epoch)
+        if dv_uncontested(environment) and dv_uncontested(sampled_epoch) and environment.value != sampled_epoch.value and epoch_sample != false:
+            // Another reading of the same instrument cannot refresh an older
+            // weather observation. Resolve that owned mismatch by looking.
+            rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("c2.weather", "environment_epoch"), dv_at_least(campaign_clock(), 1980), source, epoch_sample.time), {"navigation_room": "outdoor_meter", "navigation_methods": [rt_cat(actor.id, ".c2.inspect.weather")]}))
+        else:
+            rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("c2.meter", "safe"), dv_at_least(campaign_clock(), 1980), source, minimum), {"navigation_room": "outdoor_meter", "navigation_methods": [rt_cat(actor.id, ".c2.sample.meter")]}))
     if dv_has(["detective", "bertrand", "huo"], actor.id):
         // A fresh unsafe sample completes the empirical part of an adopted
         // pause. Return to the agreed door instead of polling away its duty.
