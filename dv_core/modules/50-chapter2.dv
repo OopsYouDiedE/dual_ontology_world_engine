@@ -2121,6 +2121,93 @@ fn c2i_value(row):
         return 4
     return true
 
+// Default content scheduling may collapse ceremony; physical effects still need
+// local materials, capable participants and the ordinary Complete receipt.
+fn c2sf_enabled(actor):
+    return dv_find(actor.policy, "opt_storyflow", true)
+
+fn c2sf_case_row(row):
+    return (row.object == "case.logistics" or row.object == "case.astral") and row.field != "evening_choice"
+
+fn c2sf_row(row):
+    if not c2sf_case_row(row):
+        return row
+    var result = dv_with(row, "when", dv_at_least(campaign_clock(), 1440))
+    let medical_pair = dv_all([campaign_at("mora", "white_tower_safe"), campaign_at("veronica", "white_tower_safe"), c2_can_act("mora"), c2_can_act("veronica")])
+    if row.field == "three_old_scars":
+        result = dv_with(result, "requirements", [medical_pair, dv_fact(campaign_ref("case.logistics", "r07_skin_test"), true)])
+    if row.field == "medicine_key_given":
+        result = dv_with(result, "requirements", [medical_pair, dv_fact(campaign_ref("case.logistics", "medicine_key_holder"), "mora"), dv_fact(campaign_ref("case.logistics", "r07_skin_test"), true), dv_fact(campaign_ref("case.logistics", "three_old_scars"), true)])
+    return result
+
+fn c2sf_actor(actor):
+    if not c2sf_enabled(actor):
+        return actor
+    let appraisals = dv_find(actor.policy, "current_appraisals", [])
+    var revised = []
+    var i = 0
+    while i < rt_count(appraisals):
+        var item = appraisals[i]
+        let base = dv_find(item, "storyflow_original_when", item.when)
+        var resolved = dv_not(dv_true())
+        if actor.id == "mora":
+            resolved = dv_all([dv_fact(campaign_ref("case.logistics", "r07_skin_test"), true), dv_fact(campaign_ref("case.logistics", "three_old_scars"), true)])
+        if actor.id == "elena":
+            resolved = dv_fact(campaign_ref("case.astral", "complete_draft"), true)
+        if dv_find(item, "id", "") == rt_cat(actor.id, ".current-moral-conflict") and (actor.id == "mora" or actor.id == "elena"):
+            item = dv_with_many(item, {"storyflow_original_when": base, "when": dv_all([base, dv_not(resolved)])})
+        rt_push(revised, item)
+        i = i + 1
+    return dv_with(actor, "policy", dv_with(actor.policy, "current_appraisals", revised))
+
+fn c2sf_ceremony_ids():
+    let key = ["authored-declaration", "c2sf_ceremony_ids"]
+    let cached = rt_memo_get([], key)
+    if cached[0]:
+        return cached[1]
+    var ids = {}
+    let rows = c2i_rows()
+    var i = 0
+    while i < rt_count(rows):
+        if c2sf_case_row(rows[i]):
+            ids = dv_with(ids, rt_cat(rows[i].id, ".undertake"), true)
+            ids = dv_with(ids, rt_cat(rows[i].id, ".request"), true)
+            ids = dv_with(ids, rt_cat(rows[i].id, ".refuse-restriction"), true)
+        i = i + 1
+    let hosts = ["detective", "quer"]
+    let guests = ["mora", "bertrand", "veronica"]
+    let rooms = ["living_hall", "clinic", "white_tower_safe"]
+    i = 0
+    while i < rt_count(hosts):
+        var j = 0
+        while j < rt_count(guests):
+            var k = 0
+            while k < rt_count(rooms):
+                ids = dv_with(ids, rt_cat(hosts[i], rt_cat(".c2.safety.invite.", rt_cat(guests[j], rt_cat(".", rooms[k])))), true)
+                k = k + 1
+            j = j + 1
+        i = i + 1
+    return rt_memo_put([], key, ids)
+
+fn c2sf_action(actor, action):
+    if not c2sf_enabled(actor):
+        return action
+    if dv_has_key(c2sf_ceremony_ids(), action.id):
+        return dv_with(action, "precondition", dv_not(dv_true()))
+    if not dv_has_key(action, "storyflow_case_row"):
+        return action
+    let row = c2sf_row(action.storyflow_case_row)
+    if row.field == "patient_thanked":
+        return dv_with(action, "precondition", dv_not(dv_true()))
+    let pre = dv_all([c2i_physical_premise(row), c2_can_act(actor.id), dv_fact(campaign_ref(row.object, row.field), false)])
+    var promotes = ["evidence", "measured_work"]
+    if row.object == "case.logistics":
+        promotes = ["evidence", "patient_priority", "measured_work"]
+    var result = dv_with_many(action, {"precondition": pre, "authority_precondition": c2i_physical_premise(row), "personal_choice": {"group": row.id, "requires": pre, "prohibits": dv_fact(campaign_ref(row.object, row.field), true), "promotes": promotes, "sacrifices": [], "require_positive": true, "basis": [campaign_approved("user:2026-10-23-similar-effect-content-rewrite")]}})
+    result = dv_without(result, "received_speech_requirement")
+    result = dv_without(result, "work_operation")
+    return result
+
 fn c2i_premise(row):
     return dv_all([c2i_physical_premise(row), c2_work_accepted(row.actor, row.id)])
 
@@ -2150,7 +2237,10 @@ axiom c2i_contact_law(row):
     if row.field == "day_sketch_exposed":
         rt_push(effects, dv_assign(campaign_own("moran", "fever"), true))
         rt_push(effects, dv_increment(campaign_own("moran", "erosion_exposure"), 1))
-    return dv_axiom("c2i_contact_law", 1, c2i_physical_premise(row), effects)
+    var physical = c2i_physical_premise(row)
+    if c2sf_case_row(row):
+        physical = campaign_any(physical, c2i_physical_premise(c2sf_row(row)))
+    return dv_axiom("c2i_contact_law", 1, physical, effects)
 
 fn c2i_world_objects(world):
     var result = world
@@ -2231,6 +2321,8 @@ fn c2i_actions(actor):
                         room_index = room_index + 1
                     host_index = host_index + 1
                 action = dv_with(action, "received_speech_requirement", {"any_of": invitations})
+            if c2sf_case_row(row):
+                action = dv_with(action, "storyflow_case_row", row)
             if actor == "quer" and row.field != "lock_no_pry":
                 action = dv_with(action, "work_operation", row.id)
             if row.field == "wedge_set" or row.field == "lift_mm":
@@ -2305,7 +2397,7 @@ fn c2i_goals(actor):
             rt_push(goals, campaign_observation_goal(campaign_own(patient, "respiratory_failure"), c2_patient_contact(id, patient), [campaign_approved("actual-contact-before-care-or-rescue")], 5370))
             rt_push(goals, campaign_observation_goal(campaign_own(patient, "anti_erosion_treated"), c2_patient_contact(id, patient), [campaign_approved("actual-contact-before-care-or-rescue")], 0))
             patient_index = patient_index + 1
-    if id == "detective" or id == "quer":
+    if not c2sf_enabled(actor) and (id == "detective" or id == "quer"):
         let guests = ["mora", "bertrand", "veronica"]
         let rooms = ["living_hall", "clinic", "white_tower_safe"]
         let completed = dv_find(actor, "completed_actions", [])
@@ -2320,7 +2412,7 @@ fn c2i_goals(actor):
             guest_index = guest_index + 1
         if invited:
             rt_push(goals, dv_with_many(campaign_goal(campaign_at(id, "white_tower_safe"), dv_all([campaign_window(3, 780, 1020), dv_fact(campaign_ref("case.logistics", "medicine_key_given"), false)]), [campaign_approved("actual-inviter-attends-medicine-confrontation")]), {"navigation_room": "white_tower_safe", "maintain_presence": true}))
-    if dv_has(["mora", "bertrand", "veronica"], id):
+    if not c2sf_enabled(actor) and dv_has(["mora", "bertrand", "veronica"], id):
         let hosts = ["detective", "quer"]
         let rooms = ["living_hall", "clinic", "white_tower_safe"]
         var invited = false
@@ -2345,11 +2437,18 @@ fn c2i_goals(actor):
             rt_push(goals, campaign_goal(campaign_at(id, closing.next), dv_all([when, campaign_at(id, closing.origin)]), [source, closing]))
     var i = 0
     while i < rt_count(rows):
-        let row = rows[i]
-        if row.actor == id:
+        var row = rows[i]
+        let streamlined = c2sf_enabled(actor) and c2sf_case_row(row)
+        if streamlined:
+            row = c2sf_row(row)
+        if row.actor == id and not (streamlined and row.field == "patient_thanked"):
             let completion = dv_fact(campaign_ref(row.object, row.field), c2i_value(row))
-            let undertaking = dv_all([row.when, c2_work_accepted(id, row.id)])
-            rt_push(goals, dv_with_many(campaign_goal(completion, undertaking, [campaign_approved("chapter-two-investigation-opportunity")]), {"navigation_completion": completion, "navigation_room": row.room, "navigation_requirements": row.requirements, "navigation_methods": [row.id]}))
+            var undertaking = dv_all([row.when, c2_work_accepted(id, row.id)])
+            var navigation_requirements = row.requirements
+            if streamlined:
+                undertaking = row.when
+                navigation_requirements = []
+            rt_push(goals, dv_with_many(campaign_goal(completion, undertaking, [campaign_approved("chapter-two-investigation-opportunity")]), {"navigation_completion": completion, "navigation_room": row.room, "navigation_requirements": navigation_requirements, "navigation_methods": [row.id]}))
         i = i + 1
     if id == "ruan":
         rt_push(goals, campaign_goal(dv_fact(campaign_ref("c2.ledger", "supplement_column"), true), dv_fact(campaign_own("ruan", "accepted.records_supplement"), true), [campaign_approved("implement-reserved-column-after-acceptance")]))
@@ -2986,6 +3085,7 @@ fn c2_owned_recheck_needed(actor):
 // Only owned observations and actual request receipts change the chooser view.
 // Physical laws retain bodily feasibility and never acquire this view's beliefs.
 fn c2_refresh_content_actions(actor):
+    actor = c2sf_actor(actor)
     let original_actions = actor.actions
     var actions = []
     var i = 0
@@ -3086,6 +3186,7 @@ fn c2_refresh_content_actions(actor):
             action = dv_with(action, "personal_choice", dv_with(action.personal_choice, "requires", qualification))
         // A supporter can physically leave; doing so releases the operation.
         // Its own continuing-duty goal is considered by the shared planner.
+        action = c2sf_action(actor, action)
         rt_push(actions, action)
         i = i + 1
     let original_rules = dv_find(actor.policy, "norm_rules", [])
@@ -4377,6 +4478,8 @@ fn c2d_goals(actor):
         let row = rows[i]
         if row.actor == actor.id and (not dv_find(row, "manual_only", false) or (dv_has_key(row, "manipulation") and dv_find(actor.policy, "allow_manipulation_candidates", false))):
             var when = dv_all([row.when, row.literal])
+            if c2sf_enabled(actor) and dv_has_key(c2sf_ceremony_ids(), row.id):
+                when = dv_not(dv_true())
             if not dv_find(row, "repeatable", false):
                 when = dv_all([when, dv_fact(c2d_mark(actor.id, row.id), false)])
             if dv_has_key(row, "owned_decision"):
