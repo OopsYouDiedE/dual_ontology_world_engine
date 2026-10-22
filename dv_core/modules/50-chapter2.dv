@@ -1086,7 +1086,7 @@ fn c2_casualty_actions(actor):
         let search_known = dv_all([c2_night(4), c2_can_act(actor), campaign_at(actor, "outdoor_alley")])
         let search_contact = dv_all([search_known, campaign_at("moran", "outdoor_alley")])
         let search_grants = [campaign_position_ref("moran"), campaign_own("moran", "alive"), campaign_own("moran", "in_coma"), campaign_own("moran", "carried_by")]
-        rt_push(result, dv_with_many(campaign_surface_action("bertrand.c2.search.moran-alley", "inspect", search_known, search_contact, "", search_grants, "沿听到的写生去向寻找同伴", "沿本人实际听到的外出方向抵达夹道，在现场查找并检查同伴。", campaign_approved("user:2026-10-22-search-from-real-heard-intention")), {"received_speech_requirement": {"speaker": "moran", "action_id": "moran.c2.sketch.evening.go.false"}}))
+        rt_push(result, dv_with_many(campaign_surface_action("bertrand.c2.search.moran-alley", "inspect", search_known, search_contact, "", search_grants, "沿听到的写生去向寻找同伴", "沿本人实际听到的外出方向抵达夹道，在现场查找并检查同伴。", campaign_approved("user:2026-10-22-search-from-real-heard-intention")), {"received_speech_requirement": {"speaker": "moran", "action_id": "moran.c2.sketch.evening.go.false"}, "personal_choice": {"group": "search-moran", "requires": search_known, "prohibits": dv_fact(campaign_own(actor, "carrying"), "moran"), "promotes": ["solidarity", "patient_priority", "safety"], "sacrifices": ["cautious_travel"], "require_positive": true, "basis": [campaign_approved("user:2026-10-23-owned-search-after-real-heard-declaration")]}}))
         let id = "bertrand.c2.rescue.moran_from_alley"
         let law = c2_bertrand_rescue_law()
         let grants = [campaign_own("bertrand", "carrying"), campaign_own("moran", "carried_by"), campaign_own("bertrand", "rescue_exposed")]

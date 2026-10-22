@@ -1,0 +1,56 @@
+#include ../../modules/50-chapter2.dv
+
+// Finite declarations and formal law checks; no AI session or seeded casualties.
+fn search_fixture_actor(id, receipts):
+    return {"id": id, "mind": dv_world("search-mind", "mind", id), "actions": c2_casualty_actions(id), "policy": {}, "received_speeches": receipts, "completed_actions": []}
+
+fn search_fixture_has_route(goals, method):
+    var i = 0
+    while i < rt_count(goals):
+        if dv_has(dv_find(goals[i], "navigation_methods", []), method):
+            return true
+        i = i + 1
+    return false
+
+fn search_fixture_has_destination(goals, room):
+    var i = 0
+    while i < rt_count(goals):
+        if dv_find(goals[i], "navigation_room", "") == room:
+            return true
+        i = i + 1
+    return false
+
+fn dvg_debug_run():
+    let absent = search_fixture_actor("bertrand", [])
+    dv_require(not search_fixture_has_route(c2i_goals(absent), "bertrand.c2.search.moran-alley"), "Unheard outing created a search route")
+    let incomplete = search_fixture_actor("bertrand", [{"speaker": "demon", "action_id": "demon.c2.relay.moran-outing.false", "parse_event": "", "source_event": "heard"}])
+    dv_require(not c2_moran_outing_heard(incomplete), "Unparsed message counted as actual reception")
+    let receipt = {"speaker": "demon", "action_id": "demon.c2.relay.moran-outing.false", "parse_event": "parsed", "source_event": "heard"}
+    let heard = search_fixture_actor("bertrand", [receipt])
+    dv_require(search_fixture_has_route(c2i_goals(heard), "bertrand.c2.search.moran-alley"), "Actual relayed intention did not permit owner search task")
+    dv_require(not dv_read(heard.mind, campaign_position_ref("moran")).known, "Heard route granted current patient location")
+    dv_require(not dv_read(heard.mind, campaign_own("moran", "in_coma")).known, "Heard route granted remote coma")
+    let teacher = search_fixture_actor("demon", [{"speaker": "moran", "action_id": "moran.c2.sketch.evening.go.false", "parse_event": "parsed", "source_event": "declaration"}])
+    dv_require(search_fixture_has_destination(c2_personal_goals(teacher), "logistics"), "Actual heard declaration did not permit relay travel purpose")
+    dv_require(not search_fixture_has_destination(c2_personal_goals(search_fixture_actor("demon", [])), "logistics"), "Teacher invented an unheard declaration")
+    let search = dvp_find_action(heard.actions, "bertrand.c2.search.moran-alley")
+    dv_require(search.personal_choice.require_positive, "Search lacks voluntary positive-reason requirement")
+    var physical = dv_world("search-physical", "physical", "")
+    physical = dv_add_object(physical, c2_initial_body("bertrand"))
+    physical = dv_add_object(physical, c2_initial_body("moran"))
+    physical = dv_add_object(physical, dv_object("bertrand", "fixture", {"state": {"location": dv_field("outdoor_alley")}}))
+    physical = dv_add_object(physical, dv_object("moran", "fixture", {"state": {"location": dv_field("living_hall")}}))
+    physical = dv_add_object(physical, dv_object("campaign.clock", "fixture", {"state": {"minute": dv_field(5600)}}))
+    dv_require(dv_truth(physical, search.authority_precondition) == "false", "Search grants remote patient contact")
+    physical = dv_store(physical, campaign_position_ref("moran"), dv_field("outdoor_alley"))
+    dv_require(dv_truth(physical, search.authority_precondition) == "true", "Real same-room search was rejected")
+    let rescue = c2_bertrand_rescue_law()
+    dv_require(dv_truth(physical, rescue.premise) == "false", "Conscious peer was automatically treated as collapsed")
+    physical = dv_store(physical, campaign_own("moran", "in_coma"), dv_field(true))
+    physical = dv_adopt(physical, campaign_method("fixture-rescue", rescue), "enforce", 1, ["finite-contact-fixture"])
+    let result = dv_execute(physical, "fixture-rescue", "finite-rescue", 5600, physical.revision)
+    dv_require(result.status == "applied", "Actual conscious-rescuer contact did not apply rescue law")
+    dv_require(dv_read(result.world, campaign_own("moran", "carried_by")).value == "bertrand", "Rescue did not establish actual carrier")
+    dv_require(dv_read(result.world, campaign_own("bertrand", "erosion_exposure")).value == 0, "Rescue law preloaded physical dose")
+    dv_require(dv_read(result.world, campaign_own("bertrand", "alive")).value == true, "Rescue law preloaded death")
+    return true

@@ -101,3 +101,14 @@ Standard实际e33934@5375观察天气，e34115@5378提出窄条款、e34158@5379
 两份environment_epoch由50的首风及weather_change法则在同一次真实环境变化中各+1，因此数值单调且同次变化对应相同序号。只在本人实际采得的仪表epoch大于本人天气epoch时，才要求更新天气观察；反向（天气新、仪表旧）仍请求实际仪表采样，不因旧采样时刻已经满足天气证据而停滞。
 
 新增measurement-epoch-direction.dv仅构造本人证据快照，未启动会话或AI：实际调用c2_safety_goals验证天气3/仪表4→天气观察且最低来源时刻为真实采样6125；天气4/仪表3→仪表采样；同为4且新鲜→无复测任务。初次夹具以列表==误比较身份导致断言失败，改用dv_same后重新生成、Release构建0警告错误、执行exit0。此为有限双方向机制检查，不是游戏效果验收。
+
+
+## S4-foolish夜间搜索缺失的原始证据与有限链路检查
+
+只读主树179340bd的S4-foolish当前完整记录，不读取设计文件。B在2323–2340反复living_hall↔central_hall、examine.bertrand、inspect.self，最后e20507@2340完成自检，此后夜间无行动。原始DAG e20470@2337的planning_choice显示current_affordance=false、即时root_best为等待120分钟（net0.01），深度2却选择去中央厅（selective-nearest-task、net1.02）；e20495@2339将自检作续行任务（revalidated-route、information1、net1.04）。stage-day5中B policy.budget=0，物理ledger computation余额99760，不是身体无法行动或付费余额不足；不能提高预算掩盖循环。
+
+同一原始快照教师budget=2，received_speeches真实含Moran go.false，source e36184/parse e36231；故教师不是没听到宣告。当前不足先发生于主体重复行动消耗，不能通过给B远端昏迷或强制夜间救援来补齐。通用候选收益/选择器由主代理统一审查，50不按人物身份修规划器。
+
+本轮最小内容补充只给现有现场搜索行动声明本人自主理由：solidarity/patient_priority/safety与cautious_travel的取舍，require_positive=true；实听门槛、实际到夹道及实际同场检视门槛不变。没有听到实际宣告/转述就不产生此搜索意图；实听后也不授予当前所在/伤情。救助与搬运、侵蚀、治疗及死亡参数未改；没有为Foolish开放manual_only操纵候选。
+
+新增outing-search-receipts.dv仅用有限证据快照与正式法则验证：无收闻/未解析收闻不形成搜索；真实转述形成本人搜索目的但不授予远端位置/昏迷；教师只有真实听到宣告才形成传话目的；搜索须实际同场，清醒同伴不满足昏迷救助前提，实际同场昏迷条件成立后dv_execute才建立carrier；救助法则没有直接加剂量或死亡。夹具初稿误用不存在的dv_run，生成失败后改用现役dv_execute，重新生成、Release构建0警告错误、执行exit0。它不启动AI或完整会话，不证明夜间链已在游戏中执行；仍待根代理整合通用循环修复后冻结双局。原始证据已释放读取句柄。
