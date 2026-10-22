@@ -1794,7 +1794,17 @@ fn c2_personal_goal_templates(id):
 
 fn c2_personal_goals(actor):
     var goals = dv_clone(c2_personal_goal_templates(actor.id))
+    // Refresh only by a real look at this board during the negotiation window.
+    let board_when = dv_all([c2_night(4), campaign_at(actor.id, "living_hall")])
+    rt_push(goals, campaign_observation_goal(campaign_ref(c2_norm_object("measurement_pause"), "posted"), board_when, [campaign_approved("user:2026-10-23-local-board-recheck-at-evening-meeting")], 5580))
     if actor.id == "demon":
+        if c2_moran_outing_heard(actor):
+            let relay = "demon.c2.relay.moran-outing.false"
+            var pending = not dv_has(dv_find(actor, "completed_actions", []), relay)
+            if c2_received_requirement(actor, {"speaker": "moran", "action_id": "moran.c2.sketch.evening.go.true"}):
+                pending = not dv_has(dv_find(actor, "completed_actions", []), "demon.c2.relay.moran-outing.true")
+            if pending:
+                rt_push(goals, dv_with(campaign_goal(campaign_at(actor.id, "logistics"), c2_night(4), [campaign_approved("user:2026-10-23-real-heard-route-relay-not-remote-patient-facts")]), "navigation_room", "logistics"))
         return goals
     if actor.id == "detective":
         let scientific_choice = {"personal_choice": {"promotes": ["measured_work", "understand_cost"], "sacrifices": ["pursue_desire", "avoid_attachment"]}}
@@ -3023,6 +3033,12 @@ fn c2_safety_goals(actor):
             minimum = environment.time
         rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("c2.meter", "safe"), dv_at_least(campaign_clock(), 1980), source, minimum), {"navigation_room": "outdoor_meter", "navigation_methods": [rt_cat(actor.id, ".c2.sample.meter")]}))
     if dv_has(["detective", "bertrand", "huo"], actor.id):
+        // A fresh unsafe sample completes the empirical part of an adopted
+        // pause. Return to the agreed door instead of polling away its duty.
+        if dv_truth(actor.mind, dv_fact(campaign_own(actor.id, "accepted.measurement_pause"), true)) == "true" and dv_truth(actor.mind, dv_fact(campaign_ref("c2.meter", "safe"), false)) == "true":
+            let resolved = dv_truth(actor.mind, dv_fact(campaign_ref("case.astral", "evening_choice"), "go")) == "true" or dv_truth(actor.mind, dv_fact(campaign_ref("case.astral", "evening_choice"), "stay")) == "true"
+            if not resolved:
+                rt_push(goals, dv_with_many(campaign_goal(campaign_at(actor.id, "living_hall"), campaign_window(4, 1050, 1800), source), {"navigation_room": "living_hall", "maintain_presence": true}))
         if c2_owned_safety_notice(actor):
             let candidate = dvp_find_action(actor.actions, rt_cat(actor.id, ".c2.guard.undertake"))
             if candidate != false and dvp_owned_decision_ready(actor, candidate, actor.mind):
