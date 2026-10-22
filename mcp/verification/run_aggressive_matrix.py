@@ -9,11 +9,11 @@ from pathlib import Path
 
 from binary_evidence import records
 from aggressive_report import record, summarize
-from matrix_lifecycle import FLAGS, CASE_NAMES, clean_case, managed_run
+from matrix_lifecycle import FLAGS, TOOL_FLAGS, CASE_NAMES, clean_case, managed_run
 
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / 'artifacts' / 'perf-opt' / 'aggressive'
-OPTIMIZATIONS = FLAGS
+OPTIMIZATIONS = FLAGS + TOOL_FLAGS
 CASES = tuple(zip(CASE_NAMES, ('Standard',) * 5 + ('Foolish', 'Standard'),
                   ('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding', 'none', 'zone_yi', 'zone_yi')))
 

@@ -227,12 +227,12 @@ class FiniteTools(unittest.TestCase):
         result = subprocess.run([sys.executable, '-B', str(tool), '--help'],
                                 capture_output=True, text=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr)
-        for flag in lifecycle.FLAGS:
+        for flag in lifecycle.FLAGS + lifecycle.TOOL_FLAGS:
             self.assertIn('--opt-' + flag, result.stdout)
 
     def test_matrix_windows_and_baseline_policy(self):
         options = matrix.production_options('baseline')
-        self.assertEqual(len([x for x in options if x.startswith('--opt-')]), 18)
+        self.assertEqual(len([x for x in options if x.startswith('--opt-')]), 20)
         self.assertIn('--opt-replaycache', options)
         self.assertIn('--opt-runtimespeed', options)
         self.assertEqual(options[:2], ['--selective-planning', 'on'])
