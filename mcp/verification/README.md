@@ -26,6 +26,8 @@ CLI 的 capture 单独保存当前 UI；截图不改写为行动。PNG 转换保
 
 ## 工具工程入口
 
+`run_cli_ai_demo.py --out <本任务固定测试目录> --seconds <授权秒数>` 启动纯引擎 AI 的 CLI 正式会话，固定侦探视角，只顺序发送 next，不代选路线或答案。开局完成后开始现实计时，到点停止新输入；默认 90 秒在途/封存宽限如实单列，超过宽限保留失败记录。默认精简证据，不开启完整审计；stdout/stderr 和全部输入写校验二进制，退出保存轨迹、存档及引擎耗时报告。窗口时长不等于归档总耗时。需用户明确授权，不由其他检查入口自动调用。MCP：diagnostics / cli-ai-demo。
+
 统一 MCP 中，Python 命令属于 `diagnostics`，GDScript 采集与观察属于 `godot_tools`。地图截图为 `capture-maps`，UI 采集为 `capture-casebook`、`capture-period`、`capture-start-reveal`、`capture-title`，宿主入口为 `capture-saved-game`、`capture-level3`、`host-startup`，独立观察为 `ui-input`、`living-floor`、`music-context`。路由直接指向本目录现役脚本；列举工具不执行它们。`ui-input` 自动采用一次性工具用户数据。
 
 所有命令从仓库根目录执行。`mcp/godot_workspace.py` 链接生产场景、成品、
