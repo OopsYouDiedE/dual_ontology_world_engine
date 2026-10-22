@@ -1,61 +1,68 @@
-# S3 无侦探：当前候选与真实因果核验
+# S3 无侦探：当前私人评价修复及正式结果
 
-当前实现 HEAD 为 `57b786e2`（包含 main `23cc359b`）。**S3 尚未通过：成见已真正提前采纳，实际表面答复已提交并获接受，但新增愤怒状态与初始否定发生同权冲突，不能把其推导事件称为已生效的愤怒。** 本报告只引用当前固定目录，不复用已替换运行的数据。
+当前实现 HEAD `e5660d9e`，合并 main `6ce6d133` 后实施。**上一轮 angry 的初始否定与后续肯定冲突已修复：当前正式会话中三房报告者的 angry 实际为 true、conflicted=false、claims=[]，其值进入本人的调查／报告目标条件并影响实际候选估值。** 这不等同于完整独立 S3 因果验收，未执行的深层路径与反事实仍保留边界。
 
-## 已实施的源码
+## 通用接口及内容接线
 
-- `40-chapter1.dv:2938`：本人实际初查后开放理由话题与假设；强成见私人 prior 为 0.8、弱成见为 0.6，不写入权威理由事实。此前依赖本人答复 receipt 的阻断已移除。
-- `40-chapter1.dv:3335`：私人评估核对本人实际取得的具体冲突材料，而不是把 report_basis 旗标等同愤怒。甲区核对质问、钥匙、私下取物残纸与无公开授权；丙区核对伤踝、半幅草图、拉闸者自述及弃一保三计算；丁区核对酸泡、无医嘱、试剂取用者与瓶号。
-- `40-chapter1.dv:3343`：居民有真实材料检视、定向提问、当事人回想与回复的路径。复用既有深层线索，不注入答案；shared_inspection 沿用同组实际共同检视投影。调查与报告的目标动机试图消费私人评估，行动目录仍保留完整路径。
-- 普通居民完整答复使用独立 complete_receipt/complete_level、接受法则与真实裁决者现场条件，不能用身份 receipt 冒充完整理由已接受。正确理由及情绪修订要求本人逐项完整材料链，不只看公共末端旗标。
-- `30-session.dv:1524`：定向回复按同一 parse_event 关联本人 received_requests 与 received_speeches，核对 requester 及真实请求行动 ID；requires_actual_request 现在有实际资格消费者，Complete 消费匹配项。
-- 普通表面答复复用已有保守正文，只报材料支持的行为，不把偷窃、单方面弃人或试验动机作为已证明事实。**正文变保守不是因果验收通过的依据。**
+`30-session.dv` 新增 policy.current_appraisals。目标 ref 必须显式归本人 subject 且限 appraisal facet，不能写权威世界或普通事实槽。声明读取本人实际输入，并可要求本人当前已选 hypothesis_id；确定成立输出 value，确定否定输出 otherwise，输入未知则撤回为未知。更新替换当前评价槽、提升 mind revision，并以 private_appraisal_updated 记录 before/after、具体输入、假设事件与来源。它不新增互斥事实 claim，不改变旧来源信任度，也不靠提高新置信度压过旧值。输入来源更新即刷新当前来源；输入未变不重复发布。禁止直接自依赖。
 
-这些是用户新授权后的内容与动机策略变化，形成新基线，不是同条件缓存优化。没有读取设计文件，没有让普通居民读取 detective_profile，没有按身份降低规划深度，没有预置答案或伤亡。
+自动认知在本人推理及假设选择后刷新当前评价，人工轻量认知也使用同一接口。保留完整策略与知识输入，不按人物身份降低搜索深度。旧 appraise-conflict/revise-appraisal infer 法则从内容层移除。
 
-## 当前正式会话
+`40-chapter1.dv` 将既有成见与本人实际材料冲突声明到该接口。当前所采纳的理由假设必须与该个人成见相符才产生相应愤怒；失去该立场或材料支持、实际取得完整证据时可修订。甲区读取本人已知质问、钥匙、私下取物残纸及无公开授权；丙区读取伤踝、半幅草图、拉闸自述及弃一保三计算；丁区读取酸泡、无医嘱、实际取用者与瓶号。report_basis 旗标本身不等同愤怒。
+
+三房承担报告任务的 ward/selma/mora：继续调查目标要求本人 angry=false，报告目标要求本人 angry=true 或本人完整证据链。实际行动仍全部保留并走正式资格与 Complete。居民真实检视、定向提问、当事人回想／回复、完整答复及独立 complete_receipt/complete_level 路径均保留；shared_inspection 沿用实际共同检视。新接口没有读取 detective_profile。
+
+## 有限工程验证与失败处理
+
+首次新接口会话曾在启动阶段报 Expected List：无假设时误把 false 当记录读取 id。该失败真实发生，未用别轮结果补齐。`e5660d9e` 已修复显式无假设分支。
+
+修复后先运行独立中立机制 fixture，实际检查无声明、无 hypothesis、未知证据撤回、确定 true 且无冲突、证据改 false 后撤销、输入未变不重复事件、再次失去假设等分支。输出为 `isolated appraisal branches completed; no game session`。该 fixture 没有开游戏会话，不是注入生产状态；一次性 .scratch/appraisal-probe 已由主代理清理。随后才冻结并启动下面的新正式会话。固定目录替换了失败输出，不保留滚动历史包。
+
+## 当前正式会话的真实次序
 
 命令：
 
 `python mcp/verification/run_debug.py --out artifacts/perf-opt/aggressive/branch-npc --timeout 300 --causal-timeout 1 --detective-profile Standard --detective-zone none --plan-depth 3`
 
-全部默认优化开启，所有人物统一深度 3，formal-model 不含 Godot 几何。用户明确要求并行测试，本轮与其他分支存在资源竞争，不能据此作独占性能比较。
+所有人物统一深度 3、全部默认优化开启，formal-model 不含 Godot 几何。用户要求并行测试，存在资源竞争，不据此宣称同条件性能优化。
 
-| 人物 | 本人先采纳的私人假设 | 冲突评估推导事件 | 真正选择表面答复 | 真正执行 / 接受 |
+| 人物 | 私人假设实际采纳 | 当前 angry=true 实际发布 | 表面答复实际选择 | 实际执行 / 正式接受 |
 | --- | --- | --- | --- | --- |
-| ward | e249，481，theft，prior 0.8 | e518/e519，483 | e658，484 | e981 / e984，494 |
-| elena | e271，481，self_preservation，prior 0.8 | e668/e669，484 | e1401，664 | e1495 / e1498，674 |
-| mora | e286，481，experiment，prior 0.8 | e1318/e1319，662；e1368/e1369，663 | e1379，663 | e1414 / e1417，673 |
-| selma | e276，481，self_preservation，prior 0.6 | e1360/e1361，663 | e1405，664 | e1508 / e1511，674 |
+| ward | e257，481，theft，prior 0.8 | e537，483 | e672，484 | e992 / e995，494 |
+| mora | e296，481，experiment，prior 0.8 | e1330，662；来源刷新 e1377，663 | e1386，663 | e1421 / e1424，673 |
+| selma | e285，481，self_preservation，prior 0.6 | e1370，663 | e1412，664 | e1515 / e1518，674 |
+| elena | e280，481，self_preservation，prior 0.8 | e683，484 | e1408，664 | e1502 / e1505，674 |
 
-时间为正式游戏分钟。选择、执行与接受是不同事件；不能用 e658 等选择记录代替之后成功执行。选择记录确实带着对应的私人理由假设，且引用真实 hypothesis 事件。
+时间为正式游戏分钟。直接读取上述 private_appraisal_updated.data.after，均为 known=true、value=true、conflicted=false、claims=[]；记录的 hypothesis_event 分别指向表中真实假设采纳事件。早期材料尚未齐备时，elena e281、selma e286、mora e297 真实发布 known=false 的未知评价，未提前授予愤怒。初始 neutral=false 和后续 true 不再作为同权事实 claim 累积。
 
-本轮全部实际寝区答复都走表面人物答复；没有执行 resident/detective truth 行动，没有正式提交带 `.reason.` 的完整答复。因此只能说完整路径已经声明，不能声称本轮居民实际查明深层真相，亦不能由此推断 Standard 在场的运行效果。本分支没有另跑 Standard 在场测试。
+选择、执行及接受严格区分。上表实际提交全是 `.answer.<group>.<actor>`，随后 identity 阶段被正式接受；不是出现候选就算作答。
 
-## 发现的实质失败
+## 评价实际进入了什么选择
 
-直接读取当前原始 DAG 的 inference.data.mind_after，得到：
+已读取当前 action_selected.data.plans 的正式候选估值：
 
-| 事件 | 私人 angry 实际值 | confidence | conflicted |
+| 正式选择记录 | 仍合法且确实被评估的调查候选 | 调查 information / progress / score | 选中的表面答复 information / progress / score |
 | --- | --- | --- | --- |
-| e518 / e519（ward） | false | 0.5 | true |
-| e668 / e669（elena） | false | 0.5 | true |
-| e1318 / e1319、e1368 / e1369（mora） | false | 0.5 | true |
-| e1360 / e1361（selma） | false | 0.5 | true |
+| ward e672 | resident.truth.ward.seal_examined | 0 / 0 / -0.01 | 1 / 1 / 1.95 |
+| mora e1386 | resident.truth.mora.old_scar_examined | 0 / 0 / -0.01 | 1 / 1 / 1.95 |
+| selma e1412 | selma.truth.ask.moran_calmed | 0 / 0 / -0.01 | 1 / 1 / 1.95 |
 
-原因可定位到 `c1_other_inquiry_scene`：它先以 `dv_field(false)` 建立确定的初始 angry=false，随后通过 infer 增添同信任度的 angry=true claim。共享认知机制保留两项矛盾来源，并没有把初始状态当可替换的情绪变量。以 ward e518 为例，原始 claims 同时保留 initial=false/trust=1 与 ward.appraise-conflict=true/trust=1；不能把“出现 appraise-conflict 事件”当作 angry=true 已成立。
+这三项不是外部新增评分：原规划器消费本人真实当前评价，使继续调查目标不可用、报告目标可用，进而形成现有 information/progress 项。调查候选没有从行动目录删除，也没有变成物理非法；它们在本次实际认知下没有相应调查意愿收益。其后真正执行与接受见上表。
 
-因此，调查目标中的 angry=false 与报告目标中的 angry=true 均可能面对争议值，而非预期的情绪转移。当前三房仍作表面答复，不能归因为已经实现的愤怒意愿机制；更不能把成见事件与实际表面作答的时间先后单独当作充分因果证明。强 prior 影响私人假设选择，但评估法则当前只依据既有成见声明的存在及材料冲突，并未显式消费实时 hypothesis 选择，这是另一项因果解释边界。
+需保留的因果边界：本轮没有改变私人评价作同知识反事实实验，不能声称已证明愤怒是唯一必要原因；没有新的独立正式会话审查结论。elena 的强成见及真实愤怒成立，但她不是当前声明的报告任务承担者，不能把三位报告者的目标消费证据直接外推到她的全部行动动机。新的 private_appraisal_updated 类型有独立来源事件，但本轮未宣称已扩展全部既有 support 索引消费者来生成完整的评价→选择证明图。
 
-**本轮按用户最新要求保留已有测试，不重跑，也不在测试后修改实现来让报告对应不同源码。** 后续修复需要把可变化的私人情绪评估与不可直接覆盖的事实 claims 分开，保持实际材料和本人来源，并在新授权窗口验收。
+## 未执行路径与验收边界
 
-## 完成、正文与封存
+本轮实际未执行任何 resident/detective truth 行动，未正式提交带 `.reason.` 的完整答复。故不能声称居民实际查明深层真相，亦不能用声明中的完整路径或独立 complete_receipt 字段当作完整作答已接受。当前 none 会话全部普通居民提交的是材料支持的表面事实；已实际打开完整正文，仍保留“授权和动机还没有说明／封门缘由仍需核对／取用目的需要本人说明与材料”等保守叙述。
 
-- 正式引擎退出码 0，实际会话 190.188 秒；构建 32.937 秒，均与离线取证分列。
-- 实际客观收束在游戏 6330；quer 于 e30101、游戏 6331 成功执行章末检视。停止原因同时包括 objective-chapter-two-closing-record 与 actual-viewer-closing-inspection；不是仅看到候选或到达终点。
-- source_unchanged=true，run_config_matches=true，logical_loop_finished=true，evidence_complete=true。当前 raw DAG 为 542,706,885 字节、30,104 个已提交事件；final checkpoint 与 seal 均存在，未投影尾部为 0。
-- 原始 DAG SHA-256：`35dd0061545bb862becd65ad16e0766dd86ccc4805acde97c2c8eb9d75ff22ee`。40 源码 SHA-256：`04861c12df58a7e960eee7a58af46f1379a8b7d9357b32217c365a23ac785648`；30 为 `8cc285cc42d0fa7549f60a3eeb8049b386ec6b74fe043337d4182b1bf7b302ad`。
-- 当前 `02-引擎输出的玩家可见动作.txt` 为 478,063 字节，已实际打开核对正文及保守表面答复；没有以标签替代全文。
-- 按主代理要求只读自动全因果检查限 1 秒，causal_check_status=timeout、causal_check_complete=false；runner 整体退出码 1 来自该检查未完成，不能写成引擎会话崩溃，也不能写成全因果验收通过。main_causal_supported=false。
-- 源码语法/名字/调用/已实现类型检查完成，Release 构建由当前 runner 成功执行；未执行 Godot UI、碰撞或独立盲玩。尝试创建新独立会话审查 Agent 时触及团队线程上限，未获得新的独立会话审查结论；主代理已有独立源码审查与本轮修正分列。
-- `.gitignore` 已恢复；巨大原始 DAG、生成程序和全文均留在本工作树固定目录，提交仅含源码及小报告/指纹/结果摘要。无本轮临时脚本遗留。
+本分支没有另跑 Standard 在场会话，也没有验证游戏中深层真相到达后自动撤回愤怒及居民完整答复。有限中立 fixture 只验证通用撤回语义，不替代这些行为验收。没有读取设计文件，没有预置答案或伤亡，没有运行 Godot UI、碰撞或盲玩。
+
+## 当前完成、封存与耗时
+
+- 正式引擎退出码 0，会话 142.062 秒；当前构建 9.203 秒，与离线封存／取证分列。该耗时不作为新接口单独提速的归因。
+- 客观收束在游戏 6330；quer e30108 于游戏 6331 实际成功执行章末检视。停止同时要求 objective-chapter-two-closing-record 与 actual-viewer-closing-inspection。
+- source_unchanged=true，run_config_matches=true，logical_loop_finished=true，evidence_complete=true。
+- 当前 raw DAG 542,417,876 字节、30,111 个已提交事件；final checkpoint 和 seal 完整，未投影尾部为 0。SHA-256：`3f083a19ec3b39dd281eebc86081428a44cd67b7966ad3f437cd6e33975173e4`。
+- 当前 30 源码 SHA-256：`321c812196be15efc48801dd032cd79025ca83e0a81ae331db4dd26cbdbd3d3a`；40：`6eac5b17d042b0a6f011cf6934fef3ea21b32b319159105f56470e0c84c25072`。
+- 玩家可见全文 478,063 字节。大 DAG、全文与生成程序仅保留于本工作树固定目录；提交只有小报告、指纹及摘要，.gitignore 已恢复。
+- 按主代理要求，只读全因果检查限 1 秒而超时；causal_check_complete=false、main_causal_supported=false。runner 整体退出码 1 来自该检查未完成，正式引擎会话退出码为 0。没有把正常封存冒充完整因果验收。
