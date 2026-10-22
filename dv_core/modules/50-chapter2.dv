@@ -2106,10 +2106,11 @@ fn c2i_rows_build():
     rt_push(rows, c2i_row("ruan", "ruan.c2.astral.explain-rescue", "quiet_room", resonance, "case.astral", "rescue_intention_explained", c2m_concat(c2m_concat(astral_evidence, astral_confrontation), [dv_fact(campaign_ref("case.astral", "gesture_identified"), true)]), "当面对照备用通风与关闸意图", "伊莲娜要求关闸的手势与备用通风算式相合。我拉闸时仍保留了门内的通风和救援安排；先前只说弃一保三，省略了她主动断后与后续救援，这个说法必须纠正。"))
     rt_push(rows, c2i_row("selma", "selma.c2.astral.withdraw-abandonment", "quiet_room", resonance, "case.astral", "abandoned_child_misunderstanding_resolved", c2m_concat(c2m_concat(astral_evidence, astral_confrontation), [dv_fact(campaign_ref("case.astral", "gesture_identified"), true), dv_fact(campaign_ref("case.astral", "rescue_intention_explained"), true)]), "依据完整材料撤回弃子定性", "完整底稿、备用通风算式和你们当面的说明已经对上。我撤回阮清月放弃伊莲娜的定性；此后合作按实际安排核对，不再拿这半张草图拒绝协作。"))
     rt_push(rows, c2i_row("ruan", "ruan.c2.astral.restore-ledger-support", "quiet_room", resonance, campaign_body("ruan"), "astral_ledger_support", c2m_concat(astral_confrontation, [dv_fact(campaign_ref("case.astral", "abandoned_child_misunderstanding_resolved"), true)]), "确认恢复台账协作", "既然弃子的定性已按完整证据撤回，我愿恢复这次配给台账的协作。补记栏仍按本人采纳的规则和现场取用记录办理，不替任何人预先销账。"))
-    let assembled = dv_all([campaign_at("mora", "white_tower_safe"), campaign_at("bertrand", "white_tower_safe"), campaign_at("veronica", "white_tower_safe")])
+    let assembled = dv_all([campaign_at("mora", "white_tower_safe"), campaign_at("veronica", "white_tower_safe"), c2_can_act("mora"), c2_can_act("veronica")])
     rt_push(rows, c2i_row("veronica", "veronica.c2.safety.scars", "white_tower_safe", safety, "case.logistics", "three_old_scars", [assembled, dv_fact(campaign_ref("case.logistics", "r07_skin_test"), true)], "出示旧疤并核对记录", "卷起左袖，露出三道旧疤，按日期和R-07自体皮试记录核对。"))
-    rt_push(rows, c2i_row("mora", "mora.c2.safety.apology-key", "white_tower_safe", safety, "case.logistics", "medicine_key_given", [assembled, dv_fact(campaign_ref("case.logistics", "three_old_scars"), true)], "致歉并交接药柜钥匙", "是我误会了。药柜钥匙交给你，我们把抗侵蚀剂配出来。"))
-    rt_push(rows, c2i_row("veronica", "veronica.c2.safety.mix", "white_tower_safe", safety, "case.logistics", "anti_erosion_mixed", [assembled, dv_fact(campaign_ref("case.logistics", "medicine_key_given"), true)], "配制抗侵蚀剂", "依皮试记录核对材料与用量，配成抗侵蚀剂，贴妥标签。"))
+    rt_push(rows, c2i_row("mora", "mora.c2.safety.apology-key", "white_tower_safe", safety, "case.logistics", "medicine_key_given", [assembled, dv_fact(campaign_ref("case.logistics", "medicine_key_holder"), "mora"), dv_fact(campaign_ref("case.logistics", "r07_skin_test"), true), dv_fact(campaign_ref("case.logistics", "three_old_scars"), true)], "致歉并交接药柜钥匙", "是我误会了。药柜钥匙交给你，我们把抗侵蚀剂配出来。"))
+    rt_push(rows, c2i_row("mora", "mora.c2.safety.prepare", "white_tower_safe", safety, "case.logistics", "medicine_materials_checked", [assembled, dv_fact(campaign_ref("case.logistics", "medicine_key_given"), true), dv_fact(campaign_ref("case.logistics", "medicine_key_holder"), "veronica"), dv_fact(campaign_ref("case.logistics", "medicine_restricted"), false)], "共同核对配药材料与用量", "茉拉与维罗妮卡打开药柜，按R-07自体皮试记录逐项核对现有材料、用量和耐受标定。"))
+    rt_push(rows, c2i_row("veronica", "veronica.c2.safety.mix", "white_tower_safe", safety, "case.logistics", "anti_erosion_mixed", [assembled, dv_fact(campaign_ref("case.logistics", "medicine_key_given"), true), dv_fact(campaign_ref("case.logistics", "medicine_materials_checked"), true), dv_fact(campaign_ref("case.logistics", "medicine_key_holder"), "veronica"), dv_fact(campaign_ref("case.logistics", "medicine_restricted"), false)], "配制抗侵蚀剂", "依皮试记录核对材料与用量，配成抗侵蚀剂，贴妥标签。"))
     rt_push(rows, c2i_row("moran", "moran.c2.sketch.day", "outdoor_high", campaign_window(3, 720, 1020), campaign_body("moran"), "day_sketch_exposed", [dv_fact(campaign_ref("c2.weather", "daylight"), true)], "前往高地写生", "在高地对着光写生，返程前察觉灰尘刺激，身体发热。"))
     return rows
 
@@ -2141,6 +2142,9 @@ axiom c2i_contact_law(row):
         rt_push(effects, dv_assign(campaign_own(row.actor, "support_active"), true))
     if row.field == "key_returned":
         rt_push(effects, dv_assign(campaign_ref("case.contract", "cabinet_key_holder"), "quer"))
+    if row.field == "medicine_key_given":
+        rt_push(effects, dv_assign(campaign_ref("case.logistics", "medicine_key_holder"), "veronica"))
+        rt_push(effects, dv_assign(campaign_ref("case.logistics", "medicine_restricted"), false))
     if row.field == "day_sketch_exposed":
         rt_push(effects, dv_assign(campaign_own("moran", "fever"), true))
         rt_push(effects, dv_increment(campaign_own("moran", "erosion_exposure"), 1))
@@ -2159,6 +2163,8 @@ fn c2i_world_objects(world):
             result = dv_store(result, campaign_ref("case.contract", "cabinet_key_holder"), dv_field("ward"))
         else:
             result = dv_store(result, campaign_ref("case.contract", "cabinet_key_holder"), dv_unknown())
+    if not dv_read(result, campaign_ref("case.logistics", "medicine_key_holder")).known:
+        result = dv_store(result, campaign_ref("case.logistics", "medicine_key_holder"), dv_field("mora"))
     let rows = c2i_rows()
     i = 0
     while i < rt_count(rows):
@@ -2202,6 +2208,11 @@ fn c2i_actions(actor):
             if row.field == "key_returned":
                 rt_push(grants, campaign_ref("case.contract", "cabinet_key_holder"))
                 rt_push(visible_grants, campaign_ref("case.contract", "cabinet_key_holder"))
+            if row.field == "medicine_key_given":
+                rt_push(grants, campaign_ref("case.logistics", "medicine_key_holder"))
+                rt_push(grants, campaign_ref("case.logistics", "medicine_restricted"))
+                rt_push(visible_grants, campaign_ref("case.logistics", "medicine_key_holder"))
+                rt_push(visible_grants, campaign_ref("case.logistics", "medicine_restricted"))
             if row.field == "day_sketch_exposed":
                 rt_push(grants, campaign_own("moran", "fever"))
                 rt_push(grants, campaign_own("moran", "erosion_exposure"))
@@ -2216,7 +2227,7 @@ fn c2i_actions(actor):
             rt_push(result, action)
         i = i + 1
     // Evidence becomes available to another actor through an actual local inspection.
-    let places = [{"object": "case.contract", "room": "document_workshop", "fields": ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]}, {"object": "case.astral", "room": "resonance_hall", "fields": ["ladder_lowered", "copper_filings", "seven_step_scuffs", "palm_print"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["vent_pressure_formula", "moran_reassured", "complete_draft", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["r07_skin_test", "three_old_scars", "medicine_key_given", "anti_erosion_mixed"]}, {"object": "c2.granary", "room": "logistics", "fields": ["wedge_set", "lift_mm", "double_bolts", "reserve_added"]}]
+    let places = [{"object": "case.contract", "room": "document_workshop", "fields": ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]}, {"object": "case.astral", "room": "resonance_hall", "fields": ["ladder_lowered", "copper_filings", "seven_step_scuffs", "palm_print"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["vent_pressure_formula", "moran_reassured", "complete_draft", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["r07_skin_test", "three_old_scars", "medicine_key_given", "medicine_materials_checked", "medicine_key_holder", "medicine_restricted", "anti_erosion_mixed"]}, {"object": "c2.granary", "room": "logistics", "fields": ["wedge_set", "lift_mm", "double_bolts", "reserve_added"]}]
     i = 0
     while i < rt_count(places):
         let place = places[i]
@@ -2307,7 +2318,7 @@ fn c2i_goals(actor):
         rt_push(goals, campaign_goal(campaign_at("moran", "outdoor_alley"), dv_fact(campaign_ref("case.astral", "evening_choice"), "go"), [campaign_approved("execute-actual-personal-sketch-choice")]))
         rt_push(goals, campaign_goal(dv_fact(campaign_ref("case.astral", "evening_choice"), "go"), c2_night(4), [campaign_approved("evening-research-opportunity-not-compulsory-outcome")]))
         rt_push(goals, campaign_goal(campaign_at("moran", "clinic"), dv_fact(campaign_own("moran", "fever"), true), [campaign_approved("actual-discomfort-motivates-return-to-care")]))
-    let evidence_places = [{"object": "case.contract", "room": "document_workshop", "fields": ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]}, {"object": "case.astral", "room": "resonance_hall", "fields": ["ladder_lowered", "copper_filings", "seven_step_scuffs", "palm_print"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["vent_pressure_formula", "moran_reassured", "complete_draft", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["r07_skin_test", "three_old_scars", "medicine_key_given", "anti_erosion_mixed"]}]
+    let evidence_places = [{"object": "case.contract", "room": "document_workshop", "fields": ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]}, {"object": "case.astral", "room": "resonance_hall", "fields": ["ladder_lowered", "copper_filings", "seven_step_scuffs", "palm_print"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["vent_pressure_formula", "moran_reassured", "complete_draft", "gesture_identified", "rescue_intention_explained", "abandoned_child_misunderstanding_resolved"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["r07_skin_test", "three_old_scars", "medicine_key_given", "medicine_materials_checked", "medicine_key_holder", "medicine_restricted", "anti_erosion_mixed"]}]
     var place_index = 0
     while place_index < rt_count(evidence_places):
         let place = evidence_places[place_index]
@@ -2639,6 +2650,15 @@ fn c2_work_purpose(field):
     if field == "day_sketch_exposed":
         叙述：
             自行判断写生机会，记录实际观察与身体感受。
+    if field == "r07_skin_test":
+        叙述：
+            打开日志抽屉，实际取出记录。
+    if field == "three_old_scars":
+        叙述：
+            出示本人旧疤，与已经取出的记录现场核对。
+    if field == "medicine_materials_checked" or field == "anti_erosion_mixed":
+        叙述：
+            在药柜准许取用后，与协作者实际核对材料和配制药剂。
     if field == "key_returned":
         叙述：
             核对代管依据与现场记录，办理钥匙交接。
@@ -3109,6 +3129,7 @@ fn c2m_rows_build():
     rt_push(rows, c2m_row("ward", "hide-inventory", "document_workshop", contract, "inventory_hidden", [campaign_window(2, 700, 800), dv_fact(campaign_ref(contract, "joined_inventory"), false), dv_fact(campaign_ref(contract, "emergency_inventory_majority"), false)], [dv_assign(campaign_ref(contract, "blue_ink"), true)], "将清册收入铁匣", "把清册收进铁匣，手边的蓝墨蹭在匣口；我想先保住自己的处置权。", ["ward_authority", "pursue_desire"], ["evidence", "understand_cost"], true))
     rt_push(rows, c2m_row("lucian", "obstruct-resonance", "quiet_room", astral, "pipe_blocked", [campaign_window(2, 820, 940), dv_fact(campaign_ref(astral, "vent_pressure_formula"), false)], [dv_assign(campaign_ref(astral, "formula_partial"), true)], "堵住传声管并擦去算式", "堵住传声管，擦去压差式的一部分；这次共鸣的解释权，我想留在自己手里。", ["resonance_exclusivity", "pursue_desire"], ["evidence", "understand_cost"], true))
     rt_push(rows, c2m_row("moran", "hide-draft", "quiet_room", astral, "draft_hidden", [campaign_window(3, 480, 560), dv_fact(campaign_ref(astral, "complete_draft"), false)], [dv_assign(campaign_ref(astral, "misleading_sketch"), true)], "藏起底稿并替换草图", "把底稿藏进画夹暗层，换上一张容易误读的草图；我怕他们据此把我隔离。", ["avoid_isolation", "pursue_desire"], ["evidence", "understand_cost"], true))
+    rt_push(rows, c2m_row("mora", "restrict-medicine", "white_tower_safe", logistics, "medicine_restricted", [campaign_window(2, 480, 840), dv_fact(campaign_ref(logistics, "medicine_key_given"), false), dv_fact(campaign_ref(logistics, "r07_skin_test"), false)], [], "因旧试药判断保管药柜钥匙", "我仍认为先前那次取药是未经医嘱的激进试验。记录没有核清前，药柜钥匙由我保管，暂不让维罗妮卡独自取用；有实物依据，我会重新核对。", ["patient_priority", "evidence"], ["research"], false))
     rt_push(rows, c2m_row("veronica", "etch-drawer", "white_tower_safe", logistics, "drawer_etched", [campaign_window(2, 700, 800), dv_fact(campaign_ref(logistics, "r07_skin_test"), false)], [dv_assign(campaign_ref(logistics, "r07_label_changed"), true)], "酸蚀日志抽屉并更换标签", "用酸蚀住日志抽屉，换去R-07标签；我不想让这份记录先变成伦理审查的罪证。", ["avoid_ethics_review", "pursue_desire"], ["records", "evidence", "understand_cost"], true))
     rt_push(rows, c2m_row("ruan", "leave-latch", "logistics", ledger, "audit_gap_created", [campaign_window(3, 1080, 1260), dv_fact(campaign_ref("c2.granary", "total_store_locked"), true)], [dv_assign(campaign_ref(ledger, "ration_latch_unfastened"), true), dv_assign(campaign_ref(ledger, "verification_ink"), true), dv_assign(campaign_ref(ledger, "drawer_contact_since_mark"), false)], "留下配给屉暗扣与校验墨点", "主仓还没开。我故意留下配给屉暗扣和校验墨点，想用一次可追查的缺口迫使大家认真对账。", ["controlled_audit", "records", "pursue_desire"], ["safety", "understand_cost"], true))
     let inspected = dv_all([dv_fact(campaign_ref(contract, "blue_ink"), true), dv_fact(campaign_ref(contract, "cabinet_key_holder"), "ward"), dv_fact(campaign_ref(contract, "lock_no_pry"), true)])
@@ -3126,7 +3147,7 @@ fn c2m_rows_build():
     return rows
 
 fn c2m_fields():
-    return [{"object": "case.contract", "room": "living_hall", "fields": ["blackboard_poem"]}, {"object": "case.contract", "room": "resonance_hall", "fields": ["seal_in_piano"]}, {"object": "case.contract", "room": "logistics", "fields": ["seal_in_cistern", "daotuoxue_trap"]}, {"object": "case.contract", "room": "document_workshop", "fields": ["inventory_hidden", "inventory_recovered", "blue_ink", "lock_no_pry", "cabinet_key_holder", "joined_inventory", "emergency_inventory_majority", "seal_lost", "ward_accusing"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["pipe_blocked", "formula_partial", "pipe_cleared", "draft_hidden", "misleading_sketch", "draft_recovered", "moran_reassured", "vent_pressure_formula", "complete_draft"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["drawer_etched", "r07_label_changed", "drawer_neutralized", "r07_skin_test"]}, {"object": "c2.ledger", "room": "logistics", "fields": ["audit_gap_created", "ration_latch_unfastened", "verification_ink", "ink_disturbed", "counted", "reserve_received", "day_recorded", "night_recorded", "pending_registered"]}]
+    return [{"object": "case.contract", "room": "living_hall", "fields": ["blackboard_poem"]}, {"object": "case.contract", "room": "resonance_hall", "fields": ["seal_in_piano"]}, {"object": "case.contract", "room": "logistics", "fields": ["seal_in_cistern", "daotuoxue_trap"]}, {"object": "case.contract", "room": "document_workshop", "fields": ["inventory_hidden", "inventory_recovered", "blue_ink", "lock_no_pry", "cabinet_key_holder", "joined_inventory", "emergency_inventory_majority", "seal_lost", "ward_accusing"]}, {"object": "case.astral", "room": "quiet_room", "fields": ["pipe_blocked", "formula_partial", "pipe_cleared", "draft_hidden", "misleading_sketch", "draft_recovered", "moran_reassured", "vent_pressure_formula", "complete_draft"]}, {"object": "case.logistics", "room": "white_tower_safe", "fields": ["drawer_etched", "r07_label_changed", "drawer_neutralized", "r07_skin_test", "medicine_restricted"]}, {"object": "c2.ledger", "room": "logistics", "fields": ["audit_gap_created", "ration_latch_unfastened", "verification_ink", "ink_disturbed", "counted", "reserve_received", "day_recorded", "night_recorded", "pending_registered"]}]
 
 fn c2m_initialize(world):
     var result = world
