@@ -239,7 +239,9 @@ internal sealed class Cli
         }
         oneCommand = command is not null;
         displayViewer = viewer;
-        followReplayActor = replayPath is null || !explicitViewer;
+        // Explicit observers stay fixed, and human/model controllers only see their player.
+        // Following each autonomous actor is an opt-in/default AI inspection behavior.
+        followReplayActor = !explicitViewer && (replayPath is not null || controller == "ai");
         if (replayPath is not null)
         {
             replay = SmartReplay.Load(replayPath, cancellation.Token);

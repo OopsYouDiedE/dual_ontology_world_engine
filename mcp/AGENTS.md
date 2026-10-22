@@ -47,3 +47,17 @@ evidence-index 的二进制读取可使用游标解码及精确固定形状节�
 统一FLAGS含taskgraph/storyflow/stateindex三项，taskgraph默认off、其余默认on，并参与全关/独立消融。run_debug明确设置DV_OPT_STATEINDEX并留证，65核对实际环境与配置。compiled-program v2运行时捕获合同同时要求runtimespeed/stateindex；新增开关不能静默忽略。策略近似与内容重写边界见../docs/cli-optimization.md。
 
 矩阵validation显式关闭taskgraph，独立消融相对生产默认翻转开关；ablation-taskgraph为显式on实验，须有opt_taskgraph=false的完整S1锚点，不能复用旧默认on锚点冒充同条件对照。
+
+## 2026-10-23 本轮真实 CLI 并行验收合同
+
+本轮最新用户指令优先于上文历史采集约束：全部正式案例通过真实 CLI 运行；JPG 必须来自实际控制台窗口的原生像素截图，不使用 SVG、离线画布或文字重绘冒充终端截图。本轮没有历史 45 秒运行上限；各独立案例按实际授权自然并行，不为调度刻意错开。等待正常输入提示属于命令同步，不表示剧情完成。
+
+`verification/cli_window.py` 以显式 `conhost.exe -ForceNoHandoff --` 启动每例独立控制台、进程、存档和输出目录；不修改系统默认终端。会话使用 120×42 的真实 viewport。后续输入由独立 helper 按 PID AttachConsole、打开 CONIN$ 并发送 WriteConsoleInputW 键盘事件；不使用共享焦点、全局 SendKeys、状态注入或调试入口。窗口 JPG 由 PrintWindow 获取；玩家可见正文由 CONOUT$/ReadConsoleOutputW 原样读取，二者均保留。
+
+公开 `cli-window` 路由将 arguments 的首项作为子命令：`start`、`command`、`capture`、`autonext` 或 `stop`。start 显式提供 --repo、--session、--source-revision、--stage ai|player、--controller、--profile、--zone、--viewer。command 提供 --session、--command-id 和单行 --text；capture 仅取证，可用 --wait-ready 等待已有输入返回正常 dv> 提示。autonext 仅在 stage=ai 的实例运行，显式提供 --run-id 与 --count，每步只发送 next，绝不代选路线或答案。stop 通过正常 quit 封存，保留退出后的实际窗口截图后再释放窗口。
+
+阶段一由内置 AI 自主决策，工具只请求 next。阶段二的盲玩家只依据正常 CLI 可见正文与规则作出输入；不读设计文件、源码内部状态或隐藏结局选择行动；工具只执行 Agent 已选择的正常输入，不另行替玩家作 AI 决策。不同案例不共享进程、stdin、焦点、存档或证据写者。
+
+每次输入前后均保存真实 JPG、实际 stdin、玩家可见 viewport、PID/HWND、现实时间、source_revision 与程序集 SHA-256。每个操作使用单独 RecordWriter 创建的 DVLOG2 文件；不通过重新打开已有 xb 记录器追加。JSON 只保存工程会话清单、路由和进程元数据，不作为新剧情证据。真实事件编号与完成判断由 `verification/audit_cli_evidence.py` 只读核对封存后的原始 CLI trace，不从截图猜测或补造事件编号。
+
+command-id 在同实例内至多投递一次。输入投递异常或等待新 dv> 超时后，保留 partial、pending 与原进程；不重新发送原输入，也不另开替代案例掩盖失败。先使用 capture 等待并记录该在途输入的实际结果，再决定下一条正常输入。每例自身独占锁阻止该实例发生两个并发写入；不同实例不共用此锁。quit 封存超时不自动强杀，也不重复投递 quit。
