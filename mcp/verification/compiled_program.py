@@ -101,22 +101,27 @@ def capture(program, hashes, instrumented, normalized, compiler_id, entry_kind='
     return verify(program, value, hashes, instrumented, normalized, compiler_id, entry_kind)
 
 
-def _copy_verified(source, target, hashes, instrumented, normalized, compiler_id):
+def _copy_verified(source, target, hashes, instrumented, normalized, compiler_id,
+                   entry_kind='fresh-debug', manifest_name='compiled-program.json'):
     source, target = Path(source).resolve(), Path(target).resolve()
     if source == target or source.is_relative_to(target) or target.is_relative_to(source):
         raise ValueError('Reusable source and destination overlap')
-    compiled = json.loads((source.parent / 'compiled-program.json').read_text(encoding='utf-8'))
-    verify(source, compiled, hashes, instrumented, normalized, compiler_id)
+    if manifest_name not in ('compiled-program.json', 'compiled-causal-program.json'):
+        raise ValueError('Unknown reusable program manifest name')
+    compiled = json.loads((source.parent / manifest_name).read_text(encoding='utf-8'))
+    verify(source, compiled, hashes, instrumented, normalized, compiler_id, entry_kind)
     for relative in (*compiled['program_sources'], *compiled['binaries']):
         destination = checked_path(target, relative)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(checked_path(source, relative), destination)
     # Verify copied bytes, complete sets and instrumentation again. A source
     # mutation between initial verification and copying cannot be re-certified.
-    verify(target, compiled, hashes, instrumented, normalized, compiler_id)
+    verify(target, compiled, hashes, instrumented, normalized, compiler_id, entry_kind)
     return compiled
 
 
-def copy_verified(source, target, hashes, instrumented, normalized, compiler_id):
+def copy_verified(source, target, hashes, instrumented, normalized, compiler_id,
+                  entry_kind='fresh-debug', manifest_name='compiled-program.json'):
     with case_guard(source):
-        return _copy_verified(source, target, hashes, instrumented, normalized, compiler_id)
+        return _copy_verified(source, target, hashes, instrumented, normalized, compiler_id,
+                              entry_kind, manifest_name)

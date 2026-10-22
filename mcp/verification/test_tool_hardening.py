@@ -232,7 +232,7 @@ class FiniteTools(unittest.TestCase):
 
     def test_matrix_windows_and_baseline_policy(self):
         options = matrix.production_options('baseline')
-        self.assertEqual(len([x for x in options if x.startswith('--opt-')]), 20)
+        self.assertEqual(len([x for x in options if x.startswith('--opt-')]), len(lifecycle.FLAGS + lifecycle.TOOL_FLAGS))
         self.assertIn('--opt-replaycache', options)
         self.assertIn('--opt-runtimespeed', options)
         self.assertEqual(options[:2], ['--selective-planning', 'on'])
