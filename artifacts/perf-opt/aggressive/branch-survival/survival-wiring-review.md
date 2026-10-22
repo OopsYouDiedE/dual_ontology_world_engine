@@ -20,6 +20,35 @@
 
 20新增dv_held_for(ref,value,clock,duration)，读取正式字段的最后写入时间及显式时钟，未知或冲突保持unknown。同值重新写入、心智重新观察会保守重启计龄。30依赖枚举保留目标与时钟。无世界的声明时间分析保守；环境仅把当前已记录字段时间物化为时钟阈值，防止无条件逐分钟轮询，并保持同一正式法则求值。
 
-中性夹具dv_core/checks/fixtures/duration-predicate.dv导入20/30，不启动会话/AI，检查时长端点、同值重写的保守计龄、不同值、目标/时钟未知、冲突、静态/现场边界及正式法则提交。同时覆盖dirty真值的时钟变化失效、环境目标/时钟依赖、动态时界与参考扫描一致。通过现役build_session生成后dotnet build成功、执行exit0；没有游戏行为或伤亡验收含义。最终正式300秒会话仍待本候选冻结及同源两profile执行；因果工具将用causal-timeout1，超时不称通过。
+中性夹具dv_core/checks/fixtures/duration-predicate.dv导入20/30，不启动会话/AI，检查时长端点、同值重写的保守计龄、不同值、目标/时钟未知、冲突、静态/现场边界及正式法则提交。同时覆盖dirty真值的时钟变化失效、环境目标/时钟依赖、动态时界与参考扫描一致。通过现役build_session生成后dotnet build成功、执行exit0；没有游戏行为或伤亡验收含义。正式会话与后续缓存签名修补分别记录如下；因果工具用causal-timeout1，超时不称通过。
 
-整合main 6ce6d133与策略S4 6594a137后，首次Standard进入第二章时发现新dirty refs未登记held_for，实际崩溃，未作为游戏验收成功。现已补齐dirty refs；静态时界缓存保留aged叶子，动态时界从当前字段时间求值，参考扫描同步口径，不用生产全扫兜底。新正式会话必须替换此次失败输出。
+整合main 6ce6d133与策略S4 6594a137后，首次Standard进入第二章时发现新dirty refs未登记held_for，实际崩溃，未作为游戏验收成功。现已补齐dirty refs；静态时界缓存保留aged叶子，动态时界从当前字段时间求值，参考扫描同步口径，不用生产全扫兜底。此次失败输出已清理，并以如下当前两局替换；没有复制旧失败证据。
+
+## 当前同源正式会话（冻结73abc65d）
+
+已整合main 6ce6d133和本人策略S4 6594a137（本树060251ba），两局串行运行，timeout=300、causal-timeout=1、plan-depth=3。两份source-hashes.json逐项相等，文件SHA-256为7d8c2becd0331051a1a7add5af683377ed53b187fa17a88a99f50fde45568c69。两局exit_code=0、build_source_consistent/source_unchanged/raw_sealing_complete/evidence_complete=true，无未投影原始事件尾部。Standard正式执行188.672秒，Foolish208.078秒；这是各局现实执行时间，不作为性能改善比较。因果工具均1秒超时，causal_check_complete=false、main_causal_supported=false，未完成全因果工具审查。
+
+|实际节点|游戏时刻|Standard事件 / 实测现实秒|Foolish事件 / 实测现实秒|
+|---|---|---|---|
+|苏泠进入严重虚弱|第4日00:00|e30553 / 136.5730702|e30120 / 148.9222151|
+|苏泠运动功能障碍与重伤史正式提交|第4日12:00|e32770 / 156.4153644|e32626 / 166.1504377|
+|教师实际介绍色层|第4日20:32|e34877 / 166.8902025|e35067 / 188.4693120|
+|莫兰实际核对身边监督|第4日21:01|e35144 / 168.1368821|e35409 / 190.0756255|
+|莫兰选择安全处等待|第4日21:03|e35266 / 169.6690292|e35552 / 190.6914442|
+|侦探实际章末检视|第5日09:31|e38612 / 188.1054653|e38757 / 207.3532773|
+
+独立读取两份原始DAG的e32770/e32626（不只看投影）确认execution.status=applied，motor_impairment和serious_injury均由false变true，time=5040，casualty_occurred同时由false变true；终态Su alive=true。没有其他重伤病程事件，所有16人dead/in_coma/stone_stupor均false；莫兰只有白日实际暴露+1。debug_end旧injury_facts未枚举新serious_injury字段，不能仅据其表格说没有重伤，也不能把普通fever计作重伤。两局均出现1例新定义的严重运动功能障碍病例；Standard在本轮正式DV逻辑下靠拢“一人重伤”，Foolish“两人实际死亡”明确未达成。
+
+两局都在成功观察章末后停止于6331，并非7200时域终点；不能因此宣告公约成功或所有调查完成。当前没有go、夹道夜间写生、寻找、扶起/搬运或实际给抗侵蚀药的执行回执。因此真实危险救助链仍未验收，新的急性呼吸衰竭/死亡路径没有在正式会话中被触发，不能用中性夹具代替该行为证明。
+
+明确剩余断点：莫兰取得真实发言、亲自检视watched=false后，两局仍选择moran.c2.sketch.evening.stay.unsafe；该既有选项额外promotes measured_work，可能在个人价值比较中压过go。两局未执行detective.c2.color.encourage、color-advice、guard系列动作。修改身体结算不能弥补此前没有发生的危险行动；后续应审查实际信息/动机与守望或诱导的差异，而非预置伤亡。新搜索只允许真实听到外出意图后追查，其后接触/搬运/救治均尚未执行。
+
+范围限制：正式跨地点移动资格受motor_impairment约束；没有Godot画面、房内WASD、碰撞或临床显示验收，也未实测苏泠在发病后尝试移动的回执。对严重病程的自我察觉与他人现场显示仍应另查，不能以作者字段代替玩家可见体验。
+
+## 正式会话之后的有限接口修补
+
+主代理独立审查指出infer签名原先剥除了held_for目标的time，并漏读clock。本轮两局病程法则是enforce，仍按上述冻结73abc65d的原始哈希报告；不能将两局冒充之后补丁的完整验收。
+
+最终补丁让held_for推理签名保留目标及显式时钟的完整单元格，普通值前提仍维持原签名策略；构造器实际拒绝负数或非数值duration。扩展中性夹具实际验证：只变时钟即改变持续值infer签名，只变目标最后写入时间也改变签名，而普通equals只变无关time仍复用原签名。连同既有dirty输入/动态时界/参考检查，通过现役生成器、dotnet build与执行exit0；没有启动新AI或会话。最终该接口补丁没有再跑完整两profile，急性结算与完整游戏验收仍未覆盖。
+
+当前原始DAG、事件索引、全文stdout、stderr与result.dvlog保留于固定Standard/Foolish子目录；大raw与生成程序不提交。本任务没有一次性scratch脚本遗留。

@@ -79,6 +79,10 @@ fn dvs_reason_value(cell):
 
 fn dvs_reason_premises(mind, proposition):
     var op = proposition.op
+    if op == "held_for":
+        // Duration depends on both the value's last write and the explicit
+        // clock. Ordinary value-only inference signatures still omit time.
+        return {"proposition": proposition, "support": dv_read(mind, proposition.ref), "clock": dv_read(mind, proposition.clock)}
     if (op == "constant"):
         return proposition
     else:

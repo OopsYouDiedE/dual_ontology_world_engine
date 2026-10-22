@@ -628,7 +628,9 @@ fn dv_truth_uncached(world, proposition):
 
 // A successful assignment starts the interval; a later different value ends it.
 // Perceptions conservatively use their own recorded observation time.
-dv_held_for(ref, value, clock, duration) = {"op": "held_for", "ref": ref, "value": value, "clock": clock, "duration": duration}
+fn dv_held_for(ref, value, clock, duration):
+    dv_require(rt_is_numeric_value(duration) and 0 <= duration, "Held-for duration must be nonnegative")
+    return {"op": "held_for", "ref": ref, "value": value, "clock": clock, "duration": duration}
 
 dv_assign(ref, value) = {"op": "assign", "ref": ref, "value": value}
 
