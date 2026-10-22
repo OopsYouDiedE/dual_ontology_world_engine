@@ -79,6 +79,10 @@ fn dvs_reason_value(cell):
 
 fn dvs_reason_premises(mind, proposition):
     var op = proposition.op
+    if op == "held_for":
+        // Duration depends on both the value's last write and the explicit
+        // clock. Ordinary value-only inference signatures still omit time.
+        return {"proposition": proposition, "support": dv_read(mind, proposition.ref), "clock": dv_read(mind, proposition.clock)}
     if (op == "constant"):
         return proposition
     else:
@@ -140,6 +144,10 @@ fn dvs_dirty_refs(condition):
         return cached[1]
     let op = condition.op
     var refs = []
+    if op == "held_for":
+        let declared = dv_condition_inputs(condition)
+        dv_require(declared.complete, "Invalid held-for dependency declaration")
+        return rt_memo_put(condition, ["dirty-declaration-refs-v1"], declared.reads)
     if op == "equals" or op == "at_least":
         rt_push(refs, condition.ref)
     else:
@@ -1991,6 +1999,8 @@ fn dvp_unmet_refs(mind, proposition, include_known):
                 return result
             else:
                 if dv_or(include_known, (not (dv_truth(mind, proposition) == "true"))):
+                    if op == "held_for":
+                        return [proposition.ref, proposition.clock]
                     return dv_single(proposition.ref)
                 else:
                     return []
@@ -2430,6 +2440,36 @@ fn dvp_context_communication(action, goals):
         i = i + 1
     return value
 
+// A personal choice is not automatically progress: use the owner's declared
+// ordinal values, including a sacrifice before a lower-ranked benefit. This is
+// motivation for choosing an action, never an execution or answer prohibition.
+fn dvp_personal_motivation(actor, action):
+    if not dv_has_key(action, "personal_choice"):
+        return 0
+    if not dv_find(actor.policy, "value_sensitive_progress", false):
+        return 1
+    let order = dv_find(actor.policy, "value_order", [])
+    var i = 0
+    while i < rt_count(order):
+        let impact = dvp_personal_impact(action.personal_choice, order[i])
+        if impact != 0:
+            return impact
+        i = i + 1
+    return 0
+
+// Initiative scales only the owner's anticipated informational benefit. Actual
+// observations, legal actions, answers and physical effects remain unchanged.
+fn dvp_inquiry_initiative(actor, action):
+    if dv_find(action, "inquiry_purpose", "") == "practical-access":
+        return 1
+    var initiative = 1
+    if dv_has(["inspect", "experiment", "sound_test"], action.kind):
+        initiative = dv_find(actor.policy, "empirical_initiative", 1)
+    if action.kind == "replay":
+        initiative = dv_find(actor.policy, "counterfactual_initiative", 1)
+    dv_require(0 <= initiative and initiative <= 1, "Inquiry initiative must be between zero and one")
+    return initiative
+
 fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
     var mind = actor.mind
     var policy = actor.policy
@@ -2469,8 +2509,9 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
             information = (information + 1)
     if dvp_context_communication(action, context.communications):
         progress = 1
+    let personal_motivation = dvp_personal_motivation(actor, action)
     if dv_has_key(action, "personal_choice"):
-        progress = 1
+        progress = personal_motivation
     let private_utility = dvp_private_execution_utility(actor, action, mind)
     progress = progress + private_utility
     let owner_utility = dvp_owner_utility(actor, action, mind)
@@ -2508,7 +2549,8 @@ fn dvp_action_value_context(actor, action, bindings, relevant, probes, context):
                         verification = verification + 1
     let achievement_work = dvp_achievement_pending_work(actor, action, context.achievements)
     let achievement = achievement_work.value
-    return {"information": information, "verification": verification, "progress": progress, "private_utility": private_utility, "owner_utility": owner_utility, "achievement": achievement, "forecasts": achievement_work.forecasts, "forecast_reuses": achievement_work.forecast_reuses, "value": (((information + verification) * dv_find(policy, "information_weight", 1)) + ((progress + achievement) * dv_find(policy, "progress_weight", 1)))}
+    let initiative = dvp_inquiry_initiative(actor, action)
+    return {"information": information, "verification": verification, "progress": progress, "personal_motivation": personal_motivation, "inquiry_initiative": initiative, "private_utility": private_utility, "owner_utility": owner_utility, "achievement": achievement, "forecasts": achievement_work.forecasts, "forecast_reuses": achievement_work.forecast_reuses, "value": (((information + verification) * dv_find(policy, "information_weight", 1) * initiative) + ((progress + achievement) * dv_find(policy, "progress_weight", 1)))}
 
 // Access to an already owned communication goal is not its fulfillment.
 // Predict only the subject's adopted effect; never supply a listener or an answer.
@@ -4531,6 +4573,8 @@ fn dvs_pragmatics_reconsider(actor, events, time, parent):
 
 fn dvs_sim_refs(proposition):
     var op = proposition.op
+    if op == "held_for":
+        return [proposition.ref, proposition.clock]
     if dv_or((op == "equals"), (op == "at_least")):
         return dv_single(proposition.ref)
     else:
@@ -8250,13 +8294,17 @@ fn dvs_environment_boundary(condition, clock, now, due):
 // an explicit classification for equality/ambiguous clock identity, matching
 // dv_time_boundary; unknown language operators are errors, not scan fallbacks.
 fn dvs_dirty_clock_plan(condition, clock):
-    let key = ["dirty-clock-plan-v1", clock]
+    let key = ["dirty-clock-plan-v2", clock]
     let cached = rt_memo_get(condition, key)
     if cached[0]:
         return cached[1]
     let op = condition.op
     var minute = false
     var thresholds = []
+    var aged = []
+    if op == "held_for":
+        dv_require(dv_condition_inputs(condition).complete, "Invalid held-for clock declaration")
+        return rt_memo_put(condition, key, {"minute": false, "thresholds": [], "aged": [condition]})
     if op == "constant":
         dv_require(dv_has(["true", "false", "unknown"], condition.value), "Invalid constant clock condition")
     else:
@@ -8264,12 +8312,14 @@ fn dvs_dirty_clock_plan(condition, clock):
             let child = dvs_dirty_clock_plan(condition.item, clock)
             minute = child.minute
             thresholds = child.thresholds
+            aged = child.aged
         else:
             if op == "all":
                 var i = 0
                 while i < rt_count(condition.items):
                     let child = dvs_dirty_clock_plan(condition.items[i], clock)
                     minute = minute or child.minute
+                    aged = dvp_merge_refs(aged, child.aged)
                     var j = 0
                     while j < rt_count(child.thresholds):
                         if not dv_has(thresholds, child.thresholds[j]):
@@ -8289,10 +8339,10 @@ fn dvs_dirty_clock_plan(condition, clock):
                                 rt_push(thresholds, condition.value)
                             else:
                                 minute = true
-    return rt_memo_put(condition, key, {"minute": minute, "thresholds": thresholds})
+    return rt_memo_put(condition, key, {"minute": minute, "thresholds": thresholds, "aged": aged})
 
 fn dvs_dirty_clock_boundary(world, processes, clock, now, due):
-    let key = ["dirty-world-clock-plan-v1", world.adoptions, clock]
+    let key = ["dirty-world-clock-plan-v2", world.adoptions, clock]
     let cached = rt_memo_get(processes, key)
     var plan = false
     if cached[0]:
@@ -8300,19 +8350,21 @@ fn dvs_dirty_clock_boundary(world, processes, clock, now, due):
     else:
         var minute = false
         var thresholds = []
+        var aged = []
         var i = 0
         while i < rt_count(processes):
             let adoption = dv_get(world.adoptions, processes[i].law)
             if adoption.active and adoption.mode == "enforce":
                 let child = dvs_dirty_clock_plan(adoption.law.premise, clock)
                 minute = minute or child.minute
+                aged = dvp_merge_refs(aged, child.aged)
                 var j = 0
                 while j < rt_count(child.thresholds):
                     if not dv_has(thresholds, child.thresholds[j]):
                         rt_push(thresholds, child.thresholds[j])
                     j = j + 1
             i = i + 1
-        plan = rt_memo_put(processes, key, {"minute": minute, "thresholds": thresholds})
+        plan = rt_memo_put(processes, key, {"minute": minute, "thresholds": thresholds, "aged": aged})
     if due < now:
         return due
     var next = due
@@ -8328,6 +8380,11 @@ fn dvs_dirty_clock_boundary(world, processes, clock, now, due):
                 steps = steps + 1
             next = dv_min(next, now + steps)
         i = i + 1
+    i = 0
+    while i < rt_count(plan.aged):
+        let condition = dv_time_materialize(world, plan.aged[i])
+        next = dv_min(next, dv_time_boundary(condition, clock, now, due, "minute").next)
+        i = i + 1
     return next
 
 // Debug-only reference keeps the original scan and its first live-process return.
@@ -8338,7 +8395,7 @@ fn dvs_environment_reference_next_time(world, processes, clock, now, due):
     while i < rt_count(processes):
         let adoption = dv_get(world.adoptions, processes[i].law)
         if adoption.active and adoption.mode == "enforce":
-            next = dv_min(next, dvs_environment_boundary(adoption.law.premise, clock, now, due))
+            next = dv_min(next, dvs_environment_boundary(dv_time_materialize(world, adoption.law.premise), clock, now, due))
             if dv_truth_uncached(world, adoption.law.premise) == "true":
                 let staged = dv_stage(world, adoption.law.effects, now, adoption.basis, adoption.confidence)
                 var j = 0
@@ -8385,7 +8442,7 @@ fn dvs_environment_next_time(world, story, due):
         let adoption = dv_get(world.adoptions, processes[i].law)
         if adoption.active and adoption.mode == "enforce":
             if not dirty:
-                next = dv_min(next, dvs_environment_boundary(adoption.law.premise, clock, now, due))
+                next = dv_min(next, dvs_environment_boundary(dv_time_materialize(world, adoption.law.premise), clock, now, due))
             if dv_truth(world, adoption.law.premise) == "true":
                 let staged = dv_stage(world, adoption.law.effects, now, adoption.basis, adoption.confidence)
                 var j = 0

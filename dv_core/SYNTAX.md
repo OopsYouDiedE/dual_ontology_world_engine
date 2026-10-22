@@ -710,3 +710,9 @@ fn revised(record) = dv_with_many(record, {"enabled": true, "weight": 2})
 source 运行时须为 List，guard 须为 Bool。元素静态类型保留 Value；具名函数调用、名义范围、不可变 let 与未绑定名称的检查继续执行。此实现不提供闭包、惰性迭代、多个并列 for、通用泛型或目标无关 IR。
 
 映射与过滤用推导式组合。当前没有 map/filter/any/all 高阶函数；`rt_count([for x in xs if predicate(x): x]) > 0` 与 `rt_count([for x in xs if not predicate(x): x]) == 0` 可表达有限集合的存在/全称判断，但会完整遍历并分配结果；需要短路时仍使用 while。记录更新继续调用 dv_with_many；未增加 `{...record}` 语法。新简写不自动改写业务源码，也不构成代码体积或运行速度结论。
+
+### 持续值前提（2026-10-23）
+
+`dv_held_for(ref, value, clock, duration)` 构造 `held_for` 前提，读取目标字段与显式时钟。目标未知或冲突时保持 unknown；值不同为 false，值相同时以最后实际写入该字段的时间加 duration 与已知时钟比较。重复同值写入或心智重新观察会保守重启计龄，不把观察时间当作此前未知病程的起点证明。duration 须为非负数，构造器实际核对；clock须与字段记录时间使用同一单位和时间原点，不能把普通累积量当作时钟。
+
+持续值前提与 equals/at_least 使用同一 `dv_truth`、采纳及原子效果提交。依赖枚举同时保留目标和时钟；纯声明时间分析保守返回未完整分析，实际环境队列可用 `dv_time_materialize` 将已记录的字段时间变为普通时钟阈值，仍在非时钟输入变化后重新分析。它不产生字段、不推定未来执行。

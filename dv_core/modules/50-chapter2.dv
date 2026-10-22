@@ -116,7 +116,9 @@ fn c2_object(id, room, fields):
     return dv_with(campaign_state_object(id, state), "location", room)
 
 fn c2_initial_body(actor):
-    var fields = {"alive": dv_field(true), "dead": dv_field(false), "stone_stupor": dv_field(false), "exiled": dv_field(false), "rations": dv_field(0), "consumed": dv_field(0), "hungry": dv_field(false), "owe_notes": dv_field(0), "pending_notes": dv_field(0), "busy_care": dv_field(false), "station": dv_field(""), "guard_commitment": dv_field(false), "guard_response_ready": dv_unknown(), "repair_requested": dv_field(false), "watched": dv_field(false), "night_taken": dv_field(false), "exposure_terminal": dv_unknown(), "reason_committed": dv_field(false), "norm_conflict_driven": dv_field(false), "fever": dv_unknown(), "day_sketch_exposed": dv_field(false), "evening_sketch_exposed": dv_field(false), "evening_sketch_completed": dv_field(false), "anti_erosion_treated": dv_field(false), "anti_erosion_carried": dv_field(false), "erosion_exposure": dv_field(0), "restriction_withdrawn": dv_field(false), "guard_active": dv_field(false), "support_active": dv_field(false), "in_coma": dv_field(false), "sketch_lured": dv_field(false), "rescue_exposed": dv_field(false), "seal_present": dv_field(actor == "ward"), "carrying": dv_field(""), "carried_by": dv_field("")}
+    var fields = {"alive": dv_field(true), "dead": dv_field(false), "stone_stupor": dv_field(false), "exiled": dv_field(false), "rations": dv_field(0), "consumed": dv_field(0), "hungry": dv_field(false), "owe_notes": dv_field(0), "pending_notes": dv_field(0), "busy_care": dv_field(false), "station": dv_field(""), "guard_commitment": dv_field(false), "guard_response_ready": dv_unknown(), "repair_requested": dv_field(false), "watched": dv_field(false), "night_taken": dv_field(false), "exposure_terminal": dv_unknown(), "reason_committed": dv_field(false), "norm_conflict_driven": dv_field(false), "fever": dv_unknown(), "day_sketch_exposed": dv_field(false), "evening_sketch_exposed": dv_field(false), "evening_sketch_completed": dv_field(false), "anti_erosion_treated": dv_field(false), "active_erosion_disease": dv_field(actor == "su"), "severe_weakness": dv_field(false), "motor_impairment": dv_field(false), "serious_injury": dv_field(false), "respiratory_failure": dv_field(false), "anti_erosion_carried": dv_field(false), "erosion_exposure": dv_field(0), "restriction_withdrawn": dv_field(false), "guard_active": dv_field(false), "support_active": dv_field(false), "in_coma": dv_field(false), "sketch_lured": dv_field(false), "rescue_exposed": dv_field(false), "seal_present": dv_field(actor == "ward"), "carrying": dv_field(""), "carried_by": dv_field("")}
+    if actor == "su":
+        fields = dv_with(fields, "active_erosion_disease", dv_with(dv_field(true), "basis", [campaign_approved("user:2026-10-22-confirmed-preexisting-su-erosion-disease")]))
     if dv_has(["ward", "lucian", "moran", "veronica", "ruan"], actor):
         fields = dv_with(fields, "private_motive", dv_with(dv_field(true), "basis", [campaign_approved("user:2026-10-18-personal-active-motives")]))
     let work = c2_work_specs()
@@ -234,6 +236,8 @@ axiom c2_move_law(actor, origin, target, gate):
         if (origin == dorm and target == threshold) or (origin == threshold and target == dorm):
             rt_push(conditions, dv_fact(campaign_ref(rt_cat("case.", groups[i]), "outer_latch_released"), true))
         i = i + 1
+    if actor != "demon":
+        rt_push(conditions, dv_fact(campaign_own(actor, "motor_impairment"), false))
     var effects = [dv_assign(campaign_position_ref(actor), target)]
     if origin == "logistics" and dv_has(["margaret", "huo"], actor):
         rt_push(effects, dv_assign(campaign_own(actor, "support_active"), false))
@@ -888,17 +892,33 @@ fn c2_carry_moran_action(origin, target, gate):
     let grants = [campaign_position_ref("bertrand"), campaign_position_ref("moran"), campaign_own("bertrand", "carrying"), campaign_own("moran", "carried_by")]
     return dv_with_many(campaign_surface_action(id, "move", law.premise, law.premise, id, grants, rt_cat("搬运伤者前往", c2_place_label(target)), dvs_surface_parts(["扶住昏迷的莫兰，从", c2_place_label(origin), "逐段搬至", c2_place_label(target), "。"]), campaign_approved("actual-contact-and-segmented-rescue")), {"repeatable": true, "travel": {"from": origin, "to": target, "gate": gate}, "predict_law": id, "public_observers": campaign_people(), "public_grants": grants})
 
-法则 c2_moran_fatal_settle_law：
-    当 c2_alive("moran")。
-    并且 campaign_clock() 至少 6120。
-    并且 campaign_own("moran", "in_coma") 等于 true。
-    并且 campaign_own("moran", "erosion_exposure") 至少 8。
-    并且 campaign_own("moran", "dead") 等于 false。
-    并且 campaign_own("moran", "anti_erosion_treated") 等于 false。
-    则 campaign_own("moran", "dead") 变为 true。
-    并使 campaign_own("moran", 存活状态) 变为 false。
-    并使 "c2.casualty" 的 "moran_dead" 变为 true。
-    并使 "c2.casualty" 的 "casualty_occurred" 变为 true。
+// Shared pathology does not inspect detective policy or select a victim.
+// Durations are new authored engineering parameters, not medical measurements.
+fn c2_care_patients():
+    return ["su", "moran", "bertrand"]
+
+axiom c2_disease_weakness_law(actor):
+    let pre = dv_all([c2_alive(actor), dv_held_for(campaign_own(actor, "active_erosion_disease"), true, campaign_clock(), 4320), dv_fact(campaign_own(actor, "anti_erosion_treated"), false), dv_fact(campaign_own(actor, "severe_weakness"), false)])
+    return dv_axiom("c2_disease_weakness_law", 1, pre, [dv_assign(campaign_own(actor, "severe_weakness"), true)])
+
+axiom c2_disease_impairment_law(actor):
+    let pre = dv_all([c2_alive(actor), dv_fact(campaign_own(actor, "active_erosion_disease"), true), dv_held_for(campaign_own(actor, "severe_weakness"), true, campaign_clock(), 720), dv_fact(campaign_own(actor, "anti_erosion_treated"), false), dv_fact(campaign_own(actor, "motor_impairment"), false)])
+    return dv_axiom("c2_disease_impairment_law", 1, pre, [dv_assign(campaign_own(actor, "motor_impairment"), true), dv_assign(campaign_own(actor, "serious_injury"), true), dv_assign(campaign_ref("c2.casualty", "casualty_occurred"), true)])
+
+axiom c2_respiratory_failure_law(actor):
+    let impaired = campaign_any(dv_fact(campaign_own(actor, "in_coma"), true), dv_fact(campaign_own(actor, "stone_stupor"), true))
+    let pre = dv_all([c2_alive(actor), impaired, dv_at_least(campaign_own(actor, "erosion_exposure"), 8), dv_fact(campaign_own(actor, "anti_erosion_treated"), false), dv_fact(campaign_own(actor, "respiratory_failure"), false)])
+    return dv_axiom("c2_respiratory_failure_law", 1, pre, [dv_assign(campaign_own(actor, "respiratory_failure"), true), dv_assign(campaign_own(actor, "serious_injury"), true), dv_assign(campaign_ref("c2.casualty", "casualty_occurred"), true)])
+
+axiom c2_respiratory_terminal_law(actor):
+    let pre = dv_all([c2_alive(actor), dv_at_least(campaign_own(actor, "erosion_exposure"), 8), dv_held_for(campaign_own(actor, "respiratory_failure"), true, campaign_clock(), 120), dv_fact(campaign_own(actor, "anti_erosion_treated"), false)])
+    var effects = [dv_assign(campaign_own(actor, "dead"), true), dv_assign(campaign_own(actor, "alive"), false), dv_assign(campaign_own(actor, "exposure_terminal"), true), dv_assign(campaign_ref("c2.casualty", "casualty_occurred"), true)]
+    if actor == "moran":
+        rt_push(effects, dv_assign(campaign_ref("c2.casualty", "moran_dead"), true))
+    return dv_axiom("c2_respiratory_terminal_law", 1, pre, effects)
+
+fn c2_moran_fatal_settle_law():
+    return c2_respiratory_terminal_law("moran")
 
 法则 c2_bertrand_petrification_settle_law：
     当 c2_alive("bertrand")。
@@ -1040,6 +1060,9 @@ fn c2_hero_substitutions(actor):
 fn c2_hero_actions(actor):
     return c2_hero_substitutions(actor)
 
+fn c2_moran_outing_heard(actor):
+    return c2_received_requirement(actor, {"speaker": "moran", "action_id": "moran.c2.sketch.evening.go.false"}) or c2_received_requirement(actor, {"speaker": "moran", "action_id": "moran.c2.sketch.evening.go.true"})
+
 fn c2_casualty_actions(actor):
     var result = []
     let source = campaign_source("docs/design-standard.md", 0, "蝴蝶效应连送两人惨败机制")
@@ -1050,6 +1073,10 @@ fn c2_casualty_actions(actor):
         let act = campaign_surface_action(id, "experiment", pre, pre, id, grants, "在夹道写生", "在实际抵达的夹道对着色层完成一段写生。", source)
         rt_push(result, dv_with_many(act, {"repeatable": false, "public_observers": campaign_people(), "public_grants": grants}))
     if actor == "bertrand":
+        let search_known = dv_all([c2_night(4), c2_can_act(actor), campaign_at(actor, "outdoor_alley")])
+        let search_contact = dv_all([search_known, campaign_at("moran", "outdoor_alley")])
+        let search_grants = [campaign_position_ref("moran"), campaign_own("moran", "alive"), campaign_own("moran", "in_coma"), campaign_own("moran", "carried_by")]
+        rt_push(result, dv_with_many(campaign_surface_action("bertrand.c2.search.moran-alley", "inspect", search_known, search_contact, "", search_grants, "沿听到的写生去向寻找同伴", "沿本人实际听到的外出方向抵达夹道，在现场查找并检查同伴。", campaign_approved("user:2026-10-22-search-from-real-heard-intention")), {"received_speech_requirement": {"speaker": "moran", "action_id": "moran.c2.sketch.evening.go.false"}}))
         let id = "bertrand.c2.rescue.moran_from_alley"
         let law = c2_bertrand_rescue_law()
         let grants = [campaign_own("bertrand", "carrying"), campaign_own("moran", "carried_by"), campaign_own("bertrand", "rescue_exposed")]
@@ -1060,7 +1087,7 @@ fn c2_casualty_actions(actor):
         while i < rt_count(edges):
             rt_push(result, c2_carry_moran_action(edges[i].from, edges[i].to, edges[i].gate))
             i = i + 1
-    let patients = ["moran", "bertrand"]
+    let patients = c2_care_patients()
     let rooms = c2_rooms()
     var patient_index = 0
     while patient_index < rt_count(patients):
@@ -1073,13 +1100,15 @@ fn c2_casualty_actions(actor):
             room_index = room_index + 1
         let pre = dv_all([c2_can_act(actor), dv_not(dv_all(c2_negated_conditions(contacts)))])
         let id = rt_cat(actor, rt_cat(".c2.examine.", patient))
-        let fields = ["alive", "dead", "in_coma", "stone_stupor", "anti_erosion_treated", "carrying", "carried_by"]
+        let fields = ["alive", "dead", "in_coma", "stone_stupor", "anti_erosion_treated", "active_erosion_disease", "severe_weakness", "motor_impairment", "serious_injury", "respiratory_failure", "carrying", "carried_by"]
         var grants = [campaign_position_ref(patient)]
         var field_index = 0
         while field_index < rt_count(fields):
             rt_push(grants, campaign_own(patient, fields[field_index]))
             field_index = field_index + 1
         let lines = [c2_visible_line(dv_true(), "现场生命迹象：{生命}；意识：{意识}；木僵症状：{木僵}。", [c2_visible_binding("生命", campaign_own(patient, "alive"), {"true": "存活", "false": "已无生命迹象"}), c2_visible_binding("意识", campaign_own(patient, "in_coma"), {"true": "昏迷", "false": "未见昏迷"}), c2_visible_binding("木僵", campaign_own(patient, "stone_stupor"), {"true": "存在", "false": "未见"})], source)]
+        rt_push(lines, c2_visible_line(dv_fact(campaign_own(patient, "motor_impairment"), true), "持续病程已经造成严重运动功能障碍，无法独立行走。", [], campaign_approved("user:2026-10-22-continuous-disease-and-effective-care")))
+        rt_push(lines, c2_visible_line(dv_fact(campaign_own(patient, "respiratory_failure"), true), "现场出现呼吸衰竭症状，需要立即有效救治。", [], campaign_approved("user:2026-10-22-continuous-disease-and-effective-care")))
         rt_push(result, dv_with_many(campaign_surface_action(id, "inspect", pre, pre, "", grants, "检查同伴的伤情", "在同一现场查看同伴的意识、生命和搬运状态，记录实际见到的伤情。", source), {"repeatable": true, "presentation": {"actor": actor, "voice": "visible-inspection", "lines": lines}}))
         patient_index = patient_index + 1
     return result
@@ -1101,13 +1130,13 @@ fn c2_patient_contact(actor, patient):
     则 campaign_own("mora", "anti_erosion_carried") 变为 true。
 
 axiom c2_administer_anti_erosion_law(patient):
-    let illness = campaign_any(dv_fact(campaign_own(patient, "in_coma"), true), campaign_any(dv_fact(campaign_own(patient, "fever"), true), dv_fact(campaign_own(patient, "rescue_exposed"), true)))
-    return dv_axiom("c2_administer_anti_erosion_law", 1, dv_all([c2_can_act("mora"), c2_alive(patient), c2_patient_contact("mora", patient), dv_fact(campaign_own("mora", "anti_erosion_carried"), true), illness, dv_fact(campaign_ref("case.logistics", "anti_erosion_mixed"), true), dv_fact(campaign_own(patient, "anti_erosion_treated"), false)]), [dv_assign(campaign_own(patient, "anti_erosion_treated"), true)])
+    let illness = campaign_any(dv_fact(campaign_own(patient, "active_erosion_disease"), true), campaign_any(dv_fact(campaign_own(patient, "in_coma"), true), campaign_any(dv_fact(campaign_own(patient, "fever"), true), dv_fact(campaign_own(patient, "rescue_exposed"), true))))
+    return dv_axiom("c2_administer_anti_erosion_law", 1, dv_all([c2_can_act("mora"), c2_alive(patient), c2_patient_contact("mora", patient), dv_fact(campaign_own("mora", "anti_erosion_carried"), true), illness, dv_fact(campaign_ref("case.logistics", "anti_erosion_mixed"), true), dv_fact(campaign_own(patient, "anti_erosion_treated"), false)]), [dv_assign(campaign_own(patient, "anti_erosion_treated"), true), dv_assign(campaign_own(patient, "severe_weakness"), false), dv_assign(campaign_own(patient, "motor_impairment"), false), dv_assign(campaign_own(patient, "respiratory_failure"), false)])
 
 fn c2_anti_erosion_actions(actor):
     if actor != "mora":
         return []
-    let patients = ["moran", "bertrand"]
+    let patients = c2_care_patients()
     let source = campaign_approved("actual-care-from-authored-mixed-anti-erosion-medicine")
     var result = []
     let take = c2_take_anti_erosion_law()
@@ -1117,7 +1146,7 @@ fn c2_anti_erosion_actions(actor):
         let patient = patients[i]
         let id = rt_cat("mora.c2.administer.anti_erosion.", patient)
         let law = c2_administer_anti_erosion_law(patient)
-        let grants = [campaign_own(patient, "anti_erosion_treated")]
+        let grants = [campaign_own(patient, "anti_erosion_treated"), campaign_own(patient, "severe_weakness"), campaign_own(patient, "motor_impairment"), campaign_own(patient, "respiratory_failure")]
         let action = campaign_surface_action(id, "help", law.premise, law.premise, id, grants, "为病人使用抗侵蚀剂", "在病人所在现场使用已经配成的抗侵蚀剂，记录实际给药。", source)
         rt_push(result, dv_with_many(action, {"repeatable": false, "personal_choice": {"group": id, "requires": law.premise, "prohibits": dv_fact(campaign_own(patient, "anti_erosion_treated"), true), "promotes": ["patient_priority", "safety"], "sacrifices": [], "basis": [source]}, "public_observers": campaign_people(), "public_grants": grants}))
         i = i + 1
@@ -1244,7 +1273,7 @@ fn c2_install_actor_laws_into(domain, owned_adoptions, actor, mode):
     c2_safety_install(domain, owned_adoptions, actor, mode)
     if actor == "mora":
         dv_adopt_into(domain, owned_adoptions, campaign_method("mora.c2.take.anti_erosion", c2_take_anti_erosion_law()), mode, 1, [campaign_approved("actual-care-from-authored-mixed-anti-erosion-medicine")])
-        let patients = ["moran", "bertrand"]
+        let patients = c2_care_patients()
         var patient_index = 0
         while patient_index < rt_count(patients):
             let patient = patients[patient_index]
@@ -1389,6 +1418,11 @@ fn c2_extend_world(world):
     while i < rt_count(people):
         c2_install_actor_laws_into(domain, owned_adoptions, people[i], "enforce")
         dv_adopt_into(domain, owned_adoptions, campaign_method(rt_cat("c2.outdoor-danger.", people[i]), c2i_outdoor_danger_law(people[i])), "enforce", 1, [campaign_approved("actual-quake-air-exposure-engineering-dose")])
+        let physiology = [{"id": "weakness", "law": c2_disease_weakness_law(people[i])}, {"id": "impairment", "law": c2_disease_impairment_law(people[i])}, {"id": "respiratory-failure", "law": c2_respiratory_failure_law(people[i])}, {"id": "respiratory-terminal", "law": c2_respiratory_terminal_law(people[i])}]
+        var pathology = 0
+        while pathology < rt_count(physiology):
+            dv_adopt_into(domain, owned_adoptions, campaign_method(rt_cat("c2.physiology.", rt_cat(people[i], rt_cat(".", physiology[pathology].id))), physiology[pathology].law), "enforce", 1, [campaign_approved("user:2026-10-22-continuous-disease-and-effective-care")])
+            pathology = pathology + 1
         var day = 2
         while day <= 5:
             let noon = rt_cat("c2.hunger.", rt_cat(people[i], rt_cat(".", rt_cat(rt_show(day), ".noon"))))
@@ -1710,11 +1744,11 @@ fn c2_personal_goal_templates_build(id):
         rt_push(goals, campaign_observation_goal(campaign_ref("c2.granary", "structure_checked"), campaign_at(id, "logistics"), source, 0))
         rt_push(goals, campaign_goal(dv_fact(campaign_ref("c2.granary", "structure_checked"), true), campaign_at(id, "logistics"), source))
     if id == "mora":
-        let patients = ["moran", "bertrand"]
+        let patients = c2_care_patients()
         var patient_index = 0
         while patient_index < rt_count(patients):
             let patient = patients[patient_index]
-            let need = campaign_any(dv_fact(campaign_own(patient, "in_coma"), true), campaign_any(dv_fact(campaign_own(patient, "fever"), true), dv_fact(campaign_own(patient, "rescue_exposed"), true)))
+            let need = campaign_any(dv_fact(campaign_own(patient, "active_erosion_disease"), true), campaign_any(dv_fact(campaign_own(patient, "in_coma"), true), campaign_any(dv_fact(campaign_own(patient, "fever"), true), dv_fact(campaign_own(patient, "rescue_exposed"), true))))
             rt_push(goals, campaign_goal(dv_fact(campaign_own(patient, "anti_erosion_treated"), true), dv_all([need, dv_fact(campaign_ref("case.logistics", "anti_erosion_mixed"), true)]), source))
             patient_index = patient_index + 1
         rt_push(goals, campaign_goal(dv_fact(campaign_own("moran", "hungry"), false), dv_all([dv_fact(campaign_own("moran", "fever"), true), dv_fact(campaign_own("moran", "hungry"), true)]), [campaign_approved("mora-does-not-refuse-a-real-patient")]))
@@ -1819,7 +1853,7 @@ fn c2_extend_teacher(actor):
     while i < rt_count(observations):
         rt_push(actions, observations[i])
         i = i + 1
-    let result = dv_with_many(actor, {"mind": mind, "location_ref": campaign_position_ref("demon"), "observable_presence_when": dv_fact(campaign_ref("demon.body", "manifested"), true), "actions": campaign_public_methods(actions), "policy": dv_with_many(actor.policy, {"wait_chunk_limit": 180, "chapter1_carried_goals": dv_find(actor.policy, "goals", []), "chapter2_profile": {"id": "demon", "domain": "teaching", "station_roles": [], "basis": [c2_source("09_表达.story", 605, "我想教")]}, "notice_co_presence": true, "visual_identity_when": dv_fact(campaign_ref("c2.weather", "daylight"), true)})})
+    let result = dv_with_many(actor, {"mind": mind, "location_ref": campaign_position_ref("demon"), "observable_presence_when": dv_fact(campaign_ref("demon.body", "manifested"), true), "actions": campaign_public_methods(actions), "policy": dv_with_many(actor.policy, {"budget": dv_max(dv_find(actor.policy, "budget", 0), 240), "wait_chunk_limit": 180, "chapter1_carried_goals": dv_find(actor.policy, "goals", []), "chapter2_profile": {"id": "demon", "domain": "teaching", "station_roles": [], "basis": [c2_source("09_表达.story", 605, "我想教")]}, "notice_co_presence": true, "visual_identity_when": dv_fact(campaign_ref("c2.weather", "daylight"), true)})})
     return c2_refresh_actor_goals(result)
 
 fn c2_extend_actor(actor):
@@ -1847,6 +1881,10 @@ fn c2_extend_actor_from(actor, physical, previous):
         if not dv_read(mind, campaign_own(actor.id, field[0])).known:
             mind = dv_store(mind, campaign_own(actor.id, field[0]), dv_with(field[1], "source", "perception"))
         i = i + 1
+    // The owner knows this personal decision has not yet been made; this is
+    // protocol state, not an observation of another person's future choice.
+    if actor.id == "moran" and not dv_read(mind, campaign_ref("case.astral", "evening_choice")).known:
+        mind = dv_store(mind, campaign_ref("case.astral", "evening_choice"), dv_with(dv_field(""), "basis", [campaign_approved("own-unperformed-evening-choice")]))
     // Own authorship is known before proposing; another person's proposal is not.
     let norms = c2_norms()
     i = 0
@@ -1964,6 +2002,12 @@ fn c2_world_processes():
             day = day + 1
         let danger = rt_cat("c2.outdoor-danger.", people[i])
         rt_push(result, {"id": danger, "law": danger, "basis": [campaign_approved("actual-quake-air-exposure-engineering-dose")]})
+        let pathology = ["weakness", "impairment", "respiratory-failure", "respiratory-terminal"]
+        var p = 0
+        while p < rt_count(pathology):
+            let id = rt_cat("c2.physiology.", rt_cat(people[i], rt_cat(".", pathology[p])))
+            rt_push(result, {"id": id, "law": id, "basis": [campaign_approved("user:2026-10-22-continuous-disease-and-effective-care")]})
+            p = p + 1
         let terminal = rt_cat("c2.terminal.", people[i])
         rt_push(result, {"id": terminal, "law": terminal, "basis": [campaign_approved("actual-terminal-exposure")]})
         i = i + 1
@@ -1981,8 +2025,8 @@ fn c2_runtime_contracts():
         "phase_services": {"counter": "real-counter-staff-action-opens-99-ration-pool-without-total-granary-key", "inventory": "each-collect-spends-one-not-32-per-day", "hunger": "derive-from-real-missed-meals-never-brand-quer-hungry-by-date", "goal_refresh": "c2_refresh_actor_goals-after-real-clock-updates-reads-only-owned-mind", "observations": "explicit-clock-self-route-and-weather-actions-not-passive-global-knowledge"},
         "norms": {"receipt": "real-proposal-post-read-events", "choice": "owner-value-order-after-personal-receipt", "execution": "policy.norm_rules-available_when-and-action.normative_method-against-owned-mind", "indifference": "do-not-treat-a-zero-value-tie-as-positive-adoption-support", "constraint": "posting-does-not-enforce-a-global-law"},
         "stations": {"scope": "chapter-two-granary-cooperation-only", "reserve_parameter": "672-standard-portions=16-persons*21-days*2-meals; engineering-unit-conversion"},
-        "environment": {"object": "c2.weather", "inputs": ["wind", "daylight", "earthquake_recent", "severe_air"], "authored_processes": ["falling-ash-through-day2-dawn", "day2-forenoon-wind", "day3-night-calm", "day4-evening-earthquake", "day5-dawn-wind"], "provenance": "authored-clock-conditions-and-actual-weather-control-history", "qualitative_laws": ["windy-day-high-ground-short-excursion", "calm-night-low-lane-slope-foot-water-spring-lethal-exposure"], "unimplemented_room_safety_draft": {"status": "isolated-no-production-controls-or-inputs", "fixture": "verification/checks/fixtures/room-safety-draft.dv", "qualitative_requirements": ["closed-indoor-doors-windows-and-isolation-protect", "recent-earthquake-heavy-air-can-seep-through-gaps"], "inputs": "unknown-not-assumed-false"}, "constraint": "no-invented-concentration-dose-disease-or-erosion-number"},
-        "physiology": {"inputs": ["actual-exposure", "observed-fever", "actual-care", "terminal-exposure"], "anti_erosion": {"source": "case.logistics.anti_erosion_mixed from the actual mixing action", "receipt": "Mora takes the prepared medicine at white_tower_safe, then per-patient anti_erosion_treated only after successful on-site Complete", "quantity": "not-modelled: no declared stock or dose count; availability for both patients is not established", "scope": "administration receipt, not revival or proven cure"}, "constraint": "never-use-third-day-illness-or-fourth-night-death-as-an-assignment"},
+        "environment": {"object": "c2.weather", "inputs": ["wind", "daylight", "earthquake_recent", "severe_air"], "authored_processes": ["falling-ash-through-day2-dawn", "day2-forenoon-wind", "day3-night-calm", "day4-evening-earthquake", "day5-dawn-wind"], "provenance": "authored-clock-conditions-and-actual-weather-control-history", "qualitative_laws": ["windy-day-high-ground-short-excursion", "calm-night-low-lane-slope-foot-water-spring-lethal-exposure"], "unimplemented_room_safety_draft": {"status": "isolated-no-production-controls-or-inputs", "fixture": "verification/checks/fixtures/room-safety-draft.dv", "qualitative_requirements": ["closed-indoor-doors-windows-and-isolation-protect", "recent-earthquake-heavy-air-can-seep-through-gaps"], "inputs": "unknown-not-assumed-false"}, "constraint": "new clinical durations are explicit user-authorized model parameters, not measured physiology; no detector-profile branch"},
+        "physiology": {"inputs": ["actual-exposure", "observed-fever", "actual-care", "terminal-exposure"], "revision_20261022": {"initial_condition": "Su's pre-existing erosion disease, not a preset injury", "chronic": "active disease held 4320 minutes causes severe weakness; another 720 untreated minutes causes motor impairment and serious-injury history", "acute": "actual exposure >=8 plus coma or stone stupor causes respiratory failure; 120 continuous untreated minutes of failure can cause actual death", "serious_injury": "actual motor impairment preventing independent movement, or actual respiratory failure; fever alone is insufficient"}, "anti_erosion": {"source": "case.logistics.anti_erosion_mixed from the actual mixing action", "receipt": "Mora takes the prepared medicine at white_tower_safe, then per-patient anti_erosion_treated only after successful on-site Complete", "quantity": "not-modelled: no declared stock or dose count; availability for both patients is not established", "scope": "successful administration halts the new disease/respiratory progression and clears current weakness, motor impairment and respiratory failure; retains serious-injury history, coma, established stone stupor, exposure and death; never revival"}, "constraint": "never-use-third-day-illness-or-fourth-night-death-as-an-assignment"},
         "evidence": {"ledger": "derive-from-real-removals-day-records-and-night-reports", "latch": "tool-marks-only-from-real-repair", "bowl": "residue-only-from-real-patient-feeding", "crumbs": "only-from-real-night-eating", "testimony": "speaker-owned-perception-no-identity-from-a-small-shadow"},
         "handoff": {"preserve": ["accepted_norms", "trust", "hunger", "remaining_rations", "casualties", "memories", "erosion", "ownership"], "constraint": "copy-committed-state-never-reset-to-a-preset-ending"}}
 
@@ -2092,6 +2136,8 @@ fn c2i_world_objects(world):
                 initial = 0
             result = dv_store(result, ref, dv_field(initial))
         i = i + 1
+    if not dv_read(result, campaign_ref("case.astral", "evening_choice")).known:
+        result = dv_store(result, campaign_ref("case.astral", "evening_choice"), dv_field(""))
     result = campaign_add_new(result, c2_object("c2.seal", "", {"holder": dv_field("ward"), "location": dv_field("")}))
     return c2m_initialize(result)
 
@@ -2173,25 +2219,30 @@ fn c2i_goals(actor):
     if id == "ward" or id == "quer":
         rt_push(goals, campaign_observation_goal(campaign_ref("case.contract", "cabinet_key_holder"), campaign_at(id, "document_workshop"), [campaign_approved("actual-key-custody-receipt")], 0))
     goals = c2m_concat(goals, c2m_goals(actor))
+    if id == "bertrand" and c2_moran_outing_heard(actor):
+        rt_push(goals, dv_with_many(campaign_observation_goal(campaign_own("moran", "in_coma"), c2_night(4), [campaign_approved("user:2026-10-22-search-from-real-heard-intention")], 5370), {"navigation_room": "outdoor_alley", "navigation_methods": ["bertrand.c2.search.moran-alley"]}))
     if id == "mora":
         let mixed = dv_fact(campaign_ref("case.logistics", "anti_erosion_mixed"), true)
         rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_own(id, "anti_erosion_carried"), true), mixed, [campaign_approved("actual-care-from-authored-mixed-anti-erosion-medicine")]), {"navigation_completion": dv_fact(campaign_own(id, "anti_erosion_carried"), true), "navigation_room": "white_tower_safe", "navigation_requirements": [mixed], "navigation_methods": ["mora.c2.take.anti_erosion"]}))
-        let patients = ["moran", "bertrand"]
+        let patients = c2_care_patients()
         var patient_index = 0
         while patient_index < rt_count(patients):
             let patient = patients[patient_index]
             let position = dv_read(actor.mind, campaign_position_ref(patient))
-            let need = campaign_any(dv_fact(campaign_own(patient, "in_coma"), true), campaign_any(dv_fact(campaign_own(patient, "fever"), true), dv_fact(campaign_own(patient, "rescue_exposed"), true)))
+            let need = campaign_any(dv_fact(campaign_own(patient, "active_erosion_disease"), true), campaign_any(dv_fact(campaign_own(patient, "in_coma"), true), campaign_any(dv_fact(campaign_own(patient, "fever"), true), dv_fact(campaign_own(patient, "rescue_exposed"), true))))
             if dv_uncontested(position) and dv_has(c2_rooms(), position.value):
                 let condition = dv_all([need, dv_fact(campaign_own(id, "anti_erosion_carried"), true)])
                 rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_own(patient, "anti_erosion_treated"), true), condition, [campaign_approved("actual-care-from-authored-mixed-anti-erosion-medicine")]), {"navigation_completion": dv_fact(campaign_own(patient, "anti_erosion_treated"), true), "navigation_room": position.value, "navigation_requirements": [condition], "navigation_methods": [rt_cat("mora.c2.administer.anti_erosion.", patient)]}))
             patient_index = patient_index + 1
     if id == "mora" or id == "bertrand":
-        let patients = ["moran", "bertrand"]
+        let patients = c2_care_patients()
         var patient_index = 0
         while patient_index < rt_count(patients):
             let patient = patients[patient_index]
             rt_push(goals, campaign_observation_goal(campaign_own(patient, "in_coma"), c2_patient_contact(id, patient), [campaign_approved("actual-contact-before-care-or-rescue")], 0))
+            rt_push(goals, campaign_observation_goal(campaign_own(patient, "active_erosion_disease"), c2_patient_contact(id, patient), [campaign_approved("actual-contact-before-care-or-rescue")], 0))
+            rt_push(goals, campaign_observation_goal(campaign_own(patient, "motor_impairment"), dv_all([c2_patient_contact(id, patient), dv_at_least(campaign_clock(), 4320)]), [campaign_approved("actual-contact-before-care-or-rescue")], 4320))
+            rt_push(goals, campaign_observation_goal(campaign_own(patient, "respiratory_failure"), c2_patient_contact(id, patient), [campaign_approved("actual-contact-before-care-or-rescue")], 5370))
             rt_push(goals, campaign_observation_goal(campaign_own(patient, "anti_erosion_treated"), c2_patient_contact(id, patient), [campaign_approved("actual-contact-before-care-or-rescue")], 0))
             patient_index = patient_index + 1
     let rows = c2i_rows()
@@ -2213,6 +2264,10 @@ fn c2i_goals(actor):
     if id == "ruan":
         rt_push(goals, campaign_goal(dv_fact(campaign_ref("c2.ledger", "supplement_column"), true), dv_fact(campaign_own("ruan", "accepted.records_supplement"), true), [campaign_approved("implement-reserved-column-after-acceptance")]))
     if id == "moran":
+        // The declared evening discussion needs a real meeting before its
+        // speaker-dependent options can exist. This grants no color or advice.
+        if not c2_received_requirement(actor, {"speaker": "demon", "action_id": "demon.c2.truth-color"}):
+            rt_push(goals, dv_with_many(campaign_goal(campaign_at(id, "living_hall"), campaign_window(4, 1050, 1260), [campaign_approved("user:2026-10-22-evening-research-meeting")]), {"navigation_room": "living_hall", "maintain_presence": true}))
         rt_push(goals, campaign_observation_goal(campaign_ref("c2.meter", "safe"), campaign_window(4, 1020, 1260), [campaign_approved("read-actual-meter-before-evening-outing")], 0))
         rt_push(goals, c2i_watch_goal(actor, c2_night(4), [campaign_approved("actual-current-supervision-not-permanent-flag")], 5370))
         rt_push(goals, campaign_goal(campaign_at("moran", "outdoor_alley"), dv_fact(campaign_ref("case.astral", "evening_choice"), "go"), [campaign_approved("execute-actual-personal-sketch-choice")]))
@@ -2329,9 +2384,10 @@ fn c2i_evening_actions(actor):
                 promotes = ["measured_work", "safety", "cautious_travel"]
             let id = rt_cat("moran.c2.sketch.evening.", rt_cat(option.value, rt_cat(".", rt_show(watched))))
             let law = rt_cat("moran.c2.sketch.evening.", option.value)
-            var ready = context
-            if option.value == "go":
-                ready = dv_all([context, dv_fact(campaign_ref("c2.meter", "safe"), true)])
+            // A dangerous intention remains physically possible. Actual adopted
+            // safety norms and the owner's competing reasons decide whether to go;
+            // an unsafe reading is not an author-level ban on considering it.
+            let ready = context
             let choice = {"group": "moran.evening-sketch", "requires": ready, "prohibits": campaign_any(dv_fact(result_ref, "stay"), dv_fact(result_ref, "go")), "promotes": promotes, "sacrifices": option.sacrifices, "basis": [source]}
             let speech = dv_with(campaign_speech(dv_true(), source, "evening-sketch-choice"), "surface", option.text)
             var action = campaign_surface_action(id, "talk", ready, when, law, [result_ref], option.label, option.text, source)
@@ -2818,6 +2874,11 @@ fn c2_refresh_content_actions(actor):
     let adopted_stop = dv_truth(actor.mind, dv_fact(campaign_own(actor.id, "accepted.seal_plan"), true)) == "true"
     while i < rt_count(original_actions):
         var action = original_actions[i]
+        if action.id == "bertrand.c2.search.moran-alley":
+            var heard = "moran.c2.sketch.evening.go.false"
+            if c2_received_requirement(actor, {"speaker": "moran", "action_id": "moran.c2.sketch.evening.go.true"}):
+                heard = "moran.c2.sketch.evening.go.true"
+            action = dv_with(action, "received_speech_requirement", {"speaker": "moran", "action_id": heard})
         if dv_has_key(action, "partner_decision"):
             let base = dv_find(action, "owned_precondition_base", action.precondition)
             let choice = dv_find(action, "owned_choice_base", action.personal_choice)
