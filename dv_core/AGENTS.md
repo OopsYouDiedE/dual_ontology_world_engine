@@ -182,3 +182,5 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 规划器的 Top-K 仅容纳存在本人 active/predict 采纳的后继候选，避免不可预测项占用可展开名额；统一 CLI 深度上限的默认值及调试参数见 cli-optimization。测试窗口遵从用户当前授权，不能将搜索深度调整当作未知前提的补值机制。
 调试65的 stop_at_chapter_end 必须同时有客观收束记录与记录观察者正式章末检视的成功回执；通常使用 detective，无侦探配置使用实际记录人物集合中的任一见证者。截止、公约成功及实际观察分别报告；不改变内容行动或延长时域。合同见 ../docs/cli-optimization.md。
 只读因果工具的 `rt_causal_prior_index(events, position, id)` 只返回受支持标志与此前 ID 成员关系；它不判定完整性。文本索引保留首次位置，事件查找保留最后匹配，闭包列表保留原 BFS 顺序；异常结构回退 DV 原路径。仅显式工具作用域启用，接口说明见 compiler/README.md。
+
+`opt_dirty` 认知队列以采纳表、外部签名和 profile 隔离，完整前提/效果单元格及对象存在性均为唤醒依赖；inactive/non-infer 保留顺序位置且不预读其声明，零预算不建立索引。时界静态计划仅替代条件树重复分析，运行时真值/效果扫描仍保留；未知活动操作符明确报错。`opt_dirty_verify` 抽样参考扫描同时覆盖正常和提前返回。合同与实测限制见 `../docs/cli-optimization.md`。
