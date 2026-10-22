@@ -432,7 +432,8 @@ public static class R
         internal object? Owner;
         internal Dictionary<string, object> Events = new(StringComparer.Ordinal);
         internal Dictionary<string, string[]> Parents = new(StringComparer.Ordinal);
-        internal Dictionary<string, object> Closures = new(StringComparer.Ordinal);
+        internal Dictionary<string, CausalClosure> Closures = new(StringComparer.Ordinal);
+        internal Dictionary<string, int> FirstPositions = new(StringComparer.Ordinal);
         internal Queue<string> ClosureOrder = new();
         internal bool Bind(object events)
         {
@@ -446,6 +447,8 @@ public static class R
             if (events is not FrozenList || !TryItems(events, out var entries)) return false;
             var byId = new Dictionary<string, object>(StringComparer.Ordinal);
             var parents = new Dictionary<string, string[]>(StringComparer.Ordinal);
+            var positions = new Dictionary<string, int>(StringComparer.Ordinal);
+            var position = 0;
             try
             {
                 foreach (var entry in entries)
@@ -459,15 +462,17 @@ public static class R
                         if (items[i] is not string name) return false;
                         names[i] = name;
                     }
+                    positions.TryAdd(id, position++);
                     byId[id] = entry; parents[id] = names; // original last match
                 }
             }
             catch (Exception) { return false; }
-            Owner = events; Events = byId; Parents = parents;
+            Owner = events; Events = byId; Parents = parents; FirstPositions = positions;
             Closures.Clear(); ClosureOrder.Clear();
             return true;
         }
-        internal object Closure(string child)
+        internal sealed record CausalClosure(object Ordered, HashSet<string> Members);
+        internal CausalClosure Closure(string child)
         {
             if (Closures.TryGetValue(child, out var cached)) return cached;
             var visited = new HashSet<string>(StringComparer.Ordinal);
@@ -481,7 +486,7 @@ public static class R
                 if (Parents.TryGetValue(id, out var parents))
                     foreach (var parent in parents) queue.Enqueue(parent);
             }
-            var frozen = snapshot(order);
+            var frozen = new CausalClosure(snapshot(order), visited);
             // At most eight complete closures, and one event-list index.
             if (ClosureOrder.Count == 8) Closures.Remove(ClosureOrder.Dequeue());
             ClosureOrder.Enqueue(child); Closures.Add(child, frozen);
@@ -499,7 +504,7 @@ public static class R
     {
         var cache = CausalLookupContext.Value;
         if (cache is null || child is not string name || !cache.Bind(events)) return CausalResult(false, false);
-        return CausalResult(true, cache.Closure(name));
+        return CausalResult(true, cache.Closure(name).Ordered);
     }
     public static object causal_ancestor_index(object events, object child, object ancestor)
     {
@@ -507,9 +512,14 @@ public static class R
         if (cache is null || child is not string name || ancestor is not string target || !cache.Bind(events)) return CausalResult(false, false);
         // Full BFS is finite for the admitted graph and preserves missing-ID
         // and self-membership semantics; no checks are removed by this lookup.
-        foreach (var id in Items(cache.Closure(name)))
-            if ((string)id == target) return CausalResult(true, true);
-        return CausalResult(true, false);
+        return CausalResult(true, cache.Closure(name).Members.Contains(target));
+    }
+
+    public static object causal_prior_index(object events, object position, object id)
+    {
+        var cache = CausalLookupContext.Value;
+        if (cache is null || id is not string name || !cache.Bind(events)) return CausalResult(false, false);
+        return CausalResult(true, cache.FirstPositions.TryGetValue(name, out var first) && first < Index(position));
     }
 
     public static object text_join(object values)

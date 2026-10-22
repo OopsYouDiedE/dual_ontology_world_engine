@@ -183,3 +183,4 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 调试65的 stop_at_chapter_end 必须同时有客观收束记录与记录观察者正式章末检视的成功回执；通常使用 detective，无侦探配置使用实际记录人物集合中的任一见证者。截止、公约成功及实际观察分别报告；不改变内容行动或延长时域。合同见 ../docs/cli-optimization.md。
 
 居民私人假设、材料冲突评估与真实回想路径的内容合同见 ../docs/cli-optimization.md；私人prior/情绪不作客观事实，不能用报告旗标替代本人可知冲突或跳过实际提问与Complete。
+只读因果工具的 `rt_causal_prior_index(events, position, id)` 只返回受支持标志与此前 ID 成员关系；它不判定完整性。文本索引保留首次位置，事件查找保留最后匹配，闭包列表保留原 BFS 顺序；异常结构回退 DV 原路径。仅显式工具作用域启用，接口说明见 compiler/README.md。
