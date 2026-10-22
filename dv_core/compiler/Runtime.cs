@@ -227,6 +227,7 @@ public static class R
     private sealed class ValueCaches
     {
         internal readonly object SnapshotLock = new();
+        internal readonly bool AppendShareEnabled = Environment.GetEnvironmentVariable("DV_OPT_APPENDSHARE") == "1";
         internal readonly bool ReadViewEnabled = Environment.GetEnvironmentVariable("DV_OPT_READVIEW") == "1";
         // Sample once per execution context; CLI captures this in run_config.
         internal readonly bool RecordCacheEnabled = Environment.GetEnvironmentVariable("DV_OPT_RECORDCACHE") == "1";
@@ -1087,10 +1088,20 @@ public static class R
         // Only SnapshotValue supplies this newly allocated, fully frozen array.
         // It is adopted once and never exposed or modified after publication.
         private readonly object[] children;
+        // Large append-only snapshots may borrow a certified immutable prefix.
+        // Depth is bounded at construction; the public DV/CLR List ABI stays intact.
+        private readonly FrozenList? prefix;
+        private readonly int prefixCount;
+        private readonly int count;
+        internal readonly int PrefixDepth;
         private static readonly List<object> InvalidIndexSource = [];
-        internal FrozenList(object[] ownedChildren, ulong hash, ulong sequenceHash)
+        internal FrozenList(object[] ownedChildren, ulong hash, ulong sequenceHash, FrozenList? prefix = null)
         {
             children = ownedChildren;
+            this.prefix = prefix;
+            prefixCount = prefix?.Count ?? 0;
+            count = prefixCount + children.Length;
+            PrefixDepth = prefix is null ? 0 : prefix.PrefixDepth + 1;
             Hash = hash;
             SequenceHash = sequenceHash;
         }
@@ -1098,45 +1109,60 @@ public static class R
         // the immutable source remains private and cannot be mutated by its owner.
         internal List<object> CopyRoot()
         {
-            if (children.Length == 0) return new List<object>();
-            // Histories and event roots usually append immediately after copying.
-            // Reserve a short suffix once instead of allocating an exact-size
-            // copy and then a second, doubled array for its very first append.
-            var extra = children.Length >= 64 ? 16 : 2;
-            var capacity = children.Length <= int.MaxValue - extra ? children.Length + extra : children.Length;
+            if (Count == 0) return new List<object>();
+            var extra = Count >= 64 ? 16 : 2;
+            var capacity = Count <= int.MaxValue - extra ? Count + extra : Count;
             var result = new List<object>(capacity);
-            result.AddRange(children);
+            AppendTo(result);
             return result;
         }
-        internal void CopyPrefixTo(object[] destination) => Array.Copy(children, destination, children.Length);
-        public int Count => children.Length;
+        private void AppendTo(List<object> target)
+        {
+            prefix?.AppendTo(target);
+            target.AddRange(children);
+        }
+        internal void CopyPrefixTo(object[] destination)
+        {
+            prefix?.CopyPrefixTo(destination);
+            Array.Copy(children, 0, destination, prefixCount, children.Length);
+        }
+        public int Count => count;
         public object this[int index]
         {
             get
             {
-                // Preserve List's invalid-index exception at the same read.
-                if ((uint)index >= (uint)children.Length) return InvalidIndexSource[index];
-                return children[index];
+                if ((uint)index >= (uint)count) return InvalidIndexSource[index];
+                var owner = this;
+                while (owner.prefix is not null && index < owner.prefixCount) owner = owner.prefix;
+                return owner.children[index - owner.prefixCount];
             }
         }
-        public Enumerator GetEnumerator() => new(children);
-        IEnumerator<object> IEnumerable<object>.GetEnumerator() => children.Length == 0
+        public Enumerator GetEnumerator() => new(children, prefix is null ? null : this);
+        IEnumerator<object> IEnumerable<object>.GetEnumerator() => Count == 0
             ? ((IEnumerable<object>)InvalidIndexSource).GetEnumerator() : GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => children.Length == 0
+        IEnumerator IEnumerable.GetEnumerator() => Count == 0
             ? ((IEnumerable)InvalidIndexSource).GetEnumerator() : GetEnumerator();
         public struct Enumerator : IEnumerator<object>
         {
             private readonly object[] values;
+            private readonly FrozenList? owner;
+            private readonly int count;
             private int index;
             private object? current;
-            internal Enumerator(object[] values) { this.values = values; index = 0; current = null; }
+            internal Enumerator(object[] values, FrozenList? owner)
+            { this.values = values; this.owner = owner; count = owner?.Count ?? values.Length; index = 0; current = null; }
             public object Current => current!;
-            object IEnumerator.Current => index == 0 || index == values.Length + 1
+            object IEnumerator.Current => index == 0 || index == count + 1
                 ? throw new InvalidOperationException("Enumeration has either not started or has already finished.") : Current;
             public bool MoveNext()
             {
-                if (index < values.Length) { current = values[index++]; return true; }
-                index = values.Length + 1; current = null; return false;
+                if (index < count)
+                {
+                    current = owner is null ? values[index] : owner[index];
+                    index++;
+                    return true;
+                }
+                index = count + 1; current = null; return false;
             }
             void IEnumerator.Reset() { index = 0; current = null; }
             public void Dispose() { }
@@ -1524,14 +1550,22 @@ public static class R
             return pair;
         }
         MaintainSnapshots(caches);
-        var children = items.Count == 0 ? Array.Empty<object>() : new object[items.Count];
+        // Share at most four append segments, then flatten using the old path.
+        // Only a prefix certified by push/Invalidate is eligible. Replacements
+        // and nested writes clear AppendBase before reaching this operation.
+        var append = state.AppendBase;
+        var sharedPrefix = caches.AppendShareEnabled && append is not null
+            && append.Count >= 1024 && append.Count < items.Count
+            && items.Count - append.Count <= 64 && append.PrefixDepth < 4 ? append : null;
+        var offset = sharedPrefix?.Count ?? 0;
+        var children = new object[items.Count - offset];
         ulong hash = 14695981039346656037UL;
         ulong compatibleHash = hash;
         var compatible = true;
         var start = 0;
         if (state.AppendBase is { } prefix && prefix.Count >= 64 && prefix.Count <= items.Count)
         {
-            prefix.CopyPrefixTo(children);
+            if (sharedPrefix is null) prefix.CopyPrefixTo(children);
             start = prefix.Count;
             hash = prefix.SequenceHash;
             compatibleHash = prefix.CompatibleSequenceHash;
@@ -1540,7 +1574,7 @@ public static class R
         for (var i = start; i < items.Count; i++)
         {
             if (items[i] is List<object> mutableChild) LinkParent(mutableChild, items, caches.MutableStates);
-            var child = children[i] = SnapshotValue(items[i], caches);
+            var child = children[i - offset] = SnapshotValue(items[i], caches);
             if (TryMembershipHash(child, out var valueHash))
                 compatibleHash = unchecked((compatibleHash ^ valueHash) * 1099511628211UL);
             else compatible = false;
@@ -1557,15 +1591,18 @@ public static class R
         for (var i = bucket.Count - 1; i >= 0; i--)
         {
             if (!bucket[i].TryGetTarget(out var existing)) { bucket.RemoveAt(i); continue; }
-            if (existing.Count != children.Length) continue;
+            if (existing.Count != items.Count) continue;
             var same = true;
-            for (var j = 0; same && j < children.Length; j++)
-                same = existing[j] is double left && children[j] is double right
+            for (var j = 0; same && j < items.Count; j++)
+            {
+                var candidate = j < offset ? sharedPrefix![j] : children[j - offset];
+                same = existing[j] is double left && candidate is double right
                     ? BitConverter.DoubleToInt64Bits(left) == BitConverter.DoubleToInt64Bits(right)
-                    : Equals(existing[j], children[j]);
+                    : Equals(existing[j], candidate);
+            }
             if (same) { state.Backbone = existing; state.AppendBase = null; return existing; }
         }
-        var frozen = new FrozenList(children, hash, sequenceHash)
+        var frozen = new FrozenList(children, hash, sequenceHash, sharedPrefix)
         {
             Index = state.Index,
             IndexChecked = state.IndexChecked,

@@ -391,7 +391,7 @@ def main():
     parser.add_argument('--detective-zone', default='zone_yi', choices=('zone_yi', 'zone_jia', 'zone_bing', 'zone_ding', 'none'))
     parser.add_argument('--trace-compression', choices=('none',), default='none', help='Deprecated compatibility argument; JSON recordings are prohibited')
     parser.add_argument('--raw-format', choices=('dag',), default='dag', help='Lossless typed binary DAG; JSON recording is forbidden')
-    optimization_names = ('readview', 'plancache', 'prune', 'lazytext', 'recordcache', 'predicate', 'predicatecache', 'declcache', 'gc')
+    optimization_names = ('readview', 'plancache', 'prune', 'lazytext', 'recordcache', 'predicate', 'predicatecache', 'declcache', 'gc', 'appendshare')
     for name in optimization_names:
         parser.add_argument('--opt-' + name, choices=('on', 'off'), default='on')
     parser.add_argument('--prune-top-k', type=int, default=3)
@@ -400,9 +400,9 @@ def main():
     args = parser.parse_args()
     # Single-thread CLI defaults; explicit GC arguments retain precedence.
     if args.gc_mode is None:
-        args.gc_mode = 'workstation' if args.opt_gc == 'on' else 'server'
+        args.gc_mode = 'server'
     if args.gc_heaps is None:
-        args.gc_heaps = 1 if args.opt_gc == 'on' else min(4, os.cpu_count() or 1)
+        args.gc_heaps = min(8 if args.opt_gc == 'on' else 4, os.cpu_count() or 1)
     args.detective_profile = {'Standard': 'Standard_Detective', 'Foolish': 'Foolish_Detective'}.get(args.detective_profile, args.detective_profile)
     if args.prune_top_k < 1:
         parser.error('--prune-top-k must be positive')
@@ -443,9 +443,9 @@ def main():
                     raise ValueError(f'Restore configuration conflicts with checkpoint: {option}')
             run_config = saved_config
             if "--gc-mode" not in explicit_options:
-                args.gc_mode = "workstation" if run_config.get("opt_gc", False) else "server"
+                args.gc_mode = "server"
             if "--gc-heaps" not in explicit_options:
-                args.gc_heaps = 1 if run_config.get("opt_gc", False) else min(4, os.cpu_count() or 1)
+                args.gc_heaps = min(8 if run_config.get("opt_gc", False) else 4, os.cpu_count() or 1)
             args.profile = resume_bundle['metadata']['provenance'].get('instrumented', False)
             args.opening_seed = run_config['seed']
             args.detective_profile = run_config['profile']
@@ -513,6 +513,7 @@ def main():
         write_result(out, {'executor': 'formal-model', 'geometry': False, 'run_config': run_config, 'build_source_consistent': False, 'source_unchanged': False, 'trace_written': False, 'error': 'Sources changed during build or generated inputs differ; session not started.'})
         return 1
     execution_env = env.copy()
+    execution_env['DV_OPT_APPENDSHARE'] = '1' if run_config.get('opt_appendshare', False) else '0'
     execution_env['DV_OPT_READVIEW'] = '1' if run_config.get('opt_readview', False) else '0'
     execution_env['DV_OPT_RECORDCACHE'] = '1' if run_config.get('opt_recordcache', False) else '0'
     execution_env['DV_OPT_PREDICATE'] = '1' if run_config.get('opt_predicate', False) else '0'
