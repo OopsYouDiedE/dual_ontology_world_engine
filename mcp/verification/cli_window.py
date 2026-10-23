@@ -122,6 +122,19 @@ class BMIHEADER(C.Structure):
 g.GetDIBits.argtypes = [W.HDC, W.HBITMAP, W.UINT, W.UINT, C.c_void_p, C.c_void_p, W.UINT]
 
 def capture(hwnd, path):
+    # PrintWindow emits physical pixels; a DPI-virtualized GetWindowRect would
+    # allocate a smaller bitmap and crop its right and bottom at desktop scaling.
+    u.SetThreadDpiAwarenessContext.argtypes = [C.c_void_p]
+    u.SetThreadDpiAwarenessContext.restype = C.c_void_p
+    previous = u.SetThreadDpiAwarenessContext(C.c_void_p(-4))
+    checked(previous)
+    try:
+        return capture_physical(hwnd, path)
+    finally:
+        checked(u.SetThreadDpiAwarenessContext(previous))
+
+
+def capture_physical(hwnd, path):
     from PIL import Image, ImageStat
     rect = W.RECT(); checked(u.GetWindowRect(hwnd, C.byref(rect)))
     width, height = rect.right-rect.left, rect.bottom-rect.top
@@ -137,7 +150,8 @@ def capture(hwnd, path):
         checked(g.GetDIBits(memory, bitmap, 0, height, pixels, C.byref(header), 0))
         image = Image.frombuffer('RGB', (width,height), pixels.raw, 'raw', 'BGRX', 0, 1)
         image.save(path, 'JPEG', quality=95)
-        return {'path':str(path), 'width':width, 'height':height, 'stddev':ImageStat.Stat(image).stddev}
+        return {'path':str(path), 'width':width, 'height':height, 'stddev':ImageStat.Stat(image).stddev,
+                'coordinate_space':'physical_pixels', 'dpi_awareness':'per_monitor_v2'}
     finally:
         g.SelectObject(memory, old); g.DeleteObject(bitmap); g.DeleteDC(memory); u.ReleaseDC(hwnd,dc)
 
@@ -179,7 +193,7 @@ def runtime(folder):
 def context(manifest,run):
     return {'source_revision':manifest['source_revision'],'assembly_sha256':manifest['assembly_sha256'],
             'bridge_sha256':manifest['bridge_sha256'],'pid':run.get('wrapper_pid'),'game_pid':run.get('game_pid'),
-            'hwnd':run.get('hwnd'),'stage':manifest['stage']}
+            'operation_bridge_sha256':digest(__file__),'hwnd':run.get('hwnd'),'stage':manifest['stage']}
 
 def evidence(writer,manifest,run,kind,**fields):
     value={'kind':kind,**stamp(),**context(manifest,run),**fields}

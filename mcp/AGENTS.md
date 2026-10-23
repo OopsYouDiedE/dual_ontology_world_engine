@@ -61,3 +61,5 @@ evidence-index 的二进制读取可使用游标解码及精确固定形状节�
 每次输入前后均保存真实 JPG、实际 stdin、玩家可见 viewport、PID/HWND、现实时间、source_revision 与程序集 SHA-256。每个操作使用单独 RecordWriter 创建的 DVLOG2 文件；不通过重新打开已有 xb 记录器追加。JSON 只保存工程会话清单、路由和进程元数据，不作为新剧情证据。真实事件编号与完成判断由 `verification/audit_cli_evidence.py` 只读核对封存后的原始 CLI trace，不从截图猜测或补造事件编号。
 
 command-id 在同实例内至多投递一次。输入投递异常或等待新 dv> 超时后，保留 partial、pending 与原进程；不重新发送原输入，也不另开替代案例掩盖失败。先使用 capture 等待并记录该在途输入的实际结果，再决定下一条正常输入。每例自身独占锁阻止该实例发生两个并发写入；不同实例不共用此锁。quit 封存超时不自动强杀，也不重复投递 quit。
+
+CLI 原生截图在捕获线程临时启用 per-monitor-v2 DPI awareness，将 GetWindowRect 与 PrintWindow 统一到物理像素坐标，完成后恢复调用线程上下文；不得通过缩放、补画或文字重绘修补裁切。截图元数据记录坐标空间，每个操作另记实际桥接工具 SHA-256，启动清单保留原启动版本。接口与排错见 `../docs/cli-window.md`。
