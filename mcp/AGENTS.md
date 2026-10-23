@@ -63,3 +63,5 @@ evidence-index 的二进制读取可使用游标解码及精确固定形状节�
 command-id 在同实例内至多投递一次。输入投递异常或等待新 dv> 超时后，保留 partial、pending 与原进程；不重新发送原输入，也不另开替代案例掩盖失败。先使用 capture 等待并记录该在途输入的实际结果，再决定下一条正常输入。每例自身独占锁阻止该实例发生两个并发写入；不同实例不共用此锁。quit 封存超时不自动强杀，也不重复投递 quit。
 
 CLI 原生截图在捕获线程临时启用 per-monitor-v2 DPI awareness，将 GetWindowRect 与 PrintWindow 统一到物理像素坐标，完成后恢复调用线程上下文；不得通过缩放、补画或文字重绘修补裁切。截图元数据记录坐标空间，每个操作另记实际桥接工具 SHA-256，启动清单保留原启动版本。接口与排错见 `../docs/cli-window.md`。
+
+控制台快照允许有限只读重采样，以应对重绘时缓冲区更换；不能重投 stdin。必须在元数据中留下 read_retries/read_stable，持续失败仍报告并保留 pending。

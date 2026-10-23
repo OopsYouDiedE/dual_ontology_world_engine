@@ -63,6 +63,20 @@ k.GetNumberOfConsoleInputEvents.argtypes = [W.HANDLE, C.POINTER(W.DWORD)]
 k.GetConsoleMode.argtypes = [W.HANDLE, C.POINTER(W.DWORD)]
 
 def snapshot(pid):
+    # A redraw can replace/resize the console buffer between API calls. Only
+    # retry this read operation; never retry delivery of a player command.
+    for attempt in range(3):
+        try:
+            result = snapshot_once(pid)
+            result['read_retries'] = attempt
+            return result
+        except OSError as error:
+            if error.winerror not in (1, 6, 87) or attempt == 2:
+                raise
+            time.sleep(.02)
+
+
+def snapshot_once(pid):
     """Read the actual console, including the cursor's current prompt position."""
     k.FreeConsole(); checked(k.AttachConsole(pid)); handles=[]
     try:
@@ -82,10 +96,12 @@ def snapshot(pid):
         pending=W.DWORD(); mode=W.DWORD()
         checked(k.GetNumberOfConsoleInputEvents(inp,C.byref(pending)))
         checked(k.GetConsoleMode(inp,C.byref(mode)))
+        after=INFO(); checked(k.GetConsoleScreenBufferInfo(out,C.byref(after)))
+        stable = (bytes(info) == bytes(after))
         return {'text':'\n'.join(rows).rstrip(),'cursor':{'x':cursor.X,'y':cursor.Y},
                 'viewport':{'left':rect.Left,'top':rect.Top,'width':width,'height':height},
                 'cursor_prefix':prefix,'pending_input_events':pending.value,'input_mode':mode.value,
-                'ready':prefix.endswith('dv> ') and pending.value==0}
+                'read_stable':stable,'ready':stable and prefix.endswith('dv> ') and pending.value==0}
     finally:
         for h in handles:
             if h is not None and h!=W.HANDLE(-1).value: k.CloseHandle(h)
