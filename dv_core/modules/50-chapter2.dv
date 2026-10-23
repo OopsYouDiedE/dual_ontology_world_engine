@@ -2302,6 +2302,14 @@ fn c2i_actions(actor):
         rt_push(result, correction)
     let custody = c2_inspect_action(actor, "case.contract", "document_workshop", ["key_returned", "cabinet_key_holder"], "核对钥匙交接记录", "当面核对代管钥匙的持有人与实际交接记录。", campaign_approved("actual-key-custody-receipt"))
     rt_push(result, dv_with(custody, "id", rt_cat(actor, ".c2.inspect.key-custody")))
+    if dv_has(["mora", "veronica"], actor):
+        var peer = "mora"
+        if actor == "mora":
+            peer = "veronica"
+        let contact = dv_all([campaign_at(actor, "white_tower_safe"), campaign_at(peer, "white_tower_safe")])
+        var inspect_peer = c2_inspect_action(actor, campaign_body(peer), "white_tower_safe", ["alive", "in_coma", "stone_stupor"], "核对配药同伴的现场状态", "当面核对配药同伴的意识、行动反应与所在位置，再继续共同操作。", campaign_approved("actual-local-medical-partner-contact"))
+        inspect_peer = dv_with_many(inspect_peer, {"id": rt_cat(actor, ".c2.inspect.medicine-partner"), "precondition": contact, "authority_precondition": contact, "grants": dv_append(inspect_peer.grants, campaign_position_ref(peer))})
+        rt_push(result, inspect_peer)
     let rows = c2i_rows()
     var i = 0
     while i < rt_count(rows):
@@ -2414,6 +2422,19 @@ fn c2i_goals(actor):
     goals = c2m_concat(goals, c2m_goals(actor))
     if id == "bertrand" and c2_moran_outing_heard(actor):
         rt_push(goals, dv_with_many(campaign_observation_goal(campaign_own("moran", "in_coma"), c2_night(4), [campaign_approved("user:2026-10-22-search-from-real-heard-intention")], 5370), {"navigation_room": "outdoor_alley", "navigation_methods": ["bertrand.c2.search.moran-alley"]}))
+    if c2sf_enabled(actor) and dv_has(["mora", "veronica"], id):
+        let live_preparation = dv_all([dv_fact(campaign_ref("case.logistics", "r07_skin_test"), true), dv_fact(campaign_ref("case.logistics", "anti_erosion_mixed"), false), c2_can_act(id)])
+        rt_push(goals, dv_with_many(campaign_goal(campaign_at(id, "white_tower_safe"), live_preparation, [campaign_approved("owned-continuing-joint-medicine-preparation-after-real-record")]), {"navigation_room": "white_tower_safe", "maintain_presence": true}))
+        var peer = "mora"
+        if id == "mora":
+            peer = "veronica"
+        let contact = dv_all([live_preparation, campaign_at(id, "white_tower_safe"), campaign_at(peer, "white_tower_safe")])
+        let fields = ["alive", "in_coma", "stone_stupor"]
+        var field_index = 0
+        while field_index < rt_count(fields):
+            rt_push(goals, dv_with_many(campaign_observation_goal(campaign_own(peer, fields[field_index]), contact, [campaign_approved("actual-local-medical-partner-contact")], 0), {"navigation_room": "white_tower_safe", "navigation_methods": [rt_cat(id, ".c2.inspect.medicine-partner")]}))
+            field_index = field_index + 1
+
     if id == "mora":
         let mixed = dv_fact(campaign_ref("case.logistics", "anti_erosion_mixed"), true)
         rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_own(id, "anti_erosion_carried"), true), mixed, [campaign_approved("actual-care-from-authored-mixed-anti-erosion-medicine")]), {"navigation_completion": dv_fact(campaign_own(id, "anti_erosion_carried"), true), "navigation_room": "white_tower_safe", "navigation_requirements": [mixed], "navigation_methods": ["mora.c2.take.anti_erosion"]}))
