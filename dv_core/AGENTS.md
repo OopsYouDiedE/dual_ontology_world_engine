@@ -217,3 +217,5 @@ current_appraisals只维护本人appraisal facet中的当前可撤销评价，�
 独立taskgraph开关默认off，storyflow/stateindex默认on；60保存、布尔核对并传给全部主体。taskgraph为本人策略近似，storyflow为内容重写，不标为轨迹等价；stateindex运行时DV_OPT_STATEINDEX与65配置核对、复用合同见../docs/cli-optimization.md。新增开关不授权正式会话。
 
 40的声路准备补闻复用30的请求上下文、实际收闻与回应消费，不建立第二套调度；`request_channels` 不授予听觉许可，补报不得复制物理准备表或试验结果。内容握手接线边界见../docs/cli-optimization.md。
+
+同房成员观察在清晰可辨且人物无条件可观察时，若本人记忆仍将缺席者定位于当前房间，撤回该位置为未知并提升认知版本；`presence_memory_retracted` 保留旧单元格、现场来源和版本。即使可见名单未变也检查新收到的过期位置。仅使用本人已有位置与实际可见名单，不发布缺席者新位置；条件可见人物、视野不清及其他房间记忆保留原状。拒绝执行本身不推断缺席原因、不放宽权威接触条件。

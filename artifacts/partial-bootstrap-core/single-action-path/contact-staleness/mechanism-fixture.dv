@@ -1,0 +1,80 @@
+fn dvs_notice_peers_before(actor, physical, actors, bindings, events, time, parent):
+    if dv_find(actor.policy, "notice_co_presence", false):
+        var context = dvs_visible_context(actor, physical, actors)
+        var old = dv_find(actor, "visible_context", [])
+        let position = dv_read(physical, actor.location_ref)
+        var location = false
+        if dv_uncontested(position):
+            location = position.value
+        let clear = location != false and dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true())) == "true"
+        if dv_same(context, old) and dv_find(actor, "visible_context_location", false) == location and dv_find(actor, "visible_context_clear", false) == clear:
+            return actor
+        else:
+            var event = dvs_event(events, "co_presence", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"context_before": old, "context_after": context, "location_ref": actor.location_ref, "observed_location": location, "visibility_available": clear})
+            var grants = []
+            var i = 0
+            while i < rt_count(actors):
+                let peer = actors[i]
+                let now = dv_find(context, peer.id, false)
+                let previous = dv_find(old, peer.id, false)
+                if now != false and (previous == false or previous.location != now.location):
+                    rt_push(grants, peer.location_ref)
+                i = i + 1
+            var mind = actor.mind
+            if 0 < rt_count(grants):
+                let observations = dv_perceive(physical, actor.mind, bindings, grants, event, time)
+                if 0 < rt_count(observations):
+                    let next = dv_update_mind(mind, observations, mind.revision, dvs_observation_profile(actor)).world
+                    event = dvs_event_prepared(events, "observation", actor.id, time, dv_single(event), {"observations": observations, "revision_before": mind.revision, "revision_after": next.revision, "bindings": bindings, "grants": grants, "execution_id": event})
+                    mind = next
+            return dv_with_many(actor, {"visible_context": context, "visible_context_location": location, "visible_context_clear": clear, "mind": mind, "last_cognitive_event": event})
+    else:
+        return actor
+
+
+fn contact_fixture():
+    let own = dv_ref("observer", "state", "location")
+    let peer_ref = dv_ref("peer", "state", "location")
+    var world = dv_world("fixture", "physical", "")
+    world = dv_add_object(world, dv_object("observer", "person", {"state": {"location": dv_cell("room-a", 1, 10, [])}}))
+    world = dv_add_object(world, dv_object("peer", "person", {"state": {"location": dv_cell("room-a", 1, 10, [])}}))
+    let bound = dv_view(world, "observer", {"observer": "self-local", "peer": "peer-local"})
+    let local_ref = dv_scoped_ref("observer", "peer-local", "state", "location")
+    let peer = {"id": "peer", "location_ref": peer_ref}
+    var actor = {"id": "observer", "location_ref": own, "mind": bound.mind, "policy": {"notice_co_presence": true}}
+    var events = []
+    actor = dvs_notice_peers(actor, world, [actor, peer], bound.bindings, events, 10, "")
+    let original = actor
+    let remembered = dv_read(actor.mind, local_ref)
+    dv_require(remembered.known and remembered.value == "room-a" and remembered.time == 10 and remembered.claims[0].time == 10, "Initial visible peer observation provenance")
+    let visible = dvs_notice_peers(actor, world, [actor, peer], bound.bindings, events, 11, "")
+    dv_require(dv_same(visible.mind, actor.mind), "Visible same-room peer must not be retracted")
+    world = dv_with(dv_store(world, peer_ref, dv_cell("room-secret", 1, 12, [])), "revision", world.revision + 1)
+    let old_result = dvs_notice_peers_before(actor, world, [actor, peer], bound.bindings, events, 12, "")
+    dv_require(dv_read(old_result.mind, local_ref).known, "Baseline exposes stale-location defect")
+    let concealed = dv_with(peer, "observable_presence_when", dv_fact(peer_ref, "room-secret"))
+    let conditional = dvs_notice_peers(actor, world, [actor, concealed], bound.bindings, events, 12, "")
+    dv_require(dv_same(dv_read(conditional.mind, local_ref), remembered), "Conditional visibility must not imply absence")
+    let dark = dv_with(actor, "policy", dv_with(actor.policy, "visual_identity_when", dv_fact(own, "other-room")))
+    let unclear = dvs_notice_peers(dark, world, [dark, peer], bound.bindings, events, 12, "")
+    dv_require(dv_same(dv_read(unclear.mind, local_ref), remembered), "Unclear visibility must not imply absence")
+    actor = dvs_notice_peers(actor, world, [actor, peer], bound.bindings, events, 12, "")
+    let absent = dv_read(actor.mind, local_ref)
+    dv_require(not absent.known and absent.value == false and absent.time == 12 and rt_count(absent.claims) == 0 and rt_count(absent.basis) == 1, "Absent peer must become unknown with current source, never remote location")
+    dv_require(actor.mind.revision == original.mind.revision + 1, "Retraction invalidates cognitive revision")
+    let evidence = events[rt_count(events) - 1]
+    dv_require(evidence.type == "presence_memory_retracted" and dv_same(evidence.data.retracted[0].before, remembered), "Retraction preserves original cell and claims")
+    let refreshed_claim = dv_with(remembered.claims[0], "id", "old-source-refresh")
+    let refreshed = dv_update_mind(actor.mind, [refreshed_claim], actor.mind.revision, dvs_observation_profile(actor))
+    dv_require(dv_same(dv_read(refreshed.world, local_ref), absent) and refreshed.dispositions[0][1] == "older-than-current", "Old source time must not revive stale location")
+    let restored_memory = dv_with(actor, "mind", dv_store(actor.mind, local_ref, remembered))
+    let no_context_change = dvs_notice_peers(restored_memory, world, [restored_memory, peer], bound.bindings, events, 13, "")
+    dv_require(not dv_read(no_context_change.mind, local_ref).known, "Unchanged visible context must still reject stale room memory")
+    world = dv_with(dv_store(world, peer_ref, dv_cell("room-a", 1, 14, [])), "revision", world.revision + 1)
+    actor = dvs_notice_peers(actor, world, [actor, peer], bound.bindings, events, 14, "")
+    let returned = dv_read(actor.mind, local_ref)
+    dv_require(returned.known and returned.value == "room-a" and returned.time == 14 and returned.claims[0].time == 14, "Real re-encounter reacquires current location")
+    dv_require(dv_same(dv_read(original.mind, local_ref), remembered), "Parent mind snapshot preserved")
+    rt_print("Mechanism differential: baseline retained stale room-a; candidate retracts to unknown at time 12; original cell/claim time 10 preserved; old-source refresh rejected; actual re-encounter at 14 reacquired. Visibility and unchanged-context guards checked. No formal session or AI scheduling.")
+    return true
+(main (contact_fixture))

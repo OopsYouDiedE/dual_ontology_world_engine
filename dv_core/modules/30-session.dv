@@ -1789,6 +1789,28 @@ fn dvs_visible_context(actor, physical, actors):
         i = (i + 1)
     return result
 
+// A clear room can contradict a remembered presence, but cannot reveal the
+// missing person's new location. Conditional visibility is not exhaustive:
+// keep those memories unchanged rather than treating concealment as absence.
+fn dvs_absent_peer_locations(actor, actors, bindings, context, location, clear):
+    var result = []
+    if not clear:
+        return result
+    let observed = dv_project_value(location, bindings, actor.id)
+    if not observed.known:
+        return result
+    var i = 0
+    while i < rt_count(actors):
+        let peer = actors[i]
+        if peer.id != actor.id and dv_find(context, peer.id, false) == false and dv_same(dv_find(peer, "observable_presence_when", dv_true()), dv_true()):
+            let projected = dv_project_value(peer.location_ref, bindings, actor.id)
+            if projected.known:
+                let before = dv_read(actor.mind, projected.value)
+                if dv_uncontested(before) and dv_same(before.value, observed.value):
+                    rt_push(result, {"ref": projected.value, "before": before})
+        i = i + 1
+    return result
+
 fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent):
     if dv_find(actor.policy, "notice_co_presence", false):
         var context = dvs_visible_context(actor, physical, actors)
@@ -1798,7 +1820,8 @@ fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent):
         if dv_uncontested(position):
             location = position.value
         let clear = location != false and dv_truth(physical, dv_find(actor.policy, "visual_identity_when", dv_true())) == "true"
-        if dv_same(context, old) and dv_find(actor, "visible_context_location", false) == location and dv_find(actor, "visible_context_clear", false) == clear:
+        let absent = dvs_absent_peer_locations(actor, actors, bindings, context, location, clear)
+        if rt_count(absent) == 0 and dv_same(context, old) and dv_find(actor, "visible_context_location", false) == location and dv_find(actor, "visible_context_clear", false) == clear:
             return actor
         else:
             var event = dvs_event(events, "co_presence", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), {"context_before": old, "context_after": context, "location_ref": actor.location_ref, "observed_location": location, "visibility_available": clear})
@@ -1818,6 +1841,15 @@ fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent):
                     let next = dv_update_mind(mind, observations, mind.revision, dvs_observation_profile(actor)).world
                     event = dvs_event_prepared(events, "observation", actor.id, time, dv_single(event), {"observations": observations, "revision_before": mind.revision, "revision_after": next.revision, "bindings": bindings, "grants": grants, "execution_id": event})
                     mind = next
+            if 0 < rt_count(absent):
+                let revision = mind.revision
+                event = dvs_event(events, "presence_memory_retracted", actor.id, time, dvs_cognitive_parents(actor, [event]), {"retracted": absent, "observed_location": location, "revision_before": revision, "revision_after": revision + 1, "scope": "clear-room-absence-new-location-unknown"})
+                var j = 0
+                while j < rt_count(absent):
+                    let unknown = dv_with_many(dv_unknown(), {"time": time, "basis": [event]})
+                    mind = dv_store(mind, absent[j].ref, unknown)
+                    j = j + 1
+                mind = dv_with_many(mind, {"revision": revision + 1, "time": dv_max(dv_find(mind, "time", 0), time)})
             return dv_with_many(actor, {"visible_context": context, "visible_context_location": location, "visible_context_clear": clear, "mind": mind, "last_cognitive_event": event})
     else:
         return actor
