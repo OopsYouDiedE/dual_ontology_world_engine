@@ -681,15 +681,24 @@ fn c2_corridor_actions(actor):
     while i < rt_count(gates):
         let gate = gates[i]
         let object = rt_cat("c2.corridor.", gate)
+        var title = "北连廊"
+        if gate == "east":
+            title = "东连廊"
         let source = campaign_approved("第五部分：封闭连廊的现场读数、密封与通风")
-        let inspection = c2_inspect_action(actor, object, c2_corridor_origin(gate), ["air_safe", "intake_safe", "seal_intact", "ventilated", "airlock_held", "airlock_hazard"], "实测连廊读数并核对密封", "从安全侧实测补风处读数，核对密封与已完成的换气记录。", source)
+        let inspection = c2_inspect_action(actor, object, c2_corridor_origin(gate), ["air_safe", "intake_safe", "seal_intact", "ventilated", "airlock_held", "airlock_hazard"], rt_cat("实测读数并核对密封：", title), rt_cat("从安全侧实测", rt_cat(title, "补风处读数，核对密封与换气状态。")), source)
         rt_push(actions, dv_with(inspection, "grants", dv_append(inspection.grants, campaign_ref("c2.weather", "severe_air"))))
         let purge = c2_purge_corridor_law(actor, gate)
         let purge_id = rt_cat(actor, rt_cat(".c2.purge.corridor.", gate))
-        rt_push(actions, dv_with(campaign_surface_action(purge_id, "help", purge.premise, purge.premise, purge_id, [campaign_ref(object, "ventilated"), campaign_ref(object, "air_safe")], "核对补风路径并换气", "核对补风处读数与排烟路径，完成连廊换气后收拢风门。", source), "predict_law", purge_id))
+        let purge_grants = [campaign_ref(object, "ventilated"), campaign_ref(object, "air_safe")]
+        // A completed purge is visible to actual same-room witnesses. The
+        // shared Complete path publishes only this gate's completed operation;
+        // a witness must still measure the air before knowing it is safe.
+        // A later observed reset can permit another purge, while the unchanged
+        // ventilated=false premise still excludes an already completed purge.
+        rt_push(actions, dv_with_many(campaign_surface_action(purge_id, "help", purge.premise, purge.premise, purge_id, purge_grants, rt_cat("核对补风路径并换气：", title), rt_cat("核对补风处读数与排烟路径，完成", rt_cat(title, "换气后收拢风门。")), source), {"predict_law": purge_id, "repeatable": true, "public_observers": dv_append(campaign_people(), "demon"), "public_grants": [campaign_ref(object, "ventilated")]}))
         let law = c2_open_corridor_law(actor, gate)
         let id = rt_cat(actor, rt_cat(".c2.open.corridor.", gate))
-        var action = campaign_surface_action(id, "help", law.premise, law.premise, id, [campaign_access(gate)], "开启连廊隔离门", "核对现场条件后，开启连廊隔离门。", source)
+        var action = campaign_surface_action(id, "help", law.premise, law.premise, id, [campaign_access(gate)], rt_cat("开启隔离门：", title), rt_cat("核对现场条件后，开启", rt_cat(title, "隔离门。")), source)
         action = dv_with_many(action, {"predict_law": id, "public_observers": dv_append(campaign_people(), "demon"), "public_grants": [campaign_access(gate)]})
         rt_push(actions, action)
         i = i + 1
@@ -1476,24 +1485,97 @@ fn c2_navigation_condition(condition, actor):
     return condition
 
 fn c2_navigation_pending(actor, goal):
+    let completion = dv_find(goal, "navigation_completion", false)
+    if completion != false and dv_truth(actor.mind, completion) == "true":
+        return false
     if dv_find(goal, "kind", "") == "evidence":
-        return not dvp_source_supported_since(dv_read(actor.mind, goal.ref), dv_find(goal, "source", "perception"), dv_find(goal, "minimum_time", 0))
+        return dvp_evidence_due(actor, goal) and not dvp_source_supported_since(dv_read(actor.mind, goal.ref), dv_find(goal, "source", "perception"), dv_find(goal, "minimum_time", 0))
     return campaign_future_goal_pending(actor, goal)
 
+// Arrival is useful only for an owned executable task or a still-unreceived
+// local observation of that task's prerequisites. A stale/declined method
+// cannot keep earning another trip merely because its result is still absent.
 fn c2_navigation_local_ready(actor, goal):
     var methods = dv_find(goal, "navigation_methods", [])
     if dv_has_key(goal, "method_id"):
         methods = dv_append(methods, goal.method_id)
+    if rt_count(methods) == 0 and dv_find(goal, "kind", "") == "achieve":
+        let proposition = dv_find(goal, "proposition", [])
+        if dv_find(proposition, "op", "") == "equals" and dv_same_local_ref(actor.id, proposition.ref, campaign_position_ref(actor.id)):
+            return true
     let relevant = dvp_goal_refs(actor)
+    var refs = []
+    if dv_has_key(goal, "ref"):
+        refs = dvp_add_ref(refs, goal.ref)
+    if dv_has_key(goal, "proposition"):
+        refs = dvp_merge_refs(refs, dvs_sim_refs(goal.proposition))
     var i = 0
     while i < rt_count(methods):
         let action = dvp_find_action(actor.actions, methods[i])
-        if action != false and action.kind != "move" and dvp_eligible(actor, action, actor.mind, relevant):
-            return true
+        if action != false and action.kind != "move":
+            if dvp_eligible(actor, action, actor.mind, relevant) and dvp_personal_motivation(actor, action) >= 0:
+                return true
+            refs = dvp_merge_refs(refs, dvs_sim_refs(action.precondition))
+        i = i + 1
+    // Inspecting can establish a missing premise, never its expected value.
+    // Read the real evidence origin even in the pure route forecast below.
+    let origin = dv_find(actor, "planning_evidence_mind", actor.mind)
+    i = 0
+    while i < rt_count(actor.actions):
+        let action = actor.actions[i]
+        if action.kind == "inspect":
+            let grants = dv_find(action, "grants", [])
+            var pending = false
+            var r = 0
+            while r < rt_count(grants):
+                let ref = grants[r]
+                if dv_has(refs, ref) and not dv_same_local_ref(actor.id, ref, campaign_position_ref(actor.id)) and not dv_same(ref, campaign_clock()):
+                    if not dv_uncontested(dv_read(origin, ref)) or dvp_needs_evidence(actor, ref):
+                        pending = true
+                r = r + 1
+            if pending and dvp_eligible(actor, action, actor.mind, relevant):
+                return true
         i = i + 1
     return false
 
+// Follow only the owner's already adopted movement laws. Forecasts supply no
+// destination inspection, partner action, future hearing or task completion.
+fn c2_navigation_route_ready(actor, goal, route):
+    var view = actor
+    var i = 0
+    while i < rt_count(route.path_basis):
+        let step = route.path_basis[i]
+        let action = dvp_find_action(view.actions, step.method)
+        if action == false or not dvp_eligible(view, action, view.mind, []):
+            return false
+        let prediction = dvp_forecast(view.mind, action.predict_law)
+        if prediction.status != "applied":
+            return false
+        view = dvp_actor_view(view, prediction.world)
+        i = i + 1
+    if dv_has_key(route, "requested_target") and route.target != route.requested_target:
+        // Preserve the existing safe-side approach to an unverified gate.
+        return true
+    return c2_navigation_local_ready(view, goal)
+
+// Keep authored windows and reasons for waiting/reconsideration, but give
+// arrival value only to the one selected navigation intention. In particular,
+// a private visit and a continuing presence no longer pay competing arrivals.
+fn c2_navigation_arrival_goals(actor, goals):
+    var result = []
+    var i = 0
+    while i < rt_count(goals):
+        var goal = goals[i]
+        if dv_find(goal, "kind", "") == "achieve" and dv_find(goal, "navigation_room", "") != "":
+            let proposition = dv_find(goal, "proposition", [])
+            if dv_find(proposition, "op", "") == "equals" and dv_same_local_ref(actor.id, proposition.ref, campaign_position_ref(actor.id)):
+                goal = dv_with(goal, "weight", 0)
+        rt_push(result, goal)
+        i = i + 1
+    return result
+
 fn c2_navigation_goals(actor, goals):
+    goals = c2_navigation_arrival_goals(actor, goals)
     if c2i_closing_navigation(actor) != false:
         return goals
     // An active, already reached presence intention does not earn another
@@ -1542,9 +1624,9 @@ fn c2_navigation_goals(actor, goals):
                 if ready and c2_navigation_local_ready(actor, goal):
                     // Local substantive work keeps priority over another trip.
                     return goals
-            elif ready:
+            elif ready and first == false:
                 let route = c2_navigation_route(actor, room)
-                if route != false:
+                if route != false and c2_navigation_route_ready(actor, goal, route):
                     let candidate = {"goal": goal, "route": route, "when": when}
                     if first == false:
                         first = candidate
@@ -4645,7 +4727,7 @@ fn c2d_goal_tail_build(id):
     let study = dv_all([dv_fact(campaign_access("north"), true), campaign_window(2, 600, 690)])
     rt_push(goals, dv_with_many(campaign_goal(campaign_at(id, "lecture"), study, [c2d_source("06_场面.story", 79, "请到讲堂")]), {"navigation_room": "lecture", "maintain_presence": true}))
     if id == "bertrand":
-        rt_push(goals, dv_with(campaign_goal(dv_fact(c2d_person_ref(id, "watching"), true), c2_any_night(), [campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story", 30, "夜里巡夜：护住同伴")]), "navigation_room", "logistics"))
+        rt_push(goals, dv_with_many(campaign_goal(dv_fact(c2d_person_ref(id, "watching"), true), c2_any_night(), [campaign_source("godot_csharp/scenes/Awakening/Script/story/生态/人物/14_贝尔特朗.story", 30, "夜里巡夜：护住同伴")]), {"navigation_room": "logistics", "navigation_methods": ["bertrand.c2.watch.start"]}))
         rt_push(goals, dv_with(campaign_observation_goal(c2d_person_ref(id, "small_shadow_seen"), dv_all([c2_any_night(), dv_fact(c2d_person_ref(id, "watching"), true)]), [c2d_source("04_案件.story", 25, "有限身影观察")], 0), "navigation_room", "logistics"))
     if id == "detective":
         let ledger_fields = ["counted", "reserve_received", "day_recorded", "night_recorded", "pending_registered"]
@@ -4655,7 +4737,7 @@ fn c2d_goal_tail_build(id):
             rt_push(goals, campaign_observation_goal(campaign_ref("c2.ledger", ledger_fields[i]), campaign_at(id, "logistics"), [c2d_source("04_案件.story", 10, "从读到账目再判断是否有缺口")], 0))
             i = i + 1
     if id == "quer":
-        rt_push(goals, dv_with(campaign_goal(dv_fact(campaign_ref("c2.granary", "latch_loose"), false), dv_all([dv_fact(campaign_ref("c2.granary", "latch_loose"), true), c2_work_accepted(id, "quer.c2.granary.precision")]), [c2d_source("10_执行.story", 17, "RepairLatch")]), "navigation_room", "logistics"))
+        rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_ref("c2.granary", "latch_loose"), false), dv_all([dv_fact(campaign_ref("c2.granary", "latch_loose"), true), c2_work_accepted(id, "quer.c2.granary.precision")]), [c2d_source("10_执行.story", 17, "RepairLatch")]), {"navigation_room": "logistics", "navigation_methods": ["quer.c2.repair.latch"]}))
     let opportunity = c2d_known_council_proposal()
     let venues = [{"room": "oath_court", "wind": true}, {"room": "central_hall", "wind": false}]
     i = 0

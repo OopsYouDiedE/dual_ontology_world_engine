@@ -1436,14 +1436,24 @@ internal sealed class Cli
         static string Seconds(object? value) => value is null ? "—" : Number(Convert.ToDouble(value, CultureInfo.InvariantCulture) / 1000d);
         var controllerKind = NormalizeControllerKind(HostValues.Text(metrics, "controller_kind"));
         var text = new StringBuilder();
-        text.AppendLine($"推进 {Number(metrics.GetValueOrDefault("game_hours_per_real_hour"))} 游戏小时/现实小时 · 正式决策 {Number(metrics.GetValueOrDefault("decisions_per_real_hour"))} 次/现实小时");
+        text.AppendLine($"会话速率：推进 {Number(metrics.GetValueOrDefault("game_hours_per_real_hour"))} 游戏小时/现实小时 · 正式选择 {Number(metrics.GetValueOrDefault("decisions_per_real_hour"))} 次/现实小时");
         text.AppendLine($"{ControllerLabel(controllerKind)}接口 {Number(metrics.GetValueOrDefault("interface_hours_per_real_hour"))} 消耗小时/现实小时 · 累计 {Seconds(metrics.GetValueOrDefault("interface_total_ms"))} 秒");
-        text.AppendLine($"采样 {Seconds(metrics.GetValueOrDefault("elapsed_wall_ms"))} 现实秒 · 推进 {Number(metrics.GetValueOrDefault("advanced_game_minutes"))} 游戏分钟 · 已提交 {Number(metrics.GetValueOrDefault("total_decisions"))} 次");
+        text.AppendLine($"采样 {Seconds(metrics.GetValueOrDefault("elapsed_wall_ms"))} 现实秒 · 推进 {Number(metrics.GetValueOrDefault("advanced_game_minutes"))} 游戏分钟 · 会话累计已选择 {Number(metrics.GetValueOrDefault("total_decisions"))} 次");
+        if (metrics.ContainsKey("engine_decisions_per_game_hour"))
+        {
+            text.AppendLine($"按本次累计推进折算／游戏小时：引擎选择 {Number(metrics.GetValueOrDefault("engine_decisions_per_game_hour"))} 次 · 选策计算 {Seconds(metrics.GetValueOrDefault("engine_decision_compute_ms_per_game_hour"))} 秒 · 现实经过 {Seconds(metrics.GetValueOrDefault("elapsed_real_ms_per_game_hour"))} 秒");
+            text.AppendLine($"选策计算累计 {Seconds(metrics.GetValueOrDefault("engine_decision_compute_total_ms"))} 秒 · 已闭合记录 {Seconds(metrics.GetValueOrDefault("engine_decision_compute_recorded_ms"))} 秒 · 未完整区间 {Number(metrics.GetValueOrDefault("engine_decision_compute_incomplete_calls"))} · 计量完整 {metrics.GetValueOrDefault("per_game_hour_measurement_complete")}");
+            text.AppendLine("选策计时仅含 dvs_choose 与规划的实际墙钟（含未采用提前计算）；扣除性能流编码/写入和外部阶段回调，不含其余认知、执行、投影、等待或归档，不等于纯 CPU 时间。游戏未推进时折算值为 —；未闭合或失败选策区间使选策总耗时及其折算保持未知。");
+        }
         foreach (var source in HostValues.List(metrics, "decision_sources").OfType<IReadOnlyDictionary<string, object?>>())
             text.AppendLine($"{HostValues.Text(source, "controller_label")} · {Number(source.GetValueOrDefault("decisions"))} 次 · {Number(source.GetValueOrDefault("decisions_per_real_hour"))} 次/现实小时 · {Number(source.GetValueOrDefault("interface_hours_per_real_hour"))} 消耗小时/现实小时");
         var lifecycle = HostValues.Map(metrics, "lifecycle");
         if (lifecycle.Count > 0)
-            text.AppendLine($"已选择 {Number(lifecycle.GetValueOrDefault("selected"))} · 已排程 {Number(lifecycle.GetValueOrDefault("scheduled"))} · 已完成 {Number(lifecycle.GetValueOrDefault("completed"))} · 待执行 {Number(lifecycle.GetValueOrDefault("pending"))} · 未进入存档 {Number(lifecycle.GetValueOrDefault("selections_not_in_save"))}");
+            text.AppendLine($"会话累计：已选择 {Number(lifecycle.GetValueOrDefault("selected"))} · 已排程 {Number(lifecycle.GetValueOrDefault("scheduled"))} · 已完成 {Number(lifecycle.GetValueOrDefault("completed"))}（含拒绝回执） · 在途 {Number(lifecycle.GetValueOrDefault("pending"))} · 未进入存档 {Number(lifecycle.GetValueOrDefault("selections_not_in_save"))}");
+        foreach (var outcome in HostValues.Map(metrics, "outcomes").OrderBy(item => item.Key, StringComparer.Ordinal))
+            text.AppendLine($"完成回执结果 {outcome.Key} · {Number(outcome.Value)} 次");
+        foreach (var actor in HostValues.List(metrics, "decisions").OfType<IReadOnlyDictionary<string, object?>>())
+            text.AppendLine($"角色 {HostValues.Text(actor, "actor")} / {HostValues.Text(actor, "controller_label")} · 累计已选择 {Number(actor.GetValueOrDefault("decisions"))} 次 · 选择速率 {Number(actor.GetValueOrDefault("decisions_per_real_hour"))} 次/现实小时");
         foreach (var category in HostValues.List(metrics, "categories").OfType<IReadOnlyDictionary<string, object?>>())
             text.AppendLine($"{HostValues.Text(category, "label")} · 排他 {Seconds(category.GetValueOrDefault("exclusive_total_ms"))} 秒");
         foreach (var row in HostValues.List(metrics, "operations").OfType<IReadOnlyDictionary<string, object?>>())

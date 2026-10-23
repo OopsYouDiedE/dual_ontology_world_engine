@@ -103,6 +103,7 @@ internal sealed class SessionPerformance
     private IReadOnlyDictionary<string, object?> provenance = HostValues.Freeze(new Dictionary<string, object?>());
     private IReadOnlyDictionary<string, object?> lifecycle = HostValues.Freeze(new Dictionary<string, object?>());
     private long sequence, dropped, exceptions, unmatchedPhases, interruptedPhases;
+    private long decisionComputeTicks, decisionComputeCalls, decisionComputeIncomplete, decisionInstrumentationTicks;
     private long decisionSequence, droppedDecisions, elapsedWallTicks, wallCursor, rawSequence, interfaceSequence, droppedInterfaces;
     private double wallGameMinute;
     private int wallEpoch;
@@ -377,7 +378,7 @@ internal sealed class SessionPerformance
         internal required double GameStart;
         internal required int Epoch;
         internal required bool IsPhase;
-        internal long ChildTicks, ChildAllocated;
+        internal long ChildTicks, ChildAllocated, DecisionInstrumentationAtStart;
         internal bool Failed;
     }
 
@@ -423,7 +424,8 @@ internal sealed class SessionPerformance
 
     private sealed record Sample(long Sequence, long RecordSequence, string Operation, string Category, string Actor,
         string Viewer, string ProjectionScope, int Epoch, double GameStart, double GameEnd, long StartTicks,
-        long DurationTicks, long SelfTicks, long AllocatedBytes, long SelfAllocatedBytes, bool Failed, bool PhaseComplete);
+        long DurationTicks, long SelfTicks, long AllocatedBytes, long SelfAllocatedBytes, bool Failed, bool PhaseComplete,
+        long? DecisionComputeTicks);
 
     private sealed class Scope(SessionPerformance owner, Frame frame, Func<double> clock) : IDisposable
     {
@@ -475,7 +477,8 @@ internal sealed class SessionPerformance
                     Viewer = parent.Category == "projection" && parent.Viewer.Length == 0 ? actor : parent.Viewer,
                     ProjectionScope = parent.ProjectionScope,
                     Started = Stopwatch.GetTimestamp(), Allocated = GC.GetAllocatedBytesForCurrentThread(),
-                    GameStart = parent.GameStart, Epoch = parent.Epoch, IsPhase = true
+                    GameStart = parent.GameStart, Epoch = parent.Epoch, IsPhase = true,
+                    DecisionInstrumentationAtStart = decisionInstrumentationTicks
                 });
                 return;
             }
@@ -491,6 +494,15 @@ internal sealed class SessionPerformance
             }
             FinishTop(stopped, allocated, stack[^1].GameStart, false, false);
         }
+    }
+
+    internal long DecisionInstrumentationCursor { get { lock (gate) return decisionInstrumentationTicks; } }
+
+    internal void ExcludeDecisionInstrumentation(long ticks, long excludedBefore)
+    {
+        // A diagnostic callback may itself write performance records. Charge
+        // the enclosing interval once, rather than subtracting nested I/O twice.
+        lock (gate) decisionInstrumentationTicks += Math.Max(0, ticks - (decisionInstrumentationTicks - excludedBefore));
     }
 
     internal void RecordFailure()
@@ -542,6 +554,17 @@ internal sealed class SessionPerformance
         var frame = stack[^1];
         stack.RemoveAt(stack.Count - 1);
         var ticks = Math.Max(0, stopped - frame.Started);
+        long? decisionTicks = null;
+        if (frame.Operation == "phase.decision-compute" && EngineCategory(frame.Category))
+        {
+            decisionComputeCalls++;
+            if (incomplete || frame.Failed) decisionComputeIncomplete++;
+            else
+            {
+                decisionTicks = Math.Max(0, ticks - (decisionInstrumentationTicks - frame.DecisionInstrumentationAtStart));
+                decisionComputeTicks += decisionTicks.Value;
+            }
+        }
         var bytes = Math.Max(0, allocated - frame.Allocated);
         var self = Math.Max(0, ticks - frame.ChildTicks);
         var selfBytes = Math.Max(0, bytes - frame.ChildAllocated);
@@ -551,7 +574,7 @@ internal sealed class SessionPerformance
             stack[^1].ChildAllocated += bytes;
         }
         Add(frame.Category, frame.Operation, frame.Actor, frame.Viewer, frame.ProjectionScope, frame.Epoch, frame.GameStart,
-            minute, frame.Started, ticks, self, bytes, selfBytes, frame.Failed, incomplete);
+            minute, frame.Started, ticks, self, bytes, selfBytes, frame.Failed, incomplete, decisionTicks);
         if (root && frame.Category == "engine" && minute > frame.GameStart)
         {
             advancedMinutes += minute - frame.GameStart;
@@ -574,7 +597,8 @@ internal sealed class SessionPerformance
     }
 
     private void Add(string category, string operation, string actor, string viewer, string projectionScope, int timeline,
-        double gameStart, double gameEnd, long started, long ticks, long self, long allocated, long selfAllocated, bool failed, bool incomplete)
+        double gameStart, double gameEnd, long started, long ticks, long self, long allocated, long selfAllocated, bool failed, bool incomplete,
+        long? decisionTicks = null)
     {
         var key = (category, operation, actor, viewer, projectionScope);
         if (!totals.TryGetValue(key, out var aggregate)) totals[key] = aggregate = new();
@@ -582,7 +606,7 @@ internal sealed class SessionPerformance
         var bucket = Bucket(timeline, (long)Math.Floor(gameStart / 60d));
         bucket.SelfTicks[category] = bucket.SelfTicks.GetValueOrDefault(category) + self;
         var sample = new Sample(++sequence, ++rawSequence, operation, category, actor, viewer, projectionScope,
-            timeline, gameStart, gameEnd, started - origin, ticks, self, allocated, selfAllocated, failed, !incomplete);
+            timeline, gameStart, gameEnd, started - origin, ticks, self, allocated, selfAllocated, failed, !incomplete, decisionTicks);
         if (samples.Count == SampleCapacity) { samples.Dequeue(); dropped++; }
         samples.Enqueue(sample);
         StreamRecordLocked(SampleRecord(sample));
@@ -621,7 +645,7 @@ internal sealed class SessionPerformance
     };
     private static string OperationLabel(string operation) => operation switch
     {
-        "phase.cognition" => "人物认知", "phase.choice" => "行动选策", "phase.goals" => "目标整理",
+        "phase.cognition" => "人物认知", "phase.choice" => "行动选策", "phase.decision-compute" => "选策计算", "phase.goals" => "目标整理",
         "phase.planning-index" => "规划索引", "phase.planning-dependencies" => "规划依赖",
         "phase.planning-expand" => "规划展开", "phase.planning-forecast" => "规划预测",
         "phase.observer-index" => "投影索引",
@@ -658,6 +682,35 @@ internal sealed class SessionPerformance
         values["sample_window_partial"] = wallMs < 3600000d;
     }
 
+    private void AppendPerGameHour(Dictionary<string, object?> values)
+    {
+        var gameHours = advancedMinutes / 60d;
+        var choiceMs = Milliseconds(decisionComputeTicks);
+        var activeEngine = stack.Any(frame => EngineCategory(frame.Category));
+        var complete = !activeEngine && decisionComputeIncomplete == 0;
+        values["per_game_hour_measurement_complete"] = complete;
+        values["engine_decision_count"] = decisionCounts.GetValueOrDefault("engine");
+        values["engine_decision_compute_total_ms"] = complete ? choiceMs : null;
+        values["engine_decision_compute_recorded_ms"] = choiceMs;
+        values["engine_decision_compute_calls"] = decisionComputeCalls;
+        values["engine_decision_compute_incomplete_calls"] = decisionComputeIncomplete;
+        values["engine_decisions_per_game_hour"] = !activeEngine ? Ratio(decisionCounts.GetValueOrDefault("engine"), gameHours) : null;
+        values["engine_decision_compute_ms_per_game_hour"] = complete ? Ratio(choiceMs, gameHours) : null;
+        values["elapsed_real_ms_per_game_hour"] = !activeEngine ? Ratio(Milliseconds(elapsedWallTicks), gameHours) : null;
+        values["per_game_hour_basis"] = "current session accumulated forward game-hour advancement; zero advancement is missing";
+        values["engine_decision_compute_basis"] = "dvs_choose wall time including planning and unadopted speculation; excludes cognition, execution, projection, waiting, performance-stream encoding/writes and external phase-observer callbacks; not CPU time";
+    }
+
+    private object[] DecisionRows(double wallMs, string actor = "") => decisions.Where(item => actor.Length == 0 || item.Key.Actor == actor).OrderBy(item => item.Key.Controller, StringComparer.Ordinal)
+        .ThenBy(item => item.Key.Actor, StringComparer.Ordinal)
+        .Select(item => (object)HostValues.Freeze(new Dictionary<string, object?>
+        {
+            ["actor"] = item.Key.Actor, ["controller_kind"] = item.Key.Controller, ["controller_label"] = ControllerLabel(item.Key.Controller),
+            ["decisions"] = item.Value.Count, ["decisions_per_real_hour"] = Frequency(item.Value.Count, wallMs),
+            ["first_event"] = item.Value.FirstEvent, ["last_event"] = item.Value.LastEvent,
+            ["first_game_minute"] = item.Value.FirstMinute, ["last_game_minute"] = item.Value.LastMinute
+        })).ToArray();
+
     internal IReadOnlyDictionary<string, object?> Summary(bool closed)
     {
         lock (gate)
@@ -672,9 +725,13 @@ internal sealed class SessionPerformance
                 ["planning_mode_approximation"] = selectivePlanning,
                 ["measured_until_ticks"] = now - origin, ["wall_measured_until_ticks"] = wallStarted ? wallCursor - origin : null,
                 ["stopwatch_frequency"] = Stopwatch.Frequency, ["wall_clock_stopped"] = wallStopped,
-                ["active_scopes"] = stack.Count, ["active_decision_interfaces"] = interfaceWaits.Count
+                ["active_scopes"] = stack.Count, ["active_decision_interfaces"] = interfaceWaits.Count,
+                ["lifecycle"] = controllerKind == "engine" ? lifecycle : HostValues.Empty,
+                ["decision_actor_scope"] = playerActor.Length == 0 ? "all" : playerActor,
+                ["decisions"] = Array.AsReadOnly(DecisionRows(Milliseconds(elapsedWallTicks), playerActor))
             };
             AppendActivity(values, advancedMinutes, engine, elapsedWallTicks, decisionCounts, interfaceTicks);
+            if (controllerKind == "engine") AppendPerGameHour(values);
             return HostValues.Freeze(values);
         }
     }
@@ -712,15 +769,7 @@ internal sealed class SessionPerformance
                 ["inclusive_p95_upper_ms"] = item.Value.PercentileUpper(0.95), ["inclusive_max_ms"] = Milliseconds(item.Value.Maximum),
                 ["allocated_bytes"] = item.Value.Allocated, ["self_allocated_bytes"] = item.Value.SelfAllocated
             })).ToArray();
-        var decisionRows = decisions.OrderBy(item => item.Key.Controller, StringComparer.Ordinal)
-            .ThenBy(item => item.Key.Actor, StringComparer.Ordinal)
-            .Select(item => (object)HostValues.Freeze(new Dictionary<string, object?>
-            {
-                ["actor"] = item.Key.Actor, ["controller_kind"] = item.Key.Controller, ["controller_label"] = ControllerLabel(item.Key.Controller),
-                ["decisions"] = item.Value.Count, ["decisions_per_real_hour"] = Frequency(item.Value.Count, wallMs),
-                ["first_event"] = item.Value.FirstEvent, ["last_event"] = item.Value.LastEvent,
-                ["first_game_minute"] = item.Value.FirstMinute, ["last_game_minute"] = item.Value.LastMinute
-            })).ToArray();
+        var decisionRows = DecisionRows(wallMs);
         var sources = decisionCounts.Keys.Concat(interfaceTicks.Keys).Append("engine").Append(controllerKind)
             .Distinct(StringComparer.Ordinal).OrderBy(source => source, StringComparer.Ordinal);
         var sourceRows = sources.Select(source =>
@@ -806,12 +855,14 @@ internal sealed class SessionPerformance
             ["failure_basis"] = "reported invocation and persistence exceptions; action outcomes and interface cancellation are separate",
             ["provenance"] = provenance, ["lifecycle"] = lifecycle,
             ["categories"] = Array.AsReadOnly(categoryRows), ["operations"] = Array.AsReadOnly(operationRows),
+            ["decision_actor_scope"] = "all",
             ["decisions"] = Array.AsReadOnly(decisionRows), ["decision_sources"] = Array.AsReadOnly(sourceRows),
             ["interface_phases"] = Array.AsReadOnly(interfaceRows), ["planning"] = Array.AsReadOnly(planningRows),
             ["hourly"] = Array.AsReadOnly(hourRows),
             ["outcomes"] = HostValues.Freeze(outcomes.ToDictionary(item => item.Key, item => (object?)item.Value, StringComparer.Ordinal))
         };
         AppendActivity(result, advancedMinutes, engineMs, elapsedWallTicks, decisionCounts, interfaceTicks);
+        AppendPerGameHour(result);
         return HostValues.Freeze(result);
     }
 
@@ -823,7 +874,8 @@ internal sealed class SessionPerformance
         ["game_start_minute"] = sample.GameStart, ["game_end_minute"] = sample.GameEnd,
         ["start_ticks"] = sample.StartTicks, ["duration_ticks"] = sample.DurationTicks, ["self_ticks"] = sample.SelfTicks,
         ["allocated_bytes"] = sample.AllocatedBytes, ["self_allocated_bytes"] = sample.SelfAllocatedBytes,
-        ["failed"] = sample.Failed, ["phase_complete"] = sample.PhaseComplete
+        ["failed"] = sample.Failed, ["phase_complete"] = sample.PhaseComplete,
+        ["decision_compute_ticks"] = sample.DecisionComputeTicks
     };
 
     private static IReadOnlyDictionary<string, object?> DecisionRecord(DecisionSample decision) => new Dictionary<string, object?>
@@ -889,8 +941,10 @@ internal sealed class SessionPerformance
     private void StreamRecordLocked(IReadOnlyDictionary<string, object?> record)
     {
         if (recording is null) return;
+        var started = Stopwatch.GetTimestamp();
         try { BinaryEvidence.WriteFrame(recording, RecordValue(record)); }
         catch (Exception error) { AbandonRecordingLocked(error); }
+        finally { decisionInstrumentationTicks += Math.Max(0, Stopwatch.GetTimestamp() - started); }
     }
 
     private static void WriteSummaryAndSeal(Stream stream, IReadOnlyDictionary<string, object?> snapshot, string policy, long omitted)
@@ -1035,6 +1089,11 @@ internal sealed class SessionPerformance
         text.AppendLine();
         text.AppendLine("分母统一为打开或恢复完成至关闭请求的现实游玩时长。小于一现实小时仍按本窗口累计量相除，属于短窗口观测比率，不代表已运行整小时或整局预测；分母为零时留空。引擎接口累计正式计算及提前准备的排他墙钟耗时，包含未采用的提前计算。人工/大模型接口只累计实际出现的可选请求至接受、取消或关闭的区间；没有该记录时为空。接口并行时累计区间允许重叠，不能当作单线程占用率。");
         text.AppendLine("决策数只来自本次正式状态新增的 action_selected；选择、排队、完成与存档提交边界分别记录。Complete 包含成功及拒绝的真实回执，结果由 outcomes 区分；待执行和未进入存档的尾部选择不算作失败。UI 聚焦、规划节点、旧存档历史、开发操作及未采用分支不重复计数。所有来源的决策频率共用现实分母。");
+        text.AppendLine("\n## 每游戏小时折算\n");
+        text.AppendLine("以下按本次会话累计实际推进的游戏小时折算，不是完整一游戏小时的独立采样；推进为零时缺失。");
+        text.AppendLine($"引擎正式选择 {Number(snapshot["engine_decisions_per_game_hour"])} 次 / 游戏小时；选策计算 {Number(snapshot["engine_decision_compute_ms_per_game_hour"] is double compute ? compute / 1000d : null)} 秒 / 游戏小时；现实经过 {Number(snapshot["elapsed_real_ms_per_game_hour"] is double elapsed ? elapsed / 1000d : null)} 秒 / 游戏小时。");
+        text.AppendLine($"选策累计 {Number(snapshot["engine_decision_compute_total_ms"])} ms；有效闭合区间合计 {Number(snapshot["engine_decision_compute_recorded_ms"])} ms；未完整区间 {Number(snapshot["engine_decision_compute_incomplete_calls"])}；计量完整 {Number(snapshot["per_game_hour_measurement_complete"])}。");
+        text.AppendLine("选策计算只计 dvs_choose 与规划的实际墙钟，含未采用提前计算，扣除性能流编码/写入与外部阶段观察回调；不含其余认知、Complete、截图/投影、等待或归档，不等于纯 CPU 时间。未闭合或失败区间不补造为完整测量，选策总耗时与其折算值保持缺失。");
         text.AppendLine("\n## 控制来源\n");
         text.AppendLine("| 来源 | 正式选择 | 次/现实小时 | 累计接口 ms | 接口小时/现实小时 |");
         text.AppendLine("| --- | ---: | ---: | ---: | ---: |");

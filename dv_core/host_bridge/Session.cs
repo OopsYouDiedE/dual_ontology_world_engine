@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using DuelView.Compiled;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -67,7 +68,13 @@ public sealed partial class DvSession
         using var phases = R.UsePhases((stage, actor) =>
         {
             ObservePerformancePhase(stage, actor);
-            if (!speculative) PhaseObserver?.Invoke(stage, actor);
+            if (!speculative && PhaseObserver is { } observer && stage is not ("decision-compute-start" or "decision-compute-end"))
+            {
+                var excludedBefore = performance.DecisionInstrumentationCursor;
+                var started = Stopwatch.GetTimestamp();
+                try { observer(stage, actor); }
+                finally { performance.ExcludeDecisionInstrumentation(Stopwatch.GetTimestamp() - started, excludedBefore); }
+            }
         });
         using var recording = R.UseRawRecording(!speculative);
         using var output = R.UseOutput(speculative ? TextWriter.Null : DiagnosticOutput);

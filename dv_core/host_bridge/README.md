@@ -39,7 +39,10 @@
 
 ## 引擎统计
 
-`dv-performance-v3` 的三个主指标统一使用现实游玩小时作分母：`game_hours_per_real_hour` 表示游戏小时/现实小时，`decisions_per_real_hour` 表示正式选择次/现实小时，`interface_hours_per_real_hour` 表示当前控制来源累计接口小时/现实小时。主界面另附真实采样时长与游戏推进量，不再同时显示倒数方向的每游戏小时耗时或每计算小时吞吐。零现实分母为缺失；现实时间有效而游戏未推进时速度为 0。短窗口比率不是完整现实小时实测或整局预测。
+用户要求的每游戏小时折算使用本次实际累计 `advanced_game_minutes / 60` 作分母：`engine_decisions_per_game_hour` 为 engine 来源新增选择数，`engine_decision_compute_ms_per_game_hour` 为选策计算毫秒，`elapsed_real_ms_per_game_hour` 为实测会话现实毫秒；零推进保持缺失。`engine_decision_compute_total_ms` 来自紧邻 `dvs_choose` 的 `decision-compute` 阶段实际墙钟，含规划及未采用 speculation，扣除性能流编码/写入和外部 `PhaseObserver` 回调，避免把整段接口、其余认知、Complete、投影、等待或归档当作思考；它不是纯 CPU 时间。活动引擎操作中不生成混合截止的折算。未闭合或失败的计算区间单列 `engine_decision_compute_incomplete_calls`，使总计算耗时及耗时折算保持未知；`engine_decision_compute_recorded_ms` 只保留有效闭合区间之和，`per_game_hour_measurement_complete` 明确完整性。内部计时阶段不转发给外部 PhaseObserver，既有阶段观察仍保留并单次扣除其真实回调耗时。新增全局引擎折算只在自主摘要及完整工程 Snapshot 提供。二进制 `performance-sample.decision_compute_ticks` 只在有效闭合的选策计算区间记录扣除后的实际ticks，其他或异常区间为空；原 inclusive `duration_ticks` 保留，二者不混用。
+
+
+`dv-performance-v3` 的三个主指标统一使用现实游玩小时作分母：`game_hours_per_real_hour` 表示游戏小时/现实小时，`decisions_per_real_hour` 表示正式选择次/现实小时，`interface_hours_per_real_hour` 表示当前控制来源累计接口小时/现实小时。主界面把上述每现实小时速率与用户要求的每游戏小时选择数量、选策计算耗时和现实经过时长分行列出，明确两组分母与计时范围；详细视图另附真实采样时长与游戏推进量，不把接口耗时当作选策计算耗时。零现实分母为缺失；现实时间有效而游戏未推进时速度为 0。短窗口比率不是完整现实小时实测或整局预测。
 
 现实游玩从打开／恢复完成至关闭请求，包含阅读、思考、输入等待、执行、投影和引擎处理；初始化与关闭归档单列。引擎接口累计正式计算加提前准备的排他墙钟，包括未采用的实际提前计算。人工或模型接口从真实选择请求交付开始，到正式接受、取消或关闭为止；没有请求记录时保持缺失，不用整段会话时间替代。
 
@@ -127,7 +130,7 @@ Godot 用 `--dv-dev`，CLI 用 `--dev`。该配置写入 `story.development_mode
 
 预览结构为 `viewer / snapshot / status / subjective / options / actors / observers / performance`，显式请求时附 `objective`。`actors` 为轻量目录，`observers` 严格只包含本次请求的 viewer，`recorded_viewers=[viewer]`，`projection_scope` 为 `viewer-only` 或 `viewer-and-objective`；不把其他缓存视角混入本帧。目录读取不触发全角色地图。没有请求的视角不补造成已经取得的历史投影；回放的某一视角缺失时保持缺失。选项和评分按实际请求取得，缓存按会话版本失效，重绘复用不可变结果。CLI stdout 按当前观察者与地图模式裁剪；记录保留本次实际请求的预览，不为封存主动展开全体角色。
 
-`performance` 独立于物理世界和人物认识。在本帧所需投影完成后取一次新摘要，交互帧顶层与嵌套预览使用同一份统计；缓存预览不缓存时钟。`measured_until_ticks` 和 Stopwatch 频率标明采样截止，状态版本标明世界截止，二者分开；旧回放缺失时不补造。
+`performance` 独立于物理世界和人物认识。摘要另带实际 `lifecycle` 与按主体区分的 `decisions`，以便把累计选择、实际完成（含拒绝）和在途数与每小时速率分开；自主摘要包含会话 lifecycle 及全角色选择行，人工/LLM 摘要的新增角色行仅包含受控人物且不附全局 lifecycle。`decision_actor_scope` 标明新增角色行覆盖 `all` 还是单个主体，只有该范围内缺少行才能认作真实零选择；旧记录缺失范围不补零。完整 `PerformanceSnapshot` 仍是显式工程统计，包含全角色细分。在本帧所需投影完成后取一次新摘要，交互帧顶层与嵌套预览使用同一份统计；缓存预览不缓存时钟。`measured_until_ticks` 和 Stopwatch 频率标明采样截止，状态版本标明世界截止，二者分开；旧回放缺失时不补造。
 
 `snapshot.actors` 和各 `observers[id].snapshot.actors` 同步保存预览的行政人物目录，供回放视角栏显示姓名；主观成员仍独立采用该观察者实际取得的身份信息。已经 prepared 而不在当前候选集中的动作保留原行动 `label`、实际费用及选择事件来源；标签先取匹配的 `action_selected`，再取当前意图/原行动，均缺失时显示 `（未记录标签）`。
 

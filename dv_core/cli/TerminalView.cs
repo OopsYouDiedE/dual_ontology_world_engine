@@ -569,14 +569,35 @@ public static class TerminalView
         {
             "human" => "人工", "llm" => "LLM", _ => "引擎"
         };
-        var rates = "每现实小时：游戏 " + Format(Number(performance, "game_hours_per_real_hour")) + " h · 决策 " +
-            Format(Number(performance, "decisions_per_real_hour")) + " 次 · " + label + "接口 " +
-            Format(Number(performance, "interface_hours_per_real_hour")) + " h";
-        if (model.Zoom != "detail") return rates;
+        static string Count(double? value) => value is double number ? number.ToString("0", CultureInfo.InvariantCulture) : "—";
+        var engine = ControllerKind(model) == "engine";
+        var actorRows = HostValues.List(performance, "decisions").OfType<IReadOnlyDictionary<string, object?>>()
+            .Where(row => HostValues.Text(row, "actor") == model.Actor).ToArray();
+        var actorScope = HostValues.Text(performance, "decision_actor_scope");
+        var zeroRecorded = actorScope == "all" || actorScope == model.Actor;
+        double? actorSelected = actorRows.Length == 0 ? zeroRecorded ? 0 : null : actorRows.Sum(row => Number(row, "decisions") ?? 0);
         var wall = Number(performance, "elapsed_wall_ms");
+        double? actorRate = actorSelected is double count && wall is double elapsed && elapsed > 0
+            ? count * 3600000d / elapsed : null;
+        var lifecycle = HostValues.Map(performance, "lifecycle");
+        var selected = Number(lifecycle, "selected") ?? Number(performance, "total_decisions");
+        var cumulative = engine
+            ? "会话累计：已选择 " + Count(selected) + " · 已完成 " + Count(Number(lifecycle, "completed")) +
+                "（含拒绝） · 在途 " + Count(Number(lifecycle, "pending"))
+            : "当前检阅者累计：已选择 " + Count(actorSelected);
+        var rates = "速率（每现实小时）：游戏 " + Format(Number(performance, "game_hours_per_real_hour")) +
+            " h · " + (engine ? "会话选择 " : "本人选择 ") +
+            Format(engine ? Number(performance, "decisions_per_real_hour") : actorRate) + " 次 · " + label + "接口 " +
+            Format(Number(performance, "interface_hours_per_real_hour")) + " h";
+        var perGameHour = engine ? "按本次累计推进折算／游戏小时：引擎选择 " +
+            Format(Number(performance, "engine_decisions_per_game_hour")) + " 次 · 选策计算 " +
+            Format(Number(performance, "engine_decision_compute_ms_per_game_hour"), 1000) + " 秒 · 现实经过 " +
+            Format(Number(performance, "elapsed_real_ms_per_game_hour"), 1000) + " 秒" : "";
+        var statistics = cumulative + "\n" + rates + (perGameHour.Length > 0 ? "\n" + perGameHour : "");
+        if (model.Zoom != "detail") return statistics;
         var duration = wall is double milliseconds ? Format(milliseconds, 1000) + " 秒" : "—";
-        return rates + "\n采样 " + duration + " / 推进 " +
-            Format(Number(performance, "advanced_game_minutes")) + " 游戏分";
+        return statistics + "\n" + (engine ? "当前检阅者累计已选择 " + Count(actorSelected) + " · " : "") +
+            "采样 " + duration + " / 推进 " + Format(Number(performance, "advanced_game_minutes")) + " 游戏分";
     }
 
     private static string ControllerKind(TerminalModel model)

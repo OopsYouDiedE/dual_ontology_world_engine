@@ -7937,7 +7937,9 @@ fn dvs_prepare_actor(state):
                 choice = dvs_player_choice(actor, selection)
         else:
             dvs_debug_phase(story, actor.id, time, "choice-start")
+            rt_phase("decision-compute-start", actor.id)
             choice = dvs_choose(actor, bindings, costs)
+            rt_phase("decision-compute-end", actor.id)
             dvs_debug_phase(story, actor.id, time, "choice-end")
         choice = dv_with_many(choice, {"cognition_reused": dv_find(actor, "cognition_reused", false), "reason_reused": dv_find(actor, "reason_reused", false), "cognition_stop": dv_find(actor, "cognition_stop", "ordinary-cognition-pass"), "evaluated_at_game_time": time, "mind_revision": actor.mind.revision})
         if dv_find(choice, "continuation", false) != false:
