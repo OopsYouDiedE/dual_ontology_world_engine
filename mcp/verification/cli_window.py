@@ -275,6 +275,8 @@ def child(folder):
     while not (folder/'release.flag').exists(): time.sleep(.1)
 
 def start(args):
+    if args.stage == 'player' and args.controller != 'llm':
+        raise ValueError('Blind-player sessions require controller=llm.')
     folder=pathlib.Path(args.session).resolve(); repo=pathlib.Path(args.repo).resolve()
     folder.mkdir(parents=True,exist_ok=True)
     if any(folder.iterdir()): raise RuntimeError('Session folder must be empty; never overwrite an existing game/evidence.')
@@ -284,6 +286,8 @@ def start(args):
           '--zone',args.zone,'--viewer',args.viewer,'--planning','selective','--opt-taskgraph','off',
           '--trace',str(folder/'session.dvdag'),'--save',str(folder/'session.dvsave'),
           '--performance',str(folder/'engine'),'--source-revision',args.source_revision]
+    if args.stage == 'player':
+        argv += ['--map','subjective','--no-scores']
     manifest={'version':1,'repo':str(repo),'session':str(folder),'stage':args.stage,
               'source_revision':args.source_revision,'assembly_sha256':digest(assembly),
               'bridge_sha256':digest(__file__),'argv':argv,'created':stamp(),'steps':{},'pending':None}
@@ -306,12 +310,25 @@ def start(args):
             evidence(writer,manifest,run,'startup_failed',error=repr(error))
             raise
 
+def validate_player_input(text):
+    parts=text.strip().lower().split(maxsplit=1)
+    verb=parts[0] if parts else ''
+    argument=parts[1].strip() if len(parts)>1 else ''
+    if verb in ('view','views','inspect','tp','time'):
+        raise ValueError('Blind-player bridge forbids observer changes and developer inspection/mutation.')
+    if verb == 'map' and argument != 'subjective':
+        raise ValueError('Blind-player map must explicitly remain subjective.')
+    if verb == 'scores' and argument != 'off':
+        raise ValueError('Blind-player sessions do not expose planner scores.')
+
+
 def command(args):
     folder=session_folder(args.session)
     if not re.fullmatch(r'[A-Za-z0-9_.:-]{1,100}',args.command_id): raise ValueError('Use a short safe command-id')
     if '\n' in args.text or '\r' in args.text: raise ValueError('Exactly one normal CLI input line per command')
     with locked(folder):
         manifest=read_json(folder/'manifest.json'); run=runtime(folder)
+        if manifest['stage'] == 'player': validate_player_input(args.text)
         if args.command_id in manifest['steps']:
             return {'duplicate_not_delivered':True,'step':manifest['steps'][args.command_id]}
         if run.get('game_exit') is not None: raise RuntimeError('CLI has exited; no input delivered to its retained window.')

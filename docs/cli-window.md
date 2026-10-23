@@ -7,3 +7,5 @@
 有限渲染检查可用 stage=player、controller=llm 启动到输入提示，只截图并正常 quit；不请求 next、选择或确认行动，因此不构成全局 AI 验收。检查必须实际查看 JPG，确认窗口边界、右侧页码和底部 dv> 提示均存在。完整剧情仍须独立运行核验。
 
 读取快照在控制台重绘或替换缓冲区时最多重读三次，只处理 Win32 1/6/87 的瞬时读错误；失败继续向上报告。读取前后缓冲区几何与光标必须一致才认可 ready。每份快照记录 read_retries/read_stable；重读绝不重投用户输入。
+
+stage=player 强制 controller=llm，启动加 --map subjective --no-scores。桥在投递前拒绝 view/views、inspect/tp/time、未显式 subjective 的 map，以及非 off 的 scores；AI 审查阶段不受这些视角约束。此边界只覆盖该桥入口，不宣称原 CLI 已删除这些能力；盲玩必须只经桥投递命令。
