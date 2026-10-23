@@ -2297,7 +2297,7 @@ fn c2i_actions(actor):
         let pre = dv_all([campaign_at(actor, "document_workshop"), c2_alive(actor), dv_fact(campaign_own(actor, "restriction_withdrawn"), false)])
         let grants = [campaign_ref("case.contract", "joined_inventory"), campaign_ref("case.contract", "lock_no_pry"), campaign_own(actor, "restriction_withdrawn")]
         let speech = dv_with_many(campaign_speech(dv_true(), source, "actual-evidence-led-correction"), {"surface": "我在现场重新核对了拼合清册与锁具。材料已推翻先前的窃取指控，我撤回指控和由我提出的自由限制。", "channel": "local"})
-        var correction = campaign_surface_action("ward.c2.review-and-correct", "experiment", pre, c2g_review_correction_law().premise, "ward.c2.review-and-correct", grants, "当面复核并按核实结果更正记录", "当面复核清册和锁具；材料核清后更正指控记录。", source)
+        var correction = campaign_surface_action("ward.c2.review-and-correct", "experiment", pre, c2g_review_correction_law().premise, "ward.c2.review-and-correct", grants, "当面复核并按核实结果更正记录", speech.surface, source)
         correction = dv_with_many(correction, {"storyflow_only": true, "repeatable": true, "speech": speech, "listeners": campaign_people(), "public_observers": campaign_people(), "public_grants": grants, "personal_choice": {"group": "ward.review-evidence", "requires": pre, "prohibits": dv_fact(campaign_own(actor, "restriction_withdrawn"), true), "promotes": ["records", "evidence", "witnesses"], "sacrifices": [], "require_positive": true, "basis": [source]}})
         rt_push(result, correction)
     let custody = c2_inspect_action(actor, "case.contract", "document_workshop", ["key_returned", "cabinet_key_holder"], "核对钥匙交接记录", "当面核对代管钥匙的持有人与实际交接记录。", campaign_approved("actual-key-custody-receipt"))
