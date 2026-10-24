@@ -3,6 +3,22 @@
     "name": "asset_pipeline",
     "description": "Build or publish selected maps, art, UI and geometry assets. arguments contains the selected script command-line options; publisher source/review inputs remain explicit.",
     "routes": {
+      "highlight-terrain": {
+        "kind": "python",
+        "path": "asset_pipeline/publish_highlight_tiles.py"
+      },
+      "highlight-report": {
+        "kind": "python",
+        "path": "verification/render_highlight_report.py"
+      },
+      "highlight-stages": {
+        "kind": "python",
+        "path": "asset_pipeline/build_highlight_stages.py"
+      },
+      "highlight-room-skins": {
+        "kind": "python",
+        "path": "asset_pipeline/publish_room_terrain_skins.py"
+      },
       "document-textures": {
         "kind": "python",
         "path": "asset_pipeline/build_document_textures.py"

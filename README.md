@@ -25,6 +25,8 @@ Core 提供原生值会话和 CLI 两种宿主入口，二者使用同一 Prepar
 
 ## 构建和游玩
 
+本轮六幕制作入口：`& $env:GODOT --path godot_csharp -- --highlights`，也可用 `--highlight=chess_god` 指定一幕。素材按自动地形、独立物件、人物分类，入口见 `godot_csharp/scenes/Highlights/README.md`；当前制作与实际观察放在 [HTML汇报](artifacts/dv-approx-highlights/index.html)。默认近似决策和多频模拟的实现范围见 [DV模拟接口](dv_core/SIMULATION.md)。
+
 环境为 .NET 8 SDK、Godot 4.6.1 .NET 与 Python 3。在仓库根目录运行：
 
 ```powershell

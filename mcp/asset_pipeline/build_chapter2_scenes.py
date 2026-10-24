@@ -527,7 +527,8 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
         lines += [f'[node name="{s["id"]}" type="Marker2D" parent="Sites"]', f'position = Vector2({s["point"][0]}, {s["point"][1]})',
                   f'metadata/label = {json.dumps(s["label"], ensure_ascii=False)}', '']
         if s.get("geometry_only", False): lines.insert(len(lines) - 1, 'metadata/geometry_only = true')
-    return "\n".join(lines)
+    from publish_room_terrain_skins import attach_skin
+    return attach_skin("\n".join(lines), room)
 
 
 def main():

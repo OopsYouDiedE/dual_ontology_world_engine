@@ -2062,7 +2062,7 @@ class SpatialInputInner extends Node:
 		for point in field._station_approaches(station, grid):
 			if field.adapter.entered_room(point) != str(field.snapshot.get("execution_room", "")) or not field.adapter.walkable(point, field.player): continue
 			if field.position_occupied(field.player, point): continue
-			var route := field.navigation_route(field.player.position, point, grid)
+			var route: PackedVector2Array = field.navigation_route(field.player.position, point, grid)
 			if route.is_empty(): continue
 			var distance: float = field._route_cost(field.player.position, route, point)
 			if distance < best:

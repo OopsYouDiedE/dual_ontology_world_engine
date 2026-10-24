@@ -32,6 +32,7 @@ var audit_enabled := false
 var navigation_sampling := false
 var _preview_tokens: Dictionary = {}
 var _npc_tick_at := 0
+var _simulation_pulse_second := -1
 var field_executor: Node
 var view_trace: Node
 var engine: Node
@@ -55,6 +56,10 @@ func _timing(stage: String, details: Dictionary = {}) -> void:
 	engine.RecordTiming({"stage": stage, "interaction_id": _interaction_id, "details": details})
 
 func _ready() -> void:
+	for argument in OS.get_cmdline_user_args():
+		if argument == "--highlights" or argument.begins_with("--highlight="):
+			get_tree().call_deferred("change_scene_to_file", "res://scenes/Highlights/Highlights.tscn")
+			return
 	if not replay_mode:
 		get_tree().auto_accept_quit = false
 		add_to_group("lifecycle_hosts")
@@ -348,6 +353,11 @@ func dispatch(input: Dictionary) -> void:
 func _process(_delta: float) -> void:
 	if flow.bookmark_requested: _try_bookmark_save()
 	var can_background := flow.allows_background()
+	var current_second := int(Time.get_ticks_msec() / 1000)
+	if can_background and not replay_mode and engine.has_method("CanSimulationPulse") and not flow.background_execution and _dv_intent.is_empty() and not flow.completion_pending and current_second > _simulation_pulse_second and engine.CanSimulationPulse():
+		_simulation_pulse_second = current_second
+		engine.Dispatch({"kind": "simulation_pulse", "seconds": current_second})
+		return
 	if can_background and not flow.background_execution and _dv_intent.is_empty() and not flow.completion_pending and (flow.reading or _queue.is_empty()) and engine.CanBackgroundTick() and Time.get_ticks_msec() >= _npc_tick_at:
 		_npc_tick_at = Time.get_ticks_msec() + 250
 		engine.Dispatch({"kind": "npc_tick"})

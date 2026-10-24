@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/rooms/central_hall.png" id="arch"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/bench.png" id="t_bench"]
@@ -7,6 +7,8 @@
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/notice_pillar.png" id="t_notice_pillar"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/relay_column.png" id="t_relay_column"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/timetable_board.png" id="t_timetable_board"]
+
+[ext_resource type="Script" path="res://scenes/Chapter2/Field/RoomTerrainSkin.gd" id="redrawn_floor_skin"]
 
 [sub_resource type="RectangleShape2D" id="s0"]
 size = Vector2(384, 32)
@@ -199,6 +201,12 @@ metadata/stage_lights = [{"kind": "sconce", "point": [288, 100]}, {"kind": "scon
 z_index = -10
 texture = ExtResource("arch")
 centered = false
+
+[node name="RedrawnTerrainSkin" type="Node2D" parent="."]
+z_index = -9
+script = ExtResource("redrawn_floor_skin")
+floor_terrain = 0
+preserved_discs = PackedVector3Array(416, 424, 104)
 
 [node name="Objects" type="Node2D" parent="."]
 y_sort_enabled = true

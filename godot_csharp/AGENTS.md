@@ -34,6 +34,10 @@
 
 ## 权威与执行
 
+近似模拟的 `simulation_pulse` 在宿主空闲已提交边界每现实秒至多入队一次；GameEngine 沿同一后台队列调用 `DvSession.SimulationPulse`。回放与 Mock 不发送该命令，正在执行的动作等待完成。脉冲只刷新近场范围和现有事实知情映射，实际游戏时间及权威行动沿正式链推进。恢复后的现实秒由会话实例重定基点。
+
+`--highlights` 或 `--highlight=<id>` 在创建正式会话前打开 `scenes/Highlights/Highlights.tscn`。六幕舞台读取 `Contracts/highlight_stages.json`，范围为在场演出，实际操作不写入正式世界存档。自动地形、物件与人物沿各自源管线重建。
+
 正式链为 `Prepare → Godot 现场执行 / 世界法则回执 → Complete → 呈现`。`execution_snapshot` 只服务执行主体；玩家文字与案卷来自观察者投影。执行者等于观察者时复用同一快照。GameEngine 通过 `Project` 接收 StateDelta，缓存静态字段，转换变化字段；正常动作路径不往返 JSON。文件持久化与人可读状态导出使用各自的序列化边界。
 
 GameEngine 在单一后台队列中使用 DvSession，工作线程不访问场景节点。主线程接收已完成的数据图后只读使用。UI 编辑另建自己的数据。正式动作 pending 期间不得重新分派该动作；重复 Complete 按 action_event 去重。开发命令输入错误只返回控制台，普通动作中无法确定提交状态的异常由会话错误入口处理。
@@ -62,6 +66,8 @@ Main 进入关闭时停止新输入与新动作请求，继续接收已经进入
 
 ## 几何与资产
 
+`RoomTerrainSkin.gd` 只读取现役场景 `terrain_rows` 的 `.DS` 格装配地面 TileMap；当前发布范围为 central_hall 和 granary。重绘层位于 Architecture 与独立物件之间，原镶嵌地纹用原图坐标保留，碰撞、门、站点和位置ID继续由原场景持有。`asset_pipeline/highlight-room-skins` 与章节地图生成器共用 `attach_skin`，避免再生成时丢失接线。
+
 `Contracts/geometry_contract.json` 是路由、锚点、房间、站点、站位、出生点、出口与室外坐标的唯一发布合同，含 cell_size、maps 和 additions。房间提供完整执行 ID、region、rect 和精确 rects；出口同时声明 point、path、rect、target、spawn、internal_gate 和可选 gate。室外坐标使用 outdoor_origin/core/cores/origins。CampusMapView、WorldView 与地图页通过 GeometryCatalog 使用该合同，正式场景提供画面与碰撞实例。外部 living_hall 目标在发布时显式映射为 living_floor 及其带前缀出生点，运行端不重复推导旧别名。仅一个 region 的地图保留统一区域语义；多区域地图无匹配为 void。DV 只使用语义位置和锚点 ID。
 
 GeometryCatalog 只负责运行读取与绑定。完整场景/合同校对函数位于 `../mcp/sandboxes/GeometryContractValidator.gd`，由 MapSandbox 在 bind_layout 前调用；校对逻辑不进入生产 Host。
@@ -79,6 +85,10 @@ Main 在地图、人物、碰撞、UI、物理注册与实际绘制完成后揭�
 对白称谓只使用该条已交付的 speaker_name；内部 speaker 只用于资源映射。案卷只归档实际读到的观察者正文。个人草稿不授予事实。Main 保留 execution_event、source_id、source_field、行序号和 source_refs，公开的 presentation_id 贯穿对白与空间选项；panel 使用 dialogue / spatial / casebook 等实际界面身份。
 
 ## 诊断、控制台与演出样本
+
+`scenes/Highlights/Highlights.tscn` 是独立条件节选舞台，读取 `Contracts/highlight_stages.json`，使用32px地形、独立道具和局部CharacterBody2D演出。它不创建正式会话，不授予观察、效果或通关；`--highlight=<id>` 选择六段之一。启动、内容cue、Y排序和局部搬运边界见 `scenes/Highlights/README.md`。舞台图像发布器为 MCP 的 `asset_pipeline/highlight-stages`，自动地形发布器单独维护地形连接与来源合同。
+
+高光舞台的移动与搬运cue等待实际route_finished；在途关闭下一句，受阻停止后续旁白，交接后才登记接收。16×12画布整体近看，人物与32格比例不单独缩放。墙体使用16四边格式，地面和岸缘使用47角边格式；它们共享稳定source/terrain编号。
 
 PlayerViewTrace 常开完整原始输入事件记录，通过 node_added 为新增控件接线。普通启动不逐帧扫描 UI 树；`--dv-audit` 或控制台 `audit on` 才开启逐帧扫描和可见记录，关闭审计保留事件输入记录。呈现样本使用 `kind: presentation`，并保留实际身体样本与原始输入。时序存储为 4096 条环，每次 PollTimings 最多消费 256 条；关闭清单记录丢弃量。
 

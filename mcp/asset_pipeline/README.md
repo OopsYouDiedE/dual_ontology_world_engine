@@ -11,6 +11,10 @@
 | UI | `ui-theme`、`ui-paper`、`ui-desk`、`translations` | 主题、纸纹、书桌与本地化资源 |
 | 选定原稿发布 | `publish-reference-desk`、`publish-redrawn-cast`、`publish-geometry-assets` | 按各发布器的原稿、复核记录和目录参数发布成品 |
 | 共享几何合同 | `geometry-contract` | 从场景提取锚点、出口、门禁与室外坐标，保留合同中已声明的房间区域和连接 |
+| 高光舞台物件与人物 | `highlight-stages` | `build_highlight_stages.py` 裁切已保留的 ImageGen 透明原稿，发布分类道具 PNG / AtlasTexture 和 32×48 三向人物 atlas；不启动游戏或会话 |
+| 正式房间地面重绘层 | `highlight-room-skins` | `publish_room_terrain_skins.py --maps central_hall granary` 接入地面 TileMap；格坐标来自原 terrain_rows，保留镶嵌纹样、独立家具、几何和门口。章节地图再生复用同一函数 |
+
+高光舞台的可复用资源和独立场景说明见 `../../godot_csharp/scenes/Highlights/README.md`。`sources/Internal/Props/Highlights/prompts.json` 保存 built-in ImageGen 提示词；人物的比例修订另记在 `sources/Internal/Characters/Highlights/cast_revision_prompt.json`。原稿裁切、透明边界与 nearest-neighbor 发布比例写入成品 manifest，实际画面效果另行观察。背景原稿保留为制作参考，运行地图使用 TileMap 与独立道具装配。
 
 `arguments` 是脚本原有参数列表。书桌的两个 Blender 入口读取 `BLENDER` 环境变量或 PATH。角色发布的 `--source`、`--review` 等输入保持显式；缺少原稿时先补齐原稿。地图生成器的 `--site-source` 和文字输入遵循其命令参数，已有发布成品不会被当作缺失原稿的替代来源。
 
@@ -28,3 +32,7 @@
 场景中的旧外部目标 `living_hall` 在发布时映射到 `living_floor`，目标出生点显式加 `living_hall_` 前缀；`doors` 的对应 target_map/to 同步更新。`living_hall:hall` 等内部房间标识保持原义。运行端读取发布合同，不再重复推导这项映射。
 
 独立静态入口是 `diagnostics` 的 `geometry`；Godot MapSandbox 使用同一合同核对实际加载场景。它们只在明确调用时运行。生成、静态对照、物理运动和人工画面观察各自报告其结果。
+
+## Highlights 地形发布
+
+`python mcp/asset_pipeline/publish_highlight_tiles.py --source <4x4材质原图>` 提取完整材质格，以 nearest-neighbor 发布32×32原料，再派生floor47角边、wall16四边、water47岸缘。遮罩保留中心16×16；四边使用16宽连接臂；47格式角位独立控制8×8角，16格式由相邻两边决定角。清单保存源格、比例、SHA-256、地形索引、peering bits和透明边预览。成品为 `godot_csharp/ShareAsset/Internal/Props/Highlights/Terrain/HighlightsTerrain.tres` 与外置PNG。已逐格绘制的原生图集可用 `--format blob47|wang16|minimal3x3 --floor-source <PNG> --wall-source <PNG> --water-source <PNG>`，分别要求8×6（47格、余格空）、4×4或3×3；3×3为手工变体。`--godot <程序>` 指定生成器使用的Godot。

@@ -1,0 +1,105 @@
+{
+  "baseline": "origin/main d9c8a91e",
+  "state": "核心已推送；架构瘦身与场景对齐继续实施",
+  "summary": "DV近似模拟与舞台接线正在实施；自动地形、独立物件和人物素材分别组织。六段文本是依据本轮剧情边界新写的条件节选，不是设计规范的逐字摘录。",
+  "changes": [
+    {
+      "area": "工作区",
+      "change": "强制对齐远端main；清理其他41个本地分支；其他工作树解除分支绑定。",
+      "result": "完成。当前main从d9c8a91e开始本轮工作。"
+    },
+    {
+      "area": "DV核心",
+      "change": "默认approximate-v1即时效用选择；32位事实知情、过滤、分频调度和单实体保护机制已接生产入口。",
+      "result": "源码已冻结等待构建诊断。现役剧情仍为两章；全岛浓度、日账、动态槽位与保护场景声明尚未迁入。"
+    },
+    {
+      "area": "分类美术",
+      "change": "Astra生成材质、独立物件和人物源；Luna按32格发布floor/wall/water三族及TileSet，支持47、16及3×3输入布局。",
+      "result": "素材已发布，拼接与场内比例待实际查看。主代理修复纹理内嵌，Luna修复peering枚举。"
+    },
+    {
+      "area": "六幕文本",
+      "change": "Sol按卢西安、顾平章、阮清月、沈鼎、苏泠与代管者各自口吻改为短口语。",
+      "result": "新写的条件节选已写入运行JSON；舞台场景正在接线修正。"
+    },
+    {
+      "area": "正式地图",
+      "change": "中央厅与粮仓增加可重建的分类TileMap地面层，生成管线保留接线。",
+      "result": "源码与资源已写入，场内效果等待Luna查看。"
+    }
+  ],
+  "observations": [
+    "Sol已审阅六幕文本；用户修正后又将对白压缩为符合角色教养和职业的短口语。",
+    "地形发布资源原先内嵌原始像素字节，主代理已修发布器改为外部PNG引用。",
+    "Luna依据GodotSharp程序集修正自动地形角边枚举，重新发布TileSet。",
+    "主代理定点审读发现雀儿身份图和四锚物件绑定有误，已交Astra直接修正。",
+    "正式构建诊断准备执行，六舞台现场画面尚待查看。",
+    "Luna已确认宿主构建实际退出成功，并完成Godot资源导入；初次导入的路由类型与join错误已在源码修正。",
+    "正式central_hall与granary地图已接入新TileMap地面层，保持原几何、门和站点；现场拼接效果等待查看。",
+    "主代理按最新契约修正第8条字面为真、第9条禁止主动诱取、第11条未深属且睡前条件持续成立的运行文字。",
+    "真实视口已显示六幕。Luna指出人物画面占比小、门窗位置与地面接缝突兀、棋盘不易辨认、搬运和旁白不同步；Astra正在按图修正。",
+    "CLI复看指出后台确认仍夹杂玩家候选、一次命令结果易被分段读取。源码现已增加command_complete边界、后台确认提示、隐藏当前人工候选及不可见结果的私有元数据。",
+    "当前HTML中的舞台截图用于展示修前问题；新一轮将替换同一固定输出目录。"
+  ],
+  "images": [
+    {
+      "path": "mcp/asset_pipeline/sources/Internal/Props/Highlights/Terrain/materials-4x4.png",
+      "caption": "Astra生成的4×4材质源图；原始规格与32格派生参数保存在asset-manifest.json。"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/Highlights/Terrain/alpha-mask-preview.png",
+      "caption": "程序拓扑派生的47型透明边预览；Godot peering方向已按本机枚举修正。"
+    },
+    {
+      "path": "mcp/asset_pipeline/sources/Internal/Props/Highlights/Objects/objects_master.png",
+      "caption": "建筑、厨房、遗迹、搬运、家具、机关、手持物的透明生产源；已分类发布。"
+    },
+    {
+      "path": "mcp/asset_pipeline/sources/Internal/Characters/Highlights/cast_master.png",
+      "caption": "Astra重绘人物源：诗人、老学者、棋手、代管者；运行帧单独派生为32×48。"
+    }
+  ],
+  "sources": [
+    {
+      "path": "godot_csharp/Contracts/highlight_stages.json",
+      "label": "六幕运行文本与演出提示"
+    },
+    {
+      "path": "mcp/verification/render_highlight_report.py",
+      "label": "本地HTML汇报生成器"
+    },
+    {
+      "path": "docs/design-standard.md",
+      "label": "最新设计导航"
+    },
+    {
+      "path": "dv_core/SIMULATION.md",
+      "label": "DV近似模拟实现与配置范围"
+    },
+    {
+      "path": "godot_csharp/scenes/Highlights/README.md",
+      "label": "六幕舞台启动与输入方式"
+    },
+    {
+      "path": "godot_csharp/ShareAsset/Internal/Props/Highlights/Terrain/asset-manifest.json",
+      "label": "地形来源、比例、布局及资源清单"
+    },
+    {
+      "path": "mcp/asset_pipeline/publish_highlight_tiles.py",
+      "label": "分类自动地形发布器"
+    },
+    {
+      "path": "artifacts/dv-approx-highlights/runtime/observations.md",
+      "label": "Luna本轮实际观察与范围说明"
+    }
+  ],
+  "pushed_commits": [
+    {
+      "sha": "6e3c90ee",
+      "url": "https://github.com/OopsYouDiedE/dual_ontology_world_engine/commit/6e3c90ee",
+      "summary": "已推送：默认近似决策、事实知情、分频机制、正式桥接与CLI命令边界。"
+    }
+  ],
+  "runtime_caption": "修前现场：Luna通过真实Godot视口和标准键盘输入采集；当前正在按图修正"
+}

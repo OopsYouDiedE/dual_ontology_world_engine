@@ -349,7 +349,7 @@ func _show_inspection(data: Dictionary) -> void:
 func _path_text(value: Array) -> String:
 	var names := PackedStringArray()
 	for part: Variant in value: names.append(str(part))
-	return names.join(" → ")
+	return " → ".join(names)
 
 func _number(value: Variant) -> float:
 	if value is Dictionary:
