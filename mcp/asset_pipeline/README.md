@@ -4,6 +4,7 @@
 
 | 工作 | MCP operation | 源与输出 |
 | --- | --- | --- |
+| 文档纹理体系 | `document-textures` | 三代建筑材质、工业/纸皮、限定视觉及九组透明徽记；制作说明在 `sources/Internal/Textures/DocumentSystems/DESIGN.md`，成品在 `ShareAsset/Internal/Textures/DocumentSystems/`，无参数 |
 | 地图 | `living-floor`、`chapter-maps` | 组合现有场景、显式地图文字和原始室外素材，发布 Chapter2 场景与资源 |
 | 角色 | `anime-cast`、`pixel-cast`、`dialogue-cast`、`character-atlas` | 读取对应原稿，发布角色资源 |
 | 书桌与材质 | `desk`、`desk-surfaces`、`room-props`、`scene-surfaces`、`materials` | Blender 或图像制作源，发布几何、纹理与材质 |

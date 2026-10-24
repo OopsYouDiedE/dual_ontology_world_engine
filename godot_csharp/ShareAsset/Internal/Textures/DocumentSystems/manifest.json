@@ -1,0 +1,466 @@
+{
+  "schema": 1,
+  "tile_size": 512,
+  "construction": "SVG paths, periodic fields and wrapped edge primitives",
+  "seed_policy": "fixed per asset",
+  "source_sha256": {
+    "《安眠者有福》世界卡、人物卡与博弈引擎设计案.md": "ff828837a00ce46ebf0819e1c8d89693b243fda1836ad69edf32a5c910d5d139",
+    "《安眠者有福》地理建筑箱庭、神秘学体系、六章剧情与技术路线.md": "e5b82de45fa761ac43ac1b4a7cecf157d924f309e9a6d3772b2eb65583a0b5a0",
+    "《安眠者有福》美术设定、视觉语言、纹样色彩、UI与音乐声学设计案.md": "3114c471c10deed2a8316f40b63422c8f7ff5907a5f5b1f9305db8c8116f9be4"
+  },
+  "assets": [
+    {
+      "id": "01-columnar-basalt",
+      "name": "六棱玄武岩巨石",
+      "group": "01-ancient",
+      "usage": "远古基座 / 海堤 / 地下 B2、B3",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/01-columnar-basalt.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "02-polished-obsidian",
+      "name": "黑曜石镜面",
+      "group": "01-ancient",
+      "usage": "母祭坛 / 远古镜面石材",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/02-polished-obsidian.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "03-carved-spiral-stone",
+      "name": "玄武岩螺旋水波刻纹",
+      "group": "01-ancient",
+      "usage": "远古铭文石面 / 粗犷螺旋水波",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/03-carved-spiral-stone.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "04-soot-darkened-tuff",
+      "name": "硫磺熏黑凝灰岩",
+      "group": "02-hermetic",
+      "usage": "16 世纪拱券 / 山体石堡",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/04-soot-darkened-tuff.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "06-porous-zeolite",
+      "name": "斜发沸石多孔矿面",
+      "group": "02-hermetic",
+      "usage": "丹房过滤矿床 / 沸石水槽",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/06-porous-zeolite.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "07-zeolite-watercourse",
+      "name": "沸石淋洗水槽",
+      "group": "02-hermetic",
+      "usage": "基地自流泉过滤 / B3 水幕槽",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/07-zeolite-watercourse.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "08-warm-walnut",
+      "name": "深暖胡桃木拼板",
+      "group": "03-academy",
+      "usage": "护墙 / 地板 / 书案 / 屏风木质底材",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/08-warm-walnut.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "09-nanmu-panelling",
+      "name": "楠木框芯护墙板",
+      "group": "03-academy",
+      "usage": "护墙 / 地板 / 书案 / 屏风木质底材",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/09-nanmu-panelling.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "10-cinnabar-lacquer",
+      "name": "朱砂漆面",
+      "group": "03-academy",
+      "usage": "描金屏风底漆 / 皇室器物",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/10-cinnabar-lacquer.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "11-emerald-velvet",
+      "name": "墨绿丝绒绒面",
+      "group": "03-academy",
+      "usage": "帷幕 / 软包；绒毛方向横向",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/11-emerald-velvet.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "12-acid-resistant-glaze",
+      "name": "白塔防酸釉面砖",
+      "group": "03-academy",
+      "usage": "诊疗 / 实验室 / 可清洗墙地面",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/12-acid-resistant-glaze.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "13-polished-brass",
+      "name": "抛光拉丝黄铜",
+      "group": "03-academy",
+      "usage": "传声管 / 仪表 / 放大镜；常规金色",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/13-polished-brass.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "05-wrought-iron-rivets",
+      "name": "熟铁铆钉板",
+      "group": "02-hermetic",
+      "usage": "古修士铁门 / 后期加固件",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/05-wrought-iron-rivets.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "14-cast-iron",
+      "name": "铸铁滚轴与机床铸面",
+      "group": "04-industry",
+      "usage": "B1 滚轴 / 铁工院设备表面",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/14-cast-iron.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "15-lead-sheet",
+      "name": "铅板阻尼夹层",
+      "group": "04-industry",
+      "usage": "B1 隔震夹层 / 低光泽冷灰",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/15-lead-sheet.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "16-asphalt-damping",
+      "name": "沥青阻尼料",
+      "group": "04-industry",
+      "usage": "铅板与玄武岩之间的阻尼层",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/16-asphalt-damping.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "17-dried-sea-sand",
+      "name": "焙干海砂",
+      "group": "04-industry",
+      "usage": "星仪院隔音夹墙填料",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/17-dried-sea-sand.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "18-faraday-copper-mesh",
+      "name": "法拉第铜网",
+      "group": "04-industry",
+      "usage": "名录库地面屏蔽层 / 铜丝网",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/18-faraday-copper-mesh.svg",
+      "source": "美术案·第一部分 / 地理案·第一部分"
+    },
+    {
+      "id": "19-linen-casebook-paper",
+      "name": "亚麻案卷纸",
+      "group": "05-casebook",
+      "usage": "案卷常规页面 / 亚麻纤维纹",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/19-linen-casebook-paper.svg",
+      "source": "美术案·第三、四部分"
+    },
+    {
+      "id": "20-emerald-book-leather",
+      "name": "墨绿案卷书皮",
+      "group": "05-casebook",
+      "usage": "烫金书封基材；纹样另叠加",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/20-emerald-book-leather.svg",
+      "source": "美术案·第四部分第一层"
+    },
+    {
+      "id": "21-memory-parchment",
+      "name": "旧羊皮回忆底",
+      "group": "06-restricted",
+      "usage": "仅脑内推演 / 闪回，不作普通装潢",
+      "scope": "mind-only",
+      "kind": "material",
+      "file": "materials/21-memory-parchment.svg",
+      "source": "美术案·第三部分第三禁区"
+    },
+    {
+      "id": "22-mind-blueprint",
+      "name": "推演建筑蓝图",
+      "group": "06-restricted",
+      "usage": "脑内推演的线框底；非世界实体材料",
+      "scope": "mind-only",
+      "kind": "material",
+      "file": "materials/22-mind-blueprint.svg",
+      "source": "美术案·第三、四部分"
+    },
+    {
+      "id": "23-ether-bismuth-crystal",
+      "name": "源质回字霜晶",
+      "group": "06-restricted",
+      "usage": "源质 / 莫兰灵视 / 黄金迷梦专用",
+      "scope": "ether-only",
+      "kind": "material",
+      "file": "materials/23-ether-bismuth-crystal.svg",
+      "source": "美术案·第二部分9 / 第三部分第二禁区"
+    },
+    {
+      "id": "24-demon-black-satin",
+      "name": "恶魔纯黑燕尾服缎面",
+      "group": "06-restricted",
+      "usage": "仅代管者实体燕尾服；不用于人类或建筑",
+      "scope": "demon-only",
+      "kind": "material",
+      "file": "materials/24-demon-black-satin.svg",
+      "source": "美术案·第三部分第一禁区"
+    },
+    {
+      "id": "25-emerald-sea",
+      "name": "碧水翡翠青水面",
+      "group": "07-landscape",
+      "usage": "海湾 / 自流泉水面；纹线非动画",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/25-emerald-sea.svg",
+      "source": "美术案·第一部分旗帜色彩 / 地理案水系"
+    },
+    {
+      "id": "26-open-air-gravel",
+      "name": "露天夹道碎石",
+      "group": "07-landscape",
+      "usage": "南北寝区之间低洼露天夹道",
+      "scope": "ordinary",
+      "kind": "material",
+      "file": "materials/26-open-air-gravel.svg",
+      "source": "地理案·主楼2F四方学舍"
+    },
+    {
+      "id": "m-academy",
+      "name": "四锚十字环",
+      "group": "08-motifs",
+      "usage": "常规学园总徽",
+      "scope": "ordinary",
+      "kind": "motif",
+      "file": "motifs/m-academy.svg",
+      "source": "美术案·第二部分纹样表"
+    },
+    {
+      "id": "r-academy",
+      "name": "四锚十字环连续底纹",
+      "group": "09-repeats",
+      "usage": "常规学园总徽；透明 512 平铺单元",
+      "scope": "ordinary",
+      "kind": "repeat",
+      "file": "repeats/r-academy.svg",
+      "source": "美术案·第二部分纹样表；重复节奏为作者补全"
+    },
+    {
+      "id": "m-imperial",
+      "name": "三叠云水纹",
+      "group": "08-motifs",
+      "usage": "皇室屏风 / 地毯滚边",
+      "scope": "ordinary",
+      "kind": "motif",
+      "file": "motifs/m-imperial.svg",
+      "source": "美术案·第二部分纹样表"
+    },
+    {
+      "id": "r-imperial",
+      "name": "三叠云水纹连续底纹",
+      "group": "09-repeats",
+      "usage": "皇室屏风 / 地毯滚边；透明 512 平铺单元",
+      "scope": "ordinary",
+      "kind": "repeat",
+      "file": "repeats/r-imperial.svg",
+      "source": "美术案·第二部分纹样表；重复节奏为作者补全"
+    },
+    {
+      "id": "m-science",
+      "name": "双环棱镜纹",
+      "group": "08-motifs",
+      "usage": "格致仪表 / 铭牌",
+      "scope": "ordinary",
+      "kind": "motif",
+      "file": "motifs/m-science.svg",
+      "source": "美术案·第二部分纹样表"
+    },
+    {
+      "id": "r-science",
+      "name": "双环棱镜纹连续底纹",
+      "group": "09-repeats",
+      "usage": "格致仪表 / 铭牌；透明 512 平铺单元",
+      "scope": "ordinary",
+      "kind": "repeat",
+      "file": "repeats/r-science.svg",
+      "source": "美术案·第二部分纹样表；重复节奏为作者补全"
+    },
+    {
+      "id": "m-syndicate",
+      "name": "蒙眼鸦与八字蛇",
+      "group": "08-motifs",
+      "usage": "财团暗记 / 私约",
+      "scope": "ordinary",
+      "kind": "motif",
+      "file": "motifs/m-syndicate.svg",
+      "source": "美术案·第二部分纹样表"
+    },
+    {
+      "id": "r-syndicate",
+      "name": "蒙眼鸦与八字蛇连续底纹",
+      "group": "09-repeats",
+      "usage": "财团暗记 / 私约；透明 512 平铺单元",
+      "scope": "ordinary",
+      "kind": "repeat",
+      "file": "repeats/r-syndicate.svg",
+      "source": "美术案·第二部分纹样表；重复节奏为作者补全"
+    },
+    {
+      "id": "m-wenqi",
+      "name": "方印与双羽笔",
+      "group": "08-motifs",
+      "usage": "文契院 / 契约拓片",
+      "scope": "ordinary",
+      "kind": "motif",
+      "file": "motifs/m-wenqi.svg",
+      "source": "美术案·第二部分纹样表"
+    },
+    {
+      "id": "r-wenqi",
+      "name": "方印与双羽笔连续底纹",
+      "group": "09-repeats",
+      "usage": "文契院 / 契约拓片；透明 512 平铺单元",
+      "scope": "ordinary",
+      "kind": "repeat",
+      "file": "repeats/r-wenqi.svg",
+      "source": "美术案·第二部分纹样表；重复节奏为作者补全"
+    },
+    {
+      "id": "m-xingyi",
+      "name": "音叉与同心波",
+      "group": "08-motifs",
+      "usage": "星仪院 / 传声铜牌",
+      "scope": "ordinary",
+      "kind": "motif",
+      "file": "motifs/m-xingyi.svg",
+      "source": "美术案·第二部分纹样表"
+    },
+    {
+      "id": "r-xingyi",
+      "name": "音叉与同心波连续底纹",
+      "group": "09-repeats",
+      "usage": "星仪院 / 传声铜牌；透明 512 平铺单元",
+      "scope": "ordinary",
+      "kind": "repeat",
+      "file": "repeats/r-xingyi.svg",
+      "source": "美术案·第二部分纹样表；重复节奏为作者补全"
+    },
+    {
+      "id": "m-baita",
+      "name": "三角与曲颈瓶",
+      "group": "08-motifs",
+      "usage": "白塔 / 温室 / 丹房",
+      "scope": "ordinary",
+      "kind": "motif",
+      "file": "motifs/m-baita.svg",
+      "source": "美术案·第二部分纹样表"
+    },
+    {
+      "id": "r-baita",
+      "name": "三角与曲颈瓶连续底纹",
+      "group": "09-repeats",
+      "usage": "白塔 / 温室 / 丹房；透明 512 平铺单元",
+      "scope": "ordinary",
+      "kind": "repeat",
+      "file": "repeats/r-baita.svg",
+      "source": "美术案·第二部分纹样表；重复节奏为作者补全"
+    },
+    {
+      "id": "m-tiegong",
+      "name": "八角螺母与铁锤",
+      "group": "08-motifs",
+      "usage": "铁工 / 连廊钢桁架",
+      "scope": "ordinary",
+      "kind": "motif",
+      "file": "motifs/m-tiegong.svg",
+      "source": "美术案·第二部分纹样表"
+    },
+    {
+      "id": "r-tiegong",
+      "name": "八角螺母与铁锤连续底纹",
+      "group": "09-repeats",
+      "usage": "铁工 / 连廊钢桁架；透明 512 平铺单元",
+      "scope": "ordinary",
+      "kind": "repeat",
+      "file": "repeats/r-tiegong.svg",
+      "source": "美术案·第二部分纹样表；重复节奏为作者补全"
+    },
+    {
+      "id": "m-alien",
+      "name": "回字晶与竖瞳",
+      "group": "08-motifs",
+      "usage": "超自然限定；冲突色采用冷金",
+      "scope": "ether-only",
+      "kind": "motif",
+      "file": "motifs/m-alien.svg",
+      "source": "美术案·第二部分纹样表"
+    },
+    {
+      "id": "r-alien",
+      "name": "回字晶与竖瞳连续底纹",
+      "group": "09-repeats",
+      "usage": "超自然限定；冲突色采用冷金；透明 512 平铺单元",
+      "scope": "ether-only",
+      "kind": "repeat",
+      "file": "repeats/r-alien.svg",
+      "source": "美术案·第二部分纹样表；重复节奏为作者补全"
+    }
+  ],
+  "boards": [
+    "boards/01-ancient-1.svg",
+    "boards/02-hermetic-1.svg",
+    "boards/03-academy-1.svg",
+    "boards/04-industry-1.svg",
+    "boards/05-casebook-1.svg",
+    "boards/06-restricted-1.svg",
+    "boards/07-landscape-1.svg",
+    "boards/08-motifs-1.svg",
+    "boards/08-motifs-2.svg",
+    "boards/09-repeats-1.svg",
+    "boards/09-repeats-2.svg"
+  ]
+}

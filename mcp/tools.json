@@ -3,6 +3,10 @@
     "name": "asset_pipeline",
     "description": "Build or publish selected maps, art, UI and geometry assets. arguments contains the selected script command-line options; publisher source/review inputs remain explicit.",
     "routes": {
+      "document-textures": {
+        "kind": "python",
+        "path": "asset_pipeline/build_document_textures.py"
+      },
       "living-floor": {
         "kind": "python",
         "path": "asset_pipeline/build_living_floor.py"
