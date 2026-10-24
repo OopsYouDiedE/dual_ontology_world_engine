@@ -2,6 +2,7 @@ extends SceneTree
 ## Render observation only: ordinary input, wall-clock waits, no world mutation.
 ## Run windowed: --script res://tools/capture_scene.gd -- --capture-scene=...
 ## --capture-output=<absolute-directory> --capture-steps=<absolute-json-file>
+const LIFECYCLE = preload("res://scenes/Host/HostLifecycle.gd")
 
 var output := ""
 var scene_path := ""
@@ -98,7 +99,7 @@ func _run() -> void:
 		return
 	manifest.store_string(JSON.stringify({"scene": scene_path, "processStartUtc": started_utc, "engine": Engine.get_version_info(), "displayServer": DisplayServer.get_name(), "method": "ordinary-input-wall-clock-render", "images": captures}, "  ") + "\n")
 	manifest.close()
-	quit(0)
+	await LIFECYCLE.quit(self)
 
 func _key(code: Key, pressed: bool) -> void:
 	var event := InputEventKey.new()

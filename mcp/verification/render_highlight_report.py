@@ -26,10 +26,14 @@ def render() -> Path:
     media = []
     for item in status.get("images", []):
         media.append(f'<figure><a href="../../{e(item["path"])}"><img loading="lazy" src="../../{e(item["path"])}" alt="{e(item["caption"])}"></a><figcaption>{e(item["caption"])}</figcaption></figure>')
-    for path in sorted((OUT / "runtime/screenshots").glob("*-progressed.png")):
-        relative = path.relative_to(ROOT).as_posix()
-        caption = status.get("runtime_caption", "Luna导出的真实舞台渲染；范围与输入方式见实际观察。") + " · " + path.stem
+    for item in status.get("runtime_images", []):
+        relative = item["path"]
+        caption = item["caption"]
         media.append(f'<figure><a href="../../{e(relative)}"><img loading="lazy" src="../../{e(relative)}" alt="{e(caption)}"></a><figcaption>{e(caption)}</figcaption></figure>')
+    comparisons = []
+    for item in status.get("scene_comparisons", []):
+        pair = ''.join(f'<figure><img loading="lazy" src="../../{e(item[key])}" alt="{e(label)}"><figcaption>{e(label)}</figcaption></figure>' for key, label in (("reference", "效果原稿"), ("runtime", "实际场景")))
+        comparisons.append(f'<article><h2>{e(item["title"])}</h2><div class="gallery">{pair}</div><p>{e(item["result"])}</p></article>')
     commits = ''.join(f'<li><a href="{e(item["url"])}">{e(item["sha"])}</a>　{e(item["summary"])}</li>' for item in status.get("pushed_commits", []))
     sources = ''.join(f'<li>{link(item["path"], item["label"])}</li>' for item in status.get("sources", []))
     navigation = ''.join(f'<a href="#{e(stage["id"])}">{e(stage["title"])}</a>' for stage in stages)
@@ -45,7 +49,7 @@ body{{margin:0;background:#f5f1e6;color:var(--ink);font:16px/1.85 'Microsoft YaH
 <nav><a href="#changes">修改与结果</a><a href="#assets">素材与现场</a><a href="#observations">实际观察</a>{navigation}</nav>
 <section id="changes"><h2>修改与结果</h2><ul>{commits}</ul><table><thead><tr><th>范围</th><th>修改</th><th>当前结果</th></tr></thead><tbody>{rows}</tbody></table></section>
 <section id="assets"><h2>分类素材与现场画面</h2><p>运行地形按32像素格组织，自动地形、独立物件和人物分别发布。图集与场景的实际引用、拼接和遮挡分别记录。</p><div class="gallery">{''.join(media) or '<p>本轮图像正在生成与接线，现场画面待采集。</p>'}</div></section>
-<section id="observations"><h2>实际观察与修正</h2><ul>{observations or '<li>尚未进行本轮实际交互与画面查看。</li>'}</ul><p class="meta">报告记录实际执行、可见效果和源码修正。构建诊断、舞台节选、正式会话分别注明范围。</p></section>
+{''.join(comparisons)}<section id="observations"><h2>实际观察与修正</h2><ul>{observations or '<li>尚未进行本轮实际交互与画面查看。</li>'}</ul><p class="meta">报告记录实际执行、可见效果和源码修正。构建诊断、舞台节选、正式会话分别注明范围。</p></section>
 <section><h2>六段高光节选</h2><p>以下为本轮依据设计新写的舞台文本。每幕注明成立条件，演出范围限定于在场人员。源质具体液面保持未审定状态，棋局按十九路实际落子。</p>{link('godot_csharp/Contracts/highlight_stages.json', '运行内容源：highlight_stages.json')}</section>
 {''.join(cards)}<section><h2>源码与素材入口</h2><ul>{sources}</ul></section></main><footer>本地工作汇报 · 不执行游戏动作或自动验收</footer></html>'''
     target = OUT / "index.html"
