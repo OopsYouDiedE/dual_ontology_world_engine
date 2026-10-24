@@ -112,7 +112,8 @@ internal sealed class SessionPerformance
     private double? firstGameMinute;
     private double lastGameMinute, advancedMinutes;
     private int epoch;
-    private bool auditMode, developerMode, selectivePlanning;
+    private bool auditMode, developerMode;
+    private string simulationMode = "unrecorded";
     private string playerActor = "";
     private int actorCount;
     private FileStream? recording;
@@ -120,11 +121,11 @@ internal sealed class SessionPerformance
     private long recordingOmittedPrefix;
     private bool recordingSealed;
 
-    internal void Configure(bool audit, bool developer, string player, int actors, double minute, bool selective)
+    internal void Configure(bool audit, bool developer, string player, int actors, double minute, string mode)
     {
         lock (gate)
         {
-            auditMode = audit; developerMode = developer; selectivePlanning = selective; playerActor = player; actorCount = actors;
+            auditMode = audit; developerMode = developer; simulationMode = mode; playerActor = player; actorCount = actors;
             controllerKind = player.Length == 0 ? "engine" : "human";
             firstGameMinute = lastGameMinute = minute;
         }
@@ -721,8 +722,8 @@ internal sealed class SessionPerformance
             var values = new Dictionary<string, object?>
             {
                 ["contract"] = Contract, ["closed"] = closed, ["engine_ms"] = engine,
-                ["planning_mode"] = selectivePlanning ? "selective-task-v1" : "full-declared",
-                ["planning_mode_approximation"] = selectivePlanning,
+                ["planning_mode"] = simulationMode,
+                ["planning_mode_approximation"] = simulationMode == "approximate-v1" ? true : (bool?)null,
                 ["measured_until_ticks"] = now - origin, ["wall_measured_until_ticks"] = wallStarted ? wallCursor - origin : null,
                 ["stopwatch_frequency"] = Stopwatch.Frequency, ["wall_clock_stopped"] = wallStopped,
                 ["active_scopes"] = stack.Count, ["active_decision_interfaces"] = interfaceWaits.Count,
@@ -828,8 +829,8 @@ internal sealed class SessionPerformance
             ["runtime"] = Environment.Version.ToString(), ["stopwatch_frequency"] = Stopwatch.Frequency,
             ["assembly_id"] = typeof(DvSession).Assembly.ManifestModule.ModuleVersionId.ToString(),
             ["audit_mode"] = auditMode, ["development_mode"] = developerMode, ["player_actor"] = playerActor, ["actor_count"] = actorCount,
-            ["planning_mode"] = selectivePlanning ? "selective-task-v1" : "full-declared",
-            ["planning_mode_approximation"] = selectivePlanning,
+            ["planning_mode"] = simulationMode,
+            ["planning_mode_approximation"] = simulationMode == "approximate-v1" ? true : (bool?)null,
             ["closed"] = closed, ["active_scopes"] = stack.Count, ["active_decision_interfaces"] = interfaceWaits.Count,
             ["game_start_minute"] = firstGameMinute, ["game_end_minute"] = lastGameMinute, ["engine_ms"] = engineMs,
             ["measured_until_ticks"] = now - origin, ["wall_measured_until_ticks"] = wallStarted ? wallCursor - origin : null,
@@ -1079,7 +1080,7 @@ internal sealed class SessionPerformance
         var text = new StringBuilder("# 会话决策与耗时报告\n\n");
         text.AppendLine($"会话：{snapshot["session_id"]}；开始 UTC：{snapshot["wall_started_utc"]}；结束 UTC：{snapshot["wall_stopped_utc"]}。");
         text.AppendLine($"采样现实 {Number(Convert.ToDouble(snapshot["elapsed_wall_ms"], CultureInfo.InvariantCulture) / 1000d)} 秒，实际推进 {Number(snapshot["advanced_game_minutes"])} 游戏分钟；正式选择 {Number(snapshot["total_decisions"])} 次。");
-        text.AppendLine($"本次规划配置：{snapshot["planning_mode"]}；模式近似：{snapshot["planning_mode_approximation"]}。selective-task-v1 为用户允许的任务选择近似，不声称完整穷举；full-declared 仍受声明预算、深度和实际停止原因约束。");
+        text.AppendLine($"本次策略配置：{snapshot["planning_mode"]}；模式近似：{snapshot["planning_mode_approximation"]}。approximate-v1 使用当前合法候选即时效用与单次声明推理；缺失模式保留为未记录。");
         text.AppendLine();
         text.AppendLine("| 核心指标 | 本窗口累计比率 | 单位 |");
         text.AppendLine("| --- | ---: | --- |");
@@ -1133,8 +1134,7 @@ internal sealed class SessionPerformance
             text.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
             foreach (var row in planningRows)
                 text.AppendLine($"| {row["actor"]} | {Number(row["candidates_skipped"])} | {Number(row["candidate_order_scans"])} | {Number(row["candidate_order_reuses"])} | {Number(row["partial_layer"])} | {Number(row["examined_layers"])} | {Number(row["completed_layers"])} |");
-            text.AppendLine("跳过候选只计已经生成的当前候选列表中实际未求值的余项，不估算尚未展开的后继。排序声明检查与其缓存复用单列，不冒充资格求值。选择性根层优先检查声明有 grants 的非移动、非答题、非等待任务，并按实际声明时长稳定排序；准入与价值仍真实求值。提前选到支持任务的部分层不算完整层，不宣称已比较该层所有选项。");
-            text.AppendLine("实际工作来自正式 action_selected 的 planning_work。缓存命中的 reused_work 是此前工作的来源，不重复累计；缺失计数保持缺失。路径与预测复用记录实际命中，skipped_expansion 累计本次选择跳过展开的次数。峰值前沿及预算/深度/展望限制取观测最大值，工作次数取实际累计。selective-task-v1 是用户允许的任务选择近似，不是完整穷举；full-declared 沿声明范围求解，是否完成仍以实际预算停止和证明为准，两种模式的结果与耗时分别比较。");
+            text.AppendLine("实际工作来自正式 action_selected 的 planning_work。当前近似策略记录候选扫描和准入求值，不执行行动树展开。历史记录中的搜索、缓存及路径字段仅按原始事件展示，缺失计数保持缺失，不把不同策略的记录合为同一基准。");
             text.AppendLine();
             foreach (var row in planningRows)
                 if (row["stop_reasons"] is IReadOnlyDictionary<string, object?> reasons)

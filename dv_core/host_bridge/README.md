@@ -4,6 +4,8 @@
 
 ## 接口
 
+会话性能与轨迹来源从正式 `run_config.simulation_mode` 读取策略。当前生产记录 `approximate-v1` 和近似标记；缺少模式的历史状态记为 `unrecorded`，近似标记留空。已退役的 `selective_planning` 与 taskgraph 不再决定元数据，报告不把新策略标为完整搜索。
+
 | 接口 | 用途 |
 | --- | --- |
 | `OpenConfiguredCampaign(options)` | 接受 `controller`、`viewer`、`campaign`、`audit`、`developer` 开局配置 |

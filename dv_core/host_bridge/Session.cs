@@ -57,7 +57,7 @@ public sealed partial class DvSession
         committedDecisionEventCursor = Events(state).Count;
         performance.Configure(audit, developer, R.Text(Field(state, "player_actor", "")),
             R.Items(Field(state, "actors", new List<object>())).Count, PerformanceGameMinute(),
-            R.Bool(Field(Field(story, "run_config", new List<object>()), "selective_planning", false)));
+            R.Text(Field(runConfiguration, "simulation_mode", "unrecorded")));
         var savedController = R.Text(Field(value, "performance_controller", ""));
         if (savedController.Length > 0) performance.ConfigureController(savedController);
         UpdateEvidenceLifecycle();

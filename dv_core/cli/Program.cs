@@ -272,6 +272,8 @@ internal sealed class Cli
         displayViewer = session?.Viewer ?? viewer;
         if (command is not null) { await Execute(command); return; }
         if (!jsonLines) Emit("status", CurrentStatus());
+        else Emit("ready", new { protocol = "dv-cli-jsonl-v1", state_version = session?.Version,
+            message = "已就绪。发送 status、options 或 help；每条请求以 command_complete 收尾。" });
         if (replay is not null) { await ReplayCommandLoop(); return; }
         while (!quit)
         {
@@ -279,6 +281,7 @@ internal sealed class Cli
             var line = await Console.In.ReadLineAsync(cancellation.Token);
             if (line is null) break;
             try { await Execute(line); }
+            catch (Exception error) when (jsonLines && RecoverableInputError(error)) { }
             catch (Exception error) { if (Console.IsInputRedirected) throw; Error(error); }
         }
     }
@@ -299,6 +302,7 @@ internal sealed class Cli
                 var line = await input;
                 if (line is null) break;
                 try { await Execute(line); }
+                catch (Exception error) when (jsonLines && RecoverableInputError(error)) { }
                 catch (Exception error) { if (Console.IsInputRedirected) throw; Error(error); }
                 if (quit) break;
                 input = ReadInput();
@@ -308,6 +312,11 @@ internal sealed class Cli
             previous = clock.Elapsed.TotalSeconds;
         }
     }
+
+    // Execute already includes recoverable request errors in command_complete.
+    // Keep piped JSONL sessions open; engine failures still reach shutdown.
+    private static bool RecoverableInputError(Exception error) =>
+        error is ArgumentException or JsonException or KeyNotFoundException or FormatException;
 
     private async Task Execute(string input)
     {
@@ -461,7 +470,7 @@ internal sealed class Cli
                 current.SetDecisionInterfacePhase(current.Viewer, argument);
                 Emit("performance", current.PerformanceSummary()); break;
             case "act":
-                if (FocusChoice(current, argument)) ConfirmChoice(current);
+                ActChoice(current, argument);
                 break;
             case "inspect": Emit("inspect", current.Inspect(argument.Length == 0 ? Observer : argument)); break;
             case "perf": case "performance":
@@ -594,6 +603,84 @@ internal sealed class Cli
         Emit("interaction", FocusPayload(focus, "focus"));
         return true;
     }
+
+    private void ActChoice(DvSession current, string argument)
+    {
+        if (ControllerIsAutonomous(current)) throw new InvalidOperationException("控制 · 自主");
+        if (Observer != current.Viewer) throw new InvalidOperationException("控制 · " + current.Viewer);
+        if (argument.Length == 0) throw new ArgumentException("act <01|ID|selection>");
+        // Resolve an index against what the caller could see before any NPC
+        // receipt changes the world. A stable id is revalidated at actual input.
+        var selection = argument;
+        if (int.TryParse(argument, NumberStyles.None, CultureInfo.InvariantCulture, out var number))
+        {
+            var options = VisibleOptions();
+            if (number < 1 || number > options.Count) throw new ArgumentOutOfRangeException(nameof(argument), "选项编号");
+            selection = HostValues.Text(options[number - 1], "id");
+        }
+        var requestedId = SelectionId(selection);
+        if (!current.ObserverOptions(current.Viewer, showScores == true).Any(option => HostValues.Text(option, "id") == requestedId))
+            throw new ArgumentException("选项已失效");
+        var submitted = false;
+        var clock = Stopwatch.StartNew();
+        while (current.Active)
+        {
+            cancellation.Token.ThrowIfCancellationRequested();
+            var intent = current.Intent;
+            if (HostValues.Text(intent, "status") == "idle") intent = current.PrepareValue();
+            var status = HostValues.Text(intent, "status");
+            if (status == "prepared")
+            {
+                var actor = HostValues.Text(intent, "actor");
+                var id = HostValues.Text(HostValues.Map(intent, "action"), "id");
+                // An existing, different player choice still needs the caller's
+                // explicit control. Never replace or complete it as a side effect.
+                if (actor == current.Viewer && (!submitted || id != requestedId))
+                {
+                    EmitActWaiting(current, requestedId, submitted, "已有另一项玩家行动待确认。输入 next 查看。");
+                    return;
+                }
+                FocusPrepared(current);
+                ConfirmChoice(current);
+                if (actor == current.Viewer) return;
+            }
+            else if (status == "awaiting_input")
+            {
+                if (submitted)
+                {
+                    EmitActWaiting(current, requestedId, true, "原请求已排程；输入 next 查看当前状态。");
+                    return;
+                }
+                if (!FocusChoice(current, selection)) return;
+                ConfirmChoice(current);
+                submitted = current.IsScheduled(current.Viewer, requestedId);
+                if (!submitted) return;
+            }
+            else
+            {
+                EmitIntent(intent);
+                return;
+            }
+            // Keep one command cancellable and bounded on slow machines. The
+            // official queue retains submitted work; no new choice is invented.
+            if (clock.ElapsedMilliseconds >= 2000)
+            {
+                EmitActWaiting(current, requestedId, submitted, submitted
+                    ? "原请求仍在正式队列中。输入 next 继续。"
+                    : "后台结算尚未完成；本次玩家请求未应用，请稍后重试。");
+                return;
+            }
+        }
+        Emit("status", CurrentStatus());
+    }
+
+    private void EmitActWaiting(DvSession current, string requestedId, bool submitted, string message) =>
+        Emit("waiting", HostValues.Freeze(new Dictionary<string, object?>
+        {
+            ["status"] = submitted ? "requested_action_scheduled" : "pending_action",
+            ["message"] = message, ["state_version"] = current.Version,
+            ["requested_action_id"] = requestedId, ["requested_selection_applied"] = submitted
+        }));
 
     private void FocusPrepared(DvSession current)
     {

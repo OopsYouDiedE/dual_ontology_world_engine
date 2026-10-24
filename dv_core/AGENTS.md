@@ -79,6 +79,8 @@ CLI 交互记录区分 actor、viewer 和 result 的 presentation_viewer；回�
 
 ## 构建与编辑器合同
 
+CLI `act` 在两秒接续窗口内沿相同 Prepare/聚焦/确认/Complete 处理必要后台行动，直到本次明确的玩家选择完成或遇到需要新输入的边界。编号在处理前解析为稳定ID，提交时重核；不替换另一项已准备玩家行动。超出窗口须报告请求未应用或仍在正式队列，后续逐步输入继续处理。`focus/confirm/next` 保留逐步控制，JSON-Lines 请求以 `command_complete` 收尾。
+
 ```powershell
 dotnet build dv_core/LanguageCore.sln -c Release --disable-build-servers -p:NuGetAudit=false
 python mcp/build/build_session.py --partition --out dv_core/host_bridge/obj/dv

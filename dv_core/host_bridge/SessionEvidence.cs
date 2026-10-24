@@ -30,7 +30,7 @@ public sealed partial class DvSession
     private IReadOnlyDictionary<string, object?> Provenance()
     {
         var configuration = Field(Field(state, "story", new List<object>()), "run_config", new List<object>());
-        var selective = R.Bool(Field(configuration, "selective_planning", false));
+        var simulationMode = R.Text(Field(configuration, "simulation_mode", "unrecorded"));
         return HostValues.Freeze(new Dictionary<string, object?>
         {
             ["host"] = executionHost, ["executor"] = executionAdapter,
@@ -39,15 +39,13 @@ public sealed partial class DvSession
             ["source_revision"] = sourceRevision.Length > 0 ? sourceRevision : null,
             ["assembly_mvid"] = typeof(DVProgram).Assembly.ManifestModule.ModuleVersionId.ToString(),
             ["runtime"] = Environment.Version.ToString(), ["audit"] = audit, ["development"] = developer,
-            ["selective_planning"] = selective,
-            ["opt_taskgraph"] = R.Bool(Field(configuration, "opt_taskgraph", false)),
+            ["simulation_mode"] = simulationMode,
             ["opt_storyflow"] = R.Bool(Field(configuration, "opt_storyflow", true)),
             ["opt_stateindex"] = R.Bool(Field(configuration, "opt_stateindex", true)),
-            ["taskgraph_semantics"] = "owner-policy approximation; not exhaustive",
             ["storyflow_semantics"] = "content-policy rewrite; similar intended effects, not trace equivalence",
-            ["planning_mode"] = selective ? "selective-task-v1" : "full-declared",
-            ["planning_mode_approximation"] = selective,
-            ["planning_search_scope"] = selective ? "user-authorized approximation; not exhaustive" : "declared policy and budget; completeness follows recorded stop and proof"
+            ["planning_mode"] = simulationMode,
+            ["planning_mode_approximation"] = simulationMode == "approximate-v1" ? true : (bool?)null,
+            ["planning_search_scope"] = simulationMode == "approximate-v1" ? "current admissible candidates; immediate utility; no action-tree search" : "unrecorded"
         });
     }
 

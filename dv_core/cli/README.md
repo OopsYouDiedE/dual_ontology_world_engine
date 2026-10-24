@@ -2,15 +2,25 @@
 
 DvCli 单向引用 host_bridge，共用正式 Prepare → formal-model → Complete；不依赖 Godot、检查程序集或 oracle。
 
-近似模拟保留文本、TUI 和 JSON-Lines 入口。人工请求 `focus` / `act` 时，若调度已准备另一行动，返回 `kind="waiting"`、`status="pending_action"`、`requested_selection_applied=false` 及当前版本。接着用 `next` 查看待处理行动，`confirm` 完成该行动，再依据最新选项提交人工选择。`act` 在收到该等待状态时停止，用户原选项保持未执行。
+近似模拟保留文本、TUI 和 JSON-Lines 入口。人工请求 `focus` 时，若调度已准备另一行动，返回 `kind="waiting"`、`status="pending_action"`、`requested_selection_applied=false` 及当前版本。接着用 `next` 查看待处理行动，`confirm` 完成该行动，再依据最新选项提交人工选择。`act` 提供下述单次请求接续。
 
 JSON-Lines 的每条请求在处理结束后追加 `kind="command_complete"`，含 `sequence`、原样 `request_id`、`command`、`success`、`state_version` 和 `closing`。客户端读取到这条消息再发送下一条请求；前面的 `interaction` 只表示当前阶段，正文和结果可能随后到达。失败请求的完成消息包含错误类型与信息；原有错误处理继续报告具体异常。`closing=true` 表示退出请求已处理，退出封存结束和进程退出另行确认。
+
+启动后先发 `kind="ready"`，随后等待输入。客户端可立即写入 `{"command":"status","request_id":"start"}`，再读到这条请求的 `command_complete`；`ready` 本身不产生完成消息。管道调用须保持 stdin 开放。不要在发送第一条请求之前等待 `command_complete`。
+
+JSON-Lines 管道中的参数、选项和 JSON 格式错误由失败的 `command_complete` 报告，后续请求仍可继续。引擎执行异常保持原失败退出与封存路径。请求错误不会在完成边界之后另发一条错误消息。
+
+完成消息形状为 `{"kind":"command_complete","scope":"formal-model","data":{"request_id":"start","success":true,...}}`。`request_id` 位于 `data` 内。
+
+需要跨多次外部调用维持一场玩家会话时，可运行 `python mcp/verification/cli_player_bridge.py serve --out <新的固定证据目录>`。它打印本机 `bridge_url`，保持唯一 CLI 的 stdin 开放；随后用 `python mcp/verification/cli_player_bridge.py request --url <bridge_url> --command status`，或加 `--argument` 发送普通命令。桥仅转运当前真实协议，自动匹配 `data.request_id`，不选行动、不生成验收结论、不保存 JSONL。`quit` 等待正式 CLI 退出后关闭桥；证据前缀已存在时在创建会话前明确拒绝。
 
 当前观察者之外的待结算行动使用 `control="background"`、`confirmation_required=true` 和通用提示，人工选项暂时留空。主观接口的不可见行动结果只报告 `visible=false`、状态与通用反馈；实际行动者、行动标识和私有来源留在正式轨迹。
 
 普通文本、TUI 和 JSON-Lines 会话关闭原始引擎诊断输出，异常继续通过错误通道报告。显式 `--dev` 可查看诊断；正式轨迹保留原始事件。这样终端合并标准输出与错误输出时也不会把后台私有事件摘要当作玩家所见。
 
 选策统一为 `approximate-v1`，可显式写 `--planning approximate`。旧 `precise/selective`、taskgraph、路线续用及深度搜索调参入口已经退役，传入会得到明确错误；正式判答、观察与付费重演保持各自机制。
+
+`act` 接续一次明确的玩家请求：数字编号先按当前可见选项解析为稳定ID，必要后台行动逐项使用同一聚焦、确认和正式结算，再重核原选择。原行动已排程时继续等待它的真实回执；已有另一项玩家行动时保留并提示，不替玩家选择。单条请求的接续窗口为两秒，超出后明确报告原请求是否已排程，正式队列保持原状。`focus/confirm/next` 继续提供逐步操作，`command_complete` 仍是本条请求输出边界。后台结果只按当前检阅者实际可见内容输出。
 
 ```powershell
 dotnet run --project dv_core/cli/DvCli.csproj -- --tui
