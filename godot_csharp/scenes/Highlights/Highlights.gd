@@ -39,6 +39,7 @@ var cue_failed := false
 var stage_epoch := 0
 
 func _ready() -> void:
+	get_tree().set_meta("highlight_launch_consumed", true)
 	theme = preload("res://scenes/UI/Styles/HighlightsTheme.tres")
 	var payload = JSON.parse_string(FileAccess.get_file_as_string("res://Contracts/highlight_stages.json"))
 	if not payload is Dictionary or not payload.has("stages"):
@@ -175,6 +176,8 @@ func _select_stage(index: int) -> void:
 	sorted_world.y_sort_enabled = true
 	world.add_child(sorted_world)
 	var id := str(stages[index]["id"])
+	viewport.size = Vector2i(512, 256) if id == "shura_poet" else Vector2i(512, 384)
+	stage_camera.position = Vector2(256, 208) if id == "shura_poet" else Vector2(256, 192)
 	focus_button.visible = id == "chess_god"
 	focus_button.set_pressed_no_signal(false)
 	var material := 4 if id in ["scholar_relic", "demon_miracle"] else 3
@@ -192,6 +195,7 @@ func _select_stage(index: int) -> void:
 	structure.gallery = id == "shura_poet"
 	world.add_child(structure)
 	world.move_child(structure, water_layer.get_index())
+	structure.install_foreground(sorted_world)
 	_barrier(Vector2(16, 192), Vector2(32, 384))
 	_barrier(Vector2(496, 192), Vector2(32, 384))
 	_barrier(Vector2(16, 72), Vector2(32, 48))
@@ -264,6 +268,15 @@ func _spawn_prop(kind: String, at: Vector2, id: String = "", blocking: bool = tr
 	sprite.centered = false
 	sprite.position = Vector2(-sprite.texture.get_width() / 2.0, -sprite.texture.get_height())
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var shadow := Polygon2D.new()
+	shadow.name = "ContactShadow"
+	var outline := PackedVector2Array()
+	for step in range(16):
+		var angle := TAU * step / 16.0
+		outline.append(Vector2(cos(angle) * sprite.texture.get_width() * 0.35, sin(angle) * 3.0 - 2.0))
+	shadow.polygon = outline
+	shadow.color = Color(0.12, 0.15, 0.14, 0.35)
+	node.add_child(shadow)
 	node.add_child(sprite)
 	sorted_world.add_child(node)
 	if blocking:
@@ -293,23 +306,19 @@ func _effect(kind: String, at: Vector2, parent: Node = null) -> Node2D:
 func _poet_stage() -> void:
 	floor_layer.clear()
 	wall_layer.clear()
-	floor_layer.set_cells_terrain_connect(_cells(Rect2i(1, 5, 14, 4)), 0, 2)
-	floor_layer.set_cells_terrain_connect(_cells(Rect2i(1, 3, 2, 2)), 0, 2)
-	var upper_wall := _cells(Rect2i(0, 3, 16, 2))
-	for gap in _cells(Rect2i(1, 3, 2, 2)):
-		upper_wall.erase(gap)
-	wall_layer.set_cells_terrain_connect(upper_wall, 1, 2)
-	props["entry"].position = Vector2(64, 176)
-	props["window"].position = Vector2(208, 160)
-	_spawn_prop("arch", Vector2(384, 176), "storm_arch", false)
-	_spawn_prop("pump", Vector2(456, 176), "gallery_valve")
-	var weather := Sprite2D.new()
-	weather.texture = load(ART + "Architecture/gallery_weather.png")
-	weather.position = Vector2(0, -50)
-	props["storm_arch"].add_child(weather)
-	props["storm_arch"].move_child(weather, 0)
-	_barrier(Vector2(16, 144), Vector2(32, 32))
-	_barrier(Vector2(304, 144), Vector2(416, 32))
+	floor_layer.set_cells_terrain_connect(_cells(Rect2i(1, 6, 14, 3)), 0, 0)
+	floor_layer.set_cells_terrain_connect(_cells(Rect2i(1, 3, 2, 3)), 0, 0)
+	props["entry"].position = Vector2(64, 192)
+	props["window"].queue_free()
+	props.erase("window")
+	var facade := Sprite2D.new()
+	facade.texture = load(ART + "Architecture/gallery_facade.png")
+	facade.centered = false
+	facade.position = Vector2(32, 96)
+	world.add_child(facade)
+	world.move_child(facade, sorted_world.get_index())
+	_barrier(Vector2(16, 184), Vector2(32, 16))
+	_barrier(Vector2(304, 184), Vector2(416, 16))
 	_barrier(Vector2(256, 296), Vector2(512, 32))
 	_actor("detective", Vector2(192, 240), "侦探", true)
 	_actor("poet", Vector2(352, 240), "卢西安")
@@ -360,19 +369,19 @@ func _kitchen_stage() -> void:
 
 func _transfer_stage() -> void:
 	_spawn_prop("grain_crates", Vector2(160, 160), "stored_grain")
-	_spawn_prop("pump", Vector2(456, 144), "service_hoist")
 	_spawn_prop("sack", Vector2(128, 264), "grain_one", false)
 	_spawn_prop("sack", Vector2(224, 264), "grain_two", false)
 	_spawn_prop("seedlings", Vector2(320, 264), "seedling_last", false)
 	_actor("chef", Vector2(128, 304), "沈鼎")
 	_actor("detective", Vector2(224, 304), "侦探", true)
 	_label_at("粮仓出库", Vector2(96, 216))
-	_label_at("高处接收台", Vector2(354, 100))
-	_barrier(Vector2(352, 144), Vector2(8, 96))
-	_barrier(Vector2(384, 192), Vector2(64, 16))
-	water_layer.set_cells_terrain_connect(_cells(Rect2i(1, 11, 14, 2)), 2, 2)
-	water_layer.position.y = 24
-	tide_barrier = _barrier(Vector2(256, 368), Vector2(448, 16))
+	_label_at("高处接收台", Vector2(300, 84))
+	_barrier(Vector2(288, 144), Vector2(8, 96))
+	_barrier(Vector2(352, 192), Vector2(128, 16))
+	water_layer.set_cells_terrain_connect(_cells(Rect2i(1, 0, 14, 6)), 2, 2)
+	water_layer.position.y = 376
+	_effect("tide_edge", Vector2.ZERO, water_layer)
+	tide_barrier = _barrier(Vector2(256, 388), Vector2(448, 16))
 
 func _label_at(text: String, at: Vector2) -> void:
 	var label := Label.new()
@@ -436,9 +445,19 @@ func _run_cue(cue: String, actor_id: String) -> void:
 			await _transfer_one(actor_id)
 		"tide":
 			tide_level = mini(tide_level + 1, 3)
-			water_layer.position.y = 24 - tide_level * 8
+			if tide_level == 3:
+				for person in ["chef", "detective"]:
+					if actors[person].position.y > 184:
+						if not await _walk_and_wait(person, [Vector2(440, 280), Vector2(440, 176)]):
+							return
+			var edge: int = [376, 344, 312, 232][tide_level]
+			var rise := create_tween()
+			rise.tween_property(water_layer, "position:y", float(edge), 1.8)
 			# Diagrammatic edge advance, not an asserted metre level or full-island tide model.
-			tide_barrier.position.y = 368 - tide_level * 4
+			tide_barrier.position.y = edge + 12
+			await rise.finished
+			if tide_level == 3:
+				actors["detective"].player_controlled = false
 			state_label.text = "源质逼近1F低沿（示意，无绝对液面） · 已实际送达：%d 件 / 当前搬运：%d 件" % [received.size(), cargo.size()]
 
 func _walk_and_wait(actor_id: String, points: Array[Vector2]) -> bool:
@@ -478,24 +497,29 @@ func _transfer_one(actor_id: String) -> void:
 	cargo[actor_id] = item
 	item_node.reparent(actor, false)
 	item_node.position = Vector2(0, -18)
-	if not await _walk_and_wait(actor_id, [Vector2(440, 280), Vector2(440, 176)]):
+	item_node.get_node("ContactShadow").visible = false
+	var drop: Vector2 = [Vector2(320, 128), Vector2(352, 128), Vector2(320, 160)][received.size()]
+	if not await _walk_and_wait(actor_id, [Vector2(440, 280), Vector2(440, 176), drop + Vector2(0, 16)]):
 		return
 	# A handover follows physical arrival. The original item persists on the bay.
 	item_node.reparent(sorted_world, false)
-	item_node.position = Vector2(372 + received.size() * 30, 144)
+	item_node.position = drop
+	item_node.get_node("ContactShadow").visible = true
 	received.append(item)
 	cargo.erase(actor_id)
 	state_label.text = "高处已接收：%d 件 · 当前物件留在接收台 · 本段不判整场抢运结果" % received.size()
 	# Park the first carrier clear of the next receiving line.
-	var park := Vector2(376, 176) if actor_id == "chef" else Vector2(408, 176)
-	await _walk_and_wait(actor_id, [park])
+	var park := Vector2(392, 128) if actor_id == "chef" else Vector2(432, 160)
+	await _walk_and_wait(actor_id, [Vector2(440, 176), park])
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	if not event is InputEventKey or not event.pressed or event.echo:
+func _input(event: InputEvent) -> void:
+	if not event is InputEventKey:
 		return
-	if event.keycode >= KEY_1 and event.keycode <= KEY_6:
-		_select_stage(event.keycode - KEY_1)
+	if event.keycode == KEY_SPACE or (event.keycode >= KEY_1 and event.keycode <= KEY_6):
+		# Consume both edges before GUI focus can activate a toggle button.
 		get_viewport().set_input_as_handled()
-	elif event.keycode == KEY_SPACE:
-		_advance()
-		get_viewport().set_input_as_handled()
+		if event.pressed and not event.echo:
+			if event.keycode == KEY_SPACE:
+				_advance()
+			else:
+				_select_stage(event.keycode - KEY_1)

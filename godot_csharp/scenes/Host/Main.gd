@@ -56,10 +56,12 @@ func _timing(stage: String, details: Dictionary = {}) -> void:
 	engine.RecordTiming({"stage": stage, "interaction_id": _interaction_id, "details": details})
 
 func _ready() -> void:
-	for argument in OS.get_cmdline_user_args():
-		if argument == "--highlights" or argument.begins_with("--highlight="):
-			get_tree().call_deferred("change_scene_to_file", "res://scenes/Highlights/Highlights.tscn")
-			return
+	if not get_tree().get_meta("highlight_launch_consumed", false):
+		for argument in OS.get_cmdline_user_args():
+			if argument == "--highlights" or argument.begins_with("--highlight="):
+				get_tree().set_meta("highlight_launch_consumed", true)
+				get_tree().call_deferred("change_scene_to_file", "res://scenes/Highlights/Highlights.tscn")
+				return
 	if not replay_mode:
 		get_tree().auto_accept_quit = false
 		add_to_group("lifecycle_hosts")

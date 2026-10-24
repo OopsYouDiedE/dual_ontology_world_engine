@@ -113,6 +113,14 @@ def publish():
         "source_rect": weather_rect, "output_size": [42, 64], "resampling": "nearest-neighbor",
         "purpose": "original gallery storm view behind the independent arch sprite",
         "output_sha256": digest(weather_path)}, indent=2) + "\n", encoding="utf-8")
+    facade_rect = (0, 0, 1536, 320)
+    facade_path = weather_path.parent / "gallery_facade.png"
+    gallery.crop(facade_rect).resize((448, 96), Image.Resampling.NEAREST).save(facade_path)
+    (facade_path.parent / "gallery_facade.publication.json").write_text(json.dumps({
+        "source": str(gallery_source.relative_to(ROOT)), "source_sha256": digest(gallery_source),
+        "source_rect": facade_rect, "output_size": [448, 96], "resampling": "nearest-neighbor",
+        "purpose": "north facade: paired windows, central broken storm arch, copper pipes; floor and rail remain assembled runtime geometry",
+        "output_sha256": digest(facade_path)}, indent=2) + "\n", encoding="utf-8")
     print("Published highlight object textures and character atlases; runtime visual review remains separate.")
 
 

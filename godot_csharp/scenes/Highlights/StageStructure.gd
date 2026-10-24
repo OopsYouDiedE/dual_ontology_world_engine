@@ -1,41 +1,56 @@
 extends Node2D
-## Architectural trim and a visible receiving platform, in the same32px space.
+## Native 32px wood and masonry assembled around the physical stair gap.
+const FLOOR = preload("res://ShareAsset/Internal/Props/Highlights/Terrain/floor.png")
+const WALL = preload("res://ShareAsset/Internal/Props/Highlights/Terrain/wall.png")
+const RAIL = preload("res://scenes/Highlights/StageRailing.gd")
 var transfer := false
 var gallery := false
 
+func install_foreground(parent: Node2D) -> void:
+	if gallery:
+		_rail(parent, Vector2(32, 292), 448)
+	elif transfer:
+		_rail(parent, Vector2(288, 200), 120)
+		_rail(parent, Vector2(468, 200), 12)
+
+func _rail(parent: Node2D, at: Vector2, span: int) -> void:
+	var rail := RAIL.new()
+	rail.position = at
+	rail.span = span
+	parent.add_child(rail)
+
+func _patch(rect: Rect2i, material: int, masonry: bool = false) -> void:
+	var texture: Texture2D = WALL if masonry else FLOOR
+	var source := Vector2i(96, material * 128 + 96) if masonry else Vector2i(192, material * 192 + 160)
+	for y in range(rect.position.y, rect.end.y, 32):
+		for x in range(rect.position.x, rect.end.x, 32):
+			var size := Vector2i(mini(32, rect.end.x - x), mini(32, rect.end.y - y))
+			draw_texture_rect_region(texture, Rect2(Vector2(x, y), Vector2(size)), Rect2(Vector2(source), Vector2(size)))
+
 func _draw() -> void:
 	if gallery:
-		# A narrow suspended gallery: solid north sill and south rail above the drop.
-		draw_rect(Rect2(32, 156, 448, 6), Color("5c4435"))
-		draw_rect(Rect2(32, 280, 448, 12), Color("443e37"))
-		draw_line(Vector2(32, 280), Vector2(480, 280), Color("aa9271"), 3)
-		for x in range(32, 481, 32):
-			draw_rect(Rect2(x, 264, 4, 20), Color("5c5142"))
-		# A pipe run joins the existing valve prop along the gallery's north wall.
-		draw_line(Vector2(96, 138), Vector2(464, 138), Color("4e7268"), 5)
-		draw_line(Vector2(96, 136), Vector2(464, 136), Color("b49361"), 1)
-		for x in [112, 240, 464]:
-			draw_rect(Rect2(x, 132, 4, 13), Color("a48960"))
+		_patch(Rect2i(32, 284, 448, 12), 2)
 		return
-	# Front-facing rear wall, open doorway at32..96, and continuous side plinths.
-	draw_rect(Rect2(0, 88, 32, 8), Color("5c4435"))
-	draw_rect(Rect2(96, 88, 416, 8), Color("5c4435"))
-	draw_line(Vector2(96, 88), Vector2(480, 88), Color("b49b70"), 2)
-	draw_rect(Rect2(24, 96, 8, 280), Color("624638"))
-	draw_rect(Rect2(480, 96, 8, 280), Color("624638"))
-	draw_rect(Rect2(32, 92, 64, 4), Color("b5a080"))
+	_patch(Rect2i(0, 88, 32, 8), 2)
+	_patch(Rect2i(96, 88, 392, 8), 2)
+	_patch(Rect2i(24, 96, 8, 280), 2)
+	_patch(Rect2i(480, 96, 8, 280), 2)
 	if transfer:
-		# A continuous high receiving bay with a south-facing service stair.
-		draw_rect(Rect2(352, 96, 128, 88), Color("a49b83"))
-		for x in range(352, 481, 32):
-			draw_line(Vector2(x, 96), Vector2(x, 184), Color("837c6c"), 1)
-		for y in range(96, 185, 32):
-			draw_line(Vector2(352, y), Vector2(480, y), Color("837c6c"), 1)
-		draw_rect(Rect2(352, 184, 64, 16), Color("675d4e"))
-		draw_line(Vector2(352, 184), Vector2(416, 184), Color("c2b395"), 2)
+		# Wood deck and masonry retaining wall open only at the service stair.
+		_patch(Rect2i(288, 96, 192, 88), 2)
+		_patch(Rect2i(288, 184, 128, 16), 0, true)
+		_patch(Rect2i(464, 184, 16, 16), 0, true)
+		_patch(Rect2i(288, 180, 128, 5), 3)
+		for y in range(104, 184, 16):
+			draw_line(Vector2(296, y), Vector2(472, y), Color(0.19, 0.15, 0.12, 0.5), 1)
 		for step in range(5):
 			var y := 184 + step * 8
-			draw_rect(Rect2(416, y, 48, 8), Color("93856c"))
-			draw_line(Vector2(416, y), Vector2(464, y), Color("c3b496"), 2)
-		draw_line(Vector2(408, 184), Vector2(408, 224), Color("5d564b"), 3)
-		draw_line(Vector2(472, 184), Vector2(472, 224), Color("5d564b"), 3)
+			_patch(Rect2i(416, y, 48, 6), 3)
+			_patch(Rect2i(416, y + 6, 48, 2), 0, true)
+			draw_line(Vector2(416, y + 6), Vector2(464, y + 6), Color(0.15, 0.17, 0.16, 0.6), 1)
+		_patch(Rect2i(410, 192, 5, 32), 2)
+		_patch(Rect2i(465, 192, 5, 32), 2)
+		# Goods ropes hang over the receiving deck, clear of the staircase.
+		for x in [300, 364]:
+			draw_line(Vector2(x, 100), Vector2(x, 158), Color("ab9569"), 2)
+			draw_circle(Vector2(x, 102), 3, Color("7e7053"))

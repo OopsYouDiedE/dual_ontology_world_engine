@@ -52,6 +52,13 @@ func _draw() -> void:
 			var at := Vector2(-25 + (i % 5) * 10, -26 - (i / 5) * 7)
 			draw_circle(at, 3, Color("eee3c6"))
 			draw_arc(at + Vector2(0, 1), 3.2, PI, TAU, 8, Color("baaa8d"), 1)
+	elif kind == "tide_edge":
+		# The local danger edge shares the water layer's moving transform.
+		for i in range(28):
+			var x := 40.0 + i * 16.0
+			var lift := sin(elapsed * 1.6 + i * 0.8) * 3.0
+			draw_circle(Vector2(x, 9 + lift), 11, Color(0.42, 0.25, 0.63, 0.16))
+			draw_line(Vector2(x - 5, 10 + lift), Vector2(x + 4, 10 + lift), Color(0.78, 0.71, 0.34, 0.65), 1)
 	elif kind == "miracle":
 		for i in range(55):
 			var x := 64 + fmod(i * 53.0, 384)
