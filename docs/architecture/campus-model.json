@@ -1,0 +1,274 @@
+{
+  "schema": "design-campus-model-v1",
+  "date": "2026-10-24",
+  "status": "design-only; not connected to game",
+  "origin_wgs84": [
+    -31.1155,
+    39.67325
+  ],
+  "horizontal_scale": 0.5,
+  "vertical_scale": 0.5,
+  "transform": "east=.5*(lon-lon0)*111320*cos(lat0); north=.5*(lat-lat0)*111320; height=.5*DEM",
+  "projection_note": "Local equirectangular approximation for this ~8 km study, not a surveyed projected CRS.",
+  "nominal_tile_pixel_ground_m": 14.708,
+  "sites": [
+    {
+      "id": "main",
+      "title": "上移后的学院中心",
+      "x": 30,
+      "y": 75,
+      "w": 60,
+      "d": 42,
+      "floor": 27.5,
+      "rotation_deg": 15,
+      "lon": -31.114799742343514,
+      "lat": 39.67459746676249,
+      "ground_model_m": 24.993,
+      "ground_source_m": 49.986,
+      "footprint_ground_range_model_m": [
+        23.123,
+        27.9
+      ]
+    },
+    {
+      "id": "wenqi",
+      "title": "文契院",
+      "x": -70,
+      "y": 105,
+      "w": 24,
+      "d": 24,
+      "floor": 37,
+      "lon": -31.1171339345318,
+      "lat": 39.67513645346748,
+      "ground_model_m": 34.807,
+      "ground_source_m": 69.614,
+      "footprint_ground_range_model_m": [
+        31.771,
+        37.981
+      ]
+    },
+    {
+      "id": "baita",
+      "title": "白塔院",
+      "x": 110,
+      "y": 105,
+      "w": 24,
+      "d": 24,
+      "floor": 35.5,
+      "lon": -31.11293238859289,
+      "lat": 39.67513645346748,
+      "ground_model_m": 32.308,
+      "ground_source_m": 64.616,
+      "footprint_ground_range_model_m": [
+        28.002,
+        38.112
+      ]
+    },
+    {
+      "id": "xingyi",
+      "title": "星仪院",
+      "x": -70,
+      "y": 40,
+      "w": 24,
+      "d": 24,
+      "floor": 26,
+      "lon": -31.1171339345318,
+      "lat": 39.67396864894,
+      "ground_model_m": 23.46,
+      "ground_source_m": 46.92,
+      "footprint_ground_range_model_m": [
+        21.289,
+        25.51
+      ]
+    },
+    {
+      "id": "tiegong",
+      "title": "铁工院",
+      "x": 110,
+      "y": 40,
+      "w": 30,
+      "d": 24,
+      "floor": 25,
+      "lon": -31.11293238859289,
+      "lat": 39.67396864894,
+      "ground_model_m": 21.391,
+      "ground_source_m": 42.782,
+      "footprint_ground_range_model_m": [
+        20.103,
+        23.611
+      ]
+    },
+    {
+      "id": "village",
+      "title": "渔村低区·架空平房",
+      "x": 165,
+      "y": -90,
+      "w": 40,
+      "d": 25,
+      "floor": null,
+      "lon": -31.111648582889334,
+      "lat": 39.671633039885016,
+      "ground_model_m": 10.463,
+      "ground_source_m": 20.926,
+      "footprint_ground_range_model_m": [
+        7.538,
+        11.87
+      ]
+    },
+    {
+      "id": "staff_homes",
+      "title": "维护人员·架空平房",
+      "x": 65,
+      "y": -25,
+      "w": 50,
+      "d": 30,
+      "floor": null,
+      "lon": -31.113982775077616,
+      "lat": 39.67280084441251,
+      "ground_model_m": 16.995,
+      "ground_source_m": 33.99,
+      "footprint_ground_range_model_m": [
+        15.493,
+        18.68
+      ]
+    },
+    {
+      "id": "islander_homes",
+      "title": "岛民生活区·架空平房",
+      "x": 100,
+      "y": -70,
+      "w": 60,
+      "d": 28,
+      "floor": null,
+      "lon": -31.11316580781172,
+      "lat": 39.67199236435501,
+      "ground_model_m": 13.542,
+      "ground_source_m": 27.084,
+      "footprint_ground_range_model_m": [
+        11.915,
+        15.272
+      ]
+    },
+    {
+      "id": "service_yard",
+      "title": "后勤收货与维修院",
+      "x": 5,
+      "y": 10,
+      "w": 36,
+      "d": 24,
+      "floor": null,
+      "lon": -31.115383290390586,
+      "lat": 39.673429662235,
+      "ground_model_m": 20.999,
+      "ground_source_m": 41.998,
+      "footprint_ground_range_model_m": [
+        19.626,
+        22.215
+      ]
+    },
+    {
+      "id": "terrace_garden",
+      "title": "坡地实验圃与预留地",
+      "x": 40,
+      "y": 170,
+      "w": 55,
+      "d": 35,
+      "floor": null,
+      "lon": -31.114566323124688,
+      "lat": 39.67630425799497,
+      "ground_model_m": 43.154,
+      "ground_source_m": 86.308,
+      "footprint_ground_range_model_m": [
+        37.429,
+        52.38
+      ]
+    },
+    {
+      "id": "monastery",
+      "title": "山腰修士基地",
+      "x": -35,
+      "y": 275,
+      "w": 18,
+      "d": 12,
+      "floor": 68,
+      "lon": -31.1163169672659,
+      "lat": 39.678190711462456,
+      "ground_model_m": 66.316,
+      "ground_source_m": 132.632,
+      "footprint_ground_range_model_m": [
+        64.56,
+        67.761
+      ]
+    },
+    {
+      "id": "altar",
+      "title": "火山口内祭坛",
+      "x": 150,
+      "y": 2100,
+      "w": 12,
+      "d": 12,
+      "floor": 199.5,
+      "lon": -31.111998711717575,
+      "lat": 39.71097906934963,
+      "ground_model_m": 198.516,
+      "ground_source_m": 397.032,
+      "footprint_ground_range_model_m": [
+        198.461,
+        198.57
+      ]
+    },
+    {
+      "id": "quay",
+      "title": "货运码头研究区",
+      "x": 223.72717320429294,
+      "y": -72.66722469630324,
+      "w": 40,
+      "d": 12,
+      "floor": 4.5,
+      "lon": -31.1102777778,
+      "lat": 39.6719444444,
+      "ground_model_m": 2.232,
+      "ground_source_m": 4.464,
+      "footprint_ground_range_model_m": [
+        -0.639,
+        6.739
+      ]
+    }
+  ],
+  "campus_study_bounds": [
+    -145,
+    -10,
+    310,
+    230
+  ],
+  "campus_study_area_ha": 7.13,
+  "floors": {
+    "B2": 20.3,
+    "B1": 24.1,
+    "1F": 27.5,
+    "2F": 32.3,
+    "3F": 36.5,
+    "4F": 40.7
+  },
+  "courts": [
+    [
+      12,
+      14,
+      12,
+      14
+    ],
+    [
+      36,
+      14,
+      12,
+      14
+    ]
+  ],
+  "limits": [
+    "No game code changes",
+    "30m-class global sources resampled to ~14.7m tile pixels; local grading uncertain",
+    "New structures use human dimensions and are not scaled with the island",
+    "No bathymetry, geotechnical or construction verification",
+    "Gallery endpoints, tunnel sections and crater access remain conditional design"
+  ]
+}
