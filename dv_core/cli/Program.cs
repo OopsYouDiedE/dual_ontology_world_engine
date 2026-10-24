@@ -174,7 +174,10 @@ internal sealed class Cli
                 case "--profile": campaign["profile"] = Value(); break;
                 case "--zone": campaign["detective_zone"] = Value(); break;
                 case "--seed": campaign["seed"] = int.Parse(Value(), CultureInfo.InvariantCulture); break;
-                case "--opt-taskgraph": case "--opt-storyflow": case "--opt-stateindex":
+                case "--opt-taskgraph": case "--selective-planning": case "--opt-planreuse": case "--opt-prune":
+                case "--plan-depth": case "--prune-top-k": case "--plan-time-bucket":
+                    throw new ArgumentException(args[i] + " 已退役。当前使用唯一近似选策。");
+                case "--opt-storyflow": case "--opt-stateindex":
                     var optimization = args[i][6..];
                     campaign["opt_" + optimization] = Value().ToLowerInvariant() switch
                     {
@@ -183,20 +186,19 @@ internal sealed class Cli
                     };
                     break;
                 case "--planning":
-                    campaign["selective_planning"] = Value().ToLowerInvariant() switch
+                    campaign["simulation_mode"] = Value().ToLowerInvariant() switch
                     {
-                        "selective" => true, "precise" => false,
-                        _ => throw new ArgumentException("--planning must be selective or precise.")
+                        "approximate" => "approximate-v1",
+                        _ => throw new ArgumentException("--planning 仅支持 approximate；旧精确与选择性搜索已退役。")
                     };
                     break;
                 default: throw new ArgumentException($"Unknown argument: {args[i]}");
             }
         }
-        if (restore is not null && campaign.Keys.Any(key => key is "opt_taskgraph" or "opt_storyflow"))
-            throw new ArgumentException("Restored sessions retain saved taskgraph/storyflow policies; these switches require a new session.");
-        if (replayPath is not null && campaign.Keys.Any(key => key is "opt_taskgraph" or "opt_storyflow" or "opt_stateindex"))
+        if (restore is not null && campaign.Keys.Any(key => key is "simulation_mode" or "opt_storyflow"))
+            throw new ArgumentException("Restored sessions retain saved policies; these switches require a new session.");
+        if (replayPath is not null && campaign.Keys.Any(key => key is "simulation_mode" or "opt_storyflow" or "opt_stateindex"))
             throw new ArgumentException("Optimization switches configure live sessions, not recorded replay.");
-        if (replayPath is null && restore is null) campaign.TryAdd("opt_taskgraph", false);
         if (campaign.TryGetValue("opt_stateindex", out var stateIndex))
             Environment.SetEnvironmentVariable("DV_OPT_STATEINDEX", stateIndex is false ? "0" : "1");
         else if (replayPath is null && restore is null)
@@ -253,13 +255,13 @@ internal sealed class Cli
         else
         {
             session = restore is not null ? DvSession.RestoreFile(restore) : DvSession.OpenConfiguredCampaign(
-                JsonSerializer.Serialize(new { controller, viewer, campaign, audit, developer }, Json), tui && !developer ? TextWriter.Null : Console.Error);
+                JsonSerializer.Serialize(new { controller, viewer, campaign, audit, developer }, Json), developer ? Console.Error : TextWriter.Null);
             if (restore is not null && explicitController)
                 session.SetPerformanceController(controller switch
                 {
                     "player" or "human" => "human", "llm" => "llm", _ => "engine"
                 });
-            if (tui && !developer) session.DiagnosticOutput = TextWriter.Null;
+            if (!developer) session.DiagnosticOutput = TextWriter.Null;
             session.SetExecutionContext("cli", "formal-model", sourceRevision);
             performancePath ??= (tracePath ?? savePath) is { } artifact
                 ? Path.ChangeExtension(artifact, null) + ".performance"
@@ -1550,8 +1552,7 @@ DV Core CLI
   --ui-zoom fit|detail|compact --ui-history latest|recent --width 120 --height 42 --no-color
   --export-ui NEW.svg --command COMMAND
   --controller player|human|llm|ai --viewer ID --profile NAME --zone ID --seed N
-  --planning selective|precise
-  --opt-taskgraph on|off (default off; experimental)
+  --planning approximate
   --opt-storyflow on|off  --opt-stateindex on|off (default on)
   --dev --audit --restore FILE --save FILE --trace FILE
   --scores | --no-scores
@@ -1570,7 +1571,7 @@ replay frame N  replay marks  replay capture NEW_DIRECTORY
 inspect ID  tp PLACE  time MINUTES  help  quit
 
 controller: player（默认）与 human 均为人类；llm 为外部大模型；ai 为自主引擎。
-planning: selective（默认）按当前任务按需展开；precise 保留内容声明的完整预算搜索。
+planning: approximate（默认）使用当前候选即时效用与单次声明推理。
 --jsonl 仅指定输入输出格式，不会自动把人类会话记为 LLM。
 --restore 默认保留存档的控制器统计分类；显式 --controller 仅调整诊断分类，不改变世界控制权。
 人类和 LLM 默认隐藏 AI 评分；--scores 或 scores on 可显式显示。

@@ -2,7 +2,7 @@
 
 ## 近似模拟生产入口（2026-10-24）
 
-生产配置 `simulation_mode` 默认 `approximate-v1`。30 的默认选择只扫描当前本人准入候选及即时效用，推理只执行一次声明遍历；记录 `approximation=true`，不得描述为完整搜索、全脑固定点或旧轨迹等价。原搜索与整套认知函数供显式 `legacy-explicit` 配置和仍依赖它们的付费重演/声明工具使用，退出默认选策入口。
+生产配置 `simulation_mode` 只接受 `approximate-v1`。`dvs_choose` 扫描当前本人准入候选并与observer评分共用 `dvs_current_action_score`；`dvs_prepare_cognition` 执行一次声明遍历。旧行动树、taskgraph、任务缓存、听者预测准备、自动全脑组合及legacy-explicit支路已删除。实际听闻、正式付费因果重演和判答继续保留；记录 `approximation=true`，不宣称全脑固定点、全局最优或旧轨迹等价。
 
 `physical.simulation` 保存四频计时、明确注册事实的 `RealityFact/KnownByMask` 和单一 `DemonEntityLock`。身份固定32位，低16位为学员。20 的 `CognitionFilter` 同时限制读取、叶命题和新观察；顺行遗忘主体的 Complete 保留原 mind。知情位图来自已有实际心智信息，不能通过位图写回人物事实。
 
@@ -41,7 +41,7 @@ CLI 空间视图按区域组织房间，区域内客观空房合并，主观无�
 
 CLI 时间栏下分开显示 `dv-performance-v3` 的累计数量与每现实小时速率。自主观察台累计显示会话已选择、已完成（含拒绝回执）与在途数量，速率为游戏小时/现实小时、正式选择次/现实小时、当前控制来源累计接口小时/现实小时；人工/LLM 主观界面只显示当前检阅者有记录的选择数量与选择速率，不额外展开其他角色计数。原始现实用时与游戏推进量注明采样窗口。自主观察台另显示本次累计推进每游戏小时的引擎选择次数、选策计算秒数和实际现实秒数。选策计算使用紧邻 `dvs_choose` 的 `decision-compute` 只读计时边界，含规划和未采用提前计算，扣除性能流编码/写入与外部阶段回调，不等于纯 CPU，不包含其余认知、执行、投影、等待和归档；零推进、未闭合与失败计量保持缺失。人工/LLM 主观界面不展开新增全局引擎项，显式工程性能页可读取。现实分母从打开／恢复完成至宿主关闭请求，初始化与关闭归档单列；零现实分母缺失，现实分母有效但游戏未推进时速度为 0。短窗口按实际累计量计算，不声称已测完整现实小时或整局收益。人工评分默认隐藏；普通投影只读真实已记录评分，显式 scores/--scores 请求即时估值及呈现，不改变正式决策。
 
-引擎接口耗时为正式 engine 与 speculation 的排他墙钟总和，未采用的提前计算仍计实际消耗。人工/模型接口从可选请求真正交付开始，到正式选择被接受、取消或关闭结束；只记录宿主实际提供的 request/response 等阶段，不用整段会话时间替代接口等待，也不推测模型内部耗时。没有真实接口测量时保留缺失。等待可能与引擎计算重叠，各来源累计耗时不能直接相加冒充整段现实时间。操作报告明确分开 inclusive/exclusive 总计与均值，P95 是含子项时长的直方图上界；触发主体、观察者和投影范围分别归属。正式选择事件的 planning_work 只累计实际候选、资格、预测和展开工作，缓存命中的 reused_work 不重复累计；预算、深度与选择顺序保持原声明。
+引擎接口耗时为正式 engine 与 speculation 的排他墙钟总和，未采用的提前计算仍计实际消耗。人工/模型接口从可选请求真正交付开始，到正式选择被接受、取消或关闭结束；只记录宿主实际提供的 request/response 等阶段，不用整段会话时间替代接口等待，也不推测模型内部耗时。没有真实接口测量时保留缺失。等待可能与引擎计算重叠，各来源累计耗时不能直接相加冒充整段现实时间。操作报告明确分开 inclusive/exclusive 总计与均值，P95 是含子项时长的直方图上界；触发主体、观察者和投影范围分别归属。正式选择事件的 planning_work 记录实际扫描候选与资格求值，预测和展开计数为零；并列按声明顺序选择。正式付费重演保留独立预算与执行证据。
 
 决策只消费本次正式状态新增的 action_selected，按 engine/human/llm 区分；未采用分支、UI 聚焦、候选节点、开发操作和恢复前历史不重计。选择、排队、Complete、pending 与 durable 截止分列，pending 不自动算失败。原始计算、决策和接口边界缓冲写入唯一二进制流，关闭后写 seal 并原子发布；内存固定尾部仅供在线查看及临时快照导出，不使流式证据随淘汰丢失。流未开启前的缺失前缀、写入失败和快照导出尾部范围必须明示。控制来源首次操作前确定且与真实控制权一致；诊断标签随存档保留，恢复统计重新起算。CLI 支持 player/human/llm/ai，JSONL 不自动决定来源。接口与报告详见 `../docs/engine-performance.md`；没有实际运行时不得填写实测结果。
 
@@ -106,9 +106,7 @@ python mcp/editor_lsp/dv_lsp.py
 
 现场失败与成功限制：一次性及默认不重复行动按 `completed_actions` 限制成功次数，`used` 继续保存全部尝试并照常结算费用与行动配额。人工控制的真实 Godot 拒绝回执，仅在明确失去热点接触或具有完整运动 job 证明的现场受阻时，向 `actor.manual_contact_retries` 写入按行动标识保存的 `{failure_class, action_event}`；同一行动后续 Complete 覆盖该项，成功清除。该字段随主体保存、恢复与扩章，不进入本人认识或公共观察；仅临时 `manual_input` 视图允许显式人工重试绕过相同拒绝签名，所有其他准入与正式执行照常重核。自主主体保留相同本人输入下的拒绝签名保护；缺资源、缺绑定、身份或站点证明错误、formal-model 回执及 DV 权威前提拒绝不生成此重试凭据。
 
-规划声明：通用 `policy.selective_planning` 默认 false，生产 campaign 默认 true，可用 CLI `--planning precise` 显式关闭。选择性策略 `selective-task-v1` 先评估当前合法任务；在根层第一个已准入、非移动/答题/等待、净分为正且具有实际信息/核验/成就价值的任务处可以提前停止，记录 partial_layer、candidates_skipped、examined_layers、completed_layers，部分层不构成完整最优证明；无当前任务时才使用已采纳预测找路。成功移动后仅续用经当前完整资格、来源与任务价值重核的剩余路线。停止和等待明确记录 `approximation=true`、`approximate-yield`，不宣称完整搜索或全脑固定点。关闭该开关时保留内容声明的 `plan_depth`、`lookahead_limit`、`fast_approximation`、`positive_move_root_stop` 与 `planning_limit`；两种策略均不提高原预算，不改变重演资格、正式判答、费用和 Complete。策略不同的运行单列比较条件。
-
-行动树中的非 transit 任务沿用 `node.tasks` 的路径内去重合同：已出现的任务标识必须在准入和评分前排除，不能先把同一未知观察机会再次计分、写入候选或更新 best 后才阻止后继入队。同一路径中的候选在入队时继续保持任务唯一性，真实会话中的可重复行动资格不因此删除；移动边的合法重访、个人选择价值与未知观察保持原合同。该修正不提高预算/深度、不重排行动、不改费用，也不指定内容路线；与此前含重复计分的窗口分列验证。
+唯一选策声明为 `approximate-v1`，完整接口见SIMULATION。旧 `selective_planning/opt_prune/opt_planreuse/opt_taskgraph/prune_top_k/prune_depth/plan_time_bucket` 输入明确拒绝。共同即时分与实际选择分区分时间和来源；当前候选评分不替代本人正式付费重演或权威判答。
 
 重演准入：具有假设目录的 replay 必须至少有一个候选满足本人的 topic、basis 与 available_when；准入、人工候选和正式 Complete 复用同一条件，人工仍另核对 manual_available_when。是否存在候选只按完整 mind 及外部目录、问题引用、话题绑定与真实收闻输入做纯值复用，不执行模型、不计作付费推演；Complete 仍按当前本人状态重新核对每个候选。没有假设目录而声明 factor_constraints 的因子专用重演保留原付费检查路径。费用、预算、证书、问题开放和观察条件保持，personal_choice 的价值不能让空候选模型重演绕过准入。
 
@@ -140,9 +138,9 @@ Core 发布中立 actor/map/room/site/station 身份、位置标题和逻辑时�
 
 `pending_heard` 只保存真实听到的话语与当时声道证据，到期才理解；不重判已结束声道或让等待者偷偷运行理解模型。真实 Complete 以 execution.time 推进本人时钟，仅对已声明 clock_ref/bindings 生成执行回执观察；未知或未绑定时钟保持未知，不全员同步认识。
 
-后台准备产出正式 pending 时保持对应执行主体与玩家等待游标，Complete 后再恢复玩家输入；只在未产出现场动作时立即恢复等待界面。同一时刻空闲主体仅在本人输入、待理解收闻、接触或声明真实变化时再次决策；选择后的 `decision_revision` 防止自唤醒。精确策略的跨时刻固定点缓存继续保留原证明要求；选择性策略的等待独立标为近似让出，按完整输入和声明时间条件失效，无法分析的时钟条件最多沿用到下一分钟。真实声明时界和排队执行可推进调度，缓存自身的有效期不产生空转游戏进度。复用记录指向真实来源，工作统计只累计本次实际运算，不冒充重新认知或完整证明。
+后台准备产出正式pending时保持执行主体与玩家等待游标，Complete后恢复玩家输入。当前候选已检查后的等待标为approximate-yield，按本人真实输入、收闻、接触、声明时界与分频节拍失效。decision_revision抑制同一输入自唤醒；没有保留旧全脑固定点和行动树续行。实际队列、费用和观察提交继续共用正式动作链。
 
-环境等待分析已采纳前提的时钟边界，保留一分钟采样格、实际 due 与一次成功后的 once 挂起；未知条件、增量或级联仍逐分钟结算，不按规则名称猜测一次性身份。`plan_budget/planning_limit` 限本次行动树，dependency_budget 与付费重演余额单独计工作；等待者不重置或运行搜索。改变层数、配额、费用、内容、审计策略或控制方式须作为条件变化单列。
+环境等待分析已采纳前提的时钟边界，保留一分钟采样格、实际 due 与一次成功后的 once 挂起；未知条件、增量或级联仍逐分钟结算，不按规则名称猜测一次性身份。付费重演工作预算继续独立计费；等待者不运行模型。旧行动树预算和搜索续行已删除。改变层数、配额、费用、内容、审计策略或控制方式须作为条件变化单列。
 
 `dvs_interrupt_waits` 仅适用于显式 `interruptible=true`、`activity="wait"`、`kind=wait` 或 `wait.*`、`minimum.time=0` 且实际时长为正的纯等待，不接受 answer、speech 或 travel。仅本人实际新听闻、观察或当前可见变化唤醒；原到期点、elapsed 和来源留在中断记录。缩短时长后继续 Prepare → 真实 receipt → Complete，核对 elapsed 并结算非时间费用；原完整等待法则不执行，不进入 `completed_actions`，不写普通拒绝签名封锁后续等待。`failure_class=activity-interrupted` 必须与普通失败区分。固定点 guard 可在完整且输入未变的认知捕获后休眠于无来源恒真 topic 条件，不补造听闻或知识；待收闻、阻塞、本人输入及真实来源变化仍重新求值。
 
@@ -187,15 +185,12 @@ run_debug 在构建前封存实际依赖、编译器、Runtime 与工具指纹�
 
 `--dv-dev` 明确开启开发会话。Inspector 可以并排查看权威世界与指定心智；tp/time 记录开发事件。时间推进沿实际队列和世界时间边界结算，保留 Prepare/Complete 的正式结果。开发记录单独标识，人物认知仍来自既有观察。Godot 在开发变更后重建保留实体。
 
-选择性根层可先按完整动作声明稳定排列：有 grants 的非 move/answer/wait 任务优先，实际声明时长短者先，同长和其他项保留原相对顺序。记录 candidate_order、candidate_order_scans、candidate_order_reuses；这只决定逐一真实求值的次序，不等于预先满足条件或获得观察。Prepare、Complete 等入口可以接收冻结整态；凡追加 state.events 的实际入口必须先取得独立事件列表，返回值显式携带新列表。禁止借写只读父态。
+当前行动按内容声明顺序参加合法性和即时效用比较，并列保持顺序。Prepare、Complete接受冻结整态；追加events前取得独立事件列表，返回值携带新列表。禁止借写只读父态。
 
 两章 CLI 激进优化入口及开关合同见 `../docs/cli-optimization.md` 的 2026-10-22 节；本轮用户的 180 秒运行授权优先于历史窗口。原始 DAG 事件封包可附进程单调耗时，旧证据不补造时间。
 
 追加激进 CLI 开关 cow/mask/lazyinternal/dirty/planreuse/blackbox 的作用域、近似边界与调试断言统一见 `../docs/cli-optimization.md`。私有 stage 更新共享未变对象；所有人物使用同一剪枝参数，缓存必须包含完整知识版本。不得将开关接线或机制差分当作正式会话验收。
 显式启用本人 value_sensitive_progress 时，`personal_choice` 规划收益遵循本人价值顺序首个非零影响；empirical_initiative/counterfactual_initiative 只缩放本人预期信息收益，默认 1。策略影响不得修改正式资格、答案判定或观察。参数接口详见 docs/cli-optimization.md。
-
-规划器的 Top-K 仅容纳存在本人 active/predict 采纳的后继候选，避免不可预测项占用可展开名额；统一 CLI 深度上限的默认值及调试参数见 cli-optimization。测试窗口遵从用户当前授权，不能将搜索深度调整当作未知前提的补值机制。
-调试65的 stop_at_chapter_end 必须同时有客观收束记录与记录观察者正式章末检视的成功回执；通常使用 detective，无侦探配置使用实际记录人物集合中的任一见证者。截止、公约成功及实际观察分别报告；不改变内容行动或延长时域。合同见 ../docs/cli-optimization.md。
 
 居民私人假设、材料冲突评估与真实回想路径的内容合同见 ../docs/cli-optimization.md；私人prior/情绪不作客观事实，不能用报告旗标替代本人可知冲突或跳过实际提问与Complete。
 
@@ -226,7 +221,7 @@ current_appraisals只维护本人appraisal facet中的当前可撤销评价，�
 `opt_stateindex` / `DV_OPT_STATEINDEX` 与 `rt_stateindex_enabled()` 的私有 stage 写入索引合同见 compiler/README.md。它只复用既有 record slots 优化严格唯一文本键对象表的值替换；未知/异常/重复键保留旧路径，公开动作与会话所有权不变。运行配置由宿主在创建 ValueContext 前确定；有限 ABI 别名差分不代替正式会话验收。
 
 
-独立taskgraph开关默认off，storyflow/stateindex默认on；60保存、布尔核对并传给全部主体。taskgraph为本人策略近似，storyflow为内容重写，不标为轨迹等价；stateindex运行时DV_OPT_STATEINDEX与65配置核对、复用合同见../docs/cli-optimization.md。新增开关不授权正式会话。
+storyflow/stateindex默认on；60保存、布尔核对并传给全部主体。taskgraph开关与实现已退役。storyflow为内容重写，stateindex运行时DV_OPT_STATEINDEX与60配置核对；复用合同见compiler/README.md。新增开关不授权正式会话。
 
 40的声路准备补闻复用30的请求上下文、实际收闻与回应消费，不建立第二套调度；`request_channels` 不授予听觉许可，补报不得复制物理准备表或试验结果。内容握手接线边界见../docs/cli-optimization.md。
 

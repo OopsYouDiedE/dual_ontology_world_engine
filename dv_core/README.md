@@ -1,6 +1,6 @@
 # DuelView 独立语言 Core
 
-生产默认采用 `approximate-v1`：当前候选即时效用、单次声明推理、32位事实知情与分频调度。正式 Prepare/现场/Complete 与语言库继续共用。新入口、声明字段、旧搜索退出默认路径和未完成的内容配置见 [近似模拟接口](SIMULATION.md)。下文的完整规划与模型能力属于保留的语言库，不代表默认游玩仍运行整套重度推理。
+生产模拟仅接受 `simulation_mode=approximate-v1`：当前候选即时效用、单次声明推理、32 位事实知情与分频调度。正式 Prepare/现场/Complete 与语言库继续共用。旧 selective/taskgraph/pruning/reuse 策略入口已退役；下文保留的完整规划与模型能力不属于生产模拟配置，也不代表默认游玩运行整套重度推理。接口细节见 [近似模拟接口](SIMULATION.md)。
 
 DuelView 简称 DV，源码后缀为 `.dv`。领域算法、主体推演和原生章节内容由 DV 编译为 C#；Godot 通过 `DvSession` 使用同一正式动作链。这里的源码与工程说明不代替实际游戏验收。
 

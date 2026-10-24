@@ -1,6 +1,6 @@
 # DV 自然书写、执行语法与数值类型方案
 
-近似模拟新增的32位掩码、`RealityFact/KnownByMask`、`CognitionFilter` 与四频声明使用本文已有函数和记录语法，未新增语言关键字。生产策略、字段与边界见 [SIMULATION.md](SIMULATION.md)。位图整数精确表示不改变其他数值的浮点语义；图扩散仍明确标记近似。
+近似模拟新增的32位掩码、`RealityFact/KnownByMask`、`CognitionFilter` 与四频声明使用本文已有函数和记录语法，未新增语言关键字。生产唯一策略、共同当前评分、字段与边界见 [SIMULATION.md](SIMULATION.md)。旧深度规划/legacy-explicit入口已删除；本文因果模型与语言求值语义继续约束实际付费重演。位图整数精确表示不改变其他数值的浮点语义；图扩散仍明确标记近似。
 
 当前 surface-v2 同时支持面向作者的自然段落、领域句式和面向算法的函数语法。执行入口与七文件索引见 [README.md](README.md)，现行语法入口见 [docs/syntax.md](../docs/syntax.md)。本文件先列源码已接入的执行子集；第1–14节保留完整语言方案，超出执行子集边界的语法仍是目标，不能直接作为当前可编译代码或验收证据。
 

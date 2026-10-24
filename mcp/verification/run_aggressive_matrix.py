@@ -25,11 +25,10 @@ def publish(path, value):
 
 
 def production_options(mode):
-    if mode not in ('baseline', 'precise-baseline'):
-        return ['--selective-planning', 'on', '--opt-taskgraph', FLAG_DEFAULTS['taskgraph']]
-    result = ['--selective-planning', 'off' if mode == 'precise-baseline' else 'on']
-    for name in OPTIMIZATIONS:
-        result += ['--opt-' + name, 'off']
+    result = ['--simulation-mode', 'approximate-v1']
+    if mode == 'baseline':
+        for name in OPTIMIZATIONS:
+            result += ['--opt-' + name, 'off']
     return result
 
 
@@ -77,9 +76,8 @@ def run_case(name, profile, zone, options, reuse, causal_timeout, *, timeout=300
                 session_limit_seconds=timeout,
                 optimization_flags=list(OPTIMIZATIONS),
                 production_flag_defaults={name: FLAG_DEFAULTS.get(name, "on") for name in OPTIMIZATIONS},
-                comparison_conditions=f'{len(OPTIMIZATIONS)}-registered-flags-off-selective' if name.startswith('baseline-') else
-                                      f'{len(OPTIMIZATIONS)}-registered-flags-off-precise-separate-policy' if name.startswith('precise-') else
-                                      'production-defaults-or-single-toggle-selective')
+                comparison_conditions=f'{len(OPTIMIZATIONS)}-registered-flags-off-approximate-v1' if name.startswith('baseline-') else
+                                      'approximate-v1-defaults-or-single-toggle')
     item['command_speed_target_met'] = bool(item.get('speed_target_met') and command_elapsed <= 180)
     item['command_speed_target_scope'] = 'entire run_debug command including build and postprocessing; excludes matrix cleanup/reporting'
     publish(OUTPUT / (name + '-measurement.json'), item)
@@ -96,7 +94,7 @@ def run_case(name, profile, zone, options, reuse, causal_timeout, *, timeout=300
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('validation', 'ablations', 'baseline', 'precise-baseline'), default='validation')
+    parser.add_argument('--mode', choices=('validation', 'ablations', 'baseline'), default='validation')
     parser.add_argument('--case', choices=CASE_NAMES)
     parser.add_argument('--reuse-program', type=Path)
     parser.add_argument('--timeout', type=int, default=300, help='Authorized session process window, excluding compilation and postprocessing')
@@ -120,14 +118,12 @@ def main():
             anchor_result = record(next(records(anchor / 'result.dvlog')))
             if not anchor_result.get('evidence_complete'):
                 raise ValueError('Ablations require a complete production-default S1 anchor')
-            if anchor_result.get('run_config', {}).get('opt_taskgraph') is not False:
-                raise ValueError('Ablations require an S1 anchor with opt_taskgraph=false')
             reuse = reuse or anchor / 'program'
             specifications = [('ablation-' + option, 'Standard', 'zone_yi',
                                ablation_options(option)) for option in OPTIMIZATIONS]
         else:
             selected = [case for case in CASES if args.case is None or case[0] == args.case]
-            prefix = 'baseline-' if args.mode == 'baseline' else 'precise-' if args.mode == 'precise-baseline' else ''
+            prefix = 'baseline-' if args.mode == 'baseline' else ''
             specifications = [(prefix + name, profile, zone, production_options(args.mode))
                               for name, profile, zone in selected]
         for name, profile, zone, options in specifications:

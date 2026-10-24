@@ -8,6 +8,10 @@ JSON-Lines 的每条请求在处理结束后追加 `kind="command_complete"`，�
 
 当前观察者之外的待结算行动使用 `control="background"`、`confirmation_required=true` 和通用提示，人工选项暂时留空。主观接口的不可见行动结果只报告 `visible=false`、状态与通用反馈；实际行动者、行动标识和私有来源留在正式轨迹。
 
+普通文本、TUI 和 JSON-Lines 会话关闭原始引擎诊断输出，异常继续通过错误通道报告。显式 `--dev` 可查看诊断；正式轨迹保留原始事件。这样终端合并标准输出与错误输出时也不会把后台私有事件摘要当作玩家所见。
+
+选策统一为 `approximate-v1`，可显式写 `--planning approximate`。旧 `precise/selective`、taskgraph、路线续用及深度搜索调参入口已经退役，传入会得到明确错误；正式判答、观察与付费重演保持各自机制。
+
 ```powershell
 dotnet run --project dv_core/cli/DvCli.csproj -- --tui
 dotnet run --project dv_core/cli/DvCli.csproj -- --jsonl

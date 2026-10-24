@@ -450,6 +450,7 @@ def _main():
     parser.add_argument('--opt-evidence-stream', choices=('on', 'off'), default='on', help='Fuse raw node atom decoding/validation with dense offset indexing')
     parser.add_argument('--detective-profile', default='Standard_Detective', choices=('Standard', 'Foolish', 'Standard_Detective', 'Foolish_Detective', 'Shura_Detective'))
     parser.add_argument('--opening-seed', type=int, default=1)
+    parser.add_argument('--simulation-mode', choices=('approximate-v1',), default='approximate-v1')
     parser.add_argument('--homecoming-negotiation', action='store_true', help='Enable declared homecoming negotiation candidates; does not seed votes or outcomes')
     parser.add_argument('--su-initial-room', choices=('hall', 'R08', 'R05'), default='hall')
     parser.add_argument('--private-execution-benefit-multiplier', type=int, choices=(1, 2), default=1)
@@ -458,14 +459,9 @@ def _main():
     parser.add_argument('--raw-format', choices=('dag',), default='dag', help='Lossless typed binary DAG; JSON recording is forbidden')
     optimization_names = FLAGS
     for name in optimization_names:
-        parser.add_argument('--opt-' + name, choices=('on', 'off'), default=FLAG_DEFAULTS[name],
-                            help='Default ' + FLAG_DEFAULTS[name] + ('; experimental task policy' if name == 'taskgraph' else ''))
-    parser.add_argument('--prune-top-k', type=int, default=3)
-    parser.add_argument('--plan-depth', type=int, default=3)
-    parser.add_argument('--plan-time-bucket', type=int, default=60)
+        parser.add_argument('--opt-' + name, choices=('on', 'off'), default=FLAG_DEFAULTS[name])
     parser.add_argument('--opt-dirty-verify', type=int, nargs='?', const=100, default=0, help='Recheck dependency cache every N accesses; no argument means 100')
     parser.add_argument('--opt-mask-verify', action='store_true')
-    parser.add_argument('--selective-planning', choices=('on', 'off'), default='on')
     parser.add_argument('--stop-at-chapter-end', choices=('on', 'off'), default='on', help='Stop after an objective chapter-two closing record and a successful closing inspection by a recorded viewer')
     args = parser.parse_args()
     # Single-thread CLI defaults; explicit GC arguments retain precedence.
@@ -474,16 +470,14 @@ def _main():
     if args.gc_heaps is None:
         args.gc_heaps = min(8 if args.opt_gc == 'on' else 4, os.cpu_count() or 1)
     args.detective_profile = {'Standard': 'Standard_Detective', 'Foolish': 'Foolish_Detective'}.get(args.detective_profile, args.detective_profile)
-    if args.prune_top_k < 1:
-        parser.error('--prune-top-k must be positive')
-    if args.plan_depth < 1 or args.plan_time_bucket < 1 or args.opt_dirty_verify < 0:
-        parser.error('Planning depth/bucket must be positive; dirty verification interval must be nonnegative')
+    if args.opt_dirty_verify < 0:
+        parser.error('Dirty verification interval must be nonnegative')
     if args.opening_seed < 0:
         parser.error('--opening-seed must be nonnegative')
-    run_config = {'seed': args.opening_seed, 'profile': args.detective_profile, 'detective_zone': args.detective_zone, 'su_initial_room': args.su_initial_room, 'private_execution_benefit_multiplier': args.private_execution_benefit_multiplier, 'homecoming_negotiation': args.homecoming_negotiation}
+    run_config = {'simulation_mode': args.simulation_mode, 'seed': args.opening_seed, 'profile': args.detective_profile, 'detective_zone': args.detective_zone, 'su_initial_room': args.su_initial_room, 'private_execution_benefit_multiplier': args.private_execution_benefit_multiplier, 'homecoming_negotiation': args.homecoming_negotiation}
     run_config.update({'opt_' + name: getattr(args, 'opt_' + name) == 'on' for name in optimization_names})
-    run_config.update(prune_top_k=args.prune_top_k, selective_planning=args.selective_planning == 'on', stop_at_chapter_end=args.stop_at_chapter_end == 'on')
-    run_config.update(prune_depth=args.plan_depth, plan_time_bucket=args.plan_time_bucket, opt_dirty_verify=args.opt_dirty_verify, opt_mask_verify=args.opt_mask_verify)
+    run_config.update(stop_at_chapter_end=args.stop_at_chapter_end == 'on')
+    run_config.update(opt_dirty_verify=args.opt_dirty_verify, opt_mask_verify=args.opt_mask_verify)
     if args.projection_every < 1:
         parser.error('--projection-every must be positive')
     if args.projection_every > 1 and args.raw_format != 'dag':
@@ -507,10 +501,14 @@ def _main():
         try:
             resume_bundle, resume_save = validate_bundle(args.resume_checkpoint)
             saved_config = resume_bundle['metadata']['run_config']
-            config_options = {'--opening-seed': 'seed', '--detective-profile': 'profile', '--detective-zone': 'detective_zone', '--su-initial-room': 'su_initial_room', '--private-execution-benefit-multiplier': 'private_execution_benefit_multiplier', '--homecoming-negotiation': 'homecoming_negotiation'}
+            legacy_policy_fields = {'selective_planning', 'opt_prune', 'opt_planreuse', 'opt_taskgraph', 'prune_top_k', 'prune_depth', 'plan_time_bucket'}
+            if legacy_policy_fields.intersection(saved_config):
+                raise ValueError('Checkpoint uses retired planning policy fields and cannot be resumed')
+            if saved_config.get('simulation_mode') != 'approximate-v1':
+                raise ValueError('Checkpoint simulation mode is missing or unsupported')
+            config_options = {'--simulation-mode': 'simulation_mode', '--opening-seed': 'seed', '--detective-profile': 'profile', '--detective-zone': 'detective_zone', '--su-initial-room': 'su_initial_room', '--private-execution-benefit-multiplier': 'private_execution_benefit_multiplier', '--homecoming-negotiation': 'homecoming_negotiation'}
             config_options.update({'--opt-' + name: 'opt_' + name for name in optimization_names})
-            config_options.update({'--prune-top-k': 'prune_top_k', '--selective-planning': 'selective_planning', '--stop-at-chapter-end': 'stop_at_chapter_end'})
-            config_options.update({'--plan-depth': 'prune_depth', '--plan-time-bucket': 'plan_time_bucket', '--opt-dirty-verify': 'opt_dirty_verify', '--opt-mask-verify': 'opt_mask_verify'})
+            config_options.update({'--stop-at-chapter-end': 'stop_at_chapter_end', '--opt-dirty-verify': 'opt_dirty_verify', '--opt-mask-verify': 'opt_mask_verify'})
             explicit_options = {item.split('=', 1)[0] for item in sys.argv[1:]}
             for option, key in config_options.items():
                 if option in explicit_options and run_config[key] != saved_config[key]:

@@ -776,19 +776,20 @@ fn dvg_simulation_pulse(state, seconds, visible_rooms):
 
 // Configuration is retained as evidence and carried into chapter policy inheritance.
 fn dvg_run_config(config):
-    let result = {"simulation_mode": dv_find(config, "simulation_mode", "approximate-v1"), "simulation": dv_find(config, "simulation", false), "seed": dv_find(config, "seed", 1), "profile": dv_find(config, "profile", "Standard_Detective"), "detective_zone": dv_find(config, "detective_zone", "zone_yi"), "su_initial_room": dv_find(config, "su_initial_room", "hall"), "private_execution_benefit_multiplier": dv_find(config, "private_execution_benefit_multiplier", 1), "homecoming_negotiation": dv_find(config, "homecoming_negotiation", false), "selective_planning": dv_find(config, "selective_planning", true), "opt_readview": dv_find(config, "opt_readview", true), "opt_plancache": dv_find(config, "opt_plancache", true), "opt_replaycache": dv_find(config, "opt_replaycache", true), "opt_prune": dv_find(config, "opt_prune", true), "opt_lazytext": dv_find(config, "opt_lazytext", true), "opt_recordcache": dv_find(config, "opt_recordcache", true), "opt_predicate": dv_find(config, "opt_predicate", true), "opt_predicatecache": dv_find(config, "opt_predicatecache", true), "opt_declcache": dv_find(config, "opt_declcache", true), "opt_gc": dv_find(config, "opt_gc", true), "opt_runtimespeed": dv_find(config, "opt_runtimespeed", true), "opt_appendshare": dv_find(config, "opt_appendshare", true), "opt_cow": dv_find(config, "opt_cow", true), "opt_mask": dv_find(config, "opt_mask", true), "opt_lazyinternal": dv_find(config, "opt_lazyinternal", true), "opt_dirty": dv_find(config, "opt_dirty", true), "opt_planreuse": dv_find(config, "opt_planreuse", true), "opt_blackbox": dv_find(config, "opt_blackbox", true), "opt_taskgraph": dv_find(config, "opt_taskgraph", false), "opt_storyflow": dv_find(config, "opt_storyflow", true), "opt_stateindex": dv_find(config, "opt_stateindex", true), "opt_mask_verify": dv_find(config, "opt_mask_verify", false), "opt_dirty_verify": dv_find(config, "opt_dirty_verify", 0), "prune_depth": dv_find(config, "prune_depth", 3), "plan_time_bucket": dv_find(config, "plan_time_bucket", 60), "prune_top_k": dv_find(config, "prune_top_k", 3), "stop_at_chapter_end": dv_find(config, "stop_at_chapter_end", true)}
-    dv_require(dv_has(["approximate-v1", "legacy-explicit"], result.simulation_mode), "Unsupported simulation mode")
+    let retired = ["selective_planning", "opt_prune", "opt_planreuse", "opt_taskgraph", "prune_top_k", "prune_depth", "plan_time_bucket"]
+    var retired_index = 0
+    while retired_index < rt_count(retired):
+        dv_require(not dv_has_key(config, retired[retired_index]), rt_cat("Retired planning option: ", retired[retired_index]))
+        retired_index = retired_index + 1
+    let result = {"simulation_mode": dv_find(config, "simulation_mode", "approximate-v1"), "simulation": dv_find(config, "simulation", false), "seed": dv_find(config, "seed", 1), "profile": dv_find(config, "profile", "Standard_Detective"), "detective_zone": dv_find(config, "detective_zone", "zone_yi"), "su_initial_room": dv_find(config, "su_initial_room", "hall"), "private_execution_benefit_multiplier": dv_find(config, "private_execution_benefit_multiplier", 1), "homecoming_negotiation": dv_find(config, "homecoming_negotiation", false), "opt_readview": dv_find(config, "opt_readview", true), "opt_plancache": dv_find(config, "opt_plancache", true), "opt_replaycache": dv_find(config, "opt_replaycache", true), "opt_lazytext": dv_find(config, "opt_lazytext", true), "opt_recordcache": dv_find(config, "opt_recordcache", true), "opt_predicate": dv_find(config, "opt_predicate", true), "opt_predicatecache": dv_find(config, "opt_predicatecache", true), "opt_declcache": dv_find(config, "opt_declcache", true), "opt_gc": dv_find(config, "opt_gc", true), "opt_runtimespeed": dv_find(config, "opt_runtimespeed", true), "opt_appendshare": dv_find(config, "opt_appendshare", true), "opt_cow": dv_find(config, "opt_cow", true), "opt_mask": dv_find(config, "opt_mask", true), "opt_lazyinternal": dv_find(config, "opt_lazyinternal", true), "opt_dirty": dv_find(config, "opt_dirty", true), "opt_blackbox": dv_find(config, "opt_blackbox", true), "opt_storyflow": dv_find(config, "opt_storyflow", true), "opt_stateindex": dv_find(config, "opt_stateindex", true), "opt_mask_verify": dv_find(config, "opt_mask_verify", false), "opt_dirty_verify": dv_find(config, "opt_dirty_verify", 0), "stop_at_chapter_end": dv_find(config, "stop_at_chapter_end", true)}
+    dv_require(result.simulation_mode == "approximate-v1", "Retired simulation mode; use approximate-v1")
     dv_require(rt_floor(result.seed) == result.seed and 0 <= result.seed, "Opening seed must be a nonnegative integer")
     dv_require(dv_has(["hall", "R08", "R05"], result.su_initial_room), "Unsupported initial Su room")
     dv_require(result.private_execution_benefit_multiplier == 1 or result.private_execution_benefit_multiplier == 2, "Private execution benefit multiplier must be 1 or 2")
     dv_require(result.homecoming_negotiation == true or result.homecoming_negotiation == false, "Homecoming negotiation must be boolean")
-    dv_require(result.selective_planning == true or result.selective_planning == false, "Selective planning must be boolean")
     dv_require(dv_has(["zone_yi", "zone_jia", "zone_bing", "zone_ding", "none"], result.detective_zone), "Unsupported detective zone")
-    dv_require(0 < result.prune_top_k and rt_floor(result.prune_top_k) == result.prune_top_k, "Pruning Top-K must be a positive integer")
-    dv_require(0 < result.prune_depth and rt_floor(result.prune_depth) == result.prune_depth, "Planning depth must be a positive integer")
-    dv_require(0 < result.plan_time_bucket and rt_floor(result.plan_time_bucket) == result.plan_time_bucket, "Planning time bucket must be a positive integer")
     dv_require(0 <= result.opt_dirty_verify and rt_floor(result.opt_dirty_verify) == result.opt_dirty_verify, "Dirty verify interval must be a nonnegative integer")
-    let switches = [result.opt_readview, result.opt_plancache, result.opt_replaycache, result.opt_prune, result.opt_lazytext, result.opt_recordcache, result.opt_predicate, result.opt_predicatecache, result.opt_declcache, result.opt_gc, result.opt_runtimespeed, result.opt_appendshare, result.opt_cow, result.opt_mask, result.opt_lazyinternal, result.opt_dirty, result.opt_planreuse, result.opt_blackbox, result.opt_taskgraph, result.opt_storyflow, result.opt_stateindex, result.opt_mask_verify, result.stop_at_chapter_end]
+    let switches = [result.opt_readview, result.opt_plancache, result.opt_replaycache, result.opt_lazytext, result.opt_recordcache, result.opt_predicate, result.opt_predicatecache, result.opt_declcache, result.opt_gc, result.opt_runtimespeed, result.opt_appendshare, result.opt_cow, result.opt_mask, result.opt_lazyinternal, result.opt_dirty, result.opt_blackbox, result.opt_storyflow, result.opt_stateindex, result.opt_mask_verify, result.stop_at_chapter_end]
     var i = 0
     while i < rt_count(switches):
         dv_require(switches[i] == true or switches[i] == false, "Optimization switches must be boolean")
@@ -812,7 +813,7 @@ fn dvg_configure_actor_policies(scene, config):
                     action = dv_with(action, "manual_only", false)
                 rt_push(actions, action)
                 j = j + 1
-        rt_push(actors, dv_with_many(actor, {"actions": actions, "policy": dv_with_many(actor.policy, {"simulation_mode": config.simulation_mode, "private_execution_benefit_multiplier": config.private_execution_benefit_multiplier, "homecoming_negotiation": config.homecoming_negotiation, "selective_planning": config.selective_planning, "opt_readview": config.opt_readview, "opt_plancache": config.opt_plancache, "opt_replaycache": config.opt_replaycache, "opt_prune": config.opt_prune, "opt_lazytext": config.opt_lazytext, "opt_recordcache": config.opt_recordcache, "opt_predicate": config.opt_predicate, "opt_predicatecache": config.opt_predicatecache, "opt_declcache": config.opt_declcache, "prune_top_k": config.prune_top_k, "opt_dirty": config.opt_dirty, "opt_dirty_verify": config.opt_dirty_verify, "opt_planreuse": config.opt_planreuse, "opt_blackbox": config.opt_blackbox, "opt_taskgraph": config.opt_taskgraph, "opt_storyflow": config.opt_storyflow, "opt_stateindex": config.opt_stateindex, "prune_depth": config.prune_depth, "plan_time_bucket": config.plan_time_bucket})}))
+        rt_push(actors, dv_with_many(actor, {"actions": actions, "policy": dv_with_many(actor.policy, {"simulation_mode": config.simulation_mode, "private_execution_benefit_multiplier": config.private_execution_benefit_multiplier, "homecoming_negotiation": config.homecoming_negotiation, "opt_readview": config.opt_readview, "opt_plancache": config.opt_plancache, "opt_replaycache": config.opt_replaycache, "opt_lazytext": config.opt_lazytext, "opt_recordcache": config.opt_recordcache, "opt_predicate": config.opt_predicate, "opt_predicatecache": config.opt_predicatecache, "opt_declcache": config.opt_declcache, "opt_dirty": config.opt_dirty, "opt_dirty_verify": config.opt_dirty_verify, "opt_blackbox": config.opt_blackbox, "opt_storyflow": config.opt_storyflow, "opt_stateindex": config.opt_stateindex})}))
         i = i + 1
     var simulation = config.simulation
     if simulation == false:
@@ -945,6 +946,8 @@ fn dvg_complete(state, receipt):
 fn dvg_prepare_background(state, viewer):
     if not dv_find(state, "awaiting_player", false) or dv_find(state, "pending", false) != false or not dvs_session_active(state):
         return state
+    // Refresh cadence and waiting guards while preserving the player request.
+    state = dvs_simulation_sync(state)
     state = dvs_interrupt_waits(state)
     let waiting = state.cursor
     var offset = 0
@@ -962,7 +965,7 @@ fn dvg_prepare_background(state, viewer):
                     return dvs_dispatch_due(current, index)
             else:
                 let fresh = dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", [])) or dvs_idle_inputs_changed(actor, state)
-                if fresh and 0 < dv_find(actor.policy, "budget", 0) and not dvs_idle_guard_matches(actor, state):
+                if state.physical.time < state.horizon and fresh and 0 < dv_find(actor.policy, "budget", 0) and dvs_simulation_actor_ready(actor, state) and not dvs_idle_guard_matches(actor, state):
                     let prepared = dvs_prepare_actor(dvg_refresh_goals(current))
                     if dv_find(prepared, "pending", false) != false:
                         return prepared
@@ -1676,13 +1679,6 @@ fn dvg_observer_options(state, viewer, include_immediate_scores):
 fn dvg_observer_options_build(state, viewer, actor, include_immediate_scores):
     rt_phase("observer-options-start", viewer)
     let goals = dvp_goal_refs(actor)
-    var probes = []
-    var relevant = []
-    var context = []
-    if include_immediate_scores:
-        probes = dvp_probe_refs(actor)
-        relevant = dvp_merge_refs(goals, probes)
-        context = dvp_value_context(actor)
     var view = actor
     if dv_find(state, "player_actor", "") == viewer:
         view = dv_with(actor, "manual_input", true)
@@ -1699,21 +1695,8 @@ fn dvg_observer_options_build(state, viewer, actor, include_immediate_scores):
                 // Immediate values are an explicitly requested diagnostic view.
                 var option = {"id": action.id, "label": label, "available": true, "kind": action.kind, "interaction": dvg_interaction(action), "cost": cost, "score_kind": "not-evaluated", "mind_revision": actor.mind.revision}
                 if include_immediate_scores:
-                    let value = dvp_action_value_context(view, action, state.bindings, relevant, probes, context)
-                    let opportunities = dvp_opportunities(view, action)
-                    var opportunity = 0
-                    var j = 0
-                    while j < rt_count(opportunities):
-                        opportunity = opportunity + opportunities[j].weight
-                        j = j + 1
-                    let information_weight = dv_find(actor.policy, "information_weight", 1)
-                    let progress_weight = dv_find(actor.policy, "progress_weight", 1)
-                    let time_cost = dv_find(actor.policy, "time_cost", 0.01)
-                    let weighted_opportunity = opportunity * progress_weight
-                    let time_penalty = cost.time * time_cost
-                    let score = value.value + weighted_opportunity - time_penalty
-                    let breakdown = {"action_value": value.value, "information": value.information, "verification": value.verification, "progress": value.progress, "achievement": value.achievement, "information_weight": information_weight, "progress_weight": progress_weight, "information_component": value.information * information_weight, "verification_component": value.verification * information_weight, "progress_component": value.progress * progress_weight, "achievement_component": value.achievement * progress_weight, "opportunity": opportunity, "weighted_opportunity": weighted_opportunity, "time_cost": time_cost, "time_penalty": time_penalty, "computation_penalty": 0, "stamina_penalty": 0, "total": score, "opportunities": opportunities, "value_details": value, "scope": "subject-current-immediate", "formula": "action_value + weighted_opportunity - time_penalty"}
-                    option = dv_with_many(option, {"ai_score": score, "score_kind": "immediate", "score_breakdown": breakdown, "immediate_score": score, "immediate_breakdown": breakdown, "score_game_time": state.physical.time})
+                    let scored = dvs_current_action_score(dv_with(view, "decision_time", state.physical.time), action, state.bindings, goals, cost)
+                    option = dv_with_many(option, {"ai_score": scored.total, "score_kind": "immediate", "score_breakdown": scored, "immediate_score": scored.total, "immediate_breakdown": scored, "score_game_time": state.physical.time})
                 if action.kind == "replay" and dv_find(state, "player_actor", "") == viewer:
                     option = dv_with(option, "replay_input", dvg_manual_replay_input(actor, action))
                 rt_push(result, option)

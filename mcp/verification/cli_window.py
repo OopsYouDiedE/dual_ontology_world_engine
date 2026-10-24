@@ -283,7 +283,7 @@ def start(args):
     assembly=repo/'dv_core/cli/bin/Release/net8.0/dv-cli.dll'
     if not assembly.is_file(): raise FileNotFoundError(assembly)
     argv=['dotnet',str(assembly),'--tui','--seed','1','--width','120','--height','42','--controller',args.controller,'--profile',args.profile,
-          '--zone',args.zone,'--viewer',args.viewer,'--planning','selective','--opt-taskgraph','off',
+          '--zone',args.zone,'--viewer',args.viewer,'--planning','approximate',
           '--trace',str(folder/'session.dvdag'),'--save',str(folder/'session.dvsave'),
           '--performance',str(folder/'engine'),'--source-revision',args.source_revision]
     if args.stage == 'player':
