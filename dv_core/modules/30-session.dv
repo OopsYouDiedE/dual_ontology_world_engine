@@ -320,6 +320,8 @@ fn dvs_reason_run(actor, events, time, parent):
     var budget = dv_find(policy, "reason_budget", 0)
     var count = 0
     var changed = true
+    var passes = 0
+    let approximate = dv_find(policy, "simulation_mode", "") == "approximate-v1"
     var signatures = dv_find(actor, "inference_signatures", [])
     var derivations = dv_find(actor, "inference_derivations", [])
     let dirty = dv_find(policy, "opt_dirty", false)
@@ -338,7 +340,8 @@ fn dvs_reason_run(actor, events, time, parent):
                 verify = true
                 calls = 0
             rt_memo_put(dependency_index, key, calls)
-    while dv_and(changed, (count < budget)):
+    while dv_and(changed, (count < budget)) and (not approximate or passes == 0):
+        passes = passes + 1
         var adoptions = mind.adoptions
         var i = 0
         if dirty:
@@ -387,7 +390,9 @@ fn dvs_reason_run(actor, events, time, parent):
         local_1 = "no-new-effective-conclusion"
     else:
         local_1 = "budget-exhausted"
-    let report = {"steps": count, "remaining": budget - count, "stop": local_1, "mind_revision": mind.revision}
+    if approximate and changed:
+        local_1 = "approximate-single-pass"
+    let report = {"steps": count, "remaining": budget - count, "stop": local_1, "mind_revision": mind.revision, "approximation": approximate}
     if count > 0 or not dv_same(report, dv_find(actor, "last_reason_report", false)):
         actor = dv_with_many(actor, {"last_cognitive_event": dvs_event(events, "reason_stop", actor.id, time, dvs_cognitive_parents(actor, dv_single(parent)), report), "last_reason_report": report})
     return dv_with_many(actor, {"mind": mind, "inference_derivations": derivations, "inference_signatures": signatures, "policy": dv_with(policy, "reason_budget", (budget - count))})
@@ -573,6 +578,8 @@ fn dvp_task_remember(actor, bindings, costs, choice):
     return dv_with(choice, "planning_task_cache", rt_snapshot(cache))
 
 fn dvs_choose(actor, bindings, costs):
+    if dv_find(actor.policy, "simulation_mode", "") == "approximate-v1":
+        return dvs_simulation_choose(actor, bindings, costs)
     let duty = dvs_obligation_choice(actor, costs)
     if duty != false:
         return duty
@@ -857,6 +864,8 @@ fn dvs_has_active_communication_goal(actor):
     return false
 
 fn dvs_prepare_cognition(actor, events, time, parent, chapter):
+    if dv_find(actor.policy, "simulation_mode", "") == "approximate-v1":
+        return dvs_simulation_cognition(actor, events, time, parent)
     let cognition_before = dvs_cognition_signature(actor)
     let continuation = dv_find(actor, "planning_continuation", false)
     if continuation != false and dv_find(actor.policy, "selective_planning", false):
@@ -897,6 +906,8 @@ fn dvs_prepare_cognition(actor, events, time, parent, chapter):
 // Human input chooses hypotheses and speech instead of pre-evaluating every
 // hypothetical branch. Real paid replay still refreshes its derived arguments.
 fn dvs_prepare_manual_cognition(actor, events, time, parent, chapter):
+    if dv_find(actor.policy, "simulation_mode", "") == "approximate-v1":
+        return dvs_simulation_cognition(actor, events, time, parent)
     if dv_find(actor, "manual_replay_refresh", false):
         return dv_with(dvs_prepare_cognition(dv_without(actor, "manual_replay_refresh"), events, time, parent, chapter), "cognition_mode", "manual-paid-replay")
     let input = dvs_reason_input(actor)
@@ -1783,7 +1794,7 @@ fn dvs_visible_context(actor, physical, actors):
     while (i < rt_count(actors)):
         var other = actors[i]
         var position = dv_read(physical, actors[i].location_ref)
-        if (other.id != actor.id) and dv_uncontested(own) and dv_uncontested(position) and dv_same(own.value, position.value):
+        if not dv_cognition_hidden(actor.mind, other.id) and (other.id != actor.id) and dv_uncontested(own) and dv_uncontested(position) and dv_same(own.value, position.value):
             if dv_truth(physical, dv_find(other, "observable_presence_when", dv_true())) == "true":
                 result = dv_with(result, other.id, {"location": position.value})
         i = (i + 1)
@@ -1892,7 +1903,14 @@ fn dvs_visible_objects(actor, physical):
     let own = dv_read(physical, actor.location_ref)
     if not dv_uncontested(own) or not rt_is_text(own.value):
         return []
-    return dv_find(dvs_visible_object_catalog(physical.objects), own.value, [])
+    let visible = dv_find(dvs_visible_object_catalog(physical.objects), own.value, [])
+    var filtered = []
+    var i = 0
+    while i < rt_count(visible):
+        if not dv_cognition_hidden(actor.mind, visible[i][0]):
+            rt_push(filtered, visible[i])
+        i = i + 1
+    return filtered
 
 fn dvs_notice_visible_objects(actor, physical, bindings, events, time, parent):
     if not dv_find(actor.policy, "notice_visible_objects", false):
@@ -7363,7 +7381,7 @@ fn dvs_run(story, capability):
 
 fn dvs_session_open(story, capability):
     dv_require((story.format == "dv-session-v1"), "Unsupported story data dialect")
-    var physical = dv_clone(story.physical)
+    var physical = dvs_simulation_open(story, dv_clone(story.physical))
     var actors = dv_clone(story.actors)
     var events = []
     var bindings = story.bindings
@@ -7737,6 +7755,7 @@ fn dvs_idle_window_boundary(actor, story, now, limit):
     return boundary
 
 fn dvs_schedule(state):
+    state = dvs_simulation_sync(state)
     state = rt_snapshot(state)
     var updated = state.actors
     var erosion_index = 0
@@ -7759,6 +7778,11 @@ fn dvs_schedule(state):
     var wake_time = state.horizon + 1
     var event_wake_index = -1
     var event_wake_time = state.horizon + 1
+    if dv_has_key(state.physical, "simulation"):
+        event_wake_time = state.physical.simulation.last_macro + 15
+        event_wake_index = state.cursor
+        wake_time = event_wake_time
+        wake_index = state.cursor
     var ready_index = -1
     var obligation_index = -1
     var obligation_time = state.horizon + 1
@@ -7777,7 +7801,7 @@ fn dvs_schedule(state):
                     due_time = queued.due
                     due_index = index
             else:
-                if state.physical.time < state.horizon and 0 < dv_find(actor.policy, "budget", 0):
+                if state.physical.time < state.horizon and 0 < dv_find(actor.policy, "budget", 0) and dvs_simulation_actor_ready(actor, state):
                     let duty = dvs_due_obligation(actor, state.physical.time, state.costs)
                     if duty != false:
                         let due = dv_find(duty, "obligation_due", 0)
@@ -7786,7 +7810,7 @@ fn dvs_schedule(state):
                             obligation_time = due
                 // No-action is not a permanent property of a mind revision:
                 // time, local arrivals and content goals can create a new opportunity.
-                if state.physical.time < state.horizon and ready_index < 0 and 0 < dv_find(actor.policy, "budget", 0) and (dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", [])) or dvs_idle_inputs_changed(actor, state) or dv_find(actor, "planning_continuation", false) != false):
+                if state.physical.time < state.horizon and ready_index < 0 and 0 < dv_find(actor.policy, "budget", 0) and dvs_simulation_actor_ready(actor, state) and (dv_find(actor, "decision_time", -1) != state.physical.time or dv_find(actor, "decision_revision", -1) != actor.mind.revision or 0 < rt_count(dv_find(actor, "pending_heard", [])) or dvs_idle_inputs_changed(actor, state) or dv_find(actor, "planning_continuation", false) != false):
                     if dvs_idle_guard_matches(actor, state):
                         let guard = actor.idle_guard
                         // No decision or world change occurs while an activity is unchanged.
@@ -7865,6 +7889,7 @@ fn dvs_session_prepare(state):
 // The caller has selected the actor; content may refresh its own declarations first.
 // This remains the same prepare phase, not a second dispatch or execution path.
 fn dvs_prepare_actor(state):
+    state = dvs_simulation_sync(state)
     state = rt_snapshot(state)
     let story = state.story
     var physical = state.physical
@@ -7884,6 +7909,8 @@ fn dvs_prepare_actor(state):
     var initial = state.initial
     var index = cursor
     var actor = dv_with_many(actors[cursor], {"idle_guard": false, "decision_time": physical.time})
+    if dv_has_key(physical, "simulation"):
+        actor = dv_with_many(actor, {"simulation_decision_macro": physical.simulation.macro_count, "simulation_decision_nearby": physical.simulation.last_nearby_second})
     var idle_before = false
     var idle_events_before = -1
     var parent = events[(rt_count(events) - 1)].id
@@ -8018,7 +8045,7 @@ fn dvs_prepare_actor(state):
     actors = dvs_replace(actors, index, actor)
     return {"player_actor": dv_find(state, "player_actor", ""), "story": story, "physical": physical, "actors": actors, "events": events, "bindings": bindings, "costs": costs, "run_start": run_start, "duration_budget": duration_budget, "horizon": horizon, "duration_blocked": duration_blocked, "limit": limit, "cursor": cursor, "executed": executed, "idle": idle, "status": status, "initial": initial, "awaiting_player": false, "player_selection": ""}
 
-fn dvs_session_complete(state, receipt):
+fn dvs_session_complete_commit(state, receipt):
     state = rt_snapshot(state)
     let story = state.story
     var physical = state.physical
@@ -8545,12 +8572,12 @@ fn dvs_dirty_verify_skipped(world, processes, first, until, time):
 fn dvs_environment(physical, story, events, parent):
     let dirty_config = dv_find(story, "run_config", [])
     let readview = dv_find(dv_find(story, "run_config", []), "opt_readview", false)
-    var world = physical
+    var world = dvs_simulation_environment(physical, story, events, parent)
     let time = dv_find(world, "time", 0)
     let clock = dv_find(story, "clock_ref", false)
     if clock != false:
         world = dv_store(world, clock, dv_cell(time, 1, time, [parent]))
-    var processes = dv_find(story, "world_processes", [])
+    var processes = dvs_simulation_unmanaged_processes(world, dv_find(story, "world_processes", []))
     if readview:
         world = rt_snapshot(world)
         processes = rt_snapshot(processes)
@@ -8737,7 +8764,7 @@ fn dvs_environment_next_time(world, story, due):
     let clock = dv_find(story, "clock_ref", false)
     let now = world.time
     var next = due
-    var processes = dv_find(story, "world_processes", [])
+    var processes = dvs_simulation_unmanaged_processes(world, dv_find(story, "world_processes", []))
     if readview:
         processes = rt_snapshot(processes)
     let dirty_config = dv_find(story, "run_config", [])
@@ -8775,12 +8802,12 @@ fn dvs_environment_next_time(world, story, due):
                         let immediate = dv_min(due, now + 1)
                         if verify_clock:
                             dv_require(immediate == original_next, "Dirty clock live-process boundary differs from reference scan")
-                        return immediate
+                        return dvs_simulation_next_time(world, immediate)
                     j = j + 1
         i = i + 1
     if verify_clock:
         dv_require(next == original_next, "Dirty clock boundary differs from complete declaration scan")
-    return next
+    return dvs_simulation_next_time(world, next)
 
 // ---- Merged source module: 40-host.dv ----
 // Host commands contain an action and its execution contract, never a mind or oracle.
@@ -9038,3 +9065,488 @@ fn dvs_player_choice(actor, id):
     let view = dv_with(actor, "manual_input", true)
     dv_require(dvp_eligible(view, action, actor.mind, dvp_goal_refs(actor)), "Player action failed subject admission")
     return {"action": action, "score": 0, "plan_expansions": 0, "plans": [], "relevant_refs": dvp_goal_refs(actor), "dependency_cache": dv_find(actor, "dependency_cache", false), "controller": "player"}
+
+// Approximate production simulation. Declarations belong to campaign content;
+// this kernel owns masks, cadence, bounded choice and the single entity lock.
+fn dvs_simulation_open(story, world):
+    let config = dv_find(story, "simulation", [])
+    let identities = dv_find(config, "identities", [])
+    var occupied = 0
+    var names = []
+    var i = 0
+    while i < rt_count(identities):
+        let identity = identities[i]
+        let bit = dv_mask_bit(identity.index)
+        dv_require(not dv_mask_has(occupied, identity.index) and not dv_has(names, identity.actor), "Simulation identity index or actor duplicated")
+        occupied = occupied + bit
+        names = dv_append(names, identity.actor)
+        i = i + 1
+    let time = dv_find(world, "time", 0)
+    return dv_with(world, "simulation", {"version": "approximate-v1", "approximation": true, "config": config, "last_macro": rt_floor(time / 15) * 15, "last_nearby_second": -1, "visible_rooms": [], "nearby_rooms": [], "RealityFacts": [], "DemonEntityLock": false, "macro_count": 0, "nearby_count": 0, "daily_count": 0})
+
+fn dvs_simulation_actor_index(actors, id):
+    var i = 0
+    while i < rt_count(actors):
+        if actors[i].id == id:
+            return i
+        i = i + 1
+    return -1
+
+fn dvs_simulation_fact(facts, id):
+    var i = 0
+    while i < rt_count(facts):
+        if facts[i].id == id:
+            return facts[i]
+        i = i + 1
+    return false
+
+fn dvs_simulation_facts(world, actors, bindings):
+    let simulation = world.simulation
+    let config = simulation.config
+    let declarations = dv_find(config, "facts", [])
+    let identities = dv_find(config, "identities", [])
+    var facts = []
+    var i = 0
+    while i < rt_count(declarations):
+        let declaration = declarations[i]
+        let reality = dv_read(world, declaration.ref)
+        var known = 0
+        var j = 0
+        while j < rt_count(identities):
+            let identity = identities[j]
+            let index = dvs_simulation_actor_index(actors, identity.actor)
+            if index >= 0:
+                let local = dv_local(bindings, declaration.ref.object, identity.actor)
+                if local != "":
+                    let cell = dv_read(actors[index].mind, dv_scoped_ref(identity.actor, local, declaration.ref.facet, declaration.ref.field))
+                    let projected = dv_project_value(reality.value, bindings, identity.actor)
+                    if dv_uncontested(reality) and dv_uncontested(cell) and projected.known and dv_same(projected.value, cell.value):
+                        known = known + dv_mask_bit(identity.index)
+            j = j + 1
+        rt_push(facts, dv_reality_fact(declaration.id, declaration.ref, reality, known))
+        i = i + 1
+    return dv_with(world, "simulation", dv_with(simulation, "RealityFacts", facts))
+
+fn dvs_simulation_danger(config, id):
+    let dangers = dv_find(config, "dangers", [])
+    var i = 0
+    while i < rt_count(dangers):
+        if dangers[i].id == id:
+            return dangers[i]
+        i = i + 1
+    return false
+
+fn dvs_simulation_lock(world, events):
+    var simulation = world.simulation
+    let config = simulation.config
+    let demon = dv_find(config, "demon", false)
+    if demon == false:
+        return world
+    var lock = simulation.DemonEntityLock
+    if lock != false:
+        let danger = dvs_simulation_danger(config, lock.danger)
+        // Public knowledge does not end a continuing emergency. Only its
+        // declared end condition releases the one physical entity.
+        if danger == false or dv_truth(world, danger.when) == "false" or dv_truth(world, dv_find(demon, "release_when", dv_not(dv_true()))) == "true":
+            dvs_event(events, "simulation_demon_released", demon.actor, world.time, [], {"lock": lock, "approximation": true})
+            lock = false
+    if lock == false:
+        let dangers = dv_find(config, "dangers", [])
+        var i = 0
+        while i < rt_count(dangers) and lock == false:
+            let danger = dangers[i]
+            let fact = dvs_simulation_fact(simulation.RealityFacts, danger.fact_id)
+            if fact != false and dv_truth(world, danger.when) == "true":
+                let victims = dv_mask_without(dv_mask_and(danger.affected_mask, 65535), fact.KnownByMask)
+                if victims != 0:
+                    lock = {"actor": demon.actor, "danger": danger.id, "room": danger.room, "victims": victims, "acquired_at": world.time, "protecting": false}
+                    dvs_event(events, "simulation_demon_reserved", demon.actor, world.time, [], {"lock": lock, "approximation": true, "movement": false})
+            i = i + 1
+    return dv_with(world, "simulation", dv_with(simulation, "DemonEntityLock", lock))
+
+fn dvs_simulation_sync(state):
+    if not dv_has_key(state.physical, "simulation"):
+        return state
+    var actors = state.actors
+    var simulation = state.physical.simulation
+    let latest_config = dv_find(state.story, "simulation", simulation.config)
+    simulation = dv_with(simulation, "config", latest_config)
+    state = dvs_owned_state_update(state, {"physical": dv_with(state.physical, "simulation", simulation)})
+    let filters = dv_find(simulation.config, "filters", [])
+    var i = 0
+    while i < rt_count(actors):
+        var actor = actors[i]
+        var j = 0
+        while j < rt_count(filters):
+            if filters[j].actor == actor.id:
+                actor = dv_with(actor, "mind", dv_with(actor.mind, "CognitionFilter", filters[j]))
+            j = j + 1
+        actor = dv_with(actor, "simulation_priority_action", "")
+        var schedules = []
+        if not dvs_simulation_onstage(actor, state):
+            let declarations = dv_find(simulation.config, "offscreen_schedules", [])
+            j = 0
+            while j < rt_count(declarations):
+                if declarations[j].actor == actor.id:
+                    rt_push(schedules, declarations[j])
+                j = j + 1
+        actor = dv_with(actor, "policy", dv_with(actor.policy, "offscreen_schedules", schedules))
+        if dv_find(actor, "simulation_decision_macro", -1) != simulation.macro_count:
+            actor = dv_with(actor, "idle_guard", false)
+        if dv_find(actor, "simulation_decision_nearby", -1) < simulation.last_nearby_second and dv_has_key(actor, "location_ref"):
+            let position = dv_read(state.physical, actor.location_ref)
+            if dv_uncontested(position) and dv_has(simulation.nearby_rooms, position.value):
+                actor = dv_with_many(actor, {"idle_guard": false, "decision_time": -1})
+        actors = dvs_replace(actors, i, actor)
+        i = i + 1
+    var events = dv_clone(state.events)
+    let world = dvs_simulation_lock(dvs_simulation_facts(state.physical, actors, state.bindings), events)
+    let lock = world.simulation.DemonEntityLock
+    if lock != false:
+        let demon = world.simulation.config.demon
+        let index = dvs_simulation_actor_index(actors, demon.actor)
+        if index >= 0:
+            let location = dv_read(world, demon.location_ref)
+            var requested = ""
+            if dv_uncontested(location) and location.value == lock.room:
+                if not lock.protecting:
+                    requested = demon.protect_action_id
+            else:
+                let routes = dv_find(demon, "travel_actions", [])
+                i = 0
+                while i < rt_count(routes):
+                    if routes[i].room == lock.room:
+                        requested = routes[i].action_id
+                    i = i + 1
+            actors = dvs_replace(actors, index, dv_with(actors[index], "simulation_priority_action", requested))
+    return dvs_owned_state_update(state, {"actors": actors, "physical": world, "events": events})
+
+fn dvs_simulation_cognition(actor, events, time, parent):
+    if dv_find(dv_find(actor.mind, "CognitionFilter", []), "anterograde", false):
+        return dv_with_many(actor, {"cognition_stop": "anterograde-no-new-memory", "cognition_reused": false, "reason_reused": false})
+    // Preserve actual inference sources and invalidation, but stop after one
+    // declaration pass. No hypothesis enumeration, listener forecasting or tree.
+    actor = dvs_reason(actor, events, time, parent)
+    actor = dvs_current_appraisals(actor, events, time, parent)
+    actor = dvs_update_support_events(actor, events)
+    return dv_with_many(actor, {"cognition_stop": "approximate-single-pass", "cognition_mode": "approximate-v1", "cognition_reused": false, "reason_reused": false, "planning_continuation": false, "speech_choice_values": []})
+
+fn dvs_simulation_next_time(world, due):
+    if dv_has_key(world, "simulation"):
+        return dv_min(due, world.simulation.last_macro + 15)
+    return due
+
+fn dvs_simulation_onstage(actor, state):
+    if actor.id == dv_find(state, "player_actor", ""):
+        return true
+    if not dv_has_key(actor, "location_ref"):
+        return false
+    let position = dv_read(state.physical, actor.location_ref)
+    if not dv_uncontested(position):
+        return false
+    if dv_has(state.physical.simulation.visible_rooms, position.value):
+        return true
+    let viewer = dv_find(state.story, "host_viewer", dv_find(state, "player_actor", ""))
+    let index = dvs_simulation_actor_index(state.actors, viewer)
+    if index >= 0 and dv_has_key(state.actors[index], "location_ref"):
+        let viewing = dv_read(state.physical, state.actors[index].location_ref)
+        return dv_uncontested(viewing) and viewing.value == position.value
+    return false
+
+fn dvs_simulation_actor_ready(actor, state):
+    if not dv_has_key(state.physical, "simulation") or dv_find(actor.policy, "simulation_mode", "") != "approximate-v1":
+        return true
+    if dvs_simulation_onstage(actor, state) or dv_find(actor, "simulation_priority_action", "") != "":
+        return true
+    let simulation = state.physical.simulation
+    if dv_find(actor, "simulation_decision_macro", -1) != simulation.macro_count:
+        return true
+    if dv_has_key(actor, "location_ref"):
+        let position = dv_read(state.physical, actor.location_ref)
+        if dv_uncontested(position) and dv_has(simulation.nearby_rooms, position.value):
+            return dv_find(actor, "simulation_decision_nearby", -1) < simulation.last_nearby_second
+    return false
+
+fn dvs_simulation_action_value(actor, action, bindings, relevant):
+    var value = dv_find(action, "simulation_utility", 0)
+    let scope = dvp_scope(actor, action, bindings)
+    var i = 0
+    while i < rt_count(scope):
+        if not dv_uncontested(dv_read(actor.mind, scope[i])) and dv_has(relevant, scope[i]):
+            value = value + dv_find(actor.policy, "information_weight", 1)
+        i = i + 1
+    value = value + dvp_private_execution_utility(actor, action, actor.mind)
+    value = value + dvp_owner_utility(actor, action, actor.mind).value
+    if dv_has_key(action, "personal_choice"):
+        value = value + dvp_personal_motivation(actor, action)
+    if dv_has_key(action, "answer"):
+        value = value + dvp_answer_reward(actor, action, actor.mind)
+    if dv_has_key(action, "response_topic") and 0 < rt_count(dvs_pending_request(actor, action)):
+        value = value + 1
+    // Exploration uses only the owner's declared movement and actual history.
+    // It predicts neither destination contents nor a future observation.
+    if action.kind == "move" and not dv_has(dv_find(actor, "completed_actions", []), action.id):
+        value = value + dv_find(actor.policy, "exploration_utility", 1)
+    return value
+
+fn dvs_simulation_choose(actor, bindings, costs):
+    if dv_find(actor, "simulation_priority_action", "") == "":
+        let duty = dvs_obligation_choice(actor, costs)
+        if duty != false:
+            return dv_with_many(duty, {"strategy": "approximate-v1", "approximation": true, "stop": "current-owned-obligation"})
+    let relevant = dvp_goal_refs(actor)
+    var selected = false
+    var best = 0
+    var plans = []
+    var evaluated = 0
+    var considered = 0
+    var time_blocked = 0
+    let priority = dv_find(actor, "simulation_priority_action", "")
+    let schedules = dv_find(actor.policy, "offscreen_schedules", [])
+    let time = dv_find(actor, "decision_time", actor.mind.time)
+    let daytime = time - rt_floor(time / 1440) * 1440
+    var i = 0
+    while i < rt_count(actor.actions):
+        let action = actor.actions[i]
+        considered = considered + 1
+        if dvp_eligible(actor, action, actor.mind, relevant):
+            let model = dv_get(costs, action.kind)
+            if dv_find(actor.policy, "remaining_game_time", model.maximum.time) < model.maximum.time:
+                time_blocked = time_blocked + 1
+            else:
+                if dv_action_cost_le(model.maximum, actor.ledger.balances):
+                    evaluated = evaluated + 1
+                    var value = dvs_simulation_action_value(actor, action, bindings, relevant)
+                    var j = 0
+                    while j < rt_count(schedules):
+                        let schedule = schedules[j]
+                        if schedule.action_id == action.id and schedule.from <= daytime and daytime < schedule.to:
+                            value = value + schedule.utility
+                        j = j + 1
+                    let score = value - model.actual.time * dv_find(actor.policy, "time_cost", 0.01)
+                    rt_push(plans, {"path": [action.id], "score": score, "value": {"value": value}, "mind_revision": actor.mind.revision, "evaluated_at_game_time": time, "score_scope": "current-owned-utility", "prediction_basis": []})
+                    if best < score or (priority != "" and action.id == priority):
+                        if selected == false or selected.id != priority:
+                            selected = action
+                            best = score
+        i = i + 1
+    var path = []
+    if selected != false:
+        path = [selected.id]
+    return {"action": selected, "score": best, "plan_expansions": 0, "dependency_expansions": 0, "plans": plans, "selected_path": path, "relevant_refs": relevant, "dependency_cache": false, "strategy": "approximate-v1", "approximation": true, "stop": "current-candidates-scanned", "time_blocked": time_blocked, "planning_work": {"candidates_considered": considered, "eligible_evaluations": evaluated, "admission_checks": considered, "expanded_nodes": 0, "forecasts": 0, "skipped_expansion": true, "stop_reason": "current-candidates-scanned"}}
+
+fn dvs_simulation_room_index(rooms, id):
+    var i = 0
+    while i < rt_count(rooms):
+        if rooms[i].id == id:
+            return i
+        i = i + 1
+    return -1
+
+fn dvs_simulation_diffuse(world, config, events, parent, time):
+    let rooms = dv_find(config, "rooms", [])
+    let edges = dv_find(config, "edges", [])
+    var amounts = []
+    var concentrations = []
+    var outgoing = []
+    var i = 0
+    while i < rt_count(rooms):
+        let room = rooms[i]
+        let concentration = dv_read(world, room.concentration_ref)
+        let volume = dv_find(room, "volume", 1)
+        dv_require(dv_uncontested(concentration) and 0 <= concentration.value and 0 < volume, "Diffusion requires known nonnegative concentration and positive volume")
+        dv_unit(dv_find(room, "settling", 0))
+        rt_push(amounts, concentration.value * volume)
+        rt_push(concentrations, concentration.value)
+        rt_push(outgoing, 0)
+        i = i + 1
+    var flows = []
+    i = 0
+    while i < rt_count(edges):
+        let edge = edges[i]
+        let a = dvs_simulation_room_index(rooms, edge.from)
+        let b = dvs_simulation_room_index(rooms, edge.to)
+        dv_require(a >= 0 and b >= 0 and a != b, "Diffusion edge references invalid rooms")
+        var opening = dv_find(edge, "opening", 0)
+        if dv_has_key(edge, "opening_ref"):
+            let gate = dv_read(world, edge.opening_ref)
+            dv_require(dv_uncontested(gate), "Diffusion opening is unknown")
+            opening = gate.value
+        dv_unit(opening)
+        let conductance = dv_find(edge, "conductance", 0)
+        let wind = dv_find(edge, "wind", 0)
+        let downward = dv_find(edge, "downward", 0)
+        dv_require(0 <= conductance and -1 <= wind and wind <= 1 and 0 <= downward, "Invalid diffusion transport coefficient")
+        let height = rooms[a].height - rooms[b].height
+        let down_a = dv_max(0, height) * downward
+        let down_b = dv_max(0, 0 - height) * downward
+        let raw = opening * conductance * ((concentrations[a] - concentrations[b]) + dv_max(0, wind) * concentrations[a] - dv_max(0, 0 - wind) * concentrations[b] + down_a * concentrations[a] - down_b * concentrations[b])
+        var source = a
+        var target = b
+        var amount = raw
+        if raw < 0:
+            source = b
+            target = a
+            amount = 0 - raw
+        outgoing = dvs_replace(outgoing, source, outgoing[source] + amount)
+        rt_push(flows, {"source": source, "target": target, "amount": amount})
+        i = i + 1
+    // Compute every edge from the same old concentration, then proportionally
+    // cap total source outflow. This conserves transported mass without negatives.
+    var next = dv_clone(amounts)
+    i = 0
+    while i < rt_count(flows):
+        let flow = flows[i]
+        var scale = 1
+        if amounts[flow.source] < outgoing[flow.source]:
+            scale = amounts[flow.source] / outgoing[flow.source]
+        let amount = flow.amount * scale
+        next = dvs_replace(next, flow.source, next[flow.source] - amount)
+        next = dvs_replace(next, flow.target, next[flow.target] + amount)
+        i = i + 1
+    var changes = []
+    i = 0
+    while i < rt_count(rooms):
+        let room = rooms[i]
+        let settled = dv_max(0, next[i]) * (1 - dv_find(room, "settling", 0))
+        let value = settled / dv_find(room, "volume", 1)
+        if value != concentrations[i]:
+            world = dv_store(world, room.concentration_ref, dv_cell(value, 1, time, [parent]))
+            rt_push(changes, {"room": room.id, "before": concentrations[i], "after": value, "settled_mass": dv_max(0, next[i]) - settled})
+        i = i + 1
+    if 0 < rt_count(changes):
+        world = dv_with(world, "revision", world.revision + 1)
+    dvs_event(events, "simulation_macro", "", time, [parent], {"changes": changes, "period_minutes": 15, "approximation": true, "model": "synchronous-room-graph", "precision_certificate": false})
+    return world
+
+fn dvs_simulation_daily(world, config, events, parent, time):
+    let rules = dv_find(config, "daily_rules", [])
+    let daytime = time - rt_floor(time / 1440) * 1440
+    var i = 0
+    while i < rt_count(rules):
+        let rule = rules[i]
+        dv_require(rule.at == 360 or rule.at == 1080, "Daily rules must use 06:00 or 18:00")
+        if rule.at == daytime:
+            let execution = dv_execute(world, rule.law, rt_cat("daily-", rt_show(rt_count(events))), time, world.revision)
+            world = execution.world
+            dvs_event(events, "simulation_daily", "", time, [parent], {"id": rule.id, "category": dv_find(rule, "category", ""), "execution": dv_without(execution, "world"), "approximation": true})
+            world = dv_with(world, "simulation", dv_with(world.simulation, "daily_count", world.simulation.daily_count + 1))
+        i = i + 1
+    return world
+
+fn dvs_simulation_unmanaged_processes(world, processes):
+    if not dv_has_key(world, "simulation"):
+        return processes
+    let daily = dv_find(world.simulation.config, "daily_rules", [])
+    if rt_count(daily) == 0:
+        return processes
+    var result = []
+    var i = 0
+    while i < rt_count(processes):
+        var managed = false
+        var j = 0
+        while j < rt_count(daily):
+            if daily[j].law == processes[i].law:
+                managed = true
+            j = j + 1
+        if not managed:
+            rt_push(result, processes[i])
+        i = i + 1
+    return result
+
+fn dvs_simulation_environment(world, story, events, parent):
+    if not dv_has_key(world, "simulation"):
+        return world
+    let time = world.time
+    let config = world.simulation.config
+    var next = world.simulation.last_macro + 15
+    while next <= time:
+        world = dv_with(world, "time", next)
+        let clock = dv_find(story, "clock_ref", false)
+        if clock != false:
+            world = dv_store(world, clock, dv_cell(next, 1, next, [parent]))
+        world = dvs_simulation_diffuse(world, config, events, parent, next)
+        world = dvs_simulation_daily(world, config, events, parent, next)
+        world = dv_with(world, "simulation", dv_with_many(world.simulation, {"last_macro": next, "macro_count": world.simulation.macro_count + 1}))
+        next = next + 15
+    return dv_with(world, "time", time)
+
+fn dvs_session_complete(state, receipt):
+    let pending = state.pending
+    let original_mind = pending.actor.mind
+    let previous_successes = rt_count(dv_find(pending.actor, "completed_actions", []))
+    var result = dvs_session_complete_commit(state, receipt)
+    var actors = result.actors
+    var actor = actors[pending.index]
+    if dv_find(dv_find(original_mind, "CognitionFilter", []), "anterograde", false):
+        // Body, accounting, successful world effects and other witnesses remain;
+        // this subject does not acquire a memory from its own completion.
+        actor = dv_with(actor, "mind", original_mind)
+        actors = dvs_replace(actors, pending.index, actor)
+    result = dvs_owned_state_update(result, {"actors": actors})
+    if rt_count(dv_find(actor, "completed_actions", [])) > previous_successes:
+        result = dvs_simulation_protect_complete(result, pending)
+    return dvs_simulation_sync(result)
+
+fn dvs_simulation_protect_complete(state, pending):
+    if not dv_has_key(state.physical, "simulation"):
+        return state
+    var world = state.physical
+    let lock = world.simulation.DemonEntityLock
+    let demon = dv_find(world.simulation.config, "demon", false)
+    if lock == false or demon == false or pending.id != demon.actor or pending.action.id != demon.protect_action_id:
+        return state
+    let location = dv_read(world, demon.location_ref)
+    if not dv_uncontested(location) or location.value != lock.room:
+        return state
+    let danger = dvs_simulation_danger(world.simulation.config, lock.danger)
+    if danger == false or dv_truth(world, danger.when) != "true":
+        return state
+    let fact = dvs_simulation_fact(world.simulation.RealityFacts, danger.fact_id)
+    if fact == false:
+        return state
+    var actors = state.actors
+    var events = dv_clone(state.events)
+    let event = dvs_event(events, "simulation_demon_protection", demon.actor, world.time, [], {"danger": danger.id, "room": lock.room, "action_event": pending.action_event, "approximation": true})
+    var i = 0
+    while i < rt_count(actors):
+        var actor = actors[i]
+        if dv_has_key(actor, "location_ref"):
+            let position = dv_read(world, actor.location_ref)
+            if dv_uncontested(position) and position.value == lock.room:
+                let observations = dv_cognition_observations(actor.mind, dv_perceive(world, actor.mind, state.bindings, [fact.ref], event, world.time))
+                actor = dv_with(actor, "mind", dv_update_mind(actor.mind, observations, actor.mind.revision, dvs_observation_profile(actor)).world)
+                if 0 < rt_count(observations):
+                    dvs_event(events, "simulation_public_warning", actor.id, world.time, [event], {"observations": observations, "danger": danger.id, "source": demon.actor})
+                actors = dvs_replace(actors, i, actor)
+        i = i + 1
+    world = dv_with(world, "simulation", dv_with(world.simulation, "DemonEntityLock", dv_with(lock, "protecting", true)))
+    return dvs_owned_state_update(state, {"actors": actors, "physical": world, "events": events})
+
+// Host-only 1 Hz boundary: seconds are monotonic host time, never game minutes.
+// Frame physics remains in the host. This call does not settle pending actions.
+fn dvs_simulation_pulse(state, seconds, visible_rooms):
+    dv_require(0 <= seconds, "Negative host simulation clock")
+    if not dv_has_key(state.physical, "simulation"):
+        return state
+    var simulation = state.physical.simulation
+    let tick = rt_floor(seconds)
+    dv_require(simulation.last_nearby_second <= tick, "Host simulation clock moved backwards")
+    if simulation.last_nearby_second == tick:
+        return state
+    var nearby = visible_rooms
+    let edges = dv_find(simulation.config, "edges", [])
+    var i = 0
+    while i < rt_count(edges):
+        let edge = edges[i]
+        if dv_has(visible_rooms, edge.from) and not dv_has(nearby, edge.to):
+            nearby = dv_append(nearby, edge.to)
+        if dv_has(visible_rooms, edge.to) and not dv_has(nearby, edge.from):
+            nearby = dv_append(nearby, edge.from)
+        i = i + 1
+    let changed = not dv_same(simulation.visible_rooms, visible_rooms) or not dv_same(simulation.nearby_rooms, nearby)
+    simulation = dv_with_many(simulation, {"last_nearby_second": tick, "visible_rooms": visible_rooms, "nearby_rooms": nearby, "nearby_count": simulation.nearby_count + 1})
+    var events = dv_clone(state.events)
+    if changed:
+        dvs_event(events, "simulation_nearby_scope", "", state.physical.time, [], {"host_second": tick, "rooms": nearby, "approximation": true})
+    return dvs_simulation_sync(dvs_owned_state_update(state, {"physical": dv_with(state.physical, "simulation", simulation), "events": events, "idle": 0}))

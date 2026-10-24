@@ -19,6 +19,8 @@ public sealed partial class DvSession
     private readonly Dictionary<string, ViewerProjection> viewers = new(StringComparer.Ordinal);
     private readonly Dictionary<string, (long Version, IReadOnlyDictionary<string, object?> Value)> executors = new(StringComparer.Ordinal);
     private PreviewBranch? preview;
+    private long? simulationPulseOrigin;
+    private long simulationPulseBase;
     public Action<string, string>? PhaseObserver { get; set; }
     public TextWriter DiagnosticOutput { get; set; } = Console.Error;
     public bool AuditMode => audit;
@@ -208,6 +210,33 @@ public sealed partial class DvSession
     }
     private static object SelectionValue(string selection) => selection.StartsWith('{') ? HostValues.Parse(selection) : selection;
     public string Prepare(string selection = "") => JsonSerializer.Serialize(PrepareValue(selection));
+
+    /// <summary>Refresh the near-field simulation at a committed idle boundary.
+    /// The monotonic wall clock never advances campaign minutes or completes actions.</summary>
+    public void SimulationPulse(long seconds, IReadOnlyList<string> visibleRooms)
+    {
+        using var valuesScope = R.UseValues(valueContext);
+        if (IsClosed || HasPending(state)) return;
+        if (seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
+        using var performanceScope = Measure("simulation-pulse");
+        if (simulationPulseOrigin is null)
+        {
+            simulationPulseOrigin = seconds;
+            var physical = Field(state, "physical", new List<object>());
+            var simulation = Field(physical, "simulation", new List<object>());
+            simulationPulseBase = checked((long)R.Num(Field(simulation, "last_nearby_second", -1d)) + 1);
+        }
+        if (seconds < simulationPulseOrigin.Value)
+            throw new ArgumentOutOfRangeException(nameof(seconds), "The host clock moved backwards.");
+        var sessionSecond = checked(simulationPulseBase + seconds - simulationPulseOrigin.Value);
+        var previous = R.snapshot(state);
+        var advanced = Run(() => DVProgram.SimulationPulse(previous,
+            converter.ToDv(sessionSecond), converter.ToDv(visibleRooms)));
+        if (ReferenceEquals(previous, advanced)) return;
+        BeginTransition();
+        state = advanced;
+        RememberCommitted();
+    }
 
     public IReadOnlyDictionary<string, object?> PrepareBackgroundValue()
     {
@@ -548,6 +577,7 @@ public static partial class DVProgram
     internal static object SessionActive(object state) => F_dvs_session_active(state);
     internal static object SessionPrepare(object state) => F_dvg_prepare(state);
     internal static object PrepareBackground(object state, object viewer) => F_dvg_prepare_background(state, viewer);
+    internal static object SimulationPulse(object state, object seconds, object rooms) => F_dvg_simulation_pulse(state, seconds, rooms);
     internal static object SessionComplete(object state, object receipt) => F_dvg_complete(state, receipt);
     internal static object SessionIntent(object state) => F_dvg_intent(state);
     internal static object SessionPresentation(object state, object viewer) => F_dvg_presentation(state, viewer);

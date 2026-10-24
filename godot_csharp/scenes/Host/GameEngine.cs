@@ -40,6 +40,8 @@ public partial class GameEngine : Node
     public bool CanBackgroundTick() => session is not null && !busy && !maintenance && !closing && !faulted
         && commands.Count == 0 && pendingEvent.Length == 0 && snapshotCache.ContainsKey("pending")
         && snapshotCache["pending"].AsGodotDictionary().GetValueOrDefault("status", "").AsString() == "awaiting_input";
+    public bool CanSimulationPulse() => session is not null && !busy && !maintenance && !closing && !faulted
+        && commands.Count == 0 && pendingEvent.Length == 0;
     public void DevCommand(string command) => Dispatch(new GDict { ["kind"] = "dev_command", ["command"] = command });
     public void LoadReplay(string path) => Dispatch(new GDict { ["kind"] = "replay_load", ["path"] = path });
     public void ReplayPlay(double speed = 1) { replay?.Play(speed); }
@@ -197,7 +199,7 @@ public partial class GameEngine : Node
     {
         var json = Json.Stringify(input);
         var kind = input.GetValueOrDefault("kind", "").AsString();
-        if (kind is not ("npc_tick" or "prepare_ahead" or "cancel_ahead")) inputs.Add(json);
+        if (kind is not ("npc_tick" or "simulation_pulse" or "prepare_ahead" or "cancel_ahead")) inputs.Add(json);
         var command = ++nextCommand;
         Stamp("command_received", input.GetValueOrDefault("interaction_id", interaction).AsString(), input.GetValueOrDefault("kind", "").AsString(), command);
         if (closing) return new();
@@ -281,6 +283,17 @@ public partial class GameEngine : Node
                         casebookViewer = opened.Viewer;
                         casebookJson = opened.Casebook;
                         Stamp("handoff_end", timingId, kind);
+                    }
+                    else if (kind == "simulation_pulse")
+                    {
+                        if (session is null || pendingEvent.Length != 0) continue;
+                        var current = session;
+                        var second = input.GetValueOrDefault("seconds", 0L).AsInt64();
+                        var room = snapshotCache.GetValueOrDefault("logical_location", "").AsString();
+                        await Task.Run(() => current.SimulationPulse(second,
+                            room.Length == 0 ? Array.Empty<string>() : new[] { room }));
+                        // The next regular projection consumes the new version. A clock
+                        // pulse creates no UI navigation or pending execution event.
                     }
                     else if (kind == "view_ready" || kind == "dv_next" || kind == "select" || kind == "npc_tick")
                     {

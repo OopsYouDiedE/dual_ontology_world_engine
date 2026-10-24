@@ -263,6 +263,41 @@ fn campaign_window(day, start, end):
 fn campaign_people():
     return ["detective", "huo", "shen", "su", "lucian", "gu", "quer", "ward", "selma", "ruan", "elena", "moran", "veronica", "bertrand", "margaret", "mora"]
 
+// Stable bit identities follow the registered student catalogue. Objective
+// values and knowledge remain in their original worlds; registration grants
+// neither observations nor a new environment state. Numeric room transport,
+// daily ledgers and protection actions require explicit scene declarations.
+fn campaign_simulation_config(scene):
+    let people = campaign_people()
+    var identities = []
+    var i = 0
+    while i < rt_count(people):
+        rt_push(identities, {"actor": people[i], "index": i})
+        i = i + 1
+    rt_push(identities, {"actor": "demon", "index": 16})
+    var facts = []
+    let weather = ["ash_falling", "wind", "daylight", "severe_air", "earthquake_recent"]
+    if dv_has_key(scene.physical.objects, "c2.weather"):
+        i = 0
+        while i < rt_count(weather):
+            rt_push(facts, {"id": rt_cat("weather.", weather[i]), "ref": campaign_ref("c2.weather", weather[i])})
+            i = i + 1
+    if dv_has_key(scene.physical.objects, "c2.meter"):
+        rt_push(facts, {"id": "meter.safe", "ref": campaign_ref("c2.meter", "safe")})
+    i = 0
+    while i < rt_count(people):
+        if dv_has_key(scene.physical.objects, campaign_body(people[i])):
+            rt_push(facts, {"id": rt_cat(people[i], ".erosion_exposure"), "ref": campaign_own(people[i], "erosion_exposure")})
+            rt_push(facts, {"id": rt_cat(people[i], ".alive"), "ref": campaign_own(people[i], "alive")})
+        i = i + 1
+    let declared = dv_find(scene, "simulation_declarations", [])
+    let extra_facts = dv_find(declared, "facts", [])
+    i = 0
+    while i < rt_count(extra_facts):
+        rt_push(facts, extra_facts[i])
+        i = i + 1
+    return dv_with_many(declared, {"identities": identities, "facts": facts})
+
 fn campaign_person_source(actor):
     let rows = [["detective", "01_侦探.story", 11], ["huo", "02_霍铎.story", 48], ["shen", "03_沈鼎.story", 45], ["su", "04_苏泠.story", 43], ["lucian", "05_卢西安.story", 25], ["gu", "06_顾平章.story", 25], ["quer", "07_雀儿.story", 27], ["ward", "08_沃德.story", 24], ["selma", "09_赛尔玛.story", 25], ["ruan", "10_阮清越.story", 24], ["elena", "11_伊莲娜.story", 24], ["moran", "12_莫兰.story", 23], ["veronica", "13_维罗妮卡.story", 25], ["bertrand", "14_贝尔特朗.story", 26], ["margaret", "15_玛格丽特.story", 27], ["mora", "16_茉拉.story", 26]]
     var i = 0
@@ -348,10 +383,10 @@ fn campaign_observation_goal(ref, when, basis, time):
     5. 恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。
     6. 恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。
     7. 恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。
-    8. 恶魔不得以言辞欺骗学员；学员问及本人封存之物或契约条文，须如实作答。
-    9. 恶魔不得向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。
+    8. 恶魔对学员所作事实陈述的字面语义在客观现实中不得为假；学员问及本人封存之物或契约条文，须按所知如实作答，不知则明言不知。
+    9. 恶魔不得主动向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。
     10. 封存的记忆可凭对应之物恢复；恢复者自负其果。
-    11. 经其余在岛存活学员一致同意，学员可择定“尽忘归乡”，于下一次入睡时遗忘此地一切、在家乡醒来。
+    11. 本人尚未深属此岛，且经当时在岛存活之其余全部在册学员一致同意，可择定“尽忘归乡”；上述条件持续成立时，于下一次入睡遗忘此地一切、在家乡醒来。
     12. （终局）担保耗尽时，恶魔须将醒着且未深属此岛的学员遣返家乡，并抹去其与此地有关的一切记忆。
 
 fn campaign_person_name(actor):

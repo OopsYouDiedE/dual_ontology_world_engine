@@ -2,6 +2,12 @@
 
 DvCli 单向引用 host_bridge，共用正式 Prepare → formal-model → Complete；不依赖 Godot、检查程序集或 oracle。
 
+近似模拟保留文本、TUI 和 JSON-Lines 入口。人工请求 `focus` / `act` 时，若调度已准备另一行动，返回 `kind="waiting"`、`status="pending_action"`、`requested_selection_applied=false` 及当前版本。接着用 `next` 查看待处理行动，`confirm` 完成该行动，再依据最新选项提交人工选择。`act` 在收到该等待状态时停止，用户原选项保持未执行。
+
+JSON-Lines 的每条请求在处理结束后追加 `kind="command_complete"`，含 `sequence`、原样 `request_id`、`command`、`success`、`state_version` 和 `closing`。客户端读取到这条消息再发送下一条请求；前面的 `interaction` 只表示当前阶段，正文和结果可能随后到达。失败请求的完成消息包含错误类型与信息；原有错误处理继续报告具体异常。`closing=true` 表示退出请求已处理，退出封存结束和进程退出另行确认。
+
+当前观察者之外的待结算行动使用 `control="background"`、`confirmation_required=true` 和通用提示，人工选项暂时留空。主观接口的不可见行动结果只报告 `visible=false`、状态与通用反馈；实际行动者、行动标识和私有来源留在正式轨迹。
+
 ```powershell
 dotnet run --project dv_core/cli/DvCli.csproj -- --tui
 dotnet run --project dv_core/cli/DvCli.csproj -- --jsonl

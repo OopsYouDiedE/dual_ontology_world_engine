@@ -36,6 +36,7 @@ internal sealed class Cli
     private string interactionPhase = "";
     private ChoiceFocus? focus;
     private long interactionSequence;
+    private long commandSequence;
     private readonly string interactionSession = Guid.NewGuid().ToString("N");
     private readonly Stopwatch recordingClock = Stopwatch.StartNew();
     private IReadOnlyDictionary<string, object?> replayPreview = HostValues.Empty;
@@ -308,6 +309,38 @@ internal sealed class Cli
 
     private async Task Execute(string input)
     {
+        if (!jsonLines) { await ExecuteCore(input); return; }
+        var sequence = ++commandSequence;
+        var command = "";
+        object? requestId = null;
+        Exception? failure = null;
+        try
+        {
+            var line = input.Trim();
+            if (line.StartsWith('{'))
+            {
+                using var request = JsonDocument.Parse(line);
+                if (request.RootElement.TryGetProperty("command", out var name)) command = name.GetString() ?? "";
+                if (request.RootElement.TryGetProperty("request_id", out var id)) requestId = id.Clone();
+            }
+            else command = line.Split(' ', 2)[0];
+            await ExecuteCore(input);
+        }
+        catch (Exception error) { failure = error; throw; }
+        finally
+        {
+            Console.WriteLine(JsonSerializer.Serialize(new
+            {
+                kind = "command_complete", scope = session is null ? "recorded-replay" : "formal-model",
+                data = new { sequence, request_id = requestId, command, success = failure is null,
+                    state_version = session?.Version, closing = quit,
+                    error_type = failure?.GetType().Name, message = failure?.Message }
+            }, Json));
+        }
+    }
+
+    private async Task ExecuteCore(string input)
+    {
         var line = input.Trim();
         if (line.Length == 0 && replay is null) return;
         string name, argument;
@@ -426,8 +459,8 @@ internal sealed class Cli
                 current.SetDecisionInterfacePhase(current.Viewer, argument);
                 Emit("performance", current.PerformanceSummary()); break;
             case "act":
-                FocusChoice(current, argument);
-                ConfirmChoice(current); break;
+                if (FocusChoice(current, argument)) ConfirmChoice(current);
+                break;
             case "inspect": Emit("inspect", current.Inspect(argument.Length == 0 ? Observer : argument)); break;
             case "perf": case "performance":
                 if (argument.Length > 0) current.WritePerformanceReport(argument);
@@ -520,12 +553,23 @@ internal sealed class Cli
         }
     }
 
-    private void FocusChoice(DvSession current, string argument)
+    private bool FocusChoice(DvSession current, string argument)
     {
         if (ControllerIsAutonomous(current)) throw new InvalidOperationException("控制 · 自主");
         if (Observer != current.Viewer) throw new InvalidOperationException("控制 · " + current.Viewer);
         if (argument.Length == 0) throw new ArgumentException("focus <01|ID|selection>");
         if (current.Active && HostValues.Text(current.Intent, "status") == "idle") current.PrepareValue();
+        if (current.Active && HostValues.Text(current.Intent, "status") == "prepared")
+        {
+            Emit("waiting", HostValues.Freeze(new Dictionary<string, object?>
+            {
+                ["status"] = "pending_action",
+                ["message"] = "另有行动待处理。输入 next 查看，再输入 confirm。",
+                ["state_version"] = current.Version,
+                ["requested_selection_applied"] = false
+            }));
+            return false;
+        }
         if (!current.Active || HostValues.Text(current.Intent, "status") != "awaiting_input")
             throw new InvalidOperationException("阶段 · " + HostValues.Text(current.Intent, "status"));
         var options = current.ObserverOptions(current.Viewer, showScores == true);
@@ -546,6 +590,7 @@ internal sealed class Cli
         interactionPhase = "聚焦";
         RecordPhase(current, "focus", focus);
         Emit("interaction", FocusPayload(focus, "focus"));
+        return true;
     }
 
     private void FocusPrepared(DvSession current)
@@ -565,7 +610,7 @@ internal sealed class Cli
         actionPage = -1;
         optionTimeBasis = "current";
         terminalPage = -1;
-        interactionPhase = "聚焦";
+        interactionPhase = actor == Observer ? "聚焦" : "后台行动待确认";
         RecordPhase(current, "focus", focus);
         Emit("interaction", FocusPayload(focus, "focus"));
     }
@@ -744,6 +789,8 @@ internal sealed class Cli
 
     private IReadOnlyList<IReadOnlyDictionary<string, object?>> VisibleOptions()
     {
+        if (session is not null && focus is { } pending && pending.Actor != Observer)
+            return Array.Empty<IReadOnlyDictionary<string, object?>>();
         if (session is { } current) return current.ObserverOptions(Observer, showScores == true);
         if (interactionPhase.StartsWith("本次记录停止", StringComparison.Ordinal) || interactionPhase == "会话已停止")
             return Array.Empty<IReadOnlyDictionary<string, object?>>();
@@ -1143,7 +1190,16 @@ internal sealed class Cli
             if (kind == "interaction" && data is IReadOnlyDictionary<string, object?> interaction &&
                 HostValues.Text(interaction, "actor") != Observer)
                 visible = new { phase = HostValues.Text(interaction, "phase"), viewer = Observer,
-                    options = VisibleOptions(), selected = "", state_version = session?.Version };
+                    control = "background", confirmation_required = true,
+                    message = "另有行动待结算。输入 confirm 后重新查看选项。",
+                    options = Array.Empty<object>(), selected = "", state_version = session?.Version };
+            if (kind == "presentation" && mapView == "subjective" &&
+                data is IReadOnlyDictionary<string, object?> presentation &&
+                presentation.GetValueOrDefault("visible") is false)
+                visible = new { visible = false, viewer = Observer,
+                    status = HostValues.Text(presentation, "status"),
+                    outcome = HostValues.Text(presentation, "outcome"),
+                    message = "未收到新的可见信息。" };
             Console.WriteLine(JsonSerializer.Serialize(new { kind, scope = session is null ? "recorded-replay" : "formal-model", data = visible }, Json));
             MarkDecisionInterfaceVisible(kind);
             return;

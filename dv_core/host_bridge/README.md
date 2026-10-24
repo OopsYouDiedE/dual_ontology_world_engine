@@ -16,6 +16,7 @@
 | `PrepareAhead(selection)`、`TryAdoptPrepared(token, out intent)` | 提前计算候选分支；正式选择在原状态版本仍有效时采用 |
 | `CancelPrepared()` | 丢弃候选分支，保持正式状态与费用 |
 | `PrepareBackgroundValue()` | 在人工等待边界调度同刻 NPC，沿唯一 pending/Complete 闭环执行 |
+| `SimulationPulse(seconds, visibleRooms)` | 在空闲已提交边界传入累计单调现实秒与可见逻辑房间，更新1Hz近场范围；恢复后按实例重定现实秒基点，游戏分钟由正式行动推进 |
 | `TextStatus(viewer)` | 指定观察者的位置、同房人物、近期实际观察及输入状态；无参数时使用会话观察者 |
 | `Actors`、`ObserverOptions(viewer, includeImmediateScores=false)` | 轻量角色目录、指定角色当前合法候选及已记录评分；显式请求才计算即时分；不构造全体认知地图 |
 | `Preview(viewer, includeObjective=false, includeImmediateScores=false)` | 只投影请求角色的主观地图；显式请求时附同 Version 共享的客观地图，保持认知不变 |

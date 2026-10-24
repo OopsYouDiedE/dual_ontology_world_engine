@@ -181,6 +181,60 @@ fn dv_world(id, domain, subject):
     dv_require(local_1, "World subject mismatch")
     return dv_with_many({"id": id, "domain": domain, "subject": subject, "revision": 0}, {"objects": [], "adoptions": [], "history": [], "seen": []})
 
+// Exact unsigned 32-bit membership represented by the existing finite-number ABI.
+// All integers through 2^32-1 are exactly representable; never use signed shifts.
+fn dv_mask32(mask):
+    dv_require(0 <= mask and mask <= 4294967295 and rt_floor(mask) == mask, "Mask must be an unsigned 32-bit integer")
+    return mask
+
+fn dv_mask_bit(index):
+    dv_require(0 <= index and index < 32 and rt_floor(index) == index, "Mask index outside 32 identities")
+    var bit = 1
+    var i = 0
+    while i < index:
+        bit = bit * 2
+        i = i + 1
+    return bit
+
+fn dv_mask_has(mask, index):
+    let quotient = rt_floor(dv_mask32(mask) / dv_mask_bit(index))
+    return quotient - rt_floor(quotient / 2) * 2 == 1
+
+fn dv_mask_and(left, right):
+    dv_mask32(left)
+    dv_mask32(right)
+    var result = 0
+    var i = 0
+    while i < 32:
+        if dv_mask_has(left, i) and dv_mask_has(right, i):
+            result = result + dv_mask_bit(i)
+        i = i + 1
+    return result
+
+fn dv_mask_union(left, right):
+    return dv_mask32(left) + dv_mask32(right) - dv_mask_and(left, right)
+
+fn dv_mask_without(mask, excluded):
+    return dv_mask32(mask) - dv_mask_and(mask, excluded)
+
+fn dv_reality_fact(id, ref, cell, known_by):
+    return {"id": id, "ref": ref, "RealityFact": cell, "KnownByMask": dv_mask32(known_by)}
+
+fn dv_cognition_hidden(mind, object):
+    return dv_has(dv_find(dv_find(mind, "CognitionFilter", []), "hidden_objects", []), object)
+
+fn dv_cognition_observations(mind, observations):
+    let filter = dv_find(mind, "CognitionFilter", [])
+    if dv_find(filter, "anterograde", false):
+        return []
+    var accepted = []
+    var i = 0
+    while i < rt_count(observations):
+        if not dv_cognition_hidden(mind, observations[i].ref.object):
+            rt_push(accepted, observations[i])
+        i = i + 1
+    return accepted
+
 fn dv_domain(world, domain):
     return dv_require((world.domain == domain), "Wrong world domain")
 
@@ -207,6 +261,8 @@ fn dv_read(world, ref):
         var subj = ref.subject
         if (not (subj == "")):
             dv_require((subj == world.subject), "Cross-subject reference access")
+    if world.domain == "mind" and dv_cognition_hidden(world, ref.object):
+        return dv_unknown()
     var objects = world.objects
     var id = ref.object
     // Access is checked before reuse. A cell depends on its own immutable
@@ -594,7 +650,7 @@ fn dv_truth_uncached(world, proposition):
                 return result
             else:
                 // Composite order and unsupported representations retain DV.
-                if rt_predicate_enabled():
+                if rt_predicate_enabled() and not dv_has_key(world, "CognitionFilter"):
                     if op == "equals" or op == "at_least":
                         let native_truth = rt_predicate_leaf(world, proposition)
                         if native_truth != false:
@@ -1080,7 +1136,7 @@ fn dv_perceive(physical, mind, bindings, grants, event_id, time):
             if mapped.known:
                 rt_push(observations, dv_with(dv_observation(dv_list3(event_id, subject, local_ref), subject, local_ref, mapped.value, "perception", "direct", time, 1, dv_pair(event_id, local_ref)), "world_version", {"id": physical.id, "revision": physical.revision}))
         i = (i + 1)
-    return observations
+    return dv_cognition_observations(mind, observations)
 
 fn dv_perceive_changes(receipt, mind, bindings, grants):
     dv_require((receipt.status == "applied"), "Only applied world changes can be perceived")
@@ -1178,6 +1234,7 @@ fn dv_aggregate(claims, profile, time):
 fn dv_update_mind(mind, observations, expected_revision, profile):
     dv_domain(mind, "mind")
     dv_require((mind.revision == expected_revision), "Stale cognition revision")
+    observations = dv_cognition_observations(mind, observations)
     var next = dv_clone(mind)
     var i = 0
     var accepted = []
