@@ -176,9 +176,9 @@
       "title": "最后的转运",
       "source": "mcp/asset_pipeline/sources/Internal/Concepts/Highlights/06-last-transfer.png",
       "artifact": "artifacts/dv-approx-highlights/concepts/06-last-transfer.png",
-      "generated_original": "C:/Users/Administrator/.codex/generated_images/01a17051-adf2-74f1-9fbd-dc58e5c029cf/exec-b7232aad-1f86-49b1-81f8-bb32468899c6.png",
-      "sha256": "6e1b5b1007c7ee47e331bb5136a84e724389326c26777d30e7895ecc894ceab7",
-      "basis": "地理案111：第19日退潮24h最后窗口，1F粮仓/白塔药剂/温室苗床→3F露台/山体基地；绳/棘轮保持架/服务梯，低处紫金源质重新逼近；绝对水位未定。",
+      "generated_original": "C:/Users/Administrator/.codex/generated_images/01a17051-adf2-74f1-9fbd-dc58e5c029cf/exec-e9cb87bf-2f61-4fa6-8d70-6cba117f48ed.png",
+      "sha256": "a1db38943315369e99678b525c69251cf79adf77068ec0478d73073a96ba16ac",
+      "basis": "本轮用户直接纠正：源质快要淹没门口；主楼有大门，门前是垫高几米的玄武岩地基，角色在一楼发现险情。局部几米基座为本轮直接设定，不推出全岛海面或源质绝对高度。原地理案111抢运背景仅由粮袋、苗床、药箱及楼内上行楼梯辅助表达。",
       "references": [
         {
           "source": "mcp/asset_pipeline/sources/Internal/Characters/PixelRedraw20261020/chef-compact.png",
@@ -187,27 +187,53 @@
         {
           "source": "mcp/asset_pipeline/sources/Internal/Characters/HighlightsCel/detective.png",
           "sha256": "d7de4012086eaf782783013e119c839593c12eb6fe3e9412c8215d91e3e8db53"
+        },
+        {
+          "source": "artifacts/campus-architecture-review/astra/12_settlement_material_refinement.png",
+          "sha256": "f54b14105c4f83afbeedf0d1136bc91ab0ca6c774d2fcd48eabbc763b792247b"
         }
       ],
-      "prompt": "mcp/asset_pipeline/sources/Internal/Concepts/Highlights/06-last-transfer.prompt.txt",
-      "edit_prompt": "mcp/asset_pipeline/sources/Internal/Concepts/Highlights/06-last-transfer.edit.prompt.txt",
-      "correction": "重构为上下多层剖视，取消水平长悬盘；单个短篮、竖轨、绞盘和撤离阶梯。",
-      "visible_action": "左下装货 → 短吊篮竖向提升 → 上方接收；低处危险逼近，右侧阶梯供撤离。",
-      "prompt_sha256": "3c10f7d7a834f8a85db2ad7cfc95d6f45106e20cf92e02455c4fb59c92381cff",
-      "edit_prompt_sha256": "838bac1853f71a1ed27baeebb1515742fe972dc14835faaf4f93cfb8566a189d",
+      "prompt": "mcp/asset_pipeline/sources/Internal/Concepts/Highlights/06-last-transfer.threshold.prompt.txt",
+      "edit_prompt": null,
+      "correction": "按用户直接纠正完全换构图：两人同在一楼门内，危险逼近门外顶部平台与门槛；厚玄武岩抬高基座和下行阶梯可见。取消跨层吊运主体，物资与室内上行楼梯仅作背景。",
+      "visible_action": "侦探与沈鼎在一楼大门内发现源质已攀近门槛；门内地坪与门外平台同高，厚玄武岩地基和下行台阶交代危险迫近。",
+      "prompt_sha256": "d90788d1938298c13b13bd87839026e8271d2a41dd7b9b1e3f6e63783ff7f1df",
+      "edit_prompt_sha256": null,
       "initial_generation": {
         "source": "mcp/asset_pipeline/sources/Internal/Concepts/Highlights/edit_inputs/06-last-transfer-initial.png",
         "sha256": "76f6222396f96c0e2fbcaaf482ada196666ebfa95ecfc288a0d3300e1a450d66"
       },
       "generation_tool": "image_gen.imagegen",
-      "edit_mode": "new composition from identity references"
+      "edit_mode": "new composition from original character and architectural references",
+      "superseded_compositions": [
+        {
+          "generated_original": "C:/Users/Administrator/.codex/generated_images/01a17051-adf2-74f1-9fbd-dc58e5c029cf/exec-b7232aad-1f86-49b1-81f8-bb32468899c6.png",
+          "sha256": "6e1b5b1007c7ee47e331bb5136a84e724389326c26777d30e7895ecc894ceab7",
+          "prompt": "mcp/asset_pipeline/sources/Internal/Concepts/Highlights/06-last-transfer.prompt.txt",
+          "prompt_sha256": "3c10f7d7a834f8a85db2ad7cfc95d6f45106e20cf92e02455c4fb59c92381cff",
+          "edit_prompt": "mcp/asset_pipeline/sources/Internal/Concepts/Highlights/06-last-transfer.edit.prompt.txt",
+          "edit_prompt_sha256": "838bac1853f71a1ed27baeebb1515742fe972dc14835faaf4f93cfb8566a189d",
+          "basis": "地理案111：第19日退潮24h最后窗口，1F粮仓/白塔药剂/温室苗床→3F露台/山体基地；绳/棘轮保持架/服务梯，低处紫金源质重新逼近；绝对水位未定。",
+          "correction": "重构为上下多层剖视，取消水平长悬盘；单个短篮、竖轨、绞盘和撤离阶梯。",
+          "visible_action": "左下装货 → 短吊篮竖向提升 → 上方接收；低处危险逼近，右侧阶梯供撤离。",
+          "source": "mcp/asset_pipeline/sources/Internal/Concepts/Highlights/edit_inputs/06-last-transfer-vertical-hoist.png",
+          "status": "superseded by direct user correction: event discovered at main-building ground-floor entrance"
+        }
+      ],
+      "user_correction": "应该是源质快要淹没门口了。主楼有个大门和门前垫高几米的玄武岩地基，所以角色其实是在一楼发现这件事的。",
+      "actual_canvas": [
+        1672,
+        941
+      ],
+      "view_scope": "3/4侧剖式局部入口：一楼室内、主楼大门、门前平台、玄武岩基座侧墙、下行阶梯及近门槛源质边界。",
+      "runtime_status": "concept only; production stage remains paused; no new game render"
     }
   ],
   "limitations": [
     "生成插画并非可直接裁切的运行tile/sprite或机械运动合同。",
     "棋局四手关系可见；精确十九路线数和星位须以运行程序网格实现，本图尚不作逐线验收结论。",
     "部分背景保留绘画纹理和照明渐变，人物硬边分区色是主要风格目标。",
-    "转运只表达局部上下空间及危险压力，不给出绝对水位/海拔或全岛影响范围。"
+    "06只表达主楼一楼门口的局部险情；几米玄武岩基座来自本轮用户直接设定，不给出全岛绝对海面/源质高度。"
   ],
   "edit_input_note": "edit_inputs仅归档已替换的初稿供来源追溯，最终展示均使用各场景顶层PNG；不作为运行发布资产。"
 }
