@@ -225,22 +225,22 @@ size = Vector2(32, 32)
 size = Vector2(512, 32)
 
 [sub_resource type="RectangleShape2D" id="s67"]
-size = Vector2(64, 14)
+size = Vector2(84, 19)
 
 [sub_resource type="RectangleShape2D" id="s68"]
-size = Vector2(40, 14)
+size = Vector2(52, 19)
 
 [sub_resource type="RectangleShape2D" id="s69"]
-size = Vector2(40, 14)
+size = Vector2(52, 19)
 
 [sub_resource type="RectangleShape2D" id="s70"]
-size = Vector2(28, 16)
+size = Vector2(45, 26)
 
 [sub_resource type="RectangleShape2D" id="s71"]
-size = Vector2(28, 16)
+size = Vector2(45, 26)
 
 [sub_resource type="RectangleShape2D" id="s72"]
-size = Vector2(24, 12)
+size = Vector2(35, 18)
 
 [sub_resource type="RectangleShape2D" id="s73"]
 size = Vector2(10, 8)
@@ -252,40 +252,40 @@ size = Vector2(44, 10)
 size = Vector2(12, 8)
 
 [sub_resource type="RectangleShape2D" id="s76"]
-size = Vector2(124, 10)
+size = Vector2(174, 14)
 
 [sub_resource type="RectangleShape2D" id="s77"]
-size = Vector2(150, 34)
+size = Vector2(225, 51)
 
 [sub_resource type="RectangleShape2D" id="s78"]
-size = Vector2(124, 10)
+size = Vector2(174, 14)
 
 [sub_resource type="RectangleShape2D" id="s79"]
 size = Vector2(10, 8)
 
 [sub_resource type="RectangleShape2D" id="s80"]
-size = Vector2(56, 16)
+size = Vector2(79, 23)
 
 [sub_resource type="RectangleShape2D" id="s81"]
-size = Vector2(12, 8)
+size = Vector2(15, 10)
 
 [sub_resource type="RectangleShape2D" id="s82"]
-size = Vector2(24, 12)
+size = Vector2(33, 17)
 
 [sub_resource type="RectangleShape2D" id="s83"]
-size = Vector2(14, 10)
+size = Vector2(17, 12)
 
 [sub_resource type="RectangleShape2D" id="s84"]
-size = Vector2(14, 10)
+size = Vector2(17, 12)
 
 [sub_resource type="RectangleShape2D" id="s85"]
 size = Vector2(16, 8)
 
 [sub_resource type="RectangleShape2D" id="s86"]
-size = Vector2(108, 16)
+size = Vector2(130, 20)
 
 [sub_resource type="RectangleShape2D" id="s87"]
-size = Vector2(64, 22)
+size = Vector2(84, 29)
 
 [sub_resource type="RectangleShape2D" id="s88"]
 size = Vector2(22, 12)
@@ -334,18 +334,21 @@ position = Vector2(128, 100)
 texture = ExtResource("t_fireplace")
 centered = false
 offset = Vector2(-36, -64)
+scale = Vector2(1.3, 1.3)
 
 [node name="BookcaseW" type="Sprite2D" parent="Objects"]
 position = Vector2(64, 110)
 texture = ExtResource("t_bookcase_study")
 centered = false
 offset = Vector2(-20, -60)
+scale = Vector2(1.3, 1.3)
 
 [node name="BookcaseE" type="Sprite2D" parent="Objects"]
 position = Vector2(384, 110)
 texture = ExtResource("t_bookcase_study_b")
 centered = false
 offset = Vector2(-20, -60)
+scale = Vector2(1.3, 1.3)
 
 [node name="NoticeBoard" type="Sprite2D" parent="Objects"]
 position = Vector2(352, 98)
@@ -358,18 +361,21 @@ position = Vector2(96, 202)
 texture = ExtResource("t_armchair")
 centered = false
 offset = Vector2(-15, -32)
+scale = Vector2(1.6, 1.6)
 
 [node name="ArmchairB" type="Sprite2D" parent="Objects"]
 position = Vector2(192, 202)
 texture = ExtResource("t_armchair")
 centered = false
 offset = Vector2(-15, -32)
+scale = Vector2(1.6, 1.6)
 
 [node name="FireSide" type="Sprite2D" parent="Objects"]
 position = Vector2(152, 198)
 texture = ExtResource("t_side_table_plain")
 centered = false
 offset = Vector2(-19, -34)
+scale = Vector2(1.45, 1.45)
 
 [node name="ReadingLamp" type="Sprite2D" parent="Objects"]
 position = Vector2(416, 234)
@@ -390,22 +396,25 @@ centered = false
 offset = Vector2(-9, -50)
 
 [node name="BenchN" type="Sprite2D" parent="Objects"]
-position = Vector2(256, 644)
+position = Vector2(256, 636)
 texture = ExtResource("t_long_bench")
 centered = false
 offset = Vector2(-64, -24)
+scale = Vector2(1.4, 1.4)
 
 [node name="LongTable" type="Sprite2D" parent="Objects"]
 position = Vector2(256, 708)
 texture = ExtResource("t_long_table")
 centered = false
 offset = Vector2(-80, -56)
+scale = Vector2(1.5, 1.5)
 
 [node name="BenchS" type="Sprite2D" parent="Objects"]
-position = Vector2(256, 748)
+position = Vector2(256, 758)
 texture = ExtResource("t_long_bench")
 centered = false
 offset = Vector2(-64, -24)
+scale = Vector2(1.4, 1.4)
 
 [node name="LampW" type="Sprite2D" parent="Objects"]
 position = Vector2(72, 672)
@@ -418,30 +427,35 @@ position = Vector2(392, 884)
 texture = ExtResource("t_upright_piano")
 centered = false
 offset = Vector2(-30, -56)
+scale = Vector2(1.4, 1.4)
 
 [node name="PianoStool" type="Sprite2D" parent="Objects"]
 position = Vector2(392, 916)
 texture = ExtResource("t_piano_stool")
 centered = false
 offset = Vector2(-9, -20)
+scale = Vector2(1.2, 1.2)
 
 [node name="Chess" type="Sprite2D" parent="Objects"]
 position = Vector2(104, 884)
 texture = ExtResource("t_chess_table")
 centered = false
 offset = Vector2(-17, -34)
+scale = Vector2(1.35, 1.35)
 
 [node name="ChessChairA" type="Sprite2D" parent="Objects"]
 position = Vector2(84, 864)
 texture = ExtResource("t_chair_front")
 centered = false
 offset = Vector2(-9, -28)
+scale = Vector2(1.2, 1.2)
 
 [node name="ChessChairB" type="Sprite2D" parent="Objects"]
 position = Vector2(104, 922)
 texture = ExtResource("t_chair_back")
 centered = false
 offset = Vector2(-9, -28)
+scale = Vector2(1.2, 1.2)
 
 [node name="Plant" type="Sprite2D" parent="Objects"]
 position = Vector2(448, 980)
@@ -454,12 +468,14 @@ position = Vector2(128, 1100)
 texture = ExtResource("t_basin_row")
 centered = false
 offset = Vector2(-56, -44)
+scale = Vector2(1.2, 1.2)
 
 [node name="Tub" type="Sprite2D" parent="Objects"]
 position = Vector2(352, 1176)
 texture = ExtResource("t_bathtub")
 centered = false
 offset = Vector2(-35, -40)
+scale = Vector2(1.3, 1.3)
 
 [node name="Heater" type="Sprite2D" parent="Objects"]
 position = Vector2(448, 1102)
@@ -745,27 +761,27 @@ position = Vector2(256.0, 1264.0)
 shape = SubResource("s66")
 
 [node name="s67" type="CollisionShape2D" parent="Solids"]
-position = Vector2(128.0, 93.0)
+position = Vector2(128.0, 90.5)
 shape = SubResource("s67")
 
 [node name="s68" type="CollisionShape2D" parent="Solids"]
-position = Vector2(64.0, 103.0)
+position = Vector2(64.0, 100.5)
 shape = SubResource("s68")
 
 [node name="s69" type="CollisionShape2D" parent="Solids"]
-position = Vector2(384.0, 103.0)
+position = Vector2(384.0, 100.5)
 shape = SubResource("s69")
 
 [node name="s70" type="CollisionShape2D" parent="Solids"]
-position = Vector2(96.0, 194.0)
+position = Vector2(95.5, 189.0)
 shape = SubResource("s70")
 
 [node name="s71" type="CollisionShape2D" parent="Solids"]
-position = Vector2(192.0, 194.0)
+position = Vector2(191.5, 189.0)
 shape = SubResource("s71")
 
 [node name="s72" type="CollisionShape2D" parent="Solids"]
-position = Vector2(152.0, 192.0)
+position = Vector2(151.5, 189.0)
 shape = SubResource("s72")
 
 [node name="s73" type="CollisionShape2D" parent="Solids"]
@@ -781,15 +797,15 @@ position = Vector2(416.0, 400.0)
 shape = SubResource("s75")
 
 [node name="s76" type="CollisionShape2D" parent="Solids"]
-position = Vector2(256.0, 639.0)
+position = Vector2(256.0, 629.0)
 shape = SubResource("s76")
 
 [node name="s77" type="CollisionShape2D" parent="Solids"]
-position = Vector2(256.0, 691.0)
+position = Vector2(255.5, 682.5)
 shape = SubResource("s77")
 
 [node name="s78" type="CollisionShape2D" parent="Solids"]
-position = Vector2(256.0, 743.0)
+position = Vector2(256.0, 751.0)
 shape = SubResource("s78")
 
 [node name="s79" type="CollisionShape2D" parent="Solids"]
@@ -797,23 +813,23 @@ position = Vector2(72.0, 668.0)
 shape = SubResource("s79")
 
 [node name="s80" type="CollisionShape2D" parent="Solids"]
-position = Vector2(392.0, 876.0)
+position = Vector2(391.5, 872.5)
 shape = SubResource("s80")
 
 [node name="s81" type="CollisionShape2D" parent="Solids"]
-position = Vector2(392.0, 912.0)
+position = Vector2(391.5, 911.0)
 shape = SubResource("s81")
 
 [node name="s82" type="CollisionShape2D" parent="Solids"]
-position = Vector2(104.0, 878.0)
+position = Vector2(103.5, 875.5)
 shape = SubResource("s82")
 
 [node name="s83" type="CollisionShape2D" parent="Solids"]
-position = Vector2(84.0, 859.0)
+position = Vector2(83.5, 858.0)
 shape = SubResource("s83")
 
 [node name="s84" type="CollisionShape2D" parent="Solids"]
-position = Vector2(104.0, 917.0)
+position = Vector2(103.5, 916.0)
 shape = SubResource("s84")
 
 [node name="s85" type="CollisionShape2D" parent="Solids"]
@@ -821,11 +837,11 @@ position = Vector2(448.0, 976.0)
 shape = SubResource("s85")
 
 [node name="s86" type="CollisionShape2D" parent="Solids"]
-position = Vector2(128.0, 1092.0)
+position = Vector2(128.0, 1090.0)
 shape = SubResource("s86")
 
 [node name="s87" type="CollisionShape2D" parent="Solids"]
-position = Vector2(352.0, 1165.0)
+position = Vector2(352.0, 1161.5)
 shape = SubResource("s87")
 
 [node name="s88" type="CollisionShape2D" parent="Solids"]
@@ -967,7 +983,7 @@ position = Vector2(112, 732)
 position = Vector2(432, 636)
 
 [node name="s11" type="Marker2D" parent="Stands"]
-position = Vector2(240, 188)
+position = Vector2(272, 188)
 
 [node name="s12" type="Marker2D" parent="Stands"]
 position = Vector2(400, 476)
@@ -976,15 +992,15 @@ position = Vector2(400, 476)
 position = Vector2(240, 828)
 
 [node name="s14" type="Marker2D" parent="Stands"]
-position = Vector2(304, 956)
+position = Vector2(144, 284)
 
 [node name="s15" type="Marker2D" parent="Stands"]
-position = Vector2(272, 1148)
+position = Vector2(304, 956)
 
 [node name="Sites" type="Node2D" parent="."]
 
 [node name="watch_point" type="Marker2D" parent="Sites"]
-position = Vector2(256, 624)
+position = Vector2(256, 608)
 metadata/label = "守夜点"
 
 [node name="hall_notice" type="Marker2D" parent="Sites"]

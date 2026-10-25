@@ -100,28 +100,28 @@ size = Vector2(704, 32)
 size = Vector2(18, 10)
 
 [sub_resource type="RectangleShape2D" id="s31"]
-size = Vector2(136, 18)
+size = Vector2(164, 22)
 
 [sub_resource type="RectangleShape2D" id="s32"]
-size = Vector2(136, 18)
+size = Vector2(164, 22)
 
 [sub_resource type="RectangleShape2D" id="s33"]
-size = Vector2(136, 18)
+size = Vector2(164, 22)
 
 [sub_resource type="RectangleShape2D" id="s34"]
-size = Vector2(136, 18)
+size = Vector2(164, 22)
 
 [sub_resource type="RectangleShape2D" id="s35"]
-size = Vector2(136, 18)
+size = Vector2(164, 22)
 
 [sub_resource type="RectangleShape2D" id="s36"]
-size = Vector2(136, 18)
+size = Vector2(164, 22)
 
 [sub_resource type="RectangleShape2D" id="s37"]
-size = Vector2(136, 18)
+size = Vector2(164, 22)
 
 [sub_resource type="RectangleShape2D" id="s38"]
-size = Vector2(136, 18)
+size = Vector2(164, 22)
 
 [sub_resource type="RectangleShape2D" id="e0"]
 size = Vector2(32, 64)
@@ -164,48 +164,56 @@ position = Vector2(192, 286)
 texture = ExtResource("t_lecture_desk_row")
 centered = false
 offset = Vector2(-70, -40)
+scale = Vector2(1.2, 1.2)
 
 [node name="Desk0b" type="Sprite2D" parent="Objects"]
 position = Vector2(480, 286)
 texture = ExtResource("t_lecture_desk_row")
 centered = false
 offset = Vector2(-70, -40)
+scale = Vector2(1.2, 1.2)
 
 [node name="Desk1a" type="Sprite2D" parent="Objects"]
 position = Vector2(192, 350)
 texture = ExtResource("t_lecture_desk_row")
 centered = false
 offset = Vector2(-70, -40)
+scale = Vector2(1.2, 1.2)
 
 [node name="Desk1b" type="Sprite2D" parent="Objects"]
 position = Vector2(480, 350)
 texture = ExtResource("t_lecture_desk_row")
 centered = false
 offset = Vector2(-70, -40)
+scale = Vector2(1.2, 1.2)
 
 [node name="Desk2a" type="Sprite2D" parent="Objects"]
 position = Vector2(192, 414)
 texture = ExtResource("t_lecture_desk_row")
 centered = false
 offset = Vector2(-70, -40)
+scale = Vector2(1.2, 1.2)
 
 [node name="Desk2b" type="Sprite2D" parent="Objects"]
 position = Vector2(480, 414)
 texture = ExtResource("t_lecture_desk_row")
 centered = false
 offset = Vector2(-70, -40)
+scale = Vector2(1.2, 1.2)
 
 [node name="Desk3a" type="Sprite2D" parent="Objects"]
 position = Vector2(192, 478)
 texture = ExtResource("t_lecture_desk_row")
 centered = false
 offset = Vector2(-70, -40)
+scale = Vector2(1.2, 1.2)
 
 [node name="Desk3b" type="Sprite2D" parent="Objects"]
 position = Vector2(480, 478)
 texture = ExtResource("t_lecture_desk_row")
 centered = false
 offset = Vector2(-70, -40)
+scale = Vector2(1.2, 1.2)
 
 [node name="Solids" type="StaticBody2D" parent="."]
 collision_mask = 0
@@ -335,35 +343,35 @@ position = Vector2(336.0, 161.0)
 shape = SubResource("s30")
 
 [node name="s31" type="CollisionShape2D" parent="Solids"]
-position = Vector2(192.0, 277.0)
+position = Vector2(192.0, 275.0)
 shape = SubResource("s31")
 
 [node name="s32" type="CollisionShape2D" parent="Solids"]
-position = Vector2(480.0, 277.0)
+position = Vector2(480.0, 275.0)
 shape = SubResource("s32")
 
 [node name="s33" type="CollisionShape2D" parent="Solids"]
-position = Vector2(192.0, 341.0)
+position = Vector2(192.0, 339.0)
 shape = SubResource("s33")
 
 [node name="s34" type="CollisionShape2D" parent="Solids"]
-position = Vector2(480.0, 341.0)
+position = Vector2(480.0, 339.0)
 shape = SubResource("s34")
 
 [node name="s35" type="CollisionShape2D" parent="Solids"]
-position = Vector2(192.0, 405.0)
+position = Vector2(192.0, 403.0)
 shape = SubResource("s35")
 
 [node name="s36" type="CollisionShape2D" parent="Solids"]
-position = Vector2(480.0, 405.0)
+position = Vector2(480.0, 403.0)
 shape = SubResource("s36")
 
 [node name="s37" type="CollisionShape2D" parent="Solids"]
-position = Vector2(192.0, 469.0)
+position = Vector2(192.0, 467.0)
 shape = SubResource("s37")
 
 [node name="s38" type="CollisionShape2D" parent="Solids"]
-position = Vector2(480.0, 469.0)
+position = Vector2(480.0, 467.0)
 shape = SubResource("s38")
 
 [node name="Exits" type="Node2D" parent="."]
@@ -386,22 +394,22 @@ position = Vector2(640, 336)
 [node name="Stands" type="Node2D" parent="."]
 
 [node name="s00" type="Marker2D" parent="Stands"]
-position = Vector2(336, 284)
+position = Vector2(368, 284)
 
 [node name="s01" type="Marker2D" parent="Stands"]
-position = Vector2(624, 508)
-
-[node name="s02" type="Marker2D" parent="Stands"]
 position = Vector2(80, 508)
 
-[node name="s03" type="Marker2D" parent="Stands"]
-position = Vector2(624, 156)
+[node name="s02" type="Marker2D" parent="Stands"]
+position = Vector2(624, 508)
 
-[node name="s04" type="Marker2D" parent="Stands"]
+[node name="s03" type="Marker2D" parent="Stands"]
 position = Vector2(80, 156)
 
+[node name="s04" type="Marker2D" parent="Stands"]
+position = Vector2(624, 156)
+
 [node name="s05" type="Marker2D" parent="Stands"]
-position = Vector2(368, 508)
+position = Vector2(336, 508)
 
 [node name="s06" type="Marker2D" parent="Stands"]
 position = Vector2(592, 316)
@@ -410,33 +418,33 @@ position = Vector2(592, 316)
 position = Vector2(240, 156)
 
 [node name="s08" type="Marker2D" parent="Stands"]
-position = Vector2(432, 156)
+position = Vector2(464, 156)
 
 [node name="s09" type="Marker2D" parent="Stands"]
 position = Vector2(80, 316)
 
 [node name="s10" type="Marker2D" parent="Stands"]
-position = Vector2(528, 220)
+position = Vector2(304, 380)
 
 [node name="s11" type="Marker2D" parent="Stands"]
-position = Vector2(176, 252)
-
-[node name="s12" type="Marker2D" parent="Stands"]
-position = Vector2(304, 412)
-
-[node name="s13" type="Marker2D" parent="Stands"]
-position = Vector2(432, 252)
-
-[node name="s14" type="Marker2D" parent="Stands"]
 position = Vector2(80, 412)
 
-[node name="s15" type="Marker2D" parent="Stands"]
+[node name="s12" type="Marker2D" parent="Stands"]
 position = Vector2(592, 412)
+
+[node name="s13" type="Marker2D" parent="Stands"]
+position = Vector2(144, 220)
+
+[node name="s14" type="Marker2D" parent="Stands"]
+position = Vector2(304, 220)
+
+[node name="s15" type="Marker2D" parent="Stands"]
+position = Vector2(528, 220)
 
 [node name="Sites" type="Node2D" parent="."]
 
 [node name="blackboard" type="Marker2D" parent="Sites"]
-position = Vector2(352, 168)
+position = Vector2(360, 168)
 metadata/label = "黑板"
 
 [node name="timetable" type="Marker2D" parent="Sites"]

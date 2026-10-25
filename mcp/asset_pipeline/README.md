@@ -55,3 +55,5 @@
 `python mcp/asset_pipeline/publish_highlight_tiles.py --source <4x4材质原图>` 提取完整材质格，以 nearest-neighbor 发布32×32原料，再派生floor47角边、wall16四边、water47岸缘。遮罩保留中心16×16；四边使用16宽连接臂；47格式角位独立控制8×8角，16格式由相邻两边决定角。清单保存源格、比例、SHA-256、地形索引、peering bits和透明边预览。成品为 `godot_csharp/ShareAsset/Internal/Props/Highlights/Terrain/HighlightsTerrain.tres` 与外置PNG。已逐格绘制的原生图集可用 `--format blob47|wang16|minimal3x3 --floor-source <PNG> --wall-source <PNG> --water-source <PNG>`，分别要求8×6（47格、余格空）、4×4或3×3；3×3为手工变体。`--godot <程序>` 指定生成器使用的Godot。
 
 室内地图截图 `capture_maps.gd` 与正式 CampusMapView 共用 RoomArtFinish.attach，绘制局部代码光晕及墙根/家具接触暗部；不改地图几何或重绘发布PNG。全图输出不含Host镜头、日时与UI，必须按此范围报告。
+
+`room_furnishing.py`维护按家具类别的尺寸、桌椅组合及同源物理足迹，章节生成器在resolve后接入。`godot_tools/capture-furnished-rooms`使用最小正式资源闭包采集并运行独立脚部碰撞夹具，不创建DV会话，不提供剧情结论。ReferenceDining新源素材经approved-cuts发布；目标、裁切、源像素与运行比例单列，不能把素材放大当作细节重绘。

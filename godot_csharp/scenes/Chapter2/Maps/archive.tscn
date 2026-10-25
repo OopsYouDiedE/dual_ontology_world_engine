@@ -163,10 +163,10 @@ size = Vector2(56, 18)
 size = Vector2(56, 18)
 
 [sub_resource type="RectangleShape2D" id="s50"]
-size = Vector2(14, 10)
+size = Vector2(17, 12)
 
 [sub_resource type="RectangleShape2D" id="s51"]
-size = Vector2(14, 10)
+size = Vector2(17, 12)
 
 [sub_resource type="RectangleShape2D" id="s52"]
 size = Vector2(48, 16)
@@ -281,12 +281,14 @@ position = Vector2(608, 474)
 texture = ExtResource("t_chair_back")
 centered = false
 offset = Vector2(-9, -28)
+scale = Vector2(1.2, 1.2)
 
 [node name="ChairB" type="Sprite2D" parent="Objects"]
 position = Vector2(768, 474)
 texture = ExtResource("t_chair_back")
 centered = false
 offset = Vector2(-9, -28)
+scale = Vector2(1.2, 1.2)
 
 [node name="PlanCabinet" type="Sprite2D" parent="Objects"]
 position = Vector2(576, 398)
@@ -510,11 +512,11 @@ position = Vector2(768.0, 449.0)
 shape = SubResource("s49")
 
 [node name="s50" type="CollisionShape2D" parent="Solids"]
-position = Vector2(608.0, 469.0)
+position = Vector2(607.5, 468.0)
 shape = SubResource("s50")
 
 [node name="s51" type="CollisionShape2D" parent="Solids"]
-position = Vector2(768.0, 469.0)
+position = Vector2(767.5, 468.0)
 shape = SubResource("s51")
 
 [node name="s52" type="CollisionShape2D" parent="Solids"]
@@ -620,13 +622,13 @@ position = Vector2(256, 160)
 metadata/label = "封存匣"
 
 [node name="name_warning" type="Marker2D" parent="Sites"]
-position = Vector2(160, 384)
+position = Vector2(160, 400)
 metadata/label = "唤名警告"
 
 [node name="red_ink" type="Marker2D" parent="Sites"]
-position = Vector2(608, 480)
+position = Vector2(608, 488)
 metadata/label = "规程页"
 
 [node name="watch_point" type="Marker2D" parent="Sites"]
-position = Vector2(320, 512)
+position = Vector2(312, 512)
 metadata/label = "守夜点"

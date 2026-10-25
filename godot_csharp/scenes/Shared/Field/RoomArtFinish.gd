@@ -5,6 +5,7 @@ var _lights: Array[PointLight2D] = []
 var _rows: Array = []
 var _contacts: Array[Rect2] = []
 var _panel_cells: Dictionary = {}
+var _rugs: Array[Rect2] = []
 
 static func attach(layout: Node2D) -> void:
 	if layout.has_meta("outdoor_core") or layout.has_node("RoomArtFinish"): return
@@ -24,12 +25,6 @@ func _ready() -> void:
 		for object in objects.get_children():
 			if object is Sprite2D and object.texture != null:
 				var bounds: Rect2 = object.get_rect()
-				# Enlarge around the existing foot, never move a site or body.
-				var factor := 1.25
-				for edge in [bounds.position.x, bounds.end.x]:
-					var foot: Vector2 = object.position + Vector2(float(edge) * factor, -3)
-					if not _floor_at(int(floorf(foot.x / 32.0)), int(floorf(foot.y / 32.0))): factor = 1.0
-				object.scale *= factor
 				var width: float = clampf(bounds.size.x * object.scale.x * 0.78, 8.0, 140.0)
 				_contacts.append(Rect2(object.position + Vector2(-width * 0.5, -4), Vector2(width, 8)))
 	var gradient := Gradient.new()
@@ -66,6 +61,17 @@ func _add_windows(layout: Node2D) -> void:
 		var origin := Vector2(float(part.origin[0]), float(part.origin[1]))
 		for panel in part.get("panels", []):
 			_panel_cells[Vector2i(int((origin.x + float(panel[0])) / 32), int((origin.y + float(panel[1])) / 32))] = true
+		for sample in part.get("floor_samples", []):
+			var surface := preload("res://scenes/Shared/Field/AuthoredSurface.gd").new()
+			surface.z_index = -1
+			add_child(surface)
+			var areas: Array[Rect2] = []
+			for area in sample.areas:
+				areas.append(Rect2(float(area[0]),float(area[1]),float(area[2]),float(area[3])))
+			surface.configure(load(str(sample.texture)),float(sample.scale),origin,areas)
+			surface.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		for rug in part.get("ornaments", []):
+			_rugs.append(Rect2(origin + Vector2(float(rug[0]), float(rug[1])), Vector2(float(rug[2]), float(rug[3]))))
 		for window in part.windows:
 			var atlas := AtlasTexture.new()
 			atlas.atlas = load(str(part.texture))
@@ -86,16 +92,19 @@ func _floor_at(x: int, y: int) -> bool:
 	return y >= 0 and y < _rows.size() and x >= 0 and x < str(_rows[y]).length() and str(_rows[y])[x] in ".DS"
 
 func _draw() -> void:
+	for rug in _rugs: _draw_rug(rug)
 	# Narrow wall contact: only actual floor cells, never a screen vignette.
 	for y in _rows.size():
 		for x in str(_rows[y]).length():
 			if _panel_cells.has(Vector2i(x, y)) and str(_rows[y])[x] == "w":
-				var panel := Rect2(x * 32, y * 32 + 12, 32, 19)
+				var paired := _panel_cells.has(Vector2i(x + 1, y)) and x % 2 == 0
+				if x % 2 == 1 and _panel_cells.has(Vector2i(x - 1, y)): continue
+				var panel := Rect2(x * 32, y * 32 + 9, 64 if paired else 32, 22)
 				draw_rect(panel, Color("51402f"))
 				draw_rect(panel.grow(-3), Color("41352c"))
 				draw_rect(panel.grow(-4), Color("69523a"), false, 1)
-				draw_line(panel.position, panel.position + Vector2(32, 0), Color("b59a68"), 1)
-				draw_line(panel.position + Vector2(0, 18), panel.end, Color("2a2729"), 2)
+				draw_line(panel.position, panel.position + Vector2(panel.size.x, 0), Color("b59a68"), 1)
+				draw_line(panel.position + Vector2(0, 21), panel.end, Color("2a2729"), 2)
 			if not _floor_at(x, y): continue
 			for step in range(8):
 				var alpha := 0.16 * pow(1.0 - float(step) / 8.0, 2.0)
@@ -113,3 +122,42 @@ func _contact_style(alpha: float) -> StyleBoxFlat:
 	style.bg_color = Color(0.08, 0.06, 0.10, alpha)
 	style.set_corner_radius_all(4)
 	return style
+
+func _draw_rug(rect: Rect2) -> void:
+	draw_rect(rect, Color("4c302d"))
+	draw_rect(rect.grow(-2), Color("a38550"))
+	draw_rect(rect.grow(-3), Color("1e403d"))
+	draw_rect(rect.grow(-7), Color("9a8150"), false, 0.75)
+	draw_rect(rect.grow(-9), Color("304d45"), false, 0.5)
+	var gold := Color("b39a62")
+	# Low-contrast woven field, fine linked border and corner returns.
+	for y in range(int(rect.position.y+11),int(rect.end.y-10),3):
+		draw_line(Vector2(rect.position.x+11,y),Vector2(rect.end.x-11,y),Color(0.65,0.72,0.57,0.035),0.5)
+	for x in range(int(rect.position.x+18),int(rect.end.x-14),14):
+		for y in [rect.position.y+5,rect.end.y-5]:
+			draw_polyline(PackedVector2Array([Vector2(x-2,y),Vector2(x,y-1.5),Vector2(x+2,y),Vector2(x,y+1.5),Vector2(x-2,y)]),gold,0.5,true)
+	for y in range(int(rect.position.y+20),int(rect.end.y-15),16):
+		for x in [rect.position.x+5,rect.end.x-5]:
+			draw_polyline(PackedVector2Array([Vector2(x,y-2),Vector2(x+1.5,y),Vector2(x,y+2),Vector2(x-1.5,y),Vector2(x,y-2)]),gold,0.5,true)
+	for corner in [rect.position, Vector2(rect.end.x,rect.position.y), rect.end, Vector2(rect.position.x,rect.end.y)]:
+		var sign_x := 1.0 if corner.x == rect.position.x else -1.0
+		var sign_y := 1.0 if corner.y == rect.position.y else -1.0
+		var inside: Vector2 = corner + Vector2(sign_x*12,sign_y*12)
+		draw_polyline(PackedVector2Array([inside+Vector2(0,sign_y*12),inside,inside+Vector2(sign_x*12,0)]),gold,0.75,true)
+	var count := maxi(1, int(rect.size.y / 112))
+	for n in count:
+		var center := Vector2(rect.get_center().x,rect.position.y+rect.size.y*(n+0.5)/count)
+		var rx := minf(rect.size.x*0.24,30)
+		var ry := minf(rect.size.y/(count*3.2),26)
+		draw_polyline(PackedVector2Array([center+Vector2(0,-ry),center+Vector2(rx,0),center+Vector2(0,ry),center+Vector2(-rx,0),center+Vector2(0,-ry)]),gold,1,true)
+		var inner := PackedVector2Array([center+Vector2(0,-ry*0.72),center+Vector2(rx*0.72,0),center+Vector2(0,ry*0.72),center+Vector2(-rx*0.72,0),center+Vector2(0,-ry*0.72)])
+		draw_polyline(inner,Color("657153"),0.75,true)
+		for petal in range(4):
+			var curve := PackedVector2Array()
+			for sample in range(25):
+				var angle := float(sample)/24.0*TAU
+				var radius := 4.0*(1.0-cos(angle))
+				var local := Vector2(radius*cos(angle),radius*sin(angle)*0.55).rotated(petal*PI*0.5)
+				curve.append(center+local)
+			draw_polyline(curve,gold,0.6,true)
+		draw_circle(center,1.5,Color("925d3e"))

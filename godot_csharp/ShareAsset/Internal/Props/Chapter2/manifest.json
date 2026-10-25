@@ -121,7 +121,7 @@
      "id": "watch_point",
      "point": [
       256,
-      624
+      608
      ],
      "label": "守夜点"
     },
@@ -245,7 +245,7 @@
      "id": "transmitter",
      "point": [
       352,
-      136
+      120
      ],
      "label": "铜口"
     },
@@ -253,7 +253,7 @@
      "id": "zone_rules",
      "point": [
       256,
-      136
+      120
      ],
      "label": "公告框"
     },
@@ -286,7 +286,7 @@
      "id": "E2",
      "point": [
       62,
-      422
+      414
      ],
      "label": "",
      "geometry_only": true
@@ -295,7 +295,7 @@
      "id": "E6",
      "point": [
       522,
-      202
+      170
      ],
      "label": "",
      "geometry_only": true
@@ -303,8 +303,8 @@
     {
      "id": "E7",
      "point": [
-      368,
-      258
+      376,
+      210
      ],
      "label": "",
      "geometry_only": true
@@ -312,8 +312,8 @@
     {
      "id": "E10",
      "point": [
-      368,
-      502
+      336,
+      486
      ],
      "label": "",
      "geometry_only": true
@@ -321,8 +321,8 @@
     {
      "id": "E11",
      "point": [
-      806,
-      110
+      798,
+      126
      ],
      "label": "",
      "geometry_only": true
@@ -330,8 +330,8 @@
     {
      "id": "hall_copper_seat",
      "point": [
-      368,
-      240
+      376,
+      208
      ],
      "label": "",
      "geometry_only": true
@@ -340,7 +340,7 @@
      "id": "hall_tea_side",
      "point": [
       320,
-      300
+      316
      ],
      "label": "",
      "geometry_only": true
@@ -349,7 +349,7 @@
      "id": "hall_window_side",
      "point": [
       260,
-      280
+      312
      ],
      "label": "",
      "geometry_only": true
@@ -370,7 +370,8 @@
       8,
       48
      ],
-     "footprint": null
+     "footprint": null,
+     "visual_scale": 1.0
     },
     {
      "name": "AshFan",
@@ -382,7 +383,8 @@
      "texture": "res://ShareAsset/Internal/Props/AwakeningEvidence/ash_fan.png",
      "rotation_degrees": 90,
      "z_index": -1,
-     "footprint": null
+     "footprint": null,
+     "visual_scale": 1.0
     },
     {
      "name": "Wedge",
@@ -392,7 +394,8 @@
       428
      ],
      "texture": "res://ShareAsset/Internal/Props/AwakeningEvidence/wedge.png",
-     "footprint": null
+     "footprint": null,
+     "visual_scale": 1.0
     },
     {
      "name": "Score",
@@ -406,21 +409,23 @@
       -9,
       -34
      ],
-     "footprint": null
+     "footprint": null,
+     "visual_scale": 1.0
     },
     {
      "name": "Slate",
      "sprite": "slate",
      "position": [
       368,
-      296
+      291
      ],
      "texture": "res://ShareAsset/Internal/Props/AwakeningEvidence/slate.png",
      "draw_offset": [
       -10,
       -44
      ],
-     "footprint": null
+     "footprint": null,
+     "visual_scale": 1.0
     },
     {
      "name": "Jar",
@@ -434,7 +439,8 @@
       -7,
       -48
      ],
-     "footprint": null
+     "footprint": null,
+     "visual_scale": 1.0
     },
     {
      "name": "R05Shelf",
@@ -445,11 +451,12 @@
      ],
      "texture": "res://ShareAsset/Internal/Props/FirstAwakeningInterior/bookcase_empty.png",
      "footprint": [
-      780,
-      96,
-      40,
-      14
-     ]
+      774,
+      91,
+      52,
+      19
+     ],
+     "visual_scale": 1.3
     },
     {
      "name": "R05ShelfTrace",
@@ -459,7 +466,8 @@
       110
      ],
      "texture": "res://ShareAsset/Internal/Props/AwakeningEvidence/shelf_dust_hand.png",
-     "footprint": null
+     "footprint": null,
+     "visual_scale": 1.0
     }
    ]
   },
@@ -704,7 +712,7 @@
     {
      "id": "blackboard",
      "point": [
-      352,
+      360,
       168
      ],
      "label": "黑板"
@@ -781,7 +789,7 @@
      "id": "name_warning",
      "point": [
       160,
-      384
+      400
      ],
      "label": "唤名警告"
     },
@@ -789,14 +797,14 @@
      "id": "red_ink",
      "point": [
       608,
-      480
+      488
      ],
      "label": "规程页"
     },
     {
      "id": "watch_point",
      "point": [
-      320,
+      312,
       512
      ],
      "label": "守夜点"
@@ -976,7 +984,7 @@
      "id": "ration_counter",
      "point": [
       464,
-      288
+      304
      ],
      "label": "配给台"
     },
@@ -1005,7 +1013,224 @@
      "label": "守夜点"
     }
    ],
-   "geometry_objects": []
+   "geometry_objects": [
+    {
+     "name": "Range",
+     "sprite": "reference_dining_range",
+     "position": [
+      160,
+      116
+     ],
+     "footprint": [
+      112,
+      98,
+      96,
+      18
+     ],
+     "visual_scale": 0.17761989342806395,
+     "texture": "res://ShareAsset/Internal/Props/ReferenceDining/range.png",
+     "draw_offset": [
+      -281.5,
+      -255
+     ]
+    },
+    {
+     "name": "Hood",
+     "sprite": "reference_dining_hood",
+     "position": [
+      160,
+      86
+     ],
+     "footprint": null,
+     "visual_scale": 0.2562929061784897,
+     "texture": "res://ShareAsset/Internal/Props/ReferenceDining/hood.png",
+     "draw_offset": [
+      -218.5,
+      -285
+     ],
+     "z_index": -1
+    },
+    {
+     "name": "DishRack",
+     "sprite": "reference_dining_dish_rack",
+     "position": [
+      320,
+      116
+     ],
+     "footprint": [
+      294,
+      106,
+      52,
+      10
+     ],
+     "visual_scale": 0.18126888217522658,
+     "texture": "res://ShareAsset/Internal/Props/ReferenceDining/dish-rack.png",
+     "draw_offset": [
+      -165.5,
+      -334
+     ]
+    },
+    {
+     "name": "Worktable",
+     "sprite": "reference_dining_prep",
+     "position": [
+      192,
+      272
+     ],
+     "footprint": [
+      124,
+      230,
+      135,
+      42
+     ],
+     "visual_scale": 0.0975254730713246,
+     "texture": "res://ShareAsset/Internal/Props/ReferenceDining/prep.png",
+     "draw_offset": [
+      -687,
+      -657
+     ]
+    },
+    {
+     "name": "RationCounter",
+     "sprite": "reference_dining_counter",
+     "position": [
+      474,
+      290
+     ],
+     "footprint": [
+      424,
+      274,
+      100,
+      16
+     ],
+     "visual_scale": 0.18281535648994515,
+     "texture": "res://ShareAsset/Internal/Props/ReferenceDining/counter.png",
+     "draw_offset": [
+      -273.5,
+      -280
+     ]
+    },
+    {
+     "name": "TableA",
+     "sprite": "reference_dining_table_a",
+     "position": [
+      704,
+      202
+     ],
+     "footprint": [
+      591,
+      151,
+      225,
+      51
+     ],
+     "visual_scale": 0.15414258188824662,
+     "texture": "res://ShareAsset/Internal/Props/ReferenceDining/table-a.png",
+     "draw_offset": [
+      -778.5,
+      -578
+     ]
+    },
+    {
+     "name": "BenchA1",
+     "sprite": "reference_dining_bench",
+     "position": [
+      704,
+      130
+     ],
+     "footprint": [
+      617,
+      116,
+      174,
+      14
+     ],
+     "visual_scale": 0.0899497487437186,
+     "texture": "res://ShareAsset/Internal/Props/ReferenceDining/bench.png",
+     "draw_offset": [
+      -995,
+      -372
+     ]
+    },
+    {
+     "name": "BenchA2",
+     "sprite": "reference_dining_bench",
+     "position": [
+      704,
+      224
+     ],
+     "footprint": [
+      617,
+      210,
+      174,
+      14
+     ],
+     "visual_scale": 0.0899497487437186,
+     "texture": "res://ShareAsset/Internal/Props/ReferenceDining/bench.png",
+     "draw_offset": [
+      -995,
+      -372
+     ]
+    },
+    {
+     "name": "TableB",
+     "sprite": "reference_dining_table_b",
+     "position": [
+      704,
+      352
+     ],
+     "footprint": [
+      591,
+      301,
+      225,
+      51
+     ],
+     "visual_scale": 0.15414258188824662,
+     "texture": "res://ShareAsset/Internal/Props/ReferenceDining/table-b.png",
+     "draw_offset": [
+      -778.5,
+      -578
+     ]
+    },
+    {
+     "name": "BenchB1",
+     "sprite": "reference_dining_bench",
+     "position": [
+      704,
+      280
+     ],
+     "footprint": [
+      617,
+      266,
+      174,
+      14
+     ],
+     "visual_scale": 0.0899497487437186,
+     "texture": "res://ShareAsset/Internal/Props/ReferenceDining/bench.png",
+     "draw_offset": [
+      -995,
+      -372
+     ]
+    },
+    {
+     "name": "BenchB2",
+     "sprite": "reference_dining_bench",
+     "position": [
+      704,
+      374
+     ],
+     "footprint": [
+      617,
+      360,
+      174,
+      14
+     ],
+     "visual_scale": 0.0899497487437186,
+     "texture": "res://ShareAsset/Internal/Props/ReferenceDining/bench.png",
+     "draw_offset": [
+      -995,
+      -372
+     ]
+    }
+   ]
   },
   "granary": {
    "title": "粮仓",

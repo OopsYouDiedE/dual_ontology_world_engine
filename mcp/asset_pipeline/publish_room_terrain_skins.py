@@ -38,6 +38,7 @@ def attach_skin(text: str, room: dict) -> str:
 def publish_art_finish_spec():
     """Publish explicit window crops and wall materials from authoring recipes."""
     from build_living_floor import PARTS
+    from room_furnishing import ornaments
     from chapter2_art.painter import Grid, _face_runs
     recipe = {room["key"]: room for room in rooms.all_rooms()}
     spec = {}
@@ -48,7 +49,14 @@ def publish_art_finish_spec():
             style = room.get("wall", {}).get(region, room.get("wall", {}).get("default", ("plaster", "CREAM")))
             if mark == "W" and style[0] in ("paper", "plaster", "panel"):
                 panels += [[x * 32, (y + 1) * 32] for x in range(x0, x1)]
-        spec[key] = [{"origin": [0, 0], "texture": f"res://ShareAsset/Internal/Props/Chapter2/rooms/{key}.png", "windows": windows, "panels": panels}]
+        spec[key] = [{"origin": [0, 0], "texture": f"res://ShareAsset/Internal/Props/Chapter2/rooms/{key}.png", "windows": windows, "panels": panels, "ornaments": ornaments(room)}]
+    dining = recipe['logistics']
+    grid = Grid(dining)
+    spec['logistics'][0]['floor_samples'] = [
+        {'texture':f'res://ShareAsset/Internal/Props/ReferenceDining/floor-{region}.png','scale':(0.16 if region == 'kitchen' else 0.25),
+         'areas':[[x*32,y*32,32,32] for y,row in enumerate(dining['rows']) for x,mark in enumerate(row)
+                  if mark in '.DS' and grid.region(x,y) == region]}
+        for region in ('kitchen','dining')]
     spec["living_floor"] = []
     for key, offset in PARTS.items():
         part = spec[key][0]
@@ -56,7 +64,8 @@ def publish_art_finish_spec():
             for lower in (False, True):
                 spec["living_floor"].append(dict(part, origin=[offset[0], offset[1] + (192 if lower else 0)],
                     windows=[w for w in part["windows"] if (w[1] >= 544) == lower],
-                    panels=[p for p in part["panels"] if (p[1] >= 544) == lower]))
+                    panels=[p for p in part["panels"] if (p[1] >= 544) == lower],
+                    ornaments=[p for p in part["ornaments"] if (p[1] >= 544) == lower]))
         else:
             spec["living_floor"].append(dict(part, origin=list(offset)))
     target = ROOT / "godot_csharp/Contracts/room_art_finish.json"

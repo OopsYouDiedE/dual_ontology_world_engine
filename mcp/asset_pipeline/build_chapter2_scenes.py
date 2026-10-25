@@ -28,6 +28,7 @@ GAME = (Path(__file__).resolve().parents[2] / "godot_csharp")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from chapter2_art import rooms  # noqa: E402
+from room_furnishing import tune_room
 from map_text import parse_json, publish, read_json, replace_json_strings, replace_spans, require_strings  # noqa: E402
 
 OUT = GAME / "ShareAsset/Internal/Props/Chapter2"
@@ -278,6 +279,7 @@ def update_geometry_only(keys, text_source=TEXT_SOURCE, scenes=SCENES, manifest_
         room = authored[key]
         resolve_outdoor_exits(room, spawn_region)
         room["furniture"] = resolve(room["furniture"], fps)
+        room = tune_room(room)
         paths, sizes = {}, {}
         for item in room["furniture"]:
             if "texture" in item:
@@ -317,6 +319,7 @@ def update_stands_only(keys, scenes=SCENES, manifest_path=OUT / "manifest.json")
     for key in keys:
         room = authored[key]
         room["furniture"] = resolve(room["furniture"], fps)
+        room = tune_room(room)
         points = stands(room)
         previous = stands({**room, "stand_capacity": {}})
         path = scenes / f"{key}.tscn"
@@ -489,6 +492,7 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
     for prop in room.get("furniture", []):
         if prop["sprite"] in ("floor_lamp", "range_stove", "fireplace"):
             lights.append({"kind": "lamp", "point": [prop["position"][0], prop["position"][1] - 28]})
+    lights.extend(room.get('art_lights', []))
     lines.append(f'metadata/stage_lights = {json.dumps(lights)}')
     lines += [f'metadata/{k} = {v}' for k, v in room.get("meta", {}).items()]
     lines += ['',
@@ -500,6 +504,10 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
         ox, oy = f.get("draw_offset", [-(w // 2), -h])
         lines += [f'[node name="{f["name"]}" type="Sprite2D" parent="Objects"]', f'position = Vector2({x}, {y})',
                   f'texture = ExtResource("t_{f["sprite"]}")', 'centered = false', f'offset = Vector2({ox}, {oy})']
+        if f["sprite"].startswith("reference_dining_"):
+            lines.append("texture_filter = 2")
+        if f.get("visual_scale", 1.0) != 1.0:
+            lines.append(f'scale = Vector2({f["visual_scale"]}, {f["visual_scale"]})')
         if "texture_region" in f:
             rx, ry, rw, rh = f["texture_region"]
             lines += ['region_enabled = true', f'region_rect = Rect2({rx}, {ry}, {rw}, {rh})']
@@ -599,6 +607,7 @@ def main():
     for room in all_rooms:
         resolve_outdoor_exits(room, spawn_region)
         room["furniture"] = resolve(room["furniture"], fps)
+        room = tune_room(room)
         register_external_sprites(room, sprite_paths, sizes)
         missing = {f["sprite"] for f in room["furniture"]} - set(sprite_paths)
         assert not missing, (room["key"], missing)
