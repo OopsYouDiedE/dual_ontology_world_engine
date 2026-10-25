@@ -73,3 +73,4 @@ CLI 原生截图在捕获线程临时启用 per-monitor-v2 DPI awareness，将 G
 控制台快照允许有限只读重采样，以应对重绘时缓冲区更换；不能重投 stdin。必须在元数据中留下 read_retries/read_stable，持续失败仍报告并保留 pending。
 
 `--opt-evidence-stream on|off` 默认 on，属于 TOOL_FLAGS，只影响离线 raw DAG 读取，并留在 verification_config。开启时将平坦 node items 的解码与原子/向后引用验证合并；精确固定形状以外（含 rational）回退原解码与验证，保留损坏输入的既有错误。帧哈希、有序链、节点编号、事件、checkpoint 与 seal 仍独立核对。已验证连续节点的 offset 索引用八字节无符号数组替代每节点 SQL 行，常驻索引内存为节点数乘八字节；事件唯一性仍由 SQLite 保证，节点正文缓存沿用原双限。关闭 evidence-index 时同时停用此路径。
+`dv_level3_capture.gd` 的决策截图只监听正式 dv_action 并在下一真实渲染帧取证；decision-frames.dvlog 保留意图与时间映射，截图不代替 Complete 或章节达成证据。

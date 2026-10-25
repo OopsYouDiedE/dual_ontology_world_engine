@@ -22,6 +22,7 @@ var capture_interval_ms := 200
 var movement_samples := false
 var held_joy_buttons: Dictionary = {}
 var held_joy_axes: Dictionary = {}
+var pending_decisions: Array = []
 
 func _initialize() -> void:
 	if "--window-mode=window" not in OS.get_cmdline_user_args():
@@ -196,6 +197,9 @@ func _key(code: int, down: bool) -> void:
 func _host_events(events: Array) -> void:
 	# Host delivery times are evidence bounds, not inferred DV milestone times.
 	_append("host-events.dvlog", {"real_ms": Time.get_ticks_msec() - started, "events": events})
+	for event in events:
+		if str(event.get("kind", "")) == "dv_action":
+			pending_decisions.append({"real_ms": Time.get_ticks_msec() - started, "intent": event.get("intent", {})})
 
 func _append(name: String, value: Variant) -> void:
 	archive.AppendRecords(directory.path_join(name), JSON.stringify(value) + "\n")
@@ -216,7 +220,7 @@ func _flush_timings(record_cost := true) -> void:
 func _capture() -> void:
 	if finishing or directory == "": return
 	var now := Time.get_ticks_msec()
-	if now - last_capture < capture_interval_ms: return
+	if pending_decisions.is_empty() and now - last_capture < capture_interval_ms: return
 	last_capture = now
 	if not archive.HasCapacity():
 		host._timing("capture_backpressure", {"real_ms": now - started})
@@ -229,6 +233,9 @@ func _capture() -> void:
 	host._timing("capture_readback_end", {"file": filename})
 	if image.get_format() != Image.FORMAT_RGBA8: image.convert(Image.FORMAT_RGBA8)
 	archive.Enqueue(image.get_data(), image.get_width(), image.get_height(), directory.path_join(filename), captured_us)
+	for decision in pending_decisions:
+		_append("decision-frames.dvlog", {"decision": decision, "file": filename, "capture_real_ms": elapsed})
+	pending_decisions.clear()
 	host._timing("capture_png_end", {"file": filename})
 	if not highlights.is_empty():
 		_append("keyframes.dvlog", {"real_ms": elapsed, "file": filename, "events": highlights})
@@ -290,8 +297,8 @@ func _finish() -> void:
 		_poll_archive()
 		if archive.IsIdle() and host_closed: break
 		await process_frame
-	var timed_out := not archive.IsIdle() or not host_closed
-	var complete := not timed_out and archive_errors.is_empty()
+	var timed_out: bool = not archive.IsIdle() or not host_closed
+	var complete: bool = not timed_out and archive_errors.is_empty()
 	_write("capture-close.dvlog", {"complete": complete, "host_closed": host_closed,
 		"archive_idle": archive.IsIdle(), "timeout": timed_out, "capture_end_real_ms": ended,
 		"archive_and_host_closed_real_ms": Time.get_ticks_msec() - started, "archive_errors": archive_errors,

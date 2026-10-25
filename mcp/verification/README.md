@@ -28,6 +28,11 @@ CLI 的 capture 单独保存当前 UI；截图不改写为行动。PNG 转换保
 
 ## 工具工程入口
 
+`dv_level3_capture.gd` 在收到每个 `dv_action` 后额外采集下一张真实渲染帧，
+以 `decision-frames.dvlog` 关联正式意图、交付时间、截图名及实际取帧时间。
+该帧表示意图交付后的画面，不表示行动完成；定时帧仍按 `--capture-ms` 保留。
+采集器不选择世界行动，图片写盘失败由原归档错误与关闭清单报告。
+
 `run_cli_ai_demo.py --out <本任务固定测试目录> --seconds <停止新决策输入秒数> --hard-timeout <授权总秒数> --grace <关闭预留秒数>` 启动纯引擎 AI 的 CLI 正式会话，固定侦探视角，只顺序发送 next，不代选路线或答案。硬时钟从进程启动计时，包含开局、运行、在途动作和封存；关闭预留位于同一个总预算内。总期限最多 300 秒，seconds 加 grace 必须落在该期限内，独立 watchdog 到期终止进程树。该入口没有源码扫描、修改验证、协议断言、UI 回放或截图；可用 `--source-revision` 写入调用者提供的来源标识。默认精简事件，输入及 stdout/stderr 原字节写二进制流，关闭时保存轨迹、存档和分项报告；超时或封存失败保留具体原因和 `.partial`。必须先完成整批源码修改，再按当前用户授权运行。MCP：diagnostics / cli-ai-demo。
 
 统一 MCP 中，Python 命令属于 `diagnostics`，GDScript 采集与观察属于 `godot_tools`。地图截图为 `capture-maps`，UI 采集为 `capture-casebook`、`capture-period`、`capture-start-reveal`、`capture-title`，宿主入口为 `capture-saved-game`、`capture-level3`、`host-startup`，独立观察为 `ui-input`、`living-floor`、`music-context`。路由直接指向本目录现役脚本；列举工具不执行它们。`ui-input` 自动采用一次性工具用户数据。
