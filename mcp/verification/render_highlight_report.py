@@ -31,6 +31,9 @@ def render() -> Path:
         caption = item["caption"]
         media.append(f'<figure><a href="../../{e(relative)}"><img loading="lazy" src="../../{e(relative)}" alt="{e(caption)}"></a><figcaption>{e(caption)}</figcaption></figure>')
     comparisons = []
+    concepts = []
+    for item in status.get("concept_images", []):
+        concepts.append(f'<figure><a href="../../{e(item["path"])}"><img loading="lazy" src="../../{e(item["path"])}" alt="{e(item["caption"])}"></a><figcaption>{e(item["caption"])}</figcaption></figure>')
     for item in status.get("scene_comparisons", []):
         pair = ''.join(f'<figure><img loading="lazy" src="../../{e(item[key])}" alt="{e(label)}"><figcaption>{e(label)}</figcaption></figure>' for key, label in (("reference", "效果原稿"), ("runtime", "实际场景")))
         comparisons.append(f'<article><h2>{e(item["title"])}</h2><div class="gallery">{pair}</div><p>{e(item["result"])}</p></article>')
@@ -46,6 +49,7 @@ body{{margin:0;background:#f5f1e6;color:var(--ink);font:16px/1.85 'Microsoft YaH
 </style>
 <header><small>BLESSED ARE THOSE WHO SLEEP · 2026-10-24</small><h1>DV近似模拟与六幕重绘</h1><p>{e(status.get("summary", "当前正在实施。源码、素材与运行观察随本轮工作更新。"))}</p></header>
 <main><p class="meta">基线：{e(status.get("baseline", "origin/main d9c8a91e"))}　·　汇报状态：{e(status.get("state", "实施中"))}</p>
+<section><h2>六幕场景设计图</h2><p>按设计正文绘制的构图目标，尚未接入游戏。先核对人物正在做什么、行动对象与事件结果。</p><div class="gallery">{''.join(concepts)}</div></section>
 <nav><a href="#changes">修改与结果</a><a href="#assets">素材与现场</a><a href="#observations">实际观察</a>{navigation}</nav>
 <section id="changes"><h2>修改与结果</h2><ul>{commits}</ul><table><thead><tr><th>范围</th><th>修改</th><th>当前结果</th></tr></thead><tbody>{rows}</tbody></table></section>
 <section id="assets"><h2>分类素材与现场画面</h2><p>运行地形按32像素格组织，自动地形、独立物件和人物分别发布。图集与场景的实际引用、拼接和遮挡分别记录。</p><div class="gallery">{''.join(media) or '<p>本轮图像正在生成与接线，现场画面待采集。</p>'}</div></section>
