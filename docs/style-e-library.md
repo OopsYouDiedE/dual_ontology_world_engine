@@ -26,3 +26,11 @@ python mcp/art_style_trials/report_e_library.py
 ```
 
 采集使用纯GDScript临时工程、Forward+和1600方形视口，不执行Core。固定输出`artifacts/style-e/library-render`只在旧采集退出后替换；保留当前来源SHA256、控制台、图像与二进制观察封包。报告列出目标图、实机取景和差异。首次全库采集仅用于发现构图/遮挡问题，不是游戏碰撞、全动作或正式录制验收。
+
+## 乙区参考图重设计
+
+用户后续提供明确乙区目标图，保存在`artifacts/style-e/zone-yi-redesign/target.png`。本版按目标分区建立紧凑的米制美术布局：在初次紧凑方案上按用户追加要求长宽各扩大15%，北寝室3.91×4.60m、南寝室3.91×4.14m，公共厅5.06×6.90m，走廊11.73×2.30m；家具和墙高不缩放。尺寸为建模推定，不是概念图实测的建筑数据。来源家具身份从原catalog读取，摆放由YiRegion转换；不修改正式DV地点、碰撞或站点。两个原空寝室和侦探空书架仍保留源身份。
+
+YiArchitecture为每室建立完整四面所属墙，移除外侧背面而保留室内框芯板、厚度截面和门洞；朝相机墙为1.05m剖切，其余3m。YiFurniture通过分件床帮/排骨条、柜框芯板、桌椅横撑、箱板及桶箍表达结构。YiRegion负责厨房、洗漱柜、米制材质及房间布置。此前暂停的UV图集不用于这版。
+
+`zone_yi:overview`是作者总览，不读取或授予玩家探索知识；单室视图用于检查结构。22°透视、58°俯视；总览1600×1000，单室1600×1600。使用现役`e-library-capture`及`e-library-report`的`--zone-yi`参数，固定输出在`artifacts/style-e/zone-yi-redesign/render`，不覆盖全库历史截图。正式Host接线、碰撞与行动验收仍未完成。

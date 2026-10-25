@@ -14,8 +14,9 @@ def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--godot',required=True)
     parser.add_argument('--diagnose',action='store_true')
+    parser.add_argument('--zone-yi',action='store_true',help='Capture only the twelve dormitory Yi rooms')
     args=parser.parse_args()
-    out=ROOT/'artifacts/style-e/library-render'
+    out=ROOT/('artifacts/style-e/zone-yi-redesign/render' if args.zone_yi else 'artifacts/style-e/library-render')
     out.mkdir(parents=True,exist_ok=True)
     if any(out.iterdir()): raise RuntimeError('Explicitly clear fixed library-render after previous capture has stopped')
     with tempfile.TemporaryDirectory(prefix='e-library-',dir=ROOT/'.scratch') as temporary:
@@ -39,7 +40,7 @@ lights_and_shadows/positional_shadow/soft_shadow_filter_quality=3
 ''',encoding='utf-8')
         for name, command, timeout in [
             ('import.log',['--headless','--editor','--import','--quit'],120),
-            ('console.log',['--script','res://capture.gd','--','--out='+str(out)]+(['--diagnose'] if args.diagnose else []),240)]:
+            ('console.log',['--script','res://capture.gd','--','--out='+str(out)]+(['--diagnose'] if args.diagnose else [])+(['--zone-yi'] if args.zone_yi else []),240)]:
             with (out/name).open('w',encoding='utf-8') as log:
                 result=subprocess.run([args.godot,'--path',str(work),*command],stdout=log,stderr=subprocess.STDOUT,timeout=timeout)
             if result.returncode: raise RuntimeError(f'{name}: exit {result.returncode}')

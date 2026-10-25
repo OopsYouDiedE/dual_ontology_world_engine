@@ -1,10 +1,12 @@
 extends SceneTree
 var destination: String
 var diagnose := false
+var zone_yi := false
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--out="): destination=arg.trim_prefix("--out=")
 		if arg=="--diagnose": diagnose=true
+		if arg=="--zone-yi": zone_yi=true
 	run.call_deferred()
 func run() -> void:
 	var view := SubViewport.new()
@@ -15,9 +17,11 @@ func run() -> void:
 	view.add_child(scene)
 	await process_frame
 	var ids: Array=scene.asset_ids()
+	if zone_yi: ids=ids.filter(func(id): return str(id).begins_with("zone_yi:"))
 	if diagnose: ids=["cast","cast-no-shadow","cast-no-ao","cast-no-ssil"]
 	var observations: Array=[]
 	for id in ids:
+		view.size=Vector2i(1600,1000) if id=="zone_yi:overview" else Vector2i(1600,1600)
 		scene.select_asset("cast" if diagnose else id)
 		if diagnose:
 			scene.key_light.shadow_enabled=id!="cast-no-shadow"

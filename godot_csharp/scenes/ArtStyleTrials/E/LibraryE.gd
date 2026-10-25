@@ -5,6 +5,7 @@ const SERVICE=preload("res://scenes/ArtStyleTrials/E/areas/ServiceRooms.gd")
 const RECORDING=preload("res://scenes/ArtStyleTrials/E/areas/RecordingStages.gd")
 const KNOWLEDGE=preload("res://scenes/ArtStyleTrials/E/RoomKnowledgeView.gd")
 const OUTDOORS=preload("res://scenes/ArtStyleTrials/E/areas/Outdoors.gd")
+const YI_REGION=preload("res://scenes/ArtStyleTrials/E/areas/YiRegion.gd")
 const RECORDING_IDS=["shura_poet","scholar_relic","chess_god","demon_miracle","kitchen_dumplings","last_transfer"]
 ## On-demand art library. IDs and furniture anchors come from production recipes.
 var catalog: Array=[]
@@ -12,7 +13,7 @@ var selected := "cast"
 var knowledge_view: Node3D
 
 func asset_ids() -> Array:
-	var ids: Array=["cast","knowledge-demo"]
+	var ids: Array=["zone_yi:overview","cast","knowledge-demo"]
 	for entry in catalog: ids.append(entry.id)
 	for id in RECORDING_IDS: ids.append("recording:"+id)
 	for id in ["campus_nw","campus_n","campus_ne","campus_sw","campus_s","harbor"]: ids.append("outdoor:"+id)
@@ -22,7 +23,7 @@ func _ready() -> void:
 	super._ready()
 	panel.hide()
 	catalog=JSON.parse_string(FileAccess.get_file_as_string("res://scenes/ArtStyleTrials/E/library-layouts.json")).rooms
-	select_asset("cast")
+	select_asset("zone_yi:overview")
 	if get_viewport()==get_tree().root:
 		var controls := CanvasLayer.new()
 		add_child(controls)
@@ -31,6 +32,7 @@ func _ready() -> void:
 		controls.add_child(picker)
 		var ids := asset_ids()
 		for id in ids: picker.add_item(id)
+		picker.select(ids.find("zone_yi:overview"))
 		picker.item_selected.connect(func(i): select_asset(ids[i]))
 
 func select_asset(id: String) -> void:
@@ -50,7 +52,18 @@ func select_asset(id: String) -> void:
 	fire_materials.clear()
 	var camera_target := Vector3(0,0.8,1.1 if id=="cast" else -0.65)
 	var camera_position := Vector3(0,22,25)
-	if id=="cast":
+	camera.projection=Camera3D.PROJECTION_ORTHOGONAL
+	$WorldEnvironment.environment.ambient_light_energy=.55
+	key_light.light_energy=.72
+	if id.begins_with("zone_yi:"):
+		var yi_size: Vector2=YI_REGION.build(self,catalog,id)
+		camera.projection=Camera3D.PROJECTION_PERSPECTIVE
+		camera.fov=22.0
+		var aspect: float=float(get_viewport().get_visible_rect().size.x)/maxf(1.0,get_viewport().get_visible_rect().size.y)
+		var distance: float=maxf(yi_size.x*1.15/aspect,yi_size.y*.85+3.1)*2.7
+		camera_target=Vector3(0,.75,0)
+		camera_position=camera_target+Vector3(0,sin(deg_to_rad(58.0)),cos(deg_to_rad(58.0)))*distance
+	elif id=="cast":
 		content_root=Node3D.new()
 		add_child(content_root)
 		rooms[id]=content_root
@@ -121,11 +134,16 @@ func select_asset(id: String) -> void:
 		camera.size=maxf(10.0,maxf(size.x*1.18,size.y*0.82+4.5))
 	active_room=id
 	current_room_id=id
-	camera.far=500.0 if id.begins_with("outdoor:") else 70.0
+	camera.far=500.0 if id.begins_with("outdoor:") else 150.0
 	camera.position=camera_position
 	camera.look_at(camera_target,Vector3.UP)
 	configure_lighting("normal")
-	set_meta("render_metadata",{"asset":id,"scope":"3D art library; production layout anchors, no gameplay migration", "body_template":"E-common-three-head-v1"})
+	if id.begins_with("zone_yi:"):
+		var environment: Environment=$WorldEnvironment.environment
+		environment.ambient_light_energy=.38
+		key_light.light_energy=.8
+		for light in local_lights: light.visible=id=="zone_yi:overview" or light.get_meta("room")==id
+	set_meta("render_metadata",{"asset":id,"scope":"Yi reference redesign in metres; production topology unchanged" if id.begins_with("zone_yi:") else "3D art library; production layout anchors, no gameplay migration", "body_template":"E-common-three-head-v1"})
 
 func select_materials(entry: Dictionary) -> void:
 	var floor_mat := ShaderMaterial.new()
@@ -148,7 +166,8 @@ func select_materials(entry: Dictionary) -> void:
 	wallpaper.roughness=0.9
 	var frame: Material=material("greenhouse_iron","465752",0,0.6,0.4) if entry.map=="greenhouse" else material("walnut","493227",1)
 	var trim: Material=frame if entry.map=="greenhouse" else material("moulding","735334",1)
-	library=KIT.library(floor_mat,wallpaper,frame,trim,3.8)
+	var wall_material: Material=wallpaper
+	library=KIT.library(floor_mat,wall_material,frame,trim,3.8)
 
 func _bed(at: Vector3, clinical: bool=false) -> void:
 	var root := group("Bed",at)
