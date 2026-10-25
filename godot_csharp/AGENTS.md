@@ -119,6 +119,10 @@ F12 或反引号打开控制台。status / options 读取当前观察者投影�
 
 高光舞台的Space与数字键在输入入口消费完整按键事件；启动参数以SceneTree的一次性标记消费。诗人幕采用512×256局部镜头，其余保持512×384；角色和32px地形比例固定。接收台用发布地形材质装配，栏杆按脚点排序；最后源质cue等待人物高处站位后推进，工程说明见Highlights/README.md。
 
+## Astra 原稿自动包边
+
+画廊自动包边由 `Shared/Field/AuthoredTerrainBorder.gd` 消费 `Props/AstraTerrain/GalleryBorder.tres`；原稿裁切与适配器邻接表的发布由 MCP `astra-terrain` 所有。该层只覆盖视觉边饰，不持有碰撞，不改变底面采样相位或独立中心纹样。有限画面采集入口、覆盖范围和源图限制见 `Highlights/README.md`。
+
 ## 室内统一明暗与代码光晕
 
 `scenes/Shared/Field/RoomArtFinish.gd` 只负责呈现：按现役 `stage_lights` 生成渐变局部光，按 `terrain_rows` 绘制墙根接触暗部，并为已有家具绘制脚点接触影。`CampusMapView._new_map_record` 对室内实例接入一次；室外跳过。截图工具 `capture_maps.gd` 调用同一 attach，不另写一套预览灯光。

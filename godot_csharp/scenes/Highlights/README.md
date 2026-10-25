@@ -30,7 +30,7 @@
 
 诗人地面直接取自 `shura_gallery.png` 的菱形地纹，青灰/赭红双线边饰与角饰独立装配。`AuthoredSurface.gd` 以7/24固定比例采样完整裁切图，地砖不进入47角边遮罩；32px格仅确定覆盖范围，相位跨格连续。源坐标、实际原图尺寸、SHA-256、缩放和非无缝限制记录在 `Props/AuthoredRooms/publication.json`。
 
-`GalleryFloorOrnament.gd` 将原图中心大菱形单独放在(256,237)，只出现一次；地面相位与源图的(767,623)纹样中心对应。四边与回字角饰内移至(48,202)–(464,272)的可见行走面，避开南栏遮挡；四角仅按90度旋转原图转角，保持统一7/24比例。
+`GalleryFloorOrnament.gd` 将原图中心大菱形单独放在(256,237)，只出现一次；地面相位与源图的(767,623)纹样中心对应。包边使用 `AuthoredTerrainBorder.gd` 和 `Props/AstraTerrain/GalleryBorder.tres`，覆盖(48,204)–(464,268)的13×2格可见地面。32px逻辑格对应120px原稿组合格；底面继续按7/24连续采样。包边源像素只裁切、旋转和拼接，复用适配器的47种唯一角边邻接，空邻居参与匹配。地面本体不挖角，中心纹样不重复，人物和碰撞保持原场景定义。源图烘焙光照和线宽不均仍存在；有限渲染证据见 `../../../artifacts/astra-autoterrain/`。
 
 其余五幕和水岸仍用旧 `HighlightsTerrain.tres`：floor=0（47角边）、wall=1（16四边）、water=2（47岸缘）；material indices 以 `Terrain/asset-manifest.json` 为准。它们尚未有对应原稿的一致性结论。图像原稿保存在 `mcp/asset_pipeline/sources/Internal/`，道具分别发布到 Props/Highlights/Architecture、Furniture、Kitchen、Logistics、Mechanisms、Relics、Handheld，人物发布到 Characters/Highlights。
 

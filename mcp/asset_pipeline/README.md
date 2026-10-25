@@ -15,6 +15,8 @@
 | 高光舞台物件与人物 | `highlight-stages` | `build_highlight_stages.py` 裁切已保留的 ImageGen 透明原稿，发布分类道具 PNG / AtlasTexture 和 32×48 三向人物 atlas；不启动游戏或会话 |
 | 正式房间地面层 | `highlight-room-skins` | `publish_room_terrain_skins.py --maps central_hall granary` 接入原稿采样层；覆盖格来自原 terrain_rows，纹样采用独立源坐标、统一缩放与相位。章节地图再生复用同一函数 |
 | 房间原稿精确裁切 | `authored-room-surfaces` | `publish_authored_room_surfaces.py` 归档中央厅、粮仓与诗人悬廊原图，发布不重采样的地面、边饰和纹盘裁切；需要 Pillow，不启动 Godot |
+| Astra 原稿自动包边 | `astra-terrain` | `publish_astra_terrain.py` 从现存画廊原稿显式裁切边条、回纹角，复用适配器的47种唯一角边邻接，发布 `Props/AstraTerrain`；不重画、不重采样、不改碰撞 |
+| Astra 地形实机采集 | `capture-astra-terrain` | `run_astra_terrain.py --godot <程序> --out artifacts/astra-autoterrain/runtime`；复制依赖到临时纯GDScript工程，采集现役画廊和矩形/L形/带孔邻接，不创建Core会话；输出目录必须为空 |
 | 参考建筑模块 | `reference-facade` | `publish_reference_facade.py` 裁切 ImageGen 正交原稿，发布32px基础格与跨格墙/基座/窄窗/门/檐/转角模块，并接入讲堂南立面；需要 Pillow，不启动 Godot |
 
 高光舞台的可复用资源和独立场景说明见 `../../godot_csharp/scenes/Highlights/README.md`。`sources/Internal/Props/Highlights/prompts.json` 保存 built-in ImageGen 提示词；人物的比例修订另记在 `sources/Internal/Characters/Highlights/cast_revision_prompt.json`。原稿裁切、透明边界与 nearest-neighbor 发布比例写入成品 manifest，实际画面效果另行观察。背景原稿保留为制作参考，运行地图使用 TileMap 与独立道具装配。

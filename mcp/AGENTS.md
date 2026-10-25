@@ -13,6 +13,7 @@
 - `asset_pipeline/highlight-stages` 只发布保留原稿的高光道具与人物 atlas；其裁切参数、比例和来源哈希写入成品清单。场景执行、画面观察和正式 Core 会话分别授权、分别记录。
 - `asset_pipeline/highlight-room-skins` 将可复用地形接到指定现役房间，只新增呈现节点与资源引用，使用已有 terrain_rows；章节地图再生复用相同的 attach_skin 函数。既有场景几何、门口、站点、脚点和楼层语义不在此发布器修改。
 - `asset_pipeline/highlight-terrain` 将明确的材质格或47/16/3×3图集发布为32格 TileSet，原始规格、衍生拓扑和透明边分别留证，纹理引用外部 PNG。`asset_pipeline/highlight-report` 只将当前内容和证据索引生成本地 HTML；该入口不启动游戏、不执行验收。
+- `asset_pipeline/astra-terrain` 只按显式源坐标裁切已有画廊边饰并旋转拼接，邻接表来自 `rpg_adapter/data/autotile_tables.gd`，不恢复退役的材质缩小/遮罩转换器。`capture-astra-terrain` 复制有限依赖到临时工程采集，检查错误日志与二进制封存；不得把邻接样片当作正式会话或全地图验收。
 - `asset_pipeline/document-textures` 只生成设计文档对应的 SVG 材质、透明徽记、平铺纹样和样板；制作补全维护在该管线 `sources/Internal/Textures/DocumentSystems/DESIGN.md`，不回写原设计案、不修改游戏几何。受限配色通过素材清单的 scope 区分。
 - `tools/list` 只读取静态目录。MCP/LSP 初始化可调度 `build/prewarm.py` 的后台编译器预热；请求线程不等待编译，其他管线在调用时导入。所有子进程输出进入响应、日志或 stderr，MCP stdout 仅承载协议。
 - Godot 工具使用 `godot_workspace.py` 的临时工程。纯地图、纯 UI Mock 和资产适配器不创建 C# 项目；显式 C# 采集工程才编入 `FrameArchive.cs`。工具 `res://addons` 和 `res://tools` 路径只在该工程中映射。
