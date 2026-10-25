@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "manifest": "mcp\\asset_pipeline\\sources\\Internal\\ArtStyleE\\cuts.json",
+  "manifest_sha256": "cc58082aa748e641db26719a765f35db9abab9cecda998d2c4b0e74b83b43b49",
+  "target": "artifacts/style-e/target-A.png",
+  "target_sha256": "ab56da29cde0ce29cd2fe2ed7a342aeaa509158c228c2da0b90cb01ee733e37c",
+  "style_notes": "New native raster paintings generated with built-in imagegen; no SVG or vector conversion. Complete flat albedo surfaces, native resolution, no resizing; A is the whole-room craft and layout reference, D supplies 3D. Native geometry and physical lights supply shape and shading.",
+  "visual_acceptance": "pending actual Godot target comparison",
+  "assets": [
+    {
+      "source": "Internal/ArtStyleE/salon-rug.png",
+      "source_sha256": "7a61431778d10db948a7ea1b4a5780fd8cf4cc4dcf292f586f625239ef0230cb",
+      "crop": [
+        0,
+        0,
+        1024,
+        1536
+      ],
+      "output": "salon-rug.png",
+      "role": "surface",
+      "sampling": "lanczos",
+      "scale": 1,
+      "size": [
+        1024,
+        1536
+      ],
+      "output_sha256": "8046eeeb70c5b9c877df258a4aff72bd7e56688c2092f0660e9238e3108171bb"
+    },
+    {
+      "source": "Internal/ArtStyleE/wallpaper.png",
+      "source_sha256": "f219b5494d6792d42010b0fd51e4ca91e6de7a0e04ee440a1e95fc7601fab8d4",
+      "crop": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "output": "wallpaper.png",
+      "role": "surface",
+      "sampling": "lanczos",
+      "scale": 1,
+      "size": [
+        1254,
+        1254
+      ],
+      "output_sha256": "c32d3d352238a9ba32ad5e07e8b21b13fe1d661900cd49bc591a349f562e7ad5"
+    }
+  ]
+}

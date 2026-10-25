@@ -3,6 +3,11 @@
     "name": "asset_pipeline",
     "description": "Build or publish selected maps, art, UI and geometry assets. arguments contains the selected script command-line options; publisher source/review inputs remain explicit.",
     "routes": {
+      "e-library-layouts": {"kind": "python", "path": "art_style_trials/build_e_library.py"},
+      "e-library-capture": {"kind": "python", "path": "art_style_trials/capture_e_library.py"},
+      "e-library-report": {"kind": "python", "path": "art_style_trials/report_e_library.py"},
+      "e-outdoor-layouts": {"kind": "python", "path": "art_style_trials/e_outdoors/extract.py"},
+      "e-surface-atlas": {"kind": "python", "path": "art_style_trials/e_surface_atlas/build_atlas.py"},
       "modern-stage": {
         "kind": "python",
         "path": "asset_pipeline/publish_astra_stage.py"

@@ -1,0 +1,617 @@
+{
+  "title": "ArtStyleTrials/E measured surface atlas",
+  "generated_by": "mcp/art_style_trials/e_surface_atlas/build_atlas.py",
+  "source_sha256": {
+    "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd": "4078071e960c5b9ce1d6a5b3b613aff5d61f97af2c306c39032bb5ed6a3021c3",
+    "godot_csharp/scenes/ArtStyleTrials/E/HallCraft.gd": "65d4a9579dcbad39396ce478b03b86c856ce2db3130bb15a1626b0add73746a3",
+    "godot_csharp/scenes/ArtStyleTrials/E/RoomGrid.gd": "8359f83abc862686775be28b3496367a90d268eb624ddd2c3ef59e8b2309f54f",
+    "godot_csharp/scenes/ArtStyleTrials/E/scene.tscn": "ee3a903f9bc6c4fb2b803b550a168d8cc63b78fe022d7c9af9b854be56557553",
+    "godot_csharp/scenes/ArtStyleTrials/E/SalonCamera.tres": "9a01455c7fe34e93c0b7f78fea0b0da30e2344f4a0722e7f21639056928860fe"
+  },
+  "projection": {
+    "source": "manual dimensions/transforms extracted from current E source and exact orthographic projection math; not runtime/Godot sampling",
+    "capture_viewport": [
+      1600,
+      1600
+    ],
+    "camera_position_relative_room": [
+      0,
+      22,
+      25
+    ],
+    "camera_target_relative_room": [
+      0,
+      0.8,
+      -0.65
+    ],
+    "hall_orthographic_size": 18.2,
+    "wing_bath_orthographic_size": 12.8,
+    "rounding": "each axis-aligned projected footprint bbox is ceiled independently to integer pixels; exact float bbox and all four projected corners are retained; no source model is scaled",
+    "view_axis": "Godot viewport top-left origin; projected corners use pixel coordinates",
+    "unit": "scene units; no claim that these are metres",
+    "assumptions": "square 1600x1600 capture viewport; orthographic camera size is vertical span; room-relative transforms from current source; no UI crop; flat planes projected without occlusion/clipping correction",
+    "purpose": "screen-density guide for the fixed authored camera. This is not a physically proportioned top-down texture atlas. Map image left/right and back/front according to the listed projected corners and UV direction; rendered planes are foreshortened by the camera."
+  },
+  "atlas": {
+    "width": 1254,
+    "height": 1254,
+    "rgba": true,
+    "gap_min_px": 20,
+    "png_pure": "surface-atlas-guide.png",
+    "png_numbered": "surface-atlas-guide-numbered.png",
+    "guide_only": true,
+    "scaling": "none",
+    "tile_scope": "3 rug planes, 2 runner planes, hall wallpaper repeat and shared wing/bath wallpaper repeat; curved curtain and upholstery are inventory only"
+  },
+  "surfaces": [
+    {
+      "id": "hall-main-rug",
+      "role": "大厅阅读区地毯",
+      "center_world": [
+        -1.8,
+        0.025,
+        -3.4
+      ],
+      "world_size_units": [
+        3.8,
+        2.53
+      ],
+      "plane": "xz",
+      "projection_corners_1600": [
+        [
+          474.7252747252747,
+          627.6494601131416
+        ],
+        [
+          808.7912087912088,
+          627.6494601131416
+        ],
+        [
+          808.7912087912088,
+          769.3462692789665
+        ],
+        [
+          474.7252747252747,
+          769.3462692789665
+        ]
+      ],
+      "projection_bbox_1600": {
+        "left": 474.7252747252747,
+        "top": 627.6494601131416,
+        "right": 808.7912087912088,
+        "bottom": 769.3462692789665,
+        "width_px_exact": 334.0659340659341,
+        "height_px_exact": 141.6968091658249,
+        "width_px": 335,
+        "height_px": 142
+      },
+      "camera": 18.2,
+      "camera_position_relative_room": [
+        0,
+        22,
+        25
+      ],
+      "camera_target_relative_room": [
+        0,
+        0.8,
+        -0.65
+      ],
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:96",
+      "uv_direction": "PlaneMesh local U maps to world -Z after PI/2 Y rotation; V maps to world +X.",
+      "guide_color_rgba": [
+        "#315345"
+      ],
+      "note": "Actual mat is the authored salon-rug raster; screen bbox is perspective foreshortened, recorded separately from world aspect.",
+      "atlas_rect": {
+        "x": 20,
+        "y": 20,
+        "width": 335,
+        "height": 142
+      }
+    },
+    {
+      "id": "hall-gathering-rug",
+      "role": "大厅会面区地毯",
+      "center_world": [
+        0,
+        0.026,
+        3.2
+      ],
+      "world_size_units": [
+        2.8,
+        4.2
+      ],
+      "plane": "xz",
+      "projection_corners_1600": [
+        [
+          676.9230769230769,
+          950.459999666309
+        ],
+        [
+          923.0769230769231,
+          950.459999666309
+        ],
+        [
+          923.0769230769231,
+          1185.6879042103662
+        ],
+        [
+          676.9230769230769,
+          1185.6879042103662
+        ]
+      ],
+      "projection_bbox_1600": {
+        "left": 676.9230769230769,
+        "top": 950.459999666309,
+        "right": 923.0769230769231,
+        "bottom": 1185.6879042103662,
+        "width_px_exact": 246.1538461538462,
+        "height_px_exact": 235.2279045440572,
+        "width_px": 247,
+        "height_px": 236
+      },
+      "camera": 18.2,
+      "camera_position_relative_room": [
+        0,
+        22,
+        25
+      ],
+      "camera_target_relative_room": [
+        0,
+        0.8,
+        -0.65
+      ],
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:106",
+      "uv_direction": "PlaneMesh local U=world +X; V=world +Z.",
+      "guide_color_rgba": [
+        "#315345"
+      ],
+      "note": "Distinct actual footprint and texture presentation from hall-main-rug.",
+      "atlas_rect": {
+        "x": 430,
+        "y": 20,
+        "width": 247,
+        "height": 236
+      }
+    },
+    {
+      "id": "hall-table-runner",
+      "role": "公共长桌桌旗",
+      "center_world": [
+        0,
+        0.952,
+        2.25
+      ],
+      "world_size_units": [
+        3.4,
+        0.473
+      ],
+      "plane": "xz",
+      "projection_corners_1600": [
+        [
+          650.5494505494505,
+          938.8737572925572
+        ],
+        [
+          949.4505494505495,
+          938.8737572925572
+        ],
+        [
+          949.4505494505495,
+          965.364899875733
+        ],
+        [
+          650.5494505494505,
+          965.364899875733
+        ]
+      ],
+      "projection_bbox_1600": {
+        "left": 650.5494505494505,
+        "top": 938.8737572925572,
+        "right": 949.4505494505495,
+        "bottom": 965.364899875733,
+        "width_px_exact": 298.901098901099,
+        "height_px_exact": 26.491142583175815,
+        "width_px": 299,
+        "height_px": 27
+      },
+      "camera": 18.2,
+      "camera_position_relative_room": [
+        0,
+        22,
+        25
+      ],
+      "camera_target_relative_room": [
+        0,
+        0.8,
+        -0.65
+      ],
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:230",
+      "uv_direction": "PlaneMesh local U maps world -Z; V maps world +X; material crops central rug strip with uv1 scale/offset.",
+      "guide_color_rgba": [
+        "#496b59"
+      ],
+      "note": "World dimensions derive from _table(Vector2(3.7,1.1)); exact runner plane is 3.40 x 0.473m.",
+      "atlas_rect": {
+        "x": 20,
+        "y": 330,
+        "width": 299,
+        "height": 27
+      }
+    },
+    {
+      "id": "hall-wallpaper-repeat",
+      "role": "大厅墙纸一个完整重复周期",
+      "center_world": [
+        0,
+        1.8,
+        -7
+      ],
+      "world_size_units": [
+        1.5384615384615383,
+        1.5384615384615383
+      ],
+      "plane": "xy",
+      "projection_corners_1600": [
+        [
+          732.3753169907015,
+          428.72025202066663
+        ],
+        [
+          867.6246830092985,
+          428.72025202066663
+        ],
+        [
+          867.6246830092985,
+          324.46985891203656
+        ],
+        [
+          732.3753169907015,
+          324.46985891203656
+        ]
+      ],
+      "projection_bbox_1600": {
+        "left": 732.3753169907015,
+        "top": 324.46985891203656,
+        "right": 867.6246830092985,
+        "bottom": 428.72025202066663,
+        "width_px_exact": 135.2493660185969,
+        "height_px_exact": 104.25039310863008,
+        "width_px": 136,
+        "height_px": 105
+      },
+      "camera": 18.2,
+      "camera_position_relative_room": [
+        0,
+        22,
+        25
+      ],
+      "camera_target_relative_room": [
+        0,
+        0.8,
+        -0.65
+      ],
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:34",
+      "uv_direction": "StandardMaterial3D world triplanar; no authored planar UV direction (world X/Y projection).",
+      "guide_color_rgba": [
+        "#c1ae8d"
+      ],
+      "note": "Complete source-image repetition derives from uv1_scale=0.65: 1/0.65=1.5384615 scene units per repeat. The 1m GridMap wall tile is a different measure.",
+      "atlas_rect": {
+        "x": 700,
+        "y": 330,
+        "width": 136,
+        "height": 105
+      }
+    },
+    {
+      "id": "wing-bedroom-rug",
+      "role": "四翼寝室地毯",
+      "center_world": [
+        0.55,
+        0.025,
+        1
+      ],
+      "world_size_units": [
+        1.65,
+        2.475
+      ],
+      "plane": "xz",
+      "projection_corners_1600": [
+        [
+          765.625,
+          907.5205895305236
+        ],
+        [
+          971.875,
+          907.5205895305236
+        ],
+        [
+          971.875,
+          1104.615845486384
+        ],
+        [
+          765.625,
+          1104.615845486384
+        ]
+      ],
+      "projection_bbox_1600": {
+        "left": 765.625,
+        "top": 907.5205895305236,
+        "right": 971.875,
+        "bottom": 1104.615845486384,
+        "width_px_exact": 206.25,
+        "height_px_exact": 197.09525595586035,
+        "width_px": 207,
+        "height_px": 198
+      },
+      "camera": 12.8,
+      "camera_position_relative_room": [
+        0,
+        22,
+        25
+      ],
+      "camera_target_relative_room": [
+        0,
+        0.8,
+        -0.65
+      ],
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:472",
+      "uv_direction": "PlaneMesh local U=world +X; V=world +Z.",
+      "guide_color_rgba": [
+        "#315345"
+      ],
+      "note": "Relative to each 6x8 wing room origin; distinct smaller actual footprint. Identical specimen is instantiated in jia/ding/bing/yi.",
+      "atlas_rect": {
+        "x": 780,
+        "y": 20,
+        "width": 207,
+        "height": 198
+      }
+    },
+    {
+      "id": "wing-bedroom-runner",
+      "role": "寝室桌旗",
+      "center_world": [
+        1.6,
+        0.902,
+        -1.7
+      ],
+      "world_size_units": [
+        1.5,
+        0.2795
+      ],
+      "plane": "xz",
+      "projection_corners_1600": [
+        [
+          906.25,
+          695.4271997225995
+        ],
+        [
+          1093.75,
+          695.4271997225995
+        ],
+        [
+          1093.75,
+          717.6850276174129
+        ],
+        [
+          906.25,
+          717.6850276174129
+        ]
+      ],
+      "projection_bbox_1600": {
+        "left": 906.25,
+        "top": 695.4271997225995,
+        "right": 1093.75,
+        "bottom": 717.6850276174129,
+        "width_px_exact": 187.5,
+        "height_px_exact": 22.257827894813317,
+        "width_px": 188,
+        "height_px": 23
+      },
+      "camera": 12.8,
+      "camera_position_relative_room": [
+        0,
+        22,
+        25
+      ],
+      "camera_target_relative_room": [
+        0,
+        0.8,
+        -0.65
+      ],
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:230",
+      "uv_direction": "PlaneMesh local U maps world -Z; V maps world +X; central strip crop via material uv1 scale/offset.",
+      "guide_color_rgba": [
+        "#496b59"
+      ],
+      "note": "Relative to each wing origin; derives from _table(Vector2(1.8,0.65)); runner is 1.50 x 0.2795m.",
+      "atlas_rect": {
+        "x": 390,
+        "y": 330,
+        "width": 188,
+        "height": 23
+      }
+    },
+    {
+      "id": "wing-wallpaper-repeat",
+      "role": "四翼寝室/盥洗墙纸一个完整重复周期",
+      "center_world": [
+        -2,
+        1.8,
+        -4
+      ],
+      "world_size_units": [
+        1.5384615384615383,
+        1.5384615384615383
+      ],
+      "plane": "xy",
+      "projection_corners_1600": [
+        [
+          453.84615384615387,
+          510.98994889444356
+        ],
+        [
+          646.1538461538462,
+          510.98994889444356
+        ],
+        [
+          646.1538461538462,
+          362.7589211931103
+        ],
+        [
+          453.84615384615387,
+          362.7589211931103
+        ]
+      ],
+      "projection_bbox_1600": {
+        "left": 453.84615384615387,
+        "top": 362.7589211931103,
+        "right": 646.1538461538462,
+        "bottom": 510.98994889444356,
+        "width_px_exact": 192.30769230769232,
+        "height_px_exact": 148.23102770133323,
+        "width_px": 193,
+        "height_px": 149
+      },
+      "camera": 12.8,
+      "camera_position_relative_room": [
+        0,
+        22,
+        25
+      ],
+      "camera_target_relative_room": [
+        0,
+        0.8,
+        -0.65
+      ],
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:34",
+      "uv_direction": "World triplanar; no planar UV direction (world X/Y projection).",
+      "guide_color_rgba": [
+        "#c1ae8d"
+      ],
+      "note": "Relative to wing room origin. The bathroom uses the same non-hall camera size=12.8 and the same material repeat; this entry is shared. 1m GridMap wall tile is not the texture period.",
+      "atlas_rect": {
+        "x": 20,
+        "y": 670,
+        "width": 193,
+        "height": 149
+      }
+    }
+  ],
+  "non_planar_or_procedural_inventory": [
+    {
+      "role": "椅背软包",
+      "geometry": "ellipsoid, center (0,1.02,-0.22), size (0.84,0.97,0.23), one per reading chair",
+      "status": "程序材质候选，未铺平；曲面无可直接对应的平面UV",
+      "screen_bbox_estimate_px": {
+        "hall": [
+          74,
+          67
+        ],
+        "method": "projected ellipsoid axis-aligned world bounding box, not surface unwrap"
+      },
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:210",
+      "reason": "not an actual planar surface; excluded from atlas"
+    },
+    {
+      "role": "椅垫软包",
+      "geometry": "ellipsoid, center (0,0.58,0), size (0.90,0.22,0.82)",
+      "status": "程序材质候选，椭球曲面",
+      "screen_bbox_estimate_px": {
+        "hall": [
+          79,
+          49
+        ],
+        "method": "projected ellipsoid screen-axis envelope with reading chair yaw; bounding extent is not a surface unwrap"
+      },
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:208",
+      "reason": "not an actual planar surface; excluded from flat artwork atlas"
+    },
+    {
+      "role": "椅背簇绒扣",
+      "geometry": "12 small ellipsoids, 4 rows x 3 columns",
+      "status": "独立程序几何/缝线材质",
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:211",
+      "reason": "small repeated modeled accents, not a continuous paintable surface"
+    },
+    {
+      "role": "地毯流苏",
+      "geometry": "thin box primitives at rug perimeter, generated every 0.055 scene units",
+      "status": "程序材质和重复几何",
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:191",
+      "reason": "not part of the raster carpet plane; existing geometry retained"
+    },
+    {
+      "role": "床罩顶面",
+      "geometry": "flat box top, size 1.29 x 1.45 scene units, wing-relative center (-1.65,0.8225,0.05)",
+      "status": "平面绘制候选，当前程序材质；暂不在本轮七块atlas范围",
+      "screen_bbox_estimate_px": {
+        "wing": [
+          162,
+          140
+        ],
+        "method": "same orthographic projection math, ceil axis-aligned flat plane footprint"
+      },
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:469",
+      "reason": "can be separately added if authoring target includes bed linen"
+    },
+    {
+      "role": "床垫、枕头",
+      "geometry": "ellipsoids",
+      "status": "曲面程序材质",
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:468",
+      "reason": "not a planar texture surface"
+    },
+    {
+      "role": "卧室窗帘",
+      "geometry": "shared _window cylinders and valances",
+      "status": "same curved assembly as hall curtain, seen with wing camera",
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:151",
+      "reason": "curved assembly; no separate planar UV or different asset declared"
+    },
+    {
+      "role": "厅窗帘单片褶皱组件",
+      "geometry": "7 vertical cylinders spanning center x=0.73..1.018 plus radius 0.055 and z fold offset ±0.035, height 2.55; tieback/tassels separately",
+      "status": "圆柱组合，未展UV；只登记屏幕外接框，不作为贴图尺寸",
+      "screen_bbox_estimate_px": {
+        "hall": [
+          35,
+          183
+        ],
+        "method": "projected union of each cylinder axis-aligned world bounds using actual seven fold centers, radius 0.055 and height 2.55; bbox is not a flat unwrap"
+      },
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:169",
+      "reason": "requires authored cylindrical/fold UV or procedural material"
+    },
+    {
+      "role": "墙面石膏/护墙/压条",
+      "geometry": "1m GridMap wall tile, combined ArrayMesh and trim",
+      "status": "plaster currently world-triplanar painted wallpaper; wood and moulding are procedural material",
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/RoomGrid.gd:3-42",
+      "reason": "wallpaper repeat is included; panel wood, trim geometry/materials are not raster-painted surfaces"
+    },
+    {
+      "role": "拼木地板与镶边",
+      "geometry": "1m GridMap floor plus world-space shader and perimeter strips",
+      "status": "procedural parquet shader and inlay boxes",
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/RoomGrid.gd:3-10; godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:66-78",
+      "reason": "explicitly procedural material; not redrawn in this atlas"
+    },
+    {
+      "role": "金属、木作、石材、瓷器、玻璃、镜面",
+      "geometry": "chairs/table/bookshelf/fireplace/window/washbasin and prop primitives",
+      "status": "solid-color/program shader materials or geometric surfaces",
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:123-457",
+      "reason": "no authored raster texture surface in current implementation; intentionally excluded from this raster painting sheet"
+    },
+    {
+      "role": "浴缸水面",
+      "geometry": "scaled cylinder with water shader",
+      "status": "procedural animated shader",
+      "source": "godot_csharp/scenes/ArtStyleTrials/E/PublicHallE.gd:449",
+      "reason": "dynamic shader surface, not this painted atlas"
+    }
+  ]
+}

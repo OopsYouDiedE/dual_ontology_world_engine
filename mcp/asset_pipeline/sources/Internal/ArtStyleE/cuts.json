@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "target": "artifacts/style-e/target-A.png",
+  "style_notes": "New native raster paintings generated with built-in imagegen; no SVG or vector conversion. Complete flat albedo surfaces, native resolution, no resizing; A is the whole-room craft and layout reference, D supplies 3D. Native geometry and physical lights supply shape and shading.",
+  "destination": "ArtStyleTrials/E",
+  "assets": [
+    {
+      "source": "Internal/ArtStyleE/salon-rug.png",
+      "source_sha256": "7a61431778d10db948a7ea1b4a5780fd8cf4cc4dcf292f586f625239ef0230cb",
+      "crop": [
+        0,
+        0,
+        1024,
+        1536
+      ],
+      "output": "salon-rug.png",
+      "role": "surface",
+      "sampling": "lanczos",
+      "scale": 1
+    },
+    {
+      "source": "Internal/ArtStyleE/wallpaper.png",
+      "source_sha256": "f219b5494d6792d42010b0fd51e4ca91e6de7a0e04ee440a1e95fc7601fab8d4",
+      "crop": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "output": "wallpaper.png",
+      "role": "surface",
+      "sampling": "lanczos",
+      "scale": 1
+    }
+  ]
+}

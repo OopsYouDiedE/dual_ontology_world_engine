@@ -79,3 +79,7 @@ CLI 原生截图在捕获线程临时启用 per-monitor-v2 DPI awareness，将 G
 ## 家具样片采集
 
 capture-furnished-rooms打包正式地图的最小资源闭包，避免导入无关UI和翻译资源。只采集地图与独立碰撞夹具；motion.dvlog保留路径、实际终点和校验，不创建正式会话，不授予事实或推进游戏时钟。工具结果与主代理逐图对照分别报告。
+
+## E区域美术库
+
+E扩展采用art_style_trials/build_e_library.py与e_outdoors/extract.py从现役陈设/几何提取，独立Forward+采集由capture_e_library.py执行，固定artifacts/style-e/library-render在旧进程退出后替换。记录来源SHA256与DVSTYLE1二进制观察，不执行Core。各区域模块不制作门；RoomKnowledgeView仅消费本人认知与最后所见静态快照，不读取隐藏实时房间。接口及正式Host未接线范围见../docs/style-e-library.md。
