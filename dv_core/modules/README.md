@@ -1,6 +1,6 @@
 # DV 生产模块与宿主接口
 
-`20-core.dv` 提供通用值、世界、法则、观察与有限域求解。`30-session.dv` 包含人物认知、预算、排队、调度与 Prepare/Complete。`35-campaign-schema.dv` 统一战役人物、位置、时钟、通行权、构造器、目标时间窗口与跨章承接字段。`40-chapter1.dv` 和 `50-chapter2.dv` 各自 include 35。`36-island-topology.dv` 是真实几何合同的生成数据；`55-island.dv` include 36和50，声明数值输运、日账、苗床及正式交互。`60-game.dv` 组合连续章节及宿主投影，打开第一章即安装共享数值对象，扩章保留状态并安装第二章交互。独立章节编译读取各自 include 闭包。
+`20-core.dv` 提供通用值、世界、法则、观察与有限域求解。`30-session.dv` 包含人物认知、预算、排队、调度与 Prepare/Complete。`35-campaign-schema.dv` 统一战役人物、位置、时钟、通行权、构造器、目标时间窗口与跨章承接字段。`40-chapter1.dv` 和 `50-chapter2.dv` 各自 include 35。`36-island-topology.dv` 是真实几何合同的生成数据；`55-island.dv` include 36和50，声明数值输运、日账、苗床及正式交互。`56-island-cases.dv` include 55，以已结日账匹配持续案件角色；候选、实际痕迹、观察和核账仍走原正式动作链。`60-game.dv` include 56并组合连续章节及宿主投影，打开第一章即安装共享数值对象，扩章保留状态并安装第二章交互。独立章节编译读取各自 include 闭包。
 
 战役共享函数使用 `campaign_` 前缀；既有通用配置构造器 `cognitive_erosion` 也由 35 提供，保留曝光引用、阈值、耦合系数和依据字段。第一章的早晨话语锚和答辩主题封装继续留在 40。第二章使用当前发言时间锚与通用行动封装。`case.*`、`night.first`、契约正文和已知人物姓名的读取继续使用原持久身份；schema 声明不授予观察。第二章须在有相应承接对象的场景上扩展，其动作仍由本人前提与权威前提共同决定。
 

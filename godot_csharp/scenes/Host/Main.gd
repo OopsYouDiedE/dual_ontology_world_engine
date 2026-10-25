@@ -504,7 +504,8 @@ func _accept_execution(input: Dictionary) -> void:
 	var travel: Dictionary = action.get("travel", {})
 	if travel.has("station"):
 		arrived = arrived and str(input.get("station", "")) == str(travel.station)
-		arrived = arrived and input.has("arrival_error") and float(input.get("arrival_error", 5.0)) <= 4.0
+		if str(input.get("execution_world", "")) != "room-graph":
+			arrived = arrived and input.has("arrival_error") and float(input.get("arrival_error", 5.0)) <= 4.0
 	var execution := _normalize_continuous_cancel(input)
 	if execution.has("continuous_cancel") and is_instance_valid(ui):
 		var locale := TranslationServer.get_locale()
@@ -905,7 +906,7 @@ func _verified_continuous_action(intent: Dictionary, source: Dictionary) -> bool
 
 func _dv_complete(outcome: String, execution: Dictionary) -> void:
 	_timing("execution_end", {"outcome": outcome, "action_event": _dv_intent.action_event})
-	var receipt := {"action_event": _dv_intent.action_event, "outcome": outcome, "actual": _dv_intent.execution_cost, "executor": "godot", "field": execution}
+	var receipt := {"action_event": _dv_intent.action_event, "outcome": outcome, "actual": _dv_intent.execution_cost, "executor": "room-graph" if str(execution.get("execution_world", "")) == "room-graph" else "godot", "field": execution}
 	if str(_dv_intent.get("actor", "")) == str(_continuous_selection.get("actor", "")) and str(_dv_intent.get("action", {}).get("id", "")) == str(_continuous_selection.get("choice_id", "")):
 		if outcome != "applied" and is_instance_valid(field):
 			var phase := str(field.continuous_request().get("phase", ""))

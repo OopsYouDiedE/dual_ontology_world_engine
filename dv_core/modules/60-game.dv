@@ -3,7 +3,7 @@
 #include 30-session.dv
 #include 40-chapter1.dv
 #include 50-chapter2.dv
-#include 55-island.dv
+#include 56-island-cases.dv
 
 // Diagnostics and formal-model runners live in checks/65-debug-runner.dv.
 
@@ -916,7 +916,7 @@ fn dvg_extend(state):
     if dv_find(state.story, "chapter", 0) != 1 or not dvg_chapter_two_ready(state):
         return state
     let live = dv_with_many(state.story, {"physical": state.physical, "actors": state.actors, "bindings": state.bindings})
-    let expanded = campaign_install_visible_objects(dvg_configure_actor_policies(island_install(dv_with(c2h_install_scene(c2daily_install_scene(c2d_install_scene(c2_extend_scene(live)))), "chapter", 2), dvg_island_locations()), dvg_run_config(dv_find(state.story, "run_config", []))))
+    let expanded = campaign_install_visible_objects(dvg_configure_actor_policies(island_case_install(island_install(dv_with(c2h_install_scene(c2daily_install_scene(c2d_install_scene(c2_extend_scene(live)))), "chapter", 2), dvg_island_locations())), dvg_run_config(dv_find(state.story, "run_config", []))))
     var events = dv_clone(state.events)
     dvs_event(events, "chapter_content_available", "", state.physical.time, [], {"chapter": 2, "source": campaign_approved("chapter-state-inheritance"), "movement": false})
     // Content availability neither relocates a resident nor grants perceptions.
@@ -950,8 +950,8 @@ fn dvg_refresh_goals(current):
             changed = true
         i = i + 1
     if changed:
-        return dvs_owned_state_update(current, {"actors": actors})
-    return current
+        current = dvs_owned_state_update(current, {"actors": actors})
+    return island_case_refresh(current)
 
 fn dvg_prepare(state):
     var current = dvg_extend(state)
@@ -970,7 +970,7 @@ fn dvg_prepare(state):
     return current
 
 fn dvg_complete(state, receipt):
-    let completed = dvg_extend(dvs_session_complete(state, receipt))
+    let completed = island_case_stamp(dvg_extend(dvs_session_complete(state, receipt)))
     if dv_has_key(completed.story, "background_waiting_cursor"):
         let cursor = completed.story.background_waiting_cursor
         let current = dvs_owned_state_update(completed, {"story": dv_without(completed.story, "background_waiting_cursor"), "cursor": cursor, "awaiting_player": false, "player_selection": ""})

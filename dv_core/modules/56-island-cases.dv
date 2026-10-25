@@ -1,0 +1,461 @@
+// Mid-chapter cases use the existing room graph and formal action chain.
+#include 55-island.dv
+
+fn island_case_parameters():
+    return island_parameters().cases
+
+fn island_case_ref(field):
+    return island_ref("case", field)
+
+fn island_case_director(field):
+    return island_ref("director", field)
+
+fn island_case_roles():
+    return [{"id": "A", "candidates": ["lucian", "moran", "veronica", "huo"], "values": ["research", "resonance_exclusivity", "measured_work"], "room": "greenhouse"}, {"id": "B", "candidates": ["ward", "mora", "bertrand"], "values": ["committee", "records", "patient_priority", "restriction"], "room": "logistics"}, {"id": "C", "candidates": campaign_people(), "values": ["records", "controlled_audit", "research"], "room": "logistics"}, {"id": "D", "candidates": ["quer", "elena", "veronica"], "values": ["not_targeted", "evidence", "safety", "movement_freedom"], "room": "logistics"}]
+
+fn island_case_value(actor, values):
+    let order = dv_find(actor.policy, "value_order", [])
+    var value = 0
+    var i = 0
+    while i < rt_count(order):
+        if dv_has(values, order[i]):
+            value = value + (rt_count(order) - i) / dv_max(1, rt_count(order))
+        i = i + 1
+    return value
+
+fn island_case_score(actor, role):
+    let p = island_case_parameters()
+    let drive = dv_find(actor.policy, "drive", p.fallback_drive)
+    let caution = dv_find(actor.policy, "caution", p.fallback_caution)
+    let trust = dv_find(dv_find(actor.policy, "speaker_trust", []), "demon", p.fallback_trust)
+    let values = island_case_value(actor, role.values)
+    let experience = rt_count(dv_find(actor, "completed_actions", [])) * p.experience_weight
+    let erosion = dv_find(actor, "erosion_rank", 0) * p.erosion_weight
+    var knowledge = 0
+    if dv_truth(actor.mind, dv_at_least(campaign_own(actor.id, "pending_notes"), 1)) == "true":
+        knowledge = knowledge + 1
+    if dv_truth(actor.mind, dv_at_least(campaign_ref("c2.ledger", "pending_registered"), 1)) == "true":
+        knowledge = knowledge + 1
+    var score = values * p.value_weight + experience + knowledge
+    if role.id == "A":
+        score = score + drive - caution + erosion
+    if role.id == "B":
+        score = score + caution + 1 - trust
+    if role.id == "C":
+        score = score + caution + trust
+    if role.id == "D":
+        score = score + caution + rt_count(dv_find(actor, "observed_claim_conflicts", []))
+    return {"score": score, "inputs": {"drive": drive, "caution": caution, "demon_trust": trust, "owned_value_order": values, "actual_completed_actions": experience, "owned_known_records": knowledge, "actual_erosion_rank": erosion}, "tuning_fallbacks": {"drive": not dv_has_key(actor.policy, "drive"), "caution": not dv_has_key(actor.policy, "caution"), "demon_trust": not dv_has_key(dv_find(actor.policy, "speaker_trust", []), "demon")}, "basis": p.basis, "scope": "owner-history-and-current-mind-not-author-secrets"}
+
+fn island_case_candidate(actor, role, world):
+    if not dv_has(role.candidates, actor.id) or not dvs_actor_can_act(actor) or dv_truth(world, c2_can_act(actor.id)) != "true" or dv_truth(world, dv_fact(campaign_own(actor.id, "exiled"), true)) == "true":
+        return false
+    if role.id == "C" and actor.id != "ruan":
+        // A scholar is considered only after the real selective-true-fragment
+        // receipt. This does not assert that the speech caused a later action.
+        let scholarly = campaign_profile(actor.id).domain == "research" or dv_has(dv_find(actor.policy, "value_order", []), "research")
+        return scholarly and c2_received_requirement(actor, {"speaker": "demon", "action_id": "demon.c2.truth-color"})
+    return true
+
+fn island_case_adopt(world, law, mode):
+    let old = dv_find(world.adoptions, law.name, false)
+    if old != false:
+        if old.active and old.mode == mode and old.confidence == 1 and dv_same(old.law, law):
+            return world
+        return dv_reconsider(world, law, mode, 1, [island_source()])
+    return dv_adopt(world, law, mode, 1, [island_source()])
+
+fn island_case_allocate(state):
+    if dv_find(state.story, "chapter", 1) != 2 or state.physical.time < island_case_parameters().start_minute:
+        return state
+    if dv_truth(state.physical, dv_fact(island_case_ref("resolved"), true)) == "true":
+        return state
+    let settlement = dv_read(state.physical, island_ref("ledger", "settled_at"))
+    let matched = dv_read(state.physical, island_case_director("matched_at"))
+    if not dv_uncontested(settlement) or settlement.value < island_case_parameters().start_minute:
+        return state
+    if dv_uncontested(matched) and matched.value >= settlement.value:
+        return state
+    let roles = island_case_roles()
+    // Reserve every still-capable incumbent before filling any earlier slot.
+    // Otherwise an empty A could take the actor currently retained by D.
+    var retained = []
+    var incumbent_index = 0
+    while incumbent_index < rt_count(roles):
+        let incumbent = dv_read(state.physical, island_case_director(roles[incumbent_index].id))
+        if dv_uncontested(incumbent) and incumbent.value != "":
+            let index = dvs_simulation_actor_index(state.actors, incumbent.value)
+            if index >= 0 and dvs_actor_can_act(state.actors[index]) and dv_truth(state.physical, c2_can_act(incumbent.value)) == "true" and dv_truth(state.physical, dv_fact(campaign_own(incumbent.value, "exiled"), true)) != "true":
+                retained = dv_append(retained, incumbent.value)
+        incumbent_index = incumbent_index + 1
+    var used = []
+    var masks = 0
+    var effects = []
+    var reasons = []
+    var r = 0
+    while r < rt_count(roles):
+        let role = roles[r]
+        let previous = dv_read(state.physical, island_case_director(role.id))
+        var chosen = ""
+        // Persistent participants survive subsequent half-day ledgers. Only
+        // an empty or physically incapable participant is reconsidered.
+        if dv_uncontested(previous) and previous.value != "":
+            let index = dvs_simulation_actor_index(state.actors, previous.value)
+            if index >= 0 and dvs_actor_can_act(state.actors[index]) and dv_truth(state.physical, c2_can_act(previous.value)) == "true" and dv_truth(state.physical, dv_fact(campaign_own(previous.value, "exiled"), true)) != "true" and not dv_has(used, previous.value):
+                chosen = previous.value
+        var best = -1000000
+        var detail = []
+        if chosen == "":
+            var i = 0
+            while i < rt_count(state.actors):
+                let actor = state.actors[i]
+                if not dv_has(used, actor.id) and not dv_has(retained, actor.id) and island_case_candidate(actor, role, state.physical):
+                    let assessment = island_case_score(actor, role)
+                    if best < assessment.score:
+                        best = assessment.score
+                        chosen = actor.id
+                        detail = assessment
+                i = i + 1
+        if chosen != "":
+            used = dv_append(used, chosen)
+            let identity = dvs_simulation_actor_index([for id in campaign_people(): {"id": id}], chosen)
+            if 0 <= identity and identity < 16:
+                masks = masks + dv_mask_bit(identity)
+        if not dv_uncontested(previous) or previous.value != chosen:
+            rt_push(effects, dv_assign(island_case_director(role.id), chosen))
+        rt_push(reasons, {"role": role.id, "actor": chosen, "assessment": detail, "retained": dv_uncontested(previous) and previous.value == chosen})
+        r = r + 1
+    rt_push(effects, dv_assign(island_case_director("matched_at"), settlement.value))
+    rt_push(effects, dv_assign(island_case_director("participant_mask"), masks))
+    let law = dv_axiom("island.case.allocate", 1, dv_all([dv_at_least(campaign_clock(), island_case_parameters().start_minute), dv_fact(island_case_ref("resolved"), false), dv_fact(island_ref("ledger", "settled_at"), settlement.value)]), effects)
+    var world = island_case_adopt(state.physical, law, "enforce")
+    let execution = dv_execute(world, law.name, rt_cat(law.name, rt_cat(".", rt_show(rt_count(state.events)))), world.time, world.revision)
+    var events = dv_clone(state.events)
+    dvs_event(events, "simulation_slots", "", world.time, [], {"settled_at": settlement.value, "assignments": reasons, "participant_mask": masks, "execution": dv_without(execution, "world"), "knowledge_granted": false, "approximation": true})
+    return dvs_owned_state_update(state, {"physical": execution.world, "events": events})
+
+fn island_case_fields():
+    return ["snapshot_done", "snapshot_name", "snapshot_seen_at", "snapshot_posted_at", "snapshot_counter", "snapshot_removed", "snapshot_reserve", "snapshot_day", "snapshot_night", "challenge_done", "challenge_name", "challenge_at", "defense_done", "defense_name", "defense_at", "defense_rations", "defense_consumed", "resolved", "challenge_old", "challenge_current", "challenge_seen_at", "defense_seen_at", "snapshot_ledger_at", "defense_removed_delta", "defense_reserve_delta", "defense_counter_at", "defense_ledger_at"]
+
+fn island_case_inspections(actor):
+    var records = island_inspect(actor, rt_cat(actor, ".island.case.records"), "logistics", "island.case", island_case_fields(), "检视摘录、质疑与自证记录", "", ["已摘录", "摘录者", "原时刻", "张贴时刻", "旧余量", "旧取出", "旧入库", "旧日账", "旧夜账", "有质疑", "质疑者", "质疑时刻", "有自证", "自证者", "自证时刻", "自证余粮", "自证食用", "已核清", "质疑旧数", "质疑现数", "质疑读数时刻", "自证读数时刻", "旧账时刻", "自证取出差", "自证入库差", "自证柜时刻", "自证账时刻"])
+    let bindings = island_case_clock_bindings(records.presentation.lines[0].bindings)
+    let lines = [c2_visible_line(dv_fact(island_case_ref("snapshot_done"), false), "这里还没有账页摘录。", [], island_source()), c2_visible_line(dv_fact(island_case_ref("snapshot_done"), true), "{摘录者}在{张贴时刻}留下摘录：配给台{旧余量}份见于{原时刻}；账页见于{旧账时刻}，累计取出{旧取出}份、仓内转入{旧入库}份。两处并非同一次观察。", [for binding in bindings if dv_has(["摘录者", "张贴时刻", "原时刻", "旧余量", "旧取出", "旧入库", "旧账时刻"], binding.name): binding], island_source()), c2_visible_line(dv_fact(island_case_ref("challenge_done"), true), "{质疑者}在{质疑时刻}公开指控配给中存在尚未说明的取用：摘录{质疑旧数}份，{质疑读数时刻}亲见现存{质疑现数}份；尚未据此认定有人私取。", [for binding in bindings if dv_has(["质疑者", "质疑时刻", "质疑旧数", "质疑现数", "质疑读数时刻"], binding.name): binding], island_source()), c2_visible_line(dv_fact(island_case_ref("defense_done"), true), "{自证者}在{自证时刻}提交本人在{自证读数时刻}核对的记录：随身{自证余粮}份，已食{自证食用}份；另附{自证柜时刻}实数柜台、{自证账时刻}核账的证据，摘录后账内取出增加{自证取出差}份、转入增加{自证入库差}份。", [for binding in bindings if dv_has(["自证者", "自证时刻", "自证读数时刻", "自证余粮", "自证食用", "自证柜时刻", "自证账时刻", "自证取出差", "自证入库差"], binding.name): binding], island_source()), c2_visible_line(dv_fact(island_case_ref("resolved"), true), "已核清这次摘录与现账的时间差；记录没有据此判定任何人盗取粮食。", [], island_source())]
+    records = dv_with_many(records, {"presentation": dv_with(records.presentation, "lines", lines), "interaction": {"kind": "site", "site": "ledger"}})
+    var trace = island_inspect(actor, rt_cat(actor, ".island.case.experiment"), "greenhouse", "island.experiment", ["done", "signed_name", "sample_seen_at", "sample_reading", "opening", "completed_at"], "检视温室南入口与实验记录", "", ["已操作", "签名", "读数时刻", "读数", "开度", "完成时刻"])
+    let trace_bindings = island_case_clock_bindings(trace.presentation.lines[0].bindings)
+    trace = dv_with(trace, "interaction", {"kind": "site", "site": "south_entry"})
+    trace = dv_with(trace, "presentation", dv_with(trace.presentation, "lines", [c2_visible_line(dv_fact(island_ref("experiment", "done"), false), "南入口尚无这次实验记录，当前开度{开度}。", [for binding in trace_bindings if binding.name == "开度": binding], island_source()), c2_visible_line(dv_fact(island_ref("experiment", "done"), true), "{签名}在{完成时刻}将南入口调至半开，记下{读数时刻}看过的源质表读数{读数}。这会改变局部空气交换；不能凭这张记录断定此刻空气安全。", trace_bindings, island_source())]))
+    var ledger = island_inspect(actor, rt_cat(actor, ".island.case.current-ledger"), "logistics", "c2.ledger", ["removed", "reserve_received", "day_recorded", "night_recorded", "pending_registered"], "复核当前领取与入库账", "累计取出{取出}份，仓内转入{转入}份；白日记账{日账}份，夜间记账{夜账}份，待核{待核}份。", ["取出", "转入", "日账", "夜账", "待核"])
+    ledger = dv_with(ledger, "interaction", {"kind": "site", "site": "ledger"})
+    let counter = dv_with(island_inspect(actor, rt_cat(actor, ".island.case.current-counter"), "logistics", "c2.counter", ["remaining"], "实数配给台现存口粮", "配给台实际现存{现存}份。", ["现存"]), "interaction", {"kind": "site", "site": "ration_counter"})
+    let own = island_inspect(actor, rt_cat(actor, ".island.case.own-account"), "logistics", campaign_body(actor), ["rations", "consumed"], "核对本人随身粮与食用记录", "本人随身口粮{余粮}份，食用记录{已食}份。", ["余粮", "已食"])
+    return [for action in [records, trace, ledger, counter, own]: dv_with_many(action, {"island_dynamic": true, "simulation_utility": 0})]
+
+fn island_case_clock_bindings(bindings):
+    var result = []
+    var i = 0
+    while i < rt_count(bindings):
+        var binding = bindings[i]
+        if dv_has(["原时刻", "张贴时刻", "质疑时刻", "自证时刻", "读数时刻", "完成时刻", "质疑读数时刻", "自证读数时刻", "旧账时刻", "自证柜时刻", "自证账时刻"], binding.name):
+            binding = dv_with(binding, "format", "game-clock")
+        rt_push(result, binding)
+        i = i + 1
+    return result
+
+fn island_case_numeric(mind, refs):
+    var values = []
+    var i = 0
+    while i < rt_count(refs):
+        let cell = dv_read(mind, refs[i])
+        if not dv_uncontested(cell) or not rt_is_numeric_value(cell.value):
+            return false
+        var seen_at = -1
+        var observation = false
+        let claims = dv_find(cell, "claims", [])
+        var c = 0
+        while c < rt_count(claims):
+            let claim = claims[c]
+            if claim.source == "perception" and dv_same(claim.value, cell.value) and seen_at < dv_find(claim, "time", -1):
+                seen_at = claim.time
+                observation = claim.id
+            c = c + 1
+        if seen_at < 0:
+            return false
+        rt_push(values, {"ref": refs[i], "value": cell.value, "seen_at": seen_at, "observation": observation})
+        i = i + 1
+    return values
+
+fn island_case_job(actor, role, suffix, room, known, effects, grants, label, text):
+    let id = rt_cat(actor.id, rt_cat(".island.case.", suffix))
+    let authority = dv_all([campaign_at(actor.id, room), c2_can_act(actor.id), dv_fact(campaign_own(actor.id, "exiled"), false), dv_fact(island_case_director(role), actor.id), dv_fact(island_case_ref("resolved"), false)])
+    let law = dv_axiom(id, 1, dv_all([authority, known]), effects)
+    let premise = dv_all([campaign_at(actor.id, room), known])
+    var action = dv_with_many(campaign_surface_action(id, "experiment", premise, law.premise, id, grants, label, text, island_source()), {"island_dynamic": true, "simulation_utility": island_case_parameters().action_utility, "repeatable": false})
+    if role == "A":
+        action = dv_with(action, "interaction", {"kind": "site", "site": "south_entry"})
+    else:
+        action = dv_with(action, "interaction", {"kind": "site", "site": "ledger"})
+    return {"law": law, "action": action}
+
+fn island_case_with_evidence(job, evidence):
+    return dv_with(job, "action", dv_with(job.action, "case_observations", evidence))
+
+fn island_case_jobs(actor, role):
+    var jobs = []
+    if role == "A":
+        let reading = island_case_numeric(actor.mind, [island_air_ref("greenhouse:greenhouse")])
+        if reading != false:
+            let opening = island_case_parameters().experimental_opening
+            let known = dv_all([dv_fact(island_ref("experiment", "done"), false), dv_fact(island_ref("experiment", "opening"), 1)])
+            let effects = [dv_assign(island_ref("experiment", "done"), true), dv_assign(island_ref("experiment", "signed_name"), campaign_person_name(actor.id)), dv_assign(island_ref("experiment", "sample_seen_at"), reading[0].seen_at), dv_assign(island_ref("experiment", "sample_reading"), reading[0].value), dv_assign(island_ref("experiment", "opening"), opening)]
+            rt_push(jobs, island_case_with_evidence(island_case_job(actor, role, "experiment", "greenhouse", known, effects, [island_ref("experiment", "done"), island_ref("experiment", "opening"), island_ref("experiment", "signed_name")], "将温室南入口调至半开并记录", "我把温室南入口调至半开，写下此前实际看过的读数与自己的签名；这改变局部空气交换，不能说明之后的空气仍然安全。"), reading))
+    if role == "C":
+        let refs = [campaign_ref("c2.counter", "remaining"), campaign_ref("c2.ledger", "removed"), campaign_ref("c2.ledger", "reserve_received"), campaign_ref("c2.ledger", "day_recorded"), campaign_ref("c2.ledger", "night_recorded")]
+        let values = island_case_numeric(actor.mind, refs)
+        if values != false:
+            let fields = ["snapshot_counter", "snapshot_removed", "snapshot_reserve", "snapshot_day", "snapshot_night"]
+            var effects = [dv_assign(island_case_ref("snapshot_done"), true), dv_assign(island_case_ref("snapshot_name"), campaign_person_name(actor.id)), dv_assign(island_case_ref("snapshot_seen_at"), values[0].seen_at), dv_assign(island_case_ref("snapshot_ledger_at"), values[1].seen_at)]
+            var i = 0
+            while i < rt_count(fields):
+                rt_push(effects, dv_assign(island_case_ref(fields[i]), values[i].value))
+                i = i + 1
+            rt_push(jobs, island_case_with_evidence(island_case_job(actor, role, "snapshot", "logistics", dv_fact(island_case_ref("snapshot_done"), false), effects, [island_case_ref("snapshot_done"), island_case_ref("snapshot_name")], "挑选先前柜账读数并列张贴", "我选择先前实数的柜台余量和看过的账页并列张贴，各自标明观察时刻，要求大家比较差额。它们并非同一时刻的现存清点。"), values))
+    if role == "B":
+        let values = island_case_numeric(actor.mind, [island_case_ref("snapshot_counter"), campaign_ref("c2.counter", "remaining"), island_case_ref("snapshot_seen_at")])
+        if values != false and values[0].value != values[1].value and values[2].value <= values[1].seen_at:
+            let known = dv_all([dv_fact(island_case_ref("snapshot_done"), true), dv_fact(island_case_ref("challenge_done"), false)])
+            var job = island_case_job(actor, role, "challenge", "logistics", known, [dv_assign(island_case_ref("challenge_done"), true), dv_assign(island_case_ref("challenge_name"), campaign_person_name(actor.id)), dv_assign(island_case_ref("challenge_old"), values[0].value), dv_assign(island_case_ref("challenge_current"), values[1].value), dv_assign(island_case_ref("challenge_seen_at"), values[1].seen_at)], [island_case_ref("challenge_done"), island_case_ref("challenge_name")], "就实见差额公开提出指控", "我指控这次配给存在尚未说明的取用：本人实数的现存和摘录不同。请公开核对，但差额尚不能证明某人私取，也可能来自后续领取或补记。")
+            job = dv_with(job, "action", dv_with_many(job.action, {"kind": "talk", "speech": dv_with(campaign_speech(dv_true(), island_source(), "owned-ledger-challenge"), "surface", job.action.surface), "listeners": campaign_people(), "public_observers": campaign_people(), "public_grants": job.action.grants}))
+            rt_push(jobs, island_case_with_evidence(job, values))
+    if role == "D":
+        let values = island_case_numeric(actor.mind, [campaign_own(actor.id, "rations"), campaign_own(actor.id, "consumed")])
+        let evidence = island_case_account_evidence(actor)
+        if values != false and evidence != false:
+            var facts = [dv_fact(island_case_ref("challenge_done"), true), dv_fact(island_case_ref("defense_done"), false)]
+            let inputs = c2m_concat(values, evidence.values)
+            var i = 0
+            while i < rt_count(inputs):
+                rt_push(facts, dv_fact(inputs[i].ref, inputs[i].value))
+                i = i + 1
+            let effects = [dv_assign(island_case_ref("defense_done"), true), dv_assign(island_case_ref("defense_name"), campaign_person_name(actor.id)), dv_assign(island_case_ref("defense_rations"), values[0].value), dv_assign(island_case_ref("defense_consumed"), values[1].value), dv_assign(island_case_ref("defense_seen_at"), values[0].seen_at), dv_assign(island_case_ref("defense_removed_delta"), evidence.removed), dv_assign(island_case_ref("defense_reserve_delta"), evidence.received), dv_assign(island_case_ref("defense_counter_at"), evidence.counter_at), dv_assign(island_case_ref("defense_ledger_at"), evidence.ledger_at)]
+            var job = island_case_job(actor, role, "defense", "logistics", dv_all(facts), effects, [island_case_ref("defense_done"), island_case_ref("defense_name"), island_case_ref("defense_rations"), island_case_ref("defense_consumed")], "提交亲见柜账与本人记录自证", "我提交实际核对的柜台、账页和本人口粮记录：账内取出与转入的变化能对上所读差额。不能只凭不同时间的余量就把私取的嫌疑归给我；这些记录也没有证明其他未观察的事。")
+            job = dv_with(job, "action", dv_with_many(job.action, {"kind": "talk", "speech": dv_with(campaign_speech(dv_true(), island_source(), "owned-self-account"), "surface", job.action.surface), "listeners": campaign_people(), "public_observers": campaign_people(), "public_grants": job.action.grants}))
+            rt_push(jobs, island_case_with_evidence(job, inputs))
+    return jobs
+
+fn island_case_install(scene):
+    if dv_find(scene, "island_case_installed", false):
+        return scene
+    var physical = scene.physical
+    physical = campaign_add_new(physical, campaign_state_object("island.director", {"A": dv_field(""), "B": dv_field(""), "C": dv_field(""), "D": dv_field(""), "participant_mask": dv_field(0), "matched_at": dv_unknown()}))
+    var fields = {"snapshot_done": dv_field(false), "challenge_done": dv_field(false), "defense_done": dv_field(false), "resolved": dv_field(false)}
+    let names = island_case_fields()
+    var i = 0
+    while i < rt_count(names):
+        if not dv_has_key(fields, names[i]):
+            fields = dv_with(fields, names[i], dv_unknown())
+        i = i + 1
+    physical = campaign_add_new(physical, island_display_object("island.case", "logistics", "摘录与核对记录", fields))
+    physical = campaign_add_new(physical, island_display_object("island.experiment", "greenhouse", "温室南入口与实验记录", {"done": dv_field(false), "signed_name": dv_unknown(), "sample_seen_at": dv_unknown(), "sample_reading": dv_unknown(), "opening": dv_field(1), "completed_at": dv_unknown()}))
+    var bindings = scene.bindings
+    var actors = []
+    let objects = ["island.case", "island.experiment"]
+    i = 0
+    while i < rt_count(scene.actors):
+        var actor = scene.actors[i]
+        if dv_has(campaign_people(), actor.id):
+            var mind = actor.mind
+            var j = 0
+            while j < rt_count(objects):
+                if not dv_has_key(mind.objects, objects[j]):
+                    mind = dv_add_object(mind, campaign_local_object(objects[j]))
+                if dv_local(bindings, objects[j], actor.id) == "":
+                    bindings = dv_append(bindings, dv_binding(objects[j], objects[j], actor.id))
+                j = j + 1
+            actor = dv_with(actor, "mind", mind)
+        rt_push(actors, actor)
+        i = i + 1
+    let declarations = dv_with(scene.simulation_declarations, "edges", island_case_edges(scene.simulation_declarations.edges))
+    return dv_with_many(scene, {"physical": physical, "actors": actors, "bindings": bindings, "simulation_declarations": declarations, "island_case_installed": true})
+
+// These values are consequences of actual completed actions. Derivation uses
+// the authoritative changed cell's time, not the current selection instant.
+fn island_case_stamp(state):
+    if not dv_find(state.story, "island_case_installed", false):
+        return state
+    let pairs = [{"flag": island_ref("experiment", "done"), "stamp": island_ref("experiment", "completed_at")}, {"flag": island_case_ref("snapshot_done"), "stamp": island_case_ref("snapshot_posted_at")}, {"flag": island_case_ref("challenge_done"), "stamp": island_case_ref("challenge_at")}, {"flag": island_case_ref("defense_done"), "stamp": island_case_ref("defense_at")}]
+    var effects = []
+    var premise = []
+    var basis = []
+    var i = 0
+    while i < rt_count(pairs):
+        let item = pairs[i]
+        let cell = dv_read(state.physical, item.flag)
+        if dv_uncontested(cell) and cell.value == true and not dv_uncontested(dv_read(state.physical, item.stamp)):
+            rt_push(effects, dv_assign(item.stamp, cell.time))
+            rt_push(premise, dv_fact(item.flag, true))
+            rt_push(basis, {"ref": item.flag, "completed_cell": cell})
+        i = i + 1
+    if rt_count(effects) == 0:
+        return state
+    let law = dv_axiom("island.case.record-times", 1, dv_all(premise), effects)
+    let world = island_case_adopt(state.physical, law, "enforce")
+    let execution = dv_execute(world, law.name, rt_cat(law.name, rt_cat(".", rt_show(rt_count(state.events)))), world.time, world.revision)
+    var events = dv_clone(state.events)
+    dvs_event(events, "case_record_times", "", world.time, [], {"basis": basis, "execution": dv_without(execution, "world"), "knowledge_granted": false})
+    return dvs_owned_state_update(state, {"physical": execution.world, "events": events})
+
+// Both locations must have actually been inspected. Their own timestamps are
+// preserved; no artificial same-minute requirement substitutes for contact.
+fn island_case_account_evidence(actor):
+    let refs = [island_case_ref("snapshot_counter"), island_case_ref("snapshot_removed"), island_case_ref("snapshot_reserve"), island_case_ref("snapshot_seen_at"), island_case_ref("snapshot_ledger_at"), campaign_ref("c2.counter", "remaining"), campaign_ref("c2.ledger", "removed"), campaign_ref("c2.ledger", "reserve_received")]
+    let values = island_case_numeric(actor.mind, refs)
+    if values == false:
+        return false
+    if values[5].seen_at < values[3].value or values[6].seen_at < values[4].value:
+        return false
+    let removed = values[6].value - values[1].value
+    let received = values[7].value - values[2].value
+    if removed < 0 or received < 0 or values[0].value + received - removed != values[5].value:
+        return false
+    return {"values": values, "removed": removed, "received": received, "counter_at": values[5].seen_at, "ledger_at": values[6].seen_at}
+
+fn island_case_reconcile(actor):
+    let evidence = island_case_account_evidence(actor)
+    if evidence == false:
+        return false
+    let values = evidence.values
+    let removed = evidence.removed
+    let received = evidence.received
+    var known = [dv_fact(island_case_ref("snapshot_done"), true), dv_fact(island_case_ref("challenge_done"), true), dv_fact(island_case_ref("defense_done"), true), dv_fact(island_ref("experiment", "done"), true), dv_fact(island_case_ref("resolved"), false)]
+    var i = 0
+    while i < rt_count(values):
+        rt_push(known, dv_fact(values[i].ref, values[i].value))
+        i = i + 1
+    let premise = dv_all(dv_append(known, campaign_at(actor.id, "logistics")))
+    let id = rt_cat(actor.id, ".island.case.reconcile")
+    let law = dv_axiom(id, 1, dv_all([premise, c2_can_act(actor.id)]), [dv_assign(island_case_ref("resolved"), true)])
+    let explanation = rt_cat("我按各次实际观察时刻核算：摘录后领取增加", rt_cat(rt_show(removed), rt_cat("份，仓内转入增加", rt_cat(rt_show(received), "份，差额与现存相符。南入口实验另有现场签名记录；这些记录本身没有证明有人盗取粮食。"))))
+    let action = dv_with_many(campaign_surface_action(id, "answer", premise, law.premise, id, [island_case_ref("resolved")], "按实际记录说明账目时间差", explanation, island_source()), {"island_dynamic": true, "simulation_utility": island_case_parameters().action_utility, "repeatable": false, "interaction": {"kind": "site", "site": "ledger"}, "public_observers": campaign_people(), "public_grants": [island_case_ref("resolved")]})
+    return island_case_with_evidence({"law": law, "action": action}, values)
+
+fn island_case_target(actor, role):
+    if role == "A" and dv_truth(actor.mind, dv_fact(island_ref("experiment", "done"), true)) != "true":
+        return "greenhouse"
+    let food = dv_all([dv_fact(island_case_ref("snapshot_done"), true), dv_fact(island_case_ref("challenge_done"), true), dv_fact(island_case_ref("defense_done"), true)])
+    if dv_truth(actor.mind, food) == "true" and dv_truth(actor.mind, dv_fact(island_ref("experiment", "done"), true)) != "true":
+        return "greenhouse"
+    return "logistics"
+
+fn island_case_observation_utility(actor, action, role):
+    if role == "":
+        return 0
+    // Revisit only on missing knowledge or a declared owner-visible age limit.
+    // The director does not peek at new physical values to trigger inspection.
+    var latest = -1
+    var i = 0
+    while i < rt_count(action.grants):
+        let cell = dv_read(actor.mind, action.grants[i])
+        if dv_uncontested(cell):
+            latest = dv_max(latest, cell.time)
+        i = i + 1
+    if not dv_has(dv_find(actor, "completed_actions", []), action.id) or latest < 0 or latest + island_case_parameters().inspection_refresh_minutes <= actor.mind.time:
+        return island_case_parameters().observation_utility
+    return 0
+
+fn island_case_refresh(state):
+    if dv_find(state.story, "chapter", 1) != 2 or state.physical.time < island_case_parameters().start_minute or not dv_find(state.story, "island_case_installed", false):
+        return state
+    state = island_case_allocate(island_case_stamp(state))
+    let resolved = dv_truth(state.physical, dv_fact(island_case_ref("resolved"), true)) == "true"
+    var physical = state.physical
+    var bindings = state.bindings
+    var actors = state.actors
+    let index = state.cursor
+    var actor = actors[index]
+    if not dv_has(campaign_people(), actor.id) or dv_find(actor, "scheduled_action", false) != false:
+        return state
+    var mind = actor.mind
+    let objects = ["island.case", "island.experiment"]
+    var i = 0
+    while i < rt_count(objects):
+        if not dv_has_key(mind.objects, objects[i]):
+            mind = dv_add_object(mind, campaign_local_object(objects[i]))
+        if dv_local(bindings, objects[i], actor.id) == "":
+            bindings = dv_append(bindings, dv_binding(objects[i], objects[i], actor.id))
+        i = i + 1
+    actor = dv_with(actor, "mind", mind)
+    var role = ""
+    let roles = island_case_roles()
+    i = 0
+    while i < rt_count(roles):
+        if not resolved and dv_truth(physical, dv_fact(island_case_director(roles[i].id), actor.id)) == "true":
+            role = roles[i].id
+        i = i + 1
+    var actions = []
+    i = 0
+    while i < rt_count(actor.actions):
+        var action = actor.actions[i]
+        if not dv_find(action, "island_dynamic", false):
+            if dv_has_key(action, "island_case_original_utility"):
+                action = dv_without(dv_with(action, "simulation_utility", action.island_case_original_utility), "island_case_original_utility")
+            rt_push(actions, action)
+        i = i + 1
+    let inspections = island_case_inspections(actor.id)
+    var goals = [for goal in dv_find(actor.policy, "goals", []) if not dv_find(goal, "island_dynamic", false): goal]
+    if not resolved and (role != "" or dv_find(state, "player_actor", "") == actor.id):
+        let refresh = island_case_parameters().inspection_refresh_minutes
+        let minimum_time = rt_floor(actor.mind.time / refresh) * refresh
+        let evidence = [{"room": "logistics", "refs": [island_case_ref("snapshot_done"), island_case_ref("challenge_done"), island_case_ref("defense_done"), island_case_ref("resolved"), campaign_ref("c2.counter", "remaining"), campaign_ref("c2.ledger", "removed"), campaign_ref("c2.ledger", "reserve_received"), campaign_own(actor.id, "rations"), campaign_own(actor.id, "consumed")]}, {"room": "greenhouse", "refs": [island_ref("experiment", "done"), island_ref("experiment", "opening"), island_air_ref("greenhouse:greenhouse")]}]
+        var e = 0
+        while e < rt_count(evidence):
+            var f = 0
+            while f < rt_count(evidence[e].refs):
+                let goal = campaign_observation_goal(evidence[e].refs[f], campaign_at(actor.id, evidence[e].room), [island_source()], minimum_time)
+                rt_push(goals, dv_with(goal, "island_dynamic", true))
+                f = f + 1
+            e = e + 1
+    actor = dv_with(actor, "policy", dv_with(actor.policy, "goals", goals))
+    i = 0
+    while i < rt_count(inspections):
+        rt_push(actions, dv_with(inspections[i], "simulation_utility", island_case_observation_utility(actor, inspections[i], role)))
+        i = i + 1
+    var jobs = []
+    if role != "":
+        jobs = island_case_jobs(actor, role)
+    if not resolved:
+        let reconciliation = island_case_reconcile(actor)
+        if reconciliation != false:
+            rt_push(jobs, reconciliation)
+    i = 0
+    while i < rt_count(jobs):
+        physical = island_case_adopt(physical, jobs[i].law, "enforce")
+        rt_push(actions, jobs[i].action)
+        i = i + 1
+    if role != "":
+        let route = c2i_known_route(actor, island_case_target(actor, role))
+        if route != false:
+            i = 0
+            while i < rt_count(actions):
+                let action = actions[i]
+                let travel = dv_find(action, "travel", {})
+                if action.kind == "move" and dv_find(travel, "from", "") == route.origin and dv_find(travel, "to", "") == route.next:
+                    let original = dv_find(action, "simulation_utility", 0)
+                    actions = dvs_replace(actions, i, dv_with_many(action, {"island_case_original_utility": original, "simulation_utility": original + island_case_parameters().travel_utility}))
+                i = i + 1
+    actor = dv_with_many(actor, {"actions": actions, "island_case_intention": {"role": role, "basis": "owned-values-history-and-observations", "knowledge_granted": false}})
+    return dvs_owned_state_update(state, {"physical": physical, "actors": dvs_replace(actors, index, actor), "bindings": bindings})
+
+// Only the two recorded directions of this real south entrance participate.
+// Opening alters air exchange, not passage permission or the authored gates.
+fn island_case_edges(edges):
+    var result = []
+    var i = 0
+    while i < rt_count(edges):
+        var edge = edges[i]
+        if dv_has(["campus_ne:exit:温室", "greenhouse:exit:south"], edge.id):
+            edge = dv_with(edge, "opening_ref", island_ref("experiment", "opening"))
+        rt_push(result, edge)
+        i = i + 1
+    return result

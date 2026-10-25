@@ -4,7 +4,7 @@
 #include 50-chapter2.dv
 
 fn island_parameters():
-    return {"basis": "user:2026-10-24-approved-island-game-tuning", "concentration_unit": "normalized-hazard-unit", "capacity_unit": "32px-grid-area", "dose_unit": "existing-erosion-dose", "initial_concentration": 0, "reserve_portions": 672, "conductance_fraction_per_15_minutes": 0.08, "settling_fraction_per_15_minutes": 0.02, "wind_strength": 0.02, "downward_per_height": 0.02, "dose_per_concentration_per_15_minutes": 0.25, "safe_concentration": 0.25, "night_boundary": 0.25, "severe_boundary": 1, "severe_night_boundary": 2, "crop_trays": 4, "crop_growth_ticks": 3, "crop_portions_per_tray": 8, "crop_damage_threshold": 1, "crop_damage_trays_per_tick": 1, "crop_initial_light": true, "heights": {"ground": 0, "first_upper": 5.8, "second_upper": 11.4, "archive": 17, "basement": -4.2, "deep_basement": -8.4, "outdoor_low": -2, "outdoor_high": 2}}
+    return {"basis": "user:2026-10-24-approved-island-game-tuning", "concentration_unit": "normalized-hazard-unit", "capacity_unit": "32px-grid-area", "dose_unit": "existing-erosion-dose", "cases": {"start_minute": 3240, "fallback_drive": 1, "fallback_caution": 0.5, "fallback_trust": 0.5, "value_weight": 1, "experience_weight": 0.05, "erosion_weight": 0.1, "observation_utility": 0.2, "action_utility": 2, "travel_utility": 0.5, "inspection_refresh_minutes": 30, "experimental_opening": 0.5, "units": "minutes-from-opening; normalized-motivation; opening-fraction", "basis": "user:2026-10-25-approved-adjustable-slot-motivation"}, "initial_concentration": 0, "reserve_portions": 672, "conductance_fraction_per_15_minutes": 0.08, "settling_fraction_per_15_minutes": 0.02, "wind_strength": 0.02, "downward_per_height": 0.02, "dose_per_concentration_per_15_minutes": 0.25, "safe_concentration": 0.25, "night_boundary": 0.25, "severe_boundary": 1, "severe_night_boundary": 2, "crop_trays": 4, "crop_growth_ticks": 3, "crop_portions_per_tray": 8, "crop_damage_threshold": 1, "crop_damage_trays_per_tick": 1, "crop_initial_light": true, "heights": {"ground": 0, "first_upper": 5.8, "second_upper": 11.4, "archive": 17, "basement": -4.2, "deep_basement": -8.4, "outdoor_low": -2, "outdoor_high": 2}}
 
 fn island_source():
     return campaign_source("dv_core/modules/55-island.dv", 0, island_parameters().basis)
@@ -208,7 +208,12 @@ fn island_inspect(actor, id, room, object, fields, label, template, names):
         rt_push(bindings, binding)
         i = i + 1
     let when = campaign_at(actor, room)
-    return dv_with_many(campaign_surface_action(id, "inspect", when, when, "", grants, label, label, island_source()), {"repeatable": true, "required_room": room, "island_content": true, "presentation": {"actor": actor, "voice": "visible-inspection", "lines": [c2_visible_line(dv_true(), template, bindings, island_source())]}})
+    var action = dv_with_many(campaign_surface_action(id, "inspect", when, when, "", grants, label, label, island_source()), {"repeatable": true, "required_room": room, "island_content": true, "presentation": {"actor": actor, "voice": "visible-inspection", "lines": [c2_visible_line(dv_true(), template, bindings, island_source())]}})
+    if object == "island.crop":
+        action = dv_with(action, "interaction", {"kind": "site", "site": "seedbeds"})
+    if object == "island.ledger":
+        action = dv_with(action, "interaction", {"kind": "site", "site": "ledger"})
+    return action
 
 fn island_actions(actor, locations, chapter):
     var actions = []
@@ -236,7 +241,7 @@ fn island_crop_jobs(actor):
     let care_id = rt_cat(actor, ".island.crop.care")
     let care_when = dv_all([campaign_at(actor, "greenhouse"), c2_alive(actor), dv_at_least(island_ref("crop", "trays"), 1), dv_fact(island_ref("crop", "cared"), false)])
     let care_law = dv_axiom(care_id, 1, care_when, [dv_assign(island_ref("crop", "cared"), true)])
-    let care = dv_with_many(campaign_surface_action(care_id, "help", care_when, care_when, care_id, [island_ref("crop", "cared")], "照料温室苗床", "检查苗床并完成这一生长节拍所需的照料。", island_source()), {"repeatable": true, "island_content": true, "predict_law": care_id, "simulation_utility": 1})
+    let care = dv_with_many(campaign_surface_action(care_id, "help", care_when, care_when, care_id, [island_ref("crop", "cared")], "照料温室苗床", "检查苗床并完成这一生长节拍所需的照料。", island_source()), {"repeatable": true, "island_content": true, "predict_law": care_id, "simulation_utility": 1, "interaction": {"kind": "site", "site": "seedbeds"}})
     rt_push(jobs, {"law": care_law, "action": care})
     let light_states = [true, false]
     var l = 0
@@ -248,13 +253,13 @@ fn island_crop_jobs(actor):
         var label = "关闭苗床照明"
         if light:
             label = "开启苗床照明"
-        let action = dv_with_many(campaign_surface_action(id, "experiment", when, when, id, [island_ref("crop", "light")], label, label, island_source()), {"repeatable": true, "island_content": true, "predict_law": id})
+        let action = dv_with_many(campaign_surface_action(id, "experiment", when, when, id, [island_ref("crop", "light")], label, label, island_source()), {"repeatable": true, "island_content": true, "predict_law": id, "interaction": {"kind": "site", "site": "seedbeds"}})
         rt_push(jobs, {"law": law, "action": action})
         l = l + 1
     let harvest_id = rt_cat(actor, ".island.crop.harvest")
     let harvest_when = dv_all([campaign_at(actor, "greenhouse"), c2_alive(actor), dv_at_least(island_ref("crop", "trays"), 1), dv_at_least(island_ref("crop", "growth"), p.crop_growth_ticks)])
     let harvest_law = dv_axiom(harvest_id, 1, harvest_when, [dv_increment(island_ref("crop", "trays"), -1), dv_increment(campaign_own(actor, "island_harvest_carried"), p.crop_portions_per_tray)])
-    let harvest = dv_with_many(campaign_surface_action(harvest_id, "help", harvest_when, harvest_when, harvest_id, [island_ref("crop", "trays"), campaign_own(actor, "island_harvest_carried")], "收获一批成熟作物", "收获一批成熟作物，分装八标准份，随身携往粮仓。", island_source()), {"repeatable": true, "island_content": true, "predict_law": harvest_id, "simulation_utility": 1})
+    let harvest = dv_with_many(campaign_surface_action(harvest_id, "help", harvest_when, harvest_when, harvest_id, [island_ref("crop", "trays"), campaign_own(actor, "island_harvest_carried")], "收获一批成熟作物", "收获一批成熟作物，分装八标准份，随身携往粮仓。", island_source()), {"repeatable": true, "island_content": true, "predict_law": harvest_id, "simulation_utility": 1, "interaction": {"kind": "site", "site": "seedbeds"}})
     rt_push(jobs, {"law": harvest_law, "action": harvest})
     let store_id = rt_cat(actor, ".island.crop.store")
     let store_when = dv_all([campaign_at(actor, "logistics"), c2_alive(actor), dv_fact(campaign_ref("c2.granary", "total_store_locked"), false), dv_at_least(campaign_own(actor, "island_harvest_carried"), p.crop_portions_per_tray)])

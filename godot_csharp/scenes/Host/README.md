@@ -2,7 +2,9 @@
 
 ## 所有权
 
-Main 通过 `flow: HostFlow` 的三个状态轴和集中 transition 持有界面、会话和执行交接状态；`GameEngine` 独占正式 DvSession；`DvFieldExecutor` 独占身体登记、离屏物理世界和动作事务。UISystem 读取观察者快照，发回纯数据输入。控制台开发修改经 GameEngine 转给 Core。
+Main 通过 `flow: HostFlow` 的三个状态轴和集中 transition 持有界面、会话和执行交接状态；`GameEngine` 独占正式 DvSession；`DvFieldExecutor` 独占身体登记和动作事务。离场 NPC 的源室和目标室均在观察者当前室外时，通过 `RoomGraphMotion` 读取唯一几何合同的房间邻接执行，回执标记 `room-graph` 并保留房间路径。Core 沿原 Complete 复核资格、效果与费用。近场及玩家保持实体碰撞执行，涉及可见房间的边界移动保留实际物理路径。UISystem 读取观察者快照，发回纯数据输入。控制台开发修改经 GameEngine 转给 Core。
+
+离场图事务只在正式 applied 后释放旧身体，失败保留原脚点。再次物化时按合法、未占用的房内候选脚点接入。可信人物投影的 `motion` 包含 from/to、start/due/now/progress；源房间内的入场位置沿计划出口方向插值并落到合法脚点。权威地点在 Complete 前保持原值，回执不提供伪造的像素轨迹或接触误差。
 
 Core 投影提供 `view_kind`、`actor`、`location_title` 等中立语义字段。`HostPresentation.gd` 根据 `Contracts/presentation_catalog.json` 增补 Godot 场景和人物资源，Core 不输出 res 路径。Main 只在正式会话路径动态加载 C# 入口；纯 GDScript Mock 使用相同呈现边界。
 

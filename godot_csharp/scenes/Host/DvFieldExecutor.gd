@@ -3,6 +3,7 @@ extends Node
 const CAMPUS_MAP_VIEW := preload("res://scenes/Chapter2/Field/CampusMapView.tscn")
 const GEOMETRY := preload("res://scenes/Host/GeometryCatalog.gd")
 const WORLD_VIEW := preload("res://scenes/Shared/Field/WorldView.gd")
+const ROOM_GRAPH := preload("res://scenes/Host/RoomGraphMotion.gd")
 var _bodies: Dictionary = {}
 var _worlds: Dictionary = {}
 var _occupancy: Array[Dictionary] = []
@@ -12,6 +13,7 @@ var _closing := false
 var _busy := false
 var _viewer := ""
 var _transactions: Dictionary = {}
+var _graph_transactions: Dictionary = {}
 var _rollback_obstacles: Array[Dictionary] = []
 var _resync_targets: Dictionary = {}
 var navigation_sampling := false
@@ -77,11 +79,19 @@ func _initial_point(who: String, field: Node2D, binding: Dictionary):
 	var room := str(binding.get("execution_room", ""))
 	if room == "" or str(binding.get("map", "")) != str(field.adapter.map_key()): return null
 	var declared_anchor := str(binding.get("anchor", ""))
-	if declared_anchor != "":
+	if declared_anchor != "" and binding.get("motion", {}).is_empty():
 		var point = field.adapter.anchor(declared_anchor)
 		if point == null or field.adapter.entered_room(point) != room or not field.adapter.walkable(point): return null
 		return null if _initial_occupied(who, field, point) else point
 	var candidates: Array = []
+	var projected = ROOM_GRAPH.approach(binding.get("motion", {}), str(binding.get("map", "")), room)
+	if projected != null:
+		# Select a legal foot point nearest the scheduled approach. The source
+		# room remains authoritative until the original Complete is applied.
+		if field.adapter.has_method("initial_room_candidates"):
+			var legal: Array = field.adapter.initial_room_candidates(room)
+			legal.sort_custom(func(a, b): return Vector2(a).distance_squared_to(projected) < Vector2(b).distance_squared_to(projected))
+			candidates.append_array(legal)
 	for placement in field.execution_binding.get("initial_placements", []):
 		if str(placement.get("actor", "")) == who:
 			var point = field.adapter.anchor(str(placement.get("anchor", "")))
@@ -275,6 +285,12 @@ func acquire_actor(who: String, sprite_key: String, field: Node2D) -> CharacterB
 		if not is_instance_valid(body) or str(record.resource) != field.execution_resource or str(record.map) != field.adapter.map_key(): return null
 		previous = record.field
 		if is_instance_valid(previous) and previous != field: _detach(who, previous)
+		if not is_instance_valid(previous):
+			var binding := _actor_binding(who, field.execution_binding)
+			if not binding.get("motion", {}).is_empty():
+				var projected = _initial_point(who, field, binding)
+				if projected == null: return null
+				body.position = projected
 	else:
 		var binding := _actor_binding(who, field.execution_binding)
 		var point = _initial_point(who, field, binding)
@@ -402,6 +418,8 @@ func _execute_pending(intent: Dictionary, visible_field: Node2D, execution_snaps
 	var source_map := str(execution_snapshot.get("map", ""))
 	var source_room := str(execution_snapshot.get("execution_room", ""))
 	if source_map == "" or source_room == "": return _blocked(intent, serial, "missing_source_geometry_binding")
+	if _is_far_movement(who, source_room, destination, visible_field):
+		return _execute_room_graph(intent, execution_snapshot, serial)
 	if _bodies.has(who) and (str(_bodies[who].map) != source_map or str(_bodies[who].resource) != str(execution_snapshot.get("resource", ""))):
 		return _blocked(intent, serial, "retained_body_source_mismatch")
 	var field: Node2D
@@ -467,7 +485,46 @@ func _execute_pending(intent: Dictionary, visible_field: Node2D, execution_snaps
 			received.reason = "station_evidence_mismatch"
 	return received
 
+func _is_far_movement(who: String, source_room: String, destination: Dictionary, visible_field: Node2D) -> bool:
+	if who == _viewer: return false
+	if not is_instance_valid(visible_field) or not is_instance_valid(visible_field.player): return true
+	var observer_room: String = visible_field.adapter.departure_room(visible_field.player.position)
+	return source_room != observer_room and str(destination.get("execution_room", destination.get("room", ""))) != observer_room
+
+func _execute_room_graph(intent: Dictionary, state: Dictionary, serial: int) -> Dictionary:
+	var destination: Dictionary = intent.get("destination", {})
+	var source_room := str(state.get("execution_room", ""))
+	var target_room := str(destination.get("execution_room", destination.get("room", "")))
+	var rooms := ROOM_GRAPH.path(source_room, target_room)
+	if rooms.is_empty(): return _blocked(intent, serial, "missing_room_graph_route")
+	var target_map := str(destination.get("map", ""))
+	if GEOMETRY.room_data(target_map, target_room).is_empty(): return _blocked(intent, serial, "missing_room_graph_destination")
+	var action: Dictionary = intent.get("action", {})
+	var station := str(action.get("travel", {}).get("station", ""))
+	if station != "" and GEOMETRY.anchor(target_map, station) == null and GEOMETRY.room_data(target_map, station).is_empty():
+		return _blocked(intent, serial, "missing_room_graph_station")
+	_graph_transactions[str(intent.action_event)] = {"actor": str(intent.actor)}
+	# Prepare already selected the formal travel law. Complete still checks
+	# its authority preconditions and charges the original execution cost.
+	return {"kind": "daily", "who": str(intent.actor), "serial": serial,
+		"action": str(action.get("id", "")), "status": "arrived",
+		"map": target_map, "room": target_room, "station": station,
+		"source_map": str(state.get("map", "")), "source_room": source_room,
+		"execution_world": "room-graph", "room_path": rooms,
+		"approximation": "scheduled-room-adjacency", "geometry_contact": false}
+
 func settle(action_event: String, outcome: String, visible_field: Node2D, animate := true) -> bool:
+	if _graph_transactions.has(action_event):
+		var who := str(_graph_transactions[action_event].actor)
+		if outcome == "applied" and _bodies.has(who):
+			var record: Dictionary = _bodies[who]
+			var previous: Node2D = record.field
+			if is_instance_valid(previous): _detach(who, previous)
+			if is_instance_valid(record.body): record.body.queue_free()
+			_bodies.erase(who)
+			if is_instance_valid(previous): sync_obstacles(previous)
+		_graph_transactions.erase(action_event)
+		return true
 	if not _transactions.has(action_event): return true
 	var transaction: Dictionary = _transactions[action_event]
 	var who := str(transaction.actor)
@@ -507,6 +564,7 @@ func reset() -> void:
 		viewport.queue_free()
 	_bodies.clear()
 	_transactions.clear()
+	_graph_transactions.clear()
 	_rollback_obstacles.clear()
 	_resync_targets.clear()
 	_worlds.clear()
