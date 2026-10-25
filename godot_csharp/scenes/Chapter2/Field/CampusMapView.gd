@@ -164,6 +164,7 @@ func _prepared_for(map_name: String, binding: Dictionary) -> bool:
 
 func _new_map_record(map_name: String, layout: Node2D) -> Dictionary:
 	GEOMETRY.bind_layout(map_name, layout)
+	preload("res://scenes/Shared/Field/RoomArtFinish.gd").attach(layout)
 	return {"node": layout, "geometry": {}, "geometry_applied": false,
 		"geometry_nodes": [], "access_shapes": {}, "relief_ready": false, "resources": {}}
 

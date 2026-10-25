@@ -22,6 +22,7 @@ func _run() -> void:
 	var geometry: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://Contracts/geometry_contract.json"))
 	for key in geometry.maps:
 		var map: Node2D = (load(str(geometry.maps[key].scene)) as PackedScene).instantiate()
+		preload("res://scenes/Shared/Field/RoomArtFinish.gd").attach(map)
 		root.add_child(map)
 		var actor := CharacterBody2D.new()
 		actor.set_script(ACTOR)

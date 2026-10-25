@@ -53,3 +53,5 @@
 中央厅采用 `artifacts/chapter12-room-design/12-central-hall.png`，粮仓采用同目录 `06-granary.png`，诗人采用 `sources/Internal/Props/Highlights/Backgrounds/shura_gallery.png`。原图有光影、透视和非周期变化；发布器保留这些像素，裁切重复处不宣称无缝。中央厅柱体遮挡处不能恢复原有径纹，纹盘单独隔离可见像素，内部遮挡区使用同图青灰盘面样本，缺失的北侧金圈弧不补画；此限制写入publication。其余五幕没有对应原稿确认，本批仍沿用下述旧地形，不宣称已达到原稿一致性。
 
 `python mcp/asset_pipeline/publish_highlight_tiles.py --source <4x4材质原图>` 提取完整材质格，以 nearest-neighbor 发布32×32原料，再派生floor47角边、wall16四边、water47岸缘。遮罩保留中心16×16；四边使用16宽连接臂；47格式角位独立控制8×8角，16格式由相邻两边决定角。清单保存源格、比例、SHA-256、地形索引、peering bits和透明边预览。成品为 `godot_csharp/ShareAsset/Internal/Props/Highlights/Terrain/HighlightsTerrain.tres` 与外置PNG。已逐格绘制的原生图集可用 `--format blob47|wang16|minimal3x3 --floor-source <PNG> --wall-source <PNG> --water-source <PNG>`，分别要求8×6（47格、余格空）、4×4或3×3；3×3为手工变体。`--godot <程序>` 指定生成器使用的Godot。
+
+室内地图截图 `capture_maps.gd` 与正式 CampusMapView 共用 RoomArtFinish.attach，绘制局部代码光晕及墙根/家具接触暗部；不改地图几何或重绘发布PNG。全图输出不含Host镜头、日时与UI，必须按此范围报告。

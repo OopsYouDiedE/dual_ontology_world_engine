@@ -4,6 +4,7 @@ Only an external script and a presentation node are inserted. Runtime reads
 the original published terrain_rows. Full scene regeneration uses attach_skin.
 """
 import argparse
+import json
 import re
 from pathlib import Path
 from chapter2_art import rooms
@@ -34,10 +35,39 @@ def attach_skin(text: str, room: dict) -> str:
     return text.replace(before, node + before, 1)
 
 
+def publish_art_finish_spec():
+    """Publish explicit window crops and wall materials from authoring recipes."""
+    from build_living_floor import PARTS
+    from chapter2_art.painter import Grid, _face_runs
+    recipe = {room["key"]: room for room in rooms.all_rooms()}
+    spec = {}
+    for key, room in recipe.items():
+        windows = [[item[1], item[2] * 32, item[3]] for item in room.get("decor", []) if item[0] == "window"]
+        panels = []
+        for x0, x1, y, region, mark in _face_runs(Grid(room)):
+            style = room.get("wall", {}).get(region, room.get("wall", {}).get("default", ("plaster", "CREAM")))
+            if mark == "W" and style[0] in ("paper", "plaster", "panel"):
+                panels += [[x * 32, (y + 1) * 32] for x in range(x0, x1)]
+        spec[key] = [{"origin": [0, 0], "texture": f"res://ShareAsset/Internal/Props/Chapter2/rooms/{key}.png", "windows": windows, "panels": panels}]
+    spec["living_floor"] = []
+    for key, offset in PARTS.items():
+        part = spec[key][0]
+        if key == "living_hall":
+            for lower in (False, True):
+                spec["living_floor"].append(dict(part, origin=[offset[0], offset[1] + (192 if lower else 0)],
+                    windows=[w for w in part["windows"] if (w[1] >= 544) == lower],
+                    panels=[p for p in part["panels"] if (p[1] >= 544) == lower]))
+        else:
+            spec["living_floor"].append(dict(part, origin=list(offset)))
+    target = ROOT / "godot_csharp/Contracts/room_art_finish.json"
+    target.write_text(json.dumps(spec, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--maps", nargs="+", choices=SELECTED, default=list(SELECTED))
     args = parser.parse_args()
+    publish_art_finish_spec()
     recipes = {room["key"]: room for room in rooms.all_rooms()}
     for key in args.maps:
         path = SCENES / (key + ".tscn")

@@ -555,6 +555,8 @@ def main():
     if args.stands_only:
         print(f"generated stands: {update_stands_only(args.stands_only)} file(s) changed")
         return
+    from publish_room_terrain_skins import publish_art_finish_spec
+    publish_art_finish_spec()
     if args.interiors_only:
         print(f"generated interiors: {update_geometry_only(args.interiors_only, text_source=args.text_source, repaint=True)} file(s) changed")
         return

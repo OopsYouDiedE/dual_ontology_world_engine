@@ -238,7 +238,7 @@ func apply_snapshot(value: Dictionary) -> void:
 	execution_binding = value
 	if is_instance_valid(tint):
 		var daylight: Color = DAYPART_TINT.get(str(value.get("daypart", "")), Color.WHITE)
-		tint.color = daylight * Color(0.62, 0.66, 0.76) if adapter.sight_terrain_fog() else daylight
+		tint.color = daylight.lerp(Color.WHITE, 0.65) if adapter.sight_terrain_fog() else daylight # Local room ambient owns contrast; retain a gentle time-of-day contribution.
 	if adapter.has_method("apply_snapshot"): adapter.apply_snapshot(value)
 	if not execution_only and adapter.fixed_actors().is_empty(): _spawn_people()
 	if execution_bridge != null: execution_bridge.sync_obstacles(self)
@@ -1463,6 +1463,9 @@ class RoomStageInner extends Node2D:
 		if not indoor:
 			field.camera.zoom = Vector2(2, 2)
 			return
+		var finish := _map.get_node_or_null("RoomArtFinish")
+		if finish != null:
+			finish.set_view_bounds(_bounds)
 		_ensure_glow()
 		var light_index := 0
 		var window_index := 0
@@ -1478,8 +1481,8 @@ class RoomStageInner extends Node2D:
 			light.texture_scale = 1.1 if window else 1.45
 			light.color = Color(0.63, 0.79, 0.94) if window else Color(1.0, 0.81, 0.71)
 			light.energy = 0.6 if window else 0.9
-			light.enabled = true
-			light.show()
+			light.enabled = finish == null
+			light.visible = finish == null
 			if window:
 				_window_beam(point, window_index)
 				window_index += 1
