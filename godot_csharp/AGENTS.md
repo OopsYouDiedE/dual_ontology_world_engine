@@ -88,6 +88,8 @@ Main 在地图、人物、碰撞、UI、物理注册与实际绘制完成后揭�
 
 ## 诊断、控制台与演出样本
 
+餐厅与护碑节选使用独立 `PainterlyStage` 装配Astra原图裁切：32px物理尺度不绑定材质像素密度，地面模块宽128px并纵向等比；人物和交互物独立脚点排序。A/B/C只切换地面重复与整模块镜像，不改变碰撞、人物尺度或路线，不另画装饰。其余高光幕仍用原资产，不因此声称全游戏美术已迁移。来源、轮廓裁切及人物头/身体分带缩放由MCP `modern-stage`（`publish_astra_stage.py`）记录；有限实机采集入口为 `capture-modern-stage`，不创建Core会话。切幕释放在途等待，失效epoch不更新新舞台。三头身与左手拦阻依据用户设计修订，四幅关键姿态不冒充完整逐帧动画。
+
 `scenes/Highlights/Highlights.tscn` 是独立条件节选舞台，读取 `Contracts/highlight_stages.json`，使用32px地形、独立道具和局部CharacterBody2D演出。它不创建正式会话，不授予观察、效果或通关；`--highlight=<id>` 选择六段之一。启动、内容cue、Y排序和局部搬运边界见 `scenes/Highlights/README.md`。舞台图像发布器为 MCP 的 `asset_pipeline/highlight-stages`，自动地形发布器单独维护地形连接与来源合同。
 
 高光舞台的移动与搬运cue等待实际route_finished；在途关闭下一句，受阻停止后续旁白，交接后才登记接收。16×12画布整体近看，人物与32格比例不单独缩放。墙体使用16四边格式，地面和岸缘使用47角边格式；它们共享稳定source/terrain编号。

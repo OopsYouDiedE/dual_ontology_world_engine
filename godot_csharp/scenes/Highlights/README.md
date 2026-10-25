@@ -1,5 +1,21 @@
 # 高光舞台
 
+## Astra 素材接入（2026-10-25）
+
+餐厅和护碑两幕采用 Astra 独立生成并经用户认可的素材板。`modern-stage` 路由调用 `mcp/asset_pipeline/publish_astra_stage.py`：只裁切、透明分离、镜像和尺寸对齐，不重新绘制或改色。源板与记录归档于 `sources/Internal/ModernStage/Astra/`，每个矩形或轮廓裁切及头/身体分带缩放写入 `Props/ModernStage/publication.json`。其他人物、灶台与母碑沿用已有素材，不宣称全部角色美术已更新。
+
+地面为128px宽的 TileMap 模块，纵向等比保留源纹理比例，物理装配仍为32px尺度。A/B/C按钮在同一镜头、身体尺寸和路线下比较旧32px重复、Astra原稿直接重复、Astra原稿整块镜像接缝。墙面直接采样源板正面，与矩形桌面共同保持RPG平行斜俯视，仅露顶面和前侧。没有重新绘制地毯、灯光或装饰。
+
+默认采用Astra在实机比较后选择的B（原稿直接重复），C作为可见的备选保留；镜像可能使石纹形成过大的连片，不能只凭接缝连续宣称更优。护碑幕把同源石材切片按128px宽、24px高分层装配前墙，并用源板边缘裁切条标明墙顶和墙脚，避免直接把整块地板放大成墙。
+
+餐厅的“绕桌落座”按钮或R键执行完整桌周路径，按真实碰撞到达座位后切换已有PixelCast背向坐姿。桌椅使用独立碰撞和脚点排序，受阻停止。护碑的 `cane_draw/cane_raise/cane_strike/cane_stop` 来自内容合同，依次抽杖、抬杖、敲地、左手伸出；右手持续持杖。两幅可用短身稿与两幅旧姿态按共同解剖头高进行分带尺寸对齐，未使用双杖错误帧。它们是四个关键姿态加时序，不是新增完整逐帧手臂动画，也没有新方向步态。
+
+这两幕使用1024×768渲染视口及2倍相机，保持原512×384世界取景；几何和素材方案比较不以镜头变化代替改进。有限采集：`python mcp/verification/run_modern_stage.py --godot <Godot程序> --out artifacts/tilemap-modernization/runtime`。原始输入、身体采样与结果写DVTILE01校验二进制，实际PNG来自游戏SubViewport。该工具不启动Core/AI，也不代表正式章节验收。
+
+采集使用临时纯GDScript工程，仅复用生产`.godot/imported`的资源缓存；源哈希失效仍交给Godot导入，不复用会话、存档或编辑器状态。`modern-stage-report`只生成固定目录的HTML，核对本轮PNG时戳、源码指纹和二进制完整性，不启动游戏。
+
+以下32×48、三方向静姿与旧地形说明继续适用于未更新的四幕；不覆盖上述两幕的Astra接入。
+
 独立纯 GDScript 场景以六个局部舞台展示条件节选。入口：
 
 ```powershell

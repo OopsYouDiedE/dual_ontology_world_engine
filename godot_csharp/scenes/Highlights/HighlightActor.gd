@@ -13,6 +13,10 @@ var facing := "front"
 var gesture_time := 0.0
 var blocked_time := 0.0
 var last_point := Vector2.ZERO
+var modern := false
+var seated := false
+var held_pose := ""
+var modern_scale := 1.0
 
 func _ready() -> void:
 	collision_layer = 2
@@ -49,6 +53,8 @@ func _ready() -> void:
 	queue_redraw()
 
 func set_pose(action: String, direction: String = "") -> void:
+	if seated: action = "sit"
+	elif not held_pose.is_empty(): action = held_pose
 	if not direction.is_empty():
 		facing = direction
 	sprite.flip_h = facing == "right"
@@ -58,6 +64,28 @@ func set_pose(action: String, direction: String = "") -> void:
 		animation = "idle_" + suffix
 	if sprite.sprite_frames.has_animation(animation):
 		sprite.play(animation)
+	if modern:
+		var frame := sprite.sprite_frames.get_frame_texture(sprite.animation, sprite.frame)
+		sprite.position = Vector2(0, -frame.get_height() * modern_scale * 0.5)
+
+func use_modern_art() -> void:
+	if actor_id != "scholar": return
+	var path := "res://ShareAsset/Internal/Props/ModernStage/%s.tres" % actor_id
+	if not ResourceLoader.exists(path): return
+	modern = true
+	sprite.sprite_frames = load(path)
+	modern_scale = float(sprite.sprite_frames.get_meta("world_scale"))
+	sprite.scale = Vector2.ONE * modern_scale
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	set_pose("idle")
+
+func sit() -> void:
+	route.clear()
+	velocity = Vector2.ZERO
+	player_controlled = false
+	seated = true
+	facing = "back"
+	set_pose("sit")
 
 func walk(points: Array[Vector2]) -> void:
 	route = points.duplicate()
@@ -69,6 +97,7 @@ func gesture() -> void:
 	set_pose("talk")
 
 func _physics_process(delta: float) -> void:
+	if seated: return
 	gesture_time = maxf(0.0, gesture_time - delta)
 	var direction := Vector2.ZERO
 	if player_controlled:

@@ -1,0 +1,21 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ModernStage/scholar-draw.png" id="draw"]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ModernStage/scholar-raise.png" id="raise"]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ModernStage/scholar-strike.png" id="strike"]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ModernStage/scholar-block.png" id="block"]
+
+[resource]
+
+animations = [{"frames": [{"duration": 1.0, "texture": ExtResource("draw")}], "loop": true, "name": &"idle_front", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("draw")}], "loop": true, "name": &"idle_back", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("draw")}], "loop": true, "name": &"idle_left", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("draw")}], "loop": true, "name": &"draw_front", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("raise")}], "loop": true, "name": &"raise_front", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("strike")}], "loop": true, "name": &"strike_front", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("block")}], "loop": true, "name": &"block_front", "speed": 1.0}]
+
+metadata/world_scale = 0.1

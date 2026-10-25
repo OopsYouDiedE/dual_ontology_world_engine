@@ -4,6 +4,7 @@
 
 | 工作 | MCP operation | 源与输出 |
 | --- | --- | --- |
+| Astra大模块舞台 | `modern-stage` | `publish_astra_stage.py`切分`sources/Internal/ModernStage/Astra/`的认可源板，发布`Props/ModernStage/`的地板、墙、桌椅、四姿态SpriteFrames、干木杖接触音与逐项裁切/变换清单；不重绘。模块宽128px且纵向等比，物理保持32px尺度。 |
 | 文档纹理体系 | `document-textures` | 三代建筑材质、工业/纸皮、限定视觉及九组透明徽记；制作说明在 `sources/Internal/Textures/DocumentSystems/DESIGN.md`，成品在 `ShareAsset/Internal/Textures/DocumentSystems/`，无参数 |
 | 地图 | `living-floor`、`chapter-maps` | 组合现有场景、显式地图文字和原始室外素材，发布 Chapter2 场景与资源 |
 | 角色 | `anime-cast`、`pixel-cast`、`dialogue-cast`、`character-atlas` | 读取对应原稿，发布角色资源 |

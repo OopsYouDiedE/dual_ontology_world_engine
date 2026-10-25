@@ -3,6 +3,14 @@
     "name": "asset_pipeline",
     "description": "Build or publish selected maps, art, UI and geometry assets. arguments contains the selected script command-line options; publisher source/review inputs remain explicit.",
     "routes": {
+      "modern-stage": {
+        "kind": "python",
+        "path": "asset_pipeline/publish_astra_stage.py"
+      },
+      "modern-stage-report": {
+        "kind": "python",
+        "path": "verification/render_modern_stage_report.py"
+      },
       "highlight-terrain": {
         "kind": "python",
         "path": "asset_pipeline/publish_highlight_tiles.py"
@@ -664,6 +672,10 @@
     "name": "godot_tools",
     "description": "Run one existing Godot capture, physics/input observation or asset-adapter tool in an isolated temporary project. C# and rendering requirements are declared per operation. Supply script --out and scope options in arguments.",
     "routes": {
+      "capture-modern-stage": {
+        "kind": "godot",
+        "script": "res://tools/capture_modern_stage.gd"
+      },
       "capture-maps": {
         "kind": "godot",
         "script": "res://asset_pipeline/capture_maps.gd"

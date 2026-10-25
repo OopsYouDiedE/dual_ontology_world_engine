@@ -1,0 +1,30 @@
+2026-10-25 — Astra independent material/art sample
+
+Generation mode: built-in image_gen. Prompts composed and calls executed by Astra subagent.
+Scope: two art sample boards only. No game code, scenes, production assets, build, session, test, commit or push was performed by this subagent.
+
+DELIVERED: environment-rpg-materials.png
+Source: C:/Users/iii/.codex/generated_images/01a170ed-8e56-73b2-ad67-c0af38d2c52d/exec-c0043ce7-6641-493d-947c-89352be0187a.png
+Initial prompt: environment-rpg-prompt.txt
+Targeted correction prompt: environment-rectangle-correction-prompt.txt
+Edit target: C:/Users/iii/.codex/generated_images/01a170ed-8e56-73b2-ad67-c0af38d2c52d/exec-214c8276-785c-4027-b1ad-d7f29096118d.png
+Visual choice: warm quiet floor, darker furniture framing, broad light plaster and slate swatches. RPG front-aligned parallel angled top-down projection with top and front surfaces; rectangular table and chair tops, no lateral side planes. Initial RPG image had tapered top outlines and was corrected once.
+
+SUPERSEDED CHARACTER DRAFT, NOT CURRENT DELIVERY: scholar-cane-actions.png
+Source: C:/Users/iii/.codex/generated_images/01a170ed-8e56-73b2-ad67-c0af38d2c52d/exec-849b6ac3-ba80-41bd-9cbc-3a6a70b68da3.png
+Prompt: scholar-actions-prompt.txt
+Visual choice: white hair, royal-blue robe, ivory collar and sleeve lining, dark cane with restrained brass fittings. Four poses: draw cane, raise cane, strike ground, extend anatomical right hand. In the last pose the right hand appears on viewer left and the left hand holds the cane on viewer right. Three equal height bands guide the compact character proportions.
+
+SUPERSEDED, NOT DELIVERED AS CORRECT: environment-prompt.txt
+Pure overhead source: C:/Users/iii/.codex/generated_images/01a170ed-8e56-73b2-ad67-c0af38d2c52d/exec-8a31e265-6185-403a-9cad-5e174f98a64a.png
+Reason: user clarified RPG angled top-down parallel projection, not 90-degree overhead.
+
+Limits: These are generated art sample boards on opaque backgrounds, not production sprite atlases or seamless TileSet textures. They have not been sliced, alpha-matted, fitted to runtime cells, registered to animation pivots, or tested in Godot. The character ruler includes the hair/topknot and long beard silhouette; exact anatomical chin-based head-height calibration remains a production task. The four stills communicate key poses but do not establish intermediate motion or consistent cane path. Source prompts preserve the requested constraints; visual review is not a proof of pixel-perfect geometry or continuous tiling.
+
+LATEST CHARACTER CORRECTION: scholar-cane-actions-corrected.png
+Source: C:/Users/iii/.codex/generated_images/01a170ed-8e56-73b2-ad67-c0af38d2c52d/exec-3e9945c7-e20c-4fd1-872c-136b0d8d41f4.png
+Prompt: scholar-actions-correction-prompt.txt
+Performed one targeted built-in image_gen edit; no additional generation after the user's next instruction.
+Observed result: lower robe and body substantially shortened; skull-crown-to-sole silhouette is approximately three skull-crown-to-anatomical-chin heights by visual inspection, excluding topknot and hanging beard. Incorrect ruler removed. No pixel-perfect anatomical validation is claimed.
+FAILED INVARIANTS: first and fourth figures hold the cane in anatomical left hand; second still raises it with anatomical right hand; third has two canes. The sheet must NOT be treated as a correct continuous four-pose sequence.
+Latest user correction: final blocking hand should be anatomical LEFT. Whole-figure horizontal mirroring of the first and fourth figures gives a consistent anatomical RIGHT cane hand and anatomical LEFT stop gesture. Mirroring the entire four-frame sheet does not fix the second/third-frame defects. This suggestion is compositing/selection guidance only; no slicing, mirroring or game modifications were performed by Astra.

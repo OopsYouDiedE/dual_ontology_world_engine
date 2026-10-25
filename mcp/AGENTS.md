@@ -7,6 +7,8 @@
 `verification/run_cli_ai_demo.py` 仅在用户明确授权 AI 决策运行及现实秒数时运行；固定内置 ai 与侦探检阅者，只请求 next 或限时 advance 批量自主推进；每项选择仍由引擎本人规划，工具不选择行动或答案。硬计时从进程启动开始，包含开局、在途动作和封存；`--seconds` 为停止请求新自主推进的时点，`--grace` 是硬期限内预留的关闭时间，不能叠加到授权时长之外。默认 `--seconds 41 --grace 4 --hard-timeout 45`，最后 250 毫秒留给操作系统终止与回收，独立 watchdog 保持在 44.75 秒终止仍在运行的被测 CLI 进程，保留失败或部分文件。该外部超时不代表规划器内部已实现墙钟硬期限。此工具不扫描源码、不运行静态验证、不生成 UI 回放；来源由调用者提供的 revision 与程序集原生记录标明。
 
 - `tools.json` 是公开操作、命令路径、函数归属和运行模式的唯一目录。`server.py` 从 `routes` 生成公开枚举，`tool_actions.py` 只执行通用路由，不维护第二份操作名单。
+- `asset_pipeline/modern-stage` 由`publish_astra_stage.py`切分用户认可的Astra素材，发布128px宽地面和透明人物/家具；只做裁切、透明分离、镜像及有记录的尺寸对齐，不重绘，不改32px碰撞尺度。`godot_tools/capture-modern-stage`仅观察真实舞台的材质候选、绕桌落座和拐杖姿态，不启动Core/AI。输入、身体采样与结果以DVTILE01头、长度、SHA-256及Godot原生Variant二进制封装到`.dvlog`；它是此工具的呈现证据格式，不冒充正式会话日志。
+- 有限舞台采集的Python包装器只复用生产`.godot/imported`资源缓存，临时工程仍独立；更新源素材必须正常重新导入。`modern-stage-report`读取固定输出目录，拒绝早于本轮指纹的截图、源码失配和损坏流，生成HTML而不启动会话；检查完整性不等同于画面或游戏验收。
 - 新增可独立调用的工具时，同步添加实际路由与参数说明。共享库、场景组件、编译桥和编辑器回调通过其所属入口使用，不另造空 handler。
 - `asset_pipeline/highlight-stages` 只发布保留原稿的高光道具与人物 atlas；其裁切参数、比例和来源哈希写入成品清单。场景执行、画面观察和正式 Core 会话分别授权、分别记录。
 - `asset_pipeline/highlight-room-skins` 将可复用地形接到指定现役房间，只新增呈现节点与资源引用，使用已有 terrain_rows；章节地图再生复用相同的 attach_skin 函数。既有场景几何、门口、站点、脚点和楼层语义不在此发布器修改。

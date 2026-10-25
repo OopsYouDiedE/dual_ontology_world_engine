@@ -6,6 +6,7 @@ const EFFECT = preload("res://scenes/Highlights/HighlightEffects.gd")
 const STRUCTURE = preload("res://scenes/Highlights/StageStructure.gd")
 const AUTHORED_SURFACE = preload("res://scenes/Shared/Field/AuthoredSurface.gd")
 const GALLERY_ORNAMENT = preload("res://scenes/Highlights/GalleryFloorOrnament.gd")
+const PAINTERLY = preload("res://scenes/Highlights/PainterlyStage.gd")
 const TILESET = preload("res://ShareAsset/Internal/Props/Highlights/Terrain/HighlightsTerrain.tres")
 const ART := "res://ShareAsset/Internal/Props/Highlights/"
 const TITLES := ["疯骑士", "人在史在", "十九路棋", "最后馈赠", "热饭", "最后抢运"]
@@ -39,6 +40,11 @@ var focus_button: Button
 var cue_busy := false
 var cue_failed := false
 var stage_epoch := 0
+var painterly: Node2D
+var material_scheme := 1
+var material_button: Button
+var dining_button: Button
+var action_phase := "idle"
 
 func _ready() -> void:
 	get_tree().set_meta("highlight_launch_consumed", true)
@@ -133,6 +139,13 @@ func _build_ui() -> void:
 	focus_button.toggle_mode = true
 	focus_button.toggled.connect(_focus_board)
 	controls.add_child(focus_button)
+	material_button = Button.new()
+	material_button.pressed.connect(_cycle_material)
+	controls.add_child(material_button)
+	dining_button = Button.new()
+	dining_button.text = "绕桌落座 [R]"
+	dining_button.pressed.connect(_dining_walk)
+	controls.add_child(dining_button)
 	progress_label = Label.new()
 	progress_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	controls.add_child(progress_label)
@@ -147,6 +160,12 @@ func _build_ui() -> void:
 
 func _select_stage(index: int) -> void:
 	stage_epoch += 1
+	for performer in actors.values():
+		if not performer.route.is_empty():
+			performer.route.clear()
+			performer.route_finished.emit(performer.actor_id, false)
+	painterly = null
+	action_phase = "idle"
 	cue_busy = false
 	cue_failed = false
 	stage_index = index
@@ -213,6 +232,12 @@ func _select_stage(index: int) -> void:
 		"demon_miracle": _miracle_stage()
 		"kitchen_dumplings": _kitchen_stage()
 		"last_transfer": _transfer_stage()
+	var modern_stage := id in ["scholar_relic", "kitchen_dumplings"]
+	material_button.visible = modern_stage
+	dining_button.visible = id == "kitchen_dumplings"
+	dining_button.disabled = false
+	if modern_stage:
+		_install_modern_stage(id, structure)
 	title_label.text = str(stages[index]["title"]) + "  /  " + str(stages[index]["location"])
 	condition_label.text = str(stages[index]["condition"])
 	for i in range(stage_buttons.size()):
@@ -220,6 +245,87 @@ func _select_stage(index: int) -> void:
 	next_button.disabled = false
 	state_label.text = "WASD / 方向键：侦探局部走位 · 空格：下一句 · 1–6：切换舞台 · 32 px 格 / 32×48 人物"
 	_advance()
+
+func _cycle_material() -> void:
+	material_scheme = (material_scheme + 1) % 3
+	if is_instance_valid(painterly): painterly.set_scheme(material_scheme)
+	_update_material_label()
+
+func _update_material_label() -> void:
+	material_button.text = ["A · 32px重复", "B · 原稿直接平铺", "C · 原稿镜像接缝"][material_scheme]
+
+func _install_modern_stage(id: String, structure: Node2D) -> void:
+	for child in world.get_children():
+		if child is Label: child.hide()
+	wall_layer.hide()
+	structure.hide()
+	props["entry"].hide()
+	props["window"].hide()
+	viewport.size = Vector2i(1024, 768)
+	stage_camera.zoom = Vector2(2, 2)
+	painterly = PAINTERLY.new()
+	world.add_child(painterly)
+	world.move_child(painterly, sorted_world.get_index())
+	painterly.configure(id == "kitchen_dumplings", floor_layer)
+	painterly.set_scheme(material_scheme)
+	_update_material_label()
+	for person in actors.values(): person.use_modern_art()
+	if id == "kitchen_dumplings":
+		_replace_prop("worktable", "table", Vector2(126, 73.18), Rect2(-52, -43, 104, 37))
+		props["worktable"].position = Vector2(256, 252)
+		props["flour_stock"].position = Vector2(116, 150)
+		_modern_prop("chair", Vector2(256, 302), Vector2(18, 35.33), "DiningChair", Rect2(-9, -22, 18, 8))
+	else:
+		props["watercourse"].hide()
+		actors["detective"].position = Vector2(208, 304)
+		actors["scholar"].set_pose("idle", "front")
+	state_label.text = "Astra原图裁切 · 32px物理格 · 128px材质模块 · 无正式会话"
+
+func _modern_prop(kind: String, at: Vector2, size: Vector2, key: String, collision := Rect2()) -> Node2D:
+	var node := Node2D.new()
+	node.name = key
+	node.position = at
+	sorted_world.add_child(node)
+	var sprite := Sprite2D.new()
+	sprite.name = "Art"
+	sprite.texture = load("res://ShareAsset/Internal/Props/ModernStage/%s.png" % kind)
+	sprite.scale = size / sprite.texture.get_size()
+	sprite.position.y = -size.y / 2.0
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	node.add_child(sprite)
+	if collision.has_area(): _barrier(collision.get_center(), collision.size, node)
+	props[key] = node
+	return node
+
+func _replace_prop(key: String, kind: String, size: Vector2, collision: Rect2) -> void:
+	var node: Node2D = props[key]
+	for child in node.get_children():
+		if child is StaticBody2D:
+			node.remove_child(child)
+			child.queue_free()
+	var art: Sprite2D = node.get_node("Art")
+	art.texture = load("res://ShareAsset/Internal/Props/ModernStage/%s.png" % kind)
+	art.centered = true
+	art.scale = size / art.texture.get_size()
+	art.position = Vector2(0, -size.y / 2.0)
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_barrier(collision.get_center(), collision.size, node)
+
+func _dining_walk() -> void:
+	if cue_busy or not dining_button.visible: return
+	var epoch := stage_epoch
+	cue_busy = true
+	dining_button.disabled = true
+	next_button.disabled = true
+	action_phase = "walking"
+	var path: Array[Vector2] = [Vector2(160, 312), Vector2(160, 156), Vector2(352, 156), Vector2(352, 312), Vector2(256, 312), Vector2(256, 300)]
+	if await _walk_and_wait("detective", path) and epoch == stage_epoch:
+		action_phase = "seated"
+		actors["detective"].sit()
+		state_label.text = "完整绕桌后实际到达座位 · 已切换背向坐姿 · 重置本段可重新演出"
+	if epoch == stage_epoch:
+		cue_busy = false
+		next_button.disabled = cue_failed
 
 func _focus_board(focused: bool) -> void:
 	if is_instance_valid(stage_camera):
@@ -432,6 +538,19 @@ func _run_cue(cue: String, actor_id: String) -> void:
 	if is_instance_valid(actor):
 		actor.gesture()
 	var id := str(stages[stage_index]["id"])
+	if cue in ["cane_draw", "cane_raise", "cane_strike", "cane_stop"]:
+		var poses := {"cane_draw": "draw", "cane_raise": "raise", "cane_strike": "strike", "cane_stop": "block"}
+		action_phase = str(poses[cue])
+		actor.held_pose = action_phase
+		actor.set_pose(action_phase, "front")
+		if action_phase == "strike":
+			var sound := AudioStreamPlayer.new()
+			sound.stream = load("res://ShareAsset/Internal/Props/ModernStage/cane-impact.wav")
+			sound.volume_db = -10
+			world.add_child(sound)
+			sound.finished.connect(sound.queue_free)
+			sound.play()
+		await get_tree().create_timer(0.65 if action_phase != "strike" else 0.35).timeout
 	match cue:
 		"approach":
 			if id == "shura_poet":
@@ -475,11 +594,13 @@ func _run_cue(cue: String, actor_id: String) -> void:
 			state_label.text = "源质逼近1F低沿（示意，无绝对液面） · 已实际送达：%d 件 / 当前搬运：%d 件" % [received.size(), cargo.size()]
 
 func _walk_and_wait(actor_id: String, points: Array[Vector2]) -> bool:
+	var epoch := stage_epoch
 	var actor = actors[actor_id]
 	var manual: bool = actor.player_controlled
 	actor.player_controlled = false
 	actor.walk(points)
 	var result: Array = await actor.route_finished
+	if epoch != stage_epoch: return false
 	actor.player_controlled = manual
 	var reached := bool(result[1])
 	if not reached:
@@ -528,6 +649,10 @@ func _transfer_one(actor_id: String) -> void:
 
 func _input(event: InputEvent) -> void:
 	if not event is InputEventKey:
+		return
+	if event.keycode == KEY_R and dining_button.visible:
+		get_viewport().set_input_as_handled()
+		if event.pressed and not event.echo: _dining_walk()
 		return
 	if event.keycode == KEY_SPACE or (event.keycode >= KEY_1 and event.keycode <= KEY_6):
 		# Consume both edges before GUI focus can activate a toggle button.
