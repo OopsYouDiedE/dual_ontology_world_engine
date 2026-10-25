@@ -197,7 +197,8 @@ func _select_stage(index: int) -> void:
 	sorted_world.y_sort_enabled = true
 	world.add_child(sorted_world)
 	var id := str(stages[index]["id"])
-	viewport.size = Vector2i(512, 256) if id == "shura_poet" else Vector2i(512, 384)
+	viewport.size = Vector2i(2048, 1024) if id == "shura_poet" else Vector2i(512, 384)
+	if id == "shura_poet": stage_camera.zoom = Vector2(4, 4)
 	stage_camera.position = Vector2(256, 208) if id == "shura_poet" else Vector2(256, 192)
 	focus_button.visible = id == "chess_god"
 	focus_button.set_pressed_no_signal(false)

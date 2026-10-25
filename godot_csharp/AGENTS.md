@@ -121,7 +121,7 @@ F12 或反引号打开控制台。status / options 读取当前观察者投影�
 
 ## Astra 原稿自动包边
 
-画廊自动包边由 `Shared/Field/AuthoredTerrainBorder.gd` 消费 `Props/AstraTerrain/GalleryBorder.tres`；原稿裁切与适配器邻接表的发布由 MCP `astra-terrain` 所有。该层只覆盖视觉边饰，不持有碰撞，不改变底面采样相位或独立中心纹样。有限画面采集入口、覆盖范围和源图限制见 `Highlights/README.md`。
+画廊自动包边由 `Shared/Field/AuthoredTerrainBorder.gd` 消费 `Props/AstraTerrain/GalleryBorder.tres`；原稿裁切与适配器邻接表的发布由 MCP `astra-terrain` 所有。该层只覆盖视觉边饰，不持有碰撞，不改变底面采样相位或独立中心纹样。诗人幕以2048×1024视口、4倍相机保持原世界取景，报告源像素到输出像素的实际比例；逐层截图核查底面、包边、中心纹样，缺少作者法线/AO/发光遮罩时明确登记缺失。有限画面采集入口、覆盖范围和源图限制见 `Highlights/README.md`。
 
 ## 室内统一明暗与代码光晕
 

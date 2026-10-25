@@ -27,15 +27,34 @@ func _run() -> void:
 	stage._select_stage(0)
 	await process_frame
 	await _picture(stage.viewport, "gallery")
+	var gallery_floor = stage.world.get_node("AuthoredGallery_floor")
+	var ornament = stage.world.get_node("AuthoredGalleryBorderAndMedallion")
+	var border_layer = ornament.get_node("AutomaticSourceBorder")
+	var center_layer = ornament.get_node("SingleLargeDiamond")
+	border_layer.hide()
+	center_layer.hide()
+	await _picture(stage.viewport, "gallery-base")
+	border_layer.show()
+	await _picture(stage.viewport, "gallery-border")
+	center_layer.show()
+	observations.append({"render_size": stage.viewport.size,"camera_zoom":stage.stage_camera.zoom,
+		"border_source_to_screen":32.0 / 120.0 * stage.stage_camera.zoom.x,
+		"floor_source_to_screen":7.0 / 24.0 * stage.stage_camera.zoom.x,
+		"layers":[gallery_floor.name,border_layer.name,center_layer.name],
+		"missing_material_channels":["authored normal","authored AO","authored emission mask"]})
 	# The same runtime component, a larger camera for close inspection.
 	var diagnostic := SubViewport.new()
-	diagnostic.size = Vector2i(960, 320)
+	diagnostic.size = Vector2i(3840, 1280)
 	diagnostic.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	root.add_child(diagnostic)
 	var background := Polygon2D.new()
 	background.polygon = PackedVector2Array([Vector2.ZERO, Vector2(960,0), Vector2(960,640), Vector2(0,640)])
 	background.color = Color(0.24, 0.24, 0.22)
 	diagnostic.add_child(background)
+	var camera := Camera2D.new()
+	camera.position = Vector2(480, 160)
+	camera.zoom = Vector2(4, 4)
+	diagnostic.add_child(camera)
 	var all_shapes := []
 	for index in 3:
 		var cells: Array[Vector2i] = []
