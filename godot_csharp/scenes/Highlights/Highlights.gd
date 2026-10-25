@@ -4,6 +4,8 @@ extends Control
 const ACTOR = preload("res://scenes/Highlights/HighlightActor.gd")
 const EFFECT = preload("res://scenes/Highlights/HighlightEffects.gd")
 const STRUCTURE = preload("res://scenes/Highlights/StageStructure.gd")
+const AUTHORED_SURFACE = preload("res://scenes/Shared/Field/AuthoredSurface.gd")
+const GALLERY_ORNAMENT = preload("res://scenes/Highlights/GalleryFloorOrnament.gd")
 const TILESET = preload("res://ShareAsset/Internal/Props/Highlights/Terrain/HighlightsTerrain.tres")
 const ART := "res://ShareAsset/Internal/Props/Highlights/"
 const TITLES := ["疯骑士", "人在史在", "十九路棋", "最后馈赠", "热饭", "最后抢运"]
@@ -306,8 +308,13 @@ func _effect(kind: String, at: Vector2, parent: Node = null) -> Node2D:
 func _poet_stage() -> void:
 	floor_layer.clear()
 	wall_layer.clear()
-	floor_layer.set_cells_terrain_connect(_cells(Rect2i(1, 6, 14, 3)), 0, 0)
-	floor_layer.set_cells_terrain_connect(_cells(Rect2i(1, 3, 2, 3)), 0, 0)
+	# The gallery owns its original diamond floor and double-line border.
+	# Coverage does not impose the old blob47 corner cut on these pixels.
+	_authored_gallery_surface("floor", [Rect2(32, 192, 448, 96), Rect2(32, 96, 64, 96)], Vector2(140.20833333333334, 204.625))
+	var ornament := GALLERY_ORNAMENT.new()
+	ornament.name = "AuthoredGalleryBorderAndMedallion"
+	world.add_child(ornament)
+	world.move_child(ornament, sorted_world.get_index())
 	props["entry"].position = Vector2(64, 192)
 	props["window"].queue_free()
 	props.erase("window")
@@ -324,6 +331,13 @@ func _poet_stage() -> void:
 	_actor("poet", Vector2(352, 240), "卢西安")
 	_actor("thief", Vector2(416, 224), "雀儿")
 	_label_at("桥口", Vector2(296, 254))
+
+func _authored_gallery_surface(piece: String, coverage: Array[Rect2], origin: Vector2) -> void:
+	var surface := AUTHORED_SURFACE.new()
+	surface.name = "AuthoredGallery_" + piece
+	world.add_child(surface)
+	world.move_child(surface, sorted_world.get_index())
+	surface.configure(load("res://ShareAsset/Internal/Props/AuthoredRooms/shura_gallery_" + piece + ".png"), 7.0 / 24.0, origin, coverage)
 
 func _scholar_stage() -> void:
 	_spawn_prop("stele", Vector2(272, 192), "mother_stele")

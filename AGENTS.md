@@ -6,6 +6,7 @@
 - AGENTS 只维护工作流程、架构、接口、验证与报告方式。世界、人物、剧情、谜题与玩法的依据只有用户指令和 [设计规范](docs/design-standard.md)；依据缺失、含糊或冲突时向用户确认，不自行补设，不在 AGENTS 中另写剧情结论。
 - 调整工作流程、命令、架构或模块接口时，在同轮更新对应 AGENTS 与工程文档。历史任务的机器状态、临时时限、暂停窗口和实施快照保存在 Git 与任务记录中，不叠加成新任务的执行要求。
 - 子代理不读取项目设计文件；主代理负责设计核对和实现取舍，并向并行任务提供必要的工程边界。
+- 每轮场景或美术设计完成后，以游戏真实渲染对照明确目标图，检查纹样、比例、接缝与遮挡，发现差异直接修正并重新观察。报告 HTML 同时登记目标、当前截图、取景范围及仍存差异。
 
 ## 现役架构
 
@@ -15,6 +16,7 @@
 | `dv_core/modules/20-core.dv`、`30-session.dv` | 通用机制、主体认知与会话 |
 | `dv_core/modules/35-campaign-schema.dv` | 两章共同依赖的角色、位置、时钟、构造器与跨章结构 |
 | `dv_core/modules/40-chapter1.dv`、`50-chapter2.dv` | 各自 include 35 的原生 DV 内容 |
+| `dv_core/modules/36-island-topology.dv`、`55-island.dv` | 同源房间拓扑与全岛数值、日账、作物行动声明 |
 | `dv_core/modules/60-game.dv` | 生产 include 闭包、连续章节与宿主入口 |
 | `dv_core/checks/70-checks.dv` | 隔离检查、权威 oracle、夹具和报告 |
 | `dv_core/compiler/`、`dv_core/host_bridge/` | 最小自举编译器、平台 ABI 与 .NET 会话接口 |
@@ -31,7 +33,7 @@ Core 的 verify/run 共用同一法则求值器，绑定对象对应不授予事
 
 ### 唯一动作链与宿主
 
-正式动作链由 `30-session.dv` 实现并由 `60-game.dv` 整合：Prepare → 现场执行/世界法则回执 → Complete。DV 负责决策、报价、权威效果、观察、传播与结算；Godot Main → WorldView 执行物理移动并返回现场结果。命令行 `formal-model` 适配同一接口，不包含 Godot 几何。预测与推演不发布真实行动效果。
+正式动作链由 `30-session.dv` 实现并由 `60-game.dv` 整合：Prepare → 现场执行/世界法则回执 → Complete。DV 负责决策、报价、权威效果、观察、传播与结算；Godot Main → WorldView 执行近场物理移动，离场 NPC 使用同源房间图邻接回执，均沿原 Complete 结算。命令行 `formal-model` 适配同一接口，不包含 Godot 几何。预测与推演不发布真实行动效果。
 
 宿主只持有 GameEngine → DvSession → 生成的 DV 类库。Core 原生值入口与 CLI 使用同一动作链；Core 发布中立身份和投影，Godot 自己映射场景、人物图像和 HUD。等待回执时不重复分派意图。阅读与同房行走期间通过显式 BackgroundPrepare 处理可执行 NPC；返回的动作仍交给同一物理执行器与 Complete。人工动作的提前准备按状态版本和观察者消费，失效即重新 Prepare。seed 是包含 Reader/Value 和代码发射的最小 C0 自举编译器，不含世界执行或第二套会话。
 

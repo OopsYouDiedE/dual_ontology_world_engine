@@ -11,7 +11,7 @@ static func validate_layout(map_id: String, layout: Node2D) -> Array[String]:
 	var groups := {"sites": "Sites", "stations": "Stations", "stands": "Stands", "spawns": "Spawns"}
 	for group in groups:
 		var expected := GEOMETRY.markers(map_id, str(group))
-		var root: Node = layout.get_node(str(groups[group]))
+		var root: Node = layout.get_node_or_null(str(groups[group]))
 		for id in expected:
 			var marker: Dictionary = expected[id]
 			var path := str(marker.get("path", str(groups[group]) + "/" + str(id)))
@@ -22,8 +22,9 @@ static func validate_layout(map_id: String, layout: Node2D) -> Array[String]:
 			if node.position.distance_to(GEOMETRY.point(marker.point)) > 0.01: errors.append("point " + path)
 			if marker.has("label") and str(node.get_meta("label", "")) != str(marker.label): errors.append("label " + path)
 			if marker.has("room") and str(GEOMETRY.room_at(map_id, GEOMETRY.point(marker.point)).get("id", "")) != str(marker.room): errors.append("room " + path)
-		for node in root.get_children():
-			if node is Marker2D and not expected.has(str(node.name)): errors.append("unexpected " + str(groups[group]) + "/" + str(node.name))
+		if root != null:
+			for node in root.get_children():
+				if node is Marker2D and not expected.has(str(node.name)): errors.append("unexpected " + str(groups[group]) + "/" + str(node.name))
 	var exit_ids := {}
 	for exit: Dictionary in item.exits:
 		exit_ids[str(exit.id)] = true

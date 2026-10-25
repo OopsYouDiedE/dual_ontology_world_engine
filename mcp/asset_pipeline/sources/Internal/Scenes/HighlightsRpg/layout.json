@@ -1,0 +1,769 @@
+{
+  "schema": 1,
+  "scope": [
+    "shura_poet",
+    "last_transfer"
+  ],
+  "publication": "res://ShareAsset/Internal/Props/HighlightsRpg/publication.json",
+  "coordinates": {
+    "logical_canvas": [
+      512,
+      384
+    ],
+    "viewport": [
+      1024,
+      768
+    ],
+    "camera_zoom": [
+      2,
+      2
+    ],
+    "world_grid": 32,
+    "source_canvas": [
+      1448,
+      1086
+    ],
+    "source_pixel_to_world": 0.35359116022099446,
+    "sprite_scale": 0.5,
+    "collision_foot": {
+      "shape": "circle",
+      "radius": 7,
+      "offset": [
+        0,
+        -5
+      ]
+    },
+    "sprite_position": "top_left = actor_foot - publication.poses[pose].foot_px * 0.5; texture scale = 0.5; do not center every unequal canvas"
+  },
+  "execution": {
+    "mode": "presentation-only local physical entities",
+    "automatic": true,
+    "advance": "Start once, then chain actual movement/contact/pose/object completion signals. No per-action next-dialogue click.",
+    "on_route_failure": "Stop this beat, preserve actual endpoints and item owner, expose failure; do not advance narrator or teleport.",
+    "camera": "Follow actual node feet using Camera2D; no enlarging the completed target bitmap.",
+    "speech": "Only existing indispensable lines, if retained. No new explanatory dialogue."
+  },
+  "stages": {
+    "shura_poet": {
+      "target": "artifacts/dv-approx-highlights/rpg-scenes/01-shura-poet-target.png",
+      "asset_layer_key": "01-shura-poet",
+      "camera": {
+        "center": [
+          256,
+          192
+        ],
+        "zoom": 2
+      },
+      "walkable": [
+        [
+          112,
+          160,
+          328,
+          160
+        ],
+        [
+          32,
+          180,
+          80,
+          140
+        ],
+        [
+          40,
+          158,
+          40,
+          36
+        ]
+      ],
+      "collisions": [
+        {
+          "id": "north",
+          "rect": [
+            112,
+            0,
+            400,
+            142
+          ]
+        },
+        {
+          "id": "west",
+          "rect": [
+            0,
+            0,
+            28,
+            384
+          ]
+        },
+        {
+          "id": "east",
+          "rect": [
+            452,
+            0,
+            60,
+            384
+          ]
+        },
+        {
+          "id": "south_rail",
+          "rect": [
+            0,
+            330,
+            512,
+            54
+          ]
+        },
+        {
+          "id": "door_leaf",
+          "rect": [
+            78,
+            166,
+            29,
+            16
+          ]
+        }
+      ],
+      "actors": {
+        "poet": {
+          "foot": [
+            232,
+            256
+          ],
+          "pose": "poet_hesitate",
+          "speed": 46,
+          "guard_collision": {
+            "rect_relative_to_foot": [
+              8,
+              -12,
+              32,
+              16
+            ],
+            "enabled_poses": [
+              "poet_guard",
+              "poet_guard_unsteady"
+            ],
+            "owner": "same poet CharacterBody2D",
+            "purpose": "Physical raised-sword block keeps pursuer at blade distance, not overlapping poet body; independent of normal foot circle."
+          }
+        },
+        "thief": {
+          "foot": [
+            184,
+            248
+          ],
+          "pose": "thief_hurt",
+          "speed": 31,
+          "limp_poses": [
+            "thief_limp_a",
+            "thief_hurt",
+            "thief_limp_b"
+          ],
+          "phase_speed": [
+            0.85,
+            0.45,
+            0.8
+          ],
+          "profile": "injured_only_this_stage"
+        },
+        "detective": {
+          "foot": [
+            392,
+            256
+          ],
+          "pose": "detective_chase_a",
+          "speed": 62
+        }
+      },
+      "exit": {
+        "rect": [
+          40,
+          158,
+          40,
+          36
+        ],
+        "foot": [
+          56,
+          176
+        ],
+        "label": "",
+        "complete_on": "actor feet enter exit rectangle after walked route"
+      },
+      "ornament_source": {
+        "source": "mcp/asset_pipeline/sources/Internal/Props/Highlights/Backgrounds/shura_gallery.png",
+        "source_rects": {
+          "floor": [
+            370,
+            512,
+            152,
+            111
+          ],
+          "border_south": [
+            370,
+            960,
+            152,
+            20
+          ],
+          "border_west": [
+            272,
+            450,
+            20,
+            152
+          ],
+          "border_turn": [
+            269,
+            399,
+            60,
+            60
+          ],
+          "center_diamond": [
+            706,
+            566,
+            124,
+            116
+          ]
+        },
+        "world_scale": 0.2916666666666667,
+        "world_phase": [
+          140.20833333333334,
+          227.625
+        ],
+        "center_anchor": [
+          256,
+          260
+        ],
+        "runtime_family": "res://ShareAsset/Internal/Props/AuthoredRooms/shura_gallery_",
+        "coverage": [
+          112,
+          160,
+          328,
+          155
+        ],
+        "repeat_limit": "Source has perspective/light variation; not claimed seamless.",
+        "assembly_note": "Exact original-pixel material reference is authoritative. The generated floor_projection contains reprojected ornament; do not relabel that as exact source pixels. Keep floor body and border/corners distinct. Any scale/phase change must be explicit and reviewed."
+      },
+      "cues": [
+        {
+          "id": "hesitate",
+          "parallel": [
+            {
+              "actor": "poet",
+              "route": [
+                [
+                  224,
+                  256
+                ]
+              ],
+              "pose": "poet_hesitate"
+            },
+            {
+              "actor": "detective",
+              "route": [
+                [
+                  320,
+                  256
+                ]
+              ],
+              "pose": "detective_chase_a"
+            }
+          ],
+          "camera": {
+            "follow": "poet",
+            "zoom": 2.8
+          },
+          "complete": [
+            "route_finished:poet:true",
+            "route_finished:detective:true"
+          ],
+          "hold_s": 0.35
+        },
+        {
+          "id": "intercept",
+          "parallel": [
+            {
+              "actor": "detective",
+              "route": [
+                [
+                  184,
+                  256
+                ]
+              ],
+              "pose": "detective_chase_a",
+              "expected_contact": "poet",
+              "stop_on_contact": true
+            },
+            {
+              "actor": "poet",
+              "route": [
+                [
+                  240,
+                  256
+                ]
+              ],
+              "pose": "poet_step",
+              "after_arrival_pose": "poet_guard"
+            }
+          ],
+          "complete": [
+            "route_finished:poet:true",
+            "physical_contact:detective:poet"
+          ],
+          "note": "Actual bodies block pursuit. Expected contact is a distinct completion signal, not a successful arrival at victim."
+        },
+        {
+          "id": "checked_stride",
+          "actor": "detective",
+          "pose": "detective_recoil",
+          "route": [
+            [
+              312,
+              256
+            ]
+          ],
+          "complete": [
+            "route_finished:detective:true"
+          ],
+          "poet_pose": "poet_guard_unsteady",
+          "hold_s": 0.6
+        },
+        {
+          "id": "standoff",
+          "actor": "poet",
+          "pose": "poet_guard",
+          "hold_s": 0.8,
+          "complete": [
+            "pose_hold_finished:poet"
+          ],
+          "optional_existing_speech": [
+            "疯子",
+            "堂吉诃德/风车/你"
+          ],
+          "note": "Optional necessary existing lines during actual separation. Do not add design narration."
+        },
+        {
+          "id": "escape",
+          "actor": "thief",
+          "route": [
+            [
+              160,
+              248
+            ],
+            [
+              112,
+              220
+            ],
+            [
+              84,
+              204
+            ],
+            [
+              64,
+              184
+            ],
+            [
+              56,
+              176
+            ]
+          ],
+          "poses": [
+            "thief_limp_a",
+            "thief_hurt",
+            "thief_limp_b"
+          ],
+          "camera": {
+            "follow": "thief",
+            "zoom": 2.6
+          },
+          "parallel_hold": {
+            "poet": "poet_guard",
+            "detective": "detective_recoil"
+          },
+          "complete": [
+            "route_finished:thief:true",
+            "area_entered:thief:exit"
+          ],
+          "optional_existing_speech": "雀儿，走。",
+          "on_complete": "Hide thief only after exit crossing; poet remains at guard line."
+        },
+        {
+          "id": "hold_bridge",
+          "camera": {
+            "follow": "poet",
+            "zoom": 2.8
+          },
+          "actor": "poet",
+          "pose": "poet_guard_unsteady",
+          "hold_s": 1.2,
+          "complete": [
+            "pose_hold_finished:poet"
+          ],
+          "end": true
+        }
+      ],
+      "limits": [
+        "Poet sheet is four authored action poses, not a full run cycle.",
+        "Pursuit A/B contain limited distinct stride detail; do not label them a complete locomotion library.",
+        "Normal camera loses close facial detail; node-follow close view preserves reaction without changing world collision."
+      ]
+    },
+    "last_transfer": {
+      "target": "artifacts/dv-approx-highlights/rpg-scenes/06-last-transfer-target.png",
+      "asset_layer_key": "06-last-transfer",
+      "camera": {
+        "center": [
+          256,
+          192
+        ],
+        "zoom": 2
+      },
+      "ground_floor": {
+        "level": "1F",
+        "floor_y_range": [
+          64,
+          184
+        ],
+        "threshold_y": 184,
+        "platform_top_y_range": [
+          184,
+          208
+        ],
+        "physical_elevation": "Main-building floor, threshold and top landing are continuous at one elevation. Basalt foundation raises this whole plane several metres above lower exterior, per direct user instruction; drawn y is screen projection, not altitude."
+      },
+      "walkable": [
+        [
+          88,
+          64,
+          280,
+          120
+        ],
+        [
+          156,
+          184,
+          180,
+          16
+        ],
+        [
+          112,
+          36,
+          64,
+          40
+        ]
+      ],
+      "collisions": [
+        {
+          "id": "west_wall",
+          "rect": [
+            0,
+            0,
+            84,
+            384
+          ]
+        },
+        {
+          "id": "east_wall",
+          "rect": [
+            382,
+            0,
+            130,
+            384
+          ]
+        },
+        {
+          "id": "north_wall_except_stair",
+          "rect": [
+            180,
+            0,
+            204,
+            62
+          ]
+        },
+        {
+          "id": "door_left",
+          "rect": [
+            128,
+            178,
+            28,
+            18
+          ]
+        },
+        {
+          "id": "door_right",
+          "rect": [
+            340,
+            172,
+            42,
+            18
+          ]
+        },
+        {
+          "id": "danger_limit",
+          "rect": [
+            84,
+            204,
+            300,
+            180
+          ]
+        }
+      ],
+      "actors": {
+        "detective": {
+          "foot": [
+            264,
+            164
+          ],
+          "pose": "detective_idle",
+          "speed": 52
+        },
+        "chef": {
+          "foot": [
+            192,
+            144
+          ],
+          "pose": "chef_idle",
+          "speed": 44
+        }
+      },
+      "props": [
+        {
+          "id": "grain",
+          "asset": "grain_sack",
+          "foot": [
+            126,
+            144
+          ]
+        },
+        {
+          "id": "seedlings",
+          "asset": "seedling_tray",
+          "foot": [
+            128,
+            102
+          ]
+        },
+        {
+          "id": "medicine",
+          "asset": "medicine_crate",
+          "foot": [
+            120,
+            78
+          ]
+        }
+      ],
+      "stairs_exit": {
+        "rect": [
+          112,
+          36,
+          64,
+          40
+        ],
+        "foot": [
+          140,
+          60
+        ]
+      },
+      "source_matter": {
+        "top_y_initial": 224,
+        "top_y_final": 196,
+        "clip_regions": [
+          [
+            136,
+            208,
+            246,
+            176
+          ],
+          [
+            0,
+            336,
+            512,
+            48
+          ]
+        ],
+        "near_crest_clip": [
+          136,
+          196,
+          246,
+          188
+        ],
+        "duration_s": 3.6,
+        "frame_assets": "publication.effects",
+        "z_index": -10,
+        "never_clip_into": "1F floor y<184",
+        "advance_completion": "effect_boundary_reached:196",
+        "meaning": "Local projected hazard edge only, no absolute island sea height."
+      },
+      "cues": [
+        {
+          "id": "notice",
+          "actor": "detective",
+          "route": [
+            [
+              264,
+              176
+            ]
+          ],
+          "after_arrival_pose": "detective_point_down",
+          "camera": {
+            "follow": "detective",
+            "offset": [
+              0,
+              16
+            ],
+            "zoom": 3
+          },
+          "parallel_effect": "source_matter rises to top_y196",
+          "complete": [
+            "route_finished:detective:true",
+            "effect_boundary_reached:196"
+          ]
+        },
+        {
+          "id": "warn",
+          "actor": "detective",
+          "pose": "detective_warn_back",
+          "other_actor_pose": {
+            "chef": "chef_warn"
+          },
+          "hold_s": 0.65,
+          "complete": [
+            "pose_hold_finished:detective"
+          ],
+          "note": "Both look at hazard below doorway. No line required."
+        },
+        {
+          "id": "chef_pickup",
+          "actor": "chef",
+          "route": [
+            [
+              160,
+              144
+            ]
+          ],
+          "pose": "chef_pickup",
+          "contact": {
+            "item": "grain",
+            "radius": 36
+          },
+          "hold_s": 0.3,
+          "complete": [
+            "route_finished:chef:true",
+            "item_contact:chef:grain",
+            "pose_hold_finished:chef"
+          ],
+          "on_complete": {
+            "attach_item": "grain",
+            "to_actor": "chef",
+            "local_hand_anchor": [
+              8,
+              -18
+            ]
+          }
+        },
+        {
+          "id": "chef_retreat",
+          "actor": "chef",
+          "route": [
+            [
+              184,
+              120
+            ],
+            [
+              184,
+              80
+            ],
+            [
+              152,
+              68
+            ],
+            [
+              140,
+              60
+            ]
+          ],
+          "camera": {
+            "follow": "chef",
+            "zoom": 2.6
+          },
+          "complete": [
+            "route_finished:chef:true",
+            "area_entered:chef:stairs_exit"
+          ],
+          "on_complete": "Retain cargo ownership; hide only after entering upstairs occlusion. No overall transfer completion claim.",
+          "poses": [
+            "chef_carry_a",
+            "chef_carry_b"
+          ]
+        },
+        {
+          "id": "detective_pickup",
+          "actor": "detective",
+          "route": [
+            [
+              240,
+              132
+            ],
+            [
+              166,
+              108
+            ]
+          ],
+          "pose": "detective_pickup",
+          "contact": {
+            "item": "seedlings",
+            "radius": 40
+          },
+          "hold_s": 0.3,
+          "complete": [
+            "route_finished:detective:true",
+            "item_contact:detective:seedlings"
+          ],
+          "on_complete": {
+            "attach_item": "seedlings",
+            "to_actor": "detective",
+            "local_hand_anchor": [
+              8,
+              -18
+            ]
+          },
+          "note": "New two-hand pickup pose, independent seedling tray attached only after physical approach/contact."
+        },
+        {
+          "id": "detective_retreat",
+          "actor": "detective",
+          "route": [
+            [
+              190,
+              108
+            ],
+            [
+              180,
+              78
+            ],
+            [
+              152,
+              68
+            ],
+            [
+              140,
+              60
+            ]
+          ],
+          "camera": {
+            "follow": "detective",
+            "zoom": 2.6
+          },
+          "complete": [
+            "route_finished:detective:true",
+            "area_entered:detective:stairs_exit"
+          ],
+          "end": true,
+          "poses": [
+            "detective_carry_a",
+            "detective_carry_b"
+          ]
+        }
+      ],
+      "limits": [
+        "No upper-floor receiving platform, cargo lift or hoist is present.",
+        "Discovery, warning, pickup and two carry contact poses are authored; these limited frames are not a complete multi-direction locomotion library.",
+        "Medicine crate remains background stock; not counted as transferred."
+      ]
+    }
+  }
+}

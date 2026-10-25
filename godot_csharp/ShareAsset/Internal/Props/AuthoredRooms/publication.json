@@ -1,0 +1,196 @@
+{
+  "schema": "authored-room-surfaces/v1",
+  "publication": "exact rectangular source crop; no resampling, recoloring, alpha masking or seam synthesis",
+  "limitation": "Illustration samples retain authored perspective, illumination and irregular spacing. Repeated samples are not claimed to be seamless native tiles.",
+  "rooms": {
+    "central_hall": {
+      "reference": "artifacts/chapter12-room-design/12-central-hall.png",
+      "source": "mcp/asset_pipeline/sources/Internal/Props/AuthoredRooms/central_hall.png",
+      "source_sha256": "68d369a35ed52144a09b4d96c0647298425ca2ec465b8ff160128fb88a057f86",
+      "source_size_px": [
+        1254,
+        1254
+      ],
+      "world_pixels_per_source_pixel": 0.64,
+      "world_phase_px": [
+        0,
+        0
+      ],
+      "crops": {
+        "floor": {
+          "source_rect_px": [
+            380,
+            332,
+            500,
+            164
+          ],
+          "output": "godot_csharp/ShareAsset/Internal/Props/AuthoredRooms/central_hall_floor.png",
+          "sha256": "d1821b997be7c6a21a799ec965475247c79b6c729e853885bc67fbca64c9a843",
+          "size_px": [
+            500,
+            164
+          ]
+        },
+        "medallion_ring": {
+          "source_rect_px": [
+            462,
+            498,
+            338,
+            266
+          ],
+          "output": "godot_csharp/ShareAsset/Internal/Props/AuthoredRooms/central_hall_medallion_ring.png",
+          "sha256": "7d889f2a643ac7d5d27548e0906e22a6d528ced0fa5eb459181fba7a54e77980",
+          "size_px": [
+            338,
+            266
+          ]
+        },
+        "medallion_field": {
+          "source_rect_px": [
+            536,
+            610,
+            24,
+            24
+          ],
+          "output": "godot_csharp/ShareAsset/Internal/Props/AuthoredRooms/central_hall_medallion_field.png",
+          "sha256": "b9d1d4e5ca050c3fa12e4aa874d1c7eebf4a6b0ebeb14387da5937d0c46c4426",
+          "size_px": [
+            24,
+            24
+          ]
+        }
+      },
+      "occlusion": "The source pillar obscures the medallion center and a small north arc. Runtime separates its source silhouette with authored_medallion.gdshader; an unobscured blue-gray sample fills the interior only. Hidden radial ornament and north gold arc are not reconstructed."
+    },
+    "granary": {
+      "reference": "artifacts/chapter12-room-design/06-granary.png",
+      "source": "mcp/asset_pipeline/sources/Internal/Props/AuthoredRooms/granary.png",
+      "source_sha256": "a8c16f31705f2756cc9fd35719697a82e9cec8f9828a5e0a4024534e95e58772",
+      "source_size_px": [
+        1322,
+        1190
+      ],
+      "world_pixels_per_source_pixel": 0.25,
+      "world_phase_px": [
+        32,
+        96
+      ],
+      "crops": {
+        "floor": {
+          "source_rect_px": [
+            370,
+            438,
+            600,
+            320
+          ],
+          "output": "godot_csharp/ShareAsset/Internal/Props/AuthoredRooms/granary_floor.png",
+          "sha256": "bf7ef31d5fd4e9cb79623f979aab88bb0ea863c7b08da0bc2292ea01d148368a",
+          "size_px": [
+            600,
+            320
+          ]
+        }
+      }
+    },
+    "shura_gallery": {
+      "reference": "mcp/asset_pipeline/sources/Internal/Props/Highlights/Backgrounds/shura_gallery.png",
+      "source": "mcp/asset_pipeline/sources/Internal/Props/AuthoredRooms/shura_gallery.png",
+      "source_sha256": "47ace3852d5fd8c766997cf5a7392463277330c7f6ab1b7796caad5548d609eb",
+      "source_size_px": [
+        1536,
+        1024
+      ],
+      "world_pixels_per_source_pixel": 0.2916666666666667,
+      "world_phase_px": [
+        140.20833333333334,
+        204.625
+      ],
+      "crops": {
+        "floor": {
+          "source_rect_px": [
+            370,
+            512,
+            152,
+            111
+          ],
+          "output": "godot_csharp/ShareAsset/Internal/Props/AuthoredRooms/shura_gallery_floor.png",
+          "sha256": "f8ab16da5d456db78903061f9ab0cac3dfc548f0787c543a9fd07f908cba57b1",
+          "size_px": [
+            152,
+            111
+          ]
+        },
+        "border_south": {
+          "source_rect_px": [
+            370,
+            960,
+            152,
+            20
+          ],
+          "output": "godot_csharp/ShareAsset/Internal/Props/AuthoredRooms/shura_gallery_border_south.png",
+          "sha256": "bbd0488d864731f7b27ce7f1208f442e97ceb03a205565d6fa18a528f71763fb",
+          "size_px": [
+            152,
+            20
+          ]
+        },
+        "border_west": {
+          "source_rect_px": [
+            272,
+            450,
+            20,
+            152
+          ],
+          "output": "godot_csharp/ShareAsset/Internal/Props/AuthoredRooms/shura_gallery_border_west.png",
+          "sha256": "1809b3b0436ffcbfd5ef19637896240672f21f77ee288e675c65c7d80df1e933",
+          "size_px": [
+            20,
+            152
+          ]
+        },
+        "border_corner": {
+          "source_rect_px": [
+            270,
+            830,
+            50,
+            40
+          ],
+          "output": "godot_csharp/ShareAsset/Internal/Props/AuthoredRooms/shura_gallery_border_corner.png",
+          "sha256": "5a82996ee59ccecbb5281503cc3fdd288f7c719ec0b5b21467e478c3f9673cbf",
+          "size_px": [
+            50,
+            40
+          ]
+        },
+        "border_turn": {
+          "source_rect_px": [
+            269,
+            399,
+            60,
+            60
+          ],
+          "output": "godot_csharp/ShareAsset/Internal/Props/AuthoredRooms/shura_gallery_border_turn.png",
+          "sha256": "072775f3549d84b2d23cf24abbcb69347fed1e22a7fa6fb1ba893138852f9da7",
+          "size_px": [
+            60,
+            60
+          ]
+        },
+        "center_diamond": {
+          "source_rect_px": [
+            706,
+            566,
+            124,
+            116
+          ],
+          "output": "godot_csharp/ShareAsset/Internal/Props/AuthoredRooms/shura_gallery_center_diamond.png",
+          "sha256": "af0aa3f3e7f7c3d1a33b918874f6b8d9a8fb49717deaba3d87034a5b4d20ee83",
+          "size_px": [
+            124,
+            116
+          ]
+        }
+      }
+    }
+  }
+}

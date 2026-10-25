@@ -15,7 +15,7 @@
 | `scenes/Host/GameEngine.cs` | 唯一正式 DvSession、串行后台命令、只读快照缓存、开发和回放桥 |
 | `scenes/Host/GodotHostValues.cs` | Core 原生只读值图到 Godot Dictionary/Array 的转换 |
 | `scenes/Host/CasebookPersistence.cs` | 世界书签与观察者案卷的配对保存、恢复 |
-| `scenes/Host/DvFieldExecutor.gd` | 保留人物身体、离屏物理世界、移动事务与占位 |
+| `scenes/Host/DvFieldExecutor.gd`、`RoomGraphMotion.gd` | 近场身体与移动事务、离场房间图调度与物化 |
 | `scenes/Host/HostPresentation.gd`、`Contracts/presentation_catalog.json` | 将 Core 的中立语义投影绑定到 Godot 呈现资源 |
 | `scenes/Host/RuntimeDiagnostics.gd`、`PlayerViewTrace.gd` | 常开输入事件记录及显式启用的帧诊断、可见记录 |
 | `scenes/Host/DevConsole.gd` | CanvasLayer 128；控制、双本体与规划、性能、回放四面板 |
@@ -48,6 +48,8 @@ GameEngine 在单一后台队列中使用 DvSession，工作线程不访问场�
 
 ## 移动事务
 
+离场 NPC 的源室与目标室均处于观察者当前室外时，采用唯一几何合同导出的房间图邻接，回执标记 `room-graph`，沿原 Prepare/Complete 复核资格与费用。该分支不创建隐藏物理世界；applied 后释放旧身体，失败保留原身体。近场、玩家及出入当前观察室的移动遵循下述物理事务。可信 `motion` 投影只用于入场位置随已排程进度向出口插值，再选择合法空脚点；权威地点仍由 Core Complete 改变。
+
 所有 move、station 与跨图移动，包括玩家和 NPC，开始执行时保存 rollback anchor：原地图、房间、连续脚点、源投影与动作标识，并保留实际走过的 trail。原位置作为占位保留到 Core Complete 返回真实 outcome。`applied` 提交并释放占位；`blocked` / `rejected` 时，玩家沿真实 trail 反向行走并接受碰撞，恢复原地图与障碍后释放事务；离屏 NPC 可直接恢复到其已保存锚点。离屏与可见世界共享身体登记，跨图交接在结算后接入可见场。
 
 每次实际移动事务将归一化轨迹写入原回执的 `receipt.field.trajectory`。跨图记录保留 `entered_by` 的真实 from/to 映射，供同一事件的回放消费；轨迹记录不产生额外 Complete 或行动费用。
@@ -66,7 +68,7 @@ Main 进入关闭时停止新输入与新动作请求，继续接收已经进入
 
 ## 几何与资产
 
-`RoomTerrainSkin.gd` 只读取现役场景 `terrain_rows` 的 `.DS` 格装配地面 TileMap；当前发布范围为 central_hall 和 granary。重绘层位于 Architecture 与独立物件之间，原镶嵌地纹用原图坐标保留，碰撞、门、站点和位置ID继续由原场景持有。`asset_pipeline/highlight-room-skins` 与章节地图生成器共用 `attach_skin`，避免再生成时丢失接线。
+`RoomTerrainSkin.gd` 读取现役场景 `terrain_rows` 的 `.DS` 格作为覆盖范围；central_hall、granary 与诗人幕使用各自原稿的 `AuthoredRooms/publication.json` 裁切、比例和全局相位，由 `AuthoredSurface` 绘制完整采样。边饰与中央厅盘纹独立；柱遮挡处保留同源底面，缺失纹样在来源清单中记录。覆盖格不压缩或挖角纹样。原稿透视、灯光和重复边界的限制须随实机对照报告。碰撞、门、站点和位置 ID 继续由原场景持有。
 
 `Contracts/geometry_contract.json` 是路由、锚点、房间、站点、站位、出生点、出口与室外坐标的唯一发布合同，含 cell_size、maps 和 additions。房间提供完整执行 ID、region、rect 和精确 rects；出口同时声明 point、path、rect、target、spawn、internal_gate 和可选 gate。室外坐标使用 outdoor_origin/core/cores/origins。CampusMapView、WorldView 与地图页通过 GeometryCatalog 使用该合同，正式场景提供画面与碰撞实例。外部 living_hall 目标在发布时显式映射为 living_floor 及其带前缀出生点，运行端不重复推导旧别名。仅一个 region 的地图保留统一区域语义；多区域地图无匹配为 void。DV 只使用语义位置和锚点 ID。
 

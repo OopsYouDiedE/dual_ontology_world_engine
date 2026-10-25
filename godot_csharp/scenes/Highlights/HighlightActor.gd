@@ -11,7 +11,6 @@ var route: Array[Vector2] = []
 var sprite: AnimatedSprite2D
 var facing := "front"
 var gesture_time := 0.0
-var motion_time := 0.0
 var blocked_time := 0.0
 var last_point := Vector2.ZERO
 
@@ -37,9 +36,8 @@ func _ready() -> void:
 			var atlas := AtlasTexture.new()
 			atlas.atlas = sheet
 			atlas.region = Rect2(index * 32, 0, 32, 48)
-			for action in ["idle", "walk", "talk"]:
-				frames.add_animation(action + "_" + direction)
-				frames.add_frame(action + "_" + direction, atlas)
+			frames.add_animation("idle_" + direction)
+			frames.add_frame("idle_" + direction, atlas)
 		sprite.sprite_frames = frames
 	else:
 		sprite.sprite_frames = load("res://ShareAsset/Internal/Characters/PixelCast/%s.tres" % actor_id)
@@ -56,6 +54,8 @@ func set_pose(action: String, direction: String = "") -> void:
 	sprite.flip_h = facing == "right"
 	var suffix := "left" if facing == "right" else facing
 	var animation := action + "_" + suffix
+	if not sprite.sprite_frames.has_animation(animation):
+		animation = "idle_" + suffix
 	if sprite.sprite_frames.has_animation(animation):
 		sprite.play(animation)
 
@@ -69,7 +69,6 @@ func gesture() -> void:
 	set_pose("talk")
 
 func _physics_process(delta: float) -> void:
-	motion_time += delta
 	gesture_time = maxf(0.0, gesture_time - delta)
 	var direction := Vector2.ZERO
 	if player_controlled:
@@ -85,26 +84,25 @@ func _physics_process(delta: float) -> void:
 		else:
 			direction = remaining.normalized()
 	velocity = direction * speed
+	var before := position
 	move_and_slide()
-	if not direction.is_zero_approx():
-		if absf(direction.x) > absf(direction.y):
-			facing = "right" if direction.x > 0 else "left"
+	var travelled := position - before
+	if not travelled.is_zero_approx():
+		if absf(travelled.x) > absf(travelled.y):
+			facing = "right" if travelled.x > 0 else "left"
 		else:
-			facing = "front" if direction.y > 0 else "back"
+			facing = "front" if travelled.y > 0 else "back"
 		set_pose("walk")
-		sprite.position.y = -23 + sin(motion_time * 13.0) * 0.8
-		if not route.is_empty():
-			if position.distance_to(last_point) < 0.1:
-				blocked_time += delta
-			else:
-				blocked_time = 0.0
-			if blocked_time > 1.0:
-				route.clear()
-				route_finished.emit(actor_id, false)
 	else:
 		set_pose("talk" if gesture_time > 0.0 else "idle")
-		sprite.position.y = -23
-	sprite.rotation = sin(motion_time * 7) * 0.035 if gesture_time > 0.0 else 0.0
+	if not route.is_empty() and not direction.is_zero_approx():
+		if position.distance_to(last_point) < 0.1:
+			blocked_time += delta
+		else:
+			blocked_time = 0.0
+		if blocked_time > 1.0:
+			route.clear()
+			route_finished.emit(actor_id, false)
 	last_point = position
 
 func _draw() -> void:

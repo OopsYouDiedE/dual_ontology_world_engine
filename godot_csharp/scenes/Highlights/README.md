@@ -10,9 +10,13 @@
 
 舞台读取 `Contracts/highlight_stages.json` 的 `title`、`condition`、`location`、`lines`。每行包含 `speaker`、`text`，可选 `actor` 和 `cue`；cue 支持 approach、gesture、black_move、white_move、miracle、dumpling、steam、transfer、tide。所有人物对白、场景条件由主代理维护的内容合同提供。
 
-逻辑画布为 512×384，地图由 16×12 个 32 px 格组成，人物脚点和物件脚点共用 Y 排序。画布与镜头整体近看，人物保持32×48与32格的原比例。角色使用 `CharacterBody2D`，房间、物件和身体通过真实局部碰撞阻挡移动。新四人 atlas 每姿态 32×48，既有侦探、厨师、苏泠、雀儿复用 PixelCast，雀儿资源ID为thief。新稿包含三个方向静姿；移动时使用身体行走和轻微步态起伏。
+逻辑画布为 512×384，地图由 16×12 个 32 px 格组成，人物脚点和物件脚点共用 Y 排序。画布与镜头整体近看，人物保持32×48与32格的原比例。角色使用 `CharacterBody2D`，房间、物件和身体通过真实局部碰撞阻挡移动。新四人 atlas 每姿态 32×48，既有侦探、厨师、苏泠、雀儿复用 PixelCast，雀儿资源ID为thief。新稿只有三个方向静姿，只注册idle；实际碰撞后的位移决定朝向。完整SpriteFrames已有walk时才播放步态，没有帧的角色移动时保持静姿，不用整身起伏或旋转代替动作。
 
-`HighlightsTerrain.tres` 为三个 terrain sets：floor=0（47角边）、wall=1（16四边）、water=2（47岸缘）；material indices 以 `Terrain/asset-manifest.json` 为准。遮罩保留中心16×16，四边使用16宽连接臂，47格式的每个8×8角由对应角位独立决定。场景使用 `set_cells_terrain_connect`；地面下有完整底色。图像原稿保存在 `mcp/asset_pipeline/sources/Internal/`，道具分别发布到 Props/Highlights/Architecture、Furniture、Kitchen、Logistics、Mechanisms、Relics、Handheld，人物发布到 Characters/Highlights。
+诗人地面直接取自 `shura_gallery.png` 的菱形地纹，青灰/赭红双线边饰与角饰独立装配。`AuthoredSurface.gd` 以7/24固定比例采样完整裁切图，地砖不进入47角边遮罩；32px格仅确定覆盖范围，相位跨格连续。源坐标、实际原图尺寸、SHA-256、缩放和非无缝限制记录在 `Props/AuthoredRooms/publication.json`。
+
+`GalleryFloorOrnament.gd` 将原图中心大菱形单独放在(256,237)，只出现一次；地面相位与源图的(767,623)纹样中心对应。四边与回字角饰内移至(48,202)–(464,272)的可见行走面，避开南栏遮挡；四角仅按90度旋转原图转角，保持统一7/24比例。
+
+其余五幕和水岸仍用旧 `HighlightsTerrain.tres`：floor=0（47角边）、wall=1（16四边）、water=2（47岸缘）；material indices 以 `Terrain/asset-manifest.json` 为准。它们尚未有对应原稿的一致性结论。图像原稿保存在 `mcp/asset_pipeline/sources/Internal/`，道具分别发布到 Props/Highlights/Architecture、Furniture、Kitchen、Logistics、Mechanisms、Relics、Handheld，人物发布到 Characters/Highlights。
 
 诗人幕沿用选定原图 `sources/Internal/Props/Highlights/Backgrounds/shura_gallery.png` 的木墙、风雨拱洞、窗和铜管关系，场内收为横向悬廊；南侧栏杆与北侧墙脚实际限定通道，门洞保留通行缺口。拱洞后的天气纹理从该原图原区域提取，发布记录在 Architecture/gallery_weather.publication.json。厨房按灶台、工作台、后墙窗构成操作三角。抢运接收台具有连续台面、南侧台缘与楼梯入口，人物从实际楼梯缺口上行。
 

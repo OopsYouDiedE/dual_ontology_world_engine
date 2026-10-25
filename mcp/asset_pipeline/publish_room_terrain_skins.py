@@ -10,7 +10,7 @@ from chapter2_art import rooms
 
 ROOT = Path(__file__).resolve().parents[2]
 SCENES = ROOT / "godot_csharp/scenes/Chapter2/Maps"
-SELECTED = {"central_hall": 0, "granary": 2}
+SELECTED = {"central_hall": "central_hall", "granary": "granary"}
 SCRIPT = "res://scenes/Chapter2/Field/RoomTerrainSkin.gd"
 
 
@@ -23,11 +23,11 @@ def attach_skin(text: str, room: dict) -> str:
     text = text[:position] + declaration + "\n" + text[position:]
     text = re.sub(r"load_steps=(\d+)", lambda m: f"load_steps={int(m[1]) + 1}", text, count=1)
     circles = [entry[1:] for entry in room.get("floor_work", []) if entry[0] == "mosaic"]
-    packed = ", ".join(str(v) for circle in circles for v in circle)
+    center = f'Vector2({circles[0][0]}, {circles[0][1]})' if circles else 'Vector2(-1, -1)'
     node = ('[node name="RedrawnTerrainSkin" type="Node2D" parent="."]\n'
             'z_index = -9\nscript = ExtResource("redrawn_floor_skin")\n'
-            f'floor_terrain = {SELECTED[key]}\n'
-            f'preserved_discs = PackedVector3Array({packed})\n\n')
+            f'authored_room = "{SELECTED[key]}"\n'
+            f'medallion_center = {center}\n\n')
     before = '[node name="Objects" type="Node2D" parent="."]'
     if before not in text:
         raise ValueError(f"{key}: missing Objects insertion point")
