@@ -1,0 +1,375 @@
+{
+  "schema": "reference-facade/v1",
+  "generator": "built-in image_gen",
+  "reference": "artifacts/campus-architecture-review/astra/12_settlement_material_refinement.png",
+  "reference_sha256": "f54b14105c4f83afbeedf0d1136bc91ab0ca6c774d2fcd48eabbc763b792247b",
+  "source": "mcp/asset_pipeline/sources/Internal/Props/ReferenceFacade/master.png",
+  "source_sha256": "8a6aa8df17eb5ce969e17efb3efa8e0400637a44fc8c1171a535a52c4ee56050",
+  "source_size_px": [
+    1254,
+    1254
+  ],
+  "base_grid_px": 32,
+  "publication": "explicit crop, nearest-neighbor uniform scale, transparent padding; alpha preserved; no recoloring or redrawing",
+  "scope": "Main-building material and opening language from the approved reference. Existing campus building geometry is retained; this is not a claim of whole-building equivalence.",
+  "unused_master_cells": "The two bottom-row perspective stone-corner illustrations are not published as orthographic tiles. Corners use the front-elevation cream pilaster.",
+  "runtime_usage": {
+    "scenes": [
+      "res://scenes/Chapter2/Maps/campus_n.tscn",
+      "res://scenes/Chapter2/Maps/campus_nw.tscn"
+    ],
+    "node": "Objects/讲堂/ReferenceFacade",
+    "surface": "existing south elevation only",
+    "geometry_changed": false
+  },
+  "components": {
+    "ivory_wall": {
+      "source_rect_px": [
+        20,
+        20,
+        275,
+        275
+      ],
+      "category": "Wall",
+      "texture": "res://ShareAsset/Internal/Props/ReferenceFacade/Wall/ivory_wall.png",
+      "source_id": 0,
+      "canvas_px": [
+        32,
+        32
+      ],
+      "grid_cells": [
+        1,
+        1
+      ],
+      "uniform_scale": 0.11636363636363636,
+      "sample_px": [
+        32,
+        32
+      ],
+      "offset_px": [
+        0,
+        0
+      ],
+      "sha256": "c358f2d42ed8303b9da125cd1f153a5a9db573cd531183aafa64f82c0a9a1d17"
+    },
+    "stone_base": {
+      "source_rect_px": [
+        327,
+        20,
+        280,
+        280
+      ],
+      "category": "Foundation",
+      "texture": "res://ShareAsset/Internal/Props/ReferenceFacade/Foundation/stone_base.png",
+      "source_id": 1,
+      "canvas_px": [
+        32,
+        32
+      ],
+      "grid_cells": [
+        1,
+        1
+      ],
+      "uniform_scale": 0.11428571428571428,
+      "sample_px": [
+        32,
+        32
+      ],
+      "offset_px": [
+        0,
+        0
+      ],
+      "sha256": "6a6db4de3b3e393e1d30b0316b3296ea30ceddb3f5c7ebb71b69ad2cd8206fe3"
+    },
+    "narrow_window": {
+      "source_rect_px": [
+        405,
+        633,
+        132,
+        287
+      ],
+      "category": "Openings",
+      "texture": "res://ShareAsset/Internal/Props/ReferenceFacade/Openings/narrow_window.png",
+      "source_id": 2,
+      "canvas_px": [
+        32,
+        64
+      ],
+      "grid_cells": [
+        1,
+        2
+      ],
+      "uniform_scale": 0.2229965156794425,
+      "sample_px": [
+        29,
+        64
+      ],
+      "offset_px": [
+        1,
+        0
+      ],
+      "sha256": "8c6275bc98f9cfc758091f6f765f5124a05badff0c917fb75e2cdeab6d83e460"
+    },
+    "timber_door": {
+      "source_rect_px": [
+        697,
+        633,
+        173,
+        292
+      ],
+      "category": "Openings",
+      "texture": "res://ShareAsset/Internal/Props/ReferenceFacade/Openings/timber_door.png",
+      "source_id": 3,
+      "canvas_px": [
+        32,
+        64
+      ],
+      "grid_cells": [
+        1,
+        2
+      ],
+      "uniform_scale": 0.18497109826589594,
+      "sample_px": [
+        32,
+        54
+      ],
+      "offset_px": [
+        0,
+        5
+      ],
+      "sha256": "b4af631c267e531f320965a6988085b6dc364a7f29c5efe8b04c6f0b3ec934ea"
+    },
+    "eave_straight": {
+      "source_rect_px": [
+        5,
+        356,
+        311,
+        143
+      ],
+      "category": "Cornice",
+      "texture": "res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/eave_straight.png",
+      "source_id": 4,
+      "canvas_px": [
+        64,
+        32
+      ],
+      "grid_cells": [
+        2,
+        1
+      ],
+      "uniform_scale": 0.2057877813504823,
+      "sample_px": [
+        64,
+        29
+      ],
+      "offset_px": [
+        0,
+        1
+      ],
+      "sha256": "42e1f3244a4bc179a06c409f6bf8c8f571d51230ce3f18c829eda1c229dfc421"
+    },
+    "eave_left": {
+      "source_rect_px": [
+        334,
+        318,
+        289,
+        238
+      ],
+      "category": "Cornice",
+      "texture": "res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/eave_left.png",
+      "source_id": 5,
+      "canvas_px": [
+        64,
+        64
+      ],
+      "grid_cells": [
+        2,
+        2
+      ],
+      "uniform_scale": 0.22145328719723184,
+      "sample_px": [
+        64,
+        53
+      ],
+      "offset_px": [
+        0,
+        5
+      ],
+      "sha256": "acbf8eb7509db6e670b6525e8bd1c8bec53339c4ea22057805189e71caebb7e1"
+    },
+    "eave_right": {
+      "source_rect_px": [
+        635,
+        318,
+        284,
+        238
+      ],
+      "category": "Cornice",
+      "texture": "res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/eave_right.png",
+      "source_id": 6,
+      "canvas_px": [
+        64,
+        64
+      ],
+      "grid_cells": [
+        2,
+        2
+      ],
+      "uniform_scale": 0.22535211267605634,
+      "sample_px": [
+        64,
+        54
+      ],
+      "offset_px": [
+        0,
+        5
+      ],
+      "sha256": "1b2561d8cc0735d0ffe1d772c0fa58ed7b3b83b765296fec3bb5ff2adbfcd7a1"
+    },
+    "corner_pilaster": {
+      "source_rect_px": [
+        1048,
+        318,
+        100,
+        307
+      ],
+      "category": "Corners",
+      "texture": "res://ShareAsset/Internal/Props/ReferenceFacade/Corners/corner_pilaster.png",
+      "source_id": 7,
+      "canvas_px": [
+        32,
+        64
+      ],
+      "grid_cells": [
+        1,
+        2
+      ],
+      "uniform_scale": 0.20846905537459284,
+      "sample_px": [
+        21,
+        64
+      ],
+      "offset_px": [
+        5,
+        0
+      ],
+      "sha256": "326e5de330713e1e67dcbf32d8dcbc8e137b59da134897a855ed45725daca6de"
+    },
+    "floor_belt": {
+      "source_rect_px": [
+        5,
+        748,
+        308,
+        55
+      ],
+      "category": "Cornice",
+      "texture": "res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/floor_belt.png",
+      "source_id": 8,
+      "canvas_px": [
+        32,
+        32
+      ],
+      "grid_cells": [
+        1,
+        1
+      ],
+      "uniform_scale": 0.1038961038961039,
+      "sample_px": [
+        32,
+        6
+      ],
+      "offset_px": [
+        0,
+        13
+      ],
+      "sha256": "e83522790e9b78e54339936cc143501e798472a649d20321e1e3734d6c5006cd"
+    },
+    "wall_base_junction": {
+      "source_rect_px": [
+        953,
+        638,
+        291,
+        286
+      ],
+      "category": "Foundation",
+      "texture": "res://ShareAsset/Internal/Props/ReferenceFacade/Foundation/wall_base_junction.png",
+      "source_id": 9,
+      "canvas_px": [
+        64,
+        64
+      ],
+      "grid_cells": [
+        2,
+        2
+      ],
+      "uniform_scale": 0.21993127147766323,
+      "sample_px": [
+        64,
+        63
+      ],
+      "offset_px": [
+        0,
+        0
+      ],
+      "sha256": "d966a04d20525846a5a85c2bd80d88f75a19679cc4dcc6e1d82e0ff993f4cb8f"
+    },
+    "ivory_wall_variant": {
+      "source_rect_px": [
+        20,
+        959,
+        275,
+        275
+      ],
+      "category": "Wall",
+      "texture": "res://ShareAsset/Internal/Props/ReferenceFacade/Wall/ivory_wall_variant.png",
+      "source_id": 10,
+      "canvas_px": [
+        32,
+        32
+      ],
+      "grid_cells": [
+        1,
+        1
+      ],
+      "uniform_scale": 0.11636363636363636,
+      "sample_px": [
+        32,
+        32
+      ],
+      "offset_px": [
+        0,
+        0
+      ],
+      "sha256": "d4fbb841112f4a1a0e1d31f2f7468f5f26afc8a795d239a1e5d5a4aec6b26d5e"
+    },
+    "black_roof": {
+      "source_rect_px": [
+        960,
+        950,
+        274,
+        274
+      ],
+      "category": "Roof",
+      "texture": "res://ShareAsset/Internal/Props/ReferenceFacade/Roof/black_roof.png",
+      "source_id": 11,
+      "canvas_px": [
+        32,
+        32
+      ],
+      "grid_cells": [
+        1,
+        1
+      ],
+      "uniform_scale": 0.11678832116788321,
+      "sample_px": [
+        32,
+        32
+      ],
+      "offset_px": [
+        0,
+        0
+      ],
+      "sha256": "467f05a00cbcca763224df54ff272580ec21fb767e4b6023e800f8b595e401de"
+    }
+  }
+}

@@ -1,8 +1,23 @@
 {
   "baseline": "origin/main d9c8a91e",
-  "state": "本轮改造已分批推送；CLI与画面观察已记录",
-  "summary": "DV收拢为唯一近似选策；自动地形、独立物件、人物与六幕条件演出已发布。CLI保留逐步操作并增加单次请求接续。此页展示实际修改、来源和运行结果，完整全岛内容仍有明确未迁入项。",
+  "state": "Astra先绘制六幕场景设计图；全岛数值修复与日账运行检查独立继续",
+  "summary": "近似选策与正式动作链继续使用；本轮将全岛房间数值、半日日账、作物照料收获及离场房间图驱动接入生产内容。新增代码尚待冻结后实际运行。已取得三处新渲染，诗人地面的大菱形与边饰差异正在修正；新外立面按已确认目标图制作。",
   "changes": [
+    {
+      "area": "诗人幕行为重做",
+      "change": "按用户反馈，将场面落实为伤员向左安全门撤离、侦探从右逼近、诗人持剑截住追击路线并守住出口。对白按实际拦截、相持、撤离和越门阶段推进。",
+      "result": "按用户最新要求，六幕生产实现暂停，先由Astra依据正文绘制六张完整场景图。新图先明确行动关系、人物动机、构图与硬边分区色；渲染分辨率与动作实现待场景图阶段完成。"
+    },
+    {
+      "area": "本轮全岛接线",
+      "change": "从唯一几何合同迁移真实房间邻接；新增可调源质参数、06/18日账与苗床照料、收获和转运行动，人物可信投影增加排程进度。",
+      "result": "实现收尾中。数值调参与世界观事实分别登记；不把源码接线视作实际运行结果。动态槽位仍待后续接入。"
+    },
+    {
+      "area": "每轮渲染对照",
+      "change": "Luna以新上下文采集中央厅、粮仓与诗人幕真实窗口渲染，并对照各自原稿。",
+      "result": "诗人幕中央大菱形缺失、边饰被栏杆遮挡，已交Astra直接修正。两张地图直场景按原生尺寸取景，画面占比不能替代游戏镜头评价；默认沙盒缺少空Stations节点的崩溃已修正。"
+    },
     {
       "area": "工作区",
       "change": "强制对齐最新origin/main，忽略旧本地提交并删除41个其他本地分支。",
@@ -201,6 +216,24 @@
     }
   ],
   "scene_comparisons": [
+    {
+      "title": "讲堂南立面：目标材料与实际组件",
+      "reference": "artifacts/campus-architecture-review/astra/12_settlement_material_refinement.png",
+      "runtime": "artifacts/dv-approx-highlights/facade-alignment/scene.png",
+      "result": "Luna新上下文实机观察，主代理已亲看。暖象牙墙、深木窄窗、灰石基座与黑瓦檐已接入现役讲堂，跨室外分区复用同一组件。当前建筑形制仍沿用现役讲堂，屋顶体量、立面层数与目标主楼存在差异；石基重复灰缝明显。本图采用记录在provenance中的静态观察镜头，不是正式玩家会话。"
+    },
+    {
+      "title": "中央厅：原稿地面采样与静态实机",
+      "reference": "artifacts/chapter12-room-design/12-central-hall.png",
+      "runtime": "artifacts/dv-approx-highlights/facade-alignment/central-hall/scene.png",
+      "result": "地砖与金圈改用原稿采样，原柱遮挡部分在来源中明示。墙体、家具密度与外围深色空场仍与原稿差异明显，未宣称整场景完全对齐。"
+    },
+    {
+      "title": "粮仓：原稿木地面与静态实机",
+      "reference": "artifacts/chapter12-room-design/06-granary.png",
+      "runtime": "artifacts/dv-approx-highlights/facade-alignment/granary/scene.png",
+      "result": "木地面使用同一原稿裁切与固定比例；现役粮仓仍缺目标的粮箱、麻袋密度与墙体装饰，外围边框也存在差异。固定观察镜头已记录，不代替正式过门、碰撞与游玩。"
+    },
     {
       "title": "悬廊：原稿与运行场景",
       "reference": "mcp/asset_pipeline/sources/Internal/Props/Highlights/Backgrounds/shura_gallery.png",

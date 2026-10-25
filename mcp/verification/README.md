@@ -1,5 +1,7 @@
 # 采集、回放与诊断工具
 
+现有窗口采集脚本 `godot_csharp/tools/capture_scene.gd` 可用 `--capture-camera-at=x,y --capture-camera-zoom=N` 对静态地图设定观察镜头；参数写入 `capture-provenance.json` 的 camera 字段。该镜头不修改人物、Core 状态或几何，也不代表正式会话的游戏镜头。场景演出与玩家操作采集继续使用场景自己的镜头。
+
 本目录包含二进制证据读写、采集启动器、诊断和独立检查。生产逻辑位于
 `dv_core/modules`，调试与检查闭包位于 `dv_core/checks`，运行资产位于
 `godot_csharp/ShareAsset`。资产生成器在 `mcp/asset_pipeline`；下文保留相关

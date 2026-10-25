@@ -1,4 +1,4 @@
-[gd_scene load_steps=85 format=3]
+[gd_scene load_steps=86 format=3]
 
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/rooms/campus_n.png" id="arch"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/bucket_pair.png" id="t_bucket_pair"]
@@ -84,6 +84,8 @@
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/outdoor_wall_200.png" id="t_outdoor_wall_200"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/spring_trough.png" id="t_spring_trough"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/stone_bench.png" id="t_stone_bench"]
+
+[ext_resource type="Script" path="res://scenes/Chapter2/Field/ReferenceFacade.gd" id="reference_facade"]
 
 [sub_resource type="RectangleShape2D" id="s0"]
 size = Vector2(3024, 448)
@@ -582,6 +584,10 @@ texture = ExtResource("t_outdoor_bldg_000")
 centered = false
 offset = Vector2(-251, -488)
 metadata/occluder = true
+
+[node name="ReferenceFacade" type="Node2D" parent="Objects/讲堂"]
+position = Vector2(-240, -136)
+script = ExtResource("reference_facade")
 
 [node name="名录库" type="Sprite2D" parent="Objects"]
 position = Vector2(672, 1152)

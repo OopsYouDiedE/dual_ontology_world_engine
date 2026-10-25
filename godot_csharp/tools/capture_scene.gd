@@ -2,6 +2,7 @@ extends SceneTree
 ## Render observation only: ordinary input, wall-clock waits, no world mutation.
 ## Run windowed: --script res://tools/capture_scene.gd -- --capture-scene=...
 ## --capture-output=<absolute-directory> --capture-steps=<absolute-json-file>
+## Static maps only: --capture-camera-at=x,y --capture-camera-zoom=1.6
 const LIFECYCLE = preload("res://scenes/Host/HostLifecycle.gd")
 
 var output := ""
@@ -9,6 +10,8 @@ var scene_path := ""
 var steps_path := ""
 var captures: Array = []
 var started_utc := ""
+var camera_at: Variant = null
+var camera_zoom := 1.0
 
 func _initialize() -> void:
 	started_utc = Time.get_datetime_string_from_system(true) + "Z"
@@ -19,6 +22,12 @@ func _initialize() -> void:
 			output = argument.trim_prefix("--capture-output=")
 		elif argument.begins_with("--capture-steps="):
 			steps_path = argument.trim_prefix("--capture-steps=")
+		elif argument.begins_with("--capture-camera-at="):
+			var coordinates := argument.trim_prefix("--capture-camera-at=").split(",")
+			if coordinates.size() == 2 and coordinates[0].is_valid_float() and coordinates[1].is_valid_float():
+				camera_at = Vector2(float(coordinates[0]), float(coordinates[1]))
+		elif argument.begins_with("--capture-camera-zoom="):
+			camera_zoom = argument.trim_prefix("--capture-camera-zoom=").to_float()
 	_run.call_deferred()
 
 func _run() -> void:
@@ -48,6 +57,15 @@ func _run() -> void:
 	var scene := packed.instantiate()
 	root.add_child(scene)
 	current_scene = scene
+	if camera_at != null:
+		if not scene is Node2D or not is_finite(camera_zoom) or camera_zoom <= 0:
+			_fail("Capture camera requires a static Node2D map and positive zoom.")
+			return
+		var camera := Camera2D.new()
+		camera.position = camera_at
+		camera.zoom = Vector2.ONE * camera_zoom
+		root.add_child(camera)
+		camera.make_current()
 	await process_frame
 	for step in steps:
 		if not step is Dictionary:
@@ -97,7 +115,7 @@ func _run() -> void:
 	if manifest == null:
 		_fail("Cannot write capture provenance: " + str(FileAccess.get_open_error()))
 		return
-	manifest.store_string(JSON.stringify({"scene": scene_path, "processStartUtc": started_utc, "engine": Engine.get_version_info(), "displayServer": DisplayServer.get_name(), "method": "ordinary-input-wall-clock-render", "images": captures}, "  ") + "\n")
+	manifest.store_string(JSON.stringify({"scene": scene_path, "processStartUtc": started_utc, "engine": Engine.get_version_info(), "displayServer": DisplayServer.get_name(), "method": "ordinary-input-wall-clock-render", "camera": {"position": [camera_at.x, camera_at.y], "zoom": camera_zoom, "scope": "static-map-render-observation"} if camera_at != null else {}, "images": captures}, "  ") + "\n")
 	manifest.close()
 	await LIFECYCLE.quit(self)
 

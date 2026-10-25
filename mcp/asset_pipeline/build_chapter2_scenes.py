@@ -528,7 +528,8 @@ def tscn(room: dict, arch_path: str, sprite_paths: dict, sizes: dict) -> str:
                   f'metadata/label = {json.dumps(s["label"], ensure_ascii=False)}', '']
         if s.get("geometry_only", False): lines.insert(len(lines) - 1, 'metadata/geometry_only = true')
     from publish_room_terrain_skins import attach_skin
-    return attach_skin("\n".join(lines), room)
+    from publish_reference_facade import attach_facade
+    return attach_facade(attach_skin("\n".join(lines), room), room)
 
 
 def main():
