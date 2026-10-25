@@ -28,7 +28,7 @@ DuelView 简称 DV，源码后缀为 `.dv`。领域算法、主体推演和原�
 | 路径 | 职责 |
 | --- | --- |
 | [compiler/](compiler/README.md) | 10-compiler.dv、seed 与 Runtime |
-| [modules/](modules/README.md) | 20/30 通用机制，35 公共结构，40/50 章节，60 生产入口 |
+| [modules/](modules/README.md) | 20/30 通用机制，35 公共结构，36 生成拓扑，40/50 章节，55 岛屿数值内容，60 生产入口 |
 | [base/](base/DuelView.Core.csproj) | 20/30 与 Runtime 的独立程序集 |
 | [host_bridge/](host_bridge/README.md) | 内容程序集、原生值图、StateDelta、存档、提前准备及回放 |
 | [cli/](cli/DvCli.csproj) | 文本、JSON-Lines、TUI 与去停滞回放 |

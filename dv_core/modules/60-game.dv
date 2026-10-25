@@ -3,6 +3,7 @@
 #include 30-session.dv
 #include 40-chapter1.dv
 #include 50-chapter2.dv
+#include 55-island.dv
 
 // Diagnostics and formal-model runners live in checks/65-debug-runner.dv.
 
@@ -195,6 +196,20 @@ fn dvg_place(location):
         return cached[1]
     return rt_memo_put([], key, dv_find(dvg_places(), location, {"map": "", "room": location}))
 
+// The numerical model consumes the same execution-room identities as the host.
+// Unmapped logical rooms remain unmapped rather than receiving invented nodes.
+fn dvg_island_locations():
+    let places = dvg_places()
+    let rooms = island_topology_rooms()
+    var result = []
+    var i = 0
+    while i < rt_count(places):
+        let place = places[i][1]
+        if dvs_simulation_room_index(rooms, place.room) >= 0:
+            rt_push(result, {"location": places[i][0], "room": place.room})
+        i = i + 1
+    return result
+
 fn dvg_intent(state):
     let intent = dvs_session_intent(state)
     if intent.status == "awaiting_input":
@@ -349,6 +364,24 @@ fn dvg_initial_anchor(actor, location):
         return "site:bed"
     return ""
 
+// Host-only in-flight presentation. This is an interpolation request, never a
+// physical relocation or an observation granted to the viewing character.
+fn dvg_person_motion(actor, now):
+    let queued = dv_find(actor, "scheduled_action", false)
+    if queued == false or queued.action.kind != "move":
+        return false
+    let travel = dv_find(queued.action, "travel", false)
+    if travel == false:
+        return false
+    let origin = dvg_place(travel.from)
+    let destination = dvg_place(travel.to)
+    if origin.map == "" or destination.map == "":
+        return false
+    var progress = 0
+    if queued.start < queued.due:
+        progress = dv_min(1, dv_max(0, (now - queued.start) / (queued.due - queued.start)))
+    return {"action_id": queued.action.id, "from": {"logical_location": travel.from, "map": origin.map, "execution_room": origin.room}, "to": {"logical_location": travel.to, "map": destination.map, "execution_room": destination.room}, "start": queued.start, "due": queued.due, "now": now, "progress": progress, "scope": "host-presentation-only-awaits-formal-receipt"}
+
 fn dvg_people(state, viewer):
     var viewer_mind = state.actors[0].mind
     var viewer_index = 0
@@ -367,6 +400,9 @@ fn dvg_people(state, viewer):
                 var person = {"key": actor.id, "map": place.map, "room": place.room, "execution_room": place.room, "logical_location": position.value, "initial_anchor": dvg_initial_anchor(actor.id, position.value), "spawn": dv_find(place, "spawn", ""), "present": true}
                 let title = dvg_preview_person_name(state, viewer_mind, actor.id, actor.id, dvg_unknown_person_label(actor.id, viewer))
                 person = dv_with(person, "title", title)
+                let motion = dvg_person_motion(actor, state.physical.time)
+                if motion != false:
+                    person = dv_with(person, "motion", motion)
                 if dv_has_key(place, "anchor"):
                     person = dv_with(person, "anchor", place.anchor)
                 rt_push(people, person)
@@ -869,7 +905,7 @@ fn dvg_open_config(config):
     if zone == "none":
         scene = dvg_without_detective(scene)
     scene = dv_with_many(scene, {"chapter": 1, "game_duration_budget": 5 * 1440 - scene.physical.time, "execution_scope": "DV production session; host execution receipts; offscreen non-movement uses DV world laws"})
-    scene = dvg_configure_actor_policies(scene, run_config)
+    scene = dvg_configure_actor_policies(island_install(scene, dvg_island_locations()), run_config)
     scene = campaign_install_visible_objects(dv_with(scene, "physical", c1_add_objects(scene.physical, c1_visible_site_objects())))
     return dvs_session_open(c1_player_scene(scene), "enabled")
 
@@ -880,7 +916,7 @@ fn dvg_extend(state):
     if dv_find(state.story, "chapter", 0) != 1 or not dvg_chapter_two_ready(state):
         return state
     let live = dv_with_many(state.story, {"physical": state.physical, "actors": state.actors, "bindings": state.bindings})
-    let expanded = campaign_install_visible_objects(dvg_configure_actor_policies(dv_with(c2h_install_scene(c2daily_install_scene(c2d_install_scene(c2_extend_scene(live)))), "chapter", 2), dvg_run_config(dv_find(state.story, "run_config", []))))
+    let expanded = campaign_install_visible_objects(dvg_configure_actor_policies(island_install(dv_with(c2h_install_scene(c2daily_install_scene(c2d_install_scene(c2_extend_scene(live)))), "chapter", 2), dvg_island_locations()), dvg_run_config(dv_find(state.story, "run_config", []))))
     var events = dv_clone(state.events)
     dvs_event(events, "chapter_content_available", "", state.physical.time, [], {"chapter": 2, "source": campaign_approved("chapter-state-inheritance"), "movement": false})
     // Content availability neither relocates a resident nor grants perceptions.
@@ -1065,7 +1101,9 @@ fn dvg_dev_time(state, minutes, viewer, viewer_index):
                         if next_due.index >= 0:
                             boundary = dv_min(boundary, next_due.time)
                         let next_time = dvs_environment_next_time(current.physical, current.story, boundary)
-                        var next_events = current.events
+                        // Background Prepare/Complete may return an evidence
+                        // snapshot. Own only the list we are about to append.
+                        var next_events = dv_clone(current.events)
                         let physical = dvs_environment(dv_with(current.physical, "time", next_time), current.story, next_events, command_event)
                         current = dvg_extend(dvs_owned_state_update(current, {"physical": physical, "events": next_events, "idle": 0}))
     current = dvg_dev_restore_input(current, state, viewer_index)

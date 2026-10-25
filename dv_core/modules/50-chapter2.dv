@@ -326,6 +326,8 @@ fn c2_inspection_presentation(actor, object, fields):
     var lines = c2m_visible_lines(object, fields)
     let description = c2_source("09_表达.story", 653, "存粮与门闩")
     if object == "c2.granary":
+        if c2_inspection_has(fields, "remaining"):
+            rt_push(lines, c2_visible_line(dv_fact(campaign_ref(object, "total_store_locked"), false), "清点已开启的主粮仓，实存{余量}标准份。", [c2_visible_binding("余量", campaign_ref(object, "remaining"), {})], campaign_approved("user:2026-10-24-conserved-granary-transfer")))
         rt_push(lines, c2_visible_line(dv_fact(campaign_ref(object, "latch_loose"), true), "门闩变形松动，重锁另须处理。", [], c2_source("09_表达.story", 654, "闩松")))
         rt_push(lines, c2_visible_line(dv_fact(campaign_ref(object, "tool_marks"), true), "门闩有新的工具痕，已经紧固。", [], c2_source("09_表达.story", 655, "闩修")))
         rt_push(lines, c2_visible_line(dv_all([dv_fact(campaign_ref(object, "latch_loose"), false), dv_fact(campaign_ref(object, "tool_marks"), false)]), "门闩完好。", [], c2_source("09_表达.story", 656, "闩好")))
@@ -334,6 +336,8 @@ fn c2_inspection_presentation(actor, object, fields):
     if object == "c2.counter":
         rt_push(lines, c2_visible_line(dv_true(), "配给台{状态}。", [c2_visible_binding("状态", campaign_ref(object, "open"), {"true": "正在发粮", "false": "还没开粮"})], c2_source("00_时间与文案.story", 98, "配给台关闭")))
         rt_push(lines, c2_visible_line(dv_true(), "配给台还剩{数}份口粮。", [c2_visible_binding("数", campaign_ref(object, "remaining"), {})], description))
+    if object == "c2.meter":
+        rt_push(lines, c2_visible_line(dv_true(), "源质表读数（游戏刻度）{浓度}，记录于{时刻}；安全判读：{安全}。", [c2_visible_binding("浓度", campaign_ref(object, "concentration"), {}), dv_with(c2_visible_binding("时刻", campaign_ref(object, "numeric_sample_at"), {}), "format", "game-clock"), c2_visible_binding("安全", campaign_ref(object, "safe"), {"true": "安全", "false": "不安全"})], campaign_approved("user:2026-10-24-live-source-essence-reading")))
     if object == "c2.ledger":
         rt_push(lines, c2_visible_line(dv_at_least(campaign_ref(object, "counted"), 1), "起始清点记录为{数}份。", [c2_visible_binding("数", campaign_ref(object, "counted"), {})], campaign_approved("实际清点的新台账")))
         rt_push(lines, c2_visible_line(dv_true(), "白天领取记了{白天}份，夜间补记了{夜间}份。", [c2_visible_binding("白天", campaign_ref(object, "day_recorded"), {}), c2_visible_binding("夜间", campaign_ref(object, "night_recorded"), {})], c2_source("04_案件.story", 88, "台账上的领取与补记")))
@@ -414,16 +418,15 @@ axiom c2_open_granary_law(actor):
     并且 配给柜 的 开放状态 等于 false。
     则 配给柜 的 开放状态 变为 true。
 
+fn c2_total_store_open_known(actor):
+    return dv_all([c2i_granary_support(), campaign_at(actor, "logistics"), dv_fact(campaign_own(actor, "can_lock"), true), dv_fact(campaign_ref("c2.granary", "double_bolts"), false), dv_fact(campaign_ref("c2.granary", "total_store_locked"), true), dv_fact(campaign_ref("c2.granary", "reserve_added"), false), c2_alive(actor)])
+
 法则 c2_total_store_open_law，给定 行动者：
-    当 c2i_granary_support()。
-    并且 行动者 位于 后勤院。
-    并且 campaign_own(行动者, "can_lock") 等于 true。
-    并且 粮仓 的 双闩状态 等于 false。
-    并且 粮仓 的 总粮仓锁定 等于 true。
-    并且 粮仓 的 储备已入账 等于 false。
-    并且 c2_alive(行动者)。
+    当 c2_total_store_open_known(行动者)。
+    并且 粮仓 的 余量 至少 672。
     则 粮仓 的 总粮仓锁定 变为 false。
     并使 粮仓 的 储备已入账 变为 true。
+    并使 粮仓 的 余量 增加 -672。
     并使 配给柜 的 余量 增加 672。
     并使 配给总账 的 已收储备 增加 672。
 
@@ -735,8 +738,8 @@ fn c2_supply_actions(actor):
     rt_push(result, campaign_surface_action(distribute, "help", c2_distribute_law(actor).premise, c2_distribute_law(actor).premise, distribute, [campaign_ref("c2.counter", "open")], "开启配给台", "配给台开始发粮。", campaign_approved("counter-99-is-independent-of-total-granary-key")))
     if actor == "quer":
         let total_store = rt_cat(actor, ".c2.open.total_store")
-        let ready = dv_all([campaign_window(3, 720, 840), c2_total_store_open_law(actor).premise, c2_work_accepted(actor, "quer.c2.granary.precision")])
-        rt_push(result, dv_with(campaign_surface_action(total_store, "experiment", ready, c2_total_store_open_law(actor).premise, total_store, [campaign_ref("c2.granary", "total_store_locked"), campaign_ref("c2.granary", "reserve_added"), campaign_ref("c2.counter", "remaining"), campaign_ref("c2.ledger", "reserve_received")], "推开总库门并清点存粮", "在结构楔与千斤顶持续承托下推开总库门，将实际新增存粮并入配给库存。", campaign_approved("总库开启需要修闩与解锁的实际结果")), "work_operation", "quer.c2.granary.precision"))
+        let ready = dv_all([campaign_window(3, 720, 840), c2_total_store_open_known(actor), c2_work_accepted(actor, "quer.c2.granary.precision")])
+        rt_push(result, dv_with(campaign_surface_action(total_store, "experiment", ready, c2_total_store_open_law(actor).premise, total_store, [campaign_ref("c2.granary", "total_store_locked"), campaign_ref("c2.granary", "reserve_added"), campaign_ref("c2.granary", "remaining"), campaign_ref("c2.counter", "remaining"), campaign_ref("c2.ledger", "reserve_received")], "推开总库门并清点存粮", "在结构楔与千斤顶持续承托下推开总库门，将实际清点存粮从仓内转入配给库存。", campaign_approved("总库开启需要修闩与解锁的实际结果")), "work_operation", "quer.c2.granary.precision"))
     if actor != "shen":
         let give = rt_cat(actor, ".c2.give_key.shen")
         rt_push(result, campaign_surface_action(give, "help", key, dv_all(dv_pair(key, campaign_at("shen", "logistics"))), give, dv_single(campaign_ref("c2.granary", "key_owner")), "交出粮仓钥匙", "把粮仓钥匙交给沈鼎。", c2_source("10_执行.story", 15, "GiveKey")))
@@ -790,6 +793,11 @@ fn c2_inspections(actor):
     var result = c2_route_inspections(actor)
     let source = c2_source("04_案件.story", 8, "actual-evidence-catalog")
     rt_push(result, c2_inspect_action(actor, "c2.granary", "logistics", ["locked", "latch_loose", "structure_checked", "tool_marks", "total_store_locked", "water_valve_hazard", "pulley_hazard", "timber_hazard"], "检视粮仓门闩和门锁", "细看粮仓门闩和门锁。", source))
+    // Door inspection reveals access, never the inventory behind a closed
+    // total-store door. A separate successful contact counts the open store.
+    let stock_when = dv_all([campaign_at(actor, "logistics"), c2_can_act(actor), dv_fact(campaign_ref("c2.granary", "total_store_locked"), false)])
+    let stock = c2_inspect_action(actor, "c2.granary", "logistics", ["total_store_locked", "remaining"], "清点已开启粮仓的存粮", "进入已开启的粮仓，实际清点存粮。", campaign_approved("user:2026-10-25-open-store-actual-inventory-inspection"))
+    rt_push(result, dv_with_many(stock, {"id": rt_cat(actor, ".c2.inspect.granary_stock"), "precondition": stock_when, "authority_precondition": stock_when}))
     rt_push(result, c2_inspect_action(actor, "c2.ledger", "logistics", ["day_recorded", "night_recorded", "counted", "reserve_received", "supplement_column", "pending_registered"], "翻看配给台账", "翻看台账上的领取和补记。", source))
     rt_push(result, c2_inspect_action(actor, "c2.counter", "logistics", ["open", "remaining"], "检视配给台与口粮", "查看配给台和剩下的口粮。", source))
     rt_push(result, c2_inspect_action(actor, "c2.bowl", "clinic", ["portions", "residue"], "检视病床旁的碗", "细看莫兰床边的碗。", source))
@@ -2760,11 +2768,12 @@ fn c2i_evening_actions(actor):
 法则 c2i_meter_safe_law：
     当 "c2.weather" 的 "wind" 等于 true。
     并且 "c2.weather" 的 "severe_air" 等于 false。
+    并且 "c2.meter" 的 "numeric_safe" 等于 true。
     并且 "c2.meter" 的 "safe" 等于 false。
     则 "c2.meter" 的 "safe" 变为 true。
 
 法则 c2i_meter_stale_law：
-    当 "c2.weather" 的 "severe_air" 等于 true。
+    当 campaign_any(dv_fact(campaign_ref("c2.weather", "severe_air"), true), dv_fact(campaign_ref("c2.meter", "numeric_safe"), false))。
     并且 "c2.meter" 的 "safe" 等于 true。
     则 "c2.meter" 的 "safe" 变为 false。
 
@@ -3318,7 +3327,7 @@ fn c2_cooperation_rows():
 // A measurement is an actual local observation. Its cells retain execution
 // time and source; the weather epoch observed elsewhere is a different receipt.
 fn c2_meter_fields():
-    return ["safe", "environment_epoch", "sample_location"]
+    return ["safe", "environment_epoch", "sample_location", "concentration", "numeric_sample_at"]
 
 fn c2_sample_claim(cell):
     let claims = dv_find(cell, "claims", [])

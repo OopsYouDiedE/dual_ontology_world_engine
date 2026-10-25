@@ -6445,7 +6445,17 @@ fn dvs_present_lines(state, viewer, presentation):
             let cell = dv_read(mind, binding.ref)
             if dv_uncontested(cell):
                 let value = rt_show(cell.value)
-                let display = dv_find(dv_find(binding, "labels", []), value, value)
+                var display = dv_find(dv_find(binding, "labels", []), value, value)
+                if dv_find(binding, "format", "") == "game-clock" and rt_is_numeric_value(cell.value):
+                    let minute = rt_floor(cell.value)
+                    let day = rt_floor(minute / 1440)
+                    let daytime = minute - day * 1440
+                    let hour = rt_floor(daytime / 60)
+                    let rest = daytime - hour * 60
+                    var clock_minute = rt_show(rest)
+                    if rest < 10:
+                        clock_minute = rt_cat("0", clock_minute)
+                    display = rt_cat("第", rt_cat(rt_show(day + 1), rt_cat("日 ", rt_cat(rt_show(hour), rt_cat(":", clock_minute)))))
                 text = dvs_present_replace(text, rt_cat("{", rt_cat(binding.name, "}")), display)
             else:
                 visible = false
@@ -6773,7 +6783,7 @@ fn dvs_simulation_sync(state):
             actor = dv_with(actor, "idle_guard", false)
         if dv_find(actor, "simulation_decision_nearby", -1) < simulation.last_nearby_second and dv_has_key(actor, "location_ref"):
             let position = dv_read(state.physical, actor.location_ref)
-            if dv_uncontested(position) and dv_has(simulation.nearby_rooms, position.value):
+            if dv_uncontested(position) and dv_has(simulation.nearby_rooms, dvs_simulation_room(simulation.config, position.value)):
                 actor = dv_with_many(actor, {"idle_guard": false, "decision_time": -1})
         actors = dvs_replace(actors, i, actor)
         i = i + 1
@@ -6804,6 +6814,15 @@ fn dvs_simulation_next_time(world, due):
         return dv_min(due, world.simulation.last_macro + 15)
     return due
 
+fn dvs_simulation_room(config, location):
+    let locations = dv_find(config, "locations", [])
+    var i = 0
+    while i < rt_count(locations):
+        if locations[i].location == location:
+            return locations[i].room
+        i = i + 1
+    return location
+
 fn dvs_simulation_onstage(actor, state):
     if actor.id == dv_find(state, "player_actor", ""):
         return true
@@ -6812,7 +6831,7 @@ fn dvs_simulation_onstage(actor, state):
     let position = dv_read(state.physical, actor.location_ref)
     if not dv_uncontested(position):
         return false
-    if dv_has(state.physical.simulation.visible_rooms, position.value):
+    if dv_has(state.physical.simulation.visible_rooms, dvs_simulation_room(state.physical.simulation.config, position.value)):
         return true
     let viewer = dv_find(state.story, "host_viewer", dv_find(state, "player_actor", ""))
     let index = dvs_simulation_actor_index(state.actors, viewer)
@@ -6831,7 +6850,7 @@ fn dvs_simulation_actor_ready(actor, state):
         return true
     if dv_has_key(actor, "location_ref"):
         let position = dv_read(state.physical, actor.location_ref)
-        if dv_uncontested(position) and dv_has(simulation.nearby_rooms, position.value):
+        if dv_uncontested(position) and dv_has(simulation.nearby_rooms, dvs_simulation_room(simulation.config, position.value)):
             return dv_find(actor, "simulation_decision_nearby", -1) < simulation.last_nearby_second
     return false
 
@@ -6891,6 +6910,7 @@ fn dvs_simulation_diffuse(world, config, events, parent, time):
     var amounts = []
     var concentrations = []
     var outgoing = []
+    var boundaries = []
     var i = 0
     while i < rt_count(rooms):
         let room = rooms[i]
@@ -6898,8 +6918,19 @@ fn dvs_simulation_diffuse(world, config, events, parent, time):
         let volume = dv_find(room, "volume", 1)
         dv_require(dv_uncontested(concentration) and 0 <= concentration.value and 0 < volume, "Diffusion requires known nonnegative concentration and positive volume")
         dv_unit(dv_find(room, "settling", 0))
-        rt_push(amounts, concentration.value * volume)
-        rt_push(concentrations, concentration.value)
+        var boundary = -1
+        let conditions = dv_find(room, "boundaries", [])
+        var c = 0
+        while c < rt_count(conditions):
+            if dv_truth(world, conditions[c].when) == "true":
+                boundary = conditions[c].value
+            c = c + 1
+        var current = concentration.value
+        if 0 <= boundary:
+            current = boundary
+        rt_push(boundaries, boundary)
+        rt_push(amounts, current * volume)
+        rt_push(concentrations, current)
         rt_push(outgoing, 0)
         i = i + 1
     var flows = []
@@ -6910,13 +6941,20 @@ fn dvs_simulation_diffuse(world, config, events, parent, time):
         let b = dvs_simulation_room_index(rooms, edge.to)
         dv_require(a >= 0 and b >= 0 and a != b, "Diffusion edge references invalid rooms")
         var opening = dv_find(edge, "opening", 0)
+        if dv_has_key(edge, "open_when"):
+            if dv_truth(world, edge.open_when) == "true":
+                opening = dv_find(edge, "open_value", 1)
+            else:
+                opening = dv_find(edge, "closed_value", 0)
         if dv_has_key(edge, "opening_ref"):
             let gate = dv_read(world, edge.opening_ref)
             dv_require(dv_uncontested(gate), "Diffusion opening is unknown")
             opening = gate.value
         dv_unit(opening)
         let conductance = dv_find(edge, "conductance", 0)
-        let wind = dv_find(edge, "wind", 0)
+        var wind = dv_find(edge, "wind", 0)
+        if dv_has_key(edge, "wind_when") and dv_truth(world, edge.wind_when) != "true":
+            wind = 0
         let downward = dv_find(edge, "downward", 0)
         dv_require(0 <= conductance and -1 <= wind and wind <= 1 and 0 <= downward, "Invalid diffusion transport coefficient")
         let height = rooms[a].height - rooms[b].height
@@ -6947,19 +6985,92 @@ fn dvs_simulation_diffuse(world, config, events, parent, time):
         next = dvs_replace(next, flow.target, next[flow.target] + amount)
         i = i + 1
     var changes = []
+    var concentrations_changed = false
     i = 0
     while i < rt_count(rooms):
         let room = rooms[i]
         let settled = dv_max(0, next[i]) * (1 - dv_find(room, "settling", 0))
-        let value = settled / dv_find(room, "volume", 1)
-        if value != concentrations[i]:
+        var value = settled / dv_find(room, "volume", 1)
+        if 0 <= boundaries[i]:
+            value = boundaries[i]
+        let previous = dv_read(world, room.concentration_ref).value
+        let boundary_exchange = (concentrations[i] - previous) * dv_find(room, "volume", 1) + value * dv_find(room, "volume", 1) - settled
+        if value != previous:
             world = dv_store(world, room.concentration_ref, dv_cell(value, 1, time, [parent]))
-            rt_push(changes, {"room": room.id, "before": concentrations[i], "after": value, "settled_mass": dv_max(0, next[i]) - settled})
+            concentrations_changed = true
+        if value != previous or boundary_exchange != 0 or dv_max(0, next[i]) != settled:
+            rt_push(changes, {"room": room.id, "before": previous, "after": value, "boundary_exchange": boundary_exchange, "settled_mass": dv_max(0, next[i]) - settled})
         i = i + 1
-    if 0 < rt_count(changes):
+    if concentrations_changed:
         world = dv_with(world, "revision", world.revision + 1)
     dvs_event(events, "simulation_macro", "", time, [parent], {"changes": changes, "period_minutes": 15, "approximation": true, "model": "synchronous-room-graph", "precision_certificate": false})
     return world
+
+// A settlement is a small declared linear calculation over one authoritative
+// snapshot. Bind every input into the premise, then use the ordinary adopted
+// law evaluator; unknown inputs never become zero or a successful settlement.
+fn dvs_simulation_calculated_rule(world, rule, time):
+    var premise = [dv_find(rule, "when", dv_true())]
+    var effects = dv_clone(dv_find(rule, "effects", []))
+    let calculations = dv_find(rule, "calculations", [])
+    var i = 0
+    while i < rt_count(calculations):
+        let calculation = calculations[i]
+        var value = dv_find(calculation, "constant", 0)
+        if dv_find(calculation, "clock", false):
+            value = time
+        if dv_has_key(calculation, "modulo"):
+            dv_require(0 < calculation.modulo, "Settlement modulus must be positive")
+            value = value - rt_floor(value / calculation.modulo) * calculation.modulo
+        let terms = dv_find(calculation, "terms", [])
+        var j = 0
+        while j < rt_count(terms):
+            let term = terms[j]
+            let when = dv_find(term, "when", dv_true())
+            let truth = dv_truth(world, when)
+            if truth != "true" and truth != "false":
+                return {"ready": false, "reason": "unknown-term-condition", "ref": calculation.ref}
+            if truth == "true":
+                rt_push(premise, when)
+                if dv_has_key(term, "ref"):
+                    let cell = dv_read(world, term.ref)
+                    if not dv_uncontested(cell) or not rt_is_numeric_value(cell.value):
+                        return {"ready": false, "reason": "unknown-numeric-input", "ref": term.ref}
+                    rt_push(premise, dv_fact(term.ref, cell.value))
+                    value = value + cell.value * dv_find(term, "factor", 1)
+                else:
+                    value = value + term.constant
+            else:
+                rt_push(premise, dv_not(when))
+            j = j + 1
+        if dv_has_key(calculation, "minimum"):
+            value = dv_max(calculation.minimum, value)
+        if dv_has_key(calculation, "maximum"):
+            value = dv_min(calculation.maximum, value)
+        rt_push(effects, {"op": dv_find(calculation, "op", "assign"), "ref": calculation.ref, "value": value})
+        i = i + 1
+    return {"ready": true, "law": dv_axiom(rule.law, 1, dv_all(premise), effects)}
+
+fn dvs_simulation_execute_rule(world, rule, events, parent, time, kind):
+    if dv_truth(world, dv_find(rule, "when", dv_true())) != "true":
+        return world
+    if dv_has_key(rule, "calculations"):
+        let calculated = dvs_simulation_calculated_rule(world, rule, time)
+        if not calculated.ready:
+            dvs_event(events, kind, "", time, [parent], {"id": rule.id, "status": "unresolved-input", "detail": calculated, "approximation": true})
+            return world
+        let basis = dv_find(rule, "basis", [parent])
+        if dv_has_key(world.adoptions, rule.law):
+            let previous = dv_get(world.adoptions, rule.law)
+            // Repeated zero-dose or unchanged safety rules still execute and
+            // record their receipt, but do not invent a fresh adoption history.
+            if not previous.active or previous.mode != "enforce" or previous.confidence != 1 or not dv_same(previous.law, calculated.law) or not dv_same(previous.basis, basis):
+                world = dv_reconsider(world, calculated.law, "enforce", 1, basis)
+        else:
+            world = dv_adopt(world, calculated.law, "enforce", 1, basis)
+    let execution = dv_execute(world, rule.law, rt_cat(kind, rt_cat("-", rt_show(rt_count(events)))), time, world.revision)
+    dvs_event(events, kind, "", time, [parent], {"id": rule.id, "category": dv_find(rule, "category", ""), "execution": dv_without(execution, "world"), "approximation": true})
+    return execution.world
 
 fn dvs_simulation_daily(world, config, events, parent, time):
     let rules = dv_find(config, "daily_rules", [])
@@ -6969,9 +7080,7 @@ fn dvs_simulation_daily(world, config, events, parent, time):
         let rule = rules[i]
         dv_require(rule.at == 360 or rule.at == 1080, "Daily rules must use 06:00 or 18:00")
         if rule.at == daytime:
-            let execution = dv_execute(world, rule.law, rt_cat("daily-", rt_show(rt_count(events))), time, world.revision)
-            world = execution.world
-            dvs_event(events, "simulation_daily", "", time, [parent], {"id": rule.id, "category": dv_find(rule, "category", ""), "execution": dv_without(execution, "world"), "approximation": true})
+            world = dvs_simulation_execute_rule(world, rule, events, parent, time, "simulation_daily")
             world = dv_with(world, "simulation", dv_with(world.simulation, "daily_count", world.simulation.daily_count + 1))
         i = i + 1
     return world
@@ -6979,7 +7088,12 @@ fn dvs_simulation_daily(world, config, events, parent, time):
 fn dvs_simulation_unmanaged_processes(world, processes):
     if not dv_has_key(world, "simulation"):
         return processes
-    let daily = dv_find(world.simulation.config, "daily_rules", [])
+    var daily = dv_clone(dv_find(world.simulation.config, "daily_rules", []))
+    let macro = dv_find(world.simulation.config, "macro_rules", [])
+    var m = 0
+    while m < rt_count(macro):
+        rt_push(daily, macro[m])
+        m = m + 1
     if rt_count(daily) == 0:
         return processes
     var result = []
@@ -7007,7 +7121,18 @@ fn dvs_simulation_environment(world, story, events, parent):
         let clock = dv_find(story, "clock_ref", false)
         if clock != false:
             world = dv_store(world, clock, dv_cell(next, 1, next, [parent]))
+        let macro_rules = dv_find(config, "macro_rules", [])
+        var m = 0
+        while m < rt_count(macro_rules):
+            if dv_find(macro_rules[m], "before_diffusion", false):
+                world = dvs_simulation_execute_rule(world, macro_rules[m], events, parent, next, "simulation_environment_effect")
+            m = m + 1
         world = dvs_simulation_diffuse(world, config, events, parent, next)
+        m = 0
+        while m < rt_count(macro_rules):
+            if not dv_find(macro_rules[m], "before_diffusion", false):
+                world = dvs_simulation_execute_rule(world, macro_rules[m], events, parent, next, "simulation_environment_effect")
+            m = m + 1
         world = dvs_simulation_daily(world, config, events, parent, next)
         world = dv_with(world, "simulation", dv_with_many(world.simulation, {"last_macro": next, "macro_count": world.simulation.macro_count + 1}))
         next = next + 15
@@ -7076,6 +7201,14 @@ fn dvs_simulation_pulse(state, seconds, visible_rooms):
     dv_require(simulation.last_nearby_second <= tick, "Host simulation clock moved backwards")
     if simulation.last_nearby_second == tick:
         return state
+    var mapped = []
+    var v = 0
+    while v < rt_count(visible_rooms):
+        let room = dvs_simulation_room(simulation.config, visible_rooms[v])
+        if not dv_has(mapped, room):
+            rt_push(mapped, room)
+        v = v + 1
+    visible_rooms = mapped
     var nearby = visible_rooms
     let edges = dv_find(simulation.config, "edges", [])
     var i = 0

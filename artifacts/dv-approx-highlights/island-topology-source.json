@@ -1,0 +1,2092 @@
+{
+  "schema": "island-topology-source-v1",
+  "source": "godot_csharp/Contracts/geometry_contract.json",
+  "source_sha256": "d7f8e1db36d7d44a039127acde1baedcb54d9cbd3c2344aab750f922fb48bf6f",
+  "generator": "mcp/rpg_adapter/generate_island_topology.py",
+  "generator_sha256": "7db9f90de0e70ad34ce251e0715b3aa48913fa38b7af3b7aa6c07d11d4e85c64",
+  "cell_size_px": 32,
+  "interpretation": "area_32_cells is exact rect area divided by 32px squared; geometric cell units only, not meters.",
+  "room_count": 120,
+  "accepted_edge_count": 136,
+  "edge_counts": {
+    "door": 93,
+    "exit": 43
+  },
+  "rejected_count": 4,
+  "rejected": [
+    {
+      "map": "living_floor",
+      "exit_id": "living_hall_west_north",
+      "source_pointer": "/maps/living_floor/exits/1",
+      "reason": "exit has no accepted same-id door edge with a resolvable target spawn room"
+    },
+    {
+      "map": "living_floor",
+      "exit_id": "living_hall_west_south",
+      "source_pointer": "/maps/living_floor/exits/2",
+      "reason": "exit has no accepted same-id door edge with a resolvable target spawn room"
+    },
+    {
+      "map": "living_floor",
+      "exit_id": "living_hall_east_north",
+      "source_pointer": "/maps/living_floor/exits/3",
+      "reason": "exit has no accepted same-id door edge with a resolvable target spawn room"
+    },
+    {
+      "map": "living_floor",
+      "exit_id": "living_hall_east_south",
+      "source_pointer": "/maps/living_floor/exits/4",
+      "reason": "exit has no accepted same-id door edge with a resolvable target spawn room"
+    }
+  ],
+  "room_sources": [
+    {
+      "id": "archive:vault",
+      "map": "archive",
+      "pointer": "/maps/archive/rooms/0"
+    },
+    {
+      "id": "archive:works",
+      "map": "archive",
+      "pointer": "/maps/archive/rooms/1"
+    },
+    {
+      "id": "archive:foyer",
+      "map": "archive",
+      "pointer": "/maps/archive/rooms/2"
+    },
+    {
+      "id": "campus_n:campus_n",
+      "map": "campus_n",
+      "pointer": "/maps/campus_n/rooms/0"
+    },
+    {
+      "id": "campus_ne:campus_ne",
+      "map": "campus_ne",
+      "pointer": "/maps/campus_ne/rooms/0"
+    },
+    {
+      "id": "campus_nw:campus_nw",
+      "map": "campus_nw",
+      "pointer": "/maps/campus_nw/rooms/0"
+    },
+    {
+      "id": "campus_s:campus_s",
+      "map": "campus_s",
+      "pointer": "/maps/campus_s/rooms/0"
+    },
+    {
+      "id": "campus_sw:campus_sw",
+      "map": "campus_sw",
+      "pointer": "/maps/campus_sw/rooms/0"
+    },
+    {
+      "id": "central_hall:central_hall",
+      "map": "central_hall",
+      "pointer": "/maps/central_hall/rooms/0"
+    },
+    {
+      "id": "clinic:ward",
+      "map": "clinic",
+      "pointer": "/maps/clinic/rooms/0"
+    },
+    {
+      "id": "clinic:safety",
+      "map": "clinic",
+      "pointer": "/maps/clinic/rooms/1"
+    },
+    {
+      "id": "counterweight:counterweight",
+      "map": "counterweight",
+      "pointer": "/maps/counterweight/rooms/0"
+    },
+    {
+      "id": "granary:granary",
+      "map": "granary",
+      "pointer": "/maps/granary/rooms/0"
+    },
+    {
+      "id": "greenhouse:greenhouse",
+      "map": "greenhouse",
+      "pointer": "/maps/greenhouse/rooms/0"
+    },
+    {
+      "id": "harbor:harbor",
+      "map": "harbor",
+      "pointer": "/maps/harbor/rooms/0"
+    },
+    {
+      "id": "lecture:lecture",
+      "map": "lecture",
+      "pointer": "/maps/lecture/rooms/0"
+    },
+    {
+      "id": "zone_jia:north_0",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/0"
+    },
+    {
+      "id": "zone_jia:north_1",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/1"
+    },
+    {
+      "id": "zone_jia:north_2",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/2"
+    },
+    {
+      "id": "zone_jia:hall",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/3"
+    },
+    {
+      "id": "zone_jia:wc",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/4"
+    },
+    {
+      "id": "zone_ding:wc",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/5"
+    },
+    {
+      "id": "zone_ding:hall",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/6"
+    },
+    {
+      "id": "zone_ding:north_2",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/7"
+    },
+    {
+      "id": "zone_ding:north_1",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/8"
+    },
+    {
+      "id": "zone_ding:north_0",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/9"
+    },
+    {
+      "id": "living_hall:hall",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/10"
+    },
+    {
+      "id": "zone_jia:foyer",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/11"
+    },
+    {
+      "id": "zone_ding:foyer",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/12"
+    },
+    {
+      "id": "zone_jia:corridor",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/13"
+    },
+    {
+      "id": "zone_ding:corridor",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/14"
+    },
+    {
+      "id": "zone_jia:south_0",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/15"
+    },
+    {
+      "id": "zone_jia:south_1",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/16"
+    },
+    {
+      "id": "zone_jia:south_2",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/17"
+    },
+    {
+      "id": "zone_jia:prep",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/18"
+    },
+    {
+      "id": "zone_jia:store",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/19"
+    },
+    {
+      "id": "zone_ding:store",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/20"
+    },
+    {
+      "id": "zone_ding:prep",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/21"
+    },
+    {
+      "id": "zone_ding:south_2",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/22"
+    },
+    {
+      "id": "zone_ding:south_1",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/23"
+    },
+    {
+      "id": "zone_ding:south_0",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/24"
+    },
+    {
+      "id": "zone_bing:north_0",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/25"
+    },
+    {
+      "id": "zone_bing:north_1",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/26"
+    },
+    {
+      "id": "zone_bing:north_2",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/27"
+    },
+    {
+      "id": "zone_bing:hall",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/28"
+    },
+    {
+      "id": "zone_bing:wc",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/29"
+    },
+    {
+      "id": "zone_yi:wc",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/30"
+    },
+    {
+      "id": "zone_yi:hall",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/31"
+    },
+    {
+      "id": "zone_yi:north_2",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/32"
+    },
+    {
+      "id": "zone_yi:north_1",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/33"
+    },
+    {
+      "id": "zone_yi:north_0",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/34"
+    },
+    {
+      "id": "zone_bing:foyer",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/35"
+    },
+    {
+      "id": "zone_yi:foyer",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/36"
+    },
+    {
+      "id": "zone_bing:corridor",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/37"
+    },
+    {
+      "id": "zone_yi:corridor",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/38"
+    },
+    {
+      "id": "zone_bing:south_0",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/39"
+    },
+    {
+      "id": "zone_bing:south_1",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/40"
+    },
+    {
+      "id": "zone_bing:south_2",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/41"
+    },
+    {
+      "id": "zone_bing:prep",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/42"
+    },
+    {
+      "id": "zone_bing:store",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/43"
+    },
+    {
+      "id": "zone_yi:store",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/44"
+    },
+    {
+      "id": "zone_yi:prep",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/45"
+    },
+    {
+      "id": "zone_yi:south_2",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/46"
+    },
+    {
+      "id": "zone_yi:south_1",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/47"
+    },
+    {
+      "id": "zone_yi:south_0",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/48"
+    },
+    {
+      "id": "living_hall:bath",
+      "map": "living_floor",
+      "pointer": "/maps/living_floor/rooms/49"
+    },
+    {
+      "id": "living_hall:hall",
+      "map": "living_hall",
+      "pointer": "/maps/living_hall/rooms/0"
+    },
+    {
+      "id": "living_hall:bath",
+      "map": "living_hall",
+      "pointer": "/maps/living_hall/rooms/1"
+    },
+    {
+      "id": "logistics:kitchen",
+      "map": "logistics",
+      "pointer": "/maps/logistics/rooms/0"
+    },
+    {
+      "id": "logistics:dining",
+      "map": "logistics",
+      "pointer": "/maps/logistics/rooms/1"
+    },
+    {
+      "id": "resonance:hall",
+      "map": "resonance",
+      "pointer": "/maps/resonance/rooms/0"
+    },
+    {
+      "id": "resonance:silent",
+      "map": "resonance",
+      "pointer": "/maps/resonance/rooms/1"
+    },
+    {
+      "id": "zone_bing:north_0",
+      "map": "zone_bing",
+      "pointer": "/maps/zone_bing/rooms/0"
+    },
+    {
+      "id": "zone_bing:north_1",
+      "map": "zone_bing",
+      "pointer": "/maps/zone_bing/rooms/1"
+    },
+    {
+      "id": "zone_bing:north_2",
+      "map": "zone_bing",
+      "pointer": "/maps/zone_bing/rooms/2"
+    },
+    {
+      "id": "zone_bing:hall",
+      "map": "zone_bing",
+      "pointer": "/maps/zone_bing/rooms/3"
+    },
+    {
+      "id": "zone_bing:wc",
+      "map": "zone_bing",
+      "pointer": "/maps/zone_bing/rooms/4"
+    },
+    {
+      "id": "zone_bing:foyer",
+      "map": "zone_bing",
+      "pointer": "/maps/zone_bing/rooms/5"
+    },
+    {
+      "id": "zone_bing:corridor",
+      "map": "zone_bing",
+      "pointer": "/maps/zone_bing/rooms/6"
+    },
+    {
+      "id": "zone_bing:south_0",
+      "map": "zone_bing",
+      "pointer": "/maps/zone_bing/rooms/7"
+    },
+    {
+      "id": "zone_bing:south_1",
+      "map": "zone_bing",
+      "pointer": "/maps/zone_bing/rooms/8"
+    },
+    {
+      "id": "zone_bing:south_2",
+      "map": "zone_bing",
+      "pointer": "/maps/zone_bing/rooms/9"
+    },
+    {
+      "id": "zone_bing:prep",
+      "map": "zone_bing",
+      "pointer": "/maps/zone_bing/rooms/10"
+    },
+    {
+      "id": "zone_bing:store",
+      "map": "zone_bing",
+      "pointer": "/maps/zone_bing/rooms/11"
+    },
+    {
+      "id": "zone_ding:wc",
+      "map": "zone_ding",
+      "pointer": "/maps/zone_ding/rooms/0"
+    },
+    {
+      "id": "zone_ding:hall",
+      "map": "zone_ding",
+      "pointer": "/maps/zone_ding/rooms/1"
+    },
+    {
+      "id": "zone_ding:north_2",
+      "map": "zone_ding",
+      "pointer": "/maps/zone_ding/rooms/2"
+    },
+    {
+      "id": "zone_ding:north_1",
+      "map": "zone_ding",
+      "pointer": "/maps/zone_ding/rooms/3"
+    },
+    {
+      "id": "zone_ding:north_0",
+      "map": "zone_ding",
+      "pointer": "/maps/zone_ding/rooms/4"
+    },
+    {
+      "id": "zone_ding:foyer",
+      "map": "zone_ding",
+      "pointer": "/maps/zone_ding/rooms/5"
+    },
+    {
+      "id": "zone_ding:corridor",
+      "map": "zone_ding",
+      "pointer": "/maps/zone_ding/rooms/6"
+    },
+    {
+      "id": "zone_ding:store",
+      "map": "zone_ding",
+      "pointer": "/maps/zone_ding/rooms/7"
+    },
+    {
+      "id": "zone_ding:prep",
+      "map": "zone_ding",
+      "pointer": "/maps/zone_ding/rooms/8"
+    },
+    {
+      "id": "zone_ding:south_2",
+      "map": "zone_ding",
+      "pointer": "/maps/zone_ding/rooms/9"
+    },
+    {
+      "id": "zone_ding:south_1",
+      "map": "zone_ding",
+      "pointer": "/maps/zone_ding/rooms/10"
+    },
+    {
+      "id": "zone_ding:south_0",
+      "map": "zone_ding",
+      "pointer": "/maps/zone_ding/rooms/11"
+    },
+    {
+      "id": "zone_jia:north_0",
+      "map": "zone_jia",
+      "pointer": "/maps/zone_jia/rooms/0"
+    },
+    {
+      "id": "zone_jia:north_1",
+      "map": "zone_jia",
+      "pointer": "/maps/zone_jia/rooms/1"
+    },
+    {
+      "id": "zone_jia:north_2",
+      "map": "zone_jia",
+      "pointer": "/maps/zone_jia/rooms/2"
+    },
+    {
+      "id": "zone_jia:hall",
+      "map": "zone_jia",
+      "pointer": "/maps/zone_jia/rooms/3"
+    },
+    {
+      "id": "zone_jia:wc",
+      "map": "zone_jia",
+      "pointer": "/maps/zone_jia/rooms/4"
+    },
+    {
+      "id": "zone_jia:foyer",
+      "map": "zone_jia",
+      "pointer": "/maps/zone_jia/rooms/5"
+    },
+    {
+      "id": "zone_jia:corridor",
+      "map": "zone_jia",
+      "pointer": "/maps/zone_jia/rooms/6"
+    },
+    {
+      "id": "zone_jia:south_0",
+      "map": "zone_jia",
+      "pointer": "/maps/zone_jia/rooms/7"
+    },
+    {
+      "id": "zone_jia:south_1",
+      "map": "zone_jia",
+      "pointer": "/maps/zone_jia/rooms/8"
+    },
+    {
+      "id": "zone_jia:south_2",
+      "map": "zone_jia",
+      "pointer": "/maps/zone_jia/rooms/9"
+    },
+    {
+      "id": "zone_jia:prep",
+      "map": "zone_jia",
+      "pointer": "/maps/zone_jia/rooms/10"
+    },
+    {
+      "id": "zone_jia:store",
+      "map": "zone_jia",
+      "pointer": "/maps/zone_jia/rooms/11"
+    },
+    {
+      "id": "zone_yi:wc",
+      "map": "zone_yi",
+      "pointer": "/maps/zone_yi/rooms/0"
+    },
+    {
+      "id": "zone_yi:hall",
+      "map": "zone_yi",
+      "pointer": "/maps/zone_yi/rooms/1"
+    },
+    {
+      "id": "zone_yi:north_2",
+      "map": "zone_yi",
+      "pointer": "/maps/zone_yi/rooms/2"
+    },
+    {
+      "id": "zone_yi:north_1",
+      "map": "zone_yi",
+      "pointer": "/maps/zone_yi/rooms/3"
+    },
+    {
+      "id": "zone_yi:north_0",
+      "map": "zone_yi",
+      "pointer": "/maps/zone_yi/rooms/4"
+    },
+    {
+      "id": "zone_yi:foyer",
+      "map": "zone_yi",
+      "pointer": "/maps/zone_yi/rooms/5"
+    },
+    {
+      "id": "zone_yi:corridor",
+      "map": "zone_yi",
+      "pointer": "/maps/zone_yi/rooms/6"
+    },
+    {
+      "id": "zone_yi:store",
+      "map": "zone_yi",
+      "pointer": "/maps/zone_yi/rooms/7"
+    },
+    {
+      "id": "zone_yi:prep",
+      "map": "zone_yi",
+      "pointer": "/maps/zone_yi/rooms/8"
+    },
+    {
+      "id": "zone_yi:south_2",
+      "map": "zone_yi",
+      "pointer": "/maps/zone_yi/rooms/9"
+    },
+    {
+      "id": "zone_yi:south_1",
+      "map": "zone_yi",
+      "pointer": "/maps/zone_yi/rooms/10"
+    },
+    {
+      "id": "zone_yi:south_0",
+      "map": "zone_yi",
+      "pointer": "/maps/zone_yi/rooms/11"
+    }
+  ],
+  "edge_sources": [
+    {
+      "id": "archive:door:door_000",
+      "from": "archive:foyer",
+      "to": "archive:works",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/archive/doors/0"
+      }
+    },
+    {
+      "id": "archive:door:door_001",
+      "from": "archive:foyer",
+      "to": "archive:vault",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/archive/doors/1"
+      }
+    },
+    {
+      "id": "archive:exit:south",
+      "from": "archive:foyer",
+      "to": "campus_n:campus_n",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/archive/doors/2",
+        "exit_pointer": "/maps/archive/exits/0",
+        "spawn_pointer": "/maps/campus_n/spawns/archive_front"
+      }
+    },
+    {
+      "id": "archive:exit:down",
+      "from": "archive:foyer",
+      "to": "counterweight:counterweight",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/archive/doors/3",
+        "exit_pointer": "/maps/archive/exits/1",
+        "spawn_pointer": "/maps/counterweight/spawns/from_stairs"
+      }
+    },
+    {
+      "id": "campus_n:exit:中央厅北",
+      "from": "campus_n:campus_n",
+      "to": "central_hall:central_hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_n/doors/0",
+        "exit_pointer": "/maps/campus_n/exits/0",
+        "spawn_pointer": "/maps/central_hall/spawns/north"
+      }
+    },
+    {
+      "id": "campus_n:exit:中央厅南",
+      "from": "campus_n:campus_n",
+      "to": "central_hall:central_hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_n/doors/1",
+        "exit_pointer": "/maps/campus_n/exits/1",
+        "spawn_pointer": "/maps/central_hall/spawns/south"
+      }
+    },
+    {
+      "id": "campus_n:exit:中央厅东",
+      "from": "campus_n:campus_n",
+      "to": "central_hall:central_hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_n/doors/2",
+        "exit_pointer": "/maps/campus_n/exits/2",
+        "spawn_pointer": "/maps/central_hall/spawns/east"
+      }
+    },
+    {
+      "id": "campus_n:exit:名录库",
+      "from": "campus_n:campus_n",
+      "to": "archive:foyer",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_n/doors/3",
+        "exit_pointer": "/maps/campus_n/exits/3",
+        "spawn_pointer": "/maps/archive/spawns/south"
+      }
+    },
+    {
+      "id": "campus_n:exit:诊疗所",
+      "from": "campus_n:campus_n",
+      "to": "clinic:ward",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_n/doors/4",
+        "exit_pointer": "/maps/campus_n/exits/4",
+        "spawn_pointer": "/maps/clinic/spawns/south"
+      }
+    },
+    {
+      "id": "campus_ne:exit:温室",
+      "from": "campus_ne:campus_ne",
+      "to": "greenhouse:greenhouse",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_ne/doors/0",
+        "exit_pointer": "/maps/campus_ne/exits/0",
+        "spawn_pointer": "/maps/greenhouse/spawns/south"
+      }
+    },
+    {
+      "id": "campus_nw:exit:生活翼北门",
+      "from": "campus_nw:campus_nw",
+      "to": "living_hall:hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_nw/doors/0",
+        "exit_pointer": "/maps/campus_nw/exits/0",
+        "spawn_pointer": "/maps/living_floor/spawns/living_hall_north_door"
+      }
+    },
+    {
+      "id": "campus_nw:exit:共鸣厅",
+      "from": "campus_nw:campus_nw",
+      "to": "resonance:hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_nw/doors/1",
+        "exit_pointer": "/maps/campus_nw/exits/1",
+        "spawn_pointer": "/maps/resonance/spawns/south"
+      }
+    },
+    {
+      "id": "campus_s:exit:诊疗所",
+      "from": "campus_s:campus_s",
+      "to": "clinic:ward",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_s/doors/0",
+        "exit_pointer": "/maps/campus_s/exits/0",
+        "spawn_pointer": "/maps/clinic/spawns/south"
+      }
+    },
+    {
+      "id": "campus_s:exit:后勤院西",
+      "from": "campus_s:campus_s",
+      "to": "logistics:kitchen",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_s/doors/1",
+        "exit_pointer": "/maps/campus_s/exits/1",
+        "spawn_pointer": "/maps/logistics/spawns/west"
+      }
+    },
+    {
+      "id": "campus_s:exit:后勤院东",
+      "from": "campus_s:campus_s",
+      "to": "logistics:dining",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_s/doors/2",
+        "exit_pointer": "/maps/campus_s/exits/2",
+        "spawn_pointer": "/maps/logistics/spawns/east"
+      }
+    },
+    {
+      "id": "campus_s:exit:粮仓",
+      "from": "campus_s:campus_s",
+      "to": "granary:granary",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_s/doors/3",
+        "exit_pointer": "/maps/campus_s/exits/3",
+        "spawn_pointer": "/maps/granary/spawns/south"
+      }
+    },
+    {
+      "id": "campus_sw:exit:生活翼北门",
+      "from": "campus_sw:campus_sw",
+      "to": "living_hall:hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_sw/doors/0",
+        "exit_pointer": "/maps/campus_sw/exits/0",
+        "spawn_pointer": "/maps/living_floor/spawns/living_hall_north_door"
+      }
+    },
+    {
+      "id": "campus_sw:exit:夹道西",
+      "from": "campus_sw:campus_sw",
+      "to": "living_hall:hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_sw/doors/1",
+        "exit_pointer": "/maps/campus_sw/exits/1",
+        "spawn_pointer": "/maps/living_floor/spawns/living_hall_west_lane"
+      }
+    },
+    {
+      "id": "campus_sw:exit:夹道东",
+      "from": "campus_sw:campus_sw",
+      "to": "living_hall:hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/campus_sw/doors/2",
+        "exit_pointer": "/maps/campus_sw/exits/2",
+        "spawn_pointer": "/maps/living_floor/spawns/living_hall_east_lane"
+      }
+    },
+    {
+      "id": "central_hall:exit:north",
+      "from": "central_hall:central_hall",
+      "to": "campus_n:campus_n",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/central_hall/doors/0",
+        "exit_pointer": "/maps/central_hall/exits/0",
+        "spawn_pointer": "/maps/campus_n/spawns/hall_north"
+      }
+    },
+    {
+      "id": "central_hall:exit:south",
+      "from": "central_hall:central_hall",
+      "to": "campus_n:campus_n",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/central_hall/doors/1",
+        "exit_pointer": "/maps/central_hall/exits/1",
+        "spawn_pointer": "/maps/campus_n/spawns/hall_south"
+      }
+    },
+    {
+      "id": "central_hall:exit:west",
+      "from": "central_hall:central_hall",
+      "to": "lecture:lecture",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/central_hall/doors/2",
+        "exit_pointer": "/maps/central_hall/exits/2",
+        "spawn_pointer": "/maps/lecture/spawns/from_central"
+      }
+    },
+    {
+      "id": "central_hall:exit:east",
+      "from": "central_hall:central_hall",
+      "to": "campus_n:campus_n",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/central_hall/doors/3",
+        "exit_pointer": "/maps/central_hall/exits/3",
+        "spawn_pointer": "/maps/campus_n/spawns/hall_east"
+      }
+    },
+    {
+      "id": "clinic:door:door_000",
+      "from": "clinic:safety",
+      "to": "clinic:ward",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/clinic/doors/0"
+      }
+    },
+    {
+      "id": "clinic:exit:south",
+      "from": "clinic:ward",
+      "to": "campus_s:campus_s",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/clinic/doors/1",
+        "exit_pointer": "/maps/clinic/exits/0",
+        "spawn_pointer": "/maps/campus_s/spawns/clinic_front"
+      }
+    },
+    {
+      "id": "counterweight:exit:up",
+      "from": "counterweight:counterweight",
+      "to": "archive:foyer",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/counterweight/doors/0",
+        "exit_pointer": "/maps/counterweight/exits/0",
+        "spawn_pointer": "/maps/archive/spawns/stairs"
+      }
+    },
+    {
+      "id": "granary:exit:south",
+      "from": "granary:granary",
+      "to": "campus_s:campus_s",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/granary/doors/0",
+        "exit_pointer": "/maps/granary/exits/0",
+        "spawn_pointer": "/maps/campus_s/spawns/granary_front"
+      }
+    },
+    {
+      "id": "greenhouse:exit:south",
+      "from": "greenhouse:greenhouse",
+      "to": "campus_ne:campus_ne",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/greenhouse/doors/0",
+        "exit_pointer": "/maps/greenhouse/exits/0",
+        "spawn_pointer": "/maps/campus_ne/spawns/greenhouse_front"
+      }
+    },
+    {
+      "id": "lecture:exit:east",
+      "from": "lecture:lecture",
+      "to": "central_hall:central_hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/lecture/doors/0",
+        "exit_pointer": "/maps/lecture/exits/0",
+        "spawn_pointer": "/maps/central_hall/spawns/west"
+      }
+    },
+    {
+      "id": "living_floor:door:door_000",
+      "from": "zone_bing:foyer",
+      "to": "zone_bing:store",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/0"
+      }
+    },
+    {
+      "id": "living_floor:door:door_001",
+      "from": "living_hall:hall",
+      "to": "zone_bing:foyer",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/1"
+      }
+    },
+    {
+      "id": "living_floor:door:door_002",
+      "from": "zone_ding:foyer",
+      "to": "zone_ding:store",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/2"
+      }
+    },
+    {
+      "id": "living_floor:door:door_003",
+      "from": "zone_ding:foyer",
+      "to": "zone_ding:hall",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/3"
+      }
+    },
+    {
+      "id": "living_floor:door:door_004",
+      "from": "zone_jia:corridor",
+      "to": "zone_jia:north_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/4"
+      }
+    },
+    {
+      "id": "living_floor:door:door_005",
+      "from": "zone_ding:corridor",
+      "to": "zone_ding:south_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/5"
+      }
+    },
+    {
+      "id": "living_floor:door:door_006",
+      "from": "zone_yi:corridor",
+      "to": "zone_yi:north_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/6"
+      }
+    },
+    {
+      "id": "living_floor:door:door_007",
+      "from": "zone_bing:corridor",
+      "to": "zone_bing:south_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/7"
+      }
+    },
+    {
+      "id": "living_floor:door:door_008",
+      "from": "zone_jia:corridor",
+      "to": "zone_jia:south_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/8"
+      }
+    },
+    {
+      "id": "living_floor:door:door_009",
+      "from": "zone_ding:corridor",
+      "to": "zone_ding:north_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/9"
+      }
+    },
+    {
+      "id": "living_floor:door:door_010",
+      "from": "zone_jia:corridor",
+      "to": "zone_jia:south_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/10"
+      }
+    },
+    {
+      "id": "living_floor:door:door_011",
+      "from": "zone_bing:corridor",
+      "to": "zone_bing:north_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/11"
+      }
+    },
+    {
+      "id": "living_floor:door:door_012",
+      "from": "zone_bing:corridor",
+      "to": "zone_bing:north_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/12"
+      }
+    },
+    {
+      "id": "living_floor:door:door_013",
+      "from": "zone_yi:hall",
+      "to": "zone_yi:prep",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/13"
+      }
+    },
+    {
+      "id": "living_floor:door:door_014",
+      "from": "zone_jia:hall",
+      "to": "zone_jia:prep",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/14"
+      }
+    },
+    {
+      "id": "living_floor:door:door_015",
+      "from": "zone_bing:foyer",
+      "to": "zone_bing:wc",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/15"
+      }
+    },
+    {
+      "id": "living_floor:door:door_016",
+      "from": "zone_ding:corridor",
+      "to": "zone_ding:south_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/16"
+      }
+    },
+    {
+      "id": "living_floor:door:door_017",
+      "from": "zone_jia:corridor",
+      "to": "zone_jia:north_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/17"
+      }
+    },
+    {
+      "id": "living_floor:door:door_018",
+      "from": "zone_yi:corridor",
+      "to": "zone_yi:south_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/18"
+      }
+    },
+    {
+      "id": "living_floor:door:door_019",
+      "from": "zone_ding:foyer",
+      "to": "zone_ding:wc",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/19"
+      }
+    },
+    {
+      "id": "living_floor:door:door_020",
+      "from": "living_hall:bath",
+      "to": "living_hall:hall",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/20"
+      }
+    },
+    {
+      "id": "living_floor:door:door_021",
+      "from": "zone_bing:corridor",
+      "to": "zone_bing:south_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/21"
+      }
+    },
+    {
+      "id": "living_floor:door:door_022",
+      "from": "zone_jia:corridor",
+      "to": "zone_jia:south_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/22"
+      }
+    },
+    {
+      "id": "living_floor:door:door_023",
+      "from": "zone_jia:foyer",
+      "to": "zone_jia:hall",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/23"
+      }
+    },
+    {
+      "id": "living_floor:door:door_024",
+      "from": "living_hall:hall",
+      "to": "zone_ding:store",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/24"
+      }
+    },
+    {
+      "id": "living_floor:door:door_025",
+      "from": "zone_yi:corridor",
+      "to": "zone_yi:south_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/25"
+      }
+    },
+    {
+      "id": "living_floor:door:door_026",
+      "from": "zone_jia:foyer",
+      "to": "zone_jia:store",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/26"
+      }
+    },
+    {
+      "id": "living_floor:door:door_027",
+      "from": "living_hall:hall",
+      "to": "zone_jia:store",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/27"
+      }
+    },
+    {
+      "id": "living_floor:door:door_028",
+      "from": "zone_bing:hall",
+      "to": "zone_bing:prep",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/28"
+      }
+    },
+    {
+      "id": "living_floor:door:door_029",
+      "from": "zone_ding:hall",
+      "to": "zone_ding:prep",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/29"
+      }
+    },
+    {
+      "id": "living_floor:door:door_030",
+      "from": "zone_ding:corridor",
+      "to": "zone_ding:south_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/30"
+      }
+    },
+    {
+      "id": "living_floor:door:door_031",
+      "from": "zone_jia:corridor",
+      "to": "zone_jia:north_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/31"
+      }
+    },
+    {
+      "id": "living_floor:door:door_032",
+      "from": "zone_jia:foyer",
+      "to": "zone_jia:wc",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/32"
+      }
+    },
+    {
+      "id": "living_floor:door:door_033",
+      "from": "zone_bing:corridor",
+      "to": "zone_bing:south_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/33"
+      }
+    },
+    {
+      "id": "living_floor:door:door_034",
+      "from": "living_hall:hall",
+      "to": "zone_jia:foyer",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/34"
+      }
+    },
+    {
+      "id": "living_floor:door:door_035",
+      "from": "zone_yi:corridor",
+      "to": "zone_yi:north_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/35"
+      }
+    },
+    {
+      "id": "living_floor:door:door_036",
+      "from": "zone_ding:corridor",
+      "to": "zone_ding:north_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/36"
+      }
+    },
+    {
+      "id": "living_floor:door:door_037",
+      "from": "zone_yi:foyer",
+      "to": "zone_yi:store",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/37"
+      }
+    },
+    {
+      "id": "living_floor:door:door_038",
+      "from": "zone_bing:foyer",
+      "to": "zone_bing:hall",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/38"
+      }
+    },
+    {
+      "id": "living_floor:door:door_039",
+      "from": "zone_bing:corridor",
+      "to": "zone_bing:north_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/39"
+      }
+    },
+    {
+      "id": "living_floor:door:door_040",
+      "from": "zone_yi:corridor",
+      "to": "zone_yi:south_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/40"
+      }
+    },
+    {
+      "id": "living_floor:door:door_041",
+      "from": "zone_ding:corridor",
+      "to": "zone_ding:north_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/41"
+      }
+    },
+    {
+      "id": "living_floor:door:door_042",
+      "from": "zone_yi:corridor",
+      "to": "zone_yi:north_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/42"
+      }
+    },
+    {
+      "id": "living_floor:door:door_043",
+      "from": "living_hall:hall",
+      "to": "zone_yi:foyer",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/43"
+      }
+    },
+    {
+      "id": "living_floor:door:door_044",
+      "from": "zone_yi:foyer",
+      "to": "zone_yi:wc",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/44"
+      }
+    },
+    {
+      "id": "living_floor:door:door_045",
+      "from": "zone_yi:foyer",
+      "to": "zone_yi:hall",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/45"
+      }
+    },
+    {
+      "id": "living_floor:door:door_046",
+      "from": "living_hall:hall",
+      "to": "zone_ding:foyer",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/46"
+      }
+    },
+    {
+      "id": "living_floor:exit:living_hall_north_door",
+      "from": "living_hall:hall",
+      "to": "campus_sw:campus_sw",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/47",
+        "exit_pointer": "/maps/living_floor/exits/0",
+        "spawn_pointer": "/maps/campus_sw/spawns/living_north"
+      }
+    },
+    {
+      "id": "living_floor:exit:living_hall_west_lane",
+      "from": "living_hall:hall",
+      "to": "campus_sw:campus_sw",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/48",
+        "exit_pointer": "/maps/living_floor/exits/5",
+        "spawn_pointer": "/maps/campus_sw/spawns/lane_west"
+      }
+    },
+    {
+      "id": "living_floor:exit:living_hall_east_lane",
+      "from": "living_hall:hall",
+      "to": "campus_sw:campus_sw",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_floor/doors/49",
+        "exit_pointer": "/maps/living_floor/exits/6",
+        "spawn_pointer": "/maps/campus_sw/spawns/lane_east"
+      }
+    },
+    {
+      "id": "living_hall:door:door_000",
+      "from": "living_hall:bath",
+      "to": "living_hall:hall",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_hall/doors/0"
+      }
+    },
+    {
+      "id": "living_hall:exit:north_door",
+      "from": "living_hall:hall",
+      "to": "campus_sw:campus_sw",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_hall/doors/1",
+        "exit_pointer": "/maps/living_hall/exits/0",
+        "spawn_pointer": "/maps/campus_sw/spawns/living_north"
+      }
+    },
+    {
+      "id": "living_hall:exit:west_north",
+      "from": "living_hall:hall",
+      "to": "zone_jia:foyer",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_hall/doors/2",
+        "exit_pointer": "/maps/living_hall/exits/1",
+        "spawn_pointer": "/maps/zone_jia/spawns/from_hall"
+      }
+    },
+    {
+      "id": "living_hall:exit:west_south",
+      "from": "living_hall:hall",
+      "to": "zone_bing:foyer",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_hall/doors/3",
+        "exit_pointer": "/maps/living_hall/exits/2",
+        "spawn_pointer": "/maps/zone_bing/spawns/from_hall"
+      }
+    },
+    {
+      "id": "living_hall:exit:east_north",
+      "from": "living_hall:hall",
+      "to": "zone_ding:foyer",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_hall/doors/4",
+        "exit_pointer": "/maps/living_hall/exits/3",
+        "spawn_pointer": "/maps/zone_ding/spawns/from_hall"
+      }
+    },
+    {
+      "id": "living_hall:exit:east_south",
+      "from": "living_hall:hall",
+      "to": "zone_yi:foyer",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_hall/doors/5",
+        "exit_pointer": "/maps/living_hall/exits/4",
+        "spawn_pointer": "/maps/zone_yi/spawns/from_hall"
+      }
+    },
+    {
+      "id": "living_hall:exit:west_lane",
+      "from": "living_hall:hall",
+      "to": "campus_sw:campus_sw",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_hall/doors/6",
+        "exit_pointer": "/maps/living_hall/exits/5",
+        "spawn_pointer": "/maps/campus_sw/spawns/lane_west"
+      }
+    },
+    {
+      "id": "living_hall:exit:east_lane",
+      "from": "living_hall:hall",
+      "to": "campus_sw:campus_sw",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/living_hall/doors/7",
+        "exit_pointer": "/maps/living_hall/exits/6",
+        "spawn_pointer": "/maps/campus_sw/spawns/lane_east"
+      }
+    },
+    {
+      "id": "logistics:door:door_000",
+      "from": "logistics:dining",
+      "to": "logistics:kitchen",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/logistics/doors/0"
+      }
+    },
+    {
+      "id": "logistics:exit:west",
+      "from": "logistics:kitchen",
+      "to": "campus_s:campus_s",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/logistics/doors/1",
+        "exit_pointer": "/maps/logistics/exits/0",
+        "spawn_pointer": "/maps/campus_s/spawns/logistics_west"
+      }
+    },
+    {
+      "id": "logistics:exit:east",
+      "from": "logistics:dining",
+      "to": "campus_s:campus_s",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/logistics/doors/2",
+        "exit_pointer": "/maps/logistics/exits/1",
+        "spawn_pointer": "/maps/campus_s/spawns/logistics_east"
+      }
+    },
+    {
+      "id": "resonance:door:door_000",
+      "from": "resonance:hall",
+      "to": "resonance:silent",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/resonance/doors/0"
+      }
+    },
+    {
+      "id": "resonance:exit:south",
+      "from": "resonance:hall",
+      "to": "campus_nw:campus_nw",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/resonance/doors/1",
+        "exit_pointer": "/maps/resonance/exits/0",
+        "spawn_pointer": "/maps/campus_nw/spawns/resonance_front"
+      }
+    },
+    {
+      "id": "zone_bing:door:door_000",
+      "from": "zone_bing:corridor",
+      "to": "zone_bing:north_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_bing/doors/0"
+      }
+    },
+    {
+      "id": "zone_bing:door:door_001",
+      "from": "zone_bing:corridor",
+      "to": "zone_bing:north_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_bing/doors/1"
+      }
+    },
+    {
+      "id": "zone_bing:door:door_002",
+      "from": "zone_bing:corridor",
+      "to": "zone_bing:south_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_bing/doors/2"
+      }
+    },
+    {
+      "id": "zone_bing:door:door_003",
+      "from": "zone_bing:corridor",
+      "to": "zone_bing:south_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_bing/doors/3"
+      }
+    },
+    {
+      "id": "zone_bing:door:door_004",
+      "from": "zone_bing:foyer",
+      "to": "zone_bing:hall",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_bing/doors/4"
+      }
+    },
+    {
+      "id": "zone_bing:door:door_005",
+      "from": "zone_bing:corridor",
+      "to": "zone_bing:north_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_bing/doors/5"
+      }
+    },
+    {
+      "id": "zone_bing:door:door_006",
+      "from": "zone_bing:foyer",
+      "to": "zone_bing:wc",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_bing/doors/6"
+      }
+    },
+    {
+      "id": "zone_bing:door:door_007",
+      "from": "zone_bing:corridor",
+      "to": "zone_bing:south_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_bing/doors/7"
+      }
+    },
+    {
+      "id": "zone_bing:door:door_008",
+      "from": "zone_bing:foyer",
+      "to": "zone_bing:store",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_bing/doors/8"
+      }
+    },
+    {
+      "id": "zone_bing:door:door_009",
+      "from": "zone_bing:hall",
+      "to": "zone_bing:prep",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_bing/doors/9"
+      }
+    },
+    {
+      "id": "zone_bing:exit:isolation_gate",
+      "from": "zone_bing:foyer",
+      "to": "living_hall:hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_bing/doors/10",
+        "exit_pointer": "/maps/zone_bing/exits/0",
+        "spawn_pointer": "/maps/living_floor/spawns/living_hall_west_south"
+      }
+    },
+    {
+      "id": "zone_ding:door:door_000",
+      "from": "zone_ding:corridor",
+      "to": "zone_ding:north_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_ding/doors/0"
+      }
+    },
+    {
+      "id": "zone_ding:door:door_001",
+      "from": "zone_ding:corridor",
+      "to": "zone_ding:south_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_ding/doors/1"
+      }
+    },
+    {
+      "id": "zone_ding:door:door_002",
+      "from": "zone_ding:foyer",
+      "to": "zone_ding:wc",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_ding/doors/2"
+      }
+    },
+    {
+      "id": "zone_ding:door:door_003",
+      "from": "zone_ding:corridor",
+      "to": "zone_ding:north_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_ding/doors/3"
+      }
+    },
+    {
+      "id": "zone_ding:door:door_004",
+      "from": "zone_ding:foyer",
+      "to": "zone_ding:store",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_ding/doors/4"
+      }
+    },
+    {
+      "id": "zone_ding:door:door_005",
+      "from": "zone_ding:hall",
+      "to": "zone_ding:prep",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_ding/doors/5"
+      }
+    },
+    {
+      "id": "zone_ding:door:door_006",
+      "from": "zone_ding:corridor",
+      "to": "zone_ding:south_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_ding/doors/6"
+      }
+    },
+    {
+      "id": "zone_ding:door:door_007",
+      "from": "zone_ding:corridor",
+      "to": "zone_ding:north_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_ding/doors/7"
+      }
+    },
+    {
+      "id": "zone_ding:door:door_008",
+      "from": "zone_ding:corridor",
+      "to": "zone_ding:south_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_ding/doors/8"
+      }
+    },
+    {
+      "id": "zone_ding:door:door_009",
+      "from": "zone_ding:foyer",
+      "to": "zone_ding:hall",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_ding/doors/9"
+      }
+    },
+    {
+      "id": "zone_ding:exit:isolation_gate",
+      "from": "zone_ding:foyer",
+      "to": "living_hall:hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_ding/doors/10",
+        "exit_pointer": "/maps/zone_ding/exits/0",
+        "spawn_pointer": "/maps/living_floor/spawns/living_hall_east_north"
+      }
+    },
+    {
+      "id": "zone_jia:door:door_000",
+      "from": "zone_jia:corridor",
+      "to": "zone_jia:north_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_jia/doors/0"
+      }
+    },
+    {
+      "id": "zone_jia:door:door_001",
+      "from": "zone_jia:corridor",
+      "to": "zone_jia:north_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_jia/doors/1"
+      }
+    },
+    {
+      "id": "zone_jia:door:door_002",
+      "from": "zone_jia:corridor",
+      "to": "zone_jia:south_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_jia/doors/2"
+      }
+    },
+    {
+      "id": "zone_jia:door:door_003",
+      "from": "zone_jia:corridor",
+      "to": "zone_jia:south_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_jia/doors/3"
+      }
+    },
+    {
+      "id": "zone_jia:door:door_004",
+      "from": "zone_jia:foyer",
+      "to": "zone_jia:hall",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_jia/doors/4"
+      }
+    },
+    {
+      "id": "zone_jia:door:door_005",
+      "from": "zone_jia:corridor",
+      "to": "zone_jia:north_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_jia/doors/5"
+      }
+    },
+    {
+      "id": "zone_jia:door:door_006",
+      "from": "zone_jia:foyer",
+      "to": "zone_jia:wc",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_jia/doors/6"
+      }
+    },
+    {
+      "id": "zone_jia:door:door_007",
+      "from": "zone_jia:corridor",
+      "to": "zone_jia:south_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_jia/doors/7"
+      }
+    },
+    {
+      "id": "zone_jia:door:door_008",
+      "from": "zone_jia:foyer",
+      "to": "zone_jia:store",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_jia/doors/8"
+      }
+    },
+    {
+      "id": "zone_jia:door:door_009",
+      "from": "zone_jia:hall",
+      "to": "zone_jia:prep",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_jia/doors/9"
+      }
+    },
+    {
+      "id": "zone_jia:exit:isolation_gate",
+      "from": "zone_jia:foyer",
+      "to": "living_hall:hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_jia/doors/10",
+        "exit_pointer": "/maps/zone_jia/exits/0",
+        "spawn_pointer": "/maps/living_floor/spawns/living_hall_west_north"
+      }
+    },
+    {
+      "id": "zone_yi:door:door_000",
+      "from": "zone_yi:corridor",
+      "to": "zone_yi:north_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_yi/doors/0"
+      }
+    },
+    {
+      "id": "zone_yi:door:door_001",
+      "from": "zone_yi:corridor",
+      "to": "zone_yi:south_0",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_yi/doors/1"
+      }
+    },
+    {
+      "id": "zone_yi:door:door_002",
+      "from": "zone_yi:foyer",
+      "to": "zone_yi:wc",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_yi/doors/2"
+      }
+    },
+    {
+      "id": "zone_yi:door:door_003",
+      "from": "zone_yi:corridor",
+      "to": "zone_yi:north_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_yi/doors/3"
+      }
+    },
+    {
+      "id": "zone_yi:door:door_004",
+      "from": "zone_yi:foyer",
+      "to": "zone_yi:store",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_yi/doors/4"
+      }
+    },
+    {
+      "id": "zone_yi:door:door_005",
+      "from": "zone_yi:hall",
+      "to": "zone_yi:prep",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_yi/doors/5"
+      }
+    },
+    {
+      "id": "zone_yi:door:door_006",
+      "from": "zone_yi:corridor",
+      "to": "zone_yi:south_2",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_yi/doors/6"
+      }
+    },
+    {
+      "id": "zone_yi:door:door_007",
+      "from": "zone_yi:corridor",
+      "to": "zone_yi:north_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_yi/doors/7"
+      }
+    },
+    {
+      "id": "zone_yi:door:door_008",
+      "from": "zone_yi:corridor",
+      "to": "zone_yi:south_1",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_yi/doors/8"
+      }
+    },
+    {
+      "id": "zone_yi:door:door_009",
+      "from": "zone_yi:foyer",
+      "to": "zone_yi:hall",
+      "kind": "door",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_yi/doors/9"
+      }
+    },
+    {
+      "id": "zone_yi:exit:isolation_gate",
+      "from": "zone_yi:foyer",
+      "to": "living_hall:hall",
+      "kind": "exit",
+      "source": {
+        "path": "godot_csharp/Contracts/geometry_contract.json",
+        "pointer": "/maps/zone_yi/doors/10",
+        "exit_pointer": "/maps/zone_yi/exits/0",
+        "spawn_pointer": "/maps/living_floor/spawns/living_hall_east_south"
+      }
+    }
+  ]
+}
