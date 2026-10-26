@@ -118,6 +118,11 @@ func set_host_input_enabled(enabled: bool) -> void:
 	_host_input_enabled = enabled
 	if is_node_ready(): _sync_overlay_input()
 
+func prepare_shutdown_drain() -> void:
+	# Retain page/transition resources until in-flight field work has settled.
+	set_host_input_blocked(true)
+	settings_ui.release_world_pause()
+
 func begin_shutdown() -> void:
 	if _closing: return
 	_closing = true

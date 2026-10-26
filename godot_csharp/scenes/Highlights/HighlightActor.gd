@@ -65,8 +65,7 @@ func set_pose(action: String, direction: String = "") -> void:
 	if sprite.sprite_frames.has_animation(animation):
 		sprite.play(animation)
 	if modern:
-		var frame := sprite.sprite_frames.get_frame_texture(sprite.animation, sprite.frame)
-		sprite.position = Vector2(0, -frame.get_height() * modern_scale * 0.5)
+		sprite.position = Vector2(0, float(sprite.sprite_frames.get_meta("foot_offset", -23.0)))
 
 func use_modern_art() -> void:
 	if actor_id != "scholar": return
@@ -76,7 +75,7 @@ func use_modern_art() -> void:
 	sprite.sprite_frames = load(path)
 	modern_scale = float(sprite.sprite_frames.get_meta("world_scale"))
 	sprite.scale = Vector2.ONE * modern_scale
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	set_pose("idle")
 
 func sit() -> void:

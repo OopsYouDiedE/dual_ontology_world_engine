@@ -170,6 +170,7 @@ public sealed partial class DvSession
             var original = R.Items(Field(actor, "actions", new List<object>()))
                 .FirstOrDefault(candidate => R.Text(Field(candidate, "id", "")) == selectedId);
             var label = HostValues.Text(selectedAction, "label");
+            if (original is not null) label = R.Text(Run(() => DVProgram.ObserverActionLabel(R.snapshot(state), viewer, original), speculative: true));
             if (label.Length == 0 && original is not null) label = R.Text(Field(original, "label", ""));
             var kind = HostValues.Text(selectedAction, "kind");
             var selected = selectedIndex >= 0 ? new Dictionary<string, object?>(options[selectedIndex], StringComparer.Ordinal) :
@@ -189,7 +190,7 @@ public sealed partial class DvSession
                 {
                     var score = Field(data, "score", false);
                     var recordedLabel = R.Text(Field(Field(data, "action", new List<object>()), "label", Field(data, "label", "")));
-                    if (recordedLabel.Length > 0 && recordedLabel != selectedId) selected["label"] = recordedLabel;
+                    if (original is null && recordedLabel.Length > 0 && recordedLabel != selectedId) selected["label"] = recordedLabel;
                     selected["selection_event"] = Field(chosen, "id", "");
                     selected["selection_game_time"] = Field(chosen, "time", false);
                     var recordedPath = Field(data, "selected_path", false);
@@ -359,6 +360,7 @@ public sealed partial class DvSession
 
 public static partial class DVProgram
 {
+    internal static object ObserverActionLabel(object state, object viewer, object action) => F_dvg_observer_action_label(state, viewer, action);
     internal static object ObserverDirectory(object state) => F_dvg_observer_directory(state);
     internal static object ObserverSubject(object state, object actor, object intent) => F_dvg_preview_subject(state, actor, intent);
     internal static object ObserverObjective(object state, object viewer) => F_dvg_preview_objective(state, viewer);

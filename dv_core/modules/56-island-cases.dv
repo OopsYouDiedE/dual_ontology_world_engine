@@ -11,7 +11,7 @@ fn island_case_director(field):
     return island_ref("director", field)
 
 fn island_case_roles():
-    return [{"id": "A", "candidates": ["lucian", "moran", "veronica", "huo"], "values": ["research", "resonance_exclusivity", "measured_work"], "room": "greenhouse"}, {"id": "B", "candidates": ["ward", "mora", "bertrand"], "values": ["committee", "records", "patient_priority", "restriction"], "room": "logistics"}, {"id": "C", "candidates": campaign_people(), "values": ["records", "controlled_audit", "research"], "room": "logistics"}, {"id": "D", "candidates": ["quer", "elena", "veronica"], "values": ["not_targeted", "evidence", "safety", "movement_freedom"], "room": "logistics"}]
+    return [{"id": "A", "candidates": ["lucian", "moran", "veronica", "huo"], "values": ["research", "resonance_exclusivity", "measured_work"], "room": "greenhouse"}, {"id": "B", "candidates": ["ward", "mora", "bertrand"], "values": ["committee", "records", "patient_priority", "restriction"], "room": "main_granary"}, {"id": "C", "candidates": campaign_people(), "values": ["records", "controlled_audit", "research"], "room": "main_granary"}, {"id": "D", "candidates": ["quer", "elena", "veronica"], "values": ["not_targeted", "evidence", "safety", "movement_freedom"], "room": "main_granary"}]
 
 fn island_case_value(actor, values):
     let order = dv_find(actor.policy, "value_order", [])
@@ -138,7 +138,7 @@ fn island_case_fields():
     return ["snapshot_done", "snapshot_name", "snapshot_seen_at", "snapshot_posted_at", "snapshot_counter", "snapshot_removed", "snapshot_reserve", "snapshot_day", "snapshot_night", "challenge_done", "challenge_name", "challenge_at", "defense_done", "defense_name", "defense_at", "defense_rations", "defense_consumed", "resolved", "challenge_old", "challenge_current", "challenge_seen_at", "defense_seen_at", "snapshot_ledger_at", "defense_removed_delta", "defense_reserve_delta", "defense_counter_at", "defense_ledger_at"]
 
 fn island_case_inspections(actor):
-    var records = island_inspect(actor, rt_cat(actor, ".island.case.records"), "logistics", "island.case", island_case_fields(), "检视摘录、质疑与自证记录", "", ["已摘录", "摘录者", "原时刻", "张贴时刻", "旧余量", "旧取出", "旧入库", "旧日账", "旧夜账", "有质疑", "质疑者", "质疑时刻", "有自证", "自证者", "自证时刻", "自证余粮", "自证食用", "已核清", "质疑旧数", "质疑现数", "质疑读数时刻", "自证读数时刻", "旧账时刻", "自证取出差", "自证入库差", "自证柜时刻", "自证账时刻"])
+    var records = island_inspect(actor, rt_cat(actor, ".island.case.records"), "main_granary", "island.case", island_case_fields(), "检视摘录、质疑与自证记录", "", ["已摘录", "摘录者", "原时刻", "张贴时刻", "旧余量", "旧取出", "旧入库", "旧日账", "旧夜账", "有质疑", "质疑者", "质疑时刻", "有自证", "自证者", "自证时刻", "自证余粮", "自证食用", "已核清", "质疑旧数", "质疑现数", "质疑读数时刻", "自证读数时刻", "旧账时刻", "自证取出差", "自证入库差", "自证柜时刻", "自证账时刻"])
     let bindings = island_case_clock_bindings(records.presentation.lines[0].bindings)
     let lines = [c2_visible_line(dv_fact(island_case_ref("snapshot_done"), false), "这里还没有账页摘录。", [], island_source()), c2_visible_line(dv_fact(island_case_ref("snapshot_done"), true), "{摘录者}在{张贴时刻}留下摘录：配给台{旧余量}份见于{原时刻}；账页见于{旧账时刻}，累计取出{旧取出}份、仓内转入{旧入库}份。两处并非同一次观察。", [for binding in bindings if dv_has(["摘录者", "张贴时刻", "原时刻", "旧余量", "旧取出", "旧入库", "旧账时刻"], binding.name): binding], island_source()), c2_visible_line(dv_fact(island_case_ref("challenge_done"), true), "{质疑者}在{质疑时刻}公开指控配给中存在尚未说明的取用：摘录{质疑旧数}份，{质疑读数时刻}亲见现存{质疑现数}份；尚未据此认定有人私取。", [for binding in bindings if dv_has(["质疑者", "质疑时刻", "质疑旧数", "质疑现数", "质疑读数时刻"], binding.name): binding], island_source()), c2_visible_line(dv_fact(island_case_ref("defense_done"), true), "{自证者}在{自证时刻}提交本人在{自证读数时刻}核对的记录：随身{自证余粮}份，已食{自证食用}份；另附{自证柜时刻}实数柜台、{自证账时刻}核账的证据，摘录后账内取出增加{自证取出差}份、转入增加{自证入库差}份。", [for binding in bindings if dv_has(["自证者", "自证时刻", "自证读数时刻", "自证余粮", "自证食用", "自证柜时刻", "自证账时刻", "自证取出差", "自证入库差"], binding.name): binding], island_source()), c2_visible_line(dv_fact(island_case_ref("resolved"), true), "已核清这次摘录与现账的时间差；记录没有据此判定任何人盗取粮食。", [], island_source())]
     records = dv_with_many(records, {"presentation": dv_with(records.presentation, "lines", lines), "interaction": {"kind": "site", "site": "ledger"}})
@@ -146,10 +146,10 @@ fn island_case_inspections(actor):
     let trace_bindings = island_case_clock_bindings(trace.presentation.lines[0].bindings)
     trace = dv_with(trace, "interaction", {"kind": "site", "site": "south_entry"})
     trace = dv_with(trace, "presentation", dv_with(trace.presentation, "lines", [c2_visible_line(dv_fact(island_ref("experiment", "done"), false), "南入口尚无这次实验记录，当前开度{开度}。", [for binding in trace_bindings if binding.name == "开度": binding], island_source()), c2_visible_line(dv_fact(island_ref("experiment", "done"), true), "{签名}在{完成时刻}将南入口调至半开，记下{读数时刻}看过的源质表读数{读数}。这会改变局部空气交换；不能凭这张记录断定此刻空气安全。", trace_bindings, island_source())]))
-    var ledger = island_inspect(actor, rt_cat(actor, ".island.case.current-ledger"), "logistics", "c2.ledger", ["removed", "reserve_received", "day_recorded", "night_recorded", "pending_registered"], "复核当前领取与入库账", "累计取出{取出}份，仓内转入{转入}份；白日记账{日账}份，夜间记账{夜账}份，待核{待核}份。", ["取出", "转入", "日账", "夜账", "待核"])
+    var ledger = island_inspect(actor, rt_cat(actor, ".island.case.current-ledger"), "main_granary", "c2.ledger", ["removed", "reserve_received", "day_recorded", "night_recorded", "pending_registered"], "复核当前领取与入库账", "累计取出{取出}份，仓内转入{转入}份；白日记账{日账}份，夜间记账{夜账}份，待核{待核}份。", ["取出", "转入", "日账", "夜账", "待核"])
     ledger = dv_with(ledger, "interaction", {"kind": "site", "site": "ledger"})
-    let counter = dv_with(island_inspect(actor, rt_cat(actor, ".island.case.current-counter"), "logistics", "c2.counter", ["remaining"], "实数配给台现存口粮", "配给台实际现存{现存}份。", ["现存"]), "interaction", {"kind": "site", "site": "ration_counter"})
-    let own = island_inspect(actor, rt_cat(actor, ".island.case.own-account"), "logistics", campaign_body(actor), ["rations", "consumed"], "核对本人随身粮与食用记录", "本人随身口粮{余粮}份，食用记录{已食}份。", ["余粮", "已食"])
+    let counter = dv_with(island_inspect(actor, rt_cat(actor, ".island.case.current-counter"), "main_granary", "c2.counter", ["remaining"], "实数配给台现存口粮", "配给台实际现存{现存}份。", ["现存"]), "interaction", {"kind": "site", "site": "ration_counter"})
+    let own = island_inspect(actor, rt_cat(actor, ".island.case.own-account"), "main_granary", campaign_body(actor), ["rations", "consumed"], "核对本人随身粮与食用记录", "本人随身口粮{余粮}份，食用记录{已食}份。", ["余粮", "已食"])
     return [for action in [records, trace, ledger, counter, own]: dv_with_many(action, {"island_dynamic": true, "simulation_utility": 0})]
 
 fn island_case_clock_bindings(bindings):
@@ -220,12 +220,12 @@ fn island_case_jobs(actor, role):
             while i < rt_count(fields):
                 rt_push(effects, dv_assign(island_case_ref(fields[i]), values[i].value))
                 i = i + 1
-            rt_push(jobs, island_case_with_evidence(island_case_job(actor, role, "snapshot", "logistics", dv_fact(island_case_ref("snapshot_done"), false), effects, [island_case_ref("snapshot_done"), island_case_ref("snapshot_name")], "挑选先前柜账读数并列张贴", "我选择先前实数的柜台余量和看过的账页并列张贴，各自标明观察时刻，要求大家比较差额。它们并非同一时刻的现存清点。"), values))
+            rt_push(jobs, island_case_with_evidence(island_case_job(actor, role, "snapshot", "main_granary", dv_fact(island_case_ref("snapshot_done"), false), effects, [island_case_ref("snapshot_done"), island_case_ref("snapshot_name")], "挑选先前柜账读数并列张贴", "我选择先前实数的柜台余量和看过的账页并列张贴，各自标明观察时刻，要求大家比较差额。它们并非同一时刻的现存清点。"), values))
     if role == "B":
         let values = island_case_numeric(actor.mind, [island_case_ref("snapshot_counter"), campaign_ref("c2.counter", "remaining"), island_case_ref("snapshot_seen_at")])
         if values != false and values[0].value != values[1].value and values[2].value <= values[1].seen_at:
             let known = dv_all([dv_fact(island_case_ref("snapshot_done"), true), dv_fact(island_case_ref("challenge_done"), false)])
-            var job = island_case_job(actor, role, "challenge", "logistics", known, [dv_assign(island_case_ref("challenge_done"), true), dv_assign(island_case_ref("challenge_name"), campaign_person_name(actor.id)), dv_assign(island_case_ref("challenge_old"), values[0].value), dv_assign(island_case_ref("challenge_current"), values[1].value), dv_assign(island_case_ref("challenge_seen_at"), values[1].seen_at)], [island_case_ref("challenge_done"), island_case_ref("challenge_name")], "就实见差额公开提出指控", "我指控这次配给存在尚未说明的取用：本人实数的现存和摘录不同。请公开核对，但差额尚不能证明某人私取，也可能来自后续领取或补记。")
+            var job = island_case_job(actor, role, "challenge", "main_granary", known, [dv_assign(island_case_ref("challenge_done"), true), dv_assign(island_case_ref("challenge_name"), campaign_person_name(actor.id)), dv_assign(island_case_ref("challenge_old"), values[0].value), dv_assign(island_case_ref("challenge_current"), values[1].value), dv_assign(island_case_ref("challenge_seen_at"), values[1].seen_at)], [island_case_ref("challenge_done"), island_case_ref("challenge_name")], "就实见差额公开提出指控", "我指控这次配给存在尚未说明的取用：本人实数的现存和摘录不同。请公开核对，但差额尚不能证明某人私取，也可能来自后续领取或补记。")
             job = dv_with(job, "action", dv_with_many(job.action, {"kind": "talk", "speech": dv_with(campaign_speech(dv_true(), island_source(), "owned-ledger-challenge"), "surface", job.action.surface), "listeners": campaign_people(), "public_observers": campaign_people(), "public_grants": job.action.grants}))
             rt_push(jobs, island_case_with_evidence(job, values))
     if role == "D":
@@ -239,7 +239,7 @@ fn island_case_jobs(actor, role):
                 rt_push(facts, dv_fact(inputs[i].ref, inputs[i].value))
                 i = i + 1
             let effects = [dv_assign(island_case_ref("defense_done"), true), dv_assign(island_case_ref("defense_name"), campaign_person_name(actor.id)), dv_assign(island_case_ref("defense_rations"), values[0].value), dv_assign(island_case_ref("defense_consumed"), values[1].value), dv_assign(island_case_ref("defense_seen_at"), values[0].seen_at), dv_assign(island_case_ref("defense_removed_delta"), evidence.removed), dv_assign(island_case_ref("defense_reserve_delta"), evidence.received), dv_assign(island_case_ref("defense_counter_at"), evidence.counter_at), dv_assign(island_case_ref("defense_ledger_at"), evidence.ledger_at)]
-            var job = island_case_job(actor, role, "defense", "logistics", dv_all(facts), effects, [island_case_ref("defense_done"), island_case_ref("defense_name"), island_case_ref("defense_rations"), island_case_ref("defense_consumed")], "提交亲见柜账与本人记录自证", "我提交实际核对的柜台、账页和本人口粮记录：账内取出与转入的变化能对上所读差额。不能只凭不同时间的余量就把私取的嫌疑归给我；这些记录也没有证明其他未观察的事。")
+            var job = island_case_job(actor, role, "defense", "main_granary", dv_all(facts), effects, [island_case_ref("defense_done"), island_case_ref("defense_name"), island_case_ref("defense_rations"), island_case_ref("defense_consumed")], "提交亲见柜账与本人记录自证", "我提交实际核对的柜台、账页和本人口粮记录：账内取出与转入的变化能对上所读差额。不能只凭不同时间的余量就把私取的嫌疑归给我；这些记录也没有证明其他未观察的事。")
             job = dv_with(job, "action", dv_with_many(job.action, {"kind": "talk", "speech": dv_with(campaign_speech(dv_true(), island_source(), "owned-self-account"), "surface", job.action.surface), "listeners": campaign_people(), "public_observers": campaign_people(), "public_grants": job.action.grants}))
             rt_push(jobs, island_case_with_evidence(job, inputs))
     return jobs
@@ -256,7 +256,7 @@ fn island_case_install(scene):
         if not dv_has_key(fields, names[i]):
             fields = dv_with(fields, names[i], dv_unknown())
         i = i + 1
-    physical = campaign_add_new(physical, island_display_object("island.case", "logistics", "摘录与核对记录", fields))
+    physical = campaign_add_new(physical, island_display_object("island.case", "main_granary", "摘录与核对记录", fields))
     physical = campaign_add_new(physical, island_display_object("island.experiment", "greenhouse", "温室南入口与实验记录", {"done": dv_field(false), "signed_name": dv_unknown(), "sample_seen_at": dv_unknown(), "sample_reading": dv_unknown(), "opening": dv_field(1), "completed_at": dv_unknown()}))
     var bindings = scene.bindings
     var actors = []
@@ -333,7 +333,7 @@ fn island_case_reconcile(actor):
     while i < rt_count(values):
         rt_push(known, dv_fact(values[i].ref, values[i].value))
         i = i + 1
-    let premise = dv_all(dv_append(known, campaign_at(actor.id, "logistics")))
+    let premise = dv_all(dv_append(known, campaign_at(actor.id, "main_granary")))
     let id = rt_cat(actor.id, ".island.case.reconcile")
     let law = dv_axiom(id, 1, dv_all([premise, c2_can_act(actor.id)]), [dv_assign(island_case_ref("resolved"), true)])
     let explanation = rt_cat("我按各次实际观察时刻核算：摘录后领取增加", rt_cat(rt_show(removed), rt_cat("份，仓内转入增加", rt_cat(rt_show(received), "份，差额与现存相符。南入口实验另有现场签名记录；这些记录本身没有证明有人盗取粮食。"))))
@@ -346,7 +346,7 @@ fn island_case_target(actor, role):
     let food = dv_all([dv_fact(island_case_ref("snapshot_done"), true), dv_fact(island_case_ref("challenge_done"), true), dv_fact(island_case_ref("defense_done"), true)])
     if dv_truth(actor.mind, food) == "true" and dv_truth(actor.mind, dv_fact(island_ref("experiment", "done"), true)) != "true":
         return "greenhouse"
-    return "logistics"
+    return "main_granary"
 
 fn island_case_observation_utility(actor, action, role):
     if role == "":
@@ -407,7 +407,7 @@ fn island_case_refresh(state):
     if not resolved and (role != "" or dv_find(state, "player_actor", "") == actor.id):
         let refresh = island_case_parameters().inspection_refresh_minutes
         let minimum_time = rt_floor(actor.mind.time / refresh) * refresh
-        let evidence = [{"room": "logistics", "refs": [island_case_ref("snapshot_done"), island_case_ref("challenge_done"), island_case_ref("defense_done"), island_case_ref("resolved"), campaign_ref("c2.counter", "remaining"), campaign_ref("c2.ledger", "removed"), campaign_ref("c2.ledger", "reserve_received"), campaign_own(actor.id, "rations"), campaign_own(actor.id, "consumed")]}, {"room": "greenhouse", "refs": [island_ref("experiment", "done"), island_ref("experiment", "opening"), island_air_ref("greenhouse:greenhouse")]}]
+        let evidence = [{"room": "main_granary", "refs": [island_case_ref("snapshot_done"), island_case_ref("challenge_done"), island_case_ref("defense_done"), island_case_ref("resolved"), campaign_ref("c2.counter", "remaining"), campaign_ref("c2.ledger", "removed"), campaign_ref("c2.ledger", "reserve_received"), campaign_own(actor.id, "rations"), campaign_own(actor.id, "consumed")]}, {"room": "greenhouse", "refs": [island_ref("experiment", "done"), island_ref("experiment", "opening"), island_air_ref("greenhouse:greenhouse")]}]
         var e = 0
         while e < rt_count(evidence):
             var f = 0

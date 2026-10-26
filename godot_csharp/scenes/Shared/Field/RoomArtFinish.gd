@@ -50,6 +50,15 @@ func _ready() -> void:
 		light.range_z_max = 100
 		add_child(light)
 		_lights.append(light)
+		if str(declaration.kind) == "table_lamp" and declaration.has("texture"):
+			var table := layout.get_node("Objects/" + str(declaration.owner)) as Sprite2D
+			var lamp := preload("res://scenes/Shared/Field/OilLamp.gd").new()
+			lamp.name = "OilLamp" + str(_lights.size())
+			table.add_child(lamp)
+			# Inherit table ordering, cancel its source-image scale, keep base fixed.
+			lamp.position = (Vector2(float(declaration.base[0]), float(declaration.base[1])) - table.position) / table.scale
+			lamp.scale = Vector2.ONE / table.scale
+			lamp.configure(declaration, light)
 	queue_redraw()
 
 func _add_windows(layout: Node2D) -> void:
@@ -59,6 +68,10 @@ func _add_windows(layout: Node2D) -> void:
 	if not spec is Dictionary: return
 	for part in spec.get(str(layout.name), []):
 		var origin := Vector2(float(part.origin[0]), float(part.origin[1]))
+		for entry in part.get("materials", []):
+			for object in layout.get_node("Objects").get_children():
+				if object is Sprite2D and object.texture.resource_path == str(entry.diffuse):
+					object.texture = load(str(entry.canvas_texture))
 		for panel in part.get("panels", []):
 			_panel_cells[Vector2i(int((origin.x + float(panel[0])) / 32), int((origin.y + float(panel[1])) / 32))] = true
 		for sample in part.get("floor_samples", []):

@@ -548,10 +548,15 @@ fn dvs_has_active_communication_goal(actor):
 fn dvs_prepare_cognition(actor, events, time, parent):
     if dv_find(dv_find(actor.mind, "CognitionFilter", []), "anterograde", false):
         return dv_with_many(actor, {"cognition_stop": "anterograde-no-new-memory", "cognition_reused": false, "reason_reused": false})
+    actor = dvs_refresh_argument(actor, events, time, parent)
+    if dv_find(actor, "argument", false) != false and dv_find(actor, "cognition_blocked", false):
+        return dv_with_many(actor, {"cognition_stop": "argument-revocation-budget", "cognition_reused": false, "reason_reused": false})
     // Preserve actual inference sources and invalidation in one declaration pass.
     actor = dvs_reason(actor, events, time, parent)
     actor = dvs_current_appraisals(actor, events, time, parent)
     actor = dvs_update_support_events(actor, events)
+    actor = dvs_capture_public_topics(actor, events, time, parent)
+    actor = dvs_refresh_argument(actor, events, time, parent)
     return dv_with_many(actor, {"cognition_stop": "approximate-single-pass", "cognition_mode": "approximate-v1", "cognition_reused": false, "reason_reused": false})
 
 fn dvp_personal_ready(mind, choice):
@@ -1379,7 +1384,7 @@ fn dvs_request_context(actor, action, target):
     let topic = dv_find(dv_find(dv_find(action, "speech", []), "request", []), "topic", dv_find(action, "response_topic", ""))
     let visible = dv_find(dv_find(actor, "visible_context", []), target, false)
     if (visible != false):
-        return {"target": target, "topic": topic, "location": visible.location, "inputs": dvs_request_inputs(actor.mind, action.precondition)}
+        return {"target": target, "topic": topic, "location": visible.location, "presence_event": dv_find(actor, "visible_context_event", ""), "inputs": dvs_request_inputs(actor.mind, action.precondition)}
     let transport = dv_find(action, "request_transport", false)
     if (transport == false):
         return false
@@ -1472,7 +1477,7 @@ fn dvs_notice_peers(actor, physical, actors, bindings, events, time, parent):
                     mind = dv_store(mind, absent[j].ref, unknown)
                     j = j + 1
                 mind = dv_with_many(mind, {"revision": revision + 1, "time": dv_max(dv_find(mind, "time", 0), time)})
-            return dv_with_many(actor, {"visible_context": context, "visible_context_location": location, "visible_context_clear": clear, "mind": mind, "last_cognitive_event": event})
+            return dv_with_many(actor, {"visible_context": context, "visible_context_location": location, "visible_context_clear": clear, "visible_context_event": event, "mind": mind, "last_cognitive_event": event})
     else:
         return actor
 
@@ -1552,9 +1557,27 @@ fn dvs_notice_visible_objects(actor, physical, bindings, events, time, parent):
             mind = next
     return dv_with_many(actor, {"visible_objects": context, "mind": mind, "last_cognitive_event": event})
 
+fn dvs_notice_movement_witnesses(actors, moving_index, before, physical, bindings, events, time, parent):
+    let mover = actors[moving_index]
+    if not dv_has_key(mover, "location_ref"):
+        return actors
+    let origin = dv_read(before, mover.location_ref)
+    let destination = dv_read(physical, mover.location_ref)
+    if not dv_uncontested(origin) or not dv_uncontested(destination) or origin.value == destination.value:
+        return actors
+    var result = actors
+    var i = 0
+    while i < rt_count(result):
+        if i != moving_index and dv_has_key(result[i], "location_ref"):
+            let position = dv_read(physical, result[i].location_ref)
+            if dv_uncontested(position) and (position.value == origin.value or position.value == destination.value):
+                result = dvs_replace(result, i, dvs_notice_peers(result[i], physical, result, bindings, events, time, parent))
+        i = i + 1
+    return result
+
 fn dvs_visible_action_grants(actors, speaker_index, action, before, physical, bindings, events, time, parent, execution_id):
     var listeners = dv_find(action, "public_observers", [])
-    var grants = dv_find(action, "public_grants", [])
+    var grants = dv_find(action, "visual_grants", dv_find(action, "public_grants", []))
     if rt_count(listeners) == 0 or rt_count(grants) == 0:
         return actors
     var speaker = actors[speaker_index]
@@ -1819,7 +1842,11 @@ fn dvp_rejected_signature(actor, action, mind):
     var opportunity = false
     if dv_has_key(action, "opportunity_requirement"):
         opportunity = {"context": dv_find(actor, "visible_context", []), "observed_location": dv_find(actor, "visible_context_location", false), "visibility_available": dv_find(actor, "visible_context_clear", false)}
-    return {"precondition": dvp_rejected_condition_signature(mind, action.precondition), "prediction": prediction, "location": location, "opportunity": opportunity}
+    var request_context = false
+    let request = dv_find(dv_find(action, "speech", []), "request", false)
+    if request != false:
+        request_context = dvs_request_context(dvp_actor_view(actor, mind), action, request.target)
+    return {"precondition": dvp_rejected_condition_signature(mind, action.precondition), "prediction": prediction, "location": location, "opportunity": opportunity, "request_context": request_context}
 
 // A control retry token comes from a rejected native contact receipt or a
 // verified source-side cancellation with exactly equal start/end positions.
@@ -1892,6 +1919,24 @@ fn dvs_manual_contact_failure(action, receipt, subject):
     return "native-motion-blocked"
 
 fn dvp_eligible_base(actor, action, mind, relevant):
+    // Rebuilt autonomous calendar waits are not stable manual choices.
+    // Manual controllers use their explicitly declared wait intentions.
+    if dv_find(actor, "manual_input", false) and dv_find(action, "known_opportunity_wait", false):
+        return false
+    let unknown_refs = dv_find(action, "unknown_refs", [])
+    var unknown_index = 0
+    while unknown_index < rt_count(unknown_refs):
+        if dv_uncontested(dv_read(mind, unknown_refs[unknown_index])):
+            return false
+        unknown_index = unknown_index + 1
+    let entity_lock = dv_find(actor, "simulation_entity_lock", false)
+    if dv_find(action, "requires_entity_reservation", false) and entity_lock == false:
+        return false
+    if entity_lock != false and dv_find(entity_lock, "protecting", false) and not dv_find(action, "entity_hold_compatible", false):
+        return false
+    if dvs_action_requires_argument(action):
+        if not dvs_argument_action_current(dvp_actor_view(actor, mind), action):
+            return false
     if dv_find(action, "manual_only", false) and not dv_find(actor, "manual_input", false):
         return false
     var id = action.id
@@ -1913,7 +1958,8 @@ fn dvp_eligible_base(actor, action, mind, relevant):
         if action.kind == "inspect":
             let inspection_actor = dvp_actor_view(actor, mind)
             if dv_same(dv_find(dv_find(actor, "inspection_attempt_signatures", []), id, false), dvp_inspection_signature(inspection_actor, action, mind)):
-                return false
+                if not (dv_find(actor, "manual_input", false) and dv_find(action, "manual_reinspect", false)):
+                    return false
         if dv_has_key(action, "answer"):
             var local_1 = false
             if dv_has_key(action, "argument"):
@@ -2311,7 +2357,12 @@ fn dvs_emission_location(speaker, speech, physical):
         return cell.value
     return ""
 
+fn dvs_auditory_access(actor, physical):
+    return dv_truth(physical, dv_find(actor, "auditory_access_when", dv_true())) == "true"
+
 fn dvs_speech_hearing(speaker, listener, speech, physical):
+    if not dvs_auditory_access(listener, physical):
+        return false
     var source = speaker.id
     var channel = dv_find(speech, "channel", "")
     var source_location = dvs_emission_location(speaker, speech, physical)
@@ -4443,21 +4494,193 @@ fn dvs_model(actor, hypothesis, events, time, parent):
 // Glue between paid prediction evidence, explicit abduction and real submissions.
 // Only actual personal reception may bind a later proposal to an old utterance.
 
+fn dvs_argument_sources(events, actor):
+    actor = dvs_update_support_events(actor, events)
+    let subject = actor.id
+    events = actor.support_events
+    var result = []
+    var i = 0
+    while (i < rt_count(events)):
+        var event = events[i]
+        if dv_and((event.actor == subject), dv_or((event.type == "observation"), (event.type == "listener_parse"))):
+            var observations = event.data.observations
+            var j = 0
+            while (j < rt_count(observations)):
+                rt_push(result, {"event_id": event.id, "observation": observations[j]})
+                j = (j + 1)
+        i = (i + 1)
+    return result
+
+fn dvs_capture_public_topics(actor, events, time, parent):
+    var bindings = dv_find(actor.policy, "topic_bindings", [])
+    var heard = dv_find(actor, "heard_topics", [])
+    var i = 0
+    while (i < rt_count(bindings)):
+        var binding = bindings[i]
+        var topic = bindings[i].topic
+        if dv_and((not dv_has_key(heard, topic)), (dv_truth(actor.mind, binding.heard_when) == "true")):
+            var sources = dvs_support_parents(actor.mind, dvs_sim_refs(binding.heard_when), events, actor)
+            if (0 < rt_count(sources)):
+                var record = dv_with({"topic": topic, "source_event_ids": sources, "heard_when": binding.heard_when}, "origin_speakers", dvs_topic_origin_speakers(events, sources))
+                dvs_event(events, "public_topic_heard", actor.id, time, dv_explanation_merge(dv_single(parent), sources), record)
+                heard = dv_with(heard, topic, record)
+        i = (i + 1)
+    return dvs_capture_heard_utterances(dv_with(actor, "heard_topics", heard), events)
+
+fn dvs_argument_revoke(actor, events, time, parent):
+    var argument = actor.argument
+    var world = actor.mind
+    var changes = actor.argument.changes
+    var i = 0
+    var restored = []
+    var derivations = dv_find(actor, "inference_derivations", [])
+    var contaminated = []
+    var remaining = dv_find(actor.policy, "reason_budget", 0)
+    var checked = 0
+    var blocked = false
+    var descendants = []
+    var updated = false
+    while (i < rt_count(changes)):
+        contaminated = dvp_add_ref(contaminated, changes[i].ref)
+        i = (i + 1)
+    i = (rt_count(derivations) - 1)
+    while dv_and((not (i < 0)), (not blocked)):
+        var derivation = derivations[i]
+        var dependent = false
+        var inputs = derivations[i].inputs
+        var j = 0
+        if (remaining < 1):
+            blocked = true
+        else:
+            remaining = (remaining - 1)
+            checked = (checked + 1)
+            while (j < rt_count(inputs)):
+                if dv_has(contaminated, inputs[j].ref):
+                    dependent = true
+                j = (j + 1)
+        if dv_and((not blocked), dv_and(dependent, dv_find(derivation, "valid", true))):
+            var outputs = derivation.changes
+            var k = 0
+            while (k < rt_count(outputs)):
+                var change = outputs[k]
+                var current = dv_read(world, outputs[k].ref)
+                if dv_same(current, change.after):
+                    world = dv_store(world, change.ref, change.before)
+                    contaminated = dvp_add_ref(contaminated, change.ref)
+                    rt_push(restored, change)
+                k = (k + 1)
+            rt_push(descendants, derivation.event)
+            derivations = dvs_replace(derivations, i, dv_with(derivation, "valid", false))
+        i = (i - 1)
+    i = 0
+    if blocked:
+        false
+    else:
+        while (i < rt_count(changes)):
+            var change = changes[i]
+            var cell = dv_read(world, changes[i].ref)
+            if dv_and((dv_find(cell, "source", "") == "abduction"), dv_has(dv_find(cell, "basis", []), argument.id)):
+                world = dv_store(world, change.ref, change.before)
+                rt_push(restored, change)
+            i = (i + 1)
+    if (0 < rt_count(restored)):
+        world = dv_with(world, "revision", (world.revision + 1))
+    var local_1 = false
+    if blocked:
+        local_1 = argument
+    else:
+        local_1 = false
+    updated = dv_with_many(actor, {"mind": world, "argument": local_1, "argument_revocation_pending": blocked, "ready_hypothesis": false, "inference_derivations": derivations, "cognition_blocked": blocked, "policy": dv_with(actor.policy, "reason_budget", remaining)})
+    updated = dv_with(updated, "last_cognitive_event", rt_cat("e", rt_show(rt_count(events))))
+    var local_2 = false
+    if blocked:
+        local_2 = "model_argument_revocation_pending"
+    else:
+        local_2 = "model_argument_revoked"
+    dvs_event_prepared(events, local_2, actor.id, time, dvs_cognitive_parents(actor, dv_explanation_merge(dv_pair(parent, argument.id), descendants)), dv_with_many({"argument": argument, "mind_revision_before": actor.mind.revision, "mind_revision_after": world.revision, "restored": restored}, {"checked": checked, "remaining": remaining, "actor_id": actor.id, "actor_before": dv_without(actor, "simulations"), "actor_after": dv_without(updated, "simulations"), "mind_before": actor.mind, "mind_after": world}))
+    return updated
+
+fn dvs_factor_argument(result, coverage):
+    var argument = result.argument
+    var certificates = coverage.certificates
+    var i = 0
+    var events = []
+    var sources = []
+    var inputs = []
+    while (i < rt_count(certificates)):
+        var certificate = certificates[i]
+        var chain = certificates[i].source_chain
+        var j = 0
+        events = dv_explanation_merge(events, dv_single(certificate.event))
+        sources = dv_explanation_merge(sources, certificate.source_event_ids)
+        while (j < rt_count(chain)):
+            rt_push(inputs, {"ref": chain[j].ref, "cell": chain[j].cell})
+            j = (j + 1)
+        i = (i + 1)
+    argument = dv_with_many(argument, {"factor_coverage": coverage, "competitor_events": dv_explanation_merge(argument.competitor_events, events), "source_event_ids": dv_explanation_merge(argument.source_event_ids, sources), "inputs": dv_explanation_merge(argument.inputs, inputs)})
+    return dv_with(result, "argument", argument)
+
+fn dvs_capture_heard_utterances(actor, events):
+    events = rt_snapshot(events)
+    var heard = dv_find(actor, "heard_utterances", [])
+    var i = dv_find(actor, "heard_utterances_cursor", 0)
+    let total = rt_count(events)
+    if i == total and dv_has_key(actor, "heard_utterances"):
+        return actor
+    while (i < total):
+        var event = events[i]
+        if dv_and((event.actor == actor.id), (event.type == "listener_parse")):
+            var data = event.data
+            var source = data.source_event
+            var existing = dv_find(heard, source, false)
+            if existing == false or existing.parse_event != event.id:
+                let literal = dvs_find_event_by_id(events, source)
+                if literal != false and dv_has(event.parents, source) and literal.actor != actor.id:
+                    heard = dv_with(heard, source, dv_with({"source_event": source, "parse_event": event.id, "speaker": literal.actor, "scope": dv_find(data.speech, "scope", "")}, "refs", dvs_sim_refs(data.literal)))
+        i = (i + 1)
+    return dv_with_many(actor, {"heard_utterances": heard, "heard_utterances_cursor": total})
+
+fn dvs_topic_origin_speakers(events, sources):
+    var pending = dv_clone(sources)
+    var visited = []
+    var result = []
+    var i = 0
+    while (i < rt_count(pending)):
+        var id = pending[i]
+        if dv_has(visited, id):
+            false
+        else:
+            rt_push(visited, id)
+            let event = dvs_find_event_by_id(events, id)
+            if (event != false):
+                if dv_or((event.type == "observation"), (event.type == "listener_parse")):
+                    var source = dv_find(event.data, "source_event", "")
+                    if dv_and((not (source == "")), dv_has(event.parents, source)):
+                        pending = dv_explanation_merge(pending, dv_single(source))
+                else:
+                    if (event.type == "public_topic_heard"):
+                        pending = dv_explanation_merge(pending, dv_find(event.data, "source_event_ids", []))
+                if (event.type == "speech_literal"):
+                    result = dv_explanation_merge(result, dv_single(event.actor))
+        i = (i + 1)
+    return result
+
 fn dvs_topic_was_heard(actor, topic):
     return dv_has_key(dv_find(actor, "heard_topics", []), topic)
 
 fn dvs_argument_valid(actor):
     var argument = dv_find(actor, "argument", false)
-    if (argument == false):
+    if argument == false or not dv_record_like(argument):
         return false
     else:
-        return dv_and(dv_same(dv_find(argument, "adoptions", []), actor.mind.adoptions), dvs_topic_was_heard(actor, argument.question_id))
+        let topic = dv_find(argument, "question_id", "")
+        return topic != "" and dv_and(dv_same(dv_find(argument, "adoptions", []), actor.mind.adoptions), dvs_topic_was_heard(actor, topic))
 
 fn dvs_argument_inputs_current(actor):
     var argument = dv_find(actor, "argument", false)
     var valid = true
     var i = 0
-    if (argument == false):
+    if argument == false or not dv_has_key(argument, "inputs") or not dv_has_key(argument, "changes"):
         return false
     else:
         var inputs = argument.inputs
@@ -4481,6 +4704,253 @@ fn dvs_argument_inputs_current(actor):
                     valid = false
             i = (i + 1)
         return valid
+
+fn dvs_action_requires_argument(action):
+    return dv_find(action, "speech_from_argument", false) or dv_has_key(action, "argument_slots")
+
+fn dvs_refresh_argument(actor, events, time, parent):
+    if dv_find(actor, "argument", false) != false:
+        if dv_find(actor, "argument_revocation_pending", false) or not dvs_argument_valid(actor) or not dvs_argument_inputs_current(actor):
+            return dvs_argument_revoke(actor, events, time, parent)
+    return actor
+
+// Resolve a real replay's question before factor proofs or models read the mind.
+// A different admitted question must not inherit the old argument's own writes.
+fn dvs_prepare_replay_argument(actor, action, events, time, parent):
+    actor = dvs_refresh_argument(actor, events, time, parent)
+    var question = ""
+    let argument = dv_find(actor, "argument", false)
+    var previous = ""
+    if argument != false:
+        previous = dv_find(argument, "question_id", "")
+    let manual = dv_find(action, "replay_hypothesis_id", "")
+    let candidates = dv_find(actor.policy, "hypotheses", [])
+    var i = 0
+    while i < rt_count(candidates):
+        let candidate = candidates[i]
+        let topic = dv_find(candidate, "question", dv_find(candidate, "topic", ""))
+        if topic != "" and 0 < rt_count(dv_find(candidate, "claim_slots", [])) and (manual == "" or manual == candidate.id):
+            if dvs_replay_candidate_available(actor, candidate) and (manual == "" or dvs_manual_candidate_available(actor, candidate)):
+                if question == "" or (question == previous and topic != previous):
+                    question = topic
+        i = i + 1
+    if not dv_find(actor, "cognition_blocked", false) and argument != false and question != "" and question != previous:
+        let requested = dvs_event(events, "model_argument_question_changed", actor.id, time, dvs_cognitive_parents(actor, [parent, argument.id]), {"previous_question": previous, "question": question, "argument_id": argument.id, "mind_revision": actor.mind.revision})
+        actor = dvs_argument_revoke(actor, events, time, requested)
+    return {"actor": actor, "question": question}
+
+// One acceptance pass over models actually computed by this paid replay.
+// dv_accept_explanation owns all claims and defeasible writes; this glue only
+// supplies actual sources, verified exclusions and the owner's remaining budget.
+fn dvs_accept_paid_arguments(actor, replayed, question_id, events, time, parent):
+    if dv_find(dv_find(actor.mind, "CognitionFilter", []), "anterograde", false):
+        return actor
+    actor = dvs_refresh_argument(actor, events, time, parent)
+    if dv_find(actor, "cognition_blocked", false):
+        return actor
+    if dvs_argument_valid(actor) and dvs_argument_inputs_current(actor) and dv_find(actor.argument, "question_id", "") == question_id:
+        return actor
+    // Withdrawal belongs before model reads. Never repair it here by accepting
+    // a model that could have consumed an earlier argument's defeasible writes.
+    if dv_find(actor, "argument", false) != false:
+        return actor
+    actor = dvs_capture_public_topics(dvs_update_support_events(actor, events), events, time, parent)
+    let sources = dvs_argument_sources(events, actor)
+    let candidates = dv_find(actor.policy, "hypotheses", [])
+    var i = 0
+    while i < rt_count(replayed):
+        let hypothesis = replayed[i]
+        let question = dv_find(hypothesis, "question", dv_find(hypothesis, "topic", ""))
+        let model = dvs_cached_model(actor, hypothesis)
+        let model_event = dvs_find_event_by_id(events, dv_find(model, "event", ""))
+        let slots = dv_find(hypothesis, "claim_slots", [])
+        if question != "" and question == question_id and dvs_topic_was_heard(actor, question) and 0 < rt_count(slots) and dv_explanation_model_complete(model, "explained", actor.mind.revision) and dvs_public_model_paid(events, dv_find(model, "event", ""), actor.id):
+            // A cached model from an older replay is not a newly computed candidate.
+            if model_event != false and dv_has(model_event.parents, dv_find(actor, "model_paid_event", "")):
+                let coverage = dvs_factor_coverage(actor, hypothesis, events)
+                if not dvs_factor_covered(hypothesis, coverage.certificates):
+                    var competitors = []
+                    var j = 0
+                    while j < rt_count(candidates):
+                        let other = candidates[j]
+                        if other.id != hypothesis.id and dv_find(other, "group", "") == dv_find(hypothesis, "group", "") and dvp_topic(actor, other) and dv_truth(actor.mind, dv_find(other, "available_when", dv_true())) == "true":
+                            if not dvs_factor_covered(other, coverage.certificates):
+                                var comparison = dvs_cached_model(actor, other)
+                                if not dvs_model_paid_result(events, dv_find(comparison, "event", ""), actor.id, "inconsistent"):
+                                    comparison = {"status": "unpaid-or-unresolved-competitor", "source_revision": actor.mind.revision}
+                                rt_push(competitors, comparison)
+                        j = j + 1
+                    var policy = dv_find(actor.policy, "abduction", [])
+                    j = 0
+                    while j < rt_count(coverage.certificates):
+                        policy = dv_with(policy, "confidence_cap", dv_min(dv_find(policy, "confidence_cap", 0), coverage.certificates[j].confidence))
+                        j = j + 1
+                    let result = dvs_factor_argument(dv_accept_explanation(actor.mind, model, competitors, slots, sources, policy, dv_find(actor.policy, "reason_budget", 0), time, rt_cat("e", rt_show(rt_count(events)))), coverage)
+                    var parents = dvs_cognitive_parents(actor, [parent, model.event])
+                    parents = dv_explanation_merge(parents, result.argument.source_event_ids)
+                    parents = dv_explanation_merge(parents, result.argument.competitor_events)
+                    var kind = "model_argument_unavailable"
+                    if result.accepted:
+                        kind = "model_argument_accepted"
+                    let accepted_event = dvs_event(events, kind, actor.id, time, parents, {"actor_id": actor.id, "actor_revision": actor.mind.revision, "hypothesis": hypothesis, "competitors": competitors, "result": result})
+                    actor = dv_with_many(actor, {"last_cognitive_event": accepted_event, "policy": dv_with(actor.policy, "reason_budget", result.remaining)})
+                    if result.accepted:
+                        return dv_with_many(actor, {"mind": result.world, "argument": dv_with_many(result.argument, {"adoptions": actor.mind.adoptions, "question_id": question, "hypothesis_id": hypothesis.id})})
+        i = i + 1
+    return actor
+
+// Read only the owner's existing accepted argument. No model run, acceptance,
+// new belief or predicted listener state is produced by action materialization.
+fn dvs_argument_action_claims(actor, action):
+    if not dvs_argument_valid(actor) or not dvs_argument_inputs_current(actor):
+        return false
+    let argument = actor.argument
+    if dv_find(argument, "question_id", "") == "" or dv_find(action, "argument_question", argument.question_id) != argument.question_id:
+        return false
+    let requested = dv_find(action, "argument_slots", [])
+    if rt_count(requested) == 0:
+        return false
+    let claims = dv_find(argument, "claims", [])
+    var result = []
+    var used = []
+    var i = 0
+    while i < rt_count(requested):
+        let slot = requested[i]
+        if dv_has(used, slot):
+            return false
+        rt_push(used, slot)
+        var found = false
+        var j = 0
+        while j < rt_count(claims):
+            if dv_find(claims[j], "slot_id", "") == slot:
+                if found != false or not dv_has_key(claims[j], "ref") or not dv_has_key(claims[j], "value"):
+                    return false
+                found = claims[j]
+            j = j + 1
+        if found == false:
+            return false
+        rt_push(result, found)
+        i = i + 1
+    return result
+
+fn dvs_argument_claim_proposition(claims):
+    var propositions = []
+    var i = 0
+    while i < rt_count(claims):
+        rt_push(propositions, dv_fact(claims[i].ref, claims[i].value))
+        i = i + 1
+    return dv_all(propositions)
+
+fn dvs_argument_reassessment_sources(actor, action, argument):
+    let heard = dv_find(actor, "heard_utterances", [])
+    let scope = dv_find(action, "reassessment_source_scope", "")
+    let topic = dv_find(dv_find(actor, "heard_topics", []), argument.question_id, [])
+    var result = []
+    var i = 0
+    while i < rt_count(heard):
+        let record = heard[i][1]
+        if scope != "" and scope == record.scope and dv_has(dv_find(topic, "origin_speakers", []), record.speaker):
+            result = dv_explanation_merge(result, dv_single(record.source_event))
+        i = i + 1
+    return result
+
+fn dvs_argument_proposal(actor, action, claims):
+    let argument = actor.argument
+    return {"argument_id": argument.id, "id": argument.id, "estimated": argument.estimated, "confidence": argument.confidence, "claims": claims, "source_event_ids": argument.source_event_ids, "model_event": argument.model_event, "reassessment_sources": dvs_argument_reassessment_sources(actor, action, argument)}
+
+// Content supplies wording; only the accepted argument supplies slot values.
+// This surface is the same actually spoken text for believers and dissenters.
+fn dvs_argument_surface(action, claims):
+    let declaration = dv_find(action, "argument_surface", false)
+    if declaration == false:
+        return dv_find(dv_find(action, "argument_speech_template", dv_find(action, "speech", [])), "surface", "")
+    var text = declaration.template
+    let bindings = dv_find(declaration, "bindings", [])
+    var i = 0
+    while i < rt_count(bindings):
+        let binding = bindings[i]
+        var found = false
+        var j = 0
+        while j < rt_count(claims):
+            if claims[j].slot_id == binding.slot:
+                found = claims[j]
+            j = j + 1
+        if found == false:
+            return false
+        let value = rt_show(found.value)
+        let labels = dv_find(binding, "labels", [])
+        if not dv_has_key(labels, value):
+            return false
+        text = dvs_present_replace(text, rt_cat("{", rt_cat(binding.name, "}")), dv_get(labels, value))
+        i = i + 1
+    return text
+
+fn dvs_argument_action_current(actor, action):
+    if not dvs_action_requires_argument(action):
+        return true
+    if not dv_find(action, "argument_available", false) or not dv_same(dv_find(action, "argument", false), dv_find(actor, "argument", false)):
+        return false
+    let claims = dvs_argument_action_claims(actor, action)
+    if claims == false:
+        return false
+    let proposition = dvs_argument_claim_proposition(claims)
+    if dv_find(action, "speech_from_argument", false):
+        let speech = dv_find(action, "speech", [])
+        let proposal = dvs_argument_proposal(actor, action, claims)
+        let surface = dvs_argument_surface(action, claims)
+        return surface != false and dv_same(dv_find(action, "surface", ""), surface) and dv_same(dv_find(speech, "surface", ""), surface) and dv_same(dv_find(speech, "literal_ast", false), proposition) and dv_same(dv_find(speech, "proposal", false), proposal) and dv_same(dv_find(action, "proposal", false), proposal)
+    return dv_same(dv_find(action, "answer", false), proposition)
+
+fn dvs_argument_action_evidence(actor, action, events):
+    if not dvs_action_requires_argument(action):
+        return true
+    if not dvs_argument_action_current(actor, action):
+        return false
+    let proof = dv_with(action, "answer", dvs_argument_claim_proposition(dvs_argument_action_claims(actor, action)))
+    return dvs_public_argument_valid(proof, [], events, actor.id)
+
+fn dvs_argument_action(actor, action, events):
+    if not dvs_action_requires_argument(action):
+        return action
+    // Invalidate old materialized fields while retaining authored speech metadata.
+    var result = dv_with(dv_without(dv_without(action, "argument"), "proposal"), "argument_available", false)
+    result = dv_without(result, "answer")
+    if dv_find(action, "speech_from_argument", false):
+        let template = dv_without(dv_without(dv_find(action, "argument_speech_template", dv_find(action, "speech", [])), "literal_ast"), "proposal")
+        result = dv_without(result, "speech")
+        result = dv_without(result, "surface")
+        if 0 < rt_count(template):
+            result = dv_with(result, "argument_speech_template", template)
+    let claims = dvs_argument_action_claims(actor, action)
+    if claims == false:
+        return result
+    let proposition = dvs_argument_claim_proposition(claims)
+    let proof = dv_with_many(result, {"argument": actor.argument, "answer": proposition})
+    if not dvs_public_argument_valid(proof, [], events, actor.id):
+        return result
+    result = dv_with_many(result, {"argument": actor.argument, "argument_available": true})
+    if dv_find(action, "speech_from_argument", false):
+        let proposal = dvs_argument_proposal(actor, action, claims)
+        let surface = dvs_argument_surface(result, claims)
+        if surface == false or surface == "":
+            return dv_with(result, "argument_available", false)
+        return dv_with_many(result, {"surface": surface, "speech": dv_with_many(dv_find(result, "argument_speech_template", []), {"literal_ast": proposition, "proposal": proposal, "surface": surface}), "proposal": proposal})
+    return dv_with(result, "answer", proposition)
+
+fn dvs_materialize_arguments(actor, events):
+    var actions = actor.actions
+    var changed = false
+    var i = 0
+    while i < rt_count(actions):
+        if dvs_action_requires_argument(actions[i]):
+            let action = dvs_argument_action(actor, actions[i], events)
+            if not dv_same(action, actions[i]):
+                actions = dvs_replace(actions, i, action)
+                changed = true
+        i = i + 1
+    if not changed:
+        return actor
+    return dv_with(actor, "actions", actions)
 
 fn dvs_factor_coverage(actor, hypothesis, events):
     var candidates = dv_find(actor.policy, "hypotheses", [])
@@ -4855,8 +5325,24 @@ fn dvs_model_observed_inputs(model):
         i = (i + 1)
     return result
 
-fn dvs_public_model_paid(events, id, subject):
+fn dvs_model_paid_result(events, id, subject, status):
     let event = dvs_find_event_by_id(events, id)
+    if event != false and event.actor == subject and event.type == "model_probe_reuse":
+        let source = dv_find(event.data, "source_event", "")
+        let original = dvs_find_event_by_id(events, source)
+        if original == false or original.actor != subject or original.type != "mind_simulation" or not dv_has(event.parents, source):
+            return false
+        var reused = event.data.result
+        var computed = original.data.result
+        let accounting = ["expanded", "total_expanded", "remaining", "work_remaining", "reused_work", "reused_from_event"]
+        var i = 0
+        while i < rt_count(accounting):
+            reused = dv_without(reused, accounting[i])
+            computed = dv_without(computed, accounting[i])
+            i = i + 1
+        if not dv_same(reused, computed):
+            return false
+        return dvs_model_paid_result(events, source, subject, status)
     if (event != false and event.actor == subject and dv_or((event.type == "mind_simulation"), (event.type == "model_recheck"))):
         let parents = event.parents
         let result = event.data.result
@@ -4865,10 +5351,13 @@ fn dvs_public_model_paid(events, id, subject):
             let paid = dvs_find_event_by_id(events, parents[j])
             if (paid != false and paid.actor == subject and paid.type == "action_execution"):
                 let data = paid.data
-                if dv_and((dv_find(dv_find(data, "action", []), "kind", "") == "replay"), dv_and((data.receipt.execution.status == "applied"), dv_and((dv_find(result, "status", "") == "explained"), dv_find(result, "plan_complete", false)))):
+                if dv_and((dv_find(dv_find(data, "action", []), "kind", "") == "replay"), dv_and((data.receipt.execution.status == "applied"), dv_and((dv_find(result, "status", "") == status), dv_find(result, "plan_complete", false)))):
                     return true
             j = j + 1
     return false
+
+fn dvs_public_model_paid(events, id, subject):
+    return dvs_model_paid_result(events, id, subject, "explained")
 
 fn dvs_public_argument_valid(action, rule, events, subject):
     var argument = dv_find(action, "argument", false)
@@ -4882,6 +5371,8 @@ fn dvs_public_argument_valid(action, rule, events, subject):
     var original = event.data.result.argument
     var public = dv_without(dv_without(dv_without(argument, "question_id"), "hypothesis_id"), "adoptions")
     if (not dv_same(original, public)):
+        return false
+    if dv_find(argument, "question_id", "") == "" or dv_find(action, "argument_question", argument.question_id) != argument.question_id:
         return false
     if (not dvs_public_model_paid(events, argument.model_event, subject)):
         return false
@@ -5235,15 +5726,24 @@ fn dvs_dispatch_due(state, index):
     // immutable. A frozen host state is otherwise consumed as a read-only value.
     var events = dv_clone(state.events)
     let actor = dvs_drain_received_speech(dv_with(updated_actor, "scheduled_action", false), events, time)
-    let action = queued.action
+    var action = queued.action
+    if not dvs_argument_action_evidence(actor, action, events):
+        dvs_event(events, "action_cancelled", actor.id, time, [queued.parent], {"action_id": action.id, "reason": "argument-no-longer-current", "scheduled_start": queued.start, "due": queued.due, "charged": false})
+        return dvs_owned_state_update(state, {"actors": dvs_replace(state.actors, index, actor), "events": events, "cursor": index, "idle": 0})
+    var preparation_parent = queued.parent
+    if dvs_action_requires_argument(action):
+        action = dv_with_many(action, {"argument_evidence_revision": actor.mind.revision, "argument_evidence_time": time, "argument_evidence_mind_time": actor.mind.time})
+        preparation_parent = dvs_event(events, "argument_evidence_prepared", actor.id, time, dvs_cognitive_parents(actor, [queued.parent, actor.argument.id]), {"action_id": action.id, "argument_id": actor.argument.id, "argument_evidence_revision": actor.mind.revision, "argument_evidence_time": time, "argument_evidence_mind_time": actor.mind.time, "physical_revision": state.physical.revision, "source_event_ids": actor.argument.source_event_ids, "contract": "prepared-evidence-before-own-completion-observations"})
     let bounds = dv_action_cost_bounds(queued.model.minimum, queued.model.maximum)
     let event = rt_cat("action", rt_show(state.executed))
     var quote = dv_with(dv_action_cost_quote(actor.ledger, state.physical, dv_find(action, "law", action.id), event, bounds), "scheduled_start", queued.start)
     let interruption = dv_find(queued, "activity_interruption", false)
     if interruption != false:
         quote = dv_with(quote, "activity_interruption", interruption)
-    let parent = dvs_event(events, "cost_quote", actor.id, time, [queued.parent], quote)
-    let pending = {"index": index, "actor": actor, "parent": parent, "time": time, "action": action, "id": actor.id, "mind": actor.mind, "model": queued.model, "action_event": event, "ledger": actor.ledger, "quote": quote, "choice": queued.choice, "activity_interruption": interruption}
+    let parent = dvs_event(events, "cost_quote", actor.id, time, [preparation_parent], quote)
+    var pending = {"index": index, "actor": actor, "parent": parent, "time": time, "action": action, "id": actor.id, "mind": actor.mind, "model": queued.model, "action_event": event, "ledger": actor.ledger, "quote": quote, "choice": queued.choice, "activity_interruption": interruption}
+    if dvs_action_requires_argument(action):
+        pending = dv_with(pending, "argument_evidence_world", state.physical)
     return dvs_owned_state_update(state, {"actors": dvs_replace(state.actors, index, actor), "events": events, "pending": pending, "idle": 0})
 
 // Scan eligibility without running cognition. Ties preserve cyclic actor order.
@@ -5528,6 +6028,10 @@ fn dvs_debug_phase(story, actor, time, phase):
     return true
 
 fn dvs_prepare_actor(state):
+    // A clock boundary may return the scan cursor of an actor still in flight.
+    // Preserve that queue; the outer scheduler must dispatch its actual due time.
+    if dv_find(state.actors[state.cursor], "scheduled_action", false) != false:
+        return state
     state = dvs_simulation_sync(state)
     state = rt_snapshot(state)
     let story = state.story
@@ -5570,6 +6074,7 @@ fn dvs_prepare_actor(state):
             actor = dvs_notice_visible_objects(actor, physical, bindings, events, time, parent)
             actor = dvs_prepare_cognition(actor, events, time, parent)
             dvs_debug_phase(story, actor.id, time, "cognition-end")
+        actor = dvs_materialize_arguments(actor, events)
         var choice = false
         if dv_find(state, "player_actor", "") == actor.id:
             let selection = dv_find(state, "player_selection", "")
@@ -5679,6 +6184,15 @@ fn dvs_session_complete_commit(state, receipt):
     let choice = pending.choice
     let interruption = dv_find(pending, "activity_interruption", false)
     dv_require(receipt.action_event == action_event, "Completion belongs to another action")
+    // Due dispatch already checked the same owned evidence before any quote.
+    // A corrupt/stale submitted payload must fail before fee or world effects.
+    if dvs_action_requires_argument(action):
+        dv_require(dv_same(actors[index], actor) and dv_same(physical, dv_find(pending, "argument_evidence_world", false)), "Argument execution state changed after Prepare")
+        dv_require(dv_same(mind, actor.mind) and dv_find(action, "argument_evidence_revision", -1) == actor.mind.revision and dv_find(action, "argument_evidence_time", -1) == time and dv_find(action, "argument_evidence_mind_time", -1) == actor.mind.time, "Prepared argument evidence boundary mismatch")
+    dv_require(dvs_argument_action_evidence(actor, action, events), "Prepared argument no longer has current paid evidence")
+    // This execution uses the checked Prepare snapshot. Its own subsequent cost,
+    // clock and observations cannot retroactively cancel the submitted speech;
+    // the next cognition preparation refreshes/revokes its old argument instead.
     var before = physical
     var result = false
     dv_require(receipt.actual.time == pending.model.actual.time, "Scheduled receipt duration differs from declared duration")
@@ -5796,9 +6310,16 @@ fn dvs_session_complete_commit(state, receipt):
                 actors = dvs_replace(actors, index, actor)
                 actors = dvs_public_grants(actors, index, dv_with_many(action, {"speech": {"channel": "formal-receipt", "literal_ast": dv_true()}, "listeners": judgment.accepted_listeners, "public_grants": judgment.accepted_public_grants}), physical, bindings, events, time, parent, rt_cat(action_event, "-accepted"))
                 actor = actors[index]
-    if action.kind == "replay" and result.execution.status == "applied" and not dvs_replay_has_available_candidate(actor):
+    var replay_question = ""
+    if action.kind == "replay" and result.execution.status == "applied":
+        let preparation = dvs_prepare_replay_argument(actor, action, events, time, parent)
+        actor = preparation.actor
+        replay_question = preparation.question
+        if dv_find(actor, "cognition_blocked", false):
+            dvs_event(events, "replay_deferred", id, time, dvs_cognitive_parents(actor, [parent]), {"action_id": action.id, "reason": "argument-revocation-pending", "question": replay_question, "reason_budget": dv_find(actor.policy, "reason_budget", 0)})
+    if action.kind == "replay" and result.execution.status == "applied" and not dv_find(actor, "cognition_blocked", false) and not dvs_replay_has_available_candidate(actor):
         dvs_event(events, "replay_deferred", id, time, [parent], {"action_id": action.id, "reason": "no-executable-plan-with-known-external-inputs", "model_budget": dv_find(actor.policy, "model_budget", 0)})
-    if action.kind == "replay" and result.execution.status == "applied" and dvs_replay_has_available_candidate(actor):
+    if action.kind == "replay" and result.execution.status == "applied" and not dv_find(actor, "cognition_blocked", false) and dvs_replay_has_available_candidate(actor):
         var candidates = dv_find(actor.policy, "hypotheses", [])
         let manual_id = dv_find(action, "replay_hypothesis_id", "")
         if manual_id != "":
@@ -5812,10 +6333,13 @@ fn dvs_session_complete_commit(state, receipt):
                 dvs_event(events, "manual_replay_unavailable", id, time, [parent], {"action_id": action.id, "hypothesis_id": manual_id, "reason": "subject-admission-changed"})
         var k = 0
         actor = dv_with(actor, "model_probe_cache", [])
+        var replayed = []
         var simulations = dv_find(actor, "simulations", [])
         var coverages = []
         var factor_rejections = []
-        actor = dv_with_many(actor, {"model_paid_event": parent, "policy": dv_with(actor.policy, "model_work_remaining", dv_find(model, "work_limit", 0))})
+        // Clock/perception observations may have advanced parent since execution.
+        // Payment must name the actual successful replay receipt, not its observation.
+        actor = dv_with_many(actor, {"model_paid_event": execution_event, "policy": dv_with(actor.policy, "model_work_remaining", dv_find(model, "work_limit", 0))})
         // Paid constraint proofs still exclude competitors. Selecting one model
         // must not make evidence-backed formal answers require exhaustive replay.
         if (0 < rt_count(dv_find(actor.policy, "factor_constraints", []))):
@@ -5856,10 +6380,13 @@ fn dvs_session_complete_commit(state, receipt):
                         simulation = dv_with_many(simulation, {"source_mind_time": actor.mind.time, "source_hypothesis": candidate, "source_replay_depth": dv_find(actor.policy, "Replay_Depth", rt_count(dvs_sim_plan(candidate)))})
                         simulations = dv_with(simulations, candidate.id, dv_with_many(simulation, {"event": events[(rt_count(events) - 1)].id, "source_revision": actor.mind.revision}))
                         actor = dv_with_many(actor, {"model_previous_event": events[(rt_count(events) - 1)].id, "last_cognitive_event": events[(rt_count(events) - 1)].id, "policy": dv_with_many(actor.policy, {"model_budget": simulation.remaining, "model_work_remaining": simulation.work_remaining})})
+                        rt_push(replayed, candidate)
             k = (k + 1)
         actor = dv_without(dv_with(actor, "simulations", simulations), "model_probe_cache")
         if manual_id == "":
             actor = dv_with(actor, "factor_rejections", {"source_revision": actor.mind.revision, "ids": factor_rejections})
+        actor = dvs_accept_paid_arguments(actor, replayed, replay_question, events, time, parent)
+        actor = dvs_materialize_arguments(actor, events)
     if dv_has_key(actor, "location_ref"):
         var cell = dv_read(physical, actor.location_ref)
         if cell.known:
@@ -5885,6 +6412,15 @@ fn dvs_session_complete_commit(state, receipt):
     actor = dv_with(actor, "attempts", dv_with(dv_find(actor, "attempts", []), action.id, actor.mind.revision))
     if result.execution.status == "applied":
         actor = dv_with(actor, "completed_actions", dv_append(dv_find(actor, "completed_actions", []), action.id))
+        if action.kind == "move" and dv_has_key(action, "travel"):
+            let position = dv_read(actor.mind, actor.location_ref)
+            if dv_uncontested(position) and position.value == action.travel.to:
+                var visited = dv_find(actor, "visited_locations", [])
+                if not dv_has(visited, action.travel.from):
+                    visited = dv_append(visited, action.travel.from)
+                if not dv_has(visited, action.travel.to):
+                    visited = dv_append(visited, action.travel.to)
+                actor = dv_with(actor, "visited_locations", visited)
     actor = dv_with_many(actor, {"used": dv_append(dv_find(actor, "used", []), action.id), "policy": dv_with(actor.policy, "budget", (actor.policy.budget - 1))})
     actors = dvs_replace(actors, index, actor)
     if dv_and(dv_has_key(action, "public_observers"), (result.execution.status == "applied")):
@@ -5900,12 +6436,13 @@ fn dvs_session_complete_commit(state, receipt):
         action = dv_with(action, "speech", dv_with_many(action.speech, {"actual_player_actor": actual_player, "actual_influence_actor": id, "actual_influence_control": control, "actual_literal_truth": dv_truth(physical, action.speech.literal_ast)}))
         actors = dvs_speech_owned(actors, index, action, events, time, parent, physical)
         actors = dvs_public_grants(actors, index, action, physical, bindings, events, time, parent, action_event)
+    if result.execution.status == "applied" and action.kind == "move":
+        actors = dvs_notice_movement_witnesses(actors, index, before, physical, bindings, events, time, execution_event)
     actor = actors[index]
-    if result.execution.status == "applied":
-        // Arrival and changed room contents are observed at this real receipt,
-        // so the result frame and the next choice share the same visible scene.
-        actor = dvs_notice_peers(actor, physical, actors, bindings, events, time, execution_event)
-        actor = dvs_notice_visible_objects(actor, physical, bindings, events, time, execution_event)
+    // A real receipt is also an opportunity to look at the actual nearby scene.
+    // Rejection itself proves nothing about an absent person's destination.
+    actor = dvs_notice_peers(actor, physical, actors, bindings, events, time, execution_event)
+    actor = dvs_notice_visible_objects(actor, physical, bindings, events, time, execution_event)
     executed = (executed + 1)
     idle = 0
     actors = dvs_replace(actors, index, actor)
@@ -6445,7 +6982,10 @@ fn dvs_present_lines(state, viewer, presentation):
             let cell = dv_read(mind, binding.ref)
             if dv_uncontested(cell):
                 let value = rt_show(cell.value)
-                var display = dv_find(dv_find(binding, "labels", []), value, value)
+                let labels = dv_find(binding, "labels", [])
+                var display = dv_find(labels, value, value)
+                if 0 < rt_count(labels) and not dv_has_key(labels, value) and dv_has_key(binding, "unmapped_fallback"):
+                    display = binding.unmapped_fallback
                 if dv_find(binding, "format", "") == "game-clock" and rt_is_numeric_value(cell.value):
                     let minute = rt_floor(cell.value)
                     let day = rt_floor(minute / 1440)
@@ -6458,7 +6998,10 @@ fn dvs_present_lines(state, viewer, presentation):
                     display = rt_cat("第", rt_cat(rt_show(day + 1), rt_cat("日 ", rt_cat(rt_show(hour), rt_cat(":", clock_minute)))))
                 text = dvs_present_replace(text, rt_cat("{", rt_cat(binding.name, "}")), display)
             else:
-                visible = false
+                if dv_has_key(binding, "fallback") and rt_is_text(binding.fallback):
+                    text = dvs_present_replace(text, rt_cat("{", rt_cat(binding.name, "}")), binding.fallback)
+                else:
+                    visible = false
             j = j + 1
         if visible:
             rt_push(result, text)
@@ -6497,6 +7040,8 @@ fn dvs_session_presentation(state, viewer):
             if applied and visible:
                 surface = dvs_render_surface(dv_find(action, "surface", dv_find(dv_find(action, "speech", []), "surface", "")))
                 presentation = dv_find(action, "presentation", [])
+            if not applied and event.actor == viewer:
+                presentation = dv_find(action, "failure_presentation", [])
             var voice = "narration"
             if dv_has_key(action, "speech"):
                 voice = "dialogue"
@@ -6627,6 +7172,8 @@ fn dvs_action_label(actor, action):
     return label
 
 fn dvs_player_options(actor):
+    if dv_find(actor, "scheduled_action", false) != false:
+        return []
     var result = []
     let view = dv_with(actor, "manual_input", true)
     let refs = dvp_goal_refs(actor)
@@ -6643,6 +7190,7 @@ fn dvs_player_options(actor):
 fn dvs_select_player(state, id):
     dv_require(dv_find(state, "awaiting_player", false), "Player input is not currently requested")
     let actor = state.actors[state.cursor]
+    dv_require(dv_find(actor, "scheduled_action", false) == false, "Player already has a scheduled action")
     let action = dvs_manual_action(actor, id)
     let view = dv_with(actor, "manual_input", true)
     dv_require(dvp_eligible(view, action, actor.mind, dvp_goal_refs(actor)), "Player action is no longer available")
@@ -6790,13 +7338,18 @@ fn dvs_simulation_sync(state):
     var events = dv_clone(state.events)
     let world = dvs_simulation_lock(dvs_simulation_facts(state.physical, actors, state.bindings), events)
     let lock = world.simulation.DemonEntityLock
+    let declared_demon = dv_find(world.simulation.config, "demon", false)
+    if declared_demon != false:
+        let owner_index = dvs_simulation_actor_index(actors, declared_demon.actor)
+        if owner_index >= 0:
+            actors = dvs_replace(actors, owner_index, dv_with(actors[owner_index], "simulation_entity_lock", lock))
     if lock != false:
         let demon = world.simulation.config.demon
         let index = dvs_simulation_actor_index(actors, demon.actor)
         if index >= 0:
             let location = dv_read(world, demon.location_ref)
             var requested = ""
-            if dv_uncontested(location) and location.value == lock.room:
+            if dv_uncontested(location) and location.value == lock.room and dv_truth(world, dv_find(demon, "presence_when", dv_true())) == "true":
                 if not lock.protecting:
                     requested = demon.protect_action_id
             else:
@@ -6845,6 +7398,10 @@ fn dvs_simulation_actor_ready(actor, state):
         return true
     if dvs_simulation_onstage(actor, state) or dv_find(actor, "simulation_priority_action", "") != "":
         return true
+    // Actual new knowledge or an unprocessed hearing wakes the owner without
+    // waiting for the ambient offscreen cadence. An unchanged input still sleeps.
+    if 0 < rt_count(dv_find(actor, "pending_heard", [])) or dv_find(actor, "decision_revision", -1) != actor.mind.revision:
+        return true
     let simulation = state.physical.simulation
     if dv_find(actor, "simulation_decision_macro", -1) != simulation.macro_count:
         return true
@@ -6853,6 +7410,137 @@ fn dvs_simulation_actor_ready(actor, state):
         if dv_uncontested(position) and dv_has(simulation.nearby_rooms, dvs_simulation_room(simulation.config, position.value)):
             return dv_find(actor, "simulation_decision_nearby", -1) < simulation.last_nearby_second
     return false
+
+// Sims 4-style commodity + implicit habit evaluation strictly over the actor's
+// own subjective mind (Dual-Layer Cognition: never reads physical reality).
+fn dvs_sims_autonomy_score(actor, action):
+    let profile = dv_find(actor.policy, "sims_autonomy", false)
+    if profile == false:
+        return 0
+    var bonus = 0
+    var room = ""
+    if dv_has_key(actor, "location_ref"):
+        let pos = dv_read(actor.mind, actor.location_ref)
+        if dv_uncontested(pos) and rt_is_text(pos.value):
+            room = pos.value
+    let habits = dv_find(profile, "implicit_habits", [])
+    var i = 0
+    while i < rt_count(habits):
+        let habit = habits[i]
+        if dv_find(habit, "trigger", "") == room and dv_find(habit, "kind", "") == action.kind:
+            bonus = bonus + dv_find(habit, "bonus", 0)
+        i = i + 1
+    let weights = dv_find(profile, "autonomy_weights", [])
+    if action.kind == "inspect":
+        bonus = bonus + 0.05 * dv_find(weights, "cognition", 1)
+    if action.kind == "talk":
+        bonus = bonus + 0.05 * dv_find(weights, "social", 1)
+    if action.kind == "help":
+        bonus = bonus + 0.05 * dv_find(weights, "safety", 1)
+    return bonus
+
+fn dvs_pending_achieve_goals(actor):
+    var goals = dv_find(actor.policy, "goals", [])
+    var result = []
+    var i = 0
+    while i < rt_count(goals):
+        let goal = goals[i]
+        if dv_find(goal, "kind", "") == "achieve" and dvp_topic(actor, goal) and dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true" and dv_truth(actor.mind, goal.proposition) != "true":
+            rt_push(result, goal)
+        i = i + 1
+    return result
+
+// Read-only route qualification substitutes only the declared origin room.
+// All remaining guards are evaluated in this subject's current mind.
+fn dvs_navigation_guard(condition, location, room):
+    let op = dv_find(condition, "op", "")
+    if op == "equals" and dv_same(dv_find(condition, "ref", false), location):
+        if dv_find(condition, "value", "") == room:
+            return dv_true()
+        return dv_not(dv_true())
+    if op == "not":
+        return dv_not(dvs_navigation_guard(condition.item, location, room))
+    if op == "all":
+        var items = []
+        var i = 0
+        while i < rt_count(condition.items):
+            rt_push(items, dvs_navigation_guard(condition.items[i], location, room))
+            i = i + 1
+        return dv_all(items)
+    return condition
+
+fn dvs_navigation_distance(actor, origin, target):
+    if origin == target:
+        return 0
+    let key = ["declared-navigation-distance-v1", actor.actions, actor.location_ref, origin, target]
+    let cached = dvs_plan_cache_get(actor.mind, key)
+    if cached[0]:
+        return cached[1]
+    var rooms = [origin]
+    var distances = [0]
+    var cursor = 0
+    while cursor < rt_count(rooms):
+        let room = rooms[cursor]
+        var i = 0
+        while i < rt_count(actor.actions):
+            let edge = actor.actions[i]
+            if edge.kind == "move" and dv_has_key(edge, "travel") and edge.travel.from == room and edge.travel.to != room and 0 < rt_count(dv_find(edge, "source_refs", [])):
+                let guard = dvs_navigation_guard(edge.precondition, actor.location_ref, room)
+                if dv_truth(actor.mind, guard) == "true" and not dv_has(rooms, edge.travel.to):
+                    let distance = distances[cursor] + 1
+                    if edge.travel.to == target:
+                        return dvs_plan_cache_put(actor.mind, key, distance)
+                    rt_push(rooms, edge.travel.to)
+                    rt_push(distances, distance)
+            i = i + 1
+        cursor = cursor + 1
+    return dvs_plan_cache_put(actor.mind, key, -1)
+
+fn dvs_goal_navigation_score(actor, action, pending_achieve):
+    if action.kind != "move" or not dv_has_key(action, "travel") or not dv_has_key(actor, "location_ref"):
+        return 0
+    if rt_count(dv_find(action, "source_refs", [])) == 0:
+        return 0
+    var target_rooms = []
+    var i = 0
+    while i < rt_count(pending_achieve):
+        let room = dvp_extract_required_room(pending_achieve[i].proposition, actor.location_ref)
+        if room != "" and not dv_has(target_rooms, room):
+            rt_push(target_rooms, room)
+        i = i + 1
+    let actions = dv_find(actor, "actions", [])
+    i = 0
+    while i < rt_count(actions):
+        let other = actions[i]
+        if other.kind != "move" and (dvp_communication_progress(actor, other) or 0 < dvp_achievement_pending_work(actor, other, pending_achieve).value or (dv_has_key(other, "response_topic") and 0 < rt_count(dvs_pending_request(actor, other)))):
+            let req_room = dvp_extract_required_room(other.precondition, actor.location_ref)
+            if req_room != "" and not dv_has(target_rooms, req_room):
+                // Bind only the declared own-location selector for a routing
+                // question. All other current admission rules are unchanged:
+                // spent methods, actual requests and personal constraints still
+                // pass through the one eligibility entry, not a second policy.
+                let guarded = dv_with(other, "precondition", dvs_navigation_guard(other.precondition, actor.location_ref, req_room))
+                if dvp_eligible(actor, guarded, actor.mind, dvp_goal_refs(actor)):
+                    rt_push(target_rooms, req_room)
+        i = i + 1
+    if rt_count(target_rooms) == 0:
+        return 0
+    let position = dv_read(actor.mind, actor.location_ref)
+    if not dv_uncontested(position) or position.value != action.travel.from:
+        return 0
+    let dest = action.travel.to
+    var score = 0
+    i = 0
+    while i < rt_count(target_rooms):
+        let before = dvs_navigation_distance(actor, position.value, target_rooms[i])
+        let after = dvs_navigation_distance(actor, dest, target_rooms[i])
+        if before > 0 and after >= 0 and after < before:
+            var progress = 1.25
+            if after == 0:
+                progress = 1.5
+            score = dv_max(score, progress)
+        i = i + 1
+    return score
 
 // Selection and explicit observer scoring share this exact current-state value.
 // The result contains no hypothetical successor, listener state or search reward.
@@ -6867,6 +7555,16 @@ fn dvs_current_action_score(actor, action, bindings, relevant, actual):
         i = i + 1
     let private = dvp_private_execution_utility(actor, action, actor.mind)
     let owner = dvp_owner_utility(actor, action, actor.mind).value
+    let pending_achieve = dvs_pending_achieve_goals(actor)
+    let achieve_work = dvp_achievement_pending_work(actor, action, pending_achieve).value * 2
+    var comm_work = 0
+    if dvp_communication_progress(actor, action):
+        comm_work = 2
+    // A move that already completes a declared achievement receives that value
+    // once. Route shaping belongs to intermediate steps toward an unmet goal.
+    var nav_work = 0
+    if achieve_work == 0:
+        nav_work = dvs_goal_navigation_score(actor, action, pending_achieve)
     var personal = 0
     if dv_has_key(action, "personal_choice"):
         personal = dvp_personal_motivation(actor, action)
@@ -6875,12 +7573,15 @@ fn dvs_current_action_score(actor, action, bindings, relevant, actual):
         answer = dvp_answer_reward(actor, action, actor.mind)
     var response = 0
     if dv_has_key(action, "response_topic") and 0 < rt_count(dvs_pending_request(actor, action)):
-        response = 1
+        response = 2
     // Exploration uses only the owner's declared movement and actual history.
     // It predicts neither destination contents nor a future observation.
     var exploration = 0
-    if action.kind == "move" and not dv_has(dv_find(actor, "completed_actions", []), action.id):
-        exploration = dv_find(actor.policy, "exploration_utility", 1)
+    // A purposeful route already has navigation value. Do not double-reward
+    // its novelty above an immediately executable declared achievement.
+    if action.kind == "move" and dv_has_key(action, "travel") and nav_work == 0 and not dv_has(dv_find(actor, "completed_actions", []), action.id):
+        if not dv_has(dv_find(actor, "visited_locations", []), action.travel.to):
+            exploration = dv_find(actor.policy, "exploration_utility", 1)
     let time = dv_find(actor, "decision_time", actor.mind.time)
     let daytime = time - rt_floor(time / 1440) * 1440
     let schedules = dv_find(actor.policy, "offscreen_schedules", [])
@@ -6891,10 +7592,12 @@ fn dvs_current_action_score(actor, action, bindings, relevant, actual):
         if schedule.action_id == action.id and schedule.from <= daytime and daytime < schedule.to:
             schedule_value = schedule_value + schedule.utility
         i = i + 1
-    let progress = declared + private + owner + personal + answer + response + exploration + schedule_value
+    let sims_autonomy = dvs_sims_autonomy_score(actor, action)
+    let sims_effective = sims_autonomy * dv_find(actor.policy, "sims_autonomy_scale", 0)
+    let progress = declared + private + owner + achieve_work + comm_work + nav_work + personal + answer + response + exploration + schedule_value + sims_effective
     let value = information + progress
     let penalty = actual.time * dv_find(actor.policy, "time_cost", 0.01)
-    return {"action_value": value, "information_component": information, "progress_component": progress, "time_penalty": penalty, "total": value - penalty, "components": {"declared": declared, "private": private, "owner": owner, "personal": personal, "answer": answer, "response": response, "exploration": exploration, "schedule": schedule_value}, "scope": "subject-current-immediate", "formula": "action_value - time_penalty", "strategy": "approximate-v1", "approximation": true}
+    return {"action_value": value, "information_component": information, "progress_component": progress, "time_penalty": penalty, "total": value - penalty, "components": {"declared": declared, "private": private, "owner": owner, "achieve": achieve_work, "communicate": comm_work, "navigate": nav_work, "personal": personal, "answer": answer, "response": response, "exploration": exploration, "schedule": schedule_value, "sims_autonomy": sims_autonomy}, "scope": "subject-current-immediate", "formula": "action_value - time_penalty", "strategy": "approximate-v1", "approximation": true}
 
 fn dvs_simulation_room_index(rooms, id):
     var i = 0
@@ -7180,7 +7883,7 @@ fn dvs_simulation_protect_complete(state, pending):
         var actor = actors[i]
         if dv_has_key(actor, "location_ref"):
             let position = dv_read(world, actor.location_ref)
-            if dv_uncontested(position) and position.value == lock.room:
+            if dv_uncontested(position) and position.value == lock.room and dvs_auditory_access(actor, world):
                 let observations = dv_cognition_observations(actor.mind, dv_perceive(world, actor.mind, state.bindings, [fact.ref], event, world.time))
                 actor = dv_with(actor, "mind", dv_update_mind(actor.mind, observations, actor.mind.revision, dvs_observation_profile(actor)).world)
                 if 0 < rt_count(observations):

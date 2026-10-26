@@ -692,11 +692,13 @@ func begin_shutdown() -> void:
 	flow.transition("bookmark_requested", false)
 	_bookmark_next = {}
 	flow.transition("reading", false)
-	if is_instance_valid(view_trace): view_trace.begin_shutdown()
 	if is_instance_valid(diagnostics): diagnostics.set_enabled(false)
 	if is_instance_valid(dev_console): dev_console.begin_shutdown()
-	if is_instance_valid(ui): ui.set_host_input_blocked(true)
+	if is_instance_valid(ui): ui.prepare_shutdown_drain()
 	if is_instance_valid(field): field.suspend_player_input()
+	# Books and a failed bookmark view can pause the SceneTree. Already entered
+	# movement and rollback still need physics frames after input is suspended.
+	if not replay_mode: get_tree().paused = false
 	# Prepared intents that never entered execution stay pending in the trace.
 	# Core saves the last committed state; shutdown does not invent an attempt.
 	_queue.clear()
@@ -704,6 +706,7 @@ func begin_shutdown() -> void:
 	# still own their scene resources. Teardown starts at the drained boundary.
 	while not _dv_intent.is_empty() or flow.completion_pending or (is_instance_valid(field_executor) and field_executor._busy) or (is_instance_valid(engine) and not engine.IsDispatchIdle()):
 		await get_tree().process_frame
+	if is_instance_valid(view_trace): view_trace.begin_shutdown()
 	if is_instance_valid(ui): ui.begin_shutdown()
 	if is_instance_valid(field_executor): field_executor.begin_shutdown()
 	if is_instance_valid(_pending_adapter) and _pending_adapter.has_method("begin_shutdown"):
@@ -729,10 +732,11 @@ func _dv_events(events: Array) -> void:
 			view_trace.record_presentation(source.presentation)
 		var ev: Dictionary = PRESENTATION.event(source)
 		if str(ev.get("kind", "")) == "dv_commit":
-			var settled: bool = await field_executor.settle(str(ev.action_event), str(ev.outcome), field, not flow.closing)
+			# Closing retains bodies and collision until the real rollback finishes.
+			var settled: bool = await field_executor.settle(str(ev.action_event), str(ev.outcome), field)
 			if not settled:
 				flow.transition("completion_pending", false)
-				flow.transition("view_faulted", true)
+				if not flow.closing: flow.transition("view_faulted", true)
 				engine.RecordHostFailure("Movement rollback did not complete for " + str(ev.action_event))
 				return
 			continue

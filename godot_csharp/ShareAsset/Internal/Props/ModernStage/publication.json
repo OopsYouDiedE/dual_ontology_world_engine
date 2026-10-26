@@ -6,8 +6,11 @@
     "scholar-original.png": "94784808c2b1e5f498f9f12a201fbe33e7999a2750c9d263e20e690327e3bd73",
     "scholar-short.png": "bbebd6c138fb66f78b9955b41478451b40fe36f310c14bcc1a8d4aa0afd72177"
   },
-  "world_head_unit": 14,
-  "world_below_chin": 28,
+  "character_policy": "shared short-body proportions; modest uniform stature differences only",
+  "character_canvas": [
+    48,
+    64
+  ],
   "logical_cell": 32,
   "cuts": {
     "wood": {
@@ -220,48 +223,60 @@
         423,
         741
       ],
-      "skull_crown_y": 294,
-      "chin_y": 431,
-      "sole_y": 737,
-      "head_unit": 140,
-      "below_chin_height": 280,
+      "uniform_scale": 0.09480812641083522,
+      "native_canvas": [
+        48,
+        64
+      ],
+      "native_foot": [
+        24,
+        63
+      ],
       "mirror": true,
       "source_pivot_x": 267,
-      "transforms": "alpha-separation; head-band uniform scale; below-chin vertical fit; optional mirror; no repaint"
+      "transforms": "alpha-separation; whole-figure uniform nearest scale; optional mirror; no head/body warping; no repaint"
     },
     "scholar-raise": {
-      "source": "scholar-original.png",
+      "source": "scholar-short.png",
       "crop": [
-        525,
-        45,
-        915,
-        755
+        505,
+        165,
+        860,
+        741
       ],
-      "skull_crown_y": 185,
-      "chin_y": 316,
-      "sole_y": 750,
-      "head_unit": 140,
-      "below_chin_height": 280,
+      "uniform_scale": 0.09480812641083522,
+      "native_canvas": [
+        48,
+        64
+      ],
+      "native_foot": [
+        24,
+        63
+      ],
       "mirror": false,
-      "source_pivot_x": 760,
-      "transforms": "alpha-separation; head-band uniform scale; below-chin vertical fit; optional mirror; no repaint"
+      "source_pivot_x": 710,
+      "transforms": "alpha-separation; whole-figure uniform nearest scale; optional mirror; no head/body warping; no repaint"
     },
     "scholar-strike": {
-      "source": "scholar-original.png",
+      "source": "scholar-short.png",
       "crop": [
-        939,
-        140,
-        1300,
-        755
+        105,
+        246,
+        423,
+        741
       ],
-      "skull_crown_y": 185,
-      "chin_y": 316,
-      "sole_y": 750,
-      "head_unit": 140,
-      "below_chin_height": 280,
-      "mirror": false,
-      "source_pivot_x": 1131,
-      "transforms": "alpha-separation; head-band uniform scale; below-chin vertical fit; optional mirror; no repaint"
+      "uniform_scale": 0.09480812641083522,
+      "native_canvas": [
+        48,
+        64
+      ],
+      "native_foot": [
+        24,
+        63
+      ],
+      "mirror": true,
+      "source_pivot_x": 267,
+      "transforms": "alpha-separation; whole-figure uniform nearest scale; optional mirror; no head/body warping; no repaint"
     },
     "scholar-block": {
       "source": "scholar-short.png",
@@ -271,14 +286,18 @@
         1730,
         741
       ],
-      "skull_crown_y": 294,
-      "chin_y": 431,
-      "sole_y": 737,
-      "head_unit": 140,
-      "below_chin_height": 280,
+      "uniform_scale": 0.09480812641083522,
+      "native_canvas": [
+        48,
+        64
+      ],
+      "native_foot": [
+        24,
+        63
+      ],
       "mirror": true,
       "source_pivot_x": 1560,
-      "transforms": "alpha-separation; head-band uniform scale; below-chin vertical fit; optional mirror; no repaint"
+      "transforms": "alpha-separation; whole-figure uniform nearest scale; optional mirror; no head/body warping; no repaint"
     }
   }
 }

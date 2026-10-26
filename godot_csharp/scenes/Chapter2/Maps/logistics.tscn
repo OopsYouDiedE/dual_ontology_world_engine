@@ -1,20 +1,20 @@
 [gd_scene load_steps=16 format=3]
 
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/rooms/logistics.png" id="arch"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/barrel.png" id="t_barrel"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/crate.png" id="t_crate"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/hand_pump.png" id="t_hand_pump"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/ledger_stand.png" id="t_ledger_stand"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/Chapter2/props/notice_board.png" id="t_notice_board"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceDining/barrel.png" id="t_reference_dining_barrel"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceDining/bench.png" id="t_reference_dining_bench"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceDining/counter.png" id="t_reference_dining_counter"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceDining/crate.png" id="t_reference_dining_crate"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceDining/dish-rack.png" id="t_reference_dining_dish_rack"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceDining/flour-sack.png" id="t_reference_dining_flour_sack"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceDining/hood.png" id="t_reference_dining_hood"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceDining/prep.png" id="t_reference_dining_prep"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceDining/pump.png" id="t_reference_dining_pump"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceDining/range.png" id="t_reference_dining_range"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceDining/table-a.png" id="t_reference_dining_table_a"]
 [ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceDining/table-b.png" id="t_reference_dining_table_b"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/FirstAwakeningInterior/sack.png" id="t_sack"]
 
 [sub_resource type="RectangleShape2D" id="s0"]
 size = Vector2(992, 32)
@@ -107,7 +107,7 @@ size = Vector2(52, 10)
 size = Vector2(14, 10)
 
 [sub_resource type="RectangleShape2D" id="s30"]
-size = Vector2(135, 42)
+size = Vector2(226, 71)
 
 [sub_resource type="RectangleShape2D" id="s31"]
 size = Vector2(18, 12)
@@ -153,7 +153,7 @@ texture_filter = 1
 metadata/title = "后勤院"
 metadata/map_size = Vector2(992, 448)
 metadata/terrain_rows = ["###############################", "#WWWWWWWWWWWW#WWWWWWWWWWWWWWWW#", "#wwwwwwwwwwww#wwwwwwwwwwwwwwww#", "#............#................#", "#............#................#", "#............#................#", "#............#................#", "#............D................#", "#............D................#", "D............D................D", "D............#................D", "#............#................#", "#............#................#", "###############################"]
-metadata/stage_lights = [{"kind": "window", "point": [640, 80]}, {"kind": "window", "point": [832, 80]}, {"kind": "sconce", "point": [736, 68]}, {"kind": "table_lamp", "point": [642, 128]}, {"kind": "table_lamp", "point": [766, 128]}, {"kind": "table_lamp", "point": [642, 278]}, {"kind": "table_lamp", "point": [766, 278]}]
+metadata/stage_lights = [{"kind": "window", "point": [640, 80]}, {"kind": "window", "point": [832, 80]}, {"kind": "sconce", "point": [736, 68]}, {"kind": "table_lamp", "owner": "TableA", "base": [642, 154], "point": [642, 136.5920245398773], "width": 15.0, "texture": "res://ShareAsset/Internal/Props/ReferenceDining/lamp-body.png", "flame_texture": "res://ShareAsset/Internal/Props/ReferenceDining/lamp-flame.png", "flame_foot": [102, 470], "foot": [163, 676], "flame_height": 14.9079754601227, "phase": 0.0}, {"kind": "table_lamp", "owner": "TableA", "base": [766, 154], "point": [766, 136.5920245398773], "width": 15.0, "texture": "res://ShareAsset/Internal/Props/ReferenceDining/lamp-body.png", "flame_texture": "res://ShareAsset/Internal/Props/ReferenceDining/lamp-flame.png", "flame_foot": [102, 470], "foot": [163, 676], "flame_height": 14.9079754601227, "phase": 1.71}, {"kind": "table_lamp", "owner": "TableB", "base": [642, 304], "point": [642, 286.5920245398773], "width": 15.0, "texture": "res://ShareAsset/Internal/Props/ReferenceDining/lamp-body.png", "flame_texture": "res://ShareAsset/Internal/Props/ReferenceDining/lamp-flame.png", "flame_foot": [102, 470], "foot": [163, 676], "flame_height": 14.9079754601227, "phase": 3.42}, {"kind": "table_lamp", "owner": "TableB", "base": [766, 304], "point": [766, 286.5920245398773], "width": 15.0, "texture": "res://ShareAsset/Internal/Props/ReferenceDining/lamp-body.png", "flame_texture": "res://ShareAsset/Internal/Props/ReferenceDining/lamp-flame.png", "flame_foot": [102, 470], "foot": [163, 676], "flame_height": 14.9079754601227, "phase": 5.13}]
 
 [node name="Architecture" type="Sprite2D" parent="."]
 z_index = -10
@@ -167,66 +167,74 @@ y_sort_enabled = true
 position = Vector2(160, 116)
 texture = ExtResource("t_reference_dining_range")
 centered = false
-offset = Vector2(-281.5, -255)
+offset = Vector2(-720, -692)
 texture_filter = 2
-scale = Vector2(0.17761989342806395, 0.17761989342806395)
+scale = Vector2(0.06944444444444445, 0.06944444444444445)
 
 [node name="Hood" type="Sprite2D" parent="Objects"]
 position = Vector2(160, 86)
 texture = ExtResource("t_reference_dining_hood")
 centered = false
-offset = Vector2(-218.5, -285)
+offset = Vector2(-767, -612)
 texture_filter = 2
-scale = Vector2(0.2562929061784897, 0.2562929061784897)
+scale = Vector2(0.07301173402868318, 0.07301173402868318)
 z_index = -1
 
 [node name="DishRack" type="Sprite2D" parent="Objects"]
 position = Vector2(320, 116)
 texture = ExtResource("t_reference_dining_dish_rack")
 centered = false
-offset = Vector2(-165.5, -334)
+offset = Vector2(-280, -780)
 texture_filter = 2
-scale = Vector2(0.18126888217522658, 0.18126888217522658)
+scale = Vector2(0.10714285714285714, 0.10714285714285714)
 
 [node name="Pump" type="Sprite2D" parent="Objects"]
 position = Vector2(72, 192)
-texture = ExtResource("t_hand_pump")
+texture = ExtResource("t_reference_dining_pump")
 centered = false
-offset = Vector2(-12, -44)
+offset = Vector2(-139, -348)
+texture_filter = 2
+scale = Vector2(0.11724137931034483, 0.11724137931034483)
 
 [node name="Worktable" type="Sprite2D" parent="Objects"]
-position = Vector2(192, 272)
+position = Vector2(224, 300)
 texture = ExtResource("t_reference_dining_prep")
 centered = false
 offset = Vector2(-687, -657)
 texture_filter = 2
-scale = Vector2(0.0975254730713246, 0.0975254730713246)
+scale = Vector2(0.16302765647743814, 0.16302765647743814)
 
 [node name="BarrelA" type="Sprite2D" parent="Objects"]
 position = Vector2(72, 372)
-texture = ExtResource("t_barrel")
+texture = ExtResource("t_reference_dining_barrel")
 centered = false
-offset = Vector2(-10, -26)
+offset = Vector2(-267, -679)
+texture_filter = 2
+scale = Vector2(0.04477611940298507, 0.04477611940298507)
 
 [node name="Sacks" type="Sprite2D" parent="Objects"]
 position = Vector2(112, 372)
-texture = ExtResource("t_sack")
+texture = ExtResource("t_reference_dining_flour_sack")
 centered = false
-offset = Vector2(-9, -22)
+offset = Vector2(-279, -604)
+texture_filter = 2
+scale = Vector2(0.03571428571428571, 0.03571428571428571)
 
 [node name="CrateK" type="Sprite2D" parent="Objects"]
 position = Vector2(352, 372)
-texture = ExtResource("t_crate")
+texture = ExtResource("t_reference_dining_crate")
 centered = false
-offset = Vector2(-12, -22)
+offset = Vector2(-461, -633)
+texture_filter = 2
+scale = Vector2(0.02813852813852814, 0.02813852813852814)
 
 [node name="RationCounter" type="Sprite2D" parent="Objects"]
 position = Vector2(474, 290)
 texture = ExtResource("t_reference_dining_counter")
 centered = false
-offset = Vector2(-273.5, -280)
+offset = Vector2(-410, -538)
 texture_filter = 2
-scale = Vector2(0.18281535648994515, 0.18281535648994515)
+scale = Vector2(0.1221001221001221, 0.1221001221001221)
 
 [node name="Ledger" type="Sprite2D" parent="Objects"]
 position = Vector2(512, 230)
@@ -244,9 +252,9 @@ offset = Vector2(-22, -40)
 position = Vector2(704, 202)
 texture = ExtResource("t_reference_dining_table_a")
 centered = false
-offset = Vector2(-778.5, -578)
+offset = Vector2(-780, -582)
 texture_filter = 2
-scale = Vector2(0.15414258188824662, 0.15414258188824662)
+scale = Vector2(0.15384615384615385, 0.15384615384615385)
 
 [node name="BenchA1" type="Sprite2D" parent="Objects"]
 position = Vector2(704, 130)
@@ -268,9 +276,9 @@ scale = Vector2(0.0899497487437186, 0.0899497487437186)
 position = Vector2(704, 352)
 texture = ExtResource("t_reference_dining_table_b")
 centered = false
-offset = Vector2(-778.5, -578)
+offset = Vector2(-780, -582)
 texture_filter = 2
-scale = Vector2(0.15414258188824662, 0.15414258188824662)
+scale = Vector2(0.15384615384615385, 0.15384615384615385)
 
 [node name="BenchB1" type="Sprite2D" parent="Objects"]
 position = Vector2(704, 280)
@@ -412,7 +420,7 @@ position = Vector2(72.0, 187.0)
 shape = SubResource("s29")
 
 [node name="s30" type="CollisionShape2D" parent="Solids"]
-position = Vector2(191.5, 251.0)
+position = Vector2(223.0, 264.5)
 shape = SubResource("s30")
 
 [node name="s31" type="CollisionShape2D" parent="Solids"]
@@ -492,7 +500,7 @@ position = Vector2(940, 336)
 [node name="Stands" type="Node2D" parent="."]
 
 [node name="s00" type="Marker2D" parent="Stands"]
-position = Vector2(496, 348)
+position = Vector2(560, 252)
 
 [node name="s01" type="Marker2D" parent="Stands"]
 position = Vector2(80, 156)
@@ -501,7 +509,7 @@ position = Vector2(80, 156)
 position = Vector2(912, 156)
 
 [node name="s03" type="Marker2D" parent="Stands"]
-position = Vector2(208, 380)
+position = Vector2(272, 380)
 
 [node name="s04" type="Marker2D" parent="Stands"]
 position = Vector2(848, 380)
@@ -510,34 +518,34 @@ position = Vector2(848, 380)
 position = Vector2(336, 188)
 
 [node name="s06" type="Marker2D" parent="Stands"]
-position = Vector2(560, 156)
+position = Vector2(112, 348)
 
 [node name="s07" type="Marker2D" parent="Stands"]
-position = Vector2(368, 316)
+position = Vector2(496, 380)
 
 [node name="s08" type="Marker2D" parent="Stands"]
 position = Vector2(208, 188)
 
 [node name="s09" type="Marker2D" parent="Stands"]
-position = Vector2(848, 252)
+position = Vector2(496, 156)
 
 [node name="s10" type="Marker2D" parent="Stands"]
-position = Vector2(112, 316)
+position = Vector2(848, 252)
 
 [node name="s11" type="Marker2D" parent="Stands"]
-position = Vector2(560, 252)
+position = Vector2(368, 316)
 
 [node name="s12" type="Marker2D" parent="Stands"]
-position = Vector2(272, 316)
+position = Vector2(880, 316)
 
 [node name="s13" type="Marker2D" parent="Stands"]
-position = Vector2(496, 188)
+position = Vector2(208, 348)
 
 [node name="s14" type="Marker2D" parent="Stands"]
-position = Vector2(304, 252)
+position = Vector2(560, 348)
 
 [node name="s15" type="Marker2D" parent="Stands"]
-position = Vector2(880, 316)
+position = Vector2(560, 156)
 
 [node name="Sites" type="Node2D" parent="."]
 

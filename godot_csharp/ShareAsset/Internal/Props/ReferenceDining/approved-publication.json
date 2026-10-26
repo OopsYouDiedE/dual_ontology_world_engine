@@ -1,57 +1,129 @@
 {
   "schema": 1,
   "manifest": "mcp\\asset_pipeline\\sources\\Internal\\ReferenceDining\\cuts.json",
-  "manifest_sha256": "459bc9aec617d4ff5f3d5f1051f76cf8838658a759aad6bb1eacbff1574ccc93",
+  "manifest_sha256": "557db9e6408b0f639bdd9e34f34915137ec600cde15788ecad504b98325a3997",
   "target": "artifacts/chapter12-room-design/04-logistics.png",
   "target_sha256": "f41fbbe6f885f636d1de1328c636b077b3fa158a6d8716216e107242a425bafd",
-  "style_notes": "Orthographic top/front only furniture. Authoring geometry guides constrain rectangular planes: equal front/back widths, vertical parallel side edges, no left/right side faces or vanishing points. Full authored RGBA pixels retained; actual ground feet explicitly published. Both tables use the same corrected design. Remaining kitchen fixtures unchanged.",
+  "style_notes": "Astra selected orthographic kitchen redraw and separated unlit table/oil lamp body. Equal front/back widths, no side plane. Original alpha and explicit feet. Native CanvasTexture table/range material studies use hand-authored same-coordinate regions; roughness is author intent, specular alpha is artistic shininess, not PBR. Flame and real light animated separately.",
   "visual_acceptance": "pending actual Godot target comparison",
   "assets": [
     {
-      "source": "Internal/ReferenceDining/table-orthographic.png",
-      "source_sha256": "00f5f13e8657dee5b3998e5689e39c7556f6429d016b87afb2f7d71347498cec",
+      "source": "Internal/ReferenceDining/table-unlit.png",
+      "source_sha256": "385b9acf28c00bae62374f417057a9f06e545d1a9bb89cc07a444aaf033f140a",
       "crop": [
-        109,
-        149,
-        1666,
-        735
+        108,
+        148,
+        1668,
+        736
       ],
       "output": "table-a.png",
       "role": "prop",
       "sampling": "lanczos",
       "scale": 1,
       "foot": [
-        778.5,
-        578
+        780,
+        582
       ],
+      "material": {
+        "normal_convention": "X+Y+Z+",
+        "shininess_multiplier": 0.85,
+        "author_status": "conservative planar/region prototype, not pixel-perfect PBR",
+        "normal": {
+          "source": "Internal/ReferenceDining/material-studies/table.normal-study.png",
+          "source_sha256": "7326a3387016860912dd0d7edb1a6d98707b997d9a5a136626f03e0c69ccf85a"
+        },
+        "specular": {
+          "source": "Internal/ReferenceDining/material-studies/table.specular-study.png",
+          "source_sha256": "f82746f3442269a35b9b2bbe58ef7b9af0fc8adc6327c88e6d9d12ec24aff29c"
+        },
+        "roughness": {
+          "source": "Internal/ReferenceDining/material-studies/table.roughness-author.png",
+          "source_sha256": "b965f0e5622f68afd45b8c247f575503e15226efab297179d286acd9cf820fe9"
+        }
+      },
       "size": [
-        1557,
-        586
+        1560,
+        588
       ],
-      "output_sha256": "e112feb0db5c4930221635af60c3227fab76cf92ff6a4aeb5aaaa2ba57eb3650"
+      "output_sha256": "5f6c724599214fca9d41c18a84780b459e73d00172d8651359050a5c1d4ed367",
+      "material_outputs": [
+        {
+          "output": "table-a.normal.png",
+          "output_sha256": "b4305dbc0f31d4d24214575413ffc8ac77accef4b83264cf177656e0970aaeed"
+        },
+        {
+          "output": "table-a.specular.png",
+          "output_sha256": "97f62803117bdb668c3ccd5ecf92ea6bc29819ff23ec7f71f373067a4d2f4f6e"
+        },
+        {
+          "output": "table-a.roughness.png",
+          "output_sha256": "5f0377456cb7663ec5a76f20ca92354fde20070dd874fe798ec2ec9348f04271"
+        },
+        {
+          "output": "table-a.tres",
+          "output_sha256": "ea5f565f67f385023664d39f2d9b874faede0ce42a74d578e85071eb134425c5"
+        }
+      ],
+      "canvas_texture": "res://ShareAsset/Internal/Props/ReferenceDining/table-a.tres"
     },
     {
-      "source": "Internal/ReferenceDining/table-orthographic.png",
-      "source_sha256": "00f5f13e8657dee5b3998e5689e39c7556f6429d016b87afb2f7d71347498cec",
+      "source": "Internal/ReferenceDining/table-unlit.png",
+      "source_sha256": "385b9acf28c00bae62374f417057a9f06e545d1a9bb89cc07a444aaf033f140a",
       "crop": [
-        109,
-        149,
-        1666,
-        735
+        108,
+        148,
+        1668,
+        736
       ],
       "output": "table-b.png",
       "role": "prop",
       "sampling": "lanczos",
       "scale": 1,
       "foot": [
-        778.5,
-        578
+        780,
+        582
       ],
+      "material": {
+        "normal_convention": "X+Y+Z+",
+        "shininess_multiplier": 0.85,
+        "author_status": "conservative planar/region prototype, not pixel-perfect PBR",
+        "normal": {
+          "source": "Internal/ReferenceDining/material-studies/table.normal-study.png",
+          "source_sha256": "7326a3387016860912dd0d7edb1a6d98707b997d9a5a136626f03e0c69ccf85a"
+        },
+        "specular": {
+          "source": "Internal/ReferenceDining/material-studies/table.specular-study.png",
+          "source_sha256": "f82746f3442269a35b9b2bbe58ef7b9af0fc8adc6327c88e6d9d12ec24aff29c"
+        },
+        "roughness": {
+          "source": "Internal/ReferenceDining/material-studies/table.roughness-author.png",
+          "source_sha256": "b965f0e5622f68afd45b8c247f575503e15226efab297179d286acd9cf820fe9"
+        }
+      },
       "size": [
-        1557,
-        586
+        1560,
+        588
       ],
-      "output_sha256": "e112feb0db5c4930221635af60c3227fab76cf92ff6a4aeb5aaaa2ba57eb3650"
+      "output_sha256": "5f6c724599214fca9d41c18a84780b459e73d00172d8651359050a5c1d4ed367",
+      "material_outputs": [
+        {
+          "output": "table-b.normal.png",
+          "output_sha256": "b4305dbc0f31d4d24214575413ffc8ac77accef4b83264cf177656e0970aaeed"
+        },
+        {
+          "output": "table-b.specular.png",
+          "output_sha256": "97f62803117bdb668c3ccd5ecf92ea6bc29819ff23ec7f71f373067a4d2f4f6e"
+        },
+        {
+          "output": "table-b.roughness.png",
+          "output_sha256": "5f0377456cb7663ec5a76f20ca92354fde20070dd874fe798ec2ec9348f04271"
+        },
+        {
+          "output": "table-b.tres",
+          "output_sha256": "8e87ec05ac30505d4e7092069a9547362fd9bf0d175a4a20230651744f1d7594"
+        }
+      ],
+      "canvas_texture": "res://ShareAsset/Internal/Props/ReferenceDining/table-b.tres"
     },
     {
       "source": "Internal/ReferenceDining/bench-orthographic.png",
@@ -100,96 +172,132 @@
       "output_sha256": "3f1bb583c7bf5a41de8dd3119ce9970bc3fdb968c8e9e1978eeec359c79ff833"
     },
     {
-      "source": "Internal/ReferenceDining/furniture-atlas.png",
-      "source_sha256": "98ca17853438b513b09cea4154768d203b32563f0824f8a633d23820c0e0e39f",
+      "source": "Internal/ReferenceDining/range-orthographic-final.png",
+      "source_sha256": "02263935f1eeddd27c8f2189fa0f7ea9e3e258ffd8fd1ffb1ea1f17feeac1a78",
       "crop": [
-        52,
-        638,
-        615,
-        893
+        92,
+        182,
+        1532,
+        880
       ],
       "output": "range.png",
       "role": "prop",
       "sampling": "lanczos",
       "scale": 1,
       "foot": [
-        281.5,
-        255
+        720,
+        692
       ],
+      "material": {
+        "normal_convention": "X+Y+Z+",
+        "shininess_multiplier": 0.85,
+        "author_status": "conservative planar/region prototype, not pixel-perfect PBR",
+        "normal": {
+          "source": "Internal/ReferenceDining/material-studies/range.normal-study.png",
+          "source_sha256": "cf1806a17f2636f5d27a5785a073cf02000e8c6e2ed498e1412a0e77994d5671"
+        },
+        "specular": {
+          "source": "Internal/ReferenceDining/material-studies/range.specular-study.png",
+          "source_sha256": "7f2c36392a4964e34c9bbd449b028d323a3e583be72c85a6d241c2985a9d996b"
+        },
+        "roughness": {
+          "source": "Internal/ReferenceDining/material-studies/range.roughness-author.png",
+          "source_sha256": "9c78f0d281f70e35baefeaecc5b18a976f7e3cd0fbd323655ad126f869c88fad"
+        }
+      },
       "size": [
-        563,
-        255
+        1440,
+        698
       ],
-      "output_sha256": "87ffc1d68544290ee7bf4c8e8bf136c36eef3df1c2cfd35876b92eecbd4598f8"
+      "output_sha256": "4f14cde1efa24d99322b4846395a2bc6f4bd2a1b73ca5525772b89fc55225a08",
+      "material_outputs": [
+        {
+          "output": "range.normal.png",
+          "output_sha256": "18e095c1a6820e421ba6b8a2ab3b72f63ce537e7afa3a669438dc30cb48a9624"
+        },
+        {
+          "output": "range.specular.png",
+          "output_sha256": "0080117f78d0f403e2f249252db89210f768be49617468ab73932352fdc88393"
+        },
+        {
+          "output": "range.roughness.png",
+          "output_sha256": "ea1e8c4fcd655a4cfbd5c67ea48df56e7619ffa5ea955a5551754b31e36554bc"
+        },
+        {
+          "output": "range.tres",
+          "output_sha256": "907cab8883ada8ddb4b0b8a78218e8c92dd3d56e0464c19a7a193b9efe5f01e1"
+        }
+      ],
+      "canvas_texture": "res://ShareAsset/Internal/Props/ReferenceDining/range.tres"
     },
     {
-      "source": "Internal/ReferenceDining/furniture-atlas.png",
-      "source_sha256": "98ca17853438b513b09cea4154768d203b32563f0824f8a633d23820c0e0e39f",
+      "source": "Internal/ReferenceDining/hood-short-wide-final.png",
+      "source_sha256": "0c84b3093ba84d0b91f69449c4b47d891bc79a518706f40d499572b6ee929edc",
       "crop": [
-        716,
-        620,
-        1153,
-        905
+        120,
+        173,
+        1654,
+        791
       ],
       "output": "hood.png",
       "role": "prop",
       "sampling": "lanczos",
       "scale": 1,
       "foot": [
-        218.5,
-        285
+        767,
+        612
       ],
       "size": [
-        437,
-        285
+        1534,
+        618
       ],
-      "output_sha256": "0a2c5507007f471ad312a5bf7b6fff6de9f62f07dd0a8e057f19e5c19e5b43e7"
+      "output_sha256": "33718a5aa9d314f077c77f411742a46f4775a0f801fbb93b215a0281bdc0385e"
     },
     {
-      "source": "Internal/ReferenceDining/furniture-atlas.png",
-      "source_sha256": "98ca17853438b513b09cea4154768d203b32563f0824f8a633d23820c0e0e39f",
+      "source": "Internal/ReferenceDining/cabinets-orthographic-scale.png",
+      "source_sha256": "f099f8b0771d6f29b491314249257c94df12728d2e5cc915713d7e9dde19a32f",
       "crop": [
-        165,
-        906,
-        496,
-        1240
+        870,
+        158,
+        1430,
+        944
       ],
       "output": "dish-rack.png",
       "role": "prop",
       "sampling": "lanczos",
       "scale": 1,
       "foot": [
-        165.5,
-        334
+        280,
+        780
       ],
       "size": [
-        331,
-        334
+        560,
+        786
       ],
-      "output_sha256": "5ea1d3fea3248f2d4561f6ace600c2721bb4009109d9a82e10e2dca114f09191"
+      "output_sha256": "99b4d9c6ea77345a570a7a2ef22be3f3e9a32fd9c943eb23622141423b4083f7"
     },
     {
-      "source": "Internal/ReferenceDining/furniture-atlas.png",
-      "source_sha256": "98ca17853438b513b09cea4154768d203b32563f0824f8a633d23820c0e0e39f",
+      "source": "Internal/ReferenceDining/cabinets-orthographic-scale.png",
+      "source_sha256": "f099f8b0771d6f29b491314249257c94df12728d2e5cc915713d7e9dde19a32f",
       "crop": [
-        680,
-        943,
-        1227,
-        1223
+        26,
+        400,
+        845,
+        944
       ],
       "output": "counter.png",
       "role": "prop",
       "sampling": "lanczos",
       "scale": 1,
       "foot": [
-        273.5,
-        280
+        410,
+        538
       ],
       "size": [
-        547,
-        280
+        819,
+        544
       ],
-      "output_sha256": "8a00f0ecfff337bffd9984c5476b386d97c35c642aae84371b54e954478324cb"
+      "output_sha256": "7e8c7c17d46d3030c302dd72197b27f2a8aaa7a0cd3f70c7632185671510a3c6"
     },
     {
       "source": "Internal/ReferenceDining/materials.png",
@@ -228,6 +336,148 @@
         887
       ],
       "output_sha256": "f21573ce56a32f641e24c029f9255b4827df492e829751f810e94435a51166fe"
+    },
+    {
+      "output": "pump.png",
+      "role": "prop",
+      "sampling": "lanczos",
+      "scale": 1,
+      "source": "Internal/ReferenceDining/kitchen-small-props-final.png",
+      "source_sha256": "2c1be65344c0ed790d0b3edb3385f40d7a59bf59c9f4d91ec8d56be8cc027203",
+      "crop": [
+        732,
+        643,
+        1022,
+        997
+      ],
+      "foot": [
+        139,
+        348
+      ],
+      "size": [
+        290,
+        354
+      ],
+      "output_sha256": "f7d0e2933e98ac4d8d6cab72f0df5d4a47b67dca36377102f400124db6578915"
+    },
+    {
+      "output": "flour-sack.png",
+      "role": "prop",
+      "sampling": "lanczos",
+      "scale": 1,
+      "source": "Internal/ReferenceDining/sack-barrel-isolated.png",
+      "source_sha256": "014b52e151bec52ca8b586831aaaa692127b3b8d8602e74bbc63489dd501f0e9",
+      "crop": [
+        104,
+        250,
+        664,
+        862
+      ],
+      "foot": [
+        279,
+        604
+      ],
+      "size": [
+        560,
+        612
+      ],
+      "output_sha256": "f2fc0289386911febc174a0bb6eba7f4e2c689f86e3a75c5e400b4e7db7cb02f"
+    },
+    {
+      "output": "barrel.png",
+      "role": "prop",
+      "sampling": "lanczos",
+      "scale": 1,
+      "source": "Internal/ReferenceDining/sack-barrel-isolated.png",
+      "source_sha256": "014b52e151bec52ca8b586831aaaa692127b3b8d8602e74bbc63489dd501f0e9",
+      "crop": [
+        968,
+        184,
+        1504,
+        872
+      ],
+      "foot": [
+        267,
+        679
+      ],
+      "size": [
+        536,
+        688
+      ],
+      "output_sha256": "db936ff8ac811a36d1f5053aee1a3645bad0ef10af5a1987951cd0b68a38e984"
+    },
+    {
+      "output": "crate.png",
+      "role": "prop",
+      "sampling": "lanczos",
+      "scale": 1,
+      "source": "Internal/ReferenceDining/crate-orthographic-final.png",
+      "source_sha256": "6be01c74e8dea9b16b7203b50d5efe4296beb96e4183aebd9931d981f2836ae6",
+      "crop": [
+        240,
+        268,
+        1164,
+        908
+      ],
+      "foot": [
+        461,
+        633
+      ],
+      "size": [
+        924,
+        640
+      ],
+      "output_sha256": "3971465eaf0deae025a87b772a44186c517687cf51f77ef2d9a824248f40cd94"
+    },
+    {
+      "output": "lamp-body.png",
+      "role": "prop",
+      "sampling": "lanczos",
+      "scale": 1,
+      "source": "Internal/ReferenceDining/lamp-body-unlit.png",
+      "source_sha256": "055567ec2fe89f18418cad2c050d08d0b43743a85230818ef6a7b1a6550c65be",
+      "crop": [
+        724,
+        104,
+        1050,
+        790
+      ],
+      "foot": [
+        163,
+        676
+      ],
+      "wick": [
+        163,
+        352
+      ],
+      "size": [
+        326,
+        686
+      ],
+      "output_sha256": "8be929a11181c70e960ebd3eefc6d259222f7840c55e51af43282cb8dedf56de"
+    },
+    {
+      "source": "Internal/ReferenceDining/lamp-flame-four-frames.png",
+      "source_sha256": "c3a7a947e4b5f75cc9c07a989e4bda1aa6182fa683724be4234d5aefe50bd5c1",
+      "crop": [
+        160,
+        132,
+        378,
+        612
+      ],
+      "output": "lamp-flame.png",
+      "role": "prop",
+      "sampling": "lanczos",
+      "scale": 1,
+      "foot": [
+        102,
+        470
+      ],
+      "size": [
+        218,
+        480
+      ],
+      "output_sha256": "870d4b45c00f16d114f9dc24571d6026389caaeeced34ac9098408ac78c8a74f"
     }
   ]
 }

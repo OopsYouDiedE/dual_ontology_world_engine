@@ -307,6 +307,7 @@ public sealed partial class DvSession
         var actionEvent = R.Text(Field(pending, "action_event", ""));
         var actor = R.Text(Field(pending, "id", ""));
         var actionId = R.Text(Field(action, "id", ""));
+        DiagnosticOutput.WriteLine($"[Session.CompleteDv] actor={actor} actionId={actionId}");
         var eventCursor = Events(state).Count;
         BeginTransition();
         state = Run(() => DVProgram.SessionComplete(R.snapshot(state), receipt));

@@ -83,7 +83,7 @@ fn island_edges(rooms):
             share = dv_max(forward, reverse) / (forward + reverse)
         var declaration = dv_with_many(edge, {"opening": 1, "conductance": p.conductance_fraction_per_15_minutes * dv_min(a.volume, b.volume) * share, "reciprocal_share": share, "wind": wind, "wind_when": dv_fact(campaign_ref("c2.weather", "wind"), true), "downward": p.downward_per_height, "opening_basis": "geometric-open-passage-no-authoritative-switch-declared"})
         // No contract door identifies the total-store bolt. The abstract
-        // logistics lock must not seal every geometric granary doorway.
+        // total-store lock must not seal every geometric granary doorway.
         rt_push(edges, declaration)
         i = i + 1
     return edges
@@ -171,6 +171,7 @@ fn island_daily_rules(chapter):
     rt_push(inventory, {"ref": campaign_ref("c2.bowl", "portions")})
     if chapter == 2:
         rt_push(inventory, {"ref": campaign_ref("c2.daily", "portions")})
+        rt_push(inventory, {"ref": campaign_own("shen", "meal_ingredients")})
     let ledger = island_rule("island.ledger.settle", "food-accounting", dv_true(), [{"ref": island_ref("ledger", "period_consumed"), "terms": period, "minimum": 0}, {"ref": island_ref("ledger", "consumed_total"), "terms": consumed}, {"ref": island_ref("ledger", "inventory_portions"), "terms": inventory}, {"ref": island_ref("ledger", "hungry_people"), "terms": hungry}, {"ref": island_ref("ledger", "living_people"), "terms": alive}, {"ref": island_ref("ledger", "living_mask"), "terms": masks}, {"ref": island_ref("ledger", "settled_at"), "clock": true}], [])
     rt_push(rules, island_daily_copy(ledger, 360))
     rt_push(rules, island_daily_copy(ledger, 1080))
@@ -222,10 +223,15 @@ fn island_actions(actor, locations, chapter):
         let place = locations[i]
         let id = rt_cat(actor, rt_cat(".island.air.", place.location))
         let object = rt_cat("island.air.", place.room)
-        rt_push(actions, island_inspect(actor, id, place.location, object, ["concentration"], "查看此处源质读数", "源质表读数（游戏刻度）：{浓度}。", ["浓度"]))
+        var reading = island_inspect(actor, id, place.location, object, ["concentration"], "查看此处源质读数", "源质表读数（游戏刻度）：{浓度}。", ["浓度"])
+        if place.location == "outdoor_meter":
+            reading = dv_with(reading, "grants", dv_append(reading.grants, campaign_clock()))
+            let completed_at = c2_visible_line(dv_true(), "本次现场读表完成时刻：{时刻}。", [dv_with(c2_visible_binding("时刻", campaign_clock(), {}), "format", "game-clock")], island_source())
+            reading = dv_with(reading, "presentation", dv_with(reading.presentation, "lines", dv_append(reading.presentation.lines, completed_at)))
+        rt_push(actions, reading)
         i = i + 1
     if chapter == 2:
-        rt_push(actions, island_inspect(actor, rt_cat(actor, ".island.ledger"), "logistics", "island.ledger", ["settled_at", "period_consumed", "consumed_total", "inventory_portions", "hungry_people", "living_people"], "查看半日日账", "日账结于{时刻}。本期吃掉{本期}份，累计{累计}份。账面仓柜、随身和送餐余粮合计{余量}份；存活{人数}人，其中缺餐{缺餐}人。", ["时刻", "本期", "累计", "余量", "缺餐", "人数"]))
+        rt_push(actions, island_inspect(actor, rt_cat(actor, ".island.ledger"), "main_granary", "island.ledger", ["settled_at", "period_consumed", "consumed_total", "inventory_portions", "hungry_people", "living_people"], "查看半日日账", "日账结于{时刻}。本期吃掉{本期}份，累计{累计}份。账面仓柜、随身和送餐余粮合计{余量}份；存活{人数}人，其中缺餐{缺餐}人。", ["时刻", "本期", "累计", "余量", "缺餐", "人数"]))
         rt_push(actions, island_inspect(actor, rt_cat(actor, ".island.crop.inspect"), "greenhouse", "island.crop", ["trays", "growth", "cared", "light", "damaged_trays"], "检视温室苗床", "苗床{批}批，生长进度{进度}/3。{照料}；照明{光照}，累计已损{损伤}批。", ["批", "进度", "照料", "光照", "损伤"]))
         rt_push(actions, island_inspect(actor, rt_cat(actor, ".island.self"), "living_hall", campaign_body(actor), ["erosion_exposure", "island_pending_dose", "rations", "consumed", "hungry", "island_harvest_carried"], "查看本人暴露记录与口粮", "已记暴露{剂量}，本期累积{待结}。随身口粮{携带}份，已食{已食}份，当前{缺餐}。收成{收成}份，尚未入库。", ["剂量", "待结", "携带", "已食", "缺餐", "收成"]))
         let jobs = island_crop_jobs(actor)
@@ -262,12 +268,12 @@ fn island_crop_jobs(actor):
     let harvest = dv_with_many(campaign_surface_action(harvest_id, "help", harvest_when, harvest_when, harvest_id, [island_ref("crop", "trays"), campaign_own(actor, "island_harvest_carried")], "收获一批成熟作物", "收获一批成熟作物，分装八标准份，随身携往粮仓。", island_source()), {"repeatable": true, "island_content": true, "predict_law": harvest_id, "simulation_utility": 1, "interaction": {"kind": "site", "site": "seedbeds"}})
     rt_push(jobs, {"law": harvest_law, "action": harvest})
     let store_id = rt_cat(actor, ".island.crop.store")
-    let store_when = dv_all([campaign_at(actor, "logistics"), c2_alive(actor), dv_fact(campaign_ref("c2.granary", "total_store_locked"), false), dv_at_least(campaign_own(actor, "island_harvest_carried"), p.crop_portions_per_tray)])
+    let store_when = dv_all([campaign_at(actor, "main_granary"), c2_alive(actor), dv_fact(campaign_ref("c2.granary", "total_store_locked"), false), dv_at_least(campaign_own(actor, "island_harvest_carried"), p.crop_portions_per_tray)])
     let store_law = dv_axiom(store_id, 1, store_when, [dv_increment(campaign_own(actor, "island_harvest_carried"), 0 - p.crop_portions_per_tray), dv_increment(campaign_ref("c2.granary", "remaining"), p.crop_portions_per_tray), dv_increment(island_ref("crop", "stored_portions"), p.crop_portions_per_tray)])
     let store = dv_with_many(campaign_surface_action(store_id, "help", store_when, store_when, store_id, [campaign_own(actor, "island_harvest_carried"), campaign_ref("c2.granary", "remaining"), island_ref("crop", "stored_portions")], "将收成送入已开启粮仓", "将随身八份收成送入粮仓并记账。", island_source()), {"repeatable": true, "island_content": true, "predict_law": store_id, "simulation_utility": 1})
     rt_push(jobs, {"law": store_law, "action": store})
     let supply_id = rt_cat(actor, ".island.supply")
-    let supply_when = dv_all([campaign_at(actor, "logistics"), c2_alive(actor), dv_fact(campaign_ref("c2.granary", "total_store_locked"), false), dv_at_least(campaign_ref("c2.granary", "remaining"), p.crop_portions_per_tray)])
+    let supply_when = dv_all([campaign_at(actor, "main_granary"), c2_alive(actor), dv_fact(campaign_ref("c2.granary", "total_store_locked"), false), dv_at_least(campaign_ref("c2.granary", "remaining"), p.crop_portions_per_tray)])
     let supply_law = dv_axiom(supply_id, 1, supply_when, [dv_increment(campaign_ref("c2.granary", "remaining"), 0 - p.crop_portions_per_tray), dv_increment(campaign_ref("c2.counter", "remaining"), p.crop_portions_per_tray), dv_increment(campaign_ref("c2.ledger", "reserve_received"), p.crop_portions_per_tray)])
     let supply = dv_with_many(campaign_surface_action(supply_id, "help", supply_when, supply_when, supply_id, [campaign_ref("c2.granary", "remaining"), campaign_ref("c2.counter", "remaining")], "转运八份存粮至配给台", "从已开粮仓转运八份存粮至配给台，仓柜分别登记同一笔转账。", island_source()), {"repeatable": true, "island_content": true, "predict_law": supply_id})
     rt_push(jobs, {"law": supply_law, "action": supply})
@@ -297,7 +303,7 @@ fn island_install(scene, locations):
         let room = rooms[i]
         physical = campaign_add_new(physical, campaign_state_object(rt_cat("island.air.", room.id), {"concentration": dv_with(dv_field(p.initial_concentration), "basis", [island_source()])}))
         i = i + 1
-    physical = campaign_add_new(physical, island_display_object("island.ledger", "logistics", "半日日账", {"settled_at": dv_unknown(), "period_consumed": dv_field(0), "consumed_total": dv_field(0), "inventory_portions": dv_unknown(), "hungry_people": dv_unknown(), "living_people": dv_unknown(), "living_mask": dv_unknown()}))
+    physical = campaign_add_new(physical, island_display_object("island.ledger", "main_granary", "半日日账", {"settled_at": dv_unknown(), "period_consumed": dv_field(0), "consumed_total": dv_field(0), "inventory_portions": dv_unknown(), "hungry_people": dv_unknown(), "living_people": dv_unknown(), "living_mask": dv_unknown()}))
     physical = campaign_add_new(physical, island_display_object("island.crop", "greenhouse", "温室苗床", {"trays": dv_field(p.crop_trays), "growth": dv_field(0), "cared": dv_field(false), "light": dv_field(p.crop_initial_light), "damaged_trays": dv_field(0), "last_growth_at": dv_unknown(), "stored_portions": dv_field(0)}))
     let people = campaign_people()
     i = 0

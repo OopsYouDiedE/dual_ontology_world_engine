@@ -95,7 +95,7 @@ fn campaign_location_title(location):
     return rt_memo_put([], key, campaign_location_title_build(location))
 
 fn campaign_location_title_build(location):
-    let titles = {"R05": "乙区 · 卧室 R-05", "R06": "乙区 · 卧室 R-06", "R07": "乙区 · 卧室 R-07", "R08": "乙区 · 卧室 R-08", "hall": "乙区 · 活动厅", "foyer": "乙区 · 门厅", "corridor": "乙区 · 宿舍走廊", "pantry": "乙区 · 备餐间", "living_hall": "生活翼 · 公共起居厅", "washroom": "生活翼 · 盥洗室", "central_hall": "主楼 · 中央厅", "lecture": "主楼 · 讲堂", "logistics": "后勤院 · 食堂", "clinic": "白塔院 · 诊疗所", "greenhouse": "后勤院 · 温室", "document_workshop": "主楼 · 文献工房", "resonance_hall": "主楼 · 共鸣厅", "resonance": "主楼 · 共鸣厅", "quiet_room": "主楼 · 沉静室", "white_tower_safe": "白塔院 · 安全端", "outdoor_meter": "室外 · 仪器阵", "outdoor_high": "室外 · 高地通路", "outdoor_alley": "室外 · 夹道", "oath_court": "室外 · 誓约庭", "threshold.contract": "生活翼 · 甲区门外", "threshold.astral": "生活翼 · 丙区门外", "threshold.logistics": "生活翼 · 丁区门外", "dorm.contract": "甲区 · 活动厅", "dorm.astral": "丙区 · 活动厅", "dorm.logistics": "丁区 · 活动厅", "dorm.yi": "乙区 · 活动厅"}
+    let titles = {"R05": "乙区 · 卧室 R-05", "R06": "乙区 · 卧室 R-06", "R07": "乙区 · 卧室 R-07", "R08": "乙区 · 卧室 R-08", "hall": "乙区 · 活动厅", "foyer": "乙区 · 门厅", "corridor": "乙区 · 宿舍走廊", "pantry": "乙区 · 备餐间", "living_hall": "生活翼 · 公共起居厅", "washroom": "生活翼 · 盥洗室", "central_hall": "主楼 · 中央厅", "main_dining": "主楼一楼 · 大食堂", "main_granary": "主楼一楼 · 主粮仓与外侧配给区", "lecture": "主楼 · 讲堂", "logistics": "后勤院 · 食堂", "clinic": "白塔院 · 诊疗所", "greenhouse": "后勤院 · 温室", "document_workshop": "文契院 · 文献工房", "resonance_hall": "星仪院 · 共鸣厅", "resonance": "星仪院 · 共鸣厅", "quiet_room": "星仪院 · 沉静室", "white_tower_safe": "白塔院 · 安全端", "outdoor_meter": "室外 · 仪器阵", "outdoor_high": "室外 · 高地通路", "outdoor_alley": "室外 · 夹道", "oath_court": "室外 · 誓约庭", "threshold.contract": "生活翼 · 甲区门外", "threshold.astral": "生活翼 · 丙区门外", "threshold.logistics": "生活翼 · 丁区门外", "dorm.contract": "甲区 · 活动厅", "dorm.astral": "丙区 · 活动厅", "dorm.logistics": "丁区 · 活动厅", "dorm.yi": "乙区 · 活动厅"}
     return dv_find(titles, location, "现场")
 
 fn campaign_location_region(location):
@@ -411,3 +411,228 @@ fn campaign_public_methods(actions):
         rt_push(result, method)
         i = i + 1
     return result
+
+// Sims 4-style character autonomy profiles, smart station advertisements,
+// implicit bodily habits surviving amnesia, player-visible scope filters, and
+// simple brush-off responses (简单的应答直接搪塞过去) for unseen off-screen zones.
+
+fn sims_autonomy_source(id):
+    return campaign_source("dv_core/modules/35-campaign-schema.dv", 418, rt_cat("sims-autonomy-player-visible.", id))
+
+fn sims_player_visible_rooms(zone):
+    if zone == "zone_yi":
+        return ["R05", "R06", "R07", "R08", "hall", "pantry", "foyer", "corridor", "living_hall", "central_hall", "main_granary", "logistics", "clinic", "greenhouse", "document_workshop", "resonance_hall", "quiet_room", "white_tower_safe", "oath_court"]
+    if zone == "zone_jia" or zone == "contract":
+        return ["dorm.contract", "threshold.contract", "living_hall", "central_hall", "main_granary", "logistics", "clinic", "greenhouse", "document_workshop", "resonance_hall", "quiet_room", "white_tower_safe", "oath_court"]
+    if zone == "zone_bing" or zone == "astral":
+        return ["dorm.astral", "threshold.astral", "living_hall", "central_hall", "main_granary", "logistics", "clinic", "greenhouse", "document_workshop", "resonance_hall", "quiet_room", "white_tower_safe", "oath_court"]
+    if zone == "zone_ding" or zone == "logistics":
+        return ["dorm.logistics", "threshold.logistics", "living_hall", "central_hall", "main_granary", "logistics", "clinic", "greenhouse", "document_workshop", "resonance_hall", "quiet_room", "white_tower_safe", "oath_court"]
+    return []
+
+fn sims_unseen_dorm_rooms(zone):
+    if zone == "zone_yi":
+        return ["dorm.contract", "dorm.astral", "dorm.logistics"]
+    return []
+
+fn sims_implicit_habits(actor):
+    if actor == "detective":
+        return [
+            {"id": "habit.cuff_rub", "trigger": "R05", "kind": "inspect", "bonus": 0.15, "surface": "右手袖口磨得发亮——写字时总拿那儿蹭桌沿。"},
+            {"id": "habit.magnifier_check", "trigger": "hall", "kind": "inspect", "bonus": 0.15, "surface": "习惯性摸向风衣口袋里的黄铜放大镜。"}
+        ]
+    if actor == "huo":
+        return [
+            {"id": "habit.mortise_touch", "trigger": "R06", "kind": "inspect", "bonus": 0.15, "surface": "手先去摸床沿榫接处与顺时针三圈半的机油布。"},
+            {"id": "habit.slate_shorthand", "trigger": "hall", "kind": "talk", "bonus": 0.15, "surface": "指尖沿刻痕辨认⊥、✕、◎的钳工速记习惯。"}
+        ]
+    if actor == "shen":
+        return [
+            {"id": "habit.unsweetened_tea_for_su", "trigger": "hall", "kind": "inspect", "bonus": 0.2, "surface": "推到苏泠面前的那杯茶顺手不放糖，老霍那杯加两勺。"},
+            {"id": "habit.feed_sourdough_starter", "trigger": "pantry", "kind": "inspect", "bonus": 0.2, "surface": "揭开陶罐喂老酵头的手法熟极而流，双手比脑子先记得。"}
+        ]
+    if actor == "su":
+        return [
+            {"id": "habit.tap_four_four_meter", "trigger": "R08", "kind": "inspect", "bonus": 0.15, "surface": "手指无意识在桌沿敲击四四拍，捕捉墙内不断线的低音。"},
+            {"id": "habit.hollow_frame_ear", "trigger": "foyer", "kind": "inspect", "bonus": 0.2, "surface": "侧耳贴近门框背面，辨别墙内传声铜管松动接头的漏音。"}
+        ]
+    if actor == "quer":
+        return [
+            {"id": "habit.steel_wire_pick", "trigger": "living_hall", "kind": "experiment", "bonus": 0.2, "surface": "袖口常备精钢丝，见着外闩便手痒想探一探锁簧。"},
+            {"id": "habit.familiar_greeting", "trigger": "living_hall", "kind": "talk", "bonus": 0.15, "surface": "一见沈鼎与霍铎便脱口而出‘老霍、沈叔’。"}
+        ]
+    if actor == "ward":
+        return [
+            {"id": "habit.public_notice_audit", "trigger": "living_hall", "kind": "help", "bonus": 0.15, "surface": "按章清点红纸与蜡布筒，坚持公开程序与限制令。"}
+        ]
+    if actor == "gu":
+        return [
+            {"id": "habit.copy_book_spines", "trigger": "living_hall", "kind": "talk", "bonus": 0.15, "surface": "在北台书架前把认得的书脊一行行抄录核对，奉行孤证不立。"}
+        ]
+    if actor == "lucian":
+        return [
+            {"id": "habit.doorway_etiquette", "trigger": "living_hall", "kind": "talk", "bonus": 0.15, "surface": "斜倚墙边讲究隔门交谈的礼数，不屑贴门呼喊。"}
+        ]
+    return []
+
+fn sims_station_advertisements(room):
+    if room == "hall":
+        return [
+            {"site": "site:slate", "need": "cognition", "advertise": 0.25, "kinds": ["inspect", "talk"]},
+            {"site": "site:transmitter", "need": "cognition", "advertise": 0.3, "kinds": ["inspect", "answer", "talk"]},
+            {"site": "opening.cabinet", "need": "obsession", "advertise": 0.25, "kinds": ["inspect", "talk"]}
+        ]
+    if room == "pantry":
+        return [
+            {"site": "site:pantry-counter", "need": "hunger", "advertise": 0.25, "kinds": ["inspect", "talk"]}
+        ]
+    if room == "foyer":
+        return [
+            {"site": "site:door-floor", "need": "cognition", "advertise": 0.25, "kinds": ["inspect", "help", "talk"]}
+        ]
+    if room == "living_hall":
+        return [
+            {"site": "living_hearth", "need": "hunger", "advertise": 0.25, "kinds": ["help", "inspect"]},
+            {"site": "living_table", "need": "social", "advertise": 0.2, "kinds": ["talk", "inspect"]}
+        ]
+    return []
+
+fn sims_actor_profile(actor):
+    let base = campaign_profile(actor)
+    var weights = {"hunger": 1.0, "safety": 1.0, "social": 1.0, "cognition": 1.1, "obsession": 1.0}
+    if actor == "detective":
+        weights = {"hunger": 0.9, "safety": 1.1, "social": 1.0, "cognition": 1.4, "obsession": 1.2}
+    if actor == "huo":
+        weights = {"hunger": 1.0, "safety": 1.2, "social": 0.9, "cognition": 1.2, "obsession": 1.3}
+    if actor == "shen":
+        weights = {"hunger": 1.3, "safety": 1.2, "social": 1.2, "cognition": 0.9, "obsession": 1.0}
+    if actor == "su":
+        weights = {"hunger": 0.9, "safety": 1.0, "social": 0.9, "cognition": 1.3, "obsession": 1.3}
+    if actor == "quer":
+        weights = {"hunger": 1.1, "safety": 0.9, "social": 1.2, "cognition": 1.1, "obsession": 1.2}
+    if actor == "ward":
+        weights = {"hunger": 1.0, "safety": 1.2, "social": 1.1, "cognition": 1.2, "obsession": 1.1}
+    if actor == "gu":
+        weights = {"hunger": 1.0, "safety": 1.1, "social": 0.9, "cognition": 1.3, "obsession": 1.1}
+    if actor == "lucian":
+        weights = {"hunger": 0.9, "safety": 1.1, "social": 1.1, "cognition": 1.1, "obsession": 1.2}
+    return {
+        "actor": actor,
+        "group": base.group,
+        "domain": base.domain,
+        "commodity_needs": {"hunger": 75, "safety": 80, "social": 70, "cognition": 60, "obsession": 65},
+        "autonomy_weights": weights,
+        "implicit_habits": sims_implicit_habits(actor),
+        "basis": [sims_autonomy_source(actor)]
+    }
+
+// Simple brush-off responses (简单的应答直接搪塞过去) for unseen rooms and off-screen
+// dormitory events during Chapter 1 when the player starts in Zone Yi.
+fn sims_brush_off_rows():
+    return [
+        {
+            "actor": "ward",
+            "id": "brush-off.closed-doors",
+            "start": 960,
+            "end": 1105,
+            "when": dv_fact(campaign_first_night_ref("done.night.ask-closed-doors"), true),
+            "received": {"speaker": "detective", "action_id": "night.ask-closed-doors"},
+            "label": "简短搪塞丙丁两区的近况",
+            "text": "方才代管者已在铜口交代过了：丙区西夹道尚有源质余气，门内人并不知情，依《契约》第七条暂不开闸；丁区有人高烧清创，从内侧拧死了死锁与传声止音阀。等明日散尽余气再说吧。"
+        },
+        {
+            "actor": "detective",
+            "id": "ask-unseen-contract",
+            "start": 780,
+            "end": 1440,
+            "when": campaign_at("quer", "living_hall"),
+            "manual_only": true,
+            "label": "询问甲区寝室内先前的经过",
+            "text": "你们在甲区寝室里头，先前都查了些什么？"
+        },
+        {
+            "actor": "quer",
+            "id": "brush-off.quer-contract",
+            "start": 780,
+            "end": 1440,
+            "when": dv_fact(campaign_first_night_ref("done.night.ask-unseen-contract"), true),
+            "received": {"speaker": "detective", "action_id": "night.ask-unseen-contract"},
+            "label": "随口搪塞甲区寝室的琐事",
+            "text": "嗨，关在屋里闷都闷死了，无非是翻翻旧物、拌几句嘴，我就顺手拿钢丝把门挑开出来透透气呗！里头那些鸡毛蒜皮的事，有什么好细说的。"
+        },
+        {
+            "actor": "lucian",
+            "id": "brush-off.lucian-contract",
+            "start": 780,
+            "end": 1440,
+            "when": dv_fact(campaign_first_night_ref("done.night.ask-unseen-contract"), true),
+            "received": {"speaker": "detective", "action_id": "night.ask-unseen-contract"},
+            "label": "冷淡敷衍甲区室内的问答",
+            "text": "不过是按铜口定下的规矩报了个名字、递了句答复罢了。内室那些杂乱口角，不提也罢。"
+        },
+        {
+            "actor": "detective",
+            "id": "brush-off.astral-door",
+            "start": 750,
+            "end": 1440,
+            "when": dv_true(),
+            "manual_only": true,
+            "kind": "inspect",
+            "label": "走近紧闭的丙区隔离门",
+            "text": "丙区气闸门紧闭。旁侧铜口只留下一句简短的例行告示：‘西夹道余气未散，门内人不知外侧险情；依第七条，明晨散尽前概不放行。’"
+        },
+        {
+            "actor": "detective",
+            "id": "brush-off.logistics-door",
+            "start": 750,
+            "end": 1440,
+            "when": dv_true(),
+            "manual_only": true,
+            "kind": "inspect",
+            "label": "走近反锁的丁区隔离门",
+            "text": "丁区厚门从内侧拧死了防侵死锁，门边传声管的止音阀也已关死，里头没有人应声，只能等明日天亮。"
+        }
+    ]
+
+// Chapter handoff evidence, populated only by the first chapter meal Complete.
+fn campaign_finale_eaten_ref(actor):
+    return campaign_first_night_ref(rt_cat("done.night.finale.eat.", actor))
+
+
+// Shared committed meal evidence; no clock or location substitutes for eating.
+fn campaign_finale_meal_complete():
+    var conditions = []
+    let people = campaign_people()
+    var i = 0
+    while i < rt_count(people):
+        rt_push(conditions, dv_fact(campaign_finale_eaten_ref(people[i]), true))
+        i = i + 1
+    return dv_all(conditions)
+
+// Neutral visual identifiers are shared by content labels and host projections.
+fn campaign_unknown_person_label(actor, viewer):
+    if actor == "":
+        return "现场记录"
+    if actor == viewer:
+        return "本人"
+    if actor == "demon":
+        return "铜口里的声音"
+    let people = campaign_people()
+    var i = 0
+    while i < rt_count(people):
+        if people[i] == actor:
+            return rt_cat("陌生学员·", rt_show(i + 1))
+        i = i + 1
+    return "陌生学员"
+
+fn campaign_person_name_ref(actor):
+    if dv_has(["detective", "huo", "shen", "su"], actor):
+        return dv_ref(rt_cat("opening.personal.", actor), "state", "name")
+    return dv_ref(actor, "identity", "name")
+
+// The actual dumpling cooking Complete also places the cooked portions on the table.
+fn campaign_finale_meal_ready_ref():
+    return campaign_first_night_ref("done.night.finale.cook-dumplings")
+
+fn campaign_finale_meal_remaining_ref():
+    return campaign_first_night_ref("meal_servings")

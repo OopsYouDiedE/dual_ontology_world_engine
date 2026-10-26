@@ -460,7 +460,9 @@ public partial class GameEngine : Node
         {
             faulted = true;
             hostErrors.Add(new { phase = "host-pump", error = error.ToString() });
-            GD.PushError(error.ToString());
+            // Complete may already be awaiting delivery. Its owner must receive
+            // the terminal failure as well as the retained evidence error.
+            Report(error);
         }
         finally { busy = false; }
     }
@@ -498,13 +500,18 @@ public partial class GameEngine : Node
     {
         if (closing) return;
         closing = true;
-        session?.StopPerformanceClock();
         string? path = null;
         var ownsDirectory = false;
         var phase = "await-work";
         var errors = new List<object>();
         try
         {
+            try { session?.StopPerformanceClock(); }
+            catch (Exception error)
+            {
+                GD.PushError(error.ToString());
+                errors.Add(new { phase = "stop-clock", error = error.ToString() });
+            }
             try { await work; }
             catch (Exception error)
             {
@@ -513,7 +520,12 @@ public partial class GameEngine : Node
             }
             errors.AddRange(hostErrors);
             // Opening may have completed while shutdown awaited the worker.
-            session?.StopPerformanceClock();
+            try { session?.StopPerformanceClock(); }
+            catch (Exception error)
+            {
+                GD.PushError(error.ToString());
+                errors.Add(new { phase = "stop-clock-after-work", error = error.ToString() });
+            }
             phase = "evidence-directory";
             path = evidenceDirectory ??= NewSessionEvidenceDirectory();
             ownsDirectory = true;
@@ -603,10 +615,15 @@ public partial class GameEngine : Node
             {
                 if (ownsDirectory && path is not null)
                 {
-                    using var result = new FileStream(Path.Combine(path, "close-result.dvlog"), FileMode.CreateNew, System.IO.FileAccess.Write);
-                    result.Write(DuelView.Compiled.BinaryEvidence.Magic);
+                    var resultPath = Path.Combine(path, "close-result.dvlog");
                     var closeRecord = System.Text.Json.JsonSerializer.SerializeToElement(new { complete = errors.Count == 0, audit_mode = session?.AuditMode, trace_policy = session?.AuditMode == true ? "full" : "omitted-gameplay", session_opened = session is not null, unprocessed_commands = commands.Count, pending_action = pendingEvent, performance_policy = "streamed-session-samples-and-aggregates", performance_prefix = "engine-performance", timing_policy = "bounded-ring", timing_capacity = TimingCapacity, timing_dropped = timingDropped, live_timing_dropped = liveTimingDropped, errors });
-                    DuelView.Compiled.BinaryEvidence.WriteFrame(result, closeRecord);
+                    using (var result = new FileStream(resultPath + ".partial", FileMode.CreateNew, System.IO.FileAccess.Write))
+                    {
+                        result.Write(DuelView.Compiled.BinaryEvidence.Magic);
+                        DuelView.Compiled.BinaryEvidence.WriteFrame(result, closeRecord);
+                        result.Flush(flushToDisk: true);
+                    }
+                    File.Move(resultPath + ".partial", resultPath, overwrite: false);
                 }
             }
             catch (Exception error) { GD.PushError(error.ToString()); }

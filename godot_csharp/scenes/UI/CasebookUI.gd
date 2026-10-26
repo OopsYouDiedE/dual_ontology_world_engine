@@ -18,6 +18,7 @@ var _shutting_down := false
 var _external_blocked := false
 var _operation_blocked := false
 var _was_paused := false
+var _owns_world_pause := false
 
 func _ready() -> void:
 	layer = 30
@@ -29,11 +30,9 @@ func open(page := "settings") -> void:
 	if _active:
 		book.open_section(page)
 		return
-	_active = true
 	_was_paused = get_tree().paused
-	if pause_world: get_tree().paused = true
-	reading_changed.emit(true)
-	visible = true
+	_owns_world_pause = pause_world
+	if _owns_world_pause: get_tree().paused = true
 	book = BOOK_SCENE.instantiate()
 	book.mode = "casebook"
 	book.replay_mode = replay_mode
@@ -44,6 +43,11 @@ func open(page := "settings") -> void:
 	book.close_requested.connect(close)
 	add_child(book)
 	book.set_external_blocked(_external_blocked or _operation_blocked)
+	# Reading observers synchronously capture this volume's page and controls.
+	# Publish the active lifecycle only after the book has entered the tree.
+	_active = true
+	visible = true
+	reading_changed.emit(true)
 	opened.emit()
 
 func close() -> void:
@@ -59,7 +63,7 @@ func close() -> void:
 	_active = false
 	_closing = false
 	visible = false
-	if pause_world: get_tree().paused = _was_paused
+	release_world_pause()
 	reading_changed.emit(false)
 	closed.emit()
 
@@ -90,14 +94,19 @@ func show_bookmark_result(message: String, success := false) -> void:
 	if success: book.open_section("load")
 	book.show_bookmark_message(message)
 
+func release_world_pause() -> void:
+	if not _owns_world_pause: return
+	_owns_world_pause = false
+	get_tree().paused = _was_paused
+
 func begin_shutdown() -> void:
 	if _shutting_down: return
 	_shutting_down = true
-	if _active:
-		if pause_world: get_tree().paused = _was_paused
-		reading_changed.emit(false)
+	var was_active := _active
 	_active = false
 	visible = false
+	release_world_pause()
+	if was_active: reading_changed.emit(false)
 
 func _exit_tree() -> void:
 	begin_shutdown()
