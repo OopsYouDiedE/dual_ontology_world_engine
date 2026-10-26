@@ -1,0 +1,55 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://scenes/ArtStyleTrials/E/painted_surface.gdshader" id="1_2dxh3"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_jcvlj"]
+render_priority = 0
+shader = ExtResource("1_2dxh3")
+shader_parameter/pigment = Color(0.70980394, 0.63529414, 0.4862745, 1)
+shader_parameter/surface_kind = 3.0
+shader_parameter/surface_roughness = 0.8
+shader_parameter/surface_metallic = 0.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_eytmn"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1cdhk"]
+top_radius = 0.05
+bottom_radius = 0.08
+height = 0.16
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1xv6q"]
+render_priority = 0
+shader = ExtResource("1_2dxh3")
+shader_parameter/pigment = Color(0.47058824, 0.39607844, 0.26666668, 1)
+shader_parameter/surface_kind = 3.0
+shader_parameter/surface_roughness = 0.8
+shader_parameter/surface_metallic = 0.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_q4cq7"]
+top_radius = 0.087
+bottom_radius = 0.087
+height = 0.035
+radial_segments = 24
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1806154750]
+
+[node name="WingSack" type="Node3D" parent="." unique_id=364786497]
+metadata/authoring_label = "WingSack"
+
+[node name="@MeshInstance3D@5749" type="MeshInstance3D" parent="WingSack" unique_id=487177356]
+transform = Transform3D(0.56, 0, 0, 0, 0.7, 0, 0, 0, 0.47, 0, 0.35, 0)
+material_override = SubResource("ShaderMaterial_jcvlj")
+mesh = SubResource("SphereMesh_eytmn")
+
+[node name="@MeshInstance3D@5750" type="MeshInstance3D" parent="WingSack" unique_id=1920042460]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.69, 0)
+material_override = SubResource("ShaderMaterial_jcvlj")
+mesh = SubResource("CylinderMesh_1cdhk")
+
+[node name="@MeshInstance3D@5751" type="MeshInstance3D" parent="WingSack" unique_id=1409009888]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.68, 0)
+material_override = SubResource("ShaderMaterial_1xv6q")
+mesh = SubResource("CylinderMesh_q4cq7")

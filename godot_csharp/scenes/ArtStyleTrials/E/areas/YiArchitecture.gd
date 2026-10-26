@@ -34,8 +34,8 @@ static func build(kit: Node3D, size: Vector2, openings: Dictionary) -> void:
 		shell.add_child(wall)
 		var centers: Array=openings.get(side,[]).duplicate()
 		centers.sort()
-		if side=="north" and centers.is_empty() and (kit.current_room_id.begins_with("zone_yi:north_") or kit.current_room_id=="zone_yi:hall"):
-			var wc: float=-.5 if kit.current_room_id.begins_with("zone_yi:north_") else 0.0
+		if side=="north" and centers.is_empty() and (kit.current_room_id.get_slice(":",1).begins_with("north_") or kit.current_room_id.get_slice(":",1)=="hall"):
+			var wc: float=-.5 if kit.current_room_id.get_slice(":",1).begins_with("north_") else 0.0
 			_span(kit,wall,-length/2,wc-.60,height)
 			_span(kit,wall,wc+.60,length/2,height)
 			_span(kit,wall,wc-.60,wc+.60,1.30)
@@ -56,7 +56,7 @@ static func build(kit: Node3D, size: Vector2, openings: Dictionary) -> void:
 		if cursor<length/2: _span(kit,wall,cursor,length/2,height)
 
 static func _plaster(kit: Node3D) -> Material:
-	if kit.current_room_id in ["zone_yi:wc","zone_yi:prep","zone_yi:foyer"]:
+	if kit.current_room_id.get_slice(":",1) in ["wc","prep","foyer"]:
 		return kit.material("yi_plaster_ivory","c9c0a8",2,.86)
 	var mat := ShaderMaterial.new()
 	mat.shader=preload("res://scenes/ArtStyleTrials/E/areas/yi_material.gdshader")

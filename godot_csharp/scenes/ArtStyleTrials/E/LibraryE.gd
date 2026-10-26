@@ -6,6 +6,7 @@ const RECORDING=preload("res://scenes/ArtStyleTrials/E/areas/RecordingStages.gd"
 const KNOWLEDGE=preload("res://scenes/ArtStyleTrials/E/RoomKnowledgeView.gd")
 const OUTDOORS=preload("res://scenes/ArtStyleTrials/E/areas/Outdoors.gd")
 const YI_REGION=preload("res://scenes/ArtStyleTrials/E/areas/YiRegion.gd")
+const HALL_REGION=preload("res://scenes/ArtStyleTrials/E/areas/PublicHallRegion.gd")
 const RECORDING_IDS=["shura_poet","scholar_relic","chess_god","demon_miracle","kitchen_dumplings","last_transfer"]
 ## On-demand art library. IDs and furniture anchors come from production recipes.
 var catalog: Array=[]
@@ -13,7 +14,7 @@ var selected := "cast"
 var knowledge_view: Node3D
 
 func asset_ids() -> Array:
-	var ids: Array=["zone_yi:overview","cast","knowledge-demo"]
+	var ids: Array=["zone_yi:overview","zone_jia:overview","zone_bing:overview","zone_ding:overview","living_hall:overview","cast","knowledge-demo"]
 	for entry in catalog: ids.append(entry.id)
 	for id in RECORDING_IDS: ids.append("recording:"+id)
 	for id in ["campus_nw","campus_n","campus_ne","campus_sw","campus_s","harbor"]: ids.append("outdoor:"+id)
@@ -55,8 +56,8 @@ func select_asset(id: String) -> void:
 	camera.projection=Camera3D.PROJECTION_ORTHOGONAL
 	$WorldEnvironment.environment.ambient_light_energy=.55
 	key_light.light_energy=.72
-	if id.begins_with("zone_yi:"):
-		var yi_size: Vector2=YI_REGION.build(self,catalog,id)
+	if id.begins_with("zone_") or id.begins_with("living_hall:"):
+		var yi_size: Vector2=YI_REGION.build(self,catalog,id) if id.begins_with("zone_") else HALL_REGION.build(self,catalog,id)
 		camera.projection=Camera3D.PROJECTION_PERSPECTIVE
 		camera.fov=22.0
 		var aspect: float=float(get_viewport().get_visible_rect().size.x)/maxf(1.0,get_viewport().get_visible_rect().size.y)
@@ -138,12 +139,12 @@ func select_asset(id: String) -> void:
 	camera.position=camera_position
 	camera.look_at(camera_target,Vector3.UP)
 	configure_lighting("normal")
-	if id.begins_with("zone_yi:"):
+	if id.begins_with("zone_") or id.begins_with("living_hall:"):
 		var environment: Environment=$WorldEnvironment.environment
 		environment.ambient_light_energy=.38
 		key_light.light_energy=.8
-		for light in local_lights: light.visible=id=="zone_yi:overview" or light.get_meta("room")==id
-	set_meta("render_metadata",{"asset":id,"scope":"Yi reference redesign in metres; production topology unchanged" if id.begins_with("zone_yi:") else "3D art library; production layout anchors, no gameplay migration", "body_template":"E-common-three-head-v1"})
+		for light in local_lights: light.visible=id.ends_with(":overview") or light.get_meta("room")==id
+	set_meta("render_metadata",{"asset":id,"scope":"Residential reference redesign in metres; production topology unchanged" if id.begins_with("zone_") or id.begins_with("living_hall:") else "3D art library; production layout anchors, no gameplay migration", "body_template":"E-common-three-head-v1"})
 
 func select_materials(entry: Dictionary) -> void:
 	var floor_mat := ShaderMaterial.new()

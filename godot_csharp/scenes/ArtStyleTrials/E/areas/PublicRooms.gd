@@ -1,5 +1,7 @@
 extends RefCounted
-## Public/academic furnishings. Source anchors stay unchanged; no doors or wall shells.
+## Public furnishings share packed geometry; caller owns placement and room state.
+const PREFABS=preload("res://scenes/ArtStyleTrials/E/prefabs/PrefabLibrary.gd")
+const COMMON=preload("res://scenes/ArtStyleTrials/E/areas/YiFurniture.gd")
 const MAPS = ["living_hall","central_hall","lecture","archive","resonance","counterweight"]
 
 static func handles(map_id: String) -> bool:
@@ -7,10 +9,52 @@ static func handles(map_id: String) -> bool:
 
 static func furnish(kit: Node3D, entry: Dictionary) -> void:
 	for prop in entry.furniture:
+		if prop.kind=="vault_door": continue
+		var at := Vector3(float(prop.at[0]),0,float(prop.at[1]))
+		if COMMON.handles(prop.kind):
+			COMMON.furnish(kit,prop.kind,at,prop.name)
+			continue
+		if prop.kind in ["floor_lamp","fireplace"]:
+			_furnish_uncached(kit,{"id":"detail","furniture":[prop]})
+			continue
+		var parent: Node3D=kit.content_root
+		var kind: String=prop.kind
+		var canonical: String="bookcase_study" if kind=="bookcase_study_b" else ("notice_board" if kind=="timetable_board" else kind)
+		var instance: Node3D=PREFABS.instantiate("public/"+canonical,func() -> Node3D:
+			var holder := Node3D.new()
+			holder.name="Public_"+kind
+			kit.content_root=holder
+			_furnish_uncached(kit,{"id":"detail","furniture":[{"kind":kind,"at":[0,0],"name":kind}]})
+			kit.content_root=parent
+			return holder)
+		if instance==null: continue
+		parent.add_child(instance)
+		instance.position=at
+		instance.set_meta("source_prop",prop.name)
+		instance.set_meta("prefab_kind",kind)
+	if entry.id=="living_hall:hall":
+		kit._rug(Vector3(-3.5,0.025,-9.65),Vector2(5.5,3.7))
+		kit._rug(Vector3(0,0.025,6.1),Vector2(3.9,8.2))
+	elif entry.id=="central_hall:central_hall":
+		# Actual raised inlay geometry, kept low and away from source furniture feet.
+		_ring(kit,kit.content_root,Vector3(0,0.014,0),3.1,0.025,_brass(kit),64)
+		_ring(kit,kit.content_root,Vector3(0,0.014,0),3.3,0.025,_brass(kit),64)
+	elif entry.id=="resonance:silent":
+		# Unfurnished source room: no invented evidence or furniture.
+		kit.content_root.set_meta("area_note","Silent room retains its empty source layout")
+
+
+static func _furnish_uncached(kit: Node3D, entry: Dictionary) -> void:
+	for prop in entry.furniture:
 		var at := Vector3(float(prop.at[0]),0,float(prop.at[1]))
 		var kind: String=prop.kind
 		if kind=="vault_door": continue # Current observer's doorway is a separate host concern.
 		match kind:
+			"long_table":
+				var table: Node3D=kit._table(at,Vector2(4.5,1.6),.75)
+				kit.box(table,Vector3(0,.22,0),Vector3(4.1,.08,.09),_wood(kit))
+				for x in [-1.9,1.9]: kit.box(table,Vector3(x,.22,0),Vector3(.08,.08,1.25),_wood(kit))
+			"long_bench": kit._bench(at,4.4)
 			"notice_board", "timetable_board":
 				kit._notice(at)
 				var board: Node3D=kit.content_root.get_child(kit.content_root.get_child_count()-1)
@@ -62,16 +106,6 @@ static func furnish(kit: Node3D, entry: Dictionary) -> void:
 				for x in [-0.18,0.18]: kit.cylinder(desk,Vector3(x,0.85,0),0.06,0.12,_paper_mat(kit))
 			"chair_front", "chair_back": _chair(kit,at,kind=="chair_front",prop.name)
 			_: kit._prop(kind,at,prop.name)
-	if entry.id=="living_hall:hall":
-		kit._rug(Vector3(-3.5,0.025,-9.65),Vector2(5.5,3.7))
-		kit._rug(Vector3(0,0.025,6.1),Vector2(3.9,8.2))
-	elif entry.id=="central_hall:central_hall":
-		# Actual raised inlay geometry, kept low and away from source furniture feet.
-		_ring(kit,kit.content_root,Vector3(0,0.014,0),3.1,0.025,_brass(kit),64)
-		_ring(kit,kit.content_root,Vector3(0,0.014,0),3.3,0.025,_brass(kit),64)
-	elif entry.id=="resonance:silent":
-		# Unfurnished source room: no invented evidence or furniture.
-		kit.content_root.set_meta("area_note","Silent room retains its empty source layout")
 
 static func _wood(kit: Node3D) -> Material:
 	return kit.material("public_walnut","60432f",1,0.62)

@@ -11,3 +11,5 @@
 WorldEnvironment、Camera3D 和日光是 scene.tscn 内显式节点，环境与相机属性保存在 tres。E 用 Forward+ 采集，记录实际渲染方法、SSAO/SSIL/Glow、相机和房间可见性。根节点保留 configure_lighting(normal/off/shift)。固定 runtime/E 输出在旧采集退出后整体替换，主代理逐图对照 A 与 D，报告位于 artifacts/style-e/index.html。不得以开关启用、格数或几何数量代替画面判断。
 
 乙区参考图重设计由areas/YiRegion、YiArchitecture、YiFurniture负责。米制美术布局与正式导航几何分开，未经宿主接线不得宣称游戏地图已替换。每室独立四面墙仅去除外侧背面，保留截面；总览为作者视图，不能作为玩家探索认知来源。--zone-yi采集只写artifacts/style-e/zone-yi-redesign/render，报告注明目标图、推定尺寸、整体与单室取景及未完成范围。当前乙区不使用此前UV图集草稿。
+
+四翼统一由YiRegion按地图前缀装配；公共大厅由PublicHallRegion装配。重复物件通过prefabs/PrefabLibrary的PackedScene实例化，构造源保持唯一，朝向与位置属于实例。缓存键包含影响外观的变体；不得缓存主体、预约、观察或实时火焰状态。灯光实例重新登记当前房间。--residences采集与报告使用artifacts/style-e/residences，附导出tscn；导出由工厂再生，不手改。正式DV与Host接线状态必须单列。

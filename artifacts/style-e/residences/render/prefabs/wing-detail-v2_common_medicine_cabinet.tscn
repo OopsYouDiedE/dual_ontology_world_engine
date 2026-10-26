@@ -1,0 +1,106 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://scenes/ArtStyleTrials/E/painted_surface.gdshader" id="1_ndvrp"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_km84g"]
+render_priority = 0
+shader = ExtResource("1_ndvrp")
+shader_parameter/pigment = Color(0.32941177, 0.23529412, 0.1764706, 1)
+shader_parameter/surface_kind = 1.0
+shader_parameter/surface_roughness = 0.8
+shader_parameter/surface_metallic = 0.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_46gqw"]
+size = Vector3(1.1, 1.86, 0.48)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_d11fg"]
+render_priority = 0
+shader = ExtResource("1_ndvrp")
+shader_parameter/pigment = Color(0.4509804, 0.3254902, 0.20392157, 1)
+shader_parameter/surface_kind = 1.0
+shader_parameter/surface_roughness = 0.8
+shader_parameter/surface_metallic = 0.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_pkx08"]
+size = Vector3(0.46, 1.51, 0.04)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_a8emi"]
+render_priority = 0
+shader = ExtResource("1_ndvrp")
+shader_parameter/pigment = Color(0.4392157, 0.5529412, 0.5294118, 1)
+shader_parameter/surface_kind = 0.0
+shader_parameter/surface_roughness = 0.22
+shader_parameter/surface_metallic = 0.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_woyrb"]
+size = Vector3(0.36, 0.95, 0.02)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_a11qr"]
+render_priority = 0
+shader = ExtResource("1_ndvrp")
+shader_parameter/pigment = Color(0.654902, 0.5529412, 0.34509805, 1)
+shader_parameter/surface_kind = 0.0
+shader_parameter/surface_roughness = 0.44
+shader_parameter/surface_metallic = 0.55
+
+[sub_resource type="SphereMesh" id="SphereMesh_ugf7q"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="BoxMesh" id="BoxMesh_n7wa5"]
+size = Vector3(0.46, 1.51, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6hvks"]
+size = Vector3(0.36, 0.95, 0.02)
+
+[sub_resource type="SphereMesh" id="SphereMesh_nulor"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="BoxMesh" id="BoxMesh_ow6qr"]
+size = Vector3(1.2, 0.1, 0.57)
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1553553139]
+
+[node name="Cabinet" type="Node3D" parent="." unique_id=806422822]
+metadata/authoring_label = "Cabinet"
+
+[node name="@MeshInstance3D@11068" type="MeshInstance3D" parent="Cabinet" unique_id=210153959]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.93, 0)
+material_override = SubResource("ShaderMaterial_km84g")
+mesh = SubResource("BoxMesh_46gqw")
+
+[node name="@MeshInstance3D@11069" type="MeshInstance3D" parent="Cabinet" unique_id=588931049]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.27, 1, 0.25)
+material_override = SubResource("ShaderMaterial_d11fg")
+mesh = SubResource("BoxMesh_pkx08")
+
+[node name="@MeshInstance3D@11070" type="MeshInstance3D" parent="Cabinet" unique_id=1321891645]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.27, 1.18, 0.28)
+material_override = SubResource("ShaderMaterial_a8emi")
+mesh = SubResource("BoxMesh_woyrb")
+
+[node name="@MeshInstance3D@11071" type="MeshInstance3D" parent="Cabinet" unique_id=841790223]
+transform = Transform3D(0.045, 0, 0, 0, 0.045, 0, 0, 0, 0.045, -0.0675, 0.92, 0.3)
+material_override = SubResource("ShaderMaterial_a11qr")
+mesh = SubResource("SphereMesh_ugf7q")
+
+[node name="@MeshInstance3D@11072" type="MeshInstance3D" parent="Cabinet" unique_id=90825552]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.27, 1, 0.25)
+material_override = SubResource("ShaderMaterial_d11fg")
+mesh = SubResource("BoxMesh_n7wa5")
+
+[node name="@MeshInstance3D@11073" type="MeshInstance3D" parent="Cabinet" unique_id=1013680913]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.27, 1.18, 0.28)
+material_override = SubResource("ShaderMaterial_a8emi")
+mesh = SubResource("BoxMesh_6hvks")
+
+[node name="@MeshInstance3D@11074" type="MeshInstance3D" parent="Cabinet" unique_id=1432296334]
+transform = Transform3D(0.045, 0, 0, 0, 0.045, 0, 0, 0, 0.045, 0.0675, 0.92, 0.3)
+material_override = SubResource("ShaderMaterial_a11qr")
+mesh = SubResource("SphereMesh_nulor")
+
+[node name="@MeshInstance3D@11075" type="MeshInstance3D" parent="Cabinet" unique_id=951314597]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)
+material_override = SubResource("ShaderMaterial_km84g")
+mesh = SubResource("BoxMesh_ow6qr")

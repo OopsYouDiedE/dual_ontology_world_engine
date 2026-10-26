@@ -9,7 +9,11 @@ OUT=ROOT/'artifacts/style-e'
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--zone-yi',action='store_true')
+    parser.add_argument('--residences',action='store_true')
     args=parser.parse_args()
+    if args.residences:
+        residence_report()
+        return
     if args.zone_yi:
         yi_report()
         return
@@ -46,7 +50,30 @@ def yi_report():
 <h2>仍存差异</h2><p>这是三维结构重设计，仍未达到目标图的手绘层次和摆件密度。参考图中的附加花盆、装饰画和行李未全量复制；空房与证据保留原游戏身份。窗为有深度的内侧窗框与玻璃，尚未建墙外景。正式行走、碰撞、门的认知选择与整局体验尚未验收。</p>
 <p>时代结构参考：<a href="https://collections.manchesterartgallery.org/collections/item/8c0ef582-b19c-331e-bdd1-3297ed5d714e/">Manchester Art Gallery，约1900年的车木腿与横撑椅</a>；<a href="https://collectionswa.net.au/items/fd4fdc42-8e7b-4e34-b8d5-ce3f55739d48">Busselton Historical Society，约1900年石台面洗漱柜</a>。用于构造参考，不宣称逐件复刻馆藏。</p>
 <div id="grid"></div><script>const items=ITEMS;const p=document.querySelector('#pick');function show(i){p.value=i;document.querySelector('#shot').src=items[i].src;document.querySelector('#label').textContent=items[i].name+' · Godot Forward+实机'}items.forEach((x,i)=>{p.add(new Option(x.name,i));const f=document.createElement('figure');f.innerHTML='<img loading="lazy" src="'+x.src+'"><figcaption>'+x.name+'</figcaption>';f.onclick=()=>{show(i);window.scrollTo({top:0,behavior:'smooth'})};document.querySelector('#grid').append(f)});p.onchange=()=>show(+p.value);document.querySelector('#full').onclick=()=>document.querySelector('#actual').classList.toggle('native');show(Math.max(0,items.findIndex(x=>x.id==='overview')));</script></html>'''
+    page=page.replace('<nav><select','<p><a href="../residences/index.html">查看最新：四翼与公共大厅、共享家具预制件</a></p><nav><select')
     (folder/'index.html').write_text(page.replace('ITEMS',json.dumps(items,ensure_ascii=False)),encoding='utf-8')
     print(f'Yi report: {len(items)} renders')
+
+def residence_report():
+    folder=OUT/'residences'
+    pictures=sorted((folder/'render').glob('*.png'))
+    names={'zone_yi':'乙区','zone_jia':'甲区','zone_bing':'丙区','zone_ding':'丁区','living_hall':'公共大厅'}
+    items=[{'id':p.stem.replace('--',':'),'src':'render/'+p.name,'name':names.get(p.stem.split('--')[0],p.stem)+' · '+p.stem.split('--')[-1]} for p in pictures]
+    page='''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>四翼与公共大厅 · 共享预制件</title>
+<style>body{margin:0;background:#18201e;color:#e2dac8;font:16px/1.7 system-ui}main{max-width:1500px;margin:auto;padding:28px}h1{font-weight:500}a{color:#d9bb7a}select,button{padding:10px;background:#314139;color:inherit;border:1px solid #9e895e}nav{position:sticky;top:0;background:#18201e;padding:12px;z-index:2}.pair{display:grid;grid-template-columns:1fr 1.6fr;gap:18px}img{width:100%;display:block}figure{margin:0}figcaption{padding:10px}.note{padding:16px;border-left:3px solid #ba995a;background:#29362f}#grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.native{overflow:auto}.native img{min-width:1600px}@media(max-width:800px){.pair{grid-template-columns:1fr}#grid{grid-template-columns:repeat(2,1fr)}}</style>
+<main><h1>甲、乙、丙、丁四翼与公共大厅</h1><p>共享米制家具与独立室内墙体；Godot Forward+ 实际渲染。</p>
+<p class="note">这是可运行的3D美术库。总览用于作者检查，不授予玩家探索知识；正式游戏的碰撞、互动点位与DV接线尚未迁移。画面仍保留程序化建模感，与参考图的手绘轮廓和细密纹样有差距。</p>
+<nav><select id="pick"></select> <button id="prev">上一张</button> <button id="next">下一张</button> <button id="native">原生尺寸</button></nav>
+<div class="pair"><figure><img id="target"><figcaption>目标参考：布局、比例、结构与材料层次；不据此新增剧情物品。</figcaption></figure><figure id="actual"><img id="shot"><figcaption id="caption"></figcaption></figure></div>
+<h2>本版结构</h2><p>四翼沿乙区参考布局展开，房间长宽增加15%，床柜桌椅保持实物尺度。公共大厅采用抬高会客区、三级台阶、长桌区与独立洗漱间。各房间分别拥有完整朝内墙体和厚度截面，保留门洞，未制作门模型。</p>
+<p>重复家具使用共享 PackedScene 预制件，床框、排骨条、桌腿横撑、柜门框芯板与箱桶为分件结构。22°透视、58°俯视；单室1600×1600、四翼总览1600×1000。世界环境启用SSAO/SSIL与局部光影。固定输出保留来源指纹、日志和二进制观察记录。</p>
+<p>各房间保留原陈设身份，包括空寝室与空书架；不凭参考图补造证据。尚未验证正式行走、碰撞、预约讨论、DV覆雾与门的认知切换。<a href="../../../docs/style-e-library.md">实现说明</a></p>
+<h2>全部当前画面</h2><div id="grid"></div></main>
+<script>const items=ITEMS;let i=0;const pick=document.querySelector('#pick');function show(n){i=(n+items.length)%items.length;pick.value=i;const x=items[i];document.querySelector('#shot').src=x.src;document.querySelector('#target').src=x.id.startsWith('living_hall:')?'target-hall.png':'../zone-yi-redesign/target.png';document.querySelector('#caption').textContent=x.name+' · 当前渲染';}items.forEach((x,n)=>{pick.add(new Option(x.name,n));const f=document.createElement('figure');const im=document.createElement('img');im.loading='lazy';im.src=x.src;const c=document.createElement('figcaption');c.textContent=x.name;f.append(im,c);f.onclick=()=>{show(n);window.scrollTo({top:0,behavior:'smooth'})};document.querySelector('#grid').append(f)});pick.onchange=()=>show(+pick.value);document.querySelector('#prev').onclick=()=>show(i-1);document.querySelector('#next').onclick=()=>show(i+1);document.querySelector('#native').onclick=()=>document.querySelector('#actual').classList.toggle('native');show(Math.max(0,items.findIndex(x=>x.id==='living_hall:overview')));</script></html>'''
+    prefabs=sorted((folder/'render/prefabs').glob('*.tscn'))
+    links=''.join('<li><a href="render/prefabs/'+html.escape(p.name,quote=True)+'">'+html.escape(p.stem)+'</a></li>' for p in prefabs)
+    page=page.replace('<h2>全部当前画面</h2>','<details><summary>导出的共享预制件（'+str(len(prefabs))+'个含材质变体）</summary><ul>'+links+'</ul></details><h2>全部当前画面</h2>')
+    (folder/'index.html').write_text(page.replace('ITEMS',json.dumps(items,ensure_ascii=False)),encoding='utf-8')
+    print(f'Residence report: {len(items)} renders; {len(prefabs)} prefabs')
 
 if __name__=='__main__': main()

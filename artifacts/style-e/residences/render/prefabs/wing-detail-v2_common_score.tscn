@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://scenes/ArtStyleTrials/E/painted_surface.gdshader" id="1_ff26n"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8jpjr"]
+render_priority = 0
+shader = ExtResource("1_ff26n")
+shader_parameter/pigment = Color(0.8627451, 0.81960785, 0.7176471, 1)
+shader_parameter/surface_kind = 3.0
+shader_parameter/surface_roughness = 0.8
+shader_parameter/surface_metallic = 0.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_0ej2j"]
+size = Vector3(0.32, 0.012, 0.24)
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1922211979]
+
+[node name="score" type="Node3D" parent="." unique_id=113026325]
+metadata/authoring_label = "score"
+metadata/authoring_detail = "blank score surface; notation not invented"
+
+[node name="@MeshInstance3D@5033" type="MeshInstance3D" parent="score" unique_id=1640207881]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.87, 0)
+material_override = SubResource("ShaderMaterial_8jpjr")
+mesh = SubResource("BoxMesh_0ej2j")

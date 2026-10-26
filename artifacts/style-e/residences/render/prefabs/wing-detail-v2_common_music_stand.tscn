@@ -1,0 +1,76 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://scenes/ArtStyleTrials/E/painted_surface.gdshader" id="1_cpeps"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_amy78"]
+render_priority = 0
+shader = ExtResource("1_cpeps")
+shader_parameter/pigment = Color(0.3019608, 0.22352941, 0.16862746, 1)
+shader_parameter/surface_kind = 1.0
+shader_parameter/surface_roughness = 0.8
+shader_parameter/surface_metallic = 0.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_bog3i"]
+top_radius = 0.034
+bottom_radius = 0.034
+height = 1.1
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_8kusc"]
+top_radius = 0.025
+bottom_radius = 0.025
+height = 0.34354767
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_p1ccl"]
+top_radius = 0.025
+bottom_radius = 0.025
+height = 0.34354767
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hyj7a"]
+top_radius = 0.025
+bottom_radius = 0.025
+height = 0.34354767
+radial_segments = 24
+
+[sub_resource type="BoxMesh" id="BoxMesh_deiv2"]
+size = Vector3(0.64, 0.45, 0.035)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7cbxf"]
+size = Vector3(0.67, 0.04, 0.09)
+
+[node name="FurniturePrefab" type="Node3D" unique_id=2056993713]
+
+[node name="WingMusicStand" type="Node3D" parent="." unique_id=2140900238]
+metadata/authoring_label = "WingMusicStand"
+
+[node name="@MeshInstance3D@9965" type="MeshInstance3D" parent="WingMusicStand" unique_id=1759537034]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
+material_override = SubResource("ShaderMaterial_amy78")
+mesh = SubResource("CylinderMesh_bog3i")
+
+[node name="@MeshInstance3D@9966" type="MeshInstance3D" parent="WingMusicStand" unique_id=1553710249]
+transform = Transform3D(-0.36385047, 0.93145734, 0, -0.93145734, -0.36385047, 0, 0, 0, 1, 0.16, 0.0975, 0)
+material_override = SubResource("ShaderMaterial_amy78")
+mesh = SubResource("CylinderMesh_8kusc")
+
+[node name="@MeshInstance3D@9967" type="MeshInstance3D" parent="WingMusicStand" unique_id=1321548623]
+transform = Transform3D(0.65903735, -0.4657287, 0.59056455, 0.4657287, -0.36385047, -0.8066658, 0.59056455, 0.8066658, -0.022887826, -0.08, 0.0975, 0.13856407)
+material_override = SubResource("ShaderMaterial_amy78")
+mesh = SubResource("CylinderMesh_p1ccl")
+
+[node name="@MeshInstance3D@9968" type="MeshInstance3D" parent="WingMusicStand" unique_id=1760380581]
+transform = Transform3D(0.65903735, -0.4657287, -0.59056455, 0.4657287, -0.36385047, 0.8066658, -0.59056455, -0.8066658, -0.022887826, -0.08, 0.0975, -0.13856407)
+material_override = SubResource("ShaderMaterial_amy78")
+mesh = SubResource("CylinderMesh_hyj7a")
+
+[node name="@MeshInstance3D@9969" type="MeshInstance3D" parent="WingMusicStand" unique_id=1794195144]
+transform = Transform3D(1, 0, 0, 0, 0.9553365, 0.29552022, 0, -0.29552022, 0.9553365, 0, 1.12, 0)
+material_override = SubResource("ShaderMaterial_amy78")
+mesh = SubResource("BoxMesh_deiv2")
+
+[node name="@MeshInstance3D@9970" type="MeshInstance3D" parent="WingMusicStand" unique_id=849415938]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.93, 0.08)
+material_override = SubResource("ShaderMaterial_amy78")
+mesh = SubResource("BoxMesh_7cbxf")

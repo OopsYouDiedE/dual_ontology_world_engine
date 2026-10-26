@@ -1,6 +1,8 @@
 shader_type spatial;
 render_mode diffuse_burley, specular_schlick_ggx;
 varying vec3 world;
+uniform float wood_value=1.0;
+uniform float finish_roughness=.53;
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 void vertex(){world=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;}
 void fragment(){
@@ -17,6 +19,6 @@ void fragment(){
  float grain=sin(along.y*55.0+sin(along.x*1.8+rand*9.0)*2.0);
  float brush=sin(along.y*130.0+along.x*9.0)*0.008;
  vec3 wood=mix(vec3(0.255,0.123,0.055),vec3(0.37,0.205,0.105),rand);
- ALBEDO=mix(vec3(0.10,0.068,0.042),wood*(1.0+grain*0.055+brush),seam);
- ROUGHNESS=0.53+rand*0.12;
+ ALBEDO=mix(vec3(0.10,0.068,0.042),wood*(1.0+grain*0.055+brush),seam)*wood_value;
+ ROUGHNESS=finish_roughness+rand*0.12;
 }

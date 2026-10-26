@@ -2,11 +2,13 @@ extends SceneTree
 var destination: String
 var diagnose := false
 var zone_yi := false
+var residences := false
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--out="): destination=arg.trim_prefix("--out=")
 		if arg=="--diagnose": diagnose=true
 		if arg=="--zone-yi": zone_yi=true
+		if arg=="--residences": residences=true
 	run.call_deferred()
 func run() -> void:
 	var view := SubViewport.new()
@@ -18,10 +20,11 @@ func run() -> void:
 	await process_frame
 	var ids: Array=scene.asset_ids()
 	if zone_yi: ids=ids.filter(func(id): return str(id).begins_with("zone_yi:"))
+	if residences: ids=ids.filter(func(id): return str(id).begins_with("zone_") or str(id).begins_with("living_hall:"))
 	if diagnose: ids=["cast","cast-no-shadow","cast-no-ao","cast-no-ssil"]
 	var observations: Array=[]
 	for id in ids:
-		view.size=Vector2i(1600,1000) if id=="zone_yi:overview" else Vector2i(1600,1600)
+		view.size=Vector2i(1600,1000) if str(id).ends_with(":overview") and str(id).begins_with("zone_") else Vector2i(1600,1600)
 		scene.select_asset("cast" if diagnose else id)
 		if diagnose:
 			scene.key_light.shadow_enabled=id!="cast-no-shadow"
@@ -37,6 +40,16 @@ func run() -> void:
 			push_error("Image save failed: "+path)
 			quit(2)
 			return
+	if residences:
+		var prefabs=load("res://scenes/ArtStyleTrials/E/prefabs/PrefabLibrary.gd")
+		var folder: String=destination.path_join("prefabs")
+		DirAccess.make_dir_recursive_absolute(folder)
+		for key in prefabs.keys():
+			var filename: String=String(key).validate_filename()+".tscn"
+			if prefabs.save(key,folder.path_join(filename))!=OK:
+				push_error("Prefab export failed: "+String(key))
+				quit(3)
+				return
 	var payload := var_to_bytes(observations)
 	var hash := HashingContext.new()
 	hash.start(HashingContext.HASH_SHA256)

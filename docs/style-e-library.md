@@ -34,3 +34,11 @@ python mcp/art_style_trials/report_e_library.py
 YiArchitecture为每室建立完整四面所属墙，移除外侧背面而保留室内框芯板、厚度截面和门洞；朝相机墙为1.05m剖切，其余3m。YiFurniture通过分件床帮/排骨条、柜框芯板、桌椅横撑、箱板及桶箍表达结构。YiRegion负责厨房、洗漱柜、米制材质及房间布置。此前暂停的UV图集不用于这版。
 
 `zone_yi:overview`是作者总览，不读取或授予玩家探索知识；单室视图用于检查结构。22°透视、58°俯视；总览1600×1000，单室1600×1600。使用现役`e-library-capture`及`e-library-report`的`--zone-yi`参数，固定输出在`artifacts/style-e/zone-yi-redesign/render`，不覆盖全库历史截图。正式Host接线、碰撞与行动验收仍未完成。
+
+## 四翼、公共大厅与共享预制件
+
+四翼现在共用 `YiRegion.build` 的米制布局和 `YiArchitecture` 室内墙构造，`selected` 前缀决定读取哪个翼区原陈设；各翼均支持 `:overview` 和十二个单室。原家具身份、空寝室和空书架不因共享布局而改变。公共大厅由 `PublicHallRegion` 装配：宽9.2m，总深18.4m，厅14.72m、洗漱间3.68m；会客区高0.45m，台阶每级0.15m，长桌4.5×1.6m。这些仍是参考图推定的美术尺寸，不覆盖正式地图合同。
+
+`prefabs/PrefabLibrary.gd` 将同类几何打包为共享不可变 `PackedScene`，实例仅持有位置、朝向和来源标识。`YiFurniture.furnish(kit,kind,at,title,palette)` 返回家具实例；正反椅共用同一资源，材质颜色作为变体键。`place_helper` 包装已有几何工厂，重登记实例光源，避免沿用已释放模板的灯光引用。床、桌椅、柜、箱桶、灯具、衣帽架、炉灶、洗漱柜及公共陈设走此接口；壁炉火焰仍单独构造，避免共享动态状态。预制件不持有预约或认知状态，不授予行动资格。
+
+`capture_e_library.py --residences --godot <路径>` 与 `report_e_library.py --residences` 使用固定目录 `artifacts/style-e/residences`，覆盖四翼和公共大厅的总览及单室。采集结束将已用预制件导出到 `render/prefabs/*.tscn`；资源引用本项目的 Shader，可导入本项目复用，不是无依赖的外部资产包。修改几何工厂后重新采集生成，禁止手改导出文件。正式Host、DV预约、认知覆雾和游戏碰撞接线仍待完成，独立渲染不等于游戏验收。

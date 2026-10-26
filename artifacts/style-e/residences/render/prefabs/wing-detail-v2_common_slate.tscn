@@ -1,0 +1,24 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://scenes/ArtStyleTrials/E/painted_surface.gdshader" id="1_5fqgm"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1p1d3"]
+render_priority = 0
+shader = ExtResource("1_5fqgm")
+shader_parameter/pigment = Color(0.29411766, 0.33333334, 0.3137255, 1)
+shader_parameter/surface_kind = 2.0
+shader_parameter/surface_roughness = 0.8
+shader_parameter/surface_metallic = 0.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_r3yky"]
+size = Vector3(0.34, 0.03, 0.25)
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1710865833]
+
+[node name="slate" type="Node3D" parent="." unique_id=69686228]
+metadata/authoring_label = "slate"
+
+[node name="@MeshInstance3D@4732" type="MeshInstance3D" parent="slate" unique_id=545142928]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+material_override = SubResource("ShaderMaterial_1p1d3")
+mesh = SubResource("BoxMesh_r3yky")

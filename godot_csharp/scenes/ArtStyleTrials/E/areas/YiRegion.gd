@@ -3,8 +3,10 @@ const ARCH=preload("res://scenes/ArtStyleTrials/E/areas/YiArchitecture.gd")
 const FURNITURE=preload("res://scenes/ArtStyleTrials/E/areas/YiFurniture.gd")
 const OLD=preload("res://scenes/ArtStyleTrials/E/areas/LivingWings.gd")
 const SURFACE=preload("res://scenes/ArtStyleTrials/E/areas/yi_material.gdshader")
+const PREFABS=preload("res://scenes/ArtStyleTrials/E/prefabs/PrefabLibrary.gd")
 const ROOM_EXPANSION := 1.15
-## Reference composition in metres, independent of the production navigation map.
+## Shared four-wing composition in metres, independent of production navigation.
+## Existing recipes retain their furniture identity; repeated joinery uses prefabs.
 const RECTS={
  "wc":[0,0,2.4,3.5],"foyer":[0,3.5,2.4,2.5],"store":[0,6,2.4,3.6],
  "hall":[2.4,0,4.4,6],"prep":[2.4,6,4.4,3.6],
@@ -13,15 +15,17 @@ const RECTS={
  "south_2":[6.8,6,3.4,3.6],"south_1":[10.2,6,3.4,3.6],"south_0":[13.6,6,3.4,3.6]}
 
 static func build(kit: Node3D, catalog: Array, selected: String) -> Vector2:
-	var overview := selected=="zone_yi:overview"
+	var wing: String=selected.get_slice(":",0)
+	var overview := selected.get_slice(":",1)=="overview"
+	var palette: Array=OLD.PALETTES[wing]
 	var size := Vector2(17,9.6)*ROOM_EXPANSION
 	for entry in catalog:
-		if entry.map!="zone_yi" or (not overview and entry.id!=selected): continue
+		if entry.map!=wing or (not overview and entry.id!=selected): continue
 		var region: String=entry.id.get_slice(":",1)
 		var r: Array=RECTS[region]
 		var dims := Vector2(r[2],r[3])*ROOM_EXPANSION
 		var root := Node3D.new()
-		root.name="Yi_"+region
+		root.name=wing+"_"+region
 		kit.add_child(root)
 		if overview: root.position=Vector3(r[0]+r[2]/2-8.5,0,r[1]+r[3]/2-4.8)*ROOM_EXPANSION
 		kit.content_root=root
@@ -31,8 +35,8 @@ static func build(kit: Node3D, catalog: Array, selected: String) -> Vector2:
 		if region.begins_with("north_"): openings={"south":[0.0]}
 		elif region.begins_with("south_"): openings={"north":[0.0]}
 		elif region=="corridor": openings={"north":[-3.4,0.0,3.4],"south":[-3.4,0.0,3.4],"west":[0.0]}
-		elif region=="hall": openings={"west":[-1.75],"east":[2.0],"south":[0.0]}
-		elif region=="foyer": openings={"north":[0.0],"south":[0.0],"east":[0.0],"west":[0.0]}
+		elif region=="hall": openings={"west":[-(1.75*ROOM_EXPANSION-.40)/ROOM_EXPANSION],"east":[2.0],"south":[0.0]}
+		elif region=="foyer": openings={"north":[0.0],"south":[0.0],"east":[-.40/ROOM_EXPANSION],"west":[0.0]}
 		elif region in ["store","prep"]: openings={"north":[0.0]}
 		elif region=="wc": openings={"south":[0.0]}
 		for side in openings:
@@ -48,21 +52,29 @@ static func build(kit: Node3D, catalog: Array, selected: String) -> Vector2:
 		for prop in entry.furniture:
 			var at := placement(region,prop,dims,entry.size)
 			var first := root.get_child_count()
-			if FURNITURE.handles(prop.kind): FURNITURE.furnish(kit,prop.kind,at,prop.name)
-			elif prop.kind=="range_stove": stove(kit,at)
-			elif prop.kind=="washstand": washstand(kit,at)
-			elif prop.kind=="bookcase_0": low_bookcase(kit,at)
+			if FURNITURE.handles(prop.kind):
+				FURNITURE.furnish(kit,prop.kind,at,prop.name,{} if wing=="zone_yi" else {"cloth":palette[0]})
+			elif prop.kind=="range_stove":
+				PREFABS.place_helper(kit,"wing-range-v1",at,prop.name,func(): stove(kit,Vector3.ZERO))
+			elif prop.kind=="washstand":
+				PREFABS.place_helper(kit,"wing-wash-cabinet-v1",at,prop.name,func(): washstand(kit,Vector3.ZERO))
+			elif prop.kind=="bookcase_0":
+				PREFABS.place_helper(kit,"wing-low-bookcase-v1",at,prop.name,func(): low_bookcase(kit,Vector3.ZERO))
 			else:
 				var item: Dictionary=entry.duplicate(true)
-				item.id="zone_yi:detail"
+				item.id=wing+":detail"
 				item.furniture=[{"kind":prop.kind,"at":[at.x,at.z],"name":prop.name}]
 				OLD.furnish(kit,item)
 			for i in range(first,root.get_child_count()):
 				root.get_child(i).set_meta("source_prop",prop.name)
 				if prop.kind in ["score","slate"]: root.get_child(i).position.y-=.10
 				if prop.name in ["ZoneRules","ToolBench"]: root.get_child(i).rotation.y=PI/2
+				if prop.name in ["InkShelf","MedCabinet","Screen"]: root.get_child(i).rotation.y=-PI/2
 				if prop.kind=="bookcase_empty" or (region=="foyer" and prop.kind=="shoe_bench"): root.get_child(i).rotation.y=PI/2
-			if prop.kind in ["desk_0","study_table","nightstand","worktable"]: dress_table(kit,at,prop.kind,prop.name=="ToolBench")
+			if prop.kind in ["desk_0","study_table","nightstand","worktable"]:
+				var articles: Node3D=PREFABS.place_helper(kit,"wing-table-articles-v1/"+prop.kind,at,"TableArticles",
+					func(): dress_table(kit,Vector3.ZERO,prop.kind,false))
+				if prop.name=="ToolBench": articles.rotation.y=PI/2
 		if region.begins_with("north_") or region.begins_with("south_"):
 			rug(kit,Vector3(.18,.015,.3),Vector2(.9,1.5))
 			if region.begins_with("north_"): ARCH.window(kit,Vector3(-.5,0,-dims.y/2+.12))
@@ -79,6 +91,7 @@ static func build(kit: Node3D, catalog: Array, selected: String) -> Vector2:
 			for x in sconces: kit._sconce(Vector3(x,2.35,-dims.y/2+.19),0)
 		root.set_meta("scope","reference-based 3D redesign; not production collision geometry")
 		root.set_meta("room_dimensions_m",dims)
+		root.set_meta("source_map",wing)
 		if not overview: size=dims
 	return size
 
@@ -98,13 +111,15 @@ static func placement(region: String, prop: Dictionary, dims: Vector2, original:
 		var named={"StudyTable":Vector2(-.20,.50),"StudyChairNW":Vector2(-.7,-.45),"StudyChairNE":Vector2(.35,-.45),
 		 "StudyChairSW":Vector2(-.7,1.35),"StudyChairSE":Vector2(.35,1.35),"HallBookcase":Vector2(-1.25,-2.65),
 		 "ZoneRules":Vector2(-2.0,-1.5),"ToolBench":Vector2(1.65,-1.0),"Transmitter":Vector2(1.55,-2.55),
-		 "HallLamp":Vector2(-1.75,1.9),"Armchair":Vector2(-1.7,-.55),"Slate":Vector2(.2,.5)}
+		 "HallLamp":Vector2(-1.75,1.9),"Armchair":Vector2(-1.7,-.55),"Slate":Vector2(.2,.5),
+		 "InkShelf":Vector2(2.0,-1.15),"Screen":Vector2(1.95,-.95),
+		 "MusicStand":Vector2(1.75,.8),"MedCabinet":Vector2(2.0,-1.15)}
 		if named.has(prop.name): p=Vector3(named[prop.name].x,0,named[prop.name].y)
 	elif region=="prep":
 		var slots={"range_stove":Vector2(-1.25,-1.3),"sideboard":Vector2(1.25,-1.3),"worktable":Vector2(0,.5),"barrel":Vector2(-1.7,.8),"jar":Vector2(1.25,-1.3)}
 		if slots.has(prop.kind): p=Vector3(slots[prop.kind].x,0,slots[prop.kind].y)
 	elif region=="wc": p=Vector3(0,0,-dims.y/2+.45)
-	elif region=="foyer" and prop.kind=="shoe_bench": p=Vector3(dims.x/2-.4,0,0)
+	elif region=="foyer" and prop.kind=="shoe_bench": p=Vector3(dims.x/2-.4,0,.64)
 	elif region=="foyer" and prop.kind=="coat_stand": p=Vector3(-dims.x/2+.48,0,-dims.y/2+.45)
 	return p
 

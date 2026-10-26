@@ -1,18 +1,40 @@
 extends RefCounted
-## Metre-scale joinery for Yi. No room placement, evidence marks or actor state.
+## Shared metre-scale joinery. No evidence marks or actor state.
+const PREFABS = preload("res://scenes/ArtStyleTrials/E/prefabs/PrefabLibrary.gd")
 static func handles(kind: String) -> bool:
 	return kind in ["bed_0","wardrobe","chair_back","chair_front","desk_0","study_table","worktable","nightstand","shoe_bench","crate","barrel","bookcase_empty"]
 
-static func furnish(kit: Node3D, kind: String, at: Vector3, title: String) -> void:
-	var root: Node3D=kit.group(title,at)
-	var wood: Material=kit.material("yi_joinery","503725",1,0.46)
-	var edge: Material=kit.material("yi_raised_trim","755034",1,0.43)
-	var panel: Material=kit.material("yi_recessed_panel","61452f",1,0.52)
-	var brass: Material=kit.material("yi_brass_hardware","aa8750",0,0.36,0.70)
-	var cloth: Material=kit.material("yi_green_cloth","35574c",3,0.94)
+static func furnish(kit: Node3D, kind: String, at: Vector3, title: String, palette: Dictionary = {}) -> Node3D:
+	if not handles(kind): return null
+	var canonical: String = "chair_back" if kind == "chair_front" else kind
+	var colors: Dictionary = {"wood":"503725", "edge":"755034", "panel":"61452f", "brass":"aa8750", "cloth":"35574c", "linen":"d9d0b7"}
+	for role in colors:
+		if palette.has(role): colors[role] = palette[role]
+	# Unused textile overrides must not split otherwise identical joinery.
+	if canonical not in ["bed_0", "chair_back"]: colors.cloth = "35574c"
+	if canonical != "bed_0": colors.linen = "d9d0b7"
+	var key: String = "joinery-v1/" + canonical
+	for role in colors: key += "/" + str(colors[role])
+	var root: Node3D = PREFABS.instantiate(key, func() -> Node3D: return _build(kit, canonical, colors))
+	if root == null: return null
+	root.name = title
+	root.set_meta("authoring_label", title)
+	root.position = at
+	if kind == "chair_front": root.rotation.y = PI
+	kit.content_root.add_child(root)
+	return root
+
+static func _build(kit: Node3D, kind: String, palette: Dictionary) -> Node3D:
+	var root := Node3D.new()
+	root.name = "JoineryPrefab"
+	var wood: Material=kit.material("joinery_wood_"+palette.wood,palette.wood,1,0.46)
+	var edge: Material=kit.material("joinery_edge_"+palette.edge,palette.edge,1,0.43)
+	var panel: Material=kit.material("joinery_panel_"+palette.panel,palette.panel,1,0.52)
+	var brass: Material=kit.material("joinery_brass_"+palette.brass,palette.brass,0,0.36,0.70)
+	var cloth: Material=kit.material("joinery_cloth_"+palette.cloth,palette.cloth,3,0.94)
 	root.set_meta("construction","separate joinery members; metres")
 	match kind:
-		"bed_0": _bed(kit,root,wood,edge,panel,cloth)
+		"bed_0": _bed(kit,root,wood,edge,panel,cloth,palette.linen)
 		"wardrobe": _wardrobe(kit,root,wood,edge,panel,brass)
 		"chair_back", "chair_front":
 			if kind=="chair_front": root.rotation.y=PI
@@ -27,6 +49,7 @@ static func furnish(kit: Node3D, kind: String, at: Vector3, title: String) -> vo
 		"crate": _crate(kit,root,wood,edge)
 		"barrel": _barrel(kit,root,wood,edge)
 		"bookcase_empty": _shelf(kit,root,wood,edge)
+	return root
 
 static func _panel(kit: Node3D, root: Node3D, at: Vector3, width: float, height: float, frame: Material, inset: Material) -> void:
 	# Raised frame surrounds a thinner recessed solid wood field.
@@ -34,8 +57,8 @@ static func _panel(kit: Node3D, root: Node3D, at: Vector3, width: float, height:
 	for x in [-1,1]: kit.box(root,at+Vector3(x*(width/2-0.025),0,0.018),Vector3(0.05,height,0.055),frame)
 	for y in [-1,1]: kit.box(root,at+Vector3(0,y*(height/2-0.025),0.018),Vector3(width-0.10,0.05,0.055),frame)
 
-static func _bed(kit: Node3D, root: Node3D, wood: Material, edge: Material, panel: Material, cloth: Material) -> void:
-	var linen: Material=kit.material("yi_linen","d9d0b7",3,0.96)
+static func _bed(kit: Node3D, root: Node3D, wood: Material, edge: Material, panel: Material, cloth: Material, linen_color: String) -> void:
+	var linen: Material=kit.material("joinery_linen_"+linen_color,linen_color,3,0.96)
 	# 1.04 x 2.12 external frame, a 0.94 x 1.98 mattress, open below.
 	for x in [-0.48,0.48]:
 		for z in [-1.00,1.00]:

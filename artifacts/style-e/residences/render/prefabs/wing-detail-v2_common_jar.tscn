@@ -1,0 +1,36 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://scenes/ArtStyleTrials/E/painted_surface.gdshader" id="1_becat"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_88een"]
+render_priority = 0
+shader = ExtResource("1_becat")
+shader_parameter/pigment = Color(0.7411765, 0.6745098, 0.53333336, 1)
+shader_parameter/surface_kind = 2.0
+shader_parameter/surface_roughness = 0.8
+shader_parameter/surface_metallic = 0.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_etu4m"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_7jb1w"]
+top_radius = 0.1
+bottom_radius = 0.1
+height = 0.04
+radial_segments = 24
+
+[node name="FurniturePrefab" type="Node3D" unique_id=738387252]
+
+[node name="jar" type="Node3D" parent="." unique_id=1573935116]
+metadata/authoring_label = "jar"
+
+[node name="@MeshInstance3D@6001" type="MeshInstance3D" parent="jar" unique_id=2033891368]
+transform = Transform3D(0.31, 0, 0, 0, 0.5, 0, 0, 0, 0.31, 0, 1.12, 0)
+material_override = SubResource("ShaderMaterial_88een")
+mesh = SubResource("SphereMesh_etu4m")
+
+[node name="@MeshInstance3D@6002" type="MeshInstance3D" parent="jar" unique_id=1899448611]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.37, 0)
+material_override = SubResource("ShaderMaterial_88een")
+mesh = SubResource("CylinderMesh_7jb1w")

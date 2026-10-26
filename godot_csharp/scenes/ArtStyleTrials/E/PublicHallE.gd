@@ -1,6 +1,7 @@
 extends "res://scenes/ArtStyleTrials/E/HallCraft.gd"
 ## E art rehearsal. Room selection never performs a world action.
 const KIT = preload("res://scenes/ArtStyleTrials/E/RoomGrid.gd")
+const PREFABS = preload("res://scenes/ArtStyleTrials/E/prefabs/PrefabLibrary.gd")
 const FIRE = preload("res://scenes/ArtStyleTrials/E/fire.gdshader")
 var rooms: Dictionary = {}
 var room_sizes: Dictionary = {}
@@ -345,6 +346,11 @@ func _notice(at: Vector3) -> void:
 		for line in range(5): box(root,Vector3(x,y-0.12+line*0.05,0.108),Vector3(0.23-0.02*(line%2),0.007,0.003),material("ink","343932",0))
 
 func _lamp(at: Vector3) -> void:
+	PREFABS.place_helper(self,"pleated-brass-lamp-v1",at,"PleatedBrassLamp",func(): _lamp_geometry())
+	_add_light(at+Vector3(0,1.43,0),0.48,3.7)
+
+func _lamp_geometry() -> void:
+	var at := Vector3.ZERO
 	var root := group("PleatedBrassLamp",at)
 	var gold := material("brass","a78d58",0,0.44,0.55)
 	cylinder(root,Vector3(0,0.035,0),0.25,0.07,gold)
@@ -355,18 +361,27 @@ func _lamp(at: Vector3) -> void:
 	for i in range(32):
 		var a := i*TAU/32
 		limb(root,Vector3(cos(a)*0.34,1.43,sin(a)*0.34),Vector3(cos(a)*0.14,1.87,sin(a)*0.14),0.009,material("pleat","b9aa80",3))
-	_add_light(at+Vector3(0,1.43,0),0.48,3.7)
 
 func _sconce(at: Vector3, angle: float) -> void:
+	var instance: Node3D = PREFABS.place_helper(self,"opal-wall-sconce-v1",at,"WallSconce",func(): _sconce_geometry())
+	if instance: instance.rotation.y=angle
+	_add_light(at,0.22,2.5)
+
+func _sconce_geometry() -> void:
+	var at := Vector3.ZERO
+	var angle := 0.0
 	var root := group("WallSconce",at)
 	root.rotation.y=angle
 	var brass := material("brass","a78d58",0,0.44,0.55)
 	ellipsoid(root,Vector3.ZERO,Vector3(0.16,0.27,0.06),brass)
 	limb(root,Vector3.ZERO,Vector3(0,-0.10,0.22),0.025,brass)
 	cylinder(root,Vector3(0,0.06,0.22),0.10,0.24,material("opal","d7cba5",2,0.4),0.07)
-	_add_light(at,0.22,2.5)
 
 func _coatstand(at: Vector3) -> void:
+	PREFABS.place_helper(self,"bentwood-coatstand-v1",at,"BentwoodCoatStand",func(): _coatstand_geometry())
+
+func _coatstand_geometry() -> void:
+	var at := Vector3.ZERO
 	var root := group("BentwoodCoatStand",at)
 	var wood := material("walnut","493227",1)
 	cylinder(root,Vector3(0,0.85,0),0.035,1.70,wood)

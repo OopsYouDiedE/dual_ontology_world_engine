@@ -1,0 +1,84 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://scenes/ArtStyleTrials/E/painted_surface.gdshader" id="1_1kafv"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_brrtr"]
+render_priority = 0
+shader = ExtResource("1_1kafv")
+shader_parameter/pigment = Color(0.654902, 0.54901963, 0.32156864, 1)
+shader_parameter/surface_kind = 0.0
+shader_parameter/surface_roughness = 0.35
+shader_parameter/surface_metallic = 0.65
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_an1p7"]
+top_radius = 0.075
+bottom_radius = 0.075
+height = 0.05
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_ya0mw"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_j0nnm"]
+render_priority = 0
+shader = ExtResource("1_1kafv")
+shader_parameter/pigment = Color(0.8784314, 0.7607843, 0.54509807, 1)
+shader_parameter/surface_kind = 0.0
+shader_parameter/surface_roughness = 0.25
+shader_parameter/surface_metallic = 0.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_wmut2"]
+top_radius = 0.022
+bottom_radius = 0.029
+height = 0.12
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qqh4j"]
+render_priority = 0
+shader = ExtResource("1_1kafv")
+shader_parameter/pigment = Color(0.79607844, 0.73333335, 0.53333336, 1)
+shader_parameter/surface_kind = 3.0
+shader_parameter/surface_roughness = 0.86
+shader_parameter/surface_metallic = 0.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_61y8d"]
+top_radius = 0.055
+bottom_radius = 0.12
+height = 0.11
+radial_segments = 24
+
+[node name="FurniturePrefab" type="Node3D" unique_id=437517535]
+
+[node name="YiTableArticles" type="Node3D" parent="." unique_id=2134242687]
+metadata/authoring_label = "YiTableArticles"
+
+[node name="@MeshInstance3D@4991" type="MeshInstance3D" parent="YiTableArticles" unique_id=579695854]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.634, 0)
+material_override = SubResource("ShaderMaterial_brrtr")
+mesh = SubResource("CylinderMesh_an1p7")
+
+[node name="@MeshInstance3D@4992" type="MeshInstance3D" parent="YiTableArticles" unique_id=1077190920]
+transform = Transform3D(0.12, 0, 0, 0, 0.12, 0, 0, 0, 0.12, 0, 0.704, 0)
+material_override = SubResource("ShaderMaterial_brrtr")
+mesh = SubResource("SphereMesh_ya0mw")
+
+[node name="@MeshInstance3D@4993" type="MeshInstance3D" parent="YiTableArticles" unique_id=735717982]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.809, 0)
+material_override = SubResource("ShaderMaterial_j0nnm")
+mesh = SubResource("CylinderMesh_wmut2")
+
+[node name="@MeshInstance3D@4994" type="MeshInstance3D" parent="YiTableArticles" unique_id=1840056766]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.899, 0)
+material_override = SubResource("ShaderMaterial_qqh4j")
+mesh = SubResource("CylinderMesh_61y8d")
+
+[node name="@OmniLight3D@4995" type="OmniLight3D" parent="." unique_id=1078978608]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.839, 0.03)
+light_color = Color(0.9490196, 0.8156863, 0.5686275, 1)
+light_energy = 0.19
+light_size = 0.12
+shadow_enabled = true
+omni_range = 1.8
+metadata/normal_energy = 0.19
+metadata/room = "zone_yi:north_2"
