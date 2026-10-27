@@ -1,0 +1,301 @@
+// Runtime DV content. Parsed and validated by C#; never self-hosted.
+schema "dv-script-v1";
+
+item coat {
+    name = "风衣";
+    group = "chapter1";
+    kind = "physical";
+    map_kind = "object";
+    visible_fields = ["name", "location"];
+    facets = { state = { worn_by = ""; }; identity = { owner = "detective"; }; };
+}
+
+item lens {
+    name = "黄铜放大镜";
+    group = "chapter1";
+    kind = "physical";
+    map_kind = "object";
+    visible_fields = ["name", "location"];
+    facets = { state = {  }; identity = { kind = "physical"; }; };
+}
+
+item graphite_pencil {
+    name = "石墨笔";
+    group = "chapter1";
+    kind = "physical";
+    map_kind = "object";
+    visible_fields = ["name", "location"];
+    facets = { state = {  }; identity = { kind = "physical"; }; };
+}
+
+item evidence_bags {
+    name = "证物袋";
+    group = "chapter1";
+    kind = "physical";
+    map_kind = "object";
+    visible_fields = ["name", "location"];
+    facets = { state = {  }; identity = { kind = "physical"; }; };
+}
+
+// A rule is an executable condition/effect declaration, not embedded C#.
+rule c1_latch_contact_law {
+    version = 1;
+    premise = all(
+        eq(ref("detective", "state", "location"), "foyer"),
+        eq(ref("ritual", "state", "present_latch_contact.detective"), false)
+    );
+    effects = [assign(ref("ritual", "state", "present_latch_contact.detective"), true)];
+}
+
+character detective {
+    name = "侦探";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 0.9, "safety": 1.1, "social": 1.0, "cognition": 1.4, "obsession": 1.2};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [
+            {"id": "habit.cuff_rub", "trigger": "R05", "kind": "inspect", "bonus": 0.15, "surface": "右手袖口磨得发亮——写字时总拿那儿蹭桌沿。"},
+            {"id": "habit.magnifier_check", "trigger": "hall", "kind": "inspect", "bonus": 0.15, "surface": "习惯性摸向风衣口袋里的黄铜放大镜。"}
+        ];
+    };
+
+    personality = { group = "living"; domain = "investigation"; station_roles = []; value_order = ["evidence", "safety", "patient_priority", "records"]; };
+    obeys = [];
+}
+
+character huo {
+    name = "霍铎";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.0, "safety": 1.2, "social": 0.9, "cognition": 1.2, "obsession": 1.3};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [
+            {"id": "habit.mortise_touch", "trigger": "R06", "kind": "inspect", "bonus": 0.15, "surface": "手先去摸床沿榫接处与顺时针三圈半的机油布。"},
+            {"id": "habit.slate_shorthand", "trigger": "hall", "kind": "talk", "bonus": 0.15, "surface": "指尖沿刻痕辨认⊥、✕、◎的钳工速记习惯。"}
+        ];
+    };
+
+    personality = { group = "living"; domain = "safety"; station_roles = ["weight"]; value_order = ["measured_work", "records", "central_cooking", "evidence", "safety"]; };
+    obeys = [];
+}
+
+character shen {
+    name = "沈鼎";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.3, "safety": 1.2, "social": 1.2, "cognition": 0.9, "obsession": 1.0};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [
+            {"id": "habit.unsweetened_tea_for_su", "trigger": "hall", "kind": "inspect", "bonus": 0.2, "surface": "推到苏泠面前的那杯茶顺手不放糖，老霍那杯加两勺。"},
+            {"id": "habit.feed_sourdough_starter", "trigger": "pantry", "kind": "inspect", "bonus": 0.2, "surface": "揭开陶罐喂老酵头的手法熟极而流，双手比脑子先记得。"}
+        ];
+    };
+
+    personality = { group = "living"; domain = "resources"; station_roles = []; value_order = ["central_cooking", "patient_priority", "per_person", "not_targeted", "cautious_travel"]; };
+    obeys = [];
+}
+
+character su {
+    name = "苏泠";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 0.9, "safety": 1.0, "social": 0.9, "cognition": 1.3, "obsession": 1.3};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [
+            {"id": "habit.tap_four_four_meter", "trigger": "R08", "kind": "inspect", "bonus": 0.15, "surface": "手指无意识在桌沿敲击四四拍，捕捉墙内不断线的低音。"},
+            {"id": "habit.hollow_frame_ear", "trigger": "foyer", "kind": "inspect", "bonus": 0.2, "surface": "侧耳贴近门框背面，辨别墙内传声铜管松动接头的漏音。"}
+        ];
+    };
+
+    personality = { group = "living"; domain = "investigation"; station_roles = ["relay"]; value_order = ["measured_work", "signal", "evidence"]; };
+    obeys = [];
+}
+
+character lucian {
+    name = "卢西安";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 0.9, "safety": 1.1, "social": 1.1, "cognition": 1.1, "obsession": 1.2};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [
+            {"id": "habit.doorway_etiquette", "trigger": "living_hall", "kind": "talk", "bonus": 0.15, "surface": "斜倚墙边讲究隔门交谈的礼数，不屑贴门呼喊。"}
+        ];
+    };
+
+    personality = { group = "contract"; domain = "research"; station_roles = []; value_order = ["resonance_exclusivity", "not_targeted", "evidence", "movement_freedom", "patient_priority", "contract", "records"]; };
+    obeys = [];
+}
+
+character gu {
+    name = "顾平章";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.0, "safety": 1.1, "social": 0.9, "cognition": 1.3, "obsession": 1.1};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [
+            {"id": "habit.copy_book_spines", "trigger": "living_hall", "kind": "talk", "bonus": 0.15, "surface": "在北台书架前把认得的书脊一行行抄录核对，奉行孤证不立。"}
+        ];
+    };
+
+    personality = { group = "contract"; domain = "research"; station_roles = []; value_order = ["cautious_travel", "tradition", "records", "evidence", "contract"]; };
+    obeys = [];
+}
+
+character quer {
+    name = "雀儿";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.1, "safety": 0.9, "social": 1.2, "cognition": 1.1, "obsession": 1.2};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [
+            {"id": "habit.steel_wire_pick", "trigger": "living_hall", "kind": "experiment", "bonus": 0.2, "surface": "袖口常备精钢丝，见着外闩便手痒想探一探锁簧。"},
+            {"id": "habit.familiar_greeting", "trigger": "living_hall", "kind": "talk", "bonus": 0.15, "surface": "一见沈鼎与霍铎便脱口而出‘老霍、沈叔’。"}
+        ];
+    };
+
+    personality = { group = "contract"; domain = "investigation"; station_roles = ["lock"]; value_order = ["not_targeted", "evidence", "movement_freedom", "night_exception", "measured_work"]; };
+    obeys = [];
+}
+
+character ward {
+    name = "沃德";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.0, "safety": 1.2, "social": 1.1, "cognition": 1.2, "obsession": 1.1};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [
+            {"id": "habit.public_notice_audit", "trigger": "living_hall", "kind": "help", "bonus": 0.15, "surface": "按章清点红纸与蜡布筒，坚持公开程序与限制令。"}
+        ];
+    };
+
+    personality = { group = "contract"; domain = "investigation"; station_roles = []; value_order = ["ward_authority", "committee", "records", "restriction", "no_exception", "witnesses", "evidence"]; };
+    obeys = [];
+}
+
+character selma {
+    name = "赛尔玛";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.0, "safety": 1.0, "social": 1.0, "cognition": 1.1, "obsession": 1.0};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [];
+    };
+
+    personality = { group = "astral"; domain = "research"; station_roles = []; value_order = ["patient_priority", "evidence", "research"]; };
+    obeys = [];
+}
+
+character ruan {
+    name = "阮清月";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.0, "safety": 1.0, "social": 1.0, "cognition": 1.1, "obsession": 1.0};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [];
+    };
+
+    personality = { group = "astral"; domain = "resources"; station_roles = []; value_order = ["records", "controlled_audit", "per_person", "committee", "witnesses", "evidence"]; };
+    obeys = [];
+}
+
+character elena {
+    name = "伊莲娜";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.0, "safety": 1.0, "social": 1.0, "cognition": 1.1, "obsession": 1.0};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [];
+    };
+
+    personality = { group = "astral"; domain = "investigation"; station_roles = []; value_order = ["tradition", "evidence", "contract", "safety", "cautious_travel"]; };
+    obeys = [];
+}
+
+character moran {
+    name = "莫兰";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.0, "safety": 1.0, "social": 1.0, "cognition": 1.1, "obsession": 1.0};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [];
+    };
+
+    personality = { group = "astral"; domain = "investigation"; station_roles = []; value_order = ["avoid_isolation", "measured_work", "research"]; };
+    obeys = [];
+}
+
+character veronica {
+    name = "维罗妮卡";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.0, "safety": 1.0, "social": 1.0, "cognition": 1.1, "obsession": 1.0};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [];
+    };
+
+    personality = { group = "logistics"; domain = "research"; station_roles = []; value_order = ["avoid_ethics_review", "evidence", "records", "committee", "research"]; };
+    obeys = [];
+}
+
+character bertrand {
+    name = "贝尔特朗";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.0, "safety": 1.0, "social": 1.0, "cognition": 1.1, "obsession": 1.0};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [];
+    };
+
+    personality = { group = "logistics"; domain = "safety"; station_roles = ["weight"]; value_order = ["patient_priority", "records", "safety"]; };
+    obeys = [];
+}
+
+character margaret {
+    name = "玛格丽特";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.0, "safety": 1.0, "social": 1.0, "cognition": 1.1, "obsession": 1.0};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [];
+    };
+
+    personality = { group = "logistics"; domain = "safety"; station_roles = ["weight"]; value_order = ["evidence", "central_cooking", "records", "safety"]; };
+    obeys = [];
+}
+
+character mora {
+    name = "茉拉";
+    autonomy = {
+        commodity_needs = { hunger = 75; safety = 80; social = 70; cognition = 60; obsession = 65; };
+        autonomy_weights = {"hunger": 1.0, "safety": 1.0, "social": 1.0, "cognition": 1.1, "obsession": 1.0};
+        action_weights = { inspect = { need = "cognition"; scale = 0.05; }; talk = { need = "social"; scale = 0.05; }; help = { need = "safety"; scale = 0.05; }; };
+        implicit_habits = [];
+    };
+
+    personality = { group = "logistics"; domain = "resources"; station_roles = []; value_order = ["patient_priority", "cautious_travel", "evidence", "night_exception"]; };
+    obeys = [];
+}
+
+character demon {
+    name = "代管者";
+    autonomy = false;
+
+    personality = { group = "living"; domain = "investigation"; station_roles = []; value_order = ["evidence", "safety", "patient_priority", "records"]; };
+    obeys = [];
+}
+
+layout chapter1 {
+    items = { coat = "R05"; lens = "coat"; graphite_pencil = "coat"; evidence_bags = "coat"; };
+}
+
+narrative campaign_contract_text {
+    text = "1. 恶魔常驻岛内，不得离岛。\n2. 经学员本人授权，恶魔封存其在校记忆（在校经历、师生与同学关系、事故全貌）；姓名、生平与入学前技艺不在封存之列。\n3. 恶魔维持学园基础生存设施的运转（水、炉火、照明的设施本身；不负责分配物资，不创造物资）。\n4. 恶魔所受约束，唯有学员出于自主的行动方可解除；恶魔不得代为或强迫学员完成解除。\n5. 恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。\n6. 恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。\n7. 恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。\n8. 恶魔对学员所作事实陈述的字面语义在客观现实中不得为假；学员问及本人封存之物或契约条文，须按所知如实作答，不知则明言不知。\n9. 恶魔不得主动向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。\n10. 封存的记忆可凭对应之物恢复；恢复者自负其果。\n11. 本人尚未深属此岛，且经当时在岛存活之其余全部在册学员一致同意，可择定“尽忘归乡”；上述条件持续成立时，于下一次入睡遗忘此地一切、在家乡醒来。\n12. （终局）担保耗尽时，恶魔须将醒着且未深属此岛的学员遣返家乡，并抹去其与此地有关的一切记忆。";
+}
+
+profile Standard_Detective {
+    "cognitive_profile": "Standard_Detective", "value_sensitive_progress": true, "coordinate_owned_tasks": true, "empirical_initiative": 1, "counterfactual_initiative": 1, "plan_depth": 6, "scope_reference_check": true, "class_bias": []
+}
+
+profile Foolish_Detective {
+    "cognitive_profile": "Foolish_Detective", "value_sensitive_progress": true, "coordinate_owned_tasks": true, "empirical_initiative": 0.01, "counterfactual_initiative": 0.03, "plan_depth": 2, "scope_reference_check": false
+}

@@ -1,0 +1,100 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/World/Prefabs/InteractiveProp.gd" id="1_s4b21"]
+[ext_resource type="Shader" path="res://rendering/shaders/surfaces/aged_metal.gdshader" id="2_muc86"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7yv1n"]
+render_priority = 0
+shader = ExtResource("2_muc86")
+shader_parameter/pigment = Color(0.27450982, 0.42745098, 0.38431373, 1)
+shader_parameter/surface_roughness = 0.6
+shader_parameter/surface_metallic = 0.45
+shader_parameter/patina = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_7cg0e"]
+top_radius = 0.12
+bottom_radius = 0.12
+height = 1.2
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_kdfsn"]
+top_radius = 0.3
+bottom_radius = 0.3
+height = 0.16
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_t50kw"]
+top_radius = 0.065
+bottom_radius = 0.065
+height = 0.44
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_lduml"]
+top_radius = 0.035
+bottom_radius = 0.035
+height = 0.54304695
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_alg2j"]
+top_radius = 0.032
+bottom_radius = 0.032
+height = 0.33837843
+radial_segments = 24
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1120849171]
+script = ExtResource("1_s4b21")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "service/hand_pump"
+
+[node name="hand_pump" type="Node3D" parent="." unique_id=914148102]
+metadata/authoring_label = "hand_pump"
+
+[node name="@MeshInstance3D@20411" type="MeshInstance3D" parent="hand_pump" unique_id=2120265599]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+material_override = SubResource("ShaderMaterial_7yv1n")
+mesh = SubResource("CylinderMesh_7cg0e")
+
+[node name="@MeshInstance3D@20412" type="MeshInstance3D" parent="hand_pump" unique_id=935500778]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
+material_override = SubResource("ShaderMaterial_7yv1n")
+mesh = SubResource("CylinderMesh_kdfsn")
+
+[node name="@MeshInstance3D@20413" type="MeshInstance3D" parent="hand_pump" unique_id=489204377]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.94, 0.22)
+material_override = SubResource("ShaderMaterial_7yv1n")
+mesh = SubResource("CylinderMesh_t50kw")
+
+[node name="@MeshInstance3D@20414" type="MeshInstance3D" parent="hand_pump" unique_id=1927312710]
+transform = Transform3D(0.5265723, -0.84707224, -0.07204335, 0.84707224, 0.51560915, 0.12890232, -0.07204335, -0.12890232, 0.98903686, -0.23, 1.34, -0.035)
+material_override = SubResource("ShaderMaterial_7yv1n")
+mesh = SubResource("CylinderMesh_lduml")
+
+[node name="@MeshInstance3D@20415" type="MeshInstance3D" parent="hand_pump" unique_id=2144179716]
+transform = Transform3D(-0.827476, -0.56150126, 0, 0.56150126, -0.827476, 0, 0, 0, 1, -0.555, 1.34, -0.07)
+material_override = SubResource("ShaderMaterial_7yv1n")
+mesh = SubResource("CylinderMesh_alg2j")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=547255705]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=1695681557]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1882396, 0, -0.75)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=665796003]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.1882396, 0, 0.89)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=949022227]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1882396, 1.15, 0.06999999)

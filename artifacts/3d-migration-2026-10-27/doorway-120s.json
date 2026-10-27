@@ -1,0 +1,107 @@
+{
+  "run_id": "godot-668c7a1c6b7613aa3b7355eb",
+  "backend": "godot",
+  "created_epoch": 1793065834.9136343,
+  "deadline_epoch": 1793065954.9136343,
+  "seed": 1,
+  "viewer": "detective",
+  "status": "deadline_reached",
+  "deadline": "2026-10-27T01:52:34.913634+00:00",
+  "report_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\.runtime\\runs\\godot-668c7a1c6b7613aa3b7355eb\\report.json",
+  "agent_required": false,
+  "clock_policy": "wall-clock-including-build-and-startup",
+  "observation": {
+    "backend": "godot",
+    "busy": true,
+    "faulted": false,
+    "observation_id": 414,
+    "options": [],
+    "reading": false,
+    "scene": "res://scenes/Host/Main.tscn",
+    "size": [
+      1280,
+      992
+    ],
+    "started": true,
+    "state": {
+      "active": true,
+      "chapter": 1.0,
+      "content_hash": "8452cbbc67c01fc6508931c5266653979418ffccdafa5c7ba9d38092055fc813",
+      "game_time": 704.0,
+      "location_title": "乙区 · 活动厅",
+      "map": "living_floor",
+      "room": "zone_yi:hall",
+      "state_version": 302,
+      "viewer": "detective"
+    },
+    "visible_ui": [
+      {
+        "class": "Label",
+        "path": "/root/Main/UI/FieldHUD/TopBar/Margin/HBox/RoomLabel",
+        "text": "乙区 · 活动厅"
+      },
+      {
+        "class": "Label",
+        "path": "/root/Main/UI/FieldHUD/TopBar/Margin/HBox/StatusLabel",
+        "text": "第 1.0 章"
+      },
+      {
+        "class": "Label",
+        "path": "/root/Main/UI/FieldHUD/TopBar/Margin/HBox/TimeLabel",
+        "text": "11:44"
+      },
+      {
+        "class": "Button",
+        "path": "/root/Main/UI/FieldHUD/TopBar/Margin/HBox/HudSettingsButton",
+        "text": "凡例"
+      }
+    ],
+    "host_errors": []
+  },
+  "observation_policy": "last-successfully-received-before-stop",
+  "observations": 414,
+  "completed_actions": null,
+  "started_epoch": 1793065834.9176402,
+  "worker_pid": 37844,
+  "screenshot_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\.runtime\\runs\\godot-668c7a1c6b7613aa3b7355eb\\latest.png",
+  "screenshot_updated_epoch": 1793065951.2691777,
+  "updated_epoch": 1793065954.707024,
+  "detail": "Configured wall-clock deadline reached; live host stopped.",
+  "host_log": [
+    "[Session.CompleteDv] actor=gu actionId=gu.departure.join-living",
+    "[[\"event_id\",\"e2290\"],[\"actor\",\"gu\"],[\"action_id\",\"gu.departure.join-living\"],[\"game_time\",693],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=quer actionId=night.inspect-room.quer",
+    "[[\"event_id\",\"e2325\"],[\"actor\",\"quer\"],[\"action_id\",\"night.inspect-room.quer\"],[\"game_time\",696],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=lucian actionId=night.inspect-room.lucian",
+    "[[\"event_id\",\"e2329\"],[\"actor\",\"lucian\"],[\"action_id\",\"night.inspect-room.lucian\"],[\"game_time\",696],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=ward actionId=night.inspect-room.ward",
+    "[[\"event_id\",\"e2333\"],[\"actor\",\"ward\"],[\"action_id\",\"night.inspect-room.ward\"],[\"game_time\",696],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=gu actionId=night.inspect-room.gu",
+    "[[\"event_id\",\"e2337\"],[\"actor\",\"gu\"],[\"action_id\",\"night.inspect-room.gu\"],[\"game_time\",696],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=quer actionId=quer.departure.call-inside",
+    "[[\"event_id\",\"e2358\"],[\"actor\",\"quer\"],[\"action_id\",\"quer.departure.call-inside\"],[\"game_time\",700],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=demon actionId=demon.wait.first_night.60",
+    "[[\"event_id\",\"e2385\"],[\"actor\",\"demon\"],[\"action_id\",\"demon.wait.first_night.60\"],[\"game_time\",700],[\"status\",\"rejected\"]]",
+    "[Session.CompleteDv] actor=lucian actionId=lucian.wait.first_night.60",
+    "[[\"event_id\",\"e2390\"],[\"actor\",\"lucian\"],[\"action_id\",\"lucian.wait.first_night.60\"],[\"game_time\",700],[\"status\",\"rejected\"]]",
+    "[Session.CompleteDv] actor=ward actionId=ward.wait.first_night.60",
+    "[[\"event_id\",\"e2395\"],[\"actor\",\"ward\"],[\"action_id\",\"ward.wait.first_night.60\"],[\"game_time\",700],[\"status\",\"rejected\"]]",
+    "[Session.CompleteDv] actor=gu actionId=gu.wait.first_night.60",
+    "[[\"event_id\",\"e2400\"],[\"actor\",\"gu\"],[\"action_id\",\"gu.wait.first_night.60\"],[\"game_time\",700],[\"status\",\"rejected\"]]",
+    "[Session.CompleteDv] actor=quer actionId=quer.departure.inspect-yi-outer",
+    "[[\"event_id\",\"e2429\"],[\"actor\",\"quer\"],[\"action_id\",\"quer.departure.inspect-yi-outer\"],[\"game_time\",703],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=lucian actionId=lucian.departure.rebuke-quer",
+    "[[\"event_id\",\"e2438\"],[\"actor\",\"lucian\"],[\"action_id\",\"lucian.departure.rebuke-quer\"],[\"game_time\",704],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=ward actionId=ward.wait.first_night.60",
+    "[[\"event_id\",\"e2465\"],[\"actor\",\"ward\"],[\"action_id\",\"ward.wait.first_night.60\"],[\"game_time\",704],[\"status\",\"rejected\"]]",
+    "[Session.CompleteDv] actor=gu actionId=gu.wait.first_night.60",
+    "[[\"event_id\",\"e2470\"],[\"actor\",\"gu\"],[\"action_id\",\"gu.wait.first_night.60\"],[\"game_time\",704],[\"status\",\"rejected\"]]",
+    "[Session.CompleteDv] actor=demon actionId=demon.wait.first_night.60",
+    "[[\"event_id\",\"e2475\"],[\"actor\",\"demon\"],[\"action_id\",\"demon.wait.first_night.60\"],[\"game_time\",704],[\"status\",\"rejected\"]]",
+    "[Session.CompleteDv] actor=quer actionId=quer.wait.first_night.60",
+    "[[\"event_id\",\"e2480\"],[\"actor\",\"quer\"],[\"action_id\",\"quer.wait.first_night.60\"],[\"game_time\",704],[\"status\",\"rejected\"]]"
+  ],
+  "finished_epoch": 1793065955.643576,
+  "host_stopped": true,
+  "coverage": "Only recorded live observations; deadline_reached does not mean campaign passed."
+}

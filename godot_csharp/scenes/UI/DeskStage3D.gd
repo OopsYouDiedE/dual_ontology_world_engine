@@ -393,12 +393,3 @@ func _update_camera() -> void:
 	var direction := Vector3(pointer.x * 0.012, sin(CAMERA_ELEVATION), cos(CAMERA_ELEVATION) + pointer.y * 0.010).normalized()
 	camera.position = center + direction * CAMERA_DISTANCE
 	camera.look_at(center,Vector3.UP)
-
-func project_world(point: Vector3) -> Vector2:
-	return camera.unproject_position(point)
-
-func intersect_book(screen_point: Vector2, book_y := 0.12) -> Vector3:
-	var origin := camera.project_ray_origin(screen_point)
-	var direction := camera.project_ray_normal(screen_point)
-	if absf(direction.y)<0.00001: return Vector3(INF,INF,INF)
-	return origin+direction*((book_y-origin.y)/direction.y)

@@ -63,12 +63,6 @@ func close() -> void:
 	closing.emit()
 	_motion.request(false)
 
-func close_and_wait() -> bool:
-	if not is_active(): return true
-	close()
-	var request_id: int = _motion.request(false)
-	return await _motion.wait_for(request_id)
-
 func begin_shutdown() -> void:
 	if _shutting_down: return
 	_shutting_down = true
@@ -89,14 +83,8 @@ func _input(event: InputEvent) -> void:
 	elif UIInput.is_back(event, false):
 		if UIInput.is_back(event): close()
 		get_viewport().set_input_as_handled()
-	elif _is_close_event(event):
-		close()
-		get_viewport().set_input_as_handled()
 	elif _navigation.handle(_modal_surface, event):
 		get_viewport().set_input_as_handled()
-
-func _is_close_event(event: InputEvent) -> bool:
-	return UIInput.is_back(event)
 
 func _process(delta: float) -> void:
 	if can_interact(): _navigation.tick(_modal_surface, delta)

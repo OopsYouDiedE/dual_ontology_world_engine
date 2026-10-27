@@ -6,15 +6,14 @@ const ENGINE_PATH := "res://scenes/Host/GameEngine.cs"
 const PRESENTATION := preload("res://scenes/Host/HostPresentation.gd")
 const UI_SCENE := preload("res://scenes/UI/UISystem.tscn")
 const TITLE_SCENE := preload("res://scenes/UI/TitleUI.tscn")
-const FIELD_SCRIPT := preload("res://scenes/Shared/Field/WorldView.gd")
+const FIELD_SCRIPT := preload("res://scenes/World/Runtime/WorldView.gd")
 const FIELD_EXECUTOR := preload("res://scenes/Host/DvFieldExecutor.gd")
 const VIEW_TRACE := preload("res://scenes/Host/PlayerViewTrace.gd")
 const DIAGNOSTICS := preload("res://scenes/Host/RuntimeDiagnostics.gd")
 const HOST_FLOW := preload("res://scenes/Host/HostFlow.gd")
 const DEV_CONSOLE := preload("res://scenes/Host/DevConsole.gd")
-const MOCK_SESSION := preload("res://scenes/Host/MockSession.gd")
 const CASEBOOK_DATA := preload("res://scenes/UI/CasebookData.gd")
-const CAMPUS_MAP_VIEW := preload("res://scenes/Chapter2/Field/CampusMapView.tscn")
+const CAMPUS_MAP_VIEW := preload("res://scenes/World/Field/CampusMapView.tscn")
 const Sound := preload("res://scenes/Shared/Audio/Sound.gd")
 const NOTICE_THEME := preload("res://scenes/UI/Styles/OverlayTheme.tres")
 
@@ -68,7 +67,6 @@ func _ready() -> void:
 		get_window().title = str(PRESENTATION.catalog().title)
 	audit_enabled = not replay_mode and "--dv-audit" in OS.get_cmdline_user_args()
 	if session_override != null: engine = session_override
-	elif "--dv-mock" in OS.get_cmdline_user_args(): engine = MOCK_SESSION.new()
 	else: engine = load(ENGINE_PATH).new()
 	engine.name = "Engine"
 	add_child(engine)
@@ -132,7 +130,7 @@ func _view(ev: Dictionary, begin := true) -> bool:
 	var replacing := bool(ev.get("replace_session", false))
 	var opening_title: Control = title_layer.get_child(0) if is_instance_valid(title_layer) else null
 	_timing("view_build_begin")
-	var resource: PackedScene = CAMPUS_MAP_VIEW if str(ev.resource) == "res://scenes/Chapter2/Field/CampusMapView.tscn" else (load(str(ev.resource)) as PackedScene)
+	var resource: PackedScene = CAMPUS_MAP_VIEW if str(ev.resource) == "res://scenes/World/Field/CampusMapView.tscn" else (load(str(ev.resource)) as PackedScene)
 	if resource == null:
 		_view_error("无法加载世界视图：" + str(ev.resource), replacing)
 		return false
@@ -264,27 +262,13 @@ func _discard_adapter(adapter: Node2D) -> void:
 		adapter.free()
 
 func _show_casebook_warning(message: String) -> void:
-	var dialog := AcceptDialog.new()
-	dialog.theme = NOTICE_THEME
-	dialog.title = tr("案卷提示")
-	dialog.dialog_text = message
-	dialog.process_mode = Node.PROCESS_MODE_ALWAYS
-	add_child(dialog)
-	dialog.confirmed.connect(dialog.queue_free)
-	dialog.popup_centered(Vector2i(640, 240))
+	_show_notice(tr("案卷提示"), message, Vector2i(640, 240), true)
 
 func _show_bookmark_view_error(backup_path: String) -> void:
 	var message := tr("书签已载入宿主，但现场未能完成装配。当前现场已暂停，请关闭游戏后重新打开，并从“续读”选择载入前备份。")
 	if backup_path != "": message += "\n\n" + tr("载入前备份：%s") % backup_path
 	if is_instance_valid(ui): ui.show_bookmark_result(message)
-	var dialog := AcceptDialog.new()
-	dialog.theme = NOTICE_THEME
-	dialog.title = tr("书签载入未完成")
-	dialog.dialog_text = message
-	dialog.process_mode = Node.PROCESS_MODE_ALWAYS
-	add_child(dialog)
-	dialog.confirmed.connect(dialog.queue_free)
-	dialog.popup_centered(Vector2i(680, 300))
+	_show_notice(tr("书签载入未完成"), message, Vector2i(680, 300), true)
 
 ## 热点与跨房间进入DV；房间内坐标接近由现场消费，不进入此入口。
 func dispatch(input: Dictionary) -> void:
@@ -404,6 +388,7 @@ func _session_options() -> Dictionary:
 			speed = float(value)
 		elif arg == "--dv-audit": options.audit = true
 		elif arg == "--dv-dev": options.developer = true
+		elif arg.begins_with("--dv-content="): options.content_path = arg.trim_prefix("--dv-content=")
 		elif arg.begins_with("--dv-controller="): options.controller = arg.trim_prefix("--dv-controller=")
 		elif arg.begins_with("--dv-viewer="): options.viewer = arg.trim_prefix("--dv-viewer=")
 		elif arg.begins_with("--dv-profile="): options.campaign.profile = arg.trim_prefix("--dv-profile=")
@@ -448,13 +433,17 @@ func _show_error(message: String) -> void:
 	if is_instance_valid(title_layer) and title_layer.get_child(0).has_method("show_start_error"):
 		title_layer.get_child(0).show_start_error(message, not flow.started)
 		return
+	_show_notice("会话错误", message, Vector2i(640, 240))
+
+func _show_notice(caption: String, message: String, size: Vector2i, always_process := false) -> void:
 	var dialog := AcceptDialog.new()
 	dialog.theme = NOTICE_THEME
-	dialog.title = "会话错误"
+	dialog.title = caption
 	dialog.dialog_text = message
+	if always_process: dialog.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(dialog)
 	dialog.confirmed.connect(dialog.queue_free)
-	dialog.popup_centered(Vector2i(640, 240))
+	dialog.popup_centered(size)
 
 func _field_input_busy() -> bool:
 	# Local movement only owns geometry. Background NPC work must not freeze

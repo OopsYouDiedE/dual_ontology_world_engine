@@ -467,9 +467,6 @@ func _localize_leaf() -> void:
 func open_settings() -> void:
 	open_section("settings")
 
-func close_settings() -> void:
-	_leave_book()
-
 func open_load_book() -> void:
 	if not _turning and not _leaving and not _request_pending and not _startup_failed: open_section("load")
 
@@ -518,7 +515,6 @@ func _request(kind: String, path := "") -> void:
 		if kind == "load": _confirm_bookmark(path)
 		elif kind == "quit": close_requested.emit()
 		return
-	if _turning or _leaving or _request_pending: return
 	if _startup_failed and kind in ["start", "load"]: return
 	if kind == "start":
 		if not _menu_input_enabled: return
@@ -531,9 +527,6 @@ func _request(kind: String, path := "") -> void:
 	var request := {"kind": kind}
 	if path != "": request.path = path
 	ui_event.emit(request)
-
-func project_button(button: Control) -> Vector2:
-	return _projection_surface.get_global_transform_with_canvas() * _projection.project(button.get_global_rect().get_center())
 
 func _setup_book() -> void:
 	_book = Node3D.new()

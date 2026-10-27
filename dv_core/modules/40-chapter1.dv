@@ -871,10 +871,8 @@ fn c1_latch_contact_ref():
 fn c1_latch_contact_source():
     return campaign_source("godot_csharp/scenes/Awakening/Script/story/第一章/场面/04_低语与回想.story", 161, "recall_detective.002; bodily-flash-only")
 
-法则 c1_latch_contact_law：
-    当 侦探 位于 乙区门厅。
-    并且 c1_latch_contact_ref() 等于 false。
-    则 c1_latch_contact_ref() 变为 true。
+fn c1_latch_contact_law():
+    return rt_content("rules", "c1_latch_contact_law")
 
 fn c1_latch_contact_method(world, actor, mode):
     if actor != "detective":
@@ -953,11 +951,7 @@ fn c1_physical_world():
     world = c1_add_objects(world, c1_room_objects())
     world = dv_add_object(world, c1_physical_cognition())
     world = dv_add_object(world, c1_question_object())
-    world = dv_add_object(world, dv_with(campaign_state_object("coat", {"name": dv_field("风衣"), "location": dv_field("R05"), "worn_by": dv_field("")}), "facets", {"state": {"name": dv_field("风衣"), "location": dv_field("R05"), "worn_by": dv_field("")}, "identity": {"owner": dv_field("detective")}}))
-    // The coat starts on its hook; its pockets travel only when the coat is worn.
-    world = dv_add_object(world, campaign_state_object("lens", {"name": dv_field("黄铜放大镜"), "location": dv_field("coat")}))
-    world = dv_add_object(world, campaign_state_object("graphite_pencil", {"name": dv_field("石墨笔"), "location": dv_field("coat")}))
-    world = dv_add_object(world, campaign_state_object("evidence_bags", {"name": dv_field("证物袋"), "location": dv_field("coat")}))
+    world = c1_add_objects(world, rt_content("groups", "chapter1"))
     world = dv_add_object(world, campaign_state_object("ritual", dv_single(dv_pair("sound_trial_done", dv_field(false)))))
     world = dv_store(world, c1_latch_contact_ref(), dv_field(false))
     while (i < rt_count(people)):
@@ -1837,9 +1831,6 @@ axiom c1_question_accept(question, stage):
     效果 []。
 
 // Compatibility name retains the same complete participant and once-only gate.
-fn c1_sound_trial(actor, ritual, room):
-    return c1_sound_execution_law(actor)
-
 // Shared defeasible rule. The caller adopts it openly into each person's policy.
 // Provenance: design §4.2/§4.7 and the user's explicit 2026-10-12 pragmatic choice.
 // Each speaker/listener's opening .003 supplies their own empty school recall.
@@ -2499,20 +2490,6 @@ fn c1_hist_add_variant_laws(mind):
     result = c1_hist_adopt(result, "history.argument.heard.relay", c1_hist_heard_argument("history", "cognition", false, "Huo-relay-only"))
     return result
 
-fn c1_hist_hearing_ids(source, words):
-    var result = []
-    var listeners = dv_pair("past.su", "past.huo")
-    var rooms = ["hall", "R08", "foyer", "pantry", "R05", "R06"]
-    var i = 0
-    var j = 0
-    while (i < 2):
-        j = 0
-        while (j < 6):
-            rt_push(result, c1_hist_acoustic_id(source, words, listeners[i], rooms[j]))
-            j = (j + 1)
-        i = (i + 1)
-    return result
-
 fn c1_hist_order(stages):
     var result = []
     var used = []
@@ -2660,9 +2637,6 @@ fn c1_hist_policy(policy):
         rt_push(combined, candidates[index])
         index = (index + 1)
     return dv_with(dv_with(dv_with(dv_with(dv_with(policy, "hypotheses", combined), "factor_domains", c1_hist_domains()), "factor_constraints", c1_hist_constraints()), "prune_confidence_limit", 0.85), "abduction", {"active": true, "confidence_cap": 0.85, "basis": dv_single(campaign_source("docs/design-standard.md", 1500, "approved-paid-model-best-explanation-not-certainty"))})
-
-fn c1_hist_expected_answer():
-    return dv_all(dv_list3(dv_fact(c1_hist_claim_ref("actual_heard"), "Huo-relay-and-Su-report"), dv_fact(c1_hist_claim_ref("voice_source"), "Tube"), dv_fact(c1_hist_claim_ref("transmission_loss"), "stressed-tail-without-leading-qualification")))
 
 fn c1_hist_claim_ref(field):
     return dv_ref("history_claims", "state", field)
@@ -3153,15 +3127,6 @@ fn c1_other_character(id):
         i = (i + 1)
     return {"id": id, "mind": c1_other_mind(id), "actions": actions, "policy": c1_other_policy(id), "balance": {"time": 100000, "computation": 100000, "stamina": 100000}, "location_ref": dv_ref(id, "state", "location"), "location": c1_other_case(person.group).room, "question_ref": dv_ref(rt_cat("personal.", id), "state", "current"), "dossier": person}
 
-fn c1_other_groups_actors():
-    var result = []
-    var people = c1_other_people()
-    var i = 0
-    while (i < rt_count(people)):
-        rt_push(result, c1_other_character(people[i].id))
-        i = (i + 1)
-    return result
-
 // Real physical authored traces and literal history; invisible answer fields are never grants.
 fn c1_other_group_extend(world, group):
     var spec = c1_other_case(group)
@@ -3219,9 +3184,6 @@ fn c1_other_groups_bindings():
             j = (j + 1)
         i = (i + 1)
     return result
-
-fn c1_other_groups_question_actions(speaker):
-    return dv_list3(c1_other_open_action("contract", speaker), c1_other_open_action("astral", speaker), c1_other_open_action("logistics", speaker))
 
 fn c1_other_groups_release_laws(clock_ref):
     return dv_list3(c1_other_release("contract", clock_ref), c1_other_release("astral", clock_ref), c1_other_release("logistics", clock_ref))
@@ -3306,11 +3268,6 @@ fn c1_other_departure_actions(id):
         depart = dv_with_many(depart, {"public_observers": ["lucian", "ward", "gu"], "public_grants": [dv_ref("quer", "state", "location")]})
     depart = dv_with(depart, "personal_choice", {"group": "leave-open-dormitory", "requires": premise, "prohibits": dv_not(dv_true()), "promotes": ["leave_confinement"], "sacrifices": [], "basis": dv_single(person.initial_source)})
     return dv_pair(inspect, depart)
-
-fn c1_other_groups_costs():
-    var costs = c1_costs()
-    rt_push(costs, dv_pair("other_departure", c1_cost(12, c1_other_departure_source("quer").source)))
-    return costs
 
 fn c1_other_group_listeners(group, except):
     var result = []
@@ -3683,23 +3640,6 @@ fn c1_other_handoff_action(id):
 
 
 // Each flag below is produced by a real Complete, then observed by the actor.
-fn c1_other_report_time(group):
-    if group == "contract":
-        return 840
-    if group == "astral":
-        return 1065
-    return 1100
-
-fn c1_other_report_surface(group):
-    if group == "contract":
-        叙述：
-            ；藏处是壁炉砖槽；未经公开授权，背着同行私藏。我将此定为窃取。
-    if group == "astral":
-        叙述：
-            ；她单方面止损，为保住多数而拉闸封门。
-    叙述：
-        ；她未经医嘱，进行了激进的酸试验。
-
 fn c1_other_submission(group, option):
     return dv_all([c1_other_identity(group, option), c1_other_material_identity(group, option), campaign_case_claim(group, "evidence_complete"), campaign_case_claim(group, "report_basis")])
 
@@ -4203,9 +4143,6 @@ fn c1dep_complete():
 fn c1dep_can_cross():
     return dv_all([dv_fact(c1dep_ref("outer_released"), true), dv_fact(c1dep_ref("inner_down"), false), dv_fact(c1dep_ref("open"), true)])
 
-fn c1dep_entered(world, actor):
-    return dv_truth(world, dv_fact(c1dep_cross_ref(actor), true)) == "true"
-
 法则 c1dep_outer_law：
     当 c1dep_complete()。
     并且 恶魔 位于 起居厅。
@@ -4434,7 +4371,7 @@ fn c1dep_goals(actor):
         let at_door = campaign_at(actor.id, "foyer")
         let sound = dv_fact(c1dep_ref("latch_sound"), true)
         let recheck = campaign_any(sound, campaign_any(after_trust, campaign_any(released, at_door)))
-        rt_push(goals, dv_with(campaign_goal(campaign_at(actor.id, "foyer"), dv_all([sound, dv_fact(c1dep_ref("outer_released"), false)]), source), "navigation_commitment", true))
+        rt_push(goals, dv_with_many(campaign_goal(campaign_at(actor.id, "foyer"), dv_all([sound, dv_fact(c1dep_ref("outer_released"), false)]), source), {"navigation_commitment": true, "navigation_evidence_refs": [c1dep_ref("outer_released")]}))
         let door_source = [c1dep_source("11_门外的人.story", 8, "door_voices.005：本人听见门外动静或在门厅现场复查")]
         rt_push(goals, dv_with_many(campaign_observation_goal(c1dep_ref("outer_released"), recheck, door_source, 0), {"refresh_until": released, "refresh_refs": [dv_ref("question", "state", "solved_trust"), c1dep_ref("latch_sound")]}))
         rt_push(goals, dv_with_many(campaign_observation_goal(c1dep_ref("inner_down"), recheck, door_source, 0), {"refresh_until": dv_not(dv_true()), "refresh_refs": [c1dep_ref("outer_released")]}))
@@ -5029,15 +4966,6 @@ fn c1_op_desire_candidates(detective_name):
     var huo_stay = c1_op_dialogue("huo", "huo.opening.seek-drawing", c1_op_reward_requirement("huo"), "表明留下寻找图纸的意愿", "我留下。那张图，我得找。", c1_op_source(40, "s4_rewards.023"), c1_op_people())
     huo_stay = dv_with(dv_with(huo_stay, "received_speech_requirement", {"speaker": "demon", "action_id": "demon.opening.desire-offer"}), "speech", dv_with(huo_stay.speech, "intention_report", {"subject": "huo", "purpose": "seek-offered-drawing", "basis": c1_op_reward_refs("huo"), "automatic_world_effect": "none"}))
     return [offer, empty_slot, ask_reward, contract, shen_keep, huo_stay]
-
-fn c1_op_investigation_candidates():
-    var first = c1_op_dialogue("demon", "demon.opening.public-alarm", dv_all(dv_pair(c1_op_property("opening.public_history", "alarm_last_night", true), c1_op_property("opening.public_history", "main_building_call", true))), "说明昨夜的警铃与呼声", "昨夜警铃骤起。主楼曾有人向诸位呼喊。", c1_op_source(44, "s5_question.002"), c1_op_people())
-    var second = c1_op_dialogue("demon", "demon.opening.public-latch", dv_all(dv_pair(c1_op_property("opening.public_history", "door_latched_this_side", true), c1_op_property("opening.public_history", "caller_not_returned", true))), "说明昨夜门闩的情况", "通往主楼之门，在诸位这一侧闩上了。那人再没有回来。", c1_op_source(45, "s5_question.003"), c1_op_people())
-    var question = c1_question_action("prompt", c1_op_source(46, "s5_question.004"), true)
-    question = dv_with(question, "speech", dv_with(question.speech, "surface", "此为始业之问：门是谁闩上的？闩门之时，此人可曾听见门外的呼喊？"))
-    var invitation = c1_op_dialogue("demon", "demon.opening.investigate-invitation", dv_true(), "邀请调查并提交答复", "记不得，并不妨碍作答。痕迹还在。答案备好了，到铜口来。", c1_op_source(47, "s5_question.017"), c1_op_people())
-    invitation = dv_with(invitation, "speech", dv_with(invitation.speech, "utterance_type", "invitation"))
-    return [first, second, dv_with(question, "owner", "demon"), invitation]
 
 // Conditional stance reports require the existing owner interpretations receipt.
 // They remain ordinary optional candidates and must not be projected as facts
@@ -6014,11 +5942,11 @@ fn c1n_night_seen_ref(actor):
 // Content-owned configuration. Callers supply approved numeric budgets and value lists.
 fn Standard_Detective(replay_depth, resistance, empirical_values, mediation_rules, basis):
     dv_require(0 < rt_count(basis), "Detective profile needs content provenance")
-    return {"cognitive_profile": "Standard_Detective", "value_sensitive_progress": true, "coordinate_owned_tasks": true, "empirical_initiative": 1, "counterfactual_initiative": 1, "Replay_Depth": replay_depth, "plan_depth": 6, "Implicature_Resistance": resistance, "scope_reference_check": true, "value_order": empirical_values, "value_basis": basis, "norm_rules": mediation_rules, "class_bias": [], "profile_basis": basis}
+    return dv_with_many(rt_content("profiles", "Standard_Detective"), {"Replay_Depth": replay_depth, "Implicature_Resistance": resistance, "value_order": empirical_values, "value_basis": basis, "norm_rules": mediation_rules, "profile_basis": basis})
 
 fn Foolish_Detective(replay_depth, resistance, values, norm_rules, class_bias, basis):
     dv_require(0 < rt_count(basis), "Detective profile needs content provenance")
-    return {"cognitive_profile": "Foolish_Detective", "value_sensitive_progress": true, "coordinate_owned_tasks": true, "empirical_initiative": 0.01, "counterfactual_initiative": 0.03, "Replay_Depth": replay_depth, "plan_depth": 2, "Implicature_Resistance": resistance, "scope_reference_check": false, "value_order": values, "value_basis": basis, "norm_rules": norm_rules, "class_bias": class_bias, "profile_basis": basis}
+    return dv_with_many(rt_content("profiles", "Foolish_Detective"), {"Replay_Depth": replay_depth, "Implicature_Resistance": resistance, "value_order": values, "value_basis": basis, "norm_rules": norm_rules, "class_bias": class_bias, "profile_basis": basis})
 
 fn cognitive_sample(key, options, basis):
     dv_require(0 < rt_count(options) and 0 < rt_count(basis), "Cognitive sampling needs options and provenance")

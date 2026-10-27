@@ -1,0 +1,107 @@
+{
+  "run_id": "godot-0abccc46f035d39478911637",
+  "backend": "godot",
+  "created_epoch": 1793066147.854857,
+  "deadline_epoch": 1793066207.854857,
+  "seed": 1,
+  "viewer": "detective",
+  "status": "deadline_reached",
+  "deadline": "2026-10-27T01:56:47.854857+00:00",
+  "report_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\.runtime\\runs\\godot-0abccc46f035d39478911637\\report.json",
+  "agent_required": false,
+  "clock_policy": "wall-clock-including-build-and-startup",
+  "observation": {
+    "backend": "godot",
+    "busy": true,
+    "faulted": false,
+    "observation_id": 182,
+    "options": [],
+    "reading": false,
+    "scene": "res://scenes/Host/Main.tscn",
+    "size": [
+      1280,
+      992
+    ],
+    "started": true,
+    "state": {
+      "active": true,
+      "chapter": 1.0,
+      "content_hash": "8452cbbc67c01fc6508931c5266653979418ffccdafa5c7ba9d38092055fc813",
+      "game_time": 495.0,
+      "location_title": "乙区 · 活动厅",
+      "map": "living_floor",
+      "room": "zone_yi:hall",
+      "state_version": 61,
+      "viewer": "detective"
+    },
+    "visible_ui": [
+      {
+        "class": "Label",
+        "path": "/root/Main/UI/FieldHUD/TopBar/Margin/HBox/RoomLabel",
+        "text": "乙区 · 活动厅"
+      },
+      {
+        "class": "Label",
+        "path": "/root/Main/UI/FieldHUD/TopBar/Margin/HBox/StatusLabel",
+        "text": "第 1.0 章"
+      },
+      {
+        "class": "Label",
+        "path": "/root/Main/UI/FieldHUD/TopBar/Margin/HBox/TimeLabel",
+        "text": "8:15"
+      },
+      {
+        "class": "Button",
+        "path": "/root/Main/UI/FieldHUD/TopBar/Margin/HBox/HudSettingsButton",
+        "text": "凡例"
+      }
+    ],
+    "host_errors": []
+  },
+  "observation_policy": "last-successfully-received-before-stop",
+  "observations": 182,
+  "completed_actions": null,
+  "started_epoch": 1793066147.8598564,
+  "worker_pid": 37844,
+  "screenshot_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\.runtime\\runs\\godot-0abccc46f035d39478911637\\latest.png",
+  "screenshot_updated_epoch": 1793066203.1551604,
+  "updated_epoch": 1793066207.768416,
+  "detail": "Configured wall-clock deadline reached; live host stopped.",
+  "host_log": [
+    "[Session.CompleteDv] actor=gu actionId=gu.wait.first_night.180",
+    "[[\"event_id\",\"e303\"],[\"actor\",\"gu\"],[\"action_id\",\"gu.wait.first_night.180\"],[\"game_time\",486],[\"status\",\"rejected\"]]",
+    "[Session.CompleteDv] actor=demon actionId=demon.departure.inspect.logistics",
+    "[[\"event_id\",\"e306\"],[\"actor\",\"demon\"],[\"action_id\",\"demon.departure.inspect.logistics\"],[\"game_time\",486],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=detective actionId=detective.move.corridor.hall",
+    "[[\"event_id\",\"e348\"],[\"actor\",\"detective\"],[\"action_id\",\"detective.move.corridor.hall\"],[\"game_time\",489],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=huo actionId=huo.move.corridor.hall",
+    "[[\"event_id\",\"e362\"],[\"actor\",\"huo\"],[\"action_id\",\"huo.move.corridor.hall\"],[\"game_time\",489],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=shen actionId=shen.move.corridor.hall",
+    "[[\"event_id\",\"e376\"],[\"actor\",\"shen\"],[\"action_id\",\"shen.move.corridor.hall\"],[\"game_time\",489],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=su actionId=su.move.hall.pantry",
+    "[[\"event_id\",\"e390\"],[\"actor\",\"su\"],[\"action_id\",\"su.move.hall.pantry\"],[\"game_time\",489],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=demon actionId=demon.opening.reward-invitation",
+    "[[\"event_id\",\"e420\"],[\"actor\",\"demon\"],[\"action_id\",\"demon.opening.reward-invitation\"],[\"game_time\",490],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=detective actionId=detective.move.hall.pantry",
+    "[[\"event_id\",\"e435\"],[\"actor\",\"detective\"],[\"action_id\",\"detective.move.hall.pantry\"],[\"game_time\",492],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=shen actionId=shen.opening.look-arrival",
+    "[[\"event_id\",\"e450\"],[\"actor\",\"shen\"],[\"action_id\",\"shen.opening.look-arrival\"],[\"game_time\",492],[\"status\",\"rejected\"]]",
+    "[Session.CompleteDv] actor=su actionId=su.move.pantry.hall",
+    "[[\"event_id\",\"e453\"],[\"actor\",\"su\"],[\"action_id\",\"su.move.pantry.hall\"],[\"game_time\",492],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=huo actionId=huo.opening.introduce",
+    "[[\"event_id\",\"e481\"],[\"actor\",\"huo\"],[\"action_id\",\"huo.opening.introduce\"],[\"game_time\",493],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=demon actionId=demon.opening.desire-offer",
+    "[[\"event_id\",\"e496\"],[\"actor\",\"demon\"],[\"action_id\",\"demon.opening.desire-offer\"],[\"game_time\",494],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=detective actionId=detective.move.pantry.hall",
+    "[[\"event_id\",\"e530\"],[\"actor\",\"detective\"],[\"action_id\",\"detective.move.pantry.hall\"],[\"game_time\",495],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=shen actionId=shen.opening.inspect-reward-slot",
+    "[[\"event_id\",\"e546\"],[\"actor\",\"shen\"],[\"action_id\",\"shen.opening.inspect-reward-slot\"],[\"game_time\",495],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=su actionId=su.move.hall.foyer",
+    "[[\"event_id\",\"e552\"],[\"actor\",\"su\"],[\"action_id\",\"su.move.hall.foyer\"],[\"game_time\",495],[\"status\",\"applied\"]]",
+    "[Session.CompleteDv] actor=huo actionId=huo.opening.inspect-reward-slot",
+    "[[\"event_id\",\"e591\"],[\"actor\",\"huo\"],[\"action_id\",\"huo.opening.inspect-reward-slot\"],[\"game_time\",496],[\"status\",\"applied\"]]"
+  ],
+  "finished_epoch": 1793066208.5696182,
+  "host_stopped": true,
+  "coverage": "Only recorded live observations; deadline_reached does not mean campaign passed."
+}

@@ -565,6 +565,3 @@ func begin_shutdown() -> void:
 
 func _exit_tree() -> void:
 	begin_shutdown()
-
-func get_fader() -> ColorRect:
-	return fader_rect

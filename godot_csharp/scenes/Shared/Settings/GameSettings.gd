@@ -16,39 +16,15 @@ const CONTROL_BINDINGS_VERSION := 1
 const BASE_WINDOW := Vector2i(1280, 992)
 const SECTIONS := ["graphics", "language", "audio", "controls", "accessibility"]
 
-## 可改键的动作（显示顺序）与分组。分组 id：move 移动 / world 现场 / dialogue 对话 / system 系统。
+## 可改键的动作（显示顺序）。
 const CONTROL_ACTIONS := [
 	"move_up", "move_down", "move_left", "move_right", "interact",
 	"notebook", "manuscript", "campus_map", "wait", "cancel",
 	"dialogue_continue", "dialogue_history", "fast_forward",
 	"settings", "book_prev", "book_next",
 ]
-const ACTION_GROUPS := {
-	"move_up": "move", "move_down": "move", "move_left": "move", "move_right": "move",
-	"interact": "world", "notebook": "world", "manuscript": "world", "campus_map": "world", "wait": "world", "cancel": "world",
-	"dialogue_continue": "dialogue", "dialogue_history": "dialogue", "fast_forward": "dialogue",
-	"settings": "system", "book_prev": "system", "book_next": "system",
-}
 ## 移动键按物理位置匹配（换键盘布局后 WASD 仍是左手那一排），其余按键帽字符匹配。
 const PHYSICAL_ACTIONS := ["move_up", "move_down", "move_left", "move_right"]
-const ACTION_NAMES := {
-	"move_up": ["向上", "Move up", "上へ"],
-	"move_down": ["向下", "Move down", "下へ"],
-	"move_left": ["向左", "Move left", "左へ"],
-	"move_right": ["向右", "Move right", "右へ"],
-	"interact": ["交互 / 交谈", "Interact / talk", "調べる・話す"],
-	"notebook": ["笔记本", "Notebook", "ノート"],
-	"manuscript": ["手稿", "Manuscript", "手稿"],
-	"campus_map": ["学园地图", "Campus map", "学園地図"],
-	"wait": ["原地等待", "Wait", "待つ"],
-	"cancel": ["返回 / 关闭", "Back / close", "戻る・閉じる"],
-	"dialogue_continue": ["继续对话", "Continue dialogue", "会話を続ける"],
-	"dialogue_history": ["对话回看", "Dialogue history", "会話履歴"],
-	"fast_forward": ["快进对话", "Fast-forward dialogue", "会話の早送り"],
-	"settings": ["设置", "Settings", "設定"],
-	"book_prev": ["前一页", "Previous page", "前のページ"],
-	"book_next": ["后一页", "Next page", "次のページ"],
-}
 const MODIFIER_KEYS := [KEY_CTRL, KEY_SHIFT, KEY_ALT, KEY_META]
 const BUS_NAMES := {"master": "Master", "music": "Music", "sfx": "Sfx", "voice": "Voice"}
 const SAVE_DELAY := 0.4
@@ -142,7 +118,7 @@ func defaults() -> Dictionary:
 	result["language"] = {"locale": _system_locale_code()}
 	var controls := {}
 	for action in CONTROL_ACTIONS:
-		controls[action] = _copy_events(_default_events[action])
+		controls[action] = _default_events[action].duplicate(true)
 	result["controls"] = controls
 	return result
 
@@ -192,20 +168,6 @@ func set_value(section: String, key: String, value: Variant) -> bool:
 	setting_changed.emit(section, key, clean)
 	return true
 
-func reset_section(section: String) -> void:
-	match section:
-		"language":
-			set_value("language", "locale", _system_locale_code())
-		"controls":
-			reset_controls()
-		_:
-			if not SPEC.has(section): return
-			for key in SPEC[section]:
-				_explicit.erase(section + "/" + key)
-				set_value(section, key, SPEC[section][key].default)
-				_explicit.erase(section + "/" + key)
-			_save_later()
-
 func current_language() -> String:
 	var locale := _locale_node()
 	if locale != null: return locale.current_language()
@@ -219,66 +181,6 @@ func action_events(action: String) -> Array[InputEvent]:
 	if InputMap.has_action(action):
 		result.assign(InputMap.action_get_events(action))
 	return result
-
-## 把第 index 个绑定换成 event；index 超出现有数量（或 -1）则新增一个。接收键鼠、手柄按钮和轴方向。
-## 同一动作里已有相同按键时返回 false。其它动作上的同键冲突由界面用 find_conflicts 先提示。
-func rebind(action: String, index: int, event: InputEvent) -> bool:
-	if not _default_events.has(action): return false
-	var fresh := _dict_to_event(_event_to_dict(event), action)
-	if fresh == null: return false
-	var events := action_events(action)
-	for i in events.size():
-		if i != index and _same_input(events[i], fresh): return false
-	if index >= 0 and index < events.size():
-		events[index] = fresh
-	else:
-		events.append(fresh)
-	_set_action_events(action, events)
-	return true
-
-## 删除第 index 个绑定；每个动作至少保留一个，所以只剩一个时返回 false。
-func unbind(action: String, index: int) -> bool:
-	var events := action_events(action)
-	if events.size() <= 1 or index < 0 or index >= events.size(): return false
-	events.remove_at(index)
-	_set_action_events(action, events)
-	return true
-
-## 其它动作里已经用了这个输入的动作名（不含 action 自己）。
-func find_conflicts(action: String, event: InputEvent) -> Array[String]:
-	var found: Array[String] = []
-	var probe := _dict_to_event(_event_to_dict(event), "")
-	if probe == null: return found
-	for other in CONTROL_ACTIONS:
-		if other == action: continue
-		for existing in action_events(other):
-			if _same_input(existing, probe):
-				found.append(other)
-				break
-	return found
-
-func reset_action(action: String) -> void:
-	if not _default_events.has(action): return
-	var events: Array[InputEvent] = []
-	for entry in _default_events[action]:
-		var event := _dict_to_event(entry, action)
-		if event != null: events.append(event)
-	_set_action_events(action, events)
-	_explicit.erase("controls/" + action)
-	_save_later()
-
-func reset_controls() -> void:
-	for action in CONTROL_ACTIONS:
-		reset_action(action)
-	_save_later()
-
-func action_label(action: String) -> String:
-	var names: Array = ACTION_NAMES.get(action, [action, action, action])
-	var language := current_language()
-	return str(names[1] if language == "en" else names[2] if language == "ja" else names[0])
-
-func action_group(action: String) -> String:
-	return str(ACTION_GROUPS.get(action, ""))
 
 ## 动作当前所有绑定的短文本，如 "E / Space / Enter"。
 func action_text(action: String) -> String:
@@ -366,7 +268,7 @@ func _set_action_events(action: String, events: Array) -> void:
 	for event in events:
 		InputMap.action_add_event(action, event)
 		serial.append(_event_to_dict(event))
-	if _same_list(serial, _default_events[action]):
+	if serial == _default_events[action]:
 		_explicit.erase("controls/" + action)
 	else:
 		_explicit["controls/" + action] = true
@@ -453,17 +355,6 @@ func _key_identity(event: InputEventKey) -> int:
 	if event.keycode != KEY_NONE: return event.keycode
 	var code := _logical_keycode(event.physical_keycode)
 	return code if code != KEY_NONE else event.physical_keycode
-
-func _same_list(a: Array, b: Array) -> bool:
-	if a.size() != b.size(): return false
-	for i in a.size():
-		if a[i] != b[i]: return false
-	return true
-
-func _copy_events(list: Array) -> Array:
-	var copy: Array = []
-	for entry in list: copy.append((entry as Dictionary).duplicate())
-	return copy
 
 # ==================================================================== apply ===
 

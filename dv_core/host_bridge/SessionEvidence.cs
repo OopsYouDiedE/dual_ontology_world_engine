@@ -1,4 +1,5 @@
 using DuelView.Compiled;
+using DuelView.Core;
 
 /// <summary>Archive provenance and cuts of the existing authoritative session.</summary>
 public sealed partial class DvSession
@@ -8,6 +9,51 @@ public sealed partial class DvSession
     private string executionHost = "unspecified", executionAdapter = "unspecified", sourceRevision = "";
     private string shutdownReason = "";
     private IReadOnlyDictionary<string, object?> evidenceLifecycle = HostValues.Empty;
+    private string planningDiagnosticEvent = "";
+    private IReadOnlyDictionary<string, object?> planningDiagnostic = HostValues.Empty;
+
+    public IReadOnlyDictionary<string, object?> ExecutionDiagnostics()
+    {
+        using var valuesScope = R.UseValues(valueContext);
+        return HostValues.Freeze(new Dictionary<string, object?>
+        {
+            ["status"] = R.Text(Field(state, "status", "")),
+            ["executed"] = converter.FromDv(Field(state, "executed", 0)),
+            ["limit"] = converter.FromDv(Field(state, "limit", 0)),
+            ["game_time"] = converter.FromDv(Field(Field(state, "physical", new List<object>()), "time", 0)),
+            ["horizon"] = converter.FromDv(Field(state, "horizon", 0))
+        });
+    }
+
+    // Read the actual committed selection, without simulating another choice
+    // or exposing this diagnostic through the player's subjective projection.
+    public IReadOnlyDictionary<string, object?> PlanningDiagnostics()
+    {
+        using var valuesScope = R.UseValues(valueContext);
+        var events = Events(state);
+        for (var i = events.Count - 1; i >= 0; i--)
+        {
+            var entry = events[i];
+            if (R.Text(Field(entry, "type", "")) != "action_selected") continue;
+            var id = R.Text(Field(entry, "id", ""));
+            if (id == planningDiagnosticEvent) return planningDiagnostic;
+            planningDiagnosticEvent = id;
+            var data = Field(entry, "data", new List<object>());
+            planningDiagnostic = HostValues.Freeze(new Dictionary<string, object?>
+            {
+                ["event"] = id,
+                ["actor"] = R.Text(Field(entry, "actor", "")),
+                ["game_time"] = converter.FromDv(Field(entry, "time", 0)),
+                ["action"] = R.Text(Field(Field(data, "action", new List<object>()), "id", "")),
+                ["score"] = converter.FromDv(Field(data, "score", 0)),
+                ["strategy"] = R.Text(Field(data, "planning_strategy", "")),
+                ["stop"] = R.Text(Field(data, "planning_stop", "")),
+                ["plans"] = converter.FromDv(Field(data, "plans", new List<object>()))
+            });
+            return planningDiagnostic;
+        }
+        return HostValues.Empty;
+    }
 
     public bool PlayerControlled
     {
@@ -39,6 +85,7 @@ public sealed partial class DvSession
             ["source_revision"] = sourceRevision.Length > 0 ? sourceRevision : null,
             ["assembly_mvid"] = typeof(DVProgram).Assembly.ManifestModule.ModuleVersionId.ToString(),
             ["runtime"] = Environment.Version.ToString(), ["audit"] = audit, ["development"] = developer,
+            ["content_hash"] = content.Hash, ["content_schema"] = ContentCatalog.Schema,
             ["simulation_mode"] = simulationMode,
             ["opt_storyflow"] = R.Bool(Field(configuration, "opt_storyflow", true)),
             ["opt_stateindex"] = R.Bool(Field(configuration, "opt_stateindex", true)),
@@ -103,8 +150,7 @@ public sealed partial class DvSession
         {
             // Count only; full labels, timing and source rows remain in the
             // archive projection and are not rebuilt at every transition.
-            var slot = (int)R.Num(R.record_index(actor, "scheduled_action"));
-            if (slot >= 0 && R.Items(R.Items(actor)[slot])[1] is not false) count++;
+            if (Field(actor, "scheduled_action", false) is not false) count++;
         }
         return count;
     }

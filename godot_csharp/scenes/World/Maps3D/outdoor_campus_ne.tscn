@@ -1,0 +1,3065 @@
+[gd_scene format=4]
+
+[ext_resource type="CameraAttributesPractical" path="res://scenes/World/Art/SalonCamera.tres" id="1_iwnnd"]
+[ext_resource type="Shader" path="res://rendering/shaders/post/contour.gdshader" id="2_kvdkj"]
+[ext_resource type="Script" path="res://scenes/World/Art/ContourEffect.gd" id="3_b6a4a"]
+[ext_resource type="PackedScene" path="res://rendering/AtmosphereRig.tscn" id="4_iqsa7"]
+[ext_resource type="Script" path="res://rendering/AtmosphereRig.gd" id="5_hco2i"]
+[ext_resource type="Script" path="res://rendering/WorldTimeLighting.gd" id="6_bfn4p"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/rooms/campus_ne.png" id="7_m8sfx"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_bldg_019.png" id="8_vesyg"]
+[ext_resource type="Shader" path="res://rendering/shaders/surfaces/stone.gdshader" id="9_kodbr"]
+[ext_resource type="Shader" path="res://rendering/shaders/surfaces/painted_surface.gdshader" id="10_uppw5"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_bldg_022.png" id="11_oaol4"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_190.png" id="12_4nhiv"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_191.png" id="13_76r0b"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_192.png" id="14_ic8jy"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_193.png" id="15_8jjw6"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_194.png" id="16_r562e"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_195.png" id="17_ro0ru"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_196.png" id="18_0wa6w"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_197.png" id="19_kaiqy"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_198.png" id="20_kgqi3"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_199.png" id="21_58f7m"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_200.png" id="22_u6gbb"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_201.png" id="23_nciua"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_202.png" id="24_jj0c2"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_203.png" id="25_lg6vf"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_204.png" id="26_gyvtr"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_205.png" id="27_3krko"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_206.png" id="28_wxf3v"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_207.png" id="29_o1a2w"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_208.png" id="30_d337e"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_209.png" id="31_bcal4"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_210.png" id="32_f3mdu"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_211.png" id="33_ya30s"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_212.png" id="34_qpv7y"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_213.png" id="35_3lnvl"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_214.png" id="36_6xjyw"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_215.png" id="37_nivue"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_216.png" id="38_l0o58"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_217.png" id="39_nvbhu"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_218.png" id="40_pvd24"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_219.png" id="41_rey12"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_220.png" id="42_b2qqb"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_221.png" id="43_sma22"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_222.png" id="44_1kirm"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_223.png" id="45_6ngsw"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_224.png" id="46_cu5cr"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_225.png" id="47_0jlrm"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_226.png" id="48_grs8r"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_227.png" id="49_ggtf6"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_228.png" id="50_nf8mw"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_229.png" id="51_pv3qv"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_230.png" id="52_r78yp"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_231.png" id="53_8ydq4"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_232.png" id="54_xea12"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_233.png" id="55_civei"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_234.png" id="56_cpig1"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_235.png" id="57_a4tgx"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_236.png" id="58_qxbgh"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_237.png" id="59_8c4x3"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_238.png" id="60_8frdh"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_239.png" id="61_d4ajp"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_240.png" id="62_1t1i7"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_241.png" id="63_etb5u"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_242.png" id="64_jnml7"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_243.png" id="65_r8u7v"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_244.png" id="66_egmue"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_245.png" id="67_hxhxk"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_246.png" id="68_fofyt"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_247.png" id="69_0gj1c"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_248.png" id="70_8phti"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_249.png" id="71_li0h2"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_250.png" id="72_mvsfi"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_251.png" id="73_2784r"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_252.png" id="74_7511g"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_253.png" id="75_54n1d"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_254.png" id="76_l8lq4"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_255.png" id="77_rdxy4"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_256.png" id="78_n3uh6"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_257.png" id="79_b2qfk"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_258.png" id="80_hm025"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_259.png" id="81_u4ptq"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_260.png" id="82_lgwg6"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_261.png" id="83_qubj4"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_262.png" id="84_upqoh"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_263.png" id="85_bi3k7"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_264.png" id="86_3i183"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_265.png" id="87_wj0jl"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_266.png" id="88_y5l4n"]
+[ext_resource type="Shader" path="res://rendering/shaders/surfaces/foliage.gdshader" id="89_fd5ao"]
+[ext_resource type="Shader" path="res://rendering/shaders/surfaces/wood.gdshader" id="90_vy3dc"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/spring_trough.png" id="91_kn4nj"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/bucket_pair.png" id="92_raifh"]
+[ext_resource type="Script" path="res://rendering/RenderDetailController.gd" id="93_fpnk5"]
+[ext_resource type="Script" path="res://rendering/CameraOcclusion.gd" id="94_jnd3h"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xdf7p"]
+render_priority = 127
+shader = ExtResource("2_kvdkj")
+shader_parameter/ink = null
+shader_parameter/width_pixels = null
+shader_parameter/strength = null
+shader_parameter/minimum_depth_step = null
+shader_parameter/relative_depth_step = null
+
+[sub_resource type="QuadMesh" id="QuadMesh_uynm8"]
+size = Vector2(2, 2)
+
+[sub_resource type="Environment" id="Environment_ivmx1"]
+background_mode = 1
+background_color = Color(0.18447499, 0.32777813, 0.39157248, 1)
+background_energy_multiplier = 0.08
+ambient_light_source = 2
+ambient_light_color = Color(0.65882355, 0.7294118, 0.7607843, 1)
+ambient_light_energy = 0.55
+tonemap_mode = 2
+ssao_enabled = true
+ssao_radius = 0.4
+ssao_intensity = 0.75
+ssao_power = 1.25
+ssao_detail = 0.35
+ssil_enabled = true
+ssil_radius = 2.0
+ssil_intensity = 0.3
+glow_enabled = true
+glow_strength = 0.65
+glow_hdr_threshold = 2.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_osg2s"]
+albedo_texture = ExtResource("7_m8sfx")
+texture_filter = 5
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_tb7ul"]
+size = Vector2(132, 134)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ksiil"]
+size = Vector3(132, 0.2, 134)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1p30w"]
+render_priority = 0
+shader = ExtResource("9_kodbr")
+shader_parameter/pigment = Color(0.40784314, 0.41960785, 0.38431373, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/variation = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_2wcbh"]
+size = Vector3(10, 3, 30)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bh7kw"]
+size = Vector3(10, 3, 30)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_j1ppm"]
+render_priority = 0
+shader = ExtResource("9_kodbr")
+shader_parameter/pigment = Color(0.65882355, 0.6313726, 0.54901963, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/variation = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_q4g0r"]
+size = Vector3(10.25, 0.5, 30.25)
+
+[sub_resource type="BoxMesh" id="BoxMesh_esgq5"]
+size = Vector3(10.35, 0.26, 30.35)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1huvh"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_avtdo"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tu7cy"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_b3unx"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8f518"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_knugr"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_76gna"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ug6wc"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2evhh"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_w8d6t"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_d7ymj"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_xqy65"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_cojxn"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_y7fmn"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_o652q"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_frwyi"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ag867"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ndo5r"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_iwpmr"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_yt52y"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4rne0"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_alkkx"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4u5ux"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="BoxMesh" id="BoxMesh_u1cjk"]
+size = Vector3(0.33, 0.4, 0.33)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gvcuf"]
+render_priority = 0
+shader = ExtResource("10_uppw5")
+shader_parameter/pigment = Color(0.45882353, 0.5764706, 0.54901963, 1)
+shader_parameter/surface_roughness = 0.28
+shader_parameter/surface_metallic = 0.0
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_aabn2"]
+size = Vector3(1.38, 2.2, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_oaby6"]
+size = Vector3(1.38, 2.2, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_jn5gs"]
+size = Vector3(1.38, 2.2, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1n6cs"]
+size = Vector3(1.38, 2.2, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_81vwu"]
+size = Vector3(1.38, 2.2, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_oq45n"]
+size = Vector3(1.38, 2.2, 0.04)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_5apao"]
+_surfaces = [{
+"aabb": AABB(-5.2, 3, -15.2, 10.4, 2.1999998, 30.4),
+"attribute_data": PackedByteArray("AAAAADMzc0FmZqbAMzNzQWZmpsAzM3PBAAAAADMzc8EAAAAAMzNzQWZmpsAzM3PBZmamQDMzc0EAAAAAMzNzQQAAAAAzM3PBZmamQDMzc8FmZqZAMzNzQQAAAAAzM3PBZmamQDMzc8EAAAAAMzNzwWZmpsAzM3PBAAAAADMzc0FmZqZAMzNzQWZmpsAzM3NB"),
+"format": 34359738391,
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 18,
+"vertex_data": PackedByteArray("AAAAAGZmpkAzM3NBZmamwAAAQEAzM3NBZmamwAAAQEAzM3PBAAAAAGZmpkAzM3PBAAAAAGZmpkAzM3NBZmamwAAAQEAzM3PBZmamQAAAQEAzM3NBAAAAAGZmpkAzM3NBAAAAAGZmpkAzM3PBZmamQAAAQEAzM3PBZmamQAAAQEAzM3NBAAAAAGZmpkAzM3PBZmamQAAAQEAzM3PBAAAAAGZmpkAzM3PBZmamwAAAQEAzM3PBAAAAAGZmpkAzM3NBZmamQAAAQEAzM3NBZmamwAAAQEAzM3NB8Vnx2RowGK/xWfHZGjAYr/FZ8dkaMBiv8Vnx2RowGK/xWfHZGjAYr/FZ8dkaMBivDabx2Row5dANpvHZGjDl0A2m8dkaMOXQDabx2Row5dANpvHZGjDl0A2m8dkaMOXQ//////9/AID//////38AgP//////fwCA/3//f/9/AID/f/9//38AgP9//3//fwCA")
+}]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k0t3k"]
+resource_name = "grass"
+albedo_color = Color(0.45234028, 0.92950165, 0.8658767, 1)
+metallic = 1.0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_vp78p"]
+_surfaces = [{
+"aabb": AABB(-0.30127186, 0, -0.30127186, 0.6025437, 0.36041093, 0.6025437),
+"format": 34896613377,
+"index_count": 312,
+"index_data": PackedByteArray("AAABAAIAAQAAAAIAAQADAAAAAwABAAAAAAAEAAMABAAAAAMAAwAFAAQABQADAAQABAAGAAUABgAEAAUABwAGAAUABgAHAAUACAAFAAcABQAIAAcABwAIAAkACAAHAAkACgAJAAcACQAKAAcACgAJAAsACQAKAAsABQAGAAwABgAFAAwADAANAAUADQAMAAUADAAOAA0ADgAMAA0ADwAFABAABQAPABAAEAAPABEADwAQABEAEAASAAUAEgAQAAUABQATABIAEwAFABIAFAAFABIABQAUABIAEgAVABMAFQASABMAFgATABUAEwAWABUAFQAXABYAFwAVABYAFgAXABgAFwAWABgAGQASABQAEgAZABQAGgAUABkAFAAaABkAGQAbABoAGwAZABoAGgAbABwAGwAaABwAEgAdAB4AHQASAB4AHgAdAB8AHQAeAB8AHgAgABIAIAAeABIAIQASACAAEgAhACAAEgAiACAAIgASACAAIAAjACEAIwAgACEAIQAkACMAJAAhACMAJQAjACQAIwAlACQAJQAmACQAJgAlACQAIAAnACIAJwAgACIAKAAiACcAIgAoACcAKQAnACgAJwApACgAKQAqACgAKgApACgAKwAsACAALAArACAALQAsACsALAAtACsAKwAuAC0ALgArAC0ALwAtAC4ALQAvAC4AIAAGACsABgAgACsAIAAGADAABgAgADAABgAxACAAMQAGACAAIAAyADEAMgAgADEAMwAxADIAMQAzADIAMAA0ACAANAAwACAANQA0ADAANAA1ADAANgAwADUAMAA2ADUANQA3ADYANwA1ADYA"),
+"name": "grass",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 56,
+"vertex_data": PackedByteArray("NZvwp+tFAADJZPCn60UAAP9/6tEZHAAAa1pkcDJmAACTpWRwMmYAAO12AADtdgAAEYkAAO12AACTpShSSVEAAGtaKFJJUQAAyWSUcqUrAAA1m5RypSsAAIh64VYAAAAABpaaIqxRAAD4aZoirFEAADF2KAt3KQAArFENGPhpAACsUQ0YBpYAAHcpwQfNiQAA7XYAABGJAABJURw5a1oAADJmIE5rWgAASVEcOZOlAAClK6VPyWQAAKUrpU81mwAAAABkPHaFAAAyZiBOk6UAAOtFvXTJZAAA60W9dDWbAAAZHOqR/38AAPhp8CJSrgAABpbwIlKuAADNiUQLh9YAABGJAAARiQAAa1p8ccyZAABrWvVSta4AAJOlfHHMmQAAyWSSqRO6AAA1m5KpE7oAAP9/9dPl4wAAk6X1UrWuAADJZLFzWdQAADWbsXNZ1AAAdoW6V///AADMmRCJa1oAAMyZEImTpQAAE7rNzDWbAAATus3MyWQAAOXj////fwAAta4xZGtaAABSrjIq+GkAAFKuMioGlgAAh9abDTF2AAC1rjFkk6UAAFnUuos1mwAAWdS6i8lkAAD///RpiHoAAA==")
+}]
+blend_shape_mode = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_gp1v4"]
+resource_name = "plant_bushDetailed_Mesh plant_bushDetailed"
+_surfaces = [{
+"aabb": AABB(-0.30127186, 0, -0.30127186, 0.6025437, 0.36041093, 0.6025437),
+"attribute_data": PackedByteArray("r9yON08jjjf/f5kQTyOON6/cjjf/f5kQ9jQ/YAjLP2DknkiCGmFIggjLP2D2ND9g5J5IghphSIL/fwAAr9xlKU8jZSmv3GUp/38AAE8jZSn//wxP5J7ihhph4oYAAAxP5J7ihv//DE8aYeKGAAAMT08jC8Cv3AvAnJIZ5K/cC8BPIwvAnJIZ5K/cMR///5BIAACQSE8jMR///5BIr9wxHwAAkEhPIzEfr9zBLv//v1MAAL9TTyPBLv//v1Ov3MEuAAC/U08jwS7//39S5J49hBphPYQAAH9S5J49hP//f1IaYT2EAAB/Uq/cvrOckhLZTyO+s5ySEtmv3L6zTyO+s/Y03akIy92pmV7nygjL3an2NN2pmV7nyq/cWTP//ztVAAA7VU8jWTP//ztVr9xZMwAAO1VPI1kzAABMXE8jXjyv3F48//9MXE8jXjwAAExcr9xePP//TFyv3BAs//+QTwAAkE9PIxAs//+QT6/cECwAAJBPTyMQLK/cFS7//0NTAABDU08jFS7//0NTr9wVLgAAQ1NPIxUuTyMstK/cLLScknXZr9wstE8jLLScknXZ//+KT+Se3YYaYd2GAACKT+Se3Yb//4pPGmHdhgAAik9PI/U2/3/mD6/c9Tb/f+YPTyP1Nq/c9Tav3FVITyNVSP9/JCRPI1VIr9xVSP9/JCT2NPilCMv4pZleA8gIy/il9jT4pZleA8j//3pVAAB6VU8jqjOv3KozAAB6Vf//elVPI6ozr9yqMxphQIMAAKha//+oWuSeQIMAAKhaGmFAg///qFrknkCDAAAkYk8jcUKv3HFC//8kYk8jcUIAACRir9xxQv//JGIaYSyGAACIXv//iF7kniyGAACIXhphLIb//4he5J4shhphTIL2NC9gCMsvYOSeTIL2NC9gGmFMggjLL2DknkyC///GUuSeNoQaYTaEAADGUuSeNoT//8ZSGmE2hAAAxlIAAD5M//8+TOSew4QaYcOE//8+TAAAPkzknsOEGmHDhAjLG6aZXh3I9jQbppleHcgIyxum9jQbpgjLrl7knp6CGmGegvY0rl7knp6CCMuuXhphnoL2NK5emV6qxfY0xaIIy8Wi9jTFopleqsUIy8WinJIf0E8jtqmv3LapTyO2qZySH9Cv3LapAABXRP//V0TkniuHGmErh///V0QAAFdE5J4rhxphK4caYduB9jT2YQjL9mHkntuB9jT2YRph24EIy/Zh5J7bgQ=="),
+"format": 34896613399,
+"index_count": 312,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACAAJAAYACgALAAwADQAMAAsADgAPABAAEQASABMAFAAVABYAFgAXABQAGAAZABoAGwAaABkAHAAdAB4AHwAgACEAIgAjACQAJAAlACIAJgAnACgAKQAoACcAKgArACwALAAtACoALgAvADAAMQAwAC8AMgAzADQANAA1ADIANgA3ADgAOQA4ADcAOgA7ADwAPQA+AD8AQABBAEIAQwBEAEUARgBHAEgASABJAEYASgBLAEwATQBMAEsATgBPAFAAUABRAE4AUgBTAFQAVQBUAFMAVgBXAFgAWABZAFYAWgBbAFwAXQBcAFsAXgBfAGAAYABhAF4AYgBjAGQAZQBkAGMAZgBnAGgAaQBqAGsAbABtAG4AbgBvAGwAcABxAHIAcwByAHEAdAB1AHYAdwB4AHkAegB7AHwAfQB+AH8AgACBAIIAgwCEAIUAhgCHAIgAiACJAIYAigCLAIwAjQCMAIsAjgCPAJAAkACRAI4AkgCTAJQAlQCUAJMAlgCXAJgAmACZAJYAmgCbAJwAnQCcAJsAngCfAKAAoAChAJ4AogCjAKQApQCkAKMApgCnAKgAqACpAKYAqgCrAKwArQCsAKsArgCvALAAsACxAK4AsgCzALQAtQC0ALMAtgC3ALgAuAC5ALYAugC7ALwAvQC8ALsAvgC/AMAAwQDCAMMAxADFAMYAxgDHAMQAyADJAMoAywDKAMkAzADNAM4AzwDQANEA0gDTANQA1QDWANcA2ADZANoA2gDbANgA3ADdAN4A3wDeAN0A4ADhAOIA4gDjAOAA5ADlAOYA5wDmAOUA"),
+"material": SubResource("StandardMaterial3D_k0t3k"),
+"name": "grass",
+"primitive": 3,
+"uv_scale": Vector4(6.964567, 29.703558, 0, 0),
+"vertex_count": 232,
+"vertex_data": PackedByteArray("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rFENGPhpQ82sUQ0YBpZDze12AAARiUPNrFENGPhphiHtdgAA7XaGIaxRDRgGloYh7XYAABGJhiH///9/////f////38AAP9/AAD/fwAA/39pr///aa///2mv//9pr////39pr/9/aa//f2mv/39przqgib86oIm/OqCJv+QZ8czkGfHM5BnxzP9/I/L/fyPy/38j8v9/I/L/fyNy/38jcv9/I3L/fyNyzqZgss6mYLLOpmCylyPL0Zcjy9GXI8vRVZpSy1WaUstVmlLLVZpSywsThckLE4XJCxOFyQsThcn///9/////f////3////9/AAD/fwAA/38AAP9/AAD/f/9/x9//f8ff/3/H3/9/x9//f8df/3/HX/9/x1//f8df////f////3////9/AAD/fwAA/38AAP9/31hATt9YQE7fWEBO3dvvLd3b7y3d2+8t/3+lz/9/pc//f6XP/3+lz/9/pk//f6ZP/3+mT/9/pk/Yymwl2MpsJdjKbCXYymwlqVCrXqlQq16pUKteqVCrXpmhyryZocq8maHKvJmhyry2G9rNthvazbYb2s22G9rN/3872/9/O9v/fzvb/3872/9/O1v/fztb/387W/9/O1v/f7vL/3+7y/9/u8v/f7xL/3+8S/9/vEv///9/////f////3////9/AAD/fwAA/38AAP9/AAD/f/9/4dH/f+HR/3/h0f9/4lH/f+JR/3/iUR7JjyQeyY8kHsmPJP1PA2D9TwNg/U8DYA61//8Otf//DrX///9/DrX/fw61/38Otf///3////9/////f////38AAP9/AAD/fwAA/38AAP9/HrwPHh68Dx4evA8eHrwPHplLy2iZS8tomUvLaJlLy2jjwHEg48BxIOPAcSDjwHEgFk3SZRZN0mUWTdJlFk3SZfygfhD8oH4Q/KB+EPygfhAcRcZ1HEXGdRxFxnUcRcZ1AAD/fwAA/38AAP9/AAD/f////3////9/////f////3////9/////f////3////9/AAD/fwAA/38AAP9/AAD/f2OXN9FjlzfRY5c30WOXN9EcEA3IHBANyBwQDcgcEA3IAAD/fwAA/38AAP9/////f////3////9/Dl/iQQ5f4kEOX+JBDl/iQSrllTIq5ZUyKuWVMirllTIbN4zbGzeM2xs3jNsXsM6fF7DOnxewzp/Px+gjz8foI8/H6CN/TwBhf08AYX9PAGHAinzqwIp86sCKfOrAinzqJgYSwyYGEsMmBhLDJgYSw/g1+9r4Nfva+DX72vg1+9qnr66gp6+uoKevrqCnr66g")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_vp78p")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_stwhl"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_d6h8j"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_s8eie"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6b4g0"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ljami"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3ujkp"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_eccs8"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ub47d"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ybago"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_18vwo"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ek8ui"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ketin"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yny61"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_iy3m0"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_k0ma1"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dww2v"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tqpxr"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_301gc"]
+resource_name = "leafsDark"
+albedo_color = Color(0.44750372, 0.8272109, 0.836007, 1)
+metallic = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bba66"]
+resource_name = "woodBarkDark"
+albedo_color = Color(0.9063318, 0.71026444, 0.6410877, 1)
+metallic = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3krdo"]
+resource_name = "_defaultMat"
+metallic = 1.0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_fapn5"]
+_surfaces = [{
+"aabb": AABB(-0.4324826, 0.44641048, -0.37213597, 0.84711504, 0.88600653, 0.7616025),
+"format": 34896613377,
+"index_count": 840,
+"index_data": PackedByteArray("AAABAAIAAQAAAAMAAwAEAAEAAQAEAAUABQAEAAYABgAEAAMAAQAFAAcABwACAAEABgAIAAUABwAFAAgAAwAJAAYACgAGAAkACgAIAAYACwAJAAMACwAMAAkACQAMAAoAAwANAAsADQADAAAADgALAA0ADAALAA4ADQAAAA8AAgAPAAAADQAQAA4ADwAQAA0AEQAPAAIAEAAPABEAAgASABEAAgAHABIAEAARABMAEwAOABAAEwARABIADgATABQADgAUAAwAEgAVABMAEgAHABYAFgAVABIACAAWAAcAEwAVABcAFwAVABYAFwAWAAgAFwAUABMACAAKABcAGAAUABcAFwAKABgAGAAZABQADAAUABkAGgAYAAoACgAMABoADAAbABoADAAZABsAHAAdAB4AHwAdABwAHgAdACAAIAAdAB8AHgAhABwAIgAcACEAHwAcACIAIwAhAB4AIgAkAB8AJAAlAB8AJgAkACIAJQAkACYAIQAnACIAKAAfACUAHwAoACAAIAApAB4AIwAeACkAKgAgACgAJQArACgAKgAoACsALAApACAAIAAqACwALAAtACkAKQAtACMALgAsACoALQAsAC4AKwAvACoAMAAjAC0ALQAxADAAIwAwADIALQAzADEAMgA0ACMALQA1ADMALgA1AC0ANQA2ADMAIQAjADQANgA1ADcALgA3ADUAOAA2ADcANAAyADgANAA4ADcANAAnACEANAA5ACcANwA5ADQAJwA5ADoAOgA5ADcAOgA7ACcAJwA7ACIANwA8ADoAIgA7AD0APQA7ADoAPgA8ADcANwAuAD4AOgA8AD8APAA+AD8AOgA/AD0AQAA+AC4APgBAAD8AKgBAAC4ALwBAACoAQAAvAEEAQQA/AEAAQgBBAC8ALwArAEIAKwAlAEIAQwBBAEIAQwA/AEEARABCACUAJgBEACUAQgBFAEMAIgA9ACYAQgBEAEYARwBEACYARgBEAEcAJgBIAEcAPQBIACYARgBHAEkASQBHAEgARgBKAEIARQBCAEoASgBGAEsASQBLAEYARQBKAEwASwBMAEoATABNAEUATgBMAEsATQBMAE4ASwBPAE4ASwBJAE8ATQBOAFAAUABOAE8ARQBNAFEAUABRAE0AUQBDAEUAPwBDAFEAUQBQAFIAUQBSAD8ATwBTAFAAPwBSAFQAPwBUAFUAVgBUAFIAVwBWAFIAPQA/AFUAVQBXAD0AWABSAFAAVwBSAFgAWAA9AFcAUABTAFgAPQBYAFkAWgBYAFMAWABaAFkAPQBZAFsASAA9AFsAWwBcAEgASABcAEkAWwBZAF0AWQBaAF4AXgBdAFkAXwBbAF0AWwBfAFwAXABgAEkAYABcAF8AYABhAEkATwBJAGEAYQBiAE8AYgBTAE8AYwBaAFMAUwBiAGMAWgBjAF4AZABjAGIAZABiAGEAYwBkAF4AZQBhAGAAZQBkAGEAYABmAGUAXwBmAGAAZABlAGcAaABeAGQAZABnAGgAZwBlAGkAaQBlAGYAaQBqAGcAaABnAGoAZgBrAGkAawBmAF8AaQBsAGoAbABpAGsAagBtAGgAagBsAG4AbgBtAGoAXwBvAGsAcABtAG4AaABtAHAAcQBuAGwAcABuAHEAawByAGwAawBvAHIAbAByAHEAcgBvAHMAcwBxAHIAcwBvAF8AcQB0AHAAdABxAHMAXwB1AHMAdABzAHUAXQB1AF8AXQB2AHUAdQB2AHQAdgBdAF4AcAB0AHcAdAB2AHgAeAB3AHQAdgB5AHgAdwB6AHAAXgB6AHYAdgB6AHkAXgBoAHoAcAB6AGgAdwB7AHoAewB5AHoAfAB9AH4AfwB+AH0AfgCAAHwAgQB8AIAAggCAAH4AgACCAIMAgACDAIEAfgCEAIIAfgB/AIQAgwCCAIUAhQCCAIQAhQCGAIMAgQCDAIYAhACHAIUAhwCEAH8AhQCIAIYAiACFAIcAhgCJAIEAhgCIAIoAigCJAIYAfwCLAIcAjACJAIoAgQCJAIwAjQCKAIgAjACKAI0AhwCOAIgAhwCLAI4AiACOAI0AjgCLAI8AjwCNAI4AjwCLAH8AjQCQAIwAkACNAI8AfwCRAI8AkACPAJEAfQCRAH8AjACQAJIAfQCTAJEAkQCTAJAAkwB9AHwAkACUAJIAlACQAJMAkwCVAJQAkwCWAJUAfACXAJMAkwCXAJYAkgCWAJcAkgCXAIwAfACBAJcAjACXAIEA"),
+"name": "leafsDark",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 152,
+"vertex_data": PackedByteArray("9ZTgMVMxAABucOAxUzEAAG5w4DGyCAAAAJVwKgU6AABjcHAqBToAAJxoZypVMQAAY3BvBwU6AACcaGcqsAgAAJxoeAdVMQAAAJVvBwU6AABucAAAUzEAAMeceAdVMQAA9ZQAAFMxAADHnGcqVTEAAMeceAewCAAA9ZTgMbIIAADHnGcqsAgAAACVcCoAAAAAY3BwKgAAAAAAlW8HAAAAAPWUAACyCAAAY3BvBwAAAACcaHgHsAgAAG5wAACyCAAAlnoAAB8XAADNigAAHxcAAPV6AABIKgAAbooAAEgqAAC0UkqJifQAAPVcVYn//wAA9VwtW///AAADXSOThvQAADuNVYn//wAAtFI5W4n0AAC0UkqJTMIAAANdYFGG9AAAzlkTkDzKAAADXSOTPMoAAGtSE5A8ygAAtFI5W/K+AAAtjSOThvQAADuNLVv//wAAfJdKiYn0AAAtjSOTPMoAAHyXOVuJ9AAALY1gUYb0AAB8lzlb8r4AAGKQE5A8ygAAbXBgUaPVAAAtgGBRo9UAAM12YFH1vgAAdoVgUfW+AAADXWBR9b4AAC2NYFH1vgAAloUFUjO+AAA7jS1bfbMAAAB3BVIzvgAA9VwtW32zAAD1XKF8fbMAALRSbIbyvgAAO42hfH2zAACIUnd8TLMAAHyXbIbyvgAA27J3fEyzAAB8l0qJTMIAAPiyE5A8ygAA+LJj7DzKAAB6xyqQUbMAAGtSY+w8ygAAesdL7FGzAACIUv//TLMAAOk9S+xRswAA6T0qkFGzAADpPUvsJEgAANuy//9MswAAiFL//yhIAADbsv//KEgAAHrHS+wkSAAA+LJj7DgxAABrUmPsODEAAPiyE5A4MQAAescqkCRIAADbsnd8KEgAAGtSE5A4MQAApIt3fCGEAAC/eXd8IYQAAKSLd3w7cAAAv3l3fDtwAACIUnd8KEgAAAhCOoyXdQAACEI6jCVIAABAP+KOsngAAOk9KpCyeAAACEKmYpd1AAAIQqZiJUIAADA46o6XgAAA6T3PkpZ1AADpPc+SJEgAALBAJ5AJRQAACELfjglFAAAIQt+OJUIAACI4VJgoQgAAIjhUmJV1AAAwOOqOJTcAADA4m2IlNwAA5glUmChCAADYCeqOJTcAAOYJVJiVdQAAAADfjiVCAADYCZtiJTcAAAAApmIlQgAA2AnqjpeAAADmCTFZKEIAAAAApmKXdQAAAADfjpd1AADYCZtil4AAAOYJMVmVdQAAMDibYpeAAAAiODFZlXUAAMsYMVn7VAAAyxgxWcllAABtLDFZqWkAACI4MVkoQgAAbSwxWexZAAD//38sz0MAAP//fywehAAA///GYx6EAACw89Rj3pEAAP//xmPPQwAAsPNxLA82AACf85hv0kMAALDz1GMPNgAAn/OYbxuEAADUuZhv0kMAAMK51GMPNgAA1LmYbxuEAAB0rcZjz0MAAMK5cSwPNgAAdK1/LM9DAADCudRj3pEAANS5rSDSQwAAdK1/LB6EAAB0rcZjHoQAAMK5cSzekQAA1LmtIBuEAACw83Es3pEAAKbFrSAIZwAAn/OtIBuEAAD0wq0gcXgAAO7brSDMcQAAzd6tIEBfAACf860g0kMAAA==")
+}, {
+"aabb": AABB(-0.35071233, 0, -0.30333996, 0.65550196, 0.87719196, 0.5667925),
+"format": 34896613377,
+"index_count": 360,
+"index_data": PackedByteArray("AAABAAIAAwACAAEAAQAEAAMAAgADAAUABgAEAAEAAgAFAAcABwAFAAYACAAGAAEABgAIAAcAAQAAAAgABwAJAAIAAgAJAAAACQAHAAoACgAHAAgACwAIAAAACAALAAoAAAAMAAsADAAAAAkACgALAA0ADQALAA4ADgALAAwADQAPAAoADgAQAA0ACgAPABEAEgARABAAEAAOABIAEQASAAoACgATAAkACQATAAwAFAAOAAwAEgAOABQAFQAKABIAEwAKABUAFgASABQAEgAXABUAFwASABYAFQAXABgAGAAZABUAGAAXABoAFgAaABcAGwAYABoAGgAcABsAHQAVABkAHAAaAB0AHQAaABYAHQAeABwAHQAZAB8AHwAeAB0AFQAdABMAFgATAB0AEwAWACAAFAAgABYAEwAgACEAIgAgABQAIwAhACAAIAAiACMAJAAjACIAIgAlACQAJQAiACYAFAAmACIAJgAnACUAKAAnACYAJAAoACkAJgApACgAKQAjACQAKQAmABQAIwApACoAFAAqACkAKgAhACMAKgAUAAwADAArACoAKwAMABMALAArABMAKgArAC0AKwAsAC4ALgAtACsALQAvACoALwAtADAAMAAxAC8AMgAwAC0ALQAuADIAMgAzADAAMwAyADQANAAyAC4ALwAxADQANAA1ADMAMQA1ADQANAA2AC8ALgA2ADQAKgAvADYANwA2AC4ANgA3ACoALgAsADcAIQAqADcAOAA3ACwAIQA3ADgALAA5ADgAOQAsABMAOgATACEAEwA6ADkAIQA7ADoAOAA7ACEAPAA4ADkAOwA4ADwAPQA5ADoAOQA9ADwAPgA6ADsAOgA+AD0AOwA/AD4APAA/ADsAPQA+AEAAQAA+AD8AQQA/ADwAPwBBAEAAPABCAEEAQABBAEIAQgA8AD0AQABDAD0APQBDAEIAQgBDAEAA"),
+"name": "woodBarkDark",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 68,
+"vertex_data": PackedByteArray("cz7RthxqAAAAAO3ZhlMAAAAA7dlbagAAGwBe3LNpAAAbAF7cHlMAAHoZXtzobgAAehle3MFZAAAtPy3HinwAAC0/LcdjZwAAcz7RtvGAAADlevi8DIEAAOV6+LyCYAAAx3nNo7JkAABnff//u3cAAAiX+LyCYAAAZ33//3mSAACGlP//u3cAAIaU//95kgAACJf4vAyBAADHec2j0ocAAJqYmZlkZgAAin83ybPMAAAmmM2j0ocAAGSSN8mzzAAAtIwf1YDgAADaeR/VgOAAACOTW7g80QAAi4x41IThAAC1hXjU//8AAMp+W7g80QAAXHF41P//AACYeXjUhOEAAH6YD5zniQAAgpk5hQ2QAAAj2I2hU4QAAMTYZJMjiAAASfxJo9d5AAAC3EmjxIIAADTYBqBPbgAAft9Jo2BrAAD//0mj62AAANbYxJGucAAAoJmZgjhqAABNeJmCOGoAACF3J2iebgAA935BebgwAABDfmNpXDMAAPaSQXm4MAAA935Hgr0ZAAD2kkeCvRkAAEN+On3XAAAAfH5HggAAAACqkzp91wAAAHGTR4IAAAAAqpNjaVwzAADNmidonm4AAPmbtk0EcwAA9HW2TQRzAAD0dbZN/Z4AAPmbtk39ngAAp6GJDnNsAABGcIkOc2wAAEZwiQ6PpQAAp6GJDo+lAAC7cwAAj6EAADKeAACPoQAAMp4AAHNwAAC7cwAAc3AAAA==")
+}, {
+"aabb": AABB(-0.036022615, 0.6475235, -0.08966362, 0.07204522, 1e-05, 0.07204523),
+"format": 34896613377,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAgADAAAA"),
+"name": "_defaultMat",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("//8AAP//AAAAAAAA//8AAAAAAAAAAAAA//8AAAAAAAA=")
+}]
+blend_shape_mode = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_kip03"]
+resource_name = "tree_detailed_dark_Mesh tree_detailed_dark"
+_surfaces = [{
+"aabb": AABB(-0.4324826, 0.44641048, -0.37213597, 0.84711504, 0.88600653, 0.7616025),
+"attribute_data": PackedByteArray("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"),
+"format": 34896613399,
+"index_count": 840,
+"index_data": PackedByteArray("AAABAAIAAgADAAAABAAFAAYABgAHAAQACAAJAAoACwAJAAgACwAIAAwADAANAAsACgAOAAgACgAPAA4ADwAQAA4AEAARAA4AEgAOABEAEQATABIAFAAVABYAFgAXABQAGAAZABoAGgAbABgAHAAdAB4AHgAfABwAHwAgABwAIQAcACAAIgAhACAAIAAjACIAJAAlACYAJgAnACQAKAApACoAKgArACgALAAtAC4ALgAvACwAMAAxADIAMwA0ADUANgA3ADgAOAA5ADYAOgA7ADwAPAA9ADoAPgA/AEAAQQBCAEMARABFAEYARgBHAEQASABJAEoASgBLAEgATABNAE4ATgBPAEwAUABRAFIAUwBUAFUAVgBXAFgAWABZAFYAWgBbAFwAXABdAFoAXgBfAGAAYABhAF4AYgBjAGQAZQBmAGcAZwBoAGUAZgBpAGcAZwBqAGgAaQBmAGsAawBoAGoAawBsAGkAawBqAGwAbQBuAG8AbwBwAG0AcQByAHMAcwB0AHEAdQB2AHcAdwB4AHUAeQB6AHsAewB8AHkAfQB7AHoAewB+AHwAegB/AH0AfgCAAHwAfwCAAH0AfwB8AIAAgQCCAIMAhACFAIYAhgCHAIQAiACJAIoAigCLAIgAjACNAI4AjgCPAIwAkACRAJIAkwCUAJUAlgCXAJgAmACZAJYAmgCbAJwAnQCeAJ8AnwCgAJ0AoQCiAKMAowCkAKEApQCmAKcApwCoAKUAqQCqAKsArACtAK4ArgCvAKwAsACxALIAsgCzALAAtAC1ALYAtwC4ALkAuQC6ALcAuwC8AL0AvQC+ALsAvwDAAMEAwQDCAL8AwwDEAMUAxgDHAMgAyADJAMYAygDLAMwAzADNAMoAzgDPANAA0QDSANMA0wDUANEA1QDWANcA1wDYANUA2ADZANUA2gDbANwA3ADdANoA3QDeANoA3wDgAOEA4QDiAN8A4wDkAOUA5QDmAOMA5gDnAOMA6ADpAOoA6gDrAOgA6wDsAOgA7ADtAOgA7gDvAPAA8ADxAO4A8gDzAPQA9QD2APcA9wD4APUA+QD6APsA+wD8APkA/QD+AP8AAAEBAQIBAgEDAQABBAEFAQYBBgEHAQQBCAEJAQoBCgELAQgBDAENAQ4BDgEPAQwBEAERARIBEwEUARUBFgEXARgBGAEZARYBGgEbARwBHAEdARoBHgEfASABIAEhAR4BIgEjASQBJAElASIBJgEnASgBKQEqASsBKwEsASkBLQEuAS8BLwEwAS0BMQEyATMBMwE0ATEBNQE2ATcBOAE5AToBOgE7ATgBPAE9AT4BPwFAAUEBQQFCAT8BQwFEAUUBRQFGAUMBRwFIAUkBSQFKAUcBSwFMAU0BTQFOAUsBTwFQAVEBUQFSAU8BUwFRAVABUQFUAVIBUAFVAVMBVQFSAVQBVQFWAVMBVQFUAVYBVwFYAVkBWgFbAVwBXQFeAV8BYAFhAWIBYgFjAWABZAFlAWYBZwFmAWUBZQFoAWcBaQFqAWsBawFsAWkBbQFuAW8BbwFwAW0BcQFyAXMBdAF1AXYBdwF4AXkBeQF6AXcBewF8AX0BfgF/AYABgQGCAYMBgwGEAYEBhQGDAYIBgwGGAYQBggGHAYUBhgGIAYQBhwGIAYUBhwGEAYgBiQGKAYsBiwGMAYkBjAGNAYkBjgGPAZABkAGRAY4BkAGSAZEBkQGTAY4BkwGUAY4BlAGTAZUBlgGXAZgBmQGaAZsBmwGcAZkBnAGdAZkBngGfAaABoQGiAaMBowGkAaEBpQGmAacBpwGoAaUBqQGqAasBqwGsAakBrQGuAa8BsAGxAbIBswG0AbUBtQG2AbMBtwG4AbkBuQG6AbcBuwG8Ab0BvgG7Ab0BvgG9Ab8BwAG+Ab8BvwHBAcABwgHDAcQBxAHFAcIBxgHHAcgByAHJAcYBygHLAcwBzAHNAcoBzgHPAdAB0AHRAc4B0QHSAc4B0wHUAdUB1gHXAdgB2AHZAdYB2gHbAdwB3AHdAdoB3gHfAeAB4AHhAd4B4gHjAeQB5QHmAecB5wHoAeUB6QHqAesB6wHsAekB7QHuAe8B7wHwAe0B8AHxAe0B8QHyAe0B8wH0AfUB9QH2AfMB9QH3AfYB9wH4AfYB9wH5AfgB+gH7AfwB/AH9AfoB/gH/AQACAQICAgMCAwIEAgECBAIFAgECBgIHAggCCAIJAgYCCQIIAgoCCgILAgkCCgIMAgsCCgINAgwC"),
+"material": SubResource("StandardMaterial3D_301gc"),
+"name": "leafsDark",
+"primitive": 3,
+"uv_scale": Vector4(31.488846, 97.57118, 0, 0),
+"vertex_count": 526,
+"vertex_data": PackedByteArray("9ZTgMVMx/79ucOAxUzH/v25w4DGyCP+/9ZTgMbII/7+0UkqJifQYoPVcVYn//xig9VwtW///GKC0UjlbifQYoIhSd3xMsxygtFJshvK+HKD1XKF8fbMcoLRSSolMwhyga1ITkDzKHKDOWROQPMocoNuyd3xMsxygO42hfH2zHKB8l2yG8r4coHyXSolMwhyg+LITkDzKHKBikBOQPMocoHyXOVuJ9BigO40tW///GKA7jVWJ//8YoHyXSomJ9BigO41Vif//AIA7jS1b//8AgPVcLVv//wCA9VxVif//AID4smPsPMoAgPiyE5A8ygCAYpATkDzKAIAtjSOTPMoAgANdI5M8ygCAa1Jj7DzKAIBrUhOQPMoAgM5ZE5A8ygCAO40tW32z5t98lzlb8r7m33yXbIbyvubfO42hfH2z5t///38sz0P/v///fywehP+////GYx6E/7///8Zjz0P/v///fyzPQ/3Fn/OtINJD/cWf860gG4T9xf//fywehP3F1LmYb9JDaOF0rcZjz0No4cK51GMPNmjh1LmYbxuEd6jCudRj3pF3qHStxmMehHeodK3GY89D/790rcZjHoT/v3StfywehP+/dK1/LM9D/7/Uua0g0kP9xXStfyzPQ/3FdK1/LB6E/cXUua0gG4T9xQNdYFGG9HeotFI5W4n0d6j1XC1b//93qNS5rSDSQ2jhwrlxLA82aOF0rX8sz0No4cecZypVMf3F9ZTgMVMx/cX1lOAxsgj9xcecZyqwCP3FAJVvBwAA//9jcG8HAAD//25wAACyCP//9ZQAALII///bsv//TLP/v4hS//9Ms/+/iFL//yhI/7/bsv//KEj/v4hSd3xMs3eo6T0qkFGzd6hrUhOQPMp3qHyXSomJ9HeoO41Vif//d6gtjSOThvR3qP//xmMehP3Fn/OYbxuE/cWf85hv0kP9xf//xmPPQ/3FwrnUYw82///CuXEsDzb//7DzcSwPNv//sPPUYw82//8DXWBR9b79xbRSOVvyvv3FtFI5W4n0/cUDXWBRhvT9xQNdYFH1vmjh9VwtW32zaOG0Ujlb8r5o4dS5rSDSQ///1LmtIBuE//+mxa0gCGf//5/zrSDSQ///9MKtIHF4///N3q0gQF///5/zrSAbhP//7tutIMxx///UuZhvG4T9xXStxmMehP3FdK3GY89D/cXUuZhv0kP9xWtSY+w4Mf//a1ITkDgx///4shOQODH///iyY+w4Mf//fJc5W/K+/cUtjWBR9b79xS2NYFGG9P3FfJc5W4n0/cWIUnd8KEj//4hSd3xMs///v3l3fDtw///bsnd8KEj//795d3whhP//pIt3fDtw///bsnd8TLP//6SLd3whhP/////GY89DaOGf85hv0kNo4bDz1GMPNmjh+LITkDgx//9rUhOQODH//4hSd3woSP//27J3fChI//+IUv//TLP9xek9S+xRs/3F6T1L7CRI/cWIUv//KEj9xdS5mG/SQ///wrnUYw82//+w89RjDzb//5/zmG/SQ///1LmtIBuEd6h0rX8sHoR3qMK5cSzekXeox5xnKrAIaOH1lOAxsgho4QCVcCoAAGjh6T1L7FGzGKBrUmPsPMoYoGtSE5A8yhig6T0qkFGzGKDHnGcqVTF3qACVcCoFOneo9ZTgMVMxd6j4shOQODHm33rHKpAkSObfesdL7CRI5t/4smPsODHm3wNdYFGG9Byg9VwtW///HKA7jS1b//8coC2NYFGG9BygsPPUY96RHKDCudRj3pEcoNS5mG8bhBygn/OYbxuEHKB6xyqQJEho4fiyE5A4MWjh27J3fChIaOGw83EsDzb//8K5cSwPNv//1LmtINJD//+f860g0kP/////fywehBigsPNxLN6RGKCw89Rj3pEYoP//xmMehBig//9/LB6Ed6if860gG4R3qLDzcSzekXeo+LJj7DzKHKBrUmPsPMocoIhS//9Msxyg27L//0yzHKCw83EsDzbm3///fyzPQ+bf///GY89D5t+w89RjDzbm33rHS+xRs/3F27L//0yz/cXbsv//KEj9xXrHS+wkSP3FiFL//yhIaOHpPUvsJEho4WtSY+w4MWjhbnAAALII/cWcaHgHsAj9xZxoeAdVMf3FbnAAAFMx/cUAlW8HAADm38eceAewCObfx5xnKrAI5t8AlXAqAADm3+YJMVmVdXeoAACmYpd1d6jYCZtil4B3qAhCpmIlQv3FIjgxWShC/cUiODFZlXX9xQhCpmKXdf3FfJc5W/K+/798lzlbifT/v3yXSomJ9P+/fJdKiUzC/798l2yG8r7/vwNdI5OG9P3FtFJKiYn0/cW0UkqJTML9xc5ZE5A8yv3FA10jkzzK/cUAlXAqBToAgACVbwcFOgCA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9VyhfH2z///1XC1bfbP//zuNLVt9s///O42hfH2z///HnHgHsAj9xfWUAACyCP3F9ZQAAFMx/cXHnHgHVTH9xTA4m2IlN///2AmbYiU3///mCTFZKEL//yI4MVkoQv//fJdKiYn0/cUtjSOThvT9xS2NI5M8yv3FYpATkDzK/cV8l0qJTML9xeYJVJgoQmjhAADfjiVCaOHYCeqOJTdo4TA46o6XgACAMDibYpeAAIDYCZtil4AAgNgJ6o6XgACAAADfjiVC/78AAN+Ol3X/vwAApmKXdf+/AACmYiVC/7/YCeqOJTf//9gJm2IlN///MDibYiU3//8wOOqOJTf//3rHS+xRs3eo+LJj7DzKd6jbsv//TLN3qG5w4DFTMf3FnGhnKlUx/cWcaGcqsAj9xW5w4DGyCP3FIjhUmJV1/7/mCVSYlXX/v+YJVJgoQv+/IjhUmChC/7/pPUvsJEj/v+k9S+xRs/+/6T0qkFGz/7/pPSqQsnj/v+k9z5KWdf+/6T3PkiRI/7/pPc+SlnX9xSI4VJiVdf3FIjhUmChC/cXpPc+SJEj9xQhC344lQv3FsEAnkAlF/cUIQt+OCUX9xeYJMVmVdRyg2AmbYpeAHKAwOJtil4AcoCI4MVmVdRygbnAAALIIaOFjcG8HAABo4ZxoeAewCGjha1Jj7Dgx5t/pPUvsJEjm3+k9z5IkSObfsEAnkAlF5t9rUhOQODHm3812YFH1vv//A11gUfW+//8DXWBRhvT//21wYFGj1f//LY1gUYb0//8tgGBRo9X//3aFYFH1vv//LY1gUfW+//////9/////f////3////9//3////9/////f/7//3/+/wAA/38BAASAAAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/f/9/AAD/fwAA/38AAP9/AAD/f////3////9/////f////3////9/////f////3////9/////f////3////9/////fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP1iAzr9YgM6/WIDOv1iAzq8ixvYvIsb2LyLG9gEr169BK9evQSvXr3/f////3////9/////f////EX94vxF/eL8Rf3i/EX94l49+dBePfnQXj350BxYQfQcWEH0HFhB9AK6AR0CugEdAroBHQK6AR2Xpf//l6X//5el//+Xpf//////f////3////9/////f149+dBePfnQXj350KDCBS+gwgUvoMIFLwK6AR0CugEdAroBHQK6AR3/f////3////9/////f////EX94vxF/eL8Rf3i/EX94hxYQfQcWEH0HFhB9P9//z//f/8//3//P/9//z//f/8//3//P/9//z//f/8/AZ37xQGd+8UBnfvFAZ37xf9/////f////3////9////9YgM6/WIDOv1iAzr9YgM6/3//P/9//z//f/8//3//P/9//z//f/8//3//P/9//z/jp70L46e9C+OnvQuXpf//l6X//5el//+Xpf//AZ37xQGd+8UBnfvFAZ37xf9/Ztr/f2ba/39m2v9/ZtpePfnQXj350F49+dDjp70L46e9C+OnvQv/f/7//3/+//9//v//f/7/oMIFL6DCBS+gwgUv/38AAP9/AAD/fwAA/38AAAAA/38AAP9/AAD/fwAA/3////9/////f////3////9/QnTjJ0J04ydCdOMnl6X//5el//+Xpf//l6X///9/AAD/fwAA/38AAP9/AAD6UKBC+lCgQvpQoEL///9/////f////3////9//38AAP9/AAD/fwAA/38AAAK6AR0CugEdAroBHQK6AR28ixvYvIsb2LyLG9j8Rf3i/EX94vxF/eL8Rf3i/38AAP9/AAD/fwAA/38AAF49+dBePfnQXj350P1iAzr9YgM6/WIDOv1iAzr/fwAA/38AAP9/AAD/fwAA/38AAAGd+8UBnfvFAZ37xQGd+8UBnfvF/3////9/////f////3////9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/39n2v9/Z9r/f2fa/39n2vpQoEL6UKBC+lCgQgAA/38AAP9/AAD/fwAA/3//f////3////9/////f///vIsb2LyLG9i8ixvY/39n2v9/Z9r/f2fa/39n2v9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/39m2v9/Ztr/f2ba/39m2gSvXr0Er169BK9evaDCBS+gwgUvoMIFL/9/////f////3/+//9//v////9/////f////3////9//3////9/////f////3////9/AAD/fwAA/38AAP9/AABCdOMnQnTjJ0J04yf/f////3////9/////f////3/+//9//v//f////3/+//9/////f////3////9////6UKBC+lCgQvpQoEL///9/////f////3////9/Xj350F49+dBePfnQ/3////9/////f////3////9/AAD/fwAA/38AAP9/AAAAAP9/AAD/fwAA/38AAP9/AZ37xQGd+8UBnfvFAZ37xf9//z//f/8//3//P/9//z//f/8//3//P/9//z//f/8/+lCgQvpQoEL6UKBCQnTjJ0J04ydCdOMn+lCgQvpQoEL6UKBC/3////9//v//f/7//3/+/6DCBS+gwgUvoMIFL6DCBS+gwgUv////f////3////9/////f/1iAzr9YgM6/WIDOv1iAzoEr169BK9evQSvXr3ip70L4qe9C+KnvQv8Rf3i/EX94vxF/eL8Rf3iQnTjJ0J04ydCdOMnBK9evQSvXr0Er169/3//P/9//z//f/8//3//P/9//z//f/8//3//P/9//z//f/7//3////9/////f////3/+/2da/v+Xpf//l6X//5el/v+Xpf//Z1r+/2da/v+Xpf//BK9evQSvXr0Er169HFhB9BxYQfQcWEH0HFhB9BxYQfTip70L4qe9C+KnvQv///9/////f////3////9/////f////3////9/////f/9/AAD/fwAA/38AAP9/AABCdOMnQnTjJ0J04ycbWEH0G1hB9BtYQfT/f/7//3/+//9//v//f/7//3////9/////f////3////xF/eL8Rf3i/EX94vxF/eL8Rf3i/EX94vxF/eL/f////3////9/////f////WIDOv1iAzr9YgM6/WIDOpel//+Xpf//l6X//5el//8CugEdAroBHQK6AR0CugEdAroBHbyLG9i8ixvYvIsb2P9/////f////3////9/////f////3////9/////f////3////9/////f////3///6DCBS+gwgUvoMIFLwGd+8UBnfvFAZ37xQGd+8X///9/////f////3////9//3////9/////f////3////9/////f///AroBHQK6AR0CugEdAroBHQK6AR0CugEdAroBHQAA/38AAP9/AAD/fwAA/38bWEH0G1hB9BtYQfT/f/7//3/+//9//v//f/7//3////9//z//f/8//3//P/9//z//f/8//3//P/9//z//f/8/")
+}, {
+"aabb": AABB(-0.35071233, 0, -0.30333996, 0.65550196, 0.87719196, 0.5667925),
+"attribute_data": PackedByteArray("N2g0NNVWFxZoaBcWynk0NPzoZ0MbwqNNIMRzRc/Vy0Cg6ctAdEzHJZ0mPRfZPj0XpD/mFqtPDh2mPdgemj1pJ9QDBxXGGr8T1gO/E5BqoUAPbkROAkCiTek9c0X5lcZ65pJjghhtY4IFasZ6Fn+ZL+uQA1wTbwNcsGtfTk1ou0AMZJkvq3yeI3ONniNjiKEsm3ehLOdnARRoaEMV1VZDFYVWARSGiY1l4I9OeR5wTnl4do1l+ZXGeuaSY4IYbWOCBWrGegVqxnr5lcZ65pJjghhtY4KINsgxezYuOaURFzCuLxcw3jtzReM9o00CF2dDLyrLQF4Wy0BKikUEhYyvJ3lzrye0dUUEGG1jggVqxnr5lcZ65pJjgrmOi0DrkJhdE2+YXXpyijDSjZc0hI2KMP//gxPwxbolxcU+HdDoPxL4/z8SGG2je+aSo3vmkgCMGG0AjOWIN0oZdzdKGXdBQeWIQUEMZCddN2hHRMp5R0QWfyddH4aSIrV4AABKjQAAK5+SIreBsS8LSRUlfUxiHNyGtCIqcVd91I5XfeWIGJEZdxiR9sY1OWaOoEDDjas0kMbMMeCPe03rkDJbE28yWx5we03rkFRc+ZX6fAVq+nwTb1RchI2MLtSOxT8qccU/E3LXM3lzfyGFjH8hhI2aYnpymmLwdvJHDonyRx+G0GiXiTVR35k1USuf0GhjiLlUhYy1bnlztW6bd7lU+ZX6fAVq+nwTb1Rc65BUXHh2hDuGiYQ7hok3T3h2N0+4bu87fXCUPcdfBz90XO879U6pYG53JnLFYv95JUKGZWR1yjMidLY/rTvaN3U8djDrkFRc+ZX6fAVq+nwTb1RcG8VaFq7dWhbEt9kkSsQDFju0JxzrvqUk/omALp2IdSEFviscl4lbLxWULh1dpC4d35lbL0qKIAGFjCskeXMrJLR1IAGjmt00Tn+YM+iAmS8fhp0iK5+dIuuQVFz5lfp8BWr6fBNvVFy0cgAASYcAAN95kiLTYJIigbNiHPO2FSVHfrEvInm0Io3m2zE9xS06YcXDMgLJ2zFSc2cjdnKTMIg9oCYXPhAe/L+iTe+RRE5ulaFAFcJzRUCbLGy4f9pn/peHUBCpNVPwdnIx/GoqHBl9KhwOiXIxU4kmPIaJxT54dsU+q3YmPIOetUK1jClB65wQMmKwEDLrkANcE28DXJN6YD9OlF9OsZe7QA=="),
+"format": 34896613399,
+"index_count": 360,
+"index_data": PackedByteArray("AAABAAIAAgADAAAABAAFAAYABgAHAAQABwAIAAQACQAKAAsACwAMAAkADAANAAkADgAPABAAEAARAA4AEAASABEAEwAUABUAFQAWABMAFwAYABkAGQAaABcAGwAcAB0AHQAeABsAHgAfABsAHwAgABsAIQAiACMAIwAkACEAJQAmACcAJwAoACUAKQAqACsAKwAsACkALQAuAC8ALwAwAC0AMQAyADMAMwA0ADEANQA2ADcANwA4ADUAOQA6ADsAOwA8ADkAOwA9ADwAPgA/AEAAQABBAD4AQgBDAEQARABFAEIARgBHAEgASABJAEYASQBKAEYASQBLAEoATABNAE4ATgBPAEwATwBQAEwAUQBSAFMAUwBUAFEAVQBWAFcAVwBYAFUAWQBaAFsAWwBcAFkAXQBeAF8AXwBgAF0AYQBiAGMAYwBkAGEAZQBmAGcAZwBoAGUAaQBqAGsAawBsAGkAbQBuAG8AbwBwAG0AcQByAHMAcwB0AHEAdQB2AHcAdwB4AHUAeAB5AHUAeQB6AHUAewB8AH0AfQB+AHsAfwCAAIEAgQCCAH8AgwCEAIUAhQCGAIMAhwCIAIkAiQCKAIcAiwCMAI0AjQCOAIsAjwCQAJEAkQCSAI8AkwCUAJUAlQCWAJMAlwCYAJkAmQCaAJcAmwCcAJ0AnQCeAJsAnwCgAKEAoQCiAJ8AoQCjAKIApAClAKYApgCnAKQAqACpAKoAqgCrAKgArACtAK4ArgCvAKwAsACxALIAsgCzALAAswC0ALAAtQC2ALcAtwC4ALUAuQC6ALsAuwC8ALkAvQC+AL8AvwDAAL0AwQDCAMMAwwDEAMEAxQDGAMcAxwDIAMUAyQDKAMsAywDMAMkAzQDOAM8AzwDQAM0A0QDSANMA0wDUANEA1QDWANcA1wDYANUA2QDaANsA2wDcANkA3QDeAN8A3wDgAN0A3wDhAOAA"),
+"material": SubResource("StandardMaterial3D_bba66"),
+"name": "woodBarkDark",
+"primitive": 3,
+"uv_scale": Vector4(28.991459, 66.97815, 0, 0),
+"vertex_count": 226,
+"vertex_data": PackedByteArray("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oJmZgjhqAsAPQAbgD0AG4A9ABuAPQAbgboQ9Am6EPQJuhD0CboQ9Am6EPQI3isIFN4rCBTeKwgU3isIFN4rCBTy9Xb08vV29PL1dvTy9Xb08vV29/YDc/f2A3P39gNz9/YDc/QAA/38AAP9/AAD/fwAA/38NguL7DYLi+w2C4vsNguL7DYLi+w2C4vv/fyvZ/38r2f9/K9n/fyvZDYLi+w2C4vsNguL7DYLi+/e+///3vv//977///e+//9eiv//Xor//16K//9eiv//0Gxn9tBsZ/bQbGf20Gxn9lR4E/9UeBP/VHgT/1R4E/89go/7PYKP+z2Cj/s9go/7PYKP+/9/QPP/f0Dz/39A8/9/QPNndi8TZ3YvE2d2LxNndi8T/v//f////3/+//9//v//f/7//3////9/Pn99Bz5/fQc+f30HPn99Bz5/fQf/f/8//3//P/9//z//f/8/////f////3////9/////fzU3mds1N5nbNTeZ2zU3mdt6g70BeoO9AXqDvQF6g70Bf4XUAn+F1AJ/hdQCf4XUAv9/68f/f+vH/3/rx/9/68e24RNftuETX7bhE1+24RNfgob//4KG//+Chv//gob//////3////9/////f////3+Chv7/gob//4KG/v+Chv7/gob+/4KG//8AAP9/AAD/fwAA/38AAP9/qM5UJ6jOVCeozlQnqM5UJ/9/5Mf/f+TH/3/kx/9/5McLiAYEC4gGBAuIBgQLiAYEE67//xOu//8Trv//E67//06d5r9Onea/Tp3mv06d5r8clkG5HJZBuRyWQbkclkG5n3+YBp9/mAaff5gGn3+YBv9/1/v/f9f7/3/X+/9/1/vLfRD/y30Q/8t9EP/LfRD/y30Q/2d5nf9neZ3/Z3md/2d5nf/vv/gf77/4H++/+B/vv/gfAAD/fwAA/38AAP9/AAD/fxyEDgIchA4CHIQOAhyEDgIchA4CBYTy9wWE8vcFhPL3BYTy97yBhPy8gYT8vIGE/LyBhPzUgn/61IJ/+tSCf/rUgn/6ILr/MyC6/zMguv8zILr/M3buIZB27iGQdu4hkHbuIZAhgv4AIYL+ACGC/gAhgv4AeVBMUXlQTFF5UExReVBMUQAA/38AAP9/AAD/fwAA/3+Chv//gob//4KG//+Chv//PlqQRT5akEU+WpBFPlqQRRyEDgIchA4CHIQOAhyEDgIchA4C")
+}, {
+"aabb": AABB(-0.036022615, 0.6475235, -0.08966362, 0.07204522, 1e-05, 0.07204523),
+"attribute_data": PackedByteArray("AADxBK8CAABP/QAAAADxBK8CAABP/QAA"),
+"format": 34896613399,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUA"),
+"material": SubResource("StandardMaterial3D_3krdo"),
+"name": "_defaultMat",
+"primitive": 3,
+"uv_scale": Vector4(2.1576881, 35.50199, 0, 0),
+"vertex_count": 6,
+"vertex_data": PackedByteArray("//8AAP//VNUAAAAA//9U1QAAAAAAAFTVAAAAAAAAVNX//wAAAABU1f//AAD//1TVVNWqKlTVqipU1aoqqqqqqqqqqqqqqqqq")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_fapn5")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wchim"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_w1l0y"]
+render_priority = 0
+shader = ExtResource("90_vy3dc")
+shader_parameter/pigment = Color(0.39607844, 0.31764707, 0.23921569, 1)
+shader_parameter/surface_roughness = 0.9
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_eqe1j"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3ju5s"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_x3my1"]
+render_priority = 0
+shader = ExtResource("90_vy3dc")
+shader_parameter/pigment = Color(0.39607844, 0.31764707, 0.23921569, 1)
+shader_parameter/surface_roughness = 0.9
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_030el"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_x3ykv"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kkact"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_noftb"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ndjjj"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bxo52"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gc282"]
+render_priority = 0
+shader = ExtResource("90_vy3dc")
+shader_parameter/pigment = Color(0.39607844, 0.31764707, 0.23921569, 1)
+shader_parameter/surface_roughness = 0.9
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kxarf"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_61aeo"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_75ybx"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_efl47"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4s83t"]
+render_priority = 0
+shader = ExtResource("90_vy3dc")
+shader_parameter/pigment = Color(0.39607844, 0.31764707, 0.23921569, 1)
+shader_parameter/surface_roughness = 0.9
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_j14ub"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_e3owe"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7cyvm"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vowbj"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qwu4v"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_l1bpt"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_p4q72"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ubcjv"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_b0i0o"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0yva1"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_n5kxp"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1qhw6"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3xiqs"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2a7id"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_y2gqq"]
+render_priority = 0
+shader = ExtResource("90_vy3dc")
+shader_parameter/pigment = Color(0.39607844, 0.31764707, 0.23921569, 1)
+shader_parameter/surface_roughness = 0.9
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yp6mc"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3f545"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_orhhj"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gnbho"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pkxiv"]
+render_priority = 0
+shader = ExtResource("90_vy3dc")
+shader_parameter/pigment = Color(0.39607844, 0.31764707, 0.23921569, 1)
+shader_parameter/surface_roughness = 0.9
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ntqd2"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fyk60"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mr288"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wddh0"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_j73q2"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1pp8n"]
+render_priority = 0
+shader = ExtResource("90_vy3dc")
+shader_parameter/pigment = Color(0.39607844, 0.31764707, 0.23921569, 1)
+shader_parameter/surface_roughness = 0.9
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rmj5x"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tdf3y"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hg7pe"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pogyc"]
+render_priority = 0
+shader = ExtResource("89_fd5ao")
+shader_parameter/pigment = Color(0.32156864, 0.4117647, 0.2901961, 1)
+shader_parameter/wind_strength = null
+shader_parameter/wind_speed = null
+
+[node name="WorldMap" type="Node3D" unique_id=38556331]
+metadata/source_layout = "res://Content/presentation.dv"
+metadata/layout_id = "outdoor:campus_ne"
+metadata/scope = "authored-3d-map; formal-host-connection-pending"
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=926333406]
+transform = Transform3D(1, 0, 0, 0, 0.75422335, 0.65661794, 0, -0.65661794, 0.75422335, 0, 150, 170)
+attributes = ExtResource("1_iwnnd")
+projection = 1
+current = true
+fov = 22.0
+size = 142.56
+far = 1000.0
+
+[node name="ContourEffect" type="MeshInstance3D" parent="Camera3D" unique_id=2015722470]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.5)
+material_override = SubResource("ShaderMaterial_xdf7p")
+cast_shadow = 0
+extra_cull_margin = 16384.0
+ignore_occlusion_culling = true
+mesh = SubResource("QuadMesh_uynm8")
+script = ExtResource("3_b6a4a")
+
+[node name="Daylight" type="DirectionalLight3D" parent="." unique_id=1100962418]
+transform = Transform3D(0.88294756, 0.43528646, -0.17586717, 0, 0.37460664, 0.92718387, 0.46947157, -0.8186547, 0.330758, 0, 0, 0)
+light_color = Color(0.9019608, 0.8666667, 0.7764706, 1)
+shadow_enabled = true
+shadow_bias = 0.08
+shadow_normal_bias = 0.8
+directional_shadow_max_distance = 180.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=269995112]
+environment = SubResource("Environment_ivmx1")
+metadata/time_environment_unique = true
+
+[node name="Atmosphere" type="Node3D" parent="." unique_id=1030087155 instance=ExtResource("4_iqsa7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+script = ExtResource("5_hco2i")
+
+[node name="WorldTimeLighting" type="Node3D" parent="." unique_id=634553014]
+script = ExtResource("6_bfn4p")
+outdoors = true
+metadata/time_sample = {
+"ambient_energy": 0.55,
+"game_minutes": 720.0,
+"outdoors": true,
+"sun_energy": 1.0
+}
+
+[node name="_Node3D_5629" type="Node3D" parent="." unique_id=1993444740]
+metadata/outdoor_representation = {
+"building_3d": 1,
+"retained_raster": 81,
+"vegetation_3d": 50
+}
+metadata/source_sha256 = "908740b3cb502276fa2eb72b1c7bfa1187d0c4b6d1bae7be31cf31d7766e0e5e"
+
+[node name="RetainedRoadsAndCoast" type="MeshInstance3D" parent="_Node3D_5629" unique_id=2070197391]
+material_override = SubResource("StandardMaterial3D_osg2s")
+mesh = SubResource("PlaneMesh_tb7ul")
+metadata/source_ground = "res://ShareAsset/Internal/Props/World/rooms/campus_ne.png"
+
+[node name="FloorSolid" type="StaticBody3D" parent="_Node3D_5629/RetainedRoadsAndCoast" unique_id=1231934542]
+collision_mask = 0
+metadata/collision_category = "floor"
+
+[node name="_CollisionShape3D_5630" type="CollisionShape3D" parent="_Node3D_5629/RetainedRoadsAndCoast/FloorSolid" unique_id=2117000272]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+shape = SubResource("BoxShape3D_ksiil")
+
+[node name="白塔（封闭）" type="Sprite3D" parent="_Node3D_5629" unique_id=1377850421]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -66, 0.015, 32)
+centered = false
+offset = Vector2(-136, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("8_vesyg")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_bldg_019.png"
+
+[node name="温室" type="Node3D" parent="_Node3D_5629" unique_id=700249263]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 0, 12)
+metadata/authoring_label = "温室"
+metadata/source_collision = "s8"
+metadata/representation = "recovered-footprint-3d"
+
+[node name="_MeshInstance3D_5631" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=643336131]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+material_override = SubResource("ShaderMaterial_1p30w")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_2wcbh")
+
+[node name="WallSolid" type="StaticBody3D" parent="_Node3D_5629/温室" unique_id=515965384]
+collision_mask = 0
+metadata/collision_category = "wall"
+
+[node name="_CollisionShape3D_5632" type="CollisionShape3D" parent="_Node3D_5629/温室/WallSolid" unique_id=1702240635]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("BoxShape3D_bh7kw")
+
+[node name="_MeshInstance3D_5633" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=890376318]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_q4g0r")
+
+[node name="_MeshInstance3D_5634" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1086287817]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.87, 0)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_esgq5")
+
+[node name="_MeshInstance3D_5635" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1321045770]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.25, -15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_1huvh")
+
+[node name="_MeshInstance3D_5636" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=2092600798]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.75, -15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_avtdo")
+
+[node name="_MeshInstance3D_5637" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1080945241]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.25, -15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_tu7cy")
+
+[node name="_MeshInstance3D_5638" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=130494880]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.75, -15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_b3unx")
+
+[node name="_MeshInstance3D_5639" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=314770891]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 2.25, -15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_8f518")
+
+[node name="_MeshInstance3D_5640" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=142946816]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 2.75, -15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_knugr")
+
+[node name="_MeshInstance3D_5641" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=368016695]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.25, 15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_76gna")
+
+[node name="_MeshInstance3D_5642" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=310553425]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.75, 15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_ug6wc")
+
+[node name="_MeshInstance3D_5643" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=193611652]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.25, 15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_2evhh")
+
+[node name="_MeshInstance3D_5644" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=464309694]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.75, 15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_w8d6t")
+
+[node name="_MeshInstance3D_5645" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1411626317]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 2.25, 15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_d7ymj")
+
+[node name="_MeshInstance3D_5646" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1392066897]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 2.75, 15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_xqy65")
+
+[node name="_MeshInstance3D_5647" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=2126274683]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.25, -15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_cojxn")
+
+[node name="_MeshInstance3D_5648" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1756000208]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.75, -15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_y7fmn")
+
+[node name="_MeshInstance3D_5649" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1418165437]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.25, -15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_o652q")
+
+[node name="_MeshInstance3D_5650" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=89260991]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.75, -15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_frwyi")
+
+[node name="_MeshInstance3D_5651" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=409144456]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.25, -15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_ag867")
+
+[node name="_MeshInstance3D_5652" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=196137678]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.75, -15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_ndo5r")
+
+[node name="_MeshInstance3D_5653" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1814192318]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.25, 15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_iwpmr")
+
+[node name="_MeshInstance3D_5654" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=388039070]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.75, 15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_yt52y")
+
+[node name="_MeshInstance3D_5655" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1181297901]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.25, 15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_4rne0")
+
+[node name="_MeshInstance3D_5656" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1738305999]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.75, 15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_alkkx")
+
+[node name="_MeshInstance3D_5657" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1055571109]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.25, 15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_4u5ux")
+
+[node name="_MeshInstance3D_5658" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=560152704]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.75, 15)
+material_override = SubResource("ShaderMaterial_j1ppm")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_u1cjk")
+
+[node name="_MeshInstance3D_5659" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=211650628]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.25, 1.8, 15.03)
+material_override = SubResource("ShaderMaterial_gvcuf")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_aabn2")
+
+[node name="_MeshInstance3D_5660" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1034277536]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.75, 1.8, 15.03)
+material_override = SubResource("ShaderMaterial_gvcuf")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_oaby6")
+
+[node name="_MeshInstance3D_5661" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=743646154]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, 1.8, 15.03)
+material_override = SubResource("ShaderMaterial_gvcuf")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_jn5gs")
+
+[node name="_MeshInstance3D_5662" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=681685141]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 1.8, 15.03)
+material_override = SubResource("ShaderMaterial_gvcuf")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_1n6cs")
+
+[node name="_MeshInstance3D_5663" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1171120908]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 1.8, 15.03)
+material_override = SubResource("ShaderMaterial_gvcuf")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_81vwu")
+
+[node name="_MeshInstance3D_5664" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=941825278]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.25, 1.8, 15.03)
+material_override = SubResource("ShaderMaterial_gvcuf")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_oq45n")
+
+[node name="_MeshInstance3D_5665" type="MeshInstance3D" parent="_Node3D_5629/温室" unique_id=1306837607]
+material_override = SubResource("ShaderMaterial_gvcuf")
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_5apao")
+
+[node name="汲水泉亭" type="Sprite3D" parent="_Node3D_5629" unique_id=1604526684]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44, 0.015, 47)
+centered = false
+offset = Vector2(-58, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("11_oaol4")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_bldg_022.png"
+
+[node name="围墙190" type="Sprite3D" parent="_Node3D_5629" unique_id=607688996]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65.5, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("12_4nhiv")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_190.png"
+
+[node name="围墙191" type="Sprite3D" parent="_Node3D_5629" unique_id=1053987137]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -63.125, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("13_76r0b")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_191.png"
+
+[node name="围墙192" type="Sprite3D" parent="_Node3D_5629" unique_id=1895387856]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.708332, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("14_ic8jy")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_192.png"
+
+[node name="围墙193" type="Sprite3D" parent="_Node3D_5629" unique_id=680818656]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58.333332, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("15_8jjw6")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_193.png"
+
+[node name="围墙194" type="Sprite3D" parent="_Node3D_5629" unique_id=1553566483]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55.916668, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("16_r562e")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_194.png"
+
+[node name="围墙195" type="Sprite3D" parent="_Node3D_5629" unique_id=890436654]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53.541668, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("17_ro0ru")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_195.png"
+
+[node name="围墙196" type="Sprite3D" parent="_Node3D_5629" unique_id=1978343712]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -51.125, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("18_0wa6w")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_196.png"
+
+[node name="围墙197" type="Sprite3D" parent="_Node3D_5629" unique_id=1980389587]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.75, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("19_kaiqy")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_197.png"
+
+[node name="围墙198" type="Sprite3D" parent="_Node3D_5629" unique_id=560411305]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46.333332, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("20_kgqi3")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_198.png"
+
+[node name="围墙199" type="Sprite3D" parent="_Node3D_5629" unique_id=2130809342]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -43.958332, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("21_58f7m")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_199.png"
+
+[node name="围墙200" type="Sprite3D" parent="_Node3D_5629" unique_id=1692215026]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41.541668, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("22_u6gbb")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_200.png"
+
+[node name="围墙201" type="Sprite3D" parent="_Node3D_5629" unique_id=1353080695]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -39.166668, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("23_nciua")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_201.png"
+
+[node name="围墙202" type="Sprite3D" parent="_Node3D_5629" unique_id=1968617153]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36.75, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("24_jj0c2")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_202.png"
+
+[node name="围墙203" type="Sprite3D" parent="_Node3D_5629" unique_id=1951528481]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.375, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("25_lg6vf")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_203.png"
+
+[node name="围墙204" type="Sprite3D" parent="_Node3D_5629" unique_id=1769073952]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.958334, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("26_gyvtr")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_204.png"
+
+[node name="围墙205" type="Sprite3D" parent="_Node3D_5629" unique_id=1790732646]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.583334, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("27_3krko")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_205.png"
+
+[node name="围墙206" type="Sprite3D" parent="_Node3D_5629" unique_id=1679614611]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.166666, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("28_wxf3v")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_206.png"
+
+[node name="围墙207" type="Sprite3D" parent="_Node3D_5629" unique_id=1577992693]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.791666, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("29_o1a2w")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_207.png"
+
+[node name="围墙208" type="Sprite3D" parent="_Node3D_5629" unique_id=1714863196]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.375, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("30_d337e")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_208.png"
+
+[node name="围墙209" type="Sprite3D" parent="_Node3D_5629" unique_id=1692363226]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("31_bcal4")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_209.png"
+
+[node name="围墙210" type="Sprite3D" parent="_Node3D_5629" unique_id=477073245]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.583334, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("32_f3mdu")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_210.png"
+
+[node name="围墙211" type="Sprite3D" parent="_Node3D_5629" unique_id=2092244452]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.208333, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("33_ya30s")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_211.png"
+
+[node name="围墙212" type="Sprite3D" parent="_Node3D_5629" unique_id=1923363340]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.791667, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("34_qpv7y")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_212.png"
+
+[node name="围墙213" type="Sprite3D" parent="_Node3D_5629" unique_id=179321289]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.416667, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("35_3lnvl")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_213.png"
+
+[node name="围墙214" type="Sprite3D" parent="_Node3D_5629" unique_id=1494699947]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("36_6xjyw")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_214.png"
+
+[node name="围墙215" type="Sprite3D" parent="_Node3D_5629" unique_id=1013587135]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.625, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("37_nivue")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_215.png"
+
+[node name="围墙216" type="Sprite3D" parent="_Node3D_5629" unique_id=1423310439]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2083333, 0.015, -48.666668)
+centered = false
+offset = Vector2(-30, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("38_l0o58")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_216.png"
+
+[node name="围墙217" type="Sprite3D" parent="_Node3D_5629" unique_id=772964606]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -46.625)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("39_nvbhu")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_217.png"
+
+[node name="围墙218" type="Sprite3D" parent="_Node3D_5629" unique_id=1309908399]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -44.25)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("40_pvd24")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_218.png"
+
+[node name="围墙219" type="Sprite3D" parent="_Node3D_5629" unique_id=1212054239]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -41.833332)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("41_rey12")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_219.png"
+
+[node name="围墙220" type="Sprite3D" parent="_Node3D_5629" unique_id=927530445]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -39.458332)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("42_b2qqb")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_220.png"
+
+[node name="围墙221" type="Sprite3D" parent="_Node3D_5629" unique_id=1331276358]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -37.083332)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("43_sma22")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_221.png"
+
+[node name="围墙222" type="Sprite3D" parent="_Node3D_5629" unique_id=628697823]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -34.708332)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("44_1kirm")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_222.png"
+
+[node name="围墙223" type="Sprite3D" parent="_Node3D_5629" unique_id=1567315839]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -32.333332)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("45_6ngsw")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_223.png"
+
+[node name="围墙224" type="Sprite3D" parent="_Node3D_5629" unique_id=908604147]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -29.916666)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("46_cu5cr")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_224.png"
+
+[node name="围墙225" type="Sprite3D" parent="_Node3D_5629" unique_id=443160531]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -27.541666)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("47_0jlrm")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_225.png"
+
+[node name="围墙226" type="Sprite3D" parent="_Node3D_5629" unique_id=52508887]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -25.166666)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("48_grs8r")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_226.png"
+
+[node name="围墙227" type="Sprite3D" parent="_Node3D_5629" unique_id=1173228594]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -22.791666)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("49_ggtf6")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_227.png"
+
+[node name="围墙228" type="Sprite3D" parent="_Node3D_5629" unique_id=977687226]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -20.416666)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("50_nf8mw")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_228.png"
+
+[node name="围墙229" type="Sprite3D" parent="_Node3D_5629" unique_id=107960230]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -18)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("51_pv3qv")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_229.png"
+
+[node name="围墙230" type="Sprite3D" parent="_Node3D_5629" unique_id=1623068681]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -15.625)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("52_r78yp")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_230.png"
+
+[node name="围墙231" type="Sprite3D" parent="_Node3D_5629" unique_id=1451871099]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -13.25)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("53_8ydq4")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_231.png"
+
+[node name="围墙232" type="Sprite3D" parent="_Node3D_5629" unique_id=1942430429]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -10.875)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("54_xea12")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_232.png"
+
+[node name="围墙233" type="Sprite3D" parent="_Node3D_5629" unique_id=2080074394]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -8.5)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("55_civei")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_233.png"
+
+[node name="围墙234" type="Sprite3D" parent="_Node3D_5629" unique_id=211671813]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -6.0833335)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("56_cpig1")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_234.png"
+
+[node name="围墙235" type="Sprite3D" parent="_Node3D_5629" unique_id=202354891]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -3.7083333)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("57_a4tgx")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_235.png"
+
+[node name="围墙236" type="Sprite3D" parent="_Node3D_5629" unique_id=1944344649]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, -1.3333334)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("58_qxbgh")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_236.png"
+
+[node name="围墙237" type="Sprite3D" parent="_Node3D_5629" unique_id=335406976]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 1.0416666)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("59_8c4x3")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_237.png"
+
+[node name="围墙238" type="Sprite3D" parent="_Node3D_5629" unique_id=1748206538]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 3.4583333)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("60_8frdh")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_238.png"
+
+[node name="围墙239" type="Sprite3D" parent="_Node3D_5629" unique_id=989095302]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 5.8333335)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("61_d4ajp")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_239.png"
+
+[node name="围墙240" type="Sprite3D" parent="_Node3D_5629" unique_id=95261101]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 8.208333)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("62_1t1i7")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_240.png"
+
+[node name="围墙241" type="Sprite3D" parent="_Node3D_5629" unique_id=1793777108]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 10.583333)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("63_etb5u")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_241.png"
+
+[node name="围墙242" type="Sprite3D" parent="_Node3D_5629" unique_id=1187578887]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 12.958333)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("64_jnml7")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_242.png"
+
+[node name="围墙243" type="Sprite3D" parent="_Node3D_5629" unique_id=328686241]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 15.375)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("65_r8u7v")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_243.png"
+
+[node name="围墙244" type="Sprite3D" parent="_Node3D_5629" unique_id=755254166]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 17.75)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("66_egmue")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_244.png"
+
+[node name="围墙245" type="Sprite3D" parent="_Node3D_5629" unique_id=2032560286]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 20.125)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("67_hxhxk")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_245.png"
+
+[node name="围墙246" type="Sprite3D" parent="_Node3D_5629" unique_id=837091091]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 22.5)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("68_fofyt")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_246.png"
+
+[node name="围墙247" type="Sprite3D" parent="_Node3D_5629" unique_id=1701293703]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 24.875)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("69_0gj1c")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_247.png"
+
+[node name="围墙248" type="Sprite3D" parent="_Node3D_5629" unique_id=1359883919]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 27.291666)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("70_8phti")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_248.png"
+
+[node name="围墙249" type="Sprite3D" parent="_Node3D_5629" unique_id=2070455617]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 29.666666)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("71_li0h2")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_249.png"
+
+[node name="围墙250" type="Sprite3D" parent="_Node3D_5629" unique_id=2023334399]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 32.041668)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("72_mvsfi")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_250.png"
+
+[node name="围墙251" type="Sprite3D" parent="_Node3D_5629" unique_id=246838764]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 34.416668)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("73_2784r")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_251.png"
+
+[node name="围墙252" type="Sprite3D" parent="_Node3D_5629" unique_id=1130356939]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 36.791668)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("74_7511g")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_252.png"
+
+[node name="围墙253" type="Sprite3D" parent="_Node3D_5629" unique_id=175626711]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 39.208332)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("75_54n1d")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_253.png"
+
+[node name="围墙254" type="Sprite3D" parent="_Node3D_5629" unique_id=843730987]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 41.583332)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("76_l8lq4")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_254.png"
+
+[node name="围墙255" type="Sprite3D" parent="_Node3D_5629" unique_id=1298666149]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 43.958332)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("77_rdxy4")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_255.png"
+
+[node name="围墙256" type="Sprite3D" parent="_Node3D_5629" unique_id=855860045]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 46.333332)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("78_n3uh6")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_256.png"
+
+[node name="围墙257" type="Sprite3D" parent="_Node3D_5629" unique_id=974509211]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 48.708332)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("79_b2qfk")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_257.png"
+
+[node name="围墙258" type="Sprite3D" parent="_Node3D_5629" unique_id=812656800]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 51.125)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("80_hm025")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_258.png"
+
+[node name="围墙259" type="Sprite3D" parent="_Node3D_5629" unique_id=1772291099]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 53.5)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("81_u4ptq")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_259.png"
+
+[node name="围墙260" type="Sprite3D" parent="_Node3D_5629" unique_id=216905947]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 55.875)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("82_lgwg6")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_260.png"
+
+[node name="围墙261" type="Sprite3D" parent="_Node3D_5629" unique_id=509936324]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 58.25)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("83_qubj4")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_261.png"
+
+[node name="围墙262" type="Sprite3D" parent="_Node3D_5629" unique_id=1328563571]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 60.625)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("84_upqoh")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_262.png"
+
+[node name="围墙263" type="Sprite3D" parent="_Node3D_5629" unique_id=1779951643]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 63.041668)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("85_bi3k7")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_263.png"
+
+[node name="围墙264" type="Sprite3D" parent="_Node3D_5629" unique_id=1719113534]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 65.416664)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("86_3i183")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_264.png"
+
+[node name="围墙265" type="Sprite3D" parent="_Node3D_5629" unique_id=819149040]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 67.791664)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("87_wj0jl")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_265.png"
+
+[node name="围墙266" type="Sprite3D" parent="_Node3D_5629" unique_id=273571196]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.015, 70.166664)
+centered = false
+offset = Vector2(-10, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("88_y5l4n")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/outdoor_wall_266.png"
+
+[node name="hydrangea373" type="Node3D" parent="_Node3D_5629" unique_id=344630305]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -63.916668, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea373" unique_id=354462357]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea373/plant_bushDetailed2" unique_id=764077553]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_stwhl")
+
+[node name="hydrangea374" type="Node3D" parent="_Node3D_5629" unique_id=582308064]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -61.5, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea374" unique_id=1343205379]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea374/plant_bushDetailed2" unique_id=884423944]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_d6h8j")
+
+[node name="hydrangea375" type="Node3D" parent="_Node3D_5629" unique_id=1748466733]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -59.083332, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea375" unique_id=2096955727]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea375/plant_bushDetailed2" unique_id=1599871606]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_s8eie")
+
+[node name="hydrangea376" type="Node3D" parent="_Node3D_5629" unique_id=606355222]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -56.666668, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea376" unique_id=1760593626]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea376/plant_bushDetailed2" unique_id=1427392784]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_6b4g0")
+
+[node name="hydrangea377" type="Node3D" parent="_Node3D_5629" unique_id=816579097]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -54.25, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea377" unique_id=532183826]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea377/plant_bushDetailed2" unique_id=453969978]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_ljami")
+
+[node name="hydrangea379" type="Node3D" parent="_Node3D_5629" unique_id=1296956669]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -49.416668, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea379" unique_id=1422162969]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea379/plant_bushDetailed2" unique_id=1311709134]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_3ujkp")
+
+[node name="hydrangea381" type="Node3D" parent="_Node3D_5629" unique_id=1646656390]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -44.583332, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea381" unique_id=613906241]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea381/plant_bushDetailed2" unique_id=1381002459]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_eccs8")
+
+[node name="hydrangea382" type="Node3D" parent="_Node3D_5629" unique_id=816094057]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -42.166668, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea382" unique_id=276430744]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea382/plant_bushDetailed2" unique_id=702857340]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_ub47d")
+
+[node name="hydrangea383" type="Node3D" parent="_Node3D_5629" unique_id=1073839567]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -39.791668, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea383" unique_id=774592751]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea383/plant_bushDetailed2" unique_id=1756901614]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_ybago")
+
+[node name="hydrangea384" type="Node3D" parent="_Node3D_5629" unique_id=2027858010]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -37.375, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea384" unique_id=158839623]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea384/plant_bushDetailed2" unique_id=676339706]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_18vwo")
+
+[node name="hydrangea386" type="Node3D" parent="_Node3D_5629" unique_id=2075765043]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -32.541668, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea386" unique_id=597003885]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea386/plant_bushDetailed2" unique_id=1888077356]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_ek8ui")
+
+[node name="hydrangea390" type="Node3D" parent="_Node3D_5629" unique_id=1298475559]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -22.875, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea390" unique_id=668589549]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea390/plant_bushDetailed2" unique_id=978576152]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_ketin")
+
+[node name="hydrangea391" type="Node3D" parent="_Node3D_5629" unique_id=2065432034]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -20.458334, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea391" unique_id=189710270]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea391/plant_bushDetailed2" unique_id=988278874]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_yny61")
+
+[node name="hydrangea392" type="Node3D" parent="_Node3D_5629" unique_id=1159180519]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -18.041666, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea392" unique_id=1414232108]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea392/plant_bushDetailed2" unique_id=1191621138]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_iy3m0")
+
+[node name="hydrangea394" type="Node3D" parent="_Node3D_5629" unique_id=1831725951]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -13.25, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea394" unique_id=604182109]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea394/plant_bushDetailed2" unique_id=95241285]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_k0ma1")
+
+[node name="hydrangea395" type="Node3D" parent="_Node3D_5629" unique_id=834303312]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -10.833333, 0, -47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea395" unique_id=388322496]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea395/plant_bushDetailed2" unique_id=1522351141]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_dww2v")
+
+[node name="hydrangea1301" type="Node3D" parent="_Node3D_5629" unique_id=1392872638]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, -42.583332)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1301" unique_id=746947558]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1301/plant_bushDetailed2" unique_id=164226906]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_tqpxr")
+
+[node name="round28" type="Node3D" parent="_Node3D_5629" unique_id=1251738429]
+transform = Transform3D(4.8783526, 0, 0, 0, 4.8783526, 0, 0, 0, 4.8783526, -40, 0, -41)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/tree_detailed_dark.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.84711504, 1.332417, 0.7616025)
+metadata/surface_height_m = 6.5
+metadata/representation = "approved-cc0-3d"
+
+[node name="tree_detailed_dark2" type="Node3D" parent="_Node3D_5629/round28" unique_id=2073218291]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00892508, 0.05, -0.008665293)
+
+[node name="tree_detailed_dark" type="MeshInstance3D" parent="_Node3D_5629/round28/tree_detailed_dark2" unique_id=1527090151]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_kip03")
+surface_material_override/0 = SubResource("ShaderMaterial_wchim")
+surface_material_override/1 = SubResource("ShaderMaterial_w1l0y")
+surface_material_override/2 = SubResource("ShaderMaterial_eqe1j")
+
+[node name="round29" type="Node3D" parent="_Node3D_5629" unique_id=452380935]
+transform = Transform3D(4.8783526, 0, 0, 0, 4.8783526, 0, 0, 0, 4.8783526, -14, 0, -33)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/tree_detailed_dark.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.84711504, 1.332417, 0.7616025)
+metadata/surface_height_m = 6.5
+metadata/representation = "approved-cc0-3d"
+
+[node name="tree_detailed_dark2" type="Node3D" parent="_Node3D_5629/round29" unique_id=1064659804]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00892508, 0.05, -0.008665293)
+
+[node name="tree_detailed_dark" type="MeshInstance3D" parent="_Node3D_5629/round29/tree_detailed_dark2" unique_id=1040136024]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_kip03")
+surface_material_override/0 = SubResource("ShaderMaterial_3ju5s")
+surface_material_override/1 = SubResource("ShaderMaterial_x3my1")
+surface_material_override/2 = SubResource("ShaderMaterial_030el")
+
+[node name="hydrangea1305" type="Node3D" parent="_Node3D_5629" unique_id=733676524]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, -32.958332)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1305" unique_id=1723434155]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1305/plant_bushDetailed2" unique_id=2045719092]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_x3ykv")
+
+[node name="hydrangea1307" type="Node3D" parent="_Node3D_5629" unique_id=2007013510]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, -28.166666)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1307" unique_id=650016639]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1307/plant_bushDetailed2" unique_id=707794513]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_kkact")
+
+[node name="hydrangea1308" type="Node3D" parent="_Node3D_5629" unique_id=1501161441]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, -25.75)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1308" unique_id=1547575846]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1308/plant_bushDetailed2" unique_id=823995895]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_noftb")
+
+[node name="hydrangea1309" type="Node3D" parent="_Node3D_5629" unique_id=320386116]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, -23.333334)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1309" unique_id=283206904]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1309/plant_bushDetailed2" unique_id=1190075832]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_ndjjj")
+
+[node name="round8" type="Node3D" parent="_Node3D_5629" unique_id=768605248]
+transform = Transform3D(4.8783526, 0, 0, 0, 4.8783526, 0, 0, 0, 4.8783526, -60, 0, -23)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/tree_detailed_dark.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.84711504, 1.332417, 0.7616025)
+metadata/surface_height_m = 6.5
+metadata/representation = "approved-cc0-3d"
+
+[node name="tree_detailed_dark2" type="Node3D" parent="_Node3D_5629/round8" unique_id=482035903]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00892508, 0.05, -0.008665293)
+
+[node name="tree_detailed_dark" type="MeshInstance3D" parent="_Node3D_5629/round8/tree_detailed_dark2" unique_id=147050230]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_kip03")
+surface_material_override/0 = SubResource("ShaderMaterial_bxo52")
+surface_material_override/1 = SubResource("ShaderMaterial_gc282")
+surface_material_override/2 = SubResource("ShaderMaterial_kxarf")
+
+[node name="hydrangea1311" type="Node3D" parent="_Node3D_5629" unique_id=1559541345]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, -18.541666)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1311" unique_id=1889390752]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1311/plant_bushDetailed2" unique_id=1526298577]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_61aeo")
+
+[node name="hydrangea1312" type="Node3D" parent="_Node3D_5629" unique_id=2097801768]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, -16.125)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1312" unique_id=1431445085]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1312/plant_bushDetailed2" unique_id=184659406]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_75ybx")
+
+[node name="round9" type="Node3D" parent="_Node3D_5629" unique_id=1296960525]
+transform = Transform3D(4.8783526, 0, 0, 0, 4.8783526, 0, 0, 0, 4.8783526, -22, 0, -13)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/tree_detailed_dark.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.84711504, 1.332417, 0.7616025)
+metadata/surface_height_m = 6.5
+metadata/representation = "approved-cc0-3d"
+
+[node name="tree_detailed_dark2" type="Node3D" parent="_Node3D_5629/round9" unique_id=2004425416]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00892508, 0.05, -0.008665293)
+
+[node name="tree_detailed_dark" type="MeshInstance3D" parent="_Node3D_5629/round9/tree_detailed_dark2" unique_id=1776991575]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_kip03")
+surface_material_override/0 = SubResource("ShaderMaterial_efl47")
+surface_material_override/1 = SubResource("ShaderMaterial_4s83t")
+surface_material_override/2 = SubResource("ShaderMaterial_j14ub")
+
+[node name="hydrangea1316" type="Node3D" parent="_Node3D_5629" unique_id=568574353]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, -6.5)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1316" unique_id=1919935260]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1316/plant_bushDetailed2" unique_id=1050866064]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_e3owe")
+
+[node name="hydrangea1320" type="Node3D" parent="_Node3D_5629" unique_id=1329032433]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 3.125)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1320" unique_id=1020203912]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1320/plant_bushDetailed2" unique_id=2118107483]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_7cyvm")
+
+[node name="hydrangea1322" type="Node3D" parent="_Node3D_5629" unique_id=1569583064]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 7.9166665)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1322" unique_id=386355999]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1322/plant_bushDetailed2" unique_id=1850442143]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_vowbj")
+
+[node name="hydrangea1323" type="Node3D" parent="_Node3D_5629" unique_id=1561753246]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 10.333333)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1323" unique_id=310501345]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1323/plant_bushDetailed2" unique_id=113163405]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_qwu4v")
+
+[node name="hydrangea1325" type="Node3D" parent="_Node3D_5629" unique_id=1378495346]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 15.125)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1325" unique_id=1518117624]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1325/plant_bushDetailed2" unique_id=1319838140]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_l1bpt")
+
+[node name="hydrangea1327" type="Node3D" parent="_Node3D_5629" unique_id=2118487143]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 19.958334)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1327" unique_id=871206725]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1327/plant_bushDetailed2" unique_id=2048488949]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_p4q72")
+
+[node name="hydrangea1329" type="Node3D" parent="_Node3D_5629" unique_id=256265815]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 24.75)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1329" unique_id=1354092640]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1329/plant_bushDetailed2" unique_id=1201020814]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_ubcjv")
+
+[node name="hydrangea1330" type="Node3D" parent="_Node3D_5629" unique_id=2085035959]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 27.166666)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1330" unique_id=1927264711]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1330/plant_bushDetailed2" unique_id=687744411]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_b0i0o")
+
+[node name="hydrangea5700" type="Node3D" parent="_Node3D_5629" unique_id=550294900]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -44.083332, 0, 27.916666)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea5700" unique_id=1162722813]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea5700/plant_bushDetailed2" unique_id=1083738839]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_0yva1")
+
+[node name="hydrangea5701" type="Node3D" parent="_Node3D_5629" unique_id=1279819186]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -42.583332, 0, 27.916666)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea5701" unique_id=1382514558]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea5701/plant_bushDetailed2" unique_id=869713080]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_n5kxp")
+
+[node name="hydrangea5703" type="Node3D" parent="_Node3D_5629" unique_id=431657970]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -35.916668, 0, 27.916666)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea5703" unique_id=1986668635]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea5703/plant_bushDetailed2" unique_id=298366215]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_1qhw6")
+
+[node name="hydrangea5704" type="Node3D" parent="_Node3D_5629" unique_id=574306983]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -37.416668, 0, 27.916666)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea5704" unique_id=528747889]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea5704/plant_bushDetailed2" unique_id=1243563031]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_3xiqs")
+
+[node name="round10" type="Node3D" parent="_Node3D_5629" unique_id=1011402895]
+transform = Transform3D(4.8783526, 0, 0, 0, 4.8783526, 0, 0, 0, 4.8783526, -18, 0, 29)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/tree_detailed_dark.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.84711504, 1.332417, 0.7616025)
+metadata/surface_height_m = 6.5
+metadata/representation = "approved-cc0-3d"
+
+[node name="tree_detailed_dark2" type="Node3D" parent="_Node3D_5629/round10" unique_id=152668634]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00892508, 0.05, -0.008665293)
+
+[node name="tree_detailed_dark" type="MeshInstance3D" parent="_Node3D_5629/round10/tree_detailed_dark2" unique_id=2048111894]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_kip03")
+surface_material_override/0 = SubResource("ShaderMaterial_2a7id")
+surface_material_override/1 = SubResource("ShaderMaterial_y2gqq")
+surface_material_override/2 = SubResource("ShaderMaterial_yp6mc")
+
+[node name="hydrangea1332" type="Node3D" parent="_Node3D_5629" unique_id=4942982]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 32)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1332" unique_id=776896177]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1332/plant_bushDetailed2" unique_id=491411835]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_3f545")
+
+[node name="hydrangea1333" type="Node3D" parent="_Node3D_5629" unique_id=632538617]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 34.375)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1333" unique_id=960775587]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1333/plant_bushDetailed2" unique_id=340231935]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_orhhj")
+
+[node name="round39" type="Node3D" parent="_Node3D_5629" unique_id=675288918]
+transform = Transform3D(4.8783526, 0, 0, 0, 4.8783526, 0, 0, 0, 4.8783526, -14, 0, 47)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/tree_detailed_dark.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.84711504, 1.332417, 0.7616025)
+metadata/surface_height_m = 6.5
+metadata/representation = "approved-cc0-3d"
+
+[node name="tree_detailed_dark2" type="Node3D" parent="_Node3D_5629/round39" unique_id=1100296034]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00892508, 0.05, -0.008665293)
+
+[node name="tree_detailed_dark" type="MeshInstance3D" parent="_Node3D_5629/round39/tree_detailed_dark2" unique_id=1945304272]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_kip03")
+surface_material_override/0 = SubResource("ShaderMaterial_gnbho")
+surface_material_override/1 = SubResource("ShaderMaterial_pkxiv")
+surface_material_override/2 = SubResource("ShaderMaterial_ntqd2")
+
+[node name="hydrangea1339" type="Node3D" parent="_Node3D_5629" unique_id=1411340347]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 48.833332)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1339" unique_id=123039615]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1339/plant_bushDetailed2" unique_id=2287229]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_fyk60")
+
+[node name="hydrangea1341" type="Node3D" parent="_Node3D_5629" unique_id=1148531397]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 53.625)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1341" unique_id=470949896]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1341/plant_bushDetailed2" unique_id=269996207]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_mr288")
+
+[node name="hydrangea1343" type="Node3D" parent="_Node3D_5629" unique_id=1895287829]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 58.458332)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1343" unique_id=1346233793]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1343/plant_bushDetailed2" unique_id=1266042907]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_wddh0")
+
+[node name="round11" type="Node3D" parent="_Node3D_5629" unique_id=1001494807]
+transform = Transform3D(4.8783526, 0, 0, 0, 4.8783526, 0, 0, 0, 4.8783526, -22, 0, 62)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/tree_detailed_dark.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.84711504, 1.332417, 0.7616025)
+metadata/surface_height_m = 6.5
+metadata/representation = "approved-cc0-3d"
+
+[node name="tree_detailed_dark2" type="Node3D" parent="_Node3D_5629/round11" unique_id=167518421]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00892508, 0.05, -0.008665293)
+
+[node name="tree_detailed_dark" type="MeshInstance3D" parent="_Node3D_5629/round11/tree_detailed_dark2" unique_id=1938802723]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_kip03")
+surface_material_override/0 = SubResource("ShaderMaterial_j73q2")
+surface_material_override/1 = SubResource("ShaderMaterial_1pp8n")
+surface_material_override/2 = SubResource("ShaderMaterial_rmj5x")
+
+[node name="hydrangea1345" type="Node3D" parent="_Node3D_5629" unique_id=1586225000]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 63.25)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1345" unique_id=464114823]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1345/plant_bushDetailed2" unique_id=921787556]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_tdf3y")
+
+[node name="hydrangea1346" type="Node3D" parent="_Node3D_5629" unique_id=2080726356]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 65.666664)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1346" unique_id=1981021046]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1346/plant_bushDetailed2" unique_id=964911841]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_hg7pe")
+
+[node name="hydrangea1347" type="Node3D" parent="_Node3D_5629" unique_id=1197416875]
+transform = Transform3D(5.202395, 0, 0, 0, 5.202395, 0, 0, 0, 5.202395, -6, 0, 68.083336)
+metadata/asset_source = "res://ShareAsset/External/KenneyNature/plant_bushDetailed.glb"
+metadata/license = "CC0-1.0"
+metadata/source_dimensions = Vector3(0.6025437, 0.36041093, 0.6025437)
+metadata/surface_height_m = 1.875
+metadata/representation = "approved-cc0-3d"
+
+[node name="plant_bushDetailed2" type="Node3D" parent="_Node3D_5629/hydrangea1347" unique_id=1735985630]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="plant_bushDetailed" type="MeshInstance3D" parent="_Node3D_5629/hydrangea1347/plant_bushDetailed2" unique_id=758436548]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+cast_shadow = 0
+mesh = SubResource("ArrayMesh_gp1v4")
+surface_material_override/0 = SubResource("ShaderMaterial_pogyc")
+
+[node name="Spring" type="Sprite3D" parent="_Node3D_5629" unique_id=5487386]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44, 0.015, 45.583332)
+centered = false
+offset = Vector2(-32, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("91_kn4nj")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/spring_trough.png"
+
+[node name="Buckets" type="Sprite3D" parent="_Node3D_5629" unique_id=1142273456]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41.416668, 0.015, 47.583332)
+centered = false
+offset = Vector2(-15, 0)
+pixel_size = 0.041666668
+shaded = true
+alpha_cut = 1
+texture_filter = 5
+texture = ExtResource("92_raifh")
+metadata/representation = "retained-raster-not-3d"
+metadata/source = "res://ShareAsset/Internal/Props/World/props/bucket_pair.png"
+
+[node name="RenderDetailController" type="Node" parent="." unique_id=108612976]
+script = ExtResource("93_fpnk5")
+
+[node name="CameraOcclusion" type="Node" parent="." unique_id=277013302]
+script = ExtResource("94_jnd3h")
+auto_configure = true
+focus = Vector3(0, 2, 0)

@@ -21,12 +21,12 @@ func configure(stage: Node3D, surface: TextureRect, page: SubViewport, binding: 
 			_control_root = child
 			break
 
-func update(mouse: Vector2, _delta: float, reduced: bool) -> void:
+func update(mouse: Vector2, delta: float, reduced: bool) -> void:
 	var dimensions := display.size.max(Vector2.ONE)
 	pointer = Vector2.ZERO if reduced else ((mouse / dimensions - Vector2.ONE * 0.5) * 2.0).clamp(-Vector2.ONE, Vector2.ONE)
 	desk.set_pointer(pointer)
 	if viewport.gui_disable_input: _navigation.reset()
-	else: _navigation.tick(_control_root, _delta)
+	else: _navigation.tick(_control_root, delta)
 
 func reset_navigation() -> void:
 	_navigation.reset()
@@ -44,11 +44,6 @@ func unproject(screen: Vector2) -> Vector2:
 		return Vector2(-10000, -10000)
 	var hit := origin + direction * distance
 	return Vector2(hit.x / page_size.x, hit.z / page_size.y + 0.5) * Vector2(viewport.size)
-
-func project(source: Vector2) -> Vector2:
-	var uv := source / Vector2(viewport.size)
-	var point := book.to_global(Vector3(uv.x * page_size.x, paper_y, (uv.y - 0.5) * page_size.y))
-	return desk.camera.unproject_position(point) * display.size / Vector2(desk.get_viewport().size)
 
 func forward(event: InputEvent) -> bool:
 	if viewport.gui_disable_input:

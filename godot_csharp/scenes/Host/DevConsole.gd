@@ -95,7 +95,7 @@ func _build() -> void:
 	file_dialog.file_selected.connect(_load_replay)
 	add_child(file_dialog)
 	panel.hide()
-	_append("help 显示命令。tp、time、inspect 需要以 --dv-dev 开启会话；演出样本单独提供只读 Inspector。")
+	_append("help 显示命令。tp、time、inspect 需要以 --dv-dev 开启会话；回放页可打开实际记录。")
 
 func _tab(title: String) -> VBoxContainer:
 	var page := VBoxContainer.new()
@@ -218,7 +218,6 @@ func _build_replay(page: VBoxContainer) -> void:
 	var controls := HBoxContainer.new()
 	page.add_child(controls)
 	controls.add_child(_button("载入记录", func(): file_dialog.popup_centered_ratio(0.75)))
-	if engine.HasReplaySample(): controls.add_child(_button("演出样本", _load_replay_sample))
 	replay_play = _button("Play", _play_replay)
 	controls.add_child(replay_play)
 	controls.add_child(_button("Pause", _pause_replay))
@@ -491,11 +490,6 @@ func _load_replay(path: String) -> void:
 	_prepare_replay_load()
 	replay_status.text = "载入记录：" + path
 	engine.LoadReplay(path)
-
-func _load_replay_sample() -> void:
-	_prepare_replay_load()
-	replay_status.text = "载入独立演出样本。"
-	engine.LoadReplaySample()
 
 func _prepare_replay_load() -> void:
 	_pause_replay()

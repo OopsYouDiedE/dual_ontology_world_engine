@@ -1,4 +1,5 @@
 #include 35-campaign-schema.dv
+#include 40-chapter1.dv
 
 // Native chapter-two content. No scheduled loss, illness, death, adoption or answer.
 // Install into a committed chapter-one handoff; retain every existing mind and world object.
@@ -70,9 +71,6 @@ fn c2_edges_build():
 
 fn c2_rooms():
     return ["main_granary", "main_dining", "outdoor_meter", "outdoor_high", "outdoor_alley", "document_workshop", "resonance_hall", "quiet_room", "white_tower_safe", "washroom", "hall", "living_hall", "central_hall", "logistics", "clinic", "lecture", "greenhouse", "threshold.contract", "threshold.astral", "threshold.logistics", "dorm.contract", "dorm.astral", "dorm.logistics", "pantry", "foyer", "corridor", "R05", "R06", "R07", "R08"]
-
-fn c2_locations():
-    return dv_append(c2_rooms(), "oath_court")
 
 fn c2_norms():
     let key = ["authored-declaration", "c2_norms"]
@@ -321,14 +319,6 @@ fn c2_visible_line(when, template, bindings, source):
 fn c2_visible_binding(name, ref, labels):
     return {"name": name, "ref": ref, "labels": labels, "fallback": "尚未核实", "unmapped_fallback": "尚未核实"}
 
-fn c2_inspection_has(fields, field):
-    var i = 0
-    while i < rt_count(fields):
-        if fields[i] == field:
-            return true
-        i = i + 1
-    return false
-
 fn c2_inspection_presentation(actor, object, fields):
     var lines = c2m_visible_lines(object, fields)
     let source = campaign_approved("actual-requested-inspection-fields-only")
@@ -446,21 +436,31 @@ fn c2_inspection_detail_lines(actor, object, fields):
         i = i + 1
     return lines
 
+fn c2_route_inspection(actor, origin, target, gate, airlock):
+    let source = c2_source("00_通行.story", 9, "visible-local-route")
+    let id = rt_cat(actor, rt_cat(".c2.inspect.route.", rt_cat(origin, rt_cat(".", target))))
+    var grants = dv_single(campaign_access(gate))
+    var lines = [c2_visible_line(dv_true(), "眼前廊门：{通行}。", [c2_visible_binding("通行", campaign_access(gate), {"true": "当前放行；实际穿行仍须符合身体与门阀条件", "false": "尚未放行"})], source)]
+    if airlock:
+        rt_push(grants, campaign_ref("c2.corridor.north", "airlock_held"))
+        rt_push(lines, c2_visible_line(dv_true(), "此处门阀：{门阀}。", [c2_visible_binding("门阀", campaign_ref("c2.corridor.north", "airlock_held"), {"true": "正被维持或固定，不能按普通通行处理", "false": "目前没有被维持或固定"})], source))
+    if dv_has(["contract", "astral", "logistics"], gate):
+        rt_push(grants, campaign_ref(rt_cat("case.", gate), "outer_latch_released"))
+    let pre = campaign_at(actor, origin)
+    let action = campaign_surface_action(id, "inspect", pre, pre, "", grants, rt_cat("检视通往", rt_cat(c2_place_label(target), "的廊门")), "查看眼前廊门与门阀的实际通行状态。", source)
+    return dv_with_many(action, {"repeatable": true, "manual_reinspect": true, "presentation": {"actor": actor, "voice": "visible-inspection", "lines": lines}})
+
 fn c2_route_inspections(actor):
     let rows = c2_edges()
     var result = []
     var i = 0
     while i < rt_count(rows):
         let row = rows[i]
-        if (row.from == "living_hall" and row.to == "central_hall") or (row.from == "central_hall" and row.to == "logistics"):
-            let source = c2_source("00_通行.story", 9, "visible-local-route")
-            let id = rt_cat(actor, rt_cat(".c2.inspect.route.", rt_cat(row.from, rt_cat(".", row.to))))
-            var grants = dv_single(campaign_access(row.gate))
-            if dv_has(["contract", "astral", "logistics"], row.gate):
-                rt_push(grants, campaign_ref(rt_cat("case.", row.gate), "outer_latch_released"))
-            rt_push(result, dv_with_many(campaign_surface_action(id, "inspect", campaign_at(actor, row.from), campaign_at(actor, row.from), "", grants, "检视廊门与外闩", "查看廊门和外闩。", source), {"repeatable": true, "presentation": {"actor": actor, "voice": "visible-inspection", "lines": [{"template": "这道廊门：{通行}。", "bindings": [c2_visible_binding("通行", campaign_access(row.gate), {"true": "已经取得通行资格；穿行前仍须在此侧检查对应连廊的密封、通风和空气读数", "false": "尚未放行"})]}]}}))
-            let back = rt_cat(actor, rt_cat(".c2.inspect.route.", rt_cat(row.to, rt_cat(".", row.from))))
-            rt_push(result, dv_with_many(campaign_surface_action(back, "inspect", campaign_at(actor, row.to), campaign_at(actor, row.to), "", grants, "检视此侧廊门", "从这侧查看廊门。", source), {"repeatable": true, "presentation": {"actor": actor, "voice": "visible-inspection", "lines": [{"template": "这道廊门：{通行}。", "bindings": [c2_visible_binding("通行", campaign_access(row.gate), {"true": "已经取得通行资格；穿行前仍须在此侧检查对应连廊的密封、通风和空气读数", "false": "尚未放行"})]}]}}))
+        // Every authored edge has a local inspection from each actual side;
+        // no inspection grants a remote route map or a forgotten adoption.
+        let airlock = row.gate == "north" and ((row.from == "living_hall" and row.to == "central_hall") or (row.from == "central_hall" and row.to == "outdoor_meter"))
+        rt_push(result, c2_route_inspection(actor, row.from, row.to, row.gate, airlock))
+        rt_push(result, c2_route_inspection(actor, row.to, row.from, row.gate, airlock))
         i = i + 1
     return result
 
@@ -689,6 +689,11 @@ fn c2_norm_actions(actor, norm):
     let read_id = rt_cat(actor, rt_cat(".c2.read.", norm.id))
     let read_pre = dv_all([campaign_at(actor, norm.board), dv_fact(campaign_ref(object, "posted"), true), dv_fact(campaign_own(actor, rt_cat("read.", norm.id)), false)])
     rt_push(result, dv_with(campaign_surface_action(read_id, "read", read_pre, read_pre, read_id, dv_pair(campaign_ref(object, "text"), campaign_own(actor, rt_cat("read.", norm.id))), rt_cat("阅读：", norm.title), norm.surface, norm.source), "norm_receipt", {"norm": norm, "content": dv_fact(campaign_ref(object, "text"), norm.surface)}))
+    // Posted writing remains readable after a lost memory. This new reading
+    // supplies the visible text, never a prior acceptance or decision.
+    let recheck_pre = dv_all([campaign_at(actor, norm.board), dv_fact(campaign_ref(object, "posted"), true)])
+    let recheck = campaign_surface_action(rt_cat(actor, rt_cat(".c2.reinspect.norm.", norm.id)), "inspect", recheck_pre, recheck_pre, "", dv_single(campaign_ref(object, "text")), rt_cat("查看正文：", norm.title), norm.surface, campaign_approved("actual-local-rereading-of-posted-text"))
+    rt_push(result, dv_with_many(recheck, {"repeatable": true, "manual_reinspect": true, "norm_receipt": {"norm": norm, "content": dv_fact(campaign_ref(object, "text"), norm.surface)}}))
     let known = dv_fact(campaign_ref(object, "text"), norm.surface)
     var accepted = true
     var n = 0
@@ -822,12 +827,15 @@ fn c2_supply_actions(actor):
             let suffix = rt_cat(rt_show(day), rt_cat(".", meal.id))
             let id = rt_cat(actor, rt_cat(".c2.collect.", suffix))
             let flag = rt_cat("collected.", suffix)
-            let known = dv_all([campaign_at(actor, "main_granary"), campaign_window(day, meal.start, meal.end), dv_fact(campaign_ref("c2.counter", "open"), true), dv_fact(campaign_own(actor, flag), false)])
+            // Trying the current meal needs present evidence, not a memory
+            // that one has never collected it. The physical law still checks
+            // the meal flag, stock and time before a single ration can move.
+            let known = dv_all([campaign_at(actor, "main_granary"), campaign_window(day, meal.start, meal.end), dv_fact(campaign_ref("c2.counter", "open"), true)])
             if day != 2 or meal.id != "noon":
-                rt_push(result, dv_with(campaign_surface_action(id, "help", known, known, id, [campaign_ref("c2.counter", "remaining"), campaign_own(actor, "rations"), campaign_own(actor, flag), campaign_ref("c2.ledger", "day_recorded")], "领取一份口粮", "在配给台领了一份口粮。", c2_source("10_执行.story", 10, "Collect")), "normative_method", "collect_and_count"))
+                rt_push(result, dv_with(campaign_surface_action(id, "help", known, c2_collect_law(actor, day, meal.id, meal.start, meal.end).premise, id, [campaign_ref("c2.counter", "remaining"), campaign_own(actor, "rations"), campaign_own(actor, flag), campaign_ref("c2.ledger", "day_recorded")], "领取一份口粮", "在配给台领了一份口粮。", c2_source("10_执行.story", 10, "Collect")), "normative_method", "collect_and_count"))
             let eat = rt_cat(actor, rt_cat(".c2.eat.", suffix))
-            let eat_known = dv_all([campaign_window(day, meal.start, meal.end), dv_at_least(campaign_own(actor, "rations"), 1), dv_fact(campaign_own(actor, rt_cat("eaten.", suffix)), false)])
-            rt_push(result, campaign_surface_action(eat, "help", eat_known, eat_known, eat, [campaign_own(actor, "rations"), campaign_own(actor, "consumed"), campaign_own(actor, "hungry"), campaign_own(actor, rt_cat("eaten.", suffix))], "吃一份随身口粮", "吃了手里的那份口粮。", campaign_approved("two-actual-meals-per-person-not-a-daily-stock-deduction")))
+            let eat_known = dv_all([campaign_window(day, meal.start, meal.end), dv_at_least(campaign_own(actor, "rations"), 1)])
+            rt_push(result, campaign_surface_action(eat, "help", eat_known, c2_eat_law(actor, day, meal.id).premise, eat, [campaign_own(actor, "rations"), campaign_own(actor, "consumed"), campaign_own(actor, "hungry"), campaign_own(actor, rt_cat("eaten.", suffix))], "吃一份随身口粮", "吃了手里的那份口粮。", campaign_approved("two-actual-meals-per-person-not-a-daily-stock-deduction")))
             i = i + 1
         day = day + 1
     let open = rt_cat(actor, ".c2.open.granary")
@@ -1321,7 +1329,8 @@ fn c2_actor_actions(actor):
         rt_push(result, c2_move_action(actor, edge.from, edge.to, edge.gate))
         rt_push(result, c2_move_action(actor, edge.to, edge.from, edge.gate))
         i = i + 1
-    let rows = [c2_board_actions(actor), c2i_evening_actions(actor), c2i_record_actions(actor), c2_supply_actions(actor), c2_special_actions(actor), c2_corridor_actions(actor), c2i_actions(actor), c2_safety_actions(actor), c2m_actions(actor), c2_foolish_duty_actions(actor), c2_hero_actions(actor), c2_casualty_actions(actor), c2_anti_erosion_actions(actor), c2_unconventional_actions(actor), c2_dead_hand_actions(actor), c2_shura_actions(actor)]
+    // Retiring story actions retains ordinary player waits; existing laws and elapsed accounts remain inherited.
+    let rows = [c1n_manual_wait_actions(actor), c2_board_actions(actor), c2i_evening_actions(actor), c2i_record_actions(actor), c2_supply_actions(actor), c2_special_actions(actor), c2_corridor_actions(actor), c2i_actions(actor), c2_safety_actions(actor), c2m_actions(actor), c2_foolish_duty_actions(actor), c2_hero_actions(actor), c2_casualty_actions(actor), c2_anti_erosion_actions(actor), c2_unconventional_actions(actor), c2_dead_hand_actions(actor), c2_shura_actions(actor)]
     i = 0
     while i < rt_count(rows):
         var j = 0
@@ -1343,7 +1352,7 @@ fn c2_actor_actions(actor):
     while i < rt_count(observations):
         rt_push(result, observations[i])
         i = i + 1
-    rt_push(result, dv_with_many(campaign_surface_action(rt_cat(actor, ".c2.inspect.self"), "inspect", dv_true(), c2_alive(actor), "", c2_self_grants(actor), "检查随身口粮与本人承诺", "核对手里的口粮、补记和本人已经答应的事项。", campaign_person_source(actor)), {"repeatable": true, "manual_reinspect": true, "presentation": c2_self_presentation(actor)}))
+    rt_push(result, dv_with_many(campaign_surface_action(rt_cat(actor, ".c2.inspect.self"), "inspect", dv_true(), c2_alive(actor), "", c2_self_grants(actor), "检查身体与随身物品", "检查当下身体活动与随身物品。", campaign_approved("actually-inspected-present-body-and-carried-supplies")), {"repeatable": true, "manual_reinspect": true, "presentation": c2_self_presentation(actor)}))
     var prepared = []
     i = 0
     while i < rt_count(result):
@@ -1352,7 +1361,29 @@ fn c2_actor_actions(actor):
             action = dv_with(action, "predict_law", action.law)
         rt_push(prepared, action)
         i = i + 1
+    // Local orientation is possible without remembered body/location facts,
+    // but the real host still checks consciousness and physical ability.
+    rt_push(prepared, c2_orientation_action(actor))
     return campaign_public_methods(prepared)
+
+fn c2_orientation_grants(actor):
+    var grants = [campaign_position_ref(actor)]
+    let fields = ["alive", "in_coma", "stone_stupor", "motor_impairment", "busy_care", "station", "support_active", "guard_active", "carrying", "carried_by", "rations", "hungry"]
+    var i = 0
+    while i < rt_count(fields):
+        rt_push(grants, campaign_own(actor, fields[i]))
+        i = i + 1
+    return grants
+
+fn c2_orientation_action(actor):
+    let source = campaign_approved("actual-local-orientation-and-bodily-sensation")
+    let action = campaign_surface_action(rt_cat(actor, ".c2.inspect.orientation"), "inspect", dv_true(), c2_can_act(actor), "", c2_orientation_grants(actor), "察看四周并感受自身状况", "看清眼前的房间与自身站位，感受身体活动和手中物品。", source)
+    // The grants are present sensory facts only; they do not restore names,
+    // earlier events, adopted rules, learned evidence or past commitments.
+    return dv_with_many(action, {"repeatable": true, "manual_reinspect": true, "presentation": {"actor": actor, "voice": "visible-inspection", "lines": [
+        c2_visible_line(dv_true(), "重新察看眼前的空间，核对自己此刻的站位。", [], source),
+        c2_visible_line(dv_true(), "肢体活动：{活动}。", [c2_visible_binding("活动", campaign_own(actor, "motor_impairment"), {"true": "活动受限", "false": "目前能够活动"})], source),
+        c2_visible_line(dv_true(), "手边口粮：{口粮}份；饥饿：{饥饿}。", [c2_visible_binding("口粮", campaign_own(actor, "rations"), {}), c2_visible_binding("饥饿", campaign_own(actor, "hungry"), {"true": "眼下感到饥饿", "false": "眼下未感到饥饿"})], source)]}})
 
 // One observation identity per scope. Weather retains the original sight locations.
 fn c2_compact_observations(actor):
@@ -1369,29 +1400,25 @@ fn c2_compact_observations(actor):
     return [dv_with_many(clock, {"repeatable": true, "presentation": {"actor": actor, "voice": "visible-inspection", "lines": [{"template": "时钟：{时刻}。", "bindings": [dv_with(c2_visible_binding("时刻", campaign_clock(), {}), "format", "game-clock")]}]}}), dv_with_many(weather, {"repeatable": true, "presentation": c2_inspection_presentation(actor, "c2.weather", fields)})]
 
 fn c2_self_presentation(actor):
-    let source = campaign_approved("actually-inspected-own-supplies-and-commitments")
+    let source = campaign_approved("actually-inspected-present-body-and-carried-supplies")
     var lines = [
-        c2_visible_line(dv_true(), "随身口粮：{口粮}份；本人食用记录：{食用}份。", [c2_visible_binding("口粮", campaign_own(actor, "rations"), {}), c2_visible_binding("食用", campaign_own(actor, "consumed"), {})], source),
-        c2_visible_line(dv_true(), "待补记录：{补记}份；已登记待核：{待核}份。", [c2_visible_binding("补记", campaign_own(actor, "owe_notes"), {}), c2_visible_binding("待核", campaign_own(actor, "pending_notes"), {})], source),
+        c2_visible_line(dv_true(), "随身口粮：{口粮}份。", [c2_visible_binding("口粮", campaign_own(actor, "rations"), {})], source),
         c2_visible_line(dv_true(), "饥饿：{状态}。", [c2_visible_binding("状态", campaign_own(actor, "hungry"), {"true": "眼下感到饥饿", "false": "眼下未感到饥饿"})], source),
         c2_visible_line(dv_fact(campaign_own(actor, "station"), ""), "目前没有承担固定工位。", [], source),
         c2_visible_line(dv_not(dv_fact(campaign_own(actor, "station"), "")), "我正承担固定工位，离开前需要实际交接。", [], source)]
     if actor == "shen":
         rt_push(lines, c2_visible_line(dv_true(), "携带的烹饪原料：{原料}份。", [c2_visible_binding("原料", campaign_own(actor, "meal_ingredients"), {})], source))
-    let jobs = c2_work_specs()
-    var i = 0
-    while i < rt_count(jobs):
-        if jobs[i].actor == actor:
-            rt_push(lines, c2_visible_line(c2_work_accepted(actor, jobs[i].id), rt_cat("已答应承担：", jobs[i].purpose), [], source))
-        i = i + 1
-    return {"actor": actor, "voice": "private-monologue", "lines": lines}
+    return {"actor": actor, "voice": "visible-inspection", "lines": lines}
 
 fn c2_self_grants(actor):
-    let fields = c2_initial_body(actor).facets.state
+    // A bodily inspection cannot recover an earlier decision, meal history,
+    // medical treatment, exposure total, learned skill or accepted agreement.
+    // Those need an actual record or a new interaction with the participant.
+    let fields = ["alive", "in_coma", "stone_stupor", "motor_impairment", "busy_care", "station", "support_active", "guard_active", "carrying", "carried_by", "rations", "hungry", "fever", "severe_weakness", "serious_injury", "respiratory_failure", "meal_ingredients", "anti_erosion_carried", "seal_present"]
     var grants = []
     var i = 0
     while i < rt_count(fields):
-        rt_push(grants, campaign_own(actor, fields[i][0]))
+        rt_push(grants, campaign_own(actor, fields[i]))
         i = i + 1
     return grants
 
@@ -1599,6 +1626,11 @@ fn c2_shared_objects():
 // A declared work location is an intention, not a prediction of its result.
 // Choose one location for all owned opportunities, including daily work and
 // communication, rather than granting simultaneous competing arrival rewards.
+fn c2_query_view(actor, value):
+    if dv_find(actor.policy, "opt_readview", false):
+        return rt_snapshot(value)
+    return value
+
 fn c2_navigation_condition(condition, actor):
     let op = dv_find(condition, "op", "")
     if op == "equals" and dv_same_local_ref(actor, condition.ref, campaign_position_ref(actor)):
@@ -1624,6 +1656,8 @@ fn c2_navigation_pending(actor, goal):
 // local observation of that task's prerequisites. A stale/declined method
 // cannot keep earning another trip merely because its result is still absent.
 fn c2_navigation_local_ready(actor, goal):
+    actor = c2_query_view(actor, actor)
+    goal = c2_query_view(actor, goal)
     var methods = dv_find(goal, "navigation_methods", [])
     if dv_has_key(goal, "method_id"):
         methods = dv_append(methods, goal.method_id)
@@ -1669,6 +1703,9 @@ fn c2_navigation_local_ready(actor, goal):
 // Follow only the owner's already adopted movement laws. Forecasts supply no
 // destination inspection, partner action, future hearing or task completion.
 fn c2_navigation_route_ready(actor, goal, route):
+    actor = c2_query_view(actor, actor)
+    goal = c2_query_view(actor, goal)
+    route = c2_query_view(actor, route)
     var view = actor
     var i = 0
     while i < rt_count(route.path_basis):
@@ -1703,9 +1740,14 @@ fn c2_navigation_arrival_goals(actor, goals):
     return result
 
 fn c2_navigation_goals(actor, goals):
+    actor = c2_query_view(actor, actor)
+    goals = c2_query_view(actor, goals)
     goals = c2_navigation_arrival_goals(actor, goals)
-    if c2i_closing_navigation(actor) != false:
-        return goals
+    let closing = c2i_closing_navigation(actor)
+    if closing != false:
+        let when = campaign_any(dv_fact(campaign_ref("c2.daily", "council_closed"), true), dv_at_least(campaign_clock(), 6330))
+        let intended = campaign_goal(campaign_at(actor.id, closing.next), dv_all([when, campaign_at(actor.id, closing.origin)]), [campaign_approved("user:2026-10-18章末授权"), closing])
+        return dv_append(goals, dv_with(intended, "navigation_intention", {"target": closing.target, "next": closing.next, "scope": "owned-closing-route-or-local-review"}))
     // An active, already reached presence intention does not earn another
     // unrelated arrival reward. Substantive actions still enter shared choice.
     var held = 0
@@ -1715,7 +1757,9 @@ fn c2_navigation_goals(actor, goals):
         if dv_find(goal, "maintain_presence", false) and 0 < rt_count(dv_find(goal, "basis", [])):
             if dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true":
                 if dv_truth(actor.mind, goal.proposition) == "true":
-                    return goals
+                    let room = dv_find(goal, "navigation_room", "")
+                    let intended = campaign_goal(campaign_at(actor.id, room), goal.available_when, goal.basis)
+                    return dv_append(goals, dv_with(intended, "navigation_intention", {"target": room, "next": room, "scope": "owned-continuing-presence"}))
                 let room = dv_find(goal, "navigation_room", "")
                 if room != "" and maintained_route == false:
                     let route = c2_navigation_route(actor, room)
@@ -1751,7 +1795,8 @@ fn c2_navigation_goals(actor, goals):
             if dv_truth(actor.mind, campaign_at(actor.id, room)) == "true":
                 if ready and c2_navigation_local_ready(actor, goal):
                     // Local substantive work keeps priority over another trip.
-                    return goals
+                    let intended = campaign_goal(campaign_at(actor.id, room), dv_all([when, campaign_at(actor.id, room)]), basis)
+                    return dv_append(goals, dv_with(intended, "navigation_intention", {"target": room, "next": room, "scope": "owned-unfinished-local-work"}))
             elif ready and first == false:
                 let route = c2_navigation_route(actor, room)
                 if route != false and c2_navigation_route_ready(actor, goal, route):
@@ -2001,7 +2046,17 @@ fn c2_personal_goal_templates(id):
     return rt_memo_put([], key, c2_personal_goal_templates_build(id))
 
 fn c2_personal_goals(actor):
+    actor = c2_query_view(actor, actor)
     var goals = dv_clone(c2_personal_goal_templates(actor.id))
+    if dv_find(actor, "erosion_memory_truncated", false) and actor.id != "demon":
+        // A new local look must postdate the retained first-day memory;
+        // but memory truncation itself grants no current world facts.
+        let minimum = dv_find(dv_find(actor, "first_day_mind", []), "time", 0) + 1
+        let refs = c2_orientation_grants(actor.id)
+        var orientation_index = 0
+        while orientation_index < rt_count(refs):
+            rt_push(goals, campaign_observation_goal(refs[orientation_index], dv_true(), [campaign_approved("actual-local-orientation-after-memory-truncation")], minimum))
+            orientation_index = orientation_index + 1
     // Refresh only by a real look at this board during the negotiation window.
     let board_when = dv_all([c2_night(4), campaign_at(actor.id, "living_hall")])
     rt_push(goals, campaign_observation_goal(campaign_ref(c2_norm_object("measurement_pause"), "posted"), board_when, [campaign_approved("user:2026-10-23-local-board-recheck-at-evening-meeting")], 5580))
@@ -2035,6 +2090,7 @@ fn c2_personal_goals(actor):
     return goals
 
 fn c2_refresh_actor_goals(actor):
+    actor = c2g_refresh_inventory_review(actor)
     var goals = c2_personal_goals(actor)
     let carried = dv_find(actor.policy, "chapter1_carried_goals", [])
     var i = 0
@@ -2096,9 +2152,6 @@ fn c2_extend_teacher(actor, physical):
         i = i + 1
     let result = dv_with_many(actor, {"mind": mind, "location_ref": campaign_position_ref("demon"), "observable_presence_when": dv_fact(campaign_ref("demon.body", "manifested"), true), "actions": campaign_public_methods(actions), "policy": dv_with_many(actor.policy, {"budget": dv_max(dv_find(actor.policy, "budget", 0), 240), "wait_chunk_limit": 180, "chapter1_carried_goals": carried, "chapter1_retired": retired, "chapter2_profile": {"id": "demon", "domain": "teaching", "station_roles": [], "basis": [c2_source("09_表达.story", 605, "我想教")]}, "notice_co_presence": true, "visual_identity_when": dv_fact(campaign_ref("c2.weather", "daylight"), true)})})
     return c2_refresh_actor_goals(result)
-
-fn c2_extend_actor(actor):
-    return c2_extend_actor_from(actor, actor.mind, actor.mind)
 
 fn c2_extend_actor_from(actor, physical, previous):
     if not dv_has(campaign_people(), actor.id):
@@ -2614,6 +2667,7 @@ fn c2i_watch_goal(actor, when, source, minimum):
     return dv_with_many(campaign_observation_goal(campaign_own("moran", "watched"), when, source, minimum), {"navigation_room": room, "navigation_methods": [method]})
 
 fn c2i_goals(actor):
+    actor = c2_query_view(actor, actor)
     let id = actor.id
     var goals = []
     if id == "ward":
@@ -2632,17 +2686,15 @@ fn c2i_goals(actor):
             contributed = "quer.c2.document.dismantle-lock"
         if dv_has(dv_find(actor, "completed_actions", []), contributed) and dv_truth(actor.mind, dv_fact(campaign_own("ward", "restriction_withdrawn"), true)) != "true":
             rt_push(goals, dv_with_many(campaign_goal(campaign_at(id, "document_workshop"), dv_true(), [campaign_approved("actual-continuing-review-after-own-contribution")]), {"navigation_room": "document_workshop", "maintain_presence": true}))
-            let prior = dv_read(actor.mind, campaign_ref("case.contract", "joined_inventory"))
             if dv_truth(actor.mind, dv_fact(campaign_ref("case.contract", "joined_inventory"), true)) != "true":
-                rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("case.contract", "joined_inventory"), dv_true(), [campaign_approved("actual-continuing-review-after-own-contribution")], dv_find(prior, "time", 0) + 1), {"navigation_room": "document_workshop", "navigation_methods": [rt_cat(id, ".c2.investigation.inspect.document_workshop")]}))
+                rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("case.contract", "joined_inventory"), dv_true(), [campaign_approved("actual-continuing-review-after-own-contribution")], dv_find(dv_find(actor, "inventory_review_trigger", {}), "minimum_time", 0)), {"navigation_room": "document_workshop", "navigation_methods": [rt_cat(id, ".c2.investigation.inspect.document_workshop")]}))
             if id == "ward":
                 rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_own(id, "restriction_withdrawn"), true), dv_true(), [campaign_approved("actual-on-site-conditional-correction-after-evidence")]), {"navigation_room": "document_workshop", "navigation_methods": ["ward.c2.review-and-correct"]}))
     if id == "ward" or id == "quer":
         if c2g_review_heard(actor):
             rt_push(goals, dv_with_many(campaign_goal(dv_fact(campaign_ref("case.contract", "joined_inventory"), true), dv_true(), [campaign_approved("actual-heard-contract-review-request")]), {"navigation_room": "document_workshop", "navigation_methods": [rt_cat(id, ".c2.investigation.inspect.document_workshop")]}))
             if c2g_enabled(actor) and dv_truth(actor.mind, dv_fact(campaign_ref("case.contract", "joined_inventory"), true)) != "true":
-                let prior = dv_read(actor.mind, campaign_ref("case.contract", "joined_inventory"))
-                let minimum = dv_find(prior, "time", 0) + 1
+                let minimum = dv_find(dv_find(actor, "inventory_review_trigger", {}), "minimum_time", 0)
                 rt_push(goals, dv_with_many(campaign_observation_goal(campaign_ref("case.contract", "joined_inventory"), dv_true(), [campaign_approved("actual-request-to-recheck-stale-inventory-observation")], minimum), {"navigation_room": "document_workshop", "navigation_methods": [rt_cat(id, ".c2.investigation.inspect.document_workshop")]}))
         rt_push(goals, campaign_observation_goal(campaign_ref("case.contract", "cabinet_key_holder"), campaign_at(id, "document_workshop"), [campaign_approved("actual-key-custody-receipt")], 0))
     goals = c2m_concat(goals, c2m_goals(actor))
@@ -2915,25 +2967,6 @@ fn c2i_evening_actions(actor):
 
 // One navigation intention at a time. Local ready work outranks a trip;
 // all completion goals remain available to the shared planner.
-fn c2i_navigation_focus(actor, rows):
-    var fallback = ""
-    var ready = ""
-    var i = 0
-    while i < rt_count(rows):
-        let row = rows[i]
-        if row.actor == actor.id and dv_truth(actor.mind, row.when) == "true" and dv_truth(actor.mind, dv_fact(campaign_ref(row.object, row.field), c2i_value(row))) != "true":
-            if fallback == "":
-                fallback = row.id
-            if dv_truth(actor.mind, dv_all(row.requirements)) == "true":
-                if dv_truth(actor.mind, campaign_at(actor.id, row.room)) == "true":
-                    return row.id
-                if ready == "" and c2i_known_route(actor, row.room) != false:
-                    ready = row.id
-        i = i + 1
-    if ready != "":
-        return ready
-    return fallback
-
 // Intermediate intention follows an owned, known-open path; execution still checks each gate.
 fn c2i_known_route(actor, target):
     if not dv_find(actor.policy, "opt_plancache", false):
@@ -3007,36 +3040,6 @@ fn c2i_closing_navigation(actor):
             distance = rt_count(route.path_basis)
         i = i + 1
     return best
-
-fn c2i_navigation_input(actor):
-    var refs = [campaign_position_ref(actor.id), campaign_access("north"), campaign_access("east"), campaign_access("living")]
-    refs = dvp_merge_refs(refs, [campaign_ref("c2.daily", "council_closed")])
-    let edges = c2_edges()
-    var edge_index = 0
-    while edge_index < rt_count(edges):
-        refs = dvp_merge_refs(refs, [campaign_access(edges[edge_index].gate)])
-        edge_index = edge_index + 1
-    let goals = dv_find(actor.policy, "goals", [])
-    var i = 0
-    while i < rt_count(goals):
-        let completion = dv_find(goals[i], "navigation_completion", false)
-        if completion != false:
-            refs = dvp_merge_refs(refs, dvs_sim_refs(completion))
-        i = i + 1
-    let rows = c2i_rows()
-    var windows = []
-    i = 0
-    while i < rt_count(rows):
-        if rows[i].actor == actor.id:
-            refs = dvp_merge_refs(refs, dvs_sim_refs(dv_all(rows[i].requirements)))
-            rt_push(windows, dv_truth(actor.mind, rows[i].when))
-        i = i + 1
-    var inputs = []
-    i = 0
-    while i < rt_count(refs):
-        rt_push(inputs, {"ref": refs[i], "cell": dvs_reason_value(dv_read(actor.mind, refs[i]))})
-        i = i + 1
-    return {"inputs": inputs, "windows": windows, "adoptions": actor.mind.adoptions, "closing_available": dv_truth(actor.mind, campaign_any(dv_fact(campaign_ref("c2.daily", "council_closed"), true), dv_at_least(campaign_clock(), 6330))), "closing_central_completed": dv_has(dv_find(actor, "completed_actions", []), rt_cat(actor.id, ".c2.daily.closing.central_hall")), "closing_oath_completed": dv_has(dv_find(actor, "completed_actions", []), rt_cat(actor.id, ".c2.daily.closing.oath_court"))}
 
 // Work decisions belong to their owner. An invitation is a heard request;
 // neither it nor a partnership promise changes another body's physical skill.
@@ -3146,6 +3149,42 @@ fn c2g_review_heard(actor):
             return true
         i = i + 1
     return false
+
+// A completed look does not itself create a fresh reason to look again.
+// Track only the owner's actual contribution, new heard review requests and
+// changed positive prerequisite beliefs; no physical case state is consulted.
+fn c2g_refresh_inventory_review(actor):
+    if actor.id != "ward" and actor.id != "quer":
+        return actor
+    var contributed = "ward.c2.document.half-paper"
+    if actor.id == "quer":
+        contributed = "quer.c2.document.dismantle-lock"
+    var requests = []
+    let receipts = dv_find(actor, "received_speeches", [])
+    let rooms = c2_rooms()
+    var i = 0
+    while i < rt_count(receipts):
+        let receipt = receipts[i]
+        var matches = receipt.speaker == "detective" and receipt.action_id == rt_cat("detective.c2.contract-review.request.", actor.id)
+        var r = 0
+        while r < rt_count(rooms):
+            if receipt.speaker == "detective" and receipt.action_id == rt_cat("detective.c2.contract-review.storyflow.", rt_cat(actor.id, rt_cat(".", rooms[r]))):
+                matches = true
+            r = r + 1
+        if matches:
+            rt_push(requests, receipt.parse_event)
+        i = i + 1
+    let fields = ["lock_no_pry", "emergency_inventory_majority", "ward_half_paper", "joined_inventory"]
+    var known = []
+    i = 0
+    while i < rt_count(fields):
+        rt_push(known, dv_truth(actor.mind, dv_fact(campaign_ref("case.contract", fields[i]), true)) == "true")
+        i = i + 1
+    let inputs = {"contributed": dv_has(dv_find(actor, "completed_actions", []), contributed), "requests": requests, "known": known, "memory_epoch": dv_find(actor, "erosion_memory_epoch", 0)}
+    let previous = dv_find(actor, "inventory_review_trigger", false)
+    if previous != false and dv_same(previous.inputs, inputs):
+        return actor
+    return dv_with(actor, "inventory_review_trigger", {"inputs": inputs, "minimum_time": actor.mind.time})
 
 fn c2g_storyflow_action(actor, original):
     var action = original
@@ -3330,11 +3369,13 @@ fn c2_document_coordination_rows():
                 text = "我暂不答应这次邀请。手里的材料由我保管，是否出示要等我自己核对后再决定。"
                 promotes = ["ward_authority"]
                 sacrifices = ["evidence"]
-            // A remote, unobserved negative is not required to answer a local
-            // request. The actual paper-showing keeps its original site gate.
+            // Answering the heard local request does not require knowing
+            // whether an unobserved workshop display has already happened.
+            // This grants no paper fact or consent; the on-site showing and
+            // the owner's accepted/deferred value choice remain separate.
             let available = dv_all([campaign_case_claim("contract", "keys_found"), campaign_at("detective", room), c2_can_act("ward")])
             var reply = c2d_reply("ward", rt_cat("ward.c2.document.visit.", rt_cat(stance, rt_cat(".", room))), room, available, dv_true(), "document-fragment-meeting", label, text, source)
-            reply = dv_with_many(reply, {"repeatable": true, "listeners": ["detective"], "received_speech_requirement": {"speaker": "detective", "action_id": invite_id}, "opportunity": {"location": room, "participants": ["detective"], "mode": "all-present"}, "owned_decision": {"id": "document-fragment-visit", "stance": stance, "context_refs": [campaign_case_ref("contract", "keys_found"), campaign_ref("case.contract", "ward_half_paper")], "request_topics": ["document-fragment-meeting"], "basis": [source]}, "personal_choice": {"group": "document-fragment-visit", "requires": available, "prohibits": dv_fact(campaign_ref("case.contract", "ward_half_paper"), true), "promotes": promotes, "sacrifices": sacrifices, "require_positive": true, "basis": [source]}})
+            reply = dv_with_many(reply, {"repeatable": true, "listeners": ["detective"], "received_speech_requirement": {"speaker": "detective", "action_id": invite_id}, "opportunity": {"location": room, "participants": ["detective"], "mode": "all-present"}, "owned_decision": {"id": "document-fragment-visit", "stance": stance, "context_refs": [campaign_case_ref("contract", "keys_found"), campaign_ref("case.contract", "ward_half_paper")], "request_topics": ["document-fragment-meeting"], "basis": [source]}, "personal_choice": {"group": "document-fragment-visit", "requires": available, "prohibits": dv_not(dv_true()), "promotes": promotes, "sacrifices": sacrifices, "require_positive": true, "basis": [source]}})
             rt_push(rows, reply)
             j = j + 1
         i = i + 1
@@ -3625,6 +3666,7 @@ fn c2_owned_recheck_needed(actor):
 // Physical laws retain bodily feasibility and never acquire this view's beliefs.
 fn c2_refresh_content_actions(actor):
     actor = c2sf_actor(actor)
+    actor = c2_query_view(actor, actor)
     let original_actions = actor.actions
     var actions = []
     var i = 0
@@ -3744,6 +3786,7 @@ fn c2_refresh_content_actions(actor):
     return dv_with_many(actor, {"actions": actions, "policy": dv_with(actor.policy, "norm_rules", rules)})
 
 fn c2_safety_goals(actor):
+    actor = c2_query_view(actor, actor)
     var goals = []
     let source = [campaign_approved("user:2026-10-18-owned-measurement-and-continuing-duty")]
     let work = c2_work_specs()
@@ -5020,6 +5063,7 @@ fn c2d_trial_evidence_goals(actor):
     return goals
 
 fn c2d_goals(actor):
+    actor = c2_query_view(actor, actor)
     var goals = []
     var rows = c2d_rows()
     if dv_find(actor.policy, "opt_plancache", false):
@@ -5037,6 +5081,7 @@ fn c2d_goals(actor):
                     rt_push(selected, row)
                 row_index = row_index + 1
             rows = rt_memo_put(rows, key, selected)
+    rows = c2_query_view(actor, rows)
     let tasks = c2daily_tasks()
     goals = dv_clone(c2d_goal_head(actor.id, tasks))
     // Invocation-local reuse: actor/mind remain unchanged throughout this loop.
@@ -5151,6 +5196,8 @@ fn c2d_refresh_actor_base_goals(actor):
     return c2d_refresh_goals_from(c2_refresh_content_actions(c2u_owned_consequences(actor)))
 
 fn c2d_refresh_goals_from(actor):
+    actor = c2g_refresh_inventory_review(actor)
+    actor = c2_query_view(actor, actor)
     let goals = c2d_goals(actor)
     var policy = dv_with(actor.policy, "chapter2_dialogue_goals", goals)
     var combined = c2_personal_goals(actor)

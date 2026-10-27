@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using DuelView.Compiled;
+using DuelView.Core;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -16,6 +17,7 @@ public sealed partial class DvSession
     private readonly bool developer;
     private readonly R.ValueContext valueContext;
     private readonly HostValues.Converter converter = new();
+    private ContentCatalog content;
     private readonly Dictionary<string, ViewerProjection> viewers = new(StringComparer.Ordinal);
     private readonly Dictionary<string, (long Version, IReadOnlyDictionary<string, object?> Value)> executors = new(StringComparer.Ordinal);
     private PreviewBranch? preview;
@@ -40,10 +42,13 @@ public sealed partial class DvSession
     }
     private sealed record PreviewBranch(PreparedPreview Public, object State, int FirstEvent);
 
-    private DvSession(R.ValueContext context, object value, bool auditMode = true, bool? developerMode = null)
+    private DvSession(R.ValueContext context, object value, bool auditMode = true, bool? developerMode = null, ContentCatalog? catalog = null)
     {
         valueContext = context;
         using var valuesScope = R.UseValues(valueContext);
+        var embedded = Field(value, "content_pack_dv", "");
+        content = catalog ?? (embedded is string { Length: > 0 } text ? ContentCatalog.Parse(text) : ContentCatalog.Default());
+        using var contentScope = R.UseContent(content.Data);
         audit = auditMode;
         var story = R.record_find(value, "story", new List<object>());
         var runConfiguration = Field(story, "run_config", new List<object>());
@@ -52,6 +57,7 @@ public sealed partial class DvSession
         developer = developerMode ?? R.Bool(R.record_find(story, "development_mode", false));
         story = R.record_with(story, "development_mode", developer);
         state = R.record_with(R.record_with(value, "story", story), "audit_mode", audit);
+        state = R.record_with(state, "content_pack_dv", content.Source);
         if (HasPending(state)) throw new InvalidDataException("A restorable session must be saved at a committed action boundary.");
         lastCommittedState = R.snapshot(state);
         committedDecisionEventCursor = Events(state).Count;
@@ -66,6 +72,7 @@ public sealed partial class DvSession
     private object Run(Func<object> operation, bool speculative = false)
     {
         using var valuesScope = R.UseValues(valueContext);
+        using var contentScope = R.UseContent(content.Data);
         using var scope = R.UseAudit(audit);
         using var phases = R.UsePhases((stage, actor) =>
         {
@@ -142,19 +149,28 @@ public sealed partial class DvSession
     }
 
     public static DvSession OpenCampaign(string player = "") =>
-        OpenMeasured("open-campaign", context => new DvSession(context, DVProgram.SetPlayer(DVProgram.CampaignOpen(), player)));
+        OpenMeasured("open-campaign", context =>
+        {
+            var catalog = ContentCatalog.Default();
+            using var contentScope = R.UseContent(catalog.Data);
+            return new DvSession(context, DVProgram.SetPlayer(DVProgram.CampaignOpen(), player), catalog: catalog);
+        });
     public static DvSession OpenConfiguredCampaign(string options) => OpenConfiguredCampaign(options, Console.Error);
     public static DvSession OpenConfiguredCampaign(string options, TextWriter diagnosticOutput) =>
         OpenMeasured("open-configured", context =>
         {
             var configuration = HostValues.Parse(options);
+            var source = Field(configuration, "content_source", "") as string ?? "";
+            var path = Field(configuration, "content_path", "") as string ?? "";
+            var catalog = source.Length > 0 ? ContentCatalog.Parse(source) : path.Length > 0 ? ContentCatalog.Load(path) : ContentCatalog.Default();
+            using var contentScope = R.UseContent(catalog.Data);
             var auditMode = R.Bool(Field(configuration, "audit", false));
             var developerMode = R.Bool(Field(configuration, "developer", false));
             var controller = R.Text(Field(configuration, "controller", ""));
             if (controller is "human" or "llm") configuration = R.record_with(configuration, "controller", "player");
             using var scope = R.UseAudit(auditMode);
             using var output = R.UseOutput(diagnosticOutput);
-            var session = new DvSession(context, DVProgram.HostOpen(configuration), auditMode, developerMode) { DiagnosticOutput = diagnosticOutput };
+            var session = new DvSession(context, DVProgram.HostOpen(configuration), auditMode, developerMode, catalog) { DiagnosticOutput = diagnosticOutput };
             if (controller is "human" or "llm") session.SetPerformanceController(controller);
             return session;
         });

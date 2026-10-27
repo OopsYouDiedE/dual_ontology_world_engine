@@ -22,9 +22,9 @@ func _ready() -> void:
 	collision_layer = 2
 	collision_mask = 3
 	var shape := CollisionShape2D.new()
-	var capsule := CircleShape2D.new()
-	capsule.radius = 7.0
-	shape.shape = capsule
+	var circle := CircleShape2D.new()
+	circle.radius = 7.0
+	shape.shape = circle
 	shape.position = Vector2(0, -5)
 	add_child(shape)
 	sprite = AnimatedSprite2D.new()
@@ -134,9 +134,6 @@ func _physics_process(delta: float) -> void:
 	last_point = position
 
 func _draw() -> void:
-	draw_ellipse_shadow()
-
-func draw_ellipse_shadow() -> void:
 	draw_set_transform(Vector2(0, -1), 0, Vector2(1, 0.33))
 	draw_circle(Vector2.ZERO, 9.0, Color(0.12, 0.16, 0.16, 0.32))
 	draw_set_transform(Vector2.ZERO)

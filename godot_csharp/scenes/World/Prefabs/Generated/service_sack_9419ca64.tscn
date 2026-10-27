@@ -1,0 +1,185 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/World/Prefabs/InteractiveProp.gd" id="1_se1pu"]
+[ext_resource type="Shader" path="res://rendering/shaders/surfaces/fabric.gdshader" id="2_y576r"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_n5elx"]
+render_priority = 0
+shader = ExtResource("2_y576r")
+shader_parameter/pigment = Color(0.69411767, 0.6313726, 0.47843137, 1)
+shader_parameter/surface_roughness = 0.75
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="SphereMesh" id="SphereMesh_v8h00"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_y6urh"]
+top_radius = 0.055
+bottom_radius = 0.08
+height = 0.14
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_y087h"]
+render_priority = 0
+shader = ExtResource("2_y576r")
+shader_parameter/pigment = Color(0.45882353, 0.38431373, 0.2627451, 1)
+shader_parameter/surface_roughness = 0.75
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="TorusMesh" id="TorusMesh_imt5v"]
+inner_radius = 0.065
+outer_radius = 0.089
+rings = 24
+ring_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_h012v"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.23748688
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_52bwp"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hsefs"]
+top_radius = 0.055
+bottom_radius = 0.08
+height = 0.14
+radial_segments = 24
+
+[sub_resource type="TorusMesh" id="TorusMesh_hdxh2"]
+inner_radius = 0.065
+outer_radius = 0.089
+rings = 24
+ring_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_r3301"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.23748687
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_cn6pb"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3e5qu"]
+top_radius = 0.055
+bottom_radius = 0.08
+height = 0.14
+radial_segments = 24
+
+[sub_resource type="TorusMesh" id="TorusMesh_td303"]
+inner_radius = 0.065
+outer_radius = 0.089
+rings = 24
+ring_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_sj7ay"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.23748688
+radial_segments = 24
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1590471686]
+script = ExtResource("1_se1pu")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "service/sack"
+
+[node name="sack" type="Node3D" parent="." unique_id=1288031822]
+metadata/authoring_label = "sack"
+
+[node name="@MeshInstance3D@20458" type="MeshInstance3D" parent="sack" unique_id=1264359760]
+transform = Transform3D(0.6, 0, 0, 0, 0.68, 0, 0, 0, 0.49, -0.32, 0.35, -0.1)
+material_override = SubResource("ShaderMaterial_n5elx")
+mesh = SubResource("SphereMesh_v8h00")
+
+[node name="@MeshInstance3D@20459" type="MeshInstance3D" parent="sack" unique_id=1381787264]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.32, 0.71000004, -0.1)
+material_override = SubResource("ShaderMaterial_n5elx")
+mesh = SubResource("CylinderMesh_y6urh")
+
+[node name="@MeshInstance3D@20460" type="MeshInstance3D" parent="sack" unique_id=512344809]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.32, 0.72, -0.1)
+material_override = SubResource("ShaderMaterial_y087h")
+mesh = SubResource("TorusMesh_imt5v")
+
+[node name="@MeshInstance3D@20461" type="MeshInstance3D" parent="sack" unique_id=1121165277]
+transform = Transform3D(0.28111118, 0.33686072, -0.89861083, -0.33686072, -0.8421521, -0.4210758, -0.89861083, 0.4210758, -0.12326336, -0.21, 0.62, -0.05)
+material_override = SubResource("ShaderMaterial_y087h")
+mesh = SubResource("CylinderMesh_h012v")
+
+[node name="@MeshInstance3D@20462" type="MeshInstance3D" parent="sack" unique_id=1698666976]
+transform = Transform3D(0.6, 0, 0, 0, 0.68, 0, 0, 0, 0.49, 0, 0.35, 0.15)
+material_override = SubResource("ShaderMaterial_n5elx")
+mesh = SubResource("SphereMesh_52bwp")
+
+[node name="@MeshInstance3D@20463" type="MeshInstance3D" parent="sack" unique_id=493576379]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.71000004, 0.15)
+material_override = SubResource("ShaderMaterial_n5elx")
+mesh = SubResource("CylinderMesh_hsefs")
+
+[node name="@MeshInstance3D@20464" type="MeshInstance3D" parent="sack" unique_id=1240850972]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0.15)
+material_override = SubResource("ShaderMaterial_y087h")
+mesh = SubResource("TorusMesh_hdxh2")
+
+[node name="@MeshInstance3D@20465" type="MeshInstance3D" parent="sack" unique_id=1510872806]
+transform = Transform3D(0.2811113, 0.3368607, -0.8986108, -0.3368607, -0.8421521, -0.4210758, -0.8986108, 0.4210758, -0.12326336, 0.11, 0.62, 0.2)
+material_override = SubResource("ShaderMaterial_y087h")
+mesh = SubResource("CylinderMesh_r3301")
+
+[node name="@MeshInstance3D@20466" type="MeshInstance3D" parent="sack" unique_id=28331936]
+transform = Transform3D(0.6, 0, 0, 0, 0.68, 0, 0, 0, 0.49, 0.32, 0.35, -0.1)
+material_override = SubResource("ShaderMaterial_n5elx")
+mesh = SubResource("SphereMesh_cn6pb")
+
+[node name="@MeshInstance3D@20467" type="MeshInstance3D" parent="sack" unique_id=696707174]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.32, 0.71000004, -0.1)
+material_override = SubResource("ShaderMaterial_n5elx")
+mesh = SubResource("CylinderMesh_3e5qu")
+
+[node name="@MeshInstance3D@20468" type="MeshInstance3D" parent="sack" unique_id=1092017772]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.32, 0.72, -0.1)
+material_override = SubResource("ShaderMaterial_y087h")
+mesh = SubResource("TorusMesh_td303")
+
+[node name="@MeshInstance3D@20469" type="MeshInstance3D" parent="sack" unique_id=1714460284]
+transform = Transform3D(0.28111118, 0.33686072, -0.89861083, -0.33686072, -0.8421521, -0.4210758, -0.89861083, 0.4210758, -0.12326336, 0.43, 0.62, -0.05)
+material_override = SubResource("ShaderMaterial_y087h")
+mesh = SubResource("CylinderMesh_sj7ay")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=1924724069]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=1298369132]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.79321367)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=833141558]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.8432137)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=1762031816]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78000003, 0.025000006)

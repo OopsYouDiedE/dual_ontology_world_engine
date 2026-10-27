@@ -1,8 +1,8 @@
 extends Node
 
-const CAMPUS_MAP_VIEW := preload("res://scenes/Chapter2/Field/CampusMapView.tscn")
+const CAMPUS_MAP_VIEW := preload("res://scenes/World/Field/CampusMapView.tscn")
 const GEOMETRY := preload("res://scenes/Host/GeometryCatalog.gd")
-const WORLD_VIEW := preload("res://scenes/Shared/Field/WorldView.gd")
+const WORLD_VIEW := preload("res://scenes/World/Runtime/WorldView.gd")
 const ROOM_GRAPH := preload("res://scenes/Host/RoomGraphMotion.gd")
 var _bodies: Dictionary = {}
 var _worlds: Dictionary = {}
@@ -51,7 +51,8 @@ func _new_viewport(label: String) -> SubViewport:
 	var viewport := SubViewport.new()
 	viewport.name = label
 	viewport.size = Vector2i(32, 32)
-	viewport.disable_3d = true
+	viewport.disable_3d = false
+	viewport.own_world_3d = true
 	viewport.world_2d = World2D.new()
 	viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	add_child(viewport)
@@ -155,6 +156,9 @@ func occupied_at(walker: CharacterBody2D, resource: String, map_key: String, poi
 
 func sync_obstacles(field: Node2D) -> void:
 	if _closing or not is_instance_valid(field) or not is_instance_valid(field.adapter): return
+	if is_instance_valid(field.stage3d):
+		field.stage3d.sync_occupancy(self)
+		return
 	_sync_rollback_obstacles(field)
 	var root: Node2D = field.adapter.objects_root()
 	var retained: Dictionary = {}
@@ -307,6 +311,8 @@ func acquire_actor(who: String, sprite_key: String, field: Node2D) -> CharacterB
 		if body.get_parent() != null: body.get_parent().remove_child(body)
 		field.adapter.objects_root().add_child(body)
 		body.position = actual
+	body.world_stage = field.stage3d
+	if previous != field and is_instance_valid(body.physical_body): field.stage3d.transfer(body)
 	body.process_mode = Node.PROCESS_MODE_INHERIT
 	field.actors[who] = body
 	if who == str(field.adapter.player_key()):
@@ -337,6 +343,11 @@ func park_actor(who: String, field: Node2D) -> void:
 	body.get_parent().remove_child(body)
 	_parking.add_child(body)
 	body.position = actual
+	body.world_stage = null
+	if is_instance_valid(body.physical_body):
+		body.physical_body.hide()
+		body.physical_body.collision_layer = 0
+		body.physical_body.collision_mask = 0
 
 func retain_field(field: Node2D) -> void:
 	if not is_instance_valid(field): return
@@ -362,8 +373,12 @@ func _hidden_field(who: String, state: Dictionary) -> Node2D:
 			var binding := _actor_binding(who, state)
 			if acquire_actor(who, str(binding.get("sprite", "")), field) == null: return null
 		field.apply_snapshot(state)
+		field.stage3d._process(0.0)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		await get_tree().physics_frame
 		return field
-	var packed := CAMPUS_MAP_VIEW if resource == "res://scenes/Chapter2/Field/CampusMapView.tscn" else (load(resource) as PackedScene)
+	var packed := CAMPUS_MAP_VIEW if resource == "res://scenes/World/Field/CampusMapView.tscn" else (load(resource) as PackedScene)
 	if packed == null: return null
 	var adapter := packed.instantiate() as Node2D
 	if adapter == null: return null
@@ -387,6 +402,10 @@ func _hidden_field(who: String, state: Dictionary) -> Node2D:
 	field.setup(adapter)
 	field.apply_snapshot(state)
 	_worlds[who] = field
+	field.stage3d._process(0.0)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	await get_tree().physics_frame
 	return field if field.player != null else null
 
 func _blocked(intent: Dictionary, serial: int, reason: String) -> Dictionary:
@@ -471,6 +490,11 @@ func _execute_pending(intent: Dictionary, visible_field: Node2D, execution_snaps
 	received["source_position"] = [source_point.x, source_point.y]
 	received["actor_instance_id"] = instance
 	received["execution_world"] = "isolated-godot" if field.execution_only else "visible-godot"
+	if is_instance_valid(body.physical_body):
+		var physical: CharacterBody3D = body.physical_body
+		received["physical_body_instance_id"] = physical.get_instance_id()
+		received["physical_position"] = [physical.global_position.x, physical.global_position.y, physical.global_position.z]
+		received["physical_host"] = "godot-3d"
 	note_map(field)
 	if str(received.get("status", "")) == "arrived":
 		var expected_room := str(destination.get("execution_room", destination.get("room", "")))

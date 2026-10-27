@@ -4,7 +4,7 @@ extends Control
 const ACTOR = preload("res://scenes/Highlights/HighlightActor.gd")
 const EFFECT = preload("res://scenes/Highlights/HighlightEffects.gd")
 const STRUCTURE = preload("res://scenes/Highlights/StageStructure.gd")
-const AUTHORED_SURFACE = preload("res://scenes/Shared/Field/AuthoredSurface.gd")
+const AUTHORED_SURFACE = preload("res://scenes/World/Runtime/AuthoredSurface.gd")
 const GALLERY_ORNAMENT = preload("res://scenes/Highlights/GalleryFloorOrnament.gd")
 const PAINTERLY = preload("res://scenes/Highlights/PainterlyStage.gd")
 const TILESET = preload("res://ShareAsset/Internal/Props/Highlights/Terrain/HighlightsTerrain.tres")
@@ -49,7 +49,7 @@ var action_phase := "idle"
 func _ready() -> void:
 	get_tree().set_meta("highlight_launch_consumed", true)
 	theme = preload("res://scenes/UI/Styles/HighlightsTheme.tres")
-	var payload = JSON.parse_string(FileAccess.get_file_as_string("res://Contracts/highlight_stages.json"))
+	var payload = preload("res://scenes/Host/DvPresentationContent.cs").new().ReadRecord("res://Content/presentation.dv", "narratives", "highlights")
 	if not payload is Dictionary or not payload.has("stages"):
 		push_error("Highlight content is missing or malformed")
 		return

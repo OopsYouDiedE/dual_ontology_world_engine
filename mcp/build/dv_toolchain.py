@@ -1,24 +1,14 @@
-"""Build/cache the source DV compiler. No DV parsing or semantic decisions here."""
+"""Build the maintained C# legacy frontend; no bootstrap or self-compilation."""
 from contextlib import contextmanager
 import hashlib
 import os
 from pathlib import Path
 import re
-import shutil
 import subprocess
-import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 LANGUAGE = ROOT / "dv_core"
 MODULES = LANGUAGE / "modules"
-BUILD = ROOT / "mcp/build"
-VERIFICATION = ROOT / "mcp/verification"
-PROJECT = '''<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>
-<OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework>
-<ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
-<TreatWarningsAsErrors>true</TreatWarningsAsErrors><UseSharedCompilation>false</UseSharedCompilation>
-</PropertyGroup></Project>'''
-
 
 def environment():
     env = os.environ.copy()
@@ -86,13 +76,9 @@ def source_graph(entries, overrides=None):
     return result, dependencies
 
 
-def sources(entries, overrides=None):
-    return source_graph(entries, overrides)[0]
-
-
 @contextmanager
 def build_lock(path):
-    # Editors may check several documents concurrently; serialize the shared seed build.
+    # Editors may check several documents concurrently; serialize the shared C# frontend build.
     with path.open("a+b") as handle:
         if handle.tell() == 0:
             handle.write(b"0")
@@ -123,34 +109,39 @@ def build_lock(path):
 
 
 def compiler():
-    inputs = [LANGUAGE / "compiler/10-compiler.dv"] + [p for folder in ("compiler",)
-              for p in (LANGUAGE / folder).rglob("*")
-              if p.is_file() and not {"bin", "obj"}.intersection(p.parts)]
-    digest = hashlib.sha256()
-    for path in sorted(inputs):
-        digest.update(path.relative_to(ROOT).as_posix().encode())
-        digest.update(path.read_bytes())
-    cache = LANGUAGE / "obj" / "dv-toolchain"
+    folder = LANGUAGE / 'compiler'
+    base = LANGUAGE / 'base'
+    inputs = [folder / name for name in ('NativeCompiler.cs', 'DvCompiler.csproj')]
+    inputs += sorted((base / 'Runtime').glob('*.cs'))
+    inputs += [base / 'Values/Rational.cs', base / 'Evidence/BinaryEvidence.cs']
+    identity = hashlib.sha256(b''.join(path.read_bytes() for path in inputs)).hexdigest()
+    cache = folder / 'obj'
     cache.mkdir(parents=True, exist_ok=True)
-    destination = cache / digest.hexdigest()
-    executable = destination / "c3/bin/Release/net8.0/Program.dll"
-    with build_lock(cache / "build.lock"):
-        if executable.exists():
+    executable = folder / 'bin/Release/net8.0/DvCompiler.dll'
+    fingerprint = cache / 'source-fingerprint.txt'
+    with build_lock(cache / 'build.lock'):
+        if executable.is_file() and fingerprint.is_file() and fingerprint.read_text() == identity:
             return executable
-        with tempfile.TemporaryDirectory(dir=cache, prefix="build-") as temporary:
-            work = Path(temporary)
-            seed = LANGUAGE / "compiler/seed/Seed.csproj"
-            checked(["dotnet", "build", seed, "-c", "Release", "--disable-build-servers"], timeout=180)
-            previous = seed.parent / "bin/Release/net8.0/Seed.dll"
-            for stage in ("c1", "c2", "c3"):
-                target = work / stage
-                target.mkdir()
-                checked(["dotnet", previous, LANGUAGE / "compiler/10-compiler.dv", target / "Program.cs"], timeout=180)
-                shutil.copyfile(LANGUAGE / "compiler/Runtime.cs", target / "Runtime.cs")
-                (target / "Program.csproj").write_text(PROJECT, encoding="utf-8")
-                checked(["dotnet", "build", target / "Program.csproj", "-c", "Release", "--disable-build-servers"], timeout=180)
-                previous = target / "bin/Release/net8.0/Program.dll"
-            if (work / "c2/Program.cs").read_bytes() != (work / "c3/Program.cs").read_bytes():
-                raise RuntimeError("DV compiler C2/C3 source fixed point differs")
-            shutil.copytree(work, destination)
+        checked(['dotnet', 'build', folder / 'DvCompiler.csproj', '-c', 'Release', '--disable-build-servers'], timeout=180)
+        fingerprint.write_text(identity)
     return executable
+
+
+def kernel_interface():
+    signatures, definitions = [], []
+    seen = set()
+    base = LANGUAGE / 'base'
+    for path in sorted(base.rglob('*.cs')):
+        if any(part in {'bin', 'obj'} for part in path.relative_to(base).parts):
+            continue
+        source = path.read_text(encoding='utf-8-sig')
+        for match in re.finditer(r'public static object F_([A-Za-z0-9_]+)\(([^)]*)\)', source):
+            name, parameters = match.groups()
+            if name in seen:
+                raise ValueError('Duplicate native DV API: ' + name)
+            seen.add(name)
+            arity = len(parameters.split(',')) if parameters.strip() else 0
+            mapping = bool(re.search(r'\[DvMapping\]\s*$', source[:match.start()]))
+            signatures.append([name, arity, mapping])
+            definitions.append([name, [['Value'] * arity, 'Value']])
+    return [signatures, definitions]

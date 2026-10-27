@@ -1,0 +1,52 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/World/Prefabs/InteractiveProp.gd" id="1_ycv5b"]
+[ext_resource type="Shader" path="res://rendering/shaders/surfaces/stone.gdshader" id="2_fv7qw"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_a6f50"]
+render_priority = 0
+shader = ExtResource("2_fv7qw")
+shader_parameter/pigment = Color(0.29411766, 0.33333334, 0.3137255, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/variation = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_nhcl7"]
+size = Vector3(0.34, 0.03, 0.25)
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1530077189]
+script = ExtResource("1_ycv5b")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "wing-detail-v2/common/slate"
+
+[node name="slate" type="Node3D" parent="." unique_id=2065062014]
+metadata/authoring_label = "slate"
+
+[node name="@MeshInstance3D@2734" type="MeshInstance3D" parent="slate" unique_id=1667362244]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+material_override = SubResource("ShaderMaterial_a6f50")
+mesh = SubResource("BoxMesh_nhcl7")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=1875535462]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=1660209603]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.575)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=841445240]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.575)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=572832893]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.91499996, 0)

@@ -84,7 +84,7 @@ fn island_case_allocate(state):
     while incumbent_index < rt_count(roles):
         let incumbent = dv_read(state.physical, island_case_director(roles[incumbent_index].id))
         if dv_uncontested(incumbent) and incumbent.value != "":
-            let index = dvs_simulation_actor_index(state.actors, incumbent.value)
+            let index = dv_index_by_id(state.actors, incumbent.value)
             if index >= 0 and dvs_actor_can_act(state.actors[index]) and dv_truth(state.physical, c2_can_act(incumbent.value)) == "true" and dv_truth(state.physical, dv_fact(campaign_own(incumbent.value, "exiled"), true)) != "true":
                 retained = dv_append(retained, incumbent.value)
         incumbent_index = incumbent_index + 1
@@ -100,7 +100,7 @@ fn island_case_allocate(state):
         // Persistent participants survive subsequent half-day ledgers. Only
         // an empty or physically incapable participant is reconsidered.
         if dv_uncontested(previous) and previous.value != "":
-            let index = dvs_simulation_actor_index(state.actors, previous.value)
+            let index = dv_index_by_id(state.actors, previous.value)
             if index >= 0 and dvs_actor_can_act(state.actors[index]) and dv_truth(state.physical, c2_can_act(previous.value)) == "true" and dv_truth(state.physical, dv_fact(campaign_own(previous.value, "exiled"), true)) != "true" and not dv_has(used, previous.value):
                 chosen = previous.value
         var best = -1000000
@@ -118,7 +118,7 @@ fn island_case_allocate(state):
                 i = i + 1
         if chosen != "":
             used = dv_append(used, chosen)
-            let identity = dvs_simulation_actor_index([for id in campaign_people(): {"id": id}], chosen)
+            let identity = dv_index_by_id([for id in campaign_people(): {"id": id}], chosen)
             if 0 <= identity and identity < 16:
                 masks = masks + dv_mask_bit(identity)
         if not dv_uncontested(previous) or previous.value != chosen:
@@ -202,6 +202,7 @@ fn island_case_with_evidence(job, evidence):
     return dv_with(job, "action", dv_with(job.action, "case_observations", evidence))
 
 fn island_case_jobs(actor, role):
+    actor = c2_query_view(actor, actor)
     var jobs = []
     if role == "A":
         let reading = island_case_numeric(actor.mind, [island_air_ref("greenhouse:greenhouse")])
@@ -322,6 +323,7 @@ fn island_case_account_evidence(actor):
     return {"values": values, "removed": removed, "received": received, "counter_at": values[5].seen_at, "ledger_at": values[6].seen_at}
 
 fn island_case_reconcile(actor):
+    actor = c2_query_view(actor, actor)
     let evidence = island_case_account_evidence(actor)
     if evidence == false:
         return false
@@ -349,6 +351,8 @@ fn island_case_target(actor, role):
     return "main_granary"
 
 fn island_case_observation_utility(actor, action, role):
+    actor = c2_query_view(actor, actor)
+    action = c2_query_view(actor, action)
     if role == "":
         return 0
     // Revisit only on missing knowledge or a declared owner-visible age limit.
@@ -363,6 +367,55 @@ fn island_case_observation_utility(actor, action, role):
     if not dv_has(dv_find(actor, "completed_actions", []), action.id) or latest < 0 or latest + island_case_parameters().inspection_refresh_minutes <= actor.mind.time:
         return island_case_parameters().observation_utility
     return 0
+
+// A role keeps its authored travel preference only while the owner can name
+// unfinished local work or an actually missing/aged observation at its target.
+// Forecasting the known route supplies location, never destination evidence.
+fn island_case_pending_route(actor, role, jobs, inspections):
+    actor = c2_query_view(actor, actor)
+    jobs = c2_query_view(actor, jobs)
+    inspections = c2_query_view(actor, inspections)
+    let target = island_case_target(actor, role)
+    let route = c2i_known_route(actor, target)
+    if route == false:
+        return false
+    var i = 0
+    while i < rt_count(jobs):
+        let action = jobs[i].action
+        let goal = dv_with_many(campaign_goal(dv_true(), dv_true(), [island_source()]), {"navigation_methods": [action.id]})
+        if c2_navigation_route_ready(actor, goal, route):
+            return route
+        i = i + 1
+    let minimum = rt_floor(actor.mind.time / island_case_parameters().inspection_refresh_minutes) * island_case_parameters().inspection_refresh_minutes
+    i = 0
+    while i < rt_count(inspections):
+        let action = inspections[i]
+        if island_case_observation_utility(actor, action, role) > 0:
+            var r = 0
+            var pending = false
+            while r < rt_count(action.grants):
+                let goal = dv_with_many(campaign_observation_goal(action.grants[r], dv_true(), [island_source()], minimum), {"navigation_methods": [action.id]})
+                if pending == false and c2_navigation_pending(actor, goal):
+                    pending = goal
+                r = r + 1
+            if pending != false and c2_navigation_route_ready(actor, pending, route):
+                return route
+        i = i + 1
+    return false
+
+fn island_case_selected_route(actor, route):
+    actor = c2_query_view(actor, actor)
+    route = c2_query_view(actor, route)
+    let goals = dv_find(actor.policy, "goals", [])
+    var i = 0
+    while i < rt_count(goals):
+        let goal = goals[i]
+        let intention = dv_find(goal, "navigation_intention", false)
+        if intention != false and dv_find(intention, "target", "") == route.target and dv_find(intention, "next", "") == route.next:
+            if dv_truth(actor.mind, dv_find(goal, "available_when", dv_true())) == "true" and 0 < dv_find(goal, "weight", 1) and 0 < rt_count(dv_find(goal, "basis", [])):
+                return true
+        i = i + 1
+    return false
 
 fn island_case_refresh(state):
     if dv_find(state.story, "chapter", 1) != 2 or state.physical.time < island_case_parameters().start_minute or not dv_find(state.story, "island_case_installed", false):
@@ -385,7 +438,7 @@ fn island_case_refresh(state):
         if dv_local(bindings, objects[i], actor.id) == "":
             bindings = dv_append(bindings, dv_binding(objects[i], objects[i], actor.id))
         i = i + 1
-    actor = dv_with(actor, "mind", mind)
+    actor = c2_query_view(actor, dv_with(actor, "mind", mind))
     var role = ""
     let roles = island_case_roles()
     i = 0
@@ -403,7 +456,7 @@ fn island_case_refresh(state):
             rt_push(actions, action)
         i = i + 1
     let inspections = island_case_inspections(actor.id)
-    var goals = [for goal in dv_find(actor.policy, "goals", []) if not dv_find(goal, "island_dynamic", false): goal]
+    var goals = [for goal in dv_find(actor.policy, "goals", []) if not dv_find(goal, "island_dynamic", false) and not dv_has_key(goal, "navigation_intention"): goal]
     if not resolved and (role != "" or dv_find(state, "player_actor", "") == actor.id):
         let refresh = island_case_parameters().inspection_refresh_minutes
         let minimum_time = rt_floor(actor.mind.time / refresh) * refresh
@@ -413,10 +466,10 @@ fn island_case_refresh(state):
             var f = 0
             while f < rt_count(evidence[e].refs):
                 let goal = campaign_observation_goal(evidence[e].refs[f], campaign_at(actor.id, evidence[e].room), [island_source()], minimum_time)
-                rt_push(goals, dv_with(goal, "island_dynamic", true))
+                let methods = [for action in inspections if dv_has(action.grants, evidence[e].refs[f]): action.id]
+                rt_push(goals, dv_with_many(goal, {"island_dynamic": true, "navigation_room": evidence[e].room, "navigation_methods": methods}))
                 f = f + 1
             e = e + 1
-    actor = dv_with(actor, "policy", dv_with(actor.policy, "goals", goals))
     i = 0
     while i < rt_count(inspections):
         rt_push(actions, dv_with(inspections[i], "simulation_utility", island_case_observation_utility(actor, inspections[i], role)))
@@ -432,10 +485,19 @@ fn island_case_refresh(state):
     while i < rt_count(jobs):
         physical = island_case_adopt(physical, jobs[i].law, "enforce")
         rt_push(actions, jobs[i].action)
+        let action = jobs[i].action
+        let room = dvp_extract_required_room(action.precondition, actor.location_ref)
+        if room != "" and 0 < rt_count(action.grants):
+            let goal = campaign_goal(dv_fact(action.grants[0], true), c2_navigation_condition(action.precondition, actor.id), [island_source()])
+            // Routing declares the already valued task, without adding a
+            // second completion preference to its existing action utility.
+            rt_push(goals, dv_with_many(goal, {"island_dynamic": true, "weight": 0, "navigation_room": room, "navigation_methods": [action.id]}))
         i = i + 1
+    actor = c2_query_view(actor, dv_with_many(actor, {"actions": actions, "policy": dv_with(actor.policy, "goals", goals)}))
+    actor = dv_with(actor, "policy", dv_with(actor.policy, "goals", c2_navigation_goals(actor, goals)))
     if role != "":
-        let route = c2i_known_route(actor, island_case_target(actor, role))
-        if route != false:
+        let route = island_case_pending_route(actor, role, jobs, inspections)
+        if route != false and island_case_selected_route(actor, route):
             i = 0
             while i < rt_count(actions):
                 let action = actions[i]

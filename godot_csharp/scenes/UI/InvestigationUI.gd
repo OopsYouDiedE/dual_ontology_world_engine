@@ -114,9 +114,6 @@ func open_modal(title: String, min_size := Vector2(760, 520), panel_id := "", ti
 	show_panel()
 	return modal_body
 
-func current_panel() -> String:
-	return _current_panel
-
 func _choose(id: String, content_serial: int) -> void:
 	if content_serial != _content_serial or not can_interact(): return
 	# close() locks every control before a callback can dispatch a second action.

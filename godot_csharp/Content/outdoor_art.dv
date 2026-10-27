@@ -1,0 +1,57 @@
+schema "dv-script-v1";
+
+layout exterior_finish {
+  "scope" = "Exterior art reconstruction; existing semantic map anchors and permissions remain authoritative";
+  "units_per_pixel" = 0.041666666666666664;
+  "grass_density" = 28.0;
+  "grass_height" = [0.12, 0.23];
+  "grass_radius" = 33.0;
+  "terrain_mesh_spacing" = 0.75;
+  "grass_color" = "586144";
+  "top_color" = "889762";
+  "bottom_color" = "35472d";
+  "soil_color" = "625746";
+  "stone_color" = "96917c";
+  "wall_color" = "bcb8a6";
+  "foundation_color" = "777a70";
+  "wood_color" = "554635";
+  "roof_color" = "526365";
+  "window_width" = 1.15;
+  "window_height" = 1.75;
+  "window_spacing" = 1.35;
+  "door_width" = 1.40;
+  "door_height" = 2.40;
+  "maps" = {
+    "campus_nw" = {
+      "seed" = 27183;
+      "focus_px" = [1344.0, 1992.0];
+      "camera_offset" = [14.0, 46.0, 24.0];
+      "camera_size" = 40.0;
+      "camera_target_height" = 3.2;
+      "detail_camera" = { "focus_px" = [1360.0, 2040.0]; "target_height" = 0.55; "size" = 15.0; };
+      "detail_bounds_px" = [792.0, 1392.0, 1200.0, 1320.0];
+      "terrain_scope" = "Local landscape grading for the art reconstruction; not a surveyed island elevation model";
+      "terrain_grid" = {
+        "origin" = [-62.0, -67.0];
+        "step" = [31.0, 33.5];
+        "heights" = [[2.2, 1.4, 0.9, 1.5, 2.0], [1.8, 0.8, 0.3, 0.8, 1.7], [1.4, 0.5, 0.0, 0.6, 1.3], [1.0, 0.7, 0.4, 0.8, 1.2], [0.7, 1.1, 0.8, 0.5, 0.8]];
+      };
+      "landforms" = [
+        { "center" = [-23.0, 21.0]; "radius" = [8.0, 10.0]; "height" = 1.40; },
+        { "center" = [11.0, 27.0]; "radius" = [10.0, 9.0]; "height" = 0.90; }
+      ];
+      "routes" = [
+        { "points_px" = [[1344.0, 1925.0], [1344.0, 2280.0], [1728.0, 2664.0], [1924.0, 3014.0]]; "width" = 2.40; "kind" = "paving"; },
+        { "points_px" = [[1008.0, 2256.0], [1344.0, 2280.0], [1788.0, 2184.0]]; "width" = 1.65; "kind" = "soil"; }
+      ];
+      "garden" = [
+        { "kind" = "bench"; "at_px" = [1232.0, 2040.0]; "yaw" = 1.5707963267948966; "width" = 1.60; },
+        { "kind" = "bench"; "at_px" = [1456.0, 2040.0]; "yaw" = -1.5707963267948966; "width" = 1.60; },
+        { "kind" = "planter"; "at_px" = [1210.0, 1920.0]; "yaw" = 0.0; "width" = 1.10; },
+        { "kind" = "planter"; "at_px" = [1478.0, 1920.0]; "yaw" = 0.0; "width" = 1.10; },
+        { "kind" = "lamp"; "at_px" = [1260.0, 2184.0]; "yaw" = 0.0; "width" = 0.3; },
+        { "kind" = "lamp"; "at_px" = [1428.0, 2184.0]; "yaw" = 0.0; "width" = 0.3; }
+      ];
+    };
+  };
+}

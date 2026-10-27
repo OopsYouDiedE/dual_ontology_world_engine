@@ -1,13 +1,34 @@
-extends "res://scenes/Host/MockSession.gd"
+extends Node
 ## A read-only replay endpoint. Recorded snapshots and presentations are its
 ## only state; UI commands never prepare, commit, or edit the live session.
 var _directions := {"move_left": 0.0, "move_right": 0.0, "move_up": 0.0, "move_down": 0.0}
 
-func _ready() -> void:
-	_snapshot = {}
+signal EventsReady(events: Array)
+signal TraceClosed
 
-func CanInspect() -> bool: return false
-func HasReplaySample() -> bool: return false
+var _snapshot: Dictionary = {}
+var _casebook: Dictionary = {}
+var _closed := false
+
+# Main shares this endpoint contract with the live bridge. Replay never submits
+# authoritative work, records evidence, or writes bookmarks.
+func SetDiagnosticsEnabled(_enabled: bool) -> void: pass
+func IsDispatchIdle() -> bool: return true
+func CanBackgroundTick() -> bool: return false
+func RecordTiming(_value: Dictionary) -> void: pass
+func RecordVisible(_value: Dictionary) -> void: pass
+func RecordInput(_value: Dictionary) -> void: pass
+func TimingClockUs() -> int: return Time.get_ticks_usec()
+func Snapshot() -> Dictionary: return _snapshot.duplicate(false)
+func UpdateCasebook(value: Dictionary) -> void: _casebook = value.duplicate(true)
+func Dispatch(_input: Dictionary) -> Array: return []
+func RecordHostFailure(message: String) -> void:
+	push_error(message)
+	EventsReady.emit([{"kind": "error", "message": message}])
+func CloseTrace() -> void:
+	if _closed: return
+	_closed = true
+	TraceClosed.emit.call_deferred()
 
 func SetSnapshot(value: Dictionary) -> void:
 	_snapshot = value.duplicate(true)
@@ -24,9 +45,6 @@ func SetSnapshot(value: Dictionary) -> void:
 	_snapshot.map_knowledge = value.get("map_knowledge", {})
 	_snapshot.access = value.get("access", {})
 	_snapshot.traces = value.get("traces", [])
-
-func _dispatch(_input: Dictionary) -> void:
-	_queued_dispatches -= 1
 
 func InputDirection() -> Vector2:
 	return Vector2(float(_directions.move_right) - float(_directions.move_left),

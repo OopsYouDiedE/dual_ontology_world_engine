@@ -1,6 +1,5 @@
 // Campaign contracts shared by independently compiled chapters.
 // These constructors declare identities and handoff fields; they grant no observations.
-#include 30-session.dv
 
 fn campaign_source(path, line, id):
     return {"path": path, "line": line, "id": id}
@@ -56,14 +55,17 @@ fn campaign_install_visible_objects(scene):
 
 // Authored presentation metadata never grants a field to a subject's mind.
 fn campaign_object_descriptor(id):
-    let key = ["campaign-object-descriptor-v2", id]
+    let key = ["campaign-object-descriptor-v3", id, rt_content("meta", "hash")]
     let cached = rt_memo_get([], key)
     if cached[0]:
         return cached[1]
     return rt_memo_put([], key, campaign_object_descriptor_build(id))
 
 fn campaign_object_descriptor_build(id):
-    let names = {"coat": "风衣", "lens": "黄铜放大镜", "graphite_pencil": "石墨笔", "evidence_bags": "证物袋", "opening.cabinet": "领取柜", "opening.silver": "银元", "opening.testpiece": "金属试件", "opening.audition": "试听机", "opening.tea": "茶具", "c2.granary": "粮仓", "c2.counter": "配给台", "c2.ledger": "公物台账", "c2.bowl": "粥碗", "c2.kitchen": "炉灶", "c2.meter": "源质计", "c2.seal": "印章"}
+    let item = rt_content("items", id)
+    if item != false:
+        return {"map_kind": item.map_kind, "map_title": item.map_title, "visible_fields": item.visible_fields}
+    let names = {"opening.cabinet": "领取柜", "opening.silver": "银元", "opening.testpiece": "金属试件", "opening.audition": "试听机", "opening.tea": "茶具", "c2.granary": "粮仓", "c2.counter": "配给台", "c2.ledger": "公物台账", "c2.bowl": "粥碗", "c2.kitchen": "炉灶", "c2.meter": "源质计", "c2.seal": "印章"}
     if dv_has_key(names, id):
         return {"map_kind": "object", "map_title": dv_get(names, id), "visible_fields": ["name", "location"]}
     let sites = {"site:bed:R05": "床", "site:bed:R06": "床", "site:bed:R07": "床", "site:bed:R08": "床", "site:shelf": "书架", "site:slate": "长桌与石板", "site:transmitter": "传声铜口", "site:door-floor": "门边地面", "site:score": "书桌与乐谱", "site:pantry-counter": "备餐柜与水槽"}
@@ -141,73 +143,13 @@ fn campaign_first_night_ref(field):
     return dv_ref("night.first", "state", field)
 
 fn campaign_positive_clock_bounds(condition):
-    var result = []
-    let op = dv_find(condition, "op", "")
-    if op == "at_least":
-        if dv_same(condition.ref, campaign_clock()):
-            rt_push(result, condition.value)
-    if op == "all":
-        let items = dv_find(condition, "items", [])
-        var i = 0
-        while i < rt_count(items):
-            let nested = campaign_positive_clock_bounds(items[i])
-            var j = 0
-            while j < rt_count(nested):
-                rt_push(result, nested[j])
-                j = j + 1
-            i = i + 1
-    return result
+    return dv_condition_bounds(condition, campaign_clock(), false)
 
 fn campaign_clock_boundaries(condition):
-    let key = ["campaign_clock_boundaries"]
-    let cached = rt_memo_get(condition, key)
-    if cached[0]:
-        return cached[1]
-    return rt_memo_put(condition, key, campaign_clock_boundaries_uncached(condition))
-
-fn campaign_clock_boundaries_uncached(condition):
-    if dv_find(condition, "op", "") == "not":
-        return campaign_clock_boundaries(condition.item)
-    var result = campaign_positive_clock_bounds(condition)
-    if dv_find(condition, "op", "") == "all":
-        var i = 0
-        while i < rt_count(condition.items):
-            let nested = campaign_clock_boundaries(condition.items[i])
-            var j = 0
-            while j < rt_count(nested):
-                if not dv_has(result, nested[j]):
-                    rt_push(result, nested[j])
-                j = j + 1
-            i = i + 1
-    return result
+    return dv_condition_bounds(condition, campaign_clock(), true)
 
 fn campaign_without_clock(condition):
-    let key = ["campaign_without_clock"]
-    let cached = rt_memo_get(condition, key)
-    if cached[0]:
-        return cached[1]
-    return rt_memo_put(condition, key, campaign_without_clock_uncached(condition))
-
-fn campaign_without_clock_uncached(condition):
-    let op = dv_find(condition, "op", "")
-    if dv_record_like(condition) and dv_has_key(condition, "ref") and dv_find(condition.ref, "object", "") == "c2.weather":
-        return dv_true()
-    if op == "at_least" and dv_same(condition.ref, campaign_clock()):
-        return dv_true()
-    if op == "not":
-        let inner = dv_find(condition, "item", false)
-        if inner != false and dv_record_like(inner) and dv_has_key(inner, "ref") and dv_find(inner.ref, "object", "") == "c2.weather":
-            return dv_true()
-        if inner != false and dv_find(inner, "op", "") == "at_least" and dv_same(inner.ref, campaign_clock()):
-            return dv_true()
-    if op == "all":
-        var items = []
-        var i = 0
-        while i < rt_count(condition.items):
-            rt_push(items, campaign_without_clock(condition.items[i]))
-            i = i + 1
-        return dv_all(items)
-    return condition
+    return dv_condition_without_context(condition, campaign_clock(), ["c2.weather"])
 
 fn campaign_future_goal_pending(actor, goal):
     let kind = dv_find(goal, "kind", "")
@@ -272,9 +214,9 @@ fn campaign_simulation_config(scene):
     var identities = []
     var i = 0
     while i < rt_count(people):
-        rt_push(identities, {"actor": people[i], "index": i})
+        rt_push(identities, {"actor": people[i], "index": i, "protected": true})
         i = i + 1
-    rt_push(identities, {"actor": "demon", "index": 16})
+    rt_push(identities, {"actor": "demon", "index": 16, "protected": false})
     var facts = []
     let weather = ["ash_falling", "wind", "daylight", "severe_air", "earthquake_recent"]
     if dv_has_key(scene.physical.objects, "c2.weather"):
@@ -308,58 +250,9 @@ fn campaign_person_source(actor):
     return campaign_approved("unknown-person-profile-needs-source")
 
 fn campaign_profile(actor):
-    var group = "living"
-    var domain = "investigation"
-    var roles = []
-    var values = ["evidence", "safety", "patient_priority", "records"]
-    if dv_has(["quer", "ward", "gu", "lucian"], actor):
-        group = "contract"
-    if dv_has(["selma", "ruan", "elena", "moran"], actor):
-        group = "astral"
-    if dv_has(["veronica", "bertrand", "margaret", "mora"], actor):
-        group = "logistics"
-    if dv_has(["mora", "shen", "ruan"], actor):
-        domain = "resources"
-    if dv_has(["selma", "veronica", "gu", "lucian"], actor):
-        domain = "research"
-    if dv_has(["bertrand", "margaret", "huo"], actor):
-        domain = "safety"
-    if actor == "huo":
-        roles = ["weight"]
-        values = ["measured_work", "records", "central_cooking", "evidence", "safety"]
-    if actor == "quer":
-        roles = ["lock"]
-        values = ["not_targeted", "evidence", "movement_freedom", "night_exception", "measured_work"]
-    if actor == "su":
-        roles = ["relay"]
-        values = ["measured_work", "signal", "evidence"]
-    if actor == "bertrand":
-        roles = ["weight"]
-        values = ["patient_priority", "records", "safety"]
-    if actor == "margaret":
-        roles = ["weight"]
-        values = ["evidence", "central_cooking", "records", "safety"]
-    if actor == "mora":
-        values = ["patient_priority", "cautious_travel", "evidence", "night_exception"]
-    if actor == "shen":
-        values = ["central_cooking", "patient_priority", "per_person", "not_targeted", "cautious_travel"]
-    if actor == "ruan":
-        values = ["records", "controlled_audit", "per_person", "committee", "witnesses", "evidence"]
-    if actor == "ward":
-        values = ["ward_authority", "committee", "records", "restriction", "no_exception", "witnesses", "evidence"]
-    if actor == "gu":
-        values = ["cautious_travel", "tradition", "records", "evidence", "contract"]
-    if actor == "lucian":
-        values = ["resonance_exclusivity", "not_targeted", "evidence", "movement_freedom", "patient_priority", "contract", "records"]
-    if actor == "selma":
-        values = ["patient_priority", "evidence", "research"]
-    if actor == "veronica":
-        values = ["avoid_ethics_review", "evidence", "records", "committee", "research"]
-    if actor == "elena":
-        values = ["tradition", "evidence", "contract", "safety", "cautious_travel"]
-    if actor == "moran":
-        values = ["avoid_isolation", "measured_work", "research"]
-    return {"id": actor, "group": group, "domain": domain, "station_roles": roles, "value_order": values, "basis": [campaign_person_source(actor), campaign_approved("chapter-two-role-groups")]}
+    let definition = rt_content("characters", actor)
+    dv_require(definition != false, rt_cat("Missing character definition: ", actor))
+    return dv_with(definition.personality, "basis", [campaign_person_source(actor), campaign_approved("chapter-two-role-groups")])
 
 fn campaign_add_new(world, object):
     if dv_has_key(world.objects, object.id):
@@ -375,23 +268,11 @@ fn campaign_goal(proposition, when, basis):
 fn campaign_observation_goal(ref, when, basis, time):
     return campaign_index_goal_window({"kind": "evidence", "scope": "personal", "ref": ref, "source": "perception", "available_when": when, "basis": basis, "minimum_time": time})
 
-叙述 campaign_contract_text：
-    1. 恶魔常驻岛内，不得离岛。
-    2. 经学员本人授权，恶魔封存其在校记忆（在校经历、师生与同学关系、事故全貌）；姓名、生平与入学前技艺不在封存之列。
-    3. 恶魔维持学园基础生存设施的运转（水、炉火、照明的设施本身；不负责分配物资，不创造物资）。
-    4. 恶魔所受约束，唯有学员出于自主的行动方可解除；恶魔不得代为或强迫学员完成解除。
-    5. 恶魔须公开它自己所立之规；规则许诺的路径必须真实可行。
-    6. 恶魔须传授学员理解处境与继续学习所需之知；学员自负其选择的后果。
-    7. 恶魔不得伤害学员身心，不得拘禁学员，不得令学员因无知而死。
-    8. 恶魔对学员所作事实陈述的字面语义在客观现实中不得为假；学员问及本人封存之物或契约条文，须按所知如实作答，不知则明言不知。
-    9. 恶魔不得主动向学员提及封存之物的所在与取回之法，不得促其取回；学员自行问及者，依前条作答。
-    10. 封存的记忆可凭对应之物恢复；恢复者自负其果。
-    11. 本人尚未深属此岛，且经当时在岛存活之其余全部在册学员一致同意，可择定“尽忘归乡”；上述条件持续成立时，于下一次入睡遗忘此地一切、在家乡醒来。
-    12. （终局）担保耗尽时，恶魔须将醒着且未深属此岛的学员遣返家乡，并抹去其与此地有关的一切记忆。
+fn campaign_contract_text():
+    return rt_content("narratives", "campaign_contract_text").text
 
 fn campaign_person_name(actor):
-    let names = {"detective": "侦探", "huo": "霍铎", "shen": "沈鼎", "su": "苏泠", "lucian": "卢西安", "gu": "顾平章", "quer": "雀儿", "ward": "沃德", "selma": "赛尔玛", "ruan": "阮清月", "elena": "伊莲娜", "moran": "莫兰", "veronica": "维罗妮卡", "bertrand": "贝尔特朗", "margaret": "玛格丽特", "mora": "茉拉", "demon": "代管者"}
-    return dv_get(names, actor)
+    return rt_content("characters", actor).name
 
 // First-night records remain shared persisted identities across the chapter handoff.
 fn campaign_handoff_fields():
@@ -436,44 +317,7 @@ fn sims_unseen_dorm_rooms(zone):
     return []
 
 fn sims_implicit_habits(actor):
-    if actor == "detective":
-        return [
-            {"id": "habit.cuff_rub", "trigger": "R05", "kind": "inspect", "bonus": 0.15, "surface": "右手袖口磨得发亮——写字时总拿那儿蹭桌沿。"},
-            {"id": "habit.magnifier_check", "trigger": "hall", "kind": "inspect", "bonus": 0.15, "surface": "习惯性摸向风衣口袋里的黄铜放大镜。"}
-        ]
-    if actor == "huo":
-        return [
-            {"id": "habit.mortise_touch", "trigger": "R06", "kind": "inspect", "bonus": 0.15, "surface": "手先去摸床沿榫接处与顺时针三圈半的机油布。"},
-            {"id": "habit.slate_shorthand", "trigger": "hall", "kind": "talk", "bonus": 0.15, "surface": "指尖沿刻痕辨认⊥、✕、◎的钳工速记习惯。"}
-        ]
-    if actor == "shen":
-        return [
-            {"id": "habit.unsweetened_tea_for_su", "trigger": "hall", "kind": "inspect", "bonus": 0.2, "surface": "推到苏泠面前的那杯茶顺手不放糖，老霍那杯加两勺。"},
-            {"id": "habit.feed_sourdough_starter", "trigger": "pantry", "kind": "inspect", "bonus": 0.2, "surface": "揭开陶罐喂老酵头的手法熟极而流，双手比脑子先记得。"}
-        ]
-    if actor == "su":
-        return [
-            {"id": "habit.tap_four_four_meter", "trigger": "R08", "kind": "inspect", "bonus": 0.15, "surface": "手指无意识在桌沿敲击四四拍，捕捉墙内不断线的低音。"},
-            {"id": "habit.hollow_frame_ear", "trigger": "foyer", "kind": "inspect", "bonus": 0.2, "surface": "侧耳贴近门框背面，辨别墙内传声铜管松动接头的漏音。"}
-        ]
-    if actor == "quer":
-        return [
-            {"id": "habit.steel_wire_pick", "trigger": "living_hall", "kind": "experiment", "bonus": 0.2, "surface": "袖口常备精钢丝，见着外闩便手痒想探一探锁簧。"},
-            {"id": "habit.familiar_greeting", "trigger": "living_hall", "kind": "talk", "bonus": 0.15, "surface": "一见沈鼎与霍铎便脱口而出‘老霍、沈叔’。"}
-        ]
-    if actor == "ward":
-        return [
-            {"id": "habit.public_notice_audit", "trigger": "living_hall", "kind": "help", "bonus": 0.15, "surface": "按章清点红纸与蜡布筒，坚持公开程序与限制令。"}
-        ]
-    if actor == "gu":
-        return [
-            {"id": "habit.copy_book_spines", "trigger": "living_hall", "kind": "talk", "bonus": 0.15, "surface": "在北台书架前把认得的书脊一行行抄录核对，奉行孤证不立。"}
-        ]
-    if actor == "lucian":
-        return [
-            {"id": "habit.doorway_etiquette", "trigger": "living_hall", "kind": "talk", "bonus": 0.15, "surface": "斜倚墙边讲究隔门交谈的礼数，不屑贴门呼喊。"}
-        ]
-    return []
+    return dv_find(rt_content("characters", actor).autonomy, "implicit_habits", [])
 
 fn sims_station_advertisements(room):
     if room == "hall":
@@ -498,33 +342,7 @@ fn sims_station_advertisements(room):
     return []
 
 fn sims_actor_profile(actor):
-    let base = campaign_profile(actor)
-    var weights = {"hunger": 1.0, "safety": 1.0, "social": 1.0, "cognition": 1.1, "obsession": 1.0}
-    if actor == "detective":
-        weights = {"hunger": 0.9, "safety": 1.1, "social": 1.0, "cognition": 1.4, "obsession": 1.2}
-    if actor == "huo":
-        weights = {"hunger": 1.0, "safety": 1.2, "social": 0.9, "cognition": 1.2, "obsession": 1.3}
-    if actor == "shen":
-        weights = {"hunger": 1.3, "safety": 1.2, "social": 1.2, "cognition": 0.9, "obsession": 1.0}
-    if actor == "su":
-        weights = {"hunger": 0.9, "safety": 1.0, "social": 0.9, "cognition": 1.3, "obsession": 1.3}
-    if actor == "quer":
-        weights = {"hunger": 1.1, "safety": 0.9, "social": 1.2, "cognition": 1.1, "obsession": 1.2}
-    if actor == "ward":
-        weights = {"hunger": 1.0, "safety": 1.2, "social": 1.1, "cognition": 1.2, "obsession": 1.1}
-    if actor == "gu":
-        weights = {"hunger": 1.0, "safety": 1.1, "social": 0.9, "cognition": 1.3, "obsession": 1.1}
-    if actor == "lucian":
-        weights = {"hunger": 0.9, "safety": 1.1, "social": 1.1, "cognition": 1.1, "obsession": 1.2}
-    return {
-        "actor": actor,
-        "group": base.group,
-        "domain": base.domain,
-        "commodity_needs": {"hunger": 75, "safety": 80, "social": 70, "cognition": 60, "obsession": 65},
-        "autonomy_weights": weights,
-        "implicit_habits": sims_implicit_habits(actor),
-        "basis": [sims_autonomy_source(actor)]
-    }
+    return dv_content_autonomy(actor, rt_content("characters", actor), [sims_autonomy_source(actor)])
 
 // Simple brush-off responses (简单的应答直接搪塞过去) for unseen rooms and off-screen
 // dormitory events during Chapter 1 when the player starts in Zone Yi.

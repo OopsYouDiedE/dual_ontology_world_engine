@@ -722,6 +722,17 @@ internal sealed class SessionPerformance
             var values = new Dictionary<string, object?>
             {
                 ["contract"] = Contract, ["closed"] = closed, ["engine_ms"] = engine,
+                ["operation_costs"] = Array.AsReadOnly(totals
+                    .GroupBy(item => (item.Key.Category, item.Key.Operation))
+                    .OrderByDescending(group => group.Sum(item => item.Value.SelfTicks))
+                    .Select(group => (object)HostValues.Freeze(new Dictionary<string, object?>
+                    {
+                        ["category"] = group.Key.Category, ["operation"] = group.Key.Operation,
+                        ["calls"] = group.Sum(item => item.Value.Count),
+                        ["exclusive_total_ms"] = group.Sum(item => Milliseconds(item.Value.SelfTicks)),
+                        ["inclusive_total_ms"] = group.Sum(item => Milliseconds(item.Value.Ticks)),
+                        ["self_allocated_bytes"] = group.Sum(item => item.Value.SelfAllocated)
+                    })).ToArray()),
                 ["planning_mode"] = simulationMode,
                 ["planning_mode_approximation"] = simulationMode == "approximate-v1" ? true : (bool?)null,
                 ["measured_until_ticks"] = now - origin, ["wall_measured_until_ticks"] = wallStarted ? wallCursor - origin : null,

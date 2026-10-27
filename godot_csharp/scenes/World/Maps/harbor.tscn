@@ -1,0 +1,4007 @@
+[gd_scene load_steps=173 format=3]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/rooms/harbor.png" id="arch"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/bucket_pair.png" id="t_bucket_pair"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/drying_lines.png" id="t_drying_lines"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_bldg_010.png" id="t_outdoor_bldg_010"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_bldg_022.png" id="t_outdoor_bldg_022"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_bollard.png" id="t_outdoor_bollard"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_boulder_0.png" id="t_outdoor_boulder_0"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_boulder_1.png" id="t_outdoor_boulder_1"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_boulder_2.png" id="t_outdoor_boulder_2"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_boulder_3.png" id="t_outdoor_boulder_3"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_hydrangea_0.png" id="t_outdoor_hydrangea_0"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_hydrangea_1.png" id="t_outdoor_hydrangea_1"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_hydrangea_2.png" id="t_outdoor_hydrangea_2"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_hydrangea_3.png" id="t_outdoor_hydrangea_3"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_round_2.png" id="t_outdoor_round_2"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_round_3.png" id="t_outdoor_round_3"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_stele.png" id="t_outdoor_stele"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_255.png" id="t_outdoor_wall_255"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_256.png" id="t_outdoor_wall_256"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_257.png" id="t_outdoor_wall_257"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_258.png" id="t_outdoor_wall_258"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_259.png" id="t_outdoor_wall_259"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_260.png" id="t_outdoor_wall_260"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_261.png" id="t_outdoor_wall_261"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_262.png" id="t_outdoor_wall_262"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_263.png" id="t_outdoor_wall_263"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_264.png" id="t_outdoor_wall_264"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_265.png" id="t_outdoor_wall_265"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_266.png" id="t_outdoor_wall_266"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_267.png" id="t_outdoor_wall_267"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_268.png" id="t_outdoor_wall_268"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_269.png" id="t_outdoor_wall_269"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_270.png" id="t_outdoor_wall_270"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_271.png" id="t_outdoor_wall_271"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_272.png" id="t_outdoor_wall_272"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_273.png" id="t_outdoor_wall_273"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_274.png" id="t_outdoor_wall_274"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_275.png" id="t_outdoor_wall_275"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_276.png" id="t_outdoor_wall_276"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_277.png" id="t_outdoor_wall_277"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_278.png" id="t_outdoor_wall_278"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_279.png" id="t_outdoor_wall_279"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_280.png" id="t_outdoor_wall_280"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_281.png" id="t_outdoor_wall_281"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_282.png" id="t_outdoor_wall_282"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_283.png" id="t_outdoor_wall_283"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_284.png" id="t_outdoor_wall_284"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_285.png" id="t_outdoor_wall_285"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_286.png" id="t_outdoor_wall_286"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_287.png" id="t_outdoor_wall_287"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_288.png" id="t_outdoor_wall_288"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_289.png" id="t_outdoor_wall_289"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_290.png" id="t_outdoor_wall_290"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_291.png" id="t_outdoor_wall_291"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_292.png" id="t_outdoor_wall_292"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_293.png" id="t_outdoor_wall_293"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_294.png" id="t_outdoor_wall_294"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_295.png" id="t_outdoor_wall_295"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_296.png" id="t_outdoor_wall_296"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_297.png" id="t_outdoor_wall_297"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_298.png" id="t_outdoor_wall_298"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_299.png" id="t_outdoor_wall_299"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_300.png" id="t_outdoor_wall_300"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_301.png" id="t_outdoor_wall_301"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_302.png" id="t_outdoor_wall_302"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_303.png" id="t_outdoor_wall_303"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_304.png" id="t_outdoor_wall_304"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_305.png" id="t_outdoor_wall_305"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_306.png" id="t_outdoor_wall_306"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_307.png" id="t_outdoor_wall_307"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_308.png" id="t_outdoor_wall_308"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_309.png" id="t_outdoor_wall_309"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_310.png" id="t_outdoor_wall_310"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_311.png" id="t_outdoor_wall_311"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_312.png" id="t_outdoor_wall_312"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_313.png" id="t_outdoor_wall_313"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_314.png" id="t_outdoor_wall_314"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_315.png" id="t_outdoor_wall_315"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_316.png" id="t_outdoor_wall_316"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_407.png" id="t_outdoor_wall_407"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_408.png" id="t_outdoor_wall_408"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_409.png" id="t_outdoor_wall_409"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_410.png" id="t_outdoor_wall_410"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_411.png" id="t_outdoor_wall_411"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_412.png" id="t_outdoor_wall_412"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_413.png" id="t_outdoor_wall_413"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_414.png" id="t_outdoor_wall_414"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_415.png" id="t_outdoor_wall_415"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_416.png" id="t_outdoor_wall_416"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_417.png" id="t_outdoor_wall_417"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_418.png" id="t_outdoor_wall_418"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_419.png" id="t_outdoor_wall_419"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_420.png" id="t_outdoor_wall_420"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_421.png" id="t_outdoor_wall_421"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_422.png" id="t_outdoor_wall_422"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_423.png" id="t_outdoor_wall_423"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_424.png" id="t_outdoor_wall_424"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_425.png" id="t_outdoor_wall_425"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_426.png" id="t_outdoor_wall_426"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_427.png" id="t_outdoor_wall_427"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_428.png" id="t_outdoor_wall_428"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_429.png" id="t_outdoor_wall_429"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_430.png" id="t_outdoor_wall_430"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_431.png" id="t_outdoor_wall_431"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_432.png" id="t_outdoor_wall_432"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_433.png" id="t_outdoor_wall_433"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_434.png" id="t_outdoor_wall_434"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_435.png" id="t_outdoor_wall_435"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_469.png" id="t_outdoor_wall_469"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_470.png" id="t_outdoor_wall_470"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_471.png" id="t_outdoor_wall_471"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_472.png" id="t_outdoor_wall_472"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_473.png" id="t_outdoor_wall_473"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_474.png" id="t_outdoor_wall_474"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_475.png" id="t_outdoor_wall_475"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_476.png" id="t_outdoor_wall_476"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_477.png" id="t_outdoor_wall_477"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_478.png" id="t_outdoor_wall_478"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_479.png" id="t_outdoor_wall_479"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_480.png" id="t_outdoor_wall_480"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_481.png" id="t_outdoor_wall_481"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_482.png" id="t_outdoor_wall_482"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_483.png" id="t_outdoor_wall_483"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_484.png" id="t_outdoor_wall_484"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_485.png" id="t_outdoor_wall_485"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_486.png" id="t_outdoor_wall_486"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_487.png" id="t_outdoor_wall_487"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_488.png" id="t_outdoor_wall_488"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_489.png" id="t_outdoor_wall_489"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_490.png" id="t_outdoor_wall_490"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_491.png" id="t_outdoor_wall_491"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_492.png" id="t_outdoor_wall_492"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_493.png" id="t_outdoor_wall_493"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_494.png" id="t_outdoor_wall_494"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_495.png" id="t_outdoor_wall_495"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_496.png" id="t_outdoor_wall_496"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_497.png" id="t_outdoor_wall_497"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_498.png" id="t_outdoor_wall_498"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_499.png" id="t_outdoor_wall_499"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_500.png" id="t_outdoor_wall_500"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_501.png" id="t_outdoor_wall_501"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_502.png" id="t_outdoor_wall_502"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_503.png" id="t_outdoor_wall_503"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_504.png" id="t_outdoor_wall_504"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_505.png" id="t_outdoor_wall_505"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_506.png" id="t_outdoor_wall_506"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_507.png" id="t_outdoor_wall_507"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_508.png" id="t_outdoor_wall_508"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_509.png" id="t_outdoor_wall_509"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_510.png" id="t_outdoor_wall_510"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_511.png" id="t_outdoor_wall_511"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_512.png" id="t_outdoor_wall_512"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_513.png" id="t_outdoor_wall_513"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_514.png" id="t_outdoor_wall_514"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_515.png" id="t_outdoor_wall_515"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_516.png" id="t_outdoor_wall_516"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_517.png" id="t_outdoor_wall_517"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_518.png" id="t_outdoor_wall_518"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_519.png" id="t_outdoor_wall_519"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_520.png" id="t_outdoor_wall_520"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_521.png" id="t_outdoor_wall_521"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_522.png" id="t_outdoor_wall_522"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_523.png" id="t_outdoor_wall_523"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_524.png" id="t_outdoor_wall_524"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_525.png" id="t_outdoor_wall_525"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_526.png" id="t_outdoor_wall_526"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_527.png" id="t_outdoor_wall_527"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_528.png" id="t_outdoor_wall_528"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_529.png" id="t_outdoor_wall_529"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_530.png" id="t_outdoor_wall_530"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/outdoor_wall_531.png" id="t_outdoor_wall_531"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/World/props/spring_trough.png" id="t_spring_trough"]
+
+[sub_resource type="RectangleShape2D" id="s0"]
+size = Vector2(1648, 1504)
+
+[sub_resource type="RectangleShape2D" id="s1"]
+size = Vector2(432, 16)
+
+[sub_resource type="RectangleShape2D" id="s2"]
+size = Vector2(912, 96)
+
+[sub_resource type="RectangleShape2D" id="s3"]
+size = Vector2(896, 16)
+
+[sub_resource type="RectangleShape2D" id="s4"]
+size = Vector2(704, 16)
+
+[sub_resource type="RectangleShape2D" id="s5"]
+size = Vector2(528, 16)
+
+[sub_resource type="RectangleShape2D" id="s6"]
+size = Vector2(432, 16)
+
+[sub_resource type="RectangleShape2D" id="s7"]
+size = Vector2(416, 16)
+
+[sub_resource type="RectangleShape2D" id="s8"]
+size = Vector2(16, 16)
+
+[sub_resource type="RectangleShape2D" id="s9"]
+size = Vector2(400, 80)
+
+[sub_resource type="RectangleShape2D" id="s10"]
+size = Vector2(192, 16)
+
+[sub_resource type="RectangleShape2D" id="s11"]
+size = Vector2(416, 16)
+
+[sub_resource type="RectangleShape2D" id="s12"]
+size = Vector2(416, 272)
+
+[sub_resource type="RectangleShape2D" id="s13"]
+size = Vector2(384, 16)
+
+[sub_resource type="RectangleShape2D" id="s14"]
+size = Vector2(432, 16)
+
+[sub_resource type="RectangleShape2D" id="s15"]
+size = Vector2(432, 16)
+
+[sub_resource type="RectangleShape2D" id="s16"]
+size = Vector2(912, 16)
+
+[sub_resource type="RectangleShape2D" id="s17"]
+size = Vector2(496, 48)
+
+[sub_resource type="RectangleShape2D" id="s18"]
+size = Vector2(1024, 48)
+
+[sub_resource type="RectangleShape2D" id="s19"]
+size = Vector2(480, 64)
+
+[sub_resource type="RectangleShape2D" id="s20"]
+size = Vector2(1040, 64)
+
+[sub_resource type="RectangleShape2D" id="s21"]
+size = Vector2(464, 32)
+
+[sub_resource type="RectangleShape2D" id="s22"]
+size = Vector2(496, 16)
+
+[sub_resource type="RectangleShape2D" id="s23"]
+size = Vector2(704, 16)
+
+[sub_resource type="RectangleShape2D" id="s24"]
+size = Vector2(1056, 64)
+
+[sub_resource type="RectangleShape2D" id="s25"]
+size = Vector2(880, 16)
+
+[sub_resource type="RectangleShape2D" id="s26"]
+size = Vector2(1088, 16)
+
+[sub_resource type="RectangleShape2D" id="s27"]
+size = Vector2(1280, 16)
+
+[sub_resource type="RectangleShape2D" id="s28"]
+size = Vector2(1472, 16)
+
+[sub_resource type="RectangleShape2D" id="s29"]
+size = Vector2(1072, 64)
+
+[sub_resource type="RectangleShape2D" id="s30"]
+size = Vector2(1664, 16)
+
+[sub_resource type="RectangleShape2D" id="s31"]
+size = Vector2(1296, 16)
+
+[sub_resource type="RectangleShape2D" id="s32"]
+size = Vector2(496, 16)
+
+[sub_resource type="RectangleShape2D" id="s33"]
+size = Vector2(1328, 16)
+
+[sub_resource type="RectangleShape2D" id="s34"]
+size = Vector2(480, 16)
+
+[sub_resource type="RectangleShape2D" id="s35"]
+size = Vector2(1296, 16)
+
+[sub_resource type="RectangleShape2D" id="s36"]
+size = Vector2(1088, 64)
+
+[sub_resource type="RectangleShape2D" id="s37"]
+size = Vector2(1248, 16)
+
+[sub_resource type="RectangleShape2D" id="s38"]
+size = Vector2(464, 32)
+
+[sub_resource type="RectangleShape2D" id="s39"]
+size = Vector2(1200, 16)
+
+[sub_resource type="RectangleShape2D" id="s40"]
+size = Vector2(1168, 16)
+
+[sub_resource type="RectangleShape2D" id="s41"]
+size = Vector2(448, 32)
+
+[sub_resource type="RectangleShape2D" id="s42"]
+size = Vector2(1104, 48)
+
+[sub_resource type="RectangleShape2D" id="s43"]
+size = Vector2(1120, 16)
+
+[sub_resource type="RectangleShape2D" id="s44"]
+size = Vector2(1072, 16)
+
+[sub_resource type="RectangleShape2D" id="s45"]
+size = Vector2(1024, 16)
+
+[sub_resource type="RectangleShape2D" id="s46"]
+size = Vector2(992, 16)
+
+[sub_resource type="RectangleShape2D" id="s47"]
+size = Vector2(432, 64)
+
+[sub_resource type="RectangleShape2D" id="s48"]
+size = Vector2(1120, 64)
+
+[sub_resource type="RectangleShape2D" id="s49"]
+size = Vector2(944, 16)
+
+[sub_resource type="RectangleShape2D" id="s50"]
+size = Vector2(64, 16)
+
+[sub_resource type="RectangleShape2D" id="s51"]
+size = Vector2(896, 16)
+
+[sub_resource type="RectangleShape2D" id="s52"]
+size = Vector2(96, 16)
+
+[sub_resource type="RectangleShape2D" id="s53"]
+size = Vector2(864, 16)
+
+[sub_resource type="RectangleShape2D" id="s54"]
+size = Vector2(144, 16)
+
+[sub_resource type="RectangleShape2D" id="s55"]
+size = Vector2(816, 16)
+
+[sub_resource type="RectangleShape2D" id="s56"]
+size = Vector2(192, 16)
+
+[sub_resource type="RectangleShape2D" id="s57"]
+size = Vector2(416, 64)
+
+[sub_resource type="RectangleShape2D" id="s58"]
+size = Vector2(1136, 64)
+
+[sub_resource type="RectangleShape2D" id="s59"]
+size = Vector2(768, 16)
+
+[sub_resource type="RectangleShape2D" id="s60"]
+size = Vector2(224, 16)
+
+[sub_resource type="RectangleShape2D" id="s61"]
+size = Vector2(736, 16)
+
+[sub_resource type="RectangleShape2D" id="s62"]
+size = Vector2(272, 16)
+
+[sub_resource type="RectangleShape2D" id="s63"]
+size = Vector2(672, 16)
+
+[sub_resource type="RectangleShape2D" id="s64"]
+size = Vector2(320, 16)
+
+[sub_resource type="RectangleShape2D" id="s65"]
+size = Vector2(400, 48)
+
+[sub_resource type="RectangleShape2D" id="s66"]
+size = Vector2(480, 16)
+
+[sub_resource type="RectangleShape2D" id="s67"]
+size = Vector2(352, 16)
+
+[sub_resource type="RectangleShape2D" id="s68"]
+size = Vector2(1152, 64)
+
+[sub_resource type="RectangleShape2D" id="s69"]
+size = Vector2(288, 16)
+
+[sub_resource type="RectangleShape2D" id="s70"]
+size = Vector2(400, 16)
+
+[sub_resource type="RectangleShape2D" id="s71"]
+size = Vector2(384, 32)
+
+[sub_resource type="RectangleShape2D" id="s72"]
+size = Vector2(96, 16)
+
+[sub_resource type="RectangleShape2D" id="s73"]
+size = Vector2(448, 16)
+
+[sub_resource type="RectangleShape2D" id="s74"]
+size = Vector2(368, 16)
+
+[sub_resource type="RectangleShape2D" id="s75"]
+size = Vector2(480, 16)
+
+[sub_resource type="RectangleShape2D" id="s76"]
+size = Vector2(352, 16)
+
+[sub_resource type="RectangleShape2D" id="s77"]
+size = Vector2(1168, 48)
+
+[sub_resource type="RectangleShape2D" id="s78"]
+size = Vector2(528, 16)
+
+[sub_resource type="RectangleShape2D" id="s79"]
+size = Vector2(336, 16)
+
+[sub_resource type="RectangleShape2D" id="s80"]
+size = Vector2(576, 16)
+
+[sub_resource type="RectangleShape2D" id="s81"]
+size = Vector2(320, 16)
+
+[sub_resource type="RectangleShape2D" id="s82"]
+size = Vector2(1184, 32)
+
+[sub_resource type="RectangleShape2D" id="s83"]
+size = Vector2(624, 16)
+
+[sub_resource type="RectangleShape2D" id="s84"]
+size = Vector2(288, 16)
+
+[sub_resource type="RectangleShape2D" id="s85"]
+size = Vector2(1200, 16)
+
+[sub_resource type="RectangleShape2D" id="s86"]
+size = Vector2(720, 16)
+
+[sub_resource type="RectangleShape2D" id="s87"]
+size = Vector2(272, 16)
+
+[sub_resource type="RectangleShape2D" id="s88"]
+size = Vector2(1216, 16)
+
+[sub_resource type="RectangleShape2D" id="s89"]
+size = Vector2(912, 16)
+
+[sub_resource type="RectangleShape2D" id="s90"]
+size = Vector2(256, 16)
+
+[sub_resource type="RectangleShape2D" id="s91"]
+size = Vector2(1232, 16)
+
+[sub_resource type="RectangleShape2D" id="s92"]
+size = Vector2(1104, 16)
+
+[sub_resource type="RectangleShape2D" id="s93"]
+size = Vector2(240, 16)
+
+[sub_resource type="RectangleShape2D" id="s94"]
+size = Vector2(1248, 16)
+
+[sub_resource type="RectangleShape2D" id="s95"]
+size = Vector2(1296, 16)
+
+[sub_resource type="RectangleShape2D" id="s96"]
+size = Vector2(224, 16)
+
+[sub_resource type="RectangleShape2D" id="s97"]
+size = Vector2(1264, 16)
+
+[sub_resource type="RectangleShape2D" id="s98"]
+size = Vector2(1360, 16)
+
+[sub_resource type="RectangleShape2D" id="s99"]
+size = Vector2(208, 16)
+
+[sub_resource type="RectangleShape2D" id="s100"]
+size = Vector2(1280, 16)
+
+[sub_resource type="RectangleShape2D" id="s101"]
+size = Vector2(1360, 16)
+
+[sub_resource type="RectangleShape2D" id="s102"]
+size = Vector2(192, 16)
+
+[sub_resource type="RectangleShape2D" id="s103"]
+size = Vector2(1312, 16)
+
+[sub_resource type="RectangleShape2D" id="s104"]
+size = Vector2(1360, 16)
+
+[sub_resource type="RectangleShape2D" id="s105"]
+size = Vector2(160, 16)
+
+[sub_resource type="RectangleShape2D" id="s106"]
+size = Vector2(1328, 16)
+
+[sub_resource type="RectangleShape2D" id="s107"]
+size = Vector2(1360, 16)
+
+[sub_resource type="RectangleShape2D" id="s108"]
+size = Vector2(144, 16)
+
+[sub_resource type="RectangleShape2D" id="s109"]
+size = Vector2(1344, 16)
+
+[sub_resource type="RectangleShape2D" id="s110"]
+size = Vector2(128, 16)
+
+[sub_resource type="RectangleShape2D" id="s111"]
+size = Vector2(1360, 16)
+
+[sub_resource type="RectangleShape2D" id="s112"]
+size = Vector2(112, 16)
+
+[sub_resource type="RectangleShape2D" id="s113"]
+size = Vector2(1376, 16)
+
+[sub_resource type="RectangleShape2D" id="s114"]
+size = Vector2(96, 16)
+
+[sub_resource type="RectangleShape2D" id="s115"]
+size = Vector2(1392, 16)
+
+[sub_resource type="RectangleShape2D" id="s116"]
+size = Vector2(80, 16)
+
+[sub_resource type="RectangleShape2D" id="s117"]
+size = Vector2(1408, 16)
+
+[sub_resource type="RectangleShape2D" id="s118"]
+size = Vector2(64, 16)
+
+[sub_resource type="RectangleShape2D" id="s119"]
+size = Vector2(1440, 16)
+
+[sub_resource type="RectangleShape2D" id="s120"]
+size = Vector2(32, 16)
+
+[sub_resource type="RectangleShape2D" id="s121"]
+size = Vector2(1456, 16)
+
+[sub_resource type="RectangleShape2D" id="s122"]
+size = Vector2(16, 16)
+
+[sub_resource type="RectangleShape2D" id="s123"]
+size = Vector2(1472, 16)
+
+[sub_resource type="RectangleShape2D" id="s124"]
+size = Vector2(1488, 16)
+
+[sub_resource type="RectangleShape2D" id="s125"]
+size = Vector2(1504, 16)
+
+[sub_resource type="RectangleShape2D" id="s126"]
+size = Vector2(1520, 16)
+
+[sub_resource type="RectangleShape2D" id="s127"]
+size = Vector2(1536, 16)
+
+[sub_resource type="RectangleShape2D" id="s128"]
+size = Vector2(1568, 16)
+
+[sub_resource type="RectangleShape2D" id="s129"]
+size = Vector2(1584, 16)
+
+[sub_resource type="RectangleShape2D" id="s130"]
+size = Vector2(1600, 16)
+
+[sub_resource type="RectangleShape2D" id="s131"]
+size = Vector2(1616, 16)
+
+[sub_resource type="RectangleShape2D" id="s132"]
+size = Vector2(1632, 16)
+
+[sub_resource type="RectangleShape2D" id="s133"]
+size = Vector2(1648, 16)
+
+[sub_resource type="RectangleShape2D" id="s134"]
+size = Vector2(1664, 16)
+
+[sub_resource type="RectangleShape2D" id="s135"]
+size = Vector2(1360, 304)
+
+[sub_resource type="RectangleShape2D" id="s136"]
+size = Vector2(1680, 16)
+
+[sub_resource type="RectangleShape2D" id="s137"]
+size = Vector2(1376, 16)
+
+[sub_resource type="RectangleShape2D" id="s138"]
+size = Vector2(1712, 16)
+
+[sub_resource type="RectangleShape2D" id="s139"]
+size = Vector2(1408, 16)
+
+[sub_resource type="RectangleShape2D" id="s140"]
+size = Vector2(1744, 16)
+
+[sub_resource type="RectangleShape2D" id="s141"]
+size = Vector2(3168, 304)
+
+[sub_resource type="RectangleShape2D" id="s142"]
+size = Vector2(182, 182)
+
+[sub_resource type="RectangleShape2D" id="s143"]
+size = Vector2(960, 600)
+
+[sub_resource type="RectangleShape2D" id="s144"]
+size = Vector2(7, 7)
+
+[sub_resource type="RectangleShape2D" id="s145"]
+size = Vector2(7, 7)
+
+[sub_resource type="RectangleShape2D" id="s146"]
+size = Vector2(7, 7)
+
+[sub_resource type="RectangleShape2D" id="s147"]
+size = Vector2(7, 7)
+
+[sub_resource type="RectangleShape2D" id="s148"]
+size = Vector2(17, 23)
+
+[sub_resource type="RectangleShape2D" id="s149"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s150"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s151"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s152"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s153"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s154"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s155"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s156"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s157"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s158"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s159"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s160"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s161"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s162"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s163"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s164"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s165"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s166"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s167"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s168"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s169"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s170"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s171"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s172"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s173"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s174"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s175"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s176"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s177"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s178"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s179"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s180"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s181"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s182"]
+size = Vector2(17, 57)
+
+[sub_resource type="RectangleShape2D" id="s183"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s184"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s185"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s186"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s187"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s188"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s189"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s190"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s191"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s192"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s193"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s194"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s195"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s196"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s197"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s198"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s199"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s200"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s201"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s202"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s203"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s204"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s205"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s206"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s207"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s208"]
+size = Vector2(59, 21)
+
+[sub_resource type="RectangleShape2D" id="s209"]
+size = Vector2(51, 21)
+
+[sub_resource type="RectangleShape2D" id="s210"]
+size = Vector2(44, 19)
+
+[sub_resource type="RectangleShape2D" id="s211"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s212"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s213"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s214"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s215"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s216"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s217"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s218"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s219"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s220"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s221"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s222"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s223"]
+size = Vector2(51, 19)
+
+[sub_resource type="RectangleShape2D" id="s224"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s225"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s226"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s227"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s228"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s229"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s230"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s231"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s232"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s233"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s234"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s235"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s236"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s237"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s238"]
+size = Vector2(52, 31)
+
+[sub_resource type="RectangleShape2D" id="s239"]
+size = Vector2(8, 19)
+
+[sub_resource type="RectangleShape2D" id="s240"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s241"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s242"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s243"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s244"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s245"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s246"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s247"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s248"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s249"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s250"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s251"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s252"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s253"]
+size = Vector2(52, 19)
+
+[sub_resource type="RectangleShape2D" id="s254"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s255"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s256"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s257"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s258"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s259"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s260"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s261"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s262"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s263"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s264"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s265"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s266"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s267"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s268"]
+size = Vector2(53, 31)
+
+[sub_resource type="RectangleShape2D" id="s269"]
+size = Vector2(12, 50)
+
+[sub_resource type="RectangleShape2D" id="s270"]
+size = Vector2(12, 50)
+
+[sub_resource type="RectangleShape2D" id="s271"]
+size = Vector2(12, 50)
+
+[sub_resource type="RectangleShape2D" id="s272"]
+size = Vector2(12, 50)
+
+[sub_resource type="RectangleShape2D" id="s273"]
+size = Vector2(12, 50)
+
+[sub_resource type="RectangleShape2D" id="s274"]
+size = Vector2(12, 50)
+
+[sub_resource type="RectangleShape2D" id="s275"]
+size = Vector2(12, 50)
+
+[sub_resource type="RectangleShape2D" id="s276"]
+size = Vector2(12, 50)
+
+[sub_resource type="RectangleShape2D" id="s277"]
+size = Vector2(12, 50)
+
+[sub_resource type="RectangleShape2D" id="s278"]
+size = Vector2(12, 50)
+
+[sub_resource type="RectangleShape2D" id="s279"]
+size = Vector2(12, 50)
+
+[sub_resource type="RectangleShape2D" id="s280"]
+size = Vector2(47, 43)
+
+[sub_resource type="RectangleShape2D" id="s281"]
+size = Vector2(47, 43)
+
+[sub_resource type="RectangleShape2D" id="s282"]
+size = Vector2(47, 43)
+
+[sub_resource type="RectangleShape2D" id="s283"]
+size = Vector2(47, 43)
+
+[sub_resource type="RectangleShape2D" id="s284"]
+size = Vector2(47, 43)
+
+[sub_resource type="RectangleShape2D" id="s285"]
+size = Vector2(47, 43)
+
+[sub_resource type="RectangleShape2D" id="s286"]
+size = Vector2(47, 43)
+
+[sub_resource type="RectangleShape2D" id="s287"]
+size = Vector2(47, 43)
+
+[sub_resource type="RectangleShape2D" id="s288"]
+size = Vector2(47, 43)
+
+[sub_resource type="RectangleShape2D" id="s289"]
+size = Vector2(47, 43)
+
+[sub_resource type="RectangleShape2D" id="s290"]
+size = Vector2(24, 50)
+
+[sub_resource type="RectangleShape2D" id="s291"]
+size = Vector2(24, 50)
+
+[sub_resource type="RectangleShape2D" id="s292"]
+size = Vector2(24, 50)
+
+[sub_resource type="RectangleShape2D" id="s293"]
+size = Vector2(24, 50)
+
+[sub_resource type="RectangleShape2D" id="s294"]
+size = Vector2(24, 50)
+
+[sub_resource type="RectangleShape2D" id="s295"]
+size = Vector2(24, 50)
+
+[sub_resource type="RectangleShape2D" id="s296"]
+size = Vector2(24, 50)
+
+[sub_resource type="RectangleShape2D" id="s297"]
+size = Vector2(24, 50)
+
+[sub_resource type="RectangleShape2D" id="s298"]
+size = Vector2(24, 50)
+
+[sub_resource type="RectangleShape2D" id="s299"]
+size = Vector2(24, 50)
+
+[sub_resource type="RectangleShape2D" id="s300"]
+size = Vector2(24, 50)
+
+[sub_resource type="RectangleShape2D" id="s301"]
+size = Vector2(24, 50)
+
+[sub_resource type="RectangleShape2D" id="s302"]
+size = Vector2(12, 6)
+
+[sub_resource type="RectangleShape2D" id="s303"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s304"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s305"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s306"]
+size = Vector2(12, 6)
+
+[sub_resource type="RectangleShape2D" id="s307"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s308"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s309"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s310"]
+size = Vector2(12, 6)
+
+[sub_resource type="RectangleShape2D" id="s311"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s312"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s313"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s314"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s315"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s316"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s317"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s318"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s319"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s320"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s321"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s322"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s323"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s324"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s325"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s326"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s327"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s328"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s329"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s330"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s331"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s332"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s333"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s334"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s335"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s336"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s337"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s338"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s339"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s340"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s341"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s342"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s343"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s344"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s345"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s346"]
+size = Vector2(33, 13)
+
+[sub_resource type="RectangleShape2D" id="s347"]
+size = Vector2(14, 13)
+
+[sub_resource type="RectangleShape2D" id="s348"]
+size = Vector2(50, 6)
+
+[sub_resource type="RectangleShape2D" id="s349"]
+size = Vector2(60, 18)
+
+[sub_resource type="RectangleShape2D" id="s350"]
+size = Vector2(24, 8)
+
+[sub_resource type="RectangleShape2D" id="s351"]
+size = Vector2(28, 12)
+
+[sub_resource type="RectangleShape2D" id="s352"]
+size = Vector2(14, 7)
+
+[sub_resource type="RectangleShape2D" id="s353"]
+size = Vector2(14, 7)
+
+[sub_resource type="RectangleShape2D" id="s354"]
+size = Vector2(14, 7)
+
+[node name="harbor" type="Node2D"]
+texture_filter = 1
+metadata/title = "港路与港口"
+metadata/map_size = Vector2(3168, 3216)
+metadata/outdoor_origin = Vector2(4848, 2640)
+metadata/outdoor_core = Rect2(5136, 2928, 2880, 2928)
+metadata/outdoor_cores = {"campus_nw": Rect2(0, 0, 2688, 2928), "campus_n": Rect2(2688, 0, 2448, 2928), "campus_ne": Rect2(5136, 0, 2880, 2928), "campus_sw": Rect2(0, 2928, 2688, 2928), "campus_s": Rect2(2688, 2928, 2448, 2928), "harbor": Rect2(5136, 2928, 2880, 2928)}
+metadata/outdoor_origins = {"campus_nw": Vector2(0, 0), "campus_n": Vector2(2400, 0), "campus_ne": Vector2(4848, 0), "campus_sw": Vector2(0, 2640), "campus_s": Vector2(2400, 2640), "harbor": Vector2(4848, 2640)}
+
+[node name="Architecture" type="Sprite2D" parent="."]
+z_index = -10
+texture = ExtResource("arch")
+centered = false
+
+[node name="Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="铁工院（封闭）" type="Sprite2D" parent="Objects"]
+position = Vector2(864, 1836)
+texture = ExtResource("t_outdoor_bldg_010")
+centered = false
+offset = Vector2(-491, -987)
+metadata/occluder = true
+
+[node name="汲水泉亭" type="Sprite2D" parent="Objects"]
+position = Vector2(528, 96)
+texture = ExtResource("t_outdoor_bldg_022")
+centered = false
+offset = Vector2(-58, -166)
+metadata/occluder = true
+
+[node name="围墙255" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 23)
+texture = ExtResource("t_outdoor_wall_255")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙256" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 80)
+texture = ExtResource("t_outdoor_wall_256")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙257" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 137)
+texture = ExtResource("t_outdoor_wall_257")
+centered = false
+offset = Vector2(-10, -101)
+
+[node name="围墙258" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 195)
+texture = ExtResource("t_outdoor_wall_258")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙259" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 252)
+texture = ExtResource("t_outdoor_wall_259")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙260" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 309)
+texture = ExtResource("t_outdoor_wall_260")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙261" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 366)
+texture = ExtResource("t_outdoor_wall_261")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙262" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 423)
+texture = ExtResource("t_outdoor_wall_262")
+centered = false
+offset = Vector2(-10, -101)
+
+[node name="围墙263" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 481)
+texture = ExtResource("t_outdoor_wall_263")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙264" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 538)
+texture = ExtResource("t_outdoor_wall_264")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙265" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 595)
+texture = ExtResource("t_outdoor_wall_265")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙266" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 652)
+texture = ExtResource("t_outdoor_wall_266")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙267" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 709)
+texture = ExtResource("t_outdoor_wall_267")
+centered = false
+offset = Vector2(-10, -101)
+
+[node name="围墙268" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 767)
+texture = ExtResource("t_outdoor_wall_268")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙269" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 824)
+texture = ExtResource("t_outdoor_wall_269")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙270" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 881)
+texture = ExtResource("t_outdoor_wall_270")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙271" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 938)
+texture = ExtResource("t_outdoor_wall_271")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙272" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 996)
+texture = ExtResource("t_outdoor_wall_272")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙273" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1053)
+texture = ExtResource("t_outdoor_wall_273")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙274" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1110)
+texture = ExtResource("t_outdoor_wall_274")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙275" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1167)
+texture = ExtResource("t_outdoor_wall_275")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙276" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1224)
+texture = ExtResource("t_outdoor_wall_276")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙277" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1282)
+texture = ExtResource("t_outdoor_wall_277")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙278" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1339)
+texture = ExtResource("t_outdoor_wall_278")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙279" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1396)
+texture = ExtResource("t_outdoor_wall_279")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙280" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1453)
+texture = ExtResource("t_outdoor_wall_280")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙281" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1510)
+texture = ExtResource("t_outdoor_wall_281")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙282" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1568)
+texture = ExtResource("t_outdoor_wall_282")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙283" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1625)
+texture = ExtResource("t_outdoor_wall_283")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙284" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1682)
+texture = ExtResource("t_outdoor_wall_284")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙285" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1739)
+texture = ExtResource("t_outdoor_wall_285")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙286" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1796)
+texture = ExtResource("t_outdoor_wall_286")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙287" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1854)
+texture = ExtResource("t_outdoor_wall_287")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙288" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1911)
+texture = ExtResource("t_outdoor_wall_288")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙289" type="Sprite2D" parent="Objects"]
+position = Vector2(1536, 1968)
+texture = ExtResource("t_outdoor_wall_289")
+centered = false
+offset = Vector2(-10, -102)
+
+[node name="围墙290" type="Sprite2D" parent="Objects"]
+position = Vector2(1507, 1981)
+texture = ExtResource("t_outdoor_wall_290")
+centered = false
+offset = Vector2(-30, -66)
+
+[node name="围墙291" type="Sprite2D" parent="Objects"]
+position = Vector2(1450, 1986)
+texture = ExtResource("t_outdoor_wall_291")
+centered = false
+offset = Vector2(-30, -66)
+
+[node name="围墙292" type="Sprite2D" parent="Objects"]
+position = Vector2(1393, 1990)
+texture = ExtResource("t_outdoor_wall_292")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="围墙293" type="Sprite2D" parent="Objects"]
+position = Vector2(1336, 1995)
+texture = ExtResource("t_outdoor_wall_293")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="围墙294" type="Sprite2D" parent="Objects"]
+position = Vector2(1279, 1999)
+texture = ExtResource("t_outdoor_wall_294")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="围墙295" type="Sprite2D" parent="Objects"]
+position = Vector2(1221, 2004)
+texture = ExtResource("t_outdoor_wall_295")
+centered = false
+offset = Vector2(-30, -66)
+
+[node name="围墙296" type="Sprite2D" parent="Objects"]
+position = Vector2(1164, 2008)
+texture = ExtResource("t_outdoor_wall_296")
+centered = false
+offset = Vector2(-30, -66)
+
+[node name="围墙297" type="Sprite2D" parent="Objects"]
+position = Vector2(1107, 2013)
+texture = ExtResource("t_outdoor_wall_297")
+centered = false
+offset = Vector2(-30, -66)
+
+[node name="围墙298" type="Sprite2D" parent="Objects"]
+position = Vector2(1050, 2018)
+texture = ExtResource("t_outdoor_wall_298")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="围墙299" type="Sprite2D" parent="Objects"]
+position = Vector2(993, 2022)
+texture = ExtResource("t_outdoor_wall_299")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="围墙300" type="Sprite2D" parent="Objects"]
+position = Vector2(936, 2027)
+texture = ExtResource("t_outdoor_wall_300")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="围墙301" type="Sprite2D" parent="Objects"]
+position = Vector2(878, 2031)
+texture = ExtResource("t_outdoor_wall_301")
+centered = false
+offset = Vector2(-30, -66)
+
+[node name="围墙302" type="Sprite2D" parent="Objects"]
+position = Vector2(821, 2036)
+texture = ExtResource("t_outdoor_wall_302")
+centered = false
+offset = Vector2(-30, -66)
+
+[node name="围墙303" type="Sprite2D" parent="Objects"]
+position = Vector2(764, 2041)
+texture = ExtResource("t_outdoor_wall_303")
+centered = false
+offset = Vector2(-30, -67)
+
+[node name="围墙304" type="Sprite2D" parent="Objects"]
+position = Vector2(707, 2045)
+texture = ExtResource("t_outdoor_wall_304")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="围墙305" type="Sprite2D" parent="Objects"]
+position = Vector2(650, 2050)
+texture = ExtResource("t_outdoor_wall_305")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="围墙306" type="Sprite2D" parent="Objects"]
+position = Vector2(593, 2054)
+texture = ExtResource("t_outdoor_wall_306")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="围墙307" type="Sprite2D" parent="Objects"]
+position = Vector2(535, 2059)
+texture = ExtResource("t_outdoor_wall_307")
+centered = false
+offset = Vector2(-30, -66)
+
+[node name="围墙308" type="Sprite2D" parent="Objects"]
+position = Vector2(478, 2063)
+texture = ExtResource("t_outdoor_wall_308")
+centered = false
+offset = Vector2(-30, -66)
+
+[node name="围墙309" type="Sprite2D" parent="Objects"]
+position = Vector2(421, 2068)
+texture = ExtResource("t_outdoor_wall_309")
+centered = false
+offset = Vector2(-30, -66)
+
+[node name="围墙310" type="Sprite2D" parent="Objects"]
+position = Vector2(364, 2073)
+texture = ExtResource("t_outdoor_wall_310")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="围墙311" type="Sprite2D" parent="Objects"]
+position = Vector2(307, 2077)
+texture = ExtResource("t_outdoor_wall_311")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="围墙312" type="Sprite2D" parent="Objects"]
+position = Vector2(250, 2082)
+texture = ExtResource("t_outdoor_wall_312")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="围墙313" type="Sprite2D" parent="Objects"]
+position = Vector2(192, 2086)
+texture = ExtResource("t_outdoor_wall_313")
+centered = false
+offset = Vector2(-30, -66)
+
+[node name="围墙314" type="Sprite2D" parent="Objects"]
+position = Vector2(135, 2091)
+texture = ExtResource("t_outdoor_wall_314")
+centered = false
+offset = Vector2(-30, -66)
+
+[node name="围墙315" type="Sprite2D" parent="Objects"]
+position = Vector2(78, 2096)
+texture = ExtResource("t_outdoor_wall_315")
+centered = false
+offset = Vector2(-30, -67)
+
+[node name="围墙316" type="Sprite2D" parent="Objects"]
+position = Vector2(21, 2100)
+texture = ExtResource("t_outdoor_wall_316")
+centered = false
+offset = Vector2(-31, -66)
+
+[node name="港路墙北036" type="Sprite2D" parent="Objects"]
+position = Vector2(19, 2383)
+texture = ExtResource("t_outdoor_wall_407")
+centered = false
+offset = Vector2(-27, -47)
+
+[node name="港路墙北037" type="Sprite2D" parent="Objects"]
+position = Vector2(69, 2379)
+texture = ExtResource("t_outdoor_wall_408")
+centered = false
+offset = Vector2(-27, -47)
+
+[node name="港路墙北038" type="Sprite2D" parent="Objects"]
+position = Vector2(119, 2374)
+texture = ExtResource("t_outdoor_wall_409")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙北039" type="Sprite2D" parent="Objects"]
+position = Vector2(168, 2370)
+texture = ExtResource("t_outdoor_wall_410")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙北040" type="Sprite2D" parent="Objects"]
+position = Vector2(218, 2366)
+texture = ExtResource("t_outdoor_wall_411")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙北041" type="Sprite2D" parent="Objects"]
+position = Vector2(268, 2362)
+texture = ExtResource("t_outdoor_wall_412")
+centered = false
+offset = Vector2(-27, -47)
+
+[node name="港路墙北042" type="Sprite2D" parent="Objects"]
+position = Vector2(318, 2358)
+texture = ExtResource("t_outdoor_wall_413")
+centered = false
+offset = Vector2(-27, -47)
+
+[node name="港路墙北043" type="Sprite2D" parent="Objects"]
+position = Vector2(368, 2353)
+texture = ExtResource("t_outdoor_wall_414")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙北044" type="Sprite2D" parent="Objects"]
+position = Vector2(418, 2349)
+texture = ExtResource("t_outdoor_wall_415")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙北045" type="Sprite2D" parent="Objects"]
+position = Vector2(468, 2345)
+texture = ExtResource("t_outdoor_wall_416")
+centered = false
+offset = Vector2(-27, -47)
+
+[node name="港路墙北046" type="Sprite2D" parent="Objects"]
+position = Vector2(517, 2341)
+texture = ExtResource("t_outdoor_wall_417")
+centered = false
+offset = Vector2(-27, -47)
+
+[node name="港路墙北047" type="Sprite2D" parent="Objects"]
+position = Vector2(567, 2337)
+texture = ExtResource("t_outdoor_wall_418")
+centered = false
+offset = Vector2(-27, -47)
+
+[node name="港路墙北048" type="Sprite2D" parent="Objects"]
+position = Vector2(617, 2332)
+texture = ExtResource("t_outdoor_wall_419")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙北049" type="Sprite2D" parent="Objects"]
+position = Vector2(667, 2328)
+texture = ExtResource("t_outdoor_wall_420")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙北050" type="Sprite2D" parent="Objects"]
+position = Vector2(715, 2323)
+texture = ExtResource("t_outdoor_wall_421")
+centered = false
+offset = Vector2(-27, -58)
+
+[node name="港路墙北051" type="Sprite2D" parent="Objects"]
+position = Vector2(762, 2306)
+texture = ExtResource("t_outdoor_wall_422")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙北052" type="Sprite2D" parent="Objects"]
+position = Vector2(808, 2289)
+texture = ExtResource("t_outdoor_wall_423")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙北053" type="Sprite2D" parent="Objects"]
+position = Vector2(855, 2271)
+texture = ExtResource("t_outdoor_wall_424")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙北054" type="Sprite2D" parent="Objects"]
+position = Vector2(902, 2254)
+texture = ExtResource("t_outdoor_wall_425")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙北055" type="Sprite2D" parent="Objects"]
+position = Vector2(949, 2236)
+texture = ExtResource("t_outdoor_wall_426")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙北056" type="Sprite2D" parent="Objects"]
+position = Vector2(995, 2219)
+texture = ExtResource("t_outdoor_wall_427")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙北057" type="Sprite2D" parent="Objects"]
+position = Vector2(1042, 2201)
+texture = ExtResource("t_outdoor_wall_428")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙北058" type="Sprite2D" parent="Objects"]
+position = Vector2(1089, 2184)
+texture = ExtResource("t_outdoor_wall_429")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙北059" type="Sprite2D" parent="Objects"]
+position = Vector2(1135, 2166)
+texture = ExtResource("t_outdoor_wall_430")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙北060" type="Sprite2D" parent="Objects"]
+position = Vector2(1182, 2149)
+texture = ExtResource("t_outdoor_wall_431")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙北061" type="Sprite2D" parent="Objects"]
+position = Vector2(1229, 2131)
+texture = ExtResource("t_outdoor_wall_432")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙北062" type="Sprite2D" parent="Objects"]
+position = Vector2(1275, 2114)
+texture = ExtResource("t_outdoor_wall_433")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙北063" type="Sprite2D" parent="Objects"]
+position = Vector2(1322, 2096)
+texture = ExtResource("t_outdoor_wall_434")
+centered = false
+offset = Vector2(-27, -58)
+
+[node name="港路墙北064" type="Sprite2D" parent="Objects"]
+position = Vector2(1369, 2079)
+texture = ExtResource("t_outdoor_wall_435")
+centered = false
+offset = Vector2(-27, -59)
+
+[node name="港路墙南033" type="Sprite2D" parent="Objects"]
+position = Vector2(-18, 2530)
+texture = ExtResource("t_outdoor_wall_469")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙南034" type="Sprite2D" parent="Objects"]
+position = Vector2(33, 2526)
+texture = ExtResource("t_outdoor_wall_470")
+centered = false
+offset = Vector2(-27, -47)
+
+[node name="港路墙南035" type="Sprite2D" parent="Objects"]
+position = Vector2(84, 2522)
+texture = ExtResource("t_outdoor_wall_471")
+centered = false
+offset = Vector2(-27, -47)
+
+[node name="港路墙南036" type="Sprite2D" parent="Objects"]
+position = Vector2(135, 2517)
+texture = ExtResource("t_outdoor_wall_472")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙南037" type="Sprite2D" parent="Objects"]
+position = Vector2(186, 2513)
+texture = ExtResource("t_outdoor_wall_473")
+centered = false
+offset = Vector2(-27, -47)
+
+[node name="港路墙南038" type="Sprite2D" parent="Objects"]
+position = Vector2(237, 2508)
+texture = ExtResource("t_outdoor_wall_474")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙南039" type="Sprite2D" parent="Objects"]
+position = Vector2(288, 2504)
+texture = ExtResource("t_outdoor_wall_475")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙南040" type="Sprite2D" parent="Objects"]
+position = Vector2(339, 2500)
+texture = ExtResource("t_outdoor_wall_476")
+centered = false
+offset = Vector2(-28, -47)
+
+[node name="港路墙南041" type="Sprite2D" parent="Objects"]
+position = Vector2(390, 2495)
+texture = ExtResource("t_outdoor_wall_477")
+centered = false
+offset = Vector2(-28, -46)
+
+[node name="港路墙南042" type="Sprite2D" parent="Objects"]
+position = Vector2(441, 2491)
+texture = ExtResource("t_outdoor_wall_478")
+centered = false
+offset = Vector2(-28, -47)
+
+[node name="港路墙南043" type="Sprite2D" parent="Objects"]
+position = Vector2(492, 2487)
+texture = ExtResource("t_outdoor_wall_479")
+centered = false
+offset = Vector2(-28, -47)
+
+[node name="港路墙南044" type="Sprite2D" parent="Objects"]
+position = Vector2(542, 2482)
+texture = ExtResource("t_outdoor_wall_480")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙南045" type="Sprite2D" parent="Objects"]
+position = Vector2(593, 2478)
+texture = ExtResource("t_outdoor_wall_481")
+centered = false
+offset = Vector2(-27, -47)
+
+[node name="港路墙南046" type="Sprite2D" parent="Objects"]
+position = Vector2(644, 2474)
+texture = ExtResource("t_outdoor_wall_482")
+centered = false
+offset = Vector2(-27, -47)
+
+[node name="港路墙南047" type="Sprite2D" parent="Objects"]
+position = Vector2(695, 2469)
+texture = ExtResource("t_outdoor_wall_483")
+centered = false
+offset = Vector2(-27, -46)
+
+[node name="港路墙南048" type="Sprite2D" parent="Objects"]
+position = Vector2(745, 2464)
+texture = ExtResource("t_outdoor_wall_484")
+centered = false
+offset = Vector2(-28, -59)
+
+[node name="港路墙南049" type="Sprite2D" parent="Objects"]
+position = Vector2(793, 2447)
+texture = ExtResource("t_outdoor_wall_485")
+centered = false
+offset = Vector2(-28, -60)
+
+[node name="港路墙南050" type="Sprite2D" parent="Objects"]
+position = Vector2(841, 2429)
+texture = ExtResource("t_outdoor_wall_486")
+centered = false
+offset = Vector2(-28, -60)
+
+[node name="港路墙南051" type="Sprite2D" parent="Objects"]
+position = Vector2(890, 2411)
+texture = ExtResource("t_outdoor_wall_487")
+centered = false
+offset = Vector2(-28, -59)
+
+[node name="港路墙南052" type="Sprite2D" parent="Objects"]
+position = Vector2(938, 2393)
+texture = ExtResource("t_outdoor_wall_488")
+centered = false
+offset = Vector2(-28, -59)
+
+[node name="港路墙南053" type="Sprite2D" parent="Objects"]
+position = Vector2(986, 2375)
+texture = ExtResource("t_outdoor_wall_489")
+centered = false
+offset = Vector2(-28, -59)
+
+[node name="港路墙南054" type="Sprite2D" parent="Objects"]
+position = Vector2(1034, 2357)
+texture = ExtResource("t_outdoor_wall_490")
+centered = false
+offset = Vector2(-28, -59)
+
+[node name="港路墙南055" type="Sprite2D" parent="Objects"]
+position = Vector2(1082, 2339)
+texture = ExtResource("t_outdoor_wall_491")
+centered = false
+offset = Vector2(-28, -59)
+
+[node name="港路墙南056" type="Sprite2D" parent="Objects"]
+position = Vector2(1130, 2322)
+texture = ExtResource("t_outdoor_wall_492")
+centered = false
+offset = Vector2(-28, -60)
+
+[node name="港路墙南057" type="Sprite2D" parent="Objects"]
+position = Vector2(1178, 2304)
+texture = ExtResource("t_outdoor_wall_493")
+centered = false
+offset = Vector2(-28, -60)
+
+[node name="港路墙南058" type="Sprite2D" parent="Objects"]
+position = Vector2(1226, 2286)
+texture = ExtResource("t_outdoor_wall_494")
+centered = false
+offset = Vector2(-28, -60)
+
+[node name="港路墙南059" type="Sprite2D" parent="Objects"]
+position = Vector2(1274, 2268)
+texture = ExtResource("t_outdoor_wall_495")
+centered = false
+offset = Vector2(-28, -59)
+
+[node name="港路墙南060" type="Sprite2D" parent="Objects"]
+position = Vector2(1323, 2250)
+texture = ExtResource("t_outdoor_wall_496")
+centered = false
+offset = Vector2(-28, -59)
+
+[node name="港路墙南061" type="Sprite2D" parent="Objects"]
+position = Vector2(1371, 2232)
+texture = ExtResource("t_outdoor_wall_497")
+centered = false
+offset = Vector2(-28, -59)
+
+[node name="港路墙南062" type="Sprite2D" parent="Objects"]
+position = Vector2(1419, 2214)
+texture = ExtResource("t_outdoor_wall_498")
+centered = false
+offset = Vector2(-28, -59)
+
+[node name="坡道矮墙0000" type="Sprite2D" parent="Objects"]
+position = Vector2(1348, 2257)
+texture = ExtResource("t_outdoor_wall_499")
+centered = false
+offset = Vector2(-7, -71)
+
+[node name="坡道矮墙0001" type="Sprite2D" parent="Objects"]
+position = Vector2(1348, 2307)
+texture = ExtResource("t_outdoor_wall_500")
+centered = false
+offset = Vector2(-7, -71)
+
+[node name="坡道矮墙0002" type="Sprite2D" parent="Objects"]
+position = Vector2(1348, 2357)
+texture = ExtResource("t_outdoor_wall_501")
+centered = false
+offset = Vector2(-7, -71)
+
+[node name="坡道矮墙0003" type="Sprite2D" parent="Objects"]
+position = Vector2(1348, 2407)
+texture = ExtResource("t_outdoor_wall_502")
+centered = false
+offset = Vector2(-7, -71)
+
+[node name="坡道矮墙0004" type="Sprite2D" parent="Objects"]
+position = Vector2(1348, 2457)
+texture = ExtResource("t_outdoor_wall_503")
+centered = false
+offset = Vector2(-7, -71)
+
+[node name="坡道矮墙0005" type="Sprite2D" parent="Objects"]
+position = Vector2(1348, 2508)
+texture = ExtResource("t_outdoor_wall_504")
+centered = false
+offset = Vector2(-7, -71)
+
+[node name="坡道矮墙0006" type="Sprite2D" parent="Objects"]
+position = Vector2(1348, 2558)
+texture = ExtResource("t_outdoor_wall_505")
+centered = false
+offset = Vector2(-7, -71)
+
+[node name="坡道矮墙0007" type="Sprite2D" parent="Objects"]
+position = Vector2(1348, 2608)
+texture = ExtResource("t_outdoor_wall_506")
+centered = false
+offset = Vector2(-7, -71)
+
+[node name="坡道矮墙0008" type="Sprite2D" parent="Objects"]
+position = Vector2(1349, 2658)
+texture = ExtResource("t_outdoor_wall_507")
+centered = false
+offset = Vector2(-8, -71)
+
+[node name="坡道矮墙0009" type="Sprite2D" parent="Objects"]
+position = Vector2(1349, 2709)
+texture = ExtResource("t_outdoor_wall_508")
+centered = false
+offset = Vector2(-7, -71)
+
+[node name="坡道矮墙0010" type="Sprite2D" parent="Objects"]
+position = Vector2(1349, 2759)
+texture = ExtResource("t_outdoor_wall_509")
+centered = false
+offset = Vector2(-7, -71)
+
+[node name="坡道矮墙1000" type="Sprite2D" parent="Objects"]
+position = Vector2(1455, 2739)
+texture = ExtResource("t_outdoor_wall_510")
+centered = false
+offset = Vector2(-24, -63)
+
+[node name="坡道矮墙1001" type="Sprite2D" parent="Objects"]
+position = Vector2(1494, 2705)
+texture = ExtResource("t_outdoor_wall_511")
+centered = false
+offset = Vector2(-25, -63)
+
+[node name="坡道矮墙1002" type="Sprite2D" parent="Objects"]
+position = Vector2(1532, 2672)
+texture = ExtResource("t_outdoor_wall_512")
+centered = false
+offset = Vector2(-24, -64)
+
+[node name="坡道矮墙1003" type="Sprite2D" parent="Objects"]
+position = Vector2(1571, 2638)
+texture = ExtResource("t_outdoor_wall_513")
+centered = false
+offset = Vector2(-24, -64)
+
+[node name="坡道矮墙1004" type="Sprite2D" parent="Objects"]
+position = Vector2(1610, 2604)
+texture = ExtResource("t_outdoor_wall_514")
+centered = false
+offset = Vector2(-25, -64)
+
+[node name="坡道矮墙1005" type="Sprite2D" parent="Objects"]
+position = Vector2(1648, 2570)
+texture = ExtResource("t_outdoor_wall_515")
+centered = false
+offset = Vector2(-24, -64)
+
+[node name="坡道矮墙1006" type="Sprite2D" parent="Objects"]
+position = Vector2(1687, 2536)
+texture = ExtResource("t_outdoor_wall_516")
+centered = false
+offset = Vector2(-25, -64)
+
+[node name="坡道矮墙1007" type="Sprite2D" parent="Objects"]
+position = Vector2(1726, 2502)
+texture = ExtResource("t_outdoor_wall_517")
+centered = false
+offset = Vector2(-25, -64)
+
+[node name="坡道矮墙1008" type="Sprite2D" parent="Objects"]
+position = Vector2(1764, 2468)
+texture = ExtResource("t_outdoor_wall_518")
+centered = false
+offset = Vector2(-24, -64)
+
+[node name="坡道矮墙1009" type="Sprite2D" parent="Objects"]
+position = Vector2(1803, 2434)
+texture = ExtResource("t_outdoor_wall_519")
+centered = false
+offset = Vector2(-25, -64)
+
+[node name="坡道矮墙2000" type="Sprite2D" parent="Objects"]
+position = Vector2(2026, 2330)
+texture = ExtResource("t_outdoor_wall_520")
+centered = false
+offset = Vector2(-13, -70)
+
+[node name="坡道矮墙2001" type="Sprite2D" parent="Objects"]
+position = Vector2(2038, 2283)
+texture = ExtResource("t_outdoor_wall_521")
+centered = false
+offset = Vector2(-13, -70)
+
+[node name="坡道矮墙2002" type="Sprite2D" parent="Objects"]
+position = Vector2(2051, 2236)
+texture = ExtResource("t_outdoor_wall_522")
+centered = false
+offset = Vector2(-13, -71)
+
+[node name="坡道矮墙2003" type="Sprite2D" parent="Objects"]
+position = Vector2(2063, 2189)
+texture = ExtResource("t_outdoor_wall_523")
+centered = false
+offset = Vector2(-13, -71)
+
+[node name="坡道矮墙2004" type="Sprite2D" parent="Objects"]
+position = Vector2(2075, 2142)
+texture = ExtResource("t_outdoor_wall_524")
+centered = false
+offset = Vector2(-13, -71)
+
+[node name="坡道矮墙2005" type="Sprite2D" parent="Objects"]
+position = Vector2(2088, 2095)
+texture = ExtResource("t_outdoor_wall_525")
+centered = false
+offset = Vector2(-13, -71)
+
+[node name="坡道矮墙2006" type="Sprite2D" parent="Objects"]
+position = Vector2(2100, 2048)
+texture = ExtResource("t_outdoor_wall_526")
+centered = false
+offset = Vector2(-13, -71)
+
+[node name="坡道矮墙2007" type="Sprite2D" parent="Objects"]
+position = Vector2(2112, 2001)
+texture = ExtResource("t_outdoor_wall_527")
+centered = false
+offset = Vector2(-13, -71)
+
+[node name="坡道矮墙2008" type="Sprite2D" parent="Objects"]
+position = Vector2(2125, 1954)
+texture = ExtResource("t_outdoor_wall_528")
+centered = false
+offset = Vector2(-13, -71)
+
+[node name="坡道矮墙2009" type="Sprite2D" parent="Objects"]
+position = Vector2(2137, 1907)
+texture = ExtResource("t_outdoor_wall_529")
+centered = false
+offset = Vector2(-13, -71)
+
+[node name="坡道矮墙2010" type="Sprite2D" parent="Objects"]
+position = Vector2(2149, 1860)
+texture = ExtResource("t_outdoor_wall_530")
+centered = false
+offset = Vector2(-13, -71)
+
+[node name="坡道矮墙2011" type="Sprite2D" parent="Objects"]
+position = Vector2(2162, 1813)
+texture = ExtResource("t_outdoor_wall_531")
+centered = false
+offset = Vector2(-13, -71)
+
+[node name="round39" type="Sprite2D" parent="Objects"]
+position = Vector2(1248, 96)
+texture = ExtResource("t_outdoor_round_3")
+centered = false
+offset = Vector2(-79, -195)
+metadata/occluder = true
+
+[node name="hydrangea1339" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 140)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1341" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 255)
+texture = ExtResource("t_outdoor_hydrangea_1")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1343" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 371)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="round11" type="Sprite2D" parent="Objects"]
+position = Vector2(1056, 456)
+texture = ExtResource("t_outdoor_round_3")
+centered = false
+offset = Vector2(-79, -195)
+metadata/occluder = true
+
+[node name="hydrangea1345" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 486)
+texture = ExtResource("t_outdoor_hydrangea_1")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1346" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 544)
+texture = ExtResource("t_outdoor_hydrangea_2")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1347" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 602)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="round38" type="Sprite2D" parent="Objects"]
+position = Vector2(912, 816)
+texture = ExtResource("t_outdoor_round_2")
+centered = false
+offset = Vector2(-74, -183)
+metadata/occluder = true
+
+[node name="hydrangea1353" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 948)
+texture = ExtResource("t_outdoor_hydrangea_1")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1357" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 1179)
+texture = ExtResource("t_outdoor_hydrangea_1")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1358" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 1237)
+texture = ExtResource("t_outdoor_hydrangea_2")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1359" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 1295)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1360" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 1352)
+texture = ExtResource("t_outdoor_hydrangea_0")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1361" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 1410)
+texture = ExtResource("t_outdoor_hydrangea_1")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1362" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 1468)
+texture = ExtResource("t_outdoor_hydrangea_2")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1363" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 1526)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1366" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 1699)
+texture = ExtResource("t_outdoor_hydrangea_2")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea1367" type="Sprite2D" parent="Objects"]
+position = Vector2(1440, 1757)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea5770" type="Sprite2D" parent="Objects"]
+position = Vector2(406, 1858)
+texture = ExtResource("t_outdoor_hydrangea_2")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea5771" type="Sprite2D" parent="Objects"]
+position = Vector2(442, 1858)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea5772" type="Sprite2D" parent="Objects"]
+position = Vector2(478, 1858)
+texture = ExtResource("t_outdoor_hydrangea_0")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea5773" type="Sprite2D" parent="Objects"]
+position = Vector2(1322, 1858)
+texture = ExtResource("t_outdoor_hydrangea_1")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea5774" type="Sprite2D" parent="Objects"]
+position = Vector2(1286, 1858)
+texture = ExtResource("t_outdoor_hydrangea_2")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea5775" type="Sprite2D" parent="Objects"]
+position = Vector2(1250, 1858)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2300" type="Sprite2D" parent="Objects"]
+position = Vector2(1318, 2272)
+texture = ExtResource("t_outdoor_hydrangea_0")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2299" type="Sprite2D" parent="Objects"]
+position = Vector2(1273, 2289)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2298" type="Sprite2D" parent="Objects"]
+position = Vector2(1228, 2305)
+texture = ExtResource("t_outdoor_hydrangea_2")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2297" type="Sprite2D" parent="Objects"]
+position = Vector2(1182, 2322)
+texture = ExtResource("t_outdoor_hydrangea_1")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2296" type="Sprite2D" parent="Objects"]
+position = Vector2(1137, 2339)
+texture = ExtResource("t_outdoor_hydrangea_0")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2295" type="Sprite2D" parent="Objects"]
+position = Vector2(1091, 2356)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2294" type="Sprite2D" parent="Objects"]
+position = Vector2(1001, 2390)
+texture = ExtResource("t_outdoor_hydrangea_2")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2293" type="Sprite2D" parent="Objects"]
+position = Vector2(910, 2423)
+texture = ExtResource("t_outdoor_hydrangea_1")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2292" type="Sprite2D" parent="Objects"]
+position = Vector2(864, 2440)
+texture = ExtResource("t_outdoor_hydrangea_0")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2291" type="Sprite2D" parent="Objects"]
+position = Vector2(819, 2457)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2290" type="Sprite2D" parent="Objects"]
+position = Vector2(773, 2474)
+texture = ExtResource("t_outdoor_hydrangea_2")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2289" type="Sprite2D" parent="Objects"]
+position = Vector2(728, 2491)
+texture = ExtResource("t_outdoor_hydrangea_1")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2288" type="Sprite2D" parent="Objects"]
+position = Vector2(631, 2499)
+texture = ExtResource("t_outdoor_hydrangea_0")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2287" type="Sprite2D" parent="Objects"]
+position = Vector2(436, 2516)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2286" type="Sprite2D" parent="Objects"]
+position = Vector2(388, 2520)
+texture = ExtResource("t_outdoor_hydrangea_2")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2285" type="Sprite2D" parent="Objects"]
+position = Vector2(339, 2524)
+texture = ExtResource("t_outdoor_hydrangea_1")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2284" type="Sprite2D" parent="Objects"]
+position = Vector2(290, 2528)
+texture = ExtResource("t_outdoor_hydrangea_0")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2283" type="Sprite2D" parent="Objects"]
+position = Vector2(242, 2532)
+texture = ExtResource("t_outdoor_hydrangea_3")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2282" type="Sprite2D" parent="Objects"]
+position = Vector2(193, 2537)
+texture = ExtResource("t_outdoor_hydrangea_2")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2281" type="Sprite2D" parent="Objects"]
+position = Vector2(96, 2545)
+texture = ExtResource("t_outdoor_hydrangea_1")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="hydrangea2280" type="Sprite2D" parent="Objects"]
+position = Vector2(-2, 2553)
+texture = ExtResource("t_outdoor_hydrangea_0")
+centered = false
+offset = Vector2(-24, -45)
+
+[node name="DryingB" type="Sprite2D" parent="Objects"]
+position = Vector2(0, 984)
+texture = ExtResource("t_drying_lines")
+centered = false
+offset = Vector2(-50, -52)
+
+[node name="Spring" type="Sprite2D" parent="Objects"]
+position = Vector2(528, 62)
+texture = ExtResource("t_spring_trough")
+centered = false
+offset = Vector2(-32, -34)
+
+[node name="Buckets" type="Sprite2D" parent="Objects"]
+position = Vector2(590, 110)
+texture = ExtResource("t_bucket_pair")
+centered = false
+offset = Vector2(-15, -22)
+
+[node name="契约石碑" type="Sprite2D" parent="Objects"]
+position = Vector2(2016, 1548)
+texture = ExtResource("t_outdoor_stele")
+centered = false
+offset = Vector2(-19, -67)
+
+[node name="Bollard0" type="Sprite2D" parent="Objects"]
+position = Vector2(2295, 1623)
+texture = ExtResource("t_outdoor_bollard")
+centered = false
+offset = Vector2(-9, -31)
+
+[node name="Bollard1" type="Sprite2D" parent="Objects"]
+position = Vector2(2469, 1638)
+texture = ExtResource("t_outdoor_bollard")
+centered = false
+offset = Vector2(-9, -31)
+
+[node name="Bollard2" type="Sprite2D" parent="Objects"]
+position = Vector2(2642, 1654)
+texture = ExtResource("t_outdoor_bollard")
+centered = false
+offset = Vector2(-9, -31)
+
+[node name="Rockfall0" type="Sprite2D" parent="Objects"]
+position = Vector2(1644, 2613)
+texture = ExtResource("t_outdoor_boulder_0")
+centered = false
+offset = Vector2(-16, -27)
+
+[node name="Rockfall1" type="Sprite2D" parent="Objects"]
+position = Vector2(1672, 2602)
+texture = ExtResource("t_outdoor_boulder_1")
+centered = false
+offset = Vector2(-19, -31)
+
+[node name="Rockfall2" type="Sprite2D" parent="Objects"]
+position = Vector2(1716, 2622)
+texture = ExtResource("t_outdoor_boulder_2")
+centered = false
+offset = Vector2(-22, -36)
+
+[node name="Rockfall3" type="Sprite2D" parent="Objects"]
+position = Vector2(1678, 2599)
+texture = ExtResource("t_outdoor_boulder_3")
+centered = false
+offset = Vector2(-25, -41)
+
+[node name="Rockfall4" type="Sprite2D" parent="Objects"]
+position = Vector2(1660, 2644)
+texture = ExtResource("t_outdoor_boulder_0")
+centered = false
+offset = Vector2(-16, -27)
+
+[node name="Rockfall5" type="Sprite2D" parent="Objects"]
+position = Vector2(1658, 2629)
+texture = ExtResource("t_outdoor_boulder_1")
+centered = false
+offset = Vector2(-19, -31)
+
+[node name="Rockfall6" type="Sprite2D" parent="Objects"]
+position = Vector2(1639, 2629)
+texture = ExtResource("t_outdoor_boulder_2")
+centered = false
+offset = Vector2(-22, -36)
+
+[node name="Solids" type="StaticBody2D" parent="."]
+collision_mask = 0
+
+[node name="s0" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2344.0, 752.0)
+shape = SubResource("s0")
+
+[node name="s1" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1736.0, 1512.0)
+shape = SubResource("s1")
+
+[node name="s2" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2712.0, 1552.0)
+shape = SubResource("s2")
+
+[node name="s3" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2720.0, 1608.0)
+shape = SubResource("s3")
+
+[node name="s4" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2816.0, 1624.0)
+shape = SubResource("s4")
+
+[node name="s5" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2904.0, 1640.0)
+shape = SubResource("s5")
+
+[node name="s6" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2952.0, 1656.0)
+shape = SubResource("s6")
+
+[node name="s7" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2960.0, 1672.0)
+shape = SubResource("s7")
+
+[node name="s8" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2264.0, 1752.0)
+shape = SubResource("s8")
+
+[node name="s9" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2968.0, 1720.0)
+shape = SubResource("s9")
+
+[node name="s10" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2352.0, 1768.0)
+shape = SubResource("s10")
+
+[node name="s11" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2960.0, 1768.0)
+shape = SubResource("s11")
+
+[node name="s12" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1728.0, 1656.0)
+shape = SubResource("s12")
+
+[node name="s13" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2448.0, 1784.0)
+shape = SubResource("s13")
+
+[node name="s14" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2952.0, 1784.0)
+shape = SubResource("s14")
+
+[node name="s15" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1736.0, 1800.0)
+shape = SubResource("s15")
+
+[node name="s16" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2712.0, 1800.0)
+shape = SubResource("s16")
+
+[node name="s17" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1768.0, 1832.0)
+shape = SubResource("s17")
+
+[node name="s18" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2656.0, 1832.0)
+shape = SubResource("s18")
+
+[node name="s19" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1760.0, 1888.0)
+shape = SubResource("s19")
+
+[node name="s20" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2648.0, 1888.0)
+shape = SubResource("s20")
+
+[node name="s21" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1752.0, 1936.0)
+shape = SubResource("s21")
+
+[node name="s22" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1736.0, 1960.0)
+shape = SubResource("s22")
+
+[node name="s23" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1632.0, 1976.0)
+shape = SubResource("s23")
+
+[node name="s24" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2640.0, 1952.0)
+shape = SubResource("s24")
+
+[node name="s25" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1528.0, 1992.0)
+shape = SubResource("s25")
+
+[node name="s26" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1424.0, 2008.0)
+shape = SubResource("s26")
+
+[node name="s27" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1328.0, 2024.0)
+shape = SubResource("s27")
+
+[node name="s28" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1216.0, 2040.0)
+shape = SubResource("s28")
+
+[node name="s29" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2632.0, 2016.0)
+shape = SubResource("s29")
+
+[node name="s30" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1120.0, 2056.0)
+shape = SubResource("s30")
+
+[node name="s31" type="CollisionShape2D" parent="Solids"]
+position = Vector2(728.0, 2072.0)
+shape = SubResource("s31")
+
+[node name="s32" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1704.0, 2072.0)
+shape = SubResource("s32")
+
+[node name="s33" type="CollisionShape2D" parent="Solids"]
+position = Vector2(664.0, 2088.0)
+shape = SubResource("s33")
+
+[node name="s34" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1712.0, 2088.0)
+shape = SubResource("s34")
+
+[node name="s35" type="CollisionShape2D" parent="Solids"]
+position = Vector2(648.0, 2104.0)
+shape = SubResource("s35")
+
+[node name="s36" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2624.0, 2080.0)
+shape = SubResource("s36")
+
+[node name="s37" type="CollisionShape2D" parent="Solids"]
+position = Vector2(624.0, 2120.0)
+shape = SubResource("s37")
+
+[node name="s38" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1704.0, 2112.0)
+shape = SubResource("s38")
+
+[node name="s39" type="CollisionShape2D" parent="Solids"]
+position = Vector2(600.0, 2136.0)
+shape = SubResource("s39")
+
+[node name="s40" type="CollisionShape2D" parent="Solids"]
+position = Vector2(584.0, 2152.0)
+shape = SubResource("s40")
+
+[node name="s41" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1712.0, 2144.0)
+shape = SubResource("s41")
+
+[node name="s42" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2616.0, 2136.0)
+shape = SubResource("s42")
+
+[node name="s43" type="CollisionShape2D" parent="Solids"]
+position = Vector2(560.0, 2168.0)
+shape = SubResource("s43")
+
+[node name="s44" type="CollisionShape2D" parent="Solids"]
+position = Vector2(536.0, 2184.0)
+shape = SubResource("s44")
+
+[node name="s45" type="CollisionShape2D" parent="Solids"]
+position = Vector2(512.0, 2200.0)
+shape = SubResource("s45")
+
+[node name="s46" type="CollisionShape2D" parent="Solids"]
+position = Vector2(496.0, 2216.0)
+shape = SubResource("s46")
+
+[node name="s47" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1704.0, 2192.0)
+shape = SubResource("s47")
+
+[node name="s48" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2608.0, 2192.0)
+shape = SubResource("s48")
+
+[node name="s49" type="CollisionShape2D" parent="Solids"]
+position = Vector2(472.0, 2232.0)
+shape = SubResource("s49")
+
+[node name="s50" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1328.0, 2232.0)
+shape = SubResource("s50")
+
+[node name="s51" type="CollisionShape2D" parent="Solids"]
+position = Vector2(448.0, 2248.0)
+shape = SubResource("s51")
+
+[node name="s52" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1312.0, 2248.0)
+shape = SubResource("s52")
+
+[node name="s53" type="CollisionShape2D" parent="Solids"]
+position = Vector2(432.0, 2264.0)
+shape = SubResource("s53")
+
+[node name="s54" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1288.0, 2264.0)
+shape = SubResource("s54")
+
+[node name="s55" type="CollisionShape2D" parent="Solids"]
+position = Vector2(408.0, 2280.0)
+shape = SubResource("s55")
+
+[node name="s56" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1264.0, 2280.0)
+shape = SubResource("s56")
+
+[node name="s57" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1696.0, 2256.0)
+shape = SubResource("s57")
+
+[node name="s58" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2600.0, 2256.0)
+shape = SubResource("s58")
+
+[node name="s59" type="CollisionShape2D" parent="Solids"]
+position = Vector2(384.0, 2296.0)
+shape = SubResource("s59")
+
+[node name="s60" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1248.0, 2296.0)
+shape = SubResource("s60")
+
+[node name="s61" type="CollisionShape2D" parent="Solids"]
+position = Vector2(368.0, 2312.0)
+shape = SubResource("s61")
+
+[node name="s62" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1224.0, 2312.0)
+shape = SubResource("s62")
+
+[node name="s63" type="CollisionShape2D" parent="Solids"]
+position = Vector2(336.0, 2328.0)
+shape = SubResource("s63")
+
+[node name="s64" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1200.0, 2328.0)
+shape = SubResource("s64")
+
+[node name="s65" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1688.0, 2312.0)
+shape = SubResource("s65")
+
+[node name="s66" type="CollisionShape2D" parent="Solids"]
+position = Vector2(240.0, 2344.0)
+shape = SubResource("s66")
+
+[node name="s67" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1184.0, 2344.0)
+shape = SubResource("s67")
+
+[node name="s68" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2592.0, 2320.0)
+shape = SubResource("s68")
+
+[node name="s69" type="CollisionShape2D" parent="Solids"]
+position = Vector2(144.0, 2360.0)
+shape = SubResource("s69")
+
+[node name="s70" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1160.0, 2360.0)
+shape = SubResource("s70")
+
+[node name="s71" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1680.0, 2352.0)
+shape = SubResource("s71")
+
+[node name="s72" type="CollisionShape2D" parent="Solids"]
+position = Vector2(48.0, 2376.0)
+shape = SubResource("s72")
+
+[node name="s73" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1136.0, 2376.0)
+shape = SubResource("s73")
+
+[node name="s74" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1672.0, 2376.0)
+shape = SubResource("s74")
+
+[node name="s75" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1120.0, 2392.0)
+shape = SubResource("s75")
+
+[node name="s76" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1664.0, 2392.0)
+shape = SubResource("s76")
+
+[node name="s77" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2584.0, 2376.0)
+shape = SubResource("s77")
+
+[node name="s78" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1096.0, 2408.0)
+shape = SubResource("s78")
+
+[node name="s79" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1656.0, 2408.0)
+shape = SubResource("s79")
+
+[node name="s80" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1072.0, 2424.0)
+shape = SubResource("s80")
+
+[node name="s81" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1648.0, 2424.0)
+shape = SubResource("s81")
+
+[node name="s82" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2576.0, 2416.0)
+shape = SubResource("s82")
+
+[node name="s83" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1048.0, 2440.0)
+shape = SubResource("s83")
+
+[node name="s84" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1632.0, 2440.0)
+shape = SubResource("s84")
+
+[node name="s85" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2568.0, 2440.0)
+shape = SubResource("s85")
+
+[node name="s86" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1000.0, 2456.0)
+shape = SubResource("s86")
+
+[node name="s87" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1624.0, 2456.0)
+shape = SubResource("s87")
+
+[node name="s88" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2560.0, 2456.0)
+shape = SubResource("s88")
+
+[node name="s89" type="CollisionShape2D" parent="Solids"]
+position = Vector2(904.0, 2472.0)
+shape = SubResource("s89")
+
+[node name="s90" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1616.0, 2472.0)
+shape = SubResource("s90")
+
+[node name="s91" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2552.0, 2472.0)
+shape = SubResource("s91")
+
+[node name="s92" type="CollisionShape2D" parent="Solids"]
+position = Vector2(808.0, 2488.0)
+shape = SubResource("s92")
+
+[node name="s93" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1608.0, 2488.0)
+shape = SubResource("s93")
+
+[node name="s94" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2544.0, 2488.0)
+shape = SubResource("s94")
+
+[node name="s95" type="CollisionShape2D" parent="Solids"]
+position = Vector2(712.0, 2504.0)
+shape = SubResource("s95")
+
+[node name="s96" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1600.0, 2504.0)
+shape = SubResource("s96")
+
+[node name="s97" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2536.0, 2504.0)
+shape = SubResource("s97")
+
+[node name="s98" type="CollisionShape2D" parent="Solids"]
+position = Vector2(680.0, 2520.0)
+shape = SubResource("s98")
+
+[node name="s99" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1592.0, 2520.0)
+shape = SubResource("s99")
+
+[node name="s100" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2528.0, 2520.0)
+shape = SubResource("s100")
+
+[node name="s101" type="CollisionShape2D" parent="Solids"]
+position = Vector2(680.0, 2536.0)
+shape = SubResource("s101")
+
+[node name="s102" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1584.0, 2536.0)
+shape = SubResource("s102")
+
+[node name="s103" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2512.0, 2536.0)
+shape = SubResource("s103")
+
+[node name="s104" type="CollisionShape2D" parent="Solids"]
+position = Vector2(680.0, 2552.0)
+shape = SubResource("s104")
+
+[node name="s105" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1568.0, 2552.0)
+shape = SubResource("s105")
+
+[node name="s106" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2504.0, 2552.0)
+shape = SubResource("s106")
+
+[node name="s107" type="CollisionShape2D" parent="Solids"]
+position = Vector2(680.0, 2568.0)
+shape = SubResource("s107")
+
+[node name="s108" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1560.0, 2568.0)
+shape = SubResource("s108")
+
+[node name="s109" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2496.0, 2568.0)
+shape = SubResource("s109")
+
+[node name="s110" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1552.0, 2584.0)
+shape = SubResource("s110")
+
+[node name="s111" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2488.0, 2584.0)
+shape = SubResource("s111")
+
+[node name="s112" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1544.0, 2600.0)
+shape = SubResource("s112")
+
+[node name="s113" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2480.0, 2600.0)
+shape = SubResource("s113")
+
+[node name="s114" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.0, 2616.0)
+shape = SubResource("s114")
+
+[node name="s115" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2472.0, 2616.0)
+shape = SubResource("s115")
+
+[node name="s116" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1528.0, 2632.0)
+shape = SubResource("s116")
+
+[node name="s117" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2464.0, 2632.0)
+shape = SubResource("s117")
+
+[node name="s118" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1520.0, 2648.0)
+shape = SubResource("s118")
+
+[node name="s119" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2448.0, 2648.0)
+shape = SubResource("s119")
+
+[node name="s120" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1504.0, 2664.0)
+shape = SubResource("s120")
+
+[node name="s121" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2440.0, 2664.0)
+shape = SubResource("s121")
+
+[node name="s122" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1496.0, 2680.0)
+shape = SubResource("s122")
+
+[node name="s123" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2432.0, 2680.0)
+shape = SubResource("s123")
+
+[node name="s124" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2424.0, 2696.0)
+shape = SubResource("s124")
+
+[node name="s125" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2416.0, 2712.0)
+shape = SubResource("s125")
+
+[node name="s126" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2408.0, 2728.0)
+shape = SubResource("s126")
+
+[node name="s127" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2400.0, 2744.0)
+shape = SubResource("s127")
+
+[node name="s128" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2384.0, 2760.0)
+shape = SubResource("s128")
+
+[node name="s129" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2376.0, 2776.0)
+shape = SubResource("s129")
+
+[node name="s130" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2368.0, 2792.0)
+shape = SubResource("s130")
+
+[node name="s131" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2360.0, 2808.0)
+shape = SubResource("s131")
+
+[node name="s132" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2352.0, 2824.0)
+shape = SubResource("s132")
+
+[node name="s133" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2344.0, 2840.0)
+shape = SubResource("s133")
+
+[node name="s134" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2336.0, 2856.0)
+shape = SubResource("s134")
+
+[node name="s135" type="CollisionShape2D" parent="Solids"]
+position = Vector2(680.0, 2728.0)
+shape = SubResource("s135")
+
+[node name="s136" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2328.0, 2872.0)
+shape = SubResource("s136")
+
+[node name="s137" type="CollisionShape2D" parent="Solids"]
+position = Vector2(688.0, 2888.0)
+shape = SubResource("s137")
+
+[node name="s138" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2312.0, 2888.0)
+shape = SubResource("s138")
+
+[node name="s139" type="CollisionShape2D" parent="Solids"]
+position = Vector2(704.0, 2904.0)
+shape = SubResource("s139")
+
+[node name="s140" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2296.0, 2904.0)
+shape = SubResource("s140")
+
+[node name="s141" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1584.0, 3064.0)
+shape = SubResource("s141")
+
+[node name="s142" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1675.0, 2617.0)
+shape = SubResource("s142")
+
+[node name="s143" type="CollisionShape2D" parent="Solids"]
+position = Vector2(864.0, 1536.0)
+shape = SubResource("s143")
+
+[node name="s144" type="CollisionShape2D" parent="Solids"]
+position = Vector2(483.5, 92.5)
+shape = SubResource("s144")
+
+[node name="s145" type="CollisionShape2D" parent="Solids"]
+position = Vector2(483.5, 3.5)
+shape = SubResource("s145")
+
+[node name="s146" type="CollisionShape2D" parent="Solids"]
+position = Vector2(572.5, 92.5)
+shape = SubResource("s146")
+
+[node name="s147" type="CollisionShape2D" parent="Solids"]
+position = Vector2(572.5, 3.5)
+shape = SubResource("s147")
+
+[node name="s148" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 11.5)
+shape = SubResource("s148")
+
+[node name="s149" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 51.5)
+shape = SubResource("s149")
+
+[node name="s150" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 108.5)
+shape = SubResource("s150")
+
+[node name="s151" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 165.5)
+shape = SubResource("s151")
+
+[node name="s152" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 223.5)
+shape = SubResource("s152")
+
+[node name="s153" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 280.5)
+shape = SubResource("s153")
+
+[node name="s154" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 337.5)
+shape = SubResource("s154")
+
+[node name="s155" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 394.5)
+shape = SubResource("s155")
+
+[node name="s156" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 451.5)
+shape = SubResource("s156")
+
+[node name="s157" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 509.5)
+shape = SubResource("s157")
+
+[node name="s158" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 566.5)
+shape = SubResource("s158")
+
+[node name="s159" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 623.5)
+shape = SubResource("s159")
+
+[node name="s160" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 680.5)
+shape = SubResource("s160")
+
+[node name="s161" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 737.5)
+shape = SubResource("s161")
+
+[node name="s162" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 795.5)
+shape = SubResource("s162")
+
+[node name="s163" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 852.5)
+shape = SubResource("s163")
+
+[node name="s164" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 909.5)
+shape = SubResource("s164")
+
+[node name="s165" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 966.5)
+shape = SubResource("s165")
+
+[node name="s166" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1024.5)
+shape = SubResource("s166")
+
+[node name="s167" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1081.5)
+shape = SubResource("s167")
+
+[node name="s168" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1138.5)
+shape = SubResource("s168")
+
+[node name="s169" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1195.5)
+shape = SubResource("s169")
+
+[node name="s170" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1252.5)
+shape = SubResource("s170")
+
+[node name="s171" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1310.5)
+shape = SubResource("s171")
+
+[node name="s172" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1367.5)
+shape = SubResource("s172")
+
+[node name="s173" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1424.5)
+shape = SubResource("s173")
+
+[node name="s174" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1481.5)
+shape = SubResource("s174")
+
+[node name="s175" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1538.5)
+shape = SubResource("s175")
+
+[node name="s176" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1596.5)
+shape = SubResource("s176")
+
+[node name="s177" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1653.5)
+shape = SubResource("s177")
+
+[node name="s178" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1710.5)
+shape = SubResource("s178")
+
+[node name="s179" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1767.5)
+shape = SubResource("s179")
+
+[node name="s180" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1824.5)
+shape = SubResource("s180")
+
+[node name="s181" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1882.5)
+shape = SubResource("s181")
+
+[node name="s182" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1536.5, 1939.5)
+shape = SubResource("s182")
+
+[node name="s183" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1507.5, 1970.5)
+shape = SubResource("s183")
+
+[node name="s184" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1450.5, 1974.5)
+shape = SubResource("s184")
+
+[node name="s185" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1393.5, 1979.5)
+shape = SubResource("s185")
+
+[node name="s186" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1336.5, 1983.5)
+shape = SubResource("s186")
+
+[node name="s187" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1279.5, 1988.5)
+shape = SubResource("s187")
+
+[node name="s188" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1221.5, 1993.5)
+shape = SubResource("s188")
+
+[node name="s189" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1164.5, 1997.5)
+shape = SubResource("s189")
+
+[node name="s190" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1107.5, 2002.5)
+shape = SubResource("s190")
+
+[node name="s191" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1050.5, 2006.5)
+shape = SubResource("s191")
+
+[node name="s192" type="CollisionShape2D" parent="Solids"]
+position = Vector2(993.5, 2011.5)
+shape = SubResource("s192")
+
+[node name="s193" type="CollisionShape2D" parent="Solids"]
+position = Vector2(936.5, 2015.5)
+shape = SubResource("s193")
+
+[node name="s194" type="CollisionShape2D" parent="Solids"]
+position = Vector2(878.5, 2020.5)
+shape = SubResource("s194")
+
+[node name="s195" type="CollisionShape2D" parent="Solids"]
+position = Vector2(821.5, 2025.5)
+shape = SubResource("s195")
+
+[node name="s196" type="CollisionShape2D" parent="Solids"]
+position = Vector2(764.5, 2029.5)
+shape = SubResource("s196")
+
+[node name="s197" type="CollisionShape2D" parent="Solids"]
+position = Vector2(707.5, 2034.5)
+shape = SubResource("s197")
+
+[node name="s198" type="CollisionShape2D" parent="Solids"]
+position = Vector2(650.5, 2038.5)
+shape = SubResource("s198")
+
+[node name="s199" type="CollisionShape2D" parent="Solids"]
+position = Vector2(593.5, 2043.5)
+shape = SubResource("s199")
+
+[node name="s200" type="CollisionShape2D" parent="Solids"]
+position = Vector2(535.5, 2048.5)
+shape = SubResource("s200")
+
+[node name="s201" type="CollisionShape2D" parent="Solids"]
+position = Vector2(478.5, 2052.5)
+shape = SubResource("s201")
+
+[node name="s202" type="CollisionShape2D" parent="Solids"]
+position = Vector2(421.5, 2057.5)
+shape = SubResource("s202")
+
+[node name="s203" type="CollisionShape2D" parent="Solids"]
+position = Vector2(364.5, 2061.5)
+shape = SubResource("s203")
+
+[node name="s204" type="CollisionShape2D" parent="Solids"]
+position = Vector2(307.5, 2066.5)
+shape = SubResource("s204")
+
+[node name="s205" type="CollisionShape2D" parent="Solids"]
+position = Vector2(250.5, 2070.5)
+shape = SubResource("s205")
+
+[node name="s206" type="CollisionShape2D" parent="Solids"]
+position = Vector2(192.5, 2075.5)
+shape = SubResource("s206")
+
+[node name="s207" type="CollisionShape2D" parent="Solids"]
+position = Vector2(135.5, 2080.5)
+shape = SubResource("s207")
+
+[node name="s208" type="CollisionShape2D" parent="Solids"]
+position = Vector2(78.5, 2084.5)
+shape = SubResource("s208")
+
+[node name="s209" type="CollisionShape2D" parent="Solids"]
+position = Vector2(25.5, 2089.5)
+shape = SubResource("s209")
+
+[node name="s210" type="CollisionShape2D" parent="Solids"]
+position = Vector2(22.0, 2373.5)
+shape = SubResource("s210")
+
+[node name="s211" type="CollisionShape2D" parent="Solids"]
+position = Vector2(68.5, 2369.5)
+shape = SubResource("s211")
+
+[node name="s212" type="CollisionShape2D" parent="Solids"]
+position = Vector2(118.5, 2365.5)
+shape = SubResource("s212")
+
+[node name="s213" type="CollisionShape2D" parent="Solids"]
+position = Vector2(168.5, 2361.5)
+shape = SubResource("s213")
+
+[node name="s214" type="CollisionShape2D" parent="Solids"]
+position = Vector2(218.5, 2356.5)
+shape = SubResource("s214")
+
+[node name="s215" type="CollisionShape2D" parent="Solids"]
+position = Vector2(268.5, 2352.5)
+shape = SubResource("s215")
+
+[node name="s216" type="CollisionShape2D" parent="Solids"]
+position = Vector2(317.5, 2348.5)
+shape = SubResource("s216")
+
+[node name="s217" type="CollisionShape2D" parent="Solids"]
+position = Vector2(367.5, 2344.5)
+shape = SubResource("s217")
+
+[node name="s218" type="CollisionShape2D" parent="Solids"]
+position = Vector2(417.5, 2340.5)
+shape = SubResource("s218")
+
+[node name="s219" type="CollisionShape2D" parent="Solids"]
+position = Vector2(467.5, 2335.5)
+shape = SubResource("s219")
+
+[node name="s220" type="CollisionShape2D" parent="Solids"]
+position = Vector2(517.5, 2331.5)
+shape = SubResource("s220")
+
+[node name="s221" type="CollisionShape2D" parent="Solids"]
+position = Vector2(567.5, 2327.5)
+shape = SubResource("s221")
+
+[node name="s222" type="CollisionShape2D" parent="Solids"]
+position = Vector2(617.5, 2323.5)
+shape = SubResource("s222")
+
+[node name="s223" type="CollisionShape2D" parent="Solids"]
+position = Vector2(667.5, 2319.5)
+shape = SubResource("s223")
+
+[node name="s224" type="CollisionShape2D" parent="Solids"]
+position = Vector2(715.0, 2307.5)
+shape = SubResource("s224")
+
+[node name="s225" type="CollisionShape2D" parent="Solids"]
+position = Vector2(762.0, 2290.5)
+shape = SubResource("s225")
+
+[node name="s226" type="CollisionShape2D" parent="Solids"]
+position = Vector2(809.0, 2273.5)
+shape = SubResource("s226")
+
+[node name="s227" type="CollisionShape2D" parent="Solids"]
+position = Vector2(856.0, 2255.5)
+shape = SubResource("s227")
+
+[node name="s228" type="CollisionShape2D" parent="Solids"]
+position = Vector2(902.0, 2238.5)
+shape = SubResource("s228")
+
+[node name="s229" type="CollisionShape2D" parent="Solids"]
+position = Vector2(949.0, 2220.5)
+shape = SubResource("s229")
+
+[node name="s230" type="CollisionShape2D" parent="Solids"]
+position = Vector2(996.0, 2203.5)
+shape = SubResource("s230")
+
+[node name="s231" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1042.0, 2185.5)
+shape = SubResource("s231")
+
+[node name="s232" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1089.0, 2168.5)
+shape = SubResource("s232")
+
+[node name="s233" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1136.0, 2150.5)
+shape = SubResource("s233")
+
+[node name="s234" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1183.0, 2133.5)
+shape = SubResource("s234")
+
+[node name="s235" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1229.0, 2115.5)
+shape = SubResource("s235")
+
+[node name="s236" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1276.0, 2098.5)
+shape = SubResource("s236")
+
+[node name="s237" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1323.0, 2080.5)
+shape = SubResource("s237")
+
+[node name="s238" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1369.0, 2063.5)
+shape = SubResource("s238")
+
+[node name="s239" type="CollisionShape2D" parent="Solids"]
+position = Vector2(4.0, 2521.5)
+shape = SubResource("s239")
+
+[node name="s240" type="CollisionShape2D" parent="Solids"]
+position = Vector2(33.0, 2516.5)
+shape = SubResource("s240")
+
+[node name="s241" type="CollisionShape2D" parent="Solids"]
+position = Vector2(84.0, 2512.5)
+shape = SubResource("s241")
+
+[node name="s242" type="CollisionShape2D" parent="Solids"]
+position = Vector2(135.0, 2507.5)
+shape = SubResource("s242")
+
+[node name="s243" type="CollisionShape2D" parent="Solids"]
+position = Vector2(186.0, 2503.5)
+shape = SubResource("s243")
+
+[node name="s244" type="CollisionShape2D" parent="Solids"]
+position = Vector2(237.0, 2499.5)
+shape = SubResource("s244")
+
+[node name="s245" type="CollisionShape2D" parent="Solids"]
+position = Vector2(288.0, 2494.5)
+shape = SubResource("s245")
+
+[node name="s246" type="CollisionShape2D" parent="Solids"]
+position = Vector2(339.0, 2490.5)
+shape = SubResource("s246")
+
+[node name="s247" type="CollisionShape2D" parent="Solids"]
+position = Vector2(390.0, 2486.5)
+shape = SubResource("s247")
+
+[node name="s248" type="CollisionShape2D" parent="Solids"]
+position = Vector2(441.0, 2481.5)
+shape = SubResource("s248")
+
+[node name="s249" type="CollisionShape2D" parent="Solids"]
+position = Vector2(492.0, 2477.5)
+shape = SubResource("s249")
+
+[node name="s250" type="CollisionShape2D" parent="Solids"]
+position = Vector2(543.0, 2473.5)
+shape = SubResource("s250")
+
+[node name="s251" type="CollisionShape2D" parent="Solids"]
+position = Vector2(594.0, 2468.5)
+shape = SubResource("s251")
+
+[node name="s252" type="CollisionShape2D" parent="Solids"]
+position = Vector2(645.0, 2464.5)
+shape = SubResource("s252")
+
+[node name="s253" type="CollisionShape2D" parent="Solids"]
+position = Vector2(696.0, 2460.5)
+shape = SubResource("s253")
+
+[node name="s254" type="CollisionShape2D" parent="Solids"]
+position = Vector2(745.5, 2448.5)
+shape = SubResource("s254")
+
+[node name="s255" type="CollisionShape2D" parent="Solids"]
+position = Vector2(793.5, 2430.5)
+shape = SubResource("s255")
+
+[node name="s256" type="CollisionShape2D" parent="Solids"]
+position = Vector2(841.5, 2412.5)
+shape = SubResource("s256")
+
+[node name="s257" type="CollisionShape2D" parent="Solids"]
+position = Vector2(889.5, 2394.5)
+shape = SubResource("s257")
+
+[node name="s258" type="CollisionShape2D" parent="Solids"]
+position = Vector2(937.5, 2377.5)
+shape = SubResource("s258")
+
+[node name="s259" type="CollisionShape2D" parent="Solids"]
+position = Vector2(985.5, 2359.5)
+shape = SubResource("s259")
+
+[node name="s260" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1033.5, 2341.5)
+shape = SubResource("s260")
+
+[node name="s261" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1082.5, 2323.5)
+shape = SubResource("s261")
+
+[node name="s262" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1130.5, 2305.5)
+shape = SubResource("s262")
+
+[node name="s263" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1178.5, 2287.5)
+shape = SubResource("s263")
+
+[node name="s264" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1226.5, 2269.5)
+shape = SubResource("s264")
+
+[node name="s265" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1274.5, 2252.5)
+shape = SubResource("s265")
+
+[node name="s266" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1322.5, 2234.5)
+shape = SubResource("s266")
+
+[node name="s267" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1370.5, 2216.5)
+shape = SubResource("s267")
+
+[node name="s268" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1418.5, 2198.5)
+shape = SubResource("s268")
+
+[node name="s269" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1348.0, 2231.0)
+shape = SubResource("s269")
+
+[node name="s270" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1348.0, 2282.0)
+shape = SubResource("s270")
+
+[node name="s271" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1348.0, 2332.0)
+shape = SubResource("s271")
+
+[node name="s272" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1349.0, 2382.0)
+shape = SubResource("s272")
+
+[node name="s273" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1349.0, 2432.0)
+shape = SubResource("s273")
+
+[node name="s274" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1349.0, 2482.0)
+shape = SubResource("s274")
+
+[node name="s275" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1349.0, 2533.0)
+shape = SubResource("s275")
+
+[node name="s276" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1349.0, 2583.0)
+shape = SubResource("s276")
+
+[node name="s277" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1349.0, 2633.0)
+shape = SubResource("s277")
+
+[node name="s278" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1349.0, 2683.0)
+shape = SubResource("s278")
+
+[node name="s279" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1349.0, 2733.0)
+shape = SubResource("s279")
+
+[node name="s280" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1455.5, 2717.5)
+shape = SubResource("s280")
+
+[node name="s281" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1494.5, 2684.5)
+shape = SubResource("s281")
+
+[node name="s282" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1532.5, 2650.5)
+shape = SubResource("s282")
+
+[node name="s283" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1571.5, 2616.5)
+shape = SubResource("s283")
+
+[node name="s284" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1610.5, 2582.5)
+shape = SubResource("s284")
+
+[node name="s285" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1648.5, 2548.5)
+shape = SubResource("s285")
+
+[node name="s286" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1687.5, 2514.5)
+shape = SubResource("s286")
+
+[node name="s287" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1726.5, 2480.5)
+shape = SubResource("s287")
+
+[node name="s288" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1764.5, 2446.5)
+shape = SubResource("s288")
+
+[node name="s289" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1803.5, 2412.5)
+shape = SubResource("s289")
+
+[node name="s290" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2026.0, 2305.0)
+shape = SubResource("s290")
+
+[node name="s291" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2039.0, 2258.0)
+shape = SubResource("s291")
+
+[node name="s292" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2051.0, 2211.0)
+shape = SubResource("s292")
+
+[node name="s293" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2063.0, 2164.0)
+shape = SubResource("s293")
+
+[node name="s294" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2076.0, 2117.0)
+shape = SubResource("s294")
+
+[node name="s295" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2088.0, 2070.0)
+shape = SubResource("s295")
+
+[node name="s296" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2100.0, 2023.0)
+shape = SubResource("s296")
+
+[node name="s297" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2113.0, 1976.0)
+shape = SubResource("s297")
+
+[node name="s298" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2125.0, 1929.0)
+shape = SubResource("s298")
+
+[node name="s299" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2137.0, 1882.0)
+shape = SubResource("s299")
+
+[node name="s300" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2150.0, 1835.0)
+shape = SubResource("s300")
+
+[node name="s301" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2162.0, 1788.0)
+shape = SubResource("s301")
+
+[node name="s302" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1248.0, 94.0)
+shape = SubResource("s302")
+
+[node name="s303" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 132.5)
+shape = SubResource("s303")
+
+[node name="s304" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 247.5)
+shape = SubResource("s304")
+
+[node name="s305" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 363.5)
+shape = SubResource("s305")
+
+[node name="s306" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1056.0, 454.0)
+shape = SubResource("s306")
+
+[node name="s307" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 478.5)
+shape = SubResource("s307")
+
+[node name="s308" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 536.5)
+shape = SubResource("s308")
+
+[node name="s309" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 594.5)
+shape = SubResource("s309")
+
+[node name="s310" type="CollisionShape2D" parent="Solids"]
+position = Vector2(912.0, 814.0)
+shape = SubResource("s310")
+
+[node name="s311" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 940.5)
+shape = SubResource("s311")
+
+[node name="s312" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 1171.5)
+shape = SubResource("s312")
+
+[node name="s313" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 1229.5)
+shape = SubResource("s313")
+
+[node name="s314" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 1287.5)
+shape = SubResource("s314")
+
+[node name="s315" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 1344.5)
+shape = SubResource("s315")
+
+[node name="s316" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 1402.5)
+shape = SubResource("s316")
+
+[node name="s317" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 1460.5)
+shape = SubResource("s317")
+
+[node name="s318" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 1518.5)
+shape = SubResource("s318")
+
+[node name="s319" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 1691.5)
+shape = SubResource("s319")
+
+[node name="s320" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1439.5, 1749.5)
+shape = SubResource("s320")
+
+[node name="s321" type="CollisionShape2D" parent="Solids"]
+position = Vector2(405.5, 1850.5)
+shape = SubResource("s321")
+
+[node name="s322" type="CollisionShape2D" parent="Solids"]
+position = Vector2(441.5, 1850.5)
+shape = SubResource("s322")
+
+[node name="s323" type="CollisionShape2D" parent="Solids"]
+position = Vector2(477.5, 1850.5)
+shape = SubResource("s323")
+
+[node name="s324" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1321.5, 1850.5)
+shape = SubResource("s324")
+
+[node name="s325" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1285.5, 1850.5)
+shape = SubResource("s325")
+
+[node name="s326" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1249.5, 1850.5)
+shape = SubResource("s326")
+
+[node name="s327" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1317.5, 2264.5)
+shape = SubResource("s327")
+
+[node name="s328" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1272.5, 2281.5)
+shape = SubResource("s328")
+
+[node name="s329" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1227.5, 2297.5)
+shape = SubResource("s329")
+
+[node name="s330" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1181.5, 2314.5)
+shape = SubResource("s330")
+
+[node name="s331" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1136.5, 2331.5)
+shape = SubResource("s331")
+
+[node name="s332" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1090.5, 2348.5)
+shape = SubResource("s332")
+
+[node name="s333" type="CollisionShape2D" parent="Solids"]
+position = Vector2(1000.5, 2382.5)
+shape = SubResource("s333")
+
+[node name="s334" type="CollisionShape2D" parent="Solids"]
+position = Vector2(909.5, 2415.5)
+shape = SubResource("s334")
+
+[node name="s335" type="CollisionShape2D" parent="Solids"]
+position = Vector2(863.5, 2432.5)
+shape = SubResource("s335")
+
+[node name="s336" type="CollisionShape2D" parent="Solids"]
+position = Vector2(818.5, 2449.5)
+shape = SubResource("s336")
+
+[node name="s337" type="CollisionShape2D" parent="Solids"]
+position = Vector2(772.5, 2466.5)
+shape = SubResource("s337")
+
+[node name="s338" type="CollisionShape2D" parent="Solids"]
+position = Vector2(727.5, 2483.5)
+shape = SubResource("s338")
+
+[node name="s339" type="CollisionShape2D" parent="Solids"]
+position = Vector2(630.5, 2491.5)
+shape = SubResource("s339")
+
+[node name="s340" type="CollisionShape2D" parent="Solids"]
+position = Vector2(435.5, 2508.5)
+shape = SubResource("s340")
+
+[node name="s341" type="CollisionShape2D" parent="Solids"]
+position = Vector2(387.5, 2512.5)
+shape = SubResource("s341")
+
+[node name="s342" type="CollisionShape2D" parent="Solids"]
+position = Vector2(338.5, 2516.5)
+shape = SubResource("s342")
+
+[node name="s343" type="CollisionShape2D" parent="Solids"]
+position = Vector2(289.5, 2520.5)
+shape = SubResource("s343")
+
+[node name="s344" type="CollisionShape2D" parent="Solids"]
+position = Vector2(241.5, 2524.5)
+shape = SubResource("s344")
+
+[node name="s345" type="CollisionShape2D" parent="Solids"]
+position = Vector2(192.5, 2529.5)
+shape = SubResource("s345")
+
+[node name="s346" type="CollisionShape2D" parent="Solids"]
+position = Vector2(95.5, 2537.5)
+shape = SubResource("s346")
+
+[node name="s347" type="CollisionShape2D" parent="Solids"]
+position = Vector2(7.0, 2545.5)
+shape = SubResource("s347")
+
+[node name="s348" type="CollisionShape2D" parent="Solids"]
+position = Vector2(25.0, 981.0)
+shape = SubResource("s348")
+
+[node name="s349" type="CollisionShape2D" parent="Solids"]
+position = Vector2(528.0, 53.0)
+shape = SubResource("s349")
+
+[node name="s350" type="CollisionShape2D" parent="Solids"]
+position = Vector2(590.0, 106.0)
+shape = SubResource("s350")
+
+[node name="s351" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2015.0, 1542.0)
+shape = SubResource("s351")
+
+[node name="s352" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2295.0, 1619.5)
+shape = SubResource("s352")
+
+[node name="s353" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2469.0, 1634.5)
+shape = SubResource("s353")
+
+[node name="s354" type="CollisionShape2D" parent="Solids"]
+position = Vector2(2642.0, 1650.5)
+shape = SubResource("s354")
+
+[node name="Exits" type="Node2D" parent="."]
+
+[node name="Spawns" type="Node2D" parent="."]
+
+[node name="harbor_landing" type="Marker2D" parent="Spawns"]
+position = Vector2(2016, 1680)
+
+[node name="Stands" type="Node2D" parent="."]
+
+[node name="Sites" type="Node2D" parent="."]
+
+[node name="collapse" type="Marker2D" parent="Sites"]
+position = Vector2(1675, 2617)
+metadata/label = "港路塌方处"
+
+[node name="spring" type="Marker2D" parent="Sites"]
+position = Vector2(528, 120)
+metadata/label = "汲水泉"
+
+[node name="stele" type="Marker2D" parent="Sites"]
+position = Vector2(2016, 1584)
+metadata/label = "契约石碑"
+
+[node name="harbor" type="Marker2D" parent="Sites"]
+position = Vector2(2424, 1704)
+metadata/label = "码头"

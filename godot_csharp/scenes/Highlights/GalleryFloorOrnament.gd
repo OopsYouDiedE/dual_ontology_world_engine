@@ -2,7 +2,7 @@ extends Node2D
 ## Large ornaments are independent source crops, never repeated floor cells.
 const ROOT := "res://ShareAsset/Internal/Props/AuthoredRooms/shura_gallery_"
 const SOURCE_SCALE := 7.0 / 24.0
-const BORDER = preload("res://scenes/Shared/Field/AuthoredTerrainBorder.gd")
+const BORDER = preload("res://scenes/World/Runtime/AuthoredTerrainBorder.gd")
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST

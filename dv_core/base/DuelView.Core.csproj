@@ -5,16 +5,5 @@
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <UseSharedCompilation>false</UseSharedCompilation>
-    <DvPython Condition="'$(DvPython)' == ''">python</DvPython>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="../compiler/Runtime.cs" Link="Runtime.cs" />
-    <Compile Include="obj/dv/DVKernel.cs" />
-  </ItemGroup>
-  <Target Name="GenerateDvMechanism" BeforeTargets="CoreCompile">
-    <Exec Command="&quot;$(DvPython)&quot; &quot;$(MSBuildProjectDirectory)/../../mcp/build/build_session.py&quot; --base-only --out &quot;$(MSBuildProjectDirectory)/obj/dv&quot;" />
-    <ItemGroup>
-      <Compile Include="$(MSBuildProjectDirectory)/obj/dv/modules/*.g.cs" />
-    </ItemGroup>
-  </Target>
 </Project>

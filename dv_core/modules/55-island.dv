@@ -55,8 +55,8 @@ fn island_edges(rooms):
     var i = 0
     while i < rt_count(source):
         let edge = source[i]
-        let a = rooms[dvs_simulation_room_index(rooms, edge.from)]
-        let b = rooms[dvs_simulation_room_index(rooms, edge.to)]
+        let a = rooms[dv_index_by_id(rooms, edge.from)]
+        let b = rooms[dv_index_by_id(rooms, edge.to)]
         // Wind uses the measured local horizontal axis only inside one map.
         // Different map coordinates have no common north/east reference.
         var wind = 0

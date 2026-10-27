@@ -18,6 +18,7 @@ public partial class GameEngine : Node
     private DvSession? session;
     private string? evidenceDirectory;
     private string optionsJson = "{}";
+    private string contentResourcePath = "res://Content/world.dv";
     private GDict snapshotCache = new();
     private string snapshotJson { get => Json.Stringify(snapshotCache); set => snapshotCache = Parse(value); }
     private readonly Dictionary<string, GDict> projectionCache = new(StringComparer.Ordinal);
@@ -29,7 +30,6 @@ public partial class GameEngine : Node
     public void SetDiagnosticsEnabled(bool value) => timingEnabled = value;
     public bool IsDeveloperMode() => session?.DevMode == true;
     public bool CanInspect() => session?.DevMode == true;
-    public bool HasReplaySample() => false;
     public bool IsDispatchIdle() => !busy && !maintenance && (faulted || commands.Count == 0);
     public void RecordHostFailure(string message)
     {
@@ -65,6 +65,7 @@ public partial class GameEngine : Node
         foreach (var key in delta.Removed) snapshot.Remove(key);
         foreach (var pair in delta.Changed) snapshot[pair.Key] = GodotHostValues.Value(pair.Value);
         snapshot["state_version"] = delta.Version;
+        snapshot["content_hash"] = current.ContentInfo["hash"] as string ?? "";
         projectionCache[viewer] = snapshot;
         return snapshot;
     }
@@ -109,7 +110,16 @@ public partial class GameEngine : Node
     {
         if (session is not null || busy || maintenance || commands.Count != 0 || closing || faulted)
             throw new InvalidOperationException("Session options can only be configured before opening a new session");
+        options = options.Duplicate(true);
+        if (options.ContainsKey("content_path")) contentResourcePath = options["content_path"].AsString();
+        options["content_source"] = ReadContent(contentResourcePath);
         optionsJson = Json.Stringify(options);
+    }
+
+    private static string ReadContent(string path)
+    {
+        if (!Godot.FileAccess.FileExists(path)) throw new IOException("Content file not found: " + path);
+        return Godot.FileAccess.GetFileAsString(path);
     }
 
     // Compatibility entry: control is an opening option, never a second decision path.
@@ -352,6 +362,22 @@ public partial class GameEngine : Node
                         var current = session;
                         if (current is not null) await Task.Run(current.CancelPrepared);
                     }
+                    else if (kind == "reload_content")
+                    {
+                        var current = session ?? throw new InvalidOperationException("Start a session before reloading content.");
+                        RequireNoPendingExecution();
+                        var path = input.ContainsKey("path") ? input["path"].AsString() : contentResourcePath;
+                        var source = input.ContainsKey("content_source") ? input["content_source"].AsString() : ReadContent(path);
+                        var reloaded = await Task.Run(() =>
+                        {
+                            current.ReloadContent(source: source);
+                            return (Snapshot: Project(current, current.Viewer, true), Intent: GodotHostValues.Dictionary(current.Intent));
+                        });
+                        contentResourcePath = path;
+                        snapshotCache = reloaded.Snapshot;
+                        events.Add(new GDict { ["kind"] = "state", ["snapshot"] = reloaded.Snapshot });
+                        events.Add(new GDict { ["kind"] = "dv_action", ["intent"] = reloaded.Intent, ["execution_snapshot"] = new GDict() });
+                    }
                     else if (kind == "dev_command")
                     {
                         var current = session ?? throw new InvalidOperationException("Start a session before using the console.");
@@ -426,7 +452,12 @@ public partial class GameEngine : Node
                 {
                     if (kind == "select" && session is { } failedSelection)
                         failedSelection.EndDecisionInterface(failedSelection.Viewer, "failed");
-                    if (kind is "dev_command" or "replay_load" or "prepare_ahead")
+                    if (kind == "reload_content")
+                    {
+                        snapshotCache["content_error"] = error.Message;
+                        events.Add(new GDict { ["kind"] = "dev_error", ["message"] = error.Message });
+                    }
+                    else if (kind is "dev_command" or "replay_load" or "prepare_ahead")
                     {
                         events.Add(new GDict { ["kind"] = "dev_error", ["message"] = error.Message });
                     }

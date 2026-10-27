@@ -16,11 +16,14 @@ static func _load() -> void:
 		var map_id := str(map_key)
 		var data: Dictionary = GEOMETRY.map_data(map_id)
 		for room: Dictionary in data.get("rooms", []): _edges[str(room.id)] = []
+	var spatial: Dictionary = preload("res://scenes/Host/DvPresentationContent.cs").new().ReadRecord("res://Content/world3d.dv", "layouts", "world3d")
 	# All nodes exist before adding reverse edges.
 	for map_key in GEOMETRY.contract().maps:
 		var map_id := str(map_key)
 		var data: Dictionary = GEOMETRY.map_data(map_id)
-		for door: Dictionary in data.get("doors", []):
+		var passages: Array = data.get("doors", []).duplicate()
+		passages.append_array(spatial.get("passages", {}).get(map_id, []))
+		for door: Dictionary in passages:
 			var a := str(door.get("from", ""))
 			var b := str(door.get("to", ""))
 			if _edges.has(a) and not GEOMETRY.room_data(map_id, b).is_empty():

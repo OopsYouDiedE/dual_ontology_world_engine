@@ -1,16 +1,12 @@
 // Production campaign and host projections.
-#include 20-core.dv
-#include 30-session.dv
 #include 40-chapter1.dv
 #include 50-chapter2.dv
 #include 56-island-cases.dv
 
-// Diagnostics and formal-model runners live in checks/65-debug-runner.dv.
-
-// Source module: language_core/game/player-content.dv
+// First-chapter player action labels and cards.
 // Presentation migrated from the existing first-chapter authored cards and routes.
 // Labels offer an interaction, not its unobserved result. Card prose is post-execution only.
-fn c1_ui_ends(text, suffix):
+fn dvg_text_ends(text, suffix):
     return rt_length(suffix) <= rt_length(text) and rt_slice(text, rt_length(text) - rt_length(suffix), rt_length(suffix)) == suffix
 
 fn c1_player_scene(scene):
@@ -61,30 +57,30 @@ fn c1_player_display_build(actor, action):
     var i = 0
     while i < rt_count(cards):
         let card = cards[i]
-        if c1_ui_ends(action.id, rt_cat(".inspect.", card.id)):
+        if dvg_text_ends(action.id, rt_cat(".inspect.", card.id)):
             result = dv_with_many(result, {"label": rt_cat("检视", card.title), "presentation": c1_op_presentation(actor, "visible-inspection", [card.text])})
         i = i + 1
     let named = {".opening.wake": "回想醒来前的事", ".opening.empty-slot": "查看自己的标签柜", ".opening.wear-coat": "穿上风衣", ".identify-own-lens": "比对放大镜与石板上的图记", ".replay": "在手稿上重演昨夜", ".sound_trial": "进行声路试验", ".reask_question": "询问当前的问题", ".compare_sole": "查看自己的鞋底", ".loss_testimony": "请苏泠说说声路试验中的所闻", ".talk.slate_code": "询问石板刻痕", ".talk.slate_person": "询问石板上的人形线条", ".talk.frame_hollow": "询问门框的声响", ".talk.cups_known": "询问杯子的摆放", ".talk.starter_kept": "询问罐中留存的酵头", ".talk.recalled_copper": "询问关于铜口的记忆", ".talk.recalled_names": "询问关于姓名的记忆"}
     i = 0
     while i < rt_count(named):
-        if c1_ui_ends(action.id, named[i][0]):
+        if dvg_text_ends(action.id, named[i][0]):
             result = dv_with(result, "label", named[i][1])
         i = i + 1
-    if c1_ui_ends(action.id, ".touch_latch"):
+    if dvg_text_ends(action.id, ".touch_latch"):
         result = dv_with(result, "label", "走近并触碰插闩")
     if action.kind == "answer":
         let answers = {"me": "闩门的是我", "V1_0": "苏泠在卧室", "V1_1": "苏泠在活动厅", "V1_2": "苏泠在备餐间", "V3_0": "声音来自铜口在墙内与门框处的管道漏音", "V3_1": "门外有人呼喊", "V4_0": "喊的是闩门，别开", "V4_1": "喊的是开门", "trust": "说明为何信任霍铎的速记并闩门"}
         let id = dv_find(action, "answer_id", "")
         if dv_has_key(answers, id):
             result = dv_with(result, "label", rt_cat("答辩：", dv_get(answers, id)))
-    if c1_ui_ends(action.id, ".reask_question"):
+    if dvg_text_ends(action.id, ".reask_question"):
         let questions = {"opening": "正式问题尚未提出。", "questions_open": c1_question_text("prompt"), "identity": c1_question_text("prompt"), "voice_source": c1_question_text("voice_source"), "words": c1_question_text("words"), "trust": c1_question_text("trust"), "complete": "当前案件的问题已答复完毕。"}
         result = dv_with(result, "presentation", {"lines": [{"template": "当前问题：{question}", "bindings": [{"name": "question", "ref": dv_ref("question", "state", "current"), "labels": questions}]}]})
-    if c1_ui_ends(action.id, ".compare_sole"):
+    if dvg_text_ends(action.id, ".compare_sole"):
         result = dv_with(result, "presentation", {"actor": "detective", "voice": "visible-inspection", "lines": [{"template": "马球靴的鞋底纹路，与门前灰上的印迹一模一样。靴齿里嵌着同样的炭灰。", "when": c1_statement("boots_fit")} ]})
-    if c1_ui_ends(action.id, ".identify-own-lens"):
+    if dvg_text_ends(action.id, ".identify-own-lens"):
         result = dv_with_many(result, {"label": "比对放大镜与石板上的图记", "presentation": {"actor": "detective", "voice": "visible-inspection", "lines": [{"template": "你取出风衣口袋里的放大镜，与眼前石板第二行的小图比对。黄铜圆框与短柄的轮廓完全吻合。", "when": c1_statement("lens_mine")} ]}})
-    if c1_ui_ends(action.id, ".opening.wear-coat"):
+    if dvg_text_ends(action.id, ".opening.wear-coat"):
         result = dv_with(result, "presentation", {"actor": "detective", "voice": "visible-action", "lines": [{"template": "你披上了这件熟悉的呢料风衣，领口与袖口早已磨平。", "when": dv_fact(dv_ref("coat", "state", "worn_by"), "detective")} ]})
     // Sound-trial reports retain their content-owned participant and receipt
     // conditions. The UI only supplies a concise interaction label above.
@@ -145,7 +141,7 @@ fn c1_player_replay_summary(actor):
         return "这次重演还没能把现有观察串在一起。我得重新核对手里的材料。"
     return "这次重演尚未形成能够完整说明现有观察的解释。"
 
-// Source module: language_core/game/presentation.dv
+// Viewer-specific presentation and geometry projections.
 // Authored location bindings. Geometry remains owned by the existing map assets.
 fn dvg_places():
     let key = ["host-place-directory-v2"]
@@ -206,7 +202,7 @@ fn dvg_island_locations():
     var i = 0
     while i < rt_count(places):
         let place = places[i][1]
-        if dvs_simulation_room_index(rooms, place.room) >= 0:
+        if dv_index_by_id(rooms, place.room) >= 0:
             rt_push(result, {"location": places[i][0], "room": place.room})
         i = i + 1
     return result
@@ -264,13 +260,13 @@ fn dvg_interaction(action):
     let sites = {"E1": "E1", "E2": "E2", "E3": "E2", "E4": "E2", "E5": "E2", "E6": "E6", "E7": "E7", "E8": "transmitter", "E9": "E10", "E10": "E10", "E11": "E11", "E12": "E12"}
     var i = 0
     while i < rt_count(sites):
-        if c1_ui_ends(action.id, rt_cat(".inspect.", sites[i][0])):
+        if dvg_text_ends(action.id, rt_cat(".inspect.", sites[i][0])):
             return {"kind": "site", "site": sites[i][1]}
         i = i + 1
     let named = {".opening.wake": "bed", ".opening.wear-coat": "E12", ".identify-own-lens": "E7", ".compare_sole": "E2", ".sound_trial": "transmitter", ".reask_question": "transmitter", ".opening.empty-slot": "zone_rules"}
     i = 0
     while i < rt_count(named):
-        if c1_ui_ends(action.id, named[i][0]):
+        if dvg_text_ends(action.id, named[i][0]):
             return {"kind": "site", "site": named[i][1]}
         i = i + 1
     if action.kind == "answer":
@@ -282,15 +278,6 @@ fn dvg_interaction(action):
     if rt_count(listeners) == 1:
         return {"kind": "person", "person": listeners[0]}
     return {"kind": "self", "purpose": dvg_self_purpose(action)}
-
-fn dvg_clock(time):
-    let minute = rt_floor(time)
-    let hour = rt_floor(minute / 60)
-    let rest = minute - hour * 60
-    var text = rt_show(rest)
-    if rest < 10:
-        text = rt_cat("0", text)
-    return rt_cat(rt_show(hour - rt_floor(hour / 24) * 24), rt_cat(":", text))
 
 // Fallback labels describe the encountered source without granting a name.
 fn dvg_unknown_person_label(actor, viewer):
@@ -343,7 +330,7 @@ fn dvg_presentation(state, viewer):
                 display = dvg_unknown_person_label(actor, viewer)
                 if actor == "demon":
                     identity_source = "encountered-voice"
-            if actor == viewer and dv_find(result, "status", "") == "applied" and c1_ui_ends(dv_find(result, "action_id", ""), ".replay"):
+            if actor == viewer and dv_find(result, "status", "") == "applied" and dvg_text_ends(dv_find(result, "action_id", ""), ".replay"):
                 result = dv_with(result, "lines", dv_append(dv_find(result, "lines", []), c1_player_replay_summary(subject)))
         i = i + 1
     let travel = dv_find(result, "travel", [])
@@ -796,7 +783,7 @@ fn dvg_chapter_summary(state):
         return false
     return c2daily_chapter_summary(state.physical)
 
-// Source module: language_core/game/campaign.dv
+// Campaign opening, chapter transitions and host operations.
 // Production composition. Chapter content owns its transition conditions.
 fn dvg_open():
     return dvg_open_config({"seed": 1, "profile": "Standard_Detective", "detective_zone": "zone_yi"})
@@ -859,7 +846,7 @@ fn dvg_configure_actor_policies(scene, config):
     var actors = []
     var i = 0
     while i < rt_count(scene.actors):
-        let actor = scene.actors[i]
+        var actor = scene.actors[i]
         var actions = actor.actions
         let initial_profile = dv_find(dv_find(actor, "cognitive_initialization", []), "profile", [])
         if dv_find(actor.policy, "allow_manipulation_candidates", dv_find(initial_profile, "allow_manipulation_candidates", false)):
@@ -872,9 +859,10 @@ fn dvg_configure_actor_policies(scene, config):
                     action = dv_with(action, "manual_only", false)
                 rt_push(actions, action)
                 j = j + 1
-        var sims_profile = false
-        if actor.id != "demon":
-            sims_profile = sims_actor_profile(actor.id)
+        let sims_profile = sims_actor_profile(actor.id)
+        let character = rt_content("characters", actor.id)
+        if character != false:
+            actor = dv_apply_content_policy(actor, character, false)
         rt_push(actors, dv_with_many(actor, {"actions": actions, "policy": dv_with_many(actor.policy, {"sims_autonomy": sims_profile, "simulation_mode": config.simulation_mode, "private_execution_benefit_multiplier": config.private_execution_benefit_multiplier, "homecoming_negotiation": config.homecoming_negotiation, "opt_readview": config.opt_readview, "opt_plancache": config.opt_plancache, "opt_replaycache": config.opt_replaycache, "opt_lazytext": config.opt_lazytext, "opt_recordcache": config.opt_recordcache, "opt_predicate": config.opt_predicate, "opt_predicatecache": config.opt_predicatecache, "opt_declcache": config.opt_declcache, "opt_dirty": config.opt_dirty, "opt_dirty_verify": config.opt_dirty_verify, "opt_blackbox": config.opt_blackbox, "opt_storyflow": config.opt_storyflow, "opt_stateindex": config.opt_stateindex})}))
         i = i + 1
     var simulation = config.simulation
@@ -932,7 +920,12 @@ fn dvg_open_config(config):
     scene = c1c_install_scene(scene, dv_find(config, "seed", 1), profile)
     if zone == "none":
         scene = dvg_without_detective(scene)
-    scene = dv_with_many(scene, {"chapter": 1, "game_duration_budget": 5 * 1440 - scene.physical.time, "execution_scope": "DV production session; host execution receipts; offscreen non-movement uses DV world laws"})
+    // Declare a five-day production safety window for every actual actor.
+    // Allow one action per actor per remaining minute, plus the initial turn;
+    // the time horizon still governs completion, and zero-time interruptions
+    // remain bounded by this declared safety limit.
+    let campaign_minutes = 5 * 1440 - scene.physical.time
+    scene = dv_with_many(scene, {"chapter": 1, "game_duration_budget": campaign_minutes, "max_actions": rt_count(scene.actors) * (campaign_minutes + 1), "execution_scope": "DV production session; host execution receipts; offscreen non-movement uses DV world laws"})
     scene = dvg_configure_actor_policies(island_install(scene, dvg_island_locations()), run_config)
     scene = campaign_install_visible_objects(dv_with(scene, "physical", c1_add_objects(scene.physical, c1_visible_site_objects())))
     return dvs_session_open(c1_player_scene(scene), "enabled")
@@ -954,7 +947,7 @@ fn dvg_extend(state):
     var events = dv_clone(state.events)
     dvs_event(events, "chapter_content_available", "", state.physical.time, [], {"chapter": 2, "source": campaign_approved("chapter-state-inheritance"), "movement": false})
     // Content availability neither relocates a resident nor grants perceptions.
-    return dvs_owned_state_update(state, {"story": expanded, "physical": expanded.physical, "actors": expanded.actors, "bindings": expanded.bindings, "events": events, "horizon": 5 * 1440, "duration_budget": 5 * 1440 - state.run_start, "idle": 0})
+    return dvs_owned_state_update(state, {"story": expanded, "physical": expanded.physical, "actors": expanded.actors, "bindings": expanded.bindings, "events": events, "horizon": 5 * 1440, "duration_budget": 5 * 1440 - state.run_start, "limit": expanded.max_actions, "idle": 0})
 
 fn dvg_refresh_goals(current):
     if dv_find(dv_find(current.story, "run_config", []), "opt_readview", false):
@@ -1194,7 +1187,7 @@ fn dvg_dev_command(state, command, argument):
 // Directory entries name the selectable inspectors from their own recorded
 // identity. They do not require building any room or object projection.
 fn dvg_observer_directory(state):
-    let player_index = dvs_simulation_actor_index(state.actors, dv_find(state, "player_actor", ""))
+    let player_index = dv_index_by_id(state.actors, dv_find(state, "player_actor", ""))
     if player_index >= 0:
         let player = state.actors[player_index]
         var identities = []
@@ -1260,24 +1253,6 @@ fn dvg_preview_location(world, id):
         if rt_is_text(declared) and declared != "":
             return dv_field(declared)
     return location
-
-fn dvg_preview_room_location(world, location):
-    var visited = []
-    var remaining = rt_count(world.objects) + 1
-    while 0 < remaining:
-        if not rt_is_text(location) or location == "":
-            return ""
-        if dvg_place(location).map != "":
-            return location
-        if dv_has(visited, location):
-            return ""
-        rt_push(visited, location)
-        let parent = dvg_preview_location(world, location)
-        if not dv_uncontested(parent):
-            return ""
-        location = parent.value
-        remaining = remaining - 1
-    return ""
 
 fn dvg_preview_add_room(rooms, location):
     if not rt_is_text(location) or location == "":
@@ -1711,9 +1686,6 @@ fn dvg_preview_subject(state, actor, intent):
         result = rt_memo_put(actor.mind.objects, key, dvg_preview_subject_geometry_known(state, actor, intent, knowledge))
     let live = {"chapter": dv_find(state.story, "chapter", 1), "game_time": state.physical.time, "active": dvs_session_active(state), "player_control": dv_find(state, "player_actor", "") == actor.id}
     return dv_with(result, "snapshot", dv_with_many(result.snapshot, live))
-
-fn dvg_preview_subject_geometry(state, actor, intent):
-    return dvg_preview_subject_geometry_known(state, actor, intent, dvg_map_knowledge(state, actor.id, intent))
 
 fn dvg_preview_subject_geometry_known(state, actor, intent, knowledge):
     let entries = dvg_preview_index(actor.mind)

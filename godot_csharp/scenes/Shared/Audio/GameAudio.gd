@@ -1,7 +1,7 @@
 extends Node
 ## 全局配乐与音效（自动加载为 GameAudio）。配乐两条轨交叉淡化、无缝循环；音效走小型播放器池。
 ## 场景脚本经 Sound.gd 调用，自动加载缺席时（无头检查脚本）静默跳过。
-## 曲目与音效由 mcp/music_pipeline/build_soundtrack.py 生成，曲目用途见 docs/design-standard.md 第五部分。
+## 曲目与音效保存在 ShareAsset/Internal/Props/Audio 下。
 
 const LIFECYCLE := preload("res://scenes/Host/HostLifecycle.gd")
 const MusicContext := preload("res://scenes/Shared/Audio/MusicContext.gd")
@@ -47,9 +47,6 @@ func _ready() -> void:
 ## 配乐/音效/语音走各自的总线（default_bus_layout.tres；音量由 GameSettings 管理），缺总线时退回 Master。
 static func _bus_or_master(bus: StringName) -> StringName:
 	return bus if AudioServer.get_bus_index(bus) != -1 else &"Master"
-
-func current_music() -> String:
-	return _current
 
 func apply_music_scene(snapshot: Dictionary) -> void:
 	var next := MusicContext.background(snapshot)
