@@ -81,11 +81,11 @@ def build_gate(deadline):
 
 def build(backend, deadline=None):
     with build_gate(deadline):
-        project = ROOT / ("dv_core/cli/DuelView.Cli.csproj" if backend == "cli"
+        project = ROOT / ("dv_core/Cli/DuelView.Cli.csproj" if backend == "cli"
                           else "godot_csharp/DualOntologyWorldEngine.csproj")
         dotnet = resolve_dotnet(deadline=deadline)
         timeout = remaining(deadline, 180)
-        command = [dotnet, "build", project, "--nologo", f"-p:DvPython={sys.executable}"]
+        command = [dotnet, "build", project, "--nologo"]
         # Each live CLI owns an immutable build output. Windows must not need
         # to overwrite DLLs held by another formal input/automatic session.
         output_directory = None
@@ -105,11 +105,12 @@ def build(backend, deadline=None):
         if process.returncode:
             raise RuntimeError("Build failed:\n" + output[-10000:])
         if output_directory is not None:
-            (output_directory / "formal-build.json").write_text(json.dumps({
+            build_receipt = {
                 "project": str(project), "configuration": "Release",
-                "command": [str(part) for part in command],
-                "completed_epoch": time.time(), "exit_code": process.returncode,
-                "output": output}, ensure_ascii=False, indent=2), encoding="utf-8")
+                "completed_epoch": time.time(), "exit_code": process.returncode}
+            (output_directory / "formal-build.yaml").write_text("".join(
+                key + ": " + json.dumps(value, ensure_ascii=False) + "\n"
+                for key, value in build_receipt.items()), encoding="utf-8")
         return output_directory
 
 
@@ -207,6 +208,7 @@ def start(arguments, deadline=None):
                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
             open_options = {
                 "controller": controller, "viewer": arguments.get("viewer", "detective"),
+                "decision_maker": "engine-ai" if controller == "ai" else arguments.get("decision_maker", "agent" if mode == "cli_ai" else "human"),
                 "campaign": {"seed": arguments.get("seed", 1)}, "content_path": endpoint.content_path,
                 "audit": False, "developer": False}
             if arguments.get("receipt_path"):
@@ -216,7 +218,8 @@ def start(arguments, deadline=None):
             with socket.socket() as reservation:
                 reservation.bind(("127.0.0.1", 0))
                 port = reservation.getsockname()[1]
-            command = [resolve_godot(deadline=deadline), "--path", ROOT / "godot_csharp", "--rendering-method", "gl_compatibility"]
+            # Use the project's renderer, matching editor and exported gameplay.
+            command = [resolve_godot(deadline=deadline), "--path", ROOT / "godot_csharp"]
             scene = arguments.get("scene", "")
             if mode == "scene":
                 path = (ROOT / "godot_csharp" / scene.removeprefix("res://")).resolve()
@@ -286,4 +289,3 @@ def execute(name, arguments):
             request_timeout = 180
         observation = endpoint.request(operation, timeout=request_timeout)
         return dict(observation, session_id=identity, mode=endpoint.mode)
-

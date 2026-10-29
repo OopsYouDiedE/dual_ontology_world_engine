@@ -1,0 +1,412 @@
+{
+  "schema": "ig01-static-audit-v1",
+  "generated_at_utc": "2026-10-29T05:10:15.971935+00:00",
+  "root": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine",
+  "git": {
+    "head": "9477a561639a",
+    "branch": "main",
+    "dirty": true
+  },
+  "source_files_sha256": {
+    "dv_core/content/00-pack.data.dv": "baa07a65790191ff0641b985a910daa15fbbbf617cdd71ace99dfe69b9b6975e",
+    "dv_core/content/95-configurable-building.data.dv": "528e7310d8b1d8ea2022eec1707a468064405e69bdafc0c52969e9ea29c0706d",
+    "dv_core/content/90-shared_building.data.dv": "3bd03cadafd6514fc0345f5f2e3da482a08e67f54e2a4dda7f6d1509b11709e4"
+  },
+  "campaign_pack_content_hash": null,
+  "campaign_pack_hash_note": "Only a real DV session may supply the complete compiled content hash.",
+  "content_manifest": {
+    "selected_spatial_definition": "space.configurable_building",
+    "selected_present": true,
+    "definitions_count": 8127
+  },
+  "catalogue": {
+    "counts": {
+      "rooms": 91,
+      "pieces": 5753,
+      "openings": 167,
+      "furniture": 356,
+      "colliders": 4600,
+      "wall_segments": 2,
+      "effective_stairs": 3,
+      "voids": 1,
+      "surface_materials": 1,
+      "spatial_anchors": 1,
+      "isolation_gate_candidates": 1,
+      "coordinate_probes": 4,
+      "railing_paths": 18
+    },
+    "distinct_id_count": 11007,
+    "duplicate_ids": [],
+    "duplicate_id_count": 0,
+    "missing_id_or_room_refs": [],
+    "missing_id_or_room_ref_count": 0,
+    "openings_missing_wall_ref": 165,
+    "interactions_not_ready": 356,
+    "interaction_statuses": {
+      "unconfigured": 356
+    }
+  },
+  "coordinates": {
+    "datum_design_m": [
+      0,
+      460,
+      48
+    ],
+    "probe_count": 4,
+    "noncollinear_planar": true,
+    "vertical_difference": true,
+    "maximum_round_trip_m": 2.3092638912203256e-14,
+    "arithmetic_passed": true,
+    "scope": "DV declaration arithmetic only; not Godot collisions, heading, or formal host",
+    "probes": [
+      {
+        "id": "R01-sw",
+        "errors": {
+          "world_m": 0.0,
+          "godot_m": 0.0,
+          "round_trip_m": 2.275957200481571e-14
+        },
+        "local": [
+          -47.4,
+          0.6,
+          8.4
+        ]
+      },
+      {
+        "id": "R02-sw",
+        "errors": {
+          "world_m": 0.0,
+          "godot_m": 0.0,
+          "round_trip_m": 2.3092638912203256e-14
+        },
+        "local": [
+          -47.4,
+          8.4,
+          8.4
+        ]
+      },
+      {
+        "id": "R05-sw",
+        "errors": {
+          "world_m": 0.0,
+          "godot_m": 0.0,
+          "round_trip_m": 2.275957200481571e-14
+        },
+        "local": [
+          24.6,
+          0.6,
+          8.4
+        ]
+      },
+      {
+        "id": "V01-sw",
+        "errors": {
+          "world_m": 0.0,
+          "godot_m": 0.0,
+          "round_trip_m": 2.1316282072803006e-14
+        },
+        "local": [
+          -23.4,
+          -35.4,
+          15.6
+        ]
+      }
+    ]
+  },
+  "formal_host": {
+    "formal_host_loads_legacy_world3d_in_ready": false,
+    "legacy_world3d_load_is_confined_to_non_dv_maps": true,
+    "formal_host_uses_2d_logical_adapter": true,
+    "logical_projection_is_dv_derived": false,
+    "projection_scenes_missing": [],
+    "formal_host_uses_old_rectangle_mapping": false,
+    "actor_physics_profile_is_dv_owned": true,
+    "spatial_node_structure_declared": true,
+    "spatial_bridge_declared": true,
+    "host_bridges_prepared_actions": true,
+    "host_checks_completion_event_duplicates": true,
+    "native_bridge_seals_content_and_state": true,
+    "core_session_checks_native_binding": true,
+    "formal_declared_map_count": 11,
+    "formal_contract_map_count": 21,
+    "legacy_dv_compatibility_maps": [
+      "main_1f",
+      "main_2f"
+    ],
+    "formal_maps_absent_from_contract": []
+  },
+  "tasks": {
+    "1.1": {
+      "static_criteria_passed": false,
+      "reason": "Some openings have no explicit wall reference; complete reverse-reference enforcement is still pending.",
+      "acceptance": "not_verified",
+      "static_evidence": "artifacts/acceptance-20261029/ig01-static-audit.json",
+      "cli_receipt": null,
+      "godot_receipt": null,
+      "static_receipt": {
+        "version": "9477a561639a",
+        "content_hash": null,
+        "source_sha256": {
+          "dv_core/content/00-pack.data.dv": "baa07a65790191ff0641b985a910daa15fbbbf617cdd71ace99dfe69b9b6975e",
+          "dv_core/content/95-configurable-building.data.dv": "528e7310d8b1d8ea2022eec1707a468064405e69bdafc0c52969e9ea29c0706d",
+          "dv_core/content/90-shared_building.data.dv": "3bd03cadafd6514fc0345f5f2e3da482a08e67f54e2a4dda7f6d1509b11709e4"
+        },
+        "host": "source-audit",
+        "decision_maker": "deterministic-static-check",
+        "test_method": "static-source-analysis",
+        "preconditions": "current tracked and untracked working files readable; no runtime session started",
+        "operation": "parse selected spatial DV; enumerate IDs, room references, opening-wall references",
+        "result": "static-blocked",
+        "detail": "Some openings have no explicit wall reference; complete reverse-reference enforcement is still pending.",
+        "evidence_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\acceptance-20261029\\ig01-static-audit.json"
+      },
+      "cli": {
+        "status": "observed-limited-scope",
+        "version": 1,
+        "content_hash": "1c19b50fea6cf72a8364e333f32ea1555aa186e383b1bdc412e7e2c0b303119b",
+        "host": "cli",
+        "decision_maker": "agent",
+        "test_method": "official live CLI input",
+        "preconditions": "new game from CLI; complete content bundle",
+        "operation": "open then select the actually offered detective.opening.wake",
+        "result": [
+          {
+            "choice_id": "detective.opening.wake",
+            "completed": 1,
+            "version": 4,
+            "status": "prepared",
+            "faulted": false,
+            "error": null
+          }
+        ],
+        "receipt_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\acceptance-20261029\\ig01-cli-live-observation.json",
+        "recorded_epoch": 1793248170.2745357,
+        "current_source_verified": false
+      },
+      "godot": {
+        "status": "not_verified",
+        "receipt_path": null
+      }
+    },
+    "1.2": {
+      "static_criteria_passed": false,
+      "reason": "DV baseline arithmetic passes; the formal map's logical grid is projected from the same DV floor pieces and the 3D transform uses DesignCoordinates.",
+      "acceptance": "not_verified",
+      "static_evidence": "artifacts/acceptance-20261029/ig01-static-audit.json",
+      "cli_receipt": null,
+      "godot_receipt": null,
+      "static_receipt": {
+        "version": "9477a561639a",
+        "content_hash": null,
+        "source_sha256": {
+          "dv_core/content/00-pack.data.dv": "baa07a65790191ff0641b985a910daa15fbbbf617cdd71ace99dfe69b9b6975e",
+          "dv_core/content/95-configurable-building.data.dv": "528e7310d8b1d8ea2022eec1707a468064405e69bdafc0c52969e9ea29c0706d",
+          "dv_core/content/90-shared_building.data.dv": "3bd03cadafd6514fc0345f5f2e3da482a08e67f54e2a4dda7f6d1509b11709e4"
+        },
+        "host": "source-audit",
+        "decision_maker": "deterministic-static-check",
+        "test_method": "static-source-analysis",
+        "preconditions": "current tracked and untracked working files readable; no runtime session started",
+        "operation": "compare DV reference probes with design-to-Godot and inverse transforms",
+        "result": "static-blocked",
+        "detail": "DV baseline arithmetic passes; the formal map's logical grid is projected from the same DV floor pieces and the 3D transform uses DesignCoordinates.",
+        "evidence_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\acceptance-20261029\\ig01-static-audit.json"
+      },
+      "cli": {
+        "status": "not_verified",
+        "receipt_path": null
+      },
+      "godot": {
+        "status": "not_verified",
+        "receipt_path": null
+      }
+    },
+    "1.3": {
+      "static_criteria_passed": false,
+      "reason": "The selected 95 DV supplies the formal 3D building, actor profile, room bounds and projected walkability. The historical room catalogue is lazy-loaded only for maps outside the selected DV building.",
+      "acceptance": "not_verified",
+      "static_evidence": "artifacts/acceptance-20261029/ig01-static-audit.json",
+      "cli_receipt": null,
+      "godot_receipt": null,
+      "static_receipt": {
+        "version": "9477a561639a",
+        "content_hash": null,
+        "source_sha256": {
+          "dv_core/content/00-pack.data.dv": "baa07a65790191ff0641b985a910daa15fbbbf617cdd71ace99dfe69b9b6975e",
+          "dv_core/content/95-configurable-building.data.dv": "528e7310d8b1d8ea2022eec1707a468064405e69bdafc0c52969e9ea29c0706d",
+          "dv_core/content/90-shared_building.data.dv": "3bd03cadafd6514fc0345f5f2e3da482a08e67f54e2a4dda7f6d1509b11709e4"
+        },
+        "host": "source-audit",
+        "decision_maker": "deterministic-static-check",
+        "test_method": "static-source-analysis",
+        "preconditions": "current tracked and untracked working files readable; no runtime session started",
+        "operation": "inspect formal host entrypoint, legacy scene reads and rectangle mapping",
+        "result": "static-blocked",
+        "detail": "The selected 95 DV supplies the formal 3D building, actor profile, room bounds and projected walkability. The historical room catalogue is lazy-loaded only for maps outside the selected DV building.",
+        "evidence_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\acceptance-20261029\\ig01-static-audit.json"
+      },
+      "cli": {
+        "status": "not_verified",
+        "receipt_path": null
+      },
+      "godot": {
+        "status": "observed-failed",
+        "version": 0,
+        "content_hash": "1c19b50fea6cf72a8364e333f32ea1555aa186e383b1bdc412e7e2c0b303119b",
+        "host": "godot",
+        "decision_maker": "agent",
+        "test_method": "official live Godot input",
+        "preconditions": "title screen; new game selected",
+        "operation": "start and observe until load completes or faults",
+        "result": {
+          "faulted": true,
+          "errors": [
+            "ERROR: 地图缺少场景声明：main_2f",
+            "ERROR: 地图缺少场景声明：main_2f"
+          ]
+        },
+        "receipt_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\acceptance-20261029\\ig01-godot-formal-observation.json",
+        "screenshot_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\acceptance-20261029\\ig01-godot-formal-actual.png",
+        "recorded_epoch": 1793247832.1002235,
+        "current_source_verified": false
+      }
+    },
+    "1.4": {
+      "static_criteria_passed": false,
+      "reason": "WorldObject3D structure exists, but DV interactive instances are not ready.",
+      "acceptance": "not_verified",
+      "static_evidence": "artifacts/acceptance-20261029/ig01-static-audit.json",
+      "cli_receipt": null,
+      "godot_receipt": null,
+      "static_receipt": {
+        "version": "9477a561639a",
+        "content_hash": null,
+        "source_sha256": {
+          "dv_core/content/00-pack.data.dv": "baa07a65790191ff0641b985a910daa15fbbbf617cdd71ace99dfe69b9b6975e",
+          "dv_core/content/95-configurable-building.data.dv": "528e7310d8b1d8ea2022eec1707a468064405e69bdafc0c52969e9ea29c0706d",
+          "dv_core/content/90-shared_building.data.dv": "3bd03cadafd6514fc0345f5f2e3da482a08e67f54e2a4dda7f6d1509b11709e4"
+        },
+        "host": "source-audit",
+        "decision_maker": "deterministic-static-check",
+        "test_method": "static-source-analysis",
+        "preconditions": "current tracked and untracked working files readable; no runtime session started",
+        "operation": "inspect DV object readiness and required WorldObject3D nodes",
+        "result": "static-blocked",
+        "detail": "WorldObject3D structure exists, but DV interactive instances are not ready.",
+        "evidence_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\acceptance-20261029\\ig01-static-audit.json"
+      },
+      "cli": {
+        "status": "not_verified",
+        "receipt_path": null
+      },
+      "godot": {
+        "status": "not_verified",
+        "receipt_path": null
+      }
+    },
+    "1.5": {
+      "static_criteria_passed": true,
+      "reason": "Static hash/version sealing and event guards exist; runtime cancellation and resource idempotence remain unverified.",
+      "acceptance": "not_verified",
+      "static_evidence": "artifacts/acceptance-20261029/ig01-static-audit.json",
+      "cli_receipt": null,
+      "godot_receipt": null,
+      "static_receipt": {
+        "version": "9477a561639a",
+        "content_hash": null,
+        "source_sha256": {
+          "dv_core/content/00-pack.data.dv": "baa07a65790191ff0641b985a910daa15fbbbf617cdd71ace99dfe69b9b6975e",
+          "dv_core/content/95-configurable-building.data.dv": "528e7310d8b1d8ea2022eec1707a468064405e69bdafc0c52969e9ea29c0706d",
+          "dv_core/content/90-shared_building.data.dv": "3bd03cadafd6514fc0345f5f2e3da482a08e67f54e2a4dda7f6d1509b11709e4"
+        },
+        "host": "source-audit",
+        "decision_maker": "deterministic-static-check",
+        "test_method": "static-source-analysis",
+        "preconditions": "current tracked and untracked working files readable; no runtime session started",
+        "operation": "inspect Core-prepared spatial bridge and duplicate completion guard",
+        "result": "static-pass",
+        "detail": "Static hash/version sealing and event guards exist; runtime cancellation and resource idempotence remain unverified.",
+        "evidence_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\acceptance-20261029\\ig01-static-audit.json"
+      },
+      "cli": {
+        "status": "not_verified",
+        "receipt_path": null
+      },
+      "godot": {
+        "status": "not_verified",
+        "receipt_path": null
+      }
+    },
+    "1.6": {
+      "static_criteria_passed": true,
+      "reason": "Repeatable source-audit ledger is generated; CLI and Godot receipts still require independent recording.",
+      "acceptance": "not_verified",
+      "static_evidence": "artifacts/acceptance-20261029/ig01-static-audit.json",
+      "cli_receipt": null,
+      "godot_receipt": null,
+      "static_receipt": {
+        "version": "9477a561639a",
+        "content_hash": null,
+        "source_sha256": {
+          "dv_core/content/00-pack.data.dv": "baa07a65790191ff0641b985a910daa15fbbbf617cdd71ace99dfe69b9b6975e",
+          "dv_core/content/95-configurable-building.data.dv": "528e7310d8b1d8ea2022eec1707a468064405e69bdafc0c52969e9ea29c0706d",
+          "dv_core/content/90-shared_building.data.dv": "3bd03cadafd6514fc0345f5f2e3da482a08e67f54e2a4dda7f6d1509b11709e4"
+        },
+        "host": "source-audit",
+        "decision_maker": "deterministic-static-check",
+        "test_method": "static-source-analysis",
+        "preconditions": "current tracked and untracked working files readable; no runtime session started",
+        "operation": "generate acceptance ledger separating static, CLI and Godot evidence",
+        "result": "static-pass",
+        "detail": "Repeatable source-audit ledger is generated; CLI and Godot receipts still require independent recording.",
+        "evidence_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\acceptance-20261029\\ig01-static-audit.json"
+      },
+      "cli": {
+        "status": "observed-limited-scope",
+        "version": 1,
+        "content_hash": "1c19b50fea6cf72a8364e333f32ea1555aa186e383b1bdc412e7e2c0b303119b",
+        "host": "cli",
+        "decision_maker": "agent",
+        "test_method": "official live CLI input",
+        "preconditions": "new game from CLI; complete content bundle",
+        "operation": "open then select the actually offered detective.opening.wake",
+        "result": [
+          {
+            "choice_id": "detective.opening.wake",
+            "completed": 1,
+            "version": 4,
+            "status": "prepared",
+            "faulted": false,
+            "error": null
+          }
+        ],
+        "receipt_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\acceptance-20261029\\ig01-cli-live-observation.json",
+        "recorded_epoch": 1793248170.2745357,
+        "current_source_verified": false
+      },
+      "godot": {
+        "status": "observed-failed",
+        "version": 0,
+        "content_hash": "1c19b50fea6cf72a8364e333f32ea1555aa186e383b1bdc412e7e2c0b303119b",
+        "host": "godot",
+        "decision_maker": "agent",
+        "test_method": "official live Godot input",
+        "preconditions": "title screen; new game selected",
+        "operation": "start and observe until load completes or faults",
+        "result": {
+          "faulted": true,
+          "errors": [
+            "ERROR: 地图缺少场景声明：main_2f",
+            "ERROR: 地图缺少场景声明：main_2f"
+          ]
+        },
+        "receipt_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\acceptance-20261029\\ig01-godot-formal-observation.json",
+        "screenshot_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\artifacts\\acceptance-20261029\\ig01-godot-formal-actual.png",
+        "recorded_epoch": 1793247832.1002235,
+        "current_source_verified": false
+      }
+    }
+  },
+  "delivery_gate_passed": false,
+  "boundary": "This tool does not run CLI or Godot or modify DV/engine state."
+}

@@ -1,0 +1,12 @@
+schema "dv-script-v1";
+
+// Immutable value templates. Only bounded Core constructors are accepted.
+
+data "template.island_topology_edges" {
+    value = {"kind":"dv-value-template","parameters":[],"value":{"$":"data","id":"m36.island_topology_edges.return","copy":true},"bindings":{}};
+}
+
+data "template.island_topology_rooms" {
+    value = {"kind":"dv-value-template","parameters":[],"value":{"$":"data","id":"m36.island_topology_rooms.return","copy":true},"bindings":{}};
+}
+

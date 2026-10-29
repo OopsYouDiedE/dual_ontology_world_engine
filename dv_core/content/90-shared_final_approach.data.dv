@@ -1,0 +1,2682 @@
+schema "dv-script-v1";
+
+data space.shared_final_approach {
+    value = {
+  "version": "final-approach-v2",
+  "status": "冻结定稿；与11/12及分层导航采用同一参数。山地地形决策以hermitage_terrain_decision.json单列。",
+  "coordinate_contract": {
+    "x": "east",
+    "y": "north",
+    "z": "world absolute",
+    "XY_already_half_Corvo": true,
+    "main_O_H": [
+      0,
+      460,
+      48
+    ],
+    "main_bbox_center_G": [
+      0,
+      481,
+      48
+    ],
+    "lowland_final_invasion_upper_bound": 180,
+    "independent_basin_final_water": 410,
+    "not_global_equal_head": true
+  },
+  "replacement_roads": [
+    {
+      "id": "R15",
+      "name": "口缘—高岸候渡间",
+      "points": [
+        [
+          0,
+          1790,
+          556
+        ],
+        [
+          -180,
+          1840,
+          528
+        ],
+        [
+          150,
+          1900,
+          480
+        ],
+        [
+          -160,
+          1960,
+          440
+        ],
+        [
+          140,
+          2020,
+          414
+        ],
+        [
+          -120,
+          2080,
+          414
+        ],
+        [
+          160,
+          2110,
+          414
+        ],
+        [
+          156,
+          2150,
+          412
+        ],
+        [
+          156,
+          2180,
+          411.2
+        ],
+        [
+          158,
+          2180,
+          411.2
+        ]
+      ],
+      "type": "foot",
+      "width": 2.0,
+      "from": "RIM",
+      "to": "FA-APPROACH",
+      "length_3d": 1773.745787230177,
+      "walk_seconds": 2217.182234037721,
+      "segments": [
+        {
+          "index": 0,
+          "from": [
+            0,
+            1790,
+            556
+          ],
+          "to": [
+            -180,
+            1840,
+            528
+          ],
+          "length_3d": 188.90209104189398,
+          "speed_mps": 0.8,
+          "walk_seconds": 236.12761380236748,
+          "slope": 0.14988056372021297
+        },
+        {
+          "index": 1,
+          "from": [
+            -180,
+            1840,
+            528
+          ],
+          "to": [
+            150,
+            1900,
+            480
+          ],
+          "length_3d": 338.827389683892,
+          "speed_mps": 0.8,
+          "walk_seconds": 423.534237104865,
+          "slope": 0.14310835055998652
+        },
+        {
+          "index": 2,
+          "from": [
+            150,
+            1900,
+            480
+          ],
+          "to": [
+            -160,
+            1960,
+            440
+          ],
+          "length_3d": 318.27660925679095,
+          "speed_mps": 0.8,
+          "walk_seconds": 397.84576157098866,
+          "slope": 0.12668127104390728
+        },
+        {
+          "index": 3,
+          "from": [
+            -160,
+            1960,
+            440
+          ],
+          "to": [
+            140,
+            2020,
+            414
+          ],
+          "length_3d": 307.0439707924583,
+          "speed_mps": 0.8,
+          "walk_seconds": 383.80496349057285,
+          "slope": 0.08498365855987974
+        },
+        {
+          "index": 4,
+          "from": [
+            140,
+            2020,
+            414
+          ],
+          "to": [
+            -120,
+            2080,
+            414
+          ],
+          "length_3d": 266.8332812825267,
+          "speed_mps": 0.8,
+          "walk_seconds": 333.5416016031583,
+          "slope": 0.0
+        },
+        {
+          "index": 5,
+          "from": [
+            -120,
+            2080,
+            414
+          ],
+          "to": [
+            160,
+            2110,
+            414
+          ],
+          "length_3d": 281.60255680657446,
+          "speed_mps": 0.8,
+          "walk_seconds": 352.003196008218,
+          "slope": 0.0
+        },
+        {
+          "index": 6,
+          "from": [
+            160,
+            2110,
+            414
+          ],
+          "to": [
+            156,
+            2150,
+            412
+          ],
+          "length_3d": 40.24922359499622,
+          "speed_mps": 0.8,
+          "walk_seconds": 50.31152949374527,
+          "slope": 0.04975185951049946
+        },
+        {
+          "index": 7,
+          "from": [
+            156,
+            2150,
+            412
+          ],
+          "to": [
+            156,
+            2180,
+            411.2
+          ],
+          "length_3d": 30.01066477104431,
+          "speed_mps": 0.8,
+          "walk_seconds": 37.51333096380539,
+          "slope": 0.026666666666667047
+        },
+        {
+          "index": 8,
+          "from": [
+            156,
+            2180,
+            411.2
+          ],
+          "to": [
+            158,
+            2180,
+            411.2
+          ],
+          "length_3d": 2.0,
+          "speed_mps": 0.8,
+          "walk_seconds": 2.5,
+          "slope": 0.0
+        }
+      ],
+      "stairs": [],
+      "layer": "ground",
+      "not_connected_to_altar": true,
+      "availability": "Always dry for Wv<=410; path ends outside waiting-room west door, never at ALTAR."
+    },
+    {
+      "id": "R16",
+      "name": "岸侧观察岔口—旧湖岸",
+      "points": [
+        [
+          158,
+          2180,
+          411.2
+        ],
+        [
+          148,
+          2180,
+          411.2
+        ],
+        [
+          148,
+          2189.6,
+          406
+        ],
+        [
+          148,
+          2191,
+          406
+        ],
+        [
+          148,
+          2200.6,
+          400.8
+        ],
+        [
+          148,
+          2202,
+          400.8
+        ],
+        [
+          148,
+          2209.2,
+          397
+        ],
+        [
+          120,
+          2220,
+          397
+        ],
+        [
+          120,
+          2240,
+          397
+        ]
+      ],
+      "type": "stair",
+      "width": 1.8,
+      "from": "FA-APPROACH",
+      "to": "LAKE",
+      "length_3d": 92.78766824819317,
+      "walk_seconds": 119.29846451839322,
+      "segments": [
+        {
+          "index": 0,
+          "from": [
+            158,
+            2180,
+            411.2
+          ],
+          "to": [
+            148,
+            2180,
+            411.2
+          ],
+          "length_3d": 10.0,
+          "speed_mps": 1.2,
+          "walk_seconds": 8.333333333333334,
+          "slope": 0.0
+        },
+        {
+          "index": 1,
+          "from": [
+            148,
+            2180,
+            411.2
+          ],
+          "to": [
+            148,
+            2189.6,
+            406
+          ],
+          "length_3d": 10.917875251164858,
+          "speed_mps": 0.65,
+          "walk_seconds": 16.79673115563824,
+          "slope": 0.5416666666666706
+        },
+        {
+          "index": 2,
+          "from": [
+            148,
+            2189.6,
+            406
+          ],
+          "to": [
+            148,
+            2191,
+            406
+          ],
+          "length_3d": 1.400000000000091,
+          "speed_mps": 1.2,
+          "walk_seconds": 1.1666666666667425,
+          "slope": 0.0
+        },
+        {
+          "index": 3,
+          "from": [
+            148,
+            2191,
+            406
+          ],
+          "to": [
+            148,
+            2200.6,
+            400.8
+          ],
+          "length_3d": 10.917875251164858,
+          "speed_mps": 0.65,
+          "walk_seconds": 16.79673115563824,
+          "slope": 0.5416666666666706
+        },
+        {
+          "index": 4,
+          "from": [
+            148,
+            2200.6,
+            400.8
+          ],
+          "to": [
+            148,
+            2202,
+            400.8
+          ],
+          "length_3d": 1.400000000000091,
+          "speed_mps": 1.2,
+          "walk_seconds": 1.1666666666667425,
+          "slope": 0.0
+        },
+        {
+          "index": 5,
+          "from": [
+            148,
+            2202,
+            400.8
+          ],
+          "to": [
+            148,
+            2209.2,
+            397
+          ],
+          "length_3d": 8.141252974818892,
+          "speed_mps": 0.65,
+          "walk_seconds": 12.525004576644449,
+          "slope": 0.5277777777777927
+        },
+        {
+          "index": 6,
+          "from": [
+            148,
+            2209.2,
+            397
+          ],
+          "to": [
+            120,
+            2220,
+            397
+          ],
+          "length_3d": 30.010664771044375,
+          "speed_mps": 0.8,
+          "walk_seconds": 37.513330963805466,
+          "slope": 0.0
+        },
+        {
+          "index": 7,
+          "from": [
+            120,
+            2220,
+            397
+          ],
+          "to": [
+            120,
+            2240,
+            397
+          ],
+          "length_3d": 20.0,
+          "speed_mps": 0.8,
+          "walk_seconds": 25.0,
+          "slope": 0.0
+        }
+      ],
+      "stairs": [
+        {
+          "segment": 1,
+          "count": 32,
+          "rise": 0.1625,
+          "tread": 0.3
+        },
+        {
+          "segment": 3,
+          "count": 32,
+          "rise": 0.1625,
+          "tread": 0.3
+        },
+        {
+          "segment": 5,
+          "count": 24,
+          "rise": 0.15833333333333333,
+          "tread": 0.3
+        }
+      ],
+      "layer": "ground",
+      "not_connected_to_altar": true,
+      "availability": "Closed when Wv>=397.15 or its ground depth>=0.15; early lake observation only."
+    },
+    {
+      "id": "R17",
+      "name": "高岸支路—旧低田—盆内遗迹",
+      "points": [
+        [
+          -120,
+          2080,
+          414
+        ],
+        [
+          -124.8,
+          2080,
+          411.5
+        ],
+        [
+          -126,
+          2080,
+          411.5
+        ],
+        [
+          -130.8,
+          2080,
+          409
+        ],
+        [
+          -132,
+          2080,
+          409
+        ],
+        [
+          -136.8,
+          2080,
+          406.5
+        ],
+        [
+          -138,
+          2080,
+          406.5
+        ],
+        [
+          -142.8,
+          2080,
+          404
+        ],
+        [
+          -300,
+          2120,
+          408
+        ],
+        [
+          -300,
+          2171,
+          405
+        ]
+      ],
+      "type": "stair",
+      "width": 1.8,
+      "from": "FA-R15-FORK",
+      "to": "RUIN",
+      "length_3d": 238.59481279843183,
+      "walk_seconds": 302.988158672379,
+      "segments": [
+        {
+          "index": 0,
+          "from": [
+            -120,
+            2080,
+            414
+          ],
+          "to": [
+            -124.8,
+            2080,
+            411.5
+          ],
+          "length_3d": 5.412023651093921,
+          "speed_mps": 0.65,
+          "walk_seconds": 8.326190232452186,
+          "slope": 0.5208333333333336
+        },
+        {
+          "index": 1,
+          "from": [
+            -124.8,
+            2080,
+            411.5
+          ],
+          "to": [
+            -126,
+            2080,
+            411.5
+          ],
+          "length_3d": 1.2000000000000028,
+          "speed_mps": 1.2,
+          "walk_seconds": 1.0000000000000024,
+          "slope": 0.0
+        },
+        {
+          "index": 2,
+          "from": [
+            -126,
+            2080,
+            411.5
+          ],
+          "to": [
+            -130.8,
+            2080,
+            409
+          ],
+          "length_3d": 5.412023651093933,
+          "speed_mps": 0.65,
+          "walk_seconds": 8.326190232452204,
+          "slope": 0.5208333333333321
+        },
+        {
+          "index": 3,
+          "from": [
+            -130.8,
+            2080,
+            409
+          ],
+          "to": [
+            -132,
+            2080,
+            409
+          ],
+          "length_3d": 1.1999999999999886,
+          "speed_mps": 1.2,
+          "walk_seconds": 0.9999999999999906,
+          "slope": 0.0
+        },
+        {
+          "index": 4,
+          "from": [
+            -132,
+            2080,
+            409
+          ],
+          "to": [
+            -136.8,
+            2080,
+            406.5
+          ],
+          "length_3d": 5.412023651093933,
+          "speed_mps": 0.65,
+          "walk_seconds": 8.326190232452204,
+          "slope": 0.5208333333333321
+        },
+        {
+          "index": 5,
+          "from": [
+            -136.8,
+            2080,
+            406.5
+          ],
+          "to": [
+            -138,
+            2080,
+            406.5
+          ],
+          "length_3d": 1.1999999999999886,
+          "speed_mps": 1.2,
+          "walk_seconds": 0.9999999999999906,
+          "slope": 0.0
+        },
+        {
+          "index": 6,
+          "from": [
+            -138,
+            2080,
+            406.5
+          ],
+          "to": [
+            -142.8,
+            2080,
+            404
+          ],
+          "length_3d": 5.412023651093933,
+          "speed_mps": 0.65,
+          "walk_seconds": 8.326190232452204,
+          "slope": 0.5208333333333321
+        },
+        {
+          "index": 7,
+          "from": [
+            -142.8,
+            2080,
+            404
+          ],
+          "to": [
+            -300,
+            2120,
+            408
+          ],
+          "length_3d": 162.25855909627694,
+          "speed_mps": 0.8,
+          "walk_seconds": 202.82319887034618,
+          "slope": 0.02465950653068004
+        },
+        {
+          "index": 8,
+          "from": [
+            -300,
+            2120,
+            408
+          ],
+          "to": [
+            -300,
+            2171,
+            405
+          ],
+          "length_3d": 51.088159097779204,
+          "speed_mps": 0.8,
+          "walk_seconds": 63.860198872224004,
+          "slope": 0.058823529411764705
+        }
+      ],
+      "stairs": [
+        {
+          "segment": 0,
+          "count": 16,
+          "rise": 0.15625,
+          "tread": 0.3
+        },
+        {
+          "segment": 2,
+          "count": 16,
+          "rise": 0.15625,
+          "tread": 0.3
+        },
+        {
+          "segment": 4,
+          "count": 16,
+          "rise": 0.15625,
+          "tread": 0.3
+        },
+        {
+          "segment": 6,
+          "count": 16,
+          "rise": 0.15625,
+          "tread": 0.3
+        }
+      ],
+      "layer": "ground",
+      "not_connected_to_altar": true,
+      "availability": "Closed when Wv>=404.15; lower field has FFL404, ruins405; no eastward altar edge."
+    }
+  ],
+  "nodes": [
+    {
+      "id": "RIM",
+      "world": [
+        0,
+        1790,
+        556
+      ],
+      "layer": "ground"
+    },
+    {
+      "id": "FA-R15-FORK",
+      "world": [
+        -120,
+        2080,
+        414
+      ],
+      "layer": "ground"
+    },
+    {
+      "id": "FA-PREP",
+      "world": [
+        160,
+        2110,
+        414
+      ],
+      "layer": "ground"
+    },
+    {
+      "id": "FA-APPROACH",
+      "world": [
+        158,
+        2180,
+        411.2
+      ],
+      "layer": "ground"
+    },
+    {
+      "id": "FA-WAIT-W",
+      "world": [
+        160,
+        2180,
+        411.2
+      ],
+      "layer": "indoor"
+    },
+    {
+      "id": "FA-WAIT-C",
+      "world": [
+        164,
+        2180,
+        411.2
+      ],
+      "layer": "indoor"
+    },
+    {
+      "id": "FA-WAIT-E",
+      "world": [
+        168,
+        2180,
+        411.2
+      ],
+      "layer": "indoor"
+    },
+    {
+      "id": "FA-D",
+      "world": [
+        175,
+        2180,
+        411.2
+      ],
+      "layer": "dock"
+    },
+    {
+      "id": "FA-FLOAT-W",
+      "world": [
+        179.1997813354157,
+        2180,
+        411.24285714285713
+      ],
+      "layer": "floating"
+    },
+    {
+      "id": "FA-FLOAT-E",
+      "world": [
+        206.8002186645843,
+        2180,
+        411.24285714285713
+      ],
+      "layer": "floating"
+    },
+    {
+      "id": "FA-I",
+      "world": [
+        211,
+        2180,
+        411.2
+      ],
+      "layer": "dock"
+    },
+    {
+      "id": "FA-INNER",
+      "world": [
+        216,
+        2180,
+        411.2
+      ],
+      "layer": "indoor"
+    },
+    {
+      "id": "FA-STAIR-TOP",
+      "world": [
+        217,
+        2181.5,
+        416.4
+      ],
+      "layer": "vertical"
+    },
+    {
+      "id": "ALTAR",
+      "world": [
+        230,
+        2180,
+        416.4
+      ],
+      "layer": "altar"
+    },
+    {
+      "id": "LAKE",
+      "world": [
+        120,
+        2240,
+        397
+      ],
+      "layer": "ground"
+    },
+    {
+      "id": "RUIN",
+      "world": [
+        -300,
+        2171,
+        405
+      ],
+      "layer": "ground"
+    },
+    {
+      "id": "FA-R16-MID",
+      "world": [
+        148,
+        2191,
+        406
+      ],
+      "layer": "ground"
+    },
+    {
+      "id": "ALTAR_LOWER",
+      "world": [
+        131,
+        2139,
+        404
+      ],
+      "layer": "ground"
+    },
+    {
+      "id": "RIM-EXIT",
+      "world": [
+        -12,
+        1793.3333333333333,
+        554.1333333333333
+      ],
+      "layer": "ground",
+      "kind": "west-platform-gate"
+    }
+  ],
+  "edges": [
+    {
+      "id": "FA-E01",
+      "from": "FA-APPROACH",
+      "to": "FA-WAIT-W",
+      "points": [
+        [
+          158,
+          2180,
+          411.2
+        ],
+        [
+          160,
+          2180,
+          411.2
+        ]
+      ],
+      "state_owner": "WAIT_W_AIRLOCK",
+      "layer": "ground",
+      "length_3d": 2.0,
+      "walk_seconds": 1.6666666666666667
+    },
+    {
+      "id": "FA-E02",
+      "from": "FA-WAIT-W",
+      "to": "FA-WAIT-C",
+      "points": [
+        [
+          160,
+          2180,
+          411.2
+        ],
+        [
+          164,
+          2180,
+          411.2
+        ]
+      ],
+      "state_owner": "WAIT_W_AIRLOCK",
+      "layer": "indoor",
+      "length_3d": 4.0,
+      "walk_seconds": 3.3333333333333335
+    },
+    {
+      "id": "FA-E03",
+      "from": "FA-WAIT-C",
+      "to": "FA-WAIT-E",
+      "points": [
+        [
+          164,
+          2180,
+          411.2
+        ],
+        [
+          168,
+          2180,
+          411.2
+        ]
+      ],
+      "state_owner": "WAIT_E_AIRLOCK",
+      "layer": "indoor",
+      "length_3d": 4.0,
+      "walk_seconds": 3.3333333333333335
+    },
+    {
+      "id": "FA-E04",
+      "from": "FA-WAIT-E",
+      "to": "FA-D",
+      "points": [
+        [
+          168,
+          2180,
+          411.2
+        ],
+        [
+          175,
+          2180,
+          411.2
+        ]
+      ],
+      "state_owner": "EXPOSED_SHORE",
+      "layer": "dock",
+      "length_3d": 7.0,
+      "walk_seconds": 5.833333333333334
+    },
+    {
+      "id": "FA-E05",
+      "from": "FA-D",
+      "to": "FA-I",
+      "points": [
+        [
+          175,
+          2180,
+          411.2
+        ],
+        [
+          179.1997813354157,
+          2180,
+          411.24285714285713
+        ],
+        [
+          206.8002186645843,
+          2180,
+          411.24285714285713
+        ],
+        [
+          211,
+          2180,
+          411.2
+        ]
+      ],
+      "state_owner": "FLOAT_DOCK",
+      "layer": "floating",
+      "length_3d": 36.00043732916859,
+      "walk_seconds": 30.000364440973826
+    },
+    {
+      "id": "FA-E06",
+      "from": "FA-I",
+      "to": "FA-INNER",
+      "points": [
+        [
+          211,
+          2180,
+          411.2
+        ],
+        [
+          216,
+          2180,
+          411.2
+        ]
+      ],
+      "state_owner": "ALTAR_AIRLOCK",
+      "layer": "indoor",
+      "length_3d": 5.0,
+      "walk_seconds": 4.166666666666667
+    },
+    {
+      "id": "FA-E07",
+      "from": "FA-INNER",
+      "to": "ALTAR",
+      "points": [
+        [
+          216,
+          2180,
+          411.2
+        ],
+        [
+          217,
+          2178.5,
+          411.2
+        ],
+        [
+          221.8,
+          2178.5,
+          413.8
+        ],
+        [
+          223.2,
+          2178.5,
+          413.8
+        ],
+        [
+          223.2,
+          2181.5,
+          413.8
+        ],
+        [
+          221.8,
+          2181.5,
+          413.8
+        ],
+        [
+          217,
+          2181.5,
+          416.4
+        ],
+        [
+          217,
+          2184,
+          416.4
+        ],
+        [
+          230,
+          2184,
+          416.4
+        ],
+        [
+          230,
+          2180,
+          416.4
+        ]
+      ],
+      "state_owner": "ALTAR_STAIR",
+      "layer": "vertical",
+      "length_3d": 38.02065088889691,
+      "walk_seconds": 39.38237752041503,
+      "flights": [
+        {
+          "count": 16,
+          "rise": 0.1625,
+          "tread": 0.3,
+          "width": 1.5,
+          "points": [
+            [
+              217,
+              2178.5,
+              411.2
+            ],
+            [
+              221.8,
+              2178.5,
+              413.8
+            ]
+          ]
+        },
+        {
+          "count": 16,
+          "rise": 0.1625,
+          "tread": 0.3,
+          "width": 1.5,
+          "points": [
+            [
+              221.8,
+              2181.5,
+              413.8
+            ],
+            [
+              217,
+              2181.5,
+              416.4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FA-LOW-APRON-SPUR",
+      "from": "FA-R16-MID",
+      "to": "ALTAR_LOWER",
+      "points": [
+        [
+          148,
+          2191,
+          406
+        ],
+        [
+          136,
+          2191,
+          406
+        ],
+        [
+          136,
+          2187,
+          404
+        ],
+        [
+          131,
+          2142,
+          404
+        ],
+        [
+          131,
+          2139,
+          404
+        ]
+      ],
+      "state_owner": "LOW_APRON_W404_15",
+      "layer": "ground",
+      "length_3d": 64.74906164568667,
+      "walk_seconds": 77.22636627489666,
+      "stairs": {
+        "segment": 1,
+        "count": 12,
+        "rise": 0.16666666666666666,
+        "tread": 0.3333333333333333
+      },
+      "no_upper_altar_connection": true
+    }
+  ],
+  "float_bridge": {
+    "id": "FA-FLOAT",
+    "type": "guided_floating_footbridge",
+    "pontoon_length": 28.0,
+    "deck_width": 3.6,
+    "clear_walk_width": 2.4,
+    "axis_xy": [
+      [
+        179,
+        2180
+      ],
+      [
+        207,
+        2180
+      ]
+    ],
+    "deck_bbox_xy": [
+      179,
+      2178.2,
+      207,
+      2181.8
+    ],
+    "bottom_to_deck": 1.7,
+    "waterplane_area": 56.0,
+    "light_mass_kg": 30000.0,
+    "max_payload_kg": 720.0,
+    "max_persons": 6,
+    "liquid_density": 1200.0,
+    "trigger_on": 409.9,
+    "trigger_off": 409.85,
+    "max_W": 410.0,
+    "tolerance": 0.1,
+    "lateral_tolerance": 0.1,
+    "wave_amplitude": 0.02,
+    "max_wind_mps": 8.0,
+    "alignment_stable_seconds": 10,
+    "deck_formula": "Zdeck=Wv+wave+1.70-(30000+payload_kg)/(1200*56)",
+    "draft_formula": "draft=(30000+payload_kg)/(1200*56)",
+    "initial_W": 397.0,
+    "nominal_loaded_W": 410.0,
+    "hulls": [
+      {
+        "id": "FA-HULL-S",
+        "bbox_xy": [
+          179,
+          2178.2,
+          207,
+          2179.2
+        ],
+        "cell_count": 4,
+        "cell_length": 7.0
+      },
+      {
+        "id": "FA-HULL-N",
+        "bbox_xy": [
+          179,
+          2180.8,
+          207,
+          2181.8
+        ],
+        "cell_count": 4,
+        "cell_length": 7.0
+      }
+    ],
+    "shell_mm": 8,
+    "deck_plank_mm": 60,
+    "truss_height": 2.0,
+    "truss_panel_length": 2.8,
+    "truss_panel_count": 10,
+    "structure_mass_kg": 13000,
+    "local_ballast_kg": 17000,
+    "wave_is_added_once": true,
+    "light_freeboard": 1.2535714285714286,
+    "loaded_freeboard": 1.2428571428571429,
+    "loaded_draft": 0.45714285714285713,
+    "payload_displacement_change_m3": 0.6,
+    "one_cell_lost_freeboard": 1.1775510204081632,
+    "one_cell_lost_policy": "Closed to new entry; evacuation only if arrest pawls engaged; nominal buoyancy margin does not certify trim or frame strength.",
+    "guides": [
+      {
+        "id": "FA-GUIDE-1",
+        "xy": [
+          176.6,
+          2177.5
+        ],
+        "z_range": [
+          394.0,
+          414.2
+        ],
+        "recess_cover_gap": 0.03,
+        "role": "horizontal restraint only, vertical sliding remains free"
+      },
+      {
+        "id": "FA-GUIDE-2",
+        "xy": [
+          176.6,
+          2182.5
+        ],
+        "z_range": [
+          394.0,
+          414.2
+        ],
+        "recess_cover_gap": 0.03,
+        "role": "horizontal restraint only, vertical sliding remains free"
+      },
+      {
+        "id": "FA-GUIDE-3",
+        "xy": [
+          209.4,
+          2177.5
+        ],
+        "z_range": [
+          394.0,
+          414.2
+        ],
+        "recess_cover_gap": 0.03,
+        "role": "horizontal restraint only, vertical sliding remains free"
+      },
+      {
+        "id": "FA-GUIDE-4",
+        "xy": [
+          209.4,
+          2182.5
+        ],
+        "z_range": [
+          394.0,
+          414.2
+        ],
+        "recess_cover_gap": 0.03,
+        "role": "horizontal restraint only, vertical sliding remains free"
+      }
+    ],
+    "tongues": [
+      {
+        "id": "FA-TONGUE-W",
+        "hinge": [
+          175,
+          2180,
+          411.2
+        ],
+        "length": 4.2,
+        "width": 2.4,
+        "roller_track_x": [
+          179.05,
+          179.25
+        ],
+        "folded_height": 4.2
+      },
+      {
+        "id": "FA-TONGUE-E",
+        "hinge": [
+          211,
+          2180,
+          411.2
+        ],
+        "length": 4.2,
+        "width": 2.4,
+        "roller_track_x": [
+          206.75,
+          206.95
+        ],
+        "folded_height": 4.2
+      }
+    ],
+    "dock_interlock": {
+      "landing_z": 411.2,
+      "requires": "abs(actual Zdeck-411.2)<=0.10 and abs(lateral_offset)<=0.10 for10s, payload<=720, persons<=6, intact cells, wave amplitude<=.02, wind<=8, Wv409.90..410",
+      "pins": "horizontal sliding locator with a 0.20m vertical slot; does not clamp Z",
+      "tongue_contact_step_max": 0.02,
+      "upward_buoyancy_policy": "Float rises freely inside vertical slot; no upward arrest. Continued +0.10m W adds no fixed-support uplift because the hull translates upward."
+    },
+    "fall_arrest": {
+      "id": "FA-PAWLS",
+      "count": 4,
+      "deck_floor_limit_z": 411.1,
+      "rated_downward_force_each_kN": 120,
+      "full_mass_gravity_kN": 301.3632,
+      "engages_only_after_first_valid_dock": true,
+      "one_way": "supports downward motion only; upward float motion lifts free",
+      "low_water": "Wv<409.85 blocks new entry; altar occupants may return west with escape push-bars while pawls hold deck>=411.10",
+      "reset": "After all occupants reach west shore, mass sensor reads0 payload and two independent shore handwheels are held60s; then lower bridge at0.03m/s by paired brake winches. No reset while occupied. New entry remains closed.",
+      "loss_of_air_or_power": "Pawls remain by gravity; mask supply and dry altar refuge are independent."
+    },
+    "dry_support_span": 32.8,
+    "dry_support_note": "28m walk deck plus end frames reaches guide bearing axes176.6/209.4. Twin2.0m lattice trusses and4x120kN pawls are selected game structure parameters; they are not a rock or steel engineering certification.",
+    "outer_altar_gate": {
+      "id": "FA-I-GATE",
+      "clear_opening": [
+        1.5,
+        2.4
+      ],
+      "world": [
+        211,
+        2180,
+        411.2
+      ],
+      "leaf_size": [
+        1.7,
+        2.6,
+        0.02
+      ],
+      "leaf_mass_kg": 820,
+      "stiffener_size_mm": [
+        80,
+        40,
+        6
+      ],
+      "frame_embed_depth": 0.2,
+      "frame_bbox": [
+        210.9,
+        2179.05,
+        411.1,
+        211.1,
+        2180.95,
+        416.3
+      ],
+      "seal": "two3mm leather/rubber composite continuous strips",
+      "bolt_count": 4,
+      "bolt_diameter_mm": 30,
+      "outside_handle": false,
+      "outside_keyhole": false,
+      "actuator": "Two independent concealed alignment cams at east guide shoes must both register true deck height/position. Only then counterbalanced internal cam lifts gate in4s. No storyline key or remote unlock bypass.",
+      "inside_escape_pushbar": "Permits westward escape only when arrest support or valid dock is present; does not enable new entry from outside.",
+      "surround": "Continuous smooth rock/iron cheeks and1.2m outer projecting canopy; no standing ledge beside gate.",
+      "gate_is_not_a_water_level_vertical_clamp": true
+    }
+  },
+  "altar": {
+    "center": [
+      230,
+      2180,
+      416.4
+    ],
+    "crown_bbox": [
+      215,
+      2168,
+      245,
+      2192
+    ],
+    "pillar_bbox": [
+      210,
+      2162,
+      250,
+      2198
+    ],
+    "west_inlet": [
+      211,
+      2180,
+      411.2
+    ],
+    "lower_apron_bbox": [
+      116,
+      2136,
+      146,
+      2142
+    ],
+    "lower_apron_z": 404,
+    "moat_outer_bbox": [
+      176,
+      2128,
+      284,
+      2232
+    ],
+    "moat_floor_z": 391,
+    "minimum_water_gap": 34,
+    "moat_inner_polygon": [
+      [
+        210,
+        2162
+      ],
+      [
+        250,
+        2162
+      ],
+      [
+        250,
+        2198
+      ],
+      [
+        210,
+        2198
+      ]
+    ],
+    "moat_outer_polygon": [
+      [
+        176,
+        2128
+      ],
+      [
+        284,
+        2128
+      ],
+      [
+        284,
+        2232
+      ],
+      [
+        176,
+        2232
+      ]
+    ],
+    "stairs": {
+      "count": 32,
+      "rise": 0.1625,
+      "tread": 0.3,
+      "total_rise": 5.2,
+      "points": [
+        [
+          216,
+          2180,
+          411.2
+        ],
+        [
+          217,
+          2178.5,
+          411.2
+        ],
+        [
+          221.8,
+          2178.5,
+          413.8
+        ],
+        [
+          223.2,
+          2178.5,
+          413.8
+        ],
+        [
+          223.2,
+          2181.5,
+          413.8
+        ],
+        [
+          221.8,
+          2181.5,
+          413.8
+        ],
+        [
+          217,
+          2181.5,
+          416.4
+        ],
+        [
+          217,
+          2184,
+          416.4
+        ],
+        [
+          230,
+          2184,
+          416.4
+        ],
+        [
+          230,
+          2180,
+          416.4
+        ]
+      ],
+      "walk_seconds": 39.38237752041503
+    },
+    "closed_ring_collision": true,
+    "cliff_slope_min_degrees": 85,
+    "crown_overhang_m": 1.2,
+    "no_lower_apron_upper_connection": true,
+    "lower_apron_location": "Western mainland; entirely west of moat outer edge X176, separate from isolated rock pillar.",
+    "water_communication": {
+      "basin_id": "VOLCANIC_POOL",
+      "target_water_is_same_Wv": true,
+      "water_only_fissures": 3,
+      "each_slot_width": 2.4,
+      "each_slot_height": 0.4,
+      "invert_z": 391.6,
+      "centerline": [
+        [
+          120,
+          2240,
+          391.8
+        ],
+        [
+          172,
+          2240,
+          391.8
+        ],
+        [
+          172,
+          2180,
+          391.8
+        ],
+        [
+          176,
+          2180,
+          391.8
+        ]
+      ],
+      "minimum_water_over_roof_at_W397": 5.0,
+      "characters_can_use": false,
+      "note": "Selected natural water-only fracture linkage; independent from lowland invasion180 and from academy tunnels. No dry walking edge."
+    }
+  },
+  "rooms": [
+    {
+      "id": "FA-WAIT",
+      "name": "西岸密闭候渡间",
+      "bbox_world": [
+        160,
+        2174,
+        168,
+        2186
+      ],
+      "ffl_z": 411.2,
+      "size": [
+        8,
+        12,
+        6.9
+      ],
+      "clear_height": 6.0,
+      "wall": 0.3,
+      "roof_top_z": 418.1,
+      "capacity": 6,
+      "C_max": 10,
+      "doors": [
+        {
+          "id": "FA-WD",
+          "world": [
+            160,
+            2180,
+            411.2
+          ],
+          "wall": "W",
+          "width": 1.5,
+          "height": 2.4,
+          "lock": "pressure_interlocked_west_airlock"
+        },
+        {
+          "id": "FA-ED",
+          "world": [
+            168,
+            2180,
+            411.2
+          ],
+          "wall": "E",
+          "width": 1.5,
+          "height": 2.4,
+          "lock": "pressure_interlocked_east_airlock"
+        },
+        {
+          "id": "FA-WD-INNER",
+          "world": [
+            162.7,
+            2180,
+            411.2
+          ],
+          "wall": "west_airlock_E",
+          "width": 1.5,
+          "height": 2.4,
+          "lock": "pressure_interlocked_with_FA-WD"
+        },
+        {
+          "id": "FA-ED-INNER",
+          "world": [
+            165.3,
+            2180,
+            411.2
+          ],
+          "wall": "east_airlock_W",
+          "width": 1.5,
+          "height": 2.4,
+          "lock": "pressure_interlocked_with_FA-ED"
+        }
+      ],
+      "airlocks": [
+        {
+          "id": "WAIT_W_AIRLOCK",
+          "bbox_world": [
+            160.3,
+            2178.8,
+            162.7,
+            2181.2
+          ],
+          "net_size": [
+            2.4,
+            2.4,
+            2.7
+          ],
+          "max_people": 6,
+          "volume_m3": 15.552,
+          "initial_C": 70,
+          "target_C": 10,
+          "recirculation_m3s": 0.5,
+          "removal_fraction": 0.95,
+          "calculated_purge_seconds": 63.71114660654364,
+          "chosen_purge_seconds": 64,
+          "outer_door_close_seconds": 2,
+          "inner_door_open_seconds": 2,
+          "cycle_seconds": 68,
+          "formula": "C(t)=70*exp(-0.5*0.95*t/15.552)",
+          "door_rule": "Never open inner and outer together; mask remains on until C<=10. One person drives short manual purge cycle; others stay on six marked standing spots.",
+          "inner_door_plane_x": 162.7,
+          "outer_door_open_seconds": 2,
+          "post_entry_purge_cycle_seconds": 68,
+          "arrival_complete_cycle_seconds": 70
+        },
+        {
+          "id": "WAIT_E_AIRLOCK",
+          "bbox_world": [
+            165.3,
+            2178.8,
+            167.7,
+            2181.2
+          ],
+          "net_size": [
+            2.4,
+            2.4,
+            2.7
+          ],
+          "max_people": 6,
+          "volume_m3": 15.552,
+          "initial_C": 70,
+          "target_C": 10,
+          "recirculation_m3s": 0.5,
+          "removal_fraction": 0.95,
+          "calculated_purge_seconds": 63.71114660654364,
+          "chosen_purge_seconds": 64,
+          "outer_door_close_seconds": 2,
+          "inner_door_open_seconds": 2,
+          "cycle_seconds": 68,
+          "formula": "C(t)=70*exp(-0.5*0.95*t/15.552)",
+          "door_rule": "Never open inner and outer together; mask remains on until C<=10. One person drives short manual purge cycle; others stay on six marked standing spots.",
+          "inner_door_plane_x": 165.3,
+          "outer_door_open_seconds": 2,
+          "post_entry_purge_cycle_seconds": 68,
+          "arrival_complete_cycle_seconds": 70
+        }
+      ],
+      "windows": [
+        {
+          "wall": "E",
+          "center_world": [
+            168,
+            2183,
+            412.7
+          ],
+          "width": 1.2,
+          "height": 1.2,
+          "lock": "sealed glass fixed",
+          "view": "D, floating bridge, west face of rock pillar; altar pavement hidden by rock crown"
+        }
+      ],
+      "furniture_anchor": "world southwest footprint corner",
+      "furniture": [
+        {
+          "name": "三人长凳",
+          "pos": [
+            160.6,
+            2174.6,
+            411.2
+          ],
+          "size": [
+            3.6,
+            0.6,
+            0.45
+          ]
+        },
+        {
+          "name": "三人长凳",
+          "pos": [
+            163.8,
+            2184.8,
+            411.2
+          ],
+          "size": [
+            3.6,
+            0.6,
+            0.45
+          ]
+        },
+        {
+          "name": "面罩滤片柜",
+          "pos": [
+            160.6,
+            2183,
+            411.2
+          ],
+          "size": [
+            1.2,
+            0.6,
+            1.8
+          ]
+        },
+        {
+          "name": "滤气风箱与6罐架",
+          "pos": [
+            166.1,
+            2174.7,
+            411.2
+          ],
+          "size": [
+            1.2,
+            2.4,
+            2.0
+          ]
+        },
+        {
+          "name": "3支50L压缩空气瓶架",
+          "pos": [
+            160.6,
+            2176,
+            411.2
+          ],
+          "size": [
+            1.8,
+            0.6,
+            1.6
+          ]
+        },
+        {
+          "name": "72L饮水/12人餐/折叠急救铺",
+          "pos": [
+            164.8,
+            2183,
+            411.2
+          ],
+          "size": [
+            1.2,
+            1.2,
+            1.5
+          ]
+        }
+      ],
+      "inventory": {
+        "mask_filter_units": 96,
+        "large_air_canisters_count": 6,
+        "large_air_canister_capacity_m3": 90,
+        "potable_water_liters": 72,
+        "food_person_meals": 12,
+        "cylinders_count": 3,
+        "cylinder_water_volume_L": 50,
+        "cylinder_pressure_MPa": 10,
+        "usable_expanded_air_m3": 12
+      },
+      "ventilation": {
+        "fresh_air_m3h": 180,
+        "on_demand_only": true,
+        "large_filter_total_m3": 540,
+        "supply_C_after_filter": 7,
+        "room_design_C_max": 10,
+        "airlock_recirculation_charged_to_same_filter_budget": true,
+        "standby_power": "Room is shut and filter fan OFF before arrival; manual fan plus counterweight governor. Capacity countdown starts at first occupancy, not atday19."
+      },
+      "backup_person_air_Lmin": 30,
+      "backup_6_people_minutes": 66.66666666666667,
+      "sound": "Closed double doors reduce shore bell audibility; west and east sight lamps give occupancy and bridge flags. No person-sized or climbable cross-moat pipe."
+    },
+    {
+      "id": "FA-IN",
+      "name": "岩柱西侧入口前室",
+      "bbox_world": [
+        210,
+        2177.6,
+        216,
+        2182.4
+      ],
+      "ffl_z": 411.2,
+      "size": [
+        6,
+        4.8,
+        3.3
+      ],
+      "clear_height": 2.7,
+      "wall": 0.3,
+      "C_after_purge": 10,
+      "doors": [
+        {
+          "id": "FA-I-GATE",
+          "world": [
+            211,
+            2180,
+            411.2
+          ],
+          "wall": "W_recessed",
+          "width": 1.5,
+          "height": 2.4,
+          "lock": "mechanical_double_alignment_interlock"
+        },
+        {
+          "id": "FA-IN-AIRLOCK-OUTER",
+          "world": [
+            213.6,
+            2180,
+            411.2
+          ],
+          "wall": "airlock_W",
+          "width": 1.5,
+          "height": 2.4,
+          "lock": "ALTAR_AIRLOCK_outer"
+        },
+        {
+          "id": "FA-IN-AIRLOCK-INNER",
+          "world": [
+            216,
+            2180,
+            411.2
+          ],
+          "wall": "shared_stair_interface_E",
+          "width": 1.5,
+          "height": 2.4,
+          "lock": "ALTAR_AIRLOCK_inner"
+        }
+      ],
+      "airlocks": [
+        {
+          "id": "ALTAR_AIRLOCK",
+          "bbox_world": [
+            213.6,
+            2178.8,
+            216,
+            2181.2
+          ],
+          "max_people": 6,
+          "volume_m3": 13.824,
+          "initial_C": 70,
+          "target_C": 10,
+          "recirculation_m3s": 0.5,
+          "removal_fraction": 0.95,
+          "calculated_purge_seconds": 56.632130316927686,
+          "chosen_purge_seconds": 64,
+          "outer_door_close_seconds": 2,
+          "inner_door_open_seconds": 2,
+          "cycle_seconds": 68,
+          "formula": "C(t)=70*exp(-0.5*0.95*t/13.824)",
+          "door_rule": "Never open inner and outer together; mask remains on until C<=10. One person drives short manual purge cycle; others stay on six marked standing spots.",
+          "outer_door_open_seconds": 2,
+          "post_entry_purge_cycle_seconds": 68,
+          "arrival_complete_cycle_seconds": 70,
+          "outer_door_plane_x": 213.6,
+          "inner_door_plane_x": 216,
+          "envelope_size": [
+            2.4,
+            2.4,
+            2.7
+          ],
+          "shared_wall_corner_volume_m3": 1.458,
+          "net_volume_m3": 13.824,
+          "standing_points_world": [
+            [
+              214.0,
+              2179.2,
+              411.2
+            ],
+            [
+              214.0,
+              2180.0,
+              411.2
+            ],
+            [
+              214.0,
+              2180.8,
+              411.2
+            ],
+            [
+              214.8,
+              2179.2,
+              411.2
+            ],
+            [
+              214.8,
+              2180.0,
+              411.2
+            ],
+            [
+              214.8,
+              2180.8,
+              411.2
+            ]
+          ],
+          "volume_rule": "2.4x2.4x2.7 envelope minus two shared-wall corners0.6x0.9x2.7 and throat lintel0.6x1.5x0.3 =13.824m3. Door throat is1.5x2.4m, with six stance centres west of it. Purge64s stays conservative; complete outer arrival70s.",
+          "shared_wall_lintel_volume_m3": 0.27
+        }
+      ],
+      "furniture": [
+        {
+          "name": "滤片24单位柜",
+          "pos": [
+            214.2,
+            2177.9,
+            411.2
+          ],
+          "size": [
+            1.2,
+            0.6,
+            1.8
+          ]
+        },
+        {
+          "name": "手摇循环风箱/2大滤罐",
+          "pos": [
+            214.2,
+            2181.5,
+            411.2
+          ],
+          "size": [
+            1.2,
+            0.6,
+            1.5
+          ]
+        }
+      ],
+      "inventory": {
+        "mask_filter_units": 24,
+        "large_air_canisters_count": 2,
+        "large_air_canister_capacity_m3": 90
+      },
+      "adjacent": [
+        "FA-I",
+        "FA-STAIR"
+      ],
+      "special": "I211 outer anti-bypass gate is separate from airlock outer213.6 and inner216. Shared0.6m interface contains recessed chamber throat terminating at actual1.5m gate in plane216; remaining overlap is structural and not duplicate room floor.",
+      "shared_interface": {
+        "with": "FA-STAIR",
+        "door_plane_x": 216,
+        "door_y_span": [
+          2179.25,
+          2180.75
+        ],
+        "structural_overlap_is_not_usable_room": true,
+        "door_z_span": [
+          411.2,
+          413.6
+        ],
+        "lintel_z_span": [
+          413.6,
+          413.9
+        ]
+      }
+    },
+    {
+      "id": "FA-STAIR",
+      "name": "岩柱内折返登坛梯",
+      "bbox_world": [
+        215.4,
+        2176.4,
+        224.4,
+        2183.6
+      ],
+      "ffl_z": 411.2,
+      "top_z": 416.4,
+      "size": [
+        9.0,
+        7.2,
+        8.1
+      ],
+      "wall": 0.4,
+      "clear_headroom": 2.4,
+      "C_max": 20,
+      "doors": [
+        {
+          "world": [
+            216,
+            2180,
+            411.2
+          ],
+          "wall": "W",
+          "width": 1.5,
+          "height": 2.4,
+          "lock": "ALTAR_AIRLOCK_inner"
+        },
+        {
+          "world": [
+            217,
+            2183.6,
+            416.4
+          ],
+          "wall": "N",
+          "width": 1.5,
+          "height": 2.4,
+          "lock": "self_closing_unlocked"
+        }
+      ],
+      "stairs_total": 32,
+      "step_rise": 0.1625,
+      "tread": 0.3,
+      "flight_width": 1.5,
+      "flight_count": 2,
+      "steps_per_flight": 16,
+      "stair_edge": {
+        "id": "FA-E07",
+        "from": "FA-INNER",
+        "to": "ALTAR",
+        "points": [
+          [
+            216,
+            2180,
+            411.2
+          ],
+          [
+            217,
+            2178.5,
+            411.2
+          ],
+          [
+            221.8,
+            2178.5,
+            413.8
+          ],
+          [
+            223.2,
+            2178.5,
+            413.8
+          ],
+          [
+            223.2,
+            2181.5,
+            413.8
+          ],
+          [
+            221.8,
+            2181.5,
+            413.8
+          ],
+          [
+            217,
+            2181.5,
+            416.4
+          ],
+          [
+            217,
+            2184,
+            416.4
+          ],
+          [
+            230,
+            2184,
+            416.4
+          ],
+          [
+            230,
+            2180,
+            416.4
+          ]
+        ],
+        "state_owner": "ALTAR_STAIR",
+        "layer": "vertical",
+        "length_3d": 38.02065088889691,
+        "walk_seconds": 39.38237752041503,
+        "flights": [
+          {
+            "count": 16,
+            "rise": 0.1625,
+            "tread": 0.3,
+            "width": 1.5,
+            "points": [
+              [
+                217,
+                2178.5,
+                411.2
+              ],
+              [
+                221.8,
+                2178.5,
+                413.8
+              ]
+            ]
+          },
+          {
+            "count": 16,
+            "rise": 0.1625,
+            "tread": 0.3,
+            "width": 1.5,
+            "points": [
+              [
+                221.8,
+                2181.5,
+                413.8
+              ],
+              [
+                217,
+                2181.5,
+                416.4
+              ]
+            ]
+          }
+        ]
+      },
+      "special": "Only west411.2 inlet and north416.4 outlet; no door to404 apron, no shaft to mainland.",
+      "shared_interface": {
+        "with": "FA-IN",
+        "overlap_bbox": [
+          215.4,
+          2177.6,
+          216,
+          2182.4
+        ],
+        "allocation": "Shared structural west wall except actual door throat; excluded from both net room floor areas.",
+        "door_plane_x": 216,
+        "door_width": 1.5,
+        "door_y_span": [
+          2179.25,
+          2180.75
+        ],
+        "door_z_span": [
+          411.2,
+          413.6
+        ]
+      }
+    },
+    {
+      "id": "FA-ALTAR",
+      "name": "最终祭坛上坪",
+      "bbox_world": [
+        215,
+        2168,
+        245,
+        2192
+      ],
+      "ffl_z": 416.4,
+      "size": [
+        30,
+        24,
+        0
+      ],
+      "outdoor": true,
+      "C_max": 20,
+      "entrance_world": [
+        217,
+        2183.6,
+        416.4
+      ],
+      "adjacent": [
+        "FA-STAIR"
+      ],
+      "furniture": [
+        {
+          "name": "8×8m齐平刻纹祭圈",
+          "pos": [
+            226,
+            2176,
+            416.37
+          ],
+          "size": [
+            8,
+            8,
+            0.03
+          ],
+          "top_z": 416.4
+        },
+        {
+          "name": "石供桌",
+          "pos": [
+            223.6,
+            2174.3,
+            416.4
+          ],
+          "size": [
+            1.8,
+            1.2,
+            1.1
+          ],
+          "interaction_world": [
+            226,
+            2174.9,
+            416.4
+          ],
+          "facing": "E"
+        },
+        {
+          "name": "四锚座",
+          "positions": [
+            [
+              215.6,
+              2168.6,
+              416.4
+            ],
+            [
+              243.2,
+              2168.6,
+              416.4
+            ],
+            [
+              215.6,
+              2190.2,
+              416.4
+            ],
+            [
+              243.2,
+              2190.2,
+              416.4
+            ]
+          ],
+          "size": [
+            1.2,
+            1.2,
+            0.6
+          ]
+        }
+      ],
+      "ritual_duration_seconds": 720,
+      "freeboard_above_final_water": 6.4,
+      "refuge": {
+        "people": 6,
+        "duration_hours": 12,
+        "sealed_water_L": 72,
+        "food_person_meals": 12,
+        "covered_area_bbox": [
+          230,
+          2185,
+          242,
+          2191
+        ],
+        "shelter_clear_height": 2.7,
+        "C": 20,
+        "door": {
+          "wall": "S",
+          "threshold_world": [
+            236,
+            2185,
+            416.4
+          ],
+          "width": 1.5,
+          "height": 2.4,
+          "lock": "self_closing_unlocked"
+        },
+        "storage_bbox_world": [
+          230.4,
+          2189.8,
+          234,
+          2190.6
+        ],
+        "collision_rule": "North-east ritual anchor remains at[243.2,2190.2], clear of refuge east wall242. Stone offering table sits southwest of ritual circle and south of stairroom wall2176.4; no furniture intersects stair shell."
+      },
+      "special": "No south stairs, lake walkway or R16 exit. Anchors are atop the crown, behind1.2m outward eave; inaccessible from lower apron.",
+      "lower_apron_z": 404
+    }
+  ],
+  "ground_obstacles": [
+    {
+      "id": "FA-WAIT",
+      "bbox_world": [
+        160,
+        2174,
+        168,
+        2186
+      ],
+      "ground_z": 411.2,
+      "top_z": 418.1
+    },
+    {
+      "id": "FA-PILLAR",
+      "bbox_world": [
+        210,
+        2162,
+        250,
+        2198
+      ],
+      "ground_z": 391,
+      "top_z": 416.4
+    }
+  ],
+  "inventory": {
+    "origin": "Academy final-observation-station sealed stores, installed before story; excluded from day19 evacuation1800kg.",
+    "prep_cabinet": {
+      "world": [
+        157,
+        2110,
+        414
+      ],
+      "mask_count": 6,
+      "mask_filter_units": 120
+    },
+    "waiting_mask_filter_units": 96,
+    "altar_mask_filter_units": 24,
+    "mask_filter_total": 240,
+    "large_filter_canisters_waiting": 6,
+    "large_filter_canisters_altar": 2,
+    "large_filter_capacity_each_m3": 90,
+    "mask_unit_seconds_C_ge_60": 30,
+    "refund_partial_filters": false
+  },
+  "chronology": [
+    {
+      "time": "day18 00:00",
+      "Wv": 397
+    },
+    {
+      "time": "day19 08:00",
+      "Wv": 399
+    },
+    {
+      "time": "day19 15:00",
+      "Wv": 402
+    },
+    {
+      "time": "day19 20:00",
+      "Wv": 404
+    },
+    {
+      "time": "day20 11:44:00",
+      "Wv": 409.9,
+      "event": "physical height threshold reached"
+    },
+    {
+      "time": "day20 11:44:10",
+      "Wv": 409.9010416667,
+      "event": "10second stable dock completed; both directions admitted"
+    },
+    {
+      "time": "day20 12:00:00",
+      "Wv": 410,
+      "event": "Stable terminal water level thereafter; bridge remains bidirectional indefinitely unless physically damaged"
+    }
+  ],
+  "chronology_interpolation": "Linear between19day20:00 and20day12:00, rate0.375m/h; final410 held, no12:00 closure.",
+  "regular_weather": {
+    "from": "day20 11:40",
+    "to": "end_of_final_ritual_and_return",
+    "wind_mps": 3,
+    "wave_amplitude": 0.02,
+    "not_randomized_into_failure": true
+  },
+  "states": {
+    "EARLY": "No dock edge. R15 ends at west bank; ring moat blocks every ground approach.",
+    "READY": "Wv409.9..410, payload<=720, persons<=6, all geometry tolerances true10s, wind<=8, wave<=.02. Tongues lower; gates permit passage.",
+    "RETURN_ONLY": "Water below409.90 after first valid dock stops new entry; below409.85 also raises recession alarm. Pawls support deck411.10 and westbound exit remains available only with valid geometry/contact/capacity and intact structure.",
+    "WEATHER_HOLD": "No new entry if wind>8 or wave>.02; waiting room staysC10. Occupied bridge returns via nearest dock using pawls.",
+    "DAMAGE": "Any flooded cell closes entry. One failed cell uses49m2 waterplane and may allow return after prior docking if supported alignment, tongue contact, load and structure stay valid. Two or more failed cells or a severed route enter the6-person12-hour upper-refuge failure state.",
+    "RESET": "At first positive dual-control hold, close new entry and rock external release. All people west and payload0 throughout60s; interrupted controls/occupancy reset the hold. Then brake-lower0.03m/s to actual float height. No release from altar or under people."
+  },
+  "concentrations": {
+    "RIM": 10,
+    "R15_Z_ge_414": 20,
+    "PREP": 20,
+    "last_low_approach_and_bridge": 70,
+    "waiting_C_max": 10,
+    "altar_airlock_after_purge": 10,
+    "altar_stair_and_crown": 20,
+    "condensation_layer_top_z": 414.8,
+    "transition_top_z": 415.6,
+    "C_evaluated_at_eye_height": 1.65,
+    "mask_required_when_C_ge": 60,
+    "note": "Masks remain worn through exposed shore, float bridge and64s incoming purge; concentration20 still invokes existing hearing effects.",
+    "formula": "At eyeZ: C=70 if eyeZ<=Wv+4.8; C=70-50*(eyeZ-Wv-4.8)/0.8 if Wv+4.8<eyeZ<Wv+5.6; C=20 above Wv+5.6. RIM overrides10; sealed rooms use their own gas balance.",
+    "R15_segments": [
+      {
+        "index": 0,
+        "z_min": 528,
+        "C_rule": "20 for whole segment at Wv<=410"
+      },
+      {
+        "index": 1,
+        "z_min": 480,
+        "C_rule": "20 for whole segment at Wv<=410"
+      },
+      {
+        "index": 2,
+        "z_min": 440,
+        "C_rule": "20 for whole segment at Wv<=410"
+      },
+      {
+        "index": 3,
+        "z_min": 414,
+        "C_rule": "20 for whole segment at Wv<=410"
+      },
+      {
+        "index": 4,
+        "z_min": 414,
+        "C_rule": "20 for whole segment at Wv<=410"
+      },
+      {
+        "index": 5,
+        "z_min": 414,
+        "C_rule": "20 for whole segment at Wv<=410"
+      },
+      {
+        "index": 6,
+        "z_min": 412,
+        "C_rule": "eye-height gas-layer formula; conservatively wear mask from FA-PREP"
+      },
+      {
+        "index": 7,
+        "z_min": 411.2,
+        "C_rule": "eye-height gas-layer formula; conservatively wear mask from FA-PREP"
+      },
+      {
+        "index": 8,
+        "z_min": 411.2,
+        "C_rule": "eye-height gas-layer formula; conservatively wear mask from FA-PREP"
+      }
+    ],
+    "latest_C60_first_point_R15": [
+      158.62,
+      2123.8,
+      413.31
+    ],
+    "scope_override": "This3D altitude-dependent volcanic gas model replaces the old singleC70 assignment for all ofBASIN. Wv controls fluid level; character exposure samples eyeZ, not merely basinXY."
+  },
+  "movement_contract": {
+    "ordinary_mountain_foot_mps": 0.8,
+    "flat_indoor_and_bridge_mps": 1.2,
+    "stairs_mps": 0.65,
+    "turn_seconds": 6,
+    "jump_horizontal_max": 1.5,
+    "step_up_max": 0.45,
+    "vault_max": 1.2,
+    "climbing": "Only explicitly tagged ladders, stairs and rope anchors; no free climbing or grappling-hook action. Mooring covers have30mm slots and no climb anchors."
+  },
+  "metrics": {
+    "R14_walk_seconds": 2764.5325222301904,
+    "R15_walk_seconds": 2217.182234037721,
+    "H_A_to_waiting_room_C10_seconds": 5069.214756267911,
+    "RIM_to_waiting_room_C10_seconds": 2304.682234037721,
+    "waiting_east_door_to_altar_walk_seconds": 79.38274196138886,
+    "waiting_east_door_to_altar_first_seconds": 159.38274196138886,
+    "waiting_east_door_to_altar_batch6_seconds": 171.88274196138886,
+    "altar_roundtrip_with_12min_ritual_seconds": 1063.7654839227778,
+    "exposure_prep_to_wait_seconds": 175.32486045755064,
+    "exposure_wait_to_altar_airlock_seconds": 130.50036444097384,
+    "exposure_altar_to_wait_seconds": 130.50036444097384,
+    "exposure_wait_to_prep_seconds": 107.32486045755066,
+    "mask_units_each_leg_per_person": [
+      6,
+      5,
+      5,
+      4
+    ],
+    "mask_units_6person_complete_trip": 120,
+    "mask_units_6person_shore_altar_roundtrip": 60,
+    "mask_stock_total": 240,
+    "mask_remaining_after_complete_trip": 120,
+    "r15_min_late_section_z": 411.2,
+    "full_cycle_note": "Postentry close2+purge64+inner_open2=68. Opening outer door before entry adds2: complete arrival cycle70. All final metrics include it."
+  },
+  "construction": {
+    "builder": "Academy funded hired engineer and stone/iron crews, not hermit",
+    "crew": 18,
+    "seasons": 2,
+    "workdays_per_season": 100,
+    "person_days": 3600,
+    "imported_structure_mass_kg": 13000,
+    "local_ballast_mass_kg": 17000,
+    "maximum_carried_component_length": 2.4,
+    "maximum_carried_component_mass_kg": 60,
+    "loaded_animal_100kg_equivalents": 130,
+    "temporary_construction_rigging": "Removed before story; all permanent shore-side controls can lower tongues and arrest falling bridge but cannot lift30t dry bridge from low water."
+  },
+  "terrain_status": {
+    "chosen_design_geometry": "Original game mesh: closed ancient-collapse ring moat [176,2128,284,2232] at floor391, basalt pillar [210,2162,250,2198] to416.4, western high-bank terminals411.2. These are authoring specifications, not surveyed Corvo geology.",
+    "not_measured_DEM": true,
+    "no_bearing_capacity_claim": true,
+    "geometry_status": "selected_for_game_implementation",
+    "foundation_geometry": "Four arrest supports and all terminal rooms use the explicit mesh and structural envelopes in this contract. The low apron remains on mainland bbox[116,2136,146,2142].",
+    "pending_user_decision": "Only the separately identified H-A footprint conflicts are reserved for the requested user choice; see hermitage_terrain_decision.json. No silent H-A earthwork is applied."
+  },
+  "sources": [
+    {
+      "title": "Historic England official Anderton Boat Lift record",
+      "url": "https://historicengland.org.uk/listing/the-list/list-entry/1021152",
+      "use": "1875iron caissons, hydraulic lift and15.24m level change are historical mechanical analogs only; no validation of the fictional source-fluid bridge."
+    },
+    {
+      "title": "Canal & River Trust Anderton Visitor Centre",
+      "url": "https://canalrivertrust.org.uk/things-to-do/museums-and-attractions/anderton-boat-lift-and-visitor-centre-cheshire/visitor-centre-at-anderton-boat-lift",
+      "use": "Watertight moving caissons, guided rise and terminal interlocks as visual/mechanical reference."
+    },
+    {
+      "title": "Library of Congress1862pontoon-bridge drawing",
+      "url": "https://www.loc.gov/item/2004660225/",
+      "use": "Period pontoon construction visual reference, not structural proof."
+    }
+  ],
+  "major_site_replacements": [
+    {
+      "id": "ALTAR",
+      "name": "海民最终祭坛上坪",
+      "center": [
+        230,
+        2180,
+        416.4
+      ],
+      "size": [
+        30,
+        24
+      ],
+      "entrance": [
+        211,
+        2180,
+        411.2
+      ],
+      "remove_old_entrance": [
+        230,
+        2168,
+        404
+      ]
+    },
+    {
+      "id": "ALTAR_LOWER",
+      "name": "旧下祭坪",
+      "center": [
+        131,
+        2139,
+        404
+      ],
+      "size": [
+        30,
+        6
+      ],
+      "entrance": [
+        131,
+        2142,
+        404
+      ],
+      "bbox": [
+        116,
+        2136,
+        146,
+        2142
+      ],
+      "location": "West mainland bank outside complete moat; flooded late, no link to upper altar."
+    }
+  ],
+  "state_numeric": {
+    "R16_close_W": 397.15,
+    "R17_close_W": 404.15,
+    "lower_apron_close_W": 404.15,
+    "new_admission_requires_W_at_least": 409.9,
+    "hysteresis_transition_W": 409.85,
+    "return_arrest_z": 411.1
+  },
+  "bypass_existing_items": {
+    "existing_ladder_length": 9.377,
+    "preserved": true,
+    "existing_port_boats_preserved": true,
+    "counterexample": "AtW404, loaded deck405.242857 to inlet411.2 is5.957143m; existing9.377m ladder can reach inlet. Therefore gap and height alone are insufficient.",
+    "solution": "FA-I full-height enclosed recessed gate,4x30mm locking bolts, no outside control, mandatory dual true alignment cams. Ladder/boat reaches closed door only; cannot open it.",
+    "climbing_to_crown": "404lower-apron to416.4crown is12.4m, greater than9.377+1.2vault=10.577; lower apron is also on opposite mainland. Smooth wall and1.2m overhang prevent external bypass from floating hull."
+  },
+  "implementation": "final_route_rules.py",
+  "scenario_examples": "final_route_scenarios.json",
+  "terrain_override": "Generate the authored ring-moat/pillar solid volumes before scatter and navigation; they override the background IDW display field within moat_outer_bbox. Ground obstacles and closed collision faces follow altar geometry.",
+  "runtime_refinements": {
+    "new_entry_min_water": 409.9,
+    "recession_alarm_below": 409.85,
+    "release_hold_state": "Any positive release_hold_seconds blocks new entry and external rock-gate release; dual controls60s and empty bridge/altar/payload precede controlled lowering0.03m/s.",
+    "damage_exit": "Exactly one failed cell uses waterplane49m2; exit only after prior docking and only if supported alignment, tongue contact, capacity and structure remain valid. Two or more failed cells enter refuge/failure state.",
+    "airlock_volumes_m3": {
+      "WAIT_W": 15.552,
+      "WAIT_E": 15.552,
+      "FA_IN": 13.824
+    }
+  },
+  "rim_platform": {
+    "center_world": [
+      0,
+      1790,
+      556
+    ],
+    "bbox_world": [
+      -12,
+      1781,
+      12,
+      1799
+    ],
+    "flat_floor_z": 556,
+    "descending_slot": {
+      "width": 2,
+      "points": [
+        [
+          0,
+          1790,
+          556
+        ],
+        [
+          -12,
+          1793.3333333333333,
+          554.1333333333333
+        ]
+      ],
+      "surface": "The first R15 incline replaces only this strip of the flat platform, with continuous z and side kerbs. Remaining observation platform stays556.",
+      "edge_rail_height": 1
+    },
+    "gate": {
+      "id": "RIM-EXIT-GATE",
+      "world": [
+        -12,
+        1793.3333333333333,
+        554.1333333333333
+      ],
+      "width": 1.2,
+      "height": 1.8,
+      "normal_horizontal": [
+        -0.9635179096299405,
+        0.2676438637860946
+      ],
+      "default_state": "latched_open",
+      "open_seconds_if_closed": 2,
+      "lock": "inside drop-hook with matching outer hand latch, no key",
+      "location": "west platform boundary, perpendicular to the actual R15 line"
+    },
+    "normal_route_timing": "Gate is held open in the published day20 itinerary; no road coordinate or walking time changes."
+  },
+  "surface_gate_contracts": [
+    {
+      "id": "RIM-EXIT-GATE",
+      "layer_node": "RIM-EXIT",
+      "world": [
+        -12,
+        1793.3333333333333,
+        554.1333333333333
+      ],
+      "road_id": "R15",
+      "default_state": "latched_open",
+      "action_seconds_if_closed": 2,
+      "closed_rule": "Cut only the immediately downhill R15 segment at this named gate, in both crossing directions. Do not delete the upper RIM platform approach.",
+      "normal_itinerary_state": "latched_open"
+    }
+  ]
+};
+}

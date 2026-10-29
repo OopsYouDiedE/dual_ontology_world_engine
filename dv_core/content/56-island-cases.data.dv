@@ -1,0 +1,578 @@
+schema "dv-script-v1";
+
+// Pure authored values. No functions, callbacks, loops or executable AST.
+
+// island_case_ref — original source line 8
+data m56.island_case_ref.literal {
+    value = "case";
+}
+
+// island_case_director — original source line 11
+data m56.island_case_director.literal {
+    value = "director";
+}
+
+// island_case_roles — original source line 14
+data m56.island_case_roles.literal_0005 {
+    value = "main1f_f13";
+}
+
+// island_case_roles — original source line 14
+data m56.island_case_value.literal {
+    value = "value_order";
+}
+
+// island_case_score — original source line 28
+data m56.island_case_score.literal_0005 {
+    value = "completed_actions";
+}
+
+// island_case_score — original source line 33
+data m56.island_case_score.literal_0008 {
+    value = "c2.ledger";
+}
+
+// island_case_score — original source line 37
+data m56.island_case_score.literal_0010 {
+    value = "A";
+}
+
+// island_case_score — original source line 42
+data m56.island_case_candidate.literal {
+    value = "exiled";
+}
+
+// island_case_candidate — original source line 53
+data m56.island_case_allocate.literal {
+    value = "chapter";
+}
+
+// island_case_allocate — original source line 69
+data m56.island_case_allocate.literal_0002 {
+    value = 2;
+}
+
+// island_case_allocate — original source line 71
+data m56.island_case_allocate.literal_0003 {
+    value = "resolved";
+}
+
+// island_case_allocate — original source line 73
+data m56.island_case_allocate.literal_0004 {
+    value = "ledger";
+}
+
+// island_case_allocate — original source line 73
+data m56.island_case_allocate.literal_0005 {
+    value = "settled_at";
+}
+
+// island_case_allocate — original source line 74
+data m56.island_case_allocate.literal_0006 {
+    value = "matched_at";
+}
+
+// island_case_allocate — original source line 106
+data m56.island_case_allocate.best {
+    value = -1000000;
+}
+
+// island_case_allocate — original source line 122
+data m56.island_case_allocate.literal_0007 {
+    value = 16;
+}
+
+// island_case_allocate — original source line 129
+data m56.island_case_allocate.literal_0008 {
+    value = "participant_mask";
+}
+
+// island_case_allocate — original source line 130
+data m56.island_case_allocate.literal_0009 {
+    value = "island.case.allocate";
+}
+
+// island_case_allocate — original source line 132
+data m56.island_case_allocate.literal_0010 {
+    value = ".";
+}
+
+// island_case_allocate — original source line 134
+data m56.island_case_allocate.literal_0011 {
+    value = "simulation_slots";
+}
+
+// island_case_fields — original source line 138
+data m56.island_case_fields.return {
+    value = ["snapshot_done", "snapshot_name", "snapshot_seen_at", "snapshot_posted_at", "snapshot_counter", "snapshot_removed", "snapshot_reserve", "snapshot_day", "snapshot_night", "challenge_done", "challenge_name", "challenge_at", "defense_done", "defense_name", "defense_at", "defense_rations", "defense_consumed", "resolved", "challenge_old", "challenge_current", "challenge_seen_at", "defense_seen_at", "snapshot_ledger_at", "defense_removed_delta", "defense_reserve_delta", "defense_counter_at", "defense_ledger_at"];
+}
+
+// island_case_inspections — original source line 141
+data m56.island_case_inspections.literal {
+    value = ".island.case.records";
+}
+
+// island_case_inspections — original source line 141
+data m56.island_case_inspections.literal_0002 {
+    value = "island.case";
+}
+
+// island_case_inspections — original source line 141
+data m56.island_case_inspections.literal_0003 {
+    value = "检视摘录、质疑与自证记录";
+}
+
+// island_case_inspections — original source line 141
+data m56.island_case_inspections.literal_0004 {
+    value = ["已摘录", "摘录者", "原时刻", "张贴时刻", "旧余量", "旧取出", "旧入库", "旧日账", "旧夜账", "有质疑", "质疑者", "质疑时刻", "有自证", "自证者", "自证时刻", "自证余粮", "自证食用", "已核清", "质疑旧数", "质疑现数", "质疑读数时刻", "自证读数时刻", "旧账时刻", "自证取出差", "自证入库差", "自证柜时刻", "自证账时刻"];
+}
+
+// island_case_inspections — original source line 143
+data m56.island_case_inspections.literal_0005 {
+    value = "snapshot_done";
+}
+
+// island_case_inspections — original source line 143
+data m56.island_case_inspections.literal_0006 {
+    value = "这里还没有账页摘录。";
+}
+
+// island_case_inspections — original source line 143
+data m56.island_case_inspections.literal_0007 {
+    value = "{摘录者}在{张贴时刻}留下摘录：配给台{旧余量}份见于{原时刻}；账页见于{旧账时刻}，累计取出{旧取出}份、仓内转入{旧入库}份。两处并非同一次观察。";
+}
+
+// island_case_inspections — original source line 143
+data m56.island_case_inspections.literal_0008 {
+    value = ["摘录者", "张贴时刻", "原时刻", "旧余量", "旧取出", "旧入库", "旧账时刻"];
+}
+
+// island_case_inspections — original source line 143
+data m56.island_case_inspections.literal_0009 {
+    value = "challenge_done";
+}
+
+// island_case_inspections — original source line 143
+data m56.island_case_inspections.literal_0010 {
+    value = "{质疑者}在{质疑时刻}公开指控配给中存在尚未说明的取用：摘录{质疑旧数}份，{质疑读数时刻}亲见现存{质疑现数}份；尚未据此认定有人私取。";
+}
+
+// island_case_inspections — original source line 143
+data m56.island_case_inspections.literal_0011 {
+    value = ["质疑者", "质疑时刻", "质疑旧数", "质疑现数", "质疑读数时刻"];
+}
+
+// island_case_inspections — original source line 143
+data m56.island_case_inspections.literal_0012 {
+    value = "defense_done";
+}
+
+// island_case_inspections — original source line 143
+data m56.island_case_inspections.literal_0013 {
+    value = "{自证者}在{自证时刻}提交本人在{自证读数时刻}核对的记录：随身{自证余粮}份，已食{自证食用}份；另附{自证柜时刻}实数柜台、{自证账时刻}核账的证据，摘录后账内取出增加{自证取出差}份、转入增加{自证入库差}份。";
+}
+
+// island_case_inspections — original source line 143
+data m56.island_case_inspections.literal_0014 {
+    value = ["自证者", "自证时刻", "自证读数时刻", "自证余粮", "自证食用", "自证柜时刻", "自证账时刻", "自证取出差", "自证入库差"];
+}
+
+// island_case_inspections — original source line 143
+data m56.island_case_inspections.literal_0015 {
+    value = "已核清这次摘录与现账的时间差；记录没有据此判定任何人盗取粮食。";
+}
+
+// island_case_inspections — original source line 144
+data m56.island_case_inspections.literal_0016 {
+    value = { "kind" = "site"; "site" = "ledger"; };
+}
+
+// island_case_inspections — original source line 145
+data m56.island_case_inspections.literal_0017 {
+    value = ".island.case.experiment";
+}
+
+// island_case_inspections — original source line 145
+data m56.island_case_inspections.literal_0018 {
+    value = "greenhouse";
+}
+
+// island_case_inspections — original source line 145
+data m56.island_case_inspections.literal_0019 {
+    value = "island.experiment";
+}
+
+// island_case_inspections — original source line 145
+data m56.island_case_inspections.literal_0020 {
+    value = ["done", "signed_name", "sample_seen_at", "sample_reading", "opening", "completed_at"];
+}
+
+// island_case_inspections — original source line 145
+data m56.island_case_inspections.literal_0021 {
+    value = "检视温室南入口与实验记录";
+}
+
+// island_case_inspections — original source line 145
+data m56.island_case_inspections.literal_0022 {
+    value = ["已操作", "签名", "读数时刻", "读数", "开度", "完成时刻"];
+}
+
+// island_case_inspections — original source line 147
+data m56.island_case_inspections.literal_0023 {
+    value = "interaction";
+}
+
+// island_case_inspections — original source line 147
+data m56.island_case_inspections.literal_0024 {
+    value = { "kind" = "site"; "site" = "south_entry"; };
+}
+
+// island_case_inspections — original source line 148
+data m56.island_case_inspections.literal_0025 {
+    value = "experiment";
+}
+
+// island_case_inspections — original source line 148
+data m56.island_case_inspections.literal_0026 {
+    value = "done";
+}
+
+// island_case_inspections — original source line 148
+data m56.island_case_inspections.literal_0027 {
+    value = "南入口尚无这次实验记录，当前开度{开度}。";
+}
+
+// island_case_inspections — original source line 148
+data m56.island_case_inspections.literal_0028 {
+    value = "开度";
+}
+
+// island_case_inspections — original source line 148
+data m56.island_case_inspections.literal_0029 {
+    value = "{签名}在{完成时刻}将南入口调至半开，记下{读数时刻}看过的源质表读数{读数}。这会改变局部空气交换；不能凭这张记录断定此刻空气安全。";
+}
+
+// island_case_inspections — original source line 149
+data m56.island_case_inspections.literal_0030 {
+    value = ".island.case.current-ledger";
+}
+
+// island_case_inspections — original source line 149
+data m56.island_case_inspections.literal_0031 {
+    value = ["removed", "reserve_received", "day_recorded", "night_recorded", "pending_registered"];
+}
+
+// island_case_inspections — original source line 149
+data m56.island_case_inspections.literal_0032 {
+    value = "复核当前领取与入库账";
+}
+
+// island_case_inspections — original source line 149
+data m56.island_case_inspections.literal_0033 {
+    value = "累计取出{取出}份，仓内转入{转入}份；白日记账{日账}份，夜间记账{夜账}份，待核{待核}份。";
+}
+
+// island_case_inspections — original source line 149
+data m56.island_case_inspections.literal_0034 {
+    value = ["取出", "转入", "日账", "夜账", "待核"];
+}
+
+// island_case_inspections — original source line 151
+data m56.island_case_inspections.literal_0035 {
+    value = ".island.case.current-counter";
+}
+
+// island_case_inspections — original source line 151
+data m56.island_case_inspections.literal_0036 {
+    value = "c2.counter";
+}
+
+// island_case_inspections — original source line 151
+data m56.island_case_inspections.literal_0037 {
+    value = ["remaining"];
+}
+
+// island_case_inspections — original source line 151
+data m56.island_case_inspections.literal_0038 {
+    value = "实数配给台现存口粮";
+}
+
+// island_case_inspections — original source line 151
+data m56.island_case_inspections.literal_0039 {
+    value = "配给台实际现存{现存}份。";
+}
+
+// island_case_inspections — original source line 151
+data m56.island_case_inspections.literal_0040 {
+    value = ["现存"];
+}
+
+// island_case_inspections — original source line 151
+data m56.island_case_inspections.literal_0041 {
+    value = { "kind" = "site"; "site" = "ration_counter"; };
+}
+
+// island_case_inspections — original source line 152
+data m56.island_case_inspections.literal_0042 {
+    value = ".island.case.own-account";
+}
+
+// island_case_inspections — original source line 152
+data m56.island_case_inspections.literal_0043 {
+    value = ["rations", "consumed"];
+}
+
+// island_case_inspections — original source line 152
+data m56.island_case_inspections.literal_0044 {
+    value = "核对本人随身粮与食用记录";
+}
+
+// island_case_inspections — original source line 152
+data m56.island_case_inspections.literal_0045 {
+    value = "本人随身口粮{余粮}份，食用记录{已食}份。";
+}
+
+// island_case_inspections — original source line 152
+data m56.island_case_inspections.literal_0046 {
+    value = ["余粮", "已食"];
+}
+
+// island_case_inspections — original source line 153
+data m56.island_case_inspections.literal_0047 {
+    value = { "island_dynamic" = true; "simulation_utility" = 0; };
+}
+
+// island_case_clock_bindings — original source line 160
+data m56.island_case_clock_bindings.literal {
+    value = ["原时刻", "张贴时刻", "质疑时刻", "自证时刻", "读数时刻", "完成时刻", "质疑读数时刻", "自证读数时刻", "旧账时刻", "自证柜时刻", "自证账时刻"];
+}
+
+// island_case_clock_bindings — original source line 161
+data m56.island_case_clock_bindings.literal_0002 {
+    value = "format";
+}
+
+// island_case_clock_bindings — original source line 161
+data m56.island_case_clock_bindings.literal_0003 {
+    value = "game-clock";
+}
+
+// island_case_numeric — original source line 175
+data m56.island_case_numeric.literal {
+    value = "claims";
+}
+
+// island_case_numeric — original source line 179
+data m56.island_case_numeric.literal_0002 {
+    value = "perception";
+}
+
+// island_case_job — original source line 190
+data m56.island_case_with_evidence.literal {
+    value = "case_observations";
+}
+
+// island_case_jobs — original source line 208
+data m56.island_case_jobs.literal {
+    value = "greenhouse:greenhouse";
+}
+
+// island_case_jobs — original source line 211
+data m56.island_case_jobs.literal_0002 {
+    value = "opening";
+}
+
+// island_case_jobs — original source line 212
+data m56.island_case_jobs.literal_0008 {
+    value = "remaining";
+}
+
+// island_case_jobs — original source line 215
+data m56.island_case_jobs.literal_0009 {
+    value = "reserve_received";
+}
+
+// island_case_jobs — original source line 215
+data m56.island_case_jobs.literal_0013 {
+    value = "snapshot_seen_at";
+}
+
+// island_case_jobs — original source line 219
+data m56.island_case_jobs.literal_0014 {
+    value = "snapshot_ledger_at";
+}
+
+// island_case_jobs — original source line 224
+data m56.island_case_jobs.literal_0018 {
+    value = "snapshot_counter";
+}
+
+// island_case_jobs — original source line 229
+data m56.island_case_jobs.literal_0028 {
+    value = "rations";
+}
+
+// island_case_jobs — original source line 233
+data m56.island_case_jobs.literal_0029 {
+    value = "consumed";
+}
+
+// island_case_jobs — original source line 242
+data m56.island_case_install.literal {
+    value = "island_case_installed";
+}
+
+// island_case_install — original source line 252
+data m56.island_case_install.literal_0002 {
+    value = "island.director";
+}
+
+// island_case_install — original source line 260
+data m56.island_case_install.literal_0003 {
+    value = "摘录与核对记录";
+}
+
+// island_case_install — original source line 261
+data m56.island_case_install.literal_0004 {
+    value = "温室南入口与实验记录";
+}
+
+// island_case_install — original source line 264
+data m56.island_case_install.objects {
+    value = ["island.case", "island.experiment"];
+}
+
+// island_case_stamp — original source line 288
+data m56.island_case_stamp.literal {
+    value = "completed_at";
+}
+
+// island_case_stamp — original source line 288
+data m56.island_case_stamp.literal_0002 {
+    value = "snapshot_posted_at";
+}
+
+// island_case_stamp — original source line 288
+data m56.island_case_stamp.literal_0003 {
+    value = "challenge_at";
+}
+
+// island_case_stamp — original source line 288
+data m56.island_case_stamp.literal_0004 {
+    value = "defense_at";
+}
+
+// island_case_stamp — original source line 303
+data m56.island_case_stamp.literal_0005 {
+    value = "island.case.record-times";
+}
+
+// island_case_stamp — original source line 307
+data m56.island_case_stamp.literal_0006 {
+    value = "case_record_times";
+}
+
+// island_case_account_evidence — original source line 313
+data m56.island_case_account_evidence.literal {
+    value = "snapshot_removed";
+}
+
+// island_case_account_evidence — original source line 313
+data m56.island_case_account_evidence.literal_0002 {
+    value = "snapshot_reserve";
+}
+
+// island_case_reconcile — original source line 339
+data m56.island_case_reconcile.literal {
+    value = ".island.case.reconcile";
+}
+
+// island_case_reconcile — original source line 341
+data m56.island_case_reconcile.literal_0002 {
+    value = "我按各次实际观察时刻核算：摘录后领取增加";
+}
+
+// island_case_reconcile — original source line 341
+data m56.island_case_reconcile.literal_0003 {
+    value = "份，仓内转入增加";
+}
+
+// island_case_reconcile — original source line 341
+data m56.island_case_reconcile.literal_0004 {
+    value = "份，差额与现存相符。南入口实验另有现场签名记录；这些记录本身没有证明有人盗取粮食。";
+}
+
+// island_case_reconcile — original source line 342
+data m56.island_case_reconcile.literal_0005 {
+    value = "按实际记录说明账目时间差";
+}
+
+// island_case_selected_route — original source line 409
+data m56.island_case_selected_route.literal {
+    value = "goals";
+}
+
+// island_case_selected_route — original source line 413
+data m56.island_case_selected_route.literal_0002 {
+    value = "navigation_intention";
+}
+
+// island_case_selected_route — original source line 415
+data m56.island_case_selected_route.literal_0003 {
+    value = "available_when";
+}
+
+// island_case_selected_route — original source line 415
+data m56.island_case_selected_route.literal_0004 {
+    value = "weight";
+}
+
+// island_case_refresh — original source line 430
+data m56.island_case_refresh.literal {
+    value = "scheduled_action";
+}
+
+// island_case_refresh — original source line 453
+data m56.island_case_refresh.literal_0002 {
+    value = "island_dynamic";
+}
+
+// island_case_refresh — original source line 455
+data m56.island_case_refresh.literal_0003 {
+    value = "simulation_utility";
+}
+
+// island_case_refresh — original source line 460
+data m56.island_case_refresh.literal_0004 {
+    value = "player_actor";
+}
+
+// island_case_refresh — original source line 504
+data m56.island_case_refresh.literal_0005 {
+    value = "travel";
+}
+
+// island_case_refresh — original source line 505
+data m56.island_case_refresh.literal_0006 {
+    value = "from";
+}
+
+// island_case_refresh — original source line 505
+data m56.island_case_refresh.literal_0007 {
+    value = "to";
+}
+
+// island_case_refresh — original source line 509
+data m56.island_case_refresh.literal_0008 {
+    value = "owned-values-history-and-observations";
+}
+
+// island_case_edges — original source line 519
+data m56.island_case_edges.literal {
+    value = ["campus_ne:exit:温室", "greenhouse:exit:south"];
+}
+
+// island_case_edges — original source line 520
+data m56.island_case_edges.literal_0002 {
+    value = "opening_ref";
+}

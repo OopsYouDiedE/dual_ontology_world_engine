@@ -7,6 +7,8 @@ signal close_requested
 signal field_reveal_finished(cancelled: bool)
 
 const Sound = preload("res://scenes/Shared/Audio/Sound.gd")
+const Snackbar = preload("res://scenes/UI/Components/Snackbar.gd")
+const MaterialControls = preload("res://scenes/UI/Components/MaterialControls.gd")
 const BookSettingsPage = preload("res://scenes/UI/BookSettingsPage.gd")
 const ReplayPreferences = preload("res://scenes/UI/ReplayPreferences.gd")
 const BookArchivePage = preload("res://scenes/UI/BookArchivePage.gd")
@@ -99,6 +101,7 @@ var _loading_stage := ""
 var _opening_error := ""
 var _startup_failed := false
 var _startup_error_dialog: AcceptDialog
+var _settings_notice: PanelContainer
 var _loading_status: RichTextLabel
 var _field_reveal_material: ShaderMaterial
 var _field_reveal_tween: Tween
@@ -126,6 +129,7 @@ func _ready() -> void:
 	_desk.apply_material_atlas(load(ASSET_ROOT + "reference-material-atlas.webp"))
 	_desk.apply_material_maps(_load_optional_material_map("reference-normal.png"), _load_optional_material_map("reference-roughness.png"))
 	_setup_leaf()
+	_setup_settings_notice()
 	_setup_book()
 	_projection.configure(_desk, _projection_surface, viewport, _book)
 	rule.draw.connect(_draw_rule)
@@ -256,9 +260,11 @@ func show_start_error(message: String, retryable := false) -> void:
 	else:
 		if not is_instance_valid(_load_error_line):
 			_load_error_line = _leaf_text("")
-		_load_error_line.text = str(LOADING_TEXTS[_language()].failed)
+		_load_error_line.text = str(LOADING_TEXTS[_language()].failed) + "：" + message
 		_load_error_line.tooltip_text = message
 		_leaf_back.grab_focus()
+	if not _startup_failed:
+		_settings_notice.show_message(message, "", 8.0)
 	if _startup_failed:
 		if not is_instance_valid(_startup_error_dialog):
 			_startup_error_dialog = AcceptDialog.new()
@@ -342,7 +348,18 @@ func _finish_field_reveal(cancelled: bool) -> void:
 func _on_page_transition(_request_id: int, shown: bool, cancelled: bool) -> void:
 	if not cancelled: transition_finished.emit(shown)
 
+func _setup_settings_notice() -> void:
+	_settings_notice = Snackbar.new()
+	_settings_notice.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_settings_notice.offset_left = 24
+	_settings_notice.offset_right = -24
+	_settings_notice.offset_top = -80
+	_settings_notice.offset_bottom = -24
+	add_child(_settings_notice)
+
 func _on_setting_changed(section: String, key: String, value: Variant) -> void:
+	if _settings_active() and not replay_mode:
+		_settings_notice.show_message(tr("设置已更新"))
 	if section == "language" and replay_mode: _localize()
 	if section == "accessibility" and key == "reduce_motion":
 		_reduce_motion = bool(value)
@@ -476,7 +493,7 @@ func _input(event: InputEvent) -> void:
 	if _external_blocked or _request_pending or _turning or _leaving:
 		get_viewport().set_input_as_handled()
 		return
-	if event is InputEventMouse or event is InputEventKey or event is InputEventJoypadButton or event is InputEventJoypadMotion:
+	if event is InputEventMouse or event is InputEventKey or event is InputEventJoypadButton or event is InputEventJoypadMotion or event is InputEventAction:
 		# Back belongs to the book, before a slider/editor can consume its
 		# right-click. Handle the release here too so it cannot leak to the field.
 		if UIInput.is_back(event, false) or event.is_action("notebook"):
@@ -496,6 +513,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not _menu_input_enabled: return
 	if event.is_action_pressed("ui_accept") or event.is_action_pressed("dialogue_continue"):
+		var focused := viewport.gui_get_focus_owner()
+		if focused is BaseButton: return
 		_request("start")
 	elif event.is_action_pressed("settings"):
 		open_settings()
@@ -800,6 +819,7 @@ func _setup_leaf() -> void:
 	_leaf_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_leaf_body)
 	_leaf_back = Button.new()
+	MaterialControls.prepare_button(_leaf_back)
 	_leaf_back.text = tr("☜ 封面")
 	_leaf_back.theme_type_variation = &"TitleMenuButton"
 	_leaf_back.pressed.connect(_leave_book)
@@ -816,6 +836,7 @@ func _setup_leaf() -> void:
 	)
 	footer.add_child(_leaf_index)
 	_leaf_next = Button.new()
+	MaterialControls.prepare_button(_leaf_next)
 	_leaf_next.theme_type_variation = &"TitleMenuButton"
 	_leaf_next.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_leaf_next.pressed.connect(func(): open_section("load" if _current_page == "settings" else "settings"))
@@ -983,6 +1004,7 @@ func show_load_error(message: String) -> void:
 	cancel_opening()
 	if not is_instance_valid(_load_error_line):
 		_load_error_line = _leaf_text(tr("无法续读此书签，请选择其他存档。"))
+	_load_error_line.text = tr("无法续读此书签：") + message
 	_load_error_line.tooltip_text = message
 	_leaf_back.grab_focus()
 
@@ -1009,3 +1031,8 @@ func restore_replay_state(state: Dictionary) -> void:
 	if page != _current_page: await _turn_to(page)
 	_page_history.assign(state.get("history", []))
 	_restore_page_state()
+
+
+
+
+

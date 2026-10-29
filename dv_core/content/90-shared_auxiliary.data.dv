@@ -1,0 +1,6629 @@
+schema "dv-script-v1";
+
+data space.shared_auxiliary {
+    value = {
+  "schema": "auxiliary-rooms-v1",
+  "units": "m",
+  "axes": "X east,Y north,Z up",
+  "furniture_anchor": "bbox_local is room-local southwest XY; height is from room FFL; interaction_local is feet position",
+  "rooms": [
+    {
+      "id": "AX-01",
+      "site_id": "PORT_STORE",
+      "name": "港口粮仓与收货厅",
+      "bbox_world": [
+        -114.4,
+        27.6,
+        -95.2,
+        44.4
+      ],
+      "world_sw": [
+        -114.4,
+        27.6,
+        4
+      ],
+      "size": [
+        19.2,
+        16.8,
+        5.4
+      ],
+      "floor_z": 4,
+      "clear_height": 5.4,
+      "doors": [
+        {
+          "wall": "S",
+          "threshold_world": [
+            -100,
+            27.6,
+            4
+          ],
+          "width": 3.0,
+          "height": 4.2,
+          "lock": "仓管双钥匙",
+          "hinge": "上轨道",
+          "opens": "沿外墙向两侧平移",
+          "to": "R02",
+          "kind": "双扇外滑门"
+        },
+        {
+          "wall": "E",
+          "threshold_world": [
+            -95.2,
+            36,
+            4
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "仓管铜钥匙",
+          "hinge": "北端",
+          "opens": "同一扇隔门，向AX-02开启",
+          "to": "AX-02"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "N",
+          "offset_along_wall": 4.2,
+          "width": 2.4,
+          "sill": 3.2,
+          "height": 0.9,
+          "lock": "固定铁格玻璃",
+          "sill_center_world": [
+            -110.2,
+            44.4,
+            7.2
+          ]
+        },
+        {
+          "wall": "N",
+          "offset_along_wall": 14.4,
+          "width": 2.4,
+          "sill": 3.2,
+          "height": 0.9,
+          "lock": "固定铁格玻璃",
+          "sill_center_world": [
+            -100.0,
+            44.4,
+            7.2
+          ]
+        },
+        {
+          "wall": "W",
+          "offset_along_wall": 8.4,
+          "width": 2.4,
+          "sill": 3.2,
+          "height": 0.9,
+          "lock": "固定铁格玻璃",
+          "sill_center_world": [
+            -114.4,
+            36.0,
+            7.2
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "西粮袋架",
+          "bbox_local": [
+            0.6,
+            6,
+            7.0,
+            12
+          ],
+          "height": 2.1,
+          "capacity": "粮食1.5t",
+          "interaction_local": [
+            3.8,
+            5.6,
+            0
+          ]
+        },
+        {
+          "name": "东粮袋架",
+          "bbox_local": [
+            10.2,
+            6,
+            16.8,
+            12
+          ],
+          "height": 2.1,
+          "capacity": "粮食1.5t",
+          "interaction_local": [
+            13.5,
+            5.6,
+            0
+          ]
+        },
+        {
+          "name": "根菜通风箱架",
+          "bbox_local": [
+            0.6,
+            2.8,
+            6.6,
+            4.8
+          ],
+          "height": 1.5,
+          "capacity": "根菜1.2t",
+          "interaction_local": [
+            3.6,
+            2.4,
+            0
+          ]
+        },
+        {
+          "name": "台秤",
+          "bbox_local": [
+            10.8,
+            1.2,
+            12.8,
+            3.2
+          ],
+          "height": 1.2,
+          "capacity": "单次500kg",
+          "interaction_local": [
+            11.8,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "收货桌",
+          "bbox_local": [
+            0.8,
+            13.4,
+            3.2,
+            14.4
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            2.0,
+            13.0,
+            0
+          ]
+        }
+      ],
+      "capacity": "谷物库容3.0t、初始1.8t；根菜库容1.2t、初始1.0t；两条东西搬运带各2.4m净宽。",
+      "entry_path_world": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          -52,
+          12,
+          1.5
+        ],
+        [
+          -100,
+          27,
+          4
+        ],
+        [
+          -100,
+          27.6,
+          4
+        ]
+      ],
+      "notes": "粮架台脚0.30m；门前R02尽端设12×8m堆货面，南门止回闸垂直行程2.4m。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 322.56
+    },
+    {
+      "id": "AX-02",
+      "site_id": "PORT_STORE",
+      "name": "港口器材与耐储品间",
+      "bbox_world": [
+        -94.6,
+        27.6,
+        -85.6,
+        44.4
+      ],
+      "world_sw": [
+        -94.6,
+        27.6,
+        4
+      ],
+      "size": [
+        9.0,
+        16.8,
+        5.4
+      ],
+      "floor_z": 4,
+      "clear_height": 5.4,
+      "doors": [
+        {
+          "wall": "W",
+          "threshold_world": [
+            -94.6,
+            36,
+            4
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "仓管铜钥匙",
+          "hinge": "北端",
+          "opens": "同一扇隔门，向AX-02开启",
+          "to": "AX-01"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "E",
+          "offset_along_wall": 8.4,
+          "width": 2.4,
+          "sill": 3.2,
+          "height": 0.9,
+          "lock": "固定铁格玻璃",
+          "sill_center_world": [
+            -85.6,
+            36.0,
+            7.2
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "材料架",
+          "bbox_local": [
+            0.6,
+            11.4,
+            8.4,
+            15.6
+          ],
+          "height": 2.4,
+          "capacity": "木料0.6m³、玻璃20m²、金属件250kg",
+          "interaction_local": [
+            4.5,
+            11.0,
+            0
+          ]
+        },
+        {
+          "name": "豆盐肉封箱架",
+          "bbox_local": [
+            0.6,
+            2.4,
+            3.6,
+            7.2
+          ],
+          "height": 2.1,
+          "capacity": "豆与盐肉合计1.0t",
+          "interaction_local": [
+            2.1,
+            2.0,
+            0
+          ]
+        },
+        {
+          "name": "灯油铁柜",
+          "bbox_local": [
+            6.6,
+            0.6,
+            8.4,
+            2.4
+          ],
+          "height": 1.8,
+          "capacity": "2只80L原封桶，初始160L",
+          "interaction_local": [
+            7.5,
+            2.8,
+            0
+          ]
+        },
+        {
+          "name": "记录桌",
+          "bbox_local": [
+            5.4,
+            6.6,
+            7.8,
+            7.5
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            6.6,
+            6.2,
+            0
+          ]
+        }
+      ],
+      "capacity": "干器材承载1.5t；灯油160L计入全岛既有480L总账。",
+      "entry_path_world": [
+        [
+          -100,
+          27,
+          4
+        ],
+        [
+          -100,
+          31,
+          4
+        ],
+        [
+          -96.4,
+          31,
+          4
+        ],
+        [
+          -96.4,
+          36,
+          4
+        ],
+        [
+          -94.6,
+          36,
+          4
+        ]
+      ],
+      "notes": "西门与AX-01东门为同一0.6m厚隔墙两侧门面；灯油柜下1.8×1.8×0.15m接液盘。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 151.2
+    },
+    {
+      "id": "AX-03",
+      "site_id": "BOAT_SHED",
+      "name": "船具修理与帆索棚",
+      "bbox_world": [
+        78.6,
+        -15.4,
+        101.4,
+        -4.6
+      ],
+      "world_sw": [
+        78.6,
+        -15.4,
+        0
+      ],
+      "size": [
+        22.8,
+        10.8,
+        5.4
+      ],
+      "floor_z": 0,
+      "clear_height": 5.4,
+      "doors": [
+        {
+          "wall": "W",
+          "threshold_world": [
+            78.6,
+            -10,
+            0
+          ],
+          "width": 3.6,
+          "height": 4.2,
+          "lock": "船匠横梁锁",
+          "hinge": "上轨道",
+          "opens": "沿外墙向两侧平移",
+          "to": "R24",
+          "kind": "双扇外滑门"
+        },
+        {
+          "wall": "E",
+          "threshold_world": [
+            101.4,
+            -10,
+            0
+          ],
+          "width": 3.6,
+          "height": 4.2,
+          "lock": "船匠横梁锁",
+          "hinge": "上轨道",
+          "opens": "沿外墙向两侧平移",
+          "to": "东修船坪",
+          "kind": "双扇外滑门"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "N",
+          "offset_along_wall": 5.4,
+          "width": 2.4,
+          "sill": 3.2,
+          "height": 1.2,
+          "lock": "内链高窗",
+          "sill_center_world": [
+            84.0,
+            -4.6,
+            3.2
+          ]
+        },
+        {
+          "wall": "N",
+          "offset_along_wall": 17.4,
+          "width": 2.4,
+          "sill": 3.2,
+          "height": 1.2,
+          "lock": "内链高窗",
+          "sill_center_world": [
+            96.0,
+            -4.6,
+            3.2
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "船体木托架",
+          "bbox_local": [
+            1.2,
+            3.6,
+            10.2,
+            6.9
+          ],
+          "height": 0.75,
+          "capacity": "1艘8.4×2.7m转运艇",
+          "interaction_local": [
+            5.7,
+            3.2,
+            0
+          ]
+        },
+        {
+          "name": "木工长台",
+          "bbox_local": [
+            1.2,
+            0.6,
+            9.6,
+            1.5
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            5.4,
+            1.9,
+            0
+          ]
+        },
+        {
+          "name": "帆布与绳索架",
+          "bbox_local": [
+            14.4,
+            7.8,
+            22.2,
+            10.2
+          ],
+          "height": 2.7,
+          "capacity": "帆布120m²、缆绳400m",
+          "interaction_local": [
+            18.3,
+            7.4,
+            0
+          ]
+        },
+        {
+          "name": "手动梁吊",
+          "bbox_local": [
+            5.7,
+            4.8,
+            6.3,
+            5.4
+          ],
+          "height": 4.5,
+          "capacity": "吊重1.0t",
+          "interaction_local": [
+            6.0,
+            2.8,
+            0
+          ]
+        },
+        {
+          "name": "修理器具柜",
+          "bbox_local": [
+            14.4,
+            0.6,
+            17.4,
+            1.5
+          ],
+          "height": 2.1,
+          "capacity": "",
+          "interaction_local": [
+            15.9,
+            1.9,
+            0
+          ]
+        }
+      ],
+      "capacity": "同一时段修理1艇、作业6人；棚东8×12m硬坪用于艇体退出。",
+      "entry_path_world": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          52,
+          0,
+          0
+        ],
+        [
+          78,
+          -10,
+          0
+        ],
+        [
+          78.6,
+          -10,
+          0
+        ]
+      ],
+      "notes": "中央东西通行带宽3.6m，托架可沿地轨移动至东坪；两门净高4.2m。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 246.24
+    },
+    {
+      "id": "AX-04",
+      "site_id": "WELL",
+      "name": "公共取水亭及双仓井口",
+      "bbox_world": [
+        -51.4,
+        140.6,
+        -44.6,
+        147.4
+      ],
+      "world_sw": [
+        -51.4,
+        140.6,
+        12
+      ],
+      "size": [
+        6.8,
+        6.8,
+        3.6
+      ],
+      "floor_z": 12,
+      "clear_height": 3.6,
+      "doors": [
+        {
+          "wall": "S",
+          "threshold_world": [
+            -48,
+            140.6,
+            12
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "白昼常开，夜间村务挂锁",
+          "hinge": "东端",
+          "opens": "向门外平台贴墙开启",
+          "to": "R25"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "W",
+          "offset_along_wall": 3.4,
+          "width": 2.4,
+          "sill": 1.2,
+          "height": 1.5,
+          "lock": "固定木百叶",
+          "sill_center_world": [
+            -51.4,
+            144.0,
+            13.2
+          ]
+        },
+        {
+          "wall": "E",
+          "offset_along_wall": 3.4,
+          "width": 2.4,
+          "sill": 1.2,
+          "height": 1.5,
+          "lock": "固定木百叶",
+          "sill_center_world": [
+            -44.6,
+            144.0,
+            13.2
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "西手泵",
+          "bbox_local": [
+            0.6,
+            2.4,
+            1.4,
+            3.2
+          ],
+          "height": 1.3,
+          "capacity": "2m³/h",
+          "interaction_local": [
+            1.0,
+            2.0,
+            0
+          ]
+        },
+        {
+          "name": "东手泵",
+          "bbox_local": [
+            5.4,
+            2.4,
+            6.2,
+            3.2
+          ],
+          "height": 1.3,
+          "capacity": "2m³/h",
+          "interaction_local": [
+            5.8,
+            2.0,
+            0
+          ]
+        },
+        {
+          "name": "取水石槽",
+          "bbox_local": [
+            1.8,
+            4.8,
+            5.0,
+            5.6
+          ],
+          "height": 0.85,
+          "capacity": "同时4桶",
+          "interaction_local": [
+            3.4,
+            4.4,
+            0
+          ]
+        },
+        {
+          "name": "南水仓检修盖",
+          "bbox_local": [
+            1.2,
+            0.6,
+            2.2,
+            1.6
+          ],
+          "height": 0.15,
+          "capacity": "5×3×2m=30m³",
+          "interaction_local": [
+            1.7,
+            2.0,
+            0
+          ]
+        },
+        {
+          "name": "北水仓检修盖",
+          "bbox_local": [
+            4.6,
+            0.6,
+            5.6,
+            1.6
+          ],
+          "height": 0.15,
+          "capacity": "5×3×2m=30m³",
+          "interaction_local": [
+            5.1,
+            2.0,
+            0
+          ]
+        }
+      ],
+      "capacity": "地下60m³分两仓；日取水上限4m³；排队6人。",
+      "entry_path_world": [
+        [
+          -48,
+          140,
+          12
+        ],
+        [
+          -48,
+          140.6,
+          12
+        ]
+      ],
+      "notes": "地下仓底Z7.6，水面上限Z9.6；南仓XY[-50.5,141,-45.5,144]，北仓[-50.5,144.6,-45.5,147.6]。两只井盖需村务或维护总管钥匙。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 46.24
+    },
+    {
+      "id": "AX-05",
+      "site_id": "CHAPEL",
+      "name": "聚落会堂",
+      "bbox_world": [
+        -104.4,
+        189.6,
+        -87.6,
+        218.4
+      ],
+      "world_sw": [
+        -104.4,
+        189.6,
+        17
+      ],
+      "size": [
+        16.8,
+        28.8,
+        6.6
+      ],
+      "floor_z": 17,
+      "clear_height": 6.6,
+      "doors": [
+        {
+          "wall": "S",
+          "threshold_world": [
+            -96,
+            189.6,
+            17
+          ],
+          "width": 2.4,
+          "height": 2.4,
+          "lock": "村务钥匙，活动时扣开",
+          "hinge": "东端",
+          "opens": "向门外平台贴墙开启",
+          "to": "R26"
+        },
+        {
+          "wall": "E",
+          "threshold_world": [
+            -87.6,
+            204,
+            17
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "内侧推杆，外侧村务钥匙",
+          "hinge": "北端",
+          "opens": "向门外平台贴墙开启",
+          "to": "会堂东疏散坪"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "W",
+          "offset_along_wall": 7.2,
+          "width": 2.4,
+          "sill": 1.8,
+          "height": 3.0,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            -104.4,
+            196.8,
+            18.8
+          ]
+        },
+        {
+          "wall": "W",
+          "offset_along_wall": 18,
+          "width": 2.4,
+          "sill": 1.8,
+          "height": 3.0,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            -104.4,
+            207.6,
+            18.8
+          ]
+        },
+        {
+          "wall": "E",
+          "offset_along_wall": 7.2,
+          "width": 2.4,
+          "sill": 1.8,
+          "height": 3.0,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            -87.6,
+            196.8,
+            18.8
+          ]
+        },
+        {
+          "wall": "E",
+          "offset_along_wall": 21,
+          "width": 2.4,
+          "sill": 1.8,
+          "height": 3.0,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            -87.6,
+            210.6,
+            18.8
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "八人长凳1",
+          "bbox_local": [
+            1.6,
+            5.7,
+            6.4,
+            6.3
+          ],
+          "height": 0.5,
+          "capacity": "8座",
+          "interaction_local": [
+            4.0,
+            5.3,
+            0
+          ]
+        },
+        {
+          "name": "八人长凳2",
+          "bbox_local": [
+            10.4,
+            5.7,
+            15.200000000000001,
+            6.3
+          ],
+          "height": 0.5,
+          "capacity": "8座",
+          "interaction_local": [
+            12.8,
+            5.3,
+            0
+          ]
+        },
+        {
+          "name": "八人长凳3",
+          "bbox_local": [
+            1.6,
+            7.7,
+            6.4,
+            8.3
+          ],
+          "height": 0.5,
+          "capacity": "8座",
+          "interaction_local": [
+            4.0,
+            7.3,
+            0
+          ]
+        },
+        {
+          "name": "八人长凳4",
+          "bbox_local": [
+            10.4,
+            7.7,
+            15.200000000000001,
+            8.3
+          ],
+          "height": 0.5,
+          "capacity": "8座",
+          "interaction_local": [
+            12.8,
+            7.3,
+            0
+          ]
+        },
+        {
+          "name": "八人长凳5",
+          "bbox_local": [
+            1.6,
+            9.7,
+            6.4,
+            10.3
+          ],
+          "height": 0.5,
+          "capacity": "8座",
+          "interaction_local": [
+            4.0,
+            9.3,
+            0
+          ]
+        },
+        {
+          "name": "八人长凳6",
+          "bbox_local": [
+            10.4,
+            9.7,
+            15.200000000000001,
+            10.3
+          ],
+          "height": 0.5,
+          "capacity": "8座",
+          "interaction_local": [
+            12.8,
+            9.3,
+            0
+          ]
+        },
+        {
+          "name": "八人长凳7",
+          "bbox_local": [
+            1.6,
+            11.7,
+            6.4,
+            12.3
+          ],
+          "height": 0.5,
+          "capacity": "8座",
+          "interaction_local": [
+            4.0,
+            11.3,
+            0
+          ]
+        },
+        {
+          "name": "八人长凳8",
+          "bbox_local": [
+            10.4,
+            11.7,
+            15.200000000000001,
+            12.3
+          ],
+          "height": 0.5,
+          "capacity": "8座",
+          "interaction_local": [
+            12.8,
+            11.3,
+            0
+          ]
+        },
+        {
+          "name": "八人长凳9",
+          "bbox_local": [
+            1.6,
+            13.7,
+            6.4,
+            14.3
+          ],
+          "height": 0.5,
+          "capacity": "8座",
+          "interaction_local": [
+            4.0,
+            13.3,
+            0
+          ]
+        },
+        {
+          "name": "八人长凳10",
+          "bbox_local": [
+            10.4,
+            13.7,
+            15.200000000000001,
+            14.3
+          ],
+          "height": 0.5,
+          "capacity": "8座",
+          "interaction_local": [
+            12.8,
+            13.3,
+            0
+          ]
+        },
+        {
+          "name": "八人长凳11",
+          "bbox_local": [
+            1.6,
+            15.7,
+            6.4,
+            16.3
+          ],
+          "height": 0.5,
+          "capacity": "8座",
+          "interaction_local": [
+            4.0,
+            15.3,
+            0
+          ]
+        },
+        {
+          "name": "八人长凳12",
+          "bbox_local": [
+            10.4,
+            15.7,
+            15.200000000000001,
+            16.3
+          ],
+          "height": 0.5,
+          "capacity": "8座",
+          "interaction_local": [
+            12.8,
+            15.3,
+            0
+          ]
+        },
+        {
+          "name": "北讲台",
+          "bbox_local": [
+            2.4,
+            22.8,
+            14.4,
+            26.4
+          ],
+          "height": 0.45,
+          "capacity": "",
+          "interaction_local": [
+            8.4,
+            22.4,
+            0
+          ]
+        },
+        {
+          "name": "北墙开放储物柜",
+          "bbox_local": [
+            1,
+            27.2,
+            15.8,
+            28.4
+          ],
+          "height": 2.4,
+          "capacity": "折椅48把、毛毯40条",
+          "interaction_local": [
+            8.4,
+            26.8,
+            0
+          ]
+        },
+        {
+          "name": "公议记录桌",
+          "bbox_local": [
+            0.6,
+            1.2,
+            3.0,
+            2.4
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            1.8,
+            0.8,
+            0
+          ]
+        }
+      ],
+      "capacity": "固定96座；撤凳后140人站立；全室净高6.6m。",
+      "entry_path_world": [
+        [
+          -96,
+          180,
+          17
+        ],
+        [
+          -96,
+          189,
+          17
+        ],
+        [
+          -96,
+          189.6,
+          17
+        ]
+      ],
+      "notes": "北端为开放讲台与柜带，不另搭夹层；中通道4m，两侧各1.6m。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 483.84
+    },
+    {
+      "id": "AX-06",
+      "site_id": "SCHOOL",
+      "name": "村学教室",
+      "bbox_world": [
+        56.6,
+        195.6,
+        66.2,
+        212.4
+      ],
+      "world_sw": [
+        56.6,
+        195.6,
+        17
+      ],
+      "size": [
+        9.6,
+        16.8,
+        6.0
+      ],
+      "floor_z": 17,
+      "clear_height": 6.0,
+      "doors": [
+        {
+          "wall": "E",
+          "threshold_world": [
+            66.2,
+            204,
+            17
+          ],
+          "width": 1.2,
+          "height": 2.4,
+          "lock": "村教师钥匙",
+          "hinge": "北端",
+          "opens": "向本室贴墙开启",
+          "to": "SCHOOL-HALL"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "W",
+          "offset_along_wall": 4.2,
+          "width": 2.4,
+          "sill": 1.2,
+          "height": 2.4,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            56.6,
+            199.8,
+            18.2
+          ]
+        },
+        {
+          "wall": "W",
+          "offset_along_wall": 11.4,
+          "width": 2.4,
+          "sill": 1.2,
+          "height": 2.4,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            56.6,
+            207.0,
+            18.2
+          ]
+        },
+        {
+          "wall": "S",
+          "offset_along_wall": 4.8,
+          "width": 2.4,
+          "sill": 1.2,
+          "height": 2.4,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            61.4,
+            195.6,
+            18.2
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "双人课桌组",
+          "bbox_local": [
+            1.2,
+            4.2,
+            8.4,
+            12.6
+          ],
+          "height": 0.75,
+          "capacity": "12桌24座，3列×4排；列间1.2m",
+          "interaction_local": [
+            4.8,
+            3.8,
+            0
+          ]
+        },
+        {
+          "name": "北黑板",
+          "bbox_local": [
+            1.8,
+            16.2,
+            7.8,
+            16.4
+          ],
+          "height": 2.4,
+          "capacity": "",
+          "interaction_local": [
+            4.8,
+            15.8,
+            0
+          ]
+        },
+        {
+          "name": "教师桌",
+          "bbox_local": [
+            0.6,
+            13.8,
+            3.0,
+            15
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            1.8,
+            13.4,
+            0
+          ]
+        },
+        {
+          "name": "教具柜",
+          "bbox_local": [
+            7.8,
+            13.2,
+            9,
+            16.2
+          ],
+          "height": 2.1,
+          "capacity": "",
+          "interaction_local": [
+            7.4,
+            14.7,
+            0
+          ]
+        }
+      ],
+      "capacity": "24名儿童与1名教师；净高6.0m。",
+      "entry_path_world": [
+        [
+          68,
+          195,
+          17
+        ],
+        [
+          68,
+          204,
+          17
+        ],
+        [
+          66.2,
+          204,
+          17
+        ]
+      ],
+      "notes": "课桌组是重复摆放区，单桌1.2×0.6m，中心X=1.8/4.8/7.8、Y=5.0/7.0/9.0/11.0，椅在桌南0.75m。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 161.28
+    },
+    {
+      "id": "AX-07",
+      "site_id": "SCHOOL",
+      "name": "村落医务室",
+      "bbox_world": [
+        69.8,
+        195.6,
+        79.4,
+        212.4
+      ],
+      "world_sw": [
+        69.8,
+        195.6,
+        17
+      ],
+      "size": [
+        9.6,
+        16.8,
+        4.2
+      ],
+      "floor_z": 17,
+      "clear_height": 4.2,
+      "doors": [
+        {
+          "wall": "W",
+          "threshold_world": [
+            69.8,
+            204,
+            17
+          ],
+          "width": 1.2,
+          "height": 2.4,
+          "lock": "村医铜钥匙",
+          "hinge": "北端",
+          "opens": "向本室贴墙开启",
+          "to": "SCHOOL-HALL"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "E",
+          "offset_along_wall": 4.2,
+          "width": 2.4,
+          "sill": 1.2,
+          "height": 2.4,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            79.4,
+            199.8,
+            18.2
+          ]
+        },
+        {
+          "wall": "E",
+          "offset_along_wall": 11.4,
+          "width": 2.4,
+          "sill": 1.2,
+          "height": 2.4,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            79.4,
+            207.0,
+            18.2
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "观察床1",
+          "bbox_local": [
+            0.6,
+            1.2,
+            1.5,
+            3.3
+          ],
+          "height": 0.65,
+          "capacity": "",
+          "interaction_local": [
+            1.05,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "观察床2",
+          "bbox_local": [
+            7.8,
+            1.2,
+            8.7,
+            3.3
+          ],
+          "height": 0.65,
+          "capacity": "",
+          "interaction_local": [
+            8.25,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "观察床3",
+          "bbox_local": [
+            0.6,
+            5.4,
+            1.5,
+            7.5
+          ],
+          "height": 0.65,
+          "capacity": "",
+          "interaction_local": [
+            1.05,
+            5.0,
+            0
+          ]
+        },
+        {
+          "name": "观察床4",
+          "bbox_local": [
+            7.8,
+            5.4,
+            8.7,
+            7.5
+          ],
+          "height": 0.65,
+          "capacity": "",
+          "interaction_local": [
+            8.25,
+            5.0,
+            0
+          ]
+        },
+        {
+          "name": "诊查台",
+          "bbox_local": [
+            3.6,
+            11.4,
+            6,
+            12.6
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            4.8,
+            11.0,
+            0
+          ]
+        },
+        {
+          "name": "药柜",
+          "bbox_local": [
+            0.6,
+            14.4,
+            4.2,
+            16.2
+          ],
+          "height": 2.1,
+          "capacity": "常用药40箱",
+          "interaction_local": [
+            2.4,
+            14.0,
+            0
+          ]
+        },
+        {
+          "name": "清洗水槽",
+          "bbox_local": [
+            7.8,
+            13.8,
+            9,
+            16.2
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            8.4,
+            13.4,
+            0
+          ]
+        }
+      ],
+      "capacity": "4张观察床、2名医护工作位；不增加常住人口。",
+      "entry_path_world": [
+        [
+          68,
+          195,
+          17
+        ],
+        [
+          68,
+          204,
+          17
+        ],
+        [
+          69.8,
+          204,
+          17
+        ]
+      ],
+      "notes": "吊顶Z21.2；上部2.4m仅为不可通行设备余高。药柜单独铜钥匙。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 161.28
+    },
+    {
+      "id": "AX-08",
+      "site_id": "GREEN",
+      "name": "温室研究床区",
+      "bbox_world": [
+        198.2,
+        423.2,
+        209.6,
+        440.8
+      ],
+      "world_sw": [
+        198.2,
+        423.2,
+        42
+      ],
+      "size": [
+        11.4,
+        17.6,
+        6.0
+      ],
+      "floor_z": 42,
+      "clear_height": 6.0,
+      "doors": [
+        {
+          "wall": "E",
+          "threshold_world": [
+            209.6,
+            424.5,
+            42
+          ],
+          "width": 1.2,
+          "height": 2.4,
+          "lock": "温室与白塔双钥匙",
+          "hinge": "北端",
+          "opens": "同一扇隔门，向AX-09开启",
+          "to": "AX-09"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "W",
+          "offset_along_wall": 8.8,
+          "width": 16,
+          "sill": 1.0,
+          "height": 4.8,
+          "lock": "固定玻璃，顶沿通风叶0.3m",
+          "sill_center_world": [
+            198.2,
+            432.0,
+            43.0
+          ]
+        },
+        {
+          "wall": "N",
+          "offset_along_wall": 5.7,
+          "width": 9,
+          "sill": 1.0,
+          "height": 4.8,
+          "lock": "固定玻璃",
+          "sill_center_world": [
+            203.9,
+            440.8,
+            43.0
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "研究床1",
+          "bbox_local": [
+            0.4,
+            2.8,
+            2.4,
+            14.8
+          ],
+          "height": 0.8,
+          "capacity": "24m²",
+          "interaction_local": [
+            1.4,
+            2.4,
+            0
+          ]
+        },
+        {
+          "name": "研究床2",
+          "bbox_local": [
+            3.1999999999999997,
+            2.8,
+            5.199999999999999,
+            14.8
+          ],
+          "height": 0.8,
+          "capacity": "24m²",
+          "interaction_local": [
+            4.2,
+            2.4,
+            0
+          ]
+        },
+        {
+          "name": "研究床3",
+          "bbox_local": [
+            6.0,
+            2.8,
+            8.0,
+            14.8
+          ],
+          "height": 0.8,
+          "capacity": "24m²",
+          "interaction_local": [
+            7.0,
+            2.4,
+            0
+          ]
+        },
+        {
+          "name": "研究床4",
+          "bbox_local": [
+            8.799999999999999,
+            2.8,
+            10.799999999999999,
+            14.8
+          ],
+          "height": 0.8,
+          "capacity": "24m²",
+          "interaction_local": [
+            9.8,
+            2.4,
+            0
+          ]
+        },
+        {
+          "name": "样本台",
+          "bbox_local": [
+            0.4,
+            0.4,
+            2.8,
+            1.4
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            1.6,
+            1.8,
+            0
+          ]
+        },
+        {
+          "name": "水量计与锁阀",
+          "bbox_local": [
+            9.6,
+            0.4,
+            10.6,
+            1.2
+          ],
+          "height": 1.2,
+          "capacity": "",
+          "interaction_local": [
+            10.1,
+            1.6,
+            0
+          ]
+        }
+      ],
+      "capacity": "4座2×12m单层研究床，共96m²；药用干料120kg/年。",
+      "entry_path_world": [
+        [
+          216,
+          423,
+          42
+        ],
+        [
+          216,
+          423.7,
+          42
+        ],
+        [
+          210.2,
+          423.7,
+          42
+        ],
+        [
+          210.2,
+          424.5,
+          42
+        ],
+        [
+          209.6,
+          424.5,
+          42
+        ]
+      ],
+      "notes": "床间净道0.8m，南操作带2.8m；研究床独立标号G-R01…04。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 200.64
+    },
+    {
+      "id": "AX-09",
+      "site_id": "GREEN",
+      "name": "温室食用种植区",
+      "bbox_world": [
+        210.2,
+        423.2,
+        233.8,
+        440.8
+      ],
+      "world_sw": [
+        210.2,
+        423.2,
+        42
+      ],
+      "size": [
+        23.6,
+        17.6,
+        6.0
+      ],
+      "floor_z": 42,
+      "clear_height": 6.0,
+      "doors": [
+        {
+          "wall": "S",
+          "threshold_world": [
+            216,
+            423.2,
+            42
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "园艺工钥匙",
+          "hinge": "东端",
+          "opens": "向门外平台贴墙开启",
+          "to": "R10"
+        },
+        {
+          "wall": "W",
+          "threshold_world": [
+            210.2,
+            424.5,
+            42
+          ],
+          "width": 1.2,
+          "height": 2.4,
+          "lock": "温室与白塔双钥匙",
+          "hinge": "北端",
+          "opens": "同一扇隔门，向AX-09开启",
+          "to": "AX-08"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "E",
+          "offset_along_wall": 8.8,
+          "width": 16,
+          "sill": 1,
+          "height": 4.8,
+          "lock": "固定玻璃，顶叶0.3m",
+          "sill_center_world": [
+            233.8,
+            432.0,
+            43
+          ]
+        },
+        {
+          "wall": "N",
+          "offset_along_wall": 11.8,
+          "width": 21,
+          "sill": 1,
+          "height": 4.8,
+          "lock": "固定玻璃",
+          "sill_center_world": [
+            222.0,
+            440.8,
+            43
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "双层苗床1",
+          "bbox_local": [
+            1.0,
+            1.4,
+            3.0,
+            17.4
+          ],
+          "height": 2.3,
+          "capacity": "两层各32m²，合64m²",
+          "interaction_local": [
+            2.0,
+            1.0,
+            0
+          ]
+        },
+        {
+          "name": "双层苗床2",
+          "bbox_local": [
+            4.6,
+            1.4,
+            6.6,
+            17.4
+          ],
+          "height": 2.3,
+          "capacity": "两层各32m²，合64m²",
+          "interaction_local": [
+            5.6,
+            1.0,
+            0
+          ]
+        },
+        {
+          "name": "双层苗床3",
+          "bbox_local": [
+            8.2,
+            1.4,
+            10.2,
+            17.4
+          ],
+          "height": 2.3,
+          "capacity": "两层各32m²，合64m²",
+          "interaction_local": [
+            9.2,
+            1.0,
+            0
+          ]
+        },
+        {
+          "name": "双层苗床4",
+          "bbox_local": [
+            11.8,
+            1.4,
+            13.8,
+            17.4
+          ],
+          "height": 2.3,
+          "capacity": "两层各32m²，合64m²",
+          "interaction_local": [
+            12.8,
+            1.0,
+            0
+          ]
+        },
+        {
+          "name": "双层苗床5",
+          "bbox_local": [
+            15.4,
+            1.4,
+            17.4,
+            17.4
+          ],
+          "height": 2.3,
+          "capacity": "两层各32m²，合64m²",
+          "interaction_local": [
+            16.4,
+            1.0,
+            0
+          ]
+        },
+        {
+          "name": "双层苗床6",
+          "bbox_local": [
+            19.0,
+            1.4,
+            21.0,
+            17.4
+          ],
+          "height": 2.3,
+          "capacity": "两层各32m²，合64m²",
+          "interaction_local": [
+            20.0,
+            1.0,
+            0
+          ]
+        },
+        {
+          "name": "移动踏台停位",
+          "bbox_local": [
+            21.6,
+            0.2,
+            23.1,
+            1.2
+          ],
+          "height": 0.75,
+          "capacity": "",
+          "interaction_local": [
+            22.35,
+            1.6,
+            0
+          ]
+        }
+      ],
+      "capacity": "6座2×16m双层苗床，地面占192m²，栽培384m²；两区合计灌溉1.4m³/日、食用鲜菜3t/年。",
+      "entry_path_world": [
+        [
+          216,
+          423,
+          42
+        ],
+        [
+          216,
+          423.2,
+          42
+        ]
+      ],
+      "notes": "上层床面Z44.3、下层Z42.8；床间净道1.6m，南门前1.4m横道。上层叶菜、下层耐阴苗与菌菜；低光损耗已计入年度定额。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 415.36
+    },
+    {
+      "id": "AX-10",
+      "site_id": "MILL",
+      "name": "风磨装粮与磨盘层",
+      "bbox_world": [
+        -325.4,
+        304.6,
+        -314.6,
+        315.4
+      ],
+      "world_sw": [
+        -325.4,
+        304.6,
+        31
+      ],
+      "size": [
+        10.8,
+        10.8,
+        3.4
+      ],
+      "floor_z": 31,
+      "clear_height": 3.4,
+      "doors": [
+        {
+          "wall": "S",
+          "threshold_world": [
+            -320,
+            304.6,
+            31
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "磨坊工铜钥匙",
+          "hinge": "东端",
+          "opens": "向门外平台贴墙开启",
+          "to": "R23"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "W",
+          "offset_along_wall": 5.4,
+          "width": 1.5,
+          "sill": 1.2,
+          "height": 1.5,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            -325.4,
+            310.0,
+            32.2
+          ]
+        },
+        {
+          "wall": "N",
+          "offset_along_wall": 5.4,
+          "width": 1.5,
+          "sill": 1.2,
+          "height": 1.5,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            -320.0,
+            315.4,
+            32.2
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "磨盘机座",
+          "bbox_local": [
+            4.2,
+            4.2,
+            6.6,
+            6.6
+          ],
+          "height": 1.6,
+          "capacity": "150kg粮/日",
+          "interaction_local": [
+            5.4,
+            3.8,
+            0
+          ]
+        },
+        {
+          "name": "装粮漏斗",
+          "bbox_local": [
+            0.6,
+            7.2,
+            2.4,
+            9.6
+          ],
+          "height": 2.4,
+          "capacity": "300kg",
+          "interaction_local": [
+            1.5,
+            6.8,
+            0
+          ]
+        },
+        {
+          "name": "面粉袋架",
+          "bbox_local": [
+            0.6,
+            1.2,
+            5.4,
+            3
+          ],
+          "height": 1.5,
+          "capacity": "500kg",
+          "interaction_local": [
+            3.0,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "切换手轮",
+          "bbox_local": [
+            6.6,
+            7.8,
+            7.2,
+            8.4
+          ],
+          "height": 1.3,
+          "capacity": "",
+          "interaction_local": [
+            6.9,
+            7.4,
+            0
+          ]
+        }
+      ],
+      "capacity": "谷物加工150kg/日；与提水负荷互斥。",
+      "entry_path_world": [
+        [
+          -320,
+          304,
+          31
+        ],
+        [
+          -320,
+          304.6,
+          31
+        ]
+      ],
+      "notes": "净井内25级踏步，踏高0.16m，踏宽0.25m，分12/13级；层高4.0m。",
+      "geometry_exclusions": [
+        {
+          "id": "MILL-STAIR",
+          "bbox_local": [
+            7.8,
+            0.6,
+            10.2,
+            7.2
+          ],
+          "purpose": "两折楼梯净井；从房间净面积和家具碰撞中扣除"
+        }
+      ],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 100.8
+    },
+    {
+      "id": "AX-11",
+      "site_id": "MILL",
+      "name": "风磨传动与抽水层",
+      "bbox_world": [
+        -325.4,
+        304.6,
+        -314.6,
+        315.4
+      ],
+      "world_sw": [
+        -325.4,
+        304.6,
+        35
+      ],
+      "size": [
+        10.8,
+        10.8,
+        3.4
+      ],
+      "floor_z": 35,
+      "clear_height": 3.4,
+      "doors": [
+        {
+          "wall": "internal",
+          "threshold_world": [
+            -315.8,
+            305.55,
+            35
+          ],
+          "width": 1.0,
+          "height": 2.4,
+          "lock": "常开楼梯口，无门扇",
+          "hinge": "无门扇",
+          "opens": "常开楼梯落点",
+          "to": "MILL-STAIR",
+          "kind": "stair_landing"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "N",
+          "offset_along_wall": 5.4,
+          "width": 1.2,
+          "sill": 1.2,
+          "height": 1.2,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            -320.0,
+            315.4,
+            36.2
+          ]
+        },
+        {
+          "wall": "W",
+          "offset_along_wall": 5.4,
+          "width": 1.2,
+          "sill": 1.2,
+          "height": 1.2,
+          "lock": "内插销，开启限位0.35m",
+          "sill_center_world": [
+            -325.4,
+            310.0,
+            36.2
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "中央木齿轮箱",
+          "bbox_local": [
+            4.2,
+            4.2,
+            6.6,
+            6.6
+          ],
+          "height": 2.7,
+          "capacity": "",
+          "interaction_local": [
+            5.4,
+            3.8,
+            0
+          ]
+        },
+        {
+          "name": "皮带离合与制动架",
+          "bbox_local": [
+            0.6,
+            4.2,
+            2.4,
+            6.6
+          ],
+          "height": 1.6,
+          "capacity": "",
+          "interaction_local": [
+            1.5,
+            3.8,
+            0
+          ]
+        },
+        {
+          "name": "辅助泵",
+          "bbox_local": [
+            0.6,
+            7.8,
+            2.4,
+            9.6
+          ],
+          "height": 1.6,
+          "capacity": "2m³/h",
+          "interaction_local": [
+            1.5,
+            7.4,
+            0
+          ]
+        },
+        {
+          "name": "检修工具柜",
+          "bbox_local": [
+            4.2,
+            0.6,
+            6.6,
+            1.2
+          ],
+          "height": 1.8,
+          "capacity": "",
+          "interaction_local": [
+            5.4,
+            1.6,
+            0
+          ]
+        }
+      ],
+      "capacity": "8m直径叶轮，檐口绝对Z39；风速4—18m/s内启用。",
+      "entry_path_world": [
+        [
+          -317,
+          305.8,
+          31
+        ],
+        [
+          -317,
+          308.55,
+          32.92
+        ],
+        [
+          -315.8,
+          308.55,
+          32.92
+        ],
+        [
+          -315.8,
+          305.55,
+          35
+        ]
+      ],
+      "notes": "入口为楼梯开口而非对外门；该开口不生成外墙。楼层净井同轴，主轴中心(-320,310)。",
+      "geometry_exclusions": [
+        {
+          "id": "MILL-STAIR",
+          "bbox_local": [
+            7.8,
+            0.6,
+            10.2,
+            7.2
+          ],
+          "purpose": "两折楼梯净井；从房间净面积和家具碰撞中扣除"
+        }
+      ],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 100.8
+    },
+    {
+      "id": "AX-12",
+      "site_id": "WATER",
+      "name": "沉淀砂滤与泵压间",
+      "bbox_world": [
+        204.6,
+        495.6,
+        215.7,
+        512.4
+      ],
+      "world_sw": [
+        204.6,
+        495.6,
+        49
+      ],
+      "size": [
+        11.1,
+        16.8,
+        6.0
+      ],
+      "floor_z": 49,
+      "clear_height": 6.0,
+      "doors": [
+        {
+          "wall": "W",
+          "threshold_world": [
+            204.6,
+            504,
+            49
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "净水工钥匙",
+          "hinge": "北端",
+          "opens": "向门外平台贴墙开启",
+          "to": "R11"
+        },
+        {
+          "wall": "E",
+          "threshold_world": [
+            215.7,
+            504,
+            49
+          ],
+          "width": 1.2,
+          "height": 2.4,
+          "lock": "净水工钥匙",
+          "hinge": "北端",
+          "opens": "同一扇隔门，向AX-13开启",
+          "to": "AX-13"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "N",
+          "offset_along_wall": 5.55,
+          "width": 3.0,
+          "sill": 2.4,
+          "height": 1.2,
+          "lock": "固定磨砂玻璃",
+          "sill_center_world": [
+            210.15,
+            512.4,
+            51.4
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "沉淀格1",
+          "bbox_local": [
+            0.6,
+            0.6,
+            3.6,
+            2.6
+          ],
+          "height": 2,
+          "capacity": "12m³",
+          "interaction_local": [
+            2.1,
+            3.0,
+            0
+          ]
+        },
+        {
+          "name": "沉淀格2",
+          "bbox_local": [
+            0.6,
+            5.4,
+            3.6,
+            7.4
+          ],
+          "height": 2,
+          "capacity": "12m³",
+          "interaction_local": [
+            2.1,
+            5.0,
+            0
+          ]
+        },
+        {
+          "name": "砂滤床1",
+          "bbox_local": [
+            6.9,
+            0.6,
+            9.9,
+            2.6
+          ],
+          "height": 1.2,
+          "capacity": "3×2m",
+          "interaction_local": [
+            8.4,
+            3.0,
+            0
+          ]
+        },
+        {
+          "name": "砂滤床2",
+          "bbox_local": [
+            6.9,
+            5.4,
+            9.9,
+            7.4
+          ],
+          "height": 1.2,
+          "capacity": "3×2m",
+          "interaction_local": [
+            8.4,
+            5.0,
+            0
+          ]
+        },
+        {
+          "name": "双活塞泵",
+          "bbox_local": [
+            0.6,
+            12,
+            3.6,
+            14.4
+          ],
+          "height": 1.8,
+          "capacity": "18m³/日",
+          "interaction_local": [
+            2.1,
+            11.6,
+            0
+          ]
+        },
+        {
+          "name": "煮沸与取样台",
+          "bbox_local": [
+            6.6,
+            12,
+            10.2,
+            13.2
+          ],
+          "height": 1.2,
+          "capacity": "",
+          "interaction_local": [
+            8.4,
+            11.6,
+            0
+          ]
+        }
+      ],
+      "capacity": "处理18m³/日；生活系统常态负荷12m³/日。",
+      "entry_path_world": [
+        [
+          192,
+          504,
+          49
+        ],
+        [
+          204,
+          504,
+          49
+        ],
+        [
+          204.6,
+          504,
+          49
+        ]
+      ],
+      "notes": "泵送主楼屋顶4m³与白塔屋顶2m³水箱，每日06:00/18:00两次；饮水管不与源热热侧相通。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 186.48
+    },
+    {
+      "id": "AX-13",
+      "site_id": "WATER",
+      "name": "双仓清水窖检修间",
+      "bbox_world": [
+        216.3,
+        495.6,
+        227.4,
+        512.4
+      ],
+      "world_sw": [
+        216.3,
+        495.6,
+        49
+      ],
+      "size": [
+        11.1,
+        16.8,
+        6.0
+      ],
+      "floor_z": 49,
+      "clear_height": 6.0,
+      "doors": [
+        {
+          "wall": "W",
+          "threshold_world": [
+            216.3,
+            504,
+            49
+          ],
+          "width": 1.2,
+          "height": 2.4,
+          "lock": "净水工双钥匙",
+          "hinge": "北端",
+          "opens": "同一扇隔门，向AX-13开启",
+          "to": "AX-12"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "E",
+          "offset_along_wall": 8.4,
+          "width": 1.8,
+          "sill": 3.6,
+          "height": 0.9,
+          "lock": "固定铁格玻璃",
+          "sill_center_world": [
+            227.4,
+            504.0,
+            52.6
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "南清水仓",
+          "bbox_local": [
+            1,
+            1,
+            6,
+            5
+          ],
+          "height": 3,
+          "capacity": "60m³",
+          "interaction_local": [
+            3.5,
+            0.6,
+            0
+          ]
+        },
+        {
+          "name": "北清水仓",
+          "bbox_local": [
+            1,
+            8,
+            6,
+            12
+          ],
+          "height": 3,
+          "capacity": "60m³",
+          "interaction_local": [
+            3.5,
+            7.6,
+            0
+          ]
+        },
+        {
+          "name": "独立出水阀组",
+          "bbox_local": [
+            8.4,
+            6.6,
+            9.6,
+            8.4
+          ],
+          "height": 1.2,
+          "capacity": "",
+          "interaction_local": [
+            9.0,
+            6.2,
+            0
+          ]
+        },
+        {
+          "name": "检修梯停架",
+          "bbox_local": [
+            8.4,
+            12.6,
+            9.6,
+            15.6
+          ],
+          "height": 3,
+          "capacity": "",
+          "interaction_local": [
+            9.0,
+            12.2,
+            0
+          ]
+        }
+      ],
+      "capacity": "两只5×4×3m密封仓，共120m³；两仓各独立进出水阀。",
+      "entry_path_world": [
+        [
+          215.7,
+          504,
+          49
+        ],
+        [
+          216.3,
+          504,
+          49
+        ]
+      ],
+      "notes": "仓底Z49、水面上限Z52；南北仓之间3m检修道，东侧净道5.1m。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 186.48
+    },
+    {
+      "id": "AX-14",
+      "site_id": "FUEL",
+      "name": "覆盖煤料库",
+      "bbox_world": [
+        -212.4,
+        509,
+        -183.6,
+        517.4
+      ],
+      "world_sw": [
+        -212.4,
+        509,
+        52
+      ],
+      "size": [
+        28.8,
+        8.4,
+        5.4
+      ],
+      "floor_z": 52,
+      "clear_height": 5.4,
+      "doors": [
+        {
+          "wall": "S",
+          "threshold_world": [
+            -198,
+            509,
+            52
+          ],
+          "width": 3.0,
+          "height": 4.2,
+          "lock": "司炉与库管横梁锁",
+          "hinge": "上轨道",
+          "opens": "沿外墙向两侧平移",
+          "to": "FUEL-YARD",
+          "kind": "双扇外滑门"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "N",
+          "offset_along_wall": 7.2,
+          "width": 3,
+          "sill": 0.9,
+          "height": 1.2,
+          "lock": "固定防雨百叶",
+          "sill_center_world": [
+            -205.2,
+            517.4,
+            52.9
+          ]
+        },
+        {
+          "wall": "N",
+          "offset_along_wall": 21.6,
+          "width": 3,
+          "sill": 0.9,
+          "height": 1.2,
+          "lock": "固定防雨百叶",
+          "sill_center_world": [
+            -190.8,
+            517.4,
+            52.9
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "煤格1",
+          "bbox_local": [
+            0.6,
+            2.4,
+            12.6,
+            7.8
+          ],
+          "height": 1.5,
+          "capacity": "12t",
+          "interaction_local": [
+            6.6,
+            2.0,
+            0
+          ]
+        },
+        {
+          "name": "煤格2",
+          "bbox_local": [
+            16.2,
+            2.4,
+            28.2,
+            7.8
+          ],
+          "height": 1.5,
+          "capacity": "12t",
+          "interaction_local": [
+            22.2,
+            2.0,
+            0
+          ]
+        },
+        {
+          "name": "磅秤",
+          "bbox_local": [
+            12.9,
+            4.8,
+            15.9,
+            6.8
+          ],
+          "height": 1.2,
+          "capacity": "单次1t",
+          "interaction_local": [
+            14.4,
+            4.4,
+            0
+          ]
+        }
+      ],
+      "capacity": "库容24t，初始18t；常态日耗120kg、冬季180kg。",
+      "entry_path_world": [
+        [
+          -183,
+          506,
+          52
+        ],
+        [
+          -198,
+          506,
+          52
+        ],
+        [
+          -198,
+          509,
+          52
+        ]
+      ],
+      "notes": "煤格前方2.4m装卸带连续贯通；不将大宗煤直接放入B2司炉。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 241.92
+    },
+    {
+      "id": "AX-15",
+      "site_id": "FUEL",
+      "name": "灯油隔间与空桶间",
+      "bbox_world": [
+        -212.4,
+        494.6,
+        -183.6,
+        503
+      ],
+      "world_sw": [
+        -212.4,
+        494.6,
+        52
+      ],
+      "size": [
+        28.8,
+        8.4,
+        4.2
+      ],
+      "floor_z": 52,
+      "clear_height": 4.2,
+      "doors": [
+        {
+          "wall": "N",
+          "threshold_world": [
+            -198,
+            503,
+            52
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "库管双钥匙",
+          "hinge": "东端",
+          "opens": "向门外平台贴墙开启",
+          "to": "FUEL-YARD"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "S",
+          "offset_along_wall": 14.4,
+          "width": 1.8,
+          "sill": 2.4,
+          "height": 0.9,
+          "lock": "固定铁格玻璃",
+          "sill_center_world": [
+            -198.0,
+            494.6,
+            54.4
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "封桶架",
+          "bbox_local": [
+            0.6,
+            0.6,
+            7.8,
+            3.0
+          ],
+          "height": 1.5,
+          "capacity": "600L上限，初始铁工配额80L",
+          "interaction_local": [
+            4.2,
+            3.4,
+            0
+          ]
+        },
+        {
+          "name": "空桶架",
+          "bbox_local": [
+            18,
+            0.6,
+            27.6,
+            3
+          ],
+          "height": 1.8,
+          "capacity": "12桶",
+          "interaction_local": [
+            22.8,
+            3.4,
+            0
+          ]
+        },
+        {
+          "name": "定量分装台",
+          "bbox_local": [
+            9.6,
+            1.2,
+            12.6,
+            2.4
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            11.1,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "吸收砂箱",
+          "bbox_local": [
+            25.2,
+            5.4,
+            27.6,
+            7.8
+          ],
+          "height": 0.8,
+          "capacity": "",
+          "interaction_local": [
+            26.4,
+            5.0,
+            0
+          ]
+        }
+      ],
+      "capacity": "装油总容量600L；初始80L属于全岛480L库存，空桶12只。",
+      "entry_path_world": [
+        [
+          -183,
+          506,
+          52
+        ],
+        [
+          -198,
+          506,
+          52
+        ],
+        [
+          -198,
+          503,
+          52
+        ]
+      ],
+      "notes": "不设炉灶；货物与煤分门，中央隔离院保留6m。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 241.92
+    },
+    {
+      "id": "AX-16",
+      "site_id": "WASTE",
+      "name": "封口废液桶库",
+      "bbox_world": [
+        -216.4,
+        564.6,
+        -199.6,
+        575.4
+      ],
+      "world_sw": [
+        -216.4,
+        564.6,
+        60
+      ],
+      "size": [
+        16.8,
+        10.8,
+        4.2
+      ],
+      "floor_z": 60,
+      "clear_height": 4.2,
+      "doors": [
+        {
+          "wall": "E",
+          "threshold_world": [
+            -199.6,
+            570,
+            60
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "实验总管与运桶工双钥匙",
+          "hinge": "北端",
+          "opens": "向门外平台贴墙开启",
+          "to": "R20"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "W",
+          "offset_along_wall": 5.4,
+          "width": 2.4,
+          "sill": 2.7,
+          "height": 0.6,
+          "lock": "固定百叶加铜网",
+          "sill_center_world": [
+            -216.4,
+            570.0,
+            62.7
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "北封桶架",
+          "bbox_local": [
+            0.6,
+            7.2,
+            7.8,
+            10.2
+          ],
+          "height": 2.1,
+          "capacity": "36只20L桶",
+          "interaction_local": [
+            4.2,
+            6.8,
+            0
+          ]
+        },
+        {
+          "name": "南封桶架",
+          "bbox_local": [
+            0.6,
+            0.6,
+            7.8,
+            3.6
+          ],
+          "height": 2.1,
+          "capacity": "36只20L桶",
+          "interaction_local": [
+            4.2,
+            4.0,
+            0
+          ]
+        },
+        {
+          "name": "称重与签封台",
+          "bbox_local": [
+            11.4,
+            1.2,
+            15,
+            2.4
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            13.2,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "空桶滚车停位",
+          "bbox_local": [
+            12,
+            7.2,
+            15.6,
+            9.6
+          ],
+          "height": 1.2,
+          "capacity": "2车",
+          "interaction_local": [
+            13.8,
+            6.8,
+            0
+          ]
+        }
+      ],
+      "capacity": "72桶×20L=1.44m³；每月船运36桶。",
+      "entry_path_world": [
+        [
+          -199,
+          580,
+          60
+        ],
+        [
+          -199,
+          570,
+          60
+        ],
+        [
+          -199.6,
+          570,
+          60
+        ]
+      ],
+      "notes": "每排桶架下独立3.6×1.8×0.25m接液槽；中间3.6m操作带；所有容器都有色签、封口与质量字段。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 181.44
+    },
+    {
+      "id": "AX-17",
+      "site_id": "HEAT",
+      "name": "源热井与隔离换热间",
+      "bbox_world": [
+        -182.4,
+        609.6,
+        -165.6,
+        626.4
+      ],
+      "world_sw": [
+        -182.4,
+        609.6,
+        66
+      ],
+      "size": [
+        16.8,
+        16.8,
+        6.0
+      ],
+      "floor_z": 66,
+      "clear_height": 6.0,
+      "doors": [
+        {
+          "wall": "W",
+          "threshold_world": [
+            -182.4,
+            618,
+            66
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "司炉总管钥匙",
+          "hinge": "北端",
+          "opens": "向门外平台贴墙开启",
+          "to": "R21"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "N",
+          "offset_along_wall": 4.2,
+          "width": 2.4,
+          "sill": 3,
+          "height": 1.2,
+          "lock": "固定高位百叶",
+          "sill_center_world": [
+            -178.2,
+            626.4,
+            69
+          ]
+        },
+        {
+          "wall": "E",
+          "offset_along_wall": 8.4,
+          "width": 2.4,
+          "sill": 3,
+          "height": 1.2,
+          "lock": "固定高位百叶",
+          "sill_center_world": [
+            -165.6,
+            618.0,
+            69
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "井口护罩",
+          "bbox_local": [
+            7.8,
+            7.8,
+            9,
+            9
+          ],
+          "height": 1.2,
+          "capacity": "井内径0.8m、深60m",
+          "interaction_local": [
+            8.4,
+            7.4,
+            0
+          ]
+        },
+        {
+          "name": "热侧缓冲槽",
+          "bbox_local": [
+            0.6,
+            0.6,
+            3.6,
+            2.6
+          ],
+          "height": 2,
+          "capacity": "12m³",
+          "interaction_local": [
+            2.1,
+            3.0,
+            0
+          ]
+        },
+        {
+          "name": "隔离换热盘管台",
+          "bbox_local": [
+            12,
+            1.2,
+            15.6,
+            4.8
+          ],
+          "height": 2.4,
+          "capacity": "180kW",
+          "interaction_local": [
+            13.8,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "供回隔离阀",
+          "bbox_local": [
+            12,
+            12,
+            15,
+            15
+          ],
+          "height": 1.4,
+          "capacity": "两只80mm阀，各8s操作",
+          "interaction_local": [
+            13.5,
+            11.6,
+            0
+          ]
+        },
+        {
+          "name": "压力记录桌",
+          "bbox_local": [
+            0.6,
+            12.6,
+            3.6,
+            13.8
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            2.1,
+            12.2,
+            0
+          ]
+        }
+      ],
+      "capacity": "源热180kW，缓冲12m³；故障后基础热量维持90min。",
+      "entry_path_world": [
+        [
+          -183,
+          618,
+          66
+        ],
+        [
+          -182.4,
+          618,
+          66
+        ],
+        [
+          -179,
+          618,
+          66
+        ]
+      ],
+      "notes": "井口下到底Z6；护栏与机座是独立碰撞体。人员沿外围2m环道绕行，不跨井盖直走。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 282.24
+    },
+    {
+      "id": "AX-18",
+      "site_id": "SEWAGE",
+      "name": "生活污水处理坪",
+      "bbox_world": [
+        320,
+        62,
+        356,
+        86
+      ],
+      "world_sw": [
+        320,
+        62,
+        6
+      ],
+      "size": [
+        36,
+        24,
+        4.2
+      ],
+      "floor_z": 6,
+      "clear_height": 4.2,
+      "doors": [
+        {
+          "wall": "W",
+          "threshold_world": [
+            320,
+            74,
+            6
+          ],
+          "width": 2.4,
+          "height": 2.4,
+          "lock": "维护总管挂锁",
+          "hinge": "北端",
+          "opens": "向门外平台贴墙开启",
+          "to": "R22"
+        }
+      ],
+      "windows": [],
+      "furniture": [
+        {
+          "name": "沉淀池1",
+          "bbox_local": [
+            2,
+            2,
+            10,
+            8
+          ],
+          "height": 2,
+          "capacity": "沉淀池净水深1.5m",
+          "interaction_local": [
+            6.0,
+            1.6,
+            0
+          ]
+        },
+        {
+          "name": "沉淀池2",
+          "bbox_local": [
+            12,
+            2,
+            20,
+            8
+          ],
+          "height": 2,
+          "capacity": "沉淀池净水深1.5m",
+          "interaction_local": [
+            16.0,
+            1.6,
+            0
+          ]
+        },
+        {
+          "name": "碎石滤床",
+          "bbox_local": [
+            2,
+            15,
+            22,
+            22
+          ],
+          "height": 1.2,
+          "capacity": "",
+          "interaction_local": [
+            12.0,
+            14.6,
+            0
+          ]
+        },
+        {
+          "name": "封闭污泥井",
+          "bbox_local": [
+            26,
+            16,
+            32,
+            22
+          ],
+          "height": 2,
+          "capacity": "",
+          "interaction_local": [
+            29.0,
+            15.6,
+            0
+          ]
+        },
+        {
+          "name": "泵阀遮雨柜",
+          "bbox_local": [
+            27,
+            2,
+            33,
+            8
+          ],
+          "height": 3.6,
+          "capacity": "",
+          "interaction_local": [
+            30.0,
+            1.6,
+            0
+          ]
+        }
+      ],
+      "capacity": "生活污水10m³/日；中心Y=72.8…75.2留2.4m检修道。",
+      "entry_path_world": [
+        [
+          300,
+          64,
+          6
+        ],
+        [
+          320,
+          74,
+          6
+        ]
+      ],
+      "notes": "室外坪；4.2m为设备与维护包络，上方露天。围栏2.2m，池边0.15m坎、1.1m栏杆；无窗。溢流至(350,40,2)。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 864
+    },
+    {
+      "id": "AX-19",
+      "site_id": "BARN-W",
+      "name": "西牧场牛羊舍",
+      "bbox_world": [
+        -484.4,
+        481.6,
+        -455.6,
+        498.4
+      ],
+      "world_sw": [
+        -484.4,
+        481.6,
+        70
+      ],
+      "size": [
+        28.8,
+        16.8,
+        5.4
+      ],
+      "floor_z": 70,
+      "clear_height": 5.4,
+      "doors": [
+        {
+          "wall": "S",
+          "threshold_world": [
+            -470,
+            481.6,
+            70
+          ],
+          "width": 3.2,
+          "height": 4.2,
+          "lock": "牧工横闩",
+          "hinge": "上轨道",
+          "opens": "沿外墙向两侧平移",
+          "to": "RA-01",
+          "kind": "双扇外滑门"
+        },
+        {
+          "wall": "N",
+          "threshold_world": [
+            -470,
+            498.4,
+            70
+          ],
+          "width": 2.4,
+          "height": 2.4,
+          "lock": "牧工木栅闩",
+          "hinge": "东端",
+          "opens": "向门外平台贴墙开启",
+          "to": "围栏牧道"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "W",
+          "offset_along_wall": 4.2,
+          "width": 3,
+          "sill": 3,
+          "height": 1.2,
+          "lock": "固定防雨百叶",
+          "sill_center_world": [
+            -484.4,
+            485.8,
+            73
+          ]
+        },
+        {
+          "wall": "W",
+          "offset_along_wall": 12.6,
+          "width": 3,
+          "sill": 3,
+          "height": 1.2,
+          "lock": "固定防雨百叶",
+          "sill_center_world": [
+            -484.4,
+            494.2,
+            73
+          ]
+        },
+        {
+          "wall": "E",
+          "offset_along_wall": 8.4,
+          "width": 4.8,
+          "sill": 3,
+          "height": 1.2,
+          "lock": "固定防雨百叶",
+          "sill_center_world": [
+            -455.6,
+            490.0,
+            73
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "西畜栏组",
+          "bbox_local": [
+            0.6,
+            3.6,
+            10.2,
+            15.6
+          ],
+          "height": 1.6,
+          "capacity": "西舍8牛；东舍6驮畜",
+          "interaction_local": [
+            5.4,
+            3.2,
+            0
+          ]
+        },
+        {
+          "name": "东小畜栏组",
+          "bbox_local": [
+            18.6,
+            3.6,
+            28.2,
+            15.6
+          ],
+          "height": 1.4,
+          "capacity": "西舍24羊；东舍18山羊",
+          "interaction_local": [
+            23.4,
+            3.2,
+            0
+          ]
+        },
+        {
+          "name": "中央喂饲车道",
+          "bbox_local": [
+            12,
+            1.2,
+            16.8,
+            15.6
+          ],
+          "height": 0,
+          "capacity": "4.8m净通行带",
+          "interaction_local": [
+            14.4,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "饮水槽",
+          "bbox_local": [
+            0.6,
+            0.6,
+            10.2,
+            1.8
+          ],
+          "height": 0.7,
+          "capacity": "4槽各150L",
+          "interaction_local": [
+            5.4,
+            2.2,
+            0
+          ]
+        },
+        {
+          "name": "清扫工具架",
+          "bbox_local": [
+            20.4,
+            0.6,
+            27.6,
+            1.5
+          ],
+          "height": 1.8,
+          "capacity": "",
+          "interaction_local": [
+            24.0,
+            1.9,
+            0
+          ]
+        }
+      ],
+      "capacity": "奶牛8头、羊24只；夜间全部可入舍。",
+      "entry_path_world": [
+        [
+          -320,
+          292,
+          29.8571
+        ],
+        [
+          -344,
+          292,
+          31.8
+        ],
+        [
+          -440,
+          350,
+          43
+        ],
+        [
+          -550,
+          430,
+          57
+        ],
+        [
+          -470,
+          430,
+          65
+        ],
+        [
+          -470,
+          475,
+          70
+        ],
+        [
+          -470,
+          481,
+          70
+        ],
+        [
+          -470,
+          481.6,
+          70
+        ]
+      ],
+      "notes": "牛栏每格2.4×3m，小畜区用可拆1.2m栅分组；地沟0.25×0.20m沿东西栏背，通堆肥容器；中央喂饲车道的height=0表示保留空地。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 483.84
+    },
+    {
+      "id": "AX-20",
+      "site_id": "BARN-E",
+      "name": "东牧场羊驮畜舍",
+      "bbox_world": [
+        405.6,
+        551.6,
+        434.4,
+        568.4
+      ],
+      "world_sw": [
+        405.6,
+        551.6,
+        64
+      ],
+      "size": [
+        28.8,
+        16.8,
+        5.4
+      ],
+      "floor_z": 64,
+      "clear_height": 5.4,
+      "doors": [
+        {
+          "wall": "S",
+          "threshold_world": [
+            420,
+            551.6,
+            64
+          ],
+          "width": 3.2,
+          "height": 4.2,
+          "lock": "牧工横闩",
+          "hinge": "上轨道",
+          "opens": "沿外墙向两侧平移",
+          "to": "RA-03",
+          "kind": "双扇外滑门"
+        },
+        {
+          "wall": "N",
+          "threshold_world": [
+            420,
+            568.4,
+            64
+          ],
+          "width": 2.4,
+          "height": 2.4,
+          "lock": "牧工木栅闩",
+          "hinge": "东端",
+          "opens": "向门外平台贴墙开启",
+          "to": "围栏牧道"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "W",
+          "offset_along_wall": 4.2,
+          "width": 3,
+          "sill": 3,
+          "height": 1.2,
+          "lock": "固定防雨百叶",
+          "sill_center_world": [
+            405.6,
+            555.8,
+            67
+          ]
+        },
+        {
+          "wall": "W",
+          "offset_along_wall": 12.6,
+          "width": 3,
+          "sill": 3,
+          "height": 1.2,
+          "lock": "固定防雨百叶",
+          "sill_center_world": [
+            405.6,
+            564.2,
+            67
+          ]
+        },
+        {
+          "wall": "E",
+          "offset_along_wall": 8.4,
+          "width": 4.8,
+          "sill": 3,
+          "height": 1.2,
+          "lock": "固定防雨百叶",
+          "sill_center_world": [
+            434.4,
+            560.0,
+            67
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "西畜栏组",
+          "bbox_local": [
+            0.6,
+            3.6,
+            10.2,
+            15.6
+          ],
+          "height": 1.6,
+          "capacity": "西舍8牛；东舍6驮畜",
+          "interaction_local": [
+            5.4,
+            3.2,
+            0
+          ]
+        },
+        {
+          "name": "东小畜栏组",
+          "bbox_local": [
+            18.6,
+            3.6,
+            28.2,
+            15.6
+          ],
+          "height": 1.4,
+          "capacity": "西舍24羊；东舍18山羊",
+          "interaction_local": [
+            23.4,
+            3.2,
+            0
+          ]
+        },
+        {
+          "name": "中央喂饲车道",
+          "bbox_local": [
+            12,
+            1.2,
+            16.8,
+            15.6
+          ],
+          "height": 0,
+          "capacity": "4.8m净通行带",
+          "interaction_local": [
+            14.4,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "饮水槽",
+          "bbox_local": [
+            0.6,
+            0.6,
+            10.2,
+            1.8
+          ],
+          "height": 0.7,
+          "capacity": "4槽各150L",
+          "interaction_local": [
+            5.4,
+            2.2,
+            0
+          ]
+        },
+        {
+          "name": "清扫工具架",
+          "bbox_local": [
+            20.4,
+            0.6,
+            27.6,
+            1.5
+          ],
+          "height": 1.8,
+          "capacity": "",
+          "interaction_local": [
+            24.0,
+            1.9,
+            0
+          ]
+        }
+      ],
+      "capacity": "山羊18只、驮畜6头；夜间全部可入舍。",
+      "entry_path_world": [
+        [
+          192,
+          504,
+          49
+        ],
+        [
+          192,
+          528,
+          49
+        ],
+        [
+          288,
+          528,
+          54
+        ],
+        [
+          380,
+          532,
+          60
+        ],
+        [
+          420,
+          551,
+          64
+        ],
+        [
+          420,
+          551.6,
+          64
+        ]
+      ],
+      "notes": "牛栏每格2.4×3m，小畜区用可拆1.2m栅分组；地沟0.25×0.20m沿东西栏背，通堆肥容器；中央喂饲车道的height=0表示保留空地。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 483.84
+    },
+    {
+      "id": "AX-21",
+      "site_id": "FEED-W",
+      "name": "西牧场饲料棚",
+      "bbox_world": [
+        -438.4,
+        484.6,
+        -421.6,
+        495.4
+      ],
+      "world_sw": [
+        -438.4,
+        484.6,
+        70
+      ],
+      "size": [
+        16.8,
+        10.8,
+        4.2
+      ],
+      "floor_z": 70,
+      "clear_height": 4.2,
+      "doors": [
+        {
+          "wall": "W",
+          "threshold_world": [
+            -438.4,
+            490,
+            70
+          ],
+          "width": 2.4,
+          "height": 2.4,
+          "lock": "牧工与仓管钥匙",
+          "hinge": "北端",
+          "opens": "向门外平台贴墙开启",
+          "to": "RA-02"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "E",
+          "offset_along_wall": 5.4,
+          "width": 3,
+          "sill": 2.4,
+          "height": 1.2,
+          "lock": "固定防雨百叶",
+          "sill_center_world": [
+            -421.6,
+            490.0,
+            72.4
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "南草捆架",
+          "bbox_local": [
+            0.6,
+            0.6,
+            15.6,
+            3.6
+          ],
+          "height": 2.4,
+          "capacity": "容量一半",
+          "interaction_local": [
+            8.1,
+            4.0,
+            0
+          ]
+        },
+        {
+          "name": "北草捆架",
+          "bbox_local": [
+            0.6,
+            7.2,
+            15.6,
+            10.2
+          ],
+          "height": 2.4,
+          "capacity": "容量一半",
+          "interaction_local": [
+            8.1,
+            6.8,
+            0
+          ]
+        },
+        {
+          "name": "称量台",
+          "bbox_local": [
+            12.6,
+            4.2,
+            15.6,
+            5.4
+          ],
+          "height": 0.9,
+          "capacity": "200kg",
+          "interaction_local": [
+            14.1,
+            5.8,
+            0
+          ]
+        }
+      ],
+      "capacity": "干饲料12t，货架底0.30m。",
+      "entry_path_world": [
+        [
+          -470,
+          481,
+          70
+        ],
+        [
+          -470,
+          477,
+          70
+        ],
+        [
+          -448,
+          477,
+          70
+        ],
+        [
+          -448,
+          490,
+          70
+        ],
+        [
+          -439,
+          490,
+          70
+        ],
+        [
+          -438.4,
+          490,
+          70
+        ]
+      ],
+      "notes": "中央3.6m通道；热源与明火归零，木栅通风口均有防鼠铜网。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 181.44
+    },
+    {
+      "id": "AX-22",
+      "site_id": "FEED-E",
+      "name": "东牧场饲料棚",
+      "bbox_world": [
+        451.6,
+        554.6,
+        468.4,
+        565.4
+      ],
+      "world_sw": [
+        451.6,
+        554.6,
+        64
+      ],
+      "size": [
+        16.8,
+        10.8,
+        4.2
+      ],
+      "floor_z": 64,
+      "clear_height": 4.2,
+      "doors": [
+        {
+          "wall": "W",
+          "threshold_world": [
+            451.6,
+            560,
+            64
+          ],
+          "width": 2.4,
+          "height": 2.4,
+          "lock": "牧工与仓管钥匙",
+          "hinge": "北端",
+          "opens": "向门外平台贴墙开启",
+          "to": "RA-04"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "E",
+          "offset_along_wall": 5.4,
+          "width": 3,
+          "sill": 2.4,
+          "height": 1.2,
+          "lock": "固定防雨百叶",
+          "sill_center_world": [
+            468.4,
+            560.0,
+            66.4
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "南草捆架",
+          "bbox_local": [
+            0.6,
+            0.6,
+            15.6,
+            3.6
+          ],
+          "height": 2.4,
+          "capacity": "容量一半",
+          "interaction_local": [
+            8.1,
+            4.0,
+            0
+          ]
+        },
+        {
+          "name": "北草捆架",
+          "bbox_local": [
+            0.6,
+            7.2,
+            15.6,
+            10.2
+          ],
+          "height": 2.4,
+          "capacity": "容量一半",
+          "interaction_local": [
+            8.1,
+            6.8,
+            0
+          ]
+        },
+        {
+          "name": "称量台",
+          "bbox_local": [
+            12.6,
+            4.2,
+            15.6,
+            5.4
+          ],
+          "height": 0.9,
+          "capacity": "200kg",
+          "interaction_local": [
+            14.1,
+            5.8,
+            0
+          ]
+        }
+      ],
+      "capacity": "干饲料6t，货架底0.30m。",
+      "entry_path_world": [
+        [
+          420,
+          551,
+          64
+        ],
+        [
+          420,
+          547,
+          64
+        ],
+        [
+          444,
+          547,
+          64
+        ],
+        [
+          444,
+          560,
+          64
+        ],
+        [
+          451,
+          560,
+          64
+        ],
+        [
+          451.6,
+          560,
+          64
+        ]
+      ],
+      "notes": "中央3.6m通道；热源与明火归零，木栅通风口均有防鼠铜网。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 181.44
+    },
+    {
+      "id": "AX-23",
+      "site_id": "TOOLS-W",
+      "name": "西田工具棚",
+      "bbox_world": [
+        -405.4,
+        246.6,
+        -394.6,
+        253.4
+      ],
+      "world_sw": [
+        -405.4,
+        246.6,
+        26
+      ],
+      "size": [
+        10.8,
+        6.8,
+        3.6
+      ],
+      "floor_z": 26,
+      "clear_height": 3.6,
+      "doors": [
+        {
+          "wall": "S",
+          "threshold_world": [
+            -400,
+            246.6,
+            26
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "农务钥匙",
+          "hinge": "东端",
+          "opens": "向门外平台贴墙开启",
+          "to": "RA-05"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "N",
+          "offset_along_wall": 5.4,
+          "width": 2.4,
+          "sill": 1.2,
+          "height": 1.5,
+          "lock": "内插销",
+          "sill_center_world": [
+            -400.0,
+            253.4,
+            27.2
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "北农具挂架",
+          "bbox_local": [
+            0.6,
+            5.4,
+            10.2,
+            6.2
+          ],
+          "height": 2.2,
+          "capacity": "24件手农具",
+          "interaction_local": [
+            5.4,
+            3.4,
+            0
+          ]
+        },
+        {
+          "name": "西种子箱架",
+          "bbox_local": [
+            0.6,
+            1.2,
+            2.4,
+            4.8
+          ],
+          "height": 1.8,
+          "capacity": "300kg种子",
+          "interaction_local": [
+            1.5,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "推车停位",
+          "bbox_local": [
+            7.2,
+            1.2,
+            10.2,
+            3.6
+          ],
+          "height": 1.2,
+          "capacity": "2辆单轮车",
+          "interaction_local": [
+            8.7,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "维修台",
+          "bbox_local": [
+            3.6,
+            4.2,
+            6.6,
+            5.4
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            5.1,
+            3.8,
+            0
+          ]
+        }
+      ],
+      "capacity": "24件农具、2辆推车、300kg种子；种子不计入可食谷物库存。",
+      "entry_path_world": [
+        [
+          -320,
+          220,
+          23
+        ],
+        [
+          -400,
+          220,
+          26
+        ],
+        [
+          -400,
+          246,
+          26
+        ],
+        [
+          -400,
+          246.6,
+          26
+        ]
+      ],
+      "notes": "门前6×6m夯土操作坪，棚后雨桶500L只供洗具和浇灌。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 73.44
+    },
+    {
+      "id": "AX-24",
+      "site_id": "TOOLS-E",
+      "name": "东田工具棚",
+      "bbox_world": [
+        294.6,
+        276.6,
+        305.4,
+        283.4
+      ],
+      "world_sw": [
+        294.6,
+        276.6,
+        24
+      ],
+      "size": [
+        10.8,
+        6.8,
+        3.6
+      ],
+      "floor_z": 24,
+      "clear_height": 3.6,
+      "doors": [
+        {
+          "wall": "S",
+          "threshold_world": [
+            300,
+            276.6,
+            24
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "农务钥匙",
+          "hinge": "东端",
+          "opens": "向门外平台贴墙开启",
+          "to": "RA-06"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "N",
+          "offset_along_wall": 5.4,
+          "width": 2.4,
+          "sill": 1.2,
+          "height": 1.5,
+          "lock": "内插销",
+          "sill_center_world": [
+            300.0,
+            283.4,
+            25.2
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "北农具挂架",
+          "bbox_local": [
+            0.6,
+            5.4,
+            10.2,
+            6.2
+          ],
+          "height": 2.2,
+          "capacity": "24件手农具",
+          "interaction_local": [
+            5.4,
+            3.4,
+            0
+          ]
+        },
+        {
+          "name": "西种子箱架",
+          "bbox_local": [
+            0.6,
+            1.2,
+            2.4,
+            4.8
+          ],
+          "height": 1.8,
+          "capacity": "300kg种子",
+          "interaction_local": [
+            1.5,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "推车停位",
+          "bbox_local": [
+            7.2,
+            1.2,
+            10.2,
+            3.6
+          ],
+          "height": 1.2,
+          "capacity": "2辆单轮车",
+          "interaction_local": [
+            8.7,
+            0.8,
+            0
+          ]
+        },
+        {
+          "name": "维修台",
+          "bbox_local": [
+            3.6,
+            4.2,
+            6.6,
+            5.4
+          ],
+          "height": 0.9,
+          "capacity": "",
+          "interaction_local": [
+            5.1,
+            3.8,
+            0
+          ]
+        }
+      ],
+      "capacity": "24件农具、2辆推车、300kg种子；种子不计入可食谷物库存。",
+      "entry_path_world": [
+        [
+          300,
+          64,
+          6
+        ],
+        [
+          300,
+          200,
+          16
+        ],
+        [
+          300,
+          276,
+          24
+        ],
+        [
+          300,
+          276.6,
+          24
+        ]
+      ],
+      "notes": "门前6×6m夯土操作坪，棚后雨桶500L只供洗具和浇灌。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 73.44
+    },
+    {
+      "id": "AX-25",
+      "site_id": "COMPOST",
+      "name": "90日堆肥棚",
+      "bbox_world": [
+        -565.4,
+        456.6,
+        -554.6,
+        463.4
+      ],
+      "world_sw": [
+        -565.4,
+        456.6,
+        70
+      ],
+      "size": [
+        10.8,
+        6.8,
+        4.2
+      ],
+      "floor_z": 70,
+      "clear_height": 4.2,
+      "doors": [
+        {
+          "wall": "E",
+          "threshold_world": [
+            -554.6,
+            460,
+            70
+          ],
+          "width": 1.8,
+          "height": 2.4,
+          "lock": "牧工木闩",
+          "hinge": "北端",
+          "opens": "向门外平台贴墙开启",
+          "to": "RA-07"
+        }
+      ],
+      "windows": [
+        {
+          "wall": "W",
+          "offset_along_wall": 3.4,
+          "width": 3,
+          "sill": 2.4,
+          "height": 0.9,
+          "lock": "固定格栅",
+          "sill_center_world": [
+            -565.4,
+            460.0,
+            72.4
+          ]
+        },
+        {
+          "wall": "N",
+          "offset_along_wall": 5.4,
+          "width": 4.8,
+          "sill": 2.4,
+          "height": 0.9,
+          "lock": "固定格栅",
+          "sill_center_world": [
+            -560.0,
+            463.4,
+            72.4
+          ]
+        }
+      ],
+      "furniture": [
+        {
+          "name": "西腐熟格",
+          "bbox_local": [
+            0.6,
+            1.8,
+            4.6,
+            6.8
+          ],
+          "height": 1.2,
+          "capacity": "24m³",
+          "interaction_local": [
+            2.6,
+            1.4,
+            0
+          ]
+        },
+        {
+          "name": "东腐熟格",
+          "bbox_local": [
+            5.8,
+            1.8,
+            9.8,
+            6.8
+          ],
+          "height": 1.2,
+          "capacity": "24m³",
+          "interaction_local": [
+            7.8,
+            1.4,
+            0
+          ]
+        },
+        {
+          "name": "叉铲挂架",
+          "bbox_local": [
+            0.6,
+            0.2,
+            3.6,
+            0.8
+          ],
+          "height": 1.8,
+          "capacity": "",
+          "interaction_local": [
+            2.1,
+            1.2,
+            0
+          ]
+        }
+      ],
+      "capacity": "两格各24m³；收集0.4m³/日，90日批次36m³，留12m³翻堆余量。",
+      "entry_path_world": [
+        [
+          -470,
+          481,
+          70
+        ],
+        [
+          -470,
+          477,
+          70
+        ],
+        [
+          -530,
+          477,
+          70
+        ],
+        [
+          -540,
+          460,
+          70
+        ],
+        [
+          -554,
+          460,
+          70
+        ],
+        [
+          -554.6,
+          460,
+          70
+        ]
+      ],
+      "notes": "南端1.8m装卸带，东门接该带的转向角；腐熟满90日才改为可下田物品状态。",
+      "geometry_exclusions": [],
+      "special": "仅列明的门及共用走道供人物通行；屋面检修盖需管理员钥匙；无地下暗道与跨建筑传声管。",
+      "net_floor_area": 73.44
+    }
+  ],
+  "sites": [
+    {
+      "id": "PORT_STORE",
+      "name": "港口干货仓",
+      "center": [
+        -100,
+        36,
+        4
+      ],
+      "size": [
+        30,
+        18
+      ],
+      "entrance": [
+        -100,
+        27,
+        4
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 192.67,
+        "horizontal_m": 456.1
+      },
+      "bbox_world": [
+        -115.0,
+        27.0,
+        -85.0,
+        45.0
+      ]
+    },
+    {
+      "id": "BOAT_SHED",
+      "name": "船具与修船棚",
+      "center": [
+        90,
+        -10,
+        0
+      ],
+      "size": [
+        24,
+        12
+      ],
+      "entrance": [
+        78,
+        -10,
+        0
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 169.61,
+        "horizontal_m": 499.18
+      },
+      "bbox_world": [
+        78.0,
+        -16.0,
+        102.0,
+        -4.0
+      ]
+    },
+    {
+      "id": "WELL",
+      "name": "公共取水亭",
+      "center": [
+        -48,
+        144,
+        12
+      ],
+      "size": [
+        8,
+        8
+      ],
+      "entrance": [
+        -48,
+        140,
+        12
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 188.11,
+        "horizontal_m": 340.4
+      },
+      "bbox_world": [
+        -52.0,
+        140.0,
+        -44.0,
+        148.0
+      ]
+    },
+    {
+      "id": "CHAPEL",
+      "name": "聚落会堂",
+      "center": [
+        -96,
+        204,
+        17
+      ],
+      "size": [
+        18,
+        30
+      ],
+      "entrance": [
+        -96,
+        189,
+        17
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 199.11,
+        "horizontal_m": 293.16
+      },
+      "bbox_world": [
+        -105.0,
+        189.0,
+        -87.0,
+        219.0
+      ]
+    },
+    {
+      "id": "SCHOOL",
+      "name": "村学与医务室",
+      "center": [
+        68,
+        204,
+        17
+      ],
+      "size": [
+        24,
+        18
+      ],
+      "entrance": [
+        68,
+        195,
+        17
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 166.21,
+        "horizontal_m": 285.22
+      },
+      "bbox_world": [
+        56.0,
+        195.0,
+        80.0,
+        213.0
+      ]
+    },
+    {
+      "id": "GREEN",
+      "name": "温室",
+      "center": [
+        216,
+        432,
+        42
+      ],
+      "size": [
+        36,
+        18
+      ],
+      "entrance": [
+        216,
+        423,
+        42
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 102.78,
+        "horizontal_m": 221.49
+      },
+      "bbox_world": [
+        198.0,
+        423.0,
+        234.0,
+        441.0
+      ]
+    },
+    {
+      "id": "MILL",
+      "name": "风磨与辅助抽水机",
+      "center": [
+        -320,
+        310,
+        31
+      ],
+      "size": [
+        12,
+        12
+      ],
+      "entrance": [
+        -320,
+        304,
+        31
+      ],
+      "floors": 2,
+      "polar_from_main_center": {
+        "azimuth_deg": 241.88,
+        "horizontal_m": 362.82
+      },
+      "bbox_world": [
+        -326.0,
+        304.0,
+        -314.0,
+        316.0
+      ]
+    },
+    {
+      "id": "WATER",
+      "name": "净水与高位储水设施",
+      "center": [
+        216,
+        504,
+        49
+      ],
+      "size": [
+        24,
+        18
+      ],
+      "entrance": [
+        204,
+        504,
+        49
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 83.92,
+        "horizontal_m": 217.22
+      },
+      "bbox_world": [
+        204.0,
+        495.0,
+        228.0,
+        513.0
+      ]
+    },
+    {
+      "id": "SEWAGE",
+      "name": "生活污水处理场",
+      "center": [
+        338,
+        74,
+        6
+      ],
+      "size": [
+        36,
+        24
+      ],
+      "entrance": [
+        320,
+        74,
+        6
+      ],
+      "floors": 0,
+      "polar_from_main_center": {
+        "azimuth_deg": 140.29,
+        "horizontal_m": 529.05
+      },
+      "bbox_world": [
+        320.0,
+        62.0,
+        356.0,
+        86.0
+      ]
+    },
+    {
+      "id": "WASTE",
+      "name": "实验废液封存库",
+      "center": [
+        -208,
+        570,
+        60
+      ],
+      "size": [
+        18,
+        12
+      ],
+      "entrance": [
+        -199,
+        570,
+        60
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 293.17,
+        "horizontal_m": 226.24
+      },
+      "bbox_world": [
+        -217.0,
+        564.0,
+        -199.0,
+        576.0
+      ]
+    },
+    {
+      "id": "FUEL",
+      "name": "煤场与灯油隔间",
+      "center": [
+        -198,
+        506,
+        52
+      ],
+      "size": [
+        30,
+        24
+      ],
+      "entrance": [
+        -183,
+        506,
+        52
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 277.2,
+        "horizontal_m": 199.57
+      },
+      "bbox_world": [
+        -213.0,
+        494.0,
+        -183.0,
+        518.0
+      ]
+    },
+    {
+      "id": "HEAT",
+      "name": "源热井与换热间",
+      "center": [
+        -174,
+        618,
+        66
+      ],
+      "size": [
+        18,
+        18
+      ],
+      "entrance": [
+        -183,
+        618,
+        66
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 308.22,
+        "horizontal_m": 221.46
+      },
+      "bbox_world": [
+        -183.0,
+        609.0,
+        -165.0,
+        627.0
+      ]
+    },
+    {
+      "id": "BARN-W",
+      "name": "西牧场牛羊舍",
+      "center": [
+        -470,
+        490,
+        70
+      ],
+      "size": [
+        30,
+        18
+      ],
+      "entrance": [
+        -470,
+        481,
+        70
+      ],
+      "floors": 1,
+      "bbox_world": [
+        -485.0,
+        481.0,
+        -455.0,
+        499.0
+      ]
+    },
+    {
+      "id": "FEED-W",
+      "name": "西牧场饲料棚",
+      "center": [
+        -430,
+        490,
+        70
+      ],
+      "size": [
+        18,
+        12
+      ],
+      "entrance": [
+        -439,
+        490,
+        70
+      ],
+      "floors": 1,
+      "bbox_world": [
+        -439.0,
+        484.0,
+        -421.0,
+        496.0
+      ]
+    },
+    {
+      "id": "BARN-E",
+      "name": "东牧场羊驮畜舍",
+      "center": [
+        420,
+        560,
+        64
+      ],
+      "size": [
+        30,
+        18
+      ],
+      "entrance": [
+        420,
+        551,
+        64
+      ],
+      "floors": 1,
+      "bbox_world": [
+        405.0,
+        551.0,
+        435.0,
+        569.0
+      ]
+    },
+    {
+      "id": "FEED-E",
+      "name": "东牧场饲料棚",
+      "center": [
+        460,
+        560,
+        64
+      ],
+      "size": [
+        18,
+        12
+      ],
+      "entrance": [
+        451,
+        560,
+        64
+      ],
+      "floors": 1,
+      "bbox_world": [
+        451.0,
+        554.0,
+        469.0,
+        566.0
+      ]
+    },
+    {
+      "id": "TOOLS-W",
+      "name": "西田工具棚",
+      "center": [
+        -400,
+        250,
+        26
+      ],
+      "size": [
+        12,
+        8
+      ],
+      "entrance": [
+        -400,
+        246,
+        26
+      ],
+      "floors": 1,
+      "bbox_world": [
+        -406.0,
+        246.0,
+        -394.0,
+        254.0
+      ]
+    },
+    {
+      "id": "TOOLS-E",
+      "name": "东田工具棚",
+      "center": [
+        300,
+        280,
+        24
+      ],
+      "size": [
+        12,
+        8
+      ],
+      "entrance": [
+        300,
+        276,
+        24
+      ],
+      "floors": 1,
+      "bbox_world": [
+        294.0,
+        276.0,
+        306.0,
+        284.0
+      ]
+    },
+    {
+      "id": "COMPOST",
+      "name": "牧场堆肥棚",
+      "center": [
+        -560,
+        460,
+        70
+      ],
+      "size": [
+        12,
+        8
+      ],
+      "entrance": [
+        -554,
+        460,
+        70
+      ],
+      "floors": 1,
+      "bbox_world": [
+        -566.0,
+        456.0,
+        -554.0,
+        464.0
+      ]
+    }
+  ],
+  "new_major_sites": [
+    {
+      "id": "BARN-W",
+      "name": "西牧场牛羊舍",
+      "center": [
+        -470,
+        490,
+        70
+      ],
+      "size": [
+        30,
+        18
+      ],
+      "entrance": [
+        -470,
+        481,
+        70
+      ],
+      "floors": 1,
+      "bbox_world": [
+        -485.0,
+        481.0,
+        -455.0,
+        499.0
+      ]
+    },
+    {
+      "id": "FEED-W",
+      "name": "西牧场饲料棚",
+      "center": [
+        -430,
+        490,
+        70
+      ],
+      "size": [
+        18,
+        12
+      ],
+      "entrance": [
+        -439,
+        490,
+        70
+      ],
+      "floors": 1,
+      "bbox_world": [
+        -439.0,
+        484.0,
+        -421.0,
+        496.0
+      ]
+    },
+    {
+      "id": "BARN-E",
+      "name": "东牧场羊驮畜舍",
+      "center": [
+        420,
+        560,
+        64
+      ],
+      "size": [
+        30,
+        18
+      ],
+      "entrance": [
+        420,
+        551,
+        64
+      ],
+      "floors": 1,
+      "bbox_world": [
+        405.0,
+        551.0,
+        435.0,
+        569.0
+      ]
+    },
+    {
+      "id": "FEED-E",
+      "name": "东牧场饲料棚",
+      "center": [
+        460,
+        560,
+        64
+      ],
+      "size": [
+        18,
+        12
+      ],
+      "entrance": [
+        451,
+        560,
+        64
+      ],
+      "floors": 1,
+      "bbox_world": [
+        451.0,
+        554.0,
+        469.0,
+        566.0
+      ]
+    },
+    {
+      "id": "TOOLS-W",
+      "name": "西田工具棚",
+      "center": [
+        -400,
+        250,
+        26
+      ],
+      "size": [
+        12,
+        8
+      ],
+      "entrance": [
+        -400,
+        246,
+        26
+      ],
+      "floors": 1,
+      "bbox_world": [
+        -406.0,
+        246.0,
+        -394.0,
+        254.0
+      ]
+    },
+    {
+      "id": "TOOLS-E",
+      "name": "东田工具棚",
+      "center": [
+        300,
+        280,
+        24
+      ],
+      "size": [
+        12,
+        8
+      ],
+      "entrance": [
+        300,
+        276,
+        24
+      ],
+      "floors": 1,
+      "bbox_world": [
+        294.0,
+        276.0,
+        306.0,
+        284.0
+      ]
+    },
+    {
+      "id": "COMPOST",
+      "name": "牧场堆肥棚",
+      "center": [
+        -560,
+        460,
+        70
+      ],
+      "size": [
+        12,
+        8
+      ],
+      "entrance": [
+        -554,
+        460,
+        70
+      ],
+      "floors": 1,
+      "bbox_world": [
+        -566.0,
+        456.0,
+        -554.0,
+        464.0
+      ]
+    }
+  ],
+  "access_roads": [
+    {
+      "id": "RA-01",
+      "name": "风磨至西畜舍农路",
+      "points": [
+        [
+          -320,
+          292,
+          29.8571
+        ],
+        [
+          -344,
+          292,
+          31.8
+        ],
+        [
+          -440,
+          350,
+          43
+        ],
+        [
+          -550,
+          430,
+          57
+        ],
+        [
+          -470,
+          430,
+          65
+        ],
+        [
+          -470,
+          475,
+          70
+        ],
+        [
+          -470,
+          481,
+          70
+        ]
+      ],
+      "width": 2.4,
+      "type": "cart",
+      "length_3d": 405.206,
+      "max_grade": 0.111111,
+      "walk_seconds_at_1_2_mps": 337.672,
+      "six_second_turns": 68,
+      "walk_seconds": 404.2062,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once",
+      "field_gate_crossings": [
+        {
+          "plot_id": "FIELD_W",
+          "gate_id": "FIELD_W-G2",
+          "position": [
+            -440.0,
+            350.0,
+            43.0
+          ],
+          "width": 5.3
+        },
+        {
+          "plot_id": "PASTURE_W",
+          "gate_id": "PASTURE_W-G1",
+          "position": [
+            -470.0,
+            440.0,
+            66.1111
+          ],
+          "width": 3.0
+        }
+      ]
+    },
+    {
+      "id": "RA-02",
+      "name": "西饲料棚支路",
+      "points": [
+        [
+          -470,
+          481,
+          70
+        ],
+        [
+          -470,
+          477,
+          70
+        ],
+        [
+          -448,
+          477,
+          70
+        ],
+        [
+          -448,
+          490,
+          70
+        ],
+        [
+          -439,
+          490,
+          70
+        ]
+      ],
+      "width": 2.4,
+      "type": "cart",
+      "length_3d": 48.0,
+      "max_grade": 0.0,
+      "walk_seconds_at_1_2_mps": 40.0,
+      "six_second_turns": 7,
+      "walk_seconds": 40.0,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once"
+    },
+    {
+      "id": "RA-03",
+      "name": "净水北节点至东畜舍农路",
+      "points": [
+        [
+          192,
+          504,
+          49
+        ],
+        [
+          192,
+          528,
+          49
+        ],
+        [
+          288,
+          528,
+          54
+        ],
+        [
+          380,
+          532,
+          60
+        ],
+        [
+          420,
+          551,
+          64
+        ]
+      ],
+      "width": 2.4,
+      "type": "cart",
+      "length_3d": 256.876,
+      "max_grade": 0.090328,
+      "walk_seconds_at_1_2_mps": 214.063,
+      "six_second_turns": 40,
+      "walk_seconds": 236.8541,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once",
+      "field_gate_crossings": [
+        {
+          "plot_id": "PASTURE_E",
+          "gate_id": "PASTURE_E-G1",
+          "position": [
+            300.0,
+            528.5217,
+            54.7826
+          ],
+          "width": 3.1
+        }
+      ]
+    },
+    {
+      "id": "RA-04",
+      "name": "东饲料棚支路",
+      "points": [
+        [
+          420,
+          551,
+          64
+        ],
+        [
+          420,
+          547,
+          64
+        ],
+        [
+          444,
+          547,
+          64
+        ],
+        [
+          444,
+          560,
+          64
+        ],
+        [
+          451,
+          560,
+          64
+        ]
+      ],
+      "width": 2.4,
+      "type": "cart",
+      "length_3d": 48.0,
+      "max_grade": 0.0,
+      "walk_seconds_at_1_2_mps": 40.0,
+      "six_second_turns": 7,
+      "walk_seconds": 40.0,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once"
+    },
+    {
+      "id": "RA-05",
+      "name": "西田工具支路",
+      "points": [
+        [
+          -320,
+          220,
+          23
+        ],
+        [
+          -400,
+          220,
+          26
+        ],
+        [
+          -400,
+          246,
+          26
+        ]
+      ],
+      "width": 1.8,
+      "type": "cart",
+      "length_3d": 106.056,
+      "max_grade": 0.0375,
+      "walk_seconds_at_1_2_mps": 88.38,
+      "six_second_turns": 15,
+      "walk_seconds": 88.3802,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once"
+    },
+    {
+      "id": "RA-06",
+      "name": "东田工具支路",
+      "points": [
+        [
+          300,
+          64,
+          6
+        ],
+        [
+          300,
+          200,
+          16
+        ],
+        [
+          300,
+          276,
+          24
+        ]
+      ],
+      "width": 1.8,
+      "type": "cart",
+      "length_3d": 212.787,
+      "max_grade": 0.105263,
+      "walk_seconds_at_1_2_mps": 177.323,
+      "six_second_turns": 36,
+      "walk_seconds": 212.787,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once",
+      "field_gate_crossings": [
+        {
+          "plot_id": "FIELD_E",
+          "gate_id": "FIELD_E-G1",
+          "position": [
+            300.0,
+            80.0,
+            7.1765
+          ],
+          "width": 2.4
+        }
+      ]
+    },
+    {
+      "id": "RA-07",
+      "name": "堆肥棚支路",
+      "points": [
+        [
+          -470,
+          481,
+          70
+        ],
+        [
+          -470,
+          477,
+          70
+        ],
+        [
+          -530,
+          477,
+          70
+        ],
+        [
+          -540,
+          460,
+          70
+        ],
+        [
+          -554,
+          460,
+          70
+        ]
+      ],
+      "width": 1.8,
+      "type": "cart",
+      "length_3d": 97.723,
+      "max_grade": 0.0,
+      "walk_seconds_at_1_2_mps": 81.436,
+      "six_second_turns": 14,
+      "walk_seconds": 81.4359,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once"
+    }
+  ],
+  "roads": [
+    {
+      "id": "RA-01",
+      "name": "风磨至西畜舍农路",
+      "points": [
+        [
+          -320,
+          292,
+          29.8571
+        ],
+        [
+          -344,
+          292,
+          31.8
+        ],
+        [
+          -440,
+          350,
+          43
+        ],
+        [
+          -550,
+          430,
+          57
+        ],
+        [
+          -470,
+          430,
+          65
+        ],
+        [
+          -470,
+          475,
+          70
+        ],
+        [
+          -470,
+          481,
+          70
+        ]
+      ],
+      "width": 2.4,
+      "type": "cart",
+      "length_3d": 405.206,
+      "max_grade": 0.111111,
+      "walk_seconds_at_1_2_mps": 337.672,
+      "six_second_turns": 68,
+      "walk_seconds": 404.2062,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once",
+      "field_gate_crossings": [
+        {
+          "plot_id": "FIELD_W",
+          "gate_id": "FIELD_W-G2",
+          "position": [
+            -440.0,
+            350.0,
+            43.0
+          ],
+          "width": 5.3
+        },
+        {
+          "plot_id": "PASTURE_W",
+          "gate_id": "PASTURE_W-G1",
+          "position": [
+            -470.0,
+            440.0,
+            66.1111
+          ],
+          "width": 3.0
+        }
+      ]
+    },
+    {
+      "id": "RA-02",
+      "name": "西饲料棚支路",
+      "points": [
+        [
+          -470,
+          481,
+          70
+        ],
+        [
+          -470,
+          477,
+          70
+        ],
+        [
+          -448,
+          477,
+          70
+        ],
+        [
+          -448,
+          490,
+          70
+        ],
+        [
+          -439,
+          490,
+          70
+        ]
+      ],
+      "width": 2.4,
+      "type": "cart",
+      "length_3d": 48.0,
+      "max_grade": 0.0,
+      "walk_seconds_at_1_2_mps": 40.0,
+      "six_second_turns": 7,
+      "walk_seconds": 40.0,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once"
+    },
+    {
+      "id": "RA-03",
+      "name": "净水北节点至东畜舍农路",
+      "points": [
+        [
+          192,
+          504,
+          49
+        ],
+        [
+          192,
+          528,
+          49
+        ],
+        [
+          288,
+          528,
+          54
+        ],
+        [
+          380,
+          532,
+          60
+        ],
+        [
+          420,
+          551,
+          64
+        ]
+      ],
+      "width": 2.4,
+      "type": "cart",
+      "length_3d": 256.876,
+      "max_grade": 0.090328,
+      "walk_seconds_at_1_2_mps": 214.063,
+      "six_second_turns": 40,
+      "walk_seconds": 236.8541,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once",
+      "field_gate_crossings": [
+        {
+          "plot_id": "PASTURE_E",
+          "gate_id": "PASTURE_E-G1",
+          "position": [
+            300.0,
+            528.5217,
+            54.7826
+          ],
+          "width": 3.1
+        }
+      ]
+    },
+    {
+      "id": "RA-04",
+      "name": "东饲料棚支路",
+      "points": [
+        [
+          420,
+          551,
+          64
+        ],
+        [
+          420,
+          547,
+          64
+        ],
+        [
+          444,
+          547,
+          64
+        ],
+        [
+          444,
+          560,
+          64
+        ],
+        [
+          451,
+          560,
+          64
+        ]
+      ],
+      "width": 2.4,
+      "type": "cart",
+      "length_3d": 48.0,
+      "max_grade": 0.0,
+      "walk_seconds_at_1_2_mps": 40.0,
+      "six_second_turns": 7,
+      "walk_seconds": 40.0,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once"
+    },
+    {
+      "id": "RA-05",
+      "name": "西田工具支路",
+      "points": [
+        [
+          -320,
+          220,
+          23
+        ],
+        [
+          -400,
+          220,
+          26
+        ],
+        [
+          -400,
+          246,
+          26
+        ]
+      ],
+      "width": 1.8,
+      "type": "cart",
+      "length_3d": 106.056,
+      "max_grade": 0.0375,
+      "walk_seconds_at_1_2_mps": 88.38,
+      "six_second_turns": 15,
+      "walk_seconds": 88.3802,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once"
+    },
+    {
+      "id": "RA-06",
+      "name": "东田工具支路",
+      "points": [
+        [
+          300,
+          64,
+          6
+        ],
+        [
+          300,
+          200,
+          16
+        ],
+        [
+          300,
+          276,
+          24
+        ]
+      ],
+      "width": 1.8,
+      "type": "cart",
+      "length_3d": 212.787,
+      "max_grade": 0.105263,
+      "walk_seconds_at_1_2_mps": 177.323,
+      "six_second_turns": 36,
+      "walk_seconds": 212.787,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once",
+      "field_gate_crossings": [
+        {
+          "plot_id": "FIELD_E",
+          "gate_id": "FIELD_E-G1",
+          "position": [
+            300.0,
+            80.0,
+            7.1765
+          ],
+          "width": 2.4
+        }
+      ]
+    },
+    {
+      "id": "RA-07",
+      "name": "堆肥棚支路",
+      "points": [
+        [
+          -470,
+          481,
+          70
+        ],
+        [
+          -470,
+          477,
+          70
+        ],
+        [
+          -530,
+          477,
+          70
+        ],
+        [
+          -540,
+          460,
+          70
+        ],
+        [
+          -554,
+          460,
+          70
+        ]
+      ],
+      "width": 1.8,
+      "type": "cart",
+      "length_3d": 97.723,
+      "max_grade": 0.0,
+      "walk_seconds_at_1_2_mps": 81.436,
+      "six_second_turns": 14,
+      "walk_seconds": 81.4359,
+      "movement_rule": "segment grade <=6%:1.2m/s; >6% up to12%:1.0m/s; round total path once"
+    }
+  ],
+  "corridors": [
+    {
+      "id": "SCHOOL-HALL",
+      "bbox_world": [
+        66.8,
+        195.6,
+        69.2,
+        212.4
+      ],
+      "floor_z": 17,
+      "clear_height": 6,
+      "points": [
+        [
+          68,
+          195,
+          17
+        ],
+        [
+          68,
+          204,
+          17
+        ],
+        [
+          68,
+          212.4,
+          17
+        ]
+      ],
+      "width": 2.4
+    },
+    {
+      "id": "FUEL-YARD",
+      "bbox_world": [
+        -213,
+        503,
+        -183,
+        509
+      ],
+      "floor_z": 52,
+      "clear_height": 6,
+      "width": 3.0,
+      "points": [
+        [
+          -183,
+          506,
+          52
+        ],
+        [
+          -198,
+          506,
+          52
+        ]
+      ],
+      "notes": "中轴3m货道，南北两侧各1.5m无火带，共6m隔离间距；石防火墙高2.4m。"
+    }
+  ],
+  "capacity_accounting": "容量与初始库存分开；本文件不增加原11常住人口、谷物或油料初始总账。",
+  "hall_height_decisions": {
+    "CHAPEL": 6.6,
+    "SCHOOL_TEACHING": 6.0,
+    "SCHOOL_CLINIC": 4.2
+  },
+  "actor": {
+    "radius_m": 0.3,
+    "eye_height_m": 1.65,
+    "turn_s": 6
+  },
+  "acoustics": {
+    "closed_ordinary_door_loss_db": 18,
+    "closed_heavy_door_loss_db": 30,
+    "open_door_loss_db": 0,
+    "audible_threshold_db": 20,
+    "speech_threshold_db": 35,
+    "speech_over_background_db": 10,
+    "background_db": {
+      "MILL": 70,
+      "HEAT": 68,
+      "BOAT_SHED": 64,
+      "WATER": 58
+    }
+  },
+  "livestock_water": {
+    "daily_l": 623,
+    "components_l": {
+      "cows": 320,
+      "sheep": 96,
+      "goats": 72,
+      "mules": 120,
+      "hens": 15
+    },
+    "effective_roof_m2": 1200,
+    "annual_design_rainfall_mm": 1100,
+    "collection_efficiency": 0.75,
+    "annual_inflow_m3": 990,
+    "cisterns": [
+      {
+        "id": "FARM-WATER-W",
+        "center": [
+          -496,
+          490,
+          70
+        ],
+        "size": [
+          6,
+          5
+        ],
+        "water_volume_m3": 20,
+        "inner_water_size": [
+          5,
+          4,
+          1
+        ]
+      },
+      {
+        "id": "FARM-WATER-E",
+        "center": [
+          394,
+          560,
+          64
+        ],
+        "size": [
+          6,
+          5
+        ],
+        "water_volume_m3": 20,
+        "inner_water_size": [
+          5,
+          4,
+          1
+        ]
+      }
+    ]
+  },
+  "agriculture": [
+    {
+      "plot_id": "FIELD_W",
+      "bbox": [
+        -500,
+        120,
+        -242,
+        350
+      ],
+      "area_m2": {
+        "potato": 28000,
+        "barley": 18000,
+        "service": 4600
+      },
+      "wall_height": 1.2,
+      "wall_base_width": 0.65,
+      "wall_top_width": 0.45,
+      "gates": [
+        {
+          "id": "FIELD_W-G1",
+          "xy_key": [
+            -242,
+            220
+          ],
+          "position": [
+            -242,
+            220,
+            23
+          ],
+          "width": 3.6,
+          "height": 1.2,
+          "road_id": "R23",
+          "lock": "field latch; villagers and farm staff",
+          "open_seconds": 2,
+          "road_binding": {
+            "road_id": "R23",
+            "segment_index": 0,
+            "segment_t": 0.07142857142857142,
+            "new_graph_split_point": [
+              -242,
+              220,
+              23
+            ],
+            "rule": "R23原线不移动；在新田门点切出门状态边，旧(-280,220,23)门口不再生成围墙或门"
+          }
+        },
+        {
+          "id": "FIELD_W-G2",
+          "xy_key": [
+            -440.0,
+            350.0
+          ],
+          "position": [
+            -440.0,
+            350.0,
+            43.0
+          ],
+          "width": 5.3,
+          "height": 1.2,
+          "road_id": "RA-01",
+          "lock": "field latch; villagers and farm staff",
+          "open_seconds": 2
+        }
+      ],
+      "wall_segments": [
+        {
+          "from_xy": [
+            -408.1021964023467,
+            120.0
+          ],
+          "to_xy": [
+            -242.0,
+            120.0
+          ]
+        },
+        {
+          "from_xy": [
+            -242.0,
+            120.0
+          ],
+          "to_xy": [
+            -242.0,
+            218.2
+          ]
+        },
+        {
+          "from_xy": [
+            -242.0,
+            221.8
+          ],
+          "to_xy": [
+            -242.0,
+            296.0697465310543
+          ]
+        },
+        {
+          "from_xy": [
+            -242.0,
+            296.0697465310543
+          ],
+          "to_xy": [
+            -280.0,
+            296.0697465310543
+          ]
+        },
+        {
+          "from_xy": [
+            -280.0,
+            296.0697465310543
+          ],
+          "to_xy": [
+            -280.0,
+            350.0
+          ]
+        },
+        {
+          "from_xy": [
+            -280.0,
+            350.0
+          ],
+          "to_xy": [
+            -437.35,
+            350.0
+          ]
+        },
+        {
+          "from_xy": [
+            -442.65,
+            350.0
+          ],
+          "to_xy": [
+            -500.0,
+            350.0
+          ]
+        },
+        {
+          "from_xy": [
+            -500.0,
+            350.0
+          ],
+          "to_xy": [
+            -500.0,
+            265.61066981476614
+          ]
+        },
+        {
+          "from_xy": [
+            -500.0,
+            265.61066981476614
+          ],
+          "to_xy": [
+            -408.1021964023467,
+            120.0
+          ]
+        }
+      ],
+      "geometry": "polygon",
+      "actual_area_m2": 50600.0,
+      "boundary_rule": "polygon为实田界；bbox只作检索包围盒，凹口与海侧裁角不铺田地",
+      "polygon": [
+        [
+          -408.1021964023467,
+          120
+        ],
+        [
+          -242,
+          120
+        ],
+        [
+          -242,
+          296.0697465310543
+        ],
+        [
+          -280,
+          296.0697465310543
+        ],
+        [
+          -280,
+          350
+        ],
+        [
+          -500,
+          350
+        ],
+        [
+          -500,
+          265.61066981476614
+        ]
+      ],
+      "coastal_edge": {
+        "from_xy": [
+          -500,
+          265.61066981476614
+        ],
+        "to_xy": [
+          -408.1021964023467,
+          120
+        ],
+        "shore_setback_m": 5,
+        "wind_wall_height": 1.2,
+        "wall_base_width": 0.65,
+        "wall_top_width": 0.45,
+        "salt_drain": {
+          "offset_into_field_m": 0.8,
+          "width": 0.3,
+          "depth": 0.25
+        },
+        "planting": "岸侧只铺低草与裸岩，墙内种植区不追加乔木屏障"
+      }
+    },
+    {
+      "plot_id": "FIELD_E",
+      "bbox": [
+        190,
+        80,
+        420,
+        340
+      ],
+      "area_m2": {
+        "potato": 20000,
+        "barley": 10000,
+        "oat": 20000,
+        "fallow_and_service": 9800
+      },
+      "wall_height": 1.2,
+      "wall_base_width": 0.65,
+      "wall_top_width": 0.45,
+      "gates": [
+        {
+          "id": "FIELD_E-G1",
+          "xy_key": [
+            300.0,
+            80.0
+          ],
+          "position": [
+            300.0,
+            80.0,
+            7.1765
+          ],
+          "width": 2.4,
+          "height": 1.2,
+          "road_id": "RA-06",
+          "lock": "field latch; villagers and farm staff",
+          "open_seconds": 2
+        }
+      ],
+      "wall_segments": [
+        {
+          "from_xy": [
+            190.0,
+            80.0
+          ],
+          "to_xy": [
+            298.8,
+            80.0
+          ]
+        },
+        {
+          "from_xy": [
+            301.2,
+            80.0
+          ],
+          "to_xy": [
+            315.0,
+            80.0
+          ]
+        },
+        {
+          "from_xy": [
+            315.0,
+            80.0
+          ],
+          "to_xy": [
+            315.0,
+            91.0
+          ]
+        },
+        {
+          "from_xy": [
+            315.0,
+            91.0
+          ],
+          "to_xy": [
+            361.0,
+            91.0
+          ]
+        },
+        {
+          "from_xy": [
+            361.0,
+            91.0
+          ],
+          "to_xy": [
+            361.0,
+            80.0
+          ]
+        },
+        {
+          "from_xy": [
+            361.0,
+            80.0
+          ],
+          "to_xy": [
+            420.0,
+            80.0
+          ]
+        },
+        {
+          "from_xy": [
+            420.0,
+            80.0
+          ],
+          "to_xy": [
+            420.0,
+            340.0
+          ]
+        },
+        {
+          "from_xy": [
+            420.0,
+            340.0
+          ],
+          "to_xy": [
+            190.0,
+            340.0
+          ]
+        },
+        {
+          "from_xy": [
+            190.0,
+            340.0
+          ],
+          "to_xy": [
+            190.0,
+            80.0
+          ]
+        }
+      ],
+      "geometry": "rectangle",
+      "actual_area_m2": 59800,
+      "boundary_rule": "矩形四角为实田界",
+      "translation_from_previous_m": [
+        -20,
+        0
+      ],
+      "fixed_gate_rule": "南门FIELD_E-G1仍在(300,80,7.1765)接既有RA-06；田界移动不拖动已固定农路或工具棚",
+      "non_crop_service_reservations": [
+        {
+          "id": "SEWAGE-NORTH-BUFFER",
+          "bbox": [
+            315,
+            80,
+            361,
+            91
+          ],
+          "area_m2": 506,
+          "charged_to": "fallow_and_service",
+          "purpose": "扣除既有污水场及5m隔离带伸入田界的部分；不扣已定作物面积"
+        }
+      ],
+      "wall_boundary_polygon": [
+        [
+          190,
+          80
+        ],
+        [
+          315,
+          80
+        ],
+        [
+          315,
+          91
+        ],
+        [
+          361,
+          91
+        ],
+        [
+          361,
+          80
+        ],
+        [
+          420,
+          80
+        ],
+        [
+          420,
+          340
+        ],
+        [
+          190,
+          340
+        ]
+      ],
+      "wall_boundary_rule": "南侧墙绕开污水场5m服务隔离区；田地总矩形及作物分配不变，506m²隔离区计入原9800m²休耕/服务配额"
+    },
+    {
+      "plot_id": "VEG",
+      "bbox": [
+        180,
+        340,
+        360,
+        420
+      ],
+      "area_m2": {
+        "leafy": 6000,
+        "bean_and_root": 5000,
+        "nursery_and_service": 3400
+      },
+      "wall_height": 1.2,
+      "wall_base_width": 0.65,
+      "wall_top_width": 0.45,
+      "gates": [
+        {
+          "id": "VEG-G1",
+          "xy_key": [
+            216.0,
+            420.0
+          ],
+          "position": [
+            216.0,
+            420.0,
+            42.0
+          ],
+          "width": 3.0,
+          "height": 1.2,
+          "road_id": "R10",
+          "lock": "field latch; villagers and farm staff",
+          "open_seconds": 2
+        },
+        {
+          "id": "VEG-G2",
+          "xy_key": [
+            240.0,
+            420.0
+          ],
+          "position": [
+            240.0,
+            420.0,
+            42.0885
+          ],
+          "width": 3.0,
+          "height": 1.2,
+          "road_id": "R11",
+          "lock": "field latch; villagers and farm staff",
+          "open_seconds": 2
+        },
+        {
+          "id": "VEG-G3",
+          "xy_key": [
+            180.0,
+            381.43
+          ],
+          "position": [
+            180.0,
+            381.4286,
+            40.2857
+          ],
+          "width": 3.4,
+          "height": 1.2,
+          "road_id": "R10",
+          "lock": "field latch; villagers and farm staff",
+          "open_seconds": 2
+        }
+      ],
+      "wall_segments": [
+        {
+          "from_xy": [
+            180,
+            340
+          ],
+          "to_xy": [
+            190,
+            340
+          ]
+        },
+        {
+          "from_xy": [
+            360,
+            340
+          ],
+          "to_xy": [
+            360,
+            420
+          ]
+        },
+        {
+          "from_xy": [
+            360,
+            420
+          ],
+          "to_xy": [
+            241.5,
+            420.0
+          ]
+        },
+        {
+          "from_xy": [
+            238.5,
+            420.0
+          ],
+          "to_xy": [
+            217.5,
+            420.0
+          ]
+        },
+        {
+          "from_xy": [
+            214.5,
+            420.0
+          ],
+          "to_xy": [
+            180,
+            420
+          ]
+        },
+        {
+          "from_xy": [
+            180,
+            420
+          ],
+          "to_xy": [
+            180.0,
+            383.12857142857143
+          ]
+        },
+        {
+          "from_xy": [
+            180.0,
+            379.7285714285714
+          ],
+          "to_xy": [
+            180,
+            340
+          ]
+        }
+      ],
+      "shared_wall": {
+        "owner_plot": "FIELD_E",
+        "from_xy": [
+          190,
+          340
+        ],
+        "to_xy": [
+          360,
+          340
+        ],
+        "generate_duplicate": false
+      }
+    },
+    {
+      "plot_id": "PASTURE_W",
+      "bbox": [
+        -600,
+        440,
+        -300,
+        860
+      ],
+      "area_m2": {
+        "grazing": 122000,
+        "service": 4000
+      },
+      "wall_height": 1.4,
+      "wall_base_width": 0.65,
+      "wall_top_width": 0.45,
+      "gates": [
+        {
+          "id": "PASTURE_W-G1",
+          "xy_key": [
+            -470.0,
+            440.0
+          ],
+          "position": [
+            -470.0,
+            440.0,
+            66.1111
+          ],
+          "width": 3.0,
+          "height": 1.4,
+          "road_id": "RA-01",
+          "lock": "field latch; villagers and farm staff",
+          "open_seconds": 2
+        }
+      ],
+      "wall_segments": [
+        {
+          "from_xy": [
+            -600,
+            440
+          ],
+          "to_xy": [
+            -471.5,
+            440.0
+          ]
+        },
+        {
+          "from_xy": [
+            -468.5,
+            440.0
+          ],
+          "to_xy": [
+            -300,
+            440
+          ]
+        },
+        {
+          "from_xy": [
+            -300,
+            440
+          ],
+          "to_xy": [
+            -300,
+            860
+          ]
+        },
+        {
+          "from_xy": [
+            -300,
+            860
+          ],
+          "to_xy": [
+            -600,
+            860
+          ]
+        },
+        {
+          "from_xy": [
+            -600,
+            860
+          ],
+          "to_xy": [
+            -600,
+            440
+          ]
+        }
+      ]
+    },
+    {
+      "plot_id": "PASTURE_E",
+      "bbox": [
+        300,
+        500,
+        620,
+        920
+      ],
+      "area_m2": {
+        "grazing": 130000,
+        "service": 4400
+      },
+      "wall_height": 1.4,
+      "wall_base_width": 0.65,
+      "wall_top_width": 0.45,
+      "gates": [
+        {
+          "id": "PASTURE_E-G1",
+          "xy_key": [
+            300.0,
+            528.52
+          ],
+          "position": [
+            300.0,
+            528.5217,
+            54.7826
+          ],
+          "width": 3.1,
+          "height": 1.4,
+          "road_id": "RA-03",
+          "lock": "field latch; villagers and farm staff",
+          "open_seconds": 2
+        }
+      ],
+      "wall_segments": [
+        {
+          "from_xy": [
+            300,
+            500
+          ],
+          "to_xy": [
+            620,
+            500
+          ]
+        },
+        {
+          "from_xy": [
+            620,
+            500
+          ],
+          "to_xy": [
+            620,
+            920
+          ]
+        },
+        {
+          "from_xy": [
+            620,
+            920
+          ],
+          "to_xy": [
+            300,
+            920
+          ]
+        },
+        {
+          "from_xy": [
+            300,
+            920
+          ],
+          "to_xy": [
+            300.0,
+            530.0717391304348
+          ]
+        },
+        {
+          "from_xy": [
+            300.0,
+            526.9717391304348
+          ],
+          "to_xy": [
+            300,
+            500
+          ]
+        }
+      ]
+    }
+  ],
+  "agricultural_boundary_revision": {
+    "coast_area_m2": 4280000,
+    "field_w_area_preserved_m2": 50600,
+    "field_e_area_preserved_m2": 59800,
+    "moved_gate": "FIELD_W-G1=(-242,220,23), on existing R23",
+    "farm_road_geometry_changes": 0,
+    "crop_accounting": "各原有area_m2/allocated_area_m2作物和服务分配原数保留",
+    "cliff_top_high_vegetation_setback_m": 20,
+    "coastal_field_setback_m": 5
+  }
+};
+}

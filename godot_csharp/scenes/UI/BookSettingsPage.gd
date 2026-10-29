@@ -3,6 +3,7 @@ extends VBoxContainer
 ## Add to a themed page container; _ready builds it once. Locale refreshes keep
 ## the same Controls, so focus and scroll position survive a language change.
 
+const MaterialControls := preload("res://scenes/UI/Components/MaterialControls.gd")
 const LocaleSettings := preload("res://scenes/Shared/Locale/LocaleSettings.gd")
 
 var settings_endpoint: Node
@@ -22,6 +23,7 @@ func _ready() -> void:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_settings = settings_endpoint if settings_endpoint != null else get_node_or_null("/root/GameSettings")
 	_locale = locale_endpoint if locale_endpoint != null else get_node_or_null("/root/GameLocale")
+	_apply_text_scale()
 	if _locale != null: _locale.language_changed.connect(func(_code: String): _refresh_content())
 	_build_language_choices()
 	if _settings != null:
@@ -47,7 +49,7 @@ func _build_language_choices() -> void:
 	for code: String in LocaleSettings.LANGUAGES:
 		var button := Button.new()
 		button.name = "Language_" + code
-		button.theme_type_variation = &"BookOption"
+		MaterialControls.prepare_button(button)
 		button.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 		button.text = LocaleSettings.NATIVE_NAMES[code]
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -76,6 +78,7 @@ func _build_settings() -> void:
 	_add_choice("graphics", "max_fps", "帧率上限",
 		[0, 30, 60, 120, 144], ["不限", "30", "60", "120", "144"])
 	_add_heading("阅读与辅助")
+	_add_choice("accessibility", "text_scale", "设置页文字大小", [1.0, 1.25, 1.5], ["100%", "125%", "150%"])
 	_add_toggle("accessibility", "reduce_motion", "减少动态效果")
 	_add_toggle("accessibility", "screen_flash", "屏幕闪光")
 	_add_choice("accessibility", "text_speed", "文字速度",
@@ -122,7 +125,7 @@ func _add_volume(key: String, source: String) -> void:
 func _add_toggle(section: String, key: String, source: String) -> void:
 	var check := CheckButton.new()
 	check.name = section + "_" + key
-	check.theme_type_variation = &"BookToggle"
+	MaterialControls.prepare_button(check)
 	check.toggled.connect(_set_value.bind(section, key))
 	add_child(check)
 	_bindings.append({"section": section, "key": key, "source": source,
@@ -137,7 +140,7 @@ func _add_choice(section: String, key: String, source: String,
 	_add_text(source, row)
 	var option := Button.new()
 	option.name = "Value"
-	option.theme_type_variation = &"BookOption"
+	MaterialControls.prepare_button(option)
 	option.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	option.pressed.connect(_cycle_value.bind(section, key, allowed))
 	row.add_child(option)
@@ -180,7 +183,27 @@ func _cycle_value(section: String, key: String, allowed: Array) -> void:
 	_settings.set_value(section, key, allowed[next])
 
 
+func _apply_text_scale() -> void:
+	var focused := get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	var scale := float(_settings.get_value("accessibility", "text_scale")) if _settings != null else 1.0
+	MaterialControls.apply(self, scale)
+	if focused != null and is_ancestor_of(focused): _reveal_focus_after_layout.call_deferred(weakref(focused))
+
+func _reveal_focus_after_layout(reference: WeakRef) -> void:
+	await get_tree().process_frame
+	if not is_inside_tree(): return
+	var focused := reference.get_ref() as Control
+	if not is_instance_valid(focused) or get_viewport().gui_get_focus_owner() != focused: return
+	var ancestor := get_parent()
+	while ancestor != null:
+		if ancestor is ScrollContainer:
+			ancestor.ensure_control_visible(focused)
+			return
+		ancestor = ancestor.get_parent()
+
+
 func _on_setting_changed(section: String, _key: String, _value: Variant) -> void:
+	if section == "accessibility" and _key == "text_scale": _apply_text_scale()
 	# TranslationServer sends NOTIFICATION_TRANSLATION_CHANGED for the language.
 	# Other settings can also change through another visible book instance.
 	if section != "language": _refresh_content()
@@ -269,3 +292,6 @@ func _restore_view(scrolls: Array[Dictionary], focus_ref: WeakRef, serial: int) 
 		if is_instance_valid(focused) and focused.is_visible_in_tree() \
 				and focused.focus_mode != Control.FOCUS_NONE:
 			focused.grab_focus()
+
+
+

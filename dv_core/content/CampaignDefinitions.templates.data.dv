@@ -1,0 +1,212 @@
+schema "dv-script-v1";
+
+// Immutable value templates. Only bounded Core constructors are accepted.
+
+data "template.campaign_access" {
+    value = {"kind":"dv-value-template","parameters":["gate"],"value":{"$":"domain.ref","args":[{"$":"data","id":"m35.campaign_access.literal","copy":false},"state",{"$":"param","name":"gate"}]},"bindings":{}};
+}
+
+data "template.campaign_action" {
+    value = {"kind":"dv-value-template","parameters":["id","kind","known","physical","law","grants","source"],"value":{"$":"value.with","args":[{"$":"value.with","args":[{"$":"value.with","args":[{"$":"list","items":[{"$":"value.pair","args":["id",{"$":"param","name":"id"}]},{"$":"value.pair","args":["kind",{"$":"param","name":"kind"}]},{"$":"value.pair","args":["precondition",{"$":"param","name":"known"}]},{"$":"value.pair","args":["authority_precondition",{"$":"param","name":"physical"}]}]},{"$":"data","id":"m35.campaign_action.literal","copy":false},{"$":"param","name":"law"}]},"grants",{"$":"param","name":"grants"}]},"source_refs",{"$":"value.single","args":[{"$":"param","name":"source"}]}]},"bindings":{}};
+}
+
+data "template.campaign_any" {
+    value = {"kind":"dv-value-template","parameters":["left","right"],"value":{"$":"domain.not","args":[{"$":"domain.all","args":[{"$":"value.pair","args":[{"$":"domain.not","args":[{"$":"param","name":"left"}]},{"$":"domain.not","args":[{"$":"param","name":"right"}]}]}]}]},"bindings":{}};
+}
+
+data "template.campaign_approved" {
+    value = {"kind":"dv-value-template","parameters":["id"],"value":{"$":"template","id":"template.campaign_source","args":[{"$":"data","id":"m35.campaign_authorized_speech.literal_0003","copy":false},0.0,{"$":"param","name":"id"}]},"bindings":{}};
+}
+
+data "template.campaign_at" {
+    value = {"kind":"dv-value-template","parameters":["actor","room"],"value":{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"actor"},"state","location"]},{"$":"param","name":"room"}]},"bindings":{}};
+}
+
+data "template.campaign_authorized_speech" {
+    value = {"kind":"dv-value-template","parameters":["action"],"value":{"$":"value.with","args":[{"$":"param","name":"action"},{"$":"data","id":"m35.campaign_authorized_speech.literal","copy":false},{"$":"list","items":[{"$":"value.pair","args":["required",true]},{"$":"value.pair","args":["contract_id",{"$":"data","id":"m35.campaign_authorized_speech.literal_0002","copy":false}]},{"$":"value.pair","args":["basis",{"$":"value.single","args":[{"$":"template","id":"template.campaign_source","args":[{"$":"data","id":"m35.campaign_authorized_speech.literal_0003","copy":false},{"$":"data","id":"m35.campaign_authorized_speech.literal_0004","copy":false},{"$":"data","id":"m35.campaign_authorized_speech.literal_0005","copy":false}]}]}]}]}]},"bindings":{}};
+}
+
+data "template.campaign_body" {
+    value = {"kind":"dv-value-template","parameters":["actor"],"value":{"$":"value.cat","args":[{"$":"data","id":"m35.campaign_body.literal","copy":false},{"$":"param","name":"actor"}]},"bindings":{}};
+}
+
+data "template.campaign_case_claim" {
+    value = {"kind":"dv-value-template","parameters":["group","field"],"value":{"$":"domain.fact","args":[{"$":"template","id":"template.campaign_case_ref","args":[{"$":"param","name":"group"},{"$":"param","name":"field"}]},true]},"bindings":{}};
+}
+
+data "template.campaign_case_ref" {
+    value = {"kind":"dv-value-template","parameters":["group","field"],"value":{"$":"domain.ref","args":[{"$":"value.cat","args":[{"$":"data","id":"m35.campaign_case_ref.literal","copy":false},{"$":"param","name":"group"}]},"state",{"$":"param","name":"field"}]},"bindings":{}};
+}
+
+data "template.campaign_clock" {
+    value = {"kind":"dv-value-template","parameters":[],"value":{"$":"domain.ref","args":[{"$":"data","id":"m35.campaign_clock.literal","copy":false},"state",{"$":"data","id":"m35.campaign_clock.literal_0002","copy":false}]},"bindings":{}};
+}
+
+data "template.campaign_contract_text" {
+    value = {"kind":"dv-value-template","parameters":[],"value":{"$":"value.get","args":[{"$":"value.content","args":["narratives",{"$":"data","id":"m35.campaign_contract_text.literal","copy":false}]},"text"]},"bindings":{}};
+}
+
+data "template.campaign_evidence_ref" {
+    value = {"kind":"dv-value-template","parameters":["atom"],"value":{"$":"domain.ref","args":[{"$":"data","id":"m35.campaign_evidence_ref.literal","copy":false},"state",{"$":"param","name":"atom"}]},"bindings":{}};
+}
+
+data "template.campaign_finale_eaten_ref" {
+    value = {"kind":"dv-value-template","parameters":["actor"],"value":{"$":"template","id":"template.campaign_first_night_ref","args":[{"$":"value.cat","args":[{"$":"data","id":"m35.campaign_finale_eaten_ref.literal","copy":false},{"$":"param","name":"actor"}]}]},"bindings":{}};
+}
+
+data "template.campaign_finale_meal_complete" {
+    value = {"kind":"dv-value-template","parameters":[],"value":{"$":"domain.all","args":[{"$":"value","name":"b1"}]},"bindings":{"b2":{"$":"list","items":[]},"b3":{"$":"template","id":"template.campaign_people","args":[]},"b1":{"$":"value.concat","args":[{"$":"value","name":"b2"},{"$":"expand","source":{"$":"value","name":"b3"},"index":"i4","value":{"$":"value.concat","args":[{"$":"list","items":[]},{"$":"list","items":[{"$":"domain.fact","args":[{"$":"template","id":"template.campaign_finale_eaten_ref","args":[{"$":"value.at","args":[{"$":"value","name":"b3"},{"$":"index","name":"i4"}]}]},true]}]}]},"bindings":{}}]}}};
+}
+
+data "template.campaign_finale_meal_ready_ref" {
+    value = {"kind":"dv-value-template","parameters":[],"value":{"$":"template","id":"template.campaign_first_night_ref","args":[{"$":"data","id":"m35.campaign_finale_meal_ready_ref.literal","copy":false}]},"bindings":{}};
+}
+
+data "template.campaign_finale_meal_remaining_ref" {
+    value = {"kind":"dv-value-template","parameters":[],"value":{"$":"template","id":"template.campaign_first_night_ref","args":[{"$":"data","id":"m35.campaign_finale_meal_remaining_ref.literal","copy":false}]},"bindings":{}};
+}
+
+data "template.campaign_first_night_ref" {
+    value = {"kind":"dv-value-template","parameters":["field"],"value":{"$":"domain.ref","args":[{"$":"data","id":"m35.campaign_first_night_ref.literal","copy":false},"state",{"$":"param","name":"field"}]},"bindings":{}};
+}
+
+data "template.campaign_handoff_fields" {
+    value = {"kind":"dv-value-template","parameters":[],"value":{"$":"list","items":[{"$":"value.pair","args":["case",{"$":"data","id":"m35.campaign_case_ref.literal","copy":false}]},{"$":"value.pair","args":["first_night",{"$":"data","id":"m35.campaign_first_night_ref.literal","copy":false}]},{"$":"value.pair","args":["contract",{"$":"data","id":"m35.campaign_handoff_fields.literal","copy":false}]},{"$":"value.pair","args":["person_identity",{"$":"data","id":"m35.campaign_handoff_fields.literal_0002","copy":false}]},{"$":"value.pair","args":["clock",{"$":"template","id":"template.campaign_clock","args":[]}]},{"$":"value.pair","args":["access",{"$":"data","id":"m35.campaign_access.literal","copy":false}]}]},"bindings":{}};
+}
+
+data "template.campaign_intent_action" {
+    value = {"kind":"dv-value-template","parameters":["id","kind","known","physical","law","grants","label","source"],"value":{"$":"value.with","args":[{"$":"template","id":"template.campaign_action","args":[{"$":"param","name":"id"},{"$":"param","name":"kind"},{"$":"param","name":"known"},{"$":"param","name":"physical"},{"$":"param","name":"law"},{"$":"param","name":"grants"},{"$":"param","name":"source"}]},{"$":"data","id":"m35.campaign_intent_action.literal","copy":false},{"$":"param","name":"label"}]},"bindings":{}};
+}
+
+data "template.campaign_local_object" {
+    value = {"kind":"dv-value-template","parameters":["id"],"value":{"$":"domain.object","args":[{"$":"param","name":"id"},{"$":"data","id":"m35.campaign_local_object.literal","copy":false},{"$":"data","id":"m35.campaign_local_object.literal_0002","copy":true}]},"bindings":{}};
+}
+
+data "template.campaign_location_region_build" {
+    value = {"kind":"dv-value-template","parameters":["location"],"value":{"$":"first","source":{"$":"value","name":"b1"},"index":"i2","when":{"$":"choose","args":[{"$":"value","name":"b3"},true,false]},"value":{"$":"choose","args":[{"$":"value","name":"b3"},{"$":"value.at","args":[{"$":"value","name":"b1"},{"$":"index","name":"i2"}]},false]},"fallback":{"$":"data","id":"m35.campaign_location_region_build.return","copy":false},"bindings":{"b3":{"$":"choose","args":[{"$":"value.not","args":[{"$":"value.lt","args":[{"$":"value.length","args":[{"$":"value","name":"b4"}]},{"$":"value.length","args":[{"$":"value.at","args":[{"$":"value","name":"b1"},{"$":"index","name":"i2"}]}]}]}]},{"$":"value.eq","args":[{"$":"value.slice","args":[{"$":"value","name":"b4"},0.0,{"$":"value.length","args":[{"$":"value.at","args":[{"$":"value","name":"b1"},{"$":"index","name":"i2"}]}]}]},{"$":"value.at","args":[{"$":"value","name":"b1"},{"$":"index","name":"i2"}]}]},false]}}},"bindings":{"b1":{"$":"data","id":"m35.campaign_location_region_build.regions","copy":true},"b4":{"$":"template","id":"template.campaign_location_title_build","args":[{"$":"param","name":"location"}]}}};
+}
+
+data "template.campaign_location_title_build" {
+    value = {"kind":"dv-value-template","parameters":["location"],"value":{"$":"value.find","args":[{"$":"value","name":"b1"},{"$":"param","name":"location"},{"$":"data","id":"m35.campaign_location_title_build.literal","copy":false}]},"bindings":{"b1":{"$":"data","id":"m35.campaign_location_title_build.titles","copy":true}}};
+}
+
+data "template.campaign_method" {
+    value = {"kind":"dv-value-template","parameters":["name","law"],"value":{"$":"domain.instance","args":[{"$":"param","name":"name"},{"$":"param","name":"law"}]},"bindings":{}};
+}
+
+data "template.campaign_object_descriptor_build" {
+    value = {"kind":"dv-value-template","parameters":["id"],"value":{"$":"choose","args":[{"$":"value","name":"b1"},{"$":"list","items":[{"$":"value.pair","args":["map_kind",{"$":"value.get","args":[{"$":"value","name":"b2"},"map_kind"]}]},{"$":"value.pair","args":["map_title",{"$":"value.get","args":[{"$":"value","name":"b2"},"map_title"]}]},{"$":"value.pair","args":["visible_fields",{"$":"value.get","args":[{"$":"value","name":"b2"},"visible_fields"]}]}]},{"$":"choose","args":[{"$":"value","name":"b3"},{"$":"list","items":[{"$":"value.pair","args":["map_kind","object"]},{"$":"value.pair","args":["map_title",{"$":"value.get","args":[{"$":"value","name":"b4"},{"$":"param","name":"id"}]}]},{"$":"value.pair","args":["visible_fields",{"$":"data","id":"m35.campaign_object_descriptor_build.literal","copy":true}]}]},{"$":"choose","args":[{"$":"value","name":"b5"},{"$":"list","items":[{"$":"value.pair","args":["map_kind","object"]},{"$":"value.pair","args":["map_title",{"$":"value.get","args":[{"$":"value","name":"b6"},{"$":"param","name":"id"}]}]},{"$":"value.pair","args":["visible_fields",{"$":"data","id":"m35.campaign_object_descriptor_build.literal","copy":true}]}]},{"$":"choose","args":[{"$":"value","name":"b7"},{"$":"list","items":[{"$":"value.pair","args":["map_kind","person"]},{"$":"value.pair","args":["map_title",{"$":"template","id":"template.campaign_person_name","args":[{"$":"param","name":"id"}]}]}]},{"$":"first","source":{"$":"value","name":"b8"},"index":"i9","when":{"$":"choose","args":[{"$":"value","name":"b10"},true,{"$":"choose","args":[{"$":"value","name":"b11"},true,false]}]},"value":{"$":"choose","args":[{"$":"value","name":"b10"},{"$":"list","items":[{"$":"value.pair","args":["map_kind","object"]},{"$":"value.pair","args":["map_title",{"$":"value.cat","args":[{"$":"template","id":"template.campaign_person_name","args":[{"$":"value.at","args":[{"$":"value","name":"b8"},{"$":"index","name":"i9"}]}]},{"$":"data","id":"m35.campaign_object_descriptor_build.literal_0004","copy":false}]}]}]},{"$":"choose","args":[{"$":"value","name":"b11"},{"$":"data","id":"m35.campaign_object_descriptor_build.return","copy":true},false]}]},"fallback":{"$":"first","source":{"$":"value","name":"b12"},"index":"i13","when":{"$":"choose","args":[{"$":"value","name":"b14"},true,false]},"value":{"$":"choose","args":[{"$":"value","name":"b14"},{"$":"data","id":"m35.campaign_object_descriptor_build.return_0002","copy":true},false]},"fallback":{"$":"data","id":"m35.campaign_object_descriptor_build.return_0003","copy":true},"bindings":{"b14":{"$":"value.eq","args":[{"$":"param","name":"id"},{"$":"value.cat","args":[{"$":"data","id":"m35.campaign_object_descriptor_build.literal_0006","copy":false},{"$":"value.at","args":[{"$":"value","name":"b12"},{"$":"index","name":"i13"}]}]}]}}},"bindings":{"b10":{"$":"value.eq","args":[{"$":"param","name":"id"},{"$":"value.cat","args":[{"$":"data","id":"m35.campaign_object_descriptor_build.literal_0003","copy":false},{"$":"value.at","args":[{"$":"value","name":"b8"},{"$":"index","name":"i9"}]}]}]},"b11":{"$":"value.eq","args":[{"$":"param","name":"id"},{"$":"value.cat","args":[{"$":"data","id":"m35.campaign_object_descriptor_build.literal_0005","copy":false},{"$":"value.at","args":[{"$":"value","name":"b8"},{"$":"index","name":"i9"}]}]}]}}}]}]}]}]},"bindings":{"b2":{"$":"value.content","args":["items",{"$":"param","name":"id"}]},"b1":{"$":"value.not","args":[{"$":"value.eq","args":[{"$":"value","name":"b2"},false]}]},"b4":{"$":"data","id":"m35.campaign_object_descriptor_build.names","copy":true},"b3":{"$":"value.has_key","args":[{"$":"value","name":"b4"},{"$":"param","name":"id"}]},"b6":{"$":"data","id":"m35.campaign_object_descriptor_build.sites","copy":true},"b5":{"$":"value.has_key","args":[{"$":"value","name":"b6"},{"$":"param","name":"id"}]},"b7":{"$":"choose","args":[{"$":"value.has","args":[{"$":"template","id":"template.campaign_people","args":[]},{"$":"param","name":"id"}]},true,{"$":"value.eq","args":[{"$":"param","name":"id"},{"$":"data","id":"m35.campaign_object_descriptor_build.literal_0002","copy":false}]}]},"b8":{"$":"data","id":"m35.campaign_object_descriptor_build.people","copy":true},"b12":{"$":"data","id":"m35.campaign_object_descriptor_build.groups","copy":true}}};
+}
+
+data "template.campaign_own" {
+    value = {"kind":"dv-value-template","parameters":["actor","field"],"value":{"$":"template","id":"template.campaign_ref","args":[{"$":"template","id":"template.campaign_body","args":[{"$":"param","name":"actor"}]},{"$":"param","name":"field"}]},"bindings":{}};
+}
+
+data "template.campaign_people" {
+    value = {"kind":"dv-value-template","parameters":[],"value":{"$":"data","id":"m35.campaign_people.return","copy":true},"bindings":{}};
+}
+
+data "template.campaign_person_name" {
+    value = {"kind":"dv-value-template","parameters":["actor"],"value":{"$":"value.get","args":[{"$":"value.content","args":["characters",{"$":"param","name":"actor"}]},"name"]},"bindings":{}};
+}
+
+data "template.campaign_person_source" {
+    value = {"kind":"dv-value-template","parameters":["actor"],"value":{"$":"first","source":{"$":"value","name":"b1"},"index":"i2","when":{"$":"choose","args":[{"$":"value","name":"b3"},true,false]},"value":{"$":"choose","args":[{"$":"value","name":"b3"},{"$":"template","id":"template.campaign_source","args":[{"$":"value.cat","args":[{"$":"data","id":"m35.campaign_person_source.literal","copy":false},{"$":"value.at","args":[{"$":"value.at","args":[{"$":"value","name":"b1"},{"$":"index","name":"i2"}]},1.0]}]},{"$":"value.at","args":[{"$":"value.at","args":[{"$":"value","name":"b1"},{"$":"index","name":"i2"}]},2.0]},{"$":"value.cat","args":[{"$":"param","name":"actor"},{"$":"data","id":"m35.campaign_person_source.literal_0002","copy":false}]}]},false]},"fallback":{"$":"template","id":"template.campaign_approved","args":[{"$":"data","id":"m35.campaign_person_source.literal_0003","copy":false}]},"bindings":{"b3":{"$":"value.eq","args":[{"$":"value.at","args":[{"$":"value.at","args":[{"$":"value","name":"b1"},{"$":"index","name":"i2"}]},0.0]},{"$":"param","name":"actor"}]}}},"bindings":{"b1":{"$":"data","id":"m35.campaign_person_source.rows","copy":true}}};
+}
+
+data "template.campaign_position_ref" {
+    value = {"kind":"dv-value-template","parameters":["actor"],"value":{"$":"domain.ref","args":[{"$":"param","name":"actor"},"state","location"]},"bindings":{}};
+}
+
+data "template.campaign_profile" {
+    value = {"kind":"dv-value-template","parameters":["actor"],"checks":[{"$":"value.require","args":[{"$":"value.not","args":[{"$":"value.eq","args":[{"$":"value","name":"b1"},false]}]},{"$":"value.cat","args":[{"$":"data","id":"m35.campaign_profile.literal","copy":false},{"$":"param","name":"actor"}]}]}],"value":{"$":"value.with","args":[{"$":"value.get","args":[{"$":"value","name":"b1"},"personality"]},"basis",{"$":"list","items":[{"$":"template","id":"template.campaign_person_source","args":[{"$":"param","name":"actor"}]},{"$":"template","id":"template.campaign_approved","args":[{"$":"data","id":"m35.campaign_profile.literal_0002","copy":false}]}]}]},"bindings":{"b1":{"$":"value.content","args":["characters",{"$":"param","name":"actor"}]}}};
+}
+
+data "template.campaign_public_methods" {
+    value = {"kind":"dv-value-template","parameters":["actions"],"value":{"$":"value","name":"b1"},"bindings":{"b2":{"$":"list","items":[]},"b1":{"$":"value.concat","args":[{"$":"value","name":"b2"},{"$":"expand","source":{"$":"param","name":"actions"},"index":"i3","value":{"$":"value.concat","args":[{"$":"list","items":[]},{"$":"list","items":[{"$":"value","name":"b4"}]}]},"bindings":{"b6":{"$":"value.at","args":[{"$":"param","name":"actions"},{"$":"index","name":"i3"}]},"b5":{"$":"choose","args":[{"$":"choose","args":[{"$":"value.eq","args":[{"$":"value.get","args":[{"$":"value","name":"b6"},"kind"]},"move"]},true,{"$":"value.eq","args":[{"$":"value.get","args":[{"$":"value","name":"b6"},"kind"]},"replay"]}]},{"$":"value.not","args":[{"$":"value.find","args":[{"$":"value","name":"b6"},{"$":"data","id":"m35.campaign_public_methods.literal_0002","copy":false},false]}]},false]},"b8":{"$":"value.with_many","args":[{"$":"value","name":"b6"},{"$":"list","items":[{"$":"value.pair","args":["purpose_refs",{"$":"value.find","args":[{"$":"value","name":"b6"},{"$":"data","id":"m35.campaign_public_methods.literal","copy":false},{"$":"value.get","args":[{"$":"value","name":"b6"},"grants"]}]}]},{"$":"value.pair","args":["purpose_basis",{"$":"value.get","args":[{"$":"value","name":"b6"},"source_refs"]}]}]}]},"b7":{"$":"value.with","args":[{"$":"value","name":"b8"},{"$":"data","id":"m35.campaign_public_methods.literal_0003","copy":false},true]},"b4":{"$":"choose","args":[{"$":"value","name":"b5"},{"$":"value","name":"b7"},{"$":"value","name":"b8"}]}}}]}}};
+}
+
+data "template.campaign_ref" {
+    value = {"kind":"dv-value-template","parameters":["object","field"],"value":{"$":"domain.ref","args":[{"$":"param","name":"object"},"state",{"$":"param","name":"field"}]},"bindings":{}};
+}
+
+data "template.campaign_simulation_config" {
+    value = {"kind":"dv-value-template","parameters":["scene"],"value":{"$":"value.with_many","args":[{"$":"value","name":"b1"},{"$":"list","items":[{"$":"value.pair","args":["identities",{"$":"value","name":"b2"}]},{"$":"value.pair","args":["facts",{"$":"value","name":"b7"}]}]}]},"bindings":{"b1":{"$":"value.find","args":[{"$":"param","name":"scene"},{"$":"data","id":"m35.campaign_simulation_config.literal_0011","copy":false},{"$":"list","items":[]}]},"b4":{"$":"list","items":[]},"b5":{"$":"template","id":"template.campaign_people","args":[]},"b3":{"$":"value.concat","args":[{"$":"value","name":"b4"},{"$":"expand","source":{"$":"value","name":"b5"},"index":"i6","value":{"$":"value.concat","args":[{"$":"list","items":[]},{"$":"list","items":[{"$":"list","items":[{"$":"value.pair","args":["actor",{"$":"value.at","args":[{"$":"value","name":"b5"},{"$":"index","name":"i6"}]}]},{"$":"value.pair","args":["index",{"$":"index","name":"i6"}]},{"$":"value.pair","args":["protected",true]}]}]}]},"bindings":{}}]},"b2":{"$":"value.append","args":[{"$":"value","name":"b3"},{"$":"data","id":"m35.campaign_simulation_config.literal","copy":true}]},"b10":{"$":"value.has_key","args":[{"$":"value.get","args":[{"$":"value.get","args":[{"$":"param","name":"scene"},"physical"]},"objects"]},{"$":"data","id":"m35.campaign_simulation_config.literal_0004","copy":false}]},"b13":{"$":"value.has_key","args":[{"$":"value.get","args":[{"$":"value.get","args":[{"$":"param","name":"scene"},"physical"]},"objects"]},{"$":"data","id":"m35.campaign_simulation_config.literal_0002","copy":false}]},"b15":{"$":"list","items":[]},"b16":{"$":"data","id":"m35.campaign_simulation_config.weather","copy":true},"b14":{"$":"value.concat","args":[{"$":"value","name":"b15"},{"$":"expand","source":{"$":"value","name":"b16"},"index":"i17","value":{"$":"value.concat","args":[{"$":"list","items":[]},{"$":"list","items":[{"$":"list","items":[{"$":"value.pair","args":["id",{"$":"value.cat","args":[{"$":"data","id":"m35.campaign_simulation_config.literal_0003","copy":false},{"$":"value.at","args":[{"$":"value","name":"b16"},{"$":"index","name":"i17"}]}]}]},{"$":"value.pair","args":["ref",{"$":"template","id":"template.campaign_ref","args":[{"$":"data","id":"m35.campaign_simulation_config.literal_0002","copy":false},{"$":"value.at","args":[{"$":"value","name":"b16"},{"$":"index","name":"i17"}]}]}]}]}]}]},"bindings":{}}]},"b12":{"$":"choose","args":[{"$":"value","name":"b13"},{"$":"value","name":"b14"},{"$":"value","name":"b15"}]},"b11":{"$":"value.append","args":[{"$":"value","name":"b12"},{"$":"list","items":[{"$":"value.pair","args":["id",{"$":"data","id":"m35.campaign_simulation_config.literal_0005","copy":false}]},{"$":"value.pair","args":["ref",{"$":"template","id":"template.campaign_ref","args":[{"$":"data","id":"m35.campaign_simulation_config.literal_0004","copy":false},{"$":"data","id":"m35.campaign_simulation_config.literal_0006","copy":false}]}]}]}]},"b9":{"$":"choose","args":[{"$":"value","name":"b10"},{"$":"value","name":"b11"},{"$":"value","name":"b12"}]},"b8":{"$":"value.concat","args":[{"$":"value","name":"b9"},{"$":"expand","source":{"$":"value","name":"b5"},"index":"i18","value":{"$":"choose","args":[{"$":"value","name":"b19"},{"$":"value.concat","args":[{"$":"value.concat","args":[{"$":"list","items":[]},{"$":"list","items":[{"$":"list","items":[{"$":"value.pair","args":["id",{"$":"value.cat","args":[{"$":"value.at","args":[{"$":"value","name":"b5"},{"$":"index","name":"i18"}]},{"$":"data","id":"m35.campaign_simulation_config.literal_0007","copy":false}]}]},{"$":"value.pair","args":["ref",{"$":"template","id":"template.campaign_own","args":[{"$":"value.at","args":[{"$":"value","name":"b5"},{"$":"index","name":"i18"}]},{"$":"data","id":"m35.campaign_simulation_config.literal_0008","copy":false}]}]}]}]}]},{"$":"list","items":[{"$":"list","items":[{"$":"value.pair","args":["id",{"$":"value.cat","args":[{"$":"value.at","args":[{"$":"value","name":"b5"},{"$":"index","name":"i18"}]},{"$":"data","id":"m35.campaign_simulation_config.literal_0009","copy":false}]}]},{"$":"value.pair","args":["ref",{"$":"template","id":"template.campaign_own","args":[{"$":"value.at","args":[{"$":"value","name":"b5"},{"$":"index","name":"i18"}]},{"$":"data","id":"m35.campaign_simulation_config.literal_0010","copy":false}]}]}]}]}]},{"$":"list","items":[]}]},"bindings":{"b19":{"$":"value.has_key","args":[{"$":"value.get","args":[{"$":"value.get","args":[{"$":"param","name":"scene"},"physical"]},"objects"]},{"$":"template","id":"template.campaign_body","args":[{"$":"value.at","args":[{"$":"value","name":"b5"},{"$":"index","name":"i18"}]}]}]}}}]},"b20":{"$":"value.find","args":[{"$":"value","name":"b1"},{"$":"data","id":"m35.campaign_simulation_config.literal_0012","copy":false},{"$":"list","items":[]}]},"b7":{"$":"value.concat","args":[{"$":"value","name":"b8"},{"$":"expand","source":{"$":"value","name":"b20"},"index":"i21","value":{"$":"value.concat","args":[{"$":"list","items":[]},{"$":"list","items":[{"$":"value.at","args":[{"$":"value","name":"b20"},{"$":"index","name":"i21"}]}]}]},"bindings":{}}]}}};
+}
+
+data "template.campaign_source" {
+    value = {"kind":"dv-value-template","parameters":["path","line","id"],"value":{"$":"list","items":[{"$":"value.pair","args":["path",{"$":"param","name":"path"}]},{"$":"value.pair","args":["line",{"$":"param","name":"line"}]},{"$":"value.pair","args":["id",{"$":"param","name":"id"}]}]},"bindings":{}};
+}
+
+data "template.campaign_speech" {
+    value = {"kind":"dv-value-template","parameters":["literal","surface","scope"],"value":{"$":"list","items":[{"$":"value.pair","args":["literal_ast",{"$":"param","name":"literal"}]},{"$":"value.pair","args":["referents",{"$":"list","items":[]}]},{"$":"value.pair","args":["scope",{"$":"param","name":"scope"}]},{"$":"value.pair","args":["time_anchor",{"$":"data","id":"m35.campaign_speech.literal","copy":false}]},{"$":"value.pair","args":["surface_ref",{"$":"param","name":"surface"}]},{"$":"value.pair","args":["presuppositions",{"$":"list","items":[]}]},{"$":"value.pair","args":["implicature_candidates",{"$":"list","items":[]}]}]},"bindings":{}};
+}
+
+data "template.campaign_state_object" {
+    value = {"kind":"dv-value-template","parameters":["id","fields"],"value":{"$":"value.with_many","args":[{"$":"domain.object","args":[{"$":"param","name":"id"},"physical",{"$":"list","items":[{"$":"value.pair","args":["state",{"$":"value","name":"b1"}]},{"$":"value.pair","args":["identity",{"$":"list","items":[]}]}]}]},{"$":"value","name":"b3"}]},"bindings":{"b3":{"$":"template","id":"template.campaign_object_descriptor_build","args":[{"$":"param","name":"id"}]},"b2":{"$":"choose","args":[{"$":"value.eq","args":[{"$":"value.get","args":[{"$":"value","name":"b3"},"map_kind"]},"object"]},{"$":"value.not","args":[{"$":"value.has_key","args":[{"$":"param","name":"fields"},"name"]}]},false]},"b4":{"$":"value.with","args":[{"$":"param","name":"fields"},"name",{"$":"domain.field","args":[{"$":"value.get","args":[{"$":"value","name":"b3"},"map_title"]}]}]},"b1":{"$":"choose","args":[{"$":"value","name":"b2"},{"$":"value","name":"b4"},{"$":"param","name":"fields"}]}}};
+}
+
+data "template.campaign_surface_action" {
+    value = {"kind":"dv-value-template","parameters":["id","kind","known","physical","law","grants","label","text","source"],"value":{"$":"value.with","args":[{"$":"template","id":"template.campaign_intent_action","args":[{"$":"param","name":"id"},{"$":"param","name":"kind"},{"$":"param","name":"known"},{"$":"param","name":"physical"},{"$":"param","name":"law"},{"$":"param","name":"grants"},{"$":"param","name":"label"},{"$":"param","name":"source"}]},{"$":"data","id":"m35.campaign_surface_action.literal","copy":false},{"$":"param","name":"text"}]},"bindings":{}};
+}
+
+data "template.campaign_window" {
+    value = {"kind":"dv-value-template","parameters":["day","start","end"],"value":{"$":"domain.all","args":[{"$":"value.pair","args":[{"$":"domain.at_least","args":[{"$":"template","id":"template.campaign_clock","args":[]},{"$":"value.add","args":[{"$":"value","name":"b1"},{"$":"param","name":"start"}]}]},{"$":"domain.not","args":[{"$":"domain.at_least","args":[{"$":"template","id":"template.campaign_clock","args":[]},{"$":"value.add","args":[{"$":"value","name":"b1"},{"$":"param","name":"end"}]}]}]}]}]},"bindings":{"b1":{"$":"value.mul","args":[{"$":"value.sub","args":[{"$":"param","name":"day"},1.0]},{"$":"data","id":"m35.campaign_window.literal","copy":false}]}}};
+}
+
+data "template.cognitive_erosion" {
+    value = {"kind":"dv-value-template","parameters":["exposure_ref","thresholds","coupling_factor","basis"],"checks":[{"$":"value.require","args":[{"$":"value.lt","args":[0.0,{"$":"value.count","args":[{"$":"param","name":"basis"}]}]},{"$":"data","id":"m35.cognitive_erosion.literal","copy":false}]}],"value":{"$":"list","items":[{"$":"value.pair","args":["physical_ref",{"$":"param","name":"exposure_ref"}]},{"$":"value.pair","args":["thresholds",{"$":"param","name":"thresholds"}]},{"$":"value.pair","args":["coupling_factor",{"$":"param","name":"coupling_factor"}]},{"$":"value.pair","args":["basis",{"$":"param","name":"basis"}]}]},"bindings":{}};
+}
+
+data "template.sims_autonomy_source" {
+    value = {"kind":"dv-value-template","parameters":["id"],"value":{"$":"template","id":"template.campaign_source","args":[{"$":"data","id":"m35.sims_autonomy_source.literal","copy":false},{"$":"data","id":"m35.sims_autonomy_source.literal_0002","copy":false},{"$":"value.cat","args":[{"$":"data","id":"m35.sims_autonomy_source.literal_0003","copy":false},{"$":"param","name":"id"}]}]},"bindings":{}};
+}
+
+data "template.sims_brush_off_rows" {
+    value = {"kind":"dv-value-template","parameters":[],"value":{"$":"list","items":[{"$":"list","items":[{"$":"value.pair","args":["actor",{"$":"data","id":"m35.sims_brush_off_rows.literal","copy":false}]},{"$":"value.pair","args":["id",{"$":"data","id":"m35.sims_brush_off_rows.literal_0002","copy":false}]},{"$":"value.pair","args":["start",{"$":"data","id":"m35.sims_brush_off_rows.literal_0003","copy":false}]},{"$":"value.pair","args":["end",{"$":"data","id":"m35.sims_brush_off_rows.literal_0004","copy":false}]},{"$":"value.pair","args":["when",{"$":"domain.fact","args":[{"$":"template","id":"template.campaign_first_night_ref","args":[{"$":"data","id":"m35.sims_brush_off_rows.literal_0005","copy":false}]},true]}]},{"$":"value.pair","args":["received",{"$":"data","id":"m35.sims_brush_off_rows.literal_0006","copy":true}]},{"$":"value.pair","args":["label",{"$":"data","id":"m35.sims_brush_off_rows.literal_0007","copy":false}]},{"$":"value.pair","args":["text",{"$":"data","id":"m35.sims_brush_off_rows.literal_0008","copy":false}]}]},{"$":"list","items":[{"$":"value.pair","args":["actor",{"$":"data","id":"m35.sims_brush_off_rows.literal_0009","copy":false}]},{"$":"value.pair","args":["id",{"$":"data","id":"m35.sims_brush_off_rows.literal_0010","copy":false}]},{"$":"value.pair","args":["start",{"$":"data","id":"m35.sims_brush_off_rows.literal_0011","copy":false}]},{"$":"value.pair","args":["end",{"$":"data","id":"m35.campaign_window.literal","copy":false}]},{"$":"value.pair","args":["when",{"$":"template","id":"template.campaign_at","args":[{"$":"data","id":"m35.sims_brush_off_rows.literal_0012","copy":false},{"$":"data","id":"m35.sims_station_advertisements.literal_0004","copy":false}]}]},{"$":"value.pair","args":["manual_only",true]},{"$":"value.pair","args":["label",{"$":"data","id":"m35.sims_brush_off_rows.literal_0013","copy":false}]},{"$":"value.pair","args":["text",{"$":"data","id":"m35.sims_brush_off_rows.literal_0014","copy":false}]}]},{"$":"list","items":[{"$":"value.pair","args":["actor",{"$":"data","id":"m35.sims_brush_off_rows.literal_0012","copy":false}]},{"$":"value.pair","args":["id",{"$":"data","id":"m35.sims_brush_off_rows.literal_0015","copy":false}]},{"$":"value.pair","args":["start",{"$":"data","id":"m35.sims_brush_off_rows.literal_0011","copy":false}]},{"$":"value.pair","args":["end",{"$":"data","id":"m35.campaign_window.literal","copy":false}]},{"$":"value.pair","args":["when",{"$":"domain.fact","args":[{"$":"template","id":"template.campaign_first_night_ref","args":[{"$":"data","id":"m35.sims_brush_off_rows.literal_0016","copy":false}]},true]}]},{"$":"value.pair","args":["received",{"$":"data","id":"m35.sims_brush_off_rows.literal_0017","copy":true}]},{"$":"value.pair","args":["label",{"$":"data","id":"m35.sims_brush_off_rows.literal_0018","copy":false}]},{"$":"value.pair","args":["text",{"$":"data","id":"m35.sims_brush_off_rows.literal_0019","copy":false}]}]},{"$":"list","items":[{"$":"value.pair","args":["actor",{"$":"data","id":"m35.sims_brush_off_rows.literal_0020","copy":false}]},{"$":"value.pair","args":["id",{"$":"data","id":"m35.sims_brush_off_rows.literal_0021","copy":false}]},{"$":"value.pair","args":["start",{"$":"data","id":"m35.sims_brush_off_rows.literal_0011","copy":false}]},{"$":"value.pair","args":["end",{"$":"data","id":"m35.campaign_window.literal","copy":false}]},{"$":"value.pair","args":["when",{"$":"domain.fact","args":[{"$":"template","id":"template.campaign_first_night_ref","args":[{"$":"data","id":"m35.sims_brush_off_rows.literal_0016","copy":false}]},true]}]},{"$":"value.pair","args":["received",{"$":"data","id":"m35.sims_brush_off_rows.literal_0017","copy":true}]},{"$":"value.pair","args":["label",{"$":"data","id":"m35.sims_brush_off_rows.literal_0022","copy":false}]},{"$":"value.pair","args":["text",{"$":"data","id":"m35.sims_brush_off_rows.literal_0023","copy":false}]}]},{"$":"list","items":[{"$":"value.pair","args":["actor",{"$":"data","id":"m35.sims_brush_off_rows.literal_0009","copy":false}]},{"$":"value.pair","args":["id",{"$":"data","id":"m35.sims_brush_off_rows.literal_0024","copy":false}]},{"$":"value.pair","args":["start",{"$":"data","id":"m35.sims_brush_off_rows.literal_0025","copy":false}]},{"$":"value.pair","args":["end",{"$":"data","id":"m35.campaign_window.literal","copy":false}]},{"$":"value.pair","args":["when",{"$":"domain.true","args":[]}]},{"$":"value.pair","args":["manual_only",true]},{"$":"value.pair","args":["kind","inspect"]},{"$":"value.pair","args":["label",{"$":"data","id":"m35.sims_brush_off_rows.literal_0026","copy":false}]},{"$":"value.pair","args":["text",{"$":"data","id":"m35.sims_brush_off_rows.literal_0027","copy":false}]}]},{"$":"list","items":[{"$":"value.pair","args":["actor",{"$":"data","id":"m35.sims_brush_off_rows.literal_0009","copy":false}]},{"$":"value.pair","args":["id",{"$":"data","id":"m35.sims_brush_off_rows.literal_0028","copy":false}]},{"$":"value.pair","args":["start",{"$":"data","id":"m35.sims_brush_off_rows.literal_0025","copy":false}]},{"$":"value.pair","args":["end",{"$":"data","id":"m35.campaign_window.literal","copy":false}]},{"$":"value.pair","args":["when",{"$":"domain.true","args":[]}]},{"$":"value.pair","args":["manual_only",true]},{"$":"value.pair","args":["kind","inspect"]},{"$":"value.pair","args":["label",{"$":"data","id":"m35.sims_brush_off_rows.literal_0029","copy":false}]},{"$":"value.pair","args":["text",{"$":"data","id":"m35.sims_brush_off_rows.literal_0030","copy":false}]}]}]},"bindings":{}};
+}
+
+data "template.sims_implicit_habits" {
+    value = {"kind":"dv-value-template","parameters":["actor"],"value":{"$":"value.find","args":[{"$":"value.get","args":[{"$":"value.content","args":["characters",{"$":"param","name":"actor"}]},"autonomy"]},{"$":"data","id":"m35.sims_implicit_habits.literal","copy":false},{"$":"list","items":[]}]},"bindings":{}};
+}
+
+data "template.inline.campaign_install_visible_objects.1" {
+    value = {"kind":"dv-value-template","parameters":["p0","p1"],"value":{"$":"value.with_many","args":[{"$":"param","name":"p0"},{"$":"list","items":[{"$":"value.pair","args":["mind",{"$":"param","name":"p1"}]},{"$":"value.pair","args":["policy",{"$":"value.with","args":[{"$":"value.get","args":[{"$":"param","name":"p0"},"policy"]},{"$":"data","id":"m35.campaign_install_visible_objects.literal","copy":false},true]}]}]}]},"bindings":{}};
+}
+
+data "template.inline.campaign_object_descriptor.2" {
+    value = {"kind":"dv-value-template","parameters":["p0"],"value":{"$":"list","items":[{"$":"data","id":"m35.campaign_object_descriptor.literal","copy":false},{"$":"param","name":"p0"},{"$":"value.content","args":["meta","hash"]}]},"bindings":{}};
+}
+
+data "template.inline.campaign_location_title.3" {
+    value = {"kind":"dv-value-template","parameters":["p0"],"value":{"$":"list","items":[{"$":"data","id":"m35.campaign_location_title.literal","copy":false},{"$":"param","name":"p0"}]},"bindings":{}};
+}
+
+data "template.inline.campaign_location_region.4" {
+    value = {"kind":"dv-value-template","parameters":["p0"],"value":{"$":"list","items":[{"$":"data","id":"m35.campaign_location_region.literal","copy":false},{"$":"param","name":"p0"}]},"bindings":{}};
+}
+
+data "template.inline.campaign_future_goal_pending.5" {
+    value = {"kind":"dv-value-template","parameters":["p0"],"value":{"$":"value.eq","args":[{"$":"param","name":"p0"},{"$":"data","id":"m35.campaign_future_goal_pending.literal","copy":false}]},"bindings":{}};
+}
+
+data "template.inline.campaign_future_goal_pending.6" {
+    value = {"kind":"dv-value-template","parameters":["p0"],"value":{"$":"value.eq","args":[{"$":"param","name":"p0"},{"$":"data","id":"m35.campaign_future_goal_pending.literal_0002","copy":false}]},"bindings":{}};
+}
+
+data "template.inline.campaign_future_goal_pending.7" {
+    value = {"kind":"dv-value-template","parameters":["p0"],"value":{"$":"choose","args":[{"$":"value.not","args":[{"$":"value.eq","args":[{"$":"param","name":"p0"},false]}]},{"$":"value.has_key","args":[{"$":"param","name":"p0"},{"$":"data","id":"m35.campaign_future_goal_pending.literal_0004","copy":false}]},false]},"bindings":{}};
+}
+
+data "template.inline.campaign_future_goal_pending.8" {
+    value = {"kind":"dv-value-template","parameters":["p0"],"value":{"$":"choose","args":[{"$":"value.eq","args":[{"$":"param","name":"p0"},{"$":"data","id":"m35.campaign_future_goal_pending.literal_0006","copy":false}]},true,{"$":"value.eq","args":[{"$":"param","name":"p0"},{"$":"data","id":"m35.campaign_future_goal_pending.literal_0007","copy":false}]}]},"bindings":{}};
+}
+
+data "template.inline.campaign_goal.9" {
+    value = {"kind":"dv-value-template","parameters":["p0","p1","p2"],"value":{"$":"list","items":[{"$":"value.pair","args":["kind",{"$":"data","id":"m35.campaign_future_goal_pending.literal","copy":false}]},{"$":"value.pair","args":["scope",{"$":"data","id":"m35.campaign_goal.literal","copy":false}]},{"$":"value.pair","args":["proposition",{"$":"param","name":"p0"}]},{"$":"value.pair","args":["available_when",{"$":"param","name":"p1"}]},{"$":"value.pair","args":["basis",{"$":"param","name":"p2"}]}]},"bindings":{}};
+}
+
+data "template.inline.campaign_observation_goal.10" {
+    value = {"kind":"dv-value-template","parameters":["p0","p1","p2","p3"],"value":{"$":"list","items":[{"$":"value.pair","args":["kind",{"$":"data","id":"m35.campaign_future_goal_pending.literal_0007","copy":false}]},{"$":"value.pair","args":["scope",{"$":"data","id":"m35.campaign_goal.literal","copy":false}]},{"$":"value.pair","args":["ref",{"$":"param","name":"p0"}]},{"$":"value.pair","args":["source",{"$":"data","id":"m35.campaign_observation_goal.literal","copy":false}]},{"$":"value.pair","args":["available_when",{"$":"param","name":"p1"}]},{"$":"value.pair","args":["basis",{"$":"param","name":"p2"}]},{"$":"value.pair","args":["minimum_time",{"$":"param","name":"p3"}]}]},"bindings":{}};
+}
+

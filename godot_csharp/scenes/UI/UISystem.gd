@@ -186,7 +186,7 @@ func apply_snapshot(data: Dictionary) -> void:
 		_known_rooms.clear()
 		_known_connections.clear()
 	snapshot = data
-	_learn_map(data.get("pending", {}).get("options", []))
+	_learn_map()
 	casebook.apply_snapshot(snapshot)
 	if is_instance_valid(dialogue_ui): dialogue_ui.configure_cast(snapshot.get("cast", {}))
 	if is_instance_valid(hud_ui): hud_ui.apply_snapshot(snapshot)
@@ -354,7 +354,7 @@ func set_player_options(options: Array) -> void:
 	# IDs come from the current Prepare result. Opening a page never creates
 	# actions or admits a hypothesis; the field checks selection again.
 	_player_options = options.duplicate(true)
-	_learn_map(_player_options)
+	_learn_map()
 
 func open_manuscript(_announce := true) -> void:
 	var data: Dictionary = snapshot.get("replay", {}).duplicate(true)
@@ -370,41 +370,48 @@ func open_card(data: Dictionary) -> void:
 	var entry_id: String = casebook.record_card(data)
 	_request_modal("card", {"entry_id": entry_id})
 
-func _learn_map(choices: Array = []) -> void:
+func _learn_map() -> void:
+	# Rebuild from the observer projection, including only completed passages.
+	# Offered choices and hypothetical playback do not add rooms or routes.
+	_known_rooms.clear()
+	_known_connections.clear()
 	var map_id := str(snapshot.get("map", ""))
 	var room_id := str(snapshot.get("execution_room", ""))
 	if map_id.is_empty() or room_id.is_empty(): return
+	_add_visited_room(map_id, room_id, str(snapshot.get("hud", {}).get("room", room_id)))
+	var knowledge: Dictionary = snapshot.get("map_knowledge", {})
+	for value in knowledge.get("doors", []):
+		if not value is Dictionary: continue
+		var door: Dictionary = value
+		var actions: Variant = door.get("passage_action_ids", [])
+		var observed: Variant = door.get("passage_observed", false)
+		var passed: bool = observed is bool and observed and actions is Array and not actions.is_empty()
+		if not passed: continue
+		var from: Dictionary = door.get("from", {})
+		var to: Dictionary = door.get("to", {})
+		var from_map := str(from.get("map", ""))
+		var from_room := str(from.get("room", ""))
+		var to_map := str(to.get("map", ""))
+		var to_room := str(to.get("room", ""))
+		if from_map.is_empty() or from_room.is_empty() or to_map.is_empty() or to_room.is_empty(): continue
+		var from_label := str(from.get("label", from_room))
+		var to_label := str(to.get("label", to_room))
+		_add_visited_room(from_map, from_room, from_label)
+		_add_visited_room(to_map, to_room, to_label)
+		var key := from_map + ":" + from_room + ">" + to_map + ":" + to_room
+		var connection := {"from_map": from_map, "to_map": to_map, "label": from_label + " → " + to_label}
+		_known_connections[key] = connection
+
+func _add_visited_room(map_id: String, room_id: String, label: String) -> void:
 	if not _known_rooms.has(map_id): _known_rooms[map_id] = {}
-	_known_rooms[map_id][room_id] = {"label": str(snapshot.get("hud", {}).get("room", room_id)), "visited": true}
-	for room: Dictionary in snapshot.get("map_knowledge", {}).get("rooms", []):
-		var known_map := str(room.map)
-		if not _known_rooms.has(known_map): _known_rooms[known_map] = {}
-		var known_id := str(room.room)
-		var visited := bool(_known_rooms[known_map].get(known_id, {}).get("visited", false))
-		_known_rooms[known_map][known_id] = {"label": str(room.label), "visited": visited}
-	for door: Dictionary in snapshot.get("map_knowledge", {}).get("doors", []):
-		var from: Dictionary = door.from
-		var to: Dictionary = door.to
-		var target := str(to.room) if str(to.map) == str(from.map) else str(to.map)
-		_known_connections[str(from.map) + ":" + str(from.room) + ">" + target] = {"map": str(from.map), "from": str(from.room), "to": target, "label": str(from.label) + " → " + str(to.label)}
-	for option: Dictionary in choices:
-		var interaction: Dictionary = option.get("interaction", {})
-		if str(interaction.get("kind", "")) != "doorway" or not bool(option.get("available", true)): continue
-		var destination: Dictionary = interaction.destination
-		var next_map := str(destination.map)
-		var next_room := str(destination.get("execution_room", destination.get("room", "")))
-		if not _known_rooms.has(next_map): _known_rooms[next_map] = {}
-		if not _known_rooms[next_map].has(next_room):
-			_known_rooms[next_map][next_room] = {"label": str(option.get("label", "")), "visited": false}
-		var to := next_room if next_map == map_id else next_map
-		_known_connections[map_id + ":" + room_id + ">" + to] = {"map": map_id, "from": room_id, "to": to, "label": str(option.get("label", ""))}
+	_known_rooms[map_id][room_id] = {"label": label, "visited": true}
 
 func open_campus_map() -> void:
-	_learn_map(_player_options)
+	_learn_map()
 	var map_id := str(snapshot.get("map", ""))
 	var connections: Array = []
 	for connection: Dictionary in _known_connections.values():
-		if str(connection.map) == map_id: connections.append(connection)
+		if str(connection.from_map) == map_id or str(connection.to_map) == map_id: connections.append(connection)
 	_request_modal("campus_map", {"id": map_id, "current_room": str(snapshot.get("execution_room", "")),
 		"current_label": str(snapshot.get("hud", {}).get("room", "")),
 		"rooms": _known_rooms.get(map_id, {}).duplicate(true), "connections": connections})
@@ -555,3 +562,5 @@ func restore_replay_context(context: Dictionary) -> void:
 			_request_modal(kind, data, view_state)
 	elif panel in ["field", "dialogue"]:
 		close_modal(false)
+
+

@@ -1,0 +1,1042 @@
+schema "dv-script-v1";
+
+// Movement graphs live in template.bridge_movement_law/action; navigation keeps actor/patient parameters.
+
+data campaign.dispatch.special_actions {
+    value = [
+        {
+            "actors": ["margaret"],
+            "actions": [
+                {
+                    "factory": "surface",
+                    "id": {
+                        "actor_prefix": true,
+                        "suffix": ".c2.check.structure"
+                    },
+                    "kind": "experiment",
+                    "physical": {
+                        "kind": "mechanism_premise",
+                        "mechanism": "structural_inspection"
+                    },
+                    "known": {
+                        "kind": "physical"
+                    },
+                    "grants": [
+                        {
+                            "kind": "state",
+                            "owner": "c2.granary",
+                            "field": "structure_checked"
+                        },
+                        {
+                            "kind": "state",
+                            "owner": "c2.granary",
+                            "field": "latch_loose"
+                        }
+                    ],
+                    "label": "检查门闩与门框受力",
+                    "text": "检查变形门闩与门框受力，确认修整的位置。",
+                    "source": {
+                        "kind": "approved",
+                        "id": "粮仓结构检查与机械处理"
+                    }
+                },
+                {
+                    "factory": "surface",
+                    "id": {
+                        "literal": "margaret.c2.request.repair_latch"
+                    },
+                    "kind": "talk",
+                    "physical": {
+                        "kind": "all",
+                        "items": [
+                            {
+                                "kind": "at",
+                                "actor": {
+                                    "binding": "actor_id"
+                                },
+                                "room": "main_granary"
+                            },
+                            {
+                                "kind": "equals",
+                                "ref": {
+                                    "kind": "state",
+                                    "owner": "c2.granary",
+                                    "field": "latch_loose"
+                                },
+                                "value": true
+                            }
+                        ]
+                    },
+                    "known": {
+                        "kind": "physical"
+                    },
+                    "grants": [],
+                    "label": "请求修理粮仓门闩",
+                    "text": "粮仓的门闩松了。雀儿，请你修一修。",
+                    "source": {
+                        "kind": "chapter",
+                        "path": "04_案件.story",
+                        "line": 84,
+                        "id": "actual-latch-repair-request"
+                    },
+                    "speech": {
+                        "scope": "repair-request",
+                        "surface": "粮仓的门闩松了。雀儿，请你修一修。",
+                        "request": {
+                            "target": "quer",
+                            "topic": "repair_latch"
+                        },
+                        "listeners": ["quer"]
+                    }
+                }
+            ]
+        },
+        {
+            "actors": ["quer"],
+            "actions": [
+                {
+                    "factory": "surface",
+                    "id": {
+                        "actor_prefix": true,
+                        "suffix": ".c2.repair.latch"
+                    },
+                    "kind": "experiment",
+                    "physical": {
+                        "kind": "mechanism_premise",
+                        "mechanism": "latch_repair"
+                    },
+                    "known": {
+                        "kind": "all",
+                        "items": [
+                            {
+                                "kind": "window",
+                                "day": 3,
+                                "start": 720,
+                                "end": 840
+                            },
+                            {
+                                "kind": "physical"
+                            },
+                            {
+                                "kind": "work_accepted",
+                                "actor": {
+                                    "binding": "actor_id"
+                                },
+                                "id": "quer.c2.granary.precision"
+                            }
+                        ]
+                    },
+                    "grants": [
+                        {
+                            "kind": "state",
+                            "owner": "c2.granary",
+                            "field": "latch_loose"
+                        },
+                        {
+                            "kind": "state",
+                            "owner": "c2.granary",
+                            "field": "tool_marks"
+                        },
+                        {
+                            "kind": "state",
+                            "owner": "c2.granary",
+                            "field": "double_bolts"
+                        },
+                        {
+                            "kind": "state",
+                            "owner": "c2.granary",
+                            "field": "locked"
+                        }
+                    ],
+                    "label": "修整粮仓门闩与双栓",
+                    "text": "趁门框抬起四毫米，双钩同时挑开两根门栓，再紧固门闩。",
+                    "source": {
+                        "kind": "chapter",
+                        "path": "10_执行.story",
+                        "line": 17,
+                        "id": "RepairLatch"
+                    },
+                    "updates": [
+                        {
+                            "field": "work_operation",
+                            "value": "quer.c2.granary.precision"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "actors": ["mora", "selma", "shen"],
+            "actions": [
+                {
+                    "factory": "inspect",
+                    "object": {
+                        "binding": "body",
+                        "actor": "moran"
+                    },
+                    "room": "clinic",
+                    "fields": ["fever", "hungry", "alive"],
+                    "label": "查看病人的状况",
+                    "text": "走近莫兰，查看他的状况。",
+                    "source": {
+                        "kind": "approved",
+                        "id": "moran-illness-requires-actual-exposure-and-observation"
+                    },
+                    "physical": {
+                        "kind": "all",
+                        "items": [
+                            {
+                                "kind": "at",
+                                "actor": {
+                                    "binding": "actor_id"
+                                },
+                                "room": "clinic"
+                            },
+                            {
+                                "kind": "at",
+                                "actor": "moran",
+                                "room": "clinic"
+                            }
+                        ]
+                    },
+                    "known": {
+                        "kind": "physical"
+                    }
+                },
+                {
+                    "factory": "surface",
+                    "id": {
+                        "actor_prefix": true,
+                        "suffix": ".c2.deliver.patient_food"
+                    },
+                    "kind": "help",
+                    "physical": {
+                        "kind": "mechanism_premise",
+                        "mechanism": "food_delivery"
+                    },
+                    "known": {
+                        "kind": "physical"
+                    },
+                    "grants": [
+                        {
+                            "kind": "owned",
+                            "owner": {
+                                "binding": "actor_id"
+                            },
+                            "field": "rations"
+                        },
+                        {
+                            "kind": "state",
+                            "owner": "c2.bowl",
+                            "field": "portions"
+                        }
+                    ],
+                    "label": "为病人煮粥并送餐",
+                    "text": "将实际取来的一份粮煮成粥，盛到莫兰床边的碗里。",
+                    "source": {
+                        "kind": "chapter",
+                        "path": "10_执行.story",
+                        "line": 7,
+                        "id": "NightTakeSick-delivery"
+                    }
+                },
+                {
+                    "factory": "surface",
+                    "id": {
+                        "actor_prefix": true,
+                        "suffix": ".c2.feed.patient"
+                    },
+                    "kind": "help",
+                    "physical": {
+                        "kind": "mechanism_premise",
+                        "mechanism": "feeding"
+                    },
+                    "known": {
+                        "kind": "physical"
+                    },
+                    "grants": [
+                        {
+                            "kind": "state",
+                            "owner": "c2.bowl",
+                            "field": "portions"
+                        },
+                        {
+                            "kind": "state",
+                            "owner": "c2.bowl",
+                            "field": "residue"
+                        },
+                        {
+                            "kind": "owned",
+                            "owner": {
+                                "binding": "actor_id"
+                            },
+                            "field": "busy_care"
+                        },
+                        {
+                            "kind": "owned",
+                            "owner": "moran",
+                            "field": "hungry"
+                        },
+                        {
+                            "kind": "owned",
+                            "owner": "moran",
+                            "field": "consumed"
+                        }
+                    ],
+                    "label": "照看病人进食",
+                    "text": "照看莫兰吃饭。",
+                    "source": {
+                        "kind": "chapter",
+                        "path": "10_执行.story",
+                        "line": 286,
+                        "id": "patient-breakfast-from-real-food"
+                    }
+                },
+                {
+                    "factory": "surface",
+                    "id": {
+                        "actor_prefix": true,
+                        "suffix": ".c2.leave.care"
+                    },
+                    "kind": "help",
+                    "physical": {
+                        "kind": "equals",
+                        "ref": {
+                            "kind": "owned",
+                            "owner": {
+                                "binding": "actor_id"
+                            },
+                            "field": "busy_care"
+                        },
+                        "value": true
+                    },
+                    "known": {
+                        "kind": "physical"
+                    },
+                    "grants": [
+                        {
+                            "kind": "owned",
+                            "owner": {
+                                "binding": "actor_id"
+                            },
+                            "field": "busy_care"
+                        }
+                    ],
+                    "label": "暂停照护",
+                    "text": "暂且停下照看。",
+                    "source": {
+                        "kind": "approved",
+                        "id": "actual-care-and-report-compete-for-personal-time"
+                    }
+                }
+            ]
+        }
+    ];
+}
+
+data campaign.dispatch.navigation {
+    value = {
+        "variants": [
+            {
+                "actors": ["bertrand"],
+                "when": {
+                    "kind": "equals",
+                    "ref": {
+                        "kind": "owned",
+                        "owner": {
+                            "binding": "actor_id"
+                        },
+                        "field": "carrying"
+                    },
+                    "value": {
+                        "binding": "template",
+                        "field": "patient"
+                    }
+                },
+                "factory": "carried_move",
+                "template": "rescue"
+            }
+        ],
+        "templates": {
+            "rescue": {
+                "actor": "bertrand",
+                "patient": "moran"
+            }
+        },
+        "legacy_carry_template": "rescue",
+        "route_scope": "known-open-prefix-before-unverified-gate"
+    };
+}
+
+data campaign.dispatch.case_jobs {
+    value = {
+        "defaults": {
+            "id_infix": ".island.case.",
+            "version": 1,
+            "kind": "experiment",
+            "authority": {
+                "kind": "all",
+                "items": [
+                    {
+                        "kind": "at",
+                        "actor": {
+                            "binding": "actor_id"
+                        },
+                        "room": {
+                            "binding": "room"
+                        }
+                    },
+                    {
+                        "kind": "can_act",
+                        "actor": {
+                            "binding": "actor_id"
+                        }
+                    },
+                    {
+                        "kind": "equals",
+                        "ref": {
+                            "kind": "owned",
+                            "owner": {
+                                "binding": "actor_id"
+                            },
+                            "field": "exiled"
+                        },
+                        "value": false
+                    },
+                    {
+                        "kind": "equals",
+                        "ref": {
+                            "kind": "director",
+                            "field": {
+                                "binding": "role"
+                            }
+                        },
+                        "value": {
+                            "binding": "actor_id"
+                        }
+                    },
+                    {
+                        "kind": "equals",
+                        "ref": {
+                            "kind": "case",
+                            "field": "resolved"
+                        },
+                        "value": false
+                    }
+                ]
+            },
+            "updates": [
+                {
+                    "field": "island_dynamic",
+                    "value": true
+                },
+                {
+                    "field": "simulation_utility",
+                    "value": {
+                        "binding": "case_parameter",
+                        "field": "action_utility"
+                    }
+                },
+                {
+                    "field": "repeatable",
+                    "value": false
+                }
+            ],
+            "interaction": {
+                "kind": "site",
+                "site": "ledger"
+            },
+            "interaction_variants": [
+                {
+                    "roles": ["A"],
+                    "value": {
+                        "kind": "site",
+                        "site": "south_entry"
+                    }
+                }
+            ]
+        },
+        "rows": [
+            {
+                "roles": ["A"],
+                "observations": [
+                    {
+                        "kind": "air",
+                        "owner": "greenhouse:greenhouse"
+                    }
+                ],
+                "suffix": "experiment",
+                "room": "greenhouse",
+                "known": {
+                    "kind": "all",
+                    "items": [
+                        {
+                            "kind": "equals",
+                            "ref": {
+                                "kind": "island",
+                                "owner": "experiment",
+                                "field": "done"
+                            },
+                            "value": false
+                        },
+                        {
+                            "kind": "equals",
+                            "ref": {
+                                "kind": "island",
+                                "owner": "experiment",
+                                "field": "opening"
+                            },
+                            "value": 1
+                        }
+                    ]
+                },
+                "effects": [
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "island",
+                            "owner": "experiment",
+                            "field": "done"
+                        },
+                        "value": true
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "island",
+                            "owner": "experiment",
+                            "field": "signed_name"
+                        },
+                        "value": {
+                            "binding": "actor_name"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "island",
+                            "owner": "experiment",
+                            "field": "sample_seen_at"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 0,
+                            "field": "seen_at"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "island",
+                            "owner": "experiment",
+                            "field": "sample_reading"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 0,
+                            "field": "value"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "island",
+                            "owner": "experiment",
+                            "field": "opening"
+                        },
+                        "value": {
+                            "binding": "case_parameter",
+                            "field": "experimental_opening"
+                        }
+                    }
+                ],
+                "grants": [
+                    {
+                        "kind": "island",
+                        "owner": "experiment",
+                        "field": "done"
+                    },
+                    {
+                        "kind": "island",
+                        "owner": "experiment",
+                        "field": "opening"
+                    },
+                    {
+                        "kind": "island",
+                        "owner": "experiment",
+                        "field": "signed_name"
+                    }
+                ],
+                "label": "将温室南入口调至半开并记录",
+                "text": "我把温室南入口调至半开，写下此前实际看过的读数与自己的签名；这改变局部空气交换，不能说明之后的空气仍然安全。"
+            },
+            {
+                "roles": ["C"],
+                "observations": [
+                    {
+                        "kind": "state",
+                        "owner": "c2.counter",
+                        "field": "remaining"
+                    },
+                    {
+                        "kind": "state",
+                        "owner": "c2.ledger",
+                        "field": "removed"
+                    },
+                    {
+                        "kind": "state",
+                        "owner": "c2.ledger",
+                        "field": "reserve_received"
+                    },
+                    {
+                        "kind": "state",
+                        "owner": "c2.ledger",
+                        "field": "day_recorded"
+                    },
+                    {
+                        "kind": "state",
+                        "owner": "c2.ledger",
+                        "field": "night_recorded"
+                    }
+                ],
+                "suffix": "snapshot",
+                "room": "main_granary",
+                "known": {
+                    "kind": "equals",
+                    "ref": {
+                        "kind": "case",
+                        "field": "snapshot_done"
+                    },
+                    "value": false
+                },
+                "effects": [
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "snapshot_done"
+                        },
+                        "value": true
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "snapshot_name"
+                        },
+                        "value": {
+                            "binding": "actor_name"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "snapshot_seen_at"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 0,
+                            "field": "seen_at"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "snapshot_ledger_at"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 1,
+                            "field": "seen_at"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "snapshot_counter"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 0,
+                            "field": "value"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "snapshot_removed"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 1,
+                            "field": "value"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "snapshot_reserve"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 2,
+                            "field": "value"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "snapshot_day"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 3,
+                            "field": "value"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "snapshot_night"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 4,
+                            "field": "value"
+                        }
+                    }
+                ],
+                "grants": [
+                    {
+                        "kind": "case",
+                        "field": "snapshot_done"
+                    },
+                    {
+                        "kind": "case",
+                        "field": "snapshot_name"
+                    }
+                ],
+                "label": "挑选先前柜账读数并列张贴",
+                "text": "我选择先前实数的柜台余量和看过的账页并列张贴，各自标明观察时刻，要求大家比较差额。它们并非同一时刻的现存清点。"
+            },
+            {
+                "roles": ["B"],
+                "observations": [
+                    {
+                        "kind": "case",
+                        "field": "snapshot_counter"
+                    },
+                    {
+                        "kind": "state",
+                        "owner": "c2.counter",
+                        "field": "remaining"
+                    },
+                    {
+                        "kind": "case",
+                        "field": "snapshot_seen_at"
+                    }
+                ],
+                "suffix": "challenge",
+                "room": "main_granary",
+                "known": {
+                    "kind": "all",
+                    "items": [
+                        {
+                            "kind": "equals",
+                            "ref": {
+                                "kind": "case",
+                                "field": "snapshot_done"
+                            },
+                            "value": true
+                        },
+                        {
+                            "kind": "equals",
+                            "ref": {
+                                "kind": "case",
+                                "field": "challenge_done"
+                            },
+                            "value": false
+                        }
+                    ]
+                },
+                "effects": [
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "challenge_done"
+                        },
+                        "value": true
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "challenge_name"
+                        },
+                        "value": {
+                            "binding": "actor_name"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "challenge_old"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 0,
+                            "field": "value"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "challenge_current"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 1,
+                            "field": "value"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "challenge_seen_at"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 1,
+                            "field": "seen_at"
+                        }
+                    }
+                ],
+                "grants": [
+                    {
+                        "kind": "case",
+                        "field": "challenge_done"
+                    },
+                    {
+                        "kind": "case",
+                        "field": "challenge_name"
+                    }
+                ],
+                "label": "就实见差额公开提出指控",
+                "text": "我指控这次配给存在尚未说明的取用：本人实数的现存和摘录不同。请公开核对，但差额尚不能证明某人私取，也可能来自后续领取或补记。",
+                "comparisons": [
+                    {
+                        "op": "not_equals",
+                        "left": {
+                            "binding": "observation",
+                            "index": 0,
+                            "field": "value"
+                        },
+                        "right": {
+                            "binding": "observation",
+                            "index": 1,
+                            "field": "value"
+                        }
+                    },
+                    {
+                        "op": "at_most",
+                        "left": {
+                            "binding": "observation",
+                            "index": 2,
+                            "field": "value"
+                        },
+                        "right": {
+                            "binding": "observation",
+                            "index": 1,
+                            "field": "seen_at"
+                        }
+                    }
+                ],
+                "speech": {
+                    "kind": "talk",
+                    "scope": "owned-ledger-challenge",
+                    "public": true
+                }
+            },
+            {
+                "roles": ["D"],
+                "observations": [
+                    {
+                        "kind": "owned",
+                        "owner": {
+                            "binding": "actor_id"
+                        },
+                        "field": "rations"
+                    },
+                    {
+                        "kind": "owned",
+                        "owner": {
+                            "binding": "actor_id"
+                        },
+                        "field": "consumed"
+                    }
+                ],
+                "suffix": "defense",
+                "room": "main_granary",
+                "known": {
+                    "kind": "all",
+                    "items": [
+                        {
+                            "kind": "equals",
+                            "ref": {
+                                "kind": "case",
+                                "field": "challenge_done"
+                            },
+                            "value": true
+                        },
+                        {
+                            "kind": "equals",
+                            "ref": {
+                                "kind": "case",
+                                "field": "defense_done"
+                            },
+                            "value": false
+                        }
+                    ],
+                    "include_input_facts": true
+                },
+                "effects": [
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "defense_done"
+                        },
+                        "value": true
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "defense_name"
+                        },
+                        "value": {
+                            "binding": "actor_name"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "defense_rations"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 0,
+                            "field": "value"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "defense_consumed"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 1,
+                            "field": "value"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "defense_seen_at"
+                        },
+                        "value": {
+                            "binding": "observation",
+                            "index": 0,
+                            "field": "seen_at"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "defense_removed_delta"
+                        },
+                        "value": {
+                            "binding": "account",
+                            "field": "removed"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "defense_reserve_delta"
+                        },
+                        "value": {
+                            "binding": "account",
+                            "field": "received"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "defense_counter_at"
+                        },
+                        "value": {
+                            "binding": "account",
+                            "field": "counter_at"
+                        }
+                    },
+                    {
+                        "op": "assign",
+                        "ref": {
+                            "kind": "case",
+                            "field": "defense_ledger_at"
+                        },
+                        "value": {
+                            "binding": "account",
+                            "field": "ledger_at"
+                        }
+                    }
+                ],
+                "grants": [
+                    {
+                        "kind": "case",
+                        "field": "defense_done"
+                    },
+                    {
+                        "kind": "case",
+                        "field": "defense_name"
+                    },
+                    {
+                        "kind": "case",
+                        "field": "defense_rations"
+                    },
+                    {
+                        "kind": "case",
+                        "field": "defense_consumed"
+                    }
+                ],
+                "label": "提交亲见柜账与本人记录自证",
+                "text": "我提交实际核对的柜台、账页和本人口粮记录：账内取出与转入的变化能对上所读差额。不能只凭不同时间的余量就把私取的嫌疑归给我；这些记录也没有证明其他未观察的事。",
+                "evidence_factory": "inventory_balance",
+                "speech": {
+                    "kind": "talk",
+                    "scope": "owned-self-account",
+                    "public": true
+                }
+            }
+        ]
+    };
+}

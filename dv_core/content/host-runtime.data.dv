@@ -1,0 +1,1132 @@
+// Host projection content. No executable DV functions.
+schema "dv-script-v1";
+
+data host.runtime.places {
+    value = {"living_hall":{"map":"main_2f","room":"main_2f:J","geometry_binding":"cli-dv-interior;godot-not-verified"},"central_hall":{"map":"main_1f","room":"main_1f:J","geometry_binding":"cli-dv-interior;godot-not-verified"},"main_dining":{"map":"main_1f","room":"main_1f:F03","geometry_binding":"cli-dv-interior;godot-not-verified"},"lecture":{"map":"lecture","room":"lecture:lecture"},"logistics":{"map":"logistics","room":"logistics:dining"},"clinic":{"map":"clinic","room":"clinic:ward"},"greenhouse":{"map":"greenhouse","room":"greenhouse:greenhouse"},"resonance_hall":{"map":"resonance","room":"resonance:hall"},"quiet_room":{"map":"resonance","room":"resonance:silent"},"white_tower_safe":{"map":"clinic","room":"clinic:safety"},"washroom":{"map":"living_floor","room":"living_hall:bath"},"resonance":{"map":"resonance","room":"resonance:hall"},"outdoor_meter":{"map":"campus_n","room":"campus_n:campus_n","anchor":"site:outdoor_meter"},"outdoor_high":{"map":"campus_n","room":"campus_n:campus_n","anchor":"site:outdoor_high"},"outdoor_alley":{"map":"campus_sw","room":"campus_sw:campus_sw","anchor":"lane_east"},"oath_court":{"map":"campus_s","room":"campus_s:campus_s","anchor":"site:oath_court"},"threshold.contract":{"map":"living_floor","room":"living_hall:hall","anchor":"living_hall_west_north"},"threshold.astral":{"map":"living_floor","room":"living_hall:hall","anchor":"living_hall_west_south"},"threshold.logistics":{"map":"living_floor","room":"living_hall:hall","anchor":"living_hall_east_north"},"dorm.contract":{"map":"living_floor","room":"zone_jia:hall"},"dorm.astral":{"map":"living_floor","room":"zone_bing:hall"},"dorm.logistics":{"map":"living_floor","room":"zone_ding:hall"},"dorm.yi":{"map":"living_floor","room":"zone_yi:hall"},"foyer":{"map":"main_2f","room":"main_2f:foyer","geometry_binding":"registered;godot-not-verified"},"hall":{"map":"living_floor","room":"zone_yi:hall"},"R05":{"map":"main_2f","room":"main_2f:R05","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R06":{"map":"main_2f","room":"main_2f:R06","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R07":{"map":"main_2f","room":"main_2f:R07","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R08":{"map":"main_2f","room":"main_2f:R08","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"corridor":{"map":"living_floor","room":"zone_yi:corridor"},"pantry":{"map":"living_floor","room":"zone_yi:prep"},"main1f_f01":{"map":"main_1f","room":"main_1f:F01","geometry_binding":"cli-dv-interior;godot-not-verified"},"main1f_f04":{"map":"main_1f","room":"main_1f:F04","geometry_binding":"cli-dv-interior;godot-not-verified"},"main1f_f05":{"map":"main_1f","room":"main_1f:F05","geometry_binding":"cli-dv-interior;godot-not-verified"},"main1f_f06":{"map":"main_1f","room":"main_1f:F06","geometry_binding":"cli-dv-interior;godot-not-verified"},"main1f_f13":{"map":"main_1f","room":"main_1f:F13","geometry_binding":"cli-dv-interior;godot-not-verified"},"main2f_t04":{"map":"main_2f","room":"main_2f:T04","geometry_binding":"cli-dv-interior;godot-not-verified"},"main1f_s":{"map":"main_1f","room":"main_1f:S","geometry_binding":"cli-dv-interior;godot-not-verified"},"main2f_s":{"map":"main_2f","room":"main_2f:S","geometry_binding":"cli-dv-interior;godot-not-verified"},"main1f_a":{"map":"main_1f","room":"main_1f:A","geometry_binding":"cli-dv-interior;godot-not-verified"},"main1f_w":{"map":"main_1f","room":"main_1f:W","geometry_binding":"cli-dv-interior;godot-not-verified"},"main2f_a":{"map":"main_2f","room":"main_2f:A","geometry_binding":"cli-dv-interior;godot-not-verified"},"main1f_p_f04":{"map":"main_1f","room":"main_1f:P-F04","geometry_binding":"cli-dv-interior;godot-not-verified"},"main1f_p_f13":{"map":"main_1f","room":"main_1f:P-F13","geometry_binding":"cli-dv-interior;godot-not-verified"},"main1f_p_f05":{"map":"main_1f","room":"main_1f:P-F05","geometry_binding":"cli-dv-interior;godot-not-verified"},"main2f_p_t04":{"map":"main_2f","room":"main_2f:P-T04","geometry_binding":"cli-dv-interior;godot-not-verified"},"R01":{"map":"main_2f","room":"main_2f:R01","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R02":{"map":"main_2f","room":"main_2f:R02","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R03":{"map":"main_2f","room":"main_2f:R03","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R04":{"map":"main_2f","room":"main_2f:R04","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R09":{"map":"main_2f","room":"main_2f:R09","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R10":{"map":"main_2f","room":"main_2f:R10","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R11":{"map":"main_2f","room":"main_2f:R11","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R12":{"map":"main_2f","room":"main_2f:R12","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R13":{"map":"main_2f","room":"main_2f:R13","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R14":{"map":"main_2f","room":"main_2f:R14","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R15":{"map":"main_2f","room":"main_2f:R15","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"},"R16":{"map":"main_2f","room":"main_2f:R16","geometry_binding":"registered;night-return-not-implemented;godot-not-verified"}};
+}
+
+data host.runtime.interactions {
+    value = {
+        "rules": [
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".inspect.E1"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E1"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".inspect.E2"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E2"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".inspect.E3"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E2"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".inspect.E4"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E2"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".inspect.E5"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E2"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".inspect.E6"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E6"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".inspect.E7"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E7"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".inspect.E8"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "transmitter"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".inspect.E9"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E10"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".inspect.E10"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E10"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".inspect.E11"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E11"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".inspect.E12"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E12"
+                }
+            },
+            {
+                "match": { "equals": { "id": "detective.opening.wake" } },
+                "value": { "kind": "site", "site": "E2" }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".opening.wake"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "bed"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".opening.wear-coat"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E12"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".identify-own-lens"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E7"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".compare_sole"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "E2"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".sound_trial"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "transmitter"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".reask_question"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "transmitter"
+                }
+            },
+            {
+                "match": {
+                    "suffix": {
+                        "id": ".opening.empty-slot"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "zone_rules"
+                }
+            },
+            {
+                "match": {
+                    "equals": {
+                        "kind": "answer"
+                    }
+                },
+                "value": {
+                    "kind": "site",
+                    "site": "transmitter"
+                }
+            }
+        ],
+        "station_prefix_length": 5
+    }
+}
+
+data host.runtime.initial_anchors {
+    value = [
+        {
+            "match": {
+                "equals": {
+                    "actor": "detective",
+                    "location": "foyer"
+                }
+            },
+            "value": "site:door-floor"
+        }
+    ]
+}
+
+data host.runtime.site_descriptors {
+    value = {
+        "E1": {
+            "id": "departure.door",
+            "title": "隔离门",
+            "kind": "object",
+            "is_viewer": false
+        },
+        "E2": {
+            "id": "site:door-floor",
+            "title": "门边地面",
+            "kind": "object",
+            "is_viewer": false
+        },
+        "E6": {
+            "id": "site:score",
+            "title": "书桌与乐谱",
+            "kind": "object",
+            "is_viewer": false
+        },
+        "E7": {
+            "id": "site:slate",
+            "title": "长桌与石板",
+            "kind": "object",
+            "is_viewer": false
+        },
+        "E10": {
+            "id": "site:pantry-counter",
+            "title": "备餐柜与水槽",
+            "kind": "object",
+            "is_viewer": false
+        },
+        "E11": {
+            "id": "site:shelf",
+            "title": "书架",
+            "kind": "object",
+            "is_viewer": false
+        },
+        "E12": {
+            "id": "coat",
+            "title": "风衣",
+            "kind": "object",
+            "is_viewer": false
+        },
+        "transmitter": {
+            "id": "site:transmitter",
+            "title": "传声铜口",
+            "kind": "object",
+            "is_viewer": false
+        },
+        "zone_rules": {
+            "id": "opening.slot.detective",
+            "title": "标签柜",
+            "kind": "object",
+            "is_viewer": false
+        },
+        "bed": {
+            "id_template": "site:bed:{location}",
+            "title": "床",
+            "kind": "object",
+            "is_viewer": false
+        }
+    }
+}
+
+data host.runtime.traces {
+    value = {
+        "ash": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "cognition",
+                "facet": "state",
+                "field": "ash_wedge"
+            },
+            "value": true
+        },
+        "boots": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "cognition",
+                "facet": "state",
+                "field": "boots_toward_bolt"
+            },
+            "value": true
+        },
+        "cloth": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "cognition",
+                "facet": "state",
+                "field": "cloth_after_boots"
+            },
+            "value": true
+        },
+        "dent": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "cognition",
+                "facet": "state",
+                "field": "fork_dent"
+            },
+            "value": true
+        },
+        "joint_west": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "cognition",
+                "facet": "state",
+                "field": "pipe_layout"
+            },
+            "value": true
+        },
+        "joint_east": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "cognition",
+                "facet": "state",
+                "field": "pipe_layout"
+            },
+            "value": true
+        },
+        "shelf_R05": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "cognition",
+                "facet": "state",
+                "field": "shelf_old"
+            },
+            "value": true
+        },
+        "shelf_R06": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "cognition",
+                "facet": "state",
+                "field": "shelf_old"
+            },
+            "value": true
+        },
+        "shelf_R07": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "cognition",
+                "facet": "state",
+                "field": "shelf_old"
+            },
+            "value": true
+        },
+        "shelf_R08": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "cognition",
+                "facet": "state",
+                "field": "shelf_old"
+            },
+            "value": true
+        },
+        "shelf_EN": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "cognition",
+                "facet": "state",
+                "field": "shelf_old"
+            },
+            "value": true
+        },
+        "shelf_ES": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "cognition",
+                "facet": "state",
+                "field": "shelf_old"
+            },
+            "value": true
+        }
+    }
+}
+
+data host.runtime.access {
+    value = {
+        "defaults": {
+            "living_hall": true
+        },
+        "hub_map": "living_hall",
+        "host_defaults": {
+            "dorms": true,
+            "door_prints": false
+        },
+        "isolation": {
+            "op": "equals",
+            "ref": {
+                "type": "ref",
+                "object": "departure.door",
+                "facet": "state",
+                "field": "open"
+            },
+            "value": true
+        },
+        "maps": [
+            {
+                "map": "zone_yi",
+                "condition": {
+                    "op": "all",
+                    "items": [
+                        {
+                            "op": "equals",
+                            "ref": {
+                                "type": "ref",
+                                "object": "departure.door",
+                                "facet": "state",
+                                "field": "outer_released"
+                            },
+                            "value": true
+                        },
+                        {
+                            "op": "equals",
+                            "ref": {
+                                "type": "ref",
+                                "object": "departure.door",
+                                "facet": "state",
+                                "field": "inner_down"
+                            },
+                            "value": false
+                        },
+                        {
+                            "op": "equals",
+                            "ref": {
+                                "type": "ref",
+                                "object": "departure.door",
+                                "facet": "state",
+                                "field": "open"
+                            },
+                            "value": true
+                        }
+                    ]
+                }
+            },
+            {
+                "map": "zone_jia",
+                "condition": {
+                    "op": "all",
+                    "items": [
+                        {
+                            "op": "equals",
+                            "ref": {
+                                "type": "ref",
+                                "object": "case.contract",
+                                "facet": "state",
+                                "field": "outer_latch_released"
+                            },
+                            "value": true
+                        },
+                        {
+                            "op": "equals",
+                            "ref": {
+                                "type": "ref",
+                                "object": "campaign.access",
+                                "facet": "state",
+                                "field": "contract"
+                            },
+                            "value": true
+                        }
+                    ]
+                }
+            },
+            {
+                "map": "zone_bing",
+                "condition": {
+                    "op": "all",
+                    "items": [
+                        {
+                            "op": "equals",
+                            "ref": {
+                                "type": "ref",
+                                "object": "case.astral",
+                                "facet": "state",
+                                "field": "outer_latch_released"
+                            },
+                            "value": true
+                        },
+                        {
+                            "op": "equals",
+                            "ref": {
+                                "type": "ref",
+                                "object": "campaign.access",
+                                "facet": "state",
+                                "field": "astral"
+                            },
+                            "value": true
+                        }
+                    ]
+                }
+            },
+            {
+                "map": "zone_ding",
+                "condition": {
+                    "op": "all",
+                    "items": [
+                        {
+                            "op": "equals",
+                            "ref": {
+                                "type": "ref",
+                                "object": "case.logistics",
+                                "facet": "state",
+                                "field": "outer_latch_released"
+                            },
+                            "value": true
+                        },
+                        {
+                            "op": "equals",
+                            "ref": {
+                                "type": "ref",
+                                "object": "campaign.access",
+                                "facet": "state",
+                                "field": "logistics"
+                            },
+                            "value": true
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
+
+data host.runtime.identity {
+    value = {
+        "label_excluded": [
+            "detective"
+        ],
+        "narration_excluded": [
+            "detective"
+        ],
+        "label_name_refs": {
+            "huo": {
+                "type": "ref",
+                "object": "opening.personal.huo",
+                "facet": "state",
+                "field": "name"
+            },
+            "shen": {
+                "type": "ref",
+                "object": "opening.personal.shen",
+                "facet": "state",
+                "field": "name"
+            },
+            "su": {
+                "type": "ref",
+                "object": "opening.personal.su",
+                "facet": "state",
+                "field": "name"
+            }
+        },
+        "name_lookup_templates": [
+            {
+                "object_prefix": "opening.personal.",
+                "facet": "state",
+                "field": "name"
+            }
+        ],
+        "self_name_reference_templates": [
+            {
+                "object_prefix": "",
+                "facet": "identity",
+                "field": "name"
+            },
+            {
+                "object_prefix": "",
+                "facet": "state",
+                "field": "name"
+            },
+            {
+                "object_prefix": "opening.personal.",
+                "facet": "state",
+                "field": "name"
+            },
+            {
+                "object_prefix": "c2.dialogue.person.",
+                "facet": "state",
+                "field": "name"
+            }
+        ],
+        "physical_people_extra": [
+            "demon"
+        ],
+        "object_names": {
+            "opening.slot.detective": {
+                "ref": {
+                    "type": "ref",
+                    "object": "opening.slot.detective",
+                    "facet": "state",
+                    "field": "label"
+                },
+                "template": "{value}的标签柜"
+            },
+            "opening.slot.huo": {
+                "ref": {
+                    "type": "ref",
+                    "object": "opening.slot.huo",
+                    "facet": "state",
+                    "field": "label"
+                },
+                "template": "{value}的标签柜"
+            },
+            "opening.slot.shen": {
+                "ref": {
+                    "type": "ref",
+                    "object": "opening.slot.shen",
+                    "facet": "state",
+                    "field": "label"
+                },
+                "template": "{value}的标签柜"
+            },
+            "opening.slot.su": {
+                "ref": {
+                    "type": "ref",
+                    "object": "opening.slot.su",
+                    "facet": "state",
+                    "field": "label"
+                },
+                "template": "{value}的标签柜"
+            }
+        },
+        "known_speaker_rules": [
+            {
+                "match": {
+                    "equals": {
+                        "id": "demon"
+                    }
+                },
+                "when": {
+                    "op": "equals",
+                    "ref": {
+                        "type": "ref",
+                        "object": "opening.roles",
+                        "facet": "state",
+                        "field": "custodian"
+                    },
+                    "value": "demon"
+                },
+                "value": "代管者"
+            }
+        ],
+        "introduced_name_template": {
+            "object_prefix": "c2.dialogue.person.",
+            "facet": "state",
+            "field": "name"
+        },
+        "unknown": {
+            "empty": "现场记录",
+            "self": "本人",
+            "by_actor": {
+                "demon": "铜口里的声音"
+            },
+            "indexed_prefix": "陌生学员·",
+            "fallback": "陌生学员"
+        },
+        "person_name_refs": {
+            "detective": {
+                "type": "ref",
+                "object": "opening.personal.detective",
+                "facet": "state",
+                "field": "name"
+            },
+            "huo": {
+                "type": "ref",
+                "object": "opening.personal.huo",
+                "facet": "state",
+                "field": "name"
+            },
+            "shen": {
+                "type": "ref",
+                "object": "opening.personal.shen",
+                "facet": "state",
+                "field": "name"
+            },
+            "su": {
+                "type": "ref",
+                "object": "opening.personal.su",
+                "facet": "state",
+                "field": "name"
+            }
+        }
+    }
+}
+
+data host.runtime.doors {
+    value = {
+        "supplemental_gates": {
+            "dorm.contract": {
+                "type": "ref",
+                "object": "campaign.access",
+                "facet": "state",
+                "field": "contract"
+            },
+            "dorm.astral": {
+                "type": "ref",
+                "object": "campaign.access",
+                "facet": "state",
+                "field": "astral"
+            },
+            "dorm.logistics": {
+                "type": "ref",
+                "object": "campaign.access",
+                "facet": "state",
+                "field": "logistics"
+            }
+        },
+        "special": [
+            {
+                "between": [
+                    "foyer",
+                    "living_hall"
+                ],
+                "states": [
+                    {
+                        "when": {
+                            "op": "equals",
+                            "ref": {
+                                "type": "ref",
+                                "object": "departure.door",
+                                "facet": "state",
+                                "field": "open"
+                            },
+                            "value": true
+                        },
+                        "state": "open",
+                        "label": "开",
+                        "basis": [
+                            {
+                                "type": "ref",
+                                "object": "departure.door",
+                                "facet": "state",
+                                "field": "open"
+                            }
+                        ]
+                    },
+                    {
+                        "when": {
+                            "op": "not",
+                            "item": {
+                                "op": "all",
+                                "items": [
+                                    {
+                                        "op": "not",
+                                        "item": {
+                                            "op": "equals",
+                                            "ref": {
+                                                "type": "ref",
+                                                "object": "departure.door",
+                                                "facet": "state",
+                                                "field": "inner_down"
+                                            },
+                                            "value": true
+                                        }
+                                    },
+                                    {
+                                        "op": "not",
+                                        "item": {
+                                            "op": "equals",
+                                            "ref": {
+                                                "type": "ref",
+                                                "object": "departure.door",
+                                                "facet": "state",
+                                                "field": "outer_released"
+                                            },
+                                            "value": false
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        "state": "locked",
+                        "label": "锁",
+                        "basis": [
+                            {
+                                "type": "ref",
+                                "object": "departure.door",
+                                "facet": "state",
+                                "field": "inner_down"
+                            },
+                            {
+                                "type": "ref",
+                                "object": "departure.door",
+                                "facet": "state",
+                                "field": "outer_released"
+                            }
+                        ]
+                    },
+                    {
+                        "when": {
+                            "op": "equals",
+                            "ref": {
+                                "type": "ref",
+                                "object": "departure.door",
+                                "facet": "state",
+                                "field": "open"
+                            },
+                            "value": false
+                        },
+                        "state": "closed",
+                        "label": "关",
+                        "basis": [
+                            {
+                                "type": "ref",
+                                "object": "departure.door",
+                                "facet": "state",
+                                "field": "open"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "labels": {
+            "unknown": "未明",
+            "open": "通",
+            "closed": "未开放",
+            "observed_unknown": "曾通过 · 现况未知"
+        }
+    }
+}
+
+data campaign.runtime.config {
+    value = {
+        "opening": {
+            "seed": 1,
+            "profile": "Standard_Detective",
+            "detective_zone": "zone_yi"
+        },
+        "host": {
+            "default_controller": "player",
+            "default_viewer": "detective",
+            "controllers": [
+                "player",
+                "ai"
+            ],
+            "interactive_controller": "player"
+        },
+        "defaults": {
+            "simulation_mode": "approximate-v1",
+            "simulation": false,
+            "seed": 1,
+            "profile": "Standard_Detective",
+            "detective_zone": "zone_yi",
+            "su_initial_room": "hall",
+            "private_execution_benefit_multiplier": 1,
+            "homecoming_negotiation": false,
+            "opt_readview": true,
+            "opt_plancache": true,
+            "opt_replaycache": true,
+            "opt_lazytext": true,
+            "opt_recordcache": true,
+            "opt_predicate": true,
+            "opt_predicatecache": true,
+            "opt_declcache": true,
+            "opt_gc": true,
+            "opt_runtimespeed": true,
+            "opt_appendshare": true,
+            "opt_cow": true,
+            "opt_mask": true,
+            "opt_lazyinternal": true,
+            "opt_dirty": true,
+            "opt_blackbox": true,
+            "opt_storyflow": true,
+            "opt_stateindex": true,
+            "opt_mask_verify": false,
+            "opt_dirty_verify": 0,
+            "stop_at_chapter_end": true
+        },
+        "retired": [
+            "selective_planning",
+            "opt_prune",
+            "opt_planreuse",
+            "opt_taskgraph",
+            "prune_top_k",
+            "prune_depth",
+            "plan_time_bucket"
+        ],
+        "checks": [
+            {
+                "key": "simulation_mode",
+                "kind": "one_of",
+                "values": [
+                    "approximate-v1"
+                ],
+                "message": "Retired simulation mode; use approximate-v1"
+            },
+            {
+                "key": "seed",
+                "kind": "nonnegative_integer",
+                "message": "Opening seed must be a nonnegative integer"
+            },
+            {
+                "key": "su_initial_room",
+                "kind": "one_of",
+                "values": [
+                    "hall",
+                    "R08",
+                    "R05"
+                ],
+                "message": "Unsupported initial Su room"
+            },
+            {
+                "key": "private_execution_benefit_multiplier",
+                "kind": "one_of",
+                "values": [
+                    1,
+                    2
+                ],
+                "message": "Private execution benefit multiplier must be 1 or 2"
+            },
+            {
+                "key": "homecoming_negotiation",
+                "kind": "boolean",
+                "message": "Homecoming negotiation must be boolean"
+            },
+            {
+                "key": "detective_zone",
+                "kind": "one_of",
+                "values": [
+                    "zone_yi",
+                    "zone_jia",
+                    "zone_bing",
+                    "zone_ding",
+                    "none"
+                ],
+                "message": "Unsupported detective zone"
+            },
+            {
+                "key": "opt_dirty_verify",
+                "kind": "nonnegative_integer",
+                "message": "Dirty verify interval must be a nonnegative integer"
+            },
+            {
+                "key": "opt_readview",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_plancache",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_replaycache",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_lazytext",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_recordcache",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_predicate",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_predicatecache",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_declcache",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_gc",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_runtimespeed",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_appendshare",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_cow",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_mask",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_lazyinternal",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_dirty",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_blackbox",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_storyflow",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_stateindex",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "opt_mask_verify",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            },
+            {
+                "key": "stop_at_chapter_end",
+                "kind": "boolean",
+                "message": "Optimization switches must be boolean"
+            }
+        ],
+        "relocations": [
+            {
+                "option": "su_initial_room",
+                "default": "hall",
+                "actor": "su",
+                "ref": {
+                    "type": "ref",
+                    "object": "su",
+                    "facet": "state",
+                    "field": "location"
+                },
+                "basis": [
+                    {
+                        "path": "user:current-request",
+                        "line": 0,
+                        "id": "counterfactual-su-initial-room"
+                    }
+                ],
+                "binding_error": "Su initial location requires its existing identity binding"
+            }
+        ],
+        "excluded_actor": {
+            "id": "detective",
+            "ref": {
+                "type": "ref",
+                "object": "detective",
+                "facet": "state",
+                "field": "location"
+            }
+        }
+    }
+}

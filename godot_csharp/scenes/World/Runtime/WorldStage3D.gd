@@ -1,6 +1,10 @@
 extends Node3D
+const PhysicsLayers = preload("res://geometry/PhysicsLayers.gd")
 const GEOMETRY = preload("res://scenes/Host/GeometryCatalog.gd")
 const BODY = preload("res://scenes/World/Actors/StoryBody3D.gd")
+const DV_MAP = preload("res://geometry/LegacyDvMap.gd")
+const COORDINATES = preload("res://geometry/DesignCoordinates.gd")
+const DV_BUILDING = preload("res://geometry/BuildingFramework.gd")
 var field: Node2D
 var camera: Camera3D
 var definitions: Dictionary
@@ -9,14 +13,26 @@ var rooms: Dictionary = {}
 var bodies: Dictionary = {}
 var logical_bodies: Dictionary = {}
 var current_room := ""
+var _dv_buildings: Dictionary = {}
 var occlusion: Node
 var route_failures: Dictionary = {}
 var occupancy: Dictionary = {}
 var lighting_minute := -1.0
 
+var _legacy_definitions_loaded := false
+
 func _ready() -> void:
 	var reader = preload("res://scenes/Host/DvPresentationContent.cs").new()
-	definitions = reader.ReadRecord("res://Content/world3d.dv", "layouts", "world3d")
+	var spatial_record: Dictionary = reader.ReadPublishedData("95-configurable-building.data.dv", "space.configurable_building")
+	var spatial: Dictionary = spatial_record.get("value", {})
+	var actor_profile: Dictionary = spatial.get("host_actor_profile", {})
+	definitions = {
+		"nominal_actor_height": float(actor_profile.get("nominal_actor_height_m", 0.0)),
+		"collision_radius": float(actor_profile.get("collision_radius_m", 0.0)),
+		"rooms": {}
+	}
+	if float(definitions.nominal_actor_height) <= 0.0 or float(definitions.collision_radius) <= 0.0:
+		push_error("Selected DV building has no valid host actor profile.")
 	var art: Dictionary = reader.ReadRecord("res://Content/character_art.dv", "layouts", "character_art")
 	cast = {}
 	for identity in art.cast:
@@ -40,8 +56,21 @@ func _ready() -> void:
 	environment.environment.ambient_light_energy = 0.45
 	add_child(environment)
 
+func _ensure_legacy_definitions() -> void:
+	if _legacy_definitions_loaded: return
+	_legacy_definitions_loaded = true
+	var reader = preload("res://scenes/Host/DvPresentationContent.cs").new()
+	var legacy: Dictionary = reader.ReadRecord("res://Content/world3d.dv", "layouts", "world3d")
+	if legacy.is_empty() or not legacy.has("rooms"):
+		push_error("Legacy room catalogue is unavailable for a non-DV map.")
+		return
+	definitions = legacy
+
 func ensure_room(identity: String) -> Dictionary:
 	if rooms.has(identity): return rooms[identity]
+	if DV_MAP.supports(field.adapter.map_key()):
+		return _ensure_dv_room(identity)
+	_ensure_legacy_definitions()
 	var spec: Dictionary = definitions.get("rooms", {}).get(identity, {})
 	if spec.is_empty(): return {}
 	var packed := load(str(spec.scene)) as PackedScene
@@ -66,6 +95,38 @@ func ensure_room(identity: String) -> Dictionary:
 	var record := {"root":scene,"footprint":footprint,"grid":null}
 	rooms[identity] = record
 	scene.visible = false
+	return record
+
+func _ensure_dv_room(identity: String) -> Dictionary:
+	var map_id: String = str(field.adapter.map_key())
+	var spec: Dictionary = GEOMETRY.room_data(map_id, identity)
+	if spec.is_empty(): return {}
+	var building: Node3D = _dv_buildings.get(map_id)
+	if not is_instance_valid(building):
+		var source: Dictionary = DV_MAP.spatial_source(map_id)
+		var selected: Dictionary = DV_MAP.spatial_floor(map_id)
+		if source.is_empty() or selected.is_empty(): return {}
+		# Each legacy input map receives exactly its DV-authored floor,
+		# with no fallback to the old per-room PackedScenes.
+		var published: Dictionary = source.duplicate(false)
+		published["floors"] = [selected]
+		building = DV_BUILDING.new()
+		building.name = "DvBuilding_" + map_id
+		add_child(building)
+		building.visible = false
+		building.call("build", published)
+		if not bool(building.get("build_completed")):
+			push_error("Selected DV geometry failed to build in legacy Godot host: " + map_id)
+			building.queue_free()
+			return {}
+		_dv_buildings[map_id] = building
+	var raw := GEOMETRY.rect(spec.rect)
+	var a := DV_MAP.pixel_to_godot(map_id, raw.position)
+	var b := DV_MAP.pixel_to_godot(map_id, raw.end)
+	var footprint := Rect2(Vector2(minf(a.x,b.x),minf(a.z,b.z)),
+		Vector2(absf(b.x-a.x),absf(b.z-a.z)))
+	var record := {"root":building,"footprint":footprint,"grid":null,"dv_authored":true}
+	rooms[identity] = record
 	return record
 
 func _strip_presentation(node: Node) -> void:
@@ -96,6 +157,8 @@ func room_at(point: Vector2) -> String:
 func to_world(point: Vector2, identity: String) -> Vector3:
 	var record := ensure_room(identity)
 	if record.is_empty(): return Vector3.INF
+	if bool(record.get("dv_authored", false)):
+		return DV_MAP.pixel_to_godot(field.adapter.map_key(), point)
 	var logical := GEOMETRY.rect(GEOMETRY.room_data(field.adapter.map_key(), identity).rect)
 	var local: Vector2 = record.footprint.position + (point - logical.position) / logical.size * record.footprint.size
 	var point3d: Vector3 = record.root.position + Vector3(local.x, 0, local.y)
@@ -105,6 +168,8 @@ func to_world(point: Vector2, identity: String) -> Vector3:
 
 func to_logical(point: Vector3, identity: String) -> Vector2:
 	var record: Dictionary = rooms[identity]
+	if bool(record.get("dv_authored", false)):
+		return DV_MAP.design_to_pixel(field.adapter.map_key(), COORDINATES.to_design(point))
 	var local: Vector3 = point - record.root.position
 	var logical := GEOMETRY.rect(GEOMETRY.room_data(field.adapter.map_key(), identity).rect)
 	return logical.position + (Vector2(local.x,local.z) - record.footprint.position) / record.footprint.size * logical.size
@@ -121,8 +186,8 @@ func prepare_actor(actor: CharacterBody2D) -> CharacterBody3D:
 			body = actor.physical_body
 			body.global_position = to_world(actor.position, identity)
 			body.set_meta("room", identity)
-			body.collision_layer = 2
-			body.collision_mask = 3
+			body.collision_layer = PhysicsLayers.ACTOR
+			body.collision_mask = PhysicsLayers.ACTOR_MOVEMENT_MASK
 			bodies[key] = body
 			logical_bodies[key] = weakref(actor)
 			return body
@@ -141,8 +206,8 @@ func prepare_actor(actor: CharacterBody2D) -> CharacterBody3D:
 		bodies[key] = body
 		logical_bodies[key] = weakref(actor)
 		_settle_initial.call_deferred(actor, body, identity)
-	body.collision_layer = 2
-	body.collision_mask = 3
+	body.collision_layer = PhysicsLayers.ACTOR
+	body.collision_mask = PhysicsLayers.ACTOR_MOVEMENT_MASK
 	return body
 
 func advance(actor: CharacterBody2D, motion: Vector2) -> bool:
@@ -196,7 +261,7 @@ func _process(_delta: float) -> void:
 		record.root.visible = not field.execution_only
 		current_room = identity
 		lighting_minute = -1.0
-		camera.environment = record.root.get_meta("presentation_environment", null)
+		camera.environment = record.root.get_meta("presentation_environment") if record.root.has_meta("presentation_environment") else null
 		for door in doorways():
 			if str(door.from) == identity: ensure_room(str(door.to))
 			elif str(door.to) == identity: ensure_room(str(door.from))
@@ -274,18 +339,21 @@ func _clear(point: Vector3, require_floor := true, radius := 0.0) -> bool:
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = shape
 	query.transform.origin = point + Vector3.UP * (shape.height * 0.5 + 0.04)
-	query.collision_mask = 1
+	query.collision_mask = PhysicsLayers.SOLID
 	query.margin = 0.005
 	return space.intersect_shape(query, 1).is_empty()
 
 func _floor_height(point: Vector3) -> float:
-	var ray := PhysicsRayQueryParameters3D.create(Vector3(point.x,2.0,point.z), Vector3(point.x,-1.0,point.z), 1)
+	var dv_floor := DV_MAP.supports(field.adapter.map_key())
+	var mask := PhysicsLayers.FLOOR if dv_floor else PhysicsLayers.SOLID
+	var ray := PhysicsRayQueryParameters3D.create(point + Vector3.UP * 2.0, point - Vector3.UP * 2.0, mask)
 	var excluded: Array[RID] = []
 	for attempt in 12:
 		var hit := get_world_3d().direct_space_state.intersect_ray(ray)
 		if hit.is_empty(): return INF
 		var collider: Node3D = hit.collider
-		if "floor" in str(collider.name).to_lower() and hit.normal.y > 0.7: return float(hit.position.y)
+		if hit.normal.y > 0.7 and (bool(collider.collision_layer & PhysicsLayers.FLOOR) if dv_floor else "floor" in str(collider.name).to_lower()):
+			return float(hit.position.y)
 		excluded.append(hit.rid)
 		ray.exclude = excluded
 	return INF
@@ -295,6 +363,23 @@ func _room_route(start: Vector2, finish: Vector2, identity: String, walker: Char
 	if record.is_empty(): return PackedVector2Array()
 	if not _clear(to_world(finish, identity)):
 		return PackedVector2Array()
+	if bool(record.get("dv_authored", false)):
+		# The existing host owns a 16 px navigation grid derived from this
+		# exact DV floor. Do not allocate a second million-cell 3D room grid.
+		if walker == null or not is_instance_valid(field.adapter): return PackedVector2Array()
+		var nav: AStarGrid2D = field.adapter.nav_grid(walker, true)
+		var from_cell := Vector2i((start / 16.0).floor())
+		var to_cell := Vector2i((finish / 16.0).floor())
+		if not nav.region.has_point(from_cell) or not nav.region.has_point(to_cell):
+			return PackedVector2Array()
+		if nav.is_point_solid(from_cell) or nav.is_point_solid(to_cell):
+			return PackedVector2Array()
+		var routed := PackedVector2Array()
+		for at in nav.get_point_path(from_cell, to_cell):
+			if room_at(at) != identity or not _clear(to_world(at, identity)):
+				return PackedVector2Array()
+			routed.append(at)
+		return routed
 	var grid: AStarGrid2D = record.grid
 	if grid == null:
 		grid = AStarGrid2D.new()
@@ -371,7 +456,7 @@ func sync_occupancy(executor: Node) -> void:
 		var obstacle: StaticBody3D = occupancy.get(key)
 		if obstacle == null:
 			obstacle = StaticBody3D.new()
-			obstacle.collision_layer = 2
+			obstacle.collision_layer = PhysicsLayers.ACTOR
 			obstacle.collision_mask = 0
 			var shape := CapsuleShape3D.new()
 			shape.radius = float(definitions.collision_radius)
@@ -383,7 +468,7 @@ func sync_occupancy(executor: Node) -> void:
 			add_child(obstacle)
 			occupancy[key] = obstacle
 		obstacle.position = to_world(item.point, identity)
-		obstacle.collision_layer = 2
+		obstacle.collision_layer = PhysicsLayers.ACTOR
 		obstacle.set_meta("room", identity)
 		obstacle.set_meta("owner_instance", item.owner.get_instance_id())
 		if is_instance_valid(item.owner.physical_body): item.owner.physical_body.add_collision_exception_with(obstacle)
@@ -470,6 +555,15 @@ func station_candidates(identity: String, actor: CharacterBody2D) -> Array[Vecto
 	var spacious: Array[Vector2] = []
 	var record := ensure_room(identity)
 	if record.is_empty(): return result
+	if bool(record.get("dv_authored", false)):
+		# Reuse the DV-derived 2D candidates. The 3D physical capsule remains
+		# authoritative for accepting each candidate.
+		for point in field.adapter.initial_room_candidates(identity):
+			if field.position_occupied(actor, point) or not _clear(to_world(point, identity)):
+				continue
+			result.append(point)
+			if result.size() >= 128: break
+		return result
 	var bounds: Rect2 = record.footprint
 	for z in range(int(ceil(bounds.size.y / 0.24))):
 		for x in range(int(ceil(bounds.size.x / 0.24))):
@@ -512,6 +606,27 @@ func _settle_initial(actor: CharacterBody2D, body: CharacterBody3D, identity: St
 	var initial_floor := _floor_height(body.global_position)
 	if is_finite(initial_floor): body.global_position.y = initial_floor
 	if _clear(body.global_position): return
+	# DV compatibility levels do not live at Y=0. Reuse the legacy adapter's
+	# prepared walkable candidates, then verify each against real 3D physics.
+	if DV_MAP.supports(field.adapter.map_key()):
+		var best_dv := Vector3.INF
+		var best_error := INF
+		var original_dv := body.global_position
+		for logical_point in field.adapter.initial_room_candidates(identity):
+			var candidate_dv := to_world(logical_point, identity)
+			var measured_floor := _floor_height(candidate_dv)
+			if not is_finite(measured_floor): continue
+			candidate_dv.y = measured_floor
+			var separation := candidate_dv.distance_squared_to(original_dv)
+			if separation >= best_error or not _clear(candidate_dv): continue
+			best_dv = candidate_dv
+			best_error = separation
+		if best_dv.is_finite():
+			body.global_position = best_dv
+			actor.position = to_logical(best_dv, identity)
+		else:
+			push_error("No collision-free DV building placement for " + str(actor.name))
+		return
 	var original := body.global_position
 	var best := Vector3.INF
 	var distance := INF

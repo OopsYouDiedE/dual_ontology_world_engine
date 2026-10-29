@@ -1,0 +1,62 @@
+schema "dv-script-v1";
+
+data "template.spatial_declared_action" {
+    value = {"kind":"dv-value-template","parameters":["id","kind","known","physical","law","grants","label","text","source","execution_ref"],"value":{"$":"value.with","args":[{"$":"template","id":"template.campaign_surface_action","args":[{"$":"param","name":"id"},{"$":"param","name":"kind"},{"$":"param","name":"known"},{"$":"param","name":"physical"},{"$":"param","name":"law"},{"$":"param","name":"grants"},{"$":"param","name":"label"},{"$":"param","name":"text"},{"$":"param","name":"source"}]},"spatial_execution_ref",{"$":"param","name":"execution_ref"}]},"bindings":{}};
+}
+
+data "template.spatial_seat_sit_law" {
+    value = {"kind":"dv-value-template","parameters":["actor","seat","room","actor_state"],"value":{"$":"domain.axiom","args":["template.spatial_seat_sit_law",1.0,{"$":"domain.all","args":[{"$":"list","items":[{"$":"template","id":"template.campaign_at","args":[{"$":"param","name":"actor"},{"$":"param","name":"room"}]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"actor"},"body","awake"]},true]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"seat"},"state","occupied_by"]},""]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"actor_state"},"state","seat"]},""]}]}]},{"$":"list","items":[{"$":"domain.assign","args":[{"$":"domain.ref","args":[{"$":"param","name":"seat"},"state","occupied_by"]},{"$":"param","name":"actor"}]},{"$":"domain.assign","args":[{"$":"domain.ref","args":[{"$":"param","name":"seat"},"state","pose"]},"sitting"]},{"$":"domain.assign","args":[{"$":"domain.ref","args":[{"$":"param","name":"actor_state"},"state","seat"]},{"$":"param","name":"seat"}]}]}]},"bindings":{}};
+}
+
+data "template.spatial_seat_stand_law" {
+    value = {"kind":"dv-value-template","parameters":["actor","seat","room","actor_state"],"value":{"$":"domain.axiom","args":["template.spatial_seat_stand_law",1.0,{"$":"domain.all","args":[{"$":"list","items":[{"$":"template","id":"template.campaign_at","args":[{"$":"param","name":"actor"},{"$":"param","name":"room"}]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"actor"},"body","awake"]},true]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"seat"},"state","occupied_by"]},{"$":"param","name":"actor"}]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"actor_state"},"state","seat"]},{"$":"param","name":"seat"}]}]}]},{"$":"list","items":[{"$":"domain.assign","args":[{"$":"domain.ref","args":[{"$":"param","name":"seat"},"state","occupied_by"]},""]},{"$":"domain.assign","args":[{"$":"domain.ref","args":[{"$":"param","name":"seat"},"state","pose"]},"empty"]},{"$":"domain.assign","args":[{"$":"domain.ref","args":[{"$":"param","name":"actor_state"},"state","seat"]},""]}]}]},"bindings":{}};
+}
+
+data "template.spatial_bed_lie_law" {
+    value = {"kind":"dv-value-template","parameters":["actor","seat","room","actor_state"],"value":{"$":"domain.axiom","args":["template.spatial_bed_lie_law",1.0,{"$":"domain.all","args":[{"$":"list","items":[{"$":"template","id":"template.campaign_at","args":[{"$":"param","name":"actor"},{"$":"param","name":"room"}]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"actor"},"body","awake"]},true]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"seat"},"state","occupied_by"]},{"$":"param","name":"actor"}]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"actor_state"},"state","seat"]},{"$":"param","name":"seat"}]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"seat"},"state","pose"]},"sitting"]}]}]},{"$":"list","items":[{"$":"domain.assign","args":[{"$":"domain.ref","args":[{"$":"param","name":"seat"},"state","pose"]},"lying"]}]}]},"bindings":{}};
+}
+
+data "template.spatial_storage_open_law" {
+    value = {"kind":"dv-value-template","parameters":["actor","object","room"],"value":{"$":"domain.axiom","args":["template.spatial_storage_open_law",1.0,{"$":"domain.all","args":[{"$":"list","items":[{"$":"template","id":"template.campaign_at","args":[{"$":"param","name":"actor"},{"$":"param","name":"room"}]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"actor"},"body","awake"]},true]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"object"},"state","open"]},false]}]}]},{"$":"list","items":[{"$":"domain.assign","args":[{"$":"domain.ref","args":[{"$":"param","name":"object"},"state","open"]},true]}]}]},"bindings":{}};
+}
+
+data "template.spatial_storage_close_law" {
+    value = {"kind":"dv-value-template","parameters":["actor","object","room"],"value":{"$":"domain.axiom","args":["template.spatial_storage_close_law",1.0,{"$":"domain.all","args":[{"$":"list","items":[{"$":"template","id":"template.campaign_at","args":[{"$":"param","name":"actor"},{"$":"param","name":"room"}]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"actor"},"body","awake"]},true]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"object"},"state","open"]},true]}]}]},{"$":"list","items":[{"$":"domain.assign","args":[{"$":"domain.ref","args":[{"$":"param","name":"object"},"state","open"]},false]}]}]},"bindings":{}};
+}
+
+data "action.spatial.r05.chair.sit" {
+    value = {"kind":"spatial-action","method":"spatial.r05.chair.sit","law_schema":"template.spatial_seat_sit_law","rule_template":"template.spatial_seat_sit_law","arguments":["detective","R-05-chair","R05","spatial.actor.detective"],"status":"unconfigured"};
+}
+
+data "action.spatial.r05.chair.stand" {
+    value = {"kind":"spatial-action","method":"spatial.r05.chair.stand","law_schema":"template.spatial_seat_stand_law","rule_template":"template.spatial_seat_stand_law","arguments":["detective","R-05-chair","R05","spatial.actor.detective"],"status":"unconfigured"};
+}
+
+data "action.spatial.r05.bed.sit" {
+    value = {"kind":"spatial-action","method":"spatial.r05.bed.sit","law_schema":"template.spatial_seat_sit_law","rule_template":"template.spatial_seat_sit_law","arguments":["detective","R-05-bed","R05","spatial.actor.detective"],"status":"unconfigured"};
+}
+
+data "action.spatial.r05.bed.lie" {
+    value = {"kind":"spatial-action","method":"spatial.r05.bed.lie","law_schema":"template.spatial_bed_lie_law","rule_template":"template.spatial_bed_lie_law","arguments":["detective","R-05-bed","R05","spatial.actor.detective"],"status":"unconfigured"};
+}
+
+data "action.spatial.r05.bed.stand" {
+    value = {"kind":"spatial-action","method":"spatial.r05.bed.stand","law_schema":"template.spatial_seat_stand_law","rule_template":"template.spatial_seat_stand_law","arguments":["detective","R-05-bed","R05","spatial.actor.detective"],"status":"unconfigured"};
+}
+
+data "action.spatial.r05.desk.open" {
+    value = {"kind":"spatial-action","method":"spatial.r05.desk.open","law_schema":"template.spatial_storage_open_law","rule_template":"template.spatial_storage_open_law","arguments":["detective","R-05-desk","R05"],"status":"unconfigured"};
+}
+
+data "action.spatial.r05.desk.close" {
+    value = {"kind":"spatial-action","method":"spatial.r05.desk.close","law_schema":"template.spatial_storage_close_law","rule_template":"template.spatial_storage_close_law","arguments":["detective","R-05-desk","R05"],"status":"unconfigured"};
+}
+
+data "action.spatial.r05.wardrobe.open" {
+    value = {"kind":"spatial-action","method":"spatial.r05.wardrobe.open","law_schema":"template.spatial_storage_open_law","rule_template":"template.spatial_storage_open_law","arguments":["detective","R-05-wardrobe","R05"],"status":"unconfigured"};
+}
+
+data "action.spatial.r05.wardrobe.close" {
+    value = {"kind":"spatial-action","method":"spatial.r05.wardrobe.close","law_schema":"template.spatial_storage_close_law","rule_template":"template.spatial_storage_close_law","arguments":["detective","R-05-wardrobe","R05"],"status":"unconfigured"};
+}
+

@@ -1,0 +1,390 @@
+schema "dv-script-v1";
+
+data space.shared_hermitage {
+    value = {
+  "schema": "hermitage-v1",
+  "status": "H-A candidate: authored architecture; terrain and rock-bearing approval retained by user",
+  "origin": [
+    -180,
+    1240,
+    312
+  ],
+  "source_invasion_envelope_z": 180,
+  "lowest_habitable_ffl_z": 312,
+  "gate": [
+    -180,
+    1225,
+    312
+  ],
+  "population": {
+    "normal": 1,
+    "work_party": 3,
+    "emergency": 22,
+    "emergency_days": 14
+  },
+  "rooms": [
+    {
+      "id": "H01",
+      "name": "Hermit cabin",
+      "bbox_world": [
+        -199,
+        1227,
+        -191,
+        1233
+      ],
+      "z": 312,
+      "clear_height": 2.6,
+      "wall_thickness": 0.6,
+      "door": {
+        "wall": "S",
+        "center": [
+          -193.4,
+          1227,
+          312
+        ],
+        "width": 0.9
+      },
+      "interior_bbox_world": [
+        -198.4,
+        1227.6,
+        -191.6,
+        1232.4
+      ]
+    },
+    {
+      "id": "H02",
+      "name": "Refuge guesthouse",
+      "bbox_world": [
+        -171,
+        1227,
+        -161,
+        1233
+      ],
+      "z": 312,
+      "clear_height": 2.6,
+      "wall_thickness": 0.6,
+      "door": {
+        "wall": "W",
+        "center": [
+          -171,
+          1229.4,
+          312
+        ],
+        "width": 1.0
+      },
+      "interior_bbox_world": [
+        -170.4,
+        1227.6,
+        -161.6,
+        1232.4
+      ]
+    },
+    {
+      "id": "H03",
+      "name": "Workshop",
+      "bbox_world": [
+        -199,
+        1237,
+        -193,
+        1241
+      ],
+      "z": 314.4,
+      "clear_height": 2.8,
+      "wall_thickness": 0.45,
+      "door": {
+        "wall": "E",
+        "center": [
+          -193,
+          1238.65,
+          314.4
+        ],
+        "width": 1.0
+      },
+      "interior_bbox_world": [
+        -198.55,
+        1237.45,
+        -193.45,
+        1240.55
+      ]
+    },
+    {
+      "id": "H04",
+      "name": "Dry stores",
+      "bbox_world": [
+        -171,
+        1237,
+        -165,
+        1241
+      ],
+      "z": 314.4,
+      "clear_height": 2.4,
+      "wall_thickness": 0.6,
+      "door": {
+        "wall": "S",
+        "center": [
+          -168,
+          1237,
+          314.4
+        ],
+        "width": 0.9
+      },
+      "interior_bbox_world": [
+        -170.4,
+        1237.6,
+        -165.6,
+        1240.4
+      ]
+    },
+    {
+      "id": "H05",
+      "name": "Root cellar",
+      "bbox_world": [
+        -171,
+        1237,
+        -165,
+        1241
+      ],
+      "z": 311.4,
+      "clear_height": 2.4,
+      "wall_thickness": 0.6,
+      "door": {
+        "wall": "S",
+        "center": [
+          -168,
+          1237,
+          311.4
+        ],
+        "width": 0.8
+      },
+      "interior_bbox_world": [
+        -170.4,
+        1237.6,
+        -165.6,
+        1240.4
+      ]
+    },
+    {
+      "id": "H06",
+      "name": "Medicinal workshop",
+      "bbox_world": [
+        -183,
+        1249,
+        -177,
+        1253
+      ],
+      "z": 316.8,
+      "clear_height": 2.8,
+      "wall_thickness": 0.6,
+      "door": {
+        "wall": "E",
+        "center": [
+          -177,
+          1251,
+          316.8
+        ],
+        "width": 0.9
+      },
+      "interior_bbox_world": [
+        -182.4,
+        1249.6,
+        -177.6,
+        1252.4
+      ]
+    },
+    {
+      "id": "H07",
+      "name": "Dual cisterns",
+      "bbox_world": [
+        -205,
+        1257,
+        -195,
+        1263
+      ],
+      "z": 318,
+      "clear_height": 2.5,
+      "wall_thickness": 0.6,
+      "door": {
+        "wall": "S",
+        "center": [
+          -200,
+          1257,
+          318
+        ],
+        "width": 0.6
+      },
+      "interior_bbox_world": [
+        -204.4,
+        1257.6,
+        -195.6,
+        1262.4
+      ]
+    },
+    {
+      "id": "H08",
+      "name": "Smokehouse",
+      "bbox_world": [
+        -164,
+        1247,
+        -161,
+        1250
+      ],
+      "z": 316.8,
+      "clear_height": 2.4,
+      "wall_thickness": 0.6,
+      "door": {
+        "wall": "S",
+        "center": [
+          -162.5,
+          1247,
+          316.8
+        ],
+        "width": 0.8
+      },
+      "interior_bbox_world": [
+        -163.4,
+        1247.6,
+        -161.6,
+        1249.4
+      ]
+    },
+    {
+      "id": "H09",
+      "name": "Dry latrine",
+      "bbox_world": [
+        -157.4,
+        1226.5,
+        -155,
+        1229.5
+      ],
+      "z": 310.8,
+      "clear_height": 2.2,
+      "wall_thickness": 0.6,
+      "door": {
+        "wall": "W",
+        "center": [
+          -157.4,
+          1228,
+          310.8
+        ],
+        "width": 0.7
+      },
+      "interior_bbox_world": [
+        -156.8,
+        1227.1,
+        -155.6,
+        1228.9
+      ]
+    },
+    {
+      "id": "H10",
+      "name": "Upper refuge",
+      "bbox_world": [
+        -212,
+        1270.5,
+        -208,
+        1273.5
+      ],
+      "z": 324,
+      "clear_height": 2.2,
+      "wall_thickness": 0.6,
+      "door": {
+        "wall": "E",
+        "center": [
+          -208,
+          1272,
+          324
+        ],
+        "width": 0.7
+      },
+      "interior_bbox_world": [
+        -211.4,
+        1271.1,
+        -208.6,
+        1272.9
+      ]
+    }
+  ],
+  "escape_route": {
+    "points": [
+      [
+        -177,
+        1251,
+        316.8
+      ],
+      [
+        -174,
+        1251,
+        316.8
+      ],
+      [
+        -170,
+        1263,
+        320
+      ],
+      [
+        -192,
+        1278,
+        324
+      ],
+      [
+        -208,
+        1272,
+        324
+      ]
+    ],
+    "length_3d_m": 60.0614,
+    "walk_speed": 0.8,
+    "open_doors_s": 4,
+    "total_seconds": 79.077
+  },
+  "candidates": [
+    {
+      "id": "H-A",
+      "center": [
+        -180,
+        1240,
+        312
+      ]
+    },
+    {
+      "id": "H-B",
+      "center": [
+        -340,
+        1200,
+        304
+      ]
+    },
+    {
+      "id": "H-C",
+      "center": [
+        20,
+        1280,
+        328
+      ]
+    }
+  ],
+  "emergency_water": {
+    "humans_l_per_day": 350,
+    "six_mules_l_per_day": 120,
+    "total_l_per_day": 470,
+    "fourteen_days_m3": 6.58,
+    "full_cistern_m3": 20
+  },
+  "livestock": {
+    "id": "H-M",
+    "bbox_world": [
+      -258,
+      1204,
+      -226,
+      1220
+    ],
+    "min_z": 308.4,
+    "max_z": 310.8,
+    "mules": 6,
+    "hay_kg": 540,
+    "oat_kg": 84,
+    "daily_hay_kg": 36,
+    "daily_oat_kg": 6
+  }
+};
+}

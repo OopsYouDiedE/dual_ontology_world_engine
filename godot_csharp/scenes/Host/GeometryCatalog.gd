@@ -2,6 +2,7 @@ extends RefCounted
 ## Semantic geometry has one published source. Scenes supply artwork/colliders;
 ## all maps, routes, room regions, exits and actor anchors use this catalogue.
 const PATH := "res://Contracts/geometry_contract.json"
+const LEGACY_DV_MAP = preload("res://geometry/LegacyDvMap.gd")
 static var _contract: Dictionary = {}
 static var _routes: Dictionary = {}
 
@@ -10,6 +11,8 @@ static func contract() -> Dictionary:
 	return _contract
 
 static func map_data(map_id: String) -> Dictionary:
+	if LEGACY_DV_MAP.supports(map_id):
+		return LEGACY_DV_MAP.map_data(map_id)
 	return contract().maps.get(map_id, {})
 
 static func additions(map_id: String) -> Dictionary:
@@ -80,6 +83,11 @@ static func routes() -> Dictionary:
 static func bind_layout(map_id: String, layout: Node2D) -> void:
 	var item := map_data(map_id)
 	layout.set_meta("map_size", point(item.size))
+	# The new-building compatibility projection derives logical walkability from
+	# the same published DV floor pieces as the 3D collider. Legacy maps retain
+	# their authored terrain metadata.
+	if item.has("terrain_rows"):
+		layout.set_meta("terrain_rows", item.terrain_rows)
 	if item.has("outdoor_origin"):
 		layout.set_meta("outdoor_origin", point(item.outdoor_origin))
 		layout.set_meta("outdoor_core", rect(item.outdoor_core))

@@ -19,12 +19,16 @@ const SEAM := 36.0
 ## 只作装饰、不开放交互的标记。
 const DECOR_MARKERS := ["transmitter", "isolation_gate", "lane", "harbor", "stele", "collapse", "counterweight"]
 func _get_packed_map(map_name: String) -> PackedScene:
-	var path := str(GEOMETRY.map_data(map_name).scene)
+	var path := str(GEOMETRY.map_data(map_name).get("scene", ""))
+	if path.is_empty():
+		_fail_binding(self, "地图缺少场景声明：" + map_name)
+		return null
 	var packed := RESOURCES.ready(path) as PackedScene
 	# Compatibility for callers that deliberately construct a map synchronously.
 	# The production host and cross-map executor await prepare_map first.
 	return packed if packed != null else (load(path) as PackedScene if ResourceLoader.exists(path) else null)
 
+var preparation_error := ""
 var field: Node2D
 var map: Node2D
 var key := ""
@@ -72,7 +76,12 @@ func prepare_map(next: String, value: Dictionary, tree: SceneTree = null) -> boo
 		if _cancelled(): return false
 		if _prepared_for(next, binding): return true
 	_preparing[next] = true
-	var scene_path := str(GEOMETRY.map_data(next).scene)
+	var scene_path := str(GEOMETRY.map_data(next).get("scene", ""))
+	if scene_path.is_empty():
+		_preparing.erase(next)
+		preparation_error = "地图缺少场景声明：" + next
+		_fail_binding(self, preparation_error)
+		return false
 	var paths: Array[String] = [scene_path]
 	var declaration: Dictionary = binding.geometry
 	for prop in declaration.get("props", []):
@@ -162,6 +171,10 @@ func _prepared_for(map_name: String, binding: Dictionary) -> bool:
 	return _map_records.has(map_name) and _grids.has(map_name) and _room_candidates.has(map_name) and _stage_ready.has(map_name) and not (map_name == key and _access_refresh_pending) and _map_records[map_name].get("prepared_binding", {}) == binding
 
 func _new_map_record(map_name: String, layout: Node2D) -> Dictionary:
+	# Runtime DV maps must expose their real navigation/collision footprint
+	# before an inactive PackedScene is attached to the tree.
+	if layout.has_method("initialize_dv_map"):
+		layout.initialize_dv_map()
 	GEOMETRY.bind_layout(map_name, layout)
 	preload("res://scenes/World/Runtime/RoomArtFinish.gd").attach(layout)
 	return {"node": layout, "geometry": {}, "geometry_applied": false,

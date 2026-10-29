@@ -144,8 +144,14 @@ func _handle(request: Dictionary) -> void:
 	_collect_controls(get_tree().root, controls)
 	_observation += 1
 	var observation := {"backend": "godot", "observation_id": _observation,
+		"rendering_method": RenderingServer.get_current_rendering_method(),
+		"rendering_driver": RenderingServer.get_current_rendering_driver_name(),
+		"gpu": RenderingServer.get_video_adapter_name(),
 		"scene": host.scene_file_path if host != null else "", "visible_ui": controls,
 		"size": [logical_size.x, logical_size.y], "busy": false, "options": []}
+	var receipt_directory := ProjectSettings.globalize_path("res://../.runtime/runs/godot-%d" % OS.get_process_id()).simplify_path()
+	var receipt_stem := "observation-%06d" % _observation
+	var directory_error := DirAccess.make_dir_recursive_absolute(receipt_directory)
 	if bool(request.get("capture_image", true)):
 		var image := get_viewport().get_texture().get_image()
 		if image == null or image.is_empty():
@@ -153,6 +159,12 @@ func _handle(request: Dictionary) -> void:
 			return
 		if image.get_size() != logical_size: image.resize(logical_size.x, logical_size.y)
 		observation.image_base64 = Marshalls.raw_to_base64(image.save_png_to_buffer())
+		if directory_error == OK:
+			var screenshot_path := receipt_directory.path_join(receipt_stem + ".png")
+			if image.save_png(screenshot_path) == OK:
+				observation.screenshot_path = screenshot_path
+			else:
+				push_warning("Could not save Godot observation screenshot")
 	if host != null and host.has_method("dispatch"):
 		observation.busy = host.flow.opening or host.flow.draining or host.flow.completion_pending \
 			or host.flow.background_execution or not host.engine.IsDispatchIdle()
@@ -167,6 +179,20 @@ func _handle(request: Dictionary) -> void:
 		if is_instance_valid(host.field) and host.flow.player_options_open:
 			for option: Dictionary in host.field.spatial.options:
 				observation.options.append({"id": option.get("id", ""), "label": option.get("label", "")})
+	if directory_error == OK:
+		var observation_path := receipt_directory.path_join(receipt_stem + ".json")
+		var receipt := observation.duplicate(true)
+		receipt.erase("image_base64")
+		receipt["observation_path"] = observation_path
+		receipt["process_id"] = OS.get_process_id()
+		var receipt_file := FileAccess.open(observation_path, FileAccess.WRITE)
+		if receipt_file != null:
+			receipt_file.store_string(JSON.stringify(receipt, "  "))
+			observation.observation_path = observation_path
+		else:
+			push_warning("Could not save Godot observation receipt")
+	else:
+		push_warning("Could not create Godot observation receipt directory")
 	_reply(id, observation)
 
 func _collect_controls(node: Node, result: Array) -> void:

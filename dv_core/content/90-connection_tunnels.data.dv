@@ -1,0 +1,3672 @@
+schema "dv-script-v1";
+
+data space.connection_tunnels {
+    value = {
+  "schema": "connection-tunnels-v1",
+  "units": "m",
+  "axes": "X east,Y north,Z up",
+  "design_origin_world": [
+    0,
+    0,
+    0
+  ],
+  "main_origin_world": [
+    0,
+    460,
+    48
+  ],
+  "main_geometric_center_world": [
+    0,
+    481,
+    48
+  ],
+  "layer_rule": "same XY in underground/ground/elevated layers never auto-connect; only listed doors and stairs create navigation edges",
+  "scope": "two human tunnels, hall-side dry shafts and roof galleries; main-side UC-MW/UC-ME are shared references owned by main-building patch",
+  "constants": {
+    "tunnel_clear_width": 2.4,
+    "tunnel_clear_height": 2.7,
+    "composite_shell_thickness": 0.3,
+    "cast_iron_inner_shell": 0.06,
+    "waterproof_grout": 0.04,
+    "basalt_outer_shell": 0.2,
+    "rated_pressure_mpa": 0.25,
+    "fluid_density_design_kg_m3": 1200,
+    "gravity": 9.81,
+    "outer_water_close_above_z": 51.8,
+    "internal_water_restrict_m": 0.15,
+    "internal_water_close_m": 0.45,
+    "gas_close_C": 60,
+    "flat_speed": 1.2,
+    "stair_speed": 0.65,
+    "restricted_speed": 0.6,
+    "turn_seconds": 6,
+    "max_people_per_tunnel": 6,
+    "wet_operation_seconds": 1200,
+    "minimum_cover": 0.8,
+    "main_end_operations_owned_by": "connection_main_patch.json; already included in 94.187782s, never add a second 24/32s cycle"
+  },
+  "tunnels": [
+    {
+      "id": "UG-W",
+      "name": "主楼—文契地下勤务道",
+      "layer": "underground",
+      "main_core_entry_reference": [
+        -48,
+        454,
+        43.8
+      ],
+      "main_shared_chamber_reference": "UC-MW",
+      "main_outer_door": [
+        -54,
+        454,
+        43.8
+      ],
+      "hall_south_interface": [
+        -132,
+        439,
+        37.8
+      ],
+      "hall_north_inlet": [
+        -130.5,
+        445,
+        37.8
+      ],
+      "points": [
+        [
+          -54,
+          454,
+          43.8
+        ],
+        [
+          -55.2,
+          454,
+          43.8
+        ],
+        [
+          -61.2,
+          454,
+          40.8
+        ],
+        [
+          -90,
+          454,
+          40.8
+        ],
+        [
+          -96,
+          454,
+          37.8
+        ],
+        [
+          -130.5,
+          454,
+          37.8
+        ],
+        [
+          -130.5,
+          445,
+          37.8
+        ]
+      ],
+      "segments": [
+        {
+          "id": "UG-W-E00",
+          "from": "UG-W-N00",
+          "to": "UG-W-N01",
+          "points": [
+            [
+              -54,
+              454,
+              43.8
+            ],
+            [
+              -55.2,
+              454,
+              43.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "level",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 1.2,
+          "walking_seconds": 1.0
+        },
+        {
+          "id": "UG-W-E01",
+          "from": "UG-W-N01",
+          "to": "UG-W-N02",
+          "points": [
+            [
+              -55.2,
+              454,
+              43.8
+            ],
+            [
+              -61.2,
+              454,
+              40.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "stair",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 6.708204,
+          "walking_seconds": 10.320314,
+          "steps": 20,
+          "riser": 0.15,
+          "tread": 0.3
+        },
+        {
+          "id": "UG-W-E02",
+          "from": "UG-W-N02",
+          "to": "UG-W-N03",
+          "points": [
+            [
+              -61.2,
+              454,
+              40.8
+            ],
+            [
+              -90,
+              454,
+              40.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "level",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 28.8,
+          "walking_seconds": 24.0
+        },
+        {
+          "id": "UG-W-E03",
+          "from": "UG-W-N03",
+          "to": "UG-W-N04",
+          "points": [
+            [
+              -90,
+              454,
+              40.8
+            ],
+            [
+              -96,
+              454,
+              37.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "stair",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 6.708204,
+          "walking_seconds": 10.320314,
+          "steps": 20,
+          "riser": 0.15,
+          "tread": 0.3
+        },
+        {
+          "id": "UG-W-E04",
+          "from": "UG-W-N04",
+          "to": "UG-W-N05",
+          "points": [
+            [
+              -96,
+              454,
+              37.8
+            ],
+            [
+              -130.5,
+              454,
+              37.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "level",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 34.5,
+          "walking_seconds": 28.75
+        },
+        {
+          "id": "UG-W-E05",
+          "from": "UG-W-N05",
+          "to": "UG-W-N06",
+          "points": [
+            [
+              -130.5,
+              454,
+              37.8
+            ],
+            [
+              -130.5,
+              445,
+              37.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "level",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 9.0,
+          "walking_seconds": 7.5
+        }
+      ],
+      "clear_section": [
+        2.4,
+        2.7
+      ],
+      "shell_thickness": 0.3,
+      "length_3d": 86.916408,
+      "level_length": 73.5,
+      "stair_length": 13.416408,
+      "walking_seconds": 81.890627,
+      "walking_turns": 14,
+      "main_chamber_length_included": false,
+      "hall_chamber_length_included": false,
+      "cover_design": "selected cut-and-cover lowland works: overburden>=0.8m; final terrain=max(current design surface,liner crown+0.8m); no claim that the existing IDW terrain already provides cover",
+      "human_passable": true,
+      "hall_chamber_to_south_interface": [
+        [
+          -130.5,
+          445,
+          37.8
+        ],
+        [
+          -130.5,
+          439.9,
+          37.8
+        ],
+        [
+          -132,
+          439.9,
+          37.8
+        ],
+        [
+          -132,
+          439,
+          37.8
+        ]
+      ],
+      "hall_chamber_to_south_interface_length": 7.5,
+      "external_head_max_m": 14.0,
+      "external_pressure_max_mpa": 0.164808,
+      "to_roof_bridge_walking_seconds": 222.779859,
+      "cover_control_profile": [
+        {
+          "world_xy": [
+            -54,
+            454
+          ],
+          "walking_floor_z": 43.8,
+          "inner_crown_z": 46.5,
+          "outer_liner_crown_z": 46.8,
+          "minimum_finished_ground_z": 47.6,
+          "excavation_bottom_z": 43.5
+        },
+        {
+          "world_xy": [
+            -55.2,
+            454
+          ],
+          "walking_floor_z": 43.8,
+          "inner_crown_z": 46.5,
+          "outer_liner_crown_z": 46.8,
+          "minimum_finished_ground_z": 47.6,
+          "excavation_bottom_z": 43.5
+        },
+        {
+          "world_xy": [
+            -61.2,
+            454
+          ],
+          "walking_floor_z": 40.8,
+          "inner_crown_z": 43.5,
+          "outer_liner_crown_z": 43.8,
+          "minimum_finished_ground_z": 44.6,
+          "excavation_bottom_z": 40.5
+        },
+        {
+          "world_xy": [
+            -90,
+            454
+          ],
+          "walking_floor_z": 40.8,
+          "inner_crown_z": 43.5,
+          "outer_liner_crown_z": 43.8,
+          "minimum_finished_ground_z": 44.6,
+          "excavation_bottom_z": 40.5
+        },
+        {
+          "world_xy": [
+            -96,
+            454
+          ],
+          "walking_floor_z": 37.8,
+          "inner_crown_z": 40.5,
+          "outer_liner_crown_z": 40.8,
+          "minimum_finished_ground_z": 41.6,
+          "excavation_bottom_z": 37.5
+        },
+        {
+          "world_xy": [
+            -130.5,
+            454
+          ],
+          "walking_floor_z": 37.8,
+          "inner_crown_z": 40.5,
+          "outer_liner_crown_z": 40.8,
+          "minimum_finished_ground_z": 41.6,
+          "excavation_bottom_z": 37.5
+        },
+        {
+          "world_xy": [
+            -130.5,
+            445
+          ],
+          "walking_floor_z": 37.8,
+          "inner_crown_z": 40.5,
+          "outer_liner_crown_z": 40.8,
+          "minimum_finished_ground_z": 41.6,
+          "excavation_bottom_z": 37.5
+        }
+      ],
+      "cover_berm": {
+        "crest_width": 4.2,
+        "side_slope_horizontal_per_vertical": 2,
+        "shoulder_each_side": 0.6,
+        "top_control": "linear interpolation of listed minimum_finished_ground_z along segment; finish at max(existing design terrain,this envelope)",
+        "tie_in": "at doors merge into shared shaft apron and hall shaft collar; no new navigation edge across mound"
+      },
+      "hall_airlock_wet_operating_seconds": 32,
+      "hall_roof_door_open_seconds": 4,
+      "bridge_tower_entry_open_seconds": 2,
+      "to_roof_bridge_wet_seconds_from_main_outer_gate": 260.779859,
+      "main_2F_to_outer_gate_seconds_from_main_patch": 94.188,
+      "main_2F_to_bridge_wet_total_seconds": 354.967859,
+      "sensors": [
+        {
+          "id": "UG-W-C-MAIN",
+          "kind": "gas",
+          "world": [
+            -54,
+            454,
+            45.3
+          ]
+        },
+        {
+          "id": "UG-W-C-MID",
+          "kind": "gas",
+          "world": [
+            -96.0418,
+            454.0,
+            39.3
+          ]
+        },
+        {
+          "id": "UG-W-C-HALL",
+          "kind": "gas",
+          "world": [
+            -130.5,
+            445,
+            39.3
+          ]
+        },
+        {
+          "id": "UG-W-H1",
+          "kind": "water_depth",
+          "world": [
+            -61.2,
+            454,
+            40.8
+          ],
+          "zero_z": 40.8
+        },
+        {
+          "id": "UG-W-H3",
+          "kind": "water_depth",
+          "world": [
+            -96,
+            454,
+            37.8
+          ],
+          "zero_z": 37.8
+        }
+      ],
+      "timing_condition": "sealed wet operation, interior h<0.02m and C<=20; abnormal dewatering/purge/queue added separately"
+    },
+    {
+      "id": "UG-B",
+      "name": "主楼—白塔地下转运道",
+      "layer": "underground",
+      "main_core_entry_reference": [
+        48,
+        526,
+        43.8
+      ],
+      "main_shared_chamber_reference": "UC-ME",
+      "main_outer_door": [
+        54,
+        526,
+        43.8
+      ],
+      "hall_south_interface": [
+        138,
+        425,
+        35.8
+      ],
+      "hall_north_inlet": [
+        139.5,
+        431,
+        35.8
+      ],
+      "points": [
+        [
+          54,
+          526,
+          43.8
+        ],
+        [
+          60,
+          526,
+          43.8
+        ],
+        [
+          60,
+          490,
+          43.8
+        ],
+        [
+          60,
+          482.5,
+          39.8
+        ],
+        [
+          60,
+          472,
+          39.8
+        ],
+        [
+          96,
+          472,
+          39.8
+        ],
+        [
+          96,
+          446,
+          39.8
+        ],
+        [
+          96,
+          438.5,
+          35.8
+        ],
+        [
+          96,
+          434,
+          35.8
+        ],
+        [
+          139.5,
+          434,
+          35.8
+        ],
+        [
+          139.5,
+          431,
+          35.8
+        ]
+      ],
+      "segments": [
+        {
+          "id": "UG-B-E00",
+          "from": "UG-B-N00",
+          "to": "UG-B-N01",
+          "points": [
+            [
+              54,
+              526,
+              43.8
+            ],
+            [
+              60,
+              526,
+              43.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "level",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 6.0,
+          "walking_seconds": 5.0
+        },
+        {
+          "id": "UG-B-E01",
+          "from": "UG-B-N01",
+          "to": "UG-B-N02",
+          "points": [
+            [
+              60,
+              526,
+              43.8
+            ],
+            [
+              60,
+              490,
+              43.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "level",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 36.0,
+          "walking_seconds": 30.0
+        },
+        {
+          "id": "UG-B-E02",
+          "from": "UG-B-N02",
+          "to": "UG-B-N03",
+          "points": [
+            [
+              60,
+              490,
+              43.8
+            ],
+            [
+              60,
+              482.5,
+              39.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "stair",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 8.5,
+          "walking_seconds": 13.076923,
+          "steps": 25,
+          "riser": 0.16,
+          "tread": 0.3
+        },
+        {
+          "id": "UG-B-E03",
+          "from": "UG-B-N03",
+          "to": "UG-B-N04",
+          "points": [
+            [
+              60,
+              482.5,
+              39.8
+            ],
+            [
+              60,
+              472,
+              39.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "level",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 10.5,
+          "walking_seconds": 8.75
+        },
+        {
+          "id": "UG-B-E04",
+          "from": "UG-B-N04",
+          "to": "UG-B-N05",
+          "points": [
+            [
+              60,
+              472,
+              39.8
+            ],
+            [
+              96,
+              472,
+              39.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "level",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 36.0,
+          "walking_seconds": 30.0
+        },
+        {
+          "id": "UG-B-E05",
+          "from": "UG-B-N05",
+          "to": "UG-B-N06",
+          "points": [
+            [
+              96,
+              472,
+              39.8
+            ],
+            [
+              96,
+              446,
+              39.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "level",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 26.0,
+          "walking_seconds": 21.666667
+        },
+        {
+          "id": "UG-B-E06",
+          "from": "UG-B-N06",
+          "to": "UG-B-N07",
+          "points": [
+            [
+              96,
+              446,
+              39.8
+            ],
+            [
+              96,
+              438.5,
+              35.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "stair",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 8.5,
+          "walking_seconds": 13.076923,
+          "steps": 25,
+          "riser": 0.16,
+          "tread": 0.3
+        },
+        {
+          "id": "UG-B-E07",
+          "from": "UG-B-N07",
+          "to": "UG-B-N08",
+          "points": [
+            [
+              96,
+              438.5,
+              35.8
+            ],
+            [
+              96,
+              434,
+              35.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "level",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 4.5,
+          "walking_seconds": 3.75
+        },
+        {
+          "id": "UG-B-E08",
+          "from": "UG-B-N08",
+          "to": "UG-B-N09",
+          "points": [
+            [
+              96,
+              434,
+              35.8
+            ],
+            [
+              139.5,
+              434,
+              35.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "level",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 43.5,
+          "walking_seconds": 36.25
+        },
+        {
+          "id": "UG-B-E09",
+          "from": "UG-B-N09",
+          "to": "UG-B-N10",
+          "points": [
+            [
+              139.5,
+              434,
+              35.8
+            ],
+            [
+              139.5,
+              431,
+              35.8
+            ]
+          ],
+          "layer": "underground",
+          "type": "level",
+          "clear_width": 2.4,
+          "clear_height": 2.7,
+          "length_3d": 3.0,
+          "walking_seconds": 2.5
+        }
+      ],
+      "clear_section": [
+        2.4,
+        2.7
+      ],
+      "shell_thickness": 0.3,
+      "length_3d": 182.5,
+      "level_length": 165.5,
+      "stair_length": 17.0,
+      "walking_seconds": 164.070513,
+      "walking_turns": 28,
+      "main_chamber_length_included": false,
+      "hall_chamber_length_included": false,
+      "cover_design": "selected cut-and-cover lowland works: overburden>=0.8m; final terrain=max(current design surface,liner crown+0.8m); no claim that the existing IDW terrain already provides cover",
+      "human_passable": true,
+      "hall_chamber_to_south_interface": [
+        [
+          139.5,
+          431,
+          35.8
+        ],
+        [
+          139.5,
+          425.9,
+          35.8
+        ],
+        [
+          138,
+          425.9,
+          35.8
+        ],
+        [
+          138,
+          425,
+          35.8
+        ]
+      ],
+      "hall_chamber_to_south_interface_length": 7.5,
+      "external_head_max_m": 16.0,
+      "external_pressure_max_mpa": 0.188352,
+      "to_roof_bridge_walking_seconds": 307.459744,
+      "cover_control_profile": [
+        {
+          "world_xy": [
+            54,
+            526
+          ],
+          "walking_floor_z": 43.8,
+          "inner_crown_z": 46.5,
+          "outer_liner_crown_z": 46.8,
+          "minimum_finished_ground_z": 47.6,
+          "excavation_bottom_z": 43.5
+        },
+        {
+          "world_xy": [
+            60,
+            526
+          ],
+          "walking_floor_z": 43.8,
+          "inner_crown_z": 46.5,
+          "outer_liner_crown_z": 46.8,
+          "minimum_finished_ground_z": 47.6,
+          "excavation_bottom_z": 43.5
+        },
+        {
+          "world_xy": [
+            60,
+            490
+          ],
+          "walking_floor_z": 43.8,
+          "inner_crown_z": 46.5,
+          "outer_liner_crown_z": 46.8,
+          "minimum_finished_ground_z": 47.6,
+          "excavation_bottom_z": 43.5
+        },
+        {
+          "world_xy": [
+            60,
+            482.5
+          ],
+          "walking_floor_z": 39.8,
+          "inner_crown_z": 42.5,
+          "outer_liner_crown_z": 42.8,
+          "minimum_finished_ground_z": 43.6,
+          "excavation_bottom_z": 39.5
+        },
+        {
+          "world_xy": [
+            60,
+            472
+          ],
+          "walking_floor_z": 39.8,
+          "inner_crown_z": 42.5,
+          "outer_liner_crown_z": 42.8,
+          "minimum_finished_ground_z": 43.6,
+          "excavation_bottom_z": 39.5
+        },
+        {
+          "world_xy": [
+            96,
+            472
+          ],
+          "walking_floor_z": 39.8,
+          "inner_crown_z": 42.5,
+          "outer_liner_crown_z": 42.8,
+          "minimum_finished_ground_z": 43.6,
+          "excavation_bottom_z": 39.5
+        },
+        {
+          "world_xy": [
+            96,
+            446
+          ],
+          "walking_floor_z": 39.8,
+          "inner_crown_z": 42.5,
+          "outer_liner_crown_z": 42.8,
+          "minimum_finished_ground_z": 43.6,
+          "excavation_bottom_z": 39.5
+        },
+        {
+          "world_xy": [
+            96,
+            438.5
+          ],
+          "walking_floor_z": 35.8,
+          "inner_crown_z": 38.5,
+          "outer_liner_crown_z": 38.8,
+          "minimum_finished_ground_z": 39.6,
+          "excavation_bottom_z": 35.5
+        },
+        {
+          "world_xy": [
+            96,
+            434
+          ],
+          "walking_floor_z": 35.8,
+          "inner_crown_z": 38.5,
+          "outer_liner_crown_z": 38.8,
+          "minimum_finished_ground_z": 39.6,
+          "excavation_bottom_z": 35.5
+        },
+        {
+          "world_xy": [
+            139.5,
+            434
+          ],
+          "walking_floor_z": 35.8,
+          "inner_crown_z": 38.5,
+          "outer_liner_crown_z": 38.8,
+          "minimum_finished_ground_z": 39.6,
+          "excavation_bottom_z": 35.5
+        },
+        {
+          "world_xy": [
+            139.5,
+            431
+          ],
+          "walking_floor_z": 35.8,
+          "inner_crown_z": 38.5,
+          "outer_liner_crown_z": 38.8,
+          "minimum_finished_ground_z": 39.6,
+          "excavation_bottom_z": 35.5
+        }
+      ],
+      "cover_berm": {
+        "crest_width": 4.2,
+        "side_slope_horizontal_per_vertical": 2,
+        "shoulder_each_side": 0.6,
+        "top_control": "linear interpolation of listed minimum_finished_ground_z along segment; finish at max(existing design terrain,this envelope)",
+        "tie_in": "at doors merge into shared shaft apron and hall shaft collar; no new navigation edge across mound"
+      },
+      "hall_airlock_wet_operating_seconds": 32,
+      "hall_roof_door_open_seconds": 4,
+      "bridge_tower_entry_open_seconds": 2,
+      "to_roof_bridge_wet_seconds_from_main_outer_gate": 345.459744,
+      "main_2F_to_outer_gate_seconds_from_main_patch": 94.188,
+      "main_2F_to_bridge_wet_total_seconds": 439.647744,
+      "sensors": [
+        {
+          "id": "UG-B-C-MAIN",
+          "kind": "gas",
+          "world": [
+            54,
+            526,
+            45.3
+          ]
+        },
+        {
+          "id": "UG-B-C-MID",
+          "kind": "gas",
+          "world": [
+            90.25,
+            472.0,
+            41.3
+          ]
+        },
+        {
+          "id": "UG-B-C-HALL",
+          "kind": "gas",
+          "world": [
+            139.5,
+            431,
+            37.3
+          ]
+        },
+        {
+          "id": "UG-B-H2",
+          "kind": "water_depth",
+          "world": [
+            60,
+            482.5,
+            39.8
+          ],
+          "zero_z": 39.8
+        },
+        {
+          "id": "UG-B-H6",
+          "kind": "water_depth",
+          "world": [
+            96,
+            438.5,
+            35.8
+          ],
+          "zero_z": 35.8
+        }
+      ],
+      "timing_condition": "sealed wet operation, interior h<0.02m and C<=20; abnormal dewatering/purge/queue added separately"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "UG-W-A",
+      "name": "B1水密前室与干井底厅",
+      "bbox_world": [
+        -135,
+        439,
+        -129,
+        445
+      ],
+      "floor_z": 37.8,
+      "outer_size": [
+        6,
+        6
+      ],
+      "net_size": [
+        5.4,
+        5.4,
+        2.7
+      ],
+      "room_is_shaft_base": "UG-W-DRY",
+      "floor_exclusions": [
+        {
+          "bbox_world": [
+            -134.7,
+            440.5,
+            -131.7,
+            444.7
+          ],
+          "type": "enclosed_stair_projection"
+        }
+      ],
+      "circulation_bbox_world": [
+        -131.7,
+        439.3,
+        -129.3,
+        444.7
+      ],
+      "occupancy": 8,
+      "windows": "无窗；独立送排风管；东壁检查灯和压力表",
+      "objects": [
+        {
+          "name": "双闸操纵盘",
+          "world": [
+            -129.35,
+            440.8,
+            39.0
+          ]
+        },
+        {
+          "name": "水深标尺",
+          "world": [
+            -129.35,
+            443.2,
+            38.099999999999994
+          ]
+        },
+        {
+          "name": "折叠背负救援椅",
+          "world": [
+            -130.2,
+            439.6,
+            37.8
+          ],
+          "size": [
+            0.62,
+            0.75,
+            1.1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "UG-W-P",
+      "name": "独立排水与供气设备间",
+      "layer": "underground",
+      "bbox_world": [
+        -128.7,
+        439.3,
+        -124.5,
+        444.7
+      ],
+      "floor_z": 37.8,
+      "net_size": [
+        4.2,
+        5.4,
+        2.7
+      ],
+      "door": {
+        "center": [
+          -128.7,
+          441.7,
+          37.8
+        ],
+        "wall": "W",
+        "width": 1.2,
+        "height": 2.4,
+        "lock": "维护铜钥匙"
+      },
+      "connector": [
+        [
+          -129.3,
+          441.7,
+          37.8
+        ],
+        [
+          -128.7,
+          441.7,
+          37.8
+        ]
+      ],
+      "furniture_anchor": "room-local southwest",
+      "equipment": [
+        {
+          "id": "AIR1",
+          "name": "2m³独立蓄压罐",
+          "bbox_local": [
+            0.3,
+            3.3,
+            1.5,
+            5.1
+          ],
+          "height": 1.35
+        },
+        {
+          "id": "AIR2",
+          "name": "2m³独立蓄压罐",
+          "bbox_local": [
+            2.1,
+            3.3,
+            3.3,
+            5.1
+          ],
+          "height": 1.35
+        },
+        {
+          "id": "P1",
+          "name": "工作容积泵",
+          "bbox_local": [
+            0.3,
+            0.3,
+            0.9,
+            1.2
+          ],
+          "height": 1.2
+        },
+        {
+          "id": "P2",
+          "name": "备用容积泵",
+          "bbox_local": [
+            1.5,
+            0.3,
+            2.1,
+            1.2
+          ],
+          "height": 1.2
+        },
+        {
+          "id": "FAN",
+          "name": "独立送排风机",
+          "bbox_local": [
+            3.45,
+            1.5,
+            4.05,
+            2.7
+          ],
+          "height": 1.2
+        }
+      ],
+      "sump": {
+        "bbox_local": [
+          0.3,
+          0.3,
+          2.3,
+          1.5
+        ],
+        "bottom_z": 36.8,
+        "usable_volume_m3": 2.4,
+        "grate_z": 37.75
+      },
+      "pumps": {
+        "count": 2,
+        "each_capacity_m3_per_h": 12,
+        "rated_head_m": 22,
+        "normal_active_count": 1,
+        "backup_mode": "two people operate mechanical hand drive at 2m3/h; one route at a time",
+        "reserve_air_m3": 4,
+        "charge_pressure_mpa": 1.0,
+        "isolated_runtime_one_pump_seconds": 1800,
+        "isolated_runtime_two_pumps_seconds": 900,
+        "start_sump_depth_m": 0.2,
+        "stop_sump_depth_m": 0.05,
+        "check_valves_per_discharge": 2,
+        "discharge_outlet_world": [
+          -127.8,
+          447.4,
+          60.0
+        ],
+        "discharge_diameter_m": 0.1
+      },
+      "ventilation": {
+        "fresh_air_m3_per_h": 180,
+        "exhaust_m3_per_h": 180,
+        "duct_inner_diameter_m": 0.25,
+        "independent_per_route": true,
+        "intake_world": [
+          -130.8,
+          447.4,
+          61.199999999999996
+        ],
+        "exhaust_world": [
+          -126,
+          447.4,
+          61.199999999999996
+        ],
+        "human_passable": false,
+        "close_on_C": 60,
+        "check_flaps": 2,
+        "mode": "独立机械风机，蓄压驱动；双人手摇备援；进排风各自止回与隔断",
+        "close_on_C_sensor": "its own roof intake sensor; an internalC alarm closes transit but permits exhaust/purge while intakeC<60"
+      }
+    },
+    {
+      "id": "UG-B-A",
+      "name": "B1水密前室与干井底厅",
+      "bbox_world": [
+        135,
+        425,
+        141,
+        431
+      ],
+      "floor_z": 35.8,
+      "outer_size": [
+        6,
+        6
+      ],
+      "net_size": [
+        5.4,
+        5.4,
+        2.7
+      ],
+      "room_is_shaft_base": "UG-B-DRY",
+      "floor_exclusions": [
+        {
+          "bbox_world": [
+            135.3,
+            426.5,
+            138.3,
+            430.7
+          ],
+          "type": "enclosed_stair_projection"
+        }
+      ],
+      "circulation_bbox_world": [
+        138.3,
+        425.3,
+        140.7,
+        430.7
+      ],
+      "occupancy": 8,
+      "windows": "无窗；独立送排风管；东壁检查灯和压力表",
+      "objects": [
+        {
+          "name": "双闸操纵盘",
+          "world": [
+            140.65,
+            426.8,
+            37.0
+          ]
+        },
+        {
+          "name": "水深标尺",
+          "world": [
+            140.65,
+            429.2,
+            36.099999999999994
+          ]
+        },
+        {
+          "name": "折叠背负救援椅",
+          "world": [
+            139.8,
+            425.6,
+            35.8
+          ],
+          "size": [
+            0.62,
+            0.75,
+            1.1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "UG-B-P",
+      "name": "独立排水与供气设备间",
+      "layer": "underground",
+      "bbox_world": [
+        141.3,
+        425.3,
+        145.5,
+        430.7
+      ],
+      "floor_z": 35.8,
+      "net_size": [
+        4.2,
+        5.4,
+        2.7
+      ],
+      "door": {
+        "center": [
+          141.3,
+          427.7,
+          35.8
+        ],
+        "wall": "W",
+        "width": 1.2,
+        "height": 2.4,
+        "lock": "维护铜钥匙"
+      },
+      "connector": [
+        [
+          140.7,
+          427.7,
+          35.8
+        ],
+        [
+          141.3,
+          427.7,
+          35.8
+        ]
+      ],
+      "furniture_anchor": "room-local southwest",
+      "equipment": [
+        {
+          "id": "AIR1",
+          "name": "2m³独立蓄压罐",
+          "bbox_local": [
+            0.3,
+            3.3,
+            1.5,
+            5.1
+          ],
+          "height": 1.35
+        },
+        {
+          "id": "AIR2",
+          "name": "2m³独立蓄压罐",
+          "bbox_local": [
+            2.1,
+            3.3,
+            3.3,
+            5.1
+          ],
+          "height": 1.35
+        },
+        {
+          "id": "P1",
+          "name": "工作容积泵",
+          "bbox_local": [
+            0.3,
+            0.3,
+            0.9,
+            1.2
+          ],
+          "height": 1.2
+        },
+        {
+          "id": "P2",
+          "name": "备用容积泵",
+          "bbox_local": [
+            1.5,
+            0.3,
+            2.1,
+            1.2
+          ],
+          "height": 1.2
+        },
+        {
+          "id": "FAN",
+          "name": "独立送排风机",
+          "bbox_local": [
+            3.45,
+            1.5,
+            4.05,
+            2.7
+          ],
+          "height": 1.2
+        }
+      ],
+      "sump": {
+        "bbox_local": [
+          0.3,
+          0.3,
+          2.3,
+          1.5
+        ],
+        "bottom_z": 34.8,
+        "usable_volume_m3": 2.4,
+        "grate_z": 35.75
+      },
+      "pumps": {
+        "count": 2,
+        "each_capacity_m3_per_h": 12,
+        "rated_head_m": 22,
+        "normal_active_count": 1,
+        "backup_mode": "two people operate mechanical hand drive at 2m3/h; one route at a time",
+        "reserve_air_m3": 4,
+        "charge_pressure_mpa": 1.0,
+        "isolated_runtime_one_pump_seconds": 1800,
+        "isolated_runtime_two_pumps_seconds": 900,
+        "start_sump_depth_m": 0.2,
+        "stop_sump_depth_m": 0.05,
+        "check_valves_per_discharge": 2,
+        "discharge_outlet_world": [
+          142.2,
+          433.4,
+          58.0
+        ],
+        "discharge_diameter_m": 0.1
+      },
+      "ventilation": {
+        "fresh_air_m3_per_h": 180,
+        "exhaust_m3_per_h": 180,
+        "duct_inner_diameter_m": 0.25,
+        "independent_per_route": true,
+        "intake_world": [
+          139.2,
+          433.4,
+          59.199999999999996
+        ],
+        "exhaust_world": [
+          144,
+          433.4,
+          59.199999999999996
+        ],
+        "human_passable": false,
+        "close_on_C": 60,
+        "check_flaps": 2,
+        "mode": "独立机械风机，蓄压驱动；双人手摇备援；进排风各自止回与隔断",
+        "close_on_C_sensor": "its own roof intake sensor; an internalC alarm closes transit but permits exhaust/purge while intakeC<60"
+      }
+    }
+  ],
+  "shafts": [
+    {
+      "id": "UG-W-DRY",
+      "name": "文契北密闭转移井",
+      "layer": "vertical",
+      "outer_bbox": [
+        -135,
+        439,
+        -129,
+        445
+      ],
+      "net_bbox": [
+        -134.7,
+        439.3,
+        -129.3,
+        444.7
+      ],
+      "base_z": 37.8,
+      "deck_z": 58.8,
+      "roof_z": 62.099999999999994,
+      "wall_thickness": 0.3,
+      "east_clear_corridor_bbox": [
+        -131.7,
+        439.3,
+        -129.3,
+        444.7
+      ],
+      "stair_bbox": [
+        -134.7,
+        439.3,
+        -131.7,
+        444.7
+      ],
+      "stair_width": 1.2,
+      "steps": 120,
+      "riser": 0.175,
+      "tread": 0.25,
+      "landings": [
+        37.8,
+        42.0,
+        46.2,
+        50.4,
+        54.6,
+        58.8
+      ],
+      "side_branch_levels": {
+        "B1": 37.8,
+        "1F": 42,
+        "2F": 50.4
+      },
+      "deck_layer": "elevated",
+      "stair_segments": [
+        {
+          "id": "UG-W-S1",
+          "layer": "vertical",
+          "points": [
+            [
+              -134.1,
+              440.5,
+              37.8
+            ],
+            [
+              -134.1,
+              443.5,
+              39.9
+            ],
+            [
+              -134.1,
+              444.1,
+              39.9
+            ],
+            [
+              -132.6,
+              444.1,
+              39.9
+            ],
+            [
+              -132.6,
+              443.5,
+              39.9
+            ],
+            [
+              -132.6,
+              440.5,
+              42.0
+            ],
+            [
+              -132.6,
+              439.9,
+              42.0
+            ],
+            [
+              -134.1,
+              439.9,
+              42.0
+            ],
+            [
+              -134.1,
+              440.5,
+              42.0
+            ]
+          ],
+          "steps": 24,
+          "riser": 0.175,
+          "tread": 0.25,
+          "clear_width": 1.2,
+          "length_3d": 12.723933,
+          "walking_seconds": 19.575282
+        },
+        {
+          "id": "UG-W-S2",
+          "layer": "vertical",
+          "points": [
+            [
+              -134.1,
+              440.5,
+              42.0
+            ],
+            [
+              -134.1,
+              443.5,
+              44.1
+            ],
+            [
+              -134.1,
+              444.1,
+              44.1
+            ],
+            [
+              -132.6,
+              444.1,
+              44.1
+            ],
+            [
+              -132.6,
+              443.5,
+              44.1
+            ],
+            [
+              -132.6,
+              440.5,
+              46.2
+            ],
+            [
+              -132.6,
+              439.9,
+              46.2
+            ],
+            [
+              -134.1,
+              439.9,
+              46.2
+            ],
+            [
+              -134.1,
+              440.5,
+              46.2
+            ]
+          ],
+          "steps": 24,
+          "riser": 0.175,
+          "tread": 0.25,
+          "clear_width": 1.2,
+          "length_3d": 12.723933,
+          "walking_seconds": 19.575282
+        },
+        {
+          "id": "UG-W-S3",
+          "layer": "vertical",
+          "points": [
+            [
+              -134.1,
+              440.5,
+              46.2
+            ],
+            [
+              -134.1,
+              443.5,
+              48.3
+            ],
+            [
+              -134.1,
+              444.1,
+              48.3
+            ],
+            [
+              -132.6,
+              444.1,
+              48.3
+            ],
+            [
+              -132.6,
+              443.5,
+              48.3
+            ],
+            [
+              -132.6,
+              440.5,
+              50.4
+            ],
+            [
+              -132.6,
+              439.9,
+              50.4
+            ],
+            [
+              -134.1,
+              439.9,
+              50.4
+            ],
+            [
+              -134.1,
+              440.5,
+              50.4
+            ]
+          ],
+          "steps": 24,
+          "riser": 0.175,
+          "tread": 0.25,
+          "clear_width": 1.2,
+          "length_3d": 12.723933,
+          "walking_seconds": 19.575282
+        },
+        {
+          "id": "UG-W-S4",
+          "layer": "vertical",
+          "points": [
+            [
+              -134.1,
+              440.5,
+              50.4
+            ],
+            [
+              -134.1,
+              443.5,
+              52.5
+            ],
+            [
+              -134.1,
+              444.1,
+              52.5
+            ],
+            [
+              -132.6,
+              444.1,
+              52.5
+            ],
+            [
+              -132.6,
+              443.5,
+              52.5
+            ],
+            [
+              -132.6,
+              440.5,
+              54.6
+            ],
+            [
+              -132.6,
+              439.9,
+              54.6
+            ],
+            [
+              -134.1,
+              439.9,
+              54.6
+            ],
+            [
+              -134.1,
+              440.5,
+              54.6
+            ]
+          ],
+          "steps": 24,
+          "riser": 0.175,
+          "tread": 0.25,
+          "clear_width": 1.2,
+          "length_3d": 12.723933,
+          "walking_seconds": 19.575282
+        },
+        {
+          "id": "UG-W-S5",
+          "layer": "vertical",
+          "points": [
+            [
+              -134.1,
+              440.5,
+              54.6
+            ],
+            [
+              -134.1,
+              443.5,
+              56.7
+            ],
+            [
+              -134.1,
+              444.1,
+              56.7
+            ],
+            [
+              -132.6,
+              444.1,
+              56.7
+            ],
+            [
+              -132.6,
+              443.5,
+              56.7
+            ],
+            [
+              -132.6,
+              440.5,
+              58.8
+            ]
+          ],
+          "steps": 24,
+          "riser": 0.175,
+          "tread": 0.25,
+          "clear_width": 1.2,
+          "length_3d": 10.023933,
+          "walking_seconds": 15.421435
+        }
+      ],
+      "stair_points": [
+        [
+          -134.1,
+          440.5,
+          37.8
+        ],
+        [
+          -134.1,
+          443.5,
+          39.9
+        ],
+        [
+          -134.1,
+          444.1,
+          39.9
+        ],
+        [
+          -132.6,
+          444.1,
+          39.9
+        ],
+        [
+          -132.6,
+          443.5,
+          39.9
+        ],
+        [
+          -132.6,
+          440.5,
+          42.0
+        ],
+        [
+          -132.6,
+          439.9,
+          42.0
+        ],
+        [
+          -134.1,
+          439.9,
+          42.0
+        ],
+        [
+          -134.1,
+          440.5,
+          42.0
+        ],
+        [
+          -134.1,
+          443.5,
+          44.1
+        ],
+        [
+          -134.1,
+          444.1,
+          44.1
+        ],
+        [
+          -132.6,
+          444.1,
+          44.1
+        ],
+        [
+          -132.6,
+          443.5,
+          44.1
+        ],
+        [
+          -132.6,
+          440.5,
+          46.2
+        ],
+        [
+          -132.6,
+          439.9,
+          46.2
+        ],
+        [
+          -134.1,
+          439.9,
+          46.2
+        ],
+        [
+          -134.1,
+          440.5,
+          46.2
+        ],
+        [
+          -134.1,
+          443.5,
+          48.3
+        ],
+        [
+          -134.1,
+          444.1,
+          48.3
+        ],
+        [
+          -132.6,
+          444.1,
+          48.3
+        ],
+        [
+          -132.6,
+          443.5,
+          48.3
+        ],
+        [
+          -132.6,
+          440.5,
+          50.4
+        ],
+        [
+          -132.6,
+          439.9,
+          50.4
+        ],
+        [
+          -134.1,
+          439.9,
+          50.4
+        ],
+        [
+          -134.1,
+          440.5,
+          50.4
+        ],
+        [
+          -134.1,
+          443.5,
+          52.5
+        ],
+        [
+          -134.1,
+          444.1,
+          52.5
+        ],
+        [
+          -132.6,
+          444.1,
+          52.5
+        ],
+        [
+          -132.6,
+          443.5,
+          52.5
+        ],
+        [
+          -132.6,
+          440.5,
+          54.6
+        ],
+        [
+          -132.6,
+          439.9,
+          54.6
+        ],
+        [
+          -134.1,
+          439.9,
+          54.6
+        ],
+        [
+          -134.1,
+          440.5,
+          54.6
+        ],
+        [
+          -134.1,
+          443.5,
+          56.7
+        ],
+        [
+          -134.1,
+          444.1,
+          56.7
+        ],
+        [
+          -132.6,
+          444.1,
+          56.7
+        ],
+        [
+          -132.6,
+          443.5,
+          56.7
+        ],
+        [
+          -132.6,
+          440.5,
+          58.8
+        ]
+      ],
+      "stair_path_length": 60.919667,
+      "stair_walking_seconds": 93.722565,
+      "bottom_access_path": [
+        [
+          -130.5,
+          445,
+          37.8
+        ],
+        [
+          -130.5,
+          439.9,
+          37.8
+        ],
+        [
+          -134.1,
+          439.9,
+          37.8
+        ],
+        [
+          -134.1,
+          440.5,
+          37.8
+        ]
+      ],
+      "bottom_access_length": 9.3,
+      "top_access_path": [
+        [
+          -132.6,
+          440.5,
+          58.8
+        ],
+        [
+          -132.6,
+          439.9,
+          58.8
+        ],
+        [
+          -130.5,
+          439.9,
+          58.8
+        ],
+        [
+          -130.5,
+          445,
+          58.8
+        ]
+      ],
+      "top_access_length": 7.8
+    },
+    {
+      "id": "UG-B-DRY",
+      "name": "白塔北密闭转移井",
+      "layer": "vertical",
+      "outer_bbox": [
+        135,
+        425,
+        141,
+        431
+      ],
+      "net_bbox": [
+        135.3,
+        425.3,
+        140.7,
+        430.7
+      ],
+      "base_z": 35.8,
+      "deck_z": 56.8,
+      "roof_z": 60.099999999999994,
+      "wall_thickness": 0.3,
+      "east_clear_corridor_bbox": [
+        138.3,
+        425.3,
+        140.7,
+        430.7
+      ],
+      "stair_bbox": [
+        135.3,
+        425.3,
+        138.3,
+        430.7
+      ],
+      "stair_width": 1.2,
+      "steps": 120,
+      "riser": 0.175,
+      "tread": 0.25,
+      "landings": [
+        35.8,
+        40.0,
+        44.2,
+        48.4,
+        52.6,
+        56.8
+      ],
+      "side_branch_levels": {
+        "B1": 35.8,
+        "1F": 40,
+        "2F": 48.4
+      },
+      "deck_layer": "elevated",
+      "stair_segments": [
+        {
+          "id": "UG-B-S1",
+          "layer": "vertical",
+          "points": [
+            [
+              135.9,
+              426.5,
+              35.8
+            ],
+            [
+              135.9,
+              429.5,
+              37.9
+            ],
+            [
+              135.9,
+              430.1,
+              37.9
+            ],
+            [
+              137.4,
+              430.1,
+              37.9
+            ],
+            [
+              137.4,
+              429.5,
+              37.9
+            ],
+            [
+              137.4,
+              426.5,
+              40.0
+            ],
+            [
+              137.4,
+              425.9,
+              40.0
+            ],
+            [
+              135.9,
+              425.9,
+              40.0
+            ],
+            [
+              135.9,
+              426.5,
+              40.0
+            ]
+          ],
+          "steps": 24,
+          "riser": 0.175,
+          "tread": 0.25,
+          "clear_width": 1.2,
+          "length_3d": 12.723933,
+          "walking_seconds": 19.575282
+        },
+        {
+          "id": "UG-B-S2",
+          "layer": "vertical",
+          "points": [
+            [
+              135.9,
+              426.5,
+              40.0
+            ],
+            [
+              135.9,
+              429.5,
+              42.1
+            ],
+            [
+              135.9,
+              430.1,
+              42.1
+            ],
+            [
+              137.4,
+              430.1,
+              42.1
+            ],
+            [
+              137.4,
+              429.5,
+              42.1
+            ],
+            [
+              137.4,
+              426.5,
+              44.2
+            ],
+            [
+              137.4,
+              425.9,
+              44.2
+            ],
+            [
+              135.9,
+              425.9,
+              44.2
+            ],
+            [
+              135.9,
+              426.5,
+              44.2
+            ]
+          ],
+          "steps": 24,
+          "riser": 0.175,
+          "tread": 0.25,
+          "clear_width": 1.2,
+          "length_3d": 12.723933,
+          "walking_seconds": 19.575282
+        },
+        {
+          "id": "UG-B-S3",
+          "layer": "vertical",
+          "points": [
+            [
+              135.9,
+              426.5,
+              44.2
+            ],
+            [
+              135.9,
+              429.5,
+              46.3
+            ],
+            [
+              135.9,
+              430.1,
+              46.3
+            ],
+            [
+              137.4,
+              430.1,
+              46.3
+            ],
+            [
+              137.4,
+              429.5,
+              46.3
+            ],
+            [
+              137.4,
+              426.5,
+              48.4
+            ],
+            [
+              137.4,
+              425.9,
+              48.4
+            ],
+            [
+              135.9,
+              425.9,
+              48.4
+            ],
+            [
+              135.9,
+              426.5,
+              48.4
+            ]
+          ],
+          "steps": 24,
+          "riser": 0.175,
+          "tread": 0.25,
+          "clear_width": 1.2,
+          "length_3d": 12.723933,
+          "walking_seconds": 19.575282
+        },
+        {
+          "id": "UG-B-S4",
+          "layer": "vertical",
+          "points": [
+            [
+              135.9,
+              426.5,
+              48.4
+            ],
+            [
+              135.9,
+              429.5,
+              50.5
+            ],
+            [
+              135.9,
+              430.1,
+              50.5
+            ],
+            [
+              137.4,
+              430.1,
+              50.5
+            ],
+            [
+              137.4,
+              429.5,
+              50.5
+            ],
+            [
+              137.4,
+              426.5,
+              52.6
+            ],
+            [
+              137.4,
+              425.9,
+              52.6
+            ],
+            [
+              135.9,
+              425.9,
+              52.6
+            ],
+            [
+              135.9,
+              426.5,
+              52.6
+            ]
+          ],
+          "steps": 24,
+          "riser": 0.175,
+          "tread": 0.25,
+          "clear_width": 1.2,
+          "length_3d": 12.723933,
+          "walking_seconds": 19.575282
+        },
+        {
+          "id": "UG-B-S5",
+          "layer": "vertical",
+          "points": [
+            [
+              135.9,
+              426.5,
+              52.6
+            ],
+            [
+              135.9,
+              429.5,
+              54.7
+            ],
+            [
+              135.9,
+              430.1,
+              54.7
+            ],
+            [
+              137.4,
+              430.1,
+              54.7
+            ],
+            [
+              137.4,
+              429.5,
+              54.7
+            ],
+            [
+              137.4,
+              426.5,
+              56.8
+            ]
+          ],
+          "steps": 24,
+          "riser": 0.175,
+          "tread": 0.25,
+          "clear_width": 1.2,
+          "length_3d": 10.023933,
+          "walking_seconds": 15.421435
+        }
+      ],
+      "stair_points": [
+        [
+          135.9,
+          426.5,
+          35.8
+        ],
+        [
+          135.9,
+          429.5,
+          37.9
+        ],
+        [
+          135.9,
+          430.1,
+          37.9
+        ],
+        [
+          137.4,
+          430.1,
+          37.9
+        ],
+        [
+          137.4,
+          429.5,
+          37.9
+        ],
+        [
+          137.4,
+          426.5,
+          40.0
+        ],
+        [
+          137.4,
+          425.9,
+          40.0
+        ],
+        [
+          135.9,
+          425.9,
+          40.0
+        ],
+        [
+          135.9,
+          426.5,
+          40.0
+        ],
+        [
+          135.9,
+          429.5,
+          42.1
+        ],
+        [
+          135.9,
+          430.1,
+          42.1
+        ],
+        [
+          137.4,
+          430.1,
+          42.1
+        ],
+        [
+          137.4,
+          429.5,
+          42.1
+        ],
+        [
+          137.4,
+          426.5,
+          44.2
+        ],
+        [
+          137.4,
+          425.9,
+          44.2
+        ],
+        [
+          135.9,
+          425.9,
+          44.2
+        ],
+        [
+          135.9,
+          426.5,
+          44.2
+        ],
+        [
+          135.9,
+          429.5,
+          46.3
+        ],
+        [
+          135.9,
+          430.1,
+          46.3
+        ],
+        [
+          137.4,
+          430.1,
+          46.3
+        ],
+        [
+          137.4,
+          429.5,
+          46.3
+        ],
+        [
+          137.4,
+          426.5,
+          48.4
+        ],
+        [
+          137.4,
+          425.9,
+          48.4
+        ],
+        [
+          135.9,
+          425.9,
+          48.4
+        ],
+        [
+          135.9,
+          426.5,
+          48.4
+        ],
+        [
+          135.9,
+          429.5,
+          50.5
+        ],
+        [
+          135.9,
+          430.1,
+          50.5
+        ],
+        [
+          137.4,
+          430.1,
+          50.5
+        ],
+        [
+          137.4,
+          429.5,
+          50.5
+        ],
+        [
+          137.4,
+          426.5,
+          52.6
+        ],
+        [
+          137.4,
+          425.9,
+          52.6
+        ],
+        [
+          135.9,
+          425.9,
+          52.6
+        ],
+        [
+          135.9,
+          426.5,
+          52.6
+        ],
+        [
+          135.9,
+          429.5,
+          54.7
+        ],
+        [
+          135.9,
+          430.1,
+          54.7
+        ],
+        [
+          137.4,
+          430.1,
+          54.7
+        ],
+        [
+          137.4,
+          429.5,
+          54.7
+        ],
+        [
+          137.4,
+          426.5,
+          56.8
+        ]
+      ],
+      "stair_path_length": 60.919667,
+      "stair_walking_seconds": 93.722565,
+      "bottom_access_path": [
+        [
+          139.5,
+          431,
+          35.8
+        ],
+        [
+          139.5,
+          425.9,
+          35.8
+        ],
+        [
+          135.9,
+          425.9,
+          35.8
+        ],
+        [
+          135.9,
+          426.5,
+          35.8
+        ]
+      ],
+      "bottom_access_length": 9.3,
+      "top_access_path": [
+        [
+          137.4,
+          426.5,
+          56.8
+        ],
+        [
+          137.4,
+          425.9,
+          56.8
+        ],
+        [
+          139.5,
+          425.9,
+          56.8
+        ],
+        [
+          139.5,
+          431,
+          56.8
+        ]
+      ],
+      "top_access_length": 7.8
+    }
+  ],
+  "doors": [
+    {
+      "id": "UG-W-D-INLET",
+      "world": [
+        -130.5,
+        445,
+        37.8
+      ],
+      "wall": "N",
+      "width": 1.8,
+      "height": 2.4,
+      "pressure_rating_mpa": 0.25,
+      "threshold_m": 0.15,
+      "type": "双面机械手轮压紧水密门",
+      "lock": "UG统一维护钥匙；井内可机械解扣",
+      "hinge": "east",
+      "swing": "toward isolated side vestibule; never into stair flight",
+      "move_seconds": 4,
+      "seal_test_seconds_dry": 8,
+      "seal_test_seconds_wet": 16,
+      "to": "tunnel"
+    },
+    {
+      "id": "UG-W-D-B1-S",
+      "world": [
+        -132,
+        439,
+        37.8
+      ],
+      "wall": "S",
+      "width": 1.8,
+      "height": 2.4,
+      "pressure_rating_mpa": 0.25,
+      "threshold_m": 0.15,
+      "type": "双面机械手轮压紧水密门",
+      "lock": "UG统一维护钥匙；井内可机械解扣",
+      "hinge": "east",
+      "swing": "toward isolated side vestibule; never into stair flight",
+      "move_seconds": 4,
+      "seal_test_seconds_dry": 8,
+      "seal_test_seconds_wet": 16,
+      "to": "UG-W-OLD-B1",
+      "normal_state": "dry branch may open; wet branch locked",
+      "close_on_external_water_z": 42.15
+    },
+    {
+      "id": "UG-W-D-1F",
+      "world": [
+        -132,
+        439,
+        42
+      ],
+      "wall": "S",
+      "width": 1.8,
+      "height": 2.4,
+      "pressure_rating_mpa": 0.25,
+      "threshold_m": 0.15,
+      "type": "双面机械手轮压紧水密门",
+      "lock": "UG统一维护钥匙；井内可机械解扣",
+      "hinge": "east",
+      "swing": "toward isolated side vestibule; never into stair flight",
+      "move_seconds": 4,
+      "seal_test_seconds_dry": 8,
+      "seal_test_seconds_wet": 16,
+      "to": "既有北楼梯核1F",
+      "close_on_external_water_z": 42.15
+    },
+    {
+      "id": "UG-W-D-2F",
+      "world": [
+        -132,
+        439,
+        50.4
+      ],
+      "wall": "S",
+      "width": 1.8,
+      "height": 2.4,
+      "pressure_rating_mpa": 0.25,
+      "threshold_m": 0.15,
+      "type": "双面机械手轮压紧水密门",
+      "lock": "UG统一维护钥匙；井内可机械解扣",
+      "hinge": "east",
+      "swing": "toward isolated side vestibule; never into stair flight",
+      "move_seconds": 4,
+      "seal_test_seconds_dry": 8,
+      "seal_test_seconds_wet": 16,
+      "to": "既有北楼梯核2F",
+      "close_on_external_water_z": 50.55
+    },
+    {
+      "id": "UG-W-D-ROOF",
+      "world": [
+        -130.5,
+        445,
+        58.8
+      ],
+      "wall": "N",
+      "width": 1.8,
+      "height": 2.4,
+      "pressure_rating_mpa": 0.25,
+      "threshold_m": 0.15,
+      "type": "双面机械手轮压紧水密门",
+      "lock": "UG统一维护钥匙；井内可机械解扣",
+      "hinge": "east",
+      "swing": "toward isolated side vestibule; never into stair flight",
+      "move_seconds": 4,
+      "seal_test_seconds_dry": 8,
+      "seal_test_seconds_wet": 16,
+      "to": "roof_gallery"
+    },
+    {
+      "id": "UG-W-D-INNER",
+      "world": [
+        -130.5,
+        440.8,
+        37.8
+      ],
+      "wall": "S",
+      "width": 1.8,
+      "height": 2.4,
+      "pressure_rating_mpa": 0.25,
+      "type": "机械互锁水密内门",
+      "interlocked_with": "UG-W-D-INLET",
+      "clear_airlock_bbox": [
+        -131.7,
+        440.8,
+        -129.3,
+        444.7
+      ],
+      "move_seconds": 4,
+      "seal_test_seconds_dry": 8,
+      "seal_test_seconds_wet": 16
+    },
+    {
+      "id": "UG-B-D-INLET",
+      "world": [
+        139.5,
+        431,
+        35.8
+      ],
+      "wall": "N",
+      "width": 1.8,
+      "height": 2.4,
+      "pressure_rating_mpa": 0.25,
+      "threshold_m": 0.15,
+      "type": "双面机械手轮压紧水密门",
+      "lock": "UG统一维护钥匙；井内可机械解扣",
+      "hinge": "east",
+      "swing": "toward isolated side vestibule; never into stair flight",
+      "move_seconds": 4,
+      "seal_test_seconds_dry": 8,
+      "seal_test_seconds_wet": 16,
+      "to": "tunnel"
+    },
+    {
+      "id": "UG-B-D-B1-S",
+      "world": [
+        138,
+        425,
+        35.8
+      ],
+      "wall": "S",
+      "width": 1.8,
+      "height": 2.4,
+      "pressure_rating_mpa": 0.25,
+      "threshold_m": 0.15,
+      "type": "双面机械手轮压紧水密门",
+      "lock": "UG统一维护钥匙；井内可机械解扣",
+      "hinge": "east",
+      "swing": "toward isolated side vestibule; never into stair flight",
+      "move_seconds": 4,
+      "seal_test_seconds_dry": 8,
+      "seal_test_seconds_wet": 16,
+      "to": "UG-B-OLD-B1",
+      "normal_state": "dry branch may open; wet branch locked",
+      "close_on_external_water_z": 40.15
+    },
+    {
+      "id": "UG-B-D-1F",
+      "world": [
+        138,
+        425,
+        40
+      ],
+      "wall": "S",
+      "width": 1.8,
+      "height": 2.4,
+      "pressure_rating_mpa": 0.25,
+      "threshold_m": 0.15,
+      "type": "双面机械手轮压紧水密门",
+      "lock": "UG统一维护钥匙；井内可机械解扣",
+      "hinge": "east",
+      "swing": "toward isolated side vestibule; never into stair flight",
+      "move_seconds": 4,
+      "seal_test_seconds_dry": 8,
+      "seal_test_seconds_wet": 16,
+      "to": "既有北楼梯核1F",
+      "close_on_external_water_z": 40.15
+    },
+    {
+      "id": "UG-B-D-2F",
+      "world": [
+        138,
+        425,
+        48.4
+      ],
+      "wall": "S",
+      "width": 1.8,
+      "height": 2.4,
+      "pressure_rating_mpa": 0.25,
+      "threshold_m": 0.15,
+      "type": "双面机械手轮压紧水密门",
+      "lock": "UG统一维护钥匙；井内可机械解扣",
+      "hinge": "east",
+      "swing": "toward isolated side vestibule; never into stair flight",
+      "move_seconds": 4,
+      "seal_test_seconds_dry": 8,
+      "seal_test_seconds_wet": 16,
+      "to": "既有北楼梯核2F",
+      "close_on_external_water_z": 48.55
+    },
+    {
+      "id": "UG-B-D-ROOF",
+      "world": [
+        139.5,
+        431,
+        56.8
+      ],
+      "wall": "N",
+      "width": 1.8,
+      "height": 2.4,
+      "pressure_rating_mpa": 0.25,
+      "threshold_m": 0.15,
+      "type": "双面机械手轮压紧水密门",
+      "lock": "UG统一维护钥匙；井内可机械解扣",
+      "hinge": "east",
+      "swing": "toward isolated side vestibule; never into stair flight",
+      "move_seconds": 4,
+      "seal_test_seconds_dry": 8,
+      "seal_test_seconds_wet": 16,
+      "to": "roof_gallery"
+    },
+    {
+      "id": "UG-B-D-INNER",
+      "world": [
+        139.5,
+        426.8,
+        35.8
+      ],
+      "wall": "S",
+      "width": 1.8,
+      "height": 2.4,
+      "pressure_rating_mpa": 0.25,
+      "type": "机械互锁水密内门",
+      "interlocked_with": "UG-B-D-INLET",
+      "clear_airlock_bbox": [
+        138.3,
+        426.8,
+        140.7,
+        430.7
+      ],
+      "move_seconds": 4,
+      "seal_test_seconds_dry": 8,
+      "seal_test_seconds_wet": 16
+    }
+  ],
+  "nodes": [
+    {
+      "id": "UG-W-N00",
+      "world": [
+        -54,
+        454,
+        43.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-W-N01",
+      "world": [
+        -55.2,
+        454,
+        43.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-W-N02",
+      "world": [
+        -61.2,
+        454,
+        40.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-W-N03",
+      "world": [
+        -90,
+        454,
+        40.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-W-N04",
+      "world": [
+        -96,
+        454,
+        37.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-W-N05",
+      "world": [
+        -130.5,
+        454,
+        37.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-W-N06",
+      "world": [
+        -130.5,
+        445,
+        37.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-B-N00",
+      "world": [
+        54,
+        526,
+        43.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-B-N01",
+      "world": [
+        60,
+        526,
+        43.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-B-N02",
+      "world": [
+        60,
+        490,
+        43.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-B-N03",
+      "world": [
+        60,
+        482.5,
+        39.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-B-N04",
+      "world": [
+        60,
+        472,
+        39.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-B-N05",
+      "world": [
+        96,
+        472,
+        39.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-B-N06",
+      "world": [
+        96,
+        446,
+        39.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-B-N07",
+      "world": [
+        96,
+        438.5,
+        35.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-B-N08",
+      "world": [
+        96,
+        434,
+        35.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-B-N09",
+      "world": [
+        139.5,
+        434,
+        35.8
+      ],
+      "layer": "underground"
+    },
+    {
+      "id": "UG-B-N10",
+      "world": [
+        139.5,
+        431,
+        35.8
+      ],
+      "layer": "underground"
+    }
+  ],
+  "edges": [
+    {
+      "id": "UG-W-E00",
+      "from": "UG-W-N00",
+      "to": "UG-W-N01",
+      "points": [
+        [
+          -54,
+          454,
+          43.8
+        ],
+        [
+          -55.2,
+          454,
+          43.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "level",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 1.2,
+      "walking_seconds": 1.0
+    },
+    {
+      "id": "UG-W-E01",
+      "from": "UG-W-N01",
+      "to": "UG-W-N02",
+      "points": [
+        [
+          -55.2,
+          454,
+          43.8
+        ],
+        [
+          -61.2,
+          454,
+          40.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "stair",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 6.708204,
+      "walking_seconds": 10.320314,
+      "steps": 20,
+      "riser": 0.15,
+      "tread": 0.3
+    },
+    {
+      "id": "UG-W-E02",
+      "from": "UG-W-N02",
+      "to": "UG-W-N03",
+      "points": [
+        [
+          -61.2,
+          454,
+          40.8
+        ],
+        [
+          -90,
+          454,
+          40.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "level",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 28.8,
+      "walking_seconds": 24.0
+    },
+    {
+      "id": "UG-W-E03",
+      "from": "UG-W-N03",
+      "to": "UG-W-N04",
+      "points": [
+        [
+          -90,
+          454,
+          40.8
+        ],
+        [
+          -96,
+          454,
+          37.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "stair",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 6.708204,
+      "walking_seconds": 10.320314,
+      "steps": 20,
+      "riser": 0.15,
+      "tread": 0.3
+    },
+    {
+      "id": "UG-W-E04",
+      "from": "UG-W-N04",
+      "to": "UG-W-N05",
+      "points": [
+        [
+          -96,
+          454,
+          37.8
+        ],
+        [
+          -130.5,
+          454,
+          37.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "level",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 34.5,
+      "walking_seconds": 28.75
+    },
+    {
+      "id": "UG-W-E05",
+      "from": "UG-W-N05",
+      "to": "UG-W-N06",
+      "points": [
+        [
+          -130.5,
+          454,
+          37.8
+        ],
+        [
+          -130.5,
+          445,
+          37.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "level",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 9.0,
+      "walking_seconds": 7.5
+    },
+    {
+      "id": "UG-B-E00",
+      "from": "UG-B-N00",
+      "to": "UG-B-N01",
+      "points": [
+        [
+          54,
+          526,
+          43.8
+        ],
+        [
+          60,
+          526,
+          43.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "level",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 6.0,
+      "walking_seconds": 5.0
+    },
+    {
+      "id": "UG-B-E01",
+      "from": "UG-B-N01",
+      "to": "UG-B-N02",
+      "points": [
+        [
+          60,
+          526,
+          43.8
+        ],
+        [
+          60,
+          490,
+          43.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "level",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 36.0,
+      "walking_seconds": 30.0
+    },
+    {
+      "id": "UG-B-E02",
+      "from": "UG-B-N02",
+      "to": "UG-B-N03",
+      "points": [
+        [
+          60,
+          490,
+          43.8
+        ],
+        [
+          60,
+          482.5,
+          39.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "stair",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 8.5,
+      "walking_seconds": 13.076923,
+      "steps": 25,
+      "riser": 0.16,
+      "tread": 0.3
+    },
+    {
+      "id": "UG-B-E03",
+      "from": "UG-B-N03",
+      "to": "UG-B-N04",
+      "points": [
+        [
+          60,
+          482.5,
+          39.8
+        ],
+        [
+          60,
+          472,
+          39.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "level",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 10.5,
+      "walking_seconds": 8.75
+    },
+    {
+      "id": "UG-B-E04",
+      "from": "UG-B-N04",
+      "to": "UG-B-N05",
+      "points": [
+        [
+          60,
+          472,
+          39.8
+        ],
+        [
+          96,
+          472,
+          39.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "level",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 36.0,
+      "walking_seconds": 30.0
+    },
+    {
+      "id": "UG-B-E05",
+      "from": "UG-B-N05",
+      "to": "UG-B-N06",
+      "points": [
+        [
+          96,
+          472,
+          39.8
+        ],
+        [
+          96,
+          446,
+          39.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "level",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 26.0,
+      "walking_seconds": 21.666667
+    },
+    {
+      "id": "UG-B-E06",
+      "from": "UG-B-N06",
+      "to": "UG-B-N07",
+      "points": [
+        [
+          96,
+          446,
+          39.8
+        ],
+        [
+          96,
+          438.5,
+          35.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "stair",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 8.5,
+      "walking_seconds": 13.076923,
+      "steps": 25,
+      "riser": 0.16,
+      "tread": 0.3
+    },
+    {
+      "id": "UG-B-E07",
+      "from": "UG-B-N07",
+      "to": "UG-B-N08",
+      "points": [
+        [
+          96,
+          438.5,
+          35.8
+        ],
+        [
+          96,
+          434,
+          35.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "level",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 4.5,
+      "walking_seconds": 3.75
+    },
+    {
+      "id": "UG-B-E08",
+      "from": "UG-B-N08",
+      "to": "UG-B-N09",
+      "points": [
+        [
+          96,
+          434,
+          35.8
+        ],
+        [
+          139.5,
+          434,
+          35.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "level",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 43.5,
+      "walking_seconds": 36.25
+    },
+    {
+      "id": "UG-B-E09",
+      "from": "UG-B-N09",
+      "to": "UG-B-N10",
+      "points": [
+        [
+          139.5,
+          434,
+          35.8
+        ],
+        [
+          139.5,
+          431,
+          35.8
+        ]
+      ],
+      "layer": "underground",
+      "type": "level",
+      "clear_width": 2.4,
+      "clear_height": 2.7,
+      "length_3d": 3.0,
+      "walking_seconds": 2.5
+    }
+  ],
+  "ground_obstacles": [
+    {
+      "id": "UG-W-DRY",
+      "bbox_world": [
+        -135,
+        439,
+        -129,
+        445
+      ],
+      "ground_z": 42,
+      "top_z": 62.099999999999994
+    },
+    {
+      "id": "UG-B-DRY",
+      "bbox_world": [
+        135,
+        425,
+        141,
+        431
+      ],
+      "ground_z": 40,
+      "top_z": 60.099999999999994
+    }
+  ],
+  "roof_galleries": [
+    {
+      "id": "UG-W-RG",
+      "layer": "elevated",
+      "points": [
+        [
+          -130.5,
+          445,
+          58.8
+        ],
+        [
+          -108,
+          445,
+          58.8
+        ],
+        [
+          -108,
+          428,
+          58.8
+        ]
+      ],
+      "clear_width": 1.8,
+      "rail_height": 1.2,
+      "floor_thickness": 0.3,
+      "length_3d": 39.5,
+      "walking_seconds": 32.916667,
+      "from": "UG-W-D-ROOF",
+      "to": "文契桥塔北门",
+      "bridge_tower_port": [
+        -108,
+        428,
+        58.8
+      ],
+      "drainage": "独立向外落水，不接井内或地下集水坑",
+      "support_spacing_m": 6
+    },
+    {
+      "id": "UG-B-RG",
+      "layer": "elevated",
+      "points": [
+        [
+          139.5,
+          431,
+          56.8
+        ],
+        [
+          114,
+          431,
+          56.8
+        ],
+        [
+          114,
+          414,
+          56.8
+        ]
+      ],
+      "clear_width": 1.8,
+      "rail_height": 1.2,
+      "floor_thickness": 0.3,
+      "length_3d": 42.5,
+      "walking_seconds": 35.416667,
+      "from": "UG-B-D-ROOF",
+      "to": "白塔桥塔北门",
+      "bridge_tower_port": [
+        114,
+        414,
+        56.8
+      ],
+      "drainage": "独立向外落水，不接井内或地下集水坑",
+      "support_spacing_m": 6
+    }
+  ],
+  "flood_state_machine": [
+    {
+      "state": "DRY",
+      "condition": "both outside water surfaces below local1F+0.15; interior h<0.15; all gas sensorsC<60; existing world gas-exposure modifiers still apply",
+      "walk_speed": 1.2,
+      "gate_cycle_operating_seconds_per_end": 24,
+      "new_entry": true,
+      "max_batch_people": 6
+    },
+    {
+      "state": "SEALED_WET",
+      "condition": "any1F side door closed; outside maxZ<=51.8; interior h<0.15; all C<60; reserve usable",
+      "walk_speed": 1.2,
+      "new_entry": true,
+      "gate_cycle_operating_seconds_per_end": 32,
+      "max_operation_seconds": 1200,
+      "traffic": "one group<=8; one direction at a time",
+      "timer_start": "first gate opening in wet transfer batch, not the earlier closing of1F side branch",
+      "max_batch_people": 6
+    },
+    {
+      "state": "RESTRICTED",
+      "condition": "0.15<=interior h<0.45 and all C<60 and outside maxZ<=51.8",
+      "walk_speed": 0.6,
+      "new_entry": false,
+      "egress_only": true,
+      "pumps": "two active; no carts or loads over10kg",
+      "max_batch_people": 6
+    },
+    {
+      "state": "CLOSED",
+      "condition": "h>=0.45 OR anyC>=60 OR outside maxZ>51.8 OR wet_clock>=1200 OR both ventilation drives failed",
+      "new_entry": false,
+      "tunnel_edge_removed": true,
+      "egress": "only trapped occupants may use directed egress through a drained vestibule to a still-dry shaft and roof; ground side doors stay locked",
+      "max_batch_people": 6
+    }
+  ],
+  "hydraulic_rules": {
+    "each_tunnel_is_independent_cell_graph": true,
+    "no_shared_sump_or_air_duct_between_routes": true,
+    "normal_design_leak_m3_per_h": 0.3,
+    "damaged_joint_leak_m3_per_h": 8.0,
+    "max_open_door_h_difference_m": 0.05,
+    "drainage_channel": [
+      "east wall0.15m wide,0.10m deep",
+      "covered by flush removable grating",
+      "ends at own2.4m3 sump"
+    ],
+    "gas_sensor_positions": "each inlet,midpoint,shaft base,intake; maximum C controls state",
+    "h_sensor_positions": "each low stair landing and each airlock floor; maximum h controls state",
+    "stairs_do_not_auto_create_fluid_edges": true,
+    "open_side_door_creates_explicit_water_edge": true,
+    "roof_gallery_not_connected_to_sump": true,
+    "dry_sealed_idle_leak_m3_per_h": 0.02,
+    "wet_timer_start": "first tunnel gate opening of a wet transfer batch; closure of a flooded1F side branch alone does not start transfer clock",
+    "reserve_accounting": "1200s transfer allowance is cumulative pump-on/gate-service time after last recharge; completed transfer pauses but never resets allowance. Two-person hand pumping is a separate explicit staffing state.",
+    "recharge_seconds": 2400,
+    "recharge_condition": "ironworks compressor operating, supply airC<35,check valve and charging branch explicitly open; recharge never clears flood/gas closure condition"
+  },
+  "structural_connections": {
+    "main_west": "new corridor B1-A(-36,454,43.8) to shared UC-MW(-48,454,43.8), below empty south strip of U01; avoid U04X[-23.4,-6.6]Y[436.6,447.4]",
+    "main_east": "new corridor B1-F(36,526,43.8) to UC-ME(48,526,43.8), above U06 north wallY524.2, clear corridorY524.8..527.2",
+    "bearing_openings": "only the named portals receive1.8m/2.4m explicit framed openings; no implicit edges across foundations",
+    "hall_side": "dry shaft built outside north wall;1F/2F south branch doors align existing central north stair core; tunnel never passes under W101/B101 or their archive/medical rooms",
+    "retired_rule": "removes earlier no-person-tunnel statement only for these two paths; no route to crater is added"
+  },
+  "hall_existing_core_extensions": [
+    {
+      "id": "UG-W-OLD-B1",
+      "layer": "vertical",
+      "name": "既有中央北梯核下延4.2m的干态支梯",
+      "clear_width": 1.5,
+      "steps": 24,
+      "riser": 0.175,
+      "tread": 0.28,
+      "points": [
+        [
+          -131.1,
+          427.0,
+          42.0
+        ],
+        [
+          -131.1,
+          427.6,
+          42.0
+        ],
+        [
+          -131.1,
+          430.96,
+          39.9
+        ],
+        [
+          -131.1,
+          432.16,
+          39.9
+        ],
+        [
+          -131.1,
+          435.52,
+          37.8
+        ],
+        [
+          -131.1,
+          436.12,
+          37.8
+        ],
+        [
+          -131.1,
+          438.4,
+          37.8
+        ],
+        [
+          -132.0,
+          438.4,
+          37.8
+        ],
+        [
+          -132.0,
+          439.0,
+          37.8
+        ]
+      ],
+      "clear_plan_bbox": [
+        -131.85,
+        427.0,
+        -130.35,
+        438.4
+      ],
+      "length_3d": 14.104544,
+      "to": "UG-W-D-B1-S",
+      "wet_isolation_gate": "UG-W-D-B1-S",
+      "wet_close_on_external_water_z": 42.15,
+      "notes": "上接既有北梯核1F南端平台，下接新干井B1南闸；仅原梯核内开明确下行楼板口，绕过邻室和柱基。水漫原馆1F时此支梯可湿封隔离，不影响新干井B1至屋面的主路线。"
+    },
+    {
+      "id": "UG-B-OLD-B1",
+      "layer": "vertical",
+      "name": "既有中央北梯核下延4.2m的干态支梯",
+      "clear_width": 1.5,
+      "steps": 24,
+      "riser": 0.175,
+      "tread": 0.28,
+      "points": [
+        [
+          138.9,
+          413.0,
+          40.0
+        ],
+        [
+          138.9,
+          413.6,
+          40.0
+        ],
+        [
+          138.9,
+          416.96,
+          37.9
+        ],
+        [
+          138.9,
+          418.16,
+          37.9
+        ],
+        [
+          138.9,
+          421.52,
+          35.8
+        ],
+        [
+          138.9,
+          422.12,
+          35.8
+        ],
+        [
+          138.9,
+          424.4,
+          35.8
+        ],
+        [
+          138.0,
+          424.4,
+          35.8
+        ],
+        [
+          138.0,
+          425.0,
+          35.8
+        ]
+      ],
+      "clear_plan_bbox": [
+        138.15,
+        413.0,
+        139.65,
+        424.4
+      ],
+      "length_3d": 14.104544,
+      "to": "UG-B-D-B1-S",
+      "wet_isolation_gate": "UG-B-D-B1-S",
+      "wet_close_on_external_water_z": 40.15,
+      "notes": "上接既有北梯核1F南端平台，下接新干井B1南闸；仅原梯核内开明确下行楼板口，绕过邻室和柱基。水漫原馆1F时此支梯可湿封隔离，不影响新干井B1至屋面的主路线。"
+    }
+  ]
+};
+}

@@ -1,0 +1,179 @@
+schema "dv-script-v1";
+
+data space.shared_alternate_routes {
+    value = {
+  "schema": "alternate-routes-v1",
+  "note": "Routes exist in normal state; locks disable doors, never materialize new paths. Terrain-following footpath slope speeds use the outdoor rule.",
+  "roads": [
+    {
+      "id": "ALT-WEN",
+      "name": "文契院西门绕行",
+      "points": [
+        [
+          -114,
+          424,
+          42
+        ],
+        [
+          -108,
+          424,
+          42.2
+        ],
+        [
+          -108,
+          448,
+          44
+        ],
+        [
+          -156,
+          448,
+          44
+        ],
+        [
+          -156,
+          424,
+          42
+        ],
+        [
+          -150,
+          424,
+          42
+        ]
+      ],
+      "width": 2.4,
+      "type": "foot",
+      "door": "W-WEST",
+      "unlock_s": 3,
+      "open_s": 2,
+      "length_3d": 108.1539,
+      "walk_seconds": 98.1534,
+      "total_seconds": 103.1534,
+      "turns": 18,
+      "max_grade": 0.083333
+    },
+    {
+      "id": "ALT-IRON",
+      "name": "铁工院南装卸门绕行",
+      "points": [
+        [
+          -108,
+          552,
+          60
+        ],
+        [
+          -84,
+          552,
+          60
+        ],
+        [
+          -84,
+          532,
+          60
+        ],
+        [
+          -132,
+          532,
+          60
+        ],
+        [
+          -132,
+          540,
+          60
+        ]
+      ],
+      "width": 3.0,
+      "type": "foot",
+      "door": "F-SOUTH",
+      "unlock_s": 0,
+      "open_s": 2,
+      "length_3d": 100.0,
+      "walk_seconds": 83.3333,
+      "total_seconds": 85.3333,
+      "turns": 15,
+      "max_grade": 0.0
+    },
+    {
+      "id": "ALT-WHITE",
+      "name": "白塔院东服务门绕行",
+      "points": [
+        [
+          120,
+          410,
+          40
+        ],
+        [
+          114,
+          410,
+          40.3
+        ],
+        [
+          114,
+          388,
+          40
+        ],
+        [
+          162,
+          388,
+          40
+        ],
+        [
+          162,
+          410,
+          40
+        ],
+        [
+          156,
+          410,
+          40
+        ]
+      ],
+      "width": 2.4,
+      "type": "foot",
+      "door": "B-EAST",
+      "unlock_s": 3,
+      "open_s": 2,
+      "length_3d": 104.0095,
+      "walk_seconds": 86.6746,
+      "total_seconds": 91.6746,
+      "turns": 16,
+      "max_grade": 0.05
+    },
+    {
+      "id": "ALT-MAIN",
+      "name": "主楼南平台绕西勤务门",
+      "points": [
+        [
+          0,
+          420,
+          48
+        ],
+        [
+          -60,
+          420,
+          48
+        ],
+        [
+          -60,
+          472,
+          48
+        ],
+        [
+          -48,
+          472,
+          48
+        ]
+      ],
+      "width": 2.4,
+      "type": "foot",
+      "door": "MAIN-W",
+      "unlock_s": 0,
+      "open_s": 2,
+      "length_3d": 124.0,
+      "walk_seconds": 103.3333,
+      "total_seconds": 105.3333,
+      "turns": 18,
+      "max_grade": 0.0
+    }
+  ]
+};
+}

@@ -1,0 +1,1258 @@
+schema "dv-script-v1";
+
+// Pure authored values. No functions, callbacks, loops or executable AST.
+
+// c1_player_cards — original source line 27
+data m60.c1_player_cards.key {
+    value = ["player-card-directory-v1"];
+}
+
+// c1_player_cards — original source line 32
+data m60.c1_player_cards.literal {
+    value = "E1";
+}
+
+// c1_player_cards — original source line 32
+data m60.c1_player_cards.literal_0002 {
+    value = "隔离门";
+}
+
+// c1_player_cards — original source line 33
+data m60.c1_player_cards.literal_0003 {
+    value = "E2";
+}
+
+// c1_player_cards — original source line 33
+data m60.c1_player_cards.literal_0004 {
+    value = "墙角的木楔与门底的灰";
+}
+
+// c1_player_cards — original source line 34
+data m60.c1_player_cards.literal_0005 {
+    value = "E3";
+}
+
+// c1_player_cards — original source line 34
+data m60.c1_player_cards.literal_0006 {
+    value = "灰上的鞋印";
+}
+
+// c1_player_cards — original source line 35
+data m60.c1_player_cards.literal_0007 {
+    value = "E4";
+}
+
+// c1_player_cards — original source line 35
+data m60.c1_player_cards.literal_0008 {
+    value = "门底的湿布";
+}
+
+// c1_player_cards — original source line 36
+data m60.c1_player_cards.literal_0009 {
+    value = "E5";
+}
+
+// c1_player_cards — original source line 36
+data m60.c1_player_cards.literal_0010 {
+    value = "地上的音叉";
+}
+
+// c1_player_cards — original source line 37
+data m60.c1_player_cards.literal_0011 {
+    value = "E6";
+}
+
+// c1_player_cards — original source line 37
+data m60.c1_player_cards.literal_0012 {
+    value = "书桌上的乐谱";
+}
+
+// c1_player_cards — original source line 38
+data m60.c1_player_cards.literal_0013 {
+    value = "E7";
+}
+
+// c1_player_cards — original source line 38
+data m60.c1_player_cards.literal_0014 {
+    value = "长桌上的石板";
+}
+
+// c1_player_cards — original source line 39
+data m60.c1_player_cards.literal_0015 {
+    value = "E8";
+}
+
+// c1_player_cards — original source line 39
+data m60.c1_player_cards.literal_0016 {
+    value = "铜口";
+}
+
+// c1_player_cards — original source line 40
+data m60.c1_player_cards.literal_0017 {
+    value = "E9";
+}
+
+// c1_player_cards — original source line 40
+data m60.c1_player_cards.literal_0018 {
+    value = "水槽里的杯子";
+}
+
+// c1_player_cards — original source line 41
+data m60.c1_player_cards.literal_0019 {
+    value = "E10";
+}
+
+// c1_player_cards — original source line 41
+data m60.c1_player_cards.literal_0020 {
+    value = "碗柜上的罐子";
+}
+
+// c1_player_cards — original source line 42
+data m60.c1_player_cards.literal_0021 {
+    value = "E11";
+}
+
+// c1_player_cards — original source line 42
+data m60.c1_player_cards.literal_0022 {
+    value = "书架";
+}
+
+// c1_player_cards — original source line 43
+data m60.c1_player_cards.literal_0023 {
+    value = "E12";
+}
+
+// c1_player_cards — original source line 43
+data m60.c1_player_cards.literal_0024 {
+    value = "风衣";
+}
+
+// c1_player_display — original source line 46
+data m60.c1_player_display.literal {
+    value = "player-action-presentation-v4";
+}
+
+// c1_player_display_build — original source line 55
+data m60.c1_player_display_build.literal {
+    value = "前往";
+}
+
+// c1_player_display_build — original source line 60
+data m60.c1_player_display_build.literal_0002 {
+    value = ".inspect.";
+}
+
+// c1_player_display_build — original source line 61
+data m60.c1_player_display_build.literal_0003 {
+    value = "检视";
+}
+
+// c1_player_display_build — original source line 61
+data m60.c1_player_display_build.literal_0004 {
+    value = "visible-inspection";
+}
+
+// c1_player_display_build — original source line 63
+data m60.c1_player_display_build.named {
+    value = { ".opening.wake" = "起身并检查自己"; ".opening.empty-slot" = "查看自己的标签柜"; ".opening.wear-coat" = "穿上风衣"; ".identify-own-lens" = "比对放大镜与石板上的图记"; ".replay" = "在手稿上重演昨夜"; ".sound_trial" = "进行声路试验"; ".reask_question" = "询问当前的问题"; ".compare_sole" = "对照鞋底与灰中鞋印"; ".loss_testimony" = "请苏泠说说声路试验中的所闻"; ".talk.slate_code" = "询问石板刻痕"; ".talk.slate_person" = "询问石板上的人形线条"; ".talk.frame_hollow" = "询问门框的声响"; ".talk.cups_known" = "询问杯子的摆放"; ".talk.starter_kept" = "询问罐中留存的酵头"; ".talk.recalled_copper" = "询问关于铜口的记忆"; ".talk.recalled_names" = "询问关于姓名的记忆"; };
+}
+
+// c1_player_display_build — original source line 69
+data m60.c1_player_display_build.literal_0005 {
+    value = ".touch_latch";
+}
+
+// c1_player_display_build — original source line 70
+data m60.c1_player_display_build.literal_0006 {
+    value = "走近并触碰插闩";
+}
+
+// c1_player_display_build — original source line 72
+data m60.c1_player_display_build.answers {
+    value = { "me" = "闩门的是我"; "V1_0" = "苏泠在卧室"; "V1_1" = "苏泠在活动厅"; "V1_2" = "苏泠在备餐间"; "V3_0" = "声音来自铜口在墙内与门框处的管道漏音"; "V3_1" = "门外有人呼喊"; "V4_0" = "速记的意思是闩门、别开，逐字原话未明"; "V4_1" = "喊的是开门"; "trust" = "说明为何信任霍铎的速记并闩门"; };
+}
+
+// c1_player_display_build — original source line 73
+data m60.c1_player_display_build.literal_0007 {
+    value = "answer_id";
+}
+
+// c1_player_display_build — original source line 75
+data m60.c1_player_display_build.literal_0008 {
+    value = "答辩：";
+}
+
+// c1_player_display_build — original source line 76
+data m60.c1_player_display_build.literal_0009 {
+    value = ".reask_question";
+}
+
+// c1_player_display_build — original source line 77
+data m60.c1_player_display_build.literal_0010 {
+    value = "正式问题尚未提出。";
+}
+
+// c1_player_display_build — original source line 77
+data m60.c1_player_display_build.literal_0011 {
+    value = "prompt";
+}
+
+// c1_player_display_build — original source line 77
+data m60.c1_player_display_build.literal_0012 {
+    value = "voice_source";
+}
+
+// c1_player_display_build — original source line 77
+data m60.c1_player_display_build.literal_0013 {
+    value = "words";
+}
+
+// c1_player_display_build — original source line 77
+data m60.c1_player_display_build.literal_0014 {
+    value = "当前案件的问题已答复完毕。";
+}
+
+// c1_player_display_build — original source line 78
+data m60.c1_player_display_build.literal_0015 {
+    value = "presentation";
+}
+
+// c1_player_display_build — original source line 78
+data m60.c1_player_display_build.literal_0016 {
+    value = "当前问题：{question}";
+}
+
+// c1_player_display_build — original source line 78
+data m60.c1_player_display_build.literal_0017 {
+    value = "question";
+}
+
+// c1_player_display_build — original source line 78
+data m60.c1_player_display_build.literal_0018 {
+    value = "current";
+}
+
+// c1_player_display_build — original source line 79
+data m60.c1_player_display_build.literal_0019 {
+    value = ".compare_sole";
+}
+
+// c1_player_display_build — original source line 80
+data m60.c1_player_display_build.literal_0020 {
+    value = "detective";
+}
+
+// c1_player_display_build — original source line 80
+data m60.c1_player_display_build.literal_0021 {
+    value = "马球靴的鞋底纹路与门前灰印相合，靴齿里也嵌着炭灰。这支持它们来自同类鞋底，仍需结合其他痕迹判断。";
+}
+
+// c1_player_display_build — original source line 80
+data m60.c1_player_display_build.literal_0022 {
+    value = "boots_fit";
+}
+
+// c1_player_display_build — original source line 81
+data m60.c1_player_display_build.literal_0023 {
+    value = ".identify-own-lens";
+}
+
+// c1_player_display_build — original source line 82
+data m60.c1_player_display_build.literal_0024 {
+    value = "比对放大镜与石板上的图记";
+}
+
+// c1_player_display_build — original source line 82
+data m60.c1_player_display_build.literal_0025 {
+    value = "你取出风衣口袋里的放大镜，与眼前石板第二行的小图比对。黄铜圆框与短柄的轮廓完全吻合。";
+}
+
+// c1_player_display_build — original source line 82
+data m60.c1_player_display_build.literal_0026 {
+    value = "lens_mine";
+}
+
+// c1_player_display_build — original source line 83
+data m60.c1_player_display_build.literal_0027 {
+    value = ".opening.wear-coat";
+}
+
+// c1_player_display_build — original source line 84
+data m60.c1_player_display_build.literal_0028 {
+    value = "visible-action";
+}
+
+// c1_player_display_build — original source line 84
+data m60.c1_player_display_build.literal_0029 {
+    value = "你披上了这件熟悉的呢料风衣，领口与袖口早已磨平。";
+}
+
+// c1_player_display_build — original source line 84
+data m60.c1_player_display_build.literal_0030 {
+    value = "coat";
+}
+
+// c1_player_display_build — original source line 84
+data m60.c1_player_display_build.literal_0031 {
+    value = "worn_by";
+}
+
+// c1_player_display_build — original source line 89
+data m60.c1_player_display_build.literal_0032 {
+    value = "label_parts";
+}
+
+// c1_player_name_parts — original source line 116
+data m60.c1_player_name_parts.literal {
+    value = "identity";
+}
+
+// c1_player_name_parts — original source line 117
+data m60.c1_player_replay_summary.literal {
+    value = "hypotheses";
+}
+
+// c1_player_replay_summary — original source line 132
+data m60.c1_player_replay_summary.literal_0002 {
+    value = "explained";
+}
+
+// c1_player_replay_summary — original source line 135
+data m60.c1_player_replay_summary.literal_0003 {
+    value = { "identity" = "me"; "voice_source" = "remote_voice"; "words" = "words_bolt"; "trust" = "trust_reason"; };
+}
+
+// c1_player_replay_summary — original source line 137
+data m60.c1_player_replay_summary.return {
+    value = "重演结果：已有解释与现有观察相符；当前问题的理由还未核实。";
+}
+
+// c1_player_replay_summary — original source line 138
+data m60.c1_player_replay_summary.return_0002 {
+    value = "重演结果：已有解释与现有观察相符。";
+}
+
+// c1_player_replay_summary — original source line 140
+data m60.c1_player_replay_summary.literal_0004 {
+    value = "model_budget";
+}
+
+// c1_player_replay_summary — original source line 141
+data m60.c1_player_replay_summary.return_0003 {
+    value = "这次重演还没能把现有观察串在一起。我得重新核对手里的材料。";
+}
+
+// c1_player_replay_summary — original source line 142
+data m60.c1_player_replay_summary.return_0004 {
+    value = "这次重演尚未形成能够完整说明现有观察的解释。";
+}
+
+// dvg_places — original source line 147
+data m60.dvg_intent.literal {
+    value = "awaiting_input";
+}
+
+// dvg_intent — original source line 221
+data m60.dvg_intent.literal_0002 {
+    value = "replay_input";
+}
+
+// dvg_intent — original source line 225
+data m60.dvg_intent.literal_0004 {
+    value = "player_actor";
+}
+
+// dvg_intent — original source line 237
+data m60.dvg_interaction.literal_0004 {
+    value = 5;
+}
+
+// dvg_interaction — original source line 260
+data m60.dvg_presentation.literal {
+    value = "run_config";
+}
+
+// dvg_presentation — original source line 305
+data m60.dvg_presentation.literal_0002 {
+    value = "actor";
+}
+
+// dvg_presentation — original source line 307
+data m60.dvg_presentation.identity_source {
+    value = "unidentified";
+}
+
+// dvg_presentation — original source line 314
+data m60.dvg_presentation.literal_0003 {
+    value = "surface";
+}
+
+// dvg_presentation — original source line 316
+data m60.dvg_presentation.literal_0004 {
+    value = "lines";
+}
+
+// dvg_presentation — original source line 328
+data m60.dvg_presentation.literal_0005 {
+    value = "viewer-mind-or-actually-heard-self-introduction";
+}
+
+// dvg_presentation — original source line 331
+data m60.dvg_presentation.literal_0006 {
+    value = "demon";
+}
+
+// dvg_presentation — original source line 332
+data m60.dvg_presentation.literal_0007 {
+    value = "encountered-voice";
+}
+
+// dvg_presentation — original source line 333
+data m60.dvg_presentation.literal_0008 {
+    value = "applied";
+}
+
+// dvg_presentation — original source line 333
+data m60.dvg_presentation.literal_0009 {
+    value = ".replay";
+}
+
+// dvg_presentation — original source line 337
+data m60.dvg_presentation.literal_0010 {
+    value = "rejected";
+}
+
+// dvg_presentation — original source line 338
+data m60.dvg_presentation.feedback {
+    value = "这次行动未能完成，现场尚不具备执行所需的条件。";
+}
+
+// dvg_presentation — original source line 339
+data m60.dvg_presentation.literal_0011 {
+    value = "failure_class";
+}
+
+// dvg_presentation — original source line 339
+data m60.dvg_presentation.literal_0012 {
+    value = "activity-interrupted";
+}
+
+// dvg_presentation — original source line 340
+data m60.dvg_presentation.literal_0013 {
+    value = "等待被新的动静打断了。";
+}
+
+// dvg_presentation — original source line 345
+data m60.dvg_presentation.literal_0014 {
+    value = "execution-feedback";
+}
+
+// dvg_presentation — original source line 346
+data m60.dvg_presentation.literal_0015 {
+    value = "judgment";
+}
+
+// dvg_presentation — original source line 351
+data m60.dvg_presentation.literal_0016 {
+    value = "answer_accepted";
+}
+
+// dvg_presentation — original source line 352
+data m60.dvg_presentation.literal_0017 {
+    value = "答辩回执：本次答复已被接受。";
+}
+
+// dvg_presentation — original source line 353
+data m60.dvg_presentation.literal_0018 {
+    value = "answer_rejected";
+}
+
+// dvg_presentation — original source line 354
+data m60.dvg_presentation.reasons {
+    value = { "unasked-topic" = "本次答复没有对应当前的问题。"; "insufficient-source" = "本次答复的依据尚未齐备。"; "incomplete-answer" = "本次答复尚不完整。"; "already-accepted-personal-answer" = "这份答复已经登记。"; };
+}
+
+// dvg_presentation — original source line 355
+data m60.dvg_presentation.literal_0019 {
+    value = "答辩回执：";
+}
+
+// dvg_presentation — original source line 355
+data m60.dvg_presentation.literal_0020 {
+    value = "reason";
+}
+
+// dvg_presentation — original source line 355
+data m60.dvg_presentation.literal_0021 {
+    value = "本次答复未被接受。";
+}
+
+// dvg_presentation — original source line 357
+data m60.dvg_presentation.literal_0022 {
+    value = "formal-receipt";
+}
+
+// dvg_presentation — original source line 358
+data m60.dvg_presentation.literal_0023 {
+    value = "visible";
+}
+
+// dvg_presentation — original source line 358
+data m60.dvg_presentation.literal_0024 {
+    value = "action_kind";
+}
+
+// dvg_presentation — original source line 364
+data m60.dvg_presentation.literal_0025 {
+    value = "已抵达";
+}
+
+// dvg_presentation — original source line 364
+data m60.dvg_presentation.literal_0026 {
+    value = "。";
+}
+
+// dvg_presentation — original source line 365
+data m60.dvg_presentation.literal_0027 {
+    value = "execution_event";
+}
+
+// dvg_presentation — original source line 366
+data m60.dvg_presentation.literal_0028 {
+    value = "presentation_kind";
+}
+
+// dvg_presentation — original source line 366
+data m60.dvg_presentation.literal_0029 {
+    value = "environmental-sound";
+}
+
+// dvg_presentation — original source line 367
+data m60.dvg_presentation.literal_0030 {
+    value = "现场声响";
+}
+
+// dvg_presentation — original source line 368
+data m60.dvg_presentation.literal_0031 {
+    value = "actually-audible-event; emitter-identity-not-presented";
+}
+
+// dvg_initial_anchor — original source line 373
+data m60.dvg_person_motion.literal {
+    value = "scheduled_action";
+}
+
+// dvg_person_motion — original source line 393
+data m60.dvg_people.literal {
+    value = "spawn";
+}
+
+// dvg_people — original source line 415
+data m60.dvg_people.literal_0002 {
+    value = "motion";
+}
+
+// dvg_map_access — original source line 425
+data m60.dvg_map_access.literal_0003 {
+    value = "living_hall";
+}
+
+// dvg_replay_comparison — original source line 443
+data m60.dvg_replay_comparison.literal {
+    value = "feature";
+}
+
+// dvg_replay_comparison — original source line 446
+data m60.dvg_replay_comparison.literal_0002 {
+    value = "observed_cells";
+}
+
+// dvg_replay_comparison — original source line 460
+data m60.dvg_replay_comparison.literal_0003 {
+    value = "claims";
+}
+
+// dvg_replay_comparison — original source line 464
+data m60.dvg_replay_comparison.literal_0004 {
+    value = "perception";
+}
+
+// dvg_replay_comparison — original source line 466
+data m60.dvg_replay_comparison.literal_0005 {
+    value = "dependency";
+}
+
+// dvg_replay_comparison — original source line 469
+data m60.dvg_replay_comparison.literal_0006 {
+    value = 2;
+}
+
+// dvg_replay_comparison — original source line 469
+data m60.dvg_replay_comparison.literal_0007 {
+    value = 3;
+}
+
+// dvg_replay_comparison — original source line 470
+data m60.dvg_replay_comparison.literal_0008 {
+    value = "inference";
+}
+
+// dvg_replay_comparison — original source line 476
+data m60.dvg_replay_comparison.literal_0009 {
+    value = "result";
+}
+
+// dvg_replay_comparison — original source line 477
+data m60.dvg_replay_comparison.labels {
+    value = { "match" = "与推演相符。"; "contradiction" = "与推演矛盾。"; "unknown" = "尚无法比对。"; };
+}
+
+// dvg_manual_history_title — original source line 490
+data m60.dvg_manual_history_title.literal {
+    value = "available_when";
+}
+
+// dvg_manual_history_title — original source line 496
+data m60.dvg_manual_history_title.literal_0002 {
+    value = "；";
+}
+
+// dvg_manual_history_title — original source line 497
+data m60.dvg_manual_history_title.literal_0003 {
+    value = "：";
+}
+
+// dvg_manual_history_title — original source line 501
+data m60.dvg_manual_history_title.literal_0004 {
+    value = "本人提交的组合假设：";
+}
+
+// dvg_replay_titles — original source line 504
+data m60.dvg_replay_titles.return {
+    value = { "me" = "闩门者是自己"; "V1_0" = "苏泠当时在卧室"; "V1_1" = "苏泠当时在活动厅"; "V1_2" = "苏泠当时在茶水间"; "V2_0" = "霍铎当时在铜口旁"; "V2_1" = "霍铎当时在卧室"; "V2_2" = "霍铎当时在门厅"; "V3_0" = "呼声经过铜管传来"; "V3_1" = "呼声来自门外的人"; "V4_0" = "原话是闩门，别开"; "V4_1" = "原话是开门"; "V5_0" = "自己选择相信霍铎"; "V5_1" = "自己选择相信苏泠"; "V5_2" = "自己没有相信两人"; "V6_0" = "昨夜之前彼此陌生"; "V6_1" = "昨夜之前彼此熟悉"; "trust" = "信任霍铎速记的理由"; };
+}
+
+// dvg_manual_replay_input — original source line 509
+data m60.dvg_manual_replay_input.literal {
+    value = "manual_input";
+}
+
+// dvg_manual_replay_input — original source line 518
+data m60.dvg_manual_replay_input.literal_0002 {
+    value = "replay_hypothesis_id";
+}
+
+// dvg_manual_replay_input — original source line 519
+data m60.dvg_manual_replay_input.literal_0003 {
+    value = "six-variable-history";
+}
+
+// dvg_manual_replay_input — original source line 525
+data m60.dvg_manual_replay_input.literal_0004 {
+    value = "V6";
+}
+
+// dvg_manual_replay_input — original source line 541
+data m60.dvg_manual_replay_input.literal_0005 {
+    value = "当前暂按彼此陌生推演，尚未查明。";
+}
+
+// dvg_replay — original source line 549
+data m60.dvg_replay.key {
+    value = ["host-replay-v2"];
+}
+
+// dvg_replay_build — original source line 565
+data m60.dvg_replay_build.return {
+    value = { "summary" = ""; "hypotheses" = []; "conflicts" = []; "predictions" = []; };
+}
+
+// dvg_replay_build — original source line 566
+data m60.dvg_replay_build.literal {
+    value = "simulations";
+}
+
+// dvg_replay_build — original source line 572
+data m60.dvg_replay_build.literal_0002 {
+    value = 16;
+}
+
+// dvg_replay_build — original source line 576
+data m60.dvg_replay_build.literal_0003 {
+    value = "source_hypothesis";
+}
+
+// dvg_replay_build — original source line 578
+data m60.dvg_replay_build.literal_0004 {
+    value = "last_manual_replay";
+}
+
+// dvg_replay_build — original source line 581
+data m60.dvg_replay_build.literal_0005 {
+    value = "stale-or-unavailable";
+}
+
+// dvg_replay_build — original source line 584
+data m60.dvg_replay_build.labels {
+    value = { "explained" = "推演与现有观察相符。"; "inconsistent" = "推演与观察矛盾。"; "unknown" = "比对未完成。"; "stale-or-unavailable" = "旧推演待复核。"; "not-simulated" = "尚无推演结果。"; };
+}
+
+// dvg_replay_build — original source line 585
+data m60.dvg_replay_build.literal_0006 {
+    value = "这份推演尚未形成确定结论。";
+}
+
+// dvg_replay_build — original source line 587
+data m60.dvg_replay_build.literal_0007 {
+    value = "重演未完成。";
+}
+
+// dvg_replay_build — original source line 589
+data m60.dvg_replay_build.literal_0008 {
+    value = "旧记录未保存重演的完成状态。";
+}
+
+// dvg_replay_build — original source line 590
+data m60.dvg_replay_build.literal_0009 {
+    value = "该次推演记录的观察比对：";
+}
+
+// dvg_replay_build — original source line 590
+data m60.dvg_replay_build.literal_0010 {
+    value = "comparisons";
+}
+
+// dvg_replay_build — original source line 591
+data m60.dvg_replay_build.literal_0011 {
+    value = "该次推演记录的矛盾：";
+}
+
+// dvg_replay_build — original source line 591
+data m60.dvg_replay_build.literal_0012 {
+    value = "contradictions";
+}
+
+// dvg_replay_build — original source line 602
+data m60.dvg_replay_build.literal_0013 {
+    value = "尚无逐项观察比对。";
+}
+
+// dvg_replay_build — original source line 604
+data m60.dvg_replay_build.literal_0014 {
+    value = "逐项比对沿用旧推演记录。";
+}
+
+// dvg_replay_build — original source line 605
+data m60.dvg_replay_build.literal_0015 {
+    value = "已执行重演 ";
+}
+
+// dvg_replay_build — original source line 608
+data m60.dvg_replay_build.literal_0016 {
+    value = "假设：";
+}
+
+// dvg_replay_build — original source line 608
+data m60.dvg_replay_build.literal_0017 {
+    value = "source_revision";
+}
+
+// dvg_replay_build — original source line 611
+data m60.dvg_replay_build.summary {
+    value = "尚无重演记录。";
+}
+
+// dvg_replay_build — original source line 613
+data m60.dvg_replay_build.literal_0018 {
+    value = "本人已有推演记录：";
+}
+
+// dvg_replay_build — original source line 615
+data m60.dvg_replay_build.literal_0019 {
+    value = "；本页显示：";
+}
+
+// dvg_known_passage_add — original source line 661
+data m60.dvg_known_passage_add.literal {
+    value = "passage_action_ids";
+}
+
+// dvg_known_passage_add — original source line 664
+data m60.dvg_known_passage_add.literal_0002 {
+    value = "own-successful-completion";
+}
+
+// dvg_observed_map_rooms — original source line 670
+data m60.dvg_observed_map_rooms.literal {
+    value = "host-observed-rooms-v1";
+}
+
+// dvg_observed_map_rooms — original source line 678
+data m60.dvg_observed_map_rooms.literal_0002 {
+    value = "observation-batch";
+}
+
+// dvg_subject_map_knowledge — original source line 689
+data m60.dvg_subject_map_knowledge.literal {
+    value = "host-known-map-v5";
+}
+
+// dvg_subject_map_knowledge — original source line 689
+data m60.dvg_subject_map_knowledge.literal_0002 {
+    value = "completed_actions";
+}
+
+// dvg_subject_map_knowledge — original source line 689
+data m60.dvg_subject_map_knowledge.literal_0003 {
+    value = "offered_actions";
+}
+
+// dvg_subject_map_knowledge — original source line 689
+data m60.dvg_subject_map_knowledge.literal_0004 {
+    value = "CognitionFilter";
+}
+
+// dvg_subject_map_knowledge — original source line 693
+data m60.dvg_subject_map_knowledge.knowledge {
+    value = { "rooms" = []; "doors" = []; };
+}
+
+// dvg_snapshot_location — original source line 742
+data m60.dvg_snapshot_location.return {
+    value = { "map" = ""; "room" = ""; "logical_location" = ""; };
+}
+
+// dvg_snapshot_static — original source line 746
+data m60.dvg_snapshot_static.literal {
+    value = "host-identity-v4";
+}
+
+// dvg_host_access — original source line 753
+data m60.dvg_snapshot_dynamic.literal {
+    value = "chapter";
+}
+
+// dvg_snapshot_dynamic — original source line 758
+data m60.dvg_snapshot_dynamic.literal_0002 {
+    value = "development_mode";
+}
+
+// dvg_snapshot_dynamic — original source line 759
+data m60.dvg_snapshot_dynamic.literal_0003 {
+    value = "development_result";
+}
+
+// dvg_recorded_snapshot — original source line 775
+data m60.dvg_recorded_snapshot.literal {
+    value = { "status" = "replay"; "options" = []; };
+}
+
+// dvg_recorded_snapshot — original source line 775
+data m60.dvg_recorded_snapshot.literal_0002 {
+    value = { "summary" = ""; "hypotheses" = []; "conflicts" = []; "predictions" = []; "total_records" = 0; "shown_records" = 0; };
+}
+
+// dvg_chapter_summary — original source line 782
+data m60.dvg_chapter_summary.literal {
+    value = "council_closed";
+}
+
+// dvg_open — original source line 789
+data m60.dvg_run_config.literal_0003 {
+    value = "profile";
+}
+
+// dvg_run_config — original source line 830
+data m60.dvg_run_config.literal_0004 {
+    value = "Standard_Detective";
+}
+
+// dvg_run_config — original source line 830
+data m60.dvg_run_config.literal_0005 {
+    value = "zone_yi";
+}
+
+// dvg_run_config — original source line 830
+data m60.dvg_configure_actor_policies.literal {
+    value = "cognitive_initialization";
+}
+
+// dvg_configure_actor_policies — original source line 852
+data m60.dvg_configure_actor_policies.literal_0002 {
+    value = "allow_manipulation_candidates";
+}
+
+// dvg_configure_actor_policies — original source line 858
+data m60.dvg_configure_actor_policies.literal_0003 {
+    value = "manipulation";
+}
+
+// dvg_configure_actor_policies — original source line 859
+data m60.dvg_configure_actor_policies.literal_0004 {
+    value = "manual_only";
+}
+
+// dvg_configure_initial_room — original source line 878
+data m60.dvg_open_config.literal {
+    value = "none";
+}
+
+// dvg_open_config — original source line 918
+data m60.dvg_open_config.literal_0002 {
+    value = "unseen_dormitories";
+}
+
+// dvg_open_config — original source line 918
+data m60.dvg_open_config.literal_0003 {
+    value = "brush-off";
+}
+
+// dvg_open_config — original source line 927
+data m60.dvg_open_config.literal_0004 {
+    value = 1440;
+}
+
+// dvg_open_config — original source line 928
+data m60.dvg_open_config.literal_0005 {
+    value = "DV production session; host execution receipts; offscreen non-movement uses DV world laws";
+}
+
+// dvg_open_config — original source line 931
+data m60.dvg_open_config.literal_0006 {
+    value = "enabled";
+}
+
+// dvg_extend — original source line 948
+data m60.dvg_extend.literal {
+    value = "chapter_content_available";
+}
+
+// dvg_extend — original source line 948
+data m60.dvg_extend.literal_0002 {
+    value = "chapter-state-inheritance";
+}
+
+// dvg_refresh_goals — original source line 962
+data m60.dvg_refresh_goals.literal {
+    value = "campaign_goals_revision";
+}
+
+// dvg_refresh_goals — original source line 962
+data m60.dvg_refresh_goals.literal_0002 {
+    value = "campaign_goals_time";
+}
+
+// dvg_refresh_goals — original source line 962
+data m60.dvg_refresh_goals.literal_0003 {
+    value = "campaign_goals_chapter";
+}
+
+// dvg_refresh_goals — original source line 971
+data m60.dvg_refresh_goals.literal_0004 {
+    value = "selma";
+}
+
+// dvg_refresh_goals — original source line 971
+data m60.dvg_refresh_goals.literal_0005 {
+    value = "astral";
+}
+
+// dvg_refresh_goals — original source line 971
+data m60.dvg_refresh_goals.literal_0006 {
+    value = "west_passage_checked";
+}
+
+// dvg_refresh_goals — original source line 971
+data m60.dvg_refresh_goals.literal_0007 {
+    value = "mora";
+}
+
+// dvg_refresh_goals — original source line 971
+data m60.dvg_refresh_goals.literal_0008 {
+    value = "logistics";
+}
+
+// dvg_refresh_goals — original source line 971
+data m60.dvg_refresh_goals.literal_0009 {
+    value = "observation_complete";
+}
+
+// dvg_prepare — original source line 987
+data m60.dvg_prepare.literal {
+    value = "awaiting_player";
+}
+
+// dvg_prepare — original source line 988
+data m60.dvg_prepare_background.literal_0002 {
+    value = "decision_time";
+}
+
+// dvg_prepare_background — original source line 1034
+data m60.dvg_prepare_background.literal_0004 {
+    value = "pending_heard";
+}
+
+// dvg_prepare_background — original source line 1035
+data m60.dvg_dev_time.literal {
+    value = "时间增量须为非负数。";
+}
+
+// dvg_dev_time — original source line 1096
+data m60.dvg_dev_time.literal_0002 {
+    value = "目标时刻超过本会话声明的时间预算。";
+}
+
+// dvg_dev_time — original source line 1098
+data m60.dvg_dev_time.literal_0003 {
+    value = "development_command";
+}
+
+// dvg_dev_time — original source line 1098
+data m60.dvg_dev_time.literal_0004 {
+    value = "development-formal-model";
+}
+
+// dvg_dev_time — original source line 1108
+data m60.dvg_dev_time.literal_0005 {
+    value = "stopped";
+}
+
+// dvg_dev_time — original source line 1108
+data m60.dvg_dev_time.literal_0006 {
+    value = "行动预算已用尽，推进停在当前时刻。";
+}
+
+// dvg_dev_time — original source line 1141
+data m60.dvg_dev_time.literal_0007 {
+    value = "时间推进完成。";
+}
+
+// dvg_dev_teleport — original source line 1146
+data m60.dvg_dev_teleport.literal {
+    value = "tp";
+}
+
+// dvg_dev_teleport — original source line 1146
+data m60.dvg_dev_teleport.literal_0002 {
+    value = "没有这个逻辑地点。";
+}
+
+// dvg_dev_teleport — original source line 1149
+data m60.dvg_dev_teleport.literal_0003 {
+    value = "当前角色的在途行动结算后可以移动。";
+}
+
+// dvg_dev_teleport — original source line 1153
+data m60.dvg_dev_teleport.literal_0004 {
+    value = "development-command";
+}
+
+// dvg_dev_teleport — original source line 1153
+data m60.dvg_dev_teleport.literal_0005 {
+    value = "explicit-development-session";
+}
+
+// dvg_dev_teleport — original source line 1154
+data m60.dvg_dev_teleport.literal_0006 {
+    value = "development.tp.";
+}
+
+// dvg_dev_teleport — original source line 1162
+data m60.dvg_dev_teleport.literal_0007 {
+    value = "idle_guard";
+}
+
+// dvg_dev_teleport — original source line 1164
+data m60.dvg_dev_teleport.literal_0008 {
+    value = "角色已移动至目标地点。";
+}
+
+// dvg_dev_command — original source line 1168
+data m60.dvg_dev_command.literal {
+    value = "请通过开发模式打开会话。";
+}
+
+// dvg_dev_command — original source line 1170
+data m60.dvg_dev_command.literal_0002 {
+    value = "请等待当前现场行动完成。";
+}
+
+// dvg_dev_command — original source line 1180
+data m60.dvg_dev_command.literal_0003 {
+    value = "请输入 time +分钟数。";
+}
+
+// dvg_dev_command — original source line 1183
+data m60.dvg_dev_command.literal_0004 {
+    value = "该命令由控制台的查看或行动入口处理。";
+}
+
+// dvg_observer_directory — original source line 1201
+data m60.dvg_observer_directory.literal {
+    value = "player-observer-directory-v1";
+}
+
+// dvg_observer_directory — original source line 1210
+data m60.dvg_observer_directory.literal_0002 {
+    value = "未记录名称";
+}
+
+// dvg_observer_title — original source line 1224
+data m60.dvg_observer_title.literal {
+    value = "host-observer-title-v2";
+}
+
+// dvg_preview_room — original source line 1231
+data m60.dvg_preview_room.literal {
+    value = "host-room-v3";
+}
+
+// dvg_preview_location — original source line 1240
+data m60.dvg_preview_location.fields {
+    value = ["worn_by", "carrier", "held_by", "holder"];
+}
+
+// dvg_preview_add_member — original source line 1272
+data m60.dvg_preview_add_member.literal {
+    value = "members";
+}
+
+// dvg_preview_add_member — original source line 1296
+data m60.dvg_preview_add_member.literal_0002 {
+    value = "is_current";
+}
+
+// dvg_preview_name — original source line 1308
+data m60.dvg_pending_self_names.literal {
+    value = "heard-self-introduction-display-v1";
+}
+
+// dvg_pending_self_names — original source line 1368
+data m60.dvg_pending_self_names.literal_0002 {
+    value = "自称";
+}
+
+// dvg_preview_actor_object — original source line 1391
+data m60.dvg_preview_actor_object.literal {
+    value = "observer-actor-binding-v1";
+}
+
+// dvg_preview_index — original source line 1419
+data m60.dvg_preview_index.literal {
+    value = "host-world-member-index-v5";
+}
+
+// dvg_preview_index — original source line 1423
+data m60.dvg_preview_index.literal_0002 {
+    value = "observer-index-start";
+}
+
+// dvg_preview_index — original source line 1443
+data m60.dvg_preview_index.literal_0003 {
+    value = "observer-index-end";
+}
+
+// dvg_preview_members — original source line 1463
+data m60.dvg_preview_members.literal {
+    value = "observer-members-start";
+}
+
+// dvg_preview_members — original source line 1482
+data m60.dvg_preview_members.literal_0002 {
+    value = ["person", "object", "item", "container", "furniture", "equipment", "door", "passage"];
+}
+
+// dvg_preview_members — original source line 1485
+data m60.dvg_preview_members.fallback {
+    value = "物品";
+}
+
+// dvg_preview_members — original source line 1495
+data m60.dvg_preview_members.literal_0003 {
+    value = "本人";
+}
+
+// dvg_preview_members — original source line 1510
+data m60.dvg_preview_members.literal_0004 {
+    value = "owner";
+}
+
+// dvg_preview_members — original source line 1515
+data m60.dvg_preview_members.literal_0005 {
+    value = "未具名者";
+}
+
+// dvg_preview_members — original source line 1520
+data m60.dvg_preview_members.literal_0006 {
+    value = "observer-members-end";
+}
+
+// dvg_preview_site_descriptor — original source line 1525
+data m60.dvg_preview_sites.literal {
+    value = "observer-sites-start";
+}
+
+// dvg_preview_sites — original source line 1550
+data m60.dvg_preview_sites.literal_0002 {
+    value = "observer-sites-end";
+}
+
+// dvg_preview_action_sites — original source line 1556
+data m60.dvg_preview_action_sites.literal {
+    value = "host-action-sites-v2";
+}
+
+// dvg_preview_action_sites — original source line 1567
+data m60.dvg_preview_action_sites.literal_0002 {
+    value = "required_room";
+}
+
+// dvg_preview_action_sites — original source line 1569
+data m60.dvg_preview_action_sites.literal_0003 {
+    value = "precondition";
+}
+
+// dvg_preview_action_routes — original source line 1578
+data m60.dvg_preview_action_routes.key {
+    value = ["host-action-routes-v1"];
+}
+
+// dvg_preview_door_gates — original source line 1594
+data m60.dvg_preview_subject.literal {
+    value = "host-subject-geometry-v7";
+}
+
+// dvg_preview_subject_geometry_known — original source line 1695
+data m60.dvg_preview_subject_geometry_known.literal {
+    value = { "members" = []; "is_current" = false; };
+}
+
+// dvg_preview_subject_geometry_known — original source line 1711
+data m60.dvg_preview_subject_geometry_known.place {
+    value = { "map" = ""; "room" = ""; "label" = ""; };
+}
+
+// dvg_observer_options — original source line 1769
+data m60.dvg_observer_options.literal {
+    value = "host-current-options-v5";
+}
+
+// dvg_observer_options_build — original source line 1776
+data m60.dvg_observer_options_build.literal {
+    value = "observer-options-start";
+}
+
+// dvg_observer_options_build — original source line 1779
+data m60.dvg_observer_options_build.literal_0002 {
+    value = "observer-options-end";
+}
+
+// dvg_observer_options_build — original source line 1796
+data m60.dvg_observer_options_build.literal_0003 {
+    value = "not-evaluated";
+}
+
+// dvg_observer_options_build — original source line 1799
+data m60.dvg_observer_options_build.literal_0004 {
+    value = "immediate";
+}

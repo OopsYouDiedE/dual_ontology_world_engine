@@ -1,0 +1,49 @@
+[gd_resource type="VisualShader" load_steps=9 format=3]
+
+[sub_resource type="VisualShaderNodeInput" id="vertex"]
+input_name = "vertex"
+[sub_resource type="VisualShaderNodeInput" id="uv"]
+input_name = "uv"
+[sub_resource type="VisualShaderNodeInput" id="time"]
+input_name = "time"
+[sub_resource type="VisualShaderNodeFloatParameter" id="wind"]
+parameter_name = "wind_strength"
+default_value_enabled = true
+default_value = 0.12
+[sub_resource type="VisualShaderNodeExpression" id="sway"]
+expression = "float w = uv.y * uv.y; float phase = pos.x * 2.7 + pos.z * 3.1; float gust = sin(t * 1.3 + phase) + 0.3 * sin(t * 2.8 + phase * 1.7); moved = pos + vec3(gust * strength * w, 0.0, gust * strength * 0.35 * w);"
+[sub_resource type="VisualShaderNodeColorParameter" id="color"]
+parameter_name = "leaf_color"
+default_value_enabled = true
+default_value = Color(0.18, 0.38, 0.12, 1)
+[sub_resource type="VisualShaderNodeExpression" id="surface"]
+expression = "albedo = tint; rough = 0.82; back = tint * 0.14;"
+[sub_resource type="VisualShaderNodeInput" id="frag_uv"]
+input_name = "uv"
+
+[resource]
+flags/cull_disabled = true
+nodes/vertex/2/node = SubResource("vertex")
+nodes/vertex/2/position = Vector2(-600, -80)
+nodes/vertex/3/node = SubResource("uv")
+nodes/vertex/3/position = Vector2(-600, 60)
+nodes/vertex/4/node = SubResource("time")
+nodes/vertex/4/position = Vector2(-600, 200)
+nodes/vertex/5/node = SubResource("wind")
+nodes/vertex/5/position = Vector2(-600, 340)
+nodes/vertex/6/node = SubResource("sway")
+nodes/vertex/6/position = Vector2(-280, 0)
+nodes/vertex/6/input_ports = "0,4,pos;1,3,uv;2,0,t;3,0,strength;"
+nodes/vertex/6/output_ports = "0,4,moved;"
+nodes/vertex/6/expression = "float w = uv.y * uv.y; float phase = pos.x * 2.7 + pos.z * 3.1; float gust = sin(t * 1.3 + phase) + 0.3 * sin(t * 2.8 + phase * 1.7); moved = pos + vec3(gust * strength * w, 0.0, gust * strength * 0.35 * w);"
+nodes/vertex/0/position = Vector2(240, 0)
+nodes/vertex/connections = PackedInt32Array(2, 0, 6, 0, 3, 0, 6, 1, 4, 0, 6, 2, 5, 0, 6, 3, 6, 0, 0, 0)
+nodes/fragment/2/node = SubResource("color")
+nodes/fragment/2/position = Vector2(-500, 0)
+nodes/fragment/3/node = SubResource("surface")
+nodes/fragment/3/position = Vector2(-180, 0)
+nodes/fragment/3/input_ports = "0,4,tint;"
+nodes/fragment/3/output_ports = "0,4,albedo;1,0,rough;2,4,back;"
+nodes/fragment/3/expression = "albedo = tint; rough = 0.82; back = tint * 0.14;"
+nodes/fragment/0/position = Vector2(260, 0)
+nodes/fragment/connections = PackedInt32Array(2, 0, 3, 0, 3, 0, 0, 0, 3, 1, 0, 3, 3, 2, 0, 18)

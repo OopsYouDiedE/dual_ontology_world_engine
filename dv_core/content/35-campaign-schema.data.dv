@@ -1,0 +1,588 @@
+schema "dv-script-v1";
+
+// Pure authored values. No functions, callbacks, loops or executable AST.
+
+// cognitive_erosion — original source line 8
+data m35.cognitive_erosion.literal {
+    value = "Erosion needs declared provenance";
+}
+
+// campaign_evidence_ref — original source line 12
+data m35.campaign_evidence_ref.literal {
+    value = "cognition";
+}
+
+// campaign_local_object — original source line 18
+data m35.campaign_local_object.literal {
+    value = "perceived";
+}
+
+// campaign_local_object — original source line 18
+data m35.campaign_local_object.literal_0002 {
+    value = { "state" = []; "identity" = []; };
+}
+
+// campaign_install_visible_objects — original source line 52
+data m35.campaign_install_visible_objects.literal {
+    value = "notice_visible_objects";
+}
+
+// campaign_object_descriptor — original source line 58
+data m35.campaign_object_descriptor.literal {
+    value = "campaign-object-descriptor-v3";
+}
+
+// campaign_object_descriptor_build — original source line 68
+data m35.campaign_object_descriptor_build.names {
+    value = { "opening.cabinet" = "领取柜"; "opening.silver" = "银元"; "opening.testpiece" = "金属试件"; "opening.audition" = "试听机"; "opening.tea" = "茶具"; "c2.granary" = "粮仓"; "c2.counter" = "配给台"; "c2.ledger" = "公物台账"; "c2.bowl" = "粥碗"; "c2.kitchen" = "炉灶"; "c2.meter" = "源质计"; "c2.seal" = "印章"; };
+}
+
+// campaign_object_descriptor_build — original source line 70
+data m35.campaign_object_descriptor_build.literal {
+    value = ["name", "location"];
+}
+
+// campaign_object_descriptor_build — original source line 71
+data m35.campaign_object_descriptor_build.sites {
+    value = { "site:bed:R05" = "床"; "site:bed:R06" = "床"; "site:bed:R07" = "床"; "site:bed:R08" = "床"; "site:shelf" = "书架"; "site:slate" = "长桌与石板"; "site:transmitter" = "传声铜口"; "site:door-floor" = "门边地面"; "site:score" = "书桌与乐谱"; "site:pantry-counter" = "备餐柜与水槽"; };
+}
+
+// campaign_object_descriptor_build — original source line 74
+data m35.campaign_object_descriptor_build.literal_0002 {
+    value = "demon";
+}
+
+// campaign_object_descriptor_build — original source line 76
+data m35.campaign_object_descriptor_build.people {
+    value = ["detective", "huo", "shen", "su"];
+}
+
+// campaign_object_descriptor_build — original source line 79
+data m35.campaign_object_descriptor_build.literal_0003 {
+    value = "opening.slot.";
+}
+
+// campaign_object_descriptor_build — original source line 80
+data m35.campaign_object_descriptor_build.literal_0004 {
+    value = "的标签柜";
+}
+
+// campaign_object_descriptor_build — original source line 81
+data m35.campaign_object_descriptor_build.literal_0005 {
+    value = "opening.cup.";
+}
+
+// campaign_object_descriptor_build — original source line 82
+data m35.campaign_object_descriptor_build.return {
+    value = { "map_kind" = "object"; "map_title" = "茶杯"; };
+}
+
+// campaign_object_descriptor_build — original source line 84
+data m35.campaign_object_descriptor_build.groups {
+    value = ["living", "contract", "astral", "logistics"];
+}
+
+// campaign_object_descriptor_build — original source line 87
+data m35.campaign_object_descriptor_build.literal_0006 {
+    value = "c2.litter.";
+}
+
+// campaign_object_descriptor_build — original source line 88
+data m35.campaign_object_descriptor_build.return_0002 {
+    value = { "map_kind" = "object"; "map_title" = "废纸篓"; };
+}
+
+// campaign_object_descriptor_build — original source line 90
+data m35.campaign_object_descriptor_build.return_0003 {
+    value = { "map_kind" = "record"; "map_title" = ""; };
+}
+
+// campaign_location_title — original source line 93
+data m35.campaign_location_title.literal {
+    value = "campaign-location-title-v2";
+}
+
+// campaign_location_title_build — original source line 100
+data m35.campaign_location_title_build.titles {
+    value = {"R05":"乙区 · 卧室 R-05","R06":"乙区 · 卧室 R-06","R07":"乙区 · 卧室 R-07","R08":"乙区 · 卧室 R-08","hall":"乙区 · 活动厅","foyer":"乙区 · 门厅","corridor":"乙区 · 宿舍走廊","pantry":"乙区 · 备餐间","living_hall":"主楼2F · J公共起居厅","washroom":"生活翼 · 盥洗室","central_hall":"主楼1F · J中央交会处","main_dining":"主楼1F · F03食堂","lecture":"主楼 · 讲堂","logistics":"后勤院 · 食堂","clinic":"白塔院 · 诊疗所","greenhouse":"后勤院 · 温室","resonance_hall":"星仪院 · 共鸣厅","resonance":"星仪院 · 共鸣厅","quiet_room":"星仪院 · 沉静室","white_tower_safe":"白塔院 · 安全端","outdoor_meter":"室外 · 仪器阵","outdoor_high":"室外 · 高地通路","outdoor_alley":"室外 · 夹道","oath_court":"室外 · 誓约庭","threshold.contract":"生活翼 · 甲区门外","threshold.astral":"生活翼 · 丙区门外","threshold.logistics":"生活翼 · 丁区门外","dorm.contract":"甲区 · 活动厅","dorm.astral":"丙区 · 活动厅","dorm.logistics":"丁区 · 活动厅","dorm.yi":"乙区 · 活动厅","main1f_f01":"主楼1F · F01主厅","main1f_f04":"主楼1F · F04账册室","main1f_f05":"主楼1F · F05厨房与工具柜","main1f_f06":"主楼1F · F06安全侧阀门","main1f_f13":"主楼1F · F13周转口粮柜","main2f_t04":"主楼2F · T04文献教室","main2f_s":"主楼2F · 南主楼梯平台","main1f_s":"主楼1F · 南主楼梯平台","main1f_a":"主楼1F · A西廊口","main1f_w":"主楼1F · W西廊交会处","main2f_a":"主楼2F · A西廊口","main1f_p_f04":"主楼1F · F04门外西廊","main1f_p_f13":"主楼1F · F13门外西廊","main1f_p_f05":"主楼1F · F05门外西廊","main2f_p_t04":"主楼2F · T04门外西廊"};
+}
+
+// campaign_location_title_build — original source line 101
+data m35.campaign_location_title_build.literal {
+    value = "现场";
+}
+
+// campaign_location_region — original source line 104
+data m35.campaign_location_region.literal {
+    value = "campaign-location-region-v2";
+}
+
+// campaign_location_region_build — original source line 112
+data m35.campaign_location_region_build.regions {
+    value = ["甲区", "乙区", "丙区", "丁区", "生活翼", "主楼", "后勤院", "白塔院", "室外"];
+}
+
+// campaign_location_region_build — original source line 118
+data m35.campaign_location_region_build.return {
+    value = "其他";
+}
+
+// campaign_action — original source line 121
+data m35.campaign_action.literal {
+    value = "law";
+}
+
+// campaign_intent_action — original source line 125
+data m35.campaign_intent_action.literal {
+    value = "label";
+}
+
+// campaign_authorized_speech — original source line 134
+data m35.campaign_authorized_speech.literal {
+    value = "authority_truth_gate";
+}
+
+// campaign_authorized_speech — original source line 134
+data m35.campaign_authorized_speech.literal_0002 {
+    value = "contract-8";
+}
+
+// campaign_authorized_speech — original source line 134
+data m35.campaign_authorized_speech.literal_0003 {
+    value = "docs/design-standard.md";
+}
+
+// campaign_authorized_speech — original source line 134
+data m35.campaign_authorized_speech.literal_0004 {
+    value = 462;
+}
+
+// campaign_authorized_speech — original source line 134
+data m35.campaign_authorized_speech.literal_0005 {
+    value = "may-not-deceive-students";
+}
+
+// campaign_case_ref — original source line 137
+data m35.campaign_case_ref.literal {
+    value = "case.";
+}
+
+// campaign_first_night_ref — original source line 143
+data m35.campaign_first_night_ref.literal {
+    value = "night.first";
+}
+
+// campaign_without_clock — original source line 152
+data m35.campaign_without_clock.literal {
+    value = ["c2.weather"];
+}
+
+// campaign_future_goal_pending — original source line 156
+data m35.campaign_future_goal_pending.literal {
+    value = "achieve";
+}
+
+// campaign_future_goal_pending — original source line 158
+data m35.campaign_future_goal_pending.literal_0002 {
+    value = "communicate";
+}
+
+// campaign_future_goal_pending — original source line 159
+data m35.campaign_future_goal_pending.literal_0003 {
+    value = "method_id";
+}
+
+// campaign_future_goal_pending — original source line 160
+data m35.campaign_future_goal_pending.literal_0004 {
+    value = "owned_decision";
+}
+
+// campaign_future_goal_pending — original source line 162
+data m35.campaign_future_goal_pending.literal_0005 {
+    value = "completed_actions";
+}
+
+// campaign_future_goal_pending — original source line 163
+data m35.campaign_future_goal_pending.literal_0006 {
+    value = "know";
+}
+
+// campaign_future_goal_pending — original source line 163
+data m35.campaign_future_goal_pending.literal_0007 {
+    value = "evidence";
+}
+
+// campaign_index_goal_window — original source line 170
+data m35.campaign_index_goal_window.literal {
+    value = "available_when";
+}
+
+// campaign_index_goal_window — original source line 171
+data m35.campaign_index_goal_window.key {
+    value = ["c1n_goal_window-v2"];
+}
+
+// campaign_body — original source line 187
+data m35.campaign_body.literal {
+    value = "c2.person.";
+}
+
+// campaign_clock — original source line 193
+data m35.campaign_clock.literal {
+    value = "campaign.clock";
+}
+
+// campaign_clock — original source line 193
+data m35.campaign_clock.literal_0002 {
+    value = "minute";
+}
+
+// campaign_access — original source line 196
+data m35.campaign_access.literal {
+    value = "campaign.access";
+}
+
+// campaign_window — original source line 202
+data m35.campaign_window.literal {
+    value = 1440;
+}
+
+// campaign_people — original source line 206
+data m35.campaign_people.return {
+    value = ["detective", "huo", "shen", "su", "lucian", "gu", "quer", "ward", "selma", "ruan", "elena", "moran", "veronica", "bertrand", "margaret", "mora"];
+}
+
+// campaign_simulation_config — original source line 219
+data m35.campaign_simulation_config.literal {
+    value = { "actor" = "demon"; "index" = 16; "protected" = false; };
+}
+
+// campaign_simulation_config — original source line 221
+data m35.campaign_simulation_config.weather {
+    value = ["ash_falling", "wind", "daylight", "severe_air", "earthquake_recent"];
+}
+
+// campaign_simulation_config — original source line 222
+data m35.campaign_simulation_config.literal_0002 {
+    value = "c2.weather";
+}
+
+// campaign_simulation_config — original source line 225
+data m35.campaign_simulation_config.literal_0003 {
+    value = "weather.";
+}
+
+// campaign_simulation_config — original source line 227
+data m35.campaign_simulation_config.literal_0004 {
+    value = "c2.meter";
+}
+
+// campaign_simulation_config — original source line 228
+data m35.campaign_simulation_config.literal_0005 {
+    value = "meter.safe";
+}
+
+// campaign_simulation_config — original source line 228
+data m35.campaign_simulation_config.literal_0006 {
+    value = "safe";
+}
+
+// campaign_simulation_config — original source line 232
+data m35.campaign_simulation_config.literal_0007 {
+    value = ".erosion_exposure";
+}
+
+// campaign_simulation_config — original source line 232
+data m35.campaign_simulation_config.literal_0008 {
+    value = "erosion_exposure";
+}
+
+// campaign_simulation_config — original source line 233
+data m35.campaign_simulation_config.literal_0009 {
+    value = ".alive";
+}
+
+// campaign_simulation_config — original source line 233
+data m35.campaign_simulation_config.literal_0010 {
+    value = "alive";
+}
+
+// campaign_simulation_config — original source line 235
+data m35.campaign_simulation_config.literal_0011 {
+    value = "simulation_declarations";
+}
+
+// campaign_simulation_config — original source line 236
+data m35.campaign_simulation_config.literal_0012 {
+    value = "facts";
+}
+
+// campaign_person_source — original source line 244
+data m35.campaign_person_source.rows {
+    value = [["detective", "01_侦探.story", 11], ["huo", "02_霍铎.story", 48], ["shen", "03_沈鼎.story", 45], ["su", "04_苏泠.story", 43], ["lucian", "05_卢西安.story", 25], ["gu", "06_顾平章.story", 25], ["quer", "07_雀儿.story", 27], ["ward", "08_沃德.story", 24], ["selma", "09_赛尔玛.story", 25], ["ruan", "10_阮清越.story", 24], ["elena", "11_伊莲娜.story", 24], ["moran", "12_莫兰.story", 23], ["veronica", "13_维罗妮卡.story", 25], ["bertrand", "14_贝尔特朗.story", 26], ["margaret", "15_玛格丽特.story", 27], ["mora", "16_茉拉.story", 26]];
+}
+
+// campaign_person_source — original source line 248
+data m35.campaign_person_source.literal {
+    value = "godot_csharp/scenes/Awakening/Script/story/生态/人物/";
+}
+
+// campaign_person_source — original source line 248
+data m35.campaign_person_source.literal_0002 {
+    value = ".personal-values";
+}
+
+// campaign_person_source — original source line 250
+data m35.campaign_person_source.literal_0003 {
+    value = "unknown-person-profile-needs-source";
+}
+
+// campaign_profile — original source line 254
+data m35.campaign_profile.literal {
+    value = "Missing character definition: ";
+}
+
+// campaign_profile — original source line 255
+data m35.campaign_profile.literal_0002 {
+    value = "chapter-two-role-groups";
+}
+
+// campaign_surface_action — original source line 263
+data m35.campaign_surface_action.literal {
+    value = "surface";
+}
+
+// campaign_goal — original source line 266
+data m35.campaign_goal.literal {
+    value = "personal";
+}
+
+// campaign_observation_goal — original source line 269
+data m35.campaign_observation_goal.literal {
+    value = "perception";
+}
+
+// campaign_contract_text — original source line 272
+data m35.campaign_contract_text.literal {
+    value = "campaign_contract_text";
+}
+
+// campaign_handoff_fields — original source line 279
+data m35.campaign_handoff_fields.literal {
+    value = "opening.contracts";
+}
+
+// campaign_handoff_fields — original source line 279
+data m35.campaign_handoff_fields.literal_0002 {
+    value = "opening.person.";
+}
+
+// campaign_speech — original source line 282
+data m35.campaign_speech.literal {
+    value = "当前发言";
+}
+
+// campaign_public_methods — original source line 289
+data m35.campaign_public_methods.literal {
+    value = "purpose_refs";
+}
+
+// campaign_public_methods — original source line 290
+data m35.campaign_public_methods.literal_0002 {
+    value = "once";
+}
+
+// campaign_public_methods — original source line 291
+data m35.campaign_public_methods.literal_0003 {
+    value = "repeatable";
+}
+
+// sims_autonomy_source — original source line 301
+data m35.sims_autonomy_source.literal {
+    value = "dv_core/modules/35-campaign-schema.dv";
+}
+
+// sims_autonomy_source — original source line 301
+data m35.sims_autonomy_source.literal_0002 {
+    value = 418;
+}
+
+// sims_autonomy_source — original source line 301
+data m35.sims_autonomy_source.literal_0003 {
+    value = "sims-autonomy-player-visible.";
+}
+
+// sims_player_visible_rooms — original source line 304
+data m35.sims_implicit_habits.literal {
+    value = "implicit_habits";
+}
+
+// sims_station_advertisements — original source line 323
+data m35.sims_station_advertisements.literal_0004 {
+    value = "living_hall";
+}
+
+// sims_station_advertisements — original source line 338
+data m35.sims_brush_off_rows.literal {
+    value = "ward";
+}
+
+// sims_brush_off_rows — original source line 353
+data m35.sims_brush_off_rows.literal_0002 {
+    value = "brush-off.closed-doors";
+}
+
+// sims_brush_off_rows — original source line 354
+data m35.sims_brush_off_rows.literal_0003 {
+    value = 960;
+}
+
+// sims_brush_off_rows — original source line 355
+data m35.sims_brush_off_rows.literal_0004 {
+    value = 1105;
+}
+
+// sims_brush_off_rows — original source line 356
+data m35.sims_brush_off_rows.literal_0005 {
+    value = "done.night.ask-closed-doors";
+}
+
+// sims_brush_off_rows — original source line 357
+data m35.sims_brush_off_rows.literal_0006 {
+    value = { "speaker" = "detective"; "action_id" = "night.ask-closed-doors"; };
+}
+
+// sims_brush_off_rows — original source line 358
+data m35.sims_brush_off_rows.literal_0007 {
+    value = "简短搪塞丙丁两区的近况";
+}
+
+// sims_brush_off_rows — original source line 359
+data m35.sims_brush_off_rows.literal_0008 {
+    value = "方才代管者已在铜口交代过了：丙区西夹道尚有源质余气，门内人并不知情，依《契约》第五条暂不开闸；丁区有人高烧清创，从内侧拧死了死锁与传声止音阀。等明日散尽余气再说吧。";
+}
+
+// sims_brush_off_rows — original source line 362
+data m35.sims_brush_off_rows.literal_0009 {
+    value = "detective";
+}
+
+// sims_brush_off_rows — original source line 363
+data m35.sims_brush_off_rows.literal_0010 {
+    value = "ask-unseen-contract";
+}
+
+// sims_brush_off_rows — original source line 364
+data m35.sims_brush_off_rows.literal_0011 {
+    value = 780;
+}
+
+// sims_brush_off_rows — original source line 366
+data m35.sims_brush_off_rows.literal_0012 {
+    value = "quer";
+}
+
+// sims_brush_off_rows — original source line 368
+data m35.sims_brush_off_rows.literal_0013 {
+    value = "询问甲区寝室内先前的经过";
+}
+
+// sims_brush_off_rows — original source line 369
+data m35.sims_brush_off_rows.literal_0014 {
+    value = "你们在甲区寝室里头，先前都查了些什么？";
+}
+
+// sims_brush_off_rows — original source line 373
+data m35.sims_brush_off_rows.literal_0015 {
+    value = "brush-off.quer-contract";
+}
+
+// sims_brush_off_rows — original source line 376
+data m35.sims_brush_off_rows.literal_0016 {
+    value = "done.night.ask-unseen-contract";
+}
+
+// sims_brush_off_rows — original source line 377
+data m35.sims_brush_off_rows.literal_0017 {
+    value = { "speaker" = "detective"; "action_id" = "night.ask-unseen-contract"; };
+}
+
+// sims_brush_off_rows — original source line 378
+data m35.sims_brush_off_rows.literal_0018 {
+    value = "随口搪塞甲区寝室的琐事";
+}
+
+// sims_brush_off_rows — original source line 379
+data m35.sims_brush_off_rows.literal_0019 {
+    value = "嗨，关在屋里闷都闷死了，无非是翻翻旧物、拌几句嘴，我就顺手拿钢丝把门挑开出来透透气呗！里头那些鸡毛蒜皮的事，有什么好细说的。";
+}
+
+// sims_brush_off_rows — original source line 382
+data m35.sims_brush_off_rows.literal_0020 {
+    value = "lucian";
+}
+
+// sims_brush_off_rows — original source line 383
+data m35.sims_brush_off_rows.literal_0021 {
+    value = "brush-off.lucian-contract";
+}
+
+// sims_brush_off_rows — original source line 388
+data m35.sims_brush_off_rows.literal_0022 {
+    value = "冷淡敷衍甲区室内的问答";
+}
+
+// sims_brush_off_rows — original source line 389
+data m35.sims_brush_off_rows.literal_0023 {
+    value = "不过是按铜口定下的规矩报了个名字、递了句答复罢了。内室那些杂乱口角，不提也罢。";
+}
+
+// sims_brush_off_rows — original source line 393
+data m35.sims_brush_off_rows.literal_0024 {
+    value = "brush-off.astral-door";
+}
+
+// sims_brush_off_rows — original source line 394
+data m35.sims_brush_off_rows.literal_0025 {
+    value = 750;
+}
+
+// sims_brush_off_rows — original source line 399
+data m35.sims_brush_off_rows.literal_0026 {
+    value = "走近紧闭的丙区隔离门";
+}
+
+// sims_brush_off_rows — original source line 400
+data m35.sims_brush_off_rows.literal_0027 {
+    value = "丙区气闸门紧闭。旁侧铜口只留下一句简短的例行告示：‘西夹道余气未散，门内人不知外侧险情；依第五条，明晨散尽前概不放行。’";
+}
+
+// sims_brush_off_rows — original source line 404
+data m35.sims_brush_off_rows.literal_0028 {
+    value = "brush-off.logistics-door";
+}
+
+// sims_brush_off_rows — original source line 410
+data m35.sims_brush_off_rows.literal_0029 {
+    value = "走近反锁的丁区隔离门";
+}
+
+// sims_brush_off_rows — original source line 411
+data m35.sims_brush_off_rows.literal_0030 {
+    value = "丁区厚门从内侧拧死了防侵死锁，门边传声管的止音阀也已关死，里头没有人应声，只能等明日天亮。";
+}
+
+// campaign_finale_eaten_ref — original source line 417
+data m35.campaign_finale_eaten_ref.literal {
+    value = "done.night.finale.eat.";
+}
+
+// campaign_unknown_person_label — original source line 433
+data m35.campaign_finale_meal_ready_ref.literal {
+    value = "done.night.finale.cook-dumplings";
+}
+
+// campaign_finale_meal_remaining_ref — original source line 456
+data m35.campaign_finale_meal_remaining_ref.literal {
+    value = "meal_servings";
+}

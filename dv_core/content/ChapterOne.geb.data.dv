@@ -1,0 +1,7 @@
+schema "dv-script-v1";
+
+// G-EB 使用唯一权威状态对象 departure.door。
+
+data "template.s04.geb_object" {
+    value = {"kind":"dv-value-template","parameters":[],"value":{"$":"template","id":"template.campaign_state_object","args":["departure.door",{"$":"list","items":[{"$":"value.pair","args":["spatial_id",{"$":"domain.field","args":["G-EB"]}]},{"$":"value.pair","args":["inner_down",{"$":"domain.field","args":[true]}]},{"$":"value.pair","args":["lock_engaged",{"$":"domain.field","args":[true]}]},{"$":"value.pair","args":["open",{"$":"domain.field","args":[false]}]},{"$":"value.pair","args":["yi_checked",{"$":"domain.field","args":[false]}]},{"$":"value.pair","args":["east_checked",{"$":"domain.field","args":[false]}]},{"$":"value.pair","args":["equalized",{"$":"domain.field","args":[false]}]},{"$":"value.pair","args":["outer_released",{"$":"domain.field","args":[false]}]},{"$":"value.pair","args":["latch_sound",{"$":"domain.field","args":[false]}]},{"$":"value.pair","args":["quer_has_wire",{"$":"domain.field","args":[true]}]},{"$":"value.pair","args":["picked_by_quer",{"$":"domain.field","args":[false]}]},{"$":"value.pair","args":["contract_picked_by_quer",{"$":"domain.field","args":[false]}]}]}]},"bindings":{}};
+}

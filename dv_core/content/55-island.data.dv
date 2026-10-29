@@ -1,0 +1,743 @@
+schema "dv-script-v1";
+
+// Pure authored values. No functions, callbacks, loops or executable AST.
+
+// island_parameters — original source line 7
+data m55.island_parameters.return {
+    value = {"basis":"user:2026-10-24-approved-island-game-tuning","concentration_unit":"normalized-hazard-unit","capacity_unit":"32px-grid-area","dose_unit":"existing-erosion-dose","cases":{"start_minute":3240,"fallback_drive":1,"fallback_caution":0.5,"fallback_trust":0.5,"value_weight":1,"experience_weight":0.05,"erosion_weight":0.1,"observation_utility":0.2,"action_utility":2,"travel_utility":0.5,"inspection_refresh_minutes":30,"experimental_opening":0.5,"units":"minutes-from-opening; normalized-motivation; opening-fraction","basis":"user:2026-10-25-approved-adjustable-slot-motivation"},"initial_concentration":0,"reserve_portions":672,"conductance_fraction_per_15_minutes":0.08,"settling_fraction_per_15_minutes":0.02,"wind_strength":0.02,"downward_per_height":0.02,"dose_per_concentration_per_15_minutes":0.25,"safe_concentration":0.25,"night_boundary":0.25,"severe_boundary":1,"severe_night_boundary":2,"crop_trays":4,"crop_growth_ticks":3,"crop_portions_per_tray":8,"crop_damage_threshold":1,"crop_damage_trays_per_tick":1,"crop_initial_light":true,"heights":{"ground":0,"first_upper":5.8,"second_upper":11.4,"archive":17,"basement":-4.2,"deep_basement":-8.4,"outdoor_low":-2,"outdoor_high":2,"main_second_floor":8.4}};
+}
+
+// island_source — original source line 10
+data m55.island_source.literal {
+    value = "dv_core/modules/55-island.dv";
+}
+
+// island_ref — original source line 13
+data m55.island_ref.literal {
+    value = "island.";
+}
+
+// island_air_ref — original source line 16
+data m55.island_air_ref.literal {
+    value = "air.";
+}
+
+// island_air_ref — original source line 16
+data m55.island_air_ref.literal_0002 {
+    value = "concentration";
+}
+
+// island_daylight — original source line 19
+data m55.island_daylight.literal {
+    value = "climate";
+}
+
+// island_daylight — original source line 19
+data m55.island_daylight.literal_0002 {
+    value = "minute_of_day";
+}
+
+// island_daylight — original source line 19
+data m55.island_daylight.literal_0003 {
+    value = 360;
+}
+
+// island_daylight — original source line 19
+data m55.island_daylight.literal_0004 {
+    value = 1080;
+}
+
+// island_outdoors — original source line 22
+data m55.island_rooms.literal {
+    value = "game-tuning-relative-layer-not-global-liquid-level";
+}
+
+// island_rooms — original source line 45
+data m55.island_rooms.literal_0002 {
+    value = "c2.weather";
+}
+
+// island_rooms — original source line 45
+data m55.island_rooms.literal_0003 {
+    value = "severe_air";
+}
+
+// island_rooms — original source line 45
+data m55.island_rooms.literal_0004 {
+    value = "earthquake_recent";
+}
+
+// island_rooms — original source line 46
+data m55.island_rooms.literal_0005 {
+    value = "boundaries";
+}
+
+// island_rooms — original source line 46
+data m55.island_rooms.literal_0006 {
+    value = "wind";
+}
+
+// island_edges — original source line 72
+data m55.island_edges.literal {
+    value = "exit";
+}
+
+// island_edges — original source line 84
+data m55.island_edges.literal_0002 {
+    value = "geometric-open-passage-no-authoritative-switch-declared";
+}
+
+// island_daily_copy — original source line 95
+data m55.island_daily_copy.literal {
+    value = ".";
+}
+
+// island_macro_rules — original source line 100
+data m55.island_macro_rules.literal {
+    value = "island.climate.clock";
+}
+
+// island_macro_rules — original source line 100
+data m55.island_macro_rules.literal_0002 {
+    value = "daylight";
+}
+
+// island_macro_rules — original source line 100
+data m55.island_macro_rules.literal_0003 {
+    value = 1440;
+}
+
+// island_macro_rules — original source line 101
+data m55.island_macro_rules.literal_0004 {
+    value = "before_diffusion";
+}
+
+// island_macro_rules — original source line 102
+data m55.island_macro_rules.literal_0005 {
+    value = 2;
+}
+
+// island_macro_rules — original source line 103
+data m55.island_macro_rules.literal_0006 {
+    value = "c2.weather.first_wind";
+}
+
+// island_macro_rules — original source line 103
+data m55.island_macro_rules.literal_0007 {
+    value = "weather";
+}
+
+// island_macro_rules — original source line 107
+data m55.island_macro_rules.literal_0008 {
+    value = "c2.weather.";
+}
+
+// island_macro_rules — original source line 123
+data m55.island_macro_rules.literal_0009 {
+    value = "outdoor_alley";
+}
+
+// island_macro_rules — original source line 127
+data m55.island_macro_rules.literal_0010 {
+    value = "island.dose.sample.";
+}
+
+// island_macro_rules — original source line 127
+data m55.island_macro_rules.literal_0011 {
+    value = "ambient-exposure";
+}
+
+// island_macro_rules — original source line 127
+data m55.island_macro_rules.literal_0012 {
+    value = "island_pending_dose";
+}
+
+// island_macro_rules — original source line 129
+data m55.island_macro_rules.literal_0013 {
+    value = "campus_n:campus_n";
+}
+
+// island_macro_rules — original source line 130
+data m55.island_macro_rules.literal_0014 {
+    value = "island.meter.sample";
+}
+
+// island_macro_rules — original source line 130
+data m55.island_macro_rules.literal_0015 {
+    value = "source-essence-meter";
+}
+
+// island_macro_rules — original source line 130
+data m55.island_macro_rules.literal_0016 {
+    value = "c2.meter";
+}
+
+// island_macro_rules — original source line 130
+data m55.island_macro_rules.literal_0017 {
+    value = "numeric_sample_at";
+}
+
+// island_macro_rules — original source line 132
+data m55.island_macro_rules.literal_0018 {
+    value = "island.meter.numeric-safe";
+}
+
+// island_macro_rules — original source line 132
+data m55.island_macro_rules.literal_0019 {
+    value = "numeric_safe";
+}
+
+// island_macro_rules — original source line 133
+data m55.island_macro_rules.literal_0020 {
+    value = "island.meter.numeric-unsafe";
+}
+
+// island_daily_rules — original source line 148
+data m55.island_daily_rules.literal {
+    value = "consumed";
+}
+
+// island_daily_rules — original source line 149
+data m55.island_daily_rules.literal_0002 {
+    value = "rations";
+}
+
+// island_daily_rules — original source line 150
+data m55.island_daily_rules.literal_0003 {
+    value = "island_harvest_carried";
+}
+
+// island_daily_rules — original source line 151
+data m55.island_daily_rules.literal_0004 {
+    value = "hungry";
+}
+
+// island_daily_rules — original source line 154
+data m55.island_daily_rules.literal_0005 {
+    value = "island.dose.settle.";
+}
+
+// island_daily_rules — original source line 154
+data m55.island_daily_rules.literal_0006 {
+    value = "erosion";
+}
+
+// island_daily_rules — original source line 154
+data m55.island_daily_rules.literal_0007 {
+    value = "erosion_exposure";
+}
+
+// island_daily_rules — original source line 158
+data m55.island_daily_rules.pathology {
+    value = ["weakness", "impairment"];
+}
+
+// island_daily_rules — original source line 161
+data m55.island_daily_rules.literal_0008 {
+    value = "c2.physiology.";
+}
+
+// island_daily_rules — original source line 162
+data m55.island_daily_rules.literal_0009 {
+    value = ".360";
+}
+
+// island_daily_rules — original source line 162
+data m55.island_daily_rules.literal_0010 {
+    value = "pathology";
+}
+
+// island_daily_rules — original source line 163
+data m55.island_daily_rules.literal_0011 {
+    value = ".1080";
+}
+
+// island_daily_rules — original source line 167
+data m55.island_daily_rules.literal_0012 {
+    value = "ledger";
+}
+
+// island_daily_rules — original source line 167
+data m55.island_daily_rules.literal_0013 {
+    value = "consumed_total";
+}
+
+// island_daily_rules — original source line 169
+data m55.island_daily_rules.literal_0014 {
+    value = "c2.granary";
+}
+
+// island_daily_rules — original source line 169
+data m55.island_daily_rules.literal_0015 {
+    value = "remaining";
+}
+
+// island_daily_rules — original source line 170
+data m55.island_daily_rules.literal_0016 {
+    value = "c2.counter";
+}
+
+// island_daily_rules — original source line 171
+data m55.island_daily_rules.literal_0017 {
+    value = "c2.bowl";
+}
+
+// island_daily_rules — original source line 171
+data m55.island_daily_rules.literal_0018 {
+    value = "portions";
+}
+
+// island_daily_rules — original source line 173
+data m55.island_daily_rules.literal_0019 {
+    value = "c2.daily";
+}
+
+// island_daily_rules — original source line 174
+data m55.island_daily_rules.literal_0020 {
+    value = "shen";
+}
+
+// island_daily_rules — original source line 174
+data m55.island_daily_rules.literal_0021 {
+    value = "meal_ingredients";
+}
+
+// island_daily_rules — original source line 175
+data m55.island_daily_rules.literal_0022 {
+    value = "island.ledger.settle";
+}
+
+// island_daily_rules — original source line 175
+data m55.island_daily_rules.literal_0023 {
+    value = "food-accounting";
+}
+
+// island_daily_rules — original source line 175
+data m55.island_daily_rules.literal_0024 {
+    value = "period_consumed";
+}
+
+// island_daily_rules — original source line 175
+data m55.island_daily_rules.literal_0025 {
+    value = "inventory_portions";
+}
+
+// island_daily_rules — original source line 175
+data m55.island_daily_rules.literal_0026 {
+    value = "hungry_people";
+}
+
+// island_daily_rules — original source line 175
+data m55.island_daily_rules.literal_0027 {
+    value = "living_people";
+}
+
+// island_daily_rules — original source line 175
+data m55.island_daily_rules.literal_0028 {
+    value = "living_mask";
+}
+
+// island_daily_rules — original source line 175
+data m55.island_daily_rules.literal_0029 {
+    value = "settled_at";
+}
+
+// island_daily_rules — original source line 178
+data m55.island_daily_rules.literal_0030 {
+    value = "greenhouse:greenhouse";
+}
+
+// island_daily_rules — original source line 180
+data m55.island_daily_rules.literal_0031 {
+    value = "crop";
+}
+
+// island_daily_rules — original source line 180
+data m55.island_daily_rules.literal_0032 {
+    value = "light";
+}
+
+// island_daily_rules — original source line 180
+data m55.island_daily_rules.literal_0033 {
+    value = "cared";
+}
+
+// island_daily_rules — original source line 180
+data m55.island_daily_rules.literal_0034 {
+    value = "trays";
+}
+
+// island_daily_rules — original source line 180
+data m55.island_daily_rules.literal_0035 {
+    value = "growth";
+}
+
+// island_daily_rules — original source line 181
+data m55.island_daily_rules.literal_0036 {
+    value = "island.crop.grow";
+}
+
+// island_daily_rules — original source line 181
+data m55.island_daily_rules.literal_0037 {
+    value = "crops";
+}
+
+// island_daily_rules — original source line 181
+data m55.island_daily_rules.literal_0038 {
+    value = "last_growth_at";
+}
+
+// island_daily_rules — original source line 182
+data m55.island_daily_rules.literal_0039 {
+    value = "island.crop.damage";
+}
+
+// island_daily_rules — original source line 182
+data m55.island_daily_rules.literal_0040 {
+    value = "damaged_trays";
+}
+
+// island_display_object — original source line 190
+data m55.island_display_object.literal {
+    value = ["name", "location"];
+}
+
+// island_inspect — original source line 201
+data m55.island_inspect.literal {
+    value = { "true" = "本轮已照料"; "false" = "本轮待照料"; };
+}
+
+// island_inspect — original source line 203
+data m55.island_inspect.literal_0002 {
+    value = { "true" = "开启"; "false" = "关闭"; };
+}
+
+// island_inspect — original source line 205
+data m55.island_inspect.literal_0003 {
+    value = { "true" = "缺餐"; "false" = "未缺餐"; };
+}
+
+// island_inspect — original source line 208
+data m55.island_inspect.literal_0004 {
+    value = "format";
+}
+
+// island_inspect — original source line 208
+data m55.island_inspect.literal_0005 {
+    value = "game-clock";
+}
+
+// island_inspect — original source line 212
+data m55.island_inspect.literal_0006 {
+    value = "visible-inspection";
+}
+
+// island_inspect — original source line 213
+data m55.island_inspect.literal_0007 {
+    value = "island.crop";
+}
+
+// island_inspect — original source line 214
+data m55.island_inspect.literal_0008 {
+    value = "interaction";
+}
+
+// island_inspect — original source line 214
+data m55.island_inspect.literal_0009 {
+    value = { "kind" = "site"; "site" = "seedbeds"; };
+}
+
+// island_inspect — original source line 215
+data m55.island_inspect.literal_0010 {
+    value = "island.ledger";
+}
+
+// island_inspect — original source line 216
+data m55.island_inspect.literal_0011 {
+    value = { "kind" = "site"; "site" = "ledger"; };
+}
+
+// island_actions — original source line 224
+data m55.island_actions.literal {
+    value = ".island.air.";
+}
+
+// island_actions — original source line 225
+data m55.island_actions.literal_0002 {
+    value = "island.air.";
+}
+
+// island_actions — original source line 226
+data m55.island_actions.literal_0003 {
+    value = ["concentration"];
+}
+
+// island_actions — original source line 226
+data m55.island_actions.literal_0004 {
+    value = "查看此处源质读数";
+}
+
+// island_actions — original source line 226
+data m55.island_actions.literal_0005 {
+    value = "源质表读数（游戏刻度）：{浓度}。";
+}
+
+// island_actions — original source line 226
+data m55.island_actions.literal_0006 {
+    value = ["浓度"];
+}
+
+// island_actions — original source line 227
+data m55.island_actions.literal_0007 {
+    value = "outdoor_meter";
+}
+
+// island_actions — original source line 229
+data m55.island_actions.literal_0008 {
+    value = "本次现场读表完成时刻：{时刻}。";
+}
+
+// island_actions — original source line 229
+data m55.island_actions.literal_0009 {
+    value = "时刻";
+}
+
+// island_actions — original source line 234
+data m55.island_actions.literal_0010 {
+    value = ".island.ledger";
+}
+
+// island_actions — original source line 234
+data m55.island_actions.literal_0011 {
+    value = "main1f_f13";
+}
+
+// island_actions — original source line 234
+data m55.island_actions.literal_0012 {
+    value = ["settled_at", "period_consumed", "consumed_total", "inventory_portions", "hungry_people", "living_people"];
+}
+
+// island_actions — original source line 234
+data m55.island_actions.literal_0013 {
+    value = "查看半日日账";
+}
+
+// island_actions — original source line 234
+data m55.island_actions.literal_0014 {
+    value = "日账结于{时刻}。本期吃掉{本期}份，累计{累计}份。账面仓柜、随身和送餐余粮合计{余量}份；存活{人数}人，其中缺餐{缺餐}人。";
+}
+
+// island_actions — original source line 234
+data m55.island_actions.literal_0015 {
+    value = ["时刻", "本期", "累计", "余量", "缺餐", "人数"];
+}
+
+// island_actions — original source line 235
+data m55.island_actions.literal_0016 {
+    value = ".island.crop.inspect";
+}
+
+// island_actions — original source line 235
+data m55.island_actions.literal_0017 {
+    value = "greenhouse";
+}
+
+// island_actions — original source line 235
+data m55.island_actions.literal_0018 {
+    value = ["trays", "growth", "cared", "light", "damaged_trays"];
+}
+
+// island_actions — original source line 235
+data m55.island_actions.literal_0019 {
+    value = "检视温室苗床";
+}
+
+// island_actions — original source line 235
+data m55.island_actions.literal_0020 {
+    value = "苗床{批}批，生长进度{进度}/3。{照料}；照明{光照}，累计已损{损伤}批。";
+}
+
+// island_actions — original source line 235
+data m55.island_actions.literal_0021 {
+    value = ["批", "进度", "照料", "光照", "损伤"];
+}
+
+// island_actions — original source line 236
+data m55.island_actions.literal_0022 {
+    value = ".island.self";
+}
+
+// island_actions — original source line 236
+data m55.island_actions.literal_0023 {
+    value = "living_hall";
+}
+
+// island_actions — original source line 236
+data m55.island_actions.literal_0024 {
+    value = ["erosion_exposure", "island_pending_dose", "rations", "consumed", "hungry", "island_harvest_carried"];
+}
+
+// island_actions — original source line 236
+data m55.island_actions.literal_0025 {
+    value = "查看本人暴露记录与口粮";
+}
+
+// island_actions — original source line 236
+data m55.island_actions.literal_0026 {
+    value = "已记暴露{剂量}，本期累积{待结}。随身口粮{携带}份，已食{已食}份，当前{缺餐}。收成{收成}份，尚未入库。";
+}
+
+// island_actions — original source line 236
+data m55.island_actions.literal_0027 {
+    value = ["剂量", "待结", "携带", "已食", "缺餐", "收成"];
+}
+
+// island_crop_jobs — original source line 247
+data m55.island_crop_jobs.literal {
+    value = ".island.crop.care";
+}
+
+// island_crop_jobs — original source line 250
+data m55.island_crop_jobs.literal_0002 {
+    value = "help";
+}
+
+// island_crop_jobs — original source line 250
+data m55.island_crop_jobs.literal_0003 {
+    value = "照料温室苗床";
+}
+
+// island_crop_jobs — original source line 250
+data m55.island_crop_jobs.literal_0004 {
+    value = "检查苗床并完成这一生长节拍所需的照料。";
+}
+
+// island_crop_jobs — original source line 252
+data m55.island_crop_jobs.light_states {
+    value = [true, false];
+}
+
+// island_crop_jobs — original source line 256
+data m55.island_crop_jobs.literal_0005 {
+    value = ".island.crop.light.";
+}
+
+// island_crop_jobs — original source line 259
+data m55.island_crop_jobs.label {
+    value = "关闭苗床照明";
+}
+
+// island_crop_jobs — original source line 261
+data m55.island_crop_jobs.literal_0006 {
+    value = "开启苗床照明";
+}
+
+// island_crop_jobs — original source line 262
+data m55.island_crop_jobs.literal_0007 {
+    value = "experiment";
+}
+
+// island_crop_jobs — original source line 265
+data m55.island_crop_jobs.literal_0008 {
+    value = ".island.crop.harvest";
+}
+
+// island_crop_jobs — original source line 268
+data m55.island_crop_jobs.literal_0009 {
+    value = "收获一批成熟作物";
+}
+
+// island_crop_jobs — original source line 268
+data m55.island_crop_jobs.literal_0010 {
+    value = "收获一批成熟作物，分装八标准份，随身携往粮仓。";
+}
+
+// island_crop_jobs — original source line 270
+data m55.island_crop_jobs.literal_0011 {
+    value = ".island.crop.store";
+}
+
+// island_crop_jobs — original source line 271
+data m55.island_crop_jobs.literal_0012 {
+    value = "total_store_locked";
+}
+
+// island_crop_jobs — original source line 272
+data m55.island_crop_jobs.literal_0013 {
+    value = "stored_portions";
+}
+
+// island_crop_jobs — original source line 273
+data m55.island_crop_jobs.literal_0014 {
+    value = "将收成送入已开启粮仓";
+}
+
+// island_crop_jobs — original source line 273
+data m55.island_crop_jobs.literal_0015 {
+    value = "将随身八份收成送入粮仓并记账。";
+}
+
+// island_crop_jobs — original source line 275
+data m55.island_crop_jobs.literal_0016 {
+    value = ".island.supply";
+}
+
+// island_crop_jobs — original source line 277
+data m55.island_crop_jobs.literal_0017 {
+    value = "c2.ledger";
+}
+
+// island_crop_jobs — original source line 277
+data m55.island_crop_jobs.literal_0018 {
+    value = "reserve_received";
+}
+
+// island_crop_jobs — original source line 278
+data m55.island_crop_jobs.literal_0019 {
+    value = "转运八份存粮至配给台";
+}
+
+// island_crop_jobs — original source line 278
+data m55.island_crop_jobs.literal_0020 {
+    value = "从已开粮仓转运八份存粮至配给台，仓柜分别登记同一笔转账。";
+}
+
+// island_install — original source line 283
+data m55.island_install.literal {
+    value = "chapter";
+}
+
+// island_install — original source line 284
+data m55.island_install.literal_0002 {
+    value = "island_installed_chapter";
+}
+
+// island_install — original source line 289
+data m55.island_install.literal_0003 {
+    value = "island.climate";
+}
+
+// island_install — original source line 306
+data m55.island_install.literal_0004 {
+    value = "半日日账";
+}
+
+// island_install — original source line 307
+data m55.island_install.literal_0005 {
+    value = "温室苗床";
+}
+
+// island_install — original source line 311
+data m55.island_install.fields {
+    value = ["island_pending_dose", "island_harvest_carried"];
+}
+
+// island_install — original source line 342
+data m55.island_install.literal_0006 {
+    value = "island_content";
+}
+
+// island_install — original source line 361
+data m55.island_install.literal_0007 {
+    value = "simulation_declarations";
+}

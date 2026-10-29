@@ -1,0 +1,775 @@
+schema "dv-script-v1";
+
+data space.day19_logistics_recalculated {
+    value = {
+  "schema": "day19-logistics-recalculation-v1",
+  "status": "Independent metrics for root integration; no canonical road or prose edited",
+  "sources": {
+    "shared_north_route_sha256": "ae78ed184309efdec20ea501da9bda3782f03279d44cbb0f709108cf3bb0c48d",
+    "new_R07_source": "Current shared_island R07, matching shared_north_route roads[0]; original geometry snapshot retained for the88.400621m comparison",
+    "R12_midpoint_note": "Inserting (-160,684,72) on existing straight R12 edge does not change length or walking time.",
+    "original_geometry_snapshot_island_sha256": "b3f2e45979784f731928fa3f712d9a4268c5199f0b3838164192505308952db2",
+    "current_island_sha256": "c7a81509a78506c3a9faba956001f172d28b47636a5ed6e83d454ef1a778fe19"
+  },
+  "preserved": {
+    "people_total": 165,
+    "H_A_people": 22,
+    "ship_people": 143,
+    "mules": 6,
+    "handlers": 6,
+    "cargo_total_kg": 1800,
+    "waves": 3,
+    "cargo_per_mule_per_wave_kg": 100,
+    "assembly_day19": "05:30–07:30",
+    "ship_batch_load_starts": [
+      "15:00:00",
+      "15:20:20",
+      "15:40:40"
+    ],
+    "all_on_large_ship": "15:56:20",
+    "H_M_handover": "H-A receiving personnel secure all six mules; the same six handlers immediately return together after final unload. No additional handlers or passengers."
+  },
+  "movement_rules": {
+    "loaded_mule_mps": 0.75,
+    "unloaded_mule_mps": 1.0,
+    "load_each_wave_seconds": 360,
+    "unload_each_wave_seconds": 360,
+    "uphill_rest_first_two_waves_seconds": 480,
+    "main_rest_first_two_waves_seconds": 480,
+    "human_road_rule": "navigation_rules.route_seconds; flat<=6%1.2m/s,6..12%1.0m/s; R12B mountain .8m/s",
+    "indoor_main_n_to_main_s_seconds": 154,
+    "handler_tail_seconds": 12.5,
+    "six_second_turns_note": "Schedules sum physical seconds; round once only when converting a whole action/path to game turns."
+  },
+  "geometry_metrics": {
+    "R07_old_length": 88.4006207812115,
+    "R07_new_length": 131.7037318964195,
+    "R07_length_delta": 43.303111115208,
+    "R07_old_walk_seconds": 88.4006207812115,
+    "R07_new_walk_seconds": 126.20373189641948,
+    "R07_walk_delta_seconds": 37.80311111520798,
+    "one_way_cargo_old_distance": 3182.2727267653395,
+    "one_way_cargo_new_distance": 3225.5758378805476,
+    "loaded_ascent_seconds": 4300.76778384073,
+    "unloaded_descent_seconds": 3225.5758378805476,
+    "each_team_full_three_wave_seconds": 23433.455027283286,
+    "each_team_duration_increase_seconds": 259.81866669124884,
+    "main_n_H_A_walk_old_seconds": 3165.53060351955,
+    "main_n_H_A_walk_new_seconds": 3203.333714634758,
+    "R01_human_walk_seconds": 610.6918512054156,
+    "handler_return_first_seconds": 3968.025565840174,
+    "handler_return_batch6_seconds": 3980.525565840174,
+    "human_return_C50_extra_seconds": 64.14518233333223,
+    "handler_return_first_with_C50_seconds": 4032.170748173506,
+    "handler_return_batch6_with_C50_seconds": 4044.670748173506
+  },
+  "recommended_0750": {
+    "load_start_rule": "The listed team start is start of six-minute loading, not loaded departure. All 6 handlers depart H-A together after team C final unload; mules stay with H-M.",
+    "teams": [
+      {
+        "id": "A",
+        "mules": 2,
+        "handlers": 2,
+        "three_wave_cargo_kg": 600,
+        "waves": [
+          {
+            "wave": 1,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 28200,
+              "day19_time": "07:50:00.000"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 28560,
+              "day19_time": "07:56:00.000"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 32860.767784,
+              "day19_time": "09:07:40.768"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 33220.767784,
+              "day19_time": "09:13:40.768"
+            },
+            "uphill_rest_complete": {
+              "seconds_since_day19_midnight": 33700.767784,
+              "day19_time": "09:21:40.768"
+            },
+            "unloaded_arrive_main_n": {
+              "seconds_since_day19_midnight": 36926.343622,
+              "day19_time": "10:15:26.344"
+            },
+            "main_rest_complete_next_load": {
+              "seconds_since_day19_midnight": 37406.343622,
+              "day19_time": "10:23:26.344"
+            }
+          },
+          {
+            "wave": 2,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 37406.343622,
+              "day19_time": "10:23:26.344"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 37766.343622,
+              "day19_time": "10:29:26.344"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 42067.111406,
+              "day19_time": "11:41:07.111"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 42427.111406,
+              "day19_time": "11:47:07.111"
+            },
+            "uphill_rest_complete": {
+              "seconds_since_day19_midnight": 42907.111406,
+              "day19_time": "11:55:07.111"
+            },
+            "unloaded_arrive_main_n": {
+              "seconds_since_day19_midnight": 46132.687243,
+              "day19_time": "12:48:52.687"
+            },
+            "main_rest_complete_next_load": {
+              "seconds_since_day19_midnight": 46612.687243,
+              "day19_time": "12:56:52.687"
+            }
+          },
+          {
+            "wave": 3,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 46612.687243,
+              "day19_time": "12:56:52.687"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 46972.687243,
+              "day19_time": "13:02:52.687"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 51273.455027,
+              "day19_time": "14:14:33.455"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 51633.455027,
+              "day19_time": "14:20:33.455"
+            }
+          }
+        ]
+      },
+      {
+        "id": "B",
+        "mules": 2,
+        "handlers": 2,
+        "three_wave_cargo_kg": 600,
+        "waves": [
+          {
+            "wave": 1,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 28320,
+              "day19_time": "07:52:00.000"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 28680,
+              "day19_time": "07:58:00.000"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 32980.767784,
+              "day19_time": "09:09:40.768"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 33340.767784,
+              "day19_time": "09:15:40.768"
+            },
+            "uphill_rest_complete": {
+              "seconds_since_day19_midnight": 33820.767784,
+              "day19_time": "09:23:40.768"
+            },
+            "unloaded_arrive_main_n": {
+              "seconds_since_day19_midnight": 37046.343622,
+              "day19_time": "10:17:26.344"
+            },
+            "main_rest_complete_next_load": {
+              "seconds_since_day19_midnight": 37526.343622,
+              "day19_time": "10:25:26.344"
+            }
+          },
+          {
+            "wave": 2,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 37526.343622,
+              "day19_time": "10:25:26.344"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 37886.343622,
+              "day19_time": "10:31:26.344"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 42187.111406,
+              "day19_time": "11:43:07.111"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 42547.111406,
+              "day19_time": "11:49:07.111"
+            },
+            "uphill_rest_complete": {
+              "seconds_since_day19_midnight": 43027.111406,
+              "day19_time": "11:57:07.111"
+            },
+            "unloaded_arrive_main_n": {
+              "seconds_since_day19_midnight": 46252.687243,
+              "day19_time": "12:50:52.687"
+            },
+            "main_rest_complete_next_load": {
+              "seconds_since_day19_midnight": 46732.687243,
+              "day19_time": "12:58:52.687"
+            }
+          },
+          {
+            "wave": 3,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 46732.687243,
+              "day19_time": "12:58:52.687"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 47092.687243,
+              "day19_time": "13:04:52.687"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 51393.455027,
+              "day19_time": "14:16:33.455"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 51753.455027,
+              "day19_time": "14:22:33.455"
+            }
+          }
+        ]
+      },
+      {
+        "id": "C",
+        "mules": 2,
+        "handlers": 2,
+        "three_wave_cargo_kg": 600,
+        "waves": [
+          {
+            "wave": 1,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 28440,
+              "day19_time": "07:54:00.000"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 28800,
+              "day19_time": "08:00:00.000"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 33100.767784,
+              "day19_time": "09:11:40.768"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 33460.767784,
+              "day19_time": "09:17:40.768"
+            },
+            "uphill_rest_complete": {
+              "seconds_since_day19_midnight": 33940.767784,
+              "day19_time": "09:25:40.768"
+            },
+            "unloaded_arrive_main_n": {
+              "seconds_since_day19_midnight": 37166.343622,
+              "day19_time": "10:19:26.344"
+            },
+            "main_rest_complete_next_load": {
+              "seconds_since_day19_midnight": 37646.343622,
+              "day19_time": "10:27:26.344"
+            }
+          },
+          {
+            "wave": 2,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 37646.343622,
+              "day19_time": "10:27:26.344"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 38006.343622,
+              "day19_time": "10:33:26.344"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 42307.111406,
+              "day19_time": "11:45:07.111"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 42667.111406,
+              "day19_time": "11:51:07.111"
+            },
+            "uphill_rest_complete": {
+              "seconds_since_day19_midnight": 43147.111406,
+              "day19_time": "11:59:07.111"
+            },
+            "unloaded_arrive_main_n": {
+              "seconds_since_day19_midnight": 46372.687243,
+              "day19_time": "12:52:52.687"
+            },
+            "main_rest_complete_next_load": {
+              "seconds_since_day19_midnight": 46852.687243,
+              "day19_time": "13:00:52.687"
+            }
+          },
+          {
+            "wave": 3,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 46852.687243,
+              "day19_time": "13:00:52.687"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 47212.687243,
+              "day19_time": "13:06:52.687"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 51513.455027,
+              "day19_time": "14:18:33.455"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 51873.455027,
+              "day19_time": "14:24:33.455"
+            }
+          }
+        ]
+      }
+    ],
+    "last_unload_complete": {
+      "seconds_since_day19_midnight": 51873.455027,
+      "day19_time": "14:24:33.455"
+    },
+    "handlers_depart_H_A": {
+      "seconds_since_day19_midnight": 51873.455027,
+      "day19_time": "14:24:33.455"
+    },
+    "handlers_arrive_main_n": {
+      "seconds_since_day19_midnight": 55140.933924,
+      "day19_time": "15:19:00.934"
+    },
+    "handlers_exit_main_s": {
+      "seconds_since_day19_midnight": 55294.933924,
+      "day19_time": "15:21:34.934"
+    },
+    "first_handler_at_port": {
+      "seconds_since_day19_midnight": 55905.625775,
+      "day19_time": "15:31:45.626"
+    },
+    "sixth_handler_at_port": {
+      "seconds_since_day19_midnight": 55918.125775,
+      "day19_time": "15:31:58.126"
+    },
+    "boat3_load_start": {
+      "seconds_since_day19_midnight": 56440,
+      "day19_time": "15:40:40.000"
+    },
+    "tail_margin_seconds": 521.874225,
+    "meets_boat3_load_start": true,
+    "geometry_only_result": {
+      "handlers_arrive_main_n": {
+        "seconds_since_day19_midnight": 55076.788742,
+        "day19_time": "15:17:56.789"
+      },
+      "handlers_exit_main_s": {
+        "seconds_since_day19_midnight": 55230.788742,
+        "day19_time": "15:20:30.789"
+      },
+      "first_handler_at_port": {
+        "seconds_since_day19_midnight": 55841.480593,
+        "day19_time": "15:30:41.481"
+      },
+      "sixth_handler_at_port": {
+        "seconds_since_day19_midnight": 55853.980593,
+        "day19_time": "15:30:53.981"
+      },
+      "tail_margin_seconds": 586.019407
+    }
+  },
+  "original_0800_diagnostic": {
+    "load_start_rule": "The listed team start is start of six-minute loading, not loaded departure. All 6 handlers depart H-A together after team C final unload; mules stay with H-M.",
+    "teams": [
+      {
+        "id": "A",
+        "mules": 2,
+        "handlers": 2,
+        "three_wave_cargo_kg": 600,
+        "waves": [
+          {
+            "wave": 1,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 28800,
+              "day19_time": "08:00:00.000"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 29160,
+              "day19_time": "08:06:00.000"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 33460.767784,
+              "day19_time": "09:17:40.768"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 33820.767784,
+              "day19_time": "09:23:40.768"
+            },
+            "uphill_rest_complete": {
+              "seconds_since_day19_midnight": 34300.767784,
+              "day19_time": "09:31:40.768"
+            },
+            "unloaded_arrive_main_n": {
+              "seconds_since_day19_midnight": 37526.343622,
+              "day19_time": "10:25:26.344"
+            },
+            "main_rest_complete_next_load": {
+              "seconds_since_day19_midnight": 38006.343622,
+              "day19_time": "10:33:26.344"
+            }
+          },
+          {
+            "wave": 2,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 38006.343622,
+              "day19_time": "10:33:26.344"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 38366.343622,
+              "day19_time": "10:39:26.344"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 42667.111406,
+              "day19_time": "11:51:07.111"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 43027.111406,
+              "day19_time": "11:57:07.111"
+            },
+            "uphill_rest_complete": {
+              "seconds_since_day19_midnight": 43507.111406,
+              "day19_time": "12:05:07.111"
+            },
+            "unloaded_arrive_main_n": {
+              "seconds_since_day19_midnight": 46732.687243,
+              "day19_time": "12:58:52.687"
+            },
+            "main_rest_complete_next_load": {
+              "seconds_since_day19_midnight": 47212.687243,
+              "day19_time": "13:06:52.687"
+            }
+          },
+          {
+            "wave": 3,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 47212.687243,
+              "day19_time": "13:06:52.687"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 47572.687243,
+              "day19_time": "13:12:52.687"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 51873.455027,
+              "day19_time": "14:24:33.455"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 52233.455027,
+              "day19_time": "14:30:33.455"
+            }
+          }
+        ]
+      },
+      {
+        "id": "B",
+        "mules": 2,
+        "handlers": 2,
+        "three_wave_cargo_kg": 600,
+        "waves": [
+          {
+            "wave": 1,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 28920,
+              "day19_time": "08:02:00.000"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 29280,
+              "day19_time": "08:08:00.000"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 33580.767784,
+              "day19_time": "09:19:40.768"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 33940.767784,
+              "day19_time": "09:25:40.768"
+            },
+            "uphill_rest_complete": {
+              "seconds_since_day19_midnight": 34420.767784,
+              "day19_time": "09:33:40.768"
+            },
+            "unloaded_arrive_main_n": {
+              "seconds_since_day19_midnight": 37646.343622,
+              "day19_time": "10:27:26.344"
+            },
+            "main_rest_complete_next_load": {
+              "seconds_since_day19_midnight": 38126.343622,
+              "day19_time": "10:35:26.344"
+            }
+          },
+          {
+            "wave": 2,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 38126.343622,
+              "day19_time": "10:35:26.344"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 38486.343622,
+              "day19_time": "10:41:26.344"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 42787.111406,
+              "day19_time": "11:53:07.111"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 43147.111406,
+              "day19_time": "11:59:07.111"
+            },
+            "uphill_rest_complete": {
+              "seconds_since_day19_midnight": 43627.111406,
+              "day19_time": "12:07:07.111"
+            },
+            "unloaded_arrive_main_n": {
+              "seconds_since_day19_midnight": 46852.687243,
+              "day19_time": "13:00:52.687"
+            },
+            "main_rest_complete_next_load": {
+              "seconds_since_day19_midnight": 47332.687243,
+              "day19_time": "13:08:52.687"
+            }
+          },
+          {
+            "wave": 3,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 47332.687243,
+              "day19_time": "13:08:52.687"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 47692.687243,
+              "day19_time": "13:14:52.687"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 51993.455027,
+              "day19_time": "14:26:33.455"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 52353.455027,
+              "day19_time": "14:32:33.455"
+            }
+          }
+        ]
+      },
+      {
+        "id": "C",
+        "mules": 2,
+        "handlers": 2,
+        "three_wave_cargo_kg": 600,
+        "waves": [
+          {
+            "wave": 1,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 29040,
+              "day19_time": "08:04:00.000"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 29400,
+              "day19_time": "08:10:00.000"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 33700.767784,
+              "day19_time": "09:21:40.768"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 34060.767784,
+              "day19_time": "09:27:40.768"
+            },
+            "uphill_rest_complete": {
+              "seconds_since_day19_midnight": 34540.767784,
+              "day19_time": "09:35:40.768"
+            },
+            "unloaded_arrive_main_n": {
+              "seconds_since_day19_midnight": 37766.343622,
+              "day19_time": "10:29:26.344"
+            },
+            "main_rest_complete_next_load": {
+              "seconds_since_day19_midnight": 38246.343622,
+              "day19_time": "10:37:26.344"
+            }
+          },
+          {
+            "wave": 2,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 38246.343622,
+              "day19_time": "10:37:26.344"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 38606.343622,
+              "day19_time": "10:43:26.344"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 42907.111406,
+              "day19_time": "11:55:07.111"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 43267.111406,
+              "day19_time": "12:01:07.111"
+            },
+            "uphill_rest_complete": {
+              "seconds_since_day19_midnight": 43747.111406,
+              "day19_time": "12:09:07.111"
+            },
+            "unloaded_arrive_main_n": {
+              "seconds_since_day19_midnight": 46972.687243,
+              "day19_time": "13:02:52.687"
+            },
+            "main_rest_complete_next_load": {
+              "seconds_since_day19_midnight": 47452.687243,
+              "day19_time": "13:10:52.687"
+            }
+          },
+          {
+            "wave": 3,
+            "mules": 2,
+            "handlers": 2,
+            "cargo_kg": 200,
+            "load_start": {
+              "seconds_since_day19_midnight": 47452.687243,
+              "day19_time": "13:10:52.687"
+            },
+            "depart_main_n": {
+              "seconds_since_day19_midnight": 47812.687243,
+              "day19_time": "13:16:52.687"
+            },
+            "arrive_H_A": {
+              "seconds_since_day19_midnight": 52113.455027,
+              "day19_time": "14:28:33.455"
+            },
+            "unload_complete": {
+              "seconds_since_day19_midnight": 52473.455027,
+              "day19_time": "14:34:33.455"
+            }
+          }
+        ]
+      }
+    ],
+    "last_unload_complete": {
+      "seconds_since_day19_midnight": 52473.455027,
+      "day19_time": "14:34:33.455"
+    },
+    "handlers_depart_H_A": {
+      "seconds_since_day19_midnight": 52473.455027,
+      "day19_time": "14:34:33.455"
+    },
+    "handlers_arrive_main_n": {
+      "seconds_since_day19_midnight": 55740.933924,
+      "day19_time": "15:29:00.934"
+    },
+    "handlers_exit_main_s": {
+      "seconds_since_day19_midnight": 55894.933924,
+      "day19_time": "15:31:34.934"
+    },
+    "first_handler_at_port": {
+      "seconds_since_day19_midnight": 56505.625775,
+      "day19_time": "15:41:45.626"
+    },
+    "sixth_handler_at_port": {
+      "seconds_since_day19_midnight": 56518.125775,
+      "day19_time": "15:41:58.126"
+    },
+    "boat3_load_start": {
+      "seconds_since_day19_midnight": 56440,
+      "day19_time": "15:40:40.000"
+    },
+    "tail_margin_seconds": -78.125775,
+    "meets_boat3_load_start": false,
+    "geometry_only_result": {
+      "handlers_arrive_main_n": {
+        "seconds_since_day19_midnight": 55676.788742,
+        "day19_time": "15:27:56.789"
+      },
+      "handlers_exit_main_s": {
+        "seconds_since_day19_midnight": 55830.788742,
+        "day19_time": "15:30:30.789"
+      },
+      "first_handler_at_port": {
+        "seconds_since_day19_midnight": 56441.480593,
+        "day19_time": "15:40:41.481"
+      },
+      "sixth_handler_at_port": {
+        "seconds_since_day19_midnight": 56453.980593,
+        "day19_time": "15:40:53.981"
+      },
+      "tail_margin_seconds": -13.980593
+    }
+  },
+  "gas_adjustment": {
+    "source": "shared_north_route.operation.outdoor_departure_profile",
+    "zone": "R12-LOW-72-96",
+    "C": 50,
+    "human_speed_multiplier": 0.8,
+    "geometric_walk_seconds": 256.58072933332903,
+    "gas_adjusted_walk_seconds": 320.72591166666126,
+    "extra_seconds": 64.14518233333223,
+    "cargo_waves_unchanged": "Local plume remains C20 until14:15. All loaded climbs and first two unloaded returns cross this low zone earlier; only final six-handler walk is delayed.",
+    "mask_filter_units_consumed_final_handlers": 0,
+    "balance_ticks_final_handlers": 10
+  }
+};
+}

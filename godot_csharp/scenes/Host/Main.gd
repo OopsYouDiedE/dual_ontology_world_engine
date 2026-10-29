@@ -8,6 +8,7 @@ const UI_SCENE := preload("res://scenes/UI/UISystem.tscn")
 const TITLE_SCENE := preload("res://scenes/UI/TitleUI.tscn")
 const FIELD_SCRIPT := preload("res://scenes/World/Runtime/WorldView.gd")
 const FIELD_EXECUTOR := preload("res://scenes/Host/DvFieldExecutor.gd")
+const SPATIAL_ACTION_BRIDGE := preload("res://scenes/Host/SpatialActionBridge.gd")
 const VIEW_TRACE := preload("res://scenes/Host/PlayerViewTrace.gd")
 const DIAGNOSTICS := preload("res://scenes/Host/RuntimeDiagnostics.gd")
 const HOST_FLOW := preload("res://scenes/Host/HostFlow.gd")
@@ -33,6 +34,7 @@ var _preview_tokens: Dictionary = {}
 var _npc_tick_at := 0
 var _simulation_pulse_second := -1
 var field_executor: Node
+var spatial_action_bridge: Node
 var view_trace: Node
 var engine: Node
 var ui: Node
@@ -91,11 +93,15 @@ func _ready() -> void:
 	field_executor.name = "DvFieldExecutor"
 	field_executor.timing_sink = engine.RecordTiming
 	add_child(field_executor)
+	spatial_action_bridge = SPATIAL_ACTION_BRIDGE.new()
+	spatial_action_bridge.name = "SpatialActionBridge"
+	add_child(spatial_action_bridge)
 	_home()
 	if not replay_mode and "--dv-auto-start" in OS.get_cmdline_user_args(): dispatch.call_deferred({"kind": "start"})
 
 func _dispose_views(keep_title := false) -> void:
 	flow.transition("player_options_open", false)
+	if is_instance_valid(spatial_action_bridge): spatial_action_bridge.cancel_all("native-spatial-view-replaced")
 	if is_instance_valid(field):
 		if is_instance_valid(field_executor): field_executor.retain_field(field)
 		field.begin_shutdown()
@@ -150,9 +156,10 @@ func _view(ev: Dictionary, begin := true) -> bool:
 		prepared = await adapter.prepare_map(str(initial.get("map", "")), initial, get_tree())
 	_timing("view_prepare_end", {"ready": prepared})
 	if not prepared or flow.closing or generation != _session_generation:
+		var preparation_error := str(adapter.get("preparation_error")) if adapter.get("preparation_error") != null else ""
 		_discard_adapter(adapter)
 		if not prepared and not flow.closing and generation == _session_generation:
-			_view_error("无法准备世界地图：" + str(initial.get("map", "")), replacing)
+			_view_error(preparation_error if preparation_error != "" else "无法准备世界地图：" + str(initial.get("map", "")), replacing)
 		return false
 	# A prepared background map cannot replace a book the player is reading.
 	# An explicit bookmark install owns the replacement and closes its old UI.
@@ -688,6 +695,7 @@ func begin_shutdown() -> void:
 	# Books and a failed bookmark view can pause the SceneTree. Already entered
 	# movement and rollback still need physics frames after input is suspended.
 	if not replay_mode: get_tree().paused = false
+	if is_instance_valid(spatial_action_bridge): spatial_action_bridge.cancel_all("native-spatial-host-closing")
 	# Prepared intents that never entered execution stay pending in the trace.
 	# Core saves the last committed state; shutdown does not invent an attempt.
 	_queue.clear()
@@ -870,7 +878,21 @@ func _dv_execute(intent: Dictionary, execution_snapshot: Dictionary) -> void:
 			_continuous_selection.clear()
 			_dv_complete("rejected", {"executor": "godot", "reason": "prepared_passage_mismatch", "context": field.context()})
 			return
-	if str(action.kind) == "move" or action.get("travel", {}).has("station"):
+	if action.has("spatial_execution_ref"):
+		var epoch := _session_generation
+		var serial := _dv_serial
+		var action_event := str(intent.action_event)
+		var participants: Node = null
+		if is_instance_valid(field) and field.has_method("get_spatial_participants"):
+			participants = field.get_spatial_participants()
+		var receipt: Dictionary = await spatial_action_bridge.execute(intent,intent.get("spatial_execution",{}),participants,epoch)
+		if epoch != _session_generation or serial != _dv_serial or str(_dv_intent.get("action_event","")) != action_event: return
+		if bool(receipt.get("duplicate",false)): return
+		if str(receipt.get("action_event","")) != action_event or int(receipt.get("epoch",-1)) != epoch:
+			_dv_complete("rejected",{"executor":"godot-native-spatial","reason":"native-spatial-receipt-mismatch"})
+			return
+		_dv_complete(str(receipt.outcome),receipt.field)
+	elif str(action.kind) == "move" or action.get("travel", {}).has("station"):
 		var receipt: Dictionary = await field_executor.execute(intent, field, execution_snapshot, _dv_serial)
 		_accept_execution(receipt)
 	else:
@@ -898,6 +920,7 @@ func _verified_continuous_action(intent: Dictionary, source: Dictionary) -> bool
 	return field.is_continuous_action(str(action.id), destination)
 
 func _dv_complete(outcome: String, execution: Dictionary) -> void:
+	if _dv_intent.is_empty(): return
 	_timing("execution_end", {"outcome": outcome, "action_event": _dv_intent.action_event})
 	var receipt := {"action_event": _dv_intent.action_event, "outcome": outcome, "actual": _dv_intent.execution_cost, "executor": "room-graph" if str(execution.get("execution_world", "")) == "room-graph" else "godot", "field": execution}
 	if str(_dv_intent.get("actor", "")) == str(_continuous_selection.get("actor", "")) and str(_dv_intent.get("action", {}).get("id", "")) == str(_continuous_selection.get("choice_id", "")):

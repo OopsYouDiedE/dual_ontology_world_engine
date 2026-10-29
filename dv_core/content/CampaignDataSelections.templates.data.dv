@@ -1,0 +1,16 @@
+schema "dv-script-v1";
+
+// Immutable value templates. Only bounded Core constructors are accepted.
+
+data "template.c2_alive" {
+    value = {"kind":"dv-value-template","parameters":["actor"],"value":{"$":"choose","args":[{"$":"value","name":"b1"},{"$":"domain.true","args":[]},{"$":"domain.fact","args":[{"$":"template","id":"template.campaign_own","args":[{"$":"param","name":"actor"},{"$":"value.get","args":[{"$":"value","name":"b2"},"alive_field"]}]},true]}]},"bindings":{"b2":{"$":"data","id":"campaign.selector.body_eligibility","copy":false},"b1":{"$":"value.has","args":[{"$":"value.get","args":[{"$":"value","name":"b2"},"exempt"]},{"$":"param","name":"actor"}]}}};
+}
+
+data "template.c2_can_act" {
+    value = {"kind":"dv-value-template","parameters":["actor"],"value":{"$":"choose","args":[{"$":"value","name":"b1"},{"$":"domain.true","args":[]},{"$":"domain.all","args":[{"$":"value","name":"b3"}]}]},"bindings":{"b2":{"$":"data","id":"campaign.selector.body_eligibility","copy":false},"b1":{"$":"value.has","args":[{"$":"value.get","args":[{"$":"value","name":"b2"},"exempt"]},{"$":"param","name":"actor"}]},"b4":{"$":"list","items":[{"$":"template","id":"template.c2_alive","args":[{"$":"param","name":"actor"}]}]},"b5":{"$":"value.get","args":[{"$":"value","name":"b2"},"inactive_fields"]},"b3":{"$":"value.concat","args":[{"$":"value","name":"b4"},{"$":"expand","source":{"$":"value","name":"b5"},"index":"i6","value":{"$":"value.concat","args":[{"$":"list","items":[]},{"$":"list","items":[{"$":"domain.fact","args":[{"$":"template","id":"template.campaign_own","args":[{"$":"param","name":"actor"},{"$":"value.at","args":[{"$":"value","name":"b5"},{"$":"index","name":"i6"}]}]},false]}]}]},"bindings":{}}]}}};
+}
+
+data "template.c2_norm_object" {
+    value = {"kind":"dv-value-template","parameters":["id"],"value":{"$":"value.cat","args":[{"$":"value.get","args":[{"$":"value.get","args":[{"$":"data","id":"campaign.selector.world_initial","copy":false},"norm"]},"id_prefix"]},{"$":"param","name":"id"}]},"bindings":{}};
+}
+

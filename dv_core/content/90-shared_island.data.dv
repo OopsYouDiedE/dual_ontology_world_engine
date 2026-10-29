@@ -1,0 +1,3544 @@
+schema "dv-script-v1";
+
+data space.shared_island {
+    value = {
+  "schema": "island-layout-v1",
+  "units": "metre",
+  "origin": "port landing",
+  "mean_sea_level": -4,
+  "main_origin": [
+    0,
+    460,
+    48
+  ],
+  "main_geometric_center": [
+    0,
+    481,
+    48
+  ],
+  "azimuth": "north=0 clockwise",
+  "major_sites": [
+    {
+      "id": "PORT",
+      "name": "港口登陆点",
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "size": [
+        64,
+        40
+      ],
+      "entrance": [
+        0,
+        0,
+        0
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 180.0,
+        "horizontal_m": 481.0
+      }
+    },
+    {
+      "id": "PIER",
+      "name": "石码头",
+      "center": [
+        0,
+        -34,
+        -0.6
+      ],
+      "size": [
+        8,
+        68
+      ],
+      "entrance": [
+        0,
+        0,
+        0
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 180.0,
+        "horizontal_m": 515.0
+      }
+    },
+    {
+      "id": "STONE",
+      "name": "契约玄武岩碑",
+      "center": [
+        12,
+        6,
+        0
+      ],
+      "size": [
+        3,
+        1.2
+      ],
+      "entrance": [
+        12,
+        4,
+        0
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 178.55,
+        "horizontal_m": 475.15
+      }
+    },
+    {
+      "id": "PORT_STORE",
+      "name": "港口干货仓",
+      "center": [
+        -100,
+        36,
+        4
+      ],
+      "size": [
+        30,
+        18
+      ],
+      "entrance": [
+        -100,
+        27,
+        4
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 192.67,
+        "horizontal_m": 456.1
+      }
+    },
+    {
+      "id": "BOAT_SHED",
+      "name": "船具与修船棚",
+      "center": [
+        90,
+        -10,
+        0
+      ],
+      "size": [
+        24,
+        12
+      ],
+      "entrance": [
+        78,
+        -10,
+        0
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 169.61,
+        "horizontal_m": 499.18
+      }
+    },
+    {
+      "id": "MARKET",
+      "name": "聚落集市",
+      "center": [
+        -8,
+        160,
+        12
+      ],
+      "size": [
+        40,
+        30
+      ],
+      "entrance": [
+        -8,
+        145,
+        12
+      ],
+      "floors": 0,
+      "polar_from_main_center": {
+        "azimuth_deg": 181.43,
+        "horizontal_m": 321.1
+      }
+    },
+    {
+      "id": "WELL",
+      "name": "公共取水亭",
+      "center": [
+        -48,
+        144,
+        12
+      ],
+      "size": [
+        8,
+        8
+      ],
+      "entrance": [
+        -48,
+        140,
+        12
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 188.11,
+        "horizontal_m": 340.4
+      }
+    },
+    {
+      "id": "CHAPEL",
+      "name": "聚落会堂",
+      "center": [
+        -96,
+        204,
+        17
+      ],
+      "size": [
+        18,
+        30
+      ],
+      "entrance": [
+        -96,
+        189,
+        17
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 199.11,
+        "horizontal_m": 293.16
+      }
+    },
+    {
+      "id": "SCHOOL",
+      "name": "村学与医务室",
+      "center": [
+        68,
+        204,
+        17
+      ],
+      "size": [
+        24,
+        18
+      ],
+      "entrance": [
+        68,
+        195,
+        17
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 166.21,
+        "horizontal_m": 285.22
+      }
+    },
+    {
+      "id": "STAFF",
+      "name": "维护人员住宅区",
+      "center": [
+        -210,
+        358,
+        34
+      ],
+      "size": [
+        144,
+        84
+      ],
+      "entrance": [
+        -138,
+        358,
+        34
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 239.64,
+        "horizontal_m": 243.37
+      }
+    },
+    {
+      "id": "MAIN",
+      "name": "崇正格致大本堂",
+      "center": [
+        0,
+        481,
+        48
+      ],
+      "size": [
+        96,
+        114
+      ],
+      "entrance": [
+        0,
+        532,
+        48
+      ],
+      "floors": 4,
+      "local_origin": [
+        0,
+        460,
+        48
+      ],
+      "entrances": {
+        "south": [
+          0,
+          424,
+          48
+        ],
+        "west": [
+          -48,
+          472,
+          48
+        ],
+        "east": [
+          48,
+          472,
+          48
+        ],
+        "north": [
+          0,
+          532,
+          48
+        ]
+      },
+      "polar_from_main_center": {
+        "azimuth_deg": 0.0,
+        "horizontal_m": 0.0
+      },
+      "facing_azimuth_deg": 0,
+      "facing_target": "RIM",
+      "entrance_roles": {
+        "north": "formal entrance",
+        "south": "port arrival reception",
+        "west": "service",
+        "east": "public and medical"
+      }
+    },
+    {
+      "id": "FORECOURT",
+      "name": "主楼南登陆前场",
+      "center": [
+        0,
+        406,
+        48
+      ],
+      "size": [
+        80,
+        36
+      ],
+      "entrance": [
+        0,
+        400,
+        48
+      ],
+      "floors": 0,
+      "polar_from_main_center": {
+        "azimuth_deg": 180.0,
+        "horizontal_m": 75.0
+      }
+    },
+    {
+      "id": "WEN",
+      "name": "文契院",
+      "center": [
+        -132,
+        424,
+        42
+      ],
+      "size": [
+        36,
+        30
+      ],
+      "entrance": [
+        -114,
+        424,
+        42
+      ],
+      "floors": 2,
+      "polar_from_main_center": {
+        "azimuth_deg": 246.64,
+        "horizontal_m": 143.78
+      }
+    },
+    {
+      "id": "STAR",
+      "name": "星仪院",
+      "center": [
+        132,
+        560,
+        66
+      ],
+      "size": [
+        36,
+        36
+      ],
+      "entrance": [
+        132,
+        542,
+        66
+      ],
+      "floors": 2,
+      "roof_height": 80.4,
+      "polar_from_main_center": {
+        "azimuth_deg": 59.1,
+        "horizontal_m": 153.83
+      }
+    },
+    {
+      "id": "WHITE",
+      "name": "白塔院",
+      "center": [
+        138,
+        410,
+        40
+      ],
+      "size": [
+        36,
+        30
+      ],
+      "entrance": [
+        120,
+        410,
+        40
+      ],
+      "floors": 2,
+      "tower_height": 61.6,
+      "polar_from_main_center": {
+        "azimuth_deg": 117.23,
+        "horizontal_m": 155.19
+      }
+    },
+    {
+      "id": "IRON",
+      "name": "铁工院",
+      "center": [
+        -132,
+        558,
+        60
+      ],
+      "size": [
+        48,
+        36
+      ],
+      "entrance": [
+        -108,
+        552,
+        60
+      ],
+      "floors": 1,
+      "annex_levels": 2,
+      "loading": [
+        -132,
+        540,
+        60
+      ],
+      "polar_from_main_center": {
+        "azimuth_deg": 300.26,
+        "horizontal_m": 152.82
+      }
+    },
+    {
+      "id": "GREEN",
+      "name": "温室",
+      "center": [
+        216,
+        432,
+        42
+      ],
+      "size": [
+        36,
+        18
+      ],
+      "entrance": [
+        216,
+        423,
+        42
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 102.78,
+        "horizontal_m": 221.49
+      }
+    },
+    {
+      "id": "MILL",
+      "name": "风磨与辅助抽水机",
+      "center": [
+        -320,
+        310,
+        31
+      ],
+      "size": [
+        12,
+        12
+      ],
+      "entrance": [
+        -320,
+        304,
+        31
+      ],
+      "floors": 2,
+      "polar_from_main_center": {
+        "azimuth_deg": 241.88,
+        "horizontal_m": 362.82
+      }
+    },
+    {
+      "id": "WATER",
+      "name": "净水与高位储水设施",
+      "center": [
+        216,
+        504,
+        49
+      ],
+      "size": [
+        24,
+        18
+      ],
+      "entrance": [
+        204,
+        504,
+        49
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 83.92,
+        "horizontal_m": 217.22
+      }
+    },
+    {
+      "id": "SEWAGE",
+      "name": "生活污水处理场",
+      "center": [
+        338,
+        74,
+        6
+      ],
+      "size": [
+        36,
+        24
+      ],
+      "entrance": [
+        320,
+        74,
+        6
+      ],
+      "floors": 0,
+      "polar_from_main_center": {
+        "azimuth_deg": 140.29,
+        "horizontal_m": 529.05
+      }
+    },
+    {
+      "id": "WASTE",
+      "name": "实验废液封存库",
+      "center": [
+        -208,
+        570,
+        60
+      ],
+      "size": [
+        18,
+        12
+      ],
+      "entrance": [
+        -199,
+        570,
+        60
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 293.17,
+        "horizontal_m": 226.24
+      }
+    },
+    {
+      "id": "FUEL",
+      "name": "煤场与灯油隔间",
+      "center": [
+        -198,
+        506,
+        52
+      ],
+      "size": [
+        30,
+        24
+      ],
+      "entrance": [
+        -183,
+        506,
+        52
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 277.2,
+        "horizontal_m": 199.57
+      }
+    },
+    {
+      "id": "HEAT",
+      "name": "源热井与换热间",
+      "center": [
+        -174,
+        618,
+        66
+      ],
+      "size": [
+        18,
+        18
+      ],
+      "entrance": [
+        -183,
+        618,
+        66
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 308.22,
+        "horizontal_m": 221.46
+      }
+    },
+    {
+      "id": "FORT",
+      "name": "半山隐修石院",
+      "center": [
+        -180,
+        1240,
+        312
+      ],
+      "size": [
+        42,
+        30
+      ],
+      "entrance": [
+        -180,
+        1225,
+        312
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 346.66,
+        "horizontal_m": 780.05
+      },
+      "site_status": "候选址H-A：建筑系统已定；坡面与岩体承载证据尚缺，按用户要求由用户决定地形冲突处置"
+    },
+    {
+      "id": "DAN",
+      "name": "隐修丹房",
+      "center": [
+        -180,
+        1251,
+        316.8
+      ],
+      "size": [
+        6,
+        4
+      ],
+      "entrance": [
+        -177,
+        1251,
+        316.8
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 346.84,
+        "horizontal_m": 790.76
+      }
+    },
+    {
+      "id": "FORT_WATER",
+      "name": "半山储水窖",
+      "center": [
+        -200,
+        1260,
+        318
+      ],
+      "size": [
+        10,
+        6
+      ],
+      "entrance": [
+        -200,
+        1257,
+        318
+      ],
+      "floors": 0,
+      "polar_from_main_center": {
+        "azimuth_deg": 345.6,
+        "horizontal_m": 804.26
+      }
+    },
+    {
+      "id": "RIM",
+      "name": "南火山口缘",
+      "center": [
+        0,
+        1790,
+        556
+      ],
+      "size": [
+        24,
+        18
+      ],
+      "entrance": [
+        0,
+        1790,
+        556
+      ],
+      "floors": 0,
+      "polar_from_main_center": {
+        "azimuth_deg": 0.0,
+        "horizontal_m": 1309.0
+      }
+    },
+    {
+      "id": "PEAK",
+      "name": "南东口缘最高点",
+      "center": [
+        450,
+        2140,
+        714
+      ],
+      "size": [
+        18,
+        18
+      ],
+      "entrance": [
+        450,
+        2140,
+        714
+      ],
+      "floors": 0,
+      "polar_from_main_center": {
+        "azimuth_deg": 15.18,
+        "horizontal_m": 1718.95
+      }
+    },
+    {
+      "id": "BASIN",
+      "name": "火山口盆地",
+      "center": [
+        -40,
+        2280,
+        399
+      ],
+      "size": [
+        1050,
+        880
+      ],
+      "entrance": [
+        -40,
+        2110,
+        404
+      ],
+      "floors": 0,
+      "polar_from_main_center": {
+        "azimuth_deg": 358.73,
+        "horizontal_m": 1799.44
+      },
+      "geometry": "ellipse",
+      "bbox_is_not_filled_terrain": true
+    },
+    {
+      "id": "LAKE",
+      "name": "火山口湖",
+      "center": [
+        -80,
+        2290,
+        397
+      ],
+      "size": [
+        400,
+        280
+      ],
+      "entrance": [
+        120,
+        2240,
+        397
+      ],
+      "floors": 0,
+      "polar_from_main_center": {
+        "azimuth_deg": 357.47,
+        "horizontal_m": 1810.77
+      }
+    },
+    {
+      "id": "ALTAR",
+      "name": "海民最终祭坛上坪",
+      "center": [
+        230,
+        2180,
+        416.4
+      ],
+      "size": [
+        30,
+        24
+      ],
+      "entrance": [
+        211,
+        2180,
+        411.2
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 7.71,
+        "horizontal_m": 1714.5
+      },
+      "remove_old_entrance": [
+        230,
+        2168,
+        404
+      ],
+      "approach_state": "FLOAT_DOCK only; source level and physical alignment"
+    },
+    {
+      "id": "RUIN",
+      "name": "盆内石门遗迹",
+      "center": [
+        -300,
+        2180,
+        405
+      ],
+      "size": [
+        24,
+        18
+      ],
+      "entrance": [
+        -300,
+        2171,
+        405
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 349.99,
+        "horizontal_m": 1725.28
+      }
+    },
+    {
+      "id": "HERM_MULE",
+      "name": "H-M临时高处拴养地",
+      "center": [
+        -242,
+        1212,
+        309.6
+      ],
+      "size": [
+        32,
+        16
+      ],
+      "entrance": [
+        -226,
+        1212,
+        310
+      ],
+      "floors": 0,
+      "ground_corners": [
+        [
+          -258,
+          1204,
+          308.4
+        ],
+        [
+          -226,
+          1204,
+          309.2
+        ],
+        [
+          -226,
+          1220,
+          310.8
+        ],
+        [
+          -258,
+          1220,
+          310.0
+        ]
+      ],
+      "temporary": true,
+      "capacity_animals": 6,
+      "ground_status": "与H-A同一坡面适配决策关口，天然坡面草垫，不削坡砌墙",
+      "polar_from_main_center": {
+        "azimuth_deg": 341.68,
+        "horizontal_m": 770.02
+      }
+    },
+    {
+      "id": "NORTH_FORECOURT",
+      "name": "北向山口礼仪前场",
+      "center": [
+        0,
+        556,
+        50.4
+      ],
+      "size": [
+        36,
+        36
+      ],
+      "entrance": [
+        0,
+        574,
+        52.8
+      ],
+      "floors": 0,
+      "terraced": true,
+      "terrace_contract": "shared_north_route.json/formal_front",
+      "polar_from_main_center": {
+        "azimuth_deg": 0.0,
+        "horizontal_m": 75.0
+      }
+    },
+    {
+      "id": "ALTAR_LOWER",
+      "name": "旧下祭坪",
+      "center": [
+        131,
+        2139,
+        404
+      ],
+      "size": [
+        30,
+        6
+      ],
+      "entrance": [
+        131,
+        2142,
+        404
+      ],
+      "bbox": [
+        116,
+        2136,
+        146,
+        2142
+      ],
+      "location": "West mainland bank outside complete moat; flooded late, no link to upper altar.",
+      "polar_from_main_center": {
+        "azimuth_deg": 4.52,
+        "horizontal_m": 1663.17
+      }
+    },
+    {
+      "id": "FA-WAIT",
+      "name": "高岸密闭候渡间",
+      "center": [
+        164,
+        2180,
+        411.2
+      ],
+      "size": [
+        8,
+        12
+      ],
+      "entrance": [
+        160,
+        2180,
+        411.2
+      ],
+      "floors": 1,
+      "polar_from_main_center": {
+        "azimuth_deg": 5.51,
+        "horizontal_m": 1706.9
+      }
+    }
+  ],
+  "roads": [
+    {
+      "id": "R01",
+      "name": "港口—主楼礼仪路",
+      "points": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          52,
+          64,
+          4
+        ],
+        [
+          36,
+          144,
+          10
+        ],
+        [
+          -28,
+          224,
+          18
+        ],
+        [
+          36,
+          304,
+          28
+        ],
+        [
+          -36,
+          376,
+          38
+        ],
+        [
+          -84,
+          400,
+          43
+        ],
+        [
+          -36,
+          400,
+          47
+        ],
+        [
+          0,
+          400,
+          48
+        ],
+        [
+          0,
+          424,
+          48
+        ]
+      ],
+      "width": 5.4,
+      "type": "cart",
+      "from": "PORT",
+      "to": "MAIN_S",
+      "length_3d": 634.454011,
+      "max_grade": 0.098209,
+      "walk_seconds": 610.691851,
+      "six_second_turns": 102
+    },
+    {
+      "id": "R02",
+      "name": "港口仓储支路",
+      "points": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          -52,
+          12,
+          1.5
+        ],
+        [
+          -100,
+          27,
+          4
+        ]
+      ],
+      "width": 4.2,
+      "type": "cart",
+      "from": "PORT",
+      "to": "PORT_STORE",
+      "length_3d": 103.738999,
+      "max_grade": 0.049712,
+      "walk_seconds": 86.449166,
+      "six_second_turns": 15
+    },
+    {
+      "id": "R03",
+      "name": "港口—学院西后勤路",
+      "points": [
+        [
+          -100,
+          27,
+          4
+        ],
+        [
+          -176,
+          52,
+          7
+        ],
+        [
+          -236,
+          124,
+          14
+        ],
+        [
+          -236,
+          220,
+          23
+        ],
+        [
+          -180,
+          300,
+          31
+        ],
+        [
+          -138,
+          358,
+          34
+        ],
+        [
+          -96,
+          398,
+          39
+        ],
+        [
+          -108,
+          448,
+          44
+        ],
+        [
+          -72,
+          472,
+          48
+        ],
+        [
+          -48,
+          472,
+          48
+        ]
+      ],
+      "width": 4.8,
+      "type": "cart",
+      "from": "PORT_STORE",
+      "to": "MAIN_W",
+      "length_3d": 617.448532,
+      "max_grade": 0.097239,
+      "walk_seconds": 588.159308,
+      "six_second_turns": 99
+    },
+    {
+      "id": "R04",
+      "name": "文契院地面连廊",
+      "points": [
+        [
+          -48,
+          472,
+          48
+        ],
+        [
+          -72,
+          472,
+          48
+        ],
+        [
+          -108,
+          448,
+          44
+        ],
+        [
+          -108,
+          424,
+          42.2
+        ],
+        [
+          -114,
+          424,
+          42
+        ]
+      ],
+      "width": 3.0,
+      "type": "cart",
+      "from": "MAIN_W",
+      "to": "WEN",
+      "length_3d": 97.52186,
+      "max_grade": 0.09245,
+      "walk_seconds": 92.521304,
+      "six_second_turns": 16
+    },
+    {
+      "id": "R05",
+      "name": "白塔院地面连廊",
+      "points": [
+        [
+          48,
+          472,
+          48
+        ],
+        [
+          72,
+          472,
+          48
+        ],
+        [
+          96,
+          448,
+          45
+        ],
+        [
+          96,
+          410,
+          41.2
+        ],
+        [
+          120,
+          410,
+          40
+        ]
+      ],
+      "width": 3.0,
+      "type": "cart",
+      "from": "MAIN_E",
+      "to": "WHITE",
+      "length_3d": 120.292959,
+      "max_grade": 0.1,
+      "walk_seconds": 112.287962,
+      "six_second_turns": 19
+    },
+    {
+      "id": "R06",
+      "name": "铁工院西勤务路",
+      "points": [
+        [
+          -48,
+          472,
+          48
+        ],
+        [
+          -72,
+          472,
+          48
+        ],
+        [
+          -72,
+          516,
+          52.2
+        ],
+        [
+          -72,
+          580,
+          58.6
+        ],
+        [
+          -84,
+          580,
+          58.6
+        ],
+        [
+          -84,
+          552,
+          60
+        ],
+        [
+          -108,
+          552,
+          60
+        ]
+      ],
+      "width": 4.2,
+      "type": "cart",
+      "from": "MAIN_W",
+      "to": "IRON",
+      "length_3d": 196.554182,
+      "max_grade": 0.1,
+      "walk_seconds": 181.881686,
+      "six_second_turns": 31
+    },
+    {
+      "id": "R07",
+      "name": "学院北前场东侧运畜坡道",
+      "points": [
+        [
+          0,
+          532,
+          48
+        ],
+        [
+          0,
+          541,
+          48
+        ],
+        [
+          24,
+          541,
+          48
+        ],
+        [
+          36,
+          565,
+          50.4
+        ],
+        [
+          36,
+          589,
+          52.8
+        ],
+        [
+          0,
+          620,
+          56.4
+        ]
+      ],
+      "width": 4.2,
+      "type": "cart",
+      "length_3d": 131.703732,
+      "walk_seconds": 126.203732,
+      "max_grade": 0.1,
+      "segments": [
+        {
+          "a": [
+            0,
+            532,
+            48
+          ],
+          "b": [
+            0,
+            541,
+            48
+          ],
+          "length": 9.0,
+          "grade": 0.0,
+          "mps": 1.2,
+          "seconds": 7.5
+        },
+        {
+          "a": [
+            0,
+            541,
+            48
+          ],
+          "b": [
+            24,
+            541,
+            48
+          ],
+          "length": 24.0,
+          "grade": 0.0,
+          "mps": 1.2,
+          "seconds": 20.0
+        },
+        {
+          "a": [
+            24,
+            541,
+            48
+          ],
+          "b": [
+            36,
+            565,
+            50.4
+          ],
+          "length": 26.939933,
+          "grade": 0.089443,
+          "mps": 1.0,
+          "seconds": 26.939933
+        },
+        {
+          "a": [
+            36,
+            565,
+            50.4
+          ],
+          "b": [
+            36,
+            589,
+            52.8
+          ],
+          "length": 24.119701,
+          "grade": 0.1,
+          "mps": 1.0,
+          "seconds": 24.119701
+        },
+        {
+          "a": [
+            36,
+            589,
+            52.8
+          ],
+          "b": [
+            0,
+            620,
+            56.4
+          ],
+          "length": 47.644097,
+          "grade": 0.075777,
+          "mps": 1.0,
+          "seconds": 47.644097
+        }
+      ],
+      "replaces": "R07 entire polyline",
+      "mule_speed": 1.0,
+      "mule_seconds": 131.703732,
+      "first_9m_width": 3.6,
+      "from": "MAIN_N",
+      "to": "HILL_BASE",
+      "six_second_turns": 22
+    },
+    {
+      "id": "R08",
+      "name": "星仪院仪器运输道",
+      "points": [
+        [
+          0,
+          620,
+          56.4
+        ],
+        [
+          72,
+          620,
+          62.8
+        ],
+        [
+          108,
+          596,
+          66
+        ],
+        [
+          108,
+          528,
+          66
+        ],
+        [
+          132,
+          528,
+          66
+        ],
+        [
+          132,
+          542,
+          66
+        ]
+      ],
+      "width": 3.6,
+      "type": "cart",
+      "from": "HILL_BASE",
+      "to": "STAR",
+      "length_3d": 221.668675,
+      "max_grade": 0.088889,
+      "walk_seconds": 204.002008,
+      "six_second_turns": 35
+    },
+    {
+      "id": "R09",
+      "name": "星仪院东阶捷径",
+      "points": [
+        [
+          48,
+          472,
+          48
+        ],
+        [
+          72,
+          472,
+          48
+        ],
+        [
+          84,
+          508,
+          54
+        ],
+        [
+          96,
+          528,
+          60
+        ],
+        [
+          108,
+          528,
+          66
+        ],
+        [
+          132,
+          528,
+          66
+        ],
+        [
+          132,
+          542,
+          66
+        ]
+      ],
+      "width": 2.4,
+      "type": "stair",
+      "from": "MAIN_E",
+      "to": "STAR",
+      "length_3d": 137.918342,
+      "max_grade": 0.5,
+      "walk_seconds": 168.464117,
+      "six_second_turns": 29
+    },
+    {
+      "id": "R10",
+      "name": "温室洁净支路",
+      "points": [
+        [
+          120,
+          410,
+          40
+        ],
+        [
+          96,
+          410,
+          41.2
+        ],
+        [
+          96,
+          378,
+          40
+        ],
+        [
+          174,
+          378,
+          40
+        ],
+        [
+          216,
+          402,
+          42
+        ],
+        [
+          216,
+          423,
+          42
+        ]
+      ],
+      "width": 2.4,
+      "type": "cart",
+      "from": "WHITE",
+      "to": "GREEN",
+      "length_3d": 203.467347,
+      "max_grade": 0.05,
+      "walk_seconds": 169.556123,
+      "six_second_turns": 29
+    },
+    {
+      "id": "R11",
+      "name": "净水场支路",
+      "points": [
+        [
+          216,
+          423,
+          42
+        ],
+        [
+          216,
+          419,
+          42
+        ],
+        [
+          240,
+          419,
+          42
+        ],
+        [
+          240,
+          480,
+          47.4
+        ],
+        [
+          192,
+          480,
+          49
+        ],
+        [
+          192,
+          504,
+          49
+        ],
+        [
+          204,
+          504,
+          49
+        ]
+      ],
+      "width": 2.4,
+      "type": "cart",
+      "from": "GREEN",
+      "to": "WATER",
+      "length_3d": 173.265209,
+      "max_grade": 0.088525,
+      "walk_seconds": 154.594099,
+      "six_second_turns": 26
+    },
+    {
+      "id": "R12",
+      "name": "既有公共牧道至隐修山道口",
+      "points": [
+        [
+          0,
+          620,
+          56.4
+        ],
+        [
+          -80,
+          684,
+          64
+        ],
+        [
+          -160,
+          684,
+          72
+        ],
+        [
+          -240,
+          684,
+          80
+        ],
+        [
+          -80,
+          756,
+          96
+        ],
+        [
+          -240,
+          756,
+          112
+        ],
+        [
+          -80,
+          828,
+          128
+        ],
+        [
+          -240,
+          828,
+          144
+        ],
+        [
+          -160,
+          876,
+          150
+        ],
+        [
+          160,
+          876,
+          180
+        ],
+        [
+          -180,
+          948,
+          212
+        ],
+        [
+          160,
+          1020,
+          244
+        ],
+        [
+          -180,
+          1092,
+          276
+        ],
+        [
+          160,
+          1164,
+          308
+        ],
+        [
+          -83.547,
+          1207.695,
+          310.865
+        ]
+      ],
+      "width": 3.2,
+      "type": "cart",
+      "from": "HILL_BASE",
+      "to": "HERMIT_TRACK",
+      "length_3d": 2995.872451,
+      "max_grade": 0.1,
+      "walk_seconds": 2954.630413,
+      "six_second_turns": 493
+    },
+    {
+      "id": "R13",
+      "name": "石院—丹房",
+      "points": [
+        [
+          -180,
+          1225,
+          312
+        ],
+        [
+          -152,
+          1225,
+          312
+        ],
+        [
+          -152,
+          1251,
+          316.8
+        ],
+        [
+          -177,
+          1251,
+          316.8
+        ]
+      ],
+      "width": 1.8,
+      "type": "stair",
+      "from": "FORT",
+      "to": "DAN",
+      "length_3d": 79.439365,
+      "max_grade": 0.184615,
+      "walk_seconds": 84.842612,
+      "six_second_turns": 15
+    },
+    {
+      "id": "R14",
+      "name": "山腰—口缘盘山步道",
+      "points": [
+        [
+          -180,
+          1225,
+          312
+        ],
+        [
+          -152,
+          1225,
+          312
+        ],
+        [
+          -152,
+          1251,
+          316.8
+        ],
+        [
+          -174,
+          1251,
+          316.8
+        ],
+        [
+          -170,
+          1263,
+          320
+        ],
+        [
+          240,
+          1360,
+          366
+        ],
+        [
+          -220,
+          1460,
+          414
+        ],
+        [
+          200,
+          1560,
+          458
+        ],
+        [
+          -160,
+          1660,
+          496
+        ],
+        [
+          120,
+          1740,
+          526
+        ],
+        [
+          0,
+          1790,
+          556
+        ]
+      ],
+      "width": 2.4,
+      "type": "foot",
+      "from": "FORT",
+      "to": "RIM",
+      "length_3d": 2222.191293,
+      "max_grade": 0.252982,
+      "walk_seconds": 2764.532522,
+      "six_second_turns": 461
+    },
+    {
+      "id": "R15",
+      "name": "口缘—高岸候渡间",
+      "points": [
+        [
+          0,
+          1790,
+          556
+        ],
+        [
+          -180,
+          1840,
+          528
+        ],
+        [
+          150,
+          1900,
+          480
+        ],
+        [
+          -160,
+          1960,
+          440
+        ],
+        [
+          140,
+          2020,
+          414
+        ],
+        [
+          -120,
+          2080,
+          414
+        ],
+        [
+          160,
+          2110,
+          414
+        ],
+        [
+          156,
+          2150,
+          412
+        ],
+        [
+          156,
+          2180,
+          411.2
+        ],
+        [
+          158,
+          2180,
+          411.2
+        ]
+      ],
+      "type": "foot",
+      "width": 2.0,
+      "from": "RIM",
+      "to": "FA-APPROACH",
+      "length_3d": 1773.745787,
+      "walk_seconds": 2217.182234,
+      "segments": [
+        {
+          "index": 0,
+          "from": [
+            0,
+            1790,
+            556
+          ],
+          "to": [
+            -180,
+            1840,
+            528
+          ],
+          "length_3d": 188.90209104189398,
+          "speed_mps": 0.8,
+          "walk_seconds": 236.12761380236748,
+          "slope": 0.14988056372021297
+        },
+        {
+          "index": 1,
+          "from": [
+            -180,
+            1840,
+            528
+          ],
+          "to": [
+            150,
+            1900,
+            480
+          ],
+          "length_3d": 338.827389683892,
+          "speed_mps": 0.8,
+          "walk_seconds": 423.534237104865,
+          "slope": 0.14310835055998652
+        },
+        {
+          "index": 2,
+          "from": [
+            150,
+            1900,
+            480
+          ],
+          "to": [
+            -160,
+            1960,
+            440
+          ],
+          "length_3d": 318.27660925679095,
+          "speed_mps": 0.8,
+          "walk_seconds": 397.84576157098866,
+          "slope": 0.12668127104390728
+        },
+        {
+          "index": 3,
+          "from": [
+            -160,
+            1960,
+            440
+          ],
+          "to": [
+            140,
+            2020,
+            414
+          ],
+          "length_3d": 307.0439707924583,
+          "speed_mps": 0.8,
+          "walk_seconds": 383.80496349057285,
+          "slope": 0.08498365855987974
+        },
+        {
+          "index": 4,
+          "from": [
+            140,
+            2020,
+            414
+          ],
+          "to": [
+            -120,
+            2080,
+            414
+          ],
+          "length_3d": 266.8332812825267,
+          "speed_mps": 0.8,
+          "walk_seconds": 333.5416016031583,
+          "slope": 0.0
+        },
+        {
+          "index": 5,
+          "from": [
+            -120,
+            2080,
+            414
+          ],
+          "to": [
+            160,
+            2110,
+            414
+          ],
+          "length_3d": 281.60255680657446,
+          "speed_mps": 0.8,
+          "walk_seconds": 352.003196008218,
+          "slope": 0.0
+        },
+        {
+          "index": 6,
+          "from": [
+            160,
+            2110,
+            414
+          ],
+          "to": [
+            156,
+            2150,
+            412
+          ],
+          "length_3d": 40.24922359499622,
+          "speed_mps": 0.8,
+          "walk_seconds": 50.31152949374527,
+          "slope": 0.04975185951049946
+        },
+        {
+          "index": 7,
+          "from": [
+            156,
+            2150,
+            412
+          ],
+          "to": [
+            156,
+            2180,
+            411.2
+          ],
+          "length_3d": 30.01066477104431,
+          "speed_mps": 0.8,
+          "walk_seconds": 37.51333096380539,
+          "slope": 0.026666666666667047
+        },
+        {
+          "index": 8,
+          "from": [
+            156,
+            2180,
+            411.2
+          ],
+          "to": [
+            158,
+            2180,
+            411.2
+          ],
+          "length_3d": 2.0,
+          "speed_mps": 0.8,
+          "walk_seconds": 2.5,
+          "slope": 0.0
+        }
+      ],
+      "stairs": [],
+      "layer": "ground",
+      "not_connected_to_altar": true,
+      "availability": "Always dry for Wv<=410; path ends outside waiting-room west door, never at ALTAR.",
+      "max_grade": 0.149881,
+      "six_second_turns": 370
+    },
+    {
+      "id": "R16",
+      "name": "岸侧观察岔口—旧湖岸",
+      "points": [
+        [
+          158,
+          2180,
+          411.2
+        ],
+        [
+          148,
+          2180,
+          411.2
+        ],
+        [
+          148,
+          2189.6,
+          406
+        ],
+        [
+          148,
+          2191,
+          406
+        ],
+        [
+          148,
+          2200.6,
+          400.8
+        ],
+        [
+          148,
+          2202,
+          400.8
+        ],
+        [
+          148,
+          2209.2,
+          397
+        ],
+        [
+          120,
+          2220,
+          397
+        ],
+        [
+          120,
+          2240,
+          397
+        ]
+      ],
+      "type": "stair",
+      "width": 1.8,
+      "from": "FA-APPROACH",
+      "to": "LAKE",
+      "length_3d": 92.787668,
+      "walk_seconds": 119.298465,
+      "segments": [
+        {
+          "index": 0,
+          "from": [
+            158,
+            2180,
+            411.2
+          ],
+          "to": [
+            148,
+            2180,
+            411.2
+          ],
+          "length_3d": 10.0,
+          "speed_mps": 1.2,
+          "walk_seconds": 8.333333333333334,
+          "slope": 0.0
+        },
+        {
+          "index": 1,
+          "from": [
+            148,
+            2180,
+            411.2
+          ],
+          "to": [
+            148,
+            2189.6,
+            406
+          ],
+          "length_3d": 10.917875251164858,
+          "speed_mps": 0.65,
+          "walk_seconds": 16.79673115563824,
+          "slope": 0.5416666666666706
+        },
+        {
+          "index": 2,
+          "from": [
+            148,
+            2189.6,
+            406
+          ],
+          "to": [
+            148,
+            2191,
+            406
+          ],
+          "length_3d": 1.400000000000091,
+          "speed_mps": 1.2,
+          "walk_seconds": 1.1666666666667425,
+          "slope": 0.0
+        },
+        {
+          "index": 3,
+          "from": [
+            148,
+            2191,
+            406
+          ],
+          "to": [
+            148,
+            2200.6,
+            400.8
+          ],
+          "length_3d": 10.917875251164858,
+          "speed_mps": 0.65,
+          "walk_seconds": 16.79673115563824,
+          "slope": 0.5416666666666706
+        },
+        {
+          "index": 4,
+          "from": [
+            148,
+            2200.6,
+            400.8
+          ],
+          "to": [
+            148,
+            2202,
+            400.8
+          ],
+          "length_3d": 1.400000000000091,
+          "speed_mps": 1.2,
+          "walk_seconds": 1.1666666666667425,
+          "slope": 0.0
+        },
+        {
+          "index": 5,
+          "from": [
+            148,
+            2202,
+            400.8
+          ],
+          "to": [
+            148,
+            2209.2,
+            397
+          ],
+          "length_3d": 8.141252974818892,
+          "speed_mps": 0.65,
+          "walk_seconds": 12.525004576644449,
+          "slope": 0.5277777777777927
+        },
+        {
+          "index": 6,
+          "from": [
+            148,
+            2209.2,
+            397
+          ],
+          "to": [
+            120,
+            2220,
+            397
+          ],
+          "length_3d": 30.010664771044375,
+          "speed_mps": 0.8,
+          "walk_seconds": 37.513330963805466,
+          "slope": 0.0
+        },
+        {
+          "index": 7,
+          "from": [
+            120,
+            2220,
+            397
+          ],
+          "to": [
+            120,
+            2240,
+            397
+          ],
+          "length_3d": 20.0,
+          "speed_mps": 0.8,
+          "walk_seconds": 25.0,
+          "slope": 0.0
+        }
+      ],
+      "stairs": [
+        {
+          "segment": 1,
+          "count": 32,
+          "rise": 0.1625,
+          "tread": 0.3
+        },
+        {
+          "segment": 3,
+          "count": 32,
+          "rise": 0.1625,
+          "tread": 0.3
+        },
+        {
+          "segment": 5,
+          "count": 24,
+          "rise": 0.15833333333333333,
+          "tread": 0.3
+        }
+      ],
+      "layer": "ground",
+      "not_connected_to_altar": true,
+      "availability": "Closed when Wv>=397.15 or its ground depth>=0.15; early lake observation only.",
+      "max_grade": 0.541667,
+      "six_second_turns": 20
+    },
+    {
+      "id": "R17",
+      "name": "高岸支路—旧低田—盆内遗迹",
+      "points": [
+        [
+          -120,
+          2080,
+          414
+        ],
+        [
+          -124.8,
+          2080,
+          411.5
+        ],
+        [
+          -126,
+          2080,
+          411.5
+        ],
+        [
+          -130.8,
+          2080,
+          409
+        ],
+        [
+          -132,
+          2080,
+          409
+        ],
+        [
+          -136.8,
+          2080,
+          406.5
+        ],
+        [
+          -138,
+          2080,
+          406.5
+        ],
+        [
+          -142.8,
+          2080,
+          404
+        ],
+        [
+          -300,
+          2120,
+          408
+        ],
+        [
+          -300,
+          2171,
+          405
+        ]
+      ],
+      "type": "stair",
+      "width": 1.8,
+      "from": "FA-R15-FORK",
+      "to": "RUIN",
+      "length_3d": 238.594813,
+      "walk_seconds": 302.988159,
+      "segments": [
+        {
+          "index": 0,
+          "from": [
+            -120,
+            2080,
+            414
+          ],
+          "to": [
+            -124.8,
+            2080,
+            411.5
+          ],
+          "length_3d": 5.412023651093921,
+          "speed_mps": 0.65,
+          "walk_seconds": 8.326190232452186,
+          "slope": 0.5208333333333336
+        },
+        {
+          "index": 1,
+          "from": [
+            -124.8,
+            2080,
+            411.5
+          ],
+          "to": [
+            -126,
+            2080,
+            411.5
+          ],
+          "length_3d": 1.2000000000000028,
+          "speed_mps": 1.2,
+          "walk_seconds": 1.0000000000000024,
+          "slope": 0.0
+        },
+        {
+          "index": 2,
+          "from": [
+            -126,
+            2080,
+            411.5
+          ],
+          "to": [
+            -130.8,
+            2080,
+            409
+          ],
+          "length_3d": 5.412023651093933,
+          "speed_mps": 0.65,
+          "walk_seconds": 8.326190232452204,
+          "slope": 0.5208333333333321
+        },
+        {
+          "index": 3,
+          "from": [
+            -130.8,
+            2080,
+            409
+          ],
+          "to": [
+            -132,
+            2080,
+            409
+          ],
+          "length_3d": 1.1999999999999886,
+          "speed_mps": 1.2,
+          "walk_seconds": 0.9999999999999906,
+          "slope": 0.0
+        },
+        {
+          "index": 4,
+          "from": [
+            -132,
+            2080,
+            409
+          ],
+          "to": [
+            -136.8,
+            2080,
+            406.5
+          ],
+          "length_3d": 5.412023651093933,
+          "speed_mps": 0.65,
+          "walk_seconds": 8.326190232452204,
+          "slope": 0.5208333333333321
+        },
+        {
+          "index": 5,
+          "from": [
+            -136.8,
+            2080,
+            406.5
+          ],
+          "to": [
+            -138,
+            2080,
+            406.5
+          ],
+          "length_3d": 1.1999999999999886,
+          "speed_mps": 1.2,
+          "walk_seconds": 0.9999999999999906,
+          "slope": 0.0
+        },
+        {
+          "index": 6,
+          "from": [
+            -138,
+            2080,
+            406.5
+          ],
+          "to": [
+            -142.8,
+            2080,
+            404
+          ],
+          "length_3d": 5.412023651093933,
+          "speed_mps": 0.65,
+          "walk_seconds": 8.326190232452204,
+          "slope": 0.5208333333333321
+        },
+        {
+          "index": 7,
+          "from": [
+            -142.8,
+            2080,
+            404
+          ],
+          "to": [
+            -300,
+            2120,
+            408
+          ],
+          "length_3d": 162.25855909627694,
+          "speed_mps": 0.8,
+          "walk_seconds": 202.82319887034618,
+          "slope": 0.02465950653068004
+        },
+        {
+          "index": 8,
+          "from": [
+            -300,
+            2120,
+            408
+          ],
+          "to": [
+            -300,
+            2171,
+            405
+          ],
+          "length_3d": 51.088159097779204,
+          "speed_mps": 0.8,
+          "walk_seconds": 63.860198872224004,
+          "slope": 0.058823529411764705
+        }
+      ],
+      "stairs": [
+        {
+          "segment": 0,
+          "count": 16,
+          "rise": 0.15625,
+          "tread": 0.3
+        },
+        {
+          "segment": 2,
+          "count": 16,
+          "rise": 0.15625,
+          "tread": 0.3
+        },
+        {
+          "segment": 4,
+          "count": 16,
+          "rise": 0.15625,
+          "tread": 0.3
+        },
+        {
+          "segment": 6,
+          "count": 16,
+          "rise": 0.15625,
+          "tread": 0.3
+        }
+      ],
+      "layer": "ground",
+      "not_connected_to_altar": true,
+      "availability": "Closed when Wv>=404.15; lower field has FFL404, ruins405; no eastward altar edge.",
+      "max_grade": 0.520833,
+      "six_second_turns": 51
+    },
+    {
+      "id": "R18",
+      "name": "高口缘登顶阶道",
+      "points": [
+        [
+          0,
+          1790,
+          556
+        ],
+        [
+          300,
+          1760,
+          586
+        ],
+        [
+          600,
+          1850,
+          620
+        ],
+        [
+          650,
+          1990,
+          650
+        ],
+        [
+          600,
+          2140,
+          680
+        ],
+        [
+          450,
+          2140,
+          714
+        ]
+      ],
+      "width": 1.8,
+      "type": "stair",
+      "from": "RIM",
+      "to": "PEAK",
+      "length_3d": 1084.4317,
+      "max_grade": 0.226667,
+      "walk_seconds": 1335.568735,
+      "six_second_turns": 223
+    },
+    {
+      "id": "R19",
+      "name": "铁工院燃料道",
+      "points": [
+        [
+          -108,
+          552,
+          60
+        ],
+        [
+          -84,
+          552,
+          60
+        ],
+        [
+          -84,
+          580,
+          58.6
+        ],
+        [
+          -174,
+          580,
+          58
+        ],
+        [
+          -174,
+          530,
+          53.2
+        ],
+        [
+          -183,
+          506,
+          52
+        ]
+      ],
+      "width": 4.2,
+      "type": "cart",
+      "from": "IRON",
+      "to": "FUEL",
+      "length_3d": 217.926935,
+      "max_grade": 0.096,
+      "walk_seconds": 189.977425,
+      "six_second_turns": 32
+    },
+    {
+      "id": "R20",
+      "name": "废液库封闭支道",
+      "points": [
+        [
+          -174,
+          580,
+          58
+        ],
+        [
+          -199,
+          580,
+          60
+        ],
+        [
+          -199,
+          570,
+          60
+        ]
+      ],
+      "width": 2.4,
+      "type": "cart",
+      "from": "R19_NODE3",
+      "to": "WASTE",
+      "length_3d": 35.079872,
+      "max_grade": 0.08,
+      "walk_seconds": 33.413206,
+      "six_second_turns": 6
+    },
+    {
+      "id": "R21",
+      "name": "源热井检修道",
+      "points": [
+        [
+          -174,
+          580,
+          58
+        ],
+        [
+          -216,
+          610,
+          62.5
+        ],
+        [
+          -216,
+          650,
+          66
+        ],
+        [
+          -198,
+          650,
+          66
+        ],
+        [
+          -198,
+          618,
+          66
+        ],
+        [
+          -183,
+          618,
+          66
+        ]
+      ],
+      "width": 2.4,
+      "type": "cart",
+      "from": "R19_NODE3",
+      "to": "HEAT",
+      "length_3d": 156.962581,
+      "max_grade": 0.0875,
+      "walk_seconds": 146.129248,
+      "six_second_turns": 25
+    },
+    {
+      "id": "R22",
+      "name": "南东污水维护道",
+      "points": [
+        [
+          52,
+          64,
+          4
+        ],
+        [
+          180,
+          64,
+          5
+        ],
+        [
+          300,
+          64,
+          6
+        ],
+        [
+          320,
+          74,
+          6
+        ]
+      ],
+      "width": 3.0,
+      "type": "cart",
+      "from": "R01_NODE1",
+      "to": "SEWAGE",
+      "length_3d": 270.368753,
+      "max_grade": 0.008333,
+      "walk_seconds": 225.307294,
+      "six_second_turns": 38
+    },
+    {
+      "id": "R23",
+      "name": "风磨农路",
+      "points": [
+        [
+          -236,
+          220,
+          23
+        ],
+        [
+          -320,
+          220,
+          23
+        ],
+        [
+          -320,
+          304,
+          31
+        ]
+      ],
+      "width": 3.0,
+      "type": "cart",
+      "from": "R03_NODE3",
+      "to": "MILL",
+      "length_3d": 168.380092,
+      "max_grade": 0.095238,
+      "walk_seconds": 154.380092,
+      "six_second_turns": 26
+    },
+    {
+      "id": "R24",
+      "name": "渔船棚路",
+      "points": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          52,
+          0,
+          0
+        ],
+        [
+          78,
+          -10,
+          0
+        ]
+      ],
+      "width": 3.6,
+      "type": "cart",
+      "from": "PORT",
+      "to": "BOAT_SHED",
+      "length_3d": 79.856777,
+      "max_grade": 0.0,
+      "walk_seconds": 66.547314,
+      "six_second_turns": 12
+    },
+    {
+      "id": "R25",
+      "name": "聚落主横街",
+      "points": [
+        [
+          36,
+          144,
+          10
+        ],
+        [
+          -8,
+          144,
+          12
+        ],
+        [
+          -48,
+          140,
+          12
+        ],
+        [
+          -120,
+          140,
+          12
+        ],
+        [
+          -140,
+          170,
+          15
+        ]
+      ],
+      "width": 3.6,
+      "type": "cart",
+      "from": "R01_NODE2",
+      "to": "VILLAGE_W",
+      "length_3d": 192.425039,
+      "max_grade": 0.083205,
+      "walk_seconds": 166.384216,
+      "six_second_turns": 28
+    },
+    {
+      "id": "R26",
+      "name": "会堂与村学横巷",
+      "points": [
+        [
+          -96,
+          189,
+          17
+        ],
+        [
+          -96,
+          180,
+          17
+        ],
+        [
+          7.2,
+          180,
+          13.6
+        ],
+        [
+          68,
+          180,
+          17
+        ],
+        [
+          68,
+          195,
+          17
+        ]
+      ],
+      "width": 2.4,
+      "type": "foot",
+      "from": "CHAPEL",
+      "to": "SCHOOL",
+      "length_3d": 188.150984,
+      "max_grade": 0.055921,
+      "walk_seconds": 156.792487,
+      "six_second_turns": 27
+    },
+    {
+      "id": "R27",
+      "name": "集市支巷",
+      "points": [
+        [
+          -8,
+          144,
+          12
+        ],
+        [
+          -8,
+          145,
+          12
+        ]
+      ],
+      "width": 3.6,
+      "type": "foot",
+      "from": "R25_NODE1",
+      "to": "MARKET",
+      "length_3d": 1.0,
+      "max_grade": 0.0,
+      "walk_seconds": 0.833333,
+      "six_second_turns": 1
+    },
+    {
+      "id": "R28",
+      "name": "维护住宅入口",
+      "points": [
+        [
+          -138,
+          358,
+          34
+        ],
+        [
+          -162,
+          358,
+          34
+        ]
+      ],
+      "width": 3.6,
+      "type": "cart",
+      "from": "R03_NODE5",
+      "to": "STAFF",
+      "length_3d": 24.0,
+      "max_grade": 0.0,
+      "walk_seconds": 20.0,
+      "six_second_turns": 4
+    },
+    {
+      "id": "R12B",
+      "name": "隐修士逐年修整的末段驮径",
+      "points": [
+        [
+          -83.547,
+          1207.695,
+          310.865
+        ],
+        [
+          -180,
+          1225,
+          312
+        ]
+      ],
+      "width": 1.6,
+      "type": "foot",
+      "from": "HERMIT_TRACK",
+      "to": "FORT",
+      "length_3d": 97.999655,
+      "max_grade": 0.011582,
+      "walk_seconds": 122.499569,
+      "six_second_turns": 21
+    },
+    {
+      "id": "R12C",
+      "name": "石院南坪—临时拴养地",
+      "points": [
+        [
+          -180,
+          1225,
+          312
+        ],
+        [
+          -218,
+          1225,
+          311
+        ],
+        [
+          -226,
+          1212,
+          310
+        ]
+      ],
+      "width": 1.6,
+      "type": "foot",
+      "from": "FORT",
+      "to": "HERM_MULE",
+      "length_3d": 53.310214,
+      "max_grade": 0.065512,
+      "walk_seconds": 66.637768,
+      "six_second_turns": 12
+    },
+    {
+      "id": "NR-SOUTH-ARRIVAL",
+      "name": "港口来客至北礼仪前场外绕路",
+      "points": [
+        [
+          0,
+          406,
+          48
+        ],
+        [
+          60,
+          406,
+          48
+        ],
+        [
+          60,
+          472,
+          48
+        ],
+        [
+          60,
+          548,
+          50.4
+        ],
+        [
+          36,
+          565,
+          50.4
+        ]
+      ],
+      "width": 4.2,
+      "type": "cart",
+      "length_3d": 231.448768,
+      "walk_seconds": 192.873973,
+      "max_grade": 0.031579,
+      "segments": [
+        {
+          "a": [
+            0,
+            406,
+            48
+          ],
+          "b": [
+            60,
+            406,
+            48
+          ],
+          "length": 60.0,
+          "grade": 0.0,
+          "mps": 1.2,
+          "seconds": 50.0
+        },
+        {
+          "a": [
+            60,
+            406,
+            48
+          ],
+          "b": [
+            60,
+            472,
+            48
+          ],
+          "length": 66.0,
+          "grade": 0.0,
+          "mps": 1.2,
+          "seconds": 55.0
+        },
+        {
+          "a": [
+            60,
+            472,
+            48
+          ],
+          "b": [
+            60,
+            548,
+            50.4
+          ],
+          "length": 76.037885,
+          "grade": 0.031579,
+          "mps": 1.2,
+          "seconds": 63.364904
+        },
+        {
+          "a": [
+            60,
+            548,
+            50.4
+          ],
+          "b": [
+            36,
+            565,
+            50.4
+          ],
+          "length": 29.410882,
+          "grade": 0.0,
+          "mps": 1.2,
+          "seconds": 24.509069
+        }
+      ],
+      "from": "FORECOURT",
+      "to": "NR-R07-MID",
+      "six_second_turns": 33
+    },
+    {
+      "id": "NR-UPPER-LINK",
+      "name": "东坡道至北上台地横联",
+      "points": [
+        [
+          36,
+          589,
+          52.8
+        ],
+        [
+          18,
+          574,
+          52.8
+        ],
+        [
+          0,
+          574,
+          52.8
+        ]
+      ],
+      "width": 3.6,
+      "type": "foot",
+      "length_3d": 41.430749,
+      "walk_seconds": 34.525624,
+      "max_grade": 0.0,
+      "segments": [
+        {
+          "a": [
+            36,
+            589,
+            52.8
+          ],
+          "b": [
+            18,
+            574,
+            52.8
+          ],
+          "length": 23.430749,
+          "grade": 0.0,
+          "mps": 1.2,
+          "seconds": 19.525624
+        },
+        {
+          "a": [
+            18,
+            574,
+            52.8
+          ],
+          "b": [
+            0,
+            574,
+            52.8
+          ],
+          "length": 18.0,
+          "grade": 0.0,
+          "mps": 1.2,
+          "seconds": 15.0
+        }
+      ],
+      "from": "NR-R07-UPPER",
+      "to": "NORTH_FORECOURT_UPPER",
+      "six_second_turns": 6
+    },
+    {
+      "id": "NR-CEREMONIAL",
+      "name": "北正面礼仪台地步道",
+      "points": [
+        [
+          0,
+          532,
+          48
+        ],
+        [
+          0,
+          538,
+          48
+        ],
+        [
+          0,
+          545.2,
+          48
+        ],
+        [
+          0,
+          550,
+          50.4
+        ],
+        [
+          0,
+          557.2,
+          50.4
+        ],
+        [
+          0,
+          562,
+          52.8
+        ],
+        [
+          0,
+          574,
+          52.8
+        ]
+      ],
+      "width": 6,
+      "type": "stair",
+      "length_3d": 43.133126,
+      "walk_seconds": 43.512502,
+      "max_grade": 0.5,
+      "segments": [
+        {
+          "a": [
+            0,
+            532,
+            48
+          ],
+          "b": [
+            0,
+            538,
+            48
+          ],
+          "length": 6.0,
+          "grade": 0.0,
+          "mps": 1.2,
+          "seconds": 5.0
+        },
+        {
+          "a": [
+            0,
+            538,
+            48
+          ],
+          "b": [
+            0,
+            545.2,
+            48
+          ],
+          "length": 7.2,
+          "grade": 0.0,
+          "mps": 1.2,
+          "seconds": 6.0
+        },
+        {
+          "a": [
+            0,
+            545.2,
+            48
+          ],
+          "b": [
+            0,
+            550,
+            50.4
+          ],
+          "length": 5.366563,
+          "grade": 0.5,
+          "mps": 0.65,
+          "seconds": 8.256251
+        },
+        {
+          "a": [
+            0,
+            550,
+            50.4
+          ],
+          "b": [
+            0,
+            557.2,
+            50.4
+          ],
+          "length": 7.2,
+          "grade": 0.0,
+          "mps": 1.2,
+          "seconds": 6.0
+        },
+        {
+          "a": [
+            0,
+            557.2,
+            50.4
+          ],
+          "b": [
+            0,
+            562,
+            52.8
+          ],
+          "length": 5.366563,
+          "grade": 0.5,
+          "mps": 0.65,
+          "seconds": 8.256251
+        },
+        {
+          "a": [
+            0,
+            562,
+            52.8
+          ],
+          "b": [
+            0,
+            574,
+            52.8
+          ],
+          "length": 12.0,
+          "grade": 0.0,
+          "mps": 1.2,
+          "seconds": 10.0
+        }
+      ],
+      "from": "MAIN_N",
+      "to": "NORTH_FORECOURT_UPPER",
+      "six_second_turns": 8
+    }
+  ],
+  "terrain_outline": [
+    [
+      0.0,
+      -140
+    ],
+    [
+      272.6438330699879,
+      -100
+    ],
+    [
+      454.4063884499799,
+      100
+    ],
+    [
+      636.1689438299718,
+      500
+    ],
+    [
+      772.4908603649658,
+      1000
+    ],
+    [
+      997.5,
+      1700
+    ],
+    [
+      727.0502215199679,
+      2400
+    ],
+    [
+      363.52511075998393,
+      2850
+    ],
+    [
+      0.0,
+      2980
+    ],
+    [
+      -454.4063884499799,
+      2800
+    ],
+    [
+      -817.9314992099638,
+      2200
+    ],
+    [
+      -997.5,
+      1600
+    ],
+    [
+      -772.4908603649658,
+      900
+    ],
+    [
+      -590.7283049849739,
+      400
+    ],
+    [
+      -363.52511075998393,
+      40
+    ],
+    [
+      -163.58629984199277,
+      -100
+    ]
+  ],
+  "village": {
+    "boundary": [
+      -140,
+      55,
+      100,
+      265
+    ],
+    "house_count": 24,
+    "household_population": 4,
+    "staff_boundary": [
+      -282,
+      316,
+      -138,
+      400
+    ],
+    "staff_house_count": 12,
+    "staff_house_population": 4,
+    "resident_population": 165,
+    "guest_capacity": 12,
+    "lowland_resident_population": 164,
+    "hermit_resident_population": 1
+  },
+  "plots": [
+    {
+      "id": "FIELD_W",
+      "type": "field",
+      "bbox": [
+        -500,
+        120,
+        -242,
+        350
+      ],
+      "crop": "potato_barley",
+      "allocated_area_m2": {
+        "potato": 28000,
+        "barley": 18000,
+        "service": 4600
+      },
+      "geometry": "polygon",
+      "polygon": [
+        [
+          -408.1021964023467,
+          120
+        ],
+        [
+          -242,
+          120
+        ],
+        [
+          -242,
+          296.0697465310543
+        ],
+        [
+          -280,
+          296.0697465310543
+        ],
+        [
+          -280,
+          350
+        ],
+        [
+          -500,
+          350
+        ],
+        [
+          -500,
+          265.61066981476614
+        ]
+      ],
+      "actual_area_m2": 50600.0,
+      "boundary_rule": "polygon为实田界；bbox只作检索包围盒，凹口与海侧裁角不铺田地",
+      "coastal_setback_m": 5,
+      "crop_area_preserved": true
+    },
+    {
+      "id": "FIELD_E",
+      "type": "field",
+      "bbox": [
+        190,
+        80,
+        420,
+        340
+      ],
+      "crop": "potato_oat",
+      "allocated_area_m2": {
+        "potato": 20000,
+        "barley": 10000,
+        "oat": 20000,
+        "fallow_and_service": 9800
+      },
+      "geometry": "rectangle",
+      "actual_area_m2": 59800,
+      "translation_from_previous_m": [
+        -20,
+        0
+      ],
+      "crop_area_preserved": true
+    },
+    {
+      "id": "VEG",
+      "type": "vegetable",
+      "bbox": [
+        180,
+        340,
+        360,
+        420
+      ],
+      "allocated_area_m2": {
+        "leafy": 6000,
+        "bean_and_root": 5000,
+        "nursery_and_service": 3400
+      }
+    },
+    {
+      "id": "PASTURE_W",
+      "type": "pasture",
+      "bbox": [
+        -600,
+        440,
+        -300,
+        860
+      ],
+      "allocated_area_m2": {
+        "grazing": 122000,
+        "service": 4000
+      }
+    },
+    {
+      "id": "PASTURE_E",
+      "type": "pasture",
+      "bbox": [
+        300,
+        500,
+        620,
+        920
+      ],
+      "allocated_area_m2": {
+        "grazing": 130000,
+        "service": 4400
+      }
+    },
+    {
+      "id": "TREE_W",
+      "type": "shelterbelt",
+      "bbox": [
+        -390,
+        360,
+        -300,
+        440
+      ]
+    },
+    {
+      "id": "TREE_E",
+      "type": "shelterbelt",
+      "bbox": [
+        260,
+        430,
+        340,
+        500
+      ]
+    }
+  ],
+  "terrain_controls": [
+    [
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      160,
+      12
+    ],
+    [
+      0,
+      300,
+      26
+    ],
+    [
+      0,
+      400,
+      48
+    ],
+    [
+      0,
+      481,
+      48
+    ],
+    [
+      -132,
+      424,
+      42
+    ],
+    [
+      132,
+      560,
+      66
+    ],
+    [
+      138,
+      410,
+      40
+    ],
+    [
+      -132,
+      558,
+      60
+    ],
+    [
+      -180,
+      1240,
+      312
+    ],
+    [
+      0,
+      1790,
+      556
+    ],
+    [
+      450,
+      2140,
+      714
+    ],
+    [
+      -40,
+      2280,
+      399
+    ],
+    [
+      -80,
+      2290,
+      397
+    ],
+    [
+      230,
+      2180,
+      416.4
+    ],
+    [
+      0,
+      2980,
+      490
+    ]
+  ],
+  "procedural": {
+    "seed": 20261028,
+    "road_seed": 20261039,
+    "building_seed": 20261065,
+    "vegetation_seed": 20261081,
+    "tile_size": 32,
+    "tree_count": 240,
+    "shrub_clusters": 1200,
+    "grass_clumps": 16000,
+    "main_roads_locked": true,
+    "parcel_seed": 20261051,
+    "shrubs_seed": 20261099,
+    "grass_seed": 20261117
+  },
+  "scale_contract": {
+    "reference": "Corvo Island, Azores; SIARAM official geography and Visit Azores dimensions",
+    "reference_area_km2": 17.12,
+    "target_area_ratio": 0.25,
+    "target_land_area_m2": 4280000.0,
+    "actual_outline_area_m2": 4280000.0,
+    "reference_dimensions_m": [
+      3990,
+      6240
+    ],
+    "authored_dimensions_m": [
+      1995,
+      3120
+    ],
+    "initial_xy_reference_scale": 0.5,
+    "z_reference_scale": 1.0,
+    "existing_internal_anchor_scale_applied_this_revision": 1.0,
+    "shoreline_only_adjustment": {
+      "fixed_x_extremes": [
+        -997.5,
+        997.5
+      ],
+      "non_extreme_x_factor": 0.9088127768999598,
+      "y_coordinates_retained": true,
+      "prior_area_m2": 4577700.0
+    },
+    "geometry_rule": "面积以terrain_outline鞋带公式为准；岛内建筑、道路与锚点保持原米制坐标，不再次执行0.5缩放",
+    "coastal_rules": {
+      "cliff_top_new_construction_setback_m": 20,
+      "high_vegetation_setback_m": 20,
+      "harbour_exception": "现有港口/泊位构筑按既定锚点接海，不套内陆崖顶建筑退让",
+      "agricultural_coastal_setback_m": 5,
+      "farm_wind_wall_height_m": 1.2,
+      "farm_salt_drain_width_m": 0.3,
+      "farm_salt_drain_depth_m": 0.25,
+      "vegetation": "20m崖顶带为低草和裸岩；5m农田岸边采用低矮干石墙与排盐沟，不扩成森林"
+    },
+    "sources": [
+      {
+        "url": "https://siaram.azores.gov.pt/geografia/corvo/intro.html",
+        "value": "17.12km², highest720m"
+      },
+      {
+        "url": "https://www.visitazores.com/en/the-azores/corvo",
+        "value": "length6.24km,maxwidth3.99km"
+      }
+    ]
+  },
+  "late_game_contracts": [
+    "shared_north_route.json",
+    "shared_final_approach.json"
+  ]
+};
+}

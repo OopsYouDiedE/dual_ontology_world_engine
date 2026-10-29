@@ -298,7 +298,13 @@ func acquire_actor(who: String, sprite_key: String, field: Node2D) -> CharacterB
 	else:
 		var binding := _actor_binding(who, field.execution_binding)
 		var point = _initial_point(who, field, binding)
-		if point == null or sprite_key == "": return null
+		if point == null or sprite_key == "":
+			if who == _viewer:
+				print("Initial player binding unavailable: actor=", who,
+					" map=", field.adapter.map_key(), " room=", binding.get("execution_room", ""),
+					" anchor=", binding.get("anchor", ""), " sprite_bound=", not sprite_key.is_empty(),
+					" candidates=", field.adapter.initial_room_candidates(str(binding.get("execution_room",""))).size())
+			return null
 		body = field.create_body(who, sprite_key)
 		if body == null: return null
 		body.speed = 130.0 if who == _viewer else 110.0

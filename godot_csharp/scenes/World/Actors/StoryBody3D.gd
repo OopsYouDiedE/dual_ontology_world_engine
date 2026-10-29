@@ -1,10 +1,11 @@
 extends CharacterBody3D
+const PhysicsLayers = preload("res://geometry/PhysicsLayers.gd")
 ## Retained metre-scale collision body; WorldStage3D executes measured movement.
 var visual: Node3D
 
 func configure(model: Dictionary, height: float, radius: float) -> bool:
-	collision_layer = 2
-	collision_mask = 3
+	collision_layer = PhysicsLayers.ACTOR
+	collision_mask = PhysicsLayers.ACTOR_MOVEMENT_MASK
 	floor_snap_length = 0.2
 	var collider := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()

@@ -130,6 +130,50 @@ public partial class GameEngine : Node
         ConfigureSession(options);
     }
 
+    /// <summary>Read only the explicitly selected, validated spatial objects for host assembly.</summary>
+    public GDict ProjectSpatialObjects(GArray objectIds)
+    {
+        if (session is not { } current || busy || maintenance || closing || faulted)
+            return new GDict { ["ok"] = false, ["error"] = "Session is not ready for spatial publication." };
+        try
+        {
+            var ids = new List<string>();
+            foreach (var id in objectIds)
+            {
+                if (id.VariantType != Variant.Type.String) throw new InvalidDataException("Spatial object ids must be strings.");
+                ids.Add(id.AsString());
+            }
+            var json = System.Text.Json.JsonSerializer.Serialize(current.ProjectSpatialObjects(ids));
+            return new GDict { ["ok"] = true, ["value"] = Parse(json) };
+        }
+        catch (Exception error)
+        {
+            return new GDict { ["ok"] = false, ["error"] = error.Message };
+        }
+    }
+
+    /// <summary>Read only explicitly selected floor surfaces for host assembly.</summary>
+    public GDict ProjectFloorSurfaces(GArray pieceIds)
+    {
+        if (session is not { } current || busy || maintenance || closing || faulted)
+            return new GDict { ["ok"] = false, ["error"] = "Session is not ready for floor publication." };
+        try
+        {
+            var ids = new List<string>();
+            foreach (var id in pieceIds)
+            {
+                if (id.VariantType != Variant.Type.String) throw new InvalidDataException("Floor piece ids must be strings.");
+                ids.Add(id.AsString());
+            }
+            var json = System.Text.Json.JsonSerializer.Serialize(current.ProjectFloorSurfaces(ids));
+            return new GDict { ["ok"] = true, ["value"] = Parse(json) };
+        }
+        catch (Exception error)
+        {
+            return new GDict { ["ok"] = false, ["error"] = error.Message };
+        }
+    }
+
     public GDict Snapshot() => snapshotCache.Duplicate(false);
     public GDict PerformanceSummary() => session is { } current
         ? GodotHostValues.Dictionary(current.PerformanceSummary()) : new();
@@ -326,6 +370,12 @@ public partial class GameEngine : Node
                             var projectedIntent = GodotHostValues.Dictionary(intent);
                             var ready = projectedIntent.GetValueOrDefault("status", "").AsString() == "prepared";
                             var actor = ready ? projectedIntent["actor"].AsString() : "";
+                            if (ready)
+                            {
+                                var spatialExecution = current.PreparedSpatialExecutionValue();
+                                if (spatialExecution.Count > 0)
+                                    projectedIntent["spatial_execution"] = GodotHostValues.Dictionary(spatialExecution);
+                            }
                             Stamp("snapshot_begin", timingId);
                             var projectedViewer = Project(current, current.Viewer);
                             var projectedExecution = ready

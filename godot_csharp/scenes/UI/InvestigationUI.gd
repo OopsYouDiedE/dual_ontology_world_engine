@@ -20,6 +20,7 @@ var _restore_serial := 0
 var _title_is_ui := true
 var _ui_texts: Array[Dictionary] = []
 var _option_placeholders: Array[Dictionary] = []
+var _replay_confirmation: VBoxContainer
 
 func _ready() -> void:
 	super._ready()
@@ -100,6 +101,7 @@ func open_modal(title: String, min_size := Vector2(760, 520), panel_id := "", ti
 	_title_is_ui = title_is_ui
 	_ui_texts.clear()
 	_option_placeholders.clear()
+	_replay_confirmation = null
 	_requested_size = min_size
 	for child in modal_body.get_children():
 		modal_body.remove_child(child)
@@ -150,9 +152,64 @@ func open_manuscript(data: Dictionary) -> void:
 		_ui_text(body, "尚无个人批注。")
 	for text: String in personal_notes: _raw_text(body, text)
 
+func _replay_cost_text(option: Dictionary) -> String:
+	var cost: Variant = option.get("cost", null)
+	if not cost is Dictionary or cost.is_empty():
+		return _text("代价未提供，暂不能提交。", "Cost unavailable; submission is disabled.", "費用が不明のため送信できません。")
+	var fields: Array[String] = []
+	for key in ["time", "computation", "stamina"]:
+		if not cost.has(key) or not (cost[key] is int or cost[key] is float):
+			return _text("代价未完整提供，暂不能提交。", "Cost incomplete; submission is disabled.", "費用が不足しているため送信できません。")
+		var name := _text("时间", "Time", "時間") if key == "time" else _text("计算力", "Computation", "計算力") if key == "computation" else _text("体力", "Stamina", "体力")
+		fields.append(name + ": " + str(cost[key]))
+	return _text("本次代价：", "Cost: ", "今回の費用：") + " · ".join(fields)
+
+func _selected_replay_text(schema: Dictionary, selected: Dictionary) -> String:
+	var parts: Array[String] = []
+	for variable in schema.get("variables", []):
+		if not variable is Dictionary: continue
+		var id := str(variable.get("id", ""))
+		if not selected.has(id): continue
+		for item in variable.get("values", []):
+			if item is Dictionary and item.get("value") == selected[id]:
+				parts.append(str(variable.get("label", "")) + ": " + str(item.get("label", "")))
+				break
+	return " · ".join(parts)
+func _confirm_replay(body: VBoxContainer, payload: String, description: String, cost_text: String, source: Button, serial: int) -> void:
+	if serial != _content_serial or not can_interact(): return
+	if is_instance_valid(_replay_confirmation): _replay_confirmation.queue_free()
+	_replay_confirmation = VBoxContainer.new()
+	body.add_child(_replay_confirmation)
+	_raw_text(_replay_confirmation, description)
+	_raw_text(_replay_confirmation, cost_text)
+	_ui_localized_text(_replay_confirmation, "确认提交推演？", "Confirm this reconstruction?", "この推論を送信しますか？")
+	var cancel := Button.new()
+	cancel.text = _text("取消", "Cancel", "キャンセル")
+	cancel.custom_minimum_size.y = 48
+	_replay_confirmation.add_child(cancel)
+	var confirm := Button.new()
+	confirm.text = _text("确认", "Confirm", "確認")
+	confirm.custom_minimum_size.y = 48
+	_replay_confirmation.add_child(confirm)
+	var panel := _replay_confirmation
+	cancel.pressed.connect(func():
+		if is_instance_valid(panel): panel.queue_free()
+		if Transition.can_focus(source): source.grab_focus()
+	)
+	confirm.pressed.connect(func(): _choose(payload, serial))
+	cancel.grab_focus()
+	modal_scroll.ensure_control_visible.call_deferred(cancel)
+
 func _append_replay_form(body: VBoxContainer, option: Dictionary) -> void:
 	var schema: Dictionary = option.replay_input
 	var serial := _content_serial
+	var cost_text := _replay_cost_text(option)
+	_raw_text(body, cost_text)
+	var cost: Variant = option.get("cost", null)
+	var cost_known: bool = cost is Dictionary and cost.has("time") and cost.has("computation") and cost.has("stamina")
+	if cost_known:
+		for key in ["time", "computation", "stamina"]:
+			if not (cost[key] is int or cost[key] is float): cost_known = false
 	var named := OptionButton.new()
 	named.theme_type_variation = &"ChoiceRow"
 	named.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
@@ -166,12 +223,12 @@ func _append_replay_form(body: VBoxContainer, option: Dictionary) -> void:
 	named_submit.text = _text("支付并重演所选假设", "Pay and replay selected hypothesis", "選択した仮説を有料で再現")
 	_ui_texts.append({"control": named_submit, "locales": ["支付并重演所选假设", "Pay and replay selected hypothesis", "選択した仮説を有料で再現"], "bold": false})
 	named_submit.disabled = true
-	named.item_selected.connect(func(index: int): named_submit.disabled = index == 0)
+	named.item_selected.connect(func(index: int): named_submit.disabled = index == 0 or not cost_known)
 	named_submit.pressed.connect(func():
 		var index := named.selected - 1
 		var rows: Array = schema.get("named", [])
 		if index >= 0 and index < rows.size():
-			_choose(JSON.stringify({"action_id": option.id, "hypothesis_id": rows[index].id}), serial)
+			_confirm_replay(body, JSON.stringify({"action_id": option.id, "hypothesis_id": rows[index].id}), str(rows[index].get("label", "")), cost_text, named_submit, serial)
 	)
 	body.add_child(named_submit)
 	var assumption := str(schema.get("initial_assumption", ""))
@@ -195,12 +252,12 @@ func _append_replay_form(body: VBoxContainer, option: Dictionary) -> void:
 		picker.item_selected.connect(func(index: int):
 			if index == 0: selected.erase(str(variable.id))
 			else: selected[str(variable.id)] = variable.get("values", [])[index - 1].value
-			history_submit.disabled = _manual_case(schema, selected).is_empty()
+			history_submit.disabled = not cost_known or _manual_case(schema, selected).is_empty()
 		)
 		body.add_child(picker)
 	history_submit.pressed.connect(func():
 		var hypothesis := _manual_case(schema, selected)
-		if not hypothesis.is_empty(): _choose(JSON.stringify({"action_id": option.id, "hypothesis_id": hypothesis}), serial)
+		if not hypothesis.is_empty() and cost_known: _confirm_replay(body, JSON.stringify({"action_id": option.id, "hypothesis_id": hypothesis}), _selected_replay_text(schema, selected), cost_text, history_submit, serial)
 	)
 	if schema.get("cases", []).is_empty():
 		_ui_localized_text(body, "完整组合假设尚未向本人开放；未选项目保持未知。", "The complete combination is not available to this subject yet. Unselected fields remain unknown.", "完全な組合せ仮説はまだ本人に開かれていません。未選択の項目は不明のままです。", "ManuscriptNote")
@@ -243,12 +300,12 @@ func _supplied_texts(value: Variant) -> Array[String]:
 	return result
 
 func open_campus_map(data: Dictionary) -> void:
-	var body := open_modal("校区平面图", Vector2(880, 620), "campus_map", true)
+	var body := open_modal("地点与路线", Vector2(880, 620), "campus_map", true)
 	_raw_text(body, str(data.current_label), true)
 	var drawing := MAP_PANEL.new()
 	drawing.configure(data)
 	body.add_child(drawing)
-	_ui_localized_text(body, "● 当前位置　细线：已知房间　金色圆点：已知通道", "● Current location · Outlines: known rooms · Gold circles: known passages", "● 現在地　細線：既知の部屋　金色の丸：既知の通路", "ManuscriptNote")
+	_ui_localized_text(body, "● 当前位置　列表：已到访地点与已走过的连接；不表示空间位置", "● Current location · List: visited places and travelled connections; not a floor plan", "● 現在地　一覧：訪問済みの場所と通行済みの経路。配置図ではありません", "ManuscriptNote")
 	for connection: Dictionary in data.connections:
 		_raw_text(body, str(connection.label))
 
@@ -292,6 +349,11 @@ func _action_button(data: Dictionary, variant: String) -> Button:
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.custom_minimum_size = Vector2(0, 48)
 	button.disabled = id.is_empty() or not bool(data.get("available", true))
+	if button.disabled:
+		var reason := str(data.get("reason", data.get("disabled_reason", "")))
+		if not reason.is_empty():
+			button.text += "\n" + reason
+			button.tooltip_text = reason
 	button.pressed.connect(_choose.bind(id, _content_serial))
 	return button
 
@@ -321,3 +383,7 @@ func _raw_text(parent: Node, text: String, allow_bbcode := false) -> RichTextLab
 	var label := _paragraph(text, "ManuscriptBody", allow_bbcode)
 	parent.add_child(label)
 	return label
+
+
+
+

@@ -1233,6 +1233,8 @@ class SightMaskInner extends Node2D:
 
 	func _process(delta: float) -> void:
 		if Engine.is_editor_hint() or host == null: return
+		if not is_instance_valid(host.field) or not is_instance_valid(host.field.player):
+			return
 		_clock += delta
 		var entry := Vector2i((host.sight_entry_origin() / cell_size).floor())
 		var origin := entry if _terrain_fog() else Vector2i((host.sight_origin() / cell_size).floor())
