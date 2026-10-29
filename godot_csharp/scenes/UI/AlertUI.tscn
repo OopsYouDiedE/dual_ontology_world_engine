@@ -1,0 +1,83 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/UI/AlertUI.gd" id="1_alert"]
+[ext_resource type="Theme" path="res://scenes/UI/Components/MaterialTheme.tres" id="2_theme"]
+
+[node name="AlertUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_alert")
+
+[node name="TopMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 130.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_constants/margin_top = 24
+
+[node name="Center" type="CenterContainer" parent="TopMargin"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="AlertCard" type="PanelContainer" parent="TopMargin/Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(560, 110)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="TopMargin/Center/AlertCard"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HeaderHBox" type="HBoxContainer" parent="TopMargin/Center/AlertCard/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HazardTypeLabel" type="Label" parent="TopMargin/Center/AlertCard/VBox/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
+theme_override_font_sizes/font_size = 17
+text = "【紧急警报】危险类型"
+
+[node name="BadgeContainer" type="MarginContainer" parent="TopMargin/Center/AlertCard/VBox/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="DismissButton" type="Button" parent="TopMargin/Center/AlertCard/VBox/HeaderHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 32)
+layout_mode = 2
+text = "知晓"
+
+[node name="SourceLabel" type="Label" parent="TopMargin/Center/AlertCard/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 14
+text = "危险源: 未知位置"
+
+[node name="ActionsHBox" type="HBoxContainer" parent="TopMargin/Center/AlertCard/VBox"]
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 12
+
+[node name="ResolveButton" type="Button" parent="TopMargin/Center/AlertCard/VBox/ActionsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 36)
+layout_mode = 2
+text = "现场处置"
+
+[node name="EvacuateButton" type="Button" parent="TopMargin/Center/AlertCard/VBox/ActionsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 36)
+layout_mode = 2
+text = "立即撤退"

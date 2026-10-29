@@ -71,6 +71,12 @@ func build(spec: Dictionary, visual: Node3D) -> bool:
 		marker.name = pair[1]
 		marker.position = interaction[pair[0]]
 		slots.add_child(marker)
+	for opt_pair in [["sit", "Sit"], ["lie", "Lie"], ["exit", "Exit"], ["placement", "PlacementSurface"]]:
+		if interaction.has(opt_pair[0]):
+			var opt_marker := Marker3D.new()
+			opt_marker.name = opt_pair[1]
+			opt_marker.position = interaction[opt_pair[0]]
+			slots.add_child(opt_marker)
 	var states := Node3D.new()
 	states.name = "StateVisuals"
 	add_child(states)
@@ -80,8 +86,70 @@ func build(spec: Dictionary, visual: Node3D) -> bool:
 	label.text = ""
 	label.position = interaction.label_position
 	label.visible = false
+	label.no_depth_test = false # Ensure depth test occludes label behind walls (Task 4.09)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.outline_size = 4
+	label.outline_modulate = Color(0, 0, 0, 0.85)
 	add_child(label)
 	return true
+
+# Single and multi-slot occupancy tracking (Tasks 3.01, 3.06, 3.09)
+var occupied_by: String = ""
+var slot_occupancies: Dictionary = {}
+
+func is_occupied() -> bool:
+	return not occupied_by.is_empty() or not slot_occupancies.is_empty()
+
+func is_slot_occupied(slot_name: String) -> bool:
+	return slot_occupancies.has(slot_name) and not str(slot_occupancies[slot_name]).is_empty()
+
+func occupy(actor_id: String) -> bool:
+	if is_occupied() and occupied_by != actor_id:
+		return false
+	occupied_by = actor_id
+	return true
+
+func occupy_slot(slot_name: String, actor_id: String) -> bool:
+	if is_slot_occupied(slot_name) and slot_occupancies[slot_name] != actor_id:
+		return false
+	slot_occupancies[slot_name] = actor_id
+	return true
+
+func release_reservation(actor = null) -> void:
+	occupied_by = ""
+	slot_occupancies.clear()
+
+func release_slot(slot_name: String) -> void:
+	slot_occupancies.erase(slot_name)
+
+# Target selection highlighting (Task 4.09)
+var is_highlighted := false
+var _original_materials: Dictionary = {}
+
+func set_highlight(highlight: bool, color: Color = Color("ffd54f")) -> void:
+	is_highlighted = highlight
+	var visual_root := get_node_or_null("VisualRoot")
+	if visual_root == null: return
+	_apply_highlight_recursive(visual_root, highlight, color)
+
+func _apply_highlight_recursive(node: Node, highlight: bool, color: Color) -> void:
+	if node is MeshInstance3D and node.mesh != null:
+		var key := node.get_instance_id()
+		if highlight:
+			if not _original_materials.has(key):
+				_original_materials[key] = node.material_override
+			var mat := StandardMaterial3D.new()
+			mat.albedo_color = color
+			mat.emission_enabled = true
+			mat.emission = color
+			mat.emission_energy_multiplier = 0.35
+			node.material_override = mat
+		else:
+			if _original_materials.has(key):
+				node.material_override = _original_materials[key]
+				_original_materials.erase(key)
+	for child in node.get_children():
+		_apply_highlight_recursive(child, highlight, color)
 
 ## The host supplies a current observer projection from Core; absence or an
 ## invalid projection clears the label rather than exposing physical content.
@@ -96,6 +164,11 @@ func set_observer_label(projection: Dictionary) -> bool:
 	if projection.display_name.is_empty(): return false
 	label.text = projection.display_name
 	label.visible = true
+	label.no_depth_test = false
+	if bool(projection.get("highlight", false)):
+		set_highlight(true)
+	else:
+		set_highlight(false)
 	return true
 
 ## Stable slot identifiers are part of the spatial interaction contract.
@@ -106,6 +179,10 @@ func resolve_interaction_slot(slot_id: String) -> Marker3D:
 		"stand": node_name = "Stand"
 		"face_target": node_name = "FaceTarget"
 		"contact": node_name = "Contact"
+		"sit": node_name = "Sit"
+		"lie": node_name = "Lie"
+		"exit": node_name = "Exit"
+		"placement": node_name = "PlacementSurface"
 		_: return null
 	return get_node_or_null("InteractionSlots/" + node_name) as Marker3D
 
@@ -119,6 +196,7 @@ func _box_shape(size: Vector3, center: Vector3) -> CollisionShape3D:
 	var shape := BoxShape3D.new()
 	shape.size = size
 	var node := CollisionShape3D.new()
+	node.name = "CollisionShape3D"
 	node.shape = shape
 	node.position = center
 	return node

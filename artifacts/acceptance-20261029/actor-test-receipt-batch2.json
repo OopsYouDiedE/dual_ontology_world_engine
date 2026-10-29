@@ -1,0 +1,112 @@
+{
+  "tasks": {
+    "5.07": {
+      "details": {
+        "action_after_call": "lie_down",
+        "action_after_transition": "lie_idle",
+        "action_on_stand": "lie_stand_up",
+        "bedridden_stand_rejected": true,
+        "is_bedridden_retained": true,
+        "lying_after_call": true,
+        "lying_after_stand": false,
+        "pos_after_stand": "(3.0, 0.0, 4.0)",
+        "stand_up_call_result": true
+      },
+      "ok": true
+    },
+    "5.08": {
+      "details": {
+        "conversing_active": true,
+        "conversing_after_leave": false,
+        "interrupted_reason": "target_left",
+        "seated_during_conversation": true,
+        "target_yaw": 0.785398163397448
+      },
+      "ok": true
+    },
+    "5.09": {
+      "details": {
+        "cancel_rollback_ok": true,
+        "held_item_cleared": true,
+        "held_item_right_set": true,
+        "item_parent_is_floor": true,
+        "item_parent_is_hand": true,
+        "item_safe_after_cancel": true,
+        "pickup_result": {
+          "height_category": "table",
+          "ok": true,
+          "slot": "RightHandSlot"
+        },
+        "place_result": {
+          "height_category": "floor",
+          "ok": true,
+          "placed_position": "(0.3, 0.02, 0.3)"
+        }
+      },
+      "ok": true
+    },
+    "5.10": {
+      "details": {
+        "close_operation": {
+          "action_type": "operate",
+          "contact_dist": 0.98488575220108,
+          "ok": true
+        },
+        "distant_rejection": {
+          "limit": 0.35,
+          "ok": false,
+          "reason": "not_at_stand_slot",
+          "stand_dist": 3.3941125869751
+        }
+      },
+      "ok": true
+    },
+    "5.11": {
+      "details": {
+        "carry_start_res": {
+          "clearance_width": 0.75,
+          "ok": true,
+          "speed_modifier": 0.65
+        },
+        "check_pickup": {
+          "allowed": false,
+          "reason": "hands_occupied_carrying"
+        },
+        "check_valve": {
+          "allowed": false,
+          "reason": "hands_occupied_carrying"
+        },
+        "dropped_item_matches": true,
+        "is_carrying": true,
+        "is_carrying_after_stop": false,
+        "narrow_door": {
+          "passable": false,
+          "passage_width": 0.65,
+          "reason": "passage_too_narrow_for_carrying",
+          "required_width": 0.75
+        },
+        "wide_door": {
+          "passable": true,
+          "passage_width": 0.9,
+          "required_width": 0.75
+        }
+      },
+      "ok": true
+    },
+    "5.12": {
+      "details": {
+        "active_after_clear": true,
+        "active_after_emergency": "alarm_escape",
+        "active_after_obs": "task_duty",
+        "active_initial": "task_duty",
+        "cancelled_log": [
+          "task_duty:preempted_by_emergency",
+          "alarm_escape:scene_transition"
+        ],
+        "queue_size_after_clear": 0
+      },
+      "ok": true
+    }
+  },
+  "timestamp": "2026-10-29T10:38:27"
+}

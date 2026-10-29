@@ -1,0 +1,134 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/UI/EvidenceInspectUI.gd" id="1_inspect"]
+[ext_resource type="Theme" path="res://scenes/UI/Components/MaterialTheme.tres" id="2_theme"]
+
+[node name="EvidenceInspectUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_inspect")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.08, 0.07, 0.65)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainCard" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(860, 560)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/MainCard"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HeaderHBox" type="HBoxContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+
+[node name="TitleCol" type="VBoxContainer" parent="Center/MainCard/VBox/HeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TitleLabel" type="Label" parent="Center/MainCard/VBox/HeaderHBox/TitleCol"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "证物检视"
+
+[node name="SourceTimeLabel" type="Label" parent="Center/MainCard/VBox/HeaderHBox/TitleCol"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.4, 0.38, 1)
+theme_override_font_sizes/font_size = 13
+text = "发现来源与时间"
+
+[node name="CloseButton" type="Button" parent="Center/MainCard/VBox/HeaderHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+text = "✕"
+
+[node name="HSeparator" type="HSeparator" parent="Center/MainCard/VBox"]
+layout_mode = 2
+
+[node name="BodyHBox" type="HBoxContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="ViewportContainer" type="SubViewportContainer" parent="Center/MainCard/VBox/BodyHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(420, 420)
+layout_mode = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="Center/MainCard/VBox/BodyHBox/ViewportContainer"]
+unique_name_in_owner = true
+own_world_3d = true
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(420, 420)
+render_target_update_mode = 3
+
+[node name="Camera3D" type="Camera3D" parent="Center/MainCard/VBox/BodyHBox/ViewportContainer/SubViewport"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+current = true
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Center/MainCard/VBox/BodyHBox/ViewportContainer/SubViewport"]
+transform = Transform3D(0.866025, -0.25, 0.433013, 0, 0.866025, 0.5, -0.5, -0.433013, 0.75, 2, 3, 3)
+
+[node name="OmniLight3D" type="OmniLight3D" parent="Center/MainCard/VBox/BodyHBox/ViewportContainer/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, -1, 1.5)
+light_color = Color(0.8, 0.85, 0.9, 1)
+light_energy = 0.6
+
+[node name="MeshPivot" type="Node3D" parent="Center/MainCard/VBox/BodyHBox/ViewportContainer/SubViewport"]
+unique_name_in_owner = true
+
+[node name="EvidenceMesh" type="MeshInstance3D" parent="Center/MainCard/VBox/BodyHBox/ViewportContainer/SubViewport/MeshPivot"]
+unique_name_in_owner = true
+
+[node name="DetailsCol" type="VBoxContainer" parent="Center/MainCard/VBox/BodyHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="DetailsHeader" type="Label" parent="Center/MainCard/VBox/BodyHBox/DetailsCol"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "特征与印记观察："
+
+[node name="DetailsScroll" type="ScrollContainer" parent="Center/MainCard/VBox/BodyHBox/DetailsCol"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ObservationsList" type="VBoxContainer" parent="Center/MainCard/VBox/BodyHBox/DetailsCol/DetailsScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="HintNote" type="Label" parent="Center/MainCard/VBox/BodyHBox/DetailsCol"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.4, 0.38, 1)
+theme_override_font_sizes/font_size = 12
+text = "提示：按住鼠标左键拖动可旋转证物，滚轮可缩放观察细节。"

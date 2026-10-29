@@ -7,8 +7,16 @@ const MeshDiagnostics = preload("res://geometry/MeshPublicationDiagnostics.gd")
 const WallSurface = preload("res://geometry/generators/WallSurface3D.gd")
 const OpeningFrame = preload("res://geometry/generators/OpeningFrame3D.gd")
 const HingedDoor = preload("res://geometry/generators/HingedDoor3D.gd")
+const HingedWindow = preload("res://geometry/generators/HingedWindow3D.gd")
+const SkirtingBoard = preload("res://geometry/generators/SkirtingBoard3D.gd")
+const StructuralMember = preload("res://geometry/generators/StructuralMember3D.gd")
 const CeilingSurface = preload("res://geometry/generators/CeilingSurface3D.gd")
 const StraightStair = preload("res://geometry/generators/StraightStair3D.gd")
+const WorldObject = preload("res://geometry/WorldObject3D.gd")
+const WorldObjectAdapter = preload("res://geometry/WorldObjectSpecAdapter.gd")
+const PublicObjects = preload("res://geometry/PublicNarrativeObjects.gd")
+const ExteriorRoof = preload("res://geometry/generators/ExteriorRoof3D.gd")
+const RailingHandrail = preload("res://geometry/generators/RailingHandrail3D.gd")
 ## Reusable DV projection. No world layout or gameplay rules are encoded here.
 var floors: Dictionary = {}
 var collision_visuals: Dictionary = {}
@@ -285,24 +293,65 @@ func build(data: Dictionary) -> void:
 			meshes.add_child(leaf)
 			study_doors[str(door.id)] = leaf
 		for p in f.get("furniture",[]):
-			var prop: Node3D
-			if p.kind == "source_furniture":
-				# Source dimensions are shown as labelled planning volumes.
-				# These are spatial review markers, not finished furniture models.
-				prop = Node3D.new()
-				prop.name = str(p.id)
-				var marker := visual({"rect":[-p.size[0]/2.0,-p.size[1]/2.0,p.size[0]/2.0,p.size[1]/2.0],"z":0,"height":p.size[2],"kind":"furniture"},wall_base)
-				prop.add_child(marker)
-			elif p.kind in ["chair","bench","desk"]:
-				prop = Furniture.create(p.kind)
+			var visual_node: Node3D = null
+			var kind_str := str(p.get("kind", ""))
+			var p_id := str(p.get("id", "")).to_lower()
+			var resolved_kind := kind_str
+			if kind_str == "source_furniture":
+				if "bed" in p_id: resolved_kind = "bed"
+				elif "nightstand" in p_id: resolved_kind = "nightstand"
+				elif "desk" in p_id: resolved_kind = "desk"
+				elif "chair" in p_id: resolved_kind = "chair"
+				elif "wardrobe" in p_id or "closet" in p_id: resolved_kind = "wardrobe"
+				elif "wash" in p_id or "basin" in p_id: resolved_kind = "washstand"
+				elif "sofa" in p_id or "couch" in p_id or "armchair" in p_id: resolved_kind = "sofa"
+				elif "tea" in p_id or "coffee" in p_id: resolved_kind = "coffeetable"
+				elif "lamp" in p_id or "light" in p_id: resolved_kind = "lamp"
+				elif "book" in p_id: resolved_kind = "book"
+				elif "paper" in p_id or "letter" in p_id: resolved_kind = "paper"
+				elif "carpet" in p_id or "rug" in p_id: resolved_kind = "carpet"
+				elif "curtain" in p_id: resolved_kind = "curtains"
+				elif "painting" in p_id or "picture" in p_id or "frame" in p_id: resolved_kind = "painting"
+				elif "plate" in p_id or "sign" in p_id: resolved_kind = "doorplate"
+				elif "evidence" in p_id: resolved_kind = "evidence"
+
+			if resolved_kind in ["chair", "bench", "desk"] and not p.has("size"):
+				visual_node = Furniture.create(resolved_kind)
+			elif resolved_kind in [
+				"bed", "cabinet", "nightstand", "desk", "chair", "counter", "stove", "sink", "table",
+				"wardrobe", "washstand", "sofa", "coffeetable", "lamp", "book", "paper",
+				"evidence", "carpet", "curtains", "painting", "doorplate", "pillow", "quilt"
+			]:
+				var sz := Vector3(1.0, 1.0, 1.0)
+				if p.has("size"):
+					sz = Coordinates.size_to_godot(Vector3(float(p.size[0]), float(p.size[1]), float(p.size[2])))
+				visual_node = Furniture.create_sized(resolved_kind, sz)
 			else:
-				prop = Furniture.create_sized(p.kind,Coordinates.size_to_godot(Vector3(p.size[0],p.size[1],p.size[2])))
-			if prop == null:
+				var r_w: float = float(p.size[0]) if p.has("size") else 1.0
+				var r_d: float = float(p.size[1]) if p.has("size") else 1.0
+				var r_h: float = float(p.size[2]) if p.has("size") else 1.0
+				visual_node = visual({"rect":[-r_w/2.0,-r_d/2.0,r_w/2.0,r_d/2.0],"z":0,"height":r_h,"kind":"furniture"},wall_base)
+
+			if visual_node == null:
 				push_error("Invalid furniture declaration: " + str(p))
 				continue
+
+			var prop: Node3D = null
+			if p.has("interaction") and p.interaction.get("status") == "ready":
+				var adapted: Dictionary = WorldObjectAdapter.convert(p, Vector3(0, 460, 48))
+				if not adapted.is_empty():
+					var wo := WorldObject.new()
+					if wo.build(adapted, visual_node):
+						prop = wo
+			if prop == null:
+				prop = Node3D.new()
+				prop.name = str(p.id)
+				prop.add_child(visual_node)
+
 			prop.position = point(p.position)
 			prop.rotation_degrees.y = 0.0 if bool(p.get("source_box_axis_aligned", false)) else Coordinates.yaw_to_godot(float(p.yaw))
-			prop.set_meta("kind","furniture")
+			prop.set_meta("kind", "furniture")
+			prop.set_meta("world_object_id", str(p.id))
 			meshes.add_child(prop)
 		var box_count := 0
 		var convex_count := 0

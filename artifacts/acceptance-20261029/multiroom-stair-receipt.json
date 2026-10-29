@@ -1,0 +1,68 @@
+{
+  "camera_jitter_free": true,
+  "max_camera_step_delta": 0.0506180115044117,
+  "ok": true,
+  "tasks": {
+    "Stage_C_MultiRoom": {
+      "details": {
+        "c_cancellation": {
+          "action_idle": true,
+          "cancelled_pos": "(0.0, 3.0, 4.421321)",
+          "stopped_safely": true,
+          "velocity_zero": true
+        },
+        "c_multiroom_complete": {
+          "corridor_reached": true,
+          "elevation_2f": 3.0,
+          "landing_reached": true
+        },
+        "d_1f_turn": {
+          "facing_yaw": 0.0,
+          "turned_ok": true
+        },
+        "d_stair_ascent": {
+          "ascent_steps_sampled": 642,
+          "elevation_gain": 3.0,
+          "end_y": 3.0,
+          "returned_2f": true,
+          "start_y": 0.0
+        },
+        "d_stair_descent": {
+          "descent_steps_sampled": 655,
+          "elevation_drop": 3.0,
+          "end_y": 0.0,
+          "landed_1f": true,
+          "start_y": 3.0
+        }
+      },
+      "ok": true
+    },
+    "Stage_D_Route": {
+      "details": {
+        "ascent": {
+          "ascent_steps_sampled": 642,
+          "elevation_gain": 3.0,
+          "end_y": 3.0,
+          "returned_2f": true,
+          "start_y": 0.0
+        },
+        "ascent_monotonic": true,
+        "descent": {
+          "descent_steps_sampled": 655,
+          "elevation_drop": 3.0,
+          "end_y": 0.0,
+          "landed_1f": true,
+          "start_y": 3.0
+        },
+        "descent_monotonic": true,
+        "no_jumping_required": true,
+        "turn_at_1f": {
+          "facing_yaw": 0.0,
+          "turned_ok": true
+        }
+      },
+      "ok": true
+    }
+  },
+  "timestamp": "2026-10-29T09:53:13"
+}

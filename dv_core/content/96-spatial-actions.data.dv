@@ -25,38 +25,1449 @@ data "template.spatial_storage_close_law" {
 }
 
 data "action.spatial.r05.chair.sit" {
-    value = {"kind":"spatial-action","method":"spatial.r05.chair.sit","law_schema":"template.spatial_seat_sit_law","rule_template":"template.spatial_seat_sit_law","arguments":["detective","R-05-chair","R05","spatial.actor.detective"],"status":"unconfigured"};
+    value = {"kind":"spatial-action","method":"spatial.r05.chair.sit","law_schema":"template.spatial_seat_sit_law","rule_template":"template.spatial_seat_sit_law","arguments":["detective","R-05-chair","R05","spatial.actor.detective"],"status":"ready"};
 }
 
 data "action.spatial.r05.chair.stand" {
-    value = {"kind":"spatial-action","method":"spatial.r05.chair.stand","law_schema":"template.spatial_seat_stand_law","rule_template":"template.spatial_seat_stand_law","arguments":["detective","R-05-chair","R05","spatial.actor.detective"],"status":"unconfigured"};
+    value = {"kind":"spatial-action","method":"spatial.r05.chair.stand","law_schema":"template.spatial_seat_stand_law","rule_template":"template.spatial_seat_stand_law","arguments":["detective","R-05-chair","R05","spatial.actor.detective"],"status":"ready"};
 }
 
 data "action.spatial.r05.bed.sit" {
-    value = {"kind":"spatial-action","method":"spatial.r05.bed.sit","law_schema":"template.spatial_seat_sit_law","rule_template":"template.spatial_seat_sit_law","arguments":["detective","R-05-bed","R05","spatial.actor.detective"],"status":"unconfigured"};
+    value = {"kind":"spatial-action","method":"spatial.r05.bed.sit","law_schema":"template.spatial_seat_sit_law","rule_template":"template.spatial_seat_sit_law","arguments":["detective","R-05-bed","R05","spatial.actor.detective"],"status":"ready"};
 }
 
 data "action.spatial.r05.bed.lie" {
-    value = {"kind":"spatial-action","method":"spatial.r05.bed.lie","law_schema":"template.spatial_bed_lie_law","rule_template":"template.spatial_bed_lie_law","arguments":["detective","R-05-bed","R05","spatial.actor.detective"],"status":"unconfigured"};
+    value = {"kind":"spatial-action","method":"spatial.r05.bed.lie","law_schema":"template.spatial_bed_lie_law","rule_template":"template.spatial_bed_lie_law","arguments":["detective","R-05-bed","R05","spatial.actor.detective"],"status":"ready"};
 }
 
 data "action.spatial.r05.bed.stand" {
-    value = {"kind":"spatial-action","method":"spatial.r05.bed.stand","law_schema":"template.spatial_seat_stand_law","rule_template":"template.spatial_seat_stand_law","arguments":["detective","R-05-bed","R05","spatial.actor.detective"],"status":"unconfigured"};
+    value = {"kind":"spatial-action","method":"spatial.r05.bed.stand","law_schema":"template.spatial_seat_stand_law","rule_template":"template.spatial_seat_stand_law","arguments":["detective","R-05-bed","R05","spatial.actor.detective"],"status":"ready"};
 }
 
 data "action.spatial.r05.desk.open" {
-    value = {"kind":"spatial-action","method":"spatial.r05.desk.open","law_schema":"template.spatial_storage_open_law","rule_template":"template.spatial_storage_open_law","arguments":["detective","R-05-desk","R05"],"status":"unconfigured"};
+    value = {"kind":"spatial-action","method":"spatial.r05.desk.open","law_schema":"template.spatial_storage_open_law","rule_template":"template.spatial_storage_open_law","arguments":["detective","R-05-desk","R05"],"status":"ready"};
 }
 
 data "action.spatial.r05.desk.close" {
-    value = {"kind":"spatial-action","method":"spatial.r05.desk.close","law_schema":"template.spatial_storage_close_law","rule_template":"template.spatial_storage_close_law","arguments":["detective","R-05-desk","R05"],"status":"unconfigured"};
+    value = {"kind":"spatial-action","method":"spatial.r05.desk.close","law_schema":"template.spatial_storage_close_law","rule_template":"template.spatial_storage_close_law","arguments":["detective","R-05-desk","R05"],"status":"ready"};
 }
 
 data "action.spatial.r05.wardrobe.open" {
-    value = {"kind":"spatial-action","method":"spatial.r05.wardrobe.open","law_schema":"template.spatial_storage_open_law","rule_template":"template.spatial_storage_open_law","arguments":["detective","R-05-wardrobe","R05"],"status":"unconfigured"};
+    value = {"kind":"spatial-action","method":"spatial.r05.wardrobe.open","law_schema":"template.spatial_storage_open_law","rule_template":"template.spatial_storage_open_law","arguments":["detective","R-05-wardrobe","R05"],"status":"ready"};
 }
 
 data "action.spatial.r05.wardrobe.close" {
-    value = {"kind":"spatial-action","method":"spatial.r05.wardrobe.close","law_schema":"template.spatial_storage_close_law","rule_template":"template.spatial_storage_close_law","arguments":["detective","R-05-wardrobe","R05"],"status":"unconfigured"};
+    value = {"kind":"spatial-action","method":"spatial.r05.wardrobe.close","law_schema":"template.spatial_storage_close_law","rule_template":"template.spatial_storage_close_law","arguments":["detective","R-05-wardrobe","R05"],"status":"ready"};
 }
 
+data "template.spatial_inspect_law" {
+    value = {"kind":"dv-value-template","parameters":["actor","object","room"],"value":{"$":"domain.axiom","args":["template.spatial_inspect_law",1.0,{"$":"domain.all","args":[{"$":"list","items":[{"$":"template","id":"template.campaign_at","args":[{"$":"param","name":"actor"},{"$":"param","name":"room"}]},{"$":"domain.fact","args":[{"$":"domain.ref","args":[{"$":"param","name":"actor"},"body","awake"]},true]}]}]},{"$":"list","items":[]}]},"bindings":{}};
+}
+
+data "action.spatial.Z-01-boiler.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-01-boiler", "Z-01"], "status": "ready"};
+}
+
+data "action.spatial.Z-01-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-01-desk", "Z-01"], "status": "ready"};
+}
+
+data "action.spatial.Z-01-valve.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-01-valve", "Z-01"], "status": "ready"};
+}
+
+data "action.spatial.Z-01-coal.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-01-coal", "Z-01"], "status": "ready"};
+}
+
+data "action.spatial.Z-02-base.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-02-base", "Z-02"], "status": "ready"};
+}
+
+data "action.spatial.Z-02-bench.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-02-bench", "Z-02"], "status": "ready"};
+}
+
+data "action.spatial.Z-03-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-03-work", "Z-03"], "status": "ready"};
+}
+
+data "action.spatial.Z-03-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-03-cab", "Z-03"], "status": "ready"};
+}
+
+data "action.spatial.Z-03-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-03-seat", "Z-03"], "status": "ready"};
+}
+
+data "action.spatial.Z-04-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-04-work", "Z-04"], "status": "ready"};
+}
+
+data "action.spatial.Z-04-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-04-cab", "Z-04"], "status": "ready"};
+}
+
+data "action.spatial.Z-04-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-04-seat", "Z-04"], "status": "ready"};
+}
+
+data "action.spatial.Z-05-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-05-work", "Z-05"], "status": "ready"};
+}
+
+data "action.spatial.Z-05-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-05-cab", "Z-05"], "status": "ready"};
+}
+
+data "action.spatial.Z-05-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "Z-05-seat", "Z-05"], "status": "ready"};
+}
+
+data "action.spatial.U-01-rack1.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-01-rack1", "U-01"], "status": "ready"};
+}
+
+data "action.spatial.U-01-rack2.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-01-rack2", "U-01"], "status": "ready"};
+}
+
+data "action.spatial.U-01-rack3.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-01-rack3", "U-01"], "status": "ready"};
+}
+
+data "action.spatial.U-01-rack4.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-01-rack4", "U-01"], "status": "ready"};
+}
+
+data "action.spatial.U-01-rack5.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-01-rack5", "U-01"], "status": "ready"};
+}
+
+data "action.spatial.U-01-rack6.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-01-rack6", "U-01"], "status": "ready"};
+}
+
+data "action.spatial.U-01-rack7.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-01-rack7", "U-01"], "status": "ready"};
+}
+
+data "action.spatial.U-01-rack8.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-01-rack8", "U-01"], "status": "ready"};
+}
+
+data "action.spatial.U-01-rack9.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-01-rack9", "U-01"], "status": "ready"};
+}
+
+data "action.spatial.U-01-rack10.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-01-rack10", "U-01"], "status": "ready"};
+}
+
+data "action.spatial.U-02-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-02-work", "U-02"], "status": "ready"};
+}
+
+data "action.spatial.U-02-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-02-cab", "U-02"], "status": "ready"};
+}
+
+data "action.spatial.U-02-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-02-seat", "U-02"], "status": "ready"};
+}
+
+data "action.spatial.U-03-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-03-work", "U-03"], "status": "ready"};
+}
+
+data "action.spatial.U-03-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-03-cab", "U-03"], "status": "ready"};
+}
+
+data "action.spatial.U-03-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-03-seat", "U-03"], "status": "ready"};
+}
+
+data "action.spatial.U-04-tank1.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-04-tank1", "U-04"], "status": "ready"};
+}
+
+data "action.spatial.U-04-tank2.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-04-tank2", "U-04"], "status": "ready"};
+}
+
+data "action.spatial.U-04-tank3.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-04-tank3", "U-04"], "status": "ready"};
+}
+
+data "action.spatial.U-04-tank4.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-04-tank4", "U-04"], "status": "ready"};
+}
+
+data "action.spatial.U-05-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-05-work", "U-05"], "status": "ready"};
+}
+
+data "action.spatial.U-05-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-05-cab", "U-05"], "status": "ready"};
+}
+
+data "action.spatial.U-05-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-05-seat", "U-05"], "status": "ready"};
+}
+
+data "action.spatial.U-06-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-06-work", "U-06"], "status": "ready"};
+}
+
+data "action.spatial.U-06-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-06-cab", "U-06"], "status": "ready"};
+}
+
+data "action.spatial.U-06-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "U-06-seat", "U-06"], "status": "ready"};
+}
+
+data "action.spatial.F-01-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-01-work", "F-01"], "status": "ready"};
+}
+
+data "action.spatial.F-01-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-01-cab", "F-01"], "status": "ready"};
+}
+
+data "action.spatial.F-01-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-01-seat", "F-01"], "status": "ready"};
+}
+
+data "action.spatial.F-02-stage.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-02-stage", "F-02"], "status": "ready"};
+}
+
+data "action.spatial.F-02-chairs.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-02-chairs", "F-02"], "status": "ready"};
+}
+
+data "action.spatial.F-03-table-0.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-03-table-0", "F-03"], "status": "ready"};
+}
+
+data "action.spatial.F-03-table-1.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-03-table-1", "F-03"], "status": "ready"};
+}
+
+data "action.spatial.F-03-table-2.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-03-table-2", "F-03"], "status": "ready"};
+}
+
+data "action.spatial.F-03-table-3.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-03-table-3", "F-03"], "status": "ready"};
+}
+
+data "action.spatial.F-03-table-4.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-03-table-4", "F-03"], "status": "ready"};
+}
+
+data "action.spatial.F-03-table-5.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-03-table-5", "F-03"], "status": "ready"};
+}
+
+data "action.spatial.F-04-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-04-work", "F-04"], "status": "ready"};
+}
+
+data "action.spatial.F-04-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-04-cab", "F-04"], "status": "ready"};
+}
+
+data "action.spatial.F-04-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-04-seat", "F-04"], "status": "ready"};
+}
+
+data "action.spatial.F-05-prep.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-05-prep", "F-05"], "status": "ready"};
+}
+
+data "action.spatial.F-05-hearth.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-05-hearth", "F-05"], "status": "ready"};
+}
+
+data "action.spatial.F-05-sink.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-05-sink", "F-05"], "status": "ready"};
+}
+
+data "action.spatial.F-05-key.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-05-key", "F-05"], "status": "ready"};
+}
+
+data "action.spatial.F-06-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-06-work", "F-06"], "status": "ready"};
+}
+
+data "action.spatial.F-06-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-06-cab", "F-06"], "status": "ready"};
+}
+
+data "action.spatial.F-06-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-06-seat", "F-06"], "status": "ready"};
+}
+
+data "action.spatial.F-08-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-08-work", "F-08"], "status": "ready"};
+}
+
+data "action.spatial.F-08-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-08-cab", "F-08"], "status": "ready"};
+}
+
+data "action.spatial.F-08-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-08-seat", "F-08"], "status": "ready"};
+}
+
+data "action.spatial.F-13-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-13-work", "F-13"], "status": "ready"};
+}
+
+data "action.spatial.F-13-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-13-cab", "F-13"], "status": "ready"};
+}
+
+data "action.spatial.F-13-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-13-seat", "F-13"], "status": "ready"};
+}
+
+data "action.spatial.F-14-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-14-work", "F-14"], "status": "ready"};
+}
+
+data "action.spatial.F-14-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-14-cab", "F-14"], "status": "ready"};
+}
+
+data "action.spatial.F-14-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-14-seat", "F-14"], "status": "ready"};
+}
+
+data "action.spatial.F-09-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-09-work", "F-09"], "status": "ready"};
+}
+
+data "action.spatial.F-09-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-09-cab", "F-09"], "status": "ready"};
+}
+
+data "action.spatial.F-09-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-09-seat", "F-09"], "status": "ready"};
+}
+
+data "action.spatial.F-10-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-10-work", "F-10"], "status": "ready"};
+}
+
+data "action.spatial.F-10-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-10-cab", "F-10"], "status": "ready"};
+}
+
+data "action.spatial.F-10-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-10-seat", "F-10"], "status": "ready"};
+}
+
+data "action.spatial.F-11-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-11-work", "F-11"], "status": "ready"};
+}
+
+data "action.spatial.F-11-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-11-cab", "F-11"], "status": "ready"};
+}
+
+data "action.spatial.F-11-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-11-seat", "F-11"], "status": "ready"};
+}
+
+data "action.spatial.F-12-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-12-work", "F-12"], "status": "ready"};
+}
+
+data "action.spatial.F-12-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-12-cab", "F-12"], "status": "ready"};
+}
+
+data "action.spatial.F-12-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-12-seat", "F-12"], "status": "ready"};
+}
+
+data "action.spatial.F-12-ladder.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-12-ladder", "F-12"], "status": "ready"};
+}
+
+data "action.spatial.F-07-table-group-0-0.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-07-table-group-0-0", "F-07"], "status": "ready"};
+}
+
+data "action.spatial.F-07-table-group-0-1.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-07-table-group-0-1", "F-07"], "status": "ready"};
+}
+
+data "action.spatial.F-07-table-group-0-2.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-07-table-group-0-2", "F-07"], "status": "ready"};
+}
+
+data "action.spatial.F-07-table-group-0-3.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-07-table-group-0-3", "F-07"], "status": "ready"};
+}
+
+data "action.spatial.F-07-table-group-0-4.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-07-table-group-0-4", "F-07"], "status": "ready"};
+}
+
+data "action.spatial.F-07-wall-storage-0-0.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "F-07-wall-storage-0-0", "F-07"], "status": "ready"};
+}
+
+data "action.spatial.R-01-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-01-bed", "R-01"], "status": "ready"};
+}
+
+data "action.spatial.R-01-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-01-nightstand", "R-01"], "status": "ready"};
+}
+
+data "action.spatial.R-01-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-01-desk", "R-01"], "status": "ready"};
+}
+
+data "action.spatial.R-01-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-01-chair", "R-01"], "status": "ready"};
+}
+
+data "action.spatial.R-01-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-01-wardrobe", "R-01"], "status": "ready"};
+}
+
+data "action.spatial.R-01-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-01-basin", "R-01"], "status": "ready"};
+}
+
+data "action.spatial.R-01-sofa.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-01-sofa", "R-01"], "status": "ready"};
+}
+
+data "action.spatial.R-01-table.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-01-table", "R-01"], "status": "ready"};
+}
+
+data "action.spatial.R-02-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-02-bed", "R-02"], "status": "ready"};
+}
+
+data "action.spatial.R-02-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-02-nightstand", "R-02"], "status": "ready"};
+}
+
+data "action.spatial.R-02-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-02-desk", "R-02"], "status": "ready"};
+}
+
+data "action.spatial.R-02-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-02-chair", "R-02"], "status": "ready"};
+}
+
+data "action.spatial.R-02-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-02-wardrobe", "R-02"], "status": "ready"};
+}
+
+data "action.spatial.R-02-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-02-basin", "R-02"], "status": "ready"};
+}
+
+data "action.spatial.R-02-sofa.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-02-sofa", "R-02"], "status": "ready"};
+}
+
+data "action.spatial.R-02-table.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-02-table", "R-02"], "status": "ready"};
+}
+
+data "action.spatial.R-03-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-03-bed", "R-03"], "status": "ready"};
+}
+
+data "action.spatial.R-03-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-03-nightstand", "R-03"], "status": "ready"};
+}
+
+data "action.spatial.R-03-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-03-desk", "R-03"], "status": "ready"};
+}
+
+data "action.spatial.R-03-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-03-chair", "R-03"], "status": "ready"};
+}
+
+data "action.spatial.R-03-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-03-wardrobe", "R-03"], "status": "ready"};
+}
+
+data "action.spatial.R-03-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-03-basin", "R-03"], "status": "ready"};
+}
+
+data "action.spatial.R-04-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-04-bed", "R-04"], "status": "ready"};
+}
+
+data "action.spatial.R-04-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-04-nightstand", "R-04"], "status": "ready"};
+}
+
+data "action.spatial.R-04-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-04-desk", "R-04"], "status": "ready"};
+}
+
+data "action.spatial.R-04-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-04-chair", "R-04"], "status": "ready"};
+}
+
+data "action.spatial.R-04-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-04-wardrobe", "R-04"], "status": "ready"};
+}
+
+data "action.spatial.R-04-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-04-basin", "R-04"], "status": "ready"};
+}
+
+data "action.spatial.R-04-sofa.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-04-sofa", "R-04"], "status": "ready"};
+}
+
+data "action.spatial.R-04-table.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-04-table", "R-04"], "status": "ready"};
+}
+
+data "action.spatial.R-05-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-05-nightstand", "R-05"], "status": "ready"};
+}
+
+data "action.spatial.R-05-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-05-basin", "R-05"], "status": "ready"};
+}
+
+data "action.spatial.R-06-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-06-bed", "R-06"], "status": "ready"};
+}
+
+data "action.spatial.R-06-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-06-nightstand", "R-06"], "status": "ready"};
+}
+
+data "action.spatial.R-06-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-06-desk", "R-06"], "status": "ready"};
+}
+
+data "action.spatial.R-06-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-06-chair", "R-06"], "status": "ready"};
+}
+
+data "action.spatial.R-06-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-06-wardrobe", "R-06"], "status": "ready"};
+}
+
+data "action.spatial.R-06-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-06-basin", "R-06"], "status": "ready"};
+}
+
+data "action.spatial.R-07-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-07-bed", "R-07"], "status": "ready"};
+}
+
+data "action.spatial.R-07-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-07-nightstand", "R-07"], "status": "ready"};
+}
+
+data "action.spatial.R-07-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-07-desk", "R-07"], "status": "ready"};
+}
+
+data "action.spatial.R-07-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-07-chair", "R-07"], "status": "ready"};
+}
+
+data "action.spatial.R-07-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-07-wardrobe", "R-07"], "status": "ready"};
+}
+
+data "action.spatial.R-07-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-07-basin", "R-07"], "status": "ready"};
+}
+
+data "action.spatial.R-08-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-08-bed", "R-08"], "status": "ready"};
+}
+
+data "action.spatial.R-08-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-08-nightstand", "R-08"], "status": "ready"};
+}
+
+data "action.spatial.R-08-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-08-desk", "R-08"], "status": "ready"};
+}
+
+data "action.spatial.R-08-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-08-chair", "R-08"], "status": "ready"};
+}
+
+data "action.spatial.R-08-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-08-wardrobe", "R-08"], "status": "ready"};
+}
+
+data "action.spatial.R-08-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-08-basin", "R-08"], "status": "ready"};
+}
+
+data "action.spatial.R-08-music.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-08-music", "R-08"], "status": "ready"};
+}
+
+data "action.spatial.R-08-low.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-08-low", "R-08"], "status": "ready"};
+}
+
+data "action.spatial.R-09-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-09-bed", "R-09"], "status": "ready"};
+}
+
+data "action.spatial.R-09-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-09-nightstand", "R-09"], "status": "ready"};
+}
+
+data "action.spatial.R-09-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-09-desk", "R-09"], "status": "ready"};
+}
+
+data "action.spatial.R-09-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-09-chair", "R-09"], "status": "ready"};
+}
+
+data "action.spatial.R-09-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-09-wardrobe", "R-09"], "status": "ready"};
+}
+
+data "action.spatial.R-09-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-09-basin", "R-09"], "status": "ready"};
+}
+
+data "action.spatial.R-10-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-10-bed", "R-10"], "status": "ready"};
+}
+
+data "action.spatial.R-10-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-10-nightstand", "R-10"], "status": "ready"};
+}
+
+data "action.spatial.R-10-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-10-desk", "R-10"], "status": "ready"};
+}
+
+data "action.spatial.R-10-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-10-chair", "R-10"], "status": "ready"};
+}
+
+data "action.spatial.R-10-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-10-wardrobe", "R-10"], "status": "ready"};
+}
+
+data "action.spatial.R-10-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-10-basin", "R-10"], "status": "ready"};
+}
+
+data "action.spatial.R-10-sofa.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-10-sofa", "R-10"], "status": "ready"};
+}
+
+data "action.spatial.R-10-table.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-10-table", "R-10"], "status": "ready"};
+}
+
+data "action.spatial.R-11-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-11-bed", "R-11"], "status": "ready"};
+}
+
+data "action.spatial.R-11-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-11-nightstand", "R-11"], "status": "ready"};
+}
+
+data "action.spatial.R-11-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-11-desk", "R-11"], "status": "ready"};
+}
+
+data "action.spatial.R-11-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-11-chair", "R-11"], "status": "ready"};
+}
+
+data "action.spatial.R-11-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-11-wardrobe", "R-11"], "status": "ready"};
+}
+
+data "action.spatial.R-11-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-11-basin", "R-11"], "status": "ready"};
+}
+
+data "action.spatial.R-12-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-12-bed", "R-12"], "status": "ready"};
+}
+
+data "action.spatial.R-12-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-12-nightstand", "R-12"], "status": "ready"};
+}
+
+data "action.spatial.R-12-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-12-desk", "R-12"], "status": "ready"};
+}
+
+data "action.spatial.R-12-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-12-chair", "R-12"], "status": "ready"};
+}
+
+data "action.spatial.R-12-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-12-wardrobe", "R-12"], "status": "ready"};
+}
+
+data "action.spatial.R-12-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-12-basin", "R-12"], "status": "ready"};
+}
+
+data "action.spatial.R-12-easel.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-12-easel", "R-12"], "status": "ready"};
+}
+
+data "action.spatial.R-12-low.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-12-low", "R-12"], "status": "ready"};
+}
+
+data "action.spatial.R-13-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-13-bed", "R-13"], "status": "ready"};
+}
+
+data "action.spatial.R-13-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-13-nightstand", "R-13"], "status": "ready"};
+}
+
+data "action.spatial.R-13-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-13-desk", "R-13"], "status": "ready"};
+}
+
+data "action.spatial.R-13-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-13-chair", "R-13"], "status": "ready"};
+}
+
+data "action.spatial.R-13-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-13-wardrobe", "R-13"], "status": "ready"};
+}
+
+data "action.spatial.R-13-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-13-basin", "R-13"], "status": "ready"};
+}
+
+data "action.spatial.R-13-sofa.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-13-sofa", "R-13"], "status": "ready"};
+}
+
+data "action.spatial.R-13-table.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-13-table", "R-13"], "status": "ready"};
+}
+
+data "action.spatial.R-13-lab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-13-lab", "R-13"], "status": "ready"};
+}
+
+data "action.spatial.R-14-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-14-bed", "R-14"], "status": "ready"};
+}
+
+data "action.spatial.R-14-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-14-nightstand", "R-14"], "status": "ready"};
+}
+
+data "action.spatial.R-14-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-14-desk", "R-14"], "status": "ready"};
+}
+
+data "action.spatial.R-14-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-14-chair", "R-14"], "status": "ready"};
+}
+
+data "action.spatial.R-14-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-14-wardrobe", "R-14"], "status": "ready"};
+}
+
+data "action.spatial.R-14-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-14-basin", "R-14"], "status": "ready"};
+}
+
+data "action.spatial.R-15-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-15-bed", "R-15"], "status": "ready"};
+}
+
+data "action.spatial.R-15-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-15-nightstand", "R-15"], "status": "ready"};
+}
+
+data "action.spatial.R-15-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-15-desk", "R-15"], "status": "ready"};
+}
+
+data "action.spatial.R-15-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-15-chair", "R-15"], "status": "ready"};
+}
+
+data "action.spatial.R-15-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-15-wardrobe", "R-15"], "status": "ready"};
+}
+
+data "action.spatial.R-15-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-15-basin", "R-15"], "status": "ready"};
+}
+
+data "action.spatial.R-16-bed.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-16-bed", "R-16"], "status": "ready"};
+}
+
+data "action.spatial.R-16-nightstand.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-16-nightstand", "R-16"], "status": "ready"};
+}
+
+data "action.spatial.R-16-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-16-desk", "R-16"], "status": "ready"};
+}
+
+data "action.spatial.R-16-chair.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-16-chair", "R-16"], "status": "ready"};
+}
+
+data "action.spatial.R-16-wardrobe.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-16-wardrobe", "R-16"], "status": "ready"};
+}
+
+data "action.spatial.R-16-basin.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "R-16-basin", "R-16"], "status": "ready"};
+}
+
+data "action.spatial.A-P-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "A-P-work", "A-P"], "status": "ready"};
+}
+
+data "action.spatial.A-P-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "A-P-cab", "A-P"], "status": "ready"};
+}
+
+data "action.spatial.A-P-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "A-P-seat", "A-P"], "status": "ready"};
+}
+
+data "action.spatial.A-W-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "A-W-work", "A-W"], "status": "ready"};
+}
+
+data "action.spatial.A-W-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "A-W-cab", "A-W"], "status": "ready"};
+}
+
+data "action.spatial.A-W-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "A-W-seat", "A-W"], "status": "ready"};
+}
+
+data "action.spatial.A-L-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "A-L-work", "A-L"], "status": "ready"};
+}
+
+data "action.spatial.A-L-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "A-L-cab", "A-L"], "status": "ready"};
+}
+
+data "action.spatial.A-L-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "A-L-seat", "A-L"], "status": "ready"};
+}
+
+data "action.spatial.A-LN-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "A-LN-work", "A-LN"], "status": "ready"};
+}
+
+data "action.spatial.A-LN-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "A-LN-cab", "A-LN"], "status": "ready"};
+}
+
+data "action.spatial.A-LN-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "A-LN-seat", "A-LN"], "status": "ready"};
+}
+
+data "action.spatial.B-W-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-W-work", "B-W"], "status": "ready"};
+}
+
+data "action.spatial.B-W-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-W-cab", "B-W"], "status": "ready"};
+}
+
+data "action.spatial.B-W-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-W-seat", "B-W"], "status": "ready"};
+}
+
+data "action.spatial.B-P-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-P-work", "B-P"], "status": "ready"};
+}
+
+data "action.spatial.B-P-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-P-cab", "B-P"], "status": "ready"};
+}
+
+data "action.spatial.B-P-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-P-seat", "B-P"], "status": "ready"};
+}
+
+data "action.spatial.B-L-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-L-work", "B-L"], "status": "ready"};
+}
+
+data "action.spatial.B-L-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-L-cab", "B-L"], "status": "ready"};
+}
+
+data "action.spatial.B-L-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-L-seat", "B-L"], "status": "ready"};
+}
+
+data "action.spatial.B-M-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-M-work", "B-M"], "status": "ready"};
+}
+
+data "action.spatial.B-M-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-M-cab", "B-M"], "status": "ready"};
+}
+
+data "action.spatial.B-M-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-M-seat", "B-M"], "status": "ready"};
+}
+
+data "action.spatial.B-LN-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-LN-work", "B-LN"], "status": "ready"};
+}
+
+data "action.spatial.B-LN-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-LN-cab", "B-LN"], "status": "ready"};
+}
+
+data "action.spatial.B-LN-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "B-LN-seat", "B-LN"], "status": "ready"};
+}
+
+data "action.spatial.C-A-step.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-A-step", "C-A"], "status": "ready"};
+}
+
+data "action.spatial.C-A-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-A-cab", "C-A"], "status": "ready"};
+}
+
+data "action.spatial.C-A-gauge.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-A-gauge", "C-A"], "status": "ready"};
+}
+
+data "action.spatial.C-W-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-W-work", "C-W"], "status": "ready"};
+}
+
+data "action.spatial.C-W-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-W-cab", "C-W"], "status": "ready"};
+}
+
+data "action.spatial.C-W-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-W-seat", "C-W"], "status": "ready"};
+}
+
+data "action.spatial.C-P-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-P-work", "C-P"], "status": "ready"};
+}
+
+data "action.spatial.C-P-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-P-cab", "C-P"], "status": "ready"};
+}
+
+data "action.spatial.C-P-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-P-seat", "C-P"], "status": "ready"};
+}
+
+data "action.spatial.C-B-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-B-work", "C-B"], "status": "ready"};
+}
+
+data "action.spatial.C-B-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-B-cab", "C-B"], "status": "ready"};
+}
+
+data "action.spatial.C-B-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-B-seat", "C-B"], "status": "ready"};
+}
+
+data "action.spatial.C-L-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-L-work", "C-L"], "status": "ready"};
+}
+
+data "action.spatial.C-L-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-L-cab", "C-L"], "status": "ready"};
+}
+
+data "action.spatial.C-L-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "C-L-seat", "C-L"], "status": "ready"};
+}
+
+data "action.spatial.D-L-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-L-work", "D-L"], "status": "ready"};
+}
+
+data "action.spatial.D-L-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-L-cab", "D-L"], "status": "ready"};
+}
+
+data "action.spatial.D-L-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-L-seat", "D-L"], "status": "ready"};
+}
+
+data "action.spatial.D-P-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-P-work", "D-P"], "status": "ready"};
+}
+
+data "action.spatial.D-P-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-P-cab", "D-P"], "status": "ready"};
+}
+
+data "action.spatial.D-P-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-P-seat", "D-P"], "status": "ready"};
+}
+
+data "action.spatial.D-W-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-W-work", "D-W"], "status": "ready"};
+}
+
+data "action.spatial.D-W-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-W-cab", "D-W"], "status": "ready"};
+}
+
+data "action.spatial.D-W-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-W-seat", "D-W"], "status": "ready"};
+}
+
+data "action.spatial.D-I-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-I-work", "D-I"], "status": "ready"};
+}
+
+data "action.spatial.D-I-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-I-cab", "D-I"], "status": "ready"};
+}
+
+data "action.spatial.D-I-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-I-seat", "D-I"], "status": "ready"};
+}
+
+data "action.spatial.D-LN-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-LN-work", "D-LN"], "status": "ready"};
+}
+
+data "action.spatial.D-LN-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-LN-cab", "D-LN"], "status": "ready"};
+}
+
+data "action.spatial.D-LN-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "D-LN-seat", "D-LN"], "status": "ready"};
+}
+
+data "action.spatial.T-01-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-01-work", "T-01"], "status": "ready"};
+}
+
+data "action.spatial.T-01-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-01-cab", "T-01"], "status": "ready"};
+}
+
+data "action.spatial.T-01-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-01-seat", "T-01"], "status": "ready"};
+}
+
+data "action.spatial.T-02-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-02-work", "T-02"], "status": "ready"};
+}
+
+data "action.spatial.T-02-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-02-cab", "T-02"], "status": "ready"};
+}
+
+data "action.spatial.T-02-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-02-seat", "T-02"], "status": "ready"};
+}
+
+data "action.spatial.T-03-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-03-work", "T-03"], "status": "ready"};
+}
+
+data "action.spatial.T-03-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-03-cab", "T-03"], "status": "ready"};
+}
+
+data "action.spatial.T-03-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-03-seat", "T-03"], "status": "ready"};
+}
+
+data "action.spatial.T-04-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-04-work", "T-04"], "status": "ready"};
+}
+
+data "action.spatial.T-04-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-04-cab", "T-04"], "status": "ready"};
+}
+
+data "action.spatial.T-04-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-04-seat", "T-04"], "status": "ready"};
+}
+
+data "action.spatial.T-05-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-05-work", "T-05"], "status": "ready"};
+}
+
+data "action.spatial.T-05-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-05-cab", "T-05"], "status": "ready"};
+}
+
+data "action.spatial.T-05-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-05-seat", "T-05"], "status": "ready"};
+}
+
+data "action.spatial.T-06-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-06-work", "T-06"], "status": "ready"};
+}
+
+data "action.spatial.T-06-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-06-cab", "T-06"], "status": "ready"};
+}
+
+data "action.spatial.T-06-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "T-06-seat", "T-06"], "status": "ready"};
+}
+
+data "action.spatial.V-01-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-01-work", "V-01"], "status": "ready"};
+}
+
+data "action.spatial.V-01-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-01-cab", "V-01"], "status": "ready"};
+}
+
+data "action.spatial.V-01-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-01-seat", "V-01"], "status": "ready"};
+}
+
+data "action.spatial.V-02-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-02-work", "V-02"], "status": "ready"};
+}
+
+data "action.spatial.V-02-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-02-cab", "V-02"], "status": "ready"};
+}
+
+data "action.spatial.V-02-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-02-seat", "V-02"], "status": "ready"};
+}
+
+data "action.spatial.V-03-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-03-work", "V-03"], "status": "ready"};
+}
+
+data "action.spatial.V-03-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-03-cab", "V-03"], "status": "ready"};
+}
+
+data "action.spatial.V-03-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-03-seat", "V-03"], "status": "ready"};
+}
+
+data "action.spatial.S-01-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-01-work", "S-01"], "status": "ready"};
+}
+
+data "action.spatial.S-01-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-01-cab", "S-01"], "status": "ready"};
+}
+
+data "action.spatial.S-01-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-01-seat", "S-01"], "status": "ready"};
+}
+
+data "action.spatial.S-02-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-02-work", "S-02"], "status": "ready"};
+}
+
+data "action.spatial.S-02-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-02-cab", "S-02"], "status": "ready"};
+}
+
+data "action.spatial.S-02-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-02-seat", "S-02"], "status": "ready"};
+}
+
+data "action.spatial.S-03-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-03-work", "S-03"], "status": "ready"};
+}
+
+data "action.spatial.S-03-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-03-cab", "S-03"], "status": "ready"};
+}
+
+data "action.spatial.S-03-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-03-seat", "S-03"], "status": "ready"};
+}
+
+data "action.spatial.S-04-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-04-work", "S-04"], "status": "ready"};
+}
+
+data "action.spatial.S-04-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-04-cab", "S-04"], "status": "ready"};
+}
+
+data "action.spatial.S-04-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-04-seat", "S-04"], "status": "ready"};
+}
+
+data "action.spatial.S-05-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-05-work", "S-05"], "status": "ready"};
+}
+
+data "action.spatial.S-05-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-05-cab", "S-05"], "status": "ready"};
+}
+
+data "action.spatial.S-05-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "S-05-seat", "S-05"], "status": "ready"};
+}
+
+data "action.spatial.V-04-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-04-work", "V-04"], "status": "ready"};
+}
+
+data "action.spatial.V-04-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-04-cab", "V-04"], "status": "ready"};
+}
+
+data "action.spatial.V-04-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-04-seat", "V-04"], "status": "ready"};
+}
+
+data "action.spatial.V-05-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-05-work", "V-05"], "status": "ready"};
+}
+
+data "action.spatial.V-05-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-05-cab", "V-05"], "status": "ready"};
+}
+
+data "action.spatial.V-05-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-05-seat", "V-05"], "status": "ready"};
+}
+
+data "action.spatial.V-06-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-06-work", "V-06"], "status": "ready"};
+}
+
+data "action.spatial.V-06-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-06-cab", "V-06"], "status": "ready"};
+}
+
+data "action.spatial.V-06-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-06-seat", "V-06"], "status": "ready"};
+}
+
+data "action.spatial.V-07-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-07-work", "V-07"], "status": "ready"};
+}
+
+data "action.spatial.V-07-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-07-cab", "V-07"], "status": "ready"};
+}
+
+data "action.spatial.V-07-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-07-seat", "V-07"], "status": "ready"};
+}
+
+data "action.spatial.V-08-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-08-work", "V-08"], "status": "ready"};
+}
+
+data "action.spatial.V-08-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-08-cab", "V-08"], "status": "ready"};
+}
+
+data "action.spatial.V-08-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-08-seat", "V-08"], "status": "ready"};
+}
+
+data "action.spatial.V-09-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-09-work", "V-09"], "status": "ready"};
+}
+
+data "action.spatial.V-09-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-09-cab", "V-09"], "status": "ready"};
+}
+
+data "action.spatial.V-09-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-09-seat", "V-09"], "status": "ready"};
+}
+
+data "action.spatial.V-10-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-10-work", "V-10"], "status": "ready"};
+}
+
+data "action.spatial.V-10-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-10-cab", "V-10"], "status": "ready"};
+}
+
+data "action.spatial.V-10-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-10-seat", "V-10"], "status": "ready"};
+}
+
+data "action.spatial.V-11-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-11-work", "V-11"], "status": "ready"};
+}
+
+data "action.spatial.V-11-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-11-cab", "V-11"], "status": "ready"};
+}
+
+data "action.spatial.V-11-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "V-11-seat", "V-11"], "status": "ready"};
+}
+
+data "action.spatial.G-01-bed1.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-01-bed1", "G-01"], "status": "ready"};
+}
+
+data "action.spatial.G-01-bed2.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-01-bed2", "G-01"], "status": "ready"};
+}
+
+data "action.spatial.G-01-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-01-desk", "G-01"], "status": "ready"};
+}
+
+data "action.spatial.G-01-ward.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-01-ward", "G-01"], "status": "ready"};
+}
+
+data "action.spatial.G-02-bed1.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-02-bed1", "G-02"], "status": "ready"};
+}
+
+data "action.spatial.G-02-bed2.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-02-bed2", "G-02"], "status": "ready"};
+}
+
+data "action.spatial.G-02-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-02-desk", "G-02"], "status": "ready"};
+}
+
+data "action.spatial.G-02-ward.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-02-ward", "G-02"], "status": "ready"};
+}
+
+data "action.spatial.G-03-bed1.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-03-bed1", "G-03"], "status": "ready"};
+}
+
+data "action.spatial.G-03-bed2.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-03-bed2", "G-03"], "status": "ready"};
+}
+
+data "action.spatial.G-03-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-03-desk", "G-03"], "status": "ready"};
+}
+
+data "action.spatial.G-03-ward.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-03-ward", "G-03"], "status": "ready"};
+}
+
+data "action.spatial.G-04-bed1.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-04-bed1", "G-04"], "status": "ready"};
+}
+
+data "action.spatial.G-04-bed2.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-04-bed2", "G-04"], "status": "ready"};
+}
+
+data "action.spatial.G-04-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-04-desk", "G-04"], "status": "ready"};
+}
+
+data "action.spatial.G-04-ward.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-04-ward", "G-04"], "status": "ready"};
+}
+
+data "action.spatial.G-05-bed1.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-05-bed1", "G-05"], "status": "ready"};
+}
+
+data "action.spatial.G-05-bed2.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-05-bed2", "G-05"], "status": "ready"};
+}
+
+data "action.spatial.G-05-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-05-desk", "G-05"], "status": "ready"};
+}
+
+data "action.spatial.G-05-ward.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-05-ward", "G-05"], "status": "ready"};
+}
+
+data "action.spatial.G-06-bed1.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-06-bed1", "G-06"], "status": "ready"};
+}
+
+data "action.spatial.G-06-bed2.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-06-bed2", "G-06"], "status": "ready"};
+}
+
+data "action.spatial.G-06-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-06-desk", "G-06"], "status": "ready"};
+}
+
+data "action.spatial.G-06-ward.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "G-06-ward", "G-06"], "status": "ready"};
+}
+
+data "action.spatial.N-01-desk.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "N-01-desk", "N-01"], "status": "ready"};
+}
+
+data "action.spatial.N-01-cases.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "N-01-cases", "N-01"], "status": "ready"};
+}
+
+data "action.spatial.N-02-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "N-02-work", "N-02"], "status": "ready"};
+}
+
+data "action.spatial.N-02-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "N-02-cab", "N-02"], "status": "ready"};
+}
+
+data "action.spatial.N-02-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "N-02-seat", "N-02"], "status": "ready"};
+}
+
+data "action.spatial.N-03-work.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "N-03-work", "N-03"], "status": "ready"};
+}
+
+data "action.spatial.N-03-cab.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "N-03-cab", "N-03"], "status": "ready"};
+}
+
+data "action.spatial.N-03-seat.inspect" {
+    value = {"kind": "spatial-action", "method": "spatial.inspect", "law_schema": "template.spatial_inspect_law", "rule_template": "template.spatial_inspect_law", "arguments": ["detective", "N-03-seat", "N-03"], "status": "ready"};
+}

@@ -1,6 +1,7 @@
 extends CharacterBody2D
 ## Logical DV coordinate adapter; all rendered geometry and collisions live in physical_body.
 signal arrived
+signal conversation_ended(reason: String)
 
 const ARRIVAL_RADIUS := 0.1
 const STUCK_DISTANCE := 0.5
@@ -23,6 +24,13 @@ var seated := false
 var seat_direction := "front"
 var seat_height := 0.0
 
+# 5.07 Lie down
+var lying := false
+var bedridden := false
+
+# 5.11 Carrying
+var carrying := false
+
 func _ready() -> void:
 	collision_layer = 0
 	collision_mask = 0
@@ -31,28 +39,148 @@ func pose(action: String, direction: String = "") -> void:
 	set_meta("requested_pose", action)
 	if not direction.is_empty(): facing = direction
 	_apply_facing()
+	if is_instance_valid(physical_body) and physical_body.has_method("play_action"):
+		physical_body.play_action(action)
 
 func _apply_facing() -> void:
-	if not is_instance_valid(physical_body) or not is_instance_valid(physical_body.visual): return
-	physical_body.visual.rotation.y = {"front": 0.0, "back": PI, "left": -PI/2, "right": PI/2}.get(facing, 0.0)
+	if not is_instance_valid(physical_body): return
+	var target_rad: float = {"front": 0.0, "back": PI, "left": -PI/2, "right": PI/2}.get(facing, 0.0)
+	if physical_body.has_method("set_target_facing"):
+		physical_body.set_target_facing(target_rad)
+	elif is_instance_valid(physical_body.visual):
+		physical_body.visual.rotation.y = target_rad
 
-func sit_at(direction: String, cushion_height: float) -> void:
-	# The source models have no sitting clip. Preserve intent without deforming
-	# their skeletons or claiming an animated pose has been performed.
+# ------------------------------------------------------------------
+# 5.06 Sitting
+# ------------------------------------------------------------------
+
+func sit_at(direction: String, cushion_height: float, seat_obj: Object = null) -> Dictionary:
+	var target_rad: float = {"front": 0.0, "back": PI, "left": -PI/2, "right": PI/2}.get(direction, 0.0)
+	if is_instance_valid(physical_body) and physical_body.has_method("sit_down_at"):
+		var res = physical_body.sit_down_at(physical_body.global_position, target_rad, cushion_height, seat_obj)
+		if res is Dictionary and not res.get("ok", true):
+			return res
 	seated = true
 	seat_direction = direction
 	seat_height = cushion_height
-	hold_seat()
+	facing = direction
+	_apply_facing()
+	if not is_instance_valid(physical_body):
+		hold_seat()
+	return {"ok": true}
 
 func stand_up() -> void:
 	seated = false
-	pose("idle")
+	if is_instance_valid(physical_body) and physical_body.has_method("stand_up_from_seat"):
+		physical_body.stand_up_from_seat()
+	else:
+		pose("idle")
 
 func hold_seat() -> void:
 	pose("sit", seat_direction)
 
+# ------------------------------------------------------------------
+# 5.07 Lying down & Bed
+# ------------------------------------------------------------------
+
+func lie_at(bed_position: Vector3, bed_yaw: float, stand_pos: Vector3, bed_obj: Object = null, is_bedridden: bool = false) -> Dictionary:
+	if is_instance_valid(physical_body) and physical_body.has_method("lie_down_at"):
+		var res = physical_body.lie_down_at(bed_position, bed_yaw, stand_pos, bed_obj, is_bedridden)
+		if res is Dictionary and not res.get("ok", true):
+			return res
+	lying = true
+	bedridden = is_bedridden
+	return {"ok": true}
+
+func stand_up_from_bed() -> bool:
+	if not lying or bedridden:
+		return false
+	lying = false
+	if is_instance_valid(physical_body) and physical_body.has_method("stand_up_from_bed"):
+		return physical_body.stand_up_from_bed()
+	pose("idle")
+	return true
+
+# ------------------------------------------------------------------
+# 5.08 Conversation
+# ------------------------------------------------------------------
+
+func converse_with(partner: Object) -> void:
+	if is_instance_valid(physical_body) and physical_body.has_method("start_conversation"):
+		physical_body.start_conversation(partner)
+
+func end_conversation() -> void:
+	if is_instance_valid(physical_body) and physical_body.has_method("end_conversation"):
+		physical_body.end_conversation()
+
+# ------------------------------------------------------------------
+# 5.09 Item Interaction (Pick up / Place)
+# ------------------------------------------------------------------
+
+func pickup_item(item_node: Node, target_pos: Vector3, height_category: String = "table", side: String = "right") -> Dictionary:
+	if is_instance_valid(physical_body) and physical_body.has_method("pickup_item_at"):
+		return physical_body.pickup_item_at(item_node, target_pos, height_category, side)
+	return {"ok": false, "reason": "no_physical_body"}
+
+func place_item(target_parent: Node, target_pos: Vector3, height_category: String = "table", side: String = "right") -> Dictionary:
+	if is_instance_valid(physical_body) and physical_body.has_method("place_item_at"):
+		return physical_body.place_item_at(target_parent, target_pos, height_category, side)
+	return {"ok": false, "reason": "no_physical_body"}
+
+# ------------------------------------------------------------------
+# 5.10 Door / Mechanism Operation
+# ------------------------------------------------------------------
+
+func operate_device(stand_slot: Vector3, contact_slot: Vector3, action_type: String = "operate", device_obj: Object = null) -> Dictionary:
+	if is_instance_valid(physical_body) and physical_body.has_method("operate_mechanism"):
+		return physical_body.operate_mechanism(stand_slot, contact_slot, action_type, device_obj)
+	return {"ok": false, "reason": "no_physical_body"}
+
+# ------------------------------------------------------------------
+# 5.11 Carrying
+# ------------------------------------------------------------------
+
+func start_carry(item_node: Node) -> Dictionary:
+	carrying = true
+	if is_instance_valid(physical_body) and physical_body.has_method("start_carrying"):
+		return physical_body.start_carrying(item_node)
+	return {"ok": false, "reason": "no_physical_body"}
+
+func drop_carry() -> Node:
+	carrying = false
+	if is_instance_valid(physical_body) and physical_body.has_method("stop_carrying"):
+		return physical_body.stop_carrying()
+	return null
+
+func can_perform_action(action_name: String) -> Dictionary:
+	if is_instance_valid(physical_body) and physical_body.has_method("can_perform_action"):
+		return physical_body.can_perform_action(action_name)
+	return {"allowed": true, "reason": "ok"}
+
+# ------------------------------------------------------------------
+# 5.12 Action Queue
+# ------------------------------------------------------------------
+
+func enqueue_action(action_id: String, priority: int, data: Dictionary = {}, on_exec: Callable = Callable(), on_cancel: Callable = Callable()) -> bool:
+	if is_instance_valid(physical_body) and physical_body.action_queue != null:
+		return physical_body.action_queue.enqueue(action_id, priority, data, on_exec, on_cancel)
+	return false
+
+func cancel_action(action_id: String) -> bool:
+	if is_instance_valid(physical_body) and physical_body.action_queue != null:
+		return physical_body.action_queue.cancel_by_id(action_id)
+	return false
+
+func clear_action_queue() -> void:
+	if is_instance_valid(physical_body) and physical_body.action_queue != null:
+		physical_body.action_queue.clear_all()
+
+# ------------------------------------------------------------------
+# Navigation & Movement
+# ------------------------------------------------------------------
+
 func face_point(point: Vector2) -> void:
-	if not seated and position.distance_squared_to(point) > 1.0:
+	if not seated and not lying and position.distance_squared_to(point) > 1.0:
 		face_vector(point - position)
 		pose("idle")
 
@@ -61,6 +189,9 @@ func face_vector(direction: Vector2) -> void:
 		facing = "right" if direction.x > 0 else "left"
 	else:
 		facing = "front" if direction.y > 0 else "back"
+	if is_instance_valid(physical_body) and physical_body.has_method("set_target_facing"):
+		var angle := atan2(direction.x, direction.y)
+		physical_body.set_target_facing(angle)
 
 func follow_path(points: PackedVector2Array) -> Dictionary:
 	stop_travel()
@@ -79,10 +210,15 @@ func follow_path(points: PackedVector2Array) -> Dictionary:
 	return travel_result
 
 func stop_travel(reason := "cancelled") -> void:
+	if is_instance_valid(physical_body) and physical_body.has_method("interrupt_action"):
+		if reason in ["cancelled", "interrupted", "missing_3d_world", "stuck"]:
+			physical_body.interrupt_action()
 	if travelling or not path.is_empty():
 		_finish_travel(false, reason)
 	else:
 		velocity = Vector2.ZERO
+		if is_instance_valid(physical_body) and physical_body.has_method("set_movement_speed"):
+			physical_body.set_movement_speed(0.0)
 		pose("idle")
 
 func _finish_travel(ok: bool, reason: String) -> void:
@@ -91,22 +227,22 @@ func _finish_travel(ok: bool, reason: String) -> void:
 	path.clear()
 	_stuck_time = 0.0
 	travel_result = {"ok": ok, "reason": reason}
+	if is_instance_valid(physical_body) and physical_body.has_method("set_movement_speed"):
+		physical_body.set_movement_speed(0.0)
 	pose("idle")
 	arrived.emit()
 
 func _physics_process(delta: float) -> void:
 	if not travelling or delta <= 0.0:
 		return
-	# A waypoint does not consume a whole physics tick. Spend the remaining
-	# distance on the next segment, keeping every corner and every collision.
-	var remaining := speed * delta
+	var carry_mod: float = float(physical_body.get("carry_speed_modifier")) if (is_instance_valid(physical_body) and bool(physical_body.get("is_carrying"))) else 1.0
+	var current_effective_speed: float = speed * carry_mod
+	var remaining: float = current_effective_speed * delta
 	for _step in MAX_ROUTE_STEPS_PER_TICK:
 		var difference := target - position
 		if difference.length() > ARRIVAL_RADIUS:
 			if remaining <= 0.0: break
 			var motion := difference.limit_length(remaining)
-			# move_and_slide integrates over the full physics delta on each call.
-			# Dividing this segment's motion by that same delta avoids extra speed.
 			velocity = motion / delta
 			face_vector(difference)
 			pose("walk")
@@ -144,3 +280,7 @@ func advance_world_motion(motion: Vector2) -> void:
 		stop_travel("missing_3d_world")
 		return
 	world_stage.advance(self, motion)
+	if is_instance_valid(physical_body) and physical_body.has_method("set_movement_speed"):
+		var speed_3d := physical_body.velocity
+		speed_3d.y = 0.0
+		physical_body.set_movement_speed(speed_3d.length())

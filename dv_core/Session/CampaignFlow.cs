@@ -1735,7 +1735,8 @@ public static partial class CampaignRuntime {
         while (R.Bool(R.lt(v_i__129235, R.count(F_dv_get(v_actor, "actions")))))
         {
             object v_action__129294 = R.at(F_dv_get(v_actor, "actions"), v_i__129235);
-            if (R.Bool(F_dvp_eligible(v_view__128973, v_action__129294, F_dv_get(v_actor, "mind"), v_goals__128935)))
+            if (R.Bool(F_dvp_eligible(v_view__128973, v_action__129294, F_dv_get(v_actor, "mind"), v_goals__128935)) &&
+                R.Bool(F_dvs_local_candidate_admissible(v_actor, v_action__129294)))
             {
                 object v_label__129396 = F_dvg_observer_action_label(v_state, v_viewer, v_action__129294);
                 if (R.Bool(R.not(R.eq(v_label__129396, ""))))

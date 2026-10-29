@@ -1,0 +1,55 @@
+{
+  "timestamp": "2026-10-29T09:58:00",
+  "commit": "batch6-m5-visual-refinement",
+  "tasks": {
+    "2.24": {
+      "item": "exterior_roof_and_enclosing_surfaces",
+      "overhang_m": 0.35,
+      "fascia_skirt_depth_m": 0.20,
+      "solid_collision": true,
+      "shadows_independent_of_ceilings": true,
+      "zero_light_leak": true,
+      "status": "passed"
+    },
+    "2.R1": { "item": "railing_3d_baseline_path", "polyline_points": 3, "status": "passed" },
+    "2.R2": { "item": "equal_arc_length_sampling", "max_spacing_m": 1.20, "actual_max_spacing_m": 1.13, "status": "passed" },
+    "2.R3": { "item": "terminal_and_corner_posts_no_duplicates", "joint_deduplication_m": 0.05, "status": "passed" },
+    "2.R4": { "item": "upright_vertical_posts", "upright_vector": "Vector3.UP", "no_slope_tilt": true, "status": "passed" },
+    "2.R5": { "item": "handrail_standard_cross_section", "rail_height_m": 1.05, "tube_radius_m": 0.025, "status": "passed" },
+    "2.R6": { "item": "smooth_corner_transition_elbows", "spherical_miter_elbows": true, "no_twisting": true, "status": "passed" },
+    "2.R7": { "item": "handrail_sealed_end_treatments", "supported_types": ["cap", "return", "wall_mount"], "active_end": "return", "status": "passed" },
+    "2.R8": { "item": "intermediate_safety_rails", "mid_height_ratio": 0.50, "infill_bar_continuous": true, "status": "passed" },
+    "2.R9": { "item": "simplified_continuous_solid_collision", "physics_layer": 1, "barrier_height_m": 1.05, "status": "passed" },
+    "2.R10": { "item": "railing_code_compliance_inspection", "no_fall_hazard": true, "stair_integration": true, "status": "passed" },
+    "4.03": {
+      "item": "standardized_material_library",
+      "categories": ["wood", "stone", "plaster", "metal", "fabric", "glass"],
+      "uniform_roughness_and_reflectance": true,
+      "backface_culling_enforced": true,
+      "no_double_sided_violation": true,
+      "status": "passed"
+    },
+    "4.04": {
+      "item": "mesh_publication_diagnostics",
+      "face_winding_checked": true,
+      "degenerate_triangles_checked": true,
+      "negative_local_scale_detected": true,
+      "bounds_verified": true,
+      "status": "passed"
+    },
+    "4.05": {
+      "item": "unified_lighting_and_environment",
+      "single_world_environment_enforced": true,
+      "duplicate_env_purged": true,
+      "min_ambient_energy": 0.25,
+      "dark_room_passages_and_evidence_discernable": true,
+      "room_lights_managed": true,
+      "status": "passed"
+    }
+  },
+  "summary": {
+    "total_tasks_verified": 14,
+    "failures": 0,
+    "all_passed": true
+  }
+}

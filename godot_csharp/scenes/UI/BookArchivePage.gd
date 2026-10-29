@@ -2,7 +2,7 @@ extends VBoxContainer
 ## A native Control page mounted by the same physical book as title settings.
 signal page_requested(page: String)
 signal ui_event(event: Dictionary)
-const LABELS := {"evidence": "证据", "items": "物品", "people": "人物", "gallery": "图版", "hypotheses": "猜想", "records": "记录"}
+const LABELS := {"evidence": "证物", "testimony": "证言", "hypotheses": "推论", "items": "物品", "people": "人物", "records": "记录", "gallery": "图版"}
 const PAGE_LENGTH := 5
 var archive: RefCounted
 var section := "index"
@@ -174,7 +174,14 @@ func _detail(id: String) -> void:
 		_text(original, &"BookHandText" if bool(entry.get("personal", false)) else &"BookBody")
 	var by := str(entry.get("speaker_name", ""))
 	if by == "": by = tr("当时记录")
-	_text("%s · %s\n%s · %s\n%s · %s" % [tr("来源"), by, tr("取得时间"), archive.time_text(entry.get("game_time", "")), tr("地点"), str(entry.get("place", "—"))], &"BookCaption")
+	var cat := str(entry.get("category", ""))
+	var certainty_desc := ""
+	match cat:
+		"testimony": certainty_desc = "【主观证言】陈述人所言，未被证实为客观事实"
+		"hypotheses": certainty_desc = "【脑内推论】认知推演假说，尚未证实"
+		"evidence": certainty_desc = "【客观物证】现场发现的实体留存"
+		_: certainty_desc = "【档案记录】"
+	_text("%s\n%s · %s\n%s · %s\n%s · %s" % [tr(certainty_desc), tr("来源"), by, tr("取得时间"), archive.time_text(entry.get("game_time", "")), tr("地点"), str(entry.get("place", "—"))], &"BookCaption")
 	var related: Array = entry.get("related", [])
 	if not related.is_empty():
 		_label(tr("关联证据"), &"BookCaptionLabel")

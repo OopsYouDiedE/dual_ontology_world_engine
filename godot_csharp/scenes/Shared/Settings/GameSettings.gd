@@ -53,6 +53,11 @@ const SPEC := {
 		"high_contrast": {"default": false, "type": "bool"},
 		"plain_fonts": {"default": false, "type": "bool"},
 		"screen_flash": {"default": true, "type": "bool"},
+		"subtitles": {"default": true, "type": "bool"},
+	},
+	"controls": {
+		"mouse_sensitivity": {"default": 1.0, "type": "range", "min": 0.2, "max": 2.5},
+		"camera_distance": {"default": 1.0, "type": "choice", "allowed": [0.8, 1.0, 1.3]},
 	},
 }
 
@@ -132,7 +137,8 @@ func get_value(section: String, key: String) -> Variant:
 				for event in action_events(key):
 					list.append(_event_to_dict(event))
 				return list
-			return null
+			elif not SPEC.get("controls", {}).has(key):
+				return null
 	if _values.has(section) and _values[section].has(key):
 		return _values[section][key]
 	return null
@@ -147,15 +153,16 @@ func set_value(section: String, key: String, value: Variant) -> bool:
 			else: TranslationServer.set_locale(str(value))
 			return true
 		"controls":
-			if _default_events.has(key) and value is Array:
-				var events: Array[InputEvent] = []
-				for entry in value:
-					var event := _dict_to_event(entry, key) if entry is Dictionary else null
-					if event != null: events.append(event)
-				if events.is_empty(): return false
-				_set_action_events(key, events)
-				return true
-			return false
+			if _default_events.has(key):
+				if value is Array:
+					var events: Array[InputEvent] = []
+					for entry in value:
+						var event := _dict_to_event(entry, key) if entry is Dictionary else null
+						if event != null: events.append(event)
+					if events.is_empty(): return false
+					_set_action_events(key, events)
+					return true
+				return false
 	if not SPEC.has(section) or not SPEC[section].has(key): return false
 	var clean: Variant = _normalize(SPEC[section][key], value)
 	_mark(section, key)

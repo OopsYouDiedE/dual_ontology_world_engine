@@ -1,0 +1,36 @@
+{
+  "timestamp": "2026-10-29T06:54:00",
+  "commit": "batch5-public-narrative",
+  "tasks": {
+    "3.19": { "item": "dining_table", "seats_count": 6, "serving_surface": true, "independent_slots": true, "status": "passed" },
+    "3.20": { "item": "dining_bench", "capacity": 3, "individual_sit_and_exit_slots": true, "status": "passed" },
+    "3.21": { "item": "food_tray", "portions_conservation": true, "initial_portions": 4, "conservation_invariant": true, "status": "passed" },
+    "3.22": { "item": "serving_counter", "solid_barrier": true, "staff_and_customer_slots": true, "status": "passed" },
+    "3.23": { "item": "fireplace_stove", "heat_source": true, "temperature_c": 18.0, "radius_m": 4.0, "status": "passed" },
+    "3.24": { "item": "double_latch_cabinet", "dual_latches": true, "support_prop": true, "all_required_to_open": true, "status": "passed" },
+    "3.25": { "item": "key_cabinet", "independent_key_ids": true, "hooks_count": 4, "empty_state_preserved": true, "status": "passed" },
+    "3.26": { "item": "register_logbook", "turn_page": true, "records_append_safe": true, "status": "passed" },
+    "3.27": { "item": "blackboard", "layered_annotations": true, "original_facts_immutable": true, "status": "passed" },
+    "3.28": { "item": "lectern", "speaker_slot": true, "presentation_slot": true, "status": "passed" },
+    "3.29": { "item": "lecture_seating", "independent_seats": 4, "aisle_clearance_slots": true, "status": "passed" },
+    "3.30": { "item": "workbench", "tool_slots": 2, "required_tools_check": true, "status": "passed" },
+    "3.31": { "item": "industrial_gauge", "kind": "pressure", "reading": 4.2, "unit": "bar", "timestamp_recorded": true, "status": "passed" },
+    "3.32": { "item": "valve_handwheel", "multi_turn": 3.0, "stand_position_retained": true, "rotation_state": true, "status": "passed" },
+    "3.33": { "item": "airlock_doors", "double_isolation": true, "interlock_no_simultaneous_open": true, "length_m": 3.0, "status": "passed" },
+    "3.34": { "item": "medical_bed", "exam_side": true, "meds_side": true, "transfer_slot": true, "patient_locked": true, "status": "passed" },
+    "3.35": { "item": "dual_lock_cabinet", "requires_both_keys": true, "partial_unlock_prevents_open": true, "status": "passed" },
+    "3.36": { "item": "medicine_bottle", "three_doses_conservation": true, "conservation_invariant": true, "status": "passed" },
+    "3.37": { "item": "layered_label", "double_layer": true, "top_peelable": true, "remnant_underneath": true, "status": "passed" },
+    "3.38": { "item": "document_fragment", "fragment_matching": true, "partial_text": true, "status": "passed" },
+    "3.39": { "item": "meal_receipt_slip", "slip_id": true, "discovery_filing_lifecycle": true, "status": "passed" },
+    "3.40": { "item": "route_map_comparison", "blueprint_vs_sketch": true, "detects_missing_sections": true, "status": "passed" },
+    "3.41": { "item": "stretcher", "dual_bearers": true, "patient_bed": true, "width_m": 0.65, "status": "passed" },
+    "3.42": { "item": "alarm_station", "pull_lever": true, "acoustic_radius_m": 25.0, "status": "passed" },
+    "3.43": { "item": "convention_document", "independent_signatures": true, "multi_actor_sign": true, "status": "passed" }
+  },
+  "summary": {
+    "total_tasks_verified": 25,
+    "failures": 0,
+    "all_passed": true
+  }
+}

@@ -196,12 +196,21 @@ func _render_current_line() -> void:
 	_stop_reveal()
 	var line: Dictionary = _lines_queue[_lines_index]
 	var speaker := str(line.get("speaker", ""))
+	var is_known: bool = bool(line.get("known", line.get("is_known", true)))
 	var custom_name := str(line.get("speaker_name", ""))
-	speaker_label.text = "[b]%s[/b]" % custom_name if custom_name != "" else ""
+	var display_name := ""
+	if not is_known:
+		display_name = str(line.get("unknown_title", line.get("unknown_name", "？？？")))
+	elif not custom_name.is_empty():
+		display_name = custom_name
+	elif not speaker.is_empty() and _cast.has(speaker):
+		display_name = str(_cast[speaker])
+		
+	speaker_label.text = "[b]%s[/b]" % display_name if not display_name.is_empty() else ""
 	body_label.text = str(line.get("text", ""))
 	body_label.scroll_to_line(0)
 	body_label.visible_ratio = 1.0 if _reduce_motion or _text_speed <= 0.0 else 0.0
-	_history.append("%s\n%s" % [custom_name, body_label.text])
+	_history.append("%s\n%s" % [display_name, body_label.text])
 	_assign_portrait(null, _line_serial)
 	var texture: Variant = line.get("portrait")
 	if texture is Texture2D:
@@ -220,6 +229,7 @@ func _render_current_line() -> void:
 		child.queue_free()
 	var is_last := _lines_index == _lines_queue.size() - 1
 	next_prompt.visible = not (is_last and not _lines_choices.is_empty())
+	next_button.disabled = false
 	if not next_prompt.visible:
 		for opt: Dictionary in _lines_choices:
 			var button := Button.new()
@@ -267,11 +277,12 @@ func _record_visible_line() -> void:
 	line_read.emit(_lines_queue[_lines_index])
 
 func advance_dialogue() -> void:
-	if not _can_advance(): return
+	if not _can_advance() or _finishing: return
 	if _finish_reveal(): return
 	_record_visible_line()
 	var is_last := _lines_index == _lines_queue.size() - 1
 	if is_last and not _lines_choices.is_empty(): return
+	next_button.disabled = true
 	_lines_index += 1
 	if _lines_index >= _lines_queue.size():
 		_finish_dialogue()
@@ -287,8 +298,11 @@ func advance_dialogue() -> void:
 	_line_motion.request(false, true, 0.06)
 
 func _choose(id: String, line_serial: int) -> void:
-	if line_serial != _line_serial or not _can_advance(): return
+	if line_serial != _line_serial or not _can_advance() or _finishing: return
 	if _finish_reveal(): return
+	# Lock all choice buttons immediately to prevent repeated duplicate clicks
+	for child in choices_container.get_children():
+		if child is BaseButton: child.disabled = true
 	_record_visible_line()
 	_chosen_choice = id
 	_finish_dialogue()

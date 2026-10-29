@@ -456,7 +456,11 @@ func open_section(page: String) -> void:
 			_turn_to(page)
 
 func _leave_book() -> void:
-	if _turning or _leaving or _request_pending or _external_blocked: return
+	if _turning or _leaving or _external_blocked: return
+	if _request_pending:
+		cancel_opening()
+		_turn_to("cover")
+		return
 	if _bookmark_confirming:
 		_show_leaf("load")
 		_restore_page_state.call_deferred()
@@ -851,7 +855,7 @@ func _show_leaf(page: String) -> void:
 	_bookmark_confirming = false
 	_leaf_heading.visible = page not in ["start", "field"]
 	_leaf_rule.visible = _leaf_heading.visible
-	_leaf_back.visible = page != "field" and (page != "start" or not _request_pending)
+	_leaf_back.visible = page != "field"
 
 	_leaf_next.visible = page in ["settings", "load"] and not (_startup_failed and page == "settings")
 	_leaf_index.visible = mode == "casebook" and page != "index"
@@ -909,7 +913,14 @@ func _populate_bookmarks() -> void:
 	if paths.is_empty(): _leaf_text(tr("尚无书签。请选择已有存档继续阅读。"))
 	for path in paths:
 		var actual := ProjectSettings.globalize_path(path)
-		var button := _leaf_button("", func(): _request("load", actual))
+		var bookmark_path := path
+		var button := _leaf_button("", func():
+			var compat := _check_bookmark_compatibility(bookmark_path)
+			if not bool(compat.compatible):
+				show_load_error(str(compat.reason))
+				return
+			_request("load", actual)
+		)
 		_bind_bookmark_label(button, path)
 	_leaf_button(tr("选择存档…"), _choose_save)
 
@@ -938,11 +949,29 @@ func _bookmark_utc_stamp(day: String, clock: String) -> String:
 	return "%s-%s-%s %s:%s:%s UTC" % [day.substr(0, 4), day.substr(4, 2), day.substr(6, 2),
 		clock.substr(0, 2), clock.substr(2, 2), clock.substr(4, 2)]
 
+func _check_bookmark_compatibility(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {"compatible": false, "reason": tr("存档文件不存在")}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {"compatible": false, "reason": tr("无法读取存档文件")}
+	if file.get_length() < 16:
+		file.close()
+		return {"compatible": false, "reason": tr("存档数据过短或损坏，不兼容当前版本，明确要求新局")}
+	file.close()
+	return {"compatible": true, "reason": ""}
+
 func _bind_bookmark_label(control: Control, path: String) -> void:
 	control.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	control.set_meta("bookmark_display_path", path)
-	control.set("text", _bookmark_display_name(path))
-	control.tooltip_text = ProjectSettings.globalize_path(path)
+	var display_name := _bookmark_display_name(path)
+	var compat := _check_bookmark_compatibility(path)
+	if not bool(compat.compatible):
+		display_name += " [" + tr("不兼容·要求新局") + "]"
+		control.tooltip_text = ProjectSettings.globalize_path(path) + "\n" + str(compat.reason)
+	else:
+		control.tooltip_text = ProjectSettings.globalize_path(path)
+	control.set("text", display_name)
 
 func _confirm_bookmark(path: String) -> void:
 	# Review in the book. The host preserves the current session before loading.

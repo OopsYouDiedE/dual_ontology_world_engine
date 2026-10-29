@@ -176,18 +176,42 @@ public static partial class DVKernel
                         object commitment = F_dv_find(v_actor, "navigation_commitment", false);
                         object candidateTask = F_dv_find(v_action__21448, "navigation_task", false);
                         object selectedTask = R.Bool(R.eq(v_selected__21128, false)) ? false : F_dv_find(v_selected__21128, "navigation_task", false);
-                        if (!R.Bool(R.eq(commitment, false)) && !R.Bool(R.eq(candidateTask, false)) && !R.Bool(R.eq(selectedTask, false)))
+                        if (!R.Bool(R.eq(commitment, false)))
                         {
                             object held = F_dv_get(commitment, "task");
-                            bool candidateHeld = R.Bool(F_dv_same(F_dv_get(held, "task_id"), F_dv_get(candidateTask, "task_id"))) && R.Bool(F_dv_same(F_dv_get(held, "phase"), F_dv_get(candidateTask, "phase")));
-                            bool selectedHeld = R.Bool(F_dv_same(F_dv_get(held, "task_id"), F_dv_get(selectedTask, "task_id"))) && R.Bool(F_dv_same(F_dv_get(held, "phase"), F_dv_get(selectedTask, "phase")));
-                            if (R.Bool(R.eq(F_dv_get(candidateTask, "priority"), F_dv_get(selectedTask, "priority"))))
+                            bool candidateHeld = !R.Bool(R.eq(candidateTask, false)) &&
+                                R.Bool(F_dv_same(F_dv_get(held, "task_id"), F_dv_get(candidateTask, "task_id"))) &&
+                                R.Bool(F_dv_same(F_dv_get(held, "phase"), F_dv_get(candidateTask, "phase")));
+                            bool selectedHeld = !R.Bool(R.eq(selectedTask, false)) &&
+                                R.Bool(F_dv_same(F_dv_get(held, "task_id"), F_dv_get(selectedTask, "task_id"))) &&
+                                R.Bool(F_dv_same(F_dv_get(held, "phase"), F_dv_get(selectedTask, "phase")));
+                            if (candidateHeld && !selectedHeld)
                             {
-                                if (candidateHeld && !selectedHeld) replaceChoice = true;
-                                if (selectedHeld && !candidateHeld) replaceChoice = false;
+                                replaceChoice = true;
                             }
-                            else if (R.Bool(R.lt(F_dv_get(selectedTask, "priority"), F_dv_get(candidateTask, "priority"))) &&
-                                R.Bool(R.eq(F_dv_truth(F_dv_get(v_actor, "mind"), F_dv_get(held, "preempt_when")), "true"))) replaceChoice = true;
+                            else if (selectedHeld && !candidateHeld)
+                            {
+                                if (!R.Bool(R.eq(candidateTask, false)) &&
+                                    R.Bool(R.lt(F_dv_get(held, "priority"), F_dv_get(candidateTask, "priority"))) &&
+                                    R.Bool(R.eq(F_dv_truth(F_dv_get(v_actor, "mind"), F_dv_get(held, "preempt_when")), "true")))
+                                {
+                                    replaceChoice = true;
+                                }
+                                else
+                                {
+                                    replaceChoice = false;
+                                }
+                            }
+                            else if (!R.Bool(R.eq(candidateTask, false)) && !R.Bool(R.eq(selectedTask, false)))
+                            {
+                                if (R.Bool(R.eq(F_dv_get(candidateTask, "priority"), F_dv_get(selectedTask, "priority"))))
+                                {
+                                    if (candidateHeld && !selectedHeld) replaceChoice = true;
+                                    if (selectedHeld && !candidateHeld) replaceChoice = false;
+                                }
+                                else if (R.Bool(R.lt(F_dv_get(selectedTask, "priority"), F_dv_get(candidateTask, "priority"))) &&
+                                    R.Bool(R.eq(F_dv_truth(F_dv_get(v_actor, "mind"), F_dv_get(held, "preempt_when")), "true"))) replaceChoice = true;
+                            }
                         }
                         if (replaceChoice)
                         {

@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-10-29T06:46:00",
+  "commit": "686e2f48",
+  "tasks": {
+    "2.8": { "item": "window_opening", "sill_height_m": 0.9, "clear_cut": true, "status": "passed" },
+    "2.9": { "item": "skirting_board", "breaks_at_door_openings": true, "continues_under_windows": true, "flat_threshold": true, "intervals_count": 2, "status": "passed" },
+    "2.11": { "item": "ceiling_edge_seal", "skirt_depth_m": 0.06, "anti_light_leak": true, "status": "passed" },
+    "2.12": { "item": "structural_members", "column_collision": true, "beam_clear_height_check": true, "required_headroom_m": 2.0, "status": "passed" },
+    "2.17": { "item": "window_frame_and_glass", "independent_materials": true, "glass_solid_collision": true, "status": "passed" },
+    "2.18": { "item": "openable_window", "ten_cycle_zero_drift": true, "reach_check_m": 1.25, "core_sync": true, "status": "passed" },
+    "2.19": { "item": "stair_steps", "step_count": 16, "riser_m": 0.16875, "step_delta_m": 0.0, "top_flush": true, "status": "passed" },
+    "2.20": { "item": "stair_collision_ramp", "prism_ramp": true, "under_stair_passage_clear": true, "status": "passed" },
+    "2.21": { "item": "stair_landing", "elevation_m": 2.7, "flush_connection": true, "status": "passed" },
+    "2.22": { "item": "stair_headroom_profile", "min_headroom_m": 2.2625, "required_headroom_m": 2.0, "status": "passed" },
+    "2.23": { "item": "stairwell_enclosure", "barrier_sides": 3, "open_passage_side": 0, "status": "passed" },
+    "4.10": { "item": "lod_retain_collision_interaction", "lod_forced": 2, "collision_retained": true, "slots_retained": true, "interactions_retained": true, "status": "passed" },
+    "4.11": { "item": "zone_switch_core_persistence", "unload_visuals": true, "reload_visuals": true, "state_synced": true, "status": "passed" },
+    "4.12": { "item": "debug_spatial_overlay", "colliders_visualized": true, "slots_visualized": true, "ids_visualized": true, "clean_cleanup": true, "status": "passed" }
+  },
+  "summary": {
+    "total_tasks_verified": 14,
+    "failures": 0,
+    "all_passed": true
+  }
+}

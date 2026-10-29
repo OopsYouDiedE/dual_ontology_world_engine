@@ -559,12 +559,17 @@ internal sealed class SessionPerformance
         }
     }
 
-    internal void RecordOutcome(string outcome)
+    internal void RecordOutcome(string outcome, string outcomeCategory = "")
     {
         lock (gate)
         {
             var key = outcome.Length == 0 ? "unrecorded" : outcome;
             outcomes[key] = outcomes.GetValueOrDefault(key) + 1;
+            if (outcomeCategory.Length > 0 && outcomeCategory != outcome)
+            {
+                var catKey = "category:" + outcomeCategory;
+                outcomes[catKey] = outcomes.GetValueOrDefault(catKey) + 1;
+            }
         }
     }
 

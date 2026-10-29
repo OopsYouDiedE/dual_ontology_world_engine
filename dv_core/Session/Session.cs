@@ -341,11 +341,41 @@ public sealed partial class DvSession
         using var performanceScope = Measure("complete");
         var pending = Field(state, "pending", false);
         if (pending is false)
+        {
+            // Idempotent duplicate completion protection (1.5):
+            // Check if this action_event was already completed previously.
+            var receiptEvent = Field(receipt, "action_event", false) as string;
+            if (receiptEvent is { Length: > 0 })
+            {
+                var eventsList = Events(state);
+                for (var i = eventsList.Count - 1; i >= 0; i--)
+                {
+                    var entry = eventsList[i];
+                    if (R.Text(Field(entry, "type", "")) != "action_execution") continue;
+                    var data = Field(entry, "data", new List<object>());
+                    var pastActionEvt = R.Text(Field(Field(data, "receipt", new List<object>()), "action_event", ""));
+                    var pastEvent = R.Text(Field(entry, "id", ""));
+                    if (pastActionEvt == receiptEvent || pastEvent == receiptEvent)
+                    {
+                        DiagnosticOutput.WriteLine($"[Session.CompleteDv] Duplicate completion ignored idempotently: {receiptEvent}");
+                        object duplicateProjected;
+                        using (Measure("presentation", "projection"))
+                            duplicateProjected = Run(() => CampaignRuntime.SessionPresentation(R.snapshot(state), viewer));
+                        var dupPresentation = new Dictionary<string, object?>(converter.Record(duplicateProjected), StringComparer.Ordinal);
+                        dupPresentation["outcome"] = "applied";
+                        dupPresentation["outcome_category"] = "completed";
+                        dupPresentation["action_event"] = receiptEvent;
+                        dupPresentation["duplicate_ignored"] = true;
+                        return HostValues.Freeze(dupPresentation);
+                    }
+                }
+            }
             throw new InvalidOperationException("Completion belongs to no pending Core action.");
+        }
         var action = Field(pending, "action", new List<object>());
         var actionEvent = R.Text(Field(pending, "action_event", ""));
-        if (actionEvent.Length == 0 || Field(receipt, "action_event", false) is not string receiptEvent
-            || !string.Equals(receiptEvent, actionEvent, StringComparison.Ordinal))
+        if (actionEvent.Length == 0 || Field(receipt, "action_event", false) is not string receiptEventMatch
+            || !string.Equals(receiptEventMatch, actionEvent, StringComparison.Ordinal))
             throw new InvalidDataException("Completion event does not match the pending Core action.");
         // A native spatial completion is only valid against the exact content pack
         // and state version from which its host binding was issued.
@@ -372,6 +402,10 @@ public sealed partial class DvSession
             projected = Run(() => CampaignRuntime.SessionPresentation(R.snapshot(state), viewer));
         var presentation = new Dictionary<string, object?>(converter.Record(projected), StringComparer.Ordinal);
         var outcome = "";
+        var outcomeCategory = "";
+        var failureClass = "";
+        var reason = "";
+        var target = "";
         var events = Events(state);
         for (var index = eventCursor; index < events.Count; index++)
         {
@@ -379,11 +413,22 @@ public sealed partial class DvSession
             if (R.Text(Field(entry, "type", "")) != "action_execution") continue;
             var data = Field(entry, "data", new List<object>());
             var result = Field(data, "receipt", new List<object>());
-            outcome = R.Text(Field(Field(result, "execution", new List<object>()), "status", ""));
+            var execution = Field(result, "execution", new List<object>());
+            outcome = R.Text(Field(execution, "status", ""));
+            outcomeCategory = R.Text(Field(execution, "outcome_category", ""));
+            failureClass = R.Text(Field(execution, "failure_class", ""));
+            reason = R.Text(Field(execution, "reason", ""));
+            target = R.Text(Field(execution, "target", ""));
             break;
         }
-        performance.RecordOutcome(outcome);
+        if (outcomeCategory.Length == 0)
+            outcomeCategory = outcome == "applied" ? "completed" : "unclassified-failure";
+        performance.RecordOutcome(outcome, outcomeCategory);
         presentation["outcome"] = outcome;
+        presentation["outcome_category"] = outcomeCategory;
+        if (failureClass.Length > 0) presentation["failure_class"] = failureClass;
+        if (reason.Length > 0) presentation["reason"] = reason;
+        if (target.Length > 0) presentation["target"] = target;
         presentation["action_event"] = actionEvent;
         presentation["completed_actor"] = actor;
         presentation["completed_action"] = actionId;

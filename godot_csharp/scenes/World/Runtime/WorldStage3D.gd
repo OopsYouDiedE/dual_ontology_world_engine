@@ -19,6 +19,12 @@ var route_failures: Dictionary = {}
 var occupancy: Dictionary = {}
 var lighting_minute := -1.0
 
+# Third-person camera state (Task 4.06)
+var camera_arm_length: float = 4.2
+var camera_current_distance: float = 4.2
+var camera_smoothed_target: Vector3 = Vector3.ZERO
+var camera_initialized: bool = false
+
 var _legacy_definitions_loaded := false
 
 func _ready() -> void:
@@ -39,10 +45,10 @@ func _ready() -> void:
 		cast[str(art.cast[identity].character_id)] = art.models.get(identity, {})
 	camera = Camera3D.new()
 	camera.name = "WorldCamera3D"
-	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 9.0
-	camera.near = 0.05
-	camera.far = 1000.0
+	camera.projection = Camera3D.PROJECTION_PERSPECTIVE
+	camera.fov = 58.0
+	camera.near = 0.1
+	camera.far = 500.0
 	add_child(camera)
 	camera.current = not field.execution_only
 	occlusion = preload("res://rendering/CameraOcclusion.gd").new()
@@ -128,6 +134,52 @@ func _ensure_dv_room(identity: String) -> Dictionary:
 	var record := {"root":building,"footprint":footprint,"grid":null,"dv_authored":true}
 	rooms[identity] = record
 	return record
+
+## Task 4.11: Release visual world resources for inactive room while keeping Core state intact
+func unload_room_visuals(identity: String) -> bool:
+	if not rooms.has(identity):
+		return false
+	var record: Dictionary = rooms[identity]
+	var root_node = record.get("root") as Node3D
+	if root_node != null and is_instance_valid(root_node):
+		root_node.visible = false
+		record["visuals_unloaded"] = true
+		return true
+	return false
+
+## Task 4.11: Reload visual resources upon re-entering room and re-synchronize with Core state
+func reload_room_visuals(identity: String, core_state_override: Dictionary = {}) -> bool:
+	if not rooms.has(identity):
+		return false
+	var record: Dictionary = rooms[identity]
+	var root_node = record.get("root") as Node3D
+	if root_node != null and is_instance_valid(root_node):
+		root_node.visible = true
+		record["visuals_unloaded"] = false
+		if not core_state_override.is_empty():
+			for obj_id in core_state_override:
+				var state_val = core_state_override[obj_id]
+				var obj = _find_world_object_recursive(root_node, str(obj_id))
+				if obj != null and obj.has_method("set_angle_checked"):
+					obj.call("set_angle_checked", float(state_val))
+		return true
+	return false
+
+func _find_world_object_recursive(parent: Node, id_str: String) -> Node:
+	if parent.has_meta("world_object_id") and str(parent.get_meta("world_object_id")) == id_str:
+		return parent
+	if str(parent.name) == id_str:
+		return parent
+	for child in parent.get_children():
+		var found = _find_world_object_recursive(child, id_str)
+		if found != null: return found
+	return null
+
+## Task 4.12: Debug visual overlay toggle
+func toggle_spatial_debug(enabled: bool, show_colliders: bool = true, show_slots: bool = true, show_ids: bool = true) -> Dictionary:
+	var DebugOverlay = preload("res://geometry/SpatialDebugOverlay.gd")
+	return DebugOverlay.toggle(self, enabled, show_colliders, show_slots, show_ids)
+
 
 func _strip_presentation(node: Node) -> void:
 	for child in node.get_children():
@@ -275,10 +327,43 @@ func _process(_delta: float) -> void:
 	for actor in field.actors.values():
 		var body := prepare_actor(actor)
 		if body != null: body.visible = not field.execution_only and str(body.get_meta("room")) == current_room and actor.visible
-	var target := to_world(field.player.position, identity) + Vector3.UP * 0.7
-	camera.global_position = target + Vector3(0,8,9)
-	camera.look_at(target)
-	occlusion.focus = target
+	# Task 4.06: Third-person perspective camera follow with smooth tracking and wall raycast anti-clipping
+	var player_body := prepare_actor(field.player)
+	var focus_height := 1.05
+	if player_body != null:
+		if bool(player_body.get("is_seated")):
+			focus_height = 0.65
+		elif bool(player_body.get("is_lying")):
+			focus_height = 0.45
+
+	var player_world: Vector3 = to_world(field.player.position, identity)
+	var desired_focus: Vector3 = player_world + Vector3.UP * focus_height
+
+	if not camera_initialized:
+		camera_smoothed_target = desired_focus
+		camera_current_distance = camera_arm_length
+		camera_initialized = true
+	else:
+		camera_smoothed_target = camera_smoothed_target.lerp(desired_focus, clampf(_delta * 12.0, 0.0, 1.0))
+
+	var pitch_rad := deg_to_rad(26.0)
+	var arm_dir := Vector3(0.0, sin(pitch_rad), cos(pitch_rad)).normalized()
+	var desired_cam_pos := camera_smoothed_target + arm_dir * camera_arm_length
+
+	var ray_query := PhysicsRayQueryParameters3D.create(camera_smoothed_target, desired_cam_pos, PhysicsLayers.SOLID)
+	if player_body != null:
+		ray_query.exclude = [player_body.get_rid()]
+	var ray_hit := get_world_3d().direct_space_state.intersect_ray(ray_query)
+	if not ray_hit.is_empty():
+		var hit_dist: float = (Vector3(ray_hit.position) - camera_smoothed_target).length()
+		var safe_dist: float = maxf(0.85, hit_dist - 0.20)
+		camera_current_distance = minf(camera_current_distance, safe_dist)
+	else:
+		camera_current_distance = move_toward(camera_current_distance, camera_arm_length, _delta * 3.5)
+
+	camera.global_position = camera_smoothed_target + arm_dir * camera_current_distance
+	camera.look_at(camera_smoothed_target, Vector3.UP)
+	occlusion.focus = camera_smoothed_target
 
 func pointer(screen: Vector2) -> Vector2:
 	if current_room == "": return Vector2.INF

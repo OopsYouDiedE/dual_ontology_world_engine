@@ -27,9 +27,9 @@ internal sealed class CliTranscript : IDisposable
         Path = System.IO.Path.GetFullPath(path);
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
         DetailPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path)!, "details.txt");
-        story = new StreamWriter(new FileStream(Path, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite), new UTF8Encoding(false)) { AutoFlush = true };
-        output = new StreamWriter(new FileStream(DetailPath, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite), new UTF8Encoding(false)) { AutoFlush = true };
-        data = new StreamWriter(new FileStream(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path)!, "panels.yaml"), FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite), new UTF8Encoding(false)) { AutoFlush = true };
+        story = new StreamWriter(new FileStream(Path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite), new UTF8Encoding(false)) { AutoFlush = true };
+        output = new StreamWriter(new FileStream(DetailPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite), new UTF8Encoding(false)) { AutoFlush = true };
+        data = new StreamWriter(new FileStream(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path)!, "panels.yaml"), FileMode.Create, FileAccess.Write, FileShare.ReadWrite), new UTF8Encoding(false)) { AutoFlush = true };
         this.decisionMaker = decisionMaker;
         story.WriteLine("游玩记录\n");
         output.WriteLine($"CLI 详细日志\n视角：{viewer}\n决策者：{decisionMaker}\n内容包：{JsonSerializer.Serialize(content, json)}\n");

@@ -1,0 +1,90 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/UI/TextComparisonUI.gd" id="1_diff"]
+[ext_resource type="Theme" path="res://scenes/UI/Components/MaterialTheme.tres" id="2_theme"]
+
+[node name="TextComparisonUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_diff")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainCard" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(800, 520)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/MainCard"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HeaderHBox" type="HBoxContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Center/MainCard/VBox/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "文本材料对读"
+
+[node name="CloseButton" type="Button" parent="Center/MainCard/VBox/HeaderHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 36)
+layout_mode = 2
+text = "关闭"
+
+[node name="SourceHBox" type="HBoxContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="SourceALabel" type="Label" parent="Center/MainCard/VBox/SourceHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3, 0.6, 0.8, 1)
+theme_override_font_sizes/font_size = 14
+text = "材料 A 来源: 未知"
+
+[node name="SourceBLabel" type="Label" parent="Center/MainCard/VBox/SourceHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.8, 0.6, 0.3, 1)
+theme_override_font_sizes/font_size = 14
+text = "材料 B 来源: 未知"
+
+[node name="HSeparator" type="HSeparator" parent="Center/MainCard/VBox"]
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ComparisonList" type="VBoxContainer" parent="Center/MainCard/VBox/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8

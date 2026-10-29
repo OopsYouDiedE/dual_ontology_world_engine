@@ -140,4 +140,30 @@ static func validate(id: String, start: Vector3, end: Vector3, thickness: float,
 			if hole.from < other.to-EPS and hole.to > other.from+EPS and hole.bottom < other.top-EPS and hole.top > other.bottom+EPS: return "opening[%s]: overlaps-opening[%s]" % [hole.id,other.id]
 	return ""
 
+## Helper to construct a validated window opening spec (Task 2.8)
+## Window openings declare sill_height, net_width, net_height, and ensure bottom >= sill_height
+static func create_window_spec(id: String, from_x: float, width: float, sill_height: float, height: float) -> Dictionary:
+	return {
+		"id": id,
+		"kind": "window",
+		"from": from_x,
+		"to": from_x + width,
+		"bottom": sill_height,
+		"top": sill_height + height,
+		"is_window": true
+	}
+
+## Helper to construct a validated door opening spec (Task 2.7)
+static func create_door_spec(id: String, from_x: float, width: float, height: float) -> Dictionary:
+	return {
+		"id": id,
+		"kind": "door",
+		"from": from_x,
+		"to": from_x + width,
+		"bottom": 0.0,
+		"top": height,
+		"is_window": false
+	}
+
+
 

@@ -34,6 +34,20 @@ size_flags_horizontal = 3
 theme_type_variation = &"HUDLocation"
 text_overrun_behavior = 3
 
+[node name="TargetLabel" type="Label" parent="TopBar/Margin/HBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"HUDCaption"
+text_overrun_behavior = 3
+
+[node name="ActionLabel" type="Label" parent="TopBar/Margin/HBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"HUDCaption"
+text_overrun_behavior = 3
+
 [node name="StatusLabel" type="Label" parent="TopBar/Margin/HBox"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -44,6 +58,17 @@ text_overrun_behavior = 3
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"HUDCaption"
+
+[node name="DangerBadge" type="PanelContainer" parent="TopBar/Margin/HBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="DangerLabel" type="Label" parent="TopBar/Margin/HBox/DangerBadge"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "安全"
 
 [node name="HudSettingsButton" type="Button" parent="TopBar/Margin/HBox"]
 unique_name_in_owner = true

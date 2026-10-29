@@ -117,7 +117,7 @@ void RecordExecutionReceipt(IReadOnlyDictionary<string, object?> receipt,
     if (serializedBounds != lastRunBounds) record["run_bounds"] = bounds;
     // These fields are already filtered by the real viewer's presentation.
     // Never reconstruct dialogue from hidden action definitions.
-    foreach (var key in new[] { "speaker_name", "voice", "surface_voice", "surface", "lines", "travel", "arrival", "judgment", "reason", "failure_class", "outcome_category" })
+    foreach (var key in new[] { "speaker_name", "voice", "surface_voice", "surface", "lines", "travel", "arrival", "judgment", "reason", "failure_class", "outcome_category", "target" })
     {
         if (!receipt.TryGetValue(key, out var value) || value is null or false or "") continue;
         if (value is System.Collections.ICollection collection && collection.Count == 0) continue;
@@ -149,7 +149,7 @@ object Observe(int completed = 0)
     transcript?.RequestDiagnostics(requests);
     requestObservationCursor = Convert.ToInt64(requests["next_event_cursor"]);
     var display = CaptureDisplay();
-    if (receiptOutput is not null)
+    if (receiptOutput is not null && controller == "ai")
     {
         var compact = current.CompactStatus();
         if (receiptsFlushed == 0) lastRunBounds = JsonSerializer.Serialize(RunBounds(compact), receiptJson);
@@ -186,7 +186,7 @@ object Observe(int completed = 0)
         screen = display.Screen,
         options = display.Options,
         ai_candidates = display.Ranking,
-        performance = preview.GetValueOrDefault("performance"),
+        performance = preview.GetValueOrDefault("performance") ?? current.CompactPerformance(),
         planning = controller == "ai" ? current.PlanningDiagnostics() : null,
         runtime = controller == "ai" ? current.ExecutionDiagnostics() : null,
         receipts_flushed = receiptsFlushed,
@@ -205,6 +205,7 @@ void Prepare()
 string? line;
 while ((line = Console.ReadLine()) is not null)
 {
+    line = line.Trim('\uFEFF');
     if (string.IsNullOrWhiteSpace(line)) continue;
     object? requestId = null;
     bool finish = false;
@@ -224,11 +225,11 @@ while ((line = Console.ReadLine()) is not null)
             var decisionMaker = config.TryGetProperty("decision_maker", out var maker) ? maker.GetString() ?? controller
                 : controller == "ai" ? "engine-ai" : controller == "llm" ? "llm" : controller == "human" ? "human" : "player";
             if (controller is "human" or "llm") controller = "player";
-            var recording = controller == "ai" && config.TryGetProperty("receipt_path", out var outputPath) &&
+            var recording = config.TryGetProperty("receipt_path", out var outputPath) &&
                 !string.IsNullOrWhiteSpace(outputPath.GetString());
             session = DvSession.OpenConfiguredCampaign(options, recording ? TextWriter.Null : Console.Error);
             session.SetExecutionContext("cli", "cli");
-            if (controller == "ai" && config.TryGetProperty("receipt_path", out var receiptFile) &&
+            if (config.TryGetProperty("receipt_path", out var receiptFile) &&
                 !string.IsNullOrWhiteSpace(receiptFile.GetString()))
             {
                 receiptPath = Path.GetFullPath(receiptFile.GetString()!);
@@ -263,7 +264,7 @@ while ((line = Console.ReadLine()) is not null)
             {
                 if (faulted) throw new InvalidOperationException("Session faulted; observe or close it. Do not retry an action.");
                 var steps = request.TryGetProperty("steps", out var count) ? count.GetInt32() : 1;
-                if (steps is < 1 or > 100) throw new ArgumentException("steps must be 1..100.");
+                if (steps is < 0 or > 100) throw new ArgumentException("steps must be 0..100.");
                 if (operation == "select")
                 {
                     var choice = request.GetProperty("choice_id").GetString() ?? "";
@@ -352,7 +353,52 @@ while ((line = Console.ReadLine()) is not null)
                 catch { faulted = true; throw; }
                 result = Observe(completed);
             }
-            else throw new ArgumentException("Unknown operation. Use open, observe, select, advance, close.");
+            else if (operation == "cancel")
+            {
+                if (faulted) throw new InvalidOperationException("Session faulted; observe or close it.");
+                Prepare();
+                var intent = session.Intent;
+                if (intent.GetValueOrDefault("status") as string != "prepared")
+                    throw new InvalidOperationException("No prepared action to cancel.");
+                var cancelReason = request.TryGetProperty("reason", out var customReason) ? customReason.GetString() ?? "user-cancelled" : "user-cancelled";
+                var attempt = new Dictionary<string, object?>
+                {
+                    ["version_before"] = session.Version,
+                    ["game_time"] = intent.GetValueOrDefault("game_time"),
+                    ["actor"] = intent.GetValueOrDefault("actor"),
+                    ["action"] = HostValues.Map(intent, "action").GetValueOrDefault("id"),
+                    ["action_event"] = intent.GetValueOrDefault("action_event")
+                };
+                var cancelReceipt = new Dictionary<string, object?>
+                {
+                    ["action_event"] = intent.GetValueOrDefault("action_event"),
+                    ["outcome"] = "cancelled",
+                    ["reason"] = cancelReason,
+                    ["executor"] = "formal-model",
+                    ["actual"] = intent.GetValueOrDefault("execution_cost") ?? new Dictionary<string, object?> { ["time"] = 0d }
+                };
+                try
+                {
+                    presentation = session.CompleteValue(cancelReceipt, session.Viewer);
+                }
+                catch (Exception error)
+                {
+                    try { RecordFaultAttempt(attempt, error); }
+                    catch (Exception logError)
+                    {
+                        throw new AggregateException("Formal action cancel fault; the failure record could not be flushed.", error, logError);
+                    }
+                    throw;
+                }
+                RecordExecutionReceipt(presentation);
+                transcript?.RecordStory(presentation, session.Viewer);
+                if (HostValues.Text(presentation, "completed_actor") == session.Viewer)
+                    transcript?.Execution(presentation);
+                CaptureDisplay();
+                Prepare();
+                result = Observe(1);
+            }
+            else throw new ArgumentException("Unknown operation. Use open, observe, select, advance, cancel, close.");
         }
         protocolOutput.WriteLine(JsonSerializer.Serialize(new { id = requestId, result }));
     }

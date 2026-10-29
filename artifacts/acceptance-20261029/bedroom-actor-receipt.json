@@ -1,0 +1,65 @@
+{
+  "screenshot": "c:/Users/Administrator/dual_ontology_world_engine/artifacts/acceptance-20261029/bedroom-actor-integration.png",
+  "tasks": {
+    "3.A3": {
+      "details": {
+        "action_after_lie": "lie_idle",
+        "action_after_sit": "sit_idle",
+        "bed_cleared": true,
+        "bed_occupant": true,
+        "chair_cleared": true,
+        "chair_occupant": true,
+        "is_lying": true,
+        "is_seated": true,
+        "lie_down_result": {
+          "ok": true,
+          "reason": "lying"
+        },
+        "lying_after_wake": false,
+        "pos_after_wake": "(-1.2, 0.0, 1.2)",
+        "pos_on_bed": "(-1.2, 0.55, 0.0)",
+        "seated_after_stand": false,
+        "sit_down_result": {
+          "ok": true,
+          "reason": "seated"
+        },
+        "wake_call_result": true
+      },
+      "ok": true
+    },
+    "3.A6": {
+      "details": {
+        "actor_a_is_passing": true,
+        "actor_a_retained_seat": true,
+        "actor_b_is_yielding": true,
+        "actor_b_remained_standing": true,
+        "conversing_both": true,
+        "eval_a_action": "pass_through",
+        "eval_b_action": "yield_pause",
+        "facing_a": 3.14159265358979,
+        "facing_b": 0.0,
+        "mutual_facing_angle_diff": 3.14159265358979,
+        "overlap_check": {
+          "distance_xz": 0.699999988079071,
+          "margin": 0.339999988079071,
+          "min_clear_distance": 0.36,
+          "overlapping": false
+        },
+        "seat_conflict_rejected": true
+      },
+      "ok": true
+    },
+    "Stage_B_Character": {
+      "details": {
+        "bed_cleared_after_interrupt": true,
+        "bed_occupied_initially": true,
+        "chair_cleared_after_interrupt": true,
+        "chair_occupied_initially": true,
+        "is_lying_after_interrupt": false,
+        "is_seated_after_interrupt": false
+      },
+      "ok": true
+    }
+  },
+  "timestamp": "2026-10-29T06:50:27"
+}

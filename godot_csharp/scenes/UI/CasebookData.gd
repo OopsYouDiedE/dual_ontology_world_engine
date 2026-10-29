@@ -3,7 +3,7 @@ extends RefCounted
 ## Personal notes are UI data; they cannot grant evidence or submit DV actions.
 signal changed
 
-const SECTIONS := ["evidence", "items", "people", "gallery", "hypotheses", "records"]
+const SECTIONS := ["evidence", "testimony", "items", "people", "gallery", "hypotheses", "records"]
 var viewer := ""
 var entries: Array[Dictionary] = []
 var notes: Array[Dictionary] = []
@@ -44,11 +44,21 @@ func record_presentation(result: Dictionary, lines: Array) -> void:
 	for line in lines:
 		if line is Dictionary and str(line.get("text", "")) != "": texts.append(str(line.text))
 	if texts.is_empty(): return
-	var category := "evidence" if voice == "visible-inspection" or action_kind in ["inspect", "observe", "testimony"] else "records"
+	var category := "records"
+	var certainty := "objective_fact"
+	if action_kind == "testimony" or voice == "testimony":
+		category = "testimony"
+		certainty = "subjective_statement" # Subjective testimony is never treated as objective fact
+	elif voice == "visible-inspection" or action_kind in ["inspect", "observe"]:
+		category = "evidence"
+		certainty = "objective_fact"
+	elif action_kind in ["deduce", "hypothesis", "reasoning"]:
+		category = "hypotheses"
+		certainty = "inference" # Inferences are never treated as settled facts
 	var title := str(result.get("title", ""))
 	if title == "": title = texts[0].left(36)
 	var entry := {
-		"id": event, "category": category, "title": title, "text": "\n\n".join(texts),
+		"id": event, "category": category, "certainty": certainty, "title": title, "text": "\n\n".join(texts),
 		"source": source, "execution_event": event, "lines": lines.duplicate(true), "source_refs": result.get("source_refs", []).duplicate(true),
 		"speaker": str(result.get("actor", "")), "speaker_name": str(result.get("speaker_name", "")),
 		"game_time": result.get("game_time", _snapshot.get("game_time", "")),

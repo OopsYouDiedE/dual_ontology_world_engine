@@ -1,0 +1,46 @@
+{
+  "camera_jitter_free": true,
+  "feet_on_ground_stable": true,
+  "max_camera_step_delta": 0.171596527099609,
+  "ok": true,
+  "screenshot": "c:/Users/Administrator/dual_ontology_world_engine/artifacts/acceptance-20261029/bedroom-end-to-end-3a7.png",
+  "stages": {
+    "1_foyer_to_door": {
+      "dist_to_door_slot": 0.00897598266601563,
+      "pos": "(0.0, 0.0, 2.841024)",
+      "reached": true
+    },
+    "2_open_door_and_enter": {
+      "bedroom_entered_pos": "(0.0, 0.0, 1.562888)",
+      "door_opened": true,
+      "operation_ok": true
+    },
+    "3_chair_and_desk": {
+      "chair_occupant_released": true,
+      "is_seated_final": false,
+      "pickup_ok": true,
+      "place_ok": true,
+      "sit_ok": true
+    },
+    "4_wardrobe": {
+      "operate_ok": true,
+      "reached_slot": true,
+      "stand_dist": 1.13359308242798
+    },
+    "5_bed_pipeline": {
+      "bed_occupant_released": true,
+      "bedhead_safe": true,
+      "final_exit_pos": "(-1.4, 0.0, 1.2)",
+      "lie_ok": true,
+      "wake_ok": true
+    },
+    "6_exit_to_foyer": {
+      "all_occupancies_clean": true,
+      "final_pos": "(-0.000625, 0.0, 3.99875)",
+      "returned_foyer": true
+    }
+  },
+  "task_id": "3.A7",
+  "timestamp": "2026-10-29T09:53:57",
+  "y_ground_drift_max": 0.0
+}

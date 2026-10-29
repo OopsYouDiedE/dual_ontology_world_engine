@@ -1,0 +1,126 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/UI/ConventionUI.gd" id="1_convention"]
+[ext_resource type="Theme" path="res://scenes/UI/Components/MaterialTheme.tres" id="2_theme"]
+
+[node name="ConventionUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_convention")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainCard" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(760, 580)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/MainCard"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HeaderHBox" type="HBoxContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Center/MainCard/VBox/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "行动公约草案"
+
+[node name="CloseButton" type="Button" parent="Center/MainCard/VBox/HeaderHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 36)
+layout_mode = 2
+text = "关闭"
+
+[node name="SubHeaderHBox" type="HBoxContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+
+[node name="VersionLabel" type="Label" parent="Center/MainCard/VBox/SubHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.4, 0.7, 0.5, 1)
+theme_override_font_sizes/font_size = 14
+text = "当前公约版本: v1.0"
+
+[node name="InvalidationNotice" type="Label" parent="Center/MainCard/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.3, 0.3, 1)
+theme_override_font_sizes/font_size = 13
+text = "【注意】文本发生修订，所有旧确认已失效，待重新确认！"
+
+[node name="HSeparator" type="HSeparator" parent="Center/MainCard/VBox"]
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="InnerVBox" type="VBoxContainer" parent="Center/MainCard/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="ClausesHeader" type="Label" parent="Center/MainCard/VBox/Scroll/InnerVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "【公约条款细则】"
+
+[node name="ClausesList" type="VBoxContainer" parent="Center/MainCard/VBox/Scroll/InnerVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="HSeparator2" type="HSeparator" parent="Center/MainCard/VBox/Scroll/InnerVBox"]
+layout_mode = 2
+
+[node name="SignHeader" type="Label" parent="Center/MainCard/VBox/Scroll/InnerVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "【签署状态与各方确认】"
+
+[node name="SignatoriesList" type="VBoxContainer" parent="Center/MainCard/VBox/Scroll/InnerVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="HSeparator3" type="HSeparator" parent="Center/MainCard/VBox"]
+layout_mode = 2
+
+[node name="BottomHBox" type="HBoxContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+alignment = 2
+
+[node name="SelfSignButton" type="Button" parent="Center/MainCard/VBox/BottomHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 42)
+layout_mode = 2
+text = "本人确认并签署公约"

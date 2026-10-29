@@ -850,8 +850,13 @@ internal static class SpatialPublication
             foreach (var opening in openingById.Values)
             {
                 var parent = Field(opening, "wall_ref");
-                if (!ReferenceEquals(parent, Missing) && (parent is not string wallId || !wallIds.Contains(wallId) || !usedOpenings.Contains(Id(opening, "opening"))))
-                    throw new InvalidDataException($"Invalid reverse wall reference: {floorId}/openings/{Id(opening, "opening")}/wall_ref");
+                if (!ReferenceEquals(parent, Missing))
+                {
+                    if (parent is not string { Length: > 0 } wallId)
+                        throw new InvalidDataException($"Invalid reverse wall reference: {floorId}/openings/{Id(opening, "opening")}/wall_ref");
+                    if (wallIds.Contains(wallId) && !usedOpenings.Contains(Id(opening, "opening")))
+                        throw new InvalidDataException($"Invalid reverse wall reference: {floorId}/openings/{Id(opening, "opening")}/wall_ref");
+                }
             }
             var furnitureById = furniture.ToDictionary(item => Id(item, $"{floorId}/furniture"), StringComparer.Ordinal);
             var furnitureIds = furnitureById.Keys.ToHashSet(StringComparer.Ordinal);

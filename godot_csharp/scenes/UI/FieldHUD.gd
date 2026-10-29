@@ -6,8 +6,12 @@ const Transition := preload("res://scenes/UI/UITransition.gd")
 
 @onready var top_bar: PanelContainer = %TopBar
 @onready var room_label: Label = %RoomLabel
+@onready var target_label: Label = %TargetLabel
+@onready var action_label: Label = %ActionLabel
 @onready var status_label: Label = %StatusLabel
 @onready var time_label: Label = %TimeLabel
+@onready var danger_badge: PanelContainer = %DangerBadge
+@onready var danger_label: Label = %DangerLabel
 @onready var hud_settings_button: Button = %HudSettingsButton
 @onready var hint_label: Label = %HintLabel
 @onready var hover_tip: Label = %HoverTip
@@ -20,10 +24,11 @@ var _shutting_down := false
 var _hint_text := ""
 var _hover_serial := 0
 var _last_snapshot: Dictionary = {}
+var _last_danger_level: Variant = null
 
 func _ready() -> void:
 	layer = 10
-	for control: Control in [room_label, status_label, time_label, hint_label, hover_tip, hud_settings_button]:
+	for control: Control in [room_label, target_label, action_label, status_label, time_label, danger_label, hint_label, hover_tip, hud_settings_button]:
 		control.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	_refresh_chrome()
 	# The field's A/Enter action belongs to the nearby object. The guide remains
@@ -55,6 +60,27 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	var hud: Dictionary = snapshot.get("hud", {})
 	room_label.text = str(hud.get("room", hud.get("title", "")))
 	room_label.tooltip_text = room_label.text
+	
+	# Current target (Task 7.03) - only display known/obtained target, no spoiler
+	var raw_target: Variant = hud.get("target", snapshot.get("target", snapshot.get("selected_target", "")))
+	var target_str := str(raw_target)
+	if not target_str.is_empty() and target_str != "null" and target_str != "<null>":
+		target_label.text = "目标: " + target_str
+		target_label.tooltip_text = target_str
+		target_label.visible = true
+	else:
+		target_label.visible = false
+		
+	# Currently executing action (Task 7.03)
+	var raw_action: Variant = hud.get("action", hud.get("current_action", snapshot.get("current_action", "")))
+	var action_str := str(raw_action)
+	if not action_str.is_empty() and action_str != "null" and action_str != "<null>":
+		action_label.text = "正在执行: " + action_str
+		action_label.tooltip_text = action_str
+		action_label.visible = true
+	else:
+		action_label.visible = false
+		
 	status_label.text = str(hud.get("chapter", ""))
 	if status_label.text.is_empty() and snapshot.has("chapter"):
 		var locale := TranslationServer.get_locale()
@@ -63,6 +89,57 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	status_label.visible = not status_label.text.is_empty()
 	status_label.tooltip_text = status_label.text
 	time_label.text = str(hud.get("time", ""))
+	
+	# Danger indication with recognizable change feedback (Task 7.03)
+	var raw_danger: Variant = hud.get("danger", snapshot.get("danger", snapshot.get("danger_level", snapshot.get("threat", 0))))
+	_apply_danger_indicator(raw_danger)
+
+func _apply_danger_indicator(danger_val: Variant) -> void:
+	var danger_str := str(danger_val).to_lower()
+	var level := 0
+	if danger_val is int or danger_val is float:
+		level = int(danger_val)
+	elif danger_str in ["warning", "warn", "moderate"]:
+		level = 1
+	elif danger_str in ["danger", "critical", "high", "alert"]:
+		level = 2
+		
+	var box := StyleBoxFlat.new()
+	box.corner_radius_top_left = 6
+	box.corner_radius_top_right = 6
+	box.corner_radius_bottom_right = 6
+	box.corner_radius_bottom_left = 6
+	box.content_margin_left = 8.0
+	box.content_margin_top = 2.0
+	box.content_margin_right = 8.0
+	box.content_margin_bottom = 2.0
+	
+	match level:
+		0:
+			box.bg_color = Color(0.18, 0.45, 0.25, 0.85)
+			danger_label.text = "安全"
+			danger_label.add_theme_color_override("font_color", Color(0.95, 0.98, 0.95, 1.0))
+		1:
+			box.bg_color = Color(0.75, 0.52, 0.12, 0.90)
+			danger_label.text = "警戒"
+			danger_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+		_:
+			box.bg_color = Color(0.82, 0.18, 0.15, 0.95)
+			danger_label.text = "危险！"
+			danger_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+			
+	danger_badge.add_theme_stylebox_override("panel", box)
+	danger_badge.visible = true
+	
+	# Recognizable danger transition feedback
+	if _last_danger_level != null and _last_danger_level != level:
+		_pulse_danger_change()
+	_last_danger_level = level
+
+func _pulse_danger_change() -> void:
+	var tween := create_tween()
+	tween.tween_property(danger_badge, "modulate", Color(1.5, 1.5, 1.5, 1.0), 0.15)
+	tween.tween_property(danger_badge, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.25)
 
 func finish_entrance() -> void:
 	# Initial layout is rendered behind the title; the reveal owns its motion.

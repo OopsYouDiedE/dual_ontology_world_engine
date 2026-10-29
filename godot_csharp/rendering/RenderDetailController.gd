@@ -31,6 +31,19 @@ func restore_authored_meshes() -> void:
 			var variants: Array = entry.variants
 			if instance.mesh in variants: instance.mesh = variants[0]
 
+## Force all registered meshes to a specific LOD level (0=high, 1=medium, 2=low)
+## Retains 100% of collision shapes, doors, and interaction components (Task 4.10)
+func force_lod(level: int) -> void:
+	var target_lod := clampi(level, 0, 2)
+	for entry: Dictionary in _entries:
+		var instance: MeshInstance3D = (entry["node"] as WeakRef).get_ref() as MeshInstance3D
+		if is_instance_valid(instance) and not instance.is_queued_for_deletion():
+			var variants: Array = entry["variants"] as Array
+			instance.mesh = variants[target_lod] as Mesh
+			entry["lod"] = target_lod
+	detail_changed.emit(snapshot())
+
+
 
 func configure(camera: Camera3D, roots: Array) -> void:
 	restore_authored_meshes()

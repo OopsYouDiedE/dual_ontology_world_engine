@@ -101,13 +101,21 @@ public static partial class DVKernel
             object v_reason__326847 = F_dv_get(F_dv_get(v_result__324838, "execution"), "status");
             if (R.Text(v_failure_class__326771).Length == 0)
             {
-                if (nativeSpatialFailure.Length > 0) v_failure_class__326771 = nativeSpatialFailure;
+                var receiptOutcome = R.Text(F_dv_find(v_receipt, "outcome", ""));
+                var receiptReason = R.Text(F_dv_find(v_receipt, "reason", ""));
+                if (receiptOutcome is "cancelled" || receiptReason is "cancelled" || receiptReason.Contains("cancel", StringComparison.OrdinalIgnoreCase))
+                    v_failure_class__326771 = "cancelled";
+                else if (receiptOutcome is "character-refused" || receiptReason is "character-refused" || receiptReason.Contains("refus", StringComparison.OrdinalIgnoreCase) || receiptReason.Contains("declin", StringComparison.OrdinalIgnoreCase))
+                    v_failure_class__326771 = "character-refused";
+                else if (nativeSpatialFailure.Length > 0) v_failure_class__326771 = nativeSpatialFailure;
                 else if (!requestContextReady) v_failure_class__326771 = "request-context-invalidated";
                 else if (opportunityFailure.Length > 0) v_failure_class__326771 = opportunityFailure;
                 else if (NativeSpatialRejectionClass(v_action__323346, v_receipt) is { Length: > 0 } nativeClass)
                     v_failure_class__326771 = nativeClass;
                 else if (R.Text(F_dv_truth(v_before__324812, F_dv_find(v_action__323346, "authority_precondition", F_dv_get(v_action__323346, "precondition")))) != "true")
                     v_failure_class__326771 = "condition-invalidated";
+                else if (receiptReason.Length > 0)
+                    v_failure_class__326771 = receiptReason;
             }
             if (R.Bool(R.not(R.eq(v_interruption__323598, false))))
             {
@@ -118,7 +126,36 @@ public static partial class DVKernel
             {
                 v_reason__326847 = v_failure_class__326771;
             }
-            v_result__324838 = F_dv_with(v_result__324838, "execution", F_dv_with_many(F_dv_get(v_result__324838, "execution"), new System.Collections.Generic.List<object>(2) { F_dv_pair("failure_class", v_failure_class__326771), F_dv_pair("reason", v_reason__326847) }));
+            object actionTarget = F_dv_find(v_action__323346, "target", false);
+            if (actionTarget is false) actionTarget = F_dv_find(v_action__323346, "target_id", false);
+            if (actionTarget is false)
+            {
+                var opp = F_dv_find(v_action__323346, "opportunity_requirement", false);
+                if (opp is not false)
+                {
+                    var participants = F_dv_find(opp, "participants", false);
+                    if (participants is not false && R.Items(participants).Count > 0)
+                        actionTarget = R.Items(participants)[0];
+                    else actionTarget = F_dv_find(opp, "location", false);
+                }
+            }
+            if (actionTarget is false)
+            {
+                var spec = F_dv_find(v_action__323346, "spatial_execution", false);
+                if (spec is not false) actionTarget = F_dv_find(spec, "target_id", false);
+            }
+            if (actionTarget is false)
+            {
+                var speech = F_dv_find(v_action__323346, "speech", false);
+                if (speech is not false)
+                {
+                    var listeners = F_dv_find(v_action__323346, "listeners", false);
+                    if (listeners is not false && R.Items(listeners).Count > 0)
+                        actionTarget = R.Items(listeners)[0];
+                }
+            }
+            if (actionTarget is false) actionTarget = "";
+            v_result__324838 = F_dv_with(v_result__324838, "execution", F_dv_with_many(F_dv_get(v_result__324838, "execution"), new System.Collections.Generic.List<object>(3) { F_dv_pair("failure_class", v_failure_class__326771), F_dv_pair("reason", v_reason__326847), F_dv_pair("target", actionTarget) }));
         }
         v_result__324838 = F_dv_with(v_result__324838, "execution", F_dv_with(F_dv_get(v_result__324838, "execution"), "outcome_category", ExecutionOutcomeCategory(F_dv_get(v_result__324838, "execution"))));
         v_physical__322682 = F_dv_get(F_dv_get(v_result__324838, "execution"), "world");

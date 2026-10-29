@@ -20,6 +20,11 @@ static func convert(spec: Dictionary, world_datum: Vector3) -> Dictionary:
 		var point := _vector(source[key])
 		if not point.is_finite(): return {}
 		target[key] = basis.inverse() * Coordinates.to_godot(point - origin)
+	for opt_key in ["sit", "lie", "exit", "placement"]:
+		if source.has(opt_key):
+			var opt_pt := _vector(source[opt_key])
+			if opt_pt.is_finite():
+				target[opt_key] = basis.inverse() * Coordinates.to_godot(opt_pt - origin)
 	var area_size := _vector(source.area_size)
 	if not area_size.is_finite(): return {}
 	target.area_size = Coordinates.size_to_godot(area_size)

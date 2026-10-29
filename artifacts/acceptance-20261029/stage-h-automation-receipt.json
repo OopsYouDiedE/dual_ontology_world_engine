@@ -1,0 +1,56 @@
+{
+  "cases": {
+    "1_read_gauge_observation": {
+      "chest_elevation": 0.791999995708466,
+      "chest_marker_valid": true,
+      "head_elevation": 1.14999997615814,
+      "head_marker_valid": true,
+      "observation_recorded": true,
+      "observed_gauge_bar": 2.4,
+      "ok": true
+    },
+    "2_turn_wheel_and_valve": {
+      "contact_dist": 0.464034020900726,
+      "ok": true,
+      "operation_ok": true,
+      "valve_turned_90deg": true
+    },
+    "3_unlock_latch_cabinet": {
+      "both_hands_ready": true,
+      "latch_disengaged": true,
+      "ok": true,
+      "unlock_res": true
+    },
+    "4_tray_carry_and_exclusion": {
+      "action_properly_blocked": true,
+      "blocked_reason": "hands_occupied_carrying",
+      "carry_started": true,
+      "delivered_safely": true,
+      "ok": true,
+      "speed_penalty_applied": true
+    },
+    "5_scroll_reading_and_covenant": {
+      "all_slots_present": true,
+      "covenant_entry_verified": true,
+      "ok": true
+    },
+    "6_interruption_and_safe_rollback": {
+      "current_action": "idle",
+      "drift_y": 0.0,
+      "feet_on_ground": true,
+      "ok": true,
+      "rolled_back": true,
+      "speed_zero": true
+    }
+  },
+  "metrics": {
+    "all_6_cases_passed": true,
+    "hands_and_chest_precision": true,
+    "narrative_actions_generalized": true,
+    "non_penetration_verified": true,
+    "safe_rollback_supported": true
+  },
+  "ok": true,
+  "task_id": "Stage_H_Automation",
+  "timestamp": "2026-10-29T11:06:08"
+}

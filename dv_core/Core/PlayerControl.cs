@@ -179,6 +179,55 @@ public static partial class DVKernel
         return v_label__381051;
     }
 
+    public static object F_dvs_local_candidate_admissible(object v_actor, object v_action)
+    {
+        object kind = F_dv_find(v_action, "kind", "");
+        if (R.Bool(R.eq(kind, "replay")) || R.Bool(R.eq(kind, "wait")) || R.Bool(R.eq(kind, "rest")))
+        {
+            return true;
+        }
+
+        // 6.4: 局部候选 - 目标在场约束与已知目标约束，不枚举非在场对象与全图未知物体
+        object speech = F_dv_find(v_action, "speech", false);
+        if (R.Bool(R.not(R.eq(speech, false))))
+        {
+            object request = F_dv_find(speech, "request", false);
+            if (R.Bool(R.not(R.eq(request, false))))
+            {
+                object target = F_dv_find(request, "target", "");
+                if (R.Bool(R.not(R.eq(target, ""))))
+                {
+                    object visible = F_dv_find(v_actor, "visible_context", new System.Collections.Generic.List<object>(0));
+                    if (!R.Bool(F_dv_has_key(visible, target)))
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        object listeners = F_dv_find(v_action, "listeners", new System.Collections.Generic.List<object>(0));
+        if (R.Bool(R.lt(R.number("0"), R.count(listeners))))
+        {
+            object visible = F_dv_find(v_actor, "visible_context", new System.Collections.Generic.List<object>(0));
+            object i = R.number("0");
+            while (R.Bool(R.lt(i, R.count(listeners))))
+            {
+                object listener = R.at(listeners, i);
+                if (R.Bool(R.not(R.eq(listener, F_dv_get(v_actor, "id")))))
+                {
+                    if (!R.Bool(F_dv_has_key(visible, listener)))
+                    {
+                        return false;
+                    }
+                }
+                i = R.add(i, R.number("1"));
+            }
+        }
+
+        return true;
+    }
+
     public static object F_dvs_player_options(object v_actor)
     {
         if (R.Bool(R.not(R.eq(F_dv_find(v_actor, "scheduled_action", false), false))))
@@ -192,7 +241,8 @@ public static partial class DVKernel
         while (R.Bool(R.lt(v_i__381909, R.count(F_dv_get(v_actor, "actions")))))
         {
             object v_action__381966 = R.at(F_dv_get(v_actor, "actions"), v_i__381909);
-            if (R.Bool(F_dvp_eligible(v_view__381821, v_action__381966, F_dv_get(v_actor, "mind"), v_refs__381873)))
+            if (R.Bool(F_dvp_eligible(v_view__381821, v_action__381966, F_dv_get(v_actor, "mind"), v_refs__381873)) &&
+                R.Bool(F_dvs_local_candidate_admissible(v_actor, v_action__381966)))
             {
                 object v_label__382065 = F_dvs_action_label(v_actor, v_action__381966);
                 if (R.Bool(R.not(R.eq(v_label__382065, ""))))
@@ -213,6 +263,7 @@ public static partial class DVKernel
         object v_action__382548 = F_dvs_manual_action(v_actor__382397, v_id);
         object v_view__382594 = F_dv_with(v_actor__382397, "manual_input", true);
         _ = F_dv_require(F_dvp_eligible(v_view__382594, v_action__382548, F_dv_get(v_actor__382397, "mind"), F_dvp_goal_refs(v_actor__382397)), "Player action is no longer available");
+        _ = F_dv_require(F_dvs_local_candidate_admissible(v_actor__382397, v_action__382548), "Player action is not locally admissible");
         return F_dvs_control_state(v_state, F_dv_get(v_state, "actors"), F_dv_get(v_state, "events"), F_dv_get(v_state, "cursor"), F_dv_find(v_state, "player_actor", ""), v_id, false);
     }
 
@@ -221,6 +272,7 @@ public static partial class DVKernel
         object v_action__382922 = F_dvs_manual_action(v_actor, v_id);
         object v_view__382968 = F_dv_with(v_actor, "manual_input", true);
         _ = F_dv_require(F_dvp_eligible(v_view__382968, v_action__382922, F_dv_get(v_actor, "mind"), F_dvp_goal_refs(v_actor)), "Player action failed subject admission");
+        _ = F_dv_require(F_dvs_local_candidate_admissible(v_actor, v_action__382922), "Player action failed local admission");
         return new System.Collections.Generic.List<object>(6) { F_dv_pair("action", v_action__382922), F_dv_pair("score", R.number("0")), F_dv_pair("plan_expansions", R.number("0")), F_dv_pair("plans", new System.Collections.Generic.List<object>(0) { }), F_dv_pair("relevant_refs", F_dvp_goal_refs(v_actor)), F_dv_pair("controller", "player") };
     }
 }

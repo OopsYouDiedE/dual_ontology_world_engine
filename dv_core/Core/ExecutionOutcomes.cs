@@ -102,17 +102,34 @@ public static partial class DVKernel
     private static string ExecutionOutcomeCategory(object execution)
     {
         if (R.Text(F_dv_get(execution, "status")) == "applied") return "completed";
-        return R.Text(F_dv_find(execution, "failure_class", "")) switch
+        var failureClass = R.Text(F_dv_find(execution, "failure_class", ""));
+        var reason = R.Text(F_dv_find(execution, "reason", ""));
+        if (failureClass.Length == 0 && reason.Length > 0) failureClass = reason;
+
+        return failureClass switch
         {
-            "activity-interrupted" => "interrupted",
-            "native-continuous-source-cancel" or "native-spatial-cancelled" => "cancelled",
-            "native-spatial-completion-invalid" or "native-spatial-execution-fault" => "execution-fault",
-            "native-motion-blocked" or "contact-out-of-reach" or "native-spatial-path-blocked" => "path-blocked",
+            "activity-interrupted" or "interrupted" => "interrupted",
+            "native-continuous-source-cancel" or "native-spatial-cancelled" or "cancelled" or "action-cancelled"
+                or "user-cancelled" or "task-cancelled" => "cancelled",
+            "native-spatial-completion-invalid" or "native-spatial-execution-fault" or "execution-fault"
+                or "argument-execution-state-changed" or "execution-state-mismatch" => "execution-fault",
+            "native-motion-blocked" or "contact-out-of-reach" or "native-spatial-path-blocked" or "path-blocked" => "path-blocked",
             "condition-invalidated" or "actor-left-required-location" or "required-participant-absent"
-                or "required-absence-not-established" or "request-context-invalidated" or "native-spatial-condition-invalidated" => "condition-invalidated",
-            // A host refusal without structured evidence must remain unclassified.
-            // It is not evidence that a character refused the request.
-            _ => "unclassified-failure"
+                or "required-absence-not-established" or "request-context-invalidated"
+                or "native-spatial-condition-invalidated" or "target-left-location" => "condition-invalidated",
+            "character-refused" or "actor-refused" or "request-refused" or "declined" or "peer-refused"
+                or "norm-refused" or "already-accepted-personal-answer" => "character-refused",
+            _ => failureClass.Contains("refus", StringComparison.OrdinalIgnoreCase) || failureClass.Contains("declin", StringComparison.OrdinalIgnoreCase)
+                ? "character-refused"
+                : failureClass.Contains("cancel", StringComparison.OrdinalIgnoreCase)
+                    ? "cancelled"
+                    : failureClass.Contains("interrupt", StringComparison.OrdinalIgnoreCase)
+                        ? "interrupted"
+                        : failureClass.Contains("block", StringComparison.OrdinalIgnoreCase)
+                            ? "path-blocked"
+                            : failureClass.Contains("invalid", StringComparison.OrdinalIgnoreCase)
+                                ? "condition-invalidated"
+                                : "unclassified-failure"
         };
     }
 }

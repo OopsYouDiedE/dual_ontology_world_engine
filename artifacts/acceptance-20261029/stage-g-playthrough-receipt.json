@@ -1,0 +1,125 @@
+{
+  "metrics": {
+    "all_occupancies_released": true,
+    "camera_jitter_free": true,
+    "floor_drift_max": 0.0,
+    "max_camera_step": 0.0592343248426914,
+    "spatial_action_valid": true,
+    "stair_descent_monotonic": true,
+    "wall_penetration_free": true
+  },
+  "observations": [
+    {
+      "actor_pos": "(0.0, 3.0, 4.5)",
+      "door_position": "(-0.425, 3.0, 2.5)",
+      "door_state": "closed",
+      "intent": "move_to_door_stand_slot",
+      "observed_room": "Corridor_2F",
+      "step": 0
+    },
+    {
+      "action": "operate_door",
+      "door_opened": true,
+      "doorway_clearance_width": 0.85,
+      "operation_ok": true,
+      "step": 2
+    },
+    {
+      "action": "sit_down",
+      "chair_occupied": true,
+      "is_seated": true,
+      "sit_ok": true,
+      "step": 4
+    },
+    {
+      "action": "inspect_evidence",
+      "casebook_entry_added": true,
+      "item_id": "evidence_poetic_notes",
+      "pickup_ok": true,
+      "place_ok": true,
+      "step": 5,
+      "title": "诗文残页草稿"
+    },
+    {
+      "action_idle": true,
+      "final_elevation": 0.0,
+      "final_hall_reached": true,
+      "final_pos": "(2.999999, 0.0, -1.92717)",
+      "step": 10
+    }
+  ],
+  "ok": true,
+  "stages": {
+    "0_wake_corridor_observation": {
+      "actor_pos": "(0.0, 3.0, 4.5)",
+      "door_position": "(-0.425, 3.0, 2.5)",
+      "door_state": "closed",
+      "intent": "move_to_door_stand_slot",
+      "observed_room": "Corridor_2F",
+      "step": 0
+    },
+    "10_1f_hall_turn_and_settle": {
+      "action_idle": true,
+      "final_elevation": 0.0,
+      "final_hall_reached": true,
+      "final_pos": "(2.999999, 0.0, -1.92717)",
+      "step": 10
+    },
+    "1_approach_door_slot": {
+      "dist_error": 0.0718772411346436,
+      "reached": true,
+      "stand_pos": "(0.0, 3.0, 2.921877)"
+    },
+    "2_operate_door_and_open": {
+      "action": "operate_door",
+      "door_opened": true,
+      "doorway_clearance_width": 0.85,
+      "operation_ok": true,
+      "step": 2
+    },
+    "3_enter_bedroom_to_chair": {
+      "actor_pos": "(1.368915, 3.0, 0.064876)",
+      "chair_slot_reached": true,
+      "entered_bedroom": true
+    },
+    "4_sit_down_on_chair": {
+      "action": "sit_down",
+      "chair_occupied": true,
+      "is_seated": true,
+      "sit_ok": true,
+      "step": 4
+    },
+    "5_inspect_evidence_book": {
+      "action": "inspect_evidence",
+      "casebook_entry_added": true,
+      "item_id": "evidence_poetic_notes",
+      "pickup_ok": true,
+      "place_ok": true,
+      "step": 5,
+      "title": "诗文残页草稿"
+    },
+    "6_stand_up_from_chair": {
+      "chair_released": true,
+      "is_seated": false,
+      "stood_up": true
+    },
+    "7_exit_bedroom_to_corridor": {
+      "actor_pos": "(0.023271, 3.0, 4.424606)",
+      "exited_bedroom": true,
+      "returned_corridor": true
+    },
+    "8_corridor_to_stair_landing": {
+      "actor_pos": "(2.925867, 3.0, 4.010573)",
+      "landing_reached": true
+    },
+    "9_stair_descent_to_1f": {
+      "descent_complete": true,
+      "end_y": 0.0,
+      "landed_1f": true,
+      "samples_count": 661,
+      "start_y": 3.0
+    }
+  },
+  "task_id": "Stage_G_Playthrough",
+  "timestamp": "2026-10-29T11:05:45"
+}

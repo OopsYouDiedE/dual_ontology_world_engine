@@ -99,3 +99,20 @@ static func _inspect_mesh(instance: MeshInstance3D, object_id: String, report: D
 				var mean_normal := normals[ids[0]] + normals[ids[1]] + normals[ids[2]]
 				if mean_normal.is_finite() and mean_normal.length_squared() > NORMAL_EPSILON_SQUARED and (-cross).dot(mean_normal) < 0.0:
 					_issue(report, object_id, surface, face, "normal-opposes-front-winding")
+
+## Formats issues into human-readable messages (Task 4.04).
+static func format_report(report: Dictionary) -> String:
+	if bool(report.get("valid", false)):
+		return "Valid: %d meshes, %d triangles inspected, 0 issues." % [int(report.get("mesh_count", 0)), int(report.get("triangle_count", 0))]
+	var lines: Array[String] = ["Mesh publication diagnostics detected %d issue(s):" % report.issues.size()]
+	for issue in report.issues:
+		lines.append(" - Object '%s', Surface %d, Face %d: %s" % [issue.object_id, issue.surface, issue.face, issue.reason])
+	return "\n".join(lines)
+
+## Validates the scene tree mesh geometry and raises errors on any defect (Task 4.04).
+static func assert_valid(root: Node3D) -> Dictionary:
+	var report := inspect(root)
+	if not bool(report.get("valid", false)):
+		push_error(format_report(report))
+	return report
+

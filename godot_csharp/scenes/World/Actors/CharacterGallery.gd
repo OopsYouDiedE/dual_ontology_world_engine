@@ -1,7 +1,8 @@
 extends "res://scenes/World/Art/HallCraft.gd"
 ## Permanent character art studio; no map construction or gameplay state.
-@export var inspect_imports := false
+@export var inspect_imports := true
 var camera: Camera3D
+var _frame := 0
 
 func _ready() -> void:
 	get_viewport().msaa_3d = Viewport.MSAA_4X
@@ -38,7 +39,7 @@ func _ready() -> void:
 		var z: float = floorf(index/5.0)*2.1-3.15
 		if inspect_imports:
 			var root := group(str(identity), Vector3(x,0,z))
-			preload("res://scenes/World/Actors/ImportedCharacter.gd").attach(root, "res://ShareAsset/Internal/Characters/UserModels/model_%02d.glb" % identity, 1.32, -90)
+			preload("res://scenes/World/Actors/ImportedCharacter.gd").attach(root, "res://ShareAsset/Internal/Characters/UserModels/model_%02d.glb" % identity, 1.32, 0)
 		else:
 			_character(CAST.PEOPLE[identity][0],x,z,identity,1.0)
 		var caption := Label3D.new()
@@ -51,3 +52,10 @@ func _ready() -> void:
 		content_root.add_child(caption)
 		index += 1
 	box(content_root,Vector3(0,-0.11,0),Vector3(10,0.2,9),material("studio_floor","65706a",2))
+
+func _process(_delta: float) -> void:
+	_frame += 1
+	if _frame == 20:
+		var img = get_viewport().get_texture().get_image()
+		if img != null:
+			img.save_png("c:/Users/Administrator/dual_ontology_world_engine/artifacts/acceptance-20261029/actor-gallery-showcase.png")

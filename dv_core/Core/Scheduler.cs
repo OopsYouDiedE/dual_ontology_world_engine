@@ -50,40 +50,45 @@ public static partial class DVKernel
             {
                 object subscription = F_dv_find(v_action, "wait_subscription", false);
                 object targets = R.Bool(R.eq(subscription, false)) ? false : F_dv_find(subscription, "contact_targets", false);
+                object dangerRefs = R.Bool(R.eq(subscription, false)) ? false : F_dv_find(subscription, "danger_refs", new System.Collections.Generic.List<object>());
                 object type = F_dv_get(v_event__291140, "type");
                 bool relevant = true;
-                if (!R.Bool(R.eq(targets, false)) && R.Bool(R.eq(type, "co_presence"))) relevant = false;
+                if (!R.Bool(R.eq(targets, false)) && (R.Bool(R.eq(type, "co_presence")) || R.Bool(R.eq(type, "room_perception")))) relevant = false;
                 if (!R.Bool(R.eq(targets, false)) && R.Bool(R.eq(type, "observation")))
                 {
                     object data = F_dv_get(v_event__291140, "data");
                     object observations = R.Bool(R.is_list(data)) && R.Bool(F_dv_record_like(data))
                         ? F_dv_find(data, "observations", new System.Collections.Generic.List<object>()) : false;
                     if (!R.Bool(R.is_list(observations))) observations = new System.Collections.Generic.List<object>();
-                    bool onlyUnrelatedPeers = R.Bool(R.lt(R.number("0"), R.count(observations)));
+                    bool anySubscribed = false;
                     for (object j = R.number("0"); R.Bool(R.lt(j, R.count(observations))); j = R.add(j, R.number("1")))
                     {
                         object observation = R.at(observations, j);
-                        if (!R.Bool(R.is_list(observation)) || !R.Bool(F_dv_record_like(observation))) { onlyUnrelatedPeers = false; break; }
+                        if (!R.Bool(R.is_list(observation)) || !R.Bool(F_dv_record_like(observation))) continue;
                         object reference = F_dv_find(observation, "ref", false);
                         if (!R.Bool(R.is_list(reference)) || !R.Bool(F_dv_record_like(reference)) ||
                             !R.Bool(F_dv_has_key(reference, "type")) || !R.Bool(F_dv_has_key(reference, "object")) ||
-                            !R.Bool(F_dv_has_key(reference, "facet")) || !R.Bool(F_dv_has_key(reference, "field"))) { onlyUnrelatedPeers = false; break; }
+                            !R.Bool(F_dv_has_key(reference, "facet")) || !R.Bool(F_dv_has_key(reference, "field"))) continue;
                         object entity = F_dv_get(reference, "object");
-                        object dangerRefs = F_dv_find(subscription, "danger_refs", new System.Collections.Generic.List<object>());
-                        bool danger = false;
-                        for (object d = R.number("0"); R.Bool(R.lt(d, R.count(dangerRefs))); d = R.add(d, R.number("1")))
-                            if (R.Bool(F_dv_same_local_ref(F_dv_get(v_actor, "id"), reference, R.at(dangerRefs, d)))) { danger = true; break; }
-                        if (danger) { onlyUnrelatedPeers = false; break; }
-                        bool peer = false;
-                        for (object k = R.number("0"); R.Bool(R.lt(k, R.count(v_actors))); k = R.add(k, R.number("1")))
+                        if (!R.Bool(R.eq(dangerRefs, false)))
                         {
-                            object other = R.at(v_actors, k);
-                            if (R.Bool(R.eq(entity, F_dv_get(other, "id"))) &&
-                                R.Bool(F_dv_same_local_ref(F_dv_get(v_actor, "id"), reference, F_dv_get(other, "location_ref")))) { peer = true; break; }
+                            for (object d = R.number("0"); R.Bool(R.lt(d, R.count(dangerRefs))); d = R.add(d, R.number("1")))
+                            {
+                                if (R.Bool(F_dv_same_local_ref(F_dv_get(v_actor, "id"), reference, R.at(dangerRefs, d))))
+                                {
+                                    anySubscribed = true;
+                                    break;
+                                }
+                            }
                         }
-                        if (!peer || R.Bool(F_dv_has(targets, entity))) { onlyUnrelatedPeers = false; break; }
+                        if (anySubscribed) break;
+                        if (R.Bool(F_dv_has(targets, entity)))
+                        {
+                            anySubscribed = true;
+                            break;
+                        }
                     }
-                    if (onlyUnrelatedPeers) relevant = false;
+                    if (!anySubscribed) relevant = false;
                 }
                 if (relevant) _ = R.push(v_sources__291064, F_dv_get(v_event__291140, "id"));
             }
@@ -100,9 +105,7 @@ public static partial class DVKernel
         object targets = R.Bool(R.eq(subscription, false)) ? false : F_dv_find(subscription, "contact_targets", false);
         if (R.Bool(R.eq(targets, false))) return R.not(F_dv_same(before, after));
         if (R.Bool(R.eq(before, false)) || R.Bool(R.eq(after, false))) return R.not(F_dv_same(before, after));
-        if (!R.Bool(F_dv_same(F_dv_get(before, "position"), F_dv_get(after, "position"))) ||
-            !R.Bool(F_dv_same(F_dv_get(before, "visible"), F_dv_get(after, "visible"))) ||
-            !R.Bool(F_dv_same(F_dv_get(before, "objects"), F_dv_get(after, "objects")))) return true;
+        if (!R.Bool(F_dv_same(F_dv_get(before, "position"), F_dv_get(after, "position")))) return true;
         object oldContext = F_dv_get(before, "context");
         object newContext = F_dv_get(after, "context");
         for (object i = R.number("0"); R.Bool(R.lt(i, R.count(targets))); i = R.add(i, R.number("1")))

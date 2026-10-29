@@ -13,11 +13,31 @@ const CASEBOOK_DATA := preload("res://scenes/UI/CasebookData.gd")
 const HUD_SCENE := preload("res://scenes/UI/FieldHUD.tscn")
 const INVESTIGATION_SCENE := preload("res://scenes/UI/InvestigationUI.tscn")
 const DIALOGUE_SCENE := preload("res://scenes/UI/DialogueUI.tscn")
+const INTERACTION_MENU_SCENE := preload("res://scenes/UI/InteractionMenu.tscn")
+const ACTION_QUEUE_SCENE := preload("res://scenes/UI/ActionQueuePanel.tscn")
+const DEDUCTION_SCENE := preload("res://scenes/UI/DeductionInterface.tscn")
+const EVIDENCE_INSPECT_SCENE := preload("res://scenes/UI/EvidenceInspectUI.tscn")
+const INVENTORY_SCENE := preload("res://scenes/UI/InventoryUI.tscn")
+const COLLABORATION_SCENE := preload("res://scenes/UI/CollaborationUI.tscn")
+const ALERT_SCENE := preload("res://scenes/UI/AlertUI.tscn")
+const TEXT_COMPARISON_SCENE := preload("res://scenes/UI/TextComparisonUI.tscn")
+const CONVENTION_SCENE := preload("res://scenes/UI/ConventionUI.tscn")
+const SNACKBAR_SCRIPT := preload("res://scenes/UI/Components/Snackbar.gd")
 
 var settings_ui: CanvasLayer
 var hud_ui: CanvasLayer
 var investigation_ui: CanvasLayer
 var dialogue_ui: CanvasLayer
+var interaction_menu: Control
+var action_queue_panel: Control
+var deduction_interface: Control
+var evidence_inspect_ui: Control
+var inventory_ui: Control
+var collaboration_ui: Control
+var alert_ui: Control
+var text_comparison_ui: Control
+var convention_ui: Control
+var global_snackbar: PanelContainer
 var snapshot: Dictionary = {}
 var casebook: RefCounted = CASEBOOK_DATA.new()
 ## The host can prepare and draw this UI under a title without accepting input.
@@ -96,6 +116,69 @@ func _ready() -> void:
 	settings_ui.reading_changed.connect(func(active: bool): casebook_reading_changed.emit(active))
 	settings_ui.ui_event.connect(_on_book_event)
 	casebook.changed.connect(func(): _casebook_trace_dirty = true)
+	
+	# Instantiate M3 components (InteractionMenu, ActionQueuePanel, DeductionInterface)
+	interaction_menu = INTERACTION_MENU_SCENE.instantiate()
+	add_child(interaction_menu)
+	interaction_menu.action_selected.connect(_on_interaction_action_selected)
+	interaction_menu.menu_closed.connect(_on_modal_closed)
+	interaction_menu.blocked_feedback.connect(_on_blocked_feedback)
+	
+	action_queue_panel = ACTION_QUEUE_SCENE.instantiate()
+	action_queue_panel.position = Vector2(28, 80)
+	add_child(action_queue_panel)
+	action_queue_panel.action_cancel_requested.connect(_on_action_cancel_requested)
+	
+	deduction_interface = DEDUCTION_SCENE.instantiate()
+	add_child(deduction_interface)
+	deduction_interface.deduction_submitted.connect(_on_deduction_submitted)
+	deduction_interface.deduction_closed.connect(_on_modal_closed)
+	
+	evidence_inspect_ui = EVIDENCE_INSPECT_SCENE.instantiate()
+	add_child(evidence_inspect_ui)
+	evidence_inspect_ui.closed.connect(_on_evidence_inspect_closed)
+	
+	inventory_ui = INVENTORY_SCENE.instantiate()
+	add_child(inventory_ui)
+	inventory_ui.inventory_closed.connect(_on_modal_closed)
+	inventory_ui.handover_requested.connect(_on_inventory_handover)
+	inventory_ui.item_inspect_requested.connect(_on_inventory_item_inspect)
+	
+	collaboration_ui = COLLABORATION_SCENE.instantiate()
+	add_child(collaboration_ui)
+	collaboration_ui.invite_dispatched.connect(_on_collaboration_invite)
+	collaboration_ui.arrangement_cancelled.connect(_on_collaboration_cancel)
+	collaboration_ui.collaboration_closed.connect(_on_modal_closed)
+	
+	alert_ui = ALERT_SCENE.instantiate()
+	add_child(alert_ui)
+	alert_ui.evacuate_requested.connect(_on_hazard_evacuate)
+	alert_ui.resolve_requested.connect(_on_hazard_resolve)
+	alert_ui.alert_dismissed.connect(_on_hazard_dismissed)
+	
+	text_comparison_ui = TEXT_COMPARISON_SCENE.instantiate()
+	add_child(text_comparison_ui)
+	text_comparison_ui.comparison_closed.connect(_on_modal_closed)
+	
+	convention_ui = CONVENTION_SCENE.instantiate()
+	add_child(convention_ui)
+	convention_ui.opinion_updated.connect(_on_convention_opinion)
+	convention_ui.convention_signed.connect(_on_convention_signed)
+	convention_ui.convention_closed.connect(_on_modal_closed)
+	
+	global_snackbar = SNACKBAR_SCRIPT.new()
+	global_snackbar.name = "GlobalSnackbar"
+	global_snackbar.anchors_preset = Control.PRESET_BOTTOM_WIDE
+	global_snackbar.anchor_top = 1.0
+	global_snackbar.anchor_bottom = 1.0
+	global_snackbar.offset_left = 120.0
+	global_snackbar.offset_right = -120.0
+	global_snackbar.offset_top = -68.0
+	global_snackbar.offset_bottom = -20.0
+	global_snackbar.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	global_snackbar.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	add_child(global_snackbar)
+	
 	var settings := get_node_or_null("/root/GameSettings")
 	if settings != null: settings.setting_changed.connect(_on_setting_changed)
 	_sync_overlay_input()
@@ -138,6 +221,15 @@ func begin_shutdown() -> void:
 	investigation_ui.begin_shutdown()
 	dialogue_ui.begin_shutdown()
 	hud_ui.begin_shutdown()
+	if is_instance_valid(interaction_menu): interaction_menu.close_menu()
+	if is_instance_valid(deduction_interface): deduction_interface.exit_deduction()
+	if is_instance_valid(evidence_inspect_ui): evidence_inspect_ui.close_inspect()
+	if is_instance_valid(inventory_ui): inventory_ui.close_inventory()
+	if is_instance_valid(collaboration_ui): collaboration_ui.close_collaboration()
+	if is_instance_valid(alert_ui): alert_ui.dismiss_alert()
+	if is_instance_valid(text_comparison_ui): text_comparison_ui.close_comparison()
+	if is_instance_valid(convention_ui): convention_ui.close_convention()
+	if is_instance_valid(global_snackbar): global_snackbar.dismiss()
 
 func _exit_tree() -> void:
 	Sound.end_presentation_music(_presentation_music_token)
@@ -148,7 +240,14 @@ func is_busy() -> bool:
 	return _closing or host_input_blocked or _screen_motion.is_active() or _modal_cycle or not _pending_modal.is_empty() \
 		or (is_instance_valid(dialogue_ui) and dialogue_ui.is_dialogue_active()) \
 		or (is_instance_valid(investigation_ui) and investigation_ui.is_active()) \
-		or (is_instance_valid(settings_ui) and settings_ui.is_active())
+		or (is_instance_valid(settings_ui) and settings_ui.is_active()) \
+		or (is_instance_valid(interaction_menu) and interaction_menu.is_menu_open()) \
+		or (is_instance_valid(deduction_interface) and deduction_interface.is_deduction_open()) \
+		or (is_instance_valid(evidence_inspect_ui) and evidence_inspect_ui.is_inspect_open()) \
+		or (is_instance_valid(inventory_ui) and inventory_ui.is_inventory_open()) \
+		or (is_instance_valid(collaboration_ui) and collaboration_ui.is_collaboration_open()) \
+		or (is_instance_valid(text_comparison_ui) and text_comparison_ui.is_comparison_open()) \
+		or (is_instance_valid(convention_ui) and convention_ui.is_convention_open())
 
 ## These methods only cover/uncover the screen. They never step or replace text.
 func fade_out() -> bool:
@@ -182,6 +281,12 @@ func _on_setting_changed(section: String, key: String, value: Variant) -> void:
 func apply_snapshot(data: Dictionary) -> void:
 	# Main publishes completed projections. UI reads them without mutating or
 	# repeatedly deep-copying the whole snapshot for a handful of display fields.
+	var old_room := str(snapshot.get("room", snapshot.get("current_room", "")))
+	var new_room := str(data.get("room", data.get("current_room", "")))
+	if not old_room.is_empty() and not new_room.is_empty() and old_room != new_room:
+		if is_instance_valid(interaction_menu) and interaction_menu.is_menu_open():
+			interaction_menu.close_menu()
+		show_snackbar("抵达区域: " + new_room, "", 2.0)
 	if str(snapshot.get("viewer", "")) != str(data.get("viewer", "")):
 		_known_rooms.clear()
 		_known_connections.clear()
@@ -190,6 +295,8 @@ func apply_snapshot(data: Dictionary) -> void:
 	casebook.apply_snapshot(snapshot)
 	if is_instance_valid(dialogue_ui): dialogue_ui.configure_cast(snapshot.get("cast", {}))
 	if is_instance_valid(hud_ui): hud_ui.apply_snapshot(snapshot)
+	if is_instance_valid(action_queue_panel):
+		action_queue_panel.apply_queue_snapshot(snapshot.get("action_queue", {}))
 	if not host_input_blocked and not _closing: Sound.scene_music(snapshot)
 
 func present(ev: Dictionary) -> Dictionary:
@@ -212,6 +319,10 @@ func present(ev: Dictionary) -> Dictionary:
 		"music": Sound.music(str(ev.get("id", "")), float(ev.get("fade", 1.6)))
 		"sound": Sound.sfx(str(ev.get("id", "")), float(ev.get("volume", 0.0)))
 		"duck": Sound.duck(bool(ev.get("on", false)))
+		"alert": show_alert(ev)
+		"collaboration": open_collaboration(ev)
+		"text_comparison", "compare_text": open_text_comparison(ev)
+		"convention": open_convention(ev)
 		"close", "interaction_closed": close_modal(false)
 	return {}
 
@@ -310,6 +421,20 @@ func _sync_overlay_input() -> void:
 	hud_ui.set_overlay_blocked(_modal_cycle or screen_blocked)
 	settings_ui.set_external_blocked(screen_blocked)
 	investigation_ui.set_external_blocked(screen_blocked)
+	if is_instance_valid(interaction_menu) and screen_blocked:
+		interaction_menu.close_menu()
+	if is_instance_valid(deduction_interface) and screen_blocked:
+		deduction_interface.exit_deduction()
+	if is_instance_valid(evidence_inspect_ui) and screen_blocked:
+		evidence_inspect_ui.close_inspect()
+	if is_instance_valid(inventory_ui) and screen_blocked:
+		inventory_ui.close_inventory()
+	if is_instance_valid(collaboration_ui) and screen_blocked:
+		collaboration_ui.close_collaboration()
+	if is_instance_valid(text_comparison_ui) and screen_blocked:
+		text_comparison_ui.close_comparison()
+	if is_instance_valid(convention_ui) and screen_blocked:
+		convention_ui.close_convention()
 
 func _on_investigation_action(id: String) -> void:
 	if _closing or not _pending_action.is_empty(): return
@@ -338,7 +463,113 @@ func _flush_pending_action() -> void:
 	ui_event.emit(action)
 
 func spatial_choices(data: Dictionary) -> void:
-	_request_modal("spatial", data)
+	if is_instance_valid(interaction_menu) and data.has("options"):
+		_spatial_context = data
+		interaction_menu.open_for_target(data)
+	else:
+		_request_modal("spatial", data)
+
+func _on_interaction_action_selected(action_id: String, target_id: String) -> void:
+	if _closing or not _pending_action.is_empty(): return
+	_pending_modal.clear()
+	_modal_stack.clear()
+	_pending_action = {"kind": "spatial_select", "choice_id": action_id, "site": target_id}
+	_flush_pending_action()
+
+func _on_blocked_feedback(reason: String) -> void:
+	if is_instance_valid(hud_ui) and hud_ui.has_method("set_hint"):
+		hud_ui.set_hint(reason)
+	show_snackbar(reason, "", 3.0)
+
+func _on_action_cancel_requested(action_id: String) -> void:
+	if _closing: return
+	ui_event.emit({"kind": "action_cancel", "action_id": action_id})
+	show_snackbar("已请求取消动作：" + action_id, "", 2.5)
+
+func show_snackbar(message: String, action_text := "", duration := 3.5) -> void:
+	if is_instance_valid(global_snackbar) and global_snackbar.has_method("show_message"):
+		global_snackbar.show_message(message, action_text, duration)
+
+func open_deduction(data: Dictionary) -> void:
+	if is_instance_valid(deduction_interface):
+		deduction_interface.open_deduction(data)
+
+func _on_deduction_submitted(hypothesis_id: String, payload: Dictionary) -> void:
+	if _closing: return
+	# Zero physical side effects: only passes cognitive hypothesis payload
+	ui_event.emit({"kind": "deduction_submit", "hypothesis_id": hypothesis_id, "payload": payload})
+
+func open_evidence_inspect(data: Dictionary) -> void:
+	if is_instance_valid(evidence_inspect_ui):
+		evidence_inspect_ui.open_inspect(data)
+
+func _on_evidence_inspect_closed(original_target: String) -> void:
+	_on_modal_closed()
+	if not original_target.is_empty():
+		ui_event.emit({"kind": "focus_target", "target_id": original_target})
+
+func open_inventory(data: Dictionary = {}) -> void:
+	if is_instance_valid(inventory_ui):
+		var inv_data: Dictionary = data if not data.is_empty() else snapshot.get("inventory", {})
+		inventory_ui.open_inventory(inv_data)
+
+func _on_inventory_handover(item_id: String, target_char: String) -> void:
+	if _closing: return
+	# Authoritative handover dispatched to Core; zero client-side duplication
+	ui_event.emit({"kind": "item_handover", "item_id": item_id, "target": target_char})
+
+func _on_inventory_item_inspect(item_id: String) -> void:
+	if _closing: return
+	var item_data := {"id": item_id, "title": item_id, "target_id": item_id}
+	open_evidence_inspect(item_data)
+
+func show_alert(data: Dictionary) -> void:
+	if is_instance_valid(alert_ui):
+		alert_ui.show_alert(data)
+
+func _on_hazard_evacuate(hazard_id: String) -> void:
+	if _closing: return
+	ui_event.emit({"kind": "hazard_evacuate", "hazard_id": hazard_id})
+
+func _on_hazard_resolve(hazard_id: String) -> void:
+	if _closing: return
+	ui_event.emit({"kind": "hazard_resolve", "hazard_id": hazard_id})
+
+func _on_hazard_dismissed(hazard_id: String) -> void:
+	if _closing: return
+	ui_event.emit({"kind": "hazard_dismissed", "hazard_id": hazard_id})
+
+func open_collaboration(data: Dictionary = {}) -> void:
+	if is_instance_valid(collaboration_ui):
+		var collab_data: Dictionary = data if not data.is_empty() else snapshot.get("collaboration", {})
+		collaboration_ui.open_collaboration(collab_data)
+
+func _on_collaboration_invite(participant: String, task: String, location: String) -> void:
+	if _closing: return
+	ui_event.emit({"kind": "collaboration_invite", "participant": participant, "task": task, "location": location})
+
+func _on_collaboration_cancel(participant: String) -> void:
+	if _closing: return
+	ui_event.emit({"kind": "collaboration_cancel", "participant": participant})
+
+func open_text_comparison(data: Dictionary) -> void:
+	if is_instance_valid(text_comparison_ui):
+		text_comparison_ui.open_comparison(data)
+
+func open_convention(data: Dictionary = {}) -> void:
+	if is_instance_valid(convention_ui):
+		var conv_data: Dictionary = data if not data.is_empty() else snapshot.get("convention", {})
+		if not conv_data.has("viewer"):
+			conv_data["viewer"] = snapshot.get("viewer", "")
+		convention_ui.open_convention(conv_data)
+
+func _on_convention_opinion(clause_id: String, opinion: String) -> void:
+	if _closing: return
+	ui_event.emit({"kind": "convention_opinion", "clause_id": clause_id, "opinion": opinion})
+
+func _on_convention_signed(viewer_id: String, version: String) -> void:
+	if _closing: return
+	ui_event.emit({"kind": "convention_signed", "viewer": viewer_id, "version": version})
 
 func close_modal(return_to_parent := true) -> void:
 	_pending_modal.clear()
@@ -412,8 +643,10 @@ func open_campus_map() -> void:
 	var connections: Array = []
 	for connection: Dictionary in _known_connections.values():
 		if str(connection.from_map) == map_id or str(connection.to_map) == map_id: connections.append(connection)
+	var target_name: String = str(snapshot.get("hud", {}).get("target", snapshot.get("target", "")))
 	_request_modal("campus_map", {"id": map_id, "current_room": str(snapshot.get("execution_room", "")),
 		"current_label": str(snapshot.get("hud", {}).get("room", "")),
+		"target_label": target_name,
 		"rooms": _known_rooms.get(map_id, {}).duplicate(true), "connections": connections})
 
 func open_ending(data: Dictionary) -> void:

@@ -78,11 +78,15 @@ func _build_settings() -> void:
 	_add_choice("graphics", "max_fps", "帧率上限",
 		[0, 30, 60, 120, 144], ["不限", "30", "60", "120", "144"])
 	_add_heading("阅读与辅助")
+	_add_toggle("accessibility", "subtitles", "显示字幕")
 	_add_choice("accessibility", "text_scale", "设置页文字大小", [1.0, 1.25, 1.5], ["100%", "125%", "150%"])
 	_add_toggle("accessibility", "reduce_motion", "减少动态效果")
 	_add_toggle("accessibility", "screen_flash", "屏幕闪光")
 	_add_choice("accessibility", "text_speed", "文字速度",
 		[0.5, 1.0, 2.0, 0.0], ["缓慢", "正常", "快速", "立即显示"])
+	_add_heading("操作与镜头")
+	_add_choice("controls", "camera_distance", "镜头距离", [0.8, 1.0, 1.3], ["近", "标准", "远"])
+	_add_choice("controls", "mouse_sensitivity", "鼠标灵敏度", [0.5, 1.0, 1.5, 2.0], ["低", "标准", "高", "超高"])
 
 
 func _add_heading(source: String) -> void:

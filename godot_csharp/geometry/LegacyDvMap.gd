@@ -99,7 +99,7 @@ static func _terrain_rows(floor: Dictionary, origin: Vector2, size: Vector2) -> 
 			row[x] = " "
 		cells.append(row)
 	for piece in floor.get("pieces", []):
-		if str(piece.get("kind", "")) != "floor": continue
+		if piece.get("kind", "") != "floor": continue
 		var rect: Array = piece.get("rect", [])
 		if rect.size() != 4: continue
 		var left := (float(rect[0]) - origin.x) * SCALE_PX_PER_M + BORDER_PX

@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-10-29T06:33:00",
+  "commit": "686e2f48",
+  "tasks": {
+    "3.02": { "item": "pillow", "head_contact_slot": true, "status": "passed" },
+    "3.03": { "item": "quilt", "bed_end_folded": true, "status": "passed" },
+    "3.07": { "item": "wardrobe", "doors": ["Door_Left", "Door_Right"], "handles": ["Handle_Left", "Handle_Right"], "status": "passed" },
+    "3.08": { "item": "washstand", "hollow_basin": true, "pitcher": true, "towel_bar": true, "status": "passed" },
+    "3.09": { "item": "sofa", "slots": ["Sit_Left", "Sit_Right"], "multi_seat_isolated": true, "conflict_rejected": true, "release_isolated": true, "status": "passed" },
+    "3.10": { "item": "coffeetable", "height_m": 0.42, "tabletop": true, "lower_shelf": true, "status": "passed" },
+    "3.11": { "item": "lamp", "omni_light_3d": true, "light_range_m": 6.5, "emission_shade": true, "status": "passed" },
+    "3.12": { "item": "book", "parts": ["BookCover", "BookPages"], "status": "passed" },
+    "3.13": { "item": "paper", "flat_sheet": true, "thickness_m": 0.003, "status": "passed" },
+    "3.14": { "item": "evidence", "brass_body": true, "status": "passed" },
+    "3.15": { "item": "carpet", "thickness_m": 0.004, "non_blocking": true, "status": "passed" },
+    "3.16": { "item": "curtains", "curtain_rod": true, "leaves": ["CurtainLeft", "CurtainRight"], "status": "passed" },
+    "3.17": { "item": "painting", "parts": ["Frame", "Canvas"], "thickness_m": 0.03, "status": "passed" },
+    "3.18": { "item": "doorplate", "brass_plaque": true, "status": "passed" },
+    "4.07": { "shader": "framework_surface.gdshader", "uniform": "occlusion_enabled", "smooth_dissolve": true, "status": "passed" },
+    "4.08": { "shader": "framework_surface.gdshader", "uniform": "occlusion_cylinder", "wall_los_cut": true, "status": "passed" },
+    "4.09": { "world_object": "WorldObject3D", "highlight_enabled": true, "label_no_depth_test": false, "status": "passed" },
+    "3.A1": { "stage": "empty_room", "components": ["floor", "wall", "ceiling"], "status": "passed" },
+    "3.A2": { "stage": "doors_windows", "components": ["OpeningFrame3D", "HingedDoor3D"], "flat_threshold": true, "zero_drift": true, "status": "passed" },
+    "3.A4": { "stage": "wardrobe_desk", "components": ["wardrobe", "desk", "nightstand", "chair"], "knee_clearance_gte_0_65m": true, "status": "passed" },
+    "3.A5": { "stage": "lamps_small_items", "components": ["lamp", "book", "paper", "carpet", "painting"], "status": "passed" }
+  },
+  "summary": {
+    "total_tasks_verified": 21,
+    "failures": 0,
+    "all_passed": true
+  }
+}
