@@ -21,9 +21,10 @@ SESSION = {"type": "string", "description": "session_id returned by on in this M
 WAIT = {"type": "integer", "minimum": 0, "maximum": 10000, "default": 200}
 OPERATION = schema({
     "type": {"type": "string", "enum": ["select", "advance", "start", "load", "input_action", "click", "reload_content", "case_reasoning", "character"]},
-    "command": {"type":"string","enum":["action","conversation","order","continue","cancel","save","walk","pause"]},
+    "command": {"type":"string","enum":["action","deduce","conversation","order","continue","cancel","save","walk","pause"]},
     "paused": {"type":"boolean"},
     "action_id": {"type":"string"},
+    "evidence_ids": {"type":"array","items":{"type":"string"},"description":"Evidence IDs selected from the current deduction preview; never author-injected facts."},
     "order": {"type":"array","items":{"type":"string"}},
     "position": {"type":"array","items":{"type":"number"},"minItems":3,"maxItems":3},
     "case_request": {"type": "string", "description": "JSON actor proof request: operation info/questions/scene/infer/check/prove/check_goal/check_natural/review/strategy/travel_actor/sim4_plan/sim4_execute; seal_scene requires case_id and query_id and commits DV-declared cognitive time, repeats are idempotent; no author evidence injection"},
@@ -68,8 +69,8 @@ TOOLS = {
         types.Tool(name="CliMCP", description="Run a complete autonomous production CLI engine-AI test until completion, fault or the configured deadline, then return its final report/observation. The tool itself advances formal actions; no Agent input or polling required.", inputSchema=RUN),
     ],
     "environment": [
-        types.Tool(name="prepare", description="Prepare missing Godot .NET/C# and .NET 8 SDK in this project folder. Reuse a valid existing environment; local_copy=true clones existing Godot binaries into .runtime/godot. Missing binaries are downloaded from official sources with checksum verification. Windows x64; no global install or recursive deletion.",
-                   inputSchema=schema({"local_copy": {"type": "boolean", "default": False}})),
+        types.Tool(name="prepare", description="Prepare Godot .NET/C#, .NET 8 SDK and optionally Blender 4.5.3 (with_blender=true) in this project folder; report the active Python runtime. Reuse valid installations; local_copy=true clones existing Godot binaries into .runtime/godot. Official downloads are checksum verified. Windows/Linux x64; no global install or recursive deletion.",
+                   inputSchema=schema({"local_copy": {"type": "boolean", "default": False}, "with_blender": {"type": "boolean", "default": False}})),
     ],
 }
 

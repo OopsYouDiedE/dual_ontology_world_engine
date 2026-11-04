@@ -7,6 +7,7 @@ until close or EOF. Every server response and returned image is retained.
 import asyncio
 import base64
 import json
+import os
 from pathlib import Path
 import secrets
 import sys
@@ -15,7 +16,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 ROOT = Path(__file__).resolve().parents[2]
-PYTHON = ROOT / "mcp/game/.venv/Scripts/python.exe"
+PYTHON = Path(sys.executable)
 ALLOWED = {"on", "step", "observe", "close"}
 
 
@@ -23,7 +24,7 @@ async def main():
     receipt_dir = ROOT / ".runtime" / "input-client" / secrets.token_hex(8)
     receipt_dir.mkdir(parents=True, exist_ok=False)
     parameters = StdioServerParameters(command=str(PYTHON),
-        args=[str(ROOT / "mcp/game/server.py"), "--service", "input"], cwd=str(ROOT))
+        args=[str(ROOT / "mcp/game/server.py"), "--service", "input"], cwd=str(ROOT), env=os.environ.copy())
     current = None
     index = 0
     async with stdio_client(parameters) as (reader, writer):

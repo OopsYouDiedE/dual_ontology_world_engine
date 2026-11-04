@@ -3,6 +3,7 @@ import argparse
 import asyncio
 from datetime import datetime, timedelta, timezone
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -30,7 +31,7 @@ async def run(options):
     destination = Path(options.receipt).resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
     parameters = StdioServerParameters(command=sys.executable,
-        args=[str(ROOT / "mcp/game/server.py"), "--service", "auto"], cwd=str(ROOT))
+        args=[str(ROOT / "mcp/game/server.py"), "--service", "auto"], cwd=str(ROOT), env=os.environ.copy())
     tool = "CliMCP" if options.backend == "cli" else "GodotMCP"
     async with stdio_client(parameters) as (reader, writer):
         async with ClientSession(reader, writer,

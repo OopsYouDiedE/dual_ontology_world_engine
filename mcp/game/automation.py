@@ -202,6 +202,9 @@ def run(spec, report):
                 raise RuntimeError("Live host reported a fault; see the last observation")
             if spec["backend"] == "cli":
                 if not observation.get("active", True):
+                    acceptance = observation.get("acceptance", {})
+                    if acceptance.get("passed") is False:
+                        raise RuntimeError("Campaign stopped without satisfying its authored completion and acceptance conditions")
                     report["status"] = "completed"
                     break
                 if observation.get("status", {}).get("status") == "awaiting_input":
@@ -210,6 +213,8 @@ def run(spec, report):
                                                timeout=runtime.remaining(deadline, 86400))
             else:
                 if observation.get("state", {}).get("active") is False:
+                    if observation.get("state", {}).get("campaign_completed") is not True:
+                        raise RuntimeError("Godot stopped before the authored five-day completion conditions were met")
                     report["status"] = "completed"
                     break
                 # Advance only visible dialogue through the normal input path.
