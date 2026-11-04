@@ -1,0 +1,56 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/UIpanel/FieldHUD/CurrentActionUI.gd" id="1"]
+
+[node name="CurrentActionUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1")
+
+[node name="CenterBox" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+mouse_filter = 2
+alignment = 1
+
+[node name="ActionCapsule" type="PanelContainer" parent="CenterBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "取消行动"
+
+[node name="HBox" type="HBoxContainer" parent="CenterBox/ActionCapsule"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 7
+
+[node name="ActionLabel" type="Label" parent="CenterBox/ActionCapsule/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+size_flags_horizontal = 3
+text_overrun_behavior = 3
+clip_text = true
+
+[node name="CancelBtn" type="Button" parent="CenterBox/ActionCapsule/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "取消"
+text = "×"
+
+[node name="ProgressBar" type="ProgressBar" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+mouse_filter = 2
+max_value = 1.0
+show_percentage = false

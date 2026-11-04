@@ -15,7 +15,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[2]
 LOCAL = ROOT / ".runtime"
 LOCK = threading.Lock()
-VERSION = re.search(r'Godot.NET.Sdk/([^"\s]+)', (ROOT / "godot_csharp/DualOntologyWorldEngine.csproj").read_text()).group(1)
+VERSION = re.search(r'Godot.NET.Sdk/([^"\s]+)', (ROOT / "DualOntologyWorldEngine.csproj").read_text()).group(1)
 
 
 def command_output(command, deadline=None):

@@ -1,0 +1,140 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/public_water_heater_a57d3bd6.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_6w7p8"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/aged_metal.gdshader" id="2_whqwd"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vkemc"]
+render_priority = 0
+shader = ExtResource("2_whqwd")
+shader_parameter/pigment = Color(0.68235296, 0.57254905, 0.3647059, 1)
+shader_parameter/surface_roughness = 0.38
+shader_parameter/surface_metallic = 0.65
+shader_parameter/patina = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_uf81k"]
+top_radius = 0.42
+bottom_radius = 0.42
+height = 1.9
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rmyql"]
+render_priority = 0
+shader = ExtResource("2_whqwd")
+shader_parameter/pigment = Color(0.28235295, 0.32156864, 0.31764707, 1)
+shader_parameter/surface_roughness = 0.65
+shader_parameter/surface_metallic = 0.45
+shader_parameter/patina = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_cbl1r"]
+top_radius = 0.45
+bottom_radius = 0.45
+height = 0.065
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3han7"]
+top_radius = 0.45
+bottom_radius = 0.45
+height = 0.065
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_t45ja"]
+top_radius = 0.045
+bottom_radius = 0.045
+height = 0.32
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3b3dk"]
+top_radius = 0.045
+bottom_radius = 0.045
+height = 0.32
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_2iqeh"]
+top_radius = 0.045
+bottom_radius = 0.045
+height = 0.28999996
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_n1mei"]
+top_radius = 0.045
+bottom_radius = 0.045
+height = 1.5
+radial_segments = 24
+
+[node name="Public_water_heater" type="Node3D" unique_id=21893893 script=ExtResource("1_auto_script")]
+script = ExtResource("1_6w7p8")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "public/water_heater"
+
+[node name="water_heater" type="Node3D" parent="." unique_id=252082515]
+metadata/authoring_label = "water_heater"
+
+[node name="@MeshInstance3D@12067" type="MeshInstance3D" parent="water_heater" unique_id=956782182]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+material_override = SubResource("ShaderMaterial_vkemc")
+mesh = SubResource("CylinderMesh_uf81k")
+
+[node name="@MeshInstance3D@12068" type="MeshInstance3D" parent="water_heater" unique_id=1140252783]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+material_override = SubResource("ShaderMaterial_rmyql")
+mesh = SubResource("CylinderMesh_cbl1r")
+
+[node name="@MeshInstance3D@12069" type="MeshInstance3D" parent="water_heater" unique_id=1521298759]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0)
+material_override = SubResource("ShaderMaterial_rmyql")
+mesh = SubResource("CylinderMesh_3han7")
+
+[node name="@MeshInstance3D@12070" type="MeshInstance3D" parent="water_heater" unique_id=606583256]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.32, 0.16, 0)
+material_override = SubResource("ShaderMaterial_rmyql")
+mesh = SubResource("CylinderMesh_t45ja")
+
+[node name="@MeshInstance3D@12071" type="MeshInstance3D" parent="water_heater" unique_id=1872413144]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.32, 0.16, 0)
+material_override = SubResource("ShaderMaterial_rmyql")
+mesh = SubResource("CylinderMesh_3b3dk")
+
+[node name="@MeshInstance3D@12072" type="MeshInstance3D" parent="water_heater" unique_id=1724232816]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0.505, 1.75, 0)
+material_override = SubResource("ShaderMaterial_vkemc")
+mesh = SubResource("CylinderMesh_2iqeh")
+
+[node name="@MeshInstance3D@12073" type="MeshInstance3D" parent="water_heater" unique_id=1806257883]
+transform = Transform3D(-1, 0, 0, 0, -1, 0, 0, 0, 1, 0.65, 1, 0)
+material_override = SubResource("ShaderMaterial_vkemc")
+mesh = SubResource("CylinderMesh_n1mei")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=1586337435]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=256151077]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1225, 0, -0.9)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=503939936]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.1225, 0, 0.9)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=1112863406]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1225, 1.15, 0)

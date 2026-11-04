@@ -1,0 +1,474 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/pleated-brass-lamp-v1_2f9b1205.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_3v5b1"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/aged_metal.gdshader" id="2_kx3n5"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/fabric.gdshader" id="3_ncu4q"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_v3k8r"]
+render_priority = 0
+shader = ExtResource("2_kx3n5")
+shader_parameter/pigment = Color(0.654902, 0.5529412, 0.34509805, 1)
+shader_parameter/surface_roughness = 0.44
+shader_parameter/surface_metallic = 0.55
+shader_parameter/patina = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_p4q2g"]
+top_radius = 0.25
+bottom_radius = 0.25
+height = 0.07
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_q2n7a"]
+top_radius = 0.07
+bottom_radius = 0.16
+height = 0.13
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_4w3ii"]
+top_radius = 0.025
+bottom_radius = 0.025
+height = 1.45
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rscn7"]
+render_priority = 0
+shader = ExtResource("3_ncu4q")
+shader_parameter/pigment = Color(0.8509804, 0.79607844, 0.64705884, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_naf1f"]
+top_radius = 0.14
+bottom_radius = 0.34
+height = 0.44
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_x63ep"]
+render_priority = 0
+shader = ExtResource("3_ncu4q")
+shader_parameter/pigment = Color(0.7254902, 0.6666667, 0.5019608, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hat3u"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_kjbvq"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_kurya"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_qn1kt"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.48332188
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_m0mlv"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.48332188
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_vqdn5"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.48332188
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_2l8tm"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_mbsui"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_lppm8"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_kbu87"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_5l2os"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_mctvv"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.48332188
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_4nrxl"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.48332188
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_5qkhg"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.48332188
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_kxep6"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ekqb4"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_02h47"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_jxk8g"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_wjf0p"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_oyua6"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.48332188
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hrqls"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.48332188
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_saxj0"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.48332188
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_5f431"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_i0lfw"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_bqxms"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_eqb2a"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_yhaoc"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_pr1dd"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.48332188
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_fx04a"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.48332188
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ruwyf"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.48332188
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_y4rlw"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_uy233"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.4833219
+radial_segments = 24
+
+[node name="FurniturePrefab" type="Node3D" unique_id=28539184 script=ExtResource("1_auto_script")]
+script = ExtResource("1_3v5b1")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "pleated-brass-lamp-v1"
+
+[node name="PleatedBrassLamp" type="Node3D" parent="." unique_id=1600808412]
+metadata/authoring_label = "PleatedBrassLamp"
+
+[node name="@MeshInstance3D@592" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1648816513]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.035, 0)
+material_override = SubResource("ShaderMaterial_v3k8r")
+mesh = SubResource("CylinderMesh_p4q2g")
+
+[node name="@MeshInstance3D@593" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1355352413]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12, 0)
+material_override = SubResource("ShaderMaterial_v3k8r")
+mesh = SubResource("CylinderMesh_q2n7a")
+
+[node name="@MeshInstance3D@594" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=48792004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+material_override = SubResource("ShaderMaterial_v3k8r")
+mesh = SubResource("CylinderMesh_4w3ii")
+
+[node name="@MeshInstance3D@595" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=742280629]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
+material_override = SubResource("ShaderMaterial_rscn7")
+mesh = SubResource("CylinderMesh_naf1f")
+
+[node name="@MeshInstance3D@596" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=257463427]
+transform = Transform3D(0.91036654, -0.41380286, 0, 0.41380286, 0.91036654, 0, 0, 0, 1, 0.24000001, 1.65, 0)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_hat3u")
+
+[node name="@MeshInstance3D@597" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1368044197]
+transform = Transform3D(0.91377795, -0.40585175, -0.017150627, 0.40585175, 0.91036654, 0.08072893, -0.017150627, -0.08072893, 0.9965885, 0.23538847, 1.65, 0.046821676)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_kjbvq")
+
+[node name="@MeshInstance3D@598" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1144790870]
+transform = Transform3D(0.923493, -0.38230398, -0.031690225, 0.38230398, 0.91036654, 0.15835552, -0.031690225, -0.15835552, 0.98687345, 0.2217311, 1.65, 0.09184402)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_kurya")
+
+[node name="@MeshInstance3D@599" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1346039034]
+transform = Transform3D(0.9380326, -0.3440645, -0.041405283, 0.3440645, 0.9103665, 0.22989659, -0.041405283, -0.22989659, 0.97233385, 0.19955271, 1.65, 0.13333686)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_qn1kt")
+
+[node name="@MeshInstance3D@600" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1006633274]
+transform = Transform3D(0.95518327, -0.29260284, -0.04481675, 0.29260284, 0.9103665, 0.29260284, -0.04481675, -0.29260284, 0.95518327, 0.16970563, 1.65, 0.16970563)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_m0mlv")
+
+[node name="@MeshInstance3D@601" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1468415820]
+transform = Transform3D(0.97233385, -0.22989659, -0.04140528, 0.22989659, 0.9103665, 0.3440645, -0.04140528, -0.3440645, 0.9380326, 0.13333686, 1.65, 0.19955271)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_vqdn5")
+
+[node name="@MeshInstance3D@602" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1665322279]
+transform = Transform3D(0.98687345, -0.15835552, -0.03169023, 0.15835552, 0.91036654, 0.38230398, -0.03169023, -0.38230398, 0.923493, 0.09184402, 1.65, 0.2217311)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_2l8tm")
+
+[node name="@MeshInstance3D@603" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=972925518]
+transform = Transform3D(0.9965885, -0.08072893, -0.017150627, 0.08072893, 0.91036654, 0.40585175, -0.017150627, -0.40585175, 0.91377795, 0.046821676, 1.65, 0.23538847)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_mbsui")
+
+[node name="@MeshInstance3D@604" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=724021045]
+transform = Transform3D(1, -2.533728e-17, -5.488287e-18, 2.533728e-17, 0.91036654, 0.41380286, -5.488287e-18, -0.41380286, 0.91036654, 1.4695277e-17, 1.65, 0.24000001)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_lppm8")
+
+[node name="@MeshInstance3D@605" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=252603058]
+transform = Transform3D(0.9965885, 0.08072893, 0.017150627, -0.08072893, 0.91036654, 0.40585175, 0.017150627, -0.40585175, 0.91377795, -0.046821676, 1.65, 0.23538847)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_kbu87")
+
+[node name="@MeshInstance3D@606" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=348337228]
+transform = Transform3D(0.98687345, 0.15835552, 0.03169023, -0.15835552, 0.91036654, 0.38230398, 0.03169023, -0.38230398, 0.923493, -0.09184402, 1.65, 0.2217311)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_5l2os")
+
+[node name="@MeshInstance3D@607" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1910700651]
+transform = Transform3D(0.97233385, 0.22989659, 0.04140528, -0.22989659, 0.9103665, 0.3440645, 0.04140528, -0.3440645, 0.9380326, -0.13333686, 1.65, 0.19955271)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_mctvv")
+
+[node name="@MeshInstance3D@608" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1619495962]
+transform = Transform3D(0.95518327, 0.29260284, 0.04481675, -0.29260284, 0.9103665, 0.29260284, 0.04481675, -0.29260284, 0.95518327, -0.16970563, 1.65, 0.16970563)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_4nrxl")
+
+[node name="@MeshInstance3D@609" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1078082194]
+transform = Transform3D(0.9380326, 0.3440645, 0.041405283, -0.3440645, 0.9103665, 0.22989659, 0.041405283, -0.22989659, 0.97233385, -0.19955271, 1.65, 0.13333686)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_5qkhg")
+
+[node name="@MeshInstance3D@610" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=534109192]
+transform = Transform3D(0.923493, 0.38230398, 0.031690225, -0.38230398, 0.91036654, 0.15835552, 0.031690225, -0.15835552, 0.98687345, -0.2217311, 1.65, 0.09184402)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_kxep6")
+
+[node name="@MeshInstance3D@611" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1027549620]
+transform = Transform3D(0.91377795, 0.40585175, 0.017150627, -0.40585175, 0.91036654, 0.08072893, 0.017150627, -0.08072893, 0.9965885, -0.23538847, 1.65, 0.046821676)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_ekqb4")
+
+[node name="@MeshInstance3D@612" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=321200803]
+transform = Transform3D(0.91036654, 0.41380286, 1.0976574e-17, -0.41380286, 0.91036654, 5.067456e-17, 1.0976574e-17, -5.067456e-17, 1, -0.24000001, 1.65, 2.9390554e-17)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_02h47")
+
+[node name="@MeshInstance3D@613" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=2035616038]
+transform = Transform3D(0.91377795, 0.40585175, -0.017150627, -0.40585175, 0.91036654, -0.08072893, -0.017150627, 0.08072893, 0.9965885, -0.23538847, 1.65, -0.046821676)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_jxk8g")
+
+[node name="@MeshInstance3D@614" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=281809841]
+transform = Transform3D(0.923493, 0.38230398, -0.031690225, -0.38230398, 0.91036654, -0.15835552, -0.031690225, 0.15835552, 0.98687345, -0.2217311, 1.65, -0.09184402)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_wjf0p")
+
+[node name="@MeshInstance3D@615" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=674817474]
+transform = Transform3D(0.9380326, 0.3440645, -0.041405283, -0.3440645, 0.9103665, -0.22989659, -0.041405283, 0.22989659, 0.97233385, -0.19955271, 1.65, -0.13333686)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_oyua6")
+
+[node name="@MeshInstance3D@616" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1136521830]
+transform = Transform3D(0.95518327, 0.29260284, -0.04481675, -0.29260284, 0.9103665, -0.29260284, -0.04481675, 0.29260284, 0.95518327, -0.16970563, 1.65, -0.16970563)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_hrqls")
+
+[node name="@MeshInstance3D@617" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=59803777]
+transform = Transform3D(0.97233385, 0.22989659, -0.04140528, -0.22989659, 0.9103665, -0.3440645, -0.04140528, 0.3440645, 0.9380326, -0.13333686, 1.65, -0.19955271)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_saxj0")
+
+[node name="@MeshInstance3D@618" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1554531935]
+transform = Transform3D(0.98687345, 0.15835552, -0.03169023, -0.15835552, 0.91036654, -0.38230398, -0.03169023, 0.38230398, 0.923493, -0.09184402, 1.65, -0.2217311)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_5f431")
+
+[node name="@MeshInstance3D@619" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1753934779]
+transform = Transform3D(0.9965885, 0.08072893, -0.017150627, -0.08072893, 0.91036654, -0.40585175, -0.017150627, 0.40585175, 0.91377795, -0.046821676, 1.65, -0.23538847)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_i0lfw")
+
+[node name="@MeshInstance3D@620" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1303813593]
+transform = Transform3D(1, 7.601185e-17, -1.6464863e-17, -7.601185e-17, 0.91036654, -0.41380286, -1.6464863e-17, 0.41380286, 0.91036654, -4.4085828e-17, 1.65, -0.24000001)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_bqxms")
+
+[node name="@MeshInstance3D@621" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1654922236]
+transform = Transform3D(0.9965885, -0.08072893, 0.017150627, 0.08072893, 0.91036654, -0.40585175, 0.017150627, 0.40585175, 0.91377795, 0.046821676, 1.65, -0.23538847)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_eqb2a")
+
+[node name="@MeshInstance3D@622" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=438971658]
+transform = Transform3D(0.98687345, -0.15835552, 0.03169023, 0.15835552, 0.91036654, -0.38230398, 0.03169023, 0.38230398, 0.923493, 0.09184402, 1.65, -0.2217311)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_yhaoc")
+
+[node name="@MeshInstance3D@623" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1743308975]
+transform = Transform3D(0.97233385, -0.22989659, 0.04140528, 0.22989659, 0.9103665, -0.3440645, 0.04140528, 0.3440645, 0.9380326, 0.13333686, 1.65, -0.19955271)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_pr1dd")
+
+[node name="@MeshInstance3D@624" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=320491928]
+transform = Transform3D(0.95518327, -0.29260284, 0.04481675, 0.29260284, 0.9103665, -0.29260284, 0.04481675, 0.29260284, 0.95518327, 0.16970563, 1.65, -0.16970563)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_fx04a")
+
+[node name="@MeshInstance3D@625" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1775691575]
+transform = Transform3D(0.9380326, -0.3440645, 0.041405283, 0.3440645, 0.9103665, -0.22989659, 0.041405283, 0.22989659, 0.97233385, 0.19955271, 1.65, -0.13333686)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_ruwyf")
+
+[node name="@MeshInstance3D@626" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=1828054189]
+transform = Transform3D(0.923493, -0.38230398, 0.031690225, 0.38230398, 0.91036654, -0.15835552, 0.031690225, 0.15835552, 0.98687345, 0.2217311, 1.65, -0.09184402)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_y4rlw")
+
+[node name="@MeshInstance3D@627" type="MeshInstance3D" parent="PleatedBrassLamp" unique_id=891479413]
+transform = Transform3D(0.91377795, -0.40585175, 0.017150627, 0.40585175, 0.91036654, -0.08072893, 0.017150627, 0.08072893, 0.9965885, 0.23538847, 1.65, -0.046821676)
+material_override = SubResource("ShaderMaterial_x63ep")
+mesh = SubResource("CylinderMesh_uy233")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=1184928667]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=1459252701]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9802322e-08, 0, -0.7981933)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=307818435]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2.9802322e-08, 0, 0.7981933)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=391265035]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9802322e-08, 1.15, 0)

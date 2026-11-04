@@ -1,0 +1,37 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/world/AcademyJoinery.gd" id="1_script"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_case"]
+size = Vector3(1.2, 0.8, 0.6)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_col"]
+top_radius = 0.08
+bottom_radius = 0.08
+height = 1.2
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_col"]
+size = Vector3(1.2, 0.8, 0.6)
+
+[node name="AcademyJoinery" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="BaseAssembly" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+mesh = SubResource("BoxMesh_case")
+
+[node name="PillarLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.55, 0.6, 0.25)
+mesh = SubResource("CylinderMesh_col")
+
+[node name="PillarRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 0.6, 0.25)
+mesh = SubResource("CylinderMesh_col")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_col")

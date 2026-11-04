@@ -1,0 +1,295 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/service_seedling_pots_09678f47.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_kriqj"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/wood.gdshader" id="2_nhp5l"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/stone.gdshader" id="3_yh0at"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/fabric.gdshader" id="4_fdb4h"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4u0k2"]
+render_priority = 0
+shader = ExtResource("2_nhp5l")
+shader_parameter/pigment = Color(0.3137255, 0.23529412, 0.17254902, 1)
+shader_parameter/surface_roughness = 0.75
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_503o3"]
+size = Vector3(0.12, 0.69, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_kxgbd"]
+size = Vector3(0.12, 0.69, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_aymlo"]
+size = Vector3(0.12, 0.69, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_kxesq"]
+size = Vector3(0.12, 0.69, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_gdgw3"]
+size = Vector3(1.4, 0.18, 0.73)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dr1je"]
+render_priority = 0
+shader = ExtResource("2_nhp5l")
+shader_parameter/pigment = Color(0.5254902, 0.38039216, 0.23921569, 1)
+shader_parameter/surface_roughness = 0.62
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_2k754"]
+size = Vector3(1.5, 0.1, 0.85)
+
+[sub_resource type="BoxMesh" id="BoxMesh_hxvlt"]
+size = Vector3(1.46, 0.003, 0.008)
+
+[sub_resource type="BoxMesh" id="BoxMesh_dcchh"]
+size = Vector3(1.46, 0.003, 0.008)
+
+[sub_resource type="BoxMesh" id="BoxMesh_jhvs8"]
+size = Vector3(1.46, 0.003, 0.008)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ceh0r"]
+size = Vector3(1.22, 0.1, 0.1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2xg0v"]
+render_priority = 0
+shader = ExtResource("3_yh0at")
+shader_parameter/pigment = Color(0.6431373, 0.42352942, 0.29803923, 1)
+shader_parameter/surface_roughness = 0.75
+shader_parameter/variation = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_gehsw"]
+top_radius = 0.14
+bottom_radius = 0.1
+height = 0.19
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_w6nbl"]
+render_priority = 0
+shader = ExtResource("4_fdb4h")
+shader_parameter/pigment = Color(0.40784314, 0.50980395, 0.3019608, 1)
+shader_parameter/surface_roughness = 0.75
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="SphereMesh" id="SphereMesh_d4gm2"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_uisrq"]
+top_radius = 0.14
+bottom_radius = 0.1
+height = 0.19
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_xgqnm"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_4a06v"]
+top_radius = 0.14
+bottom_radius = 0.1
+height = 0.19
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_dneer"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_e5f6n"]
+top_radius = 0.14
+bottom_radius = 0.1
+height = 0.19
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_ds2oc"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_7x2cm"]
+top_radius = 0.14
+bottom_radius = 0.1
+height = 0.19
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_qdu88"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_jalpg"]
+top_radius = 0.14
+bottom_radius = 0.1
+height = 0.19
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_ngigg"]
+radial_segments = 20
+rings = 12
+
+[node name="FurniturePrefab" type="Node3D" unique_id=639553217 script=ExtResource("1_auto_script")]
+script = ExtResource("1_kriqj")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "service/seedling_pots"
+
+[node name="seedling_pots" type="Node3D" parent="." unique_id=571412894]
+metadata/authoring_label = "seedling_pots"
+
+[node name="@MeshInstance3D@20965" type="MeshInstance3D" parent="seedling_pots" unique_id=1361697569]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.57, 0.345, -0.26500002)
+material_override = SubResource("ShaderMaterial_4u0k2")
+mesh = SubResource("BoxMesh_503o3")
+
+[node name="@MeshInstance3D@20966" type="MeshInstance3D" parent="seedling_pots" unique_id=1850450119]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.57, 0.345, 0.26500002)
+material_override = SubResource("ShaderMaterial_4u0k2")
+mesh = SubResource("BoxMesh_kxgbd")
+
+[node name="@MeshInstance3D@20967" type="MeshInstance3D" parent="seedling_pots" unique_id=334871940]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.57, 0.345, -0.26500002)
+material_override = SubResource("ShaderMaterial_4u0k2")
+mesh = SubResource("BoxMesh_aymlo")
+
+[node name="@MeshInstance3D@20968" type="MeshInstance3D" parent="seedling_pots" unique_id=144736666]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.57, 0.345, 0.26500002)
+material_override = SubResource("ShaderMaterial_4u0k2")
+mesh = SubResource("BoxMesh_kxesq")
+
+[node name="@MeshInstance3D@20969" type="MeshInstance3D" parent="seedling_pots" unique_id=1995346699]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.61, 0)
+material_override = SubResource("ShaderMaterial_4u0k2")
+mesh = SubResource("BoxMesh_gdgw3")
+
+[node name="@MeshInstance3D@20970" type="MeshInstance3D" parent="seedling_pots" unique_id=628307058]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+material_override = SubResource("ShaderMaterial_dr1je")
+mesh = SubResource("BoxMesh_2k754")
+
+[node name="@MeshInstance3D@20971" type="MeshInstance3D" parent="seedling_pots" unique_id=2117040251]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.802, -0.25)
+material_override = SubResource("ShaderMaterial_4u0k2")
+mesh = SubResource("BoxMesh_hxvlt")
+
+[node name="@MeshInstance3D@20972" type="MeshInstance3D" parent="seedling_pots" unique_id=133819753]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.802, 0)
+material_override = SubResource("ShaderMaterial_4u0k2")
+mesh = SubResource("BoxMesh_dcchh")
+
+[node name="@MeshInstance3D@20973" type="MeshInstance3D" parent="seedling_pots" unique_id=1793224449]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.802, 0.25)
+material_override = SubResource("ShaderMaterial_4u0k2")
+mesh = SubResource("BoxMesh_jhvs8")
+
+[node name="@MeshInstance3D@20974" type="MeshInstance3D" parent="seedling_pots" unique_id=1149604516]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.22, 0)
+material_override = SubResource("ShaderMaterial_4u0k2")
+mesh = SubResource("BoxMesh_ceh0r")
+
+[node name="@MeshInstance3D@20975" type="MeshInstance3D" parent="seedling_pots" unique_id=1109739777]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.42, 0.86, -0.22)
+material_override = SubResource("ShaderMaterial_2xg0v")
+mesh = SubResource("CylinderMesh_gehsw")
+
+[node name="@MeshInstance3D@20976" type="MeshInstance3D" parent="seedling_pots" unique_id=186887448]
+transform = Transform3D(0.23, 0, 0, 0, 0.25, 0, 0, 0, 0.22, -0.42, 1.05, -0.22)
+material_override = SubResource("ShaderMaterial_w6nbl")
+mesh = SubResource("SphereMesh_d4gm2")
+
+[node name="@MeshInstance3D@20977" type="MeshInstance3D" parent="seedling_pots" unique_id=577753229]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.86, -0.22)
+material_override = SubResource("ShaderMaterial_2xg0v")
+mesh = SubResource("CylinderMesh_uisrq")
+
+[node name="@MeshInstance3D@20978" type="MeshInstance3D" parent="seedling_pots" unique_id=1055711610]
+transform = Transform3D(0.23, 0, 0, 0, 0.25, 0, 0, 0, 0.22, 0, 1.05, -0.22)
+material_override = SubResource("ShaderMaterial_w6nbl")
+mesh = SubResource("SphereMesh_xgqnm")
+
+[node name="@MeshInstance3D@20979" type="MeshInstance3D" parent="seedling_pots" unique_id=670931162]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.42, 0.86, -0.22)
+material_override = SubResource("ShaderMaterial_2xg0v")
+mesh = SubResource("CylinderMesh_4a06v")
+
+[node name="@MeshInstance3D@20980" type="MeshInstance3D" parent="seedling_pots" unique_id=1724924354]
+transform = Transform3D(0.23, 0, 0, 0, 0.25, 0, 0, 0, 0.22, 0.42, 1.05, -0.22)
+material_override = SubResource("ShaderMaterial_w6nbl")
+mesh = SubResource("SphereMesh_dneer")
+
+[node name="@MeshInstance3D@20981" type="MeshInstance3D" parent="seedling_pots" unique_id=1801792689]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.42, 0.86, 0.18)
+material_override = SubResource("ShaderMaterial_2xg0v")
+mesh = SubResource("CylinderMesh_e5f6n")
+
+[node name="@MeshInstance3D@20982" type="MeshInstance3D" parent="seedling_pots" unique_id=2017773746]
+transform = Transform3D(0.23, 0, 0, 0, 0.25, 0, 0, 0, 0.22, -0.42, 1.05, 0.18)
+material_override = SubResource("ShaderMaterial_w6nbl")
+mesh = SubResource("SphereMesh_ds2oc")
+
+[node name="@MeshInstance3D@20983" type="MeshInstance3D" parent="seedling_pots" unique_id=1660710009]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.86, 0.18)
+material_override = SubResource("ShaderMaterial_2xg0v")
+mesh = SubResource("CylinderMesh_7x2cm")
+
+[node name="@MeshInstance3D@20984" type="MeshInstance3D" parent="seedling_pots" unique_id=797469796]
+transform = Transform3D(0.23, 0, 0, 0, 0.25, 0, 0, 0, 0.22, 0, 1.05, 0.18)
+material_override = SubResource("ShaderMaterial_w6nbl")
+mesh = SubResource("SphereMesh_qdu88")
+
+[node name="@MeshInstance3D@20985" type="MeshInstance3D" parent="seedling_pots" unique_id=1992978300]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.42, 0.86, 0.18)
+material_override = SubResource("ShaderMaterial_2xg0v")
+mesh = SubResource("CylinderMesh_jalpg")
+
+[node name="@MeshInstance3D@20986" type="MeshInstance3D" parent="seedling_pots" unique_id=10002417]
+transform = Transform3D(0.23, 0, 0, 0, 0.25, 0, 0, 0, 0.22, 0.42, 1.05, 0.18)
+material_override = SubResource("ShaderMaterial_w6nbl")
+mesh = SubResource("SphereMesh_ngigg")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=1198080963]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=1596100503]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.875)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=1926014603]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.875)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=269136163]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)

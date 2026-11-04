@@ -1,0 +1,92 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/wing-detail-v2_common_sack_ba493159.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_s60gi"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/fabric.gdshader" id="2_v7wny"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ukap6"]
+render_priority = 0
+shader = ExtResource("2_v7wny")
+shader_parameter/pigment = Color(0.70980394, 0.63529414, 0.4862745, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="SphereMesh" id="SphereMesh_n70yo"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_wy522"]
+top_radius = 0.05
+bottom_radius = 0.08
+height = 0.16
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ns1jd"]
+render_priority = 0
+shader = ExtResource("2_v7wny")
+shader_parameter/pigment = Color(0.47058824, 0.39607844, 0.26666668, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_5yrgp"]
+top_radius = 0.087
+bottom_radius = 0.087
+height = 0.035
+radial_segments = 24
+
+[node name="FurniturePrefab" type="Node3D" unique_id=713715636 script=ExtResource("1_auto_script")]
+script = ExtResource("1_s60gi")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "wing-detail-v2/common/sack"
+
+[node name="WingSack" type="Node3D" parent="." unique_id=1841263787]
+metadata/authoring_label = "WingSack"
+
+[node name="@MeshInstance3D@3870" type="MeshInstance3D" parent="WingSack" unique_id=519299183]
+transform = Transform3D(0.56, 0, 0, 0, 0.7, 0, 0, 0, 0.47, 0, 0.35, 0)
+material_override = SubResource("ShaderMaterial_ukap6")
+mesh = SubResource("SphereMesh_n70yo")
+
+[node name="@MeshInstance3D@3871" type="MeshInstance3D" parent="WingSack" unique_id=967335543]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.69, 0)
+material_override = SubResource("ShaderMaterial_ukap6")
+mesh = SubResource("CylinderMesh_wy522")
+
+[node name="@MeshInstance3D@3872" type="MeshInstance3D" parent="WingSack" unique_id=2132596709]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.68, 0)
+material_override = SubResource("ShaderMaterial_ns1jd")
+mesh = SubResource("CylinderMesh_5yrgp")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=1097294214]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=1007330461]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.6832866)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=145240264]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.6832866)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=1804954682]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.77, 0)

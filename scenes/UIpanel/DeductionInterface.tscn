@@ -1,0 +1,351 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/UIpanel/DeductionInterface.gd" id="1_deduce"]
+[ext_resource type="Theme" path="res://scenes/components/shared/MaterialTheme.tres" id="2_theme"]
+
+[node name="DeductionInterface" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_deduce")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.07, 0.06, 0.65)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainCard" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(1080, 700)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/MainCard"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HeaderHBox" type="HBoxContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="Center/MainCard/VBox/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "脑内推演"
+
+[node name="ModeToggleHBox" type="HBoxContainer" parent="Center/MainCard/VBox/HeaderHBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnCurrentMode" type="Button" parent="Center/MainCard/VBox/HeaderHBox/ModeToggleHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(76, 40)
+layout_mode = 2
+text = "当前"
+
+[node name="BtnHistoryMode" type="Button" parent="Center/MainCard/VBox/HeaderHBox/ModeToggleHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(76, 40)
+layout_mode = 2
+text = "回看"
+
+[node name="CloseButton" type="Button" parent="Center/MainCard/VBox/HeaderHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+text = "✕"
+
+[node name="HSeparator" type="HSeparator" parent="Center/MainCard/VBox"]
+layout_mode = 2
+
+[node name="ContentStack" type="MarginContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ThreeColumns" type="HBoxContainer" parent="Center/MainCard/VBox/ContentStack"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="EvidenceCol" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="EvidenceHeader" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/EvidenceCol"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "证据"
+
+[node name="EvidenceScroll" type="ScrollContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/EvidenceCol"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EvidenceList" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/EvidenceCol/EvidenceScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="VSeparator1" type="VSeparator" parent="Center/MainCard/VBox/ContentStack/ThreeColumns"]
+layout_mode = 2
+
+[node name="HypothesisCol" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="HypothesisHeader" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/HypothesisCol"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "假设"
+
+[node name="HypothesisScroll" type="ScrollContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/HypothesisCol"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HypothesisList" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/HypothesisCol/HypothesisScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="VSeparator2" type="VSeparator" parent="Center/MainCard/VBox/ContentStack/ThreeColumns"]
+layout_mode = 2
+
+[node name="SubmissionCol" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="SubmissionHeader" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "推演"
+
+[node name="SelectedCard" type="PanelContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol"]
+layout_mode = 2
+
+[node name="SelectedVBox" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/SelectedCard"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SelectedHypothesisTitle" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/SelectedCard/SelectedVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "尚未选择假设"
+
+[node name="SelectedHypothesisDetails" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/SelectedCard/SelectedVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.71, 0.73, 0.68, 1)
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="ConflictNoticeCard" type="PanelContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="ConflictVBox" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/ConflictNoticeCard"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="ConflictTitleLabel" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/ConflictNoticeCard/ConflictVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.83, 0.57, 0.51, 1)
+theme_override_font_sizes/font_size = 16
+text = "矛盾"
+
+[node name="ConflictNoticeLabel" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/ConflictNoticeCard/ConflictVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.75, 1)
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+text = ""
+
+[node name="CostCard" type="PanelContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol"]
+layout_mode = 2
+
+[node name="CostVBox" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/CostCard"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="CostHeader" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/CostCard/CostVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "代价"
+
+[node name="CostGrid" type="GridContainer" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/CostCard/CostVBox"]
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 4
+
+[node name="LabelTime" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/CostCard/CostVBox/CostGrid"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "时间"
+
+[node name="CostTimeLabel" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/CostCard/CostVBox/CostGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "0 秒"
+
+[node name="LabelComp" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/CostCard/CostVBox/CostGrid"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "算力"
+
+[node name="CostCompLabel" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/CostCard/CostVBox/CostGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "0 点"
+
+[node name="LabelStam" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/CostCard/CostVBox/CostGrid"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "精力"
+
+[node name="CostStamLabel" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol/CostCard/CostVBox/CostGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "0 点"
+
+[node name="CostWarningLabel" type="Label" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.83, 0.57, 0.51, 1)
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="Spacer" type="Control" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SubmitButton" type="Button" parent="Center/MainCard/VBox/ContentStack/ThreeColumns/SubmissionCol"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+disabled = true
+text = "推演"
+
+[node name="HistoryView" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="HistoryHeader" type="Label" parent="Center/MainCard/VBox/ContentStack/HistoryView"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "过往推演"
+
+[node name="HistorySplit" type="HBoxContainer" parent="Center/MainCard/VBox/ContentStack/HistoryView"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="HistoryListCol" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack/HistoryView/HistorySplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="HistoryListScroll" type="ScrollContainer" parent="Center/MainCard/VBox/ContentStack/HistoryView/HistorySplit/HistoryListCol"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HistoryList" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack/HistoryView/HistorySplit/HistoryListCol/HistoryListScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="HistoryComparisonCol" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack/HistoryView/HistorySplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="HistoryComparisonCard" type="PanelContainer" parent="Center/MainCard/VBox/ContentStack/HistoryView/HistorySplit/HistoryComparisonCol"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ComparisonVBox" type="VBoxContainer" parent="Center/MainCard/VBox/ContentStack/HistoryView/HistorySplit/HistoryComparisonCol/HistoryComparisonCard"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ComparisonTitle" type="Label" parent="Center/MainCard/VBox/ContentStack/HistoryView/HistorySplit/HistoryComparisonCol/HistoryComparisonCard/ComparisonVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = ""
+
+[node name="ComparisonDetails" type="Label" parent="Center/MainCard/VBox/ContentStack/HistoryView/HistorySplit/HistoryComparisonCol/HistoryComparisonCard/ComparisonVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="RestoreHistoricalBtn" type="Button" parent="Center/MainCard/VBox/ContentStack/HistoryView/HistorySplit/HistoryComparisonCol/HistoryComparisonCard/ComparisonVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+disabled = true
+text = "重审"
+
+[node name="ConnectionCanvas" type="Control" parent="Center/MainCard"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ConfirmDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "推演确认"
+ok_button_text = "确认"
+cancel_button_text = "取消"
+
+[node name="Snackbar" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = -64.0
+offset_right = -80.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0

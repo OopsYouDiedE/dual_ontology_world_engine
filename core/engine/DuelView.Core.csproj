@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <UseSharedCompilation>false</UseSharedCompilation>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../dv/DuelView.Dv.csproj" />
+    <ProjectReference Include="../reasoning/DuelView.Reasoning.csproj" />
+    <ProjectReference Include="../runtime/DuelView.Runtime.csproj" />
+  </ItemGroup>
+</Project>

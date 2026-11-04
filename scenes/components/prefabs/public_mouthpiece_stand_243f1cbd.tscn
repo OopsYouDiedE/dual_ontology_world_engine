@@ -1,0 +1,129 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/public_mouthpiece_stand_243f1cbd.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_b8wfg"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/stone.gdshader" id="2_dl6w1"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/aged_metal.gdshader" id="3_340h7"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_b2tbw"]
+render_priority = 0
+shader = ExtResource("2_dl6w1")
+shader_parameter/pigment = Color(0.46666667, 0.4745098, 0.43137255, 1)
+shader_parameter/surface_roughness = 0.9
+shader_parameter/variation = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ykc4m"]
+top_radius = 0.3
+bottom_radius = 0.3
+height = 0.3
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vkemc"]
+render_priority = 0
+shader = ExtResource("3_340h7")
+shader_parameter/pigment = Color(0.68235296, 0.57254905, 0.3647059, 1)
+shader_parameter/surface_roughness = 0.38
+shader_parameter/surface_metallic = 0.65
+shader_parameter/patina = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_emfr3"]
+top_radius = 0.075
+bottom_radius = 0.075
+height = 1.4
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_xwu1g"]
+top_radius = 0.07
+bottom_radius = 0.07
+height = 0.5106701
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ljje3"]
+top_radius = 0.07
+bottom_radius = 0.15
+height = 0.22
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ksiv1"]
+top_radius = 0.07
+bottom_radius = 0.07
+height = 0.5106701
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_rlyjd"]
+top_radius = 0.07
+bottom_radius = 0.15
+height = 0.22
+radial_segments = 24
+
+[node name="Public_mouthpiece_stand" type="Node3D" unique_id=1624984561 script=ExtResource("1_auto_script")]
+script = ExtResource("1_b8wfg")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "public/mouthpiece_stand"
+
+[node name="mouthpiece_stand" type="Node3D" parent="." unique_id=147795319]
+metadata/authoring_label = "mouthpiece_stand"
+
+[node name="@MeshInstance3D@19154" type="MeshInstance3D" parent="mouthpiece_stand" unique_id=2139825903]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+material_override = SubResource("ShaderMaterial_b2tbw")
+mesh = SubResource("CylinderMesh_ykc4m")
+
+[node name="@MeshInstance3D@19155" type="MeshInstance3D" parent="mouthpiece_stand" unique_id=1616619155]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+material_override = SubResource("ShaderMaterial_vkemc")
+mesh = SubResource("CylinderMesh_emfr3")
+
+[node name="@MeshInstance3D@19156" type="MeshInstance3D" parent="mouthpiece_stand" unique_id=1280828473]
+transform = Transform3D(0.09118253, -0.97910565, 0.1817635, 0.97910565, 0.054829836, -0.19582112, 0.1817635, 0.19582112, 0.9636473, -0.25, 0.966, 0.05)
+material_override = SubResource("ShaderMaterial_vkemc")
+mesh = SubResource("CylinderMesh_xwu1g")
+
+[node name="@MeshInstance3D@19157" type="MeshInstance3D" parent="mouthpiece_stand" unique_id=852136760]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -0.5, 0.98, 0.17)
+material_override = SubResource("ShaderMaterial_vkemc")
+mesh = SubResource("CylinderMesh_ljje3")
+
+[node name="@MeshInstance3D@19158" type="MeshInstance3D" parent="mouthpiece_stand" unique_id=512385599]
+transform = Transform3D(0.09118253, 0.97910565, -0.1817635, -0.97910565, 0.054829836, -0.19582112, -0.1817635, 0.19582112, 0.9636473, 0.25, 0.966, 0.05)
+material_override = SubResource("ShaderMaterial_vkemc")
+mesh = SubResource("CylinderMesh_ksiv1")
+
+[node name="@MeshInstance3D@19159" type="MeshInstance3D" parent="mouthpiece_stand" unique_id=605772000]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0.5, 0.98, 0.17)
+material_override = SubResource("ShaderMaterial_vkemc")
+mesh = SubResource("CylinderMesh_rlyjd")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=2013037021]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=809967812]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.75)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=1033090250]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.75000006)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=685307237]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 2.9802322e-08)

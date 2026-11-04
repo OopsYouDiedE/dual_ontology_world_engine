@@ -1,0 +1,77 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/UIpanel/TooltipGuideUI.gd" id="1_script"]
+
+[node name="TooltipGuideUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="TooltipPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_right = 280.0
+offset_bottom = 90.0
+
+[node name="VBox" type="VBoxContainer" parent="TooltipPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TooltipTitle" type="Label" parent="TooltipPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+
+[node name="TooltipBody" type="Label" parent="TooltipPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="KeyPromptLabel" type="Label" parent="TooltipPanel/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="GuideBanner" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(350, 70)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 32.0
+offset_right = 200.0
+offset_bottom = 102.0
+grow_horizontal = 2
+
+[node name="HBox" type="HBoxContainer" parent="GuideBanner"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="VBox" type="VBoxContainer" parent="GuideBanner/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GuideTitle" type="Label" parent="GuideBanner/HBox/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+
+[node name="GuideText" type="Label" parent="GuideBanner/HBox/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="GuideCloseBtn" type="Button" parent="GuideBanner/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "×"

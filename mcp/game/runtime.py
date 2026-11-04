@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import queue
+import re
 import secrets
 import socket
 import subprocess
@@ -81,8 +82,8 @@ def build_gate(deadline):
 
 def build(backend, deadline=None):
     with build_gate(deadline):
-        project = ROOT / ("dv_core/Cli/DuelView.Cli.csproj" if backend == "cli"
-                          else "godot_csharp/DualOntologyWorldEngine.csproj")
+        project = ROOT / ("core/cli/DuelView.Cli.csproj" if backend == "cli"
+                          else "DualOntologyWorldEngine.csproj")
         dotnet = resolve_dotnet(deadline=deadline)
         timeout = remaining(deadline, 180)
         command = [dotnet, "build", project, "--nologo"]
@@ -92,6 +93,7 @@ def build(backend, deadline=None):
         if backend == "cli":
             output_directory = ROOT / ".runtime/hosts" / ("cli-" + secrets.token_hex(12))
             command += ["--configuration", "Release", "--output", output_directory]
+            command += ["-p:DvIntermediateRoot=" + str(output_directory / ".intermediate")]
         process = spawn(command,
                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         try:
@@ -105,6 +107,20 @@ def build(backend, deadline=None):
         if process.returncode:
             raise RuntimeError("Build failed:\n" + output[-10000:])
         if output_directory is not None:
+            check_command = [dotnet, output_directory / "DuelView.Cli.dll", "--verify-character-actions"]
+            check = spawn(check_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            try:
+                check_output, _ = check.communicate(timeout=remaining(deadline, 60))
+            except subprocess.TimeoutExpired:
+                terminate(check)
+                check_output, _ = check.communicate()
+                (output_directory / "character-actions-raw.txt").write_text(check_output, encoding="utf-8")
+                raise DeadlineReached("Deadline reached during character-action checks; no game session was started.")
+            (output_directory / "character-actions-raw.txt").write_text(
+                "COMMAND " + " ".join(str(part) for part in check_command) + "\n" + check_output
+                + "\nEXIT " + str(check.returncode) + "\n", encoding="utf-8")
+            if check.returncode:
+                raise RuntimeError("Character-action checks failed:\n" + check_output[-10000:])
             build_receipt = {
                 "project": str(project), "configuration": "Release",
                 "completed_epoch": time.time(), "exit_code": process.returncode}
@@ -137,9 +153,10 @@ class Endpoint:
         self.serial = 0
         self.token = secrets.token_hex(24)
         self.closed = False
-        self.content_path = str(ROOT / "godot_csharp/Content/world.dv")
+        self.content_path = str(ROOT / "assets/data/scenarios/campaign.dv")
         self.deadline = deadline
         self.stop_lock = threading.RLock()
+        self.movie_path = None
 
     def attach(self, process):
         self.process = process
@@ -199,10 +216,35 @@ def start(arguments, deadline=None):
     if mode in ("cli_ai", "cli_manual") and controller != "player":
         raise ValueError("cli_ai / cli_manual require controller=player.")
     endpoint = Endpoint(mode, controller, deadline)
+    movie_filename = arguments.get("movie_filename")
+    if movie_filename is not None:
+        if endpoint.backend != "godot" or mode != "godot_manual":
+            raise ValueError("Movie capture is available only for formal Godot input sessions.")
+        if not arguments.get("background_capture", True):
+            raise ValueError("Movie capture requires background_capture=true.")
+        if not isinstance(movie_filename, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}\.avi", movie_filename):
+            raise ValueError("movie_filename must be a simple .avi basename.")
+        if movie_filename.split(".", 1)[0].upper() in {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)), *(f"LPT{i}" for i in range(1, 10))}:
+            raise ValueError("movie_filename uses a reserved Windows name.")
+        fps = arguments.get("movie_fps", 30)
+        if isinstance(fps, bool) or not isinstance(fps, int) or not 1 <= fps <= 60:
+            raise ValueError("movie_fps must be an integer between 1 and 60.")
+        movie_directory = (ROOT / "artifacts" / "recordings").resolve()
+        if not movie_directory.is_relative_to(ROOT.resolve()):
+            raise ValueError("Movie directory must remain inside the project.")
+        movie_directory.mkdir(parents=True, exist_ok=True)
+        endpoint.movie_path = movie_directory / movie_filename
+        try:
+            descriptor = os.open(endpoint.movie_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError as error:
+            raise ValueError("Movie file already exists; choose a new name.") from error
+        os.close(descriptor)
+    elif "movie_fps" in arguments:
+        raise ValueError("movie_fps requires movie_filename.")
     endpoint.content_path = str(Path(arguments.get("content_path", endpoint.content_path)).resolve())
     backend = endpoint.backend
-    output_directory = build(backend, deadline)
     try:
+        output_directory = build(backend, deadline)
         if backend == "cli":
             endpoint.attach(spawn([resolve_dotnet(deadline=deadline), output_directory / "DuelView.Cli.dll"],
                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
@@ -219,14 +261,19 @@ def start(arguments, deadline=None):
                 reservation.bind(("127.0.0.1", 0))
                 port = reservation.getsockname()[1]
             # Use the project's renderer, matching editor and exported gameplay.
-            command = [resolve_godot(deadline=deadline), "--path", ROOT / "godot_csharp"]
+            command = [resolve_godot(deadline=deadline), "--path", ROOT / "."]
+            if endpoint.movie_path:
+                command += ["--write-movie", endpoint.movie_path, "--fixed-fps", str(arguments.get("movie_fps", 30))]
+            if arguments.get("background_capture", True):
+                command += ["--windowed", "--position", "-32000,-32000"]
             scene = arguments.get("scene", "")
             if mode == "scene":
-                path = (ROOT / "godot_csharp" / scene.removeprefix("res://")).resolve()
-                path.relative_to((ROOT / "godot_csharp/scenes").resolve())
+                path = (ROOT / "." / scene.removeprefix("res://")).resolve()
+                if not any(path.is_relative_to((ROOT / folder).resolve()) for folder in ("scenes", "tools")):
+                    raise ValueError("Scene must be inside scenes/ or tools/.")
                 if path.suffix != ".tscn" or not path.is_file():
                     raise ValueError("scene must name an existing scenes/*.tscn resource.")
-                command.append("res://" + path.relative_to(ROOT / "godot_csharp").as_posix())
+                command.append("res://" + path.relative_to(ROOT / ".").as_posix())
             elif scene:
                 raise ValueError("scene is only accepted in mode=scene.")
             # The opt-in GameMcp autoload is available in every production scene.
@@ -234,6 +281,14 @@ def start(arguments, deadline=None):
                         f"--dv-controller={controller}", f"--dv-seed={arguments.get('seed', 1)}",
                         "--dv-viewer=" + arguments.get("viewer", "detective")]
             command.append("--dv-content=" + endpoint.content_path)
+            save_slot = arguments.get("save_slot", endpoint.token)
+            if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", save_slot):
+                raise ValueError("Invalid save slot")
+            command.append("--dv-save-slot=" + save_slot)
+            if arguments.get("background_capture", True):
+                command.append("--dv-background-capture")
+            else:
+                command.append("--dv-visible-window")
             endpoint.attach(spawn(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
             connect_deadline = time.monotonic() + remaining(deadline, 30)
             while True:
@@ -248,9 +303,13 @@ def start(arguments, deadline=None):
             observation = endpoint.request({"type": "observe", "wait_ms": 300})
         identity = secrets.token_hex(8)
         SESSIONS[identity] = endpoint
-        return dict(observation, session_id=identity, mode=mode)
+        return dict(observation, session_id=identity, mode=mode,
+                    **({"movie_path": str(endpoint.movie_path), "movie_fps": arguments.get("movie_fps", 30),
+                        "movie_timing": "fixed-step; not real-time performance"} if endpoint.movie_path else {}))
     except BaseException:
         endpoint.stop()
+        if endpoint.movie_path and endpoint.movie_path.is_file() and endpoint.movie_path.stat().st_size == 0:
+            endpoint.movie_path.unlink()
         raise
 
 
@@ -263,21 +322,39 @@ def execute(name, arguments):
         raise ValueError("Unknown session_id in this MCP server. Start your own session.")
     with endpoint.lock:
         if name == "close":
+            graceful = False
             try:
                 if not endpoint.closed:
                     endpoint.request({"type": "close"}, timeout=15)
+                    if endpoint.process:
+                        try:
+                            endpoint.process.wait(timeout=30)
+                            graceful = endpoint.process.returncode == 0
+                        except subprocess.TimeoutExpired:
+                            graceful = False
             finally:
                 endpoint.stop()
                 SESSIONS.pop(identity, None)
-            return {"session_id": identity, "closed": True}
+            result = {"session_id": identity, "closed": True, "graceful_exit": graceful}
+            if endpoint.movie_path:
+                result.update(movie_path=str(endpoint.movie_path),
+                              movie_finalized=graceful and endpoint.movie_path.is_file() and endpoint.movie_path.stat().st_size > 0,
+                              movie_bytes=endpoint.movie_path.stat().st_size if endpoint.movie_path.is_file() else 0)
+            return result
         operation = dict(arguments.get("operation", {})) if name == "step" else {"type": "observe"}
         if endpoint.backend == "cli":
-            if operation.get("type") not in ("select", "advance", "observe", "reload_content"):
+            if operation.get("type") not in ("select", "advance", "observe", "reload_content", "case_reasoning"):
                 raise ValueError("CLI operations: select(choice_id), advance(steps), observe.")
-        elif operation.get("type") not in ("start", "select", "input_action", "click", "observe", "reload_content"):
+        elif operation.get("type") not in ("start", "load", "select", "input_action", "click", "observe", "reload_content", "case_reasoning", "character"):
             raise ValueError("Godot operations: start, select(choice_id), input_action(action,frames), click(x,y), observe.")
+        if operation.get("type") == "case_reasoning":
+            query = json.loads(operation.get("case_request", "{}"))
+            if not isinstance(query, dict) or query.get("operation") not in ("info", "infer", "check", "prove", "check_goal", "check_natural", "review", "strategy", "travel_actor", "sim4_plan", "sim4_execute", "questions", "scene", "seal_scene"):
+                raise ValueError("Input case requests inspect the current actor's knowledge, submit a declared cognitive attempt, or plan/submit its current Sim4 action.")
+            operation = dict(query, type="case_reasoning")
         if endpoint.backend == "godot":
             operation["wait_ms"] = arguments.get("wait_ms", 200)
+            operation["capture_image"] = arguments.get("capture_image", True)
         if operation.get("type") == "reload_content" and not operation.get("path") and "content_source" not in operation:
             operation["path"] = endpoint.content_path
         # A legal CLI batch can complete up to 100 formal actions. Give it a
@@ -288,4 +365,6 @@ def execute(name, arguments):
                 and isinstance(operation.get("steps", 1), int) and operation.get("steps", 1) > 1):
             request_timeout = 180
         observation = endpoint.request(operation, timeout=request_timeout)
+        if not isinstance(observation, dict):
+            observation = {"case_reasoning": observation}
         return dict(observation, session_id=identity, mode=endpoint.mode)

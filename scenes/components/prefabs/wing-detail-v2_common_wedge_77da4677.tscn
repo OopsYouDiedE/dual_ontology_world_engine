@@ -1,0 +1,55 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/wing-detail-v2_common_wedge_77da4677.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_r5qhe"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/wood.gdshader" id="2_v168k"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xcukv"]
+render_priority = 0
+shader = ExtResource("2_v168k")
+shader_parameter/pigment = Color(0.39607844, 0.28235295, 0.18431373, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_owa2w"]
+size = Vector3(0.13, 0.05, 0.24)
+
+[node name="FurniturePrefab" type="Node3D" unique_id=776848494 script=ExtResource("1_auto_script")]
+script = ExtResource("1_r5qhe")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "wing-detail-v2/common/wedge"
+
+[node name="wedge" type="Node3D" parent="." unique_id=1854038340]
+metadata/authoring_label = "wedge"
+
+[node name="@MeshInstance3D@3560" type="MeshInstance3D" parent="wedge" unique_id=673835030]
+transform = Transform3D(1, 0, 0, 0, 0.99680173, 0.07991469, 0, -0.07991469, 0.99680173, 0, 0.025, 0)
+material_override = SubResource("ShaderMaterial_xcukv")
+mesh = SubResource("BoxMesh_owa2w")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=1756526643]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=930286545]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.5716141)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=2101705506]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.5716141)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=709813589]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05950981, 0)

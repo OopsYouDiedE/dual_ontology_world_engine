@@ -1,0 +1,14 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/wing-detail-v2_common_ash_fan_22bae476.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_8wwan"]
+
+[node name="FurniturePrefab" type="Node3D" unique_id=650898998 script=ExtResource("1_auto_script")]
+script = ExtResource("1_8wwan")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "wing-detail-v2/common/ash_fan"
+
+[node name="ash_fan" type="Node3D" parent="." unique_id=807861894]
+metadata/authoring_label = "ash_fan"
+metadata/requires_authored_evidence_surface = "ash_fan"

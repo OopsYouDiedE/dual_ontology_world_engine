@@ -1,0 +1,1652 @@
+[gd_scene format=4]
+[ext_resource type="Script" path="res://scenes/components/maps3d/clinic_safety.gd" id="1_auto_script"]
+
+
+[ext_resource type="CameraAttributesPractical" path="res://scenes/components/world/SalonCamera.tres" id="1_n1gha"]
+[ext_resource type="Shader" path="res://assets/materials/post/contour.gdshader" id="2_0c0t4"]
+[ext_resource type="Script" path="res://scenes/components/world/ContourEffect.gd" id="3_on0hy"]
+[ext_resource type="PackedScene" path="res://scenes/components/rendering/AtmosphereRig.tscn" id="4_657ey"]
+[ext_resource type="Script" path="res://scenes/components/rendering/AtmosphereRig.gd" id="5_s3f81"]
+[ext_resource type="Script" path="res://scenes/components/rendering/WorldTimeLighting.gd" id="6_x36gm"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/interior_stone_floor.gdshader" id="7_61v4c"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/interior_wall.gdshader" id="8_aw5fo"]
+[ext_resource type="Texture2D" path="res://assets/materials/wallpaper.png" id="9_ojhid"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/wood.gdshader" id="10_i6pif"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/stone.gdshader" id="11_bqiid"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/fabric.gdshader" id="12_umwtl"]
+[ext_resource type="PackedScene" path="res://scenes/components/prefabs/service_reagent_cabinet_0280d452.tscn" id="13_g1byo"]
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="14_u2rtf"]
+[ext_resource type="PackedScene" path="res://scenes/components/prefabs/service_wash_trough_15de64c3.tscn" id="15_tlb2d"]
+[ext_resource type="Script" path="res://scenes/components/rendering/RenderDetailController.gd" id="16_d5k1i"]
+[ext_resource type="Script" path="res://scenes/components/rendering/CameraOcclusion.gd" id="17_kep6b"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xdf7p"]
+render_priority = 127
+shader = ExtResource("2_0c0t4")
+shader_parameter/ink = null
+shader_parameter/width_pixels = null
+shader_parameter/strength = null
+shader_parameter/minimum_depth_step = null
+shader_parameter/relative_depth_step = null
+
+[sub_resource type="QuadMesh" id="QuadMesh_uynm8"]
+size = Vector2(2, 2)
+
+[sub_resource type="Environment" id="Environment_ivmx1"]
+background_mode = 1
+background_color = Color(0.18447499, 0.32777813, 0.39157248, 1)
+background_energy_multiplier = 0.08
+ambient_light_source = 2
+ambient_light_color = Color(0.65882355, 0.7294118, 0.7607843, 1)
+ambient_light_energy = 0.4675
+tonemap_mode = 2
+ssao_enabled = true
+ssao_radius = 0.55
+ssao_intensity = 1.0
+ssao_power = 1.25
+ssao_detail = 0.35
+ssil_enabled = true
+ssil_radius = 2.0
+ssil_intensity = 0.3
+glow_enabled = true
+glow_strength = 0.65
+glow_hdr_threshold = 2.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_jdunp"]
+render_priority = 0
+shader = ExtResource("7_61v4c")
+shader_parameter/stone_kind = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_2jnrc"]
+material = SubResource("ShaderMaterial_jdunp")
+size = Vector3(1, 0.12, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pblys"]
+size = Vector3(1, 0.12, 1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_x8vyr"]
+render_priority = 0
+shader = ExtResource("8_aw5fo")
+shader_parameter/wallpaper = ExtResource("9_ojhid")
+shader_parameter/use_wallpaper = false
+shader_parameter/pigment = null
+shader_parameter/finish_roughness = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7ciro"]
+render_priority = 0
+shader = ExtResource("10_i6pif")
+shader_parameter/pigment = Color(0.28627452, 0.19607843, 0.15294118, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kh38n"]
+render_priority = 0
+shader = ExtResource("10_i6pif")
+shader_parameter/pigment = Color(0.4509804, 0.3254902, 0.20392157, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_wppyc"]
+_surfaces = [{
+"aabb": AABB(-0.5, 0, 0.11, 1, 3.8, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_x8vyr"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAACuR+E9AAAAvwAAAACuR+E9AAAAPzMzc0CuR+E9AAAAvzMzc0CuR+E9/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 0, 0.14, 1, 1.18, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_7ciro"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAAApXA8+AAAAvwAAAAApXA8+AAAAPz0Klz8pXA8+AAAAvz0Klz8pXA8+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 0.0625, 0.17, 1, 0.075, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_kh38n"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAgD17FC4+AAAAvwAAgD17FC4+AAAAP83MDD57FC4+AAAAv83MDD57FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 1.1225, 0.17, 1, 0.07500005, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_kh38n"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPxSujz97FC4+AAAAvxSujz97FC4+AAAAP65HmT97FC4+AAAAv65HmT97FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 3.5925002, 0.17, 1, 0.07499981, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_kh38n"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAP4brZUB7FC4+AAAAv4brZUB7FC4+AAAAP1K4akB7FC4+AAAAv1K4akB7FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 3.7025, 0.17, 1, 0.07499981, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_kh38n"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAP8P1bEB7FC4+AAAAv8P1bEB7FC4+AAAAP4/CcUB7FC4+AAAAv4/CcUB7FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.38, 0.255, 0.16250001, 0.76, 0.77, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_7ciro"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("XI/CPlyPgj5nZiY+XI/CvlyPgj5nZiY+XI/CPjMzgz9nZiY+XI/CvjMzgz9nZiY+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.4375, 0.19999999, 0.19, 0.035000026, 0.87999994, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_kh38n"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("ehTOvszMTD5cj0I+AADgvszMTD5cj0I+ehTOvnA9ij9cj0I+AADgvnA9ij9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(0.40249997, 0.19999999, 0.19, 0.035000026, 0.87999994, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_kh38n"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AADgPszMTD5cj0I+ehTOPszMTD5cj0I+AADgPnA9ij9cj0I+ehTOPnA9ij9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.435, 0.1825, 0.19, 0.87, 0.034999996, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_kh38n"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("UrjePkjhOj5cj0I+UrjevkjhOj5cj0I+UrjePlK4Xj5cj0I+UrjevlK4Xj5cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.435, 1.0625, 0.19, 0.87, 0.035000086, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_kh38n"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("UrjePgAAiD9cj0I+UrjevgAAiD9cj0I+UrjePuJ6jD9cj0I+UrjevuJ6jD9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_m36vv"]
+size = Vector3(1, 3.8, 0.22)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_qcc40"]
+_surfaces = [{
+"aabb": AABB(-0.5, 0, 0.14, 1, 0.3, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_7ciro"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAAApXA8+AAAAvwAAAAApXA8+AAAAP5qZmT4pXA8+AAAAv5qZmT4pXA8+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}]
+
+[sub_resource type="MeshLibrary" id="MeshLibrary_83ava"]
+item/0/name = "Parquet / continuous world grain"
+item/0/mesh = SubResource("BoxMesh_2jnrc")
+item/0/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, 0)
+item/0/mesh_cast_shadow = 1
+item/0/shapes = [SubResource("BoxShape3D_pblys"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, 0)]
+item/0/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/0/navigation_layers = 1
+item/1/name = "Full height panelled wall"
+item/1/mesh = SubResource("ArrayMesh_wppyc")
+item/1/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/1/mesh_cast_shadow = 1
+item/1/shapes = [SubResource("BoxShape3D_m36vv"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)]
+item/1/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/1/navigation_layers = 1
+item/2/name = "Camera cutaway / full wall footprint"
+item/2/mesh = SubResource("ArrayMesh_qcc40")
+item/2/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/2/mesh_cast_shadow = 1
+item/2/shapes = [SubResource("BoxShape3D_m36vv"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)]
+item/2/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/2/navigation_layers = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_qmkbm"]
+material = SubResource("ShaderMaterial_jdunp")
+size = Vector3(1, 0.12, 1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kde3p"]
+render_priority = 0
+shader = ExtResource("8_aw5fo")
+shader_parameter/wallpaper = ExtResource("9_ojhid")
+shader_parameter/use_wallpaper = false
+shader_parameter/pigment = null
+shader_parameter/finish_roughness = null
+shader_parameter/occlusion_enabled = true
+shader_parameter/occlusion_focus = Vector3(0, 0.8, -0.65)
+shader_parameter/occlusion_camera = Vector3(0, 22, 25)
+shader_parameter/occlusion_right = Vector3(1, 0, 0)
+shader_parameter/occlusion_up = Vector3(0, 0.77080137, -0.63707566)
+shader_parameter/occlusion_toward_camera = Vector3(0, 0.63707566, 0.77080137)
+shader_parameter/occlusion_radius = 2.2
+shader_parameter/occlusion_strength = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wbji5"]
+render_priority = 0
+shader = ExtResource("10_i6pif")
+shader_parameter/pigment = Color(0.28627452, 0.19607843, 0.15294118, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = true
+shader_parameter/occlusion_focus = Vector3(0, 0.8, -0.65)
+shader_parameter/occlusion_camera = Vector3(0, 22, 25)
+shader_parameter/occlusion_right = Vector3(1, 0, 0)
+shader_parameter/occlusion_up = Vector3(0, 0.77080137, -0.63707566)
+shader_parameter/occlusion_toward_camera = Vector3(0, 0.63707566, 0.77080137)
+shader_parameter/occlusion_radius = 2.2
+shader_parameter/occlusion_strength = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_io3bp"]
+render_priority = 0
+shader = ExtResource("10_i6pif")
+shader_parameter/pigment = Color(0.4509804, 0.3254902, 0.20392157, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = true
+shader_parameter/occlusion_focus = Vector3(0, 0.8, -0.65)
+shader_parameter/occlusion_camera = Vector3(0, 22, 25)
+shader_parameter/occlusion_right = Vector3(1, 0, 0)
+shader_parameter/occlusion_up = Vector3(0, 0.77080137, -0.63707566)
+shader_parameter/occlusion_toward_camera = Vector3(0, 0.63707566, 0.77080137)
+shader_parameter/occlusion_radius = 2.2
+shader_parameter/occlusion_strength = 1.0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_kqm15"]
+_surfaces = [{
+"aabb": AABB(-0.5, 0, 0.11, 1, 3.8, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_kde3p"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAACuR+E9AAAAvwAAAACuR+E9AAAAPzMzc0CuR+E9AAAAvzMzc0CuR+E9/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 0, 0.14, 1, 1.18, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_wbji5"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAAApXA8+AAAAvwAAAAApXA8+AAAAPz0Klz8pXA8+AAAAvz0Klz8pXA8+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 0.0625, 0.17, 1, 0.075, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAgD17FC4+AAAAvwAAgD17FC4+AAAAP83MDD57FC4+AAAAv83MDD57FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 1.1225, 0.17, 1, 0.07500005, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPxSujz97FC4+AAAAvxSujz97FC4+AAAAP65HmT97FC4+AAAAv65HmT97FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 3.5925002, 0.17, 1, 0.07499981, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAP4brZUB7FC4+AAAAv4brZUB7FC4+AAAAP1K4akB7FC4+AAAAv1K4akB7FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 3.7025, 0.17, 1, 0.07499981, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAP8P1bEB7FC4+AAAAv8P1bEB7FC4+AAAAP4/CcUB7FC4+AAAAv4/CcUB7FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.38, 0.255, 0.16250001, 0.76, 0.77, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_wbji5"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("XI/CPlyPgj5nZiY+XI/CvlyPgj5nZiY+XI/CPjMzgz9nZiY+XI/CvjMzgz9nZiY+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.4375, 0.19999999, 0.19, 0.035000026, 0.87999994, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("ehTOvszMTD5cj0I+AADgvszMTD5cj0I+ehTOvnA9ij9cj0I+AADgvnA9ij9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(0.40249997, 0.19999999, 0.19, 0.035000026, 0.87999994, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AADgPszMTD5cj0I+ehTOPszMTD5cj0I+AADgPnA9ij9cj0I+ehTOPnA9ij9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.435, 0.1825, 0.19, 0.87, 0.034999996, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("UrjePkjhOj5cj0I+UrjevkjhOj5cj0I+UrjePlK4Xj5cj0I+UrjevlK4Xj5cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.435, 1.0625, 0.19, 0.87, 0.035000086, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("UrjePgAAiD9cj0I+UrjevgAAiD9cj0I+UrjePuJ6jD9cj0I+UrjevuJ6jD9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_b3d7u"]
+_surfaces = [{
+"aabb": AABB(-0.5, 0, 0.14, 1, 0.3, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_wbji5"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAAApXA8+AAAAvwAAAAApXA8+AAAAP5qZmT4pXA8+AAAAv5qZmT4pXA8+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}]
+
+[sub_resource type="MeshLibrary" id="MeshLibrary_nfvim"]
+item/0/name = "Parquet / continuous world grain"
+item/0/mesh = SubResource("BoxMesh_qmkbm")
+item/0/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, 0)
+item/0/mesh_cast_shadow = 1
+item/0/shapes = [SubResource("BoxShape3D_pblys"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, 0)]
+item/0/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/0/navigation_layers = 1
+item/1/name = "Full height panelled wall"
+item/1/mesh = SubResource("ArrayMesh_kqm15")
+item/1/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/1/mesh_cast_shadow = 1
+item/1/shapes = [SubResource("BoxShape3D_m36vv"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)]
+item/1/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/1/navigation_layers = 1
+item/2/name = "Camera cutaway / full wall footprint"
+item/2/mesh = SubResource("ArrayMesh_b3d7u")
+item/2/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/2/mesh_cast_shadow = 1
+item/2/shapes = [SubResource("BoxShape3D_m36vv"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)]
+item/2/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/2/navigation_layers = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_72j6e"]
+material = SubResource("ShaderMaterial_jdunp")
+size = Vector3(1, 0.12, 1)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_0htpn"]
+_surfaces = [{
+"aabb": AABB(-0.5, 0, 0.11, 1, 3.8, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_kde3p"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAACuR+E9AAAAvwAAAACuR+E9AAAAPzMzc0CuR+E9AAAAvzMzc0CuR+E9/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 0, 0.14, 1, 1.18, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_wbji5"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAAApXA8+AAAAvwAAAAApXA8+AAAAPz0Klz8pXA8+AAAAvz0Klz8pXA8+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 0.0625, 0.17, 1, 0.075, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAgD17FC4+AAAAvwAAgD17FC4+AAAAP83MDD57FC4+AAAAv83MDD57FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 1.1225, 0.17, 1, 0.07500005, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPxSujz97FC4+AAAAvxSujz97FC4+AAAAP65HmT97FC4+AAAAv65HmT97FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 3.5925002, 0.17, 1, 0.07499981, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAP4brZUB7FC4+AAAAv4brZUB7FC4+AAAAP1K4akB7FC4+AAAAv1K4akB7FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 3.7025, 0.17, 1, 0.07499981, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAP8P1bEB7FC4+AAAAv8P1bEB7FC4+AAAAP4/CcUB7FC4+AAAAv4/CcUB7FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.38, 0.255, 0.16250001, 0.76, 0.77, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_wbji5"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("XI/CPlyPgj5nZiY+XI/CvlyPgj5nZiY+XI/CPjMzgz9nZiY+XI/CvjMzgz9nZiY+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.4375, 0.19999999, 0.19, 0.035000026, 0.87999994, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("ehTOvszMTD5cj0I+AADgvszMTD5cj0I+ehTOvnA9ij9cj0I+AADgvnA9ij9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(0.40249997, 0.19999999, 0.19, 0.035000026, 0.87999994, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AADgPszMTD5cj0I+ehTOPszMTD5cj0I+AADgPnA9ij9cj0I+ehTOPnA9ij9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.435, 0.1825, 0.19, 0.87, 0.034999996, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("UrjePkjhOj5cj0I+UrjevkjhOj5cj0I+UrjePlK4Xj5cj0I+UrjevlK4Xj5cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.435, 1.0625, 0.19, 0.87, 0.035000086, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("UrjePgAAiD9cj0I+UrjevgAAiD9cj0I+UrjePuJ6jD9cj0I+UrjevuJ6jD9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_uqyqh"]
+_surfaces = [{
+"aabb": AABB(-0.5, 0, 0.14, 1, 0.3, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_wbji5"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAAApXA8+AAAAvwAAAAApXA8+AAAAP5qZmT4pXA8+AAAAv5qZmT4pXA8+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}]
+
+[sub_resource type="MeshLibrary" id="MeshLibrary_g1snj"]
+item/0/name = "Parquet / continuous world grain"
+item/0/mesh = SubResource("BoxMesh_72j6e")
+item/0/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, 0)
+item/0/mesh_cast_shadow = 1
+item/0/shapes = [SubResource("BoxShape3D_pblys"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, 0)]
+item/0/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/0/navigation_layers = 1
+item/1/name = "Full height panelled wall"
+item/1/mesh = SubResource("ArrayMesh_0htpn")
+item/1/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/1/mesh_cast_shadow = 1
+item/1/shapes = [SubResource("BoxShape3D_m36vv"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)]
+item/1/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/1/navigation_layers = 1
+item/2/name = "Camera cutaway / full wall footprint"
+item/2/mesh = SubResource("ArrayMesh_uqyqh")
+item/2/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/2/mesh_cast_shadow = 1
+item/2/shapes = [SubResource("BoxShape3D_m36vv"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)]
+item/2/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/2/navigation_layers = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_fv4jk"]
+material = SubResource("ShaderMaterial_jdunp")
+size = Vector3(1, 0.12, 1)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_pl2gs"]
+_surfaces = [{
+"aabb": AABB(-0.5, 0, 0.11, 1, 3.8, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_kde3p"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAACuR+E9AAAAvwAAAACuR+E9AAAAPzMzc0CuR+E9AAAAvzMzc0CuR+E9/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 0, 0.14, 1, 1.18, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_wbji5"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAAApXA8+AAAAvwAAAAApXA8+AAAAPz0Klz8pXA8+AAAAvz0Klz8pXA8+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 0.0625, 0.17, 1, 0.075, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAgD17FC4+AAAAvwAAgD17FC4+AAAAP83MDD57FC4+AAAAv83MDD57FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 1.1225, 0.17, 1, 0.07500005, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPxSujz97FC4+AAAAvxSujz97FC4+AAAAP65HmT97FC4+AAAAv65HmT97FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 3.5925002, 0.17, 1, 0.07499981, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAP4brZUB7FC4+AAAAv4brZUB7FC4+AAAAP1K4akB7FC4+AAAAv1K4akB7FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 3.7025, 0.17, 1, 0.07499981, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAP8P1bEB7FC4+AAAAv8P1bEB7FC4+AAAAP4/CcUB7FC4+AAAAv4/CcUB7FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.38, 0.255, 0.16250001, 0.76, 0.77, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_wbji5"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("XI/CPlyPgj5nZiY+XI/CvlyPgj5nZiY+XI/CPjMzgz9nZiY+XI/CvjMzgz9nZiY+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.4375, 0.19999999, 0.19, 0.035000026, 0.87999994, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("ehTOvszMTD5cj0I+AADgvszMTD5cj0I+ehTOvnA9ij9cj0I+AADgvnA9ij9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(0.40249997, 0.19999999, 0.19, 0.035000026, 0.87999994, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AADgPszMTD5cj0I+ehTOPszMTD5cj0I+AADgPnA9ij9cj0I+ehTOPnA9ij9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.435, 0.1825, 0.19, 0.87, 0.034999996, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("UrjePkjhOj5cj0I+UrjevkjhOj5cj0I+UrjePlK4Xj5cj0I+UrjevlK4Xj5cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.435, 1.0625, 0.19, 0.87, 0.035000086, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("UrjePgAAiD9cj0I+UrjevgAAiD9cj0I+UrjePuJ6jD9cj0I+UrjevuJ6jD9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_bu6yo"]
+_surfaces = [{
+"aabb": AABB(-0.5, 0, 0.14, 1, 0.3, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_wbji5"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAAApXA8+AAAAvwAAAAApXA8+AAAAP5qZmT4pXA8+AAAAv5qZmT4pXA8+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}]
+
+[sub_resource type="MeshLibrary" id="MeshLibrary_ju5nc"]
+item/0/name = "Parquet / continuous world grain"
+item/0/mesh = SubResource("BoxMesh_fv4jk")
+item/0/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, 0)
+item/0/mesh_cast_shadow = 1
+item/0/shapes = [SubResource("BoxShape3D_pblys"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, 0)]
+item/0/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/0/navigation_layers = 1
+item/1/name = "Full height panelled wall"
+item/1/mesh = SubResource("ArrayMesh_pl2gs")
+item/1/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/1/mesh_cast_shadow = 1
+item/1/shapes = [SubResource("BoxShape3D_m36vv"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)]
+item/1/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/1/navigation_layers = 1
+item/2/name = "Camera cutaway / full wall footprint"
+item/2/mesh = SubResource("ArrayMesh_bu6yo")
+item/2/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/2/mesh_cast_shadow = 1
+item/2/shapes = [SubResource("BoxShape3D_m36vv"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)]
+item/2/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/2/navigation_layers = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_8v6ou"]
+material = SubResource("ShaderMaterial_jdunp")
+size = Vector3(1, 0.12, 1)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_4hux8"]
+_surfaces = [{
+"aabb": AABB(-0.5, 0, 0.11, 1, 3.8, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_kde3p"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAACuR+E9AAAAvwAAAACuR+E9AAAAPzMzc0CuR+E9AAAAvzMzc0CuR+E9/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 0, 0.14, 1, 1.18, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_wbji5"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAAApXA8+AAAAvwAAAAApXA8+AAAAPz0Klz8pXA8+AAAAvz0Klz8pXA8+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 0.0625, 0.17, 1, 0.075, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAgD17FC4+AAAAvwAAgD17FC4+AAAAP83MDD57FC4+AAAAv83MDD57FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 1.1225, 0.17, 1, 0.07500005, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPxSujz97FC4+AAAAvxSujz97FC4+AAAAP65HmT97FC4+AAAAv65HmT97FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 3.5925002, 0.17, 1, 0.07499981, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAP4brZUB7FC4+AAAAv4brZUB7FC4+AAAAP1K4akB7FC4+AAAAv1K4akB7FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.5, 3.7025, 0.17, 1, 0.07499981, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAP8P1bEB7FC4+AAAAv8P1bEB7FC4+AAAAP4/CcUB7FC4+AAAAv4/CcUB7FC4+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.38, 0.255, 0.16250001, 0.76, 0.77, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_wbji5"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("XI/CPlyPgj5nZiY+XI/CvlyPgj5nZiY+XI/CPjMzgz9nZiY+XI/CvjMzgz9nZiY+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.4375, 0.19999999, 0.19, 0.035000026, 0.87999994, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("ehTOvszMTD5cj0I+AADgvszMTD5cj0I+ehTOvnA9ij9cj0I+AADgvnA9ij9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(0.40249997, 0.19999999, 0.19, 0.035000026, 0.87999994, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AADgPszMTD5cj0I+ehTOPszMTD5cj0I+AADgPnA9ij9cj0I+ehTOPnA9ij9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.435, 0.1825, 0.19, 0.87, 0.034999996, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("UrjePkjhOj5cj0I+UrjevkjhOj5cj0I+UrjePlK4Xj5cj0I+UrjevlK4Xj5cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}, {
+"aabb": AABB(-0.435, 1.0625, 0.19, 0.87, 0.035000086, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_io3bp"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("UrjePgAAiD9cj0I+UrjevgAAiD9cj0I+UrjePuJ6jD9cj0I+UrjevuJ6jD9cj0I+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_wptb4"]
+_surfaces = [{
+"aabb": AABB(-0.5, 0, 0.14, 1, 0.3, 1e-05),
+"attribute_data": PackedByteArray("AACAPwAAgD8AAAAAAACAPwAAgD8AAAAAAAAAAAAAAAA="),
+"format": 34359742487,
+"index_count": 6,
+"index_data": PackedByteArray("AAABAAIAAQADAAIA"),
+"material": SubResource("ShaderMaterial_wbji5"),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray("AAAAPwAAAAApXA8+AAAAvwAAAAApXA8+AAAAP5qZmT4pXA8+AAAAv5qZmT4pXA8+/3//f////7//f/9/////v/9//3////+//3//f////78=")
+}]
+
+[sub_resource type="MeshLibrary" id="MeshLibrary_d6l0p"]
+item/0/name = "Parquet / continuous world grain"
+item/0/mesh = SubResource("BoxMesh_8v6ou")
+item/0/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, 0)
+item/0/mesh_cast_shadow = 1
+item/0/shapes = [SubResource("BoxShape3D_pblys"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, 0)]
+item/0/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/0/navigation_layers = 1
+item/1/name = "Full height panelled wall"
+item/1/mesh = SubResource("ArrayMesh_4hux8")
+item/1/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/1/mesh_cast_shadow = 1
+item/1/shapes = [SubResource("BoxShape3D_m36vv"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)]
+item/1/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/1/navigation_layers = 1
+item/2/name = "Camera cutaway / full wall footprint"
+item/2/mesh = SubResource("ArrayMesh_wptb4")
+item/2/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/2/mesh_cast_shadow = 1
+item/2/shapes = [SubResource("BoxShape3D_m36vv"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)]
+item/2/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/2/navigation_layers = 1
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vygn1"]
+render_priority = 0
+shader = ExtResource("11_bqiid")
+shader_parameter/pigment = Color(0.20392157, 0.23921569, 0.24313726, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/variation = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_2ojdd"]
+size = Vector3(7.36, 0.28, 11.36)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4cy0d"]
+render_priority = 0
+shader = ExtResource("10_i6pif")
+shader_parameter/pigment = Color(0.7058824, 0.6117647, 0.4392157, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_7ygdd"]
+size = Vector3(0.028, 0.008, 10.78)
+
+[sub_resource type="BoxMesh" id="BoxMesh_qr86n"]
+size = Vector3(6.78, 0.008, 0.028)
+
+[sub_resource type="BoxMesh" id="BoxMesh_yptld"]
+size = Vector3(0.028, 0.008, 10.78)
+
+[sub_resource type="BoxMesh" id="BoxMesh_46btg"]
+size = Vector3(6.78, 0.008, 0.028)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3mj83"]
+size = Vector3(0.028, 0.008, 10.78)
+
+[sub_resource type="BoxMesh" id="BoxMesh_isfgp"]
+size = Vector3(6.78, 0.008, 0.028)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3lmem"]
+size = Vector3(0.028, 0.008, 10.78)
+
+[sub_resource type="BoxMesh" id="BoxMesh_gibuf"]
+size = Vector3(6.78, 0.008, 0.028)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tw70p"]
+size = Vector3(2, 0.96, 0.22)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ywa4j"]
+render_priority = 0
+shader = ExtResource("11_bqiid")
+shader_parameter/pigment = Color(0.7764706, 0.7411765, 0.64705884, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/variation = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_ucpyv"]
+size = Vector3(2, 0.56, 0.22)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_riv6y"]
+albedo_color = Color(0.45490196, 0.5568628, 0.5686275, 1)
+roughness = 0.25
+emission_enabled = true
+emission = Color(0.3254902, 0.42352942, 0.4392157, 1)
+emission_energy_multiplier = 0.25
+
+[sub_resource type="BoxMesh" id="BoxMesh_lefq5"]
+size = Vector3(1.74, 2.34, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_31lpx"]
+size = Vector3(0.045, 2.45, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_t7xhb"]
+size = Vector3(0.045, 2.45, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pwyfk"]
+size = Vector3(0.045, 2.45, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_kckkb"]
+size = Vector3(0.045, 2.45, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ss3lc"]
+size = Vector3(0.045, 2.45, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1t8np"]
+size = Vector3(1.9, 0.06, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ccj5t"]
+size = Vector3(1.9, 0.06, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pdknx"]
+size = Vector3(1.9, 0.06, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tq8g2"]
+size = Vector3(1.9, 0.06, 0.1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6kbek"]
+render_priority = 0
+shader = ExtResource("10_i6pif")
+shader_parameter/pigment = Color(0.60784316, 0.5019608, 0.3254902, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_vccc7"]
+size = Vector3(2.1, 0.09, 0.45)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ks1lj"]
+render_priority = 0
+shader = ExtResource("12_umwtl")
+shader_parameter/pigment = Color(0.14509805, 0.2901961, 0.23137255, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_qryjk"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_gvsbg"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hw546"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ujkme"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_x5gy7"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_sfu2b"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_5kdtf"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="BoxMesh" id="BoxMesh_xy3td"]
+size = Vector3(0.35, 0.055, 0.06)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_kuvy0"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.2
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_bnsuq"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.2
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_6ovay"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.2
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_5x8ee"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.2
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_bindb"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3eha6"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_vr0km"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_njjnf"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_la2lw"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_rvp50"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_vej4s"]
+top_radius = 0.055
+bottom_radius = 0.055
+height = 2.55
+radial_segments = 24
+
+[sub_resource type="BoxMesh" id="BoxMesh_al3q7"]
+size = Vector3(0.35, 0.055, 0.06)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_56v6n"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.2
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_qdyga"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.2
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_4um8v"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.2
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_7u1xw"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.2
+radial_segments = 24
+
+[sub_resource type="BoxMesh" id="BoxMesh_vse7y"]
+size = Vector3(2.2, 0.14, 0.23)
+
+[node name="WorldMap" type="Node3D" unique_id=2021516807 script=ExtResource("1_auto_script")]
+metadata/source_layout = "res://assets/data/presentation.dv"
+metadata/layout_id = "clinic:safety"
+metadata/scope = "authored-3d-map; formal-host-connection-pending"
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1537370184]
+transform = Transform3D(1, 0, 0, 0, 0.7708013, 0.6370756, 0, -0.6370756, 0.7708013, 0, 22, 25)
+attributes = ExtResource("1_n1gha")
+projection = 1
+current = true
+fov = 22.0
+size = 13.52
+far = 1000.0
+
+[node name="ContourEffect" type="MeshInstance3D" parent="Camera3D" unique_id=1820931014]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.5)
+material_override = SubResource("ShaderMaterial_xdf7p")
+cast_shadow = 0
+extra_cull_margin = 16384.0
+ignore_occlusion_culling = true
+mesh = SubResource("QuadMesh_uynm8")
+script = ExtResource("3_on0hy")
+
+[node name="Daylight" type="DirectionalLight3D" parent="." unique_id=574033780]
+transform = Transform3D(0.88294756, 0.43528646, -0.17586717, 0, 0.37460664, 0.92718387, 0.46947157, -0.8186547, 0.330758, 0, 0, 0)
+light_color = Color(0.9019608, 0.8666667, 0.7764706, 1)
+light_energy = 0.72
+shadow_enabled = true
+shadow_bias = 0.08
+shadow_normal_bias = 0.8
+directional_shadow_max_distance = 45.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=906214535]
+environment = SubResource("Environment_ivmx1")
+metadata/time_environment_unique = true
+
+[node name="Atmosphere" type="Node3D" parent="." unique_id=252157395 instance=ExtResource("4_657ey")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, -0.65)
+script = ExtResource("5_s3f81")
+
+[node name="WorldTimeLighting" type="Node3D" parent="." unique_id=1269355563]
+script = ExtResource("6_x36gm")
+metadata/time_sample = {
+"ambient_energy": 0.4675,
+"game_minutes": 720.0,
+"outdoors": false,
+"sun_energy": 0.72
+}
+
+[node name="Clinic_safetyRoom" type="Node3D" parent="." unique_id=1710909362]
+
+[node name="FloorGrid" type="GridMap" parent="Clinic_safetyRoom" unique_id=2072653330]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0, -5.5)
+mesh_library = SubResource("MeshLibrary_83ava")
+cell_size = Vector3(1, 1, 1)
+cell_center_y = false
+collision_mask = 0
+data = {
+"cells": PackedInt32Array(0, 0, 0, 1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0, 5, 0, 0, 6, 0, 0, 0, 1, 0, 1, 1, 0, 2, 1, 0, 3, 1, 0, 4, 1, 0, 5, 1, 0, 6, 1, 0, 0, 2, 0, 1, 2, 0, 2, 2, 0, 3, 2, 0, 4, 2, 0, 5, 2, 0, 6, 2, 0, 0, 3, 0, 1, 3, 0, 2, 3, 0, 3, 3, 0, 4, 3, 0, 5, 3, 0, 6, 3, 0, 0, 4, 0, 1, 4, 0, 2, 4, 0, 3, 4, 0, 4, 4, 0, 5, 4, 0, 6, 4, 0, 0, 5, 0, 1, 5, 0, 2, 5, 0, 3, 5, 0, 4, 5, 0, 5, 5, 0, 6, 5, 0, 0, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 0, 6, 6, 0, 0, 7, 0, 1, 7, 0, 2, 7, 0, 3, 7, 0, 4, 7, 0, 5, 7, 0, 6, 7, 0, 0, 8, 0, 1, 8, 0, 2, 8, 0, 3, 8, 0, 4, 8, 0, 5, 8, 0, 6, 8, 0, 0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0, 6, 9, 0, 0, 10, 0, 1, 10, 0, 2, 10, 0, 3, 10, 0, 4, 10, 0, 5, 10, 0, 6, 10, 0)
+}
+
+[node name="NorthWallGrid" type="GridMap" parent="Clinic_safetyRoom" unique_id=843588408]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0, -5.5)
+mesh_library = SubResource("MeshLibrary_nfvim")
+cell_size = Vector3(1, 1, 1)
+cell_center_y = false
+cell_center_z = false
+collision_mask = 0
+data = {
+"cells": PackedInt32Array(0, 0, 1, 1, 0, 1, 2, 0, 1, 3, 0, 1, 4, 0, 1, 5, 0, 1, 6, 0, 1)
+}
+
+[node name="SouthWallGrid" type="GridMap" parent="Clinic_safetyRoom" unique_id=71720307]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 3.5, 0, 5.5)
+mesh_library = SubResource("MeshLibrary_g1snj")
+cell_size = Vector3(1, 1, 1)
+cell_center_y = false
+cell_center_z = false
+collision_mask = 0
+data = {
+"cells": PackedInt32Array(0, 0, 2, 1, 0, 2, 2, 0, 2, 3, 0, 2, 4, 0, 2, 5, 0, 2, 6, 0, 2)
+}
+
+[node name="WestWallGrid" type="GridMap" parent="Clinic_safetyRoom" unique_id=769322186]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.5, 0, 5.5)
+mesh_library = SubResource("MeshLibrary_ju5nc")
+cell_size = Vector3(1, 1, 1)
+cell_center_y = false
+cell_center_z = false
+collision_mask = 0
+data = {
+"cells": PackedInt32Array(0, 0, 1, 1, 0, 1, 2, 0, 1, 5, 0, 1, 6, 0, 1, 7, 0, 1, 8, 0, 1, 9, 0, 1, 10, 0, 1)
+}
+
+[node name="EastWallGrid" type="GridMap" parent="Clinic_safetyRoom" unique_id=505018774]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 3.5, 0, -5.5)
+mesh_library = SubResource("MeshLibrary_d6l0p")
+cell_size = Vector3(1, 1, 1)
+cell_center_y = false
+cell_center_z = false
+collision_mask = 0
+data = {
+"cells": PackedInt32Array(0, 0, 1, 1, 0, 1, 2, 0, 1, 3, 0, 1, 4, 0, 1, 5, 0, 1, 6, 0, 1, 7, 0, 1, 8, 0, 1, 9, 0, 1, 10, 0, 1)
+}
+
+[node name="_MeshInstance3D_4810" type="MeshInstance3D" parent="Clinic_safetyRoom" unique_id=1726422124]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.19, 0)
+material_override = SubResource("ShaderMaterial_vygn1")
+mesh = SubResource("BoxMesh_2ojdd")
+
+[node name="_MeshInstance3D_4811" type="MeshInstance3D" parent="Clinic_safetyRoom" unique_id=927594829]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.34, 0.012, 0)
+material_override = SubResource("ShaderMaterial_4cy0d")
+mesh = SubResource("BoxMesh_7ygdd")
+
+[node name="_MeshInstance3D_4812" type="MeshInstance3D" parent="Clinic_safetyRoom" unique_id=104452946]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, -5.34)
+material_override = SubResource("ShaderMaterial_4cy0d")
+mesh = SubResource("BoxMesh_qr86n")
+
+[node name="_MeshInstance3D_4813" type="MeshInstance3D" parent="Clinic_safetyRoom" unique_id=1521405782]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.25, 0.012, 0)
+material_override = SubResource("ShaderMaterial_4cy0d")
+mesh = SubResource("BoxMesh_yptld")
+
+[node name="_MeshInstance3D_4814" type="MeshInstance3D" parent="Clinic_safetyRoom" unique_id=113720441]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, -5.25)
+material_override = SubResource("ShaderMaterial_4cy0d")
+mesh = SubResource("BoxMesh_46btg")
+
+[node name="_MeshInstance3D_4815" type="MeshInstance3D" parent="Clinic_safetyRoom" unique_id=1330896687]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.34, 0.012, 0)
+material_override = SubResource("ShaderMaterial_4cy0d")
+mesh = SubResource("BoxMesh_3mj83")
+
+[node name="_MeshInstance3D_4816" type="MeshInstance3D" parent="Clinic_safetyRoom" unique_id=11930405]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, 5.34)
+material_override = SubResource("ShaderMaterial_4cy0d")
+mesh = SubResource("BoxMesh_isfgp")
+
+[node name="_MeshInstance3D_4817" type="MeshInstance3D" parent="Clinic_safetyRoom" unique_id=1534470089]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.25, 0.012, 0)
+material_override = SubResource("ShaderMaterial_4cy0d")
+mesh = SubResource("BoxMesh_3lmem")
+
+[node name="_MeshInstance3D_4818" type="MeshInstance3D" parent="Clinic_safetyRoom" unique_id=1576423110]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, 5.25)
+material_override = SubResource("ShaderMaterial_4cy0d")
+mesh = SubResource("BoxMesh_gibuf")
+
+[node name="TallSashWindow" type="Node3D" parent="Clinic_safetyRoom" unique_id=1118186175]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -5.5)
+metadata/authoring_label = "TallSashWindow"
+
+[node name="_MeshInstance3D_4821" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=2125234913]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.48, 0)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_tw70p")
+
+[node name="_MeshInstance3D_4822" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=2134959912]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.52, 0)
+material_override = SubResource("ShaderMaterial_ywa4j")
+mesh = SubResource("BoxMesh_ucpyv")
+
+[node name="_MeshInstance3D_4823" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=963677333]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.14, -0.025)
+material_override = SubResource("StandardMaterial3D_riv6y")
+mesh = SubResource("BoxMesh_lefq5")
+
+[node name="_MeshInstance3D_4824" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=959429324]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.92, 2.15, 0.06)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_31lpx")
+
+[node name="_MeshInstance3D_4825" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=360442279]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 2.15, 0.06)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_t7xhb")
+
+[node name="_MeshInstance3D_4826" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=765370411]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, 0.06)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_pwyfk")
+
+[node name="_MeshInstance3D_4827" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1824513285]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 2.15, 0.06)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_kckkb")
+
+[node name="_MeshInstance3D_4828" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=18334142]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.92, 2.15, 0.06)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_ss3lc")
+
+[node name="_MeshInstance3D_4829" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1424160124]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.94, 0.07)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_1t8np")
+
+[node name="_MeshInstance3D_4830" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=793660081]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.68, 0.07)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_ccj5t")
+
+[node name="_MeshInstance3D_4831" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=842479918]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.43, 0.07)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_pdknx")
+
+[node name="_MeshInstance3D_4832" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1423694088]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.37, 0.07)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_tq8g2")
+
+[node name="_MeshInstance3D_4833" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1067854888]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.94, 0.18)
+material_override = SubResource("ShaderMaterial_6kbek")
+mesh = SubResource("BoxMesh_vccc7")
+
+[node name="_MeshInstance3D_4834" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=652521230]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.73, 2.02, 0.2)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_qryjk")
+
+[node name="_MeshInstance3D_4835" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1315807040]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.778, 2.02, 0.22829737)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_gvsbg")
+
+[node name="_MeshInstance3D_4836" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=769213505]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.826, 2.02, 0.16669393)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_hw546")
+
+[node name="_MeshInstance3D_4837" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=773453277]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.874, 2.02, 0.21090394)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_ujkme")
+
+[node name="_MeshInstance3D_4838" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1945094750]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.922, 2.02, 0.2204721)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_x5gy7")
+
+[node name="_MeshInstance3D_4839" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1750504514]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.97, 2.02, 0.16500035)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_sfu2b")
+
+[node name="_MeshInstance3D_4840" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=232050322]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.018, 2.02, 0.22072257)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_5kdtf")
+
+[node name="_MeshInstance3D_4841" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=708526103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 1.65, 0.28)
+material_override = SubResource("ShaderMaterial_6kbek")
+mesh = SubResource("BoxMesh_xy3td")
+
+[node name="_MeshInstance3D_4842" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=659927639]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 1.53, 0.3)
+material_override = SubResource("ShaderMaterial_6kbek")
+mesh = SubResource("CylinderMesh_kuvy0")
+
+[node name="_MeshInstance3D_4843" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=508499505]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.875, 1.53, 0.3)
+material_override = SubResource("ShaderMaterial_6kbek")
+mesh = SubResource("CylinderMesh_bnsuq")
+
+[node name="_MeshInstance3D_4844" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=999287706]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.85, 1.53, 0.3)
+material_override = SubResource("ShaderMaterial_6kbek")
+mesh = SubResource("CylinderMesh_6ovay")
+
+[node name="_MeshInstance3D_4845" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1704090899]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.825, 1.53, 0.3)
+material_override = SubResource("ShaderMaterial_6kbek")
+mesh = SubResource("CylinderMesh_5x8ee")
+
+[node name="_MeshInstance3D_4846" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1408443011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.73, 2.02, 0.2)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_bindb")
+
+[node name="_MeshInstance3D_4847" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1406149394]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.778, 2.02, 0.22829737)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_3eha6")
+
+[node name="_MeshInstance3D_4848" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=43102430]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.826, 2.02, 0.16669393)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_vr0km")
+
+[node name="_MeshInstance3D_4849" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1202974161]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.874, 2.02, 0.21090394)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_njjnf")
+
+[node name="_MeshInstance3D_4850" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=226650517]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.922, 2.02, 0.2204721)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_la2lw")
+
+[node name="_MeshInstance3D_4851" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1009740055]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.97, 2.02, 0.16500035)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_rvp50")
+
+[node name="_MeshInstance3D_4852" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1975082991]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.018, 2.02, 0.22072257)
+material_override = SubResource("ShaderMaterial_ks1lj")
+mesh = SubResource("CylinderMesh_vej4s")
+
+[node name="_MeshInstance3D_4853" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1098550458]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 1.65, 0.28)
+material_override = SubResource("ShaderMaterial_6kbek")
+mesh = SubResource("BoxMesh_al3q7")
+
+[node name="_MeshInstance3D_4854" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1697729254]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 1.53, 0.3)
+material_override = SubResource("ShaderMaterial_6kbek")
+mesh = SubResource("CylinderMesh_56v6n")
+
+[node name="_MeshInstance3D_4855" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=250920281]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.925, 1.53, 0.3)
+material_override = SubResource("ShaderMaterial_6kbek")
+mesh = SubResource("CylinderMesh_qdyga")
+
+[node name="_MeshInstance3D_4856" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1395771740]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.95, 1.53, 0.3)
+material_override = SubResource("ShaderMaterial_6kbek")
+mesh = SubResource("CylinderMesh_4um8v")
+
+[node name="_MeshInstance3D_4857" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=1733130199]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.975, 1.53, 0.3)
+material_override = SubResource("ShaderMaterial_6kbek")
+mesh = SubResource("CylinderMesh_7u1xw")
+
+[node name="_MeshInstance3D_4858" type="MeshInstance3D" parent="Clinic_safetyRoom/TallSashWindow" unique_id=211636017]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.41, 0.16)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_vse7y")
+
+[node name="_OmniLight3D_4859" type="OmniLight3D" parent="Clinic_safetyRoom" unique_id=303833909]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1, 0)
+light_color = Color(0.9490196, 0.8156863, 0.5686275, 1)
+light_energy = 1.2291611
+light_size = 0.12
+shadow_enabled = true
+omni_range = 11.0
+metadata/normal_energy = 1.2
+metadata/room = "clinic:safety"
+
+[node name="ReagentCabinet" type="Node3D" parent="Clinic_safetyRoom" unique_id=111418599 instance=ExtResource("13_g1byo")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -1.8125)
+script = ExtResource("14_u2rtf")
+metadata/world_category = &"furniture"
+metadata/prefab_id = "service/reagent_cabinet"
+metadata/authoring_label = "ReagentCabinet"
+
+[node name="Trough" type="Node3D" parent="Clinic_safetyRoom" unique_id=1946239792 instance=ExtResource("15_tlb2d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, 1.8125)
+script = ExtResource("14_u2rtf")
+metadata/world_category = &"furniture"
+metadata/prefab_id = "service/wash_trough"
+metadata/authoring_label = "Trough"
+
+[node name="RenderDetailController" type="Node" parent="." unique_id=1951224502]
+script = ExtResource("16_d5k1i")
+
+[node name="CameraOcclusion" type="Node" parent="." unique_id=1334805556]
+script = ExtResource("17_kep6b")
+auto_configure = true
+focus = Vector3(0, 0.8, -0.65)

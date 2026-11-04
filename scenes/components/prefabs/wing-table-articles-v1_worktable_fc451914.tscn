@@ -1,0 +1,77 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/wing-table-articles-v1_worktable_fc451914.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_hsbxl"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/fabric.gdshader" id="2_qa21b"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ft5cu"]
+render_priority = 0
+shader = ExtResource("2_qa21b")
+shader_parameter/pigment = Color(0.20784314, 0.2901961, 0.23529412, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_dnkn8"]
+size = Vector3(0.22, 0.035, 0.28)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_t84v7"]
+render_priority = 0
+shader = ExtResource("2_qa21b")
+shader_parameter/pigment = Color(0.79607844, 0.7490196, 0.62352943, 1)
+shader_parameter/surface_roughness = 0.96
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_y2v1t"]
+size = Vector3(0.19, 0.009, 0.25)
+
+[node name="FurniturePrefab" type="Node3D" unique_id=250037649 script=ExtResource("1_auto_script")]
+script = ExtResource("1_hsbxl")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "wing-table-articles-v1/worktable"
+
+[node name="YiTableArticles" type="Node3D" parent="." unique_id=147467118]
+metadata/authoring_label = "YiTableArticles"
+
+[node name="@MeshInstance3D@2731" type="MeshInstance3D" parent="YiTableArticles" unique_id=1790455422]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.22, 0.794, 0.07)
+material_override = SubResource("ShaderMaterial_ft5cu")
+mesh = SubResource("BoxMesh_dnkn8")
+
+[node name="@MeshInstance3D@2732" type="MeshInstance3D" parent="YiTableArticles" unique_id=898286058]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.22, 0.814, 0.07)
+material_override = SubResource("ShaderMaterial_t84v7")
+mesh = SubResource("BoxMesh_y2v1t")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=1943788491]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=1103827428]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.22, 0, -0.52)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=1879897449]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.22, 0, 0.66)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=934930376]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.22, 0.8185, 0.07)

@@ -11,7 +11,7 @@ __pycache__/
 .pytest_cache/
 tmp/
 scratch/
-.scratch/
+artifacts/scratch/
 .runtime/
 # Local release packages; source and build instructions remain tracked.
 artifacts/releases/
@@ -20,10 +20,10 @@ artifacts/releases/
 .mscbackup/
 *.wav
 # Runtime voice assets must ship with the project.
-!godot_csharp/ShareAsset/Internal/Characters/voices/*.wav
-godot_csharp/imported_assets/
+!assets/characters/voices/*.wav
+assets/imported/
 # Godot regenerates these from the tracked CSV and .csv.import files.
-godot_csharp/**/*.translation
+**/*.translation
 # Legacy soundtrack exports; current exports go to artifacts/releases/soundtrack/.
 /mcp/music_pipeline/Blessed Sleepers - *.mp3
 /mcp/music_pipeline/Blessed Sleepers - *.mid
@@ -52,3 +52,23 @@ artifacts/project-audit/*.rar
 artifacts/**/frames/
 **/trace.json
 
+
+# Shallow layout: local caches and generated audition exports.
+/artifacts/scratch/
+/artifacts/restructure-20261029/RoomCraft.original.html
+/tools/legacy/__pycache__/
+!assets/characters/voices/*.wav
+/assets/imported/
+assets/localization/*.translation
+
+# Local Godot standalone builds & GPU driver caches
+env/
+NVIDIA Corporation/
+
+# Generated artifacts stay local; adopted authoring sources live under tools/.
+/artifacts/*
+!/artifacts/.gdignore
+
+# Unpublished building previews generated from authoring sources.
+/tools/building/candidates/lowpoly_chapters_v3/
+/tools/building/candidates/lowpoly_hall/

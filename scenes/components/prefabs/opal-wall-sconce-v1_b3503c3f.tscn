@@ -1,0 +1,94 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/opal-wall-sconce-v1_b3503c3f.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_nl8ya"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/aged_metal.gdshader" id="2_kgikg"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/stone.gdshader" id="3_62ayi"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_v3k8r"]
+render_priority = 0
+shader = ExtResource("2_kgikg")
+shader_parameter/pigment = Color(0.654902, 0.5529412, 0.34509805, 1)
+shader_parameter/surface_roughness = 0.44
+shader_parameter/surface_metallic = 0.55
+shader_parameter/patina = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="SphereMesh" id="SphereMesh_a4vlf"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_pp34w"]
+top_radius = 0.025
+bottom_radius = 0.025
+height = 0.24166092
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_v1tr0"]
+render_priority = 0
+shader = ExtResource("3_62ayi")
+shader_parameter/pigment = Color(0.84313726, 0.79607844, 0.64705884, 1)
+shader_parameter/surface_roughness = 0.4
+shader_parameter/variation = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_lmvub"]
+top_radius = 0.07
+bottom_radius = 0.1
+height = 0.24
+radial_segments = 24
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1047025751 script=ExtResource("1_auto_script")]
+script = ExtResource("1_nl8ya")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "opal-wall-sconce-v1"
+
+[node name="WallSconce" type="Node3D" parent="." unique_id=1684641913]
+metadata/authoring_label = "WallSconce"
+
+[node name="@MeshInstance3D@1298" type="MeshInstance3D" parent="WallSconce" unique_id=1148266018]
+transform = Transform3D(0.16, 0, 0, 0, 0.27, 0, 0, 0, 0.06, 0, 0, 0)
+material_override = SubResource("ShaderMaterial_v3k8r")
+mesh = SubResource("SphereMesh_a4vlf")
+
+[node name="@MeshInstance3D@1299" type="MeshInstance3D" parent="WallSconce" unique_id=826852050]
+transform = Transform3D(1, 0, 0, 0, -0.41380298, -0.91036636, 0, 0.91036636, -0.41380298, 0, -0.05, 0.11)
+material_override = SubResource("ShaderMaterial_v3k8r")
+mesh = SubResource("CylinderMesh_pp34w")
+
+[node name="@MeshInstance3D@1300" type="MeshInstance3D" parent="WallSconce" unique_id=2045244608]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0.22)
+material_override = SubResource("ShaderMaterial_v1tr0")
+mesh = SubResource("CylinderMesh_lmvub")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=1945036857]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=761952258]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.47978127)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=1613732091]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.77)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=1482908524]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.17999999, 0.14510936)

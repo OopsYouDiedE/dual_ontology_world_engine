@@ -1,0 +1,79 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/UIpanel/EventScheduleUI/CollaborationUI.gd" id="1_collab"]
+[ext_resource type="Theme" path="res://scenes/components/shared/MaterialTheme.tres" id="2_theme"]
+
+[node name="CollaborationUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_collab")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.4)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainCard" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(580, 420)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/MainCard"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HeaderHBox" type="HBoxContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Center/MainCard/VBox/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "协作安排"
+
+[node name="CloseButton" type="Button" parent="Center/MainCard/VBox/HeaderHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 36)
+layout_mode = 2
+text = "关闭"
+
+[node name="HSeparator" type="HSeparator" parent="Center/MainCard/VBox"]
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Center/MainCard/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ScheduleList" type="VBoxContainer" parent="Center/MainCard/VBox/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="EmptyTip" type="Label" parent="Center/MainCard/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 6
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.5, 0.5, 0.48, 1)
+theme_override_font_sizes/font_size = 14
+text = "暂无进行中的同伴协作安排"

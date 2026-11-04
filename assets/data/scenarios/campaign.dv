@@ -1,0 +1,19 @@
+schema "dv-script-v1";
+data runtime.character_session { value = {
+    campaign = [
+        { source = "res://assets/data/scenarios/day1-morning.dv"; offset_minutes = 0; },
+        { source = "res://assets/data/scenarios/day2.dv"; offset_minutes = 1440; },
+        { source = "res://assets/data/scenarios/day3.dv"; offset_minutes = 2880; },
+        { source = "res://assets/data/scenarios/day4.dv"; offset_minutes = 4320; },
+        { source = "res://assets/data/scenarios/day5.dv"; offset_minutes = 5760; }
+    ];
+    scenario_label = "安眠者有福 · 前五日";
+    completion = {
+        label = "前五日完成：案卷已归档，互助秩序已建立。";
+        facts = [
+            { object = "cases"; facet = "doc"; field = "five_days_archived"; },
+            { object = "order"; facet = "doc"; field = "long_term_shifts_settled"; },
+            { object = "event:detective.day5.sleep_night"; facet = "state"; field = "done"; }
+        ];
+    };
+}; }

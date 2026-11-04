@@ -1,0 +1,14 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/maps/main_b1.gd" id="1_auto_script"]
+
+
+[node name="MainBuildingLogicalProjectionB1" type="Node2D" script=ExtResource("1_auto_script")]
+texture_filter = 1
+
+[node name="Objects" type="Node2D" parent="."]
+
+[node name="Solids" type="Node2D" parent="."]
+
+[node name="Sites" type="Node2D" parent="."]
+
+[node name="Exits" type="Node2D" parent="."]

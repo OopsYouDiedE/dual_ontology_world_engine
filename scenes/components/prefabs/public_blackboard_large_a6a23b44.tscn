@@ -1,0 +1,202 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/public_blackboard_large_a6a23b44.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_tdara"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/wood.gdshader" id="2_eoly3"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/stone.gdshader" id="3_icyjo"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/fabric.gdshader" id="4_xtcmg"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wd4qw"]
+render_priority = 0
+shader = ExtResource("2_eoly3")
+shader_parameter/pigment = Color(0.3764706, 0.2627451, 0.18431373, 1)
+shader_parameter/surface_roughness = 0.62
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_hwol0"]
+size = Vector3(5.5, 2.1, 0.16)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tt53s"]
+render_priority = 0
+shader = ExtResource("3_icyjo")
+shader_parameter/pigment = Color(0.16078432, 0.29803923, 0.2627451, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/variation = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_l2b5u"]
+size = Vector3(5.25, 1.86, 0.025)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ncfcq"]
+size = Vector3(0.12, 1.1, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ep3s7"]
+size = Vector3(0.12, 1.1, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5wg6b"]
+size = Vector3(5.5, 0.08, 0.27)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_w0rlg"]
+render_priority = 0
+shader = ExtResource("4_xtcmg")
+shader_parameter/pigment = Color(0.87058824, 0.827451, 0.7137255, 1)
+shader_parameter/surface_roughness = 0.95
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_3gfhw"]
+size = Vector3(2.4, 0.014, 0.007)
+
+[sub_resource type="BoxMesh" id="BoxMesh_iqfk8"]
+size = Vector3(2.6, 0.014, 0.007)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2rv45"]
+size = Vector3(2.8, 0.014, 0.007)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ekhsy"]
+size = Vector3(2.4, 0.014, 0.007)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bvp7g"]
+size = Vector3(2.6, 0.014, 0.007)
+
+[sub_resource type="BoxMesh" id="BoxMesh_dfp2m"]
+size = Vector3(2.8, 0.014, 0.007)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pjpt5"]
+size = Vector3(0.08, 0.02, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8a3ax"]
+size = Vector3(0.08, 0.02, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ck25y"]
+size = Vector3(0.08, 0.02, 0.03)
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_tdara"]
+data = PackedVector3Array(-2.75, 2.65, 0.08, 2.75, 2.65, 0.08, -2.75, 0.5500001, 0.08, 2.75, 2.65, 0.08, 2.75, 0.5500001, 0.08, -2.75, 0.5500001, 0.08, 2.75, 2.65, -0.08, -2.75, 2.65, -0.08, 2.75, 0.5500001, -0.08, -2.75, 2.65, -0.08, -2.75, 0.5500001, -0.08, 2.75, 0.5500001, -0.08, 2.75, 2.65, 0.08, 2.75, 2.65, -0.08, 2.75, 0.5500001, 0.08, 2.75, 2.65, -0.08, 2.75, 0.5500001, -0.08, 2.75, 0.5500001, 0.08, -2.75, 2.65, -0.08, -2.75, 2.65, 0.08, -2.75, 0.5500001, -0.08, -2.75, 2.65, 0.08, -2.75, 0.5500001, 0.08, -2.75, 0.5500001, -0.08, 2.75, 2.65, 0.08, -2.75, 2.65, 0.08, 2.75, 2.65, -0.08, -2.75, 2.65, 0.08, -2.75, 2.65, -0.08, 2.75, 2.65, -0.08, -2.75, 0.5500001, 0.08, 2.75, 0.5500001, 0.08, -2.75, 0.5500001, -0.08, 2.75, 0.5500001, 0.08, 2.75, 0.5500001, -0.08, -2.75, 0.5500001, -0.08, -2.625, 2.53, 0.1075, 2.625, 2.53, 0.1075, -2.625, 0.6700001, 0.1075, 2.625, 2.53, 0.1075, 2.625, 0.6700001, 0.1075, -2.625, 0.6700001, 0.1075, 2.625, 2.53, 0.082499996, -2.625, 2.53, 0.082499996, 2.625, 0.6700001, 0.082499996, -2.625, 2.53, 0.082499996, -2.625, 0.6700001, 0.082499996, 2.625, 0.6700001, 0.082499996, 2.625, 2.53, 0.1075, 2.625, 2.53, 0.082499996, 2.625, 0.6700001, 0.1075, 2.625, 2.53, 0.082499996, 2.625, 0.6700001, 0.082499996, 2.625, 0.6700001, 0.1075, -2.625, 2.53, 0.082499996, -2.625, 2.53, 0.1075, -2.625, 0.6700001, 0.082499996, -2.625, 2.53, 0.1075, -2.625, 0.6700001, 0.1075, -2.625, 0.6700001, 0.082499996, 2.625, 2.53, 0.1075, -2.625, 2.53, 0.1075, 2.625, 2.53, 0.082499996, -2.625, 2.53, 0.1075, -2.625, 2.53, 0.082499996, 2.625, 2.53, 0.082499996, -2.625, 0.6700001, 0.1075, 2.625, 0.6700001, 0.1075, -2.625, 0.6700001, 0.082499996, 2.625, 0.6700001, 0.1075, 2.625, 0.6700001, 0.082499996, -2.625, 0.6700001, 0.082499996, -2.46, 1.1, 0.08, -2.3400002, 1.1, 0.08, -2.46, 0, 0.08, -2.3400002, 1.1, 0.08, -2.3400002, 0, 0.08, -2.46, 0, 0.08, -2.3400002, 1.1, -0.08, -2.46, 1.1, -0.08, -2.3400002, 0, -0.08, -2.46, 1.1, -0.08, -2.46, 0, -0.08, -2.3400002, 0, -0.08, -2.3400002, 1.1, 0.08, -2.3400002, 1.1, -0.08, -2.3400002, 0, 0.08, -2.3400002, 1.1, -0.08, -2.3400002, 0, -0.08, -2.3400002, 0, 0.08, -2.46, 1.1, -0.08, -2.46, 1.1, 0.08, -2.46, 0, -0.08, -2.46, 1.1, 0.08, -2.46, 0, 0.08, -2.46, 0, -0.08, -2.3400002, 1.1, 0.08, -2.46, 1.1, 0.08, -2.3400002, 1.1, -0.08, -2.46, 1.1, 0.08, -2.46, 1.1, -0.08, -2.3400002, 1.1, -0.08, -2.46, 0, 0.08, -2.3400002, 0, 0.08, -2.46, 0, -0.08, -2.3400002, 0, 0.08, -2.3400002, 0, -0.08, -2.46, 0, -0.08, 2.3400002, 1.1, 0.08, 2.46, 1.1, 0.08, 2.3400002, 0, 0.08, 2.46, 1.1, 0.08, 2.46, 0, 0.08, 2.3400002, 0, 0.08, 2.46, 1.1, -0.08, 2.3400002, 1.1, -0.08, 2.46, 0, -0.08, 2.3400002, 1.1, -0.08, 2.3400002, 0, -0.08, 2.46, 0, -0.08, 2.46, 1.1, 0.08, 2.46, 1.1, -0.08, 2.46, 0, 0.08, 2.46, 1.1, -0.08, 2.46, 0, -0.08, 2.46, 0, 0.08, 2.3400002, 1.1, -0.08, 2.3400002, 1.1, 0.08, 2.3400002, 0, -0.08, 2.3400002, 1.1, 0.08, 2.3400002, 0, 0.08, 2.3400002, 0, -0.08, 2.46, 1.1, 0.08, 2.3400002, 1.1, 0.08, 2.46, 1.1, -0.08, 2.3400002, 1.1, 0.08, 2.3400002, 1.1, -0.08, 2.46, 1.1, -0.08, 2.3400002, 0, 0.08, 2.46, 0, 0.08, 2.3400002, 0, -0.08, 2.46, 0, 0.08, 2.46, 0, -0.08, 2.3400002, 0, -0.08, -2.75, 0.6, 0.33499998, 2.75, 0.6, 0.33499998, -2.75, 0.52, 0.33499998, 2.75, 0.6, 0.33499998, 2.75, 0.52, 0.33499998, -2.75, 0.52, 0.33499998, 2.75, 0.6, 0.06500001, -2.75, 0.6, 0.06500001, 2.75, 0.52, 0.06500001, -2.75, 0.6, 0.06500001, -2.75, 0.52, 0.06500001, 2.75, 0.52, 0.06500001, 2.75, 0.6, 0.33499998, 2.75, 0.6, 0.06500001, 2.75, 0.52, 0.33499998, 2.75, 0.6, 0.06500001, 2.75, 0.52, 0.06500001, 2.75, 0.52, 0.33499998, -2.75, 0.6, 0.06500001, -2.75, 0.6, 0.33499998, -2.75, 0.52, 0.06500001, -2.75, 0.6, 0.33499998, -2.75, 0.52, 0.33499998, -2.75, 0.52, 0.06500001, 2.75, 0.6, 0.33499998, -2.75, 0.6, 0.33499998, 2.75, 0.6, 0.06500001, -2.75, 0.6, 0.33499998, -2.75, 0.6, 0.06500001, 2.75, 0.6, 0.06500001, -2.75, 0.52, 0.33499998, 2.75, 0.52, 0.33499998, -2.75, 0.52, 0.06500001, 2.75, 0.52, 0.33499998, 2.75, 0.52, 0.06500001, -2.75, 0.52, 0.06500001, -1.8999999, 2.157, 0.1175, 0.49999994, 2.157, 0.1175, -1.8999999, 2.1430001, 0.1175, 0.49999994, 2.157, 0.1175, 0.49999994, 2.1430001, 0.1175, -1.8999999, 2.1430001, 0.1175, 0.49999994, 2.157, 0.1105, -1.8999999, 2.157, 0.1105, 0.49999994, 2.1430001, 0.1105, -1.8999999, 2.157, 0.1105, -1.8999999, 2.1430001, 0.1105, 0.49999994, 2.1430001, 0.1105, 0.49999994, 2.157, 0.1175, 0.49999994, 2.157, 0.1105, 0.49999994, 2.1430001, 0.1175, 0.49999994, 2.157, 0.1105, 0.49999994, 2.1430001, 0.1105, 0.49999994, 2.1430001, 0.1175, -1.8999999, 2.157, 0.1105, -1.8999999, 2.157, 0.1175, -1.8999999, 2.1430001, 0.1105, -1.8999999, 2.157, 0.1175, -1.8999999, 2.1430001, 0.1175, -1.8999999, 2.1430001, 0.1105, 0.49999994, 2.157, 0.1175, -1.8999999, 2.157, 0.1175, 0.49999994, 2.157, 0.1105, -1.8999999, 2.157, 0.1175, -1.8999999, 2.157, 0.1105, 0.49999994, 2.157, 0.1105, -1.8999999, 2.1430001, 0.1175, 0.49999994, 2.1430001, 0.1175, -1.8999999, 2.1430001, 0.1105, 0.49999994, 2.1430001, 0.1175, 0.49999994, 2.1430001, 0.1105, -1.8999999, 2.1430001, 0.1105, -2, 1.9369999, 0.1175, 0.59999996, 1.9369999, 0.1175, -2, 1.923, 0.1175, 0.59999996, 1.9369999, 0.1175, 0.59999996, 1.923, 0.1175, -2, 1.923, 0.1175, 0.59999996, 1.9369999, 0.1105, -2, 1.9369999, 0.1105, 0.59999996, 1.923, 0.1105, -2, 1.9369999, 0.1105, -2, 1.923, 0.1105, 0.59999996, 1.923, 0.1105, 0.59999996, 1.9369999, 0.1175, 0.59999996, 1.9369999, 0.1105, 0.59999996, 1.923, 0.1175, 0.59999996, 1.9369999, 0.1105, 0.59999996, 1.923, 0.1105, 0.59999996, 1.923, 0.1175, -2, 1.9369999, 0.1105, -2, 1.9369999, 0.1175, -2, 1.923, 0.1105, -2, 1.9369999, 0.1175, -2, 1.923, 0.1175, -2, 1.923, 0.1105, 0.59999996, 1.9369999, 0.1175, -2, 1.9369999, 0.1175, 0.59999996, 1.9369999, 0.1105, -2, 1.9369999, 0.1175, -2, 1.9369999, 0.1105, 0.59999996, 1.9369999, 0.1105, -2, 1.923, 0.1175, 0.59999996, 1.923, 0.1175, -2, 1.923, 0.1105, 0.59999996, 1.923, 0.1175, 0.59999996, 1.923, 0.1105, -2, 1.923, 0.1105, -2.1, 1.717, 0.1175, 0.7, 1.717, 0.1175, -2.1, 1.7030001, 0.1175, 0.7, 1.717, 0.1175, 0.7, 1.7030001, 0.1175, -2.1, 1.7030001, 0.1175, 0.7, 1.717, 0.1105, -2.1, 1.717, 0.1105, 0.7, 1.7030001, 0.1105, -2.1, 1.717, 0.1105, -2.1, 1.7030001, 0.1105, 0.7, 1.7030001, 0.1105, 0.7, 1.717, 0.1175, 0.7, 1.717, 0.1105, 0.7, 1.7030001, 0.1175, 0.7, 1.717, 0.1105, 0.7, 1.7030001, 0.1105, 0.7, 1.7030001, 0.1175, -2.1, 1.717, 0.1105, -2.1, 1.717, 0.1175, -2.1, 1.7030001, 0.1105, -2.1, 1.717, 0.1175, -2.1, 1.7030001, 0.1175, -2.1, 1.7030001, 0.1105, 0.7, 1.717, 0.1175, -2.1, 1.717, 0.1175, 0.7, 1.717, 0.1105, -2.1, 1.717, 0.1175, -2.1, 1.717, 0.1105, 0.7, 1.717, 0.1105, -2.1, 1.7030001, 0.1175, 0.7, 1.7030001, 0.1175, -2.1, 1.7030001, 0.1105, 0.7, 1.7030001, 0.1175, 0.7, 1.7030001, 0.1105, -2.1, 1.7030001, 0.1105, -1.8999999, 1.497, 0.1175, 0.49999994, 1.497, 0.1175, -1.8999999, 1.483, 0.1175, 0.49999994, 1.497, 0.1175, 0.49999994, 1.483, 0.1175, -1.8999999, 1.483, 0.1175, 0.49999994, 1.497, 0.1105, -1.8999999, 1.497, 0.1105, 0.49999994, 1.483, 0.1105, -1.8999999, 1.497, 0.1105, -1.8999999, 1.483, 0.1105, 0.49999994, 1.483, 0.1105, 0.49999994, 1.497, 0.1175, 0.49999994, 1.497, 0.1105, 0.49999994, 1.483, 0.1175, 0.49999994, 1.497, 0.1105, 0.49999994, 1.483, 0.1105, 0.49999994, 1.483, 0.1175, -1.8999999, 1.497, 0.1105, -1.8999999, 1.497, 0.1175, -1.8999999, 1.483, 0.1105, -1.8999999, 1.497, 0.1175, -1.8999999, 1.483, 0.1175, -1.8999999, 1.483, 0.1105, 0.49999994, 1.497, 0.1175, -1.8999999, 1.497, 0.1175, 0.49999994, 1.497, 0.1105, -1.8999999, 1.497, 0.1175, -1.8999999, 1.497, 0.1105, 0.49999994, 1.497, 0.1105, -1.8999999, 1.483, 0.1175, 0.49999994, 1.483, 0.1175, -1.8999999, 1.483, 0.1105, 0.49999994, 1.483, 0.1175, 0.49999994, 1.483, 0.1105, -1.8999999, 1.483, 0.1105, -2, 1.277, 0.1175, 0.59999996, 1.277, 0.1175, -2, 1.263, 0.1175, 0.59999996, 1.277, 0.1175, 0.59999996, 1.263, 0.1175, -2, 1.263, 0.1175, 0.59999996, 1.277, 0.1105, -2, 1.277, 0.1105, 0.59999996, 1.263, 0.1105, -2, 1.277, 0.1105, -2, 1.263, 0.1105, 0.59999996, 1.263, 0.1105, 0.59999996, 1.277, 0.1175, 0.59999996, 1.277, 0.1105, 0.59999996, 1.263, 0.1175, 0.59999996, 1.277, 0.1105, 0.59999996, 1.263, 0.1105, 0.59999996, 1.263, 0.1175, -2, 1.277, 0.1105, -2, 1.277, 0.1175, -2, 1.263, 0.1105, -2, 1.277, 0.1175, -2, 1.263, 0.1175, -2, 1.263, 0.1105, 0.59999996, 1.277, 0.1175, -2, 1.277, 0.1175, 0.59999996, 1.277, 0.1105, -2, 1.277, 0.1175, -2, 1.277, 0.1105, 0.59999996, 1.277, 0.1105, -2, 1.263, 0.1175, 0.59999996, 1.263, 0.1175, -2, 1.263, 0.1105, 0.59999996, 1.263, 0.1175, 0.59999996, 1.263, 0.1105, -2, 1.263, 0.1105, -2.1, 1.0569999, 0.1175, 0.7, 1.0569999, 0.1175, -2.1, 1.043, 0.1175, 0.7, 1.0569999, 0.1175, 0.7, 1.043, 0.1175, -2.1, 1.043, 0.1175, 0.7, 1.0569999, 0.1105, -2.1, 1.0569999, 0.1105, 0.7, 1.043, 0.1105, -2.1, 1.0569999, 0.1105, -2.1, 1.043, 0.1105, 0.7, 1.043, 0.1105, 0.7, 1.0569999, 0.1175, 0.7, 1.0569999, 0.1105, 0.7, 1.043, 0.1175, 0.7, 1.0569999, 0.1105, 0.7, 1.043, 0.1105, 0.7, 1.043, 0.1175, -2.1, 1.0569999, 0.1105, -2.1, 1.0569999, 0.1175, -2.1, 1.043, 0.1105, -2.1, 1.0569999, 0.1175, -2.1, 1.043, 0.1175, -2.1, 1.043, 0.1105, 0.7, 1.0569999, 0.1175, -2.1, 1.0569999, 0.1175, 0.7, 1.0569999, 0.1105, -2.1, 1.0569999, 0.1175, -2.1, 1.0569999, 0.1105, 0.7, 1.0569999, 0.1105, -2.1, 1.043, 0.1175, 0.7, 1.043, 0.1175, -2.1, 1.043, 0.1105, 0.7, 1.043, 0.1175, 0.7, 1.043, 0.1105, -2.1, 1.043, 0.1105, 1.76, 0.62, 0.245, 1.8399999, 0.62, 0.245, 1.76, 0.6, 0.245, 1.8399999, 0.62, 0.245, 1.8399999, 0.6, 0.245, 1.76, 0.6, 0.245, 1.8399999, 0.62, 0.215, 1.76, 0.62, 0.215, 1.8399999, 0.6, 0.215, 1.76, 0.62, 0.215, 1.76, 0.6, 0.215, 1.8399999, 0.6, 0.215, 1.8399999, 0.62, 0.245, 1.8399999, 0.62, 0.215, 1.8399999, 0.6, 0.245, 1.8399999, 0.62, 0.215, 1.8399999, 0.6, 0.215, 1.8399999, 0.6, 0.245, 1.76, 0.62, 0.215, 1.76, 0.62, 0.245, 1.76, 0.6, 0.215, 1.76, 0.62, 0.245, 1.76, 0.6, 0.245, 1.76, 0.6, 0.215, 1.8399999, 0.62, 0.245, 1.76, 0.62, 0.245, 1.8399999, 0.62, 0.215, 1.76, 0.62, 0.245, 1.76, 0.62, 0.215, 1.8399999, 0.62, 0.215, 1.76, 0.6, 0.245, 1.8399999, 0.6, 0.245, 1.76, 0.6, 0.215, 1.8399999, 0.6, 0.245, 1.8399999, 0.6, 0.215, 1.76, 0.6, 0.215, 1.87, 0.62, 0.245, 1.9499999, 0.62, 0.245, 1.87, 0.6, 0.245, 1.9499999, 0.62, 0.245, 1.9499999, 0.6, 0.245, 1.87, 0.6, 0.245, 1.9499999, 0.62, 0.215, 1.87, 0.62, 0.215, 1.9499999, 0.6, 0.215, 1.87, 0.62, 0.215, 1.87, 0.6, 0.215, 1.9499999, 0.6, 0.215, 1.9499999, 0.62, 0.245, 1.9499999, 0.62, 0.215, 1.9499999, 0.6, 0.245, 1.9499999, 0.62, 0.215, 1.9499999, 0.6, 0.215, 1.9499999, 0.6, 0.245, 1.87, 0.62, 0.215, 1.87, 0.62, 0.245, 1.87, 0.6, 0.215, 1.87, 0.62, 0.245, 1.87, 0.6, 0.245, 1.87, 0.6, 0.215, 1.9499999, 0.62, 0.245, 1.87, 0.62, 0.245, 1.9499999, 0.62, 0.215, 1.87, 0.62, 0.245, 1.87, 0.62, 0.215, 1.9499999, 0.62, 0.215, 1.87, 0.6, 0.245, 1.9499999, 0.6, 0.245, 1.87, 0.6, 0.215, 1.9499999, 0.6, 0.245, 1.9499999, 0.6, 0.215, 1.87, 0.6, 0.215, 1.98, 0.62, 0.245, 2.06, 0.62, 0.245, 1.98, 0.6, 0.245, 2.06, 0.62, 0.245, 2.06, 0.6, 0.245, 1.98, 0.6, 0.245, 2.06, 0.62, 0.215, 1.98, 0.62, 0.215, 2.06, 0.6, 0.215, 1.98, 0.62, 0.215, 1.98, 0.6, 0.215, 2.06, 0.6, 0.215, 2.06, 0.62, 0.245, 2.06, 0.62, 0.215, 2.06, 0.6, 0.245, 2.06, 0.62, 0.215, 2.06, 0.6, 0.215, 2.06, 0.6, 0.245, 1.98, 0.62, 0.215, 1.98, 0.62, 0.245, 1.98, 0.6, 0.215, 1.98, 0.62, 0.245, 1.98, 0.6, 0.245, 1.98, 0.6, 0.215, 2.06, 0.62, 0.245, 1.98, 0.62, 0.245, 2.06, 0.62, 0.215, 1.98, 0.62, 0.245, 1.98, 0.62, 0.215, 2.06, 0.62, 0.215, 1.98, 0.6, 0.245, 2.06, 0.6, 0.245, 1.98, 0.6, 0.215, 2.06, 0.6, 0.245, 2.06, 0.6, 0.215, 1.98, 0.6, 0.215)
+backface_collision = true
+
+[node name="Public_blackboard_large" type="Node3D" unique_id=886250845 script=ExtResource("1_auto_script")]
+script = ExtResource("1_tdara")
+metadata/world_category = &"furniture"
+metadata/prefab_id = "public/blackboard_large"
+
+[node name="blackboard_large" type="Node3D" parent="." unique_id=1138673629]
+metadata/authoring_label = "blackboard_large"
+
+[node name="@MeshInstance3D@19384" type="MeshInstance3D" parent="blackboard_large" unique_id=380220161]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+material_override = SubResource("ShaderMaterial_wd4qw")
+mesh = SubResource("BoxMesh_hwol0")
+
+[node name="@MeshInstance3D@19385" type="MeshInstance3D" parent="blackboard_large" unique_id=1190276464]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0.095)
+material_override = SubResource("ShaderMaterial_tt53s")
+mesh = SubResource("BoxMesh_l2b5u")
+
+[node name="@MeshInstance3D@19386" type="MeshInstance3D" parent="blackboard_large" unique_id=1206313915]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4, 0.55, 0)
+material_override = SubResource("ShaderMaterial_wd4qw")
+mesh = SubResource("BoxMesh_ncfcq")
+
+[node name="@MeshInstance3D@19387" type="MeshInstance3D" parent="blackboard_large" unique_id=1975035527]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 0.55, 0)
+material_override = SubResource("ShaderMaterial_wd4qw")
+mesh = SubResource("BoxMesh_ep3s7")
+
+[node name="@MeshInstance3D@19388" type="MeshInstance3D" parent="blackboard_large" unique_id=2039061759]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0.2)
+material_override = SubResource("ShaderMaterial_wd4qw")
+mesh = SubResource("BoxMesh_5wg6b")
+
+[node name="@MeshInstance3D@19389" type="MeshInstance3D" parent="blackboard_large" unique_id=1716818146]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 2.15, 0.114)
+material_override = SubResource("ShaderMaterial_w0rlg")
+mesh = SubResource("BoxMesh_3gfhw")
+
+[node name="@MeshInstance3D@19390" type="MeshInstance3D" parent="blackboard_large" unique_id=195943053]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 1.93, 0.114)
+material_override = SubResource("ShaderMaterial_w0rlg")
+mesh = SubResource("BoxMesh_iqfk8")
+
+[node name="@MeshInstance3D@19391" type="MeshInstance3D" parent="blackboard_large" unique_id=540822618]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 1.71, 0.114)
+material_override = SubResource("ShaderMaterial_w0rlg")
+mesh = SubResource("BoxMesh_2rv45")
+
+[node name="@MeshInstance3D@19392" type="MeshInstance3D" parent="blackboard_large" unique_id=474203366]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 1.49, 0.114)
+material_override = SubResource("ShaderMaterial_w0rlg")
+mesh = SubResource("BoxMesh_ekhsy")
+
+[node name="@MeshInstance3D@19393" type="MeshInstance3D" parent="blackboard_large" unique_id=796003654]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 1.27, 0.114)
+material_override = SubResource("ShaderMaterial_w0rlg")
+mesh = SubResource("BoxMesh_bvp7g")
+
+[node name="@MeshInstance3D@19394" type="MeshInstance3D" parent="blackboard_large" unique_id=1295059784]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 1.05, 0.114)
+material_override = SubResource("ShaderMaterial_w0rlg")
+mesh = SubResource("BoxMesh_dfp2m")
+
+[node name="@MeshInstance3D@19395" type="MeshInstance3D" parent="blackboard_large" unique_id=1506470139]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0.61, 0.23)
+material_override = SubResource("ShaderMaterial_w0rlg")
+mesh = SubResource("BoxMesh_pjpt5")
+
+[node name="@MeshInstance3D@19396" type="MeshInstance3D" parent="blackboard_large" unique_id=1841062923]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.91, 0.61, 0.23)
+material_override = SubResource("ShaderMaterial_w0rlg")
+mesh = SubResource("BoxMesh_8a3ax")
+
+[node name="@MeshInstance3D@19397" type="MeshInstance3D" parent="blackboard_large" unique_id=1212058868]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.02, 0.61, 0.23)
+material_override = SubResource("ShaderMaterial_w0rlg")
+mesh = SubResource("BoxMesh_ck25y")
+
+[node name="Solid" type="StaticBody3D" parent="." unique_id=1889680889]
+collision_mask = 0
+metadata/collision_category = &"furniture"
+
+[node name="@CollisionShape3D@5030" type="CollisionShape3D" parent="Solid" unique_id=124796902]
+shape = SubResource("ConcavePolygonShape3D_tdara")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=1203730438]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=268553250]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.53)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=2063309571]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.785)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=1166957813]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0.12750001)

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <UseSharedCompilation>false</UseSharedCompilation>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../assets/data/*.data.dv" Link="Content/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../../assets/data/cases/*.dv" Link="Content/Cases/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <ProjectReference Include="../engine/DuelView.Core.csproj" />
+  </ItemGroup>
+</Project>
+

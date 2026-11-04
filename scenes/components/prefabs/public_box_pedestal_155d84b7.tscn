@@ -1,0 +1,98 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/public_box_pedestal_155d84b7.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_yiw5m"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/wood.gdshader" id="2_8a6er"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ygbl2"]
+render_priority = 0
+shader = ExtResource("2_8a6er")
+shader_parameter/pigment = Color(0.5921569, 0.45882353, 0.29803923, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_hfa22"]
+size = Vector3(0.8, 0.8, 0.7)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7ciro"]
+render_priority = 0
+shader = ExtResource("2_8a6er")
+shader_parameter/pigment = Color(0.28627452, 0.19607843, 0.15294118, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_83ay5"]
+size = Vector3(0.83, 0.09, 0.045)
+
+[sub_resource type="BoxMesh" id="BoxMesh_nhmeg"]
+size = Vector3(0.83, 0.09, 0.045)
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_yiw5m"]
+data = PackedVector3Array(-0.39999998, 0.79999995, 0.35, 0.39999998, 0.79999995, 0.35, -0.39999998, 2.9802322e-08, 0.35, 0.39999998, 0.79999995, 0.35, 0.39999998, 2.9802322e-08, 0.35, -0.39999998, 2.9802322e-08, 0.35, 0.39999998, 0.79999995, -0.35, -0.39999998, 0.79999995, -0.35, 0.39999998, 2.9802322e-08, -0.35, -0.39999998, 0.79999995, -0.35, -0.39999998, 2.9802322e-08, -0.35, 0.39999998, 2.9802322e-08, -0.35, 0.39999998, 0.79999995, 0.35, 0.39999998, 0.79999995, -0.35, 0.39999998, 2.9802322e-08, 0.35, 0.39999998, 0.79999995, -0.35, 0.39999998, 2.9802322e-08, -0.35, 0.39999998, 2.9802322e-08, 0.35, -0.39999998, 0.79999995, -0.35, -0.39999998, 0.79999995, 0.35, -0.39999998, 2.9802322e-08, -0.35, -0.39999998, 0.79999995, 0.35, -0.39999998, 2.9802322e-08, 0.35, -0.39999998, 2.9802322e-08, -0.35, 0.39999998, 0.79999995, 0.35, -0.39999998, 0.79999995, 0.35, 0.39999998, 0.79999995, -0.35, -0.39999998, 0.79999995, 0.35, -0.39999998, 0.79999995, -0.35, 0.39999998, 0.79999995, -0.35, -0.39999998, 2.9802322e-08, 0.35, 0.39999998, 2.9802322e-08, 0.35, -0.39999998, 2.9802322e-08, -0.35, 0.39999998, 2.9802322e-08, 0.35, 0.39999998, 2.9802322e-08, -0.35, -0.39999998, 2.9802322e-08, -0.35, -0.415, 0.145, 0.38250002, 0.415, 0.145, 0.38250002, -0.415, 0.055000003, 0.38250002, 0.415, 0.145, 0.38250002, 0.415, 0.055000003, 0.38250002, -0.415, 0.055000003, 0.38250002, 0.415, 0.145, 0.3375, -0.415, 0.145, 0.3375, 0.415, 0.055000003, 0.3375, -0.415, 0.145, 0.3375, -0.415, 0.055000003, 0.3375, 0.415, 0.055000003, 0.3375, 0.415, 0.145, 0.38250002, 0.415, 0.145, 0.3375, 0.415, 0.055000003, 0.38250002, 0.415, 0.145, 0.3375, 0.415, 0.055000003, 0.3375, 0.415, 0.055000003, 0.38250002, -0.415, 0.145, 0.3375, -0.415, 0.145, 0.38250002, -0.415, 0.055000003, 0.3375, -0.415, 0.145, 0.38250002, -0.415, 0.055000003, 0.38250002, -0.415, 0.055000003, 0.3375, 0.415, 0.145, 0.38250002, -0.415, 0.145, 0.38250002, 0.415, 0.145, 0.3375, -0.415, 0.145, 0.38250002, -0.415, 0.145, 0.3375, 0.415, 0.145, 0.3375, -0.415, 0.055000003, 0.38250002, 0.415, 0.055000003, 0.38250002, -0.415, 0.055000003, 0.3375, 0.415, 0.055000003, 0.38250002, 0.415, 0.055000003, 0.3375, -0.415, 0.055000003, 0.3375, -0.415, 0.745, 0.38250002, 0.415, 0.745, 0.38250002, -0.415, 0.655, 0.38250002, 0.415, 0.745, 0.38250002, 0.415, 0.655, 0.38250002, -0.415, 0.655, 0.38250002, 0.415, 0.745, 0.3375, -0.415, 0.745, 0.3375, 0.415, 0.655, 0.3375, -0.415, 0.745, 0.3375, -0.415, 0.655, 0.3375, 0.415, 0.655, 0.3375, 0.415, 0.745, 0.38250002, 0.415, 0.745, 0.3375, 0.415, 0.655, 0.38250002, 0.415, 0.745, 0.3375, 0.415, 0.655, 0.3375, 0.415, 0.655, 0.38250002, -0.415, 0.745, 0.3375, -0.415, 0.745, 0.38250002, -0.415, 0.655, 0.3375, -0.415, 0.745, 0.38250002, -0.415, 0.655, 0.38250002, -0.415, 0.655, 0.3375, 0.415, 0.745, 0.38250002, -0.415, 0.745, 0.38250002, 0.415, 0.745, 0.3375, -0.415, 0.745, 0.38250002, -0.415, 0.745, 0.3375, 0.415, 0.745, 0.3375, -0.415, 0.655, 0.38250002, 0.415, 0.655, 0.38250002, -0.415, 0.655, 0.3375, 0.415, 0.655, 0.38250002, 0.415, 0.655, 0.3375, -0.415, 0.655, 0.3375)
+backface_collision = true
+
+[node name="Public_box_pedestal" type="Node3D" unique_id=1786720503 script=ExtResource("1_auto_script")]
+script = ExtResource("1_yiw5m")
+metadata/world_category = &"furniture"
+metadata/prefab_id = "public/box_pedestal"
+
+[node name="box_pedestal" type="Node3D" parent="." unique_id=934175383]
+metadata/authoring_label = "box_pedestal"
+
+[node name="@MeshInstance3D@19601" type="MeshInstance3D" parent="box_pedestal" unique_id=621670670]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+material_override = SubResource("ShaderMaterial_ygbl2")
+mesh = SubResource("BoxMesh_hfa22")
+
+[node name="@MeshInstance3D@19602" type="MeshInstance3D" parent="box_pedestal" unique_id=302980145]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0.36)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_83ay5")
+
+[node name="@MeshInstance3D@19603" type="MeshInstance3D" parent="box_pedestal" unique_id=166699176]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0.36)
+material_override = SubResource("ShaderMaterial_7ciro")
+mesh = SubResource("BoxMesh_nhmeg")
+
+[node name="Solid" type="StaticBody3D" parent="." unique_id=1166171549]
+collision_mask = 0
+metadata/collision_category = &"furniture"
+
+[node name="@CollisionShape3D@4535" type="CollisionShape3D" parent="Solid" unique_id=202719558]
+shape = SubResource("ConcavePolygonShape3D_yiw5m")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=2109912651]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=1945084294]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.8)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=1119590523]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.83250004)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=280811686]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0.016250014)

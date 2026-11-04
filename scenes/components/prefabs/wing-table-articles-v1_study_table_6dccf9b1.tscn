@@ -1,0 +1,193 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/wing-table-articles-v1_study_table_6dccf9b1.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_lg0vb"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/aged_metal.gdshader" id="2_1liok"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/painted_surface.gdshader" id="3_rgo1q"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/fabric.gdshader" id="4_r7veb"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_obu6x"]
+render_priority = 0
+shader = ExtResource("2_1liok")
+shader_parameter/pigment = Color(0.654902, 0.54901963, 0.32156864, 1)
+shader_parameter/surface_roughness = 0.35
+shader_parameter/surface_metallic = 0.65
+shader_parameter/patina = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_0y0v3"]
+top_radius = 0.075
+bottom_radius = 0.075
+height = 0.05
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_qtuwl"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0t27q"]
+render_priority = 0
+shader = ExtResource("3_rgo1q")
+shader_parameter/pigment = Color(0.8784314, 0.7607843, 0.54509807, 1)
+shader_parameter/surface_roughness = 0.25
+shader_parameter/surface_metallic = 0.0
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1nfmm"]
+top_radius = 0.022
+bottom_radius = 0.029
+height = 0.12
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dny86"]
+render_priority = 0
+shader = ExtResource("4_r7veb")
+shader_parameter/pigment = Color(0.79607844, 0.73333335, 0.53333336, 1)
+shader_parameter/surface_roughness = 0.86
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_dxbtx"]
+top_radius = 0.055
+bottom_radius = 0.12
+height = 0.11
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ft5cu"]
+render_priority = 0
+shader = ExtResource("4_r7veb")
+shader_parameter/pigment = Color(0.20784314, 0.2901961, 0.23529412, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_j7v5w"]
+size = Vector3(0.22, 0.035, 0.28)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_t84v7"]
+render_priority = 0
+shader = ExtResource("4_r7veb")
+shader_parameter/pigment = Color(0.79607844, 0.7490196, 0.62352943, 1)
+shader_parameter/surface_roughness = 0.96
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_jsn4t"]
+size = Vector3(0.19, 0.009, 0.25)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4dtb1"]
+size = Vector3(0.18, 0.012, 0.22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ypccr"]
+size = Vector3(0.18, 0.012, 0.22)
+
+[node name="FurniturePrefab" type="Node3D" unique_id=405141978 script=ExtResource("1_auto_script")]
+script = ExtResource("1_lg0vb")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "wing-table-articles-v1/study_table"
+
+[node name="YiTableArticles" type="Node3D" parent="." unique_id=364308963]
+metadata/authoring_label = "YiTableArticles"
+
+[node name="@MeshInstance3D@2644" type="MeshInstance3D" parent="YiTableArticles" unique_id=1616578481]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.794, 0)
+material_override = SubResource("ShaderMaterial_obu6x")
+mesh = SubResource("CylinderMesh_0y0v3")
+
+[node name="@MeshInstance3D@2645" type="MeshInstance3D" parent="YiTableArticles" unique_id=1983644041]
+transform = Transform3D(0.12, 0, 0, 0, 0.12, 0, 0, 0, 0.12, -0.3, 0.864, 0)
+material_override = SubResource("ShaderMaterial_obu6x")
+mesh = SubResource("SphereMesh_qtuwl")
+
+[node name="@MeshInstance3D@2646" type="MeshInstance3D" parent="YiTableArticles" unique_id=479590428]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.969, 0)
+material_override = SubResource("ShaderMaterial_0t27q")
+mesh = SubResource("CylinderMesh_1nfmm")
+
+[node name="@MeshInstance3D@2647" type="MeshInstance3D" parent="YiTableArticles" unique_id=1259602282]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 1.059, 0)
+material_override = SubResource("ShaderMaterial_dny86")
+mesh = SubResource("CylinderMesh_dxbtx")
+
+[node name="@MeshInstance3D@2649" type="MeshInstance3D" parent="YiTableArticles" unique_id=289984931]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.22, 0.794, 0.07)
+material_override = SubResource("ShaderMaterial_ft5cu")
+mesh = SubResource("BoxMesh_j7v5w")
+
+[node name="@MeshInstance3D@2650" type="MeshInstance3D" parent="YiTableArticles" unique_id=1269354894]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.22, 0.814, 0.07)
+material_override = SubResource("ShaderMaterial_t84v7")
+mesh = SubResource("BoxMesh_jsn4t")
+
+[node name="@MeshInstance3D@2651" type="MeshInstance3D" parent="YiTableArticles" unique_id=79654454]
+transform = Transform3D(0.99820054, 0.059964005, 0, -0.059964005, 0.99820054, 0, 0, 0, 1, -0.095, 0.784, -0.25)
+material_override = SubResource("ShaderMaterial_t84v7")
+mesh = SubResource("BoxMesh_4dtb1")
+
+[node name="@MeshInstance3D@2652" type="MeshInstance3D" parent="YiTableArticles" unique_id=813493547]
+transform = Transform3D(0.99820054, -0.059964005, 0, 0.059964005, 0.99820054, 0, 0, 0, 1, 0.095, 0.784, -0.25)
+material_override = SubResource("ShaderMaterial_t84v7")
+mesh = SubResource("BoxMesh_ypccr")
+
+[node name="@OmniLight3D@2648" type="OmniLight3D" parent="." unique_id=758123417]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.999, 0.03)
+light_color = Color(0.9490196, 0.8156863, 0.5686275, 1)
+light_energy = 0.19
+light_size = 0.12
+shadow_enabled = true
+omni_range = 1.8
+metadata/normal_energy = 0.19
+metadata/room = "zone_yi:hall"
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=1224617816]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=1467011441]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.045000017, 0, -0.81)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=691234656]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.045000017, 0, 0.66)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=499830865]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.045000017, 1.114, -0.07499999)

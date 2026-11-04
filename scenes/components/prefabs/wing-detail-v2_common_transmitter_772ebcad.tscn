@@ -1,0 +1,104 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/wing-detail-v2_common_transmitter_772ebcad.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_gpgj3"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/aged_metal.gdshader" id="2_wlbyw"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/stone.gdshader" id="3_8rdy6"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_aolih"]
+render_priority = 0
+shader = ExtResource("2_wlbyw")
+shader_parameter/pigment = Color(0.68235296, 0.5764706, 0.36078432, 1)
+shader_parameter/surface_roughness = 0.42
+shader_parameter/surface_metallic = 0.6
+shader_parameter/patina = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_6qex3"]
+top_radius = 0.045
+bottom_radius = 0.045
+height = 1.44
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_p2hyt"]
+top_radius = 0.045
+bottom_radius = 0.15
+height = 0.22
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_r82m1"]
+top_radius = 0.2
+bottom_radius = 0.2
+height = 0.1
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8p67w"]
+render_priority = 0
+shader = ExtResource("3_8rdy6")
+shader_parameter/pigment = Color(0.827451, 0.77254903, 0.63529414, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/variation = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_aop2r"]
+size = Vector3(0.17, 0.13, 0.025)
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1060447333 script=ExtResource("1_auto_script")]
+script = ExtResource("1_gpgj3")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "wing-detail-v2/common/transmitter"
+
+[node name="WingVoicepipe" type="Node3D" parent="." unique_id=331329173]
+metadata/authoring_label = "WingVoicepipe"
+
+[node name="@MeshInstance3D@2602" type="MeshInstance3D" parent="WingVoicepipe" unique_id=1368955144]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0)
+material_override = SubResource("ShaderMaterial_aolih")
+mesh = SubResource("CylinderMesh_6qex3")
+
+[node name="@MeshInstance3D@2603" type="MeshInstance3D" parent="WingVoicepipe" unique_id=632008930]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 1.42, 0.12)
+material_override = SubResource("ShaderMaterial_aolih")
+mesh = SubResource("CylinderMesh_p2hyt")
+
+[node name="@MeshInstance3D@2604" type="MeshInstance3D" parent="WingVoicepipe" unique_id=537810359]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+material_override = SubResource("ShaderMaterial_aolih")
+mesh = SubResource("CylinderMesh_r82m1")
+
+[node name="@MeshInstance3D@2605" type="MeshInstance3D" parent="WingVoicepipe" unique_id=1755967832]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.02, 0.06)
+material_override = SubResource("ShaderMaterial_8p67w")
+mesh = SubResource("BoxMesh_aop2r")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=202748310]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=1276330500]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.65)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=1603125678]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.67999995)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=503934759]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0.014999986)

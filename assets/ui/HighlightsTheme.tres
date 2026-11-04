@@ -1,0 +1,65 @@
+[gd_resource type="Theme" format=3 uid="uid://2o1slqmphdom"]
+
+[ext_resource type="FontFile" uid="uid://b2crko4arpitv" path="res://assets/external/NotoSansSC/NotoSansSC[wght].ttf" id="font"]
+
+[sub_resource type="StyleBoxFlat" id="focus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.83, 0.8, 0.68, 1)
+
+[sub_resource type="StyleBoxFlat" id="hover"]
+content_margin_left = 18.0
+content_margin_top = 10.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+bg_color = Color(0.23, 0.4, 0.36, 1)
+
+[sub_resource type="StyleBoxFlat" id="button"]
+content_margin_left = 18.0
+content_margin_top = 10.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+bg_color = Color(0.16, 0.3, 0.28, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="pressed"]
+content_margin_left = 18.0
+content_margin_top = 10.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+bg_color = Color(0.39, 0.25, 0.21, 1)
+
+[sub_resource type="StyleBoxFlat" id="panel"]
+content_margin_left = 22.0
+content_margin_top = 14.0
+content_margin_right = 22.0
+content_margin_bottom = 14.0
+bg_color = Color(0.12, 0.18, 0.18, 1)
+border_width_top = 2
+border_color = Color(0.38, 0.48, 0.43, 1)
+
+[resource]
+default_font = ExtResource("font")
+default_font_size = 20
+Button/colors/font_color = Color(0.92, 0.88, 0.77, 1)
+Button/styles/focus = SubResource("focus")
+Button/styles/hover = SubResource("hover")
+Button/styles/normal = SubResource("button")
+Button/styles/pressed = SubResource("pressed")
+HBoxContainer/constants/separation = 10
+Label/colors/font_color = Color(0.92, 0.88, 0.77, 1)
+PanelContainer/styles/panel = SubResource("panel")
+RichTextLabel/colors/default_color = Color(0.92, 0.88, 0.77, 1)
+RichTextLabel/font_sizes/normal_font_size = 22
+StageMeta/base_type = &"Label"
+StageMeta/colors/font_color = Color(0.67, 0.76, 0.71, 1)
+StageMeta/font_sizes/font_size = 16
+StageTitle/base_type = &"Label"
+StageTitle/font_sizes/font_size = 28
+VBoxContainer/constants/separation = 10

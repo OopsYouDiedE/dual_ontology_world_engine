@@ -63,7 +63,7 @@ def persist_report(report):
 
 def execution_receipts(path, report):
     """Read only complete blocks written/flushed by the production CLI host."""
-    required = {"receipt_index", "completed_epoch", "version", "chapter", "game_time", "actor", "action", "outcome", "state"}
+    required = {"receipt_index", "version", "chapter", "start_time", "duration", "actor", "action", "outcome"}
     fault_required = {"kind", "completion_confirmed", "failed_epoch", "version_before", "game_time",
                       "actor", "action", "action_event", "exception_type", "message"}
     record = {}
@@ -246,7 +246,7 @@ def run(spec, report):
             if receipt_path.is_file():
                 for receipt in execution_receipts(receipt_path, report):
                     count += 1
-                    if receipt.get("completed_epoch", float("inf")) > spec["deadline_epoch"]:
+                    if receipt["version"] > report.get("final_state", {}).get("version", -1):
                         continue
                     in_budget += 1
                     latest = receipt
@@ -257,9 +257,9 @@ def run(spec, report):
                     previous_chapter = receipt["chapter"]
                     summary = receipt.get("chapter_summary", summary)
                     receipt_state.update(receipt.get("run_bounds", {}))
-                    receipt_state.update(receipt["state"])
+                    receipt_state.update(receipt.get("state", {}))
                     receipt_state.update(version=receipt["version"], chapter=receipt["chapter"],
-                                         game_time=receipt["state"].get("game_time", receipt["game_time"]),
+                                         game_time=receipt.get("state", {}).get("game_time", receipt["start_time"] + receipt["duration"]),
                                          chapter_summary=summary)
                     outcome = receipt.get("outcome", "unreported")
                     outcomes[outcome] = outcomes.get(outcome, 0) + 1
@@ -271,7 +271,7 @@ def run(spec, report):
             report.update(flushed_execution_receipts=count, in_budget_execution_receipts=in_budget,
                           out_of_budget_execution_receipts=count - in_budget, last_execution_receipt=latest,
                           receipt_outcomes=outcomes, receipt_categories=categories,
-                          receipt_coverage="Only complete YAML blocks flushed after actual CompleteFormal returns; action outcomes are preserved. "
+                          receipt_coverage="Only complete Core action rows confirmed by an in-budget live observation are counted; timestamps are start_time plus duration in game minutes. "
                                            "completed_actions sums successful batch observations; receipts additionally cover a final interrupted batch. "
                                            "last_execution_receipt and outcome counts exclude receipts timestamped after the configured deadline.")
             report["progress"] = {

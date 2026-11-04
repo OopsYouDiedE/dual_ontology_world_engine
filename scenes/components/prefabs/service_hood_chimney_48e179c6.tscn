@@ -1,0 +1,188 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/service_hood_chimney_48e179c6.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_t4oer"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/painted_surface.gdshader" id="2_efhlc"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/aged_metal.gdshader" id="3_61psp"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_htwu8"]
+render_priority = 0
+shader = ExtResource("2_efhlc")
+shader_parameter/pigment = Color(0.35686275, 0.38431373, 0.34509805, 1)
+shader_parameter/surface_roughness = 0.72
+shader_parameter/surface_metallic = 0.25
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_j7ts1"]
+size = Vector3(3.2, 0.2, 1.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5muim"]
+size = Vector3(2.5, 0.43, 0.86)
+
+[sub_resource type="BoxMesh" id="BoxMesh_eo4bo"]
+size = Vector3(0.65, 0.7, 0.55)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_eq370"]
+top_radius = 0.018
+bottom_radius = 0.018
+height = 1.1
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_563i0"]
+top_radius = 0.018
+bottom_radius = 0.018
+height = 1.1
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_67gw1"]
+top_radius = 0.018
+bottom_radius = 0.018
+height = 1.1
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hdfq2"]
+top_radius = 0.018
+bottom_radius = 0.018
+height = 1.1
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_51l4b"]
+render_priority = 0
+shader = ExtResource("3_61psp")
+shader_parameter/pigment = Color(0.63529414, 0.5803922, 0.4392157, 1)
+shader_parameter/surface_roughness = 0.45
+shader_parameter/surface_metallic = 0.5
+shader_parameter/patina = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="SphereMesh" id="SphereMesh_bf2mb"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_fl4ce"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_d4n1m"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_3g1vu"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_ouu3d"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_poo27"]
+radial_segments = 20
+rings = 12
+
+[node name="FurniturePrefab" type="Node3D" unique_id=678689373 script=ExtResource("1_auto_script")]
+script = ExtResource("1_t4oer")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "service/hood_chimney"
+
+[node name="hood_chimney" type="Node3D" parent="." unique_id=1334865355]
+metadata/authoring_label = "hood_chimney"
+
+[node name="CanopyOverRange" type="Node3D" parent="hood_chimney" unique_id=1662829470]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.75)
+
+[node name="@MeshInstance3D@20373" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=1791520501]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.65, 0)
+material_override = SubResource("ShaderMaterial_htwu8")
+mesh = SubResource("BoxMesh_j7ts1")
+
+[node name="@MeshInstance3D@20374" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=1094949092]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.96, -0.2)
+material_override = SubResource("ShaderMaterial_htwu8")
+mesh = SubResource("BoxMesh_5muim")
+
+[node name="@MeshInstance3D@20375" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=1866339556]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.48, -0.36)
+material_override = SubResource("ShaderMaterial_htwu8")
+mesh = SubResource("BoxMesh_eo4bo")
+
+[node name="@MeshInstance3D@20376" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=1229984304]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.35, 3.29, -0.45)
+material_override = SubResource("ShaderMaterial_htwu8")
+mesh = SubResource("CylinderMesh_eq370")
+
+[node name="@MeshInstance3D@20377" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=1071704084]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.35, 3.29, 0.45)
+material_override = SubResource("ShaderMaterial_htwu8")
+mesh = SubResource("CylinderMesh_563i0")
+
+[node name="@MeshInstance3D@20378" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=918216859]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35, 3.29, -0.45)
+material_override = SubResource("ShaderMaterial_htwu8")
+mesh = SubResource("CylinderMesh_67gw1")
+
+[node name="@MeshInstance3D@20379" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=174250772]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35, 3.29, 0.45)
+material_override = SubResource("ShaderMaterial_htwu8")
+mesh = SubResource("CylinderMesh_hdfq2")
+
+[node name="@MeshInstance3D@20380" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=660058746]
+transform = Transform3D(0.045, 0, 0, 0, 0.045, 0, 0, 0, 0.045, -1.3, 2.65, 0.72)
+material_override = SubResource("ShaderMaterial_51l4b")
+mesh = SubResource("SphereMesh_bf2mb")
+
+[node name="@MeshInstance3D@20381" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=1586973403]
+transform = Transform3D(0.045, 0, 0, 0, 0.045, 0, 0, 0, 0.045, -0.8, 2.65, 0.72)
+material_override = SubResource("ShaderMaterial_51l4b")
+mesh = SubResource("SphereMesh_fl4ce")
+
+[node name="@MeshInstance3D@20382" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=200687187]
+transform = Transform3D(0.045, 0, 0, 0, 0.045, 0, 0, 0, 0.045, -0.3, 2.65, 0.72)
+material_override = SubResource("ShaderMaterial_51l4b")
+mesh = SubResource("SphereMesh_d4n1m")
+
+[node name="@MeshInstance3D@20383" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=443802333]
+transform = Transform3D(0.045, 0, 0, 0, 0.045, 0, 0, 0, 0.045, 0.3, 2.65, 0.72)
+material_override = SubResource("ShaderMaterial_51l4b")
+mesh = SubResource("SphereMesh_3g1vu")
+
+[node name="@MeshInstance3D@20384" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=1685836342]
+transform = Transform3D(0.045, 0, 0, 0, 0.045, 0, 0, 0, 0.045, 0.8, 2.65, 0.72)
+material_override = SubResource("ShaderMaterial_51l4b")
+mesh = SubResource("SphereMesh_ouu3d")
+
+[node name="@MeshInstance3D@20385" type="MeshInstance3D" parent="hood_chimney/CanopyOverRange" unique_id=1792277993]
+transform = Transform3D(0.045, 0, 0, 0, 0.045, 0, 0, 0, 0.045, 1.3, 2.65, 0.72)
+material_override = SubResource("ShaderMaterial_51l4b")
+mesh = SubResource("SphereMesh_poo27")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=977120699]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=734218605]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.39999998)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=1056081520]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 1.9423361)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=1034992621]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0.77116805)

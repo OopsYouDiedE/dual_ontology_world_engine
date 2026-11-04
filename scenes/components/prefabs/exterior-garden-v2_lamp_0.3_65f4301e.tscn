@@ -1,0 +1,163 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/exterior-garden-v2_lamp_0.3_65f4301e.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_b7erp"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/aged_metal.gdshader" id="2_lm33b"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/painted_surface.gdshader" id="3_d1e6t"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_j72li"]
+render_priority = 0
+shader = ExtResource("2_lm33b")
+shader_parameter/pigment = Color(0.26666668, 0.3019608, 0.26666668, 1)
+shader_parameter/surface_roughness = 0.65
+shader_parameter/surface_metallic = 0.55
+shader_parameter/patina = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_tflpv"]
+top_radius = 0.16
+bottom_radius = 0.16
+height = 0.12
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ejfs4"]
+top_radius = 0.045
+bottom_radius = 0.045
+height = 1.66
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7drwc"]
+render_priority = 0
+shader = ExtResource("3_d1e6t")
+shader_parameter/pigment = Color(0.88235295, 0.8392157, 0.6784314, 1)
+shader_parameter/surface_roughness = 0.35
+shader_parameter/surface_metallic = 0.0
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_t8nuo"]
+size = Vector3(0.28, 0.4, 0.28)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_e0h54"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.42
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_c5him"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.42
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_8dcwv"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.42
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_k72k4"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.42
+radial_segments = 24
+
+[sub_resource type="BoxMesh" id="BoxMesh_j6ufx"]
+size = Vector3(0.38, 0.06, 0.38)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_nyi22"]
+top_radius = 0.045
+bottom_radius = 0.045
+height = 0.1
+radial_segments = 24
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1748908317 script=ExtResource("1_auto_script")]
+script = ExtResource("1_b7erp")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "exterior-garden-v2/lamp/0.3"
+
+[node name="Lamp" type="Node3D" parent="." unique_id=1039553715]
+metadata/authoring_label = "Lamp"
+
+[node name="@MeshInstance3D@24933" type="MeshInstance3D" parent="Lamp" unique_id=1446129682]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+material_override = SubResource("ShaderMaterial_j72li")
+mesh = SubResource("CylinderMesh_tflpv")
+
+[node name="@MeshInstance3D@24934" type="MeshInstance3D" parent="Lamp" unique_id=1737530830]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.86, 0)
+material_override = SubResource("ShaderMaterial_j72li")
+mesh = SubResource("CylinderMesh_ejfs4")
+
+[node name="@MeshInstance3D@24935" type="MeshInstance3D" parent="Lamp" unique_id=852021556]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
+material_override = SubResource("ShaderMaterial_7drwc")
+mesh = SubResource("BoxMesh_t8nuo")
+
+[node name="@MeshInstance3D@24936" type="MeshInstance3D" parent="Lamp" unique_id=341573448]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.15, 1.8, -0.15)
+material_override = SubResource("ShaderMaterial_j72li")
+mesh = SubResource("CylinderMesh_e0h54")
+
+[node name="@MeshInstance3D@24937" type="MeshInstance3D" parent="Lamp" unique_id=1469259880]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.15, 1.8, 0.15)
+material_override = SubResource("ShaderMaterial_j72li")
+mesh = SubResource("CylinderMesh_c5him")
+
+[node name="@MeshInstance3D@24938" type="MeshInstance3D" parent="Lamp" unique_id=578086416]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, 1.8, -0.15)
+material_override = SubResource("ShaderMaterial_j72li")
+mesh = SubResource("CylinderMesh_8dcwv")
+
+[node name="@MeshInstance3D@24939" type="MeshInstance3D" parent="Lamp" unique_id=1794378]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, 1.8, 0.15)
+material_override = SubResource("ShaderMaterial_j72li")
+mesh = SubResource("CylinderMesh_k72k4")
+
+[node name="@MeshInstance3D@24940" type="MeshInstance3D" parent="Lamp" unique_id=204085027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.03, 0)
+material_override = SubResource("ShaderMaterial_j72li")
+mesh = SubResource("BoxMesh_j6ufx")
+
+[node name="@MeshInstance3D@24941" type="MeshInstance3D" parent="Lamp" unique_id=2024218020]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
+material_override = SubResource("ShaderMaterial_j72li")
+mesh = SubResource("CylinderMesh_nyi22")
+
+[node name="@OmniLight3D@24942" type="OmniLight3D" parent="Lamp" unique_id=45352687]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
+light_color = Color(0.92156863, 0.8235294, 0.6509804, 1)
+light_energy = 0.6
+omni_range = 4.0
+metadata/normal_energy = 0.6
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=869730859]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=908836787]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.64)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=243263886]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.64)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=745173410]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)

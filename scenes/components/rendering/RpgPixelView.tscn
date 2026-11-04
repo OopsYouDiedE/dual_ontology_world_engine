@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://scenes/components/rendering/RpgPixelView.gd" id="1"]
+[node name="RpgPixelView" type="SubViewportContainer"]
+texture_filter = 1
+script = ExtResource("1")
+[node name="Viewport" type="SubViewport" parent="."]
+own_world_3d = true
+size = Vector2i(320, 248)
+render_target_update_mode = 4
+msaa_3d = 2
+use_debanding = false
+positional_shadow_atlas_size = 4096

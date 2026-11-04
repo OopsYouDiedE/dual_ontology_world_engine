@@ -1,0 +1,1225 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/salon-fern-v1_65066c50.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_e5x2w"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/stone.gdshader" id="2_g35vm"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/fabric.gdshader" id="3_4ac3j"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7p6sx"]
+render_priority = 0
+shader = ExtResource("2_g35vm")
+shader_parameter/pigment = Color(0.39607844, 0.44313726, 0.41960785, 1)
+shader_parameter/surface_roughness = 0.45
+shader_parameter/variation = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ggqxh"]
+top_radius = 0.3
+bottom_radius = 0.21
+height = 0.47
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_86paw"]
+top_radius = 0.31
+bottom_radius = 0.31
+height = 0.06
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qayk0"]
+render_priority = 0
+shader = ExtResource("3_4ac3j")
+shader_parameter/pigment = Color(0.24313726, 0.36078432, 0.23137255, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hqmkj"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.6103278
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_536wk"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_bkj2l"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_pe184"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_705bh"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_y8jac"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_8a1l6"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_u0mgv"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_ro58w"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_q2qrf"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_0d4gv"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xwo7u"]
+render_priority = 0
+shader = ExtResource("3_4ac3j")
+shader_parameter/pigment = Color(0.29803923, 0.4117647, 0.25490198, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hgmhs"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.67333484
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_kunwa"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_rhlni"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_m2eyn"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_s2cqp"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_65pew"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_on7ud"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_kqwgy"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_few7c"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_iaclk"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_apjvg"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_va3ig"]
+render_priority = 0
+shader = ExtResource("3_4ac3j")
+shader_parameter/pigment = Color(0.3529412, 0.4392157, 0.28627452, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_onvnp"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.67881304
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_uttfo"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_1ncth"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_e2hy6"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_afrj5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_ls0bd"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_ysgip"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_qiaak"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_aatg5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_p34a5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_hrly5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_gelt8"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.6201942
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_ywm8h"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_vr4nu"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_bn85g"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_ynn0q"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_aif5p"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_8nwmv"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_rx4v7"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_4ais5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_tstin"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_vglt2"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_vg0wo"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.56318396
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_oyy60"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_obyfq"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_34pu0"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_o55d6"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_4etg7"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_ikhhi"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_q3r4k"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_vt5vh"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_5okre"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_pifld"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_gnjcv"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.55244154
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_uore1"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_w3rod"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_lyiis"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_gdrwt"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_x1mbb"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_d4ecb"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_2t56i"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_cvn1r"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_y7yvo"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_g16s2"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hhv7e"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.59173757
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_fltf5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_yhhwt"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_7ufmx"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_pxri1"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_3jkl1"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_hpv16"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_11pof"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_c1gcj"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_wjyiw"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_k3qn6"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_qhut6"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.6587126
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_f65js"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_585l6"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_wa33j"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_h5lgl"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_1nht3"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_tivlh"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_my6to"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_wmpji"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_pj6jt"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_saju2"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_rhr0d"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.6853475
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_dlesd"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_mu2wu"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_4y83s"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_cbxr4"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_i0iab"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_w57n5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_er5j6"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_wxgck"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_bciqh"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_yyvqf"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_af1uc"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.6399716
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_tuugn"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_8ipab"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_kvvoe"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_bhl0c"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_o1bvw"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_3y1br"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_utloc"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_5f0f5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_7p1wk"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_s7ysl"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ysa37"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.57538164
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_cekqq"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_kbgv2"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_d2t4c"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_4g6yx"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_f4bm8"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_emu1j"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_400ie"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_aphh8"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_ylr5v"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_xax84"]
+radial_segments = 20
+rings = 12
+
+[node name="FurniturePrefab" type="Node3D" unique_id=201516968 script=ExtResource("1_auto_script")]
+script = ExtResource("1_e5x2w")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "salon-fern-v1"
+
+[node name="IndoorFern" type="Node3D" parent="." unique_id=33215404]
+metadata/authoring_label = "IndoorFern"
+
+[node name="@MeshInstance3D@1173" type="MeshInstance3D" parent="IndoorFern" unique_id=1907375461]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+material_override = SubResource("ShaderMaterial_7p6sx")
+mesh = SubResource("CylinderMesh_ggqxh")
+
+[node name="@MeshInstance3D@1174" type="MeshInstance3D" parent="IndoorFern" unique_id=2057802220]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.49, 0)
+material_override = SubResource("ShaderMaterial_7p6sx")
+mesh = SubResource("CylinderMesh_86paw")
+
+[node name="@MeshInstance3D@1175" type="MeshInstance3D" parent="IndoorFern" unique_id=1586202295]
+transform = Transform3D(0.57346237, 0.8192319, 0, -0.8192319, 0.57346237, 0, 0, 0, 1, 0.25, 0.675, 0)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("CylinderMesh_hqmkj")
+
+[node name="@MeshInstance3D@1176" type="MeshInstance3D" parent="IndoorFern" unique_id=249284470]
+transform = Transform3D(0.052253004, 0, -0.17933902, 0, 0.025, 0, 0.053801708, 0, 0.17417668, 0.083333336, 0.55833334, -0.065)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_536wk")
+
+[node name="@MeshInstance3D@1177" type="MeshInstance3D" parent="IndoorFern" unique_id=860664437]
+transform = Transform3D(0.052253004, 0, 0.17933902, 0, 0.025, 0, -0.053801708, 0, 0.17417668, 0.083333336, 0.55833334, 0.065)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_bkj2l")
+
+[node name="@MeshInstance3D@1178" type="MeshInstance3D" parent="IndoorFern" unique_id=1003041067]
+transform = Transform3D(0.052253004, 0, -0.17933902, 0, 0.025, 0, 0.053801708, 0, 0.17417668, 0.16666667, 0.6166667, -0.065)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_pe184")
+
+[node name="@MeshInstance3D@1179" type="MeshInstance3D" parent="IndoorFern" unique_id=204471373]
+transform = Transform3D(0.052253004, 0, 0.17933902, 0, 0.025, 0, -0.053801708, 0, 0.17417668, 0.16666667, 0.6166667, 0.065)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_705bh")
+
+[node name="@MeshInstance3D@1180" type="MeshInstance3D" parent="IndoorFern" unique_id=1704593024]
+transform = Transform3D(0.052253004, 0, -0.17933902, 0, 0.025, 0, 0.053801708, 0, 0.17417668, 0.25, 0.675, -0.065)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_y8jac")
+
+[node name="@MeshInstance3D@1181" type="MeshInstance3D" parent="IndoorFern" unique_id=2131976908]
+transform = Transform3D(0.052253004, 0, 0.17933902, 0, 0.025, 0, -0.053801708, 0, 0.17417668, 0.25, 0.675, 0.065)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_8a1l6")
+
+[node name="@MeshInstance3D@1182" type="MeshInstance3D" parent="IndoorFern" unique_id=1282053439]
+transform = Transform3D(0.052253004, 0, -0.17933902, 0, 0.025, 0, 0.053801708, 0, 0.17417668, 0.33333334, 0.73333335, -0.065)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_u0mgv")
+
+[node name="@MeshInstance3D@1183" type="MeshInstance3D" parent="IndoorFern" unique_id=296222988]
+transform = Transform3D(0.052253004, 0, 0.17933902, 0, 0.025, 0, -0.053801708, 0, 0.17417668, 0.33333334, 0.73333335, 0.065)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_ro58w")
+
+[node name="@MeshInstance3D@1184" type="MeshInstance3D" parent="IndoorFern" unique_id=1560150033]
+transform = Transform3D(0.052253004, 0, -0.17933902, 0, 0.025, 0, 0.053801708, 0, 0.17417668, 0.41666666, 0.7916667, -0.065)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_q2qrf")
+
+[node name="@MeshInstance3D@1185" type="MeshInstance3D" parent="IndoorFern" unique_id=685998387]
+transform = Transform3D(0.052253004, 0, 0.17933902, 0, 0.025, 0, -0.053801708, 0, 0.17417668, 0.41666666, 0.7916667, 0.065)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_0d4gv")
+
+[node name="@MeshInstance3D@1186" type="MeshInstance3D" parent="IndoorFern" unique_id=340970198]
+transform = Transform3D(0.76629066, 0.6246918, -0.15019587, -0.6246918, 0.66976565, -0.40146506, -0.15019587, 0.40146506, 0.903475, 0.21031338, 0.72548825, 0.13516021)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("CylinderMesh_hgmhs")
+
+[node name="@MeshInstance3D@1187" type="MeshInstance3D" parent="IndoorFern" unique_id=1624099727]
+transform = Transform3D(0.014870626, 0, -0.2450366, 0, 0.025, 0, 0.07351098, 0, 0.04956875, 0.10524612, 0.57516277, -0.009628072)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_kunwa")
+
+[node name="@MeshInstance3D@1188" type="MeshInstance3D" parent="IndoorFern" unique_id=1592318777]
+transform = Transform3D(0.073045425, 0, 0.056702565, 0, 0.025, 0, -0.01701077, 0, 0.24348474, 0.03496281, 0.57516277, 0.09973488)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_rhlni")
+
+[node name="@MeshInstance3D@1189" type="MeshInstance3D" parent="IndoorFern" unique_id=822163875]
+transform = Transform3D(0.014870626, 0, -0.2450366, 0, 0.025, 0, 0.07351098, 0, 0.04956875, 0.17535058, 0.65032554, 0.03542533)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_m2eyn")
+
+[node name="@MeshInstance3D@1190" type="MeshInstance3D" parent="IndoorFern" unique_id=956246315]
+transform = Transform3D(0.073045425, 0, 0.056702565, 0, 0.025, 0, -0.01701077, 0, 0.24348474, 0.105067275, 0.65032554, 0.14478828)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_s2cqp")
+
+[node name="@MeshInstance3D@1191" type="MeshInstance3D" parent="IndoorFern" unique_id=359355269]
+transform = Transform3D(0.014870626, 0, -0.2450366, 0, 0.025, 0, 0.07351098, 0, 0.04956875, 0.24545503, 0.72548825, 0.08047873)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_65pew")
+
+[node name="@MeshInstance3D@1192" type="MeshInstance3D" parent="IndoorFern" unique_id=2031733791]
+transform = Transform3D(0.073045425, 0, 0.056702565, 0, 0.025, 0, -0.01701077, 0, 0.24348474, 0.17517173, 0.72548825, 0.18984169)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_on7ud")
+
+[node name="@MeshInstance3D@1193" type="MeshInstance3D" parent="IndoorFern" unique_id=1965928457]
+transform = Transform3D(0.014870626, 0, -0.2450366, 0, 0.025, 0, 0.07351098, 0, 0.04956875, 0.3155595, 0.800651, 0.12553214)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_kqwgy")
+
+[node name="@MeshInstance3D@1194" type="MeshInstance3D" parent="IndoorFern" unique_id=705457073]
+transform = Transform3D(0.073045425, 0, 0.056702565, 0, 0.025, 0, -0.01701077, 0, 0.24348474, 0.24527621, 0.800651, 0.2348951)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_few7c")
+
+[node name="@MeshInstance3D@1195" type="MeshInstance3D" parent="IndoorFern" unique_id=2134795188]
+transform = Transform3D(0.014870626, 0, -0.2450366, 0, 0.025, 0, 0.07351098, 0, 0.04956875, 0.38566393, 0.8758137, 0.17058553)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_iaclk")
+
+[node name="@MeshInstance3D@1196" type="MeshInstance3D" parent="IndoorFern" unique_id=665920210]
+transform = Transform3D(0.073045425, 0, 0.056702565, 0, 0.025, 0, -0.01701077, 0, 0.24348474, 0.31538063, 0.8758137, 0.27994847)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_apjvg")
+
+[node name="@MeshInstance3D@1197" type="MeshInstance3D" parent="IndoorFern" unique_id=847393750]
+transform = Transform3D(0.94414794, 0.30598634, -0.12229895, -0.30598634, 0.6763506, -0.67001665, -0.12229895, 0.67001665, 0.73220265, 0.103853755, 0.7295579, 0.22740799)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("CylinderMesh_onvnp")
+
+[node name="@MeshInstance3D@1198" type="MeshInstance3D" parent="IndoorFern" unique_id=614644649]
+transform = Transform3D(-0.027233075, 0, -0.2329368, 0, 0.025, 0, 0.069881044, 0, -0.09077691, 0.093743995, 0.57651925, 0.048800692)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_uttfo")
+
+[node name="@MeshInstance3D@1199" type="MeshInstance3D" parent="IndoorFern" unique_id=1320818636]
+transform = Transform3D(0.070646435, 0, -0.08393656, 0, 0.025, 0, 0.025180968, 0, 0.23548812, -0.024508156, 0.57651925, 0.102804646)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_1ncth")
+
+[node name="@MeshInstance3D@1200" type="MeshInstance3D" parent="IndoorFern" unique_id=1350958614]
+transform = Transform3D(-0.027233075, 0, -0.2329368, 0, 0.025, 0, 0.069881044, 0, -0.09077691, 0.12836191, 0.65303856, 0.12460336)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_e2hy6")
+
+[node name="@MeshInstance3D@1201" type="MeshInstance3D" parent="IndoorFern" unique_id=1531703524]
+transform = Transform3D(0.070646435, 0, -0.08393656, 0, 0.025, 0, 0.025180968, 0, 0.23548812, 0.010109764, 0.65303856, 0.17860731)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_afrj5")
+
+[node name="@MeshInstance3D@1202" type="MeshInstance3D" parent="IndoorFern" unique_id=1762689433]
+transform = Transform3D(-0.027233075, 0, -0.2329368, 0, 0.025, 0, 0.069881044, 0, -0.09077691, 0.16297983, 0.7295579, 0.20040601)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_ls0bd")
+
+[node name="@MeshInstance3D@1203" type="MeshInstance3D" parent="IndoorFern" unique_id=816561258]
+transform = Transform3D(0.070646435, 0, -0.08393656, 0, 0.025, 0, 0.025180968, 0, 0.23548812, 0.04472768, 0.7295579, 0.25440997)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_ysgip")
+
+[node name="@MeshInstance3D@1204" type="MeshInstance3D" parent="IndoorFern" unique_id=1667975282]
+transform = Transform3D(-0.027233075, 0, -0.2329368, 0, 0.025, 0, 0.069881044, 0, -0.09077691, 0.19759776, 0.8060771, 0.2762087)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_qiaak")
+
+[node name="@MeshInstance3D@1205" type="MeshInstance3D" parent="IndoorFern" unique_id=904307868]
+transform = Transform3D(0.070646435, 0, -0.08393656, 0, 0.025, 0, 0.025180968, 0, 0.23548812, 0.0793456, 0.8060771, 0.33021265)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_aatg5")
+
+[node name="@MeshInstance3D@1206" type="MeshInstance3D" parent="IndoorFern" unique_id=157854889]
+transform = Transform3D(-0.027233075, 0, -0.2329368, 0, 0.025, 0, 0.069881044, 0, -0.09077691, 0.23221567, 0.8825964, 0.35201132)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_p34a5")
+
+[node name="@MeshInstance3D@1207" type="MeshInstance3D" parent="IndoorFern" unique_id=948866774]
+transform = Transform3D(0.070646435, 0, -0.08393656, 0, 0.025, 0, 0.025180968, 0, 0.23548812, 0.113963515, 0.8825964, 0.40601528)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_hrly5")
+
+[node name="@MeshInstance3D@1208" type="MeshInstance3D" parent="IndoorFern" unique_id=2104432817]
+transform = Transform3D(0.9917294, -0.1147341, 0.057523545, 0.1147341, 0.5916443, -0.7979931, 0.057523545, 0.7979931, 0.59991497, -0.03557871, 0.6834672, 0.24745536)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("CylinderMesh_gelt8")
+
+[node name="@MeshInstance3D@1209" type="MeshInstance3D" parent="IndoorFern" unique_id=106635323]
+transform = Transform3D(-0.060690466, 0, -0.1468812, 0, 0.025, 0, 0.044064358, 0, -0.20230155, 0.052478824, 0.56115574, 0.09173559)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_ywm8h")
+
+[node name="@MeshInstance3D@1210" type="MeshInstance3D" parent="IndoorFern" unique_id=1872731862]
+transform = Transform3D(0.045817707, 0, -0.19792642, 0, 0.025, 0, 0.059377927, 0, 0.15272568, -0.07619797, 0.56115574, 0.07323466)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_vr4nu")
+
+[node name="@MeshInstance3D@1211" type="MeshInstance3D" parent="IndoorFern" unique_id=777617149]
+transform = Transform3D(-0.060690466, 0, -0.1468812, 0, 0.025, 0, 0.044064358, 0, -0.20230155, 0.040619254, 0.6223115, 0.17422071)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_bn85g")
+
+[node name="@MeshInstance3D@1212" type="MeshInstance3D" parent="IndoorFern" unique_id=1198459816]
+transform = Transform3D(0.045817707, 0, -0.19792642, 0, 0.025, 0, 0.059377927, 0, 0.15272568, -0.08805753, 0.6223115, 0.15571979)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_ynn0q")
+
+[node name="@MeshInstance3D@1213" type="MeshInstance3D" parent="IndoorFern" unique_id=1078989359]
+transform = Transform3D(-0.060690466, 0, -0.1468812, 0, 0.025, 0, 0.044064358, 0, -0.20230155, 0.028759684, 0.6834672, 0.25670582)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_aif5p")
+
+[node name="@MeshInstance3D@1214" type="MeshInstance3D" parent="IndoorFern" unique_id=1014318850]
+transform = Transform3D(0.045817707, 0, -0.19792642, 0, 0.025, 0, 0.059377927, 0, 0.15272568, -0.0999171, 0.6834672, 0.2382049)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_8nwmv")
+
+[node name="@MeshInstance3D@1215" type="MeshInstance3D" parent="IndoorFern" unique_id=895438272]
+transform = Transform3D(-0.060690466, 0, -0.1468812, 0, 0.025, 0, 0.044064358, 0, -0.20230155, 0.016900115, 0.74462295, 0.33919096)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_rx4v7")
+
+[node name="@MeshInstance3D@1216" type="MeshInstance3D" parent="IndoorFern" unique_id=2066296378]
+transform = Transform3D(0.045817707, 0, -0.19792642, 0, 0.025, 0, 0.059377927, 0, 0.15272568, -0.11177667, 0.74462295, 0.32069004)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_4ais5")
+
+[node name="@MeshInstance3D@1217" type="MeshInstance3D" parent="IndoorFern" unique_id=819855400]
+transform = Transform3D(-0.060690466, 0, -0.1468812, 0, 0.025, 0, 0.044064358, 0, -0.20230155, 0.005040545, 0.8057787, 0.42167604)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_tstin")
+
+[node name="@MeshInstance3D@1218" type="MeshInstance3D" parent="IndoorFern" unique_id=148042034]
+transform = Transform3D(0.045817707, 0, -0.19792642, 0, 0.025, 0, 0.059377927, 0, 0.15272568, -0.123636246, 0.8057787, 0.40317512)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_vglt2")
+
+[node name="@MeshInstance3D@1219" type="MeshInstance3D" parent="IndoorFern" unique_id=1964812899]
+transform = Transform3D(0.76851565, -0.5813915, 0.26714715, 0.5813915, 0.4602114, -0.67096156, 0.26714715, 0.67096156, 0.69169575, -0.16371518, 0.6295918, 0.1889374)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("CylinderMesh_vg0wo")
+
+[node name="@MeshInstance3D@1220" type="MeshInstance3D" parent="IndoorFern" unique_id=1030017741]
+transform = Transform3D(-0.074879065, 0, -0.01419184, 0, 0.025, 0, 0.0042575523, 0, -0.24959686, -0.00544801, 0.5431973, 0.105545074)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_oyy60")
+
+[node name="@MeshInstance3D@1221" type="MeshInstance3D" parent="IndoorFern" unique_id=1813735149]
+transform = Transform3D(0.0064421804, 0, -0.24907604, 0, 0.025, 0, 0.07472281, 0, 0.021473933, -0.10369545, 0.5431973, 0.020413186)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_obyfq")
+
+[node name="@MeshInstance3D@1222" type="MeshInstance3D" parent="IndoorFern" unique_id=1763781147]
+transform = Transform3D(-0.074879065, 0, -0.01419184, 0, 0.025, 0, 0.0042575523, 0, -0.24959686, -0.06001974, 0.58639455, 0.1685242)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_34pu0")
+
+[node name="@MeshInstance3D@1223" type="MeshInstance3D" parent="IndoorFern" unique_id=746166051]
+transform = Transform3D(0.0064421804, 0, -0.24907604, 0, 0.025, 0, 0.07472281, 0, 0.021473933, -0.15826717, 0.58639455, 0.08339232)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_o55d6")
+
+[node name="@MeshInstance3D@1224" type="MeshInstance3D" parent="IndoorFern" unique_id=145164899]
+transform = Transform3D(-0.074879065, 0, -0.01419184, 0, 0.025, 0, 0.0042575523, 0, -0.24959686, -0.114591464, 0.6295918, 0.23150334)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_4etg7")
+
+[node name="@MeshInstance3D@1225" type="MeshInstance3D" parent="IndoorFern" unique_id=171380259]
+transform = Transform3D(0.0064421804, 0, -0.24907604, 0, 0.025, 0, 0.07472281, 0, 0.021473933, -0.2128389, 0.6295918, 0.14637145)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_ikhhi")
+
+[node name="@MeshInstance3D@1226" type="MeshInstance3D" parent="IndoorFern" unique_id=1392635947]
+transform = Transform3D(-0.074879065, 0, -0.01419184, 0, 0.025, 0, 0.0042575523, 0, -0.24959686, -0.1691632, 0.67278916, 0.29448247)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_q3r4k")
+
+[node name="@MeshInstance3D@1227" type="MeshInstance3D" parent="IndoorFern" unique_id=1110260461]
+transform = Transform3D(0.0064421804, 0, -0.24907604, 0, 0.025, 0, 0.07472281, 0, 0.021473933, -0.26741064, 0.67278916, 0.20935059)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_vt5vh")
+
+[node name="@MeshInstance3D@1228" type="MeshInstance3D" parent="IndoorFern" unique_id=1343626567]
+transform = Transform3D(-0.074879065, 0, -0.01419184, 0, 0.025, 0, 0.0042575523, 0, -0.24959686, -0.2237349, 0.71598643, 0.3574616)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_5okre")
+
+[node name="@MeshInstance3D@1229" type="MeshInstance3D" parent="IndoorFern" unique_id=1118830181]
+transform = Transform3D(0.0064421804, 0, -0.24907604, 0, 0.025, 0, 0.07472281, 0, 0.021473933, -0.32198232, 0.71598643, 0.27232972)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_pifld")
+
+[node name="@MeshInstance3D@1230" type="MeshInstance3D" parent="IndoorFern" unique_id=1569333120]
+transform = Transform3D(0.4708752, -0.8684113, 0.15536506, 0.8684113, 0.4252559, -0.25498858, 0.15536506, 0.25498858, 0.9543807, -0.23987325, 0.61746454, 0.07043314)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("CylinderMesh_gnjcv")
+
+[node name="@MeshInstance3D@1231" type="MeshInstance3D" parent="IndoorFern" unique_id=511554515]
+transform = Transform3D(-0.06529409, 0, 0.12300327, 0, 0.025, 0, -0.036900982, 0, -0.21764696, -0.061645135, 0.5391548, 0.085844755)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_uore1")
+
+[node name="@MeshInstance3D@1232" type="MeshInstance3D" parent="IndoorFern" unique_id=1513243450]
+transform = Transform3D(-0.0349787, 0, -0.22114578, 0, 0.025, 0, 0.06634374, 0, -0.116595656, -0.09827037, 0.5391548, -0.038889326)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_w3rod")
+
+[node name="@MeshInstance3D@1233" type="MeshInstance3D" parent="IndoorFern" unique_id=580191244]
+transform = Transform3D(-0.06529409, 0, 0.12300327, 0, 0.025, 0, -0.036900982, 0, -0.21764696, -0.14160289, 0.5783097, 0.10932247)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_lyiis")
+
+[node name="@MeshInstance3D@1234" type="MeshInstance3D" parent="IndoorFern" unique_id=631775816]
+transform = Transform3D(-0.0349787, 0, -0.22114578, 0, 0.025, 0, 0.06634374, 0, -0.116595656, -0.17822812, 0.5783097, -0.015411612)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_gdrwt")
+
+[node name="@MeshInstance3D@1235" type="MeshInstance3D" parent="IndoorFern" unique_id=1253084483]
+transform = Transform3D(-0.06529409, 0, 0.12300327, 0, 0.025, 0, -0.036900982, 0, -0.21764696, -0.22156063, 0.61746454, 0.13280018)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_x1mbb")
+
+[node name="@MeshInstance3D@1236" type="MeshInstance3D" parent="IndoorFern" unique_id=851871347]
+transform = Transform3D(-0.0349787, 0, -0.22114578, 0, 0.025, 0, 0.06634374, 0, -0.116595656, -0.25818586, 0.61746454, 0.008066099)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_d4ecb")
+
+[node name="@MeshInstance3D@1237" type="MeshInstance3D" parent="IndoorFern" unique_id=1199173306]
+transform = Transform3D(-0.06529409, 0, 0.12300327, 0, 0.025, 0, -0.036900982, 0, -0.21764696, -0.3015184, 0.6566194, 0.1562779)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_2t56i")
+
+[node name="@MeshInstance3D@1238" type="MeshInstance3D" parent="IndoorFern" unique_id=1171943968]
+transform = Transform3D(-0.0349787, 0, -0.22114578, 0, 0.025, 0, 0.06634374, 0, -0.116595656, -0.33814362, 0.6566194, 0.031543817)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_cvn1r")
+
+[node name="@MeshInstance3D@1239" type="MeshInstance3D" parent="IndoorFern" unique_id=1500556200]
+transform = Transform3D(-0.06529409, 0, 0.12300327, 0, 0.025, 0, -0.036900982, 0, -0.21764696, -0.38147613, 0.6957742, 0.1797556)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_y7yvo")
+
+[node name="@MeshInstance3D@1240" type="MeshInstance3D" parent="IndoorFern" unique_id=912660631]
+transform = Transform3D(-0.0349787, 0, -0.22114578, 0, 0.025, 0, 0.06634374, 0, -0.116595656, -0.41810134, 0.6957742, 0.05502152)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_g16s2")
+
+[node name="@MeshInstance3D@1241" type="MeshInstance3D" parent="IndoorFern" unique_id=68235834]
+transform = Transform3D(0.5717382, -0.810742, -0.125749, 0.810742, 0.53481495, 0.23805533, -0.125749, -0.23805533, 0.9630768, -0.23987325, 0.6582351, -0.07043314)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("CylinderMesh_hhv7e")
+
+[node name="@MeshInstance3D@1242" type="MeshInstance3D" parent="IndoorFern" unique_id=1782660873]
+transform = Transform3D(-0.034978703, 0, 0.22114576, 0, 0.025, 0, -0.06634373, 0, -0.11659567, -0.09827037, 0.55274504, 0.038889326)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_fltf5")
+
+[node name="@MeshInstance3D@1243" type="MeshInstance3D" parent="IndoorFern" unique_id=453519097]
+transform = Transform3D(-0.06529409, 0, -0.12300328, 0, 0.025, 0, 0.036900986, 0, -0.21764694, -0.061645135, 0.55274504, -0.085844755)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_yhhwt")
+
+[node name="@MeshInstance3D@1244" type="MeshInstance3D" parent="IndoorFern" unique_id=847737475]
+transform = Transform3D(-0.034978703, 0, 0.22114576, 0, 0.025, 0, -0.06634373, 0, -0.11659567, -0.17822812, 0.60549, 0.015411612)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_7ufmx")
+
+[node name="@MeshInstance3D@1245" type="MeshInstance3D" parent="IndoorFern" unique_id=634133077]
+transform = Transform3D(-0.06529409, 0, -0.12300328, 0, 0.025, 0, 0.036900986, 0, -0.21764694, -0.14160289, 0.60549, -0.10932247)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_pxri1")
+
+[node name="@MeshInstance3D@1246" type="MeshInstance3D" parent="IndoorFern" unique_id=390313160]
+transform = Transform3D(-0.034978703, 0, 0.22114576, 0, 0.025, 0, -0.06634373, 0, -0.11659567, -0.25818586, 0.6582351, -0.008066099)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_3jkl1")
+
+[node name="@MeshInstance3D@1247" type="MeshInstance3D" parent="IndoorFern" unique_id=2065769854]
+transform = Transform3D(-0.06529409, 0, -0.12300328, 0, 0.025, 0, 0.036900986, 0, -0.21764694, -0.22156063, 0.6582351, -0.13280018)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_hpv16")
+
+[node name="@MeshInstance3D@1248" type="MeshInstance3D" parent="IndoorFern" unique_id=69244495]
+transform = Transform3D(-0.034978703, 0, 0.22114576, 0, 0.025, 0, -0.06634373, 0, -0.11659567, -0.33814362, 0.7109801, -0.031543817)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_11pof")
+
+[node name="@MeshInstance3D@1249" type="MeshInstance3D" parent="IndoorFern" unique_id=1480693899]
+transform = Transform3D(-0.06529409, 0, -0.12300328, 0, 0.025, 0, 0.036900986, 0, -0.21764694, -0.3015184, 0.7109801, -0.1562779)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_c1gcj")
+
+[node name="@MeshInstance3D@1250" type="MeshInstance3D" parent="IndoorFern" unique_id=524560702]
+transform = Transform3D(-0.034978703, 0, 0.22114576, 0, 0.025, 0, -0.06634373, 0, -0.11659567, -0.41810134, 0.7637251, -0.05502152)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_wjyiw")
+
+[node name="@MeshInstance3D@1251" type="MeshInstance3D" parent="IndoorFern" unique_id=1641816055]
+transform = Transform3D(-0.06529409, 0, -0.12300328, 0, 0.025, 0, 0.036900986, 0, -0.21764694, -0.38147613, 0.7637251, -0.1797556)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_k3qn6")
+
+[node name="@MeshInstance3D@1252" type="MeshInstance3D" parent="IndoorFern" unique_id=1941038530]
+transform = Transform3D(0.85034466, -0.4970762, -0.17271149, 0.4970762, 0.65102494, 0.5736565, -0.17271149, -0.5736565, 0.8006803, -0.16371518, 0.7144192, -0.1889374)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("CylinderMesh_qhut6")
+
+[node name="@MeshInstance3D@1253" type="MeshInstance3D" parent="IndoorFern" unique_id=1151176307]
+transform = Transform3D(0.0064421934, 0, 0.24907602, 0, 0.025, 0, -0.07472281, 0, 0.021473978, -0.10369545, 0.57147306, -0.020413186)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_f65js")
+
+[node name="@MeshInstance3D@1254" type="MeshInstance3D" parent="IndoorFern" unique_id=1645028437]
+transform = Transform3D(-0.07487906, 0, 0.014191884, 0, 0.025, 0, -0.0042575654, 0, -0.24959685, -0.00544801, 0.57147306, -0.105545074)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_585l6")
+
+[node name="@MeshInstance3D@1255" type="MeshInstance3D" parent="IndoorFern" unique_id=1621373175]
+transform = Transform3D(0.0064421934, 0, 0.24907602, 0, 0.025, 0, -0.07472281, 0, 0.021473978, -0.15826717, 0.6429461, -0.08339232)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_wa33j")
+
+[node name="@MeshInstance3D@1256" type="MeshInstance3D" parent="IndoorFern" unique_id=1112067018]
+transform = Transform3D(-0.07487906, 0, 0.014191884, 0, 0.025, 0, -0.0042575654, 0, -0.24959685, -0.06001974, 0.6429461, -0.1685242)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_h5lgl")
+
+[node name="@MeshInstance3D@1257" type="MeshInstance3D" parent="IndoorFern" unique_id=1648568713]
+transform = Transform3D(0.0064421934, 0, 0.24907602, 0, 0.025, 0, -0.07472281, 0, 0.021473978, -0.2128389, 0.7144192, -0.14637145)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_1nht3")
+
+[node name="@MeshInstance3D@1258" type="MeshInstance3D" parent="IndoorFern" unique_id=143228845]
+transform = Transform3D(-0.07487906, 0, 0.014191884, 0, 0.025, 0, -0.0042575654, 0, -0.24959685, -0.114591464, 0.7144192, -0.23150334)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_tivlh")
+
+[node name="@MeshInstance3D@1259" type="MeshInstance3D" parent="IndoorFern" unique_id=1726714890]
+transform = Transform3D(0.0064421934, 0, 0.24907602, 0, 0.025, 0, -0.07472281, 0, 0.021473978, -0.26741064, 0.78589225, -0.20935059)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_my6to")
+
+[node name="@MeshInstance3D@1260" type="MeshInstance3D" parent="IndoorFern" unique_id=278908229]
+transform = Transform3D(-0.07487906, 0, 0.014191884, 0, 0.025, 0, -0.0042575654, 0, -0.24959685, -0.1691632, 0.78589225, -0.29448247)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_wmpji")
+
+[node name="@MeshInstance3D@1261" type="MeshInstance3D" parent="IndoorFern" unique_id=721732073]
+transform = Transform3D(0.0064421934, 0, 0.24907602, 0, 0.025, 0, -0.07472281, 0, 0.021473978, -0.32198232, 0.8573653, -0.27232972)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_pj6jt")
+
+[node name="@MeshInstance3D@1262" type="MeshInstance3D" parent="IndoorFern" unique_id=997728065]
+transform = Transform3D(-0.07487906, 0, 0.014191884, 0, 0.025, 0, -0.0042575654, 0, -0.24959685, -0.2237349, 0.8573653, -0.3574616)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_saju2")
+
+[node name="@MeshInstance3D@1263" type="MeshInstance3D" parent="IndoorFern" unique_id=751160635]
+transform = Transform3D(0.9935983, -0.10382677, -0.044524997, 0.10382677, 0.68392015, 0.7221311, -0.044524997, -0.7221311, 0.6903218, -0.03557871, 0.7343615, -0.24745536)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("CylinderMesh_rhr0d")
+
+[node name="@MeshInstance3D@1264" type="MeshInstance3D" parent="IndoorFern" unique_id=1619120580]
+transform = Transform3D(0.045817707, 0, 0.19792642, 0, 0.025, 0, -0.059377927, 0, 0.15272568, -0.07619797, 0.57812047, -0.07323466)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_dlesd")
+
+[node name="@MeshInstance3D@1265" type="MeshInstance3D" parent="IndoorFern" unique_id=833655110]
+transform = Transform3D(-0.06069046, 0, 0.14688122, 0, 0.025, 0, -0.04406437, 0, -0.20230152, 0.052478824, 0.57812047, -0.09173559)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_mu2wu")
+
+[node name="@MeshInstance3D@1266" type="MeshInstance3D" parent="IndoorFern" unique_id=164674087]
+transform = Transform3D(0.045817707, 0, 0.19792642, 0, 0.025, 0, -0.059377927, 0, 0.15272568, -0.08805753, 0.656241, -0.15571979)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_4y83s")
+
+[node name="@MeshInstance3D@1267" type="MeshInstance3D" parent="IndoorFern" unique_id=1875062548]
+transform = Transform3D(-0.06069046, 0, 0.14688122, 0, 0.025, 0, -0.04406437, 0, -0.20230152, 0.040619254, 0.656241, -0.17422071)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_cbxr4")
+
+[node name="@MeshInstance3D@1268" type="MeshInstance3D" parent="IndoorFern" unique_id=1354661423]
+transform = Transform3D(0.045817707, 0, 0.19792642, 0, 0.025, 0, -0.059377927, 0, 0.15272568, -0.0999171, 0.7343615, -0.2382049)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_i0iab")
+
+[node name="@MeshInstance3D@1269" type="MeshInstance3D" parent="IndoorFern" unique_id=1031209518]
+transform = Transform3D(-0.06069046, 0, 0.14688122, 0, 0.025, 0, -0.04406437, 0, -0.20230152, 0.028759684, 0.7343615, -0.25670582)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_w57n5")
+
+[node name="@MeshInstance3D@1270" type="MeshInstance3D" parent="IndoorFern" unique_id=1875024000]
+transform = Transform3D(0.045817707, 0, 0.19792642, 0, 0.025, 0, -0.059377927, 0, 0.15272568, -0.11177667, 0.812482, -0.32069004)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_er5j6")
+
+[node name="@MeshInstance3D@1271" type="MeshInstance3D" parent="IndoorFern" unique_id=227806711]
+transform = Transform3D(-0.06069046, 0, 0.14688122, 0, 0.025, 0, -0.04406437, 0, -0.20230152, 0.016900115, 0.812482, -0.33919096)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_wxgck")
+
+[node name="@MeshInstance3D@1272" type="MeshInstance3D" parent="IndoorFern" unique_id=1435807976]
+transform = Transform3D(0.045817707, 0, 0.19792642, 0, 0.025, 0, -0.059377927, 0, 0.15272568, -0.123636246, 0.89060247, -0.40317512)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_bciqh")
+
+[node name="@MeshInstance3D@1273" type="MeshInstance3D" parent="IndoorFern" unique_id=1012188717]
+transform = Transform3D(-0.06069046, 0, 0.14688122, 0, 0.025, 0, -0.04406437, 0, -0.20230152, 0.005040545, 0.89060247, -0.42167604)
+material_override = SubResource("ShaderMaterial_va3ig")
+mesh = SubResource("SphereMesh_yyvqf")
+
+[node name="@MeshInstance3D@1274" type="MeshInstance3D" parent="IndoorFern" unique_id=676841912]
+transform = Transform3D(0.935144, 0.32455736, 0.14201482, -0.32455736, 0.62417495, 0.7106815, 0.14201482, -0.7106815, 0.68903095, 0.103853755, 0.6997271, -0.22740799)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("CylinderMesh_af1uc")
+
+[node name="@MeshInstance3D@1275" type="MeshInstance3D" parent="IndoorFern" unique_id=370382234]
+transform = Transform3D(0.070646435, 0, 0.0839366, 0, 0.025, 0, -0.025180982, 0, 0.2354881, -0.024508156, 0.5665757, -0.102804646)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_tuugn")
+
+[node name="@MeshInstance3D@1276" type="MeshInstance3D" parent="IndoorFern" unique_id=914719118]
+transform = Transform3D(-0.02723308, 0, 0.2329368, 0, 0.025, 0, -0.069881044, 0, -0.09077693, 0.093743995, 0.5665757, -0.048800692)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_8ipab")
+
+[node name="@MeshInstance3D@1277" type="MeshInstance3D" parent="IndoorFern" unique_id=1219219393]
+transform = Transform3D(0.070646435, 0, 0.0839366, 0, 0.025, 0, -0.025180982, 0, 0.2354881, 0.010109764, 0.6331514, -0.17860731)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_kvvoe")
+
+[node name="@MeshInstance3D@1278" type="MeshInstance3D" parent="IndoorFern" unique_id=1207673927]
+transform = Transform3D(-0.02723308, 0, 0.2329368, 0, 0.025, 0, -0.069881044, 0, -0.09077693, 0.12836191, 0.6331514, -0.12460336)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_bhl0c")
+
+[node name="@MeshInstance3D@1279" type="MeshInstance3D" parent="IndoorFern" unique_id=1235878001]
+transform = Transform3D(0.070646435, 0, 0.0839366, 0, 0.025, 0, -0.025180982, 0, 0.2354881, 0.04472768, 0.6997271, -0.25440997)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_o1bvw")
+
+[node name="@MeshInstance3D@1280" type="MeshInstance3D" parent="IndoorFern" unique_id=1366158419]
+transform = Transform3D(-0.02723308, 0, 0.2329368, 0, 0.025, 0, -0.069881044, 0, -0.09077693, 0.16297983, 0.6997271, -0.20040601)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_3y1br")
+
+[node name="@MeshInstance3D@1281" type="MeshInstance3D" parent="IndoorFern" unique_id=79167574]
+transform = Transform3D(0.070646435, 0, 0.0839366, 0, 0.025, 0, -0.025180982, 0, 0.2354881, 0.0793456, 0.7663028, -0.33021265)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_utloc")
+
+[node name="@MeshInstance3D@1282" type="MeshInstance3D" parent="IndoorFern" unique_id=907023549]
+transform = Transform3D(-0.02723308, 0, 0.2329368, 0, 0.025, 0, -0.069881044, 0, -0.09077693, 0.19759776, 0.7663028, -0.2762087)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_5f0f5")
+
+[node name="@MeshInstance3D@1283" type="MeshInstance3D" parent="IndoorFern" unique_id=991487200]
+transform = Transform3D(0.070646435, 0, 0.0839366, 0, 0.025, 0, -0.025180982, 0, 0.2354881, 0.113963515, 0.83287853, -0.40601528)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_7p1wk")
+
+[node name="@MeshInstance3D@1284" type="MeshInstance3D" parent="IndoorFern" unique_id=1813993532]
+transform = Transform3D(-0.02723308, 0, 0.2329368, 0, 0.025, 0, -0.069881044, 0, -0.09077693, 0.23221567, 0.83287853, -0.35201132)
+material_override = SubResource("ShaderMaterial_qayk0")
+mesh = SubResource("SphereMesh_s7ysl")
+
+[node name="@MeshInstance3D@1285" type="MeshInstance3D" parent="IndoorFern" unique_id=1872289220]
+transform = Transform3D(0.64248896, 0.7310397, 0.22975838, -0.7310397, 0.49483228, 0.46981066, 0.22975838, -0.46981066, 0.85234326, 0.21031338, 0.6423587, -0.13516021)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("CylinderMesh_ysa37")
+
+[node name="@MeshInstance3D@1286" type="MeshInstance3D" parent="IndoorFern" unique_id=630173679]
+transform = Transform3D(0.073045425, 0, -0.056702588, 0, 0.025, 0, 0.017010776, 0, 0.24348474, 0.03496281, 0.5474529, -0.09973488)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_cekqq")
+
+[node name="@MeshInstance3D@1287" type="MeshInstance3D" parent="IndoorFern" unique_id=160896084]
+transform = Transform3D(0.014870639, 0, 0.2450366, 0, 0.025, 0, -0.07351098, 0, 0.049568795, 0.10524612, 0.5474529, 0.009628072)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_kbgv2")
+
+[node name="@MeshInstance3D@1288" type="MeshInstance3D" parent="IndoorFern" unique_id=541573999]
+transform = Transform3D(0.073045425, 0, -0.056702588, 0, 0.025, 0, 0.017010776, 0, 0.24348474, 0.105067275, 0.5949058, -0.14478828)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_d2t4c")
+
+[node name="@MeshInstance3D@1289" type="MeshInstance3D" parent="IndoorFern" unique_id=1890055208]
+transform = Transform3D(0.014870639, 0, 0.2450366, 0, 0.025, 0, -0.07351098, 0, 0.049568795, 0.17535058, 0.5949058, -0.03542533)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_4g6yx")
+
+[node name="@MeshInstance3D@1290" type="MeshInstance3D" parent="IndoorFern" unique_id=1416114744]
+transform = Transform3D(0.073045425, 0, -0.056702588, 0, 0.025, 0, 0.017010776, 0, 0.24348474, 0.17517173, 0.6423587, -0.18984169)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_f4bm8")
+
+[node name="@MeshInstance3D@1291" type="MeshInstance3D" parent="IndoorFern" unique_id=688261661]
+transform = Transform3D(0.014870639, 0, 0.2450366, 0, 0.025, 0, -0.07351098, 0, 0.049568795, 0.24545503, 0.6423587, -0.08047873)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_emu1j")
+
+[node name="@MeshInstance3D@1292" type="MeshInstance3D" parent="IndoorFern" unique_id=548158374]
+transform = Transform3D(0.073045425, 0, -0.056702588, 0, 0.025, 0, 0.017010776, 0, 0.24348474, 0.24527621, 0.68981165, -0.2348951)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_400ie")
+
+[node name="@MeshInstance3D@1293" type="MeshInstance3D" parent="IndoorFern" unique_id=1443420265]
+transform = Transform3D(0.014870639, 0, 0.2450366, 0, 0.025, 0, -0.07351098, 0, 0.049568795, 0.3155595, 0.68981165, -0.12553214)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_aphh8")
+
+[node name="@MeshInstance3D@1294" type="MeshInstance3D" parent="IndoorFern" unique_id=716673025]
+transform = Transform3D(0.073045425, 0, -0.056702588, 0, 0.025, 0, 0.017010776, 0, 0.24348474, 0.31538063, 0.7372645, -0.27994847)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_ylr5v")
+
+[node name="@MeshInstance3D@1295" type="MeshInstance3D" parent="IndoorFern" unique_id=2111678047]
+transform = Transform3D(0.014870639, 0, 0.2450366, 0, 0.025, 0, -0.07351098, 0, 0.049568795, 0.38566393, 0.7372645, -0.17058553)
+material_override = SubResource("ShaderMaterial_xwo7u")
+mesh = SubResource("SphereMesh_xax84")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=778396669]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=2091724444]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0068057775, 0, -0.9939608)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=267621329]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.0068057775, 0, 0.99396104)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=1902365516]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0068057775, 0.9786345, 1.1920929e-07)

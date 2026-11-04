@@ -1,0 +1,15 @@
+<Project Sdk="Godot.NET.Sdk/4.7.2">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>DualOntologyWorldEngine</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefaultItemExcludes>$(DefaultItemExcludes);.runtime/**;artifacts/**;tools/**;.git/**</DefaultItemExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="scenes/**/*.cs" />
+    <ProjectReference Include="core/session/DuelView.Session.csproj" />
+  </ItemGroup>
+</Project>

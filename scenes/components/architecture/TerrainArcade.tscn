@@ -1,0 +1,39 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/TerrainArcade.gd" id="1_script"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_column"]
+top_radius = 0.25
+bottom_radius = 0.25
+height = 3.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_beam"]
+size = Vector3(3.6, 0.4, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_plinth"]
+size = Vector3(0.7, 0.3, 0.7)
+
+[node name="TerrainArcade" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="Column_Left" type="MeshInstance3D" parent="VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 1.6, 0)
+mesh = SubResource("CylinderMesh_column")
+
+[node name="Column_Right" type="MeshInstance3D" parent="VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 1.6, 0)
+mesh = SubResource("CylinderMesh_column")
+
+[node name="TopBeam" type="MeshInstance3D" parent="VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 0)
+mesh = SubResource("BoxMesh_beam")
+
+[node name="Plinth_Left" type="MeshInstance3D" parent="VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0.15, 0)
+mesh = SubResource("BoxMesh_plinth")
+
+[node name="Plinth_Right" type="MeshInstance3D" parent="VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0.15, 0)
+mesh = SubResource("BoxMesh_plinth")

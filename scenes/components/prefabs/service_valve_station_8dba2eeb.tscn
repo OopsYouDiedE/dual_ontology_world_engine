@@ -1,0 +1,151 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/service_valve_station_8dba2eeb.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_kphp2"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/aged_metal.gdshader" id="2_kh3u7"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7yv1n"]
+render_priority = 0
+shader = ExtResource("2_kh3u7")
+shader_parameter/pigment = Color(0.27450982, 0.42745098, 0.38431373, 1)
+shader_parameter/surface_roughness = 0.6
+shader_parameter/surface_metallic = 0.45
+shader_parameter/patina = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_y8vto"]
+top_radius = 0.12
+bottom_radius = 0.12
+height = 1.2
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_7vpbj"]
+top_radius = 0.3
+bottom_radius = 0.3
+height = 0.16
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_cdeh2"]
+top_radius = 0.065
+bottom_radius = 0.065
+height = 0.44
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fc7sc"]
+render_priority = 0
+shader = ExtResource("2_kh3u7")
+shader_parameter/pigment = Color(0.6901961, 0.58431375, 0.3647059, 1)
+shader_parameter/surface_roughness = 0.4
+shader_parameter/surface_metallic = 0.7
+shader_parameter/patina = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="TorusMesh" id="TorusMesh_5nafs"]
+inner_radius = 0.277
+outer_radius = 0.343
+rings = 24
+ring_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_0nqgp"]
+top_radius = 0.018
+bottom_radius = 0.018
+height = 0.3
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_lk05s"]
+top_radius = 0.018
+bottom_radius = 0.018
+height = 0.30000007
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_tgctt"]
+top_radius = 0.018
+bottom_radius = 0.018
+height = 0.3
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1vf4h"]
+top_radius = 0.018
+bottom_radius = 0.018
+height = 0.29999995
+radial_segments = 24
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1533743954 script=ExtResource("1_auto_script")]
+script = ExtResource("1_kphp2")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "service/valve_station"
+
+[node name="valve_station" type="Node3D" parent="." unique_id=577691227]
+metadata/authoring_label = "valve_station"
+
+[node name="@MeshInstance3D@20872" type="MeshInstance3D" parent="valve_station" unique_id=1241509976]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+material_override = SubResource("ShaderMaterial_7yv1n")
+mesh = SubResource("CylinderMesh_y8vto")
+
+[node name="@MeshInstance3D@20873" type="MeshInstance3D" parent="valve_station" unique_id=546537558]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
+material_override = SubResource("ShaderMaterial_7yv1n")
+mesh = SubResource("CylinderMesh_7vpbj")
+
+[node name="@MeshInstance3D@20874" type="MeshInstance3D" parent="valve_station" unique_id=541448225]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.94, 0.22)
+material_override = SubResource("ShaderMaterial_7yv1n")
+mesh = SubResource("CylinderMesh_cdeh2")
+
+[node name="@MeshInstance3D@20875" type="MeshInstance3D" parent="valve_station" unique_id=1723839763]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 1.31, 0)
+material_override = SubResource("ShaderMaterial_fc7sc")
+mesh = SubResource("TorusMesh_5nafs")
+
+[node name="@MeshInstance3D@20876" type="MeshInstance3D" parent="valve_station" unique_id=24010556]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0.15, 1.31, 0)
+material_override = SubResource("ShaderMaterial_7yv1n")
+mesh = SubResource("CylinderMesh_0nqgp")
+
+[node name="@MeshInstance3D@20877" type="MeshInstance3D" parent="valve_station" unique_id=949067166]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.184548e-18, 1.46, 0)
+material_override = SubResource("ShaderMaterial_7yv1n")
+mesh = SubResource("CylinderMesh_lk05s")
+
+[node name="@MeshInstance3D@20878" type="MeshInstance3D" parent="valve_station" unique_id=1933825842]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -0.15, 1.31, 0)
+material_override = SubResource("ShaderMaterial_7yv1n")
+mesh = SubResource("CylinderMesh_tgctt")
+
+[node name="@MeshInstance3D@20879" type="MeshInstance3D" parent="valve_station" unique_id=1511763]
+transform = Transform3D(-1, 0, 0, 0, -1, 0, 0, 0, 1, -2.7553643e-17, 1.16, 0)
+material_override = SubResource("ShaderMaterial_7yv1n")
+mesh = SubResource("CylinderMesh_1vf4h")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=182975871]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=263252980]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.75)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=2105598472]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.89)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=432756013]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0.06999999)

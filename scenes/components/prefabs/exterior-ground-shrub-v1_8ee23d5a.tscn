@@ -1,0 +1,803 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/exterior-ground-shrub-v1_8ee23d5a.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_va1is"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/wood.gdshader" id="2_fxn06"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/fabric.gdshader" id="3_y5m7p"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3grln"]
+render_priority = 0
+shader = ExtResource("2_fxn06")
+shader_parameter/pigment = Color(0.3254902, 0.38431373, 0.2784314, 1)
+shader_parameter/surface_roughness = 0.94
+shader_parameter/grain_density = null
+shader_parameter/grain_direction = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_g1dwg"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.6276942
+radial_segments = 24
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_srxeq"]
+render_priority = 0
+shader = ExtResource("3_y5m7p")
+shader_parameter/pigment = Color(0.3254902, 0.42352942, 0.27058825, 1)
+shader_parameter/surface_roughness = 0.92
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="SphereMesh" id="SphereMesh_kg0rt"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_t5tn4"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hwlqm"]
+render_priority = 0
+shader = ExtResource("3_y5m7p")
+shader_parameter/pigment = Color(0.38039216, 0.4745098, 0.3019608, 1)
+shader_parameter/surface_roughness = 0.92
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="SphereMesh" id="SphereMesh_bbieo"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_akbom"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_n5rx8"]
+render_priority = 0
+shader = ExtResource("3_y5m7p")
+shader_parameter/pigment = Color(0.43137255, 0.52156866, 0.34117648, 1)
+shader_parameter/surface_roughness = 0.92
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="SphereMesh" id="SphereMesh_toku5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_mgslc"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_sf7m6"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_6mvjx"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_a2ak7"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_k8vox"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3qthp"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.7133001
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_x3aik"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_rk2k5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_5pq7i"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_yvq6x"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_bxrjm"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_fcg5u"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_de1fr"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_8ep6l"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_hl03o"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_m1bsl"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_xkeq5"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.59078175
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_anoo5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_n1333"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_uyhe7"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_v7cuc"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_3unkh"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_ifpj1"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_7lk5j"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_q4aje"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_ev0b5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_wtrdi"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_dxt6t"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.5618495
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_phj40"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_pbthu"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_754ws"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_p4rfi"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_cag16"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_iw74b"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_7ieeb"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_ruhwf"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_n7l1c"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_gk4eb"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_6k5pj"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.69609654
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_lx7q1"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_7qy53"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_dvxuy"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_kgbrg"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_jju1h"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_3kx57"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_4m377"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_pl4qd"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_ty62i"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_qv02j"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_nym1g"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.6653886
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_gea0f"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_lts27"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_vg8es"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_mx84n"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_3010w"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_nkv4d"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_d6sr3"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_jyc4v"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_smoku"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_37b5q"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_5rn2p"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.5460885
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_ulcw7"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_m6uuj"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_cxyip"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_jnee5"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_uupy8"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_f3rt8"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_tqb3s"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_hbxcy"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_w2st3"]
+radial_segments = 20
+rings = 12
+
+[sub_resource type="SphereMesh" id="SphereMesh_huyo0"]
+radial_segments = 20
+rings = 12
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1709734544 script=ExtResource("1_auto_script")]
+script = ExtResource("1_va1is")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "exterior-ground-shrub-v1"
+
+[node name="GroundShrub" type="Node3D" parent="." unique_id=675677610]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.48, 0)
+
+[node name="LayeredPlantFoliage" type="Node3D" parent="GroundShrub" unique_id=163398385]
+metadata/world_category = &"decoration"
+
+[node name="@MeshInstance3D@24733" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1743760518]
+transform = Transform3D(0.8602915, 0.5098025, 0, -0.5098025, 0.8602915, 0, 0, 0, 1, 0.16, 0.75, 0)
+material_override = SubResource("ShaderMaterial_3grln")
+mesh = SubResource("CylinderMesh_g1dwg")
+
+[node name="@MeshInstance3D@24734" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=845672290]
+transform = Transform3D(0.06686283, 0.0050905403, -0.12884353, -0.021393238, 0.027197463, 0, 0.05631778, 0.0042877025, 0.15296845, 0.0736, 0.60355, -0.065)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_kg0rt")
+
+[node name="@MeshInstance3D@24735" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=107958626]
+transform = Transform3D(0.06686283, -0.0050905403, 0.12884353, 0.021393238, 0.027197463, 0, -0.05631778, 0.0042877025, 0.15296845, 0.0736, 0.60485, 0.065)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_t5tn4")
+
+[node name="@MeshInstance3D@24736" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=517979248]
+transform = Transform3D(0.06686283, 0.0050905403, -0.11724761, -0.021393238, 0.027197463, 0, 0.05631778, 0.0042877025, 0.13920128, 0.12, 0.68185, -0.065)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_bbieo")
+
+[node name="@MeshInstance3D@24737" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1136728672]
+transform = Transform3D(0.06686283, -0.0050905403, 0.11724761, 0.021393238, 0.027197463, 0, -0.05631778, 0.0042877025, 0.13920128, 0.12, 0.68315, 0.065)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_akbom")
+
+[node name="@MeshInstance3D@24738" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=260167213]
+transform = Transform3D(0.06686283, 0.0050905403, -0.1056517, -0.021393238, 0.027197463, 0, 0.05631778, 0.0042877025, 0.12543413, 0.16639999, 0.76014996, -0.065)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_toku5")
+
+[node name="@MeshInstance3D@24739" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=798049062]
+transform = Transform3D(0.06686283, -0.0050905403, 0.1056517, 0.021393238, 0.027197463, 0, -0.05631778, 0.0042877025, 0.12543413, 0.16639999, 0.76144993, 0.065)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_mgslc")
+
+[node name="@MeshInstance3D@24740" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=2128269416]
+transform = Transform3D(0.06686283, 0.0050905403, -0.09405578, -0.021393238, 0.027197463, 0, 0.05631778, 0.0042877025, 0.11166696, 0.2128, 0.83845, -0.065)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_sf7m6")
+
+[node name="@MeshInstance3D@24741" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1742025515]
+transform = Transform3D(0.06686283, -0.0050905403, 0.09405578, 0.021393238, 0.027197463, 0, -0.05631778, 0.0042877025, 0.11166696, 0.2128, 0.83975, 0.065)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_6mvjx")
+
+[node name="@MeshInstance3D@24742" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1871588339]
+transform = Transform3D(0.06686283, 0.0050905403, -0.08245987, -0.021393238, 0.027197463, 0, 0.05631778, 0.0042877025, 0.09789981, 0.2592, 0.91675, -0.065)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_a2ak7")
+
+[node name="@MeshInstance3D@24743" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=338992300]
+transform = Transform3D(0.06686283, -0.0050905403, 0.08245987, 0.021393238, 0.027197463, 0, -0.05631778, 0.0042877025, 0.09789981, 0.2592, 0.91805, 0.065)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_k8vox")
+
+[node name="@MeshInstance3D@24744" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=5334558]
+transform = Transform3D(0.95868593, 0.2797094, -0.051806163, -0.2797094, 0.8937231, -0.3507445, -0.051806163, 0.3507445, 0.93503714, 0.09975837, 0.7987464, 0.12509304)
+material_override = SubResource("ShaderMaterial_3grln")
+mesh = SubResource("CylinderMesh_3qthp")
+
+[node name="@MeshInstance3D@24745" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=2136693122]
+transform = Transform3D(-0.0023427294, -0.00017836154, -0.19992818, -0.021393238, 0.027197463, 0, 0.08738903, 0.0066532833, -0.0053596846, 0.096707895, 0.62597334, 0.017015964)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_x3aik")
+
+[node name="@MeshInstance3D@24746" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=167160173]
+transform = Transform3D(0.0857193, -0.006526161, -0.03926291, 0.021393238, 0.027197463, 0, 0.0171619, -0.0013066055, 0.1961082, -0.0049301945, 0.6272733, 0.09806964)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_rk2k5")
+
+[node name="@MeshInstance3D@24747" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=190641264]
+transform = Transform3D(-0.0023427294, -0.00017836154, -0.18193464, -0.021393238, 0.027197463, 0, 0.08738903, 0.0066532833, -0.0048773126, 0.12563783, 0.7184098, 0.053292945)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_5pq7i")
+
+[node name="@MeshInstance3D@24748" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=26583321]
+transform = Transform3D(0.0857193, -0.006526161, -0.035729244, 0.021393238, 0.027197463, 0, 0.0171619, -0.0013066055, 0.17845845, 0.023999728, 0.71970975, 0.13434662)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_yvq6x")
+
+[node name="@MeshInstance3D@24749" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=460644576]
+transform = Transform3D(-0.0023427294, -0.00017836154, -0.16394112, -0.021393238, 0.027197463, 0, 0.08738903, 0.0066532833, -0.004394941, 0.15456775, 0.81084627, 0.089569926)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_bxrjm")
+
+[node name="@MeshInstance3D@24750" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1702571993]
+transform = Transform3D(0.0857193, -0.006526161, -0.032195587, 0.021393238, 0.027197463, 0, 0.0171619, -0.0013066055, 0.16080873, 0.052929655, 0.81214625, 0.1706236)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_fcg5u")
+
+[node name="@MeshInstance3D@24751" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=729026585]
+transform = Transform3D(-0.0023427294, -0.00017836154, -0.14594756, -0.021393238, 0.027197463, 0, 0.08738903, 0.0066532833, -0.0039125695, 0.1834977, 0.9032827, 0.12584692)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_de1fr")
+
+[node name="@MeshInstance3D@24752" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1701359631]
+transform = Transform3D(0.0857193, -0.006526161, -0.028661923, 0.021393238, 0.027197463, 0, 0.0171619, -0.0013066055, 0.14315899, 0.081859596, 0.9045827, 0.2069006)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_8ep6l")
+
+[node name="@MeshInstance3D@24753" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=2016367640]
+transform = Transform3D(-0.0023427294, -0.00017836154, -0.12795404, -0.021393238, 0.027197463, 0, 0.08738903, 0.0066532833, -0.0034301982, 0.21242762, 0.99571913, 0.16212389)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_hl03o")
+
+[node name="@MeshInstance3D@24754" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1545566330]
+transform = Transform3D(0.0857193, -0.006526161, -0.025128262, 0.021393238, 0.027197463, 0, 0.0171619, -0.0013066055, 0.12550925, 0.110789515, 0.9970191, 0.24317756)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_m1bsl")
+
+[node name="@MeshInstance3D@24755" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=754810177]
+transform = Transform3D(0.9921073, -0.120529614, 0.03458037, 0.120529614, 0.8406007, -0.5280748, 0.03458037, 0.5280748, 0.84849346, -0.03560335, 0.7283058, 0.15598847)
+material_override = SubResource("ShaderMaterial_3grln")
+mesh = SubResource("CylinderMesh_xkeq5")
+
+[node name="@MeshInstance3D@24756" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=337878851]
+transform = Transform3D(-0.069784164, -0.005312953, -0.1204628, -0.021393238, 0.027197463, 0, 0.052654542, 0.0040088054, -0.15965186, 0.04699277, 0.59357065, 0.08621855)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_anoo5")
+
+[node name="@MeshInstance3D@24757" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1757897160]
+transform = Transform3D(0.040027402, -0.0030474495, -0.17780358, 0.021393238, 0.027197463, 0, 0.07771832, -0.0059170127, 0.09157448, -0.07974785, 0.5948706, 0.057290833)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_n1333")
+
+[node name="@MeshInstance3D@24758" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=2112836284]
+transform = Transform3D(-0.069784164, -0.005312953, -0.109621145, -0.021393238, 0.027197463, 0, 0.052654542, 0.0040088054, -0.14528318, 0.036667798, 0.6655794, 0.13145521)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_uyhe7")
+
+[node name="@MeshInstance3D@24759" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=685119072]
+transform = Transform3D(0.040027402, -0.0030474495, -0.16180125, 0.021393238, 0.027197463, 0, 0.07771832, -0.0059170127, 0.08333278, -0.090072826, 0.66687936, 0.1025275)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_v7cuc")
+
+[node name="@MeshInstance3D@24760" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=498740941]
+transform = Transform3D(-0.069784164, -0.005312953, -0.0987795, -0.021393238, 0.027197463, 0, 0.052654542, 0.0040088054, -0.13091452, 0.026342828, 0.73758805, 0.17669186)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_3unkh")
+
+[node name="@MeshInstance3D@24761" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=829932654]
+transform = Transform3D(0.040027402, -0.0030474495, -0.14579894, 0.021393238, 0.027197463, 0, 0.07771832, -0.0059170127, 0.07509108, -0.100397795, 0.738888, 0.14776415)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_ifpj1")
+
+[node name="@MeshInstance3D@24762" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=404193649]
+transform = Transform3D(-0.069784164, -0.005312953, -0.08793784, -0.021393238, 0.027197463, 0, 0.052654542, 0.0040088054, -0.11654585, 0.016017854, 0.8095967, 0.22192852)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_7lk5j")
+
+[node name="@MeshInstance3D@24763" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1775581892]
+transform = Transform3D(0.040027402, -0.0030474495, -0.12979661, 0.021393238, 0.027197463, 0, 0.07771832, -0.0059170127, 0.06684937, -0.110722765, 0.8108967, 0.19300081)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_q4aje")
+
+[node name="@MeshInstance3D@24764" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1645751909]
+transform = Transform3D(-0.069784164, -0.005312953, -0.077096194, -0.021393238, 0.027197463, 0, 0.052654542, 0.0040088054, -0.10217719, 0.0056928843, 0.88160545, 0.26716518)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_ev0b5")
+
+[node name="@MeshInstance3D@24765" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=148989329]
+transform = Transform3D(0.040027402, -0.0030474495, -0.1137943, 0.021393238, 0.027197463, 0, 0.07771832, -0.0059170127, 0.05860767, -0.121047735, 0.8829054, 0.23823746)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_wtrdi")
+
+[node name="@MeshInstance3D@24766" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=932433159]
+transform = Transform3D(0.8554756, -0.5131447, 0.06959927, 0.5131447, 0.82195836, -0.24711742, 0.06959927, 0.24711742, 0.96648276, -0.14415503, 0.7109084, 0.069421396)
+material_override = SubResource("ShaderMaterial_3grln")
+mesh = SubResource("CylinderMesh_dxt6t")
+
+[node name="@MeshInstance3D@24767" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=162576094]
+transform = Transform3D(-0.08467669, -0.0064467825, 0.04971349, -0.021393238, 0.027197463, 0, -0.02172987, -0.0016543838, -0.19372292, -0.038108874, 0.5855679, 0.090496816)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_phj40")
+
+[node name="@MeshInstance3D@24768" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=223714103]
+transform = Transform3D(-0.03580595, 0.0027260534, -0.18245454, 0.021393238, 0.027197463, 0, 0.07975126, -0.006071789, -0.08191668, -0.09451376, 0.58686787, -0.026629128)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_pbthu")
+
+[node name="@MeshInstance3D@24769" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1097694110]
+transform = Transform3D(-0.08467669, -0.0064467825, 0.045239273, -0.021393238, 0.027197463, 0, -0.02172987, -0.0016543838, -0.17628784, -0.079913825, 0.6525313, 0.11062902)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_754ws")
+
+[node name="@MeshInstance3D@24770" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=526428601]
+transform = Transform3D(-0.03580595, 0.0027260534, -0.16603363, 0.021393238, 0.027197463, 0, 0.07975126, -0.006071789, -0.07454418, -0.13631871, 0.6538313, -0.006496925)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_p4rfi")
+
+[node name="@MeshInstance3D@24771" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=2042248337]
+transform = Transform3D(-0.08467669, -0.0064467825, 0.040765062, -0.021393238, 0.027197463, 0, -0.02172987, -0.0016543838, -0.1588528, -0.12171878, 0.71949476, 0.13076122)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_cag16")
+
+[node name="@MeshInstance3D@24772" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1250722805]
+transform = Transform3D(-0.03580595, 0.0027260534, -0.14961272, 0.021393238, 0.027197463, 0, 0.07975126, -0.006071789, -0.06717168, -0.17812367, 0.72079474, 0.013635278)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_iw74b")
+
+[node name="@MeshInstance3D@24773" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1403150242]
+transform = Transform3D(-0.08467669, -0.0064467825, 0.036290847, -0.021393238, 0.027197463, 0, -0.02172987, -0.0016543838, -0.14141773, -0.16352375, 0.7864582, 0.15089342)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_7ieeb")
+
+[node name="@MeshInstance3D@24774" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1331692764]
+transform = Transform3D(-0.03580595, 0.0027260534, -0.13319181, 0.021393238, 0.027197463, 0, 0.07975126, -0.006071789, -0.059799176, -0.21992864, 0.7877582, 0.033767484)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_ruhwf")
+
+[node name="@MeshInstance3D@24775" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=408835774]
+transform = Transform3D(-0.08467669, -0.0064467825, 0.031816635, -0.021393238, 0.027197463, 0, -0.02172987, -0.0016543838, -0.123982675, -0.2053287, 0.8534216, 0.17102563)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_n7l1c")
+
+[node name="@MeshInstance3D@24776" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1238672229]
+transform = Transform3D(-0.03580595, 0.0027260534, -0.11677091, 0.021393238, 0.027197463, 0, 0.07975126, -0.006071789, -0.052426677, -0.2617336, 0.8547216, 0.05389969)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_gk4eb")
+
+[node name="@MeshInstance3D@24777" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=240728378]
+transform = Transform3D(0.9091422, -0.41418114, -0.043754816, 0.41418114, 0.88807094, 0.1994591, -0.043754816, -0.1994591, 0.9789288, -0.14415503, 0.7890916, -0.069421396)
+material_override = SubResource("ShaderMaterial_3grln")
+mesh = SubResource("CylinderMesh_6k5pj")
+
+[node name="@MeshInstance3D@24778" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1744864619]
+transform = Transform3D(-0.035805967, -0.0027260545, 0.18245453, -0.021393238, 0.027197463, 0, -0.07975125, -0.0060717887, -0.08191671, -0.09451376, 0.62153214, 0.026629128)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_lx7q1")
+
+[node name="@MeshInstance3D@24779" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=2124831767]
+transform = Transform3D(-0.08467669, 0.0064467825, -0.049713504, 0.021393238, 0.027197463, 0, 0.021729875, -0.0016543842, -0.19372292, -0.038108874, 0.6228321, -0.090496816)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_7qy53")
+
+[node name="@MeshInstance3D@24780" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=874077154]
+transform = Transform3D(-0.035805967, -0.0027260545, 0.16603361, -0.021393238, 0.027197463, 0, -0.07975125, -0.0060717887, -0.074544206, -0.13631871, 0.7111687, 0.006496925)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_dvxuy")
+
+[node name="@MeshInstance3D@24781" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1989740759]
+transform = Transform3D(-0.08467669, 0.0064467825, -0.045239285, 0.021393238, 0.027197463, 0, 0.021729875, -0.0016543842, -0.17628784, -0.079913825, 0.7124687, -0.11062902)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_kgbrg")
+
+[node name="@MeshInstance3D@24782" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=875416830]
+transform = Transform3D(-0.035805967, -0.0027260545, 0.14961271, -0.021393238, 0.027197463, 0, -0.07975125, -0.0060717887, -0.06717171, -0.17812367, 0.8008052, -0.013635278)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_jju1h")
+
+[node name="@MeshInstance3D@24783" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1341272885]
+transform = Transform3D(-0.08467669, 0.0064467825, -0.040765073, 0.021393238, 0.027197463, 0, 0.021729875, -0.0016543842, -0.1588528, -0.12171878, 0.8021052, -0.13076122)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_3kx57")
+
+[node name="@MeshInstance3D@24784" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1026744024]
+transform = Transform3D(-0.035805967, -0.0027260545, 0.13319181, -0.021393238, 0.027197463, 0, -0.07975125, -0.0060717887, -0.0597992, -0.21992864, 0.89044183, -0.033767484)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_4m377")
+
+[node name="@MeshInstance3D@24785" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1431547582]
+transform = Transform3D(-0.08467669, 0.0064467825, -0.036290854, 0.021393238, 0.027197463, 0, 0.021729875, -0.0016543842, -0.14141773, -0.16352375, 0.8917418, -0.15089342)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_pl4qd")
+
+[node name="@MeshInstance3D@24786" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1919468087]
+transform = Transform3D(-0.035805967, -0.0027260545, 0.1167709, -0.021393238, 0.027197463, 0, -0.07975125, -0.0060717887, -0.0524267, -0.2617336, 0.9800784, -0.05389969)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_ty62i")
+
+[node name="@MeshInstance3D@24787" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=766918516]
+transform = Transform3D(-0.08467669, 0.0064467825, -0.031816643, 0.021393238, 0.027197463, 0, 0.021729875, -0.0016543842, -0.123982675, -0.2053287, 0.9813784, -0.17102563)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_qv02j")
+
+[node name="@MeshInstance3D@24788" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=2040340682]
+transform = Transform3D(0.99389786, -0.10701521, -0.026735185, 0.10701521, 0.87676334, 0.4688643, -0.026735185, -0.4688643, 0.8828655, -0.03560335, 0.7716942, -0.15598847)
+material_override = SubResource("ShaderMaterial_3grln")
+mesh = SubResource("CylinderMesh_nym1g")
+
+[node name="@MeshInstance3D@24789" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1467270884]
+transform = Transform3D(0.040027417, 0.0030474504, 0.17780356, -0.021393238, 0.027197463, 0, -0.07771831, -0.005917012, 0.09157452, -0.07974785, 0.6135293, -0.057290833)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_gea0f")
+
+[node name="@MeshInstance3D@24790" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1826898083]
+transform = Transform3D(-0.06978415, 0.005312952, 0.120462835, 0.021393238, 0.027197463, 0, -0.05265456, 0.0040088063, -0.15965183, 0.04699277, 0.6148293, -0.08621855)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_lts27")
+
+[node name="@MeshInstance3D@24791" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1566049704]
+transform = Transform3D(0.040027417, 0.0030474504, 0.16180123, -0.021393238, 0.027197463, 0, -0.07771831, -0.005917012, 0.083332814, -0.090072826, 0.69812065, -0.1025275)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_vg8es")
+
+[node name="@MeshInstance3D@24792" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=696578228]
+transform = Transform3D(-0.06978415, 0.005312952, 0.109621175, 0.021393238, 0.027197463, 0, -0.05265456, 0.0040088063, -0.14528316, 0.036667798, 0.69942063, -0.13145521)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_mx84n")
+
+[node name="@MeshInstance3D@24793" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1359726960]
+transform = Transform3D(0.040027417, 0.0030474504, 0.14579892, -0.021393238, 0.027197463, 0, -0.07771831, -0.005917012, 0.07509111, -0.100397795, 0.7827119, -0.14776415)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_3010w")
+
+[node name="@MeshInstance3D@24794" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=482399125]
+transform = Transform3D(-0.06978415, 0.005312952, 0.09877953, 0.021393238, 0.027197463, 0, -0.05265456, 0.0040088063, -0.13091451, 0.026342828, 0.7840119, -0.17669186)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_nkv4d")
+
+[node name="@MeshInstance3D@24795" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1183268489]
+transform = Transform3D(0.040027417, 0.0030474504, 0.1297966, -0.021393238, 0.027197463, 0, -0.07771831, -0.005917012, 0.066849396, -0.110722765, 0.86730325, -0.19300081)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_d6sr3")
+
+[node name="@MeshInstance3D@24796" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1191855718]
+transform = Transform3D(-0.06978415, 0.005312952, 0.08793787, 0.021393238, 0.027197463, 0, -0.05265456, 0.0040088063, -0.11654583, 0.016017854, 0.8686032, -0.22192852)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_jyc4v")
+
+[node name="@MeshInstance3D@24797" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1366328264]
+transform = Transform3D(0.040027417, 0.0030474504, 0.11379429, -0.021393238, 0.027197463, 0, -0.07771831, -0.005917012, 0.058607694, -0.121047735, 0.9518946, -0.23823746)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_smoku")
+
+[node name="@MeshInstance3D@24798" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=2005843408]
+transform = Transform3D(-0.06978415, 0.005312952, 0.07709622, 0.021393238, 0.027197463, 0, -0.05265456, 0.0040088063, -0.10217717, 0.0056928843, 0.95319456, -0.26716518)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_37b5q")
+
+[node name="@MeshInstance3D@24799" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=275357967]
+transform = Transform3D(0.92626446, 0.3653561, 0.09246146, -0.3653561, 0.81032145, 0.45814198, 0.09246146, -0.45814198, 0.884057, 0.09975837, 0.7012536, -0.12509304)
+material_override = SubResource("ShaderMaterial_3grln")
+mesh = SubResource("CylinderMesh_5rn2p")
+
+[node name="@MeshInstance3D@24800" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=574247819]
+transform = Transform3D(0.0857193, 0.006526161, 0.03926289, -0.021393238, 0.027197463, 0, -0.017161893, -0.001306605, 0.1961082, -0.0049301945, 0.5811267, -0.09806964)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_ulcw7")
+
+[node name="@MeshInstance3D@24801" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1559452119]
+transform = Transform3D(-0.0023427245, 0.00017836118, 0.19992818, 0.021393238, 0.027197463, 0, -0.08738903, 0.0066532833, -0.0053596734, 0.096707895, 0.58242667, -0.017015964)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_m6uuj")
+
+[node name="@MeshInstance3D@24802" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1387562433]
+transform = Transform3D(0.0857193, 0.006526161, 0.03572923, -0.021393238, 0.027197463, 0, -0.017161893, -0.001306605, 0.17845845, 0.023999728, 0.6452902, -0.13434662)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_cxyip")
+
+[node name="@MeshInstance3D@24803" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1793943738]
+transform = Transform3D(-0.0023427245, 0.00017836118, 0.18193464, 0.021393238, 0.027197463, 0, -0.08738903, 0.0066532833, -0.0048773023, 0.12563783, 0.6465902, -0.053292945)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_jnee5")
+
+[node name="@MeshInstance3D@24804" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=2068148499]
+transform = Transform3D(0.0857193, 0.006526161, 0.03219557, -0.021393238, 0.027197463, 0, -0.017161893, -0.001306605, 0.16080873, 0.052929655, 0.70945376, -0.1706236)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_uupy8")
+
+[node name="@MeshInstance3D@24805" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=1114208438]
+transform = Transform3D(-0.0023427245, 0.00017836118, 0.16394112, 0.021393238, 0.027197463, 0, -0.08738903, 0.0066532833, -0.004394932, 0.15456775, 0.71075374, -0.089569926)
+material_override = SubResource("ShaderMaterial_n5rx8")
+mesh = SubResource("SphereMesh_f3rt8")
+
+[node name="@MeshInstance3D@24806" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=992162628]
+transform = Transform3D(0.0857193, 0.006526161, 0.02866191, -0.021393238, 0.027197463, 0, -0.017161893, -0.001306605, 0.14315899, 0.081859596, 0.7736173, -0.2069006)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_tqb3s")
+
+[node name="@MeshInstance3D@24807" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=425468644]
+transform = Transform3D(-0.0023427245, 0.00017836118, 0.14594756, 0.021393238, 0.027197463, 0, -0.08738903, 0.0066532833, -0.003912561, 0.1834977, 0.7749173, -0.12584692)
+material_override = SubResource("ShaderMaterial_srxeq")
+mesh = SubResource("SphereMesh_hbxcy")
+
+[node name="@MeshInstance3D@24808" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=885611373]
+transform = Transform3D(0.0857193, 0.006526161, 0.025128251, -0.021393238, 0.027197463, 0, -0.017161893, -0.001306605, 0.12550925, 0.110789515, 0.8377809, -0.24317756)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_w2st3")
+
+[node name="@MeshInstance3D@24809" type="MeshInstance3D" parent="GroundShrub/LayeredPlantFoliage" unique_id=2106091800]
+transform = Transform3D(-0.0023427245, 0.00017836118, 0.12795404, 0.021393238, 0.027197463, 0, -0.08738903, 0.0066532833, -0.003430191, 0.21242762, 0.83908087, -0.16212389)
+material_override = SubResource("ShaderMaterial_hwlqm")
+mesh = SubResource("SphereMesh_huyo0")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=429635068]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=1702137335]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0014832914, 0, -0.79602104)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=731185211]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.0014832914, 0, 0.7960211)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=455468658]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0014832914, 0.6431669, 2.9802322e-08)

@@ -1,0 +1,55 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://scenes/components/prefabs/wing-detail-v2_common_score_047056db.gd" id="1_auto_script"]
+
+
+[ext_resource type="Script" path="res://scenes/components/prefabs/InteractiveProp.gd" id="1_j2wf3"]
+[ext_resource type="Shader" path="res://assets/materials/surfaces/fabric.gdshader" id="2_u5m3c"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5ji67"]
+render_priority = 0
+shader = ExtResource("2_u5m3c")
+shader_parameter/pigment = Color(0.8627451, 0.81960785, 0.7176471, 1)
+shader_parameter/surface_roughness = 0.8
+shader_parameter/weave_density = null
+shader_parameter/occlusion_enabled = null
+shader_parameter/occlusion_focus = null
+shader_parameter/occlusion_camera = null
+shader_parameter/occlusion_right = null
+shader_parameter/occlusion_up = null
+shader_parameter/occlusion_toward_camera = null
+shader_parameter/occlusion_radius = null
+shader_parameter/occlusion_strength = null
+
+[sub_resource type="BoxMesh" id="BoxMesh_aue2k"]
+size = Vector3(0.32, 0.012, 0.24)
+
+[node name="FurniturePrefab" type="Node3D" unique_id=1164364360 script=ExtResource("1_auto_script")]
+script = ExtResource("1_j2wf3")
+metadata/world_category = &"decoration"
+metadata/prefab_id = "wing-detail-v2/common/score"
+
+[node name="score" type="Node3D" parent="." unique_id=1872870092]
+metadata/authoring_label = "score"
+metadata/authoring_detail = "blank score surface; notation not invented"
+
+[node name="@MeshInstance3D@3054" type="MeshInstance3D" parent="score" unique_id=1758641314]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.87, 0)
+material_override = SubResource("ShaderMaterial_5ji67")
+mesh = SubResource("BoxMesh_aue2k")
+
+[node name="InteractionSlots" type="Node3D" parent="." unique_id=1010879188]
+
+[node name="Back" type="Marker3D" parent="InteractionSlots" unique_id=1160878784]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.57)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="Front" type="Marker3D" parent="InteractionSlots" unique_id=573444379]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0.57)
+metadata/clearance_radius_m = 0.3
+metadata/pose = "stand"
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots" unique_id=393640738]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.876, 0)

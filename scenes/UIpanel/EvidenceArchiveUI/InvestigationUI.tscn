@@ -1,0 +1,89 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/UIpanel/EvidenceArchiveUI/InvestigationUI.gd" id="1_inv"]
+[ext_resource type="Theme" path="res://assets/ui/OverlayTheme.tres" id="2_overlay"]
+
+[node name="InvestigationUI" type="CanvasLayer"]
+layer = 25
+visible = false
+script = ExtResource("1_inv")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.16, 0.145, 0.12, 0.64)
+
+[node name="CenterBox" type="CenterContainer" parent="."]
+theme = ExtResource("2_overlay")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ModalBox" type="PanelContainer" parent="CenterBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(760, 520)
+layout_mode = 2
+theme_type_variation = &"PaperPanel"
+
+[node name="Margin" type="MarginContainer" parent="CenterBox/ModalBox"]
+layout_mode = 2
+theme_type_variation = &"ModalMargin"
+
+[node name="VBox" type="VBoxContainer" parent="CenterBox/ModalBox/Margin"]
+layout_mode = 2
+theme_type_variation = &"ModalStack"
+
+[node name="ModalKicker" type="Label" parent="CenterBox/ModalBox/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"EditorialCaption"
+
+[node name="ModalHeader" type="HBoxContainer" parent="CenterBox/ModalBox/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderRow"
+
+[node name="ModalTitle" type="Label" parent="CenterBox/ModalBox/Margin/VBox/ModalHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"EditorialTitle"
+text = "调查记录"
+autowrap_mode = 3
+
+[node name="ModalCloseButton" type="Button" parent="CenterBox/ModalBox/Margin/VBox/ModalHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 0
+theme_type_variation = &"QuietAction"
+text = "合上"
+
+[node name="HSeparator" type="HSeparator" parent="CenterBox/ModalBox/Margin/VBox"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ModalScroll" type="ScrollContainer" parent="CenterBox/ModalBox/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+follow_focus = true
+
+[node name="ModalBody" type="VBoxContainer" parent="CenterBox/ModalBox/Margin/VBox/ModalScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_type_variation = &"BodyStack"
+
+[node name="ModalFooter" type="HFlowContainer" parent="CenterBox/ModalBox/Margin/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"FooterRow"
+alignment = 2

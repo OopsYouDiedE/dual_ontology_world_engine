@@ -1,0 +1,292 @@
+// 第五日：倒灌善后、泛音共鸣特质标定、案卷汇总建档与长效秩序确立。
+schema "dv-script-v1";
+data runtime.character_session { "value": {
+  "compact": true,
+  "viewer": "detective",
+  "room_labels": {"A-P": "甲区公共厅", "B-P": "乙区公共厅／小厨房", "C-P": "丙区公共厅", "D-P": "丁区公共厅", "2F-cross-M": "二楼中翼交汇处", "2F-North-Stair": "二楼北侧楼梯与联锁闸", "1F-Shaft-Monitor": "一楼竖井监测壁龛", "1F-Infirmary": "一楼临时医疗角", "F03": "一楼大食堂", "F05": "一楼热厨", "T01": "二楼公共讲堂", "U01-granary": "B1主粮仓", "D-gate": "丁区边界门"},
+  "start_minutes": 420,
+  "scheduling": {"decision_interval_seconds": 15, "actor_stagger_seconds": 0.05, "candidates_per_decision": 32, "evaluations_per_slice": 32},
+  "run": {"end_minutes": 1295},
+  "source": {"document": "scenarios/day5.dv", "scope": "第五天07:00至错峰入睡，包含伤员复查、苏泠泛音共鸣特质标定、五日案卷汇总、四院轮值长效秩序确立与全员安然入睡"},
+  "actor_defaults": {"autonomous": true, "autonomy": {"commodity_needs": {"energy": 85, "hunger": 70, "social": 60, "comfort": 55, "thirst": 70, "hygiene": 70}, "need_decay_per_second": {"energy": 0.001, "hunger": 0.001, "social": 0.0005, "comfort": 0.0005, "thirst": 0.0015, "hygiene": 0.0005}, "autonomy_weights": {"energy": 1, "hunger": 1, "social": 1, "comfort": 1, "thirst": 2, "hygiene": 1.5}, "time_cost": 0.0001, "initial_emotion": "睡眠", "buff_definitions": {"buff_granary_opened": {"label": "粮仓开启心头大定", "emotion": "安心", "emotion_weight": 2, "tag_scores": {"搬运": 30, "协作": 25}, "duration_minutes": 180}, "buff_ration_dispute": {"label": "口粮争议心存芥蒂", "emotion": "警觉", "emotion_weight": 2, "tag_scores": {"防范": 25, "闲聊": -15}, "duration_minutes": 120}, "buff_ruan_stratagem_ready": {"label": "试应手棋局已定", "emotion": "专注", "emotion_weight": 3, "tag_scores": {"谋划": 35, "掩饰": 25}, "duration_minutes": 240}, "buff_warm_porridge": {"label": "热气腾腾清粥饱腹", "emotion": "安心", "emotion_weight": 2, "tag_scores": {"安睡": 35, "休整": 30}, "duration_minutes": 180}, "condition_detective_day5": {"label": "卷宗汇总建档存录", "emotion": "专注", "emotion_weight": 3, "tag_scores": {"归档": 45, "勘验": 35, "总结": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_su_day5": {"label": "泛音共鸣标定特质", "emotion": "专注", "emotion_weight": 3, "tag_scores": {"听辨": 50, "声学": 45, "测定": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_ward_day5": {"label": "确立秩序轮值巡守", "emotion": "警觉", "emotion_weight": 2, "tag_scores": {"守望": 45, "排班": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_margaret_day5": {"label": "修缮加固规划四院", "emotion": "专注", "emotion_weight": 2, "tag_scores": {"测绘": 45, "加固": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_mora_day5": {"label": "深层诊疗伤情复核", "emotion": "安心", "emotion_weight": 2, "tag_scores": {"复查": 45, "医护": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_veronica_day5": {"label": "留样封存螯合药方", "emotion": "专注", "emotion_weight": 2, "tag_scores": {"配药": 45, "存录": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_moran_day5": {"label": "绘制长卷记录全景", "emotion": "专注", "emotion_weight": 2, "tag_scores": {"写生": 45, "绘卷": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_bertrand_day5": {"label": "持盾护卫长效戒备", "emotion": "警觉", "emotion_weight": 2, "tag_scores": {"巡守": 45, "守卫": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_shen_day5": {"label": "长效炊事按轨供热", "emotion": "安心", "emotion_weight": 2, "tag_scores": {"厨务": 45, "热食": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_huo_day5": {"label": "轮值机务全面检修", "emotion": "专注", "emotion_weight": 2, "tag_scores": {"检修": 45, "巡检": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_quer_day5": {"label": "维护器械协作勘修", "emotion": "专注", "emotion_weight": 2, "tag_scores": {"查验": 45, "协作": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_ruan_day5": {"label": "纵览全盘长效推演", "emotion": "专注", "emotion_weight": 2, "tag_scores": {"复盘": 45, "推手": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_lucian_day5": {"label": "研磨诗篇参与轮值", "emotion": "安心", "emotion_weight": 2, "tag_scores": {"吟诗": 40, "轮值": 35}, "until_resolved": true, "resolution": "安然入睡"}, "condition_gu_day5": {"label": "考订石刻五日汇编", "emotion": "专注", "emotion_weight": 2, "tag_scores": {"考订": 45, "编修": 40}, "until_resolved": true, "resolution": "安然入睡"}, "condition_elena_day5": {"label": "伤情转好协助分拣", "emotion": "安心", "emotion_weight": 2, "tag_scores": {"分拣": 40, "休养": 35}, "until_resolved": true, "resolution": "安然入睡"}, "condition_selma_day5": {"label": "琴声悠扬秩序井然", "emotion": "安心", "emotion_weight": 2, "tag_scores": {"抚琴": 45, "安神": 40}, "until_resolved": true, "resolution": "安然入睡"}, "buff_stable_order": {"label": "长效秩序确立全员安宁", "emotion": "安心", "emotion_weight": 3, "tag_scores": {"安心": 45, "团结": 40}, "duration_minutes": 240}}, "emotion_definitions": {"睡眠": {"tag_scores": {"睡眠": 50, "勘验": -50, "闲聊": -50, "用餐": -50}}, "不适": {"tag_scores": {"护创": 35, "休整": 25, "闲聊": -15, "深度讨论": -20}}, "警觉": {"tag_scores": {"勘验": 25, "破拆": 25, "核账": 30, "防范": 25, "闲聊": -10}}, "专注": {"tag_scores": {"测绘": 30, "破拆": 30, "检修": 30, "打谱": 35, "调解": 25, "闲聊": -15}}, "担忧": {"tag_scores": {"查伤": 35, "换药": 30, "照料": 30, "闲聊": -10}}, "悲愤": {"tag_scores": {"争辩": 30, "质询": 30, "闲聊": -10}}, "安心": {"tag_scores": {"厨务": 25, "用餐": 30, "休整": 25, "就寝": 35}}}, "action_weights": {}, "action_predictions": {}, "completed_action_effects": {}}},
+  "templates": {"rest": {"id": "${actor}.rest", "label": "歇息", "kind": "interact", "at": "${room}", "minutes": 10, "priority": 10, "when": {}, "focus": "${actor}", "interaction_slot": "${actor}"}},
+  "facts": {
+    "victims.phys.rechecked": false,
+    "su.trace.acoustic_resonance_calibrated": false,
+    "cases.doc.five_days_archived": false,
+    "order.doc.long_term_shifts_settled": false,
+    "supper.phys.ready": false,
+    "demon.room": "1F-Shaft-Monitor",
+    "detective.room": "R05",
+    "su.room": "R08",
+    "mora.room": "R16",
+    "veronica.room": "R13",
+    "ward.room": "R04",
+    "margaret.room": "R15",
+    "shen.room": "R07",
+    "moran.room": "R12",
+    "bertrand.room": "R14",
+    "quer.room": "R03",
+    "huo.room": "R06",
+    "ruan.room": "R10",
+    "lucian.room": "R01",
+    "gu.room": "R02",
+    "elena.room": "R11",
+    "selma.room": "R09"
+  },
+  "fixtures": [
+    {"id": "R01-bed", "room": "R01", "label": "自己的床"},
+    {"id": "R02-bed", "room": "R02", "label": "自己的床"},
+    {"id": "R03-bed", "room": "R03", "label": "自己的床"},
+    {"id": "R04-bed", "room": "R04", "label": "自己的床"},
+    {"id": "R05-bed", "room": "R05", "label": "自己的床"},
+    {"id": "R06-bed", "room": "R06", "label": "自己的床"},
+    {"id": "R07-bed", "room": "R07", "label": "自己的床"},
+    {"id": "R08-bed", "room": "R08", "label": "自己的床"},
+    {"id": "R09-bed", "room": "R09", "label": "自己的床"},
+    {"id": "R10-bed", "room": "R10", "label": "自己的床"},
+    {"id": "R11-bed", "room": "R11", "label": "自己的床"},
+    {"id": "R12-bed", "room": "R12", "label": "自己的床"},
+    {"id": "R13-bed", "room": "R13", "label": "自己的床"},
+    {"id": "R14-bed", "room": "R14", "label": "自己的床"},
+    {"id": "R15-bed", "room": "R15", "label": "自己的床"},
+    {"id": "R16-bed", "room": "R16", "label": "自己的床"},
+    {"id": "F03-table", "room": "F03", "label": "大食堂长桌"},
+    {"id": "F05-stove", "room": "F05", "label": "热厨大灶"},
+    {"id": "T01-lectern", "room": "T01", "label": "二楼讲堂讲台"}
+  ],
+  "actors": [
+    {
+      "id": "mora", "name": "茉拉", "home_room": "R16", "home_bed": "R16-bed", "wake_at_game_minutes": 423,
+      "knows": {"mora.room": "R16", "mora.phys.asleep": true},
+      "actions": [
+        {"id": "mora.wake", "label": "醒来", "kind": "interact", "at": "R16", "minutes": 1, "priority": 100, "once": true, "focus": "mora", "interaction_slot": "mora", "writes": {"mora.phys.asleep": false}, "add_buffs": ["condition_mora_day5"], "emotion": "安心"},
+        {"id": "mora.to_infirmary", "label": "前往一楼医疗角巡诊", "kind": "walk", "at": "R16", "minutes": 5, "priority": 70, "once": true, "focus": "mora", "writes": {"mora.room": "1F-Infirmary"}, "observes": ["mora.room"], "when": {"event:mora.wake.done": true}},
+        {"id": "mora.recheck_victims", "label": "全面复查莫兰与贝尔特朗创口确认稳定脱险", "kind": "interact", "at": "1F-Infirmary", "minutes": 15, "priority": 90, "once": true, "focus": "mora", "interaction_slot": "mora", "when": {"mora.room": "1F-Infirmary", "event:mora.to_infirmary.done": true}, "not_before_game_minutes": 510, "writes": {"victims.phys.rechecked": true}},
+        {"id": "mora.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "1F-Infirmary", "minutes": 5, "priority": 70, "once": true, "focus": "mora", "writes": {"mora.room": "F03"}, "observes": ["mora.room"], "when": {"event:mora.recheck_victims.done": true}, "not_before_game_minutes": 1080},
+        {"id": "mora.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "mora", "interaction_slot": "mora", "when": {"mora.room": "F03", "event:mora.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "mora.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "mora", "writes": {"mora.room": "R16"}, "observes": ["mora.room"], "when": {"event:mora.eat_supper.done": true}, "not_before_game_minutes": 1260},
+        {"id": "mora.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R16", "minutes": 1, "priority": 95, "once": true, "focus": "mora", "interaction_slot": "mora", "when": {"mora.room": "R16", "event:mora.return_bed.done": true}, "writes": {"mora.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "su", "name": "苏泠", "home_room": "R08", "home_bed": "R08-bed", "wake_at_game_minutes": 422,
+      "knows": {"su.room": "R08", "su.phys.asleep": true},
+      "actions": [
+        {"id": "su.wake", "label": "醒来", "kind": "interact", "at": "R08", "minutes": 1, "priority": 100, "once": true, "focus": "su", "interaction_slot": "su", "writes": {"su.phys.asleep": false}, "add_buffs": ["condition_su_day5"], "emotion": "专注"},
+        {"id": "su.to_hall", "label": "走至二楼中翼交汇处校准律管", "kind": "walk", "at": "R08", "minutes": 5, "priority": 70, "once": true, "focus": "su", "writes": {"su.room": "2F-cross-M"}, "observes": ["su.room"], "when": {"event:su.wake.done": true}},
+        {"id": "su.calibrate_acoustic", "label": "辨识通风暗井低频泛音共鸣特质标定声学联锁", "kind": "interact", "at": "2F-cross-M", "minutes": 20, "priority": 95, "once": true, "focus": "su", "interaction_slot": "su", "when": {"su.room": "2F-cross-M", "event:su.to_hall.done": true}, "not_before_game_minutes": 600, "writes": {"su.trace.acoustic_resonance_calibrated": true}},
+        {"id": "su.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "2F-cross-M", "minutes": 5, "priority": 70, "once": true, "focus": "su", "writes": {"su.room": "F03"}, "observes": ["su.room"], "when": {"event:su.calibrate_acoustic.done": true}, "not_before_game_minutes": 1080},
+        {"id": "su.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "su", "interaction_slot": "su", "when": {"su.room": "F03", "event:su.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "su.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "su", "writes": {"su.room": "R08"}, "observes": ["su.room"], "when": {"event:su.eat_supper.done": true}, "not_before_game_minutes": 1260},
+        {"id": "su.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R08", "minutes": 1, "priority": 95, "once": true, "focus": "su", "interaction_slot": "su", "when": {"su.room": "R08", "event:su.return_bed.done": true}, "writes": {"su.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "detective", "name": "侦探", "home_room": "R05", "home_bed": "R05-bed", "wake_at_game_minutes": 420,
+      "knows": {"detective.room": "R05", "detective.phys.asleep": true},
+      "actions": [
+        {"id": "detective.wake", "label": "醒来", "kind": "interact", "at": "R05", "minutes": 1, "priority": 100, "once": true, "focus": "detective", "interaction_slot": "detective", "writes": {"detective.phys.asleep": false}, "add_buffs": ["condition_detective_day5"], "emotion": "专注"},
+        {"id": "detective.to_lectern", "label": "前往二楼公共讲堂汇总卷宗", "kind": "walk", "at": "R05", "minutes": 5, "priority": 70, "once": true, "focus": "detective", "writes": {"detective.room": "T01"}, "observes": ["detective.room"], "when": {"event:detective.wake.done": true}},
+        {"id": "detective.archive_cases", "label": "全面汇总五日案卷印证痕迹链条归档存查", "kind": "interact", "at": "T01", "minutes": 20, "priority": 95, "once": true, "focus": "detective", "interaction_slot": "detective", "when": {"detective.room": "T01", "event:detective.to_lectern.done": true}, "not_before_game_minutes": 840, "writes": {"cases.doc.five_days_archived": true}},
+        {"id": "detective.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "T01", "minutes": 5, "priority": 70, "once": true, "focus": "detective", "writes": {"detective.room": "F03"}, "observes": ["detective.room"], "when": {"event:detective.archive_cases.done": true}, "not_before_game_minutes": 1080},
+        {"id": "detective.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "detective", "interaction_slot": "detective", "when": {"detective.room": "F03", "event:detective.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "detective.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "detective", "writes": {"detective.room": "R05"}, "observes": ["detective.room"], "when": {"event:detective.eat_supper.done": true}, "not_before_game_minutes": 1260},
+        {"id": "detective.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R05", "minutes": 1, "priority": 95, "once": true, "focus": "detective", "interaction_slot": "detective", "when": {"detective.room": "R05", "event:detective.return_bed.done": true}, "writes": {"detective.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "ward", "name": "沃德", "home_room": "R04", "home_bed": "R04-bed", "wake_at_game_minutes": 422,
+      "knows": {"ward.room": "R04", "ward.phys.asleep": true},
+      "actions": [
+        {"id": "ward.wake", "label": "醒来", "kind": "interact", "at": "R04", "minutes": 1, "priority": 100, "once": true, "focus": "ward", "interaction_slot": "ward", "writes": {"ward.phys.asleep": false}, "add_buffs": ["condition_ward_day5"], "emotion": "警觉"},
+        {"id": "ward.to_hall", "label": "巡视长廊商定长效守望规约", "kind": "walk", "at": "R04", "minutes": 5, "priority": 70, "once": true, "focus": "ward", "writes": {"ward.room": "2F-cross-M"}, "observes": ["ward.room"], "when": {"event:ward.wake.done": true}},
+        {"id": "ward.settle_shifts", "label": "正式确立四区分工轮值表与长效互助生活秩序", "kind": "interact", "at": "2F-cross-M", "minutes": 15, "priority": 95, "once": true, "focus": "ward", "interaction_slot": "ward", "when": {"ward.room": "2F-cross-M", "event:ward.to_hall.done": true}, "not_before_game_minutes": 930, "writes": {"order.doc.long_term_shifts_settled": true}, "add_buffs": ["buff_stable_order"]},
+        {"id": "ward.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "2F-cross-M", "minutes": 5, "priority": 70, "once": true, "focus": "ward", "writes": {"ward.room": "F03"}, "observes": ["ward.room"], "when": {"event:ward.settle_shifts.done": true}, "not_before_game_minutes": 1085},
+        {"id": "ward.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "ward", "interaction_slot": "ward", "when": {"ward.room": "F03", "event:ward.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "ward.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "ward", "writes": {"ward.room": "R04"}, "observes": ["ward.room"], "when": {"event:ward.eat_supper.done": true}, "not_before_game_minutes": 1265},
+        {"id": "ward.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R04", "minutes": 1, "priority": 95, "once": true, "focus": "ward", "interaction_slot": "ward", "when": {"ward.room": "R04", "event:ward.return_bed.done": true}, "writes": {"ward.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "shen", "name": "沈鼎", "home_room": "R07", "home_bed": "R07-bed", "wake_at_game_minutes": 421,
+      "knows": {"shen.room": "R07", "shen.phys.asleep": true},
+      "actions": [
+        {"id": "shen.wake", "label": "醒来", "kind": "interact", "at": "R07", "minutes": 1, "priority": 100, "once": true, "focus": "shen", "interaction_slot": "shen", "writes": {"shen.phys.asleep": false}, "add_buffs": ["condition_shen_day5"], "emotion": "安心"},
+        {"id": "shen.daily_work", "label": "日常厨房整理", "kind": "interact", "at": "R07", "minutes": 20, "priority": 75, "once": true, "focus": "shen", "interaction_slot": "shen", "when": {"event:shen.wake.done": true}},
+        {"id": "shen.to_kitchen", "label": "前往热厨备炊", "kind": "walk", "at": "R07", "minutes": 5, "priority": 70, "once": true, "focus": "shen", "writes": {"shen.room": "F05"}, "observes": ["shen.room"], "when": {"event:shen.daily_work.done": true}, "not_before_game_minutes": 1040},
+        {"id": "shen.cook_supper", "label": "熬煮长效秩序庆祝清粥面条", "kind": "interact", "at": "F05", "minutes": 20, "priority": 85, "once": true, "focus": "shen", "interaction_slot": "shen", "when": {"shen.room": "F05", "event:shen.to_kitchen.done": true}, "not_before_game_minutes": 1050, "writes": {"supper.phys.ready": true}},
+        {"id": "shen.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "F05", "minutes": 5, "priority": 70, "once": true, "focus": "shen", "writes": {"shen.room": "F03"}, "observes": ["shen.room"], "when": {"event:shen.cook_supper.done": true}, "not_before_game_minutes": 1080},
+        {"id": "shen.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "shen", "interaction_slot": "shen", "when": {"shen.room": "F03", "event:shen.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "shen.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "shen", "writes": {"shen.room": "R07"}, "observes": ["shen.room"], "when": {"event:shen.eat_supper.done": true}, "not_before_game_minutes": 1260},
+        {"id": "shen.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R07", "minutes": 1, "priority": 95, "once": true, "focus": "shen", "interaction_slot": "shen", "when": {"shen.room": "R07", "event:shen.return_bed.done": true}, "writes": {"shen.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "veronica", "name": "维罗妮卡", "home_room": "R13", "home_bed": "R13-bed", "wake_at_game_minutes": 423,
+      "knows": {"veronica.room": "R13", "veronica.phys.asleep": true},
+      "actions": [
+        {"id": "veronica.wake", "label": "醒来", "kind": "interact", "at": "R13", "minutes": 1, "priority": 100, "once": true, "focus": "veronica", "interaction_slot": "veronica", "writes": {"veronica.phys.asleep": false}, "add_buffs": ["condition_veronica_day5"], "emotion": "专注"},
+        {"id": "veronica.daily_work", "label": "日常守望与活动", "kind": "interact", "at": "R13", "minutes": 20, "priority": 75, "once": true, "focus": "veronica", "interaction_slot": "veronica", "when": {"event:veronica.wake.done": true}},
+        {"id": "veronica.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "R13", "minutes": 5, "priority": 70, "once": true, "focus": "veronica", "writes": {"veronica.room": "F03"}, "observes": ["veronica.room"], "when": {"event:veronica.daily_work.done": true}, "not_before_game_minutes": 1089},
+        {"id": "veronica.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "veronica", "interaction_slot": "veronica", "when": {"veronica.room": "F03", "event:veronica.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "veronica.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "veronica", "writes": {"veronica.room": "R13"}, "observes": ["veronica.room"], "when": {"event:veronica.eat_supper.done": true}, "not_before_game_minutes": 1266},
+        {"id": "veronica.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R13", "minutes": 1, "priority": 95, "once": true, "focus": "veronica", "interaction_slot": "veronica", "when": {"veronica.room": "R13", "event:veronica.return_bed.done": true}, "writes": {"veronica.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "margaret", "name": "玛格丽特", "home_room": "R15", "home_bed": "R15-bed", "wake_at_game_minutes": 423,
+      "knows": {"margaret.room": "R15", "margaret.phys.asleep": true},
+      "actions": [
+        {"id": "margaret.wake", "label": "醒来", "kind": "interact", "at": "R15", "minutes": 1, "priority": 100, "once": true, "focus": "margaret", "interaction_slot": "margaret", "writes": {"margaret.phys.asleep": false}, "add_buffs": ["condition_margaret_day5"], "emotion": "专注"},
+        {"id": "margaret.daily_work", "label": "日常守望与活动", "kind": "interact", "at": "R15", "minutes": 20, "priority": 75, "once": true, "focus": "margaret", "interaction_slot": "margaret", "when": {"event:margaret.wake.done": true}},
+        {"id": "margaret.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "R15", "minutes": 5, "priority": 70, "once": true, "focus": "margaret", "writes": {"margaret.room": "F03"}, "observes": ["margaret.room"], "when": {"event:margaret.daily_work.done": true}, "not_before_game_minutes": 1089},
+        {"id": "margaret.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "margaret", "interaction_slot": "margaret", "when": {"margaret.room": "F03", "event:margaret.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "margaret.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "margaret", "writes": {"margaret.room": "R15"}, "observes": ["margaret.room"], "when": {"event:margaret.eat_supper.done": true}, "not_before_game_minutes": 1266},
+        {"id": "margaret.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R15", "minutes": 1, "priority": 95, "once": true, "focus": "margaret", "interaction_slot": "margaret", "when": {"margaret.room": "R15", "event:margaret.return_bed.done": true}, "writes": {"margaret.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "moran", "name": "莫兰", "home_room": "R12", "home_bed": "R12-bed", "wake_at_game_minutes": 423,
+      "knows": {"moran.room": "R12", "moran.phys.asleep": true},
+      "actions": [
+        {"id": "moran.wake", "label": "醒来", "kind": "interact", "at": "R12", "minutes": 1, "priority": 100, "once": true, "focus": "moran", "interaction_slot": "moran", "writes": {"moran.phys.asleep": false}, "add_buffs": ["condition_moran_day5"], "emotion": "专注"},
+        {"id": "moran.daily_work", "label": "日常守望与活动", "kind": "interact", "at": "R12", "minutes": 20, "priority": 75, "once": true, "focus": "moran", "interaction_slot": "moran", "when": {"event:moran.wake.done": true}},
+        {"id": "moran.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "R12", "minutes": 5, "priority": 70, "once": true, "focus": "moran", "writes": {"moran.room": "F03"}, "observes": ["moran.room"], "when": {"event:moran.daily_work.done": true}, "not_before_game_minutes": 1089},
+        {"id": "moran.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "moran", "interaction_slot": "moran", "when": {"moran.room": "F03", "event:moran.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "moran.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "moran", "writes": {"moran.room": "R12"}, "observes": ["moran.room"], "when": {"event:moran.eat_supper.done": true}, "not_before_game_minutes": 1266},
+        {"id": "moran.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R12", "minutes": 1, "priority": 95, "once": true, "focus": "moran", "interaction_slot": "moran", "when": {"moran.room": "R12", "event:moran.return_bed.done": true}, "writes": {"moran.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "bertrand", "name": "贝尔特朗", "home_room": "R14", "home_bed": "R14-bed", "wake_at_game_minutes": 423,
+      "knows": {"bertrand.room": "R14", "bertrand.phys.asleep": true},
+      "actions": [
+        {"id": "bertrand.wake", "label": "醒来", "kind": "interact", "at": "R14", "minutes": 1, "priority": 100, "once": true, "focus": "bertrand", "interaction_slot": "bertrand", "writes": {"bertrand.phys.asleep": false}, "add_buffs": ["condition_bertrand_day5"], "emotion": "警觉"},
+        {"id": "bertrand.daily_work", "label": "日常守望与活动", "kind": "interact", "at": "R14", "minutes": 20, "priority": 75, "once": true, "focus": "bertrand", "interaction_slot": "bertrand", "when": {"event:bertrand.wake.done": true}},
+        {"id": "bertrand.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "R14", "minutes": 5, "priority": 70, "once": true, "focus": "bertrand", "writes": {"bertrand.room": "F03"}, "observes": ["bertrand.room"], "when": {"event:bertrand.daily_work.done": true}, "not_before_game_minutes": 1089},
+        {"id": "bertrand.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "bertrand", "interaction_slot": "bertrand", "when": {"bertrand.room": "F03", "event:bertrand.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "bertrand.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "bertrand", "writes": {"bertrand.room": "R14"}, "observes": ["bertrand.room"], "when": {"event:bertrand.eat_supper.done": true}, "not_before_game_minutes": 1266},
+        {"id": "bertrand.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R14", "minutes": 1, "priority": 95, "once": true, "focus": "bertrand", "interaction_slot": "bertrand", "when": {"bertrand.room": "R14", "event:bertrand.return_bed.done": true}, "writes": {"bertrand.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "quer", "name": "雀儿", "home_room": "R03", "home_bed": "R03-bed", "wake_at_game_minutes": 421,
+      "knows": {"quer.room": "R03", "quer.phys.asleep": true},
+      "actions": [
+        {"id": "quer.wake", "label": "醒来", "kind": "interact", "at": "R03", "minutes": 1, "priority": 100, "once": true, "focus": "quer", "interaction_slot": "quer", "writes": {"quer.phys.asleep": false}, "add_buffs": ["condition_quer_day5"], "emotion": "专注"},
+        {"id": "quer.daily_work", "label": "日常守望与活动", "kind": "interact", "at": "R03", "minutes": 20, "priority": 75, "once": true, "focus": "quer", "interaction_slot": "quer", "when": {"event:quer.wake.done": true}},
+        {"id": "quer.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "R03", "minutes": 5, "priority": 70, "once": true, "focus": "quer", "writes": {"quer.room": "F03"}, "observes": ["quer.room"], "when": {"event:quer.daily_work.done": true}, "not_before_game_minutes": 1083},
+        {"id": "quer.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "quer", "interaction_slot": "quer", "when": {"quer.room": "F03", "event:quer.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "quer.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "quer", "writes": {"quer.room": "R03"}, "observes": ["quer.room"], "when": {"event:quer.eat_supper.done": true}, "not_before_game_minutes": 1262},
+        {"id": "quer.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R03", "minutes": 1, "priority": 95, "once": true, "focus": "quer", "interaction_slot": "quer", "when": {"quer.room": "R03", "event:quer.return_bed.done": true}, "writes": {"quer.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "huo", "name": "霍铎", "home_room": "R06", "home_bed": "R06-bed", "wake_at_game_minutes": 421,
+      "knows": {"huo.room": "R06", "huo.phys.asleep": true},
+      "actions": [
+        {"id": "huo.wake", "label": "醒来", "kind": "interact", "at": "R06", "minutes": 1, "priority": 100, "once": true, "focus": "huo", "interaction_slot": "huo", "writes": {"huo.phys.asleep": false}, "add_buffs": ["condition_huo_day5"], "emotion": "专注"},
+        {"id": "huo.daily_work", "label": "日常守望与活动", "kind": "interact", "at": "R06", "minutes": 20, "priority": 75, "once": true, "focus": "huo", "interaction_slot": "huo", "when": {"event:huo.wake.done": true}},
+        {"id": "huo.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "R06", "minutes": 5, "priority": 70, "once": true, "focus": "huo", "writes": {"huo.room": "F03"}, "observes": ["huo.room"], "when": {"event:huo.daily_work.done": true}, "not_before_game_minutes": 1083},
+        {"id": "huo.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "huo", "interaction_slot": "huo", "when": {"huo.room": "F03", "event:huo.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "huo.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "huo", "writes": {"huo.room": "R06"}, "observes": ["huo.room"], "when": {"event:huo.eat_supper.done": true}, "not_before_game_minutes": 1262},
+        {"id": "huo.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R06", "minutes": 1, "priority": 95, "once": true, "focus": "huo", "interaction_slot": "huo", "when": {"huo.room": "R06", "event:huo.return_bed.done": true}, "writes": {"huo.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "ruan", "name": "阮清月", "home_room": "R10", "home_bed": "R10-bed", "wake_at_game_minutes": 422,
+      "knows": {"ruan.room": "R10", "ruan.phys.asleep": true},
+      "actions": [
+        {"id": "ruan.wake", "label": "醒来", "kind": "interact", "at": "R10", "minutes": 1, "priority": 100, "once": true, "focus": "ruan", "interaction_slot": "ruan", "writes": {"ruan.phys.asleep": false}, "add_buffs": ["condition_ruan_day5"], "emotion": "专注"},
+        {"id": "ruan.daily_work", "label": "日常守望与活动", "kind": "interact", "at": "R10", "minutes": 20, "priority": 75, "once": true, "focus": "ruan", "interaction_slot": "ruan", "when": {"event:ruan.wake.done": true}},
+        {"id": "ruan.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "R10", "minutes": 5, "priority": 70, "once": true, "focus": "ruan", "writes": {"ruan.room": "F03"}, "observes": ["ruan.room"], "when": {"event:ruan.daily_work.done": true}, "not_before_game_minutes": 1086},
+        {"id": "ruan.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "ruan", "interaction_slot": "ruan", "when": {"ruan.room": "F03", "event:ruan.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "ruan.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "ruan", "writes": {"ruan.room": "R10"}, "observes": ["ruan.room"], "when": {"event:ruan.eat_supper.done": true}, "not_before_game_minutes": 1264},
+        {"id": "ruan.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R10", "minutes": 1, "priority": 95, "once": true, "focus": "ruan", "interaction_slot": "ruan", "when": {"ruan.room": "R10", "event:ruan.return_bed.done": true}, "writes": {"ruan.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "lucian", "name": "卢西安", "home_room": "R01", "home_bed": "R01-bed", "wake_at_game_minutes": 420,
+      "knows": {"lucian.room": "R01", "lucian.phys.asleep": true},
+      "actions": [
+        {"id": "lucian.wake", "label": "醒来", "kind": "interact", "at": "R01", "minutes": 1, "priority": 100, "once": true, "focus": "lucian", "interaction_slot": "lucian", "writes": {"lucian.phys.asleep": false}, "add_buffs": ["condition_lucian_day5"], "emotion": "安心"},
+        {"id": "lucian.daily_work", "label": "日常守望与活动", "kind": "interact", "at": "R01", "minutes": 20, "priority": 75, "once": true, "focus": "lucian", "interaction_slot": "lucian", "when": {"event:lucian.wake.done": true}},
+        {"id": "lucian.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "R01", "minutes": 5, "priority": 70, "once": true, "focus": "lucian", "writes": {"lucian.room": "F03"}, "observes": ["lucian.room"], "when": {"event:lucian.daily_work.done": true}, "not_before_game_minutes": 1080},
+        {"id": "lucian.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "lucian", "interaction_slot": "lucian", "when": {"lucian.room": "F03", "event:lucian.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "lucian.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "lucian", "writes": {"lucian.room": "R01"}, "observes": ["lucian.room"], "when": {"event:lucian.eat_supper.done": true}, "not_before_game_minutes": 1260},
+        {"id": "lucian.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R01", "minutes": 1, "priority": 95, "once": true, "focus": "lucian", "interaction_slot": "lucian", "when": {"lucian.room": "R01", "event:lucian.return_bed.done": true}, "writes": {"lucian.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "gu", "name": "顾平章", "home_room": "R02", "home_bed": "R02-bed", "wake_at_game_minutes": 421,
+      "knows": {"gu.room": "R02", "gu.phys.asleep": true},
+      "actions": [
+        {"id": "gu.wake", "label": "醒来", "kind": "interact", "at": "R02", "minutes": 1, "priority": 100, "once": true, "focus": "gu", "interaction_slot": "gu", "writes": {"gu.phys.asleep": false}, "add_buffs": ["condition_gu_day5"], "emotion": "专注"},
+        {"id": "gu.daily_work", "label": "日常守望与活动", "kind": "interact", "at": "R02", "minutes": 20, "priority": 75, "once": true, "focus": "gu", "interaction_slot": "gu", "when": {"event:gu.wake.done": true}},
+        {"id": "gu.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "R02", "minutes": 5, "priority": 70, "once": true, "focus": "gu", "writes": {"gu.room": "F03"}, "observes": ["gu.room"], "when": {"event:gu.daily_work.done": true}, "not_before_game_minutes": 1083},
+        {"id": "gu.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "gu", "interaction_slot": "gu", "when": {"gu.room": "F03", "event:gu.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "gu.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "gu", "writes": {"gu.room": "R02"}, "observes": ["gu.room"], "when": {"event:gu.eat_supper.done": true}, "not_before_game_minutes": 1262},
+        {"id": "gu.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R02", "minutes": 1, "priority": 95, "once": true, "focus": "gu", "interaction_slot": "gu", "when": {"gu.room": "R02", "event:gu.return_bed.done": true}, "writes": {"gu.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "elena", "name": "伊莲娜", "home_room": "R11", "home_bed": "R11-bed", "wake_at_game_minutes": 422,
+      "knows": {"elena.room": "R11", "elena.phys.asleep": true},
+      "actions": [
+        {"id": "elena.wake", "label": "醒来", "kind": "interact", "at": "R11", "minutes": 1, "priority": 100, "once": true, "focus": "elena", "interaction_slot": "elena", "writes": {"elena.phys.asleep": false}, "add_buffs": ["condition_elena_day5"], "emotion": "安心"},
+        {"id": "elena.daily_work", "label": "日常守望与活动", "kind": "interact", "at": "R11", "minutes": 20, "priority": 75, "once": true, "focus": "elena", "interaction_slot": "elena", "when": {"event:elena.wake.done": true}},
+        {"id": "elena.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "R11", "minutes": 5, "priority": 70, "once": true, "focus": "elena", "writes": {"elena.room": "F03"}, "observes": ["elena.room"], "when": {"event:elena.daily_work.done": true}, "not_before_game_minutes": 1086},
+        {"id": "elena.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "elena", "interaction_slot": "elena", "when": {"elena.room": "F03", "event:elena.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "elena.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "elena", "writes": {"elena.room": "R11"}, "observes": ["elena.room"], "when": {"event:elena.eat_supper.done": true}, "not_before_game_minutes": 1264},
+        {"id": "elena.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R11", "minutes": 1, "priority": 95, "once": true, "focus": "elena", "interaction_slot": "elena", "when": {"elena.room": "R11", "event:elena.return_bed.done": true}, "writes": {"elena.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "selma", "name": "赛尔玛", "home_room": "R09", "home_bed": "R09-bed", "wake_at_game_minutes": 422,
+      "knows": {"selma.room": "R09", "selma.phys.asleep": true},
+      "actions": [
+        {"id": "selma.wake", "label": "醒来", "kind": "interact", "at": "R09", "minutes": 1, "priority": 100, "once": true, "focus": "selma", "interaction_slot": "selma", "writes": {"selma.phys.asleep": false}, "add_buffs": ["condition_selma_day5"], "emotion": "安心"},
+        {"id": "selma.daily_work", "label": "日常守望与活动", "kind": "interact", "at": "R09", "minutes": 20, "priority": 75, "once": true, "focus": "selma", "interaction_slot": "selma", "when": {"event:selma.wake.done": true}},
+        {"id": "selma.to_supper", "label": "前往大食堂就餐", "kind": "walk", "at": "R09", "minutes": 5, "priority": 70, "once": true, "focus": "selma", "writes": {"selma.room": "F03"}, "observes": ["selma.room"], "when": {"event:selma.daily_work.done": true}, "not_before_game_minutes": 1086},
+        {"id": "selma.eat_supper", "label": "进食清粥面条", "kind": "interact", "at": "F03", "minutes": 15, "priority": 80, "once": true, "focus": "selma", "interaction_slot": "selma", "when": {"selma.room": "F03", "event:selma.to_supper.done": true}, "add_buffs": ["buff_warm_porridge"], "emotion": "安心"},
+        {"id": "selma.return_bed", "label": "返回卧室", "kind": "walk", "at": "F03", "minutes": 5, "priority": 70, "once": true, "focus": "selma", "writes": {"selma.room": "R09"}, "observes": ["selma.room"], "when": {"event:selma.eat_supper.done": true}, "not_before_game_minutes": 1264},
+        {"id": "selma.sleep_night", "label": "错峰入睡", "kind": "interact", "at": "R09", "minutes": 1, "priority": 95, "once": true, "focus": "selma", "interaction_slot": "selma", "when": {"selma.room": "R09", "event:selma.return_bed.done": true}, "writes": {"selma.phys.asleep": true}, "emotion": "睡眠"}
+      ]
+    },
+    {
+      "id": "demon", "name": "恶魔", "hidden": true, "autonomous": true,
+      "knows": {"demon.room": "1F-Shaft-Monitor"},
+      "actions": [
+        {"id": "demon.observe_order", "label": "暗中注视人类长效互助秩序形成", "kind": "interact", "at": "1F-Shaft-Monitor", "minutes": 10, "priority": 50, "once": true, "focus": "demon", "interaction_slot": "demon", "not_before_game_minutes": 900}
+      ]
+    }
+  ],
+  "expectations": [
+    {"id": "demon_observed_order", "action": "demon.observe_order"},
+    {"id": "victims_rechecked", "condition": {"op": "equals", "ref": {"type": "ref", "object": "victims", "facet": "phys", "field": "rechecked"}, "value": true}},
+    {"id": "su_acoustic_calibrated", "condition": {"op": "equals", "ref": {"type": "ref", "object": "su", "facet": "trace", "field": "acoustic_resonance_calibrated"}, "value": true}},
+    {"id": "five_days_archived", "condition": {"op": "equals", "ref": {"type": "ref", "object": "cases", "facet": "doc", "field": "five_days_archived"}, "value": true}},
+    {"id": "long_term_shifts_settled", "condition": {"op": "equals", "ref": {"type": "ref", "object": "order", "facet": "doc", "field": "long_term_shifts_settled"}, "value": true}},
+    {"id": "supper_cooked_day5", "condition": {"op": "equals", "ref": {"type": "ref", "object": "supper", "facet": "phys", "field": "ready"}, "value": true}},
+    {"id": "detective_slept", "action": "detective.sleep_night"},
+    {"id": "su_slept", "action": "su.sleep_night"},
+    {"id": "mora_slept", "action": "mora.sleep_night"},
+    {"id": "veronica_slept", "action": "veronica.sleep_night"},
+    {"id": "ward_slept", "action": "ward.sleep_night"},
+    {"id": "margaret_slept", "action": "margaret.sleep_night"},
+    {"id": "shen_slept", "action": "shen.sleep_night"},
+    {"id": "moran_slept", "action": "moran.sleep_night"},
+    {"id": "bertrand_slept", "action": "bertrand.sleep_night"},
+    {"id": "quer_slept", "action": "quer.sleep_night"},
+    {"id": "huo_slept", "action": "huo.sleep_night"},
+    {"id": "ruan_slept", "action": "ruan.sleep_night"},
+    {"id": "lucian_slept", "action": "lucian.sleep_night"},
+    {"id": "gu_slept", "action": "gu.sleep_night"},
+    {"id": "elena_slept", "action": "elena.sleep_night"},
+    {"id": "selma_slept", "action": "selma.sleep_night"}
+  ],
+  "fact_labels": {"victims.phys.rechecked": "医疗角全面复查伤员确认脱险", "su.trace.acoustic_resonance_calibrated": "苏泠听觉泛音共鸣特质标定并印证声学联锁", "cases.doc.five_days_archived": "侦探全面汇总五日案卷归档入库", "order.doc.long_term_shifts_settled": "四院长期分工轮值与互助生活秩序确立", "supper.phys.ready": "晚间庆祝清粥面条已煮熟"},
+  "display": {"action_reasons": false, "hidden_facts": []},
+  "atomic_actions": true
+} };
