@@ -11,7 +11,7 @@ internal static class CompactScenario
     {
         var i=path.LastIndexOf('.');if(i<1)throw new InvalidDataException("Expected object[.facet].field: "+path);
         var prefix=path[..i];var j=prefix.LastIndexOf('.');
-        var explicitFacet=j>0&&prefix[(j+1)..] is "phys" or "trace" or "lock" or "doc" or "infer";
+        var explicitFacet=j>0&&prefix[(j+1)..] is "state" or "phys" or "trace" or "lock" or "doc" or "infer";
         return new(){["type"]="ref",["object"]=explicitFacet?prefix[..j]:prefix,["facet"]=explicitFacet?prefix[(j+1)..]:"state",["field"]=path[(i+1)..]};
     }
     static JsonObject Eq(string path,JsonNode? value)=>new(){["op"]="equals",["ref"]=Ref(path),["value"]=Copy(value)};

@@ -38,6 +38,7 @@ public static class SessionFactory
             foundViewer |= id == viewer;
         }
         if (!foundViewer) throw new InvalidDataException("Viewer is absent from the scene.");
+        session.ConfigureMechanics(scene);
         foreach (var process in scene.Get("world_processes").Items())
         {
             var id = process.Get("law").Text();

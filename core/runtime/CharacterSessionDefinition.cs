@@ -143,6 +143,7 @@ public sealed class CharacterSessionDefinition
         }
         session.ConfigurePresenceGroups(Declaration.Get("presence_groups"));
         session.ConfigureAccumulators(Declaration.Get("objective_accumulators"));
+        session.ConfigureMechanics(Declaration);
         if(Declaration.Get("deduction").ValueKind==JsonValueKind.Object)
             session.ConfigureDeduction(deductionSource??throw new InvalidDataException("Deduction source is required."),Declaration.Get("deduction"));
         return session;

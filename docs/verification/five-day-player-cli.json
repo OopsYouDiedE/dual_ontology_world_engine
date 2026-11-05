@@ -1,0 +1,717 @@
+{
+  "schema": "five-day-formal-verification-summary-v1",
+  "type": "derived_summary_of_original_live_receipts",
+  "mode": "subagent_detective_takeover",
+  "backend": "cli",
+  "controller": "inventory_content SubAgent, sequential manual choices through formal input MCP",
+  "session_id": "a653ca000eeeb9ea",
+  "seed": 21,
+  "method": {
+    "new_game": true,
+    "formal_client": "mcp/game/input_client.py",
+    "viewer": "detective",
+    "decision_maker": "agent",
+    "choices_from_latest_normal_observation": true,
+    "explicit_evidence_selection": true,
+    "state_injections": 0,
+    "teleports": 0,
+    "private_action_log_used_for_play": false,
+    "content_or_binary_changes_during_final_run": false,
+    "completed_player_actions": 134,
+    "completed_player_actions_by_day": {
+      "1": 60,
+      "2": 17,
+      "3": 19,
+      "4": 21,
+      "5": 17
+    }
+  },
+  "source_fingerprint": "f9953cb0dc1d2bd11c1dceab4f45f7e3f56ca40a05c19b9717d9a4cd48001f74",
+  "content_hash": "d74fab17b207f45d7b9cdb8c62a3d196faf594b07be5ea3e12639b468d4f5412",
+  "source_files": {
+    "assets/data/scenarios/campaign.dv": "2308eca32541fec880fb8b13a78a43126fd5dce4dbbe1b6646a616c7bb0989b1",
+    "assets/data/scenarios/day1-morning.dv": "9dd391b93bfcad36f4b348bde1314c2f8c631669c822a6eff0dda46ef3422ee2",
+    "assets/data/scenarios/day2.dv": "8d21e09c180d8a619ad70f85bf21b4464a6b88446142cef013723dc50cd230cf",
+    "assets/data/scenarios/day3.dv": "9e9666e2682c98638029a1d7406950e58d090551c3661f45b87d3a58c261c544",
+    "assets/data/scenarios/day4.dv": "eba5a5eb9656c67bfd05601194db795299114807d65c7e0e953457032ccb3682",
+    "assets/data/scenarios/day5.dv": "7f664e342d7e82621ae558b02c559a20e6bd8f7115f990dd81e4331afad42065"
+  },
+  "final_state": {
+    "version": 1260,
+    "chapter": 5,
+    "game_time": 7043.133333333333,
+    "day": 5,
+    "status": "completed",
+    "stop_reason": "campaign_completed",
+    "horizon": 7180,
+    "campaign_completed": true
+  },
+  "acceptance": {
+    "passed": true,
+    "checks_total": 351,
+    "checks_applicable": 350,
+    "checks_passed": 350,
+    "failed_check_ids": [],
+    "not_applicable": [
+      {
+        "id": "day1.buff_changes_detective_first_choice",
+        "applicable": false,
+        "passed": null,
+        "scope": "not_applicable_player_choice"
+      }
+    ],
+    "by_day": {
+      "day1": {
+        "total": 245,
+        "applicable": 244,
+        "passed": 244
+      },
+      "day2": {
+        "total": 27,
+        "applicable": 27,
+        "passed": 27
+      },
+      "day3": {
+        "total": 21,
+        "applicable": 21,
+        "passed": 21
+      },
+      "day4": {
+        "total": 24,
+        "applicable": 24,
+        "passed": 24
+      },
+      "day5": {
+        "total": 34,
+        "applicable": 34,
+        "passed": 34
+      }
+    },
+    "failures": 0,
+    "rejected_attempts": 2,
+    "invariant_failures": [],
+    "missing_completion": []
+  },
+  "audit": {
+    "first_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000067.json",
+      "sha256": "54f47851c824cd9921b7630289db612eb840182801525ad70f8af9e9394dcf92"
+    },
+    "final_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000369.json",
+      "sha256": "33ee8f8a31cd5e5060d2491ba1bb672fee47bd622bde6b34199e75214d3c21e5"
+    },
+    "close_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000370.json",
+      "sha256": "5aaeed5e17507c1864134b4b796a131ac04cb0946664cd24b1abd88c890b6b58"
+    },
+    "closed_gracefully": true,
+    "receipt_directory": ".runtime/input-client/d1a2678d538e2247",
+    "final_run_receipt_range": [
+      67,
+      370
+    ],
+    "original_receipts_are_unmodified": true,
+    "private_logs_not_needed_to_reconstruct_player_evidence": true
+  },
+  "mechanics": {
+    "player_visible_success_counts": {
+      "deduction": 10,
+      "suggestion": 8,
+      "world_event": 1,
+      "strategy": 1,
+      "incantation": 1,
+      "incantation_expired": 1
+    },
+    "player_visible_rejection_counts": {
+      "deduction": 1,
+      "suggestion": 1
+    },
+    "whole_runtime_acceptance_counts": [
+      {
+        "kind": "deduction",
+        "completed": 10,
+        "passed": true
+      },
+      {
+        "kind": "suggestion",
+        "completed": 9,
+        "passed": true
+      },
+      {
+        "kind": "incantation",
+        "completed": 1,
+        "passed": true
+      }
+    ],
+    "proofs": [
+      {
+        "action": "detective.deduce_drag",
+        "game_time": 477,
+        "receipt": {
+          "path": ".runtime/input-client/d1a2678d538e2247/000084.json",
+          "sha256": "a24f7c6eb3b8a32fca82bc2deb424f970ec1e0d592065e5a9f24eba90ea6d572"
+        },
+        "status": "proved",
+        "selected_evidence": [
+          "e1",
+          "e2",
+          "e3"
+        ],
+        "theory_hash": "992CE37E19707EBA97507EB91068334011E231301CF87F02E01D6EBE892339F6",
+        "applied_rules": [
+          "combine_deduce_drag"
+        ],
+        "evidence_sources": {
+          "e1": [
+            "action/196"
+          ],
+          "e2": [
+            "action/204"
+          ],
+          "e3": [
+            "action/216"
+          ]
+        }
+      },
+      {
+        "action": "detective.deduce_sequence",
+        "game_time": 532,
+        "receipt": {
+          "path": ".runtime/input-client/d1a2678d538e2247/000098.json",
+          "sha256": "d4aeb60676e65d7fcd5b7f731985d8619dfee27b3efd4e4dd368ba07b8c1251b"
+        },
+        "status": "proved",
+        "selected_evidence": [
+          "e1",
+          "e2",
+          "e3",
+          "e4",
+          "e5",
+          "e6"
+        ],
+        "theory_hash": "698B4892BE329B9B2A43B891E9B1BDDEE98BE3C58E43C071C549BADC336D2933",
+        "applied_rules": [
+          "combine_deduce_sequence"
+        ],
+        "evidence_sources": {
+          "e1": [
+            "action/233"
+          ],
+          "e2": [
+            "action/196"
+          ],
+          "e3": [
+            "action/204"
+          ],
+          "e4": [
+            "action/216"
+          ],
+          "e5": [
+            "action/257"
+          ],
+          "e6": [
+            "action/266"
+          ]
+        }
+      },
+      {
+        "action": "detective.deduce_fifth_entity",
+        "game_time": 587,
+        "receipt": {
+          "path": ".runtime/input-client/d1a2678d538e2247/000110.json",
+          "sha256": "dda6832824c1f576c1ba87fa24682452b3af439109838119a46fa129d393f843"
+        },
+        "status": "proved",
+        "selected_evidence": [
+          "e1",
+          "e2",
+          "e3",
+          "e4",
+          "e5",
+          "e6",
+          "e7"
+        ],
+        "theory_hash": "43114D5FD22F18D6518AD3831CB53E70157AFFC316882BDA61D73DBB6B2647B6",
+        "applied_rules": [
+          "combine_deduce_fifth_entity"
+        ],
+        "evidence_sources": {
+          "e1": [
+            "action/271"
+          ],
+          "e2": [
+            "action/272"
+          ],
+          "e3": [
+            "action/274"
+          ],
+          "e4": [
+            "action/276"
+          ],
+          "e5": [
+            "handoff/140"
+          ],
+          "e6": [
+            "action/278"
+          ],
+          "e7": [
+            "action/280"
+          ]
+        }
+      },
+      {
+        "action": "detective.deduce_records",
+        "game_time": 847,
+        "receipt": {
+          "path": ".runtime/input-client/d1a2678d538e2247/000144.json",
+          "sha256": "5b46d0d76ac19d3d2642b31cff6fa4c24e6a40ccea3b9d10fbdffb58148fbf7e"
+        },
+        "status": "proved",
+        "selected_evidence": [
+          "e1",
+          "e2",
+          "e3",
+          "e4",
+          "e5",
+          "e6"
+        ],
+        "theory_hash": "C8F4F7DCD4CA73AE24E931ED1AC2C38DC2EE21B312DD94BEC0C7F04D60EF0772",
+        "applied_rules": [
+          "combine_deduce_records"
+        ],
+        "evidence_sources": {
+          "e1": [
+            "action/410"
+          ],
+          "e2": [
+            "action/414"
+          ],
+          "e3": [
+            "action/419"
+          ],
+          "e4": [
+            "action/433"
+          ],
+          "e5": [
+            "action/435"
+          ],
+          "e6": [
+            "handoff/441"
+          ]
+        }
+      },
+      {
+        "action": "detective.deduce_poem",
+        "game_time": 972,
+        "receipt": {
+          "path": ".runtime/input-client/d1a2678d538e2247/000161.json",
+          "sha256": "ca04d3b0a55ecac2ea28678bb973eabd5d5819550aff167321b0aabc86905309"
+        },
+        "status": "proved",
+        "selected_evidence": [
+          "e1",
+          "e2",
+          "e3",
+          "e4",
+          "e5"
+        ],
+        "theory_hash": "1483004CA8A46AB6FE33D0DCC9A941D5C068E87A1A1542AC8248737CE4E5894D",
+        "applied_rules": [
+          "combine_deduce_poem"
+        ],
+        "evidence_sources": {
+          "e1": [
+            "handoff/760"
+          ],
+          "e2": [
+            "handoff/754"
+          ],
+          "e3": [
+            "handoff/756"
+          ],
+          "e4": [
+            "action/762"
+          ],
+          "e5": [
+            "action/764"
+          ]
+        }
+      },
+      {
+        "action": "detective.day2.deduce_ration",
+        "game_time": 2063,
+        "receipt": {
+          "path": ".runtime/input-client/d1a2678d538e2247/000218.json",
+          "sha256": "2adaac46e156e17394cc030c88f62bb4f61c58363d6793856294d26895dcc4fa"
+        },
+        "status": "proved",
+        "selected_evidence": [
+          "e1",
+          "e2",
+          "e3",
+          "e4"
+        ],
+        "theory_hash": "1D475FF419AF779004A1636D03B0257DE048E1B919BB4DBB81F928DA9C0C186E",
+        "applied_rules": [
+          "combine_deduce_ration"
+        ],
+        "evidence_sources": {
+          "e1": [
+            "action/1330"
+          ],
+          "e2": [
+            "action/1331"
+          ],
+          "e3": [
+            "action/1344"
+          ],
+          "e4": [
+            "action/1345"
+          ]
+        }
+      },
+      {
+        "action": "detective.day3.deduce_medicine",
+        "game_time": 3463,
+        "receipt": {
+          "path": ".runtime/input-client/d1a2678d538e2247/000262.json",
+          "sha256": "36030f89e0df465ed94a900c0f6e392923fdd80653f7148af0764b90f7b413eb"
+        },
+        "status": "proved",
+        "selected_evidence": [
+          "e1",
+          "e2",
+          "e3",
+          "e4"
+        ],
+        "theory_hash": "CC1B56A00779F8C640005727DD49AAF75B3B49ACFD37CF3B80F011321C9C0A38",
+        "applied_rules": [
+          "combine_deduce_medicine"
+        ],
+        "evidence_sources": {
+          "e1": [
+            "action/1685"
+          ],
+          "e2": [
+            "action/1690"
+          ],
+          "e3": [
+            "action/1691"
+          ],
+          "e4": [
+            "action/1686"
+          ]
+        }
+      },
+      {
+        "action": "detective.day4.deduce_airlock",
+        "game_time": 5382,
+        "receipt": {
+          "path": ".runtime/input-client/d1a2678d538e2247/000308.json",
+          "sha256": "f2aaffec7369403643c220df1574e00f4e5aa7c9ba4a79cd98edf8b415f5fbc3"
+        },
+        "status": "proved",
+        "selected_evidence": [
+          "e1",
+          "e2",
+          "e3",
+          "e4",
+          "e5"
+        ],
+        "theory_hash": "4519522DB495D6782CF95A2D5168E740D820FE7F7A35BFB545F58AAA4A405B32",
+        "applied_rules": [
+          "combine_deduce_airlock"
+        ],
+        "evidence_sources": {
+          "e1": [
+            "action/2025"
+          ],
+          "e2": [
+            "action/2026"
+          ],
+          "e3": [
+            "action/2082"
+          ],
+          "e4": [
+            "action/2027"
+          ],
+          "e5": [
+            "action/2021"
+          ]
+        }
+      },
+      {
+        "action": "detective.day5.deduce_coupling",
+        "game_time": 6270,
+        "receipt": {
+          "path": ".runtime/input-client/d1a2678d538e2247/000347.json",
+          "sha256": "e2d0df835bda8506a7ad6e27f700ed35b3128edc5e49f5748a62c58aa01ae76f"
+        },
+        "status": "proved",
+        "selected_evidence": [
+          "e1",
+          "e2",
+          "e3",
+          "e4",
+          "e5",
+          "e6"
+        ],
+        "theory_hash": "1389F98963E228D3EA5855E34D76E7914B05BF42866F8C9D769B5B71B466B88A",
+        "applied_rules": [
+          "combine_deduce_coupling"
+        ],
+        "evidence_sources": {
+          "e1": [
+            "action/2500"
+          ],
+          "e2": [
+            "action/2501"
+          ],
+          "e3": [
+            "action/2479"
+          ],
+          "e4": [
+            "action/2480"
+          ],
+          "e5": [
+            "proof/268"
+          ],
+          "e6": [
+            "proof/442"
+          ]
+        }
+      },
+      {
+        "action": "detective.day5.deduce_five_day_case",
+        "game_time": 6293,
+        "receipt": {
+          "path": ".runtime/input-client/d1a2678d538e2247/000353.json",
+          "sha256": "ec5c83fe4e78d98dd0d1603e511b4f5ee4e4cb7bb2e819d9c41a9cf3cb7750d1"
+        },
+        "status": "proved",
+        "selected_evidence": [
+          "e1",
+          "e2",
+          "e3",
+          "e4",
+          "e5",
+          "e6",
+          "e7",
+          "e8",
+          "e9",
+          "e10",
+          "e11",
+          "e12",
+          "e13",
+          "e14"
+        ],
+        "theory_hash": "3B8756C3180B6C67428A075E4557A19A1044183035569B761B74BDCA8B7DFC5E",
+        "applied_rules": [
+          "combine_deduce_five_day_case"
+        ],
+        "evidence_sources": {
+          "e1": [
+            "proof/268"
+          ],
+          "e2": [
+            "proof/283"
+          ],
+          "e3": [
+            "proof/442"
+          ],
+          "e4": [
+            "proof/769"
+          ],
+          "e5": [
+            "proof/1347"
+          ],
+          "e6": [
+            "action/1361"
+          ],
+          "e7": [
+            "action/1748",
+            "perception/day3:detective.verdict_visible"
+          ],
+          "e8": [
+            "handoff/1787",
+            "perception/day3:detective.test_admission"
+          ],
+          "e9": [
+            "proof/2108"
+          ],
+          "e10": [
+            "proof/2109"
+          ],
+          "e11": [
+            "perception/day4:detective.night_safety"
+          ],
+          "e12": [
+            "action/2492"
+          ],
+          "e13": [
+            "proof/2503"
+          ],
+          "e14": [
+            "action/2507"
+          ]
+        }
+      }
+    ]
+  },
+  "missing_evidence_then_repair": {
+    "failed_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000096.json",
+      "sha256": "9581fd5466a6ebff371ba3d77506413c27df2ec0ce0156c66d83ba9ef90daa20"
+    },
+    "failed_status": "unknown",
+    "failed_selected_evidence": [
+      "e1",
+      "e2",
+      "e3",
+      "e4",
+      "e5"
+    ],
+    "failed_learned": [],
+    "retry_was_available": true,
+    "successful_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000098.json",
+      "sha256": "d4aeb60676e65d7fcd5b7f731985d8619dfee27b3efd4e4dd368ba07b8c1251b"
+    },
+    "successful_status": "proved",
+    "successful_selected_evidence": [
+      "e1",
+      "e2",
+      "e3",
+      "e4",
+      "e5",
+      "e6"
+    ],
+    "unlocked_next_action": "detective.inspect_wetcloth"
+  },
+  "player_changed_day3_branch": {
+    "tool_security_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000224.json",
+      "sha256": "a08bea3b97ef66567544eae175f2bb0fa2ec558b3c550546b7bf94a90649f6b3"
+    },
+    "probe_secured": true,
+    "public_report_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000244.json",
+      "sha256": "914047344f26dc90471d971e912e03f88cfbd143ac232bfe9645605446e7d01e"
+    },
+    "reported_case": "medicine",
+    "archive_seal_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000252.json",
+      "sha256": "556e268a97520219b4560014410a7447038a8fc45690c33aee10ec33cdfc853c"
+    },
+    "original_page_and_custody_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000256.json",
+      "sha256": "748eeee9e352ebcbad3dc0b905881f9458fc54c35be988e6b1adb94f977ac317"
+    },
+    "deduction_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000262.json",
+      "sha256": "36030f89e0df465ed94a900c0f6e392923fdd80653f7148af0764b90f7b413eb"
+    },
+    "ruan_acceptance_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000264.json",
+      "sha256": "a65386ac5c20d02fec27f986db57100beb81b84f338ff7ada9635caa740ad1e9"
+    },
+    "actual_original_restoration_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000268.json",
+      "sha256": "3dcb2bc38be63a9b04e9804327cc9456575edfb35d48a0b6dc91e3f29de62d73"
+    },
+    "original_restored": true,
+    "ward_correction_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000270.json",
+      "sha256": "115e3bd72969e64be69663ef565379bf5eb9ea615efcc6248cc43ec35caae865"
+    },
+    "verdict": "门封约束成立于原页离开之后；原页转移未经授权，药柜钥匙不移交",
+    "ruan_public_admission": true
+  },
+  "opinion_and_incantation_counterexample": {
+    "rejected_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000312.json",
+      "sha256": "47ae0fcc9f99c41b3709836da1be796acb6a4aec1201fd82ca847c197d0fb8cc"
+    },
+    "rejected_score": 1.04,
+    "threshold": 1.55,
+    "rejected_once_preserved": true,
+    "incantation_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000314.json",
+      "sha256": "f343d9ff307e39aec7a14b93183e072a381a4d04da0e1521b4710b8ba846ac04"
+    },
+    "cost": 12,
+    "resource_remaining": 48,
+    "backlash": 3,
+    "rule_expiry_game_time": 5445.5,
+    "accepted_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000316.json",
+      "sha256": "47f7df6932a24e91f377c61a972c5eda420f94a004597acbf522b6e65cca53be"
+    },
+    "accepted_score": 1.84,
+    "context": [
+      "亲见言灵短时封住倒灌，机械作业风险下降"
+    ],
+    "context_modifier": 0.8,
+    "quer_acceptance_and_mechanical_completion_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000318.json",
+      "sha256": "fae8e935bfabf7b9609095a61972e99e9f0ea7153a29ecff425d52646aff7eae"
+    },
+    "mechanical_safety_completed": true,
+    "rule_expiration_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000324.json",
+      "sha256": "67165adf19b67f56addbe990eec003f4071f969bf1c29b351cf41c1a424978a3"
+    },
+    "rule_value_after_expiry": false
+  },
+  "day5_closure": {
+    "medical_followup_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000340.json",
+      "sha256": "e306e37b6c294947f4b9da82e2a1e7127e3c8895acc86fbb5c23fd7c6ce4a70d"
+    },
+    "medical_record": "两名倒灌伤者已经接受R-07，呼吸、脉搏与握力复查稳定；贝尔特朗前臂灼伤重新换药，伊莲娜踝伤已检查负重与肿胀并注明免勤；剂量、时间与施药人均保留原记录",
+    "acoustic_consent_and_blinded_results_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000338.json",
+      "sha256": "71ea93be3b78104a06567b66a7ba7db0731425d08fd10ba6f2b66c77b9ca1426"
+    },
+    "final_archive_proof_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000353.json",
+      "sha256": "ec5c83fe4e78d98dd0d1603e511b4f5ee4e4cb7bb2e819d9c41a9cf3cb7750d1"
+    },
+    "archive_bound_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000355.json",
+      "sha256": "99f058dc94ef53184a4e9b71488b69cdba70b56c617b5454d6d1518efe021633"
+    },
+    "mutual_roster_opinion_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000357.json",
+      "sha256": "7d5a346f3451f8b63985c6c7437c7e1a61aa9ed6aff43b08a4826208f3ca309a"
+    },
+    "signed_roster_and_alarm_drill_receipt": {
+      "path": ".runtime/input-client/d1a2678d538e2247/000358.json",
+      "sha256": "e43fc3a267d62b55552e79b861881b96d4ae50eca7071a6ce61e437e76480187"
+    },
+    "sixteen_final_sleep_checks": {
+      "day5.lucian.day5.sleep_night": true,
+      "day5.gu.day5.sleep_night": true,
+      "day5.quer.day5.sleep_night": true,
+      "day5.ward.day5.sleep_night": true,
+      "day5.detective.day5.sleep_night": true,
+      "day5.huo.day5.sleep_night": true,
+      "day5.shen.day5.sleep_night": true,
+      "day5.su.day5.sleep_night": true,
+      "day5.selma.day5.sleep_night": true,
+      "day5.ruan.day5.sleep_night": true,
+      "day5.elena.day5.sleep_night": true,
+      "day5.moran.day5.sleep_night": true,
+      "day5.veronica.day5.sleep_night": true,
+      "day5.bertrand.day5.sleep_night": true,
+      "day5.margaret.day5.sleep_night": true,
+      "day5.mora.day5.sleep_night": true
+    },
+    "closing_announced": true,
+    "five_days_archived": true,
+    "long_term_shifts_settled": true,
+    "alarm_drill_passed": true
+  },
+  "scope_note": "This verifies the real CLI runtime through the official input MCP. Godot visual playthrough is a separate verification. The final manual run exercises medicine and mechanical-lock branches; other optional branches are not claimed as manually exercised here."
+}

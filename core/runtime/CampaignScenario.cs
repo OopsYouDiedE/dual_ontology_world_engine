@@ -65,6 +65,12 @@ internal static class CampaignScenario
                     names["event:" + id] = "event:" + renamed;
                     names["event:" + id + ".done"] = "event:" + renamed + ".done";
                 }
+            foreach (var actor in List(expanded["actors"]))
+            foreach (var sensor in List(actor!["perceptions"]))
+            {
+                var id = Text(sensor!["id"]);
+                names[id] = "day" + dayNumber + ":" + id;
+            }
             expanded = Rename(expanded, names)!.AsObject();
             var offset = day.Get("offset_minutes").Number();
             foreach (var actor in List(expanded["actors"]))
@@ -78,6 +84,7 @@ internal static class CampaignScenario
                         originalStart = Math.Max(originalStart, actor["wake_at_game_minutes"]?.GetValue<double>() ?? originalStart);
                     a["not_before_game_minutes"] = originalStart + offset;
                     if (a["not_after_game_minutes"] is not null) a["not_after_game_minutes"] = a["not_after_game_minutes"]!.GetValue<double>() + offset;
+                    if (a["rest_until_game_minutes"] is not null) a["rest_until_game_minutes"] = a["rest_until_game_minutes"]!.GetValue<double>() + offset;
                     a["campaign_day"] = dayNumber;
                     if (dayNumber > 1 && Text(a["id"]).EndsWith(".wake", StringComparison.Ordinal) && previousSleep.TryGetValue(id, out var sleep))
                     {
@@ -88,6 +95,22 @@ internal static class CampaignScenario
                 }
                 var sleepAction = List(actor["actions"]).LastOrDefault(a => Text(a!["id"]).EndsWith(".sleep_night", StringComparison.Ordinal));
                 if (sleepAction is not null) previousSleep[id] = Text(sleepAction["id"]);
+                var mind=Map(actor["mind"]);
+                if(mind["adoptions"] is JsonObject inference)
+                {
+                    var renamedRules=new JsonObject();
+                    foreach(var rule in inference)renamedRules["day"+dayNumber+":"+rule.Key]=Copy(rule.Value);
+                    mind["adoptions"]=renamedRules;
+                }
+                foreach(var sensor in List(actor["perceptions"]))
+                {
+                    sensor!["not_before_game_minutes"]=(sensor["not_before_game_minutes"]?.GetValue<double>()??0)+offset;
+                }
+            }
+            foreach(var item in List(expanded["world_events"]))
+            {
+                item!["id"]="day"+dayNumber+":"+Text(item["id"]);
+                item["at_game_minutes"]=(item["at_game_minutes"]?.GetValue<double>()??0)+offset;
             }
             foreach (var expectation in List(expanded["expectations"]))
             {
@@ -108,9 +131,16 @@ internal static class CampaignScenario
                     // Later day's moodlets become available, but must not rewrite the opening day's scoring.
                     AddMissing(Map(existing["autonomy"]!["buff_definitions"]), Map(actor["autonomy"]!["buff_definitions"]));
                     AddMissing(Map(existing["mind"]!["adoptions"]), Map(actor["mind"]!["adoptions"]));
+                    if(existing["opinion"] is null&&actor["opinion"] is not null)existing["opinion"]=Copy(actor["opinion"]);
+                    else if(existing["opinion"] is JsonObject opinion&&actor["opinion"] is JsonObject laterOpinion)
+                    {
+                        opinion["modifiers"]??=new JsonArray();
+                        foreach(var modifier in List(laterOpinion["modifiers"]))
+                            if(!List(opinion["modifiers"]).Any(prior=>JsonNode.DeepEquals(prior,modifier)))opinion["modifiers"]!.AsArray().Add(Copy(modifier));
+                    }
                 }
                 foreach (var key in new[] { "room_labels", "fact_labels" }) AddMissing(Map(combined[key]), Map(expanded[key]));
-                foreach (var key in new[] { "expectations", "knowledge_boundaries" }) Append(combined, key, expanded[key]);
+                foreach (var key in new[] { "expectations", "knowledge_boundaries", "world_events", "world_processes", "deductions", "strategy_activities", "objective_accumulators", "presence_groups" }) Append(combined, key, expanded[key]);
                 foreach (var key in new[] { "fixtures", "slots" })
                     foreach (var item in List(expanded[key]))
                         if (!List(combined[key]).Any(old => Text(old!["id"]) == Text(item!["id"]))) combined[key]!.AsArray().Add(Copy(item));

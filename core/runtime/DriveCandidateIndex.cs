@@ -6,6 +6,7 @@ internal sealed class DriveCandidateIndex
 {
     private readonly ActionCandidate[] actions;
     private readonly Dictionary<string,ActionCandidate[]> byDrive;
+    private readonly Dictionary<FieldKey,ActionCandidate[]> byKnowledge;
     private readonly Dictionary<string,int> cursors=[];
     private int fallbackCursor;
 
@@ -15,12 +16,25 @@ internal sealed class DriveCandidateIndex
         byDrive=actions.SelectMany(action=>drives.AffectedDrives(action).Select(need=>(need,action)))
             .GroupBy(item=>item.need,StringComparer.Ordinal)
             .ToDictionary(group=>group.Key,group=>group.Select(item=>item.action).ToArray(),StringComparer.Ordinal);
+        byKnowledge=actions.SelectMany(action=>action.Gate.Inputs.Distinct().Select(key=>(key,action)))
+            .GroupBy(item=>item.key).ToDictionary(group=>group.Key,group=>group.Select(item=>item.action).ToArray());
     }
 
-    internal ActionCandidate[] Select(DriveCalculator drives,double now,int limit,int driveLimit,int perDrive)
+    internal ActionCandidate[] Select(DriveCalculator drives,double now,int limit,int driveLimit,int perDrive,IEnumerable<FieldKey>? changed=null)
     {
         var result=new List<ActionCandidate>(limit);
         var seen=new HashSet<string>(StringComparer.Ordinal);
+        // A completed observation can make several alternatives newly possible.
+        // Give those alternatives the same scoring round instead of letting a
+        // catalog cursor accidentally decide which of them the actor notices.
+        // This is candidate admission only; the daily drive calculator still ranks them.
+        foreach(var key in changed??[])
+        {
+            if(result.Count==limit)break;
+            if(!byKnowledge.TryGetValue(key,out var bucket))continue;
+            for(var n=0;n<Math.Min(limit,bucket.Length)&&result.Count<limit;n++)
+                if(seen.Add(bucket[n].Id))result.Add(bucket[n]);
+        }
         foreach(var drive in drives.Priorities(now).Take(driveLimit))
         {
             if(result.Count==limit)break;

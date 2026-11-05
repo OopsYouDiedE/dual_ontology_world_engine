@@ -1,0 +1,491 @@
+schema "dv-script-v1";
+
+history r3_disaster_history {
+  clock "23:20:00" 0 3100;
+
+  node W-101, S-101, 2F-cross-M, B2-control, B2-core, B2-anchor-NW, N01,
+       A-P, B-P, C-P, D-P, A-gate, B-gate-outer, B-gate-inner, C-gate, D-gate,
+       R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11, R12, R13, R14, R15, R16;
+
+  capability walk, phase, observe, speak, broadcast, manual, craft, engineering, archive, anchor, manifest, demanifest, consent;
+  type Tool, Supply, Cloth, Diagram, Document;
+
+  initial [a_gate_open, b_gate_open, c_gate_open, d_gate_open];
+
+  def 住户决策 : Policy := {
+    planner := sim4, planning_depth := 2,
+    predictions := {
+      rehearse := { effect := { energy := -1, $goal := 12 } },
+      inquire := { effect := { energy := -0.2, $goal := 9 } },
+      respond := { effect := { energy := -0.2, safety := 24, $goal := 18 }, requires_propositions := [external_prima_dangerous] },
+      distorted_escape := { effect := { energy := -0.3, safety := 30, $goal := 22 }, requires_propositions := [distorted_threat_heard] },
+      informed_consent := { effect := { energy := -0.1, safety := 32, duty := 26, $goal := 22 }, requires_propositions := [contract_terms_known, memory_cost_understood, retained_scope_understood] },
+      purposeful := { effect := { energy := -0.2, safety := 18, duty := 18, $goal := 22 } }
+    },
+    alternatives := [
+      { id := wait_in_place, effect := { energy := 0 } },
+      { id := panic_open_boundary, intents := [respond], requires_propositions := [external_prima_dangerous], effect := { safety := -25, duty := -20 } },
+      { id := refuse_memory_pact, intents := [informed_consent], requires_propositions := [contract_terms_known], effect := { safety := -20, duty := -15 } }
+    ]
+  };
+
+  def 住户 : Profile := {
+    policy_id := 住户决策, maximum_speed := 1.6, reach_meters := 1.5, time_cost := 0.005,
+    capabilities := [walk, observe, speak, manual, consent],
+    needs := { safety := 48, duty := 44, energy := 80 },
+    weights := { safety := 2.2, duty := 1.8, energy := 0.2 },
+    need_decay_per_second := { safety := 0.002, duty := 0.001, energy := 0.001 },
+    goal := { need := 40, weight := 2.4, decay := 0.002 }
+  };
+
+  def 导师 : Profile := {
+    policy_id := 住户决策, maximum_speed := 1.7, reach_meters := 1.5, time_cost := 0.005,
+    capabilities := [walk, observe, speak, broadcast, manual, engineering, anchor],
+    needs := { safety := 55, duty := 30, energy := 82 },
+    weights := { safety := 2.4, duty := 2.8, energy := 0.2 },
+    need_decay_per_second := { safety := 0.002, duty := 0.003, energy := 0.001 },
+    goal := { need := 32, weight := 2.8, decay := 0.003 }
+  };
+
+  def 代管者 : Profile := {
+    policy_id := 住户决策, maximum_speed := 2.5, reach_meters := 1.8, time_cost := 0.002,
+    capabilities := [phase, observe, speak, manual, engineering, archive, manifest, demanifest],
+    contact_presence_fact := demon_manifested,
+    contact_capabilities := [manual, engineering, archive],
+    needs := { safety := 70, duty := 30, energy := 95 },
+    weights := { safety := 1.5, duty := 3.0, energy := 0.05 },
+    need_decay_per_second := { safety := 0.0005, duty := 0.002, energy := 0.0001 },
+    goal := { need := 25, weight := 3.2, decay := 0.002 }
+  };
+
+  actor vansittart "范思妥" : 导师 at W-101 goal covenant_order { final_location := B2-anchor-NW, initial_propositions := [contract_authority] };
+  actor graham "葛礼恒" : 导师 at 2F-cross-M goal medical_containment { final_location := B2-core };
+  actor koch "柯奥古" : 导师 at B2-control goal reactor_isolation { final_location := B2-control };
+  actor ye "叶星澜" : 导师 at S-101 goal acoustic_anchor { final_location := B2-core };
+  actor demon "恶魔" : 代管者 at 2F-cross-M goal boundary_order { final_location := D-gate, initial_propositions := [steward_bound_by_rules] };
+
+  actor lucian "卢西安" : 住户 at R01 goal poetic_duty { final_location := R01, retained_propositions := [identity_lucian, role_poet] };
+  actor gu "顾平章" : 住户 at R02 goal archive_prudence { final_location := R02, retained_propositions := [identity_gu, role_historian] };
+  actor quer "雀儿" : 住户 at R03 goal covert_custody { final_location := R03, retained_propositions := [identity_quer, role_locksmith] };
+  actor ward "沃德" : 住户 at R04 goal procedural_order { final_location := R04, retained_propositions := [identity_ward, role_lawyer] };
+  actor detective "侦探" : 住户 at R05 goal empirical_audit { final_location := R05, retained_propositions := [identity_detective, role_investigator, magnifying_glass_retained] };
+  actor huo "霍铎" : 住户 at R06 goal mechanical_safety { final_location := R06, capabilities := [walk, observe, speak, manual, engineering, consent], retained_propositions := [identity_huo, role_engineer] };
+  actor shen "沈鼎" : 住户 at R07 goal household_protection { final_location := R07, capabilities := [walk, observe, speak, manual, craft, consent], retained_propositions := [identity_shen, role_chef] };
+  actor su "苏泠" : 住户 at R08 goal acoustic_vigilance { final_location := R08, retained_propositions := [identity_su, role_musician, overtone_sensitivity] };
+  actor selma "赛尔玛" : 住户 at R09 goal care_ethics { final_location := R09, retained_propositions := [identity_selma, role_naturalist] };
+  actor ruan "阮清月" : 住户 at R10 goal rational_calculation { final_location := R10, retained_propositions := [identity_ruan, role_player] };
+  actor elena "伊莲娜" : 住户 at S-101 goal bodily_dignity { final_location := R11, retained_propositions := [identity_elena, role_dancer] };
+  actor moran "莫兰" : 住户 at R12 goal visual_testimony { final_location := R12, retained_propositions := [identity_moran, role_painter] };
+  actor veronica "维罗妮卡" : 住户 at R13 goal chemical_control { final_location := R13, retained_propositions := [identity_veronica, role_chemist] };
+  actor bertrand "贝尔特朗" : 住户 at R14 goal perimeter_watch { final_location := R14, retained_propositions := [identity_bertrand, role_guard] };
+  actor margaret "玛格丽特" : 住户 at R15 goal structural_integrity { final_location := R15, retained_propositions := [identity_margaret, role_architect] };
+  actor mora "茉拉" : 住户 at R16 goal clinical_protection { final_location := R16, retained_propositions := [identity_mora, role_doctor] };
+
+  edge R03_到_W-101 : R03 -> W-101 := 140 { capability := walk };
+  edge W-101_到_R03 : W-101 -> R03 := 140 { capability := walk };
+  edge W-101_到_2F-cross-M : W-101 -> 2F-cross-M := 80 { capability := walk };
+  edge 2F-cross-M_到_B2-core : 2F-cross-M -> B2-core := 220 { capability := walk };
+  edge 2F-cross-M_到_B2-anchor-NW : 2F-cross-M -> B2-anchor-NW := 260 { capability := walk };
+  edge S-101_到_C-P : S-101 -> C-P := 105 { requires := [c_gate_open], capability := walk };
+  edge C-P_到_B2-core : C-P -> B2-core := 240 { capability := walk };
+  edge R01_到_B-gate-outer : R01 -> B-gate-outer := 68 { requires := [a_gate_open], requires_absent := [b_shaft_pocket_dense], capability := walk };
+  edge B-gate-outer_到_A-gate : B-gate-outer -> A-gate := 60 { requires := [a_gate_open], capability := walk };
+  edge A-gate_到_R03 : A-gate -> R03 := 28 { capability := walk };
+  edge R03_到_R01 : R03 -> R01 := 24 { capability := walk };
+  edge R04_到_R03 : R04 -> R03 := 22 { capability := walk };
+  edge R03_到_R04 : R03 -> R04 := 22 { capability := walk };
+  edge R08_到_B-gate-inner : R08 -> B-gate-inner := 40 { capability := walk };
+  edge B-gate-inner_到_R08 : B-gate-inner -> R08 := 40 { capability := walk };
+  edge R06_到_B-P : R06 -> B-P := 20 { capability := walk };
+  edge B-P_到_B-gate-inner : B-P -> B-gate-inner := 35 { capability := walk };
+  edge B-gate-inner_到_R06 : B-gate-inner -> R06 := 40 { capability := walk };
+  edge R07_到_B-P : R07 -> B-P := 20 { capability := walk };
+  edge B-gate-inner_到_R07 : B-gate-inner -> R07 := 42 { capability := walk };
+  edge R05_到_B-gate-inner : R05 -> B-gate-inner := 45 { capability := walk };
+  edge B-gate-inner_到_R05 : B-gate-inner -> R05 := 45 { capability := walk };
+  edge R10_到_C-gate : R10 -> C-gate := 38 { capability := walk };
+  edge C-gate_到_R10 : C-gate -> R10 := 38 { capability := walk };
+  edge R12_到_C-gate : R12 -> C-gate := 36 { capability := walk };
+  edge C-gate_到_R12 : C-gate -> R12 := 36 { capability := walk };
+  edge R09_到_C-P : R09 -> C-P := 25 { capability := walk };
+  edge C-P_到_C-gate : C-P -> C-gate := 22 { capability := walk };
+  edge C-gate_到_R09 : C-gate -> R09 := 40 { capability := walk };
+  edge C-P_到_R11 : C-P -> R11 := 30 { capability := walk };
+  edge R13_到_D-gate : R13 -> D-gate := 40 { capability := walk };
+  edge D-gate_到_R13 : D-gate -> R13 := 40 { capability := walk };
+  edge R14_到_D-gate : R14 -> D-gate := 42 { capability := walk };
+  edge D-gate_到_R14 : D-gate -> R14 := 42 { capability := walk };
+  edge R15_到_D-gate : R15 -> D-gate := 45 { capability := walk };
+  edge D-gate_到_R15 : D-gate -> R15 := 45 { capability := walk };
+  edge R16_到_D-gate : R16 -> D-gate := 40 { capability := walk };
+  edge D-gate_到_R16 : D-gate -> R16 := 40 { capability := walk };
+
+  edge 2F-cross-M_到_N01 : 2F-cross-M -> N01 := 55 { requires_absent := [demon_manifested], capability := phase, access_bypass_capability := phase };
+  edge N01_到_B-gate-inner : N01 -> B-gate-inner := 35 { requires_absent := [demon_manifested], capability := phase, access_bypass_capability := phase };
+  edge B-gate-inner_到_B-P : B-gate-inner -> B-P := 15 { requires_absent := [demon_manifested], capability := phase, access_bypass_capability := phase };
+  edge B-P_到_A-gate : B-P -> A-gate := 32 { requires_absent := [demon_manifested], capability := phase, access_bypass_capability := phase };
+  edge A-gate_到_C-gate : A-gate -> C-gate := 27 { requires_absent := [demon_manifested], capability := phase, access_bypass_capability := phase };
+  edge C-gate_到_D-gate : C-gate -> D-gate := 27 { requires_absent := [demon_manifested], capability := phase, access_bypass_capability := phase };
+
+  channel B2-control_传声_B2-control : B2-control -> B2-control { minimum_delay := 0 };
+  channel 2F-cross-M_传声_2F-cross-M : 2F-cross-M -> 2F-cross-M { minimum_delay := 0 };
+  channel W-101_传声_W-101 : W-101 -> W-101 { minimum_delay := 1 };
+  channel B-gate-inner_传声_B-gate-inner : B-gate-inner -> B-gate-inner { minimum_delay := 0 };
+  channel C-P_传声_C-gate : C-P -> C-gate { minimum_delay := 2 };
+  channel B-gate-outer_传声_B-gate-inner_畸变 : B-gate-outer -> B-gate-inner {
+    minimum_delay := 5,
+    transform := [distorted_threat_heard, external_prima_dangerous]
+  };
+
+  channel 2F-cross-M_传声_W-101 : 2F-cross-M -> W-101 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_S-101 : 2F-cross-M -> S-101 { minimum_delay := 4 };
+  channel 2F-cross-M_传声_R01 : 2F-cross-M -> R01 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R02 : 2F-cross-M -> R02 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R03 : 2F-cross-M -> R03 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R04 : 2F-cross-M -> R04 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R05 : 2F-cross-M -> R05 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R06 : 2F-cross-M -> R06 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R07 : 2F-cross-M -> R07 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R08 : 2F-cross-M -> R08 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R09 : 2F-cross-M -> R09 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R10 : 2F-cross-M -> R10 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R11 : 2F-cross-M -> R11 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R12 : 2F-cross-M -> R12 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R13 : 2F-cross-M -> R13 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R14 : 2F-cross-M -> R14 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R15 : 2F-cross-M -> R15 { minimum_delay := 3 };
+  channel 2F-cross-M_传声_R16 : 2F-cross-M -> R16 { minimum_delay := 3 };
+
+  channel R01_传声_2F-cross-M : R01 -> 2F-cross-M { minimum_delay := 1 };
+  channel R02_传声_2F-cross-M : R02 -> 2F-cross-M { minimum_delay := 1 };
+  channel R03_传声_2F-cross-M : R03 -> 2F-cross-M { minimum_delay := 1 };
+  channel R04_传声_2F-cross-M : R04 -> 2F-cross-M { minimum_delay := 1 };
+  channel R05_传声_2F-cross-M : R05 -> 2F-cross-M { minimum_delay := 1 };
+  channel R06_传声_2F-cross-M : R06 -> 2F-cross-M { minimum_delay := 1 };
+  channel R07_传声_2F-cross-M : R07 -> 2F-cross-M { minimum_delay := 1 };
+  channel R08_传声_2F-cross-M : R08 -> 2F-cross-M { minimum_delay := 1 };
+  channel R09_传声_2F-cross-M : R09 -> 2F-cross-M { minimum_delay := 1 };
+  channel R10_传声_2F-cross-M : R10 -> 2F-cross-M { minimum_delay := 1 };
+  channel R11_传声_2F-cross-M : R11 -> 2F-cross-M { minimum_delay := 1 };
+  channel R12_传声_2F-cross-M : R12 -> 2F-cross-M { minimum_delay := 1 };
+  channel R13_传声_2F-cross-M : R13 -> 2F-cross-M { minimum_delay := 1 };
+  channel R14_传声_2F-cross-M : R14 -> 2F-cross-M { minimum_delay := 1 };
+  channel R15_传声_2F-cross-M : R15 -> 2F-cross-M { minimum_delay := 1 };
+  channel R16_传声_2F-cross-M : R16 -> 2F-cross-M { minimum_delay := 1 };
+
+  resource b_pin at B-gate-inner;
+  resource b_latch at B-gate-inner;
+  resource b_gap at B-gate-inner;
+  resource b_kitchen_hook at B-P;
+  resource c_latch at C-gate;
+  resource d_latch at D-gate;
+  resource a_latch at A-gate;
+  resource archive_vault at N01;
+
+  object wrench : Tool at B-P;
+  object oil : Supply at B-P;
+  object cloth : Cloth at B-P;
+  object knife : Tool held shen;
+  object diagram : Diagram held vansittart;
+  object scroll : Document held gu;
+  object handcuffs : Tool held ward;
+  object sword : Tool held lucian;
+  object paperweight : Tool held moran;
+  object bandage : Supply held selma;
+  object crowbar : Tool held bertrand;
+  object steel_wedge : Tool held margaret;
+  object acid : Supply held veronica;
+
+  def 步行 : Operation := { kind := move, capability := walk, minimum_seconds := 1, intent := purposeful, actual_need_effects := { energy := -0.5, $goal := 1 } };
+  def 穿闭移动 : Operation := { kind := move, capability := phase, minimum_seconds := 1, intent := purposeful, actual_need_effects := { energy := -0.1, $goal := 1 } };
+
+  def 舞步预演 : Operation := { kind := work, capability := manual, minimum_seconds := 60, intent := rehearse, actual_need_effects := { energy := -2, $goal := 4 }, adds := [rehearsal_completed] };
+  def 指导舞步预演 : Operation := { kind := work, capability := observe, minimum_seconds := 60, intent := rehearse, actual_need_effects := { energy := -1, $goal := 4 }, adds := [rehearsal_guided] };
+  def 发现反应炉故障 : Operation := { kind := observe, capability := observe, minimum_seconds := 5, intent := inquire, actual_need_effects := { energy := -0.1, $goal := 2 }, emits := [reactor_fault_detected] };
+  def 断开反应炉并导流竖井 : Operation := { kind := work, capability := engineering, minimum_seconds := 20, intent := purposeful, requires_propositions := [reactor_fault_detected], actual_need_effects := { energy := -1, safety := 8, duty := 10, $goal := 8 }, requires := [reactor_fault], adds := [reactor_isolated, anchor_se_ready, shaft_upflow_rising], removes := [reactor_fault] };
+  def 察觉源质险情 : Operation := { kind := observe, capability := observe, minimum_seconds := 5, intent := inquire, actual_need_effects := { energy := -0.1, $goal := 2 }, requires := [external_danger], emits := [external_prima_dangerous] };
+  def 广播隔离警告 : Operation := { kind := speak, capability := broadcast, minimum_seconds := 15, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.5, safety := 6, duty := 8, $goal := 6 }, requires := [external_danger], adds := [warning_broadcast], emits := [external_prima_dangerous, protect_positive_pressure, keep_isolation_boundary_closed] };
+
+  def 起草契约 : Operation := { kind := work, capability := manual, minimum_seconds := 120, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -1, duty := 8, $goal := 8 }, adds := [contract_drafted] };
+  def 交接图纸 : Operation := { kind := work, capability := manual, minimum_seconds := 10, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.2, duty := 5, $goal := 5 }, gives := [{ object := diagram, to := quer }], adds := [diagram_transferred], emits := [preserve_pipeline_diagram] };
+  def 撬开通风篦将图纸塞入夹层 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous, preserve_pipeline_diagram], actual_need_effects := { energy := -0.2, safety := 4, duty := 6, $goal := 6 }, places := [{ object := diagram, location := R03 }], adds := [diagram_preserved, trace_vent_pried] };
+  def 幻火惊恐将孤本浸入水盆 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.3, safety := 3, duty := 4, $goal := 5 }, requires := [a_glare_mirage], uses := [scroll], adds := [gu_notes_secured, scroll_soaked_in_basin] };
+  def 误认盗窃将雀儿铐上铜管 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.3, safety := 3, duty := 4, $goal := 5 }, requires := [trace_vent_pried], uses := [handcuffs], adds := [a_roll_checked, quer_cuffed_to_pipe] };
+  def 拔剑劈断铜管托架救人 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.4, safety := 5, duty := 6, $goal := 6 }, requires := [quer_cuffed_to_pipe], uses := [sword], adds := [trace_pipe_slashed, sword_notched] };
+
+  def 扶稳伤员 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.5, safety := 4, duty := 4, $goal := 4 }, adds := [elena_stabilized] };
+  def 示意关门并扑入伤踝 : Operation := { kind := speak, capability := speak, minimum_seconds := 10, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.2, safety := 4, duty := 4, $goal := 4 }, adds := [elena_inside_c, elena_ankle_sprained], emits := [elena_entered_c, close_c_gate_now] };
+  def 拉下偏心重闸封门 : Operation := { kind := work, capability := manual, minimum_seconds := 15, intent := respond, requires_propositions := [external_prima_dangerous, elena_entered_c, close_c_gate_now], actual_need_effects := { energy := -0.5, safety := 8, duty := 6, $goal := 6 }, requires := [c_gate_open, elena_inside_c], adds := [c_gate_closed, trace_copper_filing_palm, c_window_afterimage], removes := [c_gate_open], resources := [c_latch] };
+  def 照护伤员 : Operation := { kind := work, capability := manual, minimum_seconds := 30, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.5, safety := 5, duty := 5, $goal := 6 }, requires := [elena_inside_c], adds := [elena_cared] };
+  def 误认残影用镇纸猛砸观察窗内网 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.3, safety := 3, duty := 4, $goal := 5 }, requires := [c_window_afterimage], uses := [paperweight], adds := [moran_sketch_secured, trace_window_mesh_dented] };
+  def 用绷带反绑莫兰拖离窗口 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.4, safety := 6, duty := 5, $goal := 6 }, requires := [trace_window_mesh_dented], uses := [bandage], adds := [moran_bound_with_bandage] };
+
+  def 误信反相压差计用撬棍内撬大门 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.3, safety := 5, duty := 4, $goal := 5 }, requires := [d_gauge_inverted], uses := [crowbar], adds := [d_gate_checked, trace_crowbar_inner_frame] };
+  def 打入结构钢楔钉死丁区门缝 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.3, safety := 5, duty := 5, $goal := 5 }, requires := [trace_crowbar_inner_frame], uses := [steel_wedge], adds := [d_frame_inspected, d_steel_wedged_shut] };
+  def 泼洒螯合强酸封缝并逼退撬门者 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.3, safety := 3, duty := 4, $goal := 5 }, requires := [d_steel_wedged_shut], uses := [acid], adds := [r13_secured, trace_acid_scorched_mat, bertrand_acid_burn] };
+  def 冲洗酸灼伤并收缴药箱钥匙 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.3, safety := 4, duty := 4, $goal := 5 }, requires := [bertrand_acid_burn], adds := [mora_kit_ready, bertrand_bandaged, medkit_key_seized] };
+  def 松手落下撬棍 : Operation := { kind := work, capability := manual, minimum_seconds := 5, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.1, safety := 2, duty := 2, $goal := 2 }, places := [{ object := crowbar, location := D-gate }], adds := [crowbar_dropped_at_d_gate] };
+
+  def 转喊警告 : Operation := { kind := speak, capability := speak, minimum_seconds := 15, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.4, safety := 3, duty := 6, $goal := 6 }, requires_absent_during := [b_shaft_pocket_dense], adds := [lucian_warned_b], emits := [lucian_warning_keep_b_closed] };
+  def 错听拉门并拔半销 : Operation := { kind := work, capability := manual, minimum_seconds := 15, intent := distorted_escape, requires_propositions := [distorted_threat_heard], actual_need_effects := { energy := -0.4, safety := 6, $goal := 5 }, requires := [b_gate_open, b_shaft_pocket_dense], adds := [half_pin, b_gate_pulled_open, su_prima_deep_bound, trace_rosin], resources := [b_pin] };
+  def 强行拽回苏泠致自恢复门回弹 : Operation := { kind := work, capability := manual, minimum_seconds := 15, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.5, safety := 8, duty := 6, $goal := 6 }, requires := [b_gate_pulled_open], removes := [b_gate_pulled_open], adds := [b_gate_auto_closed, trace_struggle_sleeve_and_scuff], resources := [b_pin] };
+  def 门边辨听 : Operation := { kind := observe, capability := observe, minimum_seconds := 20, intent := inquire, actual_need_effects := { energy := -0.2, $goal := 3 }, adds := [su_listened_at_gate] };
+  def 记录听闻 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := purposeful, actual_need_effects := { energy := -0.2, $goal := 4 }, adds := [su_note_written] };
+
+  def 取扳手与油 : Operation := { kind := work, capability := manual, minimum_seconds := 10, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.3, $goal := 3 }, takes := [wrench, oil], adds := [wrench_taken] };
+  def 观察半拉定位销 : Operation := { kind := observe, capability := observe, minimum_seconds := 5, intent := inquire, actual_need_effects := { energy := -0.1, $goal := 3 }, requires := [half_pin, b_gate_auto_closed], emits := [observed_half_pin] };
+  def 工程反扣一档死锁 : Operation := { kind := work, capability := engineering, minimum_seconds := 25, intent := respond, requires_propositions := [external_prima_dangerous, observed_half_pin], actual_need_effects := { energy := -0.6, safety := 8, duty := 6, $goal := 6 }, requires := [half_pin, b_gate_auto_closed, wrench_taken], uses := [wrench, oil], adds := [stage1, b_engineered_deadlock, trace_oil], resources := [b_latch] };
+
+  def 浸湿抹布 : Operation := { kind := work, capability := craft, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous], actual_need_effects := { energy := -0.4, $goal := 4 }, takes := [cloth], adds := [cloth_soaked] };
+  def 湿抹布堵门底缝 : Operation := { kind := work, capability := manual, minimum_seconds := 20, intent := respond, requires_propositions := [external_prima_dangerous, keep_isolation_boundary_closed], actual_need_effects := { energy := -0.4, safety := 6, duty := 5, $goal := 5 }, requires := [stage1, cloth_soaked], places := [{ object := cloth, location := B-gate-inner }], adds := [b_gap_stuffed_with_wet_cloth, trace_soot, trace_threshold_water_and_fiber], resources := [b_gap] };
+  def 查验死锁与门底湿布 : Operation := { kind := work, capability := manual, minimum_seconds := 10, intent := inquire, requires_propositions := [external_prima_dangerous, protect_positive_pressure, keep_isolation_boundary_closed], actual_need_effects := { energy := -0.2, $goal := 1 }, requires := [b_engineered_deadlock, b_gap_stuffed_with_wet_cloth], adds := [trace_frost_contact], resources := [b_gap] };
+
+  def 宣读契约 : Operation := { kind := speak, capability := broadcast, minimum_seconds := 180, intent := purposeful, actual_need_effects := { energy := -1, duty := 10, $goal := 10 }, requires := [contract_drafted], adds := [contract_read], emits := [contract_terms_known, memory_cost_understood, retained_scope_understood] };
+  def 准备接收授权 : Operation := { kind := observe, capability := observe, minimum_seconds := 5, intent := purposeful, actual_need_effects := { energy := -0.1, $goal := 2 }, requires := [contract_read], adds := [demon_ready_for_consents] };
+  def 亲口授权契约 : Operation := { kind := speak, capability := consent, minimum_seconds := 5, intent := informed_consent, requires_propositions := [contract_terms_known, memory_cost_understood, retained_scope_understood], actual_need_effects := { energy := -0.1, safety := 10, duty := 8, $goal := 6 }, requires := [contract_read], adds := [consent_$actor], emits := [consented_$actor] };
+
+  def 服固定剂并准备医疗锚 : Operation := { kind := work, capability := anchor, minimum_seconds := 40, intent := purposeful, actual_need_effects := { energy := -1, duty := 8, $goal := 8 }, adds := [graham_anchor_prepared] };
+  def 完成医疗锚定 : Operation := { kind := work, capability := anchor, minimum_seconds := 40, intent := purposeful, actual_need_effects := { energy := -2, duty := 12, $goal := 12 }, requires := [graham_anchor_prepared], adds := [anchor_ne_ready] };
+  def 完成声律锚定 : Operation := { kind := work, capability := anchor, minimum_seconds := 40, intent := purposeful, actual_need_effects := { energy := -2, duty := 12, $goal := 12 }, adds := [anchor_sw_ready] };
+  def 完成言灵锚定 : Operation := { kind := work, capability := anchor, minimum_seconds := 40, intent := purposeful, actual_need_effects := { energy := -2, duty := 12, $goal := 12 }, requires := [contract_read], adds := [anchor_nw_ready] };
+
+  def 显形 : Operation := { kind := presence, capability := manifest, minimum_seconds := 3, intent := purposeful, actual_need_effects := { energy := -0.1, $goal := 1 }, adds := [demon_manifested] };
+  def 隐去形体 : Operation := { kind := presence, capability := demanifest, minimum_seconds := 3, intent := purposeful, actual_need_effects := { energy := -0.1, $goal := 1 }, requires := [demon_manifested], removes := [demon_manifested] };
+
+  def 封存记忆 : Operation := {
+    kind := work, capability := archive, minimum_seconds := 15, intent := purposeful,
+    requires_propositions := [
+      consented_lucian, consented_gu, consented_quer, consented_ward,
+      consented_detective, consented_huo, consented_shen, consented_su,
+      consented_selma, consented_ruan, consented_elena, consented_moran,
+      consented_veronica, consented_bertrand, consented_margaret, consented_mora
+    ],
+    actual_need_effects := { energy := -0.5, duty := 15, $goal := 15 },
+    requires := [
+      anchor_se_ready, anchor_ne_ready, anchor_sw_ready, anchor_nw_ready,
+      consent_lucian, consent_gu, consent_quer, consent_ward,
+      consent_detective, consent_huo, consent_shen, consent_su,
+      consent_selma, consent_ruan, consent_elena, consent_moran,
+      consent_veronica, consent_bertrand, consent_margaret, consent_mora
+    ],
+    erase_actor_memories := [lucian, gu, quer, ward, detective, huo, shen, su, selma, ruan, elena, moran, veronica, bertrand, margaret, mora],
+    adds := [memories_archived],
+    resources := [archive_vault]
+  };
+
+  def 加固门栓并抽走湿抹布 : Operation := { kind := work, capability := engineering, minimum_seconds := 10, intent := purposeful, requires_propositions := [external_prima_dangerous, protect_positive_pressure, keep_isolation_boundary_closed, contract_terms_known, memory_cost_understood, retained_scope_understood], actual_need_effects := { energy := -0.2, $goal := 1 }, requires := [stage1, b_gap_stuffed_with_wet_cloth, positive_pressure_b, external_danger], takes := [cloth], adds := [stage2, trace_glove, b_boundary_closed], removes := [b_gate_open, b_gap_stuffed_with_wet_cloth], resources := [b_latch, b_gap] };
+  def 将湿抹布挂回厨房并清空乙区物品 : Operation := { kind := work, capability := manual, minimum_seconds := 10, intent := purposeful, requires_propositions := [contract_terms_known, memory_cost_understood, retained_scope_understood], actual_need_effects := { energy := -0.1, $goal := 1 }, requires := [positive_pressure_b, memories_archived], places := [{ object := cloth, location := B-P }], adds := [wet_cloth_hung_in_kitchen, rooms_stripped_like_new_checkin], resources := [b_kitchen_hook] };
+  def 闭合甲区边界解开手铐并清空物品 : Operation := { kind := work, capability := manual, minimum_seconds := 10, intent := purposeful, requires_propositions := [external_prima_dangerous, protect_positive_pressure, keep_isolation_boundary_closed], actual_need_effects := { energy := -0.2, $goal := 1 }, requires := [positive_pressure_a, external_danger, quer_cuffed_to_pipe], adds := [a_boundary_closed, handcuffs_unlocked_key_missing, a_rooms_stripped], removes := [a_gate_open, quer_cuffed_to_pipe], resources := [a_latch] };
+  def 闭合丙区边界擦净观察窗并剪齐绷带 : Operation := { kind := work, capability := manual, minimum_seconds := 10, intent := purposeful, requires_propositions := [external_prima_dangerous, protect_positive_pressure, keep_isolation_boundary_closed], actual_need_effects := { energy := -0.2, $goal := 1 }, requires := [c_gate_closed, positive_pressure_c, external_danger, moran_bound_with_bandage], removes := [c_window_afterimage, moran_bound_with_bandage], adds := [c_boundary_closed, window_wiped_clean, bandage_neatly_cut, c_rooms_stripped], resources := [c_latch] };
+  def 闭合丁区边界归位撬棍并清空物品 : Operation := { kind := work, capability := manual, minimum_seconds := 10, intent := purposeful, requires_propositions := [external_prima_dangerous, protect_positive_pressure, keep_isolation_boundary_closed], actual_need_effects := { energy := -0.2, $goal := 1 }, requires := [d_steel_wedged_shut, positive_pressure_d, external_danger, crowbar_dropped_at_d_gate], removes := [d_gate_open, crowbar_dropped_at_d_gate], adds := [d_boundary_closed, crowbar_returned_to_rack, d_rooms_stripped], resources := [d_latch] };
+
+  world prima.outbreak at 600 { adds := [external_danger] };
+  world reactor.failure at 600 { adds := [reactor_fault] };
+  world shaft.pocket_erupts at 815 { adds := [b_shaft_pocket_dense, a_glare_mirage, d_gauge_inverted] };
+  world positive_pressure_on at 2480 { adds := [positive_pressure_a, positive_pressure_b, positive_pressure_c, positive_pressure_d, d_gauge_restored_normal], removes := [d_gauge_inverted, a_glare_mirage] };
+
+  work elena.rehearse elena 0..540 using 舞步预演 at S-101;
+  work ye.guide ye 0..540 using 指导舞步预演 at S-101;
+  move quer.to_mentor quer 120..300 using 步行 via [R03_到_W-101];
+  work koch.observe_failure koch 590..600 using 发现反应炉故障 at B2-control;
+  work graham.observe_danger graham 600..605 using 察觉源质险情 at 2F-cross-M;
+  work koch.shutdown koch 605..690 using 断开反应炉并导流竖井 at B2-control;
+  work graham.warning graham 610..640 using 广播隔离警告 at 2F-cross-M;
+  move graham.to_core graham 650..900 using 步行 via [2F-cross-M_到_B2-core];
+  work vansittart.draft vansittart 660..890 using 起草契约 at W-101;
+
+  move lucian.to_b lucian 680..755 using 步行 via [R01_到_B-gate-outer];
+  work ye.stabilize ye 740..780 using 扶稳伤员 at S-101;
+  work lucian.warn lucian 760..790 using 转喊警告 at B-gate-outer;
+  move elena.retreat elena 790..900 using 步行 via [S-101_到_C-P] with [ye.escort];
+  move ye.escort ye 790..900 using 步行 via [S-101_到_C-P] with [elena.retreat];
+  move lucian.return_a lucian 795..865 using 步行 via [B-gate-outer_到_A-gate];
+
+  move su.to_gate su 820..870 using 步行 via [R08_到_B-gate-inner];
+  move detective.to_struggle detective 825..875 using 步行 via [R05_到_B-gate-inner];
+  move ruan.to_gate ruan 830..890 using 步行 via [R10_到_C-gate];
+  move bertrand.to_gate bertrand 820..880 using 步行 via [R14_到_D-gate];
+  work gu.store gu 850..890 using 幻火惊恐将孤本浸入水盆 at R02;
+  move huo.to_bp huo 855..885 using 步行 via [R06_到_B-P];
+  move selma.to_cp selma 860..920 using 步行 via [R09_到_C-P];
+  move margaret.to_gate margaret 860..920 using 步行 via [R15_到_D-gate];
+  work su.pin su 880..900 using 错听拉门并拔半销 at B-gate-inner;
+  work bertrand.guard bertrand 885..925 using 误信反相压差计用撬棍内撬大门 at D-gate;
+  work huo.tools huo 890..910 using 取扳手与油 at B-P;
+  work vansittart.diagram vansittart 900..920 using 交接图纸 at W-101;
+  move veronica.to_gate veronica 900..960 using 步行 via [R13_到_D-gate];
+  work detective.pull_back_su detective 902..922 using 强行拽回苏泠致自恢复门回弹 at B-gate-inner;
+  work elena.signal elena 905..920 using 示意关门并扑入伤踝 at C-P;
+  move moran.to_gate moran 910..955 using 步行 via [R12_到_C-gate];
+  move huo.to_gate huo 920..980 using 步行 via [B-P_到_B-gate-inner];
+  work su.listen su 925..960 using 门边辨听 at B-gate-inner;
+  move detective.return_after_struggle detective 925..975 using 步行 via [B-gate-inner_到_R05];
+  move quer.return quer 930..1080 using 步行 via [W-101_到_R03];
+  move ye.to_core ye 930..1250 using 步行 via [C-P_到_B2-core];
+  work ruan.close ruan 930..950 using 拉下偏心重闸封门 at C-gate;
+  work selma.care selma 930..985 using 照护伤员 at C-P;
+  work margaret.inspect margaret 930..970 using 打入结构钢楔钉死丁区门缝 at D-gate;
+  move mora.to_gate mora 940..1000 using 步行 via [R16_到_D-gate];
+  move ruan.home ruan 960..1030 using 步行 via [C-gate_到_R10];
+  work moran.secure moran 960..1000 using 误认残影用镇纸猛砸观察窗内网 at C-gate;
+  move vansittart.to_cross vansittart 960..1060 using 步行 via [W-101_到_2F-cross-M];
+  move su.home su 970..1030 using 步行 via [B-gate-inner_到_R08];
+  work veronica.secure veronica 975..1010 using 泼洒螯合强酸封缝并逼退撬门者 at D-gate;
+  work huo.observe_pin huo 980..985 using 观察半拉定位销 at B-gate-inner;
+  work huo.stage1 huo 990..1030 using 工程反扣一档死锁 at B-gate-inner;
+  move selma.to_gate selma 990..1020 using 步行 via [C-P_到_C-gate];
+  move shen.to_bp shen 1000..1030 using 步行 via [R07_到_B-P];
+  work mora.kit mora 1015..1055 using 冲洗酸灼伤并收缴药箱钥匙 at D-gate;
+  move veronica.home veronica 1020..1080 using 步行 via [D-gate_到_R13];
+  work selma.bind_moran selma 1025..1060 using 用绷带反绑莫兰拖离窗口 at C-gate;
+  work shen.soak shen 1040..1080 using 浸湿抹布 at B-P;
+  move huo.home huo 1040..1120 using 步行 via [B-gate-inner_到_R06];
+  work bertrand.drop_crowbar bertrand 1056..1066 using 松手落下撬棍 at D-gate;
+  move moran.home moran 1065..1115 using 步行 via [C-gate_到_R12];
+  move bertrand.home bertrand 1070..1130 using 步行 via [D-gate_到_R14];
+  move selma.home selma 1070..1130 using 步行 via [C-gate_到_R09];
+  move ward.to_r03 ward 1080..1120 using 步行 via [R04_到_R03];
+  move margaret.home margaret 1080..1150 using 步行 via [D-gate_到_R15];
+  move mora.home mora 1085..1145 using 步行 via [D-gate_到_R16];
+  move shen.to_gap shen 1090..1180 using 步行 via [B-P_到_B-gate-inner];
+  work quer.store quer 1090..1125 using 撬开通风篦将图纸塞入夹层 at R03;
+  move lucian.to_r03 lucian 1110..1160 using 步行 via [A-gate_到_R03];
+  move elena.home elena 1110..1240 using 步行 via [C-P_到_R11];
+  work graham.prepare graham 1120..1200 using 服固定剂并准备医疗锚 at B2-core;
+  work su.note su 1130..1160 using 记录听闻 at R08;
+  work ward.secure ward 1130..1165 using 误认盗窃将雀儿铐上铜管 at R03;
+  work lucian.slash_pipe lucian 1170..1200 using 拔剑劈断铜管托架救人 at R03;
+  work shen.seal_gap shen 1200..1240 using 湿抹布堵门底缝 at B-gate-inner;
+  move ward.home ward 1210..1250 using 步行 via [R03_到_R04];
+  move lucian.home lucian 1210..1260 using 步行 via [R03_到_R01];
+  move shen.home shen 1250..1330 using 步行 via [B-gate-inner_到_R07];
+  move detective.to_gap detective 1470..1570 using 步行 via [R05_到_B-gate-inner];
+  work detective.inspect detective 1580..1620 using 查验死锁与门底湿布 at B-gate-inner;
+  move detective.home detective 1630..1690 using 步行 via [B-gate-inner_到_R05];
+
+  work vansittart.read_pact vansittart 1700..1940 using 宣读契约 at 2F-cross-M;
+  work demon.prepare demon 1942..1948 using 准备接收授权 at 2F-cross-M;
+  work consent.lucian lucian 1950..1956 using 亲口授权契约 at R01;
+  move vansittart.to_anchor vansittart 1950..2400 using 步行 via [2F-cross-M_到_B2-anchor-NW];
+  work consent.gu gu 1958..1964 using 亲口授权契约 at R02;
+  work consent.quer quer 1966..1972 using 亲口授权契约 at R03;
+  work consent.ward ward 1974..1980 using 亲口授权契约 at R04;
+  work graham.anchor graham 1980..2040 using 完成医疗锚定 at B2-core;
+  work ye.anchor ye 1980..2040 using 完成声律锚定 at B2-core;
+  work consent.detective detective 1982..1988 using 亲口授权契约 at R05;
+  work consent.huo huo 1990..1996 using 亲口授权契约 at R06;
+  work consent.shen shen 1998..2004 using 亲口授权契约 at R07;
+  work consent.su su 2006..2012 using 亲口授权契约 at R08;
+  work consent.selma selma 2014..2020 using 亲口授权契约 at R09;
+  work consent.ruan ruan 2022..2028 using 亲口授权契约 at R10;
+  work consent.elena elena 2030..2036 using 亲口授权契约 at R11;
+  work consent.moran moran 2038..2044 using 亲口授权契约 at R12;
+  work consent.veronica veronica 2046..2052 using 亲口授权契约 at R13;
+  work consent.bertrand bertrand 2054..2060 using 亲口授权契约 at R14;
+  work consent.margaret margaret 2062..2068 using 亲口授权契约 at R15;
+  work consent.mora mora 2070..2076 using 亲口授权契约 at R16;
+  move demon.to_archive demon 2090..2290 using 穿闭移动 via [2F-cross-M_到_N01];
+  work vansittart.anchor vansittart 2410..2470 using 完成言灵锚定 at B2-anchor-NW;
+  work demon.presence_archive demon 2492..2497 using 显形 at N01;
+  work demon.archive demon 2500..2520 using 封存记忆 at N01;
+  work demon.presence_archive_end demon 2521..2526 using 隐去形体 at N01;
+
+  move demon.return demon 2530..2585 using 穿闭移动 via [N01_到_B-gate-inner];
+  work demon.presence_b demon 2588..2593 using 显形 at B-gate-inner;
+  work demon.fix_b demon 2595..2625 using 加固门栓并抽走湿抹布 at B-gate-inner;
+  work demon.presence_b_end demon 2626..2631 using 隐去形体 at B-gate-inner;
+  move demon.to_bp demon 2635..2655 using 穿闭移动 via [B-gate-inner_到_B-P];
+  work demon.presence_bp demon 2658..2663 using 显形 at B-P;
+  work demon.hang_cloth demon 2665..2680 using 将湿抹布挂回厨房并清空乙区物品 at B-P;
+  work demon.presence_bp_end demon 2681..2686 using 隐去形体 at B-P;
+  move demon.to_a demon 2700..2780 using 穿闭移动 via [B-P_到_A-gate];
+  work demon.presence_a demon 2785..2790 using 显形 at A-gate;
+  work demon.seal_a demon 2800..2830 using 闭合甲区边界解开手铐并清空物品 at A-gate;
+  work demon.presence_a_end demon 2831..2836 using 隐去形体 at A-gate;
+  move demon.to_c demon 2850..2910 using 穿闭移动 via [A-gate_到_C-gate];
+  work demon.presence_c demon 2915..2920 using 显形 at C-gate;
+  work demon.seal_c demon 2930..2960 using 闭合丙区边界擦净观察窗并剪齐绷带 at C-gate;
+  work demon.presence_c_end demon 2961..2966 using 隐去形体 at C-gate;
+  move demon.to_d demon 2980..3040 using 穿闭移动 via [C-gate_到_D-gate];
+  work demon.presence_d demon 3045..3050 using 显形 at D-gate;
+  work demon.seal_d demon 3060..3090 using 闭合丁区边界归位撬棍并清空物品 at D-gate;
+  work demon.presence_d_end demon 3091..3096 using 隐去形体 at D-gate;
+
+  receive failure.koch koch at 600 from koch.observe_failure via B2-control_传声_B2-control;
+  receive danger.graham graham at 605 from graham.observe_danger via 2F-cross-M_传声_2F-cross-M;
+  receive alarm.bertrand bertrand at 645 from graham.warning via 2F-cross-M_传声_R14;
+  receive alarm.demon demon at 645 from graham.warning via 2F-cross-M_传声_2F-cross-M;
+  receive alarm.detective detective at 645 from graham.warning via 2F-cross-M_传声_R05;
+  receive alarm.elena elena at 645 from graham.warning via 2F-cross-M_传声_S-101;
+  receive alarm.gu gu at 645 from graham.warning via 2F-cross-M_传声_R02;
+  receive alarm.huo huo at 645 from graham.warning via 2F-cross-M_传声_R06;
+  receive alarm.lucian lucian at 645 from graham.warning via 2F-cross-M_传声_R01;
+  receive alarm.margaret margaret at 645 from graham.warning via 2F-cross-M_传声_R15;
+  receive alarm.mora mora at 645 from graham.warning via 2F-cross-M_传声_R16;
+  receive alarm.moran moran at 645 from graham.warning via 2F-cross-M_传声_R12;
+  receive alarm.quer quer at 645 from graham.warning via 2F-cross-M_传声_W-101;
+  receive alarm.ruan ruan at 645 from graham.warning via 2F-cross-M_传声_R10;
+  receive alarm.selma selma at 645 from graham.warning via 2F-cross-M_传声_R09;
+  receive alarm.shen shen at 645 from graham.warning via 2F-cross-M_传声_R07;
+  receive alarm.su su at 645 from graham.warning via 2F-cross-M_传声_R08;
+  receive alarm.vansittart vansittart at 645 from graham.warning via 2F-cross-M_传声_W-101;
+  receive alarm.veronica veronica at 645 from graham.warning via 2F-cross-M_传声_R13;
+  receive alarm.ward ward at 645 from graham.warning via 2F-cross-M_传声_R04;
+  receive alarm.ye ye at 645 from graham.warning via 2F-cross-M_传声_S-101;
+  receive distorted.su su at 870 from lucian.warn via B-gate-outer_传声_B-gate-inner_畸变;
+  receive signal.ruan ruan at 922 from elena.signal via C-P_传声_C-gate;
+  receive order.quer quer at 925 from vansittart.diagram via W-101_传声_W-101;
+  receive view.pin.huo huo at 985 from huo.observe_pin via B-gate-inner_传声_B-gate-inner;
+  receive pact.bertrand bertrand at 1943 from vansittart.read_pact via 2F-cross-M_传声_R14;
+  receive pact.demon demon at 1940 from vansittart.read_pact via 2F-cross-M_传声_2F-cross-M;
+  receive pact.detective detective at 1943 from vansittart.read_pact via 2F-cross-M_传声_R05;
+  receive pact.elena elena at 1943 from vansittart.read_pact via 2F-cross-M_传声_R11;
+  receive pact.gu gu at 1943 from vansittart.read_pact via 2F-cross-M_传声_R02;
+  receive pact.huo huo at 1943 from vansittart.read_pact via 2F-cross-M_传声_R06;
+  receive pact.lucian lucian at 1943 from vansittart.read_pact via 2F-cross-M_传声_R01;
+  receive pact.margaret margaret at 1943 from vansittart.read_pact via 2F-cross-M_传声_R15;
+  receive pact.mora mora at 1943 from vansittart.read_pact via 2F-cross-M_传声_R16;
+  receive pact.moran moran at 1943 from vansittart.read_pact via 2F-cross-M_传声_R12;
+  receive pact.quer quer at 1943 from vansittart.read_pact via 2F-cross-M_传声_R03;
+  receive pact.ruan ruan at 1943 from vansittart.read_pact via 2F-cross-M_传声_R10;
+  receive pact.selma selma at 1943 from vansittart.read_pact via 2F-cross-M_传声_R09;
+  receive pact.shen shen at 1943 from vansittart.read_pact via 2F-cross-M_传声_R07;
+  receive pact.su su at 1943 from vansittart.read_pact via 2F-cross-M_传声_R08;
+  receive pact.veronica veronica at 1943 from vansittart.read_pact via 2F-cross-M_传声_R13;
+  receive pact.ward ward at 1943 from vansittart.read_pact via 2F-cross-M_传声_R04;
+  receive heard_consent.lucian demon at 1957 from consent.lucian via R01_传声_2F-cross-M;
+  receive heard_consent.gu demon at 1965 from consent.gu via R02_传声_2F-cross-M;
+  receive heard_consent.quer demon at 1973 from consent.quer via R03_传声_2F-cross-M;
+  receive heard_consent.ward demon at 1981 from consent.ward via R04_传声_2F-cross-M;
+  receive heard_consent.detective demon at 1989 from consent.detective via R05_传声_2F-cross-M;
+  receive heard_consent.huo demon at 1997 from consent.huo via R06_传声_2F-cross-M;
+  receive heard_consent.shen demon at 2005 from consent.shen via R07_传声_2F-cross-M;
+  receive heard_consent.su demon at 2013 from consent.su via R08_传声_2F-cross-M;
+  receive heard_consent.selma demon at 2021 from consent.selma via R09_传声_2F-cross-M;
+  receive heard_consent.ruan demon at 2029 from consent.ruan via R10_传声_2F-cross-M;
+  receive heard_consent.elena demon at 2037 from consent.elena via R11_传声_2F-cross-M;
+  receive heard_consent.moran demon at 2045 from consent.moran via R12_传声_2F-cross-M;
+  receive heard_consent.veronica demon at 2053 from consent.veronica via R13_传声_2F-cross-M;
+  receive heard_consent.bertrand demon at 2061 from consent.bertrand via R14_传声_2F-cross-M;
+  receive heard_consent.margaret demon at 2069 from consent.margaret via R15_传声_2F-cross-M;
+  receive heard_consent.mora demon at 2077 from consent.mora via R16_传声_2F-cross-M;
+
+  final [
+    memories_archived, diagram_preserved,
+    su_prima_deep_bound, b_gate_auto_closed, trace_struggle_sleeve_and_scuff,
+    b_engineered_deadlock, trace_threshold_water_and_fiber, wet_cloth_hung_in_kitchen, rooms_stripped_like_new_checkin,
+    scroll_soaked_in_basin, trace_vent_pried, trace_pipe_slashed, handcuffs_unlocked_key_missing, a_rooms_stripped,
+    elena_ankle_sprained, trace_copper_filing_palm, trace_window_mesh_dented, window_wiped_clean, bandage_neatly_cut, c_rooms_stripped,
+    trace_crowbar_inner_frame, d_steel_wedged_shut, trace_acid_scorched_mat, bertrand_bandaged, d_gauge_restored_normal, crowbar_returned_to_rack, d_rooms_stripped,
+    trace_rosin, trace_oil, trace_soot, trace_frost_contact, trace_glove, stage2,
+    a_boundary_closed, b_boundary_closed, c_boundary_closed, d_boundary_closed
+  ];
+
+  branch 图纸保存 { events := [quer.store], goals := [diagram_preserved, trace_vent_pried] };
+  branch 乙区失忆前干预 { events := [su.pin, detective.pull_back_su, huo.stage1, shen.seal_gap, detective.inspect], goals := [su_prima_deep_bound, trace_struggle_sleeve_and_scuff, b_engineered_deadlock, b_gap_stuffed_with_wet_cloth, trace_rosin, trace_oil, trace_soot, trace_frost_contact] };
+  branch 甲区失忆前干预 { events := [gu.store, quer.store, ward.secure, lucian.slash_pipe], goals := [scroll_soaked_in_basin, diagram_preserved, trace_pipe_slashed] };
+  branch 丙区关门 { events := [ruan.close, moran.secure, selma.bind_moran], goals := [c_gate_closed, trace_window_mesh_dented, moran_bound_with_bandage] };
+  branch 丁区失忆前干预 { events := [bertrand.guard, margaret.inspect, veronica.secure, mora.kit], goals := [trace_crowbar_inner_frame, d_steel_wedged_shut, trace_acid_scorched_mat, bertrand_bandaged] };
+  branch 封存记忆 { events := [demon.archive], goals := [memories_archived] };
+  branch 恶魔封门 { events := [demon.hang_cloth, demon.seal_d], goals := [wet_cloth_hung_in_kitchen, rooms_stripped_like_new_checkin, a_boundary_closed, b_boundary_closed, c_boundary_closed, d_boundary_closed] };
+};

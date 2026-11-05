@@ -12,6 +12,7 @@ internal sealed class NativeCli : IDisposable
     readonly RuntimeSession session;
     readonly JsonElement content;
     readonly string viewer;
+    readonly bool automaticViewer;
     readonly StreamWriter? log;
     readonly StreamWriter? stateLog;
     long stateIndex;
@@ -29,6 +30,7 @@ internal sealed class NativeCli : IDisposable
     readonly List<object> history=[];
     long version;
     int failures;
+    int rejectedAttempts;
     string? selectedObject;
     readonly double end;
     readonly string? receiptPath;
@@ -39,6 +41,12 @@ internal sealed class NativeCli : IDisposable
     static string PathOf(string path)=>Path.GetFullPath(path.Replace("res://",""));
     static FieldKey Key(JsonElement r)=>new(Text(Get(r,"object")),Text(Get(r,"facet")),Text(Get(r,"field")));
     static string Encode(object? value)=>JsonSerializer.Serialize(value,Json);
+    object? VisibleMechanic(object? value)
+    {
+        if(value is null)return null;
+        var data=JsonSerializer.SerializeToElement(value);
+        return Text(Get(data,"actor"))==viewer?value:null;
+    }
     NativeCli(JsonElement options)
     {
         var path=Text(Get(options,"content_path"),DefaultContent);
@@ -51,17 +59,21 @@ internal sealed class NativeCli : IDisposable
         foreach(var item in Items(Get(content,"strategy_activities")))session.ConfigureStrategy(File.ReadAllText(PathOf(Text(Get(item,"source")))),item);
         end=Num(Get(Get(content,"run"),"end_minutes"));
         if(end<=session.ContentTime)throw new InvalidDataException("Invalid DV run horizon.");
-        if(Text(Get(options,"controller"))!="ai")session.SetAutonomy(viewer,false);
+        automaticViewer=Text(Get(options,"controller"))=="ai";
+        if(!automaticViewer)session.SetAutonomy(viewer,false);
         receiptPath=Text(Get(options,"receipt_path"));
         if(receiptPath.Length>0){Directory.CreateDirectory(Path.GetDirectoryName(receiptPath)!);log=new(receiptPath);}
         if(receiptPath.Length>0)stateLog=new(Path.ChangeExtension(receiptPath,"states.yaml"));
     }
     IEnumerable<JsonElement> Actors=>Items(Get(content,"actors"));
     string Room(string actor)=>Text(session.World.Read(new(actor,"state","room"))?.Value??default);
-    bool Active=>session.ContentTime<end;
+    bool HasCompletion=>Get(content,"completion").ValueKind==JsonValueKind.Object;
+    bool CampaignCompleted=>HasCompletion&&Items(Get(Get(content,"completion"),"facts")).All(reference=>session.World.Read(Key(reference)) is {Known:true,Conflicted:false} fact&&fact.Value.ValueKind==JsonValueKind.True);
+    bool Active=>session.ContentTime<end&&!CampaignCompleted;
     bool Visible(JsonElement fixture)=>Text(Get(fixture,"room"))==Room(viewer)&&Get(fixture,"hidden").ValueKind!=JsonValueKind.True;
     IEnumerable<JsonElement> Actions(string actor)=>Items(Get(Actors.Single(a=>Text(Get(a,"id"))==actor),"actions"));
-    object Status()=>new {version,chapter=session.ContentTime<1440?1:2,game_time=session.ContentTime,day=(int)(session.ContentTime/1440)+1,status=Active?"running":"stopped",stop_reason=Active?"":"dv_time_horizon",horizon=end};
+    object Status()=>new {version,chapter=(int)(session.ContentTime/1440)+1,game_time=session.ContentTime,day=(int)(session.ContentTime/1440)+1,
+        status=Active?"running":CampaignCompleted?"completed":"stopped",stop_reason=Active?"":CampaignCompleted?"campaign_completed":"dv_time_horizon",horizon=end,campaign_completed=CampaignCompleted};
     bool Check(JsonElement e)
     {
         var absent=Text(Get(e,"action_absent"));
@@ -115,9 +127,25 @@ internal sealed class NativeCli : IDisposable
         if(before.Length>0)return firstCompletion.TryGetValue(before,out var b)&&firstCompletion.TryGetValue(after,out var a)&&b<a;
         var actor=Text(Get(e,"actor"));
         if(actor.Length>0)return Condition.Compile(Get(e,"condition"),actor).Evaluate(k=>session.View(actor).Knowledge.GetValueOrDefault(k))==Truth.True;
-        return Text(Get(e,"action")).Length>0?completed.GetValueOrDefault(Text(Get(e,"action")))>=Num(Get(e,"minimum"),1):Condition.Compile(Get(e,"condition"),"world").Evaluate(session.World.Read)==Truth.True;
+        var action=Text(Get(e,"action"));
+        if(action.Length>0)return executions.Count(item=>item.Action==action&&item.End/60>=Num(Get(e,"from_minutes"))&&
+            item.End/60<Num(Get(e,"until_minutes"),double.PositiveInfinity))>=Num(Get(e,"minimum"),1);
+        return Condition.Compile(Get(e,"condition"),"world").Evaluate(session.World.Read)==Truth.True;
     }
-    object Assessment()=>new {content_hash=definition.Hash,game_time=session.ContentTime,failures,invariant_failures=invariantFailures.ToArray(),checks=Items(Get(content,"expectations")).Select(e=>new {id=Text(Get(e,"id")),passed=Check(e)}).ToArray()};
+    object Assessment()
+    {
+        var checks=Items(Get(content,"expectations")).Select(e=>{
+            var competition=Get(e,"drive_competition");
+            var applicable=automaticViewer||competition.ValueKind!=JsonValueKind.Object||!Text(Get(competition,"action")).StartsWith(viewer+".",StringComparison.Ordinal);
+            return new {id=Text(Get(e,"id")),applicable,passed=applicable?(bool?)Check(e):null,scope=applicable?"runtime":"not_applicable_player_choice"};}).ToArray();
+        var missing=Items(Get(Get(content,"completion"),"facts")).Where(reference=>session.World.Read(Key(reference)) is not {Known:true,Conflicted:false} fact||fact.Value.ValueKind!=JsonValueKind.True).Select(Key).ToArray();
+        var requiredKinds=new[]{("deduction","deduction"),("suggestion","suggestion"),("incantation","incantation")}
+            .Where(kind=>Actors.Any(actor=>Items(Get(actor,"actions")).Any(action=>Get(action,kind.Item1).ValueKind==JsonValueKind.Object))).Select(kind=>kind.Item2).ToArray();
+        var mechanics=requiredKinds.Select(kind=>new {kind,completed=session.MechanicHistory.Count(item=>item.Kind==kind&&item.Success),passed=session.MechanicHistory.Any(item=>item.Kind==kind&&item.Success)}).ToArray();
+        return new {passed=(!HasCompletion||CampaignCompleted)&&checks.All(item=>!item.applicable||item.passed==true)&&mechanics.All(item=>item.passed)&&invariantFailures.Count==0&&failures==0,
+            content_hash=definition.Hash,game_time=session.ContentTime,campaign_completed=CampaignCompleted,missing_completion=missing,failures,rejected_attempts=rejectedAttempts,
+            invariant_failures=invariantFailures.ToArray(),checks,mechanics};
+    }
     void CheckKnowledgeBoundaries()
     {
         foreach(var rule in Items(Get(content,"knowledge_boundaries")))
@@ -131,19 +159,30 @@ internal sealed class NativeCli : IDisposable
     {
         var options=Actions(viewer).Where(a=>session.Available(viewer,Text(Get(a,"id"))));
         if(selectedObject is not null)options=options.Where(a=>Text(Get(a,"target_object"))==selectedObject);
+        var visibleMechanics=session.MechanicHistoryFor(viewer);
+        object? LastVisible(string kind,object? fallback)
+        {
+            var receipt=visibleMechanics.LastOrDefault(item=>item.Actor==viewer&&item.Kind==kind);
+            return receipt is null?VisibleMechanic(fallback):receipt.Details;
+        }
         return new {active=Active,faulted=false,version,completed=count,status=Status(),runtime=Status(),
             content=new {hash=definition.Hash,schema="dv-script-v1"},receipt_path=receiptPath,
+            last_deduction=LastVisible("deduction",session.LastDeduction),last_opinion=LastVisible("suggestion",session.LastOpinion),last_incantation=LastVisible("incantation",session.LastIncantation),last_strategy=LastVisible("strategy",session.LastStrategy),
+            mechanics=visibleMechanics.Select(item=>new {time=item.Time,execution=item.Execution,actor=item.Actor,action=item.Action,kind=item.Kind,success=item.Success,details=item.Details}).ToArray(),
             screen=new {viewer,room=Room(viewer),actors=Actors.Where(a=>Room(Text(Get(a,"id")))==Room(viewer)&&Get(a,"hidden").ValueKind!=JsonValueKind.True).Select(a=>new{id=Text(Get(a,"id")),name=Text(Get(a,"name"))}),
                 objects=Items(Get(content,"fixtures")).Where(Visible).Select(f=>new{id=Text(Get(f,"id")),label=Text(Get(f,"label"))}),
-                knowledge=session.View(viewer).Knowledge.Select(k=>new{key=k.Key,value=k.Value.Value}),needs=session.Needs(viewer),affect=session.Affect(viewer)},
+                knowledge=session.View(viewer).Knowledge.Where(k=>k.Value.Known).Select(k=>new{key=k.Key,value=k.Value.Value,conflicted=k.Value.Conflicted,confidence=k.Value.Confidence}),needs=session.Needs(viewer),affect=session.Affect(viewer)},
             menu=selectedObject is null?null:new {level=1,shape="radial",target=selectedObject},
-            options=options.Select(a=>new{id=Text(Get(a,"id")),label=Text(Get(a,"label"))}).ToArray(),history=history.ToArray(),
+            options=options.Select(a=>new{id=Text(Get(a,"id")),label=Text(Get(a,"label")),kind=Text(Get(a,"kind")),target=Text(Get(a,"target_object")),
+                deduction=Get(a,"deduction").ValueKind==JsonValueKind.Object?session.DeductionPreview(viewer,Text(Get(a,"id"))):null}).ToArray(),history=history.ToArray(),
             acceptance=Active?null:Assessment()};
     }
     void Receipt(ActionReceipt r)
     {
         version++;
-        if(r.Committed){completed[r.Action]=completed.GetValueOrDefault(r.Action)+1;firstCompletion.TryAdd(r.Action,r.Time);}else failures++;
+        if(r.Committed){completed[r.Action]=completed.GetValueOrDefault(r.Action)+1;firstCompletion.TryAdd(r.Action,r.Time);}
+        else if(r.Reason is "deduction_unproved" or "suggestion_rejected" or "incantation_precondition_failed")rejectedAttempts++;
+        else failures++;
         started.Remove(r.Execution,out var execution);
         decisionDrives.Remove(r.Execution,out var drive);
         decisionReasons.Remove(r.Execution,out var reasons);
@@ -157,15 +196,23 @@ internal sealed class NativeCli : IDisposable
             executions.Add((r.Action,interaction,start,r.Time));
         }
         var row=new Dictionary<string,object?> { ["receipt_index"]=version,["focus"]=focus,["interaction_slot"]=interaction,
-            ["version"]=version,["chapter"]=start/60<1440?1:2,["day"]=(int)(start/60/1440)+1,["start_time"]=start/60,["duration"]=(r.Time-start)/60,["actor"]=r.Actor,["action"]=r.Action,
+            ["version"]=version,["chapter"]=(int)(start/60/1440)+1,["day"]=(int)(start/60/1440)+1,["start_time"]=start/60,["duration"]=(r.Time-start)/60,["actor"]=r.Actor,["action"]=r.Action,
             ["label"]=execution is null?"":Text(Get(execution.Action.Declaration,"label")),
             ["outcome"]=r.Committed?"completed":r.Reason,["execution_event"]=r.Execution,
             ["decision_drive"]=drive,["candidate_scores"]=execution?.Options,
             ["decision_basis"]=reasons,["reason"]=execution is null?"":Text(Get(execution.Action.Declaration,"reason")),
+            ["mechanics"]=session.MechanicHistory.Where(item=>item.Execution==r.Execution).ToArray(),
             ["needs"]=session.Needs(r.Actor),["room"]=Room(r.Actor),["knowledge_before_refresh"]=session.View(r.Actor).Knowledge.Select(k=>new{key=k.Key,value=k.Value.Value})};
         if(log is not null){var first=true;foreach(var pair in row){log.WriteLine((first?"- ":"  ")+pair.Key+": "+Encode(pair.Value));first=false;}log.WriteLine();log.Flush();}
         if(Room(r.Actor)==Room(viewer)&&Get(Actors.Single(a=>Text(Get(a,"id"))==r.Actor),"hidden").ValueKind!=JsonValueKind.True)
-        {history.Add(new{actor=r.Actor,action=r.Action,completed=r.Committed,start_time=start/60,duration=(r.Time-start)/60});if(history.Count>16)history.RemoveAt(0);}
+        {
+            var own=r.Actor==viewer;var declaration=execution?.Action.Declaration??default;
+            var kind=Text(Get(declaration,"kind"));
+            if(!own&&(kind is "deduce" or "strategy"||Get(declaration,"deduction").ValueKind==JsonValueKind.Object||Get(declaration,"strategy").ValueKind==JsonValueKind.Object))return;
+            var label=own?Text(Get(declaration,"label")):kind switch {"walk"=>"移动到这里", "talk"=>"与同伴交谈", "inspect" or "read"=>"查看附近物件", _=>"与附近物件互动"};
+            history.Add(new{actor=r.Actor,action=own?r.Action:"",label,completed=r.Committed,start_time=start/60,duration=(r.Time-start)/60});
+            if(history.Count>16)history.RemoveAt(0);
+        }
     }
     object Advance(int steps)
     {
@@ -213,14 +260,20 @@ internal sealed class NativeCli : IDisposable
             var renderedInferences=new HashSet<string>();
             foreach(var item in evidence.Skip(evidenceCursors.GetValueOrDefault(actor)))
             {
-                var isCommunication=item.Id.StartsWith("handoff/",StringComparison.Ordinal);
+                var isCommunication=item.Id.StartsWith("handoff/",StringComparison.Ordinal)||item.Id.StartsWith("mechanic/",StringComparison.Ordinal);
                 var isPerception=item.Id.StartsWith("perception/",StringComparison.Ordinal);
                 var isInference=item.Method=="inference";
+                var isProof=item.Id.StartsWith("proof/",StringComparison.Ordinal);
+                var isMagic=item.Id.StartsWith("incantation/",StringComparison.Ordinal);
+                var isOpinion=item.Id.StartsWith("opinion/",StringComparison.Ordinal);
                 if(isInference&&!renderedInferences.Add(item.Id+":"+item.Key+":"+item.Source.GetRawText()))continue;
                 var isObservation=item.Id.StartsWith("action/",StringComparison.Ordinal)&&!item.Key.Object.StartsWith("event:",StringComparison.Ordinal)&&item.Key.Field!="room";
-                if(!isCommunication&&!isInference&&!isObservation&&!isPerception)continue;
+                if(!isCommunication&&!isInference&&!isObservation&&!isPerception&&!isProof&&!isMagic&&!isOpinion)continue;
                 var sourceAction=Text(Get(item.Source,"action"));var label="";
-                if(isInference)
+                if(isProof)label="[脑内推演完成] "+Text(Get(item.Source,"query"));
+                else if(isMagic)label="[言灵回执] "+Text(Get(item.Source,"formula"));
+                else if(isOpinion)label=Get(item.Source,"accepted").ValueKind==JsonValueKind.True?"[建议被采纳]":"[建议被拒绝]";
+                else if(isInference)
                 {
                     var basis=Get(item.Source,"basis");
                     label="[推理更新] "+(basis.ValueKind==JsonValueKind.Object?string.Join("；",new[]{("facts","观测事实"),("excluded","排除与保留"),("conclusion","当前结论"),("question","下一问")}.Select(part=>part.Item2+"："+Text(Get(basis,part.Item1)))):Text(basis));
@@ -228,14 +281,14 @@ internal sealed class NativeCli : IDisposable
                 else
                 {
                     var speaker=isCommunication?Text(Get(item.Source,"actor")):actor;
-                    var name=Text(Get(Actors.Single(a=>Text(Get(a,"id"))==speaker),"name"),speaker);
+                    var name=Text(Get(Actors.FirstOrDefault(a=>Text(Get(a,"id"))==speaker),"name"),speaker.Length>0?speaker:"环境");
                     var fieldLabel=Text(Get(Get(content,"fact_labels"),item.Key.Object+"."+item.Key.Facet+"."+item.Key.Field));
                     var message=fieldLabel.Length>0&&item.Key.Field=="exit"?fieldLabel:item.Value.ValueKind==JsonValueKind.String?item.Value.GetString()!.TrimEnd('。','，'):
                         fieldLabel.Length>0?fieldLabel+(item.Value.ValueKind==JsonValueKind.True?"":item.Value.ValueKind==JsonValueKind.False?"：否":"："+item.Value.GetRawText()):
                         item.Key.Facet=="state"?"状态更新":item.Value.GetRawText();
                     label=isCommunication?"[获知] 来自"+name+"："+message:isPerception?"["+(Text(Get(item.Source,"channel"))=="hearing"?"听觉感知":Text(Get(item.Source,"channel"))=="blocked"?"交互受阻与感知":"视线感知")+"] "+Text(Get(item.Source,"label"))+"；"+message:"[观察所得] "+message;
                 }
-                var row=new Dictionary<string,object?>{["receipt_index"]=++stateIndex,["kind"]=isInference?"inference":isCommunication?"communication_received":isPerception?"perception":"observation",["start_time"]=session.ContentTime,["duration"]=0,
+                var row=new Dictionary<string,object?>{["receipt_index"]=++stateIndex,["kind"]=isProof?"deduction":isMagic?"incantation":isOpinion?"opinion":isInference?"inference":isCommunication?"communication_received":isPerception?"perception":"observation",["start_time"]=session.ContentTime,["duration"]=0,
                     ["actor"]=actor,["action"]=sourceAction,["label"]=label,
                     ["outcome"]="completed",["room"]=Room(actor),["evidence_id"]=item.Id,["source"]=item.Source,["fact_ref"]=item.Key,["fact_value"]=item.Value};
                 if(stateLog is not null){var first=true;foreach(var pair in row){stateLog.WriteLine((first?"- ":"  ")+pair.Key+": "+Encode(pair.Value));first=false;}stateLog.WriteLine();stateLog.Flush();}
@@ -262,7 +315,10 @@ internal sealed class NativeCli : IDisposable
         }
         var action=Text(Get(request,"choice_id"),Text(Get(request,"action_id")));
         if(!session.Available(viewer,action))throw new InvalidOperationException("Action is not available to this actor.");
-        session.Submit(viewer,action);selectedObject=null;return Observe();
+        if(Get(request,"evidence_ids").ValueKind==JsonValueKind.Array)
+            session.SubmitDeduction(viewer,action,Items(Get(request,"evidence_ids")).Select(item=>Text(item)).ToArray());
+        else session.Submit(viewer,action);
+        selectedObject=null;return Observe();
     }
     public void Dispose()
     {

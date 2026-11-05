@@ -8,12 +8,33 @@ data runtime.character_session { value = {
         { source = "res://assets/data/scenarios/day5.dv"; offset_minutes = 5760; }
     ];
     scenario_label = "安眠者有福 · 前五日";
+    presentation = {
+        host = "campaign_rooms";
+        source = "res://assets/data/presentation/campaign_rooms.dv";
+        definition = "campaign.rooms";
+        receipt_directory = "res://artifacts/five-day/godot";
+    };
     completion = {
         label = "前五日完成：案卷已归档，互助秩序已建立。";
         facts = [
             { object = "cases"; facet = "doc"; field = "five_days_archived"; },
             { object = "order"; facet = "doc"; field = "long_term_shifts_settled"; },
-            { object = "event:detective.day5.sleep_night"; facet = "state"; field = "done"; }
+            { object = "event:lucian.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:gu.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:quer.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:ward.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:detective.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:huo.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:shen.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:su.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:selma.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:ruan.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:elena.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:moran.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:veronica.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:bertrand.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:margaret.day5.sleep_night"; facet = "state"; field = "done"; },
+            { object = "event:mora.day5.sleep_night"; facet = "state"; field = "done"; }
         ];
     };
 }; }

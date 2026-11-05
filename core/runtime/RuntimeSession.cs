@@ -19,11 +19,12 @@ public sealed record RuntimeSessionState(int Version,FactStoreState World,ActorC
     WorldRulesState Rules,DecisionSchedulerState Scheduler,ReservationCheckpoint[] Reservations,ExecutionCheckpoint[] Executions,
     CompletionCheckpoint[] Completions,long[] Dispatched,long[] Cancellations,ActionReceipt[] Receipts,
     Dictionary<long,PathJourneyState> Journeys,Dictionary<string,PhysicalPlacement> Placements,Dictionary<string,StrategyBindingCheckpoint> Strategies,
-    CompletedStrategyCheckpoint[] CompletedStrategies,ConversationCheckpoint? Conversation,Dictionary<string,LogicalDoorState> Doors,long NextConversation,long NextEvidence,int ActorCursor,int StrategyCursor);
+    CompletedStrategyCheckpoint[] CompletedStrategies,ConversationCheckpoint? Conversation,Dictionary<string,LogicalDoorState> Doors,long NextConversation,long NextEvidence,int ActorCursor,int StrategyCursor,
+    MechanicsCheckpoint? Mechanics=null);
 
 /// <summary>Serial session owner. The host executes presentation and submits real
 /// completion. No action outcome is committed merely because a timer expired.</summary>
-public sealed class RuntimeSession
+public sealed partial class RuntimeSession
 {
     private sealed record Execution(Decision Decision, Effect[] Effects, Condition CompletionGate, Condition? Postcondition, bool HostRequired)
     {
@@ -99,12 +100,13 @@ public sealed class RuntimeSession
         }
     }
     private readonly Dictionary<string,(CaseTheory theory,JsonElement declaration)> deductions=new(StringComparer.Ordinal);
-    private sealed class StrategyBinding(string actor,StrategyActivity activity,FieldKey output,FieldKey? completion)
+    private sealed class StrategyBinding(string actor,StrategyActivity activity,FieldKey output,FieldKey? completion,bool publish=false)
     {
         internal readonly string Actor=actor;
         internal readonly StrategyActivity Activity=activity;
         internal readonly FieldKey Output=output;
         internal readonly FieldKey? Completion=completion;
+        internal readonly bool Publish=publish;
         internal long LastAttemptRevision=-1;
     }
     private readonly Dictionary<string,StrategyBinding> strategyBindings=new(StringComparer.Ordinal);
@@ -116,7 +118,7 @@ public sealed class RuntimeSession
     {
         var actions=running.Values.Select(item=>new ExecutionCheckpoint(item.Decision.Execution,item.HostCompleted,item.ObservationToken,
             item.WorkAfterArrival,item.HostElapsed,item.WorkStartedAt,double.IsFinite(item.DueAt)?item.DueAt:null,item.CancelRequested,item.Dispatched,item.CompletionDeferred)).ToArray();
-        return new(1,World.SaveState(),actors.Values.Select(actor=>actor.SaveState()).ToArray(),Clock.SaveState(),Rules.SaveState(),Scheduler.SaveState(),Reservations.SaveState(),actions,
+        return new(2,World.SaveState(),actors.Values.Select(actor=>actor.SaveState()).ToArray(),Clock.SaveState(),Rules.SaveState(),Scheduler.SaveState(),Reservations.SaveState(),actions,
             completions.UnorderedItems.Select(item=>new CompletionCheckpoint(item.Element.Decision.Execution,item.Priority)).ToArray(),
             dispatched.Where(item=>running.TryGetValue(item.Actor,out var run)&&ReferenceEquals(run.Decision,item)).Select(item=>item.Execution).ToArray(),
             cancellations.Where(item=>running.TryGetValue(item.Actor,out var run)&&ReferenceEquals(run.Decision,item)).Select(item=>item.Execution).ToArray(),receipts.ToArray(),
@@ -124,11 +126,11 @@ public sealed class RuntimeSession
             strategyBindings.ToDictionary(item=>item.Key,item=>new StrategyBindingCheckpoint(item.Value.LastAttemptRevision,item.Value.Activity.SaveState()),StringComparer.Ordinal),
             completedStrategies.Select(item=>new CompletedStrategyCheckpoint(item.Key,item.Value.Revision,item.Value.Choices.ToArray())).ToArray(),
             conversation is null?null:new(conversation.SaveState(),conversationDeclaration.Clone(),new(conversationHolds,StringComparer.Ordinal),conversationLocks.ToArray()),new(logicalDoors,StringComparer.Ordinal),
-            nextConversation,nextEvidence,actorCursor,strategyCursor);
+            nextConversation,nextEvidence,actorCursor,strategyCursor,SaveMechanics());
     }
     public void RestoreState(RuntimeSessionState state)
     {
-        if(state.Version!=1 || state.Actors is null || state.Actors.Length!=actors.Count || state.Actors.Select(item=>item.Actor).Distinct(StringComparer.Ordinal).Count()!=actors.Count ||
+        if(state.Version is not (1 or 2) || state.Version==2&&state.Mechanics is null || state.Actors is null || state.Actors.Length!=actors.Count || state.Actors.Select(item=>item.Actor).Distinct(StringComparer.Ordinal).Count()!=actors.Count ||
            state.Actors.Any(item=>!actors.ContainsKey(item.Actor)) || state.Executions is null || state.Completions is null || state.Dispatched is null || state.Cancellations is null || state.Receipts is null ||
            state.Journeys is null || state.Placements is null || state.Strategies is null || state.CompletedStrategies is null || state.Doors is null || state.NextConversation<0 || state.NextEvidence<0 || state.StrategyCursor<0 || state.ActorCursor<0 || state.ActorCursor>=Math.Max(1,actorOrder.Length) ||
            state.Strategies.Count!=strategyBindings.Count || state.Strategies.Keys.Any(key=>!strategyBindings.ContainsKey(key)))
@@ -185,6 +187,7 @@ public sealed class RuntimeSession
         }
         logicalDoors.Clear();foreach(var item in state.Doors)ReportDoor(item.Key,item.Value);
         nextConversation=state.NextConversation;nextEvidence=state.NextEvidence;actorCursor=state.ActorCursor;strategyCursor=state.StrategyCursor;
+        RestoreMechanics(state.Mechanics,executions.Keys.ToHashSet());
     }
     public void ConfigureStrategy(string source,JsonElement declaration)
     {
@@ -429,6 +432,7 @@ public sealed class RuntimeSession
             if(!Needs(actor).TryGetValue(threshold.Name,out var value)||value<=threshold.Value.Number())return false;
         if(Incapacitated(actor))return false;
         if(!KnowledgeEligible(action))return false;
+        if(!MechanicEligible(actor,action))return false;
         if(strategyBindings.TryGetValue(action.Id,out var strategy) && strategy.LastAttemptRevision==actors[actor].KnowledgeRevision)return false;
         if(!TimeEligible(action))return false;
         var authority=action.Declaration.Get("authority_precondition");
@@ -588,10 +592,13 @@ public sealed class RuntimeSession
             focus=focus.Append(configuredStrategy.Output).ToArray();
             if(configuredStrategy.Completion is { } completion)focus=focus.Append(completion).ToArray();
         }
+        focus=focus.Concat(MechanicFocus(decision.Action)).Distinct().ToArray();
         actors[decision.Actor].FocusAction(focus);
         if (observationKinds.Contains(declaration.Get("kind").Text()))
             execution.ObservationToken = actors[decision.Actor].BeginObservation(focus);
         running.Add(decision.Actor, execution);
+        if(!execution.WorkAfterArrival&&strategyBindings.TryGetValue(decision.Action.Id,out var immediateStrategy))
+            immediateStrategy.Activity.Begin(Clock.Now,decision.Action.Duration/contentTimeUnit);
         if (!execution.HostRequired) completions.Enqueue(execution, execution.DueAt);
         dispatched.Enqueue(decision);
     }
@@ -664,6 +671,7 @@ public sealed class RuntimeSession
         journeys.Remove(decision.Execution);
         if(strategyBindings.TryGetValue(decision.Action.Id,out var strategy))strategy.Activity.Cancel();
         completedStrategies.Remove(decision.Execution);
+        deductionSelections.Remove(decision.Execution);
         actors[decision.Actor].FocusAction([]);
         ReleaseResources(execution,retainOccupiedResources);
         Scheduler.Cancel(decision,Clock.Now);running.Remove(decision.Actor);
@@ -679,6 +687,7 @@ public sealed class RuntimeSession
         journeys.Remove(decision.Execution);
         if(strategyBindings.TryGetValue(decision.Action.Id,out var strategy))strategy.Activity.Cancel();
         completedStrategies.Remove(decision.Execution);
+        deductionSelections.Remove(decision.Execution);
         FinishObservation(execution);
         Reservations.Release(new(decision.Actor,decision.Execution));
         Scheduler.Cancel(decision,Clock.Now);running.Remove(decision.Actor);
@@ -737,8 +746,10 @@ public sealed class RuntimeSession
         // Only an explicit simulation pause suspends the session. Opening UI or
         // displaying a spoken line does not request a simulation pause.
         if (paused) return;
+        AdvanceMechanics();
         foreach(var sensor in sensoryEvents)
         {
+            if(ContentTime<sensor.Data.Get("not_before_game_minutes").Number())continue;
             var client=actors[sensor.Actor];var id="perception/"+sensor.Data.Get("id").Text();
             var during=sensor.Data.Get("during_action").Text();
             if(during.Length>0&&!running.Values.Any(e=>e.Decision.Action.Id==during&&!e.CancelRequested))continue;
@@ -778,14 +789,17 @@ public sealed class RuntimeSession
             if(due<execution.DueAt)
             {processed++;completions.Dequeue();completions.Enqueue(execution,execution.DueAt);continue;}
             if(due>Clock.Now)break;
+            if(strategyBindings.ContainsKey(execution.Decision.Action.Id)&&!WorkElapsed(execution.Decision))break;
             processed++;
             Commit(execution);
             completions.Dequeue();
         }
-        Scheduler.Step(Clock.Now);
+        // Drain decisions retained by an older checkpoint before admitting new work.
         for (var n = 0; n < workBudget && Scheduler.TryTake(out var decision); n++) Execute(decision!);
+        Scheduler.Step(Clock.Now,Execute);
         var next = completions.TryPeek(out _, out var nextDue) ? nextDue : double.PositiveInfinity;
         next = Math.Min(next, Rules.NextTime);
+        next = Math.Min(next,NextMechanicTime());
         var pending = Rules.Pending || next <= Clock.Now;
         var priorTime=Clock.Now;
         Clock.Step(realSeconds, idle, paused, pending, Math.Max(Clock.Now, next),playerActor is { } actorId&&Working(actorId));
@@ -813,6 +827,7 @@ public sealed class RuntimeSession
         var decision = execution.Decision;
         if (!Scheduler.Owns(decision) || Clock.Now < execution.DueAt) throw new InvalidOperationException("Invalid action commit.");
         var success = execution.CompletionGate.Evaluate(World.Read) == Truth.True && TimeEligible(decision.Action) && KnowledgeEligible(decision.Action);
+        var failureReason="objective_condition_failed";
         var writes = new Dictionary<FieldKey, Fact>();
         Fact? Read(FieldKey key) => success ? writes.GetValueOrDefault(key) ?? World.Read(key) : World.Read(key);
         if (success)
@@ -826,13 +841,13 @@ public sealed class RuntimeSession
         }
         var client = actors[decision.Actor];
         if(strategyBindings.ContainsKey(decision.Action.Id) && (!completedStrategies.TryGetValue(decision.Execution,out var strategyResult) || strategyResult.Revision!=client.KnowledgeRevision))success=false;
-        var grants = decision.Action.Declaration.Get(success ? "grants" : "failure_grants");
         var feedback = new List<Observation>();
         if(success && strategyBindings.TryGetValue(decision.Action.Id,out var binding) && completedStrategies.TryGetValue(decision.Execution,out var result))
         {
             var best=result.Choices.Where(choice=>choice.Ready).OrderByDescending(choice=>choice.Utility).FirstOrDefault();
             binding.LastAttemptRevision=result.Revision;
             LastStrategy=new {actor=decision.Actor,action=decision.Action.Id,knowledge_revision=result.Revision,choices=result.Choices,selected=best?.Action};
+            RecordMechanic(decision,"strategy",best is not null,LastStrategy);
             if(best is not null)
             {
                 feedback.Add(new Observation("strategy/"+(++nextEvidence),binding.Output,JsonSerializer.SerializeToElement(best.Action),1,ContentTime,InformationOrigin.ActionFeedback,
@@ -840,10 +855,22 @@ public sealed class RuntimeSession
                 if(binding.Completion is { } completed)
                     feedback.Add(new Observation("strategy/"+(++nextEvidence),completed,JsonSerializer.SerializeToElement(true),1,ContentTime,InformationOrigin.ActionFeedback,
                         JsonSerializer.SerializeToElement(new {actor=decision.Actor,action=decision.Action.Id,knowledge_revision=result.Revision})));
+                if(binding.Publish)writes[binding.Output]=new(JsonSerializer.SerializeToElement(best.Action),true,false,1,ContentTime,0);
             }
+            else {success=false;failureReason="strategy_no_feasible_option";}
         }
-        if(success && decision.Action.Declaration.Get("kind").Text()=="deduce")
-            feedback.AddRange(EvaluateDeduction(client,decision));
+        if(success&&inlineDeductions.ContainsKey(decision.Action.Id))
+        {success=EvaluateInlineDeduction(decision,feedback);if(!success)failureReason="deduction_unproved";}
+        else if(success && decision.Action.Declaration.Get("kind").Text()=="deduce")
+        {
+            feedback.AddRange(EvaluateDeduction(client,decision,out var proved));
+            if(!proved){success=false;failureReason="deduction_unproved";feedback.Clear();}
+        }
+        if(success&&decision.Action.Declaration.Get("suggestion").ValueKind==JsonValueKind.Object)
+        {success=EvaluateSuggestion(decision,writes,feedback);if(!success)failureReason="suggestion_rejected";}
+        if(success&&decision.Action.Declaration.Get("incantation").ValueKind==JsonValueKind.Object)
+        {success=EvaluateIncantation(decision,writes,feedback);if(!success)failureReason="incantation_precondition_failed";}
+        var grants = decision.Action.Declaration.Get(success ? "grants" : "failure_grants");
         foreach (var grant in grants.Items())
         {
             var key = FieldKey.Read(grant, decision.Actor);
@@ -856,8 +883,9 @@ public sealed class RuntimeSession
             if (execution.ObservationToken is not null || !success) client.Receive(sample);
             else feedback.Add(sample);
         }
-        if (execution.ObservationToken is { } token) client.EndObservation(token);
-        else if (success) client.BeginActionFeedback(feedback);
+        if (execution.ObservationToken is { } token)
+        {foreach(var sample in feedback)client.Receive(sample);client.EndObservation(token);}
+        else if (success||feedback.Count>0) client.BeginActionFeedback(feedback);
         else client.BeginRefresh(RefreshCause.FailedAction);
         if (success)
         {
@@ -872,9 +900,10 @@ public sealed class RuntimeSession
                 {
                     var key=FieldKey.Read(reference,decision.Actor);
                     var isResult=handoff.Get("result_refs").Items().Any(item=>FieldKey.Read(item,decision.Actor)==key);
-                    var fact=isResult ? writes.GetValueOrDefault(key) : client.Recall(key);
+                    var fresh=feedback.LastOrDefault(item=>item.Key==key);
+                    var fact=isResult ? writes.GetValueOrDefault(key) : fresh is not null?new Fact(fresh.Value,true,false,fresh.Confidence,fresh.Time,0):client.Recall(key);
                     if(fact is not {Known:true,Conflicted:false})continue;
-                    var sourceIds=client.Evidence.Where(item=>item.Key==key).Select(item=>item.Id).Distinct().ToArray();
+                    var sourceIds=client.Evidence.Where(item=>item.Key==key).Select(item=>item.Id).Concat(feedback.Where(item=>item.Key==key).Select(item=>item.Id)).Distinct().ToArray();
                     recipient.ReceiveDirected(new Observation("handoff/"+(++nextEvidence),key,fact.Value,fact.Confidence,ContentTime,
                         InformationOrigin.Communication,JsonSerializer.SerializeToElement(new {actor=decision.Actor,recipient=recipient.Id,action=decision.Action.Id,execution=decision.Execution,sourceIds,isResult})));
                 }
@@ -905,10 +934,11 @@ public sealed class RuntimeSession
         if(success && decision.Action.Declaration.Get("rest_until_game_minutes").ValueKind==JsonValueKind.Number)
             Clock.RestUntil(decision.Action.Declaration.Get("rest_until_game_minutes").Number()*60);
         completedStrategies.Remove(decision.Execution);
-        receipts.Enqueue(new(decision.Actor, decision.Action.Id, Clock.Now, success, success ? "completed" : "objective_condition_failed",decision.Execution));
+        deductionSelections.Remove(decision.Execution);
+        receipts.Enqueue(new(decision.Actor, decision.Action.Id, Clock.Now, success, success ? "completed" : failureReason,decision.Execution));
     }
 
-    private IEnumerable<Observation> EvaluateDeduction(ActorClient client,Decision decision)
+    private IEnumerable<Observation> EvaluateDeduction(ActorClient client,Decision decision,out bool proved)
     {
         if(!deductions.TryGetValue(decision.Action.Id,out var configured))throw new InvalidOperationException("No deduction theory configured for action.");
         var authored=configured.theory;
@@ -927,11 +957,13 @@ public sealed class RuntimeSession
         var grounded=authored.WithoutAssumptions(scope).WithEvidence(scope,evidence);
         var observations=new List<Observation>();
         var results=new List<object>();
+        proved=true;
         foreach(var mapping in deductionDeclaration.Get("results").Items())
         {
             var query=mapping.Get("query").Text();
             var goal=original.Theorems.Single(item=>item.Id==query);
             var result=grounded.Prove(scope,goal.Conclusion);
+            proved&=result.Status=="proved";
             results.Add(new {query,label=mapping.Get("label").Text(),unknown_label=mapping.Get("unknown_label").Text(),result.Status,result.Support,result.Refutation});
             if(result.Status!="proved")continue;
             observations.Add(new("proof/"+ ++nextEvidence,FieldKey.Read(mapping.Get("ref"),client.Id),
@@ -939,6 +971,7 @@ public sealed class RuntimeSession
                 JsonSerializer.SerializeToElement(new {actor=client.Id,action=decision.Action.Id,query,result.Support})));
         }
         LastDeduction=new {actor=client.Id,scope,knowledge_revision=client.KnowledgeRevision,evidence=evidence.ToArray(),results=results.ToArray()};
+        RecordMechanic(decision,"deduction",proved,LastDeduction);
         return observations;
     }
 }

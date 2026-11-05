@@ -131,7 +131,7 @@ public sealed class DecisionScheduler
         slots.Add(slot);
     }
 
-    public SchedulerSlice Step(double now)
+    public SchedulerSlice Step(double now,Action<Decision>? onSelected=null)
     {
         ValidateTime(now);
         foreach(var item in slots)
@@ -148,8 +148,10 @@ public sealed class DecisionScheduler
             cursor = (cursor + 1) % slots.Count;
             visited++;
             if (slot.Held || !slot.Autonomous || slot.Running is not null || slot.Due > now || slot.Actor.IsUpdating || slot.Actor.IsObserving) continue;
+            FieldKey[] changed=[];
             if (slot.Revision != slot.Actor.KnowledgeRevision)
             {
+                changed=slot.Actor.View().Knowledge.Where(pair=>pair.Value.Revision>slot.Revision).Select(pair=>pair.Key).ToArray();
                 slot.Cursor = 0;
                 slot.Best = null;
                 slot.BestScore = double.NegativeInfinity;
@@ -159,7 +161,7 @@ public sealed class DecisionScheduler
             if(slot.Selection.Length==0)
             {
                 slot.SelectionTime=now;
-                slot.Selection=slot.Index.Select(slot.Needs,now,candidatesPerDecision,drivesPerDecision,candidatesPerDrive);
+                slot.Selection=slot.Index.Select(slot.Needs,now,candidatesPerDecision,drivesPerDecision,candidatesPerDrive,changed);
             }
             if (slot.Cursor < slot.Selection.Length)
             {
@@ -179,7 +181,11 @@ public sealed class DecisionScheduler
                     .Select(c=>new DecisionOption(c.Id,slot.Needs.Score(c,slot.SelectionTime)+slot.Actor.GoalScore(c,slot.SelectionTime/contentTimeUnit),slot.Needs.Evaluate(c,slot.SelectionTime))).ToArray();
                 var decision = new Decision(slot.Actor.Id, best, now, now + best.Duration,++nextExecution,options);
                 slot.Running = decision;
-                ready.Enqueue(decision);
+                // The session can reserve the chosen action immediately. Later actors
+                // in this bounded pass then see the occupied slot in their eligibility
+                // check instead of all choosing the same apparently free resource.
+                if(onSelected is null)ready.Enqueue(decision);
+                else onSelected(decision);
             }
             slot.Best = null;
             slot.BestScore = double.NegativeInfinity;

@@ -1,0 +1,1329 @@
+{
+  "schema": "five-day-formal-verification-summary-v1",
+  "type": "derived_summary_of_original_live_receipts",
+  "mode": "all_ai",
+  "backend": "cli",
+  "controller": "engine-ai",
+  "external_gameplay_interventions": 0,
+  "run_id": "cli-e752f7d6b5a2acffc333f677",
+  "status": "completed",
+  "started_utc": "2026-11-04T22:50:53.412716+00:00",
+  "elapsed_wall_seconds": 89.669,
+  "source_fingerprint": "f9953cb0dc1d2bd11c1dceab4f45f7e3f56ca40a05c19b9717d9a4cd48001f74",
+  "content_hash": "d74fab17b207f45d7b9cdb8c62a3d196faf594b07be5ea3e12639b468d4f5412",
+  "source_files": {
+    "assets/data/scenarios/campaign.dv": "2308eca32541fec880fb8b13a78a43126fd5dce4dbbe1b6646a616c7bb0989b1",
+    "assets/data/scenarios/day1-morning.dv": "9dd391b93bfcad36f4b348bde1314c2f8c631669c822a6eff0dda46ef3422ee2",
+    "assets/data/scenarios/day2.dv": "8d21e09c180d8a619ad70f85bf21b4464a6b88446142cef013723dc50cd230cf",
+    "assets/data/scenarios/day3.dv": "9e9666e2682c98638029a1d7406950e58d090551c3661f45b87d3a58c261c544",
+    "assets/data/scenarios/day4.dv": "eba5a5eb9656c67bfd05601194db795299114807d65c7e0e953457032ccb3682",
+    "assets/data/scenarios/day5.dv": "7f664e342d7e82621ae558b02c559a20e6bd8f7115f990dd81e4331afad42065"
+  },
+  "final_state": {
+    "version": 1267,
+    "chapter": 5,
+    "game_time": 7041.45,
+    "day": 5,
+    "status": "completed",
+    "stop_reason": "campaign_completed",
+    "horizon": 7180,
+    "campaign_completed": true
+  },
+  "acceptance": {
+    "passed": true,
+    "checks_passed": 351,
+    "checks_total": 351,
+    "failed_check_ids": [],
+    "failures": 0,
+    "rejected_attempts": 0,
+    "invariant_failures": [],
+    "missing_completion": []
+  },
+  "audit": {
+    "original_receipt": ".runtime/runs/agent-five-days-auto-final-privacy.json",
+    "original_receipt_sha256": "dc0ba413c8fc60f8a3b8f5ea7853c1369a2d3a43ca92135c97182325e78097ec",
+    "action_log": ".runtime/runs/cli-e752f7d6b5a2acffc333f677/actions.yaml",
+    "action_log_sha256": "ab405ddacef2d01024ec12589a564be9e7a6d3a49768dbb5284a3e38ebaf1eb4",
+    "action_log_bytes": 12112416,
+    "complete_action_receipts": 1267,
+    "outcomes": {
+      "completed": 1267
+    },
+    "report": ".runtime/runs/cli-e752f7d6b5a2acffc333f677/report.yaml",
+    "report_sha256": "a4de07ca3ce3c15daa7499ad451af5ac4f87087c417472ef1e93ae9f00f2c164"
+  },
+  "mechanics": {
+    "successful_counts": {
+      "deduction": 10,
+      "suggestion": 9,
+      "strategy": 2,
+      "incantation": 1
+    },
+    "proofs": [
+      {
+        "action": "detective.deduce_drag",
+        "success": true,
+        "status": "proved",
+        "theory_hash": "F7656A76E4E568BB60DDA33C6E30038239626359B347350EF155E46C6D6B75BC",
+        "applied_rules": [
+          "combine_deduce_drag"
+        ],
+        "evidence": [
+          {
+            "id": "e1",
+            "source_ids": [
+              "action/189"
+            ]
+          },
+          {
+            "id": "e2",
+            "source_ids": [
+              "action/202"
+            ]
+          },
+          {
+            "id": "e3",
+            "source_ids": [
+              "action/205"
+            ]
+          }
+        ]
+      },
+      {
+        "action": "detective.deduce_sequence",
+        "success": true,
+        "status": "proved",
+        "theory_hash": "7F82EB1384470DFC11EEE9067B509FA7173A9DDFDF3A91BB92FCAC82A263EDD9",
+        "applied_rules": [
+          "combine_deduce_sequence"
+        ],
+        "evidence": [
+          {
+            "id": "e1",
+            "source_ids": [
+              "action/225"
+            ]
+          },
+          {
+            "id": "e2",
+            "source_ids": [
+              "action/189"
+            ]
+          },
+          {
+            "id": "e3",
+            "source_ids": [
+              "action/202"
+            ]
+          },
+          {
+            "id": "e4",
+            "source_ids": [
+              "action/205"
+            ]
+          },
+          {
+            "id": "e5",
+            "source_ids": [
+              "action/229"
+            ]
+          },
+          {
+            "id": "e6",
+            "source_ids": [
+              "action/239"
+            ]
+          }
+        ]
+      },
+      {
+        "action": "detective.deduce_fifth_entity",
+        "success": true,
+        "status": "proved",
+        "theory_hash": "22146B5C61CD950F85B1F6E82976CF040FE78EE09A15F4157CBDDB802A5AE48A",
+        "applied_rules": [
+          "combine_deduce_fifth_entity"
+        ],
+        "evidence": [
+          {
+            "id": "e1",
+            "source_ids": [
+              "action/248"
+            ]
+          },
+          {
+            "id": "e2",
+            "source_ids": [
+              "action/249"
+            ]
+          },
+          {
+            "id": "e3",
+            "source_ids": [
+              "action/259"
+            ]
+          },
+          {
+            "id": "e4",
+            "source_ids": [
+              "action/272"
+            ]
+          },
+          {
+            "id": "e5",
+            "source_ids": [
+              "handoff/141"
+            ]
+          },
+          {
+            "id": "e6",
+            "source_ids": [
+              "action/278"
+            ]
+          },
+          {
+            "id": "e7",
+            "source_ids": [
+              "action/280"
+            ]
+          }
+        ]
+      },
+      {
+        "action": "detective.deduce_records",
+        "success": true,
+        "status": "proved",
+        "theory_hash": "8718A58483A2581BCBABF862D2B0396E1D4958281C771429D51D3184DE8A5EE6",
+        "applied_rules": [
+          "combine_deduce_records"
+        ],
+        "evidence": [
+          {
+            "id": "e1",
+            "source_ids": [
+              "action/410"
+            ]
+          },
+          {
+            "id": "e2",
+            "source_ids": [
+              "action/414"
+            ]
+          },
+          {
+            "id": "e3",
+            "source_ids": [
+              "action/417"
+            ]
+          },
+          {
+            "id": "e4",
+            "source_ids": [
+              "action/433"
+            ]
+          },
+          {
+            "id": "e5",
+            "source_ids": [
+              "action/435"
+            ]
+          },
+          {
+            "id": "e6",
+            "source_ids": [
+              "handoff/441"
+            ]
+          }
+        ]
+      },
+      {
+        "action": "detective.deduce_poem",
+        "success": true,
+        "status": "proved",
+        "theory_hash": "07A8A50A98C2624E9F9792C802A2D3BEB7AF5CF38E34C177358F3132336DC34A",
+        "applied_rules": [
+          "combine_deduce_poem"
+        ],
+        "evidence": [
+          {
+            "id": "e1",
+            "source_ids": [
+              "handoff/749"
+            ]
+          },
+          {
+            "id": "e2",
+            "source_ids": [
+              "handoff/752"
+            ]
+          },
+          {
+            "id": "e3",
+            "source_ids": [
+              "handoff/755"
+            ]
+          },
+          {
+            "id": "e4",
+            "source_ids": [
+              "action/757"
+            ]
+          },
+          {
+            "id": "e5",
+            "source_ids": [
+              "action/761"
+            ]
+          }
+        ]
+      },
+      {
+        "action": "detective.day2.deduce_ration",
+        "success": true,
+        "status": "proved",
+        "theory_hash": "E4C738C19FE735D0DE616CC1DAF80EDF05A150589A851D3B799323F06BE262A7",
+        "applied_rules": [
+          "combine_deduce_ration"
+        ],
+        "evidence": [
+          {
+            "id": "e1",
+            "source_ids": [
+              "action/1329"
+            ]
+          },
+          {
+            "id": "e2",
+            "source_ids": [
+              "action/1330"
+            ]
+          },
+          {
+            "id": "e3",
+            "source_ids": [
+              "action/1361"
+            ]
+          },
+          {
+            "id": "e4",
+            "source_ids": [
+              "action/1362"
+            ]
+          }
+        ]
+      },
+      {
+        "action": "detective.day3.deduce_probe",
+        "success": true,
+        "status": "proved",
+        "theory_hash": "665CEC4D72A558C347B49D85A345CA141229AD95646F785E2868DCC7EA17527B",
+        "applied_rules": [
+          "combine_deduce_probe"
+        ],
+        "evidence": [
+          {
+            "id": "e1",
+            "source_ids": [
+              "action/1699"
+            ]
+          },
+          {
+            "id": "e2",
+            "source_ids": [
+              "action/1700"
+            ]
+          },
+          {
+            "id": "e3",
+            "source_ids": [
+              "action/1708"
+            ]
+          },
+          {
+            "id": "e4",
+            "source_ids": [
+              "action/1717"
+            ]
+          },
+          {
+            "id": "e5",
+            "source_ids": [
+              "action/1709",
+              "action/1718"
+            ]
+          },
+          {
+            "id": "e6",
+            "source_ids": [
+              "action/1702"
+            ]
+          }
+        ]
+      },
+      {
+        "action": "detective.day4.deduce_airlock",
+        "success": true,
+        "status": "proved",
+        "theory_hash": "150EE3AD39F8B369189767E0E72613F0C598864A29B1DA90633C540C5F1E35AE",
+        "applied_rules": [
+          "combine_deduce_airlock"
+        ],
+        "evidence": [
+          {
+            "id": "e1",
+            "source_ids": [
+              "action/2040"
+            ]
+          },
+          {
+            "id": "e2",
+            "source_ids": [
+              "action/2041"
+            ]
+          },
+          {
+            "id": "e3",
+            "source_ids": [
+              "action/2094"
+            ]
+          },
+          {
+            "id": "e4",
+            "source_ids": [
+              "action/2042"
+            ]
+          },
+          {
+            "id": "e5",
+            "source_ids": [
+              "action/2027"
+            ]
+          }
+        ]
+      },
+      {
+        "action": "detective.day5.deduce_coupling",
+        "success": true,
+        "status": "proved",
+        "theory_hash": "3AA7511E7CB3FE4102CA10966160E0114457676A681E50DD87FDA2204BB5811A",
+        "applied_rules": [
+          "combine_deduce_coupling"
+        ],
+        "evidence": [
+          {
+            "id": "e1",
+            "source_ids": [
+              "action/2515"
+            ]
+          },
+          {
+            "id": "e2",
+            "source_ids": [
+              "action/2516"
+            ]
+          },
+          {
+            "id": "e3",
+            "source_ids": [
+              "action/2494"
+            ]
+          },
+          {
+            "id": "e4",
+            "source_ids": [
+              "action/2495"
+            ]
+          },
+          {
+            "id": "e5",
+            "source_ids": [
+              "proof/241"
+            ]
+          },
+          {
+            "id": "e6",
+            "source_ids": [
+              "proof/442"
+            ]
+          }
+        ]
+      },
+      {
+        "action": "detective.day5.deduce_five_day_case",
+        "success": true,
+        "status": "proved",
+        "theory_hash": "C2D329C1EC04BD8A6D959F68A1D018C8820822A619D31342C2B7F7340C80EC36",
+        "applied_rules": [
+          "combine_deduce_five_day_case"
+        ],
+        "evidence": [
+          {
+            "id": "e1",
+            "source_ids": [
+              "proof/241"
+            ]
+          },
+          {
+            "id": "e2",
+            "source_ids": [
+              "proof/283"
+            ]
+          },
+          {
+            "id": "e3",
+            "source_ids": [
+              "proof/442"
+            ]
+          },
+          {
+            "id": "e4",
+            "source_ids": [
+              "proof/765"
+            ]
+          },
+          {
+            "id": "e5",
+            "source_ids": [
+              "proof/1364"
+            ]
+          },
+          {
+            "id": "e6",
+            "source_ids": [
+              "action/1376"
+            ]
+          },
+          {
+            "id": "e7",
+            "source_ids": [
+              "action/1768",
+              "perception/day3:detective.verdict_visible"
+            ]
+          },
+          {
+            "id": "e8",
+            "source_ids": [
+              "handoff/1809",
+              "perception/day3:detective.test_admission"
+            ]
+          },
+          {
+            "id": "e9",
+            "source_ids": [
+              "proof/2100"
+            ]
+          },
+          {
+            "id": "e10",
+            "source_ids": [
+              "proof/2101"
+            ]
+          },
+          {
+            "id": "e11",
+            "source_ids": [
+              "perception/day4:detective.night_safety"
+            ]
+          },
+          {
+            "id": "e12",
+            "source_ids": [
+              "action/2507"
+            ]
+          },
+          {
+            "id": "e13",
+            "source_ids": [
+              "proof/2518"
+            ]
+          },
+          {
+            "id": "e14",
+            "source_ids": [
+              "action/2522"
+            ]
+          }
+        ]
+      }
+    ],
+    "strategies": [
+      {
+        "actor": "ruan",
+        "action": "ruan.day2.plan_gambit",
+        "selected": "probe",
+        "choices": [
+          {
+            "Action": "probe",
+            "Ready": true,
+            "Utility": 17,
+            "Missing": [],
+            "Blocked": [],
+            "TheoryHash": "2E7E60FE24ACFD9787FB1B00F53DF3854310DDFC70A1E4D0F6B9C2A419BAD612"
+          },
+          {
+            "Action": "medicine",
+            "Ready": true,
+            "Utility": 12,
+            "Missing": [],
+            "Blocked": [],
+            "TheoryHash": "2E7E60FE24ACFD9787FB1B00F53DF3854310DDFC70A1E4D0F6B9C2A419BAD612"
+          },
+          {
+            "Action": "ration",
+            "Ready": true,
+            "Utility": 7,
+            "Missing": [],
+            "Blocked": [],
+            "TheoryHash": "2E7E60FE24ACFD9787FB1B00F53DF3854310DDFC70A1E4D0F6B9C2A419BAD612"
+          }
+        ]
+      },
+      {
+        "actor": "detective",
+        "action": "detective.day4.plan_night",
+        "selected": "lock",
+        "choices": [
+          {
+            "Action": "lock",
+            "Ready": true,
+            "Utility": 16,
+            "Missing": [],
+            "Blocked": [],
+            "TheoryHash": "EDDB2DBA4F3E9F12F9482E09C57A30B5938A64A6B2E5FB224B4A75598A64B852"
+          },
+          {
+            "Action": "diversion",
+            "Ready": true,
+            "Utility": 13,
+            "Missing": [],
+            "Blocked": [],
+            "TheoryHash": "EDDB2DBA4F3E9F12F9482E09C57A30B5938A64A6B2E5FB224B4A75598A64B852"
+          },
+          {
+            "Action": "watch",
+            "Ready": true,
+            "Utility": 11,
+            "Missing": [],
+            "Blocked": [],
+            "TheoryHash": "EDDB2DBA4F3E9F12F9482E09C57A30B5938A64A6B2E5FB224B4A75598A64B852"
+          }
+        ]
+      }
+    ],
+    "incantation": {
+      "actor": "detective",
+      "action": "detective.day4.seal_airlock",
+      "formula": "闭合之门，不纳污息",
+      "cost": 12,
+      "resource": {
+        "Object": "detective",
+        "Facet": "phys",
+        "Field": "resolve"
+      },
+      "resource_remaining": 48,
+      "backlash": {
+        "field": {
+          "Object": "detective",
+          "Facet": "phys",
+          "Field": "corruption"
+        },
+        "amount": 3,
+        "total": 3
+      },
+      "rule": {
+        "field": {
+          "Object": "airlock",
+          "Facet": "lock",
+          "Field": "sealed"
+        },
+        "before": false,
+        "value": true
+      },
+      "expires": 5420.2,
+      "knowledge_revision": 141
+    },
+    "incantation_expiration": [
+      {
+        "time": 5420.2,
+        "execution": 0,
+        "actor": "detective",
+        "action": "detective.day4.seal_airlock",
+        "kind": "incantation_expired",
+        "success": true,
+        "details": {
+          "actor": "detective",
+          "action": "detective.day4.seal_airlock",
+          "field": {
+            "Object": "airlock",
+            "Facet": "lock",
+            "Field": "sealed"
+          },
+          "value": false,
+          "expired_at": 5420.2
+        }
+      }
+    ]
+  },
+  "player_observation_privacy": {
+    "viewer": "detective",
+    "visible_world_events": [
+      "day4:microquake"
+    ],
+    "other_npc_mechanic_records": 0,
+    "other_npc_private_action_ids_in_history": 0,
+    "last_strategy_actor": "detective",
+    "scope": "Checks the final live observation and production projection code; does not claim every intermediate screen was captured."
+  },
+  "anchors": [
+    {
+      "day": 1,
+      "anchor": "四区脱困与来源明确的动作重建",
+      "evidence": [
+        {
+          "action": "ward.open_A",
+          "receipt_index": 107,
+          "execution": 107,
+          "started_game_minutes": 498.716667,
+          "completed_game_minutes": 503.716667,
+          "outcome": "completed"
+        },
+        {
+          "action": "huo.open_B",
+          "receipt_index": 125,
+          "execution": 125,
+          "started_game_minutes": 547.683333,
+          "completed_game_minutes": 552.683333,
+          "outcome": "completed"
+        },
+        {
+          "action": "ruan.open_C",
+          "receipt_index": 138,
+          "execution": 138,
+          "started_game_minutes": 574.183333,
+          "completed_game_minutes": 589.183333,
+          "outcome": "completed"
+        },
+        {
+          "action": "margaret.open_D",
+          "receipt_index": 151,
+          "execution": 150,
+          "started_game_minutes": 609.083333,
+          "completed_game_minutes": 621.083333,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.deduce_sequence",
+          "receipt_index": 103,
+          "execution": 104,
+          "started_game_minutes": 493.216667,
+          "completed_game_minutes": 495.216667,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.deduce_fifth_entity",
+          "receipt_index": 120,
+          "execution": 120,
+          "started_game_minutes": 529.816667,
+          "completed_game_minutes": 531.816667,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.deduce_records",
+          "receipt_index": 176,
+          "execution": 177,
+          "started_game_minutes": 740.966667,
+          "completed_game_minutes": 742.966667,
+          "outcome": "completed"
+        }
+      ]
+    },
+    {
+      "day": 1,
+      "anchor": "伪预言的推演、承认与批注",
+      "evidence": [
+        {
+          "action": "detective.deduce_poem",
+          "receipt_index": 241,
+          "execution": 249,
+          "started_game_minutes": 848.533333,
+          "completed_game_minutes": 850.533333,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.expose_poem",
+          "receipt_index": 243,
+          "execution": 251,
+          "started_game_minutes": 851.3,
+          "completed_game_minutes": 853.3,
+          "outcome": "completed"
+        },
+        {
+          "action": "lucian.confess_poem",
+          "receipt_index": 244,
+          "execution": 253,
+          "started_game_minutes": 853.833333,
+          "completed_game_minutes": 855.833333,
+          "outcome": "completed"
+        },
+        {
+          "action": "demon.annotate_board",
+          "receipt_index": 245,
+          "execution": 254,
+          "started_game_minutes": 856.116667,
+          "completed_game_minutes": 857.116667,
+          "outcome": "completed"
+        }
+      ]
+    },
+    {
+      "day": 1,
+      "anchor": "真实包制和煮饺子",
+      "evidence": [
+        {
+          "action": "shen.boil_dumplings",
+          "receipt_index": 360,
+          "execution": 356,
+          "started_game_minutes": 1112.583333,
+          "completed_game_minutes": 1137.583333,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.eat_supper",
+          "receipt_index": 380,
+          "execution": 366,
+          "started_game_minutes": 1138.116667,
+          "completed_game_minutes": 1183.116667,
+          "outcome": "completed"
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "anchor": "风窗、三人开仓与库存",
+      "evidence": [
+        {
+          "action": "demon.day2.open_wind",
+          "receipt_index": 518,
+          "execution": 520,
+          "started_game_minutes": 1980.15,
+          "completed_game_minutes": 1980.65,
+          "outcome": "completed"
+        },
+        {
+          "action": "margaret.day2.brace_granary",
+          "receipt_index": 527,
+          "execution": 527,
+          "started_game_minutes": 1986.966667,
+          "completed_game_minutes": 1992.966667,
+          "outcome": "completed"
+        },
+        {
+          "action": "quer.day2.pick_granary_lock",
+          "receipt_index": 536,
+          "execution": 537,
+          "started_game_minutes": 1993.516667,
+          "completed_game_minutes": 1999.516667,
+          "outcome": "completed"
+        },
+        {
+          "action": "huo.day2.reset_granary_winch",
+          "receipt_index": 538,
+          "execution": 546,
+          "started_game_minutes": 2000.8,
+          "completed_game_minutes": 2006.8,
+          "outcome": "completed"
+        },
+        {
+          "action": "shen.day2.inventory",
+          "receipt_index": 540,
+          "execution": 548,
+          "started_game_minutes": 2007.35,
+          "completed_game_minutes": 2015.35,
+          "outcome": "completed"
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "anchor": "配给推演、独立意见采纳与阮清月谋划",
+      "evidence": [
+        {
+          "action": "detective.day2.deduce_ration",
+          "receipt_index": 561,
+          "execution": 562,
+          "started_game_minutes": 2044.85,
+          "completed_game_minutes": 2047.85,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day2.persuade_ward",
+          "receipt_index": 562,
+          "execution": 563,
+          "started_game_minutes": 2048.616667,
+          "completed_game_minutes": 2050.616667,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day2.persuade_shen",
+          "receipt_index": 563,
+          "execution": 564,
+          "started_game_minutes": 2051.383333,
+          "completed_game_minutes": 2053.383333,
+          "outcome": "completed"
+        },
+        {
+          "action": "ruan.day2.plan_gambit",
+          "receipt_index": 583,
+          "execution": 583,
+          "started_game_minutes": 2220.916667,
+          "completed_game_minutes": 2250.916667,
+          "outcome": "completed"
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "anchor": "实际选中探针案的搜证、推演、归还与纠正",
+      "evidence": [
+        {
+          "action": "detective.day3.read_votes",
+          "receipt_index": 739,
+          "execution": 738,
+          "started_game_minutes": 3349.05,
+          "completed_game_minutes": 3353.05,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day3.interview_su",
+          "receipt_index": 742,
+          "execution": 742,
+          "started_game_minutes": 3358.35,
+          "completed_game_minutes": 3361.35,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day3.inspect_probe_draft",
+          "receipt_index": 745,
+          "execution": 746,
+          "started_game_minutes": 3370.483333,
+          "completed_game_minutes": 3374.483333,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day3.deduce_probe",
+          "receipt_index": 746,
+          "execution": 747,
+          "started_game_minutes": 3375.25,
+          "completed_game_minutes": 3378.25,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day3.recover_probes",
+          "receipt_index": 748,
+          "execution": 748,
+          "started_game_minutes": 3379.016667,
+          "completed_game_minutes": 3381.016667,
+          "outcome": "completed"
+        },
+        {
+          "action": "ruan.day3.hand_back_probes",
+          "receipt_index": 778,
+          "execution": 778,
+          "started_game_minutes": 3667.516667,
+          "completed_game_minutes": 3670.516667,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day3.persuade_ward_probe",
+          "receipt_index": 779,
+          "execution": 779,
+          "started_game_minutes": 3671.066667,
+          "completed_game_minutes": 3673.066667,
+          "outcome": "completed"
+        },
+        {
+          "action": "ruan.day3.admit_test",
+          "receipt_index": 781,
+          "execution": 781,
+          "started_game_minutes": 3673.616667,
+          "completed_game_minutes": 3676.616667,
+          "outcome": "completed"
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "anchor": "微震后的观察、推演与有限言灵",
+      "evidence": [
+        {
+          "action": "detective.day4.inspect_backflow",
+          "receipt_index": 971,
+          "execution": 972,
+          "started_game_minutes": 5370.666667,
+          "completed_game_minutes": 5371.166667,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day4.deduce_airlock",
+          "receipt_index": 974,
+          "execution": 974,
+          "started_game_minutes": 5371.933333,
+          "completed_game_minutes": 5373.933333,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day4.seal_airlock",
+          "receipt_index": 976,
+          "execution": 977,
+          "started_game_minutes": 5374.7,
+          "completed_game_minutes": 5375.2,
+          "outcome": "completed"
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "anchor": "真实救援、用药、合作机械锁门与评价",
+      "evidence": [
+        {
+          "action": "bertrand.day4.carry_moran",
+          "receipt_index": 978,
+          "execution": 979,
+          "started_game_minutes": 5377.566667,
+          "completed_game_minutes": 5378.566667,
+          "outcome": "completed"
+        },
+        {
+          "action": "mora.day4.treat_moran",
+          "receipt_index": 980,
+          "execution": 981,
+          "started_game_minutes": 5379.116667,
+          "completed_game_minutes": 5380.116667,
+          "outcome": "completed"
+        },
+        {
+          "action": "mora.day4.treat_bertrand",
+          "receipt_index": 982,
+          "execution": 983,
+          "started_game_minutes": 5380.883333,
+          "completed_game_minutes": 5381.883333,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day4.recruit_huo",
+          "receipt_index": 983,
+          "execution": 982,
+          "started_game_minutes": 5380.8,
+          "completed_game_minutes": 5382.8,
+          "outcome": "completed"
+        },
+        {
+          "action": "huo.day4.fit_ratchet",
+          "receipt_index": 985,
+          "execution": 985,
+          "started_game_minutes": 5383.566667,
+          "completed_game_minutes": 5387.566667,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day4.recruit_quer",
+          "receipt_index": 986,
+          "execution": 986,
+          "started_game_minutes": 5387.4,
+          "completed_game_minutes": 5389.4,
+          "outcome": "completed"
+        },
+        {
+          "action": "quer.day4.seal_lock_core",
+          "receipt_index": 987,
+          "execution": 987,
+          "started_game_minutes": 5389.95,
+          "completed_game_minutes": 5394.95,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day4.report_crisis",
+          "receipt_index": 988,
+          "execution": 988,
+          "started_game_minutes": 5395.533333,
+          "completed_game_minutes": 5398.533333,
+          "outcome": "completed"
+        },
+        {
+          "action": "ruan.day4.evaluate_night",
+          "receipt_index": 1019,
+          "execution": 1021,
+          "started_game_minutes": 5420.666667,
+          "completed_game_minutes": 5423.666667,
+          "outcome": "completed"
+        }
+      ]
+    },
+    {
+      "day": 5,
+      "anchor": "倒灌伤、前臂与踝伤复查及声学标定",
+      "evidence": [
+        {
+          "action": "mora.day5.recheck_victims",
+          "receipt_index": 1117,
+          "execution": 1121,
+          "started_game_minutes": 6202.1,
+          "completed_game_minutes": 6210.1,
+          "outcome": "completed"
+        },
+        {
+          "action": "mora.day5.recheck_ankle",
+          "receipt_index": 1137,
+          "execution": 1137,
+          "started_game_minutes": 6226.2,
+          "completed_game_minutes": 6232.2,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day5.read_followup",
+          "receipt_index": 1142,
+          "execution": 1142,
+          "started_game_minutes": 6237.9,
+          "completed_game_minutes": 6241.9,
+          "outcome": "completed"
+        },
+        {
+          "action": "veronica.day5.request_acoustic_consent",
+          "receipt_index": 1124,
+          "execution": 1128,
+          "started_game_minutes": 6212.166667,
+          "completed_game_minutes": 6214.166667,
+          "outcome": "completed"
+        },
+        {
+          "action": "su.day5.provide_samples",
+          "receipt_index": 1133,
+          "execution": 1130,
+          "started_game_minutes": 6214.7,
+          "completed_game_minutes": 6222.7,
+          "outcome": "completed"
+        },
+        {
+          "action": "veronica.day5.calibrate_acoustic",
+          "receipt_index": 1136,
+          "execution": 1136,
+          "started_game_minutes": 6223.383333,
+          "completed_game_minutes": 6231.383333,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day5.deduce_coupling",
+          "receipt_index": 1147,
+          "execution": 1147,
+          "started_game_minutes": 6254.5,
+          "completed_game_minutes": 6259.5,
+          "outcome": "completed"
+        }
+      ]
+    },
+    {
+      "day": 5,
+      "anchor": "五日归档、长期秩序、警报演练与闭幕",
+      "evidence": [
+        {
+          "action": "detective.day5.deduce_five_day_case",
+          "receipt_index": 1150,
+          "execution": 1150,
+          "started_game_minutes": 6272.633333,
+          "completed_game_minutes": 6280.633333,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day5.archive_cases",
+          "receipt_index": 1151,
+          "execution": 1151,
+          "started_game_minutes": 6281.4,
+          "completed_game_minutes": 6289.4,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day5.propose_mutual_roster",
+          "receipt_index": 1152,
+          "execution": 1152,
+          "started_game_minutes": 6290.166667,
+          "completed_game_minutes": 6292.166667,
+          "outcome": "completed"
+        },
+        {
+          "action": "bertrand.day5.acknowledge_alarm",
+          "receipt_index": 1158,
+          "execution": 1159,
+          "started_game_minutes": 6313.15,
+          "completed_game_minutes": 6318.15,
+          "outcome": "completed"
+        },
+        {
+          "action": "ward.day5.settle_shifts",
+          "receipt_index": 1161,
+          "execution": 1161,
+          "started_game_minutes": 6318.816667,
+          "completed_game_minutes": 6326.816667,
+          "outcome": "completed"
+        },
+        {
+          "action": "detective.day5.close_five_days",
+          "receipt_index": 1162,
+          "execution": 1162,
+          "started_game_minutes": 6327.45,
+          "completed_game_minutes": 6331.45,
+          "outcome": "completed"
+        }
+      ]
+    }
+  ],
+  "natural_event": [
+    {
+      "time": 5370,
+      "execution": 0,
+      "actor": "world",
+      "action": "day4:microquake",
+      "kind": "world_event",
+      "success": true,
+      "details": {
+        "id": "day4:microquake",
+        "label": "17:30，地板与灯具短促震颤，楼下传来金属碰响",
+        "time": 5370
+      }
+    }
+  ],
+  "final_sleep": [
+    {
+      "action": "selma.day5.sleep_night",
+      "receipt_index": 1241,
+      "execution": 1242,
+      "started_game_minutes": 7025.816667,
+      "completed_game_minutes": 7027.816667,
+      "outcome": "completed"
+    },
+    {
+      "action": "lucian.day5.sleep_night",
+      "receipt_index": 1243,
+      "execution": 1245,
+      "started_game_minutes": 7026.5,
+      "completed_game_minutes": 7028.5,
+      "outcome": "completed"
+    },
+    {
+      "action": "veronica.day5.sleep_night",
+      "receipt_index": 1244,
+      "execution": 1246,
+      "started_game_minutes": 7026.533333,
+      "completed_game_minutes": 7028.533333,
+      "outcome": "completed"
+    },
+    {
+      "action": "gu.day5.sleep_night",
+      "receipt_index": 1247,
+      "execution": 1251,
+      "started_game_minutes": 7029.983333,
+      "completed_game_minutes": 7031.983333,
+      "outcome": "completed"
+    },
+    {
+      "action": "ruan.day5.sleep_night",
+      "receipt_index": 1248,
+      "execution": 1252,
+      "started_game_minutes": 7030.016667,
+      "completed_game_minutes": 7032.016667,
+      "outcome": "completed"
+    },
+    {
+      "action": "detective.day5.sleep_night",
+      "receipt_index": 1253,
+      "execution": 1253,
+      "started_game_minutes": 7031.316667,
+      "completed_game_minutes": 7033.316667,
+      "outcome": "completed"
+    },
+    {
+      "action": "huo.day5.sleep_night",
+      "receipt_index": 1254,
+      "execution": 1254,
+      "started_game_minutes": 7032.333333,
+      "completed_game_minutes": 7034.333333,
+      "outcome": "completed"
+    },
+    {
+      "action": "bertrand.day5.sleep_night",
+      "receipt_index": 1255,
+      "execution": 1255,
+      "started_game_minutes": 7032.4,
+      "completed_game_minutes": 7034.4,
+      "outcome": "completed"
+    },
+    {
+      "action": "elena.day5.sleep_night",
+      "receipt_index": 1260,
+      "execution": 1260,
+      "started_game_minutes": 7034.416667,
+      "completed_game_minutes": 7036.416667,
+      "outcome": "completed"
+    },
+    {
+      "action": "quer.day5.sleep_night",
+      "receipt_index": 1261,
+      "execution": 1261,
+      "started_game_minutes": 7035.166667,
+      "completed_game_minutes": 7037.166667,
+      "outcome": "completed"
+    },
+    {
+      "action": "shen.day5.sleep_night",
+      "receipt_index": 1262,
+      "execution": 1262,
+      "started_game_minutes": 7035.433333,
+      "completed_game_minutes": 7037.433333,
+      "outcome": "completed"
+    },
+    {
+      "action": "margaret.day5.sleep_night",
+      "receipt_index": 1263,
+      "execution": 1263,
+      "started_game_minutes": 7035.933333,
+      "completed_game_minutes": 7037.933333,
+      "outcome": "completed"
+    },
+    {
+      "action": "ward.day5.sleep_night",
+      "receipt_index": 1264,
+      "execution": 1264,
+      "started_game_minutes": 7036.95,
+      "completed_game_minutes": 7038.95,
+      "outcome": "completed"
+    },
+    {
+      "action": "su.day5.sleep_night",
+      "receipt_index": 1265,
+      "execution": 1265,
+      "started_game_minutes": 7037.933333,
+      "completed_game_minutes": 7039.933333,
+      "outcome": "completed"
+    },
+    {
+      "action": "mora.day5.sleep_night",
+      "receipt_index": 1266,
+      "execution": 1266,
+      "started_game_minutes": 7038.716667,
+      "completed_game_minutes": 7040.716667,
+      "outcome": "completed"
+    },
+    {
+      "action": "moran.day5.sleep_night",
+      "receipt_index": 1267,
+      "execution": 1267,
+      "started_game_minutes": 7039.433333,
+      "completed_game_minutes": 7041.433333,
+      "outcome": "completed"
+    }
+  ],
+  "limits": [
+    "CLI proves the formal Core narrative and mechanics, not Godot rendering, collision, or manual play.",
+    "This run selected the probe case and the cooperative mechanical-lock night plan. Other authored branches are not claimed as played by this run.",
+    "The complete private audit stays under .runtime; this checked-in file is an explicitly derived compact summary."
+  ]
+}

@@ -1,0 +1,270 @@
+schema "dv-script-v1";
+
+// Actor-owned rules, Sim4 daily autonomy vs. Ruan Qingyue's timed self-play Gambit selection,
+// AI Detective's multi-strategy selection (fabricate diversion, lock gate with Qu'er & Huo, normal night watch),
+// and other characters' cognition-dependent evaluations of the Detective's actions.
+data case_theory {
+  script = "scope lucian { axiom poetic_urge : feels_group_anxiety(day1_afternoon); axiom board_free : unwatched_lecture_board(day1_afternoon); axiom stunt : feels_group_anxiety(?t) -> unwatched_lecture_board(?t) -> plan_blackboard_prophecy(?t); query write_poem : plan_blackboard_prophecy(day1_afternoon); } scope detective_ch1 { axiom ambush_rule : observed_blue_chalk_on_lucian(?t) -> can_ambush_poet_at_board(?t); axiom debunk_rule : observed_blackboard_poem(?t) -> observed_demon_rhythm_critique(?t) -> can_speed_debunk_poem(?t); axiom converge_ambush : can_ambush_poet_at_board(?t) -> poet_stunt_resolved(?t); axiom converge_debunk : can_speed_debunk_poem(?t) -> poet_stunt_resolved(?t); axiom dumpling_ready : poet_stunt_resolved(?t) -> day1_dumpling_feast_ready(?t); query ambush : can_ambush_poet_at_board(day1_afternoon); query debunk : can_speed_debunk_poem(day1_afternoon); query feast : day1_dumpling_feast_ready(day1_afternoon); } scope ruan { axiom decoy_lucian : available_decoy(lucian,night_ration_slip); axiom conflict_ward_quer : available_conflict_pair(ward,quer,return_home_vote); axiom decoy_moran : available_decoy(moran,window_sketch); axiom conflict_ward_veronica : available_conflict_pair(ward,veronica,medicine_folio); axiom decoy_huo : available_decoy(huo,b1_pipe_check); axiom conflict_bertrand_lucian : available_conflict_pair(bertrand,lucian,ration_ledger); axiom build_gambit1 : self_play_started(ruan,day2) -> available_decoy(lucian,night_ration_slip) -> available_conflict_pair(ward,quer,return_home_vote) -> gambit_ready(fourteen_votes_probes); axiom build_gambit2 : self_play_started(ruan,day2) -> available_decoy(moran,window_sketch) -> available_conflict_pair(ward,veronica,medicine_folio) -> gambit_ready(sealed_folio_key); axiom build_gambit3 : self_play_started(ruan,day2) -> available_decoy(huo,b1_pipe_check) -> available_conflict_pair(bertrand,lucian,ration_ledger) -> gambit_ready(two_signatures_ration); query g1 : gambit_ready(fourteen_votes_probes); query g2 : gambit_ready(sealed_folio_key); query g3 : gambit_ready(two_signatures_ration); } scope detective { axiom diversion_plan : knows_night4_gate_hazard(?d) -> can_stage_fake_inquiry(?d) -> strategy_admissible(fabricate_diversion); axiom engineering_plan : knows_night4_gate_hazard(?d) -> allied_with_quer_and_huo(?d) -> strategy_admissible(lock_gate_with_quer_huo); axiom watch_plan : knows_night4_gate_hazard(?d) -> has_watch_supplies(?d) -> strategy_admissible(normal_night_watch); query s_diversion : strategy_admissible(fabricate_diversion); query s_lock : strategy_admissible(lock_gate_with_quer_huo); query s_watch : strategy_admissible(normal_night_watch); } scope ward_eval { axiom rule_law : values_procedural_truth(ward); axiom judge_deception : values_procedural_truth(ward) -> knows_fabricated_diversion(ward,detective) -> evaluates(ward,detective,procedural_perjury_condemned); axiom judge_diligence : values_procedural_truth(ward) -> observes_indoor_audit_only(ward,detective) -> evaluates(ward,detective,diligent_order_keeper); query condemned : evaluates(ward,detective,procedural_perjury_condemned); query praised : evaluates(ward,detective,diligent_order_keeper); } scope ruan_eval { axiom rule_go : values_minimum_cost_tesuji(ruan); axiom judge_diversion : values_minimum_cost_tesuji(ruan) -> knows_fabricated_diversion(ruan,detective) -> evaluates(ruan,detective,brilliant_tesuji_worthy_rival); axiom judge_watch : values_minimum_cost_tesuji(ruan) -> observes_normal_night_watch(ruan,detective) -> evaluates(ruan,detective,honest_but_heavy_clumsy_shape); query rival : evaluates(ruan,detective,brilliant_tesuji_worthy_rival); query clumsy : evaluates(ruan,detective,honest_but_heavy_clumsy_shape); } scope mora_eval { axiom rule_clinic : values_patient_survival_first(mora); axiom judge_mercy : values_patient_survival_first(mora) -> knows_fabricated_diversion(mora,detective) -> zero_casualty_achieved(night4) -> evaluates(mora,detective,merciful_white_lie_approved); query approved : evaluates(mora,detective,merciful_white_lie_approved); } scope quer_eval { axiom rule_street : values_genuine_respect(quer); axiom judge_partner : values_genuine_respect(quer) -> invited_to_lock_gate_together(quer,detective,huo) -> evaluates(quer,detective,trusted_craft_partner); query partner : evaluates(quer,detective,trusted_craft_partner); } scope bertrand_eval { axiom rule_comrade : values_shared_hardship(bertrand); axiom judge_watch : values_shared_hardship(bertrand) -> shared_normal_night_watch(bertrand,detective) -> evaluates(bertrand,detective,honorable_trench_comrade); query comrade : evaluates(bertrand,detective,honorable_trench_comrade); } scope ch2_night4_casualty { axiom moran_knows : knows_specific_lethal_prima(moran,night4); axiom moran_obsessed : obsessed_with_vortex_color(moran,night4); axiom bertrand_knows : knows_specific_lethal_prima(bertrand,night4); axiom bertrand_rescues : enters_to_rescue(bertrand,moran,night4); axiom no_chelator : lacks_prepared_chelator(veronica,night4); axiom clause7_bypass : knows_specific_lethal_prima(?p,night4) -> no_clause7_demon_block(?p,night4); axiom double_casualty : no_clause7_demon_block(moran,night4) -> obsessed_with_vortex_color(moran,night4) -> no_clause7_demon_block(bertrand,night4) -> enters_to_rescue(bertrand,moran,night4) -> lacks_prepared_chelator(veronica,night4) -> night4_double_casualty(moran,bertrand); query moran_unprotected : no_clause7_demon_block(moran,night4); query casualty : night4_double_casualty(moran,bertrand); } scope elena { axiom autonomy : values_informed_choice(elena); axiom hearing : values_informed_choice(?a) -> wearing_earmuffs(?a) -> restore_hearing_due(?a); query restore : restore_hearing_due(elena); } scope demon { axiom duty : accepts_protective_duty(demon); axiom rescue : accepts_protective_duty(?a) -> holding_protective_valve(?a) -> victim_at_valve(elena) -> evacuate_due(?a,elena); axiom verify : accepts_protective_duty(?a) -> holding_protective_valve(?a) -> verify_release_due(?a); query evacuation : evacuate_due(demon,elena); query recheck : verify_release_due(demon); query overnight : forced_overnight_guard(demon); }";
+  audit = [
+    {scope="lucian";theorems={write_poem="proved";};},
+    {scope="detective_ch1";theorems={ambush="unknown";debunk="unknown";feast="unknown";};},
+    {scope="ruan";theorems={g1="unknown";g2="unknown";g3="unknown";};},
+    {scope="detective";theorems={s_diversion="unknown";s_lock="unknown";s_watch="unknown";};},
+    {scope="ward_eval";theorems={condemned="unknown";praised="unknown";};},
+    {scope="ruan_eval";theorems={rival="unknown";clumsy="unknown";};},
+    {scope="mora_eval";theorems={approved="unknown";};},
+    {scope="quer_eval";theorems={partner="unknown";};},
+    {scope="bertrand_eval";theorems={comrade="unknown";};},
+    {scope="ch2_night4_casualty";theorems={moran_unprotected="proved";casualty="proved";};},
+    {scope="elena";theorems={restore="unknown";};},
+    {scope="demon";theorems={evacuation="unknown";recheck="unknown";overnight="unknown";};}
+  ];
+};
+
+data case_mind_evidence {
+  mappings = [
+    {id="mora-night-survival";actor="mora";reference={object="c2.strategy";facet="state";field="zero_casualty";};equals=true;literal={predicate="zero_casualty_achieved";args=["night4"];};},
+    {id="detective-poem-chalk";actor="detective";reference={object="lucian-chalk";facet="traces";field="sleeve_dust";};equals=true;literal={predicate="observed_blue_chalk_on_lucian";args=["day1_afternoon"];};},
+    {id="detective-poem-poem";actor="detective";reference={object="day1-blackboard";facet="state";field="poem_written";};equals=true;literal={predicate="observed_blackboard_poem";args=["day1_afternoon"];};},
+    {id="detective-poem-annotation";actor="detective";reference={object="day1-blackboard";facet="state";field="demon_annotation";};equals=true;literal={predicate="observed_demon_rhythm_critique";args=["day1_afternoon"];};},
+    {id="ruan-self-play-started";actor="ruan";reference={object="c2.ruan-plan";facet="state";field="self_play_started";};equals=true;literal={predicate="self_play_started";args=["ruan","day2"];};},
+    {id="ruan-lucian-ration-routine";actor="ruan";reference={object="c2.ruan-knowledge";facet="situation";field="lucian_ration_plan";};equals=true;literal={predicate="available_decoy";args=["lucian","night_ration_slip"];};},
+    {id="detective-personally-inferred-night4-danger";actor="detective";reference={object="night4-knowledge";facet="hazard";field="specific_lethal";};equals=true;literal={predicate="knows_night4_gate_hazard";args=["detective"];};},
+    {id="ruan-ward-quer-dispute";actor="ruan";reference={object="c2.ruan-knowledge";facet="situation";field="ward_quer_dispute";};equals=true;literal={predicate="available_conflict_pair";args=["ward","quer","return_home_vote"];};},
+    {id="ruan-moran-window-routine";actor="ruan";reference={object="c2.ruan-knowledge";facet="situation";field="moran_window_routine";};equals=true;literal={predicate="available_decoy";args=["moran","window_sketch"];};},
+    {id="ruan-ward-veronica-dispute";actor="ruan";reference={object="c2.ruan-knowledge";facet="situation";field="ward_veronica_dispute";};equals=true;literal={predicate="available_conflict_pair";args=["ward","veronica","medicine_folio"];};},
+    {id="ruan-huo-pipe-routine";actor="ruan";reference={object="c2.ruan-knowledge";facet="situation";field="huo_pipe_routine";};equals=true;literal={predicate="available_decoy";args=["huo","b1_pipe_check"];};},
+    {id="ruan-bertrand-lucian-dispute";actor="ruan";reference={object="c2.ruan-knowledge";facet="situation";field="bertrand_lucian_dispute";};equals=true;literal={predicate="available_conflict_pair";args=["bertrand","lucian","ration_ledger"];};},
+    {id="elena-earmuffs";actor="elena";reference={object="c2.u";facet="state";field="earmuffs_worn";};equals=true;literal={predicate="wearing_earmuffs";args=["elena"];};},
+    {id="demon-holding";actor="demon";reference={object="c2.u";facet="state";field="guardian_holding";};equals=true;literal={predicate="holding_protective_valve";args=["demon"];};},
+    {id="demon-victim-seated";actor="demon";reference={object="c2.u";facet="state";field="seated_at_valve";};equals=true;literal={predicate="victim_at_valve";args=["elena"];};},
+    {id="demon-victim-relocated";actor="demon";reference={object="c2.u";facet="state";field="valve_victim_relocated";};equals=true;literal={predicate="victim_relocated";args=["elena"];};},
+    {"id":"ruan-layout-executed","actor":"ruan","reference":{"object":"c2.ruan-plan","facet":"state","field":"executed"},"equals":true,"literal":{"predicate":"gambit_executed","args":["day2"]}},
+    {"id":"detective-night4-hazard","actor":"detective","reference":{"object":"c2.strategy","facet":"state","field":"gate_hazard_verified"},"equals":true,"literal":{"predicate":"knows_night4_gate_hazard","args":["detective"]}},
+    {"id":"detective-gate-partners","actor":"detective","reference":{"object":"c2.strategy","facet":"state","field":"engineering_ready"},"equals":true,"literal":{"predicate":"allied_with_quer_and_huo","args":["detective"]}},
+    {"id":"detective-inquiry-prepared","actor":"detective","reference":{"object":"c2.strategy","facet":"state","field":"inquiry_prepared"},"equals":true,"literal":{"predicate":"can_stage_fake_inquiry","args":["detective"]}},
+    {"id":"detective-watch-supplies","actor":"detective","reference":{"object":"c2.strategy","facet":"state","field":"watch_supply"},"equals":true,"literal":{"predicate":"has_watch_supplies","args":["detective"]}},
+    {"id":"ward-observed-diversion-admission","actor":"ward","reference":{"object":"c2.strategy","facet":"state","field":"diversion_fabricated"},"equals":true,"literal":{"predicate":"knows_fabricated_diversion","args":["ward","detective"]}},
+    {"id":"ruan-observed-diversion-admission","actor":"ruan","reference":{"object":"c2.strategy","facet":"state","field":"diversion_fabricated"},"equals":true,"literal":{"predicate":"knows_fabricated_diversion","args":["ruan","detective"]}},
+    {"id":"mora-observed-diversion-admission","actor":"mora","reference":{"object":"c2.strategy","facet":"state","field":"diversion_fabricated"},"equals":true,"literal":{"predicate":"knows_fabricated_diversion","args":["mora","detective"]}},
+    {"id":"ward-observed-inquiry","actor":"ward","reference":{"object":"c2.strategy","facet":"state","field":"inquiry_active"},"equals":true,"literal":{"predicate":"observes_indoor_audit_only","args":["ward","detective"]}},
+    {"id":"ruan-observed-watch","actor":"ruan","reference":{"object":"c2.strategy","facet":"state","field":"watch_active"},"equals":true,"literal":{"predicate":"observes_normal_night_watch","args":["ruan","detective"]}},
+    {"id":"quer-accepted-gate","actor":"quer","reference":{"object":"c2.strategy","facet":"state","field":"gate_agreed.quer"},"equals":true,"literal":{"predicate":"invited_to_lock_gate_together","args":["quer","detective","huo"]}},
+    {"id":"bertrand-completed-watch","actor":"bertrand","reference":{"object":"c2.strategy","facet":"state","field":"watch_shared.bertrand"},"equals":true,"literal":{"predicate":"shared_normal_night_watch","args":["bertrand","detective"]}}
+  ];
+};
+
+data case_strategy {
+  actors = [
+    {
+      actor="ruan"; computation="sliced";
+      basis=["docs/世界观设计文档01.md:阮清月自我博弈与试应手槽位选择","docs/22 证据链与六章推理设计.md:第二章"];
+      drives={seize_key_tool=3;conflict_diversion=2;stealth_safety=2;};
+      choices=[
+        {
+          action="ruan.ch2.gambit-fourteen-votes-probes";
+          requires=[{predicate="gambit_ready";args=["fourteen_votes_probes"];}];
+          prohibits=[{predicate="gambit_executed";args=["day2"];}];
+          promotes={seize_key_tool=3;conflict_diversion=2;stealth_safety=2;};
+          basis=["利用卢西安夜行做显眼包、挑动沃德与雀儿围绕归乡票数冲突，骗取雀儿的精钢探针卷，总效用最高（17分）。"];
+        },
+        {
+          action="ruan.ch2.gambit-sealed-folio-key";
+          requires=[{predicate="gambit_ready";args=["sealed_folio_key"];}];
+          prohibits=[{predicate="gambit_executed";args=["day2"];}];
+          promotes={seize_key_tool=2;conflict_diversion=2;stealth_safety=1;};
+          basis=["利用莫兰窗前写生做显眼包、挑动沃德与维罗妮卡围绕验药缺页冲突，夺取药柜钥匙，总效用次之（12分）。"];
+        },
+        {
+          action="ruan.ch2.gambit-two-signatures-ration";
+          requires=[{predicate="gambit_ready";args=["two_signatures_ration"];}];
+          prohibits=[{predicate="gambit_executed";args=["day2"];}];
+          promotes={seize_key_tool=1;conflict_diversion=1;stealth_safety=1;};
+          basis=["利用霍铎夜查管路做显眼包、挑动贝尔特朗与卢西安围绕口粮签收单冲突，总效用最低（7分）。"];
+        }
+      ];
+      audit=[
+        {id="select-highest-utility-probes-gambit";action="ruan.ch2.gambit-fourteen-votes-probes";ready=true;utility=17;evidence=[{id="fixture-pondered";literal={predicate="self_play_started";args=["ruan","day2"];};source="authoring-fixture";}];},
+        {id="secondary-folio-gambit";action="ruan.ch2.gambit-sealed-folio-key";ready=true;utility=12;evidence=[{id="fixture-pondered";literal={predicate="self_play_started";args=["ruan","day2"];};source="authoring-fixture";}];},
+        {id="tertiary-ration-gambit";action="ruan.ch2.gambit-two-signatures-ration";ready=true;utility=7;evidence=[{id="fixture-pondered";literal={predicate="self_play_started";args=["ruan","day2"];};source="authoring-fixture";}];}
+      ];
+    },
+    {
+      actor="detective";
+      basis=["docs/世界观设计文档01.md:侦探多路线策略与认识论","docs/22 证据链与六章推理设计.md:第四夜方案"];
+      drives={prevent_casualty=3;structural_certainty=2;open_honesty=1;};
+      choices=[
+        {
+          action="detective.ch2.lock-gate-with-quer-and-huo";
+          requires=[{predicate="strategy_admissible";args=["lock_gate_with_quer_huo"];}];
+          prohibits=[{predicate="night4_resolved";args=["detective"];}];
+          promotes={prevent_casualty=3;structural_certainty=3;open_honesty=1;};
+          basis=["与雀儿和工程师霍铎合力从物理上锁死大门，兼顾零伤亡与工程确定性（16分）。"];
+        },
+        {
+          action="detective.ch2.fabricate-diversion-problem";
+          requires=[{predicate="strategy_admissible";args=["fabricate_diversion"];}];
+          prohibits=[{predicate="night4_resolved";args=["detective"];}];
+          promotes={prevent_casualty=3;structural_certainty=2;};
+          basis=["故意制造虚假室内问题拖住全员，使众人无暇前往危险大门（13分）。"];
+        },
+        {
+          action="detective.ch2.normal-night-watch";
+          requires=[{predicate="strategy_admissible";args=["normal_night_watch"];}];
+          prohibits=[{predicate="night4_resolved";args=["detective"];}];
+          promotes={prevent_casualty=2;structural_certainty=1;open_honesty=3;};
+          basis=["公开险情并按正常排班在夜间值守（11分）。"];
+        }
+      ];
+      audit=[
+        {id="lock-gate-when-allied";action="detective.ch2.lock-gate-with-quer-and-huo";ready=true;utility=16;evidence=[{id="fixture-known-night4-hazard";literal={predicate="knows_night4_gate_hazard";args=["detective"];};source="authoring-fixture";},{id="e-allied";literal={predicate="allied_with_quer_and_huo";args=["detective"];};source="authoring-fixture";}];},
+        {id="fabricate-diversion-when-unallied";action="detective.ch2.fabricate-diversion-problem";ready=true;utility=13;evidence=[{id="fixture-known-night4-hazard";literal={predicate="knows_night4_gate_hazard";args=["detective"];};source="authoring-fixture";},{id="e-divert";literal={predicate="can_stage_fake_inquiry";args=["detective"];};source="authoring-fixture";}];},
+        {id="normal-watch-when-supplied";action="detective.ch2.normal-night-watch";ready=true;utility=11;evidence=[{id="fixture-known-night4-hazard";literal={predicate="knows_night4_gate_hazard";args=["detective"];};source="authoring-fixture";},{id="e-watch";literal={predicate="has_watch_supplies";args=["detective"];};source="authoring-fixture";}];}
+      ];
+    },
+    {
+      actor="ward_eval"; runtime_actor="ward"; intrinsic_axioms=["rule_law"];
+      basis=["docs/世界观设计文档01.md:沃德法条程序主义评价"];
+      drives={procedural_judgment=3;};
+      choices=[
+        {
+          action="ward.eval.condemn-fabricated-diversion";
+          requires=[{predicate="evaluates";args=["ward","detective","procedural_perjury_condemned"];}];
+          prohibits=[];
+          promotes={procedural_judgment=3;};
+          basis=["沃德得知侦探制造虚假问题后，依程序正义公理斥之为伪证操纵。"];
+        },
+        {
+          action="ward.eval.praise-indoor-audit";
+          requires=[{predicate="evaluates";args=["ward","detective","diligent_order_keeper"];}];
+          prohibits=[{predicate="knows_fabricated_diversion";args=["ward","detective"];}];
+          promotes={procedural_judgment=2;};
+          basis=["沃德不知那是假问题时，认知匹配为侦探尽责核查内务。"];
+        }
+      ];
+      audit=[
+        {id="ward-condemns-when-deception-known";action="ward.eval.condemn-fabricated-diversion";ready=true;utility=9;evidence=[{id="w-knows";literal={predicate="knows_fabricated_diversion";args=["ward","detective"];};source="authoring-fixture";}];},
+        {id="ward-praises-when-deception-hidden";action="ward.eval.praise-indoor-audit";ready=true;utility=6;evidence=[{id="w-unaware";literal={predicate="observes_indoor_audit_only";args=["ward","detective"];};source="authoring-fixture";}];}
+      ];
+    },
+    {
+      actor="ruan_eval"; runtime_actor="ruan"; computation="sliced"; intrinsic_axioms=["rule_go"];
+      basis=["docs/世界观设计文档01.md:阮清月绝对博弈形式论评价"];
+      drives={go_aesthetics=3;};
+      choices=[
+        {
+          action="ruan.eval.admire-diversion-tesuji";
+          requires=[{predicate="evaluates";args=["ruan","detective","brilliant_tesuji_worthy_rival"];}];
+          prohibits=[];
+          promotes={go_aesthetics=3;};
+          basis=["阮清月看出侦探用假问题劫材零成本锁住全员，赞叹其为配与自己对弈的妙手。"];
+        },
+        {
+          action="ruan.eval.deem-watch-clumsy";
+          requires=[{predicate="evaluates";args=["ruan","detective","honest_but_heavy_clumsy_shape"];}];
+          prohibits=[];
+          promotes={go_aesthetics=1;};
+          basis=["阮清月见侦探选择苦熬守夜，依目数效率公理评价其为堂正却费目的愚形。"];
+        }
+      ];
+      audit=[
+        {id="ruan-admires-diversion";action="ruan.eval.admire-diversion-tesuji";ready=true;utility=9;evidence=[{id="r-divert";literal={predicate="knows_fabricated_diversion";args=["ruan","detective"];};source="authoring-fixture";}];},
+        {id="ruan-deems-watch-clumsy";action="ruan.eval.deem-watch-clumsy";ready=true;utility=3;evidence=[{id="r-watch";literal={predicate="observes_normal_night_watch";args=["ruan","detective"];};source="authoring-fixture";}];}
+      ];
+    },
+    {
+      actor="mora_eval"; runtime_actor="mora"; intrinsic_axioms=["rule_clinic"];
+      basis=["docs/世界观设计文档01.md:茉拉临床生命伦理评价"];
+      drives={life_ethics=3;};
+      choices=[
+        {
+          action="mora.eval.approve-merciful-lie";
+          requires=[{predicate="evaluates";args=["mora","detective","merciful_white_lie_approved"];}];
+          prohibits=[];
+          promotes={life_ethics=3;};
+          basis=["茉拉虽知侦探制造了假问题，但见全员零伤亡度过危局，依生命高于形式公理予以认可。"];
+        }
+      ];
+      audit=[
+        {id="mora-approves-life-saving-diversion";action="mora.eval.approve-merciful-lie";ready=true;utility=9;evidence=[{id="m-knows";literal={predicate="knows_fabricated_diversion";args=["mora","detective"];};source="authoring-fixture"},{id="m-safe";literal={predicate="zero_casualty_achieved";args=["night4"];};source="authoring-fixture";}];}
+      ];
+    },
+    {
+      actor="quer_eval"; runtime_actor="quer"; intrinsic_axioms=["rule_street"];
+      basis=["docs/世界观设计文档01.md:雀儿街头具体人情论评价"];
+      drives={mutual_trust=3;};
+      choices=[
+        {
+          action="quer.eval.trust-craft-partner";
+          requires=[{predicate="evaluates";args=["quer","detective","trusted_craft_partner"];}];
+          prohibits=[];
+          promotes={mutual_trust=3;};
+          basis=["侦探邀请雀儿与霍铎堂堂正正用锁匠手艺锁死险门，雀儿认其为真正尊重自己的搭档。"];
+        }
+      ];
+      audit=[
+        {id="quer-trusts-joint-lock";action="quer.eval.trust-craft-partner";ready=true;utility=9;evidence=[{id="q-joint";literal={predicate="invited_to_lock_gate_together";args=["quer","detective","huo"];};source="authoring-fixture";}];}
+      ];
+    },
+    {
+      actor="bertrand_eval"; runtime_actor="bertrand"; intrinsic_axioms=["rule_comrade"];
+      basis=["docs/世界观设计文档01.md:贝尔特朗底层同袍正义论评价"];
+      drives={comrade_honor=3;};
+      choices=[
+        {
+          action="bertrand.eval.salute-watch-comrade";
+          requires=[{predicate="evaluates";args=["bertrand","detective","honorable_trench_comrade"];}];
+          prohibits=[];
+          promotes={comrade_honor=3;};
+          basis=["侦探亲自参与夜间正常值守，贝尔特朗依同袍正义论视其为可托付后背的战友。"];
+        }
+      ];
+      audit=[
+        {id="bertrand-salutes-night-watch";action="bertrand.eval.salute-watch-comrade";ready=true;utility=9;evidence=[{id="b-watch";literal={predicate="shared_normal_night_watch";args=["bertrand","detective"];};source="authoring-fixture";}];}
+      ];
+    },
+    {
+      actor="elena";
+      basis=["docs/《安眠者有福》世界卡、人物卡与博弈引擎设计案.md:伊莲娜","assets/data/ChapterTwo.templates.data.dv:template.c2u_rows_build"];
+      drives={informed_choice=2;self_protection=1;};
+      choices=[{
+        action="elena.c2u.remove-earmuffs";
+        requires=[{predicate="restore_hearing_due";args=["elena"]; }];
+        prohibits=[];
+        promotes={informed_choice=2;self_protection=1;};
+        basis=["佩戴状态由本人认知读出，恢复听觉有助于重新了解现场。","此选择不替代他人已经完成的摘除动作，也不证明她在戴耳罩时知道危险。"];
+      }];
+      audit=[
+        {id="unknown-earmuffs";action="elena.c2u.remove-earmuffs";ready=false;utility=5;},
+        {id="known-earmuffs";action="elena.c2u.remove-earmuffs";ready=true;utility=5;evidence=[{id="fixture-wearing";literal={predicate="wearing_earmuffs";args=["elena"];};source="authoring-fixture";}];}
+      ];
+    },
+    {
+      actor="demon";
+      basis=["assets/data/world.dv:保护义务与已知危险边界","assets/data/ChapterTwo.templates.data.dv:template.c2u_specs"];
+      drives={protect_life=3;resolve_obligation=1;};
+      choices=[
+        {
+          action="demon.c2u.evacuate-valve-victim";
+          requires=[{predicate="evacuate_due";args=["demon","elena"]; }];
+          prohibits=[{predicate="victim_relocated";args=["elena"]; }];
+          promotes={protect_life=2;resolve_obligation=1;};
+          basis=["代管者依自己已知的保护现场选择移开伤员，不能由保护义务推出必须整夜按阀。","真实接触、搬离和认知更新仍须正式行动完成。"];
+        },
+        {
+          action="demon.c2u.recheck-dawn";
+          requires=[{predicate="verify_release_due";args=["demon"]; }];
+          prohibits=[];
+          promotes={protect_life=1;resolve_obligation=2;};
+          basis=["正在按阀时优先取得能否安全撤手的现场证据，检查行动原有时段与位置要求保留。"];
+        }
+      ];
+      audit=[
+        {id="unknown-protection-site";action="demon.c2u.evacuate-valve-victim";ready=false;utility=7;},
+        {id="known-protection-site";action="demon.c2u.evacuate-valve-victim";ready=true;utility=7;evidence=[{id="fixture-holding";literal={predicate="holding_protective_valve";args=["demon"];};source="authoring-fixture";},{id="fixture-seated";literal={predicate="victim_at_valve";args=["elena"];};source="authoring-fixture";}];},
+        {id="already-relocated";action="demon.c2u.evacuate-valve-victim";ready=false;utility=7;evidence=[{id="fixture-holding";literal={predicate="holding_protective_valve";args=["demon"];};source="authoring-fixture";},{id="fixture-seated";literal={predicate="victim_at_valve";args=["elena"];};source="authoring-fixture";},{id="fixture-relocated";literal={predicate="victim_relocated";args=["elena"];};source="authoring-fixture";}];},
+        {id="holding-needs-recheck";action="demon.c2u.recheck-dawn";ready=true;utility=5;evidence=[{id="fixture-holding";literal={predicate="holding_protective_valve";args=["demon"];};source="authoring-fixture";}];}
+      ];
+    }
+  ];
+};
