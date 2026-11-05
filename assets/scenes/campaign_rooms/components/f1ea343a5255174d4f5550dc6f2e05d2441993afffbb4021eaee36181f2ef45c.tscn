@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/f1ea343a5255174d4f5550dc6f2e05d2441993afffbb4021eaee36181f2ef45c.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/6360917430c9a3a9ae6067bc7f7ba1f0dfda2e1939ade44fa0622e31e8894c0e.glb" id="2_model"]
+
+[node name="bottle_rack_6c3ff43eaf7e" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "bottle_rack_6c3ff43eaf7e"
+component_kind = "bottle_rack"
+interactive = false
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"material_theme\":\"walnut\",\"width\":0.95}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

@@ -1,0 +1,42 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/01710e481c4878c4549e94a5b7291bbf6db2d19af531045bc59fef9a54f1553b.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/0b2678b778ce2ab4d0dc5cad06e8def6b1ec0383406db67f31a33409f0d2e761.glb" id="2_model"]
+
+[node name="cooking_pot_5e835f4712bd" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "cooking_pot_5e835f4712bd"
+component_kind = "cooking_pot"
+interactive = true
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "furniture"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"height\":0.3,\"kind\":\"pot\",\"material_theme\":\"walnut\",\"radius\":0.19}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]
+
+[node name="Front" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(-1, 0, -8.74227766e-08, 0, 1, 0, 8.74227766e-08, 0, -1, 0, 0, 0.63941431)
+metadata/pose = "stand"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"
+
+[node name="Back" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.63941431)
+metadata/pose = "stand"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.300000012, 0)
+metadata/pose = "contact"
+metadata/clearance_radius_m = 0
+metadata/availability = "host_validation_required"

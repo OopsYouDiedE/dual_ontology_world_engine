@@ -1,0 +1,247 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/rooms/lecture/lecture.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/46044236ed49158584221c84bd3514f34c4630723556587ba00f0b964e81f4db.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/617f11374b20e7c7e288a017c83af9c4fdaab80cf2c3b11fe093b54157819744.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/669b10e04b87cef5ef619ac81e0a1145818adc4df008c1fec5166525e45603e5.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/ad3ed36eeab47a3a59495afb6df6973aee9f0db424c3e7c76dbf6010382cf3a2.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/150cf7da87d3b8c8f1ffea5c509538c310d5f8536d037495236e585ec8948079.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/f128e46e98bad6421420855665a34d88c100f79b08a34780b0fb2280e5b55e40.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/55d4c36f6cc81c29576d73baee40a730e238f6ee4b02413308eee6ae598d8d14.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/c75c54f58aa8ea93c0c43abaf28d7c93575934ffefe5b59d431780a7e116f1d1.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/87bf98ce0f7671eda310753155a7d991b75acc34f1d27c82386e25da080752b8.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/f4cebe029ff71b7ed9bff865828596c10ce1632bb9919b86a2e71e790852b925.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/5aff55230c3c5176d7955196d8f9b425f57940254cb5f4c881b7607762b46600.tscn" id="12_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/e4bcb1969e73da158b236297a1c736c6ebb72c9e8c19a21402740aea69014dac.tscn" id="13_prefab"]
+
+[node name="lecture" type="Node3D"]
+script = ExtResource("1_script")
+metadata/room_id = "lecture"
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+metadata/core_binding = "campaign.rooms"
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="lecture_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "lecture_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "lecture_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="lecture_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.79999995, 0, -10)
+instance_id = "lecture_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_Door_01" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.79999995, 0, -10)
+instance_id = "lecture_Door_01"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_window_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -5, 1, -2.5)
+instance_id = "lecture_window_01"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_window_02" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -5, 1, -6)
+instance_id = "lecture_window_02"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chalkboard_01" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.27999997, -9.81000042)
+instance_id = "lecture_chalkboard_01"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_lectern_01" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.20000005, 0.200000003, -8.30000019)
+instance_id = "lecture_lectern_01"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_table_01" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5999999, 0, -1.70000005)
+instance_id = "lecture_table_01"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chair_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -3.20000005, 0, -0.920000017)
+instance_id = "lecture_chair_01"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chair_02" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -2, 0, -0.920000017)
+instance_id = "lecture_chair_02"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_open_book_01" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.25, 0.779999971, -1.63999999)
+instance_id = "lecture_open_book_01"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_table_02" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5999999, 0, -3.45000005)
+instance_id = "lecture_table_02"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chair_03" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -3.20000005, 0, -2.67000008)
+instance_id = "lecture_chair_03"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chair_04" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -2, 0, -2.67000008)
+instance_id = "lecture_chair_04"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_banker_lamp_01" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.4000001, 0.779999971, -3.45000005)
+instance_id = "lecture_banker_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_open_book_02" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.25, 0.779999971, -3.3900001)
+instance_id = "lecture_open_book_02"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_table_03" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5999999, 0, -5.19999981)
+instance_id = "lecture_table_03"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chair_05" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -3.20000005, 0, -4.42000008)
+instance_id = "lecture_chair_05"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chair_06" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -2, 0, -4.42000008)
+instance_id = "lecture_chair_06"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_open_book_03" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.25, 0.779999971, -5.13999987)
+instance_id = "lecture_open_book_03"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_table_04" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5999999, 0, -1.70000005)
+instance_id = "lecture_table_04"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chair_07" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 2, 0, -0.920000017)
+instance_id = "lecture_chair_07"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chair_08" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 3.20000005, 0, -0.920000017)
+instance_id = "lecture_chair_08"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_open_book_04" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.95000005, 0.779999971, -1.63999999)
+instance_id = "lecture_open_book_04"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_table_05" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5999999, 0, -3.45000005)
+instance_id = "lecture_table_05"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chair_09" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 2, 0, -2.67000008)
+instance_id = "lecture_chair_09"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chair_10" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 3.20000005, 0, -2.67000008)
+instance_id = "lecture_chair_10"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_banker_lamp_02" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.79999995, 0.779999971, -3.45000005)
+instance_id = "lecture_banker_lamp_02"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_open_book_05" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.95000005, 0.779999971, -3.3900001)
+instance_id = "lecture_open_book_05"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_table_06" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5999999, 0, -5.19999981)
+instance_id = "lecture_table_06"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chair_11" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 2, 0, -4.42000008)
+instance_id = "lecture_chair_11"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chair_12" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 3.20000005, 0, -4.42000008)
+instance_id = "lecture_chair_12"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_open_book_06" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.95000005, 0.779999971, -5.13999987)
+instance_id = "lecture_open_book_06"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_bookshelf_01" parent="Instances" instance=ExtResource("12_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.54999995, 0.200000003, -9.68999958)
+instance_id = "lecture_bookshelf_01"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_bookshelf_02" parent="Instances" instance=ExtResource("12_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.54999995, 0.200000003, -9.68999958)
+instance_id = "lecture_bookshelf_02"
+entity_id = ""
+portal_id = ""
+
+[node name="lecture_chandelier_01" parent="Instances" instance=ExtResource("13_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.55000019, -4.80000019)
+instance_id = "lecture_chandelier_01"
+entity_id = ""
+portal_id = ""

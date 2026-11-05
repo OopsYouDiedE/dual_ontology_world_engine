@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/919ba408003c63fb90d3d59d7f89013b99d85f93715184b4e687aefd016eff65.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/58f7dd588cdd333b10e5dd4b5d763985199f7ef5f8e682c91a8a0d5f33ceda18.glb" id="2_model"]
+
+[node name="chandelier_47d0d617c026" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "chandelier_47d0d617c026"
+component_kind = "chandelier"
+interactive = false
+shadowless_nodes = PackedStringArray("Glow_0", "Glow_1", "Glow_2", "Glow_3", "Glow_4", "Glow_5")
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"arms\":6,\"drop\":0.85,\"energy\":65,\"material_theme\":\"walnut\",\"radius\":0.8}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

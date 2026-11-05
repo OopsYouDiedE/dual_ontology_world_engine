@@ -96,7 +96,13 @@ func _start_native_character(load_saved := false) -> void:
 		if not parsed is Dictionary:
 			flow.transition("started",false);flow.transition("opening",false);title_layer.get_child(0).show_start_error("存档格式无效。",true);return
 		restored=parsed
-	native_character_host = load("res://scenes/components/characters/CharacterSessionHost.gd").new()
+	var content_reader = load("res://scenes/main/DvPresentationContent.cs").new()
+	var content_record: Dictionary = content_reader.ReadRecord(character_session_path,"data","runtime.character_session")
+	content_reader = null
+	var host_script := "res://scenes/components/characters/CharacterSessionHost.gd"
+	if content_record.get("value",{}).has("campaign"):
+		host_script = "res://scenes/components/characters/CampaignRoomHost.gd"
+	native_character_host = load(host_script).new()
 	add_child(native_character_host)
 	native_character_host.configure(character_session_path,restored)
 	while not native_character_host.ready_for_play:

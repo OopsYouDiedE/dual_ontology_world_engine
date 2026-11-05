@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/a666fb9ccb0e5364602bf4318755b4caad14508ea5c264da0b67cfd8e6cb7248.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/70d653ce887c0cfd4922d1d67c6952267e6bb492b83b3a6d1f07d457f794c6d0.glb" id="2_model"]
+
+[node name="long_drain_77fdafbd5c73" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "long_drain_77fdafbd5c73"
+component_kind = "long_drain"
+interactive = false
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"length\":7.392,\"material_theme\":\"warm\",\"width\":0.34}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

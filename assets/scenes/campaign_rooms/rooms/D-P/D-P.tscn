@@ -1,0 +1,159 @@
+[gd_scene load_steps=22 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/rooms/D-P/D-P.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/e17c8aa176649c9d105f1697ae061f465abaf4a61576a356d9a1cd24e24e5de8.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/8834f7507d5831e73d2d6b9930ebad3549166aeb430af150850cb7f5bb5b2a4b.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/0ee04e4f7d4469eb9388b7cea747680c57244d7d2039421041bb830cd3578926.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/914d5f1ceb379acecaa1e8e7f825008a1f15e46ea43be438712acec2f6f97050.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/53cd983e1fccb0ee088771c786b04ac8d7dfa3d9f883d6a91e490ea8a88df06d.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/490271c0a07394e08576bb91a44b73e558b208f368d70b1443919ff884370f09.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/26ceb6bcab49859ad8244142a94c66cd70e7a3a48c99bd289d0d9b2ff96db5e9.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/6dfc5861a0059193071bb8aaf3b8a93adef4826d306b8c9992fee8b22a0a2239.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/dfd2427b7abbd3674bf2a41691e9aad59ab65179319b61bc419ff1f642f3bbee.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/01710e481c4878c4549e94a5b7291bbf6db2d19af531045bc59fef9a54f1553b.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/d2c5c24ede09e7e2df96747c91c10216b09b1049c0b9231d058280058f771b70.tscn" id="12_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/d477effad30e8bf4aa29c956b1d80650ec1239630e53825d3ef950b38a05d0b5.tscn" id="13_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/ff3679ffbb8cda4b094519916382924e6fbd19af598cfc5c8dd8697aee9142c9.tscn" id="14_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/e4cc009552d8f12fc02ccbab220274ecf68d4065a5a3bfe2465a5ddf4cd22bb3.tscn" id="15_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/04fe881dade0e3be5dffb63d8ad61b5b71e0b44d45f4630a7d37d97d9ff2e8ca.tscn" id="16_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/de6d1004e56e99dca4358eb032462ea2a3733f7a7149c6d70ed0bdb5fd4a1090.tscn" id="17_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/b5705b7a847cdcca3b3a857ba3b76e27ff3037a57941836887bbd7cc8a242307.tscn" id="18_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/c82757313c7f17b5225ceb6f8d95c42a59b690513a9ba0d1cb962ce2311c80e8.tscn" id="19_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/b788b48675b4b8deee44e9089200e87103040da9cbbba5aa895282b00a5de950.tscn" id="20_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/68198bb5a661eaec48c9c6384464384c0e14ff518262daf05d2339f1d5b4473b.tscn" id="21_prefab"]
+
+[node name="D_P" type="Node3D"]
+script = ExtResource("1_script")
+metadata/room_id = "D-P"
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+metadata/core_binding = "campaign.rooms"
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="D_P_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "D-P_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "D-P_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="D_P_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -4.0999999, 0, -1.17999995)
+instance_id = "D-P_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_window_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0999999, 1.10000002, -6.30000019)
+instance_id = "D-P_window_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_stove_01" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.97000003, 0, -5.82000017)
+instance_id = "D-P_stove_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_cooker_hood_01" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.97000003, 1.75, -5.82000017)
+instance_id = "D-P_cooker_hood_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_work_counter_01" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5.80000019)
+instance_id = "D-P_work_counter_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_sink_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.04999995, 0, -5.80000019)
+instance_id = "D-P_sink_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_crockery_shelf_01" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.77999997, -6.17000008)
+instance_id = "D-P_crockery_shelf_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_cooking_pot_01" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.26999998, 0.954999983, -5.69999981)
+instance_id = "D-P_cooking_pot_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_cooking_pot_02" parent="Instances" instance=ExtResource("12_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61999989, 0.954999983, -5.78000021)
+instance_id = "D-P_cooking_pot_02"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_residential_accessories_01" parent="Instances" instance=ExtResource("13_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.949999988, -5.78000021)
+instance_id = "D-P_residential_accessories_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_table_01" parent="Instances" instance=ExtResource("14_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.06999993)
+instance_id = "D-P_table_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_chair_01" parent="Instances" instance=ExtResource("15_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -0.600000024, 0, -1.23000002)
+instance_id = "D-P_chair_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_chair_02" parent="Instances" instance=ExtResource("15_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 0.600000024, 0, -1.23000002)
+instance_id = "D-P_chair_02"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_bench_01" parent="Instances" instance=ExtResource("16_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, 1, 0, 1, 0, -1, 0, -4.37113883e-08, 3.69000006, 0, -2.5)
+instance_id = "D-P_bench_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_linen_cabinet_01" parent="Instances" instance=ExtResource("17_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -3.5999999, 0, -3.29999995)
+instance_id = "D-P_linen_cabinet_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_residential_accessories_02" parent="Instances" instance=ExtResource("18_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.550000012, 0.800000012, -2.06999993)
+instance_id = "D-P_residential_accessories_02"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_wall_lantern_01" parent="Instances" instance=ExtResource("19_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.699999988, 2.70000005, -6.0999999)
+instance_id = "D-P_wall_lantern_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_pendant_lamp_01" parent="Instances" instance=ExtResource("20_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.45000005, -2.5999999)
+instance_id = "D-P_pendant_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="D_P_pitcher_01" parent="Instances" instance=ExtResource("21_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.600000024, 0.800000012, -2.06999993)
+instance_id = "D-P_pitcher_01"
+entity_id = ""
+portal_id = ""

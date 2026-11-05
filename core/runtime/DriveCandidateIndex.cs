@@ -12,11 +12,11 @@ internal sealed class DriveCandidateIndex
 
     internal DriveCandidateIndex(IEnumerable<ActionCandidate> catalog,DriveCalculator drives)
     {
-        actions=catalog.Where(action=>!action.Declaration.Get("manual_only").Flag()).ToArray();
+        actions=catalog.Where(action=>!action.Declaration.Get("manual_only").Flag()&&!action.Declaration.Get("physiology_route_only").Flag()).ToArray();
         byDrive=actions.SelectMany(action=>drives.AffectedDrives(action).Select(need=>(need,action)))
             .GroupBy(item=>item.need,StringComparer.Ordinal)
             .ToDictionary(group=>group.Key,group=>group.Select(item=>item.action).ToArray(),StringComparer.Ordinal);
-        byKnowledge=actions.SelectMany(action=>action.Gate.Inputs.Distinct().Select(key=>(key,action)))
+        byKnowledge=actions.SelectMany(action=>action.Gate.Inputs.Concat(action.Recognition.Inputs).Distinct().Select(key=>(key,action)))
             .GroupBy(item=>item.key).ToDictionary(group=>group.Key,group=>group.Select(item=>item.action).ToArray());
     }
 

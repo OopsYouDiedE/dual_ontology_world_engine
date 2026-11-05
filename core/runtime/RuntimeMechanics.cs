@@ -25,7 +25,15 @@ public sealed partial class RuntimeSession
     {
         if(!actors.TryGetValue(actor,out var client))throw new ArgumentException("Unknown observing actor.",nameof(actor));
         var witnessed=client.Evidence.Select(item=>item.Source.Get("id").Text()).Where(id=>id.Length>0).ToHashSet(StringComparer.Ordinal);
-        return mechanicHistory.Where(item=>item.Actor==actor||item.Actor=="world"&&item.Kind=="world_event"&&witnessed.Contains(item.Action)).ToArray();
+        return mechanicHistory.Where(item=>item.Actor==actor||item.Actor=="world"&&item.Kind=="world_event"&&witnessed.Contains(item.Action))
+            .Select(item=>item with {Details=ProjectMechanicDetails(item.Kind,item.Details,actor)}).ToArray();
+    }
+    public static JsonElement ProjectMechanicDetails(string kind,JsonElement details,string viewer)
+    {
+        if(kind!="suggestion"||details.ValueKind!=JsonValueKind.Object||details.Get("target").Text()==viewer)return details;
+        string[] privateFields=["score","threshold","contributions","context"];
+        return JsonSerializer.SerializeToElement(details.EnumerateObject().Where(field=>!privateFields.Contains(field.Name,StringComparer.Ordinal))
+            .ToDictionary(field=>field.Name,field=>field.Value.Clone(),StringComparer.Ordinal));
     }
     public object? LastOpinion { get; private set; }
     public object? LastIncantation { get; private set; }
@@ -74,7 +82,12 @@ public sealed partial class RuntimeSession
             foreach(var value in opinion.Get("values").Fields())_=Finite(value.Value,0,"opinion value");
             foreach(var value in opinion.Get("trust").Fields())_=Finite(value.Value,0,"opinion trust");
             foreach(var modifier in opinion.Get("modifiers").Items())
-            {_=CompactCondition(modifier.Get("when"),actor.Id);_=Finite(modifier.Get("score"),0,"opinion modifier");}
+            {
+                var speaker=modifier.Get("speaker");
+                if(speaker.ValueKind!=JsonValueKind.Undefined&&(speaker.ValueKind!=JsonValueKind.String||!actors.ContainsKey(speaker.Text())))
+                    throw new InvalidDataException("Opinion modifier speaker must identify an existing actor: "+actor.Id);
+                _=CompactCondition(modifier.Get("when"),actor.Id);_=Finite(modifier.Get("score"),0,"opinion modifier");
+            }
             foreach(var action in actor.Declaration.Get("actions").Items())
             {
                 var id=action.Get("id").Text();
@@ -227,7 +240,7 @@ public sealed partial class RuntimeSession
     {
         var magic=action.Declaration.Get("incantation");if(magic.ValueKind!=JsonValueKind.Object)return true;
         if(CompactCondition(magic.Get("requires"),actor).Evaluate(actors[actor].Recall)!=Truth.True)return false;
-        var resource=World.Read(PathKey(magic.Get("resource").Text()));
+        var resource=actors[actor].Recall(PathKey(magic.Get("resource").Text()));
         return resource is {Known:true,Conflicted:false}&&resource.Value.Number(double.NegativeInfinity)>=magic.Get("cost").Number();
     }
     private IEnumerable<FieldKey> MechanicFocus(ActionCandidate action)
@@ -240,11 +253,13 @@ public sealed partial class RuntimeSession
         {yield return PathKey(magic.Get("resource").Text());yield return PathKey(magic.Get("backlash").Get("field").Text());yield return PathKey(magic.Get("rule").Get("field").Text());}
     }
 
-    private bool EvaluateSuggestion(Decision decision,Dictionary<FieldKey,Fact> writes,List<Observation> feedback)
+    private bool EvaluateSuggestion(Decision decision,Dictionary<FieldKey,Fact> writes,List<Observation> feedback,List<FieldChange> changes)
     {
         var proposal=decision.Action.Declaration.Get("suggestion");var speaker=actors[decision.Actor];var target=actors[proposal.Get("target").Text()];
         var profile=target.Declaration.Get("opinion");var evidenceKeys=proposal.Get("evidence").Items().Select(item=>PathKey(item.Text())).Distinct().ToArray();
         var supplied=evidenceKeys.Where(key=>speaker.Recall(key) is {Known:true,Conflicted:false}).ToArray();
+        string[] EvidenceFor(FieldKey field)=>speaker.Evidence.Where(item=>item.Key==field&&speaker.Recall(field) is {Known:true} known&&
+            Values.Same(item.Value,known.Value)&&item.Time==known.ObservedAt&&item.Confidence==known.Confidence).Select(item=>item.Id).Distinct().ToArray();
         var shared=supplied.ToDictionary(key=>key,key=>speaker.Recall(key)!);
         Fact? TargetRead(FieldKey key)=>target.Recall(key)??shared.GetValueOrDefault(key);
         var contributions=new Dictionary<string,double>(StringComparer.Ordinal) {
@@ -254,21 +269,23 @@ public sealed partial class RuntimeSession
             ["risk"]=-profile.Get("risk_aversion").Number(1)*proposal.Get("risk").Number()};
         foreach(var appeal in proposal.Get("appeal").Fields())contributions["value:"+appeal.Name]=profile.Get("values").Get(appeal.Name).Number()*appeal.Value.Number();
         var reasons=new List<string>();var index=0;
-        foreach(var modifier in profile.Get("modifiers").Items())if(CompactCondition(modifier.Get("when"),target.Id).Evaluate(TargetRead)==Truth.True)
+        foreach(var modifier in profile.Get("modifiers").Items())if((modifier.Get("speaker").ValueKind==JsonValueKind.Undefined||modifier.Get("speaker").Text()==speaker.Id)&&CompactCondition(modifier.Get("when"),target.Id).Evaluate(TargetRead)==Truth.True)
         {contributions["context:"+(++index)]=modifier.Get("score").Number();reasons.Add(modifier.Get("reason").Text());}
         var threshold=profile.Get("threshold").Number(1);var score=contributions.Values.Sum();
         var missing=evidenceKeys.Except(supplied).ToArray();var accepted=missing.Length==0&&score>=threshold;
-        var details=new {actor=speaker.Id,target=target.Id,action=decision.Action.Id,accepted,score,threshold,contributions,context=reasons.ToArray(),
-            evidence=supplied.Select(key=>new {key,value=speaker.Recall(key)!.Value,source_ids=speaker.Evidence.Where(item=>item.Key==key).Select(item=>item.Id).Distinct().ToArray()}).ToArray(),missing,
+        var key=PathKey(proposal.Get("result").Text());var result=new Fact(JsonSerializer.SerializeToElement(accepted),true,false,1,ContentTime,0);
+        if(accepted)writes[key]=result;
+        else {var rejected=World.Apply(new Dictionary<FieldKey,Fact>{{key,result}});changes.AddRange(rejected);Rules.Changed(rejected);}
+        var details=new {actor=speaker.Id,target=target.Id,action=decision.Action.Id,execution=decision.Execution,accepted,score,threshold,contributions,context=reasons.ToArray(),
+            physical_field=key,world_revision=accepted?(long?)null:World.Read(key)?.Revision,
+            evidence=supplied.Select(key=>new {key,value=speaker.Recall(key)!.Value,source_ids=EvidenceFor(key)}).ToArray(),missing,
             reason=missing.Length>0?"evidence_missing":accepted?"independent_opinion_accepted":"independent_opinion_rejected"};
         LastOpinion=JsonSerializer.SerializeToElement(details);RecordMechanic(decision,"suggestion",accepted,details);
-        var key=PathKey(proposal.Get("result").Text());var result=new Fact(JsonSerializer.SerializeToElement(accepted),true,false,1,ContentTime,0);
-        if(accepted)writes[key]=result;else Rules.Changed(World.Apply(new Dictionary<FieldKey,Fact>{{key,result}}));
         var source=JsonSerializer.SerializeToElement(details);
-        feedback.Add(new("opinion/"+(++nextEvidence),key,result.Value,1,ContentTime,InformationOrigin.ActionFeedback,source));
+        feedback.Add(new("opinion/"+(++nextEvidence),key,result.Value,1,ContentTime,InformationOrigin.ActionFeedback,ProjectMechanicDetails("suggestion",source,speaker.Id)));
         SendKnowledge(target.Id,key,result.Value,source);
         foreach(var evidence in supplied)SendKnowledge(target.Id,evidence,speaker.Recall(evidence)!.Value,JsonSerializer.SerializeToElement(new {
-            actor=speaker.Id,recipient=target.Id,action=decision.Action.Id,source_ids=speaker.Evidence.Where(item=>item.Key==evidence).Select(item=>item.Id).Distinct().ToArray()}));
+            actor=speaker.Id,recipient=target.Id,action=decision.Action.Id,execution=decision.Execution,source_ids=EvidenceFor(evidence)}));
         return accepted;
     }
 
@@ -277,6 +294,7 @@ public sealed partial class RuntimeSession
         if(!MechanicEligible(decision.Actor,decision.Action))return false;
         var magic=decision.Action.Declaration.Get("incantation");var rule=magic.Get("rule");
         var resource=PathKey(magic.Get("resource").Text());var backlash=PathKey(magic.Get("backlash").Get("field").Text());var target=PathKey(rule.Get("field").Text());
+        if(World.Read(resource) is not {Known:true,Conflicted:false} available||available.Value.Number(double.NegativeInfinity)<magic.Get("cost").Number())return false;
         var before=World.Read(target)!;var previous=incantationLeases.TryGetValue(target,out var active)?active.Before:before;
         var cost=magic.Get("cost").Number();var harm=magic.Get("backlash").Get("amount").Number();
         var expires=ContentTime+rule.Get("duration_minutes").Number();var applied=rule.Get("value").Clone();
@@ -286,7 +304,7 @@ public sealed partial class RuntimeSession
         writes[target]=new(applied,true,false,1,ContentTime,0);
         var witnesses=magic.Get("witnesses").Items().Select(item=>item.Text()).Append(decision.Actor).Distinct().ToArray();
         incantationLeases[target]=new(target,previous,applied,expires,decision.Actor,decision.Action.Id,witnesses);
-        var details=new {actor=decision.Actor,action=decision.Action.Id,formula=magic.Get("formula").Text(),cost,resource,resource_remaining=writes[resource].Value,
+        var details=new {actor=decision.Actor,action=decision.Action.Id,execution=decision.Execution,formula=magic.Get("formula").Text(),cost,resource,resource_remaining=writes[resource].Value,
             backlash=new {field=backlash,amount=harm,total=writes[backlash].Value},rule=new {field=target,before=before.Value,value=applied},expires,knowledge_revision=actors[decision.Actor].KnowledgeRevision};
         LastIncantation=JsonSerializer.SerializeToElement(details);RecordMechanic(decision,"incantation",true,details);
         var source=JsonSerializer.SerializeToElement(details);

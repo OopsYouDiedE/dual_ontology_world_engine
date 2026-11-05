@@ -1,0 +1,48 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/5b7e1ee4dbcf5917eb2da386fba3f29b8f70eaec837dbb2fd9208a84297f2fa4.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/fd7074059d2bace7ddb299ca5de52c517ac5c1206ea2efd89de6c3a247baff64.glb" id="2_model"]
+
+[node name="bench_7cdd9fa31a5b" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "bench_7cdd9fa31a5b"
+component_kind = "bench"
+interactive = true
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "furniture"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"depth\":0.6,\"height\":1.02,\"material_theme\":\"walnut\",\"seat_height\":0.46,\"width\":1.55}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]
+
+[node name="Front" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(-1, 0, -8.74227766e-08, 0, 1, 0, 8.74227766e-08, 0, -1, 0, 0, 0.729000092)
+metadata/pose = "stand"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"
+
+[node name="Back" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.729000032)
+metadata/pose = "stand"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.01999998, 2.98023224e-08)
+metadata/pose = "contact"
+metadata/clearance_radius_m = 0
+metadata/availability = "host_validation_required"
+
+[node name="Seat" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.460000008, 0)
+metadata/pose = "sit"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"

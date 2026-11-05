@@ -131,6 +131,7 @@ public sealed class DriveCalculator
             .Where(effect=>effect.Value.Number()>0).Select(effect=>effect.Name)
             .Concat(ActionWeight(action).Get("scale").Number()>0?[ActionWeight(action).Get("need").Text()]:[])
             .Where(name=>name.Length>0).Distinct(StringComparer.Ordinal);
+    internal double CompletedEffect(ActionCandidate action,string need)=>Effects(action,"completed_need_effects","completed_action_effects").Get(need).Number();
 
     internal void Validate(ActionCandidate action)
     {

@@ -14,6 +14,7 @@ import time
 import urllib.request
 import uuid
 import zipfile
+import asset_bundle
 
 ROOT = Path(__file__).resolve().parents[2]
 LOCAL = ROOT / ".runtime"
@@ -220,6 +221,7 @@ def prepare(local_copy=False, with_blender=False):
                   "python": sys.executable, "python_version": platform.python_version(), "actions": actions}
         if with_blender:
             result["blender"] = prepare_blender()
+        result["campaign_assets"] = asset_bundle.ensure()
         LOCAL.mkdir(exist_ok=True)
         (LOCAL / "environment.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
         return result

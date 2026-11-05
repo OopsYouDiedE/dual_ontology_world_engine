@@ -50,6 +50,11 @@ def environment(parent):
         directory.mkdir(parents=True)
         # TCP loopback also works in containers that do not expose Unix sockets.
         for number in range(90, 190):
+            # Display locks are shared across process/network namespaces. A free
+            # TCP port does not imply an available X display, especially after
+            # an interrupted host; leave foreign or stale locks untouched.
+            if Path(f"/tmp/.X{number}-lock").exists() or Path(f"/tmp/.X11-unix/X{number}").exists():
+                continue
             with socket.socket() as reservation:
                 try:
                     reservation.bind(("127.0.0.1", 6000 + number))

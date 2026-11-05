@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/9de84cc74337525bbbd06625a5e04a624f542eb0c9a9806989e3643805bb0d62.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/39b9d53fa4492d48c0dea93b934147661038912e77351487fb90a92a47305810.glb" id="2_model"]
+
+[node name="cloth_rack_5b06e249f05a" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "cloth_rack_5b06e249f05a"
+component_kind = "cloth_rack"
+interactive = false
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"height\":1.5,\"material_theme\":\"walnut\",\"width\":0.65}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

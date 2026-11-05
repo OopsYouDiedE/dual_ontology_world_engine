@@ -35,15 +35,18 @@ internal static class CampaignScenario
         return Copy(node);
     }
 
-    static void Append(JsonObject target, string key, JsonNode? source)
+    static void Append(JsonObject target, string key, JsonNode? source, bool unique = false)
     {
         target[key] ??= new JsonArray();
-        foreach (var item in List(source)) target[key]!.AsArray().Add(Copy(item));
+        foreach (var item in List(source))
+            if (!unique || !target[key]!.AsArray().Any(prior => JsonNode.DeepEquals(prior, item)))
+                target[key]!.AsArray().Add(Copy(item));
     }
 
     public static JsonElement Expand(JsonElement manifest, Func<string, string> read)
     {
-        if (manifest.Get("campaign").ValueKind != JsonValueKind.Array) return CompactScenario.Expand(manifest);
+        var shared = SharedScenario.Read(manifest, read);
+        if (manifest.Get("campaign").ValueKind != JsonValueKind.Array) return CompactScenario.Expand(SharedScenario.Apply(manifest, shared));
         JsonObject? combined = null;
         var previousSleep = new Dictionary<string, string>();
         var dayNumber = 0;
@@ -53,6 +56,7 @@ internal static class CampaignScenario
             var source = read(day.Get("source").Text());
             var raw = DvDocument.Parse(source).Definition("data", "runtime.character_session").GetProperty("value");
             if (raw.Get("campaign").ValueKind != JsonValueKind.Undefined) throw new InvalidDataException("Nested campaigns are not supported.");
+            raw = SharedScenario.Apply(raw, shared,dayNumber);
             var expanded = JsonNode.Parse(CompactScenario.Expand(raw).GetRawText())!.AsObject();
             var names = new Dictionary<string, string>(StringComparer.Ordinal);
             if (dayNumber > 1)
@@ -128,6 +132,15 @@ internal static class CampaignScenario
                     var existing = List(combined["actors"]).Single(a => Text(a!["id"]) == Text(actor!["id"]))!.AsObject();
                     Append(existing, "actions", actor!["actions"]);
                     Append(existing, "perceptions", actor["perceptions"]);
+                    if(actor["goal_planning"] is JsonObject laterGoals)
+                    {
+                        if(existing["goal_planning"] is not JsonObject goals)existing["goal_planning"]=Copy(laterGoals);
+                        else
+                        {
+                            Append(goals,"goals",laterGoals["goals"],true);
+                            AddMissing(goals,laterGoals);
+                        }
+                    }
                     // Later day's moodlets become available, but must not rewrite the opening day's scoring.
                     AddMissing(Map(existing["autonomy"]!["buff_definitions"]), Map(actor["autonomy"]!["buff_definitions"]));
                     AddMissing(Map(existing["mind"]!["adoptions"]), Map(actor["mind"]!["adoptions"]));
@@ -140,7 +153,7 @@ internal static class CampaignScenario
                     }
                 }
                 foreach (var key in new[] { "room_labels", "fact_labels" }) AddMissing(Map(combined[key]), Map(expanded[key]));
-                foreach (var key in new[] { "expectations", "knowledge_boundaries", "world_events", "world_processes", "deductions", "strategy_activities", "objective_accumulators", "presence_groups" }) Append(combined, key, expanded[key]);
+                foreach (var key in new[] { "expectations", "knowledge_boundaries", "world_events", "world_processes", "deductions", "strategy_activities", "objective_accumulators", "presence_groups" }) Append(combined, key, expanded[key], true);
                 foreach (var key in new[] { "fixtures", "slots" })
                     foreach (var item in List(expanded[key]))
                         if (!List(combined[key]).Any(old => Text(old!["id"]) == Text(item!["id"]))) combined[key]!.AsArray().Add(Copy(item));
@@ -155,6 +168,25 @@ internal static class CampaignScenario
         combined["bindings"] = bindings;
         combined["campaign"] = JsonNode.Parse(manifest.Get("campaign").GetRawText());
         foreach (var property in manifest.EnumerateObject().Where(p => p.Name != "campaign")) combined[property.Name] = JsonNode.Parse(property.Value.GetRawText());
+        if(manifest.Get("planning").Get("source").Text() is {Length:>0} planningSource)
+        {
+            var planning=DvDocument.Parse(read(planningSource)).Definition("data",manifest.Get("planning").Get("definition").Text("runtime.character_planning")).GetProperty("value");
+            var applied=new HashSet<string>(StringComparer.Ordinal);
+            foreach(var actor in planning.Get("actors").Items())
+            {
+                var id=actor.Get("id").Text();
+                var owner=List(combined["actors"]).SingleOrDefault(a=>Text(a!["id"])==id)?.AsObject();
+                if(owner is null||!applied.Add(id)||actor.Get("planning").ValueKind!=JsonValueKind.Object)
+                    throw new InvalidDataException("Planning source references a missing or duplicate actor.");
+                if(owner["planning"] is not null)throw new InvalidDataException("Actor planning has more than one source: "+id);
+                owner["planning"]=CompactScenario.ExpandPlanning(JsonNode.Parse(actor.Get("planning").GetRawText())!);
+            }
+        }
+        var autonomyPhase=manifest.Get("autonomy_phase");
+        if(autonomyPhase.ValueKind==JsonValueKind.Object&&autonomyPhase.Get("task_guidance").ValueKind==JsonValueKind.False)
+            foreach(var actor in List(combined["actors"]))
+                if(actor!["planning"] is JsonObject planning)
+                    planning["task_guidance_until_game_minutes"]=autonomyPhase.Get("start_minutes").Number();
         return JsonSerializer.SerializeToElement(combined);
     }
 }

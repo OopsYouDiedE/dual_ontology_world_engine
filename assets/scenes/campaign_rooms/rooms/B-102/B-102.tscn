@@ -1,0 +1,126 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/rooms/B-102/B-102.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/7733e49a8bf10eb8f1c223f848ade4a455024feb209b4c23d7e7b1afafaaf879.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/cc9217259ea18add4eab91c1dd74c7eda1cb017c21092f5b5a2c7309a918f611.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/f62871ef49dcafe8ef6c250a29cea18599963c34fa414da93da2d38835266156.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/3b382097c501deeb00c714623912844c84832b4aec903ab025023d7b0b2d1367.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/bf2ca0293d38855bbc0cc01e86006b2f301ea9c923a10a3e1214989e9e95187b.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/93b9f605d40d4bb81091c9e5764f90008b4a552d45fef0c5a9eb21e983b2bfd8.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/c19be7d64586dc5c5892cc662dc7894ed302b7c8ea4a84ae9341fc15b3c8b1c9.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/87bf98ce0f7671eda310753155a7d991b75acc34f1d27c82386e25da080752b8.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/7a2e13141d0b0fb5d2ee30d5b35f58616e8a132adf15810c435f009238ef12b3.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/d9a62894f4b19385246d33539d7ab7f2d1c47d83c8bdb465d1eff9be667d80b4.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/f1ea343a5255174d4f5550dc6f2e05d2441993afffbb4021eaee36181f2ef45c.tscn" id="12_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/d22795e9dd0239a5f5e2755d54bf1826ac129f9c475c1abb92fc1c0f2ad0978c.tscn" id="13_prefab"]
+[ext_resource type="FontFile" path="res://assets/external/NotoSansSC/NotoSansSC[wght].ttf" id="label_font"]
+
+[node name="B-102" type="Node3D"]
+script = ExtResource("1_script")
+metadata/room_id = "B-102"
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+metadata/core_binding = "campaign.rooms"
+metadata/composition_source = "res://tools/building/designs/courtyard_prototype_rooms.json"
+metadata/adaptation = "四院用途专属的室内原型。复用已发布的 R13 建筑壳体及原尺度家具重新布置；不声称复刻原拓扑平面尺寸。地图和楼层使用 campus-r3 的真实房间记录。所有规则、证据和人物行动由 DV/Core 决定。"
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="B102_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+position = Vector3(0, 0, 0)
+instance_id = "B102_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="B102_Door_00" parent="Instances" instance=ExtResource("3_prefab")]
+position = Vector3(2.85, 0, -6.7)
+instance_id = "B102_Door_00"
+entity_id = ""
+portal_id = "D-B-102"
+
+[node name="B102_window_01" parent="Instances" instance=ExtResource("4_prefab")]
+position = Vector3(-3.9, 0.95, -2.5)
+rotation = Vector3(0, -1.570796327, 0)
+instance_id = "B102_window_01"
+entity_id = ""
+portal_id = ""
+
+[node name="B102_wall_lantern_01" parent="Instances" instance=ExtResource("5_prefab")]
+position = Vector3(1.7, 2.5, -6.51)
+instance_id = "B102_wall_lantern_01"
+entity_id = ""
+portal_id = ""
+
+[node name="B102_wall_lantern_02" parent="Instances" instance=ExtResource("5_prefab")]
+position = Vector3(-3.71, 2.5, -4.4)
+rotation = Vector3(0, 1.570796327, 0)
+instance_id = "B102_wall_lantern_02"
+entity_id = ""
+portal_id = ""
+
+[node name="B102_cabinet" parent="Instances" instance=ExtResource("6_prefab")]
+position = Vector3(-0.7, 0, -3.15)
+instance_id = "B102_cabinet"
+entity_id = "B102.cabinet"
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,1.2525,0.038409],\"size\":[1.72,2.505,0.626818]}]"
+static_collision = "none"
+
+[node name="B102_clean_table" parent="Instances" instance=ExtResource("7_prefab")]
+position = Vector3(1.65, 0, -4.5)
+instance_id = "B102_clean_table"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.395,0.0],\"size\":[1.75,0.79,1.0]}]"
+static_collision = "none"
+
+[node name="B102_preparation_bottles" parent="Instances" instance=ExtResource("8_prefab")]
+position = Vector3(1.35, 0.795, -4.45)
+instance_id = "B102_preparation_bottles"
+entity_id = ""
+portal_id = ""
+
+[node name="B102_preparation_book" parent="Instances" instance=ExtResource("9_prefab")]
+position = Vector3(2.08, 0.795, -4.45)
+instance_id = "B102_preparation_book"
+entity_id = ""
+portal_id = ""
+
+[node name="B102_clean_lamp" parent="Instances" instance=ExtResource("10_prefab")]
+position = Vector3(1.65, 0.795, -4.75)
+instance_id = "B102_clean_lamp"
+entity_id = ""
+portal_id = ""
+
+[node name="B102_wash_table" parent="Instances" instance=ExtResource("11_prefab")]
+position = Vector3(-3.18, 0, -4.35)
+rotation = Vector3(0, 1.570796327, 0)
+instance_id = "B102_wash_table"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,1.02,0.0409089],\"size\":[1.09,2.0400001,0.7318178]}]"
+static_collision = "none"
+
+[node name="B102_bottle_rack" parent="Instances" instance=ExtResource("12_prefab")]
+position = Vector3(-1.7, 1.35, -6.4)
+instance_id = "B102_bottle_rack"
+entity_id = ""
+portal_id = ""
+
+[node name="B102_supply_chest" parent="Instances" instance=ExtResource("13_prefab")]
+position = Vector3(-1.65, 0, -5.95)
+instance_id = "B102_supply_chest"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.2865,0.014],\"size\":[1.235,0.573,0.6629999]}]"
+static_collision = "none"
+
+[node name="RoomPlaque" type="Label3D" parent="."]
+position = Vector3(-0.25, 2.85, -6.49)
+pixel_size = 0.005
+font = ExtResource("label_font")
+font_size = 44
+outline_size = 6
+modulate = Color(0.92, 0.88, 0.77, 1)
+outline_modulate = Color(0.13, 0.11, 0.09, 1)
+text = "白塔院 · 配药清洁制备室"

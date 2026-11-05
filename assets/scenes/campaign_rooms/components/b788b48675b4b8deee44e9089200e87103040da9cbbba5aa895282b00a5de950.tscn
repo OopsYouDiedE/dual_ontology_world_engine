@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/b788b48675b4b8deee44e9089200e87103040da9cbbba5aa895282b00a5de950.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/d303d1fee7b2aca8326d33837aaff1e6c0adda65a544d1eba4c3f2d300c4c13a.glb" id="2_model"]
+
+[node name="pendant_lamp_92a5e1c9afe1" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "pendant_lamp_92a5e1c9afe1"
+component_kind = "pendant_lamp"
+interactive = false
+shadowless_nodes = PackedStringArray("Bulb")
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"drop\":0.75,\"light_energy\":40,\"material_theme\":\"walnut\",\"radius\":0.34}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

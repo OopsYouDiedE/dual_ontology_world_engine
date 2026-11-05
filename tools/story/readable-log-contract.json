@@ -1,0 +1,63 @@
+{
+  "schema": "readable-event-log-v1",
+  "language": "zh-CN",
+  "authority": "只派生正式回执；机器原记录保留原路径与字节，不用文学叙述补齐缺失事件。",
+  "viewer": "会话 viewer；缺省 detective",
+  "entry": {
+    "time": "真实游戏分钟，另显示第几日与时分",
+    "actor_name": "本人或真实通信来源的人物姓名",
+    "kind": [
+      "action",
+      "evidence",
+      "deduction",
+      "opinion",
+      "incantation",
+      "world_event",
+      "routine"
+    ],
+    "label": "正式行动标签或实际认知更新的可读内容",
+    "outcome": "已完成、证据不足、建议未获采纳、规则生效或实际到期",
+    "source_count": "本卡对应原始条数",
+    "source_refs": "原文件名与 receipt_index/evidence_id/execution；详情可追溯",
+    "details": "原有公开证据、证明、代价与来源；默认收起，不加入隐藏候选、其他人物内心或未知事实"
+  },
+  "visibility": [
+    "本人行动回执及本人实际获得的认知可以呈现。",
+    "同房 NPC 只展示宿主已经公开的观察标签；不能从作者完整行动日志重建或公开 NPC 暗谋、打分和内部推演。",
+    "他人报告明确标为转述，并保留实际报告者与来源；不改称亲见。",
+    "缺证推演不显示未知线索原文；只列本人所选且已经观察到的证据，以及证据不足这一结果。",
+    "言灵代价、反噬与规则到期只依据本人回执或感知，不因世界私有事件存在而自动展示。"
+  ],
+  "grouping": [
+    "按真实天数与时间排序。",
+    "同日、同来源的重复可以折叠，但保留原始条数和追溯引用；跨日不合并。",
+    "清洗、饮水、歇息等重复生活记录可单独折叠；关键证据、拒绝、风险变化和首次机制结果默认可见。",
+    "通信、感知和认知更新是零分钟记录，不把处理间隔写成讲话或推演时长。",
+    "自主阶段的重复取水、搬运、做饭与歇息可折叠，首次资源短缺、实际替代、意见拒绝与真实交接保留可读条目；不能将同一组声明拼成涌现故事。"
+  ],
+  "coverage": {
+    "required": [
+      "action_rows",
+      "state_rows",
+      "shown_viewer_entries",
+      "excluded_incomplete_blocks",
+      "source_time_ranges",
+      "source_sha256"
+    ],
+    "rule": "明确原始记录覆盖范围。行动文件缺尾时不把状态记录补写为已完成行动，也不把未记录视为未发生。可读日志本身不颁发五日验收结论。"
+  },
+  "causal_review": {
+    "visibility": "完整自主决策候选与其他人物认知只进入开发用私有因果审计，普通玩家日志仍遵守本人可见范围。",
+    "required": [
+      "actual_execution",
+      "actor",
+      "game_minutes",
+      "chosen_action",
+      "legal_alternatives",
+      "need_costs",
+      "before_after_resource_values",
+      "knowledge_sources"
+    ],
+    "verdict": "观察窗结束不自动授予涌现结论；缺失因果或来源时明确写无法确认。"
+  }
+}

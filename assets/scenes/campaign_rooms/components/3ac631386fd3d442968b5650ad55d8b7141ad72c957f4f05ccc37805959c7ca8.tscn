@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/3ac631386fd3d442968b5650ad55d8b7141ad72c957f4f05ccc37805959c7ca8.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/e804451cfce6f17278ea1a16b1f0af8716e066888abd593442c989e96703375d.glb" id="2_model"]
+
+[node name="caged_lamp_6cffd7823a3e" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "caged_lamp_6cffd7823a3e"
+component_kind = "caged_lamp"
+interactive = false
+shadowless_nodes = PackedStringArray("Glow")
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"height\":0.52,\"light_energy\":23,\"material_theme\":\"warm\"}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

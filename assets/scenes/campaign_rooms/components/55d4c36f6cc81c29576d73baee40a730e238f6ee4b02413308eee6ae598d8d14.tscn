@@ -1,0 +1,48 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/55d4c36f6cc81c29576d73baee40a730e238f6ee4b02413308eee6ae598d8d14.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/3801c26d2c694d277cad19d1099377814a4abd1604e50ff46836506ff914ef91.glb" id="2_model"]
+
+[node name="table_409baf614503" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "table_409baf614503"
+component_kind = "table"
+interactive = true
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[{\"name\":\"TableTop\",\"parent_node\":\"\",\"position\":[0.0,0.7400000095367432,0.0],\"size\":[2.3,0.08,0.75]}]"
+static_collision = "none"
+metadata/world_category = "furniture"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"depth\":0.75,\"height\":0.78,\"material_theme\":\"walnut\",\"shape\":\"rect\",\"width\":2.3}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]
+
+[node name="Front" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(-1, 0, -8.74227766e-08, 0, 1, 0, 8.74227766e-08, 0, -1, 0, 0, 0.824999988)
+metadata/pose = "stand"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"
+
+[node name="Back" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.824999988)
+metadata/pose = "stand"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.780000031, 0)
+metadata/pose = "contact"
+metadata/clearance_radius_m = 0
+metadata/availability = "host_validation_required"
+
+[node name="Surface" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.779999971, 0)
+metadata/pose = "surface"
+metadata/clearance_radius_m = 0
+metadata/availability = "host_validation_required"

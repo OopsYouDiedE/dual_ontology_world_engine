@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/43d39bda9b01f27bd5923f1a1bb06933487f31f57c08121afecb6f0b45ceafad.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/663e1a0c7d984d040ab84efe81b8af8d19d6931a86b40e9deb8ec90143c6a913.glb" id="2_model"]
+
+[node name="planter_e14edc301a7f" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "planter_e14edc301a7f"
+component_kind = "planter"
+interactive = false
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"flower_count\":6,\"height\":0.88,\"material_theme\":\"walnut\",\"seed\":7,\"width\":0.7}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

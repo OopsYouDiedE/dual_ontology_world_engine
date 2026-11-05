@@ -1,0 +1,48 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/b3fb997aac529769c56965dd0af0e8a2aed2c8899903aae9e746b249c4abcc29.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/7059e38dfa6a93c728ba18be33f673fe072665fefa5c74446678a40eff1a476b.glb" id="2_model"]
+
+[node name="chair_a1c414f9d029" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "chair_a1c414f9d029"
+component_kind = "chair"
+interactive = true
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[{\"name\":\"Seat\",\"parent_node\":\"\",\"position\":[0.0,0.41999998688697815,0.0],\"size\":[0.56,0.08,0.56]}]"
+static_collision = "none"
+metadata/world_category = "furniture"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"arms\":false,\"depth\":0.56,\"height\":1.02,\"material_theme\":\"walnut\",\"seat_height\":0.46,\"width\":0.56}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]
+
+[node name="Front" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(-1, 0, -8.74227766e-08, 0, 1, 0, 8.74227766e-08, 0, -1, 0, 0, 0.718800008)
+metadata/pose = "stand"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"
+
+[node name="Back" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.718800008)
+metadata/pose = "stand"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.01999998, 0)
+metadata/pose = "contact"
+metadata/clearance_radius_m = 0
+metadata/availability = "host_validation_required"
+
+[node name="Seat" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.460000008, 0)
+metadata/pose = "sit"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"

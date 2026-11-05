@@ -49,9 +49,9 @@ def persist_report(report):
     # The JSON MCP result stays machine readable; disk keeps only the small
     # start/end cut. Full screens, plans and performance snapshots are omitted.
     keys = ("run_id", "backend", "seed", "viewer", "status", "detail", "deadline",
-            "created_epoch", "started_epoch", "finished_epoch", "host_stopped",
-            "content", "initial_state", "final_state", "final_state_source",
-            "observations", "completed_actions", "flushed_execution_receipts",
+            "created_epoch", "started_epoch", "finished_epoch", "host_stopped", "graceful_exit",
+            "content", "initial_state", "final_state", "final_state_source", "audit_persistence",
+            "observations", "completed_actions", "total_action_receipts", "recoverable_cancellations", "rejected_action_receipts", "blocked_action_attempts", "unexpected_action_failures", "flushed_execution_receipts",
             "in_budget_execution_receipts", "out_of_budget_execution_receipts",
             "receipt_outcomes", "receipt_categories", "progress", "receipt_path", "transcript_path", "detail_log_path", "receipt_read_detail", "last_fault_attempt", "close_error", "coverage", "performance")
     value = {"format": "dv-cli-story-v1", "controller": "engine-ai", "execution": "formal-model",
@@ -165,7 +165,17 @@ def run(spec, report):
         report["observation"] = observation
         report["observations"] += 1
         if spec["backend"] == "cli":
-            report["completed_actions"] += int(observation.get("completed", 0))
+            report["audit_persistence"] = observation.get("audit_persistence")
+            totals = observation.get("receipt_totals")
+            if isinstance(totals, dict):
+                report["completed_actions"] = int(totals["successful"])
+                report["total_action_receipts"] = int(totals["total"])
+                report["recoverable_cancellations"] = int(totals["recoverable_cancellations"])
+                report["rejected_action_receipts"] = int(totals["rejected"])
+                report["blocked_action_attempts"] = int(totals.get("blocked",0))
+                report["unexpected_action_failures"] = int(totals["unexpected_failures"])
+            else:
+                report["completed_actions"] += int(observation.get("completed", 0))
             report["transcript_path"] = observation.get("transcript_path")
             report["detail_log_path"] = observation.get("detail_log_path")
             state = observation.get("runtime", observation.get("status", {}))
@@ -179,6 +189,15 @@ def run(spec, report):
                 report["performance"] = dict(observation["performance"],
                                              state_version=observation.get("version"),
                                              receipts_flushed=observation.get("receipts_flushed"))
+        else:
+            audit = (observation.get("state") or {}).get("audit_status") or {}
+            if "successful_count" in audit:
+                report["completed_actions"] = int(audit["successful_count"])
+                report["total_action_receipts"] = int(audit["receipt_count"])
+                report["recoverable_cancellations"] = int(audit["recoverable_cancellations"])
+                report["rejected_action_receipts"] = int(audit["rejected_count"])
+                report["blocked_action_attempts"] = int(audit.get("blocked_attempt_count",0))
+                report["unexpected_action_failures"] = int(audit["unexpected_failure_count"])
         report["updated_epoch"] = time.time()
         persist_report(report)
 
@@ -232,8 +251,15 @@ def run(spec, report):
     finally:
         if timer: timer.cancel()
         if endpoint:
+            report["graceful_exit"] = False
             if time.monotonic() < deadline and not endpoint.closed:
-                try: endpoint.request({"type": "close"}, timeout=5)
+                try:
+                    # The close reply precedes Godot's tree teardown. Reuse the
+                    # formal input lifecycle, which waits for the real process
+                    # exit before releasing it, so its audit footer can flush.
+                    identity = next(key for key, value in runtime.SESSIONS.items() if value is endpoint)
+                    closed = runtime.execute("close", {"session_id": identity})
+                    report["graceful_exit"] = closed.get("graceful_exit", False)
                 except Exception as error: report["close_error"] = str(error)
             endpoint.stop()
             if spec["backend"] != "cli": report["host_log"] = list(endpoint.logs)

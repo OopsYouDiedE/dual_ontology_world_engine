@@ -68,6 +68,8 @@ public sealed class SlotReservations
         }
         return true;
     }
+    public string[] Blocked(string actor,IEnumerable<string> resources)=>resources.Distinct(StringComparer.Ordinal)
+        .Where(id=>!slots[id].Actors.ContainsKey(actor)&&slots[id].Actors.Count>=slots[id].Capacity).ToArray();
 
     public void Release(ReservationOwner owner)
     {

@@ -1,0 +1,151 @@
+[gd_scene load_steps=20 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/rooms/living_hall/living_hall.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/5d46bd49293e16d94a2679f1a73a7ceb12534939abde14dbc39264fec90600f5.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/1f48cae9eaaf5f725afbe8fef4e3c65f576dbc4c7c5f7d2da62bac405cd997ef.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/0354e1875e8466c2a79470c9a6664f5b5deb140843f0a3d258302064573545ff.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/c1fae75970f8b7a0d99618b71c2f1e4ee138e4777bbb7fedeb68b6c7c5a75fe6.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/1b7c67fa02f56498da915b2f6d049978a2f6dcead08b0d7ec9e79f73b7e682d1.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/ac760f76af97a2cb34db2731166dd167758a7af84acce7326b7b2ff010ccb5ad.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/b9db7812a6d7d096d627cfbd34277d7e2195a3aef4d9b99f09aded2d029f907d.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/47a67ebbe44a4882c069fc472860273f16db6788d036d19d232a65a576f8d0d1.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/3c762f6862ee0385fdd5a95fd2f7cb822b019353d385350348bb3ccdc617b3d9.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/bcb99af6798cc92408c72af3a86a8d0ef1b8958dc615b0ad79ded09d1480dd66.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/073f42e67a010e3667bb9b9923bb7fcb1bd0e382ad50d7778e5b49f0848d3c95.tscn" id="12_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/a6cc4c3e71513672591860b32046e37af305f0e398bc43c773587101303768cd.tscn" id="13_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/02e0d09afe30f873f20d0968cbc9c9ba55a0dd8caa9881823094da6bc72c04d3.tscn" id="14_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/954322645cbe1766b79ccaa6dc48fbdf8823e3ae1b23ba5dd368a0a4e76180f9.tscn" id="15_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/43d39bda9b01f27bd5923f1a1bb06933487f31f57c08121afecb6f0b45ceafad.tscn" id="16_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/919ba408003c63fb90d3d59d7f89013b99d85f93715184b4e687aefd016eff65.tscn" id="17_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/431c072f4a520d8b7826a11a8a4f52684ca8be739bf48bdf3f13bf13f9650384.tscn" id="18_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/23a21fc2a4528835377abbfeded1edae65c11f4447a491e8b670b31790bc75f3.tscn" id="19_prefab"]
+
+[node name="living_hall" type="Node3D"]
+script = ExtResource("1_script")
+metadata/room_id = "living_hall"
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+metadata/core_binding = "campaign.rooms"
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="living_hall_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "living_hall_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "living_hall_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="living_hall_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.4000001, 0, -8)
+instance_id = "living_hall_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_Door_01" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5999999, 0, -8)
+instance_id = "living_hall_Door_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_window_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -5, 1, -3.20000005)
+instance_id = "living_hall_window_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_record_station_01" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -7.51999998)
+instance_id = "living_hall_record_station_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_record_station_02" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -7.51999998)
+instance_id = "living_hall_record_station_02"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_record_station_03" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -7.51999998)
+instance_id = "living_hall_record_station_03"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_records_pillar_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -3.68000007)
+instance_id = "living_hall_records_pillar_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_lectern_01" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.6500001)
+instance_id = "living_hall_lectern_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_bench_01" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -4.30000019, 0, -3.20000005)
+instance_id = "living_hall_bench_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_bench_02" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, 1, 0, 1, 0, -1, 0, -4.37113883e-08, 4.30000019, 0, -3.20000005)
+instance_id = "living_hall_bench_02"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_table_01" parent="Instances" instance=ExtResource("12_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9000001, 0, -5.76000023)
+instance_id = "living_hall_table_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_chair_01" parent="Instances" instance=ExtResource("13_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -2.9000001, 0, -4.65999985)
+instance_id = "living_hall_chair_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_banker_lamp_01" parent="Instances" instance=ExtResource("14_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.3499999, 0.800000012, -5.76000023)
+instance_id = "living_hall_banker_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_open_book_01" parent="Instances" instance=ExtResource("15_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.75, 0.800000012, -5.65999985)
+instance_id = "living_hall_open_book_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_planter_01" parent="Instances" instance=ExtResource("16_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 0, -5.84000015)
+instance_id = "living_hall_planter_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_chandelier_01" parent="Instances" instance=ExtResource("17_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.25, -3.83999991)
+instance_id = "living_hall_chandelier_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_chalkboard_01" parent="Instances" instance=ExtResource("18_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.11999989, -7.82000017)
+instance_id = "living_hall_chalkboard_01"
+entity_id = ""
+portal_id = ""
+
+[node name="living_hall_painting_01" parent="Instances" instance=ExtResource("19_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -4.84000015, 1.79999995, -5.84000015)
+instance_id = "living_hall_painting_01"
+entity_id = ""
+portal_id = ""

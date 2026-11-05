@@ -1,0 +1,122 @@
+{
+  "schema": "campaign-room-composition-v1",
+  "source_topology": "res://tools/building/designs/campus-r3.json",
+  "source_publication": "res://assets/scenes/campaign_rooms/publication.json",
+  "source_architecture": "res://assets/scenes/campaign_rooms/rooms/R13/R13.tscn",
+  "adaptation": "四院用途专属的室内原型。复用已发布的 R13 建筑壳体及原尺度家具重新布置；不声称复刻原拓扑平面尺寸。地图和楼层使用 campus-r3 的真实房间记录。所有规则、证据和人物行动由 DV/Core 决定。",
+  "width": 7.8,
+  "depth": 6.7,
+  "wall_inset": 0.18,
+  "spawn": [0.9, 0, -0.95],
+  "preflight": {"actor_radius": 0.23, "extra_clearance": 0.07, "grid_step": 0.08},
+  "font": "res://assets/external/NotoSansSC/NotoSansSC[wght].ttf",
+  "assets": {
+    "architecture": "7733e49a8bf10eb8f1c223f848ade4a455024feb209b4c23d7e7b1afafaaf879",
+    "door": "cc9217259ea18add4eab91c1dd74c7eda1cb017c21092f5b5a2c7309a918f611",
+    "window": "f62871ef49dcafe8ef6c250a29cea18599963c34fa414da93da2d38835266156",
+    "wall_lantern": "3b382097c501deeb00c714623912844c84832b4aec903ab025023d7b0b2d1367",
+    "table": "93b9f605d40d4bb81091c9e5764f90008b4a552d45fef0c5a9eb21e983b2bfd8",
+    "bookshelf": "5aff55230c3c5176d7955196d8f9b425f57940254cb5f4c881b7607762b46600",
+    "empty_shelf": "31d2752593fe330560ba728115598ebfbdd9c6d268e0819996d09ebd75af7221",
+    "open_book": "954322645cbe1766b79ccaa6dc48fbdf8823e3ae1b23ba5dd368a0a4e76180f9",
+    "small_book": "87bf98ce0f7671eda310753155a7d991b75acc34f1d27c82386e25da080752b8",
+    "banker_lamp": "7a2e13141d0b0fb5d2ee30d5b35f58616e8a132adf15810c435f009238ef12b3",
+    "medicine_cabinet": "bf2ca0293d38855bbc0cc01e86006b2f301ea9c923a10a3e1214989e9e95187b",
+    "wash_table": "d9a62894f4b19385246d33539d7ab7f2d1c47d83c8bdb465d1eff9be667d80b4",
+    "bottle_rack": "f1ea343a5255174d4f5550dc6f2e05d2441993afffbb4021eaee36181f2ef45c",
+    "bottles": "c19be7d64586dc5c5892cc662dc7894ed302b7c8ea4a84ae9341fc15b3c8b1c9",
+    "service_chest": "d22795e9dd0239a5f5e2755d54bf1826ac129f9c475c1abb92fc1c0f2ad0978c",
+    "maintenance_crate": "61d62e7fafc2472a458fb8de230c75b7cc978cecb8eb9d4037ac1e436a35588d",
+    "maintenance_cabinet": "8c1d515b8dfe10c24146d427820ee4c6e1628bf1dd07b65279cac995b0542a52",
+    "interlock_handle": "7716abf10e883a12d6aa4d50010cfa02f8ddb0ec79f14b30c249af9a9bc342bb",
+    "control_console": "05eccb5ce2d488640e807d8b50aa4db9bee59a7e1a32bd6a1ac75438c18bd280",
+    "platform_scale": "71559af2c546c19211b13ce9e118f7c2e350d7c04dffa601b73ba5a5ac7e813d",
+    "indicator_board": "408949c39462f3a248bd0eda938b039593e6e5c99eeae442a17f66fdce373b5c",
+    "schematic": "d4d9c4ed4550e8d43e619c92a93a0a6436a2cd3e2b1192d51c3cfad1a6092f4d"
+  },
+  "common_instances": [
+    {"id": "{code}_architecture", "asset": "architecture", "position": [0, 0, 0]},
+    {"id": "{code}_Door_00", "asset": "door", "position": [2.85, 0, -6.7], "portal": "D-{room}", "check_slots": ["Front"]},
+    {"id": "{code}_window_01", "asset": "window", "position": [-3.9, 0.95, -2.5], "yaw": -90},
+    {"id": "{code}_wall_lantern_01", "asset": "wall_lantern", "position": [1.7, 2.5, -6.51]},
+    {"id": "{code}_wall_lantern_02", "asset": "wall_lantern", "position": [-3.71, 2.5, -4.4], "yaw": 90}
+  ],
+  "rooms": [
+    {
+      "id": "W-102",
+      "label": "文契院 · 纸墨分析室",
+      "floor": "1F",
+      "focus": "W102.workbench",
+      "focus_label": "纸张样本、墨迹与取样登记台",
+      "primary_component": "W102_workbench",
+      "purpose": "以样纸、墨瓶、对照书和取样工作台体现纸墨分析；两侧均可站立调查，资料书架退至墙边。",
+      "instances": [
+        {"id": "W102_workbench", "asset": "table", "position": [-0.45, 0, -3.15], "solid": true, "check_slots": ["Front", "Back"]},
+        {"id": "W102_sample_book", "asset": "open_book", "position": [-0.72, 0.795, -3.10]},
+        {"id": "W102_ink_bottles", "asset": "bottles", "position": [0.10, 0.795, -3.35]},
+        {"id": "W102_work_lamp", "asset": "banker_lamp", "position": [-1.05, 0.795, -3.47]},
+        {"id": "W102_reference_shelf", "asset": "bookshelf", "position": [-2.75, 0, -6.02], "solid": true, "check_slots": ["Front"]},
+        {"id": "W102_paper_shelf", "asset": "empty_shelf", "position": [-1.35, 0, -6.02], "solid": true, "check_slots": ["Front"]},
+        {"id": "W102_register_table", "asset": "table", "position": [1.65, 0, -4.55], "solid": true, "check_slots": ["Front", "Back"]},
+        {"id": "W102_register_book", "asset": "small_book", "position": [1.55, 0.795, -4.5]},
+        {"id": "W102_register_lamp", "asset": "banker_lamp", "position": [2.22, 0.795, -4.72]}
+      ]
+    },
+    {
+      "id": "B-102",
+      "label": "白塔院 · 配药清洁制备室",
+      "floor": "1F",
+      "focus": "B102.cabinet",
+      "focus_label": "药剂柜与洁净制备记录",
+      "primary_component": "B102_cabinet",
+      "purpose": "独立药剂柜、洁净操作台、瓶架和盥洗台组成制备工位；主药柜周围留出检视通路。",
+      "instances": [
+        {"id": "B102_cabinet", "asset": "medicine_cabinet", "position": [-0.7, 0, -3.15], "solid": true, "check_slots": ["Front", "Back"]},
+        {"id": "B102_clean_table", "asset": "table", "position": [1.65, 0, -4.5], "solid": true, "check_slots": ["Front", "Back"]},
+        {"id": "B102_preparation_bottles", "asset": "bottles", "position": [1.35, 0.795, -4.45]},
+        {"id": "B102_preparation_book", "asset": "small_book", "position": [2.08, 0.795, -4.45]},
+        {"id": "B102_clean_lamp", "asset": "banker_lamp", "position": [1.65, 0.795, -4.75]},
+        {"id": "B102_wash_table", "asset": "wash_table", "position": [-3.18, 0, -4.35], "yaw": 90, "solid": true, "check_slots": ["Front"]},
+        {"id": "B102_bottle_rack", "asset": "bottle_rack", "position": [-1.7, 1.35, -6.4]},
+        {"id": "B102_supply_chest", "asset": "service_chest", "position": [-1.65, 0, -5.95], "solid": true, "check_slots": ["Front"]}
+      ]
+    },
+    {
+      "id": "F-104",
+      "label": "铁工院 · 备件与成品室",
+      "floor": "2F",
+      "focus": "F104.spares",
+      "focus_label": "备件箱、检修工具与领用册",
+      "primary_component": "F104_spares",
+      "purpose": "中央备件箱配合检修工作台、联锁手柄和靠墙工具柜；入口沿右侧直通，两侧可查看备件。",
+      "instances": [
+        {"id": "F104_spares", "asset": "service_chest", "position": [-0.65, 0, -3.15], "solid": true, "check_slots": ["Front", "Back"]},
+        {"id": "F104_tool_table", "asset": "table", "position": [1.45, 0, -4.5], "solid": true, "check_slots": ["Front", "Back"]},
+        {"id": "F104_interlock_handle", "asset": "interlock_handle", "position": [1.15, 1.035, -4.5]},
+        {"id": "F104_repair_book", "asset": "small_book", "position": [1.90, 0.795, -4.4]},
+        {"id": "F104_tool_lamp", "asset": "banker_lamp", "position": [2.05, 0.795, -4.75]},
+        {"id": "F104_tool_cabinet", "asset": "maintenance_cabinet", "position": [-2.75, 0, -5.95], "solid": true, "check_slots": ["Front"]},
+        {"id": "F104_finished_crate", "asset": "maintenance_crate", "position": [-2.85, 0, -3.3], "solid": true},
+        {"id": "F104_spare_crate", "asset": "maintenance_crate", "position": [-2.85, 0, -4.2], "solid": true}
+      ]
+    },
+    {
+      "id": "S-102",
+      "label": "星仪院 · 精密仪器室",
+      "floor": "2F",
+      "focus": "S102.instruments",
+      "focus_label": "校准仪表、精密天平与记录台",
+      "primary_component": "S102_instruments",
+      "purpose": "精密仪表台、机械天平、指示板和校准记录台形成专属仪器陈列，主台前后均有站位。",
+      "instances": [
+        {"id": "S102_instruments", "asset": "control_console", "position": [-0.7, 0, -3.35], "solid": true, "check_slots": ["Front", "Back"]},
+        {"id": "S102_balance", "asset": "platform_scale", "position": [1.7, 0, -3.25], "solid": true, "check_slots": ["Front", "Back"]},
+        {"id": "S102_calibration_table", "asset": "table", "position": [-1.6, 0, -5.6], "solid": true, "check_slots": ["Front"]},
+        {"id": "S102_calibration_book", "asset": "open_book", "position": [-1.55, 0.795, -5.52]},
+        {"id": "S102_calibration_lamp", "asset": "banker_lamp", "position": [-2.2, 0.795, -5.83]},
+        {"id": "S102_indicator", "asset": "indicator_board", "position": [1.05, 0, -5.65], "solid": true, "check_slots": ["Front"]},
+        {"id": "S102_schematic", "asset": "schematic", "position": [-0.1, 1.95, -6.49]}
+      ]
+    }
+  ]
+}

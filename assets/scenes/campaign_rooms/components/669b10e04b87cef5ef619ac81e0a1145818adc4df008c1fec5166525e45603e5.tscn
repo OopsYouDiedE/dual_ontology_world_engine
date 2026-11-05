@@ -1,0 +1,42 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/669b10e04b87cef5ef619ac81e0a1145818adc4df008c1fec5166525e45603e5.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/4cdf7c3215e24665caffe9a14c719ad65ee05dcc9713ff68d06c05c135d0b2c7.glb" id="2_model"]
+
+[node name="door_952677a861f8" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "door_952677a861f8"
+component_kind = "door"
+interactive = true
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray("Left_hinge")
+hinge_open_degrees = PackedFloat32Array(-95)
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "furniture"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"double\":false,\"height\":2.5,\"material_theme\":\"walnut\",\"width\":1.2}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]
+
+[node name="Front" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(-1, 0, -8.74227766e-08, 0, 1, 0, 8.74227766e-08, 0, -1, 0, 0, 0.725000262)
+metadata/pose = "stand"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"
+
+[node name="Back" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.545000017)
+metadata/pose = "stand"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.14999998, 0.0900001153)
+metadata/pose = "contact"
+metadata/clearance_radius_m = 0
+metadata/availability = "host_validation_required"

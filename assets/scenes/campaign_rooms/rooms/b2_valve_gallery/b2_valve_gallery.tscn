@@ -1,0 +1,143 @@
+[gd_scene load_steps=17 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/rooms/b2_valve_gallery/b2_valve_gallery.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/8d741fd87093a30062da015bf3bf32edf9479040b1146d6d0e9a5e6b52026cf9.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/d4f63d883c96c83a14b7018db016909b34a007e136ae08f1c515ede10587cb75.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/867096901070197603fe8d50601e625c2152a87898eb43ddc73b06ae3ee635c3.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/a3cc9ced15fe60f0b6db7813c355efaa56d3705ee8707e10d30a06ecfdcd2e06.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/5880817874c619b798c6e7e006b9eb97fa3bc021a25e2afdc4d001b9021ed13e.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/97ef26597eb418049bfca4ff13e6db8d9df4794d2c19f2912c07351b4c0aa0e9.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/d31cd99139fd225e7b7e971628319a0d3692a0534d14b47db22c3708db169baf.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/295e27f22ca13a523a9ddb4d5fd5c0b67fb4209a574b64a031a1b9be90a26a2f.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/7650a1f2ee9864a71e36a674e74829a2615cad843bc2bb9583679fd13a3dbc62.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/0b3ff136e6dadbe6aee7f344e139b2ad90811a632db35ff98b417f6b5c36542a.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/f10ff6e92693ce965e8db432b1924c32f62389f88e9d28e656a0ace13a7b1df3.tscn" id="12_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/fdadfe294c08a9341b59ab959dfca3b7a2a9302810a4b32d54b86cae809b6462.tscn" id="13_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/a666fb9ccb0e5364602bf4318755b4caad14508ea5c264da0b67cfd8e6cb7248.tscn" id="14_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/681e39360cbea937f3024519bd6e45aee425d7cf34806a93ec50b111b0aed608.tscn" id="15_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/61d62e7fafc2472a458fb8de230c75b7cc978cecb8eb9d4037ac1e436a35588d.tscn" id="16_prefab"]
+
+[node name="b2_valve_gallery" type="Node3D"]
+script = ExtResource("1_script")
+metadata/room_id = "b2_valve_gallery"
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+metadata/core_binding = "campaign.rooms"
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="b2_valve_gallery_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "b2_valve_gallery_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "b2_valve_gallery_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="b2_valve_gallery_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -4.19999981, 0, -1.20000005)
+instance_id = "b2_valve_gallery_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_Door_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 2.4000001, 0, 0)
+instance_id = "b2_valve_gallery_Door_01"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="b2_valve_gallery_pipe_run_01" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "b2_valve_gallery_pipe_run_01"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_pipe_run_02" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "b2_valve_gallery_pipe_run_02"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_pipe_run_03" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "b2_valve_gallery_pipe_run_03"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_valve_station_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.51999998, 0, -3.8499999)
+instance_id = "b2_valve_gallery_valve_station_01"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_pipe_run_04" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "b2_valve_gallery_pipe_run_04"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_caged_lamp_01" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.51999998, 2.95000005, -4.7750001)
+instance_id = "b2_valve_gallery_caged_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_valve_station_02" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -3.8499999)
+instance_id = "b2_valve_gallery_valve_station_02"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_pipe_run_05" parent="Instances" instance=ExtResource("12_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "b2_valve_gallery_pipe_run_05"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_caged_lamp_02" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.95000005, -4.7750001)
+instance_id = "b2_valve_gallery_caged_lamp_02"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_valve_station_03" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.51999998, 0, -3.8499999)
+instance_id = "b2_valve_gallery_valve_station_03"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_pipe_run_06" parent="Instances" instance=ExtResource("13_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "b2_valve_gallery_pipe_run_06"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_caged_lamp_03" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.51999998, 2.95000005, -4.7750001)
+instance_id = "b2_valve_gallery_caged_lamp_03"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_long_drain_01" parent="Instances" instance=ExtResource("14_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, 0, 0.0199999996, -3.0999999)
+instance_id = "b2_valve_gallery_long_drain_01"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_indicator_board_01" parent="Instances" instance=ExtResource("15_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -4.15999985, 1, -2.78399992)
+instance_id = "b2_valve_gallery_indicator_board_01"
+entity_id = ""
+portal_id = ""
+
+[node name="b2_valve_gallery_maintenance_crate_01" parent="Instances" instance=ExtResource("16_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.02399993, 0, -0.899999976)
+instance_id = "b2_valve_gallery_maintenance_crate_01"
+entity_id = ""
+portal_id = ""

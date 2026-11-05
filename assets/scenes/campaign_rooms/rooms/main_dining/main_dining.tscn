@@ -1,0 +1,991 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/rooms/main_dining/main_dining.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/e0c850a771be6a35eb18da96dc219ce8c51970d800e90d3336e39b6e78c0d6d0.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/799cb9ce03eccb4772539897a6e67008b64824f764be5dc197d675b584c8b79f.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/2c9017f3f7c204e4f1c8dd8dc7996d2339830ee424a4c2a2b44e5d382392401b.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/b587f24991c7d0564d84edacf9a8e58432da995a4107b2e3f9ce6bf875985fdd.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/4d563d9877d3e82c9acf2dc90fd6de153e91334f6cb201245560703d5a531e6e.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/22acc13707beae9ff8d65e9b94258c90fcd446aa462e44e2b4f56cd5f4620f7b.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/2b567029861972e31cecc4eb568c6ae97a3ddb05ccf24a796c72d218345178ab.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/00fc897531acacd91fc294e6149da49b5f4189212987d8036da2f3b4c4e493de.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/3d8b1d16f15d9ce44f930aa412ea275d021665045d850f8b3e81086b7fe57172.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/b788b48675b4b8deee44e9089200e87103040da9cbbba5aa895282b00a5de950.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/c6ef4d1e9bf29af4350bfb34619f75470cb1f769bbd35f463524f960b04bc819.tscn" id="12_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/d90b3e1465a93db63a1de4d60055c5e07e1c26b8ee745bb6d28bdd50b121e208.tscn" id="13_prefab"]
+
+[node name="main_dining" type="Node3D"]
+script = ExtResource("1_script")
+metadata/room_id = "main_dining"
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+metadata/core_binding = "campaign.rooms"
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="main_dining_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "main_dining_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "main_dining_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="main_dining_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.32000017, 0, -12)
+instance_id = "main_dining_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_Door_01" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.32000017, 0, -12)
+instance_id = "main_dining_Door_01"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_window_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.10000002, -12)
+instance_id = "main_dining_window_01"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_window_02" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -7, 1.14999998, -3.83999991)
+instance_id = "main_dining_window_02"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_window_03" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -7, 1.14999998, -8.39999962)
+instance_id = "main_dining_window_03"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_table_01" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.3499999, 0, -3)
+instance_id = "main_dining_table_01"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_01" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -5.19999981, 0, -1.86000001)
+instance_id = "main_dining_chair_01"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.19999981, 0.819999993, -2.56999993)
+instance_id = "main_dining_plate_01"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_01" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.819999993, -2.72000003)
+instance_id = "main_dining_cup_01"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_02" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -4.46000004, 0, -1.86000001)
+instance_id = "main_dining_chair_02"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_02" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.46000004, 0.819999993, -2.56999993)
+instance_id = "main_dining_plate_02"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_02" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.26000023, 0.819999993, -2.72000003)
+instance_id = "main_dining_cup_02"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_03" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -3.72000003, 0, -1.86000001)
+instance_id = "main_dining_chair_03"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_03" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.72000003, 0.819999993, -2.56999993)
+instance_id = "main_dining_plate_03"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_03" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.51999998, 0.819999993, -2.72000003)
+instance_id = "main_dining_cup_03"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_04" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -2.98000002, 0, -1.86000001)
+instance_id = "main_dining_chair_04"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_04" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.98000002, 0.819999993, -2.56999993)
+instance_id = "main_dining_plate_04"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_04" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.77999997, 0.819999993, -2.72000003)
+instance_id = "main_dining_cup_04"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_05" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -2.24000001, 0, -1.86000001)
+instance_id = "main_dining_chair_05"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_05" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.24000001, 0.819999993, -2.56999993)
+instance_id = "main_dining_plate_05"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_05" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.03999996, 0.819999993, -2.72000003)
+instance_id = "main_dining_cup_05"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_06" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -1.5, 0, -1.86000001)
+instance_id = "main_dining_chair_06"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_06" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.819999993, -2.56999993)
+instance_id = "main_dining_plate_06"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_06" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.29999995, 0.819999993, -2.72000003)
+instance_id = "main_dining_cup_06"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_07" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.19999981, 0, -4.13999987)
+instance_id = "main_dining_chair_07"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_07" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.19999981, 0.819999993, -3.43000007)
+instance_id = "main_dining_plate_07"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_07" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.819999993, -3.27999997)
+instance_id = "main_dining_cup_07"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_08" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.46000004, 0, -4.13999987)
+instance_id = "main_dining_chair_08"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_08" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.46000004, 0.819999993, -3.43000007)
+instance_id = "main_dining_plate_08"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_08" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.26000023, 0.819999993, -3.27999997)
+instance_id = "main_dining_cup_08"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_09" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.72000003, 0, -4.13999987)
+instance_id = "main_dining_chair_09"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_09" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.72000003, 0.819999993, -3.43000007)
+instance_id = "main_dining_plate_09"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_09" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.51999998, 0.819999993, -3.27999997)
+instance_id = "main_dining_cup_09"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_10" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.98000002, 0, -4.13999987)
+instance_id = "main_dining_chair_10"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_10" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.98000002, 0.819999993, -3.43000007)
+instance_id = "main_dining_plate_10"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_10" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.77999997, 0.819999993, -3.27999997)
+instance_id = "main_dining_cup_10"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_11" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.24000001, 0, -4.13999987)
+instance_id = "main_dining_chair_11"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_11" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.24000001, 0.819999993, -3.43000007)
+instance_id = "main_dining_plate_11"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_11" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.03999996, 0.819999993, -3.27999997)
+instance_id = "main_dining_cup_11"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_12" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -4.13999987)
+instance_id = "main_dining_chair_12"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_12" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.819999993, -3.43000007)
+instance_id = "main_dining_plate_12"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_12" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.29999995, 0.819999993, -3.27999997)
+instance_id = "main_dining_cup_12"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_pendant_lamp_01" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.3499999, 4.55000019, -3)
+instance_id = "main_dining_pendant_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_table_02" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.3499999, 0, -8.19999981)
+instance_id = "main_dining_table_02"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_13" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -5.19999981, 0, -7.05999994)
+instance_id = "main_dining_chair_13"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_13" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.19999981, 0.819999993, -7.76999998)
+instance_id = "main_dining_plate_13"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_13" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.819999993, -7.92000008)
+instance_id = "main_dining_cup_13"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_14" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -4.46000004, 0, -7.05999994)
+instance_id = "main_dining_chair_14"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_14" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.46000004, 0.819999993, -7.76999998)
+instance_id = "main_dining_plate_14"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_14" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.26000023, 0.819999993, -7.92000008)
+instance_id = "main_dining_cup_14"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_15" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -3.72000003, 0, -7.05999994)
+instance_id = "main_dining_chair_15"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_15" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.72000003, 0.819999993, -7.76999998)
+instance_id = "main_dining_plate_15"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_15" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.51999998, 0.819999993, -7.92000008)
+instance_id = "main_dining_cup_15"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_16" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -2.98000002, 0, -7.05999994)
+instance_id = "main_dining_chair_16"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_16" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.98000002, 0.819999993, -7.76999998)
+instance_id = "main_dining_plate_16"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_16" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.77999997, 0.819999993, -7.92000008)
+instance_id = "main_dining_cup_16"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_17" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -2.24000001, 0, -7.05999994)
+instance_id = "main_dining_chair_17"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_17" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.24000001, 0.819999993, -7.76999998)
+instance_id = "main_dining_plate_17"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_17" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.03999996, 0.819999993, -7.92000008)
+instance_id = "main_dining_cup_17"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_18" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -1.5, 0, -7.05999994)
+instance_id = "main_dining_chair_18"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_18" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.819999993, -7.76999998)
+instance_id = "main_dining_plate_18"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_18" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.29999995, 0.819999993, -7.92000008)
+instance_id = "main_dining_cup_18"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_19" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.19999981, 0, -9.34000015)
+instance_id = "main_dining_chair_19"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_19" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.19999981, 0.819999993, -8.63000011)
+instance_id = "main_dining_plate_19"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_19" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.819999993, -8.47999954)
+instance_id = "main_dining_cup_19"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_20" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.46000004, 0, -9.34000015)
+instance_id = "main_dining_chair_20"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_20" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.46000004, 0.819999993, -8.63000011)
+instance_id = "main_dining_plate_20"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_20" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.26000023, 0.819999993, -8.47999954)
+instance_id = "main_dining_cup_20"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_21" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.72000003, 0, -9.34000015)
+instance_id = "main_dining_chair_21"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_21" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.72000003, 0.819999993, -8.63000011)
+instance_id = "main_dining_plate_21"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_21" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.51999998, 0.819999993, -8.47999954)
+instance_id = "main_dining_cup_21"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_22" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.98000002, 0, -9.34000015)
+instance_id = "main_dining_chair_22"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_22" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.98000002, 0.819999993, -8.63000011)
+instance_id = "main_dining_plate_22"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_22" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.77999997, 0.819999993, -8.47999954)
+instance_id = "main_dining_cup_22"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_23" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.24000001, 0, -9.34000015)
+instance_id = "main_dining_chair_23"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_23" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.24000001, 0.819999993, -8.63000011)
+instance_id = "main_dining_plate_23"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_23" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.03999996, 0.819999993, -8.47999954)
+instance_id = "main_dining_cup_23"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_24" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -9.34000015)
+instance_id = "main_dining_chair_24"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_24" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.819999993, -8.63000011)
+instance_id = "main_dining_plate_24"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_24" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.29999995, 0.819999993, -8.47999954)
+instance_id = "main_dining_cup_24"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_pendant_lamp_02" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.3499999, 4.55000019, -8.19999981)
+instance_id = "main_dining_pendant_lamp_02"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_table_03" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3499999, 0, -3)
+instance_id = "main_dining_table_03"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_25" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 1.5, 0, -1.86000001)
+instance_id = "main_dining_chair_25"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_25" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.819999993, -2.56999993)
+instance_id = "main_dining_plate_25"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_25" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.70000005, 0.819999993, -2.72000003)
+instance_id = "main_dining_cup_25"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_26" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 2.24000001, 0, -1.86000001)
+instance_id = "main_dining_chair_26"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_26" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.24000001, 0.819999993, -2.56999993)
+instance_id = "main_dining_plate_26"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_26" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.44000006, 0.819999993, -2.72000003)
+instance_id = "main_dining_cup_26"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_27" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 2.98000002, 0, -1.86000001)
+instance_id = "main_dining_chair_27"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_27" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.98000002, 0.819999993, -2.56999993)
+instance_id = "main_dining_plate_27"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_27" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.18000007, 0.819999993, -2.72000003)
+instance_id = "main_dining_cup_27"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_28" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 3.72000003, 0, -1.86000001)
+instance_id = "main_dining_chair_28"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_28" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.72000003, 0.819999993, -2.56999993)
+instance_id = "main_dining_plate_28"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_28" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.92000008, 0.819999993, -2.72000003)
+instance_id = "main_dining_cup_28"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_29" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 4.46000004, 0, -1.86000001)
+instance_id = "main_dining_chair_29"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_29" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.46000004, 0.819999993, -2.56999993)
+instance_id = "main_dining_plate_29"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_29" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.65999985, 0.819999993, -2.72000003)
+instance_id = "main_dining_cup_29"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_30" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 5.19999981, 0, -1.86000001)
+instance_id = "main_dining_chair_30"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_30" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.19999981, 0.819999993, -2.56999993)
+instance_id = "main_dining_plate_30"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_30" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4000001, 0.819999993, -2.72000003)
+instance_id = "main_dining_cup_30"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_31" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -4.13999987)
+instance_id = "main_dining_chair_31"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_31" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.819999993, -3.43000007)
+instance_id = "main_dining_plate_31"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_31" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.70000005, 0.819999993, -3.27999997)
+instance_id = "main_dining_cup_31"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_32" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.24000001, 0, -4.13999987)
+instance_id = "main_dining_chair_32"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_32" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.24000001, 0.819999993, -3.43000007)
+instance_id = "main_dining_plate_32"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_32" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.44000006, 0.819999993, -3.27999997)
+instance_id = "main_dining_cup_32"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_33" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.98000002, 0, -4.13999987)
+instance_id = "main_dining_chair_33"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_33" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.98000002, 0.819999993, -3.43000007)
+instance_id = "main_dining_plate_33"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_33" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.18000007, 0.819999993, -3.27999997)
+instance_id = "main_dining_cup_33"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_34" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.72000003, 0, -4.13999987)
+instance_id = "main_dining_chair_34"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_34" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.72000003, 0.819999993, -3.43000007)
+instance_id = "main_dining_plate_34"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_34" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.92000008, 0.819999993, -3.27999997)
+instance_id = "main_dining_cup_34"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_35" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.46000004, 0, -4.13999987)
+instance_id = "main_dining_chair_35"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_35" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.46000004, 0.819999993, -3.43000007)
+instance_id = "main_dining_plate_35"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_35" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.65999985, 0.819999993, -3.27999997)
+instance_id = "main_dining_cup_35"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_36" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.19999981, 0, -4.13999987)
+instance_id = "main_dining_chair_36"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_36" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.19999981, 0.819999993, -3.43000007)
+instance_id = "main_dining_plate_36"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_36" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4000001, 0.819999993, -3.27999997)
+instance_id = "main_dining_cup_36"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_pendant_lamp_03" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3499999, 4.55000019, -3)
+instance_id = "main_dining_pendant_lamp_03"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_table_04" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3499999, 0, -8.19999981)
+instance_id = "main_dining_table_04"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_37" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 1.5, 0, -7.05999994)
+instance_id = "main_dining_chair_37"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_37" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.819999993, -7.76999998)
+instance_id = "main_dining_plate_37"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_37" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.70000005, 0.819999993, -7.92000008)
+instance_id = "main_dining_cup_37"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_38" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 2.24000001, 0, -7.05999994)
+instance_id = "main_dining_chair_38"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_38" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.24000001, 0.819999993, -7.76999998)
+instance_id = "main_dining_plate_38"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_38" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.44000006, 0.819999993, -7.92000008)
+instance_id = "main_dining_cup_38"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_39" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 2.98000002, 0, -7.05999994)
+instance_id = "main_dining_chair_39"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_39" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.98000002, 0.819999993, -7.76999998)
+instance_id = "main_dining_plate_39"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_39" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.18000007, 0.819999993, -7.92000008)
+instance_id = "main_dining_cup_39"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_40" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 3.72000003, 0, -7.05999994)
+instance_id = "main_dining_chair_40"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_40" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.72000003, 0.819999993, -7.76999998)
+instance_id = "main_dining_plate_40"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_40" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.92000008, 0.819999993, -7.92000008)
+instance_id = "main_dining_cup_40"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_41" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 4.46000004, 0, -7.05999994)
+instance_id = "main_dining_chair_41"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_41" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.46000004, 0.819999993, -7.76999998)
+instance_id = "main_dining_plate_41"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_41" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.65999985, 0.819999993, -7.92000008)
+instance_id = "main_dining_cup_41"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_42" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 5.19999981, 0, -7.05999994)
+instance_id = "main_dining_chair_42"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_42" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.19999981, 0.819999993, -7.76999998)
+instance_id = "main_dining_plate_42"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_42" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4000001, 0.819999993, -7.92000008)
+instance_id = "main_dining_cup_42"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_43" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -9.34000015)
+instance_id = "main_dining_chair_43"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_43" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.819999993, -8.63000011)
+instance_id = "main_dining_plate_43"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_43" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.70000005, 0.819999993, -8.47999954)
+instance_id = "main_dining_cup_43"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_44" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.24000001, 0, -9.34000015)
+instance_id = "main_dining_chair_44"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_44" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.24000001, 0.819999993, -8.63000011)
+instance_id = "main_dining_plate_44"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_44" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.44000006, 0.819999993, -8.47999954)
+instance_id = "main_dining_cup_44"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_45" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.98000002, 0, -9.34000015)
+instance_id = "main_dining_chair_45"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_45" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.98000002, 0.819999993, -8.63000011)
+instance_id = "main_dining_plate_45"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_45" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.18000007, 0.819999993, -8.47999954)
+instance_id = "main_dining_cup_45"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_46" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.72000003, 0, -9.34000015)
+instance_id = "main_dining_chair_46"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_46" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.72000003, 0.819999993, -8.63000011)
+instance_id = "main_dining_plate_46"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_46" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.92000008, 0.819999993, -8.47999954)
+instance_id = "main_dining_cup_46"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_47" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.46000004, 0, -9.34000015)
+instance_id = "main_dining_chair_47"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_47" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.46000004, 0.819999993, -8.63000011)
+instance_id = "main_dining_plate_47"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_47" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.65999985, 0.819999993, -8.47999954)
+instance_id = "main_dining_cup_47"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_chair_48" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.19999981, 0, -9.34000015)
+instance_id = "main_dining_chair_48"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_plate_48" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.19999981, 0.819999993, -8.63000011)
+instance_id = "main_dining_plate_48"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_cup_48" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4000001, 0.819999993, -8.47999954)
+instance_id = "main_dining_cup_48"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_pendant_lamp_04" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3499999, 4.55000019, -8.19999981)
+instance_id = "main_dining_pendant_lamp_04"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_dish_rack_01" parent="Instances" instance=ExtResource("12_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, 1, 0, 1, 0, -1, 0, -4.37113883e-08, 6.51999998, 0, -10)
+instance_id = "main_dining_dish_rack_01"
+entity_id = ""
+portal_id = ""
+
+[node name="main_dining_planter_01" parent="Instances" instance=ExtResource("13_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.4000001, 0, -11.3500004)
+instance_id = "main_dining_planter_01"
+entity_id = ""
+portal_id = ""

@@ -1,0 +1,84 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/rooms/service_stair_M/service_stair_M.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/7ab91c2815235023af0ea92889eb9b53df1b82efe6adb1e12b88e16bd5ad304d.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/7548dd51df87c67934aeb0f2639e4e356050a6d2af37bfd60447cd139ca3f561.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/829555f0fe4bd9bec6f3648af33623cd05b90d22daa8dfcbf7b1a12d051d2043.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/7319bbf6098b5148717f15523d3b049320cb53f82a824f101050ef6d3c5abab8.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/a39d13a8150f64639e5a08fbbeffb89df52b20fd491809f226b0058447e385bf.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/8c1d515b8dfe10c24146d427820ee4c6e1628bf1dd07b65279cac995b0542a52.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/cc85fade66f07e46b64d3ae0153da48ebcb8be56cb671ae689fe2a9e46433e6d.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/be958818c9332a7b9a336b813190782704e72e7f1ff446fb61a3eb646f1a3d0d.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/222193b8af7fb28d2cad0a28d3fe4f0a5e8e942189aad52eb89288e894b6aa2a.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/408949c39462f3a248bd0eda938b039593e6e5c99eeae442a17f66fdce373b5c.tscn" id="11_prefab"]
+
+[node name="service_stair_M" type="Node3D"]
+script = ExtResource("1_script")
+metadata/room_id = "service_stair_M"
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+metadata/core_binding = "campaign.rooms"
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="service_stair_M_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "service_stair_M_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "service_stair_M_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="service_stair_M_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.29999995, 2.5999999, -6)
+instance_id = "service_stair_M_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_Door_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 0, -6)
+instance_id = "service_stair_M_Door_01"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_Door_02" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 0.600000024, 0, 0)
+instance_id = "service_stair_M_Door_02"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="service_stair_M_maintenance_cabinet_01" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.200000003, 0, -5.53000021)
+instance_id = "service_stair_M_maintenance_cabinet_01"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_pipe_run_01" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "service_stair_M_pipe_run_01"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_caged_lamp_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -2.86500001, 2.9000001, -2.57999992)
+instance_id = "service_stair_M_caged_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_caged_lamp_02" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.57999992, -5.96999979)
+instance_id = "service_stair_M_caged_lamp_02"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_indicator_board_01" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.850000024, 0.980000019, -5.94000006)
+instance_id = "service_stair_M_indicator_board_01"
+entity_id = ""
+portal_id = ""

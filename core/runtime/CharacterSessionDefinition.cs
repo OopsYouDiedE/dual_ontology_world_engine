@@ -18,6 +18,7 @@ public sealed class CharacterSessionDefinition
             throw new InvalidDataException("Compact scenario source exceeds the 2000-line authoring limit.");
         Declaration=CampaignScenario.Expand(document.Definition("data","runtime.character_session").GetProperty("value"),
             readSource??(path=>File.ReadAllText(path.Replace("res://",""))));
+        CampaignProgress.Validate(Declaration);
         ValidateReservations(Declaration);
         Hash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(Declaration.GetRawText()))).ToLowerInvariant();
         policies=DvDocument.Parse(policySource);
@@ -44,6 +45,23 @@ public sealed class CharacterSessionDefinition
         foreach(var actor in declaration.Get("actors").Items())
         foreach(var action in actor.Get("actions").Items())
         {
+        foreach(var text in new[]{"completion_text","public_completion_text"})
+            if(action.Get(text).ValueKind!=JsonValueKind.Undefined&&(action.Get(text).ValueKind!=JsonValueKind.String||action.Get(text).Text().Length>16000))
+                throw new InvalidDataException("Action presentation text must be a bounded string: "+action.Get("id").Text());
+        var completionLines=action.Get("completion_lines");
+        if(completionLines.ValueKind!=JsonValueKind.Undefined&&(completionLines.ValueKind!=JsonValueKind.Array||completionLines.GetArrayLength()>32))
+            throw new InvalidDataException("Action completion lines must be a bounded array: "+action.Get("id").Text());
+        foreach(var line in completionLines.Items())
+        {
+            var viewpoint=line.Get("speaker");
+            if(line.Get("text").ValueKind!=JsonValueKind.String||line.Get("text").Text().Length>16000||
+               viewpoint.ValueKind!=JsonValueKind.Undefined&&(viewpoint.ValueKind!=JsonValueKind.String||!actorIds.Contains(viewpoint.Text())))
+                throw new InvalidDataException("Invalid completion line or viewpoint: "+action.Get("id").Text());
+            if(line.Get("when").ValueKind!=JsonValueKind.Undefined)_=Condition.Compile(line.Get("when"),actor.Get("id").Text());
+        }
+        var cooldown=action.Get("cooldown_minutes");
+        if(cooldown.ValueKind!=JsonValueKind.Undefined&&(!double.IsFinite(cooldown.Number(double.NaN))||cooldown.Number()<0))
+            throw new InvalidDataException("Action cooldown must be a finite nonnegative duration: "+action.Get("id").Text());
         foreach(var member in action.Get("motor").Get("observe_group").Items())
             if(!actorIds.Contains(member.Text()))throw new InvalidDataException("Unknown group observation actor: "+member.Text());
         var observedActions=action.Get("motor").Get("observed_group_actions").Items().ToArray();
@@ -102,6 +120,8 @@ public sealed class CharacterSessionDefinition
         var session=new RuntimeSession(world,JsonSerializer.SerializeToElement(policy),
             JsonSerializer.SerializeToElement(scheduling),Policy(runtime.Get("clock_definition").Text()),
             Policy(runtime.Get("residency_definition").Text()),world.Get("time").Number()*timing.Get("content_time_unit_seconds").Number());
+        if(Declaration.Get("completion").Get("mode").Text()=="observation_window")
+            session.ConfigureObservationHorizon(Declaration.Get("completion").Get("end_minutes").Number());
         session.ConfigureBindings(Declaration.Get("bindings"));
         session.ConfigureHostPhysicalBindings(Declaration.Get("host_physical_bindings"));
         session.ConfigureReservations(Declaration.Get("slots"));

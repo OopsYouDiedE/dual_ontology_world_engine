@@ -71,3 +71,21 @@ NVIDIA Corporation/
 
 # Publish only the rooms actually used by the game into assets/scenes/.
 /tools/building/candidates/
+
+# Model source bytes ship in verified compressed parts; setup restores GLBs.
+/assets/scenes/campaign_rooms/models/
+!/assets/imported/
+/assets/imported/*
+!/assets/imported/kaykit/
+/assets/imported/kaykit/*
+!/assets/imported/kaykit/animations/
+/assets/imported/kaykit/animations/*.glb
+/assets/imported/kaykit/animations/*.import
+
+# Local reference originals are not part of the runnable source delivery.
+/docs/sources/Gemini-original.txt
+/docs/sources/opening-revision.txt
+
+# Development evidence stays in the cloud workspace, outside game delivery.
+/docs/verification/
+/tools/story/literary-review.md

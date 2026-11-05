@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/4a4e435144cd76eec637c6e8590b76d54e4c114a5fb24668758681ed81d18afb.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/62c4740d0ee49d5a3a22390abc7a3910c6fa2835c8b65901805c85ef39ab4beb.glb" id="2_model"]
+
+[node name="mainb1_service_architecture" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "mainb1_service_architecture"
+component_kind = "architecture"
+interactive = false
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "trimesh"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/d31cd99139fd225e7b7e971628319a0d3692a0534d14b47db22c3708db169baf.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/387aa32aaaeb0df4a4cb540a92f675ba798b3b7c81bb8582816d2fdef1c2ba87.glb" id="2_model"]
+
+[node name="pipe_run_139041080458" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "pipe_run_139041080458"
+component_kind = "pipe_run"
+interactive = false
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"material_theme\":\"warm\",\"nodes\":[[-3.612,4.55,2.65],[-3.612,4.55,2.5],[-3.024,4.55,2.5],[3.192,4.55,2.5]],\"radius\":0.105}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

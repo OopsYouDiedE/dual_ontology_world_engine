@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/7d62644840700e534cc107ea9432267e4bb79b89b2f59cbc7f455fbc4d6aaa50.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/e55ce14ef096a7d801cfd278ecb287648be4dd94703f79c080b5e18de6686ccf.glb" id="2_model"]
+
+[node name="banker_lamp_007436ddbd1c" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "banker_lamp_007436ddbd1c"
+component_kind = "banker_lamp"
+interactive = false
+shadowless_nodes = PackedStringArray("Warm_tube")
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"height\":0.55,\"light_energy\":16,\"material_theme\":\"walnut\",\"width\":0.43}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

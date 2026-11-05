@@ -22,6 +22,8 @@ def sha(path):
 
 def fingerprint(backend):
     roots = [ROOT / "core", ROOT / "tools/building/SeatingFit.cs"]
+    if backend == "cli":
+        roots.append(ROOT / "tools/story")
     if backend == "godot":
         roots.append(ROOT / "scenes")
     files = [ROOT / "NuGet.Config", ROOT / "DualOntologyWorldEngine.csproj"]

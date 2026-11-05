@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/19506c9be6bd4cd8ed0e1253285bd3df751127f1f897cf4fa4fa0a08613e3986.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/efaaf6ca10297e3c935e2bdb2f30f9245e640cbe15070439f5ee3fe2eb1c4930.glb" id="2_model"]
+
+[node name="grain_pallet_61142bc69b60" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "grain_pallet_61142bc69b60"
+component_kind = "grain_pallet"
+interactive = false
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"depth\":1.25,\"material_theme\":\"warm\",\"width\":1.55}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

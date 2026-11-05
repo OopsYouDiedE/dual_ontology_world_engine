@@ -4,12 +4,17 @@ using System.Text.Json;
 namespace DuelView.Runtime;
 
 public sealed record ActionCandidate(string Id, Condition Gate, double Duration, double Score,
-    JsonElement Declaration);
-public sealed record Decision(string Actor, ActionCandidate Action, double StartedAt, double DueAt,long Execution=0,DecisionOption[]? Options=null);
-public sealed record DecisionOption(string Action,double Score,DriveEvaluation Drive);
+    JsonElement Declaration,Condition? RecognitionGate=null)
+{
+    public Condition Recognition=>RecognitionGate??Gate;
+}
+public sealed record DecisionIntent(string Path,string? Task,string? Step,string? PhysiologicalNeed,string Reason,string? PhysiologicalRoute=null,string? RouteAction=null,
+    string? GoalAlgorithm=null,string[]? GoalSequence=null,string[]? GoalObjectives=null);
+public sealed record Decision(string Actor, ActionCandidate Action, double StartedAt, double DueAt,long Execution=0,DecisionOption[]? Options=null,DecisionIntent? Intent=null);
+public sealed record DecisionOption(string Action,double Score,DriveEvaluation Drive,double FailurePenalty=0,double GoalUtility=0,string PredictedReadiness="True");
 public sealed record SchedulerSlice(int Evaluations, bool Pending);
-public sealed record DecisionCheckpoint(string Actor,string Action,double StartedAt,double DueAt,long Execution);
-public sealed record SchedulerSlotCheckpoint(string Actor,double Due,int Cursor,string? Best,double? BestScore,long Revision,bool Autonomous,bool Held,DriveState Needs,string[] Selection,double SelectionTime,DecisionCheckpoint? Running);
+public sealed record DecisionCheckpoint(string Actor,string Action,double StartedAt,double DueAt,long Execution,DecisionIntent? Intent=null);
+public sealed record SchedulerSlotCheckpoint(string Actor,double Due,int Cursor,string? Best,double? BestScore,long Revision,bool Autonomous,bool Held,DriveState Needs,string[] Selection,double SelectionTime,DecisionCheckpoint? Running,TaskPlannerCheckpoint? Planning=null,ActionFailureCheckpoint[]? FailureMemory=null,JsonElement GoalPlanning=default);
 public sealed record DecisionSchedulerState(SchedulerSlotCheckpoint[] Slots,long[] Ready,int Cursor,long NextExecution,long Evaluations);
 
 /// <summary>Persistent round-robin cursors bound work independently of actor and action counts.
@@ -32,6 +37,9 @@ public sealed class DecisionScheduler
         internal DriveCandidateIndex Index=null!;
         internal ActionCandidate[] Selection=[];
         internal double SelectionTime;
+        internal TaskPlanner Planner=null!;
+        internal ActionFailureMemory Failures=null!;
+        internal GoalPlanningAdapter Goals=null!;
     }
 
     private readonly List<Slot> slots = [];
@@ -46,13 +54,14 @@ public sealed class DecisionScheduler
     private readonly int drivesPerDecision,candidatesPerDrive;
     private readonly double minimumUtility;
     private readonly Func<string,ActionCandidate,bool> eligible;
+    private readonly Func<string,ActionCandidate,bool> modelEligible;
     private int cursor;
     private long nextExecution;
     public long Evaluations { get; private set; }
     public void SetAutonomy(string actor,bool enabled)=>byActor[actor].Autonomous=enabled;
     public DecisionSchedulerState SaveState()=>new(slots.Select(slot=>new SchedulerSlotCheckpoint(slot.Actor.Id,slot.Due,slot.Cursor,slot.Best?.Id,
         double.IsFinite(slot.BestScore)?slot.BestScore:null,slot.Revision,slot.Autonomous,slot.Held,slot.Needs.SaveState(),
-        slot.Selection.Select(action=>action.Id).ToArray(),slot.SelectionTime,slot.Running is { } run?new(run.Actor,run.Action.Id,run.StartedAt,run.DueAt,run.Execution):null)).ToArray(),
+        slot.Selection.Select(action=>action.Id).ToArray(),slot.SelectionTime,slot.Running is { } run?new(run.Actor,run.Action.Id,run.StartedAt,run.DueAt,run.Execution,run.Intent):null,slot.Planner.SaveState(),slot.Failures.Save(),slot.Goals.Save())).ToArray(),
         ready.Where(Owns).Select(item=>item.Execution).ToArray(),cursor,nextExecution,Evaluations);
     public IReadOnlyDictionary<long,Decision> RestoreState(DecisionSchedulerState state)
     {
@@ -69,7 +78,7 @@ public sealed class DecisionScheduler
             if(item.Running is { } run)
             {
                 if(run.Actor!=item.Actor || !actions.TryGetValue(run.Action,out var action) || run.Execution<1 || run.Execution>state.NextExecution || !double.IsFinite(run.StartedAt)||!double.IsFinite(run.DueAt)||run.StartedAt<0||run.DueAt<run.StartedAt ||
-                   !decisions.TryAdd(run.Execution,new(run.Actor,action,run.StartedAt,run.DueAt,run.Execution)))throw new InvalidDataException("Invalid scheduled execution checkpoint.");
+                   !decisions.TryAdd(run.Execution,new(run.Actor,action,run.StartedAt,run.DueAt,run.Execution,null,run.Intent)))throw new InvalidDataException("Invalid scheduled execution checkpoint.");
             }
         }
         if(state.Ready.Any(id=>!decisions.ContainsKey(id)))throw new InvalidDataException("Checkpoint has stale ready action.");
@@ -78,6 +87,9 @@ public sealed class DecisionScheduler
             var slot=byActor[item.Actor];var actions=slot.Candidates.ToDictionary(action=>action.Id,StringComparer.Ordinal);
             slot.Due=item.Due;slot.Cursor=item.Cursor;slot.Best=item.Best is { } best?actions[best]:null;slot.BestScore=item.BestScore??double.NegativeInfinity;
             slot.Revision=item.Revision;slot.Autonomous=item.Autonomous;slot.Held=item.Held;slot.Needs.RestoreState(item.Needs);
+            slot.Planner.RestoreState(item.Planning);
+            slot.Failures.Restore(item.FailureMemory);
+            slot.Goals.Restore(item.GoalPlanning);
             slot.Selection=item.Selection.Select(id=>actions[id]).ToArray();slot.SelectionTime=item.SelectionTime;
             slot.Running=item.Running is { } running?decisions[running.Execution]:null;
         }
@@ -85,9 +97,10 @@ public sealed class DecisionScheduler
         return decisions;
     }
 
-    public DecisionScheduler(JsonElement policy,Func<string,ActionCandidate,bool>? eligibility=null)
+    public DecisionScheduler(JsonElement policy,Func<string,ActionCandidate,bool>? eligibility=null,Func<string,ActionCandidate,bool>? modelEligibility=null)
     {
         eligible=eligibility??((_,_)=>true);
+        modelEligible=modelEligibility??((_,_)=>true);
         interval = Positive(policy, "decision_interval_seconds");
         stagger = Positive(policy, "actor_stagger_seconds");
         candidatesPerDecision = PositiveInteger(policy, "candidates_per_decision");
@@ -127,6 +140,10 @@ public sealed class DecisionScheduler
         var slot = new Slot(actor, items, now, due) { Autonomous = autonomous };
         foreach(var item in items)slot.Needs.Validate(item);
         slot.Index=new(items,slot.Needs);
+        slot.Failures=new(actor,items,contentTimeUnit);
+        slot.Goals=new(actor,items,contentTimeUnit);
+        slot.Planner=new(actor,items,slot.Needs,action=>slot.Running is null&&!slot.Held&&!actor.IsUpdating&&!actor.IsObserving&&eligible(actor.Id,action),contentTimeUnit,
+            (action,time)=>slot.Failures.Penalty(action.Id,time));
         byActor.Add(actor.Id, slot);
         slots.Add(slot);
     }
@@ -135,19 +152,26 @@ public sealed class DecisionScheduler
     {
         ValidateTime(now);
         foreach(var item in slots)
+        {
+            item.Failures.Refresh(now);
             if(item.Needs.Tick(now))
             {
                 item.Selection=[];item.Cursor=0;item.Best=null;item.BestScore=double.NegativeInfinity;
             }
+        }
         var timer = Stopwatch.StartNew();
         var count = 0;
-        var visited = 0;
-        while (slots.Count > 0 && count < Math.Min(evaluationsPerSlice, candidatesPerDecision) && visited < slots.Count && timer.Elapsed.TotalMilliseconds < millisecondsPerSlice)
+        var idleVisits = 0;
+        // Continue the same fair rotation while useful candidate work remains.
+        // A lone due actor may use the remaining fixed evaluation budget instead
+        // of requiring a full world step for every candidate. One empty rotation
+        // still ends the slice, and both the count and wall-clock budgets apply.
+        while (slots.Count > 0 && count < Math.Min(evaluationsPerSlice, candidatesPerDecision) && idleVisits < slots.Count && timer.Elapsed.TotalMilliseconds < millisecondsPerSlice)
         {
             var slot = slots[cursor];
             cursor = (cursor + 1) % slots.Count;
-            visited++;
-            if (slot.Held || !slot.Autonomous || slot.Running is not null || slot.Due > now || slot.Actor.IsUpdating || slot.Actor.IsObserving) continue;
+            if (slot.Held || !slot.Autonomous || slot.Running is not null || slot.Due > now || slot.Actor.IsUpdating || slot.Actor.IsObserving)
+            {idleVisits++;continue;}
             FieldKey[] changed=[];
             if (slot.Revision != slot.Actor.KnowledgeRevision)
             {
@@ -161,25 +185,34 @@ public sealed class DecisionScheduler
             if(slot.Selection.Length==0)
             {
                 slot.SelectionTime=now;
-                slot.Selection=slot.Index.Select(slot.Needs,now,candidatesPerDecision,drivesPerDecision,candidatesPerDrive,changed);
+                var frontier=slot.Planner.Frontier(now);
+                var daily=slot.Index.Select(slot.Needs,now,candidatesPerDecision,drivesPerDecision,candidatesPerDrive,changed);
+                slot.Goals.Evaluate(now,action=>eligible(slot.Actor.Id,action),action=>modelEligible(slot.Actor.Id,action),slot.Failures);
+                var purposeful=slot.Goals.FirstAction is { } first?slot.Candidates.Where(action=>action.Id==first):[];
+                slot.Selection=frontier.Concat(purposeful).Concat(daily).DistinctBy(action=>action.Id)
+                    .Where(action=>action.Recognition.Evaluate(slot.Actor.Recall)==Truth.True).Take(candidatesPerDecision).ToArray();
             }
             if (slot.Cursor < slot.Selection.Length)
             {
+                idleVisits=0;
                 var candidate = slot.Selection[slot.Cursor++];
                 count++;
                 Evaluations++;
-                if (!candidate.Declaration.Get("manual_only").Flag() && eligible(slot.Actor.Id,candidate) && candidate.Gate.Evaluate(slot.Actor.Recall) == Truth.True)
+                if (!candidate.Declaration.Get("manual_only").Flag() && !candidate.Declaration.Get("physiology_route_only").Flag() && eligible(slot.Actor.Id,candidate) && candidate.Recognition.Evaluate(slot.Actor.Recall) == Truth.True)
                 {
-                    var score = slot.Needs.Score(candidate, slot.SelectionTime) + slot.Actor.GoalScore(candidate, slot.SelectionTime / contentTimeUnit);
+                    var score = Score(slot,candidate,slot.SelectionTime);
                     if (score > slot.BestScore) { slot.Best = candidate; slot.BestScore = score; }
                 }
             }
+            else idleVisits++;
             if (slot.Cursor < slot.Selection.Length) continue;
-            if (slot.Best is { } best && slot.BestScore>minimumUtility && eligible(slot.Actor.Id,best))
+            var planned=slot.Planner.Choose(slot.Selection,slot.Best,slot.SelectionTime);
+            if (planned is { } best && (slot.Planner.DirectedChoice||slot.BestScore>minimumUtility) && eligible(slot.Actor.Id,best))
             {
-                var options=slot.Selection.Where(c=>!c.Declaration.Get("manual_only").Flag()&&eligible(slot.Actor.Id,c)&&c.Gate.Evaluate(slot.Actor.Recall)==Truth.True)
-                    .Select(c=>new DecisionOption(c.Id,slot.Needs.Score(c,slot.SelectionTime)+slot.Actor.GoalScore(c,slot.SelectionTime/contentTimeUnit),slot.Needs.Evaluate(c,slot.SelectionTime))).ToArray();
-                var decision = new Decision(slot.Actor.Id, best, now, now + best.Duration,++nextExecution,options);
+                var options=slot.Selection.Where(c=>!c.Declaration.Get("manual_only").Flag()&&eligible(slot.Actor.Id,c)&&c.Recognition.Evaluate(slot.Actor.Recall)==Truth.True)
+                    .Select(c=>new DecisionOption(c.Id,Score(slot,c,slot.SelectionTime),slot.Needs.Evaluate(c,slot.SelectionTime),slot.Failures.Penalty(c.Id,slot.SelectionTime),slot.Goals.Score(c.Id),c.Gate.Evaluate(slot.Actor.Recall).ToString())).ToArray();
+                var intent=slot.Planner.DirectedChoice?slot.Planner.Intent(best.Id):slot.Goals.Intent(best.Id)??slot.Planner.Intent(best.Id);
+                var decision = new Decision(slot.Actor.Id, best, now, now + best.Duration,++nextExecution,options,intent);
                 slot.Running = decision;
                 // The session can reserve the chosen action immediately. Later actors
                 // in this bounded pass then see the occupied slot in their eligibility
@@ -223,8 +256,9 @@ public sealed class DecisionScheduler
         var candidate = slot.Candidates.SingleOrDefault(x => x.Id == action)
             ?? throw new InvalidOperationException("Unknown actor action.");
         if (!eligible(actor,candidate)) throw new InvalidOperationException("Action is unavailable at the actor's current position.");
-        if (candidate.Gate.Evaluate(slot.Actor.Recall) != Truth.True) throw new InvalidOperationException("Action is unavailable in actor knowledge.");
-        var decision = new Decision(actor, candidate, now, now + candidate.Duration,++nextExecution);
+        if (candidate.Recognition.Evaluate(slot.Actor.Recall) != Truth.True) throw new InvalidOperationException("Action is unavailable in actor knowledge.");
+        slot.Planner.ManualChoice(action,now);slot.Planner.Frontier(now);
+        var decision = new Decision(actor, candidate, now, now + candidate.Duration,++nextExecution,null,slot.Planner.Intent(candidate.Id,true));
         slot.Running = decision;
         slot.Cursor = 0;
         slot.Best = null;
@@ -240,7 +274,7 @@ public sealed class DecisionScheduler
         var slot = byActor[decision.Actor];
         if (!ReferenceEquals(slot.Running, decision)) throw new InvalidOperationException("Stale action completion.");
         if (!actualHostElapsed && now < decision.DueAt) throw new InvalidOperationException("Action duration has not elapsed.");
-        if (succeeded) slot.Needs.Complete(decision.Action, now);
+        if (succeeded){slot.Needs.Complete(decision.Action, now);slot.Planner.Completed(decision,now);}
         slot.Running = null;
         slot.Due = now + interval;
     }
@@ -258,13 +292,22 @@ public sealed class DecisionScheduler
     public IReadOnlyDictionary<string,double> Needs(string actor,double now)=>byActor[actor].Needs.Snapshot(now);
     public IEnumerable<(string Actor,AffectEvent Event)> DrainAffectEvents()=>slots.SelectMany(slot=>slot.Needs.DrainEvents().Select(item=>(slot.Actor.Id,item)));
     public object Affect(string actor)=>new {emotion=byActor[actor].Needs.Emotion,buffs=byActor[actor].Needs.Buffs};
+    public object Paths(string actor,double now)=>byActor[actor].Planner.View(now,byActor[actor].Autonomous);
+    private double Score(Slot slot,ActionCandidate action,double now)=>slot.Needs.Score(action,now)+slot.Actor.GoalScore(action,now/contentTimeUnit)+slot.Goals.Score(action.Id)-slot.Failures.Penalty(action.Id,now);
+    public object GoalAudit(string actor)=>byActor[actor].Goals.Audit();
+    public object FailureAudit(string actor,double now)=>byActor[actor].Failures.Audit(now);
+    internal ActionFailureCheckpoint? RecordOutcome(Decision decision,bool success,string reason,IEnumerable<FieldKey> basis,double now,string[]? blockedResources=null)
+    {
+        var slot=byActor[decision.Actor];
+        return slot.Failures.Record(decision.Action,success,reason,basis,now,slot.Needs.Score(decision.Action,now)+slot.Actor.GoalScore(decision.Action,now/contentTimeUnit)+slot.Goals.Score(decision.Action.Id),blockedResources);
+    }
     internal void Hold(string actor,bool held)=>byActor[actor].Held=held;
     public bool Available(string actor,string action)
     {
         var slot=byActor[actor];
         if(slot.Held || slot.Running is not null || slot.Actor.IsUpdating || slot.Actor.IsObserving)return false;
         var candidate=slot.Candidates.Single(candidate=>candidate.Id==action);
-        return eligible(actor,candidate)&&candidate.Gate.Evaluate(slot.Actor.Recall)==Truth.True;
+        return eligible(actor,candidate)&&candidate.Recognition.Evaluate(slot.Actor.Recall)==Truth.True;
     }
     public ActionCandidate Candidate(string actor,string action)=>byActor[actor].Candidates.Single(candidate=>candidate.Id==action);
     public DriveEvaluation EvaluateDrive(string actor,string action,double now)

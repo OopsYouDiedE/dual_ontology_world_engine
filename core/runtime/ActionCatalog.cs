@@ -49,6 +49,9 @@ public static class ActionCatalog
             var precondition = action.Get("precondition");
             if (precondition.ValueKind != JsonValueKind.Object) throw new InvalidDataException("Action needs a declared knowledge gate: " + id);
             var gate = Condition.Compile(precondition, subject);
+            var recognition=action.Get("recognize_when").ValueKind==JsonValueKind.Object?Condition.Compile(action.Get("recognize_when"),subject):null;
+            if(action.Get("recognize_when").ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Object))
+                throw new InvalidDataException("Action recognition must be an explicit knowledge condition: "+id);
             foreach (var reference in action.Get("grants").Items().Concat(action.Get("failure_grants").Items()))
                 _ = FieldKey.Read(reference, subject);
             var raw = action.Get("duration");
@@ -81,9 +84,20 @@ public static class ActionCatalog
                 premises.Add(JsonNode.Parse(action.Get("authority_precondition").GetRawText()));
                 declaration["objective_gate"] = new JsonObject { ["op"] = "all", ["items"] = premises };
             }
+            var opportunity=action.Get("interruptible_opportunity");
+            if(opportunity.ValueKind!=JsonValueKind.Undefined)
+            {
+                if(opportunity.ValueKind!=JsonValueKind.Object||string.IsNullOrWhiteSpace(opportunity.Get("reason").Text())||
+                   string.IsNullOrWhiteSpace(opportunity.Get("label").Text())||opportunity.Get("lost_when").ValueKind!=JsonValueKind.Object||declaration["objective_gate"] is null)
+                    throw new InvalidDataException("An interruptible opportunity needs a named, explicit lost condition: "+id);
+                var lost=Condition.Compile(opportunity.Get("lost_when"),"world").Inputs.Distinct().ToArray();
+                var objective=Condition.Compile(JsonSerializer.SerializeToElement(declaration["objective_gate"]),"world").Inputs.ToHashSet();
+                if(lost.Length==0||lost.Any(key=>!objective.Contains(key)))
+                    throw new InvalidDataException("Opportunity loss must read its own objective precondition fields: "+id);
+            }
             declaration["requires_host_completion"] = action.Get("travel").ValueKind == JsonValueKind.Object ||
                 action.Get("host_execution").Flag();
-            result.Add(new(id, gate, duration, action.Get("priority").Number(), JsonSerializer.SerializeToElement(declaration)));
+            result.Add(new(id, gate, duration, action.Get("priority").Number(), JsonSerializer.SerializeToElement(declaration),recognition));
         }
         return result;
     }

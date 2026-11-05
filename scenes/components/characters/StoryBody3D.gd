@@ -973,13 +973,11 @@ func step_towards(target_pos: Vector3, delta: float, speed: float = 1.05) -> boo
 	set_movement_speed(step_speed)
 	
 	if is_inside_tree():
-		if absf(diff.y) > 0.05:
-			# Moving along stairs/slope: smooth vertical change with motion
-			position.y += dir_3d.y * move_dist
-			move_and_slide()
-		else:
-			move_and_slide()
-			position.y = target_pos.y
+		# Velocity already contains the vertical component. Moving y manually
+		# before move_and_slide counts it twice and oscillates around a waypoint
+		# when fast-forwarding. Let the collision solver execute the one motion.
+		move_and_slide()
+		if absf(diff.y) <= 0.05: position.y = target_pos.y
 	else:
 		position += dir_3d * move_dist
 		if absf(diff.y) <= 0.05:

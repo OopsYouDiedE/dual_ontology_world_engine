@@ -1,0 +1,130 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/rooms/W-102/W-102.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/7733e49a8bf10eb8f1c223f848ade4a455024feb209b4c23d7e7b1afafaaf879.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/cc9217259ea18add4eab91c1dd74c7eda1cb017c21092f5b5a2c7309a918f611.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/f62871ef49dcafe8ef6c250a29cea18599963c34fa414da93da2d38835266156.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/3b382097c501deeb00c714623912844c84832b4aec903ab025023d7b0b2d1367.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/93b9f605d40d4bb81091c9e5764f90008b4a552d45fef0c5a9eb21e983b2bfd8.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/954322645cbe1766b79ccaa6dc48fbdf8823e3ae1b23ba5dd368a0a4e76180f9.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/c19be7d64586dc5c5892cc662dc7894ed302b7c8ea4a84ae9341fc15b3c8b1c9.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/7a2e13141d0b0fb5d2ee30d5b35f58616e8a132adf15810c435f009238ef12b3.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/5aff55230c3c5176d7955196d8f9b425f57940254cb5f4c881b7607762b46600.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/31d2752593fe330560ba728115598ebfbdd9c6d268e0819996d09ebd75af7221.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/components/87bf98ce0f7671eda310753155a7d991b75acc34f1d27c82386e25da080752b8.tscn" id="12_prefab"]
+[ext_resource type="FontFile" path="res://assets/external/NotoSansSC/NotoSansSC[wght].ttf" id="label_font"]
+
+[node name="W-102" type="Node3D"]
+script = ExtResource("1_script")
+metadata/room_id = "W-102"
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+metadata/core_binding = "campaign.rooms"
+metadata/composition_source = "res://tools/building/designs/courtyard_prototype_rooms.json"
+metadata/adaptation = "四院用途专属的室内原型。复用已发布的 R13 建筑壳体及原尺度家具重新布置；不声称复刻原拓扑平面尺寸。地图和楼层使用 campus-r3 的真实房间记录。所有规则、证据和人物行动由 DV/Core 决定。"
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="W102_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+position = Vector3(0, 0, 0)
+instance_id = "W102_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="W102_Door_00" parent="Instances" instance=ExtResource("3_prefab")]
+position = Vector3(2.85, 0, -6.7)
+instance_id = "W102_Door_00"
+entity_id = ""
+portal_id = "D-W-102"
+
+[node name="W102_window_01" parent="Instances" instance=ExtResource("4_prefab")]
+position = Vector3(-3.9, 0.95, -2.5)
+rotation = Vector3(0, -1.570796327, 0)
+instance_id = "W102_window_01"
+entity_id = ""
+portal_id = ""
+
+[node name="W102_wall_lantern_01" parent="Instances" instance=ExtResource("5_prefab")]
+position = Vector3(1.7, 2.5, -6.51)
+instance_id = "W102_wall_lantern_01"
+entity_id = ""
+portal_id = ""
+
+[node name="W102_wall_lantern_02" parent="Instances" instance=ExtResource("5_prefab")]
+position = Vector3(-3.71, 2.5, -4.4)
+rotation = Vector3(0, 1.570796327, 0)
+instance_id = "W102_wall_lantern_02"
+entity_id = ""
+portal_id = ""
+
+[node name="W102_workbench" parent="Instances" instance=ExtResource("6_prefab")]
+position = Vector3(-0.45, 0, -3.15)
+instance_id = "W102_workbench"
+entity_id = "W102.workbench"
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.395,0.0],\"size\":[1.75,0.79,1.0]}]"
+static_collision = "none"
+
+[node name="W102_sample_book" parent="Instances" instance=ExtResource("7_prefab")]
+position = Vector3(-0.72, 0.795, -3.1)
+instance_id = "W102_sample_book"
+entity_id = ""
+portal_id = ""
+
+[node name="W102_ink_bottles" parent="Instances" instance=ExtResource("8_prefab")]
+position = Vector3(0.1, 0.795, -3.35)
+instance_id = "W102_ink_bottles"
+entity_id = ""
+portal_id = ""
+
+[node name="W102_work_lamp" parent="Instances" instance=ExtResource("9_prefab")]
+position = Vector3(-1.05, 0.795, -3.47)
+instance_id = "W102_work_lamp"
+entity_id = ""
+portal_id = ""
+
+[node name="W102_reference_shelf" parent="Instances" instance=ExtResource("10_prefab")]
+position = Vector3(-2.75, 0, -6.02)
+instance_id = "W102_reference_shelf"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.925,0.000625],\"size\":[0.98325,1.85,0.4742501]}]"
+static_collision = "none"
+
+[node name="W102_paper_shelf" parent="Instances" instance=ExtResource("11_prefab")]
+position = Vector3(-1.35, 0, -6.02)
+instance_id = "W102_paper_shelf"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.915,0.000625],\"size\":[1.3248,1.83,0.47425]}]"
+static_collision = "none"
+
+[node name="W102_register_table" parent="Instances" instance=ExtResource("6_prefab")]
+position = Vector3(1.65, 0, -4.55)
+instance_id = "W102_register_table"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.395,0.0],\"size\":[1.75,0.79,1.0]}]"
+static_collision = "none"
+
+[node name="W102_register_book" parent="Instances" instance=ExtResource("12_prefab")]
+position = Vector3(1.55, 0.795, -4.5)
+instance_id = "W102_register_book"
+entity_id = ""
+portal_id = ""
+
+[node name="W102_register_lamp" parent="Instances" instance=ExtResource("9_prefab")]
+position = Vector3(2.22, 0.795, -4.72)
+instance_id = "W102_register_lamp"
+entity_id = ""
+portal_id = ""
+
+[node name="RoomPlaque" type="Label3D" parent="."]
+position = Vector3(-0.25, 2.85, -6.49)
+pixel_size = 0.005
+font = ExtResource("label_font")
+font_size = 44
+outline_size = 6
+modulate = Color(0.92, 0.88, 0.77, 1)
+outline_modulate = Color(0.13, 0.11, 0.09, 1)
+text = "文契院 · 纸墨分析室"

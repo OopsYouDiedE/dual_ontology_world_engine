@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/d668855f1103463f3115bd488b06c5b28087d414d2cfacb84ac375dbc732c923.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/86534a4e7e91e3e8e9dd2c196aaf67644d13c782dc4f9e6c685db829fe528039.glb" id="2_model"]
+
+[node name="rug_fa47995b157d" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "rug_fa47995b157d"
+component_kind = "rug"
+interactive = false
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"depth\":1.45,\"material_theme\":\"walnut\",\"width\":1.9}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]
