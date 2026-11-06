@@ -288,8 +288,14 @@ func _set_page(page_id: String, requested: String) -> void:
 	_page_id = page_id
 	if not _pages.has(page_id):
 		var index := clampi(int(page_id.substr(1)) - 1, 0, 7)
-		var scene: PackedScene = load("res://scenes/UIpanel/" + PAGE_PATHS[index] + ".tscn")
-		var page: Control = scene.instantiate()
+		var page_path: String = "res://scenes/UIpanel/" + PAGE_PATHS[index] + ".tscn"
+		var page: Control = null
+		if ResourceLoader.exists(page_path):
+			var scene: PackedScene = load(page_path)
+			if scene != null: page = scene.instantiate()
+		if page == null:
+			page = Control.new()
+			page.name = "Placeholder_" + page_id
 		_page_container.add_child(page)
 		page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		if page.has_signal("ui_event"): page.ui_event.connect(_on_page_event)
