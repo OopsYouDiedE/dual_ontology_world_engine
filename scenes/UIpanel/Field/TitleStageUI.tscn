@@ -1,0 +1,146 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/UIpanel/Field/TitleStageUI.gd" id="1_title"]
+
+[node name="TitleStageUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_title")
+
+[node name="TitleView" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DarkMatte" type="ColorRect" parent="TitleView"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0823529, 0.0745098, 0.0705882, 0.823529)
+
+[node name="CenterContainer" type="CenterContainer" parent="TitleView"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TitleView/CenterContainer"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="GameTitle" type="Label" parent="TitleView/CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.901961, 0.862745, 0.74902, 1)
+theme_override_font_sizes/font_size = 32
+text = "双本体世界引擎"
+horizontal_alignment = 1
+
+[node name="GameSubtitle" type="Label" parent="TitleView/CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.678431, 0.65098, 0.580392, 1)
+theme_override_font_sizes/font_size = 15
+text = "胡桃木书案 · 极小可信核心战役推理"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="TitleView/CenterContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="StartButton" type="Button" parent="TitleView/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "开始新局 (Start Investigation)"
+
+[node name="ContinueButton" type="Button" parent="TitleView/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "读取进度 (Continue)"
+
+[node name="CasebookButton" type="Button" parent="TitleView/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "查阅案卷 (Case Archives)"
+
+[node name="SettingsButton" type="Button" parent="TitleView/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "系统设置 (Settings)"
+
+[node name="QuitButton" type="Button" parent="TitleView/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "退出游戏 (Exit)"
+
+[node name="SettlementView" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SettlementMatte" type="ColorRect" parent="SettlementView"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0627451, 0.0745098, 0.0862745, 0.901961)
+
+[node name="CenterContainer" type="CenterContainer" parent="SettlementView"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="SettlementView/CenterContainer"]
+custom_minimum_size = Vector2(560, 360)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="SettlementView/CenterContainer/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 28
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SettlementView/CenterContainer/PanelContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="SettlementTitle" type="Label" parent="SettlementView/CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.901961, 0.862745, 0.74902, 1)
+theme_override_font_sizes/font_size = 22
+text = "【阶段结算报告】第 1 日终了"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="SettlementView/CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="SettlementStats" type="Label" parent="SettlementView/CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "调查推进统计..."
+autowrap_mode = 2
+
+[node name="ProceedButton" type="Button" parent="SettlementView/CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "进入翌日 (Advance To Next Day)"

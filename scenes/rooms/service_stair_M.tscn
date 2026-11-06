@@ -1,0 +1,96 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/RoomContainer3D.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/ServiceStairMArchitecture.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/ServiceStairM_CompleteShell.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/LatticeDoor.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/HeavySecurityDoor.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/Door_23.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/MaintenanceCabinet.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/PipeRun.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/CagedLamp_06.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/CagedLamp_05.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/IndicatorBoard.tscn" id="11_prefab"]
+
+[node name="service_stair_M" type="Node3D"]
+script = ExtResource("1_script")
+room_id = "service_stair_M"
+room_title = "service_stair_M"
+floor_name = "2F"
+spawn_position = Vector3(1.0, 0.0, -1.0)
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="service_stair_M_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "service_stair_M_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "service_stair_M_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="service_stair_M_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.29999995, 2.5999999, -6)
+instance_id = "service_stair_M_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_Door_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 0, -6)
+instance_id = "service_stair_M_Door_01"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_Door_02" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 0.600000024, 0, 0)
+instance_id = "service_stair_M_Door_02"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="service_stair_M_maintenance_cabinet_01" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.200000003, 0, -5.53000021)
+instance_id = "service_stair_M_maintenance_cabinet_01"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_pipe_run_01" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "service_stair_M_pipe_run_01"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_caged_lamp_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -2.86500001, 2.9000001, -2.57999992)
+instance_id = "service_stair_M_caged_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_caged_lamp_02" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.57999992, -5.96999979)
+instance_id = "service_stair_M_caged_lamp_02"
+entity_id = ""
+portal_id = ""
+
+[node name="service_stair_M_indicator_board_01" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.850000024, 0.980000019, -5.94000006)
+instance_id = "service_stair_M_indicator_board_01"
+entity_id = ""
+portal_id = ""
+[node name="FloorZone" type="Node3D" parent="."]
+polygon = PackedVector2Array(-4.0, -4.0, 4.0, -4.0, 4.0, 4.0, -4.0, 4.0)
+floor_thickness = 0.2
+ceiling_enabled = false
+ceiling_height = 3.0
+show_grid = true
+grid_step = 0.25
+
+[node name="SpawnPoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 0.0, -1.0)

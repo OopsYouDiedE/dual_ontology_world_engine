@@ -1,0 +1,149 @@
+[gd_scene load_steps=18 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/RoomContainer3D.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/R07Architecture.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/R07_CompleteShell.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/Door_14.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/Window_11.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/DormBed.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Wardrobe.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Nightstand.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/BankerLamp.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Table_03.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Chair_03.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/WashTable.tscn" id="12_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/Painting_03.tscn" id="13_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/WallLantern_04.tscn" id="14_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/RoomRug.tscn" id="15_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/WoodenChest.tscn" id="16_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/ResidentialAccessories_25.tscn" id="17_prefab"]
+
+[node name="R07" type="Node3D"]
+script = ExtResource("1_script")
+room_id = "R07"
+room_title = "R07 沈鼎居室"
+floor_name = "2F"
+spawn_position = Vector3(0, 0, -0.95)
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="R07_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "R07_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "R07_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="R07_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.3499999, 0, -6.0999999)
+instance_id = "R07_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_window_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -3.4000001, 0.949999988, -2.5)
+instance_id = "R07_window_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_bed_01" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.449999988, 0, -4.57999992)
+instance_id = "R07_bed_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_wardrobe_01" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3499999, 0, -5.67000008)
+instance_id = "R07_wardrobe_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_nightstand_01" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.660000026, 0, -5.19000006)
+instance_id = "R07_nightstand_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_banker_lamp_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.660000026, 0.610000014, -5.19000006)
+instance_id = "R07_banker_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_table_01" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -2.92000008, 0, -2.5)
+instance_id = "R07_table_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_chair_01" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, 1, 0, 1, 0, -1, 0, -4.37113883e-08, -2.04999995, 0, -2.5)
+instance_id = "R07_chair_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_banker_lamp_02" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -2.92000008, 0.800000012, -3.04999995)
+instance_id = "R07_banker_lamp_02"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_wash_table_01" parent="Instances" instance=ExtResource("12_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.45000005, 0, -2.5999999)
+instance_id = "R07_wash_table_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_painting_01" parent="Instances" instance=ExtResource("13_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.449999988, 1.64999998, -5.92000008)
+instance_id = "R07_painting_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_wall_lantern_01" parent="Instances" instance=ExtResource("14_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 2.54999995, -5.92000008)
+instance_id = "R07_wall_lantern_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_wall_lantern_02" parent="Instances" instance=ExtResource("14_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -3.22000003, 2.5, -4.11999989)
+instance_id = "R07_wall_lantern_02"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_rug_01" parent="Instances" instance=ExtResource("15_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.100000001, 0, -2.25)
+instance_id = "R07_rug_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_chest_01" parent="Instances" instance=ExtResource("16_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.63, 0, -0.949999988)
+instance_id = "R07_chest_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R07_residential_accessories_01" parent="Instances" instance=ExtResource("17_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -2.92000008, 0.805000007, -2.25)
+instance_id = "R07_residential_accessories_01"
+entity_id = ""
+portal_id = ""
+[node name="FloorZone" type="Node3D" parent="."]
+polygon = PackedVector2Array(-3.4, -3.05, 3.4, -3.05, 3.4, 3.05, -3.4, 3.05)
+floor_thickness = 0.2
+ceiling_enabled = false
+ceiling_height = 3.0
+show_grid = true
+grid_step = 0.25
+
+[node name="SpawnPoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.95)

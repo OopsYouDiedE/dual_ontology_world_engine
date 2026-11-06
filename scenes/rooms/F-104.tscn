@@ -1,0 +1,137 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/RoomContainer3D.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/R13Architecture.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/Door_13.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/HingedWindow_Arch.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/WallLantern_03.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/ServiceChest.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/StudyDesk.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/InterlockHandle.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/OpenBook_02.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/BankerLamp.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/MaintenanceCabinet.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/MaintenanceCrate.tscn" id="12_prefab"]
+[ext_resource type="FontFile" path="res://assets/external/NotoSansSC/NotoSansSC[wght].ttf" id="label_font"]
+
+[node name="F-104" type="Node3D"]
+script = ExtResource("1_script")
+room_id = "F-104"
+room_title = "铁工院 · 备件与成品室"
+floor_name = "2F"
+spawn_position = Vector3(0.9, 0, -0.95)
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+metadata/adaptation = "四院用途专属的室内原型。复用已发布的 R13 建筑壳体及原尺度家具重新布置；不声称复刻原拓扑平面尺寸。地图和楼层使用 campus-r3 的真实房间记录。所有规则、证据和人物行动由 DV/Core 决定。"
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="F104_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+position = Vector3(0, 0, 0)
+instance_id = "F104_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="F104_Door_00" parent="Instances" instance=ExtResource("3_prefab")]
+position = Vector3(2.85, 0, -6.7)
+instance_id = "F104_Door_00"
+entity_id = ""
+portal_id = "D-F-104"
+
+[node name="F104_window_01" parent="Instances" instance=ExtResource("4_prefab")]
+position = Vector3(-3.9, 0.95, -2.5)
+rotation = Vector3(0, -1.570796327, 0)
+instance_id = "F104_window_01"
+entity_id = ""
+portal_id = ""
+
+[node name="F104_wall_lantern_01" parent="Instances" instance=ExtResource("5_prefab")]
+position = Vector3(1.7, 2.5, -6.51)
+instance_id = "F104_wall_lantern_01"
+entity_id = ""
+portal_id = ""
+
+[node name="F104_wall_lantern_02" parent="Instances" instance=ExtResource("5_prefab")]
+position = Vector3(-3.71, 2.5, -4.4)
+rotation = Vector3(0, 1.570796327, 0)
+instance_id = "F104_wall_lantern_02"
+entity_id = ""
+portal_id = ""
+
+[node name="F104_spares" parent="Instances" instance=ExtResource("6_prefab")]
+position = Vector3(-0.65, 0, -3.15)
+instance_id = "F104_spares"
+entity_id = "F104.spares"
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.2865,0.014],\"size\":[1.235,0.573,0.6629999]}]"
+static_collision = "none"
+
+[node name="F104_tool_table" parent="Instances" instance=ExtResource("7_prefab")]
+position = Vector3(1.45, 0, -4.5)
+instance_id = "F104_tool_table"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.395,0.0],\"size\":[1.75,0.79,1.0]}]"
+static_collision = "none"
+
+[node name="F104_interlock_handle" parent="Instances" instance=ExtResource("8_prefab")]
+position = Vector3(1.15, 1.035, -4.5)
+instance_id = "F104_interlock_handle"
+entity_id = ""
+portal_id = ""
+
+[node name="F104_repair_book" parent="Instances" instance=ExtResource("9_prefab")]
+position = Vector3(1.9, 0.795, -4.4)
+instance_id = "F104_repair_book"
+entity_id = ""
+portal_id = ""
+
+[node name="F104_tool_lamp" parent="Instances" instance=ExtResource("10_prefab")]
+position = Vector3(2.05, 0.795, -4.75)
+instance_id = "F104_tool_lamp"
+entity_id = ""
+portal_id = ""
+
+[node name="F104_tool_cabinet" parent="Instances" instance=ExtResource("11_prefab")]
+position = Vector3(-2.75, 0, -5.95)
+instance_id = "F104_tool_cabinet"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.83,0.0434089],\"size\":[1.13,1.66,0.6368177]}]"
+static_collision = "none"
+
+[node name="F104_finished_crate" parent="Instances" instance=ExtResource("12_prefab")]
+position = Vector3(-2.85, 0, -3.3)
+instance_id = "F104_finished_crate"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.325,0.045],\"size\":[0.75,0.65,0.69]}]"
+static_collision = "none"
+
+[node name="F104_spare_crate" parent="Instances" instance=ExtResource("12_prefab")]
+position = Vector3(-2.85, 0, -4.2)
+instance_id = "F104_spare_crate"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.325,0.045],\"size\":[0.75,0.65,0.69]}]"
+static_collision = "none"
+
+[node name="RoomPlaque" type="Label3D" parent="."]
+position = Vector3(-0.25, 2.85, -6.49)
+pixel_size = 0.005
+font = ExtResource("label_font")
+font_size = 44
+outline_size = 6
+modulate = Color(0.92, 0.88, 0.77, 1)
+outline_modulate = Color(0.13, 0.11, 0.09, 1)
+text = "铁工院 · 备件与成品室"
+[node name="FloorZone" type="Node3D" parent="."]
+polygon = PackedVector2Array(-3.9, -3.35, 3.9, -3.35, 3.9, 3.35, -3.9, 3.35)
+floor_thickness = 0.2
+ceiling_enabled = false
+ceiling_height = 3.0
+show_grid = true
+grid_step = 0.25
+
+[node name="SpawnPoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0, -0.95)

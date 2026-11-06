@@ -1,0 +1,292 @@
+[gd_resource type="SpriteFrames" load_steps=20 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/characters/AnimeCast/chef.png" id="sheet"]
+
+[sub_resource type="AtlasTexture" id="frame_0_0"]
+atlas = ExtResource("sheet")
+region = Rect2(35, 13, 214, 321)
+margin = Rect2(9.5, 11, 19, 11)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_0_1"]
+atlas = ExtResource("sheet")
+region = Rect2(295, 14, 212, 322)
+margin = Rect2(10.5, 10, 21, 10)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_0_2"]
+atlas = ExtResource("sheet")
+region = Rect2(536, 14, 209, 322)
+margin = Rect2(12.0, 10, 24, 10)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_0_3"]
+atlas = ExtResource("sheet")
+region = Rect2(798, 59, 192, 274)
+margin = Rect2(20.5, 58, 41, 58)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_0_4"]
+atlas = ExtResource("sheet")
+region = Rect2(1054, 86, 196, 248)
+margin = Rect2(18.5, 84, 37, 84)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_0_5"]
+atlas = ExtResource("sheet")
+region = Rect2(1291, 15, 227, 318)
+margin = Rect2(3.0, 14, 6, 14)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_1_0"]
+atlas = ExtResource("sheet")
+region = Rect2(31, 351, 204, 307)
+margin = Rect2(14.5, 25, 29, 25)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_1_1"]
+atlas = ExtResource("sheet")
+region = Rect2(299, 351, 196, 309)
+margin = Rect2(18.5, 23, 37, 23)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_1_2"]
+atlas = ExtResource("sheet")
+region = Rect2(532, 350, 207, 310)
+margin = Rect2(13.0, 22, 26, 22)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_1_3"]
+atlas = ExtResource("sheet")
+region = Rect2(795, 396, 200, 262)
+margin = Rect2(16.5, 70, 33, 70)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_1_4"]
+atlas = ExtResource("sheet")
+region = Rect2(1049, 421, 208, 238)
+margin = Rect2(12.5, 94, 25, 94)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_1_5"]
+atlas = ExtResource("sheet")
+region = Rect2(1285, 350, 228, 308)
+margin = Rect2(2.5, 24, 5, 24)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_2_0"]
+atlas = ExtResource("sheet")
+region = Rect2(56, 675, 158, 331)
+margin = Rect2(37.5, 1, 75, 1)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_2_1"]
+atlas = ExtResource("sheet")
+region = Rect2(277, 675, 208, 332)
+margin = Rect2(12.5, 0, 25, 0)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_2_2"]
+atlas = ExtResource("sheet")
+region = Rect2(529, 675, 193, 330)
+margin = Rect2(20.0, 2, 40, 2)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_2_3"]
+atlas = ExtResource("sheet")
+region = Rect2(806, 717, 187, 288)
+margin = Rect2(23.0, 44, 46, 44)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_2_4"]
+atlas = ExtResource("sheet")
+region = Rect2(1046, 760, 205, 245)
+margin = Rect2(14.0, 87, 28, 87)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_2_5"]
+atlas = ExtResource("sheet")
+region = Rect2(1265, 675, 233, 332)
+margin = Rect2(0.0, 0, 0, 0)
+filter_clip = true
+
+[resource]
+metadata/visual_scale = 0.1325276939
+metadata/foot_offset = -21.9995971803
+metadata/linear_filter = true
+animations = [
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_0_0")}
+],
+"loop": true,
+"name": &"idle_front",
+"speed": 4.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_0_1")},
+{"duration": 1.0, "texture": SubResource("frame_0_0")},
+{"duration": 1.0, "texture": SubResource("frame_0_2")},
+{"duration": 1.0, "texture": SubResource("frame_0_0")}
+],
+"loop": true,
+"name": &"walk_front",
+"speed": 7.5
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_0_0")},
+{"duration": 1.0, "texture": SubResource("frame_0_3")},
+{"duration": 1.0, "texture": SubResource("frame_0_4")}
+],
+"loop": false,
+"name": &"sit_front",
+"speed": 7.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_0_0")},
+{"duration": 1.0, "texture": SubResource("frame_0_5")}
+],
+"loop": true,
+"name": &"talk_front",
+"speed": 4.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_0_0")},
+{"duration": 1.0, "texture": SubResource("frame_0_5")},
+{"duration": 1.0, "texture": SubResource("frame_0_0")}
+],
+"loop": false,
+"name": &"interact_front",
+"speed": 5.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_0_0")},
+{"duration": 1.0, "texture": SubResource("frame_0_5")},
+{"duration": 1.0, "texture": SubResource("frame_0_0")}
+],
+"loop": false,
+"name": &"inspect_front",
+"speed": 5.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_1_0")}
+],
+"loop": true,
+"name": &"idle_back",
+"speed": 4.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_1_1")},
+{"duration": 1.0, "texture": SubResource("frame_1_0")},
+{"duration": 1.0, "texture": SubResource("frame_1_2")},
+{"duration": 1.0, "texture": SubResource("frame_1_0")}
+],
+"loop": true,
+"name": &"walk_back",
+"speed": 7.5
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_1_0")},
+{"duration": 1.0, "texture": SubResource("frame_1_3")},
+{"duration": 1.0, "texture": SubResource("frame_1_4")}
+],
+"loop": false,
+"name": &"sit_back",
+"speed": 7.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_1_0")},
+{"duration": 1.0, "texture": SubResource("frame_1_5")}
+],
+"loop": true,
+"name": &"talk_back",
+"speed": 4.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_1_0")},
+{"duration": 1.0, "texture": SubResource("frame_1_5")},
+{"duration": 1.0, "texture": SubResource("frame_1_0")}
+],
+"loop": false,
+"name": &"interact_back",
+"speed": 5.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_1_0")},
+{"duration": 1.0, "texture": SubResource("frame_1_5")},
+{"duration": 1.0, "texture": SubResource("frame_1_0")}
+],
+"loop": false,
+"name": &"inspect_back",
+"speed": 5.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_2_0")}
+],
+"loop": true,
+"name": &"idle_left",
+"speed": 4.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_2_1")},
+{"duration": 1.0, "texture": SubResource("frame_2_0")},
+{"duration": 1.0, "texture": SubResource("frame_2_2")},
+{"duration": 1.0, "texture": SubResource("frame_2_0")}
+],
+"loop": true,
+"name": &"walk_left",
+"speed": 7.5
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_2_0")},
+{"duration": 1.0, "texture": SubResource("frame_2_3")},
+{"duration": 1.0, "texture": SubResource("frame_2_4")}
+],
+"loop": false,
+"name": &"sit_left",
+"speed": 7.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_2_0")},
+{"duration": 1.0, "texture": SubResource("frame_2_5")}
+],
+"loop": true,
+"name": &"talk_left",
+"speed": 4.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_2_0")},
+{"duration": 1.0, "texture": SubResource("frame_2_5")},
+{"duration": 1.0, "texture": SubResource("frame_2_0")}
+],
+"loop": false,
+"name": &"interact_left",
+"speed": 5.0
+},
+{
+"frames": [
+{"duration": 1.0, "texture": SubResource("frame_2_0")},
+{"duration": 1.0, "texture": SubResource("frame_2_5")},
+{"duration": 1.0, "texture": SubResource("frame_2_0")}
+],
+"loop": false,
+"name": &"inspect_left",
+"speed": 5.0
+}
+]

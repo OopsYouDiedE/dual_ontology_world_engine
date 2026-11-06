@@ -1,0 +1,177 @@
+[gd_scene load_steps=22 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/RoomContainer3D.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/R13Architecture.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/R13_CompleteShell.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/Door_13.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/HingedWindow_Arch.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Bed_02.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Wardrobe.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Nightstand.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/BankerLamp.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/FoldingDesk.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Chair_02.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/WashTable.tscn" id="12_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/Painting_10.tscn" id="13_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/WallLantern_03.tscn" id="14_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/Rug_01.tscn" id="15_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Bench_02.tscn" id="16_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Table_09.tscn" id="17_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/ResidentialAccessories_09.tscn" id="18_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/BottleRack.tscn" id="19_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/Bottles_01.tscn" id="20_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/ThreePartDoorLock.tscn" id="21_prefab"]
+
+[node name="R13" type="Node3D"]
+script = ExtResource("1_script")
+room_id = "R13"
+room_title = "R13 维罗妮卡居室"
+floor_name = "2F"
+spawn_position = Vector3(1.0, 0, -0.95)
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="R13_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "R13_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "R13_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="R13_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8499999, 0, -6.69999981)
+instance_id = "R13_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_window_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -3.9000001, 0.949999988, -2.5)
+instance_id = "R13_window_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_bed_01" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.449999988, 0, -5.17999983)
+instance_id = "R13_bed_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_wardrobe_01" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8499999, 0, -6.26999998)
+instance_id = "R13_wardrobe_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_nightstand_01" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.660000026, 0, -5.78999996)
+instance_id = "R13_nightstand_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_banker_lamp_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.660000026, 0.610000014, -5.78999996)
+instance_id = "R13_banker_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_folding_desk_01" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -3.42000008, 0, -2.5)
+instance_id = "R13_folding_desk_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_chair_01" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, 1, 0, 1, 0, -1, 0, -4.37113883e-08, -2.54999995, 0, -2.5)
+instance_id = "R13_chair_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_banker_lamp_02" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -3.42000008, 0.800000012, -3.04999995)
+instance_id = "R13_banker_lamp_02"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_wash_table_01" parent="Instances" instance=ExtResource("12_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.95000005, 0, -2.5999999)
+instance_id = "R13_wash_table_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_painting_01" parent="Instances" instance=ExtResource("13_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.449999988, 1.64999998, -6.51999998)
+instance_id = "R13_painting_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_wall_lantern_01" parent="Instances" instance=ExtResource("14_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2.54999995, -6.51999998)
+instance_id = "R13_wall_lantern_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_wall_lantern_02" parent="Instances" instance=ExtResource("14_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -3.72000003, 2.5, -4.11999989)
+instance_id = "R13_wall_lantern_02"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_rug_01" parent="Instances" instance=ExtResource("15_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.100000001, 0, -2.25)
+instance_id = "R13_rug_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_bench_01" parent="Instances" instance=ExtResource("16_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -1.20000005, 0, -0.850000024)
+instance_id = "R13_bench_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_table_01" parent="Instances" instance=ExtResource("17_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 0, -1.04999995)
+instance_id = "R13_table_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_residential_accessories_01" parent="Instances" instance=ExtResource("18_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -3.42000008, 0.805000007, -2.25)
+instance_id = "R13_residential_accessories_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_bottle_rack_01" parent="Instances" instance=ExtResource("19_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -3.72000003, 1.29999995, -4.9000001)
+instance_id = "R13_bottle_rack_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_bottles_01" parent="Instances" instance=ExtResource("20_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -3.42000008, 0.810000002, -2.0999999)
+instance_id = "R13_bottles_01"
+entity_id = ""
+portal_id = ""
+
+[node name="R13_three_part_door_lock_01" parent="Instances" instance=ExtResource("21_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8499999, 0, -6.55999994)
+instance_id = "R13_three_part_door_lock_01"
+entity_id = ""
+portal_id = ""
+[node name="FloorZone" type="Node3D" parent="."]
+polygon = PackedVector2Array(-3.9, -3.35, 3.9, -3.35, 3.9, 3.35, -3.9, 3.35)
+floor_thickness = 0.2
+ceiling_enabled = false
+ceiling_height = 3.0
+show_grid = true
+grid_step = 0.25
+
+[node name="SpawnPoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 0, -0.95)

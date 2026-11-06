@@ -1,0 +1,71 @@
+[gd_scene load_steps=2 format=3 uid="uid://clivebuilderoverlay001"]
+
+[ext_resource type="Script" path="res://tools/godot_architect/LiveBuilderOverlay.gd" id="1_script"]
+
+[node name="LiveBuilderOverlay" type="CanvasLayer"]
+layer = 100
+script = ExtResource("1_script")
+
+[node name="RootPanel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(400, 320)
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -240.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="VBox" type="VBoxContainer" parent="RootPanel"]
+layout_mode = 2
+
+[node name="ToolBar" type="HBoxContainer" parent="RootPanel/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="RootPanel/VBox/ToolBar"]
+layout_mode = 2
+text = "[F4] 3D Live Architect"
+
+[node name="WallBtn" type="Button" parent="RootPanel/VBox/ToolBar"]
+layout_mode = 2
+text = "+ Wall"
+
+[node name="RailingBtn" type="Button" parent="RootPanel/VBox/ToolBar"]
+layout_mode = 2
+text = "+ Railing"
+
+[node name="StairBtn" type="Button" parent="RootPanel/VBox/ToolBar"]
+layout_mode = 2
+text = "+ Stair"
+
+[node name="CategoryOption" type="OptionButton" parent="RootPanel/VBox/ToolBar"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="RootPanel/VBox/ToolBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CloseBtn" type="Button" parent="RootPanel/VBox/ToolBar"]
+layout_mode = 2
+text = "Close [F4]"
+
+[node name="PrefabDrawer" type="HSplitContainer" parent="RootPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ItemList" type="ItemList" parent="RootPanel/VBox/PrefabDrawer"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_columns = 4
+same_column_width = true
+
+[node name="StatusBar" type="HBoxContainer" parent="RootPanel/VBox"]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="RootPanel/VBox/StatusBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 12
+text = "F4 Live Builder Ready"

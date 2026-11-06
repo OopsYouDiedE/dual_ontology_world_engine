@@ -1,0 +1,187 @@
+[gd_scene load_steps=19 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/RoomContainer3D.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/Mainb1U01Architecture.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/Mainb1U01_CompleteShell.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/Door_19.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/Door_01.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/GrainRack.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/GrainCrates_02.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/GrainCrates_01.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/Handcart.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/PlatformScale.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/Barrel.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/GrainPallet.tscn" id="12_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/GrainSacks.tscn" id="13_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Table_11.tscn" id="14_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Chair_09.tscn" id="15_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/CagedLamp.tscn" id="16_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/IndicatorBoard_03.tscn" id="17_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/HeavyLock.tscn" id="18_prefab"]
+
+[node name="mainb1_u01" type="Node3D"]
+script = ExtResource("1_script")
+room_id = "mainb1_u01"
+room_title = "mainb1_u01"
+floor_name = "2F"
+spawn_position = Vector3(1.0, 0.0, -1.0)
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="mainb1_u01_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "mainb1_u01_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "mainb1_u01_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="mainb1_u01_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.70000005, 0, -9.19999981)
+instance_id = "mainb1_u01_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_Door_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 0, 0, 0)
+instance_id = "mainb1_u01_Door_01"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="mainb1_u01_grain_rack_01" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -4.78000021, 0, -3.03600001)
+instance_id = "mainb1_u01_grain_rack_01"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_grain_rack_02" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -4.78000021, 0, -6.62400007)
+instance_id = "mainb1_u01_grain_rack_02"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_grain_rack_03" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.37599993, 0, -8.56000042)
+instance_id = "mainb1_u01_grain_rack_03"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_grain_crates_01" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.67199993, 0, -2.29999995)
+instance_id = "mainb1_u01_grain_crates_01"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_grain_crates_02" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.32000017, 0, -4.87599993)
+instance_id = "mainb1_u01_grain_crates_02"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_grain_crates_03" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.91599989, 0, -8.09599972)
+instance_id = "mainb1_u01_grain_crates_03"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_handcart_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(0.975897431, 0, 0.218229622, 0, 1, 0, -0.218229622, 0, 0.975897431, 0.850000024, 0, -3.95600009)
+instance_id = "mainb1_u01_handcart_01"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_platform_scale_01" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.949999988, 0, -2.20799994)
+instance_id = "mainb1_u01_platform_scale_01"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_barrel_01" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.99600005, 0, -1.04999995)
+instance_id = "mainb1_u01_barrel_01"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_barrel_02" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.45600009, 0, -1.20000005)
+instance_id = "mainb1_u01_barrel_02"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_grain_pallet_01" parent="Instances" instance=ExtResource("12_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.150000006, 0, -6.9000001)
+instance_id = "mainb1_u01_grain_pallet_01"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_grain_sacks_01" parent="Instances" instance=ExtResource("13_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.150000006, 0.230000004, -6.9000001)
+instance_id = "mainb1_u01_grain_sacks_01"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_table_01" parent="Instances" instance=ExtResource("14_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.34800005, 0, -7.54400015)
+instance_id = "mainb1_u01_table_01"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_chair_01" parent="Instances" instance=ExtResource("15_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 3.34800005, 0, -6.69399977)
+instance_id = "mainb1_u01_chair_01"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_caged_lamp_01" parent="Instances" instance=ExtResource("16_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -5.36000013, 2.61999989, -2.11599994)
+instance_id = "mainb1_u01_caged_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_caged_lamp_02" parent="Instances" instance=ExtResource("16_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -5.36000013, 2.61999989, -6.44000006)
+instance_id = "mainb1_u01_caged_lamp_02"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_caged_lamp_03" parent="Instances" instance=ExtResource("16_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.864000022, 2.61999989, -9.17000008)
+instance_id = "mainb1_u01_caged_lamp_03"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_caged_lamp_04" parent="Instances" instance=ExtResource("16_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.99600005, 2.61999989, -9.17000008)
+instance_id = "mainb1_u01_caged_lamp_04"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_indicator_board_01" parent="Instances" instance=ExtResource("17_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.40400004, 1.04999995, -9.13000011)
+instance_id = "mainb1_u01_indicator_board_01"
+entity_id = ""
+portal_id = ""
+
+[node name="mainb1_u01_heavy_lock_01" parent="Instances" instance=ExtResource("18_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.70000005, 1.13999999, -9.06999969)
+instance_id = "mainb1_u01_heavy_lock_01"
+entity_id = ""
+portal_id = ""
+[node name="FloorZone" type="Node3D" parent="."]
+polygon = PackedVector2Array(-4.0, -4.0, 4.0, -4.0, 4.0, 4.0, -4.0, 4.0)
+floor_thickness = 0.2
+ceiling_enabled = false
+ceiling_height = 3.0
+show_grid = true
+grid_step = 0.25
+
+[node name="SpawnPoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 0.0, -1.0)

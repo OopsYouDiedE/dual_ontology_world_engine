@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DuelView 证据推演有向无环图 (Proof DAG Canvas)</title>
+  <style>
+    :root {
+      --bg: #15181e;
+      --panel: #1e232b;
+      --border: #323b49;
+      --text: #e1e7f0;
+      --text-muted: #8c9ba5;
+      --fact-blue: #2196f3;
+      --mind-yellow: #ffb74d;
+      --neg-red: #ef5350;
+      --core-green: #66bb6a;
+      --accent: #d4a373;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      background: var(--panel);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .legend {
+      display: flex;
+      gap: 16px;
+      font-size: 0.82rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .dot-blue { background: var(--fact-blue); }
+    .dot-yellow { background: var(--mind-yellow); }
+    .dot-red { background: var(--neg-red); }
+    .dot-green { background: var(--core-green); }
+
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+      overflow: hidden;
+      cursor: grab;
+    }
+    svg.connections-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .node-card {
+      position: absolute;
+      width: 220px;
+      background: var(--panel);
+      border-radius: 6px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+      border-top: 4px solid var(--fact-blue);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 12px;
+      box-sizing: border-box;
+      cursor: move;
+      user-select: none;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .node-card:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      transform: translateY(-2px);
+    }
+    .node-card.type-mind { border-top-color: var(--mind-yellow); }
+    .node-card.type-negative { border-top-color: var(--neg-red); }
+    .node-card.type-core { border-top-color: var(--core-green); }
+
+    .node-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .node-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+    .node-body {
+      font-size: 0.76rem;
+      color: #b0bec5;
+      line-height: 1.4;
+    }
+    .node-ports {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px dashed rgba(255,255,255,0.08);
+      font-size: 0.7rem;
+    }
+    .port {
+      color: var(--accent);
+      cursor: crosshair;
+    }
+
+    .bottom-bar {
+      height: 36px;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 0.82rem;
+    }
+    .check-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-ok {
+      background: rgba(102, 187, 106, 0.2);
+      color: var(--core-green);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🕸️ DuelView Case Theory - 霍恩逻辑证据推演 DAG 画布</h1>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot dot-blue"></span> 物理客观事实 (Physical)</div>
+      <div class="legend-item"><span class="legend-dot dot-yellow"></span> 角色主观感知 (Mind)</div>
+      <div class="legend-item"><span class="legend-dot dot-red"></span> 显式负证据 (Negative=true)</div>
+      <div class="legend-item"><span class="legend-dot dot-green"></span> 极小可信核心 (Minimal Core)</div>
+    </div>
+  </header>
+
+  <div class="canvas-container" id="canvas">
+    <svg class="connections-layer" id="svgLayer"></svg>
+
+    <!-- Node 1: Physical Fact -->
+    <div class="node-card" style="left: 60px; top: 120px;" id="node1">
+      <div class="node-header"><span>#FACT-001</span><span>domain="physical"</span></div>
+      <div class="node-title">钟楼门锁破损</div>
+      <div class="node-body">锁定槽位 slot:clock_tower_lock 物理状态显示暴力撬压痕迹。</div>
+      <div class="node-ports"><span class="port">● In (0)</span><span class="port">Out (2) ●</span></div>
+    </div>
+
+    <!-- Node 2: Mind Observation -->
+    <div class="node-card type-mind" style="left: 360px; top: 60px;" id="node2">
+      <div class="node-header"><span>#MIND-042</span><span>subject="sparrow"</span></div>
+      <div class="node-title">雀儿证词：听到金属敲击</div>
+      <div class="node-body">雀儿声称 Content-Time 15:40 在庭院听到连续重物撞击声。</div>
+      <div class="node-ports"><span class="port">● In (1)</span><span class="port">Out (1) ●</span></div>
+    </div>
+
+    <!-- Node 3: Negative Evidence -->
+    <div class="node-card type-negative" style="left: 360px; top: 220px;" id="node3">
+      <div class="node-header"><span>#NEG-008</span><span>Negative = true</span></div>
+      <div class="node-title">反证：霍铤不在场事实</div>
+      <div class="node-body">霍铤地下室打卡日志处于同一时间窗，不可行进至钟楼。</div>
+      <div class="node-ports"><span class="port">● In (1)</span><span class="port">Out (1) ●</span></div>
+    </div>
+
+    <!-- Node 4: Proof Hypothesis -->
+    <div class="node-card type-core" style="left: 700px; top: 140px;" id="node4">
+      <div class="node-header"><span>#PROOF-CORE</span><span>CaseProofChecker</span></div>
+      <div class="node-title">推演假设：第三者伪造作案</div>
+      <div class="node-body">自然演绎证明树拓扑偏序收敛，排除霍铤直接行动假设。</div>
+      <div class="node-ports"><span class="port">● In (2)</span><span class="port">Verified ●</span></div>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <div class="check-status">
+      <span>带符号霍恩逻辑证明器：</span>
+      <span class="badge-ok">Proof Verified (Q.E.D.)</span>
+      <span style="color: var(--text-muted); margin-left: 10px;">CaseProofNode 指纹: [a9f24e...3b]</span>
+    </div>
+    <div>连接 CLI 会话服务: core/session_cli/SessionCaseApi.cs</div>
+  </div>
+
+  <script>
+    const svg = document.getElementById('svgLayer');
+    function drawLine(x1, y1, x2, y2, color = '#5c6bc0') {
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const dx = (x2 - x1) * 0.5;
+      const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+      path.setAttribute('d', d);
+      path.setAttribute('stroke', color);
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('marker-end', 'url(#arrow)');
+      svg.appendChild(path);
+    }
+
+    function renderLines() {
+      svg.innerHTML = `
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#8c9ba5"/>
+          </marker>
+        </defs>
+      `;
+      // Node 1 (out) -> Node 2 (in)
+      drawLine(280, 155, 360, 105, '#2196f3');
+      // Node 1 (out) -> Node 3 (in)
+      drawLine(280, 155, 360, 265, '#2196f3');
+      // Node 2 (out) -> Node 4 (in)
+      drawLine(580, 105, 700, 175, '#ffb74d');
+      // Node 3 (out) -> Node 4 (in)
+      drawLine(580, 265, 700, 195, '#ef5350');
+    }
+
+    renderLines();
+  </script>
+</body>
+</html>

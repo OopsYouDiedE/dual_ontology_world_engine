@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../dv_lang/DuelView.DvLang.csproj" />
+    <ProjectReference Include="../ontology/DuelView.Ontology.csproj" />
+    <ProjectReference Include="../cognition/DuelView.Cognition.csproj" />
+    <ProjectReference Include="../reasoning/DuelView.Reasoning.csproj" />
+    <ProjectReference Include="../spatial/DuelView.Spatial.csproj" />
+    <ProjectReference Include="../autonomy/DuelView.Autonomy.csproj" />
+    <ProjectReference Include="../simulation/DuelView.Simulation.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../tools/story/ScenarioAuthoring.cs" Link="ScenarioAuthoring.cs" />
+  </ItemGroup>
+</Project>

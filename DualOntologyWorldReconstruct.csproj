@@ -5,5 +5,11 @@
     <RootNamespace>DualOntologyWorldReconstruct</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefaultItemExcludes>$(DefaultItemExcludes);.runtime/**;artifacts/**;tools/**;.git/**</DefaultItemExcludes>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="scenes/**/*.cs" />
+    <ProjectReference Include="core/session_cli/DuelView.Cli.csproj" />
+  </ItemGroup>
 </Project>

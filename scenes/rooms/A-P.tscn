@@ -1,0 +1,164 @@
+[gd_scene load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/RoomContainer3D.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/APArchitecture.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/AP_CompleteShell.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/DoubleArchDoor.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/Window_04.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/Stove.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/CookerHood.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/WorkCounter_02.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/Sink.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/CrockeryShelf.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/CookingPot.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/CookingPot_02.tscn" id="12_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/ResidentialAccessories.tscn" id="13_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/StudyDesk.tscn" id="14_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/StudyChair.tscn" id="15_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Cabinet_02.tscn" id="16_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/VentGrille_02.tscn" id="17_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/WallLantern.tscn" id="18_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/PendantLamp.tscn" id="19_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/CeramicPitcher.tscn" id="20_prefab"]
+
+[node name="A-P" type="Node3D"]
+script = ExtResource("1_script")
+room_id = "A-P"
+room_title = "甲区公共厅"
+floor_name = "2F"
+spawn_position = Vector3(0, 0, -0.9)
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="A_P_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "A-P_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "A-P_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="A_P_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -3.4000001, 0, -1.17999995)
+instance_id = "A-P_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_window_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0999999, 1.10000002, -5.5)
+instance_id = "A-P_window_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_stove_01" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.26999998, 0, -5.01999998)
+instance_id = "A-P_stove_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_cooker_hood_01" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.26999998, 1.75, -5.01999998)
+instance_id = "A-P_cooker_hood_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_work_counter_01" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5)
+instance_id = "A-P_work_counter_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_sink_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.04999995, 0, -5)
+instance_id = "A-P_sink_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_crockery_shelf_01" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.77999997, -5.36999989)
+instance_id = "A-P_crockery_shelf_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_cooking_pot_01" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.56999993, 0.954999983, -4.9000001)
+instance_id = "A-P_cooking_pot_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_cooking_pot_02" parent="Instances" instance=ExtResource("12_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.91999996, 0.954999983, -4.98000002)
+instance_id = "A-P_cooking_pot_02"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_residential_accessories_01" parent="Instances" instance=ExtResource("13_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.949999988, -4.98000002)
+instance_id = "A-P_residential_accessories_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_table_01" parent="Instances" instance=ExtResource("14_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.06999993)
+instance_id = "A-P_table_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_chair_01" parent="Instances" instance=ExtResource("15_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, -0.600000024, 0, -1.23000002)
+instance_id = "A-P_chair_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_chair_02" parent="Instances" instance=ExtResource("15_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 0.600000024, 0, -1.23000002)
+instance_id = "A-P_chair_02"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_cabinet_01" parent="Instances" instance=ExtResource("16_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5999999, 0, -1.70000005)
+instance_id = "A-P_cabinet_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_vent_grille_01" parent="Instances" instance=ExtResource("17_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9000001, -5.34000015)
+instance_id = "A-P_vent_grille_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_wall_lantern_01" parent="Instances" instance=ExtResource("18_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.699999988, 2.70000005, -5.30000019)
+instance_id = "A-P_wall_lantern_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_pendant_lamp_01" parent="Instances" instance=ExtResource("19_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.45000005, -2.5999999)
+instance_id = "A-P_pendant_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="A_P_pitcher_01" parent="Instances" instance=ExtResource("20_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.600000024, 0.800000012, -2.06999993)
+instance_id = "A-P_pitcher_01"
+entity_id = ""
+portal_id = ""
+[node name="FloorZone" type="Node3D" parent="."]
+polygon = PackedVector2Array(-3.4, -2.75, 3.4, -2.75, 3.4, 2.75, -3.4, 2.75)
+floor_thickness = 0.2
+ceiling_enabled = false
+ceiling_height = 3.0
+show_grid = true
+grid_step = 0.25
+
+[node name="SpawnPoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.9)

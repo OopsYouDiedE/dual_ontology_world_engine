@@ -3,10 +3,21 @@
 .mono/
 data_*/
 
+# Local Runtime & Toolchains (Godot .NET binary & .NET SDK)
+.runtime/
+.venv/
+__pycache__/
+*.py[cod]
+*.tmp
+*.log
+runs/
+artifacts/
+
 # .NET / C# specific ignores
 bin/
 obj/
 *.sln
+!DuelView.sln
 .vs/
 .vscode/
 *.user

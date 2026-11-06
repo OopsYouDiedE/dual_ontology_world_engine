@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../dv_lang/DuelView.DvLang.csproj" />
+    <ProjectReference Include="../ontology/DuelView.Ontology.csproj" />
+    <ProjectReference Include="../cognition/DuelView.Cognition.csproj" />
+    <ProjectReference Include="../reasoning/DuelView.Reasoning.csproj" />
+    <ProjectReference Include="../spatial/DuelView.Spatial.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="DuelView.Simulation" />
+    <InternalsVisibleTo Include="DuelView.Cli" />
+  </ItemGroup>
+</Project>

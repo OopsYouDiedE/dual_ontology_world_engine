@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://cpropentity3d001"]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/PropEntity3D.gd" id="1_script"]
+
+[node name="PropEntity3D" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+collision_mask = 0
+
+[node name="InteractionSlots" type="Node3D" parent="."]
+
+[node name="EvidenceMarkers" type="Node3D" parent="."]

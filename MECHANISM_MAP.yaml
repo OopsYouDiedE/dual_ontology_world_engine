@@ -1,0 +1,96 @@
+version: "2.1"
+entry_points:
+  godot_main: "scenes/main/Main.tscn"
+  csharp_session_bridge: "scenes/main/SessionBridge.cs"
+  cli_host: "core/session_cli/Program.cs"
+  default_scenario: "assets/data/scenarios/campaign.dv"
+
+mechanisms:
+  dual_ontology_state:
+    description: "物理客观域与角色主观心智域双本体状态隔离及跨主体访问拦截"
+    dv_keywords: ["domain", "subject", "physical", "mind", "F_dv_cell"]
+    csharp_authority:
+      - "core/ontology/State.cs"
+      - "core/ontology/References.cs"
+    godot_presenters:
+      - "scenes/main/SessionBridge.cs"
+    verify_cmd: "dotnet run --project core/session_cli/DuelView.Cli.csproj -- --verify-ontology"
+
+  perception_and_erosion:
+    description: "局部绑定投影、贝叶斯心智置信度聚合与源质侵蚀记忆周期截断"
+    dv_keywords: ["F_dv_bind", "F_dv_perceive", "F_dv_aggregate", "F_dvs_erosion_update", "grants"]
+    csharp_authority:
+      - "core/cognition/Perception.cs"
+      - "core/cognition/ActorCognition.cs"
+    godot_presenters:
+      - "scenes/UIpanel/Field/FieldHUD.gd"
+      - "scenes/UIpanel/Shared/ModalAlertUI.gd"
+    verify_cmd: "dotnet run --project core/session_cli/DuelView.Cli.csproj -- --verify-cognition"
+
+  signed_horn_reasoning:
+    description: "带符号霍恩逻辑、显式负证据与极小可信核心证明树校验"
+    dv_keywords: ["theory", "proof", "negative", "hypothesis"]
+    csharp_authority:
+      - "core/reasoning/CaseTheory.cs"
+      - "core/reasoning/CaseProofChecker.cs"
+      - "core/reasoning/NaturalDeduction.cs"
+    godot_presenters:
+      - "scenes/UIpanel/Field/DeductionInterface.gd"
+      - "scenes/UIpanel/Spreads/PinboardPlateSpread.gd"
+    workbench_tool: "tools/studio_web/proof_dag.html"
+    verify_cmd: "uv run python tools/story/author.py --scenario assets/data/scenarios/campaign.dv"
+
+  autonomy_drive_solver:
+    description: "凹性满意度动机求解器与 Sim4 NPC 行为规划"
+    dv_keywords: ["drive", "satisfaction", "routine", "scheme"]
+    csharp_authority:
+      - "core/autonomy/AutonomyDriveSolver.cs"
+      - "core/autonomy/DriveCalculator.cs"
+      - "core/autonomy/Sim4Planner.cs"
+    godot_presenters:
+      - "scenes/components/characters/AutonomousActorExecutor.gd"
+      - "tools/sandbox/DebugOverlay3D.gd"
+    workbench_tool: "tools/studio_web/timeline_gantt.html"
+    verify_cmd: "dotnet run --project core/session_cli/DuelView.Cli.csproj -- --verify-drives"
+
+  causal_clock_and_campaign:
+    description: "双轨流速因果时钟、7阶段单步切片流水线与五日战役跨日因果锁链"
+    dv_keywords: ["campaign", "sleep_night", "wake", "content_time"]
+    csharp_authority:
+      - "core/simulation/SimulationClock.cs"
+      - "core/simulation/RuntimeSession.cs"
+      - "core/simulation/CampaignScenario.cs"
+    godot_presenters:
+      - "scenes/UIpanel/Spreads/ChronicleMapSpread.gd"
+      - "scenes/components/rendering/WorldTimeLighting.gd"
+    verify_cmd: "dotnet run --project core/session_cli/DuelView.Cli.csproj -- --verify-character-actions"
+
+  native_3d_architect_and_prefabs:
+    description: "Godot 原生点击拖拽参数化建筑结构 (墙壁/栏杆/楼梯) 与已配好动作的智能预制件摆放"
+    dv_keywords: ["portal", "room", "slot"]
+    csharp_authority:
+      - "core/spatial/PortalPolicy.cs"
+      - "core/spatial/RoomLifecycle.cs"
+      - "core/spatial/SeatingFit.cs"
+      - "scenes/components/architecture/RoomStreamingController.cs"
+      - "scenes/components/architecture/CutawayGeometry.cs"
+    godot_presenters:
+      - "scenes/components/architecture/SmartWall3D.gd"
+      - "scenes/components/architecture/SmartRailing3D.gd"
+      - "scenes/components/architecture/SmartStair3D.gd"
+      - "scenes/components/architecture/SmartFloorZone3D.gd"
+      - "scenes/components/architecture/RoomContainer3D.gd"
+      - "scenes/components/architecture/PropEntity3D.gd"
+    workbench_tool: "tools/godot_architect/PrefabPaletteDock.tscn"
+    verify_cmd: "dotnet run --project core/session_cli/DuelView.Cli.csproj -- --verify-room-bundles"
+
+  book_viewport_projection:
+    description: "SubViewport 3D 弯曲书页射线 UV 反投影与 F2 平面直通双模式"
+    dv_keywords: ["casebook", "spread"]
+    csharp_authority:
+      - "scenes/main/CasebookPersistence.cs"
+    godot_presenters:
+      - "scenes/UIpanel/BookShell/BookShellUI.gd"
+      - "scenes/components/world/LowpolyBookStage3D.gd"
+      - "assets/shaders/book_leaf_mesh_3d.gdshader"
+    verify_cmd: "uv run python mcp/verification/verify_batch1.py"

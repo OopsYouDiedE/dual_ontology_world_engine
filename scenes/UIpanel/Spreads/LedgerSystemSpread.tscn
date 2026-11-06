@@ -1,0 +1,144 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/UIpanel/Spreads/LedgerSystemSpread.gd" id="1_ledger"]
+
+[node name="LedgerSystemSpread" type="Control"]
+custom_minimum_size = Vector2(1600, 1040)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ledger")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 40
+
+[node name="LeftPage" type="PanelContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Margin" type="MarginContainer" parent="HBoxContainer/LeftPage"]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="VBox" type="VBoxContainer" parent="HBoxContainer/LeftPage/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Header" type="HBoxContainer" parent="HBoxContainer/LeftPage/Margin/VBox"]
+layout_mode = 2
+
+[node name="LeftTitle" type="Label" parent="HBoxContainer/LeftPage/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.180392, 0.160784, 0.141176, 1)
+theme_override_font_sizes/font_size = 20
+text = "调查纪要与存档账本"
+
+[node name="ModeTabs" type="HBoxContainer" parent="HBoxContainer/LeftPage/Margin/VBox/Header"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HSeparator" type="HSeparator" parent="HBoxContainer/LeftPage/Margin/VBox"]
+layout_mode = 2
+
+[node name="ArchiveSlotsBox" type="VBoxContainer" parent="HBoxContainer/LeftPage/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Scroll" type="ScrollContainer" parent="HBoxContainer/LeftPage/Margin/VBox/ArchiveSlotsBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SlotsContainer" type="VBoxContainer" parent="HBoxContainer/LeftPage/Margin/VBox/ArchiveSlotsBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="SettingsCategoryBox" type="VBoxContainer" parent="HBoxContainer/LeftPage/Margin/VBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="RightPage" type="PanelContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Margin" type="MarginContainer" parent="HBoxContainer/RightPage"]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="VBox" type="VBoxContainer" parent="HBoxContainer/RightPage/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Header" type="HBoxContainer" parent="HBoxContainer/RightPage/Margin/VBox"]
+layout_mode = 2
+
+[node name="RightTitle" type="Label" parent="HBoxContainer/RightPage/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.180392, 0.160784, 0.141176, 1)
+theme_override_font_sizes/font_size = 20
+text = "存档详情与回溯偏好"
+
+[node name="HSeparator" type="HSeparator" parent="HBoxContainer/RightPage/Margin/VBox"]
+layout_mode = 2
+
+[node name="SlotDetailBox" type="VBoxContainer" parent="HBoxContainer/RightPage/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="SlotDetailLabel" type="Label" parent="HBoxContainer/RightPage/Margin/VBox/SlotDetailBox"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "选择左侧槽位查看存档详情..."
+autowrap_mode = 2
+
+[node name="ButtonRow" type="HBoxContainer" parent="HBoxContainer/RightPage/Margin/VBox/SlotDetailBox"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="SaveButton" type="Button" parent="HBoxContainer/RightPage/Margin/VBox/SlotDetailBox/ButtonRow"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "保存当前进度 (Save)"
+
+[node name="LoadButton" type="Button" parent="HBoxContainer/RightPage/Margin/VBox/SlotDetailBox/ButtonRow"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "读取此记录 (Load)"
+
+[node name="DeleteButton" type="Button" parent="HBoxContainer/RightPage/Margin/VBox/SlotDetailBox/ButtonRow"]
+custom_minimum_size = Vector2(80, 38)
+layout_mode = 2
+text = "删除"
+
+[node name="ReturnTitleButton" type="Button" parent="HBoxContainer/RightPage/Margin/VBox/SlotDetailBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+text = "返回游戏主菜单 (Title Screen)"
+
+[node name="SettingsFormBox" type="VBoxContainer" parent="HBoxContainer/RightPage/Margin/VBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 18

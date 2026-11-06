@@ -1,0 +1,92 @@
+schema "dv-script-v1";
+
+data case_history_reference {"case_id":"r3_disaster_history","scope":"objective","exports":"final"};
+
+data case_theory {
+  "script": "scope objective { query archived : history_fact(r3_disaster_history,memories_archived); query sealed : history_fact(r3_disaster_history,stage2); query glove : history_fact(r3_disaster_history,trace_glove); query deep_bound : history_fact(r3_disaster_history,su_prima_deep_bound); query struggle : history_fact(r3_disaster_history,trace_struggle_sleeve_and_scuff); query deadlock : history_fact(r3_disaster_history,b_engineered_deadlock); query wet_cloth : history_fact(r3_disaster_history,wet_cloth_hung_in_kitchen); query stripped : history_fact(r3_disaster_history,rooms_stripped_like_new_checkin); } scope detective { query history : authored_history_complete(night1); query solved : investigator_knows_full_history(night1); } scope day1_su_ling { axiom hearing : reported_distorted_threat(su_ling,night1); axiom note : observed_music_note(su_ling,day1); axiom bias : reported_distorted_threat(su_ling,night1) -> belief_external_attacker(su_ling,day1); query fear : belief_external_attacker(su_ling,day1); query pin : occurred(su_half_pin,t2); query murderer : external_murderer_proved(night1); } scope day1_halvard { axiom latch : observed_stage2(north_gate,day1); query suspicion : belief_shen_deadlocker(halvard,day1); query maker : tool_match_supported(shen,day1); query deadlocker : actual_last_deadlocker(shen,night1); } scope day1_shen_ding { axiom memory : cannot_recall_night_actions(shen,day1); query connection : tool_connection_supported(shen,day1); query remembered : remembers_sealing_action(shen,night1); query last : actual_last_deadlocker(shen,night1); } scope day1_lucian { axiom own_voice : accepted_voice_identity(lucian,day1); query memory : remembers_raw_warning(lucian,night1); query listener : knows_listener_interpretation(lucian,su_ling,night1); } scope day1_demon { axiom exterior : knows_external_danger(demon,night1); axiom pressure : knows_pressure_protection(demon,four_zones,night1); axiom action : remembers_own_boundary_closure(demon,night1); axiom own_reason : knows_external_danger(demon,night1) -> knows_pressure_protection(demon,four_zones,night1) -> remembers_own_boundary_closure(demon,night1) -> can_explain_own_protection(demon,day1); query explain : can_explain_own_protection(demon,day1); query told : actually_told_students(demon,day1); query omniscient : knows_all_student_actions(demon,night1); } scope day1_detective_partial { axiom current : observed_stage2(north_gate,day1); axiom frost : observed_frost(north_gate,day1); axiom caution : observed_stage2(north_gate,day1) -> needs_lock_history_check(north_gate,day1); query check : needs_lock_history_check(north_gate,day1); query history : authored_history_complete(night1); query ingress : toxic_inward_flow(four_zones,night1); } scope day1_action_only_deduction { axiom sleeve : observed_struggle_and_auto_close(b_gate,day1); axiom deadlock : observed_engineered_deadlock(b_gate,day1); axiom threshold : observed_threshold_water_and_Prima_cloth_in_kitchen(b_kitchen,day1); axiom bare : observed_stripped_rooms_like_new_checkin(zone_b,day1); axiom reconstruct_four : observed_struggle_and_auto_close(b_gate,day1) -> observed_engineered_deadlock(b_gate,day1) -> observed_threshold_water_and_Prima_cloth_in_kitchen(b_kitchen,day1) -> action_sequence_reconstructed(zone_b,night1); axiom deduce_fifth : action_sequence_reconstructed(zone_b,night1) -> observed_stripped_rooms_like_new_checkin(zone_b,day1) -> fifth_entity_relocated_cloth_and_stripped_rooms(night1); query actions : action_sequence_reconstructed(zone_b,night1); query fifth_entity : fifth_entity_relocated_cloth_and_stripped_rooms(night1); query remembered_motive : subjective_motive_recalled(zone_b,night1); } scope day1_ordered_deduction { axiom sleeve : observed_struggle_and_auto_close(b_gate,day1); axiom deadlock : observed_engineered_deadlock(b_gate,day1); axiom threshold : observed_threshold_water_and_Prima_cloth_in_kitchen(b_kitchen,day1); axiom bare : observed_stripped_rooms_like_new_checkin(zone_b,day1); axiom order : selected_action_order(zone_b,night1); axiom reconstruct_four : selected_action_order(zone_b,night1) -> observed_struggle_and_auto_close(b_gate,day1) -> observed_engineered_deadlock(b_gate,day1) -> observed_threshold_water_and_Prima_cloth_in_kitchen(b_kitchen,day1) -> action_sequence_reconstructed(zone_b,night1); axiom deduce_fifth : action_sequence_reconstructed(zone_b,night1) -> observed_stripped_rooms_like_new_checkin(zone_b,day1) -> fifth_entity_relocated_cloth_and_stripped_rooms(night1); query actions : action_sequence_reconstructed(zone_b,night1); query fifth_entity : fifth_entity_relocated_cloth_and_stripped_rooms(night1); query remembered_motive : subjective_motive_recalled(zone_b,night1); } scope day1_joint_pressure_inquiry { axiom concentration : accepted_external_concentration_record(four_zones,night1); axiom pressure : accepted_positive_pressure_record(four_zones,night1); axiom closure : accepted_closure_record(demon,night1); axiom scope : accepted_same_interval_and_boundary(four_zones,night1); axiom explain : accepted_external_concentration_record(four_zones,night1) -> accepted_positive_pressure_record(four_zones,night1) -> accepted_closure_record(demon,night1) -> accepted_same_interval_and_boundary(four_zones,night1) -> protective_closure_supported(night1); query protection : protective_closure_supported(night1); query all_events : authored_history_complete(night1); query inflow : toxic_inward_flow(four_zones,night1); }",
+  "audit": [
+    {
+      "scope": "objective",
+      "theorems": {
+        "archived": "proved",
+        "sealed": "proved",
+        "glove": "proved",
+        "deep_bound": "proved",
+        "struggle": "proved",
+        "deadlock": "proved",
+        "wet_cloth": "proved",
+        "stripped": "proved"
+      }
+    },
+    {
+      "scope": "detective",
+      "theorems": {
+        "history": "unknown",
+        "solved": "unknown"
+      }
+    },
+    {
+      "scope": "day1_su_ling",
+      "theorems": {
+        "fear": "proved",
+        "pin": "unknown",
+        "murderer": "unknown"
+      }
+    },
+    {
+      "scope": "day1_halvard",
+      "theorems": {
+        "suspicion": "unknown",
+        "maker": "unknown",
+        "deadlocker": "unknown"
+      }
+    },
+    {
+      "scope": "day1_shen_ding",
+      "theorems": {
+        "connection": "unknown",
+        "remembered": "unknown",
+        "last": "unknown"
+      }
+    },
+    {
+      "scope": "day1_lucian",
+      "theorems": {
+        "memory": "unknown",
+        "listener": "unknown"
+      }
+    },
+    {
+      "scope": "day1_demon",
+      "theorems": {
+        "explain": "proved",
+        "told": "unknown",
+        "omniscient": "unknown"
+      }
+    },
+    {
+      "scope": "day1_detective_partial",
+      "theorems": {
+        "check": "proved",
+        "history": "unknown",
+        "ingress": "unknown"
+      }
+    },
+    {
+      "scope": "day1_action_only_deduction",
+      "theorems": {
+        "actions": "proved",
+        "fifth_entity": "proved",
+        "remembered_motive": "unknown"
+      }
+    },
+    {
+      "scope": "day1_joint_pressure_inquiry",
+      "theorems": {
+        "protection": "proved",
+        "all_events": "unknown",
+        "inflow": "unknown"
+      }
+    }
+  ]
+};

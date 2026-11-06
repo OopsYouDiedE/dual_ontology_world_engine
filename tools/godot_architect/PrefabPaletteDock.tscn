@@ -1,0 +1,113 @@
+[gd_scene load_steps=2 format=3 uid="uid://cprefabpalette001"]
+
+[ext_resource type="Script" path="res://tools/godot_architect/PrefabPaletteDock.gd" id="1_script"]
+
+[node name="PrefabPaletteDock" type="Control"]
+custom_minimum_size = Vector2(340, 480)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TopBar" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="CategoryOption" type="OptionButton" parent="VBox/TopBar"]
+custom_minimum_size = Vector2(130, 30)
+layout_mode = 2
+
+[node name="SearchBox" type="LineEdit" parent="VBox/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Filter prefabs..."
+
+[node name="ContentSplit" type="HSplitContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ItemListTree" type="Tree" parent="VBox/ContentSplit"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PreviewPanel" type="VBoxContainer" parent="VBox/ContentSplit"]
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="VBox/ContentSplit/PreviewPanel"]
+custom_minimum_size = Vector2(160, 160)
+layout_mode = 2
+size_flags_vertical = 3
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="VBox/ContentSplit/PreviewPanel/SubViewportContainer"]
+own_world_3d = true
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(160, 160)
+render_target_update_mode = 3
+
+[node name="Camera3D" type="Camera3D" parent="VBox/ContentSplit/PreviewPanel/SubViewportContainer/SubViewport"]
+transform = Transform3D(0.707107, -0.353553, 0.612372, 0, 0.866025, 0.5, -0.707107, -0.353553, 0.612372, 2.5, 2.2, 2.5)
+
+[node name="OmniLight3D" type="OmniLight3D" parent="VBox/ContentSplit/PreviewPanel/SubViewportContainer/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 4, 3)
+omni_range = 10.0
+
+[node name="PreviewPivot" type="Node3D" parent="VBox/ContentSplit/PreviewPanel/SubViewportContainer/SubViewport"]
+
+[node name="FootprintBar" type="HBoxContainer" parent="VBox/ContentSplit/PreviewPanel"]
+layout_mode = 2
+
+[node name="FootprintIndicator" type="ColorRect" parent="VBox/ContentSplit/PreviewPanel/FootprintBar"]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+color = Color(0.2, 0.85, 0.3, 1)
+
+[node name="FootprintLabel" type="Label" parent="VBox/ContentSplit/PreviewPanel/FootprintBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text = "Clearance: OK"
+
+[node name="RotateHint" type="Label" parent="VBox/ContentSplit/PreviewPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Press 'R' to Rotate 90°"
+horizontal_alignment = 1
+
+[node name="BottomBar" type="VBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="SlotHBox" type="HBoxContainer" parent="VBox/BottomBar"]
+layout_mode = 2
+
+[node name="SlotLabel" type="Label" parent="VBox/BottomBar/SlotHBox"]
+layout_mode = 2
+text = "dv_slot_id:"
+
+[node name="SlotEdit" type="LineEdit" parent="VBox/BottomBar/SlotHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "slot:prop_target_id"
+
+[node name="SpawnBtn" type="Button" parent="VBox/BottomBar"]
+layout_mode = 2
+text = "Place In Room"
+
+[node name="TestActionBtn" type="Button" parent="VBox/BottomBar"]
+layout_mode = 2
+text = "Preview Action"

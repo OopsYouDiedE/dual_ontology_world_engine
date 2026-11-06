@@ -1,0 +1,129 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/RoomContainer3D.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/R13Architecture.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/Door_13.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/HingedWindow_Arch.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/WallLantern_03.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/ControlConsole_01.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/PlatformScale.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/StudyDesk.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/OpenBook_01.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/BankerLamp.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/IndicatorBoard.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/Schematic.tscn" id="12_prefab"]
+[ext_resource type="FontFile" path="res://assets/external/NotoSansSC/NotoSansSC[wght].ttf" id="label_font"]
+
+[node name="S-102" type="Node3D"]
+script = ExtResource("1_script")
+room_id = "S-102"
+room_title = "星仪院 · 精密仪器室"
+floor_name = "2F"
+spawn_position = Vector3(0.9, 0, -0.95)
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+metadata/adaptation = "四院用途专属的室内原型。复用已发布的 R13 建筑壳体及原尺度家具重新布置；不声称复刻原拓扑平面尺寸。地图和楼层使用 campus-r3 的真实房间记录。所有规则、证据和人物行动由 DV/Core 决定。"
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="S102_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+position = Vector3(0, 0, 0)
+instance_id = "S102_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="S102_Door_00" parent="Instances" instance=ExtResource("3_prefab")]
+position = Vector3(2.85, 0, -6.7)
+instance_id = "S102_Door_00"
+entity_id = ""
+portal_id = "D-S-102"
+
+[node name="S102_window_01" parent="Instances" instance=ExtResource("4_prefab")]
+position = Vector3(-3.9, 0.95, -2.5)
+rotation = Vector3(0, -1.570796327, 0)
+instance_id = "S102_window_01"
+entity_id = ""
+portal_id = ""
+
+[node name="S102_wall_lantern_01" parent="Instances" instance=ExtResource("5_prefab")]
+position = Vector3(1.7, 2.5, -6.51)
+instance_id = "S102_wall_lantern_01"
+entity_id = ""
+portal_id = ""
+
+[node name="S102_wall_lantern_02" parent="Instances" instance=ExtResource("5_prefab")]
+position = Vector3(-3.71, 2.5, -4.4)
+rotation = Vector3(0, 1.570796327, 0)
+instance_id = "S102_wall_lantern_02"
+entity_id = ""
+portal_id = ""
+
+[node name="S102_instruments" parent="Instances" instance=ExtResource("6_prefab")]
+position = Vector3(-0.7, 0, -3.35)
+instance_id = "S102_instruments"
+entity_id = "S102.instruments"
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.6212501,0.0075],\"size\":[1.92,1.2425001,0.8949999]}]"
+static_collision = "none"
+
+[node name="S102_balance" parent="Instances" instance=ExtResource("7_prefab")]
+position = Vector3(1.7, 0, -3.25)
+instance_id = "S102_balance"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.8325,0.0],\"size\":[1.4,1.665,1.1]}]"
+static_collision = "none"
+
+[node name="S102_calibration_table" parent="Instances" instance=ExtResource("8_prefab")]
+position = Vector3(-1.6, 0, -5.6)
+instance_id = "S102_calibration_table"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.395,0.0],\"size\":[1.75,0.79,1.0]}]"
+static_collision = "none"
+
+[node name="S102_calibration_book" parent="Instances" instance=ExtResource("9_prefab")]
+position = Vector3(-1.55, 0.795, -5.52)
+instance_id = "S102_calibration_book"
+entity_id = ""
+portal_id = ""
+
+[node name="S102_calibration_lamp" parent="Instances" instance=ExtResource("10_prefab")]
+position = Vector3(-2.2, 0.795, -5.83)
+instance_id = "S102_calibration_lamp"
+entity_id = ""
+portal_id = ""
+
+[node name="S102_indicator" parent="Instances" instance=ExtResource("11_prefab")]
+position = Vector3(1.05, 0, -5.65)
+instance_id = "S102_indicator"
+entity_id = ""
+portal_id = ""
+collision_boxes_json = "[{\"name\":\"CompositionBody\",\"parent_node\":\"\",\"position\":[0.0,0.55,0.02475],\"size\":[0.36,1.1,0.1295]}]"
+static_collision = "none"
+
+[node name="S102_schematic" parent="Instances" instance=ExtResource("12_prefab")]
+position = Vector3(-0.1, 1.95, -6.49)
+instance_id = "S102_schematic"
+entity_id = ""
+portal_id = ""
+
+[node name="RoomPlaque" type="Label3D" parent="."]
+position = Vector3(-0.25, 2.85, -6.49)
+pixel_size = 0.005
+font = ExtResource("label_font")
+font_size = 44
+outline_size = 6
+modulate = Color(0.92, 0.88, 0.77, 1)
+outline_modulate = Color(0.13, 0.11, 0.09, 1)
+text = "星仪院 · 精密仪器室"
+[node name="FloorZone" type="Node3D" parent="."]
+polygon = PackedVector2Array(-3.9, -3.35, 3.9, -3.35, 3.9, 3.35, -3.9, 3.35)
+floor_thickness = 0.2
+ceiling_enabled = false
+ceiling_height = 3.0
+show_grid = true
+grid_step = 0.25
+
+[node name="SpawnPoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0, -0.95)

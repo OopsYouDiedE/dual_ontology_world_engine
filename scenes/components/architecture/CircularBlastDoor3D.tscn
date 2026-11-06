@@ -1,0 +1,38 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/CircularBlastDoor3D.gd" id="1_script"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_collar"]
+top_radius = 1.1
+bottom_radius = 1.1
+height = 0.2
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_disk"]
+top_radius = 1.0
+bottom_radius = 1.0
+height = 0.1
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_door"]
+height = 0.2
+radius = 1.1
+
+[node name="CircularBlastDoor3D" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="CircularBlastFrame" type="Node3D" parent="."]
+
+[node name="BulkheadCollar" type="MeshInstance3D" parent="CircularBlastFrame"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 1.1, 0)
+mesh = SubResource("CylinderMesh_collar")
+
+[node name="DoorDisk" type="MeshInstance3D" parent="CircularBlastFrame"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 1.1, 0.05)
+mesh = SubResource("CylinderMesh_disk")
+
+[node name="CircularBoreCollision" type="StaticBody3D" parent="CircularBlastFrame"]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CircularBlastFrame/CircularBoreCollision"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 1.1, 0)
+shape = SubResource("CylinderShape3D_door")

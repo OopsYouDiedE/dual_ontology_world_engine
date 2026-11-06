@@ -1,0 +1,183 @@
+[gd_scene load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/RoomContainer3D.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/ClinicArchitecture.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/Clinic_CompleteShell.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/Door_21.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/Window_09.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/MedicineCabinet.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/MedicalBed.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/BedsideCabinet.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/PrivacyScreen.tscn" id="9_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Table_06.tscn" id="10_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/furniture/Chair_04.tscn" id="11_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/BankerLamp_02.tscn" id="12_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/OpenBook_01.tscn" id="13_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/Sink_01.tscn" id="14_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/PendantLamp.tscn" id="15_prefab"]
+
+[node name="clinic" type="Node3D"]
+script = ExtResource("1_script")
+room_id = "clinic"
+room_title = "clinic"
+floor_name = "2F"
+spawn_position = Vector3(1.0, 0.0, -1.0)
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="clinic_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "clinic_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "clinic_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="clinic_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8.5)
+instance_id = "clinic_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_window_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -4.5, 0.899999976, -2.54999995)
+instance_id = "clinic_window_01"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_window_02" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -4.5, 0.899999976, -5.94999981)
+instance_id = "clinic_window_02"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_medicine_cabinet_01" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.70000005, 0, -8.19999981)
+instance_id = "clinic_medicine_cabinet_01"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_medicine_cabinet_02" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.70000005, 0, -8.19999981)
+instance_id = "clinic_medicine_cabinet_02"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_medical_bed_01" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.70000005, 0, -2)
+instance_id = "clinic_medical_bed_01"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_bedside_cabinet_01" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.55999994, 0, -2.45000005)
+instance_id = "clinic_bedside_cabinet_01"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_medical_bed_02" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.70000005, 0, -4.94999981)
+instance_id = "clinic_medical_bed_02"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_bedside_cabinet_02" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.55999994, 0, -5.4000001)
+instance_id = "clinic_bedside_cabinet_02"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_privacy_screen_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.70000005, 0, -3.54999995)
+instance_id = "clinic_privacy_screen_01"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_medical_bed_03" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.70000005, 0, -2)
+instance_id = "clinic_medical_bed_03"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_bedside_cabinet_03" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.84000003, 0, -2.45000005)
+instance_id = "clinic_bedside_cabinet_03"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_medical_bed_04" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.70000005, 0, -4.94999981)
+instance_id = "clinic_medical_bed_04"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_bedside_cabinet_04" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.84000003, 0, -5.4000001)
+instance_id = "clinic_bedside_cabinet_04"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_privacy_screen_02" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.70000005, 0, -3.54999995)
+instance_id = "clinic_privacy_screen_02"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_table_01" parent="Instances" instance=ExtResource("10_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.60000002)
+instance_id = "clinic_table_01"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_chair_01" parent="Instances" instance=ExtResource("11_prefab")]
+transform = Transform3D(-1, 0, 8.74227766e-08, 0, 1, 0, -8.74227766e-08, 0, -1, 0, 0, -0.699999988)
+instance_id = "clinic_chair_01"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_banker_lamp_01" parent="Instances" instance=ExtResource("12_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.449999988, 0.800000012, -1.60000002)
+instance_id = "clinic_banker_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_open_book_01" parent="Instances" instance=ExtResource("13_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.150000006, 0.800000012, -1.5)
+instance_id = "clinic_open_book_01"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_sink_01" parent="Instances" instance=ExtResource("14_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, 1, 0, 1, 0, -1, 0, -4.37113883e-08, 4.11999989, 0, -6.375)
+instance_id = "clinic_sink_01"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_pendant_lamp_01" parent="Instances" instance=ExtResource("15_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.25, 3.79999995, -4.07999992)
+instance_id = "clinic_pendant_lamp_01"
+entity_id = ""
+portal_id = ""
+
+[node name="clinic_pendant_lamp_02" parent="Instances" instance=ExtResource("15_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.25, 3.79999995, -4.07999992)
+instance_id = "clinic_pendant_lamp_02"
+entity_id = ""
+portal_id = ""
+[node name="FloorZone" type="Node3D" parent="."]
+polygon = PackedVector2Array(-4.0, -4.0, 4.0, -4.0, 4.0, 4.0, -4.0, 4.0)
+floor_thickness = 0.2
+ceiling_enabled = false
+ceiling_height = 3.0
+show_grid = true
+grid_step = 0.25
+
+[node name="SpawnPoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 0.0, -1.0)

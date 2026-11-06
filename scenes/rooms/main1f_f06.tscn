@@ -1,0 +1,81 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/RoomContainer3D.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/Main1fF06Architecture.tscn" id="2_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/architecture/Main1fF06_CompleteShell.tscn" id="3_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/doors_windows/Door_16.tscn" id="4_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/PipeRun_12.tscn" id="5_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/ValveStation_01.tscn" id="6_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/ControlConsole_01.tscn" id="7_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/interactive_props/Schematic.tscn" id="8_prefab"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/lighting_decor/PendantLamp.tscn" id="9_prefab"]
+
+[node name="main1f_f06" type="Node3D"]
+script = ExtResource("1_script")
+room_id = "main1f_f06"
+room_title = "main1f_f06"
+floor_name = "2F"
+spawn_position = Vector3(1.0, 0.0, -1.0)
+metadata/static_unit_baked = true
+metadata/candidate_only = false
+
+[node name="Instances" type="Node3D" parent="."]
+
+[node name="main1f_f06_architecture" parent="Instances" instance=ExtResource("2_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "main1f_f06_architecture"
+entity_id = ""
+portal_id = ""
+
+[node name="main1f_f06_Complete_Near_Shell" parent="Instances" instance=ExtResource("3_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+instance_id = "main1f_f06_Complete_Near_Shell"
+entity_id = ""
+portal_id = ""
+visible = false
+
+[node name="main1f_f06_Door_00" parent="Instances" instance=ExtResource("4_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -7)
+instance_id = "main1f_f06_Door_00"
+entity_id = ""
+portal_id = ""
+
+[node name="main1f_f06_pipe_run_01" parent="Instances" instance=ExtResource("5_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.97000003, 0, 0)
+instance_id = "main1f_f06_pipe_run_01"
+entity_id = ""
+portal_id = ""
+
+[node name="main1f_f06_valve_station_01" parent="Instances" instance=ExtResource("6_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.69000006, 0, -4.19999981)
+instance_id = "main1f_f06_valve_station_01"
+entity_id = ""
+portal_id = ""
+
+[node name="main1f_f06_control_console_01" parent="Instances" instance=ExtResource("7_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.24000001)
+instance_id = "main1f_f06_control_console_01"
+entity_id = ""
+portal_id = ""
+
+[node name="main1f_f06_schematic_01" parent="Instances" instance=ExtResource("8_prefab")]
+transform = Transform3D(-4.37113883e-08, 0, -1, 0, 1, 0, 1, 0, -4.37113883e-08, -3.04999995, 1.5, -4.05999994)
+instance_id = "main1f_f06_schematic_01"
+entity_id = ""
+portal_id = ""
+
+[node name="main1f_f06_pendant_lamp_01" parent="Instances" instance=ExtResource("9_prefab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5999999, -3.5)
+instance_id = "main1f_f06_pendant_lamp_01"
+entity_id = ""
+portal_id = ""
+[node name="FloorZone" type="Node3D" parent="."]
+polygon = PackedVector2Array(-4.0, -4.0, 4.0, -4.0, 4.0, 4.0, -4.0, 4.0)
+floor_thickness = 0.2
+ceiling_enabled = false
+ceiling_height = 3.0
+show_grid = true
+grid_step = 0.25
+
+[node name="SpawnPoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 0.0, -1.0)
