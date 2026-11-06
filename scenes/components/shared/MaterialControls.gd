@@ -1,4 +1,3 @@
-@tool
 extends RefCounted
 ## Plain-paper native controls. The shared book owns geometry and lighting.
 const COLOR_PRIMARY := Color("465142")

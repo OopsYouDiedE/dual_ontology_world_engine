@@ -1,4 +1,3 @@
-@tool
 extends Node3D
 ## Reference composition: a real low-poly study and a physical, curved open book.
 ## The native Control texture is projected onto the same surface used for picking.

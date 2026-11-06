@@ -1,4 +1,3 @@
-@tool
 extends RefCounted
 ## Presentation-only input shared by the physical book and ordinary modal sheets.
 ## Native Controls still own confirmation, text editing, slider signals and focus.

@@ -1,4 +1,3 @@
-@tool
 extends RefCounted
 
 ## A cancellable presentation transition. Each accepted request completes once,

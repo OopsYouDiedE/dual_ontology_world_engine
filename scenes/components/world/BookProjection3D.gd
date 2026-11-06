@@ -1,4 +1,3 @@
-@tool
 extends RefCounted
 ## One camera/plane contract drives both rendering and native Control input.
 const UIInput := preload("res://scenes/UIpanel/UIInput.gd")

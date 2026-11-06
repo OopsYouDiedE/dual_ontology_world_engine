@@ -1,4 +1,3 @@
-@tool
 extends Control
 ## A physical, curved book with native text controls mapped through its exact surface.
 signal ui_event(event: Dictionary)

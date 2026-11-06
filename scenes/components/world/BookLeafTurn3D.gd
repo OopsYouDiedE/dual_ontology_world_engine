@@ -1,4 +1,3 @@
-@tool
 extends Node3D
 ## A physical, double-sided leaf. The caller owns timing and page input.
 ## x=0 is the binding; z runs from -height/2 to +height/2; y is height.

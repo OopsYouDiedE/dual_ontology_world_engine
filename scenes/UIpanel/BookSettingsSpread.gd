@@ -1,4 +1,3 @@
-@tool
 extends Control
 ## 透明双页内容；纸张、书脊和翻页由外壳提供。
 

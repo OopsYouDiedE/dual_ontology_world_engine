@@ -1,4 +1,3 @@
-@tool
 extends Control
 ## Reference title composition, authored on the same 2:1 frame as the room.
 signal ui_event(event: Dictionary)

@@ -1,4 +1,3 @@
-@tool
 extends Node
 ## Two live native pages on the existing physical book; no flattened UI image.
 const BookProjection = preload("res://scenes/components/world/BookProjection3D.gd")
