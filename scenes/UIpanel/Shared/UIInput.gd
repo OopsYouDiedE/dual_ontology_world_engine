@@ -16,9 +16,18 @@ var input_enabled := true
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	if not InputMap.has_action("toggle_casebook"):
+		InputMap.add_action("toggle_casebook")
+		var key := InputEventKey.new()
+		key.keycode = KEY_TAB
+		InputMap.action_add_event("toggle_casebook", key)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not input_enabled: return
+	if event.is_action_pressed("toggle_casebook") or event.is_action_pressed("notebook"):
+		notebook_toggled.emit()
+		get_viewport().set_input_as_handled()
+		return
 	if not (event is InputEventKey and event.is_pressed() and not event.is_echo()):
 		return
 

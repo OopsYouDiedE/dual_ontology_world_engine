@@ -139,7 +139,7 @@ func _handle(request: Dictionary) -> void:
 		if host.flow.started:
 			_reply(id, {}, "Campaign already started")
 			return
-		host.dispatch({"kind": kind})
+		await host.dispatch({"kind": kind})
 	elif kind == "character":
 		if host == null or not host.has_method("native_character_mode") or not host.native_character_mode() or not is_instance_valid(host.native_character_host):
 			_reply(id,{},"Start a native character session first");return
@@ -323,12 +323,13 @@ func _handle(request: Dictionary) -> void:
 			if snapshot.has(key): state[key] = snapshot[key]
 		observation.state = state
 		if bool(snapshot.get("player_control", false)) and is_instance_valid(host.field):
-			observation.busy = host.flow.blocks_input() or host.flow.reading or host.flow.book_reading or host.field.spatial.submitted 				or not bool(snapshot.get("locomotion_enabled", true))
-		if is_instance_valid(host.field) and host._formal_selection_ready():
+			var spatial_submitted := is_instance_valid(host.field.get("spatial")) and bool(host.field.spatial.get("submitted"))
+			observation.busy = host.flow.blocks_input() or host.flow.reading or host.flow.book_reading or spatial_submitted or not bool(snapshot.get("locomotion_enabled", true))
+		if is_instance_valid(host.field) and host._formal_selection_ready() and is_instance_valid(host.field.get("spatial")):
 			for option: Dictionary in host.field.spatial.options:
 				observation.options.append({"id": option.get("id", ""), "label": option.get("label", "")})
-	if bool(request.get("debug", false)) and host != null and is_instance_valid(host.field):
-		var debug := {"nearest": str(host.field.nearest), "sites": [], "spatial_options": [], "map_key": str(host.field.adapter.map_key()), "snapshot_sites": host.field.snapshot.get("sites", {}), "adapter_site_geometry": host.field.adapter.site_geometry(host.field.snapshot.get("sites", {}))}
+	if bool(request.get("debug", false)) and host != null and is_instance_valid(host.field) and is_instance_valid(host.field.get("adapter")):
+		var debug := {"nearest": str(host.field.get("nearest")), "sites": [], "spatial_options": [], "map_key": str(host.field.adapter.map_key()), "snapshot_sites": host.field.get("snapshot", {}).get("sites", {}), "adapter_site_geometry": host.field.adapter.site_geometry(host.field.get("snapshot", {}).get("sites", {}))}
 		if is_instance_valid(host.field.player):
 			debug.player_position = [host.field.player.position.x, host.field.player.position.y]
 		for site_id in host.field.sites:
@@ -380,8 +381,8 @@ func _player_presentation(host: Node) -> Dictionary:
 		result["animation_position"] = body.animation_player.current_animation_position
 		result["animation_playing"] = body.animation_player.is_playing()
 		result["animation_speed"] = body.animation_player.speed_scale
-	if is_instance_valid(field.sight): result["sight_cast_max_ms"] = field.sight.cast_max_us / 1000.0
-	if is_instance_valid(field.spatial):
+	if is_instance_valid(field.get("sight")): result["sight_cast_max_ms"] = field.sight.cast_max_us / 1000.0
+	if is_instance_valid(field.get("spatial")):
 		result["input_enabled"] = field.spatial.enabled()
 		result["control"] = {"player_control":field.snapshot.get("player_control",false),
 			"field_enabled":field.snapshot.get("field_enabled",false), "ui_busy":field.ui_busy.call(),
@@ -391,7 +392,7 @@ func _player_presentation(host: Node) -> Dictionary:
 			"route_points":field.spatial._route.size(),
 			"travel_result":field.player.travel_result.duplicate(true), "room":field.player.physical_body.get_meta("room", "")}
 
-	if is_instance_valid(field.adapter) and "candidate_sync_builds" in field.adapter:
+	if is_instance_valid(field.get("adapter")) and "candidate_sync_builds" in field.adapter:
 		result["candidate_sync_builds"] = field.adapter.candidate_sync_builds
 		result["candidate_sync_max_ms"] = field.adapter.candidate_sync_max_us / 1000.0
 		result["candidate_row_updates"] = field.adapter.candidate_row_updates
@@ -406,7 +407,7 @@ func _player_presentation(host: Node) -> Dictionary:
 	result["physics_query_yields"] = budget.waits
 	result["navigation_grid_builds_all_stages"] = 0
 	result["navigation_grid_cache_hits_all_stages"] = 0
-	if is_instance_valid(field.stage3d):
+	if is_instance_valid(field.get("stage3d")):
 		var map: Node = field.stage3d.map_port
 		result["material_parameter_writes"] = map.material_parameter_writes
 		result["observer_texture_updates"] = map.observer_texture_updates

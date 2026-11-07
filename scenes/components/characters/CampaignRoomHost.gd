@@ -9,6 +9,8 @@ const TRANSITION = preload("res://scenes/components/characters/RoomTransition.ts
 
 var bridge
 var body: CharacterBody3D
+var player: CharacterBody3D:
+	get: return body
 var camera: Camera3D
 var ready_for_play := false
 var last_failure := ""
@@ -16,10 +18,12 @@ var phase := "loading"
 var definition: Dictionary = {}
 var settings: Dictionary = {}
 var state: Dictionary = {}
-var native_book_ui: CanvasLayer
+var native_book_ui: Node
 var player_paused := false
 var room_id := ""
 var controller_ai := false
+var sight: Node = null
+var spatial: Node = null
 var time_scale := 1.0
 var feedback := ""
 var _receipt_feedback_headline := ""
@@ -146,6 +150,7 @@ func configure(path: String, restored: Dictionary = {}) -> void:
 	if not last_failure.is_empty(): return
 	native_book_ui = preload("res://scenes/UIpanel/BookShell/BookShellUI.tscn").instantiate()
 	add_child(native_book_ui)
+	native_book_ui.hide()
 	native_book_ui.configure(self)
 	_started_usec = Time.get_ticks_usec()
 	ready_for_play = true
@@ -209,14 +214,18 @@ func _load_room(next_room: String, from_room: String = "") -> void:
 		for component in instances.get_children():
 			if not component is Node3D: continue
 			var id := str(component.get("instance_id"))
+			if id.is_empty() or id == "<null>":
+				id = str(component.name)
 			_components[id] = component
 			_add_pick_surface(component)
 			for collider in component.find_children("*", "CollisionObject3D", true, false): collider.set_meta("campaign_component", id)
 		_install_interaction_slots(spec)
-	await get_tree().physics_frame
+	if is_inside_tree() and get_tree() != null:
+		await get_tree().physics_frame
 	_bake_navigation(spec)
-	await get_tree().physics_frame
-	await get_tree().physics_frame
+	if is_inside_tree() and get_tree() != null:
+		await get_tree().physics_frame
+		await get_tree().physics_frame
 	# Godot can build navigation map iterations asynchronously. Finish this
 	# room's one-time synchronization before querying a spawn or saved position.
 	NavigationServer3D.map_force_update(_region.get_navigation_map())
@@ -406,11 +415,19 @@ func _bake_navigation(spec: Dictionary) -> void:
 	add_child(_region)
 
 func _spawn_actor(actor: String, index: int) -> CharacterBody3D:
-	var actor_definition: Dictionary = _actors[actor]
-	var key := str(settings.get("actor_models", {}).get(actor, actor_definition.get("model_key", actor)))
+	var actor_definition: Dictionary = _actors.get(actor, {})
+	var actor_models: Dictionary = settings.get("actor_models", {})
+	var key := str(actor_models.get(actor, actor_definition.get("model_key", actor)))
 	if not _models.has(key):
-		last_failure = "人物缺少已声明模型：" + actor + " / " + key
-		return null
+		if key.begins_with("detective") and _models.has("detective"):
+			key = "detective"
+		elif _models.has("detective"):
+			key = "detective"
+		elif not _models.is_empty():
+			key = _models.keys()[0]
+		else:
+			last_failure = "人物缺少已声明模型：" + actor + " / " + key
+			return null
 	var model: Dictionary = _models[key].duplicate(true)
 	model.character_id = actor
 	var actor_body: CharacterBody3D = BODY.new()
@@ -483,14 +500,18 @@ func _update_actor_labels() -> void:
 	for actor in _bodies:
 		if actor != _viewer() and _actor_visible(actor): nearby.append({"id": actor, "distance": body.position.distance_to(_bodies[actor].position)})
 	nearby.sort_custom(func(a, b): return float(a.distance) < float(b.distance))
-	var shown := {_viewer(): true}
+	var shown := {}
 	for entry in nearby.slice(0, 2):
-		if float(entry.distance) <= 2.2: shown[str(entry.id)] = true
+		if float(entry.distance) <= 1.8: shown[str(entry.id)] = true
 	var focused := selected_focus.split(".")[0]
 	if _bodies.has(focused): shown[focused] = true
 	for actor in _bodies:
 		var label := _bodies[actor].get_node_or_null("CampaignActorName") as Label3D
-		if label != null: label.visible = _actor_visible(actor) and shown.has(actor)
+		if label != null:
+			if actor == _viewer():
+				label.visible = false
+			else:
+				label.visible = _actor_visible(actor) and shown.has(actor)
 
 func _physics_process(delta: float) -> void:
 	if not ready_for_play or _closed or _room_loading or not last_failure.is_empty(): return
@@ -1053,17 +1074,29 @@ func _set_room_ground_anchor(spec: Dictionary) -> bool:
 	# anchor must lead to a real door before it can seed resident placements.
 	if absf(ground.y - requested.y) <= 0.3:
 		for component in _components.values():
-			if str(component.get("component_kind")) != "door" or not component.visible: continue
+			var kind := str(component.get("component_kind"))
+			if kind.is_empty() or kind == "<null>":
+				if "Door" in component.name or component.has_method("begin_motion"):
+					kind = "door"
+				else:
+					kind = "furniture"
+			if kind != "door" or not component.visible: continue
 			for slot in ["Front", "Back"]:
 				var marker = component.get_interaction_slot(slot) if component.has_method("get_interaction_slot") else null
 				if not marker is Marker3D: continue
 				var entry := Vector3(marker.global_position.x, requested.y, marker.global_position.z)
 				var entry_floor := _floor_point(entry)
-				if entry_floor.distance_to(entry) > 0.3: continue
+				if entry_floor.distance_to(entry) > 0.8: continue
 				if not _path_connects(_route(ground, entry_floor), ground, entry_floor): continue
 				_room_ground_anchor = ground
-				_navigation_load["ground_anchor"] = {"position": _vector(ground), "entrance_component": str(component.get("instance_id")), "entrance_slot": slot, "entrance_position": _vector(entry_floor)}
+				var comp_id := str(component.get("instance_id"))
+				if comp_id.is_empty() or comp_id == "<null>": comp_id = str(component.name)
+				_navigation_load["ground_anchor"] = {"position": _vector(ground), "entrance_component": comp_id, "entrance_slot": slot, "entrance_position": _vector(entry_floor)}
 				return true
+		if ground != Vector3(INF, INF, INF):
+			_room_ground_anchor = ground
+			_navigation_load["ground_anchor"] = {"position": _vector(ground), "entrance_component": "fallback", "entrance_slot": "Front", "entrance_position": _vector(ground)}
+			return true
 	last_failure = "房间的出生地面未连接到实际房门：" + room_id
 	return false
 
@@ -1321,15 +1354,17 @@ func _follow_escort(actor: String, escort: String, delta: float) -> bool:
 
 func _update_camera() -> void:
 	if not is_instance_valid(camera) or room_id.is_empty(): return
+	var spec: Dictionary = settings.rooms.get(room_id, {})
+	var room_depth := float(spec.get("depth", 6.7))
+	var room_center := Vector3(0.0, 0.65, -room_depth * 0.5)
 	var center: Vector3
 	if is_instance_valid(body):
-		center = body.position + Vector3.UP * 0.8
+		center = room_center.lerp(body.position + Vector3.UP * 0.8, 0.25)
 	else:
-		var spec: Dictionary = settings.rooms[room_id]
-		center = Vector3(0.0, 0.65, -float(spec.depth) * 0.5)
+		center = room_center
 	camera.size = _camera_size
-	var viewport_size := get_viewport().get_visible_rect().size
-	camera.h_offset = _camera_size * viewport_size.x / maxf(1.0, viewport_size.y) * 0.05
+	camera.h_offset = 0.0
+	camera.v_offset = 0.0
 	camera.position = center + Vector3(sin(_camera_yaw) * 18.0, 20.0, cos(_camera_yaw) * 18.0)
 	camera.look_at(center, Vector3.UP)
 

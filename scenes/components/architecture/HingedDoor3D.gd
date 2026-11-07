@@ -6,6 +6,10 @@ extends Node3D
 ## Motion is visual/physical only. Core decides whether an action is permitted.
 const PhysicsLayers = preload("res://scenes/components/world/PhysicsLayers.gd")
 
+@export var instance_id: String = ""
+@export var portal_id: String = ""
+@export var component_kind: String = "door"
+
 @export_range(0.1, 10.0, 0.05) var leaf_width: float = 0.9:
 	set(v):
 		leaf_width = v
@@ -260,5 +264,19 @@ func cancel_motion() -> void:
 	moving = false
 	motion_blocked = false
 	_sync_leaf_collision()
+
+func get_interaction_slot(slot_id: String) -> Marker3D:
+	var slots = get_node_or_null("InteractionSlots")
+	if slots != null and slots.has_node(slot_id):
+		return slots.get_node(slot_id) as Marker3D
+	var dynamic_name = "DynamicSlot_" + slot_id
+	var dynamic_slot = get_node_or_null(dynamic_name) as Marker3D
+	if dynamic_slot != null:
+		return dynamic_slot
+	dynamic_slot = Marker3D.new()
+	dynamic_slot.name = dynamic_name
+	dynamic_slot.position = Vector3(0, 0, 0.6 if slot_id == "Front" else -0.6)
+	add_child(dynamic_slot)
+	return dynamic_slot
 
 

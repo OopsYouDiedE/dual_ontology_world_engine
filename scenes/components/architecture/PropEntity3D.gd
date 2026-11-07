@@ -11,6 +11,21 @@ signal interaction_requested(entity_id: String, action_id: String, slot_id: Stri
 signal action_finished(action_name: String)
 
 @export_group("DV & Identification")
+@export var instance_id: String = "":
+	set(v):
+		instance_id = v
+		set_meta("instance_id", v)
+
+@export var portal_id: String = "":
+	set(v):
+		portal_id = v
+		set_meta("portal_id", v)
+
+@export var component_kind: String = "furniture":
+	set(v):
+		component_kind = v
+		set_meta("component_kind", v)
+
 @export var dv_slot_id: String = "":
 	set(v):
 		dv_slot_id = v
@@ -55,8 +70,54 @@ var _is_playing: bool = false
 var _active_action: String = ""
 
 func _ready() -> void:
+	if instance_id.is_empty():
+		instance_id = name
+	_ensure_static_collision()
 	_init_components()
 	_apply_shader_params()
+
+func _ensure_static_collision() -> void:
+	if find_child("*CollisionObject3D*", true, false) != null: return
+	var faces := PackedVector3Array()
+	for child in find_children("*", "MeshInstance3D", true, false):
+		var mesh_inst := child as MeshInstance3D
+		if mesh_inst.mesh != null:
+			var rel := _local_transform_to_root(mesh_inst)
+			faces.append_array(rel * mesh_inst.mesh.get_faces())
+	if faces.is_empty(): return
+	var sb := StaticBody3D.new()
+	sb.name = "Solid"
+	sb.collision_layer = 1
+	sb.collision_mask = 0
+	add_child(sb)
+	var cs := CollisionShape3D.new()
+	cs.name = "PropShape"
+	var concave := ConcavePolygonShape3D.new()
+	concave.set_faces(faces)
+	cs.shape = concave
+	sb.add_child(cs)
+
+func _local_transform_to_root(descendant: Node3D) -> Transform3D:
+	var relative := Transform3D.IDENTITY
+	var cursor: Node = descendant
+	while cursor != null and cursor != self:
+		if cursor is Node3D:
+			relative = (cursor as Node3D).transform * relative
+		cursor = cursor.get_parent()
+	return relative
+
+func get_interaction_slot(slot_id: String) -> Marker3D:
+	var slots := get_node_or_null("InteractionSlots")
+	if slots != null:
+		var target := slots.get_node_or_null(slot_id) as Marker3D
+		if target != null: return target
+	var existing := get_node_or_null("DynamicSlot_" + slot_id) as Marker3D
+	if existing != null: return existing
+	var dynamic_slot := Marker3D.new()
+	dynamic_slot.name = "DynamicSlot_" + slot_id
+	dynamic_slot.position = Vector3(0, 0, 0.6 if slot_id == "Front" else -0.6)
+	add_child(dynamic_slot)
+	return dynamic_slot
 
 func _init_components() -> void:
 	_anim_player = get_node_or_null("AnimationPlayer") as AnimationPlayer

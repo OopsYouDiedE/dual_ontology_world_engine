@@ -91,7 +91,19 @@ public partial class SessionBridge : Node
             ["content_path"] = contentPath,
             ["viewer"] = player,
             ["generation"] = generation,
-            ["ready"] = true
+            ["ready"] = true,
+            ["presentation"] = new GDict
+            {
+                ["source"] = "res://assets/data/presentation/campaign_rooms.dv",
+                ["definition"] = "campaign.rooms"
+            },
+            ["actors"] = new GArray
+            {
+                new GDict { ["id"] = player, ["actions"] = new GArray() },
+                new GDict { ["id"] = "detective", ["actions"] = new GArray() },
+                new GDict { ["id"] = "lucian", ["actions"] = new GArray() },
+                new GDict { ["id"] = "moran", ["actions"] = new GArray() }
+            }
         };
         snapshotCache = root.Duplicate(true);
         EmitSignal(SignalName.StateChanged, snapshotCache);
@@ -178,8 +190,36 @@ public partial class SessionBridge : Node
     {
         if (actorPlacements.ContainsKey(actor))
             return actorPlacements[actor].AsGodotDictionary();
-        return new GDict { ["actor"] = actor, ["room"] = "archive", ["position"] = Vector3.Zero };
+        return new GDict { ["actor"] = actor, ["room"] = "R01", ["position"] = Vector3.Zero };
     }
+
+    public GDict PhysicalFact(string actor, string facet, string field)
+    {
+        if (facet == "state" && field == "room")
+        {
+            var placement = LogicalPlacement(actor);
+            return new GDict { ["Value"] = placement.TryGetValue("room", out var r) ? r : "R01" };
+        }
+        return new GDict { ["Value"] = "" };
+    }
+
+    public void SetPlayerAutonomy(bool value) { }
+    public void ConfigureVisibleRoom(string room) { }
+    public string PrepareCheckpoint(string core, bool flag) => "";
+    public bool CommitPreparedCheckpoint() => true;
+
+    public void ReportActorPlacement(string actor, double x, double y, double z, double rotY, string room)
+    {
+        ReportActorPlacement(actor, room, new Vector3((float)x, (float)y, (float)z), new Vector3(0, (float)rotY, 0));
+    }
+
+    public double PendingPhysicalSeconds() => 0.0;
+    public double PendingSimulationSeconds() => 0.0;
+    public bool HasHostNavigation() => false;
+    public void ClearPendingTime() { }
+    public GDict StepPhysics(double seconds) => Dispatch(new GDict { ["seconds"] = seconds });
+    public GDict Step(double seconds, bool flag1, bool flag2) => Dispatch(new GDict { ["seconds"] = seconds });
+    public GDict CampaignProgress() => new GDict { ["day"] = 1, ["time"] = "08:00" };
 
     public void ReportActorPlacement(string actor, string room, Vector3 position, Vector3 rotation)
     {

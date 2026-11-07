@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/UIpanel/Field/TitleStageUI.gd" id="1_title"]
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_stage"]
+viewport_path = NodePath("StageViewport")
 
 [node name="TitleStageUI" type="Control"]
 layout_mode = 3
@@ -11,77 +14,93 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_title")
 
-[node name="TitleView" type="Control" parent="."]
+[node name="CompositionMatte" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+color = Color(0.064, 0.075, 0.091, 1)
 
-[node name="DarkMatte" type="ColorRect" parent="TitleView"]
+[node name="StageViewport" type="SubViewport" parent="."]
+own_world_3d = true
+size = Vector2i(1600, 800)
+render_target_update_mode = 3
+
+[node name="StageDisplay" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0823529, 0.0745098, 0.0705882, 0.823529)
+texture = SubResource("ViewportTexture_stage")
+expand_mode = 1
 
-[node name="CenterContainer" type="CenterContainer" parent="TitleView"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="TitleShade" type="ColorRect" parent="."]
+layout_mode = 0
+mouse_filter = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="TitleView/CenterContainer"]
-custom_minimum_size = Vector2(360, 0)
-layout_mode = 2
-theme_override_constants/separation = 18
+[node name="TitleMenu" type="Control" parent="."]
+layout_mode = 0
+mouse_filter = 2
 
-[node name="GameTitle" type="Label" parent="TitleView/CenterContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.901961, 0.862745, 0.74902, 1)
-theme_override_font_sizes/font_size = 32
-text = "双本体世界引擎"
+[node name="TitleLabel" type="Label" parent="TitleMenu"]
+layout_mode = 0
+theme_override_colors/font_color = Color(0.937255, 0.894118, 0.811765, 1)
+text = "安眠者有福"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="GameSubtitle" type="Label" parent="TitleView/CenterContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.678431, 0.65098, 0.580392, 1)
-theme_override_font_sizes/font_size = 15
-text = "胡桃木书案 · 极小可信核心战役推理"
+[node name="TitleRule" type="ColorRect" parent="TitleMenu"]
+layout_mode = 0
+mouse_filter = 2
+color = Color(0.78, 0.73, 0.64, 0.43)
+
+[node name="ContinueButton" type="Button" parent="TitleMenu"]
+layout_mode = 0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+text = "继续"
+flat = true
+
+[node name="StartButton" type="Button" parent="TitleMenu"]
+layout_mode = 0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+text = "新游戏"
+flat = true
+
+[node name="LoadButton" type="Button" parent="TitleMenu"]
+layout_mode = 0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+text = "读取"
+flat = true
+
+[node name="SettingsButton" type="Button" parent="TitleMenu"]
+layout_mode = 0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+text = "设置"
+flat = true
+
+[node name="QuitButton" type="Button" parent="TitleMenu"]
+layout_mode = 0
+focus_mode = 2
+mouse_default_cursor_shape = 2
+text = "退出"
+flat = true
+
+[node name="ActionResult" type="Label" parent="TitleMenu"]
+visible = false
+layout_mode = 0
+theme_override_colors/font_color = Color(0.831373, 0.768627, 0.678431, 1)
+text = "稍候…"
 horizontal_alignment = 1
-
-[node name="HSeparator" type="HSeparator" parent="TitleView/CenterContainer/VBoxContainer"]
-layout_mode = 2
-
-[node name="StartButton" type="Button" parent="TitleView/CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 42)
-layout_mode = 2
-text = "开始新局 (Start Investigation)"
-
-[node name="ContinueButton" type="Button" parent="TitleView/CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 42)
-layout_mode = 2
-text = "读取进度 (Continue)"
-
-[node name="CasebookButton" type="Button" parent="TitleView/CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 42)
-layout_mode = 2
-text = "查阅案卷 (Case Archives)"
-
-[node name="SettingsButton" type="Button" parent="TitleView/CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 42)
-layout_mode = 2
-text = "系统设置 (Settings)"
-
-[node name="QuitButton" type="Button" parent="TitleView/CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 42)
-layout_mode = 2
-text = "退出游戏 (Exit)"
+vertical_alignment = 1
+autowrap_mode = 2
 
 [node name="SettlementView" type="Control" parent="."]
 visible = false

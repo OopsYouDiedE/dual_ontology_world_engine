@@ -56,6 +56,11 @@ func _encode(data: PackedByteArray, width: int, height: int, image_format: int) 
 	var image := Image.create_from_data(width,height,false,image_format,data)
 	if image_format == Image.FORMAT_RGBAH: image.convert(Image.FORMAT_RGBA8)
 	if image.get_size() != _logical_size: image.resize(_logical_size.x,_logical_size.y)
+	if image.detect_alpha() != Image.ALPHA_NONE:
+		var bg := Image.create(_logical_size.x, _logical_size.y, false, Image.FORMAT_RGBA8)
+		bg.fill(Color(0.0901961, 0.12549, 0.14902, 1.0))
+		bg.blend_rect(image, Rect2i(Vector2i.ZERO, _logical_size), Vector2i.ZERO)
+		image = bg
 	var png := image.save_png_to_buffer()
 	var encode_us := Time.get_ticks_usec()-started
 	started = Time.get_ticks_usec()

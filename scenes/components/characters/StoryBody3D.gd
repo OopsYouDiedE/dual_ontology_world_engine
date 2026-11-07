@@ -11,6 +11,10 @@ signal conversation_interrupted(reason: String)
 signal yield_state_changed(is_yielding: bool, peer: Object)
 signal action_rolled_back(action: String, reason: String)
 
+var physical_body: CharacterBody3D:
+	get: return self
+var travel_result: Dictionary = {}
+
 const NOMINAL_HEIGHT: float = 1.32
 const COLLISION_RADIUS: float = 0.18
 const EYE_HEIGHT: float = 1.15

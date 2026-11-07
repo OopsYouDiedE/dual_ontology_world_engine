@@ -20,6 +20,7 @@ const DIALOGUE_UI_SCENE := preload("res://scenes/UIpanel/Field/DialogueUI.tscn")
 const MODAL_ALERT_SCENE := preload("res://scenes/UIpanel/Shared/ModalAlertUI.tscn")
 const UI_INPUT_SCENE := preload("res://scenes/UIpanel/Shared/UIInput.tscn")
 const LIVE_BUILDER_SCENE := preload("res://tools/godot_architect/LiveBuilderOverlay.tscn")
+const CAMPAIGN_ROOM_HOST_SCENE := preload("res://scenes/components/characters/CampaignRoomHost.tscn")
 
 @export var default_scenario_path := "res://assets/data/scenarios/campaign.dv"
 @export var autoplay_title := true
@@ -40,10 +41,33 @@ var live_builder: CanvasLayer
 
 # State
 var current_mode := "title" # "title", "field", "book", "deduction", "dialogue"
+var return_mode_after_book := "title" # "title" or "field"
 var session_ready := false
 var flat_ui_active := false
 var perspective_active := false
 var architect_builder_active := false
+
+class HostFlowState:
+	var started := false
+	var opening := false
+	var draining := false
+	var completion_pending := false
+	var background_execution := false
+	var reading := false
+	var book_reading := false
+	var view_faulted := false
+	var opening_failed := false
+	var shutdown_finished := false
+	var player_options_open := false
+	var closing := false
+	func blocks_input() -> bool:
+		return false
+
+var flow := HostFlowState.new()
+var _dv_intent: Array = []
+var _world_ui_paused := false
+var _session_generation := 0
+var field: Node = null
 
 func _ready() -> void:
 	name = "Main"
@@ -86,7 +110,8 @@ func _initialize_ui_system() -> void:
 	# Instantiate Field HUD
 	field_hud = FIELD_HUD_SCENE.instantiate()
 	add_child(field_hud)
-	field_hud.book_open_requested.connect(open_book)
+	field_hud.book_open_requested.connect(func(): open_book_from_field("B01"))
+	field_hud.settings_requested.connect(func(): open_book_from_field("B08"))
 	field_hud.hide()
 
 	# Instantiate Interaction Menu
@@ -110,7 +135,9 @@ func _initialize_ui_system() -> void:
 	# Instantiate Book Shell UI
 	book_shell = BOOK_SHELL_SCENE.instantiate()
 	add_child(book_shell)
-	book_shell.closed.connect(return_to_field)
+	book_shell.closed.connect(_on_book_shell_closed)
+	if book_shell.has_signal("return_title_requested"):
+		book_shell.return_title_requested.connect(enter_title)
 	book_shell.hide()
 
 	# Instantiate Title & Stage Settlement UI
@@ -118,7 +145,9 @@ func _initialize_ui_system() -> void:
 	add_child(title_stage)
 	title_stage.start_game_requested.connect(start_new_game)
 	title_stage.continue_game_requested.connect(continue_game)
-	title_stage.open_casebook_requested.connect(open_book)
+	title_stage.open_casebook_requested.connect(func(page_id: String): open_book_from_title(page_id))
+	title_stage.open_settings_requested.connect(func(): open_book_from_title("B08"))
+	title_stage.settlement_completed.connect(enter_field)
 	title_stage.quit_requested.connect(func(): get_tree().quit())
 
 	# Instantiate Live Builder Overlay
@@ -143,9 +172,35 @@ func validate_prefab_placement(prefab_path: String, position: Vector3, rotation:
 	if not is_instance_valid(session_bridge): return {"valid": false, "reason": "no_session"}
 	return session_bridge.ValidatePrefabPlacement(prefab_path, position, rotation, context)
 
+func dispatch(operation: Dictionary) -> void:
+	var kind := str(operation.get("kind", ""))
+	if kind == "start":
+		await start_new_game()
+	elif kind == "load":
+		await continue_game()
+	elif kind == "action":
+		submit_session_action(operation)
+
+func session_is_idle() -> bool:
+	if current_mode == "field" and is_instance_valid(field):
+		return bool(field.get("ready_for_play"))
+	return true
+
+func _formal_selection_ready() -> bool:
+	return false
+
+func wait_for_shutdown() -> void:
+	flow.closing = true
+	shutdown_completed.emit()
+	flow.shutdown_finished = true
+
 # Navigation & Mode Flow
 func enter_title() -> void:
+	flow.started = false
 	current_mode = "title"
+	return_mode_after_book = "title"
+	if is_instance_valid(field) and field.has_method("hide"):
+		field.hide()
 	title_stage.show_title()
 	field_hud.hide()
 	book_shell.hide()
@@ -155,12 +210,14 @@ func enter_title() -> void:
 	mode_changed.emit(current_mode)
 
 func start_new_game() -> void:
+	flow.started = true
 	session_bridge.Open(default_scenario_path)
 	session_ready = true
 	title_stage.hide_stage()
-	enter_field()
+	await enter_field()
 
 func continue_game() -> void:
+	flow.started = true
 	var saved: String = session_bridge.ReadSavedGame()
 	if not saved.is_empty():
 		session_bridge.Open(default_scenario_path)
@@ -168,10 +225,18 @@ func continue_game() -> void:
 		session_bridge.Open(default_scenario_path)
 	session_ready = true
 	title_stage.hide_stage()
-	enter_field()
+	await enter_field()
 
 func enter_field() -> void:
 	current_mode = "field"
+	return_mode_after_book = "field"
+	if field == null:
+		field = CAMPAIGN_ROOM_HOST_SCENE.instantiate()
+		add_child(field)
+		move_child(field, 0)
+		await field.configure(default_scenario_path)
+	elif field.has_method("show"):
+		field.show()
 	field_hud.show()
 	title_stage.hide_stage()
 	book_shell.hide()
@@ -180,15 +245,54 @@ func enter_field() -> void:
 	interaction_menu.hide()
 	mode_changed.emit(current_mode)
 
-func open_book(section_id := "B01") -> void:
+func open_book_from_title(section_id := "B07") -> void:
+	return_mode_after_book = "title"
+	flow.reading = true
 	current_mode = "book"
+	title_stage.hide_stage()
+	field_hud.hide()
+	deduction_interface.hide()
+	dialogue_ui.hide()
+	interaction_menu.hide()
+	if is_instance_valid(field) and field.has_method("hide"):
+		field.hide()
+
+	book_shell.set_desktop_mode(true)
 	var snap := observe_session()
 	book_shell.configure(snap)
 	book_shell.open(section_id)
 	mode_changed.emit(current_mode)
 
+func open_book_from_field(section_id := "B01") -> void:
+	return_mode_after_book = "field"
+	flow.reading = true
+	current_mode = "book"
+	field_hud.hide()
+	interaction_menu.hide()
+	title_stage.hide_stage()
+
+	book_shell.set_desktop_mode(false)
+	var snap := observe_session()
+	book_shell.configure(snap)
+	book_shell.open(section_id)
+	mode_changed.emit(current_mode)
+
+func open_book(section_id := "B01") -> void:
+	if current_mode == "title":
+		open_book_from_title(section_id)
+	else:
+		open_book_from_field(section_id)
+
 func close_book() -> void:
+	flow.reading = false
 	book_shell.close()
+
+func _on_book_shell_closed() -> void:
+	flow.reading = false
+	if return_mode_after_book == "title":
+		enter_title()
+	else:
+		enter_field()
 
 func return_to_field() -> void:
 	enter_field()

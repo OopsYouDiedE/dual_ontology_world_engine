@@ -2,7 +2,7 @@ extends WorldEnvironment
 func _ready() -> void:
 	environment = Environment.new()
 	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color.BLACK
+	environment.background_color = Color("172026")
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color("d8d0c0")
 	environment.ambient_light_energy = 0.42
