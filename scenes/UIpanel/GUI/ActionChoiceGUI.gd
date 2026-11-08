@@ -134,7 +134,7 @@ func set_pending(action_id: String) -> void:
 	_pending = action_id
 	_refresh_captions()
 
-func set_anchor(screen_position: Vector2) -> void:
+func set_screen_anchor(screen_position: Vector2) -> void:
 	_anchor = screen_position
 	_has_anchor = true
 

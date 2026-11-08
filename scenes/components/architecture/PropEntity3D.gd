@@ -21,9 +21,25 @@ signal action_finished(action_name: String)
 		portal_id = v
 		set_meta("portal_id", v)
 
-@export var component_kind: String = "furniture":
+var _component_kind: String = "furniture"
+@export var component_kind: String:
+	get:
+		if _component_kind == "furniture":
+			if has_meta("component_kind"):
+				return str(get_meta("component_kind"))
+			if has_meta("clean_name"):
+				return str(get_meta("clean_name"))
+			if has_meta("prop_category"):
+				return str(get_meta("prop_category"))
+			if "architecture" in name.to_lower():
+				return "architecture"
+			if "shell" in name.to_lower():
+				return "complete_shell"
+			if "floor" in name.to_lower():
+				return "floor"
+		return _component_kind
 	set(v):
-		component_kind = v
+		_component_kind = v
 		set_meta("component_kind", v)
 
 @export var dv_slot_id: String = "":
@@ -72,6 +88,18 @@ var _active_action: String = ""
 func _ready() -> void:
 	if instance_id.is_empty():
 		instance_id = name
+	if _component_kind == "furniture":
+		if has_meta("prop_category"):
+			_component_kind = str(get_meta("prop_category"))
+		elif has_meta("component_kind"):
+			_component_kind = str(get_meta("component_kind"))
+		elif "architecture" in name.to_lower():
+			_component_kind = "architecture"
+		elif "shell" in name.to_lower():
+			_component_kind = "complete_shell"
+		elif "floor" in name.to_lower():
+			_component_kind = "floor"
+		set_meta("component_kind", _component_kind)
 	_ensure_static_collision()
 	_init_components()
 	_apply_shader_params()
@@ -111,6 +139,8 @@ func get_interaction_slot(slot_id: String) -> Marker3D:
 	if slots != null:
 		var target := slots.get_node_or_null(slot_id) as Marker3D
 		if target != null: return target
+		var reach_target := slots.get_node_or_null("ReachTarget_" + slot_id) as Marker3D
+		if reach_target != null: return reach_target
 	var existing := get_node_or_null("DynamicSlot_" + slot_id) as Marker3D
 	if existing != null: return existing
 	var dynamic_slot := Marker3D.new()

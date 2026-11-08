@@ -12,6 +12,7 @@ const PRESENTATION_CONTENT_SCRIPT := preload("res://scenes/main/DvPresentationCo
 const STUDY_STAGE_SCENE := preload("res://scenes/components/world/StudyDeskStage3D.tscn")
 const TITLE_UI_SCENE := preload("res://scenes/UIpanel/TitleUI/TitleUI.tscn")
 const BOOK_UI_SCENE := preload("res://scenes/UIpanel/BookUI/BookUI.tscn")
+const FIELD_GUI_SCENE := preload("res://scenes/UIpanel/GUI/FieldGUI.tscn")
 const LIVE_BUILDER_SCENE := preload("res://tools/godot_architect/LiveBuilderOverlay.tscn")
 const CAMPAIGN_ROOM_HOST_SCENE := preload("res://scenes/components/characters/CampaignRoomHost.tscn")
 const Sound := preload("res://scenes/components/shared/Sound.gd")
@@ -27,6 +28,7 @@ var presentation_content  # Untyped: C# script class; see session_bridge.
 var stage: Node3D
 var title_ui: Control
 var book_ui: Control
+var field_gui: Control
 var live_builder: CanvasLayer
 var ui_layer: CanvasLayer
 
@@ -88,6 +90,9 @@ func _initialize_presentation() -> void:
 	ui_layer = CanvasLayer.new()
 	ui_layer.name = "UILayer"
 	add_child(ui_layer)
+	field_gui = FIELD_GUI_SCENE.instantiate()
+	ui_layer.add_child(field_gui)
+	field_gui.hide()
 	book_ui = BOOK_UI_SCENE.instantiate()
 	ui_layer.add_child(book_ui)
 	book_ui.configure(stage, self)
@@ -138,6 +143,7 @@ func _formal_selection_ready() -> bool:
 
 func wait_for_shutdown() -> void:
 	flow.closing = true
+	if is_instance_valid(field_gui): field_gui.release()
 	if is_instance_valid(field) and field.has_method("shutdown"): field.shutdown()
 	shutdown_completed.emit()
 	flow.shutdown_finished = true
@@ -148,6 +154,7 @@ func enter_title(first := false) -> void:
 	current_mode = "title"
 	return_mode_after_book = "title"
 	flow.reading = false
+	if is_instance_valid(field_gui): field_gui.release()
 	stage.set_active(true)
 	title_ui.show_title(has_progress(), first)
 	Sound.music("main_theme", 3.0 if first else 1.6)
@@ -180,6 +187,8 @@ func open_book(page_id := "gallery") -> void:
 		_suspend_field(true)
 		stage.snap_closed()
 		stage.set_active(true)
+	if is_instance_valid(field_gui):
+		field_gui.set_suppressed(true)
 	current_mode = "book"
 	flow.reading = true
 	book_ui.open(page_id, return_mode_after_book == "field")
@@ -193,9 +202,13 @@ func _on_book_closed() -> void:
 	if return_mode_after_book == "field" and is_instance_valid(field):
 		stage.set_active(false)
 		_suspend_field(false)
+		if is_instance_valid(field_gui):
+			field_gui.set_suppressed(false)
 		current_mode = "field"
 		mode_changed.emit(current_mode)
 	else:
+		if is_instance_valid(field_gui):
+			field_gui.release()
 		enter_title()
 
 func _on_settings_requested() -> void:
@@ -207,6 +220,8 @@ func _on_settings_requested() -> void:
 
 func _open_field(restored: Dictionary) -> void:
 	if is_instance_valid(field):
+		if is_instance_valid(field_gui):
+			field_gui.release()
 		field.shutdown()
 		field.queue_free()
 		field = null
@@ -221,6 +236,8 @@ func _open_field(restored: Dictionary) -> void:
 	add_child(field)
 	move_child(field, 0)
 	field.configure(default_scenario_path, restored)
+	if is_instance_valid(field_gui):
+		field_gui.configure(field)
 	current_mode = "field"
 	return_mode_after_book = "field"
 	Sound.stop_music(1.2)

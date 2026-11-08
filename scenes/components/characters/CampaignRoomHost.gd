@@ -359,10 +359,38 @@ func _install_interaction_slots(spec: Dictionary) -> void:
 			marker.position = Vector3(float(point[0]), float(point[1]), float(point[2]))
 		else: last_failure = "家具交互站位声明无效：" + str(placement.get("component", ""))
 
+func _is_architecture_component(component: Node) -> bool:
+	if not is_instance_valid(component):
+		return false
+	var kind := str(component.get("component_kind"))
+	if kind in ["architecture", "complete_shell", "floor", "floor_slab", "shell"]:
+		return true
+	if component.has_meta("prop_category"):
+		var meta_cat := str(component.get_meta("prop_category"))
+		if meta_cat in ["architecture", "complete_shell", "floor", "floor_slab", "shell"]:
+			return true
+	if component.has_meta("component_kind"):
+		var meta_kind := str(component.get_meta("component_kind"))
+		if meta_kind in ["architecture", "complete_shell", "floor", "floor_slab", "shell"]:
+			return true
+	if component.has_meta("world_category"):
+		var world_cat := str(component.get_meta("world_category"))
+		if world_cat in ["architecture", "complete_shell", "floor", "floor_slab", "shell"]:
+			return true
+	var name_lower := component.name.to_lower()
+	for kw in ["architecture", "floor", "shell"]:
+		if kw in name_lower:
+			return true
+	var inst_id := str(component.get("instance_id")).to_lower()
+	for kw in ["architecture", "floor", "shell"]:
+		if kw in inst_id:
+			return true
+	return false
+
 func _add_pick_surface(component: Node3D) -> void:
 	# Interaction picking follows the imported mesh bounds. This separate layer
 	# neither blocks walking nor contributes fabricated furniture to navigation.
-	if not component.visible or str(component.get("component_kind")) in ["architecture", "complete_shell"]: return
+	if not component.visible or _is_architecture_component(component): return
 	var bounds := AABB()
 	var has_bounds := false
 	for mesh: MeshInstance3D in component.find_children("*", "MeshInstance3D", true, false):
@@ -636,12 +664,19 @@ func _prepare_navigation() -> void:
 			if actor == _viewer(): feedback = "现场暂时没有对应人物或物件：" + focus_label(str(action.get("focus", "")))
 			continue
 		var path := _route(actor_body.position, target)
-		if actor_body.position.distance_to(target) > 0.35 and (path.is_empty() or path[path.size() - 1].distance_to(target) > 0.35):
-			# A blocked real route fails honestly, without an arrival callback.
-			bridge.Fail(execution, "navigation_unreachable")
-			if actor == _viewer(): feedback = "到达目标的通路被挡住了，请换一条通路。"
-			_record_navigation({"actor": actor, "execution": execution, "action": str(activity.get("action", "")), "room": room_id, "result": "unreachable", "game_seconds": state.get("game_seconds", 0.0)})
-			continue
+		var direct_dist := Vector2(actor_body.position.x - target.x, actor_body.position.z - target.z).length()
+		var reach_limit := float(settings.get("interaction_distance", 0.55))
+		if direct_dist > reach_limit:
+			var unreachable := path.is_empty()
+			if not unreachable:
+				var end_dist := Vector2(path[path.size() - 1].x - target.x, path[path.size() - 1].z - target.z).length()
+				unreachable = end_dist > reach_limit
+			if unreachable:
+				# A blocked real route fails honestly, without an arrival callback.
+				bridge.Fail(execution, "navigation_unreachable")
+				if actor == _viewer(): feedback = "到达目标的通路被挡住了，请换一条通路。"
+				_record_navigation({"actor": actor, "execution": execution, "action": str(activity.get("action", "")), "room": room_id, "result": "unreachable", "game_seconds": state.get("game_seconds", 0.0)})
+				continue
 		var distance := _path_length(actor_body.position, path, target)
 		if not bridge.SetNavigationTarget(execution, room_id, target.x, target.y, target.z, distance, float(settings.get("walking_speed", 2.4))): continue
 		actor_body.interrupt_action()
@@ -1011,21 +1046,36 @@ func _target_node(focus: String) -> Node3D:
 		if _bodies.has(actor): return _bodies[actor]
 	if binding.has("component") and _components.has(str(binding.component)): return _components[str(binding.component)]
 	for kind in binding.get("kinds", []):
+		var target_kind := str(kind).to_lower()
 		for component in _components.values():
-			if str(component.get("component_kind")) == str(kind): return component
+			if not is_instance_valid(component): continue
+			var c_kind := str(component.get("component_kind")).to_lower()
+			if c_kind == target_kind: return component
+			if component.has_meta("clean_name") and str(component.get_meta("clean_name")).to_lower() == target_kind: return component
+			if component.name.to_lower().contains(target_kind): return component
+			var inst_id := str(component.get("instance_id")).to_lower()
+			if inst_id.contains(target_kind): return component
 	if focus.ends_with("-bed"):
 		for component in _components.values():
-			if str(component.get("component_kind")) in ["bed", "medical_bed"]: return component
+			if not is_instance_valid(component): continue
+			if str(component.get("component_kind")) in ["bed", "medical_bed"] or component.name.to_lower().contains("bed"): return component
 	for suffix in {"-basin": ["wash_table", "sink"], "-table": ["table", "work_counter"], "-stove": ["stove"], "-lectern": ["lectern"]}:
 		if not focus.ends_with(suffix): continue
+		var target_list: Array = {"-basin": ["wash_table", "sink"], "-table": ["table", "work_counter"], "-stove": ["stove"], "-lectern": ["lectern"]}[suffix]
 		for component in _components.values():
-			if str(component.get("component_kind")) in {"-basin": ["wash_table", "sink"], "-table": ["table", "work_counter"], "-stove": ["stove"], "-lectern": ["lectern"]}[suffix]: return component
+			if not is_instance_valid(component): continue
+			var c_kind := str(component.get("component_kind")).to_lower()
+			if c_kind in target_list: return component
+			for t in target_list:
+				if component.name.to_lower().contains(t): return component
 	if focus.ends_with("-door") or focus.ends_with("-gate") or settings.rooms.has(focus): return _exit_node()
 	return body if bool(binding.get("self", false)) else null
 
 func _exit_node() -> Node3D:
 	for component in _components.values():
-		if str(component.get("component_kind")) == "door" and component.visible: return component
+		if not is_instance_valid(component) or not component.visible: continue
+		var c_kind := str(component.get("component_kind")).to_lower()
+		if c_kind == "door" or "door" in component.name.to_lower(): return component
 	return body
 
 func _target_point(focus: String, actor: String = "") -> Vector3:
@@ -1043,20 +1093,38 @@ func _target_point(focus: String, actor: String = "") -> Vector3:
 	return _floor_point(Vector3(p.x, 0.0, p.z) + direction * float(_binding(focus).get("distance", 0.95)))
 
 func _reachable_interaction_point(node: Node3D, preferred: Marker3D, from: Vector3) -> Vector3:
-	# Generated furniture provides standing slots on both sides. A chair or
-	# wall can obstruct one side; use only a real, reachable authored slot.
 	var markers: Array[Marker3D] = [preferred]
-	for name in ["Front", "Back"]:
+	for name in ["Front", "Back", "Left", "Right"]:
 		var alternate = node.get_interaction_slot(name)
 		if alternate is Marker3D and alternate != preferred and str(alternate.get_meta("pose", "stand")) == "stand": markers.append(alternate)
+	var reach_limit := float(settings.get("interaction_distance", 0.55))
 	for marker in markers:
-		var requested := Vector3(marker.global_position.x, 0.0, marker.global_position.z)
+		var requested := marker.global_position
 		var floor := _floor_point(requested)
-		if floor.distance_to(requested) > 0.3: continue
-		if from.distance_to(floor) <= float(settings.get("interaction_distance", 0.35)): return floor
+		var horiz_dist := Vector2(floor.x - requested.x, floor.z - requested.z).length()
+		if horiz_dist > 0.8: continue
+		var from_dist := Vector2(from.x - floor.x, from.z - floor.z).length()
+		if from_dist <= reach_limit: return floor
 		var route := _route(from, floor)
-		if not route.is_empty() and route[route.size() - 1].distance_to(floor) <= float(settings.get("interaction_distance", 0.35)): return floor
-	return Vector3(preferred.global_position.x, 0.0, preferred.global_position.z)
+		if not route.is_empty():
+			var end_dist := Vector2(route[route.size() - 1].x - floor.x, route[route.size() - 1].z - floor.z).length()
+			if end_dist <= reach_limit: return floor
+	var p := node.global_position
+	var base_dist := 0.95
+	for angle_deg in [0, 45, 90, 135, 180, 225, 270, 315]:
+		var rad := deg_to_rad(angle_deg)
+		var offset := Vector3(sin(rad), 0.0, cos(rad)) * base_dist
+		var cand_floor := _floor_point(p + offset)
+		var p_dist := Vector2(cand_floor.x - p.x, cand_floor.z - p.z).length()
+		if p_dist > base_dist + 0.8: continue
+		var from_dist := Vector2(from.x - cand_floor.x, from.z - cand_floor.z).length()
+		if from_dist <= reach_limit: return cand_floor
+		var cand_route := _route(from, cand_floor)
+		if not cand_route.is_empty():
+			var end_dist := Vector2(cand_route[cand_route.size() - 1].x - cand_floor.x, cand_route[cand_route.size() - 1].z - cand_floor.z).length()
+			if end_dist <= reach_limit:
+				return cand_floor
+	return _floor_point(preferred.global_position)
 
 func _floor_point(point: Vector3) -> Vector3:
 	if not is_instance_valid(_region): return point
@@ -1221,30 +1289,22 @@ func _is_activity_idle(act: Dictionary) -> bool:
 func _move_player(delta: float) -> void:
 	if not is_instance_valid(body) or controller_ai: return
 	if player_paused: body.stop_and_hold_position(); return
-	if not _path.is_empty():
-		while not _path.is_empty() and body.position.distance_to(_path[0]) < 0.12: _path.remove_at(0)
-		if _path.is_empty():
-			body.stop_and_hold_position()
-			_manual_arrived = true
-			return
-		var prior := body.position
-		body.step_towards(_path[0], delta, float(settings.get("walking_speed", 2.4)) * _navigation_factor())
-		if not _manual_navigation.is_empty():
-			_manual_navigation["travelled"] = float(_manual_navigation.get("travelled", 0.0)) + prior.distance_to(body.position)
-			_manual_navigation["physical_seconds"] = float(_manual_navigation.get("physical_seconds", 0.0)) + delta * _navigation_factor()
-		bridge.ReportPlacement(body.position.x, body.position.y, body.position.z, body.rotation.y, room_id)
-		if body.position.distance_to(_movement_checkpoint) > 0.06: _movement_checkpoint = body.position; _movement_stalled = 0.0
-		else: _movement_stalled += delta
-		if _movement_stalled > 3.5:
-			_path.clear(); _pending_action = ""; _manual_navigation.clear(); phase = "idle"; feedback = "通路被家具挡住；可以换一个接近方向。"
-		return
 	var activity: Dictionary = bridge.ActorActivity(_viewer())
 	if not _is_activity_idle(activity):
 		phase = "walking" if bool(activity.get("requires_arrival", false)) else "working"
 		return
-	if is_instance_valid(native_book_ui) and native_book_ui.book_open(): return
+	if is_instance_valid(native_book_ui) and native_book_ui.book_open():
+		if not _path.is_empty():
+			_path.clear()
+			body.stop_and_hold_position()
+			phase = "idle"
+		return
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if input.length_squared() > 0.01:
+		_path.clear()
+		_pending_action = ""
+		_manual_navigation.clear()
+		_manual_arrived = false
 		var right := camera.global_basis.x
 		var forward := -camera.global_basis.z
 		right.y = 0; forward.y = 0
@@ -1256,11 +1316,30 @@ func _move_player(delta: float) -> void:
 		body.move_and_slide()
 		bridge.ReportPlacement(body.position.x, body.position.y, body.position.z, body.rotation.y, room_id)
 		phase = "walking"
-	else:
-		body.velocity = Vector3(0, -1, 0)
-		body.move_and_slide()
-		body.set_movement_speed(0.0)
-		phase = "idle"
+		return
+	if not _path.is_empty():
+		while not _path.is_empty() and body.position.distance_to(_path[0]) < 0.12: _path.remove_at(0)
+		if _path.is_empty():
+			body.stop_and_hold_position()
+			_manual_arrived = true
+			phase = "idle"
+			return
+		phase = "walking"
+		var prior := body.position
+		body.step_towards(_path[0], delta, float(settings.get("walking_speed", 2.4)) * _navigation_factor())
+		if not _manual_navigation.is_empty():
+			_manual_navigation["travelled"] = float(_manual_navigation.get("travelled", 0.0)) + prior.distance_to(body.position)
+			_manual_navigation["physical_seconds"] = float(_manual_navigation.get("physical_seconds", 0.0)) + delta * _navigation_factor()
+		bridge.ReportPlacement(body.position.x, body.position.y, body.position.z, body.rotation.y, room_id)
+		if body.position.distance_to(_movement_checkpoint) > 0.06: _movement_checkpoint = body.position; _movement_stalled = 0.0
+		else: _movement_stalled += delta
+		if _movement_stalled > 3.5:
+			_path.clear(); _pending_action = ""; _manual_navigation.clear(); phase = "idle"; feedback = "通路被家具挡住；可以换一个接近方向。"
+		return
+	body.velocity = Vector3(0, -1, 0)
+	body.move_and_slide()
+	body.set_movement_speed(0.0)
+	phase = "idle"
 
 func _animation(action: Dictionary) -> String:
 	return str(settings.get("action_animations", {}).get(str(action.get("kind", "")), "interact"))
@@ -1435,18 +1514,24 @@ func _pick(point: Vector2) -> void:
 			select_focus(str(node.get_meta("campaign_actor"))); return
 		if node.has_meta("campaign_component"):
 			var component = _components.get(str(node.get_meta("campaign_component")))
-			if is_instance_valid(component) and str(component.get("component_kind")) in ["architecture", "complete_shell", "floor", "floor_slab"]: break
+			if _is_architecture_component(component):
+				break
 			for action: Dictionary in available_actions():
 				if _action_target_node(action) == component: select_focus("@component:" + str(node.get_meta("campaign_component"))); return
 			feedback = "目前没有与这件物品相关的已知行动。"
 			return
+		if _is_architecture_component(node):
+			break
 		node = node.get_parent()
 	if not controller_ai and _is_activity_idle(_activity()):
-		_path = _route(body.position, hit.position)
+		var target := _floor_point(hit.position)
+		_path = _route(body.position, target)
 		_pending_action = ""
 		_movement_checkpoint = body.position
 		_movement_stalled = 0.0
-		_begin_manual_walk_trace(_floor_point(hit.position))
+		if not _path.is_empty():
+			phase = "walking"
+			_begin_manual_walk_trace(target)
 
 func _begin_manual_walk_trace(target: Vector3) -> void:
 	_manual_arrived = false
@@ -1553,6 +1638,7 @@ func interface_command(request: Dictionary) -> String:
 	if _transition_busy or _room_loading: return "正在穿过门扉，请稍候。"
 	var command := str(request.get("command", ""))
 	if command == "pause": set_paused(bool(request.get("paused", false))); return ""
+	if command == "speed": set_speed(float(request.get("speed", 1.0))); return ""
 	if command == "save": save_game(); return ""
 	if command == "cancel":
 		_path.clear(); _pending_action = ""; _manual_navigation.clear(); _manual_arrived = false; bridge.Cancel(); return ""
@@ -1569,7 +1655,9 @@ func interface_command(request: Dictionary) -> String:
 		if _floor_point(target).distance_to(target) > 0.5: return "目标不在当前房间的可行走地面。"
 		_path = _route(body.position, target)
 		_pending_action = ""; _movement_checkpoint = body.position; _movement_stalled = 0
-		_begin_manual_walk_trace(target)
+		if not _path.is_empty():
+			phase = "walking"
+			_begin_manual_walk_trace(target)
 		return "" if not _path.is_empty() else "目标无法到达。"
 	return "未支持的角色操作。"
 

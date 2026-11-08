@@ -38,7 +38,8 @@ dual_ontology_world_engine/
 │   │   ├── TitleUI/                  # 标题书名与菜单
 │   │   ├── BookUI/                   # 书本检视器：书页映射与翻页
 │   │   ├── SaveUI/                   # 书内存档对开页
-│   │   └── SettingUI/                # 书内设置对开页
+│   │   ├── SettingUI/                # 书内设置对开页
+│   │   └── GUI/                      # 现场主控 GUI（FieldGUI, ClockRoomGUI, TaskProgressGUI, ActionChoiceGUI）
 │   │
 │   ├── prefabs/                      # [已配置好动作/交互/碰撞的 Godot 智能预制件库 (Smart Prefabs)]
 │   │   ├── doors_windows/            # 带开关动画、门洞框线与音效的门窗预制件 (.tscn)

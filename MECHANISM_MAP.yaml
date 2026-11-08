@@ -102,3 +102,15 @@ mechanisms:
     verify_cmd: "none (legacy batch script removed from gate: depends on the retired .runtime/build layout)"
     gate: "excluded"
     gate_reason: "无当前有效检查；旧 verify_batch1.py 依赖已退役的 .runtime/build 布局与 S 系列任务，经整理移出门禁。"
+
+  field_gui_presentation:
+    description: "现场主控无底 GUI：时间与房间展示、任务执行进度、选中目标动作浮出与 3D 头顶跟随"
+    dv_keywords: ["campaign", "interface", "action", "choice"]
+    godot_presenters:
+      - "scenes/main/Main.gd"
+      - "scenes/UIpanel/GUI/FieldGUI.gd"
+      - "scenes/UIpanel/GUI/ClockRoomGUI.gd"
+      - "scenes/UIpanel/GUI/TaskProgressGUI.gd"
+      - "scenes/UIpanel/GUI/ActionChoiceGUI.gd"
+      - "scenes/components/characters/CampaignRoomHost.gd"
+    verify_cmd: "dotnet build DualOntologyWorldReconstruct.csproj --nologo"

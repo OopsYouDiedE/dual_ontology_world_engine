@@ -34,6 +34,7 @@ var field: Node
 var _elapsed := 0.0
 var _action_signature := ""
 var _suppressed := false
+var _last_selected_focus := ""
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -55,6 +56,8 @@ func configure(field_host: Node) -> void:
 
 func release() -> void:
 	field = null
+	_last_selected_focus = ""
+	_action_signature = ""
 	action_choices.dismiss()
 	task_progress.clear_task()
 	hide()
@@ -88,32 +91,45 @@ func _apply_visibility() -> void:
 	action_choices.visible = show_action_choices
 
 func _refresh_clock(obs: Dictionary) -> void:
-	var room := str(field.get("room_id"))
-	clock_room.set_place(room, str(field.room_label(room)) if field.has_method("room_label") else room)
-	var state: Variant = field.get("state")
+	var iface: Dictionary = obs.get("interface", obs) if obs.get("interface") is Dictionary else obs
+	var raw_room: Variant = field.get("room_id")
+	var room := str(raw_room) if raw_room != null else ""
+	if room.is_empty():
+		var state_val: Variant = obs.get("state", field.get("state") if is_instance_valid(field) else {})
+		if state_val is Dictionary: room = str(state_val.get("room", ""))
+	if not room.is_empty():
+		clock_room.set_place(room, str(field.room_label(room)) if is_instance_valid(field) and field.has_method("room_label") else room)
+	var state: Variant = obs.get("state", field.get("state") if is_instance_valid(field) else {})
 	var seconds := float(state.get("game_seconds", 0.0)) if state is Dictionary else 0.0
-	clock_room.set_time(seconds, bool(obs.get("paused", false)))
+	clock_room.set_time(seconds, bool(iface.get("paused", obs.get("paused", false))))
 
 func _refresh_task(obs: Dictionary) -> void:
-	var phase := str(field.get("phase"))
-	var pending := str(obs.get("pending_approach", ""))
-	var progress: Dictionary = obs.get("player_progress", {}) if obs.get("player_progress") is Dictionary else {}
+	var iface: Dictionary = obs.get("interface", obs) if obs.get("interface") is Dictionary else obs
+	var phase := str(obs.get("phase", field.get("phase") if is_instance_valid(field) else ""))
+	var pending := str(iface.get("pending_approach", obs.get("pending_approach", "")))
+	var raw_progress: Variant = iface.get("player_progress", obs.get("player_progress", {}))
+	var progress: Dictionary = raw_progress if raw_progress is Dictionary else {}
+	var focus := str(iface.get("selected_focus", obs.get("selected_focus", "")))
 	if phase == "walking" and not pending.is_empty():
-		task_progress.show_task(walking_prefix + _focus_label(str(obs.get("selected_focus", ""))))
+		task_progress.show_task(walking_prefix + _focus_label(focus))
 	elif phase == "working":
 		task_progress.show_task(_progress_label(progress, obs), _progress_ratio(progress), _progress_remaining(progress))
 	else:
 		task_progress.clear_task()
 
 func _refresh_actions(obs: Dictionary) -> void:
-	var focus := str(obs.get("selected_focus", ""))
+	var iface: Dictionary = obs.get("interface", obs) if obs.get("interface") is Dictionary else obs
+	var focus := str(iface.get("selected_focus", obs.get("selected_focus", "")))
+	_last_selected_focus = focus
 	if focus.is_empty() or not show_action_choices:
 		action_choices.dismiss()
 		_action_signature = ""
 		return
 	var options: Array = []
 	var signature := focus
-	for choice in obs.get("choices", []):
+	var raw_choices: Variant = iface.get("choices", obs.get("choices", []))
+	var choices: Array = raw_choices if raw_choices is Array else []
+	for choice in choices:
 		if not choice is Dictionary or str(choice.get("focus", "")) != focus: continue
 		var id := str(choice.get("id", choice.get("action_id", "")))
 		if id.is_empty(): continue
@@ -124,20 +140,36 @@ func _refresh_actions(obs: Dictionary) -> void:
 	if signature != _action_signature or not action_choices.is_presented():
 		_action_signature = signature
 		action_choices.present(_focus_label(focus), options)
-	action_choices.set_pending(str(obs.get("pending_approach", "")))
+	action_choices.set_pending(str(iface.get("pending_approach", obs.get("pending_approach", ""))))
 
 ## 把动作列表锚在选中目标头顶的屏幕投影处；目标不在镜头前时退回固定位置。
 func _follow_target() -> void:
 	if not follow_selected_target or not action_choices.is_presented(): return
+	if not is_instance_valid(field):
+		action_choices.clear_anchor()
+		return
 	var camera: Variant = field.get("camera")
-	var focus := str(field.get("selected_focus"))
-	var node: Variant = field._target_node(focus) if field.has_method("_target_node") and not focus.is_empty() else null
-	if not camera is Camera3D or not node is Node3D:
+	var raw_focus: Variant = field.get("selected_focus")
+	var focus := str(raw_focus) if raw_focus != null else ""
+	if focus.is_empty():
+		focus = _last_selected_focus
+	if focus.is_empty():
+		action_choices.clear_anchor()
+		return
+	var node: Variant = null
+	if field.has_method("target_node"):
+		node = field.target_node(focus)
+	elif field.has_method("_target_node"):
+		node = field._target_node(focus)
+	if not is_instance_valid(camera) or not camera is Camera3D or not camera.is_inside_tree() \
+			or not is_instance_valid(node) or not node is Node3D or not node.is_inside_tree():
 		action_choices.clear_anchor()
 		return
 	var world: Vector3 = node.global_position + Vector3.UP * target_head_height
-	if camera.is_position_behind(world): action_choices.clear_anchor()
-	else: action_choices.set_anchor(camera.unproject_position(world))
+	if camera.is_position_behind(world):
+		action_choices.clear_anchor()
+	else:
+		action_choices.set_screen_anchor(camera.unproject_position(world))
 
 func _on_action_chosen(action_id: String) -> void:
 	action_requested.emit(action_id)
@@ -159,8 +191,9 @@ func _focus_label(focus: String) -> String:
 static func _progress_label(progress: Dictionary, obs: Dictionary) -> String:
 	for key in ["label", "action_label", "title"]:
 		if not str(progress.get(key, "")).is_empty(): return str(progress[key])
-	var feedback := str(obs.get("feedback", "")).trim_suffix("…")
-	return feedback if not feedback.is_empty() else str(obs.get("player_action", ""))
+	var iface: Dictionary = obs.get("interface", obs) if obs.get("interface") is Dictionary else obs
+	var feedback := str(iface.get("feedback", obs.get("feedback", ""))).trim_suffix("…")
+	return feedback if not feedback.is_empty() else str(iface.get("player_action", obs.get("player_action", "")))
 
 static func _progress_ratio(progress: Dictionary) -> float:
 	for key in ["ratio", "progress", "fraction", "completion"]:
