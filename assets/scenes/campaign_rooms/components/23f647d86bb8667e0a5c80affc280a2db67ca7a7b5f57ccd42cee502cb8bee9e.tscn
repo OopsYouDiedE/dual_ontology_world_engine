@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/23f647d86bb8667e0a5c80affc280a2db67ca7a7b5f57ccd42cee502cb8bee9e.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/4dc7268d457fe1a323c6bfa133c445b6fff7eec4db70d1853e42da15ec729936.glb" id="2_model"]
+
+[node name="pot_fe55259d1f9b" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "pot_fe55259d1f9b"
+component_kind = "pot"
+interactive = false
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"height\":0.3,\"kind\":\"pot\",\"material_theme\":\"walnut\",\"radius\":0.23}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

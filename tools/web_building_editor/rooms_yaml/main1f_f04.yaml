@@ -1,0 +1,127 @@
+id: main1f_f04
+name: 银器与配膳室
+floor: 1F
+activeLayerId: layer_main1f_f04
+layers:
+- id: layer_main1f_f04
+  name: 1F 银器与配膳室 地面
+  y: 0.0
+  style: terrazzo_tile
+  polygons:
+  - - - -3.5
+      - 0.0
+    - - -3.5
+      - -6.0
+    - - 3.5
+      - -6.0
+    - - 3.5
+      - 0.0
+walls:
+- id: wall_main1f_f04
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 3.8
+  thickness: 0.28
+  baseY: 0.0
+  style: classical
+  points:
+  - - -3.5
+    - 0.0
+    - 0.0
+  - - -3.5
+    - 0.0
+    - -6.0
+  - - 3.5
+    - 0.0
+    - -6.0
+  openings:
+  - id: op_main1f_f04_Door_00
+    segment: 1
+    center: 1.12
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+  - id: op_main1f_f04_window_01
+    segment: 1
+    center: 4.83
+    width: 1.4
+    height: 2.2
+    bottom: 0.9
+    type: arched_window
+    rise: 0.4
+  - id: op_main1f_f04_window_02
+    segment: 0
+    center: 3.36
+    width: 1.4
+    height: 2.2
+    bottom: 0.95
+    type: arched_window
+    rise: 0.4
+stairs: []
+railings: []
+props:
+- id: prop_main1f_f04_dish_rack_01
+  name: main1f_f04_dish_rack_01
+  kind: bookshelf
+  x: -1.61
+  y: 0.0
+  z: -5.64
+  yaw: 0
+  params: {}
+- id: prop_main1f_f04_dish_rack_02
+  name: main1f_f04_dish_rack_02
+  kind: bookshelf
+  x: 1.12
+  y: 0.0
+  z: -5.64
+  yaw: 0
+  params: {}
+- id: prop_main1f_f04_sink_01
+  name: main1f_f04_sink_01
+  kind: wash_table
+  x: -3.08
+  y: 0.0
+  z: -2.7
+  yaw: -90
+  params: {}
+- id: prop_main1f_f04_work_counter_01
+  name: main1f_f04_work_counter_01
+  kind: reception_desk
+  x: 0.0
+  y: 0.0
+  z: -2.76
+  yaw: 0
+  params: {}
+- id: prop_main1f_f04_pot_01
+  name: main1f_f04_pot_01
+  kind: crates
+  x: -0.7
+  y: 0.9
+  z: -2.76
+  yaw: 0
+  params: {}
+- id: prop_main1f_f04_pot_02
+  name: main1f_f04_pot_02
+  kind: crates
+  x: 0.6
+  y: 0.9
+  z: -2.76
+  yaw: 0
+  params: {}
+- id: prop_main1f_f04_bottles_01
+  name: main1f_f04_bottles_01
+  kind: crates
+  x: 0.4
+  y: 0.9
+  z: -3.02
+  yaw: 0
+  params: {}
+- id: prop_main1f_f04_pendant_lamp_01
+  name: main1f_f04_pendant_lamp_01
+  kind: pendant_lamp
+  x: 0.0
+  y: 3.73
+  z: -2.58
+  yaw: 0
+  params: {}

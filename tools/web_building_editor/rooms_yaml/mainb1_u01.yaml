@@ -1,0 +1,216 @@
+id: mainb1_u01
+name: B1主粮仓
+floor: B1
+activeLayerId: layer_mainb1_u01
+layers:
+- id: layer_mainb1_u01
+  name: B1 B1主粮仓 地面
+  y: 0.0
+  style: stone_slab
+  polygons:
+  - - - -5.4
+      - 0.0
+    - - -5.4
+      - -9.2
+    - - 5.4
+      - -9.2
+    - - 5.4
+      - 0.0
+walls:
+- id: wall_mainb1_u01
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 4.3
+  thickness: 0.28
+  baseY: 0.0
+  style: brick_dado
+  points:
+  - - -5.4
+    - 0.0
+    - 0.0
+  - - -5.4
+    - 0.0
+    - -9.2
+  - - 5.4
+    - 0.0
+    - -9.2
+  openings:
+  - id: op_mainb1_u01_Door_00
+    segment: 1
+    center: 8.1
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+stairs: []
+railings: []
+props:
+- id: prop_mainb1_u01_grain_rack_01
+  name: mainb1_u01_grain_rack_01
+  kind: bookshelf
+  x: -4.78
+  y: 0.0
+  z: -3.04
+  yaw: -90
+  params: {}
+- id: prop_mainb1_u01_grain_rack_02
+  name: mainb1_u01_grain_rack_02
+  kind: bookshelf
+  x: -4.78
+  y: 0.0
+  z: -6.62
+  yaw: -90
+  params: {}
+- id: prop_mainb1_u01_grain_rack_03
+  name: mainb1_u01_grain_rack_03
+  kind: bookshelf
+  x: -2.38
+  y: 0.0
+  z: -8.56
+  yaw: 0
+  params: {}
+- id: prop_mainb1_u01_grain_crates_01
+  name: mainb1_u01_grain_crates_01
+  kind: crates
+  x: 3.67
+  y: 0.0
+  z: -2.3
+  yaw: 0
+  params: {}
+- id: prop_mainb1_u01_grain_crates_02
+  name: mainb1_u01_grain_crates_02
+  kind: crates
+  x: 4.32
+  y: 0.0
+  z: -4.88
+  yaw: 0
+  params: {}
+- id: prop_mainb1_u01_grain_crates_03
+  name: mainb1_u01_grain_crates_03
+  kind: crates
+  x: -2.92
+  y: 0.0
+  z: -8.1
+  yaw: 0
+  params: {}
+- id: prop_mainb1_u01_handcart_01
+  name: mainb1_u01_handcart_01
+  kind: crates
+  x: 0.85
+  y: 0.0
+  z: -3.96
+  yaw: 13
+  params: {}
+- id: prop_mainb1_u01_platform_scale_01
+  name: mainb1_u01_platform_scale_01
+  kind: crates
+  x: -0.95
+  y: 0.0
+  z: -2.21
+  yaw: 0
+  params: {}
+- id: prop_mainb1_u01_barrel_01
+  name: mainb1_u01_barrel_01
+  kind: crates
+  x: -4.0
+  y: 0.0
+  z: -1.05
+  yaw: 0
+  params: {}
+- id: prop_mainb1_u01_barrel_02
+  name: mainb1_u01_barrel_02
+  kind: crates
+  x: 3.46
+  y: 0.0
+  z: -1.2
+  yaw: 0
+  params: {}
+- id: prop_mainb1_u01_grain_pallet_01
+  name: mainb1_u01_grain_pallet_01
+  kind: crates
+  x: 0.15
+  y: 0.0
+  z: -6.9
+  yaw: 0
+  params: {}
+- id: prop_mainb1_u01_grain_sacks_01
+  name: mainb1_u01_grain_sacks_01
+  kind: crates
+  x: 0.15
+  y: 0.23
+  z: -6.9
+  yaw: 0
+  params: {}
+- id: prop_mainb1_u01_table_01
+  name: mainb1_u01_table_01
+  kind: table
+  x: 3.35
+  y: 0.0
+  z: -7.54
+  yaw: 0
+  params: {}
+- id: prop_mainb1_u01_chair_01
+  name: mainb1_u01_chair_01
+  kind: chair
+  x: 3.35
+  y: 0.0
+  z: -6.69
+  yaw: 180
+  params: {}
+- id: prop_mainb1_u01_caged_lamp_01
+  name: mainb1_u01_caged_lamp_01
+  kind: banker_lamp
+  x: -5.36
+  y: 2.62
+  z: -2.12
+  yaw: -90
+  params:
+    lamp_energy: 8
+    mount_y: 2.62
+- id: prop_mainb1_u01_caged_lamp_02
+  name: mainb1_u01_caged_lamp_02
+  kind: banker_lamp
+  x: -5.36
+  y: 2.62
+  z: -6.44
+  yaw: -90
+  params:
+    lamp_energy: 8
+    mount_y: 2.62
+- id: prop_mainb1_u01_caged_lamp_03
+  name: mainb1_u01_caged_lamp_03
+  kind: banker_lamp
+  x: -0.86
+  y: 2.62
+  z: -9.17
+  yaw: 0
+  params:
+    lamp_energy: 8
+    mount_y: 2.62
+- id: prop_mainb1_u01_caged_lamp_04
+  name: mainb1_u01_caged_lamp_04
+  kind: banker_lamp
+  x: 4.0
+  y: 2.62
+  z: -9.17
+  yaw: 0
+  params:
+    lamp_energy: 8
+    mount_y: 2.62
+- id: prop_mainb1_u01_indicator_board_01
+  name: mainb1_u01_indicator_board_01
+  kind: painting
+  x: 1.4
+  y: 1.05
+  z: -9.13
+  yaw: 0
+  params:
+    mount_y: 1.05
+- id: prop_mainb1_u01_heavy_lock_01
+  name: mainb1_u01_heavy_lock_01
+  kind: crates
+  x: 2.7
+  y: 1.14
+  z: -9.07
+  yaw: 0
+  params: {}

@@ -1,0 +1,144 @@
+id: F-104
+name: 铁工院 · 备件与成品室
+floor: 2F
+activeLayerId: layer_F-104
+layers:
+- id: layer_F-104
+  name: 2F 铁工院 · 备件与成品室 地面
+  y: 0.0
+  style: terrazzo_tile
+  polygons:
+  - - - -3.9
+      - 0.0
+    - - -3.9
+      - -6.7
+    - - 3.9
+      - -6.7
+    - - 3.9
+      - 0.0
+walls:
+- id: wall_F-104
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 3.6
+  thickness: 0.28
+  baseY: 0.0
+  style: classical
+  points:
+  - - -3.9
+    - 0.0
+    - 0.0
+  - - -3.9
+    - 0.0
+    - -6.7
+  - - 3.9
+    - 0.0
+    - -6.7
+  openings:
+  - id: op_F104_Door_00
+    segment: 1
+    center: 6.75
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+  - id: op_F104_window_01
+    segment: 0
+    center: 2.5
+    width: 1.4
+    height: 2.2
+    bottom: 0.95
+    type: arched_window
+    rise: 0.4
+stairs: []
+railings: []
+props:
+- id: prop_F104_wall_lantern_01
+  name: F104_wall_lantern_01
+  kind: wall_lantern
+  x: 1.7
+  y: 2.5
+  z: -6.51
+  yaw: 0.0
+  params:
+    lamp_energy: 15
+    lamp_height: 2.5
+- id: prop_F104_wall_lantern_02
+  name: F104_wall_lantern_02
+  kind: wall_lantern
+  x: -3.71
+  y: 2.5
+  z: -4.4
+  yaw: 90
+  params:
+    lamp_energy: 15
+    lamp_height: 2.5
+- id: prop_F104_spares
+  name: F104_spares
+  kind: chest
+  x: -0.65
+  y: 0.0
+  z: -3.15
+  yaw: 0.0
+  params:
+    chest_w: 0.95
+    chest_d: 0.55
+    chest_h: 0.5
+- id: prop_F104_tool_table
+  name: F104_tool_table
+  kind: table
+  x: 1.45
+  y: 0.0
+  z: -4.5
+  yaw: 0.0
+  params: {}
+- id: prop_F104_interlock_handle
+  name: F104_interlock_handle
+  kind: crates
+  x: 1.15
+  y: 1.03
+  z: -4.5
+  yaw: 0.0
+  params: {}
+- id: prop_F104_repair_book
+  name: F104_repair_book
+  kind: crates
+  x: 1.9
+  y: 0.8
+  z: -4.4
+  yaw: 0.0
+  params: {}
+- id: prop_F104_tool_lamp
+  name: F104_tool_lamp
+  kind: banker_lamp
+  x: 2.05
+  y: 0.8
+  z: -4.75
+  yaw: 0.0
+  params:
+    lamp_energy: 8
+    mount_y: 0.8
+- id: prop_F104_tool_cabinet
+  name: F104_tool_cabinet
+  kind: cabinet
+  x: -2.75
+  y: 0.0
+  z: -5.95
+  yaw: 0.0
+  params: {}
+- id: prop_F104_finished_crate
+  name: F104_finished_crate
+  kind: crates
+  x: -2.85
+  y: 0.0
+  z: -3.3
+  yaw: 0.0
+  params: {}
+- id: prop_F104_spare_crate
+  name: F104_spare_crate
+  kind: crates
+  x: -2.85
+  y: 0.0
+  z: -4.2
+  yaw: 0.0
+  params: {}

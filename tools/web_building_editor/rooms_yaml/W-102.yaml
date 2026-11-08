@@ -1,0 +1,151 @@
+id: W-102
+name: 文契院 · 纸墨分析室
+floor: 1F
+activeLayerId: layer_W-102
+layers:
+- id: layer_W-102
+  name: 1F 文契院 · 纸墨分析室 地面
+  y: 0.0
+  style: terrazzo_tile
+  polygons:
+  - - - -3.9
+      - 0.0
+    - - -3.9
+      - -6.7
+    - - 3.9
+      - -6.7
+    - - 3.9
+      - 0.0
+walls:
+- id: wall_W-102
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 3.6
+  thickness: 0.28
+  baseY: 0.0
+  style: classical
+  points:
+  - - -3.9
+    - 0.0
+    - 0.0
+  - - -3.9
+    - 0.0
+    - -6.7
+  - - 3.9
+    - 0.0
+    - -6.7
+  openings:
+  - id: op_W102_Door_00
+    segment: 1
+    center: 6.75
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+  - id: op_W102_window_01
+    segment: 0
+    center: 2.5
+    width: 1.4
+    height: 2.2
+    bottom: 0.95
+    type: arched_window
+    rise: 0.4
+stairs: []
+railings: []
+props:
+- id: prop_W102_wall_lantern_01
+  name: W102_wall_lantern_01
+  kind: wall_lantern
+  x: 1.7
+  y: 2.5
+  z: -6.51
+  yaw: 0.0
+  params:
+    lamp_energy: 15
+    lamp_height: 2.5
+- id: prop_W102_wall_lantern_02
+  name: W102_wall_lantern_02
+  kind: wall_lantern
+  x: -3.71
+  y: 2.5
+  z: -4.4
+  yaw: 90
+  params:
+    lamp_energy: 15
+    lamp_height: 2.5
+- id: prop_W102_workbench
+  name: W102_workbench
+  kind: bench
+  x: -0.45
+  y: 0.0
+  z: -3.15
+  yaw: 0.0
+  params: {}
+- id: prop_W102_sample_book
+  name: W102_sample_book
+  kind: crates
+  x: -0.72
+  y: 0.8
+  z: -3.1
+  yaw: 0.0
+  params: {}
+- id: prop_W102_ink_bottles
+  name: W102_ink_bottles
+  kind: crates
+  x: 0.1
+  y: 0.8
+  z: -3.35
+  yaw: 0.0
+  params: {}
+- id: prop_W102_work_lamp
+  name: W102_work_lamp
+  kind: banker_lamp
+  x: -1.05
+  y: 0.8
+  z: -3.47
+  yaw: 0.0
+  params:
+    lamp_energy: 8
+    mount_y: 0.8
+- id: prop_W102_reference_shelf
+  name: W102_reference_shelf
+  kind: bookshelf
+  x: -2.75
+  y: 0.0
+  z: -6.02
+  yaw: 0.0
+  params: {}
+- id: prop_W102_paper_shelf
+  name: W102_paper_shelf
+  kind: bookshelf
+  x: -1.35
+  y: 0.0
+  z: -6.02
+  yaw: 0.0
+  params: {}
+- id: prop_W102_register_table
+  name: W102_register_table
+  kind: table
+  x: 1.65
+  y: 0.0
+  z: -4.55
+  yaw: 0.0
+  params: {}
+- id: prop_W102_register_book
+  name: W102_register_book
+  kind: crates
+  x: 1.55
+  y: 0.8
+  z: -4.5
+  yaw: 0.0
+  params: {}
+- id: prop_W102_register_lamp
+  name: W102_register_lamp
+  kind: banker_lamp
+  x: 2.22
+  y: 0.8
+  z: -4.72
+  yaw: 0.0
+  params:
+    lamp_energy: 8
+    mount_y: 0.8

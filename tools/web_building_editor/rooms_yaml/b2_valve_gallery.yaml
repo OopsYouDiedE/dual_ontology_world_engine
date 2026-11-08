@@ -1,0 +1,174 @@
+id: b2_valve_gallery
+name: 低位联锁阀廊
+floor: B2
+activeLayerId: layer_b2_valve_gallery
+layers:
+- id: layer_b2_valve_gallery
+  name: B2 低位联锁阀廊 地面
+  y: 0.0
+  style: stone_slab
+  polygons:
+  - - - -4.2
+      - 0.0
+    - - -4.2
+      - -4.8
+    - - 4.2
+      - -4.8
+    - - 4.2
+      - 0.0
+walls:
+- id: wall_b2_valve_gallery
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 3.4
+  thickness: 0.28
+  baseY: 0.0
+  style: brick_dado
+  points:
+  - - -4.2
+    - 0.0
+    - 0.0
+  - - -4.2
+    - 0.0
+    - -4.8
+  - - 4.2
+    - 0.0
+    - -4.8
+  openings:
+  - id: op_b2_valve_gallery_Door_00
+    segment: 0
+    center: 1.2
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+stairs: []
+railings: []
+props:
+- id: prop_b2_valve_gallery_pipe_run_01
+  name: b2_valve_gallery_pipe_run_01
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  yaw: 0
+  params: {}
+- id: prop_b2_valve_gallery_pipe_run_02
+  name: b2_valve_gallery_pipe_run_02
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  yaw: 0
+  params: {}
+- id: prop_b2_valve_gallery_pipe_run_03
+  name: b2_valve_gallery_pipe_run_03
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  yaw: 0
+  params: {}
+- id: prop_b2_valve_gallery_valve_station_01
+  name: b2_valve_gallery_valve_station_01
+  kind: crates
+  x: -2.52
+  y: 0.0
+  z: -3.85
+  yaw: 0
+  params: {}
+- id: prop_b2_valve_gallery_pipe_run_04
+  name: b2_valve_gallery_pipe_run_04
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  yaw: 0
+  params: {}
+- id: prop_b2_valve_gallery_caged_lamp_01
+  name: b2_valve_gallery_caged_lamp_01
+  kind: banker_lamp
+  x: -2.52
+  y: 2.95
+  z: -4.78
+  yaw: 0
+  params:
+    lamp_energy: 8
+    mount_y: 2.95
+- id: prop_b2_valve_gallery_valve_station_02
+  name: b2_valve_gallery_valve_station_02
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: -3.85
+  yaw: 0
+  params: {}
+- id: prop_b2_valve_gallery_pipe_run_05
+  name: b2_valve_gallery_pipe_run_05
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  yaw: 0
+  params: {}
+- id: prop_b2_valve_gallery_caged_lamp_02
+  name: b2_valve_gallery_caged_lamp_02
+  kind: banker_lamp
+  x: 0.0
+  y: 2.95
+  z: -4.78
+  yaw: 0
+  params:
+    lamp_energy: 8
+    mount_y: 2.95
+- id: prop_b2_valve_gallery_valve_station_03
+  name: b2_valve_gallery_valve_station_03
+  kind: crates
+  x: 2.52
+  y: 0.0
+  z: -3.85
+  yaw: 0
+  params: {}
+- id: prop_b2_valve_gallery_pipe_run_06
+  name: b2_valve_gallery_pipe_run_06
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  yaw: 0
+  params: {}
+- id: prop_b2_valve_gallery_caged_lamp_03
+  name: b2_valve_gallery_caged_lamp_03
+  kind: banker_lamp
+  x: 2.52
+  y: 2.95
+  z: -4.78
+  yaw: 0
+  params:
+    lamp_energy: 8
+    mount_y: 2.95
+- id: prop_b2_valve_gallery_long_drain_01
+  name: b2_valve_gallery_long_drain_01
+  kind: crates
+  x: 0.0
+  y: 0.02
+  z: -3.1
+  yaw: -90
+  params: {}
+- id: prop_b2_valve_gallery_indicator_board_01
+  name: b2_valve_gallery_indicator_board_01
+  kind: painting
+  x: -4.16
+  y: 1.0
+  z: -2.78
+  yaw: -90
+  params:
+    mount_y: 1.0
+- id: prop_b2_valve_gallery_maintenance_crate_01
+  name: b2_valve_gallery_maintenance_crate_01
+  kind: crates
+  x: -3.02
+  y: 0.0
+  z: -0.9
+  yaw: 0
+  params: {}

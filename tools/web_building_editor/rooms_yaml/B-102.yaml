@@ -1,0 +1,144 @@
+id: B-102
+name: 白塔院 · 配药清洁制备室
+floor: 1F
+activeLayerId: layer_B-102
+layers:
+- id: layer_B-102
+  name: 1F 白塔院 · 配药清洁制备室 地面
+  y: 0.0
+  style: octagonal_tile
+  polygons:
+  - - - -3.9
+      - 0.0
+    - - -3.9
+      - -6.7
+    - - 3.9
+      - -6.7
+    - - 3.9
+      - 0.0
+walls:
+- id: wall_B-102
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 3.6
+  thickness: 0.28
+  baseY: 0.0
+  style: classical
+  points:
+  - - -3.9
+    - 0.0
+    - 0.0
+  - - -3.9
+    - 0.0
+    - -6.7
+  - - 3.9
+    - 0.0
+    - -6.7
+  openings:
+  - id: op_B102_Door_00
+    segment: 1
+    center: 6.75
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+  - id: op_B102_window_01
+    segment: 0
+    center: 2.5
+    width: 1.4
+    height: 2.2
+    bottom: 0.95
+    type: arched_window
+    rise: 0.4
+stairs: []
+railings: []
+props:
+- id: prop_B102_wall_lantern_01
+  name: B102_wall_lantern_01
+  kind: wall_lantern
+  x: 1.7
+  y: 2.5
+  z: -6.51
+  yaw: 0.0
+  params:
+    lamp_energy: 15
+    lamp_height: 2.5
+- id: prop_B102_wall_lantern_02
+  name: B102_wall_lantern_02
+  kind: wall_lantern
+  x: -3.71
+  y: 2.5
+  z: -4.4
+  yaw: 90
+  params:
+    lamp_energy: 15
+    lamp_height: 2.5
+- id: prop_B102_cabinet
+  name: B102_cabinet
+  kind: cabinet
+  x: -0.7
+  y: 0.0
+  z: -3.15
+  yaw: 0.0
+  params: {}
+- id: prop_B102_clean_table
+  name: B102_clean_table
+  kind: table
+  x: 1.65
+  y: 0.0
+  z: -4.5
+  yaw: 0.0
+  params: {}
+- id: prop_B102_preparation_bottles
+  name: B102_preparation_bottles
+  kind: crates
+  x: 1.35
+  y: 0.8
+  z: -4.45
+  yaw: 0.0
+  params: {}
+- id: prop_B102_preparation_book
+  name: B102_preparation_book
+  kind: crates
+  x: 2.08
+  y: 0.8
+  z: -4.45
+  yaw: 0.0
+  params: {}
+- id: prop_B102_clean_lamp
+  name: B102_clean_lamp
+  kind: banker_lamp
+  x: 1.65
+  y: 0.8
+  z: -4.75
+  yaw: 0.0
+  params:
+    lamp_energy: 8
+    mount_y: 0.8
+- id: prop_B102_wash_table
+  name: B102_wash_table
+  kind: wash_table
+  x: -3.18
+  y: 0.0
+  z: -4.35
+  yaw: 90
+  params: {}
+- id: prop_B102_bottle_rack
+  name: B102_bottle_rack
+  kind: bookshelf
+  x: -1.7
+  y: 1.35
+  z: -6.4
+  yaw: 0.0
+  params: {}
+- id: prop_B102_supply_chest
+  name: B102_supply_chest
+  kind: chest
+  x: -1.65
+  y: 0.0
+  z: -5.95
+  yaw: 0.0
+  params:
+    chest_w: 0.95
+    chest_d: 0.55
+    chest_h: 0.5

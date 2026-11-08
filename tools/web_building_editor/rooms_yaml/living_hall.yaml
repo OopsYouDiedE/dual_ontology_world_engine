@@ -1,0 +1,189 @@
+id: living_hall
+name: 二层生活汇合厅（旧J绑定）
+floor: 1F
+activeLayerId: layer_living_hall
+layers:
+- id: layer_living_hall
+  name: 1F 二层生活汇合厅（旧J绑定） 地面
+  y: 0.0
+  style: parquet_wood
+  polygons:
+  - - - -5.0
+      - 0.0
+    - - -5.0
+      - -8.0
+    - - 5.0
+      - -8.0
+    - - 5.0
+      - 0.0
+walls:
+- id: wall_living_hall
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 4.3
+  thickness: 0.28
+  baseY: 0.0
+  style: classical
+  points:
+  - - -5.0
+    - 0.0
+    - 0.0
+  - - -5.0
+    - 0.0
+    - -8.0
+  - - 5.0
+    - 0.0
+    - -8.0
+  openings:
+  - id: op_living_hall_Door_00
+    segment: 1
+    center: 1.6
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+  - id: op_living_hall_Door_01
+    segment: 1
+    center: 8.6
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+  - id: op_living_hall_window_01
+    segment: 0
+    center: 3.2
+    width: 1.4
+    height: 2.2
+    bottom: 1.0
+    type: arched_window
+    rise: 0.4
+stairs: []
+railings: []
+props:
+- id: prop_living_hall_record_station_01
+  name: living_hall_record_station_01
+  kind: crates
+  x: -1.5
+  y: 0.0
+  z: -7.52
+  yaw: 0
+  params: {}
+- id: prop_living_hall_record_station_02
+  name: living_hall_record_station_02
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: -7.52
+  yaw: 0
+  params: {}
+- id: prop_living_hall_record_station_03
+  name: living_hall_record_station_03
+  kind: crates
+  x: 1.5
+  y: 0.0
+  z: -7.52
+  yaw: 0
+  params: {}
+- id: prop_living_hall_records_pillar_01
+  name: living_hall_records_pillar_01
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: -3.68
+  yaw: 0
+  params: {}
+- id: prop_living_hall_lectern_01
+  name: living_hall_lectern_01
+  kind: lectern
+  x: 0.0
+  y: 0.0
+  z: -2.65
+  yaw: 0
+  params: {}
+- id: prop_living_hall_bench_01
+  name: living_hall_bench_01
+  kind: bench
+  x: -4.3
+  y: 0.0
+  z: -3.2
+  yaw: -90
+  params: {}
+- id: prop_living_hall_bench_02
+  name: living_hall_bench_02
+  kind: bench
+  x: 4.3
+  y: 0.0
+  z: -3.2
+  yaw: 90
+  params: {}
+- id: prop_living_hall_table_01
+  name: living_hall_table_01
+  kind: table
+  x: -2.9
+  y: 0.0
+  z: -5.76
+  yaw: 0
+  params: {}
+- id: prop_living_hall_chair_01
+  name: living_hall_chair_01
+  kind: chair
+  x: -2.9
+  y: 0.0
+  z: -4.66
+  yaw: 180
+  params: {}
+- id: prop_living_hall_banker_lamp_01
+  name: living_hall_banker_lamp_01
+  kind: banker_lamp
+  x: -3.35
+  y: 0.8
+  z: -5.76
+  yaw: 0
+  params:
+    lamp_energy: 8
+    mount_y: 0.8
+- id: prop_living_hall_open_book_01
+  name: living_hall_open_book_01
+  kind: crates
+  x: -2.75
+  y: 0.8
+  z: -5.66
+  yaw: 0
+  params: {}
+- id: prop_living_hall_planter_01
+  name: living_hall_planter_01
+  kind: planter
+  x: 3.5
+  y: 0.0
+  z: -5.84
+  yaw: 0
+  params:
+    plant_w: 0.65
+    plant_h: 0.85
+    flower_count: 7
+- id: prop_living_hall_chandelier_01
+  name: living_hall_chandelier_01
+  kind: pendant_lamp
+  x: 0.0
+  y: 4.25
+  z: -3.84
+  yaw: 0
+  params: {}
+- id: prop_living_hall_chalkboard_01
+  name: living_hall_chalkboard_01
+  kind: painting
+  x: 0.0
+  y: 2.12
+  z: -7.82
+  yaw: 0
+  params:
+    mount_y: 2.12
+- id: prop_living_hall_painting_01
+  name: living_hall_painting_01
+  kind: painting
+  x: -4.84
+  y: 1.8
+  z: -5.84
+  yaw: -90
+  params:
+    mount_y: 1.8

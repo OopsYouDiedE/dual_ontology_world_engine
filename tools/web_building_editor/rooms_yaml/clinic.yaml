@@ -1,0 +1,217 @@
+id: clinic
+name: 医疗诊疗室
+floor: 1F
+activeLayerId: layer_clinic
+layers:
+- id: layer_clinic
+  name: 1F 医疗诊疗室 地面
+  y: 0.0
+  style: octagonal_tile
+  polygons:
+  - - - -4.5
+      - 0.0
+    - - -4.5
+      - -8.5
+    - - 4.5
+      - -8.5
+    - - 4.5
+      - 0.0
+walls:
+- id: wall_clinic
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 3.9
+  thickness: 0.28
+  baseY: 0.0
+  style: classical
+  points:
+  - - -4.5
+    - 0.0
+    - 0.0
+  - - -4.5
+    - 0.0
+    - -8.5
+  - - 4.5
+    - 0.0
+    - -8.5
+  openings:
+  - id: op_clinic_Door_00
+    segment: 1
+    center: 4.5
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+  - id: op_clinic_window_01
+    segment: 0
+    center: 2.55
+    width: 1.4
+    height: 2.2
+    bottom: 0.9
+    type: arched_window
+    rise: 0.4
+  - id: op_clinic_window_02
+    segment: 0
+    center: 5.95
+    width: 1.4
+    height: 2.2
+    bottom: 0.9
+    type: arched_window
+    rise: 0.4
+stairs: []
+railings: []
+props:
+- id: prop_clinic_medicine_cabinet_01
+  name: clinic_medicine_cabinet_01
+  kind: cabinet
+  x: -2.7
+  y: 0.0
+  z: -8.2
+  yaw: 0
+  params: {}
+- id: prop_clinic_medicine_cabinet_02
+  name: clinic_medicine_cabinet_02
+  kind: cabinet
+  x: 2.7
+  y: 0.0
+  z: -8.2
+  yaw: 0
+  params: {}
+- id: prop_clinic_medical_bed_01
+  name: clinic_medical_bed_01
+  kind: bed
+  x: -2.7
+  y: 0.0
+  z: -2.0
+  yaw: 0
+  params: {}
+- id: prop_clinic_bedside_cabinet_01
+  name: clinic_bedside_cabinet_01
+  kind: bed
+  x: -3.56
+  y: 0.0
+  z: -2.45
+  yaw: 0
+  params: {}
+- id: prop_clinic_medical_bed_02
+  name: clinic_medical_bed_02
+  kind: bed
+  x: -2.7
+  y: 0.0
+  z: -4.95
+  yaw: 0
+  params: {}
+- id: prop_clinic_bedside_cabinet_02
+  name: clinic_bedside_cabinet_02
+  kind: bed
+  x: -3.56
+  y: 0.0
+  z: -5.4
+  yaw: 0
+  params: {}
+- id: prop_clinic_privacy_screen_01
+  name: clinic_privacy_screen_01
+  kind: screen
+  x: -2.7
+  y: 0.0
+  z: -3.55
+  yaw: 0
+  params: {}
+- id: prop_clinic_medical_bed_03
+  name: clinic_medical_bed_03
+  kind: bed
+  x: 2.7
+  y: 0.0
+  z: -2.0
+  yaw: 0
+  params: {}
+- id: prop_clinic_bedside_cabinet_03
+  name: clinic_bedside_cabinet_03
+  kind: bed
+  x: 1.84
+  y: 0.0
+  z: -2.45
+  yaw: 0
+  params: {}
+- id: prop_clinic_medical_bed_04
+  name: clinic_medical_bed_04
+  kind: bed
+  x: 2.7
+  y: 0.0
+  z: -4.95
+  yaw: 0
+  params: {}
+- id: prop_clinic_bedside_cabinet_04
+  name: clinic_bedside_cabinet_04
+  kind: bed
+  x: 1.84
+  y: 0.0
+  z: -5.4
+  yaw: 0
+  params: {}
+- id: prop_clinic_privacy_screen_02
+  name: clinic_privacy_screen_02
+  kind: screen
+  x: 2.7
+  y: 0.0
+  z: -3.55
+  yaw: 0
+  params: {}
+- id: prop_clinic_table_01
+  name: clinic_table_01
+  kind: table
+  x: 0.0
+  y: 0.0
+  z: -1.6
+  yaw: 0
+  params: {}
+- id: prop_clinic_chair_01
+  name: clinic_chair_01
+  kind: chair
+  x: 0.0
+  y: 0.0
+  z: -0.7
+  yaw: 180
+  params: {}
+- id: prop_clinic_banker_lamp_01
+  name: clinic_banker_lamp_01
+  kind: banker_lamp
+  x: -0.45
+  y: 0.8
+  z: -1.6
+  yaw: 0
+  params:
+    lamp_energy: 8
+    mount_y: 0.8
+- id: prop_clinic_open_book_01
+  name: clinic_open_book_01
+  kind: crates
+  x: 0.15
+  y: 0.8
+  z: -1.5
+  yaw: 0
+  params: {}
+- id: prop_clinic_sink_01
+  name: clinic_sink_01
+  kind: wash_table
+  x: 4.12
+  y: 0.0
+  z: -6.38
+  yaw: 90
+  params: {}
+- id: prop_clinic_pendant_lamp_01
+  name: clinic_pendant_lamp_01
+  kind: pendant_lamp
+  x: -2.25
+  y: 3.8
+  z: -4.08
+  yaw: 0
+  params: {}
+- id: prop_clinic_pendant_lamp_02
+  name: clinic_pendant_lamp_02
+  kind: pendant_lamp
+  x: 2.25
+  y: 3.8
+  z: -4.08
+  yaw: 0
+  params: {}

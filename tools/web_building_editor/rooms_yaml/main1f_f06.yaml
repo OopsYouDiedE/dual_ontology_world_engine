@@ -1,0 +1,88 @@
+id: main1f_f06
+name: 阀门安全侧
+floor: 1F
+activeLayerId: layer_main1f_f06
+layers:
+- id: layer_main1f_f06
+  name: 1F 阀门安全侧 地面
+  y: 0.0
+  style: terrazzo_tile
+  polygons:
+  - - - -3.25
+      - 0.0
+    - - -3.25
+      - -7.0
+    - - 3.25
+      - -7.0
+    - - 3.25
+      - 0.0
+walls:
+- id: wall_main1f_f06
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 3.7
+  thickness: 0.28
+  baseY: 0.0
+  style: classical
+  points:
+  - - -3.25
+    - 0.0
+    - 0.0
+  - - -3.25
+    - 0.0
+    - -7.0
+  - - 3.25
+    - 0.0
+    - -7.0
+  openings:
+  - id: op_main1f_f06_Door_00
+    segment: 1
+    center: 3.25
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+stairs: []
+railings: []
+props:
+- id: prop_main1f_f06_pipe_run_01
+  name: main1f_f06_pipe_run_01
+  kind: crates
+  x: -2.97
+  y: 0.0
+  z: 0.0
+  yaw: 0
+  params: {}
+- id: prop_main1f_f06_valve_station_01
+  name: main1f_f06_valve_station_01
+  kind: crates
+  x: 1.69
+  y: 0.0
+  z: -4.2
+  yaw: 0
+  params: {}
+- id: prop_main1f_f06_control_console_01
+  name: main1f_f06_control_console_01
+  kind: reception_desk
+  x: 0.0
+  y: 0.0
+  z: -2.24
+  yaw: 0
+  params: {}
+- id: prop_main1f_f06_schematic_01
+  name: main1f_f06_schematic_01
+  kind: painting
+  x: -3.05
+  y: 1.5
+  z: -4.06
+  yaw: -90
+  params:
+    mount_y: 1.5
+- id: prop_main1f_f06_pendant_lamp_01
+  name: main1f_f06_pendant_lamp_01
+  kind: pendant_lamp
+  x: 0.0
+  y: 3.6
+  z: -3.5
+  yaw: 0
+  params: {}

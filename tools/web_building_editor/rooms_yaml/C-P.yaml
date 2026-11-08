@@ -1,0 +1,177 @@
+id: C-P
+name: 丙区备餐间
+floor: 1F
+activeLayerId: layer_C-P
+layers:
+- id: layer_C-P
+  name: 1F 丙区备餐间 地面
+  y: 0.0
+  style: terrazzo_tile
+  polygons:
+  - - - -3.4
+      - 0.0
+    - - -3.4
+      - -5.5
+    - - 3.4
+      - -5.5
+    - - 3.4
+      - 0.0
+walls:
+- id: wall_C-P
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 3.7
+  thickness: 0.28
+  baseY: 0.0
+  style: classical
+  points:
+  - - -3.4
+    - 0.0
+    - 0.0
+  - - -3.4
+    - 0.0
+    - -5.5
+  - - 3.4
+    - 0.0
+    - -5.5
+  openings:
+  - id: op_C_P_Door_00
+    segment: 0
+    center: 1.18
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+  - id: op_C_P_window_01
+    segment: 1
+    center: 5.5
+    width: 1.4
+    height: 2.2
+    bottom: 1.1
+    type: arched_window
+    rise: 0.4
+stairs: []
+railings: []
+props:
+- id: prop_C_P_stove_01
+  name: C_P_stove_01
+  kind: crates
+  x: -2.27
+  y: 0.0
+  z: -5.02
+  yaw: 0
+  params: {}
+- id: prop_C_P_cooker_hood_01
+  name: C_P_cooker_hood_01
+  kind: crates
+  x: -2.27
+  y: 1.75
+  z: -5.02
+  yaw: 0
+  params: {}
+- id: prop_C_P_work_counter_01
+  name: C_P_work_counter_01
+  kind: reception_desk
+  x: 0.0
+  y: 0.0
+  z: -5.0
+  yaw: 0
+  params: {}
+- id: prop_C_P_sink_01
+  name: C_P_sink_01
+  kind: wash_table
+  x: 2.05
+  y: 0.0
+  z: -5.0
+  yaw: 0
+  params: {}
+- id: prop_C_P_crockery_shelf_01
+  name: C_P_crockery_shelf_01
+  kind: bookshelf
+  x: 0.0
+  y: 1.78
+  z: -5.37
+  yaw: 0
+  params: {}
+- id: prop_C_P_cooking_pot_01
+  name: C_P_cooking_pot_01
+  kind: crates
+  x: -2.57
+  y: 0.95
+  z: -4.9
+  yaw: 0
+  params: {}
+- id: prop_C_P_cooking_pot_02
+  name: C_P_cooking_pot_02
+  kind: crates
+  x: -1.92
+  y: 0.95
+  z: -4.98
+  yaw: 0
+  params: {}
+- id: prop_C_P_residential_accessories_01
+  name: C_P_residential_accessories_01
+  kind: crates
+  x: 0.0
+  y: 0.95
+  z: -4.98
+  yaw: 0
+  params: {}
+- id: prop_C_P_table_01
+  name: C_P_table_01
+  kind: table
+  x: 0.0
+  y: 0.0
+  z: -2.07
+  yaw: 0
+  params: {}
+- id: prop_C_P_chair_01
+  name: C_P_chair_01
+  kind: chair
+  x: -0.6
+  y: 0.0
+  z: -1.23
+  yaw: 180
+  params: {}
+- id: prop_C_P_chair_02
+  name: C_P_chair_02
+  kind: chair
+  x: 0.6
+  y: 0.0
+  z: -1.23
+  yaw: 180
+  params: {}
+- id: prop_C_P_cabinet_01
+  name: C_P_cabinet_01
+  kind: cabinet
+  x: 2.6
+  y: 0.0
+  z: -1.7
+  yaw: 0
+  params: {}
+- id: prop_C_P_wall_lantern_01
+  name: C_P_wall_lantern_01
+  kind: wall_lantern
+  x: 0.7
+  y: 2.7
+  z: -5.3
+  yaw: 0
+  params:
+    lamp_energy: 15
+    lamp_height: 2.7
+- id: prop_C_P_pendant_lamp_01
+  name: C_P_pendant_lamp_01
+  kind: pendant_lamp
+  x: 0.0
+  y: 3.45
+  z: -2.6
+  yaw: 0
+  params: {}
+- id: prop_C_P_pitcher_01
+  name: C_P_pitcher_01
+  kind: crates
+  x: -0.6
+  y: 0.8
+  z: -2.07
+  yaw: 0
+  params: {}

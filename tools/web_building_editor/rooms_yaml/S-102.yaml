@@ -1,0 +1,135 @@
+id: S-102
+name: 星仪院 · 精密仪器室
+floor: 2F
+activeLayerId: layer_S-102
+layers:
+- id: layer_S-102
+  name: 2F 星仪院 · 精密仪器室 地面
+  y: 0.0
+  style: terrazzo_tile
+  polygons:
+  - - - -3.9
+      - 0.0
+    - - -3.9
+      - -6.7
+    - - 3.9
+      - -6.7
+    - - 3.9
+      - 0.0
+walls:
+- id: wall_S-102
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 3.6
+  thickness: 0.28
+  baseY: 0.0
+  style: classical
+  points:
+  - - -3.9
+    - 0.0
+    - 0.0
+  - - -3.9
+    - 0.0
+    - -6.7
+  - - 3.9
+    - 0.0
+    - -6.7
+  openings:
+  - id: op_S102_Door_00
+    segment: 1
+    center: 6.75
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+  - id: op_S102_window_01
+    segment: 0
+    center: 2.5
+    width: 1.4
+    height: 2.2
+    bottom: 0.95
+    type: arched_window
+    rise: 0.4
+stairs: []
+railings: []
+props:
+- id: prop_S102_wall_lantern_01
+  name: S102_wall_lantern_01
+  kind: wall_lantern
+  x: 1.7
+  y: 2.5
+  z: -6.51
+  yaw: 0.0
+  params:
+    lamp_energy: 15
+    lamp_height: 2.5
+- id: prop_S102_wall_lantern_02
+  name: S102_wall_lantern_02
+  kind: wall_lantern
+  x: -3.71
+  y: 2.5
+  z: -4.4
+  yaw: 90
+  params:
+    lamp_energy: 15
+    lamp_height: 2.5
+- id: prop_S102_instruments
+  name: S102_instruments
+  kind: reception_desk
+  x: -0.7
+  y: 0.0
+  z: -3.35
+  yaw: 0.0
+  params: {}
+- id: prop_S102_balance
+  name: S102_balance
+  kind: crates
+  x: 1.7
+  y: 0.0
+  z: -3.25
+  yaw: 0.0
+  params: {}
+- id: prop_S102_calibration_table
+  name: S102_calibration_table
+  kind: table
+  x: -1.6
+  y: 0.0
+  z: -5.6
+  yaw: 0.0
+  params: {}
+- id: prop_S102_calibration_book
+  name: S102_calibration_book
+  kind: crates
+  x: -1.55
+  y: 0.8
+  z: -5.52
+  yaw: 0.0
+  params: {}
+- id: prop_S102_calibration_lamp
+  name: S102_calibration_lamp
+  kind: banker_lamp
+  x: -2.2
+  y: 0.8
+  z: -5.83
+  yaw: 0.0
+  params:
+    lamp_energy: 8
+    mount_y: 0.8
+- id: prop_S102_indicator
+  name: S102_indicator
+  kind: painting
+  x: 1.05
+  y: 0.0
+  z: -5.65
+  yaw: 0.0
+  params:
+    mount_y: 0.0
+- id: prop_S102_schematic
+  name: S102_schematic
+  kind: painting
+  x: -0.1
+  y: 1.95
+  z: -6.49
+  yaw: 0.0
+  params:
+    mount_y: 1.95

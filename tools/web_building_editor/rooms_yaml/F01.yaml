@@ -1,0 +1,520 @@
+id: F01
+name: 入口双分叉梯大厅与连续二层回廊
+floor: 1F
+activeLayerId: layer_F01_ground
+layers:
+- id: layer_F01_ground
+  name: 1F 主大厅 地面
+  y: 0.0
+  style: octagonal_tile
+  polygons:
+  - - - -9.0
+      - 0.0
+    - - -9.0
+      - -17.0
+    - - 9.0
+      - -17.0
+    - - 9.0
+      - 0.0
+- id: layer_F01_middle_landing
+  name: 1.5F 梯间主平台
+  y: 2.0
+  style: stone_slab
+  polygons:
+  - - - -2.0
+      - -11.3
+    - - -2.0
+      - -13.6
+    - - 2.0
+      - -13.6
+    - - 2.0
+      - -11.3
+- id: layer_F01_gallery
+  name: 2F 连续U型回廊
+  y: 4.0
+  style: parquet_wood
+  polygons:
+  - - - -9.0
+      - -3.0
+    - - -9.0
+      - -14.2
+    - - -6.5
+      - -14.2
+    - - -6.5
+      - -3.0
+  - - - 6.5
+      - -3.0
+    - - 6.5
+      - -14.2
+    - - 9.0
+      - -14.2
+    - - 9.0
+      - -3.0
+  - - - -9.0
+      - -14.2
+    - - -9.0
+      - -17.0
+    - - 9.0
+      - -17.0
+    - - 9.0
+      - -14.2
+walls:
+- id: wall_F01
+  name: 大厅古典石砌外墙
+  closed: false
+  height: 8.8
+  thickness: 0.38
+  baseY: 0.0
+  style: stone
+  points:
+  - - -9.0
+    - 0.0
+    - 0.0
+  - - -9.0
+    - 0.0
+    - -17.0
+  - - 9.0
+    - 0.0
+    - -17.0
+  openings:
+  - id: op_F01_Ground_Rear_West
+    segment: 1
+    center: 2.65
+    width: 1.5
+    height: 2.8
+    bottom: 0.0
+    type: closed_door
+  - id: op_F01_Ground_Rear_East
+    segment: 1
+    center: 15.35
+    width: 1.5
+    height: 2.8
+    bottom: 0.0
+    type: closed_door
+  - id: op_F01_Upper_Rear_West
+    segment: 1
+    center: 2.65
+    width: 1.5
+    height: 2.8
+    bottom: 4.0
+    type: closed_door
+  - id: op_F01_Upper_Rear_East
+    segment: 1
+    center: 15.35
+    width: 1.5
+    height: 2.8
+    bottom: 4.0
+    type: closed_door
+  - id: op_F01_Rear_Window_W
+    segment: 1
+    center: 5.65
+    width: 1.7
+    height: 3.55
+    bottom: 4.42
+    type: arched_window
+    rise: 0.85
+  - id: op_F01_Rear_Window_C
+    segment: 1
+    center: 9.0
+    width: 2.05
+    height: 3.55
+    bottom: 4.42
+    type: arched_window
+    rise: 1.02
+  - id: op_F01_Rear_Window_E
+    segment: 1
+    center: 12.35
+    width: 1.7
+    height: 3.55
+    bottom: 4.42
+    type: arched_window
+    rise: 0.85
+  - id: op_F01_Ground_Side_West
+    segment: 0
+    center: 7.9
+    width: 1.45
+    height: 2.75
+    bottom: 0.0
+    type: closed_door
+  - id: op_F01_Upper_Side_West
+    segment: 0
+    center: 7.9
+    width: 1.45
+    height: 2.75
+    bottom: 4.0
+    type: closed_door
+  - id: op_F01_West_Window_Lower
+    segment: 0
+    center: 12.05
+    width: 2.0
+    height: 2.65
+    bottom: 0.65
+    type: arched_window
+    rise: 0.9
+  - id: op_F01_West_Window_Upper
+    segment: 0
+    center: 12.05
+    width: 2.35
+    height: 3.45
+    bottom: 4.45
+    type: arched_window
+    rise: 1.04
+stairs:
+- id: stair_F01_central_flight
+  name: 主居中双宽大理石直跑梯
+  x: 0.0
+  y: 0.0
+  z: -7.1
+  rise: 2.0
+  run: 4.2
+  risers: 12
+  width: 3.4
+  nosing: 0.03
+  railingPos: both
+  yaw: 90
+- id: stair_F01_west_branch
+  name: 西侧二层回廊衔接分叉梯
+  x: -2.0
+  y: 2.0
+  z: -12.4
+  rise: 2.0
+  run: 4.5
+  risers: 12
+  width: 2.0
+  nosing: 0.03
+  railingPos: both
+  yaw: 180
+- id: stair_F01_east_branch
+  name: 东侧二层回廊衔接分叉梯
+  x: 2.0
+  y: 2.0
+  z: -12.4
+  rise: 2.0
+  run: 4.5
+  risers: 12
+  width: 2.0
+  nosing: 0.03
+  railingPos: both
+  yaw: 0
+railings:
+- id: rail_F01_west_gallery
+  style: turned_wood
+  height: 1.0
+  baseY: 4.0
+  points:
+  - - -6.5
+    - 4.0
+    - -3.0
+  - - -6.5
+    - 4.0
+    - -11.4
+- id: rail_F01_east_gallery
+  style: turned_wood
+  height: 1.0
+  baseY: 4.0
+  points:
+  - - 6.5
+    - 4.0
+    - -3.0
+  - - 6.5
+    - 4.0
+    - -11.4
+- id: rail_F01_rear_gallery
+  style: turned_wood
+  height: 1.0
+  baseY: 4.0
+  points:
+  - - -6.5
+    - 4.0
+    - -13.4
+  - - -6.5
+    - 4.0
+    - -14.2
+  - - 6.5
+    - 4.0
+    - -14.2
+  - - 6.5
+    - 4.0
+    - -13.4
+props:
+- id: prop_F01_table_01
+  name: F01_table_01
+  kind: table
+  x: -4.75
+  y: 0.0
+  z: -3.65
+  yaw: 0
+  params: {}
+- id: prop_F01_chair_01
+  name: F01_chair_01
+  kind: chair
+  x: -4.75
+  y: 0.0
+  z: -2.65
+  yaw: -180
+  params: {}
+- id: prop_F01_chair_02
+  name: F01_chair_02
+  kind: chair
+  x: -4.75
+  y: 0.0
+  z: -4.65
+  yaw: 0
+  params: {}
+- id: prop_F01_banker_lamp_01
+  name: F01_banker_lamp_01
+  kind: banker_lamp
+  x: -4.75
+  y: 0.76
+  z: -3.6
+  yaw: 0
+  params: {}
+- id: prop_F01_reception_desk_01
+  name: F01_reception_desk_01
+  kind: reception_desk
+  x: 4.8
+  y: 0.0
+  z: -3.6
+  yaw: 0
+  params:
+    desk_w: 2.5
+    desk_h: 1.08
+- id: prop_F01_chair_03
+  name: F01_chair_03
+  kind: chair
+  x: 4.8
+  y: 0.0
+  z: -4.78
+  yaw: 0
+  params: {}
+- id: prop_F01_banker_lamp_02
+  name: F01_banker_lamp_02
+  kind: banker_lamp
+  x: 4.12
+  y: 1.08
+  z: -3.22
+  yaw: 0
+  params: {}
+- id: prop_F01_bench_01
+  name: F01_bench_01
+  kind: bench
+  x: -7.85
+  y: 0.0
+  z: -6.1
+  yaw: 90
+  params: {}
+- id: prop_F01_planter_01
+  name: F01_planter_01
+  kind: planter
+  x: -6.3
+  y: 0.0
+  z: -2.6
+  yaw: 0
+  params:
+    plant_w: 0.75
+    plant_h: 0.9
+    flower_count: 7
+- id: prop_F01_planter_02
+  name: F01_planter_02
+  kind: planter
+  x: -7.9
+  y: 4.0
+  z: -15.7
+  yaw: 0
+  params:
+    plant_w: 0.75
+    plant_h: 0.9
+    flower_count: 7
+- id: prop_F01_pedestal_01
+  name: F01_pedestal_01
+  kind: pedestal
+  x: -2.5
+  y: 0.0
+  z: -10.8
+  yaw: 0
+  params:
+    width: 0.55
+    height: 0.7
+- id: prop_F01_planter_03
+  name: F01_planter_03
+  kind: planter
+  x: -2.5
+  y: 0.7
+  z: -10.8
+  yaw: 0
+  params:
+    plant_w: 0.75
+    plant_h: 0.9
+    flower_count: 7
+- id: prop_F01_wall_lantern_01
+  name: F01_wall_lantern_01
+  kind: wall_lantern
+  x: -8.73
+  y: 2.25
+  z: -5.6
+  yaw: 90
+  params:
+    lamp_energy: 20
+    lamp_height: 2.25
+- id: prop_F01_wall_lantern_02
+  name: F01_wall_lantern_02
+  kind: wall_lantern
+  x: -8.73
+  y: 2.25
+  z: -10.05
+  yaw: 90
+  params:
+    lamp_energy: 20
+    lamp_height: 2.25
+- id: prop_F01_wall_lantern_03
+  name: F01_wall_lantern_03
+  kind: wall_lantern
+  x: -8.73
+  y: 6.15
+  z: -5.6
+  yaw: 90
+  params:
+    lamp_energy: 20
+    lamp_height: 6.15
+- id: prop_F01_wall_lantern_04
+  name: F01_wall_lantern_04
+  kind: wall_lantern
+  x: -8.73
+  y: 6.15
+  z: -10.05
+  yaw: 90
+  params:
+    lamp_energy: 20
+    lamp_height: 6.15
+- id: prop_F01_wall_lantern_05
+  name: F01_wall_lantern_05
+  kind: wall_lantern
+  x: -4.65
+  y: 5.95
+  z: -16.72
+  yaw: 0
+  params:
+    lamp_energy: 20
+    lamp_height: 5.95
+- id: prop_F01_bench_02
+  name: F01_bench_02
+  kind: bench
+  x: 7.85
+  y: 0.0
+  z: -6.1
+  yaw: -90
+  params: {}
+- id: prop_F01_planter_04
+  name: F01_planter_04
+  kind: planter
+  x: 6.3
+  y: 0.0
+  z: -2.6
+  yaw: 0
+  params:
+    plant_w: 0.75
+    plant_h: 0.9
+    flower_count: 7
+- id: prop_F01_planter_05
+  name: F01_planter_05
+  kind: planter
+  x: 7.9
+  y: 4.0
+  z: -15.7
+  yaw: 0
+  params:
+    plant_w: 0.75
+    plant_h: 0.9
+    flower_count: 7
+- id: prop_F01_pedestal_02
+  name: F01_pedestal_02
+  kind: pedestal
+  x: 2.5
+  y: 0.0
+  z: -10.8
+  yaw: 0
+  params:
+    width: 0.55
+    height: 0.7
+- id: prop_F01_planter_06
+  name: F01_planter_06
+  kind: planter
+  x: 2.5
+  y: 0.7
+  z: -10.8
+  yaw: 0
+  params:
+    plant_w: 0.75
+    plant_h: 0.9
+    flower_count: 7
+- id: prop_F01_wall_lantern_06
+  name: F01_wall_lantern_06
+  kind: wall_lantern
+  x: 8.73
+  y: 2.25
+  z: -5.6
+  yaw: -90
+  params:
+    lamp_energy: 20
+    lamp_height: 2.25
+- id: prop_F01_wall_lantern_07
+  name: F01_wall_lantern_07
+  kind: wall_lantern
+  x: 8.73
+  y: 2.25
+  z: -10.05
+  yaw: -90
+  params:
+    lamp_energy: 20
+    lamp_height: 2.25
+- id: prop_F01_wall_lantern_08
+  name: F01_wall_lantern_08
+  kind: wall_lantern
+  x: 8.73
+  y: 6.15
+  z: -5.6
+  yaw: -90
+  params:
+    lamp_energy: 20
+    lamp_height: 6.15
+- id: prop_F01_wall_lantern_09
+  name: F01_wall_lantern_09
+  kind: wall_lantern
+  x: 8.73
+  y: 6.15
+  z: -10.05
+  yaw: -90
+  params:
+    lamp_energy: 20
+    lamp_height: 6.15
+- id: prop_F01_wall_lantern_10
+  name: F01_wall_lantern_10
+  kind: wall_lantern
+  x: 4.65
+  y: 5.95
+  z: -16.72
+  yaw: 0
+  params:
+    lamp_energy: 20
+    lamp_height: 5.95
+- id: prop_Grand_Central_Chandelier
+  name: Grand_Central_Chandelier
+  kind: pendant_lamp
+  x: 0.0
+  y: 8.75
+  z: -7.35
+  yaw: 0
+  params:
+    lamp_energy: 100
+    drop_length: 1.85
+- id: prop_F01_painting_01
+  name: F01_painting_01
+  kind: painting
+  x: 0.0
+  y: 1.2
+  z: -16.75
+  yaw: 0
+  params:
+    frame_w: 2.8
+    frame_h: 1.65
+    mount_y: 1.2

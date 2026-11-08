@@ -1,0 +1,42 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/510575b13aa9464f2a108a4376005079a9573d3dd342d2608add4a75edf66afd.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/b3e1edfa148189fcab4d039eb1d7b43c976cab8f94ddf9bf36afe01f5287c4af.glb" id="2_model"]
+
+[node name="grain_rack_432b7954d05f" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "grain_rack_432b7954d05f"
+component_kind = "grain_rack"
+interactive = true
+shadowless_nodes = PackedStringArray()
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[{\"name\":\"Shelf_lower\",\"parent_node\":\"\",\"position\":[0.0,0.2199999988079071,0.0],\"size\":[2.72,0.11,0.93]},{\"name\":\"Shelf_upper\",\"parent_node\":\"\",\"position\":[0.0,1.3515000343322754,0.0],\"size\":[2.72,0.11,0.93]}]"
+static_collision = "none"
+metadata/world_category = "furniture"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"depth\":0.85,\"height\":2.55,\"material_theme\":\"warm\",\"width\":2.6}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]
+
+[node name="Front" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(-1, 0, -8.74227766e-08, 0, 1, 0, 8.74227766e-08, 0, -1, 0, 0, 0.955000043)
+metadata/pose = "stand"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"
+
+[node name="Back" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.935000002)
+metadata/pose = "stand"
+metadata/clearance_radius_m = 0.3
+metadata/availability = "host_validation_required"
+
+[node name="ContactTarget" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.14999998, 0.0100000203)
+metadata/pose = "contact"
+metadata/clearance_radius_m = 0
+metadata/availability = "host_validation_required"

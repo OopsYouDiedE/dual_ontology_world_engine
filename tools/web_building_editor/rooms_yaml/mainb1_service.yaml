@@ -1,0 +1,150 @@
+id: mainb1_service
+name: B1服务走廊
+floor: B1
+activeLayerId: layer_mainb1_service
+layers:
+- id: layer_mainb1_service
+  name: B1 B1服务走廊 地面
+  y: 0.0
+  style: stone_slab
+  polygons:
+  - - - -2.3
+      - 0.0
+    - - -2.3
+      - -9.0
+    - - 2.3
+      - -9.0
+    - - 2.3
+      - 0.0
+walls:
+- id: wall_mainb1_service
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 3.55
+  thickness: 0.28
+  baseY: 0.0
+  style: brick_dado
+  points:
+  - - -2.3
+    - 0.0
+    - 0.0
+  - - -2.3
+    - 0.0
+    - -9.0
+  - - 2.3
+    - 0.0
+    - -9.0
+  openings:
+  - id: op_mainb1_service_Door_00
+    segment: 1
+    center: 2.3
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+  - id: op_mainb1_service_Door_01
+    segment: 0
+    center: 2.3
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+stairs: []
+railings: []
+props:
+- id: prop_mainb1_service_pipe_run_01
+  name: mainb1_service_pipe_run_01
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  yaw: 0
+  params: {}
+- id: prop_mainb1_service_pipe_run_02
+  name: mainb1_service_pipe_run_02
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  yaw: 0
+  params: {}
+- id: prop_mainb1_service_caged_lamp_01
+  name: mainb1_service_caged_lamp_01
+  kind: banker_lamp
+  x: -2.28
+  y: 2.35
+  z: -1.4
+  yaw: -90
+  params:
+    lamp_energy: 8
+    mount_y: 2.35
+- id: prop_mainb1_service_caged_lamp_02
+  name: mainb1_service_caged_lamp_02
+  kind: banker_lamp
+  x: -2.28
+  y: 2.35
+  z: -4.2
+  yaw: -90
+  params:
+    lamp_energy: 8
+    mount_y: 2.35
+- id: prop_mainb1_service_caged_lamp_03
+  name: mainb1_service_caged_lamp_03
+  kind: banker_lamp
+  x: -2.28
+  y: 2.35
+  z: -7.0
+  yaw: -90
+  params:
+    lamp_energy: 8
+    mount_y: 2.35
+- id: prop_mainb1_service_indicator_board_01
+  name: mainb1_service_indicator_board_01
+  kind: painting
+  x: 1.15
+  y: 0.98
+  z: -8.94
+  yaw: 0
+  params:
+    mount_y: 0.98
+- id: prop_mainb1_service_indicator_board_02
+  name: mainb1_service_indicator_board_02
+  kind: painting
+  x: -2.27
+  y: 1.0
+  z: -5.67
+  yaw: -90
+  params:
+    mount_y: 1.0
+- id: prop_mainb1_service_interlock_handle_01
+  name: mainb1_service_interlock_handle_01
+  kind: crates
+  x: -2.25
+  y: 1.25
+  z: -3.51
+  yaw: -90
+  params: {}
+- id: prop_mainb1_service_service_cabinet_01
+  name: mainb1_service_service_cabinet_01
+  kind: cabinet
+  x: 1.38
+  y: 0.0
+  z: -5.85
+  yaw: 0
+  params: {}
+- id: prop_mainb1_service_drain_01
+  name: mainb1_service_drain_01
+  kind: crates
+  x: -1.56
+  y: 0.03
+  z: -4.41
+  yaw: 0
+  params: {}
+- id: prop_mainb1_service_bench_01
+  name: mainb1_service_bench_01
+  kind: bench
+  x: 1.06
+  y: 0.0
+  z: -2.52
+  yaw: 90
+  params: {}

@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://assets/scenes/campaign_rooms/components/0eb1def38f988a1e8d607ca3c14afb20c57422df34b1c9e4f9881e98d5b0f7cf.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/scenes/campaign_rooms/models/5f37f97e9607b4f5c48e5cc7921e41f1b247845041c83c189198c65745d11885.glb" id="2_model"]
+
+[node name="wall_lantern_71af473d9820" type="Node3D"]
+script = ExtResource("1_script")
+asset_id = "wall_lantern_71af473d9820"
+component_kind = "wall_lantern"
+interactive = false
+shadowless_nodes = PackedStringArray("Emitting_core")
+hinge_names = PackedStringArray()
+hinge_open_degrees = PackedFloat32Array()
+collision_boxes_json = "[]"
+static_collision = "none"
+metadata/world_category = "decoration"
+metadata/core_binding = "campaign.rooms"
+metadata/front_axis = "+Z"
+metadata/static_unit_baked = true
+metadata/asset_parameters_json = "{\"height\":0.7,\"light_energy\":28,\"material_theme\":\"walnut\"}"
+
+[node name="Visual" parent="." instance=ExtResource("2_model")]
+
+[node name="InteractionSlots" type="Node3D" parent="."]

@@ -1,0 +1,146 @@
+id: b2_control
+name: B2控制室
+floor: B2
+activeLayerId: layer_b2_control
+layers:
+- id: layer_b2_control
+  name: B2 B2控制室 地面
+  y: 0.0
+  style: stone_slab
+  polygons:
+  - - - -3.8
+      - 0.0
+    - - -3.8
+      - -6.4
+    - - 3.8
+      - -6.4
+    - - 3.8
+      - 0.0
+walls:
+- id: wall_b2_control
+  name: 主外墙柱 (L型剖面外墙)
+  closed: false
+  height: 3.8
+  thickness: 0.28
+  baseY: 0.0
+  style: brick_dado
+  points:
+  - - -3.8
+    - 0.0
+    - 0.0
+  - - -3.8
+    - 0.0
+    - -6.4
+  - - 3.8
+    - 0.0
+    - -6.4
+  openings:
+  - id: op_b2_control_Door_00
+    segment: 1
+    center: 6.45
+    width: 1.2
+    height: 2.4
+    bottom: 0.0
+    type: closed_door
+stairs: []
+railings: []
+props:
+- id: prop_b2_control_reaction_vessel_01
+  name: b2_control_reaction_vessel_01
+  kind: crates
+  x: -2.2
+  y: 0.26
+  z: -4.74
+  yaw: 0
+  params: {}
+- id: prop_b2_control_control_console_01
+  name: b2_control_control_console_01
+  kind: reception_desk
+  x: 0.46
+  y: 0.0
+  z: -4.61
+  yaw: 0
+  params: {}
+- id: prop_b2_control_piping_schematic_01
+  name: b2_control_piping_schematic_01
+  kind: painting
+  x: 0.15
+  y: 2.47
+  z: -6.32
+  yaw: 0
+  params:
+    mount_y: 2.47
+- id: prop_b2_control_chair_01
+  name: b2_control_chair_01
+  kind: chair
+  x: 0.61
+  y: 0.0
+  z: -3.61
+  yaw: 180
+  params: {}
+- id: prop_b2_control_pipe_run_01
+  name: b2_control_pipe_run_01
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  yaw: 0
+  params: {}
+- id: prop_b2_control_pipe_run_02
+  name: b2_control_pipe_run_02
+  kind: crates
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  yaw: 0
+  params: {}
+- id: prop_b2_control_caged_lamp_01
+  name: b2_control_caged_lamp_01
+  kind: banker_lamp
+  x: -3.42
+  y: 2.65
+  z: -6.38
+  yaw: 0
+  params:
+    lamp_energy: 8
+    mount_y: 2.65
+- id: prop_b2_control_caged_lamp_02
+  name: b2_control_caged_lamp_02
+  kind: banker_lamp
+  x: -1.37
+  y: 2.65
+  z: -6.38
+  yaw: 0
+  params:
+    lamp_energy: 8
+    mount_y: 2.65
+- id: prop_b2_control_caged_lamp_03
+  name: b2_control_caged_lamp_03
+  kind: banker_lamp
+  x: 1.67
+  y: 2.65
+  z: -6.38
+  yaw: 0
+  params:
+    lamp_energy: 8
+    mount_y: 2.65
+- id: prop_b2_control_indicator_board_01
+  name: b2_control_indicator_board_01
+  kind: painting
+  x: 1.67
+  y: 1.03
+  z: -6.32
+  yaw: 0
+  params:
+    mount_y: 1.03
+- id: prop_b2_control_service_chest_01
+  name: b2_control_service_chest_01
+  kind: chest
+  x: 2.66
+  y: 0.0
+  z: -1.6
+  yaw: 0
+  params:
+    chest_w: 0.95
+    chest_d: 0.55
+    chest_h: 0.5
