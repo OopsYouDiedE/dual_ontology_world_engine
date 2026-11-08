@@ -3,6 +3,7 @@ from collections import deque
 from contextlib import contextmanager
 import json
 import os
+import shlex
 from pathlib import Path
 import queue
 import re
@@ -129,6 +130,16 @@ def build(backend, deadline=None):
             if not restore_config.is_file() or restore_config.read_bytes() != content:
                 restore_config.write_bytes(content)
             command.append("-p:RestoreConfigFile=" + str(restore_config))
+            # MSBuild resolves Sdk="Godot.NET.Sdk/x" before restore and only reads the
+            # NuGet.Config hierarchy (project dir, then DOTNET_CLI_HOME user config),
+            # not RestoreConfigFile. Register the bundled packages there as well.
+            user_config = Path(os.environ.get("DOTNET_CLI_HOME") or (ROOT / ".runtime/dotnet-home")) / ".nuget/NuGet/NuGet.Config"
+            user_config.parent.mkdir(parents=True, exist_ok=True)
+            user_xml = Xml.Element("configuration")
+            Xml.SubElement(Xml.SubElement(user_xml, "packageSources"), "add", key="Godot-local", value=str(bundled_packages))
+            user_content = Xml.tostring(user_xml, encoding="utf-8", xml_declaration=True)
+            if not user_config.is_file() or user_config.read_bytes() != user_content:
+                user_config.write_bytes(user_content)
         # Each live CLI owns an immutable build output. Windows must not need
         # to overwrite DLLs held by another formal input/automatic session.
         output_directory = None
@@ -339,6 +350,9 @@ def start(arguments, deadline=None):
                 command += ["--write-movie", endpoint.movie_path, "--fixed-fps", str(arguments.get("movie_fps", 30))]
             if arguments.get("background_capture", True):
                 command += ["--windowed", "--position", "-32000,-32000"]
+            # Optional engine arguments for constrained hosts (CI, software rasterisers),
+            # e.g. DV_GODOT_EXTRA_ARGS="--rendering-driver opengl3 --resolution 960x480".
+            command += shlex.split(os.environ.get("DV_GODOT_EXTRA_ARGS", ""))
             scene = arguments.get("scene", "")
             if mode == "scene":
                 path = (ROOT / "." / scene.removeprefix("res://")).resolve()

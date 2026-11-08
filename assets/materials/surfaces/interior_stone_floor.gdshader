@@ -1,7 +1,7 @@
 shader_type spatial;
 render_mode diffuse_burley, specular_disabled;
-#include "res://rendering/shaders/common/surface_noise.gdshaderinc"
-#include "res://rendering/shaders/common/surface_metrics.gdshaderinc"
+#include "res://assets/shaders/common/surface_noise.gdshaderinc"
+#include "res://assets/shaders/common/surface_metrics.gdshaderinc"
 
 // Quarry blocks, flagstones, slate slabs, field stone and fine gravel.
 uniform int stone_kind = 0;

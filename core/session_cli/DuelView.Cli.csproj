@@ -18,4 +18,7 @@
   <ItemGroup>
     <Compile Include="../../tools/story/ScenarioAuthoring.cs" Link="ScenarioAuthoring.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="../../assets/data/cases/*.dv" CopyToOutputDirectory="PreserveNewest" Link="Content/Cases/%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

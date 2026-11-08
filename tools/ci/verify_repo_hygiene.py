@@ -83,11 +83,15 @@ def main():
                 try:
                     text = file_path.read_text(encoding="utf-8", errors="ignore")
                     for match in res_pattern.finditer(text):
-                        rel_path = match.group(1).rstrip(",;)\"\'}")
+                        rel_path = match.group(1).rstrip(".,;)\"\'}")
                         if not rel_path:
                             continue
                         # Skip dynamic string templates if any
-                        if "{" in rel_path or "$" in rel_path or "%" in rel_path:
+                        if "{" in rel_path or "$" in rel_path or "%" in rel_path or rel_path.endswith("/"):
+                            # Directory prefixes are concatenated with runtime names; they cannot be checked statically.
+                            continue
+                        # Runtime-generated caches live under .runtime and are created on first run.
+                        if rel_path.startswith(".runtime/"):
                             continue
                         resolved = root / rel_path
                         if not resolved.exists():

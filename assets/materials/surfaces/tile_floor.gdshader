@@ -1,5 +1,5 @@
 shader_type spatial;
-#include "res://rendering/shaders/common/surface_metrics.gdshaderinc"
+#include "res://assets/shaders/common/surface_metrics.gdshaderinc"
 uniform vec4 base_color : source_color=vec4(0.65,0.65,0.57,1.0);
 uniform vec4 accent_color : source_color=vec4(0.20,0.30,0.27,1.0);
 uniform float tile_size=0.40;

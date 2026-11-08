@@ -1,7 +1,7 @@
 shader_type spatial;
 render_mode diffuse_burley, specular_schlick_ggx;
-#include "res://rendering/shaders/common/surface_noise.gdshaderinc"
-#include "res://rendering/shaders/common/surface_metrics.gdshaderinc"
+#include "res://assets/shaders/common/surface_noise.gdshaderinc"
+#include "res://assets/shaders/common/surface_metrics.gdshaderinc"
 uniform vec4 pigment : source_color = vec4(0.69,0.66,0.55,1.0);
 uniform float surface_roughness = 0.91;
 varying vec3 world_point;

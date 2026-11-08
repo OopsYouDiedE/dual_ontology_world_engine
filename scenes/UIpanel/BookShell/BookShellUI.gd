@@ -1,4 +1,5 @@
 extends Control
+const Sound := preload("res://scenes/components/shared/Sound.gd")
 
 ## 书本外壳容器（BookShellUI.gd）
 ## 吸收合并原 CasebookUI, PhysicalBookView, NativeBookInterface, BookPageLayout 等。
@@ -251,6 +252,7 @@ func close() -> void:
 	closed.emit()
 
 func open_section(page_id: String) -> void:
+	Sound.sfx("page", -4.0, randf_range(0.96, 1.04))
 	if not SECTIONS.has(page_id):
 		page_id = "B01"
 	if desktop and page_id not in ["B07", "B08"]:

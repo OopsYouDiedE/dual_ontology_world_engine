@@ -460,12 +460,15 @@ func _spawn_actor(actor: String, index: int) -> CharacterBody3D:
 		_navigation_load["resident_spawns"] = spawns
 	var label := Label3D.new()
 	label.name = "CampaignActorName"
-	label.text = str(actor_definition.get("name", actor))
+	var display_name := "侦探" if actor == _viewer() else str(actor_definition.get("name", actor))
+	label.text = display_name
 	var label_font := str(settings.get("label_font", ""))
 	if not label_font.is_empty() and ResourceLoader.exists(label_font): label.font = load(label_font)
-	label.position.y = float(model.get("height", settings.get("actor_height", 1.32))) + 0.24
-	label.font_size = 36
-	label.pixel_size = 0.006
+	label.position.y = float(model.get("height", settings.get("actor_height", 1.32))) + 0.28
+	label.font_size = 42
+	label.pixel_size = 0.005
+	label.outline_size = 10
+	label.outline_modulate = Color("1a1715")
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
 	label.modulate = Color("e7cfa5") if actor == _viewer() else Color("efe7d5")
@@ -508,10 +511,7 @@ func _update_actor_labels() -> void:
 	for actor in _bodies:
 		var label := _bodies[actor].get_node_or_null("CampaignActorName") as Label3D
 		if label != null:
-			if actor == _viewer():
-				label.visible = false
-			else:
-				label.visible = _actor_visible(actor) and shown.has(actor)
+			label.visible = _actor_visible(actor) and shown.has(actor)
 
 func _physics_process(delta: float) -> void:
 	if not ready_for_play or _closed or _room_loading or not last_failure.is_empty(): return
@@ -562,7 +562,7 @@ func _physics_process(delta: float) -> void:
 	if _last_ui >= 0.25:
 		_last_ui = 0.0
 		_refresh(false)
-		if _autosave_pending and not controller_ai and _pending_action.is_empty() and _activity().is_empty() and _actor_room(_viewer()) == room_id:
+		if _autosave_pending and not controller_ai and _pending_action.is_empty() and _is_activity_idle(_activity()) and _actor_room(_viewer()) == room_id:
 			_write_progress(true)
 
 func _navigation_factor() -> float:
@@ -571,7 +571,7 @@ func _navigation_factor() -> float:
 func _manual_motion_requested() -> bool:
 	if controller_ai or not is_instance_valid(body): return false
 	if not _path.is_empty() or _manual_arrived: return true
-	if not _activity().is_empty() or (is_instance_valid(native_book_ui) and native_book_ui.book_open()): return false
+	if not _is_activity_idle(_activity()) or (is_instance_valid(native_book_ui) and native_book_ui.book_open()): return false
 	return Input.get_vector("move_left", "move_right", "move_up", "move_down").length_squared() > 0.01
 
 func _advance_clock(input_seconds: float, physical: bool) -> void:
@@ -945,7 +945,8 @@ func visible_activity_label(actor: String) -> String:
 	return str(_actions.get(id, {}).get("label", "观察周围")) if actor == _viewer() else _public_action_label(id)
 
 func visible_progress(actor: String) -> Dictionary:
-	var progress: Dictionary = bridge.WorkProgress(actor)
+	var progress_value: Variant = bridge.WorkProgress(actor)
+	var progress: Dictionary = progress_value if progress_value is Dictionary else {}
 	if actor != _viewer():
 		progress.erase("action")
 		if visible_activity(actor) == "thinking": return {}
@@ -1069,36 +1070,51 @@ func _path_connects(path: PackedVector3Array, from: Vector3, to: Vector3) -> boo
 func _set_room_ground_anchor(spec: Dictionary) -> bool:
 	var spawn: Array = spec.get("spawn", [0.0, 0.0, -1.0])
 	var requested := Vector3(float(spawn[0]), float(spawn[1]), float(spawn[2]))
-	var ground := _floor_point(requested)
-	# Furniture tops can be separate navigation islands. The authored floor
-	# anchor must lead to a real door before it can seed resident placements.
-	if absf(ground.y - requested.y) <= 0.3:
-		for component in _components.values():
-			var kind := str(component.get("component_kind"))
-			if kind.is_empty() or kind == "<null>":
-				if "Door" in component.name or component.has_method("begin_motion"):
-					kind = "door"
-				else:
-					kind = "furniture"
-			if kind != "door" or not component.visible: continue
-			for slot in ["Front", "Back"]:
-				var marker = component.get_interaction_slot(slot) if component.has_method("get_interaction_slot") else null
-				if not marker is Marker3D: continue
-				var entry := Vector3(marker.global_position.x, requested.y, marker.global_position.z)
-				var entry_floor := _floor_point(entry)
-				if entry_floor.distance_to(entry) > 0.8: continue
-				if not _path_connects(_route(ground, entry_floor), ground, entry_floor): continue
-				_room_ground_anchor = ground
-				var comp_id := str(component.get("instance_id"))
-				if comp_id.is_empty() or comp_id == "<null>": comp_id = str(component.name)
-				_navigation_load["ground_anchor"] = {"position": _vector(ground), "entrance_component": comp_id, "entrance_slot": slot, "entrance_position": _vector(entry_floor)}
-				return true
-		if ground != Vector3(INF, INF, INF):
-			_room_ground_anchor = ground
-			_navigation_load["ground_anchor"] = {"position": _vector(ground), "entrance_component": "fallback", "entrance_slot": "Front", "entrance_position": _vector(ground)}
-			return true
+	# The authored spawn can sit beside or under furniture, whose tops bake into
+	# separate navigation islands. Search outward in rings for real floor at the
+	# authored height, preferring floor that leads to a visible door.
+	var floor_fallback := Vector3(INF, INF, INF)
+	for candidate in _ground_candidates(requested):
+		var ground := _floor_point(candidate)
+		if ground.x == INF or absf(ground.y - requested.y) > 0.3: continue
+		if floor_fallback.x == INF: floor_fallback = ground
+		var door := _door_entry_connected(ground, requested.y)
+		if door.is_empty(): continue
+		_room_ground_anchor = ground
+		_navigation_load["ground_anchor"] = {"position": _vector(ground), "entrance_component": door.component, "entrance_slot": door.slot, "entrance_position": _vector(door.entry), "search_offset": _vector(ground - requested)}
+		return true
+	if floor_fallback.x != INF:
+		_room_ground_anchor = floor_fallback
+		_navigation_load["ground_anchor"] = {"position": _vector(floor_fallback), "entrance_component": "fallback", "entrance_slot": "Front", "entrance_position": _vector(floor_fallback)}
+		return true
 	last_failure = "房间的出生地面未连接到实际房门：" + room_id
 	return false
+
+func _ground_candidates(origin: Vector3) -> Array:
+	var points: Array = [origin]
+	for radius in [0.35, 0.7, 1.1, 1.6, 2.2, 3.2]:
+		for step in 12:
+			var angle := TAU * float(step) / 12.0
+			points.append(origin + Vector3(cos(angle), 0.0, sin(angle)) * radius)
+	return points
+
+func _door_entry_connected(ground: Vector3, floor_y: float) -> Dictionary:
+	for component in _components.values():
+		var kind := str(component.get("component_kind"))
+		if kind.is_empty() or kind == "<null>":
+			kind = "door" if ("Door" in component.name or component.has_method("begin_motion")) else "furniture"
+		if kind != "door" or not component.visible: continue
+		for slot in ["Front", "Back"]:
+			var marker = component.get_interaction_slot(slot) if component.has_method("get_interaction_slot") else null
+			if not marker is Marker3D: continue
+			var entry := Vector3(marker.global_position.x, floor_y, marker.global_position.z)
+			var entry_floor := _floor_point(entry)
+			if entry_floor.distance_to(entry) > 0.8: continue
+			if not _path_connects(_route(ground, entry_floor), ground, entry_floor): continue
+			var comp_id := str(component.get("instance_id"))
+			if comp_id.is_empty() or comp_id == "<null>": comp_id = str(component.name)
+			return {"component": comp_id, "slot": slot, "entry": entry_floor}
+	return {}
 
 func _spawn_floor_point(requested: Vector3) -> Vector3:
 	if _room_ground_anchor.x == INF: return Vector3(INF, INF, INF)
@@ -1131,7 +1147,7 @@ func request_action(action_id: String, evidence: Array[String] = [], deduction :
 	if _transition_busy or _room_loading: return "正在穿过门扉，请稍候。"
 	if _finished: return "五日流程已结束。"
 	if controller_ai: return "当前由 AI 控制侦探；接管后可亲自行动。"
-	if not _pending_action.is_empty() or not _activity().is_empty(): return "请等待当前行动完成，或先取消。"
+	if not _pending_action.is_empty() or not _is_activity_idle(_activity()): return "请等待当前行动完成，或先取消。"
 	if not _actions.has(action_id) or not bridge.Available(action_id): return "当前认知或现场条件尚不允许这个行动。"
 	var action: Dictionary = _actions[action_id]
 	if _category(action) == "deduction" and not deduction:
@@ -1196,6 +1212,13 @@ func _submit_pending() -> String:
 func _activity() -> Dictionary:
 	return bridge.ActorActivity(_viewer()) if is_instance_valid(bridge) else {}
 
+func _is_activity_idle(act: Dictionary) -> bool:
+	if act.is_empty(): return true
+	var st: String = str(act.get("state", ""))
+	var ac: String = str(act.get("action", ""))
+	if (st == "idle" or st.is_empty()) and ac.is_empty(): return true
+	return false
+
 func _move_player(delta: float) -> void:
 	if not is_instance_valid(body) or controller_ai: return
 	if player_paused: body.stop_and_hold_position(); return
@@ -1217,7 +1240,7 @@ func _move_player(delta: float) -> void:
 			_path.clear(); _pending_action = ""; _manual_navigation.clear(); phase = "idle"; feedback = "通路被家具挡住；可以换一个接近方向。"
 		return
 	var activity: Dictionary = bridge.ActorActivity(_viewer())
-	if not activity.is_empty():
+	if not _is_activity_idle(activity):
 		phase = "walking" if bool(activity.get("requires_arrival", false)) else "working"
 		return
 	if is_instance_valid(native_book_ui) and native_book_ui.book_open(): return
@@ -1418,7 +1441,7 @@ func _pick(point: Vector2) -> void:
 			feedback = "目前没有与这件物品相关的已知行动。"
 			return
 		node = node.get_parent()
-	if not controller_ai and _activity().is_empty():
+	if not controller_ai and _is_activity_idle(_activity()):
 		_path = _route(body.position, hit.position)
 		_pending_action = ""
 		_movement_checkpoint = body.position
@@ -1475,7 +1498,8 @@ func _write_progress(automatic: bool) -> void:
 	else: feedback = "保存失败：" + error
 
 func interface_observation() -> Dictionary:
-	var progress: Dictionary = bridge.WorkProgress(_viewer())
+	var progress_value: Variant = bridge.WorkProgress(_viewer())
+	var progress: Dictionary = progress_value if progress_value is Dictionary else {}
 	var campaign: Dictionary = state.get("campaign_progress", {})
 	var campaign_phase: Dictionary = campaign.get("phase", {})
 	var objective := str(campaign_phase.get("label", "自主安排")) if bool(campaign_phase.get("active", false)) and not bool(campaign_phase.get("task_guidance", true)) else str(definition.get("scenario_label", ""))
@@ -1538,7 +1562,7 @@ func interface_command(request: Dictionary) -> String:
 		for id in request.get("evidence_ids", []): evidence.append(str(id))
 		return request_action(str(request.get("action_id", "")), evidence, true)
 	if command == "walk":
-		if controller_ai or not _activity().is_empty(): return "当前无法手动行走。"
+		if controller_ai or not _is_activity_idle(_activity()): return "当前无法手动行走。"
 		var p: Array = request.get("position", [])
 		if p.size() != 3: return "行走目标需三个坐标。"
 		var target := Vector3(float(p[0]), float(p[1]), float(p[2]))

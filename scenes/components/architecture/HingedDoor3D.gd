@@ -1,5 +1,6 @@
 @tool
 extends Node3D
+const Sound := preload("res://scenes/components/shared/Sound.gd")
 ## A hinged leaf with lock, latch and inner/outer interaction slots.
 ## Only a fully closed, stationary leaf participates in physical collision.
 ## Local +X spans the leaf; its pivot is the hinge at floor height (Tasks 2.14, 2.15, 2.16).
@@ -234,6 +235,8 @@ func begin_motion(target_degrees: float, speed_degrees_per_second: float) -> boo
 	blocked_retry_elapsed = 0.0
 	moving = not is_equal_approx(current_angle, target_degrees)
 	_sync_leaf_collision()
+	if moving:
+		Sound.sfx("door_open" if target_degrees > current_angle else "door_close", -6.0, randf_range(0.97, 1.03))
 	return true
 
 func _physics_process(delta: float) -> void:

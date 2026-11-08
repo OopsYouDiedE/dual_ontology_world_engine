@@ -1,6 +1,6 @@
 shader_type spatial;
 render_mode diffuse_burley, specular_schlick_ggx;
-#include "res://rendering/shaders/common/surface_metrics.gdshaderinc"
+#include "res://assets/shaders/common/surface_metrics.gdshaderinc"
 
 uniform int wood_tone = 0;
 varying vec3 world_point;

@@ -8,47 +8,86 @@ script = ExtResource("1_hud")
 [node name="TopBar" type="PanelContainer" parent="."]
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 48.0
+offset_left = 22.0
+offset_top = 18.0
+offset_right = -22.0
+offset_bottom = 82.0
 grow_horizontal = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="TopBar"]
 layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 4
 
 [node name="HBoxContainer" type="HBoxContainer" parent="TopBar/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/separation = 18
 
-[node name="RoomLabel" type="Label" parent="TopBar/MarginContainer/HBoxContainer"]
-layout_mode = 2
-text = "学院主案室"
-
-[node name="TimeLabel" type="Label" parent="TopBar/MarginContainer/HBoxContainer"]
+[node name="TitleBox" type="VBoxContainer" parent="TopBar/MarginContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "第一日 · 08:00"
 
-[node name="DangerLabel" type="Label" parent="TopBar/MarginContainer/HBoxContainer"]
-visible = false
+[node name="RoomLabel" type="Label" parent="TopBar/MarginContainer/HBoxContainer/TitleBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.878431, 0.301961, 0.231373, 1)
-text = "侵蚀度 10%"
+theme_override_font_sizes/font_size = 23
+text = "R05 侦探居室"
 
-[node name="BookButton" type="Button" parent="TopBar/MarginContainer/HBoxContainer"]
+[node name="TimeLabel" type="Label" parent="TopBar/MarginContainer/HBoxContainer/TitleBox"]
 layout_mode = 2
-text = "案卷手帐 (Tab)"
+theme_override_font_sizes/font_size = 16
+text = "第 1 日 07:00 · 1×"
+
+[node name="ModeLabel" type="Label" parent="TopBar/MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "侦探接管"
+
+[node name="ControlsBox" type="HBoxContainer" parent="TopBar/MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PauseButton" type="Button" parent="TopBar/MarginContainer/HBoxContainer/ControlsBox"]
+layout_mode = 2
+text = "暂停"
+
+[node name="Speed1Button" type="Button" parent="TopBar/MarginContainer/HBoxContainer/ControlsBox"]
+layout_mode = 2
+text = "1×"
+
+[node name="Speed16Button" type="Button" parent="TopBar/MarginContainer/HBoxContainer/ControlsBox"]
+layout_mode = 2
+text = "16×"
+
+[node name="Speed128Button" type="Button" parent="TopBar/MarginContainer/HBoxContainer/ControlsBox"]
+layout_mode = 2
+text = "128×"
+
+[node name="Speed1024Button" type="Button" parent="TopBar/MarginContainer/HBoxContainer/ControlsBox"]
+layout_mode = 2
+text = "1024×"
+
+[node name="AIButton" type="Button" parent="TopBar/MarginContainer/HBoxContainer/ControlsBox"]
+layout_mode = 2
+text = "交给 AI"
+
+[node name="BookButton" type="Button" parent="TopBar/MarginContainer/HBoxContainer/ControlsBox"]
+layout_mode = 2
+text = "案卷  Tab"
+
+[node name="SaveButton" type="Button" parent="TopBar/MarginContainer/HBoxContainer/ControlsBox"]
+layout_mode = 2
+text = "保存"
 
 [node name="TopCenter" type="CenterContainer" parent="."]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -300.0
-offset_top = 60.0
+offset_top = 88.0
 offset_right = 300.0
-offset_bottom = 110.0
+offset_bottom = 138.0
 grow_horizontal = 2
 mouse_filter = 2
 
@@ -67,82 +106,132 @@ layout_mode = 2
 text = "提示信息"
 horizontal_alignment = 1
 
-[node name="BottomCenter" type="CenterContainer" parent="."]
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -250.0
-offset_top = -120.0
-offset_right = 250.0
-offset_bottom = -20.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="BottomCenter"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="ActionProgressBox" type="PanelContainer" parent="BottomCenter/VBoxContainer"]
-visible = false
-custom_minimum_size = Vector2(400, 50)
-layout_mode = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="BottomCenter/VBoxContainer/ActionProgressBox"]
-layout_mode = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="BottomCenter/VBoxContainer/ActionProgressBox/VBoxContainer"]
-layout_mode = 2
-
-[node name="ActionNameLabel" type="Label" parent="BottomCenter/VBoxContainer/ActionProgressBox/VBoxContainer/HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "调查古董书案..."
-
-[node name="ProgressBar" type="ProgressBar" parent="BottomCenter/VBoxContainer/ActionProgressBox/VBoxContainer"]
-custom_minimum_size = Vector2(0, 16)
-layout_mode = 2
-
-[node name="QueueContainer" type="HBoxContainer" parent="BottomCenter/VBoxContainer"]
-layout_mode = 2
-theme_override_constants/separation = 6
-alignment = 1
-
-[node name="BottomRight" type="MarginContainer" parent="."]
+[node name="SidePanel" type="PanelContainer" parent="."]
 anchors_preset = 3
 anchor_left = 1.0
-anchor_top = 1.0
+anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -460.0
-offset_top = -50.0
+offset_left = -358.0
+offset_top = 102.0
+offset_right = -22.0
+offset_bottom = -128.0
 grow_horizontal = 0
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="SidePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 14
+
+[node name="Sections" type="VBoxContainer" parent="SidePanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TaskTitle" type="Label" parent="SidePanel/Margin/Sections"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "尚无已解锁任务"
+
+[node name="TaskStatus" type="Label" parent="SidePanel/Margin/Sections"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "尚无已知任务
+当前建议：当前没有已解锁任务，继续日常判断。"
+autowrap_mode = 3
+
+[node name="PhysiologySummary" type="Label" parent="SidePanel/Margin/Sections"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "身体状态平稳"
+
+[node name="IntentButton" type="Button" parent="SidePanel/Margin/Sections"]
+layout_mode = 2
+text = "意向与状态"
+
+[node name="ObjectiveDivider" type="HSeparator" parent="SidePanel/Margin/Sections"]
+layout_mode = 2
+
+[node name="ActionTitle" type="Label" parent="SidePanel/Margin/Sections"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 21
+text = "观察与行动"
+
+[node name="ActionHint" type="Label" parent="SidePanel/Margin/Sections"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "由你选择行动与证据；意向栏只提供当前建议。"
+autowrap_mode = 3
+
+[node name="TargetScroll" type="ScrollContainer" parent="SidePanel/Margin/Sections"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="TargetContainer" type="VBoxContainer" parent="SidePanel/Margin/Sections/TargetScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="ActionsScroll" type="ScrollContainer" parent="SidePanel/Margin/Sections"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ActionsContainer" type="VBoxContainer" parent="SidePanel/Margin/Sections/ActionsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="FooterHint" type="Label" parent="SidePanel/Margin/Sections"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "选择人物或物件；你所知道的事情会决定这里出现哪些行动。"
+autowrap_mode = 3
+
+[node name="FooterPanel" type="PanelContainer" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 22.0
+offset_top = -100.0
+offset_right = -22.0
+offset_bottom = -24.0
+grow_horizontal = 2
 grow_vertical = 0
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 16
 
-[node name="KeyGuides" type="HBoxContainer" parent="BottomRight"]
+[node name="Margin" type="MarginContainer" parent="FooterPanel"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 8
 
-[node name="GuideTab" type="Label" parent="BottomRight/KeyGuides"]
+[node name="FooterContent" type="VBoxContainer" parent="FooterPanel/Margin"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "[Tab] 手帐"
+alignment = 1
 
-[node name="GuideF2" type="Label" parent="BottomRight/KeyGuides"]
+[node name="FeedbackLabel" type="Label" parent="FooterPanel/Margin/FooterContent"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "[F2] 平面UI"
+theme_override_font_sizes/font_size = 15
+text = "WASD 行走 · 点击物件或按 E 查看行动 · 滚轮缩放 · Tab 案卷 · 右键返回"
+horizontal_alignment = 0
 
-[node name="GuideF3" type="Label" parent="BottomRight/KeyGuides"]
+[node name="ActionProgressBox" type="VBoxContainer" parent="FooterPanel/Margin/FooterContent"]
+visible = false
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "[F3] 透视"
+theme_override_constants/separation = 4
 
-[node name="GuideF4" type="Label" parent="BottomRight/KeyGuides"]
+[node name="ActionNameLabel" type="Label" parent="FooterPanel/Margin/FooterContent/ActionProgressBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "[F4] 建造"
+theme_override_font_sizes/font_size = 15
+text = "醒来…"
+
+[node name="ProgressBar" type="ProgressBar" parent="FooterPanel/Margin/FooterContent/ActionProgressBox"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+max_value = 1.0
+show_percentage = false

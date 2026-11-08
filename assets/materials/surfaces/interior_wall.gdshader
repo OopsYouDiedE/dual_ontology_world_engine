@@ -1,13 +1,13 @@
 shader_type spatial;
 render_mode diffuse_burley, specular_schlick_ggx;
-#include "res://rendering/shaders/common/surface_metrics.gdshaderinc"
+#include "res://assets/shaders/common/surface_metrics.gdshaderinc"
 uniform sampler2D wallpaper : source_color, repeat_enable, filter_linear_mipmap_anisotropic;
 uniform bool use_wallpaper=false;
 uniform vec4 pigment : source_color=vec4(.776,.784,.714,1.0);
 uniform float finish_roughness=.9;
 varying vec3 world;
 varying vec3 world_normal;
-#include "res://rendering/shaders/common/occlusion_dither.gdshaderinc"
+#include "res://assets/shaders/common/occlusion_dither.gdshaderinc"
 void vertex(){
  occlusion_world=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;
  world=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;

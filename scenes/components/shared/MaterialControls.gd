@@ -1,15 +1,18 @@
 @tool
 extends RefCounted
 ## Plain-paper native controls. The shared book owns geometry and lighting.
-const COLOR_PRIMARY := Color("465142")
-const COLOR_ON_PRIMARY := Color("f1e4ce")
-const COLOR_SURFACE := Color("e3cfba")
-const COLOR_SURFACE_VARIANT := Color("cfbba3")
-const COLOR_ON_SURFACE := Color("2e2923")
-const COLOR_OUTLINE := Color("9d8870")
-const COLOR_ERROR := Color("8a4b40")
-const COLOR_WARNING := Color("917344")
-const COLOR_SUCCESS := Color("48624d")
+## 1890s casebook palette: laid paper, iron-gall ink, oxblood rubrication, brass.
+const COLOR_PRIMARY := Color("6d2a20")      # oxblood rubric
+const COLOR_ON_PRIMARY := Color("f3ead6")
+const COLOR_SURFACE := Color("eadfc6")      # laid paper
+const COLOR_SURFACE_VARIANT := Color("dccba6")
+const COLOR_ON_SURFACE := Color("2b2219")   # iron-gall ink
+const COLOR_OUTLINE := Color("8a7458")
+const COLOR_ERROR := Color("8a3b2e")
+const COLOR_WARNING := Color("8b6c3a")      # brass
+const COLOR_SUCCESS := Color("4a5d43")
+const INK_SOFT := Color("5a4a38")
+const PAPER_SHADOW := Color(0.08, 0.05, 0.02, 0.35)
 
 static func apply(parent: Control, scale := 1.0) -> void:
 	var theme_copy := Theme.new()
@@ -50,14 +53,8 @@ static func apply(parent: Control, scale := 1.0) -> void:
 		theme_copy.set_color("font_disabled_color", type_name, Color("75644f"))
 		theme_copy.set_font_size("font_size", type_name, theme_copy.default_font_size)
 	for type_name in ["Button", "OptionButton", "CheckButton", "CheckBox"]:
-		theme_copy.set_stylebox("normal", type_name, _box(Color(0,0,0,0), 12, 9))
-		theme_copy.set_stylebox("hover", type_name, _box(Color(0.29,0.38,0.31,0.09), 12, 9))
-		theme_copy.set_stylebox("pressed", type_name, _box(COLOR_PRIMARY, 12, 9))
-		theme_copy.set_stylebox("disabled", type_name, _box(Color(0,0,0,0), 12, 9))
-		var focus := _box(Color(0,0,0,0), 12, 9)
-		focus.border_color = COLOR_PRIMARY
-		focus.border_width_bottom = 2
-		theme_copy.set_stylebox("focus", type_name, focus)
+		for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+			theme_copy.set_stylebox(state, type_name, ledger_button_box(state))
 	for type_name in ["LineEdit", "TextEdit"]:
 		var edit := _box(Color(0.95,0.93,0.87,0.35), 14, 12)
 		edit.border_width_bottom = 1
@@ -116,4 +113,55 @@ static func create_badge(text: String, severity := "info") -> PanelContainer:
 	label.add_theme_font_size_override("font_size", 20)
 	badge.add_child(label)
 	return badge
+
+## A printed card resting on the desk: paper ground, ink hairline, heavier foot rule.
+static func ledger_panel(alpha := 0.97) -> StyleBoxFlat:
+	var box := _box(Color(COLOR_SURFACE, alpha), 18, 14)
+	box.border_color = INK_SOFT
+	box.set_border_width_all(1)
+	box.border_width_bottom = 3
+	box.shadow_color = PAPER_SHADOW
+	box.shadow_size = 3
+	box.shadow_offset = Vector2(3, 4)
+	box.anti_aliasing = false
+	return box
+
+## Ruled ledger entries. No rounding, no glow: state is shown by ink, wash and rubric.
+static func ledger_button_box(state := "normal") -> StyleBoxFlat:
+	var box := _box(Color(0, 0, 0, 0), 12, 6)
+	box.anti_aliasing = false
+	box.border_color = Color(INK_SOFT, 0.45)
+	box.border_width_bottom = 1
+	match state:
+		"hover":
+			box.bg_color = Color(COLOR_SURFACE_VARIANT, 0.85)
+			box.border_color = INK_SOFT
+		"pressed":
+			box.bg_color = COLOR_PRIMARY
+			box.border_color = COLOR_PRIMARY
+		"selected":
+			box.bg_color = Color(COLOR_SURFACE_VARIANT, 0.9)
+			box.border_color = COLOR_PRIMARY
+			box.border_width_left = 4
+		"disabled":
+			box.border_color = Color(INK_SOFT, 0.2)
+		"focus":
+			box.border_color = COLOR_PRIMARY
+			box.border_width_bottom = 2
+	return box
+
+static func style_ledger_button(button: Button, font: Font = null, font_size := 15, selected := false) -> void:
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+		button.add_theme_stylebox_override(state, ledger_button_box(state))
+	if selected:
+		button.add_theme_stylebox_override("normal", ledger_button_box("selected"))
+	button.add_theme_color_override("font_color", COLOR_ON_SURFACE)
+	button.add_theme_color_override("font_hover_color", COLOR_PRIMARY)
+	button.add_theme_color_override("font_focus_color", COLOR_ON_SURFACE)
+	button.add_theme_color_override("font_pressed_color", COLOR_ON_PRIMARY)
+	button.add_theme_color_override("font_disabled_color", Color(INK_SOFT, 0.55))
+	button.add_theme_font_size_override("font_size", font_size)
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	if font != null: button.add_theme_font_override("font", font)
+	prepare_button(button)
 

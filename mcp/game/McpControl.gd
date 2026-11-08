@@ -139,11 +139,17 @@ func _handle(request: Dictionary) -> void:
 		if host.flow.started:
 			_reply(id, {}, "Campaign already started")
 			return
-		await host.dispatch({"kind": kind})
+		host.dispatch({"kind": kind})
 	elif kind == "character":
-		if host == null or not host.has_method("native_character_mode") or not host.native_character_mode() or not is_instance_valid(host.native_character_host):
+		var char_host: Node = null
+		if host != null:
+			if "field" in host and is_instance_valid(host.field):
+				char_host = host.field
+			elif "native_character_host" in host and is_instance_valid(host.native_character_host):
+				char_host = host.native_character_host
+		if char_host == null or not char_host.has_method("interface_command"):
 			_reply(id,{},"Start a native character session first");return
-		var input_error: String=host.native_character_host.interface_command(request)
+		var input_error: String=char_host.interface_command(request)
 		if not input_error.is_empty(): _reply(id,{},input_error);return
 	elif kind == "case_reasoning":
 		if host == null or not host.has_method("request_case_reasoning"):

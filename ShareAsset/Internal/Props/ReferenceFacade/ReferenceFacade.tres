@@ -1,0 +1,96 @@
+[gd_resource type="TileSet" load_steps=25 format=3]
+
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Wall/ivory_wall.png" id="tex_0"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Foundation/stone_base.png" id="tex_1"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Openings/narrow_window.png" id="tex_2"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Openings/timber_door.png" id="tex_3"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/eave_straight.png" id="tex_4"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/eave_left.png" id="tex_5"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/eave_right.png" id="tex_6"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Corners/corner_pilaster.png" id="tex_7"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/floor_belt.png" id="tex_8"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Foundation/wall_base_junction.png" id="tex_9"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Wall/ivory_wall_variant.png" id="tex_10"]
+[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Roof/black_roof.png" id="tex_11"]
+
+[sub_resource type="TileSetAtlasSource" id="atlas_0"]
+texture = ExtResource("tex_0")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_1"]
+texture = ExtResource("tex_1")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_2"]
+texture = ExtResource("tex_2")
+texture_region_size = Vector2i(32, 32)
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_3"]
+texture = ExtResource("tex_3")
+texture_region_size = Vector2i(32, 32)
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_4"]
+texture = ExtResource("tex_4")
+texture_region_size = Vector2i(32, 32)
+0:0/size_in_atlas = Vector2i(2, 1)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_5"]
+texture = ExtResource("tex_5")
+texture_region_size = Vector2i(32, 32)
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_6"]
+texture = ExtResource("tex_6")
+texture_region_size = Vector2i(32, 32)
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_7"]
+texture = ExtResource("tex_7")
+texture_region_size = Vector2i(32, 32)
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_8"]
+texture = ExtResource("tex_8")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_9"]
+texture = ExtResource("tex_9")
+texture_region_size = Vector2i(32, 32)
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_10"]
+texture = ExtResource("tex_10")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_11"]
+texture = ExtResource("tex_11")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+
+[resource]
+tile_size = Vector2i(32, 32)
+sources/0 = SubResource("atlas_0")
+sources/1 = SubResource("atlas_1")
+sources/2 = SubResource("atlas_2")
+sources/3 = SubResource("atlas_3")
+sources/4 = SubResource("atlas_4")
+sources/5 = SubResource("atlas_5")
+sources/6 = SubResource("atlas_6")
+sources/7 = SubResource("atlas_7")
+sources/8 = SubResource("atlas_8")
+sources/9 = SubResource("atlas_9")
+sources/10 = SubResource("atlas_10")
+sources/11 = SubResource("atlas_11")

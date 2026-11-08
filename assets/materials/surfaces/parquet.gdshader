@@ -1,6 +1,6 @@
 shader_type spatial;
 render_mode diffuse_burley, specular_schlick_ggx;
-#include "res://rendering/shaders/common/surface_metrics.gdshaderinc"
+#include "res://assets/shaders/common/surface_metrics.gdshaderinc"
 varying vec3 world;
 uniform float wood_value=1.0;
 uniform float finish_roughness=.53;

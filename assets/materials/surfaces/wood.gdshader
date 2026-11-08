@@ -1,13 +1,13 @@
 shader_type spatial;
 render_mode diffuse_burley, specular_schlick_ggx;
-#include "res://rendering/shaders/common/surface_noise.gdshaderinc"
-#include "res://rendering/shaders/common/surface_metrics.gdshaderinc"
+#include "res://assets/shaders/common/surface_noise.gdshaderinc"
+#include "res://assets/shaders/common/surface_metrics.gdshaderinc"
 uniform vec4 pigment : source_color = vec4(0.31,0.21,0.14,1.0);
 uniform float surface_roughness : hint_range(0.1,1.0) = 0.55;
 uniform float grain_density : hint_range(2.0,800.0) = 104.719755;
 uniform vec3 grain_direction = vec3(1.0,0.0,0.0);
 varying vec3 local_position;
-#include "res://rendering/shaders/common/occlusion_dither.gdshaderinc"
+#include "res://assets/shaders/common/occlusion_dither.gdshaderinc"
 void vertex(){
  occlusion_world=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;local_position=material_coordinates_meters(VERTEX, MODEL_MATRIX);}
 void fragment(){

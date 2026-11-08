@@ -14,7 +14,9 @@ mechanisms:
       - "core/ontology/References.cs"
     godot_presenters:
       - "scenes/main/SessionBridge.cs"
-    verify_cmd: "dotnet run --project core/session_cli/DuelView.Cli.csproj -- --verify-ontology"
+    verify_cmd: "none (no ontology check implemented; excluded from gate)"
+    gate: "excluded"
+    gate_reason: "--verify-ontology 尚无真实检查；当前 FAIL。经业主决定移出门禁，恢复前必须实现真实检查。"
 
   perception_and_erosion:
     description: "局部绑定投影、贝叶斯心智置信度聚合与源质侵蚀记忆周期截断"
@@ -25,7 +27,9 @@ mechanisms:
     godot_presenters:
       - "scenes/UIpanel/Field/FieldHUD.gd"
       - "scenes/UIpanel/Shared/ModalAlertUI.gd"
-    verify_cmd: "dotnet run --project core/session_cli/DuelView.Cli.csproj -- --verify-cognition"
+    verify_cmd: "none (no cognition check implemented; excluded from gate)"
+    gate: "excluded"
+    gate_reason: "--verify-cognition 尚无真实检查；当前 FAIL。经业主决定移出门禁，恢复前必须实现真实检查。"
 
   signed_horn_reasoning:
     description: "带符号霍恩逻辑、显式负证据与极小可信核心证明树校验"
@@ -38,7 +42,9 @@ mechanisms:
       - "scenes/UIpanel/Field/DeductionInterface.gd"
       - "scenes/UIpanel/Spreads/PinboardPlateSpread.gd"
     workbench_tool: "tools/studio_web/proof_dag.html"
-    verify_cmd: "uv run python tools/story/author.py --scenario assets/data/scenarios/campaign.dv"
+    verify_cmd: "python tools/story/author.py export --content assets/data/scenarios/campaign.dv --output .runtime/story/author-view.json"
+    gate: "skipped_author_check"
+    gate_reason: "作者检查步骤经业主决定跳过（tools/story/story-contract.json 缺失，属于作者内容）。"
 
   autonomy_drive_solver:
     description: "凹性满意度动机求解器与 Sim4 NPC 行为规划"
@@ -52,6 +58,8 @@ mechanisms:
       - "tools/sandbox/DebugOverlay3D.gd"
     workbench_tool: "tools/studio_web/timeline_gantt.html"
     verify_cmd: "dotnet run --project core/session_cli/DuelView.Cli.csproj -- --verify-drives"
+    gate: "excluded"
+    gate_reason: "--verify-drives 依赖缺失的 stage*-character-session.dv 与已删除 dv_core 生成的 stage7 包；经业主决定移出门禁。"
 
   causal_clock_and_campaign:
     description: "双轨流速因果时钟、7阶段单步切片流水线与五日战役跨日因果锁链"
@@ -82,7 +90,7 @@ mechanisms:
       - "scenes/components/architecture/RoomContainer3D.gd"
       - "scenes/components/architecture/PropEntity3D.gd"
     workbench_tool: "tools/godot_architect/PrefabPaletteDock.tscn"
-    verify_cmd: "dotnet run --project core/session_cli/DuelView.Cli.csproj -- --verify-room-bundles"
+    verify_cmd: "dotnet run --project core/session_cli/DuelView.Cli.csproj -- --verify-rooms"
 
   book_viewport_projection:
     description: "SubViewport 3D 弯曲书页射线 UV 反投影与 F2 平面直通双模式"
@@ -93,4 +101,6 @@ mechanisms:
       - "scenes/UIpanel/BookShell/BookShellUI.gd"
       - "scenes/components/world/LowpolyBookStage3D.gd"
       - "assets/shaders/book_leaf_mesh_3d.gdshader"
-    verify_cmd: "uv run python mcp/verification/verify_batch1.py"
+    verify_cmd: "none (legacy batch script removed from gate: depends on the retired .runtime/build layout)"
+    gate: "excluded"
+    gate_reason: "无当前有效检查；旧 verify_batch1.py 依赖已退役的 .runtime/build 布局与 S 系列任务，经整理移出门禁。"

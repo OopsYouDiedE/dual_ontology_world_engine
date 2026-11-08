@@ -16,6 +16,27 @@
 - 依赖图片素材放入平行同名文件夹中。正式 Godot 入口为 `scenes/main/Main.tscn`，组件通过 Main 会话接口提交操作。
 - 建筑工具位于 `tools/building/`，MCP 位于 `mcp/building/`。工具输出先存为候选，明确发布后进入游戏资源。
 
+## 构建与编译
+
+- **源码留存边界**：仓库仅保留运行必须的手写源码（C# 8 大核心子模块、Godot Main 网关、12 组 UI 面板、智能预制件、原生建造组件、自动化测试脚本）与原始数据资产（`.dv` 剧本与规则声明、原子 GLB 模型、音频、着色器）。
+- **禁止保留生成产物**：构建二进制（`bin/`、`obj/`）、Godot 引擎导入缓存（`.godot/`）、Python 虚拟环境（`.venv/`）、历史工具烘焙代码及测试日志回执一律不进入版本库。
+- **C# 核心程序集构建**：
+  ```powershell
+  dotnet build DuelView.sln --nologo
+  ```
+- **Godot 宿主与网关编译**：
+  ```powershell
+  dotnet build DualOntologyWorldReconstruct.csproj --nologo
+  ```
+- **Godot 资产缓存无头重建**：
+  ```powershell
+  godot --headless --editor --quit
+  ```
+- **CLI 宿主运行**：
+  ```powershell
+  dotnet run --project core/session_cli/DuelView.Cli.csproj --no-build
+  ```
+
 ## 测试与环境
 
 - 保留 CLI、Godot 两种宿主，各有自动测试和 AI 测试入口。

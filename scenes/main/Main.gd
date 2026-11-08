@@ -25,8 +25,8 @@ const CAMPAIGN_ROOM_HOST_SCENE := preload("res://scenes/components/characters/Ca
 @export var default_scenario_path := "res://assets/data/scenarios/campaign.dv"
 @export var autoplay_title := true
 
-var session_bridge: Node
-var presentation_content: RefCounted
+var session_bridge  # Untyped: C# script class; typed declaration fails static check during editor import.
+var presentation_content  # Untyped: C# script class; see session_bridge.
 
 # UI instances
 var ui_input: Node
@@ -68,6 +68,17 @@ var _dv_intent: Array = []
 var _world_ui_paused := false
 var _session_generation := 0
 var field: Node = null
+var native_character_host: Node:
+	get: return field
+
+func native_character_mode() -> bool:
+	return is_instance_valid(field)
+
+func native_character_observation() -> Dictionary:
+	return field.observation() if is_instance_valid(field) and field.has_method("observation") else {"ready": false}
+
+func native_character_physical() -> Dictionary:
+	return field.physical_observation() if is_instance_valid(field) and field.has_method("physical_observation") else {}
 
 func _ready() -> void:
 	name = "Main"
@@ -175,9 +186,9 @@ func validate_prefab_placement(prefab_path: String, position: Vector3, rotation:
 func dispatch(operation: Dictionary) -> void:
 	var kind := str(operation.get("kind", ""))
 	if kind == "start":
-		await start_new_game()
+		start_new_game()
 	elif kind == "load":
-		await continue_game()
+		continue_game()
 	elif kind == "action":
 		submit_session_action(operation)
 
@@ -214,7 +225,7 @@ func start_new_game() -> void:
 	session_bridge.Open(default_scenario_path)
 	session_ready = true
 	title_stage.hide_stage()
-	await enter_field()
+	enter_field()
 
 func continue_game() -> void:
 	flow.started = true
@@ -225,7 +236,7 @@ func continue_game() -> void:
 		session_bridge.Open(default_scenario_path)
 	session_ready = true
 	title_stage.hide_stage()
-	await enter_field()
+	enter_field()
 
 func enter_field() -> void:
 	current_mode = "field"
@@ -234,7 +245,7 @@ func enter_field() -> void:
 		field = CAMPAIGN_ROOM_HOST_SCENE.instantiate()
 		add_child(field)
 		move_child(field, 0)
-		await field.configure(default_scenario_path)
+		field.configure(default_scenario_path)
 	elif field.has_method("show"):
 		field.show()
 	field_hud.show()

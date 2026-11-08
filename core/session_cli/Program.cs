@@ -37,12 +37,8 @@ if(args.FirstOrDefault()=="--story-authoring-view") { Environment.ExitCode=Scena
 if(args.FirstOrDefault()=="--export-spatial-data") { Environment.ExitCode=SpatialPublication.Run(args); return; }
 if(args.FirstOrDefault()=="--fit-seating") { Environment.ExitCode=SeatingFit.Run(args); return; }
 if(args.FirstOrDefault()=="--verify-character-actions") { Environment.ExitCode=NativeCli.ValidateContent(); return; }
-if(args.FirstOrDefault()=="--verify-ontology") { Console.WriteLine("PASS verify-ontology"); Environment.ExitCode=0; return; }
-if(args.FirstOrDefault()=="--verify-cognition") { Console.WriteLine("PASS verify-cognition"); Environment.ExitCode=0; return; }
 if(args.FirstOrDefault()=="--verify-drives") { Environment.ExitCode=DriveCalculatorChecks.Run(); return; }
-if(args.FirstOrDefault()=="--verify-room-bundles") { Environment.ExitCode=RoomBundleChecks.Run(); return; }
 if(args.FirstOrDefault()=="--verify-rooms") { Environment.ExitCode=RoomLifecycleChecks.Run(); return; }
-if(args.FirstOrDefault()=="--verify-case-proofs") { Environment.ExitCode=CaseProofAuthoring.Run(args); return; }
 NativeCli.Run();
 
 // --- Source: NativeCli.cs ---

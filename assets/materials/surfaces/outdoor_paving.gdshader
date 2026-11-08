@@ -1,7 +1,7 @@
 shader_type spatial;
 render_mode diffuse_burley, specular_disabled;
-#include "res://rendering/shaders/common/surface_noise.gdshaderinc"
-#include "res://rendering/shaders/common/surface_metrics.gdshaderinc"
+#include "res://assets/shaders/common/surface_noise.gdshaderinc"
+#include "res://assets/shaders/common/surface_metrics.gdshaderinc"
 
 uniform vec4 stone_color : source_color = vec4(0.54, 0.53, 0.47, 1.0);
 varying vec3 world_point;

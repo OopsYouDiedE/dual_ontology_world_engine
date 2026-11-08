@@ -4,9 +4,9 @@ uniform vec4 pigment : source_color = vec4(0.4,0.3,0.2,1.0);
 uniform float surface_roughness = 0.8;
 uniform float surface_metallic = 0.0;
 varying vec3 local_pos;
-#include "res://rendering/shaders/common/surface_noise.gdshaderinc"
-#include "res://rendering/shaders/common/surface_metrics.gdshaderinc"
-#include "res://rendering/shaders/common/occlusion_dither.gdshaderinc"
+#include "res://assets/shaders/common/surface_noise.gdshaderinc"
+#include "res://assets/shaders/common/surface_metrics.gdshaderinc"
+#include "res://assets/shaders/common/occlusion_dither.gdshaderinc"
 void vertex(){
  occlusion_world=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;local_pos=material_coordinates_meters(VERTEX, MODEL_MATRIX);}
 void fragment(){
