@@ -148,10 +148,6 @@ func configure(path: String, restored: Dictionary = {}) -> void:
 		return
 	await _load_room(initial_room)
 	if not last_failure.is_empty(): return
-	native_book_ui = preload("res://scenes/UIpanel/BookShell/BookShellUI.tscn").instantiate()
-	add_child(native_book_ui)
-	native_book_ui.hide()
-	native_book_ui.configure(self)
 	_started_usec = Time.get_ticks_usec()
 	ready_for_play = true
 	phase = "idle"
@@ -567,6 +563,9 @@ func _physics_process(delta: float) -> void:
 
 func _navigation_factor() -> float:
 	return minf(5.0, maxf(1.0, sqrt(time_scale)))
+
+func _book_open() -> bool:
+	return is_instance_valid(native_book_ui) and native_book_ui.book_open()
 
 func _manual_motion_requested() -> bool:
 	if controller_ai or not is_instance_valid(body): return false
@@ -1393,23 +1392,24 @@ func _update_camera() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not ready_for_play or _room_loading or _transition_busy: return
-	if event.is_action_pressed("notebook"):
+	# 书本由 Main 的书本检视器负责；这里只在挂有现场书本时处理。
+	if event.is_action_pressed("notebook") and is_instance_valid(native_book_ui):
 		native_book_ui.toggle_book("evidence"); get_viewport().set_input_as_handled(); return
-	if event.is_action_pressed("campus_map"):
+	if event.is_action_pressed("campus_map") and is_instance_valid(native_book_ui):
 		native_book_ui.toggle_book("map"); get_viewport().set_input_as_handled(); return
 	if event.is_action_pressed("interact"):
 		_select_nearest_target(); get_viewport().set_input_as_handled(); return
 	if event.is_action_pressed("cancel"):
-		if native_book_ui.book_open(): native_book_ui.close_book()
+		if _book_open(): native_book_ui.close_book()
 		else: _path.clear(); _pending_action = ""; selected_focus = ""
 		get_viewport().set_input_as_handled(); return
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP: _camera_size = maxf(5.0, _camera_size - 0.8)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN: _camera_size = minf(24.0, _camera_size + 0.8)
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			if native_book_ui.book_open(): native_book_ui.close_book()
+			if _book_open(): native_book_ui.close_book()
 			else: _path.clear(); _pending_action = ""; selected_focus = ""
-		elif event.button_index == MOUSE_BUTTON_LEFT and not native_book_ui.book_open(): _pick(event.position)
+		elif event.button_index == MOUSE_BUTTON_LEFT and not _book_open(): _pick(event.position)
 
 func _select_nearest_target() -> void:
 	var closest := 1.8

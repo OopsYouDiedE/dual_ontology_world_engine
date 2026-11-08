@@ -1,17 +1,17 @@
-[gd_resource type="TileSet" load_steps=25 format=3]
+[gd_resource type="TileSet" format=3 uid="uid://br5m73d4v2gnb"]
 
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Wall/ivory_wall.png" id="tex_0"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Foundation/stone_base.png" id="tex_1"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Openings/narrow_window.png" id="tex_2"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Openings/timber_door.png" id="tex_3"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/eave_straight.png" id="tex_4"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/eave_left.png" id="tex_5"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/eave_right.png" id="tex_6"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Corners/corner_pilaster.png" id="tex_7"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/floor_belt.png" id="tex_8"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Foundation/wall_base_junction.png" id="tex_9"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Wall/ivory_wall_variant.png" id="tex_10"]
-[ext_resource type="Texture2D" path="res://ShareAsset/Internal/Props/ReferenceFacade/Roof/black_roof.png" id="tex_11"]
+[ext_resource type="Texture2D" uid="uid://d0nssrdoehdej" path="res://ShareAsset/Internal/Props/ReferenceFacade/Wall/ivory_wall.png" id="tex_0"]
+[ext_resource type="Texture2D" uid="uid://c33p4kfjvrsqo" path="res://ShareAsset/Internal/Props/ReferenceFacade/Foundation/stone_base.png" id="tex_1"]
+[ext_resource type="Texture2D" uid="uid://d1dpse0yu2o8r" path="res://ShareAsset/Internal/Props/ReferenceFacade/Openings/narrow_window.png" id="tex_2"]
+[ext_resource type="Texture2D" uid="uid://bx1jlnncsauvo" path="res://ShareAsset/Internal/Props/ReferenceFacade/Openings/timber_door.png" id="tex_3"]
+[ext_resource type="Texture2D" uid="uid://ehki56rdush1" path="res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/eave_straight.png" id="tex_4"]
+[ext_resource type="Texture2D" uid="uid://cfjppja1pgkeu" path="res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/eave_left.png" id="tex_5"]
+[ext_resource type="Texture2D" uid="uid://bxi6uquwx354w" path="res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/eave_right.png" id="tex_6"]
+[ext_resource type="Texture2D" uid="uid://ctlcbf5663lva" path="res://ShareAsset/Internal/Props/ReferenceFacade/Corners/corner_pilaster.png" id="tex_7"]
+[ext_resource type="Texture2D" uid="uid://bbkckgnhxwgpi" path="res://ShareAsset/Internal/Props/ReferenceFacade/Cornice/floor_belt.png" id="tex_8"]
+[ext_resource type="Texture2D" uid="uid://b8ucn204fmglr" path="res://ShareAsset/Internal/Props/ReferenceFacade/Foundation/wall_base_junction.png" id="tex_9"]
+[ext_resource type="Texture2D" uid="uid://cxdsa61ufxi0x" path="res://ShareAsset/Internal/Props/ReferenceFacade/Wall/ivory_wall_variant.png" id="tex_10"]
+[ext_resource type="Texture2D" uid="uid://b8frmh8e4d1ft" path="res://ShareAsset/Internal/Props/ReferenceFacade/Roof/black_roof.png" id="tex_11"]
 
 [sub_resource type="TileSetAtlasSource" id="atlas_0"]
 texture = ExtResource("tex_0")
@@ -20,6 +20,16 @@ texture_region_size = Vector2i(32, 32)
 
 [sub_resource type="TileSetAtlasSource" id="atlas_1"]
 texture = ExtResource("tex_1")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_10"]
+texture = ExtResource("tex_10")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="atlas_11"]
+texture = ExtResource("tex_11")
 texture_region_size = Vector2i(32, 32)
 0:0/0 = 0
 
@@ -68,16 +78,6 @@ texture_region_size = Vector2i(32, 32)
 texture = ExtResource("tex_9")
 texture_region_size = Vector2i(32, 32)
 0:0/size_in_atlas = Vector2i(2, 2)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="atlas_10"]
-texture = ExtResource("tex_10")
-texture_region_size = Vector2i(32, 32)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="atlas_11"]
-texture = ExtResource("tex_11")
-texture_region_size = Vector2i(32, 32)
 0:0/0 = 0
 
 [resource]

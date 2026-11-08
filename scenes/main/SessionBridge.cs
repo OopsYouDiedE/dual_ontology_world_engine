@@ -249,6 +249,8 @@ public partial class SessionBridge : Node
         catch (Exception error) { return error.Message; }
     }
 
+    public string SavedGameFile() => SavedGamePath();
+
     public string ReadSavedGame()
     {
         var path = SavedGamePath();

@@ -77,6 +77,21 @@ func set_material_masks(front: Texture2D, back: Texture2D) -> void:
 	leaf_material.set_shader_parameter("back_material_mask", back)
 	leaf_material.set_shader_parameter("has_material_masks", true)
 
+## Rect2 in UV space of each side's texture (position = origin, size = extent).
+func set_uv_rects(front_rect: Rect2, back_rect: Rect2) -> void:
+	if leaf_material == null:
+		return
+	leaf_material.set_shader_parameter("front_uv_rect", Vector4(front_rect.position.x, front_rect.position.y, front_rect.size.x, front_rect.size.y))
+	leaf_material.set_shader_parameter("back_uv_rect", Vector4(back_rect.position.x, back_rect.position.y, back_rect.size.x, back_rect.size.y))
+
+func set_tint(color: Color) -> void:
+	if leaf_material != null:
+		leaf_material.set_shader_parameter("surface_tint", color)
+
+func set_blank_paper(color: Color) -> void:
+	if leaf_material != null:
+		leaf_material.set_shader_parameter("blank_paper", color)
+
 func set_direction(closing: bool) -> void:
 	reverse = closing
 	if leaf_material != null:

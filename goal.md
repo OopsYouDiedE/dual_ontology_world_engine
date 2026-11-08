@@ -34,11 +34,11 @@ dual_ontology_world_engine/
 │   │   ├── GodotHostValues.cs        # Variant 与 .NET 对象零 GC 互转工具
 │   │   └── CasebookPersistence.cs    # 案卷与手写笔记序列化扩展
 │   │
-│   ├── UIpanel/                      # [简化后的 12 对核心 UI 体系]
-│   │   ├── BookShell/                # 书本外壳：支持 3D 弯曲纸面反投影与 F2 2D 平面直通双模式
-│   │   ├── Spreads/                  # 4 套数据驱动的双页书本标准模板（替代原 B01~B08 8 套独立书页）
-│   │   ├── Field/                    # 书外现场交互 UI（FieldHUD, InteractionMenu, DialogueUI 等）
-│   │   └── Shared/                   # 全局模态框与输入路由（ModalAlertUI, UIInput）
+│   ├── UIpanel/                      # 界面（现行设计与接口见 docs/31 第五节）
+│   │   ├── TitleUI/                  # 标题书名与菜单
+│   │   ├── BookUI/                   # 书本检视器：书页映射与翻页
+│   │   ├── SaveUI/                   # 书内存档对开页
+│   │   └── SettingUI/                # 书内设置对开页
 │   │
 │   ├── prefabs/                      # [已配置好动作/交互/碰撞的 Godot 智能预制件库 (Smart Prefabs)]
 │   │   ├── doors_windows/            # 带开关动画、门洞框线与音效的门窗预制件 (.tscn)
@@ -280,24 +280,9 @@ Prop_StudyDesk.tscn (Node3D, 挂载 PropEntity3D.gd 或专属交互子类)
 
 ---
 
-### 3. Godot UI 体系（原 `scenes/UIpanel/` 44 对 `.tscn`/`.gd` $\to$ 12 对）
+### 3. Godot UI 体系
 
-通过“**1 个书本外壳 + 4 套数据驱动双页模板 + 5 套现场/剧场 UI + 2 套全局基础组件**”，彻底消除 32 对重复的列表、边距与子页面脚本：
-
-| 序号 | 目标场景与脚本路径（1 `.tscn` : 1 `.gd`） | 吸收合并的原 UI 文件（共 44 对） | 职责与架构改造要点 |
-| :---: | :--- | :--- | :--- |
-| **01** | `scenes/UIpanel/BookShell/BookShellUI.{tscn,gd}` | `CasebookUI`, `PhysicalBookView`, `NativeBookInterface`, `BookPageLayout`, `ManuscriptMargin`, `ManuscriptControls`, `UISystem`, `UITransition`, `CasebookData` | 统一书本容器。保留 `PaperViewport` ($1600 \times 1040$) 3D 弯曲纸面射线反投影；**新增 `F2` 键切换平面 2D 直通模式**，方便人类直接调试 UI 布局 |
-| **02** | `scenes/UIpanel/Spreads/CatalogInspectSpread.{tscn,gd}` | `EvidenceArchiveUI` (B01), `RulebookUI` (B02), `ConventionUI` (B04) 及子组件 `EvidenceInspectUI`, `InventoryUI`, `InvestigationUI`, `TextComparisonUI` | **通用左索引+右检视模板**：通过传入 `mode = "evidence" \| "rulebook" \| "convention"` 动态绑定数据源，内置证物 3D 检视与双文本比对槽 |
-| **03** | `scenes/UIpanel/Spreads/ChronicleMapSpread.{tscn,gd}` | `EventScheduleUI` (B03), `CampusMapPanel`, `CollaborationUI` | **通用日程矩阵+地图联动模板**：左页展示角色时间轴矩阵，右页展示学院矢量地图与同伴协作指派 |
-| **04** | `scenes/UIpanel/Spreads/PinboardPlateSpread.{tscn,gd}` | `HypothesisNoteUI` (B05), `GalleryPlateUI` (B06) | **通用自由图版与笔记模板**：支持双页跨页画布、线索卡片钉板连线、手写批注与高清图版检视 |
-| **05** | `scenes/UIpanel/Spreads/LedgerSystemSpread.{tscn,gd}` | `BookArchiveUI` (B07), `BookArchivePage`, `BookSettingsSpread` (B08), `BookSettingsPage`, `ReplayPreferences` | **通用账本存档与设置模板**：左页存档槽位/设置分类，右页智能回放参数与键位/画质表单 |
-| **06** | `scenes/UIpanel/Field/FieldHUD.{tscn,gd}` | `FieldHUD`, `FieldChrome`, `CurrentActionUI`, `ActionQueuePanel`, `TooltipGuideUI`, `Snackbar` | **常驻探案 HUD**：将动作队列、当前执行进度条、按键提示与顶部轻提示（Snackbar）收拢为单场景内部节点树 |
-| **07** | `scenes/UIpanel/Field/InteractionMenu.{tscn,gd}` | `InteractionMenu` | **3D 目标切角交互短签**：锚定于 3D 交互物旁的上下文动作抽屉 |
-| **08** | `scenes/UIpanel/Field/DeductionInterface.{tscn,gd}` | `DeductionInterface`, `ActionOrderPanel`, `DeductionVisual3D` | **蓝图风格脑内推演空间**：连接 `SessionCaseApi.cs`，可视化编辑与校验霍恩逻辑证明树 |
-| **09** | `scenes/UIpanel/Field/DialogueUI.{tscn,gd}` | `DialogueUI` | **双角色对话剧场**：管理立绘差分、证言呈堂、追问打断与语音播放 |
-| **10** | `scenes/UIpanel/Field/TitleStageUI.{tscn,gd}` | `TitleUI`, `TitleSpread`, `StageSettlementUI` | **胡桃木书案标题与章节结算界面**：支持开场书案状态与每日结束的阶段结算报告 |
-| **11** | `scenes/UIpanel/Shared/ModalAlertUI.{tscn,gd}` | `ModalPanel`, `AlertUI` | **全局模态确认框与源质侵蚀警报叠层** |
-| **12** | `scenes/UIpanel/Shared/UIInput.{tscn,gd}` | `UIInput` | **统一输入路由器**：管理快捷键、手柄/键鼠焦点及 `F2`（平面UI）/`F3`（认知透视）/`F4`（3D房间建造台）调试热键分发 |
+界面已按“标题 + 书本检视器 + 书内页面”重做，目录、分工与接口以 [docs/31 第五节](docs/31%20系统架构与核心机制.md) 为准。本文件不再列举界面方案。
 
 ---
 
@@ -430,13 +415,8 @@ core/session/IslandTopology.cs
    ```
 4. **阶段门禁核验**：运行 `dotnet build DuelView.sln --configuration Release` 确认零警告，并再次对比 `tests/golden/campaign_baseline.json` 与 `proofs_baseline.json` 确保逻辑零偏移。
 
-### Phase 4：UI 体系模板化合并与 `F2` 平面直通模式（UI Simplification）
-1. 在 `scenes/UIpanel/BookShell/BookShellUI.gd` 中实现双渲染管线切换：
-   * 默认模式（`use_3d_book_stage = true`）：将 `SpreadContainer` 挂载于 `PaperViewport` 下，通过 `LowpolyBookStage3D.gd` 执行射线 UV 反投影；
-   * 平面创作模式（按 `F2` 切换 `use_3d_book_stage = false`）：将 `SpreadContainer` 直接挂载至根 `CanvasLayer` 全屏居中显示，旁路 3D 视口转换。
-2. 按照 **第四节第 3 部分** 依次实现 `CatalogInspectSpread`、`ChronicleMapSpread`、`PinboardPlateSpread`、`LedgerSystemSpread` 4 套模板，并在 `F2` 平面模式下逐一核对 B01 $\sim$ B08 的数据绑定。
-3. 将 `FieldHUD` 及其子组件内聚为单一场景，验证通过后执行 `git rm` 删除原 32 对旧 UI 面板文件。
-4. **阶段门禁核验**：运行 MCP UI 自动化巡检脚本验证全部书页翻页、证据检视与推演连线。
+### Phase 4：界面
+界面按 docs/31 第五节实施，不在本手册排期。
 
 ### Phase 5：部署剧情时间线与证据推演可视化工作台（DuelView Studio Workbench）
 1. **构建 `tools/studio_web/` 剧情与推演画布**：
@@ -482,8 +462,7 @@ mechanisms:
       - "core/cognition/Perception.cs"
       - "core/cognition/ActorCognition.cs"
     godot_presenters:
-      - "scenes/UIpanel/Field/FieldHUD.gd"
-      - "scenes/UIpanel/Shared/ModalAlertUI.gd"
+      - "scenes/components/characters/CampaignRoomHost.gd"
     verify_cmd: "dotnet run --project core/session_cli/DuelView.Cli.csproj -- --verify-cognition"
 
   signed_horn_reasoning:
@@ -494,8 +473,7 @@ mechanisms:
       - "core/reasoning/CaseProofChecker.cs"
       - "core/reasoning/NaturalDeduction.cs"
     godot_presenters:
-      - "scenes/UIpanel/Field/DeductionInterface.gd"
-      - "scenes/UIpanel/Spreads/PinboardPlateSpread.gd"
+      - "scenes/components/characters/CampaignRoomHost.gd"
     workbench_tool: "tools/studio_web/proof_dag.html"
     verify_cmd: "uv run python tools/story/author.py --scenario assets/data/scenarios/campaign.dv"
 
@@ -520,7 +498,6 @@ mechanisms:
       - "core/simulation/RuntimeSession.cs"
       - "core/simulation/CampaignScenario.cs"
     godot_presenters:
-      - "scenes/UIpanel/Spreads/ChronicleMapSpread.gd"
       - "scenes/components/rendering/WorldTimeLighting.gd"
     verify_cmd: "dotnet run --project core/session_cli/DuelView.Cli.csproj -- --verify-character-actions"
 
@@ -549,9 +526,10 @@ mechanisms:
     csharp_authority:
       - "scenes/main/CasebookPersistence.cs"
     godot_presenters:
-      - "scenes/UIpanel/BookShell/BookShellUI.gd"
-      - "scenes/components/world/LowpolyBookStage3D.gd"
-      - "assets/shaders/book_leaf_mesh_3d.gdshader"
+      - "scenes/UIpanel/BookUI/BookUI.gd"
+      - "scenes/components/world/StudyDeskStage3D.gd"
+      - "assets/materials/book_leaf_mesh_3d.gdshader"
+      - "assets/materials/book_spread_page.gdshader"
     verify_cmd: "uv run python mcp/verification/verify_batch1.py"
 ```
 

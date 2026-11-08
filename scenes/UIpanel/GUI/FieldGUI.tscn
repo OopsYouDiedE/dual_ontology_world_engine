@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scenes/UIpanel/GUI/FieldGUI.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/UIpanel/GUI/ClockRoomGUI.tscn" id="2_clock"]
+[ext_resource type="PackedScene" path="res://scenes/UIpanel/GUI/TaskProgressGUI.tscn" id="3_task"]
+[ext_resource type="PackedScene" path="res://scenes/UIpanel/GUI/ActionChoiceGUI.tscn" id="4_action"]
+
+[node name="FieldGUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="ClockRoomGUI" parent="." instance=ExtResource("2_clock")]
+layout_mode = 1
+
+[node name="TaskProgressGUI" parent="." instance=ExtResource("3_task")]
+layout_mode = 1
+
+[node name="ActionChoiceGUI" parent="." instance=ExtResource("4_action")]
+layout_mode = 1

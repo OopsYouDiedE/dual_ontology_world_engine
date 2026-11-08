@@ -25,6 +25,10 @@ uniform float paper_roughness : hint_range(0.0, 1.0) = 0.94;
 uniform vec4 edge_color : source_color = vec4(0.78, 0.76, 0.72, 1.0);
 uniform vec4 surface_tint : source_color = vec4(1.0);
 uniform vec4 blank_paper : source_color = vec4(0.91, 0.90, 0.86, 1.0);
+// x/y = UV origin, z/w = UV extent inside each side's texture. A spread
+// texture can thus feed the left and right halves of one physical leaf.
+uniform vec4 front_uv_rect = vec4(0.0, 0.0, 1.0, 1.0);
+uniform vec4 back_uv_rect = vec4(0.0, 0.0, 1.0, 1.0);
 
 varying vec2 surface_tag;
 
@@ -84,8 +88,8 @@ void fragment() {
 	bool is_back = surface_tag.x > 0.5;
 	vec2 page_uv = UV;
 	vec4 paper = is_back
-		? texture(back_texture, page_uv)
-		: texture(front_texture, page_uv);
+		? texture(back_texture, back_uv_rect.xy + page_uv * back_uv_rect.zw)
+		: texture(front_texture, front_uv_rect.xy + page_uv * front_uv_rect.zw);
 	vec3 detail_normal = vec3(0.0, 0.0, 1.0);
 	float roughness = paper_roughness;
 	if (!is_edge) {
