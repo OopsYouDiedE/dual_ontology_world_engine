@@ -230,12 +230,12 @@ func _open_field(restored: Dictionary) -> void:
 	stage.set_active(false)
 	flow.started = true
 	flow.reading = false
-	session_bridge.Open(default_scenario_path)
-	session_ready = true
+	# 单一会话：现场宿主复用 Main 持有的 SessionBridge，不再另开第二个 Core 会话。
 	field = CAMPAIGN_ROOM_HOST_SCENE.instantiate()
 	add_child(field)
 	move_child(field, 0)
-	field.configure(default_scenario_path, restored)
+	field.configure(default_scenario_path, restored, session_bridge)
+	session_ready = true
 	if is_instance_valid(field_gui):
 		field_gui.configure(field)
 	current_mode = "field"

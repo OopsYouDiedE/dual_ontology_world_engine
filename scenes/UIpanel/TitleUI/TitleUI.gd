@@ -52,6 +52,9 @@ func _ready() -> void:
 	hide()
 
 ## 显示标题。first=true 时从全黑淡入。
+	_install_title_polish()
+
+
 func show_title(can_continue: bool, first := false) -> void:
 	continue_button.disabled = not can_continue
 	show()
@@ -137,3 +140,39 @@ static func _button_style(color: Color, outlined := false) -> StyleBoxFlat:
 		box.border_width_bottom = 1
 		box.border_width_top = 1
 	return box
+
+## 标题润色：暗角与细颗粒（压住书房背景、聚焦书名）、书名下方副题、菜单项悬停放大。
+func _install_title_polish() -> void:
+	var vignette := ColorRect.new()
+	vignette.name = "TitleVignette"
+	vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var shader := Shader.new()
+	shader.code = "shader_type canvas_item;\nuniform float strength = 0.6;\nuniform float grain = 0.03;\nfloat h(vec2 p){return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);}\nvoid fragment(){\n\tvec2 uv = UV - 0.5;\n\tfloat v = smoothstep(0.3, 0.95, length(uv * vec2(1.3, 1.0)));\n\tfloat n = h(UV * 913.0 + fract(TIME * 7.0)) - 0.5;\n\tCOLOR = vec4(vec3(0.02, 0.015, 0.01) + n * grain, clamp(v * strength + abs(n) * grain, 0.0, 1.0));\n}\n"
+	var material := ShaderMaterial.new()
+	material.shader = shader
+	vignette.material = material
+	add_child(vignette)
+	move_child(vignette, 0)
+	var title := get_node_or_null("Menu/TitleLabel") as Label
+	if title != null and title.get_parent() is BoxContainer:
+		var tagline := Label.new()
+		tagline.name = "Tagline"
+		tagline.text = "五日 · 十七人 · 一座不肯开门的学园"
+		tagline.horizontal_alignment = title.horizontal_alignment
+		tagline.add_theme_font_size_override("font_size", 20)
+		tagline.add_theme_color_override("font_color", Color(0.88, 0.8, 0.64, 0.8))
+		var font := title.get_theme_font("font")
+		if font != null: tagline.add_theme_font_override("font", font)
+		title.get_parent().add_child(tagline)
+		title.get_parent().move_child(tagline, title.get_index() + 1)
+	for node in find_children("*", "Button", true, false):
+		var button := node as Button
+		button.mouse_entered.connect(_on_title_button_hover.bind(button, true))
+		button.mouse_exited.connect(_on_title_button_hover.bind(button, false))
+
+func _on_title_button_hover(button: Button, on: bool) -> void:
+	if not is_instance_valid(button): return
+	button.pivot_offset = Vector2(0.0, button.size.y * 0.5)
+	var tween := button.create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(button, "scale", Vector2.ONE * (1.06 if on else 1.0), 0.14)

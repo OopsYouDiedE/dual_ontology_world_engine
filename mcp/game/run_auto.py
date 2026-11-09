@@ -15,6 +15,10 @@ ROOT = Path(__file__).resolve().parents[2]
 
 async def run(options):
     arguments = {"seed": options.seed, "viewer": options.viewer}
+    if getattr(options, "movie_filename", None):
+        arguments["movie_filename"] = options.movie_filename
+    if getattr(options, "movie_fps", None):
+        arguments["movie_fps"] = options.movie_fps
     if options.deadline:
         target = datetime.fromisoformat(options.deadline.replace("Z", "+00:00"))
         if target.tzinfo is None:
@@ -64,5 +68,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--viewer", default="detective")
     parser.add_argument("--content-path")
+    parser.add_argument("--movie-filename")
+    parser.add_argument("--movie-fps", type=int, default=30)
     parser.add_argument("--receipt", required=True)
     asyncio.run(run(parser.parse_args()))

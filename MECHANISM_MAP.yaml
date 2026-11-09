@@ -114,3 +114,28 @@ mechanisms:
       - "scenes/UIpanel/GUI/ActionChoiceGUI.gd"
       - "scenes/components/characters/CampaignRoomHost.gd"
     verify_cmd: "dotnet build DualOntologyWorldReconstruct.csproj --nologo"
+
+  persuasion_adoption_game:
+    description: "说服 / 采纳博弈：对象把出示的证据与本人记忆逐条核对（佐证加分、矛盾减分），以个人参数独立决定；现场演出“权衡中→采纳/婉拒”"
+    dv_keywords: ["suggestion", "opinion", "corroboration_weight", "contradiction_weight", "partial_evidence"]
+    csharp_authority:
+      - "core/simulation/WorldRules.cs"
+    godot_presenters:
+      - "scenes/components/characters/CampaignRoomHost.gd"
+      - "scenes/components/characters/SimsBehaviorDirector.gd"
+      - "scenes/UIpanel/GUI/PersuasionGUI.gd"
+    verify_cmd: "python mcp/verification/cli_report.py run --steps 900"
+
+  character_value_tuning:
+    description: "角色数值自动优化流水线：extract → optimize（与 EvaluateSuggestion 一致的模型）→ validate（真实 CLI 对照）→ publish"
+    dv_keywords: ["opinion", "values", "trust"]
+    workbench_tool: "tools/tuning/character_tuning.py"
+    verify_cmd: "python tools/tuning/character_tuning.py all --steps 500"
+
+  field_sims_presentation:
+    description: "Sims 式现场表现：空闲微行为、工作朝向、分离转向、开局黄金角螺旋分散、头顶活动气泡与选中菱形标记"
+    godot_presenters:
+      - "scenes/components/characters/SimsBehaviorDirector.gd"
+      - "scenes/components/characters/CampaignRoomHost.gd"
+      - "scenes/components/rendering/ObserverEnvironment3D.gd"
+    verify_cmd: "python tools/ci/verify_ui_core_isolation.py"

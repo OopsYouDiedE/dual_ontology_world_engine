@@ -26,6 +26,10 @@ signal suppressed_changed(suppressed: bool)
 @export var show_action_choices := true
 @export var walking_prefix := "走近 "
 
+const GUIDANCE_SCENE := preload("res://scenes/UIpanel/GUI/GuidanceGUI.tscn")
+const DEDUCTION_SCENE := preload("res://scenes/UIpanel/GUI/DeductionGUI.tscn")
+const PERSUASION_SCENE := preload("res://scenes/UIpanel/GUI/PersuasionGUI.tscn")
+
 @onready var clock_room = $ClockRoomGUI
 @onready var task_progress = $TaskProgressGUI
 @onready var action_choices = $ActionChoiceGUI
@@ -35,19 +39,38 @@ var _elapsed := 0.0
 var _action_signature := ""
 var _suppressed := false
 var _last_selected_focus := ""
+var guidance: Control
+var deduction: Control
+var persuasion: Control
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	action_choices.action_chosen.connect(_on_action_chosen)
 	task_progress.cancel_requested.connect(_on_cancel_requested)
 	clock_room.room_pressed.connect(func(room_id: String): room_pressed.emit(room_id))
+	guidance = GUIDANCE_SCENE.instantiate()
+	add_child(guidance)
+	persuasion = PERSUASION_SCENE.instantiate()
+	add_child(persuasion)
+	deduction = DEDUCTION_SCENE.instantiate()
+	add_child(deduction)
+	guidance.action_requested.connect(_on_action_chosen)
+	guidance.speed_requested.connect(_on_speed_requested)
+	guidance.pause_requested.connect(_on_pause_requested)
+	guidance.autonomy_requested.connect(_on_autonomy_requested)
+	deduction.submitted.connect(_on_deduction_submitted)
+	deduction.dismissed.connect(func(): deduction.close())
 	_apply_visibility()
 	hide()
 
 # ================================================================ public ===
 
 func configure(field_host: Node) -> void:
+	_disconnect_field()
 	field = field_host
+	if is_instance_valid(field):
+		if field.has_signal("deduction_requested"): field.connect("deduction_requested", _on_deduction_requested)
+		if field.has_signal("persuasion_observed"): field.connect("persuasion_observed", _on_persuasion_observed)
 	_action_signature = ""
 	_suppressed = false
 	_apply_visibility()
@@ -55,7 +78,9 @@ func configure(field_host: Node) -> void:
 	refresh()
 
 func release() -> void:
+	_disconnect_field()
 	field = null
+	if is_instance_valid(deduction): deduction.close()
 	_last_selected_focus = ""
 	_action_signature = ""
 	action_choices.dismiss()
@@ -74,6 +99,8 @@ func refresh() -> void:
 	if show_clock_room: _refresh_clock(obs)
 	if show_task_progress: _refresh_task(obs)
 	_refresh_actions(obs)
+	var iface: Dictionary = obs.get("interface", {}) if obs.get("interface") is Dictionary else {}
+	if is_instance_valid(guidance) and not iface.is_empty(): guidance.refresh(iface)
 
 # ============================================================== internal ===
 
@@ -91,21 +118,14 @@ func _apply_visibility() -> void:
 	action_choices.visible = show_action_choices
 
 func _refresh_clock(obs: Dictionary) -> void:
-	var iface: Dictionary = obs.get("interface", obs) if obs.get("interface") is Dictionary else obs
-	var raw_room: Variant = field.get("room_id")
-	var room := str(raw_room) if raw_room != null else ""
-	if room.is_empty():
-		var state_val: Variant = obs.get("state", field.get("state") if is_instance_valid(field) else {})
-		if state_val is Dictionary: room = str(state_val.get("room", ""))
-	if not room.is_empty():
-		clock_room.set_place(room, str(field.room_label(room)) if is_instance_valid(field) and field.has_method("room_label") else room)
-	var state: Variant = obs.get("state", field.get("state") if is_instance_valid(field) else {})
-	var seconds := float(state.get("game_seconds", 0.0)) if state is Dictionary else 0.0
-	clock_room.set_time(seconds, bool(iface.get("paused", obs.get("paused", false))))
+	var iface: Dictionary = obs.get("interface", {}) if obs.get("interface") is Dictionary else {}
+	var room := str(iface.get("room", ""))
+	if not room.is_empty(): clock_room.set_place(room, str(iface.get("room_label", room)))
+	clock_room.set_time(float(iface.get("game_seconds", 0.0)), bool(iface.get("paused", false)))
 
 func _refresh_task(obs: Dictionary) -> void:
 	var iface: Dictionary = obs.get("interface", obs) if obs.get("interface") is Dictionary else obs
-	var phase := str(obs.get("phase", field.get("phase") if is_instance_valid(field) else ""))
+	var phase := str(obs.get("phase", ""))
 	var pending := str(iface.get("pending_approach", obs.get("pending_approach", "")))
 	var raw_progress: Variant = iface.get("player_progress", obs.get("player_progress", {}))
 	var progress: Dictionary = raw_progress if raw_progress is Dictionary else {}
@@ -143,33 +163,15 @@ func _refresh_actions(obs: Dictionary) -> void:
 	action_choices.set_pending(str(iface.get("pending_approach", obs.get("pending_approach", ""))))
 
 ## 把动作列表锚在选中目标头顶的屏幕投影处；目标不在镜头前时退回固定位置。
+## 只通过宿主公开的 screen_anchor() 取投影，不读取相机或节点。
 func _follow_target() -> void:
 	if not follow_selected_target or not action_choices.is_presented(): return
-	if not is_instance_valid(field):
+	if not is_instance_valid(field) or not field.has_method("screen_anchor") or _last_selected_focus.is_empty():
 		action_choices.clear_anchor()
 		return
-	var camera: Variant = field.get("camera")
-	var raw_focus: Variant = field.get("selected_focus")
-	var focus := str(raw_focus) if raw_focus != null else ""
-	if focus.is_empty():
-		focus = _last_selected_focus
-	if focus.is_empty():
-		action_choices.clear_anchor()
-		return
-	var node: Variant = null
-	if field.has_method("target_node"):
-		node = field.target_node(focus)
-	elif field.has_method("_target_node"):
-		node = field._target_node(focus)
-	if not is_instance_valid(camera) or not camera is Camera3D or not camera.is_inside_tree() \
-			or not is_instance_valid(node) or not node is Node3D or not node.is_inside_tree():
-		action_choices.clear_anchor()
-		return
-	var world: Vector3 = node.global_position + Vector3.UP * target_head_height
-	if camera.is_position_behind(world):
-		action_choices.clear_anchor()
-	else:
-		action_choices.set_screen_anchor(camera.unproject_position(world))
+	var anchor: Variant = field.screen_anchor(_last_selected_focus, target_head_height)
+	if anchor is Vector2: action_choices.set_screen_anchor(anchor)
+	else: action_choices.clear_anchor()
 
 func _on_action_chosen(action_id: String) -> void:
 	action_requested.emit(action_id)
@@ -212,3 +214,37 @@ static func _progress_remaining(progress: Dictionary) -> float:
 	var duration := float(progress.get("duration", progress.get("duration_seconds", 0.0)))
 	if duration > 0.0 and progress.has("elapsed"): return maxf(0.0, duration - float(progress.elapsed))
 	return -1.0
+
+func _disconnect_field() -> void:
+	if not is_instance_valid(field): return
+	if field.has_signal("deduction_requested") and field.is_connected("deduction_requested", _on_deduction_requested):
+		field.disconnect("deduction_requested", _on_deduction_requested)
+	if field.has_signal("persuasion_observed") and field.is_connected("persuasion_observed", _on_persuasion_observed):
+		field.disconnect("persuasion_observed", _on_persuasion_observed)
+
+func _command(request: Dictionary) -> String:
+	if not drive_field_directly or not is_instance_valid(field) or not field.has_method("interface_command"): return ""
+	return str(field.interface_command(request))
+
+func _on_speed_requested(speed: float) -> void:
+	_command({"command": "speed", "speed": speed})
+	_command({"command": "pause", "paused": false})
+
+func _on_pause_requested(paused: bool) -> void:
+	_command({"command": "pause", "paused": paused})
+
+func _on_autonomy_requested(enabled: bool) -> void:
+	_command({"command": "control_ai", "enabled": enabled})
+
+func _on_deduction_requested(action_id: String) -> void:
+	if not is_instance_valid(field) or not field.has_method("deduction_preview"): return
+	var preview: Variant = field.deduction_preview(action_id)
+	deduction.present(action_id, preview if preview is Dictionary else {})
+
+func _on_deduction_submitted(action_id: String, evidence_ids: Array) -> void:
+	var error := _command({"command": "deduce", "action_id": action_id, "evidence_ids": evidence_ids})
+	if error.is_empty(): deduction.close()
+	else: deduction.show_error(error)
+
+func _on_persuasion_observed(record: Dictionary) -> void:
+	if is_instance_valid(persuasion): persuasion.present(record)

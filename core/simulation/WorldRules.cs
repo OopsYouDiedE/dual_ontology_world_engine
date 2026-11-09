@@ -437,15 +437,34 @@ public sealed partial class RuntimeSession
         var reasons=new List<string>();var index=0;
         foreach(var modifier in profile.Get("modifiers").Items())if((modifier.Get("speaker").ValueKind==JsonValueKind.Undefined||modifier.Get("speaker").Text()==speaker.Id)&&CompactCondition(modifier.Get("when"),target.Id).Evaluate(TargetRead)==Truth.True)
         {contributions["context:"+(++index)]=modifier.Get("score").Number();reasons.Add(modifier.Get("reason").Text());}
+        // Cognition-grounded adoption: the target weighs each presented item against its OWN memory.
+        // Corroborated items (target already holds the same value) add confidence; items that contradict
+        // what the target itself knows subtract. Optional partial_evidence lets well-trusted speakers
+        // persuade with incomplete evidence. All new weights default to 0/false, preserving authored behaviour.
+        var corroborationWeight=profile.Get("corroboration_weight").Number(0);
+        var contradictionWeight=profile.Get("contradiction_weight").Number(0);
+        var partialEvidence=profile.Get("partial_evidence").ValueKind==JsonValueKind.True;
+        int corroborated=0,contradicted=0;
+        foreach(var item in supplied)
+        {
+            if(target.Recall(item) is not {Known:true} own)continue;
+            if(Values.Same(own.Value,speaker.Recall(item)!.Value))corroborated++;else contradicted++;
+        }
+        if(corroborationWeight!=0)contributions["corroboration"]=corroborationWeight*corroborated;
+        if(contradictionWeight!=0)contributions["contradiction"]=-contradictionWeight*contradicted;
         var threshold=profile.Get("threshold").Number(1);var score=contributions.Values.Sum();
-        var missing=evidenceKeys.Except(supplied).ToArray();var accepted=missing.Length==0&&score>=threshold;
+        var missing=evidenceKeys.Except(supplied).ToArray();
+        var evidenceSufficient=missing.Length==0||partialEvidence&&supplied.Length>0;
+        var accepted=evidenceSufficient&&score>=threshold;
+        var deliberation=contributions.OrderByDescending(pair=>Math.Abs(pair.Value)).Select(pair=>new {factor=pair.Key,weight=Math.Round(pair.Value,3)}).ToArray();
         var key=PathKey(proposal.Get("result").Text());var result=new Fact(JsonSerializer.SerializeToElement(accepted),true,false,1,ContentTime,0);
         if(accepted)writes[key]=result;
         else {var rejected=World.Apply(new Dictionary<FieldKey,Fact>{{key,result}});changes.AddRange(rejected);Rules.Changed(rejected);}
         var details=new {actor=speaker.Id,target=target.Id,action=decision.Action.Id,execution=decision.Execution,accepted,score,threshold,contributions,context=reasons.ToArray(),
             physical_field=key,world_revision=accepted?(long?)null:World.Read(key)?.Revision,
             evidence=supplied.Select(key=>new {key,value=speaker.Recall(key)!.Value,source_ids=EvidenceFor(key)}).ToArray(),missing,
-            reason=missing.Length>0?"evidence_missing":accepted?"independent_opinion_accepted":"independent_opinion_rejected"};
+            corroborated,contradicted,partial_evidence=partialEvidence,deliberation,
+            reason=!evidenceSufficient?"evidence_missing":accepted?"independent_opinion_accepted":contradicted>0&&contradictionWeight>0?"contradicts_own_memory":"independent_opinion_rejected"};
         LastOpinion=JsonSerializer.SerializeToElement(details);RecordMechanic(decision,"suggestion",accepted,details);
         var source=JsonSerializer.SerializeToElement(details);
         feedback.Add(new("opinion/"+(++nextEvidence),key,result.Value,1,ContentTime,InformationOrigin.ActionFeedback,ProjectMechanicDetails("suggestion",source,speaker.Id)));

@@ -70,7 +70,7 @@ data runtime.character_session { "value": {
       "home_bed": "R01-bed",
       "wake_at_game_minutes": 420,
       "knows": {"lucian.room":"R01","lucian.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"recognition":1.4,"solidarity":1,"honesty":0.6},"modifiers":[]},
+      "opinion": {"base_trust":0.256,"threshold":1.622,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.104,"corroboration_weight":0.12,"contradiction_weight":0.25,"values":{"recognition":1.4,"solidarity":1,"honesty":0.6},"modifiers":[]},
       "actions": [
         {"id":"lucian.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R01","minutes":1,"priority":80,"once":true,"focus":"R01-bed","interaction_slot":"R01-bed","writes":{"lucian.phys.asleep":false},"observes":["lucian.room","lucian.phys.asleep"],"add_buffs":["condition_lucian_day4"],"emotion":"安心"},
         {"id":"lucian.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R01","minutes":6,"priority":22,"once":true,"focus":"R01-basin","interaction_slot":"R01-basin","when":{"lucian.phys.asleep":false,"event:lucian.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -93,7 +93,7 @@ data runtime.character_session { "value": {
       "home_bed": "R02-bed",
       "wake_at_game_minutes": 422,
       "knows": {"gu.room":"R02","gu.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"honesty":1.3,"reason":1.3,"care":1},"modifiers":[]},
+      "opinion": {"base_trust":0.213,"threshold":1.502,"evidence_weight":0.554,"cost_aversion":0.56,"risk_aversion":1.2,"corroboration_weight":0.12,"contradiction_weight":0.845,"values":{"honesty":1.3,"reason":1.3,"care":1},"modifiers":[]},
       "actions": [
         {"id":"gu.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R02","minutes":1,"priority":80,"once":true,"focus":"R02-bed","interaction_slot":"R02-bed","writes":{"gu.phys.asleep":false},"observes":["gu.room","gu.phys.asleep"],"add_buffs":["condition_gu_day4"],"emotion":"专注"},
         {"id":"gu.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R02","minutes":6,"priority":22,"once":true,"focus":"R02-basin","interaction_slot":"R02-basin","when":{"gu.phys.asleep":false,"event:gu.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -116,7 +116,7 @@ data runtime.character_session { "value": {
       "home_bed": "R03-bed",
       "wake_at_game_minutes": 424,
       "knows": {"quer.room":"R03","quer.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"autonomy":1.4,"craft":1.3,"safety":0.9,"fairness":1},"modifiers":[{"when":{"airlock.lock.sealed":true},"score":0.8,"reason":"亲见言灵短时封住倒灌，机械作业风险下降"}]},
+      "opinion": {"base_trust":0.14,"threshold":1.798,"evidence_weight":0.473,"cost_aversion":0.613,"risk_aversion":1.363,"corroboration_weight":0.242,"contradiction_weight":0.249,"values":{"autonomy":1.4,"craft":1.3,"safety":0.9,"fairness":1},"modifiers":[{"when":{"airlock.lock.sealed":true},"score":0.8,"reason":"亲见言灵短时封住倒灌，机械作业风险下降"}]},
       "actions": [
         {"id":"quer.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R03","minutes":1,"priority":80,"once":true,"focus":"R03-bed","interaction_slot":"R03-bed","writes":{"quer.phys.asleep":false},"observes":["quer.room","quer.phys.asleep"],"add_buffs":["condition_quer_day4"],"emotion":"专注"},
         {"id":"quer.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R03","minutes":6,"priority":22,"once":true,"focus":"R03-basin","interaction_slot":"R03-basin","when":{"quer.phys.asleep":false,"event:quer.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -145,7 +145,7 @@ data runtime.character_session { "value": {
       "home_bed": "R04-bed",
       "wake_at_game_minutes": 426,
       "knows": {"ward.room":"R04","ward.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"duty":1.4,"fairness":1.1,"safety":0.8,"honesty":1.3},"modifiers":[]},
+      "opinion": {"base_trust":0.146,"threshold":1.752,"evidence_weight":0.427,"cost_aversion":0.588,"risk_aversion":1.506,"corroboration_weight":0.166,"contradiction_weight":0.926,"values":{"duty":1.4,"fairness":1.1,"safety":0.8,"honesty":1.3},"modifiers":[]},
       "actions": [
         {"id":"ward.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R04","minutes":1,"priority":80,"once":true,"focus":"R04-bed","interaction_slot":"R04-bed","writes":{"ward.phys.asleep":false},"observes":["ward.room","ward.phys.asleep"],"add_buffs":["condition_ward_day4"],"emotion":"安心"},
         {"id":"ward.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R04","minutes":6,"priority":22,"once":true,"focus":"R04-basin","interaction_slot":"R04-basin","when":{"ward.phys.asleep":false,"event:ward.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -172,7 +172,7 @@ data runtime.character_session { "value": {
       "home_bed": "R05-bed",
       "wake_at_game_minutes": 428,
       "knows": {"detective.room":"R05","detective.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"reason":1.4,"care":1.1,"safety":1},"modifiers":[]},
+      "opinion": {"base_trust":0.219,"threshold":1.501,"evidence_weight":0.491,"cost_aversion":0.576,"risk_aversion":1.371,"corroboration_weight":0.122,"contradiction_weight":0.574,"values":{"reason":1.4,"care":1.1,"safety":1},"modifiers":[]},
       "actions": [
         {"id":"detective.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R05","minutes":1,"priority":80,"once":true,"focus":"R05-bed","interaction_slot":"R05-bed","writes":{"detective.phys.asleep":false},"observes":["detective.room","detective.phys.asleep","R05.phys.drinking_water_available","detective.doc.water_return_room"],"add_buffs":["condition_detective_day4"],"emotion":"专注"},
         {"id":"detective.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R05","minutes":6,"priority":22,"once":true,"focus":"R05-basin","interaction_slot":"R05-basin","when":{"detective.phys.asleep":false,"event:detective.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -223,7 +223,7 @@ data runtime.character_session { "value": {
       "home_bed": "R06-bed",
       "wake_at_game_minutes": 420,
       "knows": {"huo.room":"R06","huo.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"craft":1.4,"safety":1.3,"duty":1.1},"modifiers":[{"when":{"airlock.lock.sealed":true},"score":0.8,"reason":"亲见言灵短时封住倒灌，机械作业风险下降"}]},
+      "opinion": {"base_trust":0.2,"threshold":1.525,"evidence_weight":0.464,"cost_aversion":0.552,"risk_aversion":1.48,"corroboration_weight":0.216,"contradiction_weight":0.25,"values":{"craft":1.4,"safety":1.3,"duty":1.1},"modifiers":[{"when":{"airlock.lock.sealed":true},"score":0.8,"reason":"亲见言灵短时封住倒灌，机械作业风险下降"}]},
       "actions": [
         {"id":"huo.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R06","minutes":1,"priority":80,"once":true,"focus":"R06-bed","interaction_slot":"R06-bed","writes":{"huo.phys.asleep":false},"observes":["huo.room","huo.phys.asleep"],"add_buffs":["condition_huo_day4"],"emotion":"专注"},
         {"id":"huo.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R06","minutes":6,"priority":22,"once":true,"focus":"R06-basin","interaction_slot":"R06-basin","when":{"huo.phys.asleep":false,"event:huo.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -250,7 +250,7 @@ data runtime.character_session { "value": {
       "home_bed": "R07-bed",
       "wake_at_game_minutes": 422,
       "knows": {"shen.room":"R07","shen.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"solidarity":1.4,"fairness":1.1,"safety":0.9,"care":1.2},"modifiers":[]},
+      "opinion": {"base_trust":0.345,"threshold":1.596,"evidence_weight":0.365,"cost_aversion":0.603,"risk_aversion":1.37,"corroboration_weight":0.166,"contradiction_weight":0.253,"values":{"solidarity":1.4,"fairness":1.1,"safety":0.9,"care":1.2},"modifiers":[]},
       "actions": [
         {"id":"shen.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R07","minutes":1,"priority":80,"once":true,"focus":"R07-bed","interaction_slot":"R07-bed","writes":{"shen.phys.asleep":false},"observes":["shen.room","shen.phys.asleep"],"add_buffs":["condition_shen_day4"],"emotion":"安心"},
         {"id":"shen.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R07","minutes":6,"priority":22,"once":true,"focus":"R07-basin","interaction_slot":"R07-basin","when":{"shen.phys.asleep":false,"event:shen.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -274,7 +274,7 @@ data runtime.character_session { "value": {
       "home_bed": "R08-bed",
       "wake_at_game_minutes": 424,
       "knows": {"su.room":"R08","su.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"care":1.2,"safety":1.2,"honesty":1.1},"modifiers":[]},
+      "opinion": {"base_trust":0.238,"threshold":1.661,"evidence_weight":0.447,"cost_aversion":0.605,"risk_aversion":1.554,"corroboration_weight":0.121,"contradiction_weight":0.483,"values":{"care":1.2,"safety":1.2,"honesty":1.1},"modifiers":[]},
       "actions": [
         {"id":"su.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R08","minutes":1,"priority":80,"once":true,"focus":"R08-bed","interaction_slot":"R08-bed","writes":{"su.phys.asleep":false},"observes":["su.room","su.phys.asleep"],"add_buffs":["condition_su_day4"],"emotion":"安心"},
         {"id":"su.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R08","minutes":6,"priority":22,"once":true,"focus":"R08-basin","interaction_slot":"R08-basin","when":{"su.phys.asleep":false,"event:su.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -297,7 +297,7 @@ data runtime.character_session { "value": {
       "home_bed": "R09-bed",
       "wake_at_game_minutes": 426,
       "knows": {"selma.room":"R09","selma.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"care":1.4,"solidarity":1.3,"safety":1.1},"modifiers":[]},
+      "opinion": {"base_trust":0.394,"threshold":1.384,"evidence_weight":0.4,"cost_aversion":0.55,"risk_aversion":1.4,"corroboration_weight":0.12,"contradiction_weight":0.25,"values":{"care":1.4,"solidarity":1.3,"safety":1.1},"modifiers":[]},
       "actions": [
         {"id":"selma.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R09","minutes":1,"priority":80,"once":true,"focus":"R09-bed","interaction_slot":"R09-bed","writes":{"selma.phys.asleep":false},"observes":["selma.room","selma.phys.asleep"],"add_buffs":["condition_selma_day4"],"emotion":"安心"},
         {"id":"selma.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R09","minutes":6,"priority":22,"once":true,"focus":"R09-basin","interaction_slot":"R09-basin","when":{"selma.phys.asleep":false,"event:selma.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -320,7 +320,7 @@ data runtime.character_session { "value": {
       "home_bed": "R10-bed",
       "wake_at_game_minutes": 428,
       "knows": {"ruan.room":"R10","ruan.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"reason":1.5,"autonomy":1.2,"craft":1.1},"modifiers":[]},
+      "opinion": {"base_trust":0.079,"threshold":1.864,"evidence_weight":0.502,"cost_aversion":0.6,"risk_aversion":1.232,"corroboration_weight":0.183,"contradiction_weight":0.77,"values":{"reason":1.5,"autonomy":1.2,"craft":1.1},"modifiers":[]},
       "actions": [
         {"id":"ruan.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R10","minutes":1,"priority":80,"once":true,"focus":"R10-bed","interaction_slot":"R10-bed","writes":{"ruan.phys.asleep":false},"observes":["ruan.room","ruan.phys.asleep"],"add_buffs":["condition_ruan_day4"],"emotion":"专注"},
         {"id":"ruan.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R10","minutes":6,"priority":22,"once":true,"focus":"R10-basin","interaction_slot":"R10-basin","when":{"ruan.phys.asleep":false,"event:ruan.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -344,7 +344,7 @@ data runtime.character_session { "value": {
       "home_bed": "R11-bed",
       "wake_at_game_minutes": 420,
       "knows": {"elena.room":"R11","elena.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"autonomy":1.3,"care":1.2,"safety":1.2},"modifiers":[]},
+      "opinion": {"base_trust":0.221,"threshold":1.657,"evidence_weight":0.411,"cost_aversion":0.577,"risk_aversion":1.426,"corroboration_weight":0.12,"contradiction_weight":0.255,"values":{"autonomy":1.3,"care":1.2,"safety":1.2},"modifiers":[]},
       "actions": [
         {"id":"elena.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R11","minutes":1,"priority":80,"once":true,"focus":"R11-bed","interaction_slot":"R11-bed","writes":{"elena.phys.asleep":false},"observes":["elena.room","elena.phys.asleep"],"add_buffs":["condition_elena_day4"],"emotion":"安心"},
         {"id":"elena.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R11","minutes":6,"priority":22,"once":true,"focus":"R11-basin","interaction_slot":"R11-basin","when":{"elena.phys.asleep":false,"event:elena.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -367,7 +367,7 @@ data runtime.character_session { "value": {
       "home_bed": "R12-bed",
       "wake_at_game_minutes": 422,
       "knows": {"moran.room":"R12","moran.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"art":1.6,"autonomy":1.2,"care":0.8},"modifiers":[]},
+      "opinion": {"base_trust":0.176,"threshold":1.706,"evidence_weight":0.4,"cost_aversion":0.58,"risk_aversion":1.2,"corroboration_weight":0.12,"contradiction_weight":0.25,"values":{"art":1.6,"autonomy":1.2,"care":0.8},"modifiers":[]},
       "actions": [
         {
           "id": "moran.wake",
@@ -792,7 +792,7 @@ data runtime.character_session { "value": {
       "home_bed": "R13-bed",
       "wake_at_game_minutes": 424,
       "knows": {"veronica.room":"R13","veronica.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"reason":1.3,"craft":1.2,"care":0.9,"autonomy":1},"modifiers":[]},
+      "opinion": {"base_trust":0.147,"threshold":1.779,"evidence_weight":0.501,"cost_aversion":0.679,"risk_aversion":1.276,"corroboration_weight":0.19,"contradiction_weight":0.779,"values":{"reason":1.3,"craft":1.2,"care":0.9,"autonomy":1},"modifiers":[]},
       "actions": [
         {"id":"veronica.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R13","minutes":1,"priority":80,"once":true,"focus":"R13-bed","interaction_slot":"R13-bed","writes":{"veronica.phys.asleep":false},"observes":["veronica.room","veronica.phys.asleep"],"add_buffs":["condition_veronica_day4"],"emotion":"专注"},
         {"id":"veronica.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R13","minutes":6,"priority":22,"once":true,"focus":"R13-basin","interaction_slot":"R13-basin","when":{"veronica.phys.asleep":false,"event:veronica.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -819,7 +819,7 @@ data runtime.character_session { "value": {
       "home_bed": "R14-bed",
       "wake_at_game_minutes": 426,
       "knows": {"bertrand.room":"R14","bertrand.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"duty":1.5,"care":1.2,"solidarity":1.2},"modifiers":[]},
+      "opinion": {"base_trust":0.356,"threshold":1.373,"evidence_weight":0.4,"cost_aversion":0.378,"risk_aversion":1.2,"corroboration_weight":0.12,"contradiction_weight":0.25,"values":{"duty":1.5,"care":1.2,"solidarity":1.2},"modifiers":[]},
       "actions": [
         {"id":"bertrand.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R14","minutes":1,"priority":80,"once":true,"focus":"R14-bed","interaction_slot":"R14-bed","writes":{"bertrand.phys.asleep":false},"observes":["bertrand.room","bertrand.phys.asleep"],"add_buffs":["condition_bertrand_day4"],"emotion":"安心"},
         {"id":"bertrand.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R14","minutes":6,"priority":22,"once":true,"focus":"R14-basin","interaction_slot":"R14-basin","when":{"bertrand.phys.asleep":false,"event:bertrand.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
@@ -851,7 +851,7 @@ data runtime.character_session { "value": {
       "home_bed": "R15-bed",
       "wake_at_game_minutes": 428,
       "knows": {"margaret.room":"R15","margaret.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"craft":1.3,"safety":1.3,"duty":1.2},"modifiers":[]},
+      "opinion": {"base_trust":0.211,"threshold":1.455,"evidence_weight":0.293,"cost_aversion":0.537,"risk_aversion":1.493,"corroboration_weight":0.209,"contradiction_weight":0.249,"values":{"craft":1.3,"safety":1.3,"duty":1.2},"modifiers":[]},
       "actions": [
         {
           "id": "margaret.wake",
@@ -1213,7 +1213,7 @@ data runtime.character_session { "value": {
       "home_bed": "R16-bed",
       "wake_at_game_minutes": 420,
       "knows": {"mora.room":"R16","mora.phys.asleep":true},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"care":1.5,"safety":1.3,"solidarity":1.1},"modifiers":[]},
+      "opinion": {"base_trust":0.378,"threshold":1.392,"evidence_weight":0.4,"cost_aversion":0.552,"risk_aversion":1.48,"corroboration_weight":0.12,"contradiction_weight":0.25,"values":{"care":1.5,"safety":1.3,"solidarity":1.1},"modifiers":[]},
       "actions": [
         {
           "id": "mora.wake",
@@ -1768,7 +1768,7 @@ data runtime.character_session { "value": {
       "name": "代管者",
       "home_room": "1F-Shaft-Monitor",
       "knows": {"demon.room":"1F-Shaft-Monitor","demon.phys.asleep":false},
-      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"duty":1.5,"reason":1.2,"art":1},"modifiers":[]},
+      "opinion": {"base_trust":0.161,"threshold":1.541,"evidence_weight":0.468,"cost_aversion":0.437,"risk_aversion":1.197,"corroboration_weight":0.119,"contradiction_weight":0.481,"values":{"duty":1.5,"reason":1.2,"art":1},"modifiers":[]},
       "actions": [
         {"id":"demon.to_elena","label":"前往B2联锁阀廊","kind":"walk","at":"1F-Shaft-Monitor","minutes":0.1,"priority":90,"once":true,"focus":"demon","when":{"demon.phys.asleep":false,"elena.phys.in_hazard":true},"writes":{"demon.room":"B2-valve"},"observes":["demon.room"],"route_rooms":["1F-Shaft-Monitor","B2-valve"]},
         {"id":"demon.carry_elena_to_safety","label":"依第七条把伊莲娜抱回安全卧室，离开阀门","kind":"walk","at":"B2-valve","minutes":0.2,"priority":90,"once":true,"focus":"elena","interaction_slot":"elena","when":{"demon.phys.asleep":false,"event:demon.to_elena.done":true},"requires":{"elena.room":"B2-valve"},"writes":{"elena.room":"R11","elena.phys.in_hazard":false,"elena.phys.earmuffs":false,"elena.doc.escorted_safely":true,"elena.doc.deception_discovered":true,"demon.room":"R11"},"observes":["demon.room"],"escort":"elena","tell":[{"actor":"elena","room":"R11","fields":[],"results":["elena.room","elena.doc.deception_discovered","elena.doc.escorted_safely"]}]}

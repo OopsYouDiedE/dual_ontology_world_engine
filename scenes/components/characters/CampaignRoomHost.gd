@@ -6,6 +6,12 @@ const BRIDGE = preload("res://scenes/main/SessionBridge.cs")
 const READER = preload("res://scenes/main/DvPresentationContent.cs")
 const BODY = preload("res://scenes/components/characters/StoryBody3D.gd")
 const TRANSITION = preload("res://scenes/components/characters/RoomTransition.tscn")
+const DIRECTOR = preload("res://scenes/components/characters/SimsBehaviorDirector.tscn")
+const ENVIRONMENT = preload("res://scenes/components/rendering/ObserverEnvironment3D.gd")
+
+## 现场 → 界面的意图信号。界面只订阅信号、读取 observation()，不访问内部成员与会话桥。
+signal deduction_requested(action_id: String)
+signal persuasion_observed(record: Dictionary)
 
 var bridge
 var body: CharacterBody3D
@@ -82,11 +88,18 @@ var _arrival_queue: Dictionary = {}
 var _physical_clock_pending := false
 var _manual_arrived := false
 var _manual_navigation: Dictionary = {}
+var director: Node = null
+var persuasion_log: Array = []
+var _environment: Node = null
 
-func configure(path: String, restored: Dictionary = {}) -> void:
+func configure(path: String, restored: Dictionary = {}, shared_bridge: Node = null) -> void:
 	_source_path = path
-	bridge = BRIDGE.new()
-	add_child(bridge)
+	# 单一会话：优先复用 Main 持有的 SessionBridge，避免同时存在两个 Core 会话。
+	if is_instance_valid(shared_bridge):
+		bridge = shared_bridge
+	else:
+		bridge = BRIDGE.new()
+		add_child(bridge)
 	definition = bridge.Open(path)
 	var presentation: Dictionary = definition.get("presentation", {})
 	var reader = READER.new()
@@ -131,7 +144,8 @@ func configure(path: String, restored: Dictionary = {}) -> void:
 	if RenderingServer.get_video_adapter_name().to_lower().contains("llvmpipe"):
 		_previous_3d_scale = get_viewport().scaling_3d_scale
 		get_viewport().scaling_3d_scale = minf(_previous_3d_scale, float(settings.get("software_render_scale", 0.6)))
-	add_child(preload("res://scenes/components/rendering/ObserverEnvironment3D.gd").new())
+	_environment = ENVIRONMENT.new()
+	add_child(_environment)
 	_transition = TRANSITION.instantiate()
 	add_child(_transition)
 	camera = Camera3D.new()
@@ -148,6 +162,9 @@ func configure(path: String, restored: Dictionary = {}) -> void:
 		return
 	await _load_room(initial_room)
 	if not last_failure.is_empty(): return
+	director = DIRECTOR.instantiate()
+	add_child(director)
+	director.configure(self)
 	_started_usec = Time.get_ticks_usec()
 	ready_for_play = true
 	phase = "idle"
@@ -294,8 +311,14 @@ func _place_at_entrance(from_room: String) -> void:
 		var safe := _floor_point(point)
 		var route := _route(body.position, safe)
 		if safe.distance_to(point) > 0.3 or (body.position.distance_to(safe) > 0.35 and (route.is_empty() or route[route.size() - 1].distance_to(safe) > 0.35)):
-			last_failure = "入口未连接到房间通路：" + room_id
-			return
+			# 门内站位没有连到烘焙通路时，改用离门最近且与房间地面连通的站位，不再让整局停摆。
+			var rescue := _spawn_floor_point(point)
+			if rescue.x == INF:
+				last_failure = "入口未连接到房间通路：" + room_id
+				return
+			push_warning("入口站位未连接通路，改用最近的连通地面：" + room_id)
+			_navigation_load["entrance_rescued"] = {"requested": _vector(point), "position": _vector(rescue)}
+			safe = rescue
 		if node.has_method("get_interaction_slot"):
 			for candidate_slot in [slot, "Front", "Back"]:
 				var candidate = node.get_interaction_slot(candidate_slot)
@@ -467,10 +490,7 @@ func _spawn_actor(actor: String, index: int) -> CharacterBody3D:
 	var spec: Dictionary = settings.rooms[room_id]
 	var spawn: Array = spec.get("spawn", [0.0, 0.0, -1.0])
 	var point := Vector3(float(spawn[0]), float(spawn[1]), float(spawn[2]))
-	if index > 0:
-		var width := float(spec.width)
-		point = Vector3(clampf((float(index % 5) - 2.0) * 1.0, -width / 2.0 + 0.75, width / 2.0 - 0.75), 0.0, -1.0 - float(index / 5) * 0.85)
-	var grounded := _spawn_floor_point(point)
+	var grounded := _spawn_floor_point(point) if index <= 0 else _spread_spawn_point(actor, spec, point)
 	if grounded.x == INF:
 		actor_body.queue_free()
 		last_failure = "人物没有连接到房门的地面站位：" + actor + " / " + room_id
@@ -514,7 +534,7 @@ func _sync_actors() -> void:
 		if not _bodies.has(actor):
 			var arriving := _spawn_actor(actor, index)
 			if arriving != null and not _room_loading:
-				var entrance := _target_point_for_node(_exit_node(), actor)
+				var entrance := _staggered_entrance_point(_target_point_for_node(_exit_node(), actor), arriving)
 				if _floor_point(entrance).distance_to(entrance) <= 0.3: arriving.position = _floor_point(entrance)
 				_place_existing_work(actor)
 				bridge.ReportActorPlacement(str(actor), arriving.position.x, arriving.position.y, arriving.position.z, arriving.rotation.y, room_id)
@@ -571,10 +591,13 @@ func _physics_process(delta: float) -> void:
 	else:
 		for actor_body in _bodies.values(): actor_body.stop_and_hold_position()
 	if _transition_busy: return
+	if is_instance_valid(director): director.tick(delta, player_paused or _finished)
 	_update_camera()
 	_last_room_refresh += delta
 	if _last_room_refresh >= 0.15:
 		_last_room_refresh = 0.0
+		if is_instance_valid(_environment) and _environment.has_method("set_time_of_day"):
+			_environment.set_time_of_day(float(state.get("game_seconds", 0.0)) / 60.0)
 		var actual_room := _actor_room(_viewer())
 		if actual_room != room_id:
 			if not settings.rooms.has(actual_room): last_failure = "未绑定的正式目的地：" + actual_room; return
@@ -824,6 +847,7 @@ func _consume_update(update: Dictionary) -> void:
 		_commands.erase(actor)
 		var private_thought := actor != _viewer() and _private_cognitive_action(action)
 		var visible_here := _bodies.has(actor) and _actor_room(actor) == room_id and _actor_visible(actor)
+		_detect_persuasion(receipt, actor, action, committed, completion, visible_here)
 		if (not private_thought and (actor == _viewer() or visible_here)) or not narrative.is_empty():
 			var public_kind := str(_actions.get(action, {}).get("kind", "interact"))
 			var public_actor := actor if actor == _viewer() or visible_here else ""
@@ -1218,7 +1242,12 @@ func request_action(action_id: String, evidence: Array[String] = [], deduction :
 	if not _actions.has(action_id) or not bridge.Available(action_id): return "当前认知或现场条件尚不允许这个行动。"
 	var action: Dictionary = _actions[action_id]
 	if _category(action) == "deduction" and not deduction:
-		if is_instance_valid(native_book_ui): native_book_ui.present_deduction(action_id)
+		if is_instance_valid(native_book_ui) and native_book_ui.has_method("present_deduction"):
+			native_book_ui.present_deduction(action_id)
+		else:
+			selected_focus = str(action.get("focus", _viewer()))
+			feedback = "推演：选择支撑结论的已知线索。"
+			deduction_requested.emit(action_id)
 		return ""
 	selected_focus = str(action.get("focus", _viewer()))
 	if str(action.get("kind", "")) != "walk" and not is_instance_valid(_target_node(selected_focus)):
@@ -1354,12 +1383,17 @@ func _move_npcs(delta: float) -> void:
 		var actor_body: CharacterBody3D = _bodies[actor]
 		var activity: Dictionary = bridge.ActorActivity(actor)
 		if activity.is_empty():
-			if actor != _viewer() or controller_ai: actor_body.play_action("idle")
+			if actor != _viewer() or controller_ai:
+				if is_instance_valid(director): director.ambient(actor, actor_body, delta)
+				else: actor_body.play_action("idle")
 			continue
 		var action_id := str(activity.get("action", ""))
 		var action: Dictionary = _actions.get(action_id, {})
 		if not bool(activity.get("requires_arrival", false)):
-			if str(activity.get("phase", "")) == "working": actor_body.play_action(_animation(action))
+			if str(activity.get("phase", "")) == "working":
+				actor_body.play_action(_animation(action))
+				if is_instance_valid(director): director.working(actor, actor_body, action, activity)
+			elif is_instance_valid(director) and (actor != _viewer() or controller_ai): director.ambient(actor, actor_body, delta)
 			else: actor_body.stop_and_hold_position()
 			continue
 		if not _navigation.has(actor): continue
@@ -1593,7 +1627,7 @@ func interface_observation() -> Dictionary:
 		var spec: Dictionary = settings.rooms.get(id, {})
 		known_map.append({"id": id, "label": room_label(id), "topology_ref": spec.get("topology_ref", ""), "position": spec.get("map_position", []), "floor": spec.get("floor", "")})
 	var own_receipts: Array = journal.filter(func(record): return str(record.get("actor", "")) == _viewer())
-	return {"choices": available_actions(), "targets": visible_targets(), "selected_focus": selected_focus, "objective": objective, "campaign_progress": campaign, "feedback": feedback, "paused": player_paused, "speed": time_scale, "last_saved_game_seconds": _last_saved_time, "player_action": str(progress.get("action", "")), "player_progress": progress, "pending_approach": _pending_action, "map": known_map, "content_path": _source_path, "player_paths": state.get("player_paths", {}), "active_intent": state.get("active_intent"), "recent_own_actions": own_receipts.slice(maxi(0, own_receipts.size() - 32)), "transition": _transition.snapshot() if is_instance_valid(_transition) else {}, "journal_coverage": {"count": journal.size(), "dropped": journal_dropped_total, "first_game_minute": journal[0].get("time") if not journal.is_empty() else null, "last_game_minute": journal[-1].get("time") if not journal.is_empty() else null}, "book": native_book_ui.book_state() if is_instance_valid(native_book_ui) else {}}
+	return {"room": room_id, "room_label": room_label(room_id), "game_seconds": float(state.get("game_seconds", 0.0)), "phase": phase, "controller_ai": controller_ai, "needs": state.get("needs", {}), "persuasions": persuasion_log.slice(maxi(0, persuasion_log.size() - 12)), "choices": available_actions(), "targets": visible_targets(), "selected_focus": selected_focus, "objective": objective, "campaign_progress": campaign, "feedback": feedback, "paused": player_paused, "speed": time_scale, "last_saved_game_seconds": _last_saved_time, "player_action": str(progress.get("action", "")), "player_progress": progress, "pending_approach": _pending_action, "map": known_map, "content_path": _source_path, "player_paths": state.get("player_paths", {}), "active_intent": state.get("active_intent"), "recent_own_actions": own_receipts.slice(maxi(0, own_receipts.size() - 32)), "transition": _transition.snapshot() if is_instance_valid(_transition) else {}, "journal_coverage": {"count": journal.size(), "dropped": journal_dropped_total, "first_game_minute": journal[0].get("time") if not journal.is_empty() else null, "last_game_minute": journal[-1].get("time") if not journal.is_empty() else null}, "book": native_book_ui.book_state() if is_instance_valid(native_book_ui) else {}}
 
 func observation() -> Dictionary:
 	_refresh(false)
@@ -1640,6 +1674,8 @@ func interface_command(request: Dictionary) -> String:
 	if command == "pause": set_paused(bool(request.get("paused", false))); return ""
 	if command == "speed": set_speed(float(request.get("speed", 1.0))); return ""
 	if command == "save": save_game(); return ""
+	if command == "control_ai": set_control_ai(bool(request.get("enabled", false))); return ""
+	if command == "select_focus": select_focus(str(request.get("focus", ""))); return ""
 	if command == "cancel":
 		_path.clear(); _pending_action = ""; _manual_navigation.clear(); _manual_arrived = false; bridge.Cancel(); return ""
 	if command == "action": return request_action(str(request.get("action_id", "")))
@@ -1674,3 +1710,152 @@ func _exit_tree() -> void:
 	if _navigation_map.is_valid():
 		NavigationServer3D.free_rid(_navigation_map)
 		_navigation_map = RID()
+
+# ============================================================ public port ===
+## 供 UIpanel 与表现组件使用的只读 / 受控接口；界面不得访问下划线成员、会话桥或 Core。
+
+func target_node(focus: String) -> Node3D:
+	return _target_node(focus)
+
+func screen_anchor(focus: String, height: float = 1.7) -> Variant:
+	if focus.is_empty() or not is_instance_valid(camera) or not camera.is_inside_tree(): return null
+	var node := _target_node(focus)
+	if not is_instance_valid(node) or not node.is_inside_tree(): return null
+	var world := node.global_position + Vector3.UP * height
+	if camera.is_position_behind(world): return null
+	return camera.unproject_position(world)
+
+func actor_bodies() -> Dictionary:
+	return _bodies
+
+func actor_activity(actor: String) -> Dictionary:
+	return bridge.ActorActivity(actor) if is_instance_valid(bridge) else {}
+
+func action_definition(id: String) -> Dictionary:
+	return _actions.get(id, {})
+
+func floor_point(point: Vector3) -> Vector3:
+	return _floor_point(point)
+
+func route(from: Vector3, to: Vector3) -> PackedVector3Array:
+	return _route(from, to)
+
+func is_core_navigating(actor: String) -> bool:
+	return _navigation.has(actor) or _arrival_queue.has(actor)
+
+func viewer_id() -> String:
+	return _viewer()
+
+func player_body() -> Node3D:
+	return body
+
+func player_controls_viewer() -> bool:
+	return not controller_ai
+
+func selected_actor() -> String:
+	var head := selected_focus.split(".")[0] if not selected_focus.is_empty() else ""
+	return head if _bodies.has(head) else ""
+
+func report_ambient_placement(actor: String) -> void:
+	if not _bodies.has(actor) or not is_instance_valid(bridge) or _room_loading or _transition_busy: return
+	var actor_body: CharacterBody3D = _bodies[actor]
+	bridge.ReportActorPlacement(str(actor), actor_body.position.x, actor_body.position.y, actor_body.position.z, actor_body.rotation.y, room_id)
+
+# ======================================================= spread placement ===
+## 开局站位分散：以房间中心为原点按黄金角螺旋（Vogel）生成候选点，逐个检验
+## “落在与房门连通的地面 + 与已有人物保持最小间距”；相位由人物 id 决定，结果确定且不堆叠。
+func _spread_spawn_point(actor: String, spec: Dictionary, fallback: Vector3) -> Vector3:
+	var width := float(spec.get("width", 6.0))
+	var depth := float(spec.get("depth", 6.0))
+	var half_w := maxf(0.4, width * 0.5 - 0.7)
+	var half_d := maxf(0.4, depth * 0.5 - 0.7)
+	var center := Vector3(0.0, fallback.y, -depth * 0.5)
+	var spacing := float(settings.get("spawn_spacing", 0.95))
+	var phase := float(absi(hash(actor)) % 6283) / 1000.0
+	var golden := PI * (3.0 - sqrt(5.0))
+	var occupied: Array = []
+	for other in _bodies.values():
+		if is_instance_valid(other): occupied.append(other.position)
+	if is_instance_valid(body): occupied.append(body.position)
+	var best := Vector3(INF, INF, INF)
+	var best_clearance := -1.0
+	var samples := 48
+	for k in range(samples):
+		var radius := sqrt((float(k) + 0.5) / float(samples))
+		var theta := float(k) * golden + phase
+		var candidate := center + Vector3(cos(theta) * radius * half_w, 0.0, sin(theta) * radius * half_d)
+		var floor := _floor_point(candidate)
+		if floor.distance_to(candidate) > 0.35: continue
+		var clearance := INF
+		for position in occupied: clearance = minf(clearance, (position as Vector3).distance_to(floor))
+		if clearance >= spacing:
+			var grounded := _spawn_floor_point(floor)
+			if grounded.x != INF and grounded.distance_to(floor) < 0.3: return grounded
+		elif clearance > best_clearance:
+			best_clearance = clearance
+			best = floor
+	if best.x != INF:
+		var fallback_ground := _spawn_floor_point(best)
+		if fallback_ground.x != INF: return fallback_ground
+	return _spawn_floor_point(fallback)
+
+## 入场错位：门口已有人时沿门内侧左右交错排开，避免所有到达者落在同一点。
+func _staggered_entrance_point(entrance: Vector3, arriving: Node3D) -> Vector3:
+	var crowded := false
+	for other in _bodies.values():
+		if other != arriving and is_instance_valid(other) and other.position.distance_to(entrance) < 0.7: crowded = true
+	if not crowded: return entrance
+	var inward := Vector3(0.0, entrance.y, -float(settings.rooms[room_id].get("depth", 6.0)) * 0.5) - entrance
+	inward.y = 0.0
+	inward = inward.normalized() if inward.length() > 0.01 else Vector3.FORWARD
+	var lateral := inward.cross(Vector3.UP).normalized()
+	for step in range(1, 9):
+		var rank := float((step + 1) / 2)
+		var side := 1.0 if step % 2 == 1 else -1.0
+		var candidate := entrance + inward * 0.45 * rank + lateral * side * 0.6 * rank
+		var floor := _floor_point(candidate)
+		if floor.distance_to(candidate) > 0.3: continue
+		var free := true
+		for other in _bodies.values():
+			if other != arriving and is_instance_valid(other) and other.position.distance_to(floor) < 0.6: free = false
+		if free: return floor
+	return entrance
+
+# ================================================ persuasion presentation ===
+## 说服 / 采纳结果的公开演出：只有在场（或本人参与）的提议才会被看见；
+## 本人提议时附上自己出示的证据与对方说出的理由类别，不读取对方私有评分。
+func _detect_persuasion(receipt: Dictionary, actor: String, action: String, committed: bool, completion: String, visible_here: bool) -> void:
+	var declared: Dictionary = _actions.get(action, {})
+	var proposal: Variant = declared.get("suggestion")
+	var rejected := str(receipt.get("Reason", "")) == "suggestion_rejected"
+	if not proposal is Dictionary and not rejected: return
+	var target := str(proposal.get("target", "")) if proposal is Dictionary else str(declared.get("focus", ""))
+	var own := actor == _viewer()
+	var target_here := _bodies.has(target) and _actor_room(target) == room_id and _actor_visible(target)
+	if not (own or target == _viewer() or visible_here or target_here): return
+	var accepted := committed and not rejected
+	var record := {"execution": int(receipt.get("Execution", 0)), "time": float(receipt.get("Time", state.get("game_seconds", 0.0))) / 60.0,
+		"speaker": actor, "speaker_name": _display_name(actor), "target": target, "target_name": _display_name(target),
+		"label": str(declared.get("label", action)), "accepted": accepted, "reply": completion, "own": own,
+		"evidence": [], "missing_count": 0, "reason": "independent_opinion_accepted" if accepted else "independent_opinion_rejected"}
+	if own and is_instance_valid(bridge):
+		var snapshot: Dictionary = bridge.Snapshot()
+		var opinion: Variant = snapshot.get("opinion")
+		if opinion is Dictionary:
+			var labels: Array = []
+			var evidence: Variant = opinion.get("evidence", [])
+			if evidence is Array:
+				for item in evidence: labels.append(str(item.get("key", item)) if item is Dictionary else str(item))
+			record["evidence"] = labels
+			var missing: Variant = opinion.get("missing", [])
+			record["missing_count"] = (missing as Array).size() if missing is Array else 0
+			record["reason"] = str(opinion.get("reason", record["reason"]))
+	persuasion_log.append(record)
+	while persuasion_log.size() > 64: persuasion_log.pop_front()
+	if is_instance_valid(director):
+		director.flash(target, "采纳" if accepted else "婉拒", Color("9fe39a") if accepted else Color("f0907a"), 3.5)
+	persuasion_observed.emit(record)
+
+func _display_name(actor: String) -> String:
+	if actor == _viewer(): return "侦探"
+	return str(_actors.get(actor, {}).get("name", actor))
