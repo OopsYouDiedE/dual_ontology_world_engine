@@ -328,15 +328,18 @@ func play_action(action: String, speed_scale: float = 1.0) -> void:
 	if animation_player.current_animation != anim_name or not animation_player.is_playing():
 		animation_player.play(anim_name)
 
+const LOCOMOTION_REFERENCE_MPS: float = 1.8
+
 func set_movement_speed(speed: float) -> void:
+	# `speed` is the measured horizontal displacement per second, not the
+	# intended velocity. When a wall stops the body, the clip stops too.
 	movement_speed = maxf(speed, 0.0)
 	if native_seat_driver != null and bool(native_seat_driver.active): return
 	if is_seated or is_lying or is_transitioning: return
-	if movement_speed > 0.05:
-		# The simulation may accelerate travel; that never turns a walk into a sprint.
-		var stride := 0.85 if is_carrying else 1.05
+	if movement_speed > 0.06:
 		var clip := "carry_walk" if is_carrying else "walk"
-		play_action(clip, clampf(movement_speed / stride, 0.55, 1.55))
+		var reference := LOCOMOTION_REFERENCE_MPS * (0.82 if is_carrying else 1.0)
+		play_action(clip, clampf(movement_speed / reference, 0.6, 1.35))
 	else:
 		play_action("idle", 1.0)
 
@@ -970,13 +973,14 @@ func step_towards(target_pos: Vector3, delta: float, speed: float = 1.05) -> boo
 	var step_speed := speed * (carry_speed_modifier if is_carrying else 1.0)
 	var move_dist := minf(dist_3d, step_speed * delta)
 	velocity = dir_3d * (move_dist / maxf(delta, 0.000001))
-	set_movement_speed(step_speed)
 	
 	if is_inside_tree():
 		# Velocity already contains the vertical component. Moving y manually
 		# before move_and_slide counts it twice and oscillates around a waypoint
 		# when fast-forwarding. Let the collision solver execute the one motion.
+		var prior := global_position
 		move_and_slide()
+		set_movement_speed(Vector2(global_position.x - prior.x, global_position.z - prior.z).length() / maxf(delta, 0.000001))
 		if absf(diff.y) <= 0.05: position.y = target_pos.y
 	else:
 		position += dir_3d * move_dist

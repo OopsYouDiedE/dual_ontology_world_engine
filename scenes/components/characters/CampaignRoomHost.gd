@@ -7,6 +7,7 @@ const READER = preload("res://scenes/main/DvPresentationContent.cs")
 const BODY = preload("res://scenes/components/characters/StoryBody3D.gd")
 const TRANSITION = preload("res://scenes/components/characters/RoomTransition.tscn")
 const DIRECTOR = preload("res://scenes/components/characters/SimsBehaviorDirector.tscn")
+const MOTOR = preload("res://scenes/components/characters/ActorMotor3D.gd")
 const ENVIRONMENT = preload("res://scenes/components/rendering/ObserverEnvironment3D.gd")
 
 ## 现场 → 界面的意图信号。界面只订阅信号、读取 observation()，不访问内部成员与会话桥。
@@ -53,6 +54,7 @@ var _npc_paths: Dictionary = {}
 var _npc_work: Dictionary = {}
 var _npc_escorts: Dictionary = {}
 var _path := PackedVector3Array()
+var _motor = MOTOR.new()
 var _pending_action := ""
 var _pending_evidence: Array[String] = []
 var _pending_deduction := false
@@ -131,7 +133,9 @@ func configure(path: String, restored: Dictionary = {}, shared_bridge: Node = nu
 		_navigation_history = view.get("navigation_history", []).duplicate(true)
 		_restored_position = view.get("position")
 	bridge.SetPlayerAutonomy(controller_ai)
-	time_scale = float(settings.get("auto_speed", 128.0) if controller_ai else settings.get("player_speed", 1.0))
+	# Accelerated time is a waiting/simulation feature. Manual locomotion always
+	# runs at human speed; player_speed only fast-forwards idle simulation.
+	time_scale = float(settings.get("auto_speed", 128.0) if controller_ai else 1.0)
 	if not restored.is_empty() and not controller_ai:
 		var restored_view: Dictionary = restored.get("campaign_view", {})
 		player_paused = bool(restored_view.get("paused", false))
@@ -263,6 +267,7 @@ func _load_room(next_room: String, from_room: String = "") -> void:
 		_room_loading = false
 		return
 	body = _spawn_actor(_viewer(), 0)
+	_bind_motor()
 	_navigation_load["initial_position"] = [body.position.x, body.position.y, body.position.z] if body != null else []
 	if body == null:
 		_room_loading = false
@@ -579,7 +584,7 @@ func _physics_process(delta: float) -> void:
 			_move_player(delta)
 			_move_npcs(delta)
 			if physical:
-				_advance_clock(delta * _navigation_factor(), true)
+				_advance_clock(delta * (1.0 if not controller_ai else _navigation_factor()), true)
 				_physical_clock_pending = float(bridge.PendingPhysicalSeconds()) > 0.000001
 				if not _physical_clock_pending: _finish_physical_arrivals()
 			else:
@@ -620,9 +625,9 @@ func _book_open() -> bool:
 
 func _manual_motion_requested() -> bool:
 	if controller_ai or not is_instance_valid(body): return false
-	if not _path.is_empty() or _manual_arrived: return true
+	if _motor.has_destination or _manual_arrived: return true
 	if not _is_activity_idle(_activity()) or (is_instance_valid(native_book_ui) and native_book_ui.book_open()): return false
-	return Input.get_vector("move_left", "move_right", "move_up", "move_down").length_squared() > 0.01
+	return Input.get_vector("move_left", "move_right", "move_up", "move_down").length_squared() > 0.0025
 
 func _advance_clock(input_seconds: float, physical: bool) -> void:
 	var started := Time.get_ticks_usec()
@@ -721,6 +726,7 @@ func _finish_physical_arrivals() -> void:
 	_arrival_queue.clear()
 	if _manual_arrived:
 		_manual_arrived = false
+		_motor.clear()
 		if not _manual_navigation.is_empty():
 			_manual_navigation["end_game_seconds"] = state.get("game_seconds", 0.0)
 			_manual_navigation["end_position"] = _vector(body.position)
@@ -753,6 +759,8 @@ func _start_portal(activity: Dictionary) -> void:
 	_portal = {"execution": int(activity.get("execution", 0)), "from": room_id, "to": target, "stage": "covering", "start_game_seconds": state.get("game_seconds", 0.0), "duration": float(activity.get("remaining_seconds", 0.0)), "completed": _actor_room(_viewer()) == target, "committed": _actor_room(_viewer()) == target}
 	_path.clear()
 	_pending_action = ""
+	_manual_arrived = false
+	_motor.clear()
 	if is_instance_valid(native_book_ui): native_book_ui.close_book()
 	for actor_body in _bodies.values(): actor_body.stop_and_hold_position()
 	await _transition.cover(room_label(room_id), room_label(target))
@@ -1271,6 +1279,7 @@ func request_action(action_id: String, evidence: Array[String] = [], deduction :
 	_movement_stalled = 0.0
 	_manual_arrived = false
 	_manual_navigation = {"actor": _viewer(), "action": action_id, "room": room_id, "authority": "godot", "start_position": _vector(body.position), "target": _vector(target), "start_game_seconds": state.get("game_seconds", 0.0), "path_length": _path_length(body.position, _path, target), "travelled": 0.0, "physical_seconds": 0.0}
+	_accept_manual_path(target)
 	phase = "walking"
 	feedback = "正在走近：" + focus_label(selected_focus)
 	return ""
@@ -1317,58 +1326,41 @@ func _is_activity_idle(act: Dictionary) -> bool:
 
 func _move_player(delta: float) -> void:
 	if not is_instance_valid(body) or controller_ai: return
-	if player_paused: body.stop_and_hold_position(); return
+	if _motor.body != body or _motor.camera != camera: _bind_motor()
+	if player_paused:
+		_motor.clear(); _path.clear(); phase = "idle"; return
 	var activity: Dictionary = bridge.ActorActivity(_viewer())
-	if not _is_activity_idle(activity):
-		phase = "walking" if bool(activity.get("requires_arrival", false)) else "working"
+	if not _is_activity_idle(activity) or (is_instance_valid(native_book_ui) and native_book_ui.book_open()):
+		_motor.clear(); _path.clear()
+		phase = "walking" if bool(activity.get("requires_arrival", false)) and str(activity.get("phase", "")) == "approaching" else "working" if not activity.is_empty() else "idle"
 		return
-	if is_instance_valid(native_book_ui) and native_book_ui.book_open():
-		if not _path.is_empty():
-			_path.clear()
-			body.stop_and_hold_position()
-			phase = "idle"
-		return
-	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	if input.length_squared() > 0.01:
-		_path.clear()
-		_pending_action = ""
-		_manual_navigation.clear()
-		_manual_arrived = false
-		var right := camera.global_basis.x
-		var forward := -camera.global_basis.z
-		right.y = 0; forward.y = 0
-		var direction := (right.normalized() * input.x - forward.normalized() * input.y).normalized()
-		body.velocity = direction * float(settings.get("walking_speed", 2.4)) * _navigation_factor()
-		body.velocity.y = -1.0
-		body.face_world_direction(direction)
-		body.set_movement_speed(body.velocity.length())
-		body.move_and_slide()
+	var before := body.global_position
+	_motor.tick(delta, true)
+	_path = _motor.path
+	if _motor.phase == "manual" or _motor.phase == "walking": phase = "walking"
+	elif _motor.phase == "arrived" or _motor.phase == "idle": phase = "idle"
+	if _motor.last_speed > 0.01 or body.global_position.distance_to(before) > 0.001:
 		bridge.ReportPlacement(body.position.x, body.position.y, body.position.z, body.rotation.y, room_id)
-		phase = "walking"
-		return
-	if not _path.is_empty():
-		while not _path.is_empty() and body.position.distance_to(_path[0]) < 0.12: _path.remove_at(0)
-		if _path.is_empty():
-			body.stop_and_hold_position()
-			_manual_arrived = true
-			phase = "idle"
-			return
-		phase = "walking"
-		var prior := body.position
-		body.step_towards(_path[0], delta, float(settings.get("walking_speed", 2.4)) * _navigation_factor())
 		if not _manual_navigation.is_empty():
-			_manual_navigation["travelled"] = float(_manual_navigation.get("travelled", 0.0)) + prior.distance_to(body.position)
-			_manual_navigation["physical_seconds"] = float(_manual_navigation.get("physical_seconds", 0.0)) + delta * _navigation_factor()
-		bridge.ReportPlacement(body.position.x, body.position.y, body.position.z, body.rotation.y, room_id)
-		if body.position.distance_to(_movement_checkpoint) > 0.06: _movement_checkpoint = body.position; _movement_stalled = 0.0
-		else: _movement_stalled += delta
-		if _movement_stalled > 3.5:
-			_path.clear(); _pending_action = ""; _manual_navigation.clear(); phase = "idle"; feedback = "通路被家具挡住；可以换一个接近方向。"
-		return
-	body.velocity = Vector3(0, -1, 0)
-	body.move_and_slide()
-	body.set_movement_speed(0.0)
-	phase = "idle"
+			_manual_navigation["travelled"] = float(_manual_navigation.get("travelled", 0.0)) + before.distance_to(body.global_position)
+			_manual_navigation["physical_seconds"] = float(_manual_navigation.get("physical_seconds", 0.0)) + delta
+
+func _bind_motor() -> void:
+	if not is_instance_valid(body) or not is_instance_valid(camera): return
+	_motor.configure(self, body, camera)
+	_motor.on_arrived = func(_target: Vector3) -> void:
+		_manual_arrived = true
+		phase = "idle"
+	_motor.on_blocked = func(reason: String) -> void:
+		_path.clear(); _pending_action = ""; _manual_navigation.clear(); phase = "idle"
+		feedback = "通路被挡住（%s）。已停止，可换一个方向或点击其他目标。" % reason
+	_motor.on_manual_override = func() -> void:
+		_path.clear(); _pending_action = ""; _manual_navigation.clear(); _manual_arrived = false
+
+func _accept_manual_path(target: Vector3) -> void:
+	if _motor.body != body or _motor.camera != camera: _bind_motor()
+	_motor.set_path(_path, target)
+	_manual_arrived = false
 
 func _animation(action: Dictionary) -> String:
 	return str(settings.get("action_animations", {}).get(str(action.get("kind", "")), "interact"))
@@ -1510,18 +1502,26 @@ func _unhandled_input(event: InputEvent) -> void:
 		native_book_ui.toggle_book("evidence"); get_viewport().set_input_as_handled(); return
 	if event.is_action_pressed("campus_map") and is_instance_valid(native_book_ui):
 		native_book_ui.toggle_book("map"); get_viewport().set_input_as_handled(); return
+	if event.is_action_pressed("camera_left"):
+		_camera_yaw = wrapf(_camera_yaw + deg_to_rad(30.0), -PI, PI); _update_camera(); get_viewport().set_input_as_handled(); return
+	if event.is_action_pressed("camera_right"):
+		_camera_yaw = wrapf(_camera_yaw - deg_to_rad(30.0), -PI, PI); _update_camera(); get_viewport().set_input_as_handled(); return
 	if event.is_action_pressed("interact"):
 		_select_nearest_target(); get_viewport().set_input_as_handled(); return
 	if event.is_action_pressed("cancel"):
 		if _book_open(): native_book_ui.close_book()
-		else: _path.clear(); _pending_action = ""; selected_focus = ""
+		else:
+			_path.clear(); _pending_action = ""; selected_focus = ""; _manual_arrived = false
+			_motor.clear()
 		get_viewport().set_input_as_handled(); return
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP: _camera_size = maxf(5.0, _camera_size - 0.8)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN: _camera_size = minf(24.0, _camera_size + 0.8)
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			if _book_open(): native_book_ui.close_book()
-			else: _path.clear(); _pending_action = ""; selected_focus = ""
+			else:
+				_path.clear(); _pending_action = ""; selected_focus = ""; _manual_arrived = false
+				_motor.clear()
 		elif event.button_index == MOUSE_BUTTON_LEFT and not _book_open(): _pick(event.position)
 
 func _select_nearest_target() -> void:
@@ -1566,6 +1566,9 @@ func _pick(point: Vector2) -> void:
 		if not _path.is_empty():
 			phase = "walking"
 			_begin_manual_walk_trace(target)
+			_accept_manual_path(target)
+		elif not _pending_action.is_empty():
+			feedback = "目标不可达；请点击更近的地面或更换交互对象。"
 
 func _begin_manual_walk_trace(target: Vector3) -> void:
 	_manual_arrived = false
@@ -1589,7 +1592,7 @@ func set_control_ai(value: bool) -> void:
 	if _transition_busy or _room_loading: return
 	controller_ai = value
 	bridge.SetPlayerAutonomy(value)
-	_pending_action = ""; _path.clear(); _manual_navigation.clear(); _manual_arrived = false
+	_pending_action = ""; _path.clear(); _manual_navigation.clear(); _manual_arrived = false; _motor.clear()
 	feedback = "侦探自主行动中。" if value else "已接管侦探。"
 
 func deduction_preview(id: String) -> Dictionary:
@@ -1617,6 +1620,8 @@ func _write_progress(automatic: bool) -> void:
 	else: feedback = "保存失败：" + error
 
 func interface_observation() -> Dictionary:
+	if settings.is_empty() or not is_instance_valid(body):
+		return {"room": "", "room_label": "未载入", "phase": "error", "feedback": last_failure, "choices": [], "targets": [], "map": [], "selected_focus": "", "game_seconds": 0.0, "paused": false, "speed": 1.0, "pending_approach": "", "exploration": {"state": "error", "hint": last_failure}}
 	var progress_value: Variant = bridge.WorkProgress(_viewer())
 	var progress: Dictionary = progress_value if progress_value is Dictionary else {}
 	var campaign: Dictionary = state.get("campaign_progress", {})
@@ -1627,9 +1632,11 @@ func interface_observation() -> Dictionary:
 		var spec: Dictionary = settings.rooms.get(id, {})
 		known_map.append({"id": id, "label": room_label(id), "topology_ref": spec.get("topology_ref", ""), "position": spec.get("map_position", []), "floor": spec.get("floor", "")})
 	var own_receipts: Array = journal.filter(func(record): return str(record.get("actor", "")) == _viewer())
-	return {"room": room_id, "room_label": room_label(room_id), "game_seconds": float(state.get("game_seconds", 0.0)), "phase": phase, "controller_ai": controller_ai, "needs": state.get("needs", {}), "persuasions": persuasion_log.slice(maxi(0, persuasion_log.size() - 12)), "choices": available_actions(), "targets": visible_targets(), "selected_focus": selected_focus, "objective": objective, "campaign_progress": campaign, "feedback": feedback, "paused": player_paused, "speed": time_scale, "last_saved_game_seconds": _last_saved_time, "player_action": str(progress.get("action", "")), "player_progress": progress, "pending_approach": _pending_action, "map": known_map, "content_path": _source_path, "player_paths": state.get("player_paths", {}), "active_intent": state.get("active_intent"), "recent_own_actions": own_receipts.slice(maxi(0, own_receipts.size() - 32)), "transition": _transition.snapshot() if is_instance_valid(_transition) else {}, "journal_coverage": {"count": journal.size(), "dropped": journal_dropped_total, "first_game_minute": journal[0].get("time") if not journal.is_empty() else null, "last_game_minute": journal[-1].get("time") if not journal.is_empty() else null}, "book": native_book_ui.book_state() if is_instance_valid(native_book_ui) else {}}
+	return {"room": room_id, "room_label": room_label(room_id), "game_seconds": float(state.get("game_seconds", 0.0)), "phase": phase, "controller_ai": controller_ai, "needs": state.get("needs", {}), "persuasions": persuasion_log.slice(maxi(0, persuasion_log.size() - 12)), "choices": available_actions(), "targets": visible_targets(), "selected_focus": selected_focus, "objective": objective, "campaign_progress": campaign, "feedback": feedback, "paused": player_paused, "speed": time_scale, "last_saved_game_seconds": _last_saved_time, "player_action": str(progress.get("action", "")), "player_progress": progress, "pending_approach": _pending_action, "map": known_map, "content_path": _source_path, "player_paths": state.get("player_paths", {}), "active_intent": state.get("active_intent"), "recent_own_actions": own_receipts.slice(maxi(0, own_receipts.size() - 32)), "transition": _transition.snapshot() if is_instance_valid(_transition) else {}, "journal_coverage": {"count": journal.size(), "dropped": journal_dropped_total, "first_game_minute": journal[0].get("time") if not journal.is_empty() else null, "last_game_minute": journal[-1].get("time") if not journal.is_empty() else null}, "book": native_book_ui.book_state() if is_instance_valid(native_book_ui) else {}, "exploration": {"state": _exploration_state(), "hint": _exploration_hint(), "motor": _motor.snapshot()}}
 
 func observation() -> Dictionary:
+	if settings.is_empty() or not is_instance_valid(body):
+		return {"ready": false, "phase": "error", "last_failure": last_failure, "state": state, "interface": {}, "autonomous_actors": []}
 	_refresh(false)
 	var actors: Array = []
 	for actor in _bodies:
@@ -1694,6 +1701,9 @@ func interface_command(request: Dictionary) -> String:
 		if not _path.is_empty():
 			phase = "walking"
 			_begin_manual_walk_trace(target)
+			_accept_manual_path(target)
+		elif not _pending_action.is_empty():
+			feedback = "目标不可达；请点击更近的地面或更换交互对象。"
 		return "" if not _path.is_empty() else "目标无法到达。"
 	return "未支持的角色操作。"
 
@@ -1713,6 +1723,22 @@ func _exit_tree() -> void:
 
 # ============================================================ public port ===
 ## 供 UIpanel 与表现组件使用的只读 / 受控接口；界面不得访问下划线成员、会话桥或 Core。
+
+func _exploration_state() -> String:
+	if _transition_busy: return "transition"
+	if not _pending_action.is_empty(): return "approach"
+	if not _path.is_empty(): return "walking"
+	if not selected_focus.is_empty(): return "focus"
+	return "free"
+
+func _exploration_hint() -> String:
+	if not last_failure.is_empty(): return last_failure
+	if _transition_busy: return "正在穿过门扉…"
+	if not _pending_action.is_empty():
+		return "走近后自动执行：" + focus_label(selected_focus)
+	if not _path.is_empty(): return "沿通路前进，WASD 可随时接管。"
+	if not selected_focus.is_empty(): return "已选中 " + focus_label(selected_focus) + "，从行动面板选择下一步。"
+	return "WASD 移动，鼠标点击地面寻路，靠近人物或物件后按 E。"
 
 func target_node(focus: String) -> Node3D:
 	return _target_node(focus)
