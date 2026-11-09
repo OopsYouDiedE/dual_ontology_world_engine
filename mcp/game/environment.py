@@ -92,7 +92,17 @@ def unpack(archive, destination):
     destination.mkdir(parents=True)
     if str(archive).endswith((".tar.gz", ".tgz", ".tar.xz")):
         with tarfile.open(archive) as bundle:
-            bundle.extractall(destination, filter="data")
+            if hasattr(tarfile, "data_filter"):
+                bundle.extractall(destination, filter="data")
+            else:
+                # Python 3.11 lacks extraction filters; reject links and paths
+                # outside the local staging directory before extracting anything.
+                for member in bundle.getmembers():
+                    target = (destination / member.name).resolve()
+                    target.relative_to(destination.resolve())
+                    if member.name.startswith(("/", "\\")) or not (member.isfile() or member.isdir()):
+                        raise ValueError(f"Unsafe archive entry: {member.name}")
+                bundle.extractall(destination)
         return
     with zipfile.ZipFile(archive) as bundle:
         for item in bundle.infolist():

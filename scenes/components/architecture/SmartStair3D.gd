@@ -114,7 +114,8 @@ func rebuild() -> void:
 	var dummy_col := PackedVector3Array()
 	
 	for i in range(step_count):
-		var step_start_h := start_point.y + float(i) * actual_step_height
+		# start_point already contains world elevation; add only the relative rise.
+		var step_start_h := float(i) * actual_step_height
 		var step_top_h := step_start_h + actual_step_height
 		var x0 := float(i) * step_depth
 		var x1 := float(i + 1) * step_depth

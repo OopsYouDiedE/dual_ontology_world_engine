@@ -1,5 +1,5 @@
 extends Node3D
-## 书房舞台：夜窗外是被火山映红的海天，桌上摆着侦探工具和一本可翻页的案卷。
+## 书房舞台：窗外夜海保持冷色，仅远处火山口照亮局部灰云。
 ## 只负责模型、灯光、镜头与动态效果。书页内容的纹理与输入换算由 BookUI 通过下方公开接口完成。
 
 const DETAIL := preload("res://scenes/components/world/BookSurfaceDetail3D.gd")
@@ -244,7 +244,7 @@ func _update_eruption(delta: float) -> void:
 	_sky_material.set_shader_parameter("flash", glow * 0.6)
 	_sea_material.set_shader_parameter("flash", glow * 0.5)
 	_crater_material.emission_energy_multiplier = 5.0 * pulse + glow * 8.0
-	_window_light.light_energy = 0.32 * pulse + glow * 1.2
+	_window_light.light_energy = 0.15 * pulse + glow * 0.65
 	_embers.amount_ratio = 0.45 + glow * 0.55
 
 func _set_opened(value: float) -> void:
@@ -279,7 +279,7 @@ func _build_environment() -> void:
 	environment.background_mode = Environment.BG_COLOR
 	environment.background_color = Color(0.012, 0.014, 0.02)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.14, 0.10, 0.16)
+	environment.ambient_light_color = Color(0.11, 0.14, 0.21)
 	environment.ambient_light_energy = 0.30
 	environment.tonemap_mode = Environment.TONE_MAPPER_ACES
 	environment.tonemap_exposure = 0.95
@@ -340,9 +340,9 @@ func _build_room() -> void:
 		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	# 透过窗户映入的火山红光，投下窗棂阴影。
 	_window_light = SpotLight3D.new()
-	_window_light.light_color = Color(1.0, 0.36, 0.18)
+	_window_light.light_color = Color(1.0, 0.50, 0.30)
 	_window_light.spot_range = 5.0
-	_window_light.spot_angle = 38.0
+	_window_light.spot_angle = 28.0
 	_window_light.shadow_enabled = true
 	add_child(_window_light)
 	_window_light.look_at_from_position(Vector3(-0.55, 1.45, -1.9), Vector3(0.05, 0.0, 0.1), Vector3.UP)

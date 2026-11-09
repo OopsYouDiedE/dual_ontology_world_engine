@@ -73,8 +73,8 @@ signal wall_rebuilt()
 		cutaway_cap_material = v
 		_update_materials()
 
-# Manual or auto-detected openings: Array of { "from": float, "to": float, "bottom": float, "top": float }
-var openings: Array[Dictionary] = []
+# Persist authored openings in .tscn; detected child openings remain transient.
+@export var openings: Array[Dictionary] = []
 var _rebuild_pending: bool = false
 
 func _ready() -> void:
@@ -109,14 +109,12 @@ func clear_openings() -> void:
 	openings.clear()
 	_queue_rebuild()
 
-func detect_child_openings() -> void:
-	openings.clear()
-	var wall_dir := (end_point - start_point)
+func detect_child_openings() -> Array[Dictionary]:
+	var detected: Array[Dictionary] = []
+	var wall_dir := end_point - start_point
 	var wall_length := wall_dir.length()
-	if wall_length < 0.001:
-		return
+	if wall_length < 0.001: return detected
 	var wall_norm := wall_dir.normalized()
-	
 	for child in get_children():
 		if child is Node3D and (child.has_method("get_leaf_width") or child.name.contains("Door") or child.name.contains("Window")):
 			var child_pos: Vector3 = child.position
@@ -125,7 +123,8 @@ func detect_child_openings() -> void:
 				var w: float = child.get("leaf_width") if "leaf_width" in child else 0.9
 				var h: float = child.get("leaf_height") if "leaf_height" in child else 2.1
 				var bottom_h: float = child_pos.y
-				register_opening(proj_dist - w * 0.5, proj_dist + w * 0.5, bottom_h, bottom_h + h)
+				detected.append({"from":proj_dist - w * 0.5,"to":proj_dist + w * 0.5,"bottom":bottom_h,"top":bottom_h + h})
+	return detected
 
 func rebuild() -> void:
 	_rebuild_pending = false
@@ -134,7 +133,8 @@ func rebuild() -> void:
 	if length < 0.05:
 		return
 	
-	detect_child_openings()
+	var active_openings: Array[Dictionary] = openings.duplicate()
+	active_openings.append_array(detect_child_openings())
 	
 	var visual_root := get_node_or_null("VisualRoot") as Node3D
 	if visual_root == null:
@@ -163,7 +163,7 @@ func rebuild() -> void:
 	# Build wall segments considering openings
 	# Sort openings along wall length
 	var valid_openings: Array[Dictionary] = []
-	for op in openings:
+	for op in active_openings:
 		var f: float = clampf(float(op.from), 0.0, length)
 		var t: float = clampf(float(op.to), 0.0, length)
 		if t > f:

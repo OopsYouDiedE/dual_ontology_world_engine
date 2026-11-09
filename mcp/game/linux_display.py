@@ -1,5 +1,6 @@
 """A private software-rendered X11 display owned by this MCP process on Linux."""
 import atexit
+import json
 import os
 from pathlib import Path
 import secrets
@@ -43,9 +44,17 @@ def environment(parent):
             return dict(parent, **_settings)
         executable = LOCAL / "usr/bin/Xvfb"
         library = LOCAL / "usr/lib/x86_64-linux-gnu"
-        icd = LOCAL / "usr/share/vulkan/icd.d/lvp_icd.json"
-        if not executable.is_file() or not icd.is_file():
+        icd_dir = LOCAL / "usr/share/vulkan/icd.d"
+        icd = next((path for path in (icd_dir / "lvp_icd.json", icd_dir / "lvp_icd.x86_64.json") if path.is_file()), None)
+        if not executable.is_file() or icd is None:
             raise RuntimeError("Linux graphical host requires Xvfb and Mesa lavapipe in .runtime/linux-display, or an existing DISPLAY")
+        manifest = json.loads(icd.read_text(encoding="utf-8"))
+        driver_name = Path(manifest.get("ICD", {}).get("library_path", "")).name
+        private_driver = library / driver_name
+        if driver_name and private_driver.is_file():
+            manifest["ICD"]["library_path"] = str(private_driver)
+            icd = LOCAL / "local-lavapipe.json"
+            icd.write_text(json.dumps(manifest), encoding="utf-8")
         directory = ROOT / ".runtime/displays" / secrets.token_hex(8)
         directory.mkdir(parents=True)
         # TCP loopback also works in containers that do not expose Unix sockets.
@@ -69,7 +78,11 @@ def environment(parent):
         authority.chmod(0o600)
         _settings = {"DISPLAY": f"127.0.0.1:{number}", "XAUTHORITY": str(authority), "DV_CLOUD_DISPLAY": "1",
                      "LD_LIBRARY_PATH": str(library) + (":" + parent["LD_LIBRARY_PATH"] if parent.get("LD_LIBRARY_PATH") else ""),
-                     "VK_ICD_FILENAMES": str(icd), "LIBGL_ALWAYS_SOFTWARE": "1"}
+                     "PATH": str(LOCAL / "usr/bin") + os.pathsep + parent.get("PATH", ""),
+                     "XKB_CONFIG_ROOT": str(LOCAL / "usr/share/X11/xkb"),
+                     "VK_ICD_FILENAMES": str(icd), "LIBGL_ALWAYS_SOFTWARE": "1",
+                     "LIBGL_DRIVERS_PATH": str(library / "dri"),
+                     "__EGL_VENDOR_LIBRARY_FILENAMES": str(LOCAL / "usr/share/glvnd/egl_vendor.d/50_mesa.json")}
         child = dict(parent, **_settings)
         _log = (directory / "xvfb.log").open("w", encoding="utf-8")
         _process = subprocess.Popen([str(executable), f":{number}", "-screen", "0", "1440x900x24",

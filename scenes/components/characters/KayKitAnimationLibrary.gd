@@ -1,7 +1,7 @@
 extends RefCounted
 ## Shared KayKit Animation Library provider (CC0 1.0 Universal)
 
-const TRES_PATH := "res://.runtime/generated/animations/KayKitAnimationLibrary.tres"
+const TRES_PATH := "res://.runtime/generated/animations/KayKitAnimationLibrary-v2.tres"
 
 const CLIPS_CONFIG := {
 	"res://assets/imported/kaykit/animations/Rig_Medium_General.glb": {
@@ -16,7 +16,7 @@ const CLIPS_CONFIG := {
 		"Use_Item": [{"name": "eat", "loop": Animation.LOOP_NONE}]
 	},
 	"res://assets/imported/kaykit/animations/Rig_Medium_MovementBasic.glb": {
-		"Walking_A": [{"name": "walk", "loop": Animation.LOOP_LINEAR}],
+		"Walking_A": [{"name": "walk", "loop": Animation.LOOP_LINEAR}, {"name": "carry_walk", "loop": Animation.LOOP_LINEAR}],
 		"Running_A": [{"name": "run", "loop": Animation.LOOP_LINEAR}]
 	},
 	"res://assets/imported/kaykit/animations/Rig_Medium_Simulation.glb": {
@@ -29,7 +29,6 @@ const CLIPS_CONFIG := {
 	},
 	"res://assets/imported/kaykit/animations/Rig_Medium_Tools.glb": {
 		"Holding_A": [{"name": "carry_idle", "loop": Animation.LOOP_LINEAR}],
-		"Holding_B": [{"name": "carry_walk", "loop": Animation.LOOP_LINEAR}],
 		"Work_A": [
 			{"name": "operate", "loop": Animation.LOOP_NONE},
 			{"name": "turn_wheel", "loop": Animation.LOOP_NONE}

@@ -48,6 +48,7 @@ func _setup_ui() -> void:
 		test_action_btn.pressed.connect(_on_test_action_pressed)
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if get_viewport().gui_get_focus_owner() is LineEdit: return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_R:
 			current_rotation_y = fmod(current_rotation_y + 90.0, 360.0)
@@ -63,17 +64,17 @@ func _on_search_changed(new_text: String) -> void:
 	refresh_palette()
 
 func refresh_palette() -> void:
-	if item_tree == null:
-		return
+	if item_tree == null: return
+	selected_prefab_path = ""
+	if preview_instance != null:
+		preview_instance.queue_free()
+		preview_instance = null
 	item_tree.clear()
 	var root := item_tree.create_item()
 	item_tree.hide_root = true
-	
 	var dir_path := "res://scenes/prefabs/" + current_category
 	var dir := DirAccess.open(dir_path)
-	if dir == null:
-		return
-	
+	if dir == null: return
 	dir.list_dir_begin()
 	var file_name := dir.get_next()
 	while not file_name.is_empty():
@@ -84,6 +85,7 @@ func refresh_palette() -> void:
 				item.set_text(0, clean_name)
 				item.set_metadata(0, dir_path + "/" + file_name)
 		file_name = dir.get_next()
+	dir.list_dir_end()
 
 func _on_item_selected() -> void:
 	var item := item_tree.get_selected()
@@ -128,7 +130,7 @@ func _validate_ergonomics(path: String) -> void:
 		footprint_label.modulate = Color(0.2, 0.85, 0.3) if is_valid else Color(0.9, 0.2, 0.2)
 
 func _on_spawn_pressed() -> void:
-	if selected_prefab_path.is_empty():
+	if selected_prefab_path.is_empty() or not ResourceLoader.exists(selected_prefab_path):
 		return
 	var slot_id := dv_slot_edit.text.strip_edges() if dv_slot_edit != null else ""
 	prefab_spawn_requested.emit(selected_prefab_path, current_rotation_y, slot_id)

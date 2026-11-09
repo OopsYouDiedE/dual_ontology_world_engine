@@ -319,6 +319,8 @@ func play_action(action: String, speed_scale: float = 1.0) -> void:
 			anim_name = "idle"
 	
 	if not animation_player.has_animation(anim_name):
+		# A missing one-shot must not block all future walking forever.
+		is_transitioning = false
 		anim_name = "idle"
 	
 	current_action = anim_name
@@ -327,20 +329,14 @@ func play_action(action: String, speed_scale: float = 1.0) -> void:
 		animation_player.play(anim_name)
 
 func set_movement_speed(speed: float) -> void:
-	movement_speed = speed
+	movement_speed = maxf(speed, 0.0)
 	if native_seat_driver != null and bool(native_seat_driver.active): return
-	if is_seated or is_lying or is_transitioning:
-		return
-	if speed > 0.05:
-		if is_carrying:
-			var carry_scale := clampf(speed / 0.85, 0.5, 1.5)
-			play_action("carry_walk", carry_scale)
-		else:
-			var is_running := speed > 1.8
-			var target_action := "run" if is_running else "walk"
-			var nominal_stride_speed := 2.0 if is_running else 1.05
-			var dynamic_scale := clampf(speed / nominal_stride_speed, 0.5, 2.0)
-			play_action(target_action, dynamic_scale)
+	if is_seated or is_lying or is_transitioning: return
+	if movement_speed > 0.05:
+		# The simulation may accelerate travel; that never turns a walk into a sprint.
+		var stride := 0.85 if is_carrying else 1.05
+		var clip := "carry_walk" if is_carrying else "walk"
+		play_action(clip, clampf(movement_speed / stride, 0.55, 1.55))
 	else:
 		play_action("idle", 1.0)
 
