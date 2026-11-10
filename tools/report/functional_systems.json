@@ -1,0 +1,240 @@
+{
+  "version": 1,
+  "title": "UI 与场景功能系统设计",
+  "basis": "采用用户指定的五个 UI 系统及场景划分；角色验收已确认指测试系统。功能系统作为设计/验收主视图，原 16 个模块只保留为代码归属参考。",
+  "status": "设计与当前代码映射，不代表系统已重构或验收通过",
+  "versionPolicy": "官方资料检索于 2026-11-09，采用 stable 文档的概念与职责。项目声明 Godot 4.7/C#，具体 API 仍须由项目内 .NET 引擎核对；不按 latest 文档擅自升级。",
+  "rules": [
+    "以功能闭环划一级系统，以稳定输入/输出和可观察结果划二级系统；单个按钮、节点类型或文件不单独立系统。",
+    "UI 仅使用公开观察与操作意图；认知/证明/规则/世界状态由 C# Core 决定，人物和初始布局由 DV 声明。",
+    "音效归 UI 组管理但提供全项目共享服务；角色听到什么属于 Core 感知，不能用扬声器播放结果代替。",
+    "建筑和家具系统生产内容；房间修建系统编辑与发布内容；运行中的房间与交互由场景运行系统负责。",
+    "角色控制器执行动作，角色表现驱动外观，角色验收只观察/发起正常操作并记录证据，不拥有另一套人物状态。",
+    "Godot 内置能力不重复自研，但项目参数、配置、桥接和整合结果仍须验收。",
+    "正式验收使用 Main 与真实新局，经 MCP 公开操作到达条件；预览不是玩法验收，不创建临时工程或注入测试状态。"
+  ],
+  "sources": [
+    {"id":"G01","title":"Control：GUI 输入、焦点与主题","url":"https://docs.godotengine.org/en/stable/classes/class_control.html","point":"引擎提供 GUI 布局与事件原语；焦点、mouse_filter 和 accept_event 仍需项目配置。"},
+    {"id":"G02","title":"Pausing games and process mode","url":"https://docs.godotengine.org/en/stable/tutorials/scripting/pausing_games.html","point":"SceneTree.paused 和节点 process_mode 管理暂停行为；它们不自动管理外部 C# 仿真调度。"},
+    {"id":"G03","title":"SubViewport","url":"https://docs.godotengine.org/en/stable/classes/class_subviewport.html","point":"可把 UI 输出为纹理用于 3D；独立 SubViewport 默认不接收输入事件。"},
+    {"id":"G04","title":"Audio buses","url":"https://docs.godotengine.org/en/stable/tutorials/audio/audio_buses.html","point":"内置总线路由、效果与音量处理；事件选曲、并发策略和暂停策略是项目职责。"},
+    {"id":"G05","title":"AudioStreamPlayer3D","url":"https://docs.godotengine.org/en/stable/classes/class_audiostreamplayer3d.html","point":"内置空间衰减、方向性与监听器；隐藏节点不会自动停止声音，也不等于实现隔墙声学传播。"},
+    {"id":"G06","title":"ArrayMesh","url":"https://docs.godotengine.org/en/stable/classes/class_arraymesh.html","point":"数组生成网格是内置能力；墙体拓扑、洞口、尺寸、碰撞和语义需项目生成。"},
+    {"id":"G07","title":"PackedScene","url":"https://docs.godotengine.org/en/stable/classes/class_packedscene.html","point":"内置场景实例化和打包；序列化的子节点受 owner 影响，不能只 add_child 就假定完整保存。"},
+    {"id":"G08","title":"EditorPlugin","url":"https://docs.godotengine.org/en/stable/classes/class_editorplugin.html","point":"用于扩展编辑器功能；不作为导出游戏中运行时建造的依赖。"},
+    {"id":"G09","title":"EditorUndoRedoManager","url":"https://docs.godotengine.org/en/stable/classes/class_editorundoredomanager.html","point":"编辑器插件使用编辑器历史管理；非编辑器用途使用 UndoRedo。"},
+    {"id":"G10","title":"CharacterBody3D","url":"https://docs.godotengine.org/en/stable/classes/class_characterbody3d.html","point":"提供脚本驱动角色的碰撞与滑动接口；运动意图、速度和状态机由项目负责。"},
+    {"id":"G11","title":"Using NavigationAgents","url":"https://docs.godotengine.org/en/stable/tutorials/navigation/navigation_using_navigationagents.html","point":"寻路/跟随计算不会自动移动父节点；NavigationAgent 是可选助手，不要求替换现有 NavigationServer 路径代码。"},
+    {"id":"G12","title":"Using AnimationTree","url":"https://docs.godotengine.org/en/stable/tutorials/animation/animation_tree.html","point":"内置动画混合与状态切换；root motion 仍需显式交给角色运动代码消费，不能形成第二个位置主权。"},
+    {"id":"G13","title":"Running code in the editor","url":"https://docs.godotengine.org/en/stable/tutorials/plugins/running_code_in_the_editor.html","point":"@tool 使代码在编辑器运行；必须区分编辑器和游戏语义，EditorScript 不自动提供撤销历史。"},
+    {"id":"G14","title":"Scene organization","url":"https://docs.godotengine.org/en/stable/tutorials/best_practices/scene_organization.html","point":"按关系和职责组织场景、限制耦合；不按视觉空间位置机械划所有代码。"}
+  ],
+  "systems": [
+    {
+      "id":"UI01","group":"UI","name":"脑内推演 UI 系统",
+      "boundary":"展示本人已知证据、规则和结论选择并提交意图；不在 GDScript 再实现证明搜索或读取 NPC 私有心智。",
+      "input":"观察者授权的推演预览、证据 ID、规则描述与既有执行结果","output":"action_id/evidence_ids 提交意图，关闭意图与 UI 状态",
+      "dependencies":["A01","A02"],"references":["G01"],"code":["scenes/UIpanel/GUI/DeductionGUI.gd","core/reasoning/CaseProofChecker.cs"],
+      "mapping":"已有 DeductionGUI 的规则/线索列表、勾选与提交；Core 证明校验是外部依赖。图形化推演工作台仍属设计扩展，不能据简单浮层认定完成。",
+      "subsystems":[
+        {"id":"UI01.1","name":"证据浏览与筛选","accept":"只显示当前观察者获准知道的线索，来源、确认状态与 ID 对应原始证据。"},
+        {"id":"UI01.2","name":"规则、前提与目标呈现","accept":"所展示规则、必要前提与当前目标匹配正式推演动作，不把未知当假。"},
+        {"id":"UI01.3","name":"推演操作区","accept":"选择/连接/撤回只改变本地草稿，未提交时不修改认知与世界。列表版与图形版可共用该契约。"},
+        {"id":"UI01.4","name":"提交与结果反馈","accept":"同一提交最多执行一次；缺前提、过期证据、成功和失败均使用 Core 原因反馈。"}
+      ]
+    },
+    {
+      "id":"UI02","group":"UI","name":"GUI／现场 HUD 系统",
+      "boundary":"现场持续信息、目标动作与交互反馈；推演由 UI01 负责，暂停书本由 UI05 负责。",
+      "input":"只读 interface 观察、目标屏幕锚点、正式任务和已送达对话/说服结果","output":"选择、动作、取消、速度/自主控制等公开操作意图",
+      "dependencies":["A01","A02","UI01"],"references":["G01"],"code":["scenes/UIpanel/GUI/FieldGUI.gd","scenes/UIpanel/GUI/ClockRoomGUI.gd","scenes/UIpanel/GUI/TaskProgressGUI.gd","scenes/UIpanel/GUI/ActionChoiceGUI.gd","scenes/UIpanel/GUI/GuidanceGUI.gd","scenes/UIpanel/GUI/PersuasionGUI.gd"],
+      "mapping":"已有 FieldGUI 组合、时间/任务/动作列表、引导及说服面板；当前由 FieldGUI 挂载推演浮层，功能归属可独立于场景父子关系。",
+      "subsystems":[
+        {"id":"UI02.1","name":"时间、地点与运行状态","accept":"显示正式世界时间、房间和暂停/速度，不自行累计一套游戏时钟。"},
+        {"id":"UI02.2","name":"任务进度与取消","accept":"行走、到达后工作、完成和取消分别呈现，不以 UI 进度条结束触发逻辑成功。"},
+        {"id":"UI02.3","name":"目标选择与动作菜单","accept":"动作来自当前合法选项；目标失效/遮挡或模态打开时不保留可点击的过期菜单。"},
+        {"id":"UI02.4","name":"对话、说服与交互反馈","accept":"只呈现已送达内容及公开原因类别，不展示 NPC 私有评分和未发生的判定。"},
+        {"id":"UI02.5","name":"引导、需求与控制提示","accept":"提示指向真实可执行操作，不代替玩家执行、不暗示角色未知剧情。"}
+      ]
+    },
+    {
+      "id":"UI03","group":"UI","name":"音效与音乐系统（全项目共享）",
+      "boundary":"播放、混音、曲目与环境声呈现；角色听觉传播、内容辨认与证据归 Core 感知。归 UI 组管理不表示只服务按钮。",
+      "input":"UI/场景公开声音事件、正式音乐上下文、空间位置、音量/暂停设置","output":"声音播放与停止、总线参数、音乐上下文 token 和音频诊断",
+      "dependencies":["A01","A02"],"references":["G04","G05","G02"],"code":["scenes/components/shared/Sound.gd","scenes/components/shared/GameAudio.gd","scenes/components/shared/MusicContext.gd","assets/audio/default_bus_layout.tres"],
+      "mapping":"已有静态 Sound 入口、GameAudio 双轨淡化和音效池、MusicContext 与总线。现有 GameAudio 使用非空间 AudioStreamPlayer，不能据此宣称完整世界空间声/遮挡已完成。",
+      "subsystems":[
+        {"id":"UI03.1","name":"UI 操作音","accept":"点击、翻页、确认/错误反馈与实际操作一致，同一事件不重复播放。"},
+        {"id":"UI03.2","name":"世界交互与空间音","accept":"脚步、门和家具声音绑定真实事件与位置；听者位置、声源清理和声道归属正确。"},
+        {"id":"UI03.3","name":"配乐与环境声上下文","accept":"按正式上下文切曲、循环和淡化；旧 UI 回调不得打断新曲目，也不从隐藏剧情选曲。"},
+        {"id":"UI03.4","name":"混音、并发与设置","accept":"总线音量、静音、并发池和优先级一致，关键反馈不被大量环境声吞掉。"},
+        {"id":"UI03.5","name":"暂停、跨场景与退出","accept":"按策略保留菜单音/音乐并暂停世界声；隐藏节点不当作停止声音，退出释放播放器。"}
+      ]
+    },
+    {
+      "id":"UI04","group":"UI","name":"标题界面系统",
+      "boundary":"标题菜单、可继续状态和模式切换意图；3D 书房背景属于 SC08，共享音频属于 UI03。",
+      "input":"存档可用性、菜单状态、用户输入与书房交互命中","output":"new_game/continue/book/quit 等意图",
+      "dependencies":["A01","A02","UI03","SC08"],"references":["G01","G14"],"code":["scenes/UIpanel/TitleUI/TitleUI.gd","scenes/main/Main.gd"],
+      "mapping":"已有 TitleUI 和 Main 信号编排；独立验收标题状态，不重复创建另一套新局/存档服务。",
+      "subsystems":[
+        {"id":"UI04.1","name":"菜单和可用性","accept":"无有效存档时继续不可用；文字/禁用/悬停状态一致。"},
+        {"id":"UI04.2","name":"标题输入与焦点","accept":"鼠标及配置支持的键盘操作不误触书本或背后世界，禁用项不触发。"},
+        {"id":"UI04.3","name":"新局、继续与退出转场","accept":"重复点击不创建多会话，加载失败可反馈并回到可操作状态，退出关闭真实宿主。"}
+      ]
+    },
+    {
+      "id":"UI05","group":"UI","name":"游戏暂停／书 UI 系统",
+      "boundary":"暂停入口、书页导航、存档/设置页与书内输入；3D 书叶、镜头和纹理由 SC08 配合，实际存档由 A02/Core 执行。",
+      "input":"书页定义、公开保存槽、设置、返回模式与舞台坐标映射","output":"暂停/恢复请求、书页纹理、翻页请求及存取/设置意图",
+      "dependencies":["A01","A02","UI03","SC08"],"references":["G01","G02","G03"],"code":["scenes/UIpanel/BookUI/BookUI.gd","scenes/UIpanel/SaveUI/SaveUI.gd","scenes/UIpanel/SettingUI/SettingUI.gd","scenes/main/Main.gd"],
+      "mapping":"已有 BookUI 的图录/存档/设置页、SubViewport 和 push_input；Main 当前通过禁用现场处理并隐藏现场切换至书房。需要验收 Core、物理、执行队列与音频的实际暂停范围，不能只看书已打开。",
+      "subsystems":[
+        {"id":"UI05.1","name":"打开、关闭与暂停请求","accept":"从现场与标题进入时返回语义不同；连续开关、加载失败和嵌套弹层不提前恢复现场。"},
+        {"id":"UI05.2","name":"书页导航和内容页","accept":"标签、前后页、当前页和图录/存档/设置显示一致；空图录不宣称已有完整案卷内容。"},
+        {"id":"UI05.3","name":"3D 书页输入映射","accept":"屏幕→书页 UV→SubViewport 坐标正确，翻页中锁输入，拖拽/滚轮/关闭不穿透到现场。"},
+        {"id":"UI05.4","name":"存档与读档界面","accept":"只发合法槽位操作，成功/失败与宿主回执一致；UI 不自行序列化另一份世界。"},
+        {"id":"UI05.5","name":"设置、语言与可读性","accept":"音量/语言/减少动态等设置实际生效，布局不截断，返回后状态正确。"}
+      ]
+    },
+    {
+      "id":"SC01","group":"场景","name":"建筑基本结构自动生成系统",
+      "boundary":"从规范化尺寸与结构声明生成墙、楼板、顶、楼梯/栏杆及洞口；不包含玩家编辑器交互或角色寻路执行。",
+      "input":"结构参数、局部坐标/尺度、材质引用与门窗洞口声明","output":"结构节点、网格、碰撞、包围盒和拓扑/门洞元数据",
+      "dependencies":["A03"],"references":["G06","G13"],"code":["scenes/components/architecture/SmartWall3D.gd","scenes/components/architecture/SmartFloorZone3D.gd","scenes/components/architecture/SmartStair3D.gd","scenes/components/architecture/SmartRailing3D.gd","scenes/components/architecture/ExteriorRoof3D.gd"],
+      "mapping":"已有 @tool 参数化结构和延迟 rebuild。生成算法、尺寸约束与洞口一致性是自研；ArrayMesh/SurfaceTool 本身是引擎能力。",
+      "subsystems":[
+        {"id":"SC01.1","name":"坐标、单位和参数校验","accept":"米制、轴向、端点、厚度、高度和楼层约束明确，非法参数明确拒绝/规范化且有说明。"},
+        {"id":"SC01.2","name":"结构几何与重建","accept":"同一参数生成稳定结构，多次 rebuild 不积累旧网格/碰撞，修改只更新有关组件。"},
+        {"id":"SC01.3","name":"门窗洞口及接缝","accept":"视觉洞口与实际碰撞开口一致，墙角/楼板/楼梯接缝满足净空。"},
+        {"id":"SC01.4","name":"碰撞和导航源元数据","accept":"角色真正可走的面与声明一致；网格、碰撞和导航源变更版本能关联。"},
+        {"id":"SC01.5","name":"材质、剖切和编辑器预览","accept":"编辑器预览与正式实例尺度一致，剖切不误删碰撞或改变世界状态。"}
+      ]
+    },
+    {
+      "id":"SC02","group":"场景","name":"家具与交互物件生成系统",
+      "boundary":"此处生成指原子资产的参数装配、智能预制件实例化与元数据绑定；原始模型制作/AI 生成属于制作流水线。",
+      "input":"预制件目录、变体、DV/实例 ID、材质和交互槽配置","output":"家具候选或正式实例、碰撞、交互锚点与动作/资源绑定",
+      "dependencies":["A03"],"references":["G07"],"code":["scenes/components/architecture/PropEntity3D.gd","scenes/components/characters/ReachTarget3D.gd","scenes/prefabs/","tools/building/"],
+      "mapping":"已有 PropEntity3D、智能预制件、碰撞生成、ReachTarget 与槽位标识。模型存在不等于站位、坐姿、交互和逻辑 ID 均已有效。",
+      "subsystems":[
+        {"id":"SC02.1","name":"资产目录与实例装配","accept":"ID/类别/变体可追溯，实例之间不意外共享可变资源。"},
+        {"id":"SC02.2","name":"尺度、材质与碰撞","accept":"家具符合角色尺度；装饰/阻挡/可交互碰撞层正确，无重复碰撞。"},
+        {"id":"SC02.3","name":"站位、触及点与座位","accept":"站位可达、朝向和接触点匹配；容量与逻辑资源槽一致。"},
+        {"id":"SC02.4","name":"物件动作及逻辑绑定","accept":"抽屉/机关等可视动作有完成/取消语义；动画不自行修改 Core 事实。"},
+        {"id":"SC02.5","name":"候选保存与发布校验","accept":"打包保留必要 owner/锚点/碰撞/标识，重载保持配置；未发布候选不进入正式新局。"}
+      ]
+    },
+    {
+      "id":"SC03","group":"场景","name":"可视化房间修建系统",
+      "boundary":"消费建筑与家具生成能力，负责编辑命令、选择/变换、候选保存和明确发布；不重新实现墙体/家具算法。编辑器与运行时为两个前端。",
+      "input":"编辑命令、结构参数、预制件和房间候选","output":"可撤销命令、候选房间数据、验证结果和发布请求",
+      "dependencies":["SC01","SC02","A03"],"references":["G07","G08","G09","G13"],"code":["tools/godot_architect/ArchitectPlugin.gd","tools/godot_architect/ArchitectGizmo3D.gd","tools/godot_architect/PrefabPaletteDock.gd","tools/godot_architect/LiveBuilderOverlay.gd"],
+      "mapping":"已有编辑器预制件放置及 EditorUndoRedoManager，F4 运行时候选放置/旋转。当前运行时脚本未展示完整保存、撤销和发布闭环，不能因注释提到 save 就视为已实现。",
+      "subsystems":[
+        {"id":"SC03.1","name":"选择、拾取与工具模式","accept":"UI 输入不误落到世界放置；选择工具、墙体工具与家具工具互不串用。"},
+        {"id":"SC03.2","name":"变换、吸附与预览","accept":"移动/旋转/尺寸吸附统一；ghost 不参与正式碰撞和逻辑注册。"},
+        {"id":"SC03.3","name":"放置与房间合法性","accept":"检查重叠、门洞净空、楼层/边界、连通及槽位；有限座位校验不冒充完整场景合法性。"},
+        {"id":"SC03.4","name":"命令历史与撤销重做","accept":"编辑器接入 EditorUndoRedoManager；运行时接入 UndoRedo 或统一命令栈，不调用编辑器 API。"},
+        {"id":"SC03.5","name":"候选持久化与恢复","accept":"重启编辑流程仍能恢复候选及稳定实例 ID，参数与依赖不丢失。"},
+        {"id":"SC03.6","name":"明确发布与 DV 一致性","accept":"发布后布局/场景/DV 绑定一致且可追溯；作者源明确，运行初始布置不在宿主脚本重复硬编码。"}
+      ]
+    },
+    {
+      "id":"SC04","group":"场景","name":"角色控制器系统",
+      "boundary":"把合法动作/玩家移动意图执行为真实物理位移和交互；控制器持有单一运动主权，不直接写剧情/认知事实。",
+      "input":"玩家意图、准备后的动作、目标槽位、路径和取消请求","output":"真实位置/速度、到达/阻断、工作开始/完成/取消与物理测量",
+      "dependencies":["A01","A02","SC06","SC07"],"references":["G10","G11","G12"],"code":["scenes/components/characters/ActorMotor3D.gd","scenes/components/characters/ActorActionQueue.gd","scenes/components/characters/CharacterController3D.gd","scenes/components/characters/AutonomousActorExecutor.gd","scenes/components/characters/RoomTransition.gd"],
+      "mapping":"已有手动马达、动作队列、准备动作执行与跨房；ActorMotor 使用现有路径代码。无需为了采用官方文档而强制重写成 NavigationAgent。",
+      "subsystems":[
+        {"id":"SC04.1","name":"意图仲裁与动作队列","accept":"手动、点击和自主动作优先级明确，同一角色不同时被两个执行器移动。"},
+        {"id":"SC04.2","name":"路径跟随与物理移动","accept":"寻路给路径，控制器在物理帧移动；墙、坡、台阶和动态阻挡有可观察结果。"},
+        {"id":"SC04.3","name":"到达、转向与交互对齐","accept":"先实际到达/对齐/接触再开始工作或确认完成，不靠动画时长假定到位。"},
+        {"id":"SC04.4","name":"工作、取消与失败恢复","accept":"到达后才计工作时间，取消/卡住/目标销毁释放资源并清理回调，完成只提交一次。"},
+        {"id":"SC04.5","name":"跨房与真实计时","accept":"跨房遵守门/连接规则；游戏加速不放大真实步速或重复计算物理秒。"}
+      ]
+    },
+    {
+      "id":"SC05","group":"场景","name":"角色验收与测试系统",
+      "boundary":"独立于生产控制器，用正式角色和正式宿主采集证据并作断言；不建立测试专用世界、隐藏传送、状态注入或合成完成接口。",
+      "input":"正式新局、可观察角色/房间/物件、正常可执行操作和内容声明阈值","output":"逐用例测量、PASS/FAIL/未覆盖、原始观察/回执/实机截图和证据路径",
+      "dependencies":["SC01","SC02","SC04","SC06","SC07","A04"],"references":["G10","G11","G12"],"code":["mcp/game/automation.py","mcp/game/input_client.py","tools/diagnostics/character_receipts.py","tools/verification/MovementRegression.gd"],
+      "mapping":"已有真实宿主 MCP、角色回执与移动回归素材。旧 MovementRegression 包装另实例化 Main 并访问宿主内部成员，不直接视为符合当前正式入口/公开端口约定的验收实现；用例应迁入正式 MCP 证据流程。",
+      "subsystems":[
+        {"id":"SC05.1","name":"用例选择与覆盖记录","accept":"记录角色、内容版本、seed、真实 backend、期限与自然到达范围；未达到条件记未覆盖。"},
+        {"id":"SC05.2","name":"体型、净空与通行验收","accept":"实际验证不同正式角色的胶囊/身高、门洞、楼梯与窄处；阈值来自角色/几何声明，不临时编造通过值。"},
+        {"id":"SC05.3","name":"位移、速度与动画验收","accept":"以真实物理位移验证速度、停步和脚底滑移；正常/加速/暂停分别采样，不以动画播放代替位移。"},
+        {"id":"SC05.4","name":"座位、触及与交互验收","accept":"同一 execution 的到达、坐姿、接触误差、工作和完成证据可关联，碰撞和姿态分别判定。"},
+        {"id":"SC05.5","name":"取消、打断与多人验收","accept":"测试公开取消、门阻断、槽位争用和跨房；观察超时/恢复/资源释放且不重复结算。"},
+        {"id":"SC05.6","name":"报告与证据封存","accept":"每项给出断言、测量、阈值来源、事件 ID 和截图/回执路径；超时不是通过，未听音不报声学通过。"}
+      ]
+    },
+    {
+      "id":"SC06","group":"场景","name":"角色外观、动画与姿态系统",
+      "boundary":"负责角色资源装配、动画和视觉姿态；与 SC04 物理控制、SC05 验收分开。不是再造 Godot 动画引擎。",
+      "input":"角色资源、物理速度/动作阶段、对话动作、座位与触及目标","output":"可见角色、动画切换/结束、骨骼姿态与视觉诊断",
+      "dependencies":["A03"],"references":["G07","G12"],"code":["scenes/components/characters/ImportedCharacter.gd","scenes/components/characters/StoryBody3D.gd","scenes/components/characters/KayKitAnimationLibrary.gd","scenes/components/characters/ConversationAnimationLibrary.gd","scenes/components/characters/SeatPostureDriver3D.gd","scenes/components/characters/SeatPoseModifier3D.gd"],
+      "mapping":"已有导入角色、动画库、对话和座姿驱动。采用 AnimationPlayer/自定义库或 AnimationTree 是实现选择，不能把混合树列为本项目已用能力。",
+      "subsystems":[
+        {"id":"SC06.1","name":"模型、骨架与资源装配","accept":"尺度、骨架、碰撞参考与角色标识一致，资源缺失有明确反馈。"},
+        {"id":"SC06.2","name":"移动动画与过渡","accept":"由实际位移/速度驱动走停和转向，撞墙不持续原地走；若启用 root motion 由 SC04 显式消费。"},
+        {"id":"SC06.3","name":"行为与对话演出","accept":"动作 token/generation 与实际执行一致，旧完成回调不结束新动作。"},
+        {"id":"SC06.4","name":"坐姿、触及与骨骼修正","accept":"按正式锚点对齐，修正不偷偷移动 Core/碰撞主身体；不同体型分别验证。"}
+      ]
+    },
+    {
+      "id":"SC07","group":"场景","name":"房间运行、门窗与空间连接系统",
+      "boundary":"负责已发布房间的运行生命周期、门窗状态/碰撞和跨房连接；不是编辑器修建，也不代替 Core 逻辑空间规则。",
+      "input":"正式房间/DV 元数据、逻辑门状态、人物/相机位置与驻留请求","output":"房间实例生命周期、门窗物理反馈、可用导航数据与空间端口",
+      "dependencies":["A02","A03","SC01","SC02"],"references":["G07","G11"],"code":["scenes/components/architecture/RoomStreamingController.cs","scenes/components/architecture/RoomContainer3D.gd","scenes/components/architecture/HingedDoor3D.gd","scenes/components/architecture/HingedWindow3D.gd","scenes/components/characters/CampaignRoomHost.gd","core/spatial/PortalPolicy.cs"],
+      "mapping":"已有房间流送、门窗组件和逻辑门策略。CampaignRoomHost 是多系统协调点，应按端口拆职责，不能直接当作某一个系统全部代码。",
+      "subsystems":[
+        {"id":"SC07.1","name":"加载、驻留与卸载","accept":"房间进出不丢失 Core 运行态/证据，卸载释放呈现资源，未加载不误判角色不存在。"},
+        {"id":"SC07.2","name":"门窗状态与碰撞同步","accept":"开闭/运动状态和逻辑许可一致；没有动态门叶不自动等于门已打开。"},
+        {"id":"SC07.3","name":"导航与跨房连接更新","accept":"房间或门变化后路径可用性及时更新，导航同步尚未完成时不会假报到达。"},
+        {"id":"SC07.4","name":"空间注册和交互端口","accept":"人物/物件/槽位按稳定 ID 注册；失效节点及时注销，拒绝错误世界/代际绑定。"}
+      ]
+    },
+    {
+      "id":"SC08","group":"场景","name":"镜头、书房舞台与环境呈现系统",
+      "boundary":"管理观察镜头、书房/3D 书叶、环境光照和项目材质/可见性策略；声音由 UI03，世界时间由 Core。",
+      "input":"模式、相机目标、正式时间/环境、书页纹理和减少动态设置","output":"当前相机、实机画面、书叶演出、坐标映射与渲染诊断",
+      "dependencies":["A03"],"references":["G03","G14"],"code":["scenes/components/world/StudyDeskStage3D.gd","scenes/components/world/BookLeafTurn3D.gd","scenes/components/rendering/TopDownCamera3D.gd","scenes/components/rendering/CameraOcclusion.gd","scenes/components/rendering/WorldTimeLighting.gd","scenes/components/rendering/ObserverEnvironment3D.gd"],
+      "mapping":"已有舞台、翻页、相机、遮挡和环境呈现组件；标题与书 UI 共用舞台。镜头/材质变动不能修改物理规则或人物知识。",
+      "subsystems":[
+        {"id":"SC08.1","name":"镜头控制和模式交接","accept":"标题、书本、现场相机切换正确，操作与 HUD 投影一致，不遗留失效 current camera。"},
+        {"id":"SC08.2","name":"书房、3D 书叶与纹理映射","accept":"正反页、UV、翻页方向与 UI05 一致，减少动态设置改变演出但不改变内容。"},
+        {"id":"SC08.3","name":"遮挡、剖切与可读性","accept":"人物/目标可辨识，透明/剖切只改变呈现；物理碰撞与逻辑视听规则分别保留。"},
+        {"id":"SC08.4","name":"环境、材质和性能策略","accept":"照明按正式时间更新，资源/实例预算可测；不为了帧率悄悄减少逻辑模拟和证据。"}
+      ]
+    }
+  ],
+  "shared": [
+    {"id":"A01","name":"模式、输入与暂停协调","contract":"Main/宿主统一协调 title/field/book/推演/修建等模式、输入焦点和暂停原因。设计上各模式申请/释放暂停原因，最后一个原因解除才恢复；物理、Core tick、执行队列、动画和音频分别规定策略。","note":"这是共享职责设计，不宣称已有 pause-token 公共 API。"},
+    {"id":"A02","name":"会话观察与操作网关","contract":"UI/场景消费授权只读投影并提交动作意图/物理完成证据；Core 负责真值、认知、证明、计时和存取。执行标识、角色/物件/槽位 ID 和代际必须一致。","note":"复用 Main/SessionBridge 的现有公开接口，具体改接口时更新 docs/31 第五节。"},
+    {"id":"A03","name":"内容与资源契约","contract":"统一坐标/尺度、稳定 ID、预制件/结构版本、锚点/碰撞层、候选/发布和资源引用；初始人物/规则/布置通过 DV 声明，C# 与 GDScript 不重复硬编码。","note":"共享数据契约不等于建设一个包办所有功能的全局 Manager。"},
+    {"id":"A04","name":"真实宿主证据流程","contract":"自动验收用 CliMCP/GodotMCP，AI/人工按 on/step/observe/close；每轮正式新局，保存原始返回、截图和事件。PASS/FAIL/未覆盖分开；预览、超时和静态扫描不冒充实机通过。","note":"SC05 规定角色用例，A04 提供真实宿主操作和证据保管；不向生产角色加入绕过规则的测试 API。"}
+  ],
+  "engine": [
+    {"name":"控件、布局、主题与输入焦点","native":"Control / Container / CanvasLayer / Theme","owner":["UI01","UI02","UI04","UI05","A01"],"custom":"界面状态、布局参数、可读性、模态优先级和防穿透","references":["G01"]},
+    {"name":"子视口与渲染纹理","native":"SubViewport / ViewportTexture","owner":["UI05","SC08"],"custom":"书页 UV/屏幕坐标、输入转发、翻页同步","references":["G03"]},
+    {"name":"暂停与节点处理模式","native":"SceneTree.paused / Node.process_mode","owner":["A01"],"custom":"跨 Core、物理、队列、UI、动画、音频的暂停范围与恢复条件","references":["G02"]},
+    {"name":"音频播放与混音","native":"AudioServer / Audio buses / AudioStreamPlayer(3D)","owner":["UI03"],"custom":"声音事件、选曲、并发、空间监听/遮挡策略、清理与暂停","references":["G04","G05"]},
+    {"name":"网格构建","native":"ArrayMesh / SurfaceTool","owner":["SC01"],"custom":"结构拓扑、洞口、尺寸约束、碰撞及导航源一致性","references":["G06"]},
+    {"name":"场景和资源序列化","native":"PackedScene / ResourceLoader / ResourceSaver","owner":["SC02","SC03","SC07"],"custom":"owner、稳定 ID、资源依赖、候选/发布和 DV 一致性","references":["G07"]},
+    {"name":"编辑器扩展","native":"EditorPlugin / @tool / gizmo","owner":["SC03"],"custom":"工具模式、编辑命令、参数校验；编辑器代码不进入运行时依赖","references":["G08","G13"]},
+    {"name":"撤销重做基础","native":"EditorUndoRedoManager / UndoRedo","owner":["SC03"],"custom":"命令事务、引用寿命、跨操作一致性；运行时不使用 EditorUndoRedoManager","references":["G09"]},
+    {"name":"角色物理及碰撞查询","native":"CharacterBody3D / CollisionShape3D / physics queries","owner":["SC04","SC05"],"custom":"速度、层/掩码、坡阶参数、阻断恢复与可测量的动作阶段","references":["G10"]},
+    {"name":"导航计算","native":"NavigationServer3D / NavigationAgent3D / NavigationRegion3D","owner":["SC04","SC07"],"custom":"导航数据/同步、跟随与物理移动、门连接、资源槽；有路径不等于实际到达","references":["G11"]},
+    {"name":"动画、骨架和混合","native":"AnimationPlayer / AnimationTree / Skeleton3D","owner":["SC06"],"custom":"角色动作映射、token、姿态、触及和 root-motion 运动主权","references":["G12"]},
+    {"name":"基础渲染与场景树","native":"Camera3D / Environment / lights / scene instances","owner":["SC08","SC07"],"custom":"镜头策略、剖切、材质风格、房间驻留及项目性能预算","references":["G14"]}
+  ],
+  "integration": [
+    {"id":"I01","name":"暂停书本闭环","route":"现场动作 → 打开 UI05 → A01 暂停 → SC08 书页/镜头 → UI03 菜单音 → 关闭恢复","assert":"书可操作；角色/Core 不偷跑；翻页点击不下落到现场；解除本次暂停不误解除其他暂停原因。"},
+    {"id":"I02","name":"推演闭环","route":"UI02 提示 → UI01 选择证据 → A02/Core 校验 → UI01/UI02 反馈","assert":"使用本人当前证据；失败原因可见；关闭浮层不提交草稿；公开 UI 不泄漏 NPC 私有状态。"},
+    {"id":"I03","name":"房间制作闭环","route":"SC03 编辑 → SC01/SC02 生成 → 候选保存重载 → 明确发布/DV 校验 → SC07 正式加载","assert":"候选不污染正式资源；重载保留实例/锚点；发布后视觉、碰撞、导航和 DV 元数据一致。"},
+    {"id":"I04","name":"角色交互闭环","route":"UI02 动作 → A02 → SC04 移动/对齐 → SC06 姿态 → SC02/SC07 物件 → Core 完成 → SC05 记录","assert":"真实到达和接触、工作计时、取消/释放及最多一次完成都有同 execution 的证据。"}
+  ],
+  "acceptancePolicy": "二级验收先归因到单一职责，一级验收验证闭环；一项失败可定位到所属系统。正式输入/观察不足或条件未自然到达就记未覆盖，不因设计了用例而记通过。静态资源/作者预览只证明其实际范围。",
+  "evidenceFields": ["system_id","subsystem_id","case_id","backend","project_revision","content_hash","seed","run_id","actor_id","object_id","execution_id","pre_observation","operation","post_observation","expected","measured","threshold_source","verdict","receipt_path","screenshot_path","coverage_limit"]
+}

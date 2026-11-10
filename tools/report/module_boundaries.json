@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "scope": "当前源码的逻辑归属与独立验收边界；尚未实施程序集迁移或新增玩法测试入口",
+  "testPolicy": "每个用例从正式 campaign.dv 新局出发，经真实 CLI/Godot 宿主公开操作到达条件。独立指单独定义契约、断言和失败归属，允许依赖已验收模块；不表示所有模块都能脱离宿主独立运行。自动测试只用 CliMCP/GodotMCP 并设置期限；AI 测试用 on/step/observe/close 串行操作。缺乏可达场景或证据的用例记为未覆盖，不能注入状态补齐。",
+  "modules": [
+    {
+      "id": "M01", "name": "DV 内容读取", "group": "Core", "patterns": ["core/dv_lang/*", "assets/data/*", "config/*"], "dependencies": [],
+      "boundary": "只负责声明读取、bundle 合并、schema 与内容哈希；不推进运行状态。案件专用声明归 M04，其余 DV 由本模块拥有。",
+      "inputs": "正式 .dv 源码及其 bundle/import 路径", "outputs": "DvDocument、Root、Hash、Definition；内容静态 C# 导出",
+      "entry": "DvDocument.Parse/ParseBundle、DvCompiler.Compile/CompileBundle", "state": "文档与内容快照；不拥有 World/人物心智",
+      "build": "core/dv_lang/DuelView.DvLang.csproj", "readiness": "已有独立程序集；正式解析错误专项验收入口不足", "host": "CLI 新局加载为主，Godot 新局核对内容一致性",
+      "tests": [{"id":"M01-T1","action":"正式新局加载 campaign.dv 及依赖 bundle","expected":"声明成功读取；审计中的内容哈希对应本次内容快照","evidence":"session_open/content_hash 或 CLI 内容元数据；若宿主不暴露所需字段则未覆盖"},{"id":"M01-T2","action":"核查导入路径、重名定义与语法错误的拒绝分支","expected":"返回明确解析错误，不构造半初始化会话","evidence":"现有正式宿主缺专门负例入口；本轮只列缺口，不修改生产内容制造错误"}],
+      "blockers": ["DvCompiler 内容常量导出不等于业务编译器", "内容/运行态重载保留由 M07/M09 实现，不能归入纯解析测试"]
+    },
+    {
+      "id": "M02", "name": "本体与值存储", "group": "Core", "patterns": ["core/ontology/*"], "dependencies": ["M01"],
+      "boundary": "字段引用、事实、值、快照、变更与旧 DVKernel 基础原语；不直接接受玩家输入。",
+      "inputs": "FieldKey、Fact 与声明目录；旧 object/list 值", "outputs": "FactStore、FieldChange、快照与引用读写结果",
+      "entry": "FactStore.Read/Apply/SaveState/RestoreState、DVKernel.F_dv_read/F_dv_store", "state": "每个 store 的 Subject/Revision/Facts；另有进程级缓存",
+      "build": "core/ontology/DuelView.Ontology.csproj", "readiness": "已有独立程序集；ontology 门禁当前 excluded", "host": "CLI 正式动作审计；Godot 观察用于核对宿主投影",
+      "tests": [{"id":"M02-T1","action":"通过真实调查/物件操作改变一个声明字段","expected":"变更有实际动作来源和修订号；未受影响字段不凭空变化","evidence":"原始动作回执、前后正式观察；不可直接调用 Apply 注入测试状态"},{"id":"M02-T2","action":"人物未感知某事件时对照客观结果与合法人物观察","expected":"客观事实变化不自动变成该人物已知事实","evidence":"不同主体的正式观察/证据；观察权限不足时标记未覆盖"}],
+      "blockers": ["@mechanism 描述和函数存在不能作为本体隔离已通过的证据", "旧 R 缓存与类型化 FactStore 两组表示需分别标记实际调用范围"]
+    },
+    {
+      "id": "M03", "name": "感知与人物认知", "group": "Core", "patterns": ["core/cognition/*"], "dependencies": ["M01","M02"],
+      "boundary": "角色局部投影、证据、置信度、侵蚀与个体记忆；不能从规划器回写客观真值。",
+      "inputs": "感知绑定、可见/可听信息、时间、角色声明与证据来源", "outputs": "人物观察、记忆/认知修订、证据溯源与可行动状态",
+      "entry": "PerceptionBindings.Project、DVCognitionKernel.F_dv_perceive/F_dv_update_mind", "state": "各人物私有心智、证据游标与认知时间",
+      "build": "core/cognition/DuelView.Cognition.csproj", "readiness": "已有独立程序集；cognition 门禁当前 excluded", "host": "CLI 主体验证；视听遮挡必须追加 Godot 真实场景",
+      "tests": [{"id":"M03-T1","action":"正式新局中调查可达证物，再通过对话传播信息","expected":"证据携带感知/通信来源，接收者所知按授权增加","evidence":"正常动作回执、接收者合法证据与 revision"},{"id":"M03-T2","action":"自然推进至已声明的侵蚀/遗忘时间边界","expected":"记忆变化符合声明且保留可追溯原因，不修改历史客观事实","evidence":"时间边界前后正式观察；期限内未达到则未覆盖"}],
+      "blockers": ["部分 ActorClient/人物运行装配位于 M07；程序集目录不是全部人物状态的物理归属", "不得以全局 World 直接灌入心智替代感知"]
+    },
+    {
+      "id": "M04", "name": "案件推理与证明", "group": "Core", "patterns": ["core/reasoning/*", "assets/data/cases/*"], "dependencies": ["M01","M02"],
+      "boundary": "理论、规则、带符号结论、证明搜索与独立校验；只输出证书和候选，不直接执行世界动作。",
+      "inputs": "CaseScope、已获证据、规则与推理目标", "outputs": "CaseProof、CaseCheckResult、候选审查与策略分支",
+      "entry": "CaseTheory.Prove/CheckGoal、CaseProofChecker.CheckSteps、CaseStrategy", "state": "理论指纹、搜索切片、证明节点与策略分支",
+      "build": "core/reasoning/DuelView.Reasoning.csproj", "readiness": "已有独立程序集；作者检查当前 skipped，非完整证明门禁", "host": "CLI 正式推理行动；Godot 推理 UI 作为另一个适配层验收",
+      "tests": [{"id":"M04-T1","action":"真实收集证据后执行当前可选的推理行动","expected":"输出与目标一致的证书，依赖本人已付出代价取得的证据","evidence":"推理回执中的理论/目标/证据标识；未暴露证明时不能声称校验已测"},{"id":"M04-T2","action":"在证据尚不足时查看/尝试宿主正常提供的推理选项","expected":"缺前提或矛盾不被当作成功；无法从无关证明推出目标","evidence":"真实可选项及失败原因；畸形证书拒绝专项入口目前不足"}],
+      "blockers": ["证明搜索成功不等于 CheckGoal 校验通过", "旧作者检查依赖缺失 contract，不能复用为当前通过证据"]
+    },
+    {
+      "id": "M05", "name": "逻辑空间与资源预留", "group": "Core", "patterns": ["core/spatial/*"], "dependencies": ["M01","M02"],
+      "boundary": "导航拓扑、门策略、可视性、房间驻留与槽位；不负责 Godot 碰撞/动画。",
+      "inputs": "房间/门洞声明、位置、导航请求、SlotOwner 与容量", "outputs": "可达路径、门许可、裁剪多边形、预留结果及座位适配",
+      "entry": "PortalPolicy.OpenWithoutLeaf、RoomVisibility、SlotReservations、NavigationGraph", "state": "房间驻留、导航状态与槽位租约",
+      "build": "core/spatial/DuelView.Spatial.csproj", "readiness": "已有独立程序集；现有 rooms 检查不能替代实机碰撞验收", "host": "CLI 逻辑空间；Godot 物理空间交叉核对",
+      "tests": [{"id":"M05-T1","action":"通过正式路线到达门/房间并执行交互","expected":"初始关闭且无动态门叶的门不被视为开放；路径与门状态一致","evidence":"公开动作选项、门状态、房间变更和真实移动回执"},{"id":"M05-T2","action":"自然出现两个人争用同一声明座位/站位","expected":"容量不超限，取消/完成正确释放，交接不泄漏租约","evidence":"正式动作占用/失败回执；没有争用场景则未覆盖"}],
+      "blockers": ["逻辑可达不等于 Godot 可走，二者由 M11/M10 分别验证", "座位几何与模型适配不能仅靠名称规则证明"]
+    },
+    {
+      "id": "M06", "name": "需求与自主决策", "group": "Core", "patterns": ["core/autonomy/*"], "dependencies": ["M01","M02","M03","M04","M05"],
+      "boundary": "需求效用、任务规划、失败记忆与调度选项；不直接提交世界效果。",
+      "inputs": "本人认知、需求、候选动作、预期效果、时间成本", "outputs": "Decision、DecisionOption、需求解释与执行意图",
+      "entry": "AutonomyDriveSolver.Score、DecisionScheduler.Submit/Step/Complete、Sim4Planner", "state": "调度队列、需求、规划进度、失败记忆；存在静态评分 Hook",
+      "build": "core/autonomy/DuelView.Autonomy.csproj", "readiness": "已有独立程序集；drives 旧门禁 excluded", "host": "CLI engine-AI 正式新局；Godot 确认选中动作真实落地",
+      "tests": [{"id":"M06-T1","action":"让正式新局人物自主选择并完成动作","expected":"决策记录含需求/目标原因；候选评分使用人物预期，不以动作名硬编码实际收益","evidence":"drives/options/decision 审计及同一 execution 的完成结果"},{"id":"M06-T2","action":"自然形成取消、失败与重选过程","expected":"失败动作不提交成功后的需求效果；重复完成不重复加收益","evidence":"同一动作/执行标识的失败记忆和后续需求记录"}],
+      "blockers": ["AutonomyDriveSolver 静态构造设置 Score Hook，进程初始化顺序影响隔离", "InternalsVisibleTo 对 Simulation/Cli 放开内部边界，后续迁移需逐项收窄"]
+    },
+    {
+      "id": "M07", "name": "运行会话与世界仿真", "group": "Core", "patterns": ["core/simulation/*"], "dependencies": ["M01","M02","M03","M04","M05","M06"],
+      "boundary": "唯一协调 World、人物、规则、时钟、动作、对话及战役；接受宿主完成证据并负责结算。",
+      "inputs": "CharacterSessionDefinition、用户动作、真实宿主耗时/完成反馈", "outputs": "动作派发、正式回执、Snapshot、检查点与世界变更",
+      "entry": "RuntimeSession.Submit/Step/HostCompleted/SaveState/RestoreState、SimulationClock.Step", "state": "World/人物/时钟/动作/导航/对话/规则/冷却；旧 DVSimulationKernel 另行标记",
+      "build": "core/simulation/DuelView.Simulation.csproj", "readiness": "已有独立程序集；跨模块集成中枢，不适合作为纯单元运行器", "host": "CLI 与 Godot 分别新局，按相同契约分别验收",
+      "tests": [{"id":"M07-T1","action":"正式执行移动→到达→工作→完成流程","expected":"工作计时在实际到达后开始；真实完成最多结算一次，物理秒不被工作倍率重复放大","evidence":"execution、开始/到达/工作/完成时间和真实回执"},{"id":"M07-T2","action":"通过正式存档/读档与暂停/恢复继续行动","expected":"恢复状态和证据不丢失、不会重放已结算动作；暂停不推进世界","evidence":"合法保存路径、存取回执、前后观察；必须另分新局独立流程"}],
+      "blockers": ["RuntimeSession 与 WorldRules 等 partial 文件是一套运行类，不按文件强拆程序集", "旧 object 形态会话与当前 RuntimeSession 不能混用证据"]
+    },
+    {
+      "id": "M08", "name": "CLI 适配与兼容会话", "group": "Host", "patterns": ["core/session_cli/*"], "dependencies": ["M01","M02","M03","M04","M05","M06","M07"],
+      "boundary": "NativeCli 输入/输出、审计、合法选项与兼容 DvSession；不新增另一套世界规则。",
+      "inputs": "标准输入命令、正式内容路径与 seed", "outputs": "正常观察、合法选项、结构化事件及原始 CLI 回执",
+      "entry": "Program.cs 顶层路由、NativeCli.Run、SessionActionApi/ObserverProjection", "state": "宿主输入循环/审计游标；DvSession 兼容运行态与当前 NativeCli 区分",
+      "build": "core/session_cli/DuelView.Cli.csproj", "readiness": "已有独立可执行工程；仍被 Godot 工程引用且链接作者 C#", "host": "CliMCP；AI 任务使用 CLI on/step/observe/close",
+      "tests": [{"id":"M08-T1","action":"CliMCP 正式新局自动推进，期限包含构建与启动","expected":"命令产生连续正常观察，回执可关联动作；deadline_reached 不算通关","evidence":"原始最终观察、run_id、状态与刷盘审计"},{"id":"M08-T2","action":"AI 会话按最新观察串行选择当前合法选项后关闭","expected":"选择没有使用过期选项，关闭释放真实宿主进程","evidence":"on/step/observe/close 原始返回与进程结束状态"}],
+      "blockers": ["DuelView.Cli 是 Exe，同时承载 DvSession 等可复用代码", "tools/story/ScenarioAuthoring.cs 通过 Compile Link 进入本工程"]
+    },
+    {
+      "id": "M09", "name": "Godot 会话网关", "group": "Host", "patterns": ["scenes/main/*", "project.godot", "DualOntologyWorldReconstruct.csproj", "DuelView.sln"], "dependencies": ["M07","M08"],
+      "boundary": "Main 生命周期/界面编排、SessionBridge 值转换与审计、存取和内容重载；同场只拥有一个正式 Core 会话。",
+      "inputs": "Main 公开操作、Variant 值、现场完成证据和内容快照", "outputs": "Godot Dictionary/Array、StateChanged/EventsReady、存取回执",
+      "entry": "Main.submit_session_action/observe_session、SessionBridge.Open/Step/Submit/Complete/Snapshot", "state": "句柄 generation、桥接队列与日志；characterSession 与旧 session 字段并存",
+      "build": "DualOntologyWorldReconstruct.csproj（与所有 Godot C# 同一工程）", "readiness": "只有共享 Godot 工程，不能单独编译/运行；旧存档和空实现需解耦", "host": "GodotMCP 正式 Main.tscn；AI Godot 串行公开操作",
+      "tests": [{"id":"M09-T1","action":"标题开始新局并进入现场，调用正常 GUI 操作","expected":"现场复用 Main 的桥接会话，无双重时间推进；动作句柄属于当前 generation","evidence":"正式观察、session_open 记录、执行句柄与事件序列"},{"id":"M09-T2","action":"正式新局中保存、继续、换页并返回现场","expected":"存取失败明确反馈；只恢复已验证的运行态，不把空实现当成功","evidence":"存档页和宿主真实错误/成功回执；旧书签与当前存档分别报告"}],
+      "blockers": ["根 Godot csproj ProjectReference 指向 CLI Exe", "CasebookPersistence 是 SessionBridge partial 且依赖 DvSession", "StartPump/Stamp/RequireNoPendingExecution 等存在空体"]
+    },
+    {
+      "id": "M10", "name": "角色行动与物理执行", "group": "Godot", "patterns": ["scenes/components/characters/*"], "dependencies": ["M09","M05"],
+      "boundary": "CampaignRoomHost、动作队列、马达、对话、坐姿和房间切换；只回报物理结果，不重复 C# 规则。",
+      "inputs": "网关给出的动作/执行标识、目标与空间端口", "outputs": "到达、工作、完成/取消/失败反馈和真实位移测量",
+      "entry": "CampaignRoomHost.configure/request_action/observation、AutonomousActorExecutor、ActorMotor3D", "state": "Godot 节点、动作队列、导航/姿态与 pending execution",
+      "build": "Godot 共享工程与场景资源", "readiness": "现有组件边界；CampaignRoomHost 集中多职责，需专项回执划分", "host": "必须 Godot 正式新局；CLI 不证明角色碰撞/动画正确",
+      "tests": [{"id":"M10-T1","action":"点击可达目标，真实移动后进入工作并完成","expected":"无穿模/开发传送；位置和实际耗时可追溯，同 execution 只上报一次完成","evidence":"实机截图、物理位移和动作原始回执"},{"id":"M10-T2","action":"通过正式取消操作终止正在移动/工作的行动","expected":"动作退出、姿态恢复，槽位释放且不再提交原行动成功","evidence":"取消前后正式观察、执行器/会话的取消回执"}],
+      "blockers": ["CampaignRoomHost 同时处理时钟、交互、房间、观察及执行协调", "一对一场景/脚本配对需要独立静态清单，不能因目录存在就认定满足"]
+    },
+    {
+      "id": "M11", "name": "建筑与房间流送", "group": "Godot", "patterns": ["scenes/components/architecture/*", "scenes/prefabs/*", "scenes/rooms/*"], "dependencies": ["M05"],
+      "boundary": "原生墙/楼梯/门窗/道具、房间实例、剖切和流送；消费逻辑门/房间事实，物理结果交给角色执行层。",
+      "inputs": "正式房间、智能预制件、几何参数、相机和门状态", "outputs": "网格/碰撞、可见房间、站位/座位与门动画报告",
+      "entry": "RoomStreamingController、RoomContainer3D、PropEntity3D、HingedDoor3D", "state": "驻留节点、生成几何、碰撞与门叶状态",
+      "build": "Godot 共享工程；纯空间算法仍归 M05", "readiness": "可按正式房间分组验收，尚无独立宿主", "host": "Godot 正式新局沿合法路线进入房间",
+      "tests": [{"id":"M11-T1","action":"沿正式路线跨房、开关门并改变相机视角","expected":"房间正确加载/卸载和剖切，门碰撞与逻辑开闭一致","evidence":"实机图、正常房间/门观察；不可用临时场景替代"},{"id":"M11-T2","action":"实际使用桌椅、楼梯或交互物件","expected":"交互点可达、坐姿和几何适配、碰撞不阻断合法入口","evidence":"交互回执、实际角色姿态与空间画面"}],
+      "blockers": ["RoomStreamingController/CutawayGeometry 与网关共用一个 C# 工程", "候选几何/预制件未发布时不能算正式资源验收"]
+    },
+    {
+      "id": "M12", "name": "玩家界面", "group": "Godot", "patterns": ["scenes/UIpanel/*", "assets/localization/*", "assets/ui/*"], "dependencies": ["M09","M10","M13"],
+      "boundary": "标题、GUI、书本/存档/设置及文本资源；只调用 Main/现场公开接口，不读 Core 或宿主私有状态。",
+      "inputs": "公开观察、页面配置、玩家点击与语言偏好", "outputs": "操作意图信号、当前页和 UI 呈现",
+      "entry": "TitleUI.show_title、BookUI.configure/open/goto_page、FieldGUI.configure/refresh", "state": "界面选择、翻页状态和偏好；不拥有世界/认知副本",
+      "build": "Godot 场景/脚本，现有 UI/Core 静态隔离检查", "readiness": "公开界面契约已有；独立视觉验收仍通过 Main 正式宿主", "host": "Godot 人工/AI 按最新画面操作",
+      "tests": [{"id":"M12-T1","action":"标题→新局→现场→书本→返回现场","expected":"面板状态正确，翻页和输入映射准确；打开书本期间现场暂停策略一致","evidence":"每个实际页面截图与正常观察"},{"id":"M12-T2","action":"通过正常 UI 发起动作、取消、保存和切换语言","expected":"意图到达公开接口，失败有清晰反馈；界面不直接更改 Core 状态","evidence":"UI/Core 静态扫描与操作前后原始回执，两者分别记录"}],
+      "blockers": ["UI 不适合脱离 Main 的临时测试工程", "GDScript 动态宿主端口要与文档第五节逐项对齐"]
+    },
+    {
+      "id": "M13", "name": "舞台渲染与共享服务", "group": "Godot", "patterns": ["scenes/components/world/*", "scenes/components/rendering/*", "scenes/components/shared/*", "scenes/World/*", "assets/*", "ShareAsset/*"], "dependencies": [],
+      "boundary": "书房/书叶、环境照明、材质、音频、语言/设置服务与原始美术资产；不做剧情决策。",
+      "inputs": "纹理、世界时间/环境上下文、音量/语言设置与材质参数", "outputs": "实际画面、声音、坐标映射和设置服务",
+      "entry": "StudyDeskStage3D、BookLeafTurn3D、WorldTimeLighting、GameAudio/LocaleSettings", "state": "场景节点、材质/音频运行状态和用户设置",
+      "build": "Godot 资源；Shader/include 由引擎导入", "readiness": "已有组件与资产边界；视觉/声学必须实机观察", "host": "Godot 正式标题/书房/现场",
+      "tests": [{"id":"M13-T1","action":"在书房正常开合书本、翻页并点击页内控件","expected":"正反页、纹理映射、命中和镜头一致，无误页/闪烁","evidence":"真实页面截图和输入后的页面状态"},{"id":"M13-T2","action":"正常改变音量/语言并自然推进昼夜","expected":"设置生效、光照随正式世界时间变化，不改变游戏事实或证据","evidence":"设置观察、实机图与实际音频；未听取音频不得报声学通过"}],
+      "blockers": ["素材可单独导入不等于与正式场景集成正确", "相同 Shader 文本在多个目录重复，先区分引用再考虑归并"]
+    },
+    {
+      "id": "M14", "name": "内容与资产制作发布", "group": "Tools", "patterns": ["tools/building/*", "tools/godot_architect/*", "tools/web_building_editor/*", "tools/studio_web/*", "tools/story/*", "tools/tuning/*", "tools/audio/*", "mcp/asset_pipeline/*", "mcp/build/*"], "dependencies": ["M01","M04","M05"],
+      "boundary": "作者工具、编辑器、构建/资产流水线、调优与发布；输出候选，只有明确发布才进正式资源。",
+      "inputs": "作者声明、原始模型/图片、参数、候选目录与发布命令", "outputs": "候选 DV/房间/预制件/资产及发布记录",
+      "entry": "tools/story/author.py、tools/godot_architect、publish_campaign_rooms.py、character_tuning.py", "state": "候选文件和工具工作区；不直接注入正在运行的世界",
+      "build": "各工具入口；ScenarioAuthoring.cs 当前由 CLI Compile Link 编译", "readiness": "工具可以独立执行，跨工具契约/发布验收仍需逐项补齐", "host": "作者工具自身操作；发布后的玩法结果必须正式 CLI/Godot 新局验收",
+      "tests": [{"id":"M14-T1","action":"正常编辑并保存一个候选，检查输出与正式资源引用","expected":"候选保存不自动污染游戏资源；路径、依赖和可追踪输入完整","evidence":"工具输出及发布前后文件差异；本轮不执行发布"},{"id":"M14-T2","action":"明确发布后使用正式新局加载资源","expected":"加载内容与发布结果一致，必要的初始化修改明确要求新局","evidence":"发布记录、内容哈希、正式加载观察；未发布则不执行此验收"}],
+      "blockers": ["该组包含不同工具，不共享运行状态；按具体命令分用例", "ScenarioAuthoring.cs 编译归属与目录归属不同，不能随目录移动直接删除链接"]
+    },
+    {
+      "id": "M15", "name": "真实宿主测试基础设施", "group": "Tools", "patterns": ["mcp/game/*"], "dependencies": ["M08","M09"],
+      "boundary": "环境准备、构建缓存、启动/关闭、输入、截图与自动测试时限；不实现游戏规则或制造动作结果。",
+      "inputs": "项目路径、真实 backend、内容/seed、时长或截止时间", "outputs": "真实进程会话、正常观察、截图、原始报告与回执路径",
+      "entry": "CliMCP/GodotMCP、input on/step/observe/close、environment.prepare", "state": "真实宿主进程、连接、deadline、报告文件",
+      "build": "项目内 Godot .NET/.NET SDK，由 prepare 管理", "readiness": "已有正式自动与 AI 入口；不能把基础设施成功等同玩法成功", "host": "MCP 自身启动并全程持有真实 CLI/Godot",
+      "tests": [{"id":"M15-T1","action":"分别用自动 MCP 设置期限运行正式新局","expected":"期限包括构建启动，连接保持至最终结果，超时结果明确且不冒充通关","evidence":"run_id、deadline、backend、最终正常观察与真实报告"},{"id":"M15-T2","action":"AI on 后按观察操作，最终 close","expected":"顺序消费最新状态，关闭实际释放宿主；每个独立测试使用新会话","evidence":"完整工具返回序列与关闭结果；不使用回放/合成端点"}],
+      "blockers": ["构建错误、启动错误、玩法失败和 deadline_reached 必须分开归因", "CLI 路径不能宣称验证 Godot 碰撞或画面"]
+    },
+    {
+      "id": "M16", "name": "审计诊断与报告", "group": "Tools", "patterns": ["tools/ci/*", "tools/diagnostics/*", "tools/verification/*", "tools/sandbox/*", "tools/report/*", "mcp/verification/*", "mcp/spatial/*", "MECHANISM_MAP.yaml"], "dependencies": [],
+      "boundary": "静态隔离、诊断、回执审查与可视化报告；消费源码/原始证据，不生成玩法成功事实。",
+      "inputs": "当前工作树、原始 CLI/Godot 回执和实际截图", "outputs": "覆盖清单、边界违规、诊断记录、HTML/JSON 与实际预览",
+      "entry": "verify_ui_core_isolation.py、generate_code_analysis_report.py、validate_report.mjs", "state": "诊断/报告产物；不拥有游戏运行态",
+      "build": "静态 Python/Node 工具；既有沙盒不作为正式验收入口", "readiness": "静态报告可独立运行；旧 batch/回放检查有效性需逐项核对", "host": "静态检查直接运行；玩法证据仅消费 M15 的真实结果",
+      "tests": [{"id":"M16-T1","action":"扫描现有工程、模块归属与跨层引用","expected":"每份代码恰有一个所有者；依赖合法；缺失覆盖明确失败","evidence":"实际模块归属校验和边界检查输出"},{"id":"M16-T2","action":"生成离线 HTML 并验证模块卡片/图谱/搜索","expected":"统计可回溯源码，候选关系明确标注；无脚本异常，窄屏可读","evidence":"浏览器实际 validation.json 与预览截图，不作为游戏测试回执"}],
+      "blockers": ["旧 VerificationSuites 中自造 Session/动作的检查不作为符合本项目规则的正式新局验收", "旧回放与已 excluded 的批次脚本不能直接恢复为当前门禁"]
+    }
+  ],
+  "assignmentRules": "多条路径规则命中时，最长的字面前缀拥有文件；同长度跨模块冲突时报错。模块逻辑归属不改变现有 csproj Compile/ProjectReference。",
+  "sequence": [
+    {"phase":"1 / 固化边界","modules":["M01","M02","M03","M04","M05","M06","M07","M08"],"work":"保留已有 8 个程序集；先给正式新局的原始回执建立分模块断言、证据字段和未覆盖清单。纯算法专项用例若无法由正式宿主到达，保留缺口，不添加注入接口。","exit":"每个用例可独立选择、记录 backend/内容版本/seed/期限/所测事件；只在观察到足够证据时通过。"},
+    {"phase":"2 / 解开宿主依赖","modules":["M07","M08","M09"],"work":"盘点所有 CLI 可复用类型；将宿主无关运行会话/存取契约迁入可复用库，再让 CLI 与 Godot 各自引用库。兼容 DvSession 与当前 RuntimeSession 分开适配；逐项处理桥接空体。","exit":"Godot 不再依赖 CLI Exe；CLI 行为、Godot 正式新局和真实存取均保持契约；实际项目引用图无环。"},
+    {"phase":"3 / 划分现场端口","modules":["M10","M11","M12","M13"],"work":"从 CampaignRoomHost 识别只读观察、动作意图、移动执行与房间呈现端口；逐项提取职责且保持 Main 公开网关。UI/游戏/模型按目录分别实施，不新增临时测试场景。","exit":"每个场景保持专属脚本配对；UI 不读内部状态；正式路线可以单独验收移动、建筑、界面与渲染。"},
+    {"phase":"4 / 工具与门禁","modules":["M14","M15","M16"],"work":"作者候选/发布与运行内容分离；构建/启动/玩法结果分层归因；补齐有效的分模块真实宿主验收，旧 excluded 检查只在有效替代完成后再恢复。","exit":"模块失败不再被整局结果掩盖；所有通过都有原始证据，未覆盖和超时单列。"}
+  ]
+}
